@@ -372,6 +372,12 @@ Changelog
   calling `fit` or `fit_transform`.
   :pr:`22553` by :user:`Meekail Zain <micky774>`.
 
+- |API| :func:`decomposition.FastICA` now supports unit variance for whitening.
+  The default value of its `whiten` argument will change from `True`
+  (which behaves like `'arbitrary-variance'`) to `'unit-variance'` in version 1.3.
+  :pr:`19490` by :user:`Facundo Ferrin <fferrin>` and
+  :user:`Julien Jerphanion <jjerphan>`.
+
 :mod:`sklearn.discriminant_analysis`
 ....................................
 
@@ -439,36 +445,7 @@ Changelog
   fitting on a pandas DataFrame with a non-default `scoring` parameter and
   early_stopping enabled. :pr:`22908` by `Thomas Fan`_.
 
-:mod:`sklearn.feature_extraction`
-.................................
-
-- |Feature| Added auto mode to
-  :class:`feature_selection.SequentialFeatureSelection`. If the argument
-  `n_features_to_select` is `'auto'`, select features until the score
-  improvement does not exceed the argument `tol`. The default value of
-  `n_features_to_select` changed from `None` to `'warn'` in 1.1 and will become
-  `'auto'` in 1.3. `None` and `'warn'` will be removed in 1.3. :pr:`20145` by
-  :user:`murata-yu`.
-
-:mod:`sklearn.feature_selection`
-................................
-
-- |Efficiency| Improve runtime performance of :func:`feature_selection.chi2`
-  with boolean arrays. :pr:`22235` by `Thomas Fan`_.
-
-- |Feature| Added the ability to pass callables to the `max_features` parameter
-  of :class:`feature_selection.SelectFromModel`. Also introduced new attribute
-  `max_features_` which is inferred from `max_features` and the data during
-  `fit`. If `max_features` is an integer, then `max_features_ = max_features`.
-  If `max_features` is a callable, then `max_features_ = max_features(X)`.
-  :pr:`22356` by :user:`Meekail Zain <micky774>`
-
-:mod:`sklearn.feature_selection`
-................................
-- |Efficiency| Reduced memory usage of :func:`feature_selection.chi2`.
-  :pr:`21837` by :user:`Louis Wagner <lrwagner>`.
-
-- |Efficiency|  Fitting a :class:`ensemble.RandomForestClassifier`,
+- |Efficiency| Fitting a :class:`ensemble.RandomForestClassifier`,
   :class:`ensemble.RandomForestRegressor`, :class:`ensemble.ExtraTreesClassifier`,
   :class:`ensemble.ExtraTreesRegressor`, and :class:`ensemble.RandomTreesEmbedding`
   is now faster in a multiprocessing setting, especially for subsequent fits with
@@ -480,19 +457,13 @@ Changelog
   :pr:`16748` by :user:`Siqi He <siqi-he>` and :pr:`22215` by
   :user:`Meekail Zain <micky774>`.
 
-- |Enhancement| :class:`feature_selection.GenericUnivariateSelect` preserves
-  float32 dtype. :pr:`18482` by :user:`Thierry Gameiro <titigmr>`
-  and :user:`Daniel Kharsa <aflatoune>` and :pr:`22370` by
-  :user:`Meekail Zain <micky774>`.
+- |Enhancement| :class:`ensemble.RandomTreesEmbedding` now has an informative
+  :func:`get_feature_names_out` function that includes both tree index and leaf index in
+  the output feature names.
+  :pr:`21762` by :user:`Zhehao Liu <MaxwellLZH>` and `Thomas Fan`_.
 
 :mod:`sklearn.feature_extraction`
 .................................
-
-- |API| :func:`decomposition.FastICA` now supports unit variance for whitening.
-  The default value of its `whiten` argument will change from `True`
-  (which behaves like `'arbitrary-variance'`) to `'unit-variance'` in version 1.3.
-  :pr:`19490` by :user:`Facundo Ferrin <fferrin>` and
-  :user:`Julien Jerphanion <jjerphan>`.
 
 - |Fix| :class:`feature_extraction.FeatureHasher` now validates input parameters
   in `transform` instead of `__init__`. :pr:`21573` by
@@ -508,6 +479,32 @@ Changelog
 
 :mod:`sklearn.feature_selection`
 ................................
+
+- |Feature| Added auto mode to
+  :class:`feature_selection.SequentialFeatureSelection`. If the argument
+  `n_features_to_select` is `'auto'`, select features until the score
+  improvement does not exceed the argument `tol`. The default value of
+  `n_features_to_select` changed from `None` to `'warn'` in 1.1 and will become
+  `'auto'` in 1.3. `None` and `'warn'` will be removed in 1.3. :pr:`20145` by
+  :user:`murata-yu <murata-yu>`.
+
+- |Efficiency| Improve runtime performance of :func:`feature_selection.chi2`
+  with boolean arrays. :pr:`22235` by `Thomas Fan`_.
+
+- |Feature| Added the ability to pass callables to the `max_features` parameter
+  of :class:`feature_selection.SelectFromModel`. Also introduced new attribute
+  `max_features_` which is inferred from `max_features` and the data during
+  `fit`. If `max_features` is an integer, then `max_features_ = max_features`.
+  If `max_features` is a callable, then `max_features_ = max_features(X)`.
+  :pr:`22356` by :user:`Meekail Zain <micky774>`
+
+- |Efficiency| Reduced memory usage of :func:`feature_selection.chi2`.
+  :pr:`21837` by :user:`Louis Wagner <lrwagner>`.
+
+- |Enhancement| :class:`feature_selection.GenericUnivariateSelect` preserves
+  float32 dtype. :pr:`18482` by :user:`Thierry Gameiro <titigmr>`
+  and :user:`Daniel Kharsa <aflatoune>` and :pr:`22370` by
+  :user:`Meekail Zain <micky774>`.
 
 - |Enhancement| Add a parameter `force_finite` to
   :func:`feature_selection.f_regression` and
@@ -531,13 +528,6 @@ Changelog
 - |Fix| :class:`gaussian_process.GaussianProcessClassifier` raises
   a more informative error if `CompoundKernel` is passed via `kernel`.
   :pr:`22223` by :user:`MarcoM <marcozzxx810>`.
-
-:mod:`sklearn.ensemble`
-.......................
-- |Enhancement| :class:`ensemble.RandomTreesEmbedding` now has an informative
-  :func:`get_feature_names_out` function that includes both tree index and leaf index in
-  the output feature names.
-  :pr:`21762` by :user:`Zhehao Liu <MaxwellLZH>` and `Thomas Fan`_.
 
 :mod:`sklearn.impute`
 .....................
