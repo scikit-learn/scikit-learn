@@ -308,8 +308,9 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         # TODO(1.3): Remove
         if self.loss == "deviance":
             warnings.warn(
-                "The loss 'deviance' was deprecated in v1.1 and will be removed in "
-                "version 1.3. Use 'log_loss' which is equivalent.",
+                "The loss parameter name 'deviance' was deprecated in v1.1 and will be
+                removed in version 1.3. Use the new parameter name 'log_loss' which is
+                equivalent.",
                 FutureWarning,
             )
             loss_class = (
