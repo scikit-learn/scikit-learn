@@ -370,7 +370,7 @@ def _pandas_arff_parser(
         header=None,
         na_values=["?"],  # missing values are represented by `?`
         comment="%",  # skip line starting by `%` since they are comments
-        columns=[name for name in openml_columns_info],
+        names=[name for name in openml_columns_info],
     )
 
     columns_to_select = feature_names_to_select + target_names_to_select

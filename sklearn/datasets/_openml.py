@@ -910,9 +910,11 @@ def fetch_openml(
     return_sparse = data_description["format"].lower() == "sparse_arff"
     as_frame = not return_sparse if as_frame == "auto" else as_frame
     if parser == "auto":
-        parser = "liac-arff" if return_sparse else "pandas"
+        parser_ = "liac-arff" if return_sparse else "pandas"
+    else:
+        parser_ = parser
 
-    if as_frame or parser == "pandas":
+    if as_frame or parser_ == "pandas":
         try:
             check_pandas_support("`fetch_openml`")
         except ImportError as exc:
@@ -924,7 +926,7 @@ def fetch_openml(
                 )
             else:
                 err_msg = (
-                    "Using `parser='pandas'` requires pandas to be installed. "
+                    f"Using `parser={parser_!r}` requires pandas to be installed. "
                     "Alternatively, explicitely set `parser='liac-arff'`."
                 )
             raise ImportError(err_msg) from exc
@@ -935,10 +937,10 @@ def fetch_openml(
                 "Sparse ARFF datasets cannot be loaded with as_frame=True. "
                 "Use as_frame=False or as_frame='auto' instead."
             )
-        if parser == "pandas":
+        if parser_ == "pandas":
             raise ValueError(
-                "Sparse ARFF datasets cannot be loaded with parser='pandas'. "
-                "Use parser='liac-arff' or  parser='auto' instead."
+                f"Sparse ARFF datasets cannot be loaded with parser={parser!r}. "
+                "Use parser='liac-arff' or parser='auto' instead."
             )
 
     # download data features, meta-info about column types
@@ -1002,7 +1004,7 @@ def fetch_openml(
         md5_checksum=data_description["md5_checksum"],
         n_retries=n_retries,
         delay=delay,
-        parser=parser,
+        parser=parser_,
     )
 
     if return_X_y:
