@@ -439,6 +439,13 @@ Changelog
   fitting on a pandas DataFrame with a non-default `scoring` parameter and
   early_stopping enabled. :pr:`22908` by `Thomas Fan`_.
 
+- |Efficiency| Fitting a :class:`ensemble.RandomForestClassifier`,
+  :class:`ensemble.RandomForestRegressor`, :class:`ensemble.ExtraTreesClassifier`,
+  :class:`ensemble.ExtraTreesRegressor`, and :class:`ensemble.RandomTreesEmbedding`
+  is now faster in a multiprocessing setting, especially for subsequent fits with
+  `warm_start` enabled.
+  :pr:`22106` by :user:`Pieter Gijsbers <PGijsbers>`.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
@@ -483,13 +490,6 @@ Changelog
 
 - |Efficiency| Reduced memory usage of :func:`feature_selection.chi2`.
   :pr:`21837` by :user:`Louis Wagner <lrwagner>`.
-
-- |Efficiency|  Fitting a :class:`ensemble.RandomForestClassifier`,
-  :class:`ensemble.RandomForestRegressor`, :class:`ensemble.ExtraTreesClassifier`,
-  :class:`ensemble.ExtraTreesRegressor`, and :class:`ensemble.RandomTreesEmbedding`
-  is now faster in a multiprocessing setting, especially for subsequent fits with
-  `warm_start` enabled.
-  :pr:`22106` by :user:`Pieter Gijsbers <PGijsbers>`.
 
 - |Enhancement| Adds support to use pre-fit models with `cv="prefit"`
   in :class:`ensemble.StackingClassifier` and :class:`ensemble.StackingRegressor`.
