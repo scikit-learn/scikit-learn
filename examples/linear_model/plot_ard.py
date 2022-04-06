@@ -1,24 +1,25 @@
 """
-==========================================
-Comparison of Linear Models for Regression
-==========================================
+====================================
+Comparing Linear Bayesian Regressors
+====================================
 
-This example compares three kind of linear models for regression:
+This example compares two different bayesian regressors:
 
- - a :ref:`ordinary_least_squares`
  - a :ref:`automatic_relevance_determination`
  - a :ref:`bayesian_ridge_regression`
 
-The comparisons are based on the models' coefficients with respect to the true
+In addition, we will also use an :ref:`ordinary_least_squares` (OLS) model as a
+baseline for comparing the models' coefficients with respect to the true
 coefficients.
 
 The estimation of the model is done in both cases by iteratively maximizing the
 marginal log-likelihood of the observations.
 
 We also plot predictions and uncertainties for the ARD and the Bayesian Ridge
-regressions using a polynomial feature expansion to fit a non-linear relationship between `X` and `y`.
-Notice that the ARD regression captures the ground truth the best, but due to
-the limitations of a polynomial regression, both models fail when extrapolating.
+regressions using a polynomial feature expansion to fit a non-linear
+relationship between `X` and `y`. Notice that the ARD regression captures the
+ground truth the best, but due to the limitations of a polynomial regression,
+both models fail when extrapolating.
 
 """
 
@@ -26,10 +27,13 @@ the limitations of a polynomial regression, both models fail when extrapolating.
 # Generate synthetic dataset
 # --------------------------
 #
-# We generate a dataset where `X` and `y` are linearly linked:
-# 10 of the features of `X` will be used to generate `y`. The
-# other features are not useful at predicting `y`. In addition,
-# a Gaussian noise is added.
+# We generate a dataset where `X` and `y` are linearly linked: 10 of the
+# features of `X` will be used to generate `y`. The other features are not
+# useful at predicting `y`. In addition, we built a system where n_samples ==
+# n_features. Such setting is challenging for an OLS model and leads to
+# arbitrary large weights. Having a prior on the weights and a penalty
+# alleviates the problem. Finally, gaussian noise is added.
+
 from sklearn.datasets import make_regression
 
 X, y, true_weights = make_regression(
@@ -45,8 +49,8 @@ X, y, true_weights = make_regression(
 # Fit the regressors
 # ------------------
 #
-# Now, we will fit both Bayesian models and the ordinary least squares
-# to later compared the model's coefficients.
+# We now fit both Bayesian models and the OLS to later compare the models'
+# coefficients.
 
 import pandas as pd
 from sklearn.linear_model import ARDRegression, LinearRegression, BayesianRidge
@@ -86,18 +90,24 @@ plt.tight_layout(rect=(0, 0, 1, 0.95))
 _ = plt.title("Models' coefficients")
 
 # %%
-# Compared to the ordinary least squares (OLS) estimator, the coefficients using
-# a Bayesian Ridge regression are slightly shifted toward zeros, which
-# stabilises them. The ARD regression sets some of the non-informative
-# coefficients exactly to zero, while shifting some them closer to zero. Some
-# non-informative coefficients are still present and retain the order of
-# magnitude of the ground truth coefficients.
+# Compared to the OLS estimator, the coefficients using a Bayesian Ridge
+# regression are slightly shifted toward zeros, which stabilises them. The ARD
+# regression provides a sparser solution: some of the non-informative
+# coefficients are set exactly to zero, while shifting others closer to zero.
+# Some non-informative coefficients are still present and retain the order of
+# magnitude of the ground truth coefficients. Due to the added noise, none of
+# the models recover the true weights. Indeed, all models always have more than
+# 10 non-zero coefficients.
 
 # %%
 # Plot the marginal log-likelihood
 # --------------------------------
-plt.plot(-ard.scores_, color="navy", label="ARD with polynomial features")
-plt.plot(-brr.scores_, color="red", label="BayesianRidge with polynomial features")
+import numpy as np
+
+ard_scores = -np.array(ard.scores_)
+brr_scores = -np.array(brr.scores_)
+plt.plot(ard_scores, color="navy", label="ARD with polynomial features")
+plt.plot(brr_scores, color="red", label="BayesianRidge with polynomial features")
 plt.ylabel("Log-likelihood")
 plt.xlabel("Iterations")
 plt.xlim(1, 30)
@@ -107,7 +117,7 @@ _ = plt.title("Models log-likelihood")
 # %%
 # Plotting polynomial regressions with std errors of the scores
 # -------------------------------------------------------------
-import numpy as np
+
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import PolynomialFeatures, StandardScaler
 
