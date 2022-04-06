@@ -59,6 +59,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC, LinearSVC
 from sklearn.cluster import KMeans
+from sklearn.neural_network import MLPRegressor
 
 from sklearn.impute import SimpleImputer
 
@@ -2360,3 +2361,14 @@ def test_callable_multimetric_confusion_matrix_cross_validate():
     score_names = ["tn", "fp", "fn", "tp"]
     for name in score_names:
         assert "test_{}".format(name) in cv_results
+
+
+def test_learning_curve_partial_fit_regressors():
+    """Check that regressors with partial_fit is supported.
+
+    Non-regression test for #22981.
+    """
+    X, y = make_regression(random_state=42)
+
+    # Does not error
+    learning_curve(MLPRegressor(), X, y, exploit_incremental_learning=True, cv=2)
