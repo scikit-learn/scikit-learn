@@ -370,8 +370,8 @@ def _pandas_arff_parser(
         header=None,
         na_values=["?"],  # missing values are represented by `?`
         comment="%",  # skip line starting by `%` since they are comments
+        columns=[name for name in openml_columns_info],
     )
-    frame.columns = [name for name in openml_columns_info]
 
     columns_to_select = feature_names_to_select + target_names_to_select
     columns_to_keep = [col for col in frame.columns if col in columns_to_select]
@@ -385,19 +385,10 @@ def _pandas_arff_parser(
     else:
         X, y = X.to_numpy(), y.to_numpy()
 
-    # With NumPy >= 1.21.5, we can simplify the following code with:
-    # categories = {
-    #     name: dtype.categories.tolist()
-    #     for name, dtype in frame.dtypes.items()
-    #     if dtype == "category"
-    # }
-    # Older versions of NumPy will trigger `np.dtype("category")` that raises
-    # an TypeError
     categories = {
-        col_name: frame[col_name].cat.categories.tolist()
-        for col_name in frame.columns
-        if hasattr(frame[col_name].dtype, "is_dtype")
-        and frame[col_name].dtype.is_dtype("category")
+        name: dtype.categories.tolist()
+        for name, dtype in frame.dtypes.items()
+        if pd.api.types.is_categorical_dtype(dtype)
     }
     return X, y, None, categories
 
