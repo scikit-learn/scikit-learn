@@ -808,6 +808,9 @@ Changelog
   now validate input parameters in `fit` instead of `__init__`.
   :pr:`21880` by :user:`Mrinal Tyagi <MrinalTyagi>`.
 
+- |Fix| :func:`model_selection.learning_curve` now supports `partial_fit`
+  with regressors. :pr:`22982` by `Thomas Fan`_.
+
 :mod:`sklearn.multiclass`
 .........................
 
