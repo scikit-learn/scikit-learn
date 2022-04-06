@@ -949,10 +949,11 @@ controls the number of iterations of the boosting process::
 Available losses for regression are 'squared_error',
 'absolute_error', which is less sensitive to outliers, and
 'poisson', which is well suited to model counts and frequencies. For
-classification, 'binary_crossentropy' is used for binary classification and
-'categorical_crossentropy' is used for multiclass classification. By default
-the loss is 'auto' and will select the appropriate loss depending on
-:term:`y` passed to :term:`fit`.
+classification, 'log_loss' is the only option. For binary classification it uses the
+binary log loss, also kown as binomial deviance or binary cross-entropy. For
+`n_classes >= 3`, it uses the multi-class log loss function, with multinomial deviance
+and categorical cross-entropy as alternative names. The appropriate loss version is
+selected based on :term:`y` passed to :term:`fit`.
 
 The size of the trees can be controlled through the ``max_leaf_nodes``,
 ``max_depth``, and ``min_samples_leaf`` parameters.
