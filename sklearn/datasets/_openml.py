@@ -781,6 +781,12 @@ def fetch_openml(
 
         .. versionadded:: 1.1
 
+        .. note::
+           `pandas="auto"` in combination with `as_frame=False` temporary fall
+           back to `"liac-arff"` if pandas is not installed. This behaviour
+           will change in version 1.3 by falling back to `"pandas"` parser and
+           will therefore raise an `ImportError` if pandas is not installed.
+
     Returns
     -------
     data : :class:`~sklearn.utils.Bunch`
@@ -924,12 +930,21 @@ def fetch_openml(
                     "Alternatively, explicitely set `as_frame=False` and "
                     "`parser='liac-arff'`."
                 )
+                raise ImportError(err_msg) from exc
             else:
-                err_msg = (
-                    f"Using `parser={parser_!r}` requires pandas to be installed. "
-                    "Alternatively, explicitely set `parser='liac-arff'`."
+                # TODO (1.3): In version 1.3, we will raise an error instead of
+                # a warning.
+                # err_msg = (
+                #     f"Using `parser={parser_!r}` requires pandas to be installed. "
+                #     "Alternatively, explicitely set `parser='liac-arff'`."
+                # )
+                warn(
+                    "From version 1.3, `parser='auto'` with `as_frame=False` "
+                    "will use pandas. Either install pandas or set explicitely "
+                    "`parser='liac-arff'`. In between, the parser used is set to "
+                    "'liac-arff'",
                 )
-            raise ImportError(err_msg) from exc
+                parser_ = "liac-arff"
 
     if return_sparse:
         if as_frame:
