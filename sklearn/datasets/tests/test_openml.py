@@ -328,15 +328,9 @@ def test_fetch_openml_as_frame_false(
 # Known failure of PyPy for OpenML. See the following issue:
 # https://github.com/scikit-learn/scikit-learn/issues/18906
 @fails_if_pypy
-@pytest.mark.parametrize("data_id", [61, 1119])
+@pytest.mark.parametrize("data_id", [61, 1119, 40945])
 def test_fetch_openml_consistency_parser(monkeypatch, data_id):
-    """Check the consistency of the LIAC-ARFF and pandas parser.
-
-    In the future, we should test for titanic dataset. However, LIAC-ARFF
-    always use string dtype for categorical features whereas pandas infer the
-    data type and thus can use integer or float dtype. Fixing this bug in
-    LIAC-ARFF would allow to check the consistency in the future.
-    """
+    """Check the consistency of the LIAC-ARFF and pandas parsers."""
     pd = pytest.importorskip("pandas")
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response=True)
@@ -361,9 +355,11 @@ def test_fetch_openml_consistency_parser(monkeypatch, data_id):
         if pd.api.types.is_numeric_dtype(pandas_series):
             return series.astype(pandas_series.dtype)
         elif pd.api.types.is_categorical_dtype(pandas_series):
-            # Compare categorical features by converting categorical
-            # liac uses strings to denote the categories, we rename the categories
-            # to make them comparable to the pandas parser
+            # Compare categorical features by converting categorical liac uses
+            # strings to denote the categories, we rename the categories to make
+            # them comparable to the pandas parser. Fixing this behavior in
+            # LIAC-ARFF would allow to check the consistency in the future but
+            # we do not plan to maintain the LIAC-ARFF on the long term.
             return series.cat.rename_categories(pandas_series.cat.categories)
         else:
             return series
