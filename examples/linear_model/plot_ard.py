@@ -16,7 +16,7 @@ The estimation of the model is done in both cases by iteratively maximizing the
 marginal log-likelihood of the observations.
 
 We also plot predictions and uncertainties for the ARD and the Bayesian Ridge
-regressions using a polynomial feature expansion to fit a non-linear feature.
+regressions using a polynomial feature expansion to fit a non-linear relationship between `X` and `y`.
 Notice that the ARD regression captures the ground truth the best, but due to
 the limitations of a polynomial regression, both models fail when extrapolating.
 
@@ -25,9 +25,14 @@ the limitations of a polynomial regression, both models fail when extrapolating.
 # %%
 # Generate synthetic dataset
 # --------------------------
+#
+# We generate a dataset where `X` and `y` are linearly linked:
+# 10 of the features of `X` will be used to generate `y`. The
+# other features are not useful at predicting `y`. In addition,
+# a Gaussian noise is added.
 from sklearn.datasets import make_regression
 
-X, y, w = make_regression(
+X, y, true_weights = make_regression(
     n_samples=100,
     n_features=100,
     n_informative=10,
@@ -37,31 +42,33 @@ X, y, w = make_regression(
 )
 
 # %%
-# Fit the regressions
-# -------------------
+# Fit the regressors
+# ------------------
+#
+# Now, we will fit both Bayesian models and the ordinary least squares
+# to later compared the model's coefficients.
+
 import pandas as pd
 from sklearn.linear_model import ARDRegression, LinearRegression, BayesianRidge
 
-olr = LinearRegression()
-brr = BayesianRidge(compute_score=True, n_iter=30)
-ard = ARDRegression(compute_score=True, n_iter=30)
-
-olr.fit(X, y)
-brr.fit(X, y)
-ard.fit(X, y)
-
+olr = LinearRegression().fit(X, y)
+brr = BayesianRidge(compute_score=True, n_iter=30).fit(X, y)
+ard = ARDRegression(compute_score=True, n_iter=30).fit(X, y)
 df = pd.DataFrame(
     {
         "LinearRegression": olr.coef_,
         "BayesianRidge": brr.coef_,
         "ARDRegression": ard.coef_,
-        "ground truth": w,
+        "Weights of true generative process": true_weights,
     }
 )
 
 # %%
 # Plot the true and estimated coefficients
 # ----------------------------------------
+#
+# Now we compared the coefficients of each model with the weights of
+# the true generative model.
 import matplotlib.pyplot as plt
 import seaborn as sns
 from matplotlib.colors import LogNorm
@@ -79,7 +86,7 @@ plt.tight_layout(rect=(0, 0, 1, 0.95))
 _ = plt.title("Models' coefficients")
 
 # %%
-# Compared to the OLS (ordinary least squares) estimator, the coefficients using
+# Compared to the ordinary least squares (OLS) estimator, the coefficients using
 # a Bayesian Ridge regression are slightly shifted toward zeros, which
 # stabilises them. The ARD regression sets some of the non-informative
 # coefficients exactly to zero, while shifting some them closer to zero. Some
@@ -89,9 +96,9 @@ _ = plt.title("Models' coefficients")
 # %%
 # Plot the marginal log-likelihood
 # --------------------------------
-plt.plot(ard.scores_, color="navy", label="ARD with polynomial features")
-plt.plot(brr.scores_, color="red", label="BayesianRidge with polynomial features")
-plt.ylabel("Score")
+plt.plot(-ard.scores_, color="navy", label="ARD with polynomial features")
+plt.plot(-brr.scores_, color="red", label="BayesianRidge with polynomial features")
+plt.ylabel("Log-likelihood")
 plt.xlabel("Iterations")
 plt.xlim(1, 30)
 plt.legend()
