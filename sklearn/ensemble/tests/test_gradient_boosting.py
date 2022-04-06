@@ -1529,7 +1529,7 @@ def test_criterion_mse_deprecated(Estimator):
 def test_loss_deprecated(old_loss, new_loss, Estimator):
     est1 = Estimator(loss=old_loss, random_state=0)
 
-    with pytest.warns(FutureWarning, match=rf"The loss .* '{old_loss}' was deprecated"):
+    with pytest.warns(FutureWarning, match=rf"The loss.* '{old_loss}' was deprecated"):
         est1.fit(X, y)
 
     est2 = Estimator(loss=new_loss, random_state=0)
