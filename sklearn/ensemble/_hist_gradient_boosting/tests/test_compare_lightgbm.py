@@ -124,7 +124,7 @@ def test_same_predictions_classification(
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=rng)
 
     est_sklearn = HistGradientBoostingClassifier(
-        loss="binary_crossentropy",
+        loss="log_loss",
         max_iter=max_iter,
         max_bins=max_bins,
         learning_rate=1,
