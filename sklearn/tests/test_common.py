@@ -373,7 +373,8 @@ def test_pandas_column_name_consistency(estimator):
             )
         for warning in record:
             assert "was fitted without feature names" not in str(warning.message)
-            
+
+
 # TODO: As more modules support get_feature_names_out they should be removed
 # from this list to be tested
 GET_FEATURES_OUT_MODULES_TO_IGNORE = [
