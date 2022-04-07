@@ -1833,7 +1833,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
                 return HalfMultinomialLoss(
                     sample_weight=sample_weight, n_classes=self.n_trees_per_iteration_
                 )
-        elif self.loss in ("categorical_crossentropy"):
+        if self.loss == "categorical_crossentropy":
             if self.n_trees_per_iteration_ == 1:
                 raise ValueError(
                     f"loss='{self.loss}' is not suitable for a binary classification "
@@ -1843,7 +1843,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
                 return HalfMultinomialLoss(
                     sample_weight=sample_weight, n_classes=self.n_trees_per_iteration_
                 )
-        elif self.loss in ("binary_crossentropy"):
+        if self.loss == "binary_crossentropy":
             if self.n_trees_per_iteration_ > 1:
                 raise ValueError(
                     f"loss='{self.loss}' is not defined for multiclass "
