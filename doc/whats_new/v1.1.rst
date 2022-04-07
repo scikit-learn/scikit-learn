@@ -98,6 +98,11 @@ Changelog
     default.
     :pr:`23036` by :user:`Christian Lorentzen <lorentzenchr>`.
 
+  - For :class:`ensemble.HistGradientBoostingClassifier`, the `loss` parameter names
+    "auto", "binary_crossentropy" and "categorical_crossentropy" are deprecated in
+    favor of the new name "log_loss", which is now the default.
+    :pr:`23040` by :user:`Christian Lorentzen <lorentzenchr>`.
+
   - For :class:`linear_model.SGDClassifier`, the `loss` parameter name
     "log" is deprecated in favor of the new name "log_loss".
     :pr:`23046` by :user:`Christian Lorentzen <lorentzenchr>`.
