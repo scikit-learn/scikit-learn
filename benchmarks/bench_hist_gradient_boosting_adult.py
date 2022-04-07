@@ -1,6 +1,8 @@
 import argparse
 from time import time
 
+import numpy as np
+
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import fetch_openml
 from sklearn.metrics import accuracy_score, roc_auc_score
@@ -48,6 +50,7 @@ def predict(est, data_test, target_test):
 data = fetch_openml(data_id=179, as_frame=False)  # adult dataset
 X, y = data.data, data.target
 
+n_classes = len(np.unique(y))
 n_features = X.shape[1]
 n_categorical_features = len(data.categories)
 n_numerical_features = n_features - n_categorical_features
@@ -61,7 +64,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_
 # already clean
 is_categorical = [name in data.categories for name in data.feature_names]
 est = HistGradientBoostingClassifier(
-    loss="binary_crossentropy",
+    loss="log_loss",
     learning_rate=lr,
     max_iter=n_trees,
     max_bins=max_bins,
@@ -76,7 +79,7 @@ fit(est, X_train, y_train, "sklearn")
 predict(est, X_test, y_test)
 
 if args.lightgbm:
-    est = get_equivalent_estimator(est, lib="lightgbm")
+    est = get_equivalent_estimator(est, lib="lightgbm", n_classes=n_classes)
     est.set_params(max_cat_to_onehot=1)  # dont use OHE
     categorical_features = [
         f_idx for (f_idx, is_cat) in enumerate(is_categorical) if is_cat

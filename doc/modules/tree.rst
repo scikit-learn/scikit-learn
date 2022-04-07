@@ -500,12 +500,6 @@ Entropy:
 
     H(Q_m) = - \sum_k p_{mk} \log(p_{mk})
 
-Misclassification:
-
-.. math::
-
-    H(Q_m) = 1 - \max(p_{mk})
-
 Regression criteria
 -------------------
 

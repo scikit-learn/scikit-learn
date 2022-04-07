@@ -990,33 +990,25 @@ def test_set_feature_union_step_drop(get_names):
     assert_array_equal([[2, 3]], ft.fit_transform(X))
     assert_array_equal(["m2__x2", "m3__x3"], getattr(ft, get_names)())
 
-    with pytest.warns(None) as record:
-        ft.set_params(m2="drop")
-        assert_array_equal([[3]], ft.fit(X).transform(X))
-        assert_array_equal([[3]], ft.fit_transform(X))
+    ft.set_params(m2="drop")
+    assert_array_equal([[3]], ft.fit(X).transform(X))
+    assert_array_equal([[3]], ft.fit_transform(X))
     assert_array_equal(["m3__x3"], getattr(ft, get_names)())
-    assert not [w.message for w in record]
 
-    with pytest.warns(None) as record:
-        ft.set_params(m3="drop")
-        assert_array_equal([[]], ft.fit(X).transform(X))
-        assert_array_equal([[]], ft.fit_transform(X))
+    ft.set_params(m3="drop")
+    assert_array_equal([[]], ft.fit(X).transform(X))
+    assert_array_equal([[]], ft.fit_transform(X))
     assert_array_equal([], getattr(ft, get_names)())
-    assert not [w.message for w in record]
 
-    with pytest.warns(None) as record:
-        # check we can change back
-        ft.set_params(m3=mult3)
-        assert_array_equal([[3]], ft.fit(X).transform(X))
-    assert not [w.message for w in record]
+    # check we can change back
+    ft.set_params(m3=mult3)
+    assert_array_equal([[3]], ft.fit(X).transform(X))
 
-    with pytest.warns(None) as record:
-        # Check 'drop' step at construction time
-        ft = FeatureUnion([("m2", "drop"), ("m3", mult3)])
-        assert_array_equal([[3]], ft.fit(X).transform(X))
-        assert_array_equal([[3]], ft.fit_transform(X))
+    # Check 'drop' step at construction time
+    ft = FeatureUnion([("m2", "drop"), ("m3", mult3)])
+    assert_array_equal([[3]], ft.fit(X).transform(X))
+    assert_array_equal([[3]], ft.fit_transform(X))
     assert_array_equal(["m3__x3"], getattr(ft, get_names)())
-    assert not [w.message for w in record]
 
 
 def test_set_feature_union_passthrough():
@@ -1524,6 +1516,31 @@ def test_pipeline_check_if_fitted():
         check_is_fitted(pipeline)
     pipeline.fit(iris.data, iris.target)
     check_is_fitted(pipeline)
+
+
+def test_feature_union_check_if_fitted():
+    """Check __sklearn_is_fitted__ is defined correctly."""
+
+    X = [[1, 2], [3, 4], [5, 6]]
+    y = [0, 1, 2]
+
+    union = FeatureUnion([("clf", MinimalTransformer())])
+    with pytest.raises(NotFittedError):
+        check_is_fitted(union)
+
+    union.fit(X, y)
+    check_is_fitted(union)
+
+    # passthrough is stateless
+    union = FeatureUnion([("pass", "passthrough")])
+    check_is_fitted(union)
+
+    union = FeatureUnion([("clf", MinimalTransformer()), ("pass", "passthrough")])
+    with pytest.raises(NotFittedError):
+        check_is_fitted(union)
+
+    union.fit(X, y)
+    check_is_fitted(union)
 
 
 def test_pipeline_get_feature_names_out_passes_names_through():
