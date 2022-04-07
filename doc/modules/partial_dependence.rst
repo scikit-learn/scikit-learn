@@ -172,7 +172,7 @@ individual conditional expectations from the mean line, thus making it easier
 to explore heterogeneous relationships. cICE plots can be plotted by setting
 `centered=True`:
 
-    >>> plot_partial_dependence(clf, X, features,
+    >>> PartialDependenceDisplay.from_estimator(clf, X, features,
     ...     kind='both', centered=True)
     <...>
 
