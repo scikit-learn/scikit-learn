@@ -473,9 +473,6 @@ class Birch(
     array([0, 0, 0, 1, 1, 1])
     """
 
-    def _more_tags(self):
-        return {"preserves_dtype": [np.float64, np.float32]}
-
     def __init__(
         self,
         *,
@@ -772,3 +769,6 @@ class Birch(
 
         if compute_labels:
             self.labels_ = self._predict(X)
+
+    def _more_tags(self):
+        return {"preserves_dtype": [np.float64, np.float32]}
