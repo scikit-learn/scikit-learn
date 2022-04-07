@@ -601,6 +601,7 @@ class PartialDependenceDisplay:
         .. deprecated:: 1.1
            Pass the parameter `pdp_lim` to
            :meth:`~sklearn.inspection.PartialDependenceDisplay.plot` instead.
+           It will be removed in 1.3.
 
     kind : {'average', 'individual', 'both'} or list of such str, \
             default='average'
