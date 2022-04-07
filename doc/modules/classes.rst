@@ -657,6 +657,7 @@ Plotting
    :toctree: generated/
    :template: class.rst
 
+   inspection.DecisionBoundaryDisplay
    inspection.PartialDependenceDisplay
 
 .. autosummary::
@@ -933,6 +934,7 @@ details.
 
    metrics.check_scoring
    metrics.get_scorer
+   metrics.get_scorer_names
    metrics.make_scorer
 
 Classification metrics
@@ -1586,12 +1588,17 @@ Plotting
 
 .. autosummary::
    :toctree: generated/
+   :template: class.rst
+
+   utils.Bunch
+
+.. autosummary::
+   :toctree: generated/
    :template: function.rst
 
    utils.arrayfuncs.min_pos
    utils.as_float_array
    utils.assert_all_finite
-   utils.Bunch
    utils.check_X_y
    utils.check_array
    utils.check_scalar

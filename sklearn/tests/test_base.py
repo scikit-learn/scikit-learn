@@ -5,6 +5,7 @@ import re
 import numpy as np
 import scipy.sparse as sp
 import pytest
+import warnings
 
 import sklearn
 from sklearn.utils._testing import assert_array_equal
@@ -539,24 +540,25 @@ def test_repr_mimebundle_():
     tree = DecisionTreeClassifier()
     output = tree._repr_mimebundle_()
     assert "text/plain" in output
-    assert "text/html" not in output
+    assert "text/html" in output
 
-    with config_context(display="diagram"):
+    with config_context(display="text"):
         output = tree._repr_mimebundle_()
         assert "text/plain" in output
-        assert "text/html" in output
+        assert "text/html" not in output
 
 
 def test_repr_html_wraps():
     # Checks the display configuration flag controls the html output
     tree = DecisionTreeClassifier()
-    msg = "_repr_html_ is only defined when"
-    with pytest.raises(AttributeError, match=msg):
-        output = tree._repr_html_()
 
-    with config_context(display="diagram"):
-        output = tree._repr_html_()
-        assert "<style>" in output
+    output = tree._repr_html_()
+    assert "<style>" in output
+
+    with config_context(display="text"):
+        msg = "_repr_html_ is only defined when"
+        with pytest.raises(AttributeError, match=msg):
+            output = tree._repr_html_()
 
 
 def test_n_features_in_validation():
@@ -631,17 +633,17 @@ def test_feature_names_in():
     # fit on dataframe with all integer feature names works without warning
     df_int_names = pd.DataFrame(X_np)
     trans = NoOpTransformer()
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
         trans.fit(df_int_names)
-    assert not [w.message for w in record]
 
     # fit on dataframe with no feature names or all integer feature names
     # -> do not warn on transform
     Xs = [X_np, df_int_names]
     for X in Xs:
-        with pytest.warns(None) as record:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", UserWarning)
             trans.transform(X)
-        assert not [w.message for w in record]
 
     # TODO: Convert to a error in 1.2
     # fit on dataframe with feature names that are mixed warns:
