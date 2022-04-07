@@ -3,8 +3,8 @@
 Evaluation of outlier detection estimators
 ==========================================
 
-This example benchmarks outlier detection algorithms, Local Outlier
-Factor (LOF) and Isolation Forest (IForest), using ROC curves on
+This example benchmarks outlier detection algorithms, :ref:`local_outlier_factor` (LOF)
+and :ref:`isolation_forest` (IForest), using ROC curves on
 classical anomaly detection datasets. The algorithm performance
 is assessed in an outlier detection context:
 
