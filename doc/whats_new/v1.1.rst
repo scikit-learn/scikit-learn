@@ -640,7 +640,7 @@ Changelog
   :user:`Andrés Babino <ababino>`.
 
 - |Fix| :class:`linear_model.TheilSenRegressor` now validates input parameter
-  max_subpopulation in `fit` instead of `__init__`.
+  ``max_subpopulation`` in `fit` instead of `__init__`.
   :pr:`21767` by :user:`Maren Westermann <marenwestermann>`.
 
 - |Enhancement| :func:`linear_model.ElasticNet` and
