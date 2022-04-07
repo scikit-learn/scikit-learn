@@ -747,7 +747,7 @@ def test_partial_dependence_overwrite_labels(
             assert legend_text[0].get_text() == label
 
 
-# FIXME: remove in 1.2
+# TODO(1.3): remove
 def test_partial_dependence_display_deprecation(
     plot_partial_dependence, pyplot, clf_diabetes, diabetes
 ):
@@ -782,7 +782,7 @@ def test_partial_dependence_display_deprecation(
 def test_partial_dependence_plot_limits_one_way(
     plot_partial_dependence, pyplot, clf_diabetes, diabetes, kind, centered
 ):
-    """Check that the PD limit on the plots are properly set."""
+    """Check that the PD limit on the plots are properly set on one-way plots."""
     disp = plot_partial_dependence(
         clf_diabetes,
         diabetes.data,
@@ -812,6 +812,7 @@ def test_partial_dependence_plot_limits_one_way(
 def test_partial_dependence_plot_limits_two_way(
     plot_partial_dependence, pyplot, clf_diabetes, diabetes, centered
 ):
+    """Check that the PD limit on the plots are properly set on two-way plots."""
     disp = plot_partial_dependence(
         clf_diabetes,
         diabetes.data,

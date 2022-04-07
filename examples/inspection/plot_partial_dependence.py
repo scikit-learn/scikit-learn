@@ -194,7 +194,7 @@ display.figure_.subplots_adjust(wspace=0.4, hspace=0.3)
 # rooms per household.
 #
 # The ICE curves (light blue lines) complement the analysis: we can see that
-# there are some exceptions (which arfe better highlighted with the option
+# there are some exceptions (which are better highlighted with the option
 # `centered=True`), where the house price remains constant with respect to
 # median income and average occupants variations.
 # On the other hand, while the house age (top right) does not have a strong
