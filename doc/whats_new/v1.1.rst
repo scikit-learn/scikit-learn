@@ -792,7 +792,7 @@ Changelog
   :pr:`22058` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |Fix| :class:`mixture.GaussianMixture` now normalizes `weights_` more safely,
-  preventing rounding errors. :pr:`23034` by :user:`Meekail Zain <micky774>`.
+  preventing rounding errors when `n_components=1`. :pr:`23034` by :user:`Meekail Zain <micky774>`.
 
 :mod:`sklearn.multiclass`
 .........................
