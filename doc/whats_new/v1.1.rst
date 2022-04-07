@@ -572,7 +572,7 @@ Changelog
   :pr:`16061` by `Thomas Fan`_.
 
 - |Enhancement| In
-  :meth:`inspection.PartialDependenceDisplay.from_estimator` allows
+  :meth:`inspection.PartialDependenceDisplay.from_estimator`, allow
   `kind` to accept a list of strings to specify  which type of
   plot to draw for each feature interaction.
   :pr:`19438` by :user:`Guillaume Lemaitre <glemaitre>`.
