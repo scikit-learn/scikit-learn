@@ -640,6 +640,10 @@ Changelog
   :pr:`21481` by :user:`Guillaume Lemaitre <glemaitre>` and
   :user:`Andrés Babino <ababino>`.
 
+- |Fix| :class:`linear_model.TheilSenRegressor` now validates input parameter
+  ``max_subpopulation`` in `fit` instead of `__init__`.
+  :pr:`21767` by :user:`Maren Westermann <marenwestermann>`.
+
 - |Enhancement| :func:`linear_model.ElasticNet` and
   and other linear model classes using coordinate descent show error
   messages when non-finite parameter weights are produced. :pr:`22148`
