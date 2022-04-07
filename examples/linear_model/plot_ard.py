@@ -138,6 +138,12 @@ y = np.sqrt(X) * np.sin(X) + noise
 full_data = pd.DataFrame({"input_feature": X, "target": y})
 X = X.reshape((-1, 1))
 
+# extrapolation
+X_plot = np.linspace(10, 10.4, 10)
+y_plot = np.sqrt(X_plot) * np.sin(X_plot)
+X_plot = np.concatenate((X, X_plot.reshape((-1, 1))))
+y_plot = np.concatenate((y - noise, y_plot))
+
 # %%
 # Fit the regressors
 # ------------------
@@ -163,8 +169,8 @@ brr_poly = make_pipeline(
     BayesianRidge(),
 ).fit(X, y)
 
-y_ard, y_ard_std = ard_poly.predict(X, return_std=True)
-y_brr, y_brr_std = brr_poly.predict(X, return_std=True)
+y_ard, y_ard_std = ard_poly.predict(X_plot, return_std=True)
+y_brr, y_brr_std = brr_poly.predict(X_plot, return_std=True)
 
 # %%
 # Plotting polynomial regressions with std errors of the scores
@@ -173,18 +179,18 @@ y_brr, y_brr_std = brr_poly.predict(X, return_std=True)
 ax = sns.scatterplot(
     data=full_data, x="input_feature", y="target", color="black", alpha=0.75
 )
-ax.plot(X, y - noise, color="black", label="Ground Truth")
-ax.plot(X, y_brr, color="red", label="BayesianRidge with polynomial features")
-ax.plot(X, y_ard, color="navy", label="ARD with polynomial features")
+ax.plot(X_plot, y_plot, color="black", label="Ground Truth")
+ax.plot(X_plot, y_brr, color="red", label="BayesianRidge with polynomial features")
+ax.plot(X_plot, y_ard, color="navy", label="ARD with polynomial features")
 ax.fill_between(
-    full_data["input_feature"],
+    X_plot.ravel(),
     y_ard - y_ard_std,
     y_ard + y_ard_std,
     color="navy",
     alpha=0.3,
 )
 ax.fill_between(
-    full_data["input_feature"],
+    X_plot.ravel(),
     y_brr - y_brr_std,
     y_brr + y_brr_std,
     color="red",
