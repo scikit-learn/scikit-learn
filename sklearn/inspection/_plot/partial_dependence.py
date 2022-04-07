@@ -1061,8 +1061,10 @@ class PartialDependenceDisplay:
             n_ice_to_plot,
             replace=False,
         )
+        ice_lines_subsampled = preds[ice_lines_idx, :]
         if centered:
-            ice_lines_subsampled = preds[ice_lines_idx, :].copy()
+            # trigger a copy if we need to center the ICE lines
+            ice_lines_subsampled = ice_lines_subsampled.copy()
             ice_lines_subsampled -= ice_lines_subsampled[:, [0]]
         # plot the subsampled ice
         for ice_idx, ice in enumerate(ice_lines_subsampled):
