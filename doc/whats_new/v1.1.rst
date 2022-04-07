@@ -581,11 +581,18 @@ Changelog
   :pr:`16061` by `Thomas Fan`_.
 
 - |Enhancement| In
-  :meth:`~sklearn.inspection.PartialDependenceDisplay.from_estimator` and
-  :meth:`~sklearn.inspection.PartialDependenceDisplay.from_predictions`, allow
+  :meth:`inspection.PartialDependenceDisplay.from_estimator`, allow
   `kind` to accept a list of strings to specify  which type of
   plot to draw for each feature interaction.
   :pr:`19438` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Enhancement| :meth:`inspection.PartialDependenceDisplay.from_estimator`,
+  :meth:`inspection.PartialDependenceDisplay.plot`, and
+  :func:`inspection.plot_partial_dependence` now support plotting centered
+  Individual Conditional Expectation (cICE) and centered PDP curves controlled
+  by setting the parameter `centered`.
+  :pr:`18310` by :user:`Johannes Elfner <JoElfner>` and
+  :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.isotonic`
 .......................

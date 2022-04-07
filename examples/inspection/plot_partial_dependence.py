@@ -113,7 +113,13 @@ print(f"Test R2 score: {est.score(X_test, y_test):.2f}")
 
 from sklearn.inspection import PartialDependenceDisplay
 
-common_params = {"subsample": 50, "n_jobs": 2, "grid_resolution": 20, "random_state": 0}
+common_params = {
+    "subsample": 50,
+    "n_jobs": 2,
+    "grid_resolution": 20,
+    "centered": True,
+    "random_state": 0,
+}
 
 print("Computing partial dependence plots...")
 tic = time()
@@ -188,10 +194,12 @@ display.figure_.subplots_adjust(wspace=0.4, hspace=0.3)
 # rooms per household.
 #
 # The ICE curves (light blue lines) complement the analysis: we can see that
-# there are some exceptions, where the house price remain constant with median
-# income and average occupants. On the other hand, while the house age (top
-# right) does not have a strong influence on the median house price on average,
-# there seems to be a number of exceptions where the house price increase when
+# there are some exceptions (which are better highlighted with the option
+# `centered=True`), where the house price remains constant with respect to
+# median income and average occupants variations.
+# On the other hand, while the house age (top right) does not have a strong
+# influence on the median house price on average, there seems to be a number
+# of exceptions where the house price increases when
 # between the ages 15-25. Similar exceptions can be observed for the average
 # number of rooms (bottom left). Therefore, ICE plots show some individual
 # effect which are attenuated by taking the averages.
