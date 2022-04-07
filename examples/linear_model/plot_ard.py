@@ -28,10 +28,10 @@ non-linear relationship between `X` and `y`.
 #
 # We generate a dataset where `X` and `y` are linearly linked: 10 of the
 # features of `X` will be used to generate `y`. The other features are not
-# useful at predicting `y`. In addition, we generate a dataset where `n_samples == n_features`.
-# Such a setting is challenging for an OLS model and leads potentially to
-# arbitrary large weights. Having a prior on the weights and a penalty
-# alleviates the problem. Finally, gaussian noise is added.
+# useful at predicting `y`. In addition, we generate a dataset where `n_samples
+# == n_features`. Such a setting is challenging for an OLS model and leads
+# potentially to arbitrary large weights. Having a prior on the weights and a
+# penalty alleviates the problem. Finally, gaussian noise is added.
 
 from sklearn.datasets import make_regression
 
@@ -59,10 +59,10 @@ brr = BayesianRidge(compute_score=True, n_iter=30).fit(X, y)
 ard = ARDRegression(compute_score=True, n_iter=30).fit(X, y)
 df = pd.DataFrame(
     {
-        "LinearRegression": olr.coef_,
-        "BayesianRidge": brr.coef_,
-        "ARDRegression": ard.coef_,
         "Weights of true generative process": true_weights,
+        "ARDRegression": ard.coef_,
+        "BayesianRidge": brr.coef_,
+        "LinearRegression": olr.coef_,
     }
 )
 
@@ -89,14 +89,15 @@ plt.tight_layout(rect=(0, 0, 1, 0.95))
 _ = plt.title("Models' coefficients")
 
 # %%
+# Due to the added noise, none of the models recover the true weights. Indeed,
+# all models always have more than 10 non-zero coefficients.
+#
 # Compared to the OLS estimator, the coefficients using a Bayesian Ridge
-# regression are slightly shifted toward zeros, which stabilises them. The ARD
+# regression are slightly shifted toward zero, which stabilises them. The ARD
 # regression provides a sparser solution: some of the non-informative
 # coefficients are set exactly to zero, while shifting others closer to zero.
 # Some non-informative coefficients are still present and retain the order of
-# magnitude of the ground truth coefficients. Due to the added noise, none of
-# the models recover the true weights. Indeed, all models always have more than
-# 10 non-zero coefficients.
+# magnitude of the ground truth coefficients.
 
 # %%
 # Plot the marginal log-likelihood
@@ -114,7 +115,8 @@ plt.legend()
 _ = plt.title("Models log-likelihood")
 
 # %%
-# In this case ARD shows a faster convergence than BayesianRidge.
+# Indeed, both models minimize the log-likelihood up to an arbitrary cutoff
+# defined by the `n_iter` parameter.
 #
 # Bayesian regressions with polynomial feature expansion
 # ======================================================
@@ -141,9 +143,14 @@ X = X.reshape((-1, 1))
 # ------------------
 #
 # Here we try a degree 10 polynomial to potentially overfit, though the bayesian
-# linear models regularize the size of the polynomial coefficients.
-# As `fit_intercept=True` by default for :class:`~sklearn.linear_model.ARDRegression` and :class:`~sklearn.linear_model.BayesianRidge`,
-# then :class:`~sklearn.preprocessing.PolynomialFeatures` should not introduce an additional bias feature.
+# linear models regularize the size of the polynomial coefficients. As
+# `fit_intercept=True` by default for
+# :class:`~sklearn.linear_model.ARDRegression` and
+# :class:`~sklearn.linear_model.BayesianRidge`, then
+# :class:`~sklearn.preprocessing.PolynomialFeatures` should not introduce an
+# additional bias feature. By setting `return_std=True`, the bayesian regressors
+# return the standard deviation of the posterior distribution for the model
+# parameters.
 
 ard_poly = make_pipeline(
     PolynomialFeatures(degree=10, include_bias=False),
