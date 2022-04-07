@@ -270,13 +270,13 @@ class BisectingKMeans(_BaseKMeans):
     ...               [10, 6], [10, 8], [10, 10]])
     >>> bisect_means = BisectingKMeans(n_clusters=3, random_state=0).fit(X)
     >>> bisect_means.labels_
-    array([0, 0, 0, 1, 1, 1, 2, 2, 2], dtype=int32)
+    array([2, 0, 2, 0, 2, 0, 1, 1, 1], dtype=int32)
     >>> bisect_means.predict([[0, 0], [12, 3]])
-    array([0, 1], dtype=int32)
+    array([2, 0], dtype=int32)
     >>> bisect_means.cluster_centers_
-    array([[ 1.,  2.],
-           [10.,  2.],
-           [10.,  8.]])
+    array([[ 10.,  2.],
+           [10.,  8.],
+           [1., 2.]])
     """
 
     def __init__(
@@ -403,28 +403,42 @@ class BisectingKMeans(_BaseKMeans):
         x_squared_norms = x_squared_norms[cluster_to_bisect.indices]
         sample_weight = sample_weight[cluster_to_bisect.indices]
 
-        # Split this X into 2 clusters
-        centers_init = self._init_centroids(
-            X, x_squared_norms, self.init, self._random_state, n_centroids=2
-        )
+        best_inertia = None
 
-        labels, _, centers, _ = self._kmeans_single(
-            X,
-            sample_weight,
-            centers_init,
-            max_iter=self.max_iter,
-            verbose=self.verbose,
-            tol=self.tol,
-            x_squared_norms=x_squared_norms,
-            n_threads=self._n_threads,
-        )
+        # Split samples in X into 2 clusters.
+        # Repeating `n_init` times to obtain best clusters
+        for _ in range(self.n_init):
+            centers_init = self._init_centroids(
+                X, x_squared_norms, self.init, self._random_state, n_centroids=2
+            )
+
+            labels, inertia, centers, _ = self._kmeans_single(
+                X,
+                sample_weight,
+                centers_init,
+                max_iter=self.max_iter,
+                verbose=self.verbose,
+                tol=self.tol,
+                x_squared_norms=x_squared_norms,
+                n_threads=self._n_threads,
+            )
+
+            # allow small tolerance on the inertia to accommodate for
+            # non-deterministic rounding errors due to parallel computation
+            if best_inertia is None or inertia < best_inertia * (1 - 1e-6):
+                best_labels = labels
+                best_centers = centers
+                best_inertia = inertia
+
+        if self.verbose:
+            print(f"New centroids from bisection: {best_centers}")
 
         if self.bisecting_strategy == "biggest_inertia":
-            scores = self._compute_bisect_errors(X, centers, labels, sample_weight)
+            scores = self._compute_bisect_errors(X, best_centers, best_labels, sample_weight)
         else:  # bisecting_strategy == "largest_cluster"
-            scores = np.bincount(labels)
+            scores = np.bincount(best_labels)
 
-        cluster_to_bisect.split(labels, centers, scores)
+        cluster_to_bisect.split(best_labels, best_centers, scores)
 
     def fit(self, X, y=None, sample_weight=None):
         """Compute bisecting k-means clustering.
@@ -465,7 +479,7 @@ class BisectingKMeans(_BaseKMeans):
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
         self._n_threads = _openmp_effective_n_threads()
 
-        if self.algorithm == "full":
+        if self.algorithm == "lloyd":
             self._kmeans_single = _kmeans_single_lloyd
             self._check_mkl_vcomp(X, X.shape[0])
         else:
@@ -530,6 +544,9 @@ class BisectingKMeans(_BaseKMeans):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             New data to predict.
 
+        sample_weight : Ignored
+            Not used, present here for API consistency by convention.
+
         Returns
         -------
         labels : ndarray of shape (n_samples,)
@@ -539,6 +556,7 @@ class BisectingKMeans(_BaseKMeans):
 
         X = self._check_test_data(X)
         x_squared_norms = row_norms(X, squared=True)
+
         # sample weights are unused but necessary in cython helpers
         sample_weight = _check_sample_weight(None, X, dtype=X.dtype)
 
