@@ -1457,7 +1457,8 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
 
     Parameters
     ----------
-    loss : {'log_loss'}, default='log_loss'
+    loss : {'log_loss', 'auto', 'binary_crossentropy', 'categorical_crossentropy'},
+            default='log_loss'
         The loss function to use in the boosting process.
 
         For binary classification problems, 'log_loss' is also known as logistic loss,
