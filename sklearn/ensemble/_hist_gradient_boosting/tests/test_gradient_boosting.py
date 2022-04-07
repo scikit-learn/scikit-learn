@@ -81,6 +81,7 @@ def test_init_parameters_validation(GradientBoosting, X, y, params, err_msg):
 
 
 # TODO(1.3): remove
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_invalid_classification_loss():
     binary_clf = HistGradientBoostingClassifier(loss="binary_crossentropy")
     err_msg = (
@@ -611,6 +612,7 @@ def test_infinite_values_missing_values():
 
 
 # TODO(1.3): remove
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_crossentropy_binary_problem():
     # categorical_crossentropy should only be used if there are more than two
     # classes present. PR #14869
