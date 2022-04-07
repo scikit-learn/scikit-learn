@@ -347,10 +347,32 @@ def test_fetch_openml_consistency_parser(monkeypatch, data_id):
         parser="pandas",
     )
 
+    # The data frames for the input features should match up to some numerical
+    # dtype conversions (e.g. float64 <=> Int64) due to limitations of the
+    # LIAC-ARFF parser.
+    data_liac, data_pandas = bunch_liac.data, bunch_pandas.data
+
+    def convert_numerical_dtypes(series):
+        pandas_series = data_pandas[series.name]
+        if pd.api.types.is_numeric_dtype(pandas_series):
+            return series.astype(pandas_series.dtype)
+        else:
+            return series
+
+    data_liac_with_fixed_dtypes = data_liac.apply(convert_numerical_dtypes)
+    pd.testing.assert_frame_equal(data_liac_with_fixed_dtypes, data_pandas)
+
+    # Let's also check that the .frame attribute also match
     frame_liac, frame_pandas = bunch_liac.frame, bunch_pandas.frame
 
-    # convert dtype of liac parser to make it comparable to the pandas parse
-    def convert_dtype(series):
+    # Note that the .frame attribute is a superset of the .data attribute:
+    pd.testing.assert_frame_equal(frame_pandas[bunch_pandas.feature_names], data_pandas)
+
+    # However the remaining columns, typically the target(s), are not necessarily
+    # dtyped similarly by both parsers due to limitations of the LIAC-ARFF parser.
+    # Therefore, extra dtype conversions are required for those columns:
+
+    def convert_numerical_and_categorical_dtypes(series):
         pandas_series = frame_pandas[series.name]
         if pd.api.types.is_numeric_dtype(pandas_series):
             return series.astype(pandas_series.dtype)
@@ -364,8 +386,10 @@ def test_fetch_openml_consistency_parser(monkeypatch, data_id):
         else:
             return series
 
-    frame_liac = frame_liac.apply(convert_dtype)
-    pd.testing.assert_frame_equal(frame_liac, frame_pandas)
+    frame_liac_with_fixed_dtypes = frame_liac.apply(
+        convert_numerical_and_categorical_dtypes
+    )
+    pd.testing.assert_frame_equal(frame_liac_with_fixed_dtypes, frame_pandas)
 
 
 # Known failure of PyPy for OpenML. See the following issue:
