@@ -188,8 +188,10 @@ for i, dataset_name in enumerate(datasets_name):
             ys[i],
             ys_pred[i][j],
             pos_label=pos_label,
-            name=model_name, lw=lw,
-            ax=axs[i // cols, i % cols])
+            name=model_name,
+            lw=lw,
+            ax=axs[i // cols, i % cols]
+            )
 
     axs[i // cols, i % cols].plot([0, 1], [0, 1], lw=lw, linestyle=":")
     axs[i // cols, i % cols].set_title(dataset_name)
