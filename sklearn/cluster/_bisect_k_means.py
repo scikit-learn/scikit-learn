@@ -824,7 +824,8 @@ class BisectingKMeans2(_BaseKMeans):
         `"auto"` and `"full"` are deprecated and they will be removed in
         Scikit-Learn 1.3. They are both aliases for `"lloyd"`.
 
-    bisecting_strategy : {"biggest_inertia", "largest_cluster"}, default="biggest_inertia"
+    bisecting_strategy : {"biggest_inertia", "largest_cluster"}, \
+            default="biggest_inertia"
         Defines how should bisection by performed:
 
          - "biggest_inertia" means that Bisect K-Means will always check
