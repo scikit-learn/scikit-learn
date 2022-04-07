@@ -28,8 +28,8 @@ non-linear relationship between `X` and `y`.
 #
 # We generate a dataset where `X` and `y` are linearly linked: 10 of the
 # features of `X` will be used to generate `y`. The other features are not
-# useful at predicting `y`. In addition, we built a system where n_samples ==
-# n_features. Such setting is challenging for an OLS model and leads to
+# useful at predicting `y`. In addition, we generate a dataset where `n_samples == n_features`.
+# Such a setting is challenging for an OLS model and leads potentially to
 # arbitrary large weights. Having a prior on the weights and a penalty
 # alleviates the problem. Finally, gaussian noise is added.
 
@@ -142,8 +142,8 @@ X = X.reshape((-1, 1))
 #
 # Here we try a degree 10 polynomial to potentially overfit, though the bayesian
 # linear models regularize the size of the polynomial coefficients.
-# As `fit_intercept=True` by default for `ARDRegression()` and `BayesianRidge()`,
-# then `PolynomialFeatures` should not introduce an additional bias feature.
+# As `fit_intercept=True` by default for :class:`~sklearn.linear_model.ARDRegression` and :class:`~sklearn.linear_model.BayesianRidge`,
+# then :class:`~sklearn.preprocessing.PolynomialFeatures` should not introduce an additional bias feature.
 
 ard_poly = make_pipeline(
     PolynomialFeatures(degree=10, include_bias=False),
