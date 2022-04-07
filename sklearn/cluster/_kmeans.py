@@ -308,13 +308,16 @@ def k_means(
         - If a callable is passed, it should take arguments `X`, `n_clusters` and a
           random state and return an initialization.
 
-    n_init : int, default=10
+    n_init : 'auto' or int, default=10
         Number of time the k-means algorithm will be run with different
         centroid seeds. The final results will be the best output of
-        `n_init` consecutive runs in terms of inertia.
+        n_init consecutive runs in terms of inertia.
 
-        .. versionchanged:: 1.1
-           `n_init` default changed from 10 to 5
+        When `n_init='auto'`, the number of runs will be 10 if using
+        `init='random'`, and 1 if using `init='kmeans++'`
+
+        .. versionadded:: 1.1
+           Added 'auto' option for `n_init`.
 
     max_iter : int, default=300
         Maximum number of iterations of the k-means algorithm to run.
@@ -1140,13 +1143,16 @@ class KMeans(_BaseKMeans):
         If a callable is passed, it should take arguments X, n_clusters and a
         random state and return an initialization.
 
-    n_init : int, default=10
+    n_init : 'auto' or int, default=10
         Number of time the k-means algorithm will be run with different
         centroid seeds. The final results will be the best output of
         n_init consecutive runs in terms of inertia.
 
-        .. versionchanged:: 1.1
-           `n_init` default changed from 10 to 5
+        When `n_init='auto'`, the number of runs will be 10 if using
+        `init='random'`, and 1 if using `init='kmeans++'`
+
+        .. versionadded:: 1.1
+           Added 'auto' option for `n_init`.
 
     max_iter : int, default=300
         Maximum number of iterations of the k-means algorithm for a
@@ -1296,10 +1302,12 @@ class KMeans(_BaseKMeans):
         # TODO(1.3): Remove
         if self.n_init == "warn":
             warnings.warn(
-                "The default value of n_init will change from 10 to 5 in 1.3",
+                "The default value of `n_init` will change from 10 to 'auto' in 1.3",
                 FutureWarning,
             )
-            self.n_init = 10
+            self.n_init = "auto"
+        if self.n_init == "auto":
+            self.n_init = 1 if self.init == "kmeans++" else 10
 
         super()._check_params(X)
 

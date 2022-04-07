@@ -32,6 +32,7 @@ from sklearn.cluster._k_means_common import _is_same_clustering
 from sklearn.datasets import make_blobs
 from io import StringIO
 
+pytestmark = pytest.mark.filterwarnings("ignore::FutureWarning")  # TODO(1.3): Remove
 
 # non centered, sparse centers to check the
 centers = np.array(
@@ -191,7 +192,6 @@ def test_kmeans_convergence(algorithm):
     assert km.n_iter_ < max_iter
 
 
-@pytest.mark.filterwarnings("ignore::FutureWarning")  # TODO(1.3): Remove
 @pytest.mark.parametrize("algorithm", ["auto", "full"])
 def test_algorithm_auto_full_deprecation_warning(algorithm):
     X = np.random.rand(100, 2)
@@ -342,7 +342,6 @@ def test_fortran_aligned_data(Estimator):
     assert_array_equal(km_c.labels_, km_f.labels_)
 
 
-@pytest.mark.filterwarnings("ignore::FutureWarning")  # TODO(1.3): Remove
 @pytest.mark.parametrize("algo", ["lloyd", "elkan"])
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 @pytest.mark.parametrize("constructor", [np.asarray, sp.csr_matrix])
@@ -597,7 +596,6 @@ def test_minibatch_iter_steps():
     assert isinstance(km.n_steps_, int)
 
 
-@pytest.mark.filterwarnings("ignore::FutureWarning")  # TODO(1.3): Remove
 def test_kmeans_copyx():
     # Check that copy_x=False returns nearly equal X after de-centering.
     my_X = X.copy()
@@ -718,7 +716,6 @@ def test_integer_input(Estimator, array_constr, dtype, init):
         assert km.cluster_centers_.dtype == np.float64
 
 
-@pytest.mark.filterwarnings("ignore::FutureWarning")  # TODO(1.3): Remove
 @pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
 def test_transform(Estimator):
     # Check the transform method
@@ -761,7 +758,6 @@ def test_n_init():
         assert km.inertia_ <= previous_inertia
 
 
-@pytest.mark.filterwarnings("ignore::FutureWarning")  # TODO(1.3): Remove
 def test_k_means_function():
     # test calling the k_means function directly
     cluster_centers, labels, inertia = k_means(
@@ -827,7 +823,6 @@ def test_centers_not_mutated(Estimator, dtype):
     assert not np.may_share_memory(km.cluster_centers_, centers_new_type)
 
 
-@pytest.mark.filterwarnings("ignore::FutureWarning")  # TODO(1.3): Remove
 @pytest.mark.parametrize("data", [X, X_csr], ids=["dense", "sparse"])
 def test_kmeans_init_fitted_centers(data):
     # Check that starting fitting from a local optimum shouldn't change the
@@ -838,7 +833,6 @@ def test_kmeans_init_fitted_centers(data):
     assert_allclose(km1.cluster_centers_, km2.cluster_centers_)
 
 
-@pytest.mark.filterwarnings("ignore::FutureWarning")  # TODO(1.3): Remove
 def test_kmeans_warns_less_centers_than_unique_points():
     # Check KMeans when the number of found clusters is smaller than expected
     X = np.asarray([[0, 0], [0, 1], [1, 0], [1, 0]])  # last point is duplicated
@@ -912,7 +906,6 @@ def test_scaled_weights(Estimator, data):
     assert_allclose(km_orig.cluster_centers_, km_scaled.cluster_centers_)
 
 
-@pytest.mark.filterwarnings("ignore::FutureWarning")  # TODO(1.3): Remove
 def test_kmeans_elkan_iter_attribute():
     # Regression test on bad n_iter_ value. Previous bug n_iter_ was one off
     # it's right value (#11340).
@@ -937,7 +930,6 @@ def test_kmeans_empty_cluster_relocated(array_constr):
     assert_allclose(km.cluster_centers_, [[-1], [1]])
 
 
-@pytest.mark.filterwarnings("ignore::FutureWarning")  # TODO(1.3): Remove
 @pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
 def test_result_equal_in_diff_n_threads(Estimator):
     # Check that KMeans/MiniBatchKMeans give the same results in parallel mode
@@ -952,7 +944,6 @@ def test_result_equal_in_diff_n_threads(Estimator):
     assert_array_equal(result_1, result_2)
 
 
-@pytest.mark.filterwarnings("ignore::FutureWarning")  # TODO(1.3): Remove
 def test_warning_elkan_1_cluster():
     # Check warning messages specific to KMeans
     with pytest.warns(
@@ -1051,14 +1042,15 @@ def test_change_n_init_future_warning():
         warnings.filterwarnings("error")
         km.fit(X)
 
-    msg = "The default value of n_init will change from 10 to 5 in 1.3"
+    msg = "The default value of `n_init` will change from 10 to 'auto' in 1.3"
     km = KMeans()
     with pytest.warns(FutureWarning, match=msg):
         km.fit(X)
 
 
 # TODO(1.3): Remove
-@pytest.mark.filterwarnings("ignore::FutureWarning")  # TODO(1.3): Remove
+
+
 @pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
 def test_sample_weight_unchanged(Estimator):
     # Check that sample_weight is not modified in place by KMeans (#17204)
@@ -1113,7 +1105,8 @@ def test_wrong_params(Estimator, param, match):
 
 
 # TODO(1.3): Remove
-@pytest.mark.filterwarnings("ignore::FutureWarning")  # TODO(1.3): Remove
+
+
 @pytest.mark.parametrize(
     "param, match",
     [({"algorithm": "wrong"}, r"Algorithm must be either 'lloyd' or 'elkan'")],
@@ -1221,7 +1214,8 @@ def test_is_same_clustering():
 
 
 # TODO(1.3): Remove
-@pytest.mark.filterwarnings("ignore::FutureWarning")  # TODO(1.3): Remove
+
+
 @pytest.mark.parametrize(
     "kwargs", ({"init": np.str_("k-means++")}, {"init": [[0, 0], [1, 1]], "n_init": 1})
 )
@@ -1238,7 +1232,8 @@ def test_kmeans_with_array_like_or_np_scalar_init(kwargs):
 
 
 # TODO(1.3): Remove
-@pytest.mark.filterwarnings("ignore::FutureWarning")  # TODO(1.3): Remove
+
+
 @pytest.mark.parametrize(
     "Klass, method",
     [(KMeans, "fit"), (MiniBatchKMeans, "fit"), (MiniBatchKMeans, "partial_fit")],
