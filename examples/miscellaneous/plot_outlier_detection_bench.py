@@ -47,21 +47,25 @@ def preprocess_dataset(dataset_name):
         dataset = fetch_kddcup99(subset=dataset_name, percent10=True, random_state=rng)
         X = dataset.data
         y = dataset.target
-        if dataset_name in ["http", "smtp"]:
-            y = (y != b"normal.").astype(int)
-        if dataset_name in ["SA", "SF"]:
+        lb = LabelBinarizer()
+
+        if dataset_name == "SF":
             idx = rng.choice(X.shape[0], int(X.shape[0] * 0.1), replace=False)
             X = X[idx]  # reduce the sample size
             y = y[idx]
-            lb = LabelBinarizer()
             x1 = lb.fit_transform(X[:, 1].astype(str))
-            if dataset_name == "SA":
-                x2 = lb.fit_transform(X[:, 2].astype(str))
-                x3 = lb.fit_transform(X[:, 3].astype(str))
-                X = np.column_stack((X[:, :1], x1, x2, x3, X[:, 4:]))
-            if dataset_name == "SF":
-                X = np.column_stack((X[:, :1], x1, X[:, 2:]))
-            y = (y != b"normal.").astype(int)
+            X = np.c_[X[:, :1], x1, X[:, 2:]]
+
+        elif dataset_name == "SA":
+            idx = rng.choice(X.shape[0], int(X.shape[0] * 0.1), replace=False)
+            X = X[idx]  # reduce the sample size
+            y = y[idx]
+            x1 = lb.fit_transform(X[:, 1].astype(str))
+            x2 = lb.fit_transform(X[:, 2].astype(str))
+            x3 = lb.fit_transform(X[:, 3].astype(str))
+            X = np.c_[X[:, :1], x1, x2, x3, X[:, 4:]]
+
+        y = (y != b"normal.").astype(int)
     if dataset_name == "forestcover":
         dataset = fetch_covtype()
         X = dataset.data
