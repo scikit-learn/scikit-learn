@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-#
 # scikit-learn documentation build configuration file, created by
 # sphinx-quickstart on Fri Jan  8 09:13:42 2010.
 #
@@ -160,7 +158,11 @@ html_theme = "scikit-learn-modern"
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-html_theme_options = {"google_analytics": True, "mathjax_path": mathjax_path}
+html_theme_options = {
+    "google_analytics": True,
+    "mathjax_path": mathjax_path,
+    "link_to_live_contributing_page": not parsed_version.is_devrelease,
+}
 
 # Add any paths that contain custom themes here, relative to this directory.
 html_theme_path = ["themes"]
@@ -397,6 +399,7 @@ sphinx_gallery_conf = {
     # avoid generating too many cross links
     "inspect_global_variables": False,
     "remove_config_comments": True,
+    "plot_gallery": "True",
 }
 
 

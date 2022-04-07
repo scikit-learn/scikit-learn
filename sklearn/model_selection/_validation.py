@@ -14,6 +14,7 @@ functions to validate the model.
 import warnings
 import numbers
 import time
+from functools import partial
 from traceback import format_exc
 from contextlib import suppress
 from collections import Counter
@@ -73,8 +74,7 @@ def cross_validate(
     X : array-like of shape (n_samples, n_features)
         The data to fit. Can be for example a list, or an array.
 
-    y : array-like of shape (n_samples,) or (n_samples, n_outputs), \
-            default=None
+    y : array-like of shape (n_samples,) or (n_samples, n_outputs), default=None
         The target variable to try to predict in the case of
         supervised learning.
 
@@ -1679,6 +1679,11 @@ def _incremental_fit_estimator(
     partitions = zip(train_sizes, np.split(train, train_sizes)[:-1])
     if fit_params is None:
         fit_params = {}
+    if classes is None:
+        partial_fit_func = partial(estimator.partial_fit, **fit_params)
+    else:
+        partial_fit_func = partial(estimator.partial_fit, classes=classes, **fit_params)
+
     for n_train_samples, partial_train in partitions:
         train_subset = train[:n_train_samples]
         X_train, y_train = _safe_split(estimator, X, y, train_subset)
@@ -1686,11 +1691,9 @@ def _incremental_fit_estimator(
         X_test, y_test = _safe_split(estimator, X, y, test, train_subset)
         start_fit = time.time()
         if y_partial_train is None:
-            estimator.partial_fit(X_partial_train, classes=classes, **fit_params)
+            partial_fit_func(X_partial_train)
         else:
-            estimator.partial_fit(
-                X_partial_train, y_partial_train, classes=classes, **fit_params
-            )
+            partial_fit_func(X_partial_train, y_partial_train)
         fit_time = time.time() - start_fit
         fit_times.append(fit_time)
 

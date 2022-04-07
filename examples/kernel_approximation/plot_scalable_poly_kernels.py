@@ -64,11 +64,10 @@ mm = make_pipeline(MinMaxScaler(), Normalizer())
 X_train = mm.fit_transform(X_train)
 X_test = mm.transform(X_test)
 
-
 # %%
 # As a baseline, train a linear SVM on the original features and print the
 # accuracy. We also measure and store accuracies and training times to
-# plot them latter.
+# plot them later.
 
 results = {}
 
@@ -95,11 +94,14 @@ print(f"Linear SVM score on raw features: {lsvm_score:.2f}%")
 # polynomial kernel of degree four would have approximately 8.5 million
 # features (precisely, 54^4). Thanks to :class:`PolynomialCountSketch`, we can
 # condense most of the discriminative information of that feature space into a
-# much more compact representation. We repeat the experiment 5 times to
-# compensate for the stochastic nature of :class:`PolynomialCountSketch`.
+# much more compact representation. While we run the experiment only a single time
+# (`n_runs` = 1) in this example, in practice one should repeat the experiment several
+# times to compensate for the stochastic nature of :class:`PolynomialCountSketch`.
 
-n_runs = 3
-for n_components in [250, 500, 1000, 2000]:
+n_runs = 1
+N_COMPONENTS = [250, 500, 1000, 2000]
+
+for n_components in N_COMPONENTS:
 
     ps_lsvm_time = 0
     ps_lsvm_score = 0
@@ -148,15 +150,13 @@ ksvm_time = time.time() - start
 ksvm_score = 100 * ksvm.score(X_test, y_test)
 
 results["KSVM"] = {"time": ksvm_time, "score": ksvm_score}
-print(f"Kernel-SVM score on raw featrues: {ksvm_score:.2f}%")
+print(f"Kernel-SVM score on raw features: {ksvm_score:.2f}%")
 
 # %%
 # Finally, plot the results of the different methods against their training
 # times. As we can see, the kernelized SVM achieves a higher accuracy,
 # but its training time is much larger and, most importantly, will grow
 # much faster if the number of training samples increases.
-
-N_COMPONENTS = [250, 500, 1000, 2000]
 
 fig, ax = plt.subplots(figsize=(7, 7))
 ax.scatter(
@@ -181,6 +181,7 @@ ax.scatter(
     label="Linear SVM + PolynomialCountSketch",
     c="blue",
 )
+
 for n_components in N_COMPONENTS:
     ax.scatter(
         [
