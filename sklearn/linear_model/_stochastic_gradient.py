@@ -168,6 +168,7 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
                 "equivalent.",
                 FutureWarning,
             )
+        # TODO(1.3): remove "log"
         if self.loss == "log":
             warnings.warn(
                 "The loss 'log' was deprecated in v1.1 and will be removed in version "
