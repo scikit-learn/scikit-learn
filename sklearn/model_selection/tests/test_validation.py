@@ -1876,7 +1876,7 @@ def test_cross_val_predict_method_checking():
     X, y = iris.data, iris.target
     X, y = shuffle(X, y, random_state=0)
     for method in ["decision_function", "predict_proba", "predict_log_proba"]:
-        est = SGDClassifier(loss="log", random_state=2)
+        est = SGDClassifier(loss="log_loss", random_state=2)
         check_cross_val_predict_multiclass(est, X, y, method)
 
 
