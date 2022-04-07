@@ -58,7 +58,7 @@ iris.data = iris.data[perm]
 iris.target = iris.target[perm]
 
 
-@pytest.mark.parametrize("loss", ("deviance", "exponential"))
+@pytest.mark.parametrize("loss", ("log_loss", "exponential"))
 def test_classification_toy(loss):
     # Check classification on a toy dataset.
     clf = GradientBoostingClassifier(loss=loss, n_estimators=10, random_state=1)
@@ -70,8 +70,8 @@ def test_classification_toy(loss):
     assert_array_equal(clf.predict(T), true_result)
     assert 10 == len(clf.estimators_)
 
-    deviance_decrease = clf.train_score_[:-1] - clf.train_score_[1:]
-    assert np.any(deviance_decrease >= 0.0)
+    log_loss_decrease = clf.train_score_[:-1] - clf.train_score_[1:]
+    assert np.any(log_loss_decrease >= 0.0)
 
     leaves = clf.apply(X)
     assert leaves.shape == (6, 10, 1)
@@ -249,7 +249,7 @@ def test_gbdt_loss_alpha_error(params, err_msg):
         (GradientBoostingClassifier, "absolute_error"),
         (GradientBoostingClassifier, "quantile"),
         (GradientBoostingClassifier, "huber"),
-        (GradientBoostingRegressor, "deviance"),
+        (GradientBoostingRegressor, "log_loss"),
         (GradientBoostingRegressor, "exponential"),
     ],
 )
@@ -260,7 +260,7 @@ def test_wrong_type_loss_function(GradientBoosting, loss):
         GradientBoosting(loss=loss).fit(X, y)
 
 
-@pytest.mark.parametrize("loss", ("deviance", "exponential"))
+@pytest.mark.parametrize("loss", ("log_loss", "exponential"))
 def test_classification_synthetic(loss):
     # Test GradientBoostingClassifier on synthetic dataset used by
     # Hastie et al. in ESLII Example 12.7.
@@ -343,7 +343,7 @@ def test_iris(subsample, sample_weight):
         sample_weight = np.ones(len(iris.target))
     # Check consistency on dataset iris.
     clf = GradientBoostingClassifier(
-        n_estimators=100, loss="deviance", random_state=1, subsample=subsample
+        n_estimators=100, loss="log_loss", random_state=1, subsample=subsample
     )
     clf.fit(iris.data, iris.target, sample_weight=sample_weight)
     score = clf.score(iris.data, iris.target)
@@ -475,8 +475,8 @@ def test_max_feature_regression():
         random_state=1,
     )
     gbrt.fit(X_train, y_train)
-    deviance = gbrt.loss_(y_test, gbrt.decision_function(X_test))
-    assert deviance < 0.5, "GB failed with deviance %.4f" % deviance
+    log_loss = gbrt.loss_(y_test, gbrt.decision_function(X_test))
+    assert log_loss < 0.5, "GB failed with deviance %.4f" % log_loss
 
 
 def test_feature_importance_regression(fetch_california_housing_fxt):
@@ -759,7 +759,7 @@ def test_oob_improvement_raise():
 def test_oob_multilcass_iris():
     # Check OOB improvement on multi-class dataset.
     clf = GradientBoostingClassifier(
-        n_estimators=100, loss="deviance", random_state=1, subsample=0.5
+        n_estimators=100, loss="log_loss", random_state=1, subsample=0.5
     )
     clf.fit(iris.data, iris.target)
     score = clf.score(iris.data, iris.target)
@@ -1226,7 +1226,7 @@ def test_non_uniform_weights_toy_edge_case_clf():
     y = [0, 0, 1, 0]
     # ignore the first 2 training samples by setting their weight to 0
     sample_weight = [0, 0, 1, 1]
-    for loss in ("deviance", "exponential"):
+    for loss in ("log_loss", "exponential"):
         gb = GradientBoostingClassifier(n_estimators=5, loss=loss)
         gb.fit(X, y, sample_weight=sample_weight)
         assert_array_equal(gb.predict([[1, 0]]), [1])
@@ -1516,20 +1516,22 @@ def test_criterion_mse_deprecated(Estimator):
         assert_allclose(est1.predict(X), est2.predict(X))
 
 
-# TODO: Remove in v1.2
 @pytest.mark.parametrize(
-    "old_loss, new_loss",
+    "old_loss, new_loss, Estimator",
     [
-        ("ls", "squared_error"),
-        ("lad", "absolute_error"),
+        # TODO(1.2): Remove
+        ("ls", "squared_error", GradientBoostingRegressor),
+        ("lad", "absolute_error", GradientBoostingRegressor),
+        # TODO(1.3): Remove
+        ("deviance", "log_loss", GradientBoostingClassifier),
     ],
 )
-def test_loss_deprecated(old_loss, new_loss):
-    est1 = GradientBoostingRegressor(loss=old_loss, random_state=0)
+def test_loss_deprecated(old_loss, new_loss, Estimator):
+    est1 = Estimator(loss=old_loss, random_state=0)
 
-    with pytest.warns(FutureWarning, match=f"The loss '{old_loss}' was deprecated"):
+    with pytest.warns(FutureWarning, match=rf"The loss.* '{old_loss}' was deprecated"):
         est1.fit(X, y)
 
-    est2 = GradientBoostingRegressor(loss=new_loss, random_state=0)
+    est2 = Estimator(loss=new_loss, random_state=0)
     est2.fit(X, y)
     assert_allclose(est1.predict(X), est2.predict(X))

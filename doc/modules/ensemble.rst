@@ -724,9 +724,9 @@ homogeneous to a prediction: it cannot be a class, since the trees predict
 continuous values.
 
 The mapping from the value :math:`F_M(x_i)` to a class or a probability is
-loss-dependent. For the deviance (or log-loss), the probability that
+loss-dependent. For the log-loss, the probability that
 :math:`x_i` belongs to the positive class is modeled as :math:`p(y_i = 1 |
-x_i) = \sigma(F_M(x_i))` where :math:`\sigma` is the sigmoid function.
+x_i) = \sigma(F_M(x_i))` where :math:`\sigma` is the sigmoid or expit function.
 
 For multiclass classification, K trees (for K classes) are built at each of
 the :math:`M` iterations. The probability that :math:`x_i` belongs to class
@@ -764,11 +764,11 @@ the parameter ``loss``:
 
   * Classification
 
-    * Binomial deviance (``'deviance'``): The binomial
-      negative log-likelihood loss function for binary classification (provides
-      probability estimates).  The initial model is given by the
+    * Binary log-loss (``'log-loss'``): The binomial
+      negative log-likelihood loss function for binary classification. It provides
+      probability estimates.  The initial model is given by the
       log odds-ratio.
-    * Multinomial deviance (``'deviance'``): The multinomial
+    * Multi-class log-loss (``'log-loss'``): The multinomial
       negative log-likelihood loss function for multi-class classification with
       ``n_classes`` mutually exclusive classes. It provides
       probability estimates.  The initial model is given by the
@@ -777,7 +777,7 @@ the parameter ``loss``:
       inefficient for data sets with a large number of classes.
     * Exponential loss (``'exponential'``): The same loss function
       as :class:`AdaBoostClassifier`. Less robust to mislabeled
-      examples than ``'deviance'``; can only be used for binary
+      examples than ``'log-loss'``; can only be used for binary
       classification.
 
 .. _gradient_boosting_shrinkage:
@@ -949,10 +949,11 @@ controls the number of iterations of the boosting process::
 Available losses for regression are 'squared_error',
 'absolute_error', which is less sensitive to outliers, and
 'poisson', which is well suited to model counts and frequencies. For
-classification, 'binary_crossentropy' is used for binary classification and
-'categorical_crossentropy' is used for multiclass classification. By default
-the loss is 'auto' and will select the appropriate loss depending on
-:term:`y` passed to :term:`fit`.
+classification, 'log_loss' is the only option. For binary classification it uses the
+binary log loss, also kown as binomial deviance or binary cross-entropy. For
+`n_classes >= 3`, it uses the multi-class log loss function, with multinomial deviance
+and categorical cross-entropy as alternative names. The appropriate loss version is
+selected based on :term:`y` passed to :term:`fit`.
 
 The size of the trees can be controlled through the ``max_leaf_nodes``,
 ``max_depth``, and ``min_samples_leaf`` parameters.
