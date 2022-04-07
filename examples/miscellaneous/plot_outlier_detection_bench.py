@@ -11,8 +11,9 @@ is assessed in an outlier detection context:
 1. The algorithms are trained on the whole dataset which is assumed to
 contain outliers.
 
-2. The ROC curve is computed on the same dataset using the knowledge
-of the labels.
+2. The ROC curve from :class:`~sklearn.metrics.RocCurveDisplay` is computed
+on the same dataset using the knowledge of the labels.
+
 """
 
 # Author: Pharuj Rajborirug <pharuj.ra@kmitl.ac.th>
@@ -24,11 +25,11 @@ print(__doc__)
 # Define a data preprocessing function
 # ----------------------------------
 #
-# The example uses real-world datasets available in `scikit-learn.datasets`
-# and the sample size of some datasets to speed up computation.
-# After the data preprocessing, the datasets' targets will have two classes,
-# 0 representing inliers and 1 representing outliers. The preprocess_dataset
-# function returns data and target.
+# The example uses real-world datasets available in
+# :class:`sklearn.datasets` and the sample size of some datasets is reduced
+# to speed up computation. After the data preprocessing, the datasets' targets
+# will have two classes, 0 representing inliers and 1 representing outliers.
+# The `preprocess_dataset` function returns data and target.
 
 import numpy as np
 from sklearn.datasets import fetch_kddcup99, fetch_covtype, fetch_openml
@@ -38,7 +39,7 @@ import pandas as pd
 rng = np.random.RandomState(42)
 
 
-def preprocess_dataset(dataset_name="http"):
+def preprocess_dataset(dataset_name):
 
     # loading and vectorization
     print(f"Loading {dataset_name} data")
@@ -46,26 +47,21 @@ def preprocess_dataset(dataset_name="http"):
         dataset = fetch_kddcup99(subset=dataset_name, percent10=True, random_state=rng)
         X = dataset.data
         y = dataset.target
-    if dataset_name == "SF":
-        idx = rng.choice(X.shape[0], int(X.shape[0] * 0.1), replace=False)
-        X = X[idx]  # reduce the sample size
-        y = y[idx]
-        lb = LabelBinarizer()
-        x1 = lb.fit_transform(X[:, 1].astype(str))
-        X = np.c_[X[:, :1], x1, X[:, 2:]]
-        y = (y != b"normal.").astype(int)
-    if dataset_name == "SA":
-        idx = rng.choice(X.shape[0], int(X.shape[0] * 0.1), replace=False)
-        X = X[idx]  # reduce the sample size
-        y = y[idx]
-        lb = LabelBinarizer()
-        x1 = lb.fit_transform(X[:, 1].astype(str))
-        x2 = lb.fit_transform(X[:, 2].astype(str))
-        x3 = lb.fit_transform(X[:, 3].astype(str))
-        X = np.column_stack((X[:, :1], x1, x2, x3, X[:, 4:]))
-        y = (y != b"normal.").astype(int)
-    if dataset_name == "http" or dataset_name == "smtp":
-        y = (y != b"normal.").astype(int)
+        if dataset_name in ["http", "smtp"]:
+            y = (y != b"normal.").astype(int)
+        if dataset_name in ["SA", "SF"]:
+            idx = rng.choice(X.shape[0], int(X.shape[0] * 0.1), replace=False)
+            X = X[idx]  # reduce the sample size
+            y = y[idx]
+            lb = LabelBinarizer()
+            x1 = lb.fit_transform(X[:, 1].astype(str))
+            if dataset_name == "SA":
+                x2 = lb.fit_transform(X[:, 2].astype(str))
+                x3 = lb.fit_transform(X[:, 3].astype(str))
+                X = np.column_stack((X[:, :1], x1, x2, x3, X[:, 4:]))
+            if dataset_name == "SF":
+                X = np.column_stack((X[:, :1], x1, X[:, 2:]))
+            y = (y != b"normal.").astype(int)
     if dataset_name == "forestcover":
         dataset = fetch_covtype()
         X = dataset.data
@@ -111,16 +107,18 @@ def preprocess_dataset(dataset_name="http"):
 # %%
 # Define an outlier prediction function
 # -------------------------------------
-# There is no particular reason to choose algorithms LOF and IForest. The goal
-# is to show that different algorithm performs well on different datasets. The
-# following function will return average outlier score of X.
+# There is no particular reason to choose algorithms
+# :class:`~sklearn.neighbors.LocalOutlierFactor` and
+# :class:`~sklearn.ensemble.IsolationForest`. The goal is to show that
+# different algorithm performs well on different datasets. The following
+# `compute_prediction` function returns average outlier score of X.
 
 
 from sklearn.neighbors import LocalOutlierFactor
 from sklearn.ensemble import IsolationForest
 
 
-def compute_prediction(X, model_name="LOF"):
+def compute_prediction(X, model_name):
 
     print(f"Computing {model_name} prediction...")
     if model_name == "LOF":
