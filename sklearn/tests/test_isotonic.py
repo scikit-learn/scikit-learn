@@ -55,7 +55,7 @@ def test_check_increasing_up():
 
     # Check that we got increasing=True and no warnings
     with warnings.catch_warnings():
-        warnings.simplefilter("error")
+        warnings.simplefilter("error", UserWarning)
         is_increasing = check_increasing(x, y)
 
     assert is_increasing
@@ -67,7 +67,7 @@ def test_check_increasing_up_extreme():
 
     # Check that we got increasing=True and no warnings
     with warnings.catch_warnings():
-        warnings.simplefilter("error")
+        warnings.simplefilter("error", UserWarning)
         is_increasing = check_increasing(x, y)
 
     assert is_increasing
@@ -79,7 +79,7 @@ def test_check_increasing_down():
 
     # Check that we got increasing=False and no warnings
     with warnings.catch_warnings():
-        warnings.simplefilter("error")
+        warnings.simplefilter("error", UserWarning)
         is_increasing = check_increasing(x, y)
 
     assert not is_increasing
@@ -91,7 +91,7 @@ def test_check_increasing_down_extreme():
 
     # Check that we got increasing=False and no warnings
     with warnings.catch_warnings():
-        warnings.simplefilter("error")
+        warnings.simplefilter("error", UserWarning)
         is_increasing = check_increasing(x, y)
 
     assert not is_increasing
