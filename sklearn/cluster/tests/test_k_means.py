@@ -1039,7 +1039,7 @@ def test_inertia(dtype):
 def test_change_n_init_future_warning():
     km = KMeans(n_init=1)
     with warnings.catch_warnings():
-        warnings.filterwarnings("error")
+        warnings.filterwarnings("error", FutureWarning)
         km.fit(X)
 
     msg = "The default value of `n_init` will change from 10 to 'auto' in 1.3"
