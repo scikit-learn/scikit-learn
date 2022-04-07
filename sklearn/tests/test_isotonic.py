@@ -43,7 +43,7 @@ def test_check_increasing_small_number_of_samples():
     y = [1, 1.1, 1.05]
 
     with warnings.catch_warnings():
-        warnings.simplefilter("error")
+        warnings.simplefilter("error", UserWarning)
         is_increasing = check_increasing(x, y)
 
     assert is_increasing
