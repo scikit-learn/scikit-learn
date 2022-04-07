@@ -1302,7 +1302,8 @@ class KMeans(_BaseKMeans):
         # TODO(1.3): Remove
         if self.n_init == "warn":
             warnings.warn(
-                "The default value of `n_init` will change from 10 to 'auto' in 1.3",
+                "The default value of `n_init` will change from 10 to 'auto' in 1.3."
+                " Set the value of `n_init` explicitly to suppress the warning",
                 FutureWarning,
             )
             self.n_init = "auto"
