@@ -1778,6 +1778,7 @@ def _check_response_method(estimator, response_method):
     ----------
     estimator : estimator instance
         Classifier or regressor to check.
+
     response_method : {"predict_proba", "decision_function", "predict"} or \
             list of such str
         Specifies the response method to use get prediction from an estimator

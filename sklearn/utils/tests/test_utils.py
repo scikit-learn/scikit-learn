@@ -806,8 +806,7 @@ def test_get_response_values_classifier_inconsistent_y_pred_for_binary_proba():
 @pytest.mark.parametrize("target_type", [None, "binary"])
 def test_get_response_values_binary_classifier_decision_function(target_type):
     """Check the behaviour of `_get_response_values` with `decision_function`
-    and binary classifier.
-    """
+    and binary classifier."""
     X, y = make_classification(
         n_samples=10,
         n_classes=2,
