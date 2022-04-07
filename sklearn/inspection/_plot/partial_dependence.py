@@ -52,8 +52,9 @@ def plot_partial_dependence(
     Partial dependence plots, individual conditional expectation plots or an
     overlay of both of them can be plotted by setting the ``kind``
     parameter.
-    Centered ICE (cICE) plots or centered PDP-Plots can be plotted by setting
-    the ``centered`` parameter.
+
+    The ICE and PD plots can be centered with the parameter `centered`.
+
     The ``len(features)`` plots are arranged in a grid with ``n_cols``
     columns. Two-way partial dependence plots are plotted as contour plots. The
     deciles of the feature values will be shown with tick marks on the x-axes
@@ -287,9 +288,8 @@ def plot_partial_dependence(
         .. versionadded:: 0.24
 
     centered : bool, default=False
-        Only has an effect when `kind='both'` or `kind='individual'`. When `True`,
-        the ICE and PD lines are centered around the origin of the x-axis. By
-        default, no centering is done.
+        If `True`, the ICE and PD lines will start at the origin of the y-axis.
+        By default, no centering is done.
 
         .. versionadded:: 1.1
 
@@ -944,9 +944,8 @@ class PartialDependenceDisplay:
            slower ``method='brute'`` option.
 
         centered : bool, default=False
-            Only has an effect when `kind='both'` or `kind='individual'`. When `True`,
-            the ICE and PD lines are centered around the origin of the x-axis. By
-            default, no centering is done.
+            If `True`, the ICE and PD lines will start at the origin of the
+            y-axis. By default, no centering is done.
 
             .. versionadded:: 1.1
 
@@ -1061,7 +1060,7 @@ class PartialDependenceDisplay:
             n_ice_to_plot,
             replace=False,
         )
-        ice_lines_subsampled = preds[ice_lines_idx, :]
+        ice_lines_subsampled = preds[ice_lines_idx, :].copy()
         if centered:
             ice_lines_subsampled -= ice_lines_subsampled[:, [0]]
         # plot the subsampled ice
@@ -1102,6 +1101,8 @@ class PartialDependenceDisplay:
             Whether or not to center the average PD to start at the origin.
         """
         if centered:
+            # trigger a copy to not make changes to the original array
+            avg_preds = avg_preds.copy()
             avg_preds -= avg_preds[0]
         line_idx = np.unravel_index(pd_line_idx, self.lines_.shape)
         self.lines_[line_idx] = ax.plot(
@@ -1160,9 +1161,9 @@ class PartialDependenceDisplay:
         pd_line_kw : dict
             Dict with keywords passed when plotting the PD plot.
         pdp_lim : dict
-            Global min and max average predictions, such that all plots will have the
-            same scale and y limits. `pdp_lim[1]` is the global min and max for single
-            partial dependence curves.
+            Global min and max average predictions, such that all plots will
+            have the same scale and y limits. `pdp_lim[1]` is the global min
+            and max for single partial dependence curves.
         centered : bool
             Whether or not to center the PD and ICE plot to start at the origin.
         """
@@ -1192,7 +1193,7 @@ class PartialDependenceDisplay:
                 ax,
                 pd_line_idx,
                 pd_line_kw,
-                centered and self.kind == "both",
+                centered,
             )
 
         trans = transforms.blended_transform_factory(ax.transData, ax.transAxes)
@@ -1354,21 +1355,20 @@ class PartialDependenceDisplay:
             Dict with keywords passed to the `matplotlib.pyplot.contourf`
             call for two-way partial dependence plots.
 
-        pdp_lim : dict of a tuple of 2 floats, default=None
+        pdp_lim : dict, default=None
             Global min and max average predictions, such that all plots will have the
             same scale and y limits. `pdp_lim[1]` is the global min and max for single
             partial dependence curves. `pdp_lim[2]` is the global min and max for
             two-way partial dependence curves. If `None` (default), the limit will be
             inferred from the global minimum and maximum of all predictions.
 
-            .. versionadded:: 1.0
+            .. versionadded:: 1.1
 
         centered : bool, default=False
-            Only has an effect when `kind='both'` or `kind='individual'`. When `True`,
-            the ICE and PD lines are centered around the origin of the x-axis. By
-            default, no centering is done.
+            If `True`, the ICE and PD lines will start at the origin of the
+            y-axis. By default, no centering is done.
 
-            .. versionadded:: 1.0
+            .. versionadded:: 1.1
 
         Returns
         -------
@@ -1399,7 +1399,7 @@ class PartialDependenceDisplay:
                 f" of such values. Currently, kind={self.kind!r}"
             )
 
-        # FIXME: remove in 1.2
+        # FIXME: remove in 1.3
         if self.pdp_lim != "deprecated":
             warnings.warn(
                 "The `pdp_lim` parameter is deprecated in version 1.1 and will be "

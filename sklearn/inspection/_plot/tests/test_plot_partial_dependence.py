@@ -173,7 +173,7 @@ def test_plot_partial_dependence_kind(
     assert disp.contours_[0, 1] is None
     assert disp.contours_[0, 2] is None
 
-    if kind in ("both", "individual") and centered:
+    if centered:
         assert all([ln._y[0] == 0.0 for ln in disp.lines_.ravel() if ln is not None])
     else:
         assert all([ln._y[0] != 0.0 for ln in disp.lines_.ravel() if ln is not None])
@@ -979,3 +979,28 @@ def test_partial_dependence_display_wrong_len_kind(
     )
     with pytest.raises(ValueError, match=err_msg):
         disp.plot()
+
+
+@pytest.mark.parametrize(
+    "kind",
+    ["individual", "both", "average", ["average", "both"], ["individual", "both"]],
+)
+def test_partial_dependence_display_kind_centered_interaction(
+    plot_partial_dependence,
+    pyplot,
+    kind,
+    clf_diabetes,
+    diabetes,
+):
+    """Check that we properly center ICE and PD when passing kind as a string and as a
+    list."""
+    disp = plot_partial_dependence(
+        clf_diabetes,
+        diabetes.data,
+        [0, 1],
+        kind=kind,
+        centered=True,
+        subsample=5,
+    )
+
+    assert all([ln._y[0] == 0.0 for ln in disp.lines_.ravel() if ln is not None])
