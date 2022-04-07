@@ -198,7 +198,7 @@ def test_parallel_execution(data, method, ensemble):
     X, y = data
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
 
-    base_estimator = LinearSVC(random_state=42)
+    base_estimator = make_pipeline(StandardScaler(), LinearSVC(random_state=42))
 
     cal_clf_parallel = CalibratedClassifierCV(
         base_estimator, method=method, n_jobs=2, ensemble=ensemble
@@ -636,8 +636,8 @@ def test_calibration_display_validation(pyplot, iris_data, iris_data_binary):
         CalibrationDisplay.from_estimator(reg, X, y)
 
     clf = LinearSVC().fit(X, y)
-    msg = "response method predict_proba is not defined in"
-    with pytest.raises(ValueError, match=msg):
+    msg = "has none of the following attributes: predict_proba."
+    with pytest.raises(AttributeError, match=msg):
         CalibrationDisplay.from_estimator(clf, X, y)
 
     clf = LogisticRegression()
@@ -653,11 +653,11 @@ def test_calibration_display_non_binary(pyplot, iris_data, constructor_name):
     y_prob = clf.predict_proba(X)
 
     if constructor_name == "from_estimator":
-        msg = "to be a binary classifier, but got"
+        msg = "The target y is not binary. Got multiclass type of target."
         with pytest.raises(ValueError, match=msg):
             CalibrationDisplay.from_estimator(clf, X, y)
     else:
-        msg = "y should be a 1d array, got an array of shape"
+        msg = "The target y is not binary. Got multiclass type of target."
         with pytest.raises(ValueError, match=msg):
             CalibrationDisplay.from_predictions(y, y_prob)
 

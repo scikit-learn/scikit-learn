@@ -32,9 +32,14 @@ from .utils import (
     column_or_1d,
     indexable,
     check_matplotlib_support,
+    _get_response_values,
+    _safe_indexing,
 )
 
-from .utils.multiclass import check_classification_targets
+from .utils.multiclass import (
+    check_classification_targets,
+    type_of_target,
+)
 from .utils.fixes import delayed
 from .utils.validation import (
     _check_fit_params,
@@ -43,12 +48,10 @@ from .utils.validation import (
     check_consistent_length,
     check_is_fitted,
 )
-from .utils import _safe_indexing
 from .isotonic import IsotonicRegression
 from .svm import LinearSVC
 from .model_selection import check_cv, cross_val_predict
 from .metrics._base import _check_pos_label_consistency
-from .metrics._plot.base import _get_response
 
 
 class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
@@ -1235,11 +1238,17 @@ class CalibrationDisplay:
         method_name = f"{cls.__name__}.from_estimator"
         check_matplotlib_support(method_name)
 
+        target_type = type_of_target(y)
         if not is_classifier(estimator):
             raise ValueError("'estimator' should be a fitted classifier.")
 
-        y_prob, pos_label = _get_response(
-            X, estimator, response_method="predict_proba", pos_label=pos_label
+        y_prob, pos_label = _get_response_values(
+            estimator,
+            X,
+            y,
+            response_method="predict_proba",
+            pos_label=pos_label,
+            target_type=target_type,
         )
 
         name = name if name is not None else estimator.__class__.__name__
@@ -1352,8 +1361,14 @@ class CalibrationDisplay:
         >>> disp = CalibrationDisplay.from_predictions(y_test, y_prob)
         >>> plt.show()
         """
-        method_name = f"{cls.__name__}.from_estimator"
+        method_name = f"{cls.__name__}.from_predictions"
         check_matplotlib_support(method_name)
+
+        target_type = type_of_target(y_true)
+        if target_type != "binary":
+            raise ValueError(
+                f"The target y is not binary. Got {target_type} type of target."
+            )
 
         prob_true, prob_pred = calibration_curve(
             y_true, y_prob, n_bins=n_bins, strategy=strategy, pos_label=pos_label
