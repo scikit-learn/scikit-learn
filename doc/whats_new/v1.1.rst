@@ -447,8 +447,6 @@ Changelog
 - |Fix| :class:`ensemble.BaggingRegressor` and :class:`ensemble.BaggingClassifier`
   sets `feature_names_in_` in `estimators_`. :pr:`21811` by `Thomas Fan`_.
 
-:mod:`sklearn.feature_extraction`
-.................................
 - |Fix| :class:`ensemble.HistGradientBoostingClassifier` and
   :class:`ensemble.HistGradientBoostingRegressor` no longer warns when
   fitting on a pandas DataFrame with a non-default `scoring` parameter and
@@ -685,9 +683,6 @@ Changelog
   :class:`linear_model.ARDRegression` now preserve float32 dtype. :pr:`9087` by
   :user:`Arthur Imbert <Henley13>` and :pr:`22525` by :user:`Meekail Zain <micky774>`.
 
-- |Fix| The `intercept_` attribute of :class:`LinearRegression` is now correctly
-  computed in the presence of sample weights when the input is sparse.
-  :pr:`22891` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 - |Feature| :class:`ElasticNet`, :class:`ElasticNetCV`, :class:`Lasso` and
   :class:`LassoCV` support `sample_weight` for sparse input `X`.
   :pr:`22808` by :user:`Christian Lorentzen <lorentzenchr>`.
