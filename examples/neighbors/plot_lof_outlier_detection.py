@@ -3,10 +3,7 @@
 Outlier detection with Local Outlier Factor (LOF)
 =================================================
 
-An example using :class:`~sklearn.neighbors.LocalOutlierFactor` for outlier
-detection.
-
-The Local Outlier Factor (LOF) algorithm is an unsupervised outlier detection
+The Local Outlier Factor (LOF) algorithm is an unsupervised anomaly detection
 method which computes the local density deviation of a given data point with
 respect to its neighbors. It considers as outliers the samples that have a
 substantially lower density than their neighbors. This example shows how to
