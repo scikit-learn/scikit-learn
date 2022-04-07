@@ -93,10 +93,14 @@ Changelog
   produce the same models, but are deprecated and will be removed in version
   1.3.
 
-  - For :class:`ensemble.GradientBoostingClassifier`, The `loss` parameter name
+  - For :class:`ensemble.GradientBoostingClassifier`, the `loss` parameter name
     "deviance" is deprecated in favor of the new name "log_loss", which is now the
     default.
     :pr:`23036` by :user:`Christian Lorentzen <lorentzenchr>`.
+
+  - For :class:`linear_model.SGDClassifier`, the `loss` parameter name
+    "log" is deprecated in favor of the new name "log_loss".
+    :pr:`23046` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 - |Efficiency| Low-level routines for reductions on pairwise distances
   for dense float64 datasets have been refactored. The following functions
