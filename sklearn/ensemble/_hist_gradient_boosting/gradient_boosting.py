@@ -1852,6 +1852,3 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
                 )
             else:
                 return HalfBinomialLoss(sample_weight=sample_weight)
-        else:
-            # should be an instance of BaseLoss
-            return self.loss
