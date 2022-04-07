@@ -3,8 +3,8 @@
 Evaluation of outlier detection estimators
 ==========================================
 
-This example benchmarks outlier detection algorithms, :ref:`local_outlier_factor` (LOF)
-and :ref:`isolation_forest` (IForest), using ROC curves on
+This example benchmarks outlier detection algorithms, :ref:`local_outlier_factor`
+(LOF) and :ref:`isolation_forest` (IForest), using ROC curves on
 classical anomaly detection datasets. The algorithm performance
 is assessed in an outlier detection context:
 
@@ -55,7 +55,6 @@ def preprocess_dataset(dataset_name):
             y = y[idx]
             x1 = lb.fit_transform(X[:, 1].astype(str))
             X = np.c_[X[:, :1], x1, X[:, 2:]]
-
         elif dataset_name == "SA":
             idx = rng.choice(X.shape[0], int(X.shape[0] * 0.1), replace=False)
             X = X[idx]  # reduce the sample size
@@ -64,7 +63,6 @@ def preprocess_dataset(dataset_name):
             x2 = lb.fit_transform(X[:, 2].astype(str))
             x3 = lb.fit_transform(X[:, 3].astype(str))
             X = np.c_[X[:, :1], x1, x2, x3, X[:, 4:]]
-
         y = (y != b"normal.").astype(int)
     if dataset_name == "forestcover":
         dataset = fetch_covtype()
