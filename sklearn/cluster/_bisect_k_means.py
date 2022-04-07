@@ -163,7 +163,7 @@ class BisectingKMeans(_BaseKMeans):
         `(n_samples, n_clusters)`.
 
     bisecting_strategy : {"biggest_inertia", "largest_cluster"},\
-    default="biggest_inertia"
+            default="biggest_inertia"
         Defines how bisection should be performed:
 
          - "biggest_inertia" means that BisectingKMeans will always check
