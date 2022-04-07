@@ -150,7 +150,7 @@ print("Estimators processing...")
 for i, dataset_name in enumerate(datasets_name):
 
     ys_pred_ = []
-    for (model_name, clf) in models:
+    for model_name, clf in models:
         clf.fit(Xs[i])
         if model_name == "LOF":
             y_pred = clf.negative_outlier_factor_
@@ -184,10 +184,12 @@ fig, axs = plt.subplots(rows, cols, figsize=(10, rows * 3))
 
 for i, dataset_name in enumerate(datasets_name):
     for j, (model_name, _) in enumerate(models):
-        display = RocCurveDisplay.from_predictions(ys[i], ys_pred[i][j],
-                                                   pos_label=pos_label,
-                                                   name=model_name, lw=lw,
-                                                   ax=axs[i // cols, i % cols])
+        display = RocCurveDisplay.from_predictions(
+            ys[i],
+            ys_pred[i][j],
+            pos_label=pos_label,
+            name=model_name, lw=lw,
+            ax=axs[i // cols, i % cols])
 
     axs[i // cols, i % cols].plot([0, 1], [0, 1], lw=lw, linestyle=":")
     axs[i // cols, i % cols].set_title(dataset_name)
