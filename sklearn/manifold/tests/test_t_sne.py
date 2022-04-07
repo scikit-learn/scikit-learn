@@ -279,8 +279,9 @@ def test_trustworthiness():
 
 def test_trustworthiness_warning():
     regex = "n_neighbors .+ should be less than .+"
-    X = np.random.rand(7, 4)
-    X_embedded = np.random.rand(7, 2)
+    rng = np.random.RandomState(42)
+    X = rng.rand(7, 4)
+    X_embedded = rng.rand(7, 2)
     with pytest.raises(ValueError, match=regex):
         trustworthiness(X, X_embedded, n_neighbors=5)
 
