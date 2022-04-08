@@ -809,7 +809,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         cross-validation.
     SGDRegressor : Implements elastic net regression with incremental training.
     SGDClassifier : Implements logistic regression with elastic net penalty
-        (``SGDClassifier(loss="log", penalty="elasticnet")``).
+        (``SGDClassifier(loss="log_loss", penalty="elasticnet")``).
 
     Notes
     -----

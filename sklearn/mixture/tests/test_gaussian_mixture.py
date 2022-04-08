@@ -2,6 +2,7 @@
 #         Thierry Guillemot <thierry.guillemot.work@gmail.com>
 # License: BSD 3 clause
 
+import itertools
 import re
 import sys
 import copy
@@ -129,55 +130,41 @@ def test_gaussian_mixture_attributes():
 
     n_components_bad = 0
     gmm = GaussianMixture(n_components=n_components_bad)
-    msg = (
-        f"Invalid value for 'n_components': {n_components_bad} "
-        "Estimation requires at least one component"
-    )
+    msg = f"n_components == {n_components_bad}, must be >= 1."
     with pytest.raises(ValueError, match=msg):
         gmm.fit(X)
 
     # covariance_type should be in [spherical, diag, tied, full]
     covariance_type_bad = "bad_covariance_type"
     gmm = GaussianMixture(covariance_type=covariance_type_bad)
-    msg = (
-        f"Invalid value for 'covariance_type': {covariance_type_bad} "
-        "'covariance_type' should be in ['spherical', 'tied', 'diag', 'full']"
+    msg = re.escape(
+        f"Invalid value for 'covariance_type': {covariance_type_bad} 'covariance_type'"
+        + " should be in ['spherical', 'tied', 'diag', 'full']"
     )
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=msg):
         gmm.fit(X)
 
     tol_bad = -1
     gmm = GaussianMixture(tol=tol_bad)
-    msg = (
-        f"Invalid value for 'tol': {tol_bad:.5f} "
-        "Tolerance used by the EM must be non-negative"
-    )
+    msg = f"tol == {tol_bad}, must be >= 0."
     with pytest.raises(ValueError, match=msg):
         gmm.fit(X)
 
     reg_covar_bad = -1
     gmm = GaussianMixture(reg_covar=reg_covar_bad)
-    msg = (
-        f"Invalid value for 'reg_covar': {reg_covar_bad:.5f} "
-        "regularization on covariance must be non-negative"
-    )
+    msg = f"reg_covar == {reg_covar_bad}, must be >= 0."
     with pytest.raises(ValueError, match=msg):
         gmm.fit(X)
 
-    max_iter_bad = 0
+    max_iter_bad = -1
     gmm = GaussianMixture(max_iter=max_iter_bad)
-    msg = (
-        f"Invalid value for 'max_iter': {max_iter_bad} "
-        "Estimation requires at least one iteration"
-    )
+    msg = f"max_iter == {max_iter_bad}, must be >= 0."
     with pytest.raises(ValueError, match=msg):
         gmm.fit(X)
 
     n_init_bad = 0
     gmm = GaussianMixture(n_init=n_init_bad)
-    msg = (
-        f"Invalid value for 'n_init': {n_init_bad} Estimation requires at least one run"
-    )
+    msg = f"n_init == {n_init_bad}, must be >= 1."
     with pytest.raises(ValueError, match=msg):
         gmm.fit(X)
 
@@ -1261,6 +1248,67 @@ def test_gaussian_mixture_setting_best_params():
         "lower_bound_",
     ]:
         assert hasattr(gmm, attr)
+
+
+@pytest.mark.parametrize(
+    "init_params", ["random", "random_from_data", "k-means++", "kmeans"]
+)
+def test_init_means_not_duplicated(init_params, global_random_seed):
+    # Check that all initialisations provide not duplicated starting means
+    rng = np.random.RandomState(global_random_seed)
+    rand_data = RandomData(rng, scale=5)
+    n_components = rand_data.n_components
+    X = rand_data.X["full"]
+
+    gmm = GaussianMixture(
+        n_components=n_components, init_params=init_params, random_state=rng, max_iter=0
+    )
+    gmm.fit(X)
+
+    means = gmm.means_
+    for i_mean, j_mean in itertools.combinations(means, r=2):
+        assert not np.allclose(i_mean, j_mean)
+
+
+@pytest.mark.parametrize(
+    "init_params", ["random", "random_from_data", "k-means++", "kmeans"]
+)
+def test_means_for_all_inits(init_params, global_random_seed):
+    # Check fitted means properties for all initializations
+    rng = np.random.RandomState(global_random_seed)
+    rand_data = RandomData(rng, scale=5)
+    n_components = rand_data.n_components
+    X = rand_data.X["full"]
+
+    gmm = GaussianMixture(
+        n_components=n_components, init_params=init_params, random_state=rng
+    )
+    gmm.fit(X)
+
+    assert gmm.means_.shape == (n_components, X.shape[1])
+    assert np.all(X.min(axis=0) <= gmm.means_)
+    assert np.all(gmm.means_ <= X.max(axis=0))
+    assert gmm.converged_
+
+
+def test_max_iter_zero():
+    # Check that max_iter=0 returns initialisation as expected
+    # Pick arbitrary initial means and check equal to max_iter=0
+    rng = np.random.RandomState(0)
+    rand_data = RandomData(rng, scale=5)
+    n_components = rand_data.n_components
+    X = rand_data.X["full"]
+    means_init = [[20, 30], [30, 25]]
+    gmm = GaussianMixture(
+        n_components=n_components,
+        random_state=rng,
+        means_init=means_init,
+        tol=1e-06,
+        max_iter=0,
+    )
+    gmm.fit(X)
+
+    assert_allclose(gmm.means_, means_init)
 
 
 def test_gaussian_mixture_precisions_init_diag():
