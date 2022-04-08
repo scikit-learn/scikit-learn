@@ -1320,7 +1320,6 @@ class KMeans(_BaseKMeans):
         self.algorithm = algorithm
 
     def _check_params(self, X):
-
         super()._check_params(X)
 
         # algorithm
