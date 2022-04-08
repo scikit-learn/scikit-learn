@@ -4032,14 +4032,23 @@ def check_param_validation(name, estimator_orig):
     y = rng.randint(0, 2, size=20)
     y = _enforce_estimator_tags_y(estimator_orig, y)
 
+    estimator_params = estimator_orig.get_params(deep=False).keys()
+
+    # check that there is a constraint for each parameter
+    if estimator_params:
+        err_msg = (
+            f"Mismatch between _parameter_constraints and the parameters of {name}."
+        )
+        assert estimator_orig._parameter_constraints.keys() == estimator_params, err_msg
+
     # this object does not have a valid type for sure for all params
     param_with_bad_type = type("BadType", (), {})()
 
     fit_methods = ["fit", "partial_fit", "fit_transform", "fit_predict"]
     methods = [method for method in fit_methods if hasattr(estimator_orig, method)]
 
-    for param_name in estimator_orig.get_params(deep=False):
-        match = rf"{param_name} must be .* Got .* instead."
+    for param_name in estimator_params:
+        match = rf"The '{param_name}' parameter of {name} must be .* Got .* instead."
         err_msg = (
             f"{name} does not raise an informative error message when the "
             f"parameter {param_name} does not have a valid type or value."

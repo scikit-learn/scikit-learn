@@ -4,6 +4,8 @@ import numpy as np
 from scipy.sparse import csr_matrix
 import pytest
 
+from sklearn.base import BaseEstimator
+from sklearn.utils import deprecated
 from sklearn.utils._param_validation import Interval
 from sklearn.utils._param_validation import StrOptions
 from sklearn.utils._param_validation import _ArrayLikes
@@ -14,6 +16,38 @@ from sklearn.utils._param_validation import _RandomStates
 from sklearn.utils._param_validation import _SparseMatrices
 from sklearn.utils._param_validation import make_constraint
 from sklearn.utils._param_validation import generate_invalid_param_val
+from sklearn.utils._param_validation import validate_params
+
+
+# Some helpers for the tests
+@validate_params({"a": [Real], "b": [Real], "c": [Real], "d": [Real]})
+def _func(a, b=0, *args, c, d=0, **kwargs):
+    """A function to test the validation of functions."""
+
+
+class _Class:
+    """A class to test the _InstancesOf constraint and the validation of methods."""
+
+    @validate_params({"a": [Real]})
+    def _method(self, a):
+        """A validated method"""
+
+    @deprecated()
+    @validate_params({"a": [Real]})
+    def _deprecated_method(self, a):
+        """A deprecated validated method"""
+
+
+class _Estimator(BaseEstimator):
+    """An estimator to test the validation of estimator parameters."""
+
+    _parameter_constraints = {"a": [Real]}
+
+    def __init__(self, a):
+        self.a = a
+
+    def fit(self, X=None, y=None):
+        self._validate_params()
 
 
 @pytest.mark.parametrize("interval_type", [Integral, Real])
@@ -121,11 +155,6 @@ def test_generate_invalid_param_val_not_error(constraint):
         generate_invalid_param_val(constraint)
 
 
-# a class to test the _InstancesOf constraint
-class _SomeClass:
-    pass
-
-
 @pytest.mark.parametrize(
     "constraint_declaration, value",
     [
@@ -140,7 +169,7 @@ class _SomeClass:
         ("random_state", 0),
         ("random_state", np.random.RandomState(0)),
         ("random_state", None),
-        (_SomeClass, _SomeClass()),
+        (_Class, _Class()),
         (int, 1),
         (Real, 0.5),
     ],
@@ -173,3 +202,73 @@ def test_make_constraint(constraint_declaration, expected_constraint_class):
 def test_make_constraint_unknown():
     with pytest.raises(ValueError, match="Unknown constraint"):
         make_constraint("not a valid constraint")
+
+
+def test_validate_params():
+    """Check that validate_params works no matter how the arguments are passed"""
+    with pytest.raises(ValueError, match="The 'a' parameter of _func must be"):
+        _func("wrong", c=1)
+
+    with pytest.raises(ValueError, match="The 'b' parameter of _func must be"):
+        _func(*[1, "wrong"], c=1)
+
+    with pytest.raises(ValueError, match="The 'c' parameter of _func must be"):
+        _func(1, **{"c": "wrong"})
+
+    with pytest.raises(ValueError, match="The 'd' parameter of _func must be"):
+        _func(1, c=1, d="wrong")
+
+    # check in the presence of extra positional and keyword args
+    with pytest.raises(ValueError, match="The 'b' parameter of _func must be"):
+        _func(0, *["wrong", 2, 3], c=4, **{"e": 5})
+
+    with pytest.raises(ValueError, match="The 'c' parameter of _func must be"):
+        _func(0, *[1, 2, 3], c="four", **{"e": 5})
+
+
+def test_validate_params_match_error():
+    # Check that an informative error is raised when the constraints do not match the
+    # function parameters.
+    @validate_params({"a": [int], "c": [int]})
+    def func(a, b):
+        pass
+
+    match = r"The parameter constraints .* do not match the parameters to validate"
+    with pytest.raises(ValueError, match=match):
+        func(1, 2)
+
+
+def test_decorate_validated_function():
+    # Check that validate_params functions can be decorated
+
+    decorated_function = deprecated()(_func)
+
+    with pytest.warns(FutureWarning, match="Function _func is deprecated"):
+        decorated_function(1, 2, c=3)
+
+    # outer decorator does not interfer with validation
+    with pytest.warns(FutureWarning, match="Function _func is deprecated"):
+        with pytest.raises(ValueError, match=r"The 'c' parameter of _func must be"):
+            decorated_function(1, 2, c="wrong")
+
+
+def test_validate_params_method():
+    """Check that validate_params works with methods"""
+    with pytest.raises(ValueError, match="The 'a' parameter of _Class._method must be"):
+        _Class()._method("wrong")
+
+    # validated method can be decorated
+    with pytest.warns(FutureWarning, match="Function _deprecated_method is deprecated"):
+        with pytest.raises(
+            ValueError, match="The 'a' parameter of _Class._deprecated_method must be"
+        ):
+            _Class()._deprecated_method("wrong")
+
+
+def test_validate_params_estimator():
+    """Check that validate_params works with Estimator instances"""
+    # no validation in init
+    est = _Estimator("wrong")
+
+    with pytest.raises(ValueError, match="The 'a' parameter of _Estimator must be"):
+        est.fit()
