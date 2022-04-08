@@ -1,5 +1,4 @@
 import warnings
-from warnings import simplefilter
 
 import numpy as np
 import pytest
@@ -98,44 +97,27 @@ def test_one_cluster():
 
 
 @pytest.mark.parametrize(
-    "param, match, single_value",
+    "param, match",
     [
         # Test bisecting_strategy param
         (
             {"bisecting_strategy": "None"},
-            r"Bisect Strategy must be 'biggest_inertia', or 'largest_cluster'",
-            False,
+            "Bisect Strategy must be 'biggest_inertia' or 'largest_cluster'",
         ),
         # Test init array
         (
             {"init": np.ones((5, 2))},
             "BisectingKMeans does not support init as array.",
-            False,
-        ),
-        # Test single X value
-        (
-            {"n_clusters": 1},
-            # 'Found array with 0 sample(s) (shape=(0, 1))
-            #  while a minimum of 1 is required by BisectingKMeans.'
-            "a minimum of 1 is required by BisectingKMeans.",
-            True,
         ),
     ],
 )
-def test_wrong_params(param, match, single_value):
+def test_wrong_params(param, match):
     """Test Exceptions at check_params function"""
-
-    simplefilter("ignore")
-
-    if single_value:
-        X = np.ones((0, 1))
-    else:
-        rng = np.random.RandomState(0)
-        X = rng.rand(5, 2)
+    rng = np.random.RandomState(0)
+    X = rng.rand(5, 2)
 
     with pytest.raises(ValueError, match=match):
-        bisect_means = BisectingKMeans(n_clusters=3, n_init=1)
-        bisect_means.set_params(**param)
+        bisect_means = BisectingKMeans(n_clusters=3, **param)
         bisect_means.fit(X)
 
 
@@ -149,7 +131,7 @@ def test_verbose(capsys):
 
     captured = capsys.readouterr()
 
-    # assert search(r"Running Bisecting K-Means", captured.out)
+    assert "New centroids from bisection" in captured.out
 
 
 @pytest.mark.parametrize("is_sparse", [True, False])

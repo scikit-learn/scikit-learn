@@ -8,23 +8,19 @@ import scipy.sparse as sp
 from threadpoolctl import threadpool_limits
 
 from ..exceptions import EfficiencyWarning
-
 from ._kmeans import _BaseKMeans
 from ._kmeans import _kmeans_single_elkan
 from ._kmeans import _kmeans_single_lloyd
-
 from ._k_means_common import _inertia_dense
 from ._k_means_common import _inertia_sparse
-
 from ._k_means_lloyd import lloyd_iter_chunked_dense
 from ._k_means_lloyd import lloyd_iter_chunked_sparse
-
 from ..utils.extmath import row_norms
 from ..utils._openmp_helpers import _openmp_effective_n_threads
-
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _check_sample_weight
 from ..utils.validation import check_random_state
+from ..utils.validation import _is_arraylike_not_scalar
 
 
 def _check_labels(X, sample_weight, x_squared_norms, centers, n_threads=1):
@@ -355,9 +351,8 @@ class BisectingKMeans(_BaseKMeans):
         # bisecting_strategy
         if self.bisecting_strategy not in ["biggest_inertia", "largest_cluster"]:
             raise ValueError(
-                "Bisect Strategy must be 'biggest_inertia', "
-                "or 'largest_cluster' "
-                f"got {self.bisecting_strategy} instead."
+                "Bisect Strategy must be 'biggest_inertia' or 'largest_cluster'. "
+                f"Got {self.bisecting_strategy} instead."
             )
 
         # Regular K-Means should do less computations when there are only
@@ -370,7 +365,7 @@ class BisectingKMeans(_BaseKMeans):
                 EfficiencyWarning,
             )
 
-        if hasattr(self.init, "__array__"):
+        if _is_arraylike_not_scalar(self.init):
             raise ValueError("BisectingKMeans does not support init as array.")
 
     def _warn_mkl_vcomp(self, n_active_threads):
