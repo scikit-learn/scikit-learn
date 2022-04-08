@@ -89,6 +89,7 @@ def _check_labels_threadpool_limit(
 
     return labels
 
+
 class _BisectingTree:
     """Tree structure representing the hierarchical clusters of BisectingKMeans."""
 
@@ -419,7 +420,9 @@ class BisectingKMeans(_BaseKMeans):
             print(f"New centroids from bisection: {best_centers}")
 
         if self.bisecting_strategy == "biggest_inertia":
-            scores = self._inertia_per_cluster(X, best_centers, best_labels, sample_weight)
+            scores = self._inertia_per_cluster(
+                X, best_centers, best_labels, sample_weight
+            )
         else:  # bisecting_strategy == "largest_cluster"
             scores = np.bincount(best_labels)
 
@@ -476,7 +479,6 @@ class BisectingKMeans(_BaseKMeans):
             X -= self._X_mean
 
         # Initialize the hierearchical clusters tree
-        
         self._bisecting_tree = _BisectingTree(
             indices=np.arange(X.shape[0]),
             center=X.mean(axis=0),
