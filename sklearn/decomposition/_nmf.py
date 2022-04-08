@@ -2046,7 +2046,11 @@ class MiniBatchNMF(NMF):
         return self
 
     def _solve_W(self, X, H, max_iter):
-        """Minimize the objective function w.r.t W"""
+        """Minimize the objective function w.r.t W.
+        
+        Update W with H being fixed, until convergence. This is the heart
+        of `transform` but it's also used during `fit` when doing fresh restarts.
+        """
         avg = np.sqrt(X.mean() / self._n_components)
         W = np.full((X.shape[0], self._n_components), avg, dtype=X.dtype)
         W_buffer = W.copy()
@@ -2055,7 +2059,7 @@ class MiniBatchNMF(NMF):
         # variable sizes of minibatches.
         l1_reg_W, _, l2_reg_W, _ = self._scale_regularization(X)
 
-        for i in range(max_iter):
+        for _ in range(max_iter):
             W, *_ = _multiplicative_update_w(
                 X, W, H, self._beta_loss, l1_reg_W, l2_reg_W, self._gamma
             )
@@ -2069,7 +2073,7 @@ class MiniBatchNMF(NMF):
         return W
 
     def _minibatch_step(self, X, W, H, update_H):
-        """Perform the update of W and H for one minibatch"""
+        """Perform the update of W and H for one minibatch."""
         batch_size = X.shape[0]
 
         # get scaled regularization terms. Done for each minibatch to take into account
