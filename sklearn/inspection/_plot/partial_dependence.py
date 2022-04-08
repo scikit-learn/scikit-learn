@@ -1411,23 +1411,15 @@ class PartialDependenceDisplay:
             for kind_plot, pd_result in zip(kind, self.pd_results):
                 current_results = {"values": pd_result["values"]}
 
-                if kind_plot == "individual":
+                if kind_plot in ("individual", "both"):
                     preds = pd_result.individual
                     preds = preds - preds[self.target_idx, :, 0, None]
                     current_results["individual"] = preds
 
-                elif kind_plot == "average":
+                if kind_plot in ("average", "both"):
                     avg_preds = pd_result.average
                     avg_preds = avg_preds - avg_preds[self.target_idx, 0, None]
                     current_results["average"] = avg_preds
-
-                else:  # kind_plot == 'both'
-                    avg_preds = pd_result.average
-                    preds = pd_result.individual
-                    avg_preds = avg_preds - avg_preds[self.target_idx, 0, None]
-                    preds = preds - preds[self.target_idx, :, 0, None]
-                    current_results["average"] = avg_preds
-                    current_results["individual"] = preds
 
                 pd_results_.append(Bunch(**current_results))
 
