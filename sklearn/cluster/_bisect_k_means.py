@@ -531,7 +531,7 @@ class BisectingKMeans(_BaseKMeans):
 
         return self
 
-    def predict(self, X, sample_weight=None):
+    def predict(self, X):
         """Predict which cluster each sample in X belongs to.
 
         Prediction is made by going down the hierarchical tree
@@ -546,9 +546,6 @@ class BisectingKMeans(_BaseKMeans):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             New data to predict.
 
-        sample_weight : Ignored
-            Not used, present here for API consistency by convention.
-
         Returns
         -------
         labels : ndarray of shape (n_samples,)
@@ -560,7 +557,7 @@ class BisectingKMeans(_BaseKMeans):
         x_squared_norms = row_norms(X, squared=True)
 
         # sample weights are unused but necessary in cython helpers
-        sample_weight = _check_sample_weight(None, X, dtype=X.dtype)
+        sample_weight = np.ones_like(x_squared_norms)
 
         labels = self._predict_recursive(
             X, x_squared_norms, sample_weight, self._bisecting_tree
