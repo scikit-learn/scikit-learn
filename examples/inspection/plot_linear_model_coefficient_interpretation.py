@@ -408,7 +408,7 @@ plt.subplots_adjust(left=0.3)
 #
 # As said above (see ":ref:`the-pipeline`"), we could also choose to scale
 # numerical values before training the model.
-# This can be useful to apply a similar amount regularization to all of them
+# This can be useful when we apply a similar amount of regularization to all of them
 # in the ridge.
 # The preprocessor is redefined in order to subtract the mean and scale
 # variables to unit variance.
@@ -474,8 +474,8 @@ plt.subplots_adjust(left=0.3)
 # %%
 # We now inspect the coefficients across several cross-validation folds. As in
 # the above example, we do not need to scale the coefficients by the std. dev.
-# of the feature values since the scaling in the preprocessing step was already
-# doing such a preprocessing.
+# of the feature values since this scaling was already
+# done in the preprocessing step of the pipeline.
 
 cv_model = cross_validate(
     model,
@@ -508,7 +508,7 @@ plt.subplots_adjust(left=0.3)
 #
 # Above, we limited this regularization to a very little amount. Regularization
 # improves the conditioning of the problem and reduces the variance of the
-# estimates. :class:`~sklearn.linear_model.RidgeCV`` applies cross validation
+# estimates. :class:`~sklearn.linear_model.RidgeCV` applies cross validation
 # in order to determine which value of the regularization parameter (`alpha`)
 # is best suited for prediction.
 
@@ -613,7 +613,7 @@ _ = plt.title("Co-variations of coefficients for AGE and EXPERIENCE across folds
 # when we dropped the AGE column in a previous ridge estimation.
 #
 # Lasso models (see the :ref:`lasso` User Guide section) estimates sparse
-# coefficients. :class:`~sklearn.linear_model.LassoCV`` applies cross
+# coefficients. :class:`~sklearn.linear_model.LassoCV` applies cross
 # validation in order to determine which value of the regularization parameter
 # (`alpha`) is best suited for the model estimation.
 
