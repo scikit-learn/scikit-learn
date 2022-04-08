@@ -817,18 +817,20 @@ class _BaseKMeans(
         # n_init
         # TODO(1.3): Remove
         self._n_init = self.n_init
+        default_n_init = 10 if self.__class__.__name__ == "KMeans" else 3
         if self._n_init == "warn":
             warnings.warn(
-                "The default value of `n_init` will change from 10 to 'auto' in 1.3."
-                " Set the value of `n_init` explicitly to suppress the warning",
+                "The default value of `n_init` will change from "
+                f"{default_n_init} to 'auto' in 1.3. Set the value of `n_init`"
+                " explicitly to suppress the warning",
                 FutureWarning,
             )
-            self._n_init = "auto"
+            self._n_init = default_n_init
         if self._n_init == "auto":
-            if self._n_init == "kmeans++":
+            if self.init == "k-means++":
                 self._n_init = 1
             else:
-                self._n_init = 10 if self.__class__.__name__ == "KMeans" else 3
+                self._n_init = default_n_init
         if self.n_init not in ("auto", "warn") and self.n_init <= 0:
             raise ValueError(
                 f"n_init should be > 0 or 'auto', got {self._n_init} instead."

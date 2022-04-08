@@ -1043,7 +1043,11 @@ def test_change_n_init_future_warning(Klass):
         warnings.simplefilter("error", FutureWarning)
         est.fit(X)
 
-    msg = r"The default value of `n_init` will change from \d* to 'auto' in 1.3"
+    default_n_init = 10 if Klass.__name__ == "KMeans" else 3
+    msg = (
+        f"The default value of `n_init` will change from {default_n_init} to 'auto'"
+        " in 1.3"
+    )
     est = Klass()
     with pytest.warns(FutureWarning, match=msg):
         est.fit(X)
@@ -1053,6 +1057,11 @@ def test_change_n_init_future_warning(Klass):
 def test_n_init_auto(Klass):
     est = Klass(n_init="auto")
     est.fit(X)
+    assert est._n_init == 1
+
+    est = Klass(n_init="auto", init="random")
+    est.fit(X)
+    assert est._n_init == 10 if Klass.__name__ == "KMeans" else 3
 
 
 @pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
