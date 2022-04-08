@@ -503,9 +503,9 @@ Entropy:
 
 .. note::
 
-  The entropy criterion computes the Shannon entropy of the possible classes. As
-  their probability, its takes the class frequencies of the training data points
-  that reached a given leaf :math:`m`. Using the **Shannon entropy as tree node
+  The entropy criterion computes the Shannon entropy of the possible classes. It
+  takes the class frequencies of the training data points that reached a given
+  leaf :math:`m` as their probability. Using the **Shannon entropy as tree node
   splitting criterion is equivalent to minimizing the log loss** (also known as
   cross-entropy and multinomial deviance) between the true labels :math:`y_i`
   and the probalistic predictions :math:`T(x_i)` of the tree model :math:`T`.
