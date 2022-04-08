@@ -503,7 +503,7 @@ Entropy:
 
 .. note::
 
-  The Entropy criterion computes the Shannon entropy of the categorical
+  The entropy criterion computes the Shannon entropy of the categorical
   distribution parametrized by the class frequency the training data points that
   reached a given leaf `m`. Using the **Shannon entropy as tree node splitting
   criterion is equivalent to minimizing the cross-entropy loss** (also known as
