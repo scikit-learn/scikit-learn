@@ -131,7 +131,7 @@ def test_stroptions():
         (Integral, "int"),
         (Real, "float"),
         (np.ndarray, "numpy.ndarray"),
-    ]
+    ],
 )
 def test_instances_of_type_human_readable(type, expected_type_name):
     """Check the string representation of the _InstancesOf constraint."""
