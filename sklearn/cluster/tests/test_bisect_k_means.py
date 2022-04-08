@@ -1,14 +1,11 @@
-from re import search
 from warnings import simplefilter
 
 import numpy as np
+import pytest
 import scipy.sparse as sp
 
-from numpy.testing import assert_array_equal, assert_array_almost_equal, assert_allclose
-
+from sklearn.utils._testing import assert_array_equal, assert_allclose
 from sklearn.cluster import BisectingKMeans
-
-import pytest
 
 
 @pytest.mark.parametrize("bisecting_strategy", ["biggest_inertia", "largest_cluster"])
@@ -41,6 +38,7 @@ def test_three_clusters(bisecting_strategy):
 
 def test_sparse():
     """Test Bisecting K-Means with sparse data
+
     Checks if labels and centers are the same between dense and sparse
     """
 
@@ -59,7 +57,7 @@ def test_sparse():
     normal_centers = bisect_means.cluster_centers_
 
     # Check if results is the same for dense and sparse data
-    assert_array_almost_equal(normal_centers, sparse_centers)
+    assert_allclose(normal_centers, sparse_centers, atol=1e-8)
 
 
 @pytest.mark.parametrize("n_clusters", [4, 5])
@@ -179,3 +177,36 @@ def test_single_cluster(is_sparse):
     km = BisectingKMeans(n_clusters=1, random_state=0).fit(X)
 
     assert_allclose(km.cluster_centers_, X.mean(axis=0).reshape(1, -1))
+
+
+@pytest.mark.parametrize("is_sparse", [True, False])
+def test_dtype_preserved(is_sparse, global_dtype):
+    """Check that centers dtype is the same as input data dtype"""
+    rng = np.random.RandomState(0)
+    X = rng.rand(10, 2).astype(global_dtype, copy=False)
+
+    if is_sparse:
+        X[X < 0.8] = 0
+        X = sp.csr_matrix(X)
+
+    km = BisectingKMeans(n_clusters=3, random_state=0)
+    km.fit(X)
+
+    assert km.cluster_centers_.dtype == global_dtype
+
+
+@pytest.mark.parametrize("is_sparse", [True, False])
+def test_float32_float64_equivalence(is_sparse):
+    """Check that the results are the same between float32 and float64."""
+    rng = np.random.RandomState(0)
+    X = rng.rand(10, 2)
+
+    if is_sparse:
+        X[X < 0.8] = 0
+        X = sp.csr_matrix(X)
+
+    km64 = BisectingKMeans(n_clusters=3, random_state=0).fit(X)
+    km32 = BisectingKMeans(n_clusters=3, random_state=0).fit(X.astype(np.float32))
+
+    assert_allclose(km32.cluster_centers_, km64.cluster_centers_)
+    assert_array_equal(km32.labels_, km64.labels_)
