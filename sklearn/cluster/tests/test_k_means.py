@@ -1121,9 +1121,6 @@ def test_wrong_params(Estimator, param, match):
         km.set_params(**param).fit(X)
 
 
-# TODO(1.3): Remove
-
-
 @pytest.mark.parametrize(
     "param, match",
     [({"algorithm": "wrong"}, r"Algorithm must be either 'lloyd' or 'elkan'")],
@@ -1230,9 +1227,6 @@ def test_is_same_clustering():
     assert not _is_same_clustering(labels1, labels3, 3)
 
 
-# TODO(1.3): Remove
-
-
 @pytest.mark.parametrize(
     "kwargs", ({"init": np.str_("k-means++")}, {"init": [[0, 0], [1, 1]], "n_init": 1})
 )
@@ -1246,9 +1240,6 @@ def test_kmeans_with_array_like_or_np_scalar_init(kwargs):
     clustering = KMeans(n_clusters=2, **kwargs)
     # Does not raise
     clustering.fit(X)
-
-
-# TODO(1.3): Remove
 
 
 @pytest.mark.parametrize(
