@@ -2,7 +2,7 @@ from cython.operator cimport dereference as deref
 from cpython.ref cimport Py_INCREF
 cimport numpy as np
 
-from ._typedefs cimport DTYPECODE, ITYPECODE
+from ._typedefs cimport DTYPECODE, ITYPECODE, INT32TYPECODE, INT64TYPECODE
 
 np.import_array()
 
@@ -10,6 +10,10 @@ np.import_array()
 cdef StdVectorSentinel _create_sentinel(vector_typed * vect_ptr):
     if vector_typed is vector[DTYPE_t]:
         return StdVectorSentinelFloat64.create_for(vect_ptr)
+    elif vector_typed is vector[INT32TYPE_t]:
+        return StdVectorSentinelInt32.create_for(vect_ptr)
+    elif vector_typed is vector[INT64TYPE_t]:
+        return StdVectorSentinelInt64.create_for(vect_ptr)
     else:
         return StdVectorSentinelIntP.create_for(vect_ptr)
 
@@ -62,6 +66,42 @@ cdef class StdVectorSentinelIntP(StdVectorSentinel):
 
     cdef int get_typenum(self):
         return ITYPECODE
+
+
+cdef class StdVectorSentinelInt32(StdVectorSentinel):
+    cdef vector[INT32TYPE_t] vec
+
+    @staticmethod
+    cdef StdVectorSentinel create_for(vector[INT32TYPE_t] * vect_ptr):
+        # This initializes the object directly without calling __init__
+        # See: https://cython.readthedocs.io/en/latest/src/userguide/extension_types.html#instantiation-from-existing-c-c-pointers # noqa
+        cdef StdVectorSentinelInt32 sentinel = StdVectorSentinelInt32.__new__(StdVectorSentinelInt32)
+        sentinel.vec.swap(deref(vect_ptr))
+        return sentinel
+
+    cdef void* get_data(self):
+        return self.vec.data()
+
+    cdef int get_typenum(self):
+        return INT32TYPECODE
+
+
+cdef class StdVectorSentinelInt64(StdVectorSentinel):
+    cdef vector[INT64TYPE_t] vec
+
+    @staticmethod
+    cdef StdVectorSentinel create_for(vector[INT64TYPE_t] * vect_ptr):
+        # This initializes the object directly without calling __init__
+        # See: https://cython.readthedocs.io/en/latest/src/userguide/extension_types.html#instantiation-from-existing-c-c-pointers # noqa
+        cdef StdVectorSentinelInt64 sentinel = StdVectorSentinelInt64.__new__(StdVectorSentinelInt64)
+        sentinel.vec.swap(deref(vect_ptr))
+        return sentinel
+
+    cdef void* get_data(self):
+        return self.vec.data()
+
+    cdef int get_typenum(self):
+        return INT64TYPECODE
 
 
 cdef np.ndarray vector_to_nd_array(vector_typed * vect_ptr):

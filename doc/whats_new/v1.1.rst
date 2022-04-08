@@ -474,6 +474,9 @@ Changelog
 :mod:`sklearn.feature_extraction`
 .................................
 
+- |Feature| :class:`feature_extraction.FeatureHasher` now supports PyPy.
+  :pr:`23023` by `Thomas Fan`_.
+
 - |Fix| :class:`feature_extraction.FeatureHasher` now validates input parameters
   in `transform` instead of `__init__`. :pr:`21573` by
   :user:`Hannah Bohle <hhnnhh>` and :user:`Maren Westermann <marenwestermann>`.
@@ -559,20 +562,6 @@ Changelog
   values in the training set.
   :pr:`21617` by :user:`Christian Ritter <chritter>`.
 
-- |Enhancement| :class:`linear_model.RidgeClassifier` is now supporting
-  multilabel classification.
-  :pr:`19689` by :user:`Guillaume Lemaitre <glemaitre>`.
-
-- |Enhancement| :class:`linear_model.RidgeCV` and
-  :class:`linear_model.RidgeClassifierCV` now raise consistent error message
-  when passed invalid values for `alphas`.
-  :pr:`21606` by :user:`Arturo Amor <ArturoAmorQ>`.
-
-- |Enhancement| :class:`linear_model.Ridge` and :class:`linear_model.RidgeClassifier`
-  now raise consistent error message when passed invalid values for `alpha`,
-  `max_iter` and `tol`.
-  :pr:`21341` by :user:`Arturo Amor <ArturoAmorQ>`.
-
 :mod:`sklearn.inspection`
 .........................
 
@@ -581,11 +570,18 @@ Changelog
   :pr:`16061` by `Thomas Fan`_.
 
 - |Enhancement| In
-  :meth:`~sklearn.inspection.PartialDependenceDisplay.from_estimator` and
-  :meth:`~sklearn.inspection.PartialDependenceDisplay.from_predictions`, allow
+  :meth:`inspection.PartialDependenceDisplay.from_estimator`, allow
   `kind` to accept a list of strings to specify  which type of
   plot to draw for each feature interaction.
   :pr:`19438` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Enhancement| :meth:`inspection.PartialDependenceDisplay.from_estimator`,
+  :meth:`inspection.PartialDependenceDisplay.plot`, and
+  :func:`inspection.plot_partial_dependence` now support plotting centered
+  Individual Conditional Expectation (cICE) and centered PDP curves controlled
+  by setting the parameter `centered`.
+  :pr:`18310` by :user:`Johannes Elfner <JoElfner>` and
+  :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.isotonic`
 .......................
@@ -701,6 +697,20 @@ Changelog
 - |Feature| :class:`Ridge` with `solver="lsqr"` now supports to fit sparse input with
   `fit_intercept=True`.
   :pr:`22950` by :user:`Christian Lorentzen <lorentzenchr>`.
+
+- |Enhancement| :class:`linear_model.RidgeClassifier` is now supporting
+  multilabel classification.
+  :pr:`19689` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Enhancement| :class:`linear_model.RidgeCV` and
+  :class:`linear_model.RidgeClassifierCV` now raise consistent error message
+  when passed invalid values for `alphas`.
+  :pr:`21606` by :user:`Arturo Amor <ArturoAmorQ>`.
+
+- |Enhancement| :class:`linear_model.Ridge` and :class:`linear_model.RidgeClassifier`
+  now raise consistent error message when passed invalid values for `alpha`,
+  `max_iter` and `tol`.
+  :pr:`21341` by :user:`Arturo Amor <ArturoAmorQ>`.
 
 :mod:`sklearn.manifold`
 .......................
@@ -826,16 +836,6 @@ Changelog
 
 :mod:`sklearn.neighbors`
 ........................
-
-- |Enhancement| `utils.validation.check_array` and `utils.validation.type_of_target`
-  now accept an `input_name` parameter to make the error message more
-  informative when passed invalid input data (e.g. with NaN or infinite
-  values).
-  :pr:`21219` by :user:`Olivier Grisel <ogrisel>`.
-
-- |Enhancement| :func:`utils.validation.check_array` returns a float
-  ndarray with `np.nan` when passed a `Float32` or `Float64` pandas extension
-  array with `pd.NA`. :pr:`21278` by `Thomas Fan`_.
 
 - |Enhancement| Adds :term:`get_feature_names_out` to
   :class:`neighbors.RadiusNeighborsTransformer`, :class:`neighbors.KNeighborsTransformer`
@@ -986,6 +986,16 @@ Changelog
 
 :mod:`sklearn.utils`
 ....................
+
+- |Enhancement| `utils.validation.check_array` and `utils.validation.type_of_target`
+  now accept an `input_name` parameter to make the error message more
+  informative when passed invalid input data (e.g. with NaN or infinite
+  values).
+  :pr:`21219` by :user:`Olivier Grisel <ogrisel>`.
+
+- |Enhancement| :func:`utils.validation.check_array` returns a float
+  ndarray with `np.nan` when passed a `Float32` or `Float64` pandas extension
+  array with `pd.NA`. :pr:`21278` by `Thomas Fan`_.
 
 - |Enhancement| :func:`utils.estimator_html_repr` shows a more helpful error
   message when running in a jupyter notebook that is not trusted. :pr:`21316`
