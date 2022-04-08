@@ -109,7 +109,6 @@ def test_plot_partial_dependence(
         ax = disp.axes_[pos]
         assert ax.get_ylabel() == expected_ylabels[i]
         assert ax.get_xlabel() == diabetes.feature_names[feat_col]
-        assert_allclose(ax.get_ylim(), disp.pdp_lim[1])
 
         line = disp.lines_[pos]
 
@@ -124,8 +123,6 @@ def test_plot_partial_dependence(
     # two feature position
     ax = disp.axes_[0, 2]
     coutour = disp.contours_[0, 2]
-    expected_levels = np.linspace(*disp.pdp_lim[2], num=8)
-    assert_allclose(coutour.levels, expected_levels)
     assert coutour.get_cmap().name == "jet"
     assert ax.get_xlabel() == diabetes.feature_names[0]
     assert ax.get_ylabel() == diabetes.feature_names[2]
@@ -133,22 +130,39 @@ def test_plot_partial_dependence(
 
 @pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize(
-    "kind, subsample, shape",
+    "kind, centered, subsample, shape",
     [
-        ("average", None, (1, 3)),
-        ("individual", None, (1, 3, 442)),
-        ("both", None, (1, 3, 443)),
-        ("individual", 50, (1, 3, 50)),
-        ("both", 50, (1, 3, 51)),
-        ("individual", 0.5, (1, 3, 221)),
-        ("both", 0.5, (1, 3, 222)),
+        ("average", False, None, (1, 3)),
+        ("individual", False, None, (1, 3, 442)),
+        ("both", False, None, (1, 3, 443)),
+        ("individual", False, 50, (1, 3, 50)),
+        ("both", False, 50, (1, 3, 51)),
+        ("individual", False, 0.5, (1, 3, 221)),
+        ("both", False, 0.5, (1, 3, 222)),
+        ("average", True, None, (1, 3)),
+        ("individual", True, None, (1, 3, 442)),
+        ("both", True, None, (1, 3, 443)),
+        ("individual", True, 50, (1, 3, 50)),
+        ("both", True, 50, (1, 3, 51)),
     ],
 )
 def test_plot_partial_dependence_kind(
-    plot_partial_dependence, pyplot, kind, subsample, shape, clf_diabetes, diabetes
+    plot_partial_dependence,
+    pyplot,
+    kind,
+    centered,
+    subsample,
+    shape,
+    clf_diabetes,
+    diabetes,
 ):
     disp = plot_partial_dependence(
-        clf_diabetes, diabetes.data, [0, 1, 2], kind=kind, subsample=subsample
+        clf_diabetes,
+        diabetes.data,
+        [0, 1, 2],
+        kind=kind,
+        centered=centered,
+        subsample=subsample,
     )
 
     assert disp.axes_.shape == (1, 3)
@@ -159,7 +173,10 @@ def test_plot_partial_dependence_kind(
     assert disp.contours_[0, 1] is None
     assert disp.contours_[0, 2] is None
 
-    assert disp.kind == kind
+    if centered:
+        assert all([ln._y[0] == 0.0 for ln in disp.lines_.ravel() if ln is not None])
+    else:
+        assert all([ln._y[0] != 0.0 for ln in disp.lines_.ravel() if ln is not None])
 
 
 @pytest.mark.filterwarnings("ignore:A Bunch will be returned")
@@ -247,9 +264,6 @@ def test_plot_partial_dependence_str_features(
 
     # contour
     ax = disp.axes_[0, 0]
-    coutour = disp.contours_[0, 0]
-    expect_levels = np.linspace(*disp.pdp_lim[2], num=8)
-    assert_allclose(coutour.levels, expect_levels)
     assert ax.get_xlabel() == "age"
     assert ax.get_ylabel() == "bmi"
 
@@ -288,9 +302,6 @@ def test_plot_partial_dependence_custom_axes(
 
     # contour
     ax = disp.axes_[1]
-    coutour = disp.contours_[1]
-    expect_levels = np.linspace(*disp.pdp_lim[2], num=8)
-    assert_allclose(coutour.levels, expect_levels)
     assert ax.get_xlabel() == "age"
     assert ax.get_ylabel() == "bmi"
 
@@ -736,6 +747,93 @@ def test_partial_dependence_overwrite_labels(
             assert legend_text[0].get_text() == label
 
 
+# TODO(1.3): remove
+def test_partial_dependence_display_deprecation(
+    plot_partial_dependence, pyplot, clf_diabetes, diabetes
+):
+    """Check that we raise the proper warning in the display."""
+    disp = plot_partial_dependence(
+        clf_diabetes,
+        diabetes.data,
+        [0, 2],
+        grid_resolution=25,
+        feature_names=diabetes.feature_names,
+    )
+
+    deprecation_msg = "The `pdp_lim` parameter is deprecated"
+    overwritting_msg = (
+        "`pdp_lim` has been passed in both the constructor and the `plot` method"
+    )
+
+    disp.pdp_lim = None
+    # case when constructor and method parameters are the same
+    with pytest.warns(FutureWarning, match=deprecation_msg):
+        disp.plot(pdp_lim=None)
+    # case when constructor and method parameters are different
+    with pytest.warns(None) as record:
+        disp.plot(pdp_lim=(0, 1))
+    assert len(record) == 2
+    for warning in record:
+        assert warning.message.args[0].startswith((deprecation_msg, overwritting_msg))
+
+
+@pytest.mark.parametrize("kind", ["individual", "average", "both"])
+@pytest.mark.parametrize("centered", [True, False])
+def test_partial_dependence_plot_limits_one_way(
+    plot_partial_dependence, pyplot, clf_diabetes, diabetes, kind, centered
+):
+    """Check that the PD limit on the plots are properly set on one-way plots."""
+    disp = plot_partial_dependence(
+        clf_diabetes,
+        diabetes.data,
+        features=(0, 1),
+        kind=kind,
+        grid_resolution=25,
+        feature_names=diabetes.feature_names,
+    )
+
+    range_pd = np.array([-1, 1])
+    for pd in disp.pd_results:
+        if "average" in pd:
+            pd["average"][...] = range_pd[1]
+            pd["average"][0, 0] = range_pd[0]
+        if "individual" in pd:
+            pd["individual"][...] = range_pd[1]
+            pd["individual"][0, 0, 0] = range_pd[0]
+
+    disp.plot(centered=centered)
+    # check that we anchor to zero x-axis when centering
+    y_lim = range_pd - range_pd[0] if centered and kind != "average" else range_pd
+    for ax in disp.axes_.ravel():
+        assert_allclose(ax.get_ylim(), y_lim)
+
+
+@pytest.mark.parametrize("centered", [True, False])
+def test_partial_dependence_plot_limits_two_way(
+    plot_partial_dependence, pyplot, clf_diabetes, diabetes, centered
+):
+    """Check that the PD limit on the plots are properly set on two-way plots."""
+    disp = plot_partial_dependence(
+        clf_diabetes,
+        diabetes.data,
+        features=[(0, 1)],
+        kind="average",
+        grid_resolution=25,
+        feature_names=diabetes.feature_names,
+    )
+
+    range_pd = np.array([-1, 1])
+    for pd in disp.pd_results:
+        pd["average"][...] = range_pd[1]
+        pd["average"][0, 0] = range_pd[0]
+
+    disp.plot(centered=centered)
+    # centering should not have any effect on the limits
+    coutour = disp.contours_[0, 0]
+    expect_levels = np.linspace(*range_pd, num=8)
+    assert_allclose(coutour.levels, expect_levels)
+
+
 def test_partial_dependence_kind_list(
     plot_partial_dependence,
     pyplot,
@@ -882,3 +980,28 @@ def test_partial_dependence_display_wrong_len_kind(
     )
     with pytest.raises(ValueError, match=err_msg):
         disp.plot()
+
+
+@pytest.mark.parametrize(
+    "kind",
+    ["individual", "both", "average", ["average", "both"], ["individual", "both"]],
+)
+def test_partial_dependence_display_kind_centered_interaction(
+    plot_partial_dependence,
+    pyplot,
+    kind,
+    clf_diabetes,
+    diabetes,
+):
+    """Check that we properly center ICE and PD when passing kind as a string and as a
+    list."""
+    disp = plot_partial_dependence(
+        clf_diabetes,
+        diabetes.data,
+        [0, 1],
+        kind=kind,
+        centered=True,
+        subsample=5,
+    )
+
+    assert all([ln._y[0] == 0.0 for ln in disp.lines_.ravel() if ln is not None])
