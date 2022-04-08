@@ -510,23 +510,26 @@ Entropy:
   the categorical deviance or the log-loss) between the true labels :math:`y_i`
   and the probalistic predictions :math:`T(x_i)` of the tree model :math:`T`.
 
-  Recall that the cross-entropy of a tree model :math:`T` computed on a dataset
-  :math:`D` is defined as follows:
+  To see, this, first recall that the cross-entropy of a tree model :math:`T`
+  computed on a dataset :math:`D` is defined as follows:
 
   .. math::
   
       \mathrm{CE}(D, T) = -\sum_{(x_i, y_i) \in D} \sum_k I(y_i = k) \log(T(x_i))
 
-  where :math:`D` is the training dataset of pairs :math:`(x_i, y_i)`. This
-  quantity can be rewritten as the sum of the Shannon entropies computed for
-  each leaf of :math:`T` multiplied by the number of training data point that
-  reached that leaf recovers:
+  where :math:`D` is the training dataset of pairs :math:`(x_i, y_i)`.
+
+  In a classification tree, the class assignment probabilities within leaf nodes
+  are constant, that is: for all :math:`(x_i, y_i) \in Q_m` such that :math:`y_i
+  = k` then :math:`T(x_i) = p_{mk}`.
+
+  This property makes it possible to rewrite :math:`\mathrm{CE}(D, T)` as the
+  sum of the Shannon entropies computed for each leaf of :math:`T` weighted by
+  the number of training data points that reached each leaf:
 
   .. math::
   
       \mathrm{CE}(D, T) = -\sum_{m \in T} n_m H(Q_m)
-
-  where :math:`n_m` is the number of training datapoints in leaf :math:`m`.
 
 Regression criteria
 -------------------
