@@ -17,13 +17,9 @@ consists of a sinusoidal target function and strong noise added to every fifth
 datapoint. The first figure compares the learned model of KRR and SVR when both
 complexity/regularization and bandwidth of the RBF kernel are optimized using
 grid-search. The learned functions are very similar; however, fitting KRR is
-approx. seven times faster than fitting SVR (both with grid-search). However,
-prediction of 100000 target values is more than tree times faster with SVR
-since it has learned a sparse model using only approx. 1/3 of the 100 training
-datapoints as support vectors.
+approx. seven times faster than fitting SVR (both with grid-search).
 
-TODO: merge this suggestion with previous sentence
- However, prediction of 100000 target values is could be in theory approximately
+Prediction of 100000 target values could be in theory approximately
 tree times faster with SVR since it has learned a sparse model using only
 approximately 1/3 of the training datapoints as support vectors. However, in
 practice, this is not necessarily the case because of implementation details
@@ -191,28 +187,27 @@ from sklearn.model_selection import learning_curve
 
 plt.figure()
 
+svr = SVR(kernel="rbf", C=1e1, gamma=0.1)
+kr = KernelRidge(kernel="rbf", alpha=0.1, gamma=0.1)
 train_sizes, train_scores_svr, test_scores_svr = learning_curve(
-    svr.best_estimator_,
-    X[:1000],
-    y[:1000],
-    train_sizes=np.linspace(0.1, 1, 7),
+    svr,
+    X[:100],
+    y[:100],
+    train_sizes=np.linspace(0.1, 1, 10),
     scoring="neg_mean_squared_error",
     cv=10,
 )
 train_sizes_abs, train_scores_kr, test_scores_kr = learning_curve(
-    kr.best_estimator_,
-    X[:1000],
-    y[:1000],
-    train_sizes=np.linspace(0.1, 1, 7),
+    kr,
+    X[:100],
+    y[:100],
+    train_sizes=np.linspace(0.1, 1, 10),
     scoring="neg_mean_squared_error",
     cv=10,
 )
 
-plt.plot(train_sizes, -train_scores_kr.mean(1), "o-", color="g", label="KRR (train)")
-plt.plot(train_sizes, -test_scores_kr.mean(1), "o--", color="g", label="KRR (test)")
-plt.plot(train_sizes, -train_scores_svr.mean(1), "o-", color="r", label="SVR (train)")
-plt.plot(train_sizes, -test_scores_svr.mean(1), "o--", color="r", label="SVR (test)")
-
+plt.plot(train_sizes, -test_scores_svr.mean(1), "o-", color="r", label="SVR")
+plt.plot(train_sizes, -test_scores_kr.mean(1), "o-", color="g", label="KRR")
 plt.xlabel("Train size")
 plt.ylabel("Mean Squared Error")
 plt.title("Learning curves")
