@@ -177,5 +177,5 @@ def test_single_cluster(is_sparse):
         X = sp.csr_matrix(X)
     
     km = BisectingKMeans(n_clusters=1, random_state=0).fit(X)
-    
-    assert_allclose(km.cluster_centers_, X.mean(axis=0))
+
+    assert_allclose(km.cluster_centers_, X.mean(axis=0).reshape(1, -1))
