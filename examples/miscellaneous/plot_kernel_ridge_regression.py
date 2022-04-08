@@ -212,8 +212,8 @@ train_sizes_abs, train_scores_kr, test_scores_kr = learning_curve(
     cv=10,
 )
 
-plt.plot(train_sizes, -test_scores_svr.mean(1), "o--", color="r", label="SVR")
 plt.plot(train_sizes, -test_scores_kr.mean(1), "o--", color="g", label="KRR")
+plt.plot(train_sizes, -test_scores_svr.mean(1), "o--", color="r", label="SVR")
 plt.xlabel("Train size")
 plt.ylabel("Mean Squared Error")
 plt.title("Learning curves")
