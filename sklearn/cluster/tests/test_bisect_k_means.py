@@ -1,4 +1,3 @@
-from re import search
 from warnings import simplefilter
 
 import numpy as np
@@ -88,6 +87,7 @@ def test_one_cluster():
             + " - Use Normal KMeans from sklearn.cluster instead."
         )
         assert str(w[0].message) == msg
+        print(bisect_means.labels_)
 
         # All labels from fit or predict should be equal 0
         assert all(bisect_means.predict(X) == 0)
@@ -133,19 +133,6 @@ def test_wrong_params(param, match, single_value):
         bisect_means = BisectingKMeans(n_clusters=3, n_init=1)
         bisect_means.set_params(**param)
         bisect_means.fit(X)
-
-
-def test_verbose(capsys):
-    """Test Verbose mode"""
-    rng = np.random.RandomState(0)
-    X = rng.rand(5, 2)
-
-    bisect_means = BisectingKMeans(n_clusters=3, verbose=1)
-    bisect_means.fit(X)
-
-    captured = capsys.readouterr()
-
-    # assert search(r"Running Bisecting K-Means", captured.out)
 
 
 @pytest.mark.parametrize("is_sparse", [True, False])

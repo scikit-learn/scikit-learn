@@ -270,7 +270,7 @@ class BisectingKMeans(_BaseKMeans):
     ...               [10, 6], [10, 8], [10, 10]])
     >>> bisect_means = BisectingKMeans(n_clusters=3, random_state=0).fit(X)
     >>> bisect_means.labels_
-    array([2, 0, 2, 0, 2, 0, 1, 1, 1], dtype=int32)
+    array([2, 2, 2, 0, 0, 0, 1, 1, 1], dtype=int32)
     >>> bisect_means.predict([[0, 0], [12, 3]])
     array([2, 0], dtype=int32)
     >>> bisect_means.cluster_centers_
@@ -434,7 +434,8 @@ class BisectingKMeans(_BaseKMeans):
             print(f"New centroids from bisection: {best_centers}")
 
         if self.bisecting_strategy == "biggest_inertia":
-            scores = self._compute_bisect_errors(X, best_centers, best_labels, sample_weight)
+            scores = self._compute_bisect_errors(X, best_centers, best_labels,
+                                                 sample_weight)
         else:  # bisecting_strategy == "largest_cluster"
             scores = np.bincount(best_labels)
 
