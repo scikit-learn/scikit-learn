@@ -32,7 +32,11 @@ from sklearn.cluster._k_means_common import _is_same_clustering
 from sklearn.datasets import make_blobs
 from io import StringIO
 
-pytestmark = pytest.mark.filterwarnings("ignore::FutureWarning")  # TODO(1.3): Remove
+# TODO(1.3): Remove
+msg = (
+    r"The default value of `n_init` will change from \d* to 'auto' in 1.3:FutureWarning"
+)
+pytestmark = pytest.mark.filterwarnings("ignore:" + msg)
 
 # non centered, sparse centers to check the
 centers = np.array(
