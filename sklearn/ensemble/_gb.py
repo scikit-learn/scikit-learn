@@ -289,7 +289,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         ):
             raise ValueError(f"Loss {self.loss!r} not supported. ")
 
-        # TODO: Remove in v1.2
+        # TODO(1.2): Remove
         if self.loss == "ls":
             warnings.warn(
                 "The loss 'ls' was deprecated in v1.0 and "
@@ -305,7 +305,20 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 FutureWarning,
             )
 
+        # TODO(1.3): Remove
         if self.loss == "deviance":
+            warnings.warn(
+                "The loss parameter name 'deviance' was deprecated in v1.1 and will be "
+                "removed in version 1.3. Use the new parameter name 'log_loss' which "
+                "is equivalent.",
+                FutureWarning,
+            )
+            loss_class = (
+                _gb_losses.MultinomialDeviance
+                if len(self.classes_) > 2
+                else _gb_losses.BinomialDeviance
+            )
+        elif self.loss == "log_loss":
             loss_class = (
                 _gb_losses.MultinomialDeviance
                 if len(self.classes_) > 2
@@ -525,7 +538,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             )
 
         if self.criterion == "mse":
-            # TODO: Remove in v1.2. By then it should raise an error.
+            # TODO(1.2): Remove. By then it should raise an error.
             warnings.warn(
                 "Criterion 'mse' was deprecated in v1.0 and will be "
                 "removed in version 1.2. Use `criterion='squared_error'` "
@@ -955,7 +968,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         return leaves
 
-    # TODO: Remove in 1.2
+    # TODO(1.2): Remove
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
         "Attribute `n_features_` was deprecated in version 1.0 and will be "
@@ -972,19 +985,23 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
     GB builds an additive model in a
     forward stage-wise fashion; it allows for the optimization of
     arbitrary differentiable loss functions. In each stage ``n_classes_``
-    regression trees are fit on the negative gradient of the
-    binomial or multinomial deviance loss function. Binary classification
+    regression trees are fit on the negative gradient of the loss function,
+    e.g. binary or multiclass log loss. Binary classification
     is a special case where only a single regression tree is induced.
 
     Read more in the :ref:`User Guide <gradient_boosting>`.
 
     Parameters
     ----------
-    loss : {'deviance', 'exponential'}, default='deviance'
-        The loss function to be optimized. 'deviance' refers to
-        deviance (= logistic regression) for classification
-        with probabilistic outputs. For loss 'exponential' gradient
-        boosting recovers the AdaBoost algorithm.
+    loss : {'log_loss', 'deviance', 'exponential'}, default='log_loss'
+        The loss function to be optimized. 'log_loss' refers to binomial and
+        multinomial deviance, the same as used in logistic regression.
+        It is a good choice for classification with probabilistic outputs.
+        For loss 'exponential', gradient boosting recovers the AdaBoost algorithm.
+
+        .. deprecated:: 1.1
+            The loss 'deviance' was deprecated in v1.1 and will be removed in
+            version 1.3. Use `loss='log_loss'` which is equivalent.
 
     learning_rate : float, default=0.1
         Learning rate shrinks the contribution of each tree by `learning_rate`.
@@ -1284,12 +1301,13 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
     0.913...
     """
 
-    _SUPPORTED_LOSS = ("deviance", "exponential")
+    # TODO(1.3): remove "deviance"
+    _SUPPORTED_LOSS = ("log_loss", "deviance", "exponential")
 
     def __init__(
         self,
         *,
-        loss="deviance",
+        loss="log_loss",
         learning_rate=0.1,
         n_estimators=100,
         subsample=1.0,
@@ -1839,7 +1857,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     0.4...
     """
 
-    # TODO: remove "ls" in version 1.2
+    # TODO(1.2): remove "ls" and "lad"
     _SUPPORTED_LOSS = (
         "squared_error",
         "ls",
