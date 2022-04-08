@@ -125,6 +125,21 @@ def test_stroptions():
 
 
 @pytest.mark.parametrize(
+    "type, expected_type_name",
+    [
+        (int, "int"),
+        (Integral, "int"),
+        (Real, "float"),
+        (np.ndarray, "numpy.ndarray"),
+    ]
+)
+def test_instances_of_type_human_readable(type, expected_type_name):
+    """Check the string representation of the _InstancesOf constraint."""
+    constraint = _InstancesOf(type)
+    assert str(constraint) == f"an instance of '{expected_type_name}'"
+
+
+@pytest.mark.parametrize(
     "constraint",
     [
         Interval(Real, None, 0, closed="left"),

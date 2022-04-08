@@ -36,7 +36,7 @@ def validate_parameter_constraints(parameter_constraints, params, caller_name):
     caller_name : str
         The name of the estimator or function or method that called this function.
     """
-    if not params.keys() == parameter_constraints.keys():
+    if params.keys() != parameter_constraints.keys():
         raise ValueError(
             f"The parameter constraints {list(parameter_constraints.keys())} do not "
             f"match the parameters to validate {list(params.keys())}."
@@ -393,6 +393,8 @@ class _RandomStates(_Constraint):
 
 def generate_invalid_param_val(constraint):
     """Return a value that does not satisfy the constraint.
+
+    This is only useful for testing purpose.
 
     Parameters
     ----------
