@@ -503,33 +503,33 @@ Entropy:
 
 .. note::
 
-  The entropy criterion computes the Shannon entropy of the categorical
-  distribution parametrized by the class frequency the training data points that
+  The entropy criterion computes the Shannon entropy of the possible classes. As
+  their probability, its takes the class frequencies of the training data points that
   reached a given leaf `m`. Using the **Shannon entropy as tree node splitting
-  criterion is equivalent to minimizing the cross-entropy loss** (also known as
-  the categorical deviance or the log-loss) between the true labels :math:`y_i`
+  criterion is equivalent to minimizing the log loss** (also known as cross-entropy
+  and multinomial deviance) between the true labels :math:`y_i`
   and the probalistic predictions :math:`T(x_i)` of the tree model :math:`T`.
 
-  To see, this, first recall that the cross-entropy of a tree model :math:`T`
+  To see, this, first recall that the log loss of a tree model :math:`T`
   computed on a dataset :math:`D` is defined as follows:
 
   .. math::
   
-      \mathrm{CE}(D, T) = -\sum_{(x_i, y_i) \in D} \sum_k I(y_i = k) \log(T(x_i))
+      \mathrm{LL}(D, T) = -\sum_{(x_i, y_i) \in D} \sum_k I(y_i = k) \log(T(x_i))
 
   where :math:`D` is the training dataset of pairs :math:`(x_i, y_i)`.
 
-  In a classification tree, the class assignment probabilities within leaf nodes
+  In a classification tree, the predicted class probabilities within leaf nodes
   are constant, that is: for all :math:`(x_i, y_i) \in Q_m` such that :math:`y_i
   = k` then :math:`T(x_i) = p_{mk}`.
 
-  This property makes it possible to rewrite :math:`\mathrm{CE}(D, T)` as the
+  This property makes it possible to rewrite :math:`\mathrm{LL}(D, T)` as the
   sum of the Shannon entropies computed for each leaf of :math:`T` weighted by
   the number of training data points that reached each leaf:
 
   .. math::
   
-      \mathrm{CE}(D, T) = -\sum_{m \in T} n_m H(Q_m)
+      \mathrm{LL}(D, T) = -\sum_{m \in T} n_m H(Q_m)
 
 Regression criteria
 -------------------
