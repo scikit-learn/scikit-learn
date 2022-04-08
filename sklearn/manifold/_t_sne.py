@@ -470,7 +470,7 @@ def trustworthiness(X, X_embedded, *, n_neighbors=5, metric="euclidean"):
     n_neighbors : int, default=5
         The number of neighbors that will be considered. Should be fewer than
         `n_samples / 2` to ensure the trustworthiness to lies within [0, 1], as
-        mentioned in [1]_. A warning will be raised otherwise.
+        mentioned in [1]_. An error will be raised otherwise.
 
     metric : str or callable, default='euclidean'
         Which metric to use for computing pairwise distances between samples

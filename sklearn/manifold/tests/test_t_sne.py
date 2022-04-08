@@ -278,7 +278,7 @@ def test_trustworthiness():
 
 
 def test_trustworthiness_n_neighbors_error():
-    ""Raise an error when n_neighbors >= n_samples / 2.
+    """Raise an error when n_neighbors >= n_samples / 2.
     
     Non-regression test for #18567.
     """
