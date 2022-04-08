@@ -1,3 +1,4 @@
+import warnings
 from warnings import simplefilter
 
 import numpy as np
@@ -78,17 +79,22 @@ def test_one_cluster():
 
     X = np.array([[1, 2], [10, 2], [10, 8]])
 
-    with pytest.warns(None) as w:
-        bisect_means = BisectingKMeans(n_clusters=1, random_state=0)
-        bisect_means.fit(X)
-        msg = (
-            "BisectingKMeans might be inefficient for n_cluster smaller than 3 "
-            + " - Use Normal KMeans from sklearn.cluster instead."
-        )
-        assert str(w[0].message) == msg
+    bisect_means = BisectingKMeans(n_clusters=1, random_state=0)
 
-        # All labels from fit or predict should be equal 0
-        assert all(bisect_means.predict(X) == 0)
+    with warnings.catch_warnings(record=True) as w:
+        bisect_means.fit(X)
+
+    msg = (
+        "BisectingKMeans might be inefficient for n_cluster smaller than 3 "
+        + " - Use Normal KMeans from sklearn.cluster instead."
+    )
+    assert str(w[0].message) == msg
+
+    # All labels from fit or predict should be equal 0
+    assert all(bisect_means.labels_ == 0)
+    assert all(bisect_means.predict(X) == 0)
+
+    assert_allclose(bisect_means.cluster_centers_, X.mean(axis=0).reshape(1, -1))
 
 
 @pytest.mark.parametrize(
@@ -161,22 +167,6 @@ def test_fit_predict(is_sparse):
     bisect_means.fit(X)
 
     assert_array_equal(bisect_means.labels_, bisect_means.predict(X))
-
-
-@pytest.mark.parametrize("is_sparse", [True, False])
-def test_single_cluster(is_sparse):
-    """Check that it works with n_clusters=1."""
-    rng = np.random.RandomState(0)
-
-    X = rng.rand(10, 2)
-
-    if is_sparse:
-        X[X < 0.8] = 0
-        X = sp.csr_matrix(X)
-    
-    km = BisectingKMeans(n_clusters=1, random_state=0).fit(X)
-
-    assert_allclose(km.cluster_centers_, X.mean(axis=0).reshape(1, -1))
 
 
 @pytest.mark.parametrize("is_sparse", [True, False])
