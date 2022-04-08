@@ -261,7 +261,10 @@ display.figure_.subplots_adjust(wspace=0.4, hspace=0.3)
 # Let's make the same partial dependence plot for the 2 features interaction,
 # this time in 3 dimensions.
 import numpy as np
-from mpl_toolkits.mplot3d import Axes3D
+
+# unused but required import for doing 3d projections with matplotlib < 3.2
+import mpl_toolkits.mplot3d  # noqa: F401
+
 from sklearn.inspection import partial_dependence
 
 fig = plt.figure()
@@ -272,7 +275,7 @@ pdp = partial_dependence(
 )
 XX, YY = np.meshgrid(pdp["values"][0], pdp["values"][1])
 Z = pdp.average[0].T
-ax = Axes3D(fig)
+ax = fig.add_subplot(projection="3d")
 fig.add_axes(ax)
 
 surf = ax.plot_surface(XX, YY, Z, rstride=1, cstride=1, cmap=plt.cm.BuPu, edgecolor="k")
