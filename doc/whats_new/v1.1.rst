@@ -454,39 +454,6 @@ Changelog
   fitting on a pandas DataFrame with a non-default `scoring` parameter and
   early_stopping enabled. :pr:`22908` by `Thomas Fan`_.
 
-:mod:`sklearn.feature_extraction`
-.................................
-
-- |Feature| :class:`feature_extraction.FeatureHasher` now supports PyPy.
-  :pr:`23023` by `Thomas Fan`_.
-
-- |Feature| Added auto mode to
-  :class:`feature_selection.SequentialFeatureSelection`. If the argument
-  `n_features_to_select` is `'auto'`, select features until the score
-  improvement does not exceed the argument `tol`. The default value of
-  `n_features_to_select` changed from `None` to `'warn'` in 1.1 and will become
-  `'auto'` in 1.3. `None` and `'warn'` will be removed in 1.3. :pr:`20145` by
-  :user:`murata-yu`.
-
-:mod:`sklearn.feature_selection`
-................................
-
-- |Efficiency| Improve runtime performance of :func:`feature_selection.chi2`
-  with boolean arrays. :pr:`22235` by `Thomas Fan`_.
-
-- |Feature| Added the ability to pass callables to the `max_features` parameter
-  of :class:`feature_selection.SelectFromModel`. Also introduced new attribute
-  `max_features_` which is inferred from `max_features` and the data during
-  `fit`. If `max_features` is an integer, then `max_features_ = max_features`.
-  If `max_features` is a callable, then `max_features_ = max_features(X)`.
-  :pr:`22356` by :user:`Meekail Zain <micky774>`
-
-:mod:`sklearn.feature_selection`
-................................
-- |Efficiency| Reduced memory usage of :func:`feature_selection.chi2`.
-  :pr:`21837` by :user:`Louis Wagner <lrwagner>`.
-
-- |Efficiency|  Fitting a :class:`ensemble.RandomForestClassifier`,
 - |Efficiency| Fitting a :class:`ensemble.RandomForestClassifier`,
   :class:`ensemble.RandomForestRegressor`, :class:`ensemble.ExtraTreesClassifier`,
   :class:`ensemble.ExtraTreesRegressor`, and :class:`ensemble.RandomTreesEmbedding`
@@ -506,6 +473,9 @@ Changelog
 
 :mod:`sklearn.feature_extraction`
 .................................
+
+- |Feature| :class:`feature_extraction.FeatureHasher` now supports PyPy.
+  :pr:`23023` by `Thomas Fan`_.
 
 - |Fix| :class:`feature_extraction.FeatureHasher` now validates input parameters
   in `transform` instead of `__init__`. :pr:`21573` by
