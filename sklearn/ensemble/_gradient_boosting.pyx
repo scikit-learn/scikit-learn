@@ -222,7 +222,6 @@ def predict_stages(np.ndarray[object, ndim=2] estimators,
                 ## out[:, k] += scale * tree.predict(X).ravel()
 
 
-
 def predict_stage(np.ndarray[object, ndim=2] estimators,
                   int stage,
                   object X, double scale,
