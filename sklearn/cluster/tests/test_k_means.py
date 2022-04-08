@@ -1036,19 +1036,23 @@ def test_inertia(dtype):
 
 
 # TODO(1.3): Remove
-def test_change_n_init_future_warning():
-    km = KMeans(n_init=1)
+@pytest.mark.parametrize("Klass", [KMeans, MiniBatchKMeans])
+def test_change_n_init_future_warning(Klass):
+    est = Klass(n_init=1)
     with warnings.catch_warnings():
-        warnings.filterwarnings("error", FutureWarning)
-        km.fit(X)
+        warnings.simplefilter("error", FutureWarning)
+        est.fit(X)
 
-    msg = "The default value of `n_init` will change from 10 to 'auto' in 1.3"
-    km = KMeans()
+    msg = r"The default value of `n_init` will change from \d* to 'auto' in 1.3"
+    est = Klass()
     with pytest.warns(FutureWarning, match=msg):
-        km.fit(X)
+        est.fit(X)
 
 
-# TODO(1.3): Remove
+@pytest.mark.parametrize("Klass", [KMeans, MiniBatchKMeans])
+def test_n_init_auto(Klass):
+    est = Klass(n_init="auto")
+    est.fit(X)
 
 
 @pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])

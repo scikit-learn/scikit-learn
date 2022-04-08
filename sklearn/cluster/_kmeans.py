@@ -318,6 +318,8 @@ def k_means(
 
         .. versionadded:: 1.1
            Added 'auto' option for `n_init`.
+        .. deprecated:: 1.1
+           Default value for `n_init` will change from 10 to `'auto'` in 1.3
 
     max_iter : int, default=300
         Maximum number of iterations of the k-means algorithm to run.
@@ -813,9 +815,24 @@ class _BaseKMeans(
 
     def _check_params(self, X):
         # n_init
-        if self.n_init <= 0:
-            raise ValueError(f"n_init should be > 0, got {self.n_init} instead.")
+        # TODO(1.3): Remove
         self._n_init = self.n_init
+        if self._n_init == "warn":
+            warnings.warn(
+                "The default value of `n_init` will change from 10 to 'auto' in 1.3."
+                " Set the value of `n_init` explicitly to suppress the warning",
+                FutureWarning,
+            )
+            self._n_init = "auto"
+        if self._n_init == "auto":
+            if self._n_init == "kmeans++":
+                self._n_init = 1
+            else:
+                self._n_init = 10 if self.__class__.__name__ == "KMeans" else 3
+        if self.n_init not in ("auto", "warn") and self.n_init <= 0:
+            raise ValueError(
+                f"n_init should be > 0 or 'auto', got {self._n_init} instead."
+            )
 
         # max_iter
         if self.max_iter <= 0:
@@ -1153,6 +1170,8 @@ class KMeans(_BaseKMeans):
 
         .. versionadded:: 1.1
            Added 'auto' option for `n_init`.
+        .. deprecated:: 1.1
+           Default value for `n_init` will change from 10 to `'auto'` in 1.3
 
     max_iter : int, default=300
         Maximum number of iterations of the k-means algorithm for a
@@ -1299,16 +1318,6 @@ class KMeans(_BaseKMeans):
         self.algorithm = algorithm
 
     def _check_params(self, X):
-        # TODO(1.3): Remove
-        if self.n_init == "warn":
-            warnings.warn(
-                "The default value of `n_init` will change from 10 to 'auto' in 1.3."
-                " Set the value of `n_init` explicitly to suppress the warning",
-                FutureWarning,
-            )
-            self.n_init = "auto"
-        if self.n_init == "auto":
-            self.n_init = 1 if self.init == "kmeans++" else 10
 
         super()._check_params(X)
 
@@ -1673,10 +1682,18 @@ class MiniBatchKMeans(_BaseKMeans):
         If `None`, the heuristic is `init_size = 3 * batch_size` if
         `3 * batch_size < n_clusters`, else `init_size = 3 * n_clusters`.
 
-    n_init : int, default=3
+    n_init : 'auto' or int, default=3
         Number of random initializations that are tried.
         In contrast to KMeans, the algorithm is only run once, using the
         best of the ``n_init`` initializations as measured by inertia.
+
+        When `n_init='auto'`, the number of runs will be 3 if using
+        `init='random'`, and 1 if using `init='kmeans++'`
+
+        .. versionadded:: 1.1
+           Added 'auto' option for `n_init`.
+        .. deprecated:: 1.1
+           Default value for `n_init` will change from 3 to `'auto'` in 1.3
 
     reassignment_ratio : float, default=0.01
         Control the fraction of the maximum number of counts for a center to
@@ -1776,7 +1793,7 @@ class MiniBatchKMeans(_BaseKMeans):
         tol=0.0,
         max_no_improvement=10,
         init_size=None,
-        n_init=3,
+        n_init="warn",
         reassignment_ratio=0.01,
     ):
 
