@@ -159,17 +159,11 @@ plot_cv_indices(cv, X, y, groups, ax, n_splits)
 #   different folds.
 # - ``StratifiedGroupKFold`` to keep the constraint of ``GroupKFold`` while
 #   attempting to return stratified folds.
-
-# To better demonstrate the difference, we will assign samples to groups
-# unevenly:
-
-uneven_groups = np.sort(np.random.randint(0, 10, n_points))
-
 cvs = [StratifiedKFold, GroupKFold, StratifiedGroupKFold]
 
 for cv in cvs:
     fig, ax = plt.subplots(figsize=(6, 3))
-    plot_cv_indices(cv(n_splits), X, y, uneven_groups, ax, n_splits)
+    plot_cv_indices(cv(n_splits), X, y, groups, ax, n_splits)
     ax.legend(
         [Patch(color=cmap_cv(0.8)), Patch(color=cmap_cv(0.02))],
         ["Testing set", "Training set"],
