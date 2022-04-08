@@ -10,6 +10,7 @@ from joblib import Parallel
 
 from .. import partial_dependence
 from ...base import is_regressor
+from ...utils import Bunch
 from ...utils import check_array
 from ...utils import deprecated
 from ...utils import check_matplotlib_support  # noqa
@@ -1028,7 +1029,6 @@ class PartialDependenceDisplay:
         pd_plot_idx,
         n_total_lines_by_plot,
         individual_line_kw,
-        centered,
     ):
         """Plot the ICE lines.
 
@@ -1051,8 +1051,6 @@ class PartialDependenceDisplay:
             The total number of lines expected to be plot on the axis.
         individual_line_kw : dict
             Dict with keywords passed when plotting the ICE lines.
-        centered : bool
-            Whether or not to center the ICE lines to start at the origin.
         """
         rng = check_random_state(self.random_state)
         # subsample ice
@@ -1062,10 +1060,6 @@ class PartialDependenceDisplay:
             replace=False,
         )
         ice_lines_subsampled = preds[ice_lines_idx, :]
-        if centered:
-            # trigger a copy if we need to center the ICE lines
-            ice_lines_subsampled = ice_lines_subsampled.copy()
-            ice_lines_subsampled -= ice_lines_subsampled[:, [0]]
         # plot the subsampled ice
         for ice_idx, ice in enumerate(ice_lines_subsampled):
             line_idx = np.unravel_index(
@@ -1082,7 +1076,6 @@ class PartialDependenceDisplay:
         ax,
         pd_line_idx,
         line_kw,
-        centered,
     ):
         """Plot the average partial dependence.
 
@@ -1103,10 +1096,6 @@ class PartialDependenceDisplay:
         centered : bool
             Whether or not to center the average PD to start at the origin.
         """
-        if centered:
-            # trigger a copy to not make changes to the original array
-            avg_preds = avg_preds.copy()
-            avg_preds -= avg_preds[0]
         line_idx = np.unravel_index(pd_line_idx, self.lines_.shape)
         self.lines_[line_idx] = ax.plot(
             feature_values,
@@ -1129,7 +1118,6 @@ class PartialDependenceDisplay:
         ice_lines_kw,
         pd_line_kw,
         pdp_lim,
-        centered,
     ):
         """Plot 1-way partial dependence: ICE and PDP.
 
@@ -1167,8 +1155,6 @@ class PartialDependenceDisplay:
             Global min and max average predictions, such that all plots will
             have the same scale and y limits. `pdp_lim[1]` is the global min
             and max for single partial dependence curves.
-        centered : bool
-            Whether or not to center the PD and ICE plot to start at the origin.
         """
         from matplotlib import transforms  # noqa
 
@@ -1181,7 +1167,6 @@ class PartialDependenceDisplay:
                 pd_plot_idx,
                 n_lines,
                 ice_lines_kw,
-                centered,
             )
 
         if kind in ("average", "both"):
@@ -1196,7 +1181,6 @@ class PartialDependenceDisplay:
                 ax,
                 pd_line_idx,
                 pd_line_kw,
-                centered,
             )
 
         trans = transforms.blended_transform_factory(ax.transData, ax.transAxes)
@@ -1419,18 +1403,34 @@ class PartialDependenceDisplay:
                 )
             pdp_lim = self.pdp_lim
 
+        # Center results before plotting
+        if not centered:
+            pd_results_ = self.pd_results
+        else:
+            pd_results_ = []
+            for kind_plot, pd_result in zip(kind, self.pd_results):
+                current_results = {"values": pd_result["values"]}
+
+                if kind_plot in ("individual", "both"):
+                    preds = pd_result.individual
+                    preds = preds - preds[self.target_idx, :, 0, None]
+                    current_results["individual"] = preds
+
+                if kind_plot in ("average", "both"):
+                    avg_preds = pd_result.average
+                    avg_preds = avg_preds - avg_preds[self.target_idx, 0, None]
+                    current_results["average"] = avg_preds
+
+                pd_results_.append(Bunch(**current_results))
+
         if pdp_lim is None:
             # get global min and max average predictions of PD grouped by plot type
             pdp_lim = {}
-            for idx, pdp in enumerate(self.pd_results):
+            for kind_plot, pdp in zip(kind, pd_results_):
                 values = pdp["values"]
-                preds = pdp.average if kind[idx] == "average" else pdp.individual
-                if centered and kind[idx] in ("both", "individual"):
-                    preds_offset = preds[self.target_idx, :, 0, None]
-                else:
-                    preds_offset = 0.0
-                min_pd = (preds[self.target_idx] - preds_offset).min()
-                max_pd = (preds[self.target_idx] - preds_offset).max()
+                preds = pdp.average if kind_plot == "average" else pdp.individual
+                min_pd = preds[self.target_idx].min()
+                max_pd = preds[self.target_idx].max()
                 n_fx = len(values)
                 old_min_pd, old_max_pd = pdp_lim.get(n_fx, (min_pd, max_pd))
                 min_pd = min(min_pd, old_min_pd)
@@ -1462,7 +1462,7 @@ class PartialDependenceDisplay:
             # we need to determine the number of ICE samples computed
             ice_plot_idx = is_average_plot.index(False)
             n_ice_lines = self._get_sample_count(
-                len(self.pd_results[ice_plot_idx].individual[0])
+                len(pd_results_[ice_plot_idx].individual[0])
             )
             if any([kind_plot == "both" for kind_plot in kind]):
                 n_lines = n_ice_lines + 1  # account for the average line
@@ -1530,7 +1530,7 @@ class PartialDependenceDisplay:
         self.deciles_hlines_ = np.empty_like(self.axes_, dtype=object)
 
         for pd_plot_idx, (axi, feature_idx, pd_result, kind_plot) in enumerate(
-            zip(self.axes_.ravel(), self.features, self.pd_results, kind)
+            zip(self.axes_.ravel(), self.features, pd_results_, kind)
         ):
             avg_preds = None
             preds = None
@@ -1597,7 +1597,6 @@ class PartialDependenceDisplay:
                     ice_lines_kw,
                     pd_line_kw,
                     pdp_lim,
-                    centered,
                 )
             else:
                 self._plot_two_way_partial_dependence(
