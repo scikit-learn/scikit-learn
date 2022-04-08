@@ -27,8 +27,6 @@ def transform(raw_X, Py_ssize_t n_features, dtype,
         For constructing a scipy.sparse.csr_matrix.
 
     """
-    assert n_features > 0
-
     cdef INT32TYPE_t h
     cdef double value
 
