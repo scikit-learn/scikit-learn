@@ -303,48 +303,6 @@ class BisectingKMeans(_BaseKMeans):
         self.algorithm = algorithm
         self.bisecting_strategy = bisecting_strategy
 
-    def _compute_bisect_errors(self, X, centers, labels, sample_weight):
-        """
-        Calculate the sum of squared errors (inertia) per cluster.
-
-        Parameters
-        ----------
-        X : {ndarray, csr_matrix} of shape (n_samples, n_features)
-            The input samples.
-
-        centers : ndarray of shape (n_clusters, n_features)
-            The cluster centers.
-
-        labels : ndarray of shape (n_samples,)
-            Index of the cluster each sample belongs to.
-
-        sample_weight : ndarray of shape (n_samples,)
-            The weights for each observation in X.
-
-        Returns
-        -------
-        errors_by_label : dict
-            dictionary containing squared error of each point by label
-            as ndarray.
-        """
-        errors_by_label = {}
-
-        _inertia = _inertia_sparse if sp.issparse(X) else _inertia_dense
-
-        for value in range(centers.shape[0]):
-            indexes = labels == value
-
-            data = X[indexes]
-            weights = sample_weight[indexes]
-            center = centers[value][np.newaxis, :]
-            label = np.zeros(data.shape[0], dtype=np.intc)
-
-            errors_by_label[value] = _inertia(
-                data, weights, center, label, self._n_threads
-            )
-
-        return errors_by_label
-
     def _check_params(self, X):
         super()._check_params(X)
 
@@ -376,6 +334,38 @@ class BisectingKMeans(_BaseKMeans):
             "threads. You can avoid it by setting the environment"
             f" variable OMP_NUM_THREADS={n_active_threads}."
         )
+
+    def _inertia_per_cluster(self, X, centers, labels, sample_weight):
+        """Calculate the sum of squared errors (inertia) per cluster.
+
+        Parameters
+        ----------
+        X : {ndarray, csr_matrix} of shape (n_samples, n_features)
+            The input samples.
+
+        centers : ndarray of shape (n_clusters, n_features)
+            The cluster centers.
+
+        labels : ndarray of shape (n_samples,)
+            Index of the cluster each sample belongs to.
+
+        sample_weight : ndarray of shape (n_samples,)
+            The weights for each observation in X.
+
+        Returns
+        -------
+        inertia_per_cluster : ndarray of shape (n_clusters,)
+            Sum of squared errors (inertia) for each cluster.
+        """
+        _inertia = _inertia_sparse if sp.issparse(X) else _inertia_dense
+
+        inertia_per_cluster = np.empty(centers.shape[1])
+        for label in range(centers.shape[0]):
+            inertia_per_cluster[label] = _inertia(
+                X, sample_weight, centers, labels, self._n_threads, single_label=label
+            )
+
+        return inertia_per_cluster
 
     def _bisect(self, X, x_squared_norms, sample_weight, cluster_to_bisect):
         """Split a cluster into 2 subsclusters.
@@ -429,7 +419,7 @@ class BisectingKMeans(_BaseKMeans):
             print(f"New centroids from bisection: {best_centers}")
 
         if self.bisecting_strategy == "biggest_inertia":
-            scores = self._compute_bisect_errors(X, best_centers, best_labels, sample_weight)
+            scores = self._inertia_per_cluster(X, best_centers, best_labels, sample_weight)
         else:  # bisecting_strategy == "largest_cluster"
             scores = np.bincount(best_labels)
 

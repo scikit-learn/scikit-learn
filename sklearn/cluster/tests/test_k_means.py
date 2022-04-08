@@ -1,4 +1,5 @@
 """Testing for K-means"""
+from cmath import sin
 import re
 import sys
 
@@ -1026,6 +1027,23 @@ def test_inertia(dtype):
     inertia_dense = _inertia_dense(X_dense, sample_weight, centers, labels, n_threads=1)
     inertia_sparse = _inertia_sparse(
         X_sparse, sample_weight, centers, labels, n_threads=1
+    )
+
+    assert_allclose(inertia_dense, inertia_sparse, rtol=1e-6)
+    assert_allclose(inertia_dense, expected, rtol=1e-6)
+    assert_allclose(inertia_sparse, expected, rtol=1e-6)
+
+    # Check the single_label parameter.
+    label = 1
+    mask = labels == label
+    distances = ((X_dense[mask] - centers[label]) ** 2).sum(axis=1)
+    expected = np.sum(distances * sample_weight[mask])
+
+    inertia_dense = _inertia_dense(
+        X_dense, sample_weight, centers, labels, n_threads=1, single_label=label
+    )
+    inertia_sparse = _inertia_sparse(
+        X_sparse, sample_weight, centers, labels, n_threads=1, single_label=label
     )
 
     assert_allclose(inertia_dense, inertia_sparse, rtol=1e-6)
