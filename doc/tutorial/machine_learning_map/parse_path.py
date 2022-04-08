@@ -54,8 +54,8 @@ sign = oneOf("+ -")
 def convertToFloat(s, loc, toks):
     try:
         return float(toks[0])
-    except:
-        raise ParseException(loc, "invalid float format %s"%toks[0])
+    except BaseException as e:
+        raise ParseException(loc, "invalid float format %s" % toks[0]) from e
 
 exponent = CaselessLiteral("e")+Optional(sign)+Word(nums)
 

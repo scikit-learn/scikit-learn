@@ -20,10 +20,11 @@ can mitigate those limitations.
 
 .. topic:: References:
 
-   [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32,
-       2001. https://doi.org/10.1023/A:1010933404324
+   * :doi:`L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32,
+     2001. <10.1023/A:1010933404324>`
+
 """
-print(__doc__)
+# %%
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -37,7 +38,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder
 
 
-##############################################################################
+# %%
 # Data Loading and Feature Engineering
 # ------------------------------------
 # Let's use pandas to load a copy of the titanic dataset. The following shows
@@ -52,36 +53,35 @@ from sklearn.preprocessing import OneHotEncoder
 #   values).
 X, y = fetch_openml("titanic", version=1, as_frame=True, return_X_y=True)
 rng = np.random.RandomState(seed=42)
-X['random_cat'] = rng.randint(3, size=X.shape[0])
-X['random_num'] = rng.randn(X.shape[0])
+X["random_cat"] = rng.randint(3, size=X.shape[0])
+X["random_num"] = rng.randn(X.shape[0])
 
-categorical_columns = ['pclass', 'sex', 'embarked', 'random_cat']
-numerical_columns = ['age', 'sibsp', 'parch', 'fare', 'random_num']
+categorical_columns = ["pclass", "sex", "embarked", "random_cat"]
+numerical_columns = ["age", "sibsp", "parch", "fare", "random_num"]
 
 X = X[categorical_columns + numerical_columns]
 
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, stratify=y, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, random_state=42)
 
-categorical_pipe = Pipeline([
-    ('imputer', SimpleImputer(strategy='constant', fill_value='missing')),
-    ('onehot', OneHotEncoder(handle_unknown='ignore'))
-])
-numerical_pipe = Pipeline([
-    ('imputer', SimpleImputer(strategy='mean'))
-])
+categorical_encoder = OneHotEncoder(handle_unknown="ignore")
+numerical_pipe = Pipeline([("imputer", SimpleImputer(strategy="mean"))])
 
 preprocessing = ColumnTransformer(
-    [('cat', categorical_pipe, categorical_columns),
-     ('num', numerical_pipe, numerical_columns)])
+    [
+        ("cat", categorical_encoder, categorical_columns),
+        ("num", numerical_pipe, numerical_columns),
+    ]
+)
 
-rf = Pipeline([
-    ('preprocess', preprocessing),
-    ('classifier', RandomForestClassifier(random_state=42))
-])
+rf = Pipeline(
+    [
+        ("preprocess", preprocessing),
+        ("classifier", RandomForestClassifier(random_state=42)),
+    ]
+)
 rf.fit(X_train, y_train)
 
-##############################################################################
+# %%
 # Accuracy of the Model
 # ---------------------
 # Prior to inspecting the feature importances, it is important to check that
@@ -106,7 +106,7 @@ print("RF train accuracy: %0.3f" % rf.score(X_train, y_train))
 print("RF test accuracy: %0.3f" % rf.score(X_test, y_test))
 
 
-##############################################################################
+# %%
 # Tree's Feature Importance from Mean Decrease in Impurity (MDI)
 # --------------------------------------------------------------
 # The impurity-based feature importance ranks the numerical features to be the
@@ -121,58 +121,59 @@ print("RF test accuracy: %0.3f" % rf.score(X_test, y_test))
 #   therefore do not reflect the ability of feature to be useful to make
 #   predictions that generalize to the test set (when the model has enough
 #   capacity).
-ohe = (rf.named_steps['preprocess']
-         .named_transformers_['cat']
-         .named_steps['onehot'])
-feature_names = ohe.get_feature_names(input_features=categorical_columns)
+ohe = rf.named_steps["preprocess"].named_transformers_["cat"]
+feature_names = ohe.get_feature_names_out(categorical_columns)
 feature_names = np.r_[feature_names, numerical_columns]
 
-tree_feature_importances = (
-    rf.named_steps['classifier'].feature_importances_)
+tree_feature_importances = rf.named_steps["classifier"].feature_importances_
 sorted_idx = tree_feature_importances.argsort()
 
 y_ticks = np.arange(0, len(feature_names))
 fig, ax = plt.subplots()
 ax.barh(y_ticks, tree_feature_importances[sorted_idx])
-ax.set_yticklabels(feature_names[sorted_idx])
 ax.set_yticks(y_ticks)
+ax.set_yticklabels(feature_names[sorted_idx])
 ax.set_title("Random Forest Feature Importances (MDI)")
 fig.tight_layout()
 plt.show()
 
 
-##############################################################################
+# %%
 # As an alternative, the permutation importances of ``rf`` are computed on a
 # held out test set. This shows that the low cardinality categorical feature,
 # ``sex`` is the most important feature.
 #
 # Also note that both random features have very low importances (close to 0) as
 # expected.
-result = permutation_importance(rf, X_test, y_test, n_repeats=10,
-                                random_state=42, n_jobs=2)
+result = permutation_importance(
+    rf, X_test, y_test, n_repeats=10, random_state=42, n_jobs=2
+)
 sorted_idx = result.importances_mean.argsort()
 
 fig, ax = plt.subplots()
-ax.boxplot(result.importances[sorted_idx].T,
-           vert=False, labels=X_test.columns[sorted_idx])
+ax.boxplot(
+    result.importances[sorted_idx].T, vert=False, labels=X_test.columns[sorted_idx]
+)
 ax.set_title("Permutation Importances (test set)")
 fig.tight_layout()
 plt.show()
 
-##############################################################################
+# %%
 # It is also possible to compute the permutation importances on the training
 # set. This reveals that ``random_num`` gets a significantly higher importance
 # ranking than when computed on the test set. The difference between those two
 # plots is a confirmation that the RF model has enough capacity to use that
 # random numerical feature to overfit. You can further confirm this by
 # re-running this example with constrained RF with min_samples_leaf=10.
-result = permutation_importance(rf, X_train, y_train, n_repeats=10,
-                                random_state=42, n_jobs=2)
+result = permutation_importance(
+    rf, X_train, y_train, n_repeats=10, random_state=42, n_jobs=2
+)
 sorted_idx = result.importances_mean.argsort()
 
 fig, ax = plt.subplots()
-ax.boxplot(result.importances[sorted_idx].T,
-           vert=False, labels=X_train.columns[sorted_idx])
+ax.boxplot(
+    result.importances[sorted_idx].T, vert=False, labels=X_train.columns[sorted_idx]
+)
 ax.set_title("Permutation Importances (train set)")
 fig.tight_layout()
 plt.show()

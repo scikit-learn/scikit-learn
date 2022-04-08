@@ -4,10 +4,12 @@ parameters:
   vmImage: ''
   matrix: []
   dependsOn: []
+  condition: ne(variables['Build.Reason'], 'Schedule')
 
 jobs:
 - job: ${{ parameters.name }}
   dependsOn: ${{ parameters.dependsOn }}
+  condition: ${{ parameters.condition }}
   pool:
     vmImage: ${{ parameters.vmImage }}
   variables:
@@ -15,13 +17,16 @@ jobs:
     JUNITXML: 'test-data.xml'
     SKLEARN_SKIP_NETWORK_TESTS: '1'
     PYTEST_VERSION: '5.2.1'
-    TMP_FOLDER: '$(Agent.WorkFolder)\tmp_folder'
+    PYTEST_XDIST_VERSION: 'latest'
+    TEST_DIR: '$(Agent.WorkFolder)/tmp_folder'
+    SHOW_SHORT_SUMMARY: 'false'
+    CPU_COUNT: '2'
   strategy:
     matrix:
       ${{ insert }}: ${{ parameters.matrix }}
 
   steps:
-    - powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
+    - bash: echo "##vso[task.prependpath]$CONDA/Scripts"
       displayName: Add conda to PATH for 64 bit Python
       condition: eq(variables['PYTHON_ARCH'], '64')
     - task: UsePythonVersion@0
@@ -31,21 +36,18 @@ jobs:
         architecture: 'x86'
       displayName: Use 32 bit System Python
       condition: eq(variables['PYTHON_ARCH'], '32')
-    - script: |
-        build_tools\\azure\\install.cmd
+    - bash: ./build_tools/azure/install_win.sh
       displayName: 'Install'
-    - script: |
-        build_tools\\azure\\test_script.cmd
+    - bash: ./build_tools/azure/test_script.sh
       displayName: 'Test Library'
-    - script: |
-        build_tools\\azure\\upload_codecov.cmd
+    - bash: ./build_tools/azure/upload_codecov.sh
       condition: and(succeeded(), eq(variables['COVERAGE'], 'true'))
       displayName: 'Upload To Codecov'
       env:
         CODECOV_TOKEN: $(CODECOV_TOKEN)
     - task: PublishTestResults@2
       inputs:
-        testResultsFiles: '$(TMP_FOLDER)\$(JUNITXML)'
+        testResultsFiles: '$(TEST_DIR)/$(JUNITXML)'
         testRunTitle: ${{ format('{0}-$(Agent.JobName)', parameters.name) }}
       displayName: 'Publish Test Results'
       condition: succeededOrFailed()

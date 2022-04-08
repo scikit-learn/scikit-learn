@@ -9,7 +9,7 @@ set -e
 # instead of relying on the subsequent rules.
 #
 # We always build the documentation for jobs that are not related to a specific
-# PR (e.g. a merge to master or a maintenance branch).
+# PR (e.g. a merge to main or a maintenance branch).
 #
 # If this is a PR, do a full build if there are some files in this PR that are
 # under the "doc/" or "examples/" folders, otherwise perform a quick build.
@@ -49,8 +49,8 @@ get_build_type() {
         echo BUILD: not a pull request
         return
     fi
-    git_range="origin/master...$CIRCLE_SHA1"
-    git fetch origin master >&2 || (echo QUICK BUILD: failed to get changed filenames for $git_range; return)
+    git_range="origin/main...$CIRCLE_SHA1"
+    git fetch origin main >&2 || (echo QUICK BUILD: failed to get changed filenames for $git_range; return)
     filenames=$(git diff --name-only $git_range)
     if [ -z "$filenames" ]
     then
@@ -114,10 +114,10 @@ then
     exit 0
 fi
 
-if [[ "$CIRCLE_BRANCH" =~ ^master$|^[0-9]+\.[0-9]+\.X$ && -z "$CI_PULL_REQUEST" ]]
+if [[ "$CIRCLE_BRANCH" =~ ^main$|^[0-9]+\.[0-9]+\.X$ && -z "$CI_PULL_REQUEST" ]]
 then
-    # PDF linked into HTML
-    make_args="dist LATEXMKOPTS=-halt-on-error"
+    # ZIP linked into HTML
+    make_args=dist
 elif [[ "$build_type" =~ ^QUICK ]]
 then
     make_args=html-noplot
@@ -133,22 +133,20 @@ fi
 make_args="SPHINXOPTS=-T $make_args"  # show full traceback on exception
 
 # Installing required system packages to support the rendering of math
-# notation in the HTML documentation
-sudo -E apt-get -yq update
-sudo -E apt-get -yq remove texlive-binaries --purge
+# notation in the HTML documentation and to optimize the image files
+sudo -E apt-get -yq update --allow-releaseinfo-change
 sudo -E apt-get -yq --no-install-suggests --no-install-recommends \
-    install dvipng texlive-latex-base texlive-latex-extra \
-    texlive-latex-recommended texlive-fonts-recommended \
-    latexmk gsfonts ccache
+    install dvipng gsfonts ccache zip optipng
 
 # deactivate circleci virtualenv and setup a miniconda env instead
 if [[ `type -t deactivate` ]]; then
   deactivate
 fi
 
+MINICONDA_PATH=$HOME/miniconda
 # Install dependencies with miniconda
-wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh \
-   -O miniconda.sh
+wget https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-Linux-x86_64.sh \
+    -O miniconda.sh
 chmod +x miniconda.sh && ./miniconda.sh -b -p $MINICONDA_PATH
 export PATH="/usr/lib/ccache:$MINICONDA_PATH/bin:$PATH"
 
@@ -163,27 +161,38 @@ if [[ "$CIRCLE_JOB" == "doc-min-dependencies" ]]; then
     conda config --set restore_free_channel true
 fi
 
+# imports get_dep
+source build_tools/shared.sh
+
 # packaging won't be needed once setuptools starts shipping packaging>=17.0
-conda create -n $CONDA_ENV_NAME --yes --quiet python="${PYTHON_VERSION:-*}" \
-  numpy="${NUMPY_VERSION:-*}" scipy="${SCIPY_VERSION:-*}" \
-  cython="${CYTHON_VERSION:-*}" pytest coverage \
-  matplotlib="${MATPLOTLIB_VERSION:-*}" sphinx=2.1.2 pillow \
-  scikit-image="${SCIKIT_IMAGE_VERSION:-*}" pandas="${PANDAS_VERSION:-*}" \
-  joblib memory_profiler packaging
+mamba create -n $CONDA_ENV_NAME --yes --quiet \
+    python="${PYTHON_VERSION:-*}" \
+    "$(get_dep numpy $NUMPY_VERSION)" \
+    "$(get_dep scipy $SCIPY_VERSION)" \
+    "$(get_dep cython $CYTHON_VERSION)" \
+    "$(get_dep matplotlib $MATPLOTLIB_VERSION)" \
+    "$(get_dep sphinx $SPHINX_VERSION)" \
+    "$(get_dep pandas $PANDAS_VERSION)" \
+    joblib memory_profiler packaging seaborn pillow pytest coverage \
+    compilers
 
 source activate testenv
-pip install sphinx-gallery
-pip install numpydoc
+pip install "$(get_dep scikit-image $SCIKIT_IMAGE_VERSION)"
+pip install "$(get_dep sphinx-gallery $SPHINX_GALLERY_VERSION)"
+pip install "$(get_dep numpydoc $NUMPYDOC_VERSION)"
+pip install "$(get_dep sphinx-prompt $SPHINX_PROMPT_VERSION)"
+pip install "$(get_dep sphinxext-opengraph $SPHINXEXT_OPENGRAPH_VERSION)"
 
-# Build and install scikit-learn in dev mode
-python setup.py build_ext --inplace -j 3
+# Set parallelism to 3 to overlap IO bound tasks with CPU bound tasks on CI
+# workers with 2 cores when building the compiled extensions of scikit-learn.
+export SKLEARN_BUILD_PARALLEL=3
 python setup.py develop
 
 export OMP_NUM_THREADS=1
 
-if [[ "$CIRCLE_BRANCH" =~ ^master$ && -z "$CI_PULL_REQUEST" ]]
+if [[ "$CIRCLE_BRANCH" =~ ^main$ && -z "$CI_PULL_REQUEST" ]]
 then
-    # List available documentation versions if on master
+    # List available documentation versions if on main
     python build_tools/circle/list_versions.py > doc/versions.rst
 fi
 
@@ -198,7 +207,7 @@ cd -
 set +o pipefail
 
 affected_doc_paths() {
-    files=$(git diff --name-only origin/master...$CIRCLE_SHA1)
+    files=$(git diff --name-only origin/main...$CIRCLE_SHA1)
     echo "$files" | grep ^doc/.*\.rst | sed 's/^doc\/\(.*\)\.rst$/\1.html/'
     echo "$files" | grep ^examples/.*.py | sed 's/^\(.*\)\.py$/auto_\1.html/'
     sklearn_files=$(echo "$files" | grep '^sklearn/')
@@ -209,7 +218,7 @@ affected_doc_paths() {
 }
 
 affected_doc_warnings() {
-    files=$(git diff --name-only origin/master...$CIRCLE_SHA1)
+    files=$(git diff --name-only origin/main...$CIRCLE_SHA1)
     # Look for sphinx warnings only in files affected by the PR
     if [ -n "$files" ]
     then
@@ -250,4 +259,3 @@ then
         exit 1
     fi
 fi
-

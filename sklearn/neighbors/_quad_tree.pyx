@@ -1,7 +1,3 @@
-# cython: boundscheck=False
-# cython: wraparound=False
-# cython: cdivision=True
-#
 # Author: Thomas Moreau <thomas.moreau.2010@gmail.com>
 # Author: Olivier Grisel <olivier.grisel@ensta.fr>
 
@@ -28,31 +24,14 @@ cdef extern from "numpy/arrayobject.h":
                                 int nd, np.npy_intp* dims,
                                 np.npy_intp* strides,
                                 void* data, int flags, object obj)
+    int PyArray_SetBaseObject(np.ndarray arr, PyObject* obj)
 
-
-# Repeat struct definition for numpy
-CELL_DTYPE = np.dtype({
-    'names': ['parent', 'children', 'cell_id', 'point_index', 'is_leaf',
-              'max_width', 'depth', 'cumulative_size', 'center', 'barycenter',
-              'min_bounds', 'max_bounds'],
-    'formats': [np.intp, (np.intp, 8), np.intp, np.intp, np.int32, np.float32,
-                np.intp, np.intp, (np.float32, 3), (np.float32, 3),
-                (np.float32, 3), (np.float32, 3)],
-    'offsets': [
-        <Py_ssize_t> &(<Cell*> NULL).parent,
-        <Py_ssize_t> &(<Cell*> NULL).children,
-        <Py_ssize_t> &(<Cell*> NULL).cell_id,
-        <Py_ssize_t> &(<Cell*> NULL).point_index,
-        <Py_ssize_t> &(<Cell*> NULL).is_leaf,
-        <Py_ssize_t> &(<Cell*> NULL).squared_max_width,
-        <Py_ssize_t> &(<Cell*> NULL).depth,
-        <Py_ssize_t> &(<Cell*> NULL).cumulative_size,
-        <Py_ssize_t> &(<Cell*> NULL).center,
-        <Py_ssize_t> &(<Cell*> NULL).barycenter,
-        <Py_ssize_t> &(<Cell*> NULL).min_bounds,
-        <Py_ssize_t> &(<Cell*> NULL).max_bounds,
-    ]
-})
+# Build the corresponding numpy dtype for Cell.
+# This works by casting `dummy` to an array of Cell of length 1, which numpy
+# can construct a `dtype`-object for. See https://stackoverflow.com/q/62448946
+# for a more detailed explanation.
+cdef Cell dummy;
+CELL_DTYPE = np.asarray(<Cell[:1]>(&dummy)).dtype
 
 assert CELL_DTYPE.itemsize == sizeof(Cell)
 
@@ -373,7 +352,7 @@ cdef class _QuadTree:
                         child = self.cells[child_id]
                         n_points += child.cumulative_size
                         assert child.cell_id == child_id, (
-                            "Cell id not correctly initiliazed.")
+                            "Cell id not correctly initialized.")
                 if n_points != cell.cumulative_size:
                     raise ValueError(
                         "Cell {} is incoherent. Size={} but found {} points "
@@ -382,7 +361,7 @@ cdef class _QuadTree:
                                 n_points, cell.children))
 
         # Make sure that the number of point in the tree correspond to the
-        # cummulative size in root cell.
+        # cumulative size in root cell.
         if self.n_points != self.cells[0].cumulative_size:
             raise ValueError(
                 "QuadTree is incoherent. Size={} but found {} points "
@@ -573,7 +552,8 @@ cdef class _QuadTree:
                                    strides, <void*> self.cells,
                                    np.NPY_DEFAULT, None)
         Py_INCREF(self)
-        arr.base = <PyObject*> self
+        if PyArray_SetBaseObject(arr, <PyObject*> self) < 0:
+            raise ValueError("Can't initialize array!")
         return arr
 
     cdef int _resize(self, SIZE_t capacity) nogil except -1:
@@ -612,59 +592,15 @@ cdef class _QuadTree:
         self.capacity = capacity
         return 0
 
-    @staticmethod
-    def test_summarize():
-
+    def _py_summarize(self, DTYPE_t[:] query_pt, DTYPE_t[:, :] X, float angle):
+        # Used for testing summarize
         cdef:
-            DTYPE_t[3] query_pt
-            float* summary
-            int i, n_samples, n_dimensions
+            DTYPE_t[:] summary
+            int n_samples, n_dimensions
 
-        n_dimensions = 2
-        n_samples = 4
-        angle = 0.9
-        offset = n_dimensions + 2
-        X = np.array([[-10., -10.], [9., 10.], [10., 9.], [10., 10.]])
-
+        n_samples = X.shape[0]
         n_dimensions = X.shape[1]
-        qt = _QuadTree(n_dimensions, verbose=0)
-        qt.build_tree(X)
+        summary = np.empty(4 * n_samples, dtype=np.float32)
 
-        summary = <float*> malloc(sizeof(float) * n_samples * 4)
-
-        for i in range(n_dimensions):
-            query_pt[i] = X[0, i]
-
-        # Summary should contain only 1 node with size 3 and distance to
-        # X[1:] barycenter
-        idx = qt.summarize(query_pt, summary, angle * angle)
-
-        node_dist = summary[n_dimensions]
-        node_size = summary[n_dimensions + 1]
-
-        barycenter = X[1:].mean(axis=0)
-        ds2c = ((X[0] - barycenter) ** 2).sum()
-
-        assert idx == offset
-        assert node_size == 3, "summary size = {}".format(node_size)
-        assert np.isclose(node_dist, ds2c)
-
-        # Summary should contain all 3 node with size 1 and distance to
-        # each point in X[1:] for ``angle=0``
-        idx = qt.summarize(query_pt, summary, 0)
-
-        node_dist = summary[n_dimensions]
-        node_size = summary[n_dimensions + 1]
-
-        barycenter = X[1:].mean(axis=0)
-        ds2c = ((X[0] - barycenter) ** 2).sum()
-
-        assert idx == 3 * (offset)
-        for i in range(3):
-            node_dist = summary[i * offset + n_dimensions]
-            node_size = summary[i * offset + n_dimensions + 1]
-
-            ds2c = ((X[0] - X[i + 1]) ** 2).sum()
-
-            assert node_size == 1, "summary size = {}".format(node_size)
-            assert np.isclose(node_dist, ds2c)
+        idx = self.summarize(&query_pt[0], &summary[0], angle * angle)
+        return idx, summary
