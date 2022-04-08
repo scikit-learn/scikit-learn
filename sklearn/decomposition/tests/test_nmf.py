@@ -507,7 +507,7 @@ def test_beta_divergence():
     n_samples = 20
     n_features = 10
     n_components = 5
-    beta_losses = [0.0, 0.5, 1.0, 1.5, 2.0]
+    beta_losses = [0.0, 0.5, 1.0, 1.5, 2.0, 3.0]
 
     # initialization
     rng = np.random.mtrand.RandomState(42)
@@ -868,7 +868,7 @@ def test_nmf_custom_init_dtype_error(Estimator):
         non_negative_factorization(X, H=H, update_H=False)
 
 
-@pytest.mark.parametrize("beta_loss", [0, 0.5, 1, 1.5, 2])
+@pytest.mark.parametrize("beta_loss", [-0.5, 0, 0.5, 1, 1.5, 2, 2.5])
 def test_nmf_minibatchnmf_equivalence(beta_loss):
     # Test that MiniBatchNMF is equivalent to NMF when batch_size = n_samples and
     # forget_factor 0.0 (stopping criterion put aside)
