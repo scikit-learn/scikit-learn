@@ -1,7 +1,6 @@
 """
-==================================================
 Online learning of a dictionary of parts of faces
-==================================================
+=================================================
 
 This example uses a large dataset of faces to learn a set of 20 x 20
 images patches that constitute faces.
@@ -37,6 +36,7 @@ faces = datasets.fetch_olivetti_faces()
 # %%
 # Learn the dictionary of images
 # ------------------------------
+
 print("Learning the dictionary... ")
 rng = np.random.RandomState(0)
 kmeans = MiniBatchKMeans(n_clusters=81, random_state=rng, verbose=True)
@@ -45,10 +45,7 @@ patch_size = (20, 20)
 buffer = []
 t0 = time.time()
 
-# %%
 # The online learning part: cycle over the whole dataset 6 times
-# --------------------------------------------------------------
-
 index = 0
 for _ in range(6):
     for img in faces.images:
