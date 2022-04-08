@@ -163,3 +163,19 @@ def test_fit_predict(is_sparse):
     bisect_means.fit(X)
 
     assert_array_equal(bisect_means.labels_, bisect_means.predict(X))
+
+
+@pytest.mark.parametrize("is_sparse", [True, False])
+def test_single_cluster(is_sparse):
+    """Check that it works with n_clusters=1."""
+    rng = np.random.RandomState(0)
+
+    X = rng.rand(10, 2)
+
+    if is_sparse:
+        X[X < 0.8] = 0
+        X = sp.csr_matrix(X)
+    
+    km = BisectingKMeans(n_clusters=1, random_state=0).fit(X)
+    
+    assert_allclose(km.cluster_centers_, X.mean(axis=0))

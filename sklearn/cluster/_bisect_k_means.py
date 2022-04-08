@@ -491,9 +491,10 @@ class BisectingKMeans(_BaseKMeans):
             X -= self._X_mean
 
         # Initialize the hierearchical clusters tree
+        
         self._bisecting_tree = _BisectingTree(
             indices=np.arange(X.shape[0]),
-            center=None,
+            center=X.mean(axis=0),
             score=0,
         )
 
