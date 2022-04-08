@@ -1059,7 +1059,7 @@ def test_change_n_init_future_warning(Klass):
 
 @pytest.mark.parametrize("Klass", [KMeans, MiniBatchKMeans])
 def test_n_init_auto(Klass):
-    est = Klass(n_init="auto")
+    est = Klass(n_init="auto", init="k-means++")
     est.fit(X)
     assert est._n_init == 1
 
