@@ -1,5 +1,4 @@
 """Testing for K-means"""
-from cmath import sin
 import re
 import sys
 
