@@ -14,25 +14,8 @@ prediction-time.
 
 This example illustrates both methods on an artificial dataset, which
 consists of a sinusoidal target function and strong noise added to every fifth
-datapoint. The first figure compares the learned model of KRR and SVR when both
-complexity/regularization and bandwidth of the RBF kernel are optimized using
-grid-search. The learned functions are very similar; however, fitting KRR is
-approx. seven times faster than fitting SVR (both with grid-search).
+datapoint.
 
-Prediction of 100000 target values could be in theory approximately
-tree times faster with SVR since it has learned a sparse model using only
-approximately 1/3 of the training datapoints as support vectors. However, in
-practice, this is not necessarily the case because of implementation details
-in the way the kernel function is computed for each model that can make the
-KRR model as fast or even faster despite computing more arithmetic operations.
-
-The next figure compares the time for fitting and prediction of KRR and SVR for
-different sizes of the training set. Fitting KRR is faster than SVR for medium-
-sized training sets (less than 1000 samples); however, for larger training sets
-SVR scales better. With regard to prediction time, SVR is faster than
-KRR for all sizes of the training set because of the learned sparse
-solution. Note that the degree of sparsity and thus the prediction time depends
-on the parameters epsilon and C of the SVR.
 """
 # %%
 # Authors: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
@@ -136,6 +119,20 @@ plt.title("SVR versus Kernel Ridge")
 _ = plt.legend()
 
 # %%
+# This figure compares the learned model of KRR and SVR when both
+# complexity/regularization and bandwidth of the RBF kernel are optimized using
+# grid-search. The learned functions are very similar; however, fitting KRR is
+# approximatively 3-4 times faster than fitting SVR (both with grid-search).
+#
+# Prediction of 100000 target values could be in theory approximately three
+# times faster with SVR since it has learned a sparse model using only
+# approximately 1/3 of the training datapoints as support vectors. However, in
+# practice, this is not necessarily the case because of implementation details
+# in the way the kernel function is computed for each model that can make the
+# KRR model as fast or even faster despite computing more arithmetic
+# operations.
+
+# %%
 # Visualize training and prediction times
 # ---------------------------------------
 
@@ -180,6 +177,15 @@ plt.title("Execution Time")
 _ = plt.legend(loc="best")
 
 # %%
+# This figure compares the time for fitting and prediction of KRR and SVR
+# for different sizes of the training set. Fitting KRR is faster than SVR for
+# medium- sized training sets (less than 1000 samples); however, for larger
+# training sets SVR scales better. With regard to prediction time, SVR is
+# faster than KRR for all sizes of the training set because of the learned
+# sparse solution. Note that the degree of sparsity and thus the prediction
+# time depends on the parameters epsilon and C of the SVR.
+
+# %%
 # Visualize the learning curves
 # -----------------------------
 
@@ -206,8 +212,8 @@ train_sizes_abs, train_scores_kr, test_scores_kr = learning_curve(
     cv=10,
 )
 
-plt.plot(train_sizes, -test_scores_svr.mean(1), "o-", color="r", label="SVR")
-plt.plot(train_sizes, -test_scores_kr.mean(1), "o-", color="g", label="KRR")
+plt.plot(train_sizes, -test_scores_svr.mean(1), "o--", color="r", label="SVR")
+plt.plot(train_sizes, -test_scores_kr.mean(1), "o--", color="g", label="KRR")
 plt.xlabel("Train size")
 plt.ylabel("Mean Squared Error")
 plt.title("Learning curves")
