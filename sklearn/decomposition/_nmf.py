@@ -2343,6 +2343,13 @@ class MiniBatchNMF(NMF):
     def partial_fit(self, X, y=None, W=None, H=None):
         """Update the model using the data in X as a mini-batch.
 
+        This method is expected to be called several times consecutively
+        on different chunks of a dataset so as to implement out-of-core
+        or online learning.
+
+        This is especially useful when the whole dataset is too big to fit in
+        memory at once (see :ref:`scaling_strategies`).
+
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
