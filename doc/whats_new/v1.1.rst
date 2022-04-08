@@ -474,6 +474,9 @@ Changelog
 :mod:`sklearn.feature_extraction`
 .................................
 
+- |Feature| :class:`feature_extraction.FeatureHasher` now supports PyPy.
+  :pr:`23023` by `Thomas Fan`_.
+
 - |Fix| :class:`feature_extraction.FeatureHasher` now validates input parameters
   in `transform` instead of `__init__`. :pr:`21573` by
   :user:`Hannah Bohle <hhnnhh>` and :user:`Maren Westermann <marenwestermann>`.
