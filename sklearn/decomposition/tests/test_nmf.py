@@ -45,7 +45,10 @@ def test_initialize_nn_output():
         assert not ((W < 0).any() or (H < 0).any())
 
 
-@pytest.mark.filterwarnings(r"ignore:The multiplicative update \('mu'\) solver cannot update zeros present in the initialization")
+@pytest.mark.filterwarnings(
+    r"ignore:The multiplicative update \('mu'\) solver cannot update zeros present in"
+    r" the initialization"
+)
 def test_parameter_checking():
     A = np.ones((2, 2))
     name = "spam"
@@ -291,7 +294,9 @@ def test_nmf_transform_custom_init(Estimator, solver):
     H_init = np.abs(avg * random_state.randn(n_components, 5))
     W_init = np.abs(avg * random_state.randn(6, n_components))
 
-    m = Estimator(n_components=n_components, init="custom", random_state=0, tol=1e-3, **solver)
+    m = Estimator(
+        n_components=n_components, init="custom", random_state=0, tol=1e-3, **solver
+    )
     m.fit_transform(A, W=W_init, H=H_init)
     m.transform(A)
 

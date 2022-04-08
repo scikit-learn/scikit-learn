@@ -2039,7 +2039,7 @@ class MiniBatchNMF(NMF):
 
     def _solve_W(self, X, H, max_iter):
         """Minimize the objective function w.r.t W.
-        
+
         Update W with H being fixed, until convergence. This is the heart
         of `transform` but it's also used during `fit` when doing fresh restarts.
         """
