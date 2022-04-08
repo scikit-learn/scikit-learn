@@ -1116,14 +1116,11 @@ class RandomForestClassifier(ForestClassifier):
            The default value of ``n_estimators`` changed from 10 to 100
            in 0.22.
 
-    criterion : {"gini", "log_loss"}, default="gini"
+    criterion : {"gini", "entropy", "log_loss"}, default="gini"
         The function to measure the quality of a split. Supported criteria are
-        "gini" for the Gini impurity and "log_loss" for the information gain.
-        Note: this parameter is tree-specific.
-
-        .. deprecated:: 1.1
-            Criterion "entropy" was deprecated in v1.1 and will be removed in
-            version 1.3. Use `criterion="log_loss"` which is equivalent.
+        "gini" for the Gini impurity and "log_loss" and "entropy" both for the
+        Shannon information gain, see :ref:`tree_mathematical_formulation`.
+        Note: This parameter is tree-specific.
 
     max_depth : int, default=None
         The maximum depth of the tree. If None, then nodes are expanded until
@@ -1791,13 +1788,11 @@ class ExtraTreesClassifier(ForestClassifier):
            The default value of ``n_estimators`` changed from 10 to 100
            in 0.22.
 
-    criterion : {"gini", "log_loss"}, default="gini"
+    criterion : {"gini", "entropy", "log_loss"}, default="gini"
         The function to measure the quality of a split. Supported criteria are
-        "gini" for the Gini impurity and "log_loss" for the information gain.
-
-        .. deprecated:: 1.1
-            Criterion "entropy" was deprecated in v1.1 and will be removed in
-            version 1.3. Use `criterion="log_loss"` which is equivalent.
+        "gini" for the Gini impurity and "log_loss" and "entropy" both for the
+        Shannon information gain, see :ref:`tree_mathematical_formulation`.
+        Note: This parameter is tree-specific.
 
     max_depth : int, default=None
         The maximum depth of the tree. If None, then nodes are expanded until

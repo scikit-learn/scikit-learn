@@ -408,13 +408,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                     "which is equivalent.",
                     FutureWarning,
                 )
-            # TODO(1.3): Remove "entropy"
-            elif self.criterion == "entropy":
-                warnings.warn(
-                    "Criterion 'entropy' was deprecated in v1.1 and will be removed "
-                    "in version 1.3. Use `criterion='log_loss'` which is equivalent.",
-                    FutureWarning,
-                )
         else:
             # Make a deepcopy in case the criterion has mutable attributes that
             # might be shared and modified concurrently during parallel fitting
@@ -686,13 +679,10 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
     Parameters
     ----------
-    criterion : {"gini", "log_loss"}, default="gini"
+    criterion : {"gini", "entropy", "log_loss"}, default="gini"
         The function to measure the quality of a split. Supported criteria are
-        "gini" for the Gini impurity and "log_loss" for the information gain.
-
-        .. deprecated:: 1.1
-            Criterion "entropy" was deprecated in v1.1 and will be removed in
-            version 1.3. Use `criterion="log_loss"` which is equivalent.
+        "gini" for the Gini impurity and "log_loss" and "entropy" both for the
+        Shannon information gain, see :ref:`tree_mathematical_formulation`.
 
     splitter : {"best", "random"}, default="best"
         The strategy used to choose the split at each node. Supported
@@ -1410,13 +1400,10 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
 
     Parameters
     ----------
-    criterion : {"gini", "log_loss"}, default="gini"
+    criterion : {"gini", "entropy", "log_loss"}, default="gini"
         The function to measure the quality of a split. Supported criteria are
-        "gini" for the Gini impurity and "log_loss" for the information gain.
-
-        .. deprecated:: 1.1
-            Criterion "entropy" was deprecated in v1.1 and will be removed in
-            version 1.3. Use `criterion="log_loss"` which is equivalent.
+        "gini" for the Gini impurity and "log_loss" and "entropy" both for the
+        Shannon information gain, see :ref:`tree_mathematical_formulation`.
 
     splitter : {"random", "best"}, default="random"
         The strategy used to choose the split at each node. Supported
