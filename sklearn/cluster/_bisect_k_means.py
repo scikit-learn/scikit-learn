@@ -515,6 +515,7 @@ class BisectingKMeans(_BaseKMeans):
             self.labels_[cluster_node.indices] = i
             self.cluster_centers_[i] = cluster_node.center
             cluster_node.label = i  # label final clusters for future prediction
+            cluster_node.indices = None  # release memory
 
         # Restore original data
         if not sp.issparse(X):
