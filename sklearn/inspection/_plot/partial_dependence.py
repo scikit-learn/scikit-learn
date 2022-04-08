@@ -1,4 +1,5 @@
 import numbers
+import warnings
 from itertools import chain
 from math import ceil
 
@@ -43,6 +44,7 @@ def plot_partial_dependence(
     kind="average",
     subsample=1000,
     random_state=None,
+    centered=False,
 ):
     """Partial dependence (PD) and individual conditional expectation (ICE)
     plots.
@@ -50,6 +52,9 @@ def plot_partial_dependence(
     Partial dependence plots, individual conditional expectation plots or an
     overlay of both of them can be plotted by setting the ``kind``
     parameter.
+
+    The ICE and PD plots can be centered with the parameter `centered`.
+
     The ``len(features)`` plots are arranged in a grid with ``n_cols``
     columns. Two-way partial dependence plots are plotted as contour plots. The
     deciles of the feature values will be shown with tick marks on the x-axes
@@ -282,6 +287,12 @@ def plot_partial_dependence(
 
         .. versionadded:: 0.24
 
+    centered : bool, default=False
+        If `True`, the ICE and PD lines will start at the origin of the y-axis.
+        By default, no centering is done.
+
+        .. versionadded:: 1.1
+
     Returns
     -------
     display : :class:`~sklearn.inspection.PartialDependenceDisplay`
@@ -326,6 +337,7 @@ def plot_partial_dependence(
         kind=kind,
         subsample=subsample,
         random_state=random_state,
+        centered=centered,
     )
 
 
@@ -352,6 +364,7 @@ def _plot_partial_dependence(
     kind="average",
     subsample=1000,
     random_state=None,
+    centered=False,
 ):
     """See PartialDependenceDisplay.from_estimator for details"""
     import matplotlib.pyplot as plt  # noqa
@@ -507,19 +520,6 @@ def _plot_partial_dependence(
             raise ValueError("target must be in [0, n_tasks], got {}.".format(target))
         target_idx = target
 
-    # get global min and max average predictions of PD grouped by plot type
-    pdp_lim = {}
-    for idx, pdp in enumerate(pd_results):
-        values = pdp["values"]
-        preds = pdp.average if kind_[idx] == "average" else pdp.individual
-        min_pd = preds[target_idx].min()
-        max_pd = preds[target_idx].max()
-        n_fx = len(values)
-        old_min_pd, old_max_pd = pdp_lim.get(n_fx, (min_pd, max_pd))
-        min_pd = min(min_pd, old_min_pd)
-        max_pd = max(max_pd, old_max_pd)
-        pdp_lim[n_fx] = (min_pd, max_pd)
-
     deciles = {}
     for fx in chain.from_iterable(features):
         if fx not in deciles:
@@ -531,7 +531,6 @@ def _plot_partial_dependence(
         features=features,
         feature_names=feature_names,
         target_idx=target_idx,
-        pdp_lim=pdp_lim,
         deciles=deciles,
         kind=kind,
         subsample=subsample,
@@ -544,6 +543,7 @@ def _plot_partial_dependence(
         ice_lines_kw=ice_lines_kw,
         pd_line_kw=pd_line_kw,
         contour_kw=contour_kw,
+        centered=centered,
     )
 
 
@@ -588,14 +588,20 @@ class PartialDependenceDisplay:
 
         Ignored in binary classification or classical regression settings.
 
-    pdp_lim : dict
+    deciles : dict
+        Deciles for feature indices in ``features``.
+
+    pdp_lim : dict or None
         Global min and max average predictions, such that all plots will have
         the same scale and y limits. `pdp_lim[1]` is the global min and max for
         single partial dependence curves. `pdp_lim[2]` is the global min and
-        max for two-way partial dependence curves.
+        max for two-way partial dependence curves. If `None`, the limit will be
+        inferred from the global minimum and maximum of all predictions.
 
-    deciles : dict
-        Deciles for feature indices in ``features``.
+        .. deprecated:: 1.1
+           Pass the parameter `pdp_lim` to
+           :meth:`~sklearn.inspection.PartialDependenceDisplay.plot` instead.
+           It will be removed in 1.3.
 
     kind : {'average', 'individual', 'both'} or list of such str, \
             default='average'
@@ -708,8 +714,8 @@ class PartialDependenceDisplay:
         features,
         feature_names,
         target_idx,
-        pdp_lim,
         deciles,
+        pdp_lim="deprecated",
         kind="average",
         subsample=1000,
         random_state=None,
@@ -746,6 +752,7 @@ class PartialDependenceDisplay:
         contour_kw=None,
         ax=None,
         kind="average",
+        centered=False,
         subsample=1000,
         random_state=None,
     ):
@@ -937,6 +944,12 @@ class PartialDependenceDisplay:
            ``kind='average'``. Plotting individual dependencies requires using the
            slower ``method='brute'`` option.
 
+        centered : bool, default=False
+            If `True`, the ICE and PD lines will start at the origin of the
+            y-axis. By default, no centering is done.
+
+            .. versionadded:: 1.1
+
         subsample : float, int or None, default=1000
             Sampling for ICE curves when `kind` is 'individual' or 'both'.
             If `float`, should be between 0.0 and 1.0 and represent the proportion
@@ -993,6 +1006,7 @@ class PartialDependenceDisplay:
             kind=kind,
             subsample=subsample,
             random_state=random_state,
+            centered=centered,
         )
 
     def _get_sample_count(self, n_samples):
@@ -1014,6 +1028,7 @@ class PartialDependenceDisplay:
         pd_plot_idx,
         n_total_lines_by_plot,
         individual_line_kw,
+        centered,
     ):
         """Plot the ICE lines.
 
@@ -1036,6 +1051,8 @@ class PartialDependenceDisplay:
             The total number of lines expected to be plot on the axis.
         individual_line_kw : dict
             Dict with keywords passed when plotting the ICE lines.
+        centered : bool
+            Whether or not to center the ICE lines to start at the origin.
         """
         rng = check_random_state(self.random_state)
         # subsample ice
@@ -1045,6 +1062,10 @@ class PartialDependenceDisplay:
             replace=False,
         )
         ice_lines_subsampled = preds[ice_lines_idx, :]
+        if centered:
+            # trigger a copy if we need to center the ICE lines
+            ice_lines_subsampled = ice_lines_subsampled.copy()
+            ice_lines_subsampled -= ice_lines_subsampled[:, [0]]
         # plot the subsampled ice
         for ice_idx, ice in enumerate(ice_lines_subsampled):
             line_idx = np.unravel_index(
@@ -1061,6 +1082,7 @@ class PartialDependenceDisplay:
         ax,
         pd_line_idx,
         line_kw,
+        centered,
     ):
         """Plot the average partial dependence.
 
@@ -1072,13 +1094,19 @@ class PartialDependenceDisplay:
         feature_values : ndarray of shape (n_grid_points,)
             The feature values for which the predictions have been computed.
         ax : Matplotlib axes
-            The axis on which to plot the ICE lines.
+            The axis on which to plot the average PD.
         pd_line_idx : int
             The sequential index of the plot. It will be unraveled to find the
             matching 2D position in the grid layout.
         line_kw : dict
             Dict with keywords passed when plotting the PD plot.
+        centered : bool
+            Whether or not to center the average PD to start at the origin.
         """
+        if centered:
+            # trigger a copy to not make changes to the original array
+            avg_preds = avg_preds.copy()
+            avg_preds -= avg_preds[0]
         line_idx = np.unravel_index(pd_line_idx, self.lines_.shape)
         self.lines_[line_idx] = ax.plot(
             feature_values,
@@ -1100,6 +1128,8 @@ class PartialDependenceDisplay:
         n_lines,
         ice_lines_kw,
         pd_line_kw,
+        pdp_lim,
+        centered,
     ):
         """Plot 1-way partial dependence: ICE and PDP.
 
@@ -1133,6 +1163,12 @@ class PartialDependenceDisplay:
             Dict with keywords passed when plotting the ICE lines.
         pd_line_kw : dict
             Dict with keywords passed when plotting the PD plot.
+        pdp_lim : dict
+            Global min and max average predictions, such that all plots will
+            have the same scale and y limits. `pdp_lim[1]` is the global min
+            and max for single partial dependence curves.
+        centered : bool
+            Whether or not to center the PD and ICE plot to start at the origin.
         """
         from matplotlib import transforms  # noqa
 
@@ -1145,6 +1181,7 @@ class PartialDependenceDisplay:
                 pd_plot_idx,
                 n_lines,
                 ice_lines_kw,
+                centered,
             )
 
         if kind in ("average", "both"):
@@ -1159,6 +1196,7 @@ class PartialDependenceDisplay:
                 ax,
                 pd_line_idx,
                 pd_line_kw,
+                centered,
             )
 
         trans = transforms.blended_transform_factory(ax.transData, ax.transAxes)
@@ -1172,7 +1210,7 @@ class PartialDependenceDisplay:
             color="k",
         )
         # reset ylim which was overwritten by vlines
-        ax.set_ylim(self.pdp_lim[1])
+        ax.set_ylim(pdp_lim[1])
 
         # Set xlabel if it is not already set
         if not ax.get_xlabel():
@@ -1275,6 +1313,8 @@ class PartialDependenceDisplay:
         ice_lines_kw=None,
         pd_line_kw=None,
         contour_kw=None,
+        pdp_lim=None,
+        centered=False,
     ):
         """Plot partial dependence plots.
 
@@ -1318,6 +1358,21 @@ class PartialDependenceDisplay:
             Dict with keywords passed to the `matplotlib.pyplot.contourf`
             call for two-way partial dependence plots.
 
+        pdp_lim : dict, default=None
+            Global min and max average predictions, such that all plots will have the
+            same scale and y limits. `pdp_lim[1]` is the global min and max for single
+            partial dependence curves. `pdp_lim[2]` is the global min and max for
+            two-way partial dependence curves. If `None` (default), the limit will be
+            inferred from the global minimum and maximum of all predictions.
+
+            .. versionadded:: 1.1
+
+        centered : bool, default=False
+            If `True`, the ICE and PD lines will start at the origin of the
+            y-axis. By default, no centering is done.
+
+            .. versionadded:: 1.1
+
         Returns
         -------
         display : :class:`~sklearn.inspection.PartialDependenceDisplay`
@@ -1346,6 +1401,41 @@ class PartialDependenceDisplay:
                 f"Values provided to `kind` must be one of: {valid_kinds!r} or a list"
                 f" of such values. Currently, kind={self.kind!r}"
             )
+
+        # FIXME: remove in 1.3
+        if self.pdp_lim != "deprecated":
+            warnings.warn(
+                "The `pdp_lim` parameter is deprecated in version 1.1 and will be "
+                "removed in version 1.3. Provide `pdp_lim` to the `plot` method."
+                "instead.",
+                FutureWarning,
+            )
+            if pdp_lim is not None and self.pdp_lim != pdp_lim:
+                warnings.warn(
+                    "`pdp_lim` has been passed in both the constructor and the `plot` "
+                    "method. For backward compatibility, the parameter from the "
+                    "constructor will be used.",
+                    UserWarning,
+                )
+            pdp_lim = self.pdp_lim
+
+        if pdp_lim is None:
+            # get global min and max average predictions of PD grouped by plot type
+            pdp_lim = {}
+            for idx, pdp in enumerate(self.pd_results):
+                values = pdp["values"]
+                preds = pdp.average if kind[idx] == "average" else pdp.individual
+                if centered and kind[idx] in ("both", "individual"):
+                    preds_offset = preds[self.target_idx, :, 0, None]
+                else:
+                    preds_offset = 0.0
+                min_pd = (preds[self.target_idx] - preds_offset).min()
+                max_pd = (preds[self.target_idx] - preds_offset).max()
+                n_fx = len(values)
+                old_min_pd, old_max_pd = pdp_lim.get(n_fx, (min_pd, max_pd))
+                min_pd = min(min_pd, old_min_pd)
+                max_pd = max(max_pd, old_max_pd)
+                pdp_lim[n_fx] = (min_pd, max_pd)
 
         if line_kw is None:
             line_kw = {}
@@ -1433,8 +1523,8 @@ class PartialDependenceDisplay:
             self.contours_ = np.empty_like(ax, dtype=object)
 
         # create contour levels for two-way plots
-        if 2 in self.pdp_lim:
-            Z_level = np.linspace(*self.pdp_lim[2], num=8)
+        if 2 in pdp_lim:
+            Z_level = np.linspace(*pdp_lim[2], num=8)
 
         self.deciles_vlines_ = np.empty_like(self.axes_, dtype=object)
         self.deciles_hlines_ = np.empty_like(self.axes_, dtype=object)
@@ -1506,6 +1596,8 @@ class PartialDependenceDisplay:
                     n_lines,
                     ice_lines_kw,
                     pd_line_kw,
+                    pdp_lim,
+                    centered,
                 )
             else:
                 self._plot_two_way_partial_dependence(
