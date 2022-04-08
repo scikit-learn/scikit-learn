@@ -398,8 +398,9 @@ plt.suptitle("Ridge model, small regularization, AGE dropped")
 plt.subplots_adjust(left=0.3)
 
 # %%
-# The estimation of the EXPERIENCE coefficient is now less variable and
-# remain important for all models trained during cross-validation.
+# The estimation of the EXPERIENCE coefficient now shows a much reduced
+# variability. EXPERIENCE remains important for all models trained during
+# cross-validation.
 #
 # .. _scaling_num:
 #
