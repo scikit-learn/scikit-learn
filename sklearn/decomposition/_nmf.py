@@ -1590,14 +1590,6 @@ class NMF(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         with config_context(assume_finite=True):
             W, H, n_iter = self._fit_transform(X, W=W, H=H)
 
-        if n_iter == self.max_iter and self.tol > 0:
-            warnings.warn(
-                "Maximum number of iterations %d reached. Increase "
-                "it to improve convergence."
-                % self.max_iter,
-                ConvergenceWarning,
-            )
-
         self.reconstruction_err_ = _beta_divergence(
             X, W, H, self._beta_loss, square_root=True
         )
@@ -2212,14 +2204,6 @@ class MiniBatchNMF(NMF):
         with config_context(assume_finite=True):
             W, H, n_iter, n_steps = self._fit_transform(X, W=W, H=H)
 
-        if n_iter == self.max_iter and self.tol > 0:
-            warnings.warn(
-                "Maximum number of iterations %d reached. Increase "
-                "it to improve convergence."
-                % self.max_iter,
-                ConvergenceWarning,
-            )
-
         self.reconstruction_err_ = _beta_divergence(
             X, W, H, self._beta_loss, square_root=True
         )
@@ -2315,6 +2299,13 @@ class MiniBatchNMF(NMF):
 
         n_steps = i + 1
         n_iter = int(np.ceil(n_steps / n_steps_per_iter))
+
+        if n_iter == self.max_iter and self.tol > 0:
+            warnings.warn(
+                f"Maximum number of iterations {self.max_iter} reached. "
+                "Increase it to improve convergence.",
+                ConvergenceWarning,
+            )
 
         return W, H, n_iter, n_steps
 

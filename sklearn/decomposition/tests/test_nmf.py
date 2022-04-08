@@ -45,6 +45,7 @@ def test_initialize_nn_output():
         assert not ((W < 0).any() or (H < 0).any())
 
 
+@pytest.mark.filterwarnings(r"ignore:The multiplicative update \('mu'\) solver cannot update zeros present in the initialization")
 def test_parameter_checking():
     A = np.ones((2, 2))
     name = "spam"
@@ -269,6 +270,7 @@ def test_minibatch_nmf_transform():
     m = MiniBatchNMF(
         n_components=3,
         random_state=0,
+        tol=1e-3,
         fresh_restarts=True,
     )
     ft = m.fit_transform(A)
@@ -289,7 +291,7 @@ def test_nmf_transform_custom_init(Estimator, solver):
     H_init = np.abs(avg * random_state.randn(n_components, 5))
     W_init = np.abs(avg * random_state.randn(6, n_components))
 
-    m = Estimator(n_components=n_components, init="custom", random_state=0, **solver)
+    m = Estimator(n_components=n_components, init="custom", random_state=0, tol=1e-3, **solver)
     m.fit_transform(A, W=W_init, H=H_init)
     m.transform(A)
 
@@ -314,19 +316,17 @@ def test_nmf_inverse_transform(solver):
 def test_mbnmf_inverse_transform():
     # Test that MiniBatchNMF.transform followed by MiniBatchNMF.inverse_transform
     # is close to the identity
-    random_state = np.random.RandomState(0)
-    A = np.abs(random_state.randn(6, 4))
-    m = MiniBatchNMF(
-        n_components=4,
-        random_state=0,
+    rng = np.random.RandomState(0)
+    A = np.abs(rng.randn(6, 4))
+    nmf = MiniBatchNMF(
+        random_state=rng,
         max_iter=500,
-        tol=1e-6,
-        init="nndsvd",
+        init="nndsvdar",
         fresh_restarts=True,
     )
-    ft = m.fit_transform(A)
-    A_new = m.inverse_transform(ft)
-    assert_allclose(A, A_new, rtol=1e-3)
+    ft = nmf.fit_transform(A)
+    A_new = nmf.inverse_transform(ft)
+    assert_allclose(A, A_new, rtol=1e-3, atol=1e-2)
 
 
 @pytest.mark.parametrize("Estimator", [NMF, MiniBatchNMF])
@@ -828,7 +828,7 @@ def test_nmf_dtype_match(Estimator, solver, dtype_in, dtype_out, alpha_W, alpha_
     # Check that NMF preserves dtype (float32 and float64)
     X = np.random.RandomState(0).randn(20, 15).astype(dtype_in, copy=False)
     np.abs(X, out=X)
-    nmf = NMF(solver=solver, alpha_W=alpha_W, alpha_H=alpha_H)
+    nmf = NMF(solver=solver, alpha_W=alpha_W, alpha_H=alpha_H, tol=1e-3, random_state=0)
 
     assert nmf.fit(X).transform(X).dtype == dtype_out
     assert nmf.fit_transform(X).dtype == dtype_out
@@ -843,13 +843,12 @@ def test_nmf_float32_float64_consistency(Estimator, solver):
     # Check that the result of NMF is the same between float32 and float64
     X = np.random.RandomState(0).randn(50, 7)
     np.abs(X, out=X)
-    tol = 1e-6
-    nmf32 = Estimator(random_state=0, tol=tol, **solver)
+    nmf32 = Estimator(random_state=0, tol=1e-3, **solver)
     W32 = nmf32.fit_transform(X.astype(np.float32))
-    nmf64 = Estimator(random_state=0, tol=tol, **solver)
+    nmf64 = Estimator(random_state=0, tol=1e-3, **solver)
     W64 = nmf64.fit_transform(X)
 
-    assert_allclose(W32, W64, rtol=1e-6, atol=1e-4)
+    assert_allclose(W32, W64, atol=1e-5)
 
 
 @pytest.mark.parametrize("Estimator", [NMF, MiniBatchNMF])
