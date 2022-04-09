@@ -1829,6 +1829,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
         # TODO: Consider overriding BaseEstimator._check_feature_names
         # Currently, when X has all str feature names, all features are
         # registered in self.feature_names_in no matter if they are used or not.
+        self._check_n_features(X, reset=True)
         self._validate_estimators()
         self._validate_column_callables(X)
         # Consistency checks for X, y are delegated to subestimators
@@ -1900,10 +1901,12 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
         first_call = not hasattr(self, "classes_")
         if first_call:
             self._check_feature_names(X, reset=True)
+            self._check_n_features(X, reset=True)
             self._validate_estimators(check_partial=True)
             self._validate_column_callables(X)
         else:
             self._check_feature_names(X, reset=False)
+            self._check_n_features(X, reset=False)
         # Consistency checks for X, y are delegated to subestimators
 
         # Subestimators get original sample_weight. This is for class counts:
