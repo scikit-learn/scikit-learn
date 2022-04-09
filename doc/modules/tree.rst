@@ -35,7 +35,7 @@ Some advantages of decision trees are:
 
     - Able to handle both numerical and categorical data. However scikit-learn
       implementation does not support categorical variables for now. Other
-      techniques are usually specialized in analysing datasets that have only one type
+      techniques are usually specialized in analyzing datasets that have only one type
       of variable. See :ref:`algorithms <tree_algorithms>` for more
       information.
 
@@ -56,7 +56,7 @@ Some advantages of decision trees are:
 The disadvantages of decision trees include:
 
     - Decision-tree learners can create over-complex trees that do not
-      generalise the data well. This is called overfitting. Mechanisms
+      generalize the data well. This is called overfitting. Mechanisms
       such as pruning, setting the minimum number of samples required
       at a leaf node or setting the maximum depth of the tree are
       necessary to avoid this problem.
