@@ -423,7 +423,7 @@ This is a binary classification problem with :math:`Y = \text{fruit} = 1` or
 
 Binary classification is very special in that the mean of :math:`Y` is also
 the full probability distribution, i.e.
-:math:`\mathbb{E}[Y] = p = \operatorname{P}(Y=\text{no fruit}) = F(Y=\text{fruit})`
+:math:`\mathbb{E}[Y] = p = \operatorname{P}(Y=\text{fruit}) = F(Y=\text{fruit})`
 (a result of setting the values of :math:`Y` to 0 and 1). This means that
 point predicting the mean is the same as probabilistic prediction of the class
 probability :math:`p`.
