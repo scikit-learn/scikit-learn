@@ -23,10 +23,10 @@ the tree, the more complex the decision rules and the fitter the model.
 
 Some advantages of decision trees are:
 
-    - Simple to understand and to interpret. Trees can be visualised.
+    - Simple to understand and to interpret. Trees can be visualized.
 
     - Requires little data preparation. Other techniques often require data
-      normalisation, dummy variables need to be created and blank values to
+      normalization, dummy variables need to be created and blank values to
       be removed. Note however that this module does not support missing
       values.
 
@@ -35,7 +35,7 @@ Some advantages of decision trees are:
 
     - Able to handle both numerical and categorical data. However scikit-learn
       implementation does not support categorical variables for now. Other
-      techniques are usually specialised in analysing datasets that have only one type
+      techniques are usually specialized in analysing datasets that have only one type
       of variable. See :ref:`algorithms <tree_algorithms>` for more
       information.
 
