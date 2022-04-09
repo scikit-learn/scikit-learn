@@ -502,9 +502,7 @@ def test_feature_union():
     assert_array_almost_equal(X_transformed, X_sp_transformed.toarray())
 
     # Test clone
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", UserWarning)
-        fs2 = clone(fs)
+    fs2 = clone(fs)
     assert fs.transformer_list[0][1] is not fs2.transformer_list[0][1]
 
     # test setting parameters
