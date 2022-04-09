@@ -11,83 +11,15 @@ from ..exceptions import EfficiencyWarning
 from ._kmeans import _BaseKMeans
 from ._kmeans import _kmeans_single_elkan
 from ._kmeans import _kmeans_single_lloyd
+from ._kmeans import _labels_inertia_threadpool_limit
 from ._k_means_common import _inertia_dense
 from ._k_means_common import _inertia_sparse
-from ._k_means_lloyd import lloyd_iter_chunked_dense
-from ._k_means_lloyd import lloyd_iter_chunked_sparse
 from ..utils.extmath import row_norms
 from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _check_sample_weight
 from ..utils.validation import check_random_state
 from ..utils.validation import _is_arraylike_not_scalar
-
-
-def _check_labels(X, sample_weight, x_squared_norms, centers, n_threads=1):
-    """Compute the labels of the given samples and centers.
-
-    Parameters
-    ----------
-    X : {ndarray, sparse matrix} of shape (n_samples, n_features)
-        The input samples to assign to the labels. If sparse matrix, must
-        be in CSR format.
-
-    sample_weight : ndarray of shape (n_samples,)
-        The weights for each observation in X.
-
-    x_squared_norms : ndarray of shape (n_samples,)
-        Precomputed squared euclidean norm of each data point, to speed up
-        computations.
-
-    centers : ndarray of shape (n_clusters, n_features)
-        The cluster centers.
-
-    n_threads : int, default=1
-        The number of OpenMP threads to use for the computation. Parallelism is
-        sample-wise on the main cython loop which assigns each sample to its
-        closest center.
-
-    Returns
-    -------
-    labels : ndarray of shape (n_samples,)
-        The resulting assignment (Labels of each point).
-    """
-    n_samples = X.shape[0]
-    n_clusters = centers.shape[0]
-
-    labels = np.full(n_samples, -1, dtype=np.int32)
-    weight_in_clusters = np.zeros(n_clusters, dtype=centers.dtype)
-    center_shift = np.zeros_like(weight_in_clusters)
-
-    if sp.issparse(X):
-        _labels = lloyd_iter_chunked_sparse
-    else:
-        _labels = lloyd_iter_chunked_dense
-
-    _labels(
-        X,
-        sample_weight,
-        x_squared_norms,
-        centers,
-        centers,
-        weight_in_clusters,
-        labels,
-        center_shift,
-        n_threads,
-        update_centers=False,
-    )
-
-    return labels
-
-
-def _check_labels_threadpool_limit(
-    X, sample_weight, x_squared_norms, centers, n_threads=1
-):
-    """Same as _check_labels but in a threadpool_limits context."""
-    with threadpool_limits(limits=1, user_api="blas"):
-        labels = _check_labels(X, sample_weight, x_squared_norms, centers, n_threads)
-
-    return labels
 
 
 class _BisectingTree:
@@ -584,8 +516,8 @@ class BisectingKMeans(_BaseKMeans):
         if hasattr(self, "_X_mean"):
             centers += self._X_mean
 
-        cluster_labels = _check_labels_threadpool_limit(
-            X, sample_weight, x_squared_norms, centers, self._n_threads
+        cluster_labels = _labels_inertia_threadpool_limit(
+            X, sample_weight, x_squared_norms, centers, self._n_threads, return_inertia=False
         )
         mask = cluster_labels == 0
 
