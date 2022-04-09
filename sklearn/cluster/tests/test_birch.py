@@ -237,7 +237,7 @@ def test_transform_match_across_dtypes():
     Y_64 = brc.fit_transform(X)
     Y_32 = brc.fit_transform(X.astype(np.float32))
 
-    np_assert_allclose(Y_64, Y_32, rtol=1e-4)
+    np_assert_allclose(Y_64, Y_32, rtol=1e-4, atol=1e-6)
 
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
