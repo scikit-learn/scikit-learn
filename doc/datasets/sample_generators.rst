@@ -25,7 +25,7 @@ Both :func:`make_blobs` and :func:`make_classification` create multiclass
 datasets by allocating each class one or more normally-distributed clusters of
 points.  :func:`make_blobs` provides greater control regarding the centers and
 standard deviations of each cluster, and is used to demonstrate clustering.
-:func:`make_classification` specialises in introducing noise by way of:
+:func:`make_classification` specializes in introducing noise by way of:
 correlated, redundant and uninformative features; multiple Gaussian clusters
 per class; and linear transformations of the feature space.
 
