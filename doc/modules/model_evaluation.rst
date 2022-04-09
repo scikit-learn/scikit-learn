@@ -432,23 +432,23 @@ mean, e.g. log loss or Brier score.
 They are also called *proper scoring rules*, as they assess predicting the
 whole probability distribution, [Gneiting2007]_.
 Note that for binary classification, the mode---the most probable outcome
-(*fruit* if :math:`p>0.5`)---is much less informative than the mean: To say
-that we expect a fruit is less informative than to say that we expect a fruit
-with probability :math:`p`.
+(:math:`\text{fruit}` if :math:`p>0.5`)---is much less informative than the
+mean: To say that we expect a fruit is less informative than to say that we
+expect a fruit with probability :math:`p`.
 
 Let's have a look on different purposes of your prediction:
 
 * If you want to optimize the conditions for good blossoms and you therefore
-  cut off blossoms for which you predict *no fruit*, you might want to minimize
-  the false negative rate (predicting *no fruit* when it actually gives a
-  fruit) in order to avoid cutting of too many.
+  cut off blossoms for which you predict :math:`\text{no fruit}`, you might
+  want to minimize the false negative rate (predicting :math:`\text{no fruit}`
+  when it actually gives a fruit) in order to avoid cutting of too many.
   If you have calibrated predictions for the probability :math:`p`, this helps
   a lot. You can start cutting off the blossoms with lowest predicted
   :math:`p`, which serves as prediction of the (expected) false negative rate.
 * If you sell your apples in advance based on the predicted number of fruits,
   you might want to avoid selling too many and control your false positive
-  rate (predicting *fruit* when it actually does not give a fruit).
-  Again, having a calibrated prediction for :math:`p` available, one
+  rate (predicting :math:`\text{fruit}` when it actually does not give a
+  fruit). Again, having a calibrated prediction for :math:`p` available, one
   immediately has an estimate of the false positives by :math:`1-p`.
 * Treating the target variable :math:`y` as a random variable may just be an
   approximation, but the true nature might be deterministic. For example, if
