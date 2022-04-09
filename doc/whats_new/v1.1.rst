@@ -158,7 +158,7 @@ Changelog
   a proper probability (i.e. a classifier's :term:`predict_proba` positive 
   class or :term:`decision_function` output calibrated with
   :class:`calibration.CalibratedClassifierCV`) is used for `y_prob`.
-  :pr:`` by :user:`Jordan Silke <jsilke>`.
+  :pr:`23095` by :user:`Jordan Silke <jsilke>`.
 
 - |Enhancement| :func:`calibration.calibration_curve` accepts a parameter
   `pos_label` to specify the positive class label.
