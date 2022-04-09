@@ -517,7 +517,12 @@ class BisectingKMeans(_BaseKMeans):
             centers += self._X_mean
 
         cluster_labels = _labels_inertia_threadpool_limit(
-            X, sample_weight, x_squared_norms, centers, self._n_threads, return_inertia=False
+            X,
+            sample_weight,
+            x_squared_norms,
+            centers,
+            self._n_threads,
+            return_inertia=False,
         )
         mask = cluster_labels == 0
 

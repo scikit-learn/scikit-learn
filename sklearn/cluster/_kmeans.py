@@ -702,7 +702,9 @@ def _kmeans_single_lloyd(
     return labels, inertia, centers, i + 1
 
 
-def _labels_inertia(X, sample_weight, x_squared_norms, centers, n_threads=1, return_inertia=True):
+def _labels_inertia(
+    X, sample_weight, x_squared_norms, centers, n_threads=1, return_inertia=True
+):
     """E step of the K-means EM algorithm.
 
     Compute the labels and the inertia of the given samples and centers.
