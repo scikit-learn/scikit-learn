@@ -844,7 +844,7 @@ cross-validation splitter. For example::
 Cross validation of time series data
 ------------------------------------
 
-Time series data is characterised by the correlation between observations
+Time series data is characterized by the correlation between observations
 that are near in time (*autocorrelation*). However, classical
 cross-validation techniques such as :class:`KFold` and
 :class:`ShuffleSplit` assume the samples are independent and
