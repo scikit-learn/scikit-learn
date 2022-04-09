@@ -427,7 +427,7 @@ it differs in that it supports numerical target variables (regression) and
 does not compute rule sets. CART constructs binary trees using the feature
 and threshold that yield the largest information gain at each node.
 
-scikit-learn uses an optimised version of the CART algorithm; however, scikit-learn
+scikit-learn uses an optimized version of the CART algorithm; however, scikit-learn
 implementation does not support categorical variables for now.
 
 .. _ID3: https://en.wikipedia.org/wiki/ID3_algorithm
