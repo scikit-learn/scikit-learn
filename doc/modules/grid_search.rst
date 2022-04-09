@@ -108,7 +108,7 @@ Randomized Parameter Optimization
 =================================
 While using a grid of parameter settings is currently the most widely used
 method for parameter optimization, other search methods have more
-favourable properties.
+favorable properties.
 :class:`RandomizedSearchCV` implements a randomized search over parameters,
 where each setting is sampled from a distribution over possible parameter values.
 This has two main benefits over an exhaustive search:
