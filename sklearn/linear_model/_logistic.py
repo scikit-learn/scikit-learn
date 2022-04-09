@@ -397,33 +397,53 @@ def _logistic_regression_path(
             # reconstructs the 2d-array via w0.reshape((n_classes, -1), order="F").
             # As w0 is F-contiguous, ravel(order="F") also avoids a copy.
             w0 = w0.ravel(order="F")
-            loss = LinearModelLoss(
+            linear_loss = LinearModelLoss(
                 base_loss=HalfMultinomialLoss(n_classes=classes.size),
                 fit_intercept=fit_intercept,
             )
         target = Y_multi
-        if solver in "lbfgs":
-            func = loss.loss_gradient
-        elif solver == "newton-cg":
-            func = loss.loss
-            grad = loss.gradient
-            hess = loss.gradient_hessian_product  # hess = [gradient, hessp]
         warm_start_sag = {"coef": w0.T}
     else:
         target = y_bin
         if solver == "lbfgs":
-            loss = LinearModelLoss(
+            linear_loss = LinearModelLoss(
                 base_loss=HalfBinomialLoss(), fit_intercept=fit_intercept
             )
-            func = loss.loss_gradient
         elif solver == "newton-cg":
-            loss = LinearModelLoss(
+            linear_loss = LinearModelLoss(
                 base_loss=HalfBinomialLoss(), fit_intercept=fit_intercept
             )
-            func = loss.loss
-            grad = loss.gradient
-            hess = loss.gradient_hessian_product  # hess = [gradient, hessp]
         warm_start_sag = {"coef": np.expand_dims(w0, axis=1)}
+
+    if solver == "lbfgs":
+        func = linear_loss.loss_gradient
+
+        # To save some memory, we preallocate a ndarray used as per row loss and
+        # gradient inside od LinearLoss, e.g. by LinearLoss.base_loss.gradient (and
+        # others).
+        per_sample_loss_out = np.empty_like(target)
+        if linear_loss.base_loss.is_multiclass:
+            per_sample_gradient_out = np.empty(
+                shape=(X.shape[0], classes.size), dtype=X.dtype, order="C"
+            )
+        else:
+            per_sample_gradient_out = np.empty_like(target, order="C")
+    elif solver == "newton-cg":
+        func = linear_loss.loss
+        grad = linear_loss.gradient
+        hess = linear_loss.gradient_hessian_product  # hess = [gradient, hessp]
+
+        # To save some memory, we preallocate a ndarray used as per row loss and
+        # gradient inside od LinearLoss, e.g. by LinearLoss.base_loss.gradient (and
+        # others).
+        per_sample_loss_out = np.empty_like(target)
+        if linear_loss.base_loss.is_multiclass:
+            per_sample_gradient_out = np.empty(
+                shape=(X.shape[0], classes.size), dtype=X.dtype, order="C"
+            )
+        else:
+            per_sample_gradient_out = np.empty_like(target, order="C")
+        per_sample_hessian_out = np.empty_like(per_sample_gradient_out)
 
     coefs = list()
     n_iter = np.zeros(len(Cs), dtype=np.int32)
@@ -438,7 +458,17 @@ def _logistic_regression_path(
                 w0,
                 method="L-BFGS-B",
                 jac=True,
-                args=(X, target, sample_weight, l2_reg_strength, n_threads),
+                args=(
+                    X,
+                    target,
+                    sample_weight,
+                    l2_reg_strength,
+                    n_threads,
+                    {
+                        "per_sample_loss_out": per_sample_loss_out,
+                        "per_sample_gradient_out": per_sample_gradient_out,
+                    },
+                ),
                 options={"iprint": iprint, "gtol": tol, "maxiter": max_iter},
             )
             n_iter_i = _check_optimize_result(
@@ -450,7 +480,18 @@ def _logistic_regression_path(
             w0, loss = opt_res.x, opt_res.fun
         elif solver == "newton-cg":
             l2_reg_strength = 1.0 / C
-            args = (X, target, sample_weight, l2_reg_strength, n_threads)
+            args = (
+                X,
+                target,
+                sample_weight,
+                l2_reg_strength,
+                n_threads,
+                {
+                    "per_sample_loss_out": per_sample_loss_out,
+                    "per_sample_gradient_out": per_sample_gradient_out,
+                    "per_sample_hessian_out": per_sample_hessian_out,
+                },
+            )
             w0, n_iter_i = _newton_cg(
                 hess, func, grad, w0, args=args, maxiter=max_iter, tol=tol
             )

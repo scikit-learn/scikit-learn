@@ -271,6 +271,12 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             else:
                 coef = np.zeros(n_features, dtype=loss_dtype)
 
+        # To save some memory, we preallocate a ndarray used as per row loss and
+        # gradient inside od LinearLoss, e.g. by LinearLoss.base_loss.gradient (and
+        # others).
+        per_sample_loss_out = np.empty_like(y)
+        per_sample_gradient_out = np.empty_like(y)
+
         # Algorithms for optimization:
         # Note again that our losses implement 1/2 * deviance.
         if solver == "lbfgs":
@@ -289,7 +295,17 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                     "gtol": self.tol,
                     "ftol": 1e3 * np.finfo(float).eps,
                 },
-                args=(X, y, sample_weight, l2_reg_strength, n_threads),
+                args=(
+                    X,
+                    y,
+                    sample_weight,
+                    l2_reg_strength,
+                    n_threads,
+                    {
+                        "per_sample_loss_out": per_sample_loss_out,
+                        "per_sample_gradient_out": per_sample_gradient_out,
+                    },
+                ),
             )
             self.n_iter_ = _check_optimize_result("lbfgs", opt_res)
             coef = opt_res.x
