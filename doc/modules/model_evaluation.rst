@@ -351,14 +351,23 @@ Point forecasts and consistent scoring functions
 Let's assume that the target variable :math:`Y` is a random variable, that
 we have observations/realizations :math:`y` and that we make predictions
 :math:`\hat{y}`.
-Scoring functions :math:`S(y, \hat{y})` then rank the prediction :math:`\hat{y}`
-of different models, given the observation :math:`y`.
+Scoring functions :math:`S(y, \hat{y})` then rank the prediction
+:math:`\hat{y}` of different models, given the observation :math:`y`.
 The higher the score the better the corresponding model (note that the
 literature uses sometimes the other orientation: smaller values are better).
 For a test or validation set :math:`y_i`, one usually uses
-:math:`\bar{S} = \frac{1}{n_\text{samples}}\sum_{i=0}^{n_\text{samples}-1} S(y_i, \hat{y}_i)`.
+
+.. :math::
+
+    \bar{S} = \frac{1}{n_\text{samples}}
+              \sum_{i=0}^{n_\text{samples}-1} S(y_i, \hat{y}_i).
+
 The optimal point prediction :math:`\hat{y}^\star` under :math:`S` is the
-*Bayes Rule* :math:`\hat{y}^\star = \operatorname{argmax}_x \mathbb{E}[S(Y, x)]`.
+*Bayes Rule*
+
+.. :math:
+
+    \hat{y}^\star = \operatorname{argmax}_x \mathbb{E}[S(Y, x)].
 
 Note that in order to get an unbiased estimate of :math:`\mathbb{E}[S(Y, x)]`
 for model evaluation and model selection, one has to use a test set independent
