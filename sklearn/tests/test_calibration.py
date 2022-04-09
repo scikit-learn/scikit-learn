@@ -395,6 +395,8 @@ def test_sigmoid_calibration():
         _SigmoidCalibration().fit(np.vstack((exF, exF)), exY)
 
 
+# TODO(1.3): Remove warning filter and normalize parameter.
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_calibration_curve():
     """Check calibration_curve function"""
     y_true = np.array([0, 0, 0, 1, 1, 1])
@@ -410,6 +412,7 @@ def test_calibration_curve():
     assert_almost_equal(prob_true, prob_true_unnormalized)
     assert_almost_equal(prob_pred, prob_pred_unnormalized)
 
+    # TODO(1.3): Probabilities outside [0, 1] should not be accepted at all.
     # probabilities outside [0, 1] should not be accepted when normalize
     # is set to False
     with pytest.raises(ValueError):
