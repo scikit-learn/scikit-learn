@@ -961,7 +961,7 @@ def calibration_curve(
     pos_label = _check_pos_label_consistency(pos_label, y_true)
 
     # TODO(1.3): Remove normalize conditional block.
-    if normalize and (normalize != "deprecated"):
+    if normalize != "deprecated":
         warnings.warn(
             "The normalize argument is deprecated in v1.1 and will be removed in v1.3."
             " Explicitly normalizing y_prob will reproduce this behavior, but it is"
@@ -970,8 +970,8 @@ def calibration_curve(
             " with `CalibratedClassifierCV`).",
             FutureWarning,
         )
-        # Normalize predicted values into interval [0, 1]
-        y_prob = (y_prob - y_prob.min()) / (y_prob.max() - y_prob.min())
+        if normalize:  # Normalize predicted values into interval [0, 1]
+            y_prob = (y_prob - y_prob.min()) / (y_prob.max() - y_prob.min())
 
     if y_prob.min() < 0 or y_prob.max() > 1:
         raise ValueError("y_prob has values outside [0, 1].")
