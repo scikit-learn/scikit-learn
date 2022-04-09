@@ -228,9 +228,7 @@ def test_pipeline_invalid_parameters():
         pipe.set_params(anova__C=0.1)
 
     # Test clone
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", UserWarning)
-        pipe2 = clone(pipe)
+    pipe2 = clone(pipe)
     assert not pipe.named_steps["svc"] is pipe2.named_steps["svc"]
 
     # Check that apart from estimators, the parameters are the same
