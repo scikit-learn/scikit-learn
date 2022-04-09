@@ -737,6 +737,11 @@ Changelog
   :pr:`21805` by :user:`Jeanne Dionisi <jeannedionisi>` and :pr:`22685` by
   :user:`Meekail Zain <micky774>`.
 
+- |Enhancement| :func:`manifold.trustworthiness` raises an error if
+  `n_neighbours >= n_samples / 2` to ensure a correct support for the function.
+  :pr:`18832` by :user:`Hong Shao Yang <hongshaoyang>` and :pr:`23033` by
+  :user:`Meekail Zain <micky774>`.
+
 :mod:`sklearn.metrics`
 ......................
 
