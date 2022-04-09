@@ -362,7 +362,7 @@ Changelog
   :pr:`22553` by :user:`Meekail Zain <micky774>`.
 
 - |Efficiency| ENH Optimise decomposition.FastICA.fit memory footprint and runtime.
-  :pr:`22268` by :user:`MohamedBsh <Bsh>`.
+  :pr:`22268` by :user:`MohamedBsh <Bsh>` and :user: `Thomas Fan`_. and :user: `lorentzenchr`_. and :user:`Julien Jerphanion <jjerphan>`.
 
 :mod:`sklearn.discriminant_analysis`
 ....................................
