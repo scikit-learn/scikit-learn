@@ -829,6 +829,11 @@ Changelog
 - |Fix| :func:`model_selection.learning_curve` now supports `partial_fit`
   with regressors. :pr:`22982` by `Thomas Fan`_.
 
+- |Fix| :class:`mixture.GaussianMixture` now normalizes `weights_` more safely,
+  preventing rounding errors when calling :meth:`GaussianMixture.sample` with
+  `n_components=1`.
+  :pr:`23034` by :user:`Meekail Zain <micky774>`.
+
 :mod:`sklearn.multiclass`
 .........................
 
