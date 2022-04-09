@@ -17,6 +17,7 @@ from sklearn.metrics import pairwise_distances_argmin, v_measure_score
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import np_assert_allclose
 
 
 def test_n_samples_leaves_roots():
@@ -228,3 +229,19 @@ def test_feature_names_out():
 
     names_out = brc.get_feature_names_out()
     assert_array_equal([f"birch{i}" for i in range(n_clusters)], names_out)
+
+
+def test_transform_match_across_dtypes():
+    X, _ = make_blobs(n_samples=80, n_features=4, random_state=0)
+    brc = Birch(n_clusters=4)
+    Y_64 = brc.fit_transform(X)
+    Y_32 = brc.fit_transform(X.astype(np.float32))
+
+    np_assert_allclose(Y_64, Y_32, rtol=1e-4)
+
+
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_subcluster_dtype(dtype):
+    X = make_blobs(n_samples=80, n_features=4, random_state=0)[0].astype(dtype)
+    brc = Birch(n_clusters=4)
+    assert brc.fit(X).subcluster_centers_.dtype == dtype
