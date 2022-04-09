@@ -78,9 +78,9 @@ print(f"Test accuracy: {accuracy_score(y_test, y_pred)}")
 # Compare choices of columns using ``GridSearchCV``
 # --------------------------------------------------
 #
-# The allocation of columns to constituent subestimators can be regarded as a hyperparameter.
-# We can explore the combinations of columns' choices and values of other hyperparameters
-# with the help of :class:`~.model_selection.GridSearchCV`.
+# The allocation of columns to constituent subestimators can be regarded as a
+# hyperparameter. We can explore the combinations of columns' choices and values
+# of other hyperparameters with the help of :class:`~.model_selection.GridSearchCV`.
 # %%
 param_grid = {
     "classifier__nb_estimators": [
