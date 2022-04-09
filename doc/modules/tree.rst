@@ -407,7 +407,7 @@ The algorithm creates a multiway tree, finding for each node (i.e. in
 a greedy manner) the categorical feature that will yield the largest
 information gain for categorical targets. Trees are grown to their
 maximum size and then a pruning step is usually applied to improve the
-ability of the tree to generalise to unseen data.
+ability of the tree to generalize to unseen data.
 
 C4.5 is the successor to ID3 and removed the restriction that features
 must be categorical by dynamically defining a discrete attribute (based
