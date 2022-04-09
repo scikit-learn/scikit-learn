@@ -224,8 +224,8 @@ for name, data, target in zip(["train", "test"], [X_train, X_test], [y_train, y_
 importances = pd.concat(importances, names=["set", "permutation"])
 
 # %%
-axes = importances.reset_index(level="set").groupby("set").plot.box(vert=False, whis=10)
-for name, ax in axes.iteritems():
+for name, data in importances.reset_index(level="set").groupby("set"):
+    ax = data.plot.box(vert=False, whis=10)
     ax.set_title(f"Permutation Importances ({name} set)")
     ax.set_xlabel("Decrease in accuracy score")
     ax.axvline(x=0, color="k", linestyle="--")
