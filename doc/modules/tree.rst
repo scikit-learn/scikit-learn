@@ -345,7 +345,7 @@ Tips on practical use
     in gaining more insights about how the decision tree makes predictions, which is
     important for understanding the important features in the data.
 
-  * Visualise your tree as you are training by using the ``export``
+  * Visualize your tree as you are training by using the ``export``
     function.  Use ``max_depth=3`` as an initial tree depth to get a feel for
     how the tree is fitting to your data, and then increase the depth.
 
