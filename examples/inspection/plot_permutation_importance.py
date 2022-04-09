@@ -146,8 +146,8 @@ mdi_importance = pd.Series(
 # %%
 mdi_importance.plot.barh()
 plt.title("Random Forest Feature Importances (MDI)")
-_ = plt.xlabel("Mean decrease in impurity")
-
+plt.xlabel("Mean decrease in impurity")
+plt.tight_layout()
 
 # %%
 # As an alternative, the permutation importances of ``rf`` are computed on a
@@ -161,18 +161,19 @@ _ = plt.xlabel("Mean decrease in impurity")
 from sklearn.inspection import permutation_importance
 
 result = permutation_importance(
-    rf[-1], rf[:-1].transform(X_test), y_test, n_repeats=10, random_state=42, n_jobs=2
+    rf, X_test, y_test, n_repeats=10, random_state=42, n_jobs=2
 )
 
 sorted_importances_idx = result.importances_mean.argsort()
 importances = pd.DataFrame(
     result.importances[sorted_importances_idx].T,
-    columns=feature_names[sorted_importances_idx],
+    columns=X.columns[sorted_importances_idx],
 )
 importances.plot.box(vert=False, whis=10)
 plt.title("Permutation Importances (test set)")
 plt.axvline(x=0, color="k", linestyle="--")
-_ = plt.xlabel("Decrease in accuracy score")
+plt.xlabel("Decrease in accuracy score")
+plt.tight_layout()
 
 # %%
 # It is also possible to compute the permutation importances on the training
@@ -181,18 +182,19 @@ _ = plt.xlabel("Decrease in accuracy score")
 # between those two plots is a confirmation that the RF model has enough
 # capacity to use that random numerical and categorical features to overfit.
 result = permutation_importance(
-    rf[-1], rf[:-1].transform(X_train), y_train, n_repeats=10, random_state=42, n_jobs=2
+    rf, X_train, y_train, n_repeats=10, random_state=42, n_jobs=2
 )
 
 sorted_importances_idx = result.importances_mean.argsort()
 importances = pd.DataFrame(
     result.importances[sorted_importances_idx].T,
-    columns=feature_names[sorted_importances_idx],
+    columns=X.columns[sorted_importances_idx],
 )
 importances.plot.box(vert=False, whis=10)
 plt.title("Permutation Importances (train set)")
 plt.axvline(x=0, color="k", linestyle="--")
-_ = plt.xlabel("Decrease in accuracy score")
+plt.xlabel("Decrease in accuracy score")
+plt.tight_layout()
 
 # %%
 # We can further retry the experiment by limiting the capacity of the trees
@@ -210,14 +212,14 @@ print(f"RF test accuracy: {rf.score(X_test, y_test):.3f}")
 importances = {}
 for name, data, target in zip(["train", "test"], [X_train, X_test], [y_train, y_test]):
     result = permutation_importance(
-        rf[-1], rf[:-1].transform(data), target, n_repeats=10, random_state=42, n_jobs=2
+        rf, data, target, n_repeats=10, random_state=42, n_jobs=2
     )
     if name == "train":
         sorted_importances_idx = result.importances_mean.argsort()
 
     importances[name] = pd.DataFrame(
         result.importances[sorted_importances_idx].T,
-        columns=rf[:-1].get_feature_names_out()[sorted_importances_idx],
+        columns=data.columns[sorted_importances_idx],
     )
 importances = pd.concat(importances, names=["set", "permutation"])
 
@@ -227,9 +229,10 @@ for name, ax in axes.iteritems():
     ax.set_title(f"Permutation Importances ({name} set)")
     ax.set_xlabel("Decrease in accuracy score")
     ax.axvline(x=0, color="k", linestyle="--")
+    plt.tight_layout()
 
 # %%
 # Now, we can observe that on both sets, the `random_num` and `random_cat`
-# features have a lower importance than with the overfitting random forest.
+# features have a lower importance compared to the overfitting random forest.
 # However, the conclusions regarding the importance of the other features are
 # still valid.
