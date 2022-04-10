@@ -792,9 +792,9 @@ def _score(estimator, X_test, y_test, scorer, error_score="raise"):
                 else:
                     score = error_score
                     warnings.warn(
-                        f"Scoring failed for the {name} scorer. The score on this"
-                        " train-test partition for these parameters will be set "
-                        f"to {error_score}. Details: \n{format_exc()}",
+                        "Scoring failed. The score on this train-test partition for "
+                        f"these parameters will be set to {error_score}. Details: \n"
+                        f"{format_exc()}",
                         UserWarning,
                     )
             if hasattr(score, "item"):
