@@ -2,10 +2,23 @@ from contextlib import closing
 from contextlib import suppress
 from io import StringIO
 from string import Template
-import uuid
 import html
 
 from .. import config_context
+
+
+class _Counter:
+    """Generate unique ids."""
+
+    def __init__(self):
+        self.count = -1
+
+    def get_id(self, prefix):
+        self.count += 1
+        return f"{prefix}{self.count}"
+
+
+_counter = _Counter()
 
 
 class _VisualBlock:
@@ -73,7 +86,7 @@ def _write_label_html(
         label_class = "sk-toggleable__label sk-toggleable__label-arrow"
 
         checked_str = "checked" if checked else ""
-        est_id = uuid.uuid4()
+        est_id = _counter.get_id("sk-estimator-id-")
         out.write(
             '<input class="sk-toggleable__control sk-hidden--visually" '
             f'id="{est_id}" type="checkbox" {checked_str}>'
@@ -362,7 +375,7 @@ def estimator_html_repr(estimator):
         HTML representation of estimator.
     """
     with closing(StringIO()) as out:
-        container_id = "sk-" + str(uuid.uuid4())
+        container_id = _counter.get_id("sk-container-id-")
         style_template = Template(_STYLE)
         style_with_id = style_template.substitute(id=container_id)
         estimator_str = str(estimator)
