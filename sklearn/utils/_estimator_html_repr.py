@@ -7,8 +7,8 @@ import html
 from .. import config_context
 
 
-class _Counter:
-    """Generate unique ids."""
+class _IDCounter:
+    """Generate sequential ids."""
 
     def __init__(self):
         self.count = 0
@@ -18,7 +18,7 @@ class _Counter:
         return f"{prefix}{self.count}"
 
 
-_counter = _Counter()
+_id_counter = _IDCounter()
 
 
 class _VisualBlock:
@@ -86,7 +86,7 @@ def _write_label_html(
         label_class = "sk-toggleable__label sk-toggleable__label-arrow"
 
         checked_str = "checked" if checked else ""
-        est_id = _counter.get_id("sk-estimator-id-")
+        est_id = _id_counter.get_id("sk-estimator-id-")
         out.write(
             '<input class="sk-toggleable__control sk-hidden--visually" '
             f'id="{est_id}" type="checkbox" {checked_str}>'
@@ -375,7 +375,7 @@ def estimator_html_repr(estimator):
         HTML representation of estimator.
     """
     with closing(StringIO()) as out:
-        container_id = _counter.get_id("sk-container-id-")
+        container_id = _id_counter.get_id("sk-container-id-")
         style_template = Template(_STYLE)
         style_with_id = style_template.substitute(id=container_id)
         estimator_str = str(estimator)
