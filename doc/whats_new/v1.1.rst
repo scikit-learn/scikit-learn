@@ -454,6 +454,9 @@ Changelog
   fitting on a pandas DataFrame with a non-default `scoring` parameter and
   early_stopping enabled. :pr:`22908` by `Thomas Fan`_.
 
+- |Fix| Fixes HTML repr for :class:`ensemble.StackingClassifier` and
+  :class:`ensemble.StackingRegressor`. :pr:`23097` by `Thomas Fan`_.
+
 - |Efficiency| Fitting a :class:`ensemble.RandomForestClassifier`,
   :class:`ensemble.RandomForestRegressor`, :class:`ensemble.ExtraTreesClassifier`,
   :class:`ensemble.ExtraTreesRegressor`, and :class:`ensemble.RandomTreesEmbedding`
