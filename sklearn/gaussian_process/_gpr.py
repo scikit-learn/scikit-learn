@@ -108,7 +108,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         which might cause predictions to change if the data is modified
         externally.
 
-    n_targets: int, default=None
+    n_targets : int, default=None
         Dimension of the target values. Used to decide the output dimension
         when sampling with prior distribution.
 
