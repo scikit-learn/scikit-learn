@@ -111,11 +111,12 @@ class _MultimetricScorer:
                 scores[name] = score
             except Exception as e:
                 scores[name] = e
+                last_exception = e
             else:
                 all_scorer_failed = False
 
         if all_scorer_failed:
-            raise ValueError("All scorer failed")
+            raise last_exception
 
         return scores
 
