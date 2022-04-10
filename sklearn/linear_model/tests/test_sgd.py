@@ -543,7 +543,7 @@ def test_not_enough_sample_for_early_stopping(klass):
 def test_sgd_clf(klass):
     # Check that SGD gives any results :-)
 
-    for loss in ("hinge", "squared_hinge", "log", "modified_huber"):
+    for loss in ("hinge", "squared_hinge", "log_loss", "modified_huber"):
         clf = klass(
             penalty="l2",
             alpha=0.01,
@@ -771,7 +771,8 @@ def test_sgd_predict_proba_method_access(klass):
     # details.
     for loss in linear_model.SGDClassifier.loss_functions:
         clf = SGDClassifier(loss=loss)
-        if loss in ("log", "modified_huber"):
+        # TODO(1.3): Remove "log"
+        if loss in ("log_loss", "log", "modified_huber"):
             assert hasattr(clf, "predict_proba")
             assert hasattr(clf, "predict_log_proba")
         else:
@@ -799,7 +800,7 @@ def test_sgd_proba(klass):
 
     # log and modified_huber losses can output probability estimates
     # binary case
-    for loss in ["log", "modified_huber"]:
+    for loss in ["log_loss", "modified_huber"]:
         clf = klass(loss=loss, alpha=0.01, max_iter=10)
         clf.fit(X, Y)
         p = clf.predict_proba([[3, 2]])
@@ -813,7 +814,7 @@ def test_sgd_proba(klass):
         assert p[0, 1] < p[0, 0]
 
     # log loss multiclass probability estimates
-    clf = klass(loss="log", alpha=0.01, max_iter=10).fit(X2, Y2)
+    clf = klass(loss="log_loss", alpha=0.01, max_iter=10).fit(X2, Y2)
 
     d = clf.decision_function([[0.1, -0.1], [0.3, 0.2]])
     p = clf.predict_proba([[0.1, -0.1], [0.3, 0.2]])
@@ -2122,19 +2123,25 @@ def test_SGDClassifier_fit_for_all_backends(backend):
     assert_array_almost_equal(clf_sequential.coef_, clf_parallel.coef_)
 
 
-# TODO: Remove in v1.2
 @pytest.mark.parametrize(
-    "Estimator", [linear_model.SGDClassifier, linear_model.SGDRegressor]
+    "old_loss, new_loss, Estimator",
+    [
+        # TODO(1.2): Remove "squared_loss"
+        ("squared_loss", "squared_error", linear_model.SGDClassifier),
+        ("squared_loss", "squared_error", linear_model.SGDRegressor),
+        # TODO(1.3): Remove "log"
+        ("log", "log_loss", linear_model.SGDClassifier),
+    ],
 )
-def test_loss_squared_loss_deprecated(Estimator):
+def test_loss_deprecated(old_loss, new_loss, Estimator):
 
     # Note: class BaseSGD calls self._validate_params() in __init__, therefore
-    # even instatiation of class raises FutureWarning for squared_loss.
-    with pytest.warns(FutureWarning, match="The loss 'squared_loss' was deprecated"):
-        est1 = Estimator(loss="squared_loss", random_state=0)
+    # even instantiation of class raises FutureWarning for deprecated losses.
+    with pytest.warns(FutureWarning, match=f"The loss '{old_loss}' was deprecated"):
+        est1 = Estimator(loss=old_loss, random_state=0)
         est1.fit(X, Y)
 
-    est2 = Estimator(loss="squared_error", random_state=0)
+    est2 = Estimator(loss=new_loss, random_state=0)
     est2.fit(X, Y)
     if hasattr(est1, "predict_proba"):
         assert_allclose(est1.predict_proba(X), est2.predict_proba(X))
