@@ -5,15 +5,16 @@ Combining Naive Bayes Estimators using ColumnwiseNB
 
 .. currentmodule:: sklearn
 
-This example shows how to use :class:`~compose.ColumnTransformer`
+This example shows how to use :class:`~naive_bayes.ColumnwiseNB`
 meta-estimator to construct a naive Bayes model from base naive Bayes
 estimators. The resulting model is applied to a dataset with a mixture of
 discrete and continuous features.
 
 We consider the titanic dataset, in which:
-- numerical (continous) features "age" and "fare" are handled by
+
+    - numerical (continous) features "age" and "fare" are handled by
 :class:`~naive_bayes.GaussianNB`;
-- categorical (discrete) features "embarked", "sex", and "pclass" are handled
+    - categorical (discrete) features "embarked", "sex", and "pclass" are handled
 by :class:`~naive_bayes.CategoricalNB`.
 """
 
