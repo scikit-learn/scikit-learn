@@ -401,7 +401,7 @@ def test_calibration_curve():
     """Check calibration_curve function"""
     y_true = np.array([0, 0, 0, 1, 1, 1])
     y_pred = np.array([0.0, 0.1, 0.2, 0.8, 0.9, 1.0])
-    prob_true, prob_pred = calibration_curve(y_true, y_pred, n_bins=2)
+    prob_true, prob_pred = calibration_curve(y_true, y_pred, n_bins=2, normalize=False)
     prob_true_unnormalized, prob_pred_unnormalized = calibration_curve(
         y_true, y_pred * 2, n_bins=2, normalize=True
     )
