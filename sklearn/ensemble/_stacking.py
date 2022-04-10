@@ -351,7 +351,7 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
         final_block = _VisualBlock(
             "parallel", [final_estimator], names=["final_estimator"], dash_wrapped=False
         )
-        return _VisualBlock("serial", (parallel, final_block), dash_wrapped=False)
+        return _VisualBlock("serial", (parallel, final_block), dash_wrapped=True)
 
 
 class StackingClassifier(ClassifierMixin, _BaseStacking):
