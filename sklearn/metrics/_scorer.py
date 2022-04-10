@@ -101,6 +101,7 @@ class _MultimetricScorer:
         cache = {} if self._use_cache(estimator) else None
         cached_call = partial(_cached_call, cache)
 
+        all_scorer_failed = True
         for name, scorer in self._scorers.items():
             try:
                 if isinstance(scorer, _BaseScorer):
@@ -110,6 +111,11 @@ class _MultimetricScorer:
                 scores[name] = score
             except Exception as e:
                 scores[name] = e
+            else:
+                all_scorer_failed = False
+
+        if all_scorer_failed:
+            raise ValueError("All scorer failed")
 
         return scores
 
