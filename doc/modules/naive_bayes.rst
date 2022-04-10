@@ -281,3 +281,37 @@ For an overview of available strategies in scikit-learn, see also the
    The ``partial_fit`` method call of naive Bayes models introduces some
    computational overhead. It is recommended to use data chunk sizes that are as
    large as possible, that is as the available RAM allows.
+
+.. _columnwise_naive_bayes:
+
+Mix and match naive Bayes models
+--------------------------------
+
+A naive Bayes model that assumes different distribution families for different
+features (or subsets of features) can be constructed using :class:`ColumnwiseNB`.
+It is a meta-estimator, whose operation relies on naive Bayes
+sub-estimators, which can be chosen in any number of combination from
+:class:`GaussianNB`, :class:`MultinomialNB`, :class:`ComplementNB`,
+:class:`BernoulliNB`, :class:`CategoricalNB`, and user-defined models
+(provided they expose the necessary methods).
+
+To initialize :class:`ColumnwiseNB`, one must pass a list of tuples specifying
+sub-estimators and their respective column subsets.
+Each sub-estimator is fitted and evaluated independently of
+others and "sees" only the features assigned to it. The estimators' predictions are
+combined via
+
+.. math::
+
+   \log P(x,y)=\log P(x_{1},y) + \dots + \log P(x_{M},y) - (M - 1)\log P(y),
+
+where :math:`\log P(x,y)` is the joint log-likelihood of the meta-estimator,
+:math:`\log P(x_{m},y)` is that of the :math:`m` th sub-estimator,
+:math:`\log P(y)` is the class prior used by the meta-estimator, and
+:math:`M\geq1` is the total number of sub-estimators.
+
+See :ref:`sphx_glr_auto_examples_miscellaneous_plot_combining_naive_bayes.py`
+for an example of a mixed naive Bayes model.
+See also :ref:`voting_classifier` for a way of combining general classifiers.
+For an introduction to processing datasets with heterogeneous features,
+see :ref:`column_transformer`.
