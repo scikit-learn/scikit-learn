@@ -1017,7 +1017,7 @@ Changelog
 
 - |Enhancement| Removes random unique identifiers in the HTML representation.
   Jupyter notebooks are reproducable as long as the cells are run in the same order.
-  :pr:`xxxxx` by `Thomas Fan`_.
+  :pr:`23098` by `Thomas Fan`_.
 
 - |API| :func:`utils.estimator_checks.check_estimator`'s argument is now called
   `estimator` (previous name was `Estimator`). :pr:`22188` by
