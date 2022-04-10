@@ -764,3 +764,18 @@ def test_sample_y_shapes(normalize_y, n_targets):
 
     y_samples = model.sample_y(X_test, n_samples=n_samples_y_test)
     assert y_samples.shape == y_test_shape
+
+
+@pytest.mark.parametrize("n_targets", [None, 1, 2, 3])
+def test_sample_y_shape_with_prior(n_targets):
+    """Check the output shape of `sample_y` is consistent before and after `fit`"""
+    rng = np.random.RandomState(1024)
+
+    X = rng.randn(10, 3)
+    y = rng.randn(10, n_targets or 1)
+
+    model = GaussianProcessRegressor(n_targets=n_targets)
+    shape_before_fit = model.sample_y(X).shape
+    model.fit(X, y)
+    shape_after_fit = model.sample_y(X).shape
+    assert shape_before_fit == shape_after_fit

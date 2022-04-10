@@ -108,6 +108,12 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         which might cause predictions to change if the data is modified
         externally.
 
+    n_targets: int, default=None
+        Dimension of the target values. Used to decide the output dimension
+        when sampling with prior distribution.
+
+        .. versionadded:: 1.1
+
     random_state : int, RandomState instance or None, default=None
         Determines random number generation used to initialize the centers.
         Pass an int for reproducible results across multiple function calls.
@@ -182,6 +188,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         n_restarts_optimizer=0,
         normalize_y=False,
         copy_X_train=True,
+        n_targets=None,
         random_state=None,
     ):
         self.kernel = kernel
@@ -190,6 +197,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         self.n_restarts_optimizer = n_restarts_optimizer
         self.normalize_y = normalize_y
         self.copy_X_train = copy_X_train
+        self.n_targets = n_targets
         self.random_state = random_state
 
     def fit(self, X, y):
@@ -378,12 +386,26 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                 )
             else:
                 kernel = self.kernel
-            y_mean = np.zeros(X.shape[0])
+
+            n_targets = self.n_targets or 1
+            if n_targets == 1:
+                y_mean = np.zeros(X.shape[0])
+            else:
+                y_mean = np.zeros(shape=(X.shape[0], self.n_targets))
+
             if return_cov:
                 y_cov = kernel(X)
+                if n_targets > 1:
+                    y_cov = np.repeat(
+                        np.expand_dims(y_cov, -1), repeats=n_targets, axis=-1
+                    )
                 return y_mean, y_cov
             elif return_std:
                 y_var = kernel.diag(X)
+                if n_targets > 1:
+                    y_var = np.repeat(
+                        np.expand_dims(y_var, -1), repeats=n_targets, axis=-1
+                    )
                 return y_mean, np.sqrt(y_var)
             else:
                 return y_mean
