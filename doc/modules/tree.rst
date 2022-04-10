@@ -510,7 +510,7 @@ Entropy:
   cross-entropy and multinomial deviance) between the true labels :math:`y_i`
   and the probalistic predictions :math:`T(x_i)` of the tree model :math:`T`.
 
-  To see, this, first recall that the log loss of a tree model :math:`T`
+  To see this, first recall that the log loss of a tree model :math:`T`
   computed on a dataset :math:`D` is defined as follows:
 
   .. math::
