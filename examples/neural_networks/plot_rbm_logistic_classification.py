@@ -41,8 +41,9 @@ from sklearn.preprocessing import minmax_scale
 from sklearn.base import clone
 
 
-# #############################################################################
+# %%
 # Setting up
+# ----------
 
 
 def nudge_dataset(X, Y):
@@ -66,7 +67,7 @@ def nudge_dataset(X, Y):
     Y = np.concatenate([Y for _ in range(5)], axis=0)
     return X, Y
 
-
+# %%
 # Load Data
 X, y = datasets.load_digits(return_X_y=True)
 X = np.asarray(X, "float32")
@@ -75,35 +76,41 @@ X = minmax_scale(X, feature_range=(0, 1))  # 0-1 scaling
 
 X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=0)
 
+# %%
 # Models we will use
 logistic = linear_model.LogisticRegression(solver="newton-cg", tol=1)
 rbm = BernoulliRBM(random_state=0, verbose=True)
 
 rbm_features_classifier = Pipeline(steps=[("rbm", rbm), ("logistic", logistic)])
 
-# #############################################################################
+# %%
 # Training
-
+# --------
+#
 # Hyper-parameters. These were set by cross-validation,
 # using a GridSearchCV. Here we are not performing cross-validation to
 # save time.
 rbm.learning_rate = 0.06
 rbm.n_iter = 10
+# %%
 # More components tend to give better prediction performance, but larger
 # fitting time
 rbm.n_components = 100
 logistic.C = 6000
 
+# %%
 # Training RBM-Logistic Pipeline
 rbm_features_classifier.fit(X_train, Y_train)
 
+# %%
 # Training the Logistic regression classifier directly on the pixel
 raw_pixel_classifier = clone(logistic)
 raw_pixel_classifier.C = 100.0
 raw_pixel_classifier.fit(X_train, Y_train)
 
-# #############################################################################
+# %%
 # Evaluation
+# ----------
 
 Y_pred = rbm_features_classifier.predict(X_test)
 print(
@@ -117,8 +124,9 @@ print(
     % (metrics.classification_report(Y_test, Y_pred))
 )
 
-# #############################################################################
+# %%
 # Plotting
+# --------
 
 plt.figure(figsize=(4.2, 4))
 for i, comp in enumerate(rbm.components_):
