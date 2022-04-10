@@ -784,6 +784,19 @@ def _score(estimator, X_test, y_test, scorer, error_score="raise"):
     error_msg = "scoring must return a number, got %s (%s) instead. (scorer=%s)"
     if isinstance(scores, dict):
         for name, score in scores.items():
+            # In case of _MultimetricScorer if a scorer fails instead of raising
+            # the exception, it is passed as score to handle it later.
+            if isinstance(score, Exception):
+                if error_score == "raise":
+                    raise score
+                else:
+                    score = error_score
+                    warnings.warn(
+                        f"Scoring failed for the {name} scorer. The score on this"
+                        " train-test partition for these parameters will be set "
+                        f"to {error_score}. Details: \n{format_exc()}",
+                        UserWarning,
+                    )
             if hasattr(score, "item"):
                 with suppress(ValueError):
                     # e.g. unwrap memmapped scalars

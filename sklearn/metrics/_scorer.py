@@ -102,11 +102,15 @@ class _MultimetricScorer:
         cached_call = partial(_cached_call, cache)
 
         for name, scorer in self._scorers.items():
-            if isinstance(scorer, _BaseScorer):
-                score = scorer._score(cached_call, estimator, *args, **kwargs)
-            else:
-                score = scorer(estimator, *args, **kwargs)
-            scores[name] = score
+            try:
+                if isinstance(scorer, _BaseScorer):
+                    score = scorer._score(cached_call, estimator, *args, **kwargs)
+                else:
+                    score = scorer(estimator, *args, **kwargs)
+                scores[name] = score
+            except Exception as e:
+                scores[name] = e
+
         return scores
 
     def _use_cache(self, estimator):
