@@ -101,9 +101,9 @@ Scoring                                Function                                 
 'neg_mean_poisson_deviance'            :func:`metrics.mean_poisson_deviance`
 'neg_mean_gamma_deviance'              :func:`metrics.mean_gamma_deviance`
 'neg_mean_absolute_percentage_error'   :func:`metrics.mean_absolute_percentage_error`
-'d2_tweedie_score'                     :func:`metrics.d2_tweedie_score`
-'d2_pinball_score'                     :func:`metrics.d2_pinball_score`
 'd2_absolute_error_score'              :func:`metrics.d2_absolute_error_score`
+'d2_pinball_score'                     :func:`metrics.d2_pinball_score`
+'d2_tweedie_score'                     :func:`metrics.d2_tweedie_score`
 ====================================   ==============================================     ==================================
 
 
@@ -2490,14 +2490,14 @@ D² score
 The D² score computes the fraction of deviance explained. 
 It is a generalization of R², where the squared error is generalized and replaced 
 by a deviance of choice :math:`\text{dev}(y, \hat{y})`
-(e.g., Tweedie, pinball or mean absolute error).
+(e.g., Tweedie, pinball or mean absolute error). D² is a form of a *skill score*.
 It is calculated as
 
 .. math::
 
   D^2(y, \hat{y}) = 1 - \frac{\text{dev}(y, \hat{y})}{\text{dev}(y, y_{\text{null}})} \,.
 
-Where :math:`y_{\text{null}}` is the optimal intercept-only model's prediction 
+Where :math:`y_{\text{null}}` is the optimal prediction of an intercept-only model
 (e.g., the mean of `y_true` for the Tweedie case, the median for absolute 
 error and the alpha-quantile for pinball loss).
 
