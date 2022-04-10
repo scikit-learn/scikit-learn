@@ -10,6 +10,7 @@ Logistic Regression
 #         Simon Wu <s8wu@uwaterloo.ca>
 #         Arthur Mensch <arthur.mensch@m4x.org
 
+import functools
 import numbers
 import warnings
 
@@ -416,8 +417,6 @@ def _logistic_regression_path(
         warm_start_sag = {"coef": np.expand_dims(w0, axis=1)}
 
     if solver == "lbfgs":
-        func = linear_loss.loss_gradient
-
         # To save some memory, we preallocate a ndarray used as per row loss and
         # gradient inside od LinearLoss, e.g. by LinearLoss.base_loss.gradient (and
         # others).
@@ -428,11 +427,13 @@ def _logistic_regression_path(
             )
         else:
             per_sample_gradient_out = np.empty_like(target, order="C")
-    elif solver == "newton-cg":
-        func = linear_loss.loss
-        grad = linear_loss.gradient
-        hess = linear_loss.gradient_hessian_product  # hess = [gradient, hessp]
 
+        func = functools.partial(
+            linear_loss.loss_gradient,
+            per_sample_loss_out=per_sample_loss_out,
+            per_sample_gradient_out=per_sample_gradient_out,
+        )
+    elif solver == "newton-cg":
         # To save some memory, we preallocate a ndarray used as per row loss and
         # gradient inside od LinearLoss, e.g. by LinearLoss.base_loss.gradient (and
         # others).
@@ -444,6 +445,19 @@ def _logistic_regression_path(
         else:
             per_sample_gradient_out = np.empty_like(target, order="C")
         per_sample_hessian_out = np.empty_like(per_sample_gradient_out)
+
+        func = functools.partial(
+            linear_loss.loss,
+            per_sample_loss_out=per_sample_loss_out,
+        )
+        grad = functools.partial(
+            linear_loss.gradient, per_sample_gradient_out=per_sample_gradient_out
+        )
+        hess = functools.partial(
+            linear_loss.gradient_hessian_product,  # hess = [gradient, hessp]
+            per_sample_gradient_out=per_sample_gradient_out,
+            per_sample_hessian_out=per_sample_hessian_out,
+        )
 
     coefs = list()
     n_iter = np.zeros(len(Cs), dtype=np.int32)
@@ -458,17 +472,7 @@ def _logistic_regression_path(
                 w0,
                 method="L-BFGS-B",
                 jac=True,
-                args=(
-                    X,
-                    target,
-                    sample_weight,
-                    l2_reg_strength,
-                    n_threads,
-                    {
-                        "per_sample_loss_out": per_sample_loss_out,
-                        "per_sample_gradient_out": per_sample_gradient_out,
-                    },
-                ),
+                args=(X, target, sample_weight, l2_reg_strength, n_threads),
                 options={"iprint": iprint, "gtol": tol, "maxiter": max_iter},
             )
             n_iter_i = _check_optimize_result(
@@ -480,18 +484,7 @@ def _logistic_regression_path(
             w0, loss = opt_res.x, opt_res.fun
         elif solver == "newton-cg":
             l2_reg_strength = 1.0 / C
-            args = (
-                X,
-                target,
-                sample_weight,
-                l2_reg_strength,
-                n_threads,
-                {
-                    "per_sample_loss_out": per_sample_loss_out,
-                    "per_sample_gradient_out": per_sample_gradient_out,
-                    "per_sample_hessian_out": per_sample_hessian_out,
-                },
-            )
+            args = (X, target, sample_weight, l2_reg_strength, n_threads)
             w0, n_iter_i = _newton_cg(
                 hess, func, grad, w0, args=args, maxiter=max_iter, tol=tol
             )

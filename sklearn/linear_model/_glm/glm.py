@@ -272,7 +272,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                 coef = np.zeros(n_features, dtype=loss_dtype)
 
         # To save some memory, we preallocate a ndarray used as per row loss and
-        # gradient inside od LinearLoss, e.g. by LinearLoss.base_loss.gradient (and
+        # gradient inside of LinearLoss, e.g. by LinearLoss.base_loss.gradient (and
         # others).
         per_sample_loss_out = np.empty_like(y)
         per_sample_gradient_out = np.empty_like(y)
@@ -301,10 +301,8 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                     sample_weight,
                     l2_reg_strength,
                     n_threads,
-                    {
-                        "per_sample_loss_out": per_sample_loss_out,
-                        "per_sample_gradient_out": per_sample_gradient_out,
-                    },
+                    per_sample_loss_out,
+                    per_sample_gradient_out,
                 ),
             )
             self.n_iter_ = _check_optimize_result("lbfgs", opt_res)

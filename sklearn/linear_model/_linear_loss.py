@@ -120,7 +120,7 @@ class LinearModelLoss:
         sample_weight=None,
         l2_reg_strength=0.0,
         n_threads=1,
-        temporary_array_dict=None,
+        per_sample_loss_out=None,
     ):
         """Compute the loss as sum over point-wise losses.
 
@@ -141,12 +141,10 @@ class LinearModelLoss:
             L2 regularization strength
         n_threads : int, default=1
             Number of OpenMP threads to use.
-        temporary_array_dict: None or dict, default=None
-            Providing such an array can save a little memory. Possible entry:
-
-            "per_sample_loss_out" : C-contiguous array of shape (n_samples,)
-                A location into which the per sample loss is stored. If None, a new
-                array might be created.
+        per_sample_loss_out : None or C-contiguous array of shape (n_samples,), \
+            default=None
+            A location into which the per sample loss is stored. If None, a new array
+            might be created. Providing such an array can save a little memory.
 
         Returns
         -------
@@ -154,10 +152,6 @@ class LinearModelLoss:
             Sum of losses per sample plus penalty.
         """
         weights, intercept, raw_prediction = self._w_intercept_raw(coef, X)
-        if temporary_array_dict is not None:
-            per_sample_loss_out = temporary_array_dict.get("per_sample_loss_out", None)
-        else:
-            per_sample_loss_out = None
 
         loss = self.base_loss.loss(
             y_true=y,
@@ -179,7 +173,8 @@ class LinearModelLoss:
         sample_weight=None,
         l2_reg_strength=0.0,
         n_threads=1,
-        temporary_array_dict=None,
+        per_sample_loss_out=None,
+        per_sample_gradient_out=None,
     ):
         """Computes the sum of loss and gradient w.r.t. coef.
 
@@ -200,17 +195,14 @@ class LinearModelLoss:
             L2 regularization strength
         n_threads : int, default=1
             Number of OpenMP threads to use.
-        temporary_array_dict: None or dict, default=None
-            Providing such arrays can save a little memory. Possible entry:
-
-            "per_sample_loss_out" : C-contiguous array of shape (n_samples,)
-                A location into which the per sample loss is stored. If None, a new
-                array might be created.
-
-            "per_sample_gradient_out" : None or C-contiguous array of shape
-                (n_samples,) or array of shape (n_samples, n_classes)
-                A location into which the per sample gradient is stored. If None, a
-                new array might be created.
+        per_sample_loss_out : None or C-contiguous array of shape (n_samples,), \
+            default=None
+            A location into which the per sample loss is stored. If None, a new array
+            might be created. Providing such an array can save a little memory.
+        per_sample_gradient_out : None or C-contiguous array of shape (n_samples,) or
+            array of shape (n_samples, n_classes), default=None
+            A location into which the per sample gradient is stored. If None, a new
+            array might be created. Providing such an array can save a little memory.
 
         Returns
         -------
@@ -223,14 +215,6 @@ class LinearModelLoss:
         n_features, n_classes = X.shape[1], self.base_loss.n_classes
         n_dof = n_features + int(self.fit_intercept)
         weights, intercept, raw_prediction = self._w_intercept_raw(coef, X)
-        if temporary_array_dict is not None:
-            per_sample_loss_out = temporary_array_dict.get("per_sample_loss_out", None)
-            per_sample_gradient_out = temporary_array_dict.get(
-                "per_sample_gradient_out", None
-            )
-        else:
-            per_sample_loss_out = None
-            per_sample_gradient_out = None
 
         loss, grad_per_sample = self.base_loss.loss_gradient(
             y_true=y,
@@ -268,7 +252,7 @@ class LinearModelLoss:
         sample_weight=None,
         l2_reg_strength=0.0,
         n_threads=1,
-        temporary_array_dict=None,
+        per_sample_gradient_out=None,
     ):
         """Computes the gradient w.r.t. coef.
 
@@ -289,13 +273,10 @@ class LinearModelLoss:
             L2 regularization strength
         n_threads : int, default=1
             Number of OpenMP threads to use.
-        temporary_array_dict: None or dict, default=None
-            Providing such an array can save a little memory. Possible entry:
-
-            "per_sample_gradient_out" : None or C-contiguous array of shape
-                (n_samples,) or array of shape (n_samples, n_classes)
-                A location into which the per sample gradient is stored. If None, a new
-                array might be created.
+        per_sample_gradient_out : None or C-contiguous array of shape (n_samples,) or
+            array of shape (n_samples, n_classes), default=None
+            A location into which the per sample gradient is stored. If None, a new
+            array might be created. Providing such an array can save a little memory.
 
         Returns
         -------
@@ -305,12 +286,6 @@ class LinearModelLoss:
         n_features, n_classes = X.shape[1], self.base_loss.n_classes
         n_dof = n_features + int(self.fit_intercept)
         weights, intercept, raw_prediction = self._w_intercept_raw(coef, X)
-        if temporary_array_dict is not None:
-            per_sample_gradient_out = temporary_array_dict.get(
-                "per_sample_gradient_out", None
-            )
-        else:
-            per_sample_gradient_out = None
 
         grad_per_sample = self.base_loss.gradient(
             y_true=y,
@@ -345,7 +320,8 @@ class LinearModelLoss:
         sample_weight=None,
         l2_reg_strength=0.0,
         n_threads=1,
-        temporary_array_dict=None,
+        per_sample_gradient_out=None,
+        per_sample_hessian_out=None,
     ):
         """Computes gradient and hessp (hessian product function) w.r.t. coef.
 
@@ -366,17 +342,14 @@ class LinearModelLoss:
             L2 regularization strength
         n_threads : int, default=1
             Number of OpenMP threads to use.
-        temporary_array_dict: None or dict, default=None
-            Providing such an array can save a little memory. Possible entry:
-
-            "per_sample_gradient_out" : None or C-contiguous array of shape
-                (n_samples,) or array of shape (n_samples, n_classes)
-                A location into which the per sample gradient is stored. If None, a new
-                array might be created.
-            "per_sample_hessian_out" : None or C-contiguous array of shape (n_samples,)
-                or array of shape (n_samples, n_classes)
-                A location into which the per sample hessian is stored. If None, a new
-                array might be created.
+        per_sample_gradient_out : None or C-contiguous array of shape (n_samples,) or
+            array of shape (n_samples, n_classes), default=None
+            A location into which the per sample gradient is stored. If None, a new
+            array might be created. Providing such an array can save a little memory.
+        per_sample_hessian_out : None or C-contiguous array of shape (n_samples,) or
+            array of shape (n_samples, n_classes), default=None
+            A location into which the per sample hessian is stored. If None, a new
+            array might be created. Providing such an array can save a little memory.
 
         Returns
         -------
@@ -390,16 +363,6 @@ class LinearModelLoss:
         (n_samples, n_features), n_classes = X.shape, self.base_loss.n_classes
         n_dof = n_features + int(self.fit_intercept)
         weights, intercept, raw_prediction = self._w_intercept_raw(coef, X)
-        if temporary_array_dict is not None:
-            per_sample_gradient_out = temporary_array_dict.get(
-                "per_sample_gradient_out", None
-            )
-            per_sample_hessian_out = temporary_array_dict.get(
-                "per_sample_hessian_out", None
-            )
-        else:
-            per_sample_gradient_out = None
-            per_sample_hessian_out = None
 
         if not self.base_loss.is_multiclass:
             gradient, hessian = self.base_loss.gradient_hessian(
