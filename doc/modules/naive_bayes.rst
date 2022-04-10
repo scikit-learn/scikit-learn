@@ -290,15 +290,15 @@ Mix and match naive Bayes models
 A naive Bayes model that assumes different distribution families for different
 features (or subsets of features) can be constructed using :class:`ColumnwiseNB`.
 It is a meta-estimator, whose operation relies on naive Bayes
-sub-estimators, which can be chosen in any number of combination from
+sub-estimators, which can be chosen in any number or combination from
 :class:`GaussianNB`, :class:`MultinomialNB`, :class:`ComplementNB`,
 :class:`BernoulliNB`, :class:`CategoricalNB`, and user-defined models
-(provided they expose the necessary methods).
+(provided they implement necessary methods).
 
-To initialize :class:`ColumnwiseNB`, one must pass a list of tuples specifying
-sub-estimators and their respective column subsets.
-Each sub-estimator is fitted and evaluated independently of
-others and "sees" only the features assigned to it. The estimators' predictions are
+When creating a :class:`ColumnwiseNB` estimator, one specifies sub-estimators
+and their respective column subsets as a list of tuples.
+Each sub-estimator is fitted and evaluated independently of the
+others and "sees" only the features assigned to it. The predictions of sub-estimators are
 combined via
 
 .. math::
@@ -311,7 +311,8 @@ where :math:`\log P(x,y)` is the joint log-likelihood of the meta-estimator,
 :math:`M\geq1` is the total number of sub-estimators.
 
 See :ref:`sphx_glr_auto_examples_miscellaneous_plot_combining_naive_bayes.py`
-for an example of a mixed naive Bayes model.
+for an example of a mixed naive Bayes model implementation.
+
 See also :ref:`voting_classifier` for a way of combining general classifiers.
-For an introduction to processing datasets with heterogeneous features,
-see :ref:`column_transformer`.
+An introduction to processing datasets with heterogeneous features is available at
+:ref:`column_transformer`.

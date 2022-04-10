@@ -12,10 +12,10 @@ discrete and continuous features.
 
 We consider the titanic dataset, in which:
 
-    - numerical (continous) features "age" and "fare" are handled by
-    :class:`~naive_bayes.GaussianNB`;
-    - categorical (discrete) features "embarked", "sex", and "pclass" are handled
-    by :class:`~naive_bayes.CategoricalNB`.
+- numerical (continous) features "age" and "fare" are handled by
+  :class:`~naive_bayes.GaussianNB`;
+- categorical (discrete) features "embarked", "sex", and "pclass" are handled
+  by :class:`~naive_bayes.CategoricalNB`.
 """
 
 # Author: Andrey V. Melnik <andrey.melnik.maths@gmail.com>
@@ -32,11 +32,10 @@ X["pclass"] = X["pclass"].astype("category")
 # Add a category for NaNs to the "embarked" feature:
 X["embarked"] = X["embarked"].cat.add_categories("N/A").fillna("N/A")
 
-#
+# %%
 # Build and use a pipeline around ``ColumnwiseNB``
 # ------------------------------------------------
-#
-# %%
+
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
@@ -75,14 +74,14 @@ pipe.fit(X_train, y_train)
 y_pred = pipe.predict(X_test)
 print(f"Test accuracy: {accuracy_score(y_test, y_pred)}")
 
-#
+# %%
 # Compare choices of columns using ``GridSearchCV``
 # --------------------------------------------------
 #
 # The allocation of columns to constituent subestimators can be regarded as a
 # hyperparameter. We can explore the combinations of columns' choices and values
 # of other hyperparameters with the help of :class:`~.model_selection.GridSearchCV`.
-# %%
+
 param_grid = {
     "classifier__nb_estimators": [
         [("gnb", GaussianNB(), [0, 1]), ("cnb", CategoricalNB(), [2, 3, 4])],
@@ -98,15 +97,16 @@ grid_search
 # %%
 # Calling `fit` triggers the cross-validated search for the best
 # hyperparameters combination:
-#
+
 grid_search.fit(X_train, y_train)
 
 print("Best params:")
 print(grid_search.best_params_)
 
-# It turns out, the best results are achieved by the naive Bayes model when "sex"
-# is the only feature used:
 # %%
+# As it turns out, the best results are achieved by the naive Bayes model when "sex"
+# is the only feature used:
+
 cv_results = pd.DataFrame(grid_search.cv_results_)
 cv_results = cv_results.sort_values("mean_test_score", ascending=False)
 cv_results["Columns dictionary"] = cv_results["param_classifier__nb_estimators"].map(
