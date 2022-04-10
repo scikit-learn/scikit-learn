@@ -12,10 +12,8 @@ discrete and continuous features.
 
 We consider the titanic dataset, in which:
 
-    - numerical (continous) features "age" and "fare" are handled by
-:class:`~naive_bayes.GaussianNB`;
-    - categorical (discrete) features "embarked", "sex", and "pclass" are handled
-by :class:`~naive_bayes.CategoricalNB`.
+    - numerical (continous) features "age" and "fare" are handled by :class:`~naive_bayes.GaussianNB`;
+    - categorical (discrete) features "embarked", "sex", and "pclass" are handled by :class:`~naive_bayes.CategoricalNB`.
 """
 
 # Author: Andrey V. Melnik <andrey.melnik.maths@gmail.com>
