@@ -11,7 +11,7 @@ class _Counter:
     """Generate unique ids."""
 
     def __init__(self):
-        self.count = -1
+        self.count = 0
 
     def get_id(self, prefix):
         self.count += 1
