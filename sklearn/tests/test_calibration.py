@@ -412,11 +412,9 @@ def test_calibration_curve():
     assert_almost_equal(prob_true, prob_true_unnormalized)
     assert_almost_equal(prob_pred, prob_pred_unnormalized)
 
-    # TODO(1.3): Probabilities outside [0, 1] should not be accepted at all.
-    # probabilities outside [0, 1] should not be accepted when normalize
-    # is set to False
+    # Probabilities outside [0, 1] should not be accepted at all.
     with pytest.raises(ValueError):
-        calibration_curve([1.1], [-0.1], normalize=False)
+        calibration_curve([1], [-0.1])
 
     # test that quantiles work as expected
     y_true2 = np.array([0, 0, 0, 0, 1, 1])
