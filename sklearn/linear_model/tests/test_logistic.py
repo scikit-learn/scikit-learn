@@ -1309,7 +1309,7 @@ def test_saga_vs_liblinear():
     )
     X_sparse = sparse.csr_matrix(X_sparse)
 
-    for (X, y) in ((X_bin, y_bin), (X_sparse, y_sparse)):
+    for X, y in ((X_bin, y_bin), (X_sparse, y_sparse)):
         for penalty in ["l1", "l2"]:
             n_samples = X.shape[0]
             # alpha=1e-3 is time consuming
@@ -1775,7 +1775,7 @@ def test_elastic_net_versus_sgd(C, l1_ratio):
         max_iter=2000,
         l1_ratio=l1_ratio,
         alpha=1.0 / C / n_samples,
-        loss="log",
+        loss="log_loss",
     )
     log = LogisticRegression(
         penalty="elasticnet",

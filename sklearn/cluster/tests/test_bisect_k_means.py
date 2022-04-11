@@ -1,13 +1,11 @@
-from warnings import simplefilter
+import warnings
 
 import numpy as np
+import pytest
 import scipy.sparse as sp
 
-from numpy.testing import assert_array_equal, assert_array_almost_equal, assert_allclose
-
+from sklearn.utils._testing import assert_array_equal, assert_allclose
 from sklearn.cluster import BisectingKMeans
-
-import pytest
 
 
 @pytest.mark.parametrize("bisecting_strategy", ["biggest_inertia", "largest_cluster"])
@@ -40,6 +38,7 @@ def test_three_clusters(bisecting_strategy):
 
 def test_sparse():
     """Test Bisecting K-Means with sparse data
+
     Checks if labels and centers are the same between dense and sparse
     """
 
@@ -58,7 +57,7 @@ def test_sparse():
     normal_centers = bisect_means.cluster_centers_
 
     # Check if results is the same for dense and sparse data
-    assert_array_almost_equal(normal_centers, sparse_centers)
+    assert_allclose(normal_centers, sparse_centers, atol=1e-8)
 
 
 @pytest.mark.parametrize("n_clusters", [4, 5])
@@ -79,59 +78,46 @@ def test_one_cluster():
 
     X = np.array([[1, 2], [10, 2], [10, 8]])
 
-    with pytest.warns(None) as w:
-        bisect_means = BisectingKMeans(n_clusters=1, random_state=0)
-        bisect_means.fit(X)
-        msg = (
-            "BisectingKMeans might be inefficient for n_cluster smaller than 3 "
-            + " - Use Normal KMeans from sklearn.cluster instead."
-        )
-        assert str(w[0].message) == msg
-        print(bisect_means.labels_)
+    bisect_means = BisectingKMeans(n_clusters=1, random_state=0)
 
-        # All labels from fit or predict should be equal 0
-        assert all(bisect_means.predict(X) == 0)
+    with warnings.catch_warnings(record=True) as w:
+        bisect_means.fit(X)
+
+    msg = (
+        "BisectingKMeans might be inefficient for n_cluster smaller than 3 "
+        + " - Use Normal KMeans from sklearn.cluster instead."
+    )
+    assert str(w[0].message) == msg
+
+    # All labels from fit or predict should be equal 0
+    assert all(bisect_means.labels_ == 0)
+    assert all(bisect_means.predict(X) == 0)
+
+    assert_allclose(bisect_means.cluster_centers_, X.mean(axis=0).reshape(1, -1))
 
 
 @pytest.mark.parametrize(
-    "param, match, single_value",
+    "param, match",
     [
         # Test bisecting_strategy param
         (
             {"bisecting_strategy": "None"},
-            r"Bisect Strategy must be 'biggest_inertia', or 'largest_cluster'",
-            False,
+            "Bisect Strategy must be 'biggest_inertia' or 'largest_cluster'",
         ),
         # Test init array
         (
             {"init": np.ones((5, 2))},
             "BisectingKMeans does not support init as array.",
-            False,
-        ),
-        # Test single X value
-        (
-            {"n_clusters": 1},
-            # 'Found array with 0 sample(s) (shape=(0, 1))
-            #  while a minimum of 1 is required by BisectingKMeans.'
-            "a minimum of 1 is required by BisectingKMeans.",
-            True,
         ),
     ],
 )
-def test_wrong_params(param, match, single_value):
+def test_wrong_params(param, match):
     """Test Exceptions at check_params function"""
-
-    simplefilter("ignore")
-
-    if single_value:
-        X = np.ones((0, 1))
-    else:
-        rng = np.random.RandomState(0)
-        X = rng.rand(5, 2)
+    rng = np.random.RandomState(0)
+    X = rng.rand(5, 2)
 
     with pytest.raises(ValueError, match=match):
-        bisect_means = BisectingKMeans(n_clusters=3, n_init=1)
-        bisect_means.set_params(**param)
+        bisect_means = BisectingKMeans(n_clusters=3, **param)
         bisect_means.fit(X)
 
 
@@ -150,3 +136,36 @@ def test_fit_predict(is_sparse):
     bisect_means.fit(X)
 
     assert_array_equal(bisect_means.labels_, bisect_means.predict(X))
+
+
+@pytest.mark.parametrize("is_sparse", [True, False])
+def test_dtype_preserved(is_sparse, global_dtype):
+    """Check that centers dtype is the same as input data dtype"""
+    rng = np.random.RandomState(0)
+    X = rng.rand(10, 2).astype(global_dtype, copy=False)
+
+    if is_sparse:
+        X[X < 0.8] = 0
+        X = sp.csr_matrix(X)
+
+    km = BisectingKMeans(n_clusters=3, random_state=0)
+    km.fit(X)
+
+    assert km.cluster_centers_.dtype == global_dtype
+
+
+@pytest.mark.parametrize("is_sparse", [True, False])
+def test_float32_float64_equivalence(is_sparse):
+    """Check that the results are the same between float32 and float64."""
+    rng = np.random.RandomState(0)
+    X = rng.rand(10, 2)
+
+    if is_sparse:
+        X[X < 0.8] = 0
+        X = sp.csr_matrix(X)
+
+    km64 = BisectingKMeans(n_clusters=3, random_state=0).fit(X)
+    km32 = BisectingKMeans(n_clusters=3, random_state=0).fit(X.astype(np.float32))
+
+    assert_allclose(km32.cluster_centers_, km64.cluster_centers_)
+    assert_array_equal(km32.labels_, km64.labels_)

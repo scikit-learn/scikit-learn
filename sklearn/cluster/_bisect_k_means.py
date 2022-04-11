@@ -5,93 +5,21 @@ import warnings
 
 import numpy as np
 import scipy.sparse as sp
-from threadpoolctl import threadpool_limits
 
 from ..exceptions import EfficiencyWarning
-
 from ._kmeans import _BaseKMeans
 from ._kmeans import _kmeans_single_elkan
 from ._kmeans import _kmeans_single_lloyd
-
+from ._kmeans import _labels_inertia_threadpool_limit
 from ._k_means_common import _inertia_dense
 from ._k_means_common import _inertia_sparse
-
-from ._k_means_lloyd import lloyd_iter_chunked_dense
-from ._k_means_lloyd import lloyd_iter_chunked_sparse
-
 from ..utils.extmath import row_norms
 from ..utils._openmp_helpers import _openmp_effective_n_threads
-
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _check_sample_weight
 from ..utils.validation import check_random_state
+from ..utils.validation import _is_arraylike_not_scalar
 
-
-def _check_labels(X, sample_weight, x_squared_norms, centers, n_threads=1):
-    """Compute the labels of the given samples and centers.
-
-    Parameters
-    ----------
-    X : {ndarray, sparse matrix} of shape (n_samples, n_features)
-        The input samples to assign to the labels. If sparse matrix, must
-        be in CSR format.
-
-    sample_weight : ndarray of shape (n_samples,)
-        The weights for each observation in X.
-
-    x_squared_norms : ndarray of shape (n_samples,)
-        Precomputed squared euclidean norm of each data point, to speed up
-        computations.
-
-    centers : ndarray of shape (n_clusters, n_features)
-        The cluster centers.
-
-    n_threads : int, default=1
-        The number of OpenMP threads to use for the computation. Parallelism is
-        sample-wise on the main cython loop which assigns each sample to its
-        closest center.
-
-    Returns
-    -------
-    labels : ndarray of shape (n_samples,)
-        The resulting assignment (Labels of each point).
-    """
-    n_samples = X.shape[0]
-    n_clusters = centers.shape[0]
-
-    labels = np.full(n_samples, -1, dtype=np.int32)
-    weight_in_clusters = np.zeros(n_clusters, dtype=centers.dtype)
-    center_shift = np.zeros_like(weight_in_clusters)
-
-    if sp.issparse(X):
-        _labels = lloyd_iter_chunked_sparse
-    else:
-        _labels = lloyd_iter_chunked_dense
-
-    _labels(
-        X,
-        sample_weight,
-        x_squared_norms,
-        centers,
-        centers,
-        weight_in_clusters,
-        labels,
-        center_shift,
-        n_threads,
-        update_centers=False,
-    )
-
-    return labels
-
-
-def _check_labels_threadpool_limit(
-    X, sample_weight, x_squared_norms, centers, n_threads=1
-):
-    """Same as _check_labels but in a threadpool_limits context."""
-    with threadpool_limits(limits=1, user_api="blas"):
-        labels = _check_labels(X, sample_weight, x_squared_norms, centers, n_threads)
-
-    return labels
 
 class _BisectingTree:
     """Tree structure representing the hierarchical clusters of BisectingKMeans."""
@@ -307,9 +235,40 @@ class BisectingKMeans(_BaseKMeans):
         self.algorithm = algorithm
         self.bisecting_strategy = bisecting_strategy
 
-    def _compute_bisect_errors(self, X, centers, labels, sample_weight):
-        """
-        Calculate the sum of squared errors (inertia) per cluster.
+    def _check_params(self, X):
+        super()._check_params(X)
+
+        # bisecting_strategy
+        if self.bisecting_strategy not in ["biggest_inertia", "largest_cluster"]:
+            raise ValueError(
+                "Bisect Strategy must be 'biggest_inertia' or 'largest_cluster'. "
+                f"Got {self.bisecting_strategy} instead."
+            )
+
+        # Regular K-Means should do less computations when there are only
+        # less than 3 clusters
+        if self.n_clusters < 3:
+            warnings.warn(
+                "BisectingKMeans might be inefficient for n_cluster "
+                "smaller than 3  "
+                "- Use Normal KMeans from sklearn.cluster instead.",
+                EfficiencyWarning,
+            )
+
+        if _is_arraylike_not_scalar(self.init):
+            raise ValueError("BisectingKMeans does not support init as array.")
+
+    def _warn_mkl_vcomp(self, n_active_threads):
+        """Warn when vcomp and mkl are both present"""
+        warnings.warn(
+            "BisectingKMeans is known to have a memory leak on Windows "
+            "with MKL, when there are less chunks than available "
+            "threads. You can avoid it by setting the environment"
+            f" variable OMP_NUM_THREADS={n_active_threads}."
+        )
+
+    def _inertia_per_cluster(self, X, centers, labels, sample_weight):
+        """Calculate the sum of squared errors (inertia) per cluster.
 
         Parameters
         ----------
@@ -327,60 +286,18 @@ class BisectingKMeans(_BaseKMeans):
 
         Returns
         -------
-        errors_by_label : dict
-            dictionary containing squared error of each point by label
-            as ndarray.
+        inertia_per_cluster : ndarray of shape (n_clusters,)
+            Sum of squared errors (inertia) for each cluster.
         """
-        errors_by_label = {}
-
         _inertia = _inertia_sparse if sp.issparse(X) else _inertia_dense
 
-        for value in range(centers.shape[0]):
-            indexes = labels == value
-
-            data = X[indexes]
-            weights = sample_weight[indexes]
-            center = centers[value][np.newaxis, :]
-            label = np.zeros(data.shape[0], dtype=np.intc)
-
-            errors_by_label[value] = _inertia(
-                data, weights, center, label, self._n_threads
+        inertia_per_cluster = np.empty(centers.shape[1])
+        for label in range(centers.shape[0]):
+            inertia_per_cluster[label] = _inertia(
+                X, sample_weight, centers, labels, self._n_threads, single_label=label
             )
 
-        return errors_by_label
-
-    def _check_params(self, X):
-        super()._check_params(X)
-
-        # bisecting_strategy
-        if self.bisecting_strategy not in ["biggest_inertia", "largest_cluster"]:
-            raise ValueError(
-                "Bisect Strategy must be 'biggest_inertia', "
-                "or 'largest_cluster' "
-                f"got {self.bisecting_strategy} instead."
-            )
-
-        # Regular K-Means should do less computations when there are only
-        # less than 3 clusters
-        if self.n_clusters < 3:
-            warnings.warn(
-                "BisectingKMeans might be inefficient for n_cluster "
-                "smaller than 3  "
-                "- Use Normal KMeans from sklearn.cluster instead.",
-                EfficiencyWarning,
-            )
-
-        if hasattr(self.init, "__array__"):
-            raise ValueError("BisectingKMeans does not support init as array.")
-
-    def _warn_mkl_vcomp(self, n_active_threads):
-        """Warn when vcomp and mkl are both present"""
-        warnings.warn(
-            "BisectingKMeans is known to have a memory leak on Windows "
-            "with MKL, when there are less chunks than available "
-            "threads. You can avoid it by setting the environment"
-            f" variable OMP_NUM_THREADS={n_active_threads}."
-        )
+        return inertia_per_cluster
 
     def _bisect(self, X, x_squared_norms, sample_weight, cluster_to_bisect):
         """Split a cluster into 2 subsclusters.
@@ -434,8 +351,9 @@ class BisectingKMeans(_BaseKMeans):
             print(f"New centroids from bisection: {best_centers}")
 
         if self.bisecting_strategy == "biggest_inertia":
-            scores = self._compute_bisect_errors(X, best_centers, best_labels,
-                                                 sample_weight)
+            scores = self._inertia_per_cluster(
+                X, best_centers, best_labels, sample_weight
+            )
         else:  # bisecting_strategy == "largest_cluster"
             scores = np.bincount(best_labels)
 
@@ -494,7 +412,7 @@ class BisectingKMeans(_BaseKMeans):
         # Initialize the hierearchical clusters tree
         self._bisecting_tree = _BisectingTree(
             indices=np.arange(X.shape[0]),
-            center=None,
+            center=X.mean(axis=0),
             score=0,
         )
 
@@ -515,6 +433,7 @@ class BisectingKMeans(_BaseKMeans):
             self.labels_[cluster_node.indices] = i
             self.cluster_centers_[i] = cluster_node.center
             cluster_node.label = i  # label final clusters for future prediction
+            cluster_node.indices = None  # release memory
 
         # Restore original data
         if not sp.issparse(X):
@@ -530,7 +449,7 @@ class BisectingKMeans(_BaseKMeans):
 
         return self
 
-    def predict(self, X, sample_weight=None):
+    def predict(self, X):
         """Predict which cluster each sample in X belongs to.
 
         Prediction is made by going down the hierarchical tree
@@ -545,9 +464,6 @@ class BisectingKMeans(_BaseKMeans):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             New data to predict.
 
-        sample_weight : Ignored
-            Not used, present here for API consistency by convention.
-
         Returns
         -------
         labels : ndarray of shape (n_samples,)
@@ -559,7 +475,7 @@ class BisectingKMeans(_BaseKMeans):
         x_squared_norms = row_norms(X, squared=True)
 
         # sample weights are unused but necessary in cython helpers
-        sample_weight = _check_sample_weight(None, X, dtype=X.dtype)
+        sample_weight = np.ones_like(x_squared_norms)
 
         labels = self._predict_recursive(
             X, x_squared_norms, sample_weight, self._bisecting_tree
@@ -599,8 +515,13 @@ class BisectingKMeans(_BaseKMeans):
         if hasattr(self, "_X_mean"):
             centers += self._X_mean
 
-        cluster_labels = _check_labels_threadpool_limit(
-            X, sample_weight, x_squared_norms, centers, self._n_threads
+        cluster_labels = _labels_inertia_threadpool_limit(
+            X,
+            sample_weight,
+            x_squared_norms,
+            centers,
+            self._n_threads,
+            return_inertia=False,
         )
         mask = cluster_labels == 0
 
@@ -616,3 +537,6 @@ class BisectingKMeans(_BaseKMeans):
         )
 
         return labels
+
+    def _more_tags(self):
+        return {"preserves_dtype": [np.float64, np.float32]}

@@ -20,10 +20,6 @@ stacking strategy. Stacking slightly improves the overall performance.
 #          Maria Telenczuk    <https://github.com/maikia>
 # License: BSD 3 clause
 
-from sklearn import set_config
-
-set_config(display="diagram")
-
 # %%
 # Download the dataset
 ##############################################################################
