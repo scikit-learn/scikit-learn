@@ -1291,6 +1291,51 @@ def test_cwnb_prior():
     assert_array_almost_equal(clf1.class_prior_, clf3.class_prior_, 8)
     assert_array_equal(clf1.class_prior_, clf1.named_estimators_["g1"].class_prior_)
 
+    # prior spec: error message when can't extract prior from subestimator
+    class GaussianNB_hide_prior(GaussianNB):
+        def fit(self, X, y, sample_weight=None):
+            super().fit(X, y, sample_weight=None)
+            self.qwerqwer = self.class_prior_
+            del self.class_prior_
+
+        def _joint_log_likelihood(self, X):
+            self.class_prior_ = self.qwerqwer
+            super()._joint_log_likelihood(X)
+            del self.class_prior_
+
+    class MultinomialNB_hide_log_prior(MultinomialNB):
+        def fit(self, X, y, sample_weight=None):
+            super().fit(X, y, sample_weight=None)
+            self.qwerqwer = self.class_log_prior_
+            del self.class_log_prior_
+
+        def _joint_log_likelihood(self, X):
+            self.class_log_prior_ = self.qwerqwer
+            super()._joint_log_likelihood(X)
+            del self.class_log_prior_
+
+    clf = ColumnwiseNB(
+        nb_estimators=[
+            ("g1", GaussianNB(), [1]),
+            ("g2", GaussianNB_hide_prior(), [0, 1]),
+        ],
+        priors="g2",
+    )
+    msg = "Unable to extract class prior from estimator g2*"
+    with pytest.raises(AttributeError, match=msg):
+        clf.fit(X, y)
+
+    clf = ColumnwiseNB(
+        nb_estimators=[
+            ("g1", GaussianNB(), [0]),
+            ("m1", MultinomialNB_hide_log_prior(), [1, 2, 3, 4, 5]),
+        ],
+        priors="m1",
+    )
+    msg = "Unable to extract class prior from estimator m1*"
+    with pytest.raises(AttributeError, match=msg):
+        clf.fit(X2, y2)
+
 
 def test_cwnb_zero_prior():
     # P(y)=0 in a subestimator results in P(y|x)=0 of meta-estimator
