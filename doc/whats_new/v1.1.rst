@@ -751,6 +751,14 @@ Changelog
   instead of the finite approximation (`1.0` and `0.0` respectively) currently
   returned by default. :pr:`17266` by :user:`Sylvain Marié <smarie>`.
 
+- |Feature| :func:`d2_pinball_score` and :func:`d2_absolute_error_score`
+  calculate the :math:`D^2` regression score for the pinball loss and the
+  absolute error respectively. :func:`d2_absolute_error_score` is a special case
+  of :func:`d2_pinball_score` with a fixed quantile parameter `alpha=0.5`
+  for ease of use and discovery. The :math:`D^2` scores are generalizations
+  of the `r2_score` and can be interpeted as the fraction of deviance explained.
+  :pr:`22118` by :user:`Ohad Michel <ohadmich>`
+
 - |Enhancement| :func:`metrics.top_k_accuracy_score` raises an improved error
   message when `y_true` is binary and `y_score` is 2d. :pr:`22284` by `Thomas Fan`_.
 
