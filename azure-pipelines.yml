@@ -21,7 +21,7 @@ jobs:
           # message is the second to last commit
           COMMIT_ID=$(echo $BUILD_SOURCEVERSIONMESSAGE | awk '{print $2}')
           message=$(git log $COMMIT_ID -1 --pretty=%B)
-          # message=$(echo $message)
+          message=$(echo $message)
         else
           message=$BUILD_SOURCEVERSIONMESSAGE
         fi
