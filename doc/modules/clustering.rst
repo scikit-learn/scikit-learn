@@ -785,17 +785,19 @@ if the number of clusters is small compared to the number of data points.
 
 This variant also do not produce empty clusters.
 
-Cluster to split is picked depending on parameter ``bisect_strategy``:
- - Cluster with largest amount of data points (with ``largest_cluster``)
- - Cluster with biggest SSE (Sum of Squared Errors) (with ``biggest_sse``)
+There exist two strategies for selecting the cluster to split:
+ - ``bisect_strategy="largest_cluster"`` selects the cluster having the most points
+ - ``bisect_strategy="biggest_inerita"`` selects the cluster with biggest inertia
+   (cluster with biggest Sum of Squared Errors within)
 
 Picking by largest amount of data points in most cases produces result as
 accurate as picking by SSE and is faster (especially for larger amount of data
 points, where calculating error may be costly).
 
 Difference between Bisecting K-Means and regular K-Means can be seen on example
-:ref:`sphx_glr_auto_examples_cluster_plot_bisect_kmeans.py` - while regular K-Means tend to create non-related
-clusters, clusters from Bisecting K-Means are well ordered and create quite visible hierarchy.
+:ref:`sphx_glr_auto_examples_cluster_plot_bisect_kmeans.py`.
+While regular K-Means tend to create non-related clusters,
+clusters from Bisecting K-Means are well ordered and create quite visible hierarchy.
 
 
 .. topic:: References:
@@ -810,10 +812,12 @@ clusters, clusters from Bisecting K-Means are well ordered and create quite visi
    K.Abirami and Dr.P.Mayilvahanan,
    International Journal of Emerging Technologies in Engineering Research (IJETER)
    Volume 4, Issue 8, (August 2016)
- * `"Bisecting K-means Algorithm Based on K-valued Self-determining and Clustering Center Optimization"
+ * `"Bisecting K-means Algorithm Based on K-valued Self-determining
+   and Clustering Center Optimization"
    <http://www.jcomputers.us/vol13/jcp1306-01.pdf>`_
    Jian Di, Xinyue Gou
-   School of Control and Computer Engineering,North China Electric Power University, Baoding, Hebei, China (August 2017)
+   School of Control and Computer Engineering,North China Electric Power University,
+   Baoding, Hebei, China (August 2017)
 
 .. _dbscan:
 
