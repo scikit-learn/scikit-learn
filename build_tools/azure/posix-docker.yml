@@ -45,21 +45,7 @@ jobs:
       ${{ insert }}: ${{ parameters.matrix }}
 
   steps:
-    - bash: |
-        set -ex
-        # Check if run only specific tests but on all random seeds
-        # commit message must take the form
-        # <title> [all random seeds]
-        # <test_name_1>
-        # <test_name_2>
-        # ...
-        if [[ "$COMMIT_MESSAGE" =~ \[all\ random\ seeds\] ]]; then
-          message=$(echo $COMMIT_MESSAGE | sed -n -e 's/^.*all\ random\ seeds\] //p')
-          selected="${message// / or }"
-        else
-          selected=""
-        fi
-        echo ##vso[task.setvariable variable=SELECTED_TESTS]$selected
+    - script: python build_tools/azure/get_selected_tests.py
       displayName: Check selected tests for all random seeds
     - task: Cache@2
       inputs:
