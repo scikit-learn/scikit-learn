@@ -1961,20 +1961,20 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
         # Implemented in the image and likeness of ColumnTranformer._transformers
         try:
             return [(name, e) for name, e, _ in self.nb_estimators]
-        except (TypeError, ValueError):  # to pass init test in test_common.py
+        except (TypeError, ValueError):
+            # This try-except clause is needed to pass the test from test_common.py:
+            # test_estimators_do_not_raise_errors_in_init_or_set_params().
+            # ColumnTransformer does the same. See PR #21355 for details.
             return self.nb_estimators
 
     @_estimators.setter
     def _estimators(self, value):
         # Implemented in the image and likeness of ColumnTranformer._transformers
         # TODO: Is renaming or changing the order legal? Swap `name` and `_`?
-        try:
-            self.nb_estimators = [
-                (name, e, col)
-                for ((name, e), (_, _, col)) in zip(value, self.nb_estimators)
-            ]
-        except (TypeError, ValueError):  # to pass init test in test_common.py
-            self.nb_estimators = value
+        self.nb_estimators = [
+            (name, e, col)
+            for ((name, e), (_, _, col)) in zip(value, self.nb_estimators)
+        ]
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.
