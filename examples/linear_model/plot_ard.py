@@ -74,14 +74,14 @@ df = pd.DataFrame(
 # the true generative model.
 import matplotlib.pyplot as plt
 import seaborn as sns
-from matplotlib.colors import LogNorm
+from matplotlib.colors import SymLogNorm
 
 plt.figure(figsize=(10, 6))
 ax = sns.heatmap(
     df.T,
-    norm=LogNorm(),
+    norm=SymLogNorm(linthresh=10e-4, vmin=-80, vmax=80),
     cbar_kws={"label": "coefficients' values"},
-    cmap="viridis_r",
+    cmap="seismic_r",
 )
 plt.ylabel("linear model")
 plt.xlabel("coefficients")
