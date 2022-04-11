@@ -515,13 +515,13 @@ Entropy:
 
   .. math::
   
-      \mathrm{LL}(D, T) = -\frac{1}{n} \sum_{(x_i, y_i) \in D} \sum_k I(y_i = k) \log(T(x_i))
+      \mathrm{LL}(D, T) = -\frac{1}{n} \sum_{(x_i, y_i) \in D} \sum_k I(y_i = k) \log(T(x_i)_k)
 
   where :math:`D` is a training dataset of :math:`n` pairs :math:`(x_i, y_i)`.
 
   In a classification tree, the predicted class probabilities within leaf nodes
-  are constant, that is: for all :math:`(x_i, y_i) \in Q_m` such that :math:`y_i
-  = k` then :math:`T(x_i) = p_{mk}`.
+  are constant, that is: for all :math:`(x_i, y_i) \in Q_m`, one has:
+  :math:`T(x_i)_k = p_{mk}` for each class :math:`k`.
 
   This property makes it possible to rewrite :math:`\mathrm{LL}(D, T)` as the
   sum of the Shannon entropies computed for each leaf of :math:`T` weighted by
