@@ -13,6 +13,7 @@ def get_selected_tests():
         ...
     """
     commit_message = os.environ["COMMIT_MESSAGE"]
+    print("commit message", commit_message)
 
     if "[all random seeds]" in commit_message:
         selected_tests = commit_message.split("[all random seeds]")[1].strip()
