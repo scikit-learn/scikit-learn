@@ -1315,20 +1315,10 @@ def test_cwnb_prior():
             self.qwerqwer = self.class_prior_
             del self.class_prior_
 
-        def _joint_log_likelihood(self, X):
-            self.class_prior_ = self.qwerqwer
-            super()._joint_log_likelihood(X)
-            del self.class_prior_
-
     class MultinomialNB_hide_log_prior(MultinomialNB):
         def fit(self, X, y, sample_weight=None):
             super().fit(X, y, sample_weight=None)
             self.qwerqwer = self.class_log_prior_
-            del self.class_log_prior_
-
-        def _joint_log_likelihood(self, X):
-            self.class_log_prior_ = self.qwerqwer
-            super()._joint_log_likelihood(X)
             del self.class_log_prior_
 
     clf = ColumnwiseNB(
