@@ -1267,29 +1267,46 @@ def test_cwnb_prior():
     # prior spec: specified prior equals calculated and subestimators' priors
     # prior spec: str prior ties subestimators'
     clf1 = ColumnwiseNB(
-        nb_estimators=[("g1", GaussianNB(), [1]), ("g2", GaussianNB(), [0, 1])],
-        priors=np.array([0.5, 0.5]),
+        nb_estimators=[
+            ("g1", GaussianNB(), [0, 1]),
+            ("m1", MultinomialNB(), [2, 3, 4, 5, 6]),
+        ],
+        priors=np.array([1 / 3, 1 / 3, 1 / 3]),
     )
-    clf2 = ColumnwiseNB(
-        nb_estimators=[("g1", GaussianNB(), [1]), ("g2", GaussianNB(), [0, 1])],
+    clf2a = ColumnwiseNB(
+        nb_estimators=[
+            ("g1", GaussianNB(), [0, 1]),
+            ("m1", MultinomialNB(), [2, 3, 4, 5, 6]),
+        ],
         priors="g1",
     )
-    clf3 = ColumnwiseNB(
-        nb_estimators=[("g1", GaussianNB(), [1]), ("g2", GaussianNB(), [0, 1])]
+    clf2b = ColumnwiseNB(
+        nb_estimators=[
+            ("g1", GaussianNB(), [0, 1]),
+            ("m1", MultinomialNB(), [2, 3, 4, 5, 6]),
+        ],
+        priors="m1",
     )
-    clf1.fit(X, y)
-    clf2.fit(X, y)
-    clf3.fit(X, y)
+    clf3 = ColumnwiseNB(
+        nb_estimators=[
+            ("g1", GaussianNB(), [0, 1]),
+            ("m1", MultinomialNB(), [2, 3, 4, 5, 6]),
+        ],
+    )
+    clf1.fit(X2, y2)
+    clf2a.fit(X2, y2)
+    clf2b.fit(X2, y2)
+    clf3.fit(X2, y2)
     assert clf3.priors is None
     assert_array_almost_equal(
         clf1.class_prior_, clf1.named_estimators_["g1"].class_prior_, 8
     )
     assert_array_almost_equal(
-        clf1.class_prior_, clf1.named_estimators_["g2"].class_prior_, 8
+        np.log(clf1.class_prior_), clf1.named_estimators_["m1"].class_log_prior_, 8
     )
-    assert_array_almost_equal(clf1.class_prior_, clf2.class_prior_, 8)
+    assert_array_almost_equal(clf1.class_prior_, clf2a.class_prior_, 8)
+    assert_array_almost_equal(clf1.class_prior_, clf2b.class_prior_, 8)
     assert_array_almost_equal(clf1.class_prior_, clf3.class_prior_, 8)
-    assert_array_equal(clf1.class_prior_, clf1.named_estimators_["g1"].class_prior_)
 
     # prior spec: error message when can't extract prior from subestimator
     class GaussianNB_hide_prior(GaussianNB):
