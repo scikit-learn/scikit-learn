@@ -39,6 +39,7 @@ from .utils import _safe_indexing, _get_column_indices
 from .utils import _print_elapsed_time
 from .utils import Bunch
 from .utils.fixes import delayed
+from .utils._estimator_html_repr import _VisualBlock
 from .compose._column_transformer import _is_empty_column_selection
 
 
@@ -2017,3 +2018,10 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
         # Implemented in the image and likeness of ColumnTranformer.set_params
         self._set_params("_estimators", **kwargs)
         return self
+
+    def _sk_visual_block_(self):
+        """HTML representation of this estimator."""
+        names, estimators, name_details = zip(*self.nb_estimators)
+        return _VisualBlock(
+            "parallel", estimators, names=names, name_details=name_details
+        )
