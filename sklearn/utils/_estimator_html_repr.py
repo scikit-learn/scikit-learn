@@ -8,17 +8,19 @@ from .. import config_context
 
 
 class _IDCounter:
-    """Generate sequential ids."""
+    """Generate sequential ids with a prefix."""
 
-    def __init__(self):
+    def __init__(self, prefix):
+        self.prefix = prefix
         self.count = 0
 
-    def get_id(self, prefix):
+    def get_id(self):
         self.count += 1
-        return f"{prefix}{self.count}"
+        return f"{self.prefix}-{self.count}"
 
 
-_id_counter = _IDCounter()
+_CONTAINER_ID_COUNTER = _IDCounter("sk-container-id")
+_ESTIMATOR_ID_COUNTER = _IDCounter("sk-estimator-id")
 
 
 class _VisualBlock:
@@ -86,7 +88,7 @@ def _write_label_html(
         label_class = "sk-toggleable__label sk-toggleable__label-arrow"
 
         checked_str = "checked" if checked else ""
-        est_id = _id_counter.get_id("sk-estimator-id-")
+        est_id = _ESTIMATOR_ID_COUNTER.get_id()
         out.write(
             '<input class="sk-toggleable__control sk-hidden--visually" '
             f'id="{est_id}" type="checkbox" {checked_str}>'
@@ -375,7 +377,7 @@ def estimator_html_repr(estimator):
         HTML representation of estimator.
     """
     with closing(StringIO()) as out:
-        container_id = _id_counter.get_id("sk-container-id-")
+        container_id = _CONTAINER_ID_COUNTER.get_id()
         style_template = Template(_STYLE)
         style_with_id = style_template.substitute(id=container_id)
         estimator_str = str(estimator)
