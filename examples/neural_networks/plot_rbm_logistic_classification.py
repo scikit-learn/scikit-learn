@@ -67,6 +67,7 @@ def nudge_dataset(X, Y):
     Y = np.concatenate([Y for _ in range(5)], axis=0)
     return X, Y
 
+
 # %%
 # Load Data
 X, y = datasets.load_digits(return_X_y=True)
