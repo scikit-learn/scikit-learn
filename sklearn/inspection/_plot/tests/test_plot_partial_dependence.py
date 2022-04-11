@@ -772,6 +772,7 @@ def test_partial_dependence_display_deprecation(
         disp.plot(pdp_lim=None)
     # case when constructor and method parameters are different
     with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter("always")
         disp.plot(pdp_lim=(0, 1))
     assert len(record) == 2
     for warning in record:
