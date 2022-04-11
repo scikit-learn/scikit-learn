@@ -815,7 +815,6 @@ clusters, clusters from Bisecting K-Means are well ordered and create quite visi
    Jian Di, Xinyue Gou
    School of Control and Computer Engineering,North China Electric Power University, Baoding, Hebei, China (August 2017)
 
-
 .. _dbscan:
 
 DBSCAN
