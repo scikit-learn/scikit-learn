@@ -1618,3 +1618,22 @@ def test_cwnb_verbose(capsys):
     )
     clf.fit(X2, y2)
     clf.predict(X2)
+
+
+def test_cwnb_sk_visual_block(capsys):
+    # Setting verbose=True does not result in an error.
+    # This DOES NOT test if the desired output is generated.
+    estimators = (MultinomialNB(), MultinomialNB(), GaussianNB())
+    clf = ColumnwiseNB(
+        nb_estimators=[
+            ("mnb1", estimators[0], [0, 1]),
+            ("mnb2", estimators[1], [3, 4]),
+            ("gnb1", estimators[2], [5]),
+        ],
+        verbose=True,
+        n_jobs=4,
+    )
+    visual_block = clf._sk_visual_block_()
+    assert visual_block.names == ('mnb1', 'mnb2', 'gnb1')
+    assert visual_block.name_details == ([0, 1], [3, 4], [5])
+    assert visual_block.estimators == estimators
