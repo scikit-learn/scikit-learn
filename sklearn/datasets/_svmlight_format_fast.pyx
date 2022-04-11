@@ -117,7 +117,85 @@ def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based,
 
     return (dtype, data, indices, indptr, labels, query)
 
-def _dump_svmlight_file(X, y, X_dtype, y_dtype, f,
-                        bint multilabel, bint zero_based, int[:] query_id,
-                        const unsigned char[:] comment):
-    print(f"{X_dtype}")
+def _dump_svmlight_file(X, y, f, bint multilabel, bint one_based, np.ndarray query_id, bint X_is_sp, bint y_is_sp):
+    if X.dtype.kind == "i":
+        value_pattern = "%d:%d"
+    else:
+        value_pattern = "%d:%.16g"
+    if y.dtype.kind == "i":
+        label_pattern = "%d"
+    else:
+        label_pattern = "%.16g"
+
+    line_pattern = "%s"
+    if query_id is not None:
+        line_pattern += " qid:%d"
+    line_pattern += " %s\n"
+
+    cdef Py_ssize_t y_len = y.shape[0]
+    cdef Py_ssize_t x_len = X.shape[0]
+    cdef Py_ssize_t row_length = X.shape[1]
+    cdef Py_ssize_t i
+    cdef Py_ssize_t j
+    cdef Py_ssize_t col_start
+    cdef Py_ssize_t col_end
+    cdef bint first
+    for i in range(x_len):
+        first = True
+        s = ""
+        if X_is_sp:
+            col_start = X.indptr[i]
+            col_end = X.indptr[i+1]
+            for j in range(col_start, col_end):
+                if first:
+                    first = False
+                else:
+                    s += " "
+                first = False
+                s += value_pattern % (X.indices[j] + one_based, X.data[j])
+        else:
+            for j in range(row_length):
+                val = X[i,j]
+                if val != 0:
+                    if first:
+                        first = False
+                    else:
+                        s += " "
+                    first = False
+                    s += value_pattern % (j+one_based, val)
+
+        if multilabel:
+            labels_str = ""
+            first = True
+            if y_is_sp:
+                col_start = y.indptr[i]
+                col_end = y.indptr[i+1]
+                for j in range(col_start, col_end):
+                    if first:
+                        first = False
+                    else:
+                        labels_str += ","
+                    first = False
+                    labels_str += label_pattern % y.indices[j]
+            else:
+                for j in range(y_len):
+                    val = y[i,j]
+                    if val != 0:
+                        if first:
+                            first = False
+                        else:
+                            labels_str += ","
+                        first = False
+                        labels_str += label_pattern % j
+        else:
+            if y_is_sp:
+                labels_str = label_pattern % y.data[i]
+            else:
+                labels_str = label_pattern % y[i]
+
+        if query_id is not None:
+            feat = (labels_str, query_id[i], s)
+        else:
+            feat = (labels_str, s)
+
+        f.write((line_pattern % feat).encode("ascii"))
