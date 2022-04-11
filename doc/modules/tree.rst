@@ -444,7 +444,7 @@ Given training vectors :math:`x_i \in R^n`, i=1,..., l and a label vector
 such that the samples with the same labels or similar target values are grouped
 together.
 
-Let the data at node :math:`m` be represented by :math:`Q_m` with :math:`N_m`
+Let the data at node :math:`m` be represented by :math:`Q_m` with :math:`n_m`
 samples. For each candidate split :math:`\theta = (j, t_m)` consisting of a
 feature :math:`j` and threshold :math:`t_m`, partition the data into
 :math:`Q_m^{left}(\theta)` and :math:`Q_m^{right}(\theta)` subsets
@@ -461,8 +461,8 @@ the task being solved (classification or regression)
 
 .. math::
 
-   G(Q_m, \theta) = \frac{N_m^{left}}{N_m} H(Q_m^{left}(\theta))
-   + \frac{N_m^{right}}{N_m} H(Q_m^{right}(\theta))
+   G(Q_m, \theta) = \frac{n_m^{left}}{n_m} H(Q_m^{left}(\theta))
+   + \frac{n_m^{right}}{n_m} H(Q_m^{right}(\theta))
 
 Select the parameters that minimises the impurity
 
@@ -472,7 +472,7 @@ Select the parameters that minimises the impurity
 
 Recurse for subsets :math:`Q_m^{left}(\theta^*)` and
 :math:`Q_m^{right}(\theta^*)` until the maximum allowable depth is reached,
-:math:`N_m < \min_{samples}` or :math:`N_m = 1`.
+:math:`n_m < \min_{samples}` or :math:`n_m = 1`.
 
 Classification criteria
 -----------------------
@@ -482,7 +482,7 @@ for node :math:`m`, let
 
 .. math::
 
-    p_{mk} = 1/ N_m \sum_{y \in Q_m} I(y = k)
+    p_{mk} = \frac{1}{n_m} \sum_{y \in Q_m} I(y = k)
 
 be the proportion of class k observations in node :math:`m`. If :math:`m` is a
 terminal node, `predict_proba` for this region is set to :math:`p_{mk}`.
@@ -500,6 +500,37 @@ Entropy:
 
     H(Q_m) = - \sum_k p_{mk} \log(p_{mk})
 
+
+.. note::
+
+  The entropy criterion computes the Shannon entropy of the possible classes. It
+  takes the class frequencies of the training data points that reached a given
+  leaf :math:`m` as their probability. Using the **Shannon entropy as tree node
+  splitting criterion is equivalent to minimizing the log loss** (also known as
+  cross-entropy and multinomial deviance) between the true labels :math:`y_i`
+  and the probalistic predictions :math:`T_k(x_i)` of the tree model :math:`T` for class :math:`k`.
+
+  To see this, first recall that the log loss of a tree model :math:`T`
+  computed on a dataset :math:`D` is defined as follows:
+
+  .. math::
+  
+      \mathrm{LL}(D, T) = -\frac{1}{n} \sum_{(x_i, y_i) \in D} \sum_k I(y_i = k) \log(T_k(x_i))
+
+  where :math:`D` is a training dataset of :math:`n` pairs :math:`(x_i, y_i)`.
+
+  In a classification tree, the predicted class probabilities within leaf nodes
+  are constant, that is: for all :math:`(x_i, y_i) \in Q_m`, one has:
+  :math:`T_k(x_i) = p_{mk}` for each class :math:`k`.
+
+  This property makes it possible to rewrite :math:`\mathrm{LL}(D, T)` as the
+  sum of the Shannon entropies computed for each leaf of :math:`T` weighted by
+  the number of training data points that reached each leaf:
+
+  .. math::
+  
+      \mathrm{LL}(D, T) = -\sum_{m \in T} \frac{n_m}{n} H(Q_m)
+
 Regression criteria
 -------------------
 
@@ -515,15 +546,15 @@ Mean Squared Error:
 
 .. math::
 
-    \bar{y}_m = \frac{1}{N_m} \sum_{y \in Q_m} y
+    \bar{y}_m = \frac{1}{n_m} \sum_{y \in Q_m} y
 
-    H(Q_m) = \frac{1}{N_m} \sum_{y \in Q_m} (y - \bar{y}_m)^2
+    H(Q_m) = \frac{1}{n_m} \sum_{y \in Q_m} (y - \bar{y}_m)^2
 
 Half Poisson deviance:
 
 .. math::
 
-    H(Q_m) = \frac{1}{N_m} \sum_{y \in Q_m} (y \log\frac{y}{\bar{y}_m}
+    H(Q_m) = \frac{1}{n_m} \sum_{y \in Q_m} (y \log\frac{y}{\bar{y}_m}
     - y + \bar{y}_m)
 
 Setting `criterion="poisson"` might be a good choice if your target is a count
@@ -537,7 +568,7 @@ Mean Absolute Error:
 
     median(y)_m = \underset{y \in Q_m}{\mathrm{median}}(y)
 
-    H(Q_m) = \frac{1}{N_m} \sum_{y \in Q_m} |y - median(y)_m|
+    H(Q_m) = \frac{1}{n_m} \sum_{y \in Q_m} |y - median(y)_m|
 
 Note that it fits much slower than the MSE criterion.
 
