@@ -11,9 +11,7 @@ def get_selected_tests():
         ...
     """
     commit_message = os.environ["COMMIT_MESSAGE"]
-    import sys
-    print(sys.version_info)
-    # print(f"commit message: {commit_message}")
+    print(f"commit message: {commit_message}")
 
     if "[all random seeds]" in commit_message:
         selected_tests = commit_message.split("[all random seeds]")[1].strip()
@@ -21,7 +19,7 @@ def get_selected_tests():
     else:
         selected_tests = ""
 
-    # print(f"##vso[task.setvariable variable=SELECTED_TESTS]'{selected_tests}'")
+    print(f"##vso[task.setvariable variable=SELECTED_TESTS]'{selected_tests}'")
 
 
 if __name__ == "__main__":
