@@ -61,7 +61,7 @@ fi
 
 if [[ "$SELECTED_TESTS" != "" ]]; then
     echo $SELECTED_TESTS
-    TEST_CMD="$TEST_CMD -k '$SELECTED_TESTS'"
+    TEST_CMD="$TEST_CMD -k $SELECTED_TESTS"
     # Override to make selected tests run on all random seeds
     export SKLEARN_TESTS_GLOBAL_RANDOM_SEED="all"
 fi
