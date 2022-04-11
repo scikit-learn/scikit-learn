@@ -3236,14 +3236,21 @@ class PowerTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
         Like for Box-Cox, MLE is done via the brent optimizer.
         """
+        x_tiny = np.finfo(np.float64).tiny
 
         def _neg_log_likelihood(lmbda):
             """Return the negative log likelihood of the observed data x as a
             function of lambda."""
             x_trans = self._yeo_johnson_transform(x, lmbda)
             n_samples = x.shape[0]
+            x_trans_var = x_trans.var()
 
-            loglike = -n_samples / 2 * np.log(x_trans.var())
+            # Reject transformed data that would raise a RuntimeWarning in np.log
+            if x_trans_var < x_tiny:
+                return np.inf
+
+            log_var = np.log(x_trans_var)
+            loglike = -n_samples / 2 * log_var
             loglike += (lmbda - 1) * (np.sign(x) * np.log1p(np.abs(x))).sum()
 
             return -loglike
@@ -3317,7 +3324,8 @@ class PowerTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
 
 def power_transform(X, method="yeo-johnson", *, standardize=True, copy=True):
-    """
+    """Parametric, monotonic transformation to make data more Gaussian-like.
+
     Power transforms are a family of parametric, monotonic transformations
     that are applied to make data more Gaussian-like. This is useful for
     modeling issues related to heteroscedasticity (non-constant variance),
@@ -3334,7 +3342,6 @@ def power_transform(X, method="yeo-johnson", *, standardize=True, copy=True):
     transformed data.
 
     Read more in the :ref:`User Guide <preprocessing_transformer>`.
-
 
     Parameters
     ----------
@@ -3363,28 +3370,6 @@ def power_transform(X, method="yeo-johnson", *, standardize=True, copy=True):
     X_trans : ndarray of shape (n_samples, n_features)
         The transformed data.
 
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from sklearn.preprocessing import power_transform
-    >>> data = [[1, 2], [3, 2], [4, 5]]
-    >>> print(power_transform(data, method='box-cox'))
-    [[-1.332... -0.707...]
-     [ 0.256... -0.707...]
-     [ 1.076...  1.414...]]
-
-    .. warning:: Risk of data leak.
-        Do not use :func:`~sklearn.preprocessing.power_transform` unless you
-        know what you are doing. A common mistake is to apply it to the entire
-        data *before* splitting into training and test sets. This will bias the
-        model evaluation because information would have leaked from the test
-        set to the training set.
-        In general, we recommend using
-        :class:`~sklearn.preprocessing.PowerTransformer` within a
-        :ref:`Pipeline <pipeline>` in order to prevent most risks of data
-        leaking, e.g.: `pipe = make_pipeline(PowerTransformer(),
-        LogisticRegression())`.
-
     See Also
     --------
     PowerTransformer : Equivalent transformation with the
@@ -3412,6 +3397,28 @@ def power_transform(X, method="yeo-johnson", *, standardize=True, copy=True):
 
     .. [2] G.E.P. Box and D.R. Cox, "An Analysis of Transformations", Journal
            of the Royal Statistical Society B, 26, 211-252 (1964).
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.preprocessing import power_transform
+    >>> data = [[1, 2], [3, 2], [4, 5]]
+    >>> print(power_transform(data, method='box-cox'))
+    [[-1.332... -0.707...]
+     [ 0.256... -0.707...]
+     [ 1.076...  1.414...]]
+
+    .. warning:: Risk of data leak.
+        Do not use :func:`~sklearn.preprocessing.power_transform` unless you
+        know what you are doing. A common mistake is to apply it to the entire
+        data *before* splitting into training and test sets. This will bias the
+        model evaluation because information would have leaked from the test
+        set to the training set.
+        In general, we recommend using
+        :class:`~sklearn.preprocessing.PowerTransformer` within a
+        :ref:`Pipeline <pipeline>` in order to prevent most risks of data
+        leaking, e.g.: `pipe = make_pipeline(PowerTransformer(),
+        LogisticRegression())`.
     """
     pt = PowerTransformer(method=method, standardize=standardize, copy=copy)
     return pt.fit_transform(X)

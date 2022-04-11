@@ -658,6 +658,7 @@ Plotting
    :toctree: generated/
    :template: class.rst
 
+   inspection.DecisionBoundaryDisplay
    inspection.PartialDependenceDisplay
 
 .. autosummary::
@@ -998,6 +999,8 @@ details.
    metrics.mean_tweedie_deviance
    metrics.d2_tweedie_score
    metrics.mean_pinball_loss
+   metrics.d2_pinball_score
+   metrics.d2_absolute_error_score
 
 Multilabel ranking metrics
 --------------------------
@@ -1588,12 +1591,17 @@ Plotting
 
 .. autosummary::
    :toctree: generated/
+   :template: class.rst
+
+   utils.Bunch
+
+.. autosummary::
+   :toctree: generated/
    :template: function.rst
 
    utils.arrayfuncs.min_pos
    utils.as_float_array
    utils.assert_all_finite
-   utils.Bunch
    utils.check_X_y
    utils.check_array
    utils.check_scalar
