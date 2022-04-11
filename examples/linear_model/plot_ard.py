@@ -90,14 +90,13 @@ _ = plt.title("Models' coefficients")
 
 # %%
 # Due to the added noise, none of the models recover the true weights. Indeed,
-# all models always have more than 10 non-zero coefficients.
-#
-# Compared to the OLS estimator, the coefficients using a Bayesian Ridge
-# regression are slightly shifted toward zero, which stabilises them. The ARD
-# regression provides a sparser solution: some of the non-informative
-# coefficients are set exactly to zero, while shifting others closer to zero.
-# Some non-informative coefficients are still present and retain the order of
-# magnitude of the ground truth coefficients.
+# all models always have more than 10 non-zero coefficients. Compared to the OLS
+# estimator, the coefficients using a Bayesian Ridge regression are slightly
+# shifted toward zero, which stabilises them. The ARD regression provides a
+# sparser solution: some of the non-informative coefficients are set exactly to
+# zero, while shifting others closer to zero. Some non-informative coefficients
+# are still present and retain the order of magnitude of the ground truth
+# coefficients.
 
 # %%
 # Plot the marginal log-likelihood
@@ -202,5 +201,9 @@ _ = ax.set_title("Polynomial fit of a non-linear feature")
 # %%
 # The error bars represent one standard deviation of the predicted gaussian
 # distribution of the query points. Notice that the ARD regression captures the
-# ground truth the best, but due to the limitations of a polynomial regression,
-# both models fail when extrapolating.
+# ground truth the best when using the default parameters in both models, but
+# further reducing the `lambda_init` hyperparameter of the Bayesian Ridge can
+# reduce its bias (see example
+# :ref:`sphx_glr_auto_examples_linear_model_plot_bayesian_ridge_curvefit.py`).
+# Finally, due to the intrinsic limitations of a polynomial regression, both
+# models fail when extrapolating.
