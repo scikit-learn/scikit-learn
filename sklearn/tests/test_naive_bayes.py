@@ -1634,6 +1634,6 @@ def test_cwnb_sk_visual_block(capsys):
         n_jobs=4,
     )
     visual_block = clf._sk_visual_block_()
-    assert visual_block.names == ('mnb1', 'mnb2', 'gnb1')
+    assert visual_block.names == ("mnb1", "mnb2", "gnb1")
     assert visual_block.name_details == ([0, 1], [3, 4], [5])
     assert visual_block.estimators == estimators
