@@ -202,9 +202,9 @@ class BisectingKMeans(_BaseKMeans):
     >>> bisect_means.predict([[0, 0], [12, 3]])
     array([2, 0], dtype=int32)
     >>> bisect_means.cluster_centers_
-    array([[ 10.,  2.],
+    array([[10.,  2.],
            [10.,  8.],
-           [1., 2.]])
+           [ 1., 2.]])
     """
 
     def __init__(
