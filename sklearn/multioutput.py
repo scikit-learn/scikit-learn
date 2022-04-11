@@ -14,19 +14,20 @@ extends single output estimators to multioutput estimators.
 #
 # License: BSD 3 clause
 
+from abc import ABCMeta, abstractmethod
+
 import numpy as np
 import scipy.sparse as sp
 from joblib import Parallel
 
-from abc import ABCMeta, abstractmethod
 from .base import BaseEstimator, clone, MetaEstimatorMixin
 from .base import RegressorMixin, ClassifierMixin, is_classifier
 from .model_selection import cross_val_predict
-from .utils.metaestimators import available_if
 from .utils import check_random_state
-from .utils.validation import check_is_fitted, has_fit_parameter, _check_fit_params
-from .utils.multiclass import check_classification_targets
 from .utils.fixes import delayed
+from .utils.metaestimators import available_if
+from .utils.multiclass import check_classification_targets
+from .utils.validation import check_is_fitted, has_fit_parameter, _check_fit_params
 
 __all__ = [
     "MultiOutputRegressor",
@@ -46,7 +47,7 @@ def _fit_estimator(estimator, X, y, sample_weight=None, **fit_params):
 
 
 def _partial_fit_estimator(
-    estimator, X, y, classes=None, sample_weight=None, first_time=True
+        estimator, X, y, classes=None, sample_weight=None, first_time=True
 ):
     if first_time:
         estimator = clone(estimator)
@@ -125,7 +126,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
             )
 
         if sample_weight is not None and not has_fit_parameter(
-            self.estimator, "sample_weight"
+                self.estimator, "sample_weight"
         ):
             raise ValueError("Underlying estimator does not support sample weights.")
 
@@ -193,7 +194,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
             )
 
         if sample_weight is not None and not has_fit_parameter(
-            self.estimator, "sample_weight"
+                self.estimator, "sample_weight"
         ):
             raise ValueError("Underlying estimator does not support sample weights.")
 
@@ -395,12 +396,11 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
     >>> import numpy as np
     >>> from sklearn.datasets import make_multilabel_classification
     >>> from sklearn.multioutput import MultiOutputClassifier
-    >>> from sklearn.linear_model import LogisticRegression
+    >>> from sklearn.neighbors import KNeighborsClassifier
     >>> X, y = make_multilabel_classification(n_classes=3, random_state=0)
-    >>> clf = MultiOutputClassifier(LogisticRegression()).fit(X, y)
+    >>> clf = MultiOutputClassifier(KNeighborsClassifier()).fit(X, y)
     >>> clf.predict(X[-2:])
-    array([[1, 1, 1],
-           [1, 0, 1]])
+    array([[1, 1, 0], [1, 1, 1]])
     """
 
     def __init__(self, estimator, *, n_jobs=None):
@@ -554,7 +554,10 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         self : object
             Returns a fitted instance.
         """
-        X, Y = self._validate_data(X, Y, multi_output=True, accept_sparse=True)
+        allow_nan = self.base_estimator._get_tags()['allow_nan']
+        force_all_finite = 'allow-nan' if allow_nan else True
+        X, Y = self._validate_data(X, Y, multi_output=True, accept_sparse=True,
+                                   force_all_finite=force_all_finite)
 
         random_state = check_random_state(self.random_state)
         self.order_ = self.order
@@ -618,7 +621,11 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
             The predicted values.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, accept_sparse=True, reset=False)
+        allow_nan = self.base_estimator._get_tags()['allow_nan']
+        force_all_finite = 'allow-nan' if allow_nan else True
+
+        X = self._validate_data(X, accept_sparse=True, reset=False,
+                                force_all_finite=force_all_finite)
         Y_pred_chain = np.zeros((X.shape[0], len(self.estimators_)))
         for chain_idx, estimator in enumerate(self.estimators_):
             previous_predictions = Y_pred_chain[:, :chain_idx]
@@ -785,7 +792,11 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         Y_prob : array-like of shape (n_samples, n_classes)
             The predicted probabilities.
         """
-        X = self._validate_data(X, accept_sparse=True, reset=False)
+        allow_nan = self.base_estimator._get_tags()['allow_nan']
+        force_all_finite = 'allow-nan' if allow_nan else True
+
+        X = self._validate_data(X, accept_sparse=True, reset=False,
+                                force_all_finite=force_all_finite)
         Y_prob_chain = np.zeros((X.shape[0], len(self.estimators_)))
         Y_pred_chain = np.zeros((X.shape[0], len(self.estimators_)))
         for chain_idx, estimator in enumerate(self.estimators_):
@@ -817,7 +828,11 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
             Returns the decision function of the sample for each model
             in the chain.
         """
-        X = self._validate_data(X, accept_sparse=True, reset=False)
+        allow_nan = self.base_estimator._get_tags()['allow_nan']
+        force_all_finite = 'allow-nan' if allow_nan else True
+
+        X = self._validate_data(X, accept_sparse=True, reset=False,
+                                force_all_finite=force_all_finite)
         Y_decision_chain = np.zeros((X.shape[0], len(self.estimators_)))
         Y_pred_chain = np.zeros((X.shape[0], len(self.estimators_)))
         for chain_idx, estimator in enumerate(self.estimators_):
