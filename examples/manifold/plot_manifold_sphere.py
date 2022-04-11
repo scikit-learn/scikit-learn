@@ -30,17 +30,11 @@ that of representing a flat map of the Earth, as with
 # License: BSD 3 clause
 
 from time import time
-
 import numpy as np
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.ticker import NullFormatter
-
 from sklearn import manifold
 from sklearn.utils import check_random_state
-
-# Next line to silence pyflakes.
-Axes3D
 
 # Variables for manifold learning.
 n_neighbors = 10
