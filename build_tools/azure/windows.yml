@@ -29,6 +29,7 @@ jobs:
   steps:
     - script: python build_tools/azure/get_selected_tests.py
       displayName: Check selected tests for all random seeds
+      condition: eq(variables['Build.Reason'], 'PullRequest')
     - bash: echo "##vso[task.prependpath]$CONDA/Scripts"
       displayName: Add conda to PATH for 64 bit Python
       condition: eq(variables['PYTHON_ARCH'], '64')
