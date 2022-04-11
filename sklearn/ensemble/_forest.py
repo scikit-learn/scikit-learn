@@ -421,14 +421,8 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                     "RandomForestRegressors and ExtraTreesRegressors.",
                     FutureWarning,
                 )
-        # TODO(1.3): Remove "entropy" and "auto"
         elif isinstance(self, (RandomForestClassifier, ExtraTreesClassifier)):
-            if self.criterion == "entropy":
-                warn(
-                    "Criterion 'entropy' was deprecated in v1.1 and will be removed "
-                    "in version 1.3. Use `criterion='log_loss'` which is equivalent.",
-                    FutureWarning,
-                )
+            # TODO(1.3): Remove "auto"
             if self.max_features == "auto":
                 warn(
                     "`max_features='auto'` has been deprecated in 1.1 "
