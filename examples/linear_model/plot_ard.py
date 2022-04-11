@@ -19,6 +19,8 @@ non-linear relationship between `X` and `y`.
 
 """
 
+# Author: Arturo Amor <david-arturo.amor-quiroz@inria.fr>
+
 # %%
 # Models robustness to recover the ground truth weights
 # =====================================================
@@ -70,7 +72,7 @@ df = pd.DataFrame(
 # Plot the true and estimated coefficients
 # ----------------------------------------
 #
-# Now we compared the coefficients of each model with the weights of
+# Now we compare the coefficients of each model with the weights of
 # the true generative model.
 import matplotlib.pyplot as plt
 import seaborn as sns
