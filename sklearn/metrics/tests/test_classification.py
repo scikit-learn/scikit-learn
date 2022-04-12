@@ -638,6 +638,25 @@ def test_likelihood_ratios_warnings(params, warn_msg):
         class_likelihood_ratios(**params)
 
 
+@pytest.mark.parametrize(
+    "params, err_msg",
+    [
+        (
+            {
+                "y_true": np.array([0, 1, 0, 1, 0]),
+                "y_pred": np.array([1, 1, 0, 0, 2]),
+            },
+            "multiclass is not supported",
+        ),
+    ],
+)
+def test_likelihood_ratios_errors(params, err_msg):
+    # likelihood_ratios must raise error when attempting
+    # non-binary classes to avoid Simpson's paradox
+    with pytest.raises(ValueError, match=err_msg):
+        class_likelihood_ratios(**params)
+
+
 def test_likelihood_ratios():
     # Build confusion matrix with tn=9, fp=8, fn=1, tp=2,
     # sensitivity=2/3, specificity=9/17, prevalence=3/20,
