@@ -21,6 +21,10 @@ information on this dataset.
 # License: BSD 3 clause
 
 import matplotlib.pyplot as plt
+
+# unused but required import for doing 3d projections with matplotlib < 3.2
+import mpl_toolkits.mplot3d  # noqa: F401
+
 from sklearn import datasets
 from sklearn.decomposition import PCA
 

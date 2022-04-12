@@ -1775,7 +1775,7 @@ def test_elastic_net_versus_sgd(C, l1_ratio):
         max_iter=2000,
         l1_ratio=l1_ratio,
         alpha=1.0 / C / n_samples,
-        loss="log",
+        loss="log_loss",
     )
     log = LogisticRegression(
         penalty="elasticnet",

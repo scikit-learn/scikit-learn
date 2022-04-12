@@ -23,11 +23,9 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.datasets._svmlight_format_io.load_svmlight_files",
     "sklearn.decomposition._dict_learning.dict_learning",
     "sklearn.decomposition._dict_learning.dict_learning_online",
-    "sklearn.decomposition._fastica.fastica",
     "sklearn.decomposition._nmf.non_negative_factorization",
     "sklearn.externals._packaging.version.parse",
     "sklearn.feature_extraction.image.extract_patches_2d",
-    "sklearn.feature_extraction.image.grid_to_graph",
     "sklearn.feature_extraction.image.img_to_graph",
     "sklearn.feature_extraction.text.strip_accents_ascii",
     "sklearn.feature_extraction.text.strip_accents_unicode",
@@ -74,7 +72,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.metrics.pairwise.cosine_distances",
     "sklearn.metrics.pairwise.cosine_similarity",
     "sklearn.metrics.pairwise.distance_metrics",
-    "sklearn.metrics.pairwise.haversine_distances",
     "sklearn.metrics.pairwise.kernel_metrics",
     "sklearn.metrics.pairwise.paired_manhattan_distances",
     "sklearn.metrics.pairwise.pairwise_distances_argmin",
@@ -134,7 +131,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.utils.sparsefuncs.inplace_swap_row_csr",
     "sklearn.utils.sparsefuncs.mean_variance_axis",
     "sklearn.utils.validation.check_is_fitted",
-    "sklearn.utils.validation.check_memory",
 ]
 FUNCTION_DOCSTRING_IGNORE_LIST = set(FUNCTION_DOCSTRING_IGNORE_LIST)
 
