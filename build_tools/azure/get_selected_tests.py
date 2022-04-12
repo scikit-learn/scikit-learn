@@ -21,7 +21,7 @@ def get_selected_tests():
         selected_tests = ""
 
     return selected_tests
- 
+
 
 if __name__ == "__main__":
     # set the environment variable to be propagated to other steps
