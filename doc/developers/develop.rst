@@ -306,7 +306,7 @@ the correct interface more easily.
       ...
       ...     def predict(self, X):
       ...
-      ...         # Check is fit had been called
+      ...         # Check if fit has been called
       ...         check_is_fitted(self)
       ...
       ...         # Input validation
@@ -336,7 +336,7 @@ estimator::
     ...         self.my_extra_param = my_extra_param
 
 The parameter `deep` will control whether or not the parameters of the
-`subsestimator` should be reported. Thus when `deep=True`, the output will be::
+`subestimator` should be reported. Thus when `deep=True`, the output will be::
 
     >>> my_estimator = MyEstimator(subestimator=LogisticRegression())
     >>> for param, value in my_estimator.get_params(deep=True).items():
@@ -774,3 +774,19 @@ The reason for this setup is reproducibility:
 when an estimator is ``fit`` twice to the same data,
 it should produce an identical model both times,
 hence the validation in ``fit``, not ``__init__``.
+
+Numerical assertions in tests
+-----------------------------
+
+When asserting the quasi-equality of arrays of continuous values,
+do use :func:`sklearn.utils._testing.assert_allclose`.
+
+The relative tolerance is automatically inferred from the provided arrays
+dtypes (for float32 and float64 dtypes in particular) but you can override
+via ``rtol``.
+
+When comparing arrays of zero-elements, please do provide a non-zero value for
+the absolute tolerance via ``atol``.
+
+For more information, please refer to the docstring of
+:func:`sklearn.utils._testing.assert_allclose`.

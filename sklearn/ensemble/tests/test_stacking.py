@@ -5,6 +5,7 @@
 
 import pytest
 import numpy as np
+from numpy.testing import assert_array_equal
 import scipy.sparse as sparse
 
 from sklearn.base import BaseEstimator
@@ -47,8 +48,10 @@ from sklearn.exceptions import NotFittedError
 
 from unittest.mock import Mock
 
-X_diabetes, y_diabetes = load_diabetes(return_X_y=True)
-X_iris, y_iris = load_iris(return_X_y=True)
+diabetes = load_diabetes()
+X_diabetes, y_diabetes = diabetes.data, diabetes.target
+iris = load_iris()
+X_iris, y_iris = iris.data, iris.target
 
 
 @pytest.mark.parametrize(
@@ -648,3 +651,79 @@ def test_stacking_without_n_features_in(make_dataset, Stacking, Estimator):
     msg = "'MyEstimator' object has no attribute 'n_features_in_'"
     with pytest.raises(AttributeError, match=msg):
         stacker.n_features_in_
+
+
+@pytest.mark.parametrize(
+    "stacker, feature_names, X, y, expected_names",
+    [
+        (
+            StackingClassifier(
+                estimators=[
+                    ("lr", LogisticRegression(random_state=0)),
+                    ("svm", LinearSVC(random_state=0)),
+                ]
+            ),
+            iris.feature_names,
+            X_iris,
+            y_iris,
+            [
+                "stackingclassifier_lr0",
+                "stackingclassifier_lr1",
+                "stackingclassifier_lr2",
+                "stackingclassifier_svm0",
+                "stackingclassifier_svm1",
+                "stackingclassifier_svm2",
+            ],
+        ),
+        (
+            StackingClassifier(
+                estimators=[
+                    ("lr", LogisticRegression(random_state=0)),
+                    ("other", "drop"),
+                    ("svm", LinearSVC(random_state=0)),
+                ]
+            ),
+            iris.feature_names,
+            X_iris[:100],
+            y_iris[:100],  # keep only classes 0 and 1
+            [
+                "stackingclassifier_lr",
+                "stackingclassifier_svm",
+            ],
+        ),
+        (
+            StackingRegressor(
+                estimators=[
+                    ("lr", LinearRegression()),
+                    ("svm", LinearSVR(random_state=0)),
+                ]
+            ),
+            diabetes.feature_names,
+            X_diabetes,
+            y_diabetes,
+            [
+                "stackingregressor_lr",
+                "stackingregressor_svm",
+            ],
+        ),
+    ],
+    ids=[
+        "StackingClassifier_multiclass",
+        "StackingClassifier_binary",
+        "StackingRegressor",
+    ],
+)
+@pytest.mark.parametrize("passthrough", [True, False])
+def test_get_feature_names_out(
+    stacker, feature_names, X, y, expected_names, passthrough
+):
+    """Check get_feature_names_out works for stacking."""
+
+    stacker.set_params(passthrough=passthrough)
+    stacker.fit(scale(X), y)
+
+    if passthrough:
+        expected_names = np.concatenate((expected_names, feature_names))
+
+    names_out = stacker.get_feature_names_out(feature_names)
+    assert_array_equal(names_out, expected_names)

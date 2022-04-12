@@ -164,7 +164,7 @@ scikit-learn has to offer. If we started doing arbitrary structured
 learning, we'd need to redesign the whole package and the project
 would likely collapse under its own weight.
 
-There are two project with API similar to scikit-learn that
+There are two projects with API similar to scikit-learn that
 do structured prediction:
 
 * `pystruct <https://pystruct.github.io/>`_ handles general structured

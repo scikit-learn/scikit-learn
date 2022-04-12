@@ -33,7 +33,7 @@
 .. _`Benchmark`: https://scikit-learn.org/scikit-learn-benchmarks/
 
 .. |PythonMinVersion| replace:: 3.8
-.. |NumPyMinVersion| replace:: 1.16.6
+.. |NumPyMinVersion| replace:: 1.17.3
 .. |SciPyMinVersion| replace:: 1.3.2
 .. |JoblibMinVersion| replace:: 1.0.0
 .. |ThreadpoolctlMinVersion| replace:: 2.0.0

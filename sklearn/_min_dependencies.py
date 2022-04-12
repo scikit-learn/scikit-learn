@@ -3,11 +3,15 @@ import platform
 import argparse
 
 
-# numpy scipy and cython should by in sync with pyproject.toml
+# scipy and cython should by in sync with pyproject.toml
+
+# NumPy version should match oldest-supported-numpy for the minimum supported
+# Python version.
+# see: https://github.com/scipy/oldest-supported-numpy/blob/main/setup.cfg
 if platform.python_implementation() == "PyPy":
-    NUMPY_MIN_VERSION = "1.19.0"
+    NUMPY_MIN_VERSION = "1.19.2"
 else:
-    NUMPY_MIN_VERSION = "1.16.6"
+    NUMPY_MIN_VERSION = "1.17.3"
 
 SCIPY_MIN_VERSION = "1.3.2"
 JOBLIB_MIN_VERSION = "1.0.0"
@@ -33,7 +37,7 @@ dependent_packages = {
     "pytest": (PYTEST_MIN_VERSION, "tests"),
     "pytest-cov": ("2.9.0", "tests"),
     "flake8": ("3.8.2", "tests"),
-    "black": ("22.1.0", "tests"),
+    "black": ("22.3.0", "tests"),
     "mypy": ("0.770", "tests"),
     "pyamg": ("4.0.0", "tests"),
     "sphinx": ("4.0.1", "docs"),
