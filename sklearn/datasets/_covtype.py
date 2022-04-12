@@ -158,7 +158,7 @@ def fetch_covtype(
         # guarantees that both reside on the same filesystem, so that we can use
         # os.rename to atomically move the data files to their target location.
         with TemporaryDirectory(dir=covtype_dir) as temp_dir:
-            logger.info("Downloading %s" % ARCHIVE.url)
+            logger.info(f"Downloading {ARCHIVE.url}")
             archive_path = _fetch_remote(ARCHIVE, dirname=temp_dir)
             Xy = np.genfromtxt(GzipFile(filename=archive_path), delimiter=",")
 
