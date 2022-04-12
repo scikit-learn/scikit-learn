@@ -1028,6 +1028,10 @@ Changelog
   left corner of the HTML representation to show how the elements are
   clickable. :pr:`21298` by `Thomas Fan`_.
 
+- |Enhancement| Removes random unique identifiers in the HTML representation.
+  With this change, jupyter notebooks are reproducible as long as the cells are
+  run in the same order. :pr:`23098` by `Thomas Fan`_.
+
 - |API| :func:`utils.estimator_checks.check_estimator`'s argument is now called
   `estimator` (previous name was `Estimator`). :pr:`22188` by
   :user:`Mathurin Massias <mathurinm>`.
