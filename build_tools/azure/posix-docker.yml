@@ -48,7 +48,7 @@ jobs:
     - task: UsePythonVersion@0
       inputs:
         versionSpec: '3.9'
-    - script: python build_tools/azure/get_selected_tests.py
+    - bash: python build_tools/azure/get_selected_tests.py
       displayName: Check selected tests for all random seeds
       condition: eq(variables['Build.Reason'], 'PullRequest')
     - task: Cache@2

@@ -32,14 +32,14 @@ jobs:
         versionSpec: '$(PYTHON_VERSION)'
         addToPath: true
         architecture: 'x86'
-    - script: python build_tools/azure/get_selected_tests.py
-      displayName: Check selected tests for all random seeds
-      condition: eq(variables['Build.Reason'], 'PullRequest')
+      displayName: Use 32 bit System Python
+      condition: eq(variables['PYTHON_ARCH'], '32')
     - bash: echo "##vso[task.prependpath]$CONDA/Scripts"
       displayName: Add conda to PATH for 64 bit Python
       condition: eq(variables['PYTHON_ARCH'], '64')
-      displayName: Use 32 bit System Python
-      condition: eq(variables['PYTHON_ARCH'], '32')
+    - bash: python build_tools/azure/get_selected_tests.py
+      displayName: Check selected tests for all random seeds
+      condition: eq(variables['Build.Reason'], 'PullRequest')
     - bash: ./build_tools/azure/install_win.sh
       displayName: 'Install'
     - bash: ./build_tools/azure/test_script.sh
