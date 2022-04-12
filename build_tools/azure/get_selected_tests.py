@@ -1,4 +1,4 @@
-from .get_commit_message import get_commit_message
+from get_commit_message import get_commit_message
 
 
 def get_selected_tests():
