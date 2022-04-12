@@ -9,6 +9,7 @@ import sys
 import warnings
 import numbers
 from abc import ABC, abstractmethod
+from functools import partial
 
 import numpy as np
 from scipy import sparse
@@ -18,10 +19,10 @@ from ._base import LinearModel, _pre_fit
 from ..base import RegressorMixin, MultiOutputMixin
 from ._base import _preprocess_data, _deprecate_normalize
 from ..utils import check_array
+from ..utils import check_scalar
 from ..utils.validation import check_random_state
 from ..model_selection import check_cv
 from ..utils.extmath import safe_sparse_dot
-from ..utils.fixes import _astype_copy_false, _joblib_parallel_args
 from ..utils.validation import (
     _check_sample_weight,
     check_consistent_length,
@@ -67,9 +68,7 @@ def _set_order(X, y, order="C"):
     if order is not None:
         sparse_format = "csc" if order == "F" else "csr"
         if sparse_X:
-            # As of scipy 1.1.0, new argument copy=False by default.
-            # This is what we want.
-            X = X.asformat(sparse_format, **_astype_copy_false(X))
+            X = X.asformat(sparse_format, copy=False)
         else:
             X = np.asarray(X, order=order)
         if sparse_y:
@@ -165,7 +164,7 @@ def _alpha_grid(
             # Workaround to find alpha_max for sparse matrices.
             # since we should not destroy the sparsity of such matrices.
             _, _, X_offset, _, X_scale = _preprocess_data(
-                X, y, fit_intercept, normalize, return_mean=True
+                X, y, fit_intercept, normalize
             )
             mean_dot = X_offset * np.sum(y)
 
@@ -178,7 +177,7 @@ def _alpha_grid(
         if normalize:
             Xy /= X_scale[:, np.newaxis]
 
-    alpha_max = np.sqrt(np.sum(Xy ** 2, axis=1)).max() / (n_samples * l1_ratio)
+    alpha_max = np.sqrt(np.sum(Xy**2, axis=1)).max() / (n_samples * l1_ratio)
 
     if alpha_max <= np.finfo(float).resolution:
         alphas = np.empty(n_alphas)
@@ -500,6 +499,7 @@ def enet_path(
     """
     X_offset_param = params.pop("X_offset", None)
     X_scale_param = params.pop("X_scale", None)
+    sample_weight = params.pop("sample_weight", None)
     tol = params.pop("tol", 1e-4)
     max_iter = params.pop("max_iter", 1000)
     random_state = params.pop("random_state", None)
@@ -545,14 +545,14 @@ def enet_path(
     # MultiTaskElasticNet does not support sparse matrices
     if not multi_output and sparse.isspmatrix(X):
         if X_offset_param is not None:
-            # As sparse matrices are not actually centered we need this
-            # to be passed to the CD solver.
+            # As sparse matrices are not actually centered we need this to be passed to
+            # the CD solver.
             X_sparse_scaling = X_offset_param / X_scale_param
             X_sparse_scaling = np.asarray(X_sparse_scaling, dtype=X.dtype)
         else:
             X_sparse_scaling = np.zeros(n_features, dtype=X.dtype)
 
-    # X should be normalized and fit already if function is called
+    # X should have been passed through _pre_fit already if function is called
     # from ElasticNet.fit
     if check_input:
         X, y, X_offset, y_offset, X_scale, precompute, Xy = _pre_fit(
@@ -579,7 +579,7 @@ def enet_path(
             normalize=False,
             copy_X=False,
         )
-    else:
+    elif len(alphas) > 1:
         alphas = np.sort(alphas)[::-1]  # make sure alphas are properly ordered
 
     n_alphas = len(alphas)
@@ -607,19 +607,20 @@ def enet_path(
         l2_reg = alpha * (1.0 - l1_ratio) * n_samples
         if not multi_output and sparse.isspmatrix(X):
             model = cd_fast.sparse_enet_coordinate_descent(
-                coef_,
-                l1_reg,
-                l2_reg,
-                X.data,
-                X.indices,
-                X.indptr,
-                y,
-                X_sparse_scaling,
-                max_iter,
-                tol,
-                rng,
-                random,
-                positive,
+                w=coef_,
+                alpha=l1_reg,
+                beta=l2_reg,
+                X_data=X.data,
+                X_indices=X.indices,
+                X_indptr=X.indptr,
+                y=y,
+                sample_weight=sample_weight,
+                X_mean=X_sparse_scaling,
+                max_iter=max_iter,
+                tol=tol,
+                rng=rng,
+                random=random,
+                positive=positive,
             )
         elif multi_output:
             model = cd_fast.enet_coordinate_descent_multi_task(
@@ -808,7 +809,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         cross-validation.
     SGDRegressor : Implements elastic net regression with incremental training.
     SGDClassifier : Implements logistic regression with elastic net penalty
-        (``SGDClassifier(loss="log", penalty="elasticnet")``).
+        (``SGDClassifier(loss="log_loss", penalty="elasticnet")``).
 
     Notes
     -----
@@ -903,6 +904,13 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
             self.normalize, default=False, estimator_name=self.__class__.__name__
         )
 
+        check_scalar(
+            self.alpha,
+            "alpha",
+            target_type=numbers.Real,
+            min_val=0.0,
+        )
+
         if self.alpha == 0:
             warnings.warn(
                 "With alpha=0, this algorithm does not converge "
@@ -917,14 +925,20 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
                 % self.precompute
             )
 
-        if (
-            not isinstance(self.l1_ratio, numbers.Number)
-            or self.l1_ratio < 0
-            or self.l1_ratio > 1
-        ):
-            raise ValueError(
-                f"l1_ratio must be between 0 and 1; got l1_ratio={self.l1_ratio}"
+        check_scalar(
+            self.l1_ratio,
+            "l1_ratio",
+            target_type=numbers.Real,
+            min_val=0.0,
+            max_val=1.0,
+        )
+
+        if self.max_iter is not None:
+            check_scalar(
+                self.max_iter, "max_iter", target_type=numbers.Integral, min_val=1
             )
+
+        check_scalar(self.tol, "tol", target_type=numbers.Real, min_val=0.0)
 
         # Remember if X is copied
         X_copied = False
@@ -953,39 +967,34 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
             sample_weight = None
         if sample_weight is not None:
             if check_input:
-                if sparse.issparse(X):
-                    raise ValueError(
-                        "Sample weights do not (yet) support sparse matrices."
-                    )
                 sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
             # TLDR: Rescale sw to sum up to n_samples.
             # Long: The objective function of Enet
             #
             #    1/2 * np.average(squared error, weights=sw)
-            #    + alpha * penalty                                   (1)
+            #    + alpha * penalty                                             (1)
             #
             # is invariant under rescaling of sw.
             # But enet_path coordinate descent minimizes
             #
-            #     1/2 * sum(squared error) + alpha * penalty
+            #     1/2 * sum(squared error) + alpha' * penalty                  (2)
             #
             # and therefore sets
             #
-            #     alpha = n_samples * alpha
+            #     alpha' = n_samples * alpha                                   (3)
             #
-            # inside its function body, which results in an objective
-            # equivalent to (1) without sw.
+            # inside its function body, which results in objective (2) being
+            # equivalent to (1) in case of no sw.
             # With sw, however, enet_path should set
             #
-            #     alpha = sum(sw) * alpha                            (2)
+            #     alpha' = sum(sw) * alpha                                     (4)
             #
-            # Therefore, using the freedom of Eq. (1) to rescale alpha before
-            # calling enet_path, we do
+            # Therefore, we use the freedom of Eq. (1) to rescale sw before
+            # calling enet_path, i.e.
             #
-            #     alpha = sum(sw) / n_samples * alpha
+            #     sw *= n_samples / sum(sw)
             #
-            # such that the rescaling inside enet_path is exactly Eq. (2)
-            # because now sum(sw) = n_samples.
+            # such that sum(sw) = n_samples. This way, (3) and (4) are the same.
             sample_weight = sample_weight * (n_samples / np.sum(sample_weight))
             # Note: Alternatively, we could also have rescaled alpha instead
             # of sample_weight:
@@ -1046,17 +1055,19 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
                 precompute=precompute,
                 Xy=this_Xy,
                 copy_X=True,
+                coef_init=coef_[k],
                 verbose=False,
-                tol=self.tol,
+                return_n_iter=True,
                 positive=self.positive,
+                check_input=False,
+                # from here on **params
+                tol=self.tol,
                 X_offset=X_offset,
                 X_scale=X_scale,
-                return_n_iter=True,
-                coef_init=coef_[k],
                 max_iter=self.max_iter,
                 random_state=self.random_state,
                 selection=self.selection,
-                check_input=False,
+                sample_weight=sample_weight,
             )
             coef_[k] = this_coef[:, 0]
             dual_gaps_[k] = this_dual_gap[0]
@@ -1074,6 +1085,14 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
 
         # workaround since _set_intercept will cast self.coef_ into X.dtype
         self.coef_ = np.asarray(self.coef_, dtype=X.dtype)
+
+        # check for finiteness of coefficients
+        if not all(np.isfinite(w).all() for w in [self.coef_, self.intercept_]):
+            raise ValueError(
+                "Coordinate descent iterations resulted in non-finite parameter"
+                " values. The input data may contain large values and need to"
+                " be preprocessed."
+            )
 
         # return self for chaining fit and predict calls
         return self
@@ -1121,11 +1140,13 @@ class Lasso(ElasticNet):
     Parameters
     ----------
     alpha : float, default=1.0
-        Constant that multiplies the L1 term. Defaults to 1.0.
-        ``alpha = 0`` is equivalent to an ordinary least square, solved
-        by the :class:`LinearRegression` object. For numerical
-        reasons, using ``alpha = 0`` with the ``Lasso`` object is not advised.
-        Given this, you should use the :class:`LinearRegression` object.
+        Constant that multiplies the L1 term, controlling regularization
+        strength. `alpha` must be a non-negative float i.e. in `[0, inf)`.
+
+        When `alpha = 0`, the objective is equivalent to ordinary least
+        squares, solved by the :class:`LinearRegression` object. For numerical
+        reasons, using `alpha = 0` with the `Lasso` object is not advised.
+        Instead, you should use the :class:`LinearRegression` object.
 
     fit_intercept : bool, default=True
         Whether to calculate the intercept for this model. If set
@@ -1228,6 +1249,14 @@ class Lasso(ElasticNet):
 
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a Fortran-contiguous numpy array.
+
+    Regularization improves the conditioning of the problem and
+    reduces the variance of the estimates. Larger values specify stronger
+    regularization. Alpha corresponds to `1 / (2C)` in other linear
+    models such as :class:`~sklearn.linear_model.LogisticRegression` or
+    :class:`~sklearn.svm.LinearSVC`. If an array is passed, penalties are
+    assumed to be specific to the targets. Hence they must correspond in
+    number.
 
     Examples
     --------
@@ -1392,6 +1421,8 @@ def _path_residuals(
     path_params["precompute"] = precompute
     path_params["copy_X"] = False
     path_params["alphas"] = alphas
+    # needed for sparse cd solver
+    path_params["sample_weight"] = sw_train
 
     if "l1_ratio" in path_params:
         path_params["l1_ratio"] = l1_ratio
@@ -1417,9 +1448,9 @@ def _path_residuals(
     residues = X_test_coefs - y_test[:, :, np.newaxis]
     residues += intercepts
     if sample_weight is None:
-        this_mse = (residues ** 2).mean(axis=0)
+        this_mse = (residues**2).mean(axis=0)
     else:
-        this_mse = np.average(residues ** 2, weights=sw_test, axis=0)
+        this_mse = np.average(residues**2, weights=sw_test, axis=0)
 
     return this_mse.mean(axis=0)
 
@@ -1580,8 +1611,6 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         if isinstance(sample_weight, numbers.Number):
             sample_weight = None
         if sample_weight is not None:
-            if sparse.issparse(X):
-                raise ValueError("Sample weights do not (yet) support sparse matrices.")
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         model = self._get_estimator()
@@ -1612,6 +1641,14 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
 
         alphas = self.alphas
         n_l1_ratio = len(l1_ratios)
+
+        check_scalar_alpha = partial(
+            check_scalar,
+            target_type=numbers.Real,
+            min_val=0.0,
+            include_boundaries="left",
+        )
+
         if alphas is None:
             alphas = [
                 _alpha_grid(
@@ -1627,8 +1664,16 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
                 for l1_ratio in l1_ratios
             ]
         else:
+            # Making sure alphas entries are scalars.
+            if np.isscalar(alphas):
+                check_scalar_alpha(alphas, "alphas")
+            else:
+                # alphas is an iterable item in this case.
+                for index, alpha in enumerate(alphas):
+                    check_scalar_alpha(alpha, f"alphas[{index}]")
             # Making sure alphas is properly ordered.
             alphas = np.tile(np.sort(alphas)[::-1], (n_l1_ratio, 1))
+
         # We want n_alphas to be the number of alphas used for each l1_ratio.
         n_alphas = len(alphas[0])
         path_params.update({"n_alphas": n_alphas})
@@ -1670,7 +1715,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         mse_paths = Parallel(
             n_jobs=self.n_jobs,
             verbose=self.verbose,
-            **_joblib_parallel_args(prefer="threads"),
+            prefer="threads",
         )(jobs)
         mse_paths = np.reshape(mse_paths, (n_l1_ratio, len(folds), -1))
         # The mean is computed over folds.
@@ -1885,12 +1930,15 @@ class LassoCV(RegressorMixin, LinearModelCV):
 
     Notes
     -----
-    For an example, see
-    :ref:`examples/linear_model/plot_lasso_model_selection.py
-    <sphx_glr_auto_examples_linear_model_plot_lasso_model_selection.py>`.
+    In `fit`, once the best parameter `alpha` is found through
+    cross-validation, the model is fit again using the entire training set.
 
-    To avoid unnecessary memory duplication the X argument of the fit method
-    should be directly passed as a Fortran-contiguous numpy array.
+    To avoid unnecessary memory duplication the `X` argument of the `fit`
+    method should be directly passed as a Fortran-contiguous numpy array.
+
+     For an example, see
+     :ref:`examples/linear_model/plot_lasso_model_selection.py
+     <sphx_glr_auto_examples_linear_model_plot_lasso_model_selection.py>`.
 
     Examples
     --------
@@ -2108,14 +2156,13 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
 
     Notes
     -----
-    For an example, see
-    :ref:`examples/linear_model/plot_lasso_model_selection.py
-    <sphx_glr_auto_examples_linear_model_plot_lasso_model_selection.py>`.
+    In `fit`, once the best parameters `l1_ratio` and `alpha` are found through
+    cross-validation, the model is fit again using the entire training set.
 
-    To avoid unnecessary memory duplication the X argument of the fit method
-    should be directly passed as a Fortran-contiguous numpy array.
+    To avoid unnecessary memory duplication the `X` argument of the `fit`
+    method should be directly passed as a Fortran-contiguous numpy array.
 
-    The parameter l1_ratio corresponds to alpha in the glmnet R package
+    The parameter `l1_ratio` corresponds to alpha in the glmnet R package
     while alpha corresponds to the lambda parameter in glmnet.
     More specifically, the optimization objective is::
 
@@ -2131,6 +2178,10 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
     for::
 
         alpha = a + b and l1_ratio = a / (a + b).
+
+    For an example, see
+    :ref:`examples/linear_model/plot_lasso_model_selection.py
+    <sphx_glr_auto_examples_linear_model_plot_lasso_model_selection.py>`.
 
     Examples
     --------
@@ -2779,8 +2830,11 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
     -----
     The algorithm used to fit the model is coordinate descent.
 
-    To avoid unnecessary memory duplication the X and y arguments of the fit
-    method should be directly passed as Fortran-contiguous numpy arrays.
+    In `fit`, once the best parameters `l1_ratio` and `alpha` are found through
+    cross-validation, the model is fit again using the entire training set.
+
+    To avoid unnecessary memory duplication the `X` and `y` arguments of the
+    `fit` method should be directly passed as Fortran-contiguous numpy arrays.
 
     Examples
     --------
@@ -3011,8 +3065,11 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
     -----
     The algorithm used to fit the model is coordinate descent.
 
-    To avoid unnecessary memory duplication the X and y arguments of the fit
-    method should be directly passed as Fortran-contiguous numpy arrays.
+    In `fit`, once the best parameter `alpha` is found through
+    cross-validation, the model is fit again using the entire training set.
+
+    To avoid unnecessary memory duplication the `X` and `y` arguments of the
+    `fit` method should be directly passed as Fortran-contiguous numpy arrays.
 
     Examples
     --------

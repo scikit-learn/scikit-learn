@@ -10,10 +10,6 @@ We also show that you can easily introspect part of the pipeline.
 
 """
 
-from sklearn import set_config
-
-set_config(display="diagram")
-
 # %%
 # We will start by generating a binary classification dataset. Subsequently, we
 # will divide the dataset into two subsets.

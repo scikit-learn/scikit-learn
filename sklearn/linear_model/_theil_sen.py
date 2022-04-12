@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 A Theil-Sen Estimator for Multiple Linear Regression Model
 """
@@ -9,6 +8,7 @@ A Theil-Sen Estimator for Multiple Linear Regression Model
 
 
 import warnings
+import numbers
 from itertools import combinations
 
 import numpy as np
@@ -20,6 +20,7 @@ from joblib import Parallel, effective_n_jobs
 from ._base import LinearModel
 from ..base import RegressorMixin
 from ..utils import check_random_state
+from ..utils.validation import check_scalar
 from ..utils.fixes import delayed
 from ..exceptions import ConvergenceWarning
 
@@ -54,7 +55,7 @@ def _modified_weiszfeld_step(X, x_old):
       http://users.jyu.fi/~samiayr/pdf/ayramo_eurogen05.pdf
     """
     diff = X - x_old
-    diff_norm = np.sqrt(np.sum(diff ** 2, axis=1))
+    diff_norm = np.sqrt(np.sum(diff**2, axis=1))
     mask = diff_norm >= _EPSILON
     # x_old equals one of our samples
     is_x_old_in_X = int(mask.sum() < X.shape[0])
@@ -233,7 +234,8 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
         number of features), consider only a stochastic subpopulation of a
         given maximal size if 'n choose k' is larger than max_subpopulation.
         For other than small problem sizes this parameter will determine
-        memory usage and runtime if n_subsamples is not changed.
+        memory usage and runtime if n_subsamples is not changed. Note that the
+        data type should be int but floats such as 1e4 can be accepted too.
 
     n_subsamples : int, default=None
         Number of samples to calculate the parameters. This is at least the
@@ -335,7 +337,7 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
     ):
         self.fit_intercept = fit_intercept
         self.copy_X = copy_X
-        self.max_subpopulation = int(max_subpopulation)
+        self.max_subpopulation = max_subpopulation
         self.n_subsamples = n_subsamples
         self.max_iter = max_iter
         self.tol = tol
@@ -363,7 +365,7 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
                     raise ValueError(
                         "Invalid parameter since n_features{0} "
                         "> n_subsamples ({1} > {2})."
-                        "".format(plus_1, n_dim, n_samples)
+                        "".format(plus_1, n_dim, n_subsamples)
                     )
             else:  # if n_samples < n_features
                 if n_subsamples != n_samples:
@@ -375,15 +377,16 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
         else:
             n_subsamples = min(n_dim, n_samples)
 
-        if self.max_subpopulation <= 0:
-            raise ValueError(
-                "Subpopulation must be strictly positive ({0} <= 0).".format(
-                    self.max_subpopulation
-                )
-            )
-
+        self._max_subpopulation = check_scalar(
+            self.max_subpopulation,
+            "max_subpopulation",
+            # target_type should be numbers.Integral but can accept float
+            # for backward compatibility reasons
+            target_type=(numbers.Real, numbers.Integral),
+            min_val=1,
+        )
         all_combinations = max(1, np.rint(binom(n_samples, n_subsamples)))
-        n_subpopulation = int(min(self.max_subpopulation, all_combinations))
+        n_subpopulation = int(min(self._max_subpopulation, all_combinations))
 
         return n_subsamples, n_subpopulation
 
@@ -418,7 +421,7 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
             print("Number of subpopulations: {0}".format(self.n_subpopulation_))
 
         # Determine indices of subpopulation
-        if np.rint(binom(n_samples, n_subsamples)) <= self.max_subpopulation:
+        if np.rint(binom(n_samples, n_subsamples)) <= self._max_subpopulation:
             indices = list(combinations(range(n_samples), n_subsamples))
         else:
             indices = [

@@ -748,7 +748,7 @@ Model evaluation and meta-estimators
   raised on trying to stack matrices with different dimensions.
   :issue:`8093` by :user:`Peter Bull <pjbull>`.
 
-- Cross validation now works with Pandas datatypes that that have a
+- Cross validation now works with Pandas datatypes that have a
   read-only index. :issue:`9507` by `Loic Esteve`_.
 
 Metrics
@@ -1066,4 +1066,3 @@ Dai, Greg Stupp, Grzegorz Szpak, Bertrand Thirion, Hadrien Bertrand, Harizo
 Rajaona, zxcvbnius, Henry Lin, Holger Peters, Icyblade Dai, Igor
 Andriushchenko, Ilya, Isaac Laughlin, Iván Vallés, Aurélien Bellet, JPFrancoia,
 Jacob Schreiber, Asish Mahapatra
-

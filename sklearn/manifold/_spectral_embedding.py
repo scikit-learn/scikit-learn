@@ -25,7 +25,6 @@ from ..utils.extmath import _deterministic_vector_sign_flip
 from ..utils.fixes import lobpcg
 from ..metrics.pairwise import rbf_kernel
 from ..neighbors import kneighbors_graph, NearestNeighbors
-from ..utils.deprecation import deprecated
 
 
 def _graph_connected_component(graph, node_id):
@@ -226,10 +225,10 @@ def spectral_embedding(
     ----------
     * https://en.wikipedia.org/wiki/LOBPCG
 
-    * Toward the Optimal Preconditioned Eigensolver: Locally Optimal
-      Block Preconditioned Conjugate Gradient Method
+    * :doi:`"Toward the Optimal Preconditioned Eigensolver: Locally Optimal
+      Block Preconditioned Conjugate Gradient Method",
       Andrew V. Knyazev
-      https://doi.org/10.1137%2FS1064827500366124
+      <10.1137/S1064827500366124>`
     """
     adjacency = check_symmetric(adjacency)
 
@@ -336,7 +335,7 @@ def spectral_embedding(
 
         M = ml.aspreconditioner()
         # Create initial approximation X to eigenvectors
-        X = random_state.randn(laplacian.shape[0], n_components + 1)
+        X = random_state.standard_normal(size=(laplacian.shape[0], n_components + 1))
         X[:, 0] = dd.ravel()
         X = X.astype(laplacian.dtype)
         _, diffusion_map = lobpcg(laplacian, X, M=M, tol=1.0e-5, largest=False)
@@ -367,7 +366,9 @@ def spectral_embedding(
             # We increase the number of eigenvectors requested, as lobpcg
             # doesn't behave well in low dimension and create initial
             # approximation X to eigenvectors
-            X = random_state.randn(laplacian.shape[0], n_components + 1)
+            X = random_state.standard_normal(
+                size=(laplacian.shape[0], n_components + 1)
+            )
             X[:, 0] = dd.ravel()
             X = X.astype(laplacian.dtype)
             _, diffusion_map = lobpcg(
@@ -482,17 +483,17 @@ class SpectralEmbedding(BaseEstimator):
     References
     ----------
 
-    - A Tutorial on Spectral Clustering, 2007
+    - :doi:`A Tutorial on Spectral Clustering, 2007
       Ulrike von Luxburg
-      http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.165.9323
+      <10.1007/s11222-007-9033-z>`
 
     - On Spectral Clustering: Analysis and an algorithm, 2001
       Andrew Y. Ng, Michael I. Jordan, Yair Weiss
       http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.19.8100
 
-    - Normalized cuts and image segmentation, 2000
+    - :doi:`Normalized cuts and image segmentation, 2000
       Jianbo Shi, Jitendra Malik
-      http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.160.2324
+      <10.1109/34.868688>`
 
     Examples
     --------
@@ -531,16 +532,6 @@ class SpectralEmbedding(BaseEstimator):
             "pairwise": self.affinity
             in ["precomputed", "precomputed_nearest_neighbors"]
         }
-
-    # TODO: Remove in 1.1
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `_pairwise` was deprecated in "
-        "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def _pairwise(self):
-        return self.affinity in ["precomputed", "precomputed_nearest_neighbors"]
 
     def _get_affinity_matrix(self, X, Y=None):
         """Calculate the affinity matrix from data
