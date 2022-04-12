@@ -1,6 +1,21 @@
 import os
 
 
+def get_commit_message():
+    build_sourceversionmessage = os.environ["BUILD_SOURCEVERSIONMESSAGE"]
+    print(build_sourceversionmessage)
+
+
+    # By default pull requests use refs/pull/PULL_ID/merge as the source branch
+    # which has a "Merge ID into ID" as a commit message. The latest commit
+    # message is the second to last commit
+    # COMMIT_ID=$(echo $BUILD_SOURCEVERSIONMESSAGE | awk '{print $2}')
+    # message=$(git log $COMMIT_ID -1 --pretty=%B)
+    # message=$(echo $message)
+
+    # echo "##vso[task.setvariable variable=message;isOutput=true]$message"
+
+
 def get_selected_tests():
     """Parse the commit message to check if pytest should run only specific tests.
 
@@ -12,7 +27,7 @@ def get_selected_tests():
         <test_name_2>
         ...
     """
-    commit_message = os.environ["COMMIT_MESSAGE"]
+    commit_message = get_commit_message()
 
     if "[all random seeds]" in commit_message:
         selected_tests = commit_message.split("[all random seeds]")[1].strip()
