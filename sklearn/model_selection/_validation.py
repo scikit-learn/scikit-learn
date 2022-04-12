@@ -783,14 +783,15 @@ def _score(estimator, X_test, y_test, scorer, error_score="raise"):
 
     # Check errors in `_MultimetricScorer`
     if isinstance(scorer, _MultimetricScorer):
-        exceptions = {name: e for name, e in scores.items() if isinstance(e, Exception)}
+        exceptions = [
+            (name, e) for name, e in scores.items() if isinstance(e, Exception)
+        ]
         if exceptions:
             if error_score == "raise":
-                for name, e in exceptions.items():
-                    raise e
+                raise exceptions[0][1]
             else:
-                new_scores = {name: error_score for name in exceptions}
-                scores.update(new_scores)
+                for name, e in exceptions:
+                    scores[name] = error_score
                 warnings.warn(
                     "Scoring failed. The score on this train-test partition for "
                     f"these parameters will be set to {error_score}. Details: \n"
