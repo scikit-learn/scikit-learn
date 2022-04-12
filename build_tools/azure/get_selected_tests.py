@@ -1,30 +1,4 @@
-import os
-import subprocess
-
-
-def get_commit_message():
-    
-    # By default pull requests use refs/pull/PULL_ID/merge as the source branch
-    # which has a "Merge ID into ID" as a commit message. The latest commit
-    # message is the second to last commit
-    build_sourceversionmessage = os.environ["BUILD_SOURCEVERSIONMESSAGE"]
-    commit_id = build_sourceversionmessage.split()[1]
-
-    git_cmd = f"git log -1 --pretty=%B {commit_id}"
-    commit_message = subprocess.run(
-        git_cmd, shell=True, capture_output=True, text=True
-    ).stdout.strip()
-
-    print(commit_message)
-    return commit_message
-    # By default pull requests use refs/pull/PULL_ID/merge as the source branch
-    # which has a "Merge ID into ID" as a commit message. The latest commit
-    # message is the second to last commit
-    # COMMIT_ID=$(echo $BUILD_SOURCEVERSIONMESSAGE | awk '{print $2}')
-    # message=$(git log $COMMIT_ID -1 --pretty=%B)
-    # message=$(echo $message)
-
-    # echo "##vso[task.setvariable variable=message;isOutput=true]$message"
+from .get_commit_message import get_commit_message
 
 
 def get_selected_tests():
