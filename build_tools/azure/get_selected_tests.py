@@ -9,8 +9,11 @@ def get_commit_message():
     # message is the second to last commit
     build_sourceversionmessage = os.environ["BUILD_SOURCEVERSIONMESSAGE"]
     commit_id = build_sourceversionmessage.split()[1]
-    commit_message = os.popen("git log -1 --pretty=%B {}".format(commit_id)).read()
-    commit_message = subprocess.run(f"git log -1 --pretty=%B {commit_id}", shell=True, capture_output=True, text=True)
+
+    git_cmd = f"git log -1 --pretty=%B {commit_id}"
+    commit_message = subprocess.run(
+        git_cmd, shell=True, capture_output=True, text=True
+    ).stdout.strip()
 
     print(commit_message)
     return commit_message
@@ -39,12 +42,12 @@ def get_selected_tests():
 
     if "[all random seeds]" in commit_message:
         selected_tests = commit_message.split("[all random seeds]")[1].strip()
-        selected_tests = selected_tests.replace(" ", " or ")
+        selected_tests = selected_tests.replace("\n", " or ")
     else:
         selected_tests = ""
 
     # set the environment variable to be propagated to other steps
-    print("##vso[task.setvariable variable=SELECTED_TESTS]'{}'".format(selected_tests))
+    print(f"##vso[task.setvariable variable=SELECTED_TESTS]'{selected_tests}'")
 
 
 if __name__ == "__main__":
