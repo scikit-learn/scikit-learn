@@ -86,18 +86,6 @@ jobs:
             platform_id: manylinux_x86_64
             manylinux_image: manylinux2014
 
-          # Linux 64 bit manylinux2010
-          - os: ubuntu-latest
-            python: 38
-            bitness: 64
-            platform_id: manylinux_x86_64
-            manylinux_image: manylinux2010
-          - os: ubuntu-latest
-            python: 39
-            bitness: 64
-            platform_id: manylinux_x86_64
-            manylinux_image: manylinux2010
-
           # NumPy on Python 3.10 only supports 64bit and is only available with manylinux2014
           - os: ubuntu-latest
             python: 310
