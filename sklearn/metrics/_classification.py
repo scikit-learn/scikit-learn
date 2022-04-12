@@ -1638,11 +1638,9 @@ def likelihood_ratios(
     y_pred,
     *,
     labels=None,
-    pos_label=1,
-    average=None,
     sample_weight=None,
 ):
-    """Compute class-wise positive and negative likelihood ratios.
+    """Compute binary classification positive and negative likelihood ratios.
 
     The positive likelihood ratio is ``sensitivity / (1 - specificity)`` where
     the sensitivity or recall is the ratio ``tp / (tp + fn)`` and the
@@ -1661,43 +1659,10 @@ def likelihood_ratios(
         Estimated targets as returned by a classifier.
 
     labels : array-like, default=None
-        The set of labels to include when ``average != 'binary'``, and their
-        order if ``average is None``. Labels present in the data can be
-        excluded, for example to calculate a multiclass average ignoring a
-        majority negative class, while labels not present in the data will
-        result in 0 components in a macro average. For multilabel targets,
-        labels are column indices. By default, all labels in ``y_true`` and
-        ``y_pred`` are used in sorted order.
-
-    pos_label : str or int, default=1
-        The class to report ratios for, if ``average='binary'`` and if the
-        data is binary.
-        If the targets are multiclass or multilabel, this will be ignored.
-        Setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
-        ratios for that label only.
-
-    average : {'binary', 'micro', 'macro', 'samples','weighted'}, \
-            default=None
-        If ``None``, the ratios for each class are returned. Otherwise, this
-        determines the type of averaging performed on the data:
-
-        ``'binary'``:
-            Only report results for the class specified by ``pos_label``.
-            This is applicable only if targets (``y_{true,pred}``) are binary.
-        ``'micro'``:
-            Calculate metrics globally by counting the total true positives,
-            false negatives and false positives.
-        ``'macro'``:
-            Calculate metrics for each label, and find their unweighted
-            mean.  This does not take label imbalance into account.
-        ``'weighted'``:
-            Calculate metrics for each label, and find their average weighted
-            by support (the number of true instances for each label). This
-            alters 'macro' to account for label imbalance.
-        ``'samples'``:
-            Calculate metrics for each instance, and find their average (only
-            meaningful for multilabel classification where this differs from
-            :func:`accuracy_score`).
+        List of labels to index the matrix. This may be used to select the
+        positive and negative classes with the ordering labels=[negative_class,
+        positive_class]. If None is given, those that appear at least once in
+        y_true or y_pred are used in sorted order.
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
@@ -1705,11 +1670,9 @@ def likelihood_ratios(
     Returns
     -------
     positive_likelihood_ratio : float (if average is not None) or array of float,\
-        shape = [n_unique_labels]
         Positive likelihood ratio.
 
     negative_likelihood_ratio : float (if average is not None) or array of float,\
-        shape = [n_unique_labels]
         Negative likelihood ratio.
 
     Notes
@@ -1728,43 +1691,35 @@ def likelihood_ratios(
     --------
     >>> import numpy as np
     >>> from sklearn.metrics import likelihood_ratios
-    >>> y_true = np.array(['cat', 'dog', 'pig', 'cat', 'dog', 'pig'])
-    >>> y_pred = np.array(['cat', 'pig', 'dog', 'cat', 'cat', 'dog'])
-    >>> likelihood_ratios(y_true, y_pred, average='macro')
-    (1.33..., 1.11...)
-    >>> likelihood_ratios(y_true, y_pred, average='micro')
-    (1.0, 1.0)
+    >>> likelihood_ratios([0, 1, 0, 1, 0], [1, 1, 0, 0, 0])
+    (1.5, 0.75)
+    >>> y_true = np.array(["non-cat", "cat", "non-cat", "cat", "non-cat"])
+    >>> y_pred = np.array(["cat", "cat", "non-cat", "non-cat", "non-cat"])
+    >>> likelihood_ratios(y_true, y_pred)
+    (1.33..., 0.66...)
+    >>> y_true = np.array(["non-zebra", "zebra", "non-zebra", "zebra", "non-zebra"])
+    >>> y_pred = np.array(["zebra", "zebra", "non-zebra", "non-zebra", "non-zebra"])
     >>> likelihood_ratios(y_true, y_pred, average='weighted')
-    (1.33..., 1.11...)
+    (1.5, 0.75)
 
-    It is possible to compute per-label likelihood ratios instead of averaging:
+    To avoid ambiguities, use the notation labels=[negative_class, positive_class]
 
-    >>> likelihood_ratios(y_true, y_pred, average=None,
-    ... labels=['pig', 'dog', 'cat'])
-    (array([0., 0., 4.]), array([1.33..., 2.        , 0.        ]))
+    >>> y_true = np.array(["non-cat", "cat", "non-cat", "cat", "non-cat"])
+    >>> y_pred = np.array(["cat", "cat", "non-cat", "non-cat", "non-cat"])
+    >>> likelihood_ratios(y_true, y_pred, labels=["non-cat", "cat"])
+    (1.5, 0.75)
     """
 
-    labels = _check_set_wise_labels(y_true, y_pred, average, labels, pos_label)
+    y_type, y_true, y_pred = _check_targets(y_true, y_pred)
+    if y_type != "binary":
+        raise ValueError("%s is not supported" % y_type)
 
-    # Compute a confusion matrix for each class or sample
-    samplewise = average == "samples"
-    MCM = multilabel_confusion_matrix(
+    tn, fp, fn, tp = confusion_matrix(
         y_true,
         y_pred,
         sample_weight=sample_weight,
         labels=labels,
-        samplewise=samplewise,
-    )
-    tp = MCM[:, 1, 1]
-    tn = MCM[:, 0, 0]
-    fp = MCM[:, 0, 1]
-    fn = MCM[:, 1, 0]
-
-    if average == "micro":
-        tp = np.array([tp.sum()])
-        tn = np.array([tn.sum()])
-        fp = np.array([fp.sum()])
-        fn = np.array([fn.sum()])
+    ).ravel()
 
     support_pos = tp + fn
     support_neg = tn + fp
@@ -1775,37 +1730,19 @@ def likelihood_ratios(
 
     # Divide, and on zero-division, warn and set scores to float('inf')
 
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        positive_likelihood_ratio = pos_num / pos_denom
-        negative_likelihood_ratio = neg_num / neg_denom
-
-    if (pos_denom == 0).any():
-        positive_likelihood_ratio[pos_denom == 0] = float("inf")
+    if pos_denom == 0:
+        positive_likelihood_ratio = float("inf")
         msg = "positive_likelihood_ratio ill-defined and being set to inf "
         warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
+    else:
+        positive_likelihood_ratio = pos_num / pos_denom
 
-    if (neg_denom == 0).any():
-        negative_likelihood_ratio[neg_denom == 0] = float("inf")
+    if neg_denom == 0:
+        negative_likelihood_ratio = float("inf")
         msg = "negative_likelihood_ratio ill-defined and being set to inf "
         warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
-
-    # Average the results
-    if average == "weighted":
-        weights = support_pos
-    elif average == "samples":
-        weights = sample_weight
     else:
-        weights = None
-
-    if average is not None:
-        assert average != "binary" or len(positive_likelihood_ratio) == 1
-        positive_likelihood_ratio = np.average(
-            positive_likelihood_ratio, weights=weights
-        )
-        negative_likelihood_ratio = np.average(
-            negative_likelihood_ratio, weights=weights
-        )
+        negative_likelihood_ratio = neg_num / neg_denom
 
     return positive_likelihood_ratio, negative_likelihood_ratio
 
