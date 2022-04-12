@@ -134,11 +134,15 @@ ax.xaxis.set_major_formatter(NullFormatter())
 ax.yaxis.set_major_formatter(NullFormatter())
 plt.axis("tight")
 
+import warnings  # TODO(1.3) Remove.
+
 # Perform t-distributed stochastic neighbor embedding.
-t0 = time()
-tsne = manifold.TSNE(n_components=2, init="pca", learning_rate="auto", random_state=0)
-trans_data = tsne.fit_transform(sphere_data).T
-t1 = time()
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore", FutureWarning)
+    t0 = time()
+    tsne = manifold.TSNE(n_components=2, init="pca", random_state=0)
+    trans_data = tsne.fit_transform(sphere_data).T
+    t1 = time()
 print("t-SNE: %.2g sec" % (t1 - t0))
 
 ax = fig.add_subplot(2, 5, 10)
