@@ -34,7 +34,7 @@ from sklearn.metrics import fbeta_score
 from sklearn.metrics import hamming_loss
 from sklearn.metrics import hinge_loss
 from sklearn.metrics import jaccard_score
-from sklearn.metrics import likelihood_ratios
+from sklearn.metrics import class_likelihood_ratios
 from sklearn.metrics import log_loss
 from sklearn.metrics import matthews_corrcoef
 from sklearn.metrics import precision_recall_fscore_support
@@ -635,7 +635,7 @@ def test_likelihood_ratios_warnings(params, warn_msg):
     # least one of the ratios is ill-defined.
 
     with pytest.warns(UndefinedMetricWarning, match=warn_msg):
-        likelihood_ratios(**params)
+        class_likelihood_ratios(**params)
 
 
 def test_likelihood_ratios():
@@ -645,12 +645,12 @@ def test_likelihood_ratios():
     y_true = np.array([1] * 3 + [0] * 17)
     y_pred = np.array([1] * 2 + [0] * 10 + [1] * 8)
 
-    pos, neg = likelihood_ratios(y_true, y_pred)
+    pos, neg = class_likelihood_ratios(y_true, y_pred)
     assert_allclose(pos, 34 / 24, rtol=1e-5)
     assert_allclose(neg, 17 / 27, rtol=1e-5)
 
     # Build limit case with y_pred = y_true
-    pos, neg = likelihood_ratios(y_true, y_true)
+    pos, neg = class_likelihood_ratios(y_true, y_true)
     assert_allclose(pos, np.array([float("inf")] * 2), rtol=1e-5)
     assert_allclose(neg, np.zeros(2), rtol=1e-5)
 
@@ -658,7 +658,7 @@ def test_likelihood_ratios():
     # sensitivity=2/3, specificity=9/12, prevalence=3/20,
     # LR+=24/9, LR-=12/27
     sample_weight = np.array([1.0] * 15 + [0.0] * 5)
-    pos, neg = likelihood_ratios(y_true, y_pred, sample_weight=sample_weight)
+    pos, neg = class_likelihood_ratios(y_true, y_pred, sample_weight=sample_weight)
     assert_allclose(pos, 24 / 9, rtol=1e-5)
     assert_allclose(neg, 12 / 27, rtol=1e-5)
 

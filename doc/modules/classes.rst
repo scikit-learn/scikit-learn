@@ -962,7 +962,7 @@ details.
    metrics.hamming_loss
    metrics.hinge_loss
    metrics.jaccard_score
-   metrics.likelihood_ratios
+   metrics.class_likelihood_ratios
    metrics.log_loss
    metrics.matthews_corrcoef
    metrics.multilabel_confusion_matrix

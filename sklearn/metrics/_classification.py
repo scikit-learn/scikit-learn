@@ -1637,7 +1637,7 @@ def precision_recall_fscore_support(
     return precision, recall, f_score, true_sum
 
 
-def likelihood_ratios(
+def class_likelihood_ratios(
     y_true,
     y_pred,
     *,
