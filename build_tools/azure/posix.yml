@@ -42,9 +42,6 @@ jobs:
       ${{ insert }}: ${{ parameters.matrix }}
 
   steps:
-    - task: UsePythonVersion@0
-      inputs:
-        versionSpec: '3.9'
     - bash: python build_tools/azure/get_selected_tests.py
       displayName: Check selected tests for all random seeds
       condition: eq(variables['Build.Reason'], 'PullRequest')
@@ -83,6 +80,12 @@ jobs:
         testRunTitle: ${{ format('{0}-$(Agent.JobName)', parameters.name) }}
       displayName: 'Publish Test Results'
       condition: succeededOrFailed()
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.9'
+        displayName: Place Python into path to update issue tracker
+        condition: and(succeededOrFailed(), eq(variables['CREATE_ISSUE_ON_TRACKER'], 'true'),
+                       eq(variables['Build.Reason'], 'Schedule'))
     - bash: |
         set -ex
         if [[ $(BOT_GITHUB_TOKEN) == "" ]]; then
