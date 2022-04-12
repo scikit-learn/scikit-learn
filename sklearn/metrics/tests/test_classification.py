@@ -603,6 +603,7 @@ def test_confusion_matrix_normalize_single_class():
 @pytest.mark.parametrize(
     "params, warn_msg",
     [
+        # When ``false positive == 0``, the positive likelihood ratio is undefined.
         (
             {
                 "y_true": np.array([1, 1, 1, 0, 0, 0]),
@@ -610,6 +611,7 @@ def test_confusion_matrix_normalize_single_class():
             },
             "positive_likelihood_ratio ill-defined and being set to inf",
         ),
+        # When ``true negative == 0``, the negative likelihood ratio is undefined.
         (
             {
                 "y_true": np.array([1, 1, 1, 0, 0, 0]),
@@ -617,9 +619,10 @@ def test_confusion_matrix_normalize_single_class():
             },
             "negative_likelihood_ratio ill-defined and being set to inf",
         ),
+        # When ``true positive + false negative == 0`` both ratios are undefined.
         (
             {
-                "y_true": np.array([1, 1, 1, 0, 0, 0]),
+                "y_true": np.array([0, 0, 0, 0, 0, 0]),
                 "y_pred": np.array([1, 1, 1, 1, 1, 1]),
             },
             "positive_likelihood_ratio ill-defined and being set to inf",
@@ -635,19 +638,28 @@ def test_likelihood_ratios_warnings(params, warn_msg):
 
 
 def test_likelihood_ratios():
-    # Build confusion matrix with tp=2, fp=8, fn=1, tn=9 when
-    # class “1” is the positive class.
+    # Build confusion matrix with tn=9, fp=8, fn=1, tp=2,
+    # sensitivity=2/3, specificity=9/17, prevalence=3/20,
+    # LR+=34/24, LR-=17/27
     y_true = np.array([1] * 3 + [0] * 17)
     y_pred = np.array([1] * 2 + [0] * 10 + [1] * 8)
 
-    pos, neg = likelihood_ratios(y_true, y_pred, labels=[1, 0])
-    assert_allclose(pos[0], 34 / 24, rtol=1e-5)
-    assert_allclose(neg[0], 17 / 27, rtol=1e-5)
+    pos, neg = likelihood_ratios(y_true, y_pred)
+    assert_allclose(pos, 34 / 24, rtol=1e-5)
+    assert_allclose(neg, 17 / 27, rtol=1e-5)
 
     # Build limit case with y_pred = y_true
-    pos, neg = likelihood_ratios(y_true, y_true, labels=[1, 0])
+    pos, neg = likelihood_ratios(y_true, y_true)
     assert_allclose(pos, np.array([float("inf")] * 2), rtol=1e-5)
     assert_allclose(neg, np.zeros(2), rtol=1e-5)
+
+    # Ignore last 5 samples to get tn=9, fp=3, fn=1, tp=2,
+    # sensitivity=2/3, specificity=9/12, prevalence=3/20,
+    # LR+=24/9, LR-=12/27
+    sample_weight = np.array([1.0] * 15 + [0.0] * 5)
+    pos, neg = likelihood_ratios(y_true, y_pred, sample_weight=sample_weight)
+    assert_allclose(pos, 24 / 9, rtol=1e-5)
+    assert_allclose(neg, 12 / 27, rtol=1e-5)
 
 
 def test_cohen_kappa():
