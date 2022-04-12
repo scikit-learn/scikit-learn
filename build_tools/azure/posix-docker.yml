@@ -44,7 +44,13 @@ jobs:
       ${{ insert }}: ${{ parameters.matrix }}
 
   steps:
-    - bash: python build_tools/azure/get_selected_tests.py
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.9'
+        addToPath: false
+      name: pyTools
+      displayName: Select python version to run CI python scripts
+    - bash: $(pyTools.pythonLocation)/bin/python build_tools/azure/get_selected_tests.py
       displayName: Check selected tests for all random seeds
       condition: eq(variables['Build.Reason'], 'PullRequest')
     - task: Cache@2
@@ -110,12 +116,6 @@ jobs:
         docker container stop skcontainer
       displayName: 'Stop container'
       condition: always()
-    - task: UsePythonVersion@0
-      inputs:
-        versionSpec: '3.9'
-      displayName: Place Python into path to update issue tracker
-      condition: and(succeededOrFailed(), eq(variables['CREATE_ISSUE_ON_TRACKER'], 'true'),
-                     eq(variables['Build.Reason'], 'Schedule'))
     - bash: |
         set -ex
         if [[ $(BOT_GITHUB_TOKEN) == "" ]]; then
@@ -127,8 +127,8 @@ jobs:
         CI_NAME="$SYSTEM_JOBIDENTIFIER"
         ISSUE_REPO="$BUILD_REPOSITORY_NAME"
 
-        pip install defusedxml PyGithub
-        python maint_tools/update_tracking_issue.py \
+        $(pyTools.pythonLocation)/bin/pip install defusedxml PyGithub
+        $(pyTools.pythonLocation)/bin/python maint_tools/update_tracking_issue.py \
           $(BOT_GITHUB_TOKEN) \
           $CI_NAME \
           $ISSUE_REPO \
