@@ -16,7 +16,6 @@ jobs:
     - script: python build_tools/azure/get_commit_message.py
       name: commit
       displayName: Get source version message
-
 - job: linting
   dependsOn: [git_commit]
   condition: |
