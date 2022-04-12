@@ -134,7 +134,7 @@ ax.xaxis.set_major_formatter(NullFormatter())
 ax.yaxis.set_major_formatter(NullFormatter())
 plt.axis("tight")
 
-import warnings  # TODO(1.3) Remove.
+import warnings  # TODO(1.2) Remove.
 
 # Perform t-distributed stochastic neighbor embedding.
 with warnings.catch_warnings():
