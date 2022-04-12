@@ -634,7 +634,7 @@ def test_likelihood_ratios_warnings(params, warn_msg):
     # likelihood_ratios must raise warnings when at
     # least one of the ratios is ill-defined.
 
-    with pytest.warns(UndefinedMetricWarning, match=warn_msg):
+    with pytest.warns(UserWarning, match=warn_msg):
         class_likelihood_ratios(**params)
 
 

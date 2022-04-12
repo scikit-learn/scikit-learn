@@ -1735,14 +1735,14 @@ def class_likelihood_ratios(
     if pos_denom == 0:
         positive_likelihood_ratio = float("inf")
         msg = "positive_likelihood_ratio ill-defined and being set to inf "
-        warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
+        warnings.warn(msg, UserWarning, stacklevel=2)
     else:
         positive_likelihood_ratio = pos_num / pos_denom
 
     if neg_denom == 0:
         negative_likelihood_ratio = float("inf")
         msg = "negative_likelihood_ratio ill-defined and being set to inf "
-        warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
+        warnings.warn(msg, UserWarning, stacklevel=2)
     else:
         negative_likelihood_ratio = neg_num / neg_denom
 
