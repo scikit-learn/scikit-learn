@@ -1060,6 +1060,9 @@ Changelog
   :func:`~sklearn.set_config`.
   :pr:`22856` by `Jérémie du Boisberranger <jeremiedbb>`.
 
+- |Fix| :func:`utils.class_weight.compute_sample_weight` now works with sparse `y`.
+  :pr:`23115` by :user:`kernc`.
+
 Code and Documentation Contributors
 -----------------------------------
 
