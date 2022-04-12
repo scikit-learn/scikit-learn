@@ -471,6 +471,11 @@ Changelog
   the output feature names.
   :pr:`21762` by :user:`Zhehao Liu <MaxwellLZH>` and `Thomas Fan`_.
 
+- |API| The attribute `loss_` of :class:`ensemble.GradientBoostingClassifier` and
+  :class:`ensemble.GradientBoostingRegressor` has been deprecated and will be removed
+  in version 1.3.
+  :pr:`23079` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
