@@ -1813,8 +1813,6 @@ def test_max_features_deprecation(Estimator):
         # TODO(1.2): Remove "mse" and "mae"
         ("mse", "squared_error", RandomForestRegressor),
         ("mae", "absolute_error", RandomForestRegressor),
-        # TODO(1.3): Remove "entropy"
-        ("entropy", "log_loss", RandomForestClassifier),
     ],
 )
 def test_criterion_deprecated(old_criterion, new_criterion, Estimator):

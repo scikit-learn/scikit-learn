@@ -63,7 +63,6 @@ __all__ = [
 DTYPE = _tree.DTYPE
 DOUBLE = _tree.DOUBLE
 
-# TODO(1.3): Remove "entropy"
 CRITERIA_CLF = {
     "gini": _criterion.Gini,
     "log_loss": _criterion.Entropy,
