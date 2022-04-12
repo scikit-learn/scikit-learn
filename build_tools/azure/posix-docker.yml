@@ -32,7 +32,6 @@ jobs:
     COVERAGE: 'false'
     TEST_DOCSTRINGS: 'false'
     BLAS: 'openblas'
-    COMMIT_MESSAGE: $[ dependencies.git_commit.outputs['commit.message'] ]
     # Set in azure-pipelines.yml
     DISTRIB: ''
     DOCKER_CONTAINER: ''
@@ -45,9 +44,6 @@ jobs:
       ${{ insert }}: ${{ parameters.matrix }}
 
   steps:
-    - task: UsePythonVersion@0
-      inputs:
-        versionSpec: '3.9'
     - bash: python build_tools/azure/get_selected_tests.py
       displayName: Check selected tests for all random seeds
       condition: eq(variables['Build.Reason'], 'PullRequest')
@@ -114,6 +110,12 @@ jobs:
         docker container stop skcontainer
       displayName: 'Stop container'
       condition: always()
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.9'
+      displayName: Place Python into path to update issue tracker
+      condition: and(succeededOrFailed(), eq(variables['CREATE_ISSUE_ON_TRACKER'], 'true'),
+                     eq(variables['Build.Reason'], 'Schedule'))
     - bash: |
         set -ex
         if [[ $(BOT_GITHUB_TOKEN) == "" ]]; then

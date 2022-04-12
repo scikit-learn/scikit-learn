@@ -37,7 +37,6 @@ jobs:
     TEST_DOCSTRINGS: 'false'
     CREATE_ISSUE_ON_TRACKER: 'false'
     SHOW_SHORT_SUMMARY: 'false'
-    COMMIT_MESSAGE: $[ dependencies.git_commit.outputs['commit.message'] ]
   strategy:
     matrix:
       ${{ insert }}: ${{ parameters.matrix }}

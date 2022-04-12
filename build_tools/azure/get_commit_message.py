@@ -22,5 +22,6 @@ def get_commit_message():
 
 
 if __name__ == "__main__":
+    # set the environment variable to be propagated to other steps
     commit_message = get_commit_message()
     print(f"##vso[task.setvariable variable=message;isOutput=true]{commit_message}")

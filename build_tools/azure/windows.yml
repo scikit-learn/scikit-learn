@@ -21,7 +21,6 @@ jobs:
     TEST_DIR: '$(Agent.WorkFolder)/tmp_folder'
     SHOW_SHORT_SUMMARY: 'false'
     CPU_COUNT: '2'
-    COMMIT_MESSAGE: $[ dependencies.git_commit.outputs['commit.message'] ]
   strategy:
     matrix:
       ${{ insert }}: ${{ parameters.matrix }}

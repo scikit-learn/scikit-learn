@@ -20,9 +20,10 @@ def get_selected_tests():
     else:
         selected_tests = ""
 
-    # set the environment variable to be propagated to other steps
-    print(f"##vso[task.setvariable variable=SELECTED_TESTS]'{selected_tests}'")
-
+    return selected_tests
+ 
 
 if __name__ == "__main__":
-    get_selected_tests()
+    # set the environment variable to be propagated to other steps
+    selected_tests = get_selected_tests()
+    print(f"##vso[task.setvariable variable=SELECTED_TESTS]'{selected_tests}'")
