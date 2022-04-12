@@ -83,9 +83,9 @@ jobs:
     - task: UsePythonVersion@0
       inputs:
         versionSpec: '3.9'
-        displayName: Place Python into path to update issue tracker
-        condition: and(succeededOrFailed(), eq(variables['CREATE_ISSUE_ON_TRACKER'], 'true'),
-                       eq(variables['Build.Reason'], 'Schedule'))
+      displayName: Place Python into path to update issue tracker
+      condition: and(succeededOrFailed(), eq(variables['CREATE_ISSUE_ON_TRACKER'], 'true'),
+                     eq(variables['Build.Reason'], 'Schedule'))
     - bash: |
         set -ex
         if [[ $(BOT_GITHUB_TOKEN) == "" ]]; then
