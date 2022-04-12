@@ -1682,7 +1682,7 @@ def class_likelihood_ratios(
     When ``false positive == 0``, the positive likelihood ratio is undefined.
     When ``true negative == 0``, the negative likelihood ratio is undefined.
     When ``true positive + false negative == 0`` both ratios are undefined.
-    In such cases, an ``UserWarning`` will be raised.
+    In such cases, ``UserWarning`` will be raised.
 
     References
     ----------
