@@ -19,6 +19,7 @@ from ._ranking import top_k_accuracy_score
 
 from ._classification import accuracy_score
 from ._classification import balanced_accuracy_score
+from ._classification import class_likelihood_ratios
 from ._classification import classification_report
 from ._classification import cohen_kappa_score
 from ._classification import confusion_matrix
@@ -27,7 +28,6 @@ from ._classification import fbeta_score
 from ._classification import hamming_loss
 from ._classification import hinge_loss
 from ._classification import jaccard_score
-from ._classification import class_likelihood_ratios
 from ._classification import log_loss
 from ._classification import matthews_corrcoef
 from ._classification import precision_recall_fscore_support
@@ -109,6 +109,7 @@ __all__ = [
     "balanced_accuracy_score",
     "calinski_harabasz_score",
     "check_scoring",
+    "class_likelihood_ratios",
     "classification_report",
     "cluster",
     "cohen_kappa_score",
@@ -138,7 +139,6 @@ __all__ = [
     "jaccard_score",
     "label_ranking_average_precision_score",
     "label_ranking_loss",
-    "class_likelihood_ratios",
     "log_loss",
     "make_scorer",
     "nan_euclidean_distances",

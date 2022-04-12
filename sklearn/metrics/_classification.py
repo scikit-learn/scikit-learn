@@ -1673,11 +1673,9 @@ def class_likelihood_ratios(
 
     Returns
     -------
-    positive_likelihood_ratio : float (if average is not None) or array of float,\
-        Positive likelihood ratio.
-
-    negative_likelihood_ratio : float (if average is not None) or array of float,\
-        Negative likelihood ratio.
+    (positive_likelihood_ratio, negative_likelihood_ratio) : tuple
+        A tuple of two float, the first containing the Positive likelihood ratio
+        and the second the Negative likelihood ratio.
 
     Notes
     -----
@@ -1694,23 +1692,23 @@ def class_likelihood_ratios(
     Examples
     --------
     >>> import numpy as np
-    >>> from sklearn.metrics import likelihood_ratios
-    >>> likelihood_ratios([0, 1, 0, 1, 0], [1, 1, 0, 0, 0])
+    >>> from sklearn.metrics import class_likelihood_ratios
+    >>> class_likelihood_ratios([0, 1, 0, 1, 0], [1, 1, 0, 0, 0])
     (1.5, 0.75)
     >>> y_true = np.array(["non-cat", "cat", "non-cat", "cat", "non-cat"])
     >>> y_pred = np.array(["cat", "cat", "non-cat", "non-cat", "non-cat"])
-    >>> likelihood_ratios(y_true, y_pred)
+    >>> class_likelihood_ratios(y_true, y_pred)
     (1.33..., 0.66...)
     >>> y_true = np.array(["non-zebra", "zebra", "non-zebra", "zebra", "non-zebra"])
     >>> y_pred = np.array(["zebra", "zebra", "non-zebra", "non-zebra", "non-zebra"])
-    >>> likelihood_ratios(y_true, y_pred, average='weighted')
+    >>> class_likelihood_ratios(y_true, y_pred, average='weighted')
     (1.5, 0.75)
 
     To avoid ambiguities, use the notation labels=[negative_class, positive_class]
 
     >>> y_true = np.array(["non-cat", "cat", "non-cat", "cat", "non-cat"])
     >>> y_pred = np.array(["cat", "cat", "non-cat", "non-cat", "non-cat"])
-    >>> likelihood_ratios(y_true, y_pred, labels=["non-cat", "cat"])
+    >>> class_likelihood_ratios(y_true, y_pred, labels=["non-cat", "cat"])
     (1.5, 0.75)
     """
 

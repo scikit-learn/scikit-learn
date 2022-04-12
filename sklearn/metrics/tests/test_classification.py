@@ -26,6 +26,7 @@ from sklearn.utils._mocking import MockDataFrame
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import average_precision_score
 from sklearn.metrics import balanced_accuracy_score
+from sklearn.metrics import class_likelihood_ratios
 from sklearn.metrics import classification_report
 from sklearn.metrics import cohen_kappa_score
 from sklearn.metrics import confusion_matrix
@@ -34,7 +35,6 @@ from sklearn.metrics import fbeta_score
 from sklearn.metrics import hamming_loss
 from sklearn.metrics import hinge_loss
 from sklearn.metrics import jaccard_score
-from sklearn.metrics import class_likelihood_ratios
 from sklearn.metrics import log_loss
 from sklearn.metrics import matthews_corrcoef
 from sklearn.metrics import precision_recall_fscore_support
