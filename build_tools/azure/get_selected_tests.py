@@ -1,11 +1,19 @@
 import os
+import subprocess
 
 
 def get_commit_message():
+    
+    # By default pull requests use refs/pull/PULL_ID/merge as the source branch
+    # which has a "Merge ID into ID" as a commit message. The latest commit
+    # message is the second to last commit
     build_sourceversionmessage = os.environ["BUILD_SOURCEVERSIONMESSAGE"]
-    print(build_sourceversionmessage)
+    commit_id = build_sourceversionmessage.split()[1]
+    commit_message = os.popen("git log -1 --pretty=%B {}".format(commit_id)).read()
+    commit_message = subprocess.run(f"git log -1 --pretty=%B {commit_id}", shell=True, capture_output=True, text=True)
 
-
+    print(commit_message)
+    return commit_message
     # By default pull requests use refs/pull/PULL_ID/merge as the source branch
     # which has a "Merge ID into ID" as a commit message. The latest commit
     # message is the second to last commit
