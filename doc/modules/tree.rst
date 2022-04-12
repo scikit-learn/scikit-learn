@@ -529,7 +529,7 @@ Entropy:
 
   .. math::
   
-      \mathrm{LL}(D, T) = -\sum_{m \in T} \frac{n_m}{n} H(Q_m)
+      \mathrm{LL}(D, T) = \sum_{m \in T} \frac{n_m}{n} H(Q_m)
 
 Regression criteria
 -------------------
