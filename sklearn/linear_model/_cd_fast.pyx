@@ -720,9 +720,9 @@ def enet_coordinate_descent_multi_task(
 
     Parameters
     ----------
-    W : F-condiguous ndarray of shape (n_tasks, n_features)
-    X : F-condiguous ndarray of shape (n_samples, n_features)
-    Y : F-condiguous ndarray of shape (n_samples, n_tasks)
+    W : F-contiguous ndarray of shape (n_tasks, n_features)
+    X : F-contiguous ndarray of shape (n_samples, n_features)
+    Y : F-contiguous ndarray of shape (n_samples, n_tasks)
     """
 
     if floating is float:
@@ -862,9 +862,9 @@ def enet_coordinate_descent_multi_task(
                 # criterion
 
                 # Using numpy:
-                # XtA = np.dot(R.T, X) - l2_reg * W
+                #     XtA = np.dot(R.T, X) - l2_reg * W
                 # Using BLAS Level 3:
-                # XtA = np.dot(R.T, X)
+                #     XtA = np.dot(R.T, X)
                 _gemm(ColMajor, Trans, NoTrans, n_tasks, n_features, n_samples, 1.0,
                       &R[0, 0], n_samples, &X[0, 0], n_samples, 0.0, &XtA[0, 0],
                       n_tasks)
