@@ -157,6 +157,15 @@ jobs:
         with:
           path: wheelhouse/*.whl
 
+  update-tracker:
+    uses: ./.github/workflows/update_tracking_issue.yml
+    if: ${{ always() }}
+    needs: [build_wheels]
+    with:
+      job_status: ${{ needs.build_wheels.result }}
+    secrets:
+      BOT_GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
+
   # Build the source distribution under Linux
   build_sdist:
     name: Source distribution
