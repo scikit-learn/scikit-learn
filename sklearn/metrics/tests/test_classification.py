@@ -646,7 +646,8 @@ def test_likelihood_ratios_warnings(params, warn_msg):
                 "y_true": np.array([0, 1, 0, 1, 0]),
                 "y_pred": np.array([1, 1, 0, 0, 2]),
             },
-            "multiclass is not supported",
+            "class_likelihood_ratios only supports binary classification "
+            "problems, got targets of type: multiclass",
         ),
     ],
 )
@@ -665,21 +666,21 @@ def test_likelihood_ratios():
     y_pred = np.array([1] * 2 + [0] * 10 + [1] * 8)
 
     pos, neg = class_likelihood_ratios(y_true, y_pred)
-    assert_allclose(pos, 34 / 24, rtol=1e-5)
-    assert_allclose(neg, 17 / 27, rtol=1e-5)
+    assert_allclose(pos, 34 / 24)
+    assert_allclose(neg, 17 / 27)
 
     # Build limit case with y_pred = y_true
     pos, neg = class_likelihood_ratios(y_true, y_true)
-    assert_allclose(pos, np.array([float("inf")] * 2), rtol=1e-5)
-    assert_allclose(neg, np.zeros(2), rtol=1e-5)
+    assert_array_equal(pos, np.array([float("inf")] * 2))
+    assert_allclose(neg, np.zeros(2), rtol=1e-12)
 
     # Ignore last 5 samples to get tn=9, fp=3, fn=1, tp=2,
     # sensitivity=2/3, specificity=9/12, prevalence=3/20,
     # LR+=24/9, LR-=12/27
     sample_weight = np.array([1.0] * 15 + [0.0] * 5)
     pos, neg = class_likelihood_ratios(y_true, y_pred, sample_weight=sample_weight)
-    assert_allclose(pos, 24 / 9, rtol=1e-5)
-    assert_allclose(neg, 12 / 27, rtol=1e-5)
+    assert_allclose(pos, 24 / 9)
+    assert_allclose(neg, 12 / 27)
 
 
 def test_cohen_kappa():
