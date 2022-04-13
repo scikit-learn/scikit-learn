@@ -32,6 +32,9 @@ from numpy.random import RandomState
 import matplotlib.pyplot as plt
 from matplotlib import ticker
 
+# unused but required import for doing 3d projections with matplotlib < 3.2
+import mpl_toolkits.mplot3d  # noqa: F401
+
 from sklearn import manifold, datasets
 
 rng = RandomState(0)
