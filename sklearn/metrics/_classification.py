@@ -1714,7 +1714,10 @@ def class_likelihood_ratios(
 
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     if y_type != "binary":
-        raise ValueError("%s is not supported" % y_type)
+        raise ValueError(
+            "class_likelihood_ratios only supports binary classification "
+            f"problems, got targets of type: {y_type}"
+        )
 
     tn, fp, fn, tp = confusion_matrix(
         y_true,
