@@ -19,15 +19,15 @@ import scipy.sparse as sp
 from joblib import Parallel
 
 from abc import ABCMeta, abstractmethod
-from .base import BaseEstimator, clone, MetaEstimatorMixin
-from .base import RegressorMixin, ClassifierMixin, is_classifier
-from .model_selection import cross_val_predict
-from .utils.metaestimators import available_if
-from .utils import check_random_state
-from .utils.validation import check_is_fitted, has_fit_parameter, _check_fit_params
-from .utils.multiclass import check_classification_targets
-from .utils.fixes import delayed
-from .utils._tags import _safe_tags
+from ..base import BaseEstimator, clone, MetaEstimatorMixin
+from ..base import RegressorMixin, ClassifierMixin, is_classifier
+from ..model_selection import cross_val_predict
+from ..utils.metaestimators import available_if
+from ..utils import check_random_state
+from ..utils.validation import check_is_fitted, has_fit_parameter, _check_fit_params
+from ..utils.multiclass import check_classification_targets
+from ..utils.fixes import delayed
+from ..utils._tags import _safe_tags
 
 __all__ = [
     "MultiOutputRegressor",
@@ -239,7 +239,8 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
         return np.asarray(y).T
 
     def _more_tags(self):
-        return {"multioutput_only": True}
+        allow_nan = _safe_tags(self.estimator, 'allow_nan')
+        return {"multioutput_only": True, "allow_nan": allow_nan}
 
 
 class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
@@ -642,6 +643,10 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
 
         return Y_pred
 
+    def _more_tags(self):
+        allow_nan = _safe_tags(self.base_estimator, 'allow_nan')
+        return {"allow_nan": allow_nan}
+
 
 class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
     """A multi-label model that arranges binary classifiers into a chain.
@@ -961,5 +966,4 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
         return self
 
     def _more_tags(self):
-        allow_nan = _safe_tags(self.base_estimator, 'allow_nan')
-        return {"multioutput_only": True, "allow_nan": allow_nan}
+        return {"multioutput_only": True}
