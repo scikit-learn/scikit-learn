@@ -105,7 +105,8 @@ enc.infrequent_categories_
 # %%
 # Since dog and snake are infrequent categories, they are grouped together when
 # transformed:
-enc.transform(np.array([["dog"], ["snake"], ["cat"], ["rabbit"]]))
+encoded = enc.transform(np.array([["dog"], ["snake"], ["cat"], ["rabbit"]]))
+pd.DataFrame(encoded, columns=enc.get_feature_names_out())
 
 # %%
 # Performance Improvements
