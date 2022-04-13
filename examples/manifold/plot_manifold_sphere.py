@@ -36,6 +36,9 @@ from matplotlib.ticker import NullFormatter
 from sklearn import manifold
 from sklearn.utils import check_random_state
 
+# unused but required import for doing 3d projections with matplotlib < 3.2
+import mpl_toolkits.mplot3d
+
 # Variables for manifold learning.
 n_neighbors = 10
 n_samples = 1000
