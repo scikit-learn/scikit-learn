@@ -284,7 +284,7 @@ Changelog
     deprecated.
   - the default value of the `batch_size` parameter of both will change from 3 to 256
     in version 1.3.
-  
+
   :pr:`18975` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 - |Enhancement| :func:`decomposition.dict_learning`, :func:`decomposition.dict_learning_online`
@@ -427,6 +427,10 @@ Changelog
   :class:`ensemble.HistGradientBoostingRegressor` no longer warns when
   fitting on a pandas DataFrame with a non-default `scoring` parameter and
   early_stopping enabled. :pr:`22908` by `Thomas Fan`_.
+
+- |Enhancement| :class:`RandomForestClassifier` and :class:`ExtraTreesClassifier` have
+  the new `criterion="log_loss"`, which is equivalent to `criterion="entropy"`.
+  :pr:`23047` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 :mod:`sklearn.feature_extraction`
 .................................
@@ -956,6 +960,10 @@ Changelog
   and will be removed in version 1.3. Setting :func:`max_features` to `"auto"` is also deprecated
   for :class:`tree.DecisionTreeClassifier` and :class:`DecisionTreeRegressor`.
   :pr:`22476` by :user: `Zhehao Liu <MaxwellLZH>`.
+
+- |Enhancement| :class:`DecisionTreeClassifier` and :class:`ExtraTreeClassifier` have
+  the new `criterion="log_loss"`, which is equivalent to `criterion="entropy"`.
+  :pr:`23047` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 :mod:`sklearn.utils`
 ....................
