@@ -81,7 +81,6 @@ jobs:
         # Tests that require large downloads over the networks are skipped in CI.
         # Here we make sure, that they are still run on a regular basis.
         SKLEARN_SKIP_NETWORK_TESTS: '0'
-        CREATE_ISSUE_ON_TRACKER: 'true'
 
 # Check compilation with intel C++ compiler (ICC)
 - template: build_tools/azure/posix.yml
@@ -126,7 +125,6 @@ jobs:
         DOCKER_CONTAINER: 'condaforge/mambaforge-pypy3:4.10.3-5'
         PILLOW_VERSION: 'none'
         PANDAS_VERSION: 'none'
-        CREATE_ISSUE_ON_TRACKER: 'true'
 
 # Will run all the time regardless of linting outcome.
 - template: build_tools/azure/posix.yml
@@ -158,8 +156,7 @@ jobs:
     condition: |
       and(
         succeeded(),
-        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]')),
-        ne(variables['Build.Reason'], 'Schedule')
+        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]'))
       )
     matrix:
       py38_conda_forge_openblas_ubuntu_1804:
@@ -179,8 +176,7 @@ jobs:
     condition: |
       and(
         succeeded(),
-        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]')),
-        ne(variables['Build.Reason'], 'Schedule')
+        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]'))
       )
     matrix:
       # Linux environment to test that scikit-learn can be built against
@@ -225,8 +221,7 @@ jobs:
     condition: |
       and(
         succeeded(),
-        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]')),
-        ne(variables['Build.Reason'], 'Schedule')
+        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]'))
       )
     matrix:
       debian_atlas_32bit:
@@ -247,8 +242,7 @@ jobs:
     condition: |
       and(
         succeeded(),
-        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]')),
-        ne(variables['Build.Reason'], 'Schedule')
+        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]'))
       )
     matrix:
       pylatest_conda_forge_mkl:
@@ -271,8 +265,7 @@ jobs:
     condition: |
       and(
         succeeded(),
-        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]')),
-        ne(variables['Build.Reason'], 'Schedule')
+        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]'))
       )
     matrix:
       py38_conda_forge_mkl:
