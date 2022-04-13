@@ -36,8 +36,9 @@ from matplotlib.ticker import NullFormatter
 from sklearn import manifold
 from sklearn.utils import check_random_state
 
-# unused but required import for doing 3d projections with matplotlib < 3.2
+# Unused but required import for doing 3d projections with matplotlib < 3.2
 import mpl_toolkits.mplot3d  # noqa: F401
+import warnings  # TODO(1.2) Remove.
 
 # Variables for manifold learning.
 n_neighbors = 10
@@ -137,13 +138,15 @@ ax.xaxis.set_major_formatter(NullFormatter())
 ax.yaxis.set_major_formatter(NullFormatter())
 plt.axis("tight")
 
-import warnings  # TODO(1.2) Remove.
-
 # Perform t-distributed stochastic neighbor embedding.
 with warnings.catch_warnings():
-    warnings.simplefilter("ignore", FutureWarning)
+    warnings.filterwarnings(
+        "ignore", message="The PCA initialization", category=FutureWarning
+    )
     t0 = time()
-    tsne = manifold.TSNE(n_components=2, init="pca", random_state=0)
+    tsne = manifold.TSNE(
+        n_components=2, init="pca", random_state=0, learning_rate="auto"
+    )
     trans_data = tsne.fit_transform(sphere_data).T
     t1 = time()
 print("t-SNE: %.2g sec" % (t1 - t0))
