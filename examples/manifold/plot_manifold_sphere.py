@@ -38,7 +38,7 @@ from sklearn.utils import check_random_state
 
 # Unused but required import for doing 3d projections with matplotlib < 3.2
 import mpl_toolkits.mplot3d  # noqa: F401
-import warnings  # TODO(1.2) Remove.
+import warnings
 
 # Variables for manifold learning.
 n_neighbors = 10
@@ -139,7 +139,7 @@ ax.yaxis.set_major_formatter(NullFormatter())
 plt.axis("tight")
 
 # Perform t-distributed stochastic neighbor embedding.
-with warnings.catch_warnings():
+with warnings.catch_warnings(): # TODO(1.2) Remove warning handling.
     warnings.filterwarnings(
         "ignore", message="The PCA initialization", category=FutureWarning
     )
