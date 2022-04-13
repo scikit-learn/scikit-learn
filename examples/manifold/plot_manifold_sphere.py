@@ -139,7 +139,8 @@ ax.yaxis.set_major_formatter(NullFormatter())
 plt.axis("tight")
 
 # Perform t-distributed stochastic neighbor embedding.
-with warnings.catch_warnings(): # TODO(1.2) Remove warning handling.
+# TODO(1.2) Remove warning handling.
+with warnings.catch_warnings():
     warnings.filterwarnings(
         "ignore", message="The PCA initialization", category=FutureWarning
     )
