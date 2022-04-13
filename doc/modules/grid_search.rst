@@ -108,7 +108,7 @@ Randomized Parameter Optimization
 =================================
 While using a grid of parameter settings is currently the most widely used
 method for parameter optimization, other search methods have more
-favourable properties.
+favorable properties.
 :class:`RandomizedSearchCV` implements a randomized search over parameters,
 where each setting is sampled from a distribution over possible parameter values.
 This has two main benefits over an exhaustive search:
@@ -495,10 +495,10 @@ min_resources = 20``.
 
 .. _successive_halving_cv_results:
 
-Analysing results with the `cv_results_` attribute
+Analyzing results with the `cv_results_` attribute
 --------------------------------------------------
 
-The ``cv_results_`` attribute contains useful information for analysing the
+The ``cv_results_`` attribute contains useful information for analyzing the
 results of a search. It can be converted to a pandas dataframe with ``df =
 pd.DataFrame(est.cv_results_)``. The ``cv_results_`` attribute of
 :class:`HalvingGridSearchCV` and :class:`HalvingRandomSearchCV` is similar
