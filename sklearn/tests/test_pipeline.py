@@ -227,8 +227,7 @@ def test_pipeline_invalid_parameters():
         pipe.set_params(anova__C=0.1)
 
     # Test clone
-    with pytest.warns(None):
-        pipe2 = clone(pipe)
+    pipe2 = clone(pipe)
     assert not pipe.named_steps["svc"] is pipe2.named_steps["svc"]
 
     # Check that apart from estimators, the parameters are the same
@@ -502,8 +501,7 @@ def test_feature_union():
     assert_array_almost_equal(X_transformed, X_sp_transformed.toarray())
 
     # Test clone
-    with pytest.warns(None):
-        fs2 = clone(fs)
+    fs2 = clone(fs)
     assert fs.transformer_list[0][1] is not fs2.transformer_list[0][1]
 
     # test setting parameters
