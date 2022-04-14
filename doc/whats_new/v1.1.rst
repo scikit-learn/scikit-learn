@@ -476,6 +476,10 @@ Changelog
   in version 1.3.
   :pr:`23079` by :user:`Christian Lorentzen <lorentzenchr>`.
 
+- |Enhancement| :class:`RandomForestClassifier` and :class:`ExtraTreesClassifier` have
+  the new `criterion="log_loss"`, which is equivalent to `criterion="entropy"`.
+  :pr:`23047` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
@@ -1006,6 +1010,10 @@ Changelog
   and will be removed in version 1.3. Setting :func:`max_features` to `"auto"` is also deprecated
   for :class:`tree.DecisionTreeClassifier` and :class:`DecisionTreeRegressor`.
   :pr:`22476` by :user: `Zhehao Liu <MaxwellLZH>`.
+
+- |Enhancement| :class:`DecisionTreeClassifier` and :class:`ExtraTreeClassifier` have
+  the new `criterion="log_loss"`, which is equivalent to `criterion="entropy"`.
+  :pr:`23047` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 :mod:`sklearn.utils`
 ....................
