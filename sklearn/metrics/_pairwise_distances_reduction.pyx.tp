@@ -46,6 +46,7 @@ import warnings
 
 from .. import get_config
 from libc.stdlib cimport free, malloc
+from libc.stdio cimport printf
 from libc.float cimport DBL_MAX
 from libcpp.memory cimport shared_ptr, make_shared
 from libcpp.vector cimport vector
@@ -627,8 +628,8 @@ cdef class GEMMTermComputer{{bitness}}:
         vector[vector[DTYPE_t]] dist_middle_terms_chunks
 
 {{if need_upcast}}
-        DTYPE_t** X_c_upcast
-        DTYPE_t** Y_c_upcast
+        vector[vector[DTYPE_t]] X_c_upcast
+        vector[vector[DTYPE_t]] Y_c_upcast
 {{endif}}
 
     def __init__(self,
@@ -649,20 +650,13 @@ cdef class GEMMTermComputer{{bitness}}:
         self.dist_middle_terms_chunks = vector[vector[DTYPE_t]](self.effective_n_threads)
 
 {{if need_upcast}}
+        self.X_c_upcast = vector[vector[DTYPE_t]](self.effective_n_threads)
+        self.Y_c_upcast = vector[vector[DTYPE_t]](self.effective_n_threads)
+
         # Buffers for upcasting chunks of X and Y from 32bit to 64bit.
         for thread_num in range(self.effective_n_threads):
-            self.X_c_upcast[thread_num] = <DTYPE_t *> malloc(
-                self.dist_middle_terms_chunks_size * sizeof(DTYPE_t)
-            )
-            self.Y_c_upcast[thread_num] = <DTYPE_t *> malloc(
-                self.dist_middle_terms_chunks_size * sizeof(DTYPE_t)
-            )
-
-    def __dealloc_(self):
-        if self.X_c_upcast is not NULL:
-            free(self.X_c_upcast)
-        if self.Y_c_upcast is not NULL:
-            free(self.Y_c_upcast)
+            self.X_c_upcast[thread_num].resize(self.dist_middle_terms_chunks_size)
+            self.Y_c_upcast[thread_num].resize(self.dist_middle_terms_chunks_size)
 {{endif}}
 
 
@@ -783,8 +777,8 @@ cdef class GEMMTermComputer{{bitness}}:
             ITYPE_t K = X_c.shape[1]
             DTYPE_t alpha = - 2.
 {{if need_upcast}}
-            DTYPE_t * A = self.X_c_upcast[thread_num]
-            DTYPE_t * B = self.Y_c_upcast[thread_num]
+            DTYPE_t * A = self.X_c_upcast[thread_num].data()
+            DTYPE_t * B = self.Y_c_upcast[thread_num].data()
 {{else}}
             # Casting for A and B to remove the const is needed because APIs exposed via
             # scipy.linalg.cython_blas aren't reflecting the arguments' const qualifier.
