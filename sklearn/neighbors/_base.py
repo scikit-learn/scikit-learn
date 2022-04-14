@@ -200,6 +200,7 @@ def _check_precomputed(X):
         )
     copied = graph.format != "csr"
     graph = check_array(graph, accept_sparse="csr")
+    check_non_negative(graph, whom="precomputed distance matrix.")
 
     if not _is_sorted_by_row_values(graph):
         warnings.warn(
@@ -209,8 +210,6 @@ def _check_precomputed(X):
             EfficiencyWarning,
         )
         graph = sort_by_row_values(graph, copy=not copied)
-
-    check_non_negative(graph, whom="precomputed distance matrix.")
     return graph
 
 
