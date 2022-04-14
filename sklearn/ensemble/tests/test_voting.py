@@ -1,7 +1,6 @@
 """Testing for the VotingClassifier and VotingRegressor"""
 
 import pytest
-import warnings
 import re
 import numpy as np
 
@@ -427,9 +426,7 @@ def test_set_estimator_drop():
         voting="hard",
         weights=[1, 1, 0.5],
     )
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
-        eclf2.set_params(rf="drop").fit(X, y)
+    eclf2.set_params(rf="drop").fit(X, y)
 
     assert_array_equal(eclf1.predict(X), eclf2.predict(X))
 
@@ -441,17 +438,13 @@ def test_set_estimator_drop():
     assert eclf2.get_params()["rf"] == "drop"
 
     eclf1.set_params(voting="soft").fit(X, y)
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
-        eclf2.set_params(voting="soft").fit(X, y)
+    eclf2.set_params(voting="soft").fit(X, y)
 
     assert_array_equal(eclf1.predict(X), eclf2.predict(X))
     assert_array_almost_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
     msg = "All estimators are dropped. At least one is required"
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
-        with pytest.raises(ValueError, match=msg):
-            eclf2.set_params(lr="drop", rf="drop", nb="drop").fit(X, y)
+    with pytest.raises(ValueError, match=msg):
+        eclf2.set_params(lr="drop", rf="drop", nb="drop").fit(X, y)
 
     # Test soft voting transform
     X1 = np.array([[1], [2]])
@@ -469,9 +462,7 @@ def test_set_estimator_drop():
         weights=[1, 0.5],
         flatten_transform=False,
     )
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
-        eclf2.set_params(rf="drop").fit(X1, y1)
+    eclf2.set_params(rf="drop").fit(X1, y1)
     assert_array_almost_equal(
         eclf1.transform(X1),
         np.array([[[0.7, 0.3], [0.3, 0.7]], [[1.0, 0.0], [0.0, 1.0]]]),
@@ -561,9 +552,7 @@ def test_none_estimator_with_weights(X, y, voter):
     voter = clone(voter)
     voter.fit(X, y, sample_weight=np.ones(y.shape))
     voter.set_params(lr="drop")
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
-        voter.fit(X, y, sample_weight=np.ones(y.shape))
+    voter.fit(X, y, sample_weight=np.ones(y.shape))
     y_pred = voter.predict(X)
     assert y_pred.shape == y.shape
 
