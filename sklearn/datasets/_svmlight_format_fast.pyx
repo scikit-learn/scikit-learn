@@ -117,7 +117,75 @@ def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based,
 
     return (dtype, data, indices, indptr, labels, query)
 
-def _dump_svmlight_file(X, y, f, bint multilabel, bint one_based, np.ndarray query_id, bint X_is_sp, bint y_is_sp):
+ctypedef fused int_or_float1:
+    cython.integral
+    cython.floating
+    signed long long
+
+ctypedef fused int_or_float2:
+    cython.integral
+    cython.floating
+    signed long long
+
+ctypedef fused int_or_longlong:
+    cython.integral
+    signed long long
+
+def _dump_svmlight_file_dense(int_or_float1[:,:] X, int_or_float2[:,:] y, f, bint multilabel, bint one_based, int_or_longlong[:] query_id):
+    if int_or_float1 in cython.floating:
+        value_pattern = "%d:%.16g"
+    else:
+        value_pattern = "%d:%d"
+    if int_or_float2 in cython.floating:
+        label_pattern = "%.16g"
+    else:
+        label_pattern = "%d"
+
+    line_pattern = "%s"
+    if query_id is not None:
+        line_pattern += " qid:%d"
+    line_pattern += " %s\n"
+
+    cdef Py_ssize_t num_labels = y.shape[1]
+    cdef Py_ssize_t x_len = X.shape[0]
+    cdef Py_ssize_t row_length = X.shape[1]
+    cdef Py_ssize_t i
+    cdef Py_ssize_t j
+    cdef Py_ssize_t col_start
+    cdef Py_ssize_t col_end
+    cdef bint first
+    for i in range(x_len):
+        s = ""
+        first = True
+        for j in range(row_length):
+            val = X[i,j]
+            if val != 0:
+                if not first:
+                    s += " "
+                first = False
+                s += value_pattern % (j+one_based, val)
+
+        if multilabel:
+            labels_str = ""
+            first = True
+            for j in range(num_labels):
+                val = y[i,j]
+                if val != 0:
+                    if not first:
+                        labels_str += ","
+                    first = False
+                    labels_str += label_pattern % j
+        else:
+            labels_str = label_pattern % y[i,0]
+
+        if query_id is not None:
+            feat = (labels_str, query_id[i], s)
+        else:
+            feat = (labels_str, s)
+
+        f.write((line_pattern % feat).encode("ascii"))
+
+def _dump_svmlight_file_general(X, y, f, bint multilabel, bint one_based, np.ndarray query_id, bint X_is_sp, bint y_is_sp):
     if X.dtype.kind == "i":
         value_pattern = "%d:%d"
     else:
@@ -132,7 +200,7 @@ def _dump_svmlight_file(X, y, f, bint multilabel, bint one_based, np.ndarray que
         line_pattern += " qid:%d"
     line_pattern += " %s\n"
 
-    cdef Py_ssize_t y_len = y.shape[0]
+    cdef Py_ssize_t num_labels = y.shape[1]
     cdef Py_ssize_t x_len = X.shape[0]
     cdef Py_ssize_t row_length = X.shape[1]
     cdef Py_ssize_t i
@@ -141,15 +209,13 @@ def _dump_svmlight_file(X, y, f, bint multilabel, bint one_based, np.ndarray que
     cdef Py_ssize_t col_end
     cdef bint first
     for i in range(x_len):
-        first = True
         s = ""
+        first = True
         if X_is_sp:
             col_start = X.indptr[i]
             col_end = X.indptr[i+1]
             for j in range(col_start, col_end):
-                if first:
-                    first = False
-                else:
+                if not first:
                     s += " "
                 first = False
                 s += value_pattern % (X.indices[j] + one_based, X.data[j])
@@ -157,9 +223,7 @@ def _dump_svmlight_file(X, y, f, bint multilabel, bint one_based, np.ndarray que
             for j in range(row_length):
                 val = X[i,j]
                 if val != 0:
-                    if first:
-                        first = False
-                    else:
+                    if not first:
                         s += " "
                     first = False
                     s += value_pattern % (j+one_based, val)
@@ -171,19 +235,15 @@ def _dump_svmlight_file(X, y, f, bint multilabel, bint one_based, np.ndarray que
                 col_start = y.indptr[i]
                 col_end = y.indptr[i+1]
                 for j in range(col_start, col_end):
-                    if first:
-                        first = False
-                    else:
+                    if not first:
                         labels_str += ","
                     first = False
                     labels_str += label_pattern % y.indices[j]
             else:
-                for j in range(y_len):
+                for j in range(num_labels):
                     val = y[i,j]
                     if val != 0:
-                        if first:
-                            first = False
-                        else:
+                        if not first:
                             labels_str += ","
                         first = False
                         labels_str += label_pattern % j
@@ -198,4 +258,4 @@ def _dump_svmlight_file(X, y, f, bint multilabel, bint one_based, np.ndarray que
         else:
             feat = (labels_str, s)
 
-        f.write((line_pattern % feat).encode("ascii"))
+        f.write((line_pattern % feat).encode("utf-8"))

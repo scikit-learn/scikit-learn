@@ -27,7 +27,11 @@ from .. import __version__
 from ..utils import check_array, IS_PYPY
 
 if not IS_PYPY:
-    from ._svmlight_format_fast import _load_svmlight_file, _dump_svmlight_file
+    from ._svmlight_format_fast import (
+        _load_svmlight_file,
+        _dump_svmlight_file_dense,
+        _dump_svmlight_file_general,
+    )
 else:
 
     def _load_svmlight_file(*args, **kwargs):
@@ -363,10 +367,7 @@ def load_svmlight_files(
     return result
 
 
-def _dump_svmlight(X, y, f, multilabel, one_based, comment, query_id, fast=False):
-    X_is_sp = int(hasattr(X, "tocsr"))
-    y_is_sp = int(hasattr(y, "tocsr"))
-
+def _dump_svmlight_and_comment(X, y, f, multilabel, one_based, comment, query_id):
     if comment:
         f.write(
             (
@@ -379,52 +380,64 @@ def _dump_svmlight(X, y, f, multilabel, one_based, comment, query_id, fast=False
 
         f.write(b"#\n")
         f.writelines(b"# %s\n" % line for line in comment.splitlines())
+    X_is_sp = int(hasattr(X, "tocsr"))
+    y_is_sp = int(hasattr(y, "tocsr"))
 
-    if fast:
-        _dump_svmlight_file(X, y, f, multilabel, one_based, query_id, X_is_sp, y_is_sp)
+    if not (X_is_sp or y_is_sp):
+        if not multilabel:
+            y = y[:, np.newaxis]
+        print("DEBUG *** Dispatching dense")
+        _dump_svmlight_file_dense(X, y, f, multilabel, one_based, query_id)
     else:
-        if X.dtype.kind == "i":
-            value_pattern = "%d:%d"
-        else:
-            value_pattern = "%d:%.16g"
+        print("DEBUG *** Dispatching general")
+        _dump_svmlight_file_general(
+            X, y, f, multilabel, one_based, query_id, X_is_sp, y_is_sp
+        )
 
-        if y.dtype.kind == "i":
-            label_pattern = "%d"
-        else:
-            label_pattern = "%.16g"
 
-        line_pattern = "%s"
+def _dump_svmlight(X, y, f, multilabel, one_based, query_id, X_is_sp, y_is_sp):
+    if X.dtype.kind == "i":
+        value_pattern = "%d:%d"
+    else:
+        value_pattern = "%d:%.16g"
+
+    if y.dtype.kind == "i":
+        label_pattern = "%d"
+    else:
+        label_pattern = "%.16g"
+
+    line_pattern = "%s"
+    if query_id is not None:
+        line_pattern += " qid:%d"
+    line_pattern += " %s\n"
+    for i in range(X.shape[0]):
+        if X_is_sp:
+            span = slice(X.indptr[i], X.indptr[i + 1])
+            row = zip(X.indices[span], X.data[span])
+        else:
+            nz = X[i] != 0
+            row = zip(np.where(nz)[0], X[i, nz])
+
+        s = " ".join(value_pattern % (j + one_based, x) for j, x in row)
+
+        if multilabel:
+            if y_is_sp:
+                nz_labels = y[i].nonzero()[1]
+            else:
+                nz_labels = np.where(y[i] != 0)[0]
+            labels_str = ",".join(label_pattern % j for j in nz_labels)
+        else:
+            if y_is_sp:
+                labels_str = label_pattern % y.data[i]
+            else:
+                labels_str = label_pattern % y[i]
+
         if query_id is not None:
-            line_pattern += " qid:%d"
-        line_pattern += " %s\n"
-        for i in range(X.shape[0]):
-            if X_is_sp:
-                span = slice(X.indptr[i], X.indptr[i + 1])
-                row = zip(X.indices[span], X.data[span])
-            else:
-                nz = X[i] != 0
-                row = zip(np.where(nz)[0], X[i, nz])
+            feat = (labels_str, query_id[i], s)
+        else:
+            feat = (labels_str, s)
 
-            s = " ".join(value_pattern % (j + one_based, x) for j, x in row)
-
-            if multilabel:
-                if y_is_sp:
-                    nz_labels = y[i].nonzero()[1]
-                else:
-                    nz_labels = np.where(y[i] != 0)[0]
-                labels_str = ",".join(label_pattern % j for j in nz_labels)
-            else:
-                if y_is_sp:
-                    labels_str = label_pattern % y.data[i]
-                else:
-                    labels_str = label_pattern % y[i]
-
-            if query_id is not None:
-                feat = (labels_str, query_id[i], s)
-            else:
-                feat = (labels_str, s)
-
-            f.write((line_pattern % feat).encode("ascii"))
+        f.write((line_pattern % feat).encode("ascii"))
 
 
 def dump_svmlight_file(
@@ -436,7 +449,6 @@ def dump_svmlight_file(
     comment=None,
     query_id=None,
     multilabel=False,
-    fast=True,
 ):
     """Dump the dataset in svmlight / libsvm file format.
 
@@ -539,7 +551,9 @@ def dump_svmlight_file(
 
     one_based = not zero_based
     if hasattr(f, "write"):
-        _dump_svmlight(X, y, f, multilabel, one_based, comment, query_id, fast)
+        _dump_svmlight_and_comment(X, y, f, multilabel, one_based, comment, query_id)
     else:
         with open(f, "wb") as f:
-            _dump_svmlight(X, y, f, multilabel, one_based, comment, query_id, fast)
+            _dump_svmlight_and_comment(
+                X, y, f, multilabel, one_based, comment, query_id
+            )
