@@ -230,12 +230,12 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         n_samples, n_features = X.shape
         self._base_loss = self._get_loss()
 
-        _linear_loss = LinearModelLoss(
+        linear_loss = LinearModelLoss(
             base_loss=self._base_loss,
             fit_intercept=self.fit_intercept,
         )
 
-        if not _linear_loss.base_loss.in_y_true_range(y):
+        if not linear_loss.base_loss.in_y_true_range(y):
             raise ValueError(
                 "Some value(s) of y are out of the valid range of the loss"
                 f" {self._base_loss.__class__.__name__!r}."
@@ -265,7 +265,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         else:
             if self.fit_intercept:
                 coef = np.zeros(n_features + 1, dtype=loss_dtype)
-                coef[-1] = _linear_loss.base_loss.link.link(
+                coef[-1] = linear_loss.base_loss.link.link(
                     np.average(y, weights=sample_weight)
                 )
             else:
@@ -274,7 +274,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         # Algorithms for optimization:
         # Note again that our losses implement 1/2 * deviance.
         if solver == "lbfgs":
-            func = _linear_loss.loss_gradient
+            func = linear_loss.loss_gradient
             l2_reg_strength = self.alpha
             n_threads = _openmp_effective_n_threads()
 
