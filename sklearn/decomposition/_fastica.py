@@ -214,7 +214,7 @@ def fastica(
     fun_args : dict, default=None
         Arguments to send to the functional form.
         If empty or None and if fun='logcosh', fun_args will take value
-        {'alpha' : 1.0}
+        {'alpha' : 1.0}.
 
     max_iter : int, default=200
         Maximum number of iterations to perform.
@@ -256,7 +256,7 @@ def fastica(
         if K is not None, else it is the inverse of W.
 
     S : ndarray of shape (n_samples, n_components) or None
-        Estimated source matrix
+        Estimated source matrix.
 
     X_mean : ndarray of shape (n_features,)
         The mean over features. Returned only if return_X_mean is True.
