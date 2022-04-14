@@ -241,7 +241,7 @@ def sort_by_row_values(graph, copy=True):
         )
     elif graph.format != "csr":
         graph = graph.asformat("csr")
-    elif copy :
+    elif copy:
         graph = graph.copy()
 
     # if each sample has the same number of provided neighbors
