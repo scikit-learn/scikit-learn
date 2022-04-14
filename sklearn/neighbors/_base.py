@@ -198,7 +198,7 @@ def _check_precomputed(X):
             "Precomputed sparse input was not sorted by row values. Use the function "
             "sklearn.neighbors.sort_by_row_values to sort the input by row values "
             "and removes this warning.",
-            EfficiencyWarning
+            EfficiencyWarning,
         )
         graph = sort_by_row_values(graph, copy=True)
 
