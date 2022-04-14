@@ -193,6 +193,38 @@ def _check_precomputed(X):
     else:
         graph = X
 
+    if not _is_sorted_by_data(graph):
+        warnings.warn(
+            "Precomputed sparse input was not sorted by row values. Use the function "
+            "sklearn.neighbors.sort_by_row_values to sort the input by row values"
+            "and removes this warning.", EfficiencyWarning
+        )
+        graph = sort_by_row_values(graph, copy=True)
+
+    check_non_negative(graph, whom="precomputed distance matrix.")
+    return graph
+
+
+def sort_by_row_values(graph, copy=True):
+    """Sort a sparse graph such that each row is stored with increasing values.
+
+    Parameters
+    ----------
+    graph : sparse matrix, (n_samples, n_samples)
+        Distance matrix to other samples, where only non-zero elements are
+        considered neighbors. Matrix is converted to CSR format if not already.
+
+    copy : bool, optional (default=True)
+        If True, the graph is copied before sorting. If False, the sorting is
+        performed inplace. If graph is not a CSR matrix, a copy is always
+        returned.
+
+    Returns
+    -------
+    graph : sparse matrix, (n_samples, n_samples)
+        Distance matrix to other samples, where only non-zero elements are
+        considered neighbors. Matrix is of CSR format.
+    """
     if graph.format not in ("csr", "csc", "coo", "lil"):
         raise TypeError(
             "Sparse matrix in {!r} format is not supported due to "
@@ -200,32 +232,28 @@ def _check_precomputed(X):
         )
     copied = graph.format != "csr"
     graph = check_array(graph, accept_sparse="csr")
-    check_non_negative(graph, whom="precomputed distance matrix.")
 
-    if not _is_sorted_by_data(graph):
-        warnings.warn(
-            "Precomputed sparse input was not sorted by data.", EfficiencyWarning
-        )
-        if not copied:
-            graph = graph.copy()
+    if copy and not copied:
+        graph = graph.copy()
 
-        # if each sample has the same number of provided neighbors
-        row_nnz = np.diff(graph.indptr)
-        if row_nnz.max() == row_nnz.min():
-            n_samples = graph.shape[0]
-            distances = graph.data.reshape(n_samples, -1)
+    # if each sample has the same number of provided neighbors
+    row_nnz = np.diff(graph.indptr)
+    if row_nnz.max() == row_nnz.min():
+        n_samples = graph.shape[0]
+        distances = graph.data.reshape(n_samples, -1)
 
-            order = np.argsort(distances, kind="mergesort")
-            order += np.arange(n_samples)[:, None] * row_nnz[0]
-            order = order.ravel()
-            graph.data = graph.data[order]
-            graph.indices = graph.indices[order]
+        order = np.argsort(distances, kind="mergesort")
+        order += np.arange(n_samples)[:, None] * row_nnz[0]
+        order = order.ravel()
+        graph.data = graph.data[order]
+        graph.indices = graph.indices[order]
 
-        else:
-            for start, stop in zip(graph.indptr, graph.indptr[1:]):
-                order = np.argsort(graph.data[start:stop], kind="mergesort")
-                graph.data[start:stop] = graph.data[start:stop][order]
-                graph.indices[start:stop] = graph.indices[start:stop][order]
+    else:
+        for start, stop in zip(graph.indptr, graph.indptr[1:]):
+            order = np.argsort(graph.data[start:stop], kind="mergesort")
+            graph.data[start:stop] = graph.data[start:stop][order]
+            graph.indices[start:stop] = graph.indices[start:stop][order]
+
     return graph
 
 

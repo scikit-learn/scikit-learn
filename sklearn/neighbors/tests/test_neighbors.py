@@ -36,7 +36,7 @@ from sklearn.neighbors import (
 )
 from sklearn.neighbors._base import (
     _is_sorted_by_data,
-    _check_precomputed,
+    sort_by_row_values,
     KNeighborsMixin,
 )
 from sklearn.pipeline import make_pipeline
@@ -463,11 +463,11 @@ def test_is_sorted_by_data():
 
 
 @ignore_warnings(category=EfficiencyWarning)
-def test_check_precomputed():
-    # Test that _check_precomputed returns a graph sorted by data
+def test_sort_by_row_values():
+    # Test that sort_by_row_values returns a graph sorted by row values
     X = csr_matrix(np.abs(np.random.RandomState(42).randn(10, 10)))
     assert not _is_sorted_by_data(X)
-    Xt = _check_precomputed(X)
+    Xt = sort_by_row_values(X)
     assert _is_sorted_by_data(Xt)
 
     # est with a different number of nonzero entries for each sample
@@ -476,7 +476,7 @@ def test_check_precomputed():
     X[mask == 1] = 0
     X = csr_matrix(X)
     assert not _is_sorted_by_data(X)
-    Xt = _check_precomputed(X)
+    Xt = sort_by_row_values(X)
     assert _is_sorted_by_data(Xt)
 
 
