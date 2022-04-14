@@ -9,6 +9,7 @@ from scipy.sparse import (
     csc_matrix,
     csr_matrix,
     dok_matrix,
+    dia_matrix,
     lil_matrix,
     issparse,
 )
@@ -36,6 +37,7 @@ from sklearn.neighbors import (
 )
 from sklearn.neighbors._base import (
     _is_sorted_by_row_values,
+    _check_precomputed,
     sort_by_row_values,
     KNeighborsMixin,
 )
@@ -478,6 +480,24 @@ def test_sort_by_row_values():
     assert not _is_sorted_by_row_values(X)
     Xt = sort_by_row_values(X)
     assert _is_sorted_by_row_values(Xt)
+
+    # test copy parameter defaults to True, so that Xt is not X
+    Xt[0, 0] = 1
+    assert X[0, 0] != 1
+    # test copy=False, so that Xt is X
+    Xt = sort_by_row_values(X, copy=False)
+    Xt[1, 1] = 2
+    assert X[1, 1] == 2
+
+
+@pytest.mark.parametrize("format", [dok_matrix, bsr_matrix, dia_matrix])
+def test_sort_by_row_values_bad_sparse_format(format):
+    # Test that sort_by_row_values and _check_precomputed error on bad formats
+    X = format(np.abs(np.random.RandomState(42).randn(10, 10)))
+    with pytest.raises(TypeError, match="format is not supported"):
+        sort_by_row_values(X)
+    with pytest.raises(TypeError, match="format is not supported"):
+        _check_precomputed(X)
 
 
 @ignore_warnings(category=EfficiencyWarning)

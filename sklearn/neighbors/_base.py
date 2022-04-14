@@ -193,6 +193,14 @@ def _check_precomputed(X):
     else:
         graph = X
 
+    if graph.format not in ("csr", "csc", "coo", "lil"):
+        raise TypeError(
+            "Sparse matrix in {!r} format is not supported due to "
+            "its handling of explicit zeros".format(graph.format)
+        )
+    copied = graph.format != "csr"
+    graph = check_array(graph, accept_sparse="csr")
+
     if not _is_sorted_by_row_values(graph):
         warnings.warn(
             "Precomputed sparse input was not sorted by row values. Use the function "
@@ -200,7 +208,7 @@ def _check_precomputed(X):
             "and removes this warning.",
             EfficiencyWarning,
         )
-        graph = sort_by_row_values(graph, copy=True)
+        graph = sort_by_row_values(graph, copy=not copied)
 
     check_non_negative(graph, whom="precomputed distance matrix.")
     return graph
@@ -217,7 +225,7 @@ def sort_by_row_values(graph, copy=True):
 
     copy : bool, optional (default=True)
         If True, the graph is copied before sorting. If False, the sorting is
-        performed inplace. If graph is not a CSR matrix, a copy is always
+        performed inplace. If graph is not of CSR format, a copy is always
         returned.
 
     Returns
@@ -231,10 +239,9 @@ def sort_by_row_values(graph, copy=True):
             "Sparse matrix in {!r} format is not supported due to "
             "its handling of explicit zeros".format(graph.format)
         )
-    copied = graph.format != "csr"
-    graph = check_array(graph, accept_sparse="csr")
-
-    if copy and not copied:
+    elif graph.format != "csr":
+        graph = graph.asformat("csr")
+    elif copy :
         graph = graph.copy()
 
     # if each sample has the same number of provided neighbors
