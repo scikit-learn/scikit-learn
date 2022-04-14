@@ -196,8 +196,9 @@ def _check_precomputed(X):
     if not _is_sorted_by_row_values(graph):
         warnings.warn(
             "Precomputed sparse input was not sorted by row values. Use the function "
-            "sklearn.neighbors.sort_by_row_values to sort the input by row values"
-            "and removes this warning.", EfficiencyWarning
+            "sklearn.neighbors.sort_by_row_values to sort the input by row values "
+            "and removes this warning.",
+            EfficiencyWarning
         )
         graph = sort_by_row_values(graph, copy=True)
 
