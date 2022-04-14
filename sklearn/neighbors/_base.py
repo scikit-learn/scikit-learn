@@ -141,7 +141,7 @@ def _get_weights(dist, weights):
         )
 
 
-def _is_sorted_by_data(graph):
+def _is_sorted_by_row_values(graph):
     """Return whether the graph's non-zero entries are sorted by data.
 
     The non-zero entries are stored in graph.data and graph.indices.
@@ -193,7 +193,7 @@ def _check_precomputed(X):
     else:
         graph = X
 
-    if not _is_sorted_by_data(graph):
+    if not _is_sorted_by_row_values(graph):
         warnings.warn(
             "Precomputed sparse input was not sorted by row values. Use the function "
             "sklearn.neighbors.sort_by_row_values to sort the input by row values"

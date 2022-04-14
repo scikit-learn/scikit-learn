@@ -3,7 +3,7 @@ import pytest
 
 from sklearn.metrics import euclidean_distances
 from sklearn.neighbors import KNeighborsTransformer, RadiusNeighborsTransformer
-from sklearn.neighbors._base import _is_sorted_by_data
+from sklearn.neighbors._base import _is_sorted_by_row_values
 from sklearn.utils._testing import assert_array_equal
 
 
@@ -27,13 +27,13 @@ def test_transformer_result():
         assert Xt.shape == (n_samples_fit, n_samples_fit)
         assert Xt.data.shape == (n_samples_fit * (n_neighbors + add_one),)
         assert Xt.format == "csr"
-        assert _is_sorted_by_data(Xt)
+        assert _is_sorted_by_row_values(Xt)
 
         X2t = nnt.transform(X2)
         assert X2t.shape == (n_queries, n_samples_fit)
         assert X2t.data.shape == (n_queries * (n_neighbors + add_one),)
         assert X2t.format == "csr"
-        assert _is_sorted_by_data(X2t)
+        assert _is_sorted_by_row_values(X2t)
 
     # with radius
     for mode in ["distance", "connectivity"]:
@@ -43,13 +43,13 @@ def test_transformer_result():
         assert Xt.shape == (n_samples_fit, n_samples_fit)
         assert not Xt.data.shape == (n_samples_fit * (n_neighbors + add_one),)
         assert Xt.format == "csr"
-        assert _is_sorted_by_data(Xt)
+        assert _is_sorted_by_row_values(Xt)
 
         X2t = nnt.transform(X2)
         assert X2t.shape == (n_queries, n_samples_fit)
         assert not X2t.data.shape == (n_queries * (n_neighbors + add_one),)
         assert X2t.format == "csr"
-        assert _is_sorted_by_data(X2t)
+        assert _is_sorted_by_row_values(X2t)
 
 
 def _has_explicit_diagonal(X):

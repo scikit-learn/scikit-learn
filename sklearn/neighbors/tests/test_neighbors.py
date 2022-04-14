@@ -35,7 +35,7 @@ from sklearn.neighbors import (
     KNeighborsRegressor,
 )
 from sklearn.neighbors._base import (
-    _is_sorted_by_data,
+    _is_sorted_by_row_values,
     sort_by_row_values,
     KNeighborsMixin,
 )
@@ -438,46 +438,46 @@ def test_precomputed_sparse_radius(fmt):
     check_precomputed(make_train_test, estimators)
 
 
-def test_is_sorted_by_data():
-    # Test that _is_sorted_by_data works as expected. In CSR sparse matrix,
+def test_is_sorted_by_row_values():
+    # Test that _is_sorted_by_row_values works as expected. In CSR sparse matrix,
     # entries in each row can be sorted by indices, by data, or unsorted.
-    # _is_sorted_by_data should return True when entries are sorted by data,
+    # _is_sorted_by_row_values should return True when entries are sorted by data,
     # and False in all other cases.
 
     # Test with sorted 1D array
     X = csr_matrix(np.arange(10))
-    assert _is_sorted_by_data(X)
+    assert _is_sorted_by_row_values(X)
     # Test with unsorted 1D array
     X[0, 2] = 5
-    assert not _is_sorted_by_data(X)
+    assert not _is_sorted_by_row_values(X)
 
     # Test when the data is sorted in each sample, but not necessarily
     # between samples
     X = csr_matrix([[0, 1, 2], [3, 0, 0], [3, 4, 0], [1, 0, 2]])
-    assert _is_sorted_by_data(X)
+    assert _is_sorted_by_row_values(X)
 
     # Test with duplicates entries in X.indptr
     data, indices, indptr = [0, 4, 2, 2], [0, 1, 1, 1], [0, 2, 2, 4]
     X = csr_matrix((data, indices, indptr), shape=(3, 3))
-    assert _is_sorted_by_data(X)
+    assert _is_sorted_by_row_values(X)
 
 
 @ignore_warnings(category=EfficiencyWarning)
 def test_sort_by_row_values():
     # Test that sort_by_row_values returns a graph sorted by row values
     X = csr_matrix(np.abs(np.random.RandomState(42).randn(10, 10)))
-    assert not _is_sorted_by_data(X)
+    assert not _is_sorted_by_row_values(X)
     Xt = sort_by_row_values(X)
-    assert _is_sorted_by_data(Xt)
+    assert _is_sorted_by_row_values(Xt)
 
     # est with a different number of nonzero entries for each sample
     mask = np.random.RandomState(42).randint(2, size=(10, 10))
     X = X.toarray()
     X[mask == 1] = 0
     X = csr_matrix(X)
-    assert not _is_sorted_by_data(X)
+    assert not _is_sorted_by_row_values(X)
     Xt = sort_by_row_values(X)
-    assert _is_sorted_by_data(Xt)
+    assert _is_sorted_by_row_values(Xt)
 
 
 @ignore_warnings(category=EfficiencyWarning)
@@ -1000,7 +1000,7 @@ def test_radius_neighbors_sort_results(algorithm, metric):
     graph = model.radius_neighbors_graph(
         X=X, radius=np.inf, mode="distance", sort_results=True
     )
-    assert _is_sorted_by_data(graph)
+    assert _is_sorted_by_row_values(graph)
 
 
 def test_RadiusNeighborsClassifier_multioutput():
