@@ -251,7 +251,7 @@ def _dump_svmlight_file_general(X, y, f, bint multilabel, bint one_based, np.nda
             if y_is_sp:
                 labels_str = label_pattern % y.data[i]
             else:
-                labels_str = label_pattern % y[i]
+                labels_str = label_pattern % y[i,0]
 
         if query_id is not None:
             feat = (labels_str, query_id[i], s)
