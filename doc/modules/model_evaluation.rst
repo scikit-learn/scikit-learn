@@ -876,6 +876,8 @@ In this context, we can define the notions of precision, recall and F-measure:
 
    F_\beta = (1 + \beta^2) \frac{\text{precision} \times \text{recall}}{\beta^2 \text{precision} + \text{recall}}.
 
+Sometimes recall is also called ''sensitivity''.
+
 Here are some small examples in binary classification::
 
   >>> from sklearn import metrics
@@ -1756,6 +1758,95 @@ the same does a lower Brier score loss always mean better calibration"
     and probability estimation." <https://drops.dagstuhl.de/opus/volltexte/2008/1382/>`_
     Dagstuhl Seminar Proceedings. Schloss Dagstuhl-Leibniz-Zentrum fr Informatik (2008).
 
+.. _class_likelihood_ratios:
+
+Class likelihood ratios
+-----------------------
+
+The :func:`class_likelihood_ratios` function computes the `positive and negative
+likelihood ratios
+<https://en.wikipedia.org/wiki/Likelihood_ratios_in_diagnostic_testing>`_ for
+binary classes, which are further metrics derived from the
+:func:`confusion_matrix` and that can be interpreted in terms of the pre-test
+and post-test probabilities:
+
+.. math::
+
+   \text{sensitivity} = \frac{tp}{tp + fn},
+
+.. math::
+
+   \text{specificity} = \frac{tn}{tn + fp},
+
+.. math::
+
+   LR_+ = \frac{\text{sensitivity}}{1 - \text{specificity}} = \frac{tp \times
+   (tn + fp)}{fp \times (tp + fn)},
+
+.. math::
+
+   LR_- = \frac{1 - \text{sensitivity}}{\text{specificity}} = \frac{fn \times
+   (tn + fp)}{tn \times (tp + fn)}.
+
+The positive likelihood ratio is the probability of a classifier to correctly
+predict that a sample belongs to the positive class divided by the probability
+of predicting the positive class for a sample belonging to the negative class:
+
+.. math::
+
+   LR_+ = \frac{\text{PR}(P+|T+)}{\text{PR}(P+|T-)}.
+
+The notation here refers to predicted (``P``) or true (``T``) label and the sign
+``+`` and ``-`` refer to the positive and negative class, respectively, e.g.
+``P+`` stands for "predicted positive". Notice that probabilities differ from
+counts, for instance:
+
+.. math::
+
+   \text{PR}(P+|T+) \ne tp.
+
+Analogously, the negative likelihood ratio is the probability of a sample of the
+positive class being classified as belonging to the negative class divided by
+the probability of a sample of the negative class being correctly classified:
+
+.. math::
+
+   LR_- = \frac{\text{PR}(P-|T+)}{\text{PR}(P-|T-)}.
+
+Both class likelihood ratios are interpretable in terms of the pre-test and
+post-test odds via the simple linear relation
+
+.. math::
+
+   \text{post-test odds} = \text{Likelihood ratio} \times \text{pre-test odds}.
+
+Odds are in general related to probabilities via
+
+.. math::
+
+   \text{odds} = \frac{\text{probability}}{1 - \text{probability}},
+
+or equivalently
+
+.. math::
+
+   \text{probability} = \frac{\text{odds}}{1 + \text{odds}}.
+
+The pre-test probability can be chosen to be the prevalence, i.e. the number of
+samples in the positive class divided by the total number of samples. By
+converting odds to probabilities, the likelihood ratios can be translated into a
+probability of truly belonging to either class before and after a classifier
+prediction:
+
+.. math::
+
+   \text{post-test odds} = \text{Likelihood ratio} \times
+   \frac{\text{pre-test probability}}{1 - \text{pre-test probability}},
+
+.. math::
+
+   \text{post-test probability} = \frac{\text{post-test odds}}{1 + \text{post-test odds}}.
+
 .. _multilabel_ranking_metrics:
 
 Multilabel ranking metrics
@@ -2488,8 +2579,8 @@ explained in the example linked below.
 D² score
 --------
 
-The D² score computes the fraction of deviance explained. 
-It is a generalization of R², where the squared error is generalized and replaced 
+The D² score computes the fraction of deviance explained.
+It is a generalization of R², where the squared error is generalized and replaced
 by a deviance of choice :math:`\text{dev}(y, \hat{y})`
 (e.g., Tweedie, pinball or mean absolute error). D² is a form of a *skill score*.
 It is calculated as
@@ -2499,7 +2590,7 @@ It is calculated as
   D^2(y, \hat{y}) = 1 - \frac{\text{dev}(y, \hat{y})}{\text{dev}(y, y_{\text{null}})} \,.
 
 Where :math:`y_{\text{null}}` is the optimal prediction of an intercept-only model
-(e.g., the mean of `y_true` for the Tweedie case, the median for absolute 
+(e.g., the mean of `y_true` for the Tweedie case, the median for absolute
 error and the alpha-quantile for pinball loss).
 
 Like R², the best possible score is 1.0 and it can be negative (because the
@@ -2510,8 +2601,8 @@ of 0.0.
 D² Tweedie score
 ^^^^^^^^^^^^^^^^
 
-The :func:`d2_tweedie_score` function implements the special case of D² 
-where :math:`\text{dev}(y, \hat{y})` is the Tweedie deviance, see :ref:`mean_tweedie_deviance`. 
+The :func:`d2_tweedie_score` function implements the special case of D²
+where :math:`\text{dev}(y, \hat{y})` is the Tweedie deviance, see :ref:`mean_tweedie_deviance`.
 It is also known as D² Tweedie and is related to McFadden's likelihood ratio index.
 
 The argument ``power`` defines the Tweedie power as for
@@ -2534,7 +2625,7 @@ of D² with the pinball loss, see :ref:`pinball_loss`, i.e.:
   \text{dev}(y, \hat{y}) = \text{pinball}(y, \hat{y}).
 
 The argument ``alpha`` defines the slope of the pinball loss as for
-:func:`mean_pinball_loss` (:ref:`pinball_loss`). It determines the 
+:func:`mean_pinball_loss` (:ref:`pinball_loss`). It determines the
 quantile level ``alpha`` for which the pinball loss and also D²
 are optimal. Note that for `alpha=0.5` (the default) :func:`d2_pinball_score`
 equals :func:`d2_absolute_error_score`.

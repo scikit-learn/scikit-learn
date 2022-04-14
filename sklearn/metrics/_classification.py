@@ -1670,6 +1670,8 @@ def class_likelihood_ratios(
     probabilities would be the probability that the condition is truly present
     given a positive test result.
 
+    Read more in the :ref:`User Guide <class_likelihood_ratios>`.
+
     Parameters
     ----------
     y_true : 1d array-like, or label indicator array / sparse matrix
