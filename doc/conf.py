@@ -91,7 +91,7 @@ source_suffix = ".rst"
 # source_encoding = 'utf-8'
 
 # The main toctree document.
-main_doc = "contents"
+root_doc = "contents"
 
 # General information about the project.
 project = "scikit-learn"
@@ -158,7 +158,11 @@ html_theme = "scikit-learn-modern"
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-html_theme_options = {"google_analytics": True, "mathjax_path": mathjax_path}
+html_theme_options = {
+    "google_analytics": True,
+    "mathjax_path": mathjax_path,
+    "link_to_live_contributing_page": not parsed_version.is_devrelease,
+}
 
 # Add any paths that contain custom themes here, relative to this directory.
 html_theme_path = ["themes"]
