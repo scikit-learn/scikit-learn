@@ -1646,13 +1646,29 @@ def class_likelihood_ratios(
 ):
     """Compute binary classification positive and negative likelihood ratios.
 
-    The positive likelihood ratio is ``sensitivity / (1 - specificity)`` where
-    the sensitivity or recall is the ratio ``tp / (tp + fn)`` and the
-    specificity is ``tn / (tn + fp)``. The negative likelihood ratio is ``(1 -
-    sensitivity) / specificity``. Here ``tp`` is the number of true positives,
-    ``fp`` the number of false positives, ``tn`` is the number of true negatives
-    and ``fn`` the number of false negatives. These ratios are interpretable in
-    terms of the pre-test versus post-test odds ratio.
+    The positive likelihood ratio is ``LR+ = sensitivity / (1 - specificity)``
+    where the sensitivity or recall is the ratio ``tp / (tp + fn)`` and the
+    specificity is ``tn / (tn + fp)``. The negative likelihood ratio is ``LR- =
+    (1 - sensitivity) / specificity``. Here ``tp`` is the number of true
+    positives, ``fp`` the number of false positives, ``tn`` is the number of
+    true negatives and ``fn`` the number of false negatives.
+
+    Both class likelihood ratios can be used to obtain post-test probabilities
+    given a pre-test probability. ``LR+`` ranges from 1 to infinity. A ``LR+``
+    of 1 indicates that the probability of predicting the positive class is the
+    same for samples belonging to either class; therefore, the test is useless.
+    The greater ``LR+`` is, the more a positive prediction is likely to be a
+    true positive when compared with the pre-test probability. ``LR-`` ranges
+    from 0 to 1. The closer it is to 0, the lower the probability of given a
+    sample to be a false negative.
+
+    A typical application in medicine is to identify the positive/negative class
+    to the presence/absence of a disease, respectively; the classifier being a
+    diagnostic test; the pre-test probability of an individual having the
+    disease can be the prevalence of such disease (proportion of a particular
+    population found to be affected by a medical condition); and the post-test
+    probabilities would be the probability that the condition is truly present
+    given a positive test result.
 
     Parameters
     ----------
@@ -1681,8 +1697,8 @@ def class_likelihood_ratios(
     -----
     When ``false positive == 0``, the positive likelihood ratio is undefined.
     When ``true negative == 0``, the negative likelihood ratio is undefined.
-    When ``true positive + false negative == 0`` both ratios are undefined.
-    In such cases, ``UserWarning`` will be raised.
+    When ``true positive + false negative == 0`` both ratios are undefined. In
+    such cases, ``UserWarning`` will be raised.
 
     References
     ----------
@@ -1704,7 +1720,8 @@ def class_likelihood_ratios(
     >>> class_likelihood_ratios(y_true, y_pred)
     (1.5, 0.75)
 
-    To avoid ambiguities, use the notation labels=[negative_class, positive_class]
+    To avoid ambiguities, use the notation labels=[negative_class,
+    positive_class]
 
     >>> y_true = np.array(["non-cat", "cat", "non-cat", "cat", "non-cat"])
     >>> y_pred = np.array(["cat", "cat", "non-cat", "non-cat", "non-cat"])
