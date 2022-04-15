@@ -1,4 +1,5 @@
 from itertools import product
+import warnings
 
 import pytest
 import re
@@ -1529,16 +1530,17 @@ def test_neighbors_metrics(
             neigh.fit(X_train)
 
             # wminkoski is deprecated in SciPy 1.6.0 and removed in 1.8.0
-            ExceptionToAssert = None
             if (
                 metric == "wminkowski"
                 and algorithm == "brute"
                 and sp_version >= parse_version("1.6.0")
             ):
-                ExceptionToAssert = FutureWarning
-
-            with pytest.warns(ExceptionToAssert):
-                results[algorithm] = neigh.kneighbors(X_test, return_distance=True)
+                with pytest.warns(FutureWarning):
+                    results[algorithm] = neigh.kneighbors(X_test, return_distance=True)
+            else:
+                with warnings.catch_warnings():
+                    warnings.simplefilter("error", FutureWarning)
+                    results[algorithm] = neigh.kneighbors(X_test, return_distance=True)
 
         brute_dst, brute_idx = results["brute"]
         ball_tree_dst, ball_tree_idx = results["ball_tree"]
@@ -1597,7 +1599,8 @@ def test_kneighbors_brute_backend(
         )
 
         neigh.fit(X_train)
-        with pytest.warns(ExceptionToAssert):
+
+        def assert_legacy_backend_same_as_cython_backend():
             with config_context(enable_cython_pairwise_dist=False):
                 # Use the legacy backend for brute
                 legacy_brute_dst, legacy_brute_idx = neigh.kneighbors(
@@ -1608,9 +1611,17 @@ def test_kneighbors_brute_backend(
                 pdr_brute_dst, pdr_brute_idx = neigh.kneighbors(
                     X_test, return_distance=True
                 )
+            assert_allclose(legacy_brute_dst, pdr_brute_dst)
+            assert_array_equal(legacy_brute_idx, pdr_brute_idx)
 
-        assert_allclose(legacy_brute_dst, pdr_brute_dst)
-        assert_array_equal(legacy_brute_idx, pdr_brute_idx)
+        if ExceptionToAssert is None:
+            with warnings.catch_warnings():
+                warnings.simplefilter("error", FutureWarning)
+                warnings.simplefilter("error", DeprecationWarning)
+                assert_legacy_backend_same_as_cython_backend()
+        else:
+            with pytest.warns(ExceptionToAssert):
+                assert_legacy_backend_same_as_cython_backend()
 
 
 def test_callable_metric():
@@ -2119,7 +2130,8 @@ def test_radius_neighbors_brute_backend(
         )
 
         neigh.fit(X_train)
-        with pytest.warns(ExceptionToAssert):
+
+        def assert_legacy_backend_same_as_cython_backend():
             with config_context(enable_cython_pairwise_dist=False):
                 # Use the legacy backend for brute
                 legacy_brute_dst, legacy_brute_idx = neigh.radius_neighbors(
@@ -2130,10 +2142,17 @@ def test_radius_neighbors_brute_backend(
                 pdr_brute_dst, pdr_brute_idx = neigh.radius_neighbors(
                     X_test, return_distance=True
                 )
+            assert_radius_neighborhood_results_equality(
+                legacy_brute_dst, pdr_brute_dst, legacy_brute_idx, pdr_brute_idx
+            )
 
-        assert_radius_neighborhood_results_equality(
-            legacy_brute_dst, pdr_brute_dst, legacy_brute_idx, pdr_brute_idx
-        )
+        if ExceptionToAssert is None:
+            with warnings.catch_warnings():
+                warnings.simplefilter("error", FutureWarning)
+                assert_legacy_backend_same_as_cython_backend()
+        else:
+            with pytest.warns(ExceptionToAssert):
+                assert_legacy_backend_same_as_cython_backend()
 
 
 def test_valid_metrics_has_no_duplicate():
