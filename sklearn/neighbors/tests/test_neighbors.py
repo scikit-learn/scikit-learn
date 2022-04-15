@@ -1556,7 +1556,7 @@ def test_neighbors_metrics(
 
 
 # TODO: Remove filterwarnings in 1.3 when wminkowski is removed
-@pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn*")
+@pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
 @pytest.mark.parametrize(
     "metric", sorted(set(neighbors.VALID_METRICS["brute"]) - set(["precomputed"]))
 )
@@ -1597,7 +1597,6 @@ def test_kneighbors_brute_backend(
         )
 
         neigh.fit(X_train)
-
         with warn_context_manager:
             with config_context(enable_cython_pairwise_dist=False):
                 # Use the legacy backend for brute
@@ -1609,8 +1608,9 @@ def test_kneighbors_brute_backend(
                 pdr_brute_dst, pdr_brute_idx = neigh.kneighbors(
                     X_test, return_distance=True
                 )
-            assert_allclose(legacy_brute_dst, pdr_brute_dst)
-            assert_array_equal(legacy_brute_idx, pdr_brute_idx)
+
+        assert_allclose(legacy_brute_dst, pdr_brute_dst)
+        assert_array_equal(legacy_brute_idx, pdr_brute_idx)
 
 
 def test_callable_metric():
@@ -2119,7 +2119,6 @@ def test_radius_neighbors_brute_backend(
         )
 
         neigh.fit(X_train)
-
         with warn_context_manager:
             with config_context(enable_cython_pairwise_dist=False):
                 # Use the legacy backend for brute
@@ -2131,9 +2130,10 @@ def test_radius_neighbors_brute_backend(
                 pdr_brute_dst, pdr_brute_idx = neigh.radius_neighbors(
                     X_test, return_distance=True
                 )
-            assert_radius_neighborhood_results_equality(
-                legacy_brute_dst, pdr_brute_dst, legacy_brute_idx, pdr_brute_idx
-            )
+
+        assert_radius_neighborhood_results_equality(
+            legacy_brute_dst, pdr_brute_dst, legacy_brute_idx, pdr_brute_idx
+        )
 
 
 def test_valid_metrics_has_no_duplicate():
