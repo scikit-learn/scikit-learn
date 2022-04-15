@@ -311,6 +311,7 @@ Some of these are restricted to the binary classification case:
 
    precision_recall_curve
    roc_curve
+   class_likelihood_ratios
    det_curve
 
 
