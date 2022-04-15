@@ -2,11 +2,12 @@ from importlib.metadata import entry_points
 from importlib import import_module
 from contextlib import contextmanager
 from functools import lru_cache
+from ssl import ALERT_DESCRIPTION_BAD_CERTIFICATE_HASH_VALUE
 import warnings
 
 from sklearn._config import get_config
 
-SKLEARN_ENGINES_ENTRY_POINT = "skearn_engines"
+SKLEARN_ENGINES_ENTRY_POINT = "sklearn_engines"
 
 
 class EngineSpec:
@@ -27,15 +28,20 @@ class EngineSpec:
 
 
 def _parse_entry_point(entry_point):
-    module_name, engine_qualname = entry_point["value"].split(":")
+    module_name, engine_qualname = entry_point.value.split(":")
     provider_name = next(iter(module_name.split(".", 1)))
-    return EngineSpec(entry_point["name"], provider_name, module_name, engine_qualname)
+    return EngineSpec(entry_point.name, provider_name, module_name, engine_qualname)
 
 
 @lru_cache
 def _parse_entry_points(provider_names=None):
     specs = []
-    for entry_point in entry_points().select(group=SKLEARN_ENGINES_ENTRY_POINT):
+    all_entry_points = entry_points()
+    if hasattr(all_entry_points, "select"):
+        engine_entry_points = all_entry_points.select(group=SKLEARN_ENGINES_ENTRY_POINT)
+    else:
+        engine_entry_points = all_entry_points[SKLEARN_ENGINES_ENTRY_POINT]
+    for entry_point in engine_entry_points:
         try:
             spec = _parse_entry_point(entry_point)
             if provider_names is not None and spec.provider_name in provider_names:
@@ -48,15 +54,16 @@ def _parse_entry_points(provider_names=None):
             # skip.
             warnings.warn(
                 f"Invalid {SKLEARN_ENGINES_ENTRY_POINT} entry point"
-                f" {entry_point['name']} with value {entry_point['value']}: {e}"
+                f" {entry_point.name} with value {entry_point.value}: {e}"
             )
     if provider_names is not None:
         observed_provider_names = {spec.provider_name for spec in specs}
         missing_providers = set(provider_names) - observed_provider_names
         if missing_providers:
             raise RuntimeError(
-                f"Could not find any provider for the {SKLEARN_ENGINES_ENTRY_POINT}"
-                f" entry point with name(s): {', '.join(sorted(missing_providers))}"
+                "Could not find any provider for the"
+                f" {SKLEARN_ENGINES_ENTRY_POINT} entry point with name(s):"
+                f" {', '.join(repr(p) for p in sorted(missing_providers))}"
             )
     return specs
 

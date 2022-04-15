@@ -1,4 +1,5 @@
 import re
+from collections import namedtuple
 import pytest
 
 from sklearn._engine import list_engine_provider_names
@@ -18,11 +19,14 @@ class FakeEngineHolder:
         pass
 
 
+FakeEntryPoint = namedtuple('FakeEntryPoint', ['name', 'value'])
+
+
 def test_get_engine_class():
-    fake_entry_point = {
-        "name": "fake_engine",
-        "value": "sklearn.tests.test_engines:FakeEngine",
-    }
+    fake_entry_point = FakeEntryPoint(
+        name="fake_engine",
+        value="sklearn.tests.test_engines:FakeEngine",
+    )
     spec = _parse_entry_point(fake_entry_point)
     assert spec.name == "fake_engine"
     assert spec.provider_name == "sklearn"  # or should it be scikit-learn?
@@ -30,10 +34,10 @@ def test_get_engine_class():
 
 
 def test_get_nested_engine_class():
-    fake_entry_point = {
-        "name": "nested_fake_engine",
-        "value": "sklearn.tests.test_engines:FakeEngineHolder.NestedFakeEngine",
-    }
+    fake_entry_point = FakeEntryPoint(
+        name="nested_fake_engine",
+        value="sklearn.tests.test_engines:FakeEngineHolder.NestedFakeEngine",
+    )
     spec = _parse_entry_point(fake_entry_point)
     assert spec.name == "nested_fake_engine"
     assert spec.provider_name == "sklearn"  # or should it be scikit-learn?
@@ -56,16 +60,16 @@ def test_get_engine_class_with_default():
 
 def test_get_engine_class_for_invalid_provider():
     expected_message = re.escape(
-        "Could not find any provider for the skearn_engines entry point with"
-        " name(s): invalid_provider_name"
+        "Could not find any provider for the sklearn_engines entry point with"
+        " name(s): 'invalid_provider_name'"
     )
     with pytest.raises(RuntimeError, match=expected_message):
         with config_context(engine_provider="invalid_provider_name"):
             get_engine_class("kmeans")
 
     expected_message = re.escape(
-        "Could not find any provider for the skearn_engines entry point with"
-        " name(s): invalid_provider_name_1, invalid_provider_name_2"
+        "Could not find any provider for the sklearn_engines entry point with"
+        " name(s): 'invalid_provider_name_1', 'invalid_provider_name_2'"
     )
     with pytest.raises(RuntimeError, match=expected_message):
         with config_context(
