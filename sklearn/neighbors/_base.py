@@ -213,8 +213,10 @@ def _check_precomputed(X):
     return graph
 
 
-def sort_by_row_values(graph, copy=True):
+def sort_by_row_values(graph):
     """Sort a sparse graph such that each row is stored with increasing values.
+
+    Sorting is done in-place if the input graph is in CSR format.
 
     Parameters
     ----------
@@ -222,16 +224,11 @@ def sort_by_row_values(graph, copy=True):
         Distance matrix to other samples, where only non-zero elements are
         considered neighbors. Matrix is converted to CSR format if not already.
 
-    copy : bool, optional (default=True)
-        If True, the graph is copied before sorting. If False, the sorting is
-        performed inplace. If graph is not of CSR format, a copy is always
-        returned.
-
     Returns
     -------
     graph : sparse matrix of shape (n_samples, n_samples)
         Distance matrix to other samples, where only non-zero elements are
-        considered neighbors. Matrix is of CSR format.
+        considered neighbors. Matrix is in CSR format.
     """
     if graph.format not in ("csr", "csc", "coo", "lil"):
         raise TypeError(
@@ -240,8 +237,6 @@ def sort_by_row_values(graph, copy=True):
         )
     elif graph.format != "csr":
         graph = graph.asformat("csr")
-    elif copy:
-        graph = graph.copy()
 
     # if each sample has the same number of provided neighbors
     row_nnz = np.diff(graph.indptr)

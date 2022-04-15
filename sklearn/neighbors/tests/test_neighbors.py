@@ -472,7 +472,7 @@ def test_sort_by_row_values():
     Xt = sort_by_row_values(X)
     assert _is_sorted_by_row_values(Xt)
 
-    # est with a different number of nonzero entries for each sample
+    # test with a different number of nonzero entries for each sample
     mask = np.random.RandomState(42).randint(2, size=(10, 10))
     X = X.toarray()
     X[mask == 1] = 0
@@ -481,13 +481,9 @@ def test_sort_by_row_values():
     Xt = sort_by_row_values(X)
     assert _is_sorted_by_row_values(Xt)
 
-    # test copy parameter defaults to True, so that Xt is not X
+    # test that the sorting is done inplace if X is CSR, so that Xt is X
     Xt[0, 0] = 1
-    assert X[0, 0] != 1
-    # test copy=False, so that Xt is X
-    Xt = sort_by_row_values(X, copy=False)
-    Xt[1, 1] = 2
-    assert X[1, 1] == 2
+    assert X[0, 0] == 1
 
 
 @pytest.mark.parametrize("format", [dok_matrix, bsr_matrix, dia_matrix])
