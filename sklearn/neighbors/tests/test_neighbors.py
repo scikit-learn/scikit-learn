@@ -1,5 +1,5 @@
 from itertools import product
-import warnings
+from contextlib import nullcontext
 
 import pytest
 import re
@@ -1538,9 +1538,7 @@ def test_neighbors_metrics(
                 with pytest.warns(FutureWarning):
                     results[algorithm] = neigh.kneighbors(X_test, return_distance=True)
             else:
-                with warnings.catch_warnings():
-                    warnings.simplefilter("error", FutureWarning)
-                    results[algorithm] = neigh.kneighbors(X_test, return_distance=True)
+                results[algorithm] = neigh.kneighbors(X_test, return_distance=True)
 
         brute_dst, brute_idx = results["brute"]
         ball_tree_dst, ball_tree_idx = results["ball_tree"]
@@ -1558,7 +1556,7 @@ def test_neighbors_metrics(
 
 
 # TODO: Remove filterwarnings in 1.3 when wminkowski is removed
-@pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
+@pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn*")
 @pytest.mark.parametrize(
     "metric", sorted(set(neighbors.VALID_METRICS["brute"]) - set(["precomputed"]))
 )
@@ -1578,14 +1576,14 @@ def test_kneighbors_brute_backend(
     metric_params_list = _generate_test_params_for(metric, n_features)
 
     # wminkoski is deprecated in SciPy 1.6.0 and removed in 1.8.0
-    ExceptionToAssert = None
+    warn_context_manager = nullcontext()
     if metric == "wminkowski" and sp_version >= parse_version("1.6.0"):
         if global_dtype == np.float64:
             # Warning from sklearn.metrics._dist_metrics.WMinkowskiDistance
-            ExceptionToAssert = FutureWarning
+            warn_context_manager = pytest.warns(FutureWarning)
         if global_dtype == np.float32:
             # Warning from Scipy
-            ExceptionToAssert = DeprecationWarning
+            warn_context_manager = pytest.warns(DeprecationWarning)
 
     for metric_params in metric_params_list:
         p = metric_params.pop("p", 2)
@@ -1600,7 +1598,7 @@ def test_kneighbors_brute_backend(
 
         neigh.fit(X_train)
 
-        def assert_legacy_backend_same_as_cython_backend():
+        with warn_context_manager:
             with config_context(enable_cython_pairwise_dist=False):
                 # Use the legacy backend for brute
                 legacy_brute_dst, legacy_brute_idx = neigh.kneighbors(
@@ -1613,15 +1611,6 @@ def test_kneighbors_brute_backend(
                 )
             assert_allclose(legacy_brute_dst, pdr_brute_dst)
             assert_array_equal(legacy_brute_idx, pdr_brute_idx)
-
-        if ExceptionToAssert is None:
-            with warnings.catch_warnings():
-                warnings.simplefilter("error", FutureWarning)
-                warnings.simplefilter("error", DeprecationWarning)
-                assert_legacy_backend_same_as_cython_backend()
-        else:
-            with pytest.warns(ExceptionToAssert):
-                assert_legacy_backend_same_as_cython_backend()
 
 
 def test_callable_metric():
@@ -2114,9 +2103,9 @@ def test_radius_neighbors_brute_backend(
     metric_params_list = _generate_test_params_for(metric, n_features)
 
     # wminkoski is deprecated in SciPy 1.6.0 and removed in 1.8.0
-    ExceptionToAssert = None
+    warn_context_manager = nullcontext()
     if metric == "wminkowski" and sp_version >= parse_version("1.6.0"):
-        ExceptionToAssert = FutureWarning
+        warn_context_manager = pytest.warns(FutureWarning)
 
     for metric_params in metric_params_list:
         p = metric_params.pop("p", 2)
@@ -2131,7 +2120,7 @@ def test_radius_neighbors_brute_backend(
 
         neigh.fit(X_train)
 
-        def assert_legacy_backend_same_as_cython_backend():
+        with warn_context_manager:
             with config_context(enable_cython_pairwise_dist=False):
                 # Use the legacy backend for brute
                 legacy_brute_dst, legacy_brute_idx = neigh.radius_neighbors(
@@ -2145,14 +2134,6 @@ def test_radius_neighbors_brute_backend(
             assert_radius_neighborhood_results_equality(
                 legacy_brute_dst, pdr_brute_dst, legacy_brute_idx, pdr_brute_idx
             )
-
-        if ExceptionToAssert is None:
-            with warnings.catch_warnings():
-                warnings.simplefilter("error", FutureWarning)
-                assert_legacy_backend_same_as_cython_backend()
-        else:
-            with pytest.warns(ExceptionToAssert):
-                assert_legacy_backend_same_as_cython_backend()
 
 
 def test_valid_metrics_has_no_duplicate():
