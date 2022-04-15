@@ -218,7 +218,7 @@ def sort_by_row_values(graph, copy=True):
 
     Parameters
     ----------
-    graph : sparse matrix, (n_samples, n_samples)
+    graph : sparse matrix of shape (n_samples, n_samples)
         Distance matrix to other samples, where only non-zero elements are
         considered neighbors. Matrix is converted to CSR format if not already.
 
@@ -229,7 +229,7 @@ def sort_by_row_values(graph, copy=True):
 
     Returns
     -------
-    graph : sparse matrix, (n_samples, n_samples)
+    graph : sparse matrix of shape (n_samples, n_samples)
         Distance matrix to other samples, where only non-zero elements are
         considered neighbors. Matrix is of CSR format.
     """
