@@ -15,7 +15,7 @@ import warnings
 import numbers
 import time
 from functools import partial
-from traceback import format_exc
+from traceback import format_exc, format_exception
 from contextlib import suppress
 from collections import Counter
 
@@ -792,12 +792,15 @@ def _score(estimator, X_test, y_test, scorer, error_score="raise"):
             else:
                 for name, e in exceptions:
                     scores[name] = error_score
-                warnings.warn(
-                    "Scoring failed. The score on this train-test partition for "
-                    f"these parameters will be set to {error_score}. Details: \n"
-                    f"{format_exc()}",
-                    UserWarning,
-                )
+                    details = "".join(
+                        format_exception(etype=type(e), value=e, tb=e.__traceback__)
+                    )
+                    warnings.warn(
+                        "Scoring failed. The score on this train-test partition for "
+                        f"these parameters will be set to {error_score}. Details: \n"
+                        f"{details}",
+                        UserWarning,
+                    )
 
     error_msg = "scoring must return a number, got %s (%s) instead. (scorer=%s)"
     if isinstance(scores, dict):
