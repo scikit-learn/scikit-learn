@@ -792,9 +792,7 @@ def _score(estimator, X_test, y_test, scorer, error_score="raise"):
             else:
                 for name, e in exceptions:
                     scores[name] = error_score
-                    details = "".join(
-                        format_exception(etype=type(e), value=e, tb=e.__traceback__)
-                    )
+                    details = "".join(format_exception(type(e), e, e.__traceback__))
                     warnings.warn(
                         "Scoring failed. The score on this train-test partition for "
                         f"these parameters will be set to {error_score}. Details: \n"
