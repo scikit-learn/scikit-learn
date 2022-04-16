@@ -78,8 +78,11 @@ labels = spectral_clustering(graph, n_clusters=4, eigen_solver="arpack")
 label_im = np.full(mask.shape, -1.0)
 label_im[mask] = labels
 
-plt.matshow(img)
-plt.matshow(label_im)
+fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(10, 5))
+axs[0].matshow(img)
+axs[1].matshow(label_im)
+
+plt.show()
 
 # %%
 # 2 Circles
