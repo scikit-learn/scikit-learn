@@ -269,7 +269,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
                 (n_samples, n_samples) if metric=’precomputed’
             A feature array, or array of distances between samples if
             metric='precomputed'. If a sparse matrix is provided, it will be
-            converted into a sparse ``csr_matrix``.
+            converted into CSR format.
 
         y : Ignored
             Not used, present for API consistency by convention.
