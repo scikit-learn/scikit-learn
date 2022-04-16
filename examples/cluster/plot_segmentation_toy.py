@@ -52,8 +52,8 @@ circle3 = (x - center3[0]) ** 2 + (y - center3[1]) ** 2 < radius3**2
 circle4 = (x - center4[0]) ** 2 + (y - center4[1]) ** 2 < radius4**2
 
 # %%
-# 4 Circles
-# ---------
+# Plotting four circles
+# ---------------------
 img = circle1 + circle2 + circle3 + circle4
 
 # We use a mask that limits to the foreground: the problem that we are
