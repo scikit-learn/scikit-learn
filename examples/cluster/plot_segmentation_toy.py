@@ -57,6 +57,7 @@ circle4 = (x - center4[0]) ** 2 + (y - center4[1]) ** 2 < radius4**2
 # Plotting four circles
 # ---------------------
 import matplotlib.pyplot as plt
+
 img = circle1 + circle2 + circle3 + circle4
 
 # We use a mask that limits to the foreground: the problem that we are
