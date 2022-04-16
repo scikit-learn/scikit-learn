@@ -30,8 +30,10 @@ separating the objects one from the other, and not from the background.
 #           Gael Varoquaux <gael.varoquaux@normalesup.org>
 # License: BSD 3 clause
 
+# %%
+# Generate the data
+# -----------------
 import numpy as np
-import matplotlib.pyplot as plt
 
 from sklearn.feature_extraction import image
 from sklearn.cluster import spectral_clustering
@@ -54,6 +56,7 @@ circle4 = (x - center4[0]) ** 2 + (y - center4[1]) ** 2 < radius4**2
 # %%
 # Plotting four circles
 # ---------------------
+import matplotlib.pyplot as plt
 img = circle1 + circle2 + circle3 + circle4
 
 # We use a mask that limits to the foreground: the problem that we are
@@ -64,16 +67,19 @@ mask = img.astype(bool)
 img = img.astype(float)
 img += 1 + 0.2 * np.random.randn(*img.shape)
 
+# %%
 # Convert the image into a graph with the value of the gradient on the
 # edges.
 graph = image.img_to_graph(img, mask=mask)
 
-# Take a decreasing function of the gradient: we take it weakly
-# dependent from the gradient the segmentation is close to a voronoi
+# %%
+# Take a decreasing function of the gradient resulting in a segmentation
+# that is close to a Voronoi partition
 graph.data = np.exp(-graph.data / graph.data.std())
 
-# Force the solver to be arpack, since amg is numerically
-# unstable on this example
+# %%
+# Here we perform spectral clustering using the arpack solver since amg is
+# numerically unstable on this example. We then plot the results.
 labels = spectral_clustering(graph, n_clusters=4, eigen_solver="arpack")
 label_im = np.full(mask.shape, -1.0)
 label_im[mask] = labels
