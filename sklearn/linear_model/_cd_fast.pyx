@@ -259,14 +259,14 @@ def enet_coordinate_descent(floating[::1] w,
 
     return w, gap, tol, n_iter + 1
 
-
+@cython.boundscheck(False)
 def sparse_enet_coordinate_descent(
     floating [::1] w,
     floating alpha,
     floating beta,
-    np.ndarray[floating, ndim=1, mode='c'] X_data,
-    np.ndarray[int, ndim=1, mode='c'] X_indices,
-    np.ndarray[int, ndim=1, mode='c'] X_indptr,
+    floating[::1] X_data,
+    int[::1] X_indices,
+    int[::1] X_indptr,
     floating[::1] y,
     floating[::1] sample_weight,
     floating[::1] X_mean,
@@ -695,8 +695,8 @@ def enet_coordinate_descent_gram(floating[::1] w,
 
 def enet_coordinate_descent_multi_task(
         floating[::1, :] W, floating l1_reg, floating l2_reg,
-        np.ndarray[floating, ndim=2, mode='fortran'] X,  # TODO: use views with Cython 3.0
-        np.ndarray[floating, ndim=2, mode='fortran'] Y,  # hopefully with skl 1.0
+        floating[::1, :] X,
+        floating[::1, :] Y,
         int max_iter, floating tol, object rng, bint random=0):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net mult-task regression
