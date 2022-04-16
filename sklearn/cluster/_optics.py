@@ -609,6 +609,8 @@ def _set_reach_dist(
     # Only compute distances to unprocessed neighbors:
     if metric == "precomputed":
         dists = X[point_index, unproc]
+        if issparse(dists):
+            dists = dists.toarray().ravel()
     else:
         _params = dict() if metric_params is None else metric_params.copy()
         if metric == "minkowski" and "p" not in _params:
@@ -617,15 +619,8 @@ def _set_reach_dist(
             _params["p"] = p
         dists = pairwise_distances(P, X[unproc], metric, n_jobs=None, **_params).ravel()
 
-    if issparse(dists):
-        rdists = dists.maximum(core_distances_[point_index])
-        np.around(
-            rdists.data, decimals=np.finfo(rdists.dtype).precision, out=rdists.data
-        )
-        rdists = np.array(rdists.todense())[0]
-    else:
-        rdists = np.maximum(dists, core_distances_[point_index])
-        np.around(rdists, decimals=np.finfo(rdists.dtype).precision, out=rdists)
+    rdists = np.maximum(dists, core_distances_[point_index])
+    np.around(rdists, decimals=np.finfo(rdists.dtype).precision, out=rdists)
     improved = np.where(rdists < np.take(reachability_, unproc))
     reachability_[unproc[improved]] = rdists[improved]
     predecessor_[unproc[improved]] = point_index
