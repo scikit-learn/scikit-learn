@@ -85,8 +85,12 @@ axs[1].matshow(label_im)
 plt.show()
 
 # %%
-# 2 Circles
-# ---------
+# Plotting two circles
+# --------------------
+# Here we repeat the above process but only consider the first two circles
+# we generated. Note that this results in a cleaner separation between the
+# circles as the region sizes are easier to balance in this case.
+
 img = circle1 + circle2
 mask = img.astype(bool)
 img = img.astype(float)
