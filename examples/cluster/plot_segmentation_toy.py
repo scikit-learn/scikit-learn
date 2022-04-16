@@ -52,8 +52,8 @@ circle3 = (x - center3[0]) ** 2 + (y - center3[1]) ** 2 < radius3**2
 circle4 = (x - center4[0]) ** 2 + (y - center4[1]) ** 2 < radius4**2
 
 # %%
-# 4 Circles
-# ---------
+# Plotting four circles
+# ---------------------
 img = circle1 + circle2 + circle3 + circle4
 
 # We use a mask that limits to the foreground: the problem that we are
@@ -78,12 +78,19 @@ labels = spectral_clustering(graph, n_clusters=4, eigen_solver="arpack")
 label_im = np.full(mask.shape, -1.0)
 label_im[mask] = labels
 
-plt.matshow(img)
-plt.matshow(label_im)
+fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(10, 5))
+axs[0].matshow(img)
+axs[1].matshow(label_im)
+
+plt.show()
 
 # %%
-# 2 Circles
-# ---------
+# Plotting two circles
+# --------------------
+# Here we repeat the above process but only consider the first two circles
+# we generated. Note that this results in a cleaner separation between the
+# circles as the region sizes are easier to balance in this case.
+
 img = circle1 + circle2
 mask = img.astype(bool)
 img = img.astype(float)
