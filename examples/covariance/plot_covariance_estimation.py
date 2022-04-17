@@ -63,7 +63,7 @@ loglik_real = -log_likelihood(emp_cov, linalg.inv(real_cov))
 # %%
 # Compare different approaches to setting the parameter
 # ---------------------------------------------------
-# 
+#
 # Here we compare 3 approaches:
 #
 # * Setting the parameter by cross-validating the likelihood on three folds
@@ -156,4 +156,3 @@ plt.show()
 #    example, the OAS estimate is a bit further away. Interestingly, both
 #    approaches outperform cross-validation, which is significantly most
 #    computationally costly.
-
