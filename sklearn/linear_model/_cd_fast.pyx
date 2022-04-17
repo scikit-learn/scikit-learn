@@ -259,7 +259,6 @@ def enet_coordinate_descent(floating[::1] w,
 
     return w, gap, tol, n_iter + 1
 
-@cython.boundscheck(False)
 def sparse_enet_coordinate_descent(
     floating [::1] w,
     floating alpha,
