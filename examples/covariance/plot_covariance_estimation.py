@@ -13,33 +13,6 @@ example illustrates the simple regularization used in
 :ref:`shrunk_covariance` estimators. In particular, it focuses on how to
 set the amount of regularization, i.e. how to choose the bias-variance
 trade-off.
-
-Here we compare 3 approaches:
-
-* Setting the parameter by cross-validating the likelihood on three folds
-  according to a grid of potential shrinkage parameters.
-
-* A close formula proposed by Ledoit and Wolf to compute
-  the asymptotically optimal regularization parameter (minimizing a MSE
-  criterion), yielding the :class:`~sklearn.covariance.LedoitWolf`
-  covariance estimate.
-
-* An improvement of the Ledoit-Wolf shrinkage, the
-  :class:`~sklearn.covariance.OAS`, proposed by Chen et al. Its
-  convergence is significantly better under the assumption that the data
-  are Gaussian, in particular for small samples.
-
-To quantify estimation error, we plot the likelihood of unseen data for
-different values of the shrinkage parameter. We also show the choices by
-cross-validation, or with the LedoitWolf and OAS estimates.
-
-Note that the maximum likelihood estimate corresponds to no shrinkage,
-and thus performs poorly. The Ledoit-Wolf estimate performs really well,
-as it is close to the optimal and is computational not costly. In this
-example, the OAS estimate is a bit further away. Interestingly, both
-approaches outperform cross-validation, which is significantly most
-computationally costly.
-
 """
 
 import numpy as np
@@ -56,8 +29,9 @@ from sklearn.covariance import (
 from sklearn.model_selection import GridSearchCV
 
 
-# #############################################################################
+# %%
 # Generate sample data
+# ---------------------------------------------------
 n_features, n_samples = 40, 20
 np.random.seed(42)
 base_X_train = np.random.normal(size=(n_samples, n_features))
@@ -68,8 +42,10 @@ coloring_matrix = np.random.normal(size=(n_features, n_features))
 X_train = np.dot(base_X_train, coloring_matrix)
 X_test = np.dot(base_X_test, coloring_matrix)
 
-# #############################################################################
+
+# %%
 # Compute the likelihood on test data
+# ---------------------------------------------------
 
 # spanning a range of possible shrinkage coefficient values
 shrinkages = np.logspace(-2, 0, 30)
@@ -83,8 +59,26 @@ real_cov = np.dot(coloring_matrix.T, coloring_matrix)
 emp_cov = empirical_covariance(X_train)
 loglik_real = -log_likelihood(emp_cov, linalg.inv(real_cov))
 
-# #############################################################################
+
+# %%
 # Compare different approaches to setting the parameter
+# ---------------------------------------------------
+# 
+# Here we compare 3 approaches:
+#
+# * Setting the parameter by cross-validating the likelihood on three folds
+#   according to a grid of potential shrinkage parameters.
+#
+# * A close formula proposed by Ledoit and Wolf to compute
+#   the asymptotically optimal regularization parameter (minimizing a MSE
+#   criterion), yielding the :class:`~sklearn.covariance.LedoitWolf`
+#   covariance estimate.
+#
+# * An improvement of the Ledoit-Wolf shrinkage, the
+#   :class:`~sklearn.covariance.OAS`, proposed by Chen et al. Its
+#   convergence is significantly better under the assumption that the data
+#   are Gaussian, in particular for small samples.
+
 
 # GridSearch for an optimal shrinkage coefficient
 tuned_parameters = [{"shrinkage": shrinkages}]
@@ -99,8 +93,15 @@ loglik_lw = lw.fit(X_train).score(X_test)
 oa = OAS()
 loglik_oa = oa.fit(X_train).score(X_test)
 
-# #############################################################################
+# %%
 # Plot results
+# ---------------------------------------------------
+#
+#
+# To quantify estimation error, we plot the likelihood of unseen data for
+# different values of the shrinkage parameter. We also show the choices by
+# cross-validation, or with the LedoitWolf and OAS estimates.
+
 fig = plt.figure()
 plt.title("Regularized covariance: likelihood and shrinkage coefficient")
 plt.xlabel("Regularization parameter: shrinkage coefficient")
@@ -145,3 +146,14 @@ plt.xlim(xmin, xmax)
 plt.legend()
 
 plt.show()
+
+# %%
+# .. note::
+#
+#    The maximum likelihood estimate corresponds to no shrinkage,
+#    and thus performs poorly. The Ledoit-Wolf estimate performs really well,
+#    as it is close to the optimal and is computational not costly. In this
+#    example, the OAS estimate is a bit further away. Interestingly, both
+#    approaches outperform cross-validation, which is significantly most
+#    computationally costly.
+
