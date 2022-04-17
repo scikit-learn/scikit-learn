@@ -95,7 +95,7 @@ plot(X, labels=labels_true, ground_truth=True)
 # dataset. As a simple demonstration, consider what happens when we find an
 # epsilon value that works for one dataset, and try to apply it to a
 # similar but rescaled versions of the dataset. Below are plots of the original
-# dataset, and version rescaled by 0.5 and 3 respectively.
+# dataset, and versions rescaled by 0.5 and 3 respectively.
 dbs = DBSCAN(eps=0.3).fit(X)
 plot(X, dbs.labels_, np.ones_like(dbs.labels_), {"eps": 0.3})
 dbs.fit(0.5 * X)
