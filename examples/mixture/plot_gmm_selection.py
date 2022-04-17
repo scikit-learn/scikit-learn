@@ -5,7 +5,7 @@ Gaussian Mixture Model Selection
 
 This example shows that model selection can be performed with
 Gaussian Mixture Models using
-:ref:`information-theoretic criteria <lasso_lars_ic>` (BIC).
+:ref:`information-theoretic criteria <aic_bic>` (BIC).
 Model selection concerns both the covariance type
 and the number of components in the model.
 In that case, AIC also provides the right result (not shown to save time),
