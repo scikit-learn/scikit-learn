@@ -193,7 +193,7 @@ _STYLE = """
 }
 #$id label.sk-toggleable__label {
   cursor: pointer;
-  display: flex;
+  display: block;
   width: 100%;
   margin-bottom: 0;
   padding: 0.3em;
