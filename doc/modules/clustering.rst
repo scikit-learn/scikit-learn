@@ -964,10 +964,14 @@ and as such it no longer needs `eps` to be given as a hyperparameter. Instead
 it relies solely on the choice of `min_samples`, which tends to be a more robust
 hyperparameter.
 
-.. |hdbscan_results| image:: ../auto_examples/cluster/images/sphx_glr_plot_hdbscan_001.png
+.. |hdbscan_ground_truth| image:: ../auto_examples/cluster/images/sphx_glr_plot_hdbscan_001.png
         :target: ../auto_examples/cluster/plot_hdbscan.html
-        :scale: 50
+        :scale: 75
+.. |hdbscan_results| image:: ../auto_examples/cluster/images/sphx_glr_plot_hdbscan_006.png
+        :target: ../auto_examples/cluster/plot_hdbscan.html
+        :scale: 75
 
+.. centered:: |hdbscan_ground_truth|
 .. centered:: |hdbscan_results|
 
 HDBSCAN can be smoothed with an additional hyperparameter `min_cluster_size`
