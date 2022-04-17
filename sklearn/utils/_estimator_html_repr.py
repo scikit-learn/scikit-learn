@@ -2,10 +2,25 @@ from contextlib import closing
 from contextlib import suppress
 from io import StringIO
 from string import Template
-import uuid
 import html
 
 from .. import config_context
+
+
+class _IDCounter:
+    """Generate sequential ids with a prefix."""
+
+    def __init__(self, prefix):
+        self.prefix = prefix
+        self.count = 0
+
+    def get_id(self):
+        self.count += 1
+        return f"{self.prefix}-{self.count}"
+
+
+_CONTAINER_ID_COUNTER = _IDCounter("sk-container-id")
+_ESTIMATOR_ID_COUNTER = _IDCounter("sk-estimator-id")
 
 
 class _VisualBlock:
@@ -73,7 +88,7 @@ def _write_label_html(
         label_class = "sk-toggleable__label sk-toggleable__label-arrow"
 
         checked_str = "checked" if checked else ""
-        est_id = uuid.uuid4()
+        est_id = _ESTIMATOR_ID_COUNTER.get_id()
         out.write(
             '<input class="sk-toggleable__control sk-hidden--visually" '
             f'id="{est_id}" type="checkbox" {checked_str}>'
@@ -100,13 +115,18 @@ def _get_visual_block(estimator):
 
     # check if estimator looks like a meta estimator wraps estimators
     if hasattr(estimator, "get_params"):
-        estimators = []
-        for key, value in estimator.get_params().items():
-            # Only look at the estimators in the first layer
-            if "__" not in key and hasattr(value, "get_params"):
-                estimators.append(value)
-        if len(estimators):
-            return _VisualBlock("parallel", estimators, names=None)
+        estimators = [
+            (key, est)
+            for key, est in estimator.get_params(deep=False).items()
+            if hasattr(est, "get_params") and hasattr(est, "fit")
+        ]
+        if estimators:
+            return _VisualBlock(
+                "parallel",
+                [est for _, est in estimators],
+                names=[f"{key}: {est.__class__.__name__}" for key, est in estimators],
+                name_details=[str(est) for _, est in estimators],
+            )
 
     return _VisualBlock(
         "single",
@@ -357,7 +377,7 @@ def estimator_html_repr(estimator):
         HTML representation of estimator.
     """
     with closing(StringIO()) as out:
-        container_id = "sk-" + str(uuid.uuid4())
+        container_id = _CONTAINER_ID_COUNTER.get_id()
         style_template = Template(_STYLE)
         style_with_id = style_template.substitute(id=container_id)
         estimator_str = str(estimator)
@@ -372,7 +392,10 @@ def estimator_html_repr(estimator):
         # The reverse logic applies to HTML repr div.sk-container.
         # div.sk-container is hidden by default and the loading the CSS displays it.
         fallback_msg = (
-            "Please rerun this cell to show the HTML repr or trust the notebook."
+            "In a Jupyter environment, please rerun this cell to show the HTML"
+            " representation or trust the notebook. <br />On GitHub, the"
+            " HTML representation is unable to render, please try loading this page"
+            " with nbviewer.org."
         )
         out.write(
             f"<style>{style_with_id}</style>"

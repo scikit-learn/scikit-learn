@@ -11,7 +11,6 @@ from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import TempMemmap
-from sklearn.utils.fixes import np_version, parse_version
 from sklearn.utils import check_random_state
 from sklearn.exceptions import ConvergenceWarning
 from sklearn import linear_model, datasets
@@ -49,11 +48,11 @@ def test_assure_warning_when_normalize(LeastAngleModel, normalize, n_warnings):
     y = rng.rand(n_samples)
 
     model = LeastAngleModel(normalize=normalize)
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings(record=True) as rec:
+        warnings.simplefilter("always", FutureWarning)
         model.fit(X, y)
 
-    record = [r for r in record if r.category == FutureWarning]
-    assert len(record) == n_warnings
+    assert len([w.message for w in rec]) == n_warnings
 
 
 def test_simple():
@@ -149,9 +148,7 @@ def test_lars_lstsq():
     X1 = 3 * X  # use un-normalized dataset
     clf = linear_model.LassoLars(alpha=0.0)
     clf.fit(X1, y)
-    # Avoid FutureWarning about default value change when numpy >= 1.14
-    rcond = None if np_version >= parse_version("1.14") else -1
-    coef_lstsq = np.linalg.lstsq(X1, y, rcond=rcond)[0]
+    coef_lstsq = np.linalg.lstsq(X1, y, rcond=None)[0]
     assert_array_almost_equal(clf.coef_, coef_lstsq)
 
 
@@ -175,7 +172,7 @@ def test_collinearity():
     _, _, coef_path_ = f(linear_model.lars_path)(X, y, alpha_min=0.01)
     assert not np.isnan(coef_path_).any()
     residual = np.dot(X, coef_path_[:, -1]) - y
-    assert (residual ** 2).sum() < 1.0  # just make sure it's bounded
+    assert (residual**2).sum() < 1.0  # just make sure it's bounded
 
     n_samples = 10
     X = rng.rand(n_samples, 5)
@@ -446,7 +443,7 @@ def test_lars_n_nonzero_coefs(verbose=False):
 @ignore_warnings
 def test_multitarget():
     # Assure that estimators receiving multidimensional y do the right thing
-    Y = np.vstack([y, y ** 2]).T
+    Y = np.vstack([y, y**2]).T
     n_targets = Y.shape[1]
     estimators = [
         linear_model.LassoLars(),
@@ -804,7 +801,7 @@ def test_lasso_lars_vs_R_implementation():
     # Let's rescale back the coefficients returned by sklearn before comparing
     # against the R result (read the note above)
     temp = X - np.mean(X, axis=0)
-    normx = np.sqrt(np.sum(temp ** 2, axis=0))
+    normx = np.sqrt(np.sum(temp**2, axis=0))
     skl_betas2 /= normx[:, np.newaxis]
 
     assert_array_almost_equal(r2, skl_betas2, decimal=12)

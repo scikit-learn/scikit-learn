@@ -315,8 +315,9 @@ def _yield_all_checks(estimator):
         for check in _yield_outliers_checks(estimator):
             yield check
     yield check_parameters_default_constructible
-    yield check_methods_sample_order_invariance
-    yield check_methods_subset_invariance
+    if not tags["non_deterministic"]:
+        yield check_methods_sample_order_invariance
+        yield check_methods_subset_invariance
     yield check_fit2d_1sample
     yield check_fit2d_1feature
     yield check_get_params_invariance
@@ -526,7 +527,7 @@ def parametrize_with_checks(estimators):
     )
 
 
-def check_estimator(Estimator, generate_only=False):
+def check_estimator(estimator=None, generate_only=False, Estimator="deprecated"):
     """Check if estimator adheres to scikit-learn conventions.
 
     This function will run an extensive test-suite for input validation,
@@ -547,10 +548,10 @@ def check_estimator(Estimator, generate_only=False):
 
     Parameters
     ----------
-    Estimator : estimator object
+    estimator : estimator object
         Estimator instance to check.
 
-        .. versionchanged:: 0.24
+        .. versionadded:: 1.1
            Passing a class was deprecated in version 0.23, and support for
            classes was removed in 0.24.
 
@@ -561,6 +562,13 @@ def check_estimator(Estimator, generate_only=False):
         `check(estimator)`.
 
         .. versionadded:: 0.22
+
+    Estimator : estimator object
+        Estimator instance to check.
+
+        .. deprecated:: 1.1
+            ``Estimator`` was deprecated in favor of ``estimator`` in version 1.1
+            and will be removed in version 1.3.
 
     Returns
     -------
@@ -573,7 +581,19 @@ def check_estimator(Estimator, generate_only=False):
     parametrize_with_checks : Pytest specific decorator for parametrizing estimator
         checks.
     """
-    if isinstance(Estimator, type):
+
+    if estimator is None and Estimator == "deprecated":
+        msg = "Either estimator or Estimator should be passed to check_estimator."
+        raise ValueError(msg)
+
+    if Estimator != "deprecated":
+        msg = (
+            "'Estimator' was deprecated in favor of 'estimator' in version 1.1 "
+            "and will be removed in version 1.3."
+        )
+        warnings.warn(msg, FutureWarning)
+        estimator = Estimator
+    if isinstance(estimator, type):
         msg = (
             "Passing a class was deprecated in version 0.23 "
             "and isn't supported anymore from 0.24."
@@ -581,7 +601,6 @@ def check_estimator(Estimator, generate_only=False):
         )
         raise TypeError(msg)
 
-    estimator = Estimator
     name = type(estimator).__name__
 
     def checks_generator():
@@ -628,14 +647,18 @@ def _set_checking_parameters(estimator):
         if estimator.max_iter is not None:
             estimator.set_params(max_iter=min(5, estimator.max_iter))
         # LinearSVR, LinearSVC
-        if estimator.__class__.__name__ in ["LinearSVR", "LinearSVC"]:
+        if name in ["LinearSVR", "LinearSVC"]:
             estimator.set_params(max_iter=20)
         # NMF
-        if estimator.__class__.__name__ == "NMF":
+        if name == "NMF":
             estimator.set_params(max_iter=500)
         # MLP
-        if estimator.__class__.__name__ in ["MLPClassifier", "MLPRegressor"]:
+        if name in ["MLPClassifier", "MLPRegressor"]:
             estimator.set_params(max_iter=100)
+        # MiniBatchDictionaryLearning
+        if name == "MiniBatchDictionaryLearning":
+            estimator.set_params(max_iter=5)
+
     if "n_resampling" in params:
         # randomized lasso
         estimator.set_params(n_resampling=5)
@@ -647,6 +670,9 @@ def _set_checking_parameters(estimator):
     if "n_init" in params:
         # K-Means
         estimator.set_params(n_init=2)
+    if "batch_size" in params:
+        estimator.set_params(batch_size=10)
+
     if name == "MeanShift":
         # In the case of check_fit2d_1sample, bandwidth is set to None and
         # is thus estimated. De facto it is 0.0 as a single sample is provided
@@ -2109,7 +2135,7 @@ def check_classifiers_train(
     if not tags["binary_only"]:
         problems.append((X_m, y_m))
 
-    for (X, y) in problems:
+    for X, y in problems:
         classes = np.unique(y)
         n_classes = len(classes)
         n_samples, n_features = X.shape
@@ -3617,20 +3643,8 @@ def check_n_features_in(name, estimator_orig):
 
     assert not hasattr(estimator, "n_features_in_")
     estimator.fit(X, y)
-    if hasattr(estimator, "n_features_in_"):
-        assert estimator.n_features_in_ == X.shape[1]
-    else:
-        warnings.warn(
-            "As of scikit-learn 0.23, estimators should expose a "
-            "n_features_in_ attribute, unless the 'no_validation' tag is "
-            "True. This attribute should be equal to the number of features "
-            "passed to the fit method. "
-            "An error will be raised from version 1.0 (renaming of 0.25) "
-            "when calling check_estimator(). "
-            "See SLEP010: "
-            "https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep010/proposal.html",  # noqa
-            FutureWarning,
-        )
+    assert hasattr(estimator, "n_features_in_")
+    assert estimator.n_features_in_ == X.shape[1]
 
 
 def check_requires_y_none(name, estimator_orig):
@@ -3646,14 +3660,6 @@ def check_requires_y_none(name, estimator_orig):
     X = rng.normal(loc=100, size=(n_samples, 2))
     X = _pairwise_estimator_convert_X(X, estimator)
 
-    warning_msg = (
-        "As of scikit-learn 0.23, estimators should have a "
-        "'requires_y' tag set to the appropriate value. "
-        "The default value of the tag is False. "
-        "An error will be raised from version 1.0 when calling "
-        "check_estimator() if the tag isn't properly set."
-    )
-
     expected_err_msgs = (
         "requires y to be passed, but the target y is None",
         "Expected array-like (array or non-string sequence), got None",
@@ -3664,7 +3670,7 @@ def check_requires_y_none(name, estimator_orig):
         estimator.fit(X, None)
     except ValueError as ve:
         if not any(msg in str(ve) for msg in expected_err_msgs):
-            warnings.warn(warning_msg, FutureWarning)
+            raise ve
 
 
 @ignore_warnings(category=FutureWarning)

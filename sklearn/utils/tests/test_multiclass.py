@@ -14,7 +14,6 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils.estimator_checks import _NotAnArray
-from sklearn.utils.fixes import parse_version
 
 from sklearn.utils.multiclass import unique_labels
 from sklearn.utils.multiclass import is_multilabel
@@ -312,12 +311,7 @@ def test_type_of_target():
 def test_type_of_target_pandas_sparse():
     pd = pytest.importorskip("pandas")
 
-    if parse_version(pd.__version__) >= parse_version("0.25"):
-        pd_sparse_array = pd.arrays.SparseArray
-    else:
-        pd_sparse_array = pd.SparseArray
-
-    y = pd_sparse_array([1, np.nan, np.nan, 1, np.nan])
+    y = pd.arrays.SparseArray([1, np.nan, np.nan, 1, np.nan])
     msg = "y cannot be class 'SparseSeries' or 'SparseArray'"
     with pytest.raises(ValueError, match=msg):
         type_of_target(y)

@@ -31,12 +31,11 @@ jobs:
     PILLOW_VERSION: 'latest'
     MATPLOTLIB_VERSION: 'latest'
     PYTEST_VERSION: '6.2.5'
-    # Disable pytest-xdist as it can stall builds
     PYTEST_XDIST_VERSION: 'latest'
     THREADPOOLCTL_VERSION: 'latest'
     COVERAGE: 'true'
     TEST_DOCSTRINGS: 'false'
-    CREATE_ISSUE_ON_TRACKER: 'false'
+    CREATE_ISSUE_ON_TRACKER: 'true'
     SHOW_SHORT_SUMMARY: 'false'
   strategy:
     matrix:
@@ -94,7 +93,12 @@ jobs:
         ISSUE_REPO="$BUILD_REPOSITORY_NAME"
 
         pip install defusedxml PyGithub
-        python maint_tools/create_issue_from_juint.py $(BOT_GITHUB_TOKEN) $CI_NAME $ISSUE_REPO $LINK_TO_RUN $JUNIT_FILE
+        python maint_tools/update_tracking_issue.py \
+          $(BOT_GITHUB_TOKEN) \
+          $CI_NAME \
+          $ISSUE_REPO \
+          $LINK_TO_RUN \
+          --junit-file $JUNIT_FILE
       displayName: 'Update issue tracker'
       env:
         JUNIT_FILE: $(TEST_DIR)/$(JUNITXML)

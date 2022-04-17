@@ -1745,12 +1745,12 @@ def normalize(X, norm="l2", *, axis=1, copy=True, return_norm=False):
         each sample, otherwise (if 0) normalize each feature.
 
     copy : bool, default=True
-        set to False to perform inplace row normalization and avoid a
+        Set to False to perform inplace row normalization and avoid a
         copy (if the input is already a numpy array or a scipy.sparse
         CSR matrix and if axis is 1).
 
     return_norm : bool, default=False
-        whether to return the computed norms
+        Whether to return the computed norms.
 
     Returns
     -------
@@ -1969,7 +1969,7 @@ def binarize(X, *, threshold=0.0, copy=True):
         Threshold may not be less than 0 for operations on sparse matrices.
 
     copy : bool, default=True
-        set to False to perform inplace binarization and avoid a copy
+        Set to False to perform inplace binarization and avoid a copy
         (if the input is already a numpy array or a scipy.sparse CSR / CSC
         matrix and if axis is 1).
 
@@ -2839,7 +2839,7 @@ def quantile_transform(
         noise.
         Please see ``subsample`` for more details.
         Pass an int for reproducible results across multiple function calls.
-        See :term:`Glossary <random_state>`
+        See :term:`Glossary <random_state>`.
 
     copy : bool, default=True
         Set to False to perform inplace transformation and avoid a copy (if the
@@ -2853,15 +2853,6 @@ def quantile_transform(
     -------
     Xt : {ndarray, sparse matrix} of shape (n_samples, n_features)
         The transformed data.
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from sklearn.preprocessing import quantile_transform
-    >>> rng = np.random.RandomState(0)
-    >>> X = np.sort(rng.normal(loc=0.5, scale=0.25, size=(25, 1)), axis=0)
-    >>> quantile_transform(X, n_quantiles=10, random_state=0, copy=True)
-    array([...])
 
     See Also
     --------
@@ -2897,6 +2888,15 @@ def quantile_transform(
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.preprocessing import quantile_transform
+    >>> rng = np.random.RandomState(0)
+    >>> X = np.sort(rng.normal(loc=0.5, scale=0.25, size=(25, 1)), axis=0)
+    >>> quantile_transform(X, n_quantiles=10, random_state=0, copy=True)
+    array([...])
     """
     n = QuantileTransformer(
         n_quantiles=n_quantiles,
@@ -3236,14 +3236,21 @@ class PowerTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
         Like for Box-Cox, MLE is done via the brent optimizer.
         """
+        x_tiny = np.finfo(np.float64).tiny
 
         def _neg_log_likelihood(lmbda):
             """Return the negative log likelihood of the observed data x as a
             function of lambda."""
             x_trans = self._yeo_johnson_transform(x, lmbda)
             n_samples = x.shape[0]
+            x_trans_var = x_trans.var()
 
-            loglike = -n_samples / 2 * np.log(x_trans.var())
+            # Reject transformed data that would raise a RuntimeWarning in np.log
+            if x_trans_var < x_tiny:
+                return np.inf
+
+            log_var = np.log(x_trans_var)
+            loglike = -n_samples / 2 * log_var
             loglike += (lmbda - 1) * (np.sign(x) * np.log1p(np.abs(x))).sum()
 
             return -loglike
@@ -3317,7 +3324,8 @@ class PowerTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
 
 def power_transform(X, method="yeo-johnson", *, standardize=True, copy=True):
-    """
+    """Parametric, monotonic transformation to make data more Gaussian-like.
+
     Power transforms are a family of parametric, monotonic transformations
     that are applied to make data more Gaussian-like. This is useful for
     modeling issues related to heteroscedasticity (non-constant variance),
@@ -3334,7 +3342,6 @@ def power_transform(X, method="yeo-johnson", *, standardize=True, copy=True):
     transformed data.
 
     Read more in the :ref:`User Guide <preprocessing_transformer>`.
-
 
     Parameters
     ----------
@@ -3363,28 +3370,6 @@ def power_transform(X, method="yeo-johnson", *, standardize=True, copy=True):
     X_trans : ndarray of shape (n_samples, n_features)
         The transformed data.
 
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from sklearn.preprocessing import power_transform
-    >>> data = [[1, 2], [3, 2], [4, 5]]
-    >>> print(power_transform(data, method='box-cox'))
-    [[-1.332... -0.707...]
-     [ 0.256... -0.707...]
-     [ 1.076...  1.414...]]
-
-    .. warning:: Risk of data leak.
-        Do not use :func:`~sklearn.preprocessing.power_transform` unless you
-        know what you are doing. A common mistake is to apply it to the entire
-        data *before* splitting into training and test sets. This will bias the
-        model evaluation because information would have leaked from the test
-        set to the training set.
-        In general, we recommend using
-        :class:`~sklearn.preprocessing.PowerTransformer` within a
-        :ref:`Pipeline <pipeline>` in order to prevent most risks of data
-        leaking, e.g.: `pipe = make_pipeline(PowerTransformer(),
-        LogisticRegression())`.
-
     See Also
     --------
     PowerTransformer : Equivalent transformation with the
@@ -3412,6 +3397,28 @@ def power_transform(X, method="yeo-johnson", *, standardize=True, copy=True):
 
     .. [2] G.E.P. Box and D.R. Cox, "An Analysis of Transformations", Journal
            of the Royal Statistical Society B, 26, 211-252 (1964).
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.preprocessing import power_transform
+    >>> data = [[1, 2], [3, 2], [4, 5]]
+    >>> print(power_transform(data, method='box-cox'))
+    [[-1.332... -0.707...]
+     [ 0.256... -0.707...]
+     [ 1.076...  1.414...]]
+
+    .. warning:: Risk of data leak.
+        Do not use :func:`~sklearn.preprocessing.power_transform` unless you
+        know what you are doing. A common mistake is to apply it to the entire
+        data *before* splitting into training and test sets. This will bias the
+        model evaluation because information would have leaked from the test
+        set to the training set.
+        In general, we recommend using
+        :class:`~sklearn.preprocessing.PowerTransformer` within a
+        :ref:`Pipeline <pipeline>` in order to prevent most risks of data
+        leaking, e.g.: `pipe = make_pipeline(PowerTransformer(),
+        LogisticRegression())`.
     """
     pt = PowerTransformer(method=method, standardize=standardize, copy=copy)
     return pt.fit_transform(X)

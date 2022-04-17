@@ -1161,11 +1161,15 @@ def test_linear_svm_convergence_warnings():
     warning_msg = "Liblinear failed to converge, increase the number of iterations."
     with pytest.warns(ConvergenceWarning, match=warning_msg):
         lsvc.fit(X, Y)
+    # Check that we have an n_iter_ attribute with int type as opposed to a
+    # numpy array or an np.int32 so as to match the docstring.
+    assert isinstance(lsvc.n_iter_, int)
     assert lsvc.n_iter_ == 2
 
     lsvr = svm.LinearSVR(random_state=0, max_iter=2)
     with pytest.warns(ConvergenceWarning, match=warning_msg):
         lsvr.fit(iris.data, iris.target)
+    assert isinstance(lsvr.n_iter_, int)
     assert lsvr.n_iter_ == 2
 
 
@@ -1327,33 +1331,12 @@ def test_svc_ovr_tie_breaking(SVCClass):
     assert np.all(pred == np.argmax(dv, axis=1))
 
 
-def test_gamma_auto():
-    X, y = [[0.0, 1.2], [1.0, 1.3]], [0, 1]
-
-    with pytest.warns(None) as record:
-        svm.SVC(kernel="linear").fit(X, y)
-    assert not [w.message for w in record]
-
-    with pytest.warns(None) as record:
-        svm.SVC(kernel="precomputed").fit(X, y)
-    assert not [w.message for w in record]
-
-
 def test_gamma_scale():
     X, y = [[0.0], [1.0]], [0, 1]
 
     clf = svm.SVC()
-    with pytest.warns(None) as record:
-        clf.fit(X, y)
-    assert not [w.message for w in record]
+    clf.fit(X, y)
     assert_almost_equal(clf._gamma, 4)
-
-    # X_var ~= 1 shouldn't raise warning, for when
-    # gamma is not explicitly set.
-    X, y = [[1, 2], [3, 2 * np.sqrt(6) / 3 + 2]], [0, 1]
-    with pytest.warns(None) as record:
-        clf.fit(X, y)
-    assert not [w.message for w in record]
 
 
 @pytest.mark.parametrize(

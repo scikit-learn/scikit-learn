@@ -2264,7 +2264,7 @@ class _CVIterableWrapper(BaseCrossValidator):
 
 
 def check_cv(cv=5, y=None, *, classifier=False):
-    """Input checker utility for building a cross-validator
+    """Input checker utility for building a cross-validator.
 
     Parameters
     ----------
@@ -2274,7 +2274,7 @@ def check_cv(cv=5, y=None, *, classifier=False):
         - None, to use the default 5-fold cross validation,
         - integer, to specify the number of folds.
         - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - An iterable that generates (train, test) splits as arrays of indices.
 
         For integer/None inputs, if classifier is True and ``y`` is either
         binary or multiclass, :class:`StratifiedKFold` is used. In all other
