@@ -91,7 +91,7 @@ source_suffix = ".rst"
 # source_encoding = 'utf-8'
 
 # The main toctree document.
-main_doc = "contents"
+root_doc = "contents"
 
 # General information about the project.
 project = "scikit-learn"

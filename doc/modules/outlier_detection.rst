@@ -131,6 +131,12 @@ sections hereunder.
     :class:`neighbors.LocalOutlierFactor` and
     :class:`covariance.EllipticEnvelope`.
 
+  * See :ref:`sphx_glr_auto_examples_miscellaneous_plot_outlier_detection_bench.py`
+    for an example showing how to evaluate outlier detection estimators,
+    the :class:`neighbors.LocalOutlierFactor` and the
+    :class:`ensemble.IsolationForest`, using ROC curves from
+    :class:`metrics.RocCurveDisplay`.
+
 Novelty Detection
 =================
 
@@ -310,6 +316,7 @@ allows you to add more trees to an already fitted model::
     * Liu, Fei Tony, Ting, Kai Ming and Zhou, Zhi-Hua. "Isolation forest."
       Data Mining, 2008. ICDM'08. Eighth IEEE International Conference on.
 
+.. _local_outlier_factor:
 
 Local Outlier Factor
 --------------------

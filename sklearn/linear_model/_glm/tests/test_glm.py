@@ -402,7 +402,7 @@ def test_tweedie_link_argument(name, link_class):
     y = np.array([0.1, 0.5])  # in range of all distributions
     X = np.array([[1], [2]])
     glm = TweedieRegressor(power=1, link=name).fit(X, y)
-    assert isinstance(glm._linear_loss.base_loss.link, link_class)
+    assert isinstance(glm._base_loss.link, link_class)
 
     glm = TweedieRegressor(power=1, link="not a link")
     with pytest.raises(
@@ -426,7 +426,7 @@ def test_tweedie_link_auto(power, expected_link_class):
     y = np.array([0.1, 0.5])  # in range of all distributions
     X = np.array([[1], [2]])
     glm = TweedieRegressor(link="auto", power=power).fit(X, y)
-    assert isinstance(glm._linear_loss.base_loss.link, expected_link_class)
+    assert isinstance(glm._base_loss.link, expected_link_class)
 
 
 @pytest.mark.parametrize("power", [0, 1, 1.5, 2, 3])

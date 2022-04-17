@@ -277,6 +277,22 @@ def test_trustworthiness():
     assert_almost_equal(trustworthiness(X, X_embedded, n_neighbors=1), 0.2)
 
 
+def test_trustworthiness_n_neighbors_error():
+    """Raise an error when n_neighbors >= n_samples / 2.
+
+    Non-regression test for #18567.
+    """
+    regex = "n_neighbors .+ should be less than .+"
+    rng = np.random.RandomState(42)
+    X = rng.rand(7, 4)
+    X_embedded = rng.rand(7, 2)
+    with pytest.raises(ValueError, match=regex):
+        trustworthiness(X, X_embedded, n_neighbors=5)
+
+    trust = trustworthiness(X, X_embedded, n_neighbors=3)
+    assert 0 <= trust <= 1
+
+
 @pytest.mark.parametrize("method", ["exact", "barnes_hut"])
 @pytest.mark.parametrize("init", ("random", "pca"))
 def test_preserve_trustworthiness_approximately(method, init):

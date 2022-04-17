@@ -87,6 +87,26 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+- |API| The option for using the log loss, aka binomial or multinomial deviance, via
+  the `loss` parameters was made more consistent. The preferred way is by
+  setting the value to `"log_loss"`. Old option names are still valid and
+  produce the same models, but are deprecated and will be removed in version
+  1.3.
+
+  - For :class:`ensemble.GradientBoostingClassifier`, the `loss` parameter name
+    "deviance" is deprecated in favor of the new name "log_loss", which is now the
+    default.
+    :pr:`23036` by :user:`Christian Lorentzen <lorentzenchr>`.
+
+  - For :class:`ensemble.HistGradientBoostingClassifier`, the `loss` parameter names
+    "auto", "binary_crossentropy" and "categorical_crossentropy" are deprecated in
+    favor of the new name "log_loss", which is now the default.
+    :pr:`23040` by :user:`Christian Lorentzen <lorentzenchr>`.
+
+  - For :class:`linear_model.SGDClassifier`, the `loss` parameter name
+    "log" is deprecated in favor of the new name "log_loss".
+    :pr:`23046` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 - |Efficiency| Low-level routines for reductions on pairwise distances
   for dense float64 datasets have been refactored. The following functions
   and estimators now benefit from improved performances in terms of hardware
@@ -284,7 +304,7 @@ Changelog
     deprecated.
   - the default value of the `batch_size` parameter of both will change from 3 to 256
     in version 1.3.
-  
+
   :pr:`18975` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 - |Enhancement| :func:`decomposition.dict_learning`, :func:`decomposition.dict_learning_online`
@@ -361,6 +381,12 @@ Changelog
   calling `fit` or `fit_transform`.
   :pr:`22553` by :user:`Meekail Zain <micky774>`.
 
+- |API| :func:`decomposition.FastICA` now supports unit variance for whitening.
+  The default value of its `whiten` argument will change from `True`
+  (which behaves like `'arbitrary-variance'`) to `'unit-variance'` in version 1.3.
+  :pr:`19490` by :user:`Facundo Ferrin <fferrin>` and
+  :user:`Julien Jerphanion <jjerphan>`.
+
 :mod:`sklearn.discriminant_analysis`
 ....................................
 
@@ -428,36 +454,7 @@ Changelog
   fitting on a pandas DataFrame with a non-default `scoring` parameter and
   early_stopping enabled. :pr:`22908` by `Thomas Fan`_.
 
-:mod:`sklearn.feature_extraction`
-.................................
-
-- |Feature| Added auto mode to
-  :class:`feature_selection.SequentialFeatureSelection`. If the argument
-  `n_features_to_select` is `'auto'`, select features until the score
-  improvement does not exceed the argument `tol`. The default value of
-  `n_features_to_select` changed from `None` to `'warn'` in 1.1 and will become
-  `'auto'` in 1.3. `None` and `'warn'` will be removed in 1.3. :pr:`20145` by
-  :user:`murata-yu`.
-
-:mod:`sklearn.feature_selection`
-................................
-
-- |Efficiency| Improve runtime performance of :func:`feature_selection.chi2`
-  with boolean arrays. :pr:`22235` by `Thomas Fan`_.
-
-- |Feature| Added the ability to pass callables to the `max_features` parameter
-  of :class:`feature_selection.SelectFromModel`. Also introduced new attribute
-  `max_features_` which is inferred from `max_features` and the data during
-  `fit`. If `max_features` is an integer, then `max_features_ = max_features`.
-  If `max_features` is a callable, then `max_features_ = max_features(X)`.
-  :pr:`22356` by :user:`Meekail Zain <micky774>`
-
-:mod:`sklearn.feature_selection`
-................................
-- |Efficiency| Reduced memory usage of :func:`feature_selection.chi2`.
-  :pr:`21837` by :user:`Louis Wagner <lrwagner>`.
-
-- |Efficiency|  Fitting a :class:`ensemble.RandomForestClassifier`,
+- |Efficiency| Fitting a :class:`ensemble.RandomForestClassifier`,
   :class:`ensemble.RandomForestRegressor`, :class:`ensemble.ExtraTreesClassifier`,
   :class:`ensemble.ExtraTreesRegressor`, and :class:`ensemble.RandomTreesEmbedding`
   is now faster in a multiprocessing setting, especially for subsequent fits with
@@ -469,19 +466,25 @@ Changelog
   :pr:`16748` by :user:`Siqi He <siqi-he>` and :pr:`22215` by
   :user:`Meekail Zain <micky774>`.
 
-- |Enhancement| :class:`feature_selection.GenericUnivariateSelect` preserves
-  float32 dtype. :pr:`18482` by :user:`Thierry Gameiro <titigmr>`
-  and :user:`Daniel Kharsa <aflatoune>` and :pr:`22370` by
-  :user:`Meekail Zain <micky774>`.
+- |Enhancement| :class:`ensemble.RandomTreesEmbedding` now has an informative
+  :func:`get_feature_names_out` function that includes both tree index and leaf index in
+  the output feature names.
+  :pr:`21762` by :user:`Zhehao Liu <MaxwellLZH>` and `Thomas Fan`_.
+
+- |API| The attribute `loss_` of :class:`ensemble.GradientBoostingClassifier` and
+  :class:`ensemble.GradientBoostingRegressor` has been deprecated and will be removed
+  in version 1.3.
+  :pr:`23079` by :user:`Christian Lorentzen <lorentzenchr>`.
+
+- |Enhancement| :class:`RandomForestClassifier` and :class:`ExtraTreesClassifier` have
+  the new `criterion="log_loss"`, which is equivalent to `criterion="entropy"`.
+  :pr:`23047` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 :mod:`sklearn.feature_extraction`
 .................................
 
-- |API| :func:`decomposition.FastICA` now supports unit variance for whitening.
-  The default value of its `whiten` argument will change from `True`
-  (which behaves like `'arbitrary-variance'`) to `'unit-variance'` in version 1.3.
-  :pr:`19490` by :user:`Facundo Ferrin <fferrin>` and
-  :user:`Julien Jerphanion <jjerphan>`.
+- |Feature| :class:`feature_extraction.FeatureHasher` now supports PyPy.
+  :pr:`23023` by `Thomas Fan`_.
 
 - |Fix| :class:`feature_extraction.FeatureHasher` now validates input parameters
   in `transform` instead of `__init__`. :pr:`21573` by
@@ -497,6 +500,32 @@ Changelog
 
 :mod:`sklearn.feature_selection`
 ................................
+
+- |Feature| Added auto mode to
+  :class:`feature_selection.SequentialFeatureSelection`. If the argument
+  `n_features_to_select` is `'auto'`, select features until the score
+  improvement does not exceed the argument `tol`. The default value of
+  `n_features_to_select` changed from `None` to `'warn'` in 1.1 and will become
+  `'auto'` in 1.3. `None` and `'warn'` will be removed in 1.3. :pr:`20145` by
+  :user:`murata-yu <murata-yu>`.
+
+- |Efficiency| Improve runtime performance of :func:`feature_selection.chi2`
+  with boolean arrays. :pr:`22235` by `Thomas Fan`_.
+
+- |Feature| Added the ability to pass callables to the `max_features` parameter
+  of :class:`feature_selection.SelectFromModel`. Also introduced new attribute
+  `max_features_` which is inferred from `max_features` and the data during
+  `fit`. If `max_features` is an integer, then `max_features_ = max_features`.
+  If `max_features` is a callable, then `max_features_ = max_features(X)`.
+  :pr:`22356` by :user:`Meekail Zain <micky774>`
+
+- |Efficiency| Reduced memory usage of :func:`feature_selection.chi2`.
+  :pr:`21837` by :user:`Louis Wagner <lrwagner>`.
+
+- |Enhancement| :class:`feature_selection.GenericUnivariateSelect` preserves
+  float32 dtype. :pr:`18482` by :user:`Thierry Gameiro <titigmr>`
+  and :user:`Daniel Kharsa <aflatoune>` and :pr:`22370` by
+  :user:`Meekail Zain <micky774>`.
 
 - |Enhancement| Add a parameter `force_finite` to
   :func:`feature_selection.f_regression` and
@@ -521,13 +550,6 @@ Changelog
   a more informative error if `CompoundKernel` is passed via `kernel`.
   :pr:`22223` by :user:`MarcoM <marcozzxx810>`.
 
-:mod:`sklearn.ensemble`
-.......................
-- |Enhancement| :class:`ensemble.RandomTreesEmbedding` now has an informative
-  :func:`get_feature_names_out` function that includes both tree index and leaf index in
-  the output feature names.
-  :pr:`21762` by :user:`Zhehao Liu <MaxwellLZH>` and `Thomas Fan`_.
-
 :mod:`sklearn.impute`
 .....................
 
@@ -549,20 +571,6 @@ Changelog
   values in the training set.
   :pr:`21617` by :user:`Christian Ritter <chritter>`.
 
-- |Enhancement| :class:`linear_model.RidgeClassifier` is now supporting
-  multilabel classification.
-  :pr:`19689` by :user:`Guillaume Lemaitre <glemaitre>`.
-
-- |Enhancement| :class:`linear_model.RidgeCV` and
-  :class:`linear_model.RidgeClassifierCV` now raise consistent error message
-  when passed invalid values for `alphas`.
-  :pr:`21606` by :user:`Arturo Amor <ArturoAmorQ>`.
-
-- |Enhancement| :class:`linear_model.Ridge` and :class:`linear_model.RidgeClassifier`
-  now raise consistent error message when passed invalid values for `alpha`,
-  `max_iter` and `tol`.
-  :pr:`21341` by :user:`Arturo Amor <ArturoAmorQ>`.
-
 :mod:`sklearn.inspection`
 .........................
 
@@ -571,11 +579,18 @@ Changelog
   :pr:`16061` by `Thomas Fan`_.
 
 - |Enhancement| In
-  :meth:`~sklearn.inspection.PartialDependenceDisplay.from_estimator` and
-  :meth:`~sklearn.inspection.PartialDependenceDisplay.from_predictions`, allow
+  :meth:`inspection.PartialDependenceDisplay.from_estimator`, allow
   `kind` to accept a list of strings to specify  which type of
   plot to draw for each feature interaction.
   :pr:`19438` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Enhancement| :meth:`inspection.PartialDependenceDisplay.from_estimator`,
+  :meth:`inspection.PartialDependenceDisplay.plot`, and
+  :func:`inspection.plot_partial_dependence` now support plotting centered
+  Individual Conditional Expectation (cICE) and centered PDP curves controlled
+  by setting the parameter `centered`.
+  :pr:`18310` by :user:`Johannes Elfner <JoElfner>` and
+  :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.isotonic`
 .......................
@@ -639,6 +654,10 @@ Changelog
   :pr:`21481` by :user:`Guillaume Lemaitre <glemaitre>` and
   :user:`Andrés Babino <ababino>`.
 
+- |Fix| :class:`linear_model.TheilSenRegressor` now validates input parameter
+  ``max_subpopulation`` in `fit` instead of `__init__`.
+  :pr:`21767` by :user:`Maren Westermann <marenwestermann>`.
+
 - |Enhancement| :func:`linear_model.ElasticNet` and
   and other linear model classes using coordinate descent show error
   messages when non-finite parameter weights are produced. :pr:`22148`
@@ -688,6 +707,20 @@ Changelog
   `fit_intercept=True`.
   :pr:`22950` by :user:`Christian Lorentzen <lorentzenchr>`.
 
+- |Enhancement| :class:`linear_model.RidgeClassifier` is now supporting
+  multilabel classification.
+  :pr:`19689` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Enhancement| :class:`linear_model.RidgeCV` and
+  :class:`linear_model.RidgeClassifierCV` now raise consistent error message
+  when passed invalid values for `alphas`.
+  :pr:`21606` by :user:`Arturo Amor <ArturoAmorQ>`.
+
+- |Enhancement| :class:`linear_model.Ridge` and :class:`linear_model.RidgeClassifier`
+  now raise consistent error message when passed invalid values for `alpha`,
+  `max_iter` and `tol`.
+  :pr:`21341` by :user:`Arturo Amor <ArturoAmorQ>`.
+
 :mod:`sklearn.manifold`
 .......................
 
@@ -713,6 +746,11 @@ Changelog
   :pr:`21805` by :user:`Jeanne Dionisi <jeannedionisi>` and :pr:`22685` by
   :user:`Meekail Zain <micky774>`.
 
+- |Enhancement| :func:`manifold.trustworthiness` raises an error if
+  `n_neighbours >= n_samples / 2` to ensure a correct support for the function.
+  :pr:`18832` by :user:`Hong Shao Yang <hongshaoyang>` and :pr:`23033` by
+  :user:`Meekail Zain <micky774>`.
+
 :mod:`sklearn.metrics`
 ......................
 
@@ -721,6 +759,14 @@ Changelog
   actual non-finite score in case of perfect predictions or constant `y_true`,
   instead of the finite approximation (`1.0` and `0.0` respectively) currently
   returned by default. :pr:`17266` by :user:`Sylvain Marié <smarie>`.
+
+- |Feature| :func:`d2_pinball_score` and :func:`d2_absolute_error_score`
+  calculate the :math:`D^2` regression score for the pinball loss and the
+  absolute error respectively. :func:`d2_absolute_error_score` is a special case
+  of :func:`d2_pinball_score` with a fixed quantile parameter `alpha=0.5`
+  for ease of use and discovery. The :math:`D^2` scores are generalizations
+  of the `r2_score` and can be interpeted as the fraction of deviance explained.
+  :pr:`22118` by :user:`Ohad Michel <ohadmich>`
 
 - |Enhancement| :func:`metrics.top_k_accuracy_score` raises an improved error
   message when `y_true` is binary and `y_score` is 2d. :pr:`22284` by `Thomas Fan`_.
@@ -766,6 +812,20 @@ Changelog
 - |Fix| Fixes `precision_recall_curve` and `average_precision_score` when true labels
   are all negative. :pr:`19085` by :user:`Varun Agrawal <varunagrawal>`.
 
+:mod:`sklearn.mixture`
+......................
+
+- |Enhancement| :class:`mixture.GaussianMixture` and
+  :class:`mixture.BayesianGaussianMixture` can now be initialized using
+  k-means++ and random data points. :pr:`20408` by
+  :user:`Gordon Walsh <g-walsh>`, :user:`Alberto Ceballos<alceballosa>`
+  and :user:`Andres Rios<ariosramirez>`.
+
+- |Fix| Fix a bug that correctly initialize `precisions_cholesky_` in
+  :class:`mixture.GaussianMixture` when providing `precisions_init` by taking
+  its square root.
+  :pr:`22058` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
@@ -783,13 +843,13 @@ Changelog
   now validate input parameters in `fit` instead of `__init__`.
   :pr:`21880` by :user:`Mrinal Tyagi <MrinalTyagi>`.
 
-:mod:`sklearn.mixture`
-......................
+- |Fix| :func:`model_selection.learning_curve` now supports `partial_fit`
+  with regressors. :pr:`22982` by `Thomas Fan`_.
 
-- |Fix| Fix a bug that correctly initialize `precisions_cholesky_` in
-  :class:`mixture.GaussianMixture` when providing `precisions_init` by taking
-  its square root.
-  :pr:`22058` by :user:`Guillaume Lemaitre <glemaitre>`.
+- |Fix| :class:`mixture.GaussianMixture` now normalizes `weights_` more safely,
+  preventing rounding errors when calling :meth:`GaussianMixture.sample` with
+  `n_components=1`.
+  :pr:`23034` by :user:`Meekail Zain <micky774>`.
 
 :mod:`sklearn.multiclass`
 .........................
@@ -803,16 +863,6 @@ Changelog
 
 :mod:`sklearn.neighbors`
 ........................
-
-- |Enhancement| `utils.validation.check_array` and `utils.validation.type_of_target`
-  now accept an `input_name` parameter to make the error message more
-  informative when passed invalid input data (e.g. with NaN or infinite
-  values).
-  :pr:`21219` by :user:`Olivier Grisel <ogrisel>`.
-
-- |Enhancement| :func:`utils.validation.check_array` returns a float
-  ndarray with `np.nan` when passed a `Float32` or `Float64` pandas extension
-  array with `pd.NA`. :pr:`21278` by `Thomas Fan`_.
 
 - |Enhancement| Adds :term:`get_feature_names_out` to
   :class:`neighbors.RadiusNeighborsTransformer`, :class:`neighbors.KNeighborsTransformer`
@@ -853,6 +903,10 @@ Changelog
 - |Fix| :class:`pipeline.FeatureUnion` does not validate hyper-parameters in
   `__init__`. Validation is now handled in `.fit()` and `.fit_transform()`.
   :pr:`21954` by :user:`iofall <iofall>` and :user:`Arisa Y. <arisayosh>`.
+
+- |Fix| Defines `__sklearn_is_fitted__` in :class:`pipeline.FeatureUnion` to
+  return correct result with :func:`utils.validation.check_is_fitted`.
+  :pr:`22953` by :user:`randomgeek78 <randomgeek78>`.
 
 :mod:`sklearn.preprocessing`
 ............................
@@ -957,8 +1011,22 @@ Changelog
   for :class:`tree.DecisionTreeClassifier` and :class:`DecisionTreeRegressor`.
   :pr:`22476` by :user: `Zhehao Liu <MaxwellLZH>`.
 
+- |Enhancement| :class:`DecisionTreeClassifier` and :class:`ExtraTreeClassifier` have
+  the new `criterion="log_loss"`, which is equivalent to `criterion="entropy"`.
+  :pr:`23047` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 :mod:`sklearn.utils`
 ....................
+
+- |Enhancement| `utils.validation.check_array` and `utils.validation.type_of_target`
+  now accept an `input_name` parameter to make the error message more
+  informative when passed invalid input data (e.g. with NaN or infinite
+  values).
+  :pr:`21219` by :user:`Olivier Grisel <ogrisel>`.
+
+- |Enhancement| :func:`utils.validation.check_array` returns a float
+  ndarray with `np.nan` when passed a `Float32` or `Float64` pandas extension
+  array with `pd.NA`. :pr:`21278` by `Thomas Fan`_.
 
 - |Enhancement| :func:`utils.estimator_html_repr` shows a more helpful error
   message when running in a jupyter notebook that is not trusted. :pr:`21316`
@@ -967,6 +1035,10 @@ Changelog
 - |Enhancement| :func:`utils.estimator_html_repr` displays an arrow on the top
   left corner of the HTML representation to show how the elements are
   clickable. :pr:`21298` by `Thomas Fan`_.
+
+- |Enhancement| Removes random unique identifiers in the HTML representation.
+  With this change, jupyter notebooks are reproducible as long as the cells are
+  run in the same order. :pr:`23098` by `Thomas Fan`_.
 
 - |API| :func:`utils.estimator_checks.check_estimator`'s argument is now called
   `estimator` (previous name was `Estimator`). :pr:`22188` by
