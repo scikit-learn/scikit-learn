@@ -15,23 +15,13 @@ set the amount of regularization, i.e. how to choose the bias-variance
 trade-off.
 """
 
-import numpy as np
-import matplotlib.pyplot as plt
-from scipy import linalg
-
-from sklearn.covariance import (
-    LedoitWolf,
-    OAS,
-    ShrunkCovariance,
-    log_likelihood,
-    empirical_covariance,
-)
-from sklearn.model_selection import GridSearchCV
-
 
 # %%
 # Generate sample data
 # --------------------
+
+import numpy as np
+
 n_features, n_samples = 40, 20
 np.random.seed(42)
 base_X_train = np.random.normal(size=(n_samples, n_features))
@@ -46,6 +36,9 @@ X_test = np.dot(base_X_test, coloring_matrix)
 # %%
 # Compute the likelihood on test data
 # -----------------------------------
+
+from sklearn.covariance import ShrunkCovariance, empirical_covariance, log_likelihood
+from scipy import linalg
 
 # spanning a range of possible shrinkage coefficient values
 shrinkages = np.logspace(-2, 0, 30)
@@ -80,6 +73,9 @@ loglik_real = -log_likelihood(emp_cov, linalg.inv(real_cov))
 #   are Gaussian, in particular for small samples.
 
 
+from sklearn.model_selection import GridSearchCV
+from sklearn.covariance import LedoitWolf, OAS
+
 # GridSearch for an optimal shrinkage coefficient
 tuned_parameters = [{"shrinkage": shrinkages}]
 cv = GridSearchCV(ShrunkCovariance(), tuned_parameters)
@@ -101,6 +97,8 @@ loglik_oa = oa.fit(X_train).score(X_test)
 # To quantify estimation error, we plot the likelihood of unseen data for
 # different values of the shrinkage parameter. We also show the choices by
 # cross-validation, or with the LedoitWolf and OAS estimates.
+
+import matplotlib.pyplot as plt
 
 fig = plt.figure()
 plt.title("Regularized covariance: likelihood and shrinkage coefficient")
