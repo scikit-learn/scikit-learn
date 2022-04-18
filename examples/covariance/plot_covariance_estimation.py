@@ -31,7 +31,7 @@ from sklearn.model_selection import GridSearchCV
 
 # %%
 # Generate sample data
-# ---------------------------------------------------
+# --------------------
 n_features, n_samples = 40, 20
 np.random.seed(42)
 base_X_train = np.random.normal(size=(n_samples, n_features))
@@ -45,7 +45,7 @@ X_test = np.dot(base_X_test, coloring_matrix)
 
 # %%
 # Compute the likelihood on test data
-# ---------------------------------------------------
+# -----------------------------------
 
 # spanning a range of possible shrinkage coefficient values
 shrinkages = np.logspace(-2, 0, 30)
@@ -61,8 +61,8 @@ loglik_real = -log_likelihood(emp_cov, linalg.inv(real_cov))
 
 
 # %%
-# Compare different approaches to setting the parameter
-# ---------------------------------------------------
+# Compare different approaches to setting the regularization parameter
+# --------------------------------------------------------------------
 #
 # Here we compare 3 approaches:
 #
@@ -95,7 +95,7 @@ loglik_oa = oa.fit(X_train).score(X_test)
 
 # %%
 # Plot results
-# ---------------------------------------------------
+# ------------
 #
 #
 # To quantify estimation error, we plot the likelihood of unseen data for
@@ -152,7 +152,7 @@ plt.show()
 #
 #    The maximum likelihood estimate corresponds to no shrinkage,
 #    and thus performs poorly. The Ledoit-Wolf estimate performs really well,
-#    as it is close to the optimal and is computational not costly. In this
+#    as it is close to the optimal and is not computationally costly. In this
 #    example, the OAS estimate is a bit further away. Interestingly, both
 #    approaches outperform cross-validation, which is significantly most
 #    computationally costly.
