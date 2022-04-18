@@ -32,6 +32,7 @@ from ..base import is_classifier
 from ..base import MultiOutputMixin
 from ..utils import Bunch
 from ..utils import check_random_state
+from ..utils import check_scalar
 from ..utils.deprecation import deprecated
 from ..utils.validation import _check_sample_weight
 from ..utils import compute_sample_weight
@@ -294,20 +295,8 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             if self.max_features == "auto":
                 if is_classification:
                     max_features = max(1, int(np.sqrt(self.n_features_in_)))
-                    warnings.warn(
-                        "`max_features='auto'` has been deprecated in 1.1 "
-                        "and will be removed in 1.3. To keep the past behaviour, "
-                        "explicitly set `max_features='sqrt'`.",
-                        FutureWarning,
-                    )
                 else:
                     max_features = self.n_features_in_
-                    warnings.warn(
-                        "`max_features='auto'` has been deprecated in 1.1 "
-                        "and will be removed in 1.3. To keep the past behaviour, "
-                        "explicitly set `max_features=1.0'`.",
-                        FutureWarning,
-                    )
             elif self.max_features == "sqrt":
                 max_features = max(1, int(np.sqrt(self.n_features_in_)))
             elif self.max_features == "log2":
@@ -326,7 +315,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 name="max_features",
                 target_type=numbers.Integral,
                 min_val=1,
-                include_boundaries="left",
+                max_val=self.n_features_in_,
             )
             max_features = self.max_features
         else:  # float
@@ -391,7 +380,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 )
             else:
                 criterion = CRITERIA_REG[self.criterion](self.n_outputs_, n_samples)
-            # TODO(1.2): Remove "mse" and "mae"
+            # TODO: Remove in v1.2
             if self.criterion == "mse":
                 warnings.warn(
                     "Criterion 'mse' was deprecated in v1.0 and will be "
@@ -1446,7 +1435,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
-    max_features : int, float, {"auto", "sqrt", "log2"} or None, default="sqrt"
+    max_features : int, float, {"auto", "sqrt", "log2"} or None, default="auto"
         The number of features to consider when looking for the best split:
 
             - If int, then consider `max_features` features at each split.
