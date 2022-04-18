@@ -871,6 +871,40 @@ def test_multimetric_scorer_sanity_check():
         assert_allclose(value, separate_scores[score_name])
 
 
+def test_multimetric_scorer_returning_exceptions_in_dictianary():
+    scorers = {
+        "failing_1": "neg_mean_squared_log_error",
+        "non_failing": "neg_median_absolute_error",
+        "failing_2": "neg_mean_squared_log_error",
+    }
+
+    X, y = make_classification(
+        n_samples=20, n_features=2, n_redundant=0, random_state=0
+    )
+    y *= -1  # neg_mean_squared_log_error fails if y contains negative values
+
+    clf = DecisionTreeClassifier()
+    clf.fit(X, y)
+
+    scorer_dict = _check_multimetric_scoring(clf, scorers)
+    multi_scorer = _MultimetricScorer(**scorer_dict)
+
+    result = multi_scorer(clf, X, y)
+
+    e1 = result["failing_1"]
+    score = result["non_failing"]
+    e2 = result["failing_2"]
+
+    error_msg = (
+        "Mean Squared Logarithmic Error cannot be used when targets contain negative"
+        " values."
+    )
+
+    assert type(e1) is ValueError and str(e1) == error_msg
+    assert isinstance(score, float)
+    assert type(e2) is ValueError and str(e2) == error_msg
+
+
 @pytest.mark.parametrize(
     "scorer_name, metric",
     [
