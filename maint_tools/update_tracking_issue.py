@@ -35,6 +35,14 @@ parser.add_argument(
         "exists. If tests-passed is false, then the an issue is updated or created."
     ),
 )
+parser.add_argument(
+    "--auto-close",
+    help=(
+        "If --auto-close is false, then issues will not auto close even if the tests"
+        " pass."
+    ),
+    default="true",
+)
 
 args = parser.parse_args()
 
@@ -81,16 +89,19 @@ def create_or_update_issue(body=""):
 
 def close_issue_if_opened():
     print("Test has no failures!")
-    issue = get_issue()
-    if issue is not None:
-        print(f"Closing issue #{issue.number}")
-        new_body = (
-            "## Closed issue because CI is no longer failing! ✅\n\n"
-            f"[Successful run]({args.link_to_ci_run})\n\n"
-            "## Previous failure report\n\n"
-            f"{issue.body}"
-        )
-        issue.edit(state="closed", body=new_body)
+    if args.auto_close.lower() == "true":
+        issue = get_issue()
+        if issue is not None:
+            print(f"Closing issue #{issue.number}")
+            new_body = (
+                "## Closed issue because CI is no longer failing! ✅\n\n"
+                f"[Successful run]({args.link_to_ci_run})\n\n"
+                "## Previous failure report\n\n"
+                f"{issue.body}"
+            )
+            issue.edit(state="closed", body=new_body)
+    else:
+        print("--auto-close is false, issue will not be closed.")
     sys.exit()
 
 
