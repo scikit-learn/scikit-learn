@@ -879,7 +879,7 @@ def test_multimetric_scorer_returning_exceptions_in_dictianary():
     }
 
     X, y = make_classification(
-        n_samples=20, n_features=2, n_redundant=0, random_state=0
+        n_samples=50, n_features=2, n_redundant=0, random_state=0
     )
     y *= -1  # neg_mean_squared_log_error fails if y contains negative values
 
