@@ -711,35 +711,24 @@ cdef class HellingerDistance(ClassificationCriterion):
                                 double* impurity_right) nogil:
         cdef:
             SIZE_t* n_classes = self.n_classes
-            double* sum_left = self.sum_left
-            double* sum_right = self.sum_right
-            double hellinger_left = 0.0
-            double hellinger_right = 0.0
-            double count_k1 = 0.0
-            double count_k2 = 0.0
-            SIZE_t k, c
+            double sum_left = self.sum_left[0] # supporting single label only
+            double sum_right = self.sum_right[0]  # supporting single label only
+            double sum_k1 = sum_left[0] + sum_right[0]
+            double sum_k2 = sum_left[1] + sum_right[1]
+            double count_k1_left = 0.0
+            double count_k2_left = 0.0
+            double count_k1_right = 0.0
+            double count_k2_right = 0.0
 
-        for k in range(self.n_outputs):
-            count_k1 = 0.0
-            count_k2 = 0.0
-            if(sum_left[0] + sum_right[0] > 0):
-                count_k1 = sqrt(sum_left[0] / (sum_left[0] + sum_right[0]))
-            if(sum_left[1] + sum_right[1] > 0):
-                count_k2 = sqrt(sum_left[1] / (sum_left[1] + sum_right[1]))
+        if  sum_k1 > 0:
+            count_k1_left = sqrt(sum_left[0] / sum_k1)
+            count_k1_right = sqrt(sum_right[0] / sum_k1)
+        if  sum_k2 > 0:
+            count_k2_left = sqrt(sum_left[1] / sum_k2)
+            count_k2_right = sqrt(sum_right[1] / sum_k2)
 
-            hellinger_left += 1 - pow((count_k1  - count_k2), 2)
-
-            count_k1 = 0.0
-            count_k2 = 0.0
-            if(sum_left[0] + sum_right[0] > 0):
-                count_k1 = sqrt(sum_right[0] / (sum_left[0] + sum_right[0]))
-            if(sum_left[1] + sum_right[1] > 0):
-                count_k2 = sqrt(sum_right[1] / (sum_left[1] + sum_right[1]))
-
-            hellinger_right += 1 - pow((count_k1  - count_k2), 2)
-
-        impurity_left[0]  = hellinger_left  / self.n_outputs
-        impurity_right[0] = hellinger_right / self.n_outputs
+        impurity_left[0]  = 1 - pow((count_k1_left  - count_k2_left), 2)
+        impurity_right[0] = 1 - pow((count_k1_right  - count_k2_right), 2)
 
 
 cdef class RegressionCriterion(Criterion):
