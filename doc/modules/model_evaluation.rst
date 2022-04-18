@@ -1137,11 +1137,11 @@ i.e., :math:`y_{i,k} = 1` if sample :math:`i` has label :math:`k`
 taken from a set of :math:`K` labels.
 Let :math:`P` be a matrix of probability estimates,
 with :math:`p_{i,k} = \operatorname{Pr}(y_{i,k} = 1)`.
-Then the log loss of the whole set is
+Then the log loss per sample is:
 
 .. math::
 
-    L_{\log}(Y, P) = -\log \operatorname{Pr}(Y|P) = - \frac{1}{N} \sum_{i=0}^{N-1} \sum_{k=0}^{K-1} y_{i,k} \log p_{i,k}
+    L_{\log}(Y, P) = -\log \operatorname{Pr}(Y|P) = - \sum_{k=0}^{K-1} y_{i,k} \log p_{i,k}
 
 To see how this generalizes the binary log loss given above,
 note that in the binary case,
