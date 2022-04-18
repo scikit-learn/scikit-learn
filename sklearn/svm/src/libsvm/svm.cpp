@@ -3115,13 +3115,13 @@ const char *PREFIX(check_parameter)(const PREFIX(problem) *prob, const svm_param
 		if(param->nu <= 0 || param->nu > 1)
 			return "nu <= 0 or nu > 1";
 
-	if(svm_type == EPSILON_SVR || svm_type == QUANTILE_SVR)
+	if(svm_type == EPSILON_SVR)
 		if(param->p < 0)
 			return "p < 0";
 
 	if(svm_type == QUANTILE_SVR)
-		if(param->p > 1)
-			return "p > 1";
+		if((param->p >= 1) || (param->p <= 0))
+			return "quantile not in (0, 1)";
 
 	if(param->shrinking != 0 &&
 	   param->shrinking != 1)

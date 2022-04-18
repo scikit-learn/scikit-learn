@@ -215,6 +215,7 @@ def test_svr():
         svm.NuSVR(kernel="linear", nu=0.4, C=1.0),
         svm.NuSVR(kernel="linear", nu=0.4, C=10.0),
         svm.SVR(kernel="linear", C=10.0),
+        svm.QuantileSVR(kernel="linear", C=10.0),
         svm.LinearSVR(C=10.0),
         svm.LinearSVR(C=10.0),
     ):
@@ -224,7 +225,27 @@ def test_svr():
     # non-regression test; previously, BaseLibSVM would check that
     # len(np.unique(y)) < 2, which must only be done for SVC
     svm.SVR().fit(diabetes.data, np.ones(len(diabetes.data)))
+    svm.QuantileSVR().fit(diabetes.data, np.ones(len(diabetes.data)))
     svm.LinearSVR().fit(diabetes.data, np.ones(len(diabetes.data)))
+
+
+def test_quantilesvr():
+    # check that SVR with epsilon set to zero is equivalent to QuantileSVR where
+    # the quantile is set to 0.5
+
+    diabetes = datasets.load_diabetes()
+    qvr = svm.QuantileSVR(kernel="linear", C=1e3, quantile=0.5).fit(
+        diabetes.data, diabetes.target
+    )
+    score1 = qvr.score(diabetes.data, diabetes.target)
+
+    svr = svm.SVR(kernel="linear", C=1e3, epsilon=0.0).fit(
+        diabetes.data, diabetes.target
+    )
+    score2 = svr.score(diabetes.data, diabetes.target)
+
+    assert_allclose(np.linalg.norm(qvr.coef_), np.linalg.norm(svr.coef_), 1, 0.0001)
+    assert_almost_equal(score1, score2, 2)
 
 
 def test_linearsvr():

@@ -78,10 +78,10 @@ def libsvm_sparse_train (int n_features,
                          cnp.ndarray[cnp.int32_t,   ndim=1, mode='c'] indptr,
                          cnp.ndarray[cnp.float64_t, ndim=1, mode='c'] Y,
                          int svm_type, int kernel_type, int degree, double gamma,
-                         double coef0, double eps, double C,
+                         double coef0, double tol, double C,
                          cnp.ndarray[cnp.float64_t, ndim=1, mode='c'] class_weight,
                          cnp.ndarray[cnp.float64_t, ndim=1, mode='c'] sample_weight,
-                         double nu, double cache_size, double p, int
+                         double nu, double cache_size, double epsilon, double quantile, int
                          shrinking, int probability, int max_iter,
                          int random_seed):
     """
@@ -132,9 +132,14 @@ def libsvm_sparse_train (int n_features,
     cdef cnp.ndarray[cnp.int32_t, ndim=1, mode='c'] \
         class_weight_label = np.arange(class_weight.shape[0], dtype=np.int32)
 
+    if svm_type == 5:
+        p = quantile
+    else:
+        p = epsilon
+
     # set parameters
     param = set_parameter(svm_type, kernel_type, degree, gamma, coef0,
-                          nu, cache_size, C, eps, p, shrinking,
+                          nu, cache_size, C, tol, p, shrinking,
                           probability, <int> class_weight.shape[0],
                           class_weight_label.data, class_weight.data, max_iter,
                           random_seed)
@@ -232,7 +237,7 @@ def libsvm_sparse_predict (cnp.ndarray[cnp.float64_t, ndim=1, mode='c'] T_data,
                            cnp.ndarray[cnp.float64_t, ndim=1, mode='c']
                            intercept, int svm_type, int kernel_type, int
                            degree, double gamma, double coef0, double
-                           eps, double C,
+                           tol, double C,
                            cnp.ndarray[cnp.float64_t, ndim=1] class_weight,
                            double nu, double p, int
                            shrinking, int probability,
@@ -267,10 +272,11 @@ def libsvm_sparse_predict (cnp.ndarray[cnp.float64_t, ndim=1, mode='c'] T_data,
     cdef cnp.ndarray[cnp.int32_t, ndim=1, mode='c'] \
         class_weight_label = np.arange(class_weight.shape[0], dtype=np.int32)
     cdef int rv
+
     param = set_parameter(svm_type, kernel_type, degree, gamma,
                           coef0, nu,
                           100., # cache size has no effect on predict
-                          C, eps, p, shrinking,
+                          C, tol, p, shrinking,
                           probability, <int> class_weight.shape[0], class_weight_label.data,
                           class_weight.data, -1,
                           -1) # random seed has no effect on predict either
@@ -310,7 +316,7 @@ def libsvm_sparse_predict_proba(
     cnp.ndarray[cnp.float64_t, ndim=1, mode='c']
     intercept, int svm_type, int kernel_type, int
     degree, double gamma, double coef0, double
-    eps, double C,
+    tol, double C,
     cnp.ndarray[cnp.float64_t, ndim=1] class_weight,
     double nu, double p, int shrinking, int probability,
     cnp.ndarray[cnp.int32_t, ndim=1, mode='c'] nSV,
@@ -327,7 +333,7 @@ def libsvm_sparse_predict_proba(
     param = set_parameter(svm_type, kernel_type, degree, gamma,
                           coef0, nu,
                           100., # cache size has no effect on predict
-                          C, eps, p, shrinking,
+                          C, tol, p, shrinking,
                           probability, <int> class_weight.shape[0], class_weight_label.data,
                           class_weight.data, -1,
                           -1) # random seed has no effect on predict either
@@ -371,7 +377,7 @@ def libsvm_sparse_decision_function(
     cnp.ndarray[cnp.float64_t, ndim=1, mode='c']
     intercept, int svm_type, int kernel_type, int
     degree, double gamma, double coef0, double
-    eps, double C,
+    tol, double C,
     cnp.ndarray[cnp.float64_t, ndim=1] class_weight,
     double nu, double p, int shrinking, int probability,
     cnp.ndarray[cnp.int32_t, ndim=1, mode='c'] nSV,
@@ -393,7 +399,7 @@ def libsvm_sparse_decision_function(
     param = set_parameter(svm_type, kernel_type, degree, gamma,
                           coef0, nu,
                           100., # cache size has no effect on predict
-                          C, eps, p, shrinking,
+                          C, tol, p, shrinking,
                           probability, <int> class_weight.shape[0],
                           class_weight_label.data, class_weight.data, -1, -1)
 

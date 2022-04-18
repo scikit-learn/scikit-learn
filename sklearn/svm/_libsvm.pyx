@@ -196,14 +196,8 @@ def fit(
 
     error_msg = svm_check_parameter(&problem, &param)
     if error_msg:
-        if svm_type == 3:
-            # for SVR: epsilon is called p in libsvm
-            error_repl = error_msg.decode('utf-8').replace("p < 0", "epsilon < 0")
-        elif svm_type == 5:
-            # for QuantileSVR: quantile is called p in libsvm, and it may give an
-            # error for values outside of [0, 1].
-            error_repl = error_msg.decode('utf-8').replace("p < 0", "quantile < 0")
-            error_repl = error_msg.decode('utf-8').replace("p > 1", "quantile > 1")
+        # for SVR: epsilon is called p in libsvm
+        error_repl = error_msg.decode('utf-8').replace("p < 0", "epsilon < 0")
         raise ValueError(error_repl)
     cdef BlasFunctions blas_functions
     blas_functions.dot = _dot[double]

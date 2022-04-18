@@ -1409,10 +1409,10 @@ class QuantileSVR(RegressorMixin, BaseLibSVM):
     >>> rng = np.random.RandomState(0)
     >>> y = rng.randn(n_samples)
     >>> X = rng.randn(n_samples, n_features)
-    >>> regr = make_pipeline(StandardScaler(), QuantileSVR(C=1.0, epsilon=0.9))
+    >>> regr = make_pipeline(StandardScaler(), QuantileSVR(C=1.0, quantile=0.9))
     >>> regr.fit(X, y)
     Pipeline(steps=[('standardscaler', StandardScaler()),
-                    ('svr', QuantileSVR(epsilon=0.9))])
+                    ('quantilesvr', QuantileSVR(quantile=0.9))])
     """
 
     _impl = "quantile_svr"
@@ -1840,6 +1840,7 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
             tol,
             0.0,
             nu,
+            0.0,
             0.0,
             shrinking,
             False,
