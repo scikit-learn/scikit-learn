@@ -1244,6 +1244,205 @@ class SVR(RegressorMixin, BaseLibSVM):
             C=C,
             nu=0.0,
             epsilon=epsilon,
+            quantile=0.0,
+            verbose=verbose,
+            shrinking=shrinking,
+            probability=False,
+            cache_size=cache_size,
+            class_weight=None,
+            max_iter=max_iter,
+            random_state=None,
+        )
+
+    def _more_tags(self):
+        return {
+            "_xfail_checks": {
+                "check_sample_weights_invariance": (
+                    "zero sample_weight is not equivalent to removing samples"
+                ),
+            }
+        }
+
+
+class QuantileSVR(RegressorMixin, BaseLibSVM):
+    """Quantile-Support Vector Regression.
+
+    The free parameters in the model are C and the quantile to be fit.
+
+    The implementation is based on libsvm. The fit time complexity
+    is more than quadratic with the number of samples which makes it hard
+    to scale to datasets with more than a couple of 10000 samples. For large
+    datasets consider using :class:`~sklearn.svm.LinearSVR` or
+    :class:`~sklearn.linear_model.SGDRegressor` instead, possibly after a
+    :class:`~sklearn.kernel_approximation.Nystroem` transformer.
+
+    Read more in the :ref:`User Guide <svm_regression>`.
+
+    Parameters
+    ----------
+    kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'} or callable,  \
+        default='rbf'
+         Specifies the kernel type to be used in the algorithm.
+         If none is given, 'rbf' will be used. If a callable is given it is
+         used to precompute the kernel matrix.
+
+    degree : int, default=3
+        Degree of the polynomial kernel function ('poly').
+        Ignored by all other kernels.
+
+    gamma : {'scale', 'auto'} or float, default='scale'
+        Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
+
+        - if ``gamma='scale'`` (default) is passed then it uses
+          1 / (n_features * X.var()) as value of gamma,
+        - if 'auto', uses 1 / n_features.
+
+        .. versionchanged:: 0.22
+           The default value of ``gamma`` changed from 'auto' to 'scale'.
+
+    coef0 : float, default=0.0
+        Independent term in kernel function.
+        It is only significant in 'poly' and 'sigmoid'.
+
+    tol : float, default=1e-3
+        Tolerance for stopping criterion.
+
+    C : float, default=1.0
+        Regularization parameter. The strength of the regularization is
+        inversely proportional to C. Must be strictly positive.
+        The penalty is a squared l2 penalty.
+
+    quantile : float, default=0.5
+         Quantile to be fit in the regression. A value of 0.5 (default) produces a
+         regression to the median and is equivalent to an Epsilon-SVR where epsilon
+         is set to zero.
+
+    shrinking : bool, default=True
+        Whether to use the shrinking heuristic.
+        See the :ref:`User Guide <shrinking_svm>`.
+
+    cache_size : float, default=200
+        Specify the size of the kernel cache (in MB).
+
+    verbose : bool, default=False
+        Enable verbose output. Note that this setting takes advantage of a
+        per-process runtime setting in libsvm that, if enabled, may not work
+        properly in a multithreaded context.
+
+    max_iter : int, default=-1
+        Hard limit on iterations within solver, or -1 for no limit.
+
+    Attributes
+    ----------
+    class_weight_ : ndarray of shape (n_classes,)
+        Multipliers of parameter C for each class.
+        Computed based on the ``class_weight`` parameter.
+
+    coef_ : ndarray of shape (1, n_features)
+        Weights assigned to the features (coefficients in the primal
+        problem). This is only available in the case of a linear kernel.
+
+        `coef_` is readonly property derived from `dual_coef_` and
+        `support_vectors_`.
+
+    dual_coef_ : ndarray of shape (1, n_SV)
+        Coefficients of the support vector in the decision function.
+
+    fit_status_ : int
+        0 if correctly fitted, 1 otherwise (will raise warning)
+
+    intercept_ : ndarray of shape (1,)
+        Constants in decision function.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    n_iter_ : int
+        Number of iterations run by the optimization routine to fit the model.
+
+        .. versionadded:: 1.1
+
+    n_support_ : ndarray of shape (n_classes,), dtype=int32
+        Number of support vectors for each class.
+
+    shape_fit_ : tuple of int of shape (n_dimensions_of_X,)
+        Array dimensions of training vector ``X``.
+
+    support_ : ndarray of shape (n_SV,)
+        Indices of support vectors.
+
+    support_vectors_ : ndarray of shape (n_SV, n_features)
+        Support vectors.
+
+    See Also
+    --------
+    NuSVR : Support Vector Machine for regression implemented using libsvm
+        using a parameter to control the number of support vectors.
+
+    LinearSVR : Scalable Linear Support Vector Machine for regression
+        implemented using liblinear.
+
+    References
+    ----------
+    .. [1] `LIBSVM: A Library for Support Vector Machines
+        <http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`_
+
+    .. [2] `Platt, John (1999). "Probabilistic outputs for support vector
+        machines and comparison to regularizedlikelihood methods."
+        <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.41.1639>`_
+
+    Examples
+    --------
+    >>> from sklearn.svm import QuantileSVR
+    >>> from sklearn.pipeline import make_pipeline
+    >>> from sklearn.preprocessing import StandardScaler
+    >>> import numpy as np
+    >>> n_samples, n_features = 10, 5
+    >>> rng = np.random.RandomState(0)
+    >>> y = rng.randn(n_samples)
+    >>> X = rng.randn(n_samples, n_features)
+    >>> regr = make_pipeline(StandardScaler(), QuantileSVR(C=1.0, epsilon=0.9))
+    >>> regr.fit(X, y)
+    Pipeline(steps=[('standardscaler', StandardScaler()),
+                    ('svr', QuantileSVR(epsilon=0.9))])
+    """
+
+    _impl = "quantile_svr"
+
+    def __init__(
+        self,
+        *,
+        kernel="rbf",
+        degree=3,
+        gamma="scale",
+        coef0=0.0,
+        tol=1e-3,
+        C=1.0,
+        quantile=0.5,
+        shrinking=True,
+        cache_size=200,
+        verbose=False,
+        max_iter=-1,
+    ):
+
+        super().__init__(
+            kernel=kernel,
+            degree=degree,
+            gamma=gamma,
+            coef0=coef0,
+            tol=tol,
+            C=C,
+            nu=0.0,
+            epsilon=0.0,
+            quantile=quantile,
             verbose=verbose,
             shrinking=shrinking,
             probability=False,
@@ -1448,6 +1647,7 @@ class NuSVR(RegressorMixin, BaseLibSVM):
             C=C,
             nu=nu,
             epsilon=0.0,
+            quantile=0.0,
             shrinking=shrinking,
             probability=False,
             cache_size=cache_size,

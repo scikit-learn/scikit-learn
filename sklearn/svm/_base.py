@@ -26,7 +26,7 @@ from ..exceptions import ConvergenceWarning
 from ..exceptions import NotFittedError
 
 
-LIBSVM_IMPL = ["c_svc", "nu_svc", "one_class", "epsilon_svr", "nu_svr"]
+LIBSVM_IMPL = ["c_svc", "nu_svc", "one_class", "epsilon_svr", "nu_svr", "quantile_svr"]
 
 
 def _one_vs_one_coef(dual_coef, n_support, support_vectors):
@@ -85,6 +85,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         C,
         nu,
         epsilon,
+        quantile,
         shrinking,
         probability,
         cache_size,
@@ -107,6 +108,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         self.C = C
         self.nu = nu
         self.epsilon = epsilon
+        self.quantile = quantile
         self.shrinking = shrinking
         self.probability = probability
         self.cache_size = cache_size
@@ -345,6 +347,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             coef0=self.coef0,
             gamma=self._gamma,
             epsilon=self.epsilon,
+            quantile=self.quantile,
             max_iter=self.max_iter,
             random_seed=random_seed,
         )
@@ -388,6 +391,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self.nu,
             self.cache_size,
             self.epsilon,
+            self.quantile,
             int(self.shrinking),
             int(self.probability),
             self.max_iter,
@@ -497,6 +501,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             getattr(self, "_class_weight", np.empty(0)),
             self.nu,
             self.epsilon,
+            self.quantile,
             self.shrinking,
             self.probability,
             self._n_support,
@@ -598,6 +603,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             getattr(self, "_class_weight", np.empty(0)),
             self.nu,
             self.epsilon,
+            self.quantile,
             self.shrinking,
             self.probability,
             self._n_support,
@@ -722,6 +728,7 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
             C=C,
             nu=nu,
             epsilon=0.0,
+            quantile=0.0,
             shrinking=shrinking,
             probability=probability,
             cache_size=cache_size,
@@ -947,6 +954,7 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
             getattr(self, "_class_weight", np.empty(0)),
             self.nu,
             self.epsilon,
+            self.quantile,
             self.shrinking,
             self.probability,
             self._n_support,
