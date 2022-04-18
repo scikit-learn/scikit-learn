@@ -710,9 +710,8 @@ cdef class HellingerDistance(ClassificationCriterion):
     cdef void children_impurity(self, double* impurity_left,
                                 double* impurity_right) nogil:
         cdef:
-            SIZE_t* n_classes = self.n_classes
-            double sum_left = self.sum_left[0] # supporting single label only
-            double sum_right = self.sum_right[0]  # supporting single label only
+            double[::1] sum_left = self.sum_left[0] # supporting single label only
+            double[::1] sum_right = self.sum_right[0]  # supporting single label only
             double sum_k1 = sum_left[0] + sum_right[0]
             double sum_k2 = sum_left[1] + sum_right[1]
             double count_k1_left = 0.0
