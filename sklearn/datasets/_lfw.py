@@ -109,7 +109,7 @@ def _check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
         import tarfile
 
         logger.debug("Decompressing the data archive to %s", data_folder_path)
-        # using extractall() can result in files outside destination directory to be overwritten, resulting in an arbitrary file write.
+        # extractall can cause a tar slip
         with closing(tarfile.open(archive_path, "r:gz")) as archive:
             archive.extractall(path=lfw_home)
         remove(archive_path)
