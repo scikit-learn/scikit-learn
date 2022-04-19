@@ -97,8 +97,7 @@ _ = plt.title("Models' coefficients")
 # shifted toward zero, which stabilises them. The ARD regression provides a
 # sparser solution: some of the non-informative coefficients are set exactly to
 # zero, while shifting others closer to zero. Some non-informative coefficients
-# are still present and retain the order of magnitude of the ground truth
-# coefficients.
+# are still present and retain large values.
 
 # %%
 # Plot the marginal log-likelihood
