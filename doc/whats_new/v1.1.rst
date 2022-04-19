@@ -1015,6 +1015,11 @@ Changelog
   the new `criterion="log_loss"`, which is equivalent to `criterion="entropy"`.
   :pr:`23047` by :user:`Christian Lorentzen <lorentzenchr>`.
 
+- |Feature| :class:`tree.DecisionTreeClassifier`, :class:`tree.ExtraTreeClassifier`,
+  :class:`ensemble.RandomForestClassifier` and :class:`ensemble.ExtraTreesClassifier`
+  now support the Hellinger distance as a split criterion.
+  :pr:`16478` by :user:`Evgeni Dubov <EvgeniDubov>`.
+
 :mod:`sklearn.utils`
 ....................
 
