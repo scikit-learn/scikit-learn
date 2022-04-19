@@ -32,6 +32,7 @@ from ..base import is_classifier
 from ..base import MultiOutputMixin
 from ..utils import Bunch
 from ..utils import check_random_state
+from ..utils import check_scalar
 from ..utils.deprecation import deprecated
 from ..utils.validation import _check_sample_weight
 from ..utils import compute_sample_weight
@@ -64,10 +65,11 @@ DOUBLE = _tree.DOUBLE
 
 CRITERIA_CLF = {
     "gini": _criterion.Gini,
+    "log_loss": _criterion.Entropy,
     "entropy": _criterion.Entropy,
     "hellinger": _criterion.HellingerDistance,
 }
-# TODO: Remove "mse" and "mae" in version 1.2.
+# TODO(1.2): Remove "mse" and "mae".
 CRITERIA_REG = {
     "squared_error": _criterion.MSE,
     "mse": _criterion.MSE,
