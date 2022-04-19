@@ -81,7 +81,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.metrics.pairwise.polynomial_kernel",
     "sklearn.metrics.pairwise.rbf_kernel",
     "sklearn.metrics.pairwise.sigmoid_kernel",
-    "sklearn.model_selection._validation.cross_validate",
     "sklearn.model_selection._validation.learning_curve",
     "sklearn.model_selection._validation.permutation_test_score",
     "sklearn.model_selection._validation.validation_curve",
