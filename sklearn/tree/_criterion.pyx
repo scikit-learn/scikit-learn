@@ -24,6 +24,7 @@ cimport numpy as np
 np.import_array()
 from numpy.math cimport INFINITY
 from scipy.special.cython_special cimport xlogy
+from cython.operator cimport dereference as deref
 
 from ._utils cimport log
 from ._utils cimport safe_realloc
