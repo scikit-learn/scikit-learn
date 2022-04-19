@@ -170,7 +170,7 @@ def stream_reuters_documents(data_path=None):
         if _not_in_sphinx():
             sys.stdout.write("\r")
         print("untarring Reuters dataset...")
-        # calling extractall() can result in files outside destination directory to be overwritten, resulting in an arbitrary file write.
+        # extractall can cause a tar slip
         with closing(tarfile.open(archive_path, "r:gz")) as archive:
             archive.extractall(path=data_path)
         print("done.")
