@@ -8,6 +8,7 @@
 
 import numpy as np
 cimport numpy as np
+cimport openmp
 cimport cython
 from cython cimport floating
 from cython.parallel import prange, parallel
@@ -279,6 +280,8 @@ def elkan_iter_chunked_dense(
         floating *centers_new_chunk
         floating *weight_in_clusters_chunk
 
+        openmp.omp_lock_t lock
+
     # count remainder chunk in total number of chunks
     n_chunks += n_samples != n_chunks * n_samples_chunk
 
@@ -288,6 +291,7 @@ def elkan_iter_chunked_dense(
     if update_centers:
         memset(&centers_new[0, 0], 0, n_clusters * n_features * sizeof(floating))
         memset(&weight_in_clusters[0], 0, n_clusters * sizeof(floating))
+        openmp.omp_init_lock(&lock)
 
     with nogil, parallel(num_threads=n_threads):
         # thread local buffers
@@ -314,19 +318,21 @@ def elkan_iter_chunked_dense(
                 weight_in_clusters_chunk,
                 update_centers)
 
-        # reduction from local buffers. The gil is necessary for that to avoid
+        # reduction from local buffers. The lock is necessary for that to avoid
         # race conditions.
         if update_centers:
-            with gil:
-                for j in range(n_clusters):
-                    weight_in_clusters[j] += weight_in_clusters_chunk[j]
-                    for k in range(n_features):
-                        centers_new[j, k] += centers_new_chunk[j * n_features + k]
+            openmp.omp_set_lock(&lock)
+            for j in range(n_clusters):
+                weight_in_clusters[j] += weight_in_clusters_chunk[j]
+                for k in range(n_features):
+                    centers_new[j, k] += centers_new_chunk[j * n_features + k]
+            openmp.omp_unset_lock(&lock)
 
         free(centers_new_chunk)
         free(weight_in_clusters_chunk)
 
     if update_centers:
+        openmp.omp_destroy_lock(&lock)
         _relocate_empty_clusters_dense(X, sample_weight, centers_old,
                                        centers_new, weight_in_clusters, labels)
 
@@ -510,6 +516,8 @@ def elkan_iter_chunked_sparse(
         floating *centers_new_chunk
         floating *weight_in_clusters_chunk
 
+        openmp.omp_lock_t lock
+
     # count remainder chunk in total number of chunks
     n_chunks += n_samples != n_chunks * n_samples_chunk
 
@@ -519,6 +527,7 @@ def elkan_iter_chunked_sparse(
     if update_centers:
         memset(&centers_new[0, 0], 0, n_clusters * n_features * sizeof(floating))
         memset(&weight_in_clusters[0], 0, n_clusters * sizeof(floating))
+        openmp.omp_init_lock(&lock)
 
     with nogil, parallel(num_threads=n_threads):
         # thread local buffers
@@ -548,19 +557,21 @@ def elkan_iter_chunked_sparse(
                 weight_in_clusters_chunk,
                 update_centers)
 
-        # reduction from local buffers. The gil is necessary for that to avoid
+        # reduction from local buffers. The lock is necessary for that to avoid
         # race conditions.
         if update_centers:
-            with gil:
-                for j in range(n_clusters):
-                    weight_in_clusters[j] += weight_in_clusters_chunk[j]
-                    for k in range(n_features):
-                        centers_new[j, k] += centers_new_chunk[j * n_features + k]
+            openmp.omp_set_lock(&lock)
+            for j in range(n_clusters):
+                weight_in_clusters[j] += weight_in_clusters_chunk[j]
+                for k in range(n_features):
+                    centers_new[j, k] += centers_new_chunk[j * n_features + k]
+            openmp.omp_unset_lock(&lock)
 
         free(centers_new_chunk)
         free(weight_in_clusters_chunk)
 
     if update_centers:
+        openmp.omp_destroy_lock(&lock)
         _relocate_empty_clusters_sparse(
             X_data, X_indices, X_indptr, sample_weight,
             centers_old, centers_new, weight_in_clusters, labels)
