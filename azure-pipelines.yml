@@ -81,7 +81,6 @@ jobs:
         # Tests that require large downloads over the networks are skipped in CI.
         # Here we make sure, that they are still run on a regular basis.
         SKLEARN_SKIP_NETWORK_TESTS: '0'
-        CREATE_ISSUE_ON_TRACKER: 'true'
 
 # Check compilation with intel C++ compiler (ICC)
 - template: build_tools/azure/posix.yml
@@ -123,7 +122,6 @@ jobs:
         DOCKER_CONTAINER: 'condaforge/miniforge3:4.10.3-5'
         DISTRIB: 'conda-pypy3'
         LOCK_FILE: './build_tools/azure/pypy3_linux-64_conda.lock'
-        CREATE_ISSUE_ON_TRACKER: 'true'
 
 # Will run all the time regardless of linting outcome.
 - template: build_tools/azure/posix.yml
@@ -153,8 +151,7 @@ jobs:
     condition: |
       and(
         succeeded(),
-        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]')),
-        ne(variables['Build.Reason'], 'Schedule')
+        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]'))
       )
     matrix:
       py38_conda_forge_openblas_ubuntu_1804:
@@ -172,8 +169,7 @@ jobs:
     condition: |
       and(
         succeeded(),
-        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]')),
-        ne(variables['Build.Reason'], 'Schedule')
+        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]'))
       )
     matrix:
       # Linux environment to test that scikit-learn can be built against
@@ -209,8 +205,7 @@ jobs:
     condition: |
       and(
         succeeded(),
-        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]')),
-        ne(variables['Build.Reason'], 'Schedule')
+        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]'))
       )
     matrix:
       debian_atlas_32bit:
@@ -229,8 +224,7 @@ jobs:
     condition: |
       and(
         succeeded(),
-        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]')),
-        ne(variables['Build.Reason'], 'Schedule')
+        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]'))
       )
     matrix:
       pylatest_conda_forge_mkl:
@@ -252,8 +246,7 @@ jobs:
     condition: |
       and(
         succeeded(),
-        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]')),
-        ne(variables['Build.Reason'], 'Schedule')
+        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]'))
       )
     matrix:
       py38_conda_forge_mkl:
@@ -265,9 +258,6 @@ jobs:
         # Unpin when pytest stalling issue is fixed
         PYTEST_VERSION: '6.2.5'
         COVERAGE: 'true'
-        # Temporary fix for setuptools to use distutils from standard lib
-        # https://github.com/numpy/numpy/issues/17216
-        SETUPTOOLS_USE_DISTUTILS: 'stdlib'
         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '7'  # non-default seed
       py38_pip_openblas_32bit:
         PYTHON_VERSION: '3.8'

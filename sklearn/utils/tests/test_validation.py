@@ -1050,7 +1050,8 @@ def test_retrieve_samples_from_non_standard_shape():
 def test_check_scalar_valid(x):
     """Test that check_scalar returns no error/warning if valid inputs are
     provided"""
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
         scalar = check_scalar(
             x,
             "test_name",
@@ -1059,7 +1060,6 @@ def test_check_scalar_valid(x):
             max_val=5,
             include_boundaries="both",
         )
-    assert not [w.message for w in record]
     assert scalar == x
 
 
@@ -1616,9 +1616,9 @@ def test_get_feature_names_pandas_with_ints_no_warning(names):
     pd = pytest.importorskip("pandas")
     X = pd.DataFrame([[1, 2], [4, 5], [5, 6]], columns=names)
 
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", FutureWarning)
         names = _get_feature_names(X)
-    assert not [w.message for w in record]
     assert names is None
 
 

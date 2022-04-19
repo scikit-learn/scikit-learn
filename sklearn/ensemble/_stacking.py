@@ -31,6 +31,7 @@ from ..utils import Bunch
 from ..utils.metaestimators import available_if
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
+from ..utils.validation import check_scalar
 from ..utils.validation import column_or_1d
 from ..utils.fixes import delayed
 from ..utils.validation import _check_feature_names_in
@@ -161,6 +162,13 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
         -------
         self : object
         """
+        # Check params.
+        check_scalar(
+            self.passthrough,
+            name="passthrough",
+            target_type=(np.bool_, bool),
+            include_boundaries="neither",
+        )
         # all_estimators contains all estimators, the one to be fitted and the
         # 'drop' string.
         names, all_estimators = self._validate_estimators()

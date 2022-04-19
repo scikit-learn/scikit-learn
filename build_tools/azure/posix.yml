@@ -25,7 +25,7 @@ jobs:
     PYTEST_XDIST_VERSION: 'latest'
     COVERAGE: 'true'
     TEST_DOCSTRINGS: 'false'
-    CREATE_ISSUE_ON_TRACKER: 'false'
+    CREATE_ISSUE_ON_TRACKER: 'true'
     SHOW_SHORT_SUMMARY: 'false'
   strategy:
     matrix:
