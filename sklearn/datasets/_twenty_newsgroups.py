@@ -75,7 +75,7 @@ def _download_20newsgroups(target_dir, cache_path):
     archive_path = _fetch_remote(ARCHIVE, dirname=target_dir)
 
     logger.debug("Decompressing %s", archive_path)
-    # using extractall() can result in files outside destination directory to be overwritten, resulting in an arbitrary file write.
+    # extractall can cause a tar slip
     with closing(tarfile.open(archive_path, "r:gz")) as archive:
         archive.extractall(path=target_dir)
     os.remove(archive_path)
