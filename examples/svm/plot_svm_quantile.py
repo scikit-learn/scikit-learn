@@ -150,6 +150,8 @@ pd.DataFrame(results).set_index("model").style.apply(highlight_min)
 #
 # To do this we can compute the fraction of observations that fall between the
 # predictions:
+
+
 def coverage_fraction(y, y_low, y_high):
     return np.mean(np.logical_and(y >= y_low, y <= y_high))
 
@@ -163,6 +165,7 @@ coverage_fraction(
 # %%
 # On the training set the calibration is very close to the expected coverage
 # value for a 90% confidence interval.
+
 coverage_fraction(
     y_test, all_models["q 0.05"].predict(X_test), all_models["q 0.95"].predict(X_test)
 )
