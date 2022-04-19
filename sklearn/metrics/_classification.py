@@ -46,9 +46,9 @@ from ._base import _check_pos_label_consistency
 
 def _check_zero_division(zero_division):
     if isinstance(zero_division, str) and zero_division == "warn":
-        return zero_division
+        return np.float64(0.0)
     elif isinstance(zero_division, (int, float)) and zero_division in [0, 1]:
-        return zero_division
+        return np.float64(zero_division)
     elif zero_division is None or np.isnan(zero_division):
         return np.nan
     raise ValueError(
@@ -788,10 +788,12 @@ def jaccard_score(
     ...                    [1, 1, 0]])
     >>> y_pred = np.array([[1, 1, 1],
     ...                    [1, 0, 0]])
-    >>> y_true_with_empty = np.array([[0, 1, 1],
-    ...                    [0, 0, 0]])
+    >>> y_true_with_empty = np.array(
+    ...                   [[0, 1, 1],
+    ...                    [0, 0, 0]]
     ...                    [1, 1, 0]])
-    >>> y_pred_with_empty = np.array([[1, 1, 1],
+    >>> y_pred_with_empty = np.array(
+    ...                   [[1, 1, 1],
     ...                    [0, 0, 0]])
     ...                    [1, 0, 0]])
 
@@ -1155,10 +1157,15 @@ def f1_score(
     0.26...
     >>> f1_score(y_true, y_pred, average=None)
     array([0.8, 0. , 0. ])
+
+    >>> # binary classification
+    >>> y_true_empty = [0, 0, 0, 0, 0, 0]
     >>> y_pred_empty = [0, 0, 0, 0, 0, 0]
-    >>> f1_score(y_true, y_pred_empty, average="macro", zero_division=None)
-    1.0...
-    >>> f1_score(y_true, y_pred_empty, zero_division=1)
+    >>> f1_score(y_true_empty, y_pred_empty)
+    0.0...
+    >>> f1_score(y_true_empty, y_pred_empty, zero_division=None)
+    np.nan...
+    >>> f1_score(y_true_empty, y_pred_empty, zero_division=1)
     1.0...
     >>> # multilabel classification
     >>> y_true = [[0, 0, 0], [1, 1, 1], [0, 1, 1]]
@@ -1612,7 +1619,8 @@ def precision_recall_fscore_support(
      array([0., 0., 1.]), array([0. , 0. , 0.8]),
      array([2, 2, 2]))
     """
-    zero_division = _check_zero_division(zero_division)
+    zero_division_value = _check_zero_division(zero_division)
+
     if beta < 0:
         raise ValueError("beta should be >=0 in the F-beta score")
     labels = _check_set_wise_labels(y_true, y_pred, average, labels, pos_label)
@@ -1635,7 +1643,7 @@ def precision_recall_fscore_support(
         pred_sum = np.array([pred_sum.sum()])
         true_sum = np.array([true_sum.sum()])
 
-    # Finally, we have all our sufficient statistics. Divide! #
+    # Finally, we have all our sufficient statistics. Divide!
     beta2 = beta ** 2
 
     # Divide, and on zero-division, set scores and/or warn according to
@@ -1653,26 +1661,24 @@ def precision_recall_fscore_support(
         if (pred_sum[true_sum == 0] == 0).any():
             _warn_prf(average, "true nor predicted", "F-score is", len(true_sum))
 
+    # if tp == 0 F will be 1 only if all predictions are zero, all labels are
+    # zero, and zero_division=1. In all other case, 0
     if np.isposinf(beta):
         f_score = recall
+    elif beta == 0:
+        f_score = precision
     else:
-        # pred_sum = TP + FP  ,    true_sum = TP + FN
-        # fbeta = num / denom
-        # num = (1 + beta2) * TP
-        # denom = (1 + beta2) * TP + beta2 * FN + FP = (TP + FP) + beta2 * (TP + FN)
-        num = (1 + beta2) * tp_sum
-        denom = pred_sum + beta2 * true_sum
-        f_score = _prf_divide(
-            num, denom, "f-score", "true nor predicted", average, [], zero_division
-        )
+        # TODO marc: continue here
+        denom = beta2 * precision + recall
+        mask = denom == 0.0
+        denom[mask] = 1  # avoid division by 0
+        f_score = (1 + beta2) * precision * recall / denom
+        f_score[mask] = zero_division_value
 
     # Average the results
     if average == "weighted":
         weights = true_sum
         if weights.sum() == 0:
-            zero_division_value = zero_division
-            if zero_division == "warn":
-                zero_division_value = np.float64(0.0)
 
             # precision is zero_division if there are no positive predictions
             # recall is zero_division if there are no positive labels
