@@ -1265,16 +1265,16 @@ class SVR(RegressorMixin, BaseLibSVM):
 
 
 class QuantileSVR(RegressorMixin, BaseLibSVM):
-    """Quantile-Support Vector Regression.
+    """Quantile Regression via Support Vector Machine
 
-    The free parameters in the model are C and the quantile to be fit.
+    This regression optimizes the pinball loss for a desired `quantile` with L2
+    regularization like :class:`~sklearn.linear_model.Ridge`.
+    The free parameters in the model are the regularization parameter C and the
+    quantile to be fit.
 
     The implementation is based on libsvm. The fit time complexity
     is more than quadratic with the number of samples which makes it hard
-    to scale to datasets with more than a couple of 10000 samples. For large
-    datasets consider using :class:`~sklearn.svm.LinearSVR` or
-    :class:`~sklearn.linear_model.SGDRegressor` instead, possibly after a
-    :class:`~sklearn.kernel_approximation.Nystroem` transformer.
+    to scale to datasets with more than a couple of 10000 samples.
 
     Read more in the :ref:`User Guide <svm_regression>`.
 
@@ -1384,11 +1384,8 @@ class QuantileSVR(RegressorMixin, BaseLibSVM):
 
     See Also
     --------
-    NuSVR : Support Vector Machine for regression implemented using libsvm
-        using a parameter to control the number of support vectors.
-
-    LinearSVR : Scalable Linear Support Vector Machine for regression
-        implemented using liblinear.
+    :class:`~sklearn.linear_model.QuantileRegressor` : Linear regression minimizing the
+        pinball loss.
 
     References
     ----------
@@ -1399,20 +1396,25 @@ class QuantileSVR(RegressorMixin, BaseLibSVM):
         machines and comparison to regularizedlikelihood methods."
         <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.41.1639>`_
 
+    .. [3] `Hwang, C., Shim, J. (2005). "A Simple Quantile Regression via
+        Support Vector Machine." <https://doi.org/10.1007/11539087_66>`_
+
     Examples
     --------
     >>> from sklearn.svm import QuantileSVR
     >>> from sklearn.pipeline import make_pipeline
     >>> from sklearn.preprocessing import StandardScaler
     >>> import numpy as np
-    >>> n_samples, n_features = 10, 5
+    >>> n_samples, n_features = 100, 3
     >>> rng = np.random.RandomState(0)
     >>> y = rng.randn(n_samples)
     >>> X = rng.randn(n_samples, n_features)
-    >>> regr = make_pipeline(StandardScaler(), QuantileSVR(C=1.0, quantile=0.9))
+    >>> regr = make_pipeline(StandardScaler(), QuantileSVR(quantile=0.8))
     >>> regr.fit(X, y)
     Pipeline(steps=[('standardscaler', StandardScaler()),
-                    ('quantilesvr', QuantileSVR(quantile=0.9))])
+                    ('quantilesvr', QuantileSVR(quantile=0.8))])
+    >>> np.mean(y <= regr.predict(X))
+    0.8
     """
 
     _impl = "quantile_svr"

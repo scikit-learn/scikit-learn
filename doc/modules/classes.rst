@@ -1532,6 +1532,7 @@ Estimators
    svm.OneClassSVM
    svm.SVC
    svm.SVR
+   svm.QuantileSVR
 
 .. autosummary::
    :toctree: generated/

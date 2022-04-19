@@ -760,6 +760,49 @@ where we make use of the epsilon-insensitive loss, i.e. errors of less than
 :math:`\varepsilon` are ignored. This is the form that is directly optimized
 by :class:`LinearSVR`.
 
+Quantile SVR
+------------
+
+Quantile Support Vector Regression estimates the median or other quantiles of :math:`y`
+conditional on :math:`X` by optimizing the pinball loss
+(see also :class:`~sklearn.metrics.mean_pinball_loss`).
+
+The primal problem for finding the :math:`\theta` 'th quantile is:
+
+.. math::
+
+    \min_ {w, b, \zeta, \zeta^*} \frac{1}{2} w^T w + C \sum_{i=1}^{n} (\theta\zeta_i + (1-\theta)\zeta_i^*)
+
+    \textrm {subject to } & y_i - w^T \phi (x_i) - b \leq \zeta_i,\\
+                          & w^T \phi (x_i) + b - y_i \leq \zeta_i^*,\\
+                          & \zeta_i, \zeta_i^* \geq 0, i=1, ..., n
+
+The dual problem is:
+
+.. math::
+
+   \min_{\alpha, \alpha^*} \frac{1}{2} (\alpha - \alpha^*)^T Q (\alpha - \alpha^*) - y^T (\alpha - \alpha^*)
+
+
+   \textrm {subject to } & e^T (\alpha - \alpha^*) = 0 & \\
+   & \alpha_i \in [0,\theta C] & , i=1, ..., n\\
+   & \alpha_i^* \in [0, (1 - \theta) C] & , i=1, ..., n
+
+where :math:`e` is the vector of all ones,
+:math:`Q` is an :math:`n` by :math:`n` positive semidefinite matrix,
+:math:`Q_{ij} \equiv K(x_i, x_j) = \phi (x_i)^T \phi (x_j)`
+is the kernel. Here training vectors are implicitly mapped into a higher
+(maybe infinite) dimensional space by the function :math:`\phi`.
+
+The prediction for the :math:`\theta` 'th quantile is:
+
+.. math:: \sum_{i \in SV}(\alpha_i - \alpha_i^*) K(x_i, x) + b
+
+These parameters can be accessed through the attributes ``dual_coef_``
+which holds the difference :math:`\alpha_i - \alpha_i^*`, ``support_vectors_`` which
+holds the support vectors, and ``intercept_`` which holds the independent
+term :math:`b`
+
 .. _svm_implementation_details:
 
 Implementation details
