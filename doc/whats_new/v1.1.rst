@@ -281,6 +281,10 @@ Changelog
   :pr:`19747` by :user:`Tony Attalla <tonyattalla>` and :pr:`22498` by
   :user:`Meekail Zain <micky774>`.
 
+- |Fix| :func:`datasets.fetch_covtype` is now concurrent-safe: data is downloaded
+  to a temporary directory before being moved to the data directory.
+  :pr:`23113` by :user:`Ilion Beyst <iasoon>`
+
 :mod:`sklearn.decomposition`
 ............................
 
