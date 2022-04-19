@@ -196,7 +196,7 @@ def test_classification_report_output_dict_empty_input():
                 assert_almost_equal(expected_report[key][metric], report[key][metric])
 
 
-@pytest.mark.parametrize("zero_division", ["warn", 0, 1, None, np.nan])
+@pytest.mark.parametrize("zero_division", ["warn", 0, 1, np.nan])
 def test_classification_report_zero_division_warning(zero_division):
     y_true, y_pred = ["a", "b", "c"], ["a", "b", "d"]
     with warnings.catch_warnings(record=True) as record:
@@ -1440,7 +1440,7 @@ def test_jaccard_score_zero_division_warning():
 
 @pytest.mark.parametrize(
     "zero_division, expected_score",
-    [(0, 0.25), (1, 0.75), (None, 0.5), (np.nan, 0.5)],
+    [(0, 0.25), (1, 0.75), (np.nan, 0.5)],
 )
 def test_jaccard_score_zero_division_set_value(zero_division, expected_score):
     # check that we don't issue warning by passing the zero_division parameter
@@ -1587,7 +1587,7 @@ def test_precision_recall_f1_score_multilabel_2():
 
 
 @ignore_warnings
-@pytest.mark.parametrize("zero_division", ["warn", 0, 1, None, np.nan])
+@pytest.mark.parametrize("zero_division", ["warn", 0, 1, np.nan])
 def test_precision_recall_f1_score_with_an_empty_prediction(zero_division):
     y_true = np.array([[0, 1, 0, 0], [1, 0, 0, 0], [0, 1, 1, 0]])
     y_pred = np.array([[0, 0, 0, 0], [0, 0, 0, 1], [0, 1, 1, 0]])
@@ -1676,7 +1676,7 @@ def test_precision_recall_f1_score_with_an_empty_prediction(zero_division):
 
 @pytest.mark.parametrize("beta", [1])
 @pytest.mark.parametrize("average", ["macro", "micro", "weighted", "samples"])
-@pytest.mark.parametrize("zero_division", [0, 1, None, np.nan])
+@pytest.mark.parametrize("zero_division", [0, 1, np.nan])
 def test_precision_recall_f1_no_labels(beta, average, zero_division):
     y_true = np.zeros((20, 3))
     y_pred = np.zeros_like(y_true)
@@ -1699,7 +1699,7 @@ def test_precision_recall_f1_no_labels(beta, average, zero_division):
     )
     assert s is None
 
-    if zero_division is None or np.isnan(zero_division):
+    if np.isnan(zero_division):
         for metric in [p, r, f, fbeta]:
             assert np.isnan(metric)
             return
@@ -1732,7 +1732,7 @@ def test_precision_recall_f1_no_labels_check_warnings(average):
     assert_almost_equal(fbeta, 0)
 
 
-@pytest.mark.parametrize("zero_division", [0, 1, None, np.nan])
+@pytest.mark.parametrize("zero_division", [0, 1, np.nan])
 def test_precision_recall_f1_no_labels_average_none(zero_division):
     y_true = np.zeros((20, 3))
     y_pred = np.zeros_like(y_true)
@@ -1756,10 +1756,7 @@ def test_precision_recall_f1_no_labels_average_none(zero_division):
     fbeta = assert_no_warnings(
         fbeta_score, y_true, y_pred, beta=1.0, average=None, zero_division=zero_division
     )
-    if zero_division is None:
-        zero_division = np.nan
-    else:
-        zero_division = float(zero_division)
+    zero_division = np.float64(zero_division)
     assert_array_almost_equal(p, [zero_division, zero_division, zero_division], 2)
     assert_array_almost_equal(r, [zero_division, zero_division, zero_division], 2)
     assert_array_almost_equal(f, [zero_division, zero_division, zero_division], 2)
@@ -1895,7 +1892,7 @@ def test_prf_warnings():
         assert str(record.pop().message) == msg
 
 
-@pytest.mark.parametrize("zero_division", [0, 1, None, np.nan])
+@pytest.mark.parametrize("zero_division", [0, 1, np.nan])
 def test_prf_no_warnings_if_zero_division_set(zero_division):
     # average of per-label scores
     f = precision_recall_fscore_support
@@ -1960,7 +1957,7 @@ def test_prf_no_warnings_if_zero_division_set(zero_division):
         assert len(record) == 0
 
 
-@pytest.mark.parametrize("zero_division", ["warn", 0, 1, None, np.nan])
+@pytest.mark.parametrize("zero_division", ["warn", 0, 1, np.nan])
 def test_recall_warnings(zero_division):
     assert_no_warnings(
         recall_score,
@@ -1999,7 +1996,7 @@ def test_recall_warnings(zero_division):
             )
 
 
-@pytest.mark.parametrize("zero_division", ["warn", 0, 1, None, np.nan])
+@pytest.mark.parametrize("zero_division", ["warn", 0, 1, np.nan])
 def test_precision_warnings(zero_division):
     with warnings.catch_warnings(record=True) as record:
         warnings.simplefilter("always")
@@ -2039,7 +2036,7 @@ def test_precision_warnings(zero_division):
     )
 
 
-@pytest.mark.parametrize("zero_division", ["warn", 0, 1, None, np.nan])
+@pytest.mark.parametrize("zero_division", ["warn", 0, 1, np.nan])
 def test_fscore_warnings(zero_division):
     with warnings.catch_warnings(record=True) as record:
         warnings.simplefilter("always")

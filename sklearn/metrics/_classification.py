@@ -49,11 +49,10 @@ def _check_zero_division(zero_division):
         return np.float64(0.0)
     elif isinstance(zero_division, (int, float)) and zero_division in [0, 1]:
         return np.float64(zero_division)
-    elif zero_division is None or np.isnan(zero_division):
-        return np.nan
+    elif np.isnan(zero_division):
+        return np.float64(np.nan)
     raise ValueError(
-        f"Got zero_division={zero_division}. "
-        'Must be one of ["warn", 0, 1, None, np.nan]'
+        'Got zero_division={0}. Must be one of ["warn", 0, 1, np.nan]'.format(zero_division)
     )
 
 
@@ -747,17 +746,16 @@ def jaccard_score(
             Calculate metrics for each instance, and find their average (only
             meaningful for multilabel classification).
 
-        Note that if zero_division is None, such values will be excluded
+        Note that if zero_division is np.nan, such values will be excluded
         from the average.
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-    zero_division : "warn", 0.0, 1.0, None, np.nan, default="warn"
+    zero_division : "warn", 0.0, 1.0, np.nan, default="warn"
         Sets the value to return when there is a zero division, i.e. when there
         there are no negative values in predictions and labels. If set to
         "warn", this acts like 0, but a warning is also raised.
-        If set to None, it returns np.nan.
 
     Returns
     -------
@@ -808,7 +806,7 @@ def jaccard_score(
     1...
     >>> jaccard_score(y_true_with_empty[1], y_pred_with_empty[1], zero_division="warn")
     0...
-    >>> jaccard_score(y_true_with_empty[1], y_pred_with_empty[1], zero_division=None)
+    >>> jaccard_score(y_true_with_empty[1], y_pred_with_empty[1], zero_division=np.nan)
     np.nan...
 
     In the 2D comparison case (e.g. image similarity):
@@ -819,7 +817,7 @@ def jaccard_score(
     0.6
     >>> jaccard_score(y_true_with_empty, y_pred_with_empty, zero_division=1)
     0.6
-    >>> jaccard_score(y_true_with_empty, y_pred_with_empty, zero_division=None)
+    >>> jaccard_score(y_true_with_empty, y_pred_with_empty, zero_division=np.nan)
     0.6
 
     In the multilabel case:
@@ -1117,16 +1115,16 @@ def f1_score(
             meaningful for multilabel classification where this differs from
             :func:`accuracy_score`).
 
-        Note that if zero_division is None, such values will be excluded
+        Note that if zero_division is np.nan, such values will be excluded
         from the average.
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-    zero_division : "warn", 0, 1, None or np.nan, default="warn"
+    zero_division : "warn", 0, 1 or np.nan, default="warn"
         Sets the value to return when there is a zero division, i.e. when all
         predictions and labels are negative. If set to "warn", this acts as 0,
-        but warnings are also raised. If set to None, it returns np.nan.
+        but warnings are also raised.
 
     Returns
     -------
@@ -1163,7 +1161,7 @@ def f1_score(
     >>> y_pred_empty = [0, 0, 0, 0, 0, 0]
     >>> f1_score(y_true_empty, y_pred_empty)
     0.0...
-    >>> f1_score(y_true_empty, y_pred_empty, zero_division=None)
+    >>> f1_score(y_true_empty, y_pred_empty, zero_division=np.nan)
     np.nan...
     >>> f1_score(y_true_empty, y_pred_empty, zero_division=1)
     1.0...
@@ -1180,8 +1178,8 @@ def f1_score(
     In such cases, by default the metric will be set to 0, as will f-score,
     and ``UndefinedMetricWarning`` will be raised. This behavior can be
     modified with ``zero_division``.
-    Note that if `zero_division` is None, scores being None will be ignored
-    for averaging.
+    Note that if `zero_division` is np.nan, scores being np.nan will be
+    ignored for averaging.
     """
     return fbeta_score(
         y_true,
@@ -1272,16 +1270,16 @@ def fbeta_score(
             meaningful for multilabel classification where this differs from
             :func:`accuracy_score`).
 
-        Note that if zero_division is None, such values will be excluded
+        Note that if zero_division is np.nan, such values will be excluded
         from the average.
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-    zero_division : "warn", 0, 1, None or np.nan, default="warn"
+    zero_division : "warn", 0, 1 or np.nan, default="warn"
         Sets the value to return when there is a zero division, i.e. when all
         predictions and labels are negative. If set to "warn", this acts as 0,
-        but warnings are also raised. If set to None, it returns np.nan.
+        but warnings are also raised.
 
     Returns
     -------
@@ -1300,8 +1298,8 @@ def fbeta_score(
     ``true positive + false negative == 0``, f-score returns 0 and raises
     ``UndefinedMetricWarning``. This behavior can be
     modified with ``zero_division``.
-    Note that if `zero_division` is None, scores being None will be ignored
-    for averaging.
+    Note that if zero_division is np.nan, such values will be excluded
+    from the average.
 
     References
     ----------
@@ -1326,7 +1324,7 @@ def fbeta_score(
     array([0.71..., 0.        , 0.        ])
     >>> y_pred_empty = [0, 0, 0, 0, 0, 0]
     >>> fbeta_score(y_true, y_pred_empty,
-    ...             average="macro", zero_division=None, beta=0.5)
+    ...             average="macro", zero_division=np.nan, beta=0.5)
     1.0...
     """
 
@@ -1539,7 +1537,7 @@ def precision_recall_fscore_support(
             meaningful for multilabel classification where this differs from
             :func:`accuracy_score`).
 
-        Note that if zero_division is None, such values will be excluded
+        Note that if zero_division is np.nan, such values will be excluded
         from the average.
 
     warn_for : tuple or set, for internal use
@@ -1549,14 +1547,13 @@ def precision_recall_fscore_support(
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-    zero_division : "warn", 0, 1, None or np.nan, default="warn"
+    zero_division : "warn", 0, 1 or np.nan, default="warn"
         Sets the value to return when there is a zero division:
            - recall: when there are no positive labels
            - precision: when there are no positive predictions
            - f-score: both
 
         If set to "warn", this acts as 0, but warnings are also raised.
-        If set to None, it returns np.nan.
 
     Returns
     -------
@@ -1780,16 +1777,15 @@ def precision_score(
             meaningful for multilabel classification where this differs from
             :func:`accuracy_score`).
 
-        Note that if zero_division is None, such values will be excluded
+        Note that if zero_division is np.nan, such values will be excluded
         from the average.
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-    zero_division : "warn", 0 or 1, None or np.nan, default="warn"
+    zero_division : "warn", 0 or 1 or np.nan, default="warn"
         Sets the value to return when there is a zero division. If set to
         "warn", this acts as 0, but warnings are also raised.
-        If set to None, it returns np.nan.
 
     Returns
     -------
@@ -1835,7 +1831,7 @@ def precision_score(
     array([0.33..., 0.        , 0.        ])
     >>> precision_score(y_true, y_pred, average=None, zero_division=1)
     array([0.33..., 1.        , 1.        ])
-    >>> precision_score(y_true, y_pred, average=None, zero_division=None)
+    >>> precision_score(y_true, y_pred, average=None, zero_division=np.nan)
     array([0.33..., nan        , nan        ])
 
     >>> # multilabel classification
@@ -1929,16 +1925,15 @@ def recall_score(
             meaningful for multilabel classification where this differs from
             :func:`accuracy_score`).
 
-        Note that if zero_division is None, such values will be excluded
+        Note that if zero_division is np.nan, such values will be excluded
         from the average.
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-    zero_division : "warn", 0, 1, None or np.nan, default="warn"
+    zero_division : "warn", 0, 1 or np.nan, default="warn"
         Sets the value to return when there is a zero division. If set to
         "warn", this acts as 0, but warnings are also raised.
-        If set to None, it returns np.nan.
 
     Returns
     -------
@@ -1986,7 +1981,7 @@ def recall_score(
     array([0.5, 0. , 0. ])
     >>> recall_score(y_true, y_pred, average=None, zero_division=1)
     array([0.5, 1. , 1. ])
-    >>> recall_score(y_true, y_pred, average=None, zero_division=None)
+    >>> recall_score(y_true, y_pred, average=None, zero_division=np.nan)
     array([0.5, nan        , nan        ])
 
     >>> # multilabel classification
@@ -2134,10 +2129,9 @@ def classification_report(
 
         .. versionadded:: 0.20
 
-    zero_division : "warn", 0 or 1, default="warn"
+    zero_division : "warn", 0, 1 or np.nan, default="warn"
         Sets the value to return when there is a zero division. If set to
         "warn", this acts as 0, but warnings are also raised.
-        If set to None, it returns np.nan.
 
     Returns
     -------
