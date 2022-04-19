@@ -1265,7 +1265,7 @@ class SVR(RegressorMixin, BaseLibSVM):
 
 
 class QuantileSVR(RegressorMixin, BaseLibSVM):
-    """Quantile Regression via Support Vector Machine
+    """Quantile Regression via Support Vector Machine.
 
     This regression optimizes the pinball loss for a desired `quantile` with L2
     regularization like :class:`~sklearn.linear_model.Ridge`.
