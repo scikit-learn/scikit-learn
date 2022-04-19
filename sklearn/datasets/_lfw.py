@@ -8,6 +8,7 @@ over the internet, all details are available on the official website:
 # Copyright (c) 2011 Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
 
+from contextlib import closing
 from os import listdir, makedirs, remove
 from os.path import join, exists, isdir
 
@@ -108,7 +109,9 @@ def _check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
         import tarfile
 
         logger.debug("Decompressing the data archive to %s", data_folder_path)
-        tarfile.open(archive_path, "r:gz").extractall(path=lfw_home)
+        # using extractall() can result in files outside destination directory to be overwritten, resulting in an arbitrary file write.
+        with closing(tarfile.open(archive_path, "r:gz")) as archive:
+            archive.extractall(path=lfw_home)
         remove(archive_path)
 
     return lfw_home, data_folder_path

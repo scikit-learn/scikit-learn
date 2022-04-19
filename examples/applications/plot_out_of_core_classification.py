@@ -18,6 +18,7 @@ features (words) may appear in each batch.
 #          @FedericoV <https://github.com/FedericoV/>
 # License: BSD 3 clause
 
+from contextlib import closing
 from glob import glob
 import itertools
 import os.path
@@ -169,7 +170,9 @@ def stream_reuters_documents(data_path=None):
         if _not_in_sphinx():
             sys.stdout.write("\r")
         print("untarring Reuters dataset...")
-        tarfile.open(archive_path, "r:gz").extractall(data_path)
+        # calling extractall() can result in files outside destination directory to be overwritten, resulting in an arbitrary file write.
+        with closing(tarfile.open(archive_path, "r:gz")) as archive:
+            archive.extractall(path=data_path)
         print("done.")
 
     parser = ReutersParser()

@@ -24,6 +24,7 @@ uncompressed the train set is 52 MB and the test set is 34 MB.
 # Copyright (c) 2011 Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
 
+from contextlib import closing
 import os
 import logging
 import tarfile
@@ -74,7 +75,9 @@ def _download_20newsgroups(target_dir, cache_path):
     archive_path = _fetch_remote(ARCHIVE, dirname=target_dir)
 
     logger.debug("Decompressing %s", archive_path)
-    tarfile.open(archive_path, "r:gz").extractall(path=target_dir)
+    # using extractall() can result in files outside destination directory to be overwritten, resulting in an arbitrary file write.
+    with closing(tarfile.open(archive_path, "r:gz")) as archive:
+        archive.extractall(path=target_dir)
     os.remove(archive_path)
 
     # Store a zipped pickle
