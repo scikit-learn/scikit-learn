@@ -27,8 +27,10 @@ from sklearn.feature_extraction.image import grid_to_graph
 from sklearn.cluster import AgglomerativeClustering
 
 
-# #############################################################################
+# %%
 # Generate data
+# -------------
+
 orig_coins = coins()
 
 # Resize it to 20% of the original size to speed up the processing
@@ -41,12 +43,18 @@ rescaled_coins = rescale(
 
 X = np.reshape(rescaled_coins, (-1, 1))
 
-# #############################################################################
-# Define the structure A of the data. Pixels connected to their neighbors.
+# %%
+# Define structure of the data
+# ----------------------------
+#
+# Pixels are connected to their neighbors.
+
 connectivity = grid_to_graph(*rescaled_coins.shape)
 
-# #############################################################################
+# %%
 # Compute clustering
+# ------------------
+
 print("Compute structured hierarchical clustering...")
 st = time.time()
 n_clusters = 27  # number of regions
@@ -59,8 +67,10 @@ print("Elapsed time: ", time.time() - st)
 print("Number of pixels: ", label.size)
 print("Number of clusters: ", np.unique(label).size)
 
-# #############################################################################
+# %%
 # Plot the results on an image
+# ----------------------------
+
 plt.figure(figsize=(5, 5))
 plt.imshow(rescaled_coins, cmap=plt.cm.gray)
 for l in range(n_clusters):
