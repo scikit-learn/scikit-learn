@@ -31,7 +31,7 @@ class PredictionErrorDisplay:
         Dictionary where the key is the name of the metric displayed and the
         value is the metric value.
 
-    with_residuals : bool, default=False
+    with_errors : bool, default=False
         Whether or not to display the residuals on the plot for each sample.
 
     Attributes
@@ -39,8 +39,8 @@ class PredictionErrorDisplay:
     line_ : matplotlib Artist
         Diagonal curve.
 
-    residual_lines_ : matplotlib Artist or None
-        Residual lines. If `with_residuals=False`, then it is set to `None`.
+    errors_lines_ : matplotlib Artist or None
+        Residual lines. If `with_errors=False`, then it is set to `None`.
 
     scatter : matplotlib Artist
         Scatter data points.
@@ -79,20 +79,21 @@ class PredictionErrorDisplay:
         y_true,
         y_pred,
         scores=None,
-        with_residuals=False,
+        with_errors=False,
     ):
         self.y_true = y_true
         self.y_pred = y_pred
         self.scores = scores
-        self.with_residuals = with_residuals
+        self.with_errors = with_errors
 
     def plot(
         self,
         ax=None,
         *,
+        kind="predictions",
         scatter_kwargs=None,
         line_kwargs=None,
-        residuals_kwargs=None,
+        errors_kwargs=None,
     ):
         """Plot visualization.
 
@@ -104,6 +105,9 @@ class PredictionErrorDisplay:
             Axes object to plot on. If `None`, a new figure and axes is
             created.
 
+        kind : {"predictions", "residuals"}, default="predictions"
+            Whether to plot the predictions or the residuals.
+
         scatter_kwargs : dict, default=None
             Dictionary with keywords passed to the `matplotlib.pyplot.scatter`
             call.
@@ -112,10 +116,10 @@ class PredictionErrorDisplay:
             Dictionary with keyword passed to the `matplotlib.pyplot.plot`
             call to draw the diagonal line.
 
-        residuals_kwargs : dict, default=None
+        errors_kwargs : dict, default=None
             Dictionary with keyword passed to the `matplotlib.pyplot.plot`
             call to draw the residual lines. Only taken into account when
-            `with_residuals=True`.
+            `with_errors=True`.
 
         Returns
         -------
@@ -130,8 +134,8 @@ class PredictionErrorDisplay:
             scatter_kwargs = {}
         if line_kwargs is None:
             line_kwargs = {}
-        if residuals_kwargs is None:
-            residuals_kwargs = {}
+        if errors_kwargs is None:
+            errors_kwargs = {}
 
         default_scatter_kwargs = {"color": "black", "alpha": 0.8}
         default_line_kwargs = {
@@ -139,40 +143,48 @@ class PredictionErrorDisplay:
             "alpha": 0.7,
             "linestyle": "--",
         }
-        default_residuals_kwargs = {"color": "red", "alpha": 0.5}
+        default_errors_kwargs = {"color": "red", "alpha": 0.5}
 
         scatter_kwargs = {**default_scatter_kwargs, **scatter_kwargs}
         line_kwargs = {**default_line_kwargs, **line_kwargs}
-        residuals_kwargs = {**default_residuals_kwargs, **residuals_kwargs}
+        errors_kwargs = {**default_errors_kwargs, **errors_kwargs}
 
         if ax is None:
             _, ax = plt.subplots()
 
-        if self.with_residuals:
-            self.residual_lines_ = []
-            for actual, predicted in zip(self.y_true, self.y_pred):
-                residual_line = ax.plot(
-                    [actual, actual],
-                    [actual, predicted],
-                    **residuals_kwargs,
-                )
-                self.residual_lines_ += residual_line
+        if kind == "predictions":
+            if self.with_errors:
+                self.errors_lines_ = []
+                for actual, predicted in zip(self.y_true, self.y_pred):
+                    residual_line = ax.plot(
+                        [actual, actual],
+                        [actual, predicted],
+                        **errors_kwargs,
+                    )
+                    self.residual_lines_ += residual_line
+            else:
+                self.residual_lines_ = None
+
+            max_value = max(np.max(self.y_true), np.max(self.y_pred))
+            min_value = min(np.min(self.y_true), np.min(self.y_pred))
+            self.line_ = ax.plot(
+                [min_value, max_value], [min_value, max_value], **line_kwargs
+            )[0]
+
+            self.scatter_ = ax.scatter(self.y_true, self.y_pred, **scatter_kwargs)
+
+            xlabel, ylabel = "Actual values", "Predicted values"
+            ax.set_aspect("equal", adjustable="datalim")
+            ax.set_xticks(np.linspace(min_value, max_value, num=5))
+            ax.set_yticks(np.linspace(min_value, max_value, num=5))
         else:
-            self.residual_lines_ = None
+            self.line_ = None
+            self.scatter_ = ax.scatter(
+                self.y_pred, self.y_pred - self.y_true, **scatter_kwargs
+            )
+            xlabel, ylabel = "Predicted values", "Residuals"
 
-        max_value = max(np.max(self.y_true), np.max(self.y_pred))
-        min_value = min(np.min(self.y_true), np.min(self.y_pred))
-        self.line_ = ax.plot(
-            [min_value, max_value], [min_value, max_value], **line_kwargs
-        )[0]
-
-        self.scatter_ = ax.scatter(self.y_true, self.y_pred, **scatter_kwargs)
-
-        xlabel, ylabel = "Actual values", "Predicted values"
         ax.set(xlabel=xlabel, ylabel=ylabel)
-        ax.set_aspect("equal", adjustable="datalim")
-        ax.set_xticks(np.linspace(min_value, max_value, num=5))
-        ax.set_yticks(np.linspace(min_value, max_value, num=5))
 
         if self.scores is not None:
             extra = plt.Rectangle(
@@ -196,13 +208,14 @@ class PredictionErrorDisplay:
         y,
         *,
         scores=None,
+        kind="predictions",
         subsample=1_000,
         random_state=None,
-        with_residuals=False,
+        with_errors=False,
         ax=None,
         scatter_kwargs=None,
         line_kwargs=None,
-        residuals_kwargs=None,
+        errors_kwargs=None,
     ):
         """Plot the prediction error given a regressor and some data.
 
@@ -226,6 +239,9 @@ class PredictionErrorDisplay:
             Dictionary containing scores that will be shown on the legend.
             Key are the score names, values are the score values.
 
+        kind : {"predictions", "residuals"}, default="predictions"
+            Whether to plot the predictions or the residuals.
+
         subsample : float, int or None, default=1_000
             Sampling the samples to be shown on the scatter plot. If `float`,
             it should be between 0 and 1 and represents the proportion of the
@@ -237,9 +253,8 @@ class PredictionErrorDisplay:
             Controls the randomness when `subsample` is not `None`.
             See :term:`Glossary <random_state>` for details.
 
-        with_residuals : bool, default=False
-            Whether or not to display the residuals on the plot for each
-            sample.
+        with_errors : bool, default=False
+            When `kind="predictions"`, whether to also show the error bars.
 
         ax : matplotlib axes, default=None
             Axes object to plot on. If `None`, a new figure and axes is
@@ -253,10 +268,10 @@ class PredictionErrorDisplay:
             Dictionary with keyword passed to the `matplotlib.pyplot.plot`
             call to draw the diagonal line.
 
-        residuals_kwargs : dict, default=None
+        errors_kwargs : dict, default=None
             Dictionary with keyword passed to the `matplotlib.pyplot.plot`
-            call to draw the residual lines. Only taken into account when
-            `with_residuals=True`.
+            call to draw the errors bars. Only taken into account when
+            `with_errors=True`.
 
         Returns
         -------
@@ -288,13 +303,14 @@ class PredictionErrorDisplay:
             y_true=y,
             y_pred=y_pred,
             scores=scores,
+            kind=kind,
             subsample=subsample,
             random_state=random_state,
-            with_residuals=with_residuals,
+            with_errors=with_errors,
             ax=ax,
             scatter_kwargs=scatter_kwargs,
             line_kwargs=line_kwargs,
-            residuals_kwargs=residuals_kwargs,
+            errors_kwargs=errors_kwargs,
         )
 
     @classmethod
@@ -304,13 +320,14 @@ class PredictionErrorDisplay:
         y_pred,
         *,
         scores=None,
+        kind="predictions",
         subsample=1_000,
         random_state=None,
-        with_residuals=False,
+        with_errors=False,
         ax=None,
         scatter_kwargs=None,
         line_kwargs=None,
-        residuals_kwargs=None,
+        errors_kwargs=None,
     ):
         """Plot the prediction error given the true and predicted targets.
 
@@ -330,6 +347,9 @@ class PredictionErrorDisplay:
             Dictionary containing scores that will be shown on the legend.
             Key are the score names, values are the score values.
 
+        kind : {"predictions", "residuals"}, default="predictions"
+            Whether to plot the predictions or the residuals.
+
         subsample : float, int or None, default=1_000
             Sampling the samples to be shown on the scatter plot. If `float`,
             it should be between 0 and 1 and represents the proportion of the
@@ -341,9 +361,8 @@ class PredictionErrorDisplay:
             Controls the randomness when `subsample` is not `None`.
             See :term:`Glossary <random_state>` for details.
 
-        with_residuals : bool, default=False
-            Whether or not to display the residuals on the plot for each
-            sample.
+        with_errors : bool, default=False
+            When `kind="predictions"`, whether to also show the error bars.
 
         ax : matplotlib axes, default=None
             Axes object to plot on. If `None`, a new figure and axes is
@@ -357,10 +376,10 @@ class PredictionErrorDisplay:
             Dictionary with keyword passed to the `matplotlib.pyplot.plot`
             call to draw the diagonal line.
 
-        residuals_kwargs : dict, default=None
+        errors_kwargs : dict, default=None
             Dictionary with keyword passed to the `matplotlib.pyplot.plot`
-            call to draw the residual lines. Only taken into account when
-            `with_residuals=True`.
+            call to draw the errors bars. Only taken into account when
+            `with_errors=True`.
 
         Returns
         -------
@@ -412,12 +431,13 @@ class PredictionErrorDisplay:
             y_true=y_true,
             y_pred=y_pred,
             scores=scores,
-            with_residuals=with_residuals,
+            with_errors=with_errors,
         )
 
         return viz.plot(
             ax=ax,
+            kind=kind,
             scatter_kwargs=scatter_kwargs,
             line_kwargs=line_kwargs,
-            residuals_kwargs=residuals_kwargs,
+            errors_kwargs=errors_kwargs,
         )

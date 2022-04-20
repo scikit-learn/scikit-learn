@@ -95,13 +95,18 @@ ridge_cv_with_trans_target = TransformedTargetRegressor(
 y_pred_ridge_with_trans_target = ridge_cv_with_trans_target.predict(X_test)
 
 PredictionErrorDisplay.from_predictions(
-    y_test, y_pred_ridge, scores=compute_score(y_test, y_pred_ridge), ax=ax0
+    y_test,
+    y_pred_ridge,
+    scores=compute_score(y_test, y_pred_ridge),
+    ax=ax0,
+    scatter_kwargs={"alpha": 0.5},
 )
 PredictionErrorDisplay.from_predictions(
     y_test,
     y_pred_ridge_with_trans_target,
     scores=compute_score(y_test, y_pred_ridge_with_trans_target),
     ax=ax1,
+    scatter_kwargs={"alpha": 0.5},
 )
 
 ax0.set_title("Ridge regression \n without target transformation")
@@ -140,17 +145,17 @@ f, (ax0, ax1) = plt.subplots(1, 2)
 ax0.hist(y, bins=100, density=True)
 ax0.set_ylabel("Probability")
 ax0.set_xlabel("Target")
-ax0.text(s="Target distribution", x=1.2e5, y=9.8e-6, fontsize=12)
-ax0.ticklabel_format(axis="both", style="sci", scilimits=(0, 0))
+ax0.set_title("Target distribution")
 
 ax1.hist(y_trans, bins=100, density=True)
 ax1.set_ylabel("Probability")
 ax1.set_xlabel("Target")
-ax1.text(s="Transformed target distribution", x=-6.8, y=0.479, fontsize=12)
+ax1.set_title("Transformed target distribution")
 
-f.suptitle("Ames housing data: selling price", y=0.04)
-f.tight_layout(rect=[0.05, 0.05, 0.95, 0.95])
+f.suptitle("Ames housing data: selling price", y=0)
+f.tight_layout()
 
+# %%
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=1)
 
 # %%
@@ -176,32 +181,42 @@ y_pred_ridge_with_trans_target = ridge_cv_with_trans_target.predict(X_test)
 
 # plot the actual vs predicted values
 PredictionErrorDisplay.from_predictions(
-    y_test, y_pred_ridge, scores=compute_score(y_test, y_pred_ridge), ax=ax0[0]
+    y_test,
+    y_pred_ridge,
+    scores=compute_score(y_test, y_pred_ridge),
+    ax=ax0[0],
+    scatter_kwargs={"alpha": 0.5},
 )
 PredictionErrorDisplay.from_predictions(
     y_test,
     y_pred_ridge_with_trans_target,
     scores=compute_score(y_test, y_pred_ridge_with_trans_target),
     ax=ax0[1],
+    scatter_kwargs={"alpha": 0.5},
 )
 ax0[0].set_title("Ridge regression \n without target transformation")
 ax0[1].set_title("Ridge regression \n with target transformation")
 
 # plot the residuals vs the predicted values
-y_pred = ridge_cv.predict(X_test)
-ax1[0].scatter(y_pred, (y_pred - y_test), s=8, c="k")
-ax1[0].set_ylabel("Residual")
-ax1[0].set_xlabel("Predicted target")
-ax1[0].ticklabel_format(axis="both", style="sci", scilimits=(0, 0))
+PredictionErrorDisplay.from_predictions(
+    y_test,
+    y_pred_ridge,
+    scores=compute_score(y_test, y_pred_ridge),
+    kind="residuals",
+    ax=ax1[0],
+    scatter_kwargs={"alpha": 0.5},
+)
+PredictionErrorDisplay.from_predictions(
+    y_test,
+    y_pred_ridge_with_trans_target,
+    scores=compute_score(y_test, y_pred_ridge_with_trans_target),
+    kind="residuals",
+    ax=ax1[1],
+    scatter_kwargs={"alpha": 0.5},
+)
+ax1[0].set_title("Ridge regression \n without target transformation")
+ax1[1].set_title("Ridge regression \n with target transformation")
 
-y_pred = ridge_cv_with_trans_target.predict(X_test)
-ax1[1].scatter(y_pred, (y_pred - y_test), s=8, c="k")
-ax1[1].set_ylabel("Residual")
-ax1[1].set_xlabel("Predicted target")
-ax1[1].ticklabel_format(axis="both", style="sci", scilimits=(0, 0))
-
-f.suptitle("Ames housing data: selling price", y=0.035)
-
+f.suptitle("Ames housing data: selling price", y=0)
+plt.tight_layout()
 plt.show()
-
-# %%
