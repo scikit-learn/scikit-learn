@@ -26,10 +26,8 @@ wage as a function of various features such as experience, age, or education.
 .. contents::
    :local:
    :depth: 1
-"""
 
-# %%
-print(__doc__)
+"""
 
 import numpy as np
 import scipy as sp
@@ -136,7 +134,9 @@ categorical_columns = ["RACE", "OCCUPATION", "SECTOR", "MARR", "UNION", "SEX", "
 numerical_columns = ["EDUCATION", "EXPERIENCE", "AGE"]
 
 preprocessor = make_column_transformer(
-    (OneHotEncoder(drop="if_binary"), categorical_columns), remainder="passthrough"
+    (OneHotEncoder(drop="if_binary"), categorical_columns),
+    remainder="passthrough",
+    verbose_feature_names_out=False,
 )
 
 # %%
@@ -199,13 +199,7 @@ _ = ax.set_title("Ridge model, small regularization")
 #
 # First of all, we can take a look to the values of the coefficients of the
 # regressor we have fitted.
-
-feature_names = (
-    model.named_steps["columntransformer"]
-    .named_transformers_["onehotencoder"]
-    .get_feature_names(input_features=categorical_columns)
-)
-feature_names = np.concatenate([feature_names, numerical_columns])
+feature_names = model[:-1].get_feature_names_out()
 
 coefs = pd.DataFrame(
     model.named_steps["transformedtargetregressor"].regressor_.coef_,
@@ -316,7 +310,7 @@ cv_model = cross_validate(
     y,
     cv=RepeatedKFold(n_splits=5, n_repeats=5),
     return_estimator=True,
-    n_jobs=-1,
+    n_jobs=2,
 )
 coefs = pd.DataFrame(
     [
@@ -358,7 +352,7 @@ _ = plt.title("Co-variations of coefficients for AGE and EXPERIENCE across folds
 
 # %%
 # Two regions are populated: when the EXPERIENCE coefficient is
-# positive the AGE one is negative and viceversa.
+# positive the AGE one is negative and vice-versa.
 #
 # To go further we remove one of the 2 features and check what is the impact
 # on the model stability.
@@ -371,7 +365,7 @@ cv_model = cross_validate(
     y,
     cv=RepeatedKFold(n_splits=5, n_repeats=5),
     return_estimator=True,
-    n_jobs=-1,
+    n_jobs=2,
 )
 coefs = pd.DataFrame(
     [
@@ -466,7 +460,7 @@ cv_model = cross_validate(
     y,
     cv=RepeatedKFold(n_splits=5, n_repeats=5),
     return_estimator=True,
-    n_jobs=-1,
+    n_jobs=2,
 )
 coefs = pd.DataFrame(
     [
@@ -567,7 +561,7 @@ cv_model = cross_validate(
     y,
     cv=RepeatedKFold(n_splits=5, n_repeats=5),
     return_estimator=True,
-    n_jobs=-1,
+    n_jobs=2,
 )
 coefs = pd.DataFrame(
     [

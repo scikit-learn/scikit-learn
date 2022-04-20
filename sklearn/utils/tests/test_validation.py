@@ -1,7 +1,7 @@
 """Tests for input validation functions"""
 
+import numbers
 import warnings
-import os
 import re
 
 from tempfile import NamedTemporaryFile
@@ -49,9 +49,11 @@ from sklearn.utils.validation import (
     _allclose_dense_sparse,
     _num_features,
     FLOAT_DTYPES,
+    _get_feature_names,
+    _check_feature_names_in,
+    _check_fit_params,
 )
-from sklearn.utils.validation import _check_fit_params
-
+from sklearn.base import BaseEstimator
 import sklearn
 
 from sklearn.exceptions import NotFittedError, PositiveSpectrumWarning
@@ -172,23 +174,75 @@ def test_check_array_force_all_finite_valid(value, force_all_finite, retype):
 
 
 @pytest.mark.parametrize(
-    "value, force_all_finite, match_msg",
+    "value, input_name, force_all_finite, match_msg",
     [
-        (np.inf, True, "Input contains NaN, infinity"),
-        (np.inf, "allow-nan", "Input contains infinity"),
-        (np.nan, True, "Input contains NaN, infinity"),
-        (np.nan, "allow-inf", 'force_all_finite should be a bool or "allow-nan"'),
-        (np.nan, 1, "Input contains NaN, infinity"),
+        (np.inf, "", True, "Input contains infinity"),
+        (np.inf, "X", True, "Input X contains infinity"),
+        (np.inf, "sample_weight", True, "Input sample_weight contains infinity"),
+        (np.inf, "X", "allow-nan", "Input X contains infinity"),
+        (np.nan, "", True, "Input contains NaN"),
+        (np.nan, "X", True, "Input X contains NaN"),
+        (np.nan, "y", True, "Input y contains NaN"),
+        (
+            np.nan,
+            "",
+            "allow-inf",
+            'force_all_finite should be a bool or "allow-nan"',
+        ),
+        (np.nan, "", 1, "Input contains NaN"),
     ],
 )
 @pytest.mark.parametrize("retype", [np.asarray, sp.csr_matrix])
 def test_check_array_force_all_finiteinvalid(
-    value, force_all_finite, match_msg, retype
+    value, input_name, force_all_finite, match_msg, retype
 ):
-    X = retype(np.arange(4).reshape(2, 2).astype(float))
+    X = retype(np.arange(4).reshape(2, 2).astype(np.float64))
     X[0, 0] = value
     with pytest.raises(ValueError, match=match_msg):
-        check_array(X, force_all_finite=force_all_finite, accept_sparse=True)
+        check_array(
+            X,
+            input_name=input_name,
+            force_all_finite=force_all_finite,
+            accept_sparse=True,
+        )
+
+
+@pytest.mark.parametrize("input_name", ["X", "y", "sample_weight"])
+@pytest.mark.parametrize("retype", [np.asarray, sp.csr_matrix])
+def test_check_array_links_to_imputer_doc_only_for_X(input_name, retype):
+    data = retype(np.arange(4).reshape(2, 2).astype(np.float64))
+    data[0, 0] = np.nan
+    estimator = SVR()
+    extended_msg = (
+        f"\n{estimator.__class__.__name__} does not accept missing values"
+        " encoded as NaN natively. For supervised learning, you might want"
+        " to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor"
+        " which accept missing values encoded as NaNs natively."
+        " Alternatively, it is possible to preprocess the"
+        " data, for instance by using an imputer transformer in a pipeline"
+        " or drop samples with missing values. See"
+        " https://scikit-learn.org/stable/modules/impute.html"
+    )
+
+    with pytest.raises(ValueError, match=f"Input {input_name} contains NaN") as ctx:
+        check_array(
+            data,
+            estimator=estimator,
+            input_name=input_name,
+            accept_sparse=True,
+        )
+
+    if input_name == "X":
+        assert extended_msg in ctx.value.args[0]
+    else:
+        assert extended_msg not in ctx.value.args[0]
+
+    if input_name == "X":
+        # Veriy that _validate_data is automatically called with the right argument
+        # to generate the same exception:
+        with pytest.raises(ValueError, match=f"Input {input_name} contains NaN") as ctx:
+            SVR().fit(data, np.ones(data.shape[0]))
+        assert extended_msg in ctx.value.args[0]
 
 
 def test_check_array_force_all_finite_object():
@@ -209,15 +263,15 @@ def test_check_array_force_all_finite_object():
     [
         (
             np.array([[1, np.nan]]),
-            "Input contains NaN, infinity or a value too large for.*int",
+            "Input contains NaN.",
         ),
         (
             np.array([[1, np.nan]]),
-            "Input contains NaN, infinity or a value too large for.*int",
+            "Input contains NaN.",
         ),
         (
             np.array([[1, np.inf]]),
-            "Input contains NaN, infinity or a value too large for.*int",
+            "Input contains infinity or a value too large for.*int",
         ),
         (np.array([[1, np.nan]], dtype=object), "cannot convert float NaN to integer"),
     ],
@@ -347,7 +401,6 @@ def test_check_array():
     assert isinstance(result, np.ndarray)
 
 
-# TODO: Check for error in 1.1 when implicit conversion is removed
 @pytest.mark.parametrize(
     "X",
     [
@@ -358,36 +411,17 @@ def test_check_array():
         np.array([[b"1", b"2"], [b"3", b"4"]], dtype="V1"),
     ],
 )
-def test_check_array_numeric_warns(X):
-    """Test that check_array warns when it converts a bytes/string into a
-    float."""
-    expected_msg = (
-        r"Arrays of bytes/strings is being converted to decimal .*"
-        r"deprecated in 0.24 and will be removed in 1.1"
-    )
-    with pytest.warns(FutureWarning, match=expected_msg):
+def test_check_array_numeric_error(X):
+    """Test that check_array errors when it receives an array of bytes/string
+    while a numeric dtype is required."""
+    expected_msg = r"dtype='numeric' is not compatible with arrays of bytes/strings"
+    with pytest.raises(ValueError, match=expected_msg):
         check_array(X, dtype="numeric")
 
 
-# TODO: remove in 1.1
-@ignore_warnings(category=FutureWarning)
 @pytest.mark.parametrize(
-    "X",
-    [
-        [["11", "12"], ["13", "xx"]],
-        np.array([["11", "12"], ["13", "xx"]], dtype="U"),
-        np.array([["11", "12"], ["13", "xx"]], dtype="S"),
-        [[b"a", b"b"], [b"c", b"d"]],
-    ],
+    "pd_dtype", ["Int8", "Int16", "UInt8", "UInt16", "Float32", "Float64"]
 )
-def test_check_array_dtype_numeric_errors(X):
-    """Error when string-ike array can not be converted"""
-    expected_warn_msg = "Unable to convert array of bytes/strings"
-    with pytest.raises(ValueError, match=expected_warn_msg):
-        check_array(X, dtype="numeric")
-
-
-@pytest.mark.parametrize("pd_dtype", ["Int8", "Int16", "UInt8", "UInt16"])
 @pytest.mark.parametrize(
     "dtype, expected_dtype",
     [
@@ -397,14 +431,18 @@ def test_check_array_dtype_numeric_errors(X):
     ],
 )
 def test_check_array_pandas_na_support(pd_dtype, dtype, expected_dtype):
-    # Test pandas IntegerArray with pd.NA
-    pd = pytest.importorskip("pandas", minversion="1.0")
+    # Test pandas numerical extension arrays with pd.NA
+    pd = pytest.importorskip("pandas")
+
+    if pd_dtype in {"Float32", "Float64"}:
+        # Extension dtypes with Floats was added in 1.2
+        pd = pytest.importorskip("pandas", minversion="1.2")
 
     X_np = np.array(
         [[1, 2, 3, np.nan, np.nan], [np.nan, np.nan, 8, 4, 6], [1, 2, 3, 4, 5]]
     ).T
 
-    # Creates dataframe with IntegerArrays with pd.NA
+    # Creates dataframe with numerical extension arrays with pd.NA
     X = pd.DataFrame(X_np, dtype=pd_dtype, columns=["a", "b", "c"])
     # column c has no nans
     X["c"] = X["c"].astype("float")
@@ -416,25 +454,9 @@ def test_check_array_pandas_na_support(pd_dtype, dtype, expected_dtype):
     assert_allclose(X_checked, X_np)
     assert X_checked.dtype == expected_dtype
 
-    msg = "Input contains NaN, infinity"
+    msg = "Input contains NaN"
     with pytest.raises(ValueError, match=msg):
         check_array(X, force_all_finite=True)
-
-
-# TODO: remove test in 1.1 once this behavior is deprecated
-def test_check_array_pandas_dtype_object_conversion():
-    # test that data-frame like objects with dtype object
-    # get converted
-    X = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=object)
-    X_df = MockDataFrame(X)
-    with pytest.warns(FutureWarning):
-        assert check_array(X_df).dtype.kind == "f"
-    with pytest.warns(FutureWarning):
-        assert check_array(X_df, ensure_2d=False).dtype.kind == "f"
-    # smoke-test against dataframes with column named "dtype"
-    X_df.dtype = "Hans"
-    with pytest.warns(FutureWarning):
-        assert check_array(X_df, ensure_2d=False).dtype.kind == "f"
 
 
 def test_check_array_pandas_dtype_casting():
@@ -750,6 +772,20 @@ def test_check_symmetric():
             assert_array_equal(output, arr_sym)
 
 
+def test_check_is_fitted_with_is_fitted():
+    class Estimator(BaseEstimator):
+        def fit(self, **kwargs):
+            self._is_fitted = True
+            return self
+
+        def __sklearn_is_fitted__(self):
+            return hasattr(self, "_is_fitted") and self._is_fitted
+
+    with pytest.raises(NotFittedError):
+        check_is_fitted(Estimator())
+    check_is_fitted(Estimator().fit())
+
+
 def test_check_is_fitted():
     # Check is TypeError raised when non estimator instance passed
     with pytest.raises(TypeError):
@@ -917,12 +953,13 @@ class WrongDummyMemory:
     pass
 
 
-@pytest.mark.filterwarnings("ignore:The 'cachedir' attribute")
 def test_check_memory():
     memory = check_memory("cache_directory")
-    assert memory.cachedir == os.path.join("cache_directory", "joblib")
+    assert memory.location == "cache_directory"
+
     memory = check_memory(None)
-    assert memory.cachedir is None
+    assert memory.location is None
+
     dummy = DummyMemory()
     memory = check_memory(dummy)
     assert memory is dummy
@@ -980,8 +1017,13 @@ def test_check_non_negative(retype):
 def test_check_X_y_informative_error():
     X = np.ones((2, 2))
     y = None
-    with pytest.raises(ValueError, match="y cannot be None"):
+    msg = "estimator requires y to be passed, but the target y is None"
+    with pytest.raises(ValueError, match=msg):
         check_X_y(X, y)
+
+    msg = "RandomForestRegressor requires y to be passed, but the target y is None"
+    with pytest.raises(ValueError, match=msg):
+        check_X_y(X, y, estimator=RandomForestRegressor())
 
 
 def test_retrieve_samples_from_non_standard_shape():
@@ -1004,21 +1046,25 @@ def test_retrieve_samples_from_non_standard_shape():
         _num_samples(TestNoLenWeirdShape())
 
 
-@pytest.mark.parametrize(
-    "x, target_type, min_val, max_val", [(3, int, 2, 5), (2.5, float, 2, 5)]
-)
-def test_check_scalar_valid(x, target_type, min_val, max_val):
+@pytest.mark.parametrize("x", [2, 3, 2.5, 5])
+def test_check_scalar_valid(x):
     """Test that check_scalar returns no error/warning if valid inputs are
     provided"""
-    with pytest.warns(None) as record:
-        check_scalar(
-            x, "test_name", target_type=target_type, min_val=min_val, max_val=max_val
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        scalar = check_scalar(
+            x,
+            "test_name",
+            target_type=numbers.Real,
+            min_val=2,
+            max_val=5,
+            include_boundaries="both",
         )
-    assert len(record) == 0
+    assert scalar == x
 
 
 @pytest.mark.parametrize(
-    "x, target_name, target_type, min_val, max_val, err_msg",
+    "x, target_name, target_type, min_val, max_val, include_boundaries, err_msg",
     [
         (
             1,
@@ -1026,21 +1072,123 @@ def test_check_scalar_valid(x, target_type, min_val, max_val):
             float,
             2,
             4,
-            TypeError(
-                "`test_name1` must be an instance of "
-                "<class 'float'>, not <class 'int'>."
+            "neither",
+            TypeError("test_name1 must be an instance of float, not int."),
+        ),
+        (
+            None,
+            "test_name1",
+            numbers.Real,
+            2,
+            4,
+            "neither",
+            TypeError("test_name1 must be an instance of float, not NoneType."),
+        ),
+        (
+            None,
+            "test_name1",
+            numbers.Integral,
+            2,
+            4,
+            "neither",
+            TypeError("test_name1 must be an instance of int, not NoneType."),
+        ),
+        (
+            1,
+            "test_name1",
+            (float, bool),
+            2,
+            4,
+            "neither",
+            TypeError("test_name1 must be an instance of {float, bool}, not int."),
+        ),
+        (
+            1,
+            "test_name2",
+            int,
+            2,
+            4,
+            "neither",
+            ValueError("test_name2 == 1, must be > 2."),
+        ),
+        (
+            5,
+            "test_name3",
+            int,
+            2,
+            4,
+            "neither",
+            ValueError("test_name3 == 5, must be < 4."),
+        ),
+        (
+            2,
+            "test_name4",
+            int,
+            2,
+            4,
+            "right",
+            ValueError("test_name4 == 2, must be > 2."),
+        ),
+        (
+            4,
+            "test_name5",
+            int,
+            2,
+            4,
+            "left",
+            ValueError("test_name5 == 4, must be < 4."),
+        ),
+        (
+            4,
+            "test_name6",
+            int,
+            2,
+            4,
+            "bad parameter value",
+            ValueError(
+                "Unknown value for `include_boundaries`: 'bad parameter value'. "
+                "Possible values are: ('left', 'right', 'both', 'neither')."
             ),
         ),
-        (1, "test_name2", int, 2, 4, ValueError("`test_name2`= 1, must be >= 2.")),
-        (5, "test_name3", int, 2, 4, ValueError("`test_name3`= 5, must be <= 4.")),
+        (
+            4,
+            "test_name7",
+            int,
+            None,
+            4,
+            "left",
+            ValueError(
+                "`include_boundaries`='left' without specifying explicitly `min_val` "
+                "is inconsistent."
+            ),
+        ),
+        (
+            4,
+            "test_name8",
+            int,
+            2,
+            None,
+            "right",
+            ValueError(
+                "`include_boundaries`='right' without specifying explicitly `max_val` "
+                "is inconsistent."
+            ),
+        ),
     ],
 )
-def test_check_scalar_invalid(x, target_name, target_type, min_val, max_val, err_msg):
+def test_check_scalar_invalid(
+    x, target_name, target_type, min_val, max_val, include_boundaries, err_msg
+):
     """Test that check_scalar returns the right error if a wrong input is
     given"""
     with pytest.raises(Exception) as raised_error:
         check_scalar(
-            x, target_name, target_type=target_type, min_val=min_val, max_val=max_val
+            x,
+            target_name,
+            target_type=target_type,
+            min_val=min_val,
+            max_val=max_val,
+            include_boundaries=include_boundaries,
         )
     assert str(raised_error.value) == str(err_msg)
     assert type(raised_error.value) == type(err_msg)
@@ -1179,6 +1327,14 @@ def test_check_sample_weight():
     sample_weight = _check_sample_weight(None, X, dtype=X.dtype)
     assert sample_weight.dtype == np.float64
 
+    # check negative weight when only_non_negative=True
+    X = np.ones((5, 2))
+    sample_weight = np.ones(_num_samples(X))
+    sample_weight[-1] = -10
+    err_msg = "Negative values in data passed to `sample_weight`"
+    with pytest.raises(ValueError, match=err_msg):
+        _check_sample_weight(sample_weight, X, only_non_negative=True)
+
 
 @pytest.mark.parametrize("toarray", [np.array, sp.csr_matrix, sp.csc_matrix])
 def test_allclose_dense_sparse_equals(toarray):
@@ -1295,7 +1451,7 @@ def test_check_fit_params(indices):
 def test_check_sparse_pandas_sp_format(sp_format):
     # check_array converts pandas dataframe with only sparse arrays into
     # sparse matrix
-    pd = pytest.importorskip("pandas", minversion="0.25.0")
+    pd = pytest.importorskip("pandas")
     sp_mat = _sparse_random_matrix(10, 3)
 
     sdf = pd.DataFrame.sparse.from_spmatrix(sp_mat)
@@ -1329,11 +1485,11 @@ def test_check_pandas_sparse_invalid(ntype1, ntype2):
     sparse extension arrays with unsupported mixed dtype
     and pandas version below 1.1. pandas versions 1.1 and
     above fixed this issue so no error will be raised."""
-    pd = pytest.importorskip("pandas", minversion="0.25.0")
+    pd = pytest.importorskip("pandas")
     df = pd.DataFrame(
         {
-            "col1": pd.arrays.SparseArray([0, 1, 0], dtype=ntype1),
-            "col2": pd.arrays.SparseArray([1, 0, 1], dtype=ntype2),
+            "col1": pd.arrays.SparseArray([0, 1, 0], dtype=ntype1, fill_value=0),
+            "col2": pd.arrays.SparseArray([1, 0, 1], dtype=ntype2, fill_value=0),
         }
     )
 
@@ -1371,11 +1527,11 @@ def test_check_pandas_sparse_invalid(ntype1, ntype2):
 def test_check_pandas_sparse_valid(ntype1, ntype2, expected_subtype):
     # check that we support the conversion of sparse dataframe with mixed
     # type which can be converted safely.
-    pd = pytest.importorskip("pandas", minversion="0.25.0")
+    pd = pytest.importorskip("pandas")
     df = pd.DataFrame(
         {
-            "col1": pd.arrays.SparseArray([0, 1, 0], dtype=ntype1),
-            "col2": pd.arrays.SparseArray([1, 0, 1], dtype=ntype2),
+            "col1": pd.arrays.SparseArray([0, 1, 0], dtype=ntype1, fill_value=0),
+            "col2": pd.arrays.SparseArray([1, 0, 1], dtype=ntype2, fill_value=0),
         }
     )
     arr = check_array(df, accept_sparse=["csr", "csc"])
@@ -1445,3 +1601,106 @@ def test_check_array_deprecated_matrix():
     )
     with pytest.warns(FutureWarning, match=msg):
         check_array(X)
+
+
+@pytest.mark.parametrize(
+    "names",
+    [list(range(2)), range(2), None, [["a", "b"], ["c", "d"]]],
+    ids=["list-int", "range", "default", "MultiIndex"],
+)
+def test_get_feature_names_pandas_with_ints_no_warning(names):
+    """Get feature names with pandas dataframes without warning.
+
+    Column names with consistent dtypes will not warn, such as int or MultiIndex.
+    """
+    pd = pytest.importorskip("pandas")
+    X = pd.DataFrame([[1, 2], [4, 5], [5, 6]], columns=names)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", FutureWarning)
+        names = _get_feature_names(X)
+    assert names is None
+
+
+def test_get_feature_names_pandas():
+    """Get feature names with pandas dataframes."""
+    pd = pytest.importorskip("pandas")
+    columns = [f"col_{i}" for i in range(3)]
+    X = pd.DataFrame([[1, 2, 3], [4, 5, 6]], columns=columns)
+    feature_names = _get_feature_names(X)
+
+    assert_array_equal(feature_names, columns)
+
+
+def test_get_feature_names_numpy():
+    """Get feature names return None for numpy arrays."""
+    X = np.array([[1, 2, 3], [4, 5, 6]])
+    names = _get_feature_names(X)
+    assert names is None
+
+
+# TODO: Convert to a error in 1.2
+@pytest.mark.parametrize(
+    "names, dtypes",
+    [
+        (["a", 1], "['int', 'str']"),
+        (["pizza", ["a", "b"]], "['list', 'str']"),
+    ],
+    ids=["int-str", "list-str"],
+)
+def test_get_feature_names_invalid_dtypes_warns(names, dtypes):
+    """Get feature names warns when the feature names have mixed dtypes"""
+    pd = pytest.importorskip("pandas")
+    X = pd.DataFrame([[1, 2], [4, 5], [5, 6]], columns=names)
+
+    msg = re.escape(
+        "Feature names only support names that are all strings. "
+        f"Got feature names with dtypes: {dtypes}. An error will be raised"
+    )
+    with pytest.warns(FutureWarning, match=msg):
+        names = _get_feature_names(X)
+    assert names is None
+
+
+class PassthroughTransformer(BaseEstimator):
+    def fit(self, X, y=None):
+        self._validate_data(X, reset=True)
+        return self
+
+    def transform(self, X):
+        return X
+
+    def get_feature_names_out(self, input_features=None):
+        return _check_feature_names_in(self, input_features)
+
+
+def test_check_feature_names_in():
+    """Check behavior of check_feature_names_in for arrays."""
+    X = np.array([[0.0, 1.0, 2.0]])
+    est = PassthroughTransformer().fit(X)
+
+    names = est.get_feature_names_out()
+    assert_array_equal(names, ["x0", "x1", "x2"])
+
+    incorrect_len_names = ["x10", "x1"]
+    with pytest.raises(ValueError, match="input_features should have length equal to"):
+        est.get_feature_names_out(incorrect_len_names)
+
+    # remove n_feature_in_
+    del est.n_features_in_
+    with pytest.raises(ValueError, match="Unable to generate feature names"):
+        est.get_feature_names_out()
+
+
+def test_check_feature_names_in_pandas():
+    """Check behavior of check_feature_names_in for pandas dataframes."""
+    pd = pytest.importorskip("pandas")
+    names = ["a", "b", "c"]
+    df = pd.DataFrame([[0.0, 1.0, 2.0]], columns=names)
+    est = PassthroughTransformer().fit(df)
+
+    names = est.get_feature_names_out()
+    assert_array_equal(names, ["a", "b", "c"])
+
+    with pytest.raises(ValueError, match="input_features is not equal to"):
+        est.get_feature_names_out(["x1", "x2", "x3"])

@@ -1,6 +1,5 @@
-from __future__ import division
-
 import pytest
+import warnings
 
 import numpy as np
 from scipy import sparse
@@ -28,6 +27,16 @@ from sklearn import tree
 from sklearn.random_projection import _sparse_random_matrix
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.impute._base import _most_frequent
+
+
+def _assert_array_equal_and_same_dtype(x, y):
+    assert_array_equal(x, y)
+    assert x.dtype == y.dtype
+
+
+def _assert_allclose_and_same_dtype(x, y):
+    assert_allclose(x, y)
+    assert x.dtype == y.dtype
 
 
 def _check_statistics(X, X_true, strategy, statistics, missing_values):
@@ -98,10 +107,45 @@ def test_imputation_error_invalid_strategy(strategy):
 def test_imputation_deletion_warning(strategy):
     X = np.ones((3, 5))
     X[:, 0] = np.nan
+    imputer = SimpleImputer(strategy=strategy, verbose=1)
 
-    with pytest.warns(UserWarning, match="Deleting"):
-        imputer = SimpleImputer(strategy=strategy, verbose=True)
-        imputer.fit_transform(X)
+    # TODO: Remove in 1.3
+    with pytest.warns(FutureWarning, match="The 'verbose' parameter"):
+        imputer.fit(X)
+
+    with pytest.warns(UserWarning, match="Skipping"):
+        imputer.transform(X)
+
+
+@pytest.mark.parametrize("strategy", ["mean", "median", "most_frequent"])
+def test_imputation_deletion_warning_feature_names(strategy):
+
+    pd = pytest.importorskip("pandas")
+
+    missing_values = np.nan
+    feature_names = np.array(["a", "b", "c", "d"], dtype=object)
+    X = pd.DataFrame(
+        [
+            [missing_values, missing_values, 1, missing_values],
+            [4, missing_values, 2, 10],
+        ],
+        columns=feature_names,
+    )
+
+    imputer = SimpleImputer(strategy=strategy, verbose=1)
+
+    # TODO: Remove in 1.3
+    with pytest.warns(FutureWarning, match="The 'verbose' parameter"):
+        imputer.fit(X)
+
+    # check SimpleImputer returning feature name attribute correctly
+    assert_array_equal(imputer.feature_names_in_, feature_names)
+
+    # ensure that skipped feature warning includes feature name
+    with pytest.warns(
+        UserWarning, match=r"Skipping features without any observed values: \['b'\]"
+    ):
+        imputer.transform(X)
 
 
 @pytest.mark.parametrize("strategy", ["mean", "median", "most_frequent", "constant"])
@@ -936,9 +980,9 @@ def test_iterative_imputer_catch_warning():
         X[sample_idx, feat] = np.nan
 
     imputer = IterativeImputer(n_nearest_features=5, sample_posterior=True)
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
         X_fill = imputer.fit_transform(X, y)
-    assert not record.list
     assert not np.any(np.isnan(X_fill))
 
 
@@ -1279,7 +1323,7 @@ def test_missing_indicator_with_imputer(X, missing_values, X_trans_exp):
 @pytest.mark.parametrize(
     "imputer_missing_values, missing_value, err_msg",
     [
-        ("NaN", np.nan, "Input contains NaN"),
+        ("NaN", np.nan, "Input X contains NaN"),
         ("-1", -1, "types are expected to be both numerical."),
     ],
 )
@@ -1495,3 +1539,82 @@ def test_most_frequent(expected, array, dtype, extra_value, n_repeat):
     assert expected == _most_frequent(
         np.array(array, dtype=dtype), extra_value, n_repeat
     )
+
+
+def test_simple_impute_pd_na():
+    pd = pytest.importorskip("pandas")
+
+    # Impute pandas array of string types.
+    df = pd.DataFrame({"feature": pd.Series(["abc", None, "de"], dtype="string")})
+    imputer = SimpleImputer(missing_values=pd.NA, strategy="constant", fill_value="na")
+    _assert_array_equal_and_same_dtype(
+        imputer.fit_transform(df), np.array([["abc"], ["na"], ["de"]], dtype=object)
+    )
+
+    # Impute pandas array of string types without any missing values.
+    df = pd.DataFrame({"feature": pd.Series(["abc", "de", "fgh"], dtype="string")})
+    imputer = SimpleImputer(fill_value="ok", strategy="constant")
+    _assert_array_equal_and_same_dtype(
+        imputer.fit_transform(df), np.array([["abc"], ["de"], ["fgh"]], dtype=object)
+    )
+
+    # Impute pandas array of integer types.
+    df = pd.DataFrame({"feature": pd.Series([1, None, 3], dtype="Int64")})
+    imputer = SimpleImputer(missing_values=pd.NA, strategy="constant", fill_value=-1)
+    _assert_allclose_and_same_dtype(
+        imputer.fit_transform(df), np.array([[1], [-1], [3]], dtype="float64")
+    )
+
+    # Use `np.nan` also works.
+    imputer = SimpleImputer(missing_values=np.nan, strategy="constant", fill_value=-1)
+    _assert_allclose_and_same_dtype(
+        imputer.fit_transform(df), np.array([[1], [-1], [3]], dtype="float64")
+    )
+
+    # Impute pandas array of integer types with 'median' strategy.
+    df = pd.DataFrame({"feature": pd.Series([1, None, 2, 3], dtype="Int64")})
+    imputer = SimpleImputer(missing_values=pd.NA, strategy="median")
+    _assert_allclose_and_same_dtype(
+        imputer.fit_transform(df), np.array([[1], [2], [2], [3]], dtype="float64")
+    )
+
+    # Impute pandas array of integer types with 'mean' strategy.
+    df = pd.DataFrame({"feature": pd.Series([1, None, 2], dtype="Int64")})
+    imputer = SimpleImputer(missing_values=pd.NA, strategy="mean")
+    _assert_allclose_and_same_dtype(
+        imputer.fit_transform(df), np.array([[1], [1.5], [2]], dtype="float64")
+    )
+
+    # Impute pandas array of float types.
+    df = pd.DataFrame({"feature": pd.Series([1.0, None, 3.0], dtype="float64")})
+    imputer = SimpleImputer(missing_values=pd.NA, strategy="constant", fill_value=-2.0)
+    _assert_allclose_and_same_dtype(
+        imputer.fit_transform(df), np.array([[1.0], [-2.0], [3.0]], dtype="float64")
+    )
+
+    # Impute pandas array of float types with 'median' strategy.
+    df = pd.DataFrame({"feature": pd.Series([1.0, None, 2.0, 3.0], dtype="float64")})
+    imputer = SimpleImputer(missing_values=pd.NA, strategy="median")
+    _assert_allclose_and_same_dtype(
+        imputer.fit_transform(df),
+        np.array([[1.0], [2.0], [2.0], [3.0]], dtype="float64"),
+    )
+
+
+def test_missing_indicator_feature_names_out():
+    """Check that missing indicator return the feature names with a prefix."""
+    pd = pytest.importorskip("pandas")
+
+    missing_values = np.nan
+    X = pd.DataFrame(
+        [
+            [missing_values, missing_values, 1, missing_values],
+            [4, missing_values, 2, 10],
+        ],
+        columns=["a", "b", "c", "d"],
+    )
+
+    indicator = MissingIndicator(missing_values=missing_values).fit(X)
+    feature_names = indicator.get_feature_names_out()
+    expected_names = ["missingindicator_a", "missingindicator_b", "missingindicator_d"]
+    assert_array_equal(expected_names, feature_names)

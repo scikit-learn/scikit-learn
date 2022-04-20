@@ -13,18 +13,7 @@ jobs:
   pool:
     vmImage: ubuntu-20.04
   steps:
-    - bash: |
-        set -ex
-        if [[ $BUILD_REASON == "PullRequest" ]]; then
-          # By default pull requests use refs/pull/PULL_ID/merge as the source branch
-          # which has a "Merge ID into ID" as a commit message. The latest commit
-          # message is the second to last commit
-          COMMIT_ID=$(echo $BUILD_SOURCEVERSIONMESSAGE | awk '{print $2}')
-          message=$(git log $COMMIT_ID -1 --pretty=%B)
-        else
-          message=$BUILD_SOURCEVERSIONMESSAGE
-        fi
-        echo "##vso[task.setvariable variable=message;isOutput=true]$message"
+    - bash: python build_tools/azure/get_commit_message.py
       name: commit
       displayName: Get source version message
 
@@ -45,10 +34,10 @@ jobs:
         versionSpec: '3.9'
     - bash: |
         # Include pytest compatibility with mypy
-        pip install pytest flake8 mypy==0.782 black==21.6b0
+        pip install pytest flake8 mypy==0.782 black==22.3.0
       displayName: Install linters
     - bash: |
-        black --check .
+        black --check --diff .
       displayName: Run black
     - bash: |
         ./build_tools/circle/linting.sh
@@ -97,12 +86,34 @@ jobs:
         )
       )
     matrix:
-      pylatest_conda_mkl:
+      pylatest_conda_forge_mkl:
         DISTRIB: 'conda'
+        CONDA_CHANNEL: 'conda-forge'
         PYTHON_VERSION: '*'
         BLAS: 'mkl'
         COVERAGE: 'false'
         BUILD_WITH_ICC: 'true'
+
+- template: build_tools/azure/posix-docker.yml
+  parameters:
+    name: Linux_Nightly_PyPy
+    vmImage: ubuntu-20.04
+    dependsOn: [linting, git_commit]
+    condition: |
+      and(
+        succeeded(),
+        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]')),
+        or(
+          eq(variables['Build.Reason'], 'Schedule'),
+          contains(dependencies['git_commit']['outputs']['commit.message'], '[pypy]')
+        )
+      )
+    matrix:
+      pypy3:
+        DISTRIB: 'conda-mamba-pypy3'
+        DOCKER_CONTAINER: 'condaforge/mambaforge-pypy3:4.10.3-5'
+        PILLOW_VERSION: 'none'
+        PANDAS_VERSION: 'none'
 
 # Will run all the time regardless of linting outcome.
 - template: build_tools/azure/posix.yml
@@ -116,11 +127,14 @@ jobs:
         not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]'))
       )
     matrix:
-      pylatest_conda_mkl:
+      pylatest_conda_forge_mkl:
         DISTRIB: 'conda'
+        CONDA_CHANNEL: 'conda-forge'
         PYTHON_VERSION: '*'
         BLAS: 'mkl'
         COVERAGE: 'true'
+        SHOW_SHORT_SUMMARY: 'true'
+        SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '42'  # default global random seed
 
 # Check compilation with Ubuntu bionic 18.04 LTS and scipy from conda-forge
 - template: build_tools/azure/posix.yml
@@ -131,16 +145,17 @@ jobs:
     condition: |
       and(
         succeeded(),
-        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]')),
-        ne(variables['Build.Reason'], 'Schedule')
+        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]'))
       )
     matrix:
-      py37_conda:
+      py38_conda_forge_openblas_ubuntu_1804:
         DISTRIB: 'conda'
-        PYTHON_VERSION: '3.7'
+        CONDA_CHANNEL: 'conda-forge'
+        PYTHON_VERSION: '3.8'
         BLAS: 'openblas'
         COVERAGE: 'false'
         BUILD_WITH_ICC: 'false'
+        SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '0'  # non-default seed
 
 - template: build_tools/azure/posix.yml
   parameters:
@@ -150,8 +165,7 @@ jobs:
     condition: |
       and(
         succeeded(),
-        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]')),
-        ne(variables['Build.Reason'], 'Schedule')
+        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]'))
       )
     matrix:
       # Linux environment to test that scikit-learn can be built against
@@ -163,85 +177,97 @@ jobs:
         PANDAS_VERSION: 'none'
         THREADPOOLCTL_VERSION: 'min'
         COVERAGE: 'false'
-      # Linux + Python 3.7 build with OpenBLAS and without SITE_JOBLIB
-      py37_conda_openblas:
+        SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '1'  # non-default seed
+      # Linux + Python 3.8 build with OpenBLAS
+      py38_conda_defaults_openblas:
         DISTRIB: 'conda'
-        PYTHON_VERSION: '3.7'
+        CONDA_CHANNEL: 'defaults'  # Anaconda main channel
+        PYTHON_VERSION: '3.8'
         BLAS: 'openblas'
         NUMPY_VERSION: 'min'
         SCIPY_VERSION: 'min'
         MATPLOTLIB_VERSION: 'min'
-        THREADPOOLCTL_VERSION: '2.0.0'
-      # Linux environment to test the latest available dependencies and MKL.
+        THREADPOOLCTL_VERSION: '2.2.0'
+        SKLEARN_ENABLE_DEBUG_CYTHON_DIRECTIVES: '1'
+        SKLEARN_RUN_FLOAT32_TESTS: '1'
+        SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '2'  # non-default seed
+      # Linux environment to test the latest available dependencies.
       # It runs tests requiring lightgbm, pandas and PyAMG.
       pylatest_pip_openblas_pandas:
         DISTRIB: 'conda-pip-latest'
         PYTHON_VERSION: '3.9'
-        PANDAS_VERSION: 'none'
+        PYTEST_VERSION: '6.2.5'
         CHECK_PYTEST_SOFT_DEPENDENCY: 'true'
         TEST_DOCSTRINGS: 'true'
         CHECK_WARNINGS: 'true'
+        SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '3'  # non-default seed
 
-- template: build_tools/azure/posix-32.yml
+- template: build_tools/azure/posix-docker.yml
   parameters:
-    name: Linux32
+    name: Linux_Docker
     vmImage: ubuntu-20.04
     dependsOn: [linting, git_commit]
     condition: |
       and(
         succeeded(),
-        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]')),
-        ne(variables['Build.Reason'], 'Schedule')
+        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]'))
       )
     matrix:
       debian_atlas_32bit:
         DISTRIB: 'debian-32'
+        DOCKER_CONTAINER: 'i386/debian:11.2'
         JOBLIB_VERSION: 'min'
         # disable pytest xdist due to unknown bug with 32-bit container
         PYTEST_XDIST_VERSION: 'none'
         PYTEST_VERSION: 'min'
-        THREADPOOLCTL_VERSION: 'min'
+        THREADPOOLCTL_VERSION: '2.2.0'
+        SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '4'  # non-default seed
 
 - template: build_tools/azure/posix.yml
   parameters:
     name: macOS
-    vmImage: macOS-10.14
+    vmImage: macOS-10.15
     dependsOn: [linting, git_commit]
     condition: |
       and(
         succeeded(),
-        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]')),
-        ne(variables['Build.Reason'], 'Schedule')
+        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]'))
       )
     matrix:
       pylatest_conda_forge_mkl:
         DISTRIB: 'conda'
         BLAS: 'mkl'
         CONDA_CHANNEL: 'conda-forge'
+        SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '5'  # non-default seed
       pylatest_conda_mkl_no_openmp:
         DISTRIB: 'conda'
         BLAS: 'mkl'
         SKLEARN_TEST_NO_OPENMP: 'true'
         SKLEARN_SKIP_OPENMP_TEST: 'true'
+        SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '6'  # non-default seed
 
 - template: build_tools/azure/windows.yml
   parameters:
     name: Windows
-    vmImage: vs2017-win2016
+    vmImage: windows-latest
     dependsOn: [linting, git_commit]
     condition: |
       and(
         succeeded(),
-        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]')),
-        ne(variables['Build.Reason'], 'Schedule')
+        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]'))
       )
     matrix:
-      py37_conda_mkl:
-        PYTHON_VERSION: '3.7'
+      py38_conda_forge_mkl:
+        DISTRIB: 'conda'
+        CONDA_CHANNEL: 'conda-forge'
+        PYTHON_VERSION: '3.8'
         CHECK_WARNINGS: 'true'
         PYTHON_ARCH: '64'
-        PYTEST_VERSION: '*'
+        # Unpin when pytest stalling issue is fixed
+        PYTEST_VERSION: '6.2.5'
         COVERAGE: 'true'
-      py37_pip_openblas_32bit:
-        PYTHON_VERSION: '3.7'
+        SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '7'  # non-default seed
+      py38_pip_openblas_32bit:
+        PYTHON_VERSION: '3.8'
         PYTHON_ARCH: '32'
+        SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '8'  # non-default seed

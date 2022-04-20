@@ -11,13 +11,17 @@ import hashlib
 import gzip
 import shutil
 from collections import namedtuple
+import os
 from os import environ, listdir, makedirs
 from os.path import expanduser, isdir, join, splitext
 from importlib import resources
+from pathlib import Path
 
+from ..preprocessing import scale
 from ..utils import Bunch
 from ..utils import check_random_state
 from ..utils import check_pandas_support
+from ..utils.deprecation import deprecated
 
 import numpy as np
 
@@ -31,12 +35,12 @@ RemoteFileMetadata = namedtuple("RemoteFileMetadata", ["filename", "url", "check
 
 
 def get_data_home(data_home=None) -> str:
-    """Return the path of the scikit-learn data dir.
+    """Return the path of the scikit-learn data directory.
 
     This folder is used by some large dataset loaders to avoid downloading the
     data several times.
 
-    By default the data dir is set to a folder named 'scikit_learn_data' in the
+    By default the data directory is set to a folder named 'scikit_learn_data' in the
     user home folder.
 
     Alternatively, it can be set by the 'SCIKIT_LEARN_DATA' environment
@@ -50,6 +54,11 @@ def get_data_home(data_home=None) -> str:
     data_home : str, default=None
         The path to scikit-learn data directory. If `None`, the default path
         is `~/sklearn_learn_data`.
+
+    Returns
+    -------
+    data_home: str
+        The path to scikit-learn data directory.
     """
     if data_home is None:
         data_home = environ.get("SCIKIT_LEARN_DATA", join("~", "scikit_learn_data"))
@@ -99,6 +108,7 @@ def load_files(
     encoding=None,
     decode_error="strict",
     random_state=0,
+    allowed_extensions=None,
 ):
     """Load text files with categories as subfolder names.
 
@@ -136,14 +146,17 @@ def load_files(
     Similar feature extractors should be built for other kind of unstructured
     data input such as images, audio, video, ...
 
+    If you want files with a specific file extension (e.g. `.txt`) then you
+    can pass a list of those file extensions to `allowed_extensions`.
+
     Read more in the :ref:`User Guide <datasets>`.
 
     Parameters
     ----------
-    container_path : str or unicode
-        Path to the main folder holding one subfolder per category
+    container_path : str
+        Path to the main folder holding one subfolder per category.
 
-    description : str or unicode, default=None
+    description : str, default=None
         A paragraph describing the characteristic of the dataset: its source,
         reference, etc.
 
@@ -177,6 +190,9 @@ def load_files(
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
+    allowed_extensions : list of str, default=None
+        List of desired file extensions to filter the files to be loaded.
+
     Returns
     -------
     data : :class:`~sklearn.utils.Bunch`
@@ -194,6 +210,7 @@ def load_files(
         filenames: ndarray
             The filenames holding the dataset.
     """
+
     target = []
     target_names = []
     filenames = []
@@ -205,10 +222,21 @@ def load_files(
     if categories is not None:
         folders = [f for f in folders if f in categories]
 
+    if allowed_extensions is not None:
+        allowed_extensions = frozenset(allowed_extensions)
+
     for label, folder in enumerate(folders):
         target_names.append(folder)
         folder_path = join(container_path, folder)
-        documents = [join(folder_path, d) for d in sorted(listdir(folder_path))]
+        files = sorted(listdir(folder_path))
+        if allowed_extensions is not None:
+            documents = [
+                join(folder_path, file)
+                for file in files
+                if os.path.splitext(file)[1] in allowed_extensions
+            ]
+        else:
+            documents = [join(folder_path, file) for file in files]
         target.extend(len(documents) * [label])
         filenames.extend(documents)
 
@@ -226,8 +254,7 @@ def load_files(
     if load_content:
         data = []
         for filename in filenames:
-            with open(filename, "rb") as f:
-                data.append(f.read())
+            data.append(Path(filename).read_bytes())
         if encoding is not None:
             data = [d.decode(encoding, decode_error) for d in data]
         return Bunch(
@@ -415,6 +442,10 @@ def load_wine(*, return_X_y=False, as_frame=False):
     Features            real, positive
     =================   ==============
 
+    The copy of UCI ML Wine Data Set dataset is downloaded and modified to fit
+    standard format from:
+    https://archive.ics.uci.edu/ml/machine-learning-databases/wine/wine.data
+
     Read more in the :ref:`User Guide <wine_dataset>`.
 
     Parameters
@@ -456,10 +487,9 @@ def load_wine(*, return_X_y=False, as_frame=False):
             The full description of the dataset.
 
     (data, target) : tuple if ``return_X_y`` is True
-
-    The copy of UCI ML Wine Data Set dataset is downloaded and modified to fit
-    standard format from:
-    https://archive.ics.uci.edu/ml/machine-learning-databases/wine/wine.data
+        A tuple of two ndarrays by default. The first contains a 2D array of shape
+        (178, 13) with each row representing one sample and each column representing
+        the features. The second array of shape (178,) contains the target samples.
 
     Examples
     --------
@@ -577,6 +607,10 @@ def load_iris(*, return_X_y=False, as_frame=False):
             .. versionadded:: 0.20
 
     (data, target) : tuple if ``return_X_y`` is True
+        A tuple of two ndarray. The first containing a 2D array of shape
+        (n_samples, n_features) with each row representing one sample and
+        each column representing the features. The second ndarray of shape
+        (n_samples,) containing the target samples.
 
         .. versionadded:: 0.18
 
@@ -649,6 +683,10 @@ def load_breast_cancer(*, return_X_y=False, as_frame=False):
     Features            real, positive
     =================   ==============
 
+    The copy of UCI ML Breast Cancer Wisconsin (Diagnostic) dataset is
+    downloaded from:
+    https://goo.gl/U2Uwz2
+
     Read more in the :ref:`User Guide <breast_cancer_dataset>`.
 
     Parameters
@@ -676,32 +714,33 @@ def load_breast_cancer(*, return_X_y=False, as_frame=False):
         data : {ndarray, dataframe} of shape (569, 30)
             The data matrix. If `as_frame=True`, `data` will be a pandas
             DataFrame.
-        target: {ndarray, Series} of shape (569,)
+        target : {ndarray, Series} of shape (569,)
             The classification target. If `as_frame=True`, `target` will be
             a pandas Series.
-        feature_names: list
+        feature_names : list
             The names of the dataset columns.
-        target_names: list
+        target_names : list
             The names of target classes.
-        frame: DataFrame of shape (569, 31)
+        frame : DataFrame of shape (569, 31)
             Only present when `as_frame=True`. DataFrame with `data` and
             `target`.
 
             .. versionadded:: 0.23
-        DESCR: str
+        DESCR : str
             The full description of the dataset.
-        filename: str
+        filename : str
             The path to the location of the data.
 
             .. versionadded:: 0.20
 
     (data, target) : tuple if ``return_X_y`` is True
+        A tuple of two ndarrays by default. The first contains a 2D ndarray of
+        shape (569, 30) with each row representing one sample and each column
+        representing the features. The second ndarray of shape (569,) contains
+        the target samples.  If `as_frame=True`, both arrays are pandas objects,
+        i.e. `X` a dataframe and `y` a series.
 
         .. versionadded:: 0.18
-
-    The copy of UCI ML Breast Cancer Wisconsin (Diagnostic) dataset is
-    downloaded from:
-    https://goo.gl/U2Uwz2
 
     Examples
     --------
@@ -792,6 +831,9 @@ def load_digits(*, n_class=10, return_X_y=False, as_frame=False):
     Features             integers 0-16
     =================   ==============
 
+    This is a copy of the test set of the UCI ML hand-written digits datasets
+    https://archive.ics.uci.edu/ml/datasets/Optical+Recognition+of+Handwritten+Digits
+
     Read more in the :ref:`User Guide <digits_dataset>`.
 
     Parameters
@@ -843,11 +885,13 @@ def load_digits(*, n_class=10, return_X_y=False, as_frame=False):
             The full description of the dataset.
 
     (data, target) : tuple if ``return_X_y`` is True
+        A tuple of two ndarrays by default. The first contains a 2D ndarray of
+        shape (1797, 64) with each row representing one sample and each column
+        representing the features. The second ndarray of shape (1797) contains
+        the target samples.  If `as_frame=True`, both arrays are pandas objects,
+        i.e. `X` a dataframe and `y` a series.
 
         .. versionadded:: 0.18
-
-    This is a copy of the test set of the UCI ML hand-written digits datasets
-    https://archive.ics.uci.edu/ml/datasets/Optical+Recognition+of+Handwritten+Digits
 
     Examples
     --------
@@ -907,7 +951,7 @@ def load_digits(*, n_class=10, return_X_y=False, as_frame=False):
     )
 
 
-def load_diabetes(*, return_X_y=False, as_frame=False):
+def load_diabetes(*, return_X_y=False, as_frame=False, scaled=True):
     """Load and return the diabetes dataset (regression).
 
     ==============   ==================
@@ -927,7 +971,7 @@ def load_diabetes(*, return_X_y=False, as_frame=False):
 
     Parameters
     ----------
-    return_X_y : bool, default=False.
+    return_X_y : bool, default=False
         If True, returns ``(data, target)`` instead of a Bunch object.
         See below for more information about the `data` and `target` object.
 
@@ -941,6 +985,13 @@ def load_diabetes(*, return_X_y=False, as_frame=False):
         DataFrames or Series as described below.
 
         .. versionadded:: 0.23
+
+    scaled : bool, default=True
+        If True, the feature variables are mean centered and scaled by the
+        standard deviation times the square root of `n_samples`.
+        If False, raw data is returned for the feature variables.
+
+        .. versionadded:: 1.1
 
     Returns
     -------
@@ -968,13 +1019,20 @@ def load_diabetes(*, return_X_y=False, as_frame=False):
             The path to the location of the target.
 
     (data, target) : tuple if ``return_X_y`` is True
+        Returns a tuple of two ndarray of shape (n_samples, n_features)
+        A 2D array with each row representing one sample and each column
+        representing the features and/or target of a given sample.
 
         .. versionadded:: 0.18
     """
-    data_filename = "diabetes_data.csv.gz"
+    data_filename = "diabetes_data_raw.csv.gz"
     target_filename = "diabetes_target.csv.gz"
     data = load_gzip_compressed_csv_data(data_filename)
     target = load_gzip_compressed_csv_data(target_filename)
+
+    if scaled:
+        data = scale(data, copy=False)
+        data /= data.shape[0] ** 0.5
 
     fdescr = load_descr("diabetes.rst")
 
@@ -1005,7 +1063,7 @@ def load_diabetes(*, return_X_y=False, as_frame=False):
 
 
 def load_linnerud(*, return_X_y=False, as_frame=False):
-    """Load and return the physical excercise linnerud dataset.
+    """Load and return the physical exercise Linnerud dataset.
 
     This dataset is suitable for multi-ouput regression tasks.
 
@@ -1065,6 +1123,9 @@ def load_linnerud(*, return_X_y=False, as_frame=False):
             .. versionadded:: 0.20
 
     (data, target) : tuple if ``return_X_y`` is True
+        Returns a tuple of two ndarrays or dataframe of shape
+        `(20, 3)`. Each row represents one sample and each column represents the
+        features in `X` and a target in `y` of a given sample.
 
         .. versionadded:: 0.18
     """
@@ -1109,8 +1170,43 @@ def load_linnerud(*, return_X_y=False, as_frame=False):
     )
 
 
+@deprecated(
+    r"""`load_boston` is deprecated in 1.0 and will be removed in 1.2.
+
+    The Boston housing prices dataset has an ethical problem. You can refer to
+    the documentation of this function for further details.
+
+    The scikit-learn maintainers therefore strongly discourage the use of this
+    dataset unless the purpose of the code is to study and educate about
+    ethical issues in data science and machine learning.
+
+    In this special case, you can fetch the dataset from the original
+    source::
+
+        import pandas as pd
+        import numpy as np
+
+        data_url = "http://lib.stat.cmu.edu/datasets/boston"
+        raw_df = pd.read_csv(data_url, sep="\s+", skiprows=22, header=None)
+        data = np.hstack([raw_df.values[::2, :], raw_df.values[1::2, :2]])
+        target = raw_df.values[1::2, 2]
+
+    Alternative datasets include the California housing dataset (i.e.
+    :func:`~sklearn.datasets.fetch_california_housing`) and the Ames housing
+    dataset. You can load the datasets as follows::
+
+        from sklearn.datasets import fetch_california_housing
+        housing = fetch_california_housing()
+
+    for the California housing dataset and::
+
+        from sklearn.datasets import fetch_openml
+        housing = fetch_openml(name="house_prices", as_frame=True)
+
+    for the Ames housing dataset."""
+)
 def load_boston(*, return_X_y=False):
-    """Load and return the boston house-prices dataset (regression).
+    r"""Load and return the Boston house-prices dataset (regression).
 
     ==============   ==============
     Samples total               506
@@ -1120,6 +1216,44 @@ def load_boston(*, return_X_y=False):
     ==============   ==============
 
     Read more in the :ref:`User Guide <boston_dataset>`.
+
+    .. warning::
+        The Boston housing prices dataset has an ethical problem: as
+        investigated in [1]_, the authors of this dataset engineered a
+        non-invertible variable "B" assuming that racial self-segregation had a
+        positive impact on house prices [2]_. Furthermore the goal of the
+        research that led to the creation of this dataset was to study the
+        impact of air quality but it did not give adequate demonstration of the
+        validity of this assumption.
+
+        The scikit-learn maintainers therefore strongly discourage the use of
+        this dataset unless the purpose of the code is to study and educate
+        about ethical issues in data science and machine learning.
+
+        In this special case, you can fetch the dataset from the original
+        source::
+
+            import pandas as pd  # doctest: +SKIP
+            import numpy as np
+
+            data_url = "http://lib.stat.cmu.edu/datasets/boston"
+            raw_df = pd.read_csv(data_url, sep="\s+", skiprows=22, header=None)
+            data = np.hstack([raw_df.values[::2, :], raw_df.values[1::2, :2]])
+            target = raw_df.values[1::2, 2]
+
+        Alternative datasets include the California housing dataset [3]_
+        (i.e. :func:`~sklearn.datasets.fetch_california_housing`) and Ames
+        housing dataset [4]_. You can load the datasets as follows::
+
+            from sklearn.datasets import fetch_california_housing
+            housing = fetch_california_housing()
+
+        for the California housing dataset and::
+
+            from sklearn.datasets import fetch_openml
+            housing = fetch_openml(name="house_prices", as_frame=True)  # noqa
+
+        for the Ames housing dataset.
 
     Parameters
     ----------
@@ -1136,7 +1270,7 @@ def load_boston(*, return_X_y=False):
 
         data : ndarray of shape (506, 13)
             The data matrix.
-        target : ndarray of shape (506, )
+        target : ndarray of shape (506,)
             The regression target.
         filename : str
             The physical location of boston csv dataset.
@@ -1149,6 +1283,9 @@ def load_boston(*, return_X_y=False):
             The names of features
 
     (data, target) : tuple if ``return_X_y`` is True
+        A tuple of two ndarrays. The first contains a 2D array of shape (506, 13)
+        with each row representing one sample and each column representing the features.
+        The second array of shape (506,) contains the target samples.
 
         .. versionadded:: 0.18
 
@@ -1157,13 +1294,37 @@ def load_boston(*, return_X_y=False):
         .. versionchanged:: 0.20
             Fixed a wrong data point at [445, 0].
 
+    References
+    ----------
+    .. [1] `Racist data destruction? M Carlisle,
+            <https://medium.com/@docintangible/racist-data-destruction-113e3eff54a8>`_
+    .. [2] `Harrison Jr, David, and Daniel L. Rubinfeld.
+           "Hedonic housing prices and the demand for clean air."
+           Journal of environmental economics and management 5.1 (1978): 81-102.
+           <https://www.researchgate.net/publication/4974606_Hedonic_housing_prices_and_the_demand_for_clean_air>`_
+    .. [3] `California housing dataset
+            <https://scikit-learn.org/stable/datasets/real_world.html#california-housing-dataset>`_
+    .. [4] `Ames housing dataset
+            <https://www.openml.org/d/42165>`_
+
     Examples
     --------
+    >>> import warnings
     >>> from sklearn.datasets import load_boston
-    >>> X, y = load_boston(return_X_y=True)
+    >>> with warnings.catch_warnings():
+    ...     # You should probably not use this dataset.
+    ...     warnings.filterwarnings("ignore")
+    ...     X, y = load_boston(return_X_y=True)
     >>> print(X.shape)
     (506, 13)
     """
+    # TODO: once the deprecation period is over, implement a module level
+    # `__getattr__` function in`sklearn.datasets` to raise an exception with
+    # an informative error message at import time instead of just removing
+    # load_boston. The goal is to avoid having beginners that copy-paste code
+    # from numerous books and tutorials that use this dataset loader get
+    # a confusing ImportError when trying to learn scikit-learn.
+    # See: https://www.python.org/dev/peps/pep-0562/
 
     descr_text = load_descr("boston_house_prices.rst")
 
@@ -1229,8 +1390,15 @@ def load_sample_images():
     >>> first_img_data.dtype               #doctest: +SKIP
     dtype('uint8')
     """
-    # import PIL only when needed
-    from ..externals._pilutil import imread
+    try:
+        from PIL import Image
+    except ImportError:
+        raise ImportError(
+            "The Python Imaging Library (PIL) is required to load data "
+            "from jpeg files. Please refer to "
+            "https://pillow.readthedocs.io/en/stable/installation.html "
+            "for installing PIL."
+        )
 
     descr = load_descr("README.txt", descr_module=IMAGES_MODULE)
 
@@ -1239,26 +1407,27 @@ def load_sample_images():
         if filename.endswith(".jpg"):
             filenames.append(filename)
             with resources.open_binary(IMAGES_MODULE, filename) as image_file:
-                image = imread(image_file)
+                pil_image = Image.open(image_file)
+                image = np.asarray(pil_image)
             images.append(image)
 
     return Bunch(images=images, filenames=filenames, DESCR=descr)
 
 
 def load_sample_image(image_name):
-    """Load the numpy array of a single sample image
+    """Load the numpy array of a single sample image.
 
     Read more in the :ref:`User Guide <sample_images>`.
 
     Parameters
     ----------
     image_name : {`china.jpg`, `flower.jpg`}
-        The name of the sample image loaded
+        The name of the sample image loaded.
 
     Returns
     -------
     img : 3D array
-        The image as a numpy array: height x width x color
+        The image as a numpy array: height x width x color.
 
     Examples
     --------

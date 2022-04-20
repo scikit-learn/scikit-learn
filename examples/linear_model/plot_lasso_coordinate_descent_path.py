@@ -7,8 +7,8 @@ Lasso and elastic net (L1 and L2 penalisation) implemented using a
 coordinate descent.
 
 The coefficients can be forced to be positive.
+
 """
-print(__doc__)
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # License: BSD 3 clause
@@ -77,7 +77,7 @@ plt.axis("tight")
 
 plt.figure(3)
 neg_log_alphas_positive_enet = -np.log10(alphas_positive_enet)
-for (coef_e, coef_pe, c) in zip(coefs_enet, coefs_positive_enet, colors):
+for coef_e, coef_pe, c in zip(coefs_enet, coefs_positive_enet, colors):
     l1 = plt.plot(neg_log_alphas_enet, coef_e, c=c)
     l2 = plt.plot(neg_log_alphas_positive_enet, coef_pe, linestyle="--", c=c)
 

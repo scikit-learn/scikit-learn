@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 ======================================================
 Effect of transforming the targets in regression model
@@ -8,6 +9,7 @@ In this example, we give an overview of
 to illustrate the benefit of transforming the targets before learning a linear
 regression model. The first example uses synthetic data while the second
 example is based on the Ames housing data set.
+
 """
 
 # Author: Guillaume Lemaitre <guillaume.lemaitre@inria.fr>
@@ -47,9 +49,9 @@ f, (ax0, ax1) = plt.subplots(1, 2)
 
 ax0.hist(y, bins=100, density=True)
 ax0.set_xlim([0, 2000])
-ax0.set_ylabel('Probability')
-ax0.set_xlabel('Target')
-ax0.set_title('Target distribution')
+ax0.set_ylabel("Probability")
+ax0.set_xlabel("Target")
+ax0.set_title("Target distribution")
 
 ax1.hist(y_trans, bins=100, density=True)
 ax1.set_ylabel('Probability')

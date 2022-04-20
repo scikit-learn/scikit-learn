@@ -30,11 +30,25 @@ approximately 80% actually belong to the positive class.
 Calibration curves
 ------------------
 
-The following plot compares how well the probabilistic predictions of
-different classifiers are calibrated, using :func:`calibration_curve`.
+Calibration curves (also known as reliability diagrams) compare how well the
+probabilistic predictions of a binary classifier are calibrated. It plots
+the true frequency of the positive label against its predicted probability,
+for binned predictions.
 The x axis represents the average predicted probability in each bin. The
 y axis is the *fraction of positives*, i.e. the proportion of samples whose
-class is the positive class (in each bin).
+class is the positive class (in each bin). The top calibration curve plot
+is created with :func:`CalibrationDisplay.from_estimators`, which uses
+:func:`calibration_curve` to calculate the per bin average predicted
+probabilities and fraction of positives.
+:func:`CalibrationDisplay.from_estimator`
+takes as input a fitted classifier, which is used to calculate the predicted
+probabilities. The classifier thus must have :term:`predict_proba` method. For
+the few classifiers that do not have a :term:`predict_proba` method, it is
+possible to use :class:`CalibratedClassifierCV` to calibrate the classifier
+outputs to probabilities.
+
+The bottom histogram gives some insight into the behavior of each classifier
+by showing the number of samples in each predicted probability bin.
 
 .. figure:: ../auto_examples/calibration/images/sphx_glr_plot_compare_calibration_001.png
    :target: ../auto_examples/calibration/plot_compare_calibration.html
@@ -160,6 +174,8 @@ mean a better calibrated model.
 
 :class:`CalibratedClassifierCV` supports the use of two 'calibration'
 regressors: 'sigmoid' and 'isotonic'.
+
+.. _sigmoid_regressor:
 
 Sigmoid
 ^^^^^^^
