@@ -41,6 +41,8 @@ def get_equivalent_estimator(estimator, lib='lightgbm', n_classes=None):
         'squared_error': 'regression_l2',
         'absolute_error': 'regression_l1',
         'log_loss': 'binary' if n_classes == 2 else 'multiclass',
+        'gamma': 'gamma',
+        'poisson': 'poisson',
     }
 
     lightgbm_params = {
@@ -60,6 +62,7 @@ def get_equivalent_estimator(estimator, lib='lightgbm', n_classes=None):
         'boost_from_average': True,
         'enable_bundle': False,  # also makes feature order consistent
         'subsample_for_bin': _BinMapper().subsample,
+        'poisson_max_delta_step': 1e-10,
     }
 
     if sklearn_params['loss'] == 'log_loss' and n_classes > 2:
@@ -76,6 +79,8 @@ def get_equivalent_estimator(estimator, lib='lightgbm', n_classes=None):
         'squared_error': 'reg:linear',
         'absolute_error': 'LEAST_ABSOLUTE_DEV_NOT_SUPPORTED',
         'log_loss': 'reg:logistic' if n_classes == 2 else 'multi:softmax',
+        'gamma': 'reg:gamma',
+        'poisson': 'count:poisson',
     }
 
     xgboost_params = {
@@ -100,6 +105,8 @@ def get_equivalent_estimator(estimator, lib='lightgbm', n_classes=None):
         # catboost does not support MAE when leaf_estimation_method is Newton
         'absolute_error': 'LEAST_ASBOLUTE_DEV_NOT_SUPPORTED',
         'log_loss': 'Logloss' if n_classes == 2 else 'MultiClass',
+        'gamma': None,
+        'poisson': 'Poisson',
     }
 
     catboost_params = {

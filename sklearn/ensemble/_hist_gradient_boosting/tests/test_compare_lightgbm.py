@@ -11,6 +11,7 @@ from sklearn.ensemble._hist_gradient_boosting.utils import get_equivalent_estima
 
 
 @pytest.mark.parametrize("seed", range(5))
+@pytest.mark.parametrize("loss", ["squared_error", "poisson", "gamma"])
 @pytest.mark.parametrize("min_samples_leaf", (1, 20))
 @pytest.mark.parametrize(
     "n_samples, max_leaf_nodes",
@@ -19,7 +20,9 @@ from sklearn.ensemble._hist_gradient_boosting.utils import get_equivalent_estima
         (1000, 8),
     ],
 )
-def test_same_predictions_regression(seed, min_samples_leaf, n_samples, max_leaf_nodes):
+def test_same_predictions_regression(
+    seed, loss, min_samples_leaf, n_samples, max_leaf_nodes
+):
     # Make sure sklearn has the same predictions as lightgbm for easy targets.
     #
     # In particular when the size of the trees are bound and the number of
@@ -33,7 +36,7 @@ def test_same_predictions_regression(seed, min_samples_leaf, n_samples, max_leaf
     #   is not exactly the same. To avoid this issue we only compare the
     #   predictions on the test set when the number of samples is large enough
     #   and max_leaf_nodes is low enough.
-    # - To ignore  discrepancies caused by small differences the binning
+    # - To ignore  discrepancies caused by small differences in the binning
     #   strategy, data is pre-binned if n_samples > 255.
     # - We don't check the absolute_error loss here. This is because
     #   LightGBM's computation of the median (used for the initial value of
@@ -52,6 +55,10 @@ def test_same_predictions_regression(seed, min_samples_leaf, n_samples, max_leaf
         n_samples=n_samples, n_features=5, n_informative=5, random_state=0
     )
 
+    if loss in ("gamma", "poisson"):
+        # make the target positive
+        y = np.abs(y) + np.mean(np.abs(y))
+
     if n_samples > 255:
         # bin data and convert it to float32 so that the estimator doesn't
         # treat it as pre-binned
@@ -60,6 +67,7 @@ def test_same_predictions_regression(seed, min_samples_leaf, n_samples, max_leaf
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=rng)
 
     est_sklearn = HistGradientBoostingRegressor(
+        loss=loss,
         max_iter=max_iter,
         max_bins=max_bins,
         learning_rate=1,
