@@ -349,8 +349,7 @@ def lloyd_iter_chunked_sparse(
                 weight_in_clusters_chunk,
                 update_centers)
 
-        # reduction from local buffers. The lock is necessary for that to avoid
-        # race conditions.
+        # reduction from local buffers.
         if update_centers:
             IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
                 # The lock is necessary to avoid race conditions when aggregating

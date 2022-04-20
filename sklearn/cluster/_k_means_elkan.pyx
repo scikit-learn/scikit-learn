@@ -566,10 +566,11 @@ def elkan_iter_chunked_sparse(
                 weight_in_clusters_chunk,
                 update_centers)
 
-        # reduction from local buffers. The lock is necessary for that to avoid
-        # race conditions.
+        # reduction from local buffers.
         if update_centers:
             IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
+                # The lock is necessary to avoid race conditions when aggregating
+                # info from different thread-local buffers.
                 openmp.omp_set_lock(&lock)
             for j in range(n_clusters):
                 weight_in_clusters[j] += weight_in_clusters_chunk[j]
