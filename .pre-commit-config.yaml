@@ -9,7 +9,6 @@ repos:
     rev: 22.3.0
     hooks:
     -   id: black
-        exclude: ^examples
 -   repo: https://gitlab.com/pycqa/flake8
     rev: 3.9.2
     hooks:
