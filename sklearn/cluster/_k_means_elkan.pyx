@@ -324,7 +324,8 @@ def elkan_iter_chunked_dense(
         # reduction from local buffers. The lock is necessary for that to avoid
         # race conditions.
         if update_centers:
-            openmp.omp_set_lock(&lock)
+            IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
+                openmp.omp_set_lock(&lock)
             for j in range(n_clusters):
                 weight_in_clusters[j] += weight_in_clusters_chunk[j]
                 for k in range(n_features):

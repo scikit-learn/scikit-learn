@@ -6,7 +6,8 @@
 
 import numpy as np
 cimport numpy as np
-cimport openmp
+IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
+    cimport openmp
 from cython cimport floating
 from cython.parallel import prange, parallel
 from libc.stdlib cimport malloc, calloc, free
