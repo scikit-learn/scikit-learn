@@ -273,7 +273,7 @@ def test_ridge_regression_vstacked_X(
     coef = coef[:-1]
 
     assert model.intercept_ == pytest.approx(intercept)
-    assert_allclose(model.coef_, coef)
+    assert_allclose(model.coef_, coef, atol=1e-8)
 
 
 @pytest.mark.parametrize("solver", SOLVERS)
