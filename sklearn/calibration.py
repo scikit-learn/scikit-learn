@@ -908,7 +908,7 @@ def calibration_curve(
 
         .. deprecated:: 1.1
             The normalize argument is deprecated in v1.1 and will be removed in v1.3.
-            Explicitly normalizing y_prob will reproduce this behavior, but it is
+            Explicitly normalizing `y_prob` will reproduce this behavior, but it is
             recommended that a proper probability is used (i.e. a classifier's
             `predict_proba` positive class or `decision_function` output calibrated
             with `CalibratedClassifierCV`).
