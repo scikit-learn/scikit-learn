@@ -54,9 +54,9 @@ ax0.set_xlabel("Target")
 ax0.set_title("Target distribution")
 
 ax1.hist(y_trans, bins=100, density=True)
-ax1.set_ylabel('Probability')
-ax1.set_xlabel('Target')
-ax1.set_title('Transformed target distribution')
+ax1.set_ylabel("Probability")
+ax1.set_xlabel("Target")
+ax1.set_title("Transformed target distribution")
 
 f.suptitle("Synthetic data", y=0.06, x=0.53)
 f.tight_layout(rect=[0.05, 0.05, 0.95, 0.95])
@@ -98,12 +98,14 @@ PredictionErrorDisplay.from_predictions(
     y_test, y_pred_ridge, scores=compute_score(y_test, y_pred_ridge), ax=ax0
 )
 PredictionErrorDisplay.from_predictions(
-    y_test, y_pred_ridge_with_trans_target,
-    scores=compute_score(y_test, y_pred_ridge_with_trans_target), ax=ax1
+    y_test,
+    y_pred_ridge_with_trans_target,
+    scores=compute_score(y_test, y_pred_ridge_with_trans_target),
+    ax=ax1,
 )
 
-ax0.set_title('Ridge regression \n without target transformation')
-ax1.set_title('Ridge regression \n with target transformation')
+ax0.set_title("Ridge regression \n without target transformation")
+ax1.set_title("Ridge regression \n with target transformation")
 f.suptitle("Synthetic data", y=0.035)
 f.tight_layout(rect=[0.05, 0.05, 0.95, 0.95])
 
@@ -123,13 +125,12 @@ ames = fetch_openml(name="house_prices", as_frame=True)
 # Keep only numeric columns
 X = ames.data.select_dtypes(np.number)
 # Remove columns with NaN or Inf values
-X = X.drop(columns=['LotFrontage', 'GarageYrBlt', 'MasVnrArea'])
+X = X.drop(columns=["LotFrontage", "GarageYrBlt", "MasVnrArea"])
 # Let's the price being in k$
 y = ames.target / 1000
-y_trans = quantile_transform(y.to_frame(),
-                             n_quantiles=900,
-                             output_distribution='normal',
-                             copy=True).squeeze()
+y_trans = quantile_transform(
+    y.to_frame(), n_quantiles=900, output_distribution="normal", copy=True
+).squeeze()
 # %%
 # A :class:`~sklearn.preprocessing.QuantileTransformer` is used to normalize
 # the target distribution before applying a
@@ -137,15 +138,15 @@ y_trans = quantile_transform(y.to_frame(),
 f, (ax0, ax1) = plt.subplots(1, 2)
 
 ax0.hist(y, bins=100, density=True)
-ax0.set_ylabel('Probability')
-ax0.set_xlabel('Target')
-ax0.text(s='Target distribution', x=1.2e5, y=9.8e-6, fontsize=12)
+ax0.set_ylabel("Probability")
+ax0.set_xlabel("Target")
+ax0.text(s="Target distribution", x=1.2e5, y=9.8e-6, fontsize=12)
 ax0.ticklabel_format(axis="both", style="sci", scilimits=(0, 0))
 
 ax1.hist(y_trans, bins=100, density=True)
-ax1.set_ylabel('Probability')
-ax1.set_xlabel('Target')
-ax1.text(s='Transformed target distribution', x=-6.8, y=0.479, fontsize=12)
+ax1.set_ylabel("Probability")
+ax1.set_xlabel("Target")
+ax1.text(s="Transformed target distribution", x=-6.8, y=0.479, fontsize=12)
 
 f.suptitle("Ames housing data: selling price", y=0.04)
 f.tight_layout(rect=[0.05, 0.05, 0.95, 0.95])
@@ -169,9 +170,7 @@ y_pred_ridge = ridge_cv.predict(X_test)
 
 ridge_cv_with_trans_target = TransformedTargetRegressor(
     regressor=RidgeCV(),
-    transformer=QuantileTransformer(
-        n_quantiles=900, output_distribution="normal"
-    ),
+    transformer=QuantileTransformer(n_quantiles=900, output_distribution="normal"),
 ).fit(X_train, y_train)
 y_pred_ridge_with_trans_target = ridge_cv_with_trans_target.predict(X_test)
 
@@ -180,8 +179,10 @@ PredictionErrorDisplay.from_predictions(
     y_test, y_pred_ridge, scores=compute_score(y_test, y_pred_ridge), ax=ax0[0]
 )
 PredictionErrorDisplay.from_predictions(
-    y_test, y_pred_ridge_with_trans_target,
-    scores=compute_score(y_test, y_pred_ridge_with_trans_target), ax=ax0[1]
+    y_test,
+    y_pred_ridge_with_trans_target,
+    scores=compute_score(y_test, y_pred_ridge_with_trans_target),
+    ax=ax0[1],
 )
 ax0[0].set_title("Ridge regression \n without target transformation")
 ax0[1].set_title("Ridge regression \n with target transformation")
@@ -189,14 +190,14 @@ ax0[1].set_title("Ridge regression \n with target transformation")
 # plot the residuals vs the predicted values
 y_pred = ridge_cv.predict(X_test)
 ax1[0].scatter(y_pred, (y_pred - y_test), s=8, c="k")
-ax1[0].set_ylabel('Residual')
-ax1[0].set_xlabel('Predicted target')
+ax1[0].set_ylabel("Residual")
+ax1[0].set_xlabel("Predicted target")
 ax1[0].ticklabel_format(axis="both", style="sci", scilimits=(0, 0))
 
 y_pred = ridge_cv_with_trans_target.predict(X_test)
 ax1[1].scatter(y_pred, (y_pred - y_test), s=8, c="k")
-ax1[1].set_ylabel('Residual')
-ax1[1].set_xlabel('Predicted target')
+ax1[1].set_ylabel("Residual")
+ax1[1].set_xlabel("Predicted target")
 ax1[1].ticklabel_format(axis="both", style="sci", scilimits=(0, 0))
 
 f.suptitle("Ames housing data: selling price", y=0.035)
