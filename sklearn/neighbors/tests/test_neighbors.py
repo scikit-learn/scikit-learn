@@ -1536,6 +1536,8 @@ def test_neighbors_metrics(
                 and sp_version >= parse_version("1.6.0")
             ):
                 with pytest.warns((FutureWarning, DeprecationWarning)):
+                    # For float64 WMinkowskiDistance raises a FutureWarning,
+                    # for float32 scipy raises a DeprecationWarning
                     results[algorithm] = neigh.kneighbors(X_test, return_distance=True)
             else:
                 results[algorithm] = neigh.kneighbors(X_test, return_distance=True)
@@ -1578,6 +1580,8 @@ def test_kneighbors_brute_backend(
     # wminkoski is deprecated in SciPy 1.6.0 and removed in 1.8.0
     warn_context_manager = nullcontext()
     if metric == "wminkowski" and sp_version >= parse_version("1.6.0"):
+        # For float64 WMinkowskiDistance raises a FutureWarning,
+        # for float32 scipy raises a DeprecationWarning
         warn_context_manager = pytest.warns((FutureWarning, DeprecationWarning))
 
     for metric_params in metric_params_list:
@@ -2101,6 +2105,8 @@ def test_radius_neighbors_brute_backend(
     # wminkoski is deprecated in SciPy 1.6.0 and removed in 1.8.0
     warn_context_manager = nullcontext()
     if metric == "wminkowski" and sp_version >= parse_version("1.6.0"):
+        # For float64 WMinkowskiDistance raises a FutureWarning,
+        # for float32 scipy raises a DeprecationWarning
         warn_context_manager = pytest.warns((FutureWarning, DeprecationWarning))
 
     for metric_params in metric_params_list:
