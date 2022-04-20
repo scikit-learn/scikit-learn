@@ -131,10 +131,12 @@ print(f"RF test accuracy: {rf.score(X_test, y_test):.3f}")
 #   predictions that generalize to the test set (when the model has enough
 #   capacity).
 #
-# The latter point explains why both the `random_num` and `random_cat` features
-# have a non-null importance. The former point explains why the `random_num`
-# has a really large importance in comparison with `random_cat` while we would
+# The bias towards high cardinality features explains why the `random_num` has
+# a really large importance in comparison with `random_cat` while we would
 # expect both random features to have a null importance.
+#
+# The fact that we use training set statistics explains why both the
+# `random_num` and `random_cat` features have a non-null importance.
 import pandas as pd
 
 feature_names = rf[:-1].get_feature_names_out()
@@ -209,23 +211,27 @@ print(f"RF train accuracy: {rf.score(X_train, y_train):.3f}")
 print(f"RF test accuracy: {rf.score(X_test, y_test):.3f}")
 
 # %%
-importances = {}
-for name, data, target in zip(["train", "test"], [X_train, X_test], [y_train, y_test]):
-    result = permutation_importance(
-        rf, data, target, n_repeats=10, random_state=42, n_jobs=2
-    )
-    if name == "train":
-        sorted_importances_idx = result.importances_mean.argsort()
-
-    importances[name] = pd.DataFrame(
-        result.importances[sorted_importances_idx].T,
-        columns=data.columns[sorted_importances_idx],
-    )
-importances = pd.concat(importances, names=["set", "permutation"])
+train_result = permutation_importance(
+    rf, X_train, y_train, n_repeats=10, random_state=42, n_jobs=2
+)
+test_results = permutation_importance(
+    rf, X_test, y_test, n_repeats=10, random_state=42, n_jobs=2
+)
+sorted_importances_idx = train_result.importances_mean.argsort()
 
 # %%
-for name, data in importances.reset_index(level="set").groupby("set"):
-    ax = data.plot.box(vert=False, whis=10)
+train_importances = pd.DataFrame(
+    train_result.importances[sorted_importances_idx].T,
+    columns=X.columns[sorted_importances_idx],
+)
+test_importances = pd.DataFrame(
+    test_results.importances[sorted_importances_idx].T,
+    columns=X.columns[sorted_importances_idx],
+)
+
+# %%
+for name, importances in zip(["train", "test"], [train_importances, test_importances]):
+    ax = importances.plot.box(vert=False, whis=10)
     ax.set_title(f"Permutation Importances ({name} set)")
     ax.set_xlabel("Decrease in accuracy score")
     ax.axvline(x=0, color="k", linestyle="--")
