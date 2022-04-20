@@ -253,8 +253,10 @@ def test_gamma_y_positive(y):
 
 
 def test_gamma():
-    # For Gamma distributed target, Gamma loss should give better results
-    # than least squares or Poisson measured in Gamma deviance as metric.
+    # For Gamma distributed target, an HGBT with Gamma loss should give better results
+    # than an HGBT with Poisson deviance, measured in Gamma deviance as metric.
+    # Note that we do not use squared error because it can potentially predict negaitve
+    # values.
     rng = np.random.RandomState(42)
     n_train, n_test, n_features = 500, 500, 20
     X = make_low_rank_matrix(
@@ -274,25 +276,21 @@ def test_gamma():
         X, y, test_size=n_test, random_state=rng
     )
     gbdt_gamma = HistGradientBoostingRegressor(loss="gamma", random_state=123)
-    gbdt_ls = HistGradientBoostingRegressor(loss="squared_error", random_state=123)
     gbdt_pois = HistGradientBoostingRegressor(loss="poisson", random_state=123)
-    for model in (gbdt_gamma, gbdt_ls, gbdt_pois):
+    dummy = DummyRegressor(strategy="mean")
+    for model in (gbdt_gamma, gbdt_pois, dummy):
         model.fit(X_train, y_train)
-    dummy = DummyRegressor(strategy="mean").fit(X_train, y_train)
 
-    # Improve unconditional calibration on the training set by a correction factor.
-    # This almost always improves out-of-sample predictive accuracy.
-    cor = np.mean(y_train) / np.mean(gbdt_gamma.predict(X_train))
-
-    for X, y in [(X_train, y_train), (X_test, y_test)]:
-        mgd_gbdt_gamma = mean_gamma_deviance(y, cor * gbdt_gamma.predict(X))
-        # squared_error might produce non-positive predictions => clip
-        mgd_gbdt_ls = mean_gamma_deviance(y, np.clip(gbdt_ls.predict(X), 1e-15, None))
+    for sample, X, y in [("train", X_train, y_train), ("test", X_test, y_test)]:
+        mgd_gbdt_gamma = mean_gamma_deviance(y, gbdt_gamma.predict(X))
         mgd_gbdt_pois = mean_gamma_deviance(y, gbdt_pois.predict(X))
         mgd_dummy = mean_gamma_deviance(y, dummy.predict(X))
-        assert mgd_gbdt_gamma < mgd_gbdt_ls
-        assert mgd_gbdt_gamma < mgd_gbdt_pois
         assert mgd_gbdt_gamma < mgd_dummy
+        if sample == "train":
+            # Important note: It seems that the Poisson HGBT almost always has better
+            # out-of-sample performance than the Gamma HGBT, measured in Gamma
+            # deviance. LightGBM shows the same behaviour. The exact origin is unclear.
+            assert mgd_gbdt_gamma < mgd_gbdt_pois
 
 
 @pytest.mark.parametrize("quantile", [0.2, 0.5, 0.8])
