@@ -537,7 +537,7 @@ Log Loss or Entropy:
 
 HellingerDistance:
 
-Hellinger distance is implemented for the binary case only.
+Hellinger distance is implemented for the binary case only and a single label.
 
 .. math::
 
