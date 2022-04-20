@@ -1535,7 +1535,9 @@ def test_neighbors_metrics(
                 and algorithm == "brute"
                 and sp_version >= parse_version("1.6.0")
             ):
-                with pytest.warns(FutureWarning):
+                with pytest.warns((FutureWarning, DeprecationWarning)):
+                    # For float64 WMinkowskiDistance raises a FutureWarning,
+                    # for float32 scipy raises a DeprecationWarning
                     results[algorithm] = neigh.kneighbors(X_test, return_distance=True)
             else:
                 results[algorithm] = neigh.kneighbors(X_test, return_distance=True)
@@ -1578,12 +1580,9 @@ def test_kneighbors_brute_backend(
     # wminkoski is deprecated in SciPy 1.6.0 and removed in 1.8.0
     warn_context_manager = nullcontext()
     if metric == "wminkowski" and sp_version >= parse_version("1.6.0"):
-        if global_dtype == np.float64:
-            # Warning from sklearn.metrics._dist_metrics.WMinkowskiDistance
-            warn_context_manager = pytest.warns(FutureWarning)
-        if global_dtype == np.float32:
-            # Warning from Scipy
-            warn_context_manager = pytest.warns(DeprecationWarning)
+        # For float64 WMinkowskiDistance raises a FutureWarning,
+        # for float32 scipy raises a DeprecationWarning
+        warn_context_manager = pytest.warns((FutureWarning, DeprecationWarning))
 
     for metric_params in metric_params_list:
         p = metric_params.pop("p", 2)
@@ -1597,6 +1596,7 @@ def test_kneighbors_brute_backend(
         )
 
         neigh.fit(X_train)
+
         with warn_context_manager:
             with config_context(enable_cython_pairwise_dist=False):
                 # Use the legacy backend for brute
@@ -2105,7 +2105,9 @@ def test_radius_neighbors_brute_backend(
     # wminkoski is deprecated in SciPy 1.6.0 and removed in 1.8.0
     warn_context_manager = nullcontext()
     if metric == "wminkowski" and sp_version >= parse_version("1.6.0"):
-        warn_context_manager = pytest.warns(FutureWarning)
+        # For float64 WMinkowskiDistance raises a FutureWarning,
+        # for float32 scipy raises a DeprecationWarning
+        warn_context_manager = pytest.warns((FutureWarning, DeprecationWarning))
 
     for metric_params in metric_params_list:
         p = metric_params.pop("p", 2)
