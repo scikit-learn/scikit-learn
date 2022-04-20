@@ -20,6 +20,11 @@ if [[ "$BUILD_REASON" == "Schedule" ]]; then
     # only on nightly builds.
     # https://scikit-learn.org/stable/computing/parallelism.html#environment-variables
     export SKLEARN_TESTS_GLOBAL_RANDOM_SEED="any"
+
+    # Enable global dtype fixture for all nightly builds to discover
+    # numerical-sensitive tests.
+    # https://scikit-learn.org/stable/computing/parallelism.html#environment-variables
+    export SKLEARN_RUN_FLOAT32_TESTS=1
 fi
 
 mkdir -p $TEST_DIR
@@ -63,6 +68,13 @@ fi
 
 if [[ "$SHOW_SHORT_SUMMARY" == "true" ]]; then
     TEST_CMD="$TEST_CMD -ra"
+fi
+
+if [[ "$SELECTED_TESTS" != "" ]]; then
+    TEST_CMD="$TEST_CMD -k $SELECTED_TESTS"
+
+    # Override to make selected tests run on all random seeds
+    export SKLEARN_TESTS_GLOBAL_RANDOM_SEED="all"
 fi
 
 set -x
