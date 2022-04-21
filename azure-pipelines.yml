@@ -101,7 +101,7 @@ jobs:
         )
       )
     matrix:
-      pylatest_pip_scipy_dev:
+      pylatest_pip_nogil:
         DISTRIB: 'pip-nogil'
 
 # Check compilation with intel C++ compiler (ICC)
