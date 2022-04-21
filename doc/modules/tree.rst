@@ -550,6 +550,8 @@ negative samples for the :math:`m` node respectively; :math:`N_{m,+}^{left}` and
 :math:`N_{m,-}^{right}` are the number of negative samples for each of the
 :math:`m` node splits.
 
+* Cieslak, D. A., Hoens, T. R., Chawla, N. V., & Kegelmeyer, W. P., Hellinger distance decision trees are robust and skew-insensitive, 2012
+
 Regression criteria
 -------------------
 
