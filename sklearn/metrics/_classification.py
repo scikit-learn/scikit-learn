@@ -54,7 +54,8 @@ def _check_zero_division(zero_division):
     elif np.isnan(zero_division):
         return np.float64(np.nan)
     raise ValueError(
-        'Got zero_division={0}. Must be one of ["warn", 0, 1, np.nan]'.format(zero_division)
+        'Got zero_division={0}. Must be one of '
+        '["warn", 0, 1, np.nan]'.format(zero_division)
     )
 
 
@@ -809,8 +810,6 @@ def jaccard_score(
 
     >>> jaccard_score(y_true_with_empty[1], y_pred_with_empty[1])
     0...
-    >>> jaccard_score(y_true_with_empty[1], y_pred_with_empty[1], zero_division=0)
-    0...
     >>> jaccard_score(y_true_with_empty[1], y_pred_with_empty[1], zero_division=1)
     1...
     >>> jaccard_score(y_true_with_empty[1], y_pred_with_empty[1], zero_division=np.nan)
@@ -1147,7 +1146,8 @@ def f1_score(
     When ``true positive + false negative == 0``, recall is undefined.
     In such cases, by default the metric will be set to 0, as will f-score,
     and ``UndefinedMetricWarning`` will be raised. This behavior can be
-    modified with ``zero_division``.
+    modified with ``zero_division``. Note that if `zero_division` is np.nan,
+    scores being np.nan will be ignored for averaging.
 
     References
     ----------
@@ -1173,26 +1173,16 @@ def f1_score(
     >>> y_pred_empty = [0, 0, 0, 0, 0, 0]
     >>> f1_score(y_true_empty, y_pred_empty)
     0.0...
-    >>> f1_score(y_true_empty, y_pred_empty, zero_division=np.nan)
-    np.nan...
     >>> f1_score(y_true_empty, y_pred_empty, zero_division=1)
     1.0...
+    >>> f1_score(y_true_empty, y_pred_empty, zero_division=np.nan)
+    np.nan...
 
     >>> # multilabel classification
     >>> y_true = [[0, 0, 0], [1, 1, 1], [0, 1, 1]]
     >>> y_pred = [[0, 0, 0], [1, 1, 1], [1, 1, 0]]
     >>> f1_score(y_true, y_pred, average=None)
     array([0.66666667, 1.        , 0.66666667])
-
-    Notes
-    -----
-    When ``true positive + false positive == 0``, precision is undefined.
-    When ``true positive + false negative == 0``, recall is undefined.
-    In such cases, by default the metric will be set to 0, as will f-score,
-    and ``UndefinedMetricWarning`` will be raised. This behavior can be
-    modified with ``zero_division``.
-    Note that if `zero_division` is np.nan, scores being np.nan will be
-    ignored for averaging.
     """
     return fbeta_score(
         y_true,

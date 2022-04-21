@@ -812,7 +812,7 @@ Changelog
   :func:`classification_report`. This change enables ``zero_division=np.nan``, meaning that when
   there is a zero division the metric is undefined and should be excluded from averaging.
   When not used for averages, the value returned is `np.nan`.
-  :pr:`22618` by :user:`Marc Torrellas Socastro <marctorsoc>`.
+  :pr:`23183` by :user:`Marc Torrellas Socastro <marctorsoc>`.
 
 :mod:`sklearn.manifold`
 .......................
