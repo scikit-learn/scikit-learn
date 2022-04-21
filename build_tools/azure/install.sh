@@ -62,9 +62,9 @@ pre_python_environment_install() {
         sudo apt-get install intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic
         source /opt/intel/oneapi/setvars.sh
     elif [[ "$DISTRIB" == "pip-nogil" ]]; then
-        apt-get -yq update
-        apt-get install -yq ccache
-        apt-get build-dep -yq python3 python3-dev
+        sudo apt-get -yq update
+        sudo apt-get install -yq ccache
+        sudo apt-get build-dep -yq python3 python3-dev
     fi
 }
 
