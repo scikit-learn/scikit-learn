@@ -797,11 +797,11 @@ def jaccard_score(
     ...                    [1, 0, 0]])
     >>> y_true_with_empty = np.array(
     ...                   [[0, 1, 1],
-    ...                    [0, 0, 0]]
+    ...                    [0, 0, 0],
     ...                    [1, 1, 0]])
     >>> y_pred_with_empty = np.array(
     ...                   [[1, 1, 1],
-    ...                    [0, 0, 0]])
+    ...                    [0, 0, 0],
     ...                    [1, 0, 0]])
 
     In the binary case:
@@ -814,7 +814,7 @@ def jaccard_score(
     >>> jaccard_score(y_true_with_empty[1], y_pred_with_empty[1], zero_division=1)
     1...
     >>> jaccard_score(y_true_with_empty[1], y_pred_with_empty[1], zero_division=np.nan)
-    np.nan...
+    nan...
 
     In the 2D comparison case (e.g. image similarity):
 
@@ -1157,6 +1157,7 @@ def f1_score(
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.metrics import f1_score
     >>> y_true = [0, 1, 2, 0, 1, 2]
     >>> y_pred = [0, 2, 1, 0, 0, 1]
@@ -1177,7 +1178,7 @@ def f1_score(
     >>> f1_score(y_true_empty, y_pred_empty, zero_division=1)
     1.0...
     >>> f1_score(y_true_empty, y_pred_empty, zero_division=np.nan)
-    np.nan...
+    nan...
 
     >>> # multilabel classification
     >>> y_true = [[0, 0, 0], [1, 1, 1], [0, 1, 1]]
@@ -1315,6 +1316,7 @@ def fbeta_score(
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.metrics import fbeta_score
     >>> y_true = [0, 1, 2, 0, 1, 2]
     >>> y_pred = [0, 2, 1, 0, 0, 1]
@@ -1329,7 +1331,7 @@ def fbeta_score(
     >>> y_pred_empty = [0, 0, 0, 0, 0, 0]
     >>> fbeta_score(y_true, y_pred_empty,
     ...             average="macro", zero_division=np.nan, beta=0.5)
-    1.0...
+    0.38...
     """
 
     _, _, f, _ = precision_recall_fscore_support(
@@ -1803,6 +1805,7 @@ def precision_score(
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.metrics import precision_score
     >>> y_true = [0, 1, 2, 0, 1, 2]
     >>> y_pred = [0, 2, 1, 0, 0, 1]
@@ -1820,7 +1823,7 @@ def precision_score(
     >>> precision_score(y_true, y_pred, average=None, zero_division=1)
     array([0.33..., 1.        , 1.        ])
     >>> precision_score(y_true, y_pred, average=None, zero_division=np.nan)
-    array([0.33..., nan        , nan        ])
+    array([0.33...,        nan,        nan])
 
     >>> # multilabel classification
     >>> y_true = [[0, 0, 0], [1, 1, 1], [0, 1, 1]]
@@ -1953,6 +1956,7 @@ def recall_score(
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.metrics import recall_score
     >>> y_true = [0, 1, 2, 0, 1, 2]
     >>> y_pred = [0, 2, 1, 0, 0, 1]
@@ -1970,7 +1974,7 @@ def recall_score(
     >>> recall_score(y_true, y_pred, average=None, zero_division=1)
     array([0.5, 1. , 1. ])
     >>> recall_score(y_true, y_pred, average=None, zero_division=np.nan)
-    array([0.5, nan        , nan        ])
+    array([0.5, nan, nan])
 
     >>> # multilabel classification
     >>> y_true = [[0, 0, 0], [1, 1, 1], [0, 1, 1]]
