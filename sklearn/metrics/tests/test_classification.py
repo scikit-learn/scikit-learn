@@ -604,29 +604,37 @@ def test_confusion_matrix_normalize_single_class():
 @pytest.mark.parametrize(
     "params, warn_msg",
     [
-        # When ``false positive == 0``, the positive likelihood ratio is undefined.
+        # When `fp == 0` and `tp != 0`, the positive likelihood ratio is undefined.
         (
             {
                 "y_true": np.array([1, 1, 1, 0, 0, 0]),
                 "y_pred": np.array([1, 1, 1, 0, 0, 0]),
             },
-            "positive_likelihood_ratio ill-defined and being set to inf",
+            "positive_likelihood_ratio ill-defined and being set to nan",
         ),
-        # When ``true negative == 0``, the negative likelihood ratio is undefined.
+        # When `fp == 0` and `tp == 0`, the positive likelihood ratio is undefined.
+        (
+            {
+                "y_true": np.array([1, 1, 1, 0, 0, 0]),
+                "y_pred": np.array([0, 0, 0, 0, 0, 0]),
+            },
+            "no samples predicted for the positive class",
+        ),
+        # When `tn == 0`, the negative likelihood ratio is undefined.
         (
             {
                 "y_true": np.array([1, 1, 1, 0, 0, 0]),
                 "y_pred": np.array([0, 0, 0, 1, 1, 1]),
             },
-            "negative_likelihood_ratio ill-defined and being set to inf",
+            "negative_likelihood_ratio ill-defined and being set to nan",
         ),
-        # When ``true positive + false negative == 0`` both ratios are undefined.
+        # When `tp + fn == 0` both ratios are undefined.
         (
             {
                 "y_true": np.array([0, 0, 0, 0, 0, 0]),
-                "y_pred": np.array([1, 1, 1, 1, 1, 1]),
+                "y_pred": np.array([1, 1, 1, 0, 0, 0]),
             },
-            "positive_likelihood_ratio ill-defined and being set to inf",
+            "no samples of the positive class were present in the testing set",
         ),
     ],
 )
@@ -671,7 +679,7 @@ def test_likelihood_ratios():
 
     # Build limit case with y_pred = y_true
     pos, neg = class_likelihood_ratios(y_true, y_true)
-    assert_array_equal(pos, np.array([float("inf")] * 2))
+    assert_array_equal(pos, np.nan * 2)
     assert_allclose(neg, np.zeros(2), rtol=1e-12)
 
     # Ignore last 5 samples to get tn=9, fp=3, fn=1, tp=2,
