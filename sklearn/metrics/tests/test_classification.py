@@ -604,7 +604,15 @@ def test_confusion_matrix_normalize_single_class():
 @pytest.mark.parametrize(
     "params, warn_msg",
     [
-        # When `fp == 0` and `tp != 0`, the positive likelihood ratio is undefined.
+        # When y_test contains one class only and y_test==y_pred, LR+ is undefined
+        (
+            {
+                "y_true": np.array([0, 0, 0, 0, 0, 0]),
+                "y_pred": np.array([0, 0, 0, 0, 0, 0]),
+            },
+            "samples of only one class were seen during testing",
+        ),
+        # When `fp == 0` and `tp != 0`, LR+ is undefined
         (
             {
                 "y_true": np.array([1, 1, 1, 0, 0, 0]),
@@ -612,7 +620,7 @@ def test_confusion_matrix_normalize_single_class():
             },
             "positive_likelihood_ratio ill-defined and being set to nan",
         ),
-        # When `fp == 0` and `tp == 0`, the positive likelihood ratio is undefined.
+        # When `fp == 0` and `tp == 0`, LR+ is undefined
         (
             {
                 "y_true": np.array([1, 1, 1, 0, 0, 0]),
@@ -620,7 +628,7 @@ def test_confusion_matrix_normalize_single_class():
             },
             "no samples predicted for the positive class",
         ),
-        # When `tn == 0`, the negative likelihood ratio is undefined.
+        # When `tn == 0`, LR- is undefined
         (
             {
                 "y_true": np.array([1, 1, 1, 0, 0, 0]),
@@ -628,7 +636,7 @@ def test_confusion_matrix_normalize_single_class():
             },
             "negative_likelihood_ratio ill-defined and being set to nan",
         ),
-        # When `tp + fn == 0` both ratios are undefined.
+        # When `tp + fn == 0` both ratios are undefined
         (
             {
                 "y_true": np.array([0, 0, 0, 0, 0, 0]),
