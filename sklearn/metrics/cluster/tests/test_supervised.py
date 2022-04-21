@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 import pytest
 
@@ -19,7 +21,7 @@ from sklearn.metrics.cluster._supervised import _generalized_average
 from sklearn.metrics.cluster._supervised import check_clusterings
 
 from sklearn.utils import assert_all_finite
-from sklearn.utils._testing import assert_almost_equal, ignore_warnings
+from sklearn.utils._testing import assert_almost_equal
 from numpy.testing import assert_array_equal, assert_array_almost_equal, assert_allclose
 
 
@@ -34,7 +36,6 @@ score_funcs = [
 ]
 
 
-@ignore_warnings(category=FutureWarning)
 def test_error_messages_on_wrong_input():
     for score_func in score_funcs:
         expected = (
@@ -62,7 +63,6 @@ def test_generalized_average():
     assert means[0] == means[1] == means[2] == means[3]
 
 
-@ignore_warnings(category=FutureWarning)
 def test_perfect_matches():
     for score_func in score_funcs:
         assert score_func([], []) == pytest.approx(1.0)
@@ -165,7 +165,6 @@ def test_non_consecutive_labels():
     assert_almost_equal(ri_2, 0.66, 2)
 
 
-@ignore_warnings(category=FutureWarning)
 def uniform_labelings_scores(score_func, n_samples, k_range, n_runs=10, seed=42):
     # Compute score for random uniform cluster labelings
     random_labels = np.random.RandomState(seed).randint
@@ -178,7 +177,6 @@ def uniform_labelings_scores(score_func, n_samples, k_range, n_runs=10, seed=42)
     return scores
 
 
-@ignore_warnings(category=FutureWarning)
 def test_adjustment_for_chance():
     # Check that adjusted scores are almost zero on random labels
     n_clusters_range = [2, 10, 50, 90]
@@ -283,7 +281,6 @@ def test_contingency_matrix_sparse():
         contingency_matrix(labels_a, labels_b, eps=1e-10, sparse=True)
 
 
-@ignore_warnings(category=FutureWarning)
 def test_exactly_zero_info_score():
     # Check numerical stability when information is exactly zero
     for i in np.logspace(1, 4, 4).astype(int):
@@ -461,9 +458,9 @@ def test_adjusted_rand_score_overflow():
     rng = np.random.RandomState(0)
     y_true = rng.randint(0, 2, 100_000, dtype=np.int8)
     y_pred = rng.randint(0, 2, 100_000, dtype=np.int8)
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
         adjusted_rand_score(y_true, y_pred)
-    assert not [w.message for w in record]
 
 
 @pytest.mark.parametrize("average_method", ["min", "arithmetic", "geometric", "max"])

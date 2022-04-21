@@ -164,7 +164,7 @@ def _alpha_grid(
             # Workaround to find alpha_max for sparse matrices.
             # since we should not destroy the sparsity of such matrices.
             _, _, X_offset, _, X_scale = _preprocess_data(
-                X, y, fit_intercept, normalize, return_mean=True
+                X, y, fit_intercept, normalize
             )
             mean_dot = X_offset * np.sum(y)
 
@@ -499,6 +499,7 @@ def enet_path(
     """
     X_offset_param = params.pop("X_offset", None)
     X_scale_param = params.pop("X_scale", None)
+    sample_weight = params.pop("sample_weight", None)
     tol = params.pop("tol", 1e-4)
     max_iter = params.pop("max_iter", 1000)
     random_state = params.pop("random_state", None)
@@ -544,14 +545,14 @@ def enet_path(
     # MultiTaskElasticNet does not support sparse matrices
     if not multi_output and sparse.isspmatrix(X):
         if X_offset_param is not None:
-            # As sparse matrices are not actually centered we need this
-            # to be passed to the CD solver.
+            # As sparse matrices are not actually centered we need this to be passed to
+            # the CD solver.
             X_sparse_scaling = X_offset_param / X_scale_param
             X_sparse_scaling = np.asarray(X_sparse_scaling, dtype=X.dtype)
         else:
             X_sparse_scaling = np.zeros(n_features, dtype=X.dtype)
 
-    # X should be normalized and fit already if function is called
+    # X should have been passed through _pre_fit already if function is called
     # from ElasticNet.fit
     if check_input:
         X, y, X_offset, y_offset, X_scale, precompute, Xy = _pre_fit(
@@ -578,7 +579,7 @@ def enet_path(
             normalize=False,
             copy_X=False,
         )
-    else:
+    elif len(alphas) > 1:
         alphas = np.sort(alphas)[::-1]  # make sure alphas are properly ordered
 
     n_alphas = len(alphas)
@@ -606,19 +607,20 @@ def enet_path(
         l2_reg = alpha * (1.0 - l1_ratio) * n_samples
         if not multi_output and sparse.isspmatrix(X):
             model = cd_fast.sparse_enet_coordinate_descent(
-                coef_,
-                l1_reg,
-                l2_reg,
-                X.data,
-                X.indices,
-                X.indptr,
-                y,
-                X_sparse_scaling,
-                max_iter,
-                tol,
-                rng,
-                random,
-                positive,
+                w=coef_,
+                alpha=l1_reg,
+                beta=l2_reg,
+                X_data=X.data,
+                X_indices=X.indices,
+                X_indptr=X.indptr,
+                y=y,
+                sample_weight=sample_weight,
+                X_mean=X_sparse_scaling,
+                max_iter=max_iter,
+                tol=tol,
+                rng=rng,
+                random=random,
+                positive=positive,
             )
         elif multi_output:
             model = cd_fast.enet_coordinate_descent_multi_task(
@@ -807,7 +809,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         cross-validation.
     SGDRegressor : Implements elastic net regression with incremental training.
     SGDClassifier : Implements logistic regression with elastic net penalty
-        (``SGDClassifier(loss="log", penalty="elasticnet")``).
+        (``SGDClassifier(loss="log_loss", penalty="elasticnet")``).
 
     Notes
     -----
@@ -965,39 +967,34 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
             sample_weight = None
         if sample_weight is not None:
             if check_input:
-                if sparse.issparse(X):
-                    raise ValueError(
-                        "Sample weights do not (yet) support sparse matrices."
-                    )
                 sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
             # TLDR: Rescale sw to sum up to n_samples.
             # Long: The objective function of Enet
             #
             #    1/2 * np.average(squared error, weights=sw)
-            #    + alpha * penalty                                   (1)
+            #    + alpha * penalty                                             (1)
             #
             # is invariant under rescaling of sw.
             # But enet_path coordinate descent minimizes
             #
-            #     1/2 * sum(squared error) + alpha * penalty
+            #     1/2 * sum(squared error) + alpha' * penalty                  (2)
             #
             # and therefore sets
             #
-            #     alpha = n_samples * alpha
+            #     alpha' = n_samples * alpha                                   (3)
             #
-            # inside its function body, which results in an objective
-            # equivalent to (1) without sw.
+            # inside its function body, which results in objective (2) being
+            # equivalent to (1) in case of no sw.
             # With sw, however, enet_path should set
             #
-            #     alpha = sum(sw) * alpha                            (2)
+            #     alpha' = sum(sw) * alpha                                     (4)
             #
-            # Therefore, using the freedom of Eq. (1) to rescale alpha before
-            # calling enet_path, we do
+            # Therefore, we use the freedom of Eq. (1) to rescale sw before
+            # calling enet_path, i.e.
             #
-            #     alpha = sum(sw) / n_samples * alpha
+            #     sw *= n_samples / sum(sw)
             #
-            # such that the rescaling inside enet_path is exactly Eq. (2)
-            # because now sum(sw) = n_samples.
+            # such that sum(sw) = n_samples. This way, (3) and (4) are the same.
             sample_weight = sample_weight * (n_samples / np.sum(sample_weight))
             # Note: Alternatively, we could also have rescaled alpha instead
             # of sample_weight:
@@ -1058,17 +1055,19 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
                 precompute=precompute,
                 Xy=this_Xy,
                 copy_X=True,
+                coef_init=coef_[k],
                 verbose=False,
-                tol=self.tol,
+                return_n_iter=True,
                 positive=self.positive,
+                check_input=False,
+                # from here on **params
+                tol=self.tol,
                 X_offset=X_offset,
                 X_scale=X_scale,
-                return_n_iter=True,
-                coef_init=coef_[k],
                 max_iter=self.max_iter,
                 random_state=self.random_state,
                 selection=self.selection,
-                check_input=False,
+                sample_weight=sample_weight,
             )
             coef_[k] = this_coef[:, 0]
             dual_gaps_[k] = this_dual_gap[0]
@@ -1141,11 +1140,13 @@ class Lasso(ElasticNet):
     Parameters
     ----------
     alpha : float, default=1.0
-        Constant that multiplies the L1 term. Defaults to 1.0.
-        ``alpha = 0`` is equivalent to an ordinary least square, solved
-        by the :class:`LinearRegression` object. For numerical
-        reasons, using ``alpha = 0`` with the ``Lasso`` object is not advised.
-        Given this, you should use the :class:`LinearRegression` object.
+        Constant that multiplies the L1 term, controlling regularization
+        strength. `alpha` must be a non-negative float i.e. in `[0, inf)`.
+
+        When `alpha = 0`, the objective is equivalent to ordinary least
+        squares, solved by the :class:`LinearRegression` object. For numerical
+        reasons, using `alpha = 0` with the `Lasso` object is not advised.
+        Instead, you should use the :class:`LinearRegression` object.
 
     fit_intercept : bool, default=True
         Whether to calculate the intercept for this model. If set
@@ -1248,6 +1249,14 @@ class Lasso(ElasticNet):
 
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a Fortran-contiguous numpy array.
+
+    Regularization improves the conditioning of the problem and
+    reduces the variance of the estimates. Larger values specify stronger
+    regularization. Alpha corresponds to `1 / (2C)` in other linear
+    models such as :class:`~sklearn.linear_model.LogisticRegression` or
+    :class:`~sklearn.svm.LinearSVC`. If an array is passed, penalties are
+    assumed to be specific to the targets. Hence they must correspond in
+    number.
 
     Examples
     --------
@@ -1412,6 +1421,8 @@ def _path_residuals(
     path_params["precompute"] = precompute
     path_params["copy_X"] = False
     path_params["alphas"] = alphas
+    # needed for sparse cd solver
+    path_params["sample_weight"] = sw_train
 
     if "l1_ratio" in path_params:
         path_params["l1_ratio"] = l1_ratio
@@ -1600,8 +1611,6 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         if isinstance(sample_weight, numbers.Number):
             sample_weight = None
         if sample_weight is not None:
-            if sparse.issparse(X):
-                raise ValueError("Sample weights do not (yet) support sparse matrices.")
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         model = self._get_estimator()

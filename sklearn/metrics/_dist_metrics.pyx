@@ -29,7 +29,7 @@ from libc.math cimport fabs, sqrt, exp, pow, cos, sin, asin
 cdef DTYPE_t INF = np.inf
 
 from scipy.sparse import csr_matrix, issparse
-from ..utils._typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t, DTYPECODE
+from ..utils._typedefs cimport DTYPE_t, ITYPE_t, DTYPECODE
 from ..utils._typedefs import DTYPE, ITYPE
 from ..utils._readonly_array_wrapper import ReadonlyArrayWrapper
 from ..utils import check_array

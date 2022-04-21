@@ -442,6 +442,10 @@ def load_wine(*, return_X_y=False, as_frame=False):
     Features            real, positive
     =================   ==============
 
+    The copy of UCI ML Wine Data Set dataset is downloaded and modified to fit
+    standard format from:
+    https://archive.ics.uci.edu/ml/machine-learning-databases/wine/wine.data
+
     Read more in the :ref:`User Guide <wine_dataset>`.
 
     Parameters
@@ -483,10 +487,9 @@ def load_wine(*, return_X_y=False, as_frame=False):
             The full description of the dataset.
 
     (data, target) : tuple if ``return_X_y`` is True
-
-    The copy of UCI ML Wine Data Set dataset is downloaded and modified to fit
-    standard format from:
-    https://archive.ics.uci.edu/ml/machine-learning-databases/wine/wine.data
+        A tuple of two ndarrays by default. The first contains a 2D array of shape
+        (178, 13) with each row representing one sample and each column representing
+        the features. The second array of shape (178,) contains the target samples.
 
     Examples
     --------
@@ -1387,8 +1390,15 @@ def load_sample_images():
     >>> first_img_data.dtype               #doctest: +SKIP
     dtype('uint8')
     """
-    # import PIL only when needed
-    from ..externals._pilutil import imread
+    try:
+        from PIL import Image
+    except ImportError:
+        raise ImportError(
+            "The Python Imaging Library (PIL) is required to load data "
+            "from jpeg files. Please refer to "
+            "https://pillow.readthedocs.io/en/stable/installation.html "
+            "for installing PIL."
+        )
 
     descr = load_descr("README.txt", descr_module=IMAGES_MODULE)
 
@@ -1397,26 +1407,27 @@ def load_sample_images():
         if filename.endswith(".jpg"):
             filenames.append(filename)
             with resources.open_binary(IMAGES_MODULE, filename) as image_file:
-                image = imread(image_file)
+                pil_image = Image.open(image_file)
+                image = np.asarray(pil_image)
             images.append(image)
 
     return Bunch(images=images, filenames=filenames, DESCR=descr)
 
 
 def load_sample_image(image_name):
-    """Load the numpy array of a single sample image
+    """Load the numpy array of a single sample image.
 
     Read more in the :ref:`User Guide <sample_images>`.
 
     Parameters
     ----------
     image_name : {`china.jpg`, `flower.jpg`}
-        The name of the sample image loaded
+        The name of the sample image loaded.
 
     Returns
     -------
     img : 3D array
-        The image as a numpy array: height x width x color
+        The image as a numpy array: height x width x color.
 
     Examples
     --------

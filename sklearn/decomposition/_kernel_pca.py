@@ -5,6 +5,7 @@
 # License: BSD 3 clause
 
 import numpy as np
+import numbers
 from scipy import linalg
 from scipy.sparse.linalg import eigsh
 
@@ -13,6 +14,7 @@ from ..utils.extmath import svd_flip, _randomized_eigsh
 from ..utils.validation import (
     check_is_fitted,
     _check_psd_eigenvalues,
+    check_scalar,
 )
 from ..utils.deprecation import deprecated
 from ..exceptions import NotFittedError
@@ -73,7 +75,7 @@ class KernelPCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
             default='auto'
         Select eigensolver to use. If `n_components` is much
         less than the number of training samples, randomized (or arpack to a
-        smaller extend) may be more efficient than the dense eigensolver.
+        smaller extent) may be more efficient than the dense eigensolver.
         Randomized SVD is performed according to the method of Halko et al
         [3]_.
 
@@ -311,10 +313,7 @@ class KernelPCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
         if self.n_components is None:
             n_components = K.shape[0]  # use all dimensions
         else:
-            if self.n_components < 1:
-                raise ValueError(
-                    f"`n_components` should be >= 1, got: {self.n_component}"
-                )
+            check_scalar(self.n_components, "n_components", numbers.Integral, min_val=1)
             n_components = min(K.shape[0], self.n_components)
 
         # compute eigenvectors
