@@ -121,7 +121,7 @@ def ols_ridge_dataset(global_random_seed, request):
     k = min(n_samples, n_features)
     rng = np.random.RandomState(global_random_seed)
     X = make_low_rank_matrix(
-        n_samples=n_samples, n_features=n_features, effective_rank=k
+        n_samples=n_samples, n_features=n_features, effective_rank=k, random_state=rng
     )
     X[:, -1] = 1  # last columns acts as intercept
     U, s, Vt = linalg.svd(X)
@@ -256,7 +256,7 @@ def test_ridge_regression_vstacked_X(
         alpha=2 * alpha,
         fit_intercept=fit_intercept,
         solver=solver,
-        tol=1e-11,
+        tol=1e-15 if solver in ("sag", "saga") else 1e-10,
         random_state=global_random_seed,
     )
     X = X[:, :-1]  # remove intercept
@@ -273,7 +273,7 @@ def test_ridge_regression_vstacked_X(
     coef = coef[:-1]
 
     assert model.intercept_ == pytest.approx(intercept)
-    assert_allclose(model.coef_, coef)
+    assert_allclose(model.coef_, coef, atol=1e-8)
 
 
 @pytest.mark.parametrize("solver", SOLVERS)
@@ -1663,7 +1663,7 @@ def test_ridge_fit_intercept_sparse(solver, with_sample_weight, global_random_se
     sparse_ridge.fit(sp.csr_matrix(X), y, sample_weight=sample_weight)
 
     assert_allclose(dense_ridge.intercept_, sparse_ridge.intercept_)
-    assert_allclose(dense_ridge.coef_, sparse_ridge.coef_)
+    assert_allclose(dense_ridge.coef_, sparse_ridge.coef_, rtol=5e-7)
 
 
 @pytest.mark.parametrize("solver", ["saga", "svd", "cholesky"])

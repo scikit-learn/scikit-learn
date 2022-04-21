@@ -281,6 +281,10 @@ Changelog
   :pr:`19747` by :user:`Tony Attalla <tonyattalla>` and :pr:`22498` by
   :user:`Meekail Zain <micky774>`.
 
+- |Fix| :func:`datasets.fetch_covtype` is now concurrent-safe: data is downloaded
+  to a temporary directory before being moved to the data directory.
+  :pr:`23113` by :user:`Ilion Beyst <iasoon>`
+
 :mod:`sklearn.decomposition`
 ............................
 
@@ -454,6 +458,9 @@ Changelog
   fitting on a pandas DataFrame with a non-default `scoring` parameter and
   early_stopping enabled. :pr:`22908` by `Thomas Fan`_.
 
+- |Fix| Fixes HTML repr for :class:`ensemble.StackingClassifier` and
+  :class:`ensemble.StackingRegressor`. :pr:`23097` by `Thomas Fan`_.
+
 - |Efficiency| Fitting a :class:`ensemble.RandomForestClassifier`,
   :class:`ensemble.RandomForestRegressor`, :class:`ensemble.ExtraTreesClassifier`,
   :class:`ensemble.ExtraTreesRegressor`, and :class:`ensemble.RandomTreesEmbedding`
@@ -470,6 +477,15 @@ Changelog
   :func:`get_feature_names_out` function that includes both tree index and leaf index in
   the output feature names.
   :pr:`21762` by :user:`Zhehao Liu <MaxwellLZH>` and `Thomas Fan`_.
+
+- |API| The attribute `loss_` of :class:`ensemble.GradientBoostingClassifier` and
+  :class:`ensemble.GradientBoostingRegressor` has been deprecated and will be removed
+  in version 1.3.
+  :pr:`23079` by :user:`Christian Lorentzen <lorentzenchr>`.
+
+- |Enhancement| :class:`RandomForestClassifier` and :class:`ExtraTreesClassifier` have
+  the new `criterion="log_loss"`, which is equivalent to `criterion="entropy"`.
+  :pr:`23047` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 :mod:`sklearn.feature_extraction`
 .................................
@@ -1007,6 +1023,10 @@ Changelog
   for :class:`tree.DecisionTreeClassifier` and :class:`DecisionTreeRegressor`.
   :pr:`22476` by :user: `Zhehao Liu <MaxwellLZH>`.
 
+- |Enhancement| :class:`DecisionTreeClassifier` and :class:`ExtraTreeClassifier` have
+  the new `criterion="log_loss"`, which is equivalent to `criterion="entropy"`.
+  :pr:`23047` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 :mod:`sklearn.utils`
 ....................
 
@@ -1027,6 +1047,10 @@ Changelog
 - |Enhancement| :func:`utils.estimator_html_repr` displays an arrow on the top
   left corner of the HTML representation to show how the elements are
   clickable. :pr:`21298` by `Thomas Fan`_.
+
+- |Enhancement| Removes random unique identifiers in the HTML representation.
+  With this change, jupyter notebooks are reproducible as long as the cells are
+  run in the same order. :pr:`23098` by `Thomas Fan`_.
 
 - |API| :func:`utils.estimator_checks.check_estimator`'s argument is now called
   `estimator` (previous name was `Estimator`). :pr:`22188` by
@@ -1055,6 +1079,9 @@ Changelog
 
 - |Fix| :func:`utils.estimator_html_repr` has an improved visualization for nested
   meta-estimators. :pr:`21310` by `Thomas Fan`_.
+
+- |Fix| :func:`utils.metaestimators.available_if` correctly returns a bounded
+  method that can be pickled. :pr:`23077` by `Thomas Fan`_.
 
 - |API| :func:`utils.metaestimators.if_delegate_has_method` is deprecated and will be
   removed in version 1.3. Use :func:`utils.metaestimators.available_if` instead.

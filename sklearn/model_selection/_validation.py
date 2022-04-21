@@ -208,6 +208,16 @@ def cross_validate(
                 This is available only if ``return_estimator`` parameter
                 is set to ``True``.
 
+    See Also
+    --------
+    cross_val_score : Run cross-validation for single metric evaluation.
+
+    cross_val_predict : Get predictions from each split of cross-validation for
+        diagnostic purposes.
+
+    sklearn.metrics.make_scorer : Make a scorer from a performance metric or
+        loss function.
+
     Examples
     --------
     >>> from sklearn import datasets, linear_model
@@ -238,17 +248,6 @@ def cross_validate(
     [-3635.5... -3573.3... -6114.7...]
     >>> print(scores['train_r2'])
     [0.28009951 0.3908844  0.22784907]
-
-    See Also
-    --------
-    cross_val_score : Run cross-validation for single metric evaluation.
-
-    cross_val_predict : Get predictions from each split of cross-validation for
-        diagnostic purposes.
-
-    sklearn.metrics.make_scorer : Make a scorer from a performance metric or
-        loss function.
-
     """
     X, y, groups = indexable(X, y, groups)
 
