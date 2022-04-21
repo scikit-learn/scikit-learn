@@ -28,20 +28,30 @@ or with conda::
 # `loss="quantile"` and the new parameter `quantile`.
 from sklearn.datasets import make_regression
 from sklearn.ensemble import HistGradientBoostingRegressor
-import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
 
-X, y = make_regression(n_features=4, n_informative=8, noise=10, random_state=0)
+# Simple regression function for X * cos(X)
+rng = np.random.RandomState(42)
+X_1d = np.linspace(0, 10, num=2000)
+X = X_1d.reshape(-1, 1)
+y = X_1d * np.cos(X_1d) + rng.normal(scale=X_1d / 3)
 
-quantiles = [0.05, 0.5, 0.95]
-hist_quantiles = [
-    HistGradientBoostingRegressor(loss="quantile", quantile=quantile).fit(X, y)
+quantiles = [0.95, 0.5, 0.05]
+parameters = dict(loss="quantile", max_bins=32, max_iter=50)
+hist_quantiles = {
+    f"quantile={quantile:.2f}": HistGradientBoostingRegressor(
+        **parameters, quantile=quantile
+    ).fit(X, y)
     for quantile in quantiles
-]
-predictions = {
-    f"quantile_{quantile:0.2f}": hist.predict(X)
-    for quantile, hist in zip(quantiles, hist_quantiles)
 }
-pd.DataFrame(predictions).iloc[:5]
+
+fig, ax = plt.subplots()
+ax.plot(X_1d, y, "o", alpha=0.5, markersize=1)
+for quantile, hist in hist_quantiles.items():
+    ax.plot(X_1d, hist.predict(X), label=quantile)
+ax.legend(loc="lower left")
+
 
 # %%
 # `get_feature_names_out` Available in all Transformers
