@@ -256,7 +256,7 @@ def test_precision_recall_f1_score_binary():
 
         assert_almost_equal(
             my_assert(fbeta_score, y_true, y_pred, beta=2, **kwargs),
-            (1 + 2 ** 2) * ps * rs / (2 ** 2 * ps + rs),
+            (1 + 2**2) * ps * rs / (2 ** 2 * ps + rs),
             2,
         )
 
@@ -1629,7 +1629,10 @@ def test_precision_recall_f1_score_with_an_empty_prediction(zero_division):
     assert s is None
     assert_almost_equal(
         fbeta_score(
-            y_true, y_pred, beta=2, average="macro",
+            y_true,
+            y_pred,
+            beta=2,
+            average="macro",
             zero_division=zero_division,
         ),
         _nan_average(f2, weights=None),
