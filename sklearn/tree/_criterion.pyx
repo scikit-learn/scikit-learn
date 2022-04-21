@@ -613,6 +613,12 @@ cdef class HellingerDistance(ClassificationCriterion):
         hellinger_distance = \sqrt{count_k1+count_k2}
     """
     cdef double node_impurity(self) nogil:
+        """Evaluate the impurity of the current node.
+        
+        Evaluate the Hellinger distance criterion as impurity of the current node,
+        i.e. the impurity of samples[start:end]. The smaller the impurity the
+        better.
+        """
         cdef:
             double impurity_left
             double impurity_right
@@ -623,11 +629,28 @@ cdef class HellingerDistance(ClassificationCriterion):
 
     cdef void children_impurity(self, double* impurity_left,
                                 double* impurity_right) nogil:
+        """Evaluate the impurity in children nodes.
+        
+        i.e. the impurity of the left child (samples[start:pos]) and the
+        impurity the right child (samples[pos:end]) using Hellinger distance.
+
+        Parameters
+        ----------
+        impurity_left : double pointer
+            The memory address to save the impurity of the left node to
+        impurity_right : double pointer
+            The memory address to save the impurity of the right node to
+        """
         cdef:
-            double[::1] sum_left = self.sum_left[0] # supporting single label only
-            double[::1] sum_right = self.sum_right[0]  # supporting single label only
+            # taking only first sum_left and sum_right because only single label is supported
+            double[::1] sum_left = self.sum_left[0]
+            double[::1] sum_right = self.sum_right[0]
+
+            # sum of same class in both children nodes
             double sum_k1 = sum_left[0] + sum_right[0]
             double sum_k2 = sum_left[1] + sum_right[1]
+
+            # hellinger distance score calculation helpers
             double count_k1_left = 0.0
             double count_k2_left = 0.0
             double count_k1_right = 0.0
@@ -640,6 +663,10 @@ cdef class HellingerDistance(ClassificationCriterion):
             count_k2_left = sqrt(sum_left[1] / sum_k2)
             count_k2_right = sqrt(sum_right[1] / sum_k2)
 
+        # assigning only first impurity because only single label is supported
+        # hellinger distance score is, the higher, the better
+        # split decision is, the lower, the better
+        # thus adding '1 - score' in order to adapt hellinger distance score to split mechanism
         impurity_left[0]  = 1 - pow((count_k1_left - count_k2_left), 2)
         impurity_right[0] = 1 - pow((count_k1_right - count_k2_right), 2)
 
