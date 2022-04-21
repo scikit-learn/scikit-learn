@@ -1808,7 +1808,7 @@ class MiniBatchNMF(NMF):
     and `H`.
 
     Note that the transformed data is named `W` and the components matrix is
-    named `H`. In the NMF literature, the naming convention is usually the opposite 
+    named `H`. In the NMF literature, the naming convention is usually the opposite
     since the data matrix `X` is transposed.
 
     Read more in the :ref:`User Guide <MiniBatchNMF>`.
