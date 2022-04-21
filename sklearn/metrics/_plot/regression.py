@@ -129,6 +129,13 @@ class PredictionErrorDisplay:
         """
         check_matplotlib_support("PredictionErrorDisplay.plot")
 
+        expected_kind = ("predictions", "predictions_residuals", "residuals")
+        if kind not in expected_kind:
+            raise ValueError(
+                f"`kind` must be one of {', '.join(expected_kind)}. "
+                f"Got {kind!r} instead."
+            )
+
         import matplotlib.pyplot as plt
 
         if scatter_kwargs is None:

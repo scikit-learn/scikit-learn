@@ -37,6 +37,12 @@ def regressor_fitted():
             ValueError,
             "When a floating-point, subsample=-20.0 should be",
         ),
+        (
+            Ridge().fit(X, y),
+            {"kind": "xxx"},
+            ValueError,
+            "`kind` must be one of",
+        ),
     ],
 )
 @pytest.mark.parametrize("class_method", ["from_estimator", "from_predictions"])
@@ -73,7 +79,7 @@ def test_prediction_error_display(pyplot, regressor_fitted, class_method):
     assert_allclose(display.line_.get_xdata(), display.line_.get_ydata())
     assert display.ax_.get_xlabel() == "Actual values"
     assert display.ax_.get_ylabel() == "Predicted values"
-    assert display.residual_lines_ is None
+    assert display.errors_lines_ is None
 
     assert display.ax_.get_legend() is None
 
@@ -97,7 +103,7 @@ def test_prediction_error_display_with_scores(
     assert_allclose(display.line_.get_xdata(), display.line_.get_ydata())
     assert display.ax_.get_xlabel() == "Actual values"
     assert display.ax_.get_ylabel() == "Predicted values"
-    assert display.residual_lines_ is None
+    assert display.errors_lines_ is None
 
     legend_text = display.ax_.get_legend().get_texts()
     assert len(legend_text) == 1
@@ -128,26 +134,22 @@ def test_plot_prediction_error_subsample(
 
 
 @pytest.mark.parametrize("class_method", ["from_estimator", "from_predictions"])
-@pytest.mark.parametrize("with_residuals", [False, True])
-def test_plot_prediction_error_residuals(
-    pyplot, regressor_fitted, class_method, with_residuals
+def test_plot_prediction_error_predictions_residuals(
+    pyplot, regressor_fitted, class_method
 ):
-    """Check that `with_residuals` is showing the residuals lines."""
+    """Check that we plot the prediction and residuals."""
     subsample = 10
     if class_method == "from_estimator":
         display = PredictionErrorDisplay.from_estimator(
-            regressor_fitted, X, y, with_residuals=with_residuals, subsample=subsample
+            regressor_fitted, X, y, kind="predictions_residuals", subsample=subsample
         )
     else:
         y_pred = regressor_fitted.predict(X)
         display = PredictionErrorDisplay.from_predictions(
-            y_true=y, y_pred=y_pred, with_residuals=with_residuals, subsample=subsample
+            y_true=y, y_pred=y_pred, kind="predictions_residuals", subsample=subsample
         )
 
-    if not with_residuals:
-        assert display.residual_lines_ is None
-    else:
-        assert len(display.residual_lines_) == subsample
+    assert len(display.errors_lines_) == subsample
 
 
 @pytest.mark.parametrize("class_method", ["from_estimator", "from_predictions"])
@@ -168,37 +170,34 @@ def test_plot_prediction_error_ax(pyplot, regressor_fitted, class_method):
 def test_prediction_error_custom_artist(pyplot, regressor_fitted, class_method):
     # check that we can tune the style of the lines
     extra_params = {
+        "kind": "predictions_residuals",
         "scatter_kwargs": {"color": "red"},
         "line_kwargs": {"color": "black"},
-        "residuals_kwargs": {"color": "blue"},
+        "errors_kwargs": {"color": "blue"},
     }
     if class_method == "from_estimator":
         display = PredictionErrorDisplay.from_estimator(
-            regressor_fitted, X, y, with_residuals=True, **extra_params
+            regressor_fitted, X, y, **extra_params
         )
     else:
         y_pred = regressor_fitted.predict(X)
         display = PredictionErrorDisplay.from_predictions(
-            y_true=y, y_pred=y_pred, with_residuals=True, **extra_params
+            y_true=y, y_pred=y_pred, **extra_params
         )
 
     assert display.line_.get_color() == "black"
     assert_allclose(display.scatter_.get_edgecolor(), [[1.0, 0.0, 0.0, 0.8]])
-    assert display.residual_lines_[0].get_color() == "blue"
+    assert display.errors_lines_[0].get_color() == "blue"
 
     # create a display with the default values
     if class_method == "from_estimator":
-        display = PredictionErrorDisplay.from_estimator(
-            regressor_fitted, X, y, with_residuals=True
-        )
+        display = PredictionErrorDisplay.from_estimator(regressor_fitted, X, y)
     else:
         y_pred = regressor_fitted.predict(X)
-        display = PredictionErrorDisplay.from_predictions(
-            y_true=y, y_pred=y_pred, with_residuals=True
-        )
+        display = PredictionErrorDisplay.from_predictions(y_true=y, y_pred=y_pred)
     pyplot.close("all")
 
     display.plot(**extra_params)
     assert display.line_.get_color() == "black"
     assert_allclose(display.scatter_.get_edgecolor(), [[1.0, 0.0, 0.0, 0.8]])
-    assert display.residual_lines_[0].get_color() == "blue"
+    assert display.errors_lines_[0].get_color() == "blue"
