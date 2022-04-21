@@ -137,7 +137,7 @@ python_environment_install() {
         git clone https://github.com/colesbury/nogil
         cd nogil
         ./configure && make -j 2
-        ./python.exe -m venv $VIRTUALENV
+        ./python -m venv $VIRTUALENV
         cd $ORIGINAL_FOLDER
         source $VIRTUALENV/bin/activate
 
