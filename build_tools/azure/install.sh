@@ -20,14 +20,19 @@ make_conda() {
 }
 
 setup_ccache() {
-    echo "Setting up ccache with CCACHE_DIR=${CCACHE_DIR}"
-    mkdir /tmp/ccache/
-    which ccache
-    for name in gcc g++ cc c++ clang clang++ i686-linux-gnu-gcc i686-linux-gnu-c++ x86_64-linux-gnu-gcc x86_64-linux-gnu-c++ x86_64-apple-darwin13.4.0-clang x86_64-apple-darwin13.4.0-clang++; do
-      ln -s $(which ccache) "/tmp/ccache/${name}"
-    done
-    export PATH="/tmp/ccache/:${PATH}"
-    ccache -M 256M
+    CCACHE_BIN=`which ccache || echo ""`
+    if [[ "${CCACHE_BIN}" != "" ]]; then
+        echo "Setting up ccache with CCACHE_DIR=${CCACHE_DIR}"
+        mkdir /tmp/ccache/
+        which ccache
+        for name in gcc g++ cc c++ clang clang++ i686-linux-gnu-gcc i686-linux-gnu-c++ x86_64-linux-gnu-gcc x86_64-linux-gnu-c++ x86_64-apple-darwin13.4.0-clang x86_64-apple-darwin13.4.0-clang++; do
+        ln -s ${CCACHE_BIN} "/tmp/ccache/${name}"
+        done
+        export PATH="/tmp/ccache/:${PATH}"
+        ccache -M 256M
+    else
+        echo "ccache not found, skipping..."
+    fi
 }
 
 pre_python_environment_install() {
