@@ -12,7 +12,8 @@ for each segmented region to be in one piece.
 # Author : Vincent Michel, 2010
 #          Alexandre Gramfort, 2011
 # License: BSD 3 clause
-#
+
+# %%
 # Generate data
 # -------------
 
