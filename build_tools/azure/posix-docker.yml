@@ -134,7 +134,8 @@ jobs:
           $CI_NAME \
           $ISSUE_REPO \
           $LINK_TO_RUN \
-          --junit-file $JUNIT_FILE
+          --junit-file $JUNIT_FILE \
+          --auto-close false
       displayName: 'Update issue tracker'
       env:
         JUNIT_FILE: $(TEST_DIR)/$(JUNITXML)
