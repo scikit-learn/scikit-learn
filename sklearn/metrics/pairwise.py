@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #          Mathieu Blondel <mathieu@mblondel.org>
 #          Robert Layton <robertlayton@gmail.com>
@@ -835,12 +833,15 @@ def haversine_distances(X, Y=None):
     Parameters
     ----------
     X : array-like of shape (n_samples_X, 2)
+        A feature array.
 
     Y : array-like of shape (n_samples_Y, 2), default=None
+        An optional second feature array. If `None`, uses `Y=X`.
 
     Returns
     -------
     distance : ndarray of shape (n_samples_X, n_samples_Y)
+        The distance matrix.
 
     Notes
     -----
@@ -992,20 +993,23 @@ def cosine_distances(X, Y=None):
 
 # Paired distances
 def paired_euclidean_distances(X, Y):
-    """
-    Computes the paired euclidean distances between X and Y.
+    """Compute the paired euclidean distances between X and Y.
 
     Read more in the :ref:`User Guide <metrics>`.
 
     Parameters
     ----------
     X : array-like of shape (n_samples, n_features)
+        Input array/matrix X.
 
     Y : array-like of shape (n_samples, n_features)
+        Input array/matrix Y.
 
     Returns
     -------
     distances : ndarray of shape (n_samples,)
+        Output array/matrix containing the calculated paired euclidean
+        distances.
     """
     X, Y = check_paired_arrays(X, Y)
     return row_norms(X - Y)
@@ -1287,9 +1291,10 @@ def laplacian_kernel(X, Y=None, gamma=None):
     Parameters
     ----------
     X : ndarray of shape (n_samples_X, n_features)
+        A feature array.
 
     Y : ndarray of shape (n_samples_Y, n_features), default=None
-        If `None`, uses `Y=X`.
+        An optional second feature array. If `None`, uses `Y=X`.
 
     gamma : float, default=None
         If None, defaults to 1.0 / n_features.
@@ -1297,6 +1302,7 @@ def laplacian_kernel(X, Y=None, gamma=None):
     Returns
     -------
     kernel_matrix : ndarray of shape (n_samples_X, n_samples_Y)
+        The kernel matrix.
     """
     X, Y = check_pairwise_arrays(X, Y)
     if gamma is None:

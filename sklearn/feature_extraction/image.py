@@ -177,18 +177,18 @@ def img_to_graph(img, *, mask=None, return_as=sparse.coo_matrix, dtype=None):
 def grid_to_graph(
     n_x, n_y, n_z=1, *, mask=None, return_as=sparse.coo_matrix, dtype=int
 ):
-    """Graph of the pixel-to-pixel connections
+    """Graph of the pixel-to-pixel connections.
 
     Edges exist if 2 voxels are connected.
 
     Parameters
     ----------
     n_x : int
-        Dimension in x axis
+        Dimension in x axis.
     n_y : int
-        Dimension in y axis
+        Dimension in y axis.
     n_z : int, default=1
-        Dimension in z axis
+        Dimension in z axis.
     mask : ndarray of shape (n_x, n_y, n_z), dtype=bool, default=None
         An optional mask of the image, to consider only part of the
         pixels.
@@ -196,7 +196,12 @@ def grid_to_graph(
             default=sparse.coo_matrix
         The class to use to build the returned adjacency matrix.
     dtype : dtype, default=int
-        The data of the returned sparse matrix. By default it is int
+        The data of the returned sparse matrix. By default it is int.
+
+    Returns
+    -------
+    graph : np.ndarray or a sparse matrix class
+        The computed adjacency matrix.
 
     Notes
     -----
