@@ -185,6 +185,7 @@ display = PredictionErrorDisplay.from_predictions(
     y_true=y_test, y_pred=y_pred, scores=scores, ax=ax, scatter_kwargs={"alpha": 0.5}
 )
 _ = ax.set_title("Ridge model, small regularization")
+plt.tight_layout()
 
 # %%
 # The model learnt is far from being a good model making accurate predictions:
@@ -448,6 +449,7 @@ display = PredictionErrorDisplay.from_predictions(
     y_true=y_test, y_pred=y_pred, scores=scores, ax=ax, scatter_kwargs={"alpha": 0.5}
 )
 _ = ax.set_title("Ridge model, small regularization, normalized variables")
+plt.tight_layout()
 
 # %%
 # For the coefficient analysis, scaling is not needed this time because it
@@ -538,6 +540,7 @@ display = PredictionErrorDisplay.from_predictions(
     y_true=y_test, y_pred=y_pred, scores=scores, ax=ax, scatter_kwargs={"alpha": 0.5}
 )
 _ = ax.set_title("Ridge model, optimum regularization, normalized variables")
+plt.tight_layout()
 
 # %%
 # The ability to reproduce the data of the regularized model is similar to

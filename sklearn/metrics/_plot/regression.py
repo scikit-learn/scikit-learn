@@ -50,9 +50,9 @@ class PredictionErrorDisplay:
 
     See Also
     --------
-    PredictionDisplay.from_estimator : Prediction error visualization
+    PredictionErrorDisplay.from_estimator : Prediction error visualization
         given an estimator and some data.
-    PredictionDisplay.from_predictions : Prediction error visualization
+    PredictionErrorDisplay.from_predictions : Prediction error visualization
         given the true and predicted targets.
 
     Examples
@@ -292,7 +292,7 @@ class PredictionErrorDisplay:
         See Also
         --------
         PredictionErrorDisplay : Prediction error visualization for regression.
-        PredictionDisplay.from_predictions : Prediction error visualization
+        PredictionErrorDisplay.from_predictions : Prediction error visualization
             given the true and predicted targets.
 
         Examples
@@ -401,7 +401,7 @@ class PredictionErrorDisplay:
         See Also
         --------
         PredictionErrorDisplay : Prediction error visualization for regression.
-        PredictionDisplay.from_estimator : Prediction error visualization
+        PredictionErrorDisplay.from_estimator : Prediction error visualization
             given an estimator and some data.
 
         Examples
