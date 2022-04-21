@@ -3,7 +3,7 @@
 To run it you need to be in the root folder of the scikit-learn repo:
 python build_tools/azure/update_environments_and_lock_files.py
 
-Two scenarii where this script can be useful:
+Two scenarios where this script can be useful:
 - make sure that the latest versions of all the dependencies are used in the CI.
   We can run this script regularly and open a PR with the changes to the lock
   files. This workflow will eventually be automated with a bot in the future.
