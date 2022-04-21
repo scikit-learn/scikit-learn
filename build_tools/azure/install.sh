@@ -56,6 +56,9 @@ pre_python_environment_install() {
         sudo apt-get update
         sudo apt-get install intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic
         source /opt/intel/oneapi/setvars.sh
+    elif [[ "$DISTRIB" == "pip-nogil" ]]; then
+        apt-get update
+        apt-get build-dep python3 python3-dev
     fi
 }
 
@@ -120,6 +123,19 @@ python_environment_install() {
         pip install https://github.com/joblib/joblib/archive/master.zip
         echo "Installing pillow master"
         pip install https://github.com/python-pillow/Pillow/archive/main.zip
+    elif [[ "$DISTRIB" == "pip-nogil" ]]; then
+        ORIGINAL_FOLDER=`pwd`
+        cd ..
+        git clone https://github.com/colesbury/nogil
+        cd nogil
+        ./configure && make -j 2
+        ./python.exe -m venv $VIRTUALENV
+        cd $ORIGINAL_FOLDER
+        source $VIRTUALENV/bin/activate
+
+        python -m pip install -U pip
+        echo "Installing build dependepencies with pip from the nogil repository"
+        pip install numpy scipy cython joblib threadpoolctl
     fi
 
     python -m pip install $(get_dep threadpoolctl $THREADPOOLCTL_VERSION) \
@@ -140,7 +156,6 @@ python_environment_install() {
 }
 
 scikit_learn_install() {
-    setup_ccache
     show_installed_libraries
 
     # Set parallelism to 3 to overlap IO bound tasks with CPU bound tasks on CI
@@ -183,6 +198,7 @@ scikit_learn_install() {
 
 main() {
     pre_python_environment_install
+    setup_ccache
     python_environment_install
     scikit_learn_install
 }
