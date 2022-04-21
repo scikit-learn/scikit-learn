@@ -636,8 +636,7 @@ def test_nmf_multiplicative_update_sparse():
         assert_allclose(H1, H3, atol=1e-4)
 
 
-@pytest.mark.parametrize("forget_factor", [None, 0.7])
-def test_nmf_negative_beta_loss(forget_factor):
+def test_nmf_negative_beta_loss():
     # Test that an error is raised if beta_loss < 0 and X contains zeros.
     # Test that the output has not NaN values when the input contains zeros.
     n_samples = 6
@@ -671,6 +670,20 @@ def test_nmf_negative_beta_loss(forget_factor):
     for beta_loss in (0.2, 1.0, 1.2, 2.0, 2.5):
         _assert_nmf_no_nan(X, beta_loss)
         _assert_nmf_no_nan(X_csr, beta_loss)
+
+
+@pytest.mark.parametrize("beta_loss", [-0.5, 0.0])
+def test_minibatch_nmf_negative_beta_loss(beta_loss):
+    """Check that an error is raised if beta_loss < 0 and X contains zeros."""
+    rng = np.random.RandomState(0)
+    X = rng.normal(size=(6, 5))
+    X[X < 0] = 0
+
+    nmf = MiniBatchNMF(beta_loss=beta_loss, random_state=0)
+
+    msg = "When beta_loss <= 0 and X contains zeros, the solver may diverge."
+    with pytest.raises(ValueError, match=msg):
+        nmf.fit(X)
 
 
 @pytest.mark.parametrize(
@@ -825,15 +838,15 @@ def test_nmf_underflow():
     ],
 )
 @pytest.mark.parametrize(
-    ["Estimator", "solver"], [[NMF, "cd"], [NMF, "mu"], [MiniBatchNMF, "mu"]]
+    ["Estimator", "solver"],
+    [[NMF, {"solver": "cd"}], [NMF, {"solver": "mu"}], [MiniBatchNMF, {}]],
 )
-@pytest.mark.parametrize("alpha_W", (0.0, 1.0))
-@pytest.mark.parametrize("alpha_H", (0.0, 1.0, "same"))
-def test_nmf_dtype_match(Estimator, solver, dtype_in, dtype_out, alpha_W, alpha_H):
+def test_nmf_dtype_match(Estimator, solver, dtype_in, dtype_out):
     # Check that NMF preserves dtype (float32 and float64)
     X = np.random.RandomState(0).randn(20, 15).astype(dtype_in, copy=False)
     np.abs(X, out=X)
-    nmf = NMF(solver=solver, alpha_W=alpha_W, alpha_H=alpha_H, tol=1e-3, random_state=0)
+
+    nmf = Estimator(alpha_W=1.0, alpha_H=1.0, tol=1e-2, random_state=0, **solver)
 
     assert nmf.fit(X).transform(X).dtype == dtype_out
     assert nmf.fit_transform(X).dtype == dtype_out
