@@ -68,19 +68,28 @@ def test_from_estimator_not_fitted(pyplot):
 
 
 @pytest.mark.parametrize("class_method", ["from_estimator", "from_predictions"])
-def test_prediction_error_display(pyplot, regressor_fitted, class_method):
+@pytest.mark.parametrize("kind", ["predictions", "residuals"])
+def test_prediction_error_display(pyplot, regressor_fitted, class_method, kind):
     """Check the default behaviour of the display."""
     if class_method == "from_estimator":
-        display = PredictionErrorDisplay.from_estimator(regressor_fitted, X, y)
+        display = PredictionErrorDisplay.from_estimator(
+            regressor_fitted, X, y, kind=kind
+        )
     else:
         y_pred = regressor_fitted.predict(X)
-        display = PredictionErrorDisplay.from_predictions(y_true=y, y_pred=y_pred)
+        display = PredictionErrorDisplay.from_predictions(
+            y_true=y, y_pred=y_pred, kind=kind
+        )
 
-    assert_allclose(display.line_.get_xdata(), display.line_.get_ydata())
-    assert display.ax_.get_xlabel() == "Actual values"
-    assert display.ax_.get_ylabel() == "Predicted values"
+    if kind == "predictions":
+        assert_allclose(display.line_.get_xdata(), display.line_.get_ydata())
+        assert display.ax_.get_xlabel() == "Actual values"
+        assert display.ax_.get_ylabel() == "Predicted values"
+    else:
+        assert display.ax_.get_xlabel() == "Predicted values"
+        assert display.ax_.get_ylabel() == "Residuals"
+
     assert display.errors_lines_ is None
-
     assert display.ax_.get_legend() is None
 
 
@@ -154,7 +163,7 @@ def test_plot_prediction_error_predictions_residuals(
 
 @pytest.mark.parametrize("class_method", ["from_estimator", "from_predictions"])
 def test_plot_prediction_error_ax(pyplot, regressor_fitted, class_method):
-    # check that we can pass an axis
+    """Check that we can pass an axis to the display."""
     _, ax = pyplot.subplots()
     if class_method == "from_estimator":
         display = PredictionErrorDisplay.from_estimator(regressor_fitted, X, y, ax=ax)
@@ -168,7 +177,7 @@ def test_plot_prediction_error_ax(pyplot, regressor_fitted, class_method):
 
 @pytest.mark.parametrize("class_method", ["from_estimator", "from_predictions"])
 def test_prediction_error_custom_artist(pyplot, regressor_fitted, class_method):
-    # check that we can tune the style of the lines
+    """Check that we can tune the style of the lines."""
     extra_params = {
         "kind": "predictions_residuals",
         "scatter_kwargs": {"color": "red"},

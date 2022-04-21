@@ -187,7 +187,7 @@ class PredictionErrorDisplay:
             ax.set_xticks(np.linspace(min_value, max_value, num=5))
             ax.set_yticks(np.linspace(min_value, max_value, num=5))
         else:  # kind == "residuals"
-            self.line_ = None
+            self.line_, self.errors_lines_ = None, None
             self.scatter_ = ax.scatter(
                 self.y_pred, self.y_pred - self.y_true, **scatter_kwargs
             )
