@@ -24,6 +24,8 @@ the lower the better.
 
 
 import warnings
+from typing import Optional
+
 import numpy as np
 
 from scipy.sparse import coo_matrix
@@ -143,20 +145,25 @@ def _weighted_sum(sample_score, sample_weight, normalize=False):
         return sample_score.sum()
 
 
-def _nan_average(scores: np.ndarray, weights: np.ndarray):
+def _nan_average(scores: np.ndarray, weights: Optional[np.ndarray]):
     """
     Wrapper for np.average, with np.nan values being ignored from the average
     This is similar to np.nanmean, but allowing to pass weights as in np.average
     """
 
     mask = np.isnan(scores)
-    if mask.size > 0 and mask.all():
+    if mask.all():
         return np.nan
     if weights is None:
         return np.average(scores[~mask])
     if isinstance(weights, list):
         weights = np.array(weights)
-    return np.average(scores[~mask], weights=weights[~mask])
+
+    scores, weights = scores[~mask], weights[~mask]
+
+    if (weights == 0).all():
+        return np.average(scores)
+    return np.average(scores, weights=weights)
 
 
 def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
@@ -800,24 +807,18 @@ def jaccard_score(
     >>> jaccard_score(y_true[0], y_pred[0])
     0.6666...
 
+    >>> jaccard_score(y_true_with_empty[1], y_pred_with_empty[1])
+    0...
     >>> jaccard_score(y_true_with_empty[1], y_pred_with_empty[1], zero_division=0)
     0...
     >>> jaccard_score(y_true_with_empty[1], y_pred_with_empty[1], zero_division=1)
     1...
-    >>> jaccard_score(y_true_with_empty[1], y_pred_with_empty[1], zero_division="warn")
-    0...
     >>> jaccard_score(y_true_with_empty[1], y_pred_with_empty[1], zero_division=np.nan)
     np.nan...
 
     In the 2D comparison case (e.g. image similarity):
 
     >>> jaccard_score(y_true, y_pred, average="micro")
-    0.6
-    >>> jaccard_score(y_true_with_empty, y_pred_with_empty, zero_division=0)
-    0.6
-    >>> jaccard_score(y_true_with_empty, y_pred_with_empty, zero_division=1)
-    0.6
-    >>> jaccard_score(y_true_with_empty, y_pred_with_empty, zero_division=np.nan)
     0.6
 
     In the multilabel case:
@@ -836,7 +837,6 @@ def jaccard_score(
     >>> jaccard_score(y_true, y_pred, average=None)
     array([1. , 0. , 0.33...])
     """
-    zero_division = _check_zero_division(zero_division)
     labels = _check_set_wise_labels(y_true, y_pred, average, labels, pos_label)
     samplewise = average == "samples"
     MCM = multilabel_confusion_matrix(
@@ -1165,6 +1165,7 @@ def f1_score(
     np.nan...
     >>> f1_score(y_true_empty, y_pred_empty, zero_division=1)
     1.0...
+
     >>> # multilabel classification
     >>> y_true = [[0, 0, 0], [1, 1, 1], [0, 1, 1]]
     >>> y_pred = [[0, 0, 0], [1, 1, 1], [1, 1, 0]]
@@ -1363,7 +1364,8 @@ def _prf_divide(
         return result
 
     # set those with 0 denominator to `zero_division`, and 0 when "warn"
-    result[mask] = zero_division if zero_division != "warn" else 0
+    zero_division_value = _check_zero_division(zero_division)
+    result[mask] = zero_division_value
 
     # we assume the user will be removing warnings if zero_division is set
     # to something different than "warn". If we are computing only f-score
@@ -1375,13 +1377,11 @@ def _prf_divide(
     # E.g. "Precision and F-score are ill-defined and being set to 0.0 in
     # labels with no predicted samples. Use ``zero_division`` parameter to
     # control this behavior."
-    if metric in warn_for:
-        if metric == "f-score":
-            msg_start = "F-score is"
-        elif "f-score" not in warn_for:
-            msg_start = "{0} is".format(metric.title())
-        else:
-            msg_start = "{0} and F-score are".format(metric.title())
+
+    if metric in warn_for and "f-score" in warn_for:
+        msg_start = "{0} and F-score are".format(metric.title())
+    elif metric in warn_for:
+        msg_start = "{0} is".format(metric.title())
     elif "f-score" in warn_for:
         msg_start = "F-score is"
     else:
@@ -1557,19 +1557,19 @@ def precision_recall_fscore_support(
 
     Returns
     -------
-    precision : float (if average is not None) or array of float, shape =\
+    precision : float (if `average` is not None) or array of float, shape =\
         [n_unique_labels]
         Precision score.
 
-    recall : float (if average is not None) or array of float, shape =\
+    recall : float (if `average` is not None) or array of float, shape =\
         [n_unique_labels]
         Recall score.
 
-    fbeta_score : float (if average is not None) or array of float, shape =\
+    fbeta_score : float (if `average` is not None) or array of float, shape =\
         [n_unique_labels]
         F-beta score.
 
-    support : None (if average is not None) or array of int, shape =\
+    support : None (if `average` is not None) or array of int, shape =\
         [n_unique_labels]
         The number of occurrences of each label in ``y_true``.
 
@@ -1618,8 +1618,9 @@ def precision_recall_fscore_support(
     """
     zero_division_value = _check_zero_division(zero_division)
 
-    if beta < 0:
-        raise ValueError("beta should be >=0 in the F-beta score")
+    if beta < 0 or np.isnan(beta):
+        raise ValueError("beta should be >=0 (np.inf is ok) in the F-beta score")
+
     labels = _check_set_wise_labels(y_true, y_pred, average, labels, pos_label)
 
     # Calculate tp_sum, pred_sum, true_sum ###
@@ -1653,21 +1654,20 @@ def precision_recall_fscore_support(
     )
 
     # warn for f-score only if zero_division is warn, it is in warn_for
-    # and BOTH prec and rec are ill-defined
+    # and BOTH precision and recall are ill-defined
     if zero_division == "warn" and ("f-score",) == warn_for:
         if (pred_sum[true_sum == 0] == 0).any():
             _warn_prf(average, "true nor predicted", "F-score is", len(true_sum))
 
-    # if tp == 0 F will be 1 only if all predictions are zero, all labels are
-    # zero, and zero_division=1. In all other case, 0
     if np.isposinf(beta):
         f_score = recall
     elif beta == 0:
         f_score = precision
     else:
-        # TODO marc: continue here
+        # set to zero_division_value if denom 0
+        # OR if BOTH precision and recall are ill-defined
         denom = beta2 * precision + recall
-        mask = denom == 0.0
+        mask = (denom == 0.0) | ((pred_sum + true_sum) == 0)
         denom[mask] = 1  # avoid division by 0
         f_score = (1 + beta2) * precision * recall / denom
         f_score[mask] = zero_division_value
@@ -1675,21 +1675,6 @@ def precision_recall_fscore_support(
     # Average the results
     if average == "weighted":
         weights = true_sum
-        if weights.sum() == 0:
-
-            # precision is zero_division if there are no positive predictions
-            # recall is zero_division if there are no positive labels
-            # fscore is zero_division if all labels AND predictions are negative
-            if pred_sum.sum() == 0:
-                return (
-                    zero_division_value,
-                    zero_division_value,
-                    zero_division_value,
-                    None,
-                )
-            else:
-                return np.float64(0.0), zero_division_value, np.float64(0.0), None
-
     elif average == "samples":
         weights = sample_weight
     else:
@@ -2249,7 +2234,7 @@ def classification_report(
     if output_dict:
         report_dict = {label[0]: label[1:] for label in rows}
         for label, scores in report_dict.items():
-            report_dict[label] = dict(zip(headers, [i.item() for i in scores]))
+            report_dict[label] = dict(zip(headers, map(float, scores)))
     else:
         longest_last_line_heading = "weighted avg"
         name_width = max(len(cn) for cn in target_names)
@@ -2281,7 +2266,7 @@ def classification_report(
         avg = [avg_p, avg_r, avg_f1, np.sum(s)]
 
         if output_dict:
-            report_dict[line_heading] = dict(zip(headers, [i.item() for i in avg]))
+            report_dict[line_heading] = dict(zip(headers, map(float, avg)))
         else:
             if line_heading == "accuracy":
                 row_fmt_accuracy = (
