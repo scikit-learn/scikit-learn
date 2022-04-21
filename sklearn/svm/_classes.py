@@ -407,7 +407,7 @@ class LinearSVR(RegressorMixin, LinearModel):
     Examples
     --------
     >>> from sklearn.svm import LinearSVR
-    >>> from sklearn.pipeline import make_pipeline
+    >>> from sklearn.pipeline import make_pipeline, Pipeline
     >>> from sklearn.preprocessing import StandardScaler
     >>> from sklearn.datasets import make_regression
     >>> X, y = make_regression(n_features=4, random_state=0)
@@ -730,7 +730,7 @@ class SVC(BaseSVC):
     Examples
     --------
     >>> import numpy as np
-    >>> from sklearn.pipeline import make_pipeline
+    >>> from sklearn.pipeline import make_pipeline, Pipeline
     >>> from sklearn.preprocessing import StandardScaler
     >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
     >>> y = np.array([1, 1, 2, 2])
