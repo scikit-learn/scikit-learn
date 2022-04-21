@@ -17,7 +17,7 @@ class PredictionErrorDisplay:
 
     Read more in the :ref:`User Guide <visualizations>`.
 
-    .. versionadded:: 1.0
+    .. versionadded:: 1.1
 
     Parameters
     ----------
@@ -175,6 +175,7 @@ class PredictionErrorDisplay:
             self.scatter_ = ax.scatter(self.y_true, self.y_pred, **scatter_kwargs)
 
             xlabel, ylabel = "Actual values", "Predicted values"
+            # force to have a squared axis
             ax.set_aspect("equal", adjustable="datalim")
             ax.set_xticks(np.linspace(min_value, max_value, num=5))
             ax.set_yticks(np.linspace(min_value, max_value, num=5))
