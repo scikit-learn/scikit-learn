@@ -1654,7 +1654,7 @@ def test_precision_recall_f1_score_with_an_empty_prediction(zero_division):
     )
     assert_almost_equal(p, 3 / 4 if zero_division_expected == 0 else 1.0)
     assert_almost_equal(r, 0.5)
-    values_to_average =  (4 if not np.isnan(zero_division_expected) else 3)
+    values_to_average = 4 if not np.isnan(zero_division_expected) else 3
     assert_almost_equal(f, (2 * 2 / 3 + 1) / values_to_average)
     assert s is None
     assert_almost_equal(
