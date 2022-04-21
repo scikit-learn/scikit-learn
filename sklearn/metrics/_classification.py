@@ -1643,6 +1643,7 @@ def class_likelihood_ratios(
     *,
     labels=None,
     sample_weight=None,
+    raise_warning=True,
 ):
     """Compute binary classification positive and negative likelihood ratios.
 
@@ -1697,6 +1698,11 @@ def class_likelihood_ratios(
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
+    raise_warning : bool, default=True
+        Whether or not a case-specific warning message is raised when there is a
+        zero division. Even if the error is not raised, the function will return
+        nan in such cases.
+
     Returns
     -------
     (positive_likelihood_ratio, negative_likelihood_ratio) : tuple
@@ -1708,7 +1714,7 @@ def class_likelihood_ratios(
     When ``false positive == 0``, the positive likelihood ratio is undefined.
     When ``true negative == 0``, the negative likelihood ratio is undefined.
     When ``true positive + false negative == 0`` both ratios are undefined. In
-    such cases, ``UserWarning`` will be raised.
+    such cases, ``UserWarning`` will be raised if raise_warning=True.
 
     References
     ----------
@@ -1746,35 +1752,55 @@ def class_likelihood_ratios(
             f"problems, got targets of type: {y_type}"
         )
 
-    tn, fp, fn, tp = confusion_matrix(
+    cm = confusion_matrix(
         y_true,
         y_pred,
         sample_weight=sample_weight,
         labels=labels,
-    ).ravel()
+    )
 
-    support_pos = tp + fn
-    support_neg = tn + fp
-    pos_num = tp * support_neg
-    pos_denom = fp * support_pos
-    neg_num = fn * support_neg
-    neg_denom = tn * support_pos
-
-    # Divide, and on zero-division, warn and set scores to float('inf')
-
-    if pos_denom == 0:
-        positive_likelihood_ratio = float("inf")
-        msg = "positive_likelihood_ratio ill-defined and being set to inf "
-        warnings.warn(msg, UserWarning, stacklevel=2)
+    # limit case when y_test contains one class only and y_test==y_pred
+    # this may happen when cross-validating imbalanced data and should
+    # not be interpreted as a perfect score
+    if cm.shape == (1, 1):
+        msg = "samples of only one class were seen during testing "
+        if raise_warning:
+            warnings.warn(msg, UserWarning, stacklevel=2)
+        positive_likelihood_ratio = np.nan
+        negative_likelihood_ratio = np.nan
     else:
-        positive_likelihood_ratio = pos_num / pos_denom
+        tn, fp, fn, tp = cm.ravel()
+        support_pos = tp + fn
+        support_neg = tn + fp
+        pos_num = tp * support_neg
+        pos_denom = fp * support_pos
+        neg_num = fn * support_neg
+        neg_denom = tn * support_pos
 
-    if neg_denom == 0:
-        negative_likelihood_ratio = float("inf")
-        msg = "negative_likelihood_ratio ill-defined and being set to inf "
-        warnings.warn(msg, UserWarning, stacklevel=2)
-    else:
-        negative_likelihood_ratio = neg_num / neg_denom
+        # Divide, and on zero-division, warn and set scores to nan
+        if support_pos == 0:
+            msg = "no samples of the positive class were present in the testing set "
+            if raise_warning:
+                warnings.warn(msg, UserWarning, stacklevel=2)
+            positive_likelihood_ratio = np.nan
+            negative_likelihood_ratio = np.nan
+        if fp == 0:
+            if tp == 0:
+                msg = "no samples predicted for the positive class "
+            else:
+                msg = "positive_likelihood_ratio ill-defined and being set to nan "
+            if raise_warning:
+                warnings.warn(msg, UserWarning, stacklevel=2)
+            positive_likelihood_ratio = np.nan
+        else:
+            positive_likelihood_ratio = pos_num / pos_denom
+        if tn == 0:
+            msg = "negative_likelihood_ratio ill-defined and being set to nan "
+            if raise_warning:
+                warnings.warn(msg, UserWarning, stacklevel=2)
+            negative_likelihood_ratio = np.nan
+        else:
+            negative_likelihood_ratio = neg_num / neg_denom
 
     return positive_likelihood_ratio, negative_likelihood_ratio
 
