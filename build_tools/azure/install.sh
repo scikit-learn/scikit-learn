@@ -130,6 +130,7 @@ python_environment_install() {
         echo "Installing pillow master"
         pip install https://github.com/python-pillow/Pillow/archive/main.zip
     elif [[ "$DISTRIB" == "pip-nogil" ]]; then
+        setup_ccache  # speed-up the build of CPython it-self
         ORIGINAL_FOLDER=`pwd`
         cd ..
         git clone https://github.com/colesbury/nogil
@@ -162,6 +163,7 @@ python_environment_install() {
 }
 
 scikit_learn_install() {
+    setup_ccache
     show_installed_libraries
 
     # Set parallelism to 3 to overlap IO bound tasks with CPU bound tasks on CI
@@ -204,7 +206,6 @@ scikit_learn_install() {
 
 main() {
     pre_python_environment_install
-    setup_ccache
     python_environment_install
     scikit_learn_install
 }
