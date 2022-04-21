@@ -32,7 +32,10 @@ from skimage.transform import rescale
 
 smoothened_coins = gaussian_filter(orig_coins, sigma=2)
 rescaled_coins = rescale(
-    smoothened_coins, 0.2, mode="reflect", anti_aliasing=False,
+    smoothened_coins,
+    0.2,
+    mode="reflect",
+    anti_aliasing=False,
 )
 
 X = np.reshape(rescaled_coins, (-1, 1))
