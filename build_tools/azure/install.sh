@@ -62,7 +62,7 @@ pre_python_environment_install() {
         sudo apt-get install intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic
         source /opt/intel/oneapi/setvars.sh
     elif [[ "$DISTRIB" == "pip-nogil" ]]; then
-        echo "deb-src http://archive.ubuntu.com/ubuntu/ focal main" | sudo tee /etc/apt/sources.list
+        echo "deb-src http://archive.ubuntu.com/ubuntu/ focal main" | sudo tee -a /etc/apt/sources.list
         sudo apt-get -yq update
         sudo apt-get install -yq ccache
         sudo apt-get build-dep -yq python3 python3-dev
