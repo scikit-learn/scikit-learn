@@ -1854,11 +1854,10 @@ and additionally `tp = 0`, this leads to a zero/zero division. This happens, for
 instance, when using a `DummyClassifier` that always predicts the negative class
 and therefore the interpretation as a perfect classifier is lost.
 
-The negative likelihood ratio is undefined when `tn = 0`, which **should not**
-return a number, as any value of ``LR-`` greater than 1 is invalid, the reason
-being that it would indicate an increase in the odds of a sample belonging to
-the positive class after being classified as negative, as if the act of
-classifying caused the positive condition. This includes the case of a
+The negative likelihood ratio is undefined when `tn = 0`. Such divergence is
+invalid, as ``LR- > 1`` would indicate an increase in the odds of a sample
+belonging to the positive class after being classified as negative, as if the
+act of classifying caused the positive condition. This includes the case of a
 `DummyClassifier` that always predicts the positive class (i.e. when `tn = fn =
 0`).
 
