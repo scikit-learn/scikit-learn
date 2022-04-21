@@ -271,8 +271,8 @@ def test_poisson_vs_mse():
         # If y = 0 for those, the poisson deviance gets too good.
         # If we drew more samples, we would eventually get y > 0 and the
         # poisson deviance would explode, i.e. be undefined. Therefore, we do
-        # not clip to a tiny value like 1e-15, but to 0.1. This acts like a
-        # mild penalty to the non-positive predictions.
+        # not clip to a tiny value like 1e-15, but to 1e-6. This acts like a
+        # small penalty to the non-positive predictions.
         metric_mse = mean_poisson_deviance(
             y, np.clip(forest_mse.predict(X), 1e-6, None)
         )
