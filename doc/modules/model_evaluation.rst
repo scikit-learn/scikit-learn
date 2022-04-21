@@ -1848,6 +1848,28 @@ prediction:
 
    \text{post-test probability} = \frac{\text{post-test odds}}{1 + \text{post-test odds}}.
 
+The positive likelihood ratio is undefined when `fp = 0`, which can be
+interpreted as the classifier perfectly identifying positive cases. If `fp = 0`
+and additionally `tp = 0`, this leads to a zero/zero division. This happens, for
+instance, when using a `DummyClassifier` that always predicts the negative class
+and therefore the interpretation as a perfect classifier is lost.
+
+The negative likelihood ratio is undefined when `tn = 0`, which **should not**
+return a number, as any value of ``LR-`` greater than 1 is invalid, the reason
+being that it would indicate an increase in the odds of a sample belonging to
+the positive class after being classified as negative, as if the act of
+classifying caused the positive condition. This includes the case of a
+`DummyClassifier` that always predicts the positive class (i.e. when `tn = fn =
+0`).
+
+Both class likelihood ratios are undefined when `tp = fn = 0`, which means that
+no samples of the positive class were present in the testing set. This can also
+happen when cross-validating highly imbalanced data.
+
+In all the previous cases the :func:`class_likelihood_ratios` function raises by
+default an appropriate warning message and returns `nan` to avoid pollution when
+averaging over cross-validation folds.
+
 .. _multilabel_ranking_metrics:
 
 Multilabel ranking metrics
