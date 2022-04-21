@@ -8,6 +8,9 @@ source build_tools/shared.sh
 
 UNAMESTR=`uname`
 
+CCACHE_LINKS_DIR="/tmp/ccache"
+
+
 make_conda() {
     TO_INSTALL="$@"
     if [[ "$DISTRIB" == *"mamba"* ]]; then
@@ -21,14 +24,14 @@ make_conda() {
 
 setup_ccache() {
     CCACHE_BIN=`which ccache || echo ""`
-    if [[ "${CCACHE_BIN}" != "" ]]; then
+    if [[ "${CCACHE_BIN}" != "" ]] && [[ ! -d "${CCACHE_LINKS_DIR}" ]]; then
         echo "Setting up ccache with CCACHE_DIR=${CCACHE_DIR}"
-        mkdir /tmp/ccache/
+        mkdir ${CCACHE_LINKS_DIR}
         which ccache
         for name in gcc g++ cc c++ clang clang++ i686-linux-gnu-gcc i686-linux-gnu-c++ x86_64-linux-gnu-gcc x86_64-linux-gnu-c++ x86_64-apple-darwin13.4.0-clang x86_64-apple-darwin13.4.0-clang++; do
-        ln -s ${CCACHE_BIN} "/tmp/ccache/${name}"
+        ln -s ${CCACHE_BIN} "${CCACHE_LINKS_DIR}/${name}"
         done
-        export PATH="/tmp/ccache/:${PATH}"
+        export PATH="${CCACHE_LINKS_DIR}:${PATH}"
         ccache -M 256M
     else
         echo "ccache not found, skipping..."
