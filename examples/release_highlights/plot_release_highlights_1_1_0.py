@@ -44,10 +44,10 @@ predictions = {
 pd.DataFrame(predictions).iloc[:5]
 
 # %%
-# `get_feature_names_out` Avaliable in All Transformers
+# `get_feature_names_out` Avaliable in all Transformers
 # -----------------------------------------------------
-# :term:`get_feature_names_out` is now avaliable in all Transformers. This enables
-# :class:`pipeline.Pipeline` to construct the feature names out for more comlex
+# :term:`get_feature_names_out` is now available in all Transformers. This enables
+# :class:`pipeline.Pipeline` to construct the output feature names for more complex
 # pipelines:
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
@@ -79,11 +79,11 @@ log_reg.fit(X, y)
 
 # %%
 # Here we slice the pipeline to include all the steps but the last one. The output
-# feature names of this pipeline slice is the features inputted into logistic
-# regression. These names directly corresponds to the coefficients in the logistic
+# feature names of this pipeline slice are the features put into logistic
+# regression. These names corresponds directly to the coefficients in the logistic
 # regression:
 log_reg_input_features = log_reg[:-1].get_feature_names_out()
-pd.Series(log_reg[-1].coef_.ravel(), index=log_reg_input_features)
+pd.Series(log_reg[-1].coef_.ravel(), index=log_reg_input_features).plot.bar()
 
 
 # %%
@@ -109,14 +109,14 @@ encoded = enc.transform(np.array([["dog"], ["snake"], ["cat"], ["rabbit"]]))
 pd.DataFrame(encoded, columns=enc.get_feature_names_out())
 
 # %%
-# Performance Improvements
+# Performance improvements
 # ------------------------
 # Reductions on pairwise distances for dense float64 datasets has been refactored
-# to better take advantage of parallelism. For example,
+# to better take advantage of non-blocking thread parallelism. For example,
 # :meth:`neighbors.NearestNeighbors.kneighbors` and
 # :meth:`neighbors.NearestNeighbors.radius_neighbors` can respectively be up to ×20 and
 # ×5 faster than previously. In summary, the following functions and estimators
-# now benefit from improved performances:
+# now benefit from improved performance:
 #
 # - :func:`metrics.pairwise_distances_argmin`
 # - :func:`metrics.pairwise_distances_argmin_min`
@@ -139,8 +139,11 @@ pd.DataFrame(encoded, columns=enc.get_feature_names_out())
 # - :class:`semi_supervised.LabelPropagation`
 # - :class:`semi_supervised.LabelSpreading`
 #
-# The computation of loss has been refactored using Cython resulting in performance
-# improvements in the following estimators:
+# To know more about the technical details of this work, you can read
+# `this suite of blog posts <https://blog.scikit-learn.org/technical/performances/>`_.
+# 
+# Moreover, the computation of loss functions has been refactored using
+# Cython resulting in performance improvements for the following estimators:
 #
 # - :class:`linear_model.LogisticRegression`
 # - :class:`linear_model.GammaRegressor`
