@@ -44,7 +44,7 @@ predictions = {
 pd.DataFrame(predictions).iloc[:5]
 
 # %%
-# `get_feature_names_out` Avaliable in all Transformers
+# `get_feature_names_out` Available in all Transformers
 # -----------------------------------------------------
 # :term:`get_feature_names_out` is now available in all Transformers. This enables
 # :class:`pipeline.Pipeline` to construct the output feature names for more complex
@@ -141,7 +141,7 @@ pd.DataFrame(encoded, columns=enc.get_feature_names_out())
 #
 # To know more about the technical details of this work, you can read
 # `this suite of blog posts <https://blog.scikit-learn.org/technical/performances/>`_.
-# 
+#
 # Moreover, the computation of loss functions has been refactored using
 # Cython resulting in performance improvements for the following estimators:
 #
