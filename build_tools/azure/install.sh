@@ -24,7 +24,11 @@ make_conda() {
 
 setup_ccache() {
     CCACHE_BIN=`which ccache || echo ""`
-    if [[ "${CCACHE_BIN}" != "" ]] && [[ ! -d "${CCACHE_LINKS_DIR}" ]]; then
+    if [[ "${CCACHE_BIN}" == "" ]]; then
+        echo "ccache not found, skipping..."
+    elif [[ -d "${CCACHE_LINKS_DIR}" ]]; then
+        echo "ccache already configured, skipping..."
+    else
         echo "Setting up ccache with CCACHE_DIR=${CCACHE_DIR}"
         mkdir ${CCACHE_LINKS_DIR}
         which ccache
@@ -33,8 +37,6 @@ setup_ccache() {
         done
         export PATH="${CCACHE_LINKS_DIR}:${PATH}"
         ccache -M 256M
-    else
-        echo "ccache not found, skipping..."
     fi
 }
 
