@@ -134,7 +134,7 @@ python_environment_install() {
         setup_ccache  # speed-up the build of CPython it-self
         ORIGINAL_FOLDER=`pwd`
         cd ..
-        git clone https://github.com/colesbury/nogil
+        git clone --depth 1 https://github.com/colesbury/nogil
         cd nogil
         ./configure && make -j 2
         ./python -m venv $ORIGINAL_FOLDER/$VIRTUALENV
