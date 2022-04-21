@@ -103,6 +103,7 @@ jobs:
     matrix:
       pylatest_pip_nogil:
         DISTRIB: 'pip-nogil'
+        PYTEST_XDIST_VERSION: 'none'
 
 # Check compilation with intel C++ compiler (ICC)
 - template: build_tools/azure/posix.yml
