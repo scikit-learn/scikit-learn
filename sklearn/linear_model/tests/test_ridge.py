@@ -121,7 +121,7 @@ def ols_ridge_dataset(global_random_seed, request):
     k = min(n_samples, n_features)
     rng = np.random.RandomState(global_random_seed)
     X = make_low_rank_matrix(
-        n_samples=n_samples, n_features=n_features, effective_rank=k
+        n_samples=n_samples, n_features=n_features, effective_rank=k, random_state=rng
     )
     X[:, -1] = 1  # last columns acts as intercept
     U, s, Vt = linalg.svd(X)
