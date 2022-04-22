@@ -566,12 +566,12 @@ def _plot_partial_dependence(
                     f"{min_n_cats}. Got {grid_resolution} instead."
                 )
 
-        # # TODO: adapt the code such that we use kind_ that is a list of choices
-        # if kind != "average" and any(any(cat) for cat in is_categorical):
-        #     raise ValueError(
-        #         "It is not possible to display individual effects for categorical"
-        #         " features."
-        #     )
+        for is_cat, kind_plot in zip(is_categorical, kind_):
+            if any(is_cat) and kind_plot != "average":
+                raise ValueError(
+                    "It is not possible to display individual effects for categorical"
+                    " features."
+                )
 
     # Early exit if the axes does not have the correct number of axes
     if ax is not None and not isinstance(ax, plt.Axes):
