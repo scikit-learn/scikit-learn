@@ -931,13 +931,9 @@ def test_ridge_gcv_sample_weights(
     ridge_reg = Ridge(alpha=kfold.alpha_, fit_intercept=fit_intercept)
     splits = cv.split(X_tiled, y_tiled, groups=indices)
     predictions = cross_val_predict(ridge_reg, X_tiled, y_tiled, cv=splits)
-<<<<<<< HEAD
     if predictions.shape != y_tiled.shape:
         predictions = predictions.reshape(y_tiled.shape)
     kfold_errors = (y_tiled - predictions)**2
-=======
-    kfold_errors = (y_tiled - predictions) ** 2
->>>>>>> main
     kfold_errors = [
         np.sum(kfold_errors[indices == i], axis=0) for i in np.arange(X.shape[0])
     ]
