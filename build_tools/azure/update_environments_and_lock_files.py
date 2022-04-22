@@ -150,9 +150,27 @@ conda_build_metadata_list = [
         "channel": "defaults",
         "conda_dependencies": ["python", "ccache"],
         "pip_dependencies": remove_from(
-            common_dependencies, ["python", "blas", "matplotlib", "pyamg"]
+            common_dependencies,
+            [
+                "python",
+                "blas",
+                "matplotlib",
+                "pyamg",
+                # all the dependencies below have a development version
+                # installed in the CI, so they can be removed from the
+                # environment.yml
+                "numpy",
+                "scipy",
+                "pandas",
+                "cython",
+                "joblib",
+                "pillow",
+            ],
         )
-        + docstring_test_dependencies,
+        + docstring_test_dependencies
+        # python-dateutil is a dependency of pandas and pandas is removed from
+        # the environment.yml. Adding python-dateutil so it is pinned
+        + ["python-dateutil"],
     },
     {
         "build_name": "pypy3",

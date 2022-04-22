@@ -8,17 +8,12 @@ dependencies:
   - ccache
   - pip
   - pip:
-    - numpy
-    - scipy
-    - cython
-    - joblib
     - threadpoolctl
-    - pandas
     - pytest==6.2.5
     - pytest-xdist
-    - pillow
     - codecov
     - pytest-cov
     - coverage==6.2
     - sphinx
     - numpydoc
+    - python-dateutil
