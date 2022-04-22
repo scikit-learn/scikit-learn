@@ -1,8 +1,8 @@
-# -*- coding: utf-8 -*-
 from collections.abc import Mapping
 import re
 
 import pytest
+import warnings
 from scipy import sparse
 
 from sklearn.feature_extraction.text import strip_tags
@@ -451,9 +451,9 @@ def test_countvectorizer_uppercase_in_vocab():
     with pytest.warns(UserWarning, match=message):
         vectorizer.fit(vocabulary)
 
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
         vectorizer.transform(vocabulary)
-    assert not [w.message for w in record]
 
 
 def test_tf_transformer_feature_names_out():
@@ -1357,13 +1357,13 @@ def test_tfidf_vectorizer_type(vectorizer_dtype, output_dtype, warning_expected)
     vectorizer = TfidfVectorizer(dtype=vectorizer_dtype)
 
     warning_msg_match = "'dtype' should be used."
-    warning_cls = UserWarning
-    expected_warning_cls = warning_cls if warning_expected else None
-    with pytest.warns(expected_warning_cls, match=warning_msg_match) as record:
-        X_idf = vectorizer.fit_transform(X)
-    if expected_warning_cls is None:
-        relevant_warnings = [w for w in record if isinstance(w, warning_cls)]
-        assert len(relevant_warnings) == 0
+    if warning_expected:
+        with pytest.warns(UserWarning, match=warning_msg_match):
+            X_idf = vectorizer.fit_transform(X)
+    else:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", UserWarning)
+            X_idf = vectorizer.fit_transform(X)
     assert X_idf.dtype == output_dtype
 
 
@@ -1421,9 +1421,9 @@ def test_vectorizer_stop_words_inconsistent():
         assert _check_stop_words_consistency(vec) is False
 
     # Only one warning per stop list
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
         vec.fit_transform(["hello world"])
-    assert not [w.message for w in record]
     assert _check_stop_words_consistency(vec) is None
 
     # Test caching of inconsistency assessment

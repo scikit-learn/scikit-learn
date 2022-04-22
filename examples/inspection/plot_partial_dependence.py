@@ -111,24 +111,24 @@ print(f"Test R2 score: {est.score(X_test, y_test):.2f}")
 # We will plot the partial dependence, both individual (ICE) and averaged one
 # (PDP). We limit to only 50 ICE curves to not overcrowd the plot.
 
-import matplotlib.pyplot as plt
-from sklearn.inspection import partial_dependence
 from sklearn.inspection import PartialDependenceDisplay
+
+common_params = {
+    "subsample": 50,
+    "n_jobs": 2,
+    "grid_resolution": 20,
+    "centered": True,
+    "random_state": 0,
+}
 
 print("Computing partial dependence plots...")
 tic = time()
-features = ["MedInc", "AveOccup", "HouseAge", "AveRooms"]
 display = PartialDependenceDisplay.from_estimator(
     est,
     X_train,
-    features,
+    features=["MedInc", "AveOccup", "HouseAge", "AveRooms"],
     kind="both",
-    subsample=50,
-    n_jobs=3,
-    grid_resolution=20,
-    random_state=0,
-    ice_lines_kw={"color": "tab:blue", "alpha": 0.2, "linewidth": 0.5},
-    pd_line_kw={"color": "tab:orange", "linestyle": "--"},
+    **common_params,
 )
 print(f"done in {time() - tic:.3f}s")
 display.figure_.suptitle(
@@ -171,14 +171,9 @@ tic = time()
 display = PartialDependenceDisplay.from_estimator(
     est,
     X_train,
-    features,
+    features=["MedInc", "AveOccup", "HouseAge", "AveRooms"],
     kind="both",
-    subsample=50,
-    n_jobs=3,
-    grid_resolution=20,
-    random_state=0,
-    ice_lines_kw={"color": "tab:blue", "alpha": 0.2, "linewidth": 0.5},
-    pd_line_kw={"color": "tab:orange", "linestyle": "--"},
+    **common_params,
 )
 print(f"done in {time() - tic:.3f}s")
 display.figure_.suptitle(
@@ -199,10 +194,12 @@ display.figure_.subplots_adjust(wspace=0.4, hspace=0.3)
 # rooms per household.
 #
 # The ICE curves (light blue lines) complement the analysis: we can see that
-# there are some exceptions, where the house price remain constant with median
-# income and average occupants. On the other hand, while the house age (top
-# right) does not have a strong influence on the median house price on average,
-# there seems to be a number of exceptions where the house price increase when
+# there are some exceptions (which are better highlighted with the option
+# `centered=True`), where the house price remains constant with respect to
+# median income and average occupants variations.
+# On the other hand, while the house age (top right) does not have a strong
+# influence on the median house price on average, there seems to be a number
+# of exceptions where the house price increases when
 # between the ages 15-25. Similar exceptions can be observed for the average
 # number of rooms (bottom left). Therefore, ICE plots show some individual
 # effect which are attenuated by taking the averages.
@@ -226,20 +223,23 @@ display.figure_.subplots_adjust(wspace=0.4, hspace=0.3)
 # Another consideration is linked to the performance to compute the PDPs. With
 # the tree-based algorithm, when only PDPs are requested, they can be computed
 # on an efficient way using the `'recursion'` method.
+import matplotlib.pyplot as plt
 
-features = ["AveOccup", "HouseAge", ("AveOccup", "HouseAge")]
 print("Computing partial dependence plots...")
 tic = time()
 _, ax = plt.subplots(ncols=3, figsize=(9, 4))
+
+# Note that we could have called the method `from_estimator` three times and
+# provide one feature, one kind of plot, and one axis for each call.
 display = PartialDependenceDisplay.from_estimator(
     est,
     X_train,
-    features,
-    kind="average",
-    n_jobs=2,
-    grid_resolution=10,
+    features=["AveOccup", "HouseAge", ("AveOccup", "HouseAge")],
+    kind=["both", "both", "average"],
     ax=ax,
+    **common_params,
 )
+
 print(f"done in {time() - tic:.3f}s")
 display.figure_.suptitle(
     "Partial dependence of house value on non-location features\n"
@@ -260,9 +260,12 @@ display.figure_.subplots_adjust(wspace=0.4, hspace=0.3)
 #
 # Let's make the same partial dependence plot for the 2 features interaction,
 # this time in 3 dimensions.
-
 import numpy as np
-from mpl_toolkits.mplot3d import Axes3D
+
+# unused but required import for doing 3d projections with matplotlib < 3.2
+import mpl_toolkits.mplot3d  # noqa: F401
+
+from sklearn.inspection import partial_dependence
 
 fig = plt.figure()
 
@@ -272,7 +275,7 @@ pdp = partial_dependence(
 )
 XX, YY = np.meshgrid(pdp["values"][0], pdp["values"][1])
 Z = pdp.average[0].T
-ax = Axes3D(fig)
+ax = fig.add_subplot(projection="3d")
 fig.add_axes(ax)
 
 surf = ax.plot_surface(XX, YY, Z, rstride=1, cstride=1, cmap=plt.cm.BuPu, edgecolor="k")

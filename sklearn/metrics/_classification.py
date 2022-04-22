@@ -632,9 +632,9 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
 
     References
     ----------
-    .. [1] J. Cohen (1960). "A coefficient of agreement for nominal scales".
+    .. [1] :doi:`J. Cohen (1960). "A coefficient of agreement for nominal scales".
            Educational and Psychological Measurement 20(1):37-46.
-           doi:10.1177/001316446002000104.
+           <10.1177/001316446002000104>`
     .. [2] `R. Artstein and M. Poesio (2008). "Inter-coder agreement for
            computational linguistics". Computational Linguistics 34(4):555-596
            <https://www.mitpressjournals.org/doi/pdf/10.1162/coli.07-034-R2>`_.
@@ -871,9 +871,9 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
 
     References
     ----------
-    .. [1] `Baldi, Brunak, Chauvin, Andersen and Nielsen, (2000). Assessing the
-       accuracy of prediction algorithms for classification: an overview
-       <https://doi.org/10.1093/bioinformatics/16.5.412>`_.
+    .. [1] :doi:`Baldi, Brunak, Chauvin, Andersen and Nielsen, (2000). Assessing the
+       accuracy of prediction algorithms for classification: an overview.
+       <10.1093/bioinformatics/16.5.412>`
 
     .. [2] `Wikipedia entry for the Matthews Correlation Coefficient
        <https://en.wikipedia.org/wiki/Matthews_correlation_coefficient>`_.
@@ -1086,8 +1086,20 @@ def f1_score(
 
     See Also
     --------
-    fbeta_score, precision_recall_fscore_support, jaccard_score,
-    multilabel_confusion_matrix
+    fbeta_score : Compute the F-beta score.
+    precision_recall_fscore_support : Compute the precision, recall, F-score,
+        and support.
+    jaccard_score : Compute the Jaccard similarity coefficient score.
+    multilabel_confusion_matrix : Compute a confusion matrix for each class or
+        sample.
+
+    Notes
+    -----
+    When ``true positive + false positive == 0``, precision is undefined.
+    When ``true positive + false negative == 0``, recall is undefined.
+    In such cases, by default the metric will be set to 0, as will f-score,
+    and ``UndefinedMetricWarning`` will be raised. This behavior can be
+    modified with ``zero_division``.
 
     References
     ----------
@@ -1116,14 +1128,6 @@ def f1_score(
     >>> y_pred = [[0, 0, 0], [1, 1, 1], [1, 1, 0]]
     >>> f1_score(y_true, y_pred, average=None)
     array([0.66666667, 1.        , 0.66666667])
-
-    Notes
-    -----
-    When ``true positive + false positive == 0``, precision is undefined.
-    When ``true positive + false negative == 0``, recall is undefined.
-    In such cases, by default the metric will be set to 0, as will f-score,
-    and ``UndefinedMetricWarning`` will be raised. This behavior can be
-    modified with ``zero_division``.
     """
     return fbeta_score(
         y_true,
@@ -1398,8 +1402,8 @@ def precision_recall_fscore_support(
 
     The precision is the ratio ``tp / (tp + fp)`` where ``tp`` is the number of
     true positives and ``fp`` the number of false positives. The precision is
-    intuitively the ability of the classifier not to label as positive a sample
-    that is negative.
+    intuitively the ability of the classifier not to label a negative sample as
+    positive.
 
     The recall is the ratio ``tp / (tp + fn)`` where ``tp`` is the number of
     true positives and ``fn`` the number of false negatives. The recall is
@@ -2080,8 +2084,11 @@ def classification_report(
 
     See Also
     --------
-    precision_recall_fscore_support, confusion_matrix,
-    multilabel_confusion_matrix
+    precision_recall_fscore_support: Compute precision, recall, F-measure and
+        support for each class.
+    confusion_matrix: Compute confusion matrix to evaluate the accuracy of a
+        classification.
+    multilabel_confusion_matrix: Compute a confusion matrix for each class or sample.
 
     Examples
     --------

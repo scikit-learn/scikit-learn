@@ -35,21 +35,11 @@ env:
 jobs:
   include:
     # Linux environments to build the scikit-learn wheels for the ARM64
-    # architecture and Python 3.7 and newer. This is used both at release time
+    # architecture and Python 3.8 and newer. This is used both at release time
     # with the manual trigger in the commit message in the release branch and as
     # a scheduled task to build the weekly dev build on the main branch. The
     # weekly frequency is meant to avoid depleting the Travis CI credits too
     # fast.
-    - os: linux
-      arch: arm64-graviton2
-      dist: focal
-      virt: vm
-      group: edge
-      if: type = cron or commit_message =~ /\[cd build\]/
-      env:
-        - CIBW_BUILD=cp37-manylinux_aarch64
-        - BUILD_WHEEL=true
-
     - os: linux
       arch: arm64-graviton2
       dist: focal
