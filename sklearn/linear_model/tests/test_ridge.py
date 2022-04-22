@@ -533,7 +533,7 @@ def test_ridge_shapes_type():
 
     ridge.fit(X, Y1)
     assert ridge.coef_.shape == (n_features,)
-    assert ridge.intercept_.shape == (1, )
+    assert ridge.intercept_.shape == (1,)
     assert isinstance(ridge.coef_, np.ndarray)
     assert isinstance(ridge.intercept_, np.ndarray)
 
@@ -933,7 +933,7 @@ def test_ridge_gcv_sample_weights(
     predictions = cross_val_predict(ridge_reg, X_tiled, y_tiled, cv=splits)
     if predictions.shape != y_tiled.shape:
         predictions = predictions.reshape(y_tiled.shape)
-    kfold_errors = (y_tiled - predictions)**2
+    kfold_errors = (y_tiled - predictions) ** 2
     kfold_errors = [
         np.sum(kfold_errors[indices == i], axis=0) for i in np.arange(X.shape[0])
     ]
