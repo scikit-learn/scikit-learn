@@ -60,7 +60,7 @@ def plot_heatmap(
     colorbar : bool, default=True
         Whether or not to add a colorbar to the plot.
 
-    im_kw : dict, default=None
+    im_kwargs : dict, default=None
         Dict with keywords passed to `matplotlib.pyplot.imshow` call.
 
     Returns
@@ -86,11 +86,11 @@ def plot_heatmap(
     else:
         fig = ax.figure
 
-    default_im_kw = dict(interpolation="nearest", cmap=cmap)
-    im_kw = im_kwargs or {}
-    im_kw = {**default_im_kw, **im_kw}
+    default_im_kwargs = dict(interpolation="nearest", cmap=cmap)
+    im_kwargs = im_kwargs or {}
+    im_kwargs = {**default_im_kwargs, **im_kwargs}
 
-    im = ax.imshow(data, **im_kw)
+    im = ax.imshow(data, **im_kwargs)
     text = None
     cmap_min, cmap_max = im.cmap(0), im.cmap(1.0)
 
