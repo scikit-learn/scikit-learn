@@ -3,7 +3,7 @@
 Discrete versus Real AdaBoost
 =============================
 
-This example is based on Figure 10.2 from Hastie et al 2009 [1]_ and
+This notebook is based on Figure 10.2 from Hastie et al 2009 [1]_ and
 illustrates the difference in performance between the discrete SAMME [2]_
 boosting algorithm and real SAMME.R boosting algorithm. Both algorithms are
 evaluated on a binary classification task where the target Y is a non-linear
@@ -24,6 +24,12 @@ whereas real SAMME.R uses the predicted class probabilities.
 #
 # License: BSD 3 clause
 
+# %%
+# Hastie et al. (2009) example 10.2
+# ---------------------------------------------------
+# We start by generating the binary classification dataset
+# used in Hastie et al. 2009, Example 10.2.
+
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -33,11 +39,19 @@ from sklearn.metrics import zero_one_loss
 from sklearn.ensemble import AdaBoostClassifier
 
 
+X, y = datasets.make_hastie_10_2(n_samples=12000, random_state=1)
+
+# %%
+# Now, we set the hyperparameters for our AdaBoost classifiers.
+# Be aware, a learning rate of 1.0 may not be optimal for both SAMME and SAMME.R
+
 n_estimators = 400
-# A learning rate of 1. may not be optimal for both SAMME and SAMME.R
 learning_rate = 1.0
 
-X, y = datasets.make_hastie_10_2(n_samples=12000, random_state=1)
+# %%
+# We split the data into a training and a test set.
+# Then, we train our baseline classifiers, a `DecisionTreeClassifier` with `depth=9`
+# and a "stump" `DecisionTreeClassifier` with `depth=1` and compute the test error.
 
 X_test, y_test = X[2000:], y[2000:]
 X_train, y_train = X[:2000], y[:2000]
@@ -49,6 +63,12 @@ dt_stump_err = 1.0 - dt_stump.score(X_test, y_test)
 dt = DecisionTreeClassifier(max_depth=9, min_samples_leaf=1)
 dt.fit(X_train, y_train)
 dt_err = 1.0 - dt.score(X_test, y_test)
+
+# %%
+# Adaboost with discrete SAMME and real SAMME.R
+# ---------------------------------------------------
+# We now define the discrete and real AdaBoost classifiers
+# and fit them to the training set.
 
 ada_discrete = AdaBoostClassifier(
     base_estimator=dt_stump,
@@ -66,11 +86,10 @@ ada_real = AdaBoostClassifier(
 )
 ada_real.fit(X_train, y_train)
 
-fig = plt.figure()
-ax = fig.add_subplot(111)
-
-ax.plot([1, n_estimators], [dt_stump_err] * 2, "k-", label="Decision Stump Error")
-ax.plot([1, n_estimators], [dt_err] * 2, "k--", label="Decision Tree Error")
+# %%
+# Now, let's compute the test error of the discrete and
+# real AdaBoost classifiers for each new stump in `n_estimators`
+# added to the ensemble.
 
 ada_discrete_err = np.zeros((n_estimators,))
 for i, y_pred in enumerate(ada_discrete.staged_predict(X_test)):
@@ -87,6 +106,17 @@ for i, y_pred in enumerate(ada_real.staged_predict(X_test)):
 ada_real_err_train = np.zeros((n_estimators,))
 for i, y_pred in enumerate(ada_real.staged_predict(X_train)):
     ada_real_err_train[i] = zero_one_loss(y_pred, y_train)
+
+# %%
+# Finally, we plot the train and test errors of our baselines
+# and of the discrete and real AdaBoost classifiers
+
+fig = plt.figure()
+ax = fig.add_subplot(111)
+
+ax.plot([1, n_estimators], [dt_stump_err] * 2, "k-", label="Decision Stump Error")
+ax.plot([1, n_estimators], [dt_err] * 2, "k--", label="Decision Tree Error")
+
 
 ax.plot(
     np.arange(n_estimators) + 1,
