@@ -32,13 +32,13 @@ identify the directions of largest non-Gaussianity (lower right).
 # Authors: Alexandre Gramfort, Gael Varoquaux
 # License: BSD 3 clause
 
+# %%
+# Generate sample data
+# --------------------
 import numpy as np
-import matplotlib.pyplot as plt
 
 from sklearn.decomposition import PCA, FastICA
 
-# #############################################################################
-# Generate sample data
 rng = np.random.RandomState(42)
 S = rng.standard_t(1.5, size=(20000, 2))
 S[:, 0] *= 2.0
@@ -51,14 +51,16 @@ X = np.dot(S, A.T)  # Generate observations
 pca = PCA()
 S_pca_ = pca.fit(X).transform(X)
 
-ica = FastICA(random_state=rng)
+ica = FastICA(random_state=rng, whiten="arbitrary-variance")
 S_ica_ = ica.fit(X).transform(X)  # Estimate the sources
 
 S_ica_ /= S_ica_.std(axis=0)
 
 
-# #############################################################################
+# %%
 # Plot results
+# ------------
+import matplotlib.pyplot as plt
 
 
 def plot_samples(S, axis_list=None):
