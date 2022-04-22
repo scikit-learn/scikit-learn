@@ -281,8 +281,17 @@ Changelog
   :pr:`19747` by :user:`Tony Attalla <tonyattalla>` and :pr:`22498` by
   :user:`Meekail Zain <micky774>`.
 
+- |Fix| :func:`datasets.fetch_covtype` is now concurrent-safe: data is downloaded
+  to a temporary directory before being moved to the data directory.
+  :pr:`23113` by :user:`Ilion Beyst <iasoon>`
+
 :mod:`sklearn.decomposition`
 ............................
+
+- |MajorFeature| Added a new estimator :class:`decomposition.MiniBatchNMF`. It is a
+  faster but less accurate version of non-negative matrix factorization, better suited
+  for large datasets. :pr:`16948` by :user:`Chiara Marmo <cmarmo>`,
+  :user:`Patricio Cerda <pcerda>` and :user:`Jérémie du Boisberranger <jeremiedbb>`. 
 
 - |Enhancement| :class:`decomposition.PCA` exposes a parameter `n_oversamples` to tune
   :func:`sklearn.decomposition.randomized_svd` and
@@ -453,6 +462,9 @@ Changelog
   :class:`ensemble.HistGradientBoostingRegressor` no longer warns when
   fitting on a pandas DataFrame with a non-default `scoring` parameter and
   early_stopping enabled. :pr:`22908` by `Thomas Fan`_.
+
+- |Fix| Fixes HTML repr for :class:`ensemble.StackingClassifier` and
+  :class:`ensemble.StackingRegressor`. :pr:`23097` by `Thomas Fan`_.
 
 - |Efficiency| Fitting a :class:`ensemble.RandomForestClassifier`,
   :class:`ensemble.RandomForestRegressor`, :class:`ensemble.ExtraTreesClassifier`,
@@ -1067,6 +1079,9 @@ Changelog
 
 - |Fix| :func:`utils.estimator_html_repr` has an improved visualization for nested
   meta-estimators. :pr:`21310` by `Thomas Fan`_.
+
+- |Fix| :func:`utils.metaestimators.available_if` correctly returns a bounded
+  method that can be pickled. :pr:`23077` by `Thomas Fan`_.
 
 - |API| :func:`utils.metaestimators.if_delegate_has_method` is deprecated and will be
   removed in version 1.3. Use :func:`utils.metaestimators.available_if` instead.

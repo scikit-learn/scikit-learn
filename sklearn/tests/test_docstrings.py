@@ -18,7 +18,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.datasets._samples_generator.make_gaussian_quantiles",
     "sklearn.datasets._samples_generator.make_spd_matrix",
     "sklearn.datasets._species_distributions.fetch_species_distributions",
-    "sklearn.datasets._svmlight_format_io.dump_svmlight_file",
     "sklearn.datasets._svmlight_format_io.load_svmlight_file",
     "sklearn.datasets._svmlight_format_io.load_svmlight_files",
     "sklearn.decomposition._dict_learning.dict_learning",
