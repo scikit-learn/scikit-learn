@@ -20,7 +20,7 @@ def plot_heatmap(
 ):
     """Plot a heatmap.
 
-    .. versionadded:: 1.0
+    .. versionadded:: 1.1
 
     Parameters
     ----------
