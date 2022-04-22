@@ -2,6 +2,7 @@
 Testing for the tree module (sklearn.tree).
 """
 import copy
+import math
 import pickle
 from itertools import product, chain
 import struct
@@ -2529,6 +2530,15 @@ def test_check_node_ndarray():
 
     with pytest.raises(ValueError, match="node array.+incompatible dtype"):
         _check_node_ndarray(problematic_node_ndarray, expected_dtype=expected_dtype)
+
+
+@pytest.mark.parametrize("Tree", CLF_TREES.values())
+def test_hellinger_score_range(Tree):
+    clf = Tree(criterion="hellinger", random_state=1)
+    clf.fit(X_large_imbl, y_large_imbl)
+
+    assert math.sqrt(2) >= clf.tree_.impurity.max()
+    assert 0 <= clf.tree_.impurity.min()
 
 
 # TODO(1.3): Remove
