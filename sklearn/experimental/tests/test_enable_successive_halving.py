@@ -26,9 +26,7 @@ def test_imports_strategies():
     from sklearn.model_selection import HalvingGridSearchCV
     from sklearn.model_selection import HalvingRandomSearchCV
     """
-    assert_run_python_script(
-        textwrap.dedent(good_import_with_model_selection_first)
-    )
+    assert_run_python_script(textwrap.dedent(good_import_with_model_selection_first))
 
     bad_imports = """
     import pytest

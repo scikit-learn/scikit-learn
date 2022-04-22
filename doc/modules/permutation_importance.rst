@@ -98,19 +98,19 @@ but more input formats are possible, as documented in :ref:`multimetric_scoring`
   ...                   f" +/- {r.importances_std[i]:.3f}")
   ...
   r2
-    s5      0.204 +/- 0.050
-    bmi     0.176 +/- 0.048
-    bp      0.088 +/- 0.033
-    sex     0.056 +/- 0.023
+      s5      0.204 +/- 0.050
+      bmi     0.176 +/- 0.048
+      bp      0.088 +/- 0.033
+      sex     0.056 +/- 0.023
   neg_mean_absolute_percentage_error
-    s5      0.081 +/- 0.020
-    bmi     0.064 +/- 0.015
-    bp      0.029 +/- 0.010
+      s5      0.081 +/- 0.020
+      bmi     0.064 +/- 0.015
+      bp      0.029 +/- 0.010
   neg_mean_squared_error
-    s5      1013.903 +/- 246.460
-    bmi     872.694 +/- 240.296
-    bp      438.681 +/- 163.025
-    sex     277.382 +/- 115.126
+      s5      1013.866 +/- 246.445
+      bmi     872.726 +/- 240.298
+      bp      438.663 +/- 163.022
+      sex     277.376 +/- 115.123
 
 The ranking of the features is approximately the same for different metrics even
 if the scales of the importance values are very different. However, this is not
@@ -145,7 +145,7 @@ Relation to impurity-based importance in trees
 Tree-based models provide an alternative measure of :ref:`feature importances
 based on the mean decrease in impurity <random_forest_feature_importance>`
 (MDI). Impurity is quantified by the splitting criterion of the decision trees
-(Gini, Entropy or Mean Squared Error). However, this method can give high
+(Gini, Log Loss or Mean Squared Error). However, this method can give high
 importance to features that may not be predictive on unseen data when the model
 is overfitting. Permutation-based feature importance, on the other hand, avoids
 this issue, since it can be computed on unseen data.
@@ -157,7 +157,7 @@ with a small number of possible categories.
 
 Permutation-based feature importances do not exhibit such a bias. Additionally,
 the permutation feature importance may be computed performance metric on the
-model predictions predictions and can be used to analyze any model class (not
+model predictions and can be used to analyze any model class (not
 just tree-based models).
 
 The following example highlights the limitations of impurity-based feature
@@ -184,5 +184,5 @@ example:
 
 .. topic:: References:
 
-   .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32,
-       2001. https://doi.org/10.1023/A:1010933404324
+   .. [1] L. Breiman, :doi:`"Random Forests" <10.1023/A:1010933404324>`,
+      Machine Learning, 45(1), 5-32, 2001.
