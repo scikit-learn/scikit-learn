@@ -127,7 +127,8 @@ def cross_validate_LRs(clf, X, y, verbose=True):
 
 
 # %%
-# We first validate the `LogisticRegression` model used in the previous section
+# We first validate the `LogisticRegression` model with default hyperparameters
+# as used in the previous section
 
 _ = cross_validate_LRs(LogisticRegression(), X, y)
 
@@ -176,11 +177,15 @@ _ = cross_validate_LRs(LogisticRegression(), X, y)
 # ============================
 #
 # Here we vary the prevalence of the hypothetical condition by passing different
-# weights to the `make_classification` function. The is set to create 2 clusters
-# per class of points normally distributed (std=1) about the vertices of a
-# (`n_informative=2`)-dimensional hypercube with sides of length 2.0.
+# weights to the `make_classification` function, which create 2 clusters per
+# class as shown in the plot below. The label `1` corresponds to the positive
+# class "disease" and therefore the label `0` stands for "no-disease". The
+# decision boundary corresponds to the `LogisticRegression` model as used in the
+# previous sections
 
 import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.inspection import DecisionBoundaryDisplay
 
 pos_LRs = []
 neg_LRs = []
@@ -188,7 +193,14 @@ pos_LRs_std = []
 neg_LRs_std = []
 prevalence = []
 
-for weight in np.linspace(0.1, 0.9, 21):
+plt.figure(figsize=(15, 12))
+plt.subplots_adjust(hspace=0.25)
+
+weights = np.linspace(0.1, 0.9, 6)
+weights = weights[::-1]
+
+for n, weight in enumerate(weights):
+
     X, y = make_classification(
         n_samples=10_000,
         n_features=2,
@@ -197,7 +209,21 @@ for weight in np.linspace(0.1, 0.9, 21):
         weights=[weight],
         random_state=0,
     )
-    class_LRs = cross_validate_LRs(LogisticRegression(), X, y, verbose=False)
+
+    clf = LogisticRegression()
+    ax = plt.subplot(3, 2, n + 1)
+    disp = DecisionBoundaryDisplay.from_estimator(
+        clf.fit(X, y),
+        X,
+        response_method="predict",
+        alpha=0.5,
+        ax=ax,
+    )
+    scatter = disp.ax_.scatter(X[:, 0], X[:, 1], c=y, edgecolor="k")
+    disp.ax_.set_title(f"prevalence = {y.mean():.2f}")
+    disp.ax_.legend(*scatter.legend_elements())
+
+    class_LRs = cross_validate_LRs(clf, X, y, verbose=False)
 
     pos_LR = class_LRs["LR+"].mean()
     neg_LR = class_LRs["LR-"].mean()
@@ -221,8 +247,6 @@ class_LRs = pd.DataFrame(
 # diagnostic value of alternative tests. The following plots show that this is
 # not the case even when the disease is truly dichotomous and all of the
 # physiological measurements `X` are informative.
-
-import matplotlib.pyplot as plt
 
 fig, ax1 = plt.subplots()
 ax1.plot(prevalence, class_LRs["LR+"], color="red")
