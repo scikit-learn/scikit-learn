@@ -786,8 +786,8 @@ if the number of clusters is small compared to the number of data points.
 This variant also do not produce empty clusters.
 
 There exist two strategies for selecting the cluster to split:
- - ``bisect_strategy="largest_cluster"`` selects the cluster having the most points
- - ``bisect_strategy="biggest_inerita"`` selects the cluster with biggest inertia
+ - ``bisecting_strategy="largest_cluster"`` selects the cluster having the most points
+ - ``bisecting_strategy="biggest_inertia"`` selects the cluster with biggest inertia
    (cluster with biggest Sum of Squared Errors within)
 
 Picking by largest amount of data points in most cases produces result as
