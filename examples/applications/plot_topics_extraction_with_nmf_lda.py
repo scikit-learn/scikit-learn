@@ -37,7 +37,7 @@ n_samples = 2000
 n_features = 1000
 n_components = 10
 n_top_words = 20
-batch_size = 512
+batch_size = 128
 init = "nndsvda"
 
 
@@ -163,7 +163,6 @@ mbnmf = MiniBatchNMF(
     batch_size=batch_size,
     init=init,
     beta_loss="frobenius",
-    max_iter=10,
     alpha_W=0.00005,
     alpha_H=0.00005,
     l1_ratio=0.5,
@@ -192,7 +191,6 @@ mbnmf = MiniBatchNMF(
     random_state=1,
     batch_size=batch_size,
     init=init,
-    max_iter=10,
     beta_loss="kullback-leibler",
     alpha_W=0.00005,
     alpha_H=0.00005,
