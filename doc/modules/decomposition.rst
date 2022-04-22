@@ -926,9 +926,9 @@ stored components::
 Mini-batch Non Negative Matrix Factorization
 --------------------------------------------
 
-:class:`MiniBatchNMF` [7]_ implements a faster, but less accurate
-version of the non negative matrix factorization, better suited for
-large datasets.
+:class:`MiniBatchNMF` [7]_ implements a faster, but less accurate version of the
+non negative matrix factorization (i.e. :class:`~sklearn.decomposition.NMF`),
+better suited for large datasets.
 
 By default, :class:`MiniBatchNMF` divides the data into mini-batches and
 optimizes the NMF model in an online manner by cycling over the mini-batches
@@ -968,10 +968,9 @@ is not readily available from the start, or when the data does not fit into memo
            the beta-divergence" <1010.1763>`
            C. Fevotte, J. Idier, 2011
 
-    .. [7] `"Online algorithms for nonnegative matrix factorization with the
-      Itakura-Saito divergence"
-      <https://hal.archives-ouvertes.fr/hal-00602050>`_
-      A. Lefevre, F. Bach, C. Fevotte, 2011
+    .. [7] :arxiv:`"Online algorithms for nonnegative matrix factorization with the
+       Itakura-Saito divergence" <1106.4198>`
+       A. Lefevre, F. Bach, C. Fevotte, 2011
 
 .. _LatentDirichletAllocation:
 

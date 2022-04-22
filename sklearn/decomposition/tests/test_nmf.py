@@ -45,6 +45,10 @@ def test_initialize_nn_output():
         assert not ((W < 0).any() or (H < 0).any())
 
 
+@pytest.mark.filterwarnings(
+    r"ignore:The multiplicative update \('mu'\) solver cannot update zeros present in"
+    r" the initialization"
+)
 def test_parameter_checking():
     A = np.ones((2, 2))
     name = "spam"
@@ -269,6 +273,7 @@ def test_minibatch_nmf_transform():
     m = MiniBatchNMF(
         n_components=3,
         random_state=0,
+        tol=1e-3,
         fresh_restarts=True,
     )
     ft = m.fit_transform(A)
@@ -289,7 +294,9 @@ def test_nmf_transform_custom_init(Estimator, solver):
     H_init = np.abs(avg * random_state.randn(n_components, 5))
     W_init = np.abs(avg * random_state.randn(6, n_components))
 
-    m = Estimator(n_components=n_components, init="custom", random_state=0, **solver)
+    m = Estimator(
+        n_components=n_components, init="custom", random_state=0, tol=1e-3, **solver
+    )
     m.fit_transform(A, W=W_init, H=H_init)
     m.transform(A)
 
@@ -314,19 +321,17 @@ def test_nmf_inverse_transform(solver):
 def test_mbnmf_inverse_transform():
     # Test that MiniBatchNMF.transform followed by MiniBatchNMF.inverse_transform
     # is close to the identity
-    random_state = np.random.RandomState(0)
-    A = np.abs(random_state.randn(6, 4))
-    m = MiniBatchNMF(
-        n_components=4,
-        random_state=0,
+    rng = np.random.RandomState(0)
+    A = np.abs(rng.randn(6, 4))
+    nmf = MiniBatchNMF(
+        random_state=rng,
         max_iter=500,
-        tol=1e-6,
-        init="nndsvd",
+        init="nndsvdar",
         fresh_restarts=True,
     )
-    ft = m.fit_transform(A)
-    A_new = m.inverse_transform(ft)
-    assert_allclose(A, A_new, rtol=1e-3)
+    ft = nmf.fit_transform(A)
+    A_new = nmf.inverse_transform(ft)
+    assert_allclose(A, A_new, rtol=1e-3, atol=1e-2)
 
 
 @pytest.mark.parametrize("Estimator", [NMF, MiniBatchNMF])
@@ -507,7 +512,7 @@ def test_beta_divergence():
     n_samples = 20
     n_features = 10
     n_components = 5
-    beta_losses = [0.0, 0.5, 1.0, 1.5, 2.0]
+    beta_losses = [0.0, 0.5, 1.0, 1.5, 2.0, 3.0]
 
     # initialization
     rng = np.random.mtrand.RandomState(42)
@@ -631,8 +636,7 @@ def test_nmf_multiplicative_update_sparse():
         assert_allclose(H1, H3, atol=1e-4)
 
 
-@pytest.mark.parametrize("forget_factor", [None, 0.7])
-def test_nmf_negative_beta_loss(forget_factor):
+def test_nmf_negative_beta_loss():
     # Test that an error is raised if beta_loss < 0 and X contains zeros.
     # Test that the output has not NaN values when the input contains zeros.
     n_samples = 6
@@ -666,6 +670,20 @@ def test_nmf_negative_beta_loss(forget_factor):
     for beta_loss in (0.2, 1.0, 1.2, 2.0, 2.5):
         _assert_nmf_no_nan(X, beta_loss)
         _assert_nmf_no_nan(X_csr, beta_loss)
+
+
+@pytest.mark.parametrize("beta_loss", [-0.5, 0.0])
+def test_minibatch_nmf_negative_beta_loss(beta_loss):
+    """Check that an error is raised if beta_loss < 0 and X contains zeros."""
+    rng = np.random.RandomState(0)
+    X = rng.normal(size=(6, 5))
+    X[X < 0] = 0
+
+    nmf = MiniBatchNMF(beta_loss=beta_loss, random_state=0)
+
+    msg = "When beta_loss <= 0 and X contains zeros, the solver may diverge."
+    with pytest.raises(ValueError, match=msg):
+        nmf.fit(X)
 
 
 @pytest.mark.parametrize(
@@ -820,15 +838,15 @@ def test_nmf_underflow():
     ],
 )
 @pytest.mark.parametrize(
-    ["Estimator", "solver"], [[NMF, "cd"], [NMF, "mu"], [MiniBatchNMF, "mu"]]
+    ["Estimator", "solver"],
+    [[NMF, {"solver": "cd"}], [NMF, {"solver": "mu"}], [MiniBatchNMF, {}]],
 )
-@pytest.mark.parametrize("alpha_W", (0.0, 1.0))
-@pytest.mark.parametrize("alpha_H", (0.0, 1.0, "same"))
-def test_nmf_dtype_match(Estimator, solver, dtype_in, dtype_out, alpha_W, alpha_H):
+def test_nmf_dtype_match(Estimator, solver, dtype_in, dtype_out):
     # Check that NMF preserves dtype (float32 and float64)
     X = np.random.RandomState(0).randn(20, 15).astype(dtype_in, copy=False)
     np.abs(X, out=X)
-    nmf = NMF(solver=solver, alpha_W=alpha_W, alpha_H=alpha_H)
+
+    nmf = Estimator(alpha_W=1.0, alpha_H=1.0, tol=1e-2, random_state=0, **solver)
 
     assert nmf.fit(X).transform(X).dtype == dtype_out
     assert nmf.fit_transform(X).dtype == dtype_out
@@ -843,13 +861,12 @@ def test_nmf_float32_float64_consistency(Estimator, solver):
     # Check that the result of NMF is the same between float32 and float64
     X = np.random.RandomState(0).randn(50, 7)
     np.abs(X, out=X)
-    tol = 1e-6
-    nmf32 = Estimator(random_state=0, tol=tol, **solver)
+    nmf32 = Estimator(random_state=0, tol=1e-3, **solver)
     W32 = nmf32.fit_transform(X.astype(np.float32))
-    nmf64 = Estimator(random_state=0, tol=tol, **solver)
+    nmf64 = Estimator(random_state=0, tol=1e-3, **solver)
     W64 = nmf64.fit_transform(X)
 
-    assert_allclose(W32, W64, rtol=1e-6, atol=1e-4)
+    assert_allclose(W32, W64, atol=1e-5)
 
 
 @pytest.mark.parametrize("Estimator", [NMF, MiniBatchNMF])
@@ -868,7 +885,7 @@ def test_nmf_custom_init_dtype_error(Estimator):
         non_negative_factorization(X, H=H, update_H=False)
 
 
-@pytest.mark.parametrize("beta_loss", [0, 0.5, 1, 1.5, 2])
+@pytest.mark.parametrize("beta_loss", [-0.5, 0, 0.5, 1, 1.5, 2, 2.5])
 def test_nmf_minibatchnmf_equivalence(beta_loss):
     # Test that MiniBatchNMF is equivalent to NMF when batch_size = n_samples and
     # forget_factor 0.0 (stopping criterion put aside)

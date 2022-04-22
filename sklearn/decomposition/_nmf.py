@@ -496,10 +496,10 @@ def _fit_coordinate_descent(
 
     References
     ----------
-    Cichocki, Andrzej, and Phan, Anh-Huy. "Fast local algorithms for
-    large scale nonnegative matrix and tensor factorizations."
-    IEICE transactions on fundamentals of electronics, communications and
-    computer sciences 92.3: 708-721, 2009.
+    .. [1] :doi:`"Fast local algorithms for large scale nonnegative matrix and tensor
+       factorizations" <10.1587/transfun.E92.A.708>`
+       Cichocki, Andrzej, and P. H. A. N. Anh-Huy. IEICE transactions on fundamentals
+       of electronics, communications and computer sciences 92.3: 708-721, 2009.
     """
     # so W and Ht are both in C order in memory
     Ht = check_array(H.T, order="C")
@@ -863,7 +863,7 @@ def _fit_multiplicative_update(
         if beta_loss < 1:
             W[W < np.finfo(np.float64).eps] = 0.0
 
-        # update H
+        # update H (only at fit or fit_transform)
         if update_H:
             H = _multiplicative_update_h(
                 X,
@@ -1121,13 +1121,14 @@ def non_negative_factorization(
 
     References
     ----------
-    Cichocki, Andrzej, and P. H. A. N. Anh-Huy. "Fast local algorithms for
-    large scale nonnegative matrix and tensor factorizations."
-    IEICE transactions on fundamentals of electronics, communications and
-    computer sciences 92.3: 708-721, 2009.
+    .. [1] :doi:`"Fast local algorithms for large scale nonnegative matrix and tensor
+       factorizations" <10.1587/transfun.E92.A.708>`
+       Cichocki, Andrzej, and P. H. A. N. Anh-Huy. IEICE transactions on fundamentals
+       of electronics, communications and computer sciences 92.3: 708-721, 2009.
 
-    Fevotte, C., & Idier, J. (2011). Algorithms for nonnegative matrix
-    factorization with the beta-divergence. Neural Computation, 23(9).
+    .. [2] :doi:`"Algorithms for nonnegative matrix factorization with the
+       beta-divergence" <10.1162/NECO_a_00168>`
+       Fevotte, C., & Idier, J. (2011). Neural Computation, 23(9).
     """
     X = check_array(X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32])
 
@@ -1362,13 +1363,14 @@ class NMF(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
 
     References
     ----------
-    Cichocki, Andrzej, and P. H. A. N. Anh-Huy. "Fast local algorithms for
-    large scale nonnegative matrix and tensor factorizations."
-    IEICE transactions on fundamentals of electronics, communications and
-    computer sciences 92.3: 708-721, 2009.
+    .. [1] :doi:`"Fast local algorithms for large scale nonnegative matrix and tensor
+       factorizations" <10.1587/transfun.E92.A.708>`
+       Cichocki, Andrzej, and P. H. A. N. Anh-Huy. IEICE transactions on fundamentals
+       of electronics, communications and computer sciences 92.3: 708-721, 2009.
 
-    Fevotte, C., & Idier, J. (2011). Algorithms for nonnegative matrix
-    factorization with the beta-divergence. Neural Computation, 23(9).
+    .. [2] :doi:`"Algorithms for nonnegative matrix factorization with the
+       beta-divergence" <10.1162/NECO_a_00168>`
+       Fevotte, C., & Idier, J. (2011). Neural Computation, 23(9).
 
     Examples
     --------
@@ -1590,14 +1592,6 @@ class NMF(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         with config_context(assume_finite=True):
             W, H, n_iter = self._fit_transform(X, W=W, H=H)
 
-        if n_iter == self.max_iter and self.tol > 0:
-            warnings.warn(
-                "Maximum number of iterations %d reached. Increase "
-                "it to improve convergence."
-                % self.max_iter,
-                ConvergenceWarning,
-            )
-
         self.reconstruction_err_ = _beta_divergence(
             X, W, H, self._beta_loss, square_root=True
         )
@@ -1781,23 +1775,24 @@ class MiniBatchNMF(NMF):
 
     .. versionadded:: 1.1
 
-    Find two non-negative matrices, i.e. matrices with all non-negative elements, (W, H)
-    whose product approximates the non-negative matrix X. This factorization can be used
-    for example for dimensionality reduction, source separation or topic extraction.
+    Find two non-negative matrices, i.e. matrices with all non-negative elements,
+    (`W`, `H`) whose product approximates the non-negative matrix `X`. This
+    factorization can be used for example for dimensionality reduction, source
+    separation or topic extraction.
 
     The objective function is:
 
         .. math::
 
-            0.5 * ||X - WH||_{loss}^2
+            L(W, H) &= 0.5 * ||X - WH||_{loss}^2
 
-            + alpha\\_W * l1_{ratio} * n\\_features * ||vec(W)||_1
+            &+ alpha\\_W * l1\\_ratio * n\\_features * ||vec(W)||_1
 
-            + alpha\\_H * l1_{ratio} * n\\_samples * ||vec(H)||_1
+            &+ alpha\\_H * l1\\_ratio * n\\_samples * ||vec(H)||_1
 
-            + 0.5 * alpha\\_W * (1 - l1_{ratio}) * n\\_features * ||W||_{Fro}^2
+            &+ 0.5 * alpha\\_W * (1 - l1\\_ratio) * n\\_features * ||W||_{Fro}^2
 
-            + 0.5 * alpha\\_H * (1 - l1_{ratio}) * n\\_samples * ||H||_{Fro}^2
+            &+ 0.5 * alpha\\_H * (1 - l1\\_ratio) * n\\_samples * ||H||_{Fro}^2
 
     Where:
 
@@ -1809,38 +1804,42 @@ class MiniBatchNMF(NMF):
     the Frobenius norm or another supported beta-divergence loss.
     The choice between options is controlled by the `beta_loss` parameter.
 
-    The objective function is minimized with an alternating minimization of W
-    and H.
+    The objective function is minimized with an alternating minimization of `W`
+    and `H`.
+
+    Note that the transformed data is named `W` and the components matrix is
+    named `H`. In the NMF literature, the naming convention is usually the opposite
+    since the data matrix `X` is transposed.
 
     Read more in the :ref:`User Guide <MiniBatchNMF>`.
 
     Parameters
     ----------
-    n_components : int or None
-        Number of components, if n_components is not set all features
+    n_components : int, default=None
+        Number of components, if `n_components` is not set all features
         are kept.
 
     init : {'random', 'nndsvd', 'nndsvda', 'nndsvdar', 'custom'}, default=None
         Method used to initialize the procedure.
         Valid options:
 
-        - `None`: 'nndsvda' if n_components <= min(n_samples, n_features),
+        - `None`: 'nndsvda' if `n_components <= min(n_samples, n_features)`,
           otherwise random.
 
         - `'random'`: non-negative random matrices, scaled with:
-          sqrt(X.mean() / n_components)
+          `sqrt(X.mean() / n_components)`
 
         - `'nndsvd'`: Nonnegative Double Singular Value Decomposition (NNDSVD)
-          initialization (better for sparseness)
+          initialization (better for sparseness).
 
         - `'nndsvda'`: NNDSVD with zeros filled with the average of X
-          (better when sparsity is not desired)
+          (better when sparsity is not desired).
 
         - `'nndsvdar'` NNDSVD with zeros filled with small random values
           (generally faster, less accurate alternative to NNDSVDa
-          for when sparsity is not desired)
+          for when sparsity is not desired).
 
-        - `'custom'`: use custom matrices W and H
+        - `'custom'`: use custom matrices `W` and `H`
 
     batch_size : int, default=1024
         Number of samples in each mini-batch. Large batch sizes
@@ -1848,15 +1847,15 @@ class MiniBatchNMF(NMF):
 
     beta_loss : float or {'frobenius', 'kullback-leibler', \
             'itakura-saito'}, default='frobenius'
-        Beta divergence to be minimized, measuring the distance between X
-        and the dot product WH. Note that values different from 'frobenius'
+        Beta divergence to be minimized, measuring the distance between `X`
+        and the dot product `WH`. Note that values different from 'frobenius'
         (or 2) and 'kullback-leibler' (or 1) lead to significantly slower
-        fits. Note that for beta_loss <= 0 (or 'itakura-saito'), the input
-        matrix X cannot contain zeros.
+        fits. Note that for `beta_loss <= 0` (or 'itakura-saito'), the input
+        matrix `X` cannot contain zeros.
 
     tol : float, default=1e-4
-        Control early stopping based on the norm of the differences in H
-        between 2 steps. To disable early stopping based on changes in H, set
+        Control early stopping based on the norm of the differences in `H`
+        between 2 steps. To disable early stopping based on changes in `H`, set
         `tol` to 0.0.
 
     max_no_improvement : int, default=10
@@ -1865,7 +1864,7 @@ class MiniBatchNMF(NMF):
         To disable convergence detection based on cost function, set
         `max_no_improvement` to None.
 
-    max_iter : int, default: 200
+    max_iter : int, default=200
         Maximum number of iterations over the complete dataset before
         timing out.
 
@@ -1878,7 +1877,7 @@ class MiniBatchNMF(NMF):
         have no regularization on `H`. If "same" (default), it takes the same value as
         `alpha_W`.
 
-    l1_ratio : double, default: 0.0
+    l1_ratio : float, default=0.0
         The regularization mixing parameter, with 0 <= l1_ratio <= 1.
         For l1_ratio = 0 the penalty is an elementwise L2 penalty
         (aka Frobenius Norm).
@@ -1903,7 +1902,7 @@ class MiniBatchNMF(NMF):
         Maximum number of iterations when solving for W at transform time.
         If None, it defaults to `max_iter`.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Used for initialisation (when ``init`` == 'nndsvdar' or
         'random'), and in Coordinate Descent. Pass an int for reproducible
         results across multiple function calls.
@@ -1917,14 +1916,14 @@ class MiniBatchNMF(NMF):
     components_ : ndarray of shape (n_components, n_features)
         Factorization matrix, sometimes called 'dictionary'.
 
-    n_components_ : integer
+    n_components_ : int
         The number of components. It is same as the `n_components` parameter
         if it was given. Otherwise, it will be same as the number of
         features.
 
-    reconstruction_err_ : number
+    reconstruction_err_ : float
         Frobenius norm of the matrix difference, or beta-divergence, between
-        the training data ``X`` and the reconstructed data ``WH`` from
+        the training data `X` and the reconstructed data `WH` from
         the fitted model.
 
     n_iter_ : int
@@ -1950,8 +1949,8 @@ class MiniBatchNMF(NMF):
     ----------
     .. [1] :doi:`"Fast local algorithms for large scale nonnegative matrix and tensor
        factorizations" <10.1587/transfun.E92.A.708>`
-       Cichocki, Andrzej, and P. H. A. N. Anh-Huy. IEICE transactions on fundamentals of
-       electronics, communications and computer sciences 92.3: 708-721, 2009.
+       Cichocki, Andrzej, and P. H. A. N. Anh-Huy. IEICE transactions on fundamentals
+       of electronics, communications and computer sciences 92.3: 708-721, 2009.
 
     .. [2] :doi:`"Algorithms for nonnegative matrix factorization with the
        beta-divergence" <10.1162/NECO_a_00168>`
@@ -2046,7 +2045,11 @@ class MiniBatchNMF(NMF):
         return self
 
     def _solve_W(self, X, H, max_iter):
-        """Minimize the objective function w.r.t W"""
+        """Minimize the objective function w.r.t W.
+
+        Update W with H being fixed, until convergence. This is the heart
+        of `transform` but it's also used during `fit` when doing fresh restarts.
+        """
         avg = np.sqrt(X.mean() / self._n_components)
         W = np.full((X.shape[0], self._n_components), avg, dtype=X.dtype)
         W_buffer = W.copy()
@@ -2055,7 +2058,7 @@ class MiniBatchNMF(NMF):
         # variable sizes of minibatches.
         l1_reg_W, _, l2_reg_W, _ = self._scale_regularization(X)
 
-        for i in range(max_iter):
+        for _ in range(max_iter):
             W, *_ = _multiplicative_update_w(
                 X, W, H, self._beta_loss, l1_reg_W, l2_reg_W, self._gamma
             )
@@ -2069,7 +2072,7 @@ class MiniBatchNMF(NMF):
         return W
 
     def _minibatch_step(self, X, W, H, update_H):
-        """Perform the update of W and H for one minibatch"""
+        """Perform the update of W and H for one minibatch."""
         batch_size = X.shape[0]
 
         # get scaled regularization terms. Done for each minibatch to take into account
@@ -2096,7 +2099,7 @@ class MiniBatchNMF(NMF):
             + l2_reg_H * (H**2).sum()
         ) / batch_size
 
-        # update H
+        # update H (only at fit or fit_transform)
         if update_H:
             H[:] = _multiplicative_update_h(
                 X,
@@ -2184,21 +2187,21 @@ class MiniBatchNMF(NMF):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Data matrix to be decomposed.
 
         y : Ignored
             Not used, present here for API consistency by convention.
 
-        W : array-like, shape (n_samples, n_components)
-            If init='custom', it is used as initial guess for the solution.
+        W : array-like of shape (n_samples, n_components), default=None
+            If `init='custom'`, it is used as initial guess for the solution.
 
-        H : array-like, shape (n_components, n_features)
-            If init='custom', it is used as initial guess for the solution.
+        H : array-like of shape (n_components, n_features), default=None
+            If `init='custom'`, it is used as initial guess for the solution.
 
         Returns
         -------
-        W : array, shape (n_samples, n_components)
+        W : ndarray of shape (n_samples, n_components)
             Transformed data.
         """
         X = self._validate_data(
@@ -2207,14 +2210,6 @@ class MiniBatchNMF(NMF):
 
         with config_context(assume_finite=True):
             W, H, n_iter, n_steps = self._fit_transform(X, W=W, H=H)
-
-        if n_iter == self.max_iter and self.tol > 0:
-            warnings.warn(
-                "Maximum number of iterations %d reached. Increase "
-                "it to improve convergence."
-                % self.max_iter,
-                ConvergenceWarning,
-            )
 
         self.reconstruction_err_ = _beta_divergence(
             X, W, H, self._beta_loss, square_root=True
@@ -2227,29 +2222,26 @@ class MiniBatchNMF(NMF):
 
         return W
 
-    def _fit_transform(self, X, y=None, W=None, H=None, update_H=True):
+    def _fit_transform(self, X, W=None, H=None, update_H=True):
         """Learn a NMF model for the data X and returns the transformed data.
 
         Parameters
         ----------
-        X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Data matrix to be decomposed
+        X : {ndarray, sparse matrix} of shape (n_samples, n_features)
+            Data matrix to be decomposed.
 
-        y : Ignored
-            Not used, present here for API consistency by convention.
-
-        W : array-like of shape (n_samples, n_components)
+        W : array-like of shape (n_samples, n_components), default=None
             If init='custom', it is used as initial guess for the solution.
 
-        H : array-like of shape (n_components, n_features)
+        H : array-like of shape (n_components, n_features), default=None
             If init='custom', it is used as initial guess for the solution.
             If update_H=False, it is used as a constant, to solve for W only.
 
         update_H : bool, default=True
             If True, both W and H will be estimated from initial guesses,
-            this corresponds to a call to the 'fit_transform' method.
+            this corresponds to a call to the `fit_transform` method.
             If False, only W will be estimated, this corresponds to a call
-            to the 'transform' method.
+            to the `transform` method.
 
         Returns
         -------
@@ -2275,7 +2267,7 @@ class MiniBatchNMF(NMF):
                 "to X, or use a positive beta_loss."
             )
 
-        n_samples, n_features = X.shape
+        n_samples = X.shape[0]
 
         # initialize or check W and H
         W, H = self._check_w_h(X, W, H, update_H)
@@ -2312,6 +2304,13 @@ class MiniBatchNMF(NMF):
         n_steps = i + 1
         n_iter = int(np.ceil(n_steps / n_steps_per_iter))
 
+        if n_iter == self.max_iter and self.tol > 0:
+            warnings.warn(
+                f"Maximum number of iterations {self.max_iter} reached. "
+                "Increase it to improve convergence.",
+                ConvergenceWarning,
+            )
+
         return W, H, n_iter, n_steps
 
     def transform(self, X):
@@ -2337,7 +2336,14 @@ class MiniBatchNMF(NMF):
         return W
 
     def partial_fit(self, X, y=None, W=None, H=None):
-        """Update the model using the data in X as a mini-batch.
+        """Update the model using the data in `X` as a mini-batch.
+
+        This method is expected to be called several times consecutively
+        on different chunks of a dataset so as to implement out-of-core
+        or online learning.
+
+        This is especially useful when the whole dataset is too big to fit in
+        memory at once (see :ref:`scaling_strategies`).
 
         Parameters
         ----------
@@ -2347,12 +2353,12 @@ class MiniBatchNMF(NMF):
         y : Ignored
             Not used, present here for API consistency by convention.
 
-        W : array-like of shape (n_samples, n_components)
-            If init='custom', it is used as initial guess for the solution.
+        W : array-like of shape (n_samples, n_components), default=None
+            If `init='custom'`, it is used as initial guess for the solution.
             Only used for the first call to `partial_fit`.
 
-        H : array-like of shape (n_components, n_features)
-            If init='custom', it is used as initial guess for the solution.
+        H : array-like of shape (n_components, n_features), default=None
+            If `init='custom'`, it is used as initial guess for the solution.
             Only used for the first call to `partial_fit`.
 
         Returns
