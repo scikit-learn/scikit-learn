@@ -9,21 +9,6 @@ Bernoulli Restricted Boltzmann machine model (:class:`BernoulliRBM
 <sklearn.neural_network.BernoulliRBM>`) can perform effective non-linear
 feature extraction.
 
-In order to learn good latent representations from a small dataset, we
-artificially generate more labeled data by perturbing the training data with
-linear shifts of 1 pixel in each direction.
-
-This example shows how to build a classification pipeline with a BernoulliRBM
-feature extractor and a :class:`LogisticRegression
-<sklearn.linear_model.LogisticRegression>` classifier. The hyperparameters
-of the entire model (learning rate, hidden layer size, regularization)
-were optimized by grid search, but the search is not reproduced here because
-of runtime constraints.
-
-Logistic regression on raw pixel values is presented for comparison. The
-example shows that the features extracted by the BernoulliRBM help improve the
-classification accuracy.
-
 """
 
 # Authors: Yann N. Dauphin, Vlad Niculae, Gabriel Synnaeve
@@ -32,6 +17,10 @@ classification accuracy.
 # %%
 # Generate data
 # -------------
+#
+# In order to learn good latent representations from a small dataset, we
+# artificially generate more labeled data by perturbing the training data with
+# linear shifts of 1 pixel in each direction.
 
 import numpy as np
 
@@ -75,6 +64,10 @@ X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_
 # %%
 # Models definition
 # -----------------
+#
+# We build a classification pipeline with a BernoulliRBM feature extractor and
+# a :class:`LogisticRegression <sklearn.linear_model.LogisticRegression>`
+# classifier.
 
 from sklearn import linear_model
 from sklearn.neural_network import BernoulliRBM
@@ -88,6 +81,10 @@ rbm_features_classifier = Pipeline(steps=[("rbm", rbm), ("logistic", logistic)])
 # %%
 # Training
 # --------
+#
+# The hyperparameters of the entire model (learning rate, hidden layer size,
+# regularization) were optimized by grid search, but the search is not
+# reproduced here because of runtime constraints.
 
 from sklearn.base import clone
 
@@ -122,11 +119,16 @@ print(
     % (metrics.classification_report(Y_test, Y_pred))
 )
 
+# %%
 Y_pred = raw_pixel_classifier.predict(X_test)
 print(
     "Logistic regression using raw pixel features:\n%s\n"
     % (metrics.classification_report(Y_test, Y_pred))
 )
+
+# %%
+# The features extracted by the BernoulliRBM help improve the classification
+# accuracy with respect to the logistic regression on raw pixels.
 
 # %%
 # Plotting
