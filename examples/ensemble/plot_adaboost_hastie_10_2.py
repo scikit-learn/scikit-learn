@@ -157,7 +157,9 @@ plt.show()
 # is better than that of discrete AdaBoost
 
 # %%
-# Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>,
-#         Noel Dawe <noel.dawe@gmail.com>
+# Contributors:
+# ------------------
+# Peter Prettenhofer <peter.prettenhofer@gmail.com>,
+# Noel Dawe <noel.dawe@gmail.com>
 #
 # License: BSD 3 clause
