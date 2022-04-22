@@ -652,6 +652,9 @@ def _set_checking_parameters(estimator):
         # NMF
         if name == "NMF":
             estimator.set_params(max_iter=500)
+        # MiniBatchNMF
+        if estimator.__class__.__name__ == "MiniBatchNMF":
+            estimator.set_params(max_iter=20, fresh_restarts=True)
         # MLP
         if name in ["MLPClassifier", "MLPRegressor"]:
             estimator.set_params(max_iter=100)
