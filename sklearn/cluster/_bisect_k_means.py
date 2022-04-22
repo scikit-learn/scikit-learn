@@ -183,11 +183,7 @@ class BisectingKMeans(_BaseKMeans):
 
     Notes
     -----
-    Bisection cannot be performed if n_cluster < 2.
-    Despite that in case when n_cluster == 1 - centroid will be created and points
-    will be assigned to it.
-
-    Also it might be inefficient when n_cluster is equal to 2, due to unnecassary
+    It might be inefficient when n_cluster is less than 3, due to unnecassary
     calculations for that case.
 
     Examples
