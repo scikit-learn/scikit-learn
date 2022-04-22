@@ -275,9 +275,10 @@ _STYLE = """
   position: absolute;
   border-left: 1px solid gray;
   box-sizing: border-box;
-  top: 2em;
+  top: 0;
   bottom: 0;
   left: 50%;
+  z-index: 0;
 }
 #$id div.sk-serial {
   display: flex;
@@ -286,8 +287,10 @@ _STYLE = """
   background-color: white;
   padding-right: 0.2em;
   padding-left: 0.2em;
+  position: relative;
 }
 #$id div.sk-item {
+  position: relative;
   z-index: 1;
 }
 #$id div.sk-parallel {
@@ -295,19 +298,22 @@ _STYLE = """
   align-items: stretch;
   justify-content: center;
   background-color: white;
+  position: relative;
 }
-#$id div.sk-parallel::before {
+#$id div.sk-item::before, #$id div.sk-parallel-item::before {
   content: "";
   position: absolute;
   border-left: 1px solid gray;
   box-sizing: border-box;
-  top: 2em;
+  top: 0;
   bottom: 0;
   left: 50%;
+  z-index: -1;
 }
 #$id div.sk-parallel-item {
   display: flex;
   flex-direction: column;
+  z-index: 1;
   position: relative;
   background-color: white;
 }
@@ -328,18 +334,14 @@ _STYLE = """
   box-sizing: border-box;
   padding-bottom: 0.4em;
   background-color: white;
-  position: relative;
 }
 #$id div.sk-label label {
   font-family: monospace;
   font-weight: bold;
-  background-color: white;
   display: inline-block;
   line-height: 1.2em;
 }
 #$id div.sk-label-container {
-  position: relative;
-  z-index: 2;
   text-align: center;
 }
 #$id div.sk-container {
