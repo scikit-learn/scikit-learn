@@ -3,6 +3,7 @@
 cimport libc
 cimport libc.math
 from libc.math cimport isfinite as _isfinite, isinf as _isinf
+from libc.stdint cimport uint16_t
 
 cimport cython
 
@@ -11,13 +12,22 @@ import numpy
 numpy.import_array()
 
 
+cdef extern from "numpy/halffloat.h":
+    ctypedef uint16_t npy_half
+
+    # conversion function
+    float npy_half_to_float(npy_half h);
+
+
 cdef fused fprecision:
+    npy_half
     float
     double
     float complex
     double complex
 
 cdef fused const_fprecision:
+    const npy_half
     const float
     const double
     const float complex
@@ -89,6 +99,8 @@ def py_isfinite(numpy.ndarray a, bint allow_nan=False):
             result = True
         elif a_type == numpy.NPY_ULONGLONG:
             result = True
+        elif a_type == numpy.NPY_HALF:
+            result = c_isfinite(<const npy_half*>a_data, a_step, a_size, <bint_enum>disallow_nan)
         elif a_type == numpy.NPY_FLOAT:
             result = c_isfinite(<const float*>a_data, a_step, a_size, <bint_enum>disallow_nan)
         elif a_type == numpy.NPY_DOUBLE:
@@ -124,8 +136,15 @@ cdef bint c_isfinite_bint_type(const_fprecision* a_ptr, size_t step, size_t size
 
 
 cdef inline bint c_isnonfinite(fprecision v, bint_type* disallow_nan) nogil:
+
     if fprecision is floatcomplex or fprecision is doublecomplex:
         return c_isnonfinite(v.real, disallow_nan) or c_isnonfinite(v.imag, disallow_nan)
+    elif fprecision is npy_half:
+        with gil:
+            if bint_type is bint_true_type:
+                return _isfinite(npy_half_to_float(v)) == 0
+            else:
+                return _isinf(npy_half_to_float(v)) != 0
     elif fprecision is float or fprecision is double:
         if bint_type is bint_true_type:
             return _isfinite(v) == 0

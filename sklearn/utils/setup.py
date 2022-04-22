@@ -6,9 +6,10 @@ from sklearn._build_utils import gen_from_templates
 
 def configuration(parent_package="", top_path=None):
     import numpy
-    from numpy.distutils.misc_util import Configuration
+    from numpy.distutils.misc_util import Configuration, get_info
 
     config = Configuration("utils", parent_package, top_path)
+    info = get_info("npymath")
 
     libraries = []
     if os.name == "posix":
@@ -116,7 +117,13 @@ def configuration(parent_package="", top_path=None):
         libraries=libraries,
         language="c++",
     )
-    config.add_extension("isfinite", sources=["isfinite.pyx"], libraries=libraries)
+    config.add_extension(
+        "isfinite",
+        sources=["isfinite.pyx"],
+        include_dirs=[numpy.get_include()],
+        libraries=libraries,
+        extra_info=info,
+    )
 
     config.add_subpackage("tests")
 
