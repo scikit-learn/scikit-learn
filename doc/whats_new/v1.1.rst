@@ -831,6 +831,7 @@ Changelog
   :user:`Matthieu Parizy <matthieu-pa>`, :pr:`18094` by
   :user:`Roth E Conrad <rotheconrad>` and :pr:`22562` by
   :user:`Meekail Zain <micky774>`.
+  
 :mod:`sklearn.mixture`
 ......................
 
