@@ -176,7 +176,8 @@ def make_dataset(X, y, sample_weight, random_state=None):
         The weight of each sample
 
     random_state : int, RandomState instance or None (default)
-        Determines random number generation for dataset shuffling and noise.
+        Determines random number generation for dataset random sampling. It is not
+        used for dataset shuffling.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 

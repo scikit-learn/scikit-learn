@@ -254,7 +254,7 @@ how to set up your git repository:
 
    .. prompt:: bash $
 
-        pip install pytest pytest-cov flake8 mypy numpydoc black==22.1.0
+        pip install pytest pytest-cov flake8 mypy numpydoc black==22.3.0
 
 .. _upstream:
 
@@ -381,9 +381,9 @@ In order to ease the reviewing process, we recommend that your contribution
 complies with the following rules before marking a PR as ``[MRG]``. The
 **bolded** ones are especially important:
 
-1. **Give your pull request a helpful title** that summarises what your
+1. **Give your pull request a helpful title** that summarizes what your
    contribution does. This title will often become the commit message once
-   merged so it should summarise your contribution for posterity. In some
+   merged so it should summarize your contribution for posterity. In some
    cases "Fix <ISSUE TITLE>" is enough. "Fix #<ISSUE NUMBER>" is never a
    good title.
 
