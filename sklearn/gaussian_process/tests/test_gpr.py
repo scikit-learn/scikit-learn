@@ -791,10 +791,13 @@ def test_predict_shape_with_prior(n_targets):
     y = rng.randn(n_sample, n_targets or 1)
 
     model = GaussianProcessRegressor(n_targets=n_targets)
-    mean, cov = model.predict(X, return_cov=True)
-    _, std = model.predict(X, return_std=True)
+    mean_prior, cov_prior = model.predict(X, return_cov=True)
+    _, std_prior = model.predict(X, return_std=True)
 
-    n_cols = n_targets or 1
-    assert mean.shape == (n_sample, n_cols)
-    assert cov.shape == (n_sample, n_sample, n_cols)
-    assert std.shape == (n_sample, n_cols)
+    model.fit(X, y)
+    mean_post, cov_post = model.predict(X, return_cov=True)
+    _, std_post = model.predict(X, return_std=True)
+
+    assert mean_prior.shape == mean_post.shape
+    assert cov_prior.shape == cov_post.shape
+    assert std_prior.shape == std_post.shape
