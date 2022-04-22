@@ -1657,8 +1657,6 @@ class PartialDependenceDisplay:
             ice_lines_kw = {}
         if pd_line_kw is None:
             pd_line_kw = {}
-        if contour_kw is None:
-            contour_kw = {}
         if bar_kw is None:
             bar_kw = {}
         if heatmap_kw is None:
@@ -1667,6 +1665,8 @@ class PartialDependenceDisplay:
         if ax is None:
             _, ax = plt.subplots()
 
+        if contour_kw is None:
+            contour_kw = {}
         default_contour_kws = {"alpha": 0.75}
         contour_kw = {**default_contour_kws, **contour_kw}
 
