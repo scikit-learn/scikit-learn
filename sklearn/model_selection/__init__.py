@@ -1,4 +1,5 @@
 import typing
+import importlib
 
 from ._split import BaseCrossValidator
 from ._split import BaseShuffleSplit
@@ -72,3 +73,15 @@ __all__ = [
     "train_test_split",
     "validation_curve",
 ]
+
+
+# TODO: remove this check once the estimator is no longer experimental.
+def __getattr__(name):
+    if name not in __all__ and name in {"HalvingGridSearchCV", "HalvingRandomSearchCV"}:
+        raise ImportError(
+            f"{name} is experimental and the API might change without any "
+            "deprecation cycle. To use it, you need to explicitly import "
+            "enable_halving_search_cv:\n"
+            "from sklearn.experimental import enable_halving_search_cv"
+        )
+    return importlib.import_module(f".{name}", __name__)
