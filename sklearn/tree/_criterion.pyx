@@ -620,12 +620,19 @@ cdef class HellingerDistance(ClassificationCriterion):
         better.
         """
         cdef:
-            double impurity_left
-            double impurity_right
+            double impurity_left = 0.0
+            double impurity_right = 0.0
+            double impurity_sum = 0.0
 
+        # get the partial hellinger score, separately per child
         self.children_impurity(&impurity_left, &impurity_right)
 
-        return impurity_right + impurity_left
+        # hellinger score is sqrt of children impurity sum
+        impurity_sum = impurity_right + impurity_left
+        if impurity_sum >= 0:
+            impurity_sum = sqrt(impurity_sum)
+
+        return impurity_sum
 
     cdef void children_impurity(self, double* impurity_left,
                                 double* impurity_right) nogil:
