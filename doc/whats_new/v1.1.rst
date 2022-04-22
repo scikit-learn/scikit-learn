@@ -150,6 +150,12 @@ Changelog
   error message when setting invalid hyper-parameters with `set_params`.
   :pr:`21542` by :user:`Olivier Grisel <ogrisel>`.
 
+- |Enhancement| The error message is improved when importing
+  :class:`model_selection.HalvingGridSearchCV`,
+  :class:`model_selection.HalvingRandomSearchCV`, or
+  :class:`impute.IterativeImputer` without the experimental import flag.
+  :pr:`xxxxx` by `Thomas Fan`_.
+
 :mod:`sklearn.calibration`
 ..........................
 
@@ -291,7 +297,7 @@ Changelog
 - |MajorFeature| Added a new estimator :class:`decomposition.MiniBatchNMF`. It is a
   faster but less accurate version of non-negative matrix factorization, better suited
   for large datasets. :pr:`16948` by :user:`Chiara Marmo <cmarmo>`,
-  :user:`Patricio Cerda <pcerda>` and :user:`Jérémie du Boisberranger <jeremiedbb>`. 
+  :user:`Patricio Cerda <pcerda>` and :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 - |Enhancement| :class:`decomposition.PCA` exposes a parameter `n_oversamples` to tune
   :func:`sklearn.decomposition.randomized_svd` and
