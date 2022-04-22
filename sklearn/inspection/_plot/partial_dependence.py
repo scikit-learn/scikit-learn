@@ -882,6 +882,7 @@ class PartialDependenceDisplay:
         X,
         features,
         *,
+        categorical_features=None,
         feature_names=None,
         target=None,
         response_method="auto",
@@ -900,7 +901,6 @@ class PartialDependenceDisplay:
         centered=False,
         subsample=1000,
         random_state=None,
-        categorical_features=None,
     ):
         """Partial dependence (PD) and individual conditional expectation (ICE) plots.
 
