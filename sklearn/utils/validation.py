@@ -95,8 +95,6 @@ def _assert_all_finite(
     X, allow_nan=False, msg_dtype=None, estimator_name=None, input_name=""
 ):
     """Like assert_all_finite, but only for ndarray."""
-    # validation is also imported in extmath
-    from .extmath import _safe_accumulator_op
 
     if _get_config()["assume_finite"]:
         return
@@ -106,36 +104,32 @@ def _assert_all_finite(
     # false positives from overflow in sum method. The sum is also calculated
     # safely to reduce dtype induced overflows.
     is_float = X.dtype.kind in "fc"
-    if is_float and (np.isfinite(_safe_accumulator_op(np.sum, X))):
+    if is_float:
+        is_finite = py_isfinite(X, allow_nan=allow_nan)
+    if is_float and is_finite:
         pass
     elif is_float:
-        if not py_isfinite(X, allow_nan):
-            if not allow_nan and np.isnan(X).any():
-                type_err = "NaN"
-            else:
-                msg_dtype = msg_dtype if msg_dtype is not None else X.dtype
-                type_err = f"infinity or a value too large for {msg_dtype!r}"
-            padded_input_name = input_name + " " if input_name else ""
-            msg_err = f"Input {padded_input_name}contains {type_err}."
-            if (
-                not allow_nan
-                and estimator_name
-                and input_name == "X"
-                and np.isnan(X).any()
-            ):
-                # Improve the error message on how to handle missing values in
-                # scikit-learn.
-                msg_err += (
-                    f"\n{estimator_name} does not accept missing values"
-                    " encoded as NaN natively. For supervised learning, you might want"
-                    " to consider sklearn.ensemble.HistGradientBoostingClassifier and"
-                    " Regressor which accept missing values encoded as NaNs natively."
-                    " Alternatively, it is possible to preprocess the data, for"
-                    " instance by using an imputer transformer in a pipeline or drop"
-                    " samples with missing values. See"
-                    " https://scikit-learn.org/stable/modules/impute.html"
-                )
-            raise ValueError(msg_err)
+        if not allow_nan and np.isnan(X).any():
+            type_err = "NaN"
+        else:
+            msg_dtype = msg_dtype if msg_dtype is not None else X.dtype
+            type_err = f"infinity or a value too large for {msg_dtype!r}"
+        padded_input_name = input_name + " " if input_name else ""
+        msg_err = f"Input {padded_input_name}contains {type_err}."
+        if not allow_nan and estimator_name and input_name == "X" and np.isnan(X).any():
+            # Improve the error message on how to handle missing values in
+            # scikit-learn.
+            msg_err += (
+                f"\n{estimator_name} does not accept missing values"
+                " encoded as NaN natively. For supervised learning, you might want"
+                " to consider sklearn.ensemble.HistGradientBoostingClassifier and"
+                " Regressor which accept missing values encoded as NaNs natively."
+                " Alternatively, it is possible to preprocess the data, for"
+                " instance by using an imputer transformer in a pipeline or drop"
+                " samples with missing values. See"
+                " https://scikit-learn.org/stable/modules/impute.html"
+            )
+        raise ValueError(msg_err)
 
     # for object dtype data, we only check for NaNs (GH-13254)
     elif X.dtype == np.dtype("object") and not allow_nan:
