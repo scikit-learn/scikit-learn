@@ -1869,6 +1869,24 @@ In all the previous cases the :func:`class_likelihood_ratios` function raises by
 default an appropriate warning message and returns `nan` to avoid pollution when
 averaging over cross-validation folds.
 
+For a worked-out demonstration of the :func:`class_likelihood_ratios` function,
+see the example below.
+
+.. topic:: Examples:
+
+  * :ref:`sphx_glr_auto_examples_classification_plot_likelihood_ratios.py`
+
+.. topic:: References:
+
+  * `Wikipedia entry for Likelihood ratios in diagnostic testing
+    <https://en.wikipedia.org/wiki/Likelihood_ratios_in_diagnostic_testing>`_
+
+  * Brenner, H., & Gefeller, O. (1997).
+    Variation of sensitivity, specificity, likelihood ratios and predictive
+    values with disease prevalence.
+    Statistics in medicine, 16(9), 981-991.
+
+
 .. _multilabel_ranking_metrics:
 
 Multilabel ranking metrics
