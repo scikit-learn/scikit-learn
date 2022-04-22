@@ -779,3 +779,22 @@ def test_sample_y_shape_with_prior(n_targets):
     model.fit(X, y)
     shape_after_fit = model.sample_y(X).shape
     assert shape_before_fit == shape_after_fit
+
+
+@pytest.mark.parametrize("n_targets", [None, 1, 2, 3])
+def test_predict_shape_with_prior(n_targets):
+    """Check the output shape of `predict` with prior distribution"""
+    rng = np.random.RandomState(1024)
+
+    n_sample = 10
+    X = rng.randn(n_sample, 3)
+    y = rng.randn(n_sample, n_targets or 1)
+
+    model = GaussianProcessRegressor(n_targets=n_targets)
+    mean, cov = model.predict(X, return_cov=True)
+    _, std = model.predict(X, return_std=True)
+
+    n_cols = n_targets or 1
+    assert mean.shape == (n_sample, n_cols)
+    assert cov.shape == (n_sample, n_sample, n_cols)
+    assert std.shape == (n_sample, n_cols)
