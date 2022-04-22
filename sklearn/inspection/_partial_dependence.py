@@ -482,7 +482,7 @@ def partial_dependence(
 
     if len(is_categorical) != len(features_indices):
         raise ValueError(
-            "`is_categorical` should contains the same number of elements as "
+            "`is_categorical` should contain the same number of elements as "
             f"`features`. Got {len(is_categorical)} in `is_categorical` and "
             f"`features` {len(features_indices)}."
         )
