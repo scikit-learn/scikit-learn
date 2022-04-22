@@ -30,13 +30,15 @@ from time import time
 import matplotlib.pyplot as plt
 
 from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
-from sklearn.decomposition import NMF, LatentDirichletAllocation
+from sklearn.decomposition import NMF, MiniBatchNMF, LatentDirichletAllocation
 from sklearn.datasets import fetch_20newsgroups
 
 n_samples = 2000
 n_features = 1000
 n_components = 10
 n_top_words = 20
+batch_size = 128
+init = "nndsvda"
 
 
 def plot_top_words(model, feature_names, n_top_words, title):
@@ -101,7 +103,15 @@ print(
     "n_samples=%d and n_features=%d..." % (n_samples, n_features)
 )
 t0 = time()
-nmf = NMF(n_components=n_components, random_state=1, alpha=0.1, l1_ratio=0.5).fit(tfidf)
+nmf = NMF(
+    n_components=n_components,
+    random_state=1,
+    init=init,
+    beta_loss="frobenius",
+    alpha_W=0.00005,
+    alpha_H=0.00005,
+    l1_ratio=1,
+).fit(tfidf)
 print("done in %0.3fs." % (time() - t0))
 
 
@@ -121,10 +131,12 @@ t0 = time()
 nmf = NMF(
     n_components=n_components,
     random_state=1,
+    init=init,
     beta_loss="kullback-leibler",
     solver="mu",
     max_iter=1000,
-    alpha=0.1,
+    alpha_W=0.00005,
+    alpha_H=0.00005,
     l1_ratio=0.5,
 ).fit(tfidf)
 print("done in %0.3fs." % (time() - t0))
@@ -135,6 +147,63 @@ plot_top_words(
     tfidf_feature_names,
     n_top_words,
     "Topics in NMF model (generalized Kullback-Leibler divergence)",
+)
+
+# Fit the MiniBatchNMF model
+print(
+    "\n" * 2,
+    "Fitting the MiniBatchNMF model (Frobenius norm) with tf-idf "
+    "features, n_samples=%d and n_features=%d, batch_size=%d..."
+    % (n_samples, n_features, batch_size),
+)
+t0 = time()
+mbnmf = MiniBatchNMF(
+    n_components=n_components,
+    random_state=1,
+    batch_size=batch_size,
+    init=init,
+    beta_loss="frobenius",
+    alpha_W=0.00005,
+    alpha_H=0.00005,
+    l1_ratio=0.5,
+).fit(tfidf)
+print("done in %0.3fs." % (time() - t0))
+
+
+tfidf_feature_names = tfidf_vectorizer.get_feature_names_out()
+plot_top_words(
+    mbnmf,
+    tfidf_feature_names,
+    n_top_words,
+    "Topics in MiniBatchNMF model (Frobenius norm)",
+)
+
+# Fit the MiniBatchNMF model
+print(
+    "\n" * 2,
+    "Fitting the MiniBatchNMF model (generalized Kullback-Leibler "
+    "divergence) with tf-idf features, n_samples=%d and n_features=%d, "
+    "batch_size=%d..." % (n_samples, n_features, batch_size),
+)
+t0 = time()
+mbnmf = MiniBatchNMF(
+    n_components=n_components,
+    random_state=1,
+    batch_size=batch_size,
+    init=init,
+    beta_loss="kullback-leibler",
+    alpha_W=0.00005,
+    alpha_H=0.00005,
+    l1_ratio=0.5,
+).fit(tfidf)
+print("done in %0.3fs." % (time() - t0))
+
+tfidf_feature_names = tfidf_vectorizer.get_feature_names_out()
+plot_top_words(
+    mbnmf,
+    tfidf_feature_names,
+    n_top_words,
+    "Topics in MiniBatchNMF model (generalized Kullback-Leibler divergence)",
 )
 
 print(
