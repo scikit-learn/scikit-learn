@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -xe
+set -e
 
 # defines the show_installed_libraries function
 source build_tools/shared.sh
@@ -70,12 +70,13 @@ if [[ "$SHOW_SHORT_SUMMARY" == "true" ]]; then
     TEST_CMD="$TEST_CMD -ra"
 fi
 
-if [[ -z "$SELECTED_TESTS" ]]; then
+if [[ -n "$SELECTED_TESTS" ]]; then
     TEST_CMD="$TEST_CMD -k $SELECTED_TESTS"
 
     # Override to make selected tests run on all random seeds
     export SKLEARN_TESTS_GLOBAL_RANDOM_SEED="all"
 fi
 
+set -x
 eval "$TEST_CMD --pyargs sklearn"
 set +x
