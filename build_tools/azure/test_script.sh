@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+set -xe
 
 # defines the show_installed_libraries function
 source build_tools/shared.sh
@@ -77,6 +77,5 @@ if [[ -z "$SELECTED_TESTS" ]]; then
     export SKLEARN_TESTS_GLOBAL_RANDOM_SEED="all"
 fi
 
-set -x
 eval "$TEST_CMD --pyargs sklearn"
 set +x
