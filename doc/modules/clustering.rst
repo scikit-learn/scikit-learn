@@ -451,7 +451,7 @@ to be specified in advance. It works well for a small number of clusters,
 but is not advised for many clusters.
 
 For two clusters, SpectralClustering solves a convex relaxation of the
-`normalised cuts <https://people.eecs.berkeley.edu/~malik/papers/SM-ncut.pdf>`_
+`normalized cuts <https://people.eecs.berkeley.edu/~malik/papers/SM-ncut.pdf>`_
 problem on the similarity graph: cutting the graph in two so that the weight of
 the edges cut is small compared to the weights of the edges inside each
 cluster. This criteria is especially interesting when working on images, where
@@ -530,6 +530,8 @@ below.
 
  * :doi:`"Simple, direct, and efficient multi-way spectral clustering"<10.1093/imaiai/iay008>`
    Anil Damle, Victor Minden, Lexing Ying, 2019
+
+.. _spectral_clustering_graph:
 
 Spectral Clustering Graphs
 --------------------------

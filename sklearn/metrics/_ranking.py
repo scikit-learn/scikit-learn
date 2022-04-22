@@ -170,6 +170,7 @@ def average_precision_score(
     Returns
     -------
     average_precision : float
+        Average precision score.
 
     See Also
     --------
@@ -864,15 +865,25 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None, sample_weight
         y_true, probas_pred, pos_label=pos_label, sample_weight=sample_weight
     )
 
-    precision = tps / (tps + fps)
-    precision[np.isnan(precision)] = 0
-    recall = tps / tps[-1]
+    ps = tps + fps
+    precision = np.divide(tps, ps, where=(ps != 0))
+
+    # When no positive label in y_true, recall is set to 1 for all thresholds
+    # tps[-1] == 0 <=> y_true == all negative labels
+    if tps[-1] == 0:
+        warnings.warn(
+            "No positive class found in y_true, "
+            "recall is set to one for all thresholds."
+        )
+        recall = np.ones_like(tps)
+    else:
+        recall = tps / tps[-1]
 
     # stop when full recall attained
     # and reverse the outputs so recall is decreasing
     last_ind = tps.searchsorted(tps[-1])
     sl = slice(last_ind, None, -1)
-    return np.r_[precision[sl], 1], np.r_[recall[sl], 0], thresholds[sl]
+    return np.hstack((precision[sl], 1)), np.hstack((recall[sl], 0)), thresholds[sl]
 
 
 def roc_curve(
@@ -1192,6 +1203,9 @@ def label_ranking_loss(y_true, y_score, *, sample_weight=None):
     Returns
     -------
     loss : float
+        Average number of label pairs that are incorrectly ordered given
+        y_score weighted by the size of the label set and the number of labels not
+        in the label set.
 
     References
     ----------
@@ -1707,15 +1721,21 @@ def top_k_accuracy_score(
     y_type = type_of_target(y_true, input_name="y_true")
     if y_type == "binary" and labels is not None and len(labels) > 2:
         y_type = "multiclass"
-    y_score = check_array(y_score, ensure_2d=False)
-    y_score = column_or_1d(y_score) if y_type == "binary" else y_score
-    check_consistent_length(y_true, y_score, sample_weight)
-
     if y_type not in {"binary", "multiclass"}:
         raise ValueError(
             f"y type must be 'binary' or 'multiclass', got '{y_type}' instead."
         )
+    y_score = check_array(y_score, ensure_2d=False)
+    if y_type == "binary":
+        if y_score.ndim == 2 and y_score.shape[1] != 1:
+            raise ValueError(
+                "`y_true` is binary while y_score is 2d with"
+                f" {y_score.shape[1]} classes. If `y_true` does not contain all the"
+                " labels, `labels` must be provided."
+            )
+        y_score = column_or_1d(y_score)
 
+    check_consistent_length(y_true, y_score, sample_weight)
     y_score_n_classes = y_score.shape[1] if y_score.ndim == 2 else 2
 
     if labels is None:
