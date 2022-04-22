@@ -6,7 +6,6 @@ import warnings
 import numpy as np
 import scipy.sparse as sp
 
-from ..exceptions import EfficiencyWarning
 from ._kmeans import _BaseKMeans
 from ._kmeans import _kmeans_single_elkan
 from ._kmeans import _kmeans_single_lloyd
@@ -52,7 +51,9 @@ class _BisectingTree:
     def get_cluster_to_bisect(self):
         """Return the cluster node to bisect next.
 
-        It's based on the score of the cluster (see `bisecting_strategy` for details).
+        It's based on the score of the cluster, which can be either the number of
+        data points assigned to that cluster or the inertia of that cluster
+        (see `bisecting_strategy` for details).
         """
         max_score = None
 
@@ -109,7 +110,7 @@ class BisectingKMeans(_BaseKMeans):
         in inner K-Means. Use an int to make the randomness deterministic.
         See :term:`Glossary <random_state>`.
 
-    max_iter : int, default=30
+    max_iter : int, default=300
         Maximum number of iterations of the inner k-means algorithm at each
         bisection.
 
@@ -148,7 +149,7 @@ class BisectingKMeans(_BaseKMeans):
             all calculated cluster for cluster with biggest SSE
             (Sum of squared errors) and bisect it. This approach concentrates on
             precision, but may be costly in terms of execution time (especially for
-            larger ammount of data points).
+            larger amount of data points).
 
          - "largest_cluster" - BisectingKMeans will always split cluster with
             largest amount of points assigned to it from all clusters
@@ -210,10 +211,11 @@ class BisectingKMeans(_BaseKMeans):
     def __init__(
         self,
         n_clusters=8,
+        *,
         init="random",
         n_init=1,
         random_state=None,
-        max_iter=30,
+        max_iter=300,
         verbose=0,
         tol=1e-4,
         copy_x=True,
@@ -238,6 +240,13 @@ class BisectingKMeans(_BaseKMeans):
     def _check_params(self, X):
         super()._check_params(X)
 
+        # algorithm
+        if self.algorithm not in ("lloyd", "elkan"):
+            raise ValueError(
+                "Algorithm must be either 'lloyd' or 'elkan', "
+                f"got {self.algorithm} instead."
+            )
+
         # bisecting_strategy
         if self.bisecting_strategy not in ["biggest_inertia", "largest_cluster"]:
             raise ValueError(
@@ -245,16 +254,7 @@ class BisectingKMeans(_BaseKMeans):
                 f"Got {self.bisecting_strategy} instead."
             )
 
-        # Regular K-Means should do less computations when there are only
-        # less than 3 clusters
-        if self.n_clusters < 3:
-            warnings.warn(
-                "BisectingKMeans might be inefficient for n_cluster "
-                "smaller than 3  "
-                "- Use Normal KMeans from sklearn.cluster instead.",
-                EfficiencyWarning,
-            )
-
+        # init
         if _is_arraylike_not_scalar(self.init):
             raise ValueError("BisectingKMeans does not support init as array.")
 
@@ -398,7 +398,7 @@ class BisectingKMeans(_BaseKMeans):
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
         self._n_threads = _openmp_effective_n_threads()
 
-        if self.algorithm == "lloyd":
+        if self.algorithm == "lloyd" or self.n_clusters == 1:
             self._kmeans_single = _kmeans_single_lloyd
             self._check_mkl_vcomp(X, X.shape[0])
         else:
@@ -409,7 +409,7 @@ class BisectingKMeans(_BaseKMeans):
             self._X_mean = X.mean(axis=0)
             X -= self._X_mean
 
-        # Initialize the hierearchical clusters tree
+        # Initialize the hierarchical clusters tree
         self._bisecting_tree = _BisectingTree(
             indices=np.arange(X.shape[0]),
             center=X.mean(axis=0),
@@ -440,12 +440,12 @@ class BisectingKMeans(_BaseKMeans):
             X += self._X_mean
             self.cluster_centers_ += self._X_mean
 
-        self._n_features_out = self.cluster_centers_.shape[0]
-
         _inertia = _inertia_sparse if sp.issparse(X) else _inertia_dense
         self.inertia_ = _inertia(
             X, sample_weight, self.cluster_centers_, self.labels_, self._n_threads
         )
+
+        self._n_features_out = self.cluster_centers_.shape[0]
 
         return self
 

@@ -11,7 +11,7 @@ from sklearn.cluster import BisectingKMeans
 @pytest.mark.parametrize("bisecting_strategy", ["biggest_inertia", "largest_cluster"])
 def test_three_clusters(bisecting_strategy):
     """Tries to perform bisect k-means for three clusters to check
-    if splitting data is performed correctly
+    if splitting data is performed correctly.
     """
 
     # X = np.array([[1, 2], [1, 4], [1, 0],
@@ -37,9 +37,9 @@ def test_three_clusters(bisecting_strategy):
 
 
 def test_sparse():
-    """Test Bisecting K-Means with sparse data
+    """Test Bisecting K-Means with sparse data.
 
-    Checks if labels and centers are the same between dense and sparse
+    Checks if labels and centers are the same between dense and sparse.
     """
 
     rng = np.random.RandomState(0)
@@ -62,7 +62,7 @@ def test_sparse():
 
 @pytest.mark.parametrize("n_clusters", [4, 5])
 def test_n_clusters(n_clusters):
-    """Test if resulting labels are in range [0, n_clusters - 1]"""
+    """Test if resulting labels are in range [0, n_clusters - 1]."""
 
     rng = np.random.RandomState(0)
     X = rng.rand(10, 2)
@@ -74,20 +74,11 @@ def test_n_clusters(n_clusters):
 
 
 def test_one_cluster():
-    """Test warnings and performance for n_cluster = 1"""
+    """Test single cluster."""
 
     X = np.array([[1, 2], [10, 2], [10, 8]])
 
-    bisect_means = BisectingKMeans(n_clusters=1, random_state=0)
-
-    with warnings.catch_warnings(record=True) as w:
-        bisect_means.fit(X)
-
-    msg = (
-        "BisectingKMeans might be inefficient for n_cluster smaller than 3 "
-        + " - Use Normal KMeans from sklearn.cluster instead."
-    )
-    assert str(w[0].message) == msg
+    bisect_means = BisectingKMeans(n_clusters=1, random_state=0).fit(X)
 
     # All labels from fit or predict should be equal 0
     assert all(bisect_means.labels_ == 0)
@@ -112,7 +103,7 @@ def test_one_cluster():
     ],
 )
 def test_wrong_params(param, match):
-    """Test Exceptions at check_params function"""
+    """Test Exceptions at check_params function."""
     rng = np.random.RandomState(0)
     X = rng.rand(5, 2)
 
@@ -123,7 +114,7 @@ def test_wrong_params(param, match):
 
 @pytest.mark.parametrize("is_sparse", [True, False])
 def test_fit_predict(is_sparse):
-    """Check if labels from fit(X) method are same as from fit(X).predict(X)"""
+    """Check if labels from fit(X) method are same as from fit(X).predict(X)."""
     rng = np.random.RandomState(0)
 
     X = rng.rand(10, 2)
@@ -140,7 +131,7 @@ def test_fit_predict(is_sparse):
 
 @pytest.mark.parametrize("is_sparse", [True, False])
 def test_dtype_preserved(is_sparse, global_dtype):
-    """Check that centers dtype is the same as input data dtype"""
+    """Check that centers dtype is the same as input data dtype."""
     rng = np.random.RandomState(0)
     X = rng.rand(10, 2).astype(global_dtype, copy=False)
 

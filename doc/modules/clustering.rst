@@ -783,7 +783,7 @@ until the target number of clusters is reached.
 This variant is preferable to agglomerative clustering
 if the number of clusters is small compared to the number of data points.
 
-This variant also do not produce empty clusters.
+This variant also does not produce empty clusters.
 
 There exist two strategies for selecting the cluster to split:
  - ``bisecting_strategy="largest_cluster"`` selects the cluster having the most points
@@ -791,13 +791,13 @@ There exist two strategies for selecting the cluster to split:
    (cluster with biggest Sum of Squared Errors within)
 
 Picking by largest amount of data points in most cases produces result as
-accurate as picking by SSE and is faster (especially for larger amount of data
+accurate as picking by inertia and is faster (especially for larger amount of data
 points, where calculating error may be costly).
 
 Difference between Bisecting K-Means and regular K-Means can be seen on example
 :ref:`sphx_glr_auto_examples_cluster_plot_bisect_kmeans.py`.
-While regular K-Means tend to create non-related clusters,
-clusters from Bisecting K-Means are well ordered and create quite visible hierarchy.
+While the regular K-Means algorithm tends to create non-related clusters,
+clusters from Bisecting K-Means are well ordered and create quite a visible hierarchy.
 
 
 .. topic:: References:

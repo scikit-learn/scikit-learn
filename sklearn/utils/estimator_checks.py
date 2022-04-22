@@ -259,7 +259,8 @@ def _yield_clustering_checks(clusterer):
         yield check_clustering
         yield partial(check_clustering, readonly_memmap=True)
         yield check_estimators_partial_fit_n_features
-    yield check_non_transformer_estimators_n_iter
+    if not hasattr(clusterer, "transform"):
+        yield check_non_transformer_estimators_n_iter
 
 
 def _yield_outliers_checks(estimator):
@@ -3294,7 +3295,6 @@ def check_non_transformer_estimators_n_iter(name, estimator_orig):
         "LinearSVC",
         "LogisticRegression",
         "SelfTrainingClassifier",
-        "BisectingKMeans",
     ]
 
     # Tested in test_transformer_n_iter

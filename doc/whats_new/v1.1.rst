@@ -171,6 +171,11 @@ Changelog
 :mod:`sklearn.cluster`
 ......................
 
+- |MajorFeature| :class:`BisectingKMeans` introducing Bisecting K-Means algorithm
+  :pr:`20031` by :user:`Michal Krawczyk <michalkrawczyk>`,
+  :user:`Tom Dupre la Tour <TomDLT>`
+  and :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 - |Enhancement| :class:`cluster.SpectralClustering` and :func:`cluster.spectral`
   now include the new `'cluster_qr'` method from :func:`cluster.cluster_qr`
   that clusters samples in the embedding space as an alternative to the existing
@@ -757,14 +762,6 @@ Changelog
   `n_neighbours >= n_samples / 2` to ensure a correct support for the function.
   :pr:`18832` by :user:`Hong Shao Yang <hongshaoyang>` and :pr:`23033` by
   :user:`Meekail Zain <micky774>`.
-
-:mod:`sklearn.cluster`
-......................
-
-- |Feature| :class:`BisectingKMeans` introducing Bisecting K-Means algorithm
-  :pr:`20031` by :user:`Michal Krawczyk <michalkrawczyk>`,
-  :user:`Tom Dupre la Tour <TomDLT>`
-  and :user:`Jérémie du Boisberranger <jeremiedbb>`.
   
 :mod:`sklearn.metrics`
 ......................
