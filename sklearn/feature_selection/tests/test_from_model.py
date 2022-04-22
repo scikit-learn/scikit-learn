@@ -1,6 +1,7 @@
 import re
 import pytest
 import numpy as np
+import warnings
 from unittest.mock import Mock
 
 from sklearn.utils._testing import assert_array_almost_equal
@@ -10,6 +11,8 @@ from sklearn.utils._testing import skip_if_32bit
 from sklearn.utils._testing import MinimalClassifier
 
 from sklearn import datasets
+from sklearn.cross_decomposition import CCA, PLSCanonical, PLSRegression
+from sklearn.datasets import make_friedman1
 from sklearn.linear_model import LogisticRegression, SGDClassifier, Lasso
 from sklearn.svm import LinearSVC
 from sklearn.feature_selection import SelectFromModel
@@ -499,6 +502,19 @@ def test_importance_getter(estimator, importance_getter):
     assert selector.transform(data).shape[1] == 1
 
 
+@pytest.mark.parametrize("PLSEstimator", [CCA, PLSCanonical, PLSRegression])
+def test_select_from_model_pls(PLSEstimator):
+    """Check the behaviour of SelectFromModel with PLS estimators.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/12410
+    """
+    X, y = make_friedman1(n_samples=50, n_features=10, random_state=0)
+    estimator = PLSEstimator(n_components=1)
+    model = make_pipeline(SelectFromModel(estimator), estimator).fit(X, y)
+    assert model.score(X, y) > 0.5
+
+
 def test_estimator_does_not_support_feature_names():
     """SelectFromModel works with estimators that do not support feature_names_in_.
 
@@ -521,6 +537,7 @@ def test_estimator_does_not_support_feature_names():
     feature_names_out = set(selector.get_feature_names_out())
     assert feature_names_out < all_feature_names
 
-    with pytest.warns(None) as records:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
+
         selector.transform(X.iloc[1:3])
-    assert not [w.message for w in records]
