@@ -19,10 +19,6 @@ whereas real SAMME.R uses the predicted class probabilities.
 
 """
 
-# Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>,
-#         Noel Dawe <noel.dawe@gmail.com>
-#
-# License: BSD 3 clause
 
 # %%
 # Hastie et al. (2009) example 10.2
@@ -151,3 +147,17 @@ leg = ax.legend(loc="upper right", fancybox=True)
 leg.get_frame().set_alpha(0.7)
 
 plt.show()
+
+# %%
+#
+# Concluding remarks
+# ------------------
+#
+# We observe that the performance on both train and test sets of real AdaBoost
+# is better than that of discrete AdaBoost
+
+# %%
+# Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>,
+#         Noel Dawe <noel.dawe@gmail.com>
+#
+# License: BSD 3 clause
