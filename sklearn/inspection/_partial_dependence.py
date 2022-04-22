@@ -40,17 +40,24 @@ def _grid_from_X(X, percentiles, is_categorical, grid_resolution):
     The grid is a cartesian product between the columns of ``values``. The
     ith column of ``values`` consists in ``grid_resolution`` equally-spaced
     points between the percentiles of the jth column of X.
+
     If ``grid_resolution`` is bigger than the number of unique values in the
-    jth column of X, then those unique values will be used instead.
+    j-th column of X or if the feature is a categorical feature (by inspecting
+    `is_categorical`) , then those unique values will be used instead.
 
     Parameters
     ----------
-    X : ndarray, shape (n_samples, n_target_features)
+    X : ndarray of shape (n_samples, n_target_features)
         The data.
 
-    percentiles : tuple of floats
+    percentiles : tuple of float
         The percentiles which are used to construct the extreme values of
         the grid. Must be in [0, 1].
+
+    is_categorical : tuple of bool
+        For each feature, tells whether it is categorical or not. If a feature
+        is categorical, then the values used will be the unique ones
+        (i.e. categories) instead of the percentiles.
 
     grid_resolution : int
         The number of equally spaced points to be placed on the grid for each
@@ -58,7 +65,7 @@ def _grid_from_X(X, percentiles, is_categorical, grid_resolution):
 
     Returns
     -------
-    grid : ndarray, shape (n_points, n_target_features)
+    grid : ndarray of shape (n_points, n_target_features)
         A value for each feature at each point in the grid. ``n_points`` is
         always ``<= grid_resolution ** X.shape[1]``.
 
@@ -81,7 +88,9 @@ def _grid_from_X(X, percentiles, is_categorical, grid_resolution):
     for is_cat, feature in zip(is_categorical, range(X.shape[1])):
         uniques = np.unique(_safe_indexing(X, feature, axis=1))
         if is_cat or uniques.shape[0] < grid_resolution:
-            # feature has low resolution use unique values
+            # Use the unique values either because:
+            # - feature has low resolution use unique values
+            # - feature is categorical
             axis = uniques
         else:
             # create axis based on percentiles and grid resolution

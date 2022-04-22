@@ -977,11 +977,11 @@ class PartialDependenceDisplay:
             Indicates the categorical features.
 
             - `None`: no feature will be considered categorical;
-            - boolean array-like: boolean mask of shape `(n_features,)` indicating
-            which features are categorical. Thus, this array has the same shape
-            has `X.shape[1]`;
-            - integer or string array-like: integer indices or strings indicating
-            categorical features.
+            - boolean array-like: boolean mask of shape `(n_features,)`
+              indicating which features are categorical. Thus, this array has
+              the same shape has `X.shape[1]`;
+            - integer or string array-like: integer indices or strings
+              indicating categorical features.
 
             .. versionadded:: 1.1
 
