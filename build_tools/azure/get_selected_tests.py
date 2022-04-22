@@ -30,5 +30,5 @@ if __name__ == "__main__":
     if selected_tests:
         print(f"##vso[task.setvariable variable=SELECTED_TESTS]'{selected_tests}'")
         print(f"selected tests: {selected_tests}")  # helps debugging
-
-    print("no selected tests")
+    else:
+        print("no selected tests")
