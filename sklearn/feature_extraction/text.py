@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Authors: Olivier Grisel <olivier.grisel@ensta.org>
 #          Mathieu Blondel <mathieu@mblondel.org>
 #          Lars Buitinck
@@ -32,7 +31,6 @@ from ._stop_words import ENGLISH_STOP_WORDS
 from ..utils.validation import check_is_fitted, check_array, FLOAT_DTYPES, check_scalar
 from ..utils.deprecation import deprecated
 from ..utils import _IS_32BIT
-from ..utils.fixes import _astype_copy_false
 from ..exceptions import NotFittedError
 
 
@@ -1621,7 +1619,7 @@ class TfidfTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         if self.use_idf:
             n_samples, n_features = X.shape
             df = _document_frequency(X)
-            df = df.astype(dtype, **_astype_copy_false(df))
+            df = df.astype(dtype, copy=False)
 
             # perform idf smoothing if required
             df += int(self.smooth_idf)
@@ -1987,7 +1985,7 @@ class TfidfVectorizer(CountVectorizer):
         if not self.use_idf:
             raise ValueError("`idf_` cannot be set when `user_idf=False`.")
         if not hasattr(self, "_tfidf"):
-            # We should support transfering `idf_` from another `TfidfTransformer`
+            # We should support transferring `idf_` from another `TfidfTransformer`
             # and therefore, we need to create the transformer instance it does not
             # exist yet.
             self._tfidf = TfidfTransformer(

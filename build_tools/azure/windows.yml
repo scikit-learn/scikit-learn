@@ -26,6 +26,9 @@ jobs:
       ${{ insert }}: ${{ parameters.matrix }}
 
   steps:
+    - bash: python build_tools/azure/get_selected_tests.py
+      displayName: Check selected tests for all random seeds
+      condition: eq(variables['Build.Reason'], 'PullRequest')
     - bash: echo "##vso[task.prependpath]$CONDA/Scripts"
       displayName: Add conda to PATH for 64 bit Python
       condition: eq(variables['PYTHON_ARCH'], '64')
@@ -41,7 +44,8 @@ jobs:
     - bash: ./build_tools/azure/test_script.sh
       displayName: 'Test Library'
     - bash: ./build_tools/azure/upload_codecov.sh
-      condition: and(succeeded(), eq(variables['COVERAGE'], 'true'))
+      condition: and(succeeded(), eq(variables['COVERAGE'], 'true'),
+                     eq(variables['SELECTED_TESTS'], ''))
       displayName: 'Upload To Codecov'
       env:
         CODECOV_TOKEN: $(CODECOV_TOKEN)

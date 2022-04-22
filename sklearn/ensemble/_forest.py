@@ -51,7 +51,8 @@ from scipy.sparse import hstack as sparse_hstack
 from joblib import Parallel
 
 from ..base import is_classifier
-from ..base import ClassifierMixin, MultiOutputMixin, RegressorMixin
+from ..base import ClassifierMixin, MultiOutputMixin, RegressorMixin, TransformerMixin
+
 from ..metrics import accuracy_score, r2_score
 from ..preprocessing import OneHotEncoder
 from ..tree import (
@@ -66,7 +67,11 @@ from ..exceptions import DataConversionWarning
 from ._base import BaseEnsemble, _partition_estimators
 from ..utils.fixes import delayed
 from ..utils.multiclass import check_classification_targets, type_of_target
-from ..utils.validation import check_is_fitted, _check_sample_weight
+from ..utils.validation import (
+    check_is_fitted,
+    _check_sample_weight,
+    _check_feature_names_in,
+)
 from ..utils.validation import _num_samples
 
 
@@ -389,7 +394,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
         # Check parameters
         self._validate_estimator()
-        # TODO: Remove in v1.2
+        # TODO(1.2): Remove "mse" and "mae"
         if isinstance(self, (RandomForestRegressor, ExtraTreesRegressor)):
             if self.criterion == "mse":
                 warn(
@@ -406,6 +411,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                     FutureWarning,
                 )
 
+            # TODO(1.3): Remove "auto"
             if self.max_features == "auto":
                 warn(
                     "`max_features='auto'` has been deprecated in 1.1 "
@@ -415,8 +421,8 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                     "RandomForestRegressors and ExtraTreesRegressors.",
                     FutureWarning,
                 )
-
         elif isinstance(self, (RandomForestClassifier, ExtraTreesClassifier)):
+            # TODO(1.3): Remove "auto"
             if self.max_features == "auto":
                 warn(
                     "`max_features='auto'` has been deprecated in 1.1 "
@@ -1104,10 +1110,11 @@ class RandomForestClassifier(ForestClassifier):
            The default value of ``n_estimators`` changed from 10 to 100
            in 0.22.
 
-    criterion : {"gini", "entropy"}, default="gini"
+    criterion : {"gini", "entropy", "log_loss"}, default="gini"
         The function to measure the quality of a split. Supported criteria are
-        "gini" for the Gini impurity and "entropy" for the information gain.
-        Note: this parameter is tree-specific.
+        "gini" for the Gini impurity and "log_loss" and "entropy" both for the
+        Shannon information gain, see :ref:`tree_mathematical_formulation`.
+        Note: This parameter is tree-specific.
 
     max_depth : int, default=None
         The maximum depth of the tree. If None, then nodes are expanded until
@@ -1775,9 +1782,11 @@ class ExtraTreesClassifier(ForestClassifier):
            The default value of ``n_estimators`` changed from 10 to 100
            in 0.22.
 
-    criterion : {"gini", "entropy"}, default="gini"
+    criterion : {"gini", "entropy", "log_loss"}, default="gini"
         The function to measure the quality of a split. Supported criteria are
-        "gini" for the Gini impurity and "entropy" for the information gain.
+        "gini" for the Gini impurity and "log_loss" and "entropy" both for the
+        Shannon information gain, see :ref:`tree_mathematical_formulation`.
+        Note: This parameter is tree-specific.
 
     max_depth : int, default=None
         The maximum depth of the tree. If None, then nodes are expanded until
@@ -2404,7 +2413,7 @@ class ExtraTreesRegressor(ForestRegressor):
         self.ccp_alpha = ccp_alpha
 
 
-class RandomTreesEmbedding(BaseForest):
+class RandomTreesEmbedding(TransformerMixin, BaseForest):
     """
     An ensemble of totally random trees.
 
@@ -2694,7 +2703,41 @@ class RandomTreesEmbedding(BaseForest):
         super().fit(X, y, sample_weight=sample_weight)
 
         self.one_hot_encoder_ = OneHotEncoder(sparse=self.sparse_output)
-        return self.one_hot_encoder_.fit_transform(self.apply(X))
+        output = self.one_hot_encoder_.fit_transform(self.apply(X))
+        self._n_features_out = output.shape[1]
+        return output
+
+    def get_feature_names_out(self, input_features=None):
+        """Get output feature names for transformation.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Only used to validate feature names with the names seen in :meth:`fit`.
+
+        Returns
+        -------
+        feature_names_out : ndarray of str objects
+            Transformed feature names, in the format of
+            `randomtreesembedding_{tree}_{leaf}`, where `tree` is the tree used
+            to generate the leaf and `leaf` is the index of a leaf node
+            in that tree. Note that the node indexing scheme is used to
+            index both nodes with children (split nodes) and leaf nodes.
+            Only the latter can be present as output features.
+            As a consequence, there are missing indices in the output
+            feature names.
+        """
+        check_is_fitted(self, "_n_features_out")
+        _check_feature_names_in(
+            self, input_features=input_features, generate_names=False
+        )
+
+        feature_names = [
+            f"randomtreesembedding_{tree}_{leaf}"
+            for tree in range(self.n_estimators)
+            for leaf in self.one_hot_encoder_.categories_[tree]
+        ]
+        return np.asarray(feature_names, dtype=object)
 
     def transform(self, X):
         """
