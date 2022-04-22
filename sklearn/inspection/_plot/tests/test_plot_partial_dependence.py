@@ -738,6 +738,36 @@ def test_plot_partial_dependence_with_categorical(
     assert disp.axes_[0, 0].get_legend() is None
 
 
+def test_plot_partial_dependence_legend(pyplot):
+    pd = pytest.importorskip("pandas")
+    X = pd.DataFrame(
+        {
+            "col_A": ["A", "B", "C"],
+            "col_B": [1, 0, 2],
+            "col_C": ["C", "B", "A"],
+        }
+    )
+    y = np.array([1.2, 0.5, 0.45]).T
+
+    categorical_features = ["col_A", "col_C"]
+    preprocessor = make_column_transformer((OneHotEncoder(), categorical_features))
+    model = make_pipeline(preprocessor, LinearRegression())
+    model.fit(X, y)
+
+    disp = plot_partial_dependence_func(
+        model,
+        X,
+        features=["col_B", "col_C"],
+        categorical_features=categorical_features,
+        kind=["both", "average"],
+    )
+
+    legend_text = disp.axes_[0, 0].get_legend().get_texts()
+    assert len(legend_text) == 1
+    assert legend_text[0].get_text() == "average"
+    assert disp.axes_[0, 1].get_legend() is None
+
+
 @pytest.mark.parametrize(
     "kind, expected_shape",
     [("average", (1, 2)), ("individual", (1, 2, 50)), ("both", (1, 2, 51))],
