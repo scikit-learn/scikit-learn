@@ -28,19 +28,11 @@ bike sharing dataset. The example is inspired from [1]_.
 .. [2] For classification you can think of it as the regression score before
        the link function.
 
-.. [3] `Goldstein, A., Kapelner, A., Bleich, J., and Pitkin, E., Peeking Inside
-       the Black Box: Visualizing Statistical Learning With Plots of
-       Individual Conditional Expectation. (2015) Journal of Computational and
-       Graphical Statistics, 24(1): 44-65 <https://arxiv.org/abs/1309.6392>`_
+.. [3] :arxiv:`Goldstein, A., Kapelner, A., Bleich, J., and Pitkin, E. (2015).
+       "Peeking Inside the Black Box: Visualizing Statistical Learning With Plots of
+       Individual Conditional Expectation". Journal of Computational and
+       Graphical Statistics, 24(1): 44-65 <1309.6392>`
 """
-
-# Authors : Guillaume Lemaitre <g.lemaitre58@gmail.com>
-#           Madhura Jayaratne
-#           Nicolas Hug <contact@nicolas-hug.com>
-#           Olivier Grisel <olivier.grisel@ensta.org>
-# License : BSD 3 clause
-
-print(__doc__)
 
 # %%
 # Bike sharing dataset preprocessing
@@ -51,7 +43,8 @@ print(__doc__)
 from sklearn.datasets import fetch_openml
 
 bikes = fetch_openml("Bike_Sharing_Demand", version=2, as_frame=True)
-X, y = bikes.data, bikes.target
+# Make an explicit copy to avoid "SettingWithCopyWarning" from pandas
+X, y = bikes.data.copy(), bikes.target
 
 # %%
 # The feature `"weather"` have a particularity: the category `"heavy_rain"` is a rare
@@ -170,6 +163,7 @@ mlp_preprocessor = ColumnTransformer(
         ("cat", OneHotEncoder(handle_unknown="ignore"), categorical_features),
     ]
 )
+mlp_preprocessor
 
 # %%
 # Preprocessor for the gradient boosting model
@@ -181,10 +175,13 @@ mlp_preprocessor = ColumnTransformer(
 from sklearn.preprocessing import OrdinalEncoder
 
 hgbdt_preprocessor = ColumnTransformer(
-    transformers=[("cat", OrdinalEncoder(), categorical_features)],
-    remainder="passthrough",
+    transformers=[
+        ("cat", OrdinalEncoder(), categorical_features),
+        ("num", "passthrough", numerical_features),
+    ],
     sparse_threshold=1,
 )
+hgbdt_preprocessor
 
 # %%
 # 1-way partial dependence with different models
@@ -210,7 +207,10 @@ tic = time()
 mlp_model = make_pipeline(
     mlp_preprocessor,
     MLPRegressor(
-        hidden_layer_sizes=(50, 50), learning_rate_init=0.01, early_stopping=True
+        hidden_layer_sizes=(30, 15),
+        learning_rate_init=0.01,
+        early_stopping=True,
+        random_state=0,
     ),
 )
 mlp_model.fit(X_train, y_train)
@@ -234,29 +234,35 @@ print(f"Test R2 score: {mlp_model.score(X_test, y_test):.2f}")
 # test set before plotting the partial dependence since there would be little
 # use in explaining the impact of a given feature on the prediction function of
 # a poor model. In this regard, our model is working reasonably well.
+#
+# We will plot the averaged partial dependence.
 import matplotlib.pyplot as plt
 from sklearn.inspection import PartialDependenceDisplay
 
+common_params = {
+    "subsample": 50,
+    "n_jobs": -1,
+    "grid_resolution": 20,
+    "random_state": 0,
+}
+
 print("Computing partial dependence plots...")
-features = [
-    "temp",
-    "humidity",
-    "windspeed",
-    "season",
-    "weather",
-    "hour",
-]
+features_info = {
+    # features of interest
+    "features": ["temp", "humidity", "windspeed", "season", "weather", "hour"],
+    # type of partial dependence plot
+    "kind": "average",
+    # information regarding categorical features
+    "categorical_features": categorical_features,
+}
 tic = time()
 _, ax = plt.subplots(ncols=3, nrows=2, figsize=(9, 8))
 display = PartialDependenceDisplay.from_estimator(
     mlp_model,
     X_train,
-    features,
-    categorical_features=categorical_features,
-    kind="average",
-    grid_resolution=100,
-    n_jobs=3,
+    **features_info,
     ax=ax,
+    **common_params,
 )
 print(f"done in {time() - tic:.3f}s")
 _ = display.figure_.suptitle(
@@ -296,24 +302,12 @@ print(f"Test R2 score: {hgbdt_model.score(X_test, y_test):.2f}")
 print("Computing partial dependence plots...")
 tic = time()
 _, ax = plt.subplots(ncols=3, nrows=2, figsize=(9, 8))
-features = [
-    "temp",
-    "humidity",
-    "windspeed",
-    "season",
-    "weather",
-    "hour",
-]
 display = PartialDependenceDisplay.from_estimator(
     hgbdt_model,
     X_train,
-    features,
-    categorical_features=categorical_features,
-    kind="average",
-    grid_resolution=100,
-    n_jobs=3,
+    **features_info,
     ax=ax,
-    method="brute",
+    **common_params,
 )
 print(f"done in {time() - tic:.3f}s")
 _ = display.figure_.suptitle(
@@ -325,8 +319,6 @@ _ = display.figure_.suptitle(
 # %%
 # Analysis of the plots
 # .....................
-# In all plots, the tick marks on the x-axis represent the deciles of the
-# feature values in the training data.
 #
 # We will first look at the PDPs for the numerical features. For both models, the
 # general trend of the PDP of the temperature is that the number of bike rentals is
@@ -357,17 +349,19 @@ _ = display.figure_.suptitle(
 print("Computing partial dependence plots and individual conditional expectation...")
 tic = time()
 _, ax = plt.subplots(ncols=2, figsize=(6, 4), sharey=True)
-features = ["temp", "humidity"]
+
+features_info = {
+    "features": ["temp", "humidity"],
+    "kind": "both",
+    "centered": True,
+}
+
 display = PartialDependenceDisplay.from_estimator(
     hgbdt_model,
     X_train,
-    features,
-    kind="both",
-    grid_resolution=100,
-    subsample=50,
-    n_jobs=3,
+    **features_info,
     ax=ax,
-    method="brute",
+    **common_params,
 )
 print(f"done in {time() - tic:.3f}s")
 _ = display.figure_.suptitle("ICE and PDP representations", fontsize=16)
@@ -385,29 +379,30 @@ _ = display.figure_.suptitle("ICE and PDP representations", fontsize=16)
 # Heatmap representation
 # ......................
 #
-# PDPs with two features of interest enable us to visualize interactions among
-# them. However, ICEs cannot be plotted in an easy manner and thus interpreted.
-# We will show the representation of available in
-# :meth:`~sklearn.inspection.PartialDependenceDisplay.from_estimator` that is a
-# 2D heatmap.
+# PDPs with two features of interest enable us to visualize interactions among them.
+# However, ICEs cannot be plotted in an easy manner and thus interpreted. We will show
+# the representation of available in
+# :meth:`~sklearn.inspection.PartialDependenceDisplay.from_estimator` that is a 2D
+# heatmap.
 print("Computing partial dependence plots...")
-features = ["temp", "humidity", ("temp", "humidity")]
-_, ax = plt.subplots(ncols=3, figsize=(9, 4))
+features_info = {
+    "features": ["temp", "humidity", ("temp", "humidity")],
+    "kind": "average",
+}
+_, ax = plt.subplots(ncols=3, figsize=(10, 4))
 tic = time()
 display = PartialDependenceDisplay.from_estimator(
     hgbdt_model,
     X_train,
-    features,
-    kind="average",
-    n_jobs=3,
-    grid_resolution=30,
-    random_state=0,
+    **features_info,
     ax=ax,
+    **common_params,
 )
 print(f"done in {time() - tic:.3f}s")
 _ = display.figure_.suptitle(
     "1-way vs 2-way of numerical PDP using gradient boosting", fontsize=16
 )
+plt.subplots_adjust(wspace=0.3)
 
 # %%
 # The two-way partial dependence plot shows the dependence of the number of bike rentals
@@ -418,55 +413,63 @@ _ = display.figure_.suptitle(
 # humidity will have an impact on the number of bike rentals. 2-way interaction is also
 # supported for categorical data.
 print("Computing partial dependence plots...")
-features = ["season", "weather", ("season", "weather")]
+features_info = {
+    "features": ["season", "weather", ("season", "weather")],
+    "kind": "average",
+    "categorical_features": categorical_features,
+}
 _, ax = plt.subplots(ncols=3, figsize=(14, 4))
 tic = time()
 display = PartialDependenceDisplay.from_estimator(
     hgbdt_model,
     X_train,
-    features,
-    kind="average",
-    categorical_features=categorical_features,
-    n_jobs=3,
-    grid_resolution=20,
-    random_state=0,
+    **features_info,
     ax=ax,
+    **common_params,
 )
+
 print(f"done in {time() - tic:.3f}s")
 _ = display.figure_.suptitle(
     "1-way vs 2-way PDP of categorical features using gradient boosting", fontsize=16
 )
-
+plt.subplots_adjust(wspace=0.3)
 
 # %%
 # 3D representation
 # .................
 #
-# In the previous plot, we show a 2D heatmap representation of the 2-way interaction.
-# Here, we show a 3D representation that uses matplotlib.
+# Let's make the same partial dependence plot for the 2 features interaction,
+# this time in 3 dimensions.
 import numpy as np
-from mpl_toolkits.mplot3d import Axes3D
+
+# unused but required import for doing 3d projections with matplotlib < 3.2
+import mpl_toolkits.mplot3d  # noqa: F401
+
 from sklearn.inspection import partial_dependence
 
-fig = plt.figure()
+fig = plt.figure(figsize=(10, 5))
 
 features = ("temp", "humidity")
 pdp = partial_dependence(
-    hgbdt_model, X_train, features=features, kind="average", grid_resolution=20
+    hgbdt_model, X_train, features=features, kind="average", grid_resolution=10
 )
 XX, YY = np.meshgrid(pdp["values"][0], pdp["values"][1])
 Z = pdp.average[0].T
-ax = Axes3D(fig)
+ax = fig.add_subplot(projection="3d")
+fig.add_axes(ax)
+
 surf = ax.plot_surface(XX, YY, Z, rstride=1, cstride=1, cmap=plt.cm.BuPu, edgecolor="k")
 ax.set_xlabel(features[0])
 ax.set_ylabel(features[1])
-ax.set_zlabel("Partial dependence")
 # pretty init view
 ax.view_init(elev=22, azim=122)
-plt.colorbar(surf)
+clb = plt.colorbar(surf)
+clb.ax.set_title("Partial dependence")
 plt.suptitle(
     "PD of number of bike rentals on\nthe temperature and humidity using",
     fontsize=16,
 )
 plt.subplots_adjust(top=0.9)
 plt.show()
+
+# %%

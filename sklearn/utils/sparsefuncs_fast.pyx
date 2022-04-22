@@ -7,7 +7,6 @@
 # License: BSD 3 clause
 
 #!python
-# cython: boundscheck=False, wraparound=False, cdivision=True
 
 from libc.math cimport fabs, sqrt, pow
 cimport numpy as np

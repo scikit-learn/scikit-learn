@@ -6,14 +6,12 @@
 # License: BSD 3 clause
 
 from collections.abc import Iterable
-import warnings
 
 import numpy as np
 from scipy import sparse
 from scipy.stats.mstats import mquantiles
 
 from ..base import is_classifier, is_regressor
-from ..pipeline import Pipeline
 from ..utils.extmath import cartesian
 from ..utils import check_array
 from ..utils import check_matplotlib_support  # noqa
@@ -36,7 +34,7 @@ __all__ = [
 ]
 
 
-def _grid_from_X(X, percentiles, grid_resolution):
+def _grid_from_X(X, percentiles, is_categorical, grid_resolution):
     """Generate a grid of points based on the percentiles of X.
 
     The grid is a cartesian product between the columns of ``values``. The
@@ -80,9 +78,9 @@ def _grid_from_X(X, percentiles, grid_resolution):
         raise ValueError("'grid_resolution' must be strictly greater than 1.")
 
     values = []
-    for feature in range(X.shape[1]):
+    for is_cat, feature in zip(is_categorical, range(X.shape[1])):
         uniques = np.unique(_safe_indexing(X, feature, axis=1))
-        if uniques.shape[0] < grid_resolution:
+        if is_cat or uniques.shape[0] < grid_resolution:
             # feature has low resolution use unique values
             axis = uniques
         else:
@@ -148,8 +146,8 @@ def _partial_dependence_brute(est, grid, features, X, response_method):
             else:
                 raise ValueError("The estimator has no decision_function method.")
 
+    X_eval = X.copy()
     for new_values in grid:
-        X_eval = X.copy()
         for i, variable in enumerate(features):
             if hasattr(X_eval, "iloc"):
                 X_eval.iloc[:, variable] = new_values[i]
@@ -211,11 +209,12 @@ def partial_dependence(
     X,
     features,
     *,
+    is_categorical=None,
     response_method="auto",
     percentiles=(0.05, 0.95),
     grid_resolution=100,
     method="auto",
-    kind="legacy",
+    kind="average",
 ):
     """Partial dependence of ``features``.
 
@@ -258,6 +257,13 @@ def partial_dependence(
     features : array-like of {int, str} or tuple of 2 {int, str}
         The feature (e.g. `[0]`) or pair of interacting features
         (e.g. `[(0, 1)]`) for which the partial dependency should be computed.
+
+    is_categorical : array-like of bool or tuple of 2 bool, default=None
+        Specifies if the `features` provided are categorical or continuous.
+        When a feature is declared as categorical, the grid values will be
+        the category of this feature, ignoring the `grid_resolution` parameter.
+        This array has the same design has `features`. If `None`, all features
+        are considered as continuous.
 
     response_method : {'auto', 'predict_proba', 'decision_function'}, \
             default='auto'
@@ -306,7 +312,7 @@ def partial_dependence(
         Please see :ref:`this note <pdp_method_differences>` for
         differences between the `'brute'` and `'recursion'` method.
 
-    kind : {'legacy', 'average', 'individual', 'both'}, default='legacy'
+    kind : {'average', 'individual', 'both'}, default='average'
         Whether to return the partial dependence averaged across all the
         samples in the dataset or one line per sample or both.
         See Returns below.
@@ -316,56 +322,36 @@ def partial_dependence(
         slower `method='brute'` option.
 
         .. versionadded:: 0.24
-        .. deprecated:: 0.24
-            `kind='legacy'` is deprecated and will be removed in version 1.1.
-            `kind='average'` will be the new default. It is intended to migrate
-            from the ndarray output to :class:`~sklearn.utils.Bunch` output.
 
     Returns
     -------
-    predictions : ndarray or :class:`~sklearn.utils.Bunch`
+    predictions : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
 
-        - if `kind='legacy'`, return value is ndarray of shape (n_outputs, \
+        individual : ndarray of shape (n_outputs, n_instances, \
                 len(values[0]), len(values[1]), ...)
+            The predictions for all the points in the grid for all
+            samples in X. This is also known as Individual
+            Conditional Expectation (ICE)
+
+        average : ndarray of shape (n_outputs, len(values[0]), \
+                len(values[1]), ...)
             The predictions for all the points in the grid, averaged
-            over all samples in X (or over the training data if ``method``
-            is 'recursion').
+            over all samples in X (or over the training data if
+            ``method`` is 'recursion').
+            Only available when ``kind='both'``.
 
-        - if `kind='individual'`, `'average'` or `'both'`, return value is \
-                :class:`~sklearn.utils.Bunch`
-            Dictionary-like object, with the following attributes.
-
-            individual : ndarray of shape (n_outputs, n_instances, \
-                    len(values[0]), len(values[1]), ...)
-                The predictions for all the points in the grid for all
-                samples in X. This is also known as Individual
-                Conditional Expectation (ICE)
-
-            average : ndarray of shape (n_outputs, len(values[0]), \
-                    len(values[1]), ...)
-                The predictions for all the points in the grid, averaged
-                over all samples in X (or over the training data if
-                ``method`` is 'recursion').
-                Only available when kind='both'.
-
-            values : seq of 1d ndarrays
-                The values with which the grid has been created. The generated
-                grid is a cartesian product of the arrays in ``values``.
-                ``len(values) == len(features)``. The size of each array
-                ``values[j]`` is either ``grid_resolution``, or the number of
-                unique values in ``X[:, j]``, whichever is smaller.
+        values : seq of 1d ndarrays
+            The values with which the grid has been created. The generated
+            grid is a cartesian product of the arrays in ``values``.
+            ``len(values) == len(features)``. The size of each array
+            ``values[j]`` is either ``grid_resolution``, or the number of
+            unique values in ``X[:, j]``, whichever is smaller.
 
         ``n_outputs`` corresponds to the number of classes in a multi-class
         setting, or to the number of tasks for multi-output regression.
         For classical regression and binary classification ``n_outputs==1``.
         ``n_values_feature_j`` corresponds to the size ``values[j]``.
-
-    values : seq of 1d ndarrays
-        The values with which the grid has been created. The generated grid
-        is a cartesian product of the arrays in ``values``. ``len(values) ==
-        len(features)``. The size of each array ``values[j]`` is either
-        ``grid_resolution``, or the number of unique values in ``X[:, j]``,
-        whichever is smaller. Only available when `kind="legacy"`.
 
     See Also
     --------
@@ -382,19 +368,10 @@ def partial_dependence(
     ...                    grid_resolution=2) # doctest: +SKIP
     (array([[-4.52...,  4.52...]]), [array([ 0.,  1.])])
     """
+    check_is_fitted(estimator)
+
     if not (is_classifier(estimator) or is_regressor(estimator)):
         raise ValueError("'estimator' must be a fitted regressor or classifier.")
-
-    if isinstance(estimator, Pipeline):
-        # TODO: to be removed if/when pipeline get a `steps_` attributes
-        # assuming Pipeline is the only estimator that does not store a new
-        # attribute
-        for est in estimator:
-            # FIXME: remove the None option when it will be deprecated
-            if est not in (None, "drop"):
-                check_is_fitted(est)
-    else:
-        check_is_fitted(estimator)
 
     if is_classifier(estimator) and isinstance(estimator.classes_[0], np.ndarray):
         raise ValueError("Multiclass-multioutput estimators are not supported")
@@ -425,7 +402,7 @@ def partial_dependence(
             )
         )
 
-    if kind != "average" and kind != "legacy":
+    if kind != "average":
         if method == "recursion":
             raise ValueError(
                 "The 'recursion' method only applies when 'kind' is set to 'average'"
@@ -488,9 +465,23 @@ def partial_dependence(
         _get_column_indices(X, features), dtype=np.int32, order="C"
     ).ravel()
 
+    if is_categorical is None:
+        is_categorical = [
+            tuple([False, False]) if isinstance(fxs, Iterable) else False
+            for fxs in features_indices
+        ]
+
+    if len(is_categorical) != len(features_indices):
+        raise ValueError(
+            "`is_categorical` should contains the same number of elements as "
+            f"`features`. Got {len(is_categorical)} in `is_categorical` and "
+            f"`features` {len(features_indices)}."
+        )
+
     grid, values = _grid_from_X(
         _safe_indexing(X, features_indices, axis=1),
         percentiles,
+        is_categorical,
         grid_resolution,
     )
 
@@ -515,17 +506,7 @@ def partial_dependence(
         -1, *[val.shape[0] for val in values]
     )
 
-    if kind == "legacy":
-        warnings.warn(
-            "A Bunch will be returned in place of 'predictions' from version"
-            " 1.1 (renaming of 0.26) with partial dependence results "
-            "accessible via the 'average' key. In the meantime, pass "
-            "kind='average' to get the future behaviour.",
-            FutureWarning,
-        )
-        # TODO 1.1: Remove kind == 'legacy' section
-        return averaged_predictions, values
-    elif kind == "average":
+    if kind == "average":
         return Bunch(average=averaged_predictions, values=values)
     elif kind == "individual":
         return Bunch(individual=predictions, values=values)

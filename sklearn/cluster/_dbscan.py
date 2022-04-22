@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 DBSCAN: Density-Based Spatial Clustering of Applications with Noise
 """
@@ -10,9 +9,11 @@ DBSCAN: Density-Based Spatial Clustering of Applications with Noise
 # License: BSD 3 clause
 
 import numpy as np
+import numbers
 import warnings
 from scipy import sparse
 
+from ..utils import check_scalar
 from ..base import BaseEstimator, ClusterMixin
 from ..utils.validation import _check_sample_weight
 from ..neighbors import NearestNeighbors
@@ -345,9 +346,6 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         """
         X = self._validate_data(X, accept_sparse="csr")
 
-        if not self.eps > 0.0:
-            raise ValueError("eps must be positive.")
-
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X)
 
@@ -360,6 +358,39 @@ class DBSCAN(ClusterMixin, BaseEstimator):
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", sparse.SparseEfficiencyWarning)
                 X.setdiag(X.diagonal())  # XXX: modifies X's internals in-place
+
+        # Validating the scalar parameters.
+        check_scalar(
+            self.eps,
+            "eps",
+            target_type=numbers.Real,
+            min_val=0.0,
+            include_boundaries="neither",
+        )
+        check_scalar(
+            self.min_samples,
+            "min_samples",
+            target_type=numbers.Integral,
+            min_val=1,
+            include_boundaries="left",
+        )
+        check_scalar(
+            self.leaf_size,
+            "leaf_size",
+            target_type=numbers.Integral,
+            min_val=1,
+            include_boundaries="left",
+        )
+        if self.p is not None:
+            check_scalar(
+                self.p,
+                "p",
+                target_type=numbers.Real,
+                min_val=0.0,
+                include_boundaries="left",
+            )
+        if self.n_jobs is not None:
+            check_scalar(self.n_jobs, "n_jobs", target_type=numbers.Integral)
 
         neighbors_model = NearestNeighbors(
             radius=self.eps,
@@ -426,3 +457,6 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         """
         self.fit(X, sample_weight=sample_weight)
         return self.labels_
+
+    def _more_tags(self):
+        return {"pairwise": self.metric == "precomputed"}

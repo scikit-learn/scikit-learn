@@ -80,9 +80,8 @@ Then run:
         ><span class="sk-expandable" data-packager="pip" data-os="mac" data-venv="no">pip install -U scikit-learn</span
         ><span class="sk-expandable" data-packager="pip" data-os="windows" data-venv="no">pip install -U scikit-learn</span
         ><span class="sk-expandable" data-packager="pip" data-os="linux" data-venv="no">pip3 install -U scikit-learn</span
-        ><span class="sk-expandable" data-packager="conda" data-venv="">conda create -n sklearn-env</span
-        ><span class="sk-expandable" data-packager="conda" data-venv="">conda activate sklearn-env</span
-        ><span class="sk-expandable" data-packager="conda">conda install -c conda-forge scikit-learn </span
+        ><span class="sk-expandable" data-packager="conda">conda create -n sklearn-env -c conda-forge scikit-learn</span
+        ><span class="sk-expandable" data-packager="conda">conda activate sklearn-env</span
        ></code></pre></div>
 
 In order to check your installation you can use
@@ -143,7 +142,8 @@ purpose.
     Scikit-learn 0.21 supported Python 3.5-3.7.
     Scikit-learn 0.22 supported Python 3.5-3.8.
     Scikit-learn 0.23 - 0.24 require Python 3.6 or newer.
-    Scikit-learn 1.0 and later requires Python 3.7 or newer.
+    Scikit-learn 1.0 supported Python 3.7-3.10.
+    Scikit-learn 1.1 and later requires Python 3.8 or newer.
 
 
 .. note::
@@ -247,7 +247,7 @@ command:
 
 .. prompt:: bash $
 
-  sudo port install py36-scikit-learn
+  sudo port install py39-scikit-learn
 
 
 Anaconda and Enthought Deployment Manager for all supported platforms

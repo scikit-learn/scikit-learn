@@ -59,6 +59,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC, LinearSVC
 from sklearn.cluster import KMeans
+from sklearn.neural_network import MLPRegressor
 
 from sklearn.impute import SimpleImputer
 
@@ -371,9 +372,8 @@ def test_cross_validate_invalid_scoring_param():
     # the warning message we're expecting to see
     warning_message = (
         "Scoring failed. The score on this train-test "
-        "partition for these parameters will be set to %f. "
+        f"partition for these parameters will be set to {np.nan}. "
         "Details: \n"
-        % np.nan
     )
 
     with pytest.warns(UserWarning, match=warning_message):
@@ -461,7 +461,7 @@ def check_cross_validate_single_metric(clf, X, y, scores):
         fitted_estimators,
     ) = scores
     # Test single metric evaluation when scoring is string or singleton list
-    for (return_train_score, dict_len) in ((True, 4), (False, 3)):
+    for return_train_score, dict_len in ((True, 4), (False, 3)):
         # Single metric passed as a string
         if return_train_score:
             mse_scores_dict = cross_validate(
@@ -846,14 +846,14 @@ def test_permutation_test_score_allow_nans():
 def test_permutation_test_score_fit_params():
     X = np.arange(100).reshape(10, 10)
     y = np.array([0] * 5 + [1] * 5)
-    clf = CheckingClassifier(expected_fit_params=["sample_weight"])
+    clf = CheckingClassifier(expected_sample_weight=True)
 
-    err_msg = r"Expected fit parameter\(s\) \['sample_weight'\] not seen."
+    err_msg = r"Expected sample_weight to be passed"
     with pytest.raises(AssertionError, match=err_msg):
         permutation_test_score(clf, X, y)
 
-    err_msg = "Fit parameter sample_weight has length 1; expected"
-    with pytest.raises(AssertionError, match=err_msg):
+    err_msg = r"sample_weight.shape == \(1,\), expected \(8,\)!"
+    with pytest.raises(ValueError, match=err_msg):
         permutation_test_score(clf, X, y, fit_params={"sample_weight": np.ones(1)})
     permutation_test_score(clf, X, y, fit_params={"sample_weight": np.ones(10)})
 
@@ -1516,14 +1516,14 @@ def test_learning_curve_with_shuffle():
 def test_learning_curve_fit_params():
     X = np.arange(100).reshape(10, 10)
     y = np.array([0] * 5 + [1] * 5)
-    clf = CheckingClassifier(expected_fit_params=["sample_weight"])
+    clf = CheckingClassifier(expected_sample_weight=True)
 
-    err_msg = r"Expected fit parameter\(s\) \['sample_weight'\] not seen."
+    err_msg = r"Expected sample_weight to be passed"
     with pytest.raises(AssertionError, match=err_msg):
         learning_curve(clf, X, y, error_score="raise")
 
-    err_msg = "Fit parameter sample_weight has length 1; expected"
-    with pytest.raises(AssertionError, match=err_msg):
+    err_msg = r"sample_weight.shape == \(1,\), expected \(2,\)!"
+    with pytest.raises(ValueError, match=err_msg):
         learning_curve(
             clf, X, y, error_score="raise", fit_params={"sample_weight": np.ones(1)}
         )
@@ -1678,9 +1678,9 @@ def test_validation_curve_cv_splits_consistency():
 def test_validation_curve_fit_params():
     X = np.arange(100).reshape(10, 10)
     y = np.array([0] * 5 + [1] * 5)
-    clf = CheckingClassifier(expected_fit_params=["sample_weight"])
+    clf = CheckingClassifier(expected_sample_weight=True)
 
-    err_msg = r"Expected fit parameter\(s\) \['sample_weight'\] not seen."
+    err_msg = r"Expected sample_weight to be passed"
     with pytest.raises(AssertionError, match=err_msg):
         validation_curve(
             clf,
@@ -1691,8 +1691,8 @@ def test_validation_curve_fit_params():
             error_score="raise",
         )
 
-    err_msg = "Fit parameter sample_weight has length 1; expected"
-    with pytest.raises(AssertionError, match=err_msg):
+    err_msg = r"sample_weight.shape == \(1,\), expected \(8,\)!"
+    with pytest.raises(ValueError, match=err_msg):
         validation_curve(
             clf,
             X,
@@ -1876,7 +1876,7 @@ def test_cross_val_predict_method_checking():
     X, y = iris.data, iris.target
     X, y = shuffle(X, y, random_state=0)
     for method in ["decision_function", "predict_proba", "predict_log_proba"]:
-        est = SGDClassifier(loss="log", random_state=2)
+        est = SGDClassifier(loss="log_loss", random_state=2)
         check_cross_val_predict_multiclass(est, X, y, method)
 
 
@@ -2130,38 +2130,66 @@ def test_fit_and_score_working():
     assert result["parameters"] == fit_and_score_kwargs["parameters"]
 
 
+class DataDependentFailingClassifier(BaseEstimator):
+    def __init__(self, max_x_value=None):
+        self.max_x_value = max_x_value
+
+    def fit(self, X, y=None):
+        num_values_too_high = (X > self.max_x_value).sum()
+        if num_values_too_high:
+            raise ValueError(
+                f"Classifier fit failed with {num_values_too_high} values too high"
+            )
+
+    def score(self, X=None, Y=None):
+        return 0.0
+
+
 @pytest.mark.parametrize("error_score", [np.nan, 0])
-def test_cross_validate_failing_fits_warnings(error_score):
+def test_cross_validate_some_failing_fits_warning(error_score):
     # Create a failing classifier to deliberately fail
-    failing_clf = FailingClassifier(FailingClassifier.FAILING_PARAMETER)
+    failing_clf = DataDependentFailingClassifier(max_x_value=8)
     # dummy X data
     X = np.arange(1, 10)
     y = np.ones(9)
-    # fit_and_score_args = [failing_clf, X, None, dict(), None, None, 0, None, None]
     # passing error score to trigger the warning message
     cross_validate_args = [failing_clf, X, y]
-    cross_validate_kwargs = {"cv": 7, "error_score": error_score}
+    cross_validate_kwargs = {"cv": 3, "error_score": error_score}
     # check if the warning message type is as expected
+
+    individual_fit_error_message = (
+        "ValueError: Classifier fit failed with 1 values too high"
+    )
     warning_message = re.compile(
-        "7 fits failed.+total of 7.+The score on these"
+        "2 fits failed.+total of 3.+The score on these"
         " train-test partitions for these parameters will be set to"
-        f" {cross_validate_kwargs['error_score']}.",
+        f" {cross_validate_kwargs['error_score']}.+{individual_fit_error_message}",
         flags=re.DOTALL,
     )
 
     with pytest.warns(FitFailedWarning, match=warning_message):
         cross_validate(*cross_validate_args, **cross_validate_kwargs)
 
-    # since we're using FailingClassfier, our error will be the following
-    error_message = "ValueError: Failing classifier failed as required"
 
-    # check traceback is included
-    warning_message = re.compile(
-        "The score on these train-test partitions for these parameters will be set"
-        f" to {cross_validate_kwargs['error_score']}.+{error_message}",
-        re.DOTALL,
+@pytest.mark.parametrize("error_score", [np.nan, 0])
+def test_cross_validate_all_failing_fits_error(error_score):
+    # Create a failing classifier to deliberately fail
+    failing_clf = FailingClassifier(FailingClassifier.FAILING_PARAMETER)
+    # dummy X data
+    X = np.arange(1, 10)
+    y = np.ones(9)
+
+    cross_validate_args = [failing_clf, X, y]
+    cross_validate_kwargs = {"cv": 7, "error_score": error_score}
+
+    individual_fit_error_message = "ValueError: Failing classifier failed as required"
+    error_message = re.compile(
+        "All the 7 fits failed.+your model is misconfigured.+"
+        f"{individual_fit_error_message}",
+        flags=re.DOTALL,
     )
-    with pytest.warns(FitFailedWarning, match=warning_message):
+
+    with pytest.raises(ValueError, match=error_message):
         cross_validate(*cross_validate_args, **cross_validate_kwargs)
 
 
@@ -2335,25 +2363,12 @@ def test_callable_multimetric_confusion_matrix_cross_validate():
         assert "test_{}".format(name) in cv_results
 
 
-# TODO: Remove in 1.1 when the _pairwise attribute is removed
-def test_validation_pairwise():
-    # checks the interactions between the pairwise estimator tag
-    # and the _pairwise attribute
-    iris = load_iris()
-    X, y = iris.data, iris.target
-    linear_kernel = np.dot(X, X.T)
+def test_learning_curve_partial_fit_regressors():
+    """Check that regressors with partial_fit is supported.
 
-    svm = SVC(kernel="precomputed")
-    with pytest.warns(None) as record:
-        cross_validate(svm, linear_kernel, y, cv=2)
-    assert not record
+    Non-regression test for #22981.
+    """
+    X, y = make_regression(random_state=42)
 
-    # pairwise tag is not consistent with pairwise attribute
-    class IncorrectTagSVM(SVC):
-        def _more_tags(self):
-            return {"pairwise": False}
-
-    svm = IncorrectTagSVM(kernel="precomputed")
-    msg = "_pairwise was deprecated in 0.24 and will be removed in 1.1"
-    with pytest.warns(FutureWarning, match=msg):
-        cross_validate(svm, linear_kernel, y, cv=2)
+    # Does not error
+    learning_curve(MLPRegressor(), X, y, exploit_incremental_learning=True, cv=2)

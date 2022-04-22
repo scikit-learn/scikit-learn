@@ -87,6 +87,7 @@ class ConfusionMatrixDisplay:
         values_format=None,
         ax=None,
         colorbar=True,
+        im_kw=None,
     ):
         """Plot visualization.
 
@@ -112,6 +113,9 @@ class ConfusionMatrixDisplay:
 
         colorbar : bool, default=True
             Whether or not to add a colorbar to the plot.
+
+        im_kw : dict, default=None
+            Dict with keywords passed to `matplotlib.pyplot.imshow` call.
 
         Returns
         -------
@@ -162,6 +166,7 @@ class ConfusionMatrixDisplay:
         cmap="viridis",
         ax=None,
         colorbar=True,
+        im_kw=None,
     ):
         """Plot Confusion Matrix given an estimator and some data.
 
@@ -227,6 +232,9 @@ class ConfusionMatrixDisplay:
         colorbar : bool, default=True
             Whether or not to add a colorbar to the plot.
 
+        im_kw : dict, default=None
+            Dict with keywords passed to `matplotlib.pyplot.imshow` call.
+
         Returns
         -------
         display : :class:`~sklearn.metrics.ConfusionMatrixDisplay`
@@ -273,6 +281,7 @@ class ConfusionMatrixDisplay:
             xticks_rotation=xticks_rotation,
             values_format=values_format,
             colorbar=colorbar,
+            im_kw=im_kw,
         )
 
     @classmethod
@@ -291,12 +300,13 @@ class ConfusionMatrixDisplay:
         cmap="viridis",
         ax=None,
         colorbar=True,
+        im_kw=None,
     ):
         """Plot Confusion Matrix given true and predicted labels.
 
         Read more in the :ref:`User Guide <confusion_matrix>`.
 
-        .. versionadded:: 0.24
+        .. versionadded:: 1.0
 
         Parameters
         ----------
@@ -353,6 +363,9 @@ class ConfusionMatrixDisplay:
         colorbar : bool, default=True
             Whether or not to add a colorbar to the plot.
 
+        im_kw : dict, default=None
+            Dict with keywords passed to `matplotlib.pyplot.imshow` call.
+
         Returns
         -------
         display : :class:`~sklearn.metrics.ConfusionMatrixDisplay`
@@ -406,6 +419,7 @@ class ConfusionMatrixDisplay:
             xticks_rotation=xticks_rotation,
             values_format=values_format,
             colorbar=colorbar,
+            im_kw=im_kw,
         )
 
 
@@ -433,13 +447,12 @@ def plot_confusion_matrix(
 ):
     """Plot Confusion Matrix.
 
-    Read more in the :ref:`User Guide <confusion_matrix>`.
+    `plot_confusion_matrix` is deprecated in 1.0 and will be removed in
+    1.2. Use one of the following class methods:
+    :func:`~sklearn.metrics.ConfusionMatrixDisplay.from_predictions` or
+    :func:`~sklearn.metrics.ConfusionMatrixDisplay.from_estimator`.
 
-    .. deprecated:: 1.0
-       `plot_confusion_matrix` is deprecated in 1.0 and will be removed in
-       1.2. Use one of the following class methods:
-       :func:`~sklearn.metrics.ConfusionMatrixDisplay.from_predictions` or
-       :func:`~sklearn.metrics.ConfusionMatrixDisplay.from_estimator`.
+    Read more in the :ref:`User Guide <confusion_matrix>`.
 
     Parameters
     ----------
@@ -503,6 +516,7 @@ def plot_confusion_matrix(
     Returns
     -------
     display : :class:`~sklearn.metrics.ConfusionMatrixDisplay`
+        Object that stores computed values.
 
     See Also
     --------

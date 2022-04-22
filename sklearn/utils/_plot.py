@@ -16,6 +16,7 @@ def plot_heatmap(
     include_values=True,
     values_format=None,
     colorbar=True,
+    im_kwargs=None,
 ):
     """Plot a heatmap.
 
@@ -59,6 +60,9 @@ def plot_heatmap(
     colorbar : bool, default=True
         Whether or not to add a colorbar to the plot.
 
+    im_kw : dict, default=None
+        Dict with keywords passed to `matplotlib.pyplot.imshow` call.
+
     Returns
     -------
     fig : matplotlib Figure
@@ -82,7 +86,11 @@ def plot_heatmap(
     else:
         fig = ax.figure
 
-    im = ax.imshow(data, interpolation="nearest", cmap=cmap)
+    default_im_kw = dict(interpolation="nearest", cmap=cmap)
+    im_kw = im_kwargs or {}
+    im_kw = {**default_im_kw, **im_kw}
+
+    im = ax.imshow(data, **im_kw)
     text = None
     cmap_min, cmap_max = im.cmap(0), im.cmap(1.0)
 
