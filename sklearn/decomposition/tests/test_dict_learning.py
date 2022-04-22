@@ -911,9 +911,12 @@ def test_minibatch_dictionary_learning_dtype_match(
         batch_size=10,
         fit_algorithm=fit_algorithm,
         transform_algorithm=transform_algorithm,
+        max_iter=100,
+        tol=1e-1,
         random_state=0,
     )
     dict_learner.fit(X.astype(data_type))
+
     assert dict_learner.components_.dtype == expected_type
     assert dict_learner.transform(X.astype(data_type)).dtype == expected_type
     assert dict_learner._inner_stats[0].dtype == expected_type
