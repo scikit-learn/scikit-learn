@@ -111,7 +111,7 @@ def test_plot_heatmap_axis(pyplot):
     assert ax is ax_out
 
 
-def test_plot_heatmap_im_kwargs(pyplot):
+def test_plot_heatmap_im_kw(pyplot):
     """Check that we can pass extra keyword to the underlying `imshow` function."""
     data = np.array([[0.1, 0.3, 0.4], [0.2, 0.4, 0.5]])
     cmap = "RdBu"
@@ -121,6 +121,6 @@ def test_plot_heatmap_im_kwargs(pyplot):
         xlabel="xlabel",
         yticklabels=["row_1", "row_2"],
         xticklabels=["col_1", "col_2", "col_3"],
-        im_kwargs={"cmap": cmap},
+        im_kw={"cmap": cmap},
     )
     assert im.cmap.name == cmap

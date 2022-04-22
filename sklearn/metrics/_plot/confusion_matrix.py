@@ -141,7 +141,7 @@ class ConfusionMatrixDisplay:
             include_values=include_values,
             values_format=values_format,
             colorbar=colorbar,
-            im_kwargs=im_kw,
+            im_kw=im_kw,
         )
 
         ax.set_ylim((n_classes - 0.5, -0.5))
