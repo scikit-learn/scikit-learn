@@ -115,7 +115,7 @@ def test_plot_heatmap_im_kw(pyplot):
     """Check that we can pass extra keyword to the underlying `imshow` function."""
     data = np.array([[0.1, 0.3, 0.4], [0.2, 0.4, 0.5]])
     cmap = "RdBu"
-    _, ax, im, text = plot_heatmap(
+    _, _, im, _ = plot_heatmap(
         data,
         ylabel="ylabel",
         xlabel="xlabel",

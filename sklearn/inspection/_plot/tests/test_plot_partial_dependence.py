@@ -735,6 +735,7 @@ def test_plot_partial_dependence_with_categorical(
     assert disp.deciles_vlines_[0][0] is None
     assert disp.deciles_hlines_.shape == (1, 1)
     assert disp.deciles_hlines_[0][0] is None
+    assert disp.axes_[0, 0].get_legend() is None
 
 
 @pytest.mark.parametrize(
