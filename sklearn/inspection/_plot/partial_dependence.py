@@ -1667,8 +1667,6 @@ class PartialDependenceDisplay:
         if ax is None:
             _, ax = plt.subplots()
 
-        if contour_kw is None:
-            contour_kw = {}
         default_contour_kws = {"alpha": 0.75}
         contour_kw = {**default_contour_kws, **contour_kw}
 
