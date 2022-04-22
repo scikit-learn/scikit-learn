@@ -29,6 +29,7 @@ from .. import get_config as _get_config
 from ..exceptions import PositiveSpectrumWarning
 from ..exceptions import NotFittedError
 from ..exceptions import DataConversionWarning
+from .isfinite import py_isfinite
 
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 
@@ -108,12 +109,7 @@ def _assert_all_finite(
     if is_float and (np.isfinite(_safe_accumulator_op(np.sum, X))):
         pass
     elif is_float:
-        if (
-            allow_nan
-            and np.isinf(X).any()
-            or not allow_nan
-            and not np.isfinite(X).all()
-        ):
+        if not py_isfinite(X, allow_nan):
             if not allow_nan and np.isnan(X).any():
                 type_err = "NaN"
             else:
