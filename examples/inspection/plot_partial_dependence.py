@@ -471,5 +471,3 @@ plt.suptitle(
 )
 plt.subplots_adjust(top=0.9)
 plt.show()
-
-# %%

@@ -121,6 +121,8 @@ class ConfusionMatrixDisplay:
         -------
         display : :class:`~sklearn.metrics.ConfusionMatrixDisplay`
         """
+        method_name = f"{self.__class__.__name__}.plot"
+        check_matplotlib_support(method_name)
         cm = self.confusion_matrix
         n_classes = cm.shape[0]
         if self.display_labels is None:
@@ -139,6 +141,7 @@ class ConfusionMatrixDisplay:
             include_values=include_values,
             values_format=values_format,
             colorbar=colorbar,
+            im_kwargs=im_kw,
         )
 
         ax.set_ylim((n_classes - 0.5, -0.5))

@@ -1383,7 +1383,7 @@ class PartialDependenceDisplay:
         else:
             ax.set_yticklabels([])
 
-        if pd_line_kw.get("label", None) and kind != "individual":
+        if pd_line_kw.get("label", None) and kind != "individual" and not categorical:
             ax.legend()
 
     def _plot_two_way_partial_dependence(
