@@ -395,8 +395,6 @@ def test_sigmoid_calibration():
         _SigmoidCalibration().fit(np.vstack((exF, exF)), exY)
 
 
-# TODO(1.3): Remove warning filter.
-@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_calibration_curve():
     """Check calibration_curve function"""
     y_true = np.array([0, 0, 0, 1, 1, 1])
