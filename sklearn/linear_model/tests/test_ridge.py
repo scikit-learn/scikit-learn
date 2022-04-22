@@ -235,7 +235,7 @@ def test_ridge_regression_hstacked_X(
     assert model.intercept_ == pytest.approx(intercept)
     # coefficients are not all on the same magnitude, adding a small atol to
     # make this test less brittle
-    assert_allclose(model.coef_, np.r_[coef, coef])
+    assert_allclose(model.coef_, np.r_[coef, coef], atol=1e-8)
 
 
 @pytest.mark.parametrize("solver", SOLVERS)
