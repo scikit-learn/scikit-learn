@@ -116,6 +116,7 @@ def configuration(parent_package="", top_path=None):
         libraries=libraries,
         language="c++",
     )
+    config.add_extension("isfinite", sources=["isfinite.pyx"], libraries=libraries)
 
     config.add_subpackage("tests")
 
