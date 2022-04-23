@@ -451,7 +451,7 @@ def dump_svmlight_file(
         If file-like, data will be written to f. f should be opened in binary
         mode.
 
-    zero_based : boolean, default=True
+    zero_based : bool, default=True
         Whether column indices should be written zero-based (True) or one-based
         (False).
 
@@ -467,9 +467,9 @@ def dump_svmlight_file(
         Array containing pairwise preference constraints (qid in svmlight
         format).
 
-    multilabel : boolean, default=False
+    multilabel : bool, default=False
         Samples may have several labels each (see
-        https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multilabel.html)
+        https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multilabel.html).
 
         .. versionadded:: 0.17
            parameter *multilabel* to support multilabel datasets.

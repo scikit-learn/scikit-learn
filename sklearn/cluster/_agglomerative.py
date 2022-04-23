@@ -14,13 +14,12 @@ import numpy as np
 from scipy import sparse
 from scipy.sparse.csgraph import connected_components
 
-from ..base import BaseEstimator, ClusterMixin
+from ..base import BaseEstimator, ClusterMixin, _ClassNamePrefixFeaturesOutMixin
 from ..metrics.pairwise import paired_distances
 from ..metrics import DistanceMetric
 from ..metrics._dist_metrics import METRIC_MAPPING
 from ..utils import check_array
 from ..utils._fast_dict import IntFloatDict
-from ..utils.fixes import _astype_copy_false
 from ..utils.graph import _fix_connected_components
 from ..utils.validation import check_memory
 
@@ -123,7 +122,7 @@ def _single_linkage_tree(
     from scipy.sparse.csgraph import minimum_spanning_tree
 
     # explicitly cast connectivity to ensure safety
-    connectivity = connectivity.astype("float64", **_astype_copy_false(connectivity))
+    connectivity = connectivity.astype(np.float64, copy=False)
 
     # Ensure zero distances aren't ignored by setting them to "epsilon"
     epsilon_value = np.finfo(dtype=connectivity.data.dtype).eps
@@ -559,9 +558,7 @@ def linkage_tree(
     del diag_mask
 
     if affinity == "precomputed":
-        distances = X[connectivity.row, connectivity.col].astype(
-            "float64", **_astype_copy_false(X)
-        )
+        distances = X[connectivity.row, connectivity.col].astype(np.float64, copy=False)
     else:
         # FIXME We compute all the distances, while we could have only computed
         # the "interesting" distances
@@ -1054,7 +1051,9 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         return super().fit_predict(X, y)
 
 
-class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
+class FeatureAgglomeration(
+    _ClassNamePrefixFeaturesOutMixin, AgglomerativeClustering, AgglomerationTransform
+):
     """Agglomerate features.
 
     Recursively merges pair of clusters of features.
@@ -1236,6 +1235,7 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         """
         X = self._validate_data(X, ensure_min_features=2)
         super()._fit(X.T)
+        self._n_features_out = self.n_clusters_
         return self
 
     @property

@@ -1,7 +1,9 @@
 import numpy as np
+from numpy.testing import assert_allclose
 import pytest
 import scipy.sparse as sp
 
+from sklearn.datasets import make_regression
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_almost_equal
 
@@ -52,33 +54,38 @@ def test_lasso_zero():
     assert_almost_equal(clf.dual_gap_, 0)
 
 
-def test_enet_toy_list_input():
+@pytest.mark.parametrize("with_sample_weight", [True, False])
+def test_enet_toy_list_input(with_sample_weight):
     # Test ElasticNet for various values of alpha and l1_ratio with list X
 
     X = np.array([[-1], [0], [1]])
     X = sp.csc_matrix(X)
     Y = [-1, 0, 1]  # just a straight line
     T = np.array([[2], [3], [4]])  # test sample
+    if with_sample_weight:
+        sw = np.array([2.0, 2, 2])
+    else:
+        sw = None
 
     # this should be the same as unregularized least squares
     clf = ElasticNet(alpha=0, l1_ratio=1.0)
     # catch warning about alpha=0.
     # this is discouraged but should work.
-    ignore_warnings(clf.fit)(X, Y)
+    ignore_warnings(clf.fit)(X, Y, sample_weight=sw)
     pred = clf.predict(T)
     assert_array_almost_equal(clf.coef_, [1])
     assert_array_almost_equal(pred, [2, 3, 4])
     assert_almost_equal(clf.dual_gap_, 0)
 
     clf = ElasticNet(alpha=0.5, l1_ratio=0.3)
-    clf.fit(X, Y)
+    clf.fit(X, Y, sample_weight=sw)
     pred = clf.predict(T)
     assert_array_almost_equal(clf.coef_, [0.50819], decimal=3)
     assert_array_almost_equal(pred, [1.0163, 1.5245, 2.0327], decimal=3)
     assert_almost_equal(clf.dual_gap_, 0)
 
     clf = ElasticNet(alpha=0.5, l1_ratio=0.5)
-    clf.fit(X, Y)
+    clf.fit(X, Y, sample_weight=sw)
     pred = clf.predict(T)
     assert_array_almost_equal(clf.coef_, [0.45454], 3)
     assert_array_almost_equal(pred, [0.9090, 1.3636, 1.8181], 3)
@@ -269,6 +276,39 @@ def test_path_parameters():
     sparse_mse_path = clf.mse_path_
     ignore_warnings(clf.fit)(X.toarray(), y)  # compare with dense data
     assert_almost_equal(clf.mse_path_, sparse_mse_path)
+
+
+@pytest.mark.parametrize("Model", [Lasso, ElasticNet, LassoCV, ElasticNetCV])
+@pytest.mark.parametrize("fit_intercept", [False, True])
+@pytest.mark.parametrize("n_samples, n_features", [(24, 6), (6, 24)])
+@pytest.mark.parametrize("with_sample_weight", [True, False])
+def test_sparse_dense_equality(
+    Model, fit_intercept, n_samples, n_features, with_sample_weight
+):
+    X, y = make_regression(
+        n_samples=n_samples,
+        n_features=n_features,
+        effective_rank=n_features // 2,
+        n_informative=n_features // 2,
+        bias=4 * fit_intercept,
+        noise=1,
+        random_state=42,
+    )
+    if with_sample_weight:
+        sw = np.abs(np.random.RandomState(42).normal(scale=10, size=y.shape))
+    else:
+        sw = None
+    Xs = sp.csc_matrix(X)
+    params = {"fit_intercept": fit_intercept}
+    reg_dense = Model(**params).fit(X, y, sample_weight=sw)
+    reg_sparse = Model(**params).fit(Xs, y, sample_weight=sw)
+    if fit_intercept:
+        assert reg_sparse.intercept_ == pytest.approx(reg_dense.intercept_)
+        # balance property
+        assert np.average(reg_sparse.predict(X), weights=sw) == pytest.approx(
+            np.average(y, weights=sw)
+        )
+    assert_allclose(reg_sparse.coef_, reg_dense.coef_)
 
 
 def test_same_output_sparse_dense_lasso_and_enet_cv():

@@ -14,7 +14,7 @@ if [[ "$BITNESS" == "32" ]]; then
 fi
 
 TEMP_FOLDER="$HOME/AppData/Local/Temp"
-WHEEL_PATH=$(ls -d $TEMP_FOLDER/*/repaired_wheel/*)
+WHEEL_PATH=$(ls -d $TEMP_FOLDER/**/*/repaired_wheel/*)
 WHEEL_NAME=$(basename $WHEEL_PATH)
 
 cp $WHEEL_PATH $WHEEL_NAME

@@ -22,6 +22,8 @@ from sklearn.metrics import mean_pinball_loss
 from sklearn.metrics import r2_score
 from sklearn.metrics import mean_tweedie_deviance
 from sklearn.metrics import d2_tweedie_score
+from sklearn.metrics import d2_pinball_score
+from sklearn.metrics import d2_absolute_error_score
 from sklearn.metrics import make_scorer
 
 from sklearn.metrics._regression import _check_reg_targets
@@ -50,13 +52,37 @@ def test_regression_metrics(n_samples=50):
     assert mape > 1e6
     assert_almost_equal(max_error(y_true, y_pred), 1.0)
     assert_almost_equal(r2_score(y_true, y_pred), 0.995, 2)
+    assert_almost_equal(r2_score(y_true, y_pred, force_finite=False), 0.995, 2)
     assert_almost_equal(explained_variance_score(y_true, y_pred), 1.0)
+    assert_almost_equal(
+        explained_variance_score(y_true, y_pred, force_finite=False), 1.0
+    )
     assert_almost_equal(
         mean_tweedie_deviance(y_true, y_pred, power=0),
         mean_squared_error(y_true, y_pred),
     )
     assert_almost_equal(
         d2_tweedie_score(y_true, y_pred, power=0), r2_score(y_true, y_pred)
+    )
+    dev_median = np.abs(y_true - np.median(y_true)).sum()
+    assert_array_almost_equal(
+        d2_absolute_error_score(y_true, y_pred),
+        1 - np.abs(y_true - y_pred).sum() / dev_median,
+    )
+    alpha = 0.2
+    pinball_loss = lambda y_true, y_pred, alpha: alpha * np.maximum(
+        y_true - y_pred, 0
+    ) + (1 - alpha) * np.maximum(y_pred - y_true, 0)
+    y_quantile = np.percentile(y_true, q=alpha * 100)
+    assert_almost_equal(
+        d2_pinball_score(y_true, y_pred, alpha=alpha),
+        1
+        - pinball_loss(y_true, y_pred, alpha).sum()
+        / pinball_loss(y_true, y_quantile, alpha).sum(),
+    )
+    assert_almost_equal(
+        d2_absolute_error_score(y_true, y_pred),
+        d2_pinball_score(y_true, y_pred, alpha=0.5),
     )
 
     # Tweedie deviance needs positive y_pred, except for p=0,
@@ -67,7 +93,7 @@ def test_regression_metrics(n_samples=50):
     n = n_samples
     assert_almost_equal(
         mean_tweedie_deviance(y_true, y_pred, power=-1),
-        5 / 12 * n * (n ** 2 + 2 * n + 1),
+        5 / 12 * n * (n**2 + 2 * n + 1),
     )
     assert_almost_equal(
         mean_tweedie_deviance(y_true, y_pred, power=1), (n + 1) * (1 - np.log(2))
@@ -135,8 +161,61 @@ def test_multioutput_regression():
     error = r2_score(y_true, y_pred, multioutput="uniform_average")
     assert_almost_equal(error, -0.875)
 
+    score = d2_pinball_score(y_true, y_pred, alpha=0.5, multioutput="raw_values")
+    raw_expected_score = [
+        1
+        - np.abs(y_true[:, i] - y_pred[:, i]).sum()
+        / np.abs(y_true[:, i] - np.median(y_true[:, i])).sum()
+        for i in range(y_true.shape[1])
+    ]
+    # in the last case, the denominator vanishes and hence we get nan,
+    # but since the the numerator vanishes as well the expected score is 1.0
+    raw_expected_score = np.where(np.isnan(raw_expected_score), 1, raw_expected_score)
+    assert_array_almost_equal(score, raw_expected_score)
+
+    score = d2_pinball_score(y_true, y_pred, alpha=0.5, multioutput="uniform_average")
+    assert_almost_equal(score, raw_expected_score.mean())
+    # constant `y_true` with force_finite=True leads to 1. or 0.
+    yc = [5.0, 5.0]
+    error = r2_score(yc, [5.0, 5.0], multioutput="variance_weighted")
+    assert_almost_equal(error, 1.0)
+    error = r2_score(yc, [5.0, 5.1], multioutput="variance_weighted")
+    assert_almost_equal(error, 0.0)
+
+    # Setting force_finite=False results in the nan for 4th output propagating
+    error = r2_score(
+        y_true, y_pred, multioutput="variance_weighted", force_finite=False
+    )
+    assert_almost_equal(error, np.nan)
+    error = r2_score(y_true, y_pred, multioutput="uniform_average", force_finite=False)
+    assert_almost_equal(error, np.nan)
+
+    # Dropping the 4th output to check `force_finite=False` for nominal
+    y_true = y_true[:, :-1]
+    y_pred = y_pred[:, :-1]
+    error = r2_score(y_true, y_pred, multioutput="variance_weighted")
+    error2 = r2_score(
+        y_true, y_pred, multioutput="variance_weighted", force_finite=False
+    )
+    assert_almost_equal(error, error2)
+    error = r2_score(y_true, y_pred, multioutput="uniform_average")
+    error2 = r2_score(y_true, y_pred, multioutput="uniform_average", force_finite=False)
+    assert_almost_equal(error, error2)
+
+    # constant `y_true` with force_finite=False leads to NaN or -Inf.
+    error = r2_score(
+        yc, [5.0, 5.0], multioutput="variance_weighted", force_finite=False
+    )
+    assert_almost_equal(error, np.nan)
+    error = r2_score(
+        yc, [5.0, 6.0], multioutput="variance_weighted", force_finite=False
+    )
+    assert_almost_equal(error, -np.inf)
+
 
 def test_regression_metrics_at_limits():
+    # Single-sample case
+    # Note: for r2 and d2_tweedie see also test_regression_single_sample
     assert_almost_equal(mean_squared_error([0.0], [0.0]), 0.0)
     assert_almost_equal(mean_squared_error([0.0], [0.0], squared=False), 0.0)
     assert_almost_equal(mean_squared_log_error([0.0], [0.0]), 0.0)
@@ -146,7 +225,18 @@ def test_regression_metrics_at_limits():
     assert_almost_equal(median_absolute_error([0.0], [0.0]), 0.0)
     assert_almost_equal(max_error([0.0], [0.0]), 0.0)
     assert_almost_equal(explained_variance_score([0.0], [0.0]), 1.0)
+
+    # Perfect cases
     assert_almost_equal(r2_score([0.0, 1], [0.0, 1]), 1.0)
+    assert_almost_equal(d2_pinball_score([0.0, 1], [0.0, 1]), 1.0)
+
+    # Non-finite cases
+    # R² and explained variance have a fix by default for non-finite cases
+    for s in (r2_score, explained_variance_score):
+        assert_almost_equal(s([0, 0], [1, -1]), 0.0)
+        assert_almost_equal(s([0, 0], [1, -1], force_finite=False), -np.inf)
+        assert_almost_equal(s([1, 1], [1, 1]), 1.0)
+        assert_almost_equal(s([1, 1], [1, 1], force_finite=False), np.nan)
     msg = (
         "Mean Squared Logarithmic Error cannot be used when targets "
         "contain negative values."
@@ -266,10 +356,18 @@ def test_regression_multioutput_array():
     )
     with pytest.raises(ValueError, match=err_msg):
         mean_pinball_loss(y_true, y_pred, multioutput="variance_weighted")
+
+    with pytest.raises(ValueError, match=err_msg):
+        d2_pinball_score(y_true, y_pred, multioutput="variance_weighted")
+
     pbl = mean_pinball_loss(y_true, y_pred, multioutput="raw_values")
     mape = mean_absolute_percentage_error(y_true, y_pred, multioutput="raw_values")
     r = r2_score(y_true, y_pred, multioutput="raw_values")
     evs = explained_variance_score(y_true, y_pred, multioutput="raw_values")
+    d2ps = d2_pinball_score(y_true, y_pred, alpha=0.5, multioutput="raw_values")
+    evs2 = explained_variance_score(
+        y_true, y_pred, multioutput="raw_values", force_finite=False
+    )
 
     assert_array_almost_equal(mse, [0.125, 0.5625], decimal=2)
     assert_array_almost_equal(mae, [0.25, 0.625], decimal=2)
@@ -277,6 +375,8 @@ def test_regression_multioutput_array():
     assert_array_almost_equal(mape, [0.0778, 0.2262], decimal=2)
     assert_array_almost_equal(r, [0.95, 0.93], decimal=2)
     assert_array_almost_equal(evs, [0.95, 0.93], decimal=2)
+    assert_array_almost_equal(d2ps, [0.833, 0.722], decimal=2)
+    assert_array_almost_equal(evs2, [0.95, 0.93], decimal=2)
 
     # mean_absolute_error and mean_squared_error are equal because
     # it is a binary problem.
@@ -286,10 +386,12 @@ def test_regression_multioutput_array():
     mae = mean_absolute_error(y_true, y_pred, multioutput="raw_values")
     pbl = mean_pinball_loss(y_true, y_pred, multioutput="raw_values")
     r = r2_score(y_true, y_pred, multioutput="raw_values")
+    d2ps = d2_pinball_score(y_true, y_pred, multioutput="raw_values")
     assert_array_almost_equal(mse, [1.0, 1.0], decimal=2)
     assert_array_almost_equal(mae, [1.0, 1.0], decimal=2)
     assert_array_almost_equal(pbl, [0.5, 0.5], decimal=2)
     assert_array_almost_equal(r, [0.0, 0.0], decimal=2)
+    assert_array_almost_equal(d2ps, [0.0, 0.0], decimal=2)
 
     r = r2_score([[0, -1], [0, 1]], [[2, 2], [1, 1]], multioutput="raw_values")
     assert_array_almost_equal(r, [0, -3.5], decimal=2)
@@ -300,17 +402,40 @@ def test_regression_multioutput_array():
         [[0, -1], [0, 1]], [[2, 2], [1, 1]], multioutput="raw_values"
     )
     assert_array_almost_equal(evs, [0, -1.25], decimal=2)
+    evs2 = explained_variance_score(
+        [[0, -1], [0, 1]],
+        [[2, 2], [1, 1]],
+        multioutput="raw_values",
+        force_finite=False,
+    )
+    assert_array_almost_equal(evs2, [-np.inf, -1.25], decimal=2)
 
     # Checking for the condition in which both numerator and denominator is
     # zero.
-    y_true = [[1, 3], [-1, 2]]
-    y_pred = [[1, 4], [-1, 1]]
+    y_true = [[1, 3], [1, 2]]
+    y_pred = [[1, 4], [1, 1]]
     r2 = r2_score(y_true, y_pred, multioutput="raw_values")
     assert_array_almost_equal(r2, [1.0, -3.0], decimal=2)
     assert np.mean(r2) == r2_score(y_true, y_pred, multioutput="uniform_average")
+    r22 = r2_score(y_true, y_pred, multioutput="raw_values", force_finite=False)
+    assert_array_almost_equal(r22, [np.nan, -3.0], decimal=2)
+    assert_almost_equal(
+        np.mean(r22),
+        r2_score(y_true, y_pred, multioutput="uniform_average", force_finite=False),
+    )
+
     evs = explained_variance_score(y_true, y_pred, multioutput="raw_values")
     assert_array_almost_equal(evs, [1.0, -3.0], decimal=2)
     assert np.mean(evs) == explained_variance_score(y_true, y_pred)
+    d2ps = d2_pinball_score(y_true, y_pred, alpha=0.5, multioutput="raw_values")
+    assert_array_almost_equal(d2ps, [1.0, -1.0], decimal=2)
+    evs2 = explained_variance_score(
+        y_true, y_pred, multioutput="raw_values", force_finite=False
+    )
+    assert_array_almost_equal(evs2, [np.nan, -3.0], decimal=2)
+    assert_almost_equal(
+        np.mean(evs2), explained_variance_score(y_true, y_pred, force_finite=False)
+    )
 
     # Handling msle separately as it does not accept negative inputs.
     y_true = np.array([[0.5, 1], [1, 2], [7, 6]])
@@ -332,6 +457,10 @@ def test_regression_custom_weights():
     mapew = mean_absolute_percentage_error(y_true, y_pred, multioutput=[0.4, 0.6])
     rw = r2_score(y_true, y_pred, multioutput=[0.4, 0.6])
     evsw = explained_variance_score(y_true, y_pred, multioutput=[0.4, 0.6])
+    d2psw = d2_pinball_score(y_true, y_pred, alpha=0.5, multioutput=[0.4, 0.6])
+    evsw2 = explained_variance_score(
+        y_true, y_pred, multioutput=[0.4, 0.6], force_finite=False
+    )
 
     assert_almost_equal(msew, 0.39, decimal=2)
     assert_almost_equal(rmsew, 0.59, decimal=2)
@@ -339,6 +468,8 @@ def test_regression_custom_weights():
     assert_almost_equal(mapew, 0.1668, decimal=2)
     assert_almost_equal(rw, 0.94, decimal=2)
     assert_almost_equal(evsw, 0.94, decimal=2)
+    assert_almost_equal(d2psw, 0.766, decimal=2)
+    assert_almost_equal(evsw2, 0.94, decimal=2)
 
     # Handling msle separately as it does not accept negative inputs.
     y_true = np.array([[0.5, 1], [1, 2], [7, 6]])
@@ -350,7 +481,7 @@ def test_regression_custom_weights():
     assert_almost_equal(msle, msle2, decimal=2)
 
 
-@pytest.mark.parametrize("metric", [r2_score, d2_tweedie_score])
+@pytest.mark.parametrize("metric", [r2_score, d2_tweedie_score, d2_pinball_score])
 def test_regression_single_sample(metric):
     y_true = [0]
     y_pred = [1]
@@ -360,19 +491,6 @@ def test_regression_single_sample(metric):
     with pytest.warns(UndefinedMetricWarning, match=warning_msg):
         score = metric(y_true, y_pred)
         assert np.isnan(score)
-
-
-def test_deprecation_positional_arguments_mape():
-    y_true = [1, 1, 1]
-    y_pred = [1, 0, 1]
-    sample_weights = [0.5, 0.1, 0.2]
-    multioutput = "raw_values"
-
-    warning_msg = "passing these as positional arguments will result in an error"
-
-    # Trigger the warning
-    with pytest.warns(FutureWarning, match=warning_msg):
-        mean_absolute_percentage_error(y_true, y_pred, sample_weights, multioutput)
 
 
 def test_tweedie_deviance_continuity():

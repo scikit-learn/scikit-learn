@@ -64,3 +64,24 @@ cdef class DistanceMetric:
     cdef DTYPE_t _rdist_to_dist(self, DTYPE_t rdist) nogil except -1
 
     cdef DTYPE_t _dist_to_rdist(self, DTYPE_t dist) nogil except -1
+
+
+######################################################################
+# DatasetsPair base class
+cdef class DatasetsPair:
+    cdef DistanceMetric distance_metric
+
+    cdef ITYPE_t n_samples_X(self) nogil
+
+    cdef ITYPE_t n_samples_Y(self) nogil
+
+    cdef DTYPE_t dist(self, ITYPE_t i, ITYPE_t j) nogil
+
+    cdef DTYPE_t surrogate_dist(self, ITYPE_t i, ITYPE_t j) nogil
+
+
+cdef class DenseDenseDatasetsPair(DatasetsPair):
+    cdef:
+        const DTYPE_t[:, ::1] X
+        const DTYPE_t[:, ::1] Y
+        ITYPE_t d
