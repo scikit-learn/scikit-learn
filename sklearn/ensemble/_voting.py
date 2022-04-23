@@ -309,6 +309,9 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
 
         updated_clfs = []
         for clf in clfs:
+            if clf == "drop":
+                continue
+
             params_with_class_weights = [
                 (k, v)
                 for k, v in clf.get_params(deep=True).items()
