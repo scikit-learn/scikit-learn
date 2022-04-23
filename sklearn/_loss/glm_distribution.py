@@ -4,6 +4,10 @@ Distribution functions used in GLM
 
 # Author: Christian Lorentzen <lorentzen.ch@googlemail.com>
 # License: BSD 3 clause
+#
+# TODO(1.3): remove file
+#       This is only used for backward compatibility in _GeneralizedLinearRegressor
+#       for the deprecated family attribute.
 
 from abc import ABCMeta, abstractmethod
 from collections import namedtuple
@@ -13,8 +17,7 @@ import numpy as np
 from scipy.special import xlogy
 
 
-DistributionBoundary = namedtuple("DistributionBoundary",
-                                  ("value", "inclusive"))
+DistributionBoundary = namedtuple("DistributionBoundary", ("value", "inclusive"))
 
 
 class ExponentialDispersionModel(metaclass=ABCMeta):
@@ -57,8 +60,9 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
         # Note that currently supported distributions have +inf upper bound
 
         if not isinstance(self._lower_bound, DistributionBoundary):
-            raise TypeError('_lower_bound attribute must be of type '
-                            'DistributionBoundary')
+            raise TypeError(
+                "_lower_bound attribute must be of type DistributionBoundary"
+            )
 
         if self._lower_bound.inclusive:
             return np.greater_equal(y, self._lower_bound.value)
@@ -200,6 +204,7 @@ class TweedieDistribution(ExponentialDispersionModel):
             :math:`v(y_\textrm{pred}) = y_\textrm{pred}^{power}`.
             For ``0<power<1``, no distribution exists.
     """
+
     def __init__(self, power=0):
         self.power = power
 
@@ -213,15 +218,15 @@ class TweedieDistribution(ExponentialDispersionModel):
         # upper bound when the power parameter is updated e.g. in grid
         # search.
         if not isinstance(power, numbers.Real):
-            raise TypeError('power must be a real number, input was {0}'
-                            .format(power))
+            raise TypeError("power must be a real number, input was {0}".format(power))
 
         if power <= 0:
             # Extreme Stable or Normal distribution
             self._lower_bound = DistributionBoundary(-np.Inf, inclusive=False)
         elif 0 < power < 1:
-            raise ValueError('Tweedie distribution is only defined for '
-                             'power<=0 and power>=1.')
+            raise ValueError(
+                "Tweedie distribution is only defined for power<=0 and power>=1."
+            )
         elif 1 <= power < 2:
             # Poisson or Compound Poisson distribution
             self._lower_bound = DistributionBoundary(0, inclusive=True)
@@ -272,84 +277,97 @@ class TweedieDistribution(ExponentialDispersionModel):
         p = self.power
 
         if check_input:
-            message = ("Mean Tweedie deviance error with power={} can only be "
-                       "used on ".format(p))
+            message = (
+                "Mean Tweedie deviance error with power={} can only be used on ".format(
+                    p
+                )
+            )
             if p < 0:
-                # 'Extreme stable', y any realy number, y_pred > 0
+                # 'Extreme stable', y any real number, y_pred > 0
                 if (y_pred <= 0).any():
                     raise ValueError(message + "strictly positive y_pred.")
             elif p == 0:
                 # Normal, y and y_pred can be any real number
                 pass
             elif 0 < p < 1:
-                raise ValueError("Tweedie deviance is only defined for "
-                                 "power<=0 and power>=1.")
+                raise ValueError(
+                    "Tweedie deviance is only defined for power<=0 and power>=1."
+                )
             elif 1 <= p < 2:
-                # Poisson and Compount poisson distribution, y >= 0, y_pred > 0
+                # Poisson and compound Poisson distribution, y >= 0, y_pred > 0
                 if (y < 0).any() or (y_pred <= 0).any():
-                    raise ValueError(message + "non-negative y and strictly "
-                                     "positive y_pred.")
+                    raise ValueError(
+                        message + "non-negative y and strictly positive y_pred."
+                    )
             elif p >= 2:
                 # Gamma and Extreme stable distribution, y and y_pred > 0
                 if (y <= 0).any() or (y_pred <= 0).any():
-                    raise ValueError(message
-                                     + "strictly positive y and y_pred.")
+                    raise ValueError(message + "strictly positive y and y_pred.")
             else:  # pragma: nocover
                 # Unreachable statement
                 raise ValueError
 
         if p < 0:
-            # 'Extreme stable', y any realy number, y_pred > 0
-            dev = 2 * (np.power(np.maximum(y, 0), 2-p) / ((1-p) * (2-p))
-                       - y * np.power(y_pred, 1-p) / (1-p)
-                       + np.power(y_pred, 2-p) / (2-p))
+            # 'Extreme stable', y any real number, y_pred > 0
+            dev = 2 * (
+                np.power(np.maximum(y, 0), 2 - p) / ((1 - p) * (2 - p))
+                - y * np.power(y_pred, 1 - p) / (1 - p)
+                + np.power(y_pred, 2 - p) / (2 - p)
+            )
 
         elif p == 0:
             # Normal distribution, y and y_pred any real number
-            dev = (y - y_pred)**2
+            dev = (y - y_pred) ** 2
         elif p < 1:
-            raise ValueError("Tweedie deviance is only defined for power<=0 "
-                             "and power>=1.")
+            raise ValueError(
+                "Tweedie deviance is only defined for power<=0 and power>=1."
+            )
         elif p == 1:
             # Poisson distribution
-            dev = 2 * (xlogy(y, y/y_pred) - y + y_pred)
+            dev = 2 * (xlogy(y, y / y_pred) - y + y_pred)
         elif p == 2:
             # Gamma distribution
-            dev = 2 * (np.log(y_pred/y) + y/y_pred - 1)
+            dev = 2 * (np.log(y_pred / y) + y / y_pred - 1)
         else:
-            dev = 2 * (np.power(y, 2-p) / ((1-p) * (2-p))
-                       - y * np.power(y_pred, 1-p) / (1-p)
-                       + np.power(y_pred, 2-p) / (2-p))
+            dev = 2 * (
+                np.power(y, 2 - p) / ((1 - p) * (2 - p))
+                - y * np.power(y_pred, 1 - p) / (1 - p)
+                + np.power(y_pred, 2 - p) / (2 - p)
+            )
         return dev
 
 
 class NormalDistribution(TweedieDistribution):
-    """Class for the Normal (aka Gaussian) distribution"""
+    """Class for the Normal (aka Gaussian) distribution."""
+
     def __init__(self):
         super().__init__(power=0)
 
 
 class PoissonDistribution(TweedieDistribution):
-    """Class for the scaled Poisson distribution"""
+    """Class for the scaled Poisson distribution."""
+
     def __init__(self):
         super().__init__(power=1)
 
 
 class GammaDistribution(TweedieDistribution):
-    """Class for the Gamma distribution"""
+    """Class for the Gamma distribution."""
+
     def __init__(self):
         super().__init__(power=2)
 
 
 class InverseGaussianDistribution(TweedieDistribution):
-    """Class for the scaled InverseGaussianDistribution distribution"""
+    """Class for the scaled InverseGaussianDistribution distribution."""
+
     def __init__(self):
         super().__init__(power=3)
 
 
 EDM_DISTRIBUTIONS = {
-    'normal': NormalDistribution,
-    'poisson': PoissonDistribution,
-    'gamma': GammaDistribution,
-    'inverse-gaussian': InverseGaussianDistribution,
+    "normal": NormalDistribution,
+    "poisson": PoissonDistribution,
+    "gamma": GammaDistribution,
+    "inverse-gaussian": InverseGaussianDistribution,
 }

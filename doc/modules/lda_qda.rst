@@ -136,7 +136,7 @@ Mathematical formulation of LDA dimensionality reduction
 
 First note that the K means :math:`\mu_k` are vectors in
 :math:`\mathcal{R}^d`, and they lie in an affine subspace :math:`H` of
-dimension at least :math:`K - 1` (2 points lie on a line, 3 points lie on a
+dimension at most :math:`K - 1` (2 points lie on a line, 3 points lie on a
 plane, etc).
 
 As mentioned above, we can interpret LDA as assigning :math:`x` to the class
@@ -163,8 +163,8 @@ transformed class means :math:`\mu^*_k`). This :math:`L` corresponds to the
 :func:`~discriminant_analysis.LinearDiscriminantAnalysis.transform` method. See
 [1]_ for more details.
 
-Shrinkage
-=========
+Shrinkage and Covariance Estimator
+==================================
 
 Shrinkage is a form of regularization used to improve the estimation of
 covariance matrices in situations where the number of training samples is
@@ -187,12 +187,33 @@ an estimate for the covariance matrix). Setting this parameter to a value
 between these two extrema will estimate a shrunk version of the covariance
 matrix.
 
+The shrunk Ledoit and Wolf estimator of covariance may not always be the
+best choice. For example if the distribution of the data
+is normally distributed, the
+Oracle Shrinkage Approximating estimator :class:`sklearn.covariance.OAS`
+yields a smaller Mean Squared Error than the one given by Ledoit and Wolf's
+formula used with shrinkage="auto". In LDA, the data are assumed to be gaussian
+conditionally to the class. If these assumptions hold, using LDA with
+the OAS estimator of covariance will yield a better classification 
+accuracy than if Ledoit and Wolf or the empirical covariance estimator is used.
+
+The covariance estimator can be chosen using with the ``covariance_estimator``
+parameter of the :class:`discriminant_analysis.LinearDiscriminantAnalysis`
+class. A covariance estimator should have a :term:`fit` method and a
+``covariance_`` attribute like all covariance estimators in the
+:mod:`sklearn.covariance` module.
+
+
 .. |shrinkage| image:: ../auto_examples/classification/images/sphx_glr_plot_lda_001.png
         :target: ../auto_examples/classification/plot_lda.html
         :scale: 75
 
 .. centered:: |shrinkage|
 
+.. topic:: Examples:
+
+    :ref:`sphx_glr_auto_examples_classification_plot_lda.py`: Comparison of LDA classifiers
+    with Empirical, Ledoit Wolf and OAS covariance estimator.
 
 Estimation algorithms
 =====================
@@ -211,16 +232,17 @@ solver may be preferable in situations where the number of features is large.
 The 'svd' solver cannot be used with shrinkage.
 For QDA, the use of the SVD solver relies on the fact that the covariance
 matrix :math:`\Sigma_k` is, by definition, equal to :math:`\frac{1}{n - 1}
-X_k^tX_k = V S^2 V^t` where :math:`V` comes from the SVD of the (centered)
+X_k^tX_k = \frac{1}{n - 1} V S^2 V^t` where :math:`V` comes from the SVD of the (centered)
 matrix: :math:`X_k = U S V^t`. It turns out that we can compute the
-log-posterior above without having to explictly compute :math:`\Sigma`:
+log-posterior above without having to explicitly compute :math:`\Sigma`:
 computing :math:`S` and :math:`V` via the SVD of :math:`X` is enough. For
 LDA, two SVDs are computed: the SVD of the centered input matrix :math:`X`
 and the SVD of the class-wise mean vectors.
 
 The 'lsqr' solver is an efficient algorithm that only works for
 classification. It needs to explicitly compute the covariance matrix
-:math:`\Sigma`, and supports shrinkage. This solver computes the coefficients
+:math:`\Sigma`, and supports shrinkage and custom covariance estimators.
+This solver computes the coefficients
 :math:`\omega_k = \Sigma^{-1}\mu_k` by solving for :math:`\Sigma \omega =
 \mu_k`, thus avoiding the explicit computation of the inverse
 :math:`\Sigma^{-1}`.
@@ -230,11 +252,6 @@ within class scatter ratio. It can be used for both classification and
 transform, and it supports shrinkage. However, the 'eigen' solver needs to
 compute the covariance matrix, so it might not be suitable for situations with
 a high number of features.
-
-.. topic:: Examples:
-
-    :ref:`sphx_glr_auto_examples_classification_plot_lda.py`: Comparison of LDA classifiers
-    with and without shrinkage.
 
 .. topic:: References:
 

@@ -16,6 +16,16 @@ indicative of how much the model depends on the feature. This technique
 benefits from being model agnostic and can be calculated many times with
 different permutations of the feature.
 
+.. warning::
+
+  Features that are deemed of **low importance for a bad model** (low
+  cross-validation score) could be **very important for a good model**.
+  Therefore it is always important to evaluate the predictive power of a model
+  using a held-out set (or better with cross-validation) prior to computing
+  importances. Permutation importance does not reflect to the intrinsic
+  predictive value of a feature by itself but **how important this feature is
+  for a particular model**.
+
 The :func:`permutation_importance` function calculates the feature importance
 of :term:`estimators` for a given dataset. The ``n_repeats`` parameter sets the
 number of times a feature is randomly shuffled and returns a sample of feature
@@ -64,15 +74,49 @@ highlight which features contribute the most to the generalization power of the
 inspected model. Features that are important on the training set but not on the
 held-out set might cause the model to overfit.
 
-.. warning::
+The permutation feature importance is the decrease in a model score when a single
+feature value is randomly shuffled. The score function to be used for the
+computation of importances can be specified with the `scoring` argument,
+which also accepts multiple scorers. Using multiple scorers is more computationally
+efficient than sequentially calling :func:`permutation_importance` several times
+with a different scorer, as it reuses model predictions.
 
-  Features that are deemed of **low importance for a bad model** (low
-  cross-validation score) could be **very important for a good model**.
-  Therefore it is always important to evaluate the predictive power of a model
-  using a held-out set (or better with cross-validation) prior to computing
-  importances. Permutation importance does not reflect to the intrinsic
-  predictive value of a feature by itself but **how important this feature is
-  for a particular model**.
+An example of using multiple scorers is shown below, employing a list of metrics,
+but more input formats are possible, as documented in :ref:`multimetric_scoring`.
+
+  >>> scoring = ['r2', 'neg_mean_absolute_percentage_error', 'neg_mean_squared_error']
+  >>> r_multi = permutation_importance(
+  ...     model, X_val, y_val, n_repeats=30, random_state=0, scoring=scoring)
+  ...
+  >>> for metric in r_multi:
+  ...     print(f"{metric}")
+  ...     r = r_multi[metric]
+  ...     for i in r.importances_mean.argsort()[::-1]:
+  ...         if r.importances_mean[i] - 2 * r.importances_std[i] > 0:
+  ...             print(f"    {diabetes.feature_names[i]:<8}"
+  ...                   f"{r.importances_mean[i]:.3f}"
+  ...                   f" +/- {r.importances_std[i]:.3f}")
+  ...
+  r2
+      s5      0.204 +/- 0.050
+      bmi     0.176 +/- 0.048
+      bp      0.088 +/- 0.033
+      sex     0.056 +/- 0.023
+  neg_mean_absolute_percentage_error
+      s5      0.081 +/- 0.020
+      bmi     0.064 +/- 0.015
+      bp      0.029 +/- 0.010
+  neg_mean_squared_error
+      s5      1013.866 +/- 246.445
+      bmi     872.726 +/- 240.298
+      bp      438.663 +/- 163.022
+      sex     277.376 +/- 115.123
+
+The ranking of the features is approximately the same for different metrics even
+if the scales of the importance values are very different. However, this is not
+guaranteed and different metrics might lead to significantly different feature
+importances, in particular for models trained for imbalanced classification problems,
+for which the choice of the classification metric can be critical.
 
 Outline of the permutation importance algorithm
 -----------------------------------------------
@@ -101,7 +145,7 @@ Relation to impurity-based importance in trees
 Tree-based models provide an alternative measure of :ref:`feature importances
 based on the mean decrease in impurity <random_forest_feature_importance>`
 (MDI). Impurity is quantified by the splitting criterion of the decision trees
-(Gini, Entropy or Mean Squared Error). However, this method can give high
+(Gini, Log Loss or Mean Squared Error). However, this method can give high
 importance to features that may not be predictive on unseen data when the model
 is overfitting. Permutation-based feature importance, on the other hand, avoids
 this issue, since it can be computed on unseen data.
@@ -113,7 +157,7 @@ with a small number of possible categories.
 
 Permutation-based feature importances do not exhibit such a bias. Additionally,
 the permutation feature importance may be computed performance metric on the
-model predictions predictions and can be used to analyze any model class (not
+model predictions and can be used to analyze any model class (not
 just tree-based models).
 
 The following example highlights the limitations of impurity-based feature
@@ -140,5 +184,5 @@ example:
 
 .. topic:: References:
 
-   .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32,
-       2001. https://doi.org/10.1023/A:1010933404324
+   .. [1] L. Breiman, :doi:`"Random Forests" <10.1023/A:1010933404324>`,
+      Machine Learning, 45(1), 5-32, 2001.

@@ -1,7 +1,3 @@
-# cython: boundscheck=False
-# cython: wraparound=False
-# cython: cdivision=True
-#
 # Author: Thomas Moreau <thomas.moreau.2010@gmail.com>
 # Author: Olivier Grisel <olivier.grisel@ensta.fr>
 
@@ -31,7 +27,7 @@ cdef struct Cell:
 
     # Tree structure
     SIZE_t parent              # Parent cell of this cell
-    SIZE_t[8] children         # Array pointing to childrens of this cell
+    SIZE_t[8] children         # Array pointing to children of this cell
 
     # Cell description
     SIZE_t cell_id             # Id of the cell in the cells array in the Tree
@@ -82,7 +78,7 @@ cdef class _QuadTree:
 
     # Create a summary of the Tree compare to a query point
     cdef long summarize(self, DTYPE_t[3] point, DTYPE_t* results,
-                        float squared_theta=*, int cell_id=*, long idx=*
+                        float squared_theta=*, SIZE_t cell_id=*, long idx=*
                         ) nogil
 
     # Internal cell initialization methods

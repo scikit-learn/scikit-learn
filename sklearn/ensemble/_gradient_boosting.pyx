@@ -1,7 +1,3 @@
-# cython: cdivision=True
-# cython: boundscheck=False
-# cython: wraparound=False
-#
 # Author: Peter Prettenhofer
 #
 # License: BSD 3 clause
@@ -32,7 +28,6 @@ ctypedef np.uint8_t uint8
 # no namespace lookup for numpy dtype and array creation
 from numpy import zeros as np_zeros
 from numpy import ones as np_ones
-from numpy import bool as np_bool
 from numpy import float32 as np_float32
 from numpy import float64 as np_float64
 
@@ -224,7 +219,7 @@ def predict_stages(np.ndarray[object, ndim=2] estimators,
                     tree.nodes, tree.value,
                     scale, k, K, X.shape[0], X.shape[1],
                     <float64 *> (<np.ndarray> out).data)
-                ## out += scale * tree.predict(X).reshape((X.shape[0], 1))
+                ## out[:, k] += scale * tree.predict(X).ravel()
 
 
 def predict_stage(np.ndarray[object, ndim=2] estimators,
@@ -261,9 +256,9 @@ def _random_sample_mask(np.npy_intp n_total_samples,
          the others are ``False``.
      """
      cdef np.ndarray[float64, ndim=1, mode="c"] rand = \
-          random_state.rand(n_total_samples)
+          random_state.uniform(size=n_total_samples)
      cdef np.ndarray[uint8, ndim=1, mode="c", cast=True] sample_mask = \
-          np_zeros((n_total_samples,), dtype=np_bool)
+          np_zeros((n_total_samples,), dtype=bool)
 
      cdef np.npy_intp n_bagged = 0
      cdef np.npy_intp i = 0
