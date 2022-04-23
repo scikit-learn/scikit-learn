@@ -961,3 +961,25 @@ def test_n_features_deprecation(Estimator):
 
     with pytest.warns(FutureWarning, match="`n_features_` was deprecated"):
         est.n_features_
+
+
+@pytest.mark.parametrize(
+    "class_weight, new_encoding",
+    [
+        ("balanced", np.array([1, 2, 3])),
+        ({1: 2, 2: 3, 3: 4}, np.array([1, 2, 3])),
+        ({"a": 2, "b": 3, "d": 4}, np.array(["a", "b", "d"], dtype=object)),
+    ],
+)
+def test_bagging_inner_class_weights(class_weight, new_encoding):
+    """Check that BaggingClassifier re-encodes class_weights for the inner estimator.
+
+    Non-regresion test for #19665
+    """
+    X = iris.data
+    y = new_encoding[iris.target]
+
+    clf = BaggingClassifier(DecisionTreeClassifier(class_weight=class_weight))
+
+    # Does not error
+    clf.fit(X, y)

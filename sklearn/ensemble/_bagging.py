@@ -12,9 +12,11 @@ from warnings import warn
 
 from joblib import Parallel
 
+from ..base import clone
 from ._base import BaseEnsemble, _partition_estimators
 from ..base import ClassifierMixin, RegressorMixin
 from ..metrics import r2_score, accuracy_score
+from ..preprocessing import LabelEncoder
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..utils import check_random_state, column_or_1d, deprecated
 from ..utils import indices_to_mask
@@ -688,6 +690,18 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
     def _validate_estimator(self):
         """Check the estimator and set the base_estimator_ attribute."""
         super()._validate_estimator(default=DecisionTreeClassifier())
+        base_est = self.base_estimator_
+
+        # re-encode class_weights when needed
+        if hasattr(base_est, "class_weight") and isinstance(
+            base_est.class_weight, dict
+        ):
+            labels, weights = zip(*base_est.class_weight.items())
+            encoded_labels = self._le.transform(labels)
+            new_class_weight = dict(zip(encoded_labels, weights))
+            self.base_estimator_ = clone(base_est).set_params(
+                class_weight=new_class_weight
+            )
 
     def _set_oob_score(self, X, y):
         n_samples = y.shape[0]
@@ -731,7 +745,10 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
     def _validate_y(self, y):
         y = column_or_1d(y, warn=True)
         check_classification_targets(y)
-        self.classes_, y = np.unique(y, return_inverse=True)
+        self._le = LabelEncoder()
+        y = self._le.fit_transform(y)
+
+        self.classes_ = self._le.classes_
         self.n_classes_ = len(self.classes_)
 
         return y

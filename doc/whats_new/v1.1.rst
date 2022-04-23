@@ -438,6 +438,10 @@ Changelog
   other than a float is passed in as an argument.
   :pr:`21632` by :user:`Genesis Valencia <genvalen>`
 
+- |Fix| :class:`ensemble.BaggingClassifier` now supports `base_estimators`
+  with `class_weight` that uses string targets or non-standard integer encoding.
+  :pr:`22021` by `Thomas Fan`_.
+
 - |API| Changed the default of :func:`max_features` to 1.0 for
   :class:`ensemble.RandomForestRegressor` and to `"sqrt"` for
   :class:`ensemble.RandomForestClassifier`. Note that these give the same fit
