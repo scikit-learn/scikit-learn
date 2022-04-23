@@ -13,7 +13,6 @@ from sklearn.preprocessing import (
     PolynomialFeatures,
     SplineTransformer,
 )
-from sklearn.utils.fixes import linspace, sp_version, parse_version
 
 
 @pytest.mark.parametrize("est", (PolynomialFeatures, SplineTransformer))
@@ -113,11 +112,14 @@ def test_spline_transformer_integer_knots(extrapolation):
     ).fit_transform(X)
 
 
-def test_spline_transformer_feature_names():
+# TODO: Remove in 1.2 when get_feature_names is removed.
+@pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
+@pytest.mark.parametrize("get_names", ["get_feature_names", "get_feature_names_out"])
+def test_spline_transformer_feature_names(get_names):
     """Test that SplineTransformer generates correct features name."""
     X = np.arange(20).reshape(10, 2)
     splt = SplineTransformer(n_knots=3, degree=3, include_bias=True).fit(X)
-    feature_names = splt.get_feature_names()
+    feature_names = getattr(splt, get_names)()
     assert_array_equal(
         feature_names,
         [
@@ -135,7 +137,7 @@ def test_spline_transformer_feature_names():
     )
 
     splt = SplineTransformer(n_knots=3, degree=3, include_bias=False).fit(X)
-    feature_names = splt.get_feature_names(["a", "b"])
+    feature_names = getattr(splt, get_names)(["a", "b"])
     assert_array_equal(
         feature_names,
         [
@@ -205,6 +207,38 @@ def test_spline_transformer_linear_regression(bias, intercept):
 
 
 @pytest.mark.parametrize(
+    ["knots", "n_knots", "sample_weight", "expected_knots"],
+    [
+        ("uniform", 3, None, np.array([[0, 2], [3, 8], [6, 14]])),
+        (
+            "uniform",
+            3,
+            np.array([0, 0, 1, 1, 0, 3, 1]),
+            np.array([[2, 2], [4, 8], [6, 14]]),
+        ),
+        ("uniform", 4, None, np.array([[0, 2], [2, 6], [4, 10], [6, 14]])),
+        ("quantile", 3, None, np.array([[0, 2], [3, 3], [6, 14]])),
+        (
+            "quantile",
+            3,
+            np.array([0, 0, 1, 1, 0, 3, 1]),
+            np.array([[2, 2], [5, 8], [6, 14]]),
+        ),
+    ],
+)
+def test_spline_transformer_get_base_knot_positions(
+    knots, n_knots, sample_weight, expected_knots
+):
+    # Check the behaviour to find the positions of the knots with and without
+    # `sample_weight`
+    X = np.array([[0, 2], [0, 2], [2, 2], [3, 3], [4, 6], [5, 8], [6, 14]])
+    base_knots = SplineTransformer._get_base_knot_positions(
+        X=X, knots=knots, n_knots=n_knots, sample_weight=sample_weight
+    )
+    assert_allclose(base_knots, expected_knots)
+
+
+@pytest.mark.parametrize(
     "knots, n_knots, degree",
     [
         ("uniform", 5, 3),
@@ -218,8 +252,8 @@ def test_spline_transformer_linear_regression(bias, intercept):
 )
 def test_spline_transformer_periodicity_of_extrapolation(knots, n_knots, degree):
     """Test that the SplineTransformer is periodic for multiple features."""
-    X_1 = linspace((-1, 0), (1, 5), 10)
-    X_2 = linspace((1, 5), (3, 10), 10)
+    X_1 = np.linspace((-1, 0), (1, 5), 10)
+    X_2 = np.linspace((1, 5), (3, 10), 10)
 
     splt = SplineTransformer(
         knots=knots, n_knots=n_knots, degree=degree, extrapolation="periodic"
@@ -260,10 +294,6 @@ def test_spline_transformer_periodic_linear_regression(bias, intercept):
     assert_allclose(predictions[0:100], predictions[100:200], rtol=1e-3)
 
 
-@pytest.mark.skipif(
-    sp_version < parse_version("1.0.0"),
-    reason="Periodic extrapolation not yet implemented for BSpline.",
-)
 def test_spline_transformer_periodic_spline_backport():
     """Test that the backport of extrapolate="periodic" works correctly"""
     X = np.linspace(-2, 3.5, 10)[:, None]
@@ -324,7 +354,7 @@ def test_spline_transformer_periodic_splines_smoothness(degree):
     dXt = Xt
     # We expect splines of degree `degree` to be (`degree`-1) times
     # continuously differentiable. I.e. for d = 0, ..., `degree` - 1 the d-th
-    # derivative should be continous. This is the case if the (d+1)-th
+    # derivative should be continuous. This is the case if the (d+1)-th
     # numerical derivative is reasonably small (smaller than `tol` in absolute
     # value). We thus compute d-th numeric derivatives for d = 1, ..., `degree`
     # and compare them to `tol`.
@@ -338,7 +368,7 @@ def test_spline_transformer_periodic_splines_smoothness(degree):
         # Compute d-th numeric derivative
         dXt = diff / delta
 
-    # As degree `degree` splines are not `degree` times continously
+    # As degree `degree` splines are not `degree` times continuously
     # differentiable at the knots, the `degree + 1`-th numeric derivative
     # should have spikes at the knots.
     diff = np.diff(dXt, axis=0)
@@ -455,7 +485,7 @@ def test_polynomial_features_input_validation(params, err_msg):
 @pytest.fixture()
 def single_feature_degree3():
     X = np.arange(6)[:, np.newaxis]
-    P = np.hstack([np.ones_like(X), X, X ** 2, X ** 3])
+    P = np.hstack([np.ones_like(X), X, X**2, X**3])
     return X, P
 
 
@@ -506,16 +536,16 @@ def two_features_degree3():
     x2 = X[:, 1:]
     P = np.hstack(
         [
-            x1 ** 0 * x2 ** 0,  # 0
-            x1 ** 1 * x2 ** 0,  # 1
-            x1 ** 0 * x2 ** 1,  # 2
-            x1 ** 2 * x2 ** 0,  # 3
-            x1 ** 1 * x2 ** 1,  # 4
-            x1 ** 0 * x2 ** 2,  # 5
-            x1 ** 3 * x2 ** 0,  # 6
-            x1 ** 2 * x2 ** 1,  # 7
-            x1 ** 1 * x2 ** 2,  # 8
-            x1 ** 0 * x2 ** 3,  # 9
+            x1**0 * x2**0,  # 0
+            x1**1 * x2**0,  # 1
+            x1**0 * x2**1,  # 2
+            x1**2 * x2**0,  # 3
+            x1**1 * x2**1,  # 4
+            x1**0 * x2**2,  # 5
+            x1**3 * x2**0,  # 6
+            x1**2 * x2**1,  # 7
+            x1**1 * x2**2,  # 8
+            x1**0 * x2**3,  # 9
         ]
     )
     return X, P
@@ -573,7 +603,10 @@ def test_polynomial_features_two_features(
         assert tf.powers_.shape == (tf.n_output_features_, tf.n_features_in_)
 
 
-def test_polynomial_feature_names():
+# TODO: Remove in 1.2 when get_feature_names is removed.
+@pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
+@pytest.mark.parametrize("get_names", ["get_feature_names", "get_feature_names_out"])
+def test_polynomial_feature_names(get_names):
     X = np.arange(30).reshape(10, 3)
     poly = PolynomialFeatures(degree=2, include_bias=True).fit(X)
     feature_names = poly.get_feature_names()
@@ -584,7 +617,7 @@ def test_polynomial_feature_names():
     assert len(feature_names) == poly.transform(X).shape[1]
 
     poly = PolynomialFeatures(degree=3, include_bias=False).fit(X)
-    feature_names = poly.get_feature_names(["a", "b", "c"])
+    feature_names = getattr(poly, get_names)(["a", "b", "c"])
     assert_array_equal(
         [
             "a",
@@ -612,7 +645,7 @@ def test_polynomial_feature_names():
     assert len(feature_names) == poly.transform(X).shape[1]
 
     poly = PolynomialFeatures(degree=(2, 3), include_bias=False).fit(X)
-    feature_names = poly.get_feature_names(["a", "b", "c"])
+    feature_names = getattr(poly, get_names)(["a", "b", "c"])
     assert_array_equal(
         [
             "a^2",
@@ -639,7 +672,7 @@ def test_polynomial_feature_names():
     poly = PolynomialFeatures(
         degree=(3, 3), include_bias=True, interaction_only=True
     ).fit(X)
-    feature_names = poly.get_feature_names(["a", "b", "c"])
+    feature_names = getattr(poly, get_names)(["a", "b", "c"])
     assert_array_equal(["1", "a b c"], feature_names)
     assert len(feature_names) == poly.transform(X).shape[1]
 
@@ -855,3 +888,13 @@ def test_polynomial_features_deprecated_n_input_features():
 
     with pytest.warns(FutureWarning, match=depr_msg):
         PolynomialFeatures().fit(X).n_input_features_
+
+
+# TODO: Remove in 1.2 when get_feature_names is removed
+@pytest.mark.parametrize("Transformer", [SplineTransformer, PolynomialFeatures])
+def test_get_feature_names_deprecated(Transformer):
+    X = np.arange(30).reshape(10, 3)
+    poly = Transformer().fit(X)
+    msg = "get_feature_names is deprecated in 1.0"
+    with pytest.warns(FutureWarning, match=msg):
+        poly.get_feature_names()

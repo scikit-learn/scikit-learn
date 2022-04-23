@@ -1,0 +1,47 @@
+{{py:
+
+"""
+Efficient (dense) parameter vector implementation for linear models.
+
+Template file for easily generate fused types consistent code using Tempita
+(https://github.com/cython/cython/blob/master/Cython/Tempita/_tempita.py).
+
+Generated file: weight_vector.pxd
+
+Each class is duplicated for all dtypes (float and double). The keywords
+between double braces are substituted in setup.py.
+"""
+
+# name_suffix, c_type
+dtypes = [('64', 'double'),
+          ('32', 'float')]
+
+}}
+
+# WARNING: Do not edit this .pyx file directly, it is generated from its .pyx.tp
+cimport numpy as np
+
+{{for name_suffix, c_type in dtypes}}
+
+cdef class WeightVector{{name_suffix}}(object):
+    cdef readonly {{c_type}}[::1] w
+    cdef readonly {{c_type}}[::1] aw
+    cdef {{c_type}} *w_data_ptr
+    cdef {{c_type}} *aw_data_ptr
+    cdef {{c_type}} wscale
+    cdef {{c_type}} average_a
+    cdef {{c_type}} average_b
+    cdef int n_features
+    cdef {{c_type}} sq_norm
+
+    cdef void add(self, {{c_type}} *x_data_ptr, int *x_ind_ptr,
+                  int xnnz, {{c_type}} c) nogil
+    cdef void add_average(self, {{c_type}} *x_data_ptr, int *x_ind_ptr,
+                          int xnnz, {{c_type}} c, {{c_type}} num_iter) nogil
+    cdef {{c_type}} dot(self, {{c_type}} *x_data_ptr, int *x_ind_ptr,
+                    int xnnz) nogil
+    cdef void scale(self, {{c_type}} c) nogil
+    cdef void reset_wscale(self) nogil
+    cdef {{c_type}} norm(self) nogil
+
+{{endfor}}

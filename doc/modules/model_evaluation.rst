@@ -101,6 +101,9 @@ Scoring                                Function                                 
 'neg_mean_poisson_deviance'            :func:`metrics.mean_poisson_deviance`
 'neg_mean_gamma_deviance'              :func:`metrics.mean_gamma_deviance`
 'neg_mean_absolute_percentage_error'   :func:`metrics.mean_absolute_percentage_error`
+'d2_absolute_error_score'              :func:`metrics.d2_absolute_error_score`
+'d2_pinball_score'                     :func:`metrics.d2_pinball_score`
+'d2_tweedie_score'                     :func:`metrics.d2_tweedie_score`
 ====================================   ==============================================     ==================================
 
 
@@ -115,14 +118,15 @@ Usage examples:
     >>> model = svm.SVC()
     >>> cross_val_score(model, X, y, cv=5, scoring='wrong_choice')
     Traceback (most recent call last):
-    ValueError: 'wrong_choice' is not a valid scoring value. Use sorted(sklearn.metrics.SCORERS.keys()) to get valid options.
+    ValueError: 'wrong_choice' is not a valid scoring value. Use
+    sklearn.metrics.get_scorer_names() to get valid options.
 
 .. note::
 
-    The values listed by the ``ValueError`` exception correspond to the functions measuring
-    prediction accuracy described in the following sections.
-    The scorer objects for those functions are stored in the dictionary
-    ``sklearn.metrics.SCORERS``.
+    The values listed by the ``ValueError`` exception correspond to the
+    functions measuring prediction accuracy described in the following
+    sections. You can retrieve the names of all available scorers by calling
+    :func:`~sklearn.metrics.get_scorer_names`.
 
 .. currentmodule:: sklearn.metrics
 
@@ -437,7 +441,7 @@ In the multilabel case with binary label indicators::
 
 .. topic:: Example:
 
-  * See :ref:`sphx_glr_auto_examples_feature_selection_plot_permutation_test_for_classification.py`
+  * See :ref:`sphx_glr_auto_examples_model_selection_plot_permutation_tests_for_classification.py`
     for an example of accuracy score usage using permutations of
     the dataset.
 
@@ -563,8 +567,9 @@ or *informedness*.
      Machine Learning for Predictive Data Analytics: Algorithms, Worked Examples,
      and Case Studies <https://mitpress.mit.edu/books/fundamentals-machine-learning-predictive-data-analytics>`_,
      2015.
-  .. [Urbanowicz2015] Urbanowicz R.J.,  Moore, J.H. `ExSTraCS 2.0: description and evaluation of a scalable learning
-     classifier system <https://doi.org/10.1007/s12065-015-0128-8>`_, Evol. Intel. (2015) 8: 89.
+  .. [Urbanowicz2015] Urbanowicz R.J.,  Moore, J.H. :doi:`ExSTraCS 2.0: description
+      and evaluation of a scalable learning classifier
+      system <10.1007/s12065-015-0128-8>`, Evol. Intel. (2015) 8: 89.
 
 .. _cohen_kappa:
 
@@ -796,9 +801,10 @@ score:
 
 Note that the :func:`precision_recall_curve` function is restricted to the
 binary case. The :func:`average_precision_score` function works only in
-binary classification and multilabel indicator format. The
-:func:`plot_precision_recall_curve` function plots the precision recall as
-follows.
+binary classification and multilabel indicator format.
+The :func:`PredictionRecallDisplay.from_estimator` and
+:func:`PredictionRecallDisplay.from_predictions` functions will plot the
+precision-recall curve as follows.
 
 .. image:: ../auto_examples/model_selection/images/sphx_glr_plot_precision_recall_001.png
         :target: ../auto_examples/model_selection/plot_precision_recall.html#plot-the-precision-recall-curve
@@ -924,8 +930,8 @@ produce an F-score that is not between precision and recall.
 
 To make this more explicit, consider the following notation:
 
-* :math:`y` the set of *predicted* :math:`(sample, label)` pairs
-* :math:`\hat{y}` the set of *true* :math:`(sample, label)` pairs
+* :math:`y` the set of *true* :math:`(sample, label)` pairs
+* :math:`\hat{y}` the set of *predicted* :math:`(sample, label)` pairs
 * :math:`L` the set of labels
 * :math:`S` the set of samples
 * :math:`y_s` the subset of :math:`y` with sample :math:`s`,
@@ -933,9 +939,9 @@ To make this more explicit, consider the following notation:
 * :math:`y_l` the subset of :math:`y` with label :math:`l`
 * similarly, :math:`\hat{y}_s` and :math:`\hat{y}_l` are subsets of
   :math:`\hat{y}`
-* :math:`P(A, B) := \frac{\left| A \cap B \right|}{\left|A\right|}` for some
+* :math:`P(A, B) := \frac{\left| A \cap B \right|}{\left|\right|}` for some
   sets :math:`A` and :math:`B`
-* :math:`R(A, B) := \frac{\left| A \cap B \right|}{\left|B\right|}`
+* :math:`R(A, B) := \frac{\left| A \cap B \right|}{\left|A\right|}`
   (Conventions vary on handling :math:`B = \emptyset`; this implementation uses
   :math:`R(A, B):=0`, and similar for :math:`P`.)
 * :math:`F_\beta(A, B) := \left(1 + \beta^2\right) \frac{P(A, B) \times R(A, B)}{\beta^2 P(A, B) + R(A, B)}`
@@ -1013,6 +1019,11 @@ In the binary case::
   ...                    [1, 0, 0]])
   >>> jaccard_score(y_true[0], y_pred[0])
   0.6666...
+
+In the 2D comparison case (e.g. image similarity):
+
+  >>> jaccard_score(y_true, y_pred, average="micro")
+  0.6
 
 In the multilabel case with binary label indicators::
 
@@ -1587,7 +1598,7 @@ Additionally DET curves can be consulted for threshold analysis and operating
 point selection.
 This is particularly helpful if a comparison of error types is required.
 
-One the other hand DET curves do not provide their metric as a single number.
+On the other hand DET curves do not provide their metric as a single number.
 Therefore for either automated evaluation or comparison to other
 classification tasks metrics like the derived area under ROC curve might be
 better suited.
@@ -1607,12 +1618,12 @@ better suited.
 
   .. [Martin1997] A. Martin, G. Doddington, T. Kamm, M. Ordowski, and M. Przybocki,
      `The DET Curve in Assessment of Detection Task Performance
-     <http://www.dtic.mil/docs/citations/ADA530509>`_,
+     <https://ccc.inaoep.mx/~villasen/bib/martin97det.pdf>`_,
      NIST 1997.
 
   .. [Navratil2007] J. Navractil and D. Klusacek,
      "`On Linear DETs,
-     <http://www.research.ibm.com/CBG/papers/icassp07_navratil.pdf>`_"
+     <https://ieeexplore.ieee.org/document/4218079>`_"
      2007 IEEE International Conference on Acoustics,
      Speech and Signal Processing - ICASSP '07, Honolulu,
      HI, 2007, pp. IV-229-IV-232.
@@ -1960,8 +1971,9 @@ Regression metrics
 The :mod:`sklearn.metrics` module implements several loss, score, and utility
 functions to measure regression performance. Some of those have been enhanced
 to handle the multioutput case: :func:`mean_squared_error`,
-:func:`mean_absolute_error`, :func:`explained_variance_score`,
-:func:`r2_score` and :func:`mean_pinball_loss`.
+:func:`mean_absolute_error`, :func:`r2_score`,
+:func:`explained_variance_score`, :func:`mean_pinball_loss`, :func:`d2_pinball_score`
+and :func:`d2_absolute_error_score`.
 
 
 These functions have an ``multioutput`` keyword argument which specifies the
@@ -1984,71 +1996,87 @@ score puts more importance on well explaining the higher variance variables.
 for backward compatibility. This will be changed to ``uniform_average`` in the
 future.
 
-.. _explained_variance_score:
+.. _r2_score:
 
-Explained variance score
--------------------------
+R² score, the coefficient of determination
+-------------------------------------------
 
-The :func:`explained_variance_score` computes the `explained variance
-regression score <https://en.wikipedia.org/wiki/Explained_variation>`_.
+The :func:`r2_score` function computes the `coefficient of
+determination <https://en.wikipedia.org/wiki/Coefficient_of_determination>`_,
+usually denoted as R².
 
-If :math:`\hat{y}` is the estimated target output, :math:`y` the corresponding
-(correct) target output, and :math:`Var` is `Variance
-<https://en.wikipedia.org/wiki/Variance>`_, the square of the standard deviation,
-then the explained variance is estimated as follow:
+It represents the proportion of variance (of y) that has been explained by the
+independent variables in the model. It provides an indication of goodness of
+fit and therefore a measure of how well unseen samples are likely to be
+predicted by the model, through the proportion of explained variance.
 
-.. math::
+As such variance is dataset dependent, R² may not be meaningfully comparable
+across different datasets. Best possible score is 1.0 and it can be negative
+(because the model can be arbitrarily worse). A constant model that always
+predicts the expected (average) value of y, disregarding the input features,
+would get an :math:`R^2` score of 0.0.
 
-  explained\_{}variance(y, \hat{y}) = 1 - \frac{Var\{ y - \hat{y}\}}{Var\{y\}}
+Note: when the prediction residuals have zero mean, the :math:`R^2` score and
+the :ref:`explained_variance_score` are identical.
 
-The best possible score is 1.0, lower values are worse.
-
-Here is a small example of usage of the :func:`explained_variance_score`
-function::
-
-    >>> from sklearn.metrics import explained_variance_score
-    >>> y_true = [3, -0.5, 2, 7]
-    >>> y_pred = [2.5, 0.0, 2, 8]
-    >>> explained_variance_score(y_true, y_pred)
-    0.957...
-    >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
-    >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
-    >>> explained_variance_score(y_true, y_pred, multioutput='raw_values')
-    array([0.967..., 1.        ])
-    >>> explained_variance_score(y_true, y_pred, multioutput=[0.3, 0.7])
-    0.990...
-
-.. _max_error:
-
-Max error
--------------------
-
-The :func:`max_error` function computes the maximum `residual error
-<https://en.wikipedia.org/wiki/Errors_and_residuals>`_ , a metric
-that captures the worst case error between the predicted value and
-the true value. In a perfectly fitted single output regression
-model, ``max_error`` would be ``0`` on the training set and though this
-would be highly unlikely in the real world, this metric shows the
-extent of error that the model had when it was fitted.
-
-
-If :math:`\hat{y}_i` is the predicted value of the :math:`i`-th sample,
-and :math:`y_i` is the corresponding true value, then the max error is
-defined as
+If :math:`\hat{y}_i` is the predicted value of the :math:`i`-th sample
+and :math:`y_i` is the corresponding true value for total :math:`n` samples,
+the estimated R² is defined as:
 
 .. math::
 
-  \text{Max Error}(y, \hat{y}) = max(| y_i - \hat{y}_i |)
+  R^2(y, \hat{y}) = 1 - \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{\sum_{i=1}^{n} (y_i - \bar{y})^2}
 
-Here is a small example of usage of the :func:`max_error` function::
+where :math:`\bar{y} = \frac{1}{n} \sum_{i=1}^{n} y_i` and :math:`\sum_{i=1}^{n} (y_i - \hat{y}_i)^2 = \sum_{i=1}^{n} \epsilon_i^2`.
 
-  >>> from sklearn.metrics import max_error
-  >>> y_true = [3, 2, 7, 1]
-  >>> y_pred = [9, 2, 7, 1]
-  >>> max_error(y_true, y_pred)
-  6
+Note that :func:`r2_score` calculates unadjusted R² without correcting for
+bias in sample variance of y.
 
-The :func:`max_error` does not support multioutput.
+In the particular case where the true target is constant, the :math:`R^2` score is
+not finite: it is either ``NaN`` (perfect predictions) or ``-Inf`` (imperfect
+predictions). Such non-finite scores may prevent correct model optimization
+such as grid-search cross-validation to be performed correctly. For this reason
+the default behaviour of :func:`r2_score` is to replace them with 1.0 (perfect
+predictions) or 0.0 (imperfect predictions). If ``force_finite``
+is set to ``False``, this score falls back on the original :math:`R^2` definition.
+
+Here is a small example of usage of the :func:`r2_score` function::
+
+  >>> from sklearn.metrics import r2_score
+  >>> y_true = [3, -0.5, 2, 7]
+  >>> y_pred = [2.5, 0.0, 2, 8]
+  >>> r2_score(y_true, y_pred)
+  0.948...
+  >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
+  >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
+  >>> r2_score(y_true, y_pred, multioutput='variance_weighted')
+  0.938...
+  >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
+  >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
+  >>> r2_score(y_true, y_pred, multioutput='uniform_average')
+  0.936...
+  >>> r2_score(y_true, y_pred, multioutput='raw_values')
+  array([0.965..., 0.908...])
+  >>> r2_score(y_true, y_pred, multioutput=[0.3, 0.7])
+  0.925...
+  >>> y_true = [-2, -2, -2]
+  >>> y_pred = [-2, -2, -2]
+  >>> r2_score(y_true, y_pred)
+  1.0
+  >>> r2_score(y_true, y_pred, force_finite=False)
+  nan
+  >>> y_true = [-2, -2, -2]
+  >>> y_pred = [-2, -2, -2 + 1e-8]
+  >>> r2_score(y_true, y_pred)
+  0.0
+  >>> r2_score(y_true, y_pred, force_finite=False)
+  -inf
+
+.. topic:: Example:
+
+  * See :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_and_elasticnet.py`
+    for an example of R² score usage to
+    evaluate Lasso and Elastic Net on sparse signals.
 
 .. _mean_absolute_error:
 
@@ -2173,7 +2201,7 @@ error (MAPE) estimated over :math:`n_{\text{samples}}` is defined as
 
 .. math::
 
-  \text{MAPE}(y, \hat{y}) = \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}}-1} \frac{{}\left| y_i - \hat{y}_i \right|}{max(\epsilon, \left| y_i \right|)}
+  \text{MAPE}(y, \hat{y}) = \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}}-1} \frac{{}\left| y_i - \hat{y}_i \right|}{\max(\epsilon, \left| y_i \right|)}
 
 where :math:`\epsilon` is an arbitrary small yet strictly positive number to
 avoid undefined results when y is zero.
@@ -2222,65 +2250,102 @@ function::
   >>> median_absolute_error(y_true, y_pred)
   0.5
 
-.. _r2_score:
 
-R² score, the coefficient of determination
--------------------------------------------
 
-The :func:`r2_score` function computes the `coefficient of
-determination <https://en.wikipedia.org/wiki/Coefficient_of_determination>`_,
-usually denoted as R².
+.. _max_error:
 
-It represents the proportion of variance (of y) that has been explained by the
-independent variables in the model. It provides an indication of goodness of
-fit and therefore a measure of how well unseen samples are likely to be
-predicted by the model, through the proportion of explained variance.
+Max error
+-------------------
 
-As such variance is dataset dependent, R² may not be meaningfully comparable
-across different datasets. Best possible score is 1.0 and it can be negative
-(because the model can be arbitrarily worse). A constant model that always
-predicts the expected value of y, disregarding the input features, would get a
-R² score of 0.0.
+The :func:`max_error` function computes the maximum `residual error
+<https://en.wikipedia.org/wiki/Errors_and_residuals>`_ , a metric
+that captures the worst case error between the predicted value and
+the true value. In a perfectly fitted single output regression
+model, ``max_error`` would be ``0`` on the training set and though this
+would be highly unlikely in the real world, this metric shows the
+extent of error that the model had when it was fitted.
 
-If :math:`\hat{y}_i` is the predicted value of the :math:`i`-th sample
-and :math:`y_i` is the corresponding true value for total :math:`n` samples,
-the estimated R² is defined as:
+
+If :math:`\hat{y}_i` is the predicted value of the :math:`i`-th sample,
+and :math:`y_i` is the corresponding true value, then the max error is
+defined as
 
 .. math::
 
-  R^2(y, \hat{y}) = 1 - \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{\sum_{i=1}^{n} (y_i - \bar{y})^2}
+  \text{Max Error}(y, \hat{y}) = \max(| y_i - \hat{y}_i |)
 
-where :math:`\bar{y} = \frac{1}{n} \sum_{i=1}^{n} y_i` and :math:`\sum_{i=1}^{n} (y_i - \hat{y}_i)^2 = \sum_{i=1}^{n} \epsilon_i^2`.
+Here is a small example of usage of the :func:`max_error` function::
 
-Note that :func:`r2_score` calculates unadjusted R² without correcting for
-bias in sample variance of y.
+  >>> from sklearn.metrics import max_error
+  >>> y_true = [3, 2, 7, 1]
+  >>> y_pred = [9, 2, 7, 1]
+  >>> max_error(y_true, y_pred)
+  6
 
-Here is a small example of usage of the :func:`r2_score` function::
+The :func:`max_error` does not support multioutput.
 
-  >>> from sklearn.metrics import r2_score
-  >>> y_true = [3, -0.5, 2, 7]
-  >>> y_pred = [2.5, 0.0, 2, 8]
-  >>> r2_score(y_true, y_pred)
-  0.948...
-  >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
-  >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
-  >>> r2_score(y_true, y_pred, multioutput='variance_weighted')
-  0.938...
-  >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
-  >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
-  >>> r2_score(y_true, y_pred, multioutput='uniform_average')
-  0.936...
-  >>> r2_score(y_true, y_pred, multioutput='raw_values')
-  array([0.965..., 0.908...])
-  >>> r2_score(y_true, y_pred, multioutput=[0.3, 0.7])
-  0.925...
+.. _explained_variance_score:
 
+Explained variance score
+-------------------------
 
-.. topic:: Example:
+The :func:`explained_variance_score` computes the `explained variance
+regression score <https://en.wikipedia.org/wiki/Explained_variation>`_.
 
-  * See :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_and_elasticnet.py`
-    for an example of R² score usage to
-    evaluate Lasso and Elastic Net on sparse signals.
+If :math:`\hat{y}` is the estimated target output, :math:`y` the corresponding
+(correct) target output, and :math:`Var` is `Variance
+<https://en.wikipedia.org/wiki/Variance>`_, the square of the standard deviation,
+then the explained variance is estimated as follow:
+
+.. math::
+
+  explained\_{}variance(y, \hat{y}) = 1 - \frac{Var\{ y - \hat{y}\}}{Var\{y\}}
+
+The best possible score is 1.0, lower values are worse.
+
+.. topic:: Link to :ref:`r2_score`
+
+    The difference between the explained variance score and the :ref:`r2_score`
+    is that when the explained variance score does not account for
+    systematic offset in the prediction. For this reason, the
+    :ref:`r2_score` should be preferred in general.
+
+In the particular case where the true target is constant, the Explained
+Variance score is not finite: it is either ``NaN`` (perfect predictions) or
+``-Inf`` (imperfect predictions). Such non-finite scores may prevent correct
+model optimization such as grid-search cross-validation to be performed
+correctly. For this reason the default behaviour of
+:func:`explained_variance_score` is to replace them with 1.0 (perfect
+predictions) or 0.0 (imperfect predictions). You can set the ``force_finite``
+parameter to ``False`` to prevent this fix from happening and fallback on the
+original Explained Variance score.
+
+Here is a small example of usage of the :func:`explained_variance_score`
+function::
+
+    >>> from sklearn.metrics import explained_variance_score
+    >>> y_true = [3, -0.5, 2, 7]
+    >>> y_pred = [2.5, 0.0, 2, 8]
+    >>> explained_variance_score(y_true, y_pred)
+    0.957...
+    >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
+    >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
+    >>> explained_variance_score(y_true, y_pred, multioutput='raw_values')
+    array([0.967..., 1.        ])
+    >>> explained_variance_score(y_true, y_pred, multioutput=[0.3, 0.7])
+    0.990...
+    >>> y_true = [-2, -2, -2]
+    >>> y_pred = [-2, -2, -2]
+    >>> explained_variance_score(y_true, y_pred)
+    1.0
+    >>> explained_variance_score(y_true, y_pred, force_finite=False)
+    nan
+    >>> y_true = [-2, -2, -2]
+    >>> y_pred = [-2, -2, -2 + 1e-8]
+    >>> explained_variance_score(y_true, y_pred)
+    0.0
+    >>> explained_variance_score(y_true, y_pred, force_finite=False)
+    -inf
 
 
 .. _mean_tweedie_deviance:
@@ -2310,8 +2375,8 @@ is defined as
   \sum_{i=0}^{n_\text{samples} - 1}
   \begin{cases}
   (y_i-\hat{y}_i)^2, & \text{for }p=0\text{ (Normal)}\\
-  2(y_i \log(y/\hat{y}_i) + \hat{y}_i - y_i),  & \text{for}p=1\text{ (Poisson)}\\
-  2(\log(\hat{y}_i/y_i) + y_i/\hat{y}_i - 1),  & \text{for}p=2\text{ (Gamma)}\\
+  2(y_i \log(y/\hat{y}_i) + \hat{y}_i - y_i),  & \text{for }p=1\text{ (Poisson)}\\
+  2(\log(\hat{y}_i/y_i) + y_i/\hat{y}_i - 1),  & \text{for }p=2\text{ (Gamma)}\\
   2\left(\frac{\max(y_i,0)^{2-p}}{(1-p)(2-p)}-
   \frac{y\,\hat{y}^{1-p}_i}{1-p}+\frac{\hat{y}^{2-p}_i}{2-p}\right),
   & \text{otherwise}
@@ -2386,7 +2451,7 @@ Here is a small example of usage of the :func:`mean_pinball_loss` function::
   >>> mean_pinball_loss(y_true, y_true, alpha=0.9)
   0.0
 
-It is possible to build a scorer object with a specific choice of alpha::
+It is possible to build a scorer object with a specific choice of ``alpha``::
 
   >>> from sklearn.metrics import make_scorer
   >>> mean_pinball_loss_95p = make_scorer(mean_pinball_loss, alpha=0.95)
@@ -2417,6 +2482,93 @@ explained in the example linked below.
     for an example of using a the pinball loss to evaluate and tune the
     hyper-parameters of quantile regression models on data with non-symmetric
     noise and outliers.
+
+.. _d2_score:
+
+D² score
+--------
+
+The D² score computes the fraction of deviance explained. 
+It is a generalization of R², where the squared error is generalized and replaced 
+by a deviance of choice :math:`\text{dev}(y, \hat{y})`
+(e.g., Tweedie, pinball or mean absolute error). D² is a form of a *skill score*.
+It is calculated as
+
+.. math::
+
+  D^2(y, \hat{y}) = 1 - \frac{\text{dev}(y, \hat{y})}{\text{dev}(y, y_{\text{null}})} \,.
+
+Where :math:`y_{\text{null}}` is the optimal prediction of an intercept-only model
+(e.g., the mean of `y_true` for the Tweedie case, the median for absolute 
+error and the alpha-quantile for pinball loss).
+
+Like R², the best possible score is 1.0 and it can be negative (because the
+model can be arbitrarily worse). A constant model that always predicts
+:math:`y_{\text{null}}`, disregarding the input features, would get a D² score
+of 0.0.
+
+D² Tweedie score
+^^^^^^^^^^^^^^^^
+
+The :func:`d2_tweedie_score` function implements the special case of D² 
+where :math:`\text{dev}(y, \hat{y})` is the Tweedie deviance, see :ref:`mean_tweedie_deviance`. 
+It is also known as D² Tweedie and is related to McFadden's likelihood ratio index.
+
+The argument ``power`` defines the Tweedie power as for
+:func:`mean_tweedie_deviance`. Note that for `power=0`,
+:func:`d2_tweedie_score` equals :func:`r2_score` (for single targets).
+
+A scorer object with a specific choice of ``power`` can be built by::
+
+  >>> from sklearn.metrics import d2_tweedie_score, make_scorer
+  >>> d2_tweedie_score_15 = make_scorer(d2_tweedie_score, power=1.5)
+
+D² pinball score
+^^^^^^^^^^^^^^^^^^^^^
+
+The :func:`d2_pinball_score` function implements the special case
+of D² with the pinball loss, see :ref:`pinball_loss`, i.e.:
+
+.. math::
+
+  \text{dev}(y, \hat{y}) = \text{pinball}(y, \hat{y}).
+
+The argument ``alpha`` defines the slope of the pinball loss as for
+:func:`mean_pinball_loss` (:ref:`pinball_loss`). It determines the 
+quantile level ``alpha`` for which the pinball loss and also D²
+are optimal. Note that for `alpha=0.5` (the default) :func:`d2_pinball_score`
+equals :func:`d2_absolute_error_score`.
+
+A scorer object with a specific choice of ``alpha`` can be built by::
+
+  >>> from sklearn.metrics import d2_pinball_score, make_scorer
+  >>> d2_pinball_score_08 = make_scorer(d2_pinball_score, alpha=0.8)
+
+D² absolute error score
+^^^^^^^^^^^^^^^^^^^^^^^
+
+The :func:`d2_absolute_error_score` function implements the special case of
+the :ref:`mean_absolute_error`:
+
+.. math::
+
+  \text{dev}(y, \hat{y}) = \text{MAE}(y, \hat{y}).
+
+Here are some usage examples of the :func:`d2_absolute_error_score` function::
+
+  >>> from sklearn.metrics import d2_absolute_error_score
+  >>> y_true = [3, -0.5, 2, 7]
+  >>> y_pred = [2.5, 0.0, 2, 8]
+  >>> d2_absolute_error_score(y_true, y_pred)
+  0.764...
+  >>> y_true = [1, 2, 3]
+  >>> y_pred = [1, 2, 3]
+  >>> d2_absolute_error_score(y_true, y_pred)
+  1.0
+  >>> y_true = [1, 2, 3]
+  >>> y_pred = [2, 2, 2]
+  >>> d2_absolute_error_score(y_true, y_pred)
+  0.0
 
 
 .. _clustering_metrics:

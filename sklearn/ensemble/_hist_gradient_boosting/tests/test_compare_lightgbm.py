@@ -104,11 +104,12 @@ def test_same_predictions_classification(
 
     rng = np.random.RandomState(seed=seed)
     max_iter = 1
+    n_classes = 2
     max_bins = 255
 
     X, y = make_classification(
         n_samples=n_samples,
-        n_classes=2,
+        n_classes=n_classes,
         n_features=5,
         n_informative=5,
         n_redundant=0,
@@ -123,7 +124,7 @@ def test_same_predictions_classification(
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=rng)
 
     est_sklearn = HistGradientBoostingClassifier(
-        loss="binary_crossentropy",
+        loss="log_loss",
         max_iter=max_iter,
         max_bins=max_bins,
         learning_rate=1,
@@ -131,7 +132,9 @@ def test_same_predictions_classification(
         min_samples_leaf=min_samples_leaf,
         max_leaf_nodes=max_leaf_nodes,
     )
-    est_lightgbm = get_equivalent_estimator(est_sklearn, lib="lightgbm")
+    est_lightgbm = get_equivalent_estimator(
+        est_sklearn, lib="lightgbm", n_classes=n_classes
+    )
 
     est_lightgbm.fit(X_train, y_train)
     est_sklearn.fit(X_train, y_train)
@@ -174,13 +177,14 @@ def test_same_predictions_multiclass_classification(
     pytest.importorskip("lightgbm")
 
     rng = np.random.RandomState(seed=seed)
+    n_classes = 3
     max_iter = 1
     max_bins = 255
     lr = 1
 
     X, y = make_classification(
         n_samples=n_samples,
-        n_classes=3,
+        n_classes=n_classes,
         n_features=5,
         n_informative=5,
         n_redundant=0,
@@ -196,7 +200,7 @@ def test_same_predictions_multiclass_classification(
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=rng)
 
     est_sklearn = HistGradientBoostingClassifier(
-        loss="categorical_crossentropy",
+        loss="log_loss",
         max_iter=max_iter,
         max_bins=max_bins,
         learning_rate=lr,
@@ -204,7 +208,9 @@ def test_same_predictions_multiclass_classification(
         min_samples_leaf=min_samples_leaf,
         max_leaf_nodes=max_leaf_nodes,
     )
-    est_lightgbm = get_equivalent_estimator(est_sklearn, lib="lightgbm")
+    est_lightgbm = get_equivalent_estimator(
+        est_sklearn, lib="lightgbm", n_classes=n_classes
+    )
 
     est_lightgbm.fit(X_train, y_train)
     est_sklearn.fit(X_train, y_train)
@@ -224,7 +230,8 @@ def test_same_predictions_multiclass_classification(
 
     acc_lightgbm = accuracy_score(y_train, pred_lightgbm)
     acc_sklearn = accuracy_score(y_train, pred_sklearn)
-    np.testing.assert_almost_equal(acc_lightgbm, acc_sklearn, decimal=2)
+
+    np.testing.assert_allclose(acc_lightgbm, acc_sklearn, rtol=0, atol=5e-2)
 
     if max_leaf_nodes < 10 and n_samples >= 1000:
 

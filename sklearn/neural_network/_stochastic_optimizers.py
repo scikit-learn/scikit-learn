@@ -12,10 +12,6 @@ class BaseOptimizer:
 
     Parameters
     ----------
-    params : list, length = len(coefs_) + len(intercepts_)
-        The concatenated list containing coefs_ and intercepts_ in MLP model.
-        Used for initializing velocities and updating params
-
     learning_rate_init : float, default=0.1
         The initial learning rate used. It controls the step-size in updating
         the weights
@@ -26,22 +22,25 @@ class BaseOptimizer:
         the current learning rate
     """
 
-    def __init__(self, params, learning_rate_init=0.1):
-        self.params = [param for param in params]
+    def __init__(self, learning_rate_init=0.1):
         self.learning_rate_init = learning_rate_init
         self.learning_rate = float(learning_rate_init)
 
-    def update_params(self, grads):
+    def update_params(self, params, grads):
         """Update parameters with given gradients
 
         Parameters
         ----------
-        grads : list, length = len(params)
+        params : list of length = len(coefs_) + len(intercepts_)
+            The concatenated list containing coefs_ and intercepts_ in MLP
+            model. Used for initializing velocities and updating params
+
+        grads : list of length = len(params)
             Containing gradients with respect to coefs_ and intercepts_ in MLP
             model. So length should be aligned with params
         """
         updates = self._get_updates(grads)
-        for param, update in zip(self.params, updates):
+        for param, update in zip((p for p in params), updates):
             param += update
 
     def iteration_ends(self, time_step):
@@ -128,7 +127,7 @@ class SGDOptimizer(BaseOptimizer):
         nesterov=True,
         power_t=0.5,
     ):
-        super().__init__(params, learning_rate_init)
+        super().__init__(learning_rate_init)
 
         self.lr_schedule = lr_schedule
         self.momentum = momentum
@@ -238,15 +237,14 @@ class AdamOptimizer(BaseOptimizer):
 
     References
     ----------
-    Kingma, Diederik, and Jimmy Ba.
-    "Adam: A method for stochastic optimization."
-    arXiv preprint arXiv:1412.6980 (2014).
+    :arxiv:`Kingma, Diederik, and Jimmy Ba (2014) "Adam: A method for
+        stochastic optimization." <1412.6980>
     """
 
     def __init__(
         self, params, learning_rate_init=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-8
     ):
-        super().__init__(params, learning_rate_init)
+        super().__init__(learning_rate_init)
 
         self.beta_1 = beta_1
         self.beta_2 = beta_2
@@ -275,13 +273,13 @@ class AdamOptimizer(BaseOptimizer):
             for m, grad in zip(self.ms, grads)
         ]
         self.vs = [
-            self.beta_2 * v + (1 - self.beta_2) * (grad ** 2)
+            self.beta_2 * v + (1 - self.beta_2) * (grad**2)
             for v, grad in zip(self.vs, grads)
         ]
         self.learning_rate = (
             self.learning_rate_init
-            * np.sqrt(1 - self.beta_2 ** self.t)
-            / (1 - self.beta_1 ** self.t)
+            * np.sqrt(1 - self.beta_2**self.t)
+            / (1 - self.beta_1**self.t)
         )
         updates = [
             -self.learning_rate * m / (np.sqrt(v) + self.epsilon)

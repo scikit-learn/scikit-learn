@@ -68,7 +68,10 @@ class IncrementalPCA(_BasePCA):
     Attributes
     ----------
     components_ : ndarray of shape (n_components, n_features)
-        Components with maximum variance.
+        Principal axes in feature space, representing the directions of
+        maximum variance in the data. Equivalently, the right singular
+        vectors of the centered input data, parallel to its eigenvectors.
+        The components are sorted by ``explained_variance_``.
 
     explained_variance_ : ndarray of shape (n_components,)
         Variance explained by each of the selected components.
@@ -112,21 +115,18 @@ class IncrementalPCA(_BasePCA):
 
         .. versionadded:: 0.24
 
-    Examples
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
     --------
-    >>> from sklearn.datasets import load_digits
-    >>> from sklearn.decomposition import IncrementalPCA
-    >>> from scipy import sparse
-    >>> X, _ = load_digits(return_X_y=True)
-    >>> transformer = IncrementalPCA(n_components=7, batch_size=200)
-    >>> # either partially fit on smaller batches of data
-    >>> transformer.partial_fit(X[:100, :])
-    IncrementalPCA(batch_size=200, n_components=7)
-    >>> # or let the fit function itself divide the data into batches
-    >>> X_sparse = sparse.csr_matrix(X)
-    >>> X_transformed = transformer.fit_transform(X_sparse)
-    >>> X_transformed.shape
-    (1797, 7)
+    PCA : Principal component analysis (PCA).
+    KernelPCA : Kernel Principal component analysis (KPCA).
+    SparsePCA : Sparse Principal Components Analysis (SparsePCA).
+    TruncatedSVD : Dimensionality reduction using truncated SVD.
 
     Notes
     -----
@@ -161,12 +161,21 @@ class IncrementalPCA(_BasePCA):
     G. Golub and C. Van Loan. Matrix Computations, Third Edition, Chapter 5,
     Section 5.4.4, pp. 252-253.
 
-    See Also
+    Examples
     --------
-    PCA
-    KernelPCA
-    SparsePCA
-    TruncatedSVD
+    >>> from sklearn.datasets import load_digits
+    >>> from sklearn.decomposition import IncrementalPCA
+    >>> from scipy import sparse
+    >>> X, _ = load_digits(return_X_y=True)
+    >>> transformer = IncrementalPCA(n_components=7, batch_size=200)
+    >>> # either partially fit on smaller batches of data
+    >>> transformer.partial_fit(X[:100, :])
+    IncrementalPCA(batch_size=200, n_components=7)
+    >>> # or let the fit function itself divide the data into batches
+    >>> X_sparse = sparse.csr_matrix(X)
+    >>> X_transformed = transformer.fit_transform(X_sparse)
+    >>> X_transformed.shape
+    (1797, 7)
     """
 
     def __init__(self, n_components=None, *, whiten=False, copy=True, batch_size=None):
@@ -181,10 +190,11 @@ class IncrementalPCA(_BasePCA):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training data, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training data, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         y : Ignored
+            Not used, present for API consistency by convention.
 
         Returns
         -------
@@ -229,13 +239,14 @@ class IncrementalPCA(_BasePCA):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training data, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training data, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
+
+        y : Ignored
+            Not used, present for API consistency by convention.
 
         check_input : bool, default=True
             Run check_array on X.
-
-        y : Ignored
 
         Returns
         -------
@@ -323,8 +334,8 @@ class IncrementalPCA(_BasePCA):
 
         U, S, Vt = linalg.svd(X, full_matrices=False, check_finite=False)
         U, Vt = svd_flip(U, Vt, u_based_decision=False)
-        explained_variance = S ** 2 / (n_total_samples - 1)
-        explained_variance_ratio = S ** 2 / np.sum(col_var * n_total_samples)
+        explained_variance = S**2 / (n_total_samples - 1)
+        explained_variance_ratio = S**2 / np.sum(col_var * n_total_samples)
 
         self.n_samples_seen_ = n_total_samples
         self.components_ = Vt[: self.n_components_]
@@ -349,12 +360,13 @@ class IncrementalPCA(_BasePCA):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            New data, where n_samples is the number of samples
-            and n_features is the number of features.
+            New data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         Returns
         -------
         X_new : ndarray of shape (n_samples, n_components)
+            Projection of X in the first principal components.
 
         Examples
         --------

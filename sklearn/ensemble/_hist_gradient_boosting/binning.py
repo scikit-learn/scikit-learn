@@ -12,6 +12,8 @@ import numpy as np
 from ...utils import check_random_state, check_array
 from ...base import BaseEstimator, TransformerMixin
 from ...utils.validation import check_is_fitted
+from ...utils.fixes import percentile
+from ...utils._openmp_helpers import _openmp_effective_n_threads
 from ._binning import _map_to_bins
 from .common import X_DTYPE, X_BINNED_DTYPE, ALMOST_INF, X_BITSET_INNER_DTYPE
 from ._bitset import set_bitset_memoryview
@@ -56,9 +58,7 @@ def _find_binning_thresholds(col_data, max_bins):
         # work on a fixed-size subsample of the full data.
         percentiles = np.linspace(0, 100, num=max_bins + 1)
         percentiles = percentiles[1:-1]
-        midpoints = np.percentile(
-            col_data, percentiles, interpolation="midpoint"
-        ).astype(X_DTYPE)
+        midpoints = percentile(col_data, percentiles, method="midpoint").astype(X_DTYPE)
         assert midpoints.shape[0] == max_bins - 1
 
     # We avoid having +inf thresholds: +inf thresholds are only allowed in
@@ -114,7 +114,12 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         Pseudo-random number generator to control the random sub-sampling.
         Pass an int for reproducible output across multiple
         function calls.
-        See :term: `Glossary <random_state>`.
+        See :term:`Glossary <random_state>`.
+    n_threads : int, default=None
+        Number of OpenMP threads to use. `_openmp_effective_n_threads` is called
+        to determine the effective number of threads use, which takes cgroups CPU
+        quotes into account. See the docstring of `_openmp_effective_n_threads`
+        for details.
 
     Attributes
     ----------
@@ -151,12 +156,14 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         is_categorical=None,
         known_categories=None,
         random_state=None,
+        n_threads=None,
     ):
         self.n_bins = n_bins
         self.subsample = subsample
         self.is_categorical = is_categorical
         self.known_categories = known_categories
         self.random_state = random_state
+        self.n_threads = n_threads
 
     def fit(self, X, y=None):
         """Fit data X by computing the binning thresholds.
@@ -264,8 +271,12 @@ class _BinMapper(TransformerMixin, BaseEstimator):
                 "This estimator was fitted with {} features but {} got passed "
                 "to transform()".format(self.n_bins_non_missing_.shape[0], X.shape[1])
             )
+
+        n_threads = _openmp_effective_n_threads(self.n_threads)
         binned = np.zeros_like(X, dtype=X_BINNED_DTYPE, order="F")
-        _map_to_bins(X, self.bin_thresholds_, self.missing_values_bin_idx_, binned)
+        _map_to_bins(
+            X, self.bin_thresholds_, self.missing_values_bin_idx_, n_threads, binned
+        )
         return binned
 
     def make_known_categories_bitsets(self):

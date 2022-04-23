@@ -15,7 +15,12 @@ from ..base import clone
 from ..base import is_classifier, is_regressor
 from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
-from ..tree import DecisionTreeRegressor, ExtraTreeRegressor
+from ..tree import (
+    DecisionTreeRegressor,
+    ExtraTreeRegressor,
+    BaseDecisionTree,
+    DecisionTreeClassifier,
+)
 from ..utils import Bunch, _print_elapsed_time
 from ..utils import check_random_state
 from ..utils.metaestimators import _BaseComposition
@@ -167,6 +172,16 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             elif getattr(estimator, "criterion", None) == "mae":
                 estimator.set_params(criterion="absolute_error")
 
+        # TODO(1.3): Remove
+        # max_features = 'auto' would cause warnings in every call to
+        # Tree.fit(..)
+        if isinstance(estimator, BaseDecisionTree):
+            if getattr(estimator, "max_features", None) == "auto":
+                if isinstance(estimator, DecisionTreeClassifier):
+                    estimator.set_params(max_features="sqrt")
+                elif isinstance(estimator, DecisionTreeRegressor):
+                    estimator.set_params(max_features=1.0)
+
         if random_state is not None:
             _set_random_states(estimator, random_state)
 
@@ -226,6 +241,12 @@ class _BaseHeterogeneousEnsemble(
 
     @property
     def named_estimators(self):
+        """Dictionary to access any fitted sub-estimators by name.
+
+        Returns
+        -------
+        :class:`~sklearn.utils.Bunch`
+        """
         return Bunch(**dict(self.estimators))
 
     @abstractmethod
@@ -277,6 +298,11 @@ class _BaseHeterogeneousEnsemble(
             parameters of the estimator, the individual estimator of the
             estimators can also be set, or can be removed by setting them to
             'drop'.
+
+        Returns
+        -------
+        self : object
+            Estimator instance.
         """
         super()._set_params("estimators", **params)
         return self
@@ -293,5 +319,11 @@ class _BaseHeterogeneousEnsemble(
         deep : bool, default=True
             Setting it to True gets the various estimators and the parameters
             of the estimators as well.
+
+        Returns
+        -------
+        params : dict
+            Parameter and estimator names mapped to their values or parameter
+            names mapped to their values.
         """
         return super()._get_params("estimators", deep=deep)

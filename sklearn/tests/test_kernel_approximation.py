@@ -13,6 +13,7 @@ from sklearn.kernel_approximation import AdditiveChi2Sampler
 from sklearn.kernel_approximation import SkewedChi2Sampler
 from sklearn.kernel_approximation import Nystroem
 from sklearn.kernel_approximation import PolynomialCountSketch
+from sklearn.datasets import make_classification
 from sklearn.metrics.pairwise import polynomial_kernel, rbf_kernel, chi2_kernel
 
 # generate data
@@ -303,11 +304,11 @@ def test_nystroem_callable():
     ).fit(X)
     assert len(kernel_log) == n_samples * (n_samples - 1) / 2
 
-    # if degree, gamma or coef0 is passed, we raise a warning
+    # if degree, gamma or coef0 is passed, we raise a ValueError
     msg = "Don't pass gamma, coef0 or degree to Nystroem"
     params = ({"gamma": 1}, {"coef0": 1}, {"degree": 2})
     for param in params:
-        ny = Nystroem(kernel=_linear_kernel, **param)
+        ny = Nystroem(kernel=_linear_kernel, n_components=(n_samples - 1), **param)
         with pytest.raises(ValueError, match=msg):
             ny.fit(X)
 
@@ -330,3 +331,62 @@ def test_nystroem_precomputed_kernel():
         ny = Nystroem(kernel="precomputed", n_components=X.shape[0], **param)
         with pytest.raises(ValueError, match=msg):
             ny.fit(K)
+
+
+def test_nystroem_component_indices():
+    """Check that `component_indices_` corresponds to the subset of
+    training points used to construct the feature map.
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/20474
+    """
+    X, _ = make_classification(n_samples=100, n_features=20)
+    feature_map_nystroem = Nystroem(
+        n_components=10,
+        random_state=0,
+    )
+    feature_map_nystroem.fit(X)
+    assert feature_map_nystroem.component_indices_.shape == (10,)
+
+
+@pytest.mark.parametrize(
+    "Estimator", [PolynomialCountSketch, RBFSampler, SkewedChi2Sampler, Nystroem]
+)
+def test_get_feature_names_out(Estimator):
+    """Check get_feature_names_out"""
+    est = Estimator().fit(X)
+    X_trans = est.transform(X)
+
+    names_out = est.get_feature_names_out()
+    class_name = Estimator.__name__.lower()
+    expected_names = [f"{class_name}{i}" for i in range(X_trans.shape[1])]
+    assert_array_equal(names_out, expected_names)
+
+
+def test_additivechi2sampler_get_feature_names_out():
+    """Check get_feature_names_out for for AdditiveChi2Sampler."""
+    rng = np.random.RandomState(0)
+    X = rng.random_sample(size=(300, 3))
+
+    chi2_sampler = AdditiveChi2Sampler(sample_steps=3).fit(X)
+    input_names = ["f0", "f1", "f2"]
+    suffixes = [
+        "f0_sqrt",
+        "f1_sqrt",
+        "f2_sqrt",
+        "f0_cos1",
+        "f1_cos1",
+        "f2_cos1",
+        "f0_sin1",
+        "f1_sin1",
+        "f2_sin1",
+        "f0_cos2",
+        "f1_cos2",
+        "f2_cos2",
+        "f0_sin2",
+        "f1_sin2",
+        "f2_sin2",
+    ]
+
+    names_out = chi2_sampler.get_feature_names_out(input_features=input_names)
+    expected_names = [f"additivechi2sampler_{suffix}" for suffix in suffixes]
+    assert_array_equal(names_out, expected_names)

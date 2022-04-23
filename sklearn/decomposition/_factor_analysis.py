@@ -25,14 +25,14 @@ import numpy as np
 from scipy import linalg
 
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
 from ..utils import check_random_state
 from ..utils.extmath import fast_logdet, randomized_svd, squared_norm
 from ..utils.validation import check_is_fitted
 from ..exceptions import ConvergenceWarning
 
 
-class FactorAnalysis(TransformerMixin, BaseEstimator):
+class FactorAnalysis(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     """Factor Analysis (FA).
 
     A simple linear generative model with Gaussian latent variables.
@@ -62,7 +62,7 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         of ``X`` that are obtained after ``transform``.
         If None, n_components is set to the number of features.
 
-    tol : float, defaul=1e-2
+    tol : float, default=1e-2
         Stopping tolerance for log-likelihood increase.
 
     copy : bool, default=True
@@ -125,23 +125,11 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
-    Examples
-    --------
-    >>> from sklearn.datasets import load_digits
-    >>> from sklearn.decomposition import FactorAnalysis
-    >>> X, _ = load_digits(return_X_y=True)
-    >>> transformer = FactorAnalysis(n_components=7, random_state=0)
-    >>> X_transformed = transformer.fit_transform(X)
-    >>> X_transformed.shape
-    (1797, 7)
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
 
-    References
-    ----------
-    - David Barber, Bayesian Reasoning and Machine Learning,
-      Algorithm 21.1.
-
-    - Christopher M. Bishop: Pattern Recognition and Machine Learning,
-      Chapter 12.2.4.
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -151,6 +139,24 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         computed in closed form.
     FastICA: Independent component analysis, a latent variable model with
         non-Gaussian latent variables.
+
+    References
+    ----------
+    - David Barber, Bayesian Reasoning and Machine Learning,
+      Algorithm 21.1.
+
+    - Christopher M. Bishop: Pattern Recognition and Machine Learning,
+      Chapter 12.2.4.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_digits
+    >>> from sklearn.decomposition import FactorAnalysis
+    >>> X, _ = load_digits(return_X_y=True)
+    >>> transformer = FactorAnalysis(n_components=7, random_state=0)
+    >>> X_transformed = transformer.fit_transform(X)
+    >>> X_transformed.shape
+    (1797, 7)
     """
 
     def __init__(
@@ -170,11 +176,6 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         self.copy = copy
         self.tol = tol
         self.max_iter = max_iter
-        if svd_method not in ["lapack", "randomized"]:
-            raise ValueError(
-                "SVD method %s is not supported. Please consider the documentation"
-                % svd_method
-            )
         self.svd_method = svd_method
 
         self.noise_variance_init = noise_variance_init
@@ -183,7 +184,7 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         self.rotation = rotation
 
     def fit(self, X, y=None):
-        """Fit the FactorAnalysis model to X using SVD based approach
+        """Fit the FactorAnalysis model to X using SVD based approach.
 
         Parameters
         ----------
@@ -191,11 +192,20 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
             Training data.
 
         y : Ignored
+            Ignored parameter.
 
         Returns
         -------
-        self
+        self : object
+            FactorAnalysis class instance.
         """
+
+        if self.svd_method not in ["lapack", "randomized"]:
+            raise ValueError(
+                f"SVD method {self.svd_method!r} is not supported. Possible methods "
+                "are either 'lapack' or 'randomized'."
+            )
+
         X = self._validate_data(X, copy=self.copy, dtype=np.float64)
 
         n_samples, n_features = X.shape
@@ -275,7 +285,7 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
                 break
             old_ll = ll
 
-            psi = np.maximum(var - np.sum(W ** 2, axis=0), SMALL)
+            psi = np.maximum(var - np.sum(W**2, axis=0), SMALL)
         else:
             warnings.warn(
                 "FactorAnalysis did not converge."
@@ -367,17 +377,17 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         return precision
 
     def score_samples(self, X):
-        """Compute the log-likelihood of each sample
+        """Compute the log-likelihood of each sample.
 
         Parameters
         ----------
         X : ndarray of shape (n_samples, n_features)
-            The data
+            The data.
 
         Returns
         -------
         ll : ndarray of shape (n_samples,)
-            Log-likelihood of each sample under the current model
+            Log-likelihood of each sample under the current model.
         """
         check_is_fitted(self)
         X = self._validate_data(X, reset=False)
@@ -389,19 +399,20 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         return log_like
 
     def score(self, X, y=None):
-        """Compute the average log-likelihood of the samples
+        """Compute the average log-likelihood of the samples.
 
         Parameters
         ----------
         X : ndarray of shape (n_samples, n_features)
-            The data
+            The data.
 
         y : Ignored
+            Ignored parameter.
 
         Returns
         -------
         ll : float
-            Average log-likelihood of the samples under the current model
+            Average log-likelihood of the samples under the current model.
         """
         return np.mean(self.score_samples(X))
 
@@ -417,6 +428,11 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         else:
             raise ValueError("'method' must be in %s, not %s" % (implemented, method))
 
+    @property
+    def _n_features_out(self):
+        """Number of transformed output features."""
+        return self.components_.shape[0]
+
 
 def _ortho_rotation(components, method="varimax", tol=1e-6, max_iter=100):
     """Return rotated components."""
@@ -427,10 +443,10 @@ def _ortho_rotation(components, method="varimax", tol=1e-6, max_iter=100):
     for _ in range(max_iter):
         comp_rot = np.dot(components, rotation_matrix)
         if method == "varimax":
-            tmp = comp_rot * np.transpose((comp_rot ** 2).sum(axis=0) / nrow)
+            tmp = comp_rot * np.transpose((comp_rot**2).sum(axis=0) / nrow)
         elif method == "quartimax":
             tmp = 0
-        u, s, v = np.linalg.svd(np.dot(components.T, comp_rot ** 3 - tmp))
+        u, s, v = np.linalg.svd(np.dot(components.T, comp_rot**3 - tmp))
         rotation_matrix = np.dot(u, v)
         var_new = np.sum(s)
         if var != 0 and var_new < var * (1 + tol):

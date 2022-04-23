@@ -5,30 +5,35 @@
 # License: BSD 3 clause
 
 import numpy as np
+import numbers
 from scipy import linalg
 from scipy.sparse.linalg import eigsh
 
 from ..utils._arpack import _init_arpack_v0
 from ..utils.extmath import svd_flip, _randomized_eigsh
-from ..utils.validation import check_is_fitted, _check_psd_eigenvalues
+from ..utils.validation import (
+    check_is_fitted,
+    _check_psd_eigenvalues,
+    check_scalar,
+)
 from ..utils.deprecation import deprecated
 from ..exceptions import NotFittedError
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
 from ..preprocessing import KernelCenterer
 from ..metrics.pairwise import pairwise_kernels
 
 
-class KernelPCA(TransformerMixin, BaseEstimator):
-    """Kernel Principal component analysis (KPCA).
+class KernelPCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
+    """Kernel Principal component analysis (KPCA) [1]_.
 
     Non-linear dimensionality reduction through the use of kernels (see
     :ref:`metrics`).
 
-    It uses the `scipy.linalg.eigh` LAPACK implementation of the full SVD or
-    the `scipy.sparse.linalg.eigsh` ARPACK implementation of the truncated SVD,
-    depending on the shape of the input data and the number of components to
-    extract. It can also use a randomized truncated SVD by the method of
-    Halko et al. 2009, see `eigen_solver`.
+    It uses the :func:`scipy.linalg.eigh` LAPACK implementation of the full SVD
+    or the :func:`scipy.sparse.linalg.eigsh` ARPACK implementation of the
+    truncated SVD, depending on the shape of the input data and the number of
+    components to extract. It can also use a randomized truncated SVD by the
+    method proposed in [3]_, see `eigen_solver`.
 
     Read more in the :ref:`User Guide <kernel_PCA>`.
 
@@ -62,15 +67,17 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         inverse transform (when fit_inverse_transform=True).
 
     fit_inverse_transform : bool, default=False
-        Learn the inverse transform for non-precomputed kernels.
-        (i.e. learn to find the pre-image of a point)
+        Learn the inverse transform for non-precomputed kernels
+        (i.e. learn to find the pre-image of a point). This method is based
+        on [2]_.
 
     eigen_solver : {'auto', 'dense', 'arpack', 'randomized'}, \
-        default='auto'
+            default='auto'
         Select eigensolver to use. If `n_components` is much
         less than the number of training samples, randomized (or arpack to a
-        smaller extend) may be more efficient than the dense eigensolver.
-        Randomized SVD is performed according to the method of Halko et al.
+        smaller extent) may be more efficient than the dense eigensolver.
+        Randomized SVD is performed according to the method of Halko et al
+        [3]_.
 
         auto :
             the solver is selected by a default policy based on n_samples
@@ -89,10 +96,10 @@ class KernelPCA(TransformerMixin, BaseEstimator):
             `scipy.sparse.linalg.eigsh`. It requires strictly
             0 < n_components < n_samples
         randomized :
-            run randomized SVD by the method of Halko et al. The current
+            run randomized SVD by the method of Halko et al. [3]_. The current
             implementation selects eigenvalues based on their module; therefore
             using this method can lead to unexpected results if the kernel is
-            not positive semi-definite.
+            not positive semi-definite. See also [4]_.
 
         .. versionchanged:: 1.0
            `'randomized'` was added.
@@ -143,14 +150,28 @@ class KernelPCA(TransformerMixin, BaseEstimator):
 
     Attributes
     ----------
-    lambdas_ : ndarray of shape (n_components,)
+    eigenvalues_ : ndarray of shape (n_components,)
         Eigenvalues of the centered kernel matrix in decreasing order.
         If `n_components` and `remove_zero_eig` are not set,
         then all values are stored.
 
-    alphas_ : ndarray of shape (n_samples, n_components)
+    lambdas_ : ndarray of shape (n_components,)
+        Same as `eigenvalues_` but this attribute is deprecated.
+
+        .. deprecated:: 1.0
+           `lambdas_` was renamed to `eigenvalues_` in version 1.0 and will be
+           removed in 1.2.
+
+    eigenvectors_ : ndarray of shape (n_samples, n_components)
         Eigenvectors of the centered kernel matrix. If `n_components` and
         `remove_zero_eig` are not set, then all components are stored.
+
+    alphas_ : ndarray of shape (n_samples, n_components)
+        Same as `eigenvectors_` but this attribute is deprecated.
+
+        .. deprecated:: 1.0
+           `alphas_` was renamed to `eigenvectors_` in version 1.0 and will be
+           removed in 1.2.
 
     dual_coef_ : ndarray of shape (n_samples, n_features)
         Inverse transform matrix. Only available when
@@ -169,6 +190,44 @@ class KernelPCA(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    FastICA : A fast algorithm for Independent Component Analysis.
+    IncrementalPCA : Incremental Principal Component Analysis.
+    NMF : Non-Negative Matrix Factorization.
+    PCA : Principal Component Analysis.
+    SparsePCA : Sparse Principal Component Analysis.
+    TruncatedSVD : Dimensionality reduction using truncated SVD.
+
+    References
+    ----------
+    .. [1] `Schölkopf, Bernhard, Alexander Smola, and Klaus-Robert Müller.
+       "Kernel principal component analysis."
+       International conference on artificial neural networks.
+       Springer, Berlin, Heidelberg, 1997.
+       <https://people.eecs.berkeley.edu/~wainwrig/stat241b/scholkopf_kernel.pdf>`_
+
+    .. [2] `Bakır, Gökhan H., Jason Weston, and Bernhard Schölkopf.
+       "Learning to find pre-images."
+       Advances in neural information processing systems 16 (2004): 449-456.
+       <https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.68.5164&rep=rep1&type=pdf>`_
+
+    .. [3] :arxiv:`Halko, Nathan, Per-Gunnar Martinsson, and Joel A. Tropp.
+       "Finding structure with randomness: Probabilistic algorithms for
+       constructing approximate matrix decompositions."
+       SIAM review 53.2 (2011): 217-288. <0909.4061>`
+
+    .. [4] `Martinsson, Per-Gunnar, Vladimir Rokhlin, and Mark Tygert.
+       "A randomized algorithm for the decomposition of matrices."
+       Applied and Computational Harmonic Analysis 30.1 (2011): 47-68.
+       <https://www.sciencedirect.com/science/article/pii/S1063520310000242>`_
+
     Examples
     --------
     >>> from sklearn.datasets import load_digits
@@ -178,23 +237,6 @@ class KernelPCA(TransformerMixin, BaseEstimator):
     >>> X_transformed = transformer.fit_transform(X)
     >>> X_transformed.shape
     (1797, 7)
-
-    References
-    ----------
-    Kernel PCA was introduced in:
-        Bernhard Schoelkopf, Alexander J. Smola,
-        and Klaus-Robert Mueller. 1999. Kernel principal
-        component analysis. In Advances in kernel methods,
-        MIT Press, Cambridge, MA, USA 327-352.
-
-    For eigen_solver == 'arpack', refer to `scipy.sparse.linalg.eigsh`.
-
-    For eigen_solver == 'randomized', see:
-        Finding structure with randomness: Stochastic algorithms
-        for constructing approximate matrix decompositions Halko, et al., 2009
-        (arXiv:909)
-        A randomized algorithm for the decomposition of matrices
-        Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert
     """
 
     def __init__(
@@ -217,8 +259,6 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         copy_X=True,
         n_jobs=None,
     ):
-        if fit_inverse_transform and kernel == "precomputed":
-            raise ValueError("Cannot fit_inverse_transform with a precomputed kernel.")
         self.n_components = n_components
         self.kernel = kernel
         self.kernel_params = kernel_params
@@ -236,15 +276,24 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         self.n_jobs = n_jobs
         self.copy_X = copy_X
 
-    # TODO: Remove in 1.1
+    # TODO: Remove in 1.2
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
-        "Attribute `_pairwise` was deprecated in "
-        "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
+        "Attribute `lambdas_` was deprecated in version 1.0 and will be "
+        "removed in 1.2. Use `eigenvalues_` instead."
     )
     @property
-    def _pairwise(self):
-        return self.kernel == "precomputed"
+    def lambdas_(self):
+        return self.eigenvalues_
+
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
+        "Attribute `alphas_` was deprecated in version 1.0 and will be "
+        "removed in 1.2. Use `eigenvectors_` instead."
+    )
+    @property
+    def alphas_(self):
+        return self.eigenvectors_
 
     def _get_kernel(self, X, Y=None):
         if callable(self.kernel):
@@ -264,10 +313,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         if self.n_components is None:
             n_components = K.shape[0]  # use all dimensions
         else:
-            if self.n_components < 1:
-                raise ValueError(
-                    f"`n_components` should be >= 1, got: {self.n_component}"
-                )
+            check_scalar(self.n_components, "n_components", numbers.Integral, min_val=1)
             n_components = min(K.shape[0], self.n_components)
 
         # compute eigenvectors
@@ -281,16 +327,16 @@ class KernelPCA(TransformerMixin, BaseEstimator):
 
         if eigen_solver == "dense":
             # Note: eigvals specifies the indices of smallest/largest to return
-            self.lambdas_, self.alphas_ = linalg.eigh(
+            self.eigenvalues_, self.eigenvectors_ = linalg.eigh(
                 K, eigvals=(K.shape[0] - n_components, K.shape[0] - 1)
             )
         elif eigen_solver == "arpack":
             v0 = _init_arpack_v0(K.shape[0], self.random_state)
-            self.lambdas_, self.alphas_ = eigsh(
+            self.eigenvalues_, self.eigenvectors_ = eigsh(
                 K, n_components, which="LA", tol=self.tol, maxiter=self.max_iter, v0=v0
             )
         elif eigen_solver == "randomized":
-            self.lambdas_, self.alphas_ = _randomized_eigsh(
+            self.eigenvalues_, self.eigenvectors_ = _randomized_eigsh(
                 K,
                 n_components=n_components,
                 n_iter=self.iterated_power,
@@ -301,20 +347,24 @@ class KernelPCA(TransformerMixin, BaseEstimator):
             raise ValueError("Unsupported value for `eigen_solver`: %r" % eigen_solver)
 
         # make sure that the eigenvalues are ok and fix numerical issues
-        self.lambdas_ = _check_psd_eigenvalues(self.lambdas_, enable_warnings=False)
+        self.eigenvalues_ = _check_psd_eigenvalues(
+            self.eigenvalues_, enable_warnings=False
+        )
 
         # flip eigenvectors' sign to enforce deterministic output
-        self.alphas_, _ = svd_flip(self.alphas_, np.zeros_like(self.alphas_).T)
+        self.eigenvectors_, _ = svd_flip(
+            self.eigenvectors_, np.zeros_like(self.eigenvectors_).T
+        )
 
         # sort eigenvectors in descending order
-        indices = self.lambdas_.argsort()[::-1]
-        self.lambdas_ = self.lambdas_[indices]
-        self.alphas_ = self.alphas_[:, indices]
+        indices = self.eigenvalues_.argsort()[::-1]
+        self.eigenvalues_ = self.eigenvalues_[indices]
+        self.eigenvectors_ = self.eigenvectors_[:, indices]
 
         # remove eigenvectors with a zero eigenvalue (null space) if required
         if self.remove_zero_eig or self.n_components is None:
-            self.alphas_ = self.alphas_[:, self.lambdas_ > 0]
-            self.lambdas_ = self.lambdas_[self.lambdas_ > 0]
+            self.eigenvectors_ = self.eigenvectors_[:, self.eigenvalues_ > 0]
+            self.eigenvalues_ = self.eigenvalues_[self.eigenvalues_ > 0]
 
         # Maintenance note on Eigenvectors normalization
         # ----------------------------------------------
@@ -325,12 +375,12 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         # if u is an eigenvector of Phi(X)Phi(X)'
         #     then Phi(X)'u is an eigenvector of Phi(X)'Phi(X)
         #
-        # At this stage our self.alphas_ (the v) have norm 1, we need to scale
+        # At this stage our self.eigenvectors_ (the v) have norm 1, we need to scale
         # them so that eigenvectors in kernel feature space (the u) have norm=1
         # instead
         #
         # We COULD scale them here:
-        #       self.alphas_ = self.alphas_ / np.sqrt(self.lambdas_)
+        #       self.eigenvectors_ = self.eigenvectors_ / np.sqrt(self.eigenvalues_)
         #
         # But choose to perform that LATER when needed, in `fit()` and in
         # `transform()`.
@@ -355,14 +405,19 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vector, where n_samples in the number of samples
-            and n_features is the number of features.
+            Training vector, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
+
+        y : Ignored
+            Not used, present for API consistency by convention.
 
         Returns
         -------
         self : object
             Returns the instance itself.
         """
+        if self.fit_inverse_transform and self.kernel == "precomputed":
+            raise ValueError("Cannot fit_inverse_transform with a precomputed kernel.")
         X = self._validate_data(X, accept_sparse="csr", copy=self.copy_X)
         self._centerer = KernelCenterer()
         K = self._get_kernel(X)
@@ -370,7 +425,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
 
         if self.fit_inverse_transform:
             # no need to use the kernel to transform X, use shortcut expression
-            X_transformed = self.alphas_ * np.sqrt(self.lambdas_)
+            X_transformed = self.eigenvectors_ * np.sqrt(self.eigenvalues_)
 
             self._fit_inverse_transform(X_transformed, X)
 
@@ -383,17 +438,25 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vector, where n_samples in the number of samples
-            and n_features is the number of features.
+            Training vector, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
+
+        y : Ignored
+            Not used, present for API consistency by convention.
+
+        **params : kwargs
+            Parameters (keyword arguments) and values passed to
+            the fit_transform instance.
 
         Returns
         -------
         X_new : ndarray of shape (n_samples, n_components)
+            Returns the instance itself.
         """
         self.fit(X, **params)
 
         # no need to use the kernel to transform X, use shortcut expression
-        X_transformed = self.alphas_ * np.sqrt(self.lambdas_)
+        X_transformed = self.eigenvectors_ * np.sqrt(self.eigenvalues_)
 
         if self.fit_inverse_transform:
             self._fit_inverse_transform(X_transformed, X)
@@ -406,10 +469,13 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Training vector, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         Returns
         -------
         X_new : ndarray of shape (n_samples, n_components)
+            Returns the instance itself.
         """
         check_is_fitted(self)
         X = self._validate_data(X, accept_sparse="csr", reset=False)
@@ -418,10 +484,10 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         K = self._centerer.transform(self._get_kernel(X, self.X_fit_))
 
         # scale eigenvectors (properly account for null-space for dot product)
-        non_zeros = np.flatnonzero(self.lambdas_)
-        scaled_alphas = np.zeros_like(self.alphas_)
-        scaled_alphas[:, non_zeros] = self.alphas_[:, non_zeros] / np.sqrt(
-            self.lambdas_[non_zeros]
+        non_zeros = np.flatnonzero(self.eigenvalues_)
+        scaled_alphas = np.zeros_like(self.eigenvectors_)
+        scaled_alphas[:, non_zeros] = self.eigenvectors_[:, non_zeros] / np.sqrt(
+            self.eigenvalues_[non_zeros]
         )
 
         # Project with a scalar product between K and the scaled eigenvectors
@@ -453,14 +519,20 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_components)
+            Training vector, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         Returns
         -------
         X_new : ndarray of shape (n_samples, n_features)
+            Returns the instance itself.
 
         References
         ----------
-        "Learning to Find Pre-Images", G BakIr et al, 2004.
+        `Bakır, Gökhan H., Jason Weston, and Bernhard Schölkopf.
+        "Learning to find pre-images."
+        Advances in neural information processing systems 16 (2004): 449-456.
+        <https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.68.5164&rep=rep1&type=pdf>`_
         """
         if not self.fit_inverse_transform:
             raise NotFittedError(
@@ -477,3 +549,8 @@ class KernelPCA(TransformerMixin, BaseEstimator):
             "preserves_dtype": [np.float64, np.float32],
             "pairwise": self.kernel == "precomputed",
         }
+
+    @property
+    def _n_features_out(self):
+        """Number of transformed output features."""
+        return self.eigenvalues_.shape[0]

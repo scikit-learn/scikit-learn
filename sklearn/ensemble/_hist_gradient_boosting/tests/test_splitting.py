@@ -12,6 +12,9 @@ from sklearn.ensemble._hist_gradient_boosting.splitting import (
 )
 from sklearn.ensemble._hist_gradient_boosting.histogram import HistogramBuilder
 from sklearn.utils._testing import skip_if_32bit
+from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
+
+n_threads = _openmp_effective_n_threads()
 
 
 @pytest.mark.parametrize("n_bins", [3, 32, 256])
@@ -40,7 +43,12 @@ def test_histogram_split(n_bins):
             sum_gradients = all_gradients.sum()
 
             builder = HistogramBuilder(
-                X_binned, n_bins, all_gradients, all_hessians, hessians_are_constant
+                X_binned,
+                n_bins,
+                all_gradients,
+                all_hessians,
+                hessians_are_constant,
+                n_threads,
             )
             n_bins_non_missing = np.array(
                 [n_bins - 1] * X_binned.shape[1], dtype=np.uint32
@@ -120,7 +128,7 @@ def test_gradient_and_hessian_sanity(constant_hessian):
         sum_hessians = all_hessians.sum()
 
     builder = HistogramBuilder(
-        X_binned, n_bins, all_gradients, all_hessians, constant_hessian
+        X_binned, n_bins, all_gradients, all_hessians, constant_hessian, n_threads
     )
     n_bins_non_missing = np.array([n_bins - 1] * X_binned.shape[1], dtype=np.uint32)
     has_missing_values = np.array([False] * X_binned.shape[1], dtype=np.uint8)
@@ -263,7 +271,7 @@ def test_split_indices():
     hessians_are_constant = True
 
     builder = HistogramBuilder(
-        X_binned, n_bins, all_gradients, all_hessians, hessians_are_constant
+        X_binned, n_bins, all_gradients, all_hessians, hessians_are_constant, n_threads
     )
     n_bins_non_missing = np.array([n_bins] * X_binned.shape[1], dtype=np.uint32)
     has_missing_values = np.array([False] * X_binned.shape[1], dtype=np.uint8)
@@ -339,7 +347,7 @@ def test_min_gain_to_split():
     hessians_are_constant = False
 
     builder = HistogramBuilder(
-        X_binned, n_bins, all_gradients, all_hessians, hessians_are_constant
+        X_binned, n_bins, all_gradients, all_hessians, hessians_are_constant, n_threads
     )
     n_bins_non_missing = np.array([n_bins - 1] * X_binned.shape[1], dtype=np.uint32)
     has_missing_values = np.array([False] * X_binned.shape[1], dtype=np.uint8)
@@ -508,7 +516,7 @@ def test_splitting_missing_values(
     hessians_are_constant = True
 
     builder = HistogramBuilder(
-        X_binned, n_bins, all_gradients, all_hessians, hessians_are_constant
+        X_binned, n_bins, all_gradients, all_hessians, hessians_are_constant, n_threads
     )
 
     n_bins_non_missing = np.array([n_bins_non_missing], dtype=np.uint32)
@@ -612,7 +620,7 @@ def test_splitting_categorical_cat_smooth(
     hessians_are_constant = True
 
     builder = HistogramBuilder(
-        X_binned, n_bins, all_gradients, all_hessians, hessians_are_constant
+        X_binned, n_bins, all_gradients, all_hessians, hessians_are_constant, n_threads
     )
 
     n_bins_non_missing = np.array([n_bins_non_missing], dtype=np.uint32)
@@ -798,7 +806,7 @@ def test_splitting_categorical_sanity(
     hessians_are_constant = True
 
     builder = HistogramBuilder(
-        X_binned, n_bins, all_gradients, all_hessians, hessians_are_constant
+        X_binned, n_bins, all_gradients, all_hessians, hessians_are_constant, n_threads
     )
 
     n_bins_non_missing = np.array([n_bins_non_missing], dtype=np.uint32)

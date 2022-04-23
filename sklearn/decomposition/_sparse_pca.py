@@ -2,16 +2,18 @@
 # Author: Vlad Niculae, Gael Varoquaux, Alexandre Gramfort
 # License: BSD 3 clause
 
+import warnings
+
 import numpy as np
 
 from ..utils import check_random_state
 from ..utils.validation import check_is_fitted
 from ..linear_model import ridge_regression
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
 from ._dict_learning import dict_learning, dict_learning_online
 
 
-class SparsePCA(TransformerMixin, BaseEstimator):
+class SparsePCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     """Sparse Principal Components Analysis (SparsePCA).
 
     Finds the set of sparse components that can optimally reconstruct
@@ -23,7 +25,8 @@ class SparsePCA(TransformerMixin, BaseEstimator):
     Parameters
     ----------
     n_components : int, default=None
-        Number of sparse atoms to extract.
+        Number of sparse atoms to extract. If None, then ``n_components``
+        is set to ``n_features``.
 
     alpha : float, default=1
         Sparsity controlling parameter. Higher values lead to sparser
@@ -40,6 +43,7 @@ class SparsePCA(TransformerMixin, BaseEstimator):
         Tolerance for the stopping condition.
 
     method : {'lars', 'cd'}, default='lars'
+        Method to be used for optimization.
         lars: uses the least angle regression method to solve the lasso problem
         (linear_model.lars_path)
         cd: uses the coordinate descent method to compute the
@@ -93,6 +97,19 @@ class SparsePCA(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    PCA : Principal Component Analysis implementation.
+    MiniBatchSparsePCA : Mini batch variant of `SparsePCA` that is faster but less
+        accurate.
+    DictionaryLearning : Generic dictionary learning problem using a sparse code.
+
     Examples
     --------
     >>> import numpy as np
@@ -108,12 +125,6 @@ class SparsePCA(TransformerMixin, BaseEstimator):
     >>> # most values in the components_ are zero (sparsity)
     >>> np.mean(transformer.components_ == 0)
     0.9666...
-
-    See Also
-    --------
-    PCA
-    MiniBatchSparsePCA
-    DictionaryLearning
     """
 
     def __init__(
@@ -149,10 +160,11 @@ class SparsePCA(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training vector, where n_samples in the number of samples
-            and n_features is the number of features.
+            Training vector, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         y : Ignored
+            Not used, present here for API consistency by convention.
 
         Returns
         -------
@@ -226,9 +238,19 @@ class SparsePCA(TransformerMixin, BaseEstimator):
 
         return U
 
+    @property
+    def _n_features_out(self):
+        """Number of transformed output features."""
+        return self.components_.shape[0]
+
+    def _more_tags(self):
+        return {
+            "preserves_dtype": [np.float64, np.float32],
+        }
+
 
 class MiniBatchSparsePCA(SparsePCA):
-    """Mini-batch Sparse Principal Components Analysis
+    """Mini-batch Sparse Principal Components Analysis.
 
     Finds the set of sparse components that can optimally reconstruct
     the data.  The amount of sparseness is controllable by the coefficient
@@ -239,7 +261,8 @@ class MiniBatchSparsePCA(SparsePCA):
     Parameters
     ----------
     n_components : int, default=None
-        number of sparse atoms to extract
+        Number of sparse atoms to extract. If None, then ``n_components``
+        is set to ``n_features``.
 
     alpha : int, default=1
         Sparsity controlling parameter. Higher values lead to sparser
@@ -250,19 +273,19 @@ class MiniBatchSparsePCA(SparsePCA):
         conditioning when calling the transform method.
 
     n_iter : int, default=100
-        number of iterations to perform for each mini batch
+        Number of iterations to perform for each mini batch.
 
     callback : callable, default=None
-        callable that gets invoked every five iterations
+        Callable that gets invoked every five iterations.
 
     batch_size : int, default=3
-        the number of features to take in each mini batch
+        The number of features to take in each mini batch.
 
     verbose : int or bool, default=False
         Controls the verbosity; the higher, the more messages. Defaults to 0.
 
     shuffle : bool, default=True
-        whether to shuffle the data before splitting it in batches
+        Whether to shuffle the data before splitting it in batches.
 
     n_jobs : int, default=None
         Number of parallel jobs to run.
@@ -271,6 +294,7 @@ class MiniBatchSparsePCA(SparsePCA):
         for more details.
 
     method : {'lars', 'cd'}, default='lars'
+        Method to be used for optimization.
         lars: uses the least angle regression method to solve the lasso problem
         (linear_model.lars_path)
         cd: uses the coordinate descent method to compute the
@@ -305,6 +329,20 @@ class MiniBatchSparsePCA(SparsePCA):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    DictionaryLearning : Find a dictionary that sparsely encodes data.
+    IncrementalPCA : Incremental principal components analysis.
+    PCA : Principal component analysis.
+    SparsePCA : Sparse Principal Components Analysis.
+    TruncatedSVD : Dimensionality reduction using truncated SVD.
+
     Examples
     --------
     >>> import numpy as np
@@ -321,12 +359,6 @@ class MiniBatchSparsePCA(SparsePCA):
     >>> # most values in the components_ are zero (sparsity)
     >>> np.mean(transformer.components_ == 0)
     0.94
-
-    See Also
-    --------
-    PCA
-    SparsePCA
-    DictionaryLearning
     """
 
     def __init__(
@@ -364,10 +396,11 @@ class MiniBatchSparsePCA(SparsePCA):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training vector, where n_samples in the number of samples
-            and n_features is the number of features.
+            Training vector, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         y : Ignored
+            Not used, present for API consistency by convention.
 
         Returns
         -------
@@ -384,22 +417,44 @@ class MiniBatchSparsePCA(SparsePCA):
             n_components = X.shape[1]
         else:
             n_components = self.n_components
-        Vt, _, self.n_iter_ = dict_learning_online(
-            X.T,
-            n_components,
-            alpha=self.alpha,
-            n_iter=self.n_iter,
-            return_code=True,
-            dict_init=None,
-            verbose=self.verbose,
-            callback=self.callback,
-            batch_size=self.batch_size,
-            shuffle=self.shuffle,
-            n_jobs=self.n_jobs,
-            method=self.method,
-            random_state=random_state,
-            return_n_iter=True,
-        )
+
+        with warnings.catch_warnings():
+            # return_n_iter and n_iter are deprecated. TODO Remove in 1.3
+            warnings.filterwarnings(
+                "ignore",
+                message=(
+                    "'return_n_iter' is deprecated in version 1.1 and will be "
+                    "removed in version 1.3. From 1.3 'n_iter' will never be "
+                    "returned. Refer to the 'n_iter_' and 'n_steps_' attributes "
+                    "of the MiniBatchDictionaryLearning object instead."
+                ),
+                category=FutureWarning,
+            )
+            warnings.filterwarnings(
+                "ignore",
+                message=(
+                    "'n_iter' is deprecated in version 1.1 and will be removed in "
+                    "version 1.3. Use 'max_iter' instead."
+                ),
+                category=FutureWarning,
+            )
+            Vt, _, self.n_iter_ = dict_learning_online(
+                X.T,
+                n_components,
+                alpha=self.alpha,
+                n_iter=self.n_iter,
+                return_code=True,
+                dict_init=None,
+                verbose=self.verbose,
+                callback=self.callback,
+                batch_size=self.batch_size,
+                shuffle=self.shuffle,
+                n_jobs=self.n_jobs,
+                method=self.method,
+                random_state=random_state,
+                return_n_iter=True,
+            )
+
         self.components_ = Vt.T
 
         components_norm = np.linalg.norm(self.components_, axis=1)[:, np.newaxis]

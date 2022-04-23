@@ -3,6 +3,7 @@ import numpy as np
 import scipy.sparse as sp
 import warnings
 
+from sklearn import clone
 from sklearn.preprocessing import KBinsDiscretizer
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.utils._testing import (
@@ -37,16 +38,16 @@ def test_valid_n_bins():
 def test_invalid_n_bins():
     est = KBinsDiscretizer(n_bins=1)
     err_msg = (
-        "KBinsDiscretizer received an invalid "
-        "number of bins. Received 1, expected at least 2."
+        "KBinsDiscretizer received an invalid number of bins. Received 1, expected at"
+        " least 2."
     )
     with pytest.raises(ValueError, match=err_msg):
         est.fit_transform(X)
 
     est = KBinsDiscretizer(n_bins=1.1)
     err_msg = (
-        "KBinsDiscretizer received an invalid "
-        "n_bins type. Received float, expected int."
+        "KBinsDiscretizer received an invalid n_bins type. Received float, expected"
+        " int."
     )
     with pytest.raises(ValueError, match=err_msg):
         est.fit_transform(X)
@@ -143,7 +144,7 @@ def test_numeric_stability(i):
     Xt_expected = np.array([0, 0, 1, 1, 1]).reshape(-1, 1)
 
     # Test up to discretizing nano units
-    X = X_init / 10 ** i
+    X = X_init / 10**i
     Xt = KBinsDiscretizer(n_bins=2, encode="ordinal").fit_transform(X)
     assert_array_equal(Xt_expected, Xt)
 
@@ -357,3 +358,115 @@ def test_32_equal_64(input_dtype, encode):
     Xt_64 = kbd_64.transform(X_input)
 
     assert_allclose_dense_sparse(Xt_32, Xt_64)
+
+
+# FIXME: remove the `filterwarnings` in 1.3
+@pytest.mark.filterwarnings("ignore:In version 1.3 onwards, subsample=2e5")
+@pytest.mark.parametrize("subsample", [None, "warn"])
+def test_kbinsdiscretizer_subsample_default(subsample):
+    # Since the size of X is small (< 2e5), subsampling will not take place.
+    X = np.array([-2, 1.5, -4, -1]).reshape(-1, 1)
+    kbd_default = KBinsDiscretizer(n_bins=10, encode="ordinal", strategy="quantile")
+    kbd_default.fit(X)
+
+    kbd_with_subsampling = clone(kbd_default)
+    kbd_with_subsampling.set_params(subsample=subsample)
+    kbd_with_subsampling.fit(X)
+
+    for bin_kbd_default, bin_kbd_with_subsampling in zip(
+        kbd_default.bin_edges_[0], kbd_with_subsampling.bin_edges_[0]
+    ):
+        np.testing.assert_allclose(bin_kbd_default, bin_kbd_with_subsampling)
+    assert kbd_default.bin_edges_.shape == kbd_with_subsampling.bin_edges_.shape
+
+
+def test_kbinsdiscretizer_subsample_invalid_strategy():
+    X = np.array([-2, 1.5, -4, -1]).reshape(-1, 1)
+    kbd = KBinsDiscretizer(n_bins=10, encode="ordinal", strategy="uniform", subsample=3)
+
+    err_msg = '`subsample` must be used with `strategy="quantile"`.'
+    with pytest.raises(ValueError, match=err_msg):
+        kbd.fit(X)
+
+
+def test_kbinsdiscretizer_subsample_invalid_type():
+    X = np.array([-2, 1.5, -4, -1]).reshape(-1, 1)
+    kbd = KBinsDiscretizer(
+        n_bins=10, encode="ordinal", strategy="quantile", subsample="full"
+    )
+
+    msg = "subsample must be an instance of int, not str."
+    with pytest.raises(TypeError, match=msg):
+        kbd.fit(X)
+
+
+# TODO: Remove in 1.3
+def test_kbinsdiscretizer_subsample_warn():
+    X = np.random.rand(200001, 1).reshape(-1, 1)
+    kbd = KBinsDiscretizer(n_bins=100, encode="ordinal", strategy="quantile")
+
+    msg = "In version 1.3 onwards, subsample=2e5 will be used by default."
+    with pytest.warns(FutureWarning, match=msg):
+        kbd.fit(X)
+
+
+@pytest.mark.parametrize("subsample", [0, int(2e5)])
+def test_kbinsdiscretizer_subsample_values(subsample):
+    X = np.random.rand(220000, 1).reshape(-1, 1)
+    kbd_default = KBinsDiscretizer(n_bins=10, encode="ordinal", strategy="quantile")
+
+    kbd_with_subsampling = clone(kbd_default)
+    kbd_with_subsampling.set_params(subsample=subsample)
+
+    if subsample == 0:
+        with pytest.raises(ValueError, match="subsample == 0, must be >= 1."):
+            kbd_with_subsampling.fit(X)
+    else:
+        # TODO: Remove in 1.3
+        msg = "In version 1.3 onwards, subsample=2e5 will be used by default."
+        with pytest.warns(FutureWarning, match=msg):
+            kbd_default.fit(X)
+
+        kbd_with_subsampling.fit(X)
+        assert not np.all(
+            kbd_default.bin_edges_[0] == kbd_with_subsampling.bin_edges_[0]
+        )
+        assert kbd_default.bin_edges_.shape == kbd_with_subsampling.bin_edges_.shape
+
+
+@pytest.mark.parametrize(
+    "encode, expected_names",
+    [
+        (
+            "onehot",
+            [
+                f"feat{col_id}_{float(bin_id)}"
+                for col_id in range(3)
+                for bin_id in range(4)
+            ],
+        ),
+        (
+            "onehot-dense",
+            [
+                f"feat{col_id}_{float(bin_id)}"
+                for col_id in range(3)
+                for bin_id in range(4)
+            ],
+        ),
+        ("ordinal", [f"feat{col_id}" for col_id in range(3)]),
+    ],
+)
+def test_kbinsdiscrtizer_get_feature_names_out(encode, expected_names):
+    """Check get_feature_names_out for different settings.
+    Non-regression test for #22731
+    """
+    X = [[-2, 1, -4], [-1, 2, -3], [0, 3, -2], [1, 4, -1]]
+
+    kbd = KBinsDiscretizer(n_bins=4, encode=encode).fit(X)
+    Xt = kbd.transform(X)
+
+    input_features = [f"feat{i}" for i in range(3)]
+    output_names = kbd.get_feature_names_out(input_features)
+    assert Xt.shape[1] == output_names.shape[0]
+
+    assert_array_equal(output_names, expected_names)

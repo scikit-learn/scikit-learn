@@ -34,7 +34,7 @@ from sklearn.ensemble import StackingRegressor
 
 
 def test_multi_target_regression():
-    X, y = datasets.make_regression(n_targets=3)
+    X, y = datasets.make_regression(n_targets=3, random_state=0)
     X_train, y_train = X[:50], y[:50]
     X_test, y_test = X[50:], y[50:]
 
@@ -52,7 +52,7 @@ def test_multi_target_regression():
 
 
 def test_multi_target_regression_partial_fit():
-    X, y = datasets.make_regression(n_targets=3)
+    X, y = datasets.make_regression(n_targets=3, random_state=0)
     X_train, y_train = X[:50], y[:50]
     X_test, y_test = X[50:], y[50:]
 
@@ -76,7 +76,7 @@ def test_multi_target_regression_partial_fit():
 
 def test_multi_target_regression_one_target():
     # Test multi target regression raises
-    X, y = datasets.make_regression(n_targets=1)
+    X, y = datasets.make_regression(n_targets=1, random_state=0)
     rgr = MultiOutputRegressor(GradientBoostingRegressor(random_state=0))
     msg = "at least two dimensions"
     with pytest.raises(ValueError, match=msg):
@@ -84,7 +84,7 @@ def test_multi_target_regression_one_target():
 
 
 def test_multi_target_sparse_regression():
-    X, y = datasets.make_regression(n_targets=3)
+    X, y = datasets.make_regression(n_targets=3, random_state=0)
     X_train, y_train = X[:50], y[:50]
     X_test = X[50:]
 
@@ -168,7 +168,7 @@ classes = list(map(np.unique, (y1, y2, y3)))
 
 
 def test_multi_output_classification_partial_fit_parallelism():
-    sgd_linear_clf = SGDClassifier(loss="log", random_state=1, max_iter=5)
+    sgd_linear_clf = SGDClassifier(loss="log_loss", random_state=1, max_iter=5)
     mor = MultiOutputClassifier(sgd_linear_clf, n_jobs=4)
     mor.partial_fit(X, y, classes)
     est1 = mor.estimators_[0]
@@ -189,7 +189,7 @@ def test_hasattr_multi_output_predict_proba():
     assert not hasattr(multi_target_linear, "predict_proba")
 
     # case where predict_proba attribute exists
-    sgd_linear_clf = SGDClassifier(loss="log", random_state=1, max_iter=5)
+    sgd_linear_clf = SGDClassifier(loss="log_loss", random_state=1, max_iter=5)
     multi_target_linear = MultiOutputClassifier(sgd_linear_clf)
     multi_target_linear.fit(X, y)
     assert hasattr(multi_target_linear, "predict_proba")
@@ -197,7 +197,7 @@ def test_hasattr_multi_output_predict_proba():
 
 # check predict_proba passes
 def test_multi_output_predict_proba():
-    sgd_linear_clf = SGDClassifier(random_state=1, max_iter=5)
+    sgd_linear_clf = SGDClassifier(random_state=1, max_iter=5, loss="log_loss")
     param = {"loss": ("hinge", "log", "modified_huber")}
 
     # inner function for custom scoring
@@ -220,7 +220,7 @@ def test_multi_output_predict_proba():
     sgd_linear_clf = SGDClassifier(random_state=1, max_iter=5)
     multi_target_linear = MultiOutputClassifier(sgd_linear_clf)
     multi_target_linear.fit(X, y)
-    err_msg = "The base estimator should implement predict_proba method"
+    err_msg = "probability estimates are not available for loss='hinge'"
     with pytest.raises(AttributeError, match=err_msg):
         multi_target_linear.predict_proba(X)
 
@@ -229,7 +229,7 @@ def test_multi_output_classification_partial_fit():
     # test if multi_target initializes correctly with base estimator and fit
     # assert predictions work as expected for predict
 
-    sgd_linear_clf = SGDClassifier(loss="log", random_state=1, max_iter=5)
+    sgd_linear_clf = SGDClassifier(loss="log_loss", random_state=1, max_iter=5)
     multi_target_linear = MultiOutputClassifier(sgd_linear_clf)
 
     # train the multi_target_linear and also get the predictions.
@@ -257,7 +257,7 @@ def test_multi_output_classification_partial_fit():
 
 
 def test_multi_output_classification_partial_fit_no_first_classes_exception():
-    sgd_linear_clf = SGDClassifier(loss="log", random_state=1, max_iter=5)
+    sgd_linear_clf = SGDClassifier(loss="log_loss", random_state=1, max_iter=5)
     multi_target_linear = MultiOutputClassifier(sgd_linear_clf)
     msg = "classes must be passed on the first call to partial_fit."
     with pytest.raises(ValueError, match=msg):
@@ -401,13 +401,6 @@ def test_multi_output_exceptions():
     # NotFittedError when fit is not done but score, predict and
     # and predict_proba are called
     moc = MultiOutputClassifier(LinearSVC(random_state=0))
-
-    with pytest.raises(NotFittedError):
-        moc.predict(y)
-
-    with pytest.raises(NotFittedError):
-        moc.predict_proba
-
     with pytest.raises(NotFittedError):
         moc.score(X, y)
 
@@ -422,6 +415,36 @@ def test_multi_output_exceptions():
     msg = "Unknown label type"
     with pytest.raises(ValueError, match=msg):
         moc.fit(X, X[:, 1])
+
+
+@pytest.mark.parametrize("response_method", ["predict_proba", "predict"])
+def test_multi_output_not_fitted_error(response_method):
+    """Check that we raise the proper error when the estimator is not fitted"""
+    moc = MultiOutputClassifier(LogisticRegression())
+    with pytest.raises(NotFittedError):
+        getattr(moc, response_method)(X)
+
+
+def test_multi_output_delegate_predict_proba():
+    """Check the behavior for the delegation of predict_proba to the underlying
+    estimator"""
+
+    # A base estimator with `predict_proba`should expose the method even before fit
+    moc = MultiOutputClassifier(LogisticRegression())
+    assert hasattr(moc, "predict_proba")
+    moc.fit(X, y)
+    assert hasattr(moc, "predict_proba")
+
+    # A base estimator without `predict_proba` should raise an AttributeError
+    moc = MultiOutputClassifier(LinearSVC())
+    assert not hasattr(moc, "predict_proba")
+    msg = "'LinearSVC' object has no attribute 'predict_proba'"
+    with pytest.raises(AttributeError, match=msg):
+        moc.predict_proba(X)
+    moc.fit(X, y)
+    assert not hasattr(moc, "predict_proba")
+    with pytest.raises(AttributeError, match=msg):
+        moc.predict_proba(X)
 
 
 def generate_multilabel_dataset_with_correlations():
@@ -592,6 +615,7 @@ class DummyClassifierWithFitParams(DummyClassifier):
         return super().fit(X, y, sample_weight)
 
 
+@pytest.mark.filterwarnings("ignore:`n_features_in_` is deprecated")
 @pytest.mark.parametrize(
     "estimator, dataset",
     [
@@ -601,7 +625,7 @@ class DummyClassifierWithFitParams(DummyClassifier):
         ),
         (
             MultiOutputRegressor(DummyRegressorWithFitParams()),
-            datasets.make_regression(n_targets=3),
+            datasets.make_regression(n_targets=3, random_state=0),
         ),
     ],
 )
@@ -616,7 +640,7 @@ def test_multioutput_estimator_with_fit_params(estimator, dataset):
 def test_regressor_chain_w_fit_params():
     # Make sure fit_params are properly propagated to the sub-estimators
     rng = np.random.RandomState(0)
-    X, y = datasets.make_regression(n_targets=3)
+    X, y = datasets.make_regression(n_targets=3, random_state=0)
     weight = rng.rand(y.shape[0])
 
     class MySGD(SGDRegressor):

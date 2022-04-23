@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Ordering Points To Identify the Clustering Structure (OPTICS)
 
 These routines execute the OPTICS algorithm, and implement various
@@ -17,6 +16,7 @@ import numpy as np
 from ..exceptions import DataConversionWarning
 from ..metrics.pairwise import PAIRWISE_BOOLEAN_FUNCTIONS
 from ..utils import gen_batches, get_chunk_n_rows
+from ..utils.validation import check_memory
 from ..neighbors import NearestNeighbors
 from ..base import BaseEstimator, ClusterMixin
 from ..metrics import pairwise_distances
@@ -67,7 +67,8 @@ class OPTICS(ClusterMixin, BaseEstimator):
         should take two arrays as input and return one value indicating the
         distance between them. This works for Scipy's metrics, but is less
         efficient than passing the metric name as a string. If metric is
-        "precomputed", X is assumed to be a distance matrix and must be square.
+        "precomputed", `X` is assumed to be a distance matrix and must be
+        square.
 
         Valid values for metric are:
 
@@ -123,11 +124,11 @@ class OPTICS(ClusterMixin, BaseEstimator):
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, default='auto'
         Algorithm used to compute the nearest neighbors:
 
-        - 'ball_tree' will use :class:`BallTree`
-        - 'kd_tree' will use :class:`KDTree`
+        - 'ball_tree' will use :class:`BallTree`.
+        - 'kd_tree' will use :class:`KDTree`.
         - 'brute' will use a brute-force search.
-        - 'auto' will attempt to decide the most appropriate algorithm
-          based on the values passed to :meth:`fit` method. (default)
+        - 'auto' (default) will attempt to decide the most appropriate
+          algorithm based on the values passed to :meth:`fit` method.
 
         Note: fitting on sparse input will override the setting of
         this parameter, using brute force.
@@ -137,6 +138,11 @@ class OPTICS(ClusterMixin, BaseEstimator):
         affect the speed of the construction and query, as well as the memory
         required to store the tree. The optimal value depends on the
         nature of the problem.
+
+    memory : str or object with the joblib.Memory interface, default=None
+        Used to cache the output of the computation of the tree.
+        By default, no caching is done. If a string is given, it is the
+        path to the caching directory.
 
     n_jobs : int, default=None
         The number of parallel jobs to run for neighbors search.
@@ -183,6 +189,12 @@ class OPTICS(ClusterMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     See Also
     --------
     DBSCAN : A similar clustering for a specified neighborhood radius (eps).
@@ -224,6 +236,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
         min_cluster_size=None,
         algorithm="auto",
         leaf_size=30,
+        memory=None,
         n_jobs=None,
     ):
         self.max_eps = max_eps
@@ -238,6 +251,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
         self.eps = eps
         self.xi = xi
         self.predecessor_correction = predecessor_correction
+        self.memory = memory
         self.n_jobs = n_jobs
 
     def fit(self, X, y=None):
@@ -254,15 +268,14 @@ class OPTICS(ClusterMixin, BaseEstimator):
             A feature array, or array of distances between samples if
             metric='precomputed'.
 
-        y : ignored
-            Ignored.
+        y : Ignored
+            Not used, present for API consistency by convention.
 
         Returns
         -------
-        self : instance of OPTICS
-            The instance.
+        self : object
+            Returns a fitted instance of self.
         """
-
         dtype = bool if self.metric in PAIRWISE_BOOLEAN_FUNCTIONS else float
         if dtype == bool and X.dtype != bool:
             msg = (
@@ -273,6 +286,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
             warnings.warn(msg, DataConversionWarning)
 
         X = self._validate_data(X, dtype=dtype)
+        memory = check_memory(self.memory)
 
         if self.cluster_method not in ["dbscan", "xi"]:
             raise ValueError(
@@ -285,7 +299,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
             self.core_distances_,
             self.reachability_,
             self.predecessor_,
-        ) = compute_optics_graph(
+        ) = memory.cache(compute_optics_graph)(
             X=X,
             min_samples=self.min_samples,
             algorithm=self.algorithm,
@@ -346,7 +360,7 @@ def _validate_size(size, n_samples, param_name):
 
 # OPTICS helper functions
 def _compute_core_distances_(X, neighbors, min_samples, working_memory):
-    """Compute the k-th nearest neighbor of each sample
+    """Compute the k-th nearest neighbor of each sample.
 
     Equivalent to neighbors.kneighbors(X, self.min_samples)[0][:, -1]
     but with more memory efficiency.
@@ -384,16 +398,16 @@ def _compute_core_distances_(X, neighbors, min_samples, working_memory):
 def compute_optics_graph(
     X, *, min_samples, max_eps, metric, p, metric_params, algorithm, leaf_size, n_jobs
 ):
-    """Computes the OPTICS reachability graph.
+    """Compute the OPTICS reachability graph.
 
     Read more in the :ref:`User Guide <optics>`.
 
     Parameters
     ----------
     X : ndarray of shape (n_samples, n_features), or \
-            (n_samples, n_samples) if metric=’precomputed’.
+            (n_samples, n_samples) if metric='precomputed'
         A feature array, or array of distances between samples if
-        metric='precomputed'
+        metric='precomputed'.
 
     min_samples : int > 1 or float between 0 and 1
         The number of samples in a neighborhood for a point to be considered
@@ -443,8 +457,8 @@ def compute_optics_graph(
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, default='auto'
         Algorithm used to compute the nearest neighbors:
 
-        - 'ball_tree' will use :class:`BallTree`
-        - 'kd_tree' will use :class:`KDTree`
+        - 'ball_tree' will use :class:`BallTree`.
+        - 'kd_tree' will use :class:`KDTree`.
         - 'brute' will use a brute-force search.
         - 'auto' will attempt to decide the most appropriate algorithm
           based on the values passed to :meth:`fit` method. (default)
@@ -607,7 +621,7 @@ def _set_reach_dist(
 
 
 def cluster_optics_dbscan(*, reachability, core_distances, ordering, eps):
-    """Performs DBSCAN extraction for an arbitrary epsilon.
+    """Perform DBSCAN extraction for an arbitrary epsilon.
 
     Extracting the clusters runs in linear time. Note that this results in
     ``labels_`` which are close to a :class:`~sklearn.cluster.DBSCAN` with
@@ -616,13 +630,13 @@ def cluster_optics_dbscan(*, reachability, core_distances, ordering, eps):
     Parameters
     ----------
     reachability : array of shape (n_samples,)
-        Reachability distances calculated by OPTICS (``reachability_``)
+        Reachability distances calculated by OPTICS (``reachability_``).
 
     core_distances : array of shape (n_samples,)
-        Distances at which points become core (``core_distances_``)
+        Distances at which points become core (``core_distances_``).
 
     ordering : array of shape (n_samples,)
-        OPTICS ordered point indices (``ordering_``)
+        OPTICS ordered point indices (``ordering_``).
 
     eps : float
         DBSCAN ``eps`` parameter. Must be set to < ``max_eps``. Results
@@ -633,7 +647,6 @@ def cluster_optics_dbscan(*, reachability, core_distances, ordering, eps):
     -------
     labels_ : array of shape (n_samples,)
         The estimated labels.
-
     """
     n_samples = len(core_distances)
     labels = np.zeros(n_samples, dtype=int)
@@ -660,13 +673,13 @@ def cluster_optics_xi(
     Parameters
     ----------
     reachability : ndarray of shape (n_samples,)
-        Reachability distances calculated by OPTICS (`reachability_`)
+        Reachability distances calculated by OPTICS (`reachability_`).
 
     predecessor : ndarray of shape (n_samples,)
         Predecessors calculated by OPTICS.
 
     ordering : ndarray of shape (n_samples,)
-        OPTICS ordered point indices (`ordering_`)
+        OPTICS ordered point indices (`ordering_`).
 
     min_samples : int > 1 or float between 0 and 1
         The same as the min_samples given to OPTICS. Up and down steep regions

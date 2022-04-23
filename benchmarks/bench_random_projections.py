@@ -38,15 +38,15 @@ def type_auto_or_int(val):
 
 
 def compute_time(t_start, delta):
-    mu_second = 0.0 + 10 ** 6  # number of microseconds in a second
+    mu_second = 0.0 + 10**6  # number of microseconds in a second
 
     return delta.seconds + delta.microseconds / mu_second
 
 
-def bench_scikit_transformer(X, transfomer):
+def bench_scikit_transformer(X, transformer):
     gc.collect()
 
-    clf = clone(transfomer)
+    clf = clone(transformer)
 
     # start time
     t_start = datetime.now()
@@ -109,7 +109,7 @@ if __name__ == "__main__":
     op.add_option(
         "--n-features",
         dest="n_features",
-        default=10 ** 4,
+        default=10**4,
         type=int,
         help="Number of features in the benchmarks",
     )
@@ -124,7 +124,7 @@ if __name__ == "__main__":
     op.add_option(
         "--ratio-nonzeros",
         dest="ratio_nonzeros",
-        default=10 ** -3,
+        default=10**-3,
         type=float,
         help="Number of features in the benchmarks",
     )
@@ -195,7 +195,7 @@ if __name__ == "__main__":
     ###########################################################################
     n_nonzeros = int(opts.ratio_nonzeros * opts.n_features)
 
-    print("Dataset statics")
+    print("Dataset statistics")
     print("===========================")
     print("n_samples \t= %s" % opts.n_samples)
     print("n_features \t= %s" % opts.n_features)
