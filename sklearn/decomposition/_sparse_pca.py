@@ -2,16 +2,18 @@
 # Author: Vlad Niculae, Gael Varoquaux, Alexandre Gramfort
 # License: BSD 3 clause
 
+import warnings
+
 import numpy as np
 
 from ..utils import check_random_state
 from ..utils.validation import check_is_fitted
 from ..linear_model import ridge_regression
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
 from ._dict_learning import dict_learning, dict_learning_online
 
 
-class SparsePCA(TransformerMixin, BaseEstimator):
+class SparsePCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     """Sparse Principal Components Analysis (SparsePCA).
 
     Finds the set of sparse components that can optimally reconstruct
@@ -23,7 +25,8 @@ class SparsePCA(TransformerMixin, BaseEstimator):
     Parameters
     ----------
     n_components : int, default=None
-        Number of sparse atoms to extract.
+        Number of sparse atoms to extract. If None, then ``n_components``
+        is set to ``n_features``.
 
     alpha : float, default=1
         Sparsity controlling parameter. Higher values lead to sparser
@@ -235,6 +238,16 @@ class SparsePCA(TransformerMixin, BaseEstimator):
 
         return U
 
+    @property
+    def _n_features_out(self):
+        """Number of transformed output features."""
+        return self.components_.shape[0]
+
+    def _more_tags(self):
+        return {
+            "preserves_dtype": [np.float64, np.float32],
+        }
+
 
 class MiniBatchSparsePCA(SparsePCA):
     """Mini-batch Sparse Principal Components Analysis.
@@ -248,7 +261,8 @@ class MiniBatchSparsePCA(SparsePCA):
     Parameters
     ----------
     n_components : int, default=None
-        Number of sparse atoms to extract.
+        Number of sparse atoms to extract. If None, then ``n_components``
+        is set to ``n_features``.
 
     alpha : int, default=1
         Sparsity controlling parameter. Higher values lead to sparser
@@ -403,22 +417,44 @@ class MiniBatchSparsePCA(SparsePCA):
             n_components = X.shape[1]
         else:
             n_components = self.n_components
-        Vt, _, self.n_iter_ = dict_learning_online(
-            X.T,
-            n_components,
-            alpha=self.alpha,
-            n_iter=self.n_iter,
-            return_code=True,
-            dict_init=None,
-            verbose=self.verbose,
-            callback=self.callback,
-            batch_size=self.batch_size,
-            shuffle=self.shuffle,
-            n_jobs=self.n_jobs,
-            method=self.method,
-            random_state=random_state,
-            return_n_iter=True,
-        )
+
+        with warnings.catch_warnings():
+            # return_n_iter and n_iter are deprecated. TODO Remove in 1.3
+            warnings.filterwarnings(
+                "ignore",
+                message=(
+                    "'return_n_iter' is deprecated in version 1.1 and will be "
+                    "removed in version 1.3. From 1.3 'n_iter' will never be "
+                    "returned. Refer to the 'n_iter_' and 'n_steps_' attributes "
+                    "of the MiniBatchDictionaryLearning object instead."
+                ),
+                category=FutureWarning,
+            )
+            warnings.filterwarnings(
+                "ignore",
+                message=(
+                    "'n_iter' is deprecated in version 1.1 and will be removed in "
+                    "version 1.3. Use 'max_iter' instead."
+                ),
+                category=FutureWarning,
+            )
+            Vt, _, self.n_iter_ = dict_learning_online(
+                X.T,
+                n_components,
+                alpha=self.alpha,
+                n_iter=self.n_iter,
+                return_code=True,
+                dict_init=None,
+                verbose=self.verbose,
+                callback=self.callback,
+                batch_size=self.batch_size,
+                shuffle=self.shuffle,
+                n_jobs=self.n_jobs,
+                method=self.method,
+                random_state=random_state,
+                return_n_iter=True,
+            )
+
         self.components_ = Vt.T
 
         components_norm = np.linalg.norm(self.components_, axis=1)[:, np.newaxis]

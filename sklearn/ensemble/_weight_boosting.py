@@ -25,6 +25,7 @@ The module structure is the following:
 
 from abc import ABCMeta, abstractmethod
 
+import numbers
 import numpy as np
 
 import warnings
@@ -36,6 +37,7 @@ from ..base import ClassifierMixin, RegressorMixin, is_classifier, is_regressor
 
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..utils import check_random_state, _safe_indexing
+from ..utils import check_scalar
 from ..utils.extmath import softmax
 from ..utils.extmath import stable_cumsum
 from ..metrics import accuracy_score, r2_score
@@ -109,9 +111,22 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         -------
         self : object
         """
-        # Check parameters
-        if self.learning_rate <= 0:
-            raise ValueError("learning_rate must be greater than zero")
+        # Validate scalar parameters
+        check_scalar(
+            self.n_estimators,
+            "n_estimators",
+            target_type=numbers.Integral,
+            min_val=1,
+            include_boundaries="left",
+        )
+
+        check_scalar(
+            self.learning_rate,
+            "learning_rate",
+            target_type=numbers.Real,
+            min_val=0,
+            include_boundaries="neither",
+        )
 
         X, y = self._validate_data(
             X,
@@ -337,11 +352,13 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
     n_estimators : int, default=50
         The maximum number of estimators at which boosting is terminated.
         In case of perfect fit, the learning procedure is stopped early.
+        Values must be in the range `[1, inf)`.
 
     learning_rate : float, default=1.0
         Weight applied to each classifier at each boosting iteration. A higher
         learning rate increases the contribution of each classifier. There is
         a trade-off between the `learning_rate` and `n_estimators` parameters.
+        Values must be in the range `(0.0, inf)`.
 
     algorithm : {'SAMME', 'SAMME.R'}, default='SAMME.R'
         If 'SAMME.R' then use the SAMME.R real boosting algorithm.
@@ -480,7 +497,10 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         """
         # Check that algorithm is supported
         if self.algorithm not in ("SAMME", "SAMME.R"):
-            raise ValueError("algorithm %s is not supported" % self.algorithm)
+            raise ValueError(
+                "Algorithm must be 'SAMME' or 'SAMME.R'."
+                f" Got {self.algorithm!r} instead."
+            )
 
         # Fit
         return super().fit(X, y, sample_weight)
@@ -676,8 +696,6 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         y : ndarray of shape (n_samples,)
             The predicted classes.
         """
-        X = self._check_X(X)
-
         pred = self.decision_function(X)
 
         if self.n_classes_ == 2:
@@ -852,8 +870,6 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
             outputs is the same of that of the :term:`classes_` attribute.
         """
         check_is_fitted(self)
-        X = self._check_X(X)
-
         n_classes = self.n_classes_
 
         if n_classes == 1:
@@ -881,12 +897,11 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
             DOK, or LIL. COO, DOK, and LIL are converted to CSR.
 
         Yields
-        -------
+        ------
         p : generator of ndarray of shape (n_samples,)
             The class probabilities of the input samples. The order of
             outputs is the same of that of the :term:`classes_` attribute.
         """
-        X = self._check_X(X)
 
         n_classes = self.n_classes_
 
@@ -912,7 +927,6 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
             The class probabilities of the input samples. The order of
             outputs is the same of that of the :term:`classes_` attribute.
         """
-        X = self._check_X(X)
         return np.log(self.predict_proba(X))
 
 
@@ -942,11 +956,13 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
     n_estimators : int, default=50
         The maximum number of estimators at which boosting is terminated.
         In case of perfect fit, the learning procedure is stopped early.
+        Values must be in the range `[1, inf)`.
 
     learning_rate : float, default=1.0
         Weight applied to each regressor at each boosting iteration. A higher
         learning rate increases the contribution of each regressor. There is
         a trade-off between the `learning_rate` and `n_estimators` parameters.
+        Values must be in the range `(0.0, inf)`.
 
     loss : {'linear', 'square', 'exponential'}, default='linear'
         The loss function to use when updating the weights after each
@@ -1065,7 +1081,10 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         """
         # Check loss
         if self.loss not in ("linear", "square", "exponential"):
-            raise ValueError("loss must be 'linear', 'square', or 'exponential'")
+            raise ValueError(
+                "loss must be 'linear', 'square', or 'exponential'."
+                f" Got {self.loss!r} instead."
+            )
 
         # Fit
         return super().fit(X, y, sample_weight)
@@ -1227,7 +1246,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
             The training input samples.
 
         Yields
-        -------
+        ------
         y : generator of ndarray of shape (n_samples,)
             The predicted regression values.
         """
