@@ -104,6 +104,8 @@ for i, y_pred in enumerate(ada_real.staged_predict(X_train)):
     ada_real_err_train[i] = zero_one_loss(y_pred, y_train)
 
 # %%
+# Plotting the results
+# --------------------
 # Finally, we plot the train and test errors of our baselines
 # and of the discrete and real AdaBoost classifiers
 
