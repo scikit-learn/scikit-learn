@@ -19,20 +19,13 @@ whereas real SAMME.R uses the predicted class probabilities.
 
 """
 
-
 # %%
 # Preparing the data and baseline models
 # ---------------------------------------------------
 # We start by generating the binary classification dataset
 # used in Hastie et al. 2009, Example 10.2.
 
-import numpy as np
-import matplotlib.pyplot as plt
-
 from sklearn import datasets
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.metrics import zero_one_loss
-from sklearn.ensemble import AdaBoostClassifier
 
 
 X, y = datasets.make_hastie_10_2(n_samples=12000, random_state=1)
@@ -48,6 +41,9 @@ learning_rate = 1.0
 # We split the data into a training and a test set.
 # Then, we train our baseline classifiers, a `DecisionTreeClassifier` with `depth=9`
 # and a "stump" `DecisionTreeClassifier` with `depth=1` and compute the test error.
+
+from sklearn.tree import DecisionTreeClassifier
+
 
 X_test, y_test = X[2000:], y[2000:]
 X_train, y_train = X[:2000], y[:2000]
@@ -65,6 +61,9 @@ dt_err = 1.0 - dt.score(X_test, y_test)
 # ---------------------------------------------------
 # We now define the discrete and real AdaBoost classifiers
 # and fit them to the training set.
+
+from sklearn.ensemble import AdaBoostClassifier
+
 
 ada_discrete = AdaBoostClassifier(
     base_estimator=dt_stump,
@@ -87,6 +86,11 @@ ada_real.fit(X_train, y_train)
 # real AdaBoost classifiers for each new stump in `n_estimators`
 # added to the ensemble.
 
+import numpy as np
+
+from sklearn.metrics import zero_one_loss
+
+
 ada_discrete_err = np.zeros((n_estimators,))
 for i, y_pred in enumerate(ada_discrete.staged_predict(X_test)):
     ada_discrete_err[i] = zero_one_loss(y_pred, y_test)
@@ -108,6 +112,9 @@ for i, y_pred in enumerate(ada_real.staged_predict(X_train)):
 # ---------------------------------------------------
 # Finally, we plot the train and test errors of our baselines
 # and of the discrete and real AdaBoost classifiers
+
+import matplotlib.pyplot as plt
+
 
 fig = plt.figure()
 ax = fig.add_subplot(111)
