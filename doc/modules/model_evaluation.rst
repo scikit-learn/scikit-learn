@@ -2375,10 +2375,10 @@ is defined as
   \sum_{i=0}^{n_\text{samples} - 1}
   \begin{cases}
   (y_i-\hat{y}_i)^2, & \text{for }p=0\text{ (Normal)}\\
-  2(y_i \log(y/\hat{y}_i) + \hat{y}_i - y_i),  & \text{for }p=1\text{ (Poisson)}\\
+  2(y_i \log(y_i/\hat{y}_i) + \hat{y}_i - y_i),  & \text{for }p=1\text{ (Poisson)}\\
   2(\log(\hat{y}_i/y_i) + y_i/\hat{y}_i - 1),  & \text{for }p=2\text{ (Gamma)}\\
   2\left(\frac{\max(y_i,0)^{2-p}}{(1-p)(2-p)}-
-  \frac{y\,\hat{y}^{1-p}_i}{1-p}+\frac{\hat{y}^{2-p}_i}{2-p}\right),
+  \frac{y_i\,\hat{y}_i^{1-p}}{1-p}+\frac{\hat{y}_i^{2-p}}{2-p}\right),
   & \text{otherwise}
   \end{cases}
 
@@ -2390,8 +2390,8 @@ distribution (``power=0``), quadratically.  In general, the higher
 ``power`` the less weight is given to extreme deviations between true
 and predicted targets.
 
-For instance, let's compare the two predictions 1.0 and 100 that are both
-50% of their corresponding true value.
+For instance, let's compare the two predictions 1.5 and 150 that are both
+50% larger than their corresponding true value.
 
 The mean squared error (``power=0``) is very sensitive to the
 prediction difference of the second point,::
