@@ -13,8 +13,8 @@ class Allow_Nan(Directive):
     def make_paragraph_for_estimator_type(estimator_type):
         output = StringIO()
         output.write(
-            " **List of estimators that allow NaN values for type"
-            f" *{estimator_type}* :**\n"
+            "* List of estimators that allow NaN values for type"
+            f" *{estimator_type}*:\n"
         )
 
         exists = False
@@ -32,7 +32,7 @@ class Allow_Nan(Directive):
             if est._get_tags().get("allow_nan"):
                 module_name = est_class.__module__
                 class_name = est_class.__name__
-                output.write(f" * :class:`{module_name}.{class_name}` \n")
+                output.write(f" * :class:`{module_name}.{class_name}`\n")
                 exists = True
         return nodes.paragraph(text=output.getvalue()) if exists else None
 
