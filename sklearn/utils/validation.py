@@ -29,7 +29,7 @@ from .. import get_config as _get_config
 from ..exceptions import PositiveSpectrumWarning
 from ..exceptions import NotFittedError
 from ..exceptions import DataConversionWarning
-from .isfinite import py_isfinite
+from .isfinite import cy_isfinite
 
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 
@@ -110,7 +110,7 @@ def _assert_all_finite(
     is_finite = False
     if is_float:
         if not is_complex:
-            is_finite = py_isfinite(X, allow_nan=allow_nan)
+            is_finite = cy_isfinite(X, allow_nan=allow_nan)
         else:
             is_finite = np.isfinite(_safe_accumulator_op(np.sum, X))
     if is_finite:
