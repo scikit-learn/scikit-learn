@@ -70,7 +70,7 @@ if [[ "$SHOW_SHORT_SUMMARY" == "true" ]]; then
     TEST_CMD="$TEST_CMD -ra"
 fi
 
-if [[ "$SELECTED_TESTS" != "" ]]; then
+if [[ -n "$SELECTED_TESTS" ]]; then
     TEST_CMD="$TEST_CMD -k $SELECTED_TESTS"
 
     # Override to make selected tests run on all random seeds
