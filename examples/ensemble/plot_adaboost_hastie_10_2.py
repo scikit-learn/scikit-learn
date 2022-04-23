@@ -22,7 +22,7 @@ whereas real SAMME.R uses the predicted class probabilities.
 
 # %%
 # Preparing the data and baseline models
-# --------------------------------------
+# ---------------------------------------------------
 # We start by generating the binary classification dataset
 # used in Hastie et al. 2009, Example 10.2.
 
@@ -105,7 +105,7 @@ for i, y_pred in enumerate(ada_real.staged_predict(X_train)):
 
 # %%
 # Plotting the results
-# --------------------
+# ---------------------------------------------------
 # Finally, we plot the train and test errors of our baselines
 # and of the discrete and real AdaBoost classifiers
 
@@ -153,14 +153,14 @@ plt.show()
 # %%
 #
 # Concluding remarks
-# ------------------
+# ---------------------------------------------------
 #
 # We observe that the performance on both train and test sets of real AdaBoost
 # is better than that of discrete AdaBoost
 
 # %%
 # Contributors:
-# ------------------
+# ---------------------------------------------------
 # Peter Prettenhofer <peter.prettenhofer@gmail.com>,
 # Noel Dawe <noel.dawe@gmail.com>
 #
