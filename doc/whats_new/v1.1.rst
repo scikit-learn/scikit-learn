@@ -72,7 +72,7 @@ Changelog
 
 - |Enhancement| Added an extension in doc/conf.py to automatically generate
   the list of estimators that handle NaN values. 
-  :pr:`22096` by `Lise Kleiber <lisekleiber>`_.
+  :pr:`22096` by `Lise Kleiber <lisekleiber>`_ and :user:`Zhehao Liu <MaxwellLZH>`.
 
 :mod:`sklearn.calibration`
 ..........................

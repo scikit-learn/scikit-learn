@@ -1,90 +1,48 @@
 from sklearn.utils import all_estimators
-from sklearn.linear_model import LogisticRegression
-from sklearn.preprocessing import OrdinalEncoder, OneHotEncoder
 from sklearn.compose import ColumnTransformer
+from sklearn.utils.estimator_checks import _construct_instance
 from io import StringIO
 from docutils import nodes
+import warnings
 
 from docutils.parsers.rst import Directive
 
 
 class Allow_Nan(Directive):
-    def run(self):
-        names1 = []
-        names2 = []
-        names3 = []
-        names4 = []
+    @staticmethod
+    def make_paragraph_for_estimator_type(estimator_type):
         output = StringIO()
         output.write(
-            f"List of estimators that allow NaN values for type_filter=cluster : "
+            " **List of estimators that allow NaN values for type"
+            f" *{estimator_type}* :**"
         )
-        for name, Estimator in all_estimators(type_filter="cluster"):
-            if Estimator()._get_tags().get("allow_nan") == True:
-                names1.append(name)
-        output.write(f" {names1} ")
 
-        output2 = StringIO()
-        output2.write(
-            f" List of estimators that allow NaN values for type_filter=regressor : "
-        )
-        for name, Estimator in all_estimators(type_filter="regressor"):
+        exists = False
+        for name, est_class in all_estimators(type_filter=estimator_type):
             try:
-                if Estimator()._get_tags().get("allow_nan") == True:
-                    names2.append(name)
-            except TypeError:
-                base = LogisticRegression(solver="lbfgs")
-                if Estimator(base)._get_tags().get("allow_nan") == True:
-                    names2.append(name)
-        output2.write(f" {names2} ")
-
-        output3 = StringIO()
-        output3.write(
-            f" List of estimators that allow NaN values for type_filter=classifier : "
-        )
-        for name, Estimator in all_estimators(type_filter="classifier"):
-            try:
-                if Estimator()._get_tags().get("allow_nan") == True:
-                    names3.append(name)
-            except TypeError:
-                base = LogisticRegression(solver="lbfgs")
-                if Estimator(base)._get_tags().get("allow_nan") == True:
-                    names3.append(name)
-        output3.write(f" {names3} ")
-
-        output4 = StringIO()
-        output4.write(
-            f" List of estimators that allow NaN values for type_filter=transformer : "
-        )
-        for name, Estimator in all_estimators(type_filter="transformer"):
-            try:
-                if Estimator()._get_tags().get("allow_nan") == True:
-                    names4.append(name)
-            except TypeError:
+                est = _construct_instance(est_class)
+            except:
                 if name == "ColumnTransformer":
-                    if (
-                        ColumnTransformer(
-                            [
-                                ("ordinal", OrdinalEncoder(), [0, 1]),
-                                ("nominal", OneHotEncoder(), [2, 3]),
-                            ]
-                        )
-                        ._get_tags()
-                        .get("allow_nan")
-                        == True
-                    ):
-                        names4.append(name)
-        output4.write(f" {names4} ")
+                    est = ColumnTransformer(None)
+                else:
+                    warnings.warn(
+                        f"Estimator {est_class.__name__} failed to construct."
+                    )
 
-        output = output.getvalue()
-        output2 = output2.getvalue()
-        output3 = output3.getvalue()
-        output4 = output4.getvalue()
-        paragraph_node = nodes.paragraph(text=output)
-        paragraph_node2 = nodes.paragraph(text=output2)
-        paragraph_node3 = nodes.paragraph(text=output3)
-        paragraph_node4 = nodes.paragraph(text=output4)
+            if est._get_tags().get("allow_nan"):
+                module_name = est_class.__module__
+                class_name = est_class.__name__
+                output.write(f" * :class:`{module_name}.{class_name}` ")
+                exists = True
+        return nodes.paragraph(text=output.getvalue()) if exists else None
 
-        return [paragraph_node, paragraph_node2, paragraph_node3, paragraph_node4]
+    def run(self):
+        output = []
+        for i in ["cluster", "regressor", "classifier", "transformer"]:
+            paragraph = self.make_paragraph_for_estimator_type(i)
+            if paragraph is not None:
+                output.append(paragraph)
+        return output
 
 
 def setup(app):
