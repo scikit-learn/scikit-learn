@@ -15,7 +15,8 @@ whereas real SAMME.R uses the predicted class probabilities.
 .. [1] T. Hastie, R. Tibshirani and J. Friedman, "Elements of Statistical
     Learning Ed. 2", Springer, 2009.
 
-.. [2] J. Zhu, H. Zou, S. Rosset, T. Hastie, "Multi-class AdaBoost", 2009.
+..  [2] J Zhu, H. Zou, S. Rosset, T. Hastie, "Multi-class AdaBoost",
+    Statistics and Its Interface, 2009.
 
 """
 
