@@ -107,7 +107,7 @@ def _assert_all_finite(
     # safely to reduce dtype induced overflows.
     is_float = X.dtype.kind in "fc"
     # Cython implementation doesn't support FP16 or complex numbers
-    # size > 500 is a heuristic for when the python implementation is preferred
+    # size > 5000 is a heuristic for when the python implementation is faster
     use_cython = not (X.dtype.kind == "c" or X.dtype == np.float16) and X.size > 5000
     is_finite = False
     if is_float:
