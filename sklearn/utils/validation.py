@@ -136,8 +136,8 @@ def _assert_all_finite(
                     " samples with missing values. See"
                     " https://scikit-learn.org/stable/modules/impute.html"
                     " You can find a list of all estimators that handle NaN values"
-                    " by following this link to the documentation "
-                    " above and going to section 6.4.7"
+                    " at the following page"
+                    " https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values"
                 )
             raise ValueError(msg_err)
 
