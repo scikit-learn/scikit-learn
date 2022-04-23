@@ -77,11 +77,13 @@ __all__ = [
 
 # TODO: remove this check once the estimator is no longer experimental.
 def __getattr__(name):
-    if name not in __all__ and name in {"HalvingGridSearchCV", "HalvingRandomSearchCV"}:
+    if name in __all__:
+        return importlib.import_module(f".{name}", __name__)
+    elif name in {"HalvingGridSearchCV", "HalvingRandomSearchCV"}:
         raise ImportError(
             f"{name} is experimental and the API might change without any "
             "deprecation cycle. To use it, you need to explicitly import "
             "enable_halving_search_cv:\n"
             "from sklearn.experimental import enable_halving_search_cv"
         )
-    return importlib.import_module(f".{name}", __name__)
+    raise AttributeError(f"module {__name__} has no attribute {name}")
