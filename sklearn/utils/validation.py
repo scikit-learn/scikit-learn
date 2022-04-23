@@ -106,10 +106,10 @@ def _assert_all_finite(
     # false positives from overflow in sum method. The sum is also calculated
     # safely to reduce dtype induced overflows.
     is_float = X.dtype.kind in "fc"
-    is_complex = X.dtype.kind == "c"
+    use_cython = not (X.dtype.kind == "c" or X.dtype == np.float16)
     is_finite = False
     if is_float:
-        if not is_complex:
+        if use_cython:
             is_finite = cy_isfinite(X, allow_nan=allow_nan)
         else:
             is_finite = np.isfinite(_safe_accumulator_op(np.sum, X))
