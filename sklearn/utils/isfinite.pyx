@@ -47,7 +47,7 @@ cdef fused bint_type:
 
 
 @cython.cdivision(True)
-def _isfinite(numpy.ndarray a, bint allow_nan=False):
+def cy_isfinite(numpy.ndarray a, bint allow_nan=False):
     cdef numpy.ndarray a_flat
 
     cdef char* a_data
