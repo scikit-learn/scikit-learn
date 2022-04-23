@@ -1,6 +1,3 @@
-#
-# cython: boundscheck=False, wraparound=False
-
 cimport cython
 cimport numpy as np
 import numpy as np
@@ -91,7 +88,6 @@ def _dirichlet_expectation_2d(np.ndarray[ndim=2, dtype=np.float64_t] arr):
 #
 # After: J. Bernardo (1976). Algorithm AS 103: Psi (Digamma) Function.
 # https://www.uv.es/~bernardo/1976AppStatist.pdf
-@cython.cdivision(True)
 cdef double psi(double x) nogil:
     if x <= 1e-6:
         # psi(x) = -EULER - 1/x + O(x)

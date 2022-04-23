@@ -55,7 +55,6 @@ cpdef np.int32_t murmurhash3_bytes_s32(bytes key, unsigned int seed):
     return out
 
 
-@cython.boundscheck(False)
 cpdef np.ndarray[np.uint32_t, ndim=1] murmurhash3_bytes_array_u32(
     np.ndarray[np.int32_t] key, unsigned int seed):
     """Compute 32bit murmurhash3 hashes of a key int array at seed."""
@@ -67,7 +66,6 @@ cpdef np.ndarray[np.uint32_t, ndim=1] murmurhash3_bytes_array_u32(
     return out
 
 
-@cython.boundscheck(False)
 cpdef np.ndarray[np.int32_t, ndim=1] murmurhash3_bytes_array_s32(
     np.ndarray[np.int32_t] key, unsigned int seed):
     """Compute 32bit murmurhash3 hashes of a key int array at seed."""

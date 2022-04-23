@@ -7,10 +7,9 @@
 import itertools
 
 import numpy as np
+import pytest
 
 from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_raise_message
-from sklearn.utils._testing import assert_warns_message
 
 from sklearn import datasets
 from sklearn.covariance import empirical_covariance, MinCovDet
@@ -43,26 +42,28 @@ def test_mcd():
 
 def test_fast_mcd_on_invalid_input():
     X = np.arange(100)
-    assert_raise_message(ValueError, 'Expected 2D array, got 1D array instead',
-                         fast_mcd, X)
+    msg = "Expected 2D array, got 1D array instead"
+    with pytest.raises(ValueError, match=msg):
+        fast_mcd(X)
 
 
 def test_mcd_class_on_invalid_input():
     X = np.arange(100)
     mcd = MinCovDet()
-    assert_raise_message(ValueError, 'Expected 2D array, got 1D array instead',
-                         mcd.fit, X)
+    msg = "Expected 2D array, got 1D array instead"
+    with pytest.raises(ValueError, match=msg):
+        mcd.fit(X)
 
 
-def launch_mcd_on_dataset(n_samples, n_features, n_outliers, tol_loc, tol_cov,
-                          tol_support):
+def launch_mcd_on_dataset(
+    n_samples, n_features, n_outliers, tol_loc, tol_cov, tol_support
+):
 
     rand_gen = np.random.RandomState(0)
     data = rand_gen.randn(n_samples, n_features)
     # add some outliers
     outliers_index = rand_gen.permutation(n_samples)[:n_outliers]
-    outliers_offset = 10. * \
-        (rand_gen.randint(2, size=(n_outliers, n_features)) - 0.5)
+    outliers_offset = 10.0 * (rand_gen.randint(2, size=(n_outliers, n_features)) - 0.5)
     data[outliers_index] += outliers_offset
     inliers_mask = np.ones(n_samples).astype(bool)
     inliers_mask[outliers_index] = False
@@ -75,10 +76,10 @@ def launch_mcd_on_dataset(n_samples, n_features, n_outliers, tol_loc, tol_cov,
     H = mcd_fit.support_
     # compare with the estimates learnt from the inliers
     error_location = np.mean((pure_data.mean(0) - T) ** 2)
-    assert(error_location < tol_loc)
+    assert error_location < tol_loc
     error_cov = np.mean((empirical_covariance(pure_data) - S) ** 2)
-    assert(error_cov < tol_cov)
-    assert(np.sum(H) >= tol_support)
+    assert error_cov < tol_cov
+    assert np.sum(H) >= tol_support
     assert_array_almost_equal(mcd_fit.mahalanobis(data), mcd_fit.dist_)
 
 
@@ -130,10 +131,13 @@ def test_mcd_support_covariance_is_zero():
     X_1 = X_1.reshape(-1, 1)
     X_2 = np.array([0.5, 0.3, 0.3, 0.3, 0.957, 0.3, 0.3, 0.3, 0.4285, 0.3])
     X_2 = X_2.reshape(-1, 1)
-    msg = ('The covariance matrix of the support data is equal to 0, try to '
-           'increase support_fraction')
+    msg = (
+        "The covariance matrix of the support data is equal to 0, try to "
+        "increase support_fraction"
+    )
     for X in [X_1, X_2]:
-        assert_raise_message(ValueError, msg, MinCovDet().fit, X)
+        with pytest.raises(ValueError, match=msg):
+            MinCovDet().fit(X)
 
 
 def test_mcd_increasing_det_warning():
@@ -142,27 +146,29 @@ def test_mcd_increasing_det_warning():
     # decreasing. Increasing determinants are likely due to ill-conditioned
     # covariance matrices that result in poor precision matrices.
 
-    X = [[5.1, 3.5, 1.4, 0.2],
-         [4.9, 3.0, 1.4, 0.2],
-         [4.7, 3.2, 1.3, 0.2],
-         [4.6, 3.1, 1.5, 0.2],
-         [5.0, 3.6, 1.4, 0.2],
-         [4.6, 3.4, 1.4, 0.3],
-         [5.0, 3.4, 1.5, 0.2],
-         [4.4, 2.9, 1.4, 0.2],
-         [4.9, 3.1, 1.5, 0.1],
-         [5.4, 3.7, 1.5, 0.2],
-         [4.8, 3.4, 1.6, 0.2],
-         [4.8, 3.0, 1.4, 0.1],
-         [4.3, 3.0, 1.1, 0.1],
-         [5.1, 3.5, 1.4, 0.3],
-         [5.7, 3.8, 1.7, 0.3],
-         [5.4, 3.4, 1.7, 0.2],
-         [4.6, 3.6, 1.0, 0.2],
-         [5.0, 3.0, 1.6, 0.2],
-         [5.2, 3.5, 1.5, 0.2]]
+    X = [
+        [5.1, 3.5, 1.4, 0.2],
+        [4.9, 3.0, 1.4, 0.2],
+        [4.7, 3.2, 1.3, 0.2],
+        [4.6, 3.1, 1.5, 0.2],
+        [5.0, 3.6, 1.4, 0.2],
+        [4.6, 3.4, 1.4, 0.3],
+        [5.0, 3.4, 1.5, 0.2],
+        [4.4, 2.9, 1.4, 0.2],
+        [4.9, 3.1, 1.5, 0.1],
+        [5.4, 3.7, 1.5, 0.2],
+        [4.8, 3.4, 1.6, 0.2],
+        [4.8, 3.0, 1.4, 0.1],
+        [4.3, 3.0, 1.1, 0.1],
+        [5.1, 3.5, 1.4, 0.3],
+        [5.7, 3.8, 1.7, 0.3],
+        [5.4, 3.4, 1.7, 0.2],
+        [4.6, 3.6, 1.0, 0.2],
+        [5.0, 3.0, 1.6, 0.2],
+        [5.2, 3.5, 1.5, 0.2],
+    ]
 
     mcd = MinCovDet(random_state=1)
-    assert_warns_message(RuntimeWarning,
-                         "Determinant has increased",
-                         mcd.fit, X)
+    warn_msg = "Determinant has increased"
+    with pytest.warns(RuntimeWarning, match=warn_msg):
+        mcd.fit(X)

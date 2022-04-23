@@ -6,14 +6,12 @@
 # License: BSD 3 clause
 
 from collections.abc import Iterable
-import warnings
 
 import numpy as np
 from scipy import sparse
 from scipy.stats.mstats import mquantiles
 
 from ..base import is_classifier, is_regressor
-from ..pipeline import Pipeline
 from ..utils.extmath import cartesian
 from ..utils import check_array
 from ..utils import check_matplotlib_support  # noqa
@@ -22,17 +20,17 @@ from ..utils import _determine_key_type
 from ..utils import _get_column_indices
 from ..utils.validation import check_is_fitted
 from ..utils import Bunch
-from ..utils.validation import _deprecate_positional_args
 from ..tree import DecisionTreeRegressor
 from ..ensemble import RandomForestRegressor
 from ..exceptions import NotFittedError
 from ..ensemble._gb import BaseGradientBoosting
-from sklearn.ensemble._hist_gradient_boosting.gradient_boosting import (
-    BaseHistGradientBoosting)
+from ..ensemble._hist_gradient_boosting.gradient_boosting import (
+    BaseHistGradientBoosting,
+)
 
 
 __all__ = [
-    'partial_dependence',
+    "partial_dependence",
 ]
 
 
@@ -74,8 +72,7 @@ def _grid_from_X(X, percentiles, grid_resolution):
     if not all(0 <= x <= 1 for x in percentiles):
         raise ValueError("'percentiles' values must be in [0, 1].")
     if percentiles[0] >= percentiles[1]:
-        raise ValueError('percentiles[0] must be strictly less '
-                         'than percentiles[1].')
+        raise ValueError("percentiles[0] must be strictly less than percentiles[1].")
 
     if grid_resolution <= 1:
         raise ValueError("'grid_resolution' must be strictly greater than 1.")
@@ -93,20 +90,23 @@ def _grid_from_X(X, percentiles, grid_resolution):
             )
             if np.allclose(emp_percentiles[0], emp_percentiles[1]):
                 raise ValueError(
-                    'percentiles are too close to each other, '
-                    'unable to build the grid. Please choose percentiles '
-                    'that are further apart.')
-            axis = np.linspace(emp_percentiles[0],
-                               emp_percentiles[1],
-                               num=grid_resolution, endpoint=True)
+                    "percentiles are too close to each other, "
+                    "unable to build the grid. Please choose percentiles "
+                    "that are further apart."
+                )
+            axis = np.linspace(
+                emp_percentiles[0],
+                emp_percentiles[1],
+                num=grid_resolution,
+                endpoint=True,
+            )
         values.append(axis)
 
     return cartesian(values), values
 
 
 def _partial_dependence_recursion(est, grid, features):
-    averaged_predictions = est._compute_partial_dependence_recursion(grid,
-                                                                     features)
+    averaged_predictions = est._compute_partial_dependence_recursion(grid, features)
     if averaged_predictions.ndim == 1:
         # reshape to (1, n_points) for consistency with
         # _partial_dependence_brute
@@ -124,30 +124,32 @@ def _partial_dependence_brute(est, grid, features, X, response_method):
     if is_regressor(est):
         prediction_method = est.predict
     else:
-        predict_proba = getattr(est, 'predict_proba', None)
-        decision_function = getattr(est, 'decision_function', None)
-        if response_method == 'auto':
+        predict_proba = getattr(est, "predict_proba", None)
+        decision_function = getattr(est, "decision_function", None)
+        if response_method == "auto":
             # try predict_proba, then decision_function if it doesn't exist
             prediction_method = predict_proba or decision_function
         else:
-            prediction_method = (predict_proba if response_method ==
-                                 'predict_proba' else decision_function)
+            prediction_method = (
+                predict_proba
+                if response_method == "predict_proba"
+                else decision_function
+            )
         if prediction_method is None:
-            if response_method == 'auto':
+            if response_method == "auto":
                 raise ValueError(
-                    'The estimator has no predict_proba and no '
-                    'decision_function method.'
+                    "The estimator has no predict_proba and no "
+                    "decision_function method."
                 )
-            elif response_method == 'predict_proba':
-                raise ValueError('The estimator has no predict_proba method.')
+            elif response_method == "predict_proba":
+                raise ValueError("The estimator has no predict_proba method.")
             else:
-                raise ValueError(
-                    'The estimator has no decision_function method.')
+                raise ValueError("The estimator has no decision_function method.")
 
+    X_eval = X.copy()
     for new_values in grid:
-        X_eval = X.copy()
         for i, variable in enumerate(features):
-            if hasattr(X_eval, 'iloc'):
+            if hasattr(X_eval, "iloc"):
                 X_eval.iloc[:, variable] = new_values[i]
             else:
                 X_eval[:, variable] = new_values[i]
@@ -165,8 +167,7 @@ def _partial_dependence_brute(est, grid, features, X, response_method):
             # average over samples
             averaged_predictions.append(np.mean(pred, axis=0))
         except NotFittedError as e:
-            raise ValueError(
-                "'estimator' parameter must be a fitted estimator") from e
+            raise ValueError("'estimator' parameter must be a fitted estimator") from e
 
     n_samples = X.shape[0]
 
@@ -203,10 +204,17 @@ def _partial_dependence_brute(est, grid, features, X, response_method):
     return averaged_predictions, predictions
 
 
-@_deprecate_positional_args
-def partial_dependence(estimator, X, features, *, response_method='auto',
-                       percentiles=(0.05, 0.95), grid_resolution=100,
-                       method='auto', kind='legacy'):
+def partial_dependence(
+    estimator,
+    X,
+    features,
+    *,
+    response_method="auto",
+    percentiles=(0.05, 0.95),
+    grid_resolution=100,
+    method="auto",
+    kind="average",
+):
     """Partial dependence of ``features``.
 
     Partial dependence of a feature (or a set of features) corresponds to
@@ -282,7 +290,7 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
           This is more efficient in terms of speed.
           With this method, the target response of a
           classifier is always the decision function, not the predicted
-          probabilities. Since the `'recursion'` method implicitely computes
+          probabilities. Since the `'recursion'` method implicitly computes
           the average of the Individual Conditional Expectation (ICE) by
           design, it is not compatible with ICE and thus `kind` must be
           `'average'`.
@@ -296,7 +304,7 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
         Please see :ref:`this note <pdp_method_differences>` for
         differences between the `'brute'` and `'recursion'` method.
 
-    kind : {'legacy', 'average', 'individual', 'both'}, default='legacy'
+    kind : {'average', 'individual', 'both'}, default='average'
         Whether to return the partial dependence averaged across all the
         samples in the dataset or one line per sample or both.
         See Returns below.
@@ -306,61 +314,40 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
         slower `method='brute'` option.
 
         .. versionadded:: 0.24
-        .. deprecated:: 0.24
-            `kind='legacy'` is deprecated and will be removed in version 1.1.
-            `kind='average'` will be the new default. It is intended to migrate
-            from the ndarray output to :class:`~sklearn.utils.Bunch` output.
-
 
     Returns
     -------
-    predictions : ndarray or :class:`~sklearn.utils.Bunch`
+    predictions : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
 
-        - if `kind='legacy'`, return value is ndarray of shape (n_outputs, \
+        individual : ndarray of shape (n_outputs, n_instances, \
                 len(values[0]), len(values[1]), ...)
+            The predictions for all the points in the grid for all
+            samples in X. This is also known as Individual
+            Conditional Expectation (ICE)
+
+        average : ndarray of shape (n_outputs, len(values[0]), \
+                len(values[1]), ...)
             The predictions for all the points in the grid, averaged
-            over all samples in X (or over the training data if ``method``
-            is 'recursion').
+            over all samples in X (or over the training data if
+            ``method`` is 'recursion').
+            Only available when ``kind='both'``.
 
-        - if `kind='individual'`, `'average'` or `'both'`, return value is \
-                :class:`~sklearn.utils.Bunch`
-            Dictionary-like object, with the following attributes.
-
-            individual : ndarray of shape (n_outputs, n_instances, \
-                    len(values[0]), len(values[1]), ...)
-                The predictions for all the points in the grid for all
-                samples in X. This is also known as Individual
-                Conditional Expectation (ICE)
-
-            average : ndarray of shape (n_outputs, len(values[0]), \
-                    len(values[1]), ...)
-                The predictions for all the points in the grid, averaged
-                over all samples in X (or over the training data if
-                ``method`` is 'recursion').
-                Only available when kind='both'.
-
-            values : seq of 1d ndarrays
-                The values with which the grid has been created. The generated
-                grid is a cartesian product of the arrays in ``values``.
-                ``len(values) == len(features)``. The size of each array
-                ``values[j]`` is either ``grid_resolution``, or the number of
-                unique values in ``X[:, j]``, whichever is smaller.
+        values : seq of 1d ndarrays
+            The values with which the grid has been created. The generated
+            grid is a cartesian product of the arrays in ``values``.
+            ``len(values) == len(features)``. The size of each array
+            ``values[j]`` is either ``grid_resolution``, or the number of
+            unique values in ``X[:, j]``, whichever is smaller.
 
         ``n_outputs`` corresponds to the number of classes in a multi-class
         setting, or to the number of tasks for multi-output regression.
         For classical regression and binary classification ``n_outputs==1``.
         ``n_values_feature_j`` corresponds to the size ``values[j]``.
 
-    values : seq of 1d ndarrays
-        The values with which the grid has been created. The generated grid
-        is a cartesian product of the arrays in ``values``. ``len(values) ==
-        len(features)``. The size of each array ``values[j]`` is either
-        ``grid_resolution``, or the number of unique values in ``X[:, j]``,
-        whichever is smaller. Only available when `kind="legacy"`.
-
     See Also
     --------
-    plot_partial_dependence : Plot Partial Dependence.
+    PartialDependenceDisplay.from_estimator : Plot Partial Dependence.
     PartialDependenceDisplay : Partial Dependence visualization.
 
     Examples
@@ -373,115 +360,108 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
     ...                    grid_resolution=2) # doctest: +SKIP
     (array([[-4.52...,  4.52...]]), [array([ 0.,  1.])])
     """
+    check_is_fitted(estimator)
+
     if not (is_classifier(estimator) or is_regressor(estimator)):
-        raise ValueError(
-            "'estimator' must be a fitted regressor or classifier."
-        )
+        raise ValueError("'estimator' must be a fitted regressor or classifier.")
 
-    if isinstance(estimator, Pipeline):
-        # TODO: to be removed if/when pipeline get a `steps_` attributes
-        # assuming Pipeline is the only estimator that does not store a new
-        # attribute
-        for est in estimator:
-            # FIXME: remove the None option when it will be deprecated
-            if est not in (None, 'drop'):
-                check_is_fitted(est)
-    else:
-        check_is_fitted(estimator)
-
-    if (is_classifier(estimator) and
-            isinstance(estimator.classes_[0], np.ndarray)):
-        raise ValueError(
-            'Multiclass-multioutput estimators are not supported'
-        )
+    if is_classifier(estimator) and isinstance(estimator.classes_[0], np.ndarray):
+        raise ValueError("Multiclass-multioutput estimators are not supported")
 
     # Use check_array only on lists and other non-array-likes / sparse. Do not
     # convert DataFrame into a NumPy array.
-    if not(hasattr(X, '__array__') or sparse.issparse(X)):
-        X = check_array(X, force_all_finite='allow-nan', dtype=object)
+    if not (hasattr(X, "__array__") or sparse.issparse(X)):
+        X = check_array(X, force_all_finite="allow-nan", dtype=object)
 
-    accepted_responses = ('auto', 'predict_proba', 'decision_function')
+    accepted_responses = ("auto", "predict_proba", "decision_function")
     if response_method not in accepted_responses:
         raise ValueError(
-            'response_method {} is invalid. Accepted response_method names '
-            'are {}.'.format(response_method, ', '.join(accepted_responses)))
+            "response_method {} is invalid. Accepted response_method names "
+            "are {}.".format(response_method, ", ".join(accepted_responses))
+        )
 
-    if is_regressor(estimator) and response_method != 'auto':
+    if is_regressor(estimator) and response_method != "auto":
         raise ValueError(
             "The response_method parameter is ignored for regressors and "
             "must be 'auto'."
         )
 
-    accepted_methods = ('brute', 'recursion', 'auto')
+    accepted_methods = ("brute", "recursion", "auto")
     if method not in accepted_methods:
         raise ValueError(
-            'method {} is invalid. Accepted method names are {}.'.format(
-                method, ', '.join(accepted_methods)))
-
-    if kind != 'average' and kind != 'legacy':
-        if method == 'recursion':
-            raise ValueError(
-                "The 'recursion' method only applies when 'kind' is set "
-                "to 'average'"
+            "method {} is invalid. Accepted method names are {}.".format(
+                method, ", ".join(accepted_methods)
             )
-        method = 'brute'
+        )
 
-    if method == 'auto':
-        if (isinstance(estimator, BaseGradientBoosting) and
-                estimator.init is None):
-            method = 'recursion'
-        elif isinstance(estimator, (BaseHistGradientBoosting,
-                                    DecisionTreeRegressor,
-                                    RandomForestRegressor)):
-            method = 'recursion'
+    if kind != "average":
+        if method == "recursion":
+            raise ValueError(
+                "The 'recursion' method only applies when 'kind' is set to 'average'"
+            )
+        method = "brute"
+
+    if method == "auto":
+        if isinstance(estimator, BaseGradientBoosting) and estimator.init is None:
+            method = "recursion"
+        elif isinstance(
+            estimator,
+            (BaseHistGradientBoosting, DecisionTreeRegressor, RandomForestRegressor),
+        ):
+            method = "recursion"
         else:
-            method = 'brute'
+            method = "brute"
 
-    if method == 'recursion':
-        if not isinstance(estimator,
-                          (BaseGradientBoosting, BaseHistGradientBoosting,
-                           DecisionTreeRegressor, RandomForestRegressor)):
+    if method == "recursion":
+        if not isinstance(
+            estimator,
+            (
+                BaseGradientBoosting,
+                BaseHistGradientBoosting,
+                DecisionTreeRegressor,
+                RandomForestRegressor,
+            ),
+        ):
             supported_classes_recursion = (
-                'GradientBoostingClassifier',
-                'GradientBoostingRegressor',
-                'HistGradientBoostingClassifier',
-                'HistGradientBoostingRegressor',
-                'HistGradientBoostingRegressor',
-                'DecisionTreeRegressor',
-                'RandomForestRegressor',
+                "GradientBoostingClassifier",
+                "GradientBoostingRegressor",
+                "HistGradientBoostingClassifier",
+                "HistGradientBoostingRegressor",
+                "HistGradientBoostingRegressor",
+                "DecisionTreeRegressor",
+                "RandomForestRegressor",
             )
             raise ValueError(
                 "Only the following estimators support the 'recursion' "
-                "method: {}. Try using method='brute'."
-                .format(', '.join(supported_classes_recursion)))
-        if response_method == 'auto':
-            response_method = 'decision_function'
+                "method: {}. Try using method='brute'.".format(
+                    ", ".join(supported_classes_recursion)
+                )
+            )
+        if response_method == "auto":
+            response_method = "decision_function"
 
-        if response_method != 'decision_function':
+        if response_method != "decision_function":
             raise ValueError(
                 "With the 'recursion' method, the response_method must be "
                 "'decision_function'. Got {}.".format(response_method)
             )
 
-    if _determine_key_type(features, accept_slice=False) == 'int':
+    if _determine_key_type(features, accept_slice=False) == "int":
         # _get_column_indices() supports negative indexing. Here, we limit
         # the indexing to be positive. The upper bound will be checked
         # by _get_column_indices()
         if np.any(np.less(features, 0)):
-            raise ValueError(
-                'all features must be in [0, {}]'.format(X.shape[1] - 1)
-            )
+            raise ValueError("all features must be in [0, {}]".format(X.shape[1] - 1))
 
     features_indices = np.asarray(
-        _get_column_indices(X, features), dtype=np.int32, order='C'
+        _get_column_indices(X, features), dtype=np.int32, order="C"
     ).ravel()
 
     grid, values = _grid_from_X(
-        _safe_indexing(X, features_indices, axis=1), percentiles,
-        grid_resolution
+        _safe_indexing(X, features_indices, axis=1), percentiles, grid_resolution
     )
 
-    if method == 'brute':
+    if method == "brute":
         averaged_predictions, predictions = _partial_dependence_brute(
             estimator, grid, features_indices, X, response_method
         )
@@ -499,24 +479,16 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
     # reshape averaged_predictions to
     # (n_outputs, n_values_feature_0, n_values_feature_1, ...)
     averaged_predictions = averaged_predictions.reshape(
-        -1, *[val.shape[0] for val in values])
+        -1, *[val.shape[0] for val in values]
+    )
 
-    if kind == 'legacy':
-        warnings.warn(
-            "A Bunch will be returned in place of 'predictions' from version"
-            " 1.1 (renaming of 0.26) with partial dependence results "
-            "accessible via the 'average' key. In the meantime, pass "
-            "kind='average' to get the future behaviour.",
-            FutureWarning
-        )
-        # TODO 1.1: Remove kind == 'legacy' section
-        return averaged_predictions, values
-    elif kind == 'average':
+    if kind == "average":
         return Bunch(average=averaged_predictions, values=values)
-    elif kind == 'individual':
+    elif kind == "individual":
         return Bunch(individual=predictions, values=values)
     else:  # kind='both'
         return Bunch(
-            average=averaged_predictions, individual=predictions,
+            average=averaged_predictions,
+            individual=predictions,
             values=values,
         )
