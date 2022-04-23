@@ -106,7 +106,9 @@ def _assert_all_finite(
     # false positives from overflow in sum method. The sum is also calculated
     # safely to reduce dtype induced overflows.
     is_float = X.dtype.kind in "fc"
-    use_cython = not (X.dtype.kind == "c" or X.dtype == np.float16)
+    # Cython implementation doesn't support FP16 or complex numbers
+    # size > 500 is a heuristic for when the python implementation is preferred
+    use_cython = not (X.dtype.kind == "c" or X.dtype == np.float16) and X.size > 5000
     is_finite = False
     if is_float:
         if use_cython:
