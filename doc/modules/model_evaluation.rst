@@ -939,10 +939,10 @@ To make this more explicit, consider the following notation:
 * :math:`y_l` the subset of :math:`y` with label :math:`l`
 * similarly, :math:`\hat{y}_s` and :math:`\hat{y}_l` are subsets of
   :math:`\hat{y}`
-* :math:`P(A, B) := \frac{\left| A \cap B \right|}{\left|A\right|}` for some
+* :math:`P(A, B) := \frac{\left| A \cap B \right|}{\left|B\right|}` for some
   sets :math:`A` and :math:`B`
-* :math:`R(A, B) := \frac{\left| A \cap B \right|}{\left|B\right|}`
-  (Conventions vary on handling :math:`B = \emptyset`; this implementation uses
+* :math:`R(A, B) := \frac{\left| A \cap B \right|}{\left|A\right|}`
+  (Conventions vary on handling :math:`A = \emptyset`; this implementation uses
   :math:`R(A, B):=0`, and similar for :math:`P`.)
 * :math:`F_\beta(A, B) := \left(1 + \beta^2\right) \frac{P(A, B) \times R(A, B)}{\beta^2 P(A, B) + R(A, B)}`
 
