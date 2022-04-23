@@ -139,7 +139,6 @@ for n, (name, estimator) in enumerate(estimators):
     # Bias^2 + Variance + Noise decomposition of the mean squared error
     y_error = np.zeros(n_test)
 
-    # Datasets drawn for training and testing are independent
     for i in range(n_repeat):
         for j in range(n_repeat):
             y_error += (y_test[:, j] - y_predict[:, i]) ** 2
