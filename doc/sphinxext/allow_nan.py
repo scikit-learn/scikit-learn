@@ -13,8 +13,7 @@ class Allow_Nan(Directive):
     def make_paragraph_for_estimator_type(estimator_type):
         output = StringIO()
         output.write(
-            "* List of estimators that allow NaN values for type"
-            f" *{estimator_type}*:\n"
+            f"* List of estimators that allow NaN values for type *{estimator_type}*:\n"
         )
 
         exists = False
