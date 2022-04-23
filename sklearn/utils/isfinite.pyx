@@ -23,15 +23,11 @@ cdef fused fprecision:
     npy_half
     float
     double
-    float complex
-    double complex
 
 cdef fused const_fprecision:
     const npy_half
     const float
     const double
-    const float complex
-    const double complex
 
 
 cdef enum bint_enum:
@@ -77,38 +73,34 @@ def py_isfinite(numpy.ndarray a, bint allow_nan=False):
 
         err = bint_enum.false
 
-        if a_type == numpy.NPY_BOOL:
+        if a_type == numpy.NPY_TYPES.NPY_BOOL:
             result = True
-        elif a_type == numpy.NPY_BYTE:
+        elif a_type == numpy.NPY_TYPES.NPY_BYTE:
             result = True
-        elif a_type == numpy.NPY_UBYTE:
+        elif a_type == numpy.NPY_TYPES.NPY_UBYTE:
             result = True
-        elif a_type == numpy.NPY_SHORT:
+        elif a_type == numpy.NPY_TYPES.NPY_SHORT:
             result = True
-        elif a_type == numpy.NPY_USHORT:
+        elif a_type == numpy.NPY_TYPES.NPY_USHORT:
             result = True
-        elif a_type == numpy.NPY_INT:
+        elif a_type == numpy.NPY_TYPES.NPY_INT:
             result = True
-        elif a_type == numpy.NPY_UINT:
+        elif a_type == numpy.NPY_TYPES.NPY_UINT:
             result = True
-        elif a_type == numpy.NPY_LONG:
+        elif a_type == numpy.NPY_TYPES.NPY_LONG:
             result = True
-        elif a_type == numpy.NPY_ULONG:
+        elif a_type == numpy.NPY_TYPES.NPY_ULONG:
             result = True
-        elif a_type == numpy.NPY_LONGLONG:
+        elif a_type == numpy.NPY_TYPES.NPY_LONGLONG:
             result = True
-        elif a_type == numpy.NPY_ULONGLONG:
+        elif a_type == numpy.NPY_TYPES.NPY_ULONGLONG:
             result = True
-        elif a_type == numpy.NPY_HALF:
+        elif a_type == numpy.NPY_TYPES.NPY_FLOAT16:
             result = c_isfinite(<const npy_half*>a_data, a_step, a_size, <bint_enum>disallow_nan)
-        elif a_type == numpy.NPY_FLOAT:
+        elif a_type == numpy.NPY_TYPES.NPY_FLOAT:
             result = c_isfinite(<const float*>a_data, a_step, a_size, <bint_enum>disallow_nan)
-        elif a_type == numpy.NPY_DOUBLE:
+        elif a_type == numpy.NPY_TYPES.NPY_DOUBLE:
             result = c_isfinite(<const double*>a_data, a_step, a_size, <bint_enum>disallow_nan)
-        elif a_type == numpy.NPY_CFLOAT:
-            result = c_isfinite(<const float complex*>a_data, a_step, a_size, <bint_enum>disallow_nan)
-        elif a_type == numpy.NPY_CDOUBLE:
-            result = c_isfinite(<const double complex*>a_data, a_step, a_size, <bint_enum>disallow_nan)
         else:
             err = bint_enum.true
 
@@ -137,16 +129,13 @@ cdef bint c_isfinite_bint_type(const_fprecision* a_ptr, size_t step, size_t size
 
 cdef inline bint c_isnonfinite(fprecision v, bint_type* disallow_nan) nogil:
 
-    if fprecision is floatcomplex or fprecision is doublecomplex:
-        return c_isnonfinite(v.real, disallow_nan) or c_isnonfinite(v.imag, disallow_nan)
-    elif fprecision is npy_half:
+    if fprecision is npy_half:
         with gil:
             if bint_type is bint_true_type:
                 return _isfinite(npy_half_to_float(v)) == 0
             else:
                 return _isinf(npy_half_to_float(v)) != 0
-    elif fprecision is float or fprecision is double:
-        if bint_type is bint_true_type:
-            return _isfinite(v) == 0
-        else:
-            return _isinf(v) != 0
+    if bint_type is bint_true_type:
+        return _isfinite(v) == 0
+    else:
+        return _isinf(v) != 0

@@ -98,15 +98,22 @@ def _assert_all_finite(
 
     if _get_config()["assume_finite"]:
         return
+    from sklearn.utils.extmath import _safe_accumulator_op
+
     X = np.asanyarray(X)
     # First try an O(n) time, O(1) space solution for the common case that
     # everything is finite; fall back to O(n) space np.isfinite to prevent
     # false positives from overflow in sum method. The sum is also calculated
     # safely to reduce dtype induced overflows.
     is_float = X.dtype.kind in "fc"
+    is_complex = X.dtype.kind == "c"
+    is_finite = False
     if is_float:
-        is_finite = py_isfinite(X, allow_nan=allow_nan)
-    if is_float and is_finite:
+        if not is_complex:
+            is_finite = py_isfinite(X, allow_nan=allow_nan)
+        else:
+            is_finite = np.isfinite(_safe_accumulator_op(np.sum, X))
+    if is_finite:
         pass
     elif is_float:
         if not allow_nan and np.isnan(X).any():
