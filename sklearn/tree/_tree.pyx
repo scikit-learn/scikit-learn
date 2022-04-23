@@ -1460,8 +1460,8 @@ cdef _cost_complexity_prune(unsigned char[:] leaves_in_subtree, # OUT
     This function takes an already grown tree, `orig_tree` and outputs a
     boolean mask `leaves_in_subtree` which are the leaves in the pruned tree.
     During the pruning process, the controller is passed the effective alpha and
-    the subtree impurities. The controller is also used to signal when pruning
-    should stop.
+    the subtree impurities. Furthermore, the controller signals when to stop
+    pruning.
 
     Parameters
     ----------
