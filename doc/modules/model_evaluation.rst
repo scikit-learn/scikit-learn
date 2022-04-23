@@ -2378,7 +2378,7 @@ is defined as
   2(y_i \log(y_i/\hat{y}_i) + \hat{y}_i - y_i),  & \text{for }p=1\text{ (Poisson)}\\
   2(\log(\hat{y}_i/y_i) + y_i/\hat{y}_i - 1),  & \text{for }p=2\text{ (Gamma)}\\
   2\left(\frac{\max(y_i,0)^{2-p}}{(1-p)(2-p)}-
-  \frac{y_i\,\hat{y}^{1-p}_i}{1-p}+\frac{\hat{y}^{2-p}_i}{2-p}\right),
+  \frac{y_i\,\hat{y}_i^{1-p}}{1-p}+\frac{\hat{y}_i^{2-p}}{2-p}\right),
   & \text{otherwise}
   \end{cases}
 
