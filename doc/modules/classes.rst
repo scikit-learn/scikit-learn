@@ -963,6 +963,8 @@ details.
    metrics.hamming_loss
    metrics.hinge_loss
    metrics.jaccard_score
+   metrics.lift_curve
+   metrics.lift_score
    metrics.log_loss
    metrics.matthews_corrcoef
    metrics.multilabel_confusion_matrix
@@ -1128,6 +1130,7 @@ See the :ref:`visualizations` section of the user guide for further details.
 
    metrics.plot_confusion_matrix
    metrics.plot_det_curve
+   metrics.plot_lift_curve
    metrics.plot_precision_recall_curve
    metrics.plot_roc_curve
 
@@ -1137,6 +1140,7 @@ See the :ref:`visualizations` section of the user guide for further details.
 
    metrics.ConfusionMatrixDisplay
    metrics.DetCurveDisplay
+   metrics.LiftCurveDisplay
    metrics.PrecisionRecallDisplay
    metrics.RocCurveDisplay
    calibration.CalibrationDisplay

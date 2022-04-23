@@ -15,6 +15,7 @@ from ._ranking import ndcg_score
 from ._ranking import precision_recall_curve
 from ._ranking import roc_auc_score
 from ._ranking import roc_curve
+from ._ranking import lift_curve
 from ._ranking import top_k_accuracy_score
 
 from ._classification import accuracy_score
@@ -28,6 +29,7 @@ from ._classification import hamming_loss
 from ._classification import hinge_loss
 from ._classification import jaccard_score
 from ._classification import log_loss
+from ._classification import lift_score
 from ._classification import matthews_corrcoef
 from ._classification import precision_recall_fscore_support
 from ._classification import precision_score
@@ -90,6 +92,8 @@ from ._scorer import get_scorer_names
 
 from ._plot.det_curve import plot_det_curve
 from ._plot.det_curve import DetCurveDisplay
+from ._plot.lift_curve import plot_lift_curve
+from ._plot.lift_curve import LiftCurveDisplay
 from ._plot.roc_curve import plot_roc_curve
 from ._plot.roc_curve import RocCurveDisplay
 from ._plot.precision_recall_curve import plot_precision_recall_curve
@@ -137,6 +141,9 @@ __all__ = [
     "jaccard_score",
     "label_ranking_average_precision_score",
     "label_ranking_loss",
+    "LiftCurveDisplay",
+    "lift_curve",
+    "lift_score",
     "log_loss",
     "make_scorer",
     "nan_euclidean_distances",
@@ -163,6 +170,7 @@ __all__ = [
     "pairwise_kernels",
     "plot_confusion_matrix",
     "plot_det_curve",
+    "plot_lift_curve",
     "plot_precision_recall_curve",
     "plot_roc_curve",
     "PrecisionRecallDisplay",

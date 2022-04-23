@@ -1023,6 +1023,101 @@ def roc_curve(
     return fpr, tpr, thresholds
 
 
+def lift_curve(y_true, y_score, *, pos_label=None, sample_weight=None):
+    """Compute lift for each percent coverage of the sample.
+
+    Lift is the ratio of positive treatment responses to treatments on a
+    specific subset of a population, relative to the ratio of positive
+    treatment responses to treatments on a random subset of the population.
+
+    This metric is only for binary classification.
+
+    Parameters
+    ----------
+    y_true : ndarray of shape (n_samples,)
+        True binary labels. If labels are not either {-1, 1} or {0, 1}, then
+        pos_label should be explicitly given.
+
+    y_score : ndarray of shape (n_samples,)
+        Target scores, can either be probability estimates of the positive
+        class, confidence values, or non-thresholded measure of decisions
+        (as returned by "decision_function" on some classifiers).
+
+    pos_label : int or str, default=None
+        The label of the positive class.
+        When ``pos_label=None``, if `y_true` is in {-1, 1} or {0, 1},
+        ``pos_label`` is set to 1, otherwise an error will be raised.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights.
+
+    Returns
+    -------
+    lift : ndarray of shape (n_thresholds,)
+        Decreasing lift values such that element i is the lift a treatment on
+        a subset with score >= `thresholds[i]`.
+
+    percentages : ndarray of shape = (n_thresholds,)
+        Increasing percentages on population included in the treatment.
+        `percentages[0]` represents no instances being predicted
+        and is arbitrarily set to `0`.
+
+    thresholds : ndarray of shape = (n_thresholds,)
+        Decreasing thresholds on the decision function used to compute
+        lift. `thresholds[0]` represents no instances being predicted
+        and is arbitrarily set to `max(y_score) + 1`.
+
+    See Also
+    --------
+    det_curve: Compute error rates for different probability thresholds.
+    roc_auc_score : Compute the area under the ROC curve.
+    roc_curve : Compute Receiver operating characteristic (ROC) curve.
+    precision_recall_curve : Compute precision-recall curve.
+
+    References
+    ----------
+    .. [1] `Wikipedia entry for the lift metric
+            <https://en.wikipedia.org/wiki/Lift_(data_mining)>`_
+
+    .. [2] `IBM's SPSS page on gain and lift
+            <https://www.ibm.com/docs/en/spss-statistics/24.0.0?topic=overtraining-cumulative-gains-lift-charts>`_
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn import metrics
+    >>> y = np.array([1, 2, 1, 2])
+    >>> scores = np.array([0.1, 0.4, 0.3, 0.8])
+    >>> lift, percentages, threshs = metrics.lift_curve(y, scores, pos_label=2)
+    >>> lift
+    array([2.        , 2.        , 2.        , 1.33333333, 1.        ])
+    >>> percentages
+    array([  0.,  25.,  50.,  75., 100.])
+    >>> threshs
+    array([1.8, 0.8, 0.4, 0.3, 0.1])
+    """
+
+    fps, tps, thresholds = _binary_clf_curve(
+        y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
+    )
+
+    # False negatives
+    fns = tps[-1] - tps
+    # Sample counts
+    n_samples = fps[-1] + tps[-1]
+
+    # Lift & percentages
+    lift = n_samples * tps / ((fps + tps) * (fns + tps))
+    percentages = 100 * (fps + tps) / n_samples
+
+    # Insert a 0 percentage point
+    lift = np.insert(lift, 0, [lift[0]])
+    percentages = np.insert(percentages, 0, [0])
+    thresholds = np.insert(thresholds, 0, [thresholds.max() + 1])
+
+    return lift, percentages, thresholds
+
+
 def label_ranking_average_precision_score(y_true, y_score, *, sample_weight=None):
     """Compute ranking-based average precision.
 
