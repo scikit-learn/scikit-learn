@@ -276,25 +276,25 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
 
     def _validate_estimators(self):
         names, clfs = super()._validate_estimators()
-        # mapping from original labels to encoded ones
-        label_mapping = {c: i for i, c in enumerate(self.classes_)}
 
-        updated_clfs = tuple()
+        updated_clfs = []
         for clf in clfs:
-            if clf == "drop":
-                continue
-            already_clone = False
+            params_with_class_weights = [
+                (k, v)
+                for k, v in clf.get_params(deep=True).items()
+                if k.endswith("class_weight") and isinstance(v, Mapping)
+            ]
+            # re-encode params with class weights
+            if params_with_class_weights:
+                clf = clone(clf)
+                for k, v in params_with_class_weights:
+                    labels, weights = zip(*v.items())
+                    encoded_labels = self.le_.transform(labels)
+                    new_weights = dict(zip(encoded_labels, weights))
+                    clf.set_params(**{k: new_weights})
 
-            for k, v in clf.get_params(deep=True).items():
-                if not k.endswith("class_weight") or not isinstance(v, Mapping):
-                    continue
-
-                if not already_clone:
-                    clf, already_clone = clone(clf), True
-                updated_class_weight = {label_mapping[i]: w for i, w in v.items()}
-                clf.set_params(**{k: updated_class_weight})
-            updated_clfs += (clf,)
-        return names, updated_clfs
+            updated_clfs.append(clf)
+        return names, tuple(updated_clfs)
 
     def fit(self, X, y, sample_weight=None):
         """Fit the estimators.
