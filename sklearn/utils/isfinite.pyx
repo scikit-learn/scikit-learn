@@ -12,12 +12,12 @@ numpy.import_array()
 
 
 cdef fused fprecision:
-    float
-    double
+    numpy.npy_float32
+    numpy.npy_float64
 
 cdef fused const_fprecision:
-    const float
-    const double
+    const numpy.npy_float32
+    const numpy.npy_float64
 
 
 cdef enum bint_enum:
@@ -38,54 +38,23 @@ cdef fused bint_type:
 
 @cython.cdivision(True)
 def cy_isfinite(numpy.ndarray a, bint allow_nan=False):
-    cdef numpy.ndarray a_flat
-
     cdef char* a_data
     cdef numpy.NPY_TYPES a_type
     cdef Py_ssize_t a_step
-    cdef Py_ssize_t a_size
-
+    cdef Py_ssize_t a_size = a.size
     cdef bint disallow_nan
 
     cdef bint result
     cdef bint_enum err
 
-
-    a_flat = numpy.PyArray_Reshape(a, -1)
-
     with nogil:
-        a_data = a_flat.data
-        a_type = <numpy.NPY_TYPES>a_flat.descr.type_num
-        a_step = a_flat.strides[0] / a_flat.descr.itemsize
-        a_size = a_flat.shape[0]
+        a_data = a.data
+        a_type = <numpy.NPY_TYPES>a.descr.type_num
 
         disallow_nan = not allow_nan
 
         err = bint_enum.false
-
-        if a_type == numpy.NPY_TYPES.NPY_BOOL:
-            result = True
-        elif a_type == numpy.NPY_TYPES.NPY_BYTE:
-            result = True
-        elif a_type == numpy.NPY_TYPES.NPY_UBYTE:
-            result = True
-        elif a_type == numpy.NPY_TYPES.NPY_SHORT:
-            result = True
-        elif a_type == numpy.NPY_TYPES.NPY_USHORT:
-            result = True
-        elif a_type == numpy.NPY_TYPES.NPY_INT:
-            result = True
-        elif a_type == numpy.NPY_TYPES.NPY_UINT:
-            result = True
-        elif a_type == numpy.NPY_TYPES.NPY_LONG:
-            result = True
-        elif a_type == numpy.NPY_TYPES.NPY_ULONG:
-            result = True
-        elif a_type == numpy.NPY_TYPES.NPY_LONGLONG:
-            result = True
-        elif a_type == numpy.NPY_TYPES.NPY_ULONGLONG:
-            result = True
-        elif a_type == numpy.NPY_TYPES.NPY_FLOAT:
+        if a_type == numpy.NPY_TYPES.NPY_FLOAT:
             result = c_isfinite(<const float*>a_data, a_step, a_size, <bint_enum>disallow_nan)
         elif a_type == numpy.NPY_TYPES.NPY_DOUBLE:
             result = c_isfinite(<const double*>a_data, a_step, a_size, <bint_enum>disallow_nan)
@@ -108,7 +77,7 @@ cdef inline bint c_isfinite(const_fprecision* a_ptr, Py_ssize_t step, Py_ssize_t
 cdef bint c_isfinite_bint_type(const_fprecision* a_ptr, Py_ssize_t step, Py_ssize_t size, bint_type* disallow_nan) nogil:
     cdef Py_ssize_t i
 
-    for i in prange(0, size, step, nogil=True):
+    for i from 0 <= i < size:
         if c_isnonfinite(a_ptr[i], disallow_nan):
             return False
 
