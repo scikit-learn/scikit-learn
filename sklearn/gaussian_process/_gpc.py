@@ -110,7 +110,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
     random_state : int, RandomState instance or None, default=None
         Determines random number generation used to initialize the centers.
         Pass an int for reproducible results across multiple function calls.
-        See :term: `Glossary <random_state>`.
+        See :term:`Glossary <random_state>`.
 
     Attributes
     ----------
@@ -320,7 +320,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         gamma = LAMBDAS * f_star
         integrals = (
             np.sqrt(np.pi / alpha)
-            * erf(gamma * np.sqrt(alpha / (alpha + LAMBDAS ** 2)))
+            * erf(gamma * np.sqrt(alpha / (alpha + LAMBDAS**2)))
             / (2 * np.sqrt(var_f_star * 2 * np.pi))
         )
         pi_star = (COEFS * integrals).sum(axis=0) + 0.5 * COEFS.sum()
@@ -496,12 +496,15 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <gaussian_process>`.
 
+    .. versionadded:: 0.18
+
     Parameters
     ----------
     kernel : kernel instance, default=None
         The kernel specifying the covariance function of the GP. If None is
         passed, the kernel "1.0 * RBF(1.0)" is used as default. Note that
-        the kernel's hyperparameters are optimized during fitting.
+        the kernel's hyperparameters are optimized during fitting. Also kernel
+        cannot be a `CompoundKernel`.
 
     optimizer : 'fmin_l_bfgs_b' or callable, default='fmin_l_bfgs_b'
         Can either be one of the internally supported optimizers for optimizing
@@ -559,7 +562,7 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
     random_state : int, RandomState instance or None, default=None
         Determines random number generation used to initialize the centers.
         Pass an int for reproducible results across multiple function calls.
-        See :term: `Glossary <random_state>`.
+        See :term:`Glossary <random_state>`.
 
     multi_class : {'one_vs_rest', 'one_vs_one'}, default='one_vs_rest'
         Specifies how multi-class classification problems are handled.
@@ -606,6 +609,12 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     See Also
     --------
     GaussianProcessRegressor : Gaussian process regression (GPR).
@@ -624,8 +633,6 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
     >>> gpc.predict_proba(X[:2,:])
     array([[0.83548752, 0.03228706, 0.13222543],
            [0.79064206, 0.06525643, 0.14410151]])
-
-    .. versionadded:: 0.18
     """
 
     def __init__(
@@ -667,6 +674,9 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
         self : object
             Returns an instance of self.
         """
+        if isinstance(self.kernel, CompoundKernel):
+            raise ValueError("kernel cannot be a CompoundKernel")
+
         if self.kernel is None or self.kernel.requires_vector_input:
             X, y = self._validate_data(
                 X, y, multi_output=False, ensure_2d=True, dtype="numeric"

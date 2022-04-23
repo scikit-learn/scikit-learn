@@ -3,11 +3,14 @@ Testing Recursive feature elimination
 """
 
 from operator import attrgetter
+
 import pytest
 import numpy as np
-from numpy.testing import assert_array_almost_equal, assert_array_equal
+from numpy.testing import assert_array_almost_equal, assert_array_equal, assert_allclose
 from scipy import sparse
 
+from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.cross_decomposition import PLSCanonical, PLSRegression, CCA
 from sklearn.feature_selection import RFE, RFECV
 from sklearn.datasets import load_iris, make_friedman1
 from sklearn.metrics import zero_one_loss
@@ -108,6 +111,31 @@ def test_rfe():
     assert_array_almost_equal(X_r, X_r_sparse.toarray())
 
 
+def test_RFE_fit_score_params():
+    # Make sure RFE passes the metadata down to fit and score methods of the
+    # underlying estimator
+    class TestEstimator(BaseEstimator, ClassifierMixin):
+        def fit(self, X, y, prop=None):
+            if prop is None:
+                raise ValueError("fit: prop cannot be None")
+            self.svc_ = SVC(kernel="linear").fit(X, y)
+            self.coef_ = self.svc_.coef_
+            return self
+
+        def score(self, X, y, prop=None):
+            if prop is None:
+                raise ValueError("score: prop cannot be None")
+            return self.svc_.score(X, y)
+
+    X, y = load_iris(return_X_y=True)
+    with pytest.raises(ValueError, match="fit: prop cannot be None"):
+        RFE(estimator=TestEstimator()).fit(X, y)
+    with pytest.raises(ValueError, match="score: prop cannot be None"):
+        RFE(estimator=TestEstimator()).fit(X, y, prop="foo").score(X, y)
+
+    RFE(estimator=TestEstimator()).fit(X, y, prop="foo").score(X, y, prop="foo")
+
+
 @pytest.mark.parametrize("n_features_to_select", [-1, 2.1])
 def test_rfe_invalid_n_features_errors(n_features_to_select):
     clf = SVC(kernel="linear")
@@ -163,7 +191,18 @@ def test_rfecv():
     rfecv = RFECV(estimator=SVC(kernel="linear"), step=1)
     rfecv.fit(X, y)
     # non-regression test for missing worst feature:
-    assert len(rfecv.grid_scores_) == X.shape[1]
+
+    # TODO: Remove in v1.2 when grid_scores_ is removed
+    msg = (
+        r"The `grid_scores_` attribute is deprecated in version 1\.0 in "
+        r"favor of `cv_results_` and will be removed in version 1\.2."
+    )
+    with pytest.warns(FutureWarning, match=msg):
+        assert len(rfecv.grid_scores_) == X.shape[1]
+
+    for key in rfecv.cv_results_.keys():
+        assert len(rfecv.cv_results_[key]) == X.shape[1]
+
     assert len(rfecv.ranking_) == X.shape[1]
     X_r = rfecv.transform(X)
 
@@ -191,13 +230,17 @@ def test_rfecv():
     X_r = rfecv.transform(X)
     assert_array_equal(X_r, iris.data)
 
-    # Test fix on grid_scores
+    # Test fix on cv_results_
     def test_scorer(estimator, X, y):
         return 1.0
 
     rfecv = RFECV(estimator=SVC(kernel="linear"), step=1, scoring=test_scorer)
     rfecv.fit(X, y)
-    assert_array_equal(rfecv.grid_scores_, np.ones(len(rfecv.grid_scores_)))
+
+    # TODO: Remove in v1.2 when grid_scores_ is removed
+    with pytest.warns(FutureWarning, match=msg):
+        assert_array_equal(rfecv.grid_scores_, np.ones(rfecv.grid_scores_.shape))
+
     # In the event of cross validation score ties, the expected behavior of
     # RFECV is to return the FEWEST features that maximize the CV score.
     # Because test_scorer always returns 1.0 in this example, RFECV should
@@ -207,7 +250,14 @@ def test_rfecv():
     # Same as the first two tests, but with step=2
     rfecv = RFECV(estimator=SVC(kernel="linear"), step=2)
     rfecv.fit(X, y)
-    assert len(rfecv.grid_scores_) == 6
+
+    # TODO: Remove in v1.2 when grid_scores_ is removed
+    with pytest.warns(FutureWarning, match=msg):
+        assert len(rfecv.grid_scores_) == 6
+
+    for key in rfecv.cv_results_.keys():
+        assert len(rfecv.cv_results_[key]) == 6
+
     assert len(rfecv.ranking_) == X.shape[1]
     X_r = rfecv.transform(X)
     assert_array_equal(X_r, iris.data)
@@ -236,7 +286,18 @@ def test_rfecv_mockclassifier():
     rfecv = RFECV(estimator=MockClassifier(), step=1)
     rfecv.fit(X, y)
     # non-regression test for missing worst feature:
-    assert len(rfecv.grid_scores_) == X.shape[1]
+
+    # TODO: Remove in v1.2 when grid_scores_ is removed
+    msg = (
+        r"The `grid_scores_` attribute is deprecated in version 1\.0 in "
+        r"favor of `cv_results_` and will be removed in version 1\.2."
+    )
+    with pytest.warns(FutureWarning, match=msg):
+        assert len(rfecv.grid_scores_) == X.shape[1]
+
+    for key in rfecv.cv_results_.keys():
+        assert len(rfecv.cv_results_[key]) == X.shape[1]
+
     assert len(rfecv.ranking_) == X.shape[1]
 
 
@@ -260,7 +321,7 @@ def test_rfecv_verbose_output():
     assert len(verbose_output.readline()) > 0
 
 
-def test_rfecv_grid_scores_size():
+def test_rfecv_cv_results_size():
     generator = check_random_state(0)
     iris = load_iris()
     X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
@@ -277,7 +338,18 @@ def test_rfecv_grid_scores_size():
         rfecv.fit(X, y)
 
         score_len = np.ceil((X.shape[1] - min_features_to_select) / step) + 1
-        assert len(rfecv.grid_scores_) == score_len
+
+        # TODO: Remove in v1.2 when grid_scores_ is removed
+        msg = (
+            r"The `grid_scores_` attribute is deprecated in version 1\.0 in "
+            r"favor of `cv_results_` and will be removed in version 1\.2."
+        )
+        with pytest.warns(FutureWarning, match=msg):
+            assert len(rfecv.grid_scores_) == score_len
+
+        for key in rfecv.cv_results_.keys():
+            assert len(rfecv.cv_results_[key]) == score_len
+
         assert len(rfecv.ranking_) == X.shape[1]
         assert rfecv.n_features_ >= min_features_to_select
 
@@ -352,7 +424,7 @@ def test_number_of_subsets_of_features():
 
     # In RFECV, 'fit' calls 'RFE._fit'
     # 'number_of_subsets_of_features' of RFE
-    # = the size of 'grid_scores' of RFECV
+    # = the size of each score in 'cv_results_' of RFECV
     # = the number of iterations of the for loop before optimization #4534
 
     # RFECV, n_features_to_select = 1
@@ -369,12 +441,26 @@ def test_number_of_subsets_of_features():
         rfecv = RFECV(estimator=SVC(kernel="linear"), step=step)
         rfecv.fit(X, y)
 
-        assert rfecv.grid_scores_.shape[0] == formula1(
-            n_features, n_features_to_select, step
+        # TODO: Remove in v1.2 when grid_scores_ is removed
+        msg = (
+            r"The `grid_scores_` attribute is deprecated in version 1\.0 in "
+            r"favor of `cv_results_` and will be removed in version 1\.2."
         )
-        assert rfecv.grid_scores_.shape[0] == formula2(
-            n_features, n_features_to_select, step
-        )
+        with pytest.warns(FutureWarning, match=msg):
+            assert len(rfecv.grid_scores_) == formula1(
+                n_features, n_features_to_select, step
+            )
+            assert len(rfecv.grid_scores_) == formula2(
+                n_features, n_features_to_select, step
+            )
+
+        for key in rfecv.cv_results_.keys():
+            assert len(rfecv.cv_results_[key]) == formula1(
+                n_features, n_features_to_select, step
+            )
+            assert len(rfecv.cv_results_[key]) == formula2(
+                n_features, n_features_to_select, step
+            )
 
 
 def test_rfe_cv_n_jobs():
@@ -386,12 +472,28 @@ def test_rfe_cv_n_jobs():
     rfecv = RFECV(estimator=SVC(kernel="linear"))
     rfecv.fit(X, y)
     rfecv_ranking = rfecv.ranking_
-    rfecv_grid_scores = rfecv.grid_scores_
+
+    # TODO: Remove in v1.2 when grid_scores_ is removed
+    msg = (
+        r"The `grid_scores_` attribute is deprecated in version 1\.0 in "
+        r"favor of `cv_results_` and will be removed in version 1\.2."
+    )
+    with pytest.warns(FutureWarning, match=msg):
+        rfecv_grid_scores = rfecv.grid_scores_
+
+    rfecv_cv_results_ = rfecv.cv_results_
 
     rfecv.set_params(n_jobs=2)
     rfecv.fit(X, y)
     assert_array_almost_equal(rfecv.ranking_, rfecv_ranking)
-    assert_array_almost_equal(rfecv.grid_scores_, rfecv_grid_scores)
+
+    # TODO: Remove in v1.2 when grid_scores_ is removed
+    with pytest.warns(FutureWarning, match=msg):
+        assert_array_almost_equal(rfecv.grid_scores_, rfecv_grid_scores)
+
+    assert rfecv_cv_results_.keys() == rfecv.cv_results_.keys()
+    for key in rfecv_cv_results_.keys():
+        assert rfecv_cv_results_[key] == pytest.approx(rfecv.cv_results_[key])
 
 
 def test_rfe_cv_groups():
@@ -486,6 +588,25 @@ def test_w_pipeline_2d_coef_():
     assert sfm.transform(data).shape[1] == 2
 
 
+def test_rfecv_std_and_mean():
+    generator = check_random_state(0)
+    iris = load_iris()
+    X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
+    y = iris.target
+
+    rfecv = RFECV(estimator=SVC(kernel="linear"))
+    rfecv.fit(X, y)
+    n_split_keys = len(rfecv.cv_results_) - 2
+    split_keys = [f"split{i}_test_score" for i in range(n_split_keys)]
+
+    cv_scores = np.asarray([rfecv.cv_results_[key] for key in split_keys])
+    expected_mean = np.mean(cv_scores, axis=0)
+    expected_std = np.std(cv_scores, axis=0)
+
+    assert_allclose(rfecv.cv_results_["mean_test_score"], expected_mean)
+    assert_allclose(rfecv.cv_results_["std_test_score"], expected_std)
+
+
 @pytest.mark.parametrize("ClsRFE", [RFE, RFECV])
 def test_multioutput(ClsRFE):
     X = np.random.normal(size=(10, 3))
@@ -493,3 +614,17 @@ def test_multioutput(ClsRFE):
     clf = RandomForestClassifier(n_estimators=5)
     rfe_test = ClsRFE(clf)
     rfe_test.fit(X, y)
+
+
+@pytest.mark.parametrize("ClsRFE", [RFE, RFECV])
+@pytest.mark.parametrize("PLSEstimator", [CCA, PLSCanonical, PLSRegression])
+def test_rfe_pls(ClsRFE, PLSEstimator):
+    """Check the behaviour of RFE with PLS estimators.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/12410
+    """
+    X, y = make_friedman1(n_samples=50, n_features=10, random_state=0)
+    estimator = PLSEstimator(n_components=1)
+    selector = ClsRFE(estimator, step=1).fit(X, y)
+    assert selector.score(X, y) > 0.5

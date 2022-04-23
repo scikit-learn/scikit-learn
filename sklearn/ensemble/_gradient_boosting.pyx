@@ -1,7 +1,3 @@
-# cython: cdivision=True
-# cython: boundscheck=False
-# cython: wraparound=False
-#
 # Author: Peter Prettenhofer
 #
 # License: BSD 3 clause
@@ -223,7 +219,7 @@ def predict_stages(np.ndarray[object, ndim=2] estimators,
                     tree.nodes, tree.value,
                     scale, k, K, X.shape[0], X.shape[1],
                     <float64 *> (<np.ndarray> out).data)
-                ## out += scale * tree.predict(X).reshape((X.shape[0], 1))
+                ## out[:, k] += scale * tree.predict(X).ravel()
 
 
 def predict_stage(np.ndarray[object, ndim=2] estimators,
@@ -260,7 +256,7 @@ def _random_sample_mask(np.npy_intp n_total_samples,
          the others are ``False``.
      """
      cdef np.ndarray[float64, ndim=1, mode="c"] rand = \
-          random_state.rand(n_total_samples)
+          random_state.uniform(size=n_total_samples)
      cdef np.ndarray[uint8, ndim=1, mode="c", cast=True] sample_mask = \
           np_zeros((n_total_samples,), dtype=bool)
 

@@ -6,7 +6,6 @@
 from math import log
 
 import numpy as np
-from scipy.linalg import pinvh
 import pytest
 
 
@@ -73,9 +72,9 @@ def test_bayesian_ridge_score_values():
     score = lambda_1 * log(lambda_) - lambda_2 * lambda_
     score += alpha_1 * log(alpha_) - alpha_2 * alpha_
     M = 1.0 / alpha_ * np.eye(n_samples) + 1.0 / lambda_ * np.dot(X, X.T)
-    M_inv = pinvh(M)
+    M_inv_dot_y = np.linalg.solve(M, y)
     score += -0.5 * (
-        fast_logdet(M) + np.dot(y.T, np.dot(M_inv, y)) + n_samples * log(2 * np.pi)
+        fast_logdet(M) + np.dot(y.T, M_inv_dot_y) + n_samples * log(2 * np.pi)
     )
 
     # compute score with BayesianRidge
@@ -288,3 +287,32 @@ def test_ard_regression_predict_normalize_true():
     clf = ARDRegression(normalize=True)
     clf.fit([[0, 0], [1, 1], [2, 2]], [0, 1, 2])
     clf.predict([[1, 1]], return_std=True)
+
+
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+@pytest.mark.parametrize("Estimator", [BayesianRidge, ARDRegression])
+def test_dtype_match(dtype, Estimator):
+    # Test that np.float32 input data is not cast to np.float64 when possible
+    X = np.array([[1, 1], [3, 4], [5, 7], [4, 1], [2, 6], [3, 10], [3, 2]], dtype=dtype)
+    y = np.array([1, 2, 3, 2, 0, 4, 5]).T
+
+    model = Estimator()
+    # check type consistency
+    model.fit(X, y)
+    attributes = ["coef_", "sigma_"]
+    for attribute in attributes:
+        assert getattr(model, attribute).dtype == X.dtype
+
+    y_mean, y_std = model.predict(X, return_std=True)
+    assert y_mean.dtype == X.dtype
+    assert y_std.dtype == X.dtype
+
+
+@pytest.mark.parametrize("Estimator", [BayesianRidge, ARDRegression])
+def test_dtype_correctness(Estimator):
+    X = np.array([[1, 1], [3, 4], [5, 7], [4, 1], [2, 6], [3, 10], [3, 2]])
+    y = np.array([1, 2, 3, 2, 0, 4, 5]).T
+    model = Estimator()
+    coef_32 = model.fit(X.astype(np.float32), y).coef_
+    coef_64 = model.fit(X.astype(np.float64), y).coef_
+    np.testing.assert_allclose(coef_32, coef_64, rtol=1e-4)

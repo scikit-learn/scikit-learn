@@ -89,14 +89,15 @@ Overview of clustering methods
    * - :ref:`DBSCAN <dbscan>`
      - neighborhood size
      - Very large ``n_samples``, medium ``n_clusters``
-     - Non-flat geometry, uneven cluster sizes, transductive
+     - Non-flat geometry, uneven cluster sizes, outlier removal,
+       transductive
      - Distances between nearest points
 
    * - :ref:`OPTICS <optics>`
      - minimum cluster membership
      - Very large ``n_samples``, large ``n_clusters``
      - Non-flat geometry, uneven cluster sizes, variable cluster density,
-       transductive
+       outlier removal, transductive
      - Distances between points
 
    * - :ref:`Gaussian mixtures <mixture>`
@@ -203,9 +204,9 @@ initializations of the centroids. One method to help address this issue is the
 k-means++ initialization scheme, which has been implemented in scikit-learn
 (use the ``init='k-means++'`` parameter). This initializes the centroids to be
 (generally) distant from each other, leading to probably better results than
-random initialization, as shown in the reference. 
+random initialization, as shown in the reference.
 
-K-means++ can also be called independently to select seeds for other 
+K-means++ can also be called independently to select seeds for other
 clustering algorithms, see :func:`sklearn.cluster.kmeans_plusplus` for details
 and example usage.
 
@@ -428,8 +429,8 @@ given sample.
 
 .. topic:: References:
 
- * `"Mean shift: A robust approach toward feature space analysis."
-   <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.76.8968&rep=rep1&type=pdf>`_
+ * :doi:`"Mean shift: A robust approach toward feature space analysis"
+   <10.1109/34.1000236>`
    D. Comaniciu and P. Meer, *IEEE Transactions on Pattern Analysis and Machine Intelligence* (2002)
 
 
@@ -450,7 +451,7 @@ to be specified in advance. It works well for a small number of clusters,
 but is not advised for many clusters.
 
 For two clusters, SpectralClustering solves a convex relaxation of the
-`normalised cuts <https://people.eecs.berkeley.edu/~malik/papers/SM-ncut.pdf>`_
+`normalized cuts <https://people.eecs.berkeley.edu/~malik/papers/SM-ncut.pdf>`_
 problem on the similarity graph: cutting the graph in two so that the weight of
 the edges cut is small compared to the weights of the edges inside each
 cluster. This criteria is especially interesting when working on images, where
@@ -491,11 +492,15 @@ computed using a function of a gradient of the image.
 
 .. |coin_kmeans| image:: ../auto_examples/cluster/images/sphx_glr_plot_coin_segmentation_001.png
     :target: ../auto_examples/cluster/plot_coin_segmentation.html
-    :scale: 65
+    :scale: 35
 
 .. |coin_discretize| image:: ../auto_examples/cluster/images/sphx_glr_plot_coin_segmentation_002.png
     :target: ../auto_examples/cluster/plot_coin_segmentation.html
-    :scale: 65
+    :scale: 35
+
+.. |coin_cluster_qr| image:: ../auto_examples/cluster/images/sphx_glr_plot_coin_segmentation_003.png
+    :target: ../auto_examples/cluster/plot_coin_segmentation.html
+    :scale: 35
 
 Different label assignment strategies
 -------------------------------------
@@ -507,12 +512,26 @@ In particular, unless you control the ``random_state``, it may not be
 reproducible from run-to-run, as it depends on random initialization.
 The alternative ``"discretize"`` strategy is 100% reproducible, but tends
 to create parcels of fairly even and geometrical shape.
+The recently added ``"cluster_qr"`` option is a deterministic alternative that
+tends to create the visually best partitioning on the example application
+below.
 
-=====================================  =====================================
- ``assign_labels="kmeans"``              ``assign_labels="discretize"``
-=====================================  =====================================
-|coin_kmeans|                          |coin_discretize|
-=====================================  =====================================
+================================  ================================  ================================
+ ``assign_labels="kmeans"``        ``assign_labels="discretize"``    ``assign_labels="cluster_qr"``
+================================  ================================  ================================
+|coin_kmeans|                          |coin_discretize|                  |coin_cluster_qr|
+================================  ================================  ================================
+
+.. topic:: References:
+
+ * `"Multiclass spectral clustering"
+   <https://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf>`_
+   Stella X. Yu, Jianbo Shi, 2003
+
+ * :doi:`"Simple, direct, and efficient multi-way spectral clustering"<10.1093/imaiai/iay008>`
+   Anil Damle, Victor Minden, Lexing Ying, 2019
+
+.. _spectral_clustering_graph:
 
 Spectral Clustering Graphs
 --------------------------
@@ -528,12 +547,12 @@ graph, and SpectralClustering is initialized with `affinity='precomputed'`::
 
 .. topic:: References:
 
- * `"A Tutorial on Spectral Clustering"
-   <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.165.9323>`_
+ * :doi:`"A Tutorial on Spectral Clustering"
+   <10.1007/s11222-007-9033-z>`
    Ulrike von Luxburg, 2007
 
- * `"Normalized cuts and image segmentation"
-   <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.160.2324>`_
+ * :doi:`"Normalized cuts and image segmentation"
+   <10.1109/34.868688>`
    Jianbo Shi, Jitendra Malik, 2000
 
  * `"A Random Walks View of Spectral Segmentation"
@@ -544,9 +563,9 @@ graph, and SpectralClustering is initialized with `affinity='precomputed'`::
    <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.19.8100>`_
    Andrew Y. Ng, Michael I. Jordan, Yair Weiss, 2001
 
- * `"Preconditioned Spectral Clustering for Stochastic
+ * :arxiv:`"Preconditioned Spectral Clustering for Stochastic
    Block Partition Streaming Graph Challenge"
-   <https://arxiv.org/abs/1708.07481>`_
+   <1708.07481>`
    David Zhuzhunashvili, Andrew Knyazev
 
 .. _hierarchical_clustering:
@@ -1383,7 +1402,7 @@ more broadly common names.
 
  * `Wikipedia entry for the Adjusted Mutual Information
    <https://en.wikipedia.org/wiki/Adjusted_Mutual_Information>`_
-   
+
  .. [VEB2009] Vinh, Epps, and Bailey, (2009). "Information theoretic measures
    for clusterings comparison". Proceedings of the 26th Annual International
    Conference on Machine Learning - ICML '09.
@@ -1394,13 +1413,13 @@ more broadly common names.
    Clusterings Comparison: Variants, Properties, Normalization and
    Correction for Chance". JMLR
    <http://jmlr.csail.mit.edu/papers/volume11/vinh10a/vinh10a.pdf>
-   
+
  .. [YAT2016] Yang, Algesheimer, and Tessone, (2016). "A comparative analysis of
    community
    detection algorithms on artificial networks". Scientific Reports 6: 30750.
    `doi:10.1038/srep30750 <https://www.nature.com/articles/srep30750>`_.
-   
-   
+
+
 
 .. _homogeneity_completeness:
 
@@ -1702,10 +1721,9 @@ cluster analysis.
 
 .. topic:: References
 
- * Peter J. Rousseeuw (1987). "Silhouettes: a Graphical Aid to the
-   Interpretation and Validation of Cluster Analysis". Computational
-   and Applied Mathematics 20: 53–65.
-   `doi:10.1016/0377-0427(87)90125-7 <https://doi.org/10.1016/0377-0427(87)90125-7>`_.
+ * Peter J. Rousseeuw (1987). :doi:`"Silhouettes: a Graphical Aid to the
+   Interpretation and Validation of Cluster Analysis"<10.1016/0377-0427(87)90125-7>`
+   . Computational and Applied Mathematics 20: 53–65.
 
 
 Advantages
@@ -1738,8 +1756,8 @@ Calinski-Harabasz Index
 
 
 If the ground truth labels are not known, the Calinski-Harabasz index
-(:func:`sklearn.metrics.calinski_harabasz_score`) - also known as the Variance 
-Ratio Criterion - can be used to evaluate the model, where a higher 
+(:func:`sklearn.metrics.calinski_harabasz_score`) - also known as the Variance
+Ratio Criterion - can be used to evaluate the model, where a higher
 Calinski-Harabasz score relates to a model with better defined clusters.
 
 The index is the ratio of the sum of between-clusters dispersion and of
@@ -1804,8 +1822,7 @@ number of points in cluster :math:`q`.
  * Caliński, T., & Harabasz, J. (1974).
    `"A Dendrite Method for Cluster Analysis"
    <https://www.researchgate.net/publication/233096619_A_Dendrite_Method_for_Cluster_Analysis>`_.
-   Communications in Statistics-theory and Methods 3: 1-27.
-   `doi:10.1080/03610927408827101 <https://doi.org/10.1080/03610927408827101>`_.
+   :doi:`Communications in Statistics-theory and Methods 3: 1-27 <10.1080/03610927408827101>`.
 
 
 .. _davies-bouldin_index:
@@ -1843,7 +1860,8 @@ Advantages
 ~~~~~~~~~~
 
 - The computation of Davies-Bouldin is simpler than that of Silhouette scores.
-- The index is computed only quantities and features inherent to the dataset.
+- The index is solely based on quantities and features inherent to the dataset
+  as its computation only uses point-wise distances.
 
 Drawbacks
 ~~~~~~~~~
@@ -1879,15 +1897,13 @@ Then the Davies-Bouldin index is defined as:
 .. topic:: References
 
  * Davies, David L.; Bouldin, Donald W. (1979).
-   "A Cluster Separation Measure"
+   :doi:`"A Cluster Separation Measure" <10.1109/TPAMI.1979.4766909>`
    IEEE Transactions on Pattern Analysis and Machine Intelligence.
    PAMI-1 (2): 224-227.
-   `doi:10.1109/TPAMI.1979.4766909 <https://doi.org/10.1109/TPAMI.1979.4766909>`_.
 
  * Halkidi, Maria; Batistakis, Yannis; Vazirgiannis, Michalis (2001).
-   "On Clustering Validation Techniques"
+   :doi:`"On Clustering Validation Techniques" <10.1023/A:1012801612483>`
    Journal of Intelligent Information Systems, 17(2-3), 107-145.
-   `doi:10.1023/A:1012801612483 <https://doi.org/10.1023/A:1012801612483>`_.
 
  * `Wikipedia entry for Davies-Bouldin index
    <https://en.wikipedia.org/wiki/Davies–Bouldin_index>`_.

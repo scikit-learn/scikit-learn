@@ -1,14 +1,14 @@
-version: 2
+version: 2.1
 
 jobs:
   doc-min-dependencies:
     docker:
-      - image: circleci/python:3.7.7-buster
+      - image: cimg/python:3.8.12
     environment:
       - OMP_NUM_THREADS: 2
       - MKL_NUM_THREADS: 2
       - CONDA_ENV_NAME: testenv
-      - PYTHON_VERSION: 3.7
+      - PYTHON_VERSION: 3.8
       - NUMPY_VERSION: 'min'
       - SCIPY_VERSION: 'min'
       - MATPLOTLIB_VERSION: 'min'
@@ -24,7 +24,7 @@ jobs:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
       - restore_cache:
-          key: v1-datasets-{{ .Branch }}
+          key: v1-doc-min-deps-datasets-{{ .Branch }}
       - restore_cache:
           keys:
             - doc-min-deps-ccache-{{ .Branch }}
@@ -36,7 +36,7 @@ jobs:
             - ~/.ccache
             - ~/.cache/pip
       - save_cache:
-          key: v1-datasets-{{ .Branch }}
+          key: v1-doc-min-deps-datasets-{{ .Branch }}
           paths:
             - ~/scikit_learn_data
       - store_artifacts:
@@ -48,18 +48,20 @@ jobs:
 
   doc:
     docker:
-      - image: circleci/python:3.7.7-buster
+      - image: cimg/python:3.8.12
     environment:
       - OMP_NUM_THREADS: 2
       - MKL_NUM_THREADS: 2
       - CONDA_ENV_NAME: testenv
-      - PYTHON_VERSION: 3
+      - PYTHON_VERSION: '3.9'
       - NUMPY_VERSION: 'latest'
       - SCIPY_VERSION: 'latest'
       - MATPLOTLIB_VERSION: 'latest'
       - CYTHON_VERSION: 'latest'
       - SCIKIT_IMAGE_VERSION: 'latest'
-      - SPHINX_VERSION: 'min'
+      # Bump the sphinx version from time to time. Avoid latest sphinx version
+      # that tends to break things slightly too often
+      - SPHINX_VERSION: 4.2.0
       - PANDAS_VERSION: 'latest'
       - SPHINX_GALLERY_VERSION: 'latest'
       - NUMPYDOC_VERSION: 'latest'
@@ -69,7 +71,7 @@ jobs:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
       - restore_cache:
-          key: v1-datasets-{{ .Branch }}
+          key: v1-doc-datasets-{{ .Branch }}
       - restore_cache:
           keys:
             - doc-ccache-{{ .Branch }}
@@ -81,7 +83,7 @@ jobs:
             - ~/.ccache
             - ~/.cache/pip
       - save_cache:
-          key: v1-datasets-{{ .Branch }}
+          key: v1-doc-datasets-{{ .Branch }}
           paths:
             - ~/scikit_learn_data
       - store_artifacts:
@@ -98,41 +100,49 @@ jobs:
 
   lint:
     docker:
-      - image: circleci/python:3.7
+      - image: cimg/python:3.8.12
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
       - run:
           name: dependencies
-          command: sudo pip install flake8
+          command: pip install flake8
       - run:
           name: linting
           command: ./build_tools/circle/linting.sh
 
-  pypy3:
-    docker:
-      - image: condaforge/miniforge3
+  linux-arm64:
+    machine:
+      image: ubuntu-2004:202101-01
+    resource_class: arm.medium
     environment:
-      # Avoid the interactive dialog when installing tzdata
-      - DEBIAN_FRONTEND: noninteractive
+      # Use the latest supported version of python
+      - PYTHON_VERSION: '3.9'
+      - OMP_NUM_THREADS: 2
+      - OPENBLAS_NUM_THREADS: 2
+      - NUMPY_VERSION: 'latest'
+      - SCIPY_VERSION: 'latest'
+      - CYTHON_VERSION: 'latest'
+      - JOBLIB_VERSION: 'latest'
+      - THREADPOOLCTL_VERSION: 'latest'
+      - PYTEST_VERSION: 'latest'
+      - PYTEST_XDIST_VERSION: 'latest'
+      - TEST_DOCSTRINGS: 'true'
     steps:
-      - restore_cache:
-          keys:
-            - pypy3-ccache-{{ .Branch }}
-            - pypy3-ccache
-      - run: apt-get -yq update && apt-get -yq install git ssh
       - checkout
-      - run: conda init bash && source ~/.bashrc
-      - run: ./build_tools/circle/build_test_pypy.sh
+      - run: ./build_tools/circle/checkout_merge_commit.sh
+      - restore_cache:
+          key: linux-arm64-{{ .Branch }}
+      - run: ./build_tools/circle/build_test_arm.sh
       - save_cache:
-          key: pypy3-ccache-{{ .Branch }}-{{ .BuildNum }}
+          key: linux-arm64-{{ .Branch }}
           paths:
-            - ~/.ccache
+            - ~/.cache/ccache
             - ~/.cache/pip
-
+            - ~/scikit_learn_data
   deploy:
     docker:
-      - image: circleci/python:3.7
+      - image: cimg/python:3.8.12
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
@@ -158,21 +168,9 @@ workflows:
       - doc-min-dependencies:
           requires:
             - lint
-      - pypy3:
-          filters:
-            branches:
-              only:
-                - 0.20.X
       - deploy:
           requires:
             - doc
-  pypy:
-    triggers:
-      - schedule:
-          cron: "0 0 * * *"
-          filters:
-            branches:
-              only:
-                - main
+  linux-arm64:
     jobs:
-      - pypy3
+      - linux-arm64
