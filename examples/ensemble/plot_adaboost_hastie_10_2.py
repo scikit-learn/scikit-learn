@@ -25,6 +25,11 @@ whereas real SAMME.R uses the predicted class probabilities.
 # We start by generating the binary classification dataset
 # used in Hastie et al. 2009, Example 10.2.
 
+# Authors: Peter Prettenhofer <peter.prettenhofer@gmail.com>,
+# Noel Dawe <noel.dawe@gmail.com>
+#
+# License: BSD 3 clause
+
 from sklearn import datasets
 
 
@@ -164,11 +169,3 @@ plt.show()
 #
 # We observe that the performance on both train and test sets of real AdaBoost
 # is better than that of discrete AdaBoost
-
-# %%
-# Contributors:
-# ---------------------------------------------------
-# Peter Prettenhofer <peter.prettenhofer@gmail.com>,
-# Noel Dawe <noel.dawe@gmail.com>
-#
-# License: BSD 3 clause
