@@ -223,8 +223,9 @@ def test_check_array_links_to_imputer_doc_only_for_X(input_name, retype):
         " or drop samples with missing values. See"
         " https://scikit-learn.org/stable/modules/impute.html"
         " You can find a list of all estimators that handle NaN values"
-        " at the following page"
-        " https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values"
+        " at the following page:"
+        " https://scikit-learn.org/stable/modules/impute.html"
+        "#estimators-that-handle-nan-values"
     )
 
     with pytest.raises(ValueError, match=f"Input {input_name} contains NaN") as ctx:
