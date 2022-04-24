@@ -561,7 +561,7 @@ class PartialDependenceDisplay:
 
     Read more in
     :ref:`sphx_glr_auto_examples_miscellaneous_plot_partial_dependence_visualization_api.py`
-    and the :ref:`User Guide <visualizations>`.
+    and the :ref:`User Guide <partial_dependence>`.
 
         .. versionadded:: 0.22
 
