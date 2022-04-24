@@ -151,10 +151,10 @@ Changelog
   :pr:`21542` by :user:`Olivier Grisel <ogrisel>`.
 
 - |Enhancement| All scikit-learn estimators now save the sklearn version
-  with which they have been pickled on a private attribute to avoid having
-  to parse the warning message to programmatically access this information
-  to introspect this.
-  :pr:`22094` by :user:`Gawein Le Goff <Edern76>`.
+  with which they have been pickled into a private attribute,
+  `_sklearn_pickle_version`. This allows access to this information without
+  having to parse the warning message. :pr:`22094` by
+  :user:`Gawein Le Goff <Edern76>`.
 
 :mod:`sklearn.calibration`
 ..........................
@@ -297,7 +297,7 @@ Changelog
 - |MajorFeature| Added a new estimator :class:`decomposition.MiniBatchNMF`. It is a
   faster but less accurate version of non-negative matrix factorization, better suited
   for large datasets. :pr:`16948` by :user:`Chiara Marmo <cmarmo>`,
-  :user:`Patricio Cerda <pcerda>` and :user:`Jérémie du Boisberranger <jeremiedbb>`. 
+  :user:`Patricio Cerda <pcerda>` and :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 - |Enhancement| :class:`decomposition.PCA` exposes a parameter `n_oversamples` to tune
   :func:`sklearn.decomposition.randomized_svd` and
