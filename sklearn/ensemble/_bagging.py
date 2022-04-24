@@ -135,9 +135,7 @@ def _parallel_build_estimators(
                 not_indices_mask = ~indices_to_mask(indices, n_samples)
                 curr_sample_weight[not_indices_mask] = 0
 
-            # only index arrays when needed
-            X_ = X if max_features == X.shape[1] else X[:, features]
-            estimator_fit(X_, y, sample_weight=curr_sample_weight)
+            estimator_fit(X[:, features], y, sample_weight=curr_sample_weight)
 
         else:
             estimator_fit(X[indices][:, features], y[indices])
