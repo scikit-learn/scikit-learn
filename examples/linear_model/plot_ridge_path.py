@@ -40,6 +40,7 @@ y = np.ones(10)
 
 # %%
 # Compute paths
+# -------------
 
 n_alphas = 200
 alphas = np.logspace(-10, -2, n_alphas)
@@ -52,6 +53,7 @@ for a in alphas:
 
 # %%
 # Display results
+# ---------------
 
 ax = plt.gca()
 
