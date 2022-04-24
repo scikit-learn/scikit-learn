@@ -83,7 +83,7 @@ def test_the_extract_xi_labels(ordering, clusters, expected):
     assert_array_equal(labels, expected)
 
 
-def test_extract_xi():
+def test_extract_xi(global_dtype):
     # small and easy test (no clusters around other clusters)
     # but with a clear noise data.
     rng = np.random.RandomState(0)
@@ -96,7 +96,9 @@ def test_extract_xi():
     C5 = [3, -2] + 0.6 * rng.randn(n_points_per_cluster, 2)
     C6 = [5, 6] + 0.2 * rng.randn(n_points_per_cluster, 2)
 
-    X = np.vstack((C1, C2, C3, C4, C5, np.array([[100, 100]]), C6))
+    X = np.vstack((C1, C2, C3, C4, C5, np.array([[100, 100]]), C6)).astype(
+        global_dtype, copy=False
+    )
     expected_labels = np.r_[[2] * 5, [0] * 5, [1] * 5, [3] * 5, [1] * 5, -1, [4] * 5]
     X, expected_labels = shuffle(X, expected_labels, random_state=rng)
 
@@ -111,7 +113,9 @@ def test_extract_xi():
     ).fit(X)
     assert_array_equal(clust.labels_, expected_labels)
 
-    X = np.vstack((C1, C2, C3, C4, C5, np.array([[100, 100]] * 2), C6))
+    X = np.vstack((C1, C2, C3, C4, C5, np.array([[100, 100]] * 2), C6)).astype(
+        global_dtype, copy=False
+    )
     expected_labels = np.r_[
         [1] * 5, [3] * 5, [2] * 5, [0] * 5, [2] * 5, -1, -1, [4] * 5
     ]
@@ -126,7 +130,7 @@ def test_extract_xi():
     C1 = [[0, 0], [0, 0.1], [0, -0.1], [0.1, 0]]
     C2 = [[10, 10], [10, 9], [10, 11], [9, 10]]
     C3 = [[100, 100], [100, 90], [100, 110], [90, 100]]
-    X = np.vstack((C1, C2, C3))
+    X = np.vstack((C1, C2, C3)).astype(global_dtype, copy=False)
     expected_labels = np.r_[[0] * 4, [1] * 4, [2] * 4]
     X, expected_labels = shuffle(X, expected_labels, random_state=rng)
 
@@ -136,11 +140,15 @@ def test_extract_xi():
     assert_array_equal(clust.labels_, expected_labels)
 
 
-def test_cluster_hierarchy_():
+def test_cluster_hierarchy_(global_dtype):
     rng = np.random.RandomState(0)
     n_points_per_cluster = 100
-    C1 = [0, 0] + 2 * rng.randn(n_points_per_cluster, 2)
-    C2 = [0, 0] + 50 * rng.randn(n_points_per_cluster, 2)
+    C1 = [0, 0] + 2 * rng.randn(n_points_per_cluster, 2).astype(
+        global_dtype, copy=False
+    )
+    C2 = [0, 0] + 50 * rng.randn(n_points_per_cluster, 2).astype(
+        global_dtype, copy=False
+    )
     X = np.vstack((C1, C2))
     X = shuffle(X, random_state=0)
 
@@ -278,13 +286,15 @@ def test_close_extract():
 
 @pytest.mark.parametrize("eps", [0.1, 0.3, 0.5])
 @pytest.mark.parametrize("min_samples", [3, 10, 20])
-def test_dbscan_optics_parity(eps, min_samples):
+def test_dbscan_optics_parity(eps, min_samples, global_dtype):
     # Test that OPTICS clustering labels are <= 5% difference of DBSCAN
 
     centers = [[1, 1], [-1, -1], [1, -1]]
     X, labels_true = make_blobs(
         n_samples=750, centers=centers, cluster_std=0.4, random_state=0
     )
+
+    X = X.astype(global_dtype, copy=False)
 
     # calculate optics with dbscan extract at 0.3 epsilon
     op = OPTICS(min_samples=min_samples, cluster_method="dbscan", eps=eps).fit(X)
@@ -304,11 +314,11 @@ def test_dbscan_optics_parity(eps, min_samples):
     assert percent_mismatch <= 0.05
 
 
-def test_min_samples_edge_case():
+def test_min_samples_edge_case(global_dtype):
     C1 = [[0, 0], [0, 0.1], [0, -0.1]]
     C2 = [[10, 10], [10, 9], [10, 11]]
     C3 = [[100, 100], [100, 96], [100, 106]]
-    X = np.vstack((C1, C2, C3))
+    X = np.vstack((C1, C2, C3)).astype(global_dtype, copy=False)
 
     expected_labels = np.r_[[0] * 3, [1] * 3, [2] * 3]
     clust = OPTICS(min_samples=3, max_eps=7, cluster_method="xi", xi=0.04).fit(X)
@@ -326,8 +336,8 @@ def test_min_samples_edge_case():
 
 # try arbitrary minimum sizes
 @pytest.mark.parametrize("min_cluster_size", range(2, X.shape[0] // 10, 23))
-def test_min_cluster_size(min_cluster_size):
-    redX = X[::2]  # reduce for speed
+def test_min_cluster_size(min_cluster_size, global_dtype):
+    redX = X[::2].astype(global_dtype, copy=False)  # reduce for speed
     clust = OPTICS(min_samples=9, min_cluster_size=min_cluster_size).fit(redX)
     cluster_sizes = np.bincount(clust.labels_[clust.labels_ != -1])
     if cluster_sizes.size:
@@ -771,7 +781,7 @@ def test_wrong_cluster_method():
         clust.fit(X)
 
 
-def test_extract_dbscan():
+def test_extract_dbscan(global_dtype):
     # testing an easy dbscan case. Not including clusters with different
     # densities.
     rng = np.random.RandomState(0)
@@ -780,14 +790,14 @@ def test_extract_dbscan():
     C2 = [4, -1] + 0.2 * rng.randn(n_points_per_cluster, 2)
     C3 = [1, 2] + 0.2 * rng.randn(n_points_per_cluster, 2)
     C4 = [-2, 3] + 0.2 * rng.randn(n_points_per_cluster, 2)
-    X = np.vstack((C1, C2, C3, C4))
+    X = np.vstack((C1, C2, C3, C4)).astype(global_dtype, copy=False)
 
     clust = OPTICS(cluster_method="dbscan", eps=0.5).fit(X)
     assert_array_equal(np.sort(np.unique(clust.labels_)), [0, 1, 2, 3])
 
 
-def test_precomputed_dists():
-    redX = X[::2]
+def test_precomputed_dists(global_dtype):
+    redX = X[::2].astype(global_dtype, copy=False)
     dists = pairwise_distances(redX, metric="euclidean")
     clust1 = OPTICS(min_samples=10, algorithm="brute", metric="precomputed").fit(dists)
     clust2 = OPTICS(min_samples=10, algorithm="brute", metric="euclidean").fit(redX)

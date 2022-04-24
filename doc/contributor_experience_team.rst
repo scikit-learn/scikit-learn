@@ -15,7 +15,7 @@
     </div>
     <div>
     <a href='https://github.com/jmloyola'><img src='https://avatars.githubusercontent.com/u/2133361?v=4' class='avatar' /></a> <br />
-    <p>Juan Martín Loyola</p>
+    <p>Juan Martin Loyola</p>
     </div>
     <div>
     <a href='https://github.com/smarie'><img src='https://avatars.githubusercontent.com/u/3236794?v=4' class='avatar' /></a> <br />

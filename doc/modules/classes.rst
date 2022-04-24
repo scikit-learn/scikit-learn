@@ -319,6 +319,7 @@ Samples generator
    decomposition.MiniBatchDictionaryLearning
    decomposition.MiniBatchSparsePCA
    decomposition.NMF
+   decomposition.MiniBatchNMF
    decomposition.PCA
    decomposition.SparsePCA
    decomposition.SparseCoder
@@ -657,6 +658,7 @@ Plotting
    :toctree: generated/
    :template: class.rst
 
+   inspection.DecisionBoundaryDisplay
    inspection.PartialDependenceDisplay
 
 .. autosummary::
@@ -997,6 +999,8 @@ details.
    metrics.mean_tweedie_deviance
    metrics.d2_tweedie_score
    metrics.mean_pinball_loss
+   metrics.d2_pinball_score
+   metrics.d2_absolute_error_score
 
 Multilabel ranking metrics
 --------------------------
