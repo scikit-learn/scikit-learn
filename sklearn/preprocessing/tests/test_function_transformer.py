@@ -1,9 +1,16 @@
+import warnings
+
 import pytest
 import numpy as np
 from scipy import sparse
+from sklearn.utils import _safe_indexing
 
 from sklearn.preprocessing import FunctionTransformer
-from sklearn.utils._testing import assert_array_equal, assert_allclose_dense_sparse
+from sklearn.utils._testing import (
+    assert_array_equal,
+    assert_allclose_dense_sparse,
+    _convert_container,
+)
 
 
 def _make_func(args_store, kwargs_store, func=lambda X, *a, **k: X):
@@ -147,9 +154,10 @@ def test_check_inverse():
             check_inverse=True,
             validate=True,
         )
-        with pytest.warns(None) as record:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", UserWarning)
             Xt = trans.fit_transform(X)
-        assert len(record) == 0
+
         assert_allclose_dense_sparse(X, trans.inverse_transform(Xt))
 
     # check that we don't check inverse when one of the func or inverse is not
@@ -157,15 +165,15 @@ def test_check_inverse():
     trans = FunctionTransformer(
         func=np.expm1, inverse_func=None, check_inverse=True, validate=True
     )
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
         trans.fit(X_dense)
-    assert len(record) == 0
     trans = FunctionTransformer(
         func=None, inverse_func=np.expm1, check_inverse=True, validate=True
     )
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
         trans.fit(X_dense)
-    assert len(record) == 0
 
 
 def test_function_transformer_frame():
@@ -174,6 +182,38 @@ def test_function_transformer_frame():
     transformer = FunctionTransformer()
     X_df_trans = transformer.fit_transform(X_df)
     assert hasattr(X_df_trans, "loc")
+
+
+@pytest.mark.parametrize("X_type", ["array", "series"])
+def test_function_transformer_raise_error_with_mixed_dtype(X_type):
+    """Check that `FunctionTransformer.check_inverse` raises error on mixed dtype."""
+    mapping = {"one": 1, "two": 2, "three": 3, 5: "five", 6: "six"}
+    inverse_mapping = {value: key for key, value in mapping.items()}
+    dtype = "object"
+
+    data = ["one", "two", "three", "one", "one", 5, 6]
+    data = _convert_container(data, X_type, columns_name=["value"], dtype=dtype)
+
+    def func(X):
+        return np.array(
+            [mapping[_safe_indexing(X, i)] for i in range(X.size)], dtype=object
+        )
+
+    def inverse_func(X):
+        return _convert_container(
+            [inverse_mapping[x] for x in X],
+            X_type,
+            columns_name=["value"],
+            dtype=dtype,
+        )
+
+    transformer = FunctionTransformer(
+        func=func, inverse_func=inverse_func, validate=False, check_inverse=True
+    )
+
+    msg = "'check_inverse' is only supported when all the elements in `X` is numerical."
+    with pytest.raises(ValueError, match=msg):
+        transformer.fit(data)
 
 
 @pytest.mark.parametrize(

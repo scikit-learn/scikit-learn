@@ -13,10 +13,10 @@ from sklearn.ensemble._hist_gradient_boosting.common import X_DTYPE
 @pytest.mark.parametrize(
     "values_to_insert, expected_bitset",
     [
-        ([0, 4, 33], np.array([2 ** 0 + 2 ** 4, 2 ** 1, 0], dtype=np.uint32)),
+        ([0, 4, 33], np.array([2**0 + 2**4, 2**1, 0], dtype=np.uint32)),
         (
             [31, 32, 33, 79],
-            np.array([2 ** 31, 2 ** 0 + 2 ** 1, 2 ** 15], dtype=np.uint32),
+            np.array([2**31, 2**0 + 2**1, 2**15], dtype=np.uint32),
         ),
     ],
 )
@@ -39,9 +39,9 @@ def test_set_get_bitset(values_to_insert, expected_bitset):
         (
             [3, 4, 5, 10, 31, 32, 43],
             [0, 2, 4, 5, 6],
-            [2 ** 3 + 2 ** 5 + 2 ** 31, 2 ** 0 + 2 ** 11],
+            [2**3 + 2**5 + 2**31, 2**0 + 2**11],
         ),
-        ([3, 33, 50, 52], [1, 3], [0, 2 ** 1 + 2 ** 20]),
+        ([3, 33, 50, 52], [1, 3], [0, 2**1 + 2**20]),
     ],
 )
 def test_raw_bitset_from_binned_bitset(

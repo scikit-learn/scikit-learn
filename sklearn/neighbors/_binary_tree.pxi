@@ -163,7 +163,8 @@ from ._partition_nodes cimport partition_node_indices
 from ..utils import check_array
 from ..utils._typedefs cimport DTYPE_t, ITYPE_t
 from ..utils._typedefs import DTYPE, ITYPE
-from ..utils._heap cimport simultaneous_sort as _simultaneous_sort, heap_push
+from ..utils._heap cimport heap_push
+from ..utils._sorting cimport simultaneous_sort as _simultaneous_sort
 
 cdef extern from "numpy/arrayobject.h":
     void PyArray_ENABLEFLAGS(np.ndarray arr, int flags)
@@ -947,7 +948,7 @@ cdef class BinaryTree:
 
     def get_tree_stats(self):
         """
-        get_tree_stats(self)
+        get_tree_stats()
 
         Get tree status.
 
@@ -960,7 +961,7 @@ cdef class BinaryTree:
 
     def reset_n_calls(self):
         """
-        reset_n_calls(self)
+        reset_n_calls()
 
         Reset number of calls to 0.
         """
@@ -968,7 +969,7 @@ cdef class BinaryTree:
 
     def get_n_calls(self):
         """
-        get_n_calls(self)
+        get_n_calls()
 
         Get number of calls.
 
@@ -981,7 +982,7 @@ cdef class BinaryTree:
 
     def get_arrays(self):
         """
-        get_arrays(self)
+        get_arrays()
 
         Get data and node arrays.
 
@@ -1379,7 +1380,7 @@ cdef class BinaryTree:
                        atol=0, rtol=1E-8,
                        breadth_first=True, return_log=False):
         """
-        kernel_density(self, X, h, kernel='gaussian', atol=0, rtol=1E-8,
+        kernel_density(X, h, kernel='gaussian', atol=0, rtol=1E-8,
                        breadth_first=True, return_log=False)
 
         Compute the kernel density estimate at points X with the given kernel,
