@@ -480,6 +480,9 @@ Changelog
   the new `criterion="log_loss"`, which is equivalent to `criterion="entropy"`.
   :pr:`23047` by :user:`Christian Lorentzen <lorentzenchr>`.
 
+- |Efficiency| Improve runtime performance of :class:`ensemble.IsolationForest`
+  by skipping repetitive input checks. :pr:`23149` by :user:`Zhehao Liu <MaxwellLZH>`.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
