@@ -1048,6 +1048,11 @@ Changelog
   left corner of the HTML representation to show how the elements are
   clickable. :pr:`21298` by `Thomas Fan`_.
 
+- |Enhancement| :func:`utils.check_array` with `dtype=None` returns numeric
+  arrays when passed in a pandas DataFrame with mixed dtypes. `dtype="numeric"`
+  will also make better infer the dtype when the DataFrame has mixed dtypes.
+  :pr:`22237` by `Thomas Fan`_.
+
 - |Enhancement| Removes random unique identifiers in the HTML representation.
   With this change, jupyter notebooks are reproducible as long as the cells are
   run in the same order. :pr:`23098` by `Thomas Fan`_.
