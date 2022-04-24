@@ -6,19 +6,8 @@ import numbers
 import numpy as np
 import scipy.sparse as sp
 
-from ..utils import IS_PYPY
 from ..base import BaseEstimator, TransformerMixin
-
-if not IS_PYPY:
-    from ._hashing_fast import transform as _hashing_transform
-else:
-
-    def _hashing_transform(*args, **kwargs):
-        raise NotImplementedError(
-            "FeatureHasher is not compatible with PyPy (see "
-            "https://github.com/scikit-learn/scikit-learn/issues/11540 "
-            "for the status updates)."
-        )
+from ._hashing_fast import transform as _hashing_transform
 
 
 def _iteritems(d):
@@ -94,7 +83,7 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
 
     def __init__(
         self,
-        n_features=(2 ** 20),
+        n_features=(2**20),
         *,
         input_type="dict",
         dtype=np.float64,

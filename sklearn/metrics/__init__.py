@@ -77,12 +77,16 @@ from ._regression import mean_tweedie_deviance
 from ._regression import mean_poisson_deviance
 from ._regression import mean_gamma_deviance
 from ._regression import d2_tweedie_score
+from ._regression import d2_pinball_score
+from ._regression import d2_absolute_error_score
 
 
 from ._scorer import check_scoring
 from ._scorer import make_scorer
 from ._scorer import SCORERS
 from ._scorer import get_scorer
+from ._scorer import get_scorer_names
+
 
 from ._plot.det_curve import plot_det_curve
 from ._plot.det_curve import DetCurveDisplay
@@ -113,6 +117,8 @@ __all__ = [
     "consensus_score",
     "coverage_error",
     "d2_tweedie_score",
+    "d2_absolute_error_score",
+    "d2_pinball_score",
     "dcg_score",
     "davies_bouldin_score",
     "DetCurveDisplay",
@@ -170,6 +176,7 @@ __all__ = [
     "roc_auc_score",
     "roc_curve",
     "SCORERS",
+    "get_scorer_names",
     "silhouette_samples",
     "silhouette_score",
     "top_k_accuracy_score",

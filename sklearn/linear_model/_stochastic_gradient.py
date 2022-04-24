@@ -36,7 +36,6 @@ from ._sgd_fast import SquaredLoss
 from ._sgd_fast import Huber
 from ._sgd_fast import EpsilonInsensitive
 from ._sgd_fast import SquaredEpsilonInsensitive
-from ..utils.fixes import _joblib_parallel_args
 
 LEARNING_RATE_TYPES = {
     "constant": 1,
@@ -161,11 +160,19 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         if self.loss not in self.loss_functions:
             raise ValueError("The loss %s is not supported. " % self.loss)
 
+        # TODO(1.2): remove "squared_loss"
         if self.loss == "squared_loss":
             warnings.warn(
                 "The loss 'squared_loss' was deprecated in v1.0 and will be "
                 "removed in version 1.2. Use `loss='squared_error'` which is "
                 "equivalent.",
+                FutureWarning,
+            )
+        # TODO(1.3): remove "log"
+        if self.loss == "log":
+            warnings.warn(
+                "The loss 'log' was deprecated in v1.1 and will be removed in version "
+                "1.3. Use `loss='log_loss'` which is equivalent.",
                 FutureWarning,
             )
 
@@ -489,11 +496,13 @@ def fit_binary(
 
 class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
 
-    # TODO: Remove squared_loss in v1.2
+    # TODO(1.2): Remove "squared_loss"
+    # TODO(1.3): Remove "log""
     loss_functions = {
         "hinge": (Hinge, 1.0),
         "squared_hinge": (SquaredHinge, 1.0),
         "perceptron": (Hinge, 0.0),
+        "log_loss": (Log,),
         "log": (Log,),
         "modified_huber": (ModifiedHuber,),
         "squared_error": (SquaredLoss,),
@@ -752,9 +761,7 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         random_state = check_random_state(self.random_state)
         seeds = random_state.randint(MAX_INT, size=len(self.classes_))
         result = Parallel(
-            n_jobs=self.n_jobs,
-            verbose=self.verbose,
-            **_joblib_parallel_args(require="sharedmem"),
+            n_jobs=self.n_jobs, verbose=self.verbose, require="sharedmem"
         )(
             delayed(fit_binary)(
                 self,
@@ -920,22 +927,21 @@ class SGDClassifier(BaseSGDClassifier):
 
     Parameters
     ----------
-    loss : str, default='hinge'
-        The loss function to be used. Defaults to 'hinge', which gives a
-        linear SVM.
+    loss : {'hinge', 'log_loss', 'log', 'modified_huber', 'squared_hinge',\
+        'perceptron', 'squared_error', 'huber', 'epsilon_insensitive',\
+        'squared_epsilon_insensitive'}, default='hinge'
+        The loss function to be used.
 
-        The possible options are 'hinge', 'log', 'modified_huber',
-        'squared_hinge', 'perceptron', or a regression loss: 'squared_error',
-        'huber', 'epsilon_insensitive', or 'squared_epsilon_insensitive'.
-
-        The 'log' loss gives logistic regression, a probabilistic classifier.
-        'modified_huber' is another smooth loss that brings tolerance to
-        outliers as well as probability estimates.
-        'squared_hinge' is like hinge but is quadratically penalized.
-        'perceptron' is the linear loss used by the perceptron algorithm.
-        The other losses are designed for regression but can be useful in
-        classification as well; see
-        :class:`~sklearn.linear_model.SGDRegressor` for a description.
+        - 'hinge' gives a linear SVM.
+        - 'log_loss' gives logistic regression, a probabilistic classifier.
+        - 'modified_huber' is another smooth loss that brings tolerance to
+           outliers as well as probability estimates.
+        - 'squared_hinge' is like hinge but is quadratically penalized.
+        - 'perceptron' is the linear loss used by the perceptron algorithm.
+        - The other losses, 'squared_error', 'huber', 'epsilon_insensitive' and
+          'squared_epsilon_insensitive' are designed for regression but can be useful
+          in classification as well; see
+          :class:`~sklearn.linear_model.SGDRegressor` for a description.
 
         More details about the losses formulas can be found in the
         :ref:`User Guide <sgd_mathematical_formulation>`.
@@ -943,6 +949,10 @@ class SGDClassifier(BaseSGDClassifier):
         .. deprecated:: 1.0
             The loss 'squared_loss' was deprecated in v1.0 and will be removed
             in version 1.2. Use `loss='squared_error'` which is equivalent.
+
+        .. deprecated:: 1.1
+            The loss 'log' was deprecated in v1.1 and will be removed
+            in version 1.3. Use `loss='log_loss'` which is equivalent.
 
     penalty : {'l2', 'l1', 'elasticnet'}, default='l2'
         The penalty (aka regularization term) to be used. Defaults to 'l2'
@@ -1207,7 +1217,8 @@ class SGDClassifier(BaseSGDClassifier):
         )
 
     def _check_proba(self):
-        if self.loss not in ("log", "modified_huber"):
+        # TODO(1.3): Remove "log"
+        if self.loss not in ("log_loss", "log", "modified_huber"):
             raise AttributeError(
                 "probability estimates are not available for loss=%r" % self.loss
             )
@@ -1252,7 +1263,8 @@ class SGDClassifier(BaseSGDClassifier):
         """
         check_is_fitted(self)
 
-        if self.loss == "log":
+        # TODO(1.3): Remove "log"
+        if self.loss in ("log_loss", "log"):
             return self._predict_proba_lr(X)
 
         elif self.loss == "modified_huber":
@@ -1290,7 +1302,7 @@ class SGDClassifier(BaseSGDClassifier):
         else:
             raise NotImplementedError(
                 "predict_(log_)proba only supported when"
-                " loss='log' or loss='modified_huber' "
+                " loss='log_loss' or loss='modified_huber' "
                 "(%r given)"
                 % self.loss
             )
@@ -1595,8 +1607,6 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
     def _fit_regressor(
         self, X, y, alpha, C, loss, learning_rate, sample_weight, max_iter
     ):
-        dataset, intercept_decay = make_dataset(X, y, sample_weight)
-
         loss_function = self._get_loss_function(loss)
         penalty_type = self._get_penalty_type(self.penalty)
         learning_rate_type = self._get_learning_rate_type(learning_rate)
@@ -1613,6 +1623,10 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         # numpy mtrand expects a C long which is a signed 32 bit integer under
         # Windows
         seed = random_state.randint(0, np.iinfo(np.int32).max)
+
+        dataset, intercept_decay = make_dataset(
+            X, y, sample_weight, random_state=random_state
+        )
 
         tol = self.tol if self.tol is not None else -np.inf
 
