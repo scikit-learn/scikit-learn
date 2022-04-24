@@ -4,7 +4,7 @@ from sklearn.metrics import balanced_accuracy_score, r2_score
 
 
 def neg_mean_inertia(X, labels, centers):
-    return - (np.asarray(X - centers[labels])**2).sum(axis=1).mean()
+    return -(np.asarray(X - centers[labels]) ** 2).sum(axis=1).mean()
 
 
 def make_gen_classif_scorers(caller):
@@ -18,18 +18,22 @@ def make_gen_reg_scorers(caller):
 
 
 def neg_mean_data_error(X, U, V):
-    return - np.sqrt(((X - U.dot(V))**2).mean())
+    return -np.sqrt(((X - U.dot(V)) ** 2).mean())
 
 
 def make_dict_learning_scorers(caller):
     caller.train_scorer = lambda _, __: (
-        neg_mean_data_error(caller.X,
-                            caller.estimator.transform(caller.X),
-                            caller.estimator.components_))
+        neg_mean_data_error(
+            caller.X, caller.estimator.transform(caller.X), caller.estimator.components_
+        )
+    )
     caller.test_scorer = lambda _, __: (
-        neg_mean_data_error(caller.X_val,
-                            caller.estimator.transform(caller.X_val),
-                            caller.estimator.components_))
+        neg_mean_data_error(
+            caller.X_val,
+            caller.estimator.transform(caller.X_val),
+            caller.estimator.components_,
+        )
+    )
 
 
 def explained_variance_ratio(Xt, X):
@@ -37,8 +41,7 @@ def explained_variance_ratio(Xt, X):
 
 
 def make_pca_scorers(caller):
-    caller.train_scorer = (
-        lambda _, __: caller.estimator.explained_variance_ratio_.sum())
+    caller.train_scorer = lambda _, __: caller.estimator.explained_variance_ratio_.sum()
     caller.test_scorer = lambda _, __: (
-        explained_variance_ratio(caller.estimator.transform(caller.X_val),
-                                 caller.X_val))
+        explained_variance_ratio(caller.estimator.transform(caller.X_val), caller.X_val)
+    )

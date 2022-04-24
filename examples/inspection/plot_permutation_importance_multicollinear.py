@@ -15,14 +15,16 @@ picking a threshold, and keeping a single feature from each cluster.
 .. note::
     See also
     :ref:`sphx_glr_auto_examples_inspection_plot_permutation_importance.py`
+
 """
-print(__doc__)
+
 from collections import defaultdict
 
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.stats import spearmanr
 from scipy.cluster import hierarchy
+from scipy.spatial.distance import squareform
 
 from sklearn.datasets import load_breast_cancer
 from sklearn.ensemble import RandomForestClassifier
@@ -50,21 +52,22 @@ print("Accuracy on test data: {:.2f}".format(clf.score(X_test, y_test)))
 # computed above: some feature must be important. The permutation importance
 # is calculated on the training set to show how much the model relies on each
 # feature during training.
-result = permutation_importance(clf, X_train, y_train, n_repeats=10,
-                                random_state=42)
+result = permutation_importance(clf, X_train, y_train, n_repeats=10, random_state=42)
 perm_sorted_idx = result.importances_mean.argsort()
 
 tree_importance_sorted_idx = np.argsort(clf.feature_importances_)
 tree_indices = np.arange(0, len(clf.feature_importances_)) + 0.5
 
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 8))
-ax1.barh(tree_indices,
-         clf.feature_importances_[tree_importance_sorted_idx], height=0.7)
+ax1.barh(tree_indices, clf.feature_importances_[tree_importance_sorted_idx], height=0.7)
 ax1.set_yticks(tree_indices)
 ax1.set_yticklabels(data.feature_names[tree_importance_sorted_idx])
 ax1.set_ylim((0, len(clf.feature_importances_)))
-ax2.boxplot(result.importances[perm_sorted_idx].T, vert=False,
-            labels=data.feature_names[perm_sorted_idx])
+ax2.boxplot(
+    result.importances[perm_sorted_idx].T,
+    vert=False,
+    labels=data.feature_names[perm_sorted_idx],
+)
 fig.tight_layout()
 plt.show()
 
@@ -79,17 +82,25 @@ plt.show()
 # we plot a heatmap of the correlated features:
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 8))
 corr = spearmanr(X).correlation
-corr_linkage = hierarchy.ward(corr)
-dendro = hierarchy.dendrogram(
-    corr_linkage, labels=data.feature_names.tolist(), ax=ax1, leaf_rotation=90
-)
-dendro_idx = np.arange(0, len(dendro['ivl']))
 
-ax2.imshow(corr[dendro['leaves'], :][:, dendro['leaves']])
+# Ensure the correlation matrix is symmetric
+corr = (corr + corr.T) / 2
+np.fill_diagonal(corr, 1)
+
+# We convert the correlation matrix to a distance matrix before performing
+# hierarchical clustering using Ward's linkage.
+distance_matrix = 1 - np.abs(corr)
+dist_linkage = hierarchy.ward(squareform(distance_matrix))
+dendro = hierarchy.dendrogram(
+    dist_linkage, labels=data.feature_names.tolist(), ax=ax1, leaf_rotation=90
+)
+dendro_idx = np.arange(0, len(dendro["ivl"]))
+
+ax2.imshow(corr[dendro["leaves"], :][:, dendro["leaves"]])
 ax2.set_xticks(dendro_idx)
 ax2.set_yticks(dendro_idx)
-ax2.set_xticklabels(dendro['ivl'], rotation='vertical')
-ax2.set_yticklabels(dendro['ivl'])
+ax2.set_xticklabels(dendro["ivl"], rotation="vertical")
+ax2.set_yticklabels(dendro["ivl"])
 fig.tight_layout()
 plt.show()
 
@@ -99,7 +110,7 @@ plt.show()
 # keep, select those features from our dataset, and train a new random forest.
 # The test accuracy of the new random forest did not change much compared to
 # the random forest trained on the complete dataset.
-cluster_ids = hierarchy.fcluster(corr_linkage, 1, criterion='distance')
+cluster_ids = hierarchy.fcluster(dist_linkage, 1, criterion="distance")
 cluster_id_to_feature_ids = defaultdict(list)
 for idx, cluster_id in enumerate(cluster_ids):
     cluster_id_to_feature_ids[cluster_id].append(idx)
@@ -110,5 +121,8 @@ X_test_sel = X_test[:, selected_features]
 
 clf_sel = RandomForestClassifier(n_estimators=100, random_state=42)
 clf_sel.fit(X_train_sel, y_train)
-print("Accuracy on test data with features removed: {:.2f}".format(
-      clf_sel.score(X_test_sel, y_test)))
+print(
+    "Accuracy on test data with features removed: {:.2f}".format(
+        clf_sel.score(X_test_sel, y_test)
+    )
+)

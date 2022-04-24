@@ -18,7 +18,6 @@ from scipy import linalg, sparse
 
 from . import check_random_state
 from ._logistic_sigmoid import _log_logistic_sigmoid
-from .fixes import np_version, parse_version
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array
 
@@ -38,11 +37,13 @@ def squared_norm(x):
         The Euclidean norm when x is a vector, the Frobenius norm when x
         is a matrix (2-d array).
     """
-    x = np.ravel(x, order='K')
+    x = np.ravel(x, order="K")
     if np.issubdtype(x.dtype, np.integer):
-        warnings.warn('Array type is integer, np.dot may overflow. '
-                      'Data should be float type to avoid this issue',
-                      UserWarning)
+        warnings.warn(
+            "Array type is integer, np.dot may overflow. "
+            "Data should be float type to avoid this issue",
+            UserWarning,
+        )
     return np.dot(x, x)
 
 
@@ -71,7 +72,7 @@ def row_norms(X, squared=False):
             X = sparse.csr_matrix(X)
         norms = csr_row_norms(X)
     else:
-        norms = np.einsum('ij,ij->i', X, X)
+        norms = np.einsum("ij,ij->i", X, X)
 
     if not squared:
         np.sqrt(norms, norms)
@@ -150,16 +151,20 @@ def safe_sparse_dot(a, b, *, dense_output=False):
     else:
         ret = a @ b
 
-    if (sparse.issparse(a) and sparse.issparse(b)
-            and dense_output and hasattr(ret, "toarray")):
+    if (
+        sparse.issparse(a)
+        and sparse.issparse(b)
+        and dense_output
+        and hasattr(ret, "toarray")
+    ):
         return ret.toarray()
     return ret
 
 
-def randomized_range_finder(A, *, size, n_iter,
-                            power_iteration_normalizer='auto',
-                            random_state=None):
-    """Computes an orthonormal matrix whose range approximates the range of A.
+def randomized_range_finder(
+    A, *, size, n_iter, power_iteration_normalizer="auto", random_state=None
+):
+    """Compute an orthonormal matrix whose range approximates the range of A.
 
     Parameters
     ----------
@@ -198,9 +203,10 @@ def randomized_range_finder(A, *, size, n_iter,
     -----
 
     Follows Algorithm 4.3 of
-    Finding structure with randomness: Stochastic algorithms for constructing
-    approximate matrix decompositions
-    Halko, et al., 2009 (arXiv:909) https://arxiv.org/pdf/0909.4061.pdf
+    :arxiv:`"Finding structure with randomness:
+    Stochastic algorithms for constructing approximate matrix decompositions"
+    <0909.4061>`
+    Halko, et al. (2009)
 
     An implementation of a randomized algorithm for principal component
     analysis
@@ -210,39 +216,47 @@ def randomized_range_finder(A, *, size, n_iter,
 
     # Generating normal random vectors with shape: (A.shape[1], size)
     Q = random_state.normal(size=(A.shape[1], size))
-    if A.dtype.kind == 'f':
+    if A.dtype.kind == "f":
         # Ensure f32 is preserved as f32
         Q = Q.astype(A.dtype, copy=False)
 
     # Deal with "auto" mode
-    if power_iteration_normalizer == 'auto':
+    if power_iteration_normalizer == "auto":
         if n_iter <= 2:
-            power_iteration_normalizer = 'none'
+            power_iteration_normalizer = "none"
         else:
-            power_iteration_normalizer = 'LU'
+            power_iteration_normalizer = "LU"
 
     # Perform power iterations with Q to further 'imprint' the top
     # singular vectors of A in Q
     for i in range(n_iter):
-        if power_iteration_normalizer == 'none':
+        if power_iteration_normalizer == "none":
             Q = safe_sparse_dot(A, Q)
             Q = safe_sparse_dot(A.T, Q)
-        elif power_iteration_normalizer == 'LU':
+        elif power_iteration_normalizer == "LU":
             Q, _ = linalg.lu(safe_sparse_dot(A, Q), permute_l=True)
             Q, _ = linalg.lu(safe_sparse_dot(A.T, Q), permute_l=True)
-        elif power_iteration_normalizer == 'QR':
-            Q, _ = linalg.qr(safe_sparse_dot(A, Q), mode='economic')
-            Q, _ = linalg.qr(safe_sparse_dot(A.T, Q), mode='economic')
+        elif power_iteration_normalizer == "QR":
+            Q, _ = linalg.qr(safe_sparse_dot(A, Q), mode="economic")
+            Q, _ = linalg.qr(safe_sparse_dot(A.T, Q), mode="economic")
 
     # Sample the range of A using by linear projection of Q
     # Extract an orthonormal basis
-    Q, _ = linalg.qr(safe_sparse_dot(A, Q), mode='economic')
+    Q, _ = linalg.qr(safe_sparse_dot(A, Q), mode="economic")
     return Q
 
 
-def randomized_svd(M, n_components, *, n_oversamples=10, n_iter='auto',
-                   power_iteration_normalizer='auto', transpose='auto',
-                   flip_sign=True, random_state='warn'):
+def randomized_svd(
+    M,
+    n_components,
+    *,
+    n_oversamples=10,
+    n_iter="auto",
+    power_iteration_normalizer="auto",
+    transpose="auto",
+    flip_sign=True,
+    random_state="warn",
+):
     """Computes a truncated randomized SVD.
 
     This method solves the fixed-rank approximation problem described in the
@@ -332,9 +346,10 @@ def randomized_svd(M, n_components, *, n_oversamples=10, n_iter='auto',
 
     References
     ----------
-    * Finding structure with randomness: Stochastic algorithms for constructing
-      approximate matrix decompositions (Algorithm 4.3)
-      Halko, et al., 2009 https://arxiv.org/abs/0909.4061
+    * :arxiv:`"Finding structure with randomness:
+      Stochastic algorithms for constructing approximate matrix decompositions"
+      <0909.4061>`
+      Halko, et al. (2009)
 
     * A randomized algorithm for the decomposition of matrices
       Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert
@@ -344,11 +359,13 @@ def randomized_svd(M, n_components, *, n_oversamples=10, n_iter='auto',
       A. Szlam et al. 2014
     """
     if isinstance(M, (sparse.lil_matrix, sparse.dok_matrix)):
-        warnings.warn("Calculating SVD of a {} is expensive. "
-                      "csr_matrix is more efficient.".format(type(M).__name__),
-                      sparse.SparseEfficiencyWarning)
+        warnings.warn(
+            "Calculating SVD of a {} is expensive. "
+            "csr_matrix is more efficient.".format(type(M).__name__),
+            sparse.SparseEfficiencyWarning,
+        )
 
-    if random_state == 'warn':
+    if random_state == "warn":
         warnings.warn(
             "If 'random_state' is not supplied, the current default "
             "is to use 0 as a fixed seed. This will change to  "
@@ -357,7 +374,7 @@ def randomized_svd(M, n_components, *, n_oversamples=10, n_iter='auto',
             "If you want to silence this warning, set 'random_state' "
             "to an integer seed or to None explicitly depending "
             "if you want your code to be deterministic or not.",
-            FutureWarning
+            FutureWarning,
         )
         random_state = 0
 
@@ -365,21 +382,24 @@ def randomized_svd(M, n_components, *, n_oversamples=10, n_iter='auto',
     n_random = n_components + n_oversamples
     n_samples, n_features = M.shape
 
-    if n_iter == 'auto':
+    if n_iter == "auto":
         # Checks if the number of iterations is explicitly specified
         # Adjust n_iter. 7 was found a good compromise for PCA. See #5299
-        n_iter = 7 if n_components < .1 * min(M.shape) else 4
+        n_iter = 7 if n_components < 0.1 * min(M.shape) else 4
 
-    if transpose == 'auto':
+    if transpose == "auto":
         transpose = n_samples < n_features
     if transpose:
         # this implementation is a bit faster with smaller shape[1]
         M = M.T
 
     Q = randomized_range_finder(
-        M, size=n_random, n_iter=n_iter,
+        M,
+        size=n_random,
+        n_iter=n_iter,
         power_iteration_normalizer=power_iteration_normalizer,
-        random_state=random_state)
+        random_state=random_state,
+    )
 
     # project M to the (k + p) dimensional space using the basis vectors
     B = safe_sparse_dot(Q.T, M)
@@ -405,9 +425,16 @@ def randomized_svd(M, n_components, *, n_oversamples=10, n_iter='auto',
         return U[:, :n_components], s[:n_components], Vt[:n_components, :]
 
 
-def _randomized_eigsh(M, n_components, *, n_oversamples=10, n_iter='auto',
-                      power_iteration_normalizer='auto',
-                      selection='module', random_state=None):
+def _randomized_eigsh(
+    M,
+    n_components,
+    *,
+    n_oversamples=10,
+    n_iter="auto",
+    power_iteration_normalizer="auto",
+    selection="module",
+    random_state=None,
+):
     """Computes a truncated eigendecomposition using randomized methods
 
     This method solves the fixed-rank approximation problem described in the
@@ -512,23 +539,27 @@ def _randomized_eigsh(M, n_components, *, n_oversamples=10, n_iter='auto',
 
     References
     ----------
-    * Finding structure with randomness: Stochastic algorithms for constructing
-      approximate matrix decompositions (Algorithm 4.3 for strategy 'module')
-      Halko, et al., 2009 https://arxiv.org/abs/0909.4061
-
+    * :arxiv:`"Finding structure with randomness:
+      Stochastic algorithms for constructing approximate matrix decompositions"
+      (Algorithm 4.3 for strategy 'module') <0909.4061>`
+      Halko, et al. (2009)
     """
-    if selection == 'value':  # pragma: no cover
+    if selection == "value":  # pragma: no cover
         # to do : an algorithm can be found in the Halko et al reference
         raise NotImplementedError()
 
-    elif selection == 'module':
+    elif selection == "module":
         # Note: no need for deterministic U and Vt (flip_sign=True),
         # as we only use the dot product UVt afterwards
         U, S, Vt = randomized_svd(
-            M, n_components=n_components, n_oversamples=n_oversamples,
+            M,
+            n_components=n_components,
+            n_oversamples=n_oversamples,
             n_iter=n_iter,
             power_iteration_normalizer=power_iteration_normalizer,
-            flip_sign=False, random_state=random_state)
+            flip_sign=False,
+            random_state=random_state,
+        )
 
         eigvecs = U[:, :n_components]
         eigvals = S[:n_components]
@@ -539,8 +570,7 @@ def _randomized_eigsh(M, n_components, *, n_oversamples=10, n_iter='auto',
         # value will be -t, and the left (U) and right (V) singular vectors
         # will have opposite signs.
         # Fastest way: see <https://stackoverflow.com/a/61974002/7262247>
-        diag_VtU = np.einsum('ji,ij->j',
-                             Vt[:n_components, :], U[:, :n_components])
+        diag_VtU = np.einsum("ji,ij->j", Vt[:n_components, :], U[:, :n_components])
         signs = np.sign(diag_VtU)
         eigvals = eigvals * signs
 
@@ -607,14 +637,14 @@ def weighted_mode(a, w, *, axis=0):
     if a.shape != w.shape:
         w = np.full(a.shape, w, dtype=w.dtype)
 
-    scores = np.unique(np.ravel(a))       # get ALL unique values
+    scores = np.unique(np.ravel(a))  # get ALL unique values
     testshape = list(a.shape)
     testshape[axis] = 1
     oldmostfreq = np.zeros(testshape)
     oldcounts = np.zeros(testshape)
     for score in scores:
         template = np.zeros(a.shape)
-        ind = (a == score)
+        ind = a == score
         template[ind] = w[ind]
         counts = np.expand_dims(np.sum(template, axis), axis)
         mostfrequent = np.where(counts > oldcounts, score, oldmostfreq)
@@ -630,17 +660,22 @@ def cartesian(arrays, out=None):
     ----------
     arrays : list of array-like
         1-D arrays to form the cartesian product of.
-    out : ndarray, default=None
+    out : ndarray of shape (M, len(arrays)), default=None
         Array to place the cartesian product in.
 
     Returns
     -------
-    out : ndarray
-        2-D array of shape (M, len(arrays)) containing cartesian products
-        formed of input arrays.
+    out : ndarray of shape (M, len(arrays))
+        Array containing the cartesian products formed of input arrays.
+
+    Notes
+    -----
+    This function may not be used on more than 32 arrays
+    because the underlying numpy functions do not support it.
 
     Examples
     --------
+    >>> from sklearn.utils.extmath import cartesian
     >>> cartesian(([1, 2, 3], [4, 5], [6, 7]))
     array([[1, 4, 6],
            [1, 4, 7],
@@ -654,11 +689,6 @@ def cartesian(arrays, out=None):
            [3, 4, 7],
            [3, 5, 6],
            [3, 5, 7]])
-
-    Notes
-    -----
-    This function may not be used on more than 32 arrays
-    because the underlying numpy functions do not support it.
     """
     arrays = [np.asarray(x) for x in arrays]
     shape = (len(x) for x in arrays)
@@ -694,7 +724,7 @@ def svd_flip(u, v, u_based_decision=True):
         :func:`~sklearn.utils.extmath.randomized_svd`, with matching inner
         dimensions so one can compute `np.dot(u * s, v)`.
         The input v should really be called vt to be consistent with scipy's
-        ouput.
+        output.
 
     u_based_decision : bool, default=True
         If True, use the columns of u as the basis for sign flipping.
@@ -824,10 +854,12 @@ def make_nonnegative(X, min_value=0):
     min_ = X.min()
     if min_ < min_value:
         if sparse.issparse(X):
-            raise ValueError("Cannot make the data matrix"
-                             " nonnegative because it is sparse."
-                             " Adding a value to every entry would"
-                             " make it no longer sparse.")
+            raise ValueError(
+                "Cannot make the data matrix"
+                " nonnegative because it is sparse."
+                " Adding a value to every entry would"
+                " make it no longer sparse."
+            )
         X = X + (min_value - min_)
     return X
 
@@ -865,8 +897,9 @@ def _safe_accumulator_op(op, x, *args, **kwargs):
     return result
 
 
-def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count,
-                              sample_weight=None):
+def _incremental_mean_and_var(
+    X, last_mean, last_variance, last_sample_count, sample_weight=None
+):
     """Calculate mean update and a Youngs and Cramer variance update.
 
     If sample_weight is given, the weighted mean and variance is computed.
@@ -923,21 +956,24 @@ def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count,
     # new = the current increment
     # updated = the aggregated stats
     last_sum = last_mean * last_sample_count
-    if sample_weight is not None:
-        if np_version >= parse_version("1.16.6"):
-            # equivalent to np.nansum(X * sample_weight, axis=0)
-            # safer because np.float64(X*W) != np.float64(X)*np.float64(W)
-            # dtype arg of np.matmul only exists since version 1.16
-            new_sum = _safe_accumulator_op(
-                np.matmul, sample_weight, np.where(np.isnan(X), 0, X))
-        else:
-            new_sum = _safe_accumulator_op(
-                np.nansum, X * sample_weight[:, None], axis=0)
-        new_sample_count = _safe_accumulator_op(
-            np.sum, sample_weight[:, None] * (~np.isnan(X)), axis=0)
+    X_nan_mask = np.isnan(X)
+    if np.any(X_nan_mask):
+        sum_op = np.nansum
     else:
-        new_sum = _safe_accumulator_op(np.nansum, X, axis=0)
-        new_sample_count = np.sum(~np.isnan(X), axis=0)
+        sum_op = np.sum
+    if sample_weight is not None:
+        # equivalent to np.nansum(X * sample_weight, axis=0)
+        # safer because np.float64(X*W) != np.float64(X)*np.float64(W)
+        new_sum = _safe_accumulator_op(
+            np.matmul, sample_weight, np.where(X_nan_mask, 0, X)
+        )
+        new_sample_count = _safe_accumulator_op(
+            np.sum, sample_weight[:, None] * (~X_nan_mask), axis=0
+        )
+    else:
+        new_sum = _safe_accumulator_op(sum_op, X, axis=0)
+        n_samples = X.shape[0]
+        new_sample_count = n_samples - np.sum(X_nan_mask, axis=0)
 
     updated_sample_count = last_sample_count + new_sample_count
 
@@ -947,25 +983,21 @@ def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count,
         updated_variance = None
     else:
         T = new_sum / new_sample_count
+        temp = X - T
         if sample_weight is not None:
-            if np_version >= parse_version("1.16.6"):
-                # equivalent to np.nansum((X-T)**2 * sample_weight, axis=0)
-                # safer because np.float64(X*W) != np.float64(X)*np.float64(W)
-                # dtype arg of np.matmul only exists since version 1.16
-                new_unnormalized_variance = _safe_accumulator_op(
-                    np.matmul, sample_weight,
-                    np.where(np.isnan(X), 0, (X - T)**2))
-                correction = _safe_accumulator_op(
-                    np.matmul, sample_weight, np.where(np.isnan(X), 0, X - T))
-            else:
-                new_unnormalized_variance = _safe_accumulator_op(
-                    np.nansum, (X - T)**2 * sample_weight[:, None], axis=0)
-                correction = _safe_accumulator_op(
-                    np.nansum, (X - T) * sample_weight[:, None], axis=0)
-        else:
+            # equivalent to np.nansum((X-T)**2 * sample_weight, axis=0)
+            # safer because np.float64(X*W) != np.float64(X)*np.float64(W)
+            correction = _safe_accumulator_op(
+                np.matmul, sample_weight, np.where(X_nan_mask, 0, temp)
+            )
+            temp **= 2
             new_unnormalized_variance = _safe_accumulator_op(
-                np.nansum, (X - T)**2, axis=0)
-            correction = _safe_accumulator_op(np.nansum, X - T, axis=0)
+                np.matmul, sample_weight, np.where(X_nan_mask, 0, temp)
+            )
+        else:
+            correction = _safe_accumulator_op(sum_op, temp, axis=0)
+            temp **= 2
+            new_unnormalized_variance = _safe_accumulator_op(sum_op, temp, axis=0)
 
         # correction term of the corrected 2 pass algorithm.
         # See "Algorithms for computing the sample variance: analysis
@@ -974,12 +1006,15 @@ def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count,
 
         last_unnormalized_variance = last_variance * last_sample_count
 
-        with np.errstate(divide='ignore', invalid='ignore'):
+        with np.errstate(divide="ignore", invalid="ignore"):
             last_over_new_count = last_sample_count / new_sample_count
             updated_unnormalized_variance = (
-                last_unnormalized_variance + new_unnormalized_variance +
-                last_over_new_count / updated_sample_count *
-                (last_sum / last_over_new_count - new_sum) ** 2)
+                last_unnormalized_variance
+                + new_unnormalized_variance
+                + last_over_new_count
+                / updated_sample_count
+                * (last_sum / last_over_new_count - new_sum) ** 2
+            )
 
         zeros = last_sample_count == 0
         updated_unnormalized_variance[zeros] = new_unnormalized_variance[zeros]
@@ -1027,9 +1062,14 @@ def stable_cumsum(arr, axis=None, rtol=1e-05, atol=1e-08):
     """
     out = np.cumsum(arr, axis=axis, dtype=np.float64)
     expected = np.sum(arr, axis=axis, dtype=np.float64)
-    if not np.all(np.isclose(out.take(-1, axis=axis), expected, rtol=rtol,
-                             atol=atol, equal_nan=True)):
-        warnings.warn('cumsum was found to be unstable: '
-                      'its last element does not correspond to sum',
-                      RuntimeWarning)
+    if not np.all(
+        np.isclose(
+            out.take(-1, axis=axis), expected, rtol=rtol, atol=atol, equal_nan=True
+        )
+    ):
+        warnings.warn(
+            "cumsum was found to be unstable: "
+            "its last element does not correspond to sum",
+            RuntimeWarning,
+        )
     return out
