@@ -73,7 +73,7 @@ X_large, y_large = datasets.make_classification(
     random_state=0,
 )
 
-# Imbalanced classification sample used for testing imbalanced criterions
+# Imbalanced classification sample used for testing imbalanced criteria
 imbl_minority_class_ratio = 0.05
 X_large_imbl, y_large_imbl = datasets.make_classification(
     n_samples=500,
@@ -195,7 +195,7 @@ def check_imbalanced_criterion(name, criterion):
 
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS)
 @pytest.mark.parametrize("criterion", ["hellinger"])
-def test_imbalanced_criterions(name, criterion):
+def test_imbalanced_criteria(name, criterion):
     check_imbalanced_criterion(name, criterion)
 
 
