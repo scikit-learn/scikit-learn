@@ -697,7 +697,7 @@ def test_feature_names_in():
 
 
 def test_base_estimator_pickle_version(monkeypatch):
-    """The version should be embedded at dump time and checked at load time"""
+    """Check the version is embedded when pickled and checked when unpickled."""
     old_version = "0.21.3"
     monkeypatch.setattr(sklearn.base, "__version__", old_version)
     original_estimator = MyEstimator()
@@ -705,6 +705,8 @@ def test_base_estimator_pickle_version(monkeypatch):
     loaded_estimator = pickle.loads(old_pickle)
     assert loaded_estimator._sklearn_pickle_version == old_version
     assert not hasattr(original_estimator, "_sklearn_pickle_version")
+
+    # Loading pickle with newer version will raise a warning
     new_version = "1.1.0"
     monkeypatch.setattr(sklearn.base, "__version__", new_version)
     message = pickle_error_message.format(
