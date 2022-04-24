@@ -145,7 +145,7 @@ def spectral_embedding(
     n_components=8,
     eigen_solver=None,
     random_state=None,
-    eigen_tol=None,
+    eigen_tol="warn",
     max_iter=None,
     norm_laplacian=True,
     drop_first=True,
@@ -198,12 +198,23 @@ def spectral_embedding(
             https://github.com/pyamg/pyamg/issues/139 for further
             information.
 
-    eigen_tol : float, default=None
+    eigen_tol : float, default="auto"
         Stopping criterion for eigendecomposition of the Laplacian matrix.
-        The default tolerance depends on the `eigen_solver`:
+        If `eigen_tol="auto"` then the passed tolerance will depend on the
+        `eigen_solver`:
 
-        - when `eigen_solver="arpack"`, then `eigen_tol=0.0`;
-        - when `eigen_solver="lobpcg"`, then `eigen_tol=1e-5`.
+        - If `eigen_solver="arpack"`, then `eigen_tol=0.0`;
+        - If `eigen_solver="lobpcg"` or `eigen_solver="amg"`, then
+          `eigen_tol=1e-5`.
+
+        Note that when using `eigen_solver="amg"` values of `tol<1e-5` may lead
+        to convergence issues and should be avoided.
+
+        .. versionadded:: 1.1
+           Added 'auto' option for `eigen_tol`.
+
+        .. deorecated:: 1.1
+           Default value for `eigen_tol` changed to 'auto'.
 
     max_iter : int, default=None
         The maximum number of iterations done by the eigendecomposition.
@@ -256,6 +267,13 @@ def spectral_embedding(
             "Unknown value for eigen_solver: '%s'."
             "Should be 'amg', 'arpack', or 'lobpcg'" % eigen_solver
         )
+    # TODO(1.3): Remove
+    if eigen_tol == "warn":
+        warnings.warn(
+            "The default value for `eigen_tol` will be changed from 0 to 'auto' in 1.3",
+            FutureWarning,
+        )
+        eigen_tol = 0
 
     random_state = check_random_state(random_state)
 
@@ -300,9 +318,9 @@ def spectral_embedding(
         # orders-of-magnitude speedup over simply using keyword which='LA'
         # in standard mode.
         try:
-            tol = 0 if eigen_tol is None else eigen_tol
             # We are computing the opposite of the laplacian inplace so as
             # to spare a memory allocation of a possibly very large array
+            tol = 0 if eigen_tol == "auto" else eigen_tol
             laplacian *= -1
             v0 = _init_arpack_v0(laplacian.shape[0], random_state)
             _, diffusion_map = eigsh(
@@ -357,7 +375,7 @@ def spectral_embedding(
         # While scikit-learn has a minimum scipy dependency <1.4.0 we require
         # high tolerance as explained in:
         # https://github.com/scikit-learn/scikit-learn/pull/13707#discussion_r314028509
-        tol = max(1e-5, 1e-5 if eigen_tol is None else eigen_tol)
+        tol = 1e-5 if eigen_tol == "auto" else eigen_tol
         _, diffusion_map = lobpcg(
             laplacian, X, M=M, tol=tol, maxiter=max_iter, largest=False
         )
@@ -393,7 +411,7 @@ def spectral_embedding(
             )
             X[:, 0] = dd.ravel()
             X = X.astype(laplacian.dtype)
-            tol = 1e-5 if eigen_tol is None else eigen_tol
+            tol = 1e-5 if eigen_tol == "auto" else eigen_tol
             _, diffusion_map = lobpcg(
                 laplacian,
                 X,
@@ -471,13 +489,18 @@ class SpectralEmbedding(BaseEstimator):
         to be installed. It can be faster on very large, sparse problems.
         If None, then ``'arpack'`` is used.
 
-    eigen_tol : float, default=None
+    eigen_tol : float, default="auto"
         Stopping criterion for eigendecomposition of the Laplacian matrix.
-        The default tolerance depends on the `eigen_solver`:
+        If `eigen_tol="auto"` then the passed tolerance will depend on the
+        `eigen_solver`:
 
-        - when `eigen_solver="arpack"`, then `eigen_tol=0.0`;
-        - when `eigen_solver="lobpcg"` and `eigen_solver="amg"`, then
+        - If `eigen_solver="arpack"`, then `eigen_tol=0.0`;
+        - If `eigen_solver="lobpcg"` or `eigen_solver="amg"`, then
           `eigen_tol=1e-5`.
+
+        Note that when using `eigen_solver="lobpcg"` or `eigen_solver="amg"`
+        values of `tol<1e-5` may lead to convergence issues and should be
+        avoided.
 
         .. versionadded:: 1.1
 
@@ -558,7 +581,7 @@ class SpectralEmbedding(BaseEstimator):
         gamma=None,
         random_state=None,
         eigen_solver=None,
-        eigen_tol=None,
+        eigen_tol="warn",
         max_iter=None,
         n_neighbors=None,
         n_jobs=None,

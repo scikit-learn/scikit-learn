@@ -198,7 +198,7 @@ def spectral_clustering(
     eigen_solver=None,
     random_state=None,
     n_init=10,
-    eigen_tol=None,
+    eigen_tol="warn",
     max_iter=None,
     assign_labels="kmeans",
     verbose=False,
@@ -260,17 +260,24 @@ def spectral_clustering(
         consecutive runs in terms of inertia. Only used if
         ``assign_labels='kmeans'``.
 
-    eigen_tol : float, default=None
+    eigen_tol : float, default="auto"
         Stopping criterion for eigendecomposition of the Laplacian matrix.
-        The default tolerance depends on the `eigen_solver`:
+        If `eigen_tol="auto"` then the passed tolerance will depend on the
+        `eigen_solver`:
 
-        - when `eigen_solver="arpack"`, then `eigen_tol=0.0`;
-        - when `eigen_solver="lobpcg"`, then `eigen_tol=1e-5`.
+        - If `eigen_solver="arpack"`, then `eigen_tol=0.0`;
+        - If `eigen_solver="lobpcg"` or `eigen_solver="amg"`, then
+          `eigen_tol=1e-5`.
 
-    max_iter : int, default=None
-        The maximum number of iterations done by the eigendecomposition.
+        Note that when using `eigen_solver="lobpcg"` or `eigen_solver="amg"`
+        values of `tol<1e-5` may lead to convergence issues and should be
+        avoided.
 
         .. versionadded:: 1.1
+           Added 'auto' option for `eigen_tol`.
+
+        .. deorecated:: 1.1
+           Default value for `eigen_tol` changed to 'auto'.
 
     assign_labels : {'kmeans', 'discretize', 'cluster_qr'}, default='kmeans'
         The strategy to use to assign labels in the embedding
@@ -355,6 +362,13 @@ def spectral_clustering(
 
     random_state = check_random_state(random_state)
     n_components = n_clusters if n_components is None else n_components
+    # TODO(1.3): Remove
+    if eigen_tol == "warn":
+        warnings.warn(
+            "The default value for `eigen_tol` will be changed from 0 to 'auto' in 1.3",
+            FutureWarning,
+        )
+        eigen_tol = 0
 
     # We now obtain the real valued solution matrix to the
     # relaxed Ncut problem, solving the eigenvalue problem
@@ -471,13 +485,24 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         Number of neighbors to use when constructing the affinity matrix using
         the nearest neighbors method. Ignored for ``affinity='rbf'``.
 
-    eigen_tol : float, default=None
+    eigen_tol : float, default="auto"
         Stopping criterion for eigendecomposition of the Laplacian matrix.
-        The default tolerance depends on the `eigen_solver`:
+        If `eigen_tol="auto"` then the passed tolerance will depend on the
+        `eigen_solver`:
 
-        - when `eigen_solver="arpack"`, then `eigen_tol=0.0`;
-        - when `eigen_solver="lobpcg"` and `eigen_solver="amg"`, then
+        - If `eigen_solver="arpack"`, then `eigen_tol=0.0`;
+        - If `eigen_solver="lobpcg"` or `eigen_solver="amg"`, then
           `eigen_tol=1e-5`.
+
+        Note that when using `eigen_solver="lobpcg"` or `eigen_solver="amg"`
+        values of `tol<1e-5` may lead to convergence issues and should be
+        avoided.
+
+        .. versionadded:: 1.1
+           Added 'auto' option for `eigen_tol`.
+
+        .. deorecated:: 1.1
+           Default value for `eigen_tol` changed to 'auto'.
 
     max_iter : int, default=None
         The maximum number of iterations done by the eigendecomposition.
@@ -617,7 +642,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         gamma=1.0,
         affinity="rbf",
         n_neighbors=10,
-        eigen_tol=None,
+        eigen_tol="warn",
         max_iter=None,
         assign_labels="kmeans",
         degree=3,
@@ -715,9 +740,19 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
             include_boundaries="left",
         )
 
-        if self.eigen_solver == "arpack":
+        self._eigen_tol = self.eigen_tol
+        # TODO(1.3): Remove
+        if self.eigen_tol == "warn":
+            warnings.warn(
+                "The default value for `eigen_tol` will be changed from 0 to 'auto'"
+                " in 1.3",
+                FutureWarning,
+            )
+            self._eigen_tol = 0
+
+        if self._eigen_tol != "auto":
             check_scalar(
-                self.eigen_tol,
+                self._eigen_tol,
                 "eigen_tol",
                 target_type=numbers.Real,
                 min_val=0,
@@ -765,7 +800,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
             eigen_solver=self.eigen_solver,
             random_state=random_state,
             n_init=self.n_init,
-            eigen_tol=self.eigen_tol,
+            eigen_tol=self._eigen_tol,
             max_iter=self.max_iter,
             assign_labels=self.assign_labels,
             verbose=self.verbose,
