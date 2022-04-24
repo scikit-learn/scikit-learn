@@ -64,11 +64,7 @@ def cythonize_extensions(top_path, config):
     with contextlib.suppress(ImportError):
         import joblib
 
-        if LooseVersion(joblib.__version__) > LooseVersion("0.13.0"):
-            # earlier joblib versions don't account for CPU affinity
-            # constraints, and may over-estimate the number of available
-            # CPU particularly in CI (cf loky#114)
-            n_jobs = joblib.cpu_count()
+        n_jobs = joblib.cpu_count()
 
     # Additional checks for Cython
     cython_enable_debug_directives = (

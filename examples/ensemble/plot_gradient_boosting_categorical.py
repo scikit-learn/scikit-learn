@@ -228,8 +228,8 @@ plot_results("Gradient Boosting on Ames Housing")
 # comparable error rates, with a slight edge for the native handling.
 
 # %%
-# Limitting the number of splits
-# ------------------------------
+# Limiting the number of splits
+# -----------------------------
 # In general, one can expect poorer predictions from one-hot-encoded data,
 # especially when the tree depths or the number of nodes are limited: with
 # one-hot-encoded data, one needs more split points, i.e. more depth, in order
@@ -246,7 +246,7 @@ plot_results("Gradient Boosting on Ames Housing")
 # dataset and on the flexibility of the trees.
 #
 # To see this, let us re-run the same analysis with under-fitting models where
-# we artificially limit the total number of splits by both limitting the number
+# we artificially limit the total number of splits by both limiting the number
 # of trees and the depth of each tree.
 
 for pipe in (hist_dropped, hist_one_hot, hist_ordinal, hist_native):

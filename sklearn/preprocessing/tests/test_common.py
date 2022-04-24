@@ -68,20 +68,20 @@ def test_missing_value_handling(
     assert np.any(np.isnan(X_test), axis=0).all()
     X_test[:, 0] = np.nan  # make sure this boundary case is tested
 
-    with pytest.warns(None) as records:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
         Xt = est.fit(X_train).transform(X_test)
     # ensure no warnings are raised
-    assert len(records) == 0
     # missing values should still be missing, and only them
     assert_array_equal(np.isnan(Xt), np.isnan(X_test))
 
     # check that the function leads to the same results as the class
-    with pytest.warns(None) as records:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
         Xt_class = est.transform(X_train)
-    assert len(records) == 0
     kwargs = est.get_params()
     # remove the parameters which should be omitted because they
-    # are not defined in the sister function of the preprocessing class
+    # are not defined in the counterpart function of the preprocessing class
     for kwarg in omit_kwargs:
         _ = kwargs.pop(kwarg)
     Xt_func = func(X_train, **kwargs)
@@ -99,9 +99,9 @@ def test_missing_value_handling(
         # train only on non-NaN
         est.fit(_get_valid_samples_by_column(X_train, i))
         # check transforming with NaN works even when training without NaN
-        with pytest.warns(None) as records:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", RuntimeWarning)
             Xt_col = est.transform(X_test[:, [i]])
-        assert len(records) == 0
         assert_allclose(Xt_col, Xt[:, [i]])
         # check non-NaN is handled as before - the 1st column is all nan
         if not np.isnan(X_test[:, i]).all():
@@ -112,10 +112,11 @@ def test_missing_value_handling(
         est_dense = clone(est)
         est_sparse = clone(est)
 
-        with pytest.warns(None) as records:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", RuntimeWarning)
             Xt_dense = est_dense.fit(X_train).transform(X_test)
             Xt_inv_dense = est_dense.inverse_transform(Xt_dense)
-        assert len(records) == 0
+
         for sparse_constructor in (
             sparse.csr_matrix,
             sparse.csc_matrix,
@@ -129,15 +130,17 @@ def test_missing_value_handling(
             # precompute the matrix to avoid catching side warnings
             X_train_sp = sparse_constructor(X_train)
             X_test_sp = sparse_constructor(X_test)
-            with pytest.warns(None) as records:
+            with warnings.catch_warnings():
                 warnings.simplefilter("ignore", PendingDeprecationWarning)
+                warnings.simplefilter("error", RuntimeWarning)
                 Xt_sp = est_sparse.fit(X_train_sp).transform(X_test_sp)
-            assert len(records) == 0
+
             assert_allclose(Xt_sp.A, Xt_dense)
-            with pytest.warns(None) as records:
+            with warnings.catch_warnings():
                 warnings.simplefilter("ignore", PendingDeprecationWarning)
+                warnings.simplefilter("error", RuntimeWarning)
                 Xt_inv_sp = est_sparse.inverse_transform(Xt_sp)
-            assert len(records) == 0
+
             assert_allclose(Xt_inv_sp.A, Xt_inv_dense)
 
 
@@ -160,7 +163,7 @@ def test_missing_value_handling(
 )
 def test_missing_value_pandas_na_support(est, func):
     # Test pandas IntegerArray with pd.NA
-    pd = pytest.importorskip("pandas", minversion="1.0")
+    pd = pytest.importorskip("pandas")
 
     X = np.array(
         [

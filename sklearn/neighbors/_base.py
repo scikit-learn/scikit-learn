@@ -14,7 +14,6 @@ import numbers
 
 import numpy as np
 from scipy.sparse import csr_matrix, issparse
-import joblib
 from joblib import Parallel, effective_n_jobs
 
 from ._ball_tree import BallTree
@@ -23,16 +22,19 @@ from ..base import BaseEstimator, MultiOutputMixin
 from ..base import is_classifier
 from ..metrics import pairwise_distances_chunked
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
+from ..metrics._pairwise_distances_reduction import (
+    PairwiseDistancesArgKmin,
+    PairwiseDistancesRadiusNeighborhood,
+)
 from ..utils import (
     check_array,
     gen_even_slices,
     _to_object_array,
 )
-from ..utils.deprecation import deprecated
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
 from ..utils.validation import check_non_negative
-from ..utils.fixes import delayed
+from ..utils.fixes import delayed, sp_version
 from ..utils.fixes import parse_version
 from ..exceptions import DataConversionWarning, EfficiencyWarning
 
@@ -41,33 +43,38 @@ VALID_METRICS = dict(
     kd_tree=KDTree.valid_metrics,
     # The following list comes from the
     # sklearn.metrics.pairwise doc string
-    brute=(
-        list(PAIRWISE_DISTANCE_FUNCTIONS.keys())
-        + [
-            "braycurtis",
-            "canberra",
-            "chebyshev",
-            "correlation",
-            "cosine",
-            "dice",
-            "hamming",
-            "jaccard",
-            "kulsinski",
-            "mahalanobis",
-            "matching",
-            "minkowski",
-            "rogerstanimoto",
-            "russellrao",
-            "seuclidean",
-            "sokalmichener",
-            "sokalsneath",
-            "sqeuclidean",
-            "yule",
-            "wminkowski",
-        ]
+    brute=sorted(
+        set(PAIRWISE_DISTANCE_FUNCTIONS).union(
+            [
+                "braycurtis",
+                "canberra",
+                "chebyshev",
+                "correlation",
+                "cosine",
+                "dice",
+                "hamming",
+                "jaccard",
+                "kulsinski",
+                "mahalanobis",
+                "matching",
+                "minkowski",
+                "rogerstanimoto",
+                "russellrao",
+                "seuclidean",
+                "sokalmichener",
+                "sokalsneath",
+                "sqeuclidean",
+                "yule",
+            ]
+        )
     ),
 )
 
+# TODO: Remove filterwarnings in 1.3 when wminkowski is removed
+if sp_version < parse_version("1.8.0.dev0"):
+    # Before scipy 1.8.0.dev0, wminkowski was the key to use
+    # the weighted minkowski metric.
+    VALID_METRICS["brute"].append("wminkowski")
 
 VALID_METRICS_SPARSE = dict(
     ball_tree=[],
@@ -397,7 +404,9 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
     def _fit(self, X, y=None):
         if self._get_tags()["requires_y"]:
             if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
-                X, y = self._validate_data(X, y, accept_sparse="csr", multi_output=True)
+                X, y = self._validate_data(
+                    X, y, accept_sparse="csr", multi_output=True, order="C"
+                )
 
             if is_classifier(self):
                 # Classification targets require a specific format
@@ -432,7 +441,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         else:
             if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
-                X = self._validate_data(X, accept_sparse="csr")
+                X = self._validate_data(X, accept_sparse="csr", order="C")
 
         self._check_algorithm_metric()
         if self.metric_params is None:
@@ -502,6 +511,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         if issparse(X):
             if self.algorithm not in ("auto", "brute"):
                 warnings.warn("cannot use tree with sparse input: using brute force")
+
             if self.effective_metric_ not in VALID_METRICS_SPARSE[
                 "brute"
             ] and not callable(self.effective_metric_):
@@ -535,7 +545,21 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             ):
                 self._fit_method = "brute"
             else:
-                if self.effective_metric_ in VALID_METRICS["kd_tree"]:
+                if (
+                    self.effective_metric_ == "minkowski"
+                    and self.effective_metric_params_.get("w") is not None
+                ):
+                    # Be consistent with scipy 1.8 conventions: in scipy 1.8,
+                    # 'wminkowski' was removed in favor of passing a
+                    # weight vector directly to 'minkowski'.
+                    #
+                    # 'wminkowski' is not part of valid metrics for KDTree but
+                    # the 'minkowski' without weights is.
+                    #
+                    # Hence, we detect this case and choose BallTree
+                    # which supports 'wminkowski'.
+                    self._fit_method = "ball_tree"
+                elif self.effective_metric_ in VALID_METRICS["kd_tree"]:
                     self._fit_method = "kd_tree"
                 elif (
                     callable(self.effective_metric_)
@@ -553,6 +577,16 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 **self.effective_metric_params_,
             )
         elif self._fit_method == "kd_tree":
+            if (
+                self.effective_metric_ == "minkowski"
+                and self.effective_metric_params_.get("w") is not None
+            ):
+                raise ValueError(
+                    "algorithm='kd_tree' is not valid for "
+                    "metric='minkowski' with a weight parameter 'w': "
+                    "try algorithm='ball_tree' "
+                    "or algorithm='brute' instead."
+                )
             self._tree = KDTree(
                 X,
                 self.leaf_size,
@@ -578,17 +612,6 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
     def _more_tags(self):
         # For cross-validation routines to split data correctly
         return {"pairwise": self.metric == "precomputed"}
-
-    # TODO: Remove in 1.1
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `_pairwise` was deprecated in "
-        "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def _pairwise(self):
-        # For cross-validation routines to split data correctly
-        return self.metric == "precomputed"
 
 
 def _tree_query_parallel_helper(tree, *args, **kwargs):
@@ -709,18 +732,17 @@ class KNeighborsMixin:
                 % type(n_neighbors)
             )
 
-        if X is not None:
-            query_is_train = False
-            if self.metric == "precomputed":
-                X = _check_precomputed(X)
-            else:
-                X = self._validate_data(X, accept_sparse="csr", reset=False)
-        else:
-            query_is_train = True
+        query_is_train = X is None
+        if query_is_train:
             X = self._fit_X
             # Include an extra neighbor to account for the sample itself being
             # returned, which is removed later
             n_neighbors += 1
+        else:
+            if self.metric == "precomputed":
+                X = _check_precomputed(X)
+            else:
+                X = self._validate_data(X, accept_sparse="csr", reset=False, order="C")
 
         n_samples_fit = self.n_samples_fit_
         if n_neighbors > n_samples_fit:
@@ -731,12 +753,34 @@ class KNeighborsMixin:
 
         n_jobs = effective_n_jobs(self.n_jobs)
         chunked_results = None
-        if self._fit_method == "brute" and self.metric == "precomputed" and issparse(X):
+        use_pairwise_distances_reductions = (
+            self._fit_method == "brute"
+            and PairwiseDistancesArgKmin.is_usable_for(
+                X if X is not None else self._fit_X, self._fit_X, self.effective_metric_
+            )
+        )
+        if use_pairwise_distances_reductions:
+            results = PairwiseDistancesArgKmin.compute(
+                X=X,
+                Y=self._fit_X,
+                k=n_neighbors,
+                metric=self.effective_metric_,
+                metric_kwargs=self.effective_metric_params_,
+                strategy="auto",
+                return_distance=return_distance,
+            )
+
+        elif (
+            self._fit_method == "brute" and self.metric == "precomputed" and issparse(X)
+        ):
             results = _kneighbors_from_graph(
                 X, n_neighbors=n_neighbors, return_distance=return_distance
             )
 
         elif self._fit_method == "brute":
+            # TODO: should no longer be needed once PairwiseDistancesArgKmin
+            # is extended to accept sparse and/or float32 inputs.
+
             reduce_func = partial(
                 self._kneighbors_reduce_func,
                 n_neighbors=n_neighbors,
@@ -767,13 +811,7 @@ class KNeighborsMixin:
                     "or set algorithm='brute'"
                     % self._fit_method
                 )
-            old_joblib = parse_version(joblib.__version__) < parse_version("0.12")
-            if old_joblib:
-                # Deal with change of API in joblib
-                parallel_kwargs = {"backend": "threading"}
-            else:
-                parallel_kwargs = {"prefer": "threads"}
-            chunked_results = Parallel(n_jobs, **parallel_kwargs)(
+            chunked_results = Parallel(n_jobs, prefer="threads")(
                 delayed(_tree_query_parallel_helper)(
                     self._tree, X[s], n_neighbors, return_distance
                 )
@@ -1033,25 +1071,52 @@ class RadiusNeighborsMixin:
         """
         check_is_fitted(self)
 
-        if X is not None:
-            query_is_train = False
+        if sort_results and not return_distance:
+            raise ValueError("return_distance must be True if sort_results is True.")
+
+        query_is_train = X is None
+        if query_is_train:
+            X = self._fit_X
+        else:
             if self.metric == "precomputed":
                 X = _check_precomputed(X)
             else:
-                X = self._validate_data(X, accept_sparse="csr", reset=False)
-        else:
-            query_is_train = True
-            X = self._fit_X
+                X = self._validate_data(X, accept_sparse="csr", reset=False, order="C")
 
         if radius is None:
             radius = self.radius
 
-        if self._fit_method == "brute" and self.metric == "precomputed" and issparse(X):
+        use_pairwise_distances_reductions = (
+            self._fit_method == "brute"
+            and PairwiseDistancesRadiusNeighborhood.is_usable_for(
+                X if X is not None else self._fit_X, self._fit_X, self.effective_metric_
+            )
+        )
+
+        if use_pairwise_distances_reductions:
+            results = PairwiseDistancesRadiusNeighborhood.compute(
+                X=X,
+                Y=self._fit_X,
+                radius=radius,
+                metric=self.effective_metric_,
+                metric_kwargs=self.effective_metric_params_,
+                strategy="auto",
+                return_distance=return_distance,
+                sort_results=sort_results,
+            )
+
+        elif (
+            self._fit_method == "brute" and self.metric == "precomputed" and issparse(X)
+        ):
             results = _radius_neighbors_from_graph(
                 X, radius=radius, return_distance=return_distance
             )
 
         elif self._fit_method == "brute":
+            # TODO: should no longer be needed once we have Cython-optimized
+            # implementation for radius queries, with support for sparse and/or
+            # float32 inputs.
+
             # for efficiency, use squared euclidean distances
             if self.effective_metric_ == "euclidean":
                 radius *= radius
@@ -1085,10 +1150,6 @@ class RadiusNeighborsMixin:
                 results = _to_object_array(neigh_ind_list)
 
             if sort_results:
-                if not return_distance:
-                    raise ValueError(
-                        "return_distance must be True if sort_results is True."
-                    )
                 for ii in range(len(neigh_dist)):
                     order = np.argsort(neigh_dist[ii], kind="mergesort")
                     neigh_ind[ii] = neigh_ind[ii][order]
@@ -1105,13 +1166,7 @@ class RadiusNeighborsMixin:
 
             n_jobs = effective_n_jobs(self.n_jobs)
             delayed_query = delayed(_tree_query_radius_parallel_helper)
-            if parse_version(joblib.__version__) < parse_version("0.12"):
-                # Deal with change of API in joblib
-                parallel_kwargs = {"backend": "threading"}
-            else:
-                parallel_kwargs = {"prefer": "threads"}
-
-            chunked_results = Parallel(n_jobs, **parallel_kwargs)(
+            chunked_results = Parallel(n_jobs, prefer="threads")(
                 delayed_query(
                     self._tree, X[s], radius, return_distance, sort_results=sort_results
                 )

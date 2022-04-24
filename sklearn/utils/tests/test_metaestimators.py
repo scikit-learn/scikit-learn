@@ -1,5 +1,8 @@
 import numpy as np
 import pytest
+import warnings
+
+import pickle
 
 from sklearn.utils.metaestimators import if_delegate_has_method
 from sklearn.utils.metaestimators import available_if
@@ -21,6 +24,7 @@ class MockMetaEstimator:
         pass
 
 
+@pytest.mark.filterwarnings("ignore:if_delegate_has_method was deprecated")
 def test_delegated_docstring():
     assert "This is a mock delegated function" in str(
         MockMetaEstimator.__dict__["func"].__doc__
@@ -76,6 +80,7 @@ class HasPredictAsNDArray:
     predict = np.ones((10, 2), dtype=np.int64)
 
 
+@pytest.mark.filterwarnings("ignore:if_delegate_has_method was deprecated")
 def test_if_delegate_has_method():
     assert hasattr(MetaEst(HasPredict()), "predict")
     assert not hasattr(MetaEst(HasNoPredict()), "predict")
@@ -89,13 +94,14 @@ def test_if_delegate_has_method():
 class AvailableParameterEstimator:
     """This estimator's `available` parameter toggles the presence of a method"""
 
-    def __init__(self, available=True):
+    def __init__(self, available=True, return_value=1):
         self.available = available
+        self.return_value = return_value
 
     @available_if(lambda est: est.available)
     def available_func(self):
         """This is a mock available_if function"""
-        pass
+        return self.return_value
 
 
 def test_available_if_docstring():
@@ -131,6 +137,7 @@ def test_available_if_unbound_method():
         AvailableParameterEstimator.available_func(est)
 
 
+@pytest.mark.filterwarnings("ignore:if_delegate_has_method was deprecated")
 def test_if_delegate_has_method_numpy_array():
     """Check that we can check for an attribute that is a NumPy array.
 
@@ -139,3 +146,27 @@ def test_if_delegate_has_method_numpy_array():
     """
     estimator = MetaEst(HasPredictAsNDArray())
     assert hasattr(estimator, "predict")
+
+
+def test_if_delegate_has_method_deprecated():
+    """Check the deprecation warning of if_delegate_has_method"""
+    # don't warn when creating the decorator
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", FutureWarning)
+        _ = if_delegate_has_method(delegate="predict")
+
+    # Only when calling it
+    with pytest.warns(FutureWarning, match="if_delegate_has_method was deprecated"):
+        hasattr(MetaEst(HasPredict()), "predict")
+
+
+def test_available_if_methods_can_be_pickled():
+    """Check that available_if methods can be pickled.
+
+    Non-regression test for #21344.
+    """
+    return_value = 10
+    est = AvailableParameterEstimator(available=True, return_value=return_value)
+    pickled_bytes = pickle.dumps(est.available_func)
+    unpickled_func = pickle.loads(pickled_bytes)
+    assert unpickled_func() == return_value

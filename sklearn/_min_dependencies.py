@@ -3,21 +3,18 @@ import platform
 import argparse
 
 
-# numpy scipy and cython should by in sync with pyproject.toml
-if platform.python_implementation() == "PyPy":
-    NUMPY_MIN_VERSION = "1.19.0"
-else:
-    # We pinned PyWavelet (a scikit-image dependence) to 1.1.1 in the minimum
-    # documentation CI builds that is the latest version that support our
-    # minimum NumPy version required. If PyWavelets 1.2+ is installed, it would
-    # require NumPy 1.17+ that trigger a bug with Pandas 0.25:
-    # https://github.com/numpy/numpy/issues/18355#issuecomment-774610226
-    # When upgrading NumPy, we can unpin PyWavelets but we need to update the
-    # minimum version of Pandas >= 1.0.5.
-    NUMPY_MIN_VERSION = "1.14.6"
+# scipy and cython should by in sync with pyproject.toml
 
-SCIPY_MIN_VERSION = "1.1.0"
-JOBLIB_MIN_VERSION = "0.11"
+# NumPy version should match oldest-supported-numpy for the minimum supported
+# Python version.
+# see: https://github.com/scipy/oldest-supported-numpy/blob/main/setup.cfg
+if platform.python_implementation() == "PyPy":
+    NUMPY_MIN_VERSION = "1.19.2"
+else:
+    NUMPY_MIN_VERSION = "1.17.3"
+
+SCIPY_MIN_VERSION = "1.3.2"
+JOBLIB_MIN_VERSION = "1.0.0"
 THREADPOOLCTL_MIN_VERSION = "2.0.0"
 PYTEST_MIN_VERSION = "5.0.1"
 CYTHON_MIN_VERSION = "0.29.24"
@@ -32,20 +29,20 @@ dependent_packages = {
     "joblib": (JOBLIB_MIN_VERSION, "install"),
     "threadpoolctl": (THREADPOOLCTL_MIN_VERSION, "install"),
     "cython": (CYTHON_MIN_VERSION, "build"),
-    "matplotlib": ("2.2.3", "benchmark, docs, examples, tests"),
+    "matplotlib": ("3.1.2", "benchmark, docs, examples, tests"),
     "scikit-image": ("0.14.5", "docs, examples, tests"),
-    "pandas": ("0.25.0", "benchmark, docs, examples, tests"),
+    "pandas": ("1.0.5", "benchmark, docs, examples, tests"),
     "seaborn": ("0.9.0", "docs, examples"),
     "memory_profiler": ("0.57.0", "benchmark, docs"),
     "pytest": (PYTEST_MIN_VERSION, "tests"),
     "pytest-cov": ("2.9.0", "tests"),
     "flake8": ("3.8.2", "tests"),
-    "black": ("21.6b0", "tests"),
+    "black": ("22.3.0", "tests"),
     "mypy": ("0.770", "tests"),
     "pyamg": ("4.0.0", "tests"),
     "sphinx": ("4.0.1", "docs"),
     "sphinx-gallery": ("0.7.0", "docs"),
-    "numpydoc": ("1.0.0", "docs"),
+    "numpydoc": ("1.2.0", "docs, tests"),
     "Pillow": ("7.1.2", "docs"),
     "sphinx-prompt": ("1.3.0", "docs"),
     "sphinxext-opengraph": ("0.4.2", "docs"),
