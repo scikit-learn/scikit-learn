@@ -198,7 +198,7 @@ def spectral_embedding(
             https://github.com/pyamg/pyamg/issues/139 for further
             information.
 
-    eigen_tol : float or None, default=None
+    eigen_tol : float, default=None
         Stopping criterion for eigendecomposition of the Laplacian matrix.
         The default tolerance depends on the `eigen_solver`:
 
@@ -354,8 +354,8 @@ def spectral_embedding(
         X = random_state.standard_normal(size=(laplacian.shape[0], n_components + 1))
         X[:, 0] = dd.ravel()
         X = X.astype(laplacian.dtype)
-        # Until scikit-learn minimum scipy dependency <1.4.0 we require high
-        # tolerance as explained in:
+        # While scikit-learn has a minimum scipy dependency <1.4.0 we require
+        # high tolerance as explained in:
         # https://github.com/scikit-learn/scikit-learn/pull/13707#discussion_r314028509
         tol = max(1e-5, 1e-5 if eigen_tol is None else eigen_tol)
         _, diffusion_map = lobpcg(
@@ -471,7 +471,7 @@ class SpectralEmbedding(BaseEstimator):
         to be installed. It can be faster on very large, sparse problems.
         If None, then ``'arpack'`` is used.
 
-    eigen_tol : float or None, default=None
+    eigen_tol : float, default=None
         Stopping criterion for eigendecomposition of the Laplacian matrix.
         The default tolerance depends on the `eigen_solver`:
 

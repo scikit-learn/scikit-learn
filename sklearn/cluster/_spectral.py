@@ -260,7 +260,7 @@ def spectral_clustering(
         consecutive runs in terms of inertia. Only used if
         ``assign_labels='kmeans'``.
 
-    eigen_tol : float or None, default=None
+    eigen_tol : float, default=None
         Stopping criterion for eigendecomposition of the Laplacian matrix.
         The default tolerance depends on the `eigen_solver`:
 
@@ -471,7 +471,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         Number of neighbors to use when constructing the affinity matrix using
         the nearest neighbors method. Ignored for ``affinity='rbf'``.
 
-    eigen_tol : float or None, default=None
+    eigen_tol : float, default=None
         Stopping criterion for eigendecomposition of the Laplacian matrix.
         The default tolerance depends on the `eigen_solver`:
 
