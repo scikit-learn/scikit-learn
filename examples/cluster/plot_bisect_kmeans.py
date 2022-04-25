@@ -13,10 +13,9 @@ This difference can visually be observed.
 """
 import warnings
 
-import numpy as np
 import matplotlib.pyplot as plt
 
-from sklearn.datasets import make_moons
+from sklearn.datasets import make_blobs
 from sklearn.cluster import BisectingKMeans, KMeans
 from sklearn.exceptions import EfficiencyWarning
 from sklearn.preprocessing import StandardScaler
@@ -29,10 +28,7 @@ warnings.filterwarnings("ignore", category=EfficiencyWarning)
 n_samples = 1000
 random_state = 0
 
-X, _ = make_moons(n_samples=n_samples, noise=0.4, random_state=random_state)
-
-# Normalize dataset for easier parameter selection
-X = StandardScaler().fit_transform(X)
+X, _ = make_blobs(n_samples=n_samples, centers=2, random_state=random_state)
 
 # Number of cluster centers for KMeans and BisectingKMeans
 n_clusters_list = [2, 3, 4, 5]
@@ -42,9 +38,6 @@ clustering_algorithms = {
     "Bisecting K-Means": BisectingKMeans,
     "K-Means": KMeans,
 }
-
-# Colors in RGB format
-colors = np.array(["#377eb8", "#ff7f00", "#4daf4a", "#f781bf", "#a65628"])
 
 # Make subplots for each variant
 fig, axs = plt.subplots(
@@ -56,16 +49,13 @@ axs = axs.T
 for i, (algorithm_name, Algorithm) in enumerate(clustering_algorithms.items()):
     for j, n_clusters in enumerate(n_clusters_list):
         algo = Algorithm(n_clusters=n_clusters, random_state=random_state)
-
         algo.fit(X)
-
-        y_pred = algo.labels_.astype(int)
         centers = algo.cluster_centers_
 
-        axs[j, i].scatter(X[:, 0], X[:, 1], s=10, color=colors[y_pred])
-        axs[j, i].set_title(f"{algorithm_name} : {n_clusters} clusters")
+        axs[j, i].scatter(X[:, 0], X[:, 1], s=10, c=algo.labels_)
+        axs[j, i].scatter(centers[:, 0], centers[:, 1], c="r", s=20)
 
-        axs[j, i].scatter(centers[:, 0], centers[:, 1], c="#000000", s=20)
+        axs[j, i].set_title(f"{algorithm_name} : {n_clusters} clusters")
 
 
 # Hide x labels and tick labels for top plots and y ticks for right plots.

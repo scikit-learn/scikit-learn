@@ -775,13 +775,21 @@ Bisecting K-Means
 .. _bisect_k_means:
 
 The :class:`BisectingKMeans` is an iterative variant of :class:`KMeans`, using
-divisive hierarchical clustering.
-Instead of creating all centroids at once, centroids are picked progressively based
-on a previous clustering: a cluster is split into two new clusters repeatedly 
-until the target number of clusters is reached.
+divisive hierarchical clustering. Instead of creating all centroids at once, centroids
+are picked progressively based on a previous clustering: a cluster is split into two
+new clusters repeatedly until the target number of clusters is reached.
 
-This variant is preferable to agglomerative clustering
-if the number of clusters is small compared to the number of data points.
+:class:`BisectingKMeans` is more efficient than :class:`KMeans` when the number the
+number of clusters is large since it only works on a subset of the data at each
+bisection while :class:`KMeans` always works on the entire dataset.
+
+Although :class:`BisectingKMeans` can't benefit from the advantages of the `"k-means++"`
+initialization by design, it will still produce comparable results than
+`KMeans(init="k-means++")` in terms of inertia at cheaper computational costs, and will
+likely produce better results than `KMeans` with a random initialization.
+
+This variant is more efficient to agglomerative clustering if the number of clusters is
+small compared to the number of data points.
 
 This variant also does not produce empty clusters.
 
@@ -794,11 +802,13 @@ Picking by largest amount of data points in most cases produces result as
 accurate as picking by inertia and is faster (especially for larger amount of data
 points, where calculating error may be costly).
 
+Picking by largest amount of data points will also likely produce clusters of similar
+sizes while `KMeans` is known to produce clusters of different sizes.
+
 Difference between Bisecting K-Means and regular K-Means can be seen on example
 :ref:`sphx_glr_auto_examples_cluster_plot_bisect_kmeans.py`.
 While the regular K-Means algorithm tends to create non-related clusters,
 clusters from Bisecting K-Means are well ordered and create quite a visible hierarchy.
-
 
 .. topic:: References:
 
