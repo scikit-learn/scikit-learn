@@ -153,6 +153,12 @@ Changelog
 :mod:`sklearn.calibration`
 ..........................
 
+- |API| :func:`calibration.calibration_curve`'s `normalize` parameter is
+  now deprecated and will be removed in version 1.3. It is recommended that
+  a proper probability (i.e. a classifier's :term:`predict_proba` positive
+  class) is used for `y_prob`.
+  :pr:`23095` by :user:`Jordan Silke <jsilke>`.
+
 - |Enhancement| :func:`calibration.calibration_curve` accepts a parameter
   `pos_label` to specify the positive class label.
   :pr:`21032` by :user:`Guillaume Lemaitre <glemaitre>`.
