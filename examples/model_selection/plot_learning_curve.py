@@ -196,8 +196,15 @@ cv = ShuffleSplit(n_splits=50, test_size=0.2, random_state=0)
 
 estimator = GaussianNB()
 plot_learning_curve(
-    estimator, title, X, y, axes=axes[:, 0], ylim=(0.7, 1.01), cv=cv, n_jobs=4,
-    scoring="accuracy"
+    estimator,
+    title,
+    X,
+    y,
+    axes=axes[:, 0],
+    ylim=(0.7, 1.01),
+    cv=cv,
+    n_jobs=4,
+    scoring="accuracy",
 )
 
 title = r"Learning Curves (SVM, RBF kernel, $\gamma=0.001$)"
