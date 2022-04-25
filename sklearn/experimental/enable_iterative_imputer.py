@@ -11,10 +11,3 @@ as an attribute of the impute module::
     >>> # now you can import normally from impute
     >>> from sklearn.impute import IterativeImputer
 """
-
-from ..impute._iterative import IterativeImputer
-from .. import impute
-
-# use settattr to avoid mypy errors when monkeypatching
-setattr(impute, "IterativeImputer", IterativeImputer)
-impute.__all__ += ["IterativeImputer"]
