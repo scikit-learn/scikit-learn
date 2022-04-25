@@ -217,7 +217,7 @@ Changelog
   to all choices of `eigen_solver`. Includes a new option `eigen_tol="auto"`
   and begins deprecation to change the default from `eigen_tol=0` to
   `eigen_tol="auto"` in version 1.3.
-  :pr:`22217` by :user:`Meekail Zain <micky774>`.
+  :pr:`23210` by :user:`Meekail Zain <micky774>`.
 
 :mod:`sklearn.compose`
 ......................
@@ -782,7 +782,7 @@ Changelog
   choices of `eigen_solver`. Includes a new option `eigen_tol="auto"`
   and begins deprecation to change the default from `eigen_tol=0` to
   `eigen_tol="auto"` in version 1.3.
-  :pr:`22217` by :user:`Meekail Zain <micky774>`.
+  :pr:`23210` by :user:`Meekail Zain <micky774>`.
 
 :mod:`sklearn.metrics`
 ......................
