@@ -18,6 +18,12 @@ pip requirements.txt are used when we install some dependencies (e.g. numpy and
 scipy) with apt-get and the rest of the dependencies (e.g. pytest and joblib)
 with pip.
 
+To run this script you need:
+- conda-lock. The version should match the one used in the CI in
+  build_tools/azure/install.sh
+- pip-tools
+- jinja2
+
 """
 
 import re
