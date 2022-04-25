@@ -11,8 +11,6 @@ Bisecting K-Means clustering build on top of the previous ones.
 This difference can visually be observed.
 
 """
-import warnings
-
 import matplotlib.pyplot as plt
 
 from sklearn.datasets import make_blobs
