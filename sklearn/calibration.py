@@ -910,8 +910,7 @@ def calibration_curve(
             The normalize argument is deprecated in v1.1 and will be removed in v1.3.
             Explicitly normalizing `y_prob` will reproduce this behavior, but it is
             recommended that a proper probability is used (i.e. a classifier's
-            `predict_proba` positive class or `decision_function` output calibrated
-            with `CalibratedClassifierCV`).
+            `predict_proba` positive class).
 
     n_bins : int, default=5
         Number of bins to discretize the [0, 1] interval. A bigger number
