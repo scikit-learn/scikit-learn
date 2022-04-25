@@ -90,7 +90,7 @@ log_reg.fit(X, y)
 # %%
 # Here we slice the pipeline to include all the steps but the last one. The output
 # feature names of this pipeline slice are the features put into logistic
-# regression. These names corresponds directly to the coefficients in the logistic
+# regression. These names correspond directly to the coefficients in the logistic
 # regression:
 import pandas as pd
 
