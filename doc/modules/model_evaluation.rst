@@ -919,7 +919,7 @@ Here are some small examples in binary classification::
 
 Multiclass and multilabel classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-In multiclass and multilabel classification task, the notions of precision,
+In a multiclass and multilabel classification task, the notions of precision,
 recall, and F-measures can be applied to each label independently.
 There are a few ways to combine results across labels,
 specified by the ``average`` argument to the
@@ -933,8 +933,8 @@ produce an F-score that is not between precision and recall.
 
 To make this more explicit, consider the following notation:
 
-* :math:`y` the set of *predicted* :math:`(sample, label)` pairs
-* :math:`\hat{y}` the set of *true* :math:`(sample, label)` pairs
+* :math:`y` the set of *true* :math:`(sample, label)` pairs
+* :math:`\hat{y}` the set of *predicted* :math:`(sample, label)` pairs
 * :math:`L` the set of labels
 * :math:`S` the set of samples
 * :math:`y_s` the subset of :math:`y` with sample :math:`s`,
@@ -942,10 +942,10 @@ To make this more explicit, consider the following notation:
 * :math:`y_l` the subset of :math:`y` with label :math:`l`
 * similarly, :math:`\hat{y}_s` and :math:`\hat{y}_l` are subsets of
   :math:`\hat{y}`
-* :math:`P(A, B) := \frac{\left| A \cap B \right|}{\left|A\right|}` for some
+* :math:`P(A, B) := \frac{\left| A \cap B \right|}{\left|B\right|}` for some
   sets :math:`A` and :math:`B`
-* :math:`R(A, B) := \frac{\left| A \cap B \right|}{\left|B\right|}`
-  (Conventions vary on handling :math:`B = \emptyset`; this implementation uses
+* :math:`R(A, B) := \frac{\left| A \cap B \right|}{\left|A\right|}`
+  (Conventions vary on handling :math:`A = \emptyset`; this implementation uses
   :math:`R(A, B):=0`, and similar for :math:`P`.)
 * :math:`F_\beta(A, B) := \left(1 + \beta^2\right) \frac{P(A, B) \times R(A, B)}{\beta^2 P(A, B) + R(A, B)}`
 
@@ -960,7 +960,7 @@ Then the metrics are defined as:
 +---------------+------------------------------------------------------------------------------------------------------------------+------------------------------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------+
 |``"macro"``    | :math:`\frac{1}{\left|L\right|} \sum_{l \in L} P(y_l, \hat{y}_l)`                                                | :math:`\frac{1}{\left|L\right|} \sum_{l \in L} R(y_l, \hat{y}_l)`                                                | :math:`\frac{1}{\left|L\right|} \sum_{l \in L} F_\beta(y_l, \hat{y}_l)`                                              |
 +---------------+------------------------------------------------------------------------------------------------------------------+------------------------------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------+
-|``"weighted"`` | :math:`\frac{1}{\sum_{l \in L} \left|\hat{y}_l\right|} \sum_{l \in L} \left|\hat{y}_l\right| P(y_l, \hat{y}_l)`  | :math:`\frac{1}{\sum_{l \in L} \left|\hat{y}_l\right|} \sum_{l \in L} \left|\hat{y}_l\right| R(y_l, \hat{y}_l)`  | :math:`\frac{1}{\sum_{l \in L} \left|\hat{y}_l\right|} \sum_{l \in L} \left|\hat{y}_l\right| F_\beta(y_l, \hat{y}_l)`|
+|``"weighted"`` | :math:`\frac{1}{\sum_{l \in L} \left|y_l\right|} \sum_{l \in L} \left|y_l\right| P(y_l, \hat{y}_l)`              | :math:`\frac{1}{\sum_{l \in L} \left|y_l\right|} \sum_{l \in L} \left|y_l\right| R(y_l, \hat{y}_l)`              | :math:`\frac{1}{\sum_{l \in L} \left|y_l\right|} \sum_{l \in L} \left|y_l\right| F_\beta(y_l, \hat{y}_l)`            |
 +---------------+------------------------------------------------------------------------------------------------------------------+------------------------------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------+
 |``None``       | :math:`\langle P(y_l, \hat{y}_l) | l \in L \rangle`                                                              | :math:`\langle R(y_l, \hat{y}_l) | l \in L \rangle`                                                              | :math:`\langle F_\beta(y_l, \hat{y}_l) | l \in L \rangle`                                                            |
 +---------------+------------------------------------------------------------------------------------------------------------------+------------------------------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------+
@@ -2506,10 +2506,10 @@ is defined as
   \sum_{i=0}^{n_\text{samples} - 1}
   \begin{cases}
   (y_i-\hat{y}_i)^2, & \text{for }p=0\text{ (Normal)}\\
-  2(y_i \log(y/\hat{y}_i) + \hat{y}_i - y_i),  & \text{for }p=1\text{ (Poisson)}\\
+  2(y_i \log(y_i/\hat{y}_i) + \hat{y}_i - y_i),  & \text{for }p=1\text{ (Poisson)}\\
   2(\log(\hat{y}_i/y_i) + y_i/\hat{y}_i - 1),  & \text{for }p=2\text{ (Gamma)}\\
   2\left(\frac{\max(y_i,0)^{2-p}}{(1-p)(2-p)}-
-  \frac{y\,\hat{y}^{1-p}_i}{1-p}+\frac{\hat{y}^{2-p}_i}{2-p}\right),
+  \frac{y_i\,\hat{y}_i^{1-p}}{1-p}+\frac{\hat{y}_i^{2-p}}{2-p}\right),
   & \text{otherwise}
   \end{cases}
 
@@ -2521,8 +2521,8 @@ distribution (``power=0``), quadratically.  In general, the higher
 ``power`` the less weight is given to extreme deviations between true
 and predicted targets.
 
-For instance, let's compare the two predictions 1.0 and 100 that are both
-50% of their corresponding true value.
+For instance, let's compare the two predictions 1.5 and 150 that are both
+50% larger than their corresponding true value.
 
 The mean squared error (``power=0``) is very sensitive to the
 prediction difference of the second point,::
