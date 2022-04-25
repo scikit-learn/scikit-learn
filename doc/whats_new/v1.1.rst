@@ -293,6 +293,11 @@ Changelog
 :mod:`sklearn.decomposition`
 ............................
 
+- |MajorFeature| Added a new estimator :class:`decomposition.MiniBatchNMF`. It is a
+  faster but less accurate version of non-negative matrix factorization, better suited
+  for large datasets. :pr:`16948` by :user:`Chiara Marmo <cmarmo>`,
+  :user:`Patricio Cerda <pcerda>` and :user:`Jérémie du Boisberranger <jeremiedbb>`. 
+
 - |Enhancement| :class:`decomposition.PCA` exposes a parameter `n_oversamples` to tune
   :func:`sklearn.decomposition.randomized_svd` and
   get accurate results when the number of features is large.
@@ -1047,6 +1052,11 @@ Changelog
 - |Enhancement| :func:`utils.estimator_html_repr` displays an arrow on the top
   left corner of the HTML representation to show how the elements are
   clickable. :pr:`21298` by `Thomas Fan`_.
+
+- |Enhancement| :func:`utils.check_array` with `dtype=None` returns numeric
+  arrays when passed in a pandas DataFrame with mixed dtypes. `dtype="numeric"`
+  will also make better infer the dtype when the DataFrame has mixed dtypes.
+  :pr:`22237` by `Thomas Fan`_.
 
 - |Enhancement| Removes random unique identifiers in the HTML representation.
   With this change, jupyter notebooks are reproducible as long as the cells are
