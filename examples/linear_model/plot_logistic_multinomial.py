@@ -16,6 +16,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.datasets import make_blobs
 from sklearn.linear_model import LogisticRegression
+from sklearn.inspection import DecisionBoundaryDisplay
 
 # make 3-class dataset for classification
 centers = [[-5, 0], [0, 1.5], [5, -1]]
@@ -31,19 +32,10 @@ for multi_class in ("multinomial", "ovr"):
     # print the training scores
     print("training score : %.3f (%s)" % (clf.score(X, y), multi_class))
 
-    # create a mesh to plot in
-    h = 0.02  # step size in the mesh
-    x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
-    y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
-    xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
-
-    # Plot the decision boundary. For that, we will assign a color to each
-    # point in the mesh [x_min, x_max]x[y_min, y_max].
-    Z = clf.predict(np.c_[xx.ravel(), yy.ravel()])
-    # Put the result into a color plot
-    Z = Z.reshape(xx.shape)
-    plt.figure()
-    plt.contourf(xx, yy, Z, cmap=plt.cm.Paired)
+    _, ax = plt.subplots()
+    DecisionBoundaryDisplay.from_estimator(
+        clf, X, response_method="predict", cmap=plt.cm.Paired, ax=ax
+    )
     plt.title("Decision surface of LogisticRegression (%s)" % multi_class)
     plt.axis("tight")
 

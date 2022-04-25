@@ -1717,7 +1717,7 @@ def test_stochastic_gradient_loss_param():
     # Make sure the predict_proba works when loss is specified
     # as one of the parameters in the param_grid.
     param_grid = {
-        "loss": ["log"],
+        "loss": ["log_loss"],
     }
     X = np.arange(24).reshape(6, -1)
     y = [0, 0, 0, 1, 1, 1]
