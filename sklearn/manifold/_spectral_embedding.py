@@ -213,7 +213,7 @@ def spectral_embedding(
         .. versionadded:: 1.1
            Added 'auto' option for `eigen_tol`.
 
-        .. deorecated:: 1.1
+        .. deprecated:: 1.1
            Default value for `eigen_tol` changed to 'auto'.
 
     max_iter : int, default=None
