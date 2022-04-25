@@ -17,9 +17,10 @@ import matplotlib.pyplot as plt
 
 from sklearn.datasets import make_blobs
 from sklearn.cluster import BisectingKMeans, KMeans
-from sklearn.exceptions import EfficiencyWarning
+
 
 print(__doc__)
+
 
 # Generate sample data
 n_samples = 1000
