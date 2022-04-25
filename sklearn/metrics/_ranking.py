@@ -879,10 +879,8 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None, sample_weight
     else:
         recall = tps / tps[-1]
 
-    # stop when full recall attained
-    # and reverse the outputs so recall is decreasing
-    last_ind = tps.searchsorted(tps[-1])
-    sl = slice(last_ind, None, -1)
+    # reverse the outputs so recall is decreasing
+    sl = slice(None, None, -1)
     return np.hstack((precision[sl], 1)), np.hstack((recall[sl], 0)), thresholds[sl]
 
 
