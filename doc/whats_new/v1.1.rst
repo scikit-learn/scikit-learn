@@ -212,6 +212,13 @@ Changelog
   `-1` and the original warning message is shown.
   :pr:`22217` by :user:`Meekail Zain <micky774>`.
 
+- |Enhancement| :class:`cluster.SpectralClustering` and
+  :func:`cluster.spectral_clustering` now propogates the `eigen_tol` parameter
+  to all choices of `eigen_solver`. Includes a new option `eigen_tol="auto"`
+  and begins deprecation to change the default from `eigen_tol=0` to
+  `eigen_tol="auto"` in version 1.3.
+  :pr:`22217` by :user:`Meekail Zain <micky774>`.
+
 :mod:`sklearn.compose`
 ......................
 
@@ -297,7 +304,7 @@ Changelog
 - |MajorFeature| Added a new estimator :class:`decomposition.MiniBatchNMF`. It is a
   faster but less accurate version of non-negative matrix factorization, better suited
   for large datasets. :pr:`16948` by :user:`Chiara Marmo <cmarmo>`,
-  :user:`Patricio Cerda <pcerda>` and :user:`Jérémie du Boisberranger <jeremiedbb>`. 
+  :user:`Patricio Cerda <pcerda>` and :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 - |Enhancement| :class:`decomposition.PCA` exposes a parameter `n_oversamples` to tune
   :func:`sklearn.decomposition.randomized_svd` and
@@ -768,6 +775,14 @@ Changelog
   `n_neighbours >= n_samples / 2` to ensure a correct support for the function.
   :pr:`18832` by :user:`Hong Shao Yang <hongshaoyang>` and :pr:`23033` by
   :user:`Meekail Zain <micky774>`.
+
+- |Enhancement| Adds `eigen_tol` parameter to
+  :class:`manifold.SpectralEmbedding`. Both :func:`manifold.spectral_embedding`
+  and :class:`manifold.SpectralEmbedding` now propogate `eigen_tol` to all
+  choices of `eigen_solver`. Includes a new option `eigen_tol="auto"`
+  and begins deprecation to change the default from `eigen_tol=0` to
+  `eigen_tol="auto"` in version 1.3.
+  :pr:`22217` by :user:`Meekail Zain <micky774>`.
 
 :mod:`sklearn.metrics`
 ......................
