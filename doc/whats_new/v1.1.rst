@@ -444,9 +444,9 @@ Changelog
   :pr:`21800` and :pr:`20567` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 - |Efficiency| :meth:`fit` of :class:`ensemble.GradientBoostingClassifier`
-  and :class:`ensemble.GradientBoostingRegressor` now calls :func:`check_array` with
-  parameter `force_all_finite=False` for non initial warm-start runs as it has already 
-  been checked before.
+  and :class:`ensemble.GradientBoostingRegressor` now calls :func:`utils.check_array`
+  with parameter `force_all_finite=False` for non initial warm-start runs as it has
+  already been checked before.
   :pr:`22159` by :user:`Geoffrey Paris <Geoffrey-Paris>`.
 
 - |Enhancement| :class:`ensemble.HistGradientBoostingClassifier` is faster,
@@ -1010,7 +1010,7 @@ Changelog
   `numpy.float32`. :pr:`22114` by :user:`Takeshi Oura <takoika>`.
 
 - |Enhancement| Adds :term:`get_feature_names_out` to all transformers in the
-  :mod:`random_projection` module:
+  :mod:`sklearn.random_projection` module:
   :class:`random_projection.GaussianRandomProjection` and
   :class:`random_projection.SparseRandomProjection`. :pr:`21330` by
   :user:`Loïc Estève <lesteve>`.
@@ -1057,13 +1057,13 @@ Changelog
 :mod:`sklearn.utils`
 ....................
 
-- |Enhancement| :func:`utils.validation.check_array` and
-  :func:`utils.validation.type_of_target` now accept an `input_name` parameter to make
+- |Enhancement| :func:`utils.check_array` and
+  :func:`utils.multiclass.type_of_target` now accept an `input_name` parameter to make
   the error message more informative when passed invalid input data (e.g. with NaN or
   infinite values).
   :pr:`21219` by :user:`Olivier Grisel <ogrisel>`.
 
-- |Enhancement| :func:`utils.validation.check_array` returns a float
+- |Enhancement| :func:`utils.check_array` returns a float
   ndarray with `np.nan` when passed a `Float32` or `Float64` pandas extension
   array with `pd.NA`. :pr:`21278` by `Thomas Fan`_.
 
@@ -1080,12 +1080,12 @@ Changelog
   will also make better infer the dtype when the DataFrame has mixed dtypes.
   :pr:`22237` by `Thomas Fan`_.
 
-- |Enhancement| :func:`utils.validation.check_scalar` now has better messages
+- |Enhancement| :func:`utils.check_scalar` now has better messages
   when displaying the type. :pr:`22218` by `Thomas Fan`_.
 
 - |Fix| Changes the error message of the `ValidationError` raised by
-  :func:`utils.validation.check_X_y` when y is None so that it is compatible
-  with :func:`utils.estimator_checks.check_requires_y_none`. :pr:`22578` by
+  :func:`utils.check_X_y` when y is None so that it is compatible
+  with the `check_requires_y_none` estimator check. :pr:`22578` by
   :user:`Claudio Salvatore Arcidiacono <ClaudioSalvatoreArcidiacono>`.
 
 - |Fix| :func:`utils.class_weight.compute_class_weight` now only requires that
