@@ -27,12 +27,11 @@ whereas real SAMME.R uses the predicted class probabilities.
 # used in Hastie et al. 2009, Example 10.2.
 
 # Authors: Peter Prettenhofer <peter.prettenhofer@gmail.com>,
-# Noel Dawe <noel.dawe@gmail.com>
+#          Noel Dawe <noel.dawe@gmail.com>
 #
 # License: BSD 3 clause
 
 from sklearn import datasets
-
 
 X, y = datasets.make_hastie_10_2(n_samples=12000, random_state=1)
 
@@ -49,7 +48,6 @@ learning_rate = 1.0
 # and a "stump" `DecisionTreeClassifier` with `depth=1` and compute the test error.
 
 from sklearn.tree import DecisionTreeClassifier
-
 
 X_test, y_test = X[2000:], y[2000:]
 X_train, y_train = X[:2000], y[:2000]
@@ -69,7 +67,6 @@ dt_err = 1.0 - dt.score(X_test, y_test)
 # and fit them to the training set.
 
 from sklearn.ensemble import AdaBoostClassifier
-
 
 ada_discrete = AdaBoostClassifier(
     base_estimator=dt_stump,
@@ -93,9 +90,7 @@ ada_real.fit(X_train, y_train)
 # added to the ensemble.
 
 import numpy as np
-
 from sklearn.metrics import zero_one_loss
-
 
 ada_discrete_err = np.zeros((n_estimators,))
 for i, y_pred in enumerate(ada_discrete.staged_predict(X_test)):
@@ -120,7 +115,6 @@ for i, y_pred in enumerate(ada_real.staged_predict(X_train)):
 # and of the discrete and real AdaBoost classifiers
 
 import matplotlib.pyplot as plt
-
 
 fig = plt.figure()
 ax = fig.add_subplot(111)
