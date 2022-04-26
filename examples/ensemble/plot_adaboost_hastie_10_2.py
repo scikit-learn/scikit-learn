@@ -22,7 +22,7 @@ whereas real SAMME.R uses the predicted class probabilities.
 
 # %%
 # Preparing the data and baseline models
-# ---------------------------------------------------
+# --------------------------------------
 # We start by generating the binary classification dataset
 # used in Hastie et al. 2009, Example 10.2.
 
@@ -64,7 +64,7 @@ dt_err = 1.0 - dt.score(X_test, y_test)
 
 # %%
 # Adaboost with discrete SAMME and real SAMME.R
-# ---------------------------------------------------
+# ---------------------------------------------
 # We now define the discrete and real AdaBoost classifiers
 # and fit them to the training set.
 
@@ -115,7 +115,7 @@ for i, y_pred in enumerate(ada_real.staged_predict(X_train)):
 
 # %%
 # Plotting the results
-# ---------------------------------------------------
+# --------------------
 # Finally, we plot the train and test errors of our baselines
 # and of the discrete and real AdaBoost classifiers
 
@@ -166,7 +166,7 @@ plt.show()
 # %%
 #
 # Concluding remarks
-# ---------------------------------------------------
+# ------------------
 #
-# We observe that the performance on both train and test sets of real AdaBoost
-# is better than that of discrete AdaBoost
+# We observe that the error rate for both train and test sets of real AdaBoost
+# is lower than that of discrete AdaBoost.
