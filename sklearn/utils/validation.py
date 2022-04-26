@@ -575,13 +575,25 @@ def _check_estimator_name(estimator):
 
 def _pandas_dtype_needs_early_conversion(pd_dtype):
     """Return True if pandas extension pd_dtype need to be converted early."""
+    # Check these early for pandas versions without extension dtypes
+    from pandas.api.types import (
+        is_bool_dtype,
+        is_sparse,
+        is_float_dtype,
+        is_integer_dtype,
+    )
+
+    if is_bool_dtype(pd_dtype):
+        # bool and extension booleans need early converstion because __array__
+        # converts mixed dtype dataframes into object dtypes
+        return True
+
+    if is_sparse(pd_dtype):
+        # Sparse arrays will be converted later in `check_array`
+        return False
+
     try:
-        from pandas.api.types import (
-            is_extension_array_dtype,
-            is_float_dtype,
-            is_integer_dtype,
-            is_sparse,
-        )
+        from pandas.api.types import is_extension_array_dtype
     except ImportError:
         return False
 
@@ -744,16 +756,10 @@ def check_array(
                     "It will be converted to a dense numpy array."
                 )
 
-        dtypes_orig = []
-        for dtype_iter in array.dtypes:
-            if dtype_iter.kind == "b":
-                # pandas boolean dtype __array__ interface coerces bools to objects
-                dtype_iter = np.dtype(object)
-            elif _pandas_dtype_needs_early_conversion(dtype_iter):
-                pandas_requires_conversion = True
-
-            dtypes_orig.append(dtype_iter)
-
+        dtypes_orig = list(array.dtypes)
+        pandas_requires_conversion = any(
+            _pandas_dtype_needs_early_conversion(i) for i in dtypes_orig
+        )
         if all(isinstance(dtype_iter, np.dtype) for dtype_iter in dtypes_orig):
             dtype_orig = np.result_type(*dtypes_orig)
 
@@ -776,7 +782,9 @@ def check_array(
     if pandas_requires_conversion:
         # pandas dataframe requires conversion earlier to handle extension dtypes with
         # nans
-        array = array.astype(dtype)
+        # Use the original dtype for conversion if dtype is None
+        new_dtype = dtype_orig if dtype is None else dtype
+        array = array.astype(new_dtype)
         # Since we converted here, we do not need to convert again later
         dtype = None
 
