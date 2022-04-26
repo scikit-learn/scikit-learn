@@ -855,11 +855,11 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None, sample_weight
     >>> precision, recall, thresholds = precision_recall_curve(
     ...     y_true, y_scores)
     >>> precision
-    array([0.66666667, 0.5       , 1.        , 1.        ])
+    array([0.5       , 0.66666667, 0.5       , 1.        , 1.        ])
     >>> recall
-    array([1. , 0.5, 0.5, 0. ])
+    array([1. , 1. , 0.5, 0.5, 0. ])
     >>> thresholds
-    array([0.35, 0.4 , 0.8 ])
+    array([0.1 , 0.35, 0.4 , 0.8 ])
     """
     fps, tps, thresholds = _binary_clf_curve(
         y_true, probas_pred, pos_label=pos_label, sample_weight=sample_weight
