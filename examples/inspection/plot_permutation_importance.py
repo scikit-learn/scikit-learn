@@ -25,18 +25,7 @@ can mitigate those limitations.
 
 """
 # %%
-import matplotlib.pyplot as plt
 import numpy as np
-
-from sklearn.datasets import fetch_openml
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.impute import SimpleImputer
-from sklearn.inspection import permutation_importance
-from sklearn.compose import ColumnTransformer
-from sklearn.model_selection import train_test_split
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder
-
 
 # %%
 # Data Loading and Feature Engineering
@@ -51,6 +40,9 @@ from sklearn.preprocessing import OneHotEncoder
 #   values as records).
 # - ``random_cat`` is a low cardinality categorical variable (3 possible
 #   values).
+from sklearn.datasets import fetch_openml
+from sklearn.model_selection import train_test_split
+
 X, y = fetch_openml("titanic", version=1, as_frame=True, return_X_y=True)
 rng = np.random.RandomState(seed=42)
 X["random_cat"] = rng.randint(3, size=X.shape[0])
@@ -60,17 +52,33 @@ categorical_columns = ["pclass", "sex", "embarked", "random_cat"]
 numerical_columns = ["age", "sibsp", "parch", "fare", "random_num"]
 
 X = X[categorical_columns + numerical_columns]
-
 X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, random_state=42)
 
-categorical_encoder = OneHotEncoder(handle_unknown="ignore")
-numerical_pipe = Pipeline([("imputer", SimpleImputer(strategy="mean"))])
+# %%
+# We define a predictive model based on a random forest. Therefore, we will make
+# the following preprocessing steps:
+#
+# - use :class:`~sklearn.preprocessing.OrdinaleEcnoder` to encode the
+#   categorical features;
+# - use :class:`~sklearn.impute.SimpleImputer` to fill missing values for
+#   numerical features using a mean strategy.
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.impute import SimpleImputer
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import OrdinalEncoder
+
+categorical_encoder = OrdinalEncoder(
+    handle_unknown="use_encoded_value", unknown_value=-1, encoded_missing_value=-1
+)
+numerical_pipe = SimpleImputer(strategy="mean")
 
 preprocessing = ColumnTransformer(
     [
         ("cat", categorical_encoder, categorical_columns),
         ("num", numerical_pipe, numerical_columns),
-    ]
+    ],
+    verbose_feature_names_out=False,
 )
 
 rf = Pipeline(
@@ -102,8 +110,8 @@ rf.fit(X_train, y_train)
 # However let's keep our high capacity random forest model for now so as to
 # illustrate some pitfalls with feature importance on variables with many
 # unique values.
-print("RF train accuracy: %0.3f" % rf.score(X_train, y_train))
-print("RF test accuracy: %0.3f" % rf.score(X_test, y_test))
+print(f"RF train accuracy: {rf.score(X_train, y_train):.3f}")
+print(f"RF test accuracy: {rf.score(X_test, y_test):.3f}")
 
 
 # %%
@@ -111,7 +119,7 @@ print("RF test accuracy: %0.3f" % rf.score(X_test, y_test))
 # --------------------------------------------------------------
 # The impurity-based feature importance ranks the numerical features to be the
 # most important features. As a result, the non-predictive ``random_num``
-# variable is ranked the most important!
+# variable is ranked as one of the most important features!
 #
 # This problem stems from two limitations of impurity-based feature
 # importances:
@@ -121,59 +129,116 @@ print("RF test accuracy: %0.3f" % rf.score(X_test, y_test))
 #   therefore do not reflect the ability of feature to be useful to make
 #   predictions that generalize to the test set (when the model has enough
 #   capacity).
-ohe = rf.named_steps["preprocess"].named_transformers_["cat"]
-feature_names = ohe.get_feature_names_out(categorical_columns)
-feature_names = np.r_[feature_names, numerical_columns]
+#
+# The bias towards high cardinality features explains why the `random_num` has
+# a really large importance in comparison with `random_cat` while we would
+# expect both random features to have a null importance.
+#
+# The fact that we use training set statistics explains why both the
+# `random_num` and `random_cat` features have a non-null importance.
+import pandas as pd
 
-tree_feature_importances = rf.named_steps["classifier"].feature_importances_
-sorted_idx = tree_feature_importances.argsort()
+feature_names = rf[:-1].get_feature_names_out()
 
-y_ticks = np.arange(0, len(feature_names))
-fig, ax = plt.subplots()
-ax.barh(y_ticks, tree_feature_importances[sorted_idx])
-ax.set_yticks(y_ticks)
-ax.set_yticklabels(feature_names[sorted_idx])
-ax.set_title("Random Forest Feature Importances (MDI)")
-fig.tight_layout()
-plt.show()
+mdi_importances = pd.Series(
+    rf[-1].feature_importances_, index=feature_names
+).sort_values(ascending=True)
 
+# %%
+ax = mdi_importances.plot.box(vert=False, whis=10)
+ax.set_title("Permutation Importances (test set)")
+ax.axvline(x=0, color="k", linestyle="--")
+ax.set_xlabel("Decrease in accuracy score")
+ax.figure.tight_layout()
 
 # %%
 # As an alternative, the permutation importances of ``rf`` are computed on a
 # held out test set. This shows that the low cardinality categorical feature,
-# ``sex`` is the most important feature.
+# `sex` and `pclass` are the most important feature. Indeed, permuting the
+# values of these features will lead to most decrease in accuracy score of the
+# model on the test set.
 #
 # Also note that both random features have very low importances (close to 0) as
 # expected.
+from sklearn.inspection import permutation_importance
+
 result = permutation_importance(
     rf, X_test, y_test, n_repeats=10, random_state=42, n_jobs=2
 )
-sorted_idx = result.importances_mean.argsort()
 
-fig, ax = plt.subplots()
-ax.boxplot(
-    result.importances[sorted_idx].T, vert=False, labels=X_test.columns[sorted_idx]
+sorted_importances_idx = result.importances_mean.argsort()
+importances = pd.DataFrame(
+    result.importances[sorted_importances_idx].T,
+    columns=X.columns[sorted_importances_idx],
 )
+ax = importances.plot.box(vert=False, whis=10)
 ax.set_title("Permutation Importances (test set)")
-fig.tight_layout()
-plt.show()
+ax.axvline(x=0, color="k", linestyle="--")
+ax.set_xlabel("Decrease in accuracy score")
+ax.figure.tight_layout()
 
 # %%
 # It is also possible to compute the permutation importances on the training
-# set. This reveals that ``random_num`` gets a significantly higher importance
-# ranking than when computed on the test set. The difference between those two
-# plots is a confirmation that the RF model has enough capacity to use that
-# random numerical feature to overfit. You can further confirm this by
-# re-running this example with constrained RF with min_samples_leaf=10.
+# set. This reveals that `random_num` and `random_cat` get a significantly
+# higher importance ranking than when computed on the test set. The difference
+# between those two plots is a confirmation that the RF model has enough
+# capacity to use that random numerical and categorical features to overfit.
 result = permutation_importance(
     rf, X_train, y_train, n_repeats=10, random_state=42, n_jobs=2
 )
-sorted_idx = result.importances_mean.argsort()
 
-fig, ax = plt.subplots()
-ax.boxplot(
-    result.importances[sorted_idx].T, vert=False, labels=X_train.columns[sorted_idx]
+sorted_importances_idx = result.importances_mean.argsort()
+importances = pd.DataFrame(
+    result.importances[sorted_importances_idx].T,
+    columns=X.columns[sorted_importances_idx],
 )
+ax = importances.plot.box(vert=False, whis=10)
 ax.set_title("Permutation Importances (train set)")
-fig.tight_layout()
-plt.show()
+ax.axvline(x=0, color="k", linestyle="--")
+ax.set_xlabel("Decrease in accuracy score")
+ax.figure.tight_layout()
+
+# %%
+# We can further retry the experiment by limiting the capacity of the trees
+# to overfit by setting `min_samples_leaf` at 20 data points.
+rf.set_params(classifier__min_samples_leaf=20).fit(X_train, y_train)
+
+# %%
+# Observing the accuracy score on the training and testing set, we observe that
+# the two metrics are very similar now. Therefore, our model is not overfitting
+# anymore. We can then check the permutation importances with this new model.
+print(f"RF train accuracy: {rf.score(X_train, y_train):.3f}")
+print(f"RF test accuracy: {rf.score(X_test, y_test):.3f}")
+
+# %%
+train_result = permutation_importance(
+    rf, X_train, y_train, n_repeats=10, random_state=42, n_jobs=2
+)
+test_results = permutation_importance(
+    rf, X_test, y_test, n_repeats=10, random_state=42, n_jobs=2
+)
+sorted_importances_idx = train_result.importances_mean.argsort()
+
+# %%
+train_importances = pd.DataFrame(
+    train_result.importances[sorted_importances_idx].T,
+    columns=X.columns[sorted_importances_idx],
+)
+test_importances = pd.DataFrame(
+    test_results.importances[sorted_importances_idx].T,
+    columns=X.columns[sorted_importances_idx],
+)
+
+# %%
+for name, importances in zip(["train", "test"], [train_importances, test_importances]):
+    ax = importances.plot.box(vert=False, whis=10)
+    ax.set_title(f"Permutation Importances ({name} set)")
+    ax.set_xlabel("Decrease in accuracy score")
+    ax.axvline(x=0, color="k", linestyle="--")
+    ax.figure.tight_layout()
+
+# %%
+# Now, we can observe that on both sets, the `random_num` and `random_cat`
+# features have a lower importance compared to the overfitting random forest.
+# However, the conclusions regarding the importance of the other features are
+# still valid.
