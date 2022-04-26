@@ -1,5 +1,4 @@
 import typing
-import sys
 
 from ._split import BaseCrossValidator
 from ._split import BaseShuffleSplit
@@ -78,14 +77,10 @@ __all__ = [
 # TODO: remove this check once the estimator is no longer experimental.
 def __getattr__(name):
     if name in {"HalvingGridSearchCV", "HalvingRandomSearchCV"}:
-        if "sklearn.experimental.enable_halving_search_cv" not in sys.modules:
-            raise ImportError(
-                f"{name} is experimental and the API might change without any "
-                "deprecation cycle. To use it, you need to explicitly import "
-                "enable_halving_search_cv:\n"
-                "from sklearn.experimental import enable_halving_search_cv"
-            )
-        from . import _search_successive_halving
-
-        return getattr(_search_successive_halving, name)
+        raise ImportError(
+            f"{name} is experimental and the API might change without any "
+            "deprecation cycle. To use it, you need to explicitly import "
+            "enable_halving_search_cv:\n"
+            "from sklearn.experimental import enable_halving_search_cv"
+        )
     raise AttributeError(f"module {__name__} has no attribute {name}")
