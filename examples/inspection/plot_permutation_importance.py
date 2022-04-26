@@ -25,7 +25,6 @@ can mitigate those limitations.
 
 """
 # %%
-import matplotlib.pyplot as plt
 import numpy as np
 
 # %%
@@ -141,12 +140,12 @@ import pandas as pd
 
 feature_names = rf[:-1].get_feature_names_out()
 
-mdi_importance = pd.Series(
+mdi_importances = pd.Series(
     rf[-1].feature_importances_, index=feature_names
 ).sort_values(ascending=True)
 
 # %%
-ax = importances.plot.box(vert=False, whis=10)
+ax = mdi_importances.plot.box(vert=False, whis=10)
 ax.set_title("Permutation Importances (test set)")
 ax.axvline(x=0, color="k", linestyle="--")
 ax.set_xlabel("Decrease in accuracy score")
