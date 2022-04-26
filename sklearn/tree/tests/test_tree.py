@@ -61,7 +61,7 @@ from sklearn import datasets
 from sklearn.utils import compute_sample_weight
 
 
-CLF_CRITERIONS = ("gini", "entropy")
+CLF_CRITERIONS = ("gini", "log_loss")
 REG_CRITERIONS = ("squared_error", "absolute_error", "friedman_mse", "poisson")
 
 CLF_TREES = {
@@ -2181,16 +2181,41 @@ def test_decision_tree_regressor_sample_weight_consistency(criterion):
     assert_allclose(tree1.predict(X), tree2.predict(X))
 
 
-# TODO: Remove in v1.2
-@pytest.mark.parametrize("Tree", REG_TREES.values())
+@pytest.mark.parametrize("Tree", [DecisionTreeClassifier, ExtraTreeClassifier])
+@pytest.mark.parametrize("n_classes", [2, 4])
+def test_criterion_entropy_same_as_log_loss(Tree, n_classes):
+    """Test that criterion=entropy gives same as log_loss."""
+    n_samples, n_features = 50, 5
+    X, y = datasets.make_classification(
+        n_classes=n_classes,
+        n_samples=n_samples,
+        n_features=n_features,
+        n_informative=n_features,
+        n_redundant=0,
+        random_state=42,
+    )
+    tree_log_loss = Tree(criterion="log_loss", random_state=43).fit(X, y)
+    tree_entropy = Tree(criterion="entropy", random_state=43).fit(X, y)
+
+    assert_tree_equal(
+        tree_log_loss.tree_,
+        tree_entropy.tree_,
+        f"{Tree!r} with criterion 'entropy' and 'log_loss' gave different trees.",
+    )
+    assert_allclose(tree_log_loss.predict(X), tree_entropy.predict(X))
+
+
 @pytest.mark.parametrize(
-    "old_criterion, new_criterion",
+    "old_criterion, new_criterion, Tree",
     [
-        ("mse", "squared_error"),
-        ("mae", "absolute_error"),
+        # TODO(1.2): Remove "mse" and "mae"
+        ("mse", "squared_error", DecisionTreeRegressor),
+        ("mse", "squared_error", ExtraTreeRegressor),
+        ("mae", "absolute_error", DecisionTreeRegressor),
+        ("mae", "absolute_error", ExtraTreeRegressor),
     ],
 )
-def test_criterion_deprecated(Tree, old_criterion, new_criterion):
+def test_criterion_deprecated(old_criterion, new_criterion, Tree):
     tree = Tree(criterion=old_criterion)
 
     with pytest.warns(
