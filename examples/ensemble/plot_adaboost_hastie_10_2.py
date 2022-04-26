@@ -115,7 +115,7 @@ for i, y_pred in enumerate(ada_real.staged_predict(X_train)):
 
 # %%
 # Plotting the results
-# ---------------------------------------------------
+# --------------------
 # Finally, we plot the train and test errors of our baselines
 # and of the discrete and real AdaBoost classifiers
 
