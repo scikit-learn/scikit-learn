@@ -122,7 +122,6 @@ ax = fig.add_subplot(111)
 ax.plot([1, n_estimators], [dt_stump_err] * 2, "k-", label="Decision Stump Error")
 ax.plot([1, n_estimators], [dt_err] * 2, "k--", label="Decision Tree Error")
 
-
 ax.plot(
     np.arange(n_estimators) + 1,
     ada_discrete_err,
