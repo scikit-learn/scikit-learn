@@ -118,7 +118,7 @@ Changelog
   can respectively be up to ×20 and ×5 faster than previously.
 
   :pr:`21987`, :pr:`22064`, :pr:`22065`, :pr:`22288` and :pr:`22320`
-  by :user:`Julien Jerphanion <jjerphan>`
+  by :user:`Julien Jerphanion <jjerphan>`.
 
 - |Enhancement| All scikit-learn models now generate a more informative
   error message when some input contains unexpected `NaN` or infinite values.
@@ -134,12 +134,6 @@ Changelog
 - |Enhancement| Removes random unique identifiers in the HTML representation.
   With this change, jupyter notebooks are reproducible as long as the cells are
   run in the same order. :pr:`23098` by `Thomas Fan`_.
-
-- |Fix| Panda's DataFrames with all non-string columns such as a MultiIndex no
-  longer warns when passed into an Estimator. Estimators will continue to
-  ignore the column names in DataFrames with non-string columns. For
-  `feature_names_in_` to be defined, columns must be all strings. :pr:`22410` by
-  `Thomas Fan`_.
 
 - |Fix| Estimators with `non_deterministic` tag set to `True` will skip both
   `check_methods_sample_order_invariance` and `check_methods_subset_invariance` tests.
@@ -185,10 +179,6 @@ Changelog
   to add this information to the plot.
   :pr:`21038` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-- |Fix| :func:`calibration.calibration_curve` changed handling of bin
-  edges slightly, which might result in a different output curve given the same
-  data.
-
 - |Fix| :func:`calibration.calibration_curve` handles bin edges more consistently now.
   :pr:`14975` by `Andreas Müller`_ and :pr:`22526` by :user:`Meekail Zain <micky774>`.
 
@@ -225,12 +215,6 @@ Changelog
   `-1` and the original warning message is shown.
   :pr:`22217` by :user:`Meekail Zain <micky774>`.
 
-- |Efficiency| :class:`cluster.KMeans` now defaults to ``algorithm="lloyd"``
-  instead of ``algorithm="auto"``, which was equivalent to
-  ``algorithm="elkan"``. Lloyd's algorithm and Elkan's algorithm converge to the
-  same solution, up to numerical rounding errors, but in general Lloyd's
-  algorithm uses much less memory, and it is often faster.
-
 - |Efficiency| In :class:`cluster.KMeans`, the default ``algorithm`` is now
   ``"lloyd"`` which is the full classical EM-style algorithm. Both ``"auto"``
   and ``"full"`` are deprecated and will be removed in version 1.3. They are
@@ -252,7 +236,7 @@ Changelog
 - |Fix| :term:`get_feature_names_out` functionality in
   :class:`compose.ColumnTransformer` was broken when columns were specified
   using `slice`. This is fixed in :pr:`22775` and :pr:`22913` by
-  :user:`randomgeek78 <randomgeek78>`
+  :user:`randomgeek78 <randomgeek78>`.
 
 :mod:`sklearn.covariance`
 .........................
@@ -338,8 +322,8 @@ Changelog
   :pr:`22002` by :user:`Takeshi Oura <takoika>`.
 
 - |Enhancement| :class:`decomposition.PCA` exposes a parameter `n_oversamples` to tune
-  :func:`sklearn.decomposition.randomized_svd` and
-  get accurate results when the number of features is large.
+  :func:`decomposition.randomized_svd` and get accurate results when the number of
+  features is large.
   :pr:`21109` by :user:`Smile <x-shadow-man>`.
 
 - |Enhancement| The :class:`decomposition.MiniBatchDictionaryLearning` and
@@ -362,29 +346,29 @@ Changelog
   preserve dtype for `numpy.float32`.
   :pr:`22111` by :user:`Takeshi Oura <takoika>`.
 
-- |Enhancement| :class:`decomposition.TruncatedSVD` now allows n_components == n_features, if
-  `algorithm='randomized'`.
+- |Enhancement| :class:`decomposition.TruncatedSVD` now allows
+  `n_components == n_features`, if `algorithm='randomized'`.
   :pr:`22181` by :user:`Zach Deane-Mayer <zachmayer>`.
 
 - |Enhancement| Adds :term:`get_feature_names_out` to all transformers in the
   :mod:`~sklearn.decomposition` module:
-  :class:`~sklearn.decomposition.DictionaryLearning`,
-  :class:`~sklearn.decomposition.FactorAnalysis`,
-  :class:`~sklearn.decomposition.FastICA`,
-  :class:`~sklearn.decomposition.IncrementalPCA`,
-  :class:`~sklearn.decomposition.KernelPCA`,
-  :class:`~sklearn.decomposition.LatentDirichletAllocation`,
-  :class:`~sklearn.decomposition.MiniBatchDictionaryLearning`,
-  :class:`~sklearn.decomposition.MiniBatchSparsePCA`,
-  :class:`~sklearn.decomposition.NMF`,
-  :class:`~sklearn.decomposition.PCA`,
-  :class:`~sklearn.decomposition.SparsePCA`,
-  and :class:`~sklearn.decomposition.TruncatedSVD`. :pr:`21334` by
+  :class:`decomposition.DictionaryLearning`,
+  :class:`decomposition.FactorAnalysis`,
+  :class:`decomposition.FastICA`,
+  :class:`decomposition.IncrementalPCA`,
+  :class:`decomposition.KernelPCA`,
+  :class:`decomposition.LatentDirichletAllocation`,
+  :class:`decomposition.MiniBatchDictionaryLearning`,
+  :class:`decomposition.MiniBatchSparsePCA`,
+  :class:`decomposition.NMF`,
+  :class:`decomposition.PCA`,
+  :class:`decomposition.SparsePCA`,
+  and :class:`decomposition.TruncatedSVD`. :pr:`21334` by
   `Thomas Fan`_.
 
 - |Enhancement| :class:`decomposition.TruncatedSVD` exposes the parameter
   `n_oversamples` and `power_iteration_normalizer` to tune
-  :func:`sklearn.decomposition.randomized_svd` and
+  :func:`decomposition.randomized_svd` and
   get accurate results when the number of features is large, the rank of
   the matrix is high, or other features of the matrix make low rank
   approximation difficult.
@@ -392,7 +376,7 @@ Changelog
 
 - |Enhancement| :class:`decomposition.PCA` exposes the parameter
   `power_iteration_normalizer` to tune
-  :func:`sklearn.decomposition.randomized_svd` and
+  :func:`decomposition.randomized_svd` and
   get more accurate results when low rank approximation is difficult.
   :pr:`21705` by :user:`Jay S. Stanley III <stanleyjs>`.
 
@@ -404,13 +388,12 @@ Changelog
 - |Fix| :class:`decomposition.FastICA` now accepts `np.float32` data without
   silent upcasting. The dtype is preserved by `fit` and `fit_transform` and the
   main fitted attributes use a dtype of the same precision as the training
-  data. :pr:`22806` by :user:`Jihane Bennis <JihaneBennis>` and :user:`Olivier
-  Grisel <ogrisel>`.
+  data. :pr:`22806` by :user:`Jihane Bennis <JihaneBennis>` and
+  :user:`Olivier Grisel <ogrisel>`.
 
 - |Fix| :class:`decomposition.FactorAnalysis` now validates input parameters
   in `fit` instead of `__init__`.
-  :pr:`21713` by :user:`Haya <HayaAlmutairi>` and
-  :user:`Krum Arnaudov <krumeto>`.
+  :pr:`21713` by :user:`Haya <HayaAlmutairi>` and :user:`Krum Arnaudov <krumeto>`.
 
 - |Fix| :class:`decomposition.KernelPCA` now validates input parameters in
   `fit` instead of `__init__`.
@@ -419,8 +402,7 @@ Changelog
 - |Fix| :class:`decomposition.PCA` and :class:`decomposition.IncrementalPCA`
   more safely calculate precision using the inverse of the covariance matrix
   if `self.noise_variance_` is zero.
-  :pr:`22300` by :user:`Meekail Zain <micky774>` and :pr:`15948` by
-  :user:`sysuresh`.
+  :pr:`22300` by :user:`Meekail Zain <micky774>` and :pr:`15948` by :user:`sysuresh`.
 
 - |Fix| Greatly reduced peak memory usage in :class:`decomposition.PCA` when
   calling `fit` or `fit_transform`.
@@ -457,17 +439,6 @@ Changelog
   :class:`ensemble.HistGradientBoostingRegressor` for modelling quantiles.
   The quantile level can be specified with the new parameter `quantile`.
   :pr:`21800` and :pr:`20567` by :user:`Christian Lorentzen <lorentzenchr>`.
-
-- |Efficiency| Fitting :class:`tree.DecisionTreeClassifier`,
-  :class:`tree.DecisionTreeRegressor`,
-  :class:`ensemble.RandomForestClassifier`,
-  :class:`ensemble.RandomForestRegressor`,
-  :class:`ensemble.GradientBoostingClassifier`, and
-  :class:`ensemble.GradientBoostingRegressor` is on average 15% faster than in
-  previous versions thanks to a new sort algorithm to find the best split.
-  Models might be different because of a different handling of splits
-  with tied criterion values: both the old and the new sorting algorithm
-  are unstable sorting algorithms. :pr:`22868` by `Thomas Fan`_.
 
 - |Efficiency| :meth:`fit` of :class:`ensemble.BaseGradientBoosting` now
   calls :func:`check_array` with parameter `force_all_finite=False` for non
@@ -510,7 +481,7 @@ Changelog
 - |Fix| Change the parameter `validation_fraction` in
   :class:`ensemble.BaseGradientBoosting` so that an error is raised if anything
   other than a float is passed in as an argument.
-  :pr:`21632` by :user:`Genesis Valencia <genvalen>`
+  :pr:`21632` by :user:`Genesis Valencia <genvalen>`.
 
 - |Fix| Removed a potential source of CPU oversubscription in
   :class:`ensemble.HistGradientBoostingClassifier` and
@@ -571,7 +542,7 @@ Changelog
   `max_features_` which is inferred from `max_features` and the data during
   `fit`. If `max_features` is an integer, then `max_features_ = max_features`.
   If `max_features` is a callable, then `max_features_ = max_features(X)`.
-  :pr:`22356` by :user:`Meekail Zain <micky774>`
+  :pr:`22356` by :user:`Meekail Zain <micky774>`.
 
 - |Enhancement| :class:`feature_selection.GenericUnivariateSelect` preserves
   float32 dtype. :pr:`18482` by :user:`Thierry Gameiro <titigmr>`
@@ -592,17 +563,11 @@ Changelog
 - |Efficiency| Reduced memory usage of :func:`feature_selection.chi2`.
   :pr:`21837` by :user:`Louis Wagner <lrwagner>`.
 
-- |Fix| :func:`feature_selection.f_regression` and
-  :func:`feature_selection.r_regression` will now returned finite score by
-  default instead of `np.nan` and `np.inf` for some corner case. You can use
-  `force_finite=False` if you really want to get non-finite values and keep
-  the old behavior.
-
 :mod:`sklearn.gaussian_process`
 ...............................
 
 - |Fix| `predict` and `sample_y` methods of
-  :class:`sklearn.gaussian_process.GaussianProcessRegressor` now return
+  :class:`gaussian_process.GaussianProcessRegressor` now return
   arrays of the correct shape in single-target and multi-target cases, and for
   both `normalize_y=False` and `normalize_y=True`.
   :pr:`22199` by :user:`Guillaume Lemaitre <glemaitre>`,
@@ -694,7 +659,7 @@ Changelog
   :user:`Christian Lorentzen <lorentzenchr>`.
 
 - |Enhancement| :class:`linear_model.GammaRegressor`,
-  :class:`~linear_model.PoissonRegressor` and :class:`linear_model.TweedieRegressor`
+  :class:`linear_model.PoissonRegressor` and :class:`linear_model.TweedieRegressor`
   are faster for ``solvers="lbfgs"``.
   :pr:`22548`, :pr:`21808` and :pr:`20567` by
   :user:`Christian Lorentzen <lorentzenchr>`.
@@ -831,7 +796,7 @@ Changelog
   of :func:`metrics.d2_pinball_score` with a fixed quantile parameter `alpha=0.5`
   for ease of use and discovery. The :math:`D^2` scores are generalizations
   of the `r2_score` and can be interpeted as the fraction of deviance explained.
-  :pr:`22118` by :user:`Ohad Michel <ohadmich>`
+  :pr:`22118` by :user:`Ohad Michel <ohadmich>`.
 
 - |Enhancement| :func:`metrics.top_k_accuracy_score` raises an improved error
   message when `y_true` is binary and `y_score` is 2d. :pr:`22284` by `Thomas Fan`_.
@@ -944,7 +909,7 @@ Changelog
 - |Fix| :func:`neighbors.KNeighborsRegressor.predict` now works properly when
   given an array-like input if `KNeighborsRegressor` is first constructed with a
   callable passed to the `weights` parameter. :pr:`22687` by
-  :user:`Meekail Zain <micky774>`
+  :user:`Meekail Zain <micky774>`.
 
 :mod:`sklearn.neural_network`
 .............................
@@ -1006,9 +971,6 @@ Changelog
   :class:`preprocessing.KernelCenterer`,
   :class:`preprocessing.OrdinalEncoder`, and
   :class:`preprocessing.Binarizer`. :pr:`21079` by `Thomas Fan`_.
-
-- |Fix| :class:`preprocessing.KBinsDiscretizer` changed handling of bin edges
-  slightly, which might result in a different encoding with the same data.
 
 - |Fix| :class:`preprocessing.PowerTransformer` with `method='yeo-johnson'`
   better supports significantly non-Gaussian data when searching for an optimal
@@ -1143,14 +1105,6 @@ Changelog
 - |API| :func:`utils.metaestimators.if_delegate_has_method` is deprecated and will be
   removed in version 1.3. Use :func:`utils.metaestimators.available_if` instead.
   :pr:`22830` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
-
-Multiple modules
-................
-
-- |Fix| The eigenvectors initialization for :class:`cluster.SpectralClustering`
-  and :class:`manifold.SpectralEmbedding` now samples from a Gaussian when
-  using the `'amg'` or `'lobpcg'` solver. This change  improves numerical
-  stability of the solver, but may result in a different model.
 
 Code and Documentation Contributors
 -----------------------------------
