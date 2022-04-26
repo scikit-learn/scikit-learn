@@ -146,10 +146,11 @@ mdi_importance = pd.Series(
 ).sort_values(ascending=True)
 
 # %%
-mdi_importance.plot.barh()
-plt.title("Random Forest Feature Importances (MDI)")
-plt.xlabel("Mean decrease in impurity")
-plt.tight_layout()
+ax = importances.plot.box(vert=False, whis=10)
+ax.set_title("Permutation Importances (test set)")
+ax.axvline(x=0, color="k", linestyle="--")
+ax.set_xlabel("Decrease in accuracy score")
+ax.figure.tight_layout()
 
 # %%
 # As an alternative, the permutation importances of ``rf`` are computed on a
@@ -171,11 +172,11 @@ importances = pd.DataFrame(
     result.importances[sorted_importances_idx].T,
     columns=X.columns[sorted_importances_idx],
 )
-importances.plot.box(vert=False, whis=10)
-plt.title("Permutation Importances (test set)")
-plt.axvline(x=0, color="k", linestyle="--")
-plt.xlabel("Decrease in accuracy score")
-plt.tight_layout()
+ax = importances.plot.box(vert=False, whis=10)
+ax.set_title("Permutation Importances (test set)")
+ax.axvline(x=0, color="k", linestyle="--")
+ax.set_xlabel("Decrease in accuracy score")
+ax.figure.tight_layout()
 
 # %%
 # It is also possible to compute the permutation importances on the training
@@ -192,11 +193,11 @@ importances = pd.DataFrame(
     result.importances[sorted_importances_idx].T,
     columns=X.columns[sorted_importances_idx],
 )
-importances.plot.box(vert=False, whis=10)
-plt.title("Permutation Importances (train set)")
-plt.axvline(x=0, color="k", linestyle="--")
-plt.xlabel("Decrease in accuracy score")
-plt.tight_layout()
+ax = importances.plot.box(vert=False, whis=10)
+ax.set_title("Permutation Importances (train set)")
+ax.axvline(x=0, color="k", linestyle="--")
+ax.set_xlabel("Decrease in accuracy score")
+ax.figure.tight_layout()
 
 # %%
 # We can further retry the experiment by limiting the capacity of the trees
@@ -235,7 +236,7 @@ for name, importances in zip(["train", "test"], [train_importances, test_importa
     ax.set_title(f"Permutation Importances ({name} set)")
     ax.set_xlabel("Decrease in accuracy score")
     ax.axvline(x=0, color="k", linestyle="--")
-    plt.tight_layout()
+    ax.figure.tight_layout()
 
 # %%
 # Now, we can observe that on both sets, the `random_num` and `random_cat`
