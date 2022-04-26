@@ -1,6 +1,7 @@
 import re
 import pytest
 import numpy as np
+import warnings
 from unittest.mock import Mock
 
 from sklearn.utils._testing import assert_array_almost_equal
@@ -536,6 +537,7 @@ def test_estimator_does_not_support_feature_names():
     feature_names_out = set(selector.get_feature_names_out())
     assert feature_names_out < all_feature_names
 
-    with pytest.warns(None) as records:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
+
         selector.transform(X.iloc[1:3])
-    assert not [w.message for w in records]

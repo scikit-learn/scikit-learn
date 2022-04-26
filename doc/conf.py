@@ -91,7 +91,7 @@ source_suffix = ".rst"
 # source_encoding = 'utf-8'
 
 # The main toctree document.
-main_doc = "contents"
+root_doc = "contents"
 
 # General information about the project.
 project = "scikit-learn"
@@ -253,6 +253,9 @@ redirects = {
         "auto_examples/model_selection/plot_permutation_tests_for_classification"
     ),
     "modules/model_persistence": "model_persistence",
+    "auto_examples/linear_model/plot_bayesian_ridge": (
+        "auto_examples/linear_model/plot_ard"
+    ),
 }
 html_context["redirects"] = redirects
 for old_link in redirects:
