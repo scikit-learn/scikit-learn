@@ -311,14 +311,10 @@ class DecisionBoundaryDisplay:
             # TODO: Support pos_label
             response = response[:, 1]
 
-        if xlabel is not None:
-            xlabel = xlabel
-        else:
+        if xlabel is None:
             xlabel = X.columns[0] if hasattr(X, "columns") else ""
 
-        if ylabel is not None:
-            ylabel = ylabel
-        else:
+        if ylabel is None:
             ylabel = X.columns[1] if hasattr(X, "columns") else ""
 
         display = DecisionBoundaryDisplay(
