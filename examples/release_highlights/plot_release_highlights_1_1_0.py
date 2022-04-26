@@ -161,3 +161,37 @@ pd.DataFrame(encoded, columns=enc.get_feature_names_out())
 # - :class:`linear_model.GammaRegressor`
 # - :class:`linear_model.PoissonRegressor`
 # - :class:`linear_model.TweedieRegressor`
+
+# %%
+# MiniBatchNMF
+# ------------
+# The new class :class:`decomposition.MiniBatchNMF` implements an online version of
+# non-negative matrix factorization (:class:`decomposition.NMF`).
+
+# %%
+# BisectingKMeans
+# ---------------
+# The new class :class:`cluster.BisectingKMeans` is a variant of :class:`KMeans`, using
+# divisive hierarchical clustering. Instead of creating all centroids at once, centroids
+# are picked progressively based on a previous clustering: a cluster is split into two
+# new clusters repeatedly until the target number of clusters is reached, giving a
+# hierarchical structure to the clustering.
+from sklearn.datasets import make_blobs
+from sklearn.cluster import KMeans, BisectingKMeans
+import matplotlib.pyplot as plt
+
+X, _ = make_blobs(n_samples=1000, centers=2, random_state=0)
+
+km = KMeans(n_clusters=5, random_state=0).fit(X)
+bisect_km = BisectingKMeans(n_clusters=5, random_state=0).fit(X)
+
+fig, ax = plt.subplots(1, 2, figsize=(10, 5))
+ax[0].scatter(X[:,0], X[:,1], s=10, c=km.labels_)
+ax[0].scatter(km.cluster_centers_[:,0], km.cluster_centers_[:,1], s=20, c="r")
+ax[0].set_title("KMeans")
+
+ax[1].scatter(X[:,0], X[:,1], s=10, c=bisect_km.labels_)
+ax[1].scatter(
+    bisect_km.cluster_centers_[:,0], bisect_km.cluster_centers_[:,1], s=20, c="r"
+)
+ax[1].set_title("BisectingKMeans")
