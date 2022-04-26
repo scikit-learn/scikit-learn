@@ -22,7 +22,7 @@ whereas real SAMME.R uses the predicted class probabilities.
 
 # %%
 # Preparing the data and baseline models
-# ---------------------------------------------------
+# --------------------------------------
 # We start by generating the binary classification dataset
 # used in Hastie et al. 2009, Example 10.2.
 
