@@ -279,7 +279,6 @@ Changelog
   specific shape for `coef_` (e.g. :class:`feature_selection.RFE`).
   :pr:`22016` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-<<<<<<< HEAD
 - |API| add the fitted attribute `intercept_` to
   :class:`cross_decomposition.PLSCanonical`,
   :class:`cross_decomposition.PLSRegression`, and
@@ -287,8 +286,6 @@ Changelog
   `Y = X @ coef_ + intercept_`.
   :pr:`22015` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-=======
->>>>>>> 4942ba76eb (MAINT Sort and clean-up whats new 1.1 (#23216))
 :mod:`sklearn.datasets`
 .......................
 
@@ -500,12 +497,9 @@ Changelog
   `warm_start` enabled.
   :pr:`22106` by :user:`Pieter Gijsbers <PGijsbers>`.
 
-<<<<<<< HEAD
 - |Efficiency| Improve runtime performance of :class:`ensemble.IsolationForest`
   by skipping repetitive input checks. :pr:`23149` by :user:`Zhehao Liu <MaxwellLZH>`.
 
-=======
->>>>>>> 4942ba76eb (MAINT Sort and clean-up whats new 1.1 (#23216))
 - |Fix| Change the parameter `validation_fraction` in
   :class:`ensemble.GradientBoostingClassifier` and
   :class:`ensemble.GradientBoostingRegressor` so that an error is raised if anything
@@ -774,13 +768,10 @@ Changelog
   of sample weights when the input is sparse.
   :pr:`22899` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
-<<<<<<< HEAD
 - |Fix| :class:`linear_model.SGDRegressor` and :class:`linear_model.SGDClassifier` now
   computes the validation error correctly when early stopping is enabled.
   :pr:`23256` by :user:`Zhehao Liu <MaxwellLZH>`.
 
-=======
->>>>>>> 4942ba76eb (MAINT Sort and clean-up whats new 1.1 (#23216))
 - |API| :class:`linear_model.LassoLarsIC` now exposes `noise_variance` as
   a parameter in order to provide an estimate of the noise variance.
   This is particularly relevant when `n_features > n_samples` and the
