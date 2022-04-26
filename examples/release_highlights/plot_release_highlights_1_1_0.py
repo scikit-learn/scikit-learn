@@ -96,6 +96,7 @@ import pandas as pd
 
 log_reg_input_features = log_reg[:-1].get_feature_names_out()
 pd.Series(log_reg[-1].coef_.ravel(), index=log_reg_input_features).plot.bar()
+plt.tight_layout()
 
 
 # %%
@@ -163,8 +164,8 @@ pd.DataFrame(encoded, columns=enc.get_feature_names_out())
 # - :class:`linear_model.TweedieRegressor`
 
 # %%
-# MiniBatchNMF
-# ------------
+# MiniBatchNMF: an online version of NMF
+# --------------------------------------
 # The new class :class:`decomposition.MiniBatchNMF` implements a faster but less
 # accurate version of non-negative matrix factorization (:class:`decomposition.NMF`).
 # :class:`MiniBatchNMF` divides the data into mini-batches and optimizes the NMF model
@@ -190,12 +191,14 @@ W = nmf.transform(X)
 H = nmf.components_
 X_reconstructed = W @ H
 
-# relative reconstruction error
-np.sum((X - X_reconstructed) ** 2) / np.sum(X**2)
+print(
+      f"relative reconstruction error: ",
+      f"{np.sum((X - X_reconstructed) ** 2) / np.sum(X**2):.5f}"
+)
 
 # %%
-# BisectingKMeans
-# ---------------
+# BisectingKMeans: divide and cluster
+# -----------------------------------
 # The new class :class:`cluster.BisectingKMeans` is a variant of :class:`KMeans`, using
 # divisive hierarchical clustering. Instead of creating all centroids at once, centroids
 # are picked progressively based on a previous clustering: a cluster is split into two
@@ -219,4 +222,4 @@ ax[1].scatter(X[:, 0], X[:, 1], s=10, c=bisect_km.labels_)
 ax[1].scatter(
     bisect_km.cluster_centers_[:, 0], bisect_km.cluster_centers_[:, 1], s=20, c="r"
 )
-ax[1].set_title("BisectingKMeans")
+_ = ax[1].set_title("BisectingKMeans")
