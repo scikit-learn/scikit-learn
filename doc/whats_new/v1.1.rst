@@ -315,7 +315,7 @@ Changelog
 - |MajorFeature| Added a new estimator :class:`decomposition.MiniBatchNMF`. It is a
   faster but less accurate version of non-negative matrix factorization, better suited
   for large datasets. :pr:`16948` by :user:`Chiara Marmo <cmarmo>`,
-  :user:`Patricio Cerda <pcerda>` and :user:`Jérémie du Boisberranger <jeremiedbb>`. 
+  :user:`Patricio Cerda <pcerda>` and :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 - |Enhancement| :func:`decomposition.dict_learning`,
   :func:`decomposition.dict_learning_online`
