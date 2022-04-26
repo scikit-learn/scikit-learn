@@ -191,11 +191,10 @@ Changelog
 :mod:`sklearn.cluster`
 ......................
 
-- |Enhancement| :class:`cluster.SpectralClustering` and :func:`cluster.spectral`
-  now include the new `'cluster_qr'` method from :func:`cluster.cluster_qr`
-  that clusters samples in the embedding space as an alternative to the existing
-  `'kmeans'` and `'discrete'` methods.
-  See :func:`cluster.spectral_clustering` for more details.
+- |Enhancement| :class:`cluster.SpectralClustering` and
+  :func:`cluster.spectral_clustering` now include the new `'cluster_qr'` method that
+  clusters samples in the embedding space as an alternative to the existing `'kmeans'`
+  and `'discrete'` methods. See :func:`cluster.spectral_clustering` for more details.
   :pr:`21148` by :user:`Andrew Knyazev <lobpcg>`.
 
 - |Enhancement| Adds :term:`get_feature_names_out` to :class:`cluster.Birch`,
@@ -250,6 +249,11 @@ Changelog
 
 - |Enhancement| :func:`cross_decomposition._PLS.inverse_transform` now allows
   reconstruction of a `X` target when a `Y` parameter is given. :pr:`19680` by
+  :user:`Robin Thibaut <robinthibaut>`.
+- |Enhancement| the `inverse_transform` method of
+  :class:`cross_decomposition.PLSRegression`, :class:`cross_decomposition.PLSCanonical`
+  and :class:`cross_decomposition.CCA` now allows reconstruction of a `X` target when
+  a `Y` parameter is given. :pr:`19680` by
   :user:`Robin Thibaut <robinthibaut>`.
 
 - |Enhancement| Adds :term:`get_feature_names_out` to all transformers in the
@@ -317,12 +321,12 @@ Changelog
   :func:`decomposition.dict_learning_online`
   and :func:`decomposition.sparse_encode` preserve dtype for `numpy.float32`.
   :class:`decomposition.DictionaryLearning`,
-  :class:`decompsition.MiniBatchDictionaryLearning`
+  :class:`decomposition.MiniBatchDictionaryLearning`
   and :class:`decomposition.SparseCoder` preserve dtype for `numpy.float32`.
   :pr:`22002` by :user:`Takeshi Oura <takoika>`.
 
 - |Enhancement| :class:`decomposition.PCA` exposes a parameter `n_oversamples` to tune
-  :func:`decomposition.randomized_svd` and get accurate results when the number of
+  :func:`utils.randomized_svd` and get accurate results when the number of
   features is large.
   :pr:`21109` by :user:`Smile <x-shadow-man>`.
 
@@ -369,16 +373,13 @@ Changelog
   `Thomas Fan`_.
 
 - |Enhancement| :class:`decomposition.TruncatedSVD` exposes the parameter
-  `n_oversamples` and `power_iteration_normalizer` to tune
-  :func:`decomposition.randomized_svd` and
-  get accurate results when the number of features is large, the rank of
-  the matrix is high, or other features of the matrix make low rank
-  approximation difficult.
+  `n_oversamples` and `power_iteration_normalizer` to tune :func:`utils.randomized_svd`
+  and get accurate results when the number of features is large, the rank of the matrix
+  is high, or other features of the matrix make low rank approximation difficult.
   :pr:`21705` by :user:`Jay S. Stanley III <stanleyjs>`.
 
 - |Enhancement| :class:`decomposition.PCA` exposes the parameter
-  `power_iteration_normalizer` to tune
-  :func:`decomposition.randomized_svd` and
+  `power_iteration_normalizer` to tune :func:`utils.randomized_svd` and
   get more accurate results when low rank approximation is difficult.
   :pr:`21705` by :user:`Jay S. Stanley III <stanleyjs>`.
 
@@ -425,7 +426,7 @@ Changelog
 
 - |Fix| :class:`discriminant_analysis.LinearDiscriminantAnalysis` now uses
   the correct variance-scaling coefficient which may result in different model
-  behavior.:pr:`15984` by :user:`Okon Samuel <OkonSamuel>` :pr:`22696` by
+  behavior. :pr:`15984` by :user:`Okon Samuel <OkonSamuel>` and :pr:`22696` by
   :user:`Meekail Zain <micky774>`.
 
 :mod:`sklearn.dummy`
@@ -442,9 +443,10 @@ Changelog
   The quantile level can be specified with the new parameter `quantile`.
   :pr:`21800` and :pr:`20567` by :user:`Christian Lorentzen <lorentzenchr>`.
 
-- |Efficiency| :meth:`fit` of :class:`ensemble.BaseGradientBoosting` now
-  calls :func:`check_array` with parameter `force_all_finite=False` for non
-  initial warm-start runs as it has already been checked before.
+- |Efficiency| :meth:`fit` of :class:`ensemble.GradientBoostingClassifier`
+  and :class:`ensemble.GradientBoostingRegressor` now calls :func:`check_array` with
+  parameter `force_all_finite=False` for non initial warm-start runs as it has already 
+  been checked before.
   :pr:`22159` by :user:`Geoffrey Paris <Geoffrey-Paris>`.
 
 - |Enhancement| :class:`ensemble.HistGradientBoostingClassifier` is faster,
@@ -481,7 +483,8 @@ Changelog
   :pr:`22106` by :user:`Pieter Gijsbers <PGijsbers>`.
 
 - |Fix| Change the parameter `validation_fraction` in
-  :class:`ensemble.BaseGradientBoosting` so that an error is raised if anything
+  :class:`ensemble.GradientBoostingClassifier` and
+  :class:`ensemble.GradientBoostingRegressor` so that an error is raised if anything
   other than a float is passed in as an argument.
   :pr:`21632` by :user:`Genesis Valencia <genvalen>`.
 
@@ -531,9 +534,8 @@ Changelog
 :mod:`sklearn.feature_selection`
 ................................
 
-- |Feature| Added auto mode to
-  :class:`feature_selection.SequentialFeatureSelection`. If the argument
-  `n_features_to_select` is `'auto'`, select features until the score
+- |Feature| Added auto mode to :class:`feature_selection.SequentialFeatureSelector`.
+  If the argument `n_features_to_select` is `'auto'`, select features until the score
   improvement does not exceed the argument `tol`. The default value of
   `n_features_to_select` changed from `None` to `'warn'` in 1.1 and will become
   `'auto'` in 1.3. `None` and `'warn'` will be removed in 1.3. :pr:`20145` by
@@ -620,6 +622,13 @@ Changelog
   by setting the parameter `centered`.
   :pr:`18310` by :user:`Johannes Elfner <JoElfner>` and
   :user:`Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.isotonic`
+.......................
+
+- |Enhancement| Adds :term:`get_feature_names_out` to
+  :class:`isotonic.IsotonicRegression`.
+  :pr:`22249` by `Thomas Fan`_.
 
 :mod:`sklearn.kernel_approximation`
 ...................................
@@ -747,12 +756,6 @@ Changelog
   estimator of the noise variance cannot be computed.
   :pr:`21481` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-:mod:`sklearn.isotonic`
-.......................
-
-- |Enhancement| Adds :term:`get_feature_names_out` to `isotonic.IsotonicRegression`.
-  :pr:`22249` by `Thomas Fan`_.
-
 :mod:`sklearn.manifold`
 .......................
 
@@ -840,7 +843,7 @@ Changelog
   with SciPy 1.8 convention. :pr:`21873` by :user:`Yar Khine Phyo <yarkhinephyo>`.
 
 - |API| :class:`metrics.DistanceMetric` has been moved from
-  :mod:`sklearn.neighbors` to :mod:`sklearn.metric`.
+  :mod:`sklearn.neighbors` to :mod:`sklearn.metrics`.
   Using `neighbors.DistanceMetric` for imports is still valid for
   backward compatibility, but this alias will be removed in 1.3.
   :pr:`21177` by :user:`Julien Jerphanion <jjerphan>`.
@@ -860,7 +863,7 @@ Changelog
   :pr:`22058` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |Fix| :class:`mixture.GaussianMixture` now normalizes `weights_` more safely,
-  preventing rounding errors when calling :meth:`GaussianMixture.sample` with
+  preventing rounding errors when calling :meth:`mixture.GaussianMixture.sample` with
   `n_components=1`.
   :pr:`23034` by :user:`Meekail Zain <micky774>`.
 
@@ -986,10 +989,10 @@ Changelog
   now provides informative error message when input has mixed dtypes. :pr:`19916` by
   :user:`Zhehao Liu <MaxwellLZH>`.
 
-- |Fix| :class:`preprocessing.KBinDiscretizer` handles bin edges more consistently now.
+- |Fix| :class:`preprocessing.KBinsDiscretizer` handles bin edges more consistently now.
   :pr:`14975` by `Andreas Müller`_ and :pr:`22526` by :user:`Meekail Zain <micky774>`.
 
-- |Fix| Adds :meth:`preprocessing.KBinDiscretizer.get_feature_names_out` support when
+- |Fix| Adds :meth:`preprocessing.KBinsDiscretizer.get_feature_names_out` support when
   `encode="ordinal"`. :pr:`22735` by `Thomas Fan`_.
 
 :mod:`sklearn.random_projection`
@@ -1000,7 +1003,7 @@ Changelog
   :class:`random_projection.GaussianRandomProjection` and
   :class:`random_projection.SparseRandomProjection`. When the parameter is set
   to True, the pseudo-inverse of the components is computed during `fit` and stored as
-  `inverse_components_`. :pr:`21701` by `Aurélien Geron <ageron>`.
+  `inverse_components_`. :pr:`21701` by :user:`Aurélien Geron <ageron>`.
 
 - |Enhancement| :class:`random_projection.SparseRandomProjection` and
   :class:`random_projection.GaussianRandomProjection` preserves dtype for
@@ -1049,13 +1052,13 @@ Changelog
   default value `"auto"` has been deprecated and will be removed in version 1.3.
   Setting `max_features` to `"auto"` is also deprecated
   for :class:`tree.DecisionTreeClassifier` and :class:`tree.DecisionTreeRegressor`.
-  :pr:`22476` by :user: `Zhehao Liu <MaxwellLZH>`.
+  :pr:`22476` by :user:`Zhehao Liu <MaxwellLZH>`.
 
 :mod:`sklearn.utils`
 ....................
 
 - |Enhancement| :func:`utils.validation.check_array` and
-  :func:`utils.validation.type_of_target`now accept an `input_name` parameter to make
+  :func:`utils.validation.type_of_target` now accept an `input_name` parameter to make
   the error message more informative when passed invalid input data (e.g. with NaN or
   infinite values).
   :pr:`21219` by :user:`Olivier Grisel <ogrisel>`.
@@ -1095,7 +1098,7 @@ Changelog
 
 - |Fix| :func:`utils.check_scalar` raises an error when
   `include_boundaries={"left", "right"}` and the boundaries are not set.
-  :pr:`22027` by `Marie Lanternier <mlant>`.
+  :pr:`22027` by :user:`Marie Lanternier <mlant>`.
 
 - |Fix| :func:`utils.metaestimators.available_if` correctly returns a bounded
   method that can be pickled. :pr:`23077` by `Thomas Fan`_.
