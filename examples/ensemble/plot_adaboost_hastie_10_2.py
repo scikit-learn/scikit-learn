@@ -64,7 +64,7 @@ dt_err = 1.0 - dt.score(X_test, y_test)
 
 # %%
 # Adaboost with discrete SAMME and real SAMME.R
-# ---------------------------------------------------
+# ---------------------------------------------
 # We now define the discrete and real AdaBoost classifiers
 # and fit them to the training set.
 
