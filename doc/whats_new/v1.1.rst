@@ -137,7 +137,7 @@ Changelog
 
 - |Fix| Estimators with `non_deterministic` tag set to `True` will skip both
   `check_methods_sample_order_invariance` and `check_methods_subset_invariance` tests.
-  :pr:`22318` by `Zhehao Liu <MaxwellLZH>`.
+  :pr:`22318` by :user:`Zhehao Liu <MaxwellLZH>`.
 
 - |API| The option for using the log loss, aka binomial or multinomial deviance, via
   the `loss` parameters was made more consistent. The preferred way is by
@@ -162,7 +162,7 @@ Changelog
 - |API| Rich html representation of estimators is now enabled by default in Jupyter
   notebooks. It can be deactivated by setting `display='text'` in
   :func:`sklearn.set_config`.
-  :pr:`22856` by `Jérémie du Boisberranger <jeremiedbb>`.
+  :pr:`22856` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.calibration`
 ..........................
@@ -252,9 +252,6 @@ Changelog
 :mod:`sklearn.cross_decomposition`
 ..................................
 
-- |Enhancement| :func:`cross_decomposition._PLS.inverse_transform` now allows
-  reconstruction of a `X` target when a `Y` parameter is given. :pr:`19680` by
-  :user:`Robin Thibaut <robinthibaut>`.
 - |Enhancement| the `inverse_transform` method of
   :class:`cross_decomposition.PLSRegression`, :class:`cross_decomposition.PLSCanonical`
   and :class:`cross_decomposition.CCA` now allows reconstruction of a `X` target when
@@ -470,13 +467,13 @@ Changelog
   equivalent to `criterion="entropy"`.
   :pr:`23047` by :user:`Christian Lorentzen <lorentzenchr>`.
 
-- |Enhancement| Adds :meth:`get_feature_names_out` to
+- |Enhancement| Adds :term:`get_feature_names_out` to
   :class:`ensemble.VotingClassifier`, :class:`ensemble.VotingRegressor`,
   :class:`ensemble.StackingClassifier`, and
   :class:`ensemble.StackingRegressor`. :pr:`22695` and :pr:`22697`  by `Thomas Fan`_.
 
 - |Enhancement| :class:`ensemble.RandomTreesEmbedding` now has an informative
-  :func:`get_feature_names_out` function that includes both tree index and leaf index in
+  :term:`get_feature_names_out` function that includes both tree index and leaf index in
   the output feature names.
   :pr:`21762` by :user:`Zhehao Liu <MaxwellLZH>` and `Thomas Fan`_.
 
@@ -597,7 +594,7 @@ Changelog
 - |Enhancement| Added support for `pd.NA` in :class:`impute.SimpleImputer`.
   :pr:`21114` by :user:`Ying Xiong <yxiong>`.
 
-- |Enhancement| Adds :meth:`get_feature_names_out` to
+- |Enhancement| Adds :term:`get_feature_names_out` to
   :class:`impute.SimpleImputer`, :class:`impute.KNNImputer`,
   :class:`impute.IterativeImputer`, and :class:`impute.MissingIndicator`.
   :pr:`21078` by `Thomas Fan`_.
@@ -638,7 +635,7 @@ Changelog
 :mod:`sklearn.kernel_approximation`
 ...................................
 
-- |Enhancement| Adds :meth:`get_feature_names_out` to
+- |Enhancement| Adds :term:`get_feature_names_out` to
   :class:`kernel_approximation.AdditiveChi2Sampler`.
   :class:`kernel_approximation.Nystroem`,
   :class:`kernel_approximation.PolynomialCountSketch`,
@@ -773,7 +770,7 @@ Changelog
   preserve this dtype.
   :pr:`21534` by :user:`Andrew Knyazev <lobpcg>`.
 
-- |Enhancement| Adds `get_feature_names_out` to :class:`manifold.Isomap`
+- |Enhancement| Adds :term:`get_feature_names_out` to :class:`manifold.Isomap`
   and :class:`manifold.LocallyLinearEmbedding`. :pr:`22254` by `Thomas Fan`_.
 
 - |Enhancement| added `metric_params` to :class:`manifold.TSNE` constructor for
@@ -976,7 +973,7 @@ Changelog
   then `get_output_feature_names` is not defined.
   :pr:`21569` by :user:`Aurélien Geron <ageron>`.
 
-- |Enhancement| Adds :meth:`get_feature_names_out` to
+- |Enhancement| Adds :term:`get_feature_names_out` to
   :class:`preprocessing.Normalizer`,
   :class:`preprocessing.KernelCenterer`,
   :class:`preprocessing.OrdinalEncoder`, and
@@ -1003,9 +1000,8 @@ Changelog
 :mod:`sklearn.random_projection`
 ................................
 
-- |Enhancement| Adds an :meth:`inverse_transform` method and a
-  `compute_inverse_transform` parameter to
-  :class:`random_projection.GaussianRandomProjection` and
+- |Enhancement| Adds an `inverse_transform` method and a `compute_inverse_transform`
+  parameter to :class:`random_projection.GaussianRandomProjection` and
   :class:`random_projection.SparseRandomProjection`. When the parameter is set
   to True, the pseudo-inverse of the components is computed during `fit` and stored as
   `inverse_components_`. :pr:`21701` by :user:`Aurélien Geron <ageron>`.
