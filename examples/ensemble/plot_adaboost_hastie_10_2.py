@@ -166,7 +166,7 @@ plt.show()
 # %%
 #
 # Concluding remarks
-# ---------------------------------------------------
+# ------------------
 #
 # We observe that the performance on both train and test sets of real AdaBoost
 # is better than that of discrete AdaBoost
