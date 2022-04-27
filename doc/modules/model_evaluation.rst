@@ -1769,7 +1769,7 @@ likelihood ratios
 <https://en.wikipedia.org/wiki/Likelihood_ratios_in_diagnostic_testing>`_ for
 binary classes, which are further metrics derived from the
 :func:`confusion_matrix` and that can be interpreted in terms of the pre-test
-and post-test probabilities:
+and post-test odds:
 
 .. math::
 
@@ -1814,8 +1814,8 @@ the probability of a sample of the negative class being correctly classified:
 
    LR_- = \frac{\text{PR}(P-|T+)}{\text{PR}(P-|T-)}.
 
-Both class likelihood ratios are interpretable in terms of the pre-test and
-post-test odds via the simple linear relation
+**Interpretation across varying prevalence** Both class likelihood ratios are interpretable in terms of an odds ratio (pre-test and post-tests):
+```**
 
 .. math::
 
@@ -1833,7 +1833,7 @@ or equivalently
 
    \text{probability} = \frac{\text{odds}}{1 + \text{odds}}.
 
-The pre-test probability can be chosen to be the prevalence, i.e. the number of
+On a given population, the pre-test probability is given by the prevalence, i.e. the number of
 samples in the positive class divided by the total number of samples. By
 converting odds to probabilities, the likelihood ratios can be translated into a
 probability of truly belonging to either class before and after a classifier
