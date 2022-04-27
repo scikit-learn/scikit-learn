@@ -258,8 +258,6 @@ Changelog
 :mod:`sklearn.cross_decomposition`
 ..................................
 
-- |Enhancement| :func:`cross_decomposition._PLS.inverse_transform` now allows
-  reconstruction of a `X` target when a `Y` parameter is given. :pr:`19680` by
 - |Enhancement| the `inverse_transform` method of
   :class:`cross_decomposition.PLSRegression`, :class:`cross_decomposition.PLSCanonical`
   and :class:`cross_decomposition.CCA` now allows reconstruction of a `X` target when
