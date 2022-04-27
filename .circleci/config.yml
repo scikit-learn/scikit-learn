@@ -29,7 +29,7 @@ jobs:
           keys:
             - doc-min-deps-ccache-{{ .Branch }}
             - doc-min-deps-ccache
-      - run: ./build_tools/circle/build_doc.sh
+      - run: ./build_tools/github/build_doc.sh
       - save_cache:
           key: doc-min-deps-ccache-{{ .Branch }}-{{ .BuildNum }}
           paths:
@@ -76,7 +76,7 @@ jobs:
           keys:
             - doc-ccache-{{ .Branch }}
             - doc-ccache
-      - run: ./build_tools/circle/build_doc.sh
+      - run: ./build_tools/github/build_doc.sh
       - save_cache:
           key: doc-ccache-{{ .Branch }}-{{ .BuildNum }}
           paths:
@@ -159,9 +159,18 @@ jobs:
 
 workflows:
   version: 2
-  lint:
+  build-doc-and-deploy:
     jobs:
       - lint
+      - doc:
+          requires:
+            - lint
+      - doc-min-dependencies:
+          requires:
+            - lint
+      - deploy:
+          requires:
+            - doc
   linux-arm64:
     jobs:
       - linux-arm64
