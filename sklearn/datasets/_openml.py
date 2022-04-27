@@ -4,30 +4,21 @@ import os
 import shutil
 import hashlib
 from os.path import join
+import time
 from warnings import warn
 from contextlib import closing
 from functools import wraps
 from typing import Callable, Optional, Dict, Tuple, List, Any, Union
-import itertools
-from collections.abc import Generator
-from collections import OrderedDict
-from functools import partial
 from tempfile import TemporaryDirectory
-
 from urllib.request import urlopen, Request
+from urllib.error import HTTPError, URLError
 
 import numpy as np
-import scipy.sparse
 
 from ..externals import _arff
-from ..externals._arff import ArffSparseDataType, ArffContainerType
 from . import get_data_home
-from urllib.error import HTTPError
+from ._arff_parser import _liac_arff_parser
 from ..utils import Bunch
-from ..utils import is_scalar_nan
-from ..utils import get_chunk_n_rows
-from ..utils import _chunk_generator
-from ..utils import check_pandas_support  # noqa
 
 __all__ = ["fetch_openml"]
 
@@ -59,7 +50,7 @@ def _retry_with_clean_cache(openml_path: str, data_home: Optional[str]) -> Calla
                 return f(*args, **kw)
             try:
                 return f(*args, **kw)
-            except HTTPError:
+            except URLError:
                 raise
             except Exception:
                 warn("Invalid cache, redownloading file", RuntimeWarning)
@@ -73,7 +64,44 @@ def _retry_with_clean_cache(openml_path: str, data_home: Optional[str]) -> Calla
     return decorator
 
 
-def _open_openml_url(openml_path: str, data_home: Optional[str]):
+def _retry_on_network_error(
+    n_retries: int = 3, delay: float = 1.0, url: str = ""
+) -> Callable:
+    """If the function call results in a network error, call the function again
+    up to ``n_retries`` times with a ``delay`` between each call. If the error
+    has a 412 status code, don't call the function again as this is a specific
+    OpenML error.
+    The url parameter is used to give more information to the user about the
+    error.
+    """
+
+    def decorator(f):
+        @wraps(f)
+        def wrapper(*args, **kwargs):
+            retry_counter = n_retries
+            while True:
+                try:
+                    return f(*args, **kwargs)
+                except (URLError, TimeoutError) as e:
+                    # 412 is a specific OpenML error code.
+                    if isinstance(e, HTTPError) and e.code == 412:
+                        raise
+                    if retry_counter == 0:
+                        raise
+                    warn(
+                        f"A network error occurred while downloading {url}. Retrying..."
+                    )
+                    retry_counter -= 1
+                    time.sleep(delay)
+
+        return wrapper
+
+    return decorator
+
+
+def _open_openml_url(
+    openml_path: str, data_home: Optional[str], n_retries: int = 3, delay: float = 1.0
+):
     """
     Returns a resource from OpenML.org. Caches it to data_home if required.
 
@@ -81,16 +109,23 @@ def _open_openml_url(openml_path: str, data_home: Optional[str]):
     ----------
     openml_path : str
         OpenML URL that will be accessed. This will be prefixes with
-        _OPENML_PREFIX
+        _OPENML_PREFIX.
 
     data_home : str
         Directory to which the files will be cached. If None, no caching will
         be applied.
 
+    n_retries : int, default=3
+        Number of retries when HTTP errors are encountered. Error with status
+        code 412 won't be retried as they represent OpenML generic errors.
+
+    delay : float, default=1.0
+        Number of seconds between retries.
+
     Returns
     -------
     result : stream
-        A stream to the OpenML resource
+        A stream to the OpenML resource.
     """
 
     def is_gzip_encoded(_fsrc):
@@ -100,7 +135,9 @@ def _open_openml_url(openml_path: str, data_home: Optional[str]):
     req.add_header("Accept-encoding", "gzip")
 
     if data_home is None:
-        fsrc = urlopen(req)
+        fsrc = _retry_on_network_error(n_retries, delay, req.full_url)(urlopen)(
+            req, timeout=delay
+        )
         if is_gzip_encoded(fsrc):
             return gzip.GzipFile(fileobj=fsrc, mode="rb")
         return fsrc
@@ -115,7 +152,11 @@ def _open_openml_url(openml_path: str, data_home: Optional[str]):
             # renaming operation to the final location is atomic to ensure the
             # concurrence safety of the dataset caching mechanism.
             with TemporaryDirectory(dir=dir_name) as tmpdir:
-                with closing(urlopen(req)) as fsrc:
+                with closing(
+                    _retry_on_network_error(n_retries, delay, req.full_url)(urlopen)(
+                        req, timeout=delay
+                    )
+                ) as fsrc:
                     opener: Callable
                     if is_gzip_encoded(fsrc):
                         opener = open
@@ -141,7 +182,11 @@ class OpenMLError(ValueError):
 
 
 def _get_json_content_from_openml_api(
-    url: str, error_message: Optional[str], data_home: Optional[str]
+    url: str,
+    error_message: Optional[str],
+    data_home: Optional[str],
+    n_retries: int = 3,
+    delay: float = 1.0,
 ) -> Dict:
     """
     Loads json data from the openml api
@@ -149,15 +194,22 @@ def _get_json_content_from_openml_api(
     Parameters
     ----------
     url : str
-        The URL to load from. Should be an official OpenML endpoint
+        The URL to load from. Should be an official OpenML endpoint.
 
     error_message : str or None
         The error message to raise if an acceptable OpenML error is thrown
         (acceptable error is, e.g., data id not found. Other errors, like 404's
-        will throw the native error message)
+        will throw the native error message).
 
     data_home : str or None
         Location to cache the response. None if no cache is required.
+
+    n_retries : int, default=3
+        Number of retries when HTTP errors are encountered. Error with status
+        code 412 won't be retried as they represent OpenML generic errors.
+
+    delay : float, default=1.0
+        Number of seconds between retries.
 
     Returns
     -------
@@ -168,7 +220,9 @@ def _get_json_content_from_openml_api(
 
     @_retry_with_clean_cache(url, data_home)
     def _load_json():
-        with closing(_open_openml_url(url, data_home)) as response:
+        with closing(
+            _open_openml_url(url, data_home, n_retries=n_retries, delay=delay)
+        ) as response:
             return json.loads(response.read().decode("utf-8"))
 
     try:
@@ -183,200 +237,12 @@ def _get_json_content_from_openml_api(
     raise OpenMLError(error_message)
 
 
-def _split_sparse_columns(
-    arff_data: ArffSparseDataType, include_columns: List
-) -> ArffSparseDataType:
-    """
-    obtains several columns from sparse arff representation. Additionally, the
-    column indices are re-labelled, given the columns that are not included.
-    (e.g., when including [1, 2, 3], the columns will be relabelled to
-    [0, 1, 2])
-
-    Parameters
-    ----------
-    arff_data : tuple
-        A tuple of three lists of equal size; first list indicating the value,
-        second the x coordinate and the third the y coordinate.
-
-    include_columns : list
-        A list of columns to include.
-
-    Returns
-    -------
-    arff_data_new : tuple
-        Subset of arff data with only the include columns indicated by the
-        include_columns argument.
-    """
-    arff_data_new: ArffSparseDataType = (list(), list(), list())
-    reindexed_columns = {
-        column_idx: array_idx for array_idx, column_idx in enumerate(include_columns)
-    }
-    for val, row_idx, col_idx in zip(arff_data[0], arff_data[1], arff_data[2]):
-        if col_idx in include_columns:
-            arff_data_new[0].append(val)
-            arff_data_new[1].append(row_idx)
-            arff_data_new[2].append(reindexed_columns[col_idx])
-    return arff_data_new
-
-
-def _sparse_data_to_array(
-    arff_data: ArffSparseDataType, include_columns: List
-) -> np.ndarray:
-    # turns the sparse data back into an array (can't use toarray() function,
-    # as this does only work on numeric data)
-    num_obs = max(arff_data[1]) + 1
-    y_shape = (num_obs, len(include_columns))
-    reindexed_columns = {
-        column_idx: array_idx for array_idx, column_idx in enumerate(include_columns)
-    }
-    # TODO: improve for efficiency
-    y = np.empty(y_shape, dtype=np.float64)
-    for val, row_idx, col_idx in zip(arff_data[0], arff_data[1], arff_data[2]):
-        if col_idx in include_columns:
-            y[row_idx, reindexed_columns[col_idx]] = val
-    return y
-
-
-def _convert_arff_data(
-    arff: ArffContainerType,
-    col_slice_x: List[int],
-    col_slice_y: List[int],
-    shape: Optional[Tuple] = None,
-) -> Tuple:
-    """
-    converts the arff object into the appropriate matrix type (np.array or
-    scipy.sparse.csr_matrix) based on the 'data part' (i.e., in the
-    liac-arff dict, the object from the 'data' key)
-
-    Parameters
-    ----------
-    arff : dict
-        As obtained from liac-arff object.
-
-    col_slice_x : list
-        The column indices that are sliced from the original array to return
-        as X data
-
-    col_slice_y : list
-        The column indices that are sliced from the original array to return
-        as y data
-
-    Returns
-    -------
-    X : np.array or scipy.sparse.csr_matrix
-    y : np.array
-    """
-    arff_data = arff["data"]
-    if isinstance(arff_data, Generator):
-        if shape is None:
-            raise ValueError("shape must be provided when arr['data'] is a Generator")
-        if shape[0] == -1:
-            count = -1
-        else:
-            count = shape[0] * shape[1]
-        data = np.fromiter(
-            itertools.chain.from_iterable(arff_data), dtype="float64", count=count
-        )
-        data = data.reshape(*shape)
-        X = data[:, col_slice_x]
-        y = data[:, col_slice_y]
-        return X, y
-    elif isinstance(arff_data, tuple):
-        arff_data_X = _split_sparse_columns(arff_data, col_slice_x)
-        num_obs = max(arff_data[1]) + 1
-        X_shape = (num_obs, len(col_slice_x))
-        X = scipy.sparse.coo_matrix(
-            (arff_data_X[0], (arff_data_X[1], arff_data_X[2])),
-            shape=X_shape,
-            dtype=np.float64,
-        )
-        X = X.tocsr()
-        y = _sparse_data_to_array(arff_data, col_slice_y)
-        return X, y
-    else:
-        # This should never happen
-        raise ValueError("Unexpected Data Type obtained from arff.")
-
-
-def _feature_to_dtype(feature: Dict[str, str]):
-    """Map feature to dtype for pandas DataFrame"""
-    if feature["data_type"] == "string":
-        return object
-    elif feature["data_type"] == "nominal":
-        return "category"
-    # only numeric, integer, real are left
-    elif feature["number_of_missing_values"] != "0" or feature["data_type"] in [
-        "numeric",
-        "real",
-    ]:
-        # cast to floats when there are any missing values
-        return np.float64
-    elif feature["data_type"] == "integer":
-        return np.int64
-    raise ValueError("Unsupported feature: {}".format(feature))
-
-
-def _convert_arff_data_dataframe(
-    arff: ArffContainerType, columns: List, features_dict: Dict[str, Any]
-) -> Tuple:
-    """Convert the ARFF object into a pandas DataFrame.
-
-    Parameters
-    ----------
-    arff : dict
-        As obtained from liac-arff object.
-
-    columns : list
-        Columns from dataframe to return.
-
-    features_dict : dict
-        Maps feature name to feature info from openml.
-
-    Returns
-    -------
-    result : tuple
-        tuple with the resulting dataframe
-    """
-    pd = check_pandas_support("fetch_openml with as_frame=True")
-
-    attributes = OrderedDict(arff["attributes"])
-    arff_columns = list(attributes)
-
-    if not isinstance(arff["data"], Generator):
-        raise ValueError(
-            "arff['data'] must be a generator when converting to pd.DataFrame."
-        )
-
-    # calculate chunksize
-    first_row = next(arff["data"])
-    first_df = pd.DataFrame([first_row], columns=arff_columns)
-
-    row_bytes = first_df.memory_usage(deep=True).sum()
-    chunksize = get_chunk_n_rows(row_bytes)
-
-    # read arff data with chunks
-    columns_to_keep = [col for col in arff_columns if col in columns]
-    dfs = []
-    dfs.append(first_df[columns_to_keep])
-    for data in _chunk_generator(arff["data"], chunksize):
-        dfs.append(pd.DataFrame(data, columns=arff_columns)[columns_to_keep])
-    df = pd.concat(dfs, ignore_index=True)
-
-    for column in columns_to_keep:
-        dtype = _feature_to_dtype(features_dict[column])
-        if dtype == "category":
-            cats_without_missing = [
-                cat
-                for cat in attributes[column]
-                if cat is not None and not is_scalar_nan(cat)
-            ]
-            dtype = pd.api.types.CategoricalDtype(cats_without_missing)
-        df[column] = df[column].astype(dtype, copy=False)
-    return (df,)
-
-
 def _get_data_info_by_name(
-    name: str, version: Union[int, str], data_home: Optional[str]
+    name: str,
+    version: Union[int, str],
+    data_home: Optional[str],
+    n_retries: int = 3,
+    delay: float = 1.0,
 ):
     """
     Utilizes the openml dataset listing api to find a dataset by
@@ -398,6 +264,13 @@ def _get_data_info_by_name(
     data_home : str or None
         Location to cache the response. None if no cache is required.
 
+    n_retries : int, default=3
+        Number of retries when HTTP errors are encountered. Error with status
+        code 412 won't be retried as they represent OpenML generic errors.
+
+    delay : float, default=1.0
+        Number of seconds between retries.
+
     Returns
     -------
     first_dataset : json
@@ -410,7 +283,11 @@ def _get_data_info_by_name(
         url = _SEARCH_NAME.format(name) + "/status/active/"
         error_msg = "No active dataset {} found.".format(name)
         json_data = _get_json_content_from_openml_api(
-            url, error_msg, data_home=data_home
+            url,
+            error_msg,
+            data_home=data_home,
+            n_retries=n_retries,
+            delay=delay,
         )
         res = json_data["data"]["dataset"]
         if len(res) > 1:
@@ -426,7 +303,11 @@ def _get_data_info_by_name(
     url = (_SEARCH_NAME + "/data_version/{}").format(name, version)
     try:
         json_data = _get_json_content_from_openml_api(
-            url, error_message=None, data_home=data_home
+            url,
+            error_message=None,
+            data_home=data_home,
+            n_retries=n_retries,
+            delay=delay,
         )
     except OpenMLError:
         # we can do this in 1 function call if OpenML does not require the
@@ -436,42 +317,71 @@ def _get_data_info_by_name(
         url += "/status/deactivated"
         error_msg = "Dataset {} with version {} not found.".format(name, version)
         json_data = _get_json_content_from_openml_api(
-            url, error_msg, data_home=data_home
+            url,
+            error_msg,
+            data_home=data_home,
+            n_retries=n_retries,
+            delay=delay,
         )
 
     return json_data["data"]["dataset"][0]
 
 
 def _get_data_description_by_id(
-    data_id: int, data_home: Optional[str]
+    data_id: int,
+    data_home: Optional[str],
+    n_retries: int = 3,
+    delay: float = 1.0,
 ) -> Dict[str, Any]:
     # OpenML API function: https://www.openml.org/api_docs#!/data/get_data_id
     url = _DATA_INFO.format(data_id)
     error_message = "Dataset with data_id {} not found.".format(data_id)
     json_data = _get_json_content_from_openml_api(
-        url, error_message, data_home=data_home
+        url,
+        error_message,
+        data_home=data_home,
+        n_retries=n_retries,
+        delay=delay,
     )
     return json_data["data_set_description"]
 
 
-def _get_data_features(data_id: int, data_home: Optional[str]) -> OpenmlFeaturesType:
+def _get_data_features(
+    data_id: int,
+    data_home: Optional[str],
+    n_retries: int = 3,
+    delay: float = 1.0,
+) -> OpenmlFeaturesType:
     # OpenML function:
     # https://www.openml.org/api_docs#!/data/get_data_features_id
     url = _DATA_FEATURES.format(data_id)
     error_message = "Dataset with data_id {} not found.".format(data_id)
     json_data = _get_json_content_from_openml_api(
-        url, error_message, data_home=data_home
+        url,
+        error_message,
+        data_home=data_home,
+        n_retries=n_retries,
+        delay=delay,
     )
     return json_data["data_features"]["feature"]
 
 
-def _get_data_qualities(data_id: int, data_home: Optional[str]) -> OpenmlQualitiesType:
+def _get_data_qualities(
+    data_id: int,
+    data_home: Optional[str],
+    n_retries: int = 3,
+    delay: float = 1.0,
+) -> OpenmlQualitiesType:
     # OpenML API function:
     # https://www.openml.org/api_docs#!/data/get_data_qualities_id
     url = _DATA_QUALITIES.format(data_id)
     error_message = "Dataset with data_id {} not found.".format(data_id)
     json_data = _get_json_content_from_openml_api(
-        url, error_message, data_home=data_home
+        url,
+        error_message,
+        data_home=data_home,
+        n_retries=n_retries,
+        delay=delay,
     )
     # the qualities might not be available, but we still try to process
     # the data
@@ -502,13 +412,19 @@ def _get_num_samples(data_qualities: OpenmlQualitiesType) -> int:
 def _load_arff_response(
     url: str,
     data_home: Optional[str],
-    return_type,
-    encode_nominal: bool,
-    parse_arff: Callable[[ArffContainerType], Tuple],
+    output_arrays_type: str,
+    features_dict: Dict,
+    data_columns: List,
+    target_columns: List,
+    col_slice_x: List,
+    col_slice_y: List,
+    shape: Tuple,
     md5_checksum: str,
+    n_retries: int = 3,
+    delay: float = 1.0,
 ) -> Tuple:
     """Load arff data with url and parses arff response with parse_arff"""
-    response = _open_openml_url(url, data_home)
+    response = _open_openml_url(url, data_home, n_retries=n_retries, delay=delay)
 
     with closing(response):
         # Note that if the data is dense, no reading is done until the data
@@ -522,11 +438,23 @@ def _load_arff_response(
 
         stream = _stream_checksum_generator(response)
 
+        encode_nominal = not output_arrays_type == "pandas"
+        return_type = _arff.COO if output_arrays_type == "sparse" else _arff.DENSE_GEN
+
         arff = _arff.load(
             stream, return_type=return_type, encode_nominal=encode_nominal
         )
 
-        parsed_arff = parse_arff(arff)
+        X, y, frame, nominal_attributes = _liac_arff_parser(
+            arff,
+            output_arrays_type,
+            features_dict,
+            data_columns,
+            target_columns,
+            col_slice_x,
+            col_slice_y,
+            shape,
+        )
 
         # consume remaining stream, if early exited
         for _ in stream:
@@ -541,7 +469,7 @@ def _load_arff_response(
                 "corrupted, clean cache and retry..."
             )
 
-        return parsed_arff
+        return X, y, frame, nominal_attributes
 
 
 def _download_data_to_bunch(
@@ -555,6 +483,8 @@ def _download_data_to_bunch(
     target_columns: List,
     shape: Optional[Tuple[int, int]],
     md5_checksum: str,
+    n_retries: int = 3,
+    delay: float = 1.0,
 ):
     """Download OpenML ARFF and convert to Bunch of data"""
     # NB: this function is long in order to handle retry for any failure
@@ -582,85 +512,29 @@ def _download_data_to_bunch(
     # Access an ARFF file on the OpenML server. Documentation:
     # https://www.openml.org/api_data_docs#!/data/get_download_id
 
-    if sparse is True:
-        return_type = _arff.COO
-    else:
-        return_type = _arff.DENSE_GEN
-
-    frame = nominal_attributes = None
-
-    parse_arff: Callable
-    postprocess: Callable
     if as_frame:
-        columns = data_columns + target_columns
-        parse_arff = partial(
-            _convert_arff_data_dataframe, columns=columns, features_dict=features_dict
-        )
-
-        def postprocess(frame):
-            X = frame[data_columns]
-            if len(target_columns) >= 2:
-                y = frame[target_columns]
-            elif len(target_columns) == 1:
-                y = frame[target_columns[0]]
-            else:
-                y = None
-            return X, y, frame, nominal_attributes
-
+        output_arrays_type = "pandas"
+    elif sparse:
+        output_arrays_type = "sparse"
     else:
+        output_arrays_type = "numpy"
 
-        def parse_arff(arff):
-            X, y = _convert_arff_data(arff, col_slice_x, col_slice_y, shape)
-            # nominal attributes is a dict mapping from the attribute name to
-            # the possible values. Includes also the target column (which will
-            # be popped off below, before it will be packed in the Bunch
-            # object)
-            nominal_attributes = {
-                k: v
-                for k, v in arff["attributes"]
-                if isinstance(v, list) and k in data_columns + target_columns
-            }
-            return X, y, nominal_attributes
-
-        def postprocess(X, y, nominal_attributes):
-            is_classification = {
-                col_name in nominal_attributes for col_name in target_columns
-            }
-            if not is_classification:
-                # No target
-                pass
-            elif all(is_classification):
-                y = np.hstack(
-                    [
-                        np.take(
-                            np.asarray(nominal_attributes.pop(col_name), dtype="O"),
-                            y[:, i : i + 1].astype(int, copy=False),
-                        )
-                        for i, col_name in enumerate(target_columns)
-                    ]
-                )
-            elif any(is_classification):
-                raise ValueError(
-                    "Mix of nominal and non-nominal targets is not currently supported"
-                )
-
-            # reshape y back to 1-D array, if there is only 1 target column;
-            # back to None if there are not target columns
-            if y.shape[1] == 1:
-                y = y.reshape((-1,))
-            elif y.shape[1] == 0:
-                y = None
-            return X, y, frame, nominal_attributes
-
-    out = _retry_with_clean_cache(url, data_home)(_load_arff_response)(
+    X, y, frame, nominal_attributes = _retry_with_clean_cache(url, data_home)(
+        _load_arff_response
+    )(
         url,
         data_home,
-        return_type=return_type,
-        encode_nominal=not as_frame,
-        parse_arff=parse_arff,
+        output_arrays_type,
+        features_dict,
+        data_columns,
+        target_columns,
+        col_slice_x,
+        col_slice_y,
+        shape,
         md5_checksum=md5_checksum,
+        n_retries=n_retries,
+        delay=delay,
     )
-    X, y, frame, nominal_attributes = postprocess(*out)
 
     return Bunch(
         data=X,
@@ -725,6 +599,8 @@ def fetch_openml(
     cache: bool = True,
     return_X_y: bool = False,
     as_frame: Union[str, bool] = "auto",
+    n_retries: int = 3,
+    delay: float = 1.0,
 ):
     """Fetch dataset from openml by name or dataset id.
 
@@ -772,10 +648,10 @@ def fetch_openml(
         is used. If ``None``, all columns are returned as data and the
         target is ``None``. If list (of strings), all columns with these names
         are returned as multi-target (Note: not all scikit-learn classifiers
-        can handle all types of multi-output combinations)
+        can handle all types of multi-output combinations).
 
     cache : bool, default=True
-        Whether to cache downloaded datasets using joblib.
+        Whether to cache the downloaded datasets into `data_home`.
 
     return_X_y : bool, default=False
         If True, returns ``(data, target)`` instead of a Bunch object. See
@@ -797,6 +673,14 @@ def fetch_openml(
            The default value of `as_frame` changed from `False` to `'auto'`
            in 0.24.
 
+    n_retries : int, default=3
+        Number of retries when HTTP errors or network timeouts are encountered.
+        Error with status code 412 won't be retried as they represent OpenML
+        generic errors.
+
+    delay : float, default=1.0
+        Number of seconds between retries.
+
     Returns
     -------
 
@@ -810,11 +694,11 @@ def fetch_openml(
             Dtype is float if numeric, and object if categorical. If
             ``as_frame`` is True, ``target`` is a pandas object.
         DESCR : str
-            The full description of the dataset
+            The full description of the dataset.
         feature_names : list
-            The names of the dataset columns
+            The names of the dataset columns.
         target_names: list
-            The names of the target columns
+            The names of the target columns.
 
         .. versionadded:: 0.22
 
@@ -823,7 +707,7 @@ def fetch_openml(
             that the value encoded as i is ith in the list. If ``as_frame``
             is True, this is None.
         details : dict
-            More metadata from OpenML
+            More metadata from OpenML.
         frame : pandas DataFrame
             Only present when `as_frame=True`. DataFrame with ``data`` and
             ``target``.
@@ -838,7 +722,7 @@ def fetch_openml(
 
         Missing values in the 'data' are represented as NaN's. Missing values
         in 'target' are represented as NaN's (numerical target) or None
-        (categorical target)
+        (categorical target).
     """
     if cache is False:
         # no caching will be applied
@@ -859,7 +743,9 @@ def fetch_openml(
                 "specify a numeric data_id or a name, not "
                 "both.".format(data_id, name)
             )
-        data_info = _get_data_info_by_name(name, version, data_home)
+        data_info = _get_data_info_by_name(
+            name, version, data_home, n_retries=n_retries, delay=delay
+        )
         data_id = data_info["did"]
     elif data_id is not None:
         # from the previous if statement, it is given that name is None
@@ -965,6 +851,8 @@ def fetch_openml(
         target_columns=target_columns,
         data_columns=data_columns,
         md5_checksum=data_description["md5_checksum"],
+        n_retries=n_retries,
+        delay=delay,
     )
 
     if return_X_y:

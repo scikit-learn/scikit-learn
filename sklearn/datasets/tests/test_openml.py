@@ -18,11 +18,14 @@ from sklearn.datasets._openml import (
     _open_openml_url,
     _arff,
     _DATA_FILE,
-    _convert_arff_data,
-    _convert_arff_data_dataframe,
+    _OPENML_PREFIX,
     _get_data_description_by_id,
     _get_local_path,
     _retry_with_clean_cache,
+)
+from sklearn.datasets._arff_parser import (
+    _convert_arff_data,
+    _convert_arff_data_dataframe,
     _feature_to_dtype,
 )
 from sklearn.utils import is_scalar_nan
@@ -313,7 +316,7 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
                 fp = BytesIO(decompressed_f.read())
                 return _MockHTTPResponse(fp, False)
 
-    def _mock_urlopen(request):
+    def _mock_urlopen(request, *args, **kwargs):
         url = request.get_full_url()
         has_gzip_header = request.get_header("Accept-encoding") == "gzip"
         if url.startswith(url_prefix_data_list):
@@ -1176,7 +1179,7 @@ def test_open_openml_url_unlinks_local_path(
     cache_directory = str(tmpdir.mkdir("scikit_learn_data"))
     location = _get_local_path(openml_path, cache_directory)
 
-    def _mock_urlopen(request):
+    def _mock_urlopen(request, *args, **kwargs):
         if write_to_disk:
             with open(location, "w") as f:
                 f.write("")
@@ -1231,7 +1234,7 @@ def test_retry_with_clean_cache_http_error(tmpdir):
 
 @pytest.mark.parametrize("gzip_response", [True, False])
 def test_fetch_openml_cache(monkeypatch, gzip_response, tmpdir):
-    def _mock_urlopen_raise(request):
+    def _mock_urlopen_raise(request, *args, **kwargs):
         raise ValueError(
             "This mechanism intends to test correct cache"
             "handling. As such, urlopen should never be "
@@ -1473,7 +1476,7 @@ def test_fetch_openml_verify_checksum(monkeypatch, as_frame, cache, tmpdir):
     # hence creating a thin mock over the original mock
     mocked_openml_url = sklearn.datasets._openml.urlopen
 
-    def swap_file_mock(request):
+    def swap_file_mock(request, *args, **kwargs):
         url = request.get_full_url()
         if url.endswith("data/v1/download/1666876"):
             with open(corrupt_copy_path, "rb") as f:
@@ -1523,3 +1526,25 @@ def test_missing_values_pandas(monkeypatch):
     # there are nans in the categorical
     assert penguins.data["sex"].isna().any()
     assert_array_equal(cat_dtype.categories, ["FEMALE", "MALE", "_"])
+
+
+def test_open_openml_url_retry_on_network_error(monkeypatch):
+    def _mock_urlopen_network_error(request, *args, **kwargs):
+        raise HTTPError("", 404, "Simulated network error", None, None)
+
+    monkeypatch.setattr(
+        sklearn.datasets._openml, "urlopen", _mock_urlopen_network_error
+    )
+
+    invalid_openml_url = "invalid-url"
+
+    with pytest.warns(
+        UserWarning,
+        match=re.escape(
+            "A network error occurred while downloading"
+            f" {_OPENML_PREFIX + invalid_openml_url}. Retrying..."
+        ),
+    ) as record:
+        with pytest.raises(HTTPError, match="Simulated network error"):
+            _open_openml_url(invalid_openml_url, None, delay=0)
+        assert len(record) == 3

@@ -3,6 +3,7 @@ from scipy.stats.mstats import mquantiles
 
 import pytest
 from numpy.testing import assert_allclose
+import warnings
 
 from sklearn.datasets import load_diabetes
 from sklearn.datasets import load_iris
@@ -109,7 +110,6 @@ def test_plot_partial_dependence(
         ax = disp.axes_[pos]
         assert ax.get_ylabel() == expected_ylabels[i]
         assert ax.get_xlabel() == diabetes.feature_names[feat_col]
-        assert_allclose(ax.get_ylim(), disp.pdp_lim[1])
 
         line = disp.lines_[pos]
 
@@ -124,8 +124,6 @@ def test_plot_partial_dependence(
     # two feature position
     ax = disp.axes_[0, 2]
     coutour = disp.contours_[0, 2]
-    expected_levels = np.linspace(*disp.pdp_lim[2], num=8)
-    assert_allclose(coutour.levels, expected_levels)
     assert coutour.get_cmap().name == "jet"
     assert ax.get_xlabel() == diabetes.feature_names[0]
     assert ax.get_ylabel() == diabetes.feature_names[2]
@@ -133,22 +131,39 @@ def test_plot_partial_dependence(
 
 @pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize(
-    "kind, subsample, shape",
+    "kind, centered, subsample, shape",
     [
-        ("average", None, (1, 3)),
-        ("individual", None, (1, 3, 442)),
-        ("both", None, (1, 3, 443)),
-        ("individual", 50, (1, 3, 50)),
-        ("both", 50, (1, 3, 51)),
-        ("individual", 0.5, (1, 3, 221)),
-        ("both", 0.5, (1, 3, 222)),
+        ("average", False, None, (1, 3)),
+        ("individual", False, None, (1, 3, 442)),
+        ("both", False, None, (1, 3, 443)),
+        ("individual", False, 50, (1, 3, 50)),
+        ("both", False, 50, (1, 3, 51)),
+        ("individual", False, 0.5, (1, 3, 221)),
+        ("both", False, 0.5, (1, 3, 222)),
+        ("average", True, None, (1, 3)),
+        ("individual", True, None, (1, 3, 442)),
+        ("both", True, None, (1, 3, 443)),
+        ("individual", True, 50, (1, 3, 50)),
+        ("both", True, 50, (1, 3, 51)),
     ],
 )
 def test_plot_partial_dependence_kind(
-    plot_partial_dependence, pyplot, kind, subsample, shape, clf_diabetes, diabetes
+    plot_partial_dependence,
+    pyplot,
+    kind,
+    centered,
+    subsample,
+    shape,
+    clf_diabetes,
+    diabetes,
 ):
     disp = plot_partial_dependence(
-        clf_diabetes, diabetes.data, [0, 1, 2], kind=kind, subsample=subsample
+        clf_diabetes,
+        diabetes.data,
+        [0, 1, 2],
+        kind=kind,
+        centered=centered,
+        subsample=subsample,
     )
 
     assert disp.axes_.shape == (1, 3)
@@ -158,6 +173,11 @@ def test_plot_partial_dependence_kind(
     assert disp.contours_[0, 0] is None
     assert disp.contours_[0, 1] is None
     assert disp.contours_[0, 2] is None
+
+    if centered:
+        assert all([ln._y[0] == 0.0 for ln in disp.lines_.ravel() if ln is not None])
+    else:
+        assert all([ln._y[0] != 0.0 for ln in disp.lines_.ravel() if ln is not None])
 
 
 @pytest.mark.filterwarnings("ignore:A Bunch will be returned")
@@ -245,9 +265,6 @@ def test_plot_partial_dependence_str_features(
 
     # contour
     ax = disp.axes_[0, 0]
-    coutour = disp.contours_[0, 0]
-    expect_levels = np.linspace(*disp.pdp_lim[2], num=8)
-    assert_allclose(coutour.levels, expect_levels)
     assert ax.get_xlabel() == "age"
     assert ax.get_ylabel() == "bmi"
 
@@ -286,9 +303,6 @@ def test_plot_partial_dependence_custom_axes(
 
     # contour
     ax = disp.axes_[1]
-    coutour = disp.contours_[1]
-    expect_levels = np.linspace(*disp.pdp_lim[2], num=8)
-    assert_allclose(coutour.levels, expect_levels)
     assert ax.get_xlabel() == "age"
     assert ax.get_ylabel() == "bmi"
 
@@ -592,13 +606,8 @@ dummy_classification_data = make_classification(random_state=0)
         ),
         (
             dummy_classification_data,
-            {"features": [(1, 2)], "kind": "individual"},
-            "It is not possible to display individual effects for more than one",
-        ),
-        (
-            dummy_classification_data,
-            {"features": [(1, 2)], "kind": "both"},
-            "It is not possible to display individual effects for more than one",
+            {"features": [1, 2], "kind": ["both"]},
+            "When `kind` is provided as a list of strings, it should contain",
         ),
         (
             dummy_classification_data,
@@ -609,6 +618,16 @@ dummy_classification_data = make_classification(random_state=0)
             dummy_classification_data,
             {"features": [1], "subsample": 1.2},
             r"When a floating-point, subsample=1.2 should be in the \(0, 1\) range",
+        ),
+        (
+            dummy_classification_data,
+            {"features": [1], "kind": "foo"},
+            "Values provided to `kind` must be one of",
+        ),
+        (
+            dummy_classification_data,
+            {"features": [0, 1], "kind": ["foo", "individual"]},
+            "Values provided to `kind` must be one of",
         ),
     ],
 )
@@ -729,6 +748,159 @@ def test_partial_dependence_overwrite_labels(
             assert legend_text[0].get_text() == label
 
 
+# TODO(1.3): remove
+def test_partial_dependence_display_deprecation(
+    plot_partial_dependence, pyplot, clf_diabetes, diabetes
+):
+    """Check that we raise the proper warning in the display."""
+    disp = plot_partial_dependence(
+        clf_diabetes,
+        diabetes.data,
+        [0, 2],
+        grid_resolution=25,
+        feature_names=diabetes.feature_names,
+    )
+
+    deprecation_msg = "The `pdp_lim` parameter is deprecated"
+    overwritting_msg = (
+        "`pdp_lim` has been passed in both the constructor and the `plot` method"
+    )
+
+    disp.pdp_lim = None
+    # case when constructor and method parameters are the same
+    with pytest.warns(FutureWarning, match=deprecation_msg):
+        disp.plot(pdp_lim=None)
+    # case when constructor and method parameters are different
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter("always", FutureWarning)
+        disp.plot(pdp_lim=(0, 1))
+    assert len(record) == 2
+    for warning in record:
+        assert warning.message.args[0].startswith((deprecation_msg, overwritting_msg))
+
+
+@pytest.mark.parametrize("kind", ["individual", "average", "both"])
+@pytest.mark.parametrize("centered", [True, False])
+def test_partial_dependence_plot_limits_one_way(
+    plot_partial_dependence, pyplot, clf_diabetes, diabetes, kind, centered
+):
+    """Check that the PD limit on the plots are properly set on one-way plots."""
+    disp = plot_partial_dependence(
+        clf_diabetes,
+        diabetes.data,
+        features=(0, 1),
+        kind=kind,
+        grid_resolution=25,
+        feature_names=diabetes.feature_names,
+    )
+
+    range_pd = np.array([-1, 1])
+    for pd in disp.pd_results:
+        if "average" in pd:
+            pd["average"][...] = range_pd[1]
+            pd["average"][0, 0] = range_pd[0]
+        if "individual" in pd:
+            pd["individual"][...] = range_pd[1]
+            pd["individual"][0, 0, 0] = range_pd[0]
+
+    disp.plot(centered=centered)
+    # check that we anchor to zero x-axis when centering
+    y_lim = range_pd - range_pd[0] if centered else range_pd
+    for ax in disp.axes_.ravel():
+        assert_allclose(ax.get_ylim(), y_lim)
+
+
+@pytest.mark.parametrize("centered", [True, False])
+def test_partial_dependence_plot_limits_two_way(
+    plot_partial_dependence, pyplot, clf_diabetes, diabetes, centered
+):
+    """Check that the PD limit on the plots are properly set on two-way plots."""
+    disp = plot_partial_dependence(
+        clf_diabetes,
+        diabetes.data,
+        features=[(0, 1)],
+        kind="average",
+        grid_resolution=25,
+        feature_names=diabetes.feature_names,
+    )
+
+    range_pd = np.array([-1, 1])
+    for pd in disp.pd_results:
+        pd["average"][...] = range_pd[1]
+        pd["average"][0, 0] = range_pd[0]
+
+    disp.plot(centered=centered)
+    coutour = disp.contours_[0, 0]
+    levels = range_pd - range_pd[0] if centered else range_pd
+    expect_levels = np.linspace(*levels, num=8)
+    assert_allclose(coutour.levels, expect_levels)
+
+
+def test_partial_dependence_kind_list(
+    plot_partial_dependence,
+    pyplot,
+    clf_diabetes,
+    diabetes,
+):
+    """Check that we can provide a list of strings to kind parameter."""
+    matplotlib = pytest.importorskip("matplotlib")
+
+    disp = plot_partial_dependence(
+        clf_diabetes,
+        diabetes.data,
+        features=[0, 2, (1, 2)],
+        grid_resolution=20,
+        kind=["both", "both", "average"],
+    )
+
+    for idx in [0, 1]:
+        assert all(
+            [
+                isinstance(line, matplotlib.lines.Line2D)
+                for line in disp.lines_[0, idx].ravel()
+            ]
+        )
+        assert disp.contours_[0, idx] is None
+
+    assert disp.contours_[0, 2] is not None
+    assert all([line is None for line in disp.lines_[0, 2].ravel()])
+
+
+@pytest.mark.parametrize(
+    "features, kind",
+    [
+        ([0, 2, (1, 2)], "individual"),
+        ([0, 2, (1, 2)], "both"),
+        ([(0, 1), (0, 2), (1, 2)], "individual"),
+        ([(0, 1), (0, 2), (1, 2)], "both"),
+        ([0, 2, (1, 2)], ["individual", "individual", "individual"]),
+        ([0, 2, (1, 2)], ["both", "both", "both"]),
+    ],
+)
+def test_partial_dependence_kind_error(
+    plot_partial_dependence,
+    pyplot,
+    clf_diabetes,
+    diabetes,
+    features,
+    kind,
+):
+    """Check that we raise an informative error when 2-way PD is requested
+    together with 1-way PD/ICE"""
+    warn_msg = (
+        "ICE plot cannot be rendered for 2-way feature interactions. 2-way "
+        "feature interactions mandates PD plots using the 'average' kind"
+    )
+    with pytest.raises(ValueError, match=warn_msg):
+        plot_partial_dependence(
+            clf_diabetes,
+            diabetes.data,
+            features=features,
+            grid_resolution=20,
+            kind=kind,
+        )
+
+
 @pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize(
     "line_kw, pd_line_kw, ice_lines_kw, expected_colors",
@@ -773,7 +945,7 @@ def test_plot_partial_dependence_lines_kw(
     if pd_line_kw is not None and "linestyle" in pd_line_kw:
         assert line.get_linestyle() == pd_line_kw["linestyle"]
     else:
-        assert line.get_linestyle() == "-"
+        assert line.get_linestyle() == "--"
 
     line = disp.lines_[0, 0, 0]
     assert line.get_color() == expected_colors[1]
@@ -781,3 +953,57 @@ def test_plot_partial_dependence_lines_kw(
         assert line.get_linestyle() == ice_lines_kw["linestyle"]
     else:
         assert line.get_linestyle() == "-"
+
+
+def test_partial_dependence_display_wrong_len_kind(
+    pyplot,
+    clf_diabetes,
+    diabetes,
+):
+    """Check that we raise an error when `kind` is a list with a wrong length.
+
+    This case can only be triggered using the `PartialDependenceDisplay.from_estimator`
+    method.
+    """
+    disp = PartialDependenceDisplay.from_estimator(
+        clf_diabetes,
+        diabetes.data,
+        features=[0, 2],
+        grid_resolution=20,
+        kind="average",  # len(kind) != len(features)
+    )
+
+    # alter `kind` to be a list with a length different from length of `features`
+    disp.kind = ["average"]
+    err_msg = (
+        r"When `kind` is provided as a list of strings, it should contain as many"
+        r" elements as `features`. `kind` contains 1 element\(s\) and `features`"
+        r" contains 2 element\(s\)."
+    )
+    with pytest.raises(ValueError, match=err_msg):
+        disp.plot()
+
+
+@pytest.mark.parametrize(
+    "kind",
+    ["individual", "both", "average", ["average", "both"], ["individual", "both"]],
+)
+def test_partial_dependence_display_kind_centered_interaction(
+    plot_partial_dependence,
+    pyplot,
+    kind,
+    clf_diabetes,
+    diabetes,
+):
+    """Check that we properly center ICE and PD when passing kind as a string and as a
+    list."""
+    disp = plot_partial_dependence(
+        clf_diabetes,
+        diabetes.data,
+        [0, 1],
+        kind=kind,
+        centered=True,
+        subsample=5,
+    )
+
+    assert all([ln._y[0] == 0.0 for ln in disp.lines_.ravel() if ln is not None])
