@@ -46,6 +46,7 @@ learning_rate = 1.0
 # We split the data into a training and a test set.
 # Then, we train our baseline classifiers, a `DecisionTreeClassifier` with `depth=9`
 # and a "stump" `DecisionTreeClassifier` with `depth=1` and compute the test error.
+
 from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
 
