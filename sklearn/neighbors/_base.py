@@ -209,7 +209,9 @@ def _check_precomputed(X):
             "and removes this warning.",
             EfficiencyWarning,
         )
-        graph = sort_by_row_values(graph, copy=not copied)
+        if not copied:
+            graph = graph.copy()
+        graph = sort_by_row_values(graph)
     return graph
 
 

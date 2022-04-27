@@ -465,11 +465,13 @@ def test_is_sorted_by_row_values():
 
 
 @ignore_warnings(category=EfficiencyWarning)
-def test_sort_by_row_values():
+@pytest.mark.parametrize("function,inplace", [(sort_by_row_values, True),
+                                              (_check_precomputed, False)])
+def test_sort_by_row_values(function, inplace):
     # Test that sort_by_row_values returns a graph sorted by row values
     X = csr_matrix(np.abs(np.random.RandomState(42).randn(10, 10)))
     assert not _is_sorted_by_row_values(X)
-    Xt = sort_by_row_values(X)
+    Xt = function(X)
     assert _is_sorted_by_row_values(Xt)
 
     # test with a different number of nonzero entries for each sample
@@ -478,12 +480,15 @@ def test_sort_by_row_values():
     X[mask == 1] = 0
     X = csr_matrix(X)
     assert not _is_sorted_by_row_values(X)
-    Xt = sort_by_row_values(X)
+    Xt = function(X)
     assert _is_sorted_by_row_values(Xt)
 
-    # test that the sorting is done inplace if X is CSR, so that Xt is X
-    Xt[0, 0] = 1
-    assert X[0, 0] == 1
+    # Test if the sorting is done inplace if X is CSR, so that Xt is X.
+    # Sort_by_row_values is done inplace, but _check_precomputed is not.
+    if inplace:
+        assert X.data is Xt.data
+    else:
+        assert X.data is not Xt.data
 
 
 @pytest.mark.parametrize("format", [dok_matrix, bsr_matrix, dia_matrix])
