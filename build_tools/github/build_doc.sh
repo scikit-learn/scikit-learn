@@ -24,11 +24,6 @@ then
     CIRCLE_BRANCH=$GITHUB_REF
     CIRCLE_JOB=$GITHUB_JOB
     CI_PULL_REQUEST=[ "$GITHUB_EVENT_NAME" == pull_request ] && echo true
-
-    echo $CIRCLE_SHA1
-    echo $CIRCLE_BRANCH
-    echo $CIRCLE_JOB
-    echo $CI_PULL_REQUEST
 fi
 
 get_build_type() {
