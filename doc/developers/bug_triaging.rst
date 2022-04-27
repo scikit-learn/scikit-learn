@@ -66,7 +66,7 @@ can do the following important tasks:
 
 - If a stalled PR is taken over by a newer PR, then label the stalled PR as
   "Superseded", leave a comment on the stalled PR linking to the new PR, and
-  close the stalled PR.
+  likely close the stalled PR.
 
 - Triage issues:
 
