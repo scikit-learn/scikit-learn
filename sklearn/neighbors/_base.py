@@ -204,18 +204,18 @@ def _check_precomputed(X):
 
     if not _is_sorted_by_row_values(graph):
         warnings.warn(
-            "Precomputed sparse input was not sorted by row values. Use the function "
-            "sklearn.neighbors.sort_by_row_values to sort the input by row values "
-            "and removes this warning.",
+            "Precomputed sparse input was not sorted by row values. Use the function"
+            " sklearn.neighbors.sort_graph_by_row_values to sort the input by row"
+            " values and removes this warning.",
             EfficiencyWarning,
         )
         if not copied:
             graph = graph.copy()
-        graph = sort_by_row_values(graph)
+        graph = sort_graph_by_row_values(graph)
     return graph
 
 
-def sort_by_row_values(graph):
+def sort_graph_by_row_values(graph):
     """Sort a sparse graph such that each row is stored with increasing values.
 
     Sorting is done in-place if the input graph is in CSR format.

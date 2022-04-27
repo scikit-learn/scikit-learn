@@ -865,11 +865,11 @@ Changelog
   and :class:`neighbors.NeighborhoodComponentsAnalysis`. :pr:`22212` by
   :user:`Meekail Zain <micky774>`.
 
-- |Feature| Adds new function :func:`neighbors.sort_by_row_values` to sort a
-  CSR sparse graph such that each row is stored with increasing values. This is
-  useful to improve efficiency when using precomputed sparse distance matrices
-  in a variety of estimators and avoid a ``EfficiencyWarning``. :pr:`23139` by
-  `Tom Dupre la Tour`_.
+- |Feature| Adds new function :func:`neighbors.sort_graph_by_row_values` to
+  sort a CSR sparse graph such that each row is stored with increasing values.
+  This is useful to improve efficiency when using precomputed sparse distance
+  matrices in a variety of estimators and avoid a ``EfficiencyWarning``.
+  :pr:`23139` by `Tom Dupre la Tour`_.
 
 - |Fix| :class:`neighbors.KernelDensity` now validates input parameters in `fit`
   instead of `__init__`. :pr:`21430` by :user:`Desislava Vasileva <DessyVV>` and

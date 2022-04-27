@@ -38,7 +38,7 @@ from sklearn.neighbors import (
 from sklearn.neighbors._base import (
     _is_sorted_by_row_values,
     _check_precomputed,
-    sort_by_row_values,
+    sort_graph_by_row_values,
     KNeighborsMixin,
 )
 from sklearn.pipeline import make_pipeline
@@ -466,10 +466,10 @@ def test_is_sorted_by_row_values():
 
 @ignore_warnings(category=EfficiencyWarning)
 @pytest.mark.parametrize(
-    "function,inplace", [(sort_by_row_values, True), (_check_precomputed, False)]
+    "function,inplace", [(sort_graph_by_row_values, True), (_check_precomputed, False)]
 )
-def test_sort_by_row_values(function, inplace):
-    # Test that sort_by_row_values returns a graph sorted by row values
+def test_sort_graph_by_row_values(function, inplace):
+    # Test that sort_graph_by_row_values returns a graph sorted by row values
     X = csr_matrix(np.abs(np.random.RandomState(42).randn(10, 10)))
     assert not _is_sorted_by_row_values(X)
     Xt = function(X)
@@ -493,11 +493,11 @@ def test_sort_by_row_values(function, inplace):
 
 
 @pytest.mark.parametrize("format", [dok_matrix, bsr_matrix, dia_matrix])
-def test_sort_by_row_values_bad_sparse_format(format):
-    # Test that sort_by_row_values and _check_precomputed error on bad formats
+def test_sort_graph_by_row_values_bad_sparse_format(format):
+    # Test that sort_graph_by_row_values and _check_precomputed error on bad formats
     X = format(np.abs(np.random.RandomState(42).randn(10, 10)))
     with pytest.raises(TypeError, match="format is not supported"):
-        sort_by_row_values(X)
+        sort_graph_by_row_values(X)
     with pytest.raises(TypeError, match="format is not supported"):
         _check_precomputed(X)
 
