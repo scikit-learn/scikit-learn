@@ -87,6 +87,11 @@ def token_freqs(doc):
 
 from time import time
 from sklearn.feature_extraction import DictVectorizer, FeatureHasher
+from sklearn.feature_extraction.text import (
+    TfidfVectorizer,
+    HashingVectorizer,
+    CountVectorizer,
+)
 
 print("DictVectorizer")
 t0 = time()
@@ -95,6 +100,33 @@ vectorizer.fit_transform(token_freqs(d) for d in raw_data)
 duration = time() - t0
 print("done in %fs at %0.3fMB/s" % (duration, data_size_mb / duration))
 print("Found %d unique terms" % len(vectorizer.get_feature_names_out()))
+print()
+
+print("CountVectorizer")
+t0 = time()
+vectorizer = CountVectorizer()
+vectorizer.fit_transform(raw_data)
+duration = time() - t0
+print("done in %fs at %0.3fMB/s" % (duration, data_size_mb / duration))
+print("Found %d unique terms" % len(vectorizer.get_feature_names_out()))
+print()
+
+print("TfidfVectorizer")
+t0 = time()
+vectorizer = TfidfVectorizer()
+vectorizer.fit_transform(raw_data)
+duration = time() - t0
+print("done in %fs at %0.3fMB/s" % (duration, data_size_mb / duration))
+print("Found %d unique terms" % len(vectorizer.get_feature_names_out()))
+print()
+
+print("HashingVectorizer")
+t0 = time()
+vectorizer = HashingVectorizer()
+vectorizer.fit_transform(raw_data)
+duration = time() - t0
+print("done in %fs at %0.3fMB/s" % (duration, data_size_mb / duration))
+# print("Found %d unique terms" % len(vectorizer.get_feature_names_out()))
 print()
 
 # The default number of features is 2**20.
