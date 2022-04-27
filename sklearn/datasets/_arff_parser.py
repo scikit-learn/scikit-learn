@@ -89,6 +89,8 @@ def _cast_frame(frame, columns_info):
     for name in frame.columns:
         column_dtype = columns_info[name]["data_type"]
         if column_dtype.lower() == "integer":
+            # Use a pandas extension array instead of np.int64 to be able to
+            # support missing values.
             dtypes[name] = "Int64"
         elif column_dtype.lower() == "nominal":
             dtypes[name] = "category"
@@ -139,7 +141,10 @@ def _liac_arff_parser(
 ):
     """ARFF parser using the LIAC-ARFF library coded purely in Python.
 
-    This parser is quite slow but consumes a generator.
+    This parser is quite slow but consumes a generator. Currently it is needed
+    to parse sparse datasets. For dense datasets, it is recommended to instead
+    use the pandas-based parser, although it does not always handles the
+    dtypes exactly the same.
 
     Parameters
     ----------

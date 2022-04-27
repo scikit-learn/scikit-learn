@@ -122,7 +122,7 @@ def test_post_process_frame(feature_names, target_names):
 
     X, y = _post_process_frame(X_original, feature_names, target_names)
     assert isinstance(X, pd.DataFrame)
-    if len(target_names) == 2:
+    if len(target_names) >= 2:
         assert isinstance(y, pd.DataFrame)
     elif len(target_names) == 1:
         assert isinstance(y, pd.Series)
