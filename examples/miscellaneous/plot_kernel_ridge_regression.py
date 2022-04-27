@@ -119,7 +119,7 @@ plt.title("SVR versus Kernel Ridge")
 _ = plt.legend()
 
 # %%
-# This figure compares the learned model of KRR and SVR when both
+# The previous figure compares the learned model of KRR and SVR when both
 # complexity/regularization and bandwidth of the RBF kernel are optimized using
 # grid-search. The learned functions are very similar; however, fitting KRR is
 # approximatively 3-4 times faster than fitting SVR (both with grid-search).
@@ -136,12 +136,14 @@ _ = plt.legend()
 # Visualize training and prediction times
 # ---------------------------------------
 
+from sklearn.base import clone
+
 plt.figure()
 
 sizes = np.logspace(1, 3.8, 7).astype(int)
 for name, estimator in {
-    "KRR": kr.best_estimator_,
-    "SVR": svr.best_estimator_
+    "KRR": clone(kr.best_estimator_),
+    "SVR": clone(svr.best_estimator_)
 }.items():
     train_time = []
     test_time = []
@@ -151,7 +153,7 @@ for name, estimator in {
         train_time.append(time.time() - t0)
 
         t0 = time.time()
-        estimator.predict(X_plot[:train_test_size])
+        estimator.predict(X_plot[:1000])
         test_time.append(time.time() - t0)
 
     plt.plot(
@@ -195,16 +197,16 @@ plt.figure()
 
 train_sizes, train_scores_svr, test_scores_svr = learning_curve(
     svr.best_estimator_,
-    X[:1000],
-    y[:1000],
+    X[:100],
+    y[:100],
     train_sizes=np.linspace(0.1, 1, 10),
     scoring="neg_mean_squared_error",
     cv=10,
 )
 train_sizes_abs, train_scores_kr, test_scores_kr = learning_curve(
     kr.best_estimator_,
-    X[:1000],
-    y[:1000],
+    X[:100],
+    y[:100],
     train_sizes=np.linspace(0.1, 1, 10),
     scoring="neg_mean_squared_error",
     cv=10,
