@@ -19,6 +19,7 @@ from abc import ABCMeta, abstractmethod
 
 
 import numpy as np
+import scipy.sparse as sp
 from scipy.special import logsumexp
 
 from .base import BaseEstimator, ClassifierMixin
@@ -1339,14 +1340,14 @@ class CategoricalNB(_BaseDiscreteNB):
     def _check_X(self, X):
         """Validate X, used only in predict* methods."""
         X = self._validate_data(
-            X, dtype="int", accept_sparse=False, force_all_finite=True, reset=False
+            X, dtype="int", accept_sparse="csr", force_all_finite=True, reset=False
         )
         check_non_negative(X, "CategoricalNB (input X)")
         return X
 
     def _check_X_y(self, X, y, reset=True):
         X, y = self._validate_data(
-            X, y, dtype="int", accept_sparse=False, force_all_finite=True, reset=reset
+            X, y, dtype="int", accept_sparse="csr", force_all_finite=True, reset=reset
         )
         check_non_negative(X, "CategoricalNB (input X)")
         return X, y
@@ -1358,7 +1359,10 @@ class CategoricalNB(_BaseDiscreteNB):
     @staticmethod
     def _validate_n_categories(X, min_categories):
         # rely on max for n_categories categories are encoded between 0...n-1
-        n_categories_X = X.max(axis=0) + 1
+        max_categories = X.max(axis=0)
+        if sp.issparse(X):
+            max_categories = max_categories.toarray().flatten()
+        n_categories_X = max_categories + 1
         min_categories_ = np.array(min_categories)
         if min_categories is not None:
             if not np.issubdtype(min_categories_.dtype, np.signedinteger):
@@ -1386,6 +1390,8 @@ class CategoricalNB(_BaseDiscreteNB):
             return cat_count
 
         def _update_cat_count(X_feature, Y, cat_count, n_classes):
+            if sp.issparse(X_feature):
+                X_feature = X_feature.toarray().flatten()
             for j in range(n_classes):
                 mask = Y[:, j].astype(bool)
                 if Y.dtype.type == np.int64:
@@ -1420,8 +1426,11 @@ class CategoricalNB(_BaseDiscreteNB):
     def _joint_log_likelihood(self, X):
         self._check_n_features(X, reset=False)
         jll = np.zeros((X.shape[0], self.class_count_.shape[0]))
+        is_sparse = sp.issparse(X)
         for i in range(self.n_features_in_):
             indices = X[:, i]
+            if is_sparse:
+                indices = indices.toarray().flatten()
             jll += self.feature_log_prob_[i][:, indices].T
         total_ll = jll + self.class_log_prior_
         return total_ll
