@@ -688,6 +688,7 @@ def test_categoricalnb():
     clf.fit(X3, y3)
     assert_array_equal(clf.n_categories_, np.array([3, 6]))
 
+    # Check error is raised for X with negative entries
     X = np.array([[0, -1]])
     y = np.array([1])
     error_msg = re.escape("Negative values in data passed to CategoricalNB (input X)")
