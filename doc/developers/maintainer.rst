@@ -211,12 +211,6 @@ Making a release
 
    https://github.com/scikit-learn/scikit-learn/actions?query=workflow%3A%22Publish+to+Pypi%22
 
-4.1 You can test the conda-forge builds by submitting a PR to the feedstock
-    repo: https://github.com/conda-forge/scikit-learn-feedstock. If you want to
-    publish an RC release on conda-forge, the PR should target the `rc` branch
-    as opposed to the `master` branch. The two branches need to be kept sync
-    together otherwise.
-
 5. If this went fine, you can proceed with tagging. Proceed with caution.
    Ideally, tags should be created when you're almost certain that the release
    is ready, since adding a tag to the main repo can trigger certain automated
@@ -234,7 +228,13 @@ Making a release
    to the real https://pypi.org (replace "testpypi" by "pypi" in the "Run
    workflow" form).
 
-7. Alternatively, it's possible to collect locally the generated binary wheel
+7. Confirm that the bot has detected the tag on the conda-forge feedstock repo:
+   https://github.com/conda-forge/scikit-learn-feedstock. If not, submit a PR for the
+   release. If you want to publish an RC release on conda-forge, the PR should target
+   the `rc` branch as opposed to the `main` branch. The two branches need to be kept
+   sync together otherwise.
+
+8. Alternatively, it's possible to collect locally the generated binary wheel
    packages and source tarball and upload them all to PyPI by running the
    following commands in the scikit-learn source folder (checked out at the
    release tag):
@@ -272,7 +272,7 @@ Making a release
 
        twine upload dist/*
 
-8. For major/minor (not bug-fix release), update the symlink for ``stable``
+9. For major/minor (not bug-fix release), update the symlink for ``stable``
    and the ``latestStable`` variable in
    https://github.com/scikit-learn/scikit-learn.github.io:
 
