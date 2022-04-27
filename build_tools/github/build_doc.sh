@@ -17,13 +17,13 @@ set -e
 # If the inspection of the current commit fails for any reason, the default
 # behavior is to quick build the documentation.
 
-if [[! -z "$GITHUB_ACTION" ]]
+if [ -n "$GITHUB_ACTION" ]
 then
     # Map the variables for the new documentation builder to the old one
     CIRCLE_SHA1 = $GITHUB_SHA
     CIRCLE_BRANCH = $GITHUB_REF
     CIRCLE_JOB = $GITHUB_JOB
-    CI_PULL_REQUEST = [[ "$GITHUB_EVENT_NAME" == pull_request ]] && echo true
+    CI_PULL_REQUEST = [ "$GITHUB_EVENT_NAME" == pull_request ] && echo true
 fi
 
 get_build_type() {
