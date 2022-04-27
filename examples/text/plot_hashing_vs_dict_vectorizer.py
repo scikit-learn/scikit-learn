@@ -3,31 +3,60 @@
 FeatureHasher and DictVectorizer Comparison
 ===========================================
 
-Compares FeatureHasher and DictVectorizer by using both to vectorize
-text documents.
+Compares FeatureHasher and DictVectorizer by using both to vectorize text
+documents.
 
-The example demonstrates syntax and speed only; it doesn't actually do
-anything useful with the extracted vectors. See the example scripts
-{document_classification_20newsgroups,clustering}.py for actual learning
-on text documents.
+The example demonstrates syntax and speed only; it doesn't actually do anything
+useful with the extracted vectors. See the example scripts
+:ref:`sphx_glr_auto_examples_text_plot_document_classification.py` and
+:ref:`sphx_glr_auto_examples_text_plot_document_clustering.py` for actual
+learning on text documents.
 
-A discrepancy between the number of terms reported for DictVectorizer and
-for FeatureHasher is to be expected due to hash collisions.
+A discrepancy between the number of terms reported for DictVectorizer and for
+FeatureHasher is to be expected due to hash collisions.
 
 """
 
 # Author: Lars Buitinck
 # License: BSD 3 clause
 
-from collections import defaultdict
-import re
+# %%
 import sys
-from time import time
 
-import numpy as np
+print(__doc__)
+print("Usage: %s [n_features_for_hashing]" % sys.argv[0])
+
+# %%
+# Load Data
+# ---------
 
 from sklearn.datasets import fetch_20newsgroups
-from sklearn.feature_extraction import DictVectorizer, FeatureHasher
+
+categories = [
+    "alt.atheism",
+    "comp.graphics",
+    "comp.sys.ibm.pc.hardware",
+    "misc.forsale",
+    "rec.autos",
+    "sci.space",
+    "talk.religion.misc",
+]
+# Uncomment the following line to use a larger set (11k+ documents)
+# categories = None
+
+print("Loading 20 newsgroups training data")
+raw_data, _ = fetch_20newsgroups(subset="train", categories=categories, return_X_y=True)
+data_size_mb = sum(len(s.encode("utf-8")) for s in raw_data) / 1e6
+print("%d documents - %0.3fMB" % (len(raw_data), data_size_mb))
+print()
+
+# %%
+# Define preprocessing functions
+# ------------------------------
+
+import re
+import numpy as np
+from collections import defaultdict
 
 
 def n_nonzero_columns(X):
@@ -52,37 +81,12 @@ def token_freqs(doc):
     return freq
 
 
-categories = [
-    "alt.atheism",
-    "comp.graphics",
-    "comp.sys.ibm.pc.hardware",
-    "misc.forsale",
-    "rec.autos",
-    "sci.space",
-    "talk.religion.misc",
-]
-# Uncomment the following line to use a larger set (11k+ documents)
-# categories = None
+# %%
+# Benchmarking
+# ------------
 
-print(__doc__)
-print("Usage: %s [n_features_for_hashing]" % sys.argv[0])
-print("    The default number of features is 2**18.")
-print()
-
-try:
-    n_features = int(sys.argv[1])
-except IndexError:
-    n_features = 2**18
-except ValueError:
-    print("not a valid number of features: %r" % sys.argv[1])
-    sys.exit(1)
-
-
-print("Loading 20 newsgroups training data")
-raw_data, _ = fetch_20newsgroups(subset="train", categories=categories, return_X_y=True)
-data_size_mb = sum(len(s.encode("utf-8")) for s in raw_data) / 1e6
-print("%d documents - %0.3fMB" % (len(raw_data), data_size_mb))
-print()
+from time import time
+from sklearn.feature_extraction import DictVectorizer, FeatureHasher
 
 print("DictVectorizer")
 t0 = time()
@@ -92,6 +96,14 @@ duration = time() - t0
 print("done in %fs at %0.3fMB/s" % (duration, data_size_mb / duration))
 print("Found %d unique terms" % len(vectorizer.get_feature_names_out()))
 print()
+
+# The default number of features is 2**20.
+try:
+    n_features = int(sys.argv[1])
+except IndexError:
+    n_features = 2**18
+except ValueError:
+    n_features = 2**18
 
 print("FeatureHasher on frequency dicts")
 t0 = time()
