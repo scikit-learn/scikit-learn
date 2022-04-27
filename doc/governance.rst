@@ -27,25 +27,25 @@ Contributors are community members who contribute in concrete ways to the
 project. Anyone can become a contributor, and contributions can take many forms
 – not only code – as detailed in the :ref:`contributors guide <contributing>`.
 
-Triage team
-------------
+Contributor Experience Team
+---------------------------
 
-The triage team is composed of community members who have permission on
+The contributor experience team is composed of community members who have permission on
 github to label and close issues. :ref:`Their work <bug_triaging>` is
 crucial to improve the communication in the project and limit the crowding
 of the issue tracker.
 
 Similarly to what has been decided in the `python project
 <https://devguide.python.org/triaging/#becoming-a-member-of-the-python-triage-team>`_,
-any contributor may become a member of the scikit-learn triage team, after
-showing some continuity in participating to scikit-learn
+any contributor may become a member of the scikit-learn contributor experience team,
+after showing some continuity in participating to scikit-learn
 development (with pull requests and reviews).
-Any core developer or member of the triage team is welcome to propose a
-scikit-learn contributor to join the triage team. Other core developers
+Any core developer or member of the contributor experience team is welcome to propose a
+scikit-learn contributor to join the contributor experience team. Other core developers
 are then consulted: while it is expected that most acceptances will be
 unanimous, a two-thirds majority is enough.
-Every new triager will be announced in the mailing list.
-Triagers are welcome to participate in `monthly core developer meetings
+Every new member of the contributor experience team will be announced in the mailing
+list. Members of the team are welcome to participate in `monthly core developer meetings
 <https://github.com/scikit-learn/administrative/tree/master/meeting_notes>`_.
 
 .. _communication_team:
