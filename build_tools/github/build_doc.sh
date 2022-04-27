@@ -20,10 +20,14 @@ set -e
 if [ -n "$GITHUB_ACTION" ]
 then
     # Map the variables for the new documentation builder to the old one
-    CIRCLE_SHA1=$GITHUB_SHA
-    CIRCLE_BRANCH=$GITHUB_REF
+    CIRCLE_SHA1=$(git log --no-merges -1 --pretty=format:%H)
+    CIRCLE_BRANCH=$GITHUB_REF_NAME
     CIRCLE_JOB=$GITHUB_JOB
-    CI_PULL_REQUEST=[ "$GITHUB_EVENT_NAME" == pull_request ] && echo true
+
+    if [ "$GITHUB_EVENT_NAME" == "pull_request" ]
+    then
+        CI_PULL_REQUEST=true
+    fi
 fi
 
 get_build_type() {
@@ -32,7 +36,7 @@ get_build_type() {
         echo SKIP: undefined CIRCLE_SHA1
         return
     fi
-    commit_msg=$(git log --format=%B -n 1 $CIRCLE_SHA1)
+    commit_msg=$(git log --no-merges -1 --oneline $CIRCLE_SHA1)
     if [ -z "$commit_msg" ]
     then
         echo QUICK BUILD: failed to inspect commit $CIRCLE_SHA1
