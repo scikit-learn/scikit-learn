@@ -7,7 +7,6 @@ different columns.
 #         Joris Van den Bossche
 # License: BSD
 from itertools import chain
-from typing import Iterable
 from collections import Counter
 
 import numpy as np
@@ -112,7 +111,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         If True, the time elapsed while fitting each transformer will be
         printed as it is completed.
 
-    prefix_feature_names_out : bool, default=True
+    verbose_feature_names_out : bool, default=True
         If True, :meth:`get_feature_names_out` will prefix all feature names
         with the name of the transformer that generated that feature.
         If False, :meth:`get_feature_names_out` will not prefix any feature
@@ -204,7 +203,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         n_jobs=None,
         transformer_weights=None,
         verbose=False,
-        prefix_feature_names_out=True,
+        verbose_feature_names_out=True,
     ):
         self.transformers = transformers
         self.remainder = remainder
@@ -212,7 +211,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         self.n_jobs = n_jobs
         self.transformer_weights = transformer_weights
         self.verbose = verbose
-        self.prefix_feature_names_out = prefix_feature_names_out
+        self.verbose_feature_names_out = verbose_feature_names_out
 
     @property
     def _transformers(self):
@@ -222,14 +221,20 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         of get_params via BaseComposition._get_params which expects lists
         of tuples of len 2.
         """
-        return [(name, trans) for name, trans, _ in self.transformers]
+        try:
+            return [(name, trans) for name, trans, _ in self.transformers]
+        except (TypeError, ValueError):
+            return self.transformers
 
     @_transformers.setter
     def _transformers(self, value):
-        self.transformers = [
-            (name, trans, col)
-            for ((name, trans), (_, _, col)) in zip(value, self.transformers)
-        ]
+        try:
+            self.transformers = [
+                (name, trans, col)
+                for ((name, trans), (_, _, col)) in zip(value, self.transformers)
+            ]
+        except (TypeError, ValueError):
+            self.transformers = value
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.
@@ -430,16 +435,12 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
         Used in conjunction with self._iter(fitted=True) in get_feature_names_out.
         """
+        column_indices = self._transformer_to_input_indices[name]
+        names = feature_names_in[column_indices]
         if trans == "drop" or _is_empty_column_selection(column):
             return
         elif trans == "passthrough":
-            if (not isinstance(column, slice)) and all(
-                isinstance(col, str) for col in column
-            ):
-                # selection was already strings
-                return column
-            else:
-                return feature_names_in[column]
+            return names
 
         # An actual transformer
         if not hasattr(trans, "get_feature_names_out"):
@@ -447,11 +448,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 f"Transformer {name} (type {type(trans).__name__}) does "
                 "not provide get_feature_names_out."
             )
-        if isinstance(column, Iterable) and not all(
-            isinstance(col, str) for col in column
-        ):
-            column = _safe_indexing(feature_names_in, column)
-        return trans.get_feature_names_out(column)
+        return trans.get_feature_names_out(names)
 
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
@@ -463,7 +460,8 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
             - If `input_features` is `None`, then `feature_names_in_` is
               used as feature names in. If `feature_names_in_` is not defined,
-              then names are generated: `[x0, x1, ..., x(n_features_in_)]`.
+              then the following input feature names are generated:
+              `["x0", "x1", ..., "x(n_features_in_ - 1)"]`.
             - If `input_features` is an array-like, then `input_features` must
               match `feature_names_in_` if `feature_names_in_` is defined.
 
@@ -489,7 +487,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             # No feature names
             return np.array([], dtype=object)
 
-        if self.prefix_feature_names_out:
+        if self.verbose_feature_names_out:
             # Prefix the feature names out with the transformers name
             names = list(
                 chain.from_iterable(
@@ -499,7 +497,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             )
             return np.asarray(names, dtype=object)
 
-        # prefix_feature_names_out is False
+        # verbose_feature_names_out is False
         # Check that names are all unique without a prefix
         feature_names_count = Counter(
             chain.from_iterable(s for _, s in transformer_with_feature_names_out)
@@ -517,7 +515,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 names_repr = str(top_6_overlap)
             raise ValueError(
                 f"Output feature names: {names_repr} are not unique. Please set "
-                "prefix_feature_names_out=True to add prefixes to feature names"
+                "verbose_feature_names_out=True to add prefixes to feature names"
             )
 
         return np.concatenate(
@@ -856,7 +854,7 @@ def make_column_transformer(
     sparse_threshold=0.3,
     n_jobs=None,
     verbose=False,
-    prefix_feature_names_out=True,
+    verbose_feature_names_out=True,
 ):
     """Construct a ColumnTransformer from the given transformers.
 
@@ -919,7 +917,7 @@ def make_column_transformer(
         If True, the time elapsed while fitting each transformer will be
         printed as it is completed.
 
-    prefix_feature_names_out : bool, default=True
+    verbose_feature_names_out : bool, default=True
         If True, :meth:`get_feature_names_out` will prefix all feature names
         with the name of the transformer that generated that feature.
         If False, :meth:`get_feature_names_out` will not prefix any feature
@@ -930,6 +928,7 @@ def make_column_transformer(
     Returns
     -------
     ct : ColumnTransformer
+        Returns a :class:`ColumnTransformer` object.
 
     See Also
     --------
@@ -948,7 +947,6 @@ def make_column_transformer(
                                      ['numerical_column']),
                                     ('onehotencoder', OneHotEncoder(...),
                                      ['categorical_column'])])
-
     """
     # transformer_weights keyword is not passed through because the user
     # would need to know the automatically generated names of the transformers
@@ -959,7 +957,7 @@ def make_column_transformer(
         remainder=remainder,
         sparse_threshold=sparse_threshold,
         verbose=verbose,
-        prefix_feature_names_out=prefix_feature_names_out,
+        verbose_feature_names_out=verbose_feature_names_out,
     )
 
 
@@ -1002,6 +1000,7 @@ class make_column_selector:
     >>> from sklearn.preprocessing import StandardScaler, OneHotEncoder
     >>> from sklearn.compose import make_column_transformer
     >>> from sklearn.compose import make_column_selector
+    >>> import numpy as np
     >>> import pandas as pd  # doctest: +SKIP
     >>> X = pd.DataFrame({'city': ['London', 'London', 'Paris', 'Sallisaw'],
     ...                   'rating': [5, 3, 4, 5]})  # doctest: +SKIP

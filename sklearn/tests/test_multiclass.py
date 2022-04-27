@@ -1,12 +1,12 @@
 import numpy as np
 import scipy.sparse as sp
 import pytest
+from numpy.testing import assert_allclose
 
 from re import escape
 
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._mocking import CheckingClassifier
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multiclass import OneVsOneClassifier
@@ -32,12 +32,14 @@ from sklearn.linear_model import (
     SGDClassifier,
 )
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import GridSearchCV, cross_val_score
 from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.impute import SimpleImputer
 from sklearn import svm
 from sklearn.exceptions import NotFittedError
 from sklearn import datasets
+from sklearn.datasets import load_breast_cancer
 
 iris = datasets.load_iris()
 rng = np.random.RandomState(0)
@@ -473,63 +475,6 @@ def test_ovr_pipeline():
     assert_array_equal(ovr.predict(iris.data), ovr_pipe.predict(iris.data))
 
 
-# TODO: Remove this test in version 1.1
-# when the coef_ attribute is removed
-@ignore_warnings(category=FutureWarning)
-def test_ovr_coef_():
-    for base_classifier in [
-        SVC(kernel="linear", random_state=0),
-        LinearSVC(random_state=0),
-    ]:
-        # SVC has sparse coef with sparse input data
-
-        ovr = OneVsRestClassifier(base_classifier)
-        for X in [iris.data, sp.csr_matrix(iris.data)]:
-            # test with dense and sparse coef
-            ovr.fit(X, iris.target)
-            shape = ovr.coef_.shape
-            assert shape[0] == n_classes
-            assert shape[1] == iris.data.shape[1]
-            # don't densify sparse coefficients
-            assert sp.issparse(ovr.estimators_[0].coef_) == sp.issparse(ovr.coef_)
-
-
-# TODO: Remove this test in version 1.1
-# when the coef_ attribute is removed
-@ignore_warnings(category=FutureWarning)
-def test_ovr_coef_exceptions():
-    # Not fitted exception!
-    ovr = OneVsRestClassifier(LinearSVC(random_state=0))
-
-    with pytest.raises(NotFittedError):
-        ovr.coef_
-
-    # Doesn't have coef_ exception!
-    ovr = OneVsRestClassifier(DecisionTreeClassifier())
-    ovr.fit(iris.data, iris.target)
-    msg = "Base estimator doesn't have a coef_ attribute"
-    with pytest.raises(AttributeError, match=msg):
-        ovr.coef_
-
-
-# TODO: Remove this test in version 1.1 when
-# the coef_ and intercept_ attributes are removed
-def test_ovr_deprecated_coef_intercept():
-    ovr = OneVsRestClassifier(SVC(kernel="linear"))
-    ovr = ovr.fit(iris.data, iris.target)
-
-    msg = (
-        r"Attribute `{0}` was deprecated in version 0.24 "
-        r"and will be removed in 1.1 \(renaming of 0.26\). If you observe "
-        r"this warning while using RFE or SelectFromModel, "
-        r"use the importance_getter parameter instead."
-    )
-
-    for att in ["coef_", "intercept_"]:
-        with pytest.warns(FutureWarning, match=msg.format(att)):
-            getattr(ovr, att)
-
-
 def test_ovo_exceptions():
     ovo = OneVsOneClassifier(LinearSVC(random_state=0))
     with pytest.raises(NotFittedError):
@@ -893,19 +838,6 @@ def test_pairwise_n_features_in():
     assert ovo_precomputed.estimators_[2].n_features_in_ == 100  # class 1 vs class 2
 
 
-@ignore_warnings(category=FutureWarning)
-def test_pairwise_attribute():
-    clf_precomputed = svm.SVC(kernel="precomputed")
-    clf_notprecomputed = svm.SVC()
-
-    for MultiClassClassifier in [OneVsRestClassifier, OneVsOneClassifier]:
-        ovr_false = MultiClassClassifier(clf_notprecomputed)
-        assert not ovr_false._pairwise
-
-        ovr_true = MultiClassClassifier(clf_precomputed)
-        assert ovr_true._pairwise
-
-
 @pytest.mark.parametrize(
     "MultiClassClassifier", [OneVsRestClassifier, OneVsOneClassifier]
 )
@@ -918,18 +850,6 @@ def test_pairwise_tag(MultiClassClassifier):
 
     ovr_true = MultiClassClassifier(clf_precomputed)
     assert ovr_true._get_tags()["pairwise"]
-
-
-# TODO: Remove in 1.1
-@pytest.mark.parametrize(
-    "MultiClassClassifier", [OneVsRestClassifier, OneVsOneClassifier]
-)
-def test_pairwise_deprecated(MultiClassClassifier):
-    clf_precomputed = svm.SVC(kernel="precomputed")
-    ov_clf = MultiClassClassifier(clf_precomputed)
-    msg = r"Attribute `_pairwise` was deprecated in version 0\.24"
-    with pytest.warns(FutureWarning, match=msg):
-        ov_clf._pairwise
 
 
 @pytest.mark.parametrize(
@@ -971,3 +891,36 @@ def test_support_missing_values(MultiClassClassifier):
     lr = make_pipeline(SimpleImputer(), LogisticRegression(random_state=rng))
 
     MultiClassClassifier(lr).fit(X, y).score(X, y)
+
+
+@pytest.mark.parametrize("make_y", [np.ones, np.zeros])
+def test_constant_int_target(make_y):
+    """Check that constant y target does not raise.
+
+    Non-regression test for #21869
+    """
+    X = np.ones((10, 2))
+    y = make_y((10, 1), dtype=np.int32)
+    ovr = OneVsRestClassifier(LogisticRegression())
+
+    ovr.fit(X, y)
+    y_pred = ovr.predict_proba(X)
+    expected = np.zeros((X.shape[0], 2))
+    expected[:, 0] = 1
+    assert_allclose(y_pred, expected)
+
+
+def test_ovo_consistent_binary_classification():
+    """Check that ovo is consistent with binary classifier.
+
+    Non-regression test for #13617.
+    """
+    X, y = load_breast_cancer(return_X_y=True)
+
+    clf = KNeighborsClassifier(n_neighbors=8, weights="distance")
+    ovo = OneVsOneClassifier(clf)
+
+    clf.fit(X, y)
+    ovo.fit(X, y)
+
+    assert_array_equal(clf.predict(X), ovo.predict(X))

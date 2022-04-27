@@ -23,6 +23,8 @@ from functools import partial
 from collections import Counter
 
 import numpy as np
+import copy
+import warnings
 
 from . import (
     r2_score,
@@ -46,6 +48,7 @@ from . import (
     brier_score_loss,
     jaccard_score,
     mean_absolute_percentage_error,
+    matthews_corrcoef,
 )
 
 from .cluster import adjusted_rand_score
@@ -388,6 +391,8 @@ def get_scorer(scoring):
     """Get a scorer from string.
 
     Read more in the :ref:`User Guide <scoring_parameter>`.
+    :func:`~sklearn.metrics.get_scorer_names` can be used to retrieve the names
+    of all available scorers.
 
     Parameters
     ----------
@@ -398,14 +403,20 @@ def get_scorer(scoring):
     -------
     scorer : callable
         The scorer.
+
+    Notes
+    -----
+    When passed a string, this function always returns a copy of the scorer
+    object. Calling `get_scorer` twice for the same scorer results in two
+    separate scorer objects.
     """
     if isinstance(scoring, str):
         try:
-            scorer = SCORERS[scoring]
+            scorer = copy.deepcopy(_SCORERS[scoring])
         except KeyError:
             raise ValueError(
                 "%r is not a valid scoring value. "
-                "Use sorted(sklearn.metrics.SCORERS.keys()) "
+                "Use sklearn.metrics.get_scorer_names() "
                 "to get valid options." % scoring
             )
     else:
@@ -590,8 +601,8 @@ def make_scorer(
     :func:`~sklearn.model_selection.cross_val_score`.
     It takes a score function, such as :func:`~sklearn.metrics.accuracy_score`,
     :func:`~sklearn.metrics.mean_squared_error`,
-    :func:`~sklearn.metrics.adjusted_rand_index` or
-    :func:`~sklearn.metrics.average_precision`
+    :func:`~sklearn.metrics.adjusted_rand_score` or
+    :func:`~sklearn.metrics.average_precision_score`
     and returns a callable that scores an estimator's output.
     The signature of the call is `(estimator, X, y)` where `estimator`
     is the model to be evaluated, `X` is the data and `y` is the
@@ -603,51 +614,40 @@ def make_scorer(
     ----------
     score_func : callable
         Score function (or loss function) with signature
-        ``score_func(y, y_pred, **kwargs)``.
+        `score_func(y, y_pred, **kwargs)`.
 
     greater_is_better : bool, default=True
-        Whether score_func is a score function (default), meaning high is good,
-        or a loss function, meaning low is good. In the latter case, the
-        scorer object will sign-flip the outcome of the score_func.
+        Whether `score_func` is a score function (default), meaning high is
+        good, or a loss function, meaning low is good. In the latter case, the
+        scorer object will sign-flip the outcome of the `score_func`.
 
     needs_proba : bool, default=False
-        Whether score_func requires predict_proba to get probability estimates
-        out of a classifier.
+        Whether `score_func` requires `predict_proba` to get probability
+        estimates out of a classifier.
 
         If True, for binary `y_true`, the score function is supposed to accept
         a 1D `y_pred` (i.e., probability of the positive class, shape
         `(n_samples,)`).
 
     needs_threshold : bool, default=False
-        Whether score_func takes a continuous decision certainty.
+        Whether `score_func` takes a continuous decision certainty.
         This only works for binary classification using estimators that
-        have either a decision_function or predict_proba method.
+        have either a `decision_function` or `predict_proba` method.
 
         If True, for binary `y_true`, the score function is supposed to accept
         a 1D `y_pred` (i.e., probability of the positive class or the decision
         function, shape `(n_samples,)`).
 
-        For example ``average_precision`` or the area under the roc curve
+        For example `average_precision` or the area under the roc curve
         can not be computed using discrete predictions alone.
 
     **kwargs : additional arguments
-        Additional parameters to be passed to score_func.
+        Additional parameters to be passed to `score_func`.
 
     Returns
     -------
     scorer : callable
         Callable object that returns a scalar score; greater is better.
-
-    Examples
-    --------
-    >>> from sklearn.metrics import fbeta_score, make_scorer
-    >>> ftwo_scorer = make_scorer(fbeta_score, beta=2)
-    >>> ftwo_scorer
-    make_scorer(fbeta_score, beta=2)
-    >>> from sklearn.model_selection import GridSearchCV
-    >>> from sklearn.svm import LinearSVC
-    >>> grid = GridSearchCV(LinearSVC(), param_grid={'C': [1, 10]},
-    ...                     scoring=ftwo_scorer)
 
     Notes
     -----
@@ -659,6 +659,17 @@ def make_scorer(
     `needs_threshold=True`, the score function is supposed to accept the
     output of :term:`decision_function` or :term:`predict_proba` when
     :term:`decision_function` is not present.
+
+    Examples
+    --------
+    >>> from sklearn.metrics import fbeta_score, make_scorer
+    >>> ftwo_scorer = make_scorer(fbeta_score, beta=2)
+    >>> ftwo_scorer
+    make_scorer(fbeta_score, beta=2)
+    >>> from sklearn.model_selection import GridSearchCV
+    >>> from sklearn.svm import LinearSVC
+    >>> grid = GridSearchCV(LinearSVC(), param_grid={'C': [1, 10]},
+    ...                     scoring=ftwo_scorer)
     """
     sign = 1 if greater_is_better else -1
     if needs_proba and needs_threshold:
@@ -705,6 +716,7 @@ neg_mean_gamma_deviance_scorer = make_scorer(
 # Standard Classification Scores
 accuracy_scorer = make_scorer(accuracy_score)
 balanced_accuracy_scorer = make_scorer(balanced_accuracy_score)
+matthews_corrcoef_scorer = make_scorer(matthews_corrcoef)
 
 # Score functions that need decision values
 top_k_accuracy_scorer = make_scorer(
@@ -745,10 +757,25 @@ normalized_mutual_info_scorer = make_scorer(normalized_mutual_info_score)
 fowlkes_mallows_scorer = make_scorer(fowlkes_mallows_score)
 
 
-SCORERS = dict(
+# TODO(1.3) Remove
+class _DeprecatedScorers(dict):
+    """A temporary class to deprecate SCORERS."""
+
+    def __getitem__(self, item):
+        warnings.warn(
+            "sklearn.metrics.SCORERS is deprecated and will be removed in v1.3. "
+            "Please use sklearn.metrics.get_scorer_names to get a list of available "
+            "scorers and sklearn.metrics.get_metric to get scorer.",
+            FutureWarning,
+        )
+        return super().__getitem__(item)
+
+
+_SCORERS = dict(
     explained_variance=explained_variance_scorer,
     r2=r2_scorer,
     max_error=max_error_scorer,
+    matthews_corrcoef=matthews_corrcoef_scorer,
     neg_median_absolute_error=neg_median_absolute_error_scorer,
     neg_mean_absolute_error=neg_mean_absolute_error_scorer,
     neg_mean_absolute_percentage_error=neg_mean_absolute_percentage_error_scorer,  # noqa
@@ -781,13 +808,29 @@ SCORERS = dict(
 )
 
 
+def get_scorer_names():
+    """Get the names of all available scorers.
+
+    These names can be passed to :func:`~sklearn.metrics.get_scorer` to
+    retrieve the scorer object.
+
+    Returns
+    -------
+    list of str
+        Names of all available scorers.
+    """
+    return sorted(_SCORERS.keys())
+
+
 for name, metric in [
     ("precision", precision_score),
     ("recall", recall_score),
     ("f1", f1_score),
     ("jaccard", jaccard_score),
 ]:
-    SCORERS[name] = make_scorer(metric, average="binary")
+    _SCORERS[name] = make_scorer(metric, average="binary")
     for average in ["macro", "micro", "samples", "weighted"]:
         qualified_name = "{0}_{1}".format(name, average)
-        SCORERS[qualified_name] = make_scorer(metric, pos_label=None, average=average)
+        _SCORERS[qualified_name] = make_scorer(metric, pos_label=None, average=average)
+
+SCORERS = _DeprecatedScorers(_SCORERS)

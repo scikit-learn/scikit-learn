@@ -29,7 +29,6 @@ from scipy.stats import bernoulli, expon, uniform
 
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.base import is_classifier
-from sklearn.exceptions import NotFittedError
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_blobs
 from sklearn.datasets import make_multilabel_classification
@@ -134,12 +133,13 @@ def assert_grid_iter_equals_getitem(grid):
 @pytest.mark.parametrize(
     "input, error_type, error_message",
     [
-        (0, TypeError, r"Parameter .* is not a dict or a list \(0\)"),
+        (0, TypeError, r"Parameter .* a dict or a list, got: 0 of type int"),
         ([{"foo": [0]}, 0], TypeError, r"Parameter .* is not a dict \(0\)"),
         (
             {"foo": 0},
             TypeError,
-            "Parameter.* value is not iterable .*" r"\(key='foo', value=0\)",
+            r"Parameter (grid|distribution) for parameter 'foo' (is not|needs to be) "
+            r"(a list or a numpy array|iterable or a distribution).*",
         ),
     ],
 )
@@ -441,40 +441,43 @@ def test_grid_search_when_param_grid_includes_range():
 
 
 def test_grid_search_bad_param_grid():
+    X, y = make_classification(n_samples=10, n_features=5, random_state=0)
     param_dict = {"C": 1}
     clf = SVC(gamma="auto")
     error_msg = re.escape(
-        "Parameter grid for parameter (C) needs to"
-        " be a list or numpy array, but got (<class 'int'>)."
-        " Single values need to be wrapped in a list"
-        " with one element."
+        "Parameter grid for parameter 'C' needs to be a list or "
+        "a numpy array, but got 1 (of type int) instead. Single "
+        "values need to be wrapped in a list with one element."
     )
-    with pytest.raises(ValueError, match=error_msg):
-        GridSearchCV(clf, param_dict)
+    search = GridSearchCV(clf, param_dict)
+    with pytest.raises(TypeError, match=error_msg):
+        search.fit(X, y)
 
     param_dict = {"C": []}
     clf = SVC()
     error_msg = re.escape(
-        "Parameter values for parameter (C) need to be a non-empty sequence."
+        "Parameter grid for parameter 'C' need to be a non-empty sequence, got: []"
     )
+    search = GridSearchCV(clf, param_dict)
     with pytest.raises(ValueError, match=error_msg):
-        GridSearchCV(clf, param_dict)
+        search.fit(X, y)
 
     param_dict = {"C": "1,2,3"}
     clf = SVC(gamma="auto")
     error_msg = re.escape(
-        "Parameter grid for parameter (C) needs to"
-        " be a list or numpy array, but got (<class 'str'>)."
-        " Single values need to be wrapped in a list"
-        " with one element."
+        "Parameter grid for parameter 'C' needs to be a list or a numpy array, "
+        "but got '1,2,3' (of type str) instead. Single values need to be "
+        "wrapped in a list with one element."
     )
-    with pytest.raises(ValueError, match=error_msg):
-        GridSearchCV(clf, param_dict)
+    search = GridSearchCV(clf, param_dict)
+    with pytest.raises(TypeError, match=error_msg):
+        search.fit(X, y)
 
     param_dict = {"C": np.ones((3, 2))}
     clf = SVC()
+    search = GridSearchCV(clf, param_dict)
     with pytest.raises(ValueError):
-        GridSearchCV(clf, param_dict)
+        search.fit(X, y)
 
 
 def test_grid_search_sparse():
@@ -1628,6 +1631,27 @@ def test_grid_search_failing_classifier():
     assert gs.best_index_ != clf.FAILING_PARAMETER
 
 
+def test_grid_search_classifier_all_fits_fail():
+    X, y = make_classification(n_samples=20, n_features=10, random_state=0)
+
+    clf = FailingClassifier()
+
+    gs = GridSearchCV(
+        clf,
+        [{"parameter": [FailingClassifier.FAILING_PARAMETER] * 3}],
+        error_score=0.0,
+    )
+
+    warning_message = re.compile(
+        "All the 15 fits failed.+"
+        "15 fits failed with the following error.+ValueError.+Failing classifier failed"
+        " as required",
+        flags=re.DOTALL,
+    )
+    with pytest.raises(ValueError, match=warning_message):
+        gs.fit(X, y)
+
+
 def test_grid_search_failing_classifier_raise():
     # GridSearchCV with on_error == 'raise' raises the error
 
@@ -1693,7 +1717,7 @@ def test_stochastic_gradient_loss_param():
     # Make sure the predict_proba works when loss is specified
     # as one of the parameters in the param_grid.
     param_grid = {
-        "loss": ["log"],
+        "loss": ["log_loss"],
     }
     X = np.arange(24).reshape(6, -1)
     y = [0, 0, 0, 1, 1, 1]
@@ -2130,7 +2154,7 @@ def test_callable_multimetric_error_failing_clf():
     assert_allclose(gs.cv_results_["mean_test_acc"], [1, 1, 0.1])
 
 
-def test_callable_multimetric_clf_all_fails():
+def test_callable_multimetric_clf_all_fits_fail():
     # Warns and raises when all estimator fails to fit.
     def custom_scorer(est, X, y):
         return {"acc": 1}
@@ -2141,16 +2165,20 @@ def test_callable_multimetric_clf_all_fails():
 
     gs = GridSearchCV(
         clf,
-        [{"parameter": [2, 2, 2]}],
+        [{"parameter": [FailingClassifier.FAILING_PARAMETER] * 3}],
         scoring=custom_scorer,
         refit=False,
         error_score=0.1,
     )
 
-    with pytest.warns(
-        FitFailedWarning,
-        match="15 fits failed.+total of 15",
-    ), pytest.raises(NotFittedError, match="All estimators failed to fit"):
+    individual_fit_error_message = "ValueError: Failing classifier failed as required"
+    error_message = re.compile(
+        "All the 15 fits failed.+your model is misconfigured.+"
+        f"{individual_fit_error_message}",
+        flags=re.DOTALL,
+    )
+
+    with pytest.raises(ValueError, match=error_message):
         gs.fit(X, y)
 
 
@@ -2191,23 +2219,29 @@ def test_search_cv_pairwise_property_delegated_to_base_estimator(pairwise):
     assert pairwise == cv._get_tags()["pairwise"], attr_message
 
 
-# TODO: Remove in 1.1
-@ignore_warnings(category=FutureWarning)
 def test_search_cv__pairwise_property_delegated_to_base_estimator():
     """
-    Test implementation of BaseSearchCV has the _pairwise property
-    which matches the _pairwise property of its estimator.
-    This test make sure _pairwise is delegated to the base estimator.
+    Test implementation of BaseSearchCV has the pairwise property
+    which matches the pairwise tag of its estimator.
+    This test make sure pairwise tag is delegated to the base estimator.
 
     Non-regression test for issue #13920.
     """
-    est = BaseEstimator()
+
+    class EstimatorPairwise(BaseEstimator):
+        def __init__(self, pairwise=True):
+            self.pairwise = pairwise
+
+        def _more_tags(self):
+            return {"pairwise": self.pairwise}
+
+    est = EstimatorPairwise()
     attr_message = "BaseSearchCV _pairwise property must match estimator"
 
     for _pairwise_setting in [True, False]:
-        setattr(est, "_pairwise", _pairwise_setting)
+        est.set_params(pairwise=_pairwise_setting)
         cv = GridSearchCV(est, {"n_neighbors": [10]})
-        assert _pairwise_setting == cv._pairwise, attr_message
+        assert _pairwise_setting == cv._get_tags()["pairwise"], attr_message
 
 
 def test_search_cv_pairwise_property_equivalence_of_precomputed():

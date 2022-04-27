@@ -171,7 +171,7 @@ def permutation_importance(
         Pseudo-random number generator to control the permutations of each
         feature.
         Pass an int to get reproducible results across function calls.
-        See :term: `Glossary <random_state>`.
+        See :term:`Glossary <random_state>`.
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights used in scoring.
@@ -212,8 +212,8 @@ def permutation_importance(
 
     References
     ----------
-    .. [BRE] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32,
-             2001. https://doi.org/10.1023/A:1010933404324
+    .. [BRE] :doi:`L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32,
+             2001. <10.1023/A:1010933404324>`
 
     Examples
     --------
