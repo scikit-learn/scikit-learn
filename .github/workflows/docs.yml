@@ -5,10 +5,6 @@ on:
   schedule:
     # Nightly build at 3:42 A.M.
     - cron: "42 3 */1 * *"
-  # TODO: Remove when the pull request is ready to merge
-  pull_request:
-    branches:
-      - main
 
 jobs:
   # Build the documentation
