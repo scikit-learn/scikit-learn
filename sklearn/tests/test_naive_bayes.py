@@ -675,13 +675,24 @@ def test_cnb():
     assert_array_almost_equal(clf.feature_log_prob_, normed_weights)
 
 
-def test_categoricalnb():
+@pytest.mark.parametrize("kind", ("dense", "csr", "csc"))
+def test_categoricalnb(kind):
     # Check the ability to predict the training set.
     clf = CategoricalNB()
-    y_pred = clf.fit(X2, y2).predict(X2)
+    if kind == "dense":
+        X = X2
+    elif kind == "csr":
+        X = scipy.sparse.csr_matrix(X2)
+    elif kind == "csc":
+        X = scipy.sparse.csc_matrix(X2)
+    y_pred = clf.fit(X, y2).predict(X)
     assert_array_equal(y_pred, y2)
 
     X3 = np.array([[1, 4], [2, 5]])
+    if kind == "csr":
+        X3 = scipy.sparse.csr_matrix(X3)
+    elif kind == "csc":
+        X3 = scipy.sparse.csc_matrix(X3)
     y3 = np.array([1, 2])
     clf = CategoricalNB(alpha=1, fit_prior=False)
 
@@ -689,41 +700,57 @@ def test_categoricalnb():
     assert_array_equal(clf.n_categories_, np.array([3, 6]))
 
     # Check error is raised for X with negative entries
-    X = np.array([[0, -1]])
-    y = np.array([1])
+    X4 = np.array([[0, -1]])
+    if kind == "csr":
+        X4 = scipy.sparse.csr_matrix(X4)
+    elif kind == "csc":
+        X4 = scipy.sparse.csc_matrix(X4)
+    y4 = np.array([1])
     error_msg = re.escape("Negative values in data passed to CategoricalNB (input X)")
     with pytest.raises(ValueError, match=error_msg):
-        clf.predict(X)
+        clf.predict(X4)
     with pytest.raises(ValueError, match=error_msg):
-        clf.fit(X, y)
+        clf.fit(X4, y4)
 
     # Test alpha
-    X3_test = np.array([[2, 5]])
+    X5_test = np.array([[2, 5]])
+    if kind == "csr":
+        X5_test = scipy.sparse.csr_matrix(X5_test)
+    elif kind == "csc":
+        X5_test = scipy.sparse.csc_matrix(X5_test)
     # alpha=1 increases the count of all categories by one so the final
     # probability for each category is not 50/50 but 1/3 to 2/3
     bayes_numerator = np.array([[1 / 3 * 1 / 3, 2 / 3 * 2 / 3]])
     bayes_denominator = bayes_numerator.sum()
     assert_array_almost_equal(
-        clf.predict_proba(X3_test), bayes_numerator / bayes_denominator
+        clf.predict_proba(X5_test), bayes_numerator / bayes_denominator
     )
 
     # Assert category_count has counted all features
     assert len(clf.category_count_) == X3.shape[1]
 
     # Check sample_weight
-    X = np.array([[0, 0], [0, 1], [0, 0], [1, 1]])
-    y = np.array([1, 1, 2, 2])
+    X6 = np.array([[0, 0], [0, 1], [0, 0], [1, 1]])
+    if kind == "csr":
+        X6 = scipy.sparse.csr_matrix(X6)
+    elif kind == "csc":
+        X6 = scipy.sparse.csc_matrix(X6)
+    y6 = np.array([1, 1, 2, 2])
     clf = CategoricalNB(alpha=1, fit_prior=False)
-    clf.fit(X, y)
+    clf.fit(X6, y6)
     assert_array_equal(clf.predict(np.array([[0, 0]])), np.array([1]))
     assert_array_equal(clf.n_categories_, np.array([2, 2]))
 
     for factor in [1.0, 0.3, 5, 0.0001]:
-        X = np.array([[0, 0], [0, 1], [0, 0], [1, 1]])
-        y = np.array([1, 1, 2, 2])
+        X7 = np.array([[0, 0], [0, 1], [0, 0], [1, 1]])
+        if kind == "csr":
+            X7 = scipy.sparse.csr_matrix(X7)
+        elif kind == "csc":
+            X7 = scipy.sparse.csc_matrix(X7)
+        y7 = np.array([1, 1, 2, 2])
         sample_weight = np.array([1, 1, 10, 0.1]) * factor
         clf = CategoricalNB(alpha=1, fit_prior=False)
-        clf.fit(X, y, sample_weight=sample_weight)
+        clf.fit(X7, y7, sample_weight=sample_weight)
         assert_array_equal(clf.predict(np.array([[0, 0]])), np.array([2]))
         assert_array_equal(clf.n_categories_, np.array([2, 2]))
 
