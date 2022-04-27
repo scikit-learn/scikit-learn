@@ -164,6 +164,12 @@ Changelog
   :func:`sklearn.set_config`.
   :pr:`22856` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+- |Enhancement| The error message is improved when importing
+  :class:`model_selection.HalvingGridSearchCV`,
+  :class:`model_selection.HalvingRandomSearchCV`, or
+  :class:`impute.IterativeImputer` without importing the experimental flag.
+  :pr:`23194` by `Thomas Fan`_.
+
 :mod:`sklearn.calibration`
 ..........................
 
