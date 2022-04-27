@@ -140,8 +140,8 @@ plt.figure()
 
 sizes = np.logspace(1, 3.8, 7).astype(int)
 for name, estimator in {
-    "KRR": KernelRidge(kernel="rbf", alpha=0.01, gamma=10),
-    "SVR": SVR(kernel="rbf", C=1e2, gamma=10),
+    "KRR": kr.best_estimator_,
+    "SVR": svr.best_estimator_
 }.items():
     train_time = []
     test_time = []
@@ -151,7 +151,7 @@ for name, estimator in {
         train_time.append(time.time() - t0)
 
         t0 = time.time()
-        estimator.predict(X_plot[:1000])
+        estimator.predict(X_plot[:train_test_size])
         test_time.append(time.time() - t0)
 
     plt.plot(
@@ -193,20 +193,18 @@ from sklearn.model_selection import learning_curve
 
 plt.figure()
 
-svr = SVR(kernel="rbf", C=1e1, gamma=0.1)
-kr = KernelRidge(kernel="rbf", alpha=0.1, gamma=0.1)
 train_sizes, train_scores_svr, test_scores_svr = learning_curve(
-    svr,
-    X[:100],
-    y[:100],
+    svr.best_estimator_,
+    X[:1000],
+    y[:1000],
     train_sizes=np.linspace(0.1, 1, 10),
     scoring="neg_mean_squared_error",
     cv=10,
 )
 train_sizes_abs, train_scores_kr, test_scores_kr = learning_curve(
-    kr,
-    X[:100],
-    y[:100],
+    kr.best_estimator_,
+    X[:1000],
+    y[:1000],
     train_sizes=np.linspace(0.1, 1, 10),
     scoring="neg_mean_squared_error",
     cv=10,
