@@ -50,7 +50,7 @@ fig, ax = plt.subplots()
 ax.plot(X_1d, y, "o", alpha=0.5, markersize=1)
 for quantile, hist in hist_quantiles.items():
     ax.plot(X_1d, hist.predict(X), label=quantile)
-ax.legend(loc="lower left")
+_ = ax.legend(loc="lower left")
 
 
 # %%
@@ -96,6 +96,7 @@ import pandas as pd
 
 log_reg_input_features = log_reg[:-1].get_feature_names_out()
 pd.Series(log_reg[-1].coef_.ravel(), index=log_reg_input_features).plot.bar()
+plt.tight_layout()
 
 
 # %%
@@ -161,3 +162,64 @@ pd.DataFrame(encoded, columns=enc.get_feature_names_out())
 # - :class:`linear_model.GammaRegressor`
 # - :class:`linear_model.PoissonRegressor`
 # - :class:`linear_model.TweedieRegressor`
+
+# %%
+# MiniBatchNMF: an online version of NMF
+# --------------------------------------
+# The new class :class:`decomposition.MiniBatchNMF` implements a faster but less
+# accurate version of non-negative matrix factorization (:class:`decomposition.NMF`).
+# :class:`MiniBatchNMF` divides the data into mini-batches and optimizes the NMF model
+# in an online manner by cycling over the mini-batches, making it better suited for
+# large datasets. In particular, it implements `partial_fit`, which can be used for
+# online learning when the data is not readily available from the start, or when the
+# data does not fit into memory.
+import numpy as np
+from sklearn.decomposition import MiniBatchNMF
+
+rng = np.random.RandomState(0)
+n_samples, n_features, n_components = 10, 10, 5
+true_W = rng.uniform(size=(n_samples, n_components))
+true_H = rng.uniform(size=(n_components, n_features))
+X = true_W @ true_H
+
+nmf = MiniBatchNMF(n_components=n_components, random_state=0)
+
+for _ in range(10):
+    nmf.partial_fit(X)
+
+W = nmf.transform(X)
+H = nmf.components_
+X_reconstructed = W @ H
+
+print(
+    f"relative reconstruction error: ",
+    f"{np.sum((X - X_reconstructed) ** 2) / np.sum(X**2):.5f}",
+)
+
+# %%
+# BisectingKMeans: divide and cluster
+# -----------------------------------
+# The new class :class:`cluster.BisectingKMeans` is a variant of :class:`KMeans`, using
+# divisive hierarchical clustering. Instead of creating all centroids at once, centroids
+# are picked progressively based on a previous clustering: a cluster is split into two
+# new clusters repeatedly until the target number of clusters is reached, giving a
+# hierarchical structure to the clustering.
+from sklearn.datasets import make_blobs
+from sklearn.cluster import KMeans, BisectingKMeans
+import matplotlib.pyplot as plt
+
+X, _ = make_blobs(n_samples=1000, centers=2, random_state=0)
+
+km = KMeans(n_clusters=5, random_state=0).fit(X)
+bisect_km = BisectingKMeans(n_clusters=5, random_state=0).fit(X)
+
+fig, ax = plt.subplots(1, 2, figsize=(10, 5))
+ax[0].scatter(X[:, 0], X[:, 1], s=10, c=km.labels_)
+ax[0].scatter(km.cluster_centers_[:, 0], km.cluster_centers_[:, 1], s=20, c="r")
+ax[0].set_title("KMeans")
+
+ax[1].scatter(X[:, 0], X[:, 1], s=10, c=bisect_km.labels_)
+ax[1].scatter(
+    bisect_km.cluster_centers_[:, 0], bisect_km.cluster_centers_[:, 1], s=20, c="r"
+)
+_ = ax[1].set_title("BisectingKMeans")
