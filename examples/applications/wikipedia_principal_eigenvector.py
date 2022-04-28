@@ -65,8 +65,7 @@ for url, filename in resources:
     if not os.path.exists(filename):
         print("Downloading data from '%s', please wait..." % url)
         opener = urlopen(url)
-        with open(filename, "wb") as f:
-            f.write(opener.read())
+        open(filename, "wb").write(opener.read())
         print()
 
 
