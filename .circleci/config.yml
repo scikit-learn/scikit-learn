@@ -11,7 +11,7 @@ jobs:
     docker:
       - image: cimg/python:3.8.12
     environment:
-      - GITHUB_ARTIFACT_URL: << pipeline.parameters.GITHUB_RUN_RUL >>/doc-min-dependencies.zip
+      - GITHUB_ARTIFACT_URL: << pipeline.parameters.GITHUB_RUN_URL >>/doc-min-dependencies.zip
     steps:
       - checkout
       - run: ./build_tools/circle/download_documentation.sh
