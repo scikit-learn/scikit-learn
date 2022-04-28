@@ -19,5 +19,5 @@ jobs:
       - name: Trigger hosting jobs
         run: bash build_tools/github/trigger_hosting.sh
         env:
-          GITHUB_RUN_URL: https://nightly.link/scikit-learn/scikit-learn/actions/runs/${{ github.run_id }}
+          GITHUB_RUN_URL: https://nightly.link/${{ github.github_repository }}/actions/runs/${{ github.run_id }}
           CCI_TOKEN: ${{ secrets.CCI_TOKEN }}
