@@ -224,53 +224,53 @@ Making a release
      git tag -a 0.99.0  # in the 0.99.X branch
      git push git@github.com:scikit-learn/scikit-learn.git 0.99.0
 
-6. Trigger the GitHub Actions workflow again but this time to upload the artifacts
-   to the real https://pypi.org (replace "testpypi" by "pypi" in the "Run
-   workflow" form).
-
-7. Confirm that the bot has detected the tag on the conda-forge feedstock repo:
+6. Confirm that the bot has detected the tag on the conda-forge feedstock repo:
    https://github.com/conda-forge/scikit-learn-feedstock. If not, submit a PR for the
    release. If you want to publish an RC release on conda-forge, the PR should target
    the `rc` branch as opposed to the `main` branch. The two branches need to be kept
    sync together otherwise.
 
-8. Alternatively, it's possible to collect locally the generated binary wheel
-   packages and source tarball and upload them all to PyPI by running the
-   following commands in the scikit-learn source folder (checked out at the
-   release tag):
+7. Trigger the GitHub Actions workflow again but this time to upload the artifacts
+   to the real https://pypi.org (replace "testpypi" by "pypi" in the "Run
+   workflow" form).
 
-   .. prompt:: bash $
+   7.1. Alternatively, it's possible to collect locally the generated binary wheel
+        packages and source tarball and upload them all to PyPI by running the
+        following commands in the scikit-learn source folder (checked out at the
+        release tag):
 
-       rm -r dist
-       pip install -U wheelhouse_uploader twine
-       python -m wheelhouse_uploader fetch \
-         --version 0.99.0 \
-         --local-folder dist \
-         scikit-learn \
-         https://pypi.anaconda.org/scikit-learn-wheels-staging/simple/scikit-learn/
+        .. prompt:: bash $
 
-   This command will download all the binary packages accumulated in the
-   `staging area on the anaconda.org hosting service
-   <https://anaconda.org/scikit-learn-wheels-staging/scikit-learn/files>`_ and
-   put them in your local `./dist` folder.
+            rm -r dist
+            pip install -U wheelhouse_uploader twine
+            python -m wheelhouse_uploader fetch \
+              --version 0.99.0 \
+              --local-folder dist \
+              scikit-learn \
+              https://pypi.anaconda.org/scikit-learn-wheels-staging/simple/scikit-learn/
 
-   Check the content of the `./dist` folder: it should contain all the wheels
-   along with the source tarball ("scikit-learn-RRR.tar.gz").
+        This command will download all the binary packages accumulated in the
+        `staging area on the anaconda.org hosting service
+        <https://anaconda.org/scikit-learn-wheels-staging/scikit-learn/files>`_ and
+        put them in your local `./dist` folder.
 
-   Make sure that you do not have developer versions or older versions of
-   the scikit-learn package in that folder.
+        Check the content of the `./dist` folder: it should contain all the wheels
+        along with the source tarball ("scikit-learn-RRR.tar.gz").
 
-   Before uploading to pypi, you can test upload to test.pypi.org:
+        Make sure that you do not have developer versions or older versions of
+        the scikit-learn package in that folder.
 
-   .. prompt:: bash $
+        Before uploading to pypi, you can test upload to test.pypi.org:
 
-       twine upload --verbose --repository-url https://test.pypi.org/legacy/ dist/*
+        .. prompt:: bash $
 
-   Upload everything at once to https://pypi.org:
+            twine upload --verbose --repository-url https://test.pypi.org/legacy/ dist/*
 
-   .. prompt:: bash $
+        Upload everything at once to https://pypi.org:
 
-       twine upload dist/*
+        .. prompt:: bash $
+
+            twine upload dist/*
 
 9. For major/minor (not bug-fix release or release candidates), update the symlink for
    ``stable`` and the ``latestStable`` variable in
