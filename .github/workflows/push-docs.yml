@@ -17,7 +17,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Trigger hosting jobs
-        run: build_tools/github/trigger_hosting.sh
+        run: bash build_tools/github/trigger_hosting.sh
         env:
           GITHUB_RUN_URL: https://nightly.link/scikit-learn/scikit-learn/actions/runs/${{ github.run_id }}
           CCI_TOKEN: ${{ secrets.CCI_TOKEN }}
