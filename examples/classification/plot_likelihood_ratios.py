@@ -180,19 +180,21 @@ _ = cross_validate_LRs(LogisticRegression(), X, y)
 # Plot class likelihood ratios
 # ============================
 #
-# The likelihood ratios are independent of the disease prevalence as long as the
-# same model is applied through varying populations. This is the case when
-# diagnostic tests remain constant through time. In the case where
-# models/diagnostic tests are updated, for instance, to evolve with time, one
-# has to account for the prevalence seen when training before making a
-# comparison analysis.
+# The likelihood ratios are independent of the disease prevalence and can be
+# extrapolated between populations regardless of any possible class imbalance,
+# as long as the same model is applied to all of them. In the case where
+# models/diagnostic tests are updated, for instance, to evolve along with the
+# spread of a disease, one has to account for the prevalence seen during
+# training before making a comparison analysis.
 #
-# Here we vary the prevalence of the hypothetical condition by passing different
-# weights to the `make_classification` function, which creates 2 clusters per
-# class as shown in the plots below. The label `1` corresponds to the positive
-# class "disease" and therefore the label `0` stands for "no-disease". The
-# decision boundary corresponds to the `LogisticRegression` model as used in the
-# previous sections.
+# Here we use the `make_classification` function to explore both scenarios:
+# constant and evolving models. This function creates 2 clusters per class as
+# shown in the plots below. We vary the prevalence of the hypothetical condition
+# by passing different `weights` to the `make_classification` function, which
+# ensures the data-generating process is always the same. The label `1`
+# corresponds to the positive class "disease", whereas the label `0` stands for
+# "no-disease". The decision boundaries are trained using a `LogisticRegression`
+# classifier similarly to the previous sections.
 #
 # Re-trained models
 # -----------------
