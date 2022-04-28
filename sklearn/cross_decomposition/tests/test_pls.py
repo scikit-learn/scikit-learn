@@ -616,6 +616,9 @@ def test_pls_coef_shape(PLSEstimator):
     assert pls._coef_.shape == (Y.shape[1], X.shape[1])
 
 
+# TODO (1.3): remove the filterwarnings and adapt the dot product between `X_trans` and
+# `pls.coef_`
+@pytest.mark.filterwarnings("ignore:The attribute `coef_` will be transposed")
 @pytest.mark.parametrize("scale", [True, False])
 @pytest.mark.parametrize("PLSEstimator", [PLSRegression, PLSCanonical, CCA])
 def test_pls_prediction(PLSEstimator, scale):
