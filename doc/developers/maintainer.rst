@@ -234,45 +234,45 @@ Making a release
    to the real https://pypi.org (replace "testpypi" by "pypi" in the "Run
    workflow" form).
 
-   7.1. Alternatively, it's possible to collect locally the generated binary wheel
-        packages and source tarball and upload them all to PyPI by running the
-        following commands in the scikit-learn source folder (checked out at the
-        release tag):
+8. **Alternative to step 7**: it's possible to collect locally the generated binary
+   wheel packages and source tarball and upload them all to PyPI by running the
+   following commands in the scikit-learn source folder (checked out at the
+   release tag):
 
-        .. prompt:: bash $
+   .. prompt:: bash $
 
-            rm -r dist
-            pip install -U wheelhouse_uploader twine
-            python -m wheelhouse_uploader fetch \
-              --version 0.99.0 \
-              --local-folder dist \
-              scikit-learn \
-              https://pypi.anaconda.org/scikit-learn-wheels-staging/simple/scikit-learn/
+       rm -r dist
+       pip install -U wheelhouse_uploader twine
+       python -m wheelhouse_uploader fetch \
+         --version 0.99.0 \
+         --local-folder dist \
+         scikit-learn \
+         https://pypi.anaconda.org/scikit-learn-wheels-staging/simple/scikit-learn/
 
-        This command will download all the binary packages accumulated in the
-        `staging area on the anaconda.org hosting service
-        <https://anaconda.org/scikit-learn-wheels-staging/scikit-learn/files>`_ and
-        put them in your local `./dist` folder.
+   This command will download all the binary packages accumulated in the
+   `staging area on the anaconda.org hosting service
+   <https://anaconda.org/scikit-learn-wheels-staging/scikit-learn/files>`_ and
+   put them in your local `./dist` folder.
 
-        Check the content of the `./dist` folder: it should contain all the wheels
-        along with the source tarball ("scikit-learn-RRR.tar.gz").
+   Check the content of the `./dist` folder: it should contain all the wheels
+   along with the source tarball ("scikit-learn-RRR.tar.gz").
 
-        Make sure that you do not have developer versions or older versions of
-        the scikit-learn package in that folder.
+   Make sure that you do not have developer versions or older versions of
+   the scikit-learn package in that folder.
 
-        Before uploading to pypi, you can test upload to test.pypi.org:
+   Before uploading to pypi, you can test upload to test.pypi.org:
 
-        .. prompt:: bash $
+   .. prompt:: bash $
 
-            twine upload --verbose --repository-url https://test.pypi.org/legacy/ dist/*
+       twine upload --verbose --repository-url https://test.pypi.org/legacy/ dist/*
 
-        Upload everything at once to https://pypi.org:
+   Upload everything at once to https://pypi.org:
 
-        .. prompt:: bash $
+   .. prompt:: bash $
 
-            twine upload dist/*
+       twine upload dist/*
 
-8. For major/minor (not bug-fix release or release candidates), update the symlink for
+9. For major/minor (not bug-fix release or release candidates), update the symlink for
    ``stable`` and the ``latestStable`` variable in
    https://github.com/scikit-learn/scikit-learn.github.io:
 
