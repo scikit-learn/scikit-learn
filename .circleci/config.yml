@@ -89,8 +89,8 @@ workflows:
     when:
       not:
         equal: [ "none", << pipeline.parameters.GITHUB_RUN_URL >> ]
-    # The following jobs will be executed conditionally upon
-    # the action is triggered to ignore normal push events
+    # The following jobs will be executed only if the
+    # action is executed to ignore normal push events
     jobs:
       - doc-min-dependencies
       - doc
