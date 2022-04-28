@@ -272,8 +272,8 @@ Making a release
 
        twine upload dist/*
 
-9. For major/minor (not bug-fix release), update the symlink for ``stable``
-   and the ``latestStable`` variable in
+9. For major/minor (not bug-fix release or release candidates), update the symlink for
+   ``stable`` and the ``latestStable`` variable in
    https://github.com/scikit-learn/scikit-learn.github.io:
 
    .. prompt:: bash $
