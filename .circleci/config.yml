@@ -1,30 +1,17 @@
 version: 2.1
 
-# Parameters variables required to conditionally execute the "deploy" job and 
+# Parameters required to conditionally execute the "deploy" job and 
 parameters:
-  # The event triggering the pipeline
-  GHA_Event:
+  GITHUB_RUN_URL:
     type: string
-    default: ""
-  # The user triggering the pipeline
-  GHA_Actor:
-    type: string
-    default: ""
-  # The identifier assigned in the workflow configuration
-  GHA_Action:
-    type: string
-    default: ""
-  # The metadata given as input parameters
-  GHA_Meta:
-    type: string
-    default: ""
+    default: "none"
 
 jobs:
   doc-min-dependencies:
     docker:
       - image: cimg/python:3.8.12
     environment:
-      - GITHUB_ARTIFACT_URL: << pipeline.parameters.GHA_Meta >>/doc-min-dependencies.zip
+      - GITHUB_ARTIFACT_URL: << pipeline.parameters.GITHUB_RUN_RUL >>/doc-min-dependencies.zip
     steps:
       - checkout
       - run: ./build_tools/circle/download_documentation.sh
@@ -36,7 +23,7 @@ jobs:
     docker:
       - image: cimg/python:3.8.12
     environment:
-      - GITHUB_ARTIFACT_URL: << pipeline.parameters.GHA_Meta >>/doc.zip
+      - GITHUB_ARTIFACT_URL: << pipeline.parameters.GITHUB_RUN_URL >>/doc.zip
     steps:
       - checkout
       - run: ./build_tools/circle/download_documentation.sh
@@ -99,9 +86,11 @@ workflows:
   version: 2
 
   build-doc-and-deploy:
-    when: << pipeline.parameters.GHA_Action >>
-    # This workflow is executed conditionally upon the
-    # action is triggered to ignore normal push events
+    when:
+      not:
+        equal: [ "none", << pipeline.parameters.GITHUB_RUN_URL >> ]
+    # The following jobs will be executed conditionally upon
+    # the action is triggered to ignore normal push events
     jobs:
       - doc-min-dependencies
       - doc
@@ -109,6 +98,6 @@ workflows:
           requires:
             - doc
 
-  # linux-arm64:
-  # jobs:
-  # - linux-arm64
+  linux-arm64:
+    jobs:
+      - linux-arm64
