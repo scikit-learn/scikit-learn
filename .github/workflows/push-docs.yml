@@ -4,8 +4,8 @@ on:
   workflow_run:
     # Run the workflow after the separate "Documentation builder" workflow completes
     workflows: [Documentation builder]
-      types:
-        - completed
+    types:
+      - completed
 
 jobs:
   push:
