@@ -1,10 +1,19 @@
-# Workflow to build and publish the documentation
+# Workflow to build the documentation
 name: Documentation builder
 
 on:
   schedule:
     # Nightly build at 3:42 A.M.
     - cron: "42 3 */1 * *"
+  push:
+    branches:
+      - main
+      # Release branches
+      - "[0-9]+.[0-9]+.X"
+  pull_request:
+    branches:
+      - main
+      - "[0-9]+.[0-9]+.X"
 
 jobs:
   # Build the documentation against the minimum version of the dependencies

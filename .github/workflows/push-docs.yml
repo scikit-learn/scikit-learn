@@ -1,0 +1,19 @@
+# Workflow to trigger the jobs that will host the documentation
+name: Documentation push trigger
+on:
+  # Run the workflow after the separate "Documentation builder" workflow completes
+  workflows: [Documentation builder]
+    types:
+      - completed
+
+jobs:
+  push:
+    runs-on: ubuntu-latest
+    # Run the job only if the "Documentation builder" workflow succeeded
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - name: Trigger hosting jobs
+        uses: CircleCI-Public/trigger-circleci-pipeline-action@v1.0.4
+        env:
+          GHA_META: https://nightly.link/scikit-learn/scikit-learn/actions/runs/${{ github.run_id }}
+          CCI_TOKEN: ${{ secrets.CCI_TOKEN }}
