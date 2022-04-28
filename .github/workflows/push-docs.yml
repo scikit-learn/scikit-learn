@@ -1,10 +1,11 @@
 # Workflow to trigger the jobs that will host the documentation
 name: Documentation push trigger
 on:
-  workflows: [Documentation builder]
+  workflow_run:
     # Run the workflow after the separate "Documentation builder" workflow completes
-    types:
-      - completed
+    workflows: [Documentation builder]
+      types:
+        - completed
 
 jobs:
   push:
