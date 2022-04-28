@@ -1766,10 +1766,46 @@ Class likelihood ratios
 
 The :func:`class_likelihood_ratios` function computes the `positive and negative
 likelihood ratios
-<https://en.wikipedia.org/wiki/Likelihood_ratios_in_diagnostic_testing>`_ for
-binary classes, which are further metrics derived from the
-:func:`confusion_matrix` and that can be interpreted in terms of the pre-test
-and post-test odds:
+<https://en.wikipedia.org/wiki/Likelihood_ratios_in_diagnostic_testing>`_
+:math:`LR_\pm` for binary classes, which can be interpreted as the ratio of
+post-test to pre-test odds as explained below. As a consequence, this metric is
+invariant w.r.t. the class prevalence (the number of samples in the positive
+class divided by the total number of samples) and can be extrapolated between
+populations regardless of any possible class imbalance.
+
+The :math:`LR_\pm` metrics are therefore very useful in settings where the data
+available to learn and evaluate a classifier is a study population with nearly
+balanced classes, such as a case-control study, while the target application,
+i.e. the general population, has very low prevalence.
+
+The positive likelihood ratio :math:`LR_+` is the probability of a classifier to
+correctly predict that a sample belongs to the positive class divided by the
+probability of predicting the positive class for a sample belonging to the
+negative class:
+
+.. math::
+
+   LR_+ = \frac{\text{PR}(P+|T+)}{\text{PR}(P+|T-)}.
+
+The notation here refers to predicted (:math:`P`) or true (:math:`T`) label and
+the sign :math:`+` and :math:`-` refer to the positive and negative class,
+respectively, e.g. :math:`P+` stands for "predicted positive".
+
+Analogously, the negative likelihood ratio :math:`LR_-` is the probability of a
+sample of the positive class being classified as belonging to the negative class
+divided by the probability of a sample of the negative class being correctly
+classified:
+
+.. math::
+
+   LR_- = \frac{\text{PR}(P-|T+)}{\text{PR}(P-|T-)}.
+
+Notice that probabilities differ from counts, for instance
+:math:`\operatorname{PR}(P+|T+)` is not equal to the number of true positive
+counts ``tp``. In fact, the class likelihood ratios can be expressed in terms of
+the `sensitivity and specificity
+<https://en.wikipedia.org/wiki/Sensitivity_and_specificity>`_, which are further
+metrics derived from the :func:`confusion_matrix`:
 
 .. math::
 
@@ -1789,33 +1825,10 @@ and post-test odds:
    LR_- = \frac{1 - \text{sensitivity}}{\text{specificity}} = \frac{fn \times
    (tn + fp)}{tn \times (tp + fn)}.
 
-The positive likelihood ratio is the probability of a classifier to correctly
-predict that a sample belongs to the positive class divided by the probability
-of predicting the positive class for a sample belonging to the negative class:
+**Interpretation across varying prevalence:**
 
-.. math::
-
-   LR_+ = \frac{\text{PR}(P+|T+)}{\text{PR}(P+|T-)}.
-
-The notation here refers to predicted (``P``) or true (``T``) label and the sign
-``+`` and ``-`` refer to the positive and negative class, respectively, e.g.
-``P+`` stands for "predicted positive". Notice that probabilities differ from
-counts, for instance:
-
-.. math::
-
-   \text{PR}(P+|T+) \ne tp.
-
-Analogously, the negative likelihood ratio is the probability of a sample of the
-positive class being classified as belonging to the negative class divided by
-the probability of a sample of the negative class being correctly classified:
-
-.. math::
-
-   LR_- = \frac{\text{PR}(P-|T+)}{\text{PR}(P-|T-)}.
-
-**Interpretation across varying prevalence** Both class likelihood ratios are interpretable in terms of an odds ratio (pre-test and post-tests):
-```**
+Both class likelihood ratios are interpretable in terms of an odds ratio
+(pre-test and post-tests):
 
 .. math::
 
@@ -1833,8 +1846,7 @@ or equivalently
 
    \text{probability} = \frac{\text{odds}}{1 + \text{odds}}.
 
-On a given population, the pre-test probability is given by the prevalence, i.e. the number of
-samples in the positive class divided by the total number of samples. By
+On a given population, the pre-test probability is given by the prevalence. By
 converting odds to probabilities, the likelihood ratios can be translated into a
 probability of truly belonging to either class before and after a classifier
 prediction:
@@ -1848,22 +1860,24 @@ prediction:
 
    \text{post-test probability} = \frac{\text{post-test odds}}{1 + \text{post-test odds}}.
 
-The positive likelihood ratio is undefined when `fp = 0`, which can be
-interpreted as the classifier perfectly identifying positive cases. If `fp = 0`
-and additionally `tp = 0`, this leads to a zero/zero division. This happens, for
-instance, when using a `DummyClassifier` that always predicts the negative class
-and therefore the interpretation as a perfect classifier is lost.
+**Mathematical divergences:**
 
-The negative likelihood ratio is undefined when `tn = 0`. Such divergence is
-invalid, as ``LR- > 1`` would indicate an increase in the odds of a sample
-belonging to the positive class after being classified as negative, as if the
-act of classifying caused the positive condition. This includes the case of a
-`DummyClassifier` that always predicts the positive class (i.e. when `tn = fn =
-0`).
+The positive likelihood ratio is undefined when :math:`fp = 0`, which can be
+interpreted as the classifier perfectly identifying positive cases. If :math:`fp
+= 0` and additionally :math:`tp = 0`, this leads to a zero/zero division. This
+happens, for instance, when using a `DummyClassifier` that always predicts the
+negative class and therefore the interpretation as a perfect classifier is lost.
 
-Both class likelihood ratios are undefined when `tp = fn = 0`, which means that
-no samples of the positive class were present in the testing set. This can also
-happen when cross-validating highly imbalanced data.
+The negative likelihood ratio is undefined when :math:`tn = 0`. Such divergence
+is invalid, as :math:`LR_- > 1` would indicate an increase in the odds of a
+sample belonging to the positive class after being classified as negative, as if
+the act of classifying caused the positive condition. This includes the case of
+a `DummyClassifier` that always predicts the positive class (i.e. when
+:math:`tn=fn=0`).
+
+Both class likelihood ratios are undefined when :math:`tp=fn=0`, which means
+that no samples of the positive class were present in the testing set. This can
+also happen when cross-validating highly imbalanced data.
 
 In all the previous cases the :func:`class_likelihood_ratios` function raises by
 default an appropriate warning message and returns `nan` to avoid pollution when
