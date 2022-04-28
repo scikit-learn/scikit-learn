@@ -205,16 +205,27 @@ def _pandas_indexing(X, key, key_dtype, axis):
         return indexer[:, key] if axis else indexer[key]
 
 
-def _list_indexing(X, key, key_dtype):
+def _list_indexing(X, key, key_dtype, axis):
     """Index a Python list."""
-    if np.isscalar(key) or isinstance(key, slice):
-        # key is a slice or a scalar
-        return X[key]
-    if key_dtype == "bool":
-        # key is a boolean array-like
-        return list(compress(X, key))
-    # key is a integer array-like of key
-    return [X[idx] for idx in key]
+    if axis == 0:
+        if np.isscalar(key) or isinstance(key, slice):
+            # key is a slice or a scalar
+            return X[key]
+        if key_dtype == "bool":
+            # key is a boolean array-like
+            return list(compress(X, key))
+        # key is a integer array-like of key
+        return [X[idx] for idx in key]
+    else:
+        # axis == 1
+        if np.isscalar(key) or isinstance(key, slice):
+            # key is a slice or a scalar
+            return [x_row[key] for x_row in X]
+        if key_dtype == "bool":
+            # key is a boolean array-like
+            return [compress(x_row, key) for x_row in X]
+        # key is a integer array-like of key
+        return [[x_row[idx] for idx in key] for x_row in X]
 
 
 def _determine_key_type(key, accept_slice=True):
@@ -299,8 +310,7 @@ def _safe_indexing(X, indices, *, axis=0):
     Parameters
     ----------
     X : array-like, sparse-matrix, list, pandas.DataFrame, pandas.Series
-        Data from which to sample rows, items or columns. `list` are only
-        supported when `axis=0`.
+        Data from which to sample rows, items or columns.
     indices : bool, int, str, slice, array-like
         - If `axis=0`, boolean and integer array-like, integer slice,
           and scalar integer are supported.
@@ -342,12 +352,19 @@ def _safe_indexing(X, indices, *, axis=0):
     if axis == 0 and indices_dtype == "str":
         raise ValueError("String indexing is not supported with 'axis=0'")
 
-    if axis == 1 and X.ndim != 2:
-        raise ValueError(
-            "'X' should be a 2D NumPy array, 2D sparse matrix or pandas "
-            "dataframe when indexing the columns (i.e. 'axis=1'). "
-            "Got {} instead with {} dimension(s).".format(type(X), X.ndim)
-        )
+    if axis == 1:
+        if hasattr(X, "ndim"):
+            X_ndim = X.ndim
+        else:
+            # list of list
+            X_ndim = 2 if isinstance(X[0], list) else 1
+
+        if X_ndim != 2:
+            raise ValueError(
+                "'X' should be a 2D NumPy array, 2D sparse matrix, list of list, or"
+                " pandas dataframe when indexing the columns (i.e. 'axis=1'). Got {}"
+                " instead with {} dimension(s).".format(type(X), X_ndim)
+            )
 
     if axis == 1 and indices_dtype == "str" and not hasattr(X, "loc"):
         raise ValueError(
@@ -360,7 +377,7 @@ def _safe_indexing(X, indices, *, axis=0):
     elif hasattr(X, "shape"):
         return _array_indexing(X, indices, indices_dtype, axis=axis)
     else:
-        return _list_indexing(X, indices, indices_dtype)
+        return _list_indexing(X, indices, indices_dtype, axis=axis)
 
 
 def _get_column_indices(X, key):

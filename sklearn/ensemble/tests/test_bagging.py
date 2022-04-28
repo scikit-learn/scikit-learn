@@ -5,6 +5,7 @@ Testing for the bagging ensemble module (sklearn.ensemble.bagging).
 # Author: Gilles Louppe
 # License: BSD 3 clause
 from itertools import product
+import warnings
 
 import numpy as np
 import joblib
@@ -961,3 +962,63 @@ def test_n_features_deprecation(Estimator):
 
     with pytest.warns(FutureWarning, match="`n_features_` was deprecated"):
         est.n_features_
+
+
+@pytest.mark.parametrize(
+    "BaggingEstimator, BaseEstimator, load_data",
+    [
+        (
+            BaggingClassifier,
+            DecisionTreeClassifier,
+            load_iris,
+        ),
+        (
+            BaggingRegressor,
+            DecisionTreeRegressor,
+            load_diabetes,
+        ),
+    ],
+)
+@pytest.mark.parametrize("bootstrap_features", [True, False])
+def test_feature_names_are_set_in_estimators(
+    BaggingEstimator, BaseEstimator, load_data, bootstrap_features, global_random_seed
+):
+    """Test that feature names are set in trained estimators.
+
+    Non-regression test for #21599.
+    """
+    rng = np.random.RandomState(global_random_seed)
+    n_estimators = 2
+    X, y = load_data(as_frame=True, return_X_y=True)
+    feature_names = np.asarray(X.columns, dtype=object)
+
+    X_train, X_test, y_train, _ = train_test_split(X, y, random_state=rng)
+
+    bagged_trees = BaggingEstimator(
+        BaseEstimator(),
+        n_estimators=n_estimators,
+        max_features=1.0,
+        bootstrap_features=bootstrap_features,
+        random_state=rng,
+    ).fit(X_train, y_train)
+
+    for i in range(n_estimators):
+        if bootstrap_features:
+            # Use bootstrap featured features in predict
+            feature_idx = bagged_trees.estimators_features_[i]
+            X_test_inner = X_test.iloc[:, feature_idx]
+            expected_features = feature_names[feature_idx]
+        else:
+            X_test_inner = X_test
+            expected_features = feature_names
+
+        inner_estimator = bagged_trees.estimators_[i]
+        assert isinstance(inner_estimator.feature_names_in_, np.ndarray)
+        assert inner_estimator.feature_names_in_.dtype == object
+        assert_array_equal(inner_estimator.feature_names_in_, expected_features)
+
+        assert inner_estimator.n_features_in_ == expected_features.shape[0]
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", UserWarning)
+            inner_estimator.predict(X_test_inner)
