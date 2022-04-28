@@ -98,12 +98,8 @@ jobs:
 workflows:
   version: 2
 
-  linux-arm64:
-    jobs:
-      - linux-arm64
-
-  when: << pipeline.parameters.GHA_Action >>
   build-doc-and-deploy:
+    when: << pipeline.parameters.GHA_Action >>
     # This workflow is executed conditionally upon the
     # action is triggered to ignore normal push events
     jobs:
@@ -112,3 +108,7 @@ workflows:
       - deploy:
           requires:
             - doc
+
+  linux-arm64:
+    jobs:
+      - linux-arm64
