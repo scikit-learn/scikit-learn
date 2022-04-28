@@ -24,7 +24,7 @@ jobs:
     docker:
       - image: cimg/python:3.8.12
     environment:
-      - GITHUB_ARTIFACT_URL: << pipeline.parameters.GHA_META >>/doc-min-dependencies.zip
+      - GITHUB_ARTIFACT_URL: << pipeline.parameters.GHA_Meta >>/doc-min-dependencies.zip
     steps:
       - checkout
       - run: ./build_tools/circle/download_documentation.sh
@@ -36,7 +36,7 @@ jobs:
     docker:
       - image: cimg/python:3.8.12
     environment:
-      - GITHUB_ARTIFACT_URL: << pipeline.parameters.GHA_META >>/doc.zip
+      - GITHUB_ARTIFACT_URL: << pipeline.parameters.GHA_Meta >>/doc.zip
     steps:
       - checkout
       - run: ./build_tools/circle/download_documentation.sh
@@ -97,17 +97,18 @@ jobs:
 
 workflows:
   version: 2
+
+  linux-arm64:
+    jobs:
+      - linux-arm64
+
+  when: << pipeline.parameters.GHA_Action >>
   build-doc-and-deploy:
     # This workflow is executed conditionally upon the
     # action is triggered to ignore normal push events
-    when: << pipeline.parameters.GHA_Action >>
     jobs:
       - doc-min-dependencies
       - doc
       - deploy:
           requires:
             - doc
-
-  linux-arm64:
-    jobs:
-      - linux-arm64
