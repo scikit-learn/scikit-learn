@@ -103,7 +103,6 @@ jobs:
     matrix:
       pylatest_pip_nogil:
         DISTRIB: 'pip-nogil'
-        PYTEST_XDIST_VERSION: 'none'
         COVERAGE: 'false'
 
 # Check compilation with intel C++ compiler (ICC)
