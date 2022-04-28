@@ -10,6 +10,10 @@ Two scenarios where this script can be useful:
 - bump minimum dependencies in sklearn/_min_dependencies.py. Running this
   script will update both the CI environment files and associated lock files.
   You can then open a PR with the changes.
+- pin some packages to an older version by adding them to the
+  default_package_constraints variable. This is useful when regressions are
+  introduced in our dependencies, this has happened for example with pytest 7
+  and coverage 6.3.
 
 Environments are conda environment.yml or pip requirements.txt. Lock files are
 conda-lock lock files or pip-compile requirements.txt.
