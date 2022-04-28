@@ -38,7 +38,7 @@ get_build_type() {
         echo SKIP: undefined CIRCLE_SHA1
         return
     fi
-    commit_msg=$(git log --no-merges -1 --oneline $CIRCLE_SHA1)
+    commit_msg=$(git log --format=%B -n 1 $CIRCLE_SHA1)
     if [ -z "$commit_msg" ]
     then
         echo QUICK BUILD: failed to inspect commit $CIRCLE_SHA1

@@ -5,10 +5,51 @@ on:
   schedule:
     # Nightly build at 3:42 A.M.
     - cron: "42 3 */1 * *"
+  # TODO: Remove when the pull request is ready to merge
+  pull_request:
+    branches:
+      - main
 
 jobs:
-  # Build the documentation
-  build:
+  # Build the documentation against the minimum version of the dependencies
+  doc-min-dependencies:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout scikit-learn
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+
+      - name: Build documentation
+        run: build_tools/github/build_doc.sh
+        env:
+          OMP_NUM_THREADS: 2
+          MKL_NUM_THREADS: 2
+          CONDA_ENV_NAME: testenv
+          PYTHON_VERSION: 3.8
+          NUMPY_VERSION: min
+          SCIPY_VERSION: min
+          MATPLOTLIB_VERSION: min
+          CYTHON_VERSION: min
+          SCIKIT_IMAGE_VERSION: min
+          SPHINX_VERSION: min
+          PANDAS_VERSION: min
+          SPHINX_GALLERY_VERSION: min
+          NUMPYDOC_VERSION: min
+          SPHINX_PROMPT_VERSION: min
+          SPHINXEXT_OPENGRAPH_VERSION: min
+
+      - name: Upload documentation
+        uses: actions/upload-artifact@v2
+        with:
+          name: doc-min-dependencies
+          path: doc/_build/html/stable
+
+  # Build the documentation against the latest version of the dependencies
+  doc:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout scikit-learn
@@ -42,5 +83,5 @@ jobs:
       - name: Upload documentation
         uses: actions/upload-artifact@v2
         with:
-          name: docs
+          name: doc
           path: doc/_build/html/stable
