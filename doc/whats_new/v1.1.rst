@@ -534,6 +534,9 @@ Changelog
   :class:`ensemble.ExtraTreesClassifier`.
   :pr:`20803` by :user:`Brian Sun <bsun94>`.
 
+- |Efficiency| Improve runtime performance of :class:`ensemble.IsolationForest`
+  by skipping repetitive input checks. :pr:`23149` by :user:`Zhehao Liu <MaxwellLZH>`.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
