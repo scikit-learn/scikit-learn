@@ -1888,7 +1888,7 @@ see the example below.
 
 .. topic:: Examples:
 
-  * :ref:`sphx_glr_auto_examples_classification_plot_likelihood_ratios.py`
+  * :ref:`sphx_glr_auto_examples_model_selection_plot_likelihood_ratios.py`
 
 .. topic:: References:
 
