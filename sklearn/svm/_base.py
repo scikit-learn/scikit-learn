@@ -674,21 +674,10 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         return safe_sparse_dot(self._dual_coef_, self.support_vectors_)
 
     @property
-    def n_support_(self):
-        """Number of support vectors for each class."""
-        try:
-            check_is_fitted(self)
-        except NotFittedError:
-            raise AttributeError
-        return self._n_support
-
-    @property
     def _class_weight(self):
         """Weights per class"""
         # Class weights are defined for classifiers during
-        # fit, otherwise it is empty
-        if hasattr(self, "class_weight_"):
-            return self.class_weight_
+        # fit and override this property, otherwise it is empty
         return np.empty(0)
 
 
@@ -992,6 +981,22 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
         ndarray of shape  (n_classes * (n_classes - 1) / 2)
         """
         return self._probB
+
+    @property
+    def n_support_(self):
+        """Number of support vectors for each class."""
+        try:
+            check_is_fitted(self)
+        except NotFittedError:
+            raise AttributeError
+        return self._n_support
+
+    @property
+    def _class_weight(self):
+        """Weights per class"""
+        # Class weights are defined for classifiers during
+        # fit and override the parent property
+        return self.class_weight_
 
 
 def _get_liblinear_solver_type(multi_class, penalty, loss, dual):
