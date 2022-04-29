@@ -903,13 +903,13 @@ a matrix of coefficients :math:`W` where each row vector :math:`w_k` corresponds
 
 The objective for the optimization becomes
 
-.. math:: \min_W -C \sum_{i=1}^n \sum_{k=0}^{K-1} [y_i = k] \log(p_k(X_i)) + r(W).
+.. math:: \min_W -C \sum_{i=1}^n \sum_{k=0}^{K-1} [y_i = k] \log(\hat{p}_k(X_i)) + r(W).
 
 We currently implement four choices of regularization term
 
 #. None, :math:`r(W) = 0`
 #. :math:`\ell_1,\, r(W) = \|W\|_1`
-#. :math:`\ell_2,\, r(W) = \frac{1}{2}\|W\|_F^2 = \frac{1}{2}sum_{i=1}^n\sum_{j=1}^K w_{i,j}^2`
+#. :math:`\ell_2,\, r(W) = \frac{1}{2}\|W\|_F^2 = \frac{1}{2}\sum_{i=1}^n\sum_{j=1}^K w_{i,j}^2`
 #. ElasticNet, :math:`r(W) = \frac{1 - \rho}{2}\|W\|_F^2 + \rho \|W\|_1`
 
 Solvers
