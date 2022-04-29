@@ -44,6 +44,6 @@ TODO: update at the time of the release.
 :mod:`sklearn.svm`
 ..................
 
-- |API| Attributes `n_support_` and `class_weight_` are noe deprecated for
+- |API| Attributes `n_support_` and `class_weight_` are now deprecated for
   :class:`svm.NuSVR`, :class:`svm.SVR`, :class:`svm.OneClassSVM`.
   :pr:`22898` by :user:`Meekail Zain <micky774>`.
