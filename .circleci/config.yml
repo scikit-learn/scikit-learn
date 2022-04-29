@@ -1,6 +1,7 @@
 version: 2.1
 
-# Parameters required to conditionally execute the "deploy" job and 
+# Parameters required to trigger the execution
+# of the "doc-min-dependencies" and "doc" jobs
 parameters:
   GITHUB_RUN_URL:
     type: string
