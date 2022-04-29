@@ -171,7 +171,7 @@ def strip_accents_ascii(s):
 
 
 def strip_tags(s):
-    """Basic regexp based HTML / XML tag stripper function
+    """Basic regexp based HTML / XML tag stripper function.
 
     For serious HTML/XML preprocessing you should rather use an external
     library such as lxml or BeautifulSoup.
@@ -179,7 +179,12 @@ def strip_tags(s):
     Parameters
     ----------
     s : str
-        The string to strip
+        The string to strip.
+
+    Returns
+    -------
+    s : str
+        The stripped string.
     """
     return re.compile(r"<([^>]+)>", flags=re.UNICODE).sub(" ", s)
 
