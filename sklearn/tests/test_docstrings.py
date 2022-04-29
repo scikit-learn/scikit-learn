@@ -26,7 +26,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.externals._packaging.version.parse",
     "sklearn.feature_extraction.image.extract_patches_2d",
     "sklearn.feature_extraction.image.img_to_graph",
-    "sklearn.feature_extraction.text.strip_accents_ascii",
     "sklearn.feature_extraction.text.strip_accents_unicode",
     "sklearn.feature_extraction.text.strip_tags",
     "sklearn.feature_selection._univariate_selection.chi2",
