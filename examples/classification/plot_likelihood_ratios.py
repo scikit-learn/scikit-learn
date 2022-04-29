@@ -187,20 +187,12 @@ _ = cross_validate_LRs(LogisticRegression(), X, y)
 # spread of a disease, one has to account for the prevalence seen during
 # training before making a comparison analysis.
 #
-# Here we use the `make_classification` function to explore both scenarios:
-# constant and evolving models. This function creates 2 clusters per class as
-# shown in the plots below. We vary the prevalence of the hypothetical condition
-# by passing different `weights` to the `make_classification` function, which
-# ensures the data-generating process is always the same. The label `1`
-# corresponds to the positive class "disease", whereas the label `0` stands for
-# "no-disease". The decision boundaries are trained using a `LogisticRegression`
-# classifier similarly to the previous sections.
-#
-# Constant model
-# --------------
-# Notice that in this case, the model is trained with a prevalence of 50% and
-# the resulting decision boundary is used to evaluate said model over
-# populations with varying prevalence.
+# Here we train a `LogisticRegression` base model on a population with a
+# prevalence of 50%. It is then evaluated over populations with varying
+# prevalence. We use the `make_classification` function to ensure the
+# data-generating process is always the same as shown in the plots below. The
+# label `1` corresponds to the positive class "disease", whereas the label `0`
+# stands for "no-disease".
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -215,6 +207,7 @@ prevalence = []
 weights = np.linspace(0.1, 0.8, 6)
 weights = weights[::-1]
 
+# create base model
 X, y = make_classification(
     n_samples=10_000,
     n_features=2,
@@ -223,9 +216,10 @@ X, y = make_classification(
     weights=[0.5],
     random_state=0,
 )
-
 clf = LogisticRegression()
-(pos_LR_base, neg_LR_base, pos_LR_base_std, neg_LR_base_std) = cross_validate_LRs(
+
+# fit and evaluate base model
+pos_LR_base, neg_LR_base, pos_LR_base_std, neg_LR_base_std = cross_validate_LRs(
     clf, X, y, verbose=False
 )
 
@@ -243,6 +237,7 @@ for n, weight in enumerate(weights):
         random_state=0,
     )
 
+    # plot decision boundary of base model with varying prevalence
     ax = plt.subplot(3, 2, n + 1)
     disp = DecisionBoundaryDisplay.from_estimator(
         clf,
@@ -255,6 +250,7 @@ for n, weight in enumerate(weights):
     disp.ax_.set_title(f"prevalence = {y_test.mean():.2f}")
     disp.ax_.legend(*scatter.legend_elements())
 
+    # recompute likelihood ratios for each prevalence
     pos_LR, neg_LR, pos_LR_std, neg_LR_std = cross_validate_LRs(
         clf, X_test, y_test, verbose=False, internal_fit=False
     )
@@ -269,8 +265,9 @@ class_LRs = pd.DataFrame(
     {"LR+": pos_LRs, "LR-": neg_LRs, "LR+_std": pos_LRs_std, "LR-_std": neg_LRs_std}
 )
 # %%
-# In the plots below we can observe that the class likelihood ratios remain
-# within one standard deviation of those computed with the constant model.
+# In the plots below we observe that the class likelihood ratios re-computed
+# with different prevalences are indeed constant within one standard deviation
+# of those computed with the base model.
 
 plt.figure(figsize=(15, 6))
 
@@ -288,7 +285,7 @@ ax1.axhline(
     y=pos_LR_base - pos_LR_base_std,
     color="r",
     linestyle="--",
-    label="trained model confidence band",
+    label="base model confidence band",
 )
 ax1.set(
     title="Positive likelihood ratio",
@@ -312,7 +309,7 @@ ax2.axhline(
     y=neg_LR_base - neg_LR_base_std,
     color="b",
     linestyle="--",
-    label="trained model confidence band",
+    label="base model confidence band",
 )
 ax2.set(
     title="Negative likelihood ratio",
@@ -323,112 +320,3 @@ ax2.set(
 plt.legend(loc="lower right")
 
 plt.show()
-
-# %%
-# Re-trained models
-# -----------------
-# We evaluate the case where the model is re-trained in each iteration with
-# varying prevalence. Notice that the decision boundary changes accordingly.
-
-pos_LRs = []
-neg_LRs = []
-pos_LRs_std = []
-neg_LRs_std = []
-prevalence = []
-weights = np.linspace(0.1, 0.9, 6)
-weights = weights[::-1]
-
-plt.figure(figsize=(15, 12))
-plt.subplots_adjust(hspace=0.25)
-
-
-for n, weight in enumerate(weights):
-
-    X, y = make_classification(
-        n_samples=10_000,
-        n_features=2,
-        n_informative=2,
-        n_redundant=0,
-        weights=[weight],
-        random_state=0,
-    )
-
-    clf = LogisticRegression()
-    ax = plt.subplot(3, 2, n + 1)
-    disp = DecisionBoundaryDisplay.from_estimator(
-        clf.fit(X, y),
-        X,
-        response_method="predict",
-        alpha=0.5,
-        ax=ax,
-    )
-    scatter = disp.ax_.scatter(X[:, 0], X[:, 1], c=y, edgecolor="k")
-    disp.ax_.set_title(f"prevalence = {y.mean():.2f}")
-    disp.ax_.legend(*scatter.legend_elements())
-
-    pos_LR, neg_LR, pos_LR_std, neg_LR_std = cross_validate_LRs(
-        clf, X, y, verbose=False
-    )
-
-    pos_LRs.append(pos_LR)
-    neg_LRs.append(neg_LR)
-    pos_LRs_std.append(pos_LR_std)
-    neg_LRs_std.append(neg_LR_std)
-    prevalence.append(y.mean())
-
-class_LRs = pd.DataFrame(
-    {"LR+": pos_LRs, "LR-": neg_LRs, "LR+_std": pos_LRs_std, "LR-_std": neg_LRs_std}
-)
-
-# %%
-# The following plots show that likelihood ratios vary with the prevalence when
-# the diagnostic tools are re-calibrated with different prevalences even when the
-# disease is truly dichotomous and all of the physiological measurements `X` are
-# informative.
-
-plt.figure(figsize=(15, 6))
-ax1 = plt.subplot(1, 2, 1)
-ax1.plot(prevalence, class_LRs["LR+"], color="r")
-ax1.fill_between(
-    prevalence,
-    class_LRs["LR+"] - class_LRs["LR+_std"],
-    class_LRs["LR+"] + class_LRs["LR+_std"],
-    color="r",
-    alpha=0.3,
-)
-ax1.set(
-    title="Positive likelihood ratio",
-    xlabel="prevalence",
-    ylabel="LR+",
-)
-
-ax2 = plt.subplot(1, 2, 2)
-ax2.plot(prevalence, class_LRs["LR-"], color="b")
-ax2.fill_between(
-    prevalence,
-    class_LRs["LR-"] + class_LRs["LR-_std"],
-    class_LRs["LR-"] - class_LRs["LR-_std"],
-    color="b",
-    alpha=0.3,
-)
-ax2.set(
-    title="Negative likelihood ratio",
-    xlabel="prevalence",
-    ylabel="LR-",
-)
-
-plt.show()
-
-# %%
-# Both estimated class likelihood ratios decrease with increasing prevalence:
-#
-# For `LR+` this means that the post-test odds of the condition truly being
-# present given a positive test result become closer to the pre-test odds as the
-# proportion of the population affected by the condition increases. In the limit
-# of prevalence=1.0 all the population is affected and the act of testing is no
-# more informative than assuming the sample is a priori positive.
-#
-# For `LR-` it means that the probability of a sample of the positive class
-# being misclassified as belonging to the negative class drops to zero when the
-# fraction of population with the condition increases, which should be the case
-# if the classifier is truly informative.
