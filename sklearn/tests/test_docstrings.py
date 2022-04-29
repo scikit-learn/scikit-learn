@@ -148,7 +148,7 @@ def get_all_methods():
                 methods.append(name)
         methods.append(None)
 
-        for method in sorted(methods, key=lambda x: str(x)):
+        for method in sorted(methods, key=str):
             yield Estimator, method
 
 
