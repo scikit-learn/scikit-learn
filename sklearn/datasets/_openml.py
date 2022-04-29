@@ -778,7 +778,7 @@ def fetch_openml(
         `"pandas"` is selected.
 
         .. versionadded:: 1.1
-        .. deprecated:: 1.1
+        .. versionchanged:: 1.3
            The default value of `parser` will change from `"liac-arff"` to
            `"auto"` in 1.3. You can set `parser="auto"` to silence this
            warning. Therefore, an `ImportError` will be raised from 1.3 if

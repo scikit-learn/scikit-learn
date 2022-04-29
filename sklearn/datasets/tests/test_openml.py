@@ -1525,3 +1525,16 @@ def test_fetch_openml_with_ignored_feature(monkeypatch, gzip_response, parser):
     # so we assert that we don't have the ignored feature in the final Bunch
     assert dataset["data"].shape == (101, 16)
     assert "animal" not in dataset["feature_names"]
+
+
+###############################################################################
+# Deprecation-changed parameters
+
+# TODO(1.3): remove this test
+def test_fetch_openml_deprecation_parser(monkeypatch):
+    """Check that we raise a deprecation warning for parser parameter."""
+    data_id = 61
+    _monkey_patch_webbased_functions(monkeypatch, data_id=data_id, gzip_response=False)
+
+    with pytest.warns(FutureWarning, match="The default value of `parser` will change"):
+        sklearn.datasets.fetch_openml(data_id=data_id)
