@@ -4,4 +4,4 @@ set -e
 set -x
 
 wget $GHA_META
-unzip doc.zip -d doc
+unzip doc*.zip -d doc
