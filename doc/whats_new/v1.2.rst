@@ -33,6 +33,15 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.metrics`
+......................
+
+- |Feature| :func:`class_likelihood_ratios` is added to compute the positive and
+  negative likelihood ratios derived from the confusion matrix
+  of a binary classification problem. :pr:`22518` by
+  :user:`Arturo Amor <ArturoAmorQ>`.
+
+
 Code and Documentation Contributors
 -----------------------------------
 
