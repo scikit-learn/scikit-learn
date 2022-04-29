@@ -14,7 +14,7 @@ https://repo.anaconda.com/pkgs/main/linux-64/libffi-3.3-he6710b0_2.conda#88a54b8
 https://repo.anaconda.com/pkgs/main/linux-64/ncurses-6.3-h7f8727e_2.conda#4edf660a09cc7adcb21120464b2a1783
 https://repo.anaconda.com/pkgs/main/linux-64/openssl-1.1.1n-h7f8727e_0.conda#6a628baa5cc1c79c86026c21abfed46d
 https://repo.anaconda.com/pkgs/main/linux-64/xz-5.2.5-h7b6447c_0.conda#73a16ea8ba890175a1ce94a3a87c8f68
-https://repo.anaconda.com/pkgs/main/linux-64/zlib-1.2.12-h7f8727e_1.conda#3f1269f527286d89da169b1aa0cb5542
+https://repo.anaconda.com/pkgs/main/linux-64/zlib-1.2.12-h7f8727e_2.conda#4f4080e9939f082332cd8be7fedad087
 https://repo.anaconda.com/pkgs/main/linux-64/ccache-3.7.9-hfe4627d_0.conda#bef6fc681c273bb7bd0c67d1a591365e
 https://repo.anaconda.com/pkgs/main/linux-64/readline-8.1.2-h7f8727e_1.conda#ea33f478fea12406f394944e7e4f3d20
 https://repo.anaconda.com/pkgs/main/linux-64/tk-8.6.11-h1ccaba5_0.conda#3a4fa2ce7262dc3e8f082a7c25e7451c
@@ -31,7 +31,7 @@ https://repo.anaconda.com/pkgs/main/linux-64/pip-21.2.4-py39h06a4308_0.conda#74b
 # pip cython @ https://files.pythonhosted.org/packages/9a/26/d2b6bc4cb7d716c82ebc89690cbd5ba0f547db364809cd42dad34d593182/Cython-0.29.28-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.manylinux_2_24_x86_64.whl#md5=None
 # pip docutils @ https://files.pythonhosted.org/packages/4c/5e/6003a0d1f37725ec2ebd4046b657abb9372202655f96e76795dca8c0063c/docutils-0.17.1-py2.py3-none-any.whl#md5=None
 # pip execnet @ https://files.pythonhosted.org/packages/81/c0/3072ecc23f4c5e0a1af35e3a222855cfd9c80a1a105ca67be3b6172637dd/execnet-1.9.0-py2.py3-none-any.whl#md5=None
-# pip fonttools @ https://files.pythonhosted.org/packages/d9/2d/6632d152cfe120ca8903e3cba209b6fa6f58ccbaecd0fdd42afc9f7b58c7/fonttools-4.33.0-py3-none-any.whl#md5=None
+# pip fonttools @ https://files.pythonhosted.org/packages/2f/85/2f6e42fb4b537b9998835410578fb1973175b81691e9a82ab6668cf64b0b/fonttools-4.33.3-py3-none-any.whl#md5=None
 # pip idna @ https://files.pythonhosted.org/packages/04/a2/d918dcd22354d8958fe113e1a3630137e0fc8b44859ade3063982eacd2a4/idna-3.3-py3-none-any.whl#md5=None
 # pip imagesize @ https://files.pythonhosted.org/packages/60/d6/5e803b17f4d42e085c365b44fda34deb0d8675a1a910635930b831c43f07/imagesize-1.3.0-py2.py3-none-any.whl#md5=None
 # pip iniconfig @ https://files.pythonhosted.org/packages/9b/dd/b3c12c6d707058fa947864b67f0c4e0c39ef8610988d7baea9578f3c48f3/iniconfig-1.1.1-py2.py3-none-any.whl#md5=None
@@ -43,7 +43,7 @@ https://repo.anaconda.com/pkgs/main/linux-64/pip-21.2.4-py39h06a4308_0.conda#74b
 # pip pillow @ https://files.pythonhosted.org/packages/15/37/45ad6041473ebb803d0bb265cf7e749c4838dc48c3335a03e63d6aad07d8/Pillow-9.1.0-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl#md5=None
 # pip pluggy @ https://files.pythonhosted.org/packages/9e/01/f38e2ff29715251cf25532b9082a1589ab7e4f571ced434f98d0139336dc/pluggy-1.0.0-py2.py3-none-any.whl#md5=None
 # pip py @ https://files.pythonhosted.org/packages/f6/f0/10642828a8dfb741e5f3fbaac830550a518a775c7fff6f04a007259b0548/py-1.11.0-py2.py3-none-any.whl#md5=None
-# pip pygments @ https://files.pythonhosted.org/packages/1d/17/ed4d2df187995561b28f1073df24137cb750e12f9879d291cc8ab67c65d2/Pygments-2.11.2-py3-none-any.whl#md5=None
+# pip pygments @ https://files.pythonhosted.org/packages/5c/8e/1d9017950034297fffa336c72e693a5b51bbf85141b24a763882cf1977b5/Pygments-2.12.0-py3-none-any.whl#md5=None
 # pip pyparsing @ https://files.pythonhosted.org/packages/d9/41/d9cfb4410589805cd787f8a82cddd13142d9bf7449d12adf2d05a4a7d633/pyparsing-3.0.8-py3-none-any.whl#md5=None
 # pip pytz @ https://files.pythonhosted.org/packages/60/2e/dec1cc18c51b8df33c7c4d0a321b084cf38e1733b98f9d15018880fb4970/pytz-2022.1-py2.py3-none-any.whl#md5=None
 # pip six @ https://files.pythonhosted.org/packages/d9/5a/e7c31adbe875f2abbb91bd84cf2dc52d792b5a01506781dbcf25c91daf11/six-1.16.0-py2.py3-none-any.whl#md5=None
@@ -61,7 +61,7 @@ https://repo.anaconda.com/pkgs/main/linux-64/pip-21.2.4-py39h06a4308_0.conda#74b
 # pip zipp @ https://files.pythonhosted.org/packages/80/0e/16a7ee38617aab6a624e95948d314097cc2669edae9b02ded53309941cfc/zipp-3.8.0-py3-none-any.whl#md5=None
 # pip babel @ https://files.pythonhosted.org/packages/c5/7b/2c9fc1e18cb97676c7bedaa872447eb720e0c6e0e48190b4fba7eccdc1a8/Babel-2.10.1-py3-none-any.whl#md5=None
 # pip coverage @ https://files.pythonhosted.org/packages/d2/41/87d1e548a0418b24cff9c60815ea2cc2d0e0cd4891337a24236a30a1d141/coverage-6.2-cp39-cp39-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_12_x86_64.manylinux2010_x86_64.whl#md5=None
-# pip imageio @ https://files.pythonhosted.org/packages/e7/c1/cd2118b924b4b986e9393dd34e3c624b639884bcc91db8164cac1b60dfd1/imageio-2.17.0-py3-none-any.whl#md5=None
+# pip imageio @ https://files.pythonhosted.org/packages/77/eb/71dd16192f74f9c2007feca3f8c99bbcb86e7b2eec1194765445326440bf/imageio-2.18.0-py3-none-any.whl#md5=None
 # pip importlib-metadata @ https://files.pythonhosted.org/packages/92/f2/c48787ca7d1e20daa185e1b6b2d4e16acd2fb5e0320bc50ffc89b91fa4d7/importlib_metadata-4.11.3-py3-none-any.whl#md5=None
 # pip jinja2 @ https://files.pythonhosted.org/packages/20/9a/e5d9ec41927401e41aea8af6d16e78b5e612bca4699d417f646a9610a076/Jinja2-3.0.3-py3-none-any.whl#md5=None
 # pip packaging @ https://files.pythonhosted.org/packages/05/8e/8de486cbd03baba4deef4142bd643a3e7bbe954a784dc1bb17142572d127/packaging-21.3-py3-none-any.whl#md5=None
@@ -69,7 +69,7 @@ https://repo.anaconda.com/pkgs/main/linux-64/pip-21.2.4-py39h06a4308_0.conda#74b
 # pip pywavelets @ https://files.pythonhosted.org/packages/45/fd/1ad6a2c2b9f16d684c8a21e92455885891b38c703b39f13916971e9ee8ff/PyWavelets-1.3.0-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl#md5=None
 # pip requests @ https://files.pythonhosted.org/packages/2d/61/08076519c80041bc0ffa1a8af0cbd3bf3e2b62af10435d269a9d0f40564d/requests-2.27.1-py2.py3-none-any.whl#md5=None
 # pip scipy @ https://files.pythonhosted.org/packages/b8/51/6a058c1c742c8365399c93685a5b3c4f9c39389957189725738954c427a0/scipy-1.8.0-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl#md5=None
-# pip tifffile @ https://files.pythonhosted.org/packages/49/5e/4670f23f4234a1d4dbf6722e2b265ce2efeef334ff3d1d3b725c8d1ca29e/tifffile-2022.4.8-py3-none-any.whl#md5=None
+# pip tifffile @ https://files.pythonhosted.org/packages/e2/04/2e758237af68c1caf58a136a3c37e69b68606fc98ba746c6b3901f46be42/tifffile-2022.4.28-py3-none-any.whl#md5=None
 # pip codecov @ https://files.pythonhosted.org/packages/dc/e2/964d0881eff5a67bf5ddaea79a13c7b34a74bc4efe917b368830b475a0b9/codecov-2.1.12-py2.py3-none-any.whl#md5=None
 # pip pandas @ https://files.pythonhosted.org/packages/35/ad/616c27cade647c2a1513343c72c095146cf3e7a72ace6582574a334fb525/pandas-1.4.2-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl#md5=None
 # pip pyamg @ https://files.pythonhosted.org/packages/8e/08/d512b6e34d502152723b5a4ad9d962a6141dfe83cd8bcd01af4cb6e84f28/pyamg-4.2.3-cp39-cp39-manylinux_2_12_x86_64.manylinux2010_x86_64.whl#md5=None

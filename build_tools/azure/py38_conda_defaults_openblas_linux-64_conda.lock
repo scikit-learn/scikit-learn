@@ -15,7 +15,7 @@ https://repo.anaconda.com/pkgs/main/linux-64/libgcc-ng-9.3.0-h5101ec6_17.conda#e
 https://repo.anaconda.com/pkgs/main/linux-64/expat-2.4.4-h295c915_0.conda#f9930c60940181cf06d0bd0b8095063c
 https://repo.anaconda.com/pkgs/main/linux-64/giflib-5.2.1-h7b6447c_0.conda#c2583ad8de5051f19479580c58336f15
 https://repo.anaconda.com/pkgs/main/linux-64/icu-58.2-he6710b0_3.conda#48cc14d5ad1a9bcd8dac17211a8deb8b
-https://repo.anaconda.com/pkgs/main/linux-64/jpeg-9d-h7f8727e_0.conda#28bb4c75a1ef6e3d7100a383a6437318
+https://repo.anaconda.com/pkgs/main/linux-64/jpeg-9e-h7f8727e_0.conda#a0571bd2254b360aef526307a17f3526
 https://repo.anaconda.com/pkgs/main/linux-64/libffi-3.3-he6710b0_2.conda#88a54b8f50e351c650e16f4ee781440c
 https://repo.anaconda.com/pkgs/main/linux-64/libopenblas-0.3.18-hf726d26_0.conda#10422bb3b9b022e27798fc368cda69ba
 https://repo.anaconda.com/pkgs/main/linux-64/libuuid-1.0.3-h7f8727e_2.conda#6c4c9e96bfa4744d4839b9ed128e1114
@@ -26,7 +26,7 @@ https://repo.anaconda.com/pkgs/main/linux-64/ncurses-6.3-h7f8727e_2.conda#4edf66
 https://repo.anaconda.com/pkgs/main/linux-64/openssl-1.1.1n-h7f8727e_0.conda#6a628baa5cc1c79c86026c21abfed46d
 https://repo.anaconda.com/pkgs/main/linux-64/pcre-8.45-h295c915_0.conda#b32ccc24d1d9808618c1e898da60f68d
 https://repo.anaconda.com/pkgs/main/linux-64/xz-5.2.5-h7b6447c_0.conda#73a16ea8ba890175a1ce94a3a87c8f68
-https://repo.anaconda.com/pkgs/main/linux-64/zlib-1.2.12-h7f8727e_1.conda#3f1269f527286d89da169b1aa0cb5542
+https://repo.anaconda.com/pkgs/main/linux-64/zlib-1.2.12-h7f8727e_2.conda#4f4080e9939f082332cd8be7fedad087
 https://repo.anaconda.com/pkgs/main/linux-64/ccache-3.7.9-hfe4627d_0.conda#bef6fc681c273bb7bd0c67d1a591365e
 https://repo.anaconda.com/pkgs/main/linux-64/glib-2.69.1-h4ff587b_1.conda#4c3eae7c0b8b1c8fb3046a0740313bbf
 https://repo.anaconda.com/pkgs/main/linux-64/libpng-1.6.37-hbc83047_0.conda#689f903925dcf6c5ab7bc1de0f58b67b
@@ -87,6 +87,6 @@ https://repo.anaconda.com/pkgs/main/noarch/pyopenssl-22.0.0-pyhd3eb1b0_0.conda#1
 https://repo.anaconda.com/pkgs/main/noarch/pytest-cov-3.0.0-pyhd3eb1b0_0.conda#bbdaac2947f507399816d509107945c2
 https://repo.anaconda.com/pkgs/main/noarch/pytest-forked-1.3.0-pyhd3eb1b0_0.tar.bz2#07970bffdc78f417d7f8f1c7e620f5c4
 https://repo.anaconda.com/pkgs/main/noarch/pytest-xdist-2.3.0-pyhd3eb1b0_0.conda#e32083f4844fd5c40361be1cacef05f3
-https://repo.anaconda.com/pkgs/main/noarch/urllib3-1.26.8-pyhd3eb1b0_0.conda#444a13f96600b3ce17e947e2d8f51cbd
+https://repo.anaconda.com/pkgs/main/linux-64/urllib3-1.26.9-py38h06a4308_0.conda#40c1c6f5e634ec77344a822ab3aa84cc
 https://repo.anaconda.com/pkgs/main/noarch/requests-2.27.1-pyhd3eb1b0_0.conda#9b593f86737e69140c47c2107ecf277c
 https://repo.anaconda.com/pkgs/main/noarch/codecov-2.1.11-pyhd3eb1b0_0.conda#83a743cc928162d53d4066c43468b2c7

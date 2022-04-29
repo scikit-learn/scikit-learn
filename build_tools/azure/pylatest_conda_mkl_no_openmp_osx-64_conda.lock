@@ -6,14 +6,14 @@ https://repo.anaconda.com/pkgs/main/osx-64/blas-1.0-mkl.conda#cb2c87e85ac8e0ceae
 https://repo.anaconda.com/pkgs/main/osx-64/ca-certificates-2022.3.29-hecd8cb5_1.conda#17ff2dc42cf8c50850ee09245df0f4bb
 https://repo.anaconda.com/pkgs/main/osx-64/giflib-5.2.1-haf1e3a3_0.conda#0c36d6800a1a0f0ae244699a09d3f982
 https://repo.anaconda.com/pkgs/main/osx-64/intel-openmp-2021.4.0-hecd8cb5_3538.conda#65e79d0ffef79cbb8ebd3c71e74eb50a
-https://repo.anaconda.com/pkgs/main/osx-64/jpeg-9d-h9ed2024_0.conda#a50e7dd5264949332c4a510c8d54903b
+https://repo.anaconda.com/pkgs/main/osx-64/jpeg-9e-hca72f7f_0.conda#99b7d820514a0c07818d58c320ab21fc
 https://repo.anaconda.com/pkgs/main/osx-64/libcxx-12.0.0-h2f01273_0.conda#fa697ecaca74bdf72bd0a10e42a2287a
 https://repo.anaconda.com/pkgs/main/osx-64/libgfortran-3.0.1-h93005f0_2.conda#2f6d6d3c7a46ff214a5a1a8991af9bef
 https://repo.anaconda.com/pkgs/main/osx-64/libwebp-base-1.2.2-hca72f7f_0.conda#029b8fce196d53c93af17512f6f606d8
 https://repo.anaconda.com/pkgs/main/osx-64/ncurses-6.3-hca72f7f_2.conda#32896581ee96215797b753884720e581
 https://repo.anaconda.com/pkgs/main/noarch/tzdata-2022a-hda174b7_0.conda#e8fd073330b1083fcd3bc2634722f1a6
 https://repo.anaconda.com/pkgs/main/osx-64/xz-5.2.5-h1de35cc_0.conda#f38610dab0f2b0cb05f1b31f354113c5
-https://repo.anaconda.com/pkgs/main/osx-64/zlib-1.2.12-h4dc903c_1.conda#b0488707f1a5300572841cf20a77a732
+https://repo.anaconda.com/pkgs/main/osx-64/zlib-1.2.12-h4dc903c_2.conda#4264c14bdd0bd302b0232cb65f3ee275
 https://repo.anaconda.com/pkgs/main/osx-64/brotli-1.0.9-hb1e8313_2.conda#47c6f0f0789dc3b0c350e2f6caac3ebc
 https://repo.anaconda.com/pkgs/main/osx-64/ccache-3.7.9-hf120daa_0.conda#a01515a32e721c51d631283f991bc8ea
 https://repo.anaconda.com/pkgs/main/osx-64/libffi-3.3-hb1e8313_2.conda#0c959d444ac65555cb836cdbd3e9a2d9
@@ -67,7 +67,7 @@ https://repo.anaconda.com/pkgs/main/noarch/pyopenssl-22.0.0-pyhd3eb1b0_0.conda#1
 https://repo.anaconda.com/pkgs/main/noarch/pytest-cov-3.0.0-pyhd3eb1b0_0.conda#bbdaac2947f507399816d509107945c2
 https://repo.anaconda.com/pkgs/main/noarch/pytest-forked-1.3.0-pyhd3eb1b0_0.tar.bz2#07970bffdc78f417d7f8f1c7e620f5c4
 https://repo.anaconda.com/pkgs/main/noarch/pytest-xdist-2.3.0-pyhd3eb1b0_0.conda#e32083f4844fd5c40361be1cacef05f3
-https://repo.anaconda.com/pkgs/main/noarch/urllib3-1.26.8-pyhd3eb1b0_0.conda#444a13f96600b3ce17e947e2d8f51cbd
+https://repo.anaconda.com/pkgs/main/osx-64/urllib3-1.26.9-py39hecd8cb5_0.conda#7dab8b6edc90f7dc6e83e0c3d9c69432
 https://repo.anaconda.com/pkgs/main/noarch/requests-2.27.1-pyhd3eb1b0_0.conda#9b593f86737e69140c47c2107ecf277c
 https://repo.anaconda.com/pkgs/main/noarch/codecov-2.1.11-pyhd3eb1b0_0.conda#83a743cc928162d53d4066c43468b2c7
 https://repo.anaconda.com/pkgs/main/osx-64/bottleneck-1.3.4-py39h67323c0_0.conda#8da674eeda1069663e69f0b112232ffb
@@ -78,5 +78,5 @@ https://repo.anaconda.com/pkgs/main/osx-64/mkl_random-1.2.2-py39hb2f4e1b_0.conda
 https://repo.anaconda.com/pkgs/main/osx-64/numpy-1.21.5-py39h2e5f0a9_1.conda#b2cb9bbc0927600cea38695c82ab3930
 https://repo.anaconda.com/pkgs/main/osx-64/numexpr-2.8.1-py39h2e5f0a9_0.conda#d7c50238e03c12077f70591771c4ce68
 https://repo.anaconda.com/pkgs/main/osx-64/scipy-1.7.3-py39h8c7af03_0.conda#de2900b6122e1417d2f79f0266f700e9
-https://repo.anaconda.com/pkgs/main/osx-64/pandas-1.4.1-py39he9d5cce_1.conda#338d343588f8ded3a346d58e17197fc9
+https://repo.anaconda.com/pkgs/main/osx-64/pandas-1.4.2-py39he9d5cce_0.conda#9513b1735fc6feabfb647c545a5be53a
 https://repo.anaconda.com/pkgs/main/osx-64/pyamg-4.1.0-py39h1341a74_0.conda#9c560e676ee6f9f26b05f94ffda599d8
