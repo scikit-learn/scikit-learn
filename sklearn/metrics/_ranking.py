@@ -801,6 +801,9 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None, sample_weight
     have a corresponding threshold. This ensures that the graph starts on the
     y axis.
 
+    The first precision and recall values are precision=class balance and recall=1.
+    which corresponds to a classifier that always predicts the positive class.
+
     Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
 
     Parameters
@@ -834,7 +837,7 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None, sample_weight
 
     thresholds : ndarray of shape (n_thresholds,)
         Increasing thresholds on the decision function used to compute
-        precision and recall. n_thresholds <= len(np.unique(probas_pred)).
+        precision and recall. n_thresholds = len(np.unique(probas_pred)).
 
     See Also
     --------

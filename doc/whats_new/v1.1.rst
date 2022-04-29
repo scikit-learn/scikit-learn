@@ -824,6 +824,11 @@ Changelog
 - |Fix| Fixes `precision_recall_curve` and `average_precision_score` when true labels
   are all negative. :pr:`19085` by :user:`Varun Agrawal <varunagrawal>`.
 
+- |Fix| Fixes `precision_recall_curve` to compute precision-recall at 100% recall.
+  The Precision-Recall curve now displays the last point corresponding to a classifier
+  that always predicts the positive class: recall=100% and precision=class balance.
+  :pr:`23214` by :user:`Stéphane Collot <stephanecollot>` and :user:`Max Baak <mbaak>`.
+
 :mod:`sklearn.mixture`
 ......................
 
