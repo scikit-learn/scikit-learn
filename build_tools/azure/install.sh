@@ -151,7 +151,7 @@ python_environment_install() {
         # automatically uses the custom nogil index as its highest priority
         # index to fetch patched versions of libraries with native code that
         # would otherwise depend on the GIL.
-        echo "Installing build dependepencies with pip from the nogil repository: https://d1yxz45j0ypngg.cloudfront.net/"
+        echo "Installing build dependencies with pip from the nogil repository: https://d1yxz45j0ypngg.cloudfront.net/"
         pip install numpy scipy cython joblib threadpoolctl
     fi
 
