@@ -132,7 +132,7 @@ def _post_process_frame(frame, feature_names, target_names):
 def _liac_arff_parser(
     gzip_file,
     output_arrays_type,
-    columns_info_openml,
+    openml_columns_info,
     feature_names_to_select,
     target_names_to_select,
     shape=None,
@@ -223,7 +223,7 @@ def _liac_arff_parser(
         frame = pd.concat(dfs, ignore_index=True)
         del dfs, first_df
 
-        frame = _cast_frame(frame, columns_info_openml)
+        frame = _cast_frame(frame, openml_columns_info)
         X, y = _post_process_frame(
             frame, feature_names_to_select, target_names_to_select
         )
@@ -231,11 +231,11 @@ def _liac_arff_parser(
         arff_data = arff_container["data"]
 
         feature_indices_to_select = [
-            int(columns_info_openml[col_name]["index"])
+            int(openml_columns_info[col_name]["index"])
             for col_name in feature_names_to_select
         ]
         target_indices_to_select = [
-            int(columns_info_openml[col_name]["index"])
+            int(openml_columns_info[col_name]["index"])
             for col_name in target_names_to_select
         ]
 

@@ -512,7 +512,7 @@ def _download_data_to_bunch(
     data_home: Optional[str],
     *,
     as_frame: bool,
-    columns_info_openml_as_list: List[dict],
+    openml_columns_info: List[dict],
     data_columns: List[str],
     target_columns: List[str],
     shape: Optional[Tuple[int, int]],
@@ -539,7 +539,7 @@ def _download_data_to_bunch(
     as_frame : bool
         Whether or not to return the data into a pandas DataFrame.
 
-    columns_info_openml_as_list : list of dict
+    openml_columns_info : list of dict
         The information regarding the columns provided by OpenML for the
         ARFF dataset. The information is stored as a list of dictionaries.
 
@@ -583,9 +583,7 @@ def _download_data_to_bunch(
             `output_array_type == "pandas"`.
     """
     # Prepare which columns and data types should be returned for the X and y
-    features_dict = {
-        feature["name"]: feature for feature in columns_info_openml_as_list
-    }
+    features_dict = {feature["name"]: feature for feature in openml_columns_info}
 
     if sparse:
         output_type = "sparse"
@@ -1012,7 +1010,7 @@ def fetch_openml(
         return_sparse,
         data_home,
         as_frame=bool(as_frame),
-        columns_info_openml_as_list=features_list,
+        openml_columns_info=features_list,
         shape=shape,
         target_columns=target_columns,
         data_columns=data_columns,
