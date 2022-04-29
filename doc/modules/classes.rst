@@ -104,6 +104,7 @@ Classes
    cluster.DBSCAN
    cluster.FeatureAgglomeration
    cluster.KMeans
+   cluster.BisectingKMeans
    cluster.MiniBatchKMeans
    cluster.MeanShift
    cluster.OPTICS
@@ -319,6 +320,7 @@ Samples generator
    decomposition.MiniBatchDictionaryLearning
    decomposition.MiniBatchSparsePCA
    decomposition.NMF
+   decomposition.MiniBatchNMF
    decomposition.PCA
    decomposition.SparsePCA
    decomposition.SparseCoder
