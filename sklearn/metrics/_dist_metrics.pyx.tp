@@ -3,7 +3,7 @@
 implementation_specific_values = [
     # Values are the following ones:
     #
-    #       name_suffix, bitness, DTYPE_t, DTYPE
+    #       name_suffix, DTYPE_t, DTYPE
     #
     #
     # On the first hand, an empty string is use for `name_suffix`
@@ -21,8 +21,8 @@ implementation_specific_values = [
     # to maintain backward compatibility at the symbol level for extra
     # safety.
     #
-    ('', '64', 'DTYPE_t', 'DTYPE'),
-    ('32', '32', 'np.float32_t', 'np.float32')
+    ('', 'DTYPE_t', 'DTYPE'),
+    ('32', 'np.float32_t', 'np.float32')
 ]
 
 }}
@@ -84,7 +84,7 @@ def get_valid_metric_ids(L):
             if (val.__name__ in L) or (val in L)]
 
 
-{{for name_suffix, bitness, DTYPE_t, DTYPE in implementation_specific_values}}
+{{for name_suffix, DTYPE_t, DTYPE in implementation_specific_values}}
 
 ######################################################################
 # metric mappings
