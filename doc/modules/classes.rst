@@ -104,6 +104,7 @@ Classes
    cluster.DBSCAN
    cluster.FeatureAgglomeration
    cluster.KMeans
+   cluster.BisectingKMeans
    cluster.MiniBatchKMeans
    cluster.MeanShift
    cluster.OPTICS
