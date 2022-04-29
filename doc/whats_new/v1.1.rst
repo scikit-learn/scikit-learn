@@ -102,26 +102,26 @@ Changelog
   for dense float64 datasets have been refactored. The following functions
   and estimators now benefit from improved performances in terms of hardware
   scalability and speed-ups:
-  - :func:`sklearn.metrics.pairwise_distances_argmin`
-  - :func:`sklearn.metrics.pairwise_distances_argmin_min`
-  - :class:`sklearn.cluster.AffinityPropagation`
-  - :class:`sklearn.cluster.Birch`
-  - :class:`sklearn.cluster.MeanShift`
-  - :class:`sklearn.cluster.OPTICS`
-  - :class:`sklearn.cluster.SpectralClustering`
-  - :func:`sklearn.feature_selection.mutual_info_regression`
-  - :class:`sklearn.neighbors.KNeighborsClassifier`
-  - :class:`sklearn.neighbors.KNeighborsRegressor`
-  - :class:`sklearn.neighbors.RadiusNeighborsClassifier`
-  - :class:`sklearn.neighbors.RadiusNeighborsRegressor`
-  - :class:`sklearn.neighbors.LocalOutlierFactor`
-  - :class:`sklearn.neighbors.NearestNeighbors`
-  - :class:`sklearn.manifold.Isomap`
-  - :class:`sklearn.manifold.LocallyLinearEmbedding`
-  - :class:`sklearn.manifold.TSNE`
-  - :func:`sklearn.manifold.trustworthiness`
-  - :class:`sklearn.semi_supervised.LabelPropagation`
-  - :class:`sklearn.semi_supervised.LabelSpreading`
+    - :func:`sklearn.metrics.pairwise_distances_argmin`
+    - :func:`sklearn.metrics.pairwise_distances_argmin_min`
+    - :class:`sklearn.cluster.AffinityPropagation`
+    - :class:`sklearn.cluster.Birch`
+    - :class:`sklearn.cluster.MeanShift`
+    - :class:`sklearn.cluster.OPTICS`
+    - :class:`sklearn.cluster.SpectralClustering`
+    - :func:`sklearn.feature_selection.mutual_info_regression`
+    - :class:`sklearn.neighbors.KNeighborsClassifier`
+    - :class:`sklearn.neighbors.KNeighborsRegressor`
+    - :class:`sklearn.neighbors.RadiusNeighborsClassifier`
+    - :class:`sklearn.neighbors.RadiusNeighborsRegressor`
+    - :class:`sklearn.neighbors.LocalOutlierFactor`
+    - :class:`sklearn.neighbors.NearestNeighbors`
+    - :class:`sklearn.manifold.Isomap`
+    - :class:`sklearn.manifold.LocallyLinearEmbedding`
+    - :class:`sklearn.manifold.TSNE`
+    - :func:`sklearn.manifold.trustworthiness`
+    - :class:`sklearn.semi_supervised.LabelPropagation`
+    - :class:`sklearn.semi_supervised.LabelSpreading`
 
   For instance :class:`sklearn.neighbors.NearestNeighbors.kneighbors` and
   :class:`sklearn.neighbors.NearestNeighbors.radius_neighbors`
