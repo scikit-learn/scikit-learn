@@ -361,7 +361,6 @@ cdef class BestSplitter(BaseDenseSplitter):
 
             simultaneous_sort(Xf + start, samples + start, end - start)
 
-            # Skip feature f_j if it is constant
             if Xf[end - 1] <= Xf[start] + FEATURE_THRESHOLD:
                 features[f_j], features[n_total_constants] = features[n_total_constants], features[f_j]
 
@@ -541,7 +540,6 @@ cdef class RandomSplitter(BaseDenseSplitter):
             f_j = rand_int(n_drawn_constants, f_i - n_found_constants,
                            random_state)
 
-            # Skip f_j because it is constant
             if f_j < n_known_constants:
                 # f_j in the interval [n_drawn_constants, n_known_constants[
                 features[n_drawn_constants], features[f_j] = features[f_j], features[n_drawn_constants]
@@ -1305,7 +1303,6 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
             f_j = rand_int(n_drawn_constants, f_i - n_found_constants,
                            random_state)
 
-            # Skip f_j because it is constant
             if f_j < n_known_constants:
                 # f_j in the interval [n_drawn_constants, n_known_constants[
                 features[f_j], features[n_drawn_constants] = features[n_drawn_constants], features[f_j]
