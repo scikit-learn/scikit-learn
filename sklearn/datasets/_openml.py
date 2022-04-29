@@ -439,7 +439,7 @@ def _load_arff_response(
         The parser used to parse the ARFF file.
 
     output_type : {"numpy", "pandas", "sparse"}
-        The type of the arrays that will be returned. The possibilities ara:
+        The type of the arrays that will be returned. The possibilities are:
 
         - `"numpy"`: both `X` and `y` will be NumPy arrays;
         - `"sparse"`: `X` will be sparse matrix and `y` will be a NumPy array;
@@ -480,12 +480,16 @@ def _load_arff_response(
         `output_array_type == "pandas"`.
     """
     gzip_file = _open_openml_url(url, data_home, n_retries=n_retries, delay=delay)
-    actual_md5_checksum = hashlib.md5(gzip_file.read()).hexdigest()
-    gzip_file.close()
+    with closing(gzip_file):
+        md5 = hashlib.md5()
+        for chunk in iter(lambda: gzip_file.read(4096), b""):
+            md5.update(chunk)
+        actual_md5_checksum = md5.hexdigest()
 
     if actual_md5_checksum != md5_checksum:
         raise ValueError(
-            f"md5 checksum of local file for {url} does not match description. "
+            f"md5 checksum of local file for {url} does not match description: "
+            f"expected: {md5_checksum} but got {actual_md5_checksum}. "
             "Downloaded file could have been modified / corrupted, clean cache "
             "and retry..."
         )
@@ -900,10 +904,11 @@ def fetch_openml(
         )
 
     # TODO (1.3): remove "deprecated" from the valid parser
-    valid_parser = ("auto", "pandas", "liac-arff", "deprecated")
-    if parser not in valid_parser:
+    valid_parsers = ("auto", "pandas", "liac-arff", "deprecated")
+    if parser not in valid_parsers:
         raise ValueError(
-            f"`parser` must be one of {','.join(valid_parser)}. Got {parser} instead."
+            f"`parser` must be one of {', '.join(repr(p) for p in valid_parsers)}. Got"
+            f" {parser!r} instead."
         )
 
     if parser == "deprecated":
@@ -952,6 +957,7 @@ def fetch_openml(
                     "will use pandas. Either install pandas or set explicitely "
                     "`parser='liac-arff'`. In between, the parser used is set to "
                     "'liac-arff'",
+                    FutureWarning,
                 )
                 parser_ = "liac-arff"
 
