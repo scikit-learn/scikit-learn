@@ -1134,58 +1134,58 @@ Code and Documentation Contributors
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.0, including:
 
-2357juan, Abhishek Gupta, adamgonzo, Adam Li, adijohar, Aditya Kumawat, Aditya 
-Raghuwanshi, Aditya Singh, Adrian Trujillo Duron, Adrin Jalali, ahmadjubair33, 
-AJ Druck, aj-white, Alan Peixinho, Alberto Mario Ceballos-Arroyo, Alek 
-Lefebvre, Alex, Alexandre Gramfort, alexanmv, almeidayoel, Amanda Dsouza, Aman 
-Sharma, Amar pratap singh, Amit, amrcode, András Simon, Andreas Mueller, 
-Andrew Knyazev, Andriy, Angus L'Herrou, Ankit Sharma, Anne Ducout, Arisa, Arth, 
-arthurmello, Arturo Amor, ArturoAmor, Atharva Patil, aufarkari, Aurélien 
-Geron, avm19, Ayan Bag, baam, Behrouz B, Ben3940, Benjamin Bossan, Bharat 
-Raghunathan, Bijil Subhash, bmreiniger, Brandon Truth, Brenden Kadota, Brian 
-Sun, cdrig, Chalmer Lowe, Chiara Marmo, Chitteti Srinath Reddy, Chloe-Agathe 
-Azencott, Christian Lorentzen, Christian Ritter, christopherlim98, Christoph T. 
-Weidemann, Christos Aridas, Claudio Salvatore Arcidiacono, combscCode, Daniela 
-Fernandes, Dave Eargle, David Poznik, Dea María Léon, Dennis Osei, DessyVV, 
-Dev514, Dimitri Papadopoulos Orfanos, Diwakar Gupta, Dr. Felix M. Riese, drskd, 
-Emiko Sano, Emmanouil Gionanidis, EricEllwanger, Erich Schubert, Eric Larson, 
-Eric Ndirangu, Estefania Barreto-Ojeda, eyast, Fatima GASMI, Federico Luna, 
-Felix Glushchenkov, fkaren27, Fortune Uwha, FPGAwesome, francoisgoupil, Frans 
-Larsson, Gabor Berei, Gabor Kertesz, Gabriel Stefanini Vicente, Gabriel S 
-Vicente, Gael Varoquaux, GAURAV CHOUDHARY, Gauthier I, genvalen, 
-Geoffrey-Paris, Giancarlo Pablo, glennfrutiz, gpapadok, Guillaume Lemaitre, 
-Guillermo Tomás Fernández Martín, Gustavo Oliveira, Haidar Almubarak, Hannah 
-Bohle, Haoyin Xu, Haya, Helder Geovane Gomes de Lima, henrymooresc, Hideaki 
-Imamura, Himanshu Kumar, Hind-M, hmasdev, hvassard, i-aki-y, iasoon, Inclusive 
-Coding Bot, Ingela, iofall, Ishan Kumar, Jack Liu, Jake Cowton, jalexand3r, J 
-Alexander, Jauhar, Jaya Surya Kommireddy, Jay Stanley, Jeff Hale, je-kr, 
-JElfner, Jenny Vo, Jérémie du Boisberranger, Jihane, Jirka Borovec, Joel 
-Nothman, Jon Haitz Legarreta Gorroño, Jordan Silke, Jorge Ciprián, Jorge 
-Loayza, Joseph Chazalon, Joseph Schwartz-Messing, JSchuerz, Juan Carlos Alfaro 
-Jiménez, Juan Martin Loyola, Julien Jerphanion, katotten, Kaushik Roy 
-Chowdhury, Ken4git, Kevin Doucet, KimAYoung, Koushik Joshi, Kranthi Sedamaki, 
-krumetoft, lesnee, Logan Thomas, Loic Esteve, Louis Wagner, LucieClair, Lucy 
-Liu, Luiz Eduardo Amaral, Magali, MaggieChege, Mai, mandjevant, Mandy Gu, 
-Manimaran, MarcoM, Maren Westermann, Maria Boerner, MarieS-WiMLDS, Martel 
-Corentin, mathurinm, Matías, matjansen, Matteo Francia, Maxwell, Meekail Zain, 
-Megabyte, Mehrdad Moradizadeh, melemo2, Michael I Chen, michalkrawczyk, 
-Micky774, milana2, millawell, Ming-Yang Ho, Mitzi, miwojc, Mizuki, mlant, 
-Mohamed Haseeb, Mohit Sharma, Moonkyung94, mpoemsl, MrinalTyagi, Mr. Leu, 
-msabatier, murata-yu, N, Nadirhan Şahin, NartayXD, nastegiano, nathansquan, 
-nat-salt, Nicki Skafte Detlefsen, Nicolas Hug, Niket Jain, Nikhil Suresh, 
-Nikita Titov, Nikolay Kondratyev, Ohad Michel, Oleksandr Husak, Olivier Grisel, 
-partev, Patrick Ferreira, Paul, pelennor, PierreAttard, Pieter Gijsbers, Pinky, 
-poloso, Pramod Anantharam, puhuk, Purna Chandra Mansingh, QuadV, Rahil Parikh, 
-Randall Boyes, randomgeek78, Raz Hoshia, Reshama Shaikh, Ricardo Ferreira, 
-Richard Taylor, Rileran, Rishabh, Robin Thibaut, Roman Feldbauer, Roman 
-Yurchak, Ross Barnowski, rsnegrin, Sachin Yadav, sakinaOuisrani, Sam Adam Day, 
-Sanjay Marreddi, Sebastian Pujalte, SEELE, Seyedsaman (Sam) Emami, ShanDeng123, 
-Shao Yang Hong, sharmadharmpal, shaymerNaturalint, Shubhraneel Pal, siavrez, 
-slishak, Smile, spikebh, sply88, Sultan Orazbayev, Sumit Saha, Sven Eschlbeck, 
-Swapnil Jha, Sylvain Marié, Takeshi Oura, Tamires Santana, Tenavi, teunpe, 
-Theis Ferré Hjortkjær, Thiruvenkadam, Thomas J. Fan, t-jakubek, Tom Dupré la 
-Tour, TONY GEORGE, Tyler Martin, Tyler Reddy, Udit Gupta, Ugo Marchand, Varun 
-Agrawal, Venkatachalam N, Vera Komeyer, victoirelouis, Vikas Vishwakarma, 
-Vikrant khedkar, Vladimir Chernyy, Vladimir Kim, WeijiaDu, Xiao Yuan, Yar Khine 
+2357juan, Abhishek Gupta, adamgonzo, Adam Li, adijohar, Aditya Kumawat, Aditya
+Raghuwanshi, Aditya Singh, Adrian Trujillo Duron, Adrin Jalali, ahmadjubair33,
+AJ Druck, aj-white, Alan Peixinho, Alberto Mario Ceballos-Arroyo, Alek
+Lefebvre, Alex, Alexandre Gramfort, alexanmv, almeidayoel, Amanda Dsouza, Aman
+Sharma, Amar pratap singh, Amit, amrcode, András Simon, Andreas Mueller,
+Andrew Knyazev, Andriy, Angus L'Herrou, Ankit Sharma, Anne Ducout, Arisa, Arth,
+arthurmello, Arturo Amor, ArturoAmor, Atharva Patil, aufarkari, Aurélien
+Geron, avm19, Ayan Bag, baam, Behrouz B, Ben3940, Benjamin Bossan, Bharat
+Raghunathan, Bijil Subhash, bmreiniger, Brandon Truth, Brenden Kadota, Brian
+Sun, cdrig, Chalmer Lowe, Chiara Marmo, Chitteti Srinath Reddy, Chloe-Agathe
+Azencott, Christian Lorentzen, Christian Ritter, christopherlim98, Christoph T.
+Weidemann, Christos Aridas, Claudio Salvatore Arcidiacono, combscCode, Daniela
+Fernandes, Dave Eargle, David Poznik, Dea María Léon, Dennis Osei, DessyVV,
+Dev514, Dimitri Papadopoulos Orfanos, Diwakar Gupta, Dr. Felix M. Riese, drskd,
+Emiko Sano, Emmanouil Gionanidis, EricEllwanger, Erich Schubert, Eric Larson,
+Eric Ndirangu, Estefania Barreto-Ojeda, eyast, Fatima GASMI, Federico Luna,
+Felix Glushchenkov, fkaren27, Fortune Uwha, FPGAwesome, francoisgoupil, Frans
+Larsson, Gabor Berei, Gabor Kertesz, Gabriel Stefanini Vicente, Gabriel S
+Vicente, Gael Varoquaux, GAURAV CHOUDHARY, Gauthier I, genvalen,
+Geoffrey-Paris, Giancarlo Pablo, glennfrutiz, gpapadok, Guillaume Lemaitre,
+Guillermo Tomás Fernández Martín, Gustavo Oliveira, Haidar Almubarak, Hannah
+Bohle, Haoyin Xu, Haya, Helder Geovane Gomes de Lima, henrymooresc, Hideaki
+Imamura, Himanshu Kumar, Hind-M, hmasdev, hvassard, i-aki-y, iasoon, Inclusive
+Coding Bot, Ingela, iofall, Ishan Kumar, Jack Liu, Jake Cowton, jalexand3r, J
+Alexander, Jauhar, Jaya Surya Kommireddy, Jay Stanley, Jeff Hale, je-kr,
+JElfner, Jenny Vo, Jérémie du Boisberranger, Jihane, Jirka Borovec, Joel
+Nothman, Jon Haitz Legarreta Gorroño, Jordan Silke, Jorge Ciprián, Jorge
+Loayza, Joseph Chazalon, Joseph Schwartz-Messing, JSchuerz, Juan Carlos Alfaro
+Jiménez, Juan Martin Loyola, Julien Jerphanion, katotten, Kaushik Roy
+Chowdhury, Ken4git, Kevin Doucet, KimAYoung, Koushik Joshi, Kranthi Sedamaki,
+krumetoft, lesnee, Logan Thomas, Loic Esteve, Louis Wagner, LucieClair, Lucy
+Liu, Luiz Eduardo Amaral, Magali, MaggieChege, Mai, mandjevant, Mandy Gu,
+Manimaran, MarcoM, Maren Westermann, Maria Boerner, MarieS-WiMLDS, Martel
+Corentin, mathurinm, Matías, matjansen, Matteo Francia, Maxwell, Meekail Zain,
+Megabyte, Mehrdad Moradizadeh, melemo2, Michael I Chen, michalkrawczyk,
+Micky774, milana2, millawell, Ming-Yang Ho, Mitzi, miwojc, Mizuki, mlant,
+Mohamed Haseeb, Mohit Sharma, Moonkyung94, mpoemsl, MrinalTyagi, Mr. Leu,
+msabatier, murata-yu, N, Nadirhan Şahin, NartayXD, nastegiano, nathansquan,
+nat-salt, Nicki Skafte Detlefsen, Nicolas Hug, Niket Jain, Nikhil Suresh,
+Nikita Titov, Nikolay Kondratyev, Ohad Michel, Oleksandr Husak, Olivier Grisel,
+partev, Patrick Ferreira, Paul, pelennor, PierreAttard, Pieter Gijsbers, Pinky,
+poloso, Pramod Anantharam, puhuk, Purna Chandra Mansingh, QuadV, Rahil Parikh,
+Randall Boyes, randomgeek78, Raz Hoshia, Reshama Shaikh, Ricardo Ferreira,
+Richard Taylor, Rileran, Rishabh, Robin Thibaut, Roman Feldbauer, Roman
+Yurchak, Ross Barnowski, rsnegrin, Sachin Yadav, sakinaOuisrani, Sam Adam Day,
+Sanjay Marreddi, Sebastian Pujalte, SEELE, Seyedsaman (Sam) Emami, ShanDeng123,
+Shao Yang Hong, sharmadharmpal, shaymerNaturalint, Shubhraneel Pal, siavrez,
+slishak, Smile, spikebh, sply88, Sultan Orazbayev, Sumit Saha, Sven Eschlbeck,
+Swapnil Jha, Sylvain Marié, Takeshi Oura, Tamires Santana, Tenavi, teunpe,
+Theis Ferré Hjortkjær, Thiruvenkadam, Thomas J. Fan, t-jakubek, Tom Dupré la
+Tour, TONY GEORGE, Tyler Martin, Tyler Reddy, Udit Gupta, Ugo Marchand, Varun
+Agrawal, Venkatachalam N, Vera Komeyer, victoirelouis, Vikas Vishwakarma,
+Vikrant khedkar, Vladimir Chernyy, Vladimir Kim, WeijiaDu, Xiao Yuan, Yar Khine
 Phyo, Ying Xiong, yiyangq, Yosshi999, Yuki Koyama, Zach Deane-Mayer, Zeel B Patel,
 zempleni, zhenfisher, 赵丰 (Zhao Feng)
