@@ -3,5 +3,5 @@
 set -e
 set -x
 
-wget $GHA_META
+wget $GITHUB_ARTIFACT_URL
 unzip doc*.zip -d doc
