@@ -15,7 +15,7 @@ jobs:
       - GITHUB_ARTIFACT_URL: << pipeline.parameters.GITHUB_RUN_URL >>/doc-min-dependencies.zip
     steps:
       - checkout
-      - run: ./build_tools/circle/download_documentation.sh
+      - run: bash build_tools/circle/download_documentation.sh
       - store_artifacts:
           path: doc/_build/html/stable
           destination: doc
@@ -27,7 +27,7 @@ jobs:
       - GITHUB_ARTIFACT_URL: << pipeline.parameters.GITHUB_RUN_URL >>/doc.zip
     steps:
       - checkout
-      - run: ./build_tools/circle/download_documentation.sh
+      - run: bash build_tools/circle/download_documentation.sh
       - store_artifacts:
           path: doc/_build/html/stable
           destination: doc
