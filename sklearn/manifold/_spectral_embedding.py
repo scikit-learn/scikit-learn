@@ -146,7 +146,6 @@ def spectral_embedding(
     eigen_solver=None,
     random_state=None,
     eigen_tol="warn",
-    max_iter=None,
     norm_laplacian=True,
     drop_first=True,
 ):
@@ -210,16 +209,11 @@ def spectral_embedding(
         Note that when using `eigen_solver="amg"` values of `tol<1e-5` may lead
         to convergence issues and should be avoided.
 
-        .. versionadded:: 1.1
-           Added 'auto' option for `eigen_tol`.
+        .. versionadded:: 1.2
+           Added 'auto' option.
 
-        .. deprecated:: 1.1
-           Default value for `eigen_tol` changed to 'auto'.
-
-    max_iter : int, default=None
-        The maximum number of iterations done by the eigendecomposition.
-
-        .. versionadded:: 1.1
+        .. deprecated:: 1.2
+           Default value will change to 'auto' in v1.4.
 
     norm_laplacian : bool, default=True
         If True, then compute symmetric normalized Laplacian.
@@ -267,10 +261,10 @@ def spectral_embedding(
             "Unknown value for eigen_solver: '%s'."
             "Should be 'amg', 'arpack', or 'lobpcg'" % eigen_solver
         )
-    # TODO(1.3): Remove
+    # TODO(1.4): Remove
     if eigen_tol == "warn":
         warnings.warn(
-            "The default value for `eigen_tol` will be changed from 0 to 'auto' in 1.3",
+            "The default value for `eigen_tol` will be changed from 0 to 'auto' in 1.4",
             FutureWarning,
         )
         eigen_tol = 0
@@ -324,13 +318,7 @@ def spectral_embedding(
             laplacian *= -1
             v0 = _init_arpack_v0(laplacian.shape[0], random_state)
             _, diffusion_map = eigsh(
-                laplacian,
-                k=n_components,
-                sigma=1.0,
-                which="LM",
-                tol=tol,
-                maxiter=max_iter,
-                v0=v0,
+                laplacian, k=n_components, sigma=1.0, which="LM", tol=tol, v0=v0
             )
             embedding = diffusion_map.T[n_components::-1]
             if norm_laplacian:
@@ -376,9 +364,7 @@ def spectral_embedding(
         # high tolerance as explained in:
         # https://github.com/scikit-learn/scikit-learn/pull/13707#discussion_r314028509
         tol = 1e-5 if eigen_tol == "auto" else eigen_tol
-        _, diffusion_map = lobpcg(
-            laplacian, X, M=M, tol=tol, maxiter=max_iter, largest=False
-        )
+        _, diffusion_map = lobpcg(laplacian, X, M=M, tol=tol, largest=False)
         embedding = diffusion_map.T
         if norm_laplacian:
             # recover u = D^-1/2 x from the eigenvector output x
@@ -413,11 +399,7 @@ def spectral_embedding(
             X = X.astype(laplacian.dtype)
             tol = 1e-5 if eigen_tol == "auto" else eigen_tol
             _, diffusion_map = lobpcg(
-                laplacian,
-                X,
-                tol=tol,
-                maxiter=max_iter,
-                largest=False,
+                laplacian, X, tol=tol, largest=False, maxiter=2000
             )
             embedding = diffusion_map.T[:n_components]
             if norm_laplacian:
@@ -502,12 +484,7 @@ class SpectralEmbedding(BaseEstimator):
         values of `tol<1e-5` may lead to convergence issues and should be
         avoided.
 
-        .. versionadded:: 1.1
-
-    max_iter : int, default=None
-        The maximum number of iterations done by the eigendecomposition.
-
-        .. versionadded:: 1.1
+        .. versionadded:: 1.2
 
     n_neighbors : int, default=None
         Number of nearest neighbors for nearest_neighbors graph building.
@@ -582,7 +559,6 @@ class SpectralEmbedding(BaseEstimator):
         random_state=None,
         eigen_solver=None,
         eigen_tol="warn",
-        max_iter=None,
         n_neighbors=None,
         n_jobs=None,
     ):
@@ -592,7 +568,6 @@ class SpectralEmbedding(BaseEstimator):
         self.random_state = random_state
         self.eigen_solver = eigen_solver
         self.eigen_tol = eigen_tol
-        self.max_iter = max_iter
         self.n_neighbors = n_neighbors
         self.n_jobs = n_jobs
 
@@ -711,7 +686,6 @@ class SpectralEmbedding(BaseEstimator):
             n_components=self.n_components,
             eigen_solver=self.eigen_solver,
             eigen_tol=self.eigen_tol,
-            max_iter=self.max_iter,
             random_state=random_state,
         )
         return self

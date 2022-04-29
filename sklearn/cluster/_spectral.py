@@ -199,7 +199,6 @@ def spectral_clustering(
     random_state=None,
     n_init=10,
     eigen_tol="warn",
-    max_iter=None,
     assign_labels="kmeans",
     verbose=False,
 ):
@@ -273,11 +272,11 @@ def spectral_clustering(
         values of `tol<1e-5` may lead to convergence issues and should be
         avoided.
 
-        .. versionadded:: 1.1
-           Added 'auto' option for `eigen_tol`.
+        .. versionadded:: 1.2
+           Added 'auto' option.
 
-        .. deprecated:: 1.1
-           Default value for `eigen_tol` changed to 'auto'.
+        .. deprecated:: 1.2
+           Default value will change to 'auto' in v1.4.
 
     assign_labels : {'kmeans', 'discretize', 'cluster_qr'}, default='kmeans'
         The strategy to use to assign labels in the embedding
@@ -362,10 +361,10 @@ def spectral_clustering(
 
     random_state = check_random_state(random_state)
     n_components = n_clusters if n_components is None else n_components
-    # TODO(1.3): Remove
+    # TODO(1.4): Remove
     if eigen_tol == "warn":
         warnings.warn(
-            "The default value for `eigen_tol` will be changed from 0 to 'auto' in 1.3",
+            "The default value for `eigen_tol` will be changed from 0 to 'auto' in 1.4",
             FutureWarning,
         )
         eigen_tol = 0
@@ -382,7 +381,6 @@ def spectral_clustering(
         eigen_solver=eigen_solver,
         random_state=random_state,
         eigen_tol=eigen_tol,
-        max_iter=max_iter,
         drop_first=False,
     )
     if verbose:
@@ -498,16 +496,11 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         values of `tol<1e-5` may lead to convergence issues and should be
         avoided.
 
-        .. versionadded:: 1.1
-           Added 'auto' option for `eigen_tol`.
+        .. versionadded:: 1.2
+           Added 'auto' option.
 
-        .. deprecated:: 1.1
-           Default value for `eigen_tol` changed to 'auto'.
-
-    max_iter : int, default=None
-        The maximum number of iterations done by the eigendecomposition.
-
-        .. versionadded:: 1.1
+        .. deprecated:: 1.2
+           Default value will change to 'auto' in v1.4.
 
     assign_labels : {'kmeans', 'discretize', 'cluster_qr'}, default='kmeans'
         The strategy for assigning labels in the embedding space. There are two
@@ -643,7 +636,6 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         affinity="rbf",
         n_neighbors=10,
         eigen_tol="warn",
-        max_iter=None,
         assign_labels="kmeans",
         degree=3,
         coef0=1,
@@ -660,7 +652,6 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         self.affinity = affinity
         self.n_neighbors = n_neighbors
         self.eigen_tol = eigen_tol
-        self.max_iter = max_iter
         self.assign_labels = assign_labels
         self.degree = degree
         self.coef0 = coef0
@@ -741,11 +732,11 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         )
 
         self._eigen_tol = self.eigen_tol
-        # TODO(1.3): Remove
+        # TODO(1.4): Remove
         if self.eigen_tol == "warn":
             warnings.warn(
                 "The default value for `eigen_tol` will be changed from 0 to 'auto'"
-                " in 1.3",
+                " in 1.4",
                 FutureWarning,
             )
             self._eigen_tol = 0
@@ -801,7 +792,6 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
             random_state=random_state,
             n_init=self.n_init,
             eigen_tol=self._eigen_tol,
-            max_iter=self.max_iter,
             assign_labels=self.assign_labels,
             verbose=self.verbose,
         )

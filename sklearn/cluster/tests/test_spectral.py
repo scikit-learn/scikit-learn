@@ -428,7 +428,7 @@ def test_spectral_eigen_tol_auto():
 
 
 def test_spectral_eigen_tol_future_warn():
-    msg = "The default value for `eigen_tol` will be changed from 0 to 'auto' in 1.3"
+    msg = "The default value for `eigen_tol` will be changed from 0 to 'auto' in 1.4"
     X = make_blobs(
         n_samples=20, random_state=0, centers=[[1, 1], [-1, -1]], cluster_std=0.01
     )[0]
