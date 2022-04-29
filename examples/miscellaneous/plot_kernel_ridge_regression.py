@@ -177,13 +177,14 @@ plt.title("Execution Time")
 _ = plt.legend(loc="best")
 
 # %%
-# This figure compares the time for fitting and prediction of KRR and SVR
-# for different sizes of the training set. Fitting KRR is faster than SVR for
-# medium- sized training sets (less than 1000 samples); however, for larger
-# training sets SVR scales better. With regard to prediction time, SVR is
-# faster than KRR for all sizes of the training set because of the learned
-# sparse solution. Note that the degree of sparsity and thus the prediction
-# time depends on the parameters epsilon and C of the SVR.
+# This figure compares the time for fitting and prediction of KRR and SVR for
+# different sizes of the training set. Fitting KRR is faster than SVR for
+# medium-sized training sets (less than a few thousand samples); however, for
+# larger training sets SVR scales better. With regard to prediction time, SVR
+# should be faster than KRR for all sizes of the training set because of the
+# learned sparse solution, however this is not necessarily the case in practice
+# because of implementation details. Note that the degree of sparsity and thus
+# the prediction time depends on the parameters epsilon and C of the SVR.
 
 # %%
 # Visualize the learning curves
