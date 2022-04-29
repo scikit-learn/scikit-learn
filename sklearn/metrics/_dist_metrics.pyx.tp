@@ -10,9 +10,9 @@ implementation_specific_values = [
     # for the 64bit case as to still be able to expose the original
     # 64bit implementation under the same API, namely `DistanceMetric`.
     #
-    # On the other hand, '32' bit is use for `name_suffix`
-    # for the 32bit case to remove ambiguity and use `DistanceMetric32`,
-    # which is not publicly exposed.
+    # On the other hand, '32' bit is use for `name_suffix` for the float32
+    # case to remove ambiguity and use `DistanceMetric32`, which is not
+    # publicly exposed.
     #
     # The metric mapping is adapted accordingly to route to the correct
     # implementations.
