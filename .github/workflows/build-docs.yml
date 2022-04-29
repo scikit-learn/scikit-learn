@@ -102,6 +102,7 @@ jobs:
         run: build_tools/github/store_branch.sh
 
       - name: Upload branch reference
+        uses: actions/upload-artifact@v2
         with:
           name: branch
           path: branch.txt
