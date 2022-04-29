@@ -115,20 +115,16 @@ def cross_validate_LRs(clf, X, y, verbose=True, internal_fit=True):
         neg_LRs.append(neg_LR)
 
     class_LRs = pd.DataFrame({"LR+": pos_LRs, "LR-": neg_LRs})
+    pos_LR = class_LRs["LR+"].mean()
+    pos_LR_std = class_LRs["LR+"].std()
+    neg_LR = class_LRs["LR-"].mean()
+    neg_LR_std = class_LRs["LR-"].std()
 
     if verbose:
-        print(
-            "The mean cross-validated LR+ is: "
-            f"{class_LRs['LR+'].mean():.2f} +/- "
-            f"{class_LRs['LR+'].std():.2f}"
-        )
-        print(
-            "The mean cross-validated LR- is: "
-            f"{class_LRs['LR-'].mean():.2f} +/- "
-            f"{class_LRs['LR-'].std():.2f}"
-        )
+        print(f"The mean cross-validated LR+ is: {pos_LR:.2f} +/- {pos_LR_std:.2f}")
+        print(f"The mean cross-validated LR- is: {neg_LR:.2f} +/- {neg_LR_std:.2f}")
 
-    return class_LRs
+    return pos_LR, neg_LR, pos_LR_std, neg_LR_std
 
 
 # %%
@@ -242,12 +238,9 @@ for n, weight in enumerate(weights):
     disp.ax_.set_title(f"prevalence = {y.mean():.2f}")
     disp.ax_.legend(*scatter.legend_elements())
 
-    class_LRs = cross_validate_LRs(clf, X, y, verbose=False)
-
-    pos_LR = class_LRs["LR+"].mean()
-    neg_LR = class_LRs["LR-"].mean()
-    pos_LR_std = class_LRs["LR+"].std()
-    neg_LR_std = class_LRs["LR-"].std()
+    pos_LR, neg_LR, pos_LR_std, neg_LR_std = cross_validate_LRs(
+        clf, X, y, verbose=False
+    )
 
     pos_LRs.append(pos_LR)
     neg_LRs.append(neg_LR)
@@ -338,12 +331,9 @@ X, y = make_classification(
 )
 
 clf = LogisticRegression()
-class_LRs = cross_validate_LRs(clf, X, y, verbose=False)
-
-pos_LR_base = class_LRs["LR+"].mean()
-neg_LR_base = class_LRs["LR-"].mean()
-pos_LR_base_std = class_LRs["LR+"].std()
-neg_LR_base_std = class_LRs["LR-"].std()
+(pos_LR_base, neg_LR_base, pos_LR_base_std, neg_LR_base_std) = cross_validate_LRs(
+    clf, X, y, verbose=False
+)
 
 plt.figure(figsize=(15, 12))
 plt.subplots_adjust(hspace=0.25)
@@ -371,13 +361,10 @@ for n, weight in enumerate(weights):
     disp.ax_.set_title(f"prevalence = {y_test.mean():.2f}")
     disp.ax_.legend(*scatter.legend_elements())
 
-    class_LRs = cross_validate_LRs(
+    pos_LR, neg_LR, pos_LR_std, neg_LR_std = cross_validate_LRs(
         clf, X_test, y_test, verbose=False, internal_fit=False
     )
-    pos_LR = class_LRs["LR+"].mean()
-    neg_LR = class_LRs["LR-"].mean()
-    pos_LR_std = class_LRs["LR+"].std()
-    neg_LR_std = class_LRs["LR-"].std()
+
     pos_LRs.append(pos_LR)
     neg_LRs.append(neg_LR)
     pos_LRs_std.append(pos_LR_std)
