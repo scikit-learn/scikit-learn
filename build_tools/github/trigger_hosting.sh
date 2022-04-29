@@ -14,4 +14,4 @@ curl --request POST \
      --header "content-type: application/json" \
      --header "x-attribution-actor-id: github_actions" \
      --header "x-attribution-login: github_actions" \
-     --data \{\"branch\":\"$BRANCH\", \"parameters\":\{\"GITHUB_RUN_URL\": $GITHUB_RUN_URL\"\"\}\}
+     --data \{\"branch\":\"$BRANCH\",\"parameters\":\{\"GITHUB_RUN_URL\":$GITHUB_RUN_URL\"\"\}\}
