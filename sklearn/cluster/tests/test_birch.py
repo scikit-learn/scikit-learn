@@ -241,6 +241,8 @@ def test_transform_match_across_dtypes():
 
 
 def test_subcluster_dtype(global_dtype):
-    X = make_blobs(n_samples=80, n_features=4, random_state=0)[0].astype(global_dtype, copy=False)
+    X = make_blobs(n_samples=80, n_features=4, random_state=0)[0].astype(
+        global_dtype, copy=False
+    )
     brc = Birch(n_clusters=4)
     assert brc.fit(X).subcluster_centers_.dtype == global_dtype
