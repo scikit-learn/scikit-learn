@@ -97,7 +97,7 @@ from sklearn.model_selection import StratifiedKFold
 import pandas as pd
 
 
-def cross_validate_LRs(clf, X, y, verbose=True):
+def cross_validate_LRs(clf, X, y, verbose=True, internal_fit=True):
 
     pos_LRs = []
     neg_LRs = []
@@ -107,7 +107,8 @@ def cross_validate_LRs(clf, X, y, verbose=True):
         X_train, X_test = X[train_index], X[test_index]
         y_train, y_test = y[train_index], y[test_index]
 
-        clf.fit(X_train, y_train)
+        if internal_fit:
+            clf.fit(X_train, y_train)
         y_pred = clf.predict(X_test)
         pos_LR, neg_LR = class_likelihood_ratios(y_test, y_pred, raise_warning=False)
         pos_LRs.append(pos_LR)
@@ -370,13 +371,22 @@ for n, weight in enumerate(weights):
     disp.ax_.set_title(f"prevalence = {y_test.mean():.2f}")
     disp.ax_.legend(*scatter.legend_elements())
 
-    y_pred = clf.predict(X_test)
-    pos_LR, neg_LR = class_likelihood_ratios(y_test, y_pred, raise_warning=False)
+    class_LRs = cross_validate_LRs(
+        clf, X_test, y_test, verbose=False, internal_fit=False
+    )
+    pos_LR = class_LRs["LR+"].mean()
+    neg_LR = class_LRs["LR-"].mean()
+    pos_LR_std = class_LRs["LR+"].std()
+    neg_LR_std = class_LRs["LR-"].std()
     pos_LRs.append(pos_LR)
     neg_LRs.append(neg_LR)
+    pos_LRs_std.append(pos_LR_std)
+    neg_LRs_std.append(neg_LR_std)
     prevalence.append(y_test.mean())
 
-class_LRs = pd.DataFrame({"LR+": pos_LRs, "LR-": neg_LRs})
+class_LRs = pd.DataFrame(
+    {"LR+": pos_LRs, "LR-": neg_LRs, "LR+_std": pos_LRs_std, "LR-_std": neg_LRs_std}
+)
 # %%
 # In the plots below we can observe that the class likelihood ratios remain
 # within one standard deviation of those computed with the constant model.
@@ -384,8 +394,14 @@ class_LRs = pd.DataFrame({"LR+": pos_LRs, "LR-": neg_LRs})
 plt.figure(figsize=(15, 6))
 
 ax1 = plt.subplot(1, 2, 1)
-ax1.plot(prevalence, class_LRs["LR+"], "r+", label="extrapolation through populations")
-
+ax1.plot(prevalence, class_LRs["LR+"], "r", label="extrapolation through populations")
+ax1.fill_between(
+    prevalence,
+    class_LRs["LR+"] - class_LRs["LR+_std"],
+    class_LRs["LR+"] + class_LRs["LR+_std"],
+    color="r",
+    alpha=0.3,
+)
 ax1.axhline(y=pos_LR_base + pos_LR_base_std, color="r", linestyle="--")
 ax1.axhline(
     y=pos_LR_base - pos_LR_base_std,
@@ -402,7 +418,14 @@ ax1.set(
 plt.legend(loc="lower right")
 
 ax2 = plt.subplot(1, 2, 2)
-ax2.plot(prevalence, class_LRs["LR-"], "b+", label="extrapolation through populations")
+ax2.plot(prevalence, class_LRs["LR-"], "b", label="extrapolation through populations")
+ax2.fill_between(
+    prevalence,
+    class_LRs["LR-"] + class_LRs["LR-_std"],
+    class_LRs["LR-"] - class_LRs["LR-_std"],
+    color="b",
+    alpha=0.3,
+)
 ax2.axhline(y=neg_LR_base + neg_LR_base_std, color="b", linestyle="--")
 ax2.axhline(
     y=neg_LR_base - neg_LR_base_std,
@@ -419,4 +442,3 @@ ax2.set(
 plt.legend(loc="lower right")
 
 plt.show()
-# %%
