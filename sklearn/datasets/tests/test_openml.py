@@ -967,7 +967,6 @@ def test_fetch_openml_validation_parameter(monkeypatch, params, err_msg):
     [
         {"as_frame": True, "parser": "auto"},
         {"as_frame": "auto", "parser": "auto"},
-        {"as_frame": False, "parser": "auto"},
         {"as_frame": False, "parser": "pandas"},
     ],
 )
@@ -980,6 +979,24 @@ def test_fetch_openml_requires_pandas_error(monkeypatch, params):
         _monkey_patch_webbased_functions(monkeypatch, data_id, True)
         err_msg = "requires pandas to be installed. Alternatively, explicitely"
         with pytest.raises(ImportError, match=err_msg):
+            fetch_openml(data_id=data_id, **params)
+    else:
+        raise SkipTest("This test requires pandas to not be installed.")
+
+
+# TODO(1.3): move this parameter option in`test_fetch_openml_requires_pandas_error`
+def test_fetch_openml_requires_pandas_in_future(monkeypatch):
+    """Check that we raise a warning that pandas will be required in the future."""
+    params = {"as_frame": False, "parser": "auto"}
+    data_id = 1119
+    try:
+        check_pandas_support("test_fetch_openml_requires_pandas")
+    except ImportError:
+        _monkey_patch_webbased_functions(monkeypatch, data_id, True)
+        warn_msg = (
+            "From version 1.3, `parser='auto'` with `as_frame=False` will use pandas"
+        )
+        with pytest.warns(FutureWarning, match=warn_msg):
             fetch_openml(data_id=data_id, **params)
     else:
         raise SkipTest("This test requires pandas to not be installed.")
