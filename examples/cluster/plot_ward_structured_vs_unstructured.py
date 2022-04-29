@@ -63,8 +63,8 @@ st = time.time()
 ward = AgglomerativeClustering(n_clusters=6, linkage="ward").fit(X)
 elapsed_time = time.time() - st
 label = ward.labels_
-print("Elapsed time: %.2fs" % elapsed_time)
-print("Number of points: %i" % label.size)
+print(f"Elapsed time: {elapsed_time:.2f}s")
+print(f"Number of points: {label.size}")
 
 # %%
 # Plot result
@@ -73,11 +73,11 @@ print("Number of points: %i" % label.size)
 
 import matplotlib.pyplot as plt
 
-fig = plt.figure()
-ax = fig.add_subplot(111, projection="3d", elev=7, azim=-80)
-ax.set_position([0, 0, 0.95, 1])
+fig1 = plt.figure()
+ax1 = fig1.add_subplot(111, projection="3d", elev=7, azim=-80)
+ax1.set_position([0, 0, 0.95, 1])
 for l in np.unique(label):
-    ax.scatter(
+    ax1.scatter(
         X[label == l, 0],
         X[label == l, 1],
         X[label == l, 2],
@@ -85,7 +85,7 @@ for l in np.unique(label):
         s=20,
         edgecolor="k",
     )
-plt.title("Without connectivity constraints (time %.2fs)" % elapsed_time)
+fig1.suptitle(f"Without connectivity constraints (time {elapsed_time:.2f}s)")
 
 # %%
 # We are defining k-Nearest Neighbors with 10 neighbors
@@ -108,8 +108,8 @@ ward = AgglomerativeClustering(
 ).fit(X)
 elapsed_time = time.time() - st
 label = ward.labels_
-print("Elapsed time: %.2fs" % elapsed_time)
-print("Number of points: %i" % label.size)
+print(f"Elapsed time: {elapsed_time:.2f}s")
+print(f"Number of points: {label.size}")
 
 # %%
 # Plot result
@@ -117,11 +117,11 @@ print("Number of points: %i" % label.size)
 #
 # Plotting the structured hierarchical clusters.
 
-fig = plt.figure()
-ax = fig.add_subplot(111, projection="3d", elev=7, azim=-80)
-ax.set_position([0, 0, 0.95, 1])
+fig2 = plt.figure()
+ax2 = fig2.add_subplot(121, projection="3d", elev=7, azim=-80)
+ax2.set_position([0, 0, 0.95, 1])
 for l in np.unique(label):
-    ax.scatter(
+    ax2.scatter(
         X[label == l, 0],
         X[label == l, 1],
         X[label == l, 2],
@@ -129,6 +129,6 @@ for l in np.unique(label):
         s=20,
         edgecolor="k",
     )
-plt.title("With connectivity constraints (time %.2fs)" % elapsed_time)
+fig2.suptitle(f"With connectivity constraints (time {elapsed_time:.2f}s)")
 
 plt.show()
