@@ -21,3 +21,4 @@ jobs:
         env:
           CCI_TOKEN: ${{ secrets.CCI_TOKEN }}
           RUN_ID: ${{ github.event.workflow_run.id }}
+          EVENT_OBJ: ${{ toJson(github.event) }}

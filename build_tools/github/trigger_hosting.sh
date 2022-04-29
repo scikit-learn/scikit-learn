@@ -3,6 +3,8 @@
 set -e
 set -x
 
+echo $EVENT_OBJ
+
 GITHUB_RUN_URL=https://nightly.link/$GITHUB_REPOSITORY/actions/runs/$RUN_ID
 BRANCH=$( wget $GITHUB_RUN_URL/branch.zip && \
           unzip branch.zip > /dev/null && \
