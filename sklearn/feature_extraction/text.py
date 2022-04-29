@@ -147,7 +147,7 @@ def strip_accents_unicode(s):
 
 
 def strip_accents_ascii(s):
-    """Transform accentuated unicode symbols into ascii or nothing
+    """Transform accentuated unicode symbols into ascii or nothing.
 
     Warning: this solution is only suited for languages that have a direct
     transliteration to ASCII symbols.
@@ -155,7 +155,12 @@ def strip_accents_ascii(s):
     Parameters
     ----------
     s : str
-        The string to strip
+        The string to strip.
+
+    Returns
+    -------
+    s : str
+        The stripped string.
 
     See Also
     --------
