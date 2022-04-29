@@ -207,7 +207,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         """Fit another stage of ``_n_classes`` trees to the boosting model."""
 
         assert sample_mask.dtype == bool
-        loss = self.loss_
+        loss = self._loss
         original_y = y
 
         # Need to pass a copy of raw_predictions to negative_gradient()
@@ -289,7 +289,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         ):
             raise ValueError(f"Loss {self.loss!r} not supported. ")
 
-        # TODO: Remove in v1.2
+        # TODO(1.2): Remove
         if self.loss == "ls":
             warnings.warn(
                 "The loss 'ls' was deprecated in v1.0 and "
@@ -305,7 +305,20 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 FutureWarning,
             )
 
+        # TODO(1.3): Remove
         if self.loss == "deviance":
+            warnings.warn(
+                "The loss parameter name 'deviance' was deprecated in v1.1 and will be "
+                "removed in version 1.3. Use the new parameter name 'log_loss' which "
+                "is equivalent.",
+                FutureWarning,
+            )
+            loss_class = (
+                _gb_losses.MultinomialDeviance
+                if len(self.classes_) > 2
+                else _gb_losses.BinomialDeviance
+            )
+        elif self.loss == "log_loss":
             loss_class = (
                 _gb_losses.MultinomialDeviance
                 if len(self.classes_) > 2
@@ -315,11 +328,11 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             loss_class = _gb_losses.LOSS_FUNCTIONS[self.loss]
 
         if is_classifier(self):
-            self.loss_ = loss_class(self.n_classes_)
+            self._loss = loss_class(self.n_classes_)
         elif self.loss in ("huber", "quantile"):
-            self.loss_ = loss_class(self.alpha)
+            self._loss = loss_class(self.alpha)
         else:
-            self.loss_ = loss_class()
+            self._loss = loss_class()
 
         check_scalar(
             self.subsample,
@@ -333,7 +346,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         if self.init is not None:
             # init must be an estimator or 'zero'
             if isinstance(self.init, BaseEstimator):
-                self.loss_.check_init_estimator(self.init)
+                self._loss.check_init_estimator(self.init)
             elif not (isinstance(self.init, str) and self.init == "zero"):
                 raise ValueError(
                     "The init parameter must be an estimator or 'zero'. "
@@ -426,9 +439,9 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         self.init_ = self.init
         if self.init_ is None:
-            self.init_ = self.loss_.init_estimator()
+            self.init_ = self._loss.init_estimator()
 
-        self.estimators_ = np.empty((self.n_estimators, self.loss_.K), dtype=object)
+        self.estimators_ = np.empty((self.n_estimators, self._loss.K), dtype=object)
         self.train_score_ = np.zeros((self.n_estimators,), dtype=np.float64)
         # do oob?
         if self.subsample < 1.0:
@@ -458,7 +471,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             )
 
         self.estimators_ = np.resize(
-            self.estimators_, (total_n_estimators, self.loss_.K)
+            self.estimators_, (total_n_estimators, self._loss.K)
         )
         self.train_score_ = np.resize(self.train_score_, total_n_estimators)
         if self.subsample < 1 or hasattr(self, "oob_improvement_"):
@@ -525,7 +538,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             )
 
         if self.criterion == "mse":
-            # TODO: Remove in v1.2. By then it should raise an error.
+            # TODO(1.2): Remove. By then it should raise an error.
             warnings.warn(
                 "Criterion 'mse' was deprecated in v1.0 and will be "
                 "removed in version 1.2. Use `criterion='squared_error'` "
@@ -594,7 +607,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             # fit initial model and initialize raw predictions
             if self.init_ == "zero":
                 raw_predictions = np.zeros(
-                    shape=(X.shape[0], self.loss_.K), dtype=np.float64
+                    shape=(X.shape[0], self._loss.K), dtype=np.float64
                 )
             else:
                 # XXX clean this once we have a support_sample_weight tag
@@ -621,7 +634,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                         else:  # regular estimator whose input checking failed
                             raise
 
-                raw_predictions = self.loss_.get_init_raw_predictions(X, self.init_)
+                raw_predictions = self._loss.get_init_raw_predictions(X, self.init_)
 
             begin_at_stage = 0
 
@@ -699,7 +712,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         do_oob = self.subsample < 1.0
         sample_mask = np.ones((n_samples,), dtype=bool)
         n_inbag = max(1, int(self.subsample * n_samples))
-        loss_ = self.loss_
+        loss_ = self._loss
 
         if self.verbose:
             verbose_reporter = VerboseReporter(verbose=self.verbose)
@@ -791,10 +804,10 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         X = self.estimators_[0, 0]._validate_X_predict(X, check_input=True)
         if self.init_ == "zero":
             raw_predictions = np.zeros(
-                shape=(X.shape[0], self.loss_.K), dtype=np.float64
+                shape=(X.shape[0], self._loss.K), dtype=np.float64
             )
         else:
-            raw_predictions = self.loss_.get_init_raw_predictions(X, self.init_).astype(
+            raw_predictions = self._loss.get_init_raw_predictions(X, self.init_).astype(
                 np.float64
             )
         return raw_predictions
@@ -955,7 +968,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         return leaves
 
-    # TODO: Remove in 1.2
+    # TODO(1.2): Remove
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
         "Attribute `n_features_` was deprecated in version 1.0 and will be "
@@ -965,6 +978,15 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
     def n_features_(self):
         return self.n_features_in_
 
+    # TODO(1.3): Remove
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
+        "Attribute `loss_` was deprecated in version 1.1 and will be removed in 1.3."
+    )
+    @property
+    def loss_(self):
+        return self._loss
+
 
 class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
     """Gradient Boosting for classification.
@@ -972,19 +994,23 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
     GB builds an additive model in a
     forward stage-wise fashion; it allows for the optimization of
     arbitrary differentiable loss functions. In each stage ``n_classes_``
-    regression trees are fit on the negative gradient of the
-    binomial or multinomial deviance loss function. Binary classification
+    regression trees are fit on the negative gradient of the loss function,
+    e.g. binary or multiclass log loss. Binary classification
     is a special case where only a single regression tree is induced.
 
     Read more in the :ref:`User Guide <gradient_boosting>`.
 
     Parameters
     ----------
-    loss : {'deviance', 'exponential'}, default='deviance'
-        The loss function to be optimized. 'deviance' refers to
-        deviance (= logistic regression) for classification
-        with probabilistic outputs. For loss 'exponential' gradient
-        boosting recovers the AdaBoost algorithm.
+    loss : {'log_loss', 'deviance', 'exponential'}, default='log_loss'
+        The loss function to be optimized. 'log_loss' refers to binomial and
+        multinomial deviance, the same as used in logistic regression.
+        It is a good choice for classification with probabilistic outputs.
+        For loss 'exponential', gradient boosting recovers the AdaBoost algorithm.
+
+        .. deprecated:: 1.1
+            The loss 'deviance' was deprecated in v1.1 and will be removed in
+            version 1.3. Use `loss='log_loss'` which is equivalent.
 
     learning_rate : float, default=0.1
         Learning rate shrinks the contribution of each tree by `learning_rate`.
@@ -1197,6 +1223,10 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
     loss_ : LossFunction
         The concrete ``LossFunction`` object.
 
+        .. deprecated:: 1.1
+             Attribute `loss_` was deprecated in version 1.1 and will be
+            removed in 1.3.
+
     init_ : estimator
         The estimator that provides the initial predictions.
         Set via the ``init`` argument or ``loss.init_estimator``.
@@ -1284,12 +1314,13 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
     0.913...
     """
 
-    _SUPPORTED_LOSS = ("deviance", "exponential")
+    # TODO(1.3): remove "deviance"
+    _SUPPORTED_LOSS = ("log_loss", "deviance", "exponential")
 
     def __init__(
         self,
         *,
-        loss="deviance",
+        loss="log_loss",
         learning_rate=0.1,
         n_estimators=100,
         subsample=1.0,
@@ -1416,7 +1447,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
             The predicted values.
         """
         raw_predictions = self.decision_function(X)
-        encoded_labels = self.loss_._raw_prediction_to_decision(raw_predictions)
+        encoded_labels = self._loss._raw_prediction_to_decision(raw_predictions)
         return self.classes_.take(encoded_labels, axis=0)
 
     def staged_predict(self, X):
@@ -1438,7 +1469,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
             The predicted value of the input samples.
         """
         for raw_predictions in self._staged_raw_predict(X):
-            encoded_labels = self.loss_._raw_prediction_to_decision(raw_predictions)
+            encoded_labels = self._loss._raw_prediction_to_decision(raw_predictions)
             yield self.classes_.take(encoded_labels, axis=0)
 
     def predict_proba(self, X):
@@ -1464,7 +1495,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         """
         raw_predictions = self.decision_function(X)
         try:
-            return self.loss_._raw_prediction_to_proba(raw_predictions)
+            return self._loss._raw_prediction_to_proba(raw_predictions)
         except NotFittedError:
             raise
         except AttributeError as e:
@@ -1516,7 +1547,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         """
         try:
             for raw_predictions in self._staged_raw_predict(X):
-                yield self.loss_._raw_prediction_to_proba(raw_predictions)
+                yield self._loss._raw_prediction_to_proba(raw_predictions)
         except NotFittedError:
             raise
         except AttributeError as e:
@@ -1763,6 +1794,10 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     loss_ : LossFunction
         The concrete ``LossFunction`` object.
 
+        .. deprecated:: 1.1
+             Attribute `loss_` was deprecated in version 1.1 and will be
+            removed in 1.3.
+
     init_ : estimator
         The estimator that provides the initial predictions.
         Set via the ``init`` argument or ``loss.init_estimator``.
@@ -1839,7 +1874,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     0.4...
     """
 
-    # TODO: remove "ls" in version 1.2
+    # TODO(1.2): remove "ls" and "lad"
     _SUPPORTED_LOSS = (
         "squared_error",
         "ls",
