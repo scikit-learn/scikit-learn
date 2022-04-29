@@ -1,14 +1,13 @@
 """
-=======================
-Class Likelihood Ratios
-=======================
+=============================================================
+Class Likelihood Ratios to measure classification performance
+=============================================================
 
-This example shows a worked-out demonstration of the
-:func:`class_likelihood_ratios` function, which computes the positive and
-negative likelihood ratios and outputs them as a tuple (`LR+`, `LR-`).
+This example demonstrates the :func:`class_likelihood_ratios` function, which 
+computes the positive and negative likelihood ratios (`LR+`, `LR-`).
 
-In the first section we discuss the link between pre-test and post-test odds
-given by the :ref:`class_likelihood_ratios`. We thereafter evaluate the behavior
+First we discuss the link between pre-test and post-test odds
+given by the :ref:`class_likelihood_ratios`. Then we evaluate the behavior
 of the likelihood ratios in some controlled scenarios. In the last section we
 plot the likelihood ratios as a function of the prevalence of the positive
 class.
