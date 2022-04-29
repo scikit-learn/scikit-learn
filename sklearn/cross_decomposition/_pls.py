@@ -846,7 +846,7 @@ class CCA(_PLS):
     intercept_ : ndarray of shape (n_targets,)
         The intercepts of the linear model such that `Y` is approximated as
         `Y = X @ coef_ + intercept_`.
-        
+
         .. versionadded:: 1.1
 
     n_iter_ : list of shape (n_components,)
