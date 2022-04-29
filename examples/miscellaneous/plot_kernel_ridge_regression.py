@@ -136,14 +136,12 @@ _ = plt.legend()
 # Visualize training and prediction times
 # ---------------------------------------
 
-from sklearn.base import clone
-
 plt.figure()
 
 sizes = np.logspace(1, 3.8, 7).astype(int)
 for name, estimator in {
-    "KRR": clone(kr.best_estimator_),
-    "SVR": clone(svr.best_estimator_)
+    "KRR": KernelRidge(kernel="rbf", alpha=0.01, gamma=10),
+    "SVR": SVR(kernel="rbf", C=1e2, gamma=10),
 }.items():
     train_time = []
     test_time = []
@@ -195,8 +193,10 @@ from sklearn.model_selection import learning_curve
 
 plt.figure()
 
+svr = SVR(kernel="rbf", C=1e1, gamma=0.1)
+kr = KernelRidge(kernel="rbf", alpha=0.1, gamma=0.1)
 train_sizes, train_scores_svr, test_scores_svr = learning_curve(
-    svr.best_estimator_,
+    svr,
     X[:100],
     y[:100],
     train_sizes=np.linspace(0.1, 1, 10),
@@ -204,7 +204,7 @@ train_sizes, train_scores_svr, test_scores_svr = learning_curve(
     cv=10,
 )
 train_sizes_abs, train_scores_kr, test_scores_kr = learning_curve(
-    kr.best_estimator_,
+    kr,
     X[:100],
     y[:100],
     train_sizes=np.linspace(0.1, 1, 10),
