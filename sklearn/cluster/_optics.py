@@ -20,7 +20,7 @@ from ..utils.validation import check_memory
 from ..neighbors import NearestNeighbors
 from ..base import BaseEstimator, ClusterMixin
 from ..metrics import pairwise_distances
-from scipy.sparse import issparse
+from scipy.sparse import issparse, SparseEfficiencyWarning
 
 
 class OPTICS(ClusterMixin, BaseEstimator):
@@ -290,8 +290,11 @@ class OPTICS(ClusterMixin, BaseEstimator):
 
         X = self._validate_data(X, dtype=dtype, accept_sparse="csr")
         if self.metric == "precomputed" and issparse(X):
-            # Set each diagonal to an explicit value so each point is its own neighbor
-            X.setdiag(X.diagonal())
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", SparseEfficiencyWarning)
+                # Set each diagonal to an explicit value so each point is its
+                # own neighbor
+                X.setdiag(X.diagonal())
         memory = check_memory(self.memory)
 
         if self.cluster_method not in ["dbscan", "xi"]:

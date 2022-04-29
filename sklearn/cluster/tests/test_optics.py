@@ -16,7 +16,7 @@ from sklearn.cluster import DBSCAN
 from sklearn.utils import shuffle
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_allclose
-
+from sklearn.exceptions import EfficiencyWarning
 from sklearn.cluster.tests.common import generate_clustered_data
 
 
@@ -823,7 +823,11 @@ def test_precomputed_dists(is_sparse, global_dtype):
     redX = X[::2].astype(global_dtype, copy=False)
     dists = pairwise_distances(redX, metric="euclidean")
     dists = sparse.csr_matrix(dists) if is_sparse else dists
-    clust1 = OPTICS(min_samples=10, algorithm="brute", metric="precomputed").fit(dists)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", EfficiencyWarning)
+        clust1 = OPTICS(min_samples=10, algorithm="brute", metric="precomputed").fit(
+            dists
+        )
     clust2 = OPTICS(min_samples=10, algorithm="brute", metric="euclidean").fit(redX)
 
     assert_allclose(clust1.reachability_, clust2.reachability_)
