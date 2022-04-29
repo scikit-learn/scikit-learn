@@ -856,9 +856,9 @@ Binary Case
 For notational ease, we assume that the target :math:`y_i` takes values in the
 set :math:`\{0, 1\}` for data point :math:`i`.
 Once fitted, the ``predict_proba`` method of ``LogisticRegression`` predicts
-the probability of the positive class math:`P(y_i=1|X_i)` as 
+the probability of the positive class math:`P(y_i=1|X_i)` as
 
-.. math:: \hat{p}(X_i) = \operatorname{expit}(X_i^T w + w_0) = \frac{1}{1 + \exp(-X_i^T w - w_0)}.
+.. math:: \hat{p}(X_i) = \operatorname{expit}(X_i w + w_0) = \frac{1}{1 + \exp(-X_i w - w_0)}.
 
 As an optimization problem, binary
 class logistic regression with regularization term :math:`r(w)`  minimizes the
