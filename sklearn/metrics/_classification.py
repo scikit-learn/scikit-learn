@@ -1667,9 +1667,10 @@ def class_likelihood_ratios(
     ``LR-`` ranges from 0 to 1. The closer it is to 0, the lower the probability
     of a given sample to be a false negative. A ``LR-`` of 1 means the test is
     useless because the odds of having the condition did not change after the
-    test. A value of ``LR-`` greater than 1 is invalid as it would indicate an
-    increase in the odds of a sample belonging to the positive class after being
-    classified as negative.
+    test. A value of ``LR-`` greater than 1 invalidates the classifier as it
+    indicates an increase in the odds of a sample belonging to the positive
+    class after being classified as negative. This is the case when the
+    classifier systematically predicts the opposite of the true label.
 
     A typical application in medicine is to identify the positive/negative class
     to the presence/absence of a disease, respectively; the classifier being a
