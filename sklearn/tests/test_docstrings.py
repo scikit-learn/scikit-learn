@@ -27,7 +27,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.feature_extraction.image.extract_patches_2d",
     "sklearn.feature_extraction.image.img_to_graph",
     "sklearn.feature_extraction.text.strip_accents_unicode",
-    "sklearn.feature_extraction.text.strip_tags",
     "sklearn.feature_selection._univariate_selection.chi2",
     "sklearn.feature_selection._univariate_selection.f_oneway",
     "sklearn.inspection._partial_dependence.partial_dependence",
