@@ -965,8 +965,8 @@ def test_fetch_openml_validation_parameter(monkeypatch, params, err_msg):
 @pytest.mark.parametrize(
     "params",
     [
-        {"as_frame": True},
-        {"as_frame": "auto"},
+        {"as_frame": True, "parser": "auto"},
+        {"as_frame": "auto", "parser": "auto"},
         {"as_frame": False, "parser": "auto"},
         {"as_frame": False, "parser": "pandas"},
     ],
@@ -1533,6 +1533,7 @@ def test_fetch_openml_with_ignored_feature(monkeypatch, gzip_response, parser):
 # TODO(1.3): remove this test
 def test_fetch_openml_deprecation_parser(monkeypatch):
     """Check that we raise a deprecation warning for parser parameter."""
+    pytest.importorskip("pandas")
     data_id = 61
     _monkey_patch_webbased_functions(monkeypatch, data_id=data_id, gzip_response=False)
 
