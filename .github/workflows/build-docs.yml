@@ -100,6 +100,8 @@ jobs:
 
       - name: Store branch reference
         run: bash build_tools/github/store_branch.sh
+        env:
+          EVENT_OBJ: ${{ toJson(github.event) }}
 
       - name: Upload branch reference
         uses: actions/upload-artifact@v2
