@@ -1137,8 +1137,8 @@ class SVR(RegressorMixin, BaseLibSVM):
         Multipliers of parameter C for each class.
         Computed based on the ``class_weight`` parameter.
 
-        .. deprecated::
-            `class_weight_` was deprecated in version 1.1 and will be removed in 1.3.
+        .. deprecated:: 1.2
+            `class_weight_` was deprecated in version 1.2 and will be removed in 1.4.
 
     coef_ : ndarray of shape (1, n_features)
         Weights assigned to the features (coefficients in the primal
@@ -1175,8 +1175,8 @@ class SVR(RegressorMixin, BaseLibSVM):
     n_support_ : ndarray of shape (n_classes,), dtype=int32
         Number of support vectors for each class.
 
-        .. deprecated::
-            `n_support_` was deprecated in version 1.1 and will be removed in 1.3.
+        .. deprecated:: 1.2
+            `n_support_` was deprecated in version 1.2 and will be removed in 1.4.
 
     shape_fit_ : tuple of int of shape (n_dimensions_of_X,)
         Array dimensions of training vector ``X``.
@@ -1258,8 +1258,8 @@ class SVR(RegressorMixin, BaseLibSVM):
 
     # TODO(1.3): Remove
     @deprecated(  # type: ignore
-        "Attribute `class_weight_` was deprecated in version 1.1 and will be removed in"
-        " 1.3."
+        "Attribute `class_weight_` was deprecated in version 1.2 and will be removed in"
+        " 1.4."
     )
     @property
     def class_weight_(self):
@@ -1267,8 +1267,8 @@ class SVR(RegressorMixin, BaseLibSVM):
 
     # TODO(1.3): Remove
     @deprecated(  # type: ignore
-        "Attribute `n_support_` was deprecated in version 1.1 and will be removed in"
-        " 1.3."
+        "Attribute `n_support_` was deprecated in version 1.2 and will be removed in"
+        " 1.4."
     )
     @property
     def n_support_(self):
@@ -1354,8 +1354,8 @@ class NuSVR(RegressorMixin, BaseLibSVM):
         Multipliers of parameter C for each class.
         Computed based on the ``class_weight`` parameter.
 
-        .. deprecated::
-            `class_weight_` was deprecated in version 1.1 and will be removed in 1.3.
+        .. deprecated:: 1.2
+            `class_weight_` was deprecated in version 1.2 and will be removed in 1.4.
 
     coef_ : ndarray of shape (1, n_features)
         Weights assigned to the features (coefficients in the primal
@@ -1392,8 +1392,8 @@ class NuSVR(RegressorMixin, BaseLibSVM):
     n_support_ : ndarray of shape (n_classes,), dtype=int32
         Number of support vectors for each class.
 
-        .. deprecated::
-            `n_support_` was deprecated in version 1.1 and will be removed in 1.3.
+        .. deprecated:: 1.2
+            `n_support_` was deprecated in version 1.2 and will be removed in 1.4.
 
     shape_fit_ : tuple of int of shape (n_dimensions_of_X,)
         Array dimensions of training vector ``X``.
@@ -1475,8 +1475,8 @@ class NuSVR(RegressorMixin, BaseLibSVM):
 
     # TODO(1.3): Remove
     @deprecated(  # type: ignore
-        "Attribute `class_weight_` was deprecated in version 1.1 and will be removed in"
-        " 1.3."
+        "Attribute `class_weight_` was deprecated in version 1.2 and will be removed in"
+        " 1.4."
     )
     @property
     def class_weight_(self):
@@ -1484,8 +1484,8 @@ class NuSVR(RegressorMixin, BaseLibSVM):
 
     # TODO(1.3): Remove
     @deprecated(  # type: ignore
-        "Attribute `n_support_` was deprecated in version 1.1 and will be removed in"
-        " 1.3."
+        "Attribute `n_support_` was deprecated in version 1.2 and will be removed in"
+        " 1.4."
     )
     @property
     def n_support_(self):
@@ -1567,8 +1567,8 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
         Multipliers of parameter C for each class.
         Computed based on the ``class_weight`` parameter.
 
-        .. deprecated::
-            `class_weight_` was deprecated in version 1.1 and will be removed in 1.3.
+        .. deprecated:: 1.2
+            `class_weight_` was deprecated in version 1.2 and will be removed in 1.4.
 
     coef_ : ndarray of shape (1, n_features)
         Weights assigned to the features (coefficients in the primal
@@ -1605,8 +1605,8 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
     n_support_ : ndarray of shape (n_classes,), dtype=int32
         Number of support vectors for each class.
 
-        .. deprecated::
-            `n_support_` was deprecated in version 1.1 and will be removed in 1.3.
+        .. deprecated:: 1.2
+            `n_support_` was deprecated in version 1.2 and will be removed in 1.4.
 
     offset_ : float
         Offset used to define the decision function from the raw scores.
@@ -1681,8 +1681,8 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
 
     # TODO(1.3): Remove
     @deprecated(  # type: ignore
-        "Attribute `class_weight_` was deprecated in version 1.1 and will be removed in"
-        " 1.3."
+        "Attribute `class_weight_` was deprecated in version 1.2 and will be removed in"
+        " 1.4."
     )
     @property
     def class_weight_(self):
@@ -1690,8 +1690,8 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
 
     # TODO(1.3): Remove
     @deprecated(  # type: ignore
-        "Attribute `n_support_` was deprecated in version 1.1 and will be removed in"
-        " 1.3."
+        "Attribute `n_support_` was deprecated in version 1.2 and will be removed in"
+        " 1.4."
     )
     @property
     def n_support_(self):
