@@ -684,7 +684,7 @@ def fetch_openml(
     as_frame: Union[str, bool] = "auto",
     n_retries: int = 3,
     delay: float = 1.0,
-    parser: Optional[str] = "auto",
+    parser: Optional[str] = "deprecated",
 ):
     """Fetch dataset from openml by name or dataset id.
 
@@ -765,7 +765,7 @@ def fetch_openml(
     delay : float, default=1.0
         Number of seconds between retries.
 
-    parser : {"auto", "pandas", "liac-arff"}, default="auto"
+    parser : {"auto", "pandas", "liac-arff"}, default="liac-arff"
         Parser used to load the ARFF file. Two parsers are implemented:
 
         - `"pandas"`: this is the most efficient parser. However, it requires
@@ -778,12 +778,11 @@ def fetch_openml(
         `"pandas"` is selected.
 
         .. versionadded:: 1.1
-
-        .. note::
-           `pandas="auto"` in combination with `as_frame=False` temporary fall
-           back to `"liac-arff"` if pandas is not installed. This behaviour
-           will change in version 1.3 by falling back to `"pandas"` parser and
-           will therefore raise an `ImportError` if pandas is not installed.
+        .. deprecated:: 1.1
+           The default value of `parser` will change from `"liac-arff"` to
+           `"auto"` in 1.3. You can set `parser="auto"` to silence this
+           warning. Therefore, an `ImportError` will be raised from 1.3 if
+           the dataset is dense and pandas is not installed.
 
     Returns
     -------
@@ -900,10 +899,22 @@ def fetch_openml(
             "unusable. Warning: {}".format(data_description["warning"])
         )
 
-    valid_parser = ("auto", "pandas", "liac-arff")
+    # TODO (1.3): remove "deprecated" from the valid parser
+    valid_parser = ("auto", "pandas", "liac-arff", "deprecated")
     if parser not in valid_parser:
         raise ValueError(
             f"`parser` must be one of {','.join(valid_parser)}. Got {parser} instead."
+        )
+
+    if parser == "deprecated":
+        # TODO (1.3): remove this warning
+        parser = "liac-arff"
+        warn(
+            "The default value of `parser` will change from `'liac-arff'` to "
+            "`'auto'` in 1.3. You can set `parser='auto'` to silence this "
+            "warning. Therefore, an `ImportError` will be raised from 1.3 if "
+            "the dataset is dense and pandas is not installed.",
+            FutureWarning,
         )
 
     if as_frame not in ("auto", True, False):

@@ -946,7 +946,8 @@ def test_fetch_openml_types_inference(
 ###############################################################################
 # Test some more specific behaviour
 
-
+# TODO (1.3): remove this filterwarning decorator
+@pytest.mark.filterwarnings("ignore:The default value of `parser` will change")
 @pytest.mark.parametrize(
     "params, err_msg",
     [
@@ -985,6 +986,8 @@ def test_fetch_openml_requires_pandas_error(monkeypatch, params):
 
 
 @pytest.mark.filterwarnings("ignore:Version 1 of dataset Australian is inactive")
+# TODO (1.3): remove this filterwarning decorator for `parser`
+@pytest.mark.filterwarnings("ignore:The default value of `parser` will change")
 @pytest.mark.parametrize(
     "params, err_msg",
     [
