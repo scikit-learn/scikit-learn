@@ -93,13 +93,15 @@ jobs:
   # branch when triggering the pipeline that will
   # host the documentation in the current service
   store-branch:
-    - name: Checkout scikit-learn
-      uses: actions/checkout@v2
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout scikit-learn
+        uses: actions/checkout@v2
 
-    - name: Store branch reference
-      run: build_tools/github/store_branch.sh
+      - name: Store branch reference
+        run: build_tools/github/store_branch.sh
 
-    - name: Upload branch reference
-      with:
-        name: branch
-        path: branch.txt
+      - name: Upload branch reference
+        with:
+          name: branch
+          path: branch.txt
