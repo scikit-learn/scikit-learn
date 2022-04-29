@@ -685,13 +685,11 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
     @property
     def _class_weight(self):
         """Weights per class"""
-        # Avoid using self.class_weight_ in SVR, NuSVR, OneClass due
-        # due to deprecation
-        return (
-            self.class_weight_
-            if LIBSVM_IMPL.index(self._impl) in (0, 1)
-            else np.empty(0)
-        )
+        # Class weights are defined for classifiers during
+        # fit, otherwise it is empty
+        if hasattr(self, "class_weight_"):
+            return self.class_weight_
+        return np.empty(0)
 
 
 class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
