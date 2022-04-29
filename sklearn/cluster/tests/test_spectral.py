@@ -415,18 +415,6 @@ def test_spectral_clustering_not_infinite_loop(capsys, monkeypatch):
         discretize(vectors)
 
 
-# WIP
-def test_spectral_eigen_tol_auto():
-    """Test that `eigen_tol="auto"` is resolved correctly"""
-    X = make_blobs(
-        n_samples=20, random_state=0, centers=[[1, 1], [-1, -1]], cluster_std=0.01
-    )[0]
-    D = pairwise_distances(X)  # Distance matrix
-    S = np.max(D) - D  # Similarity matrix
-
-    spectral_clustering(S, n_clusters=2, random_state=42, eigen_tol="auto")
-
-
 def test_spectral_eigen_tol_future_warn():
     msg = "The default value for `eigen_tol` will be changed from 0 to 'auto' in 1.4"
     X = make_blobs(
