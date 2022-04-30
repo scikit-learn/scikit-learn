@@ -42,7 +42,7 @@ from io import StringIO
 JUNK_FOOD_DOCS = (
     "the pizza pizza beer copyright",
     "the pizza burger beer copyright",
-    "the the pizza beer beer copyright",
+    "the pizza beer beer copyright",
     "the burger beer beer copyright",
     "the coke burger coke copyright",
     "the coke burger burger",
@@ -51,7 +51,7 @@ JUNK_FOOD_DOCS = (
 NOTJUNK_FOOD_DOCS = (
     "the salad celeri copyright",
     "the salad salad sparkling water copyright",
-    "the the celeri celeri copyright",
+    "the celeri celeri copyright",
     "the tomato tomato salad water",
     "the tomato salad water copyright",
 )

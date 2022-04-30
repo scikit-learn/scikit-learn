@@ -44,7 +44,7 @@ iris = load_iris()
 JUNK_FOOD_DOCS = (
     "the pizza pizza beer copyright",
     "the pizza burger beer copyright",
-    "the the pizza beer beer copyright",
+    "the pizza beer beer copyright",
     "the burger beer beer copyright",
     "the coke burger coke copyright",
     "the coke burger burger",

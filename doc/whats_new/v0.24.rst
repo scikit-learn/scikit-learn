@@ -783,7 +783,7 @@ Changelog
 - |Enhancement| :class:`model_selection.GridSearchCV`,
   :class:`model_selection.RandomizedSearchCV` and
   :func:`model_selection.cross_validate` support `scoring` being a callable
-  returning a dictionary of of multiple metric names/values association.
+  returning a dictionary of multiple metric names/values association.
   :pr:`15126` by `Thomas Fan`_.
 
 :mod:`sklearn.multiclass`
