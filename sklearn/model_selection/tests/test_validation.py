@@ -2279,7 +2279,7 @@ def test_cross_validate_failing_scorer(
             )
             for key in results:
                 if "_score" in key:
-                    if "2" in key:
+                    if "score_2" in key:
                         # check the test (and optionally train) score for the
                         # scorer that should be non-failing
                         for i in results[key]:
