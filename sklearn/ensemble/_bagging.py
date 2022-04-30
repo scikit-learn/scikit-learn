@@ -135,8 +135,13 @@ def _parallel_build_estimators(
                 not_indices_mask = ~indices_to_mask(indices, n_samples)
                 curr_sample_weight[not_indices_mask] = 0
 
-            estimator_fit(X[:, features], y, sample_weight=curr_sample_weight)
+            # Indicator of if indexing is necessary
+            require_indexing = bootstrap_features or max_features != n_features
 
+            if require_indexing:
+                estimator_fit(X[:, features], y, sample_weight=curr_sample_weight)
+            else:
+                estimator_fit(X, y, sample_weight=curr_sample_weight)
         else:
             estimator_fit(X[indices][:, features], y[indices])
 
