@@ -2528,7 +2528,7 @@ def test_n_features_deprecated(Tree):
 
 def test_tree_split_with_identical_feature():
     """Test that in the presence of same-ordered features, tree will always
-    split on the one with lowest index
+    split on the one with lowest index.
     """
     tree = DecisionTreeRegressor(random_state=42)
     n_samples = 100
