@@ -613,7 +613,8 @@ def _set_reach_dist(
     if metric == "precomputed":
         dists = X[point_index, unproc]
         if issparse(dists):
-            dists = dists.toarray().ravel()
+            dists.sort_indices()
+            dists = dists.data
     else:
         _params = dict() if metric_params is None else metric_params.copy()
         if metric == "minkowski" and "p" not in _params:
