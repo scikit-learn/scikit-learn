@@ -746,13 +746,6 @@ There are four more hyperparameters, :math:`\alpha_1`, :math:`\alpha_2`,
 :math:`\alpha` and :math:`\lambda`. These are usually chosen to be
 *non-informative*. By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 10^{-6}`.
 
-
-.. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_bayesian_ridge_001.png
-   :target: ../auto_examples/linear_model/plot_bayesian_ridge.html
-   :align: center
-   :scale: 50%
-
-
 Bayesian Ridge Regression is used for regression::
 
     >>> from sklearn import linear_model
@@ -778,7 +771,6 @@ is more robust to ill-posed problems.
 
 .. topic:: Examples:
 
- * :ref:`sphx_glr_auto_examples_linear_model_plot_bayesian_ridge.py`
  * :ref:`sphx_glr_auto_examples_linear_model_plot_bayesian_ridge_curvefit.py`
 
 .. topic:: References:
@@ -789,37 +781,35 @@ is more robust to ill-posed problems.
 
     * Michael E. Tipping, `Sparse Bayesian Learning and the Relevance Vector Machine <http://www.jmlr.org/papers/volume1/tipping01a/tipping01a.pdf>`_, 2001.
 
+.. _automatic_relevance_determination:
 
 Automatic Relevance Determination - ARD
 ---------------------------------------
 
-:class:`ARDRegression` is very similar to `Bayesian Ridge Regression`_,
-but can lead to sparser coefficients :math:`w` [1]_ [2]_.
-:class:`ARDRegression` poses a different prior over :math:`w`, by dropping the
-assumption of the Gaussian being spherical.
+The Automatic Relevance Determination (as being implemented in
+:class:`ARDRegression`) is a kind of linear model which is very similar to the
+`Bayesian Ridge Regression`_, but that leads to sparser coefficients :math:`w`
+[1]_ [2]_.
 
-Instead, the distribution over :math:`w` is assumed to be an axis-parallel,
-elliptical Gaussian distribution.
-
-This means each coefficient :math:`w_{i}` is drawn from a Gaussian distribution,
-centered on zero and with a precision :math:`\lambda_{i}`:
+:class:`ARDRegression` poses a different prior over :math:`w`: it drops
+the spherical Gaussian distribution for a centered elliptic Gaussian
+distribution. This means each coefficient :math:`w_{i}` can itself be drawn from
+a Gaussian distribution, centered on zero and with a precision
+:math:`\lambda_{i}`:
 
 .. math:: p(w|\lambda) = \mathcal{N}(w|0,A^{-1})
 
-with :math:`\text{diag}(A) = \lambda = \{\lambda_{1},...,\lambda_{p}\}`.
+with :math:`A` being a positive definite diagonal matrix and
+:math:`\text{diag}(A) = \lambda = \{\lambda_{1},...,\lambda_{p}\}`.
 
-In contrast to `Bayesian Ridge Regression`_, each coordinate of :math:`w_{i}`
-has its own standard deviation :math:`\lambda_i`. The prior over all
-:math:`\lambda_i` is chosen to be the same gamma distribution given by
-hyperparameters :math:`\lambda_1` and :math:`\lambda_2`.
+In contrast to the `Bayesian Ridge Regression`_, each coordinate of
+:math:`w_{i}` has its own standard deviation :math:`\frac{1}{\lambda_i}`. The
+prior over all :math:`\lambda_i` is chosen to be the same gamma distribution
+given by the hyperparameters :math:`\lambda_1` and :math:`\lambda_2`.
 
-.. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_ard_001.png
-   :target: ../auto_examples/linear_model/plot_ard.html
-   :align: center
-   :scale: 50%
-
-ARD is also known in the literature as *Sparse Bayesian Learning* and
-*Relevance Vector Machine* [3]_ [4]_.
+ARD is also known in the literature as *Sparse Bayesian Learning* and *Relevance
+Vector Machine* [3]_ [4]_. For a worked-out comparison between ARD and `Bayesian
+Ridge Regression`_, see the example below.
 
 .. topic:: Examples:
 
