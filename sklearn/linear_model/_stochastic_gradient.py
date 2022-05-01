@@ -269,13 +269,16 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
                 self._standard_intercept.shape, dtype=np.float64, order="C"
             )
 
-    def _make_validation_split(self, y):
+    def _make_validation_split(self, y, sample_weight):
         """Split the dataset between training set and validation set.
 
         Parameters
         ----------
         y : ndarray of shape (n_samples, )
             Target values.
+
+        sample_weight : numpy array of shape [n_samples, ]
+            The weight of each sample
 
         Returns
         -------
@@ -295,7 +298,11 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         cv = splitter_type(
             test_size=self.validation_fraction, random_state=self.random_state
         )
-        idx_train, idx_val = next(cv.split(np.zeros(shape=(y.shape[0], 1)), y))
+
+        # make sure the sample weights for validation set is non-zero
+        idx_non_zero = np.arange(n_samples)[sample_weight > 0]
+        y_ = y[sample_weight > 0]
+        idx_train, idx_val = next(cv.split(np.zeros(shape=(y_.shape[0], 1)), y_))
         if idx_train.shape[0] == 0 or idx_val.shape[0] == 0:
             raise ValueError(
                 "Splitting %d samples into a train set and a validation set "
@@ -310,6 +317,7 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
                 )
             )
 
+        idx_val = idx_non_zero[idx_val]
         validation_mask[idx_val] = 1
         return validation_mask
 
@@ -752,7 +760,7 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         """
         # Precompute the validation split using the multiclass labels
         # to ensure proper balancing of the classes.
-        validation_mask = self._make_validation_split(y)
+        validation_mask = self._make_validation_split(y, sample_weight=sample_weight)
 
         # Use joblib to fit OvA in parallel.
         # Pick the random seed for each job outside of fit_binary to avoid
@@ -1614,7 +1622,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         if not hasattr(self, "t_"):
             self.t_ = 1.0
 
-        validation_mask = self._make_validation_split(y)
+        validation_mask = self._make_validation_split(y, sample_weight=sample_weight)
         validation_score_cb = self._make_validation_score_cb(
             validation_mask, X, y, sample_weight
         )
@@ -2173,7 +2181,7 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         # validation_mask and validation_score_cb will be set to values
         # associated to early_stopping=False in _make_validation_split and
         # _make_validation_score_cb respectively.
-        validation_mask = self._make_validation_split(y)
+        validation_mask = self._make_validation_split(y, sample_weight=sample_weight)
         validation_score_cb = self._make_validation_score_cb(
             validation_mask, X, y, sample_weight
         )
