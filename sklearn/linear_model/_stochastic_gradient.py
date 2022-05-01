@@ -283,7 +283,7 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
             Equal to True on the validation set, False on the training set.
         """
         n_samples = y.shape[0]
-        validation_mask = np.zeros(n_samples, dtype=bool)
+        validation_mask = np.zeros(n_samples, dtype=np.bool_)
         if not self.early_stopping:
             # use the full set for training, with an empty validation set
             return validation_mask
