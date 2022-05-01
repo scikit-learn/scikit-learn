@@ -2239,6 +2239,7 @@ def test_n_features_deprecated(Tree):
     with pytest.warns(FutureWarning, match=depr_msg):
         Tree().fit(X, y).n_features_
 
+
 def test_different_endianness_pickle():
     X, y = datasets.make_classification(random_state=0)
 
@@ -2507,6 +2508,7 @@ def test_max_features_auto_deprecated():
         )
         with pytest.warns(FutureWarning, match=msg):
             tree.fit(X, y)
+
 
 def test_tree_split_with_identical_feature(global_random_seed):
     """Test that in the presence of same-ordered features, tree will always
