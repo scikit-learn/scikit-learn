@@ -891,7 +891,7 @@ The binary case can be extended to :math:`K` classes leading to the multinomial 
    determined by the other class probabilities by leveraging the fact that all
    class probabilities must sum to one. We deliberately choose to overparameterize the model
    using :math:`K` weight vectors for ease of implementation and to preserve the
-   symmetrical inductive bias regarding ordering of classes, see [1]. This effect becomes
+   symmetrical inductive bias regarding ordering of classes, see [16]_. This effect becomes
    especially important when using regularization.
 
 Let :math:`y_i \in {0, \ldots, K-1}` be the label (ordinal) encoded target variable for observation :math:`i`.
@@ -1045,6 +1045,11 @@ to warm-starting (see :term:`Glossary <warm_start>`).
 
     .. [9] `"Performance Evaluation of Lbfgs vs other solvers"
             <http://www.fuzihao.org/blog/2016/01/16/Comparison-of-Gradient-Descent-Stochastic-Gradient-Descent-and-L-BFGS/>`_
+
+    .. [16] Simon, Noah, J. Friedman and T. Hastie.
+        "A Blockwise Descent Algorithm for Group-penalized Multiresponse and
+        Multinomial Regression."
+        https://arxiv.org/pdf/1311.6529.pdf
 
 .. _Generalized_linear_regression:
 
