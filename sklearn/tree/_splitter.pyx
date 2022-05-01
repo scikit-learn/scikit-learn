@@ -1276,8 +1276,10 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
 
                             current_proxy_improvement = self.criterion.proxy_impurity_improvement()
 
-                            if current_proxy_improvement > best_proxy_improvement or \
-                                    (current_proxy_improvement == best_proxy_improvement and current.feature < best.feature):
+                            if (current_proxy_improvement > best_proxy_improvement or
+                                # Breaking ties on the feature with lowest index
+                                (current_proxy_improvement == best_proxy_improvement and
+                                 current.feature < best.feature)):
                                 best_proxy_improvement = current_proxy_improvement
                                 # sum of halves used to avoid infinite values
                                 current.threshold = Xf[p_prev] / 2.0 + Xf[p] / 2.0
