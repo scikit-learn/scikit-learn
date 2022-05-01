@@ -778,6 +778,10 @@ Changelog
   estimator of the noise variance cannot be computed.
   :pr:`21481` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Fix| :class:`linear_model.SGDRegressor` and :class:`linear_model.SGDClassifier` now
+  computes the validation error correctly when earlystopping is enabled.
+  :pr:`23256` by :user:`Zhehao Liu <MaxwellLZH>`.
+
 :mod:`sklearn.manifold`
 .......................
 
