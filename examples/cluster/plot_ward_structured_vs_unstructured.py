@@ -85,7 +85,7 @@ for l in np.unique(label):
         s=20,
         edgecolor="k",
     )
-fig1.suptitle(f"Without connectivity constraints (time {elapsed_time:.2f}s)")
+_ = fig1.suptitle(f"Without connectivity constraints (time {elapsed_time:.2f}s)")
 
 # %%
 # We are defining k-Nearest Neighbors with 10 neighbors
