@@ -2211,12 +2211,7 @@ def test_validation_mask_correctly_subsets(monkeypatch):
     )
 
     mock = Mock(side_effect=_stochastic_gradient._ValidationScoreCallback)
-
-    monkeypatch.setattr(
-        _stochastic_gradient,
-        "_ValidationScoreCallback",
-        mock,
-    )
+    monkeypatch.setattr(_stochastic_gradient, "_ValidationScoreCallback", mock)
     clf.fit(X, Y)
 
     X_val, y_val = mock.call_args[0][1:3]
