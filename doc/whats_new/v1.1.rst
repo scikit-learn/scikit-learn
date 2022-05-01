@@ -920,13 +920,6 @@ Changelog
 - |Fix| :meth:`multiclass.OneVsOneClassifier.predict` returns correct predictions when
   the inner classifier only has a :term:`predict_proba`. :pr:`22604` by `Thomas Fan`_.
 
-:mod:`sklearn.naive_bayes`
-..........................
-
-- |Feature| Add :class:`naive_bayes.ColumnwiseNB`, a meta-estimator that allows
-  existing naive Bayes classifiers to be combined and applied to different columns
-  of `X`. :pr:`22574` by :user:`Andrey Melnik <avm19>`.
-
 :mod:`sklearn.neighbors`
 ........................
 
