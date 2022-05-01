@@ -1141,12 +1141,12 @@ Then the log loss per sample is:
 
 .. math::
 
-    L_{\log}(Y, P) = -\log \operatorname{Pr}(Y|P) = - \sum_{k=0}^{K-1} y_{i,k} \log p_{i,k}
+    L_{\log}(y, p) = -\log \operatorname{Pr}(y|p) = - \sum_{k=0}^{K-1} y_{i,k} \log p_{i,k}
 
 To see how this generalizes the binary log loss given above,
 note that in the binary case,
 :math:`p_{i,0} = 1 - p_{i,1}` and :math:`y_{i,0} = 1 - y_{i,1}`,
-so expanding the inner sum over :math:`y_{i,k} \in \{0,1\}`
+so expanding the sum over :math:`K` labels :math:`y_{i,k} \in \{0,1\}`
 gives the binary log loss.
 
 The :func:`log_loss` function computes log loss given a list of ground-truth
