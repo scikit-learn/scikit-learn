@@ -1557,7 +1557,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
             # by the model fitting itself
 
             # Need to validate separately here.
-            # We can't pass multi_ouput=True because that would allow y to be
+            # We can't pass multi_output=True because that would allow y to be
             # csr. We also want to allow y to be 64 or 32 but check_X_y only
             # allows to convert for 64.
             check_X_params = dict(
@@ -1578,7 +1578,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
             del reference_to_old_X
         else:
             # Need to validate separately here.
-            # We can't pass multi_ouput=True because that would allow y to be
+            # We can't pass multi_output=True because that would allow y to be
             # csr. We also want to allow y to be 64 or 32 but check_X_y only
             # allows to convert for 64.
             check_X_params = dict(
@@ -2443,7 +2443,7 @@ class MultiTaskElasticNet(Lasso):
         )
 
         # Need to validate separately here.
-        # We can't pass multi_ouput=True because that would allow y to be csr.
+        # We can't pass multi_output=True because that would allow y to be csr.
         check_X_params = dict(
             dtype=[np.float64, np.float32],
             order="F",
