@@ -6,6 +6,7 @@ TODO: remove hard coded numerical results when possible
 import numpy as np
 import itertools
 import pytest
+import re
 
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 from numpy.testing import assert_almost_equal
@@ -65,12 +66,58 @@ def test_libsvm_iris():
     assert_array_equal(clf.classes_, np.sort(clf.classes_))
 
     # check also the low-level API
-    model = _libsvm.fit(iris.data, iris.target.astype(np.float64))
-    pred = _libsvm.predict(iris.data, *model)
+    # We unpack the values to create a dictionary with some of the return values
+    # from Libsvm's fit.
+    (
+        libsvm_support,
+        libsvm_support_vectors,
+        libsvm_n_class_SV,
+        libsvm_sv_coef,
+        libsvm_intercept,
+        libsvm_probA,
+        libsvm_probB,
+        # libsvm_fit_status and libsvm_n_iter won't be used below.
+        libsvm_fit_status,
+        libsvm_n_iter,
+    ) = _libsvm.fit(iris.data, iris.target.astype(np.float64))
+
+    model_params = {
+        "support": libsvm_support,
+        "SV": libsvm_support_vectors,
+        "nSV": libsvm_n_class_SV,
+        "sv_coef": libsvm_sv_coef,
+        "intercept": libsvm_intercept,
+        "probA": libsvm_probA,
+        "probB": libsvm_probB,
+    }
+    pred = _libsvm.predict(iris.data, **model_params)
     assert np.mean(pred == iris.target) > 0.95
 
-    model = _libsvm.fit(iris.data, iris.target.astype(np.float64), kernel="linear")
-    pred = _libsvm.predict(iris.data, *model, kernel="linear")
+    # We unpack the values to create a dictionary with some of the return values
+    # from Libsvm's fit.
+    (
+        libsvm_support,
+        libsvm_support_vectors,
+        libsvm_n_class_SV,
+        libsvm_sv_coef,
+        libsvm_intercept,
+        libsvm_probA,
+        libsvm_probB,
+        # libsvm_fit_status and libsvm_n_iter won't be used below.
+        libsvm_fit_status,
+        libsvm_n_iter,
+    ) = _libsvm.fit(iris.data, iris.target.astype(np.float64), kernel="linear")
+
+    model_params = {
+        "support": libsvm_support,
+        "SV": libsvm_support_vectors,
+        "nSV": libsvm_n_class_SV,
+        "sv_coef": libsvm_sv_coef,
+        "intercept": libsvm_intercept,
+        "probA": libsvm_probA,
+        "probB": libsvm_probB,
+    }
+    pred = _libsvm.predict(iris.data, **model_params, kernel="linear")
     assert np.mean(pred == iris.target) > 0.95
 
     pred = _libsvm.cross_validation(
@@ -297,6 +344,22 @@ def test_oneclass_score_samples():
         clf.score_samples([[2.0, 2.0]]),
         clf.decision_function([[2.0, 2.0]]) + clf.offset_,
     )
+
+
+# TODO: Remove in v1.2
+def test_oneclass_fit_params_is_deprecated():
+    clf = svm.OneClassSVM()
+    params = {
+        "unused_param": "",
+        "extra_param": None,
+    }
+    msg = (
+        "Passing additional keyword parameters has no effect and is deprecated "
+        "in 1.0. An error will be raised from 1.2 and beyond. The ignored "
+        f"keyword parameter(s) are: {params.keys()}."
+    )
+    with pytest.warns(FutureWarning, match=re.escape(msg)):
+        clf.fit(X, **params)
 
 
 def test_tweak_params():
@@ -668,6 +731,20 @@ def test_bad_input():
         clf.predict(Xt)
 
 
+def test_svc_nonfinite_params():
+    # Check SVC throws ValueError when dealing with non-finite parameter values
+    rng = np.random.RandomState(0)
+    n_samples = 10
+    fmax = np.finfo(np.float64).max
+    X = fmax * rng.uniform(size=(n_samples, 2))
+    y = rng.randint(0, 2, size=n_samples)
+
+    clf = svm.SVC()
+    msg = "The dual coefficients or intercepts are not finite"
+    with pytest.raises(ValueError, match=msg):
+        clf.fit(X, y)
+
+
 @pytest.mark.parametrize(
     "Estimator, data",
     [
@@ -678,11 +755,47 @@ def test_bad_input():
         (svm.OneClassSVM, datasets.load_iris(return_X_y=True)),
     ],
 )
-def test_svm_gamma_error(Estimator, data):
+@pytest.mark.parametrize(
+    "gamma, err_msg",
+    [
+        (
+            "auto_deprecated",
+            "When 'gamma' is a string, it should be either 'scale' or 'auto'",
+        ),
+        (
+            -1,
+            "gamma value must be > 0; -1 is invalid. Use"
+            " a positive number or use 'auto' to set gamma to a"
+            " value of 1 / n_features.",
+        ),
+        (
+            0.0,
+            "gamma value must be > 0; 0.0 is invalid. Use"
+            " a positive number or use 'auto' to set gamma to a"
+            " value of 1 / n_features.",
+        ),
+        (
+            np.array([1.0, 4.0]),
+            "The gamma value should be set to 'scale',"
+            f" 'auto' or a positive float value. {np.array([1.0, 4.0])!r}"
+            " is not a valid option",
+        ),
+        (
+            [],
+            "The gamma value should be set to 'scale', 'auto' or a positive"
+            f" float value. {[]} is not a valid option",
+        ),
+        (
+            {},
+            "The gamma value should be set to 'scale', 'auto' or a positive"
+            " float value. {} is not a valid option",
+        ),
+    ],
+)
+def test_svm_gamma_error(Estimator, data, gamma, err_msg):
     X, y = data
-    est = Estimator(gamma="auto_deprecated")
-    err_msg = "When 'gamma' is a string, it should be either 'scale' or 'auto'"
-    with pytest.raises(ValueError, match=err_msg):
+    est = Estimator(gamma=gamma)
+    with pytest.raises(ValueError, match=(re.escape(err_msg))):
         est.fit(X, y)
 
 
@@ -1006,16 +1119,17 @@ def test_svc_bad_kernel():
         svc.fit(X, Y)
 
 
-def test_timeout():
+def test_libsvm_convergence_warnings():
     a = svm.SVC(
-        kernel=lambda x, y: np.dot(x, y.T), probability=True, random_state=0, max_iter=1
+        kernel=lambda x, y: np.dot(x, y.T), probability=True, random_state=0, max_iter=2
     )
     warning_msg = (
-        r"Solver terminated early \(max_iter=1\).  Consider pre-processing "
+        r"Solver terminated early \(max_iter=2\).  Consider pre-processing "
         r"your data with StandardScaler or MinMaxScaler."
     )
     with pytest.warns(ConvergenceWarning, match=warning_msg):
         a.fit(np.array(X), Y)
+    assert np.all(a.n_iter_ == 2)
 
 
 def test_unfitted():
@@ -1047,11 +1161,15 @@ def test_linear_svm_convergence_warnings():
     warning_msg = "Liblinear failed to converge, increase the number of iterations."
     with pytest.warns(ConvergenceWarning, match=warning_msg):
         lsvc.fit(X, Y)
+    # Check that we have an n_iter_ attribute with int type as opposed to a
+    # numpy array or an np.int32 so as to match the docstring.
+    assert isinstance(lsvc.n_iter_, int)
     assert lsvc.n_iter_ == 2
 
     lsvr = svm.LinearSVR(random_state=0, max_iter=2)
     with pytest.warns(ConvergenceWarning, match=warning_msg):
         lsvr.fit(iris.data, iris.target)
+    assert isinstance(lsvr.n_iter_, int)
     assert lsvr.n_iter_ == 2
 
 
@@ -1187,57 +1305,38 @@ def test_svc_ovr_tie_breaking(SVCClass):
     """Test if predict breaks ties in OVR mode.
     Related issue: https://github.com/scikit-learn/scikit-learn/issues/8277
     """
-    X, y = make_blobs(random_state=27)
+    X, y = make_blobs(random_state=0, n_samples=20, n_features=2)
 
-    xs = np.linspace(X[:, 0].min(), X[:, 0].max(), 1000)
-    ys = np.linspace(X[:, 1].min(), X[:, 1].max(), 1000)
+    xs = np.linspace(X[:, 0].min(), X[:, 0].max(), 100)
+    ys = np.linspace(X[:, 1].min(), X[:, 1].max(), 100)
     xx, yy = np.meshgrid(xs, ys)
 
+    common_params = dict(
+        kernel="rbf", gamma=1e6, random_state=42, decision_function_shape="ovr"
+    )
     svm = SVCClass(
-        kernel="linear",
-        decision_function_shape="ovr",
         break_ties=False,
-        random_state=42,
+        **common_params,
     ).fit(X, y)
     pred = svm.predict(np.c_[xx.ravel(), yy.ravel()])
     dv = svm.decision_function(np.c_[xx.ravel(), yy.ravel()])
     assert not np.all(pred == np.argmax(dv, axis=1))
 
     svm = SVCClass(
-        kernel="linear", decision_function_shape="ovr", break_ties=True, random_state=42
+        break_ties=True,
+        **common_params,
     ).fit(X, y)
     pred = svm.predict(np.c_[xx.ravel(), yy.ravel()])
     dv = svm.decision_function(np.c_[xx.ravel(), yy.ravel()])
     assert np.all(pred == np.argmax(dv, axis=1))
 
 
-def test_gamma_auto():
-    X, y = [[0.0, 1.2], [1.0, 1.3]], [0, 1]
-
-    with pytest.warns(None) as record:
-        svm.SVC(kernel="linear").fit(X, y)
-    assert not len(record)
-
-    with pytest.warns(None) as record:
-        svm.SVC(kernel="precomputed").fit(X, y)
-    assert not len(record)
-
-
 def test_gamma_scale():
     X, y = [[0.0], [1.0]], [0, 1]
 
     clf = svm.SVC()
-    with pytest.warns(None) as record:
-        clf.fit(X, y)
-    assert not len(record)
+    clf.fit(X, y)
     assert_almost_equal(clf._gamma, 4)
-
-    # X_var ~= 1 shouldn't raise warning, for when
-    # gamma is not explicitly set.
-    X, y = [[1, 2], [3, 2 * np.sqrt(6) / 3 + 2]], [0, 1]
-    with pytest.warns(None) as record:
-        clf.fit(X, y)
-    assert not len(record)
 
 
 @pytest.mark.parametrize(
@@ -1354,3 +1453,48 @@ def test_custom_kernel_not_array_input(Estimator):
     else:  # regressor
         assert_allclose(svc1.predict(data), svc2.predict(X))
         assert_allclose(svc1.predict(data), svc3.predict(K))
+
+
+def test_svc_raises_error_internal_representation():
+    """Check that SVC raises error when internal representation is altered.
+
+    Non-regression test for #18891 and https://nvd.nist.gov/vuln/detail/CVE-2020-28975
+    """
+    clf = svm.SVC(kernel="linear").fit(X, Y)
+    clf._n_support[0] = 1000000
+
+    msg = "The internal representation of SVC was altered"
+    with pytest.raises(ValueError, match=msg):
+        clf.predict(X)
+
+
+@pytest.mark.parametrize(
+    "estimator, expected_n_iter_type",
+    [
+        (svm.SVC, np.ndarray),
+        (svm.NuSVC, np.ndarray),
+        (svm.SVR, int),
+        (svm.NuSVR, int),
+        (svm.OneClassSVM, int),
+    ],
+)
+@pytest.mark.parametrize(
+    "dataset",
+    [
+        make_classification(n_classes=2, n_informative=2, random_state=0),
+        make_classification(n_classes=3, n_informative=3, random_state=0),
+        make_classification(n_classes=4, n_informative=4, random_state=0),
+    ],
+)
+def test_n_iter_libsvm(estimator, expected_n_iter_type, dataset):
+    # Check that the type of n_iter_ is correct for the classes that inherit
+    # from BaseSVC.
+    # Note that for SVC, and NuSVC this is an ndarray; while for SVR, NuSVR, and
+    # OneClassSVM, it is an int.
+    # For SVC and NuSVC also check the shape of n_iter_.
+    X, y = dataset
+    n_iter = estimator(kernel="linear").fit(X, y).n_iter_
+    assert type(n_iter) == expected_n_iter_type
+    if estimator in [svm.SVC, svm.NuSVC]:
+        n_classes = len(np.unique(y))
+        assert n_iter.shape == (n_classes * (n_classes - 1) // 2,)

@@ -5,6 +5,7 @@ import warnings
 import json
 import os
 import re
+from importlib import resources
 from io import BytesIO
 
 import numpy as np
@@ -12,16 +13,19 @@ import scipy.sparse
 import sklearn
 import pytest
 from sklearn import config_context
-from sklearn.datasets import fetch_openml
+from sklearn.datasets import fetch_openml as fetch_openml_orig
 from sklearn.datasets._openml import (
     _open_openml_url,
     _arff,
     _DATA_FILE,
-    _convert_arff_data,
-    _convert_arff_data_dataframe,
+    _OPENML_PREFIX,
     _get_data_description_by_id,
     _get_local_path,
     _retry_with_clean_cache,
+)
+from sklearn.datasets._arff_parser import (
+    _convert_arff_data,
+    _convert_arff_data_dataframe,
     _feature_to_dtype,
 )
 from sklearn.utils import is_scalar_nan
@@ -33,9 +37,17 @@ from functools import partial
 from sklearn.utils._testing import fails_if_pypy
 
 
-currdir = os.path.dirname(os.path.abspath(__file__))
+OPENML_TEST_DATA_MODULE = "sklearn.datasets.tests.data.openml"
 # if True, urlopen will be monkey patched to only use local files
 test_offline = True
+
+
+# Do not use a cache for `fetch_openml` to avoid concurrent writing
+# issues with `pytest-xdist`.
+# Furthermore sklearn/datasets/tests/data/openml/ is not always consistent
+# with the version on openml.org. If one were to load the dataset outside of
+# the tests, it may result in data that does not represent openml.org.
+fetch_openml = partial(fetch_openml_orig, data_home=None)
 
 
 def _test_features_list(data_id):
@@ -220,11 +232,13 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
     path_suffix = ".gz"
     read_fn = gzip.open
 
+    data_module = OPENML_TEST_DATA_MODULE + "." + f"id_{data_id}"
+
     def _file_name(url, suffix):
         output = (
             re.sub(r"\W", "-", url[len("https://openml.org/") :]) + suffix + path_suffix
         )
-        # Shorten the filenames to have better compability with windows 10
+        # Shorten the filenames to have better compatibility with windows 10
         # and filenames > 260 characters
         return (
             output.replace("-json-data-list", "-jdl")
@@ -240,76 +254,69 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
             .replace("-active", "-act")
         )
 
+    def _mock_urlopen_shared(url, has_gzip_header, expected_prefix, suffix):
+        assert url.startswith(expected_prefix)
+
+        data_file_name = _file_name(url, suffix)
+
+        with resources.open_binary(data_module, data_file_name) as f:
+            if has_gzip_header and gzip_response:
+                fp = BytesIO(f.read())
+                return _MockHTTPResponse(fp, True)
+            else:
+                decompressed_f = read_fn(f, "rb")
+                fp = BytesIO(decompressed_f.read())
+                return _MockHTTPResponse(fp, False)
+
     def _mock_urlopen_data_description(url, has_gzip_header):
-        assert url.startswith(url_prefix_data_description)
-
-        path = os.path.join(
-            currdir, "data", "openml", str(data_id), _file_name(url, ".json")
+        return _mock_urlopen_shared(
+            url=url,
+            has_gzip_header=has_gzip_header,
+            expected_prefix=url_prefix_data_description,
+            suffix=".json",
         )
-
-        if has_gzip_header and gzip_response:
-            with open(path, "rb") as f:
-                fp = BytesIO(f.read())
-            return _MockHTTPResponse(fp, True)
-        else:
-            with read_fn(path, "rb") as f:
-                fp = BytesIO(f.read())
-            return _MockHTTPResponse(fp, False)
 
     def _mock_urlopen_data_features(url, has_gzip_header):
-        assert url.startswith(url_prefix_data_features)
-        path = os.path.join(
-            currdir, "data", "openml", str(data_id), _file_name(url, ".json")
+        return _mock_urlopen_shared(
+            url=url,
+            has_gzip_header=has_gzip_header,
+            expected_prefix=url_prefix_data_features,
+            suffix=".json",
         )
-
-        if has_gzip_header and gzip_response:
-            with open(path, "rb") as f:
-                fp = BytesIO(f.read())
-            return _MockHTTPResponse(fp, True)
-        else:
-            with read_fn(path, "rb") as f:
-                fp = BytesIO(f.read())
-            return _MockHTTPResponse(fp, False)
 
     def _mock_urlopen_download_data(url, has_gzip_header):
-        assert url.startswith(url_prefix_download_data)
-
-        path = os.path.join(
-            currdir, "data", "openml", str(data_id), _file_name(url, ".arff")
+        return _mock_urlopen_shared(
+            url=url,
+            has_gzip_header=has_gzip_header,
+            expected_prefix=url_prefix_download_data,
+            suffix=".arff",
         )
-
-        if has_gzip_header and gzip_response:
-            with open(path, "rb") as f:
-                fp = BytesIO(f.read())
-            return _MockHTTPResponse(fp, True)
-        else:
-            with read_fn(path, "rb") as f:
-                fp = BytesIO(f.read())
-            return _MockHTTPResponse(fp, False)
 
     def _mock_urlopen_data_list(url, has_gzip_header):
         assert url.startswith(url_prefix_data_list)
 
-        json_file_path = os.path.join(
-            currdir, "data", "openml", str(data_id), _file_name(url, ".json")
-        )
+        data_file_name = _file_name(url, ".json")
+
         # load the file itself, to simulate a http error
-        json_data = json.loads(read_fn(json_file_path, "rb").read().decode("utf-8"))
+        with resources.open_binary(data_module, data_file_name) as f:
+            decompressed_f = read_fn(f, "rb")
+            decoded_s = decompressed_f.read().decode("utf-8")
+            json_data = json.loads(decoded_s)
         if "error" in json_data:
             raise HTTPError(
                 url=None, code=412, msg="Simulated mock error", hdrs=None, fp=None
             )
 
-        if has_gzip_header:
-            with open(json_file_path, "rb") as f:
+        with resources.open_binary(data_module, data_file_name) as f:
+            if has_gzip_header:
                 fp = BytesIO(f.read())
-            return _MockHTTPResponse(fp, True)
-        else:
-            with read_fn(json_file_path, "rb") as f:
-                fp = BytesIO(f.read())
-            return _MockHTTPResponse(fp, False)
+                return _MockHTTPResponse(fp, True)
+            else:
+                decompressed_f = read_fn(f, "rb")
+                fp = BytesIO(decompressed_f.read())
+                return _MockHTTPResponse(fp, False)
 
-    def _mock_urlopen(request):
+    def _mock_urlopen(request, *args, **kwargs):
         url = request.get_full_url()
         has_gzip_header = request.get_header("Accept-encoding") == "gzip"
         if url.startswith(url_prefix_data_list):
@@ -1172,7 +1179,7 @@ def test_open_openml_url_unlinks_local_path(
     cache_directory = str(tmpdir.mkdir("scikit_learn_data"))
     location = _get_local_path(openml_path, cache_directory)
 
-    def _mock_urlopen(request):
+    def _mock_urlopen(request, *args, **kwargs):
         if write_to_disk:
             with open(location, "w") as f:
                 f.write("")
@@ -1227,7 +1234,7 @@ def test_retry_with_clean_cache_http_error(tmpdir):
 
 @pytest.mark.parametrize("gzip_response", [True, False])
 def test_fetch_openml_cache(monkeypatch, gzip_response, tmpdir):
-    def _mock_urlopen_raise(request):
+    def _mock_urlopen_raise(request, *args, **kwargs):
         raise ValueError(
             "This mechanism intends to test correct cache"
             "handling. As such, urlopen should never be "
@@ -1451,14 +1458,17 @@ def test_fetch_openml_verify_checksum(monkeypatch, as_frame, cache, tmpdir):
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
 
     # create a temporary modified arff file
-    dataset_dir = os.path.join(currdir, "data", "openml", str(data_id))
-    original_data_path = os.path.join(dataset_dir, "data-v1-dl-1666876.arff.gz")
-    corrupt_copy = os.path.join(tmpdir, "test_invalid_checksum.arff")
-    with gzip.GzipFile(original_data_path, "rb") as orig_gzip, gzip.GzipFile(
-        corrupt_copy, "wb"
-    ) as modified_gzip:
+    original_data_module = OPENML_TEST_DATA_MODULE + "." + f"id_{data_id}"
+    original_data_file_name = "data-v1-dl-1666876.arff.gz"
+    corrupt_copy_path = tmpdir / "test_invalid_checksum.arff"
+    with resources.open_binary(
+        original_data_module, original_data_file_name
+    ) as orig_file:
+        orig_gzip = gzip.open(orig_file, "rb")
         data = bytearray(orig_gzip.read())
         data[len(data) - 1] = 37
+
+    with gzip.GzipFile(corrupt_copy_path, "wb") as modified_gzip:
         modified_gzip.write(data)
 
     # Requests are already mocked by monkey_patch_webbased_functions.
@@ -1466,10 +1476,12 @@ def test_fetch_openml_verify_checksum(monkeypatch, as_frame, cache, tmpdir):
     # hence creating a thin mock over the original mock
     mocked_openml_url = sklearn.datasets._openml.urlopen
 
-    def swap_file_mock(request):
+    def swap_file_mock(request, *args, **kwargs):
         url = request.get_full_url()
         if url.endswith("data/v1/download/1666876"):
-            return _MockHTTPResponse(open(corrupt_copy, "rb"), is_gzip=True)
+            with open(corrupt_copy_path, "rb") as f:
+                corrupted_data = f.read()
+            return _MockHTTPResponse(BytesIO(corrupted_data), is_gzip=True)
         else:
             return mocked_openml_url(request)
 
@@ -1514,3 +1526,25 @@ def test_missing_values_pandas(monkeypatch):
     # there are nans in the categorical
     assert penguins.data["sex"].isna().any()
     assert_array_equal(cat_dtype.categories, ["FEMALE", "MALE", "_"])
+
+
+def test_open_openml_url_retry_on_network_error(monkeypatch):
+    def _mock_urlopen_network_error(request, *args, **kwargs):
+        raise HTTPError("", 404, "Simulated network error", None, None)
+
+    monkeypatch.setattr(
+        sklearn.datasets._openml, "urlopen", _mock_urlopen_network_error
+    )
+
+    invalid_openml_url = "invalid-url"
+
+    with pytest.warns(
+        UserWarning,
+        match=re.escape(
+            "A network error occurred while downloading"
+            f" {_OPENML_PREFIX + invalid_openml_url}. Retrying..."
+        ),
+    ) as record:
+        with pytest.raises(HTTPError, match="Simulated network error"):
+            _open_openml_url(invalid_openml_url, None, delay=0)
+        assert len(record) == 3

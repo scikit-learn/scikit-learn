@@ -5,11 +5,12 @@ import pytest
 from scipy import linalg
 from sklearn.base import clone
 from sklearn.model_selection import train_test_split
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import TempMemmap
-from sklearn.utils.fixes import np_version, parse_version
 from sklearn.utils import check_random_state
 from sklearn.exceptions import ConvergenceWarning
 from sklearn import linear_model, datasets
@@ -47,11 +48,11 @@ def test_assure_warning_when_normalize(LeastAngleModel, normalize, n_warnings):
     y = rng.rand(n_samples)
 
     model = LeastAngleModel(normalize=normalize)
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings(record=True) as rec:
+        warnings.simplefilter("always", FutureWarning)
         model.fit(X, y)
 
-    record = [r for r in record if r.category == FutureWarning]
-    assert len(record) == n_warnings
+    assert len([w.message for w in rec]) == n_warnings
 
 
 def test_simple():
@@ -147,9 +148,7 @@ def test_lars_lstsq():
     X1 = 3 * X  # use un-normalized dataset
     clf = linear_model.LassoLars(alpha=0.0)
     clf.fit(X1, y)
-    # Avoid FutureWarning about default value change when numpy >= 1.14
-    rcond = None if np_version >= parse_version("1.14") else -1
-    coef_lstsq = np.linalg.lstsq(X1, y, rcond=rcond)[0]
+    coef_lstsq = np.linalg.lstsq(X1, y, rcond=None)[0]
     assert_array_almost_equal(clf.coef_, coef_lstsq)
 
 
@@ -173,7 +172,7 @@ def test_collinearity():
     _, _, coef_path_ = f(linear_model.lars_path)(X, y, alpha_min=0.01)
     assert not np.isnan(coef_path_).any()
     residual = np.dot(X, coef_path_[:, -1]) - y
-    assert (residual ** 2).sum() < 1.0  # just make sure it's bounded
+    assert (residual**2).sum() < 1.0  # just make sure it's bounded
 
     n_samples = 10
     X = rng.rand(n_samples, 5)
@@ -383,9 +382,7 @@ def test_lasso_lars_vs_lasso_cd_ill_conditioned():
     y = y.squeeze()
     lars_alphas, _, lars_coef = linear_model.lars_path(X, y, method="lasso")
 
-    _, lasso_coef2, _ = linear_model.lasso_path(
-        X, y, alphas=lars_alphas, tol=1e-6, fit_intercept=False
-    )
+    _, lasso_coef2, _ = linear_model.lasso_path(X, y, alphas=lars_alphas, tol=1e-6)
 
     assert_array_almost_equal(lars_coef, lasso_coef2, decimal=1)
 
@@ -446,7 +443,7 @@ def test_lars_n_nonzero_coefs(verbose=False):
 @ignore_warnings
 def test_multitarget():
     # Assure that estimators receiving multidimensional y do the right thing
-    Y = np.vstack([y, y ** 2]).T
+    Y = np.vstack([y, y**2]).T
     n_targets = Y.shape[1]
     estimators = [
         linear_model.LassoLars(),
@@ -804,7 +801,7 @@ def test_lasso_lars_vs_R_implementation():
     # Let's rescale back the coefficients returned by sklearn before comparing
     # against the R result (read the note above)
     temp = X - np.mean(X, axis=0)
-    normx = np.sqrt(np.sum(temp ** 2, axis=0))
+    normx = np.sqrt(np.sum(temp**2, axis=0))
     skl_betas2 /= normx[:, np.newaxis]
 
     assert_array_almost_equal(r2, skl_betas2, decimal=12)
@@ -900,8 +897,8 @@ def test_copy_X_with_auto_gram():
 def test_lars_dtype_match(LARS, has_coef_path, args, dtype):
     # The test ensures that the fit method preserves input dtype
     rng = np.random.RandomState(0)
-    X = rng.rand(6, 6).astype(dtype)
-    y = rng.rand(6).astype(dtype)
+    X = rng.rand(20, 6).astype(dtype)
+    y = rng.rand(20).astype(dtype)
 
     model = LARS(**args)
     model.fit(X, y)
@@ -930,8 +927,8 @@ def test_lars_numeric_consistency(LARS, has_coef_path, args):
     atol = 1e-5
 
     rng = np.random.RandomState(0)
-    X_64 = rng.rand(6, 6)
-    y_64 = rng.rand(6)
+    X_64 = rng.rand(10, 6)
+    y_64 = rng.rand(10)
 
     model_64 = LARS(**args).fit(X_64, y_64)
     model_32 = LARS(**args).fit(X_64.astype(np.float32), y_64.astype(np.float32))
@@ -940,3 +937,44 @@ def test_lars_numeric_consistency(LARS, has_coef_path, args):
     if has_coef_path:
         assert_allclose(model_64.coef_path_, model_32.coef_path_, rtol=rtol, atol=atol)
     assert_allclose(model_64.intercept_, model_32.intercept_, rtol=rtol, atol=atol)
+
+
+@pytest.mark.parametrize("criterion", ["aic", "bic"])
+def test_lassolarsic_alpha_selection(criterion):
+    """Check that we properly compute the AIC and BIC score.
+
+    In this test, we reproduce the example of the Fig. 2 of Zou et al.
+    (reference [1] in LassoLarsIC) In this example, only 7 features should be
+    selected.
+    """
+    model = make_pipeline(
+        StandardScaler(), LassoLarsIC(criterion=criterion, normalize=False)
+    )
+    model.fit(X, y)
+
+    best_alpha_selected = np.argmin(model[-1].criterion_)
+    assert best_alpha_selected == 7
+
+
+@pytest.mark.parametrize("fit_intercept", [True, False])
+def test_lassolarsic_noise_variance(fit_intercept):
+    """Check the behaviour when `n_samples` < `n_features` and that one needs
+    to provide the noise variance."""
+    rng = np.random.RandomState(0)
+    X, y = datasets.make_regression(
+        n_samples=10, n_features=11 - fit_intercept, random_state=rng
+    )
+
+    model = make_pipeline(
+        StandardScaler(), LassoLarsIC(fit_intercept=fit_intercept, normalize=False)
+    )
+
+    err_msg = (
+        "You are using LassoLarsIC in the case where the number of samples is smaller"
+        " than the number of features"
+    )
+    with pytest.raises(ValueError, match=err_msg):
+        model.fit(X, y)
+
+    model.set_params(lassolarsic__noise_variance=1.0)
+    model.fit(X, y).predict(X)

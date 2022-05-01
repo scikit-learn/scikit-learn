@@ -36,6 +36,8 @@ from ._classification import zero_one_loss
 from ._classification import brier_score_loss
 from ._classification import multilabel_confusion_matrix
 
+from ._dist_metrics import DistanceMetric
+
 from . import cluster
 from .cluster import adjusted_mutual_info_score
 from .cluster import adjusted_rand_score
@@ -74,12 +76,17 @@ from ._regression import r2_score
 from ._regression import mean_tweedie_deviance
 from ._regression import mean_poisson_deviance
 from ._regression import mean_gamma_deviance
+from ._regression import d2_tweedie_score
+from ._regression import d2_pinball_score
+from ._regression import d2_absolute_error_score
 
 
 from ._scorer import check_scoring
 from ._scorer import make_scorer
 from ._scorer import SCORERS
 from ._scorer import get_scorer
+from ._scorer import get_scorer_names
+
 
 from ._plot.det_curve import plot_det_curve
 from ._plot.det_curve import DetCurveDisplay
@@ -109,10 +116,14 @@ __all__ = [
     "confusion_matrix",
     "consensus_score",
     "coverage_error",
+    "d2_tweedie_score",
+    "d2_absolute_error_score",
+    "d2_pinball_score",
     "dcg_score",
     "davies_bouldin_score",
     "DetCurveDisplay",
     "det_curve",
+    "DistanceMetric",
     "euclidean_distances",
     "explained_variance_score",
     "f1_score",
@@ -165,6 +176,7 @@ __all__ = [
     "roc_auc_score",
     "roc_curve",
     "SCORERS",
+    "get_scorer_names",
     "silhouette_samples",
     "silhouette_score",
     "top_k_accuracy_score",

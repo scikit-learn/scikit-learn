@@ -25,7 +25,6 @@ from ..utils.extmath import _deterministic_vector_sign_flip
 from ..utils.fixes import lobpcg
 from ..metrics.pairwise import rbf_kernel
 from ..neighbors import kneighbors_graph, NearestNeighbors
-from ..utils.deprecation import deprecated
 
 
 def _graph_connected_component(graph, node_id):
@@ -226,10 +225,10 @@ def spectral_embedding(
     ----------
     * https://en.wikipedia.org/wiki/LOBPCG
 
-    * Toward the Optimal Preconditioned Eigensolver: Locally Optimal
-      Block Preconditioned Conjugate Gradient Method
+    * :doi:`"Toward the Optimal Preconditioned Eigensolver: Locally Optimal
+      Block Preconditioned Conjugate Gradient Method",
       Andrew V. Knyazev
-      https://doi.org/10.1137%2FS1064827500366124
+      <10.1137/S1064827500366124>`
     """
     adjacency = check_symmetric(adjacency)
 
@@ -315,8 +314,9 @@ def spectral_embedding(
         # problem.
         if not sparse.issparse(laplacian):
             warnings.warn("AMG works better for sparse matrices")
-        # lobpcg needs double precision floats
-        laplacian = check_array(laplacian, dtype=np.float64, accept_sparse=True)
+        laplacian = check_array(
+            laplacian, dtype=[np.float64, np.float32], accept_sparse=True
+        )
         laplacian = _set_diag(laplacian, 1, norm_laplacian)
 
         # The Laplacian matrix is always singular, having at least one zero
@@ -335,8 +335,9 @@ def spectral_embedding(
 
         M = ml.aspreconditioner()
         # Create initial approximation X to eigenvectors
-        X = random_state.rand(laplacian.shape[0], n_components + 1)
+        X = random_state.standard_normal(size=(laplacian.shape[0], n_components + 1))
         X[:, 0] = dd.ravel()
+        X = X.astype(laplacian.dtype)
         _, diffusion_map = lobpcg(laplacian, X, M=M, tol=1.0e-5, largest=False)
         embedding = diffusion_map.T
         if norm_laplacian:
@@ -346,8 +347,9 @@ def spectral_embedding(
             raise ValueError
 
     if eigen_solver == "lobpcg":
-        # lobpcg needs double precision floats
-        laplacian = check_array(laplacian, dtype=np.float64, accept_sparse=True)
+        laplacian = check_array(
+            laplacian, dtype=[np.float64, np.float32], accept_sparse=True
+        )
         if n_nodes < 5 * n_components + 1:
             # see note above under arpack why lobpcg has problems with small
             # number of nodes
@@ -364,10 +366,13 @@ def spectral_embedding(
             # We increase the number of eigenvectors requested, as lobpcg
             # doesn't behave well in low dimension and create initial
             # approximation X to eigenvectors
-            X = random_state.rand(laplacian.shape[0], n_components + 1)
+            X = random_state.standard_normal(
+                size=(laplacian.shape[0], n_components + 1)
+            )
             X[:, 0] = dd.ravel()
+            X = X.astype(laplacian.dtype)
             _, diffusion_map = lobpcg(
-                laplacian, X, tol=1e-15, largest=False, maxiter=2000
+                laplacian, X, tol=1e-5, largest=False, maxiter=2000
             )
             embedding = diffusion_map.T[:n_components]
             if norm_laplacian:
@@ -462,8 +467,33 @@ class SpectralEmbedding(BaseEstimator):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     n_neighbors_ : int
         Number of nearest neighbors effectively used.
+
+    See Also
+    --------
+    Isomap : Non-linear dimensionality reduction through Isometric Mapping.
+
+    References
+    ----------
+
+    - :doi:`A Tutorial on Spectral Clustering, 2007
+      Ulrike von Luxburg
+      <10.1007/s11222-007-9033-z>`
+
+    - On Spectral Clustering: Analysis and an algorithm, 2001
+      Andrew Y. Ng, Michael I. Jordan, Yair Weiss
+      http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.19.8100
+
+    - :doi:`Normalized cuts and image segmentation, 2000
+      Jianbo Shi, Jitendra Malik
+      <10.1109/34.868688>`
 
     Examples
     --------
@@ -476,21 +506,6 @@ class SpectralEmbedding(BaseEstimator):
     >>> X_transformed = embedding.fit_transform(X[:100])
     >>> X_transformed.shape
     (100, 2)
-
-    References
-    ----------
-
-    - A Tutorial on Spectral Clustering, 2007
-      Ulrike von Luxburg
-      http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.165.9323
-
-    - On Spectral Clustering: Analysis and an algorithm, 2001
-      Andrew Y. Ng, Michael I. Jordan, Yair Weiss
-      http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.19.8100
-
-    - Normalized cuts and image segmentation, 2000
-      Jianbo Shi, Jitendra Malik
-      http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.160.2324
     """
 
     def __init__(
@@ -518,23 +533,13 @@ class SpectralEmbedding(BaseEstimator):
             in ["precomputed", "precomputed_nearest_neighbors"]
         }
 
-    # TODO: Remove in 1.1
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `_pairwise` was deprecated in "
-        "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def _pairwise(self):
-        return self.affinity in ["precomputed", "precomputed_nearest_neighbors"]
-
     def _get_affinity_matrix(self, X, Y=None):
         """Calculate the affinity matrix from data
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training vector, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training vector, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
             If affinity is "precomputed"
             X : array-like of shape (n_samples, n_samples),
@@ -592,8 +597,8 @@ class SpectralEmbedding(BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vector, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training vector, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
             If affinity is "precomputed"
             X : {array-like, sparse matrix}, shape (n_samples, n_samples),
@@ -601,6 +606,7 @@ class SpectralEmbedding(BaseEstimator):
             samples.
 
         y : Ignored
+            Not used, present for API consistency by convention.
 
         Returns
         -------
@@ -608,9 +614,7 @@ class SpectralEmbedding(BaseEstimator):
             Returns the instance itself.
         """
 
-        X = self._validate_data(
-            X, accept_sparse="csr", ensure_min_samples=2, estimator=self
-        )
+        X = self._validate_data(X, accept_sparse="csr", ensure_min_samples=2)
 
         random_state = check_random_state(self.random_state)
         if isinstance(self.affinity, str):
@@ -647,8 +651,8 @@ class SpectralEmbedding(BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vector, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training vector, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
             If affinity is "precomputed"
             X : {array-like, sparse matrix} of shape (n_samples, n_samples),
@@ -656,10 +660,12 @@ class SpectralEmbedding(BaseEstimator):
             samples.
 
         y : Ignored
+            Not used, present for API consistency by convention.
 
         Returns
         -------
         X_new : array-like of shape (n_samples, n_components)
+            Spectral embedding of the training matrix.
         """
         self.fit(X)
         return self.embedding_

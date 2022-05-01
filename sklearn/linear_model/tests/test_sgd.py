@@ -1,16 +1,15 @@
 import pickle
-import pytest
 
-import numpy as np
-from numpy.testing import assert_allclose
-import scipy.sparse as sp
 import joblib
+import pytest
+import numpy as np
+import scipy.sparse as sp
 
+from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import ignore_warnings
-from sklearn.utils.fixes import parse_version
 
 from sklearn import linear_model, datasets, metrics
 from sklearn.base import clone, is_classifier
@@ -216,30 +215,58 @@ def asgd(klass, X, y, eta, alpha, weight_init=None, intercept_init=0.0):
 
 
 @pytest.mark.parametrize(
-    "klass", [SGDClassifier, SparseSGDClassifier, SGDRegressor, SparseSGDRegressor]
+    "klass",
+    [
+        SGDClassifier,
+        SparseSGDClassifier,
+        SGDRegressor,
+        SparseSGDRegressor,
+        SGDOneClassSVM,
+        SparseSGDOneClassSVM,
+    ],
 )
-def test_sgd_bad_alpha(klass):
-    # Check whether expected ValueError on bad alpha
-    with pytest.raises(ValueError):
-        klass(alpha=-0.1)
-
-
+@pytest.mark.parametrize("fit_method", ["fit", "partial_fit"])
 @pytest.mark.parametrize(
-    "klass", [SGDClassifier, SparseSGDClassifier, SGDRegressor, SparseSGDRegressor]
+    "params, err_msg",
+    [
+        ({"alpha": -0.1}, "alpha must be >= 0"),
+        ({"penalty": "foobar", "l1_ratio": 0.85}, "Penalty foobar is not supported"),
+        ({"loss": "foobar"}, "The loss foobar is not supported"),
+        ({"l1_ratio": 1.1}, r"l1_ratio must be in \[0, 1\]"),
+        ({"learning_rate": "<unknown>"}, "learning rate <unknown> is not supported"),
+        ({"nu": -0.5}, r"nu must be in \(0, 1]"),
+        ({"nu": 2}, r"nu must be in \(0, 1]"),
+        ({"alpha": 0, "learning_rate": "optimal"}, "alpha must be > 0"),
+        ({"eta0": 0, "learning_rate": "constant"}, "eta0 must be > 0"),
+        ({"max_iter": -1}, "max_iter must be > zero"),
+        ({"shuffle": "false"}, "shuffle must be either True or False"),
+        ({"early_stopping": "false"}, "early_stopping must be either True or False"),
+        (
+            {"validation_fraction": -0.1},
+            r"validation_fraction must be in range \(0, 1\)",
+        ),
+        ({"n_iter_no_change": 0}, "n_iter_no_change must be >= 1"),
+    ],
+    # Avoid long error messages in test names:
+    # https://github.com/scikit-learn/scikit-learn/issues/21362
+    ids=lambda x: x[:10].replace("]", "") if isinstance(x, str) else x,
 )
-def test_sgd_bad_penalty(klass):
-    # Check whether expected ValueError on bad penalty
-    with pytest.raises(ValueError):
-        klass(penalty="foobar", l1_ratio=0.85)
+def test_sgd_estimator_params_validation(klass, fit_method, params, err_msg):
+    """Validate parameters in the different SGD estimators."""
+    try:
+        sgd_estimator = klass(**params)
+    except TypeError as err:
+        if "unexpected keyword argument" in str(err):
+            # skip test if the parameter is not supported by the estimator
+            return
+        raise err
 
-
-@pytest.mark.parametrize(
-    "klass", [SGDClassifier, SparseSGDClassifier, SGDRegressor, SparseSGDRegressor]
-)
-def test_sgd_bad_loss(klass):
-    # Check whether expected ValueError on bad loss
-    with pytest.raises(ValueError):
-        klass(loss="foobar")
+    with pytest.raises(ValueError, match=err_msg):
+        if is_classifier(sgd_estimator) and fit_method == "partial_fit":
+            fit_params = {"classes": np.unique(Y)}
+        else:
+            fit_params = {}
+        getattr(sgd_estimator, fit_method)(X, Y, **fit_params)
 
 
 def _test_warm_start(klass, X, Y, lr):
@@ -411,16 +438,6 @@ def test_late_onset_averaging_reached(klass):
 @pytest.mark.parametrize(
     "klass", [SGDClassifier, SparseSGDClassifier, SGDRegressor, SparseSGDRegressor]
 )
-def test_sgd_bad_alpha_for_optimal_learning_rate(klass):
-    # Check whether expected ValueError on bad alpha, i.e. 0
-    # since alpha is used to compute the optimal learning rate
-    with pytest.raises(ValueError):
-        klass(alpha=0, learning_rate="optimal")
-
-
-@pytest.mark.parametrize(
-    "klass", [SGDClassifier, SparseSGDClassifier, SGDRegressor, SparseSGDRegressor]
-)
 def test_early_stopping(klass):
     X = iris.data[iris.target > 0]
     Y = iris.target[iris.target > 0]
@@ -526,7 +543,7 @@ def test_not_enough_sample_for_early_stopping(klass):
 def test_sgd_clf(klass):
     # Check that SGD gives any results :-)
 
-    for loss in ("hinge", "squared_hinge", "log", "modified_huber"):
+    for loss in ("hinge", "squared_hinge", "log_loss", "modified_huber"):
         clf = klass(
             penalty="l2",
             alpha=0.01,
@@ -540,115 +557,56 @@ def test_sgd_clf(klass):
         assert_array_equal(clf.predict(T), true_result)
 
 
-@pytest.mark.parametrize("klass", [SGDClassifier, SparseSGDClassifier])
-def test_sgd_bad_l1_ratio(klass):
-    # Check whether expected ValueError on bad l1_ratio
-    with pytest.raises(ValueError):
-        klass(l1_ratio=1.1)
-
-
-@pytest.mark.parametrize(
-    "klass", [SGDClassifier, SparseSGDClassifier, SGDOneClassSVM, SparseSGDOneClassSVM]
-)
-def test_sgd_bad_learning_rate_schedule(klass):
-    # Check whether expected ValueError on bad learning_rate
-    with pytest.raises(ValueError):
-        klass(learning_rate="<unknown>")
-
-
-@pytest.mark.parametrize(
-    "klass", [SGDClassifier, SparseSGDClassifier, SGDOneClassSVM, SparseSGDOneClassSVM]
-)
-def test_sgd_bad_eta0(klass):
-    # Check whether expected ValueError on bad eta0
-    with pytest.raises(ValueError):
-        klass(eta0=0, learning_rate="constant")
-
-
-@pytest.mark.parametrize(
-    "klass", [SGDClassifier, SparseSGDClassifier, SGDOneClassSVM, SparseSGDOneClassSVM]
-)
-def test_sgd_max_iter_param(klass):
-    # Test parameter validity check
-    with pytest.raises(ValueError):
-        klass(max_iter=-10000)
-
-
-@pytest.mark.parametrize(
-    "klass", [SGDClassifier, SparseSGDClassifier, SGDOneClassSVM, SparseSGDOneClassSVM]
-)
-def test_sgd_shuffle_param(klass):
-    # Test parameter validity check
-    with pytest.raises(ValueError):
-        klass(shuffle="false")
-
-
-@pytest.mark.parametrize("klass", [SGDClassifier, SparseSGDClassifier])
-def test_sgd_early_stopping_param(klass):
-    # Test parameter validity check
-    with pytest.raises(ValueError):
-        klass(early_stopping="false")
-
-
-@pytest.mark.parametrize("klass", [SGDClassifier, SparseSGDClassifier])
-def test_sgd_validation_fraction(klass):
-    # Test parameter validity check
-    with pytest.raises(ValueError):
-        klass(validation_fraction=-0.1)
-
-
-@pytest.mark.parametrize("klass", [SGDClassifier, SparseSGDClassifier])
-def test_sgd_n_iter_no_change(klass):
-    # Test parameter validity check
-    with pytest.raises(ValueError):
-        klass(n_iter_no_change=0)
-
-
-@pytest.mark.parametrize(
-    "klass", [SGDClassifier, SparseSGDClassifier, SGDOneClassSVM, SparseSGDOneClassSVM]
-)
-def test_argument_coef(klass):
-    # Checks coef_init not allowed as model argument (only fit)
-    # Provided coef_ does not match dataset
-    with pytest.raises(TypeError):
-        klass(coef_init=np.zeros((3,)))
-
-
 @pytest.mark.parametrize(
     "klass", [SGDClassifier, SparseSGDClassifier, SGDOneClassSVM, SparseSGDOneClassSVM]
 )
 def test_provide_coef(klass):
-    # Checks coef_init shape for the warm starts
-    # Provided coef_ does not match dataset.
-    with pytest.raises(ValueError):
+    """Check that the shape of `coef_init` is validated."""
+    with pytest.raises(ValueError, match="Provided coef_init does not match dataset"):
         klass().fit(X, Y, coef_init=np.zeros((3,)))
 
 
 @pytest.mark.parametrize(
-    "klass", [SGDClassifier, SparseSGDClassifier, SGDOneClassSVM, SparseSGDOneClassSVM]
+    "klass, fit_params",
+    [
+        (SGDClassifier, {"intercept_init": np.zeros((3,))}),
+        (SparseSGDClassifier, {"intercept_init": np.zeros((3,))}),
+        (SGDOneClassSVM, {"offset_init": np.zeros((3,))}),
+        (SparseSGDOneClassSVM, {"offset_init": np.zeros((3,))}),
+    ],
 )
-def test_set_intercept(klass):
-    # Checks intercept_ shape for the warm starts
-    # Provided intercept_ does not match dataset.
-    if klass in [SGDClassifier, SparseSGDClassifier]:
-        with pytest.raises(ValueError):
-            klass().fit(X, Y, intercept_init=np.zeros((3,)))
-    elif klass in [SGDOneClassSVM, SparseSGDOneClassSVM]:
-        with pytest.raises(ValueError):
-            klass().fit(X, Y, offset_init=np.zeros((3,)))
+def test_set_intercept_offset(klass, fit_params):
+    """Check that `intercept_init` or `offset_init` is validated."""
+    sgd_estimator = klass()
+    with pytest.raises(ValueError, match="does not match dataset"):
+        sgd_estimator.fit(X, Y, **fit_params)
 
 
-@pytest.mark.parametrize("klass", [SGDClassifier, SparseSGDClassifier])
+@pytest.mark.parametrize(
+    "klass", [SGDClassifier, SparseSGDClassifier, SGDRegressor, SparseSGDRegressor]
+)
 def test_sgd_early_stopping_with_partial_fit(klass):
-    # Test parameter validity check
-    with pytest.raises(ValueError):
+    """Check that we raise an error for `early_stopping` used with
+    `partial_fit`.
+    """
+    err_msg = "early_stopping should be False with partial_fit"
+    with pytest.raises(ValueError, match=err_msg):
         klass(early_stopping=True).partial_fit(X, Y)
 
 
-@pytest.mark.parametrize("klass", [SGDClassifier, SparseSGDClassifier])
-def test_set_intercept_binary(klass):
-    # Checks intercept_ shape for the warm starts in binary case
-    klass().fit(X5, Y5, intercept_init=0)
+@pytest.mark.parametrize(
+    "klass, fit_params",
+    [
+        (SGDClassifier, {"intercept_init": 0}),
+        (SparseSGDClassifier, {"intercept_init": 0}),
+        (SGDOneClassSVM, {"offset_init": 0}),
+        (SparseSGDOneClassSVM, {"offset_init": 0}),
+    ],
+)
+def test_set_intercept_offset_binary(klass, fit_params):
+    """Check that we can pass a scaler with binary classification to
+    `intercept_init` or `offset_init`."""
+    klass().fit(X5, Y5, **fit_params)
 
 
 @pytest.mark.parametrize("klass", [SGDClassifier, SparseSGDClassifier])
@@ -813,7 +771,8 @@ def test_sgd_predict_proba_method_access(klass):
     # details.
     for loss in linear_model.SGDClassifier.loss_functions:
         clf = SGDClassifier(loss=loss)
-        if loss in ("log", "modified_huber"):
+        # TODO(1.3): Remove "log"
+        if loss in ("log_loss", "log", "modified_huber"):
             assert hasattr(clf, "predict_proba")
             assert hasattr(clf, "predict_log_proba")
         else:
@@ -841,7 +800,7 @@ def test_sgd_proba(klass):
 
     # log and modified_huber losses can output probability estimates
     # binary case
-    for loss in ["log", "modified_huber"]:
+    for loss in ["log_loss", "modified_huber"]:
         clf = klass(loss=loss, alpha=0.01, max_iter=10)
         clf.fit(X, Y)
         p = clf.predict_proba([[3, 2]])
@@ -855,7 +814,7 @@ def test_sgd_proba(klass):
         assert p[0, 1] < p[0, 0]
 
     # log loss multiclass probability estimates
-    clf = klass(loss="log", alpha=0.01, max_iter=10).fit(X2, Y2)
+    clf = klass(loss="log_loss", alpha=0.01, max_iter=10).fit(X2, Y2)
 
     d = clf.decision_function([[0.1, -0.1], [0.3, 0.2]])
     p = clf.predict_proba([[0.1, -0.1], [0.3, 0.2]])
@@ -1538,19 +1497,6 @@ def asgd_oneclass(klass, X, eta, nu, coef_init=None, offset_init=0.0):
 
 
 @pytest.mark.parametrize("klass", [SGDOneClassSVM, SparseSGDOneClassSVM])
-@pytest.mark.parametrize("nu", [-0.5, 2])
-def test_bad_nu_values(klass, nu):
-    msg = r"nu must be in \(0, 1]"
-    with pytest.raises(ValueError, match=msg):
-        klass(nu=nu)
-
-    clf = klass(nu=0.05)
-    clf2 = clone(clf)
-    with pytest.raises(ValueError, match=msg):
-        clf2.set_params(nu=nu)
-
-
-@pytest.mark.parametrize("klass", [SGDOneClassSVM, SparseSGDOneClassSVM])
 def _test_warm_start_oneclass(klass, X, lr):
     # Test that explicit warm restart...
     clf = klass(nu=0.5, eta0=0.01, shuffle=False, learning_rate=lr)
@@ -2157,9 +2103,6 @@ def test_SGDClassifier_fit_for_all_backends(backend):
     # a segmentation fault when trying to write in a readonly memory mapped
     # buffer.
 
-    if parse_version(joblib.__version__) < parse_version("0.12") and backend == "loky":
-        pytest.skip("loky backend does not exist in joblib <0.12")
-
     random_state = np.random.RandomState(42)
 
     # Create a classification problem with 50000 features and 20 classes. Using
@@ -2180,21 +2123,65 @@ def test_SGDClassifier_fit_for_all_backends(backend):
     assert_array_almost_equal(clf_sequential.coef_, clf_parallel.coef_)
 
 
-# TODO: Remove in v1.2
 @pytest.mark.parametrize(
-    "Estimator", [linear_model.SGDClassifier, linear_model.SGDRegressor]
+    "old_loss, new_loss, Estimator",
+    [
+        # TODO(1.2): Remove "squared_loss"
+        ("squared_loss", "squared_error", linear_model.SGDClassifier),
+        ("squared_loss", "squared_error", linear_model.SGDRegressor),
+        # TODO(1.3): Remove "log"
+        ("log", "log_loss", linear_model.SGDClassifier),
+    ],
 )
-def test_loss_squared_loss_deprecated(Estimator):
+def test_loss_deprecated(old_loss, new_loss, Estimator):
 
     # Note: class BaseSGD calls self._validate_params() in __init__, therefore
-    # even instatiation of class raises FutureWarning for squared_loss.
-    with pytest.warns(FutureWarning, match="The loss 'squared_loss' was deprecated"):
-        est1 = Estimator(loss="squared_loss", random_state=0)
+    # even instantiation of class raises FutureWarning for deprecated losses.
+    with pytest.warns(FutureWarning, match=f"The loss '{old_loss}' was deprecated"):
+        est1 = Estimator(loss=old_loss, random_state=0)
         est1.fit(X, Y)
 
-    est2 = Estimator(loss="squared_error", random_state=0)
+    est2 = Estimator(loss=new_loss, random_state=0)
     est2.fit(X, Y)
     if hasattr(est1, "predict_proba"):
         assert_allclose(est1.predict_proba(X), est2.predict_proba(X))
     else:
         assert_allclose(est1.predict(X), est2.predict(X))
+
+
+@pytest.mark.parametrize(
+    "Estimator", [linear_model.SGDClassifier, linear_model.SGDRegressor]
+)
+def test_sgd_random_state(Estimator, global_random_seed):
+    # Train the same model on the same data without converging and check that we
+    # get reproducible results by fixing the random seed.
+    if Estimator == linear_model.SGDRegressor:
+        X, y = datasets.make_regression(random_state=global_random_seed)
+    else:
+        X, y = datasets.make_classification(random_state=global_random_seed)
+
+    # Fitting twice a model with the same hyper-parameters on the same training
+    # set with the same seed leads to the same results deterministically.
+
+    est = Estimator(random_state=global_random_seed, max_iter=1)
+    with pytest.warns(ConvergenceWarning):
+        coef_same_seed_a = est.fit(X, y).coef_
+        assert est.n_iter_ == 1
+
+    est = Estimator(random_state=global_random_seed, max_iter=1)
+    with pytest.warns(ConvergenceWarning):
+        coef_same_seed_b = est.fit(X, y).coef_
+        assert est.n_iter_ == 1
+
+    assert_allclose(coef_same_seed_a, coef_same_seed_b)
+
+    # Fitting twice a model with the same hyper-parameters on the same training
+    # set but with different random seed leads to different results after one
+    # epoch because of the random shuffling of the dataset.
+
+    est = Estimator(random_state=global_random_seed + 1, max_iter=1)
+    with pytest.warns(ConvergenceWarning):
+        coef_other_seed = est.fit(X, y).coef_
+        assert est.n_iter_ == 1
+
+    assert np.abs(coef_same_seed_a - coef_other_seed).max() > 1.0

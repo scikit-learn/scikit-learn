@@ -1,5 +1,3 @@
-import numpy as np
-
 from ...base import is_classifier
 
 
@@ -82,36 +80,37 @@ def _get_response(X, estimator, response_method, pos_label=None):
         The class considered as the positive class when computing
         the metrics.
     """
-    classification_error = "{} should be a binary classifier".format(
-        estimator.__class__.__name__
+    classification_error = (
+        "Expected 'estimator' to be a binary classifier, but got"
+        f" {estimator.__class__.__name__}"
     )
 
     if not is_classifier(estimator):
         raise ValueError(classification_error)
 
     prediction_method = _check_classifier_response_method(estimator, response_method)
-
     y_pred = prediction_method(X)
-
-    if pos_label is not None and pos_label not in estimator.classes_:
-        raise ValueError(
-            "The class provided by 'pos_label' is unknown. Got "
-            f"{pos_label} instead of one of {estimator.classes_}"
-        )
+    if pos_label is not None:
+        try:
+            class_idx = estimator.classes_.tolist().index(pos_label)
+        except ValueError as e:
+            raise ValueError(
+                "The class provided by 'pos_label' is unknown. Got "
+                f"{pos_label} instead of one of {set(estimator.classes_)}"
+            ) from e
+    else:
+        class_idx = 1
+        pos_label = estimator.classes_[class_idx]
 
     if y_pred.ndim != 1:  # `predict_proba`
-        if y_pred.shape[1] != 2:
-            raise ValueError(classification_error)
-        if pos_label is None:
-            pos_label = estimator.classes_[1]
-            y_pred = y_pred[:, 1]
-        else:
-            class_idx = np.flatnonzero(estimator.classes_ == pos_label)
-            y_pred = y_pred[:, class_idx]
-    else:
-        if pos_label is None:
-            pos_label = estimator.classes_[1]
-        elif pos_label == estimator.classes_[0]:
-            y_pred *= -1
+        y_pred_shape = y_pred.shape[1]
+        if y_pred_shape != 2:
+            raise ValueError(
+                f"{classification_error} fit on multiclass ({y_pred_shape} classes)"
+                " data"
+            )
+        y_pred = y_pred[:, class_idx]
+    elif pos_label == estimator.classes_[0]:  # `decision_function`
+        y_pred *= -1
 
     return y_pred, pos_label

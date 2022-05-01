@@ -7,6 +7,7 @@
 import warnings
 import itertools
 
+import re
 import numpy as np
 import numpy.linalg as la
 from scipy import sparse, stats
@@ -44,6 +45,7 @@ from sklearn.preprocessing import PowerTransformer
 from sklearn.preprocessing import power_transform
 from sklearn.preprocessing._data import _handle_zeros_in_scale
 from sklearn.preprocessing._data import BOUNDS_THRESHOLD
+from sklearn.metrics.pairwise import linear_kernel
 
 from sklearn.exceptions import NotFittedError
 
@@ -280,7 +282,7 @@ def test_standard_scaler_near_constant_features(
     # is considered constant and not scaled.
 
     scale_min, scale_max = -30, 19
-    scales = np.array([10 ** i for i in range(scale_min, scale_max + 1)], dtype=dtype)
+    scales = np.array([10**i for i in range(scale_min, scale_max + 1)], dtype=dtype)
 
     n_features = scales.shape[0]
     X = np.empty((n_samples, n_features), dtype=dtype)
@@ -297,8 +299,8 @@ def test_standard_scaler_near_constant_features(
 
     # if var < bound = N.eps.var + N².eps².mean², the feature is considered
     # constant and the scale_ attribute is set to 1.
-    bounds = n_samples * eps * scales ** 2 + n_samples ** 2 * eps ** 2 * average ** 2
-    within_bounds = scales ** 2 <= bounds
+    bounds = n_samples * eps * scales**2 + n_samples**2 * eps**2 * average**2
+    within_bounds = scales**2 <= bounds
 
     # Check that scale_min is small enough to have some scales below the
     # bound and therefore detected as constant:
@@ -319,7 +321,7 @@ def test_standard_scaler_near_constant_features(
     # The other features are scaled and scale_ is equal to sqrt(var_) assuming
     # that scales are large enough for average + scale and average - scale to
     # be distinct in X (depending on X's dtype).
-    common_mask = np.logical_and(scales ** 2 > bounds, representable_diff)
+    common_mask = np.logical_and(scales**2 > bounds, representable_diff)
     assert_allclose(scaler.scale_[common_mask], np.sqrt(scaler.var_)[common_mask])
 
 
@@ -343,9 +345,9 @@ def test_standard_scaler_numerical_stability():
     x = np.full(8, np.log(1e-5), dtype=np.float64)
     # This does not raise a warning as the number of samples is too low
     # to trigger the problem in recent numpy
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
         scale(x)
-    assert len(record) == 0
     assert_array_almost_equal(scale(x), np.zeros(8))
 
     # with 2 more samples, the std computation run into numerical issues:
@@ -356,9 +358,9 @@ def test_standard_scaler_numerical_stability():
     assert_array_almost_equal(x_scaled, np.zeros(10))
 
     x = np.full(10, 1e-100, dtype=np.float64)
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
         x_small_scaled = scale(x)
-    assert len(record) == 0
     assert_array_almost_equal(x_small_scaled, np.zeros(10))
 
     # Large values can cause (often recoverable) numerical stability issues:
@@ -1561,7 +1563,7 @@ def test_quantile_transformer_sorted_quantiles(array_type):
     n_quantiles = 100
     qt = QuantileTransformer(n_quantiles=n_quantiles).fit(X)
 
-    # Check that the estimated quantile threasholds are monotically
+    # Check that the estimated quantile thresholds are monotically
     # increasing:
     quantiles = qt.quantiles_[:, 0]
     assert len(quantiles) == 100
@@ -2037,7 +2039,7 @@ def test_normalize():
                 if norm == "l1":
                     row_sums = np.abs(X_norm).sum(axis=1)
                 else:
-                    X_norm_squared = X_norm ** 2
+                    X_norm_squared = X_norm**2
                     row_sums = X_norm_squared.sum(axis=1)
 
                 assert_array_almost_equal(row_sums, ones)
@@ -2228,24 +2230,11 @@ def test_cv_pipeline_precomputed():
     # did the pipeline set the pairwise attribute?
     assert pipeline._get_tags()["pairwise"]
 
-    # TODO: Remove in 1.1
-    msg = r"Attribute `_pairwise` was deprecated in version 0\.24"
-    with pytest.warns(FutureWarning, match=msg):
-        assert pipeline._pairwise
-
     # test cross-validation, score should be almost perfect
     # NB: this test is pretty vacuous -- it's mainly to test integration
     #     of Pipeline and KernelCenterer
     y_pred = cross_val_predict(pipeline, K, y_true, cv=2)
     assert_array_almost_equal(y_true, y_pred)
-
-
-# TODO: Remove in 1.1
-def test_pairwise_deprecated():
-    kcent = KernelCenterer()
-    msg = r"Attribute `_pairwise` was deprecated in version 0\.24"
-    with pytest.warns(FutureWarning, match=msg):
-        kcent._pairwise
 
 
 def test_fit_transform():
@@ -2620,7 +2609,7 @@ def test_standard_scaler_sparse_partial_fit_finite_variance(X_2):
 
 @pytest.mark.parametrize("feature_range", [(0, 1), (-10, 10)])
 def test_minmax_scaler_clip(feature_range):
-    # test behaviour of the paramter 'clip' in MinMaxScaler
+    # test behaviour of the parameter 'clip' in MinMaxScaler
     X = iris.data
     scaler = MinMaxScaler(feature_range=feature_range, clip=True).fit(X)
     X_min, X_max = np.min(X, axis=0), np.max(X, axis=0)
@@ -2630,3 +2619,102 @@ def test_minmax_scaler_clip(feature_range):
         X_transformed,
         [[feature_range[0], feature_range[0], feature_range[1], feature_range[1]]],
     )
+
+
+def test_standard_scaler_raise_error_for_1d_input():
+    """Check that `inverse_transform` from `StandardScaler` raises an error
+    with 1D array.
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/19518
+    """
+    scaler = StandardScaler().fit(X_2d)
+    err_msg = "Expected 2D array, got 1D array instead"
+    with pytest.raises(ValueError, match=err_msg):
+        scaler.inverse_transform(X_2d[:, 0])
+
+
+def test_power_transformer_significantly_non_gaussian():
+    """Check that significantly non-Gaussian data before transforms correctly.
+
+    For some explored lambdas, the transformed data may be constant and will
+    be rejected. Non-regression test for
+    https://github.com/scikit-learn/scikit-learn/issues/14959
+    """
+
+    X_non_gaussian = 1e6 * np.array(
+        [0.6, 2.0, 3.0, 4.0] * 4 + [11, 12, 12, 16, 17, 20, 85, 90], dtype=np.float64
+    ).reshape(-1, 1)
+    pt = PowerTransformer()
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
+        X_trans = pt.fit_transform(X_non_gaussian)
+
+    assert not np.any(np.isnan(X_trans))
+    assert X_trans.mean() == pytest.approx(0.0)
+    assert X_trans.std() == pytest.approx(1.0)
+    assert X_trans.min() > -2
+    assert X_trans.max() < 2
+
+
+@pytest.mark.parametrize(
+    "Transformer",
+    [
+        MinMaxScaler,
+        MaxAbsScaler,
+        RobustScaler,
+        StandardScaler,
+        QuantileTransformer,
+        PowerTransformer,
+    ],
+)
+def test_one_to_one_features(Transformer):
+    """Check one-to-one transformers give correct feature names."""
+    tr = Transformer().fit(iris.data)
+    names_out = tr.get_feature_names_out(iris.feature_names)
+    assert_array_equal(names_out, iris.feature_names)
+
+
+@pytest.mark.parametrize(
+    "Transformer",
+    [
+        MinMaxScaler,
+        MaxAbsScaler,
+        RobustScaler,
+        StandardScaler,
+        QuantileTransformer,
+        PowerTransformer,
+        Normalizer,
+        Binarizer,
+    ],
+)
+def test_one_to_one_features_pandas(Transformer):
+    """Check one-to-one transformers give correct feature names."""
+    pd = pytest.importorskip("pandas")
+
+    df = pd.DataFrame(iris.data, columns=iris.feature_names)
+    tr = Transformer().fit(df)
+
+    names_out_df_default = tr.get_feature_names_out()
+    assert_array_equal(names_out_df_default, iris.feature_names)
+
+    names_out_df_valid_in = tr.get_feature_names_out(iris.feature_names)
+    assert_array_equal(names_out_df_valid_in, iris.feature_names)
+
+    msg = re.escape("input_features is not equal to feature_names_in_")
+    with pytest.raises(ValueError, match=msg):
+        invalid_names = list("abcd")
+        tr.get_feature_names_out(invalid_names)
+
+
+def test_kernel_centerer_feature_names_out():
+    """Test that kernel centerer `feature_names_out`."""
+
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((6, 4))
+    X_pairwise = linear_kernel(X)
+    centerer = KernelCenterer().fit(X_pairwise)
+
+    names_out = centerer.get_feature_names_out()
+    samples_out2 = X_pairwise.shape[1]
+    assert_array_equal(names_out, [f"kernelcenterer{i}" for i in range(samples_out2)])

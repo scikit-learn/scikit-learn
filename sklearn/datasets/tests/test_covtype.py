@@ -20,6 +20,10 @@ def test_fetch(fetch_covtype_fxt):
     assert (X1.shape[0],) == y1.shape
     assert (X1.shape[0],) == y2.shape
 
+    descr_prefix = ".. _covtype_dataset:"
+    assert data1.DESCR.startswith(descr_prefix)
+    assert data2.DESCR.startswith(descr_prefix)
+
     # test return_X_y option
     fetch_func = partial(fetch_covtype_fxt)
     check_return_X_y(data1, fetch_func)
