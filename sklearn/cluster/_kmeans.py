@@ -316,10 +316,10 @@ def k_means(
         When `n_init='auto'`, the number of runs will be 10 if using
         `init='random'`, and 1 if using `init='kmeans++'`.
 
-        .. versionadded:: 1.1
+        .. versionadded:: 1.2
            Added 'auto' option for `n_init`.
-        .. deprecated:: 1.1
-           Default value for `n_init` will change from 10 to `'auto'` in 1.3
+        .. deprecated:: 1.2
+           Default value for `n_init` will change from 10 to `'auto'` in 1.4
 
     max_iter : int, default=300
         Maximum number of iterations of the k-means algorithm to run.
@@ -1184,10 +1184,10 @@ class KMeans(_BaseKMeans):
         When `n_init='auto'`, the number of runs will be 10 if using
         `init='random'`, and 1 if using `init='kmeans++'`.
 
-        .. versionadded:: 1.1
+        .. versionadded:: 1.2
            Added 'auto' option for `n_init`.
-        .. deprecated:: 1.1
-           Default value for `n_init` will change from 10 to `'auto'` in 1.3
+        .. deprecated:: 1.2
+           Default value for `n_init` will change from 10 to `'auto'` in 1.4
 
     max_iter : int, default=300
         Maximum number of iterations of the k-means algorithm for a
@@ -1705,9 +1705,9 @@ class MiniBatchKMeans(_BaseKMeans):
         When `n_init='auto'`, the number of runs will be 3 if using
         `init='random'`, and 1 if using `init='kmeans++'`.
 
-        .. versionadded:: 1.1
+        .. versionadded:: 1.2
            Added 'auto' option for `n_init`.
-        .. deprecated:: 1.1
+        .. deprecated:: 1.2
            Default value for `n_init` will change from 3 to `'auto'` in 1.4
 
     reassignment_ratio : float, default=0.01
