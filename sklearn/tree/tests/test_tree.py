@@ -2508,11 +2508,11 @@ def test_max_features_auto_deprecated():
         with pytest.warns(FutureWarning, match=msg):
             tree.fit(X, y)
 
-def test_tree_split_with_identical_feature():
+def test_tree_split_with_identical_feature(global_random_seed):
     """Test that in the presence of same-ordered features, tree will always
     split on the one with lowest index.
     """
-    tree = DecisionTreeRegressor(random_state=42)
+    tree = DecisionTreeRegressor(random_state=global_random_seed)
     n_samples = 100
 
     X = np.arange(n_samples * 2).reshape(n_samples, 2)
