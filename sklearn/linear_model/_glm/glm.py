@@ -42,7 +42,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
     log-likelihood up to a constant (in w) term.
     The parameter ``alpha`` corresponds to the lambda parameter in glmnet.
 
-    Instead of implementing the EDM family and a link function seperately, we directly
+    Instead of implementing the EDM family and a link function separately, we directly
     use the loss functions `from sklearn._loss` which have the link functions included
     in them for performance reasons. We pick the loss functions that implement
     (1/2 times) EDM deviances.
