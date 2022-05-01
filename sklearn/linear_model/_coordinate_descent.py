@@ -611,7 +611,9 @@ def enet_path(
                 w=coef_,
                 alpha=l1_reg,
                 beta=l2_reg,
-                X_data=ReadonlyArrayWrapper(X.data),
+                X_data=ReadonlyArrayWrapper(
+                    X.data
+                ),  # TODO: Remove after release of Cython 3 (#23147)
                 X_indices=X.indices,
                 X_indptr=X.indptr,
                 y=y,
