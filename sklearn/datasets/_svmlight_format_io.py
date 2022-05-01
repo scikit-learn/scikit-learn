@@ -380,8 +380,8 @@ def _dump_svmlight(X, y, f, multilabel, one_based, comment, query_id):
 
         f.write(b"#\n")
         f.writelines(b"# %s\n" % line for line in comment.splitlines())
-    X_is_sp = int(hasattr(X, "tocsr"))
-    y_is_sp = int(hasattr(y, "tocsr"))
+    X_is_sp = hasattr(X, "tocsr")
+    y_is_sp = hasattr(y, "tocsr")
     if not multilabel and not y_is_sp:
         y = y[:, np.newaxis]
     if not (X_is_sp or y_is_sp):
