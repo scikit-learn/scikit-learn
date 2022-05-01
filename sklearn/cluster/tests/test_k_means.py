@@ -1057,8 +1057,8 @@ def test_inertia(dtype):
 
 
 # TODO(1.4): Remove
-@pytest.mark.parametrize("Klass", [KMeans, MiniBatchKMeans])
-def test_change_n_init_future_warning(Klass):
+@pytest.mark.parametrize("Klass, default_n_init", [(KMeans, 10), (MiniBatchKMeans, 3)])
+def test_change_n_init_future_warning(Klass, default_n_init):
     est = Klass(n_init=1)
     with warnings.catch_warnings():
         warnings.simplefilter("error", FutureWarning)
@@ -1074,8 +1074,8 @@ def test_change_n_init_future_warning(Klass):
         est.fit(X)
 
 
-@pytest.mark.parametrize("Klass", [KMeans, MiniBatchKMeans])
-def test_n_init_auto(Klass):
+@pytest.mark.parametrize("Klass, default_n_init", [(KMeans, 10), (MiniBatchKMeans, 3)])
+def test_n_init_auto(Klass, default_n_init):
     est = Klass(n_init="auto", init="k-means++")
     est.fit(X)
     assert est._n_init == 1
