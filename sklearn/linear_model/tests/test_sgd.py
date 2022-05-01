@@ -4,6 +4,7 @@ import joblib
 import pytest
 import numpy as np
 import scipy.sparse as sp
+from unittest.mock import Mock
 
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_equal
@@ -21,6 +22,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.model_selection import StratifiedShuffleSplit, ShuffleSplit
 from sklearn.linear_model import _sgd_fast as sgd_fast
+from sklearn.linear_model import _stochastic_gradient
 from sklearn.model_selection import RandomizedSearchCV
 
 
@@ -2191,3 +2193,32 @@ def test_sgd_random_state(Estimator, global_random_seed):
         assert est.n_iter_ == 1
 
     assert np.abs(coef_same_seed_a - coef_other_seed).max() > 1.0
+
+
+def test_validation_mask_correctly_subsets(monkeypatch):
+    """Test that data passed to validation callback correctly subsets.
+
+    Non-regression test for #23255.
+    """
+    X, Y = iris.data, iris.target
+    n_samples = X.shape[0]
+    validation_fraction = 0.2
+    clf = linear_model.SGDClassifier(
+        early_stopping=True,
+        tol=1e-3,
+        max_iter=1000,
+        validation_fraction=validation_fraction,
+    )
+
+    mock = Mock(side_effect=_stochastic_gradient._ValidationScoreCallback)
+
+    monkeypatch.setattr(
+        _stochastic_gradient,
+        "_ValidationScoreCallback",
+        mock,
+    )
+    clf.fit(X, Y)
+
+    X_val, y_val = mock.call_args[0][1:3]
+    assert X_val.shape[0] == int(n_samples * validation_fraction)
+    assert y_val.shape[0] == int(n_samples * validation_fraction)
