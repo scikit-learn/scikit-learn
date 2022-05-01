@@ -821,15 +821,18 @@ class _BaseKMeans(
         self.verbose = verbose
         self.random_state = random_state
 
-    def _check_params(self, X):
+    def _check_params(self, X, default_n_init):
         # n_init
-        # TODO(1.3): Remove
+        # TODO(1.4): Remove
+        if self.n_init not in ("auto", "warn") and self.n_init <= 0:
+            raise ValueError(
+                f"n_init should be > 0 or 'auto', got {self.n_init} instead."
+            )
         self._n_init = self.n_init
-        default_n_init = 10 if self.__class__.__name__ == "KMeans" else 3
         if self._n_init == "warn":
             warnings.warn(
                 "The default value of `n_init` will change from "
-                f"{default_n_init} to 'auto' in 1.3. Set the value of `n_init`"
+                f"{default_n_init} to 'auto' in 1.4. Set the value of `n_init`"
                 " explicitly to suppress the warning",
                 FutureWarning,
             )
@@ -839,10 +842,6 @@ class _BaseKMeans(
                 self._n_init = 1
             else:
                 self._n_init = default_n_init
-        if self.n_init not in ("auto", "warn") and self.n_init <= 0:
-            raise ValueError(
-                f"n_init should be > 0 or 'auto', got {self._n_init} instead."
-            )
 
         # max_iter
         if self.max_iter <= 0:
@@ -1335,7 +1334,7 @@ class KMeans(_BaseKMeans):
         self.algorithm = algorithm
 
     def _check_params(self, X):
-        super()._check_params(X)
+        super()._check_params(X, default_n_init=10)
 
         # algorithm
         if self.algorithm not in ("lloyd", "elkan", "auto", "full"):
@@ -1709,7 +1708,7 @@ class MiniBatchKMeans(_BaseKMeans):
         .. versionadded:: 1.1
            Added 'auto' option for `n_init`.
         .. deprecated:: 1.1
-           Default value for `n_init` will change from 3 to `'auto'` in 1.3
+           Default value for `n_init` will change from 3 to `'auto'` in 1.4
 
     reassignment_ratio : float, default=0.01
         Control the fraction of the maximum number of counts for a center to
@@ -1830,7 +1829,7 @@ class MiniBatchKMeans(_BaseKMeans):
         self.reassignment_ratio = reassignment_ratio
 
     def _check_params(self, X):
-        super()._check_params(X)
+        super()._check_params(X, default_n_init=3)
 
         # max_no_improvement
         if self.max_no_improvement is not None and self.max_no_improvement < 0:

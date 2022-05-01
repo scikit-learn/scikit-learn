@@ -32,9 +32,9 @@ from sklearn.cluster._k_means_common import _is_same_clustering
 from sklearn.datasets import make_blobs
 from io import StringIO
 
-# TODO(1.3): Remove
+# TODO(1.4): Remove
 msg = (
-    r"The default value of `n_init` will change from \d* to 'auto' in 1.3:FutureWarning"
+    r"The default value of `n_init` will change from \d* to 'auto' in 1.4:FutureWarning"
 )
 pytestmark = pytest.mark.filterwarnings("ignore:" + msg)
 
@@ -1056,7 +1056,7 @@ def test_inertia(dtype):
     assert_allclose(inertia_sparse, expected, rtol=1e-6)
 
 
-# TODO(1.3): Remove
+# TODO(1.4): Remove
 @pytest.mark.parametrize("Klass", [KMeans, MiniBatchKMeans])
 def test_change_n_init_future_warning(Klass):
     est = Klass(n_init=1)
@@ -1067,7 +1067,7 @@ def test_change_n_init_future_warning(Klass):
     default_n_init = 10 if Klass.__name__ == "KMeans" else 3
     msg = (
         f"The default value of `n_init` will change from {default_n_init} to 'auto'"
-        " in 1.3"
+        " in 1.4"
     )
     est = Klass()
     with pytest.warns(FutureWarning, match=msg):
