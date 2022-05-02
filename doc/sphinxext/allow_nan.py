@@ -1,5 +1,7 @@
 from sklearn.utils import all_estimators
 from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import FeatureUnion
+from sklearn.decomposition import SparseCoder
 from sklearn.utils.estimator_checks import _construct_instance
 from docutils import nodes
 import warnings
@@ -22,16 +24,19 @@ class Allow_Nan(Directive):
             except:
                 if name == "ColumnTransformer":
                     est = ColumnTransformer(None)
+                elif name == "SparseCoder":
+                    est = SparseCoder({})
+                elif name == "FeatureUnion":
+                    est = FeatureUnion([(None, None)])
                 else:
                     warnings.warn(
                         f"Estimator {est_class.__name__} failed to construct."
                     )
 
             if est._get_tags().get("allow_nan"):
-                module_name = est_class.__module__
-                class_name = est_class.__name__
+                module_name = '.'.join(est_class.__module__.split('.')[:2])
                 class_title = f"{est_class.__name__}"
-                class_url = f"generated/{module_name}.{est_class.__name__}.html"
+                class_url = f"generated/{module_name}.{class_title}.html"
                 item = nodes.list_item()
                 para = nodes.paragraph()
                 para += nodes.reference(
