@@ -49,6 +49,7 @@ from . import (
     jaccard_score,
     mean_absolute_percentage_error,
     matthews_corrcoef,
+    class_likelihood_ratios,
 )
 
 from .cluster import adjusted_rand_score
@@ -718,6 +719,20 @@ accuracy_scorer = make_scorer(accuracy_score)
 balanced_accuracy_scorer = make_scorer(balanced_accuracy_score)
 matthews_corrcoef_scorer = make_scorer(matthews_corrcoef)
 
+
+def pos_LR(y_true, y_pred):
+    pos_LR, _ = class_likelihood_ratios(y_true, y_pred)
+    return pos_LR
+
+
+def neg_LR(y_true, y_pred):
+    _, neg_LR = class_likelihood_ratios(y_true, y_pred)
+    return neg_LR
+
+
+positive_likelihood_ratio_scorer = make_scorer(pos_LR)
+neg_negative_likelihood_ratio_scorer = make_scorer(neg_LR, greater_is_better=False)
+
 # Score functions that need decision values
 top_k_accuracy_scorer = make_scorer(
     top_k_accuracy_score, greater_is_better=True, needs_threshold=True
@@ -795,6 +810,8 @@ _SCORERS = dict(
     average_precision=average_precision_scorer,
     neg_log_loss=neg_log_loss_scorer,
     neg_brier_score=neg_brier_score_scorer,
+    positive_likelihood_ratio=positive_likelihood_ratio_scorer,
+    neg_negative_likelihood_ratio=neg_negative_likelihood_ratio_scorer,
     # Cluster metrics that use supervised evaluation
     adjusted_rand_score=adjusted_rand_scorer,
     rand_score=rand_scorer,
