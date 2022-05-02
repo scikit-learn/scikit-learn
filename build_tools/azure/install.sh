@@ -124,17 +124,6 @@ python_environment_install() {
         # do not install dependencies for lightgbm since it requires scikit-learn.
         python -m pip install "lightgbm>=3.0.0" --no-deps
 
-    elif [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
-        make_conda "ccache python=$PYTHON_VERSION"
-        python -m pip install -U pip
-        echo "Installing numpy and scipy master wheels"
-        dev_anaconda_url=https://pypi.anaconda.org/scipy-wheels-nightly/simple
-        pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url numpy pandas scipy
-        pip install --pre cython
-        echo "Installing joblib master"
-        pip install https://github.com/joblib/joblib/archive/master.zip
-        echo "Installing pillow master"
-        pip install https://github.com/python-pillow/Pillow/archive/main.zip
     elif [[ "$DISTRIB" == "pip-nogil" ]]; then
         setup_ccache  # speed-up the build of CPython it-self
         ORIGINAL_FOLDER=`pwd`
@@ -153,6 +142,19 @@ python_environment_install() {
         # would otherwise depend on the GIL.
         echo "Installing build dependencies with pip from the nogil repository: https://d1yxz45j0ypngg.cloudfront.net/"
         pip install numpy scipy cython joblib threadpoolctl
+
+    elif [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
+        make_conda "ccache python=$PYTHON_VERSION"
+        python -m pip install -U pip
+        echo "Installing numpy and scipy master wheels"
+        dev_anaconda_url=https://pypi.anaconda.org/scipy-wheels-nightly/simple
+        pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url numpy pandas scipy
+        pip install --pre cython
+        echo "Installing joblib master"
+        pip install https://github.com/joblib/joblib/archive/master.zip
+        echo "Installing pillow master"
+        pip install https://github.com/python-pillow/Pillow/archive/main.zip
+
     fi
 
     python -m pip install $(get_dep threadpoolctl $THREADPOOLCTL_VERSION) \
