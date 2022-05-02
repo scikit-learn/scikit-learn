@@ -757,6 +757,11 @@ def fetch_openml(
         DataFrame or Series as if `as_frame` is set to True, unless the dataset
         is stored in sparse format.
 
+        If `as_frame` is False, the data and target will be NumPy arrays and
+        the `data` will only contain numerical values when `parser="liac-arff"`
+        where the categories are provided in the attribute `categories` of the
+        `Bunch` instance. When `parser="pandas"`, no ordinal encoding is made.
+
         .. versionchanged:: 0.24
            The default value of `as_frame` changed from `False` to `'auto'`
            in 0.24.
@@ -843,6 +848,11 @@ def fetch_openml(
       tagged as 'REAL' and 'NUMERICAL' in the metadata. The `"pandas"`
       parser instead infers if these numerical features corresponds
       to integers and uses panda's Integer extension dtype.
+
+    In addition, when `as_frame=False` is used, the `"liac-arff"` parser
+    returns ordinally encoded data where the categories are provided in the
+    attribute `categories` of the `Bunch` instance. Instead, `"pandas"` returns
+    a NumPy array were the categories are not encoded.
     """
     if cache is False:
         # no caching will be applied
