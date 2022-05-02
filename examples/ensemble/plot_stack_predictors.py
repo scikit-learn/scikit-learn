@@ -45,7 +45,7 @@ from sklearn.utils import shuffle
 
 
 def load_ames_housing():
-    df = fetch_openml(name="house_prices", as_frame=True)
+    df = fetch_openml(name="house_prices", as_frame=True, parser="pandas")
     X = df.data
     y = df.target
 
