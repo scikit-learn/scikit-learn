@@ -23,7 +23,7 @@ print(__doc__)
 
 # %%
 # Define a data preprocessing function
-# ----------------------------------
+# ------------------------------------
 #
 # The example uses real-world datasets available in
 # :class:`sklearn.datasets` and the sample size of some datasets is reduced

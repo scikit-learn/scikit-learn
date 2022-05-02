@@ -801,6 +801,9 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None, sample_weight
     have a corresponding threshold. This ensures that the graph starts on the
     y axis.
 
+    The first precision and recall values are precision=class balance and recall=1.0
+    which corresponds to a classifier that always predicts the positive class.
+
     Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
 
     Parameters
@@ -834,7 +837,7 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None, sample_weight
 
     thresholds : ndarray of shape (n_thresholds,)
         Increasing thresholds on the decision function used to compute
-        precision and recall. n_thresholds <= len(np.unique(probas_pred)).
+        precision and recall where `n_thresholds = len(np.unique(probas_pred))`.
 
     See Also
     --------
@@ -855,11 +858,11 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None, sample_weight
     >>> precision, recall, thresholds = precision_recall_curve(
     ...     y_true, y_scores)
     >>> precision
-    array([0.66666667, 0.5       , 1.        , 1.        ])
+    array([0.5       , 0.66666667, 0.5       , 1.        , 1.        ])
     >>> recall
-    array([1. , 0.5, 0.5, 0. ])
+    array([1. , 1. , 0.5, 0.5, 0. ])
     >>> thresholds
-    array([0.35, 0.4 , 0.8 ])
+    array([0.1 , 0.35, 0.4 , 0.8 ])
     """
     fps, tps, thresholds = _binary_clf_curve(
         y_true, probas_pred, pos_label=pos_label, sample_weight=sample_weight
@@ -879,10 +882,8 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None, sample_weight
     else:
         recall = tps / tps[-1]
 
-    # stop when full recall attained
-    # and reverse the outputs so recall is decreasing
-    last_ind = tps.searchsorted(tps[-1])
-    sl = slice(last_ind, None, -1)
+    # reverse the outputs so recall is decreasing
+    sl = slice(None, None, -1)
     return np.hstack((precision[sl], 1)), np.hstack((recall[sl], 0)), thresholds[sl]
 
 
