@@ -15,7 +15,7 @@ class Allow_Nan(Directive):
         intro = nodes.list_item()
         intro += nodes.strong(text="Estimators that allow NaN values for type ")
         intro += nodes.literal(text=f"{estimator_type}")
-        intro += nodes.strong(text=":\n" )
+        intro += nodes.strong(text=":\n")
         exists = False
         lst = nodes.bullet_list()
         for name, est_class in all_estimators(type_filter=estimator_type):
@@ -34,16 +34,13 @@ class Allow_Nan(Directive):
                     )
 
             if est._get_tags().get("allow_nan"):
-                module_name = '.'.join(est_class.__module__.split('.')[:2])
+                module_name = ".".join(est_class.__module__.split(".")[:2])
                 class_title = f"{est_class.__name__}"
                 class_url = f"generated/{module_name}.{class_title}.html"
                 item = nodes.list_item()
                 para = nodes.paragraph()
                 para += nodes.reference(
-                    class_title,
-                    text=class_title,
-                    internal=False,
-                    refuri=class_url
+                    class_title, text=class_title, internal=False, refuri=class_url
                 )
                 exists = True
                 item += para
