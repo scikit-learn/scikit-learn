@@ -90,8 +90,7 @@ workflows:
     when:
       not:
         equal: [ "none", << pipeline.parameters.GITHUB_RUN_URL >> ]
-    # The following jobs will be executed only if the
-    # action is executed to ignore normal push events
+    # The jobs should run only when triggered by the workflow
     jobs:
       - doc-min-dependencies
       - doc
@@ -100,5 +99,9 @@ workflows:
             - doc
 
   linux-arm64:
+    when:
+      equal: [ "none", << pipeline.parameters.GITHUB_RUN_URL >> ]
+    # Prevent double execution of this job: on push
+    # by default and when triggered by the workflow
     jobs:
       - linux-arm64
