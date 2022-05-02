@@ -69,36 +69,6 @@ def _sparse_data_to_array(
     return y
 
 
-def _cast_frame(frame, columns_info):
-    """Cast the columns of a dataframe using the ARFF metadata.
-
-    Parameters
-    ----------
-    frame : dataframe
-        The dataframe to cast.
-
-    columns_info : dict
-        The ARFF metadata for the columns of the dataframe.
-
-    Returns
-    -------
-    frame : dataframe
-        The dataframe with the right casting.
-    """
-    dtypes = {}
-    for name in frame.columns:
-        column_dtype = columns_info[name]["data_type"]
-        if column_dtype.lower() == "integer":
-            # Use a pandas extension array instead of np.int64 to be able to
-            # support missing values.
-            dtypes[name] = "Int64"
-        elif column_dtype.lower() == "nominal":
-            dtypes[name] = "category"
-        else:
-            dtypes[name] = frame.dtypes[name]
-    return frame.astype(dtypes)
-
-
 def _post_process_frame(frame, feature_names, target_names):
     """Post process a dataframe to select the desired columns in `X` and `y`.
 
@@ -228,7 +198,20 @@ def _liac_arff_parser(
         frame = pd.concat(dfs, ignore_index=True)
         del dfs, first_df
 
-        frame = _cast_frame(frame, openml_columns_info)
+        # cast the columns frame
+        dtypes = {}
+        for name in frame.columns:
+            column_dtype = openml_columns_info[name]["data_type"]
+            if column_dtype.lower() == "integer":
+                # Use a pandas extension array instead of np.int64 to be able
+                # to support missing values.
+                dtypes[name] = "Int64"
+            elif column_dtype.lower() == "nominal":
+                dtypes[name] = "category"
+            else:
+                dtypes[name] = frame.dtypes[name]
+        frame = frame.astype(dtypes)
+
         X, y = _post_process_frame(
             frame, feature_names_to_select, target_names_to_select
         )
