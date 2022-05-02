@@ -3,12 +3,14 @@ Testing Recursive feature elimination
 """
 
 from operator import attrgetter
+
 import pytest
 import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_equal, assert_allclose
 from scipy import sparse
 
 from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.cross_decomposition import PLSCanonical, PLSRegression, CCA
 from sklearn.feature_selection import RFE, RFECV
 from sklearn.datasets import load_iris, make_friedman1
 from sklearn.metrics import zero_one_loss
@@ -612,3 +614,17 @@ def test_multioutput(ClsRFE):
     clf = RandomForestClassifier(n_estimators=5)
     rfe_test = ClsRFE(clf)
     rfe_test.fit(X, y)
+
+
+@pytest.mark.parametrize("ClsRFE", [RFE, RFECV])
+@pytest.mark.parametrize("PLSEstimator", [CCA, PLSCanonical, PLSRegression])
+def test_rfe_pls(ClsRFE, PLSEstimator):
+    """Check the behaviour of RFE with PLS estimators.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/12410
+    """
+    X, y = make_friedman1(n_samples=50, n_features=10, random_state=0)
+    estimator = PLSEstimator(n_components=1)
+    selector = ClsRFE(estimator, step=1).fit(X, y)
+    assert selector.score(X, y) > 0.5
