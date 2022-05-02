@@ -41,6 +41,9 @@ Changelog
   :pr:`20802` by :user:`Brandon Pokorny <Clickedbigfoot>`,
   and :pr:`22965` by :user:`Meekail Zain <micky774>`.
 
+- |Enhancement| :class:`cluster.Birch` now preserves dtype for `numpy.float32`
+  inputs. :pr:`22968` by `Meekail Zain <micky774>`.
+
 Code and Documentation Contributors
 -----------------------------------
 
@@ -48,8 +51,3 @@ Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.1, including:
 
 TODO: update at the time of the release.
-
-:mod:`sklearn.cluster`
-......................
-- |Enhancement| :class:`cluster.Birch` now preserves dtype for `numpy.float32`
-  inputs. :pr:`22968` by `Meekail Zain <micky774>`.
