@@ -201,24 +201,13 @@ def _check_precomputed(X):
     copied = graph.format != "csr"
     graph = check_array(graph, accept_sparse="csr")
     check_non_negative(graph, whom="precomputed distance matrix.")
+    graph = sort_graph_by_row_values(graph, copy=not copied, warn_when_not_sorted=True)
 
-    if not _is_sorted_by_row_values(graph):
-        warnings.warn(
-            "Precomputed sparse input was not sorted by row values. Use the function"
-            " sklearn.neighbors.sort_graph_by_row_values to sort the input by row"
-            " values and removes this warning.",
-            EfficiencyWarning,
-        )
-        if not copied:
-            graph = graph.copy()
-        graph = sort_graph_by_row_values(graph)
     return graph
 
 
-def sort_graph_by_row_values(graph):
+def sort_graph_by_row_values(graph, copy=False, warn_when_not_sorted=True):
     """Sort a sparse graph such that each row is stored with increasing values.
-
-    Sorting is done in-place if the input graph is in CSR format.
 
     Parameters
     ----------
@@ -226,12 +215,32 @@ def sort_graph_by_row_values(graph):
         Distance matrix to other samples, where only non-zero elements are
         considered neighbors. Matrix is converted to CSR format if not already.
 
+    copy : bool
+        If True, the graph is copied before sorting. If False, the sorting is
+        performed inplace. If graph is not of CSR format, a copy is always
+        returned.
+
+    warn_when_not_sorted : bool
+        If True, a warning is raised when the input graph is not sorted by row
+        values.
+
     Returns
     -------
     graph : sparse matrix of shape (n_samples, n_samples)
         Distance matrix to other samples, where only non-zero elements are
         considered neighbors. Matrix is in CSR format.
     """
+    if graph.format == "csr" and _is_sorted_by_row_values(graph):
+        return graph
+
+    if warn_when_not_sorted:
+        warnings.warn(
+            "Precomputed sparse input was not sorted by row values. Use the function"
+            " sklearn.neighbors.sort_graph_by_row_values to sort the input by row"
+            " values, with warn_when_not_sorted=False to remove this warning.",
+            EfficiencyWarning,
+        )
+
     if graph.format not in ("csr", "csc", "coo", "lil"):
         raise TypeError(
             "Sparse matrix in {!r} format is not supported due to "
@@ -239,6 +248,8 @@ def sort_graph_by_row_values(graph):
         )
     elif graph.format != "csr":
         graph = graph.asformat("csr")
+    elif copy:  # csr format with copy=True
+        graph = graph.copy()
 
     # if each sample has the same number of provided neighbors
     row_nnz = np.diff(graph.indptr)

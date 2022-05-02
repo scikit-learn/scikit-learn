@@ -1,4 +1,5 @@
 from itertools import product
+import warnings
 
 import pytest
 import re
@@ -465,10 +466,8 @@ def test_is_sorted_by_row_values():
 
 
 @ignore_warnings(category=EfficiencyWarning)
-@pytest.mark.parametrize(
-    "function,inplace", [(sort_graph_by_row_values, True), (_check_precomputed, False)]
-)
-def test_sort_graph_by_row_values(function, inplace):
+@pytest.mark.parametrize("function", [sort_graph_by_row_values, _check_precomputed])
+def test_sort_graph_by_row_values(function):
     # Test that sort_graph_by_row_values returns a graph sorted by row values
     X = csr_matrix(np.abs(np.random.RandomState(42).randn(10, 10)))
     assert not _is_sorted_by_row_values(X)
@@ -484,12 +483,48 @@ def test_sort_graph_by_row_values(function, inplace):
     Xt = function(X)
     assert _is_sorted_by_row_values(Xt)
 
+
+@ignore_warnings(category=EfficiencyWarning)
+def test_sort_graph_by_row_values_copy():
     # Test if the sorting is done inplace if X is CSR, so that Xt is X.
-    # Sort_by_row_values is done inplace, but _check_precomputed is not.
-    if inplace:
-        assert X.data is Xt.data
-    else:
-        assert X.data is not Xt.data
+    X_ = csr_matrix(np.abs(np.random.RandomState(42).randn(10, 10)))
+    assert not _is_sorted_by_row_values(X_)
+
+    # sort_graph_by_row_values is done inplace if copy=False
+    X = X_.copy()
+    assert sort_graph_by_row_values(X).data is X.data
+
+    X = X_.copy()
+    assert sort_graph_by_row_values(X, copy=False).data is X.data
+
+    X = X_.copy()
+    assert sort_graph_by_row_values(X, copy=True).data is not X.data
+
+    X = X_.copy()
+    assert sort_graph_by_row_values(X.tocsc(), copy=False).data is not X.data
+
+    # _check_precomputed is never done inplace
+    X = X_.copy()
+    assert _check_precomputed(X).data is not X.data
+
+
+def test_sort_graph_by_row_values_warning():
+    # Test that the parameter warn_when_not_sorted works as expected.
+    X = csr_matrix(np.abs(np.random.RandomState(42).randn(10, 10)))
+    assert not _is_sorted_by_row_values(X)
+
+    # warning
+    with pytest.warns(EfficiencyWarning, match="was not sorted by row values"):
+        sort_graph_by_row_values(X, copy=True)
+    with pytest.warns(EfficiencyWarning, match="was not sorted by row values"):
+        sort_graph_by_row_values(X, copy=True, warn_when_not_sorted=True)
+    with pytest.warns(EfficiencyWarning, match="was not sorted by row values"):
+        _check_precomputed(X)
+
+    # no warning
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        sort_graph_by_row_values(X, copy=True, warn_when_not_sorted=False)
 
 
 @pytest.mark.parametrize("format", [dok_matrix, bsr_matrix, dia_matrix])
