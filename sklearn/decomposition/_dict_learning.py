@@ -808,7 +808,12 @@ def dict_learning_online(
         Whether to also return the code U or just the dictionary `V`.
 
     dict_init : ndarray of shape (n_components, n_features), default=None
-        Initial value for the dictionary for warm restart scenarios.
+        Initial values for the dictionary for warm restart scenarios.
+        If `None`, the initial values for the dictionary are created
+        using :func:`randomized_svd` as::
+
+            _, S, dictionary = randomized_svc(X, n_components, random_state)
+            dictionary = S[:, np.newaxis] * dictionary
 
     callback : callable, default=None
         A callable that gets invoked at the end of each iteration.
