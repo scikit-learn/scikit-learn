@@ -20,5 +20,7 @@ jobs:
         run: bash build_tools/github/trigger_hosting.sh
         env:
           CCI_TOKEN: ${{ secrets.CCI_TOKEN }}
+          EVENT: ${{ github.event.workflow_run.event }}
           RUN_ID: ${{ github.event.workflow_run.id }}
-          EVENT_OBJ: ${{ toJson(github.event) }}
+          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          PULL_REQUEST_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}

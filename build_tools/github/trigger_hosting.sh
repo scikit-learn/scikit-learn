@@ -3,12 +3,14 @@
 set -e
 set -x
 
-echo $EVENT_OBJ
-
 GITHUB_RUN_URL=https://nightly.link/$GITHUB_REPOSITORY/actions/runs/$RUN_ID
-BRANCH=$( wget $GITHUB_RUN_URL/branch.zip && \
-          unzip branch.zip > /dev/null && \
-          cat branch.txt )
+
+if [ "$EVENT" == pull_request ]
+then
+     BRANCH=pull/$PULL_REQUEST_NUMBER/head
+else
+     BRANCH=$HEAD_BRANCH
+fi
 
 curl --request POST \
      --url https://circleci.com/api/v2/project/gh/$GITHUB_REPOSITORY/pipeline \
