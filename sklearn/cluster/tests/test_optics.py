@@ -3,6 +3,7 @@
 # License: BSD 3 clause
 import numpy as np
 import pytest
+from scipy import sparse
 import warnings
 
 from sklearn.datasets import make_blobs
@@ -15,7 +16,7 @@ from sklearn.cluster import DBSCAN
 from sklearn.utils import shuffle
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_allclose
-
+from sklearn.exceptions import EfficiencyWarning
 from sklearn.cluster.tests.common import generate_clustered_data
 
 
@@ -158,15 +159,19 @@ def test_cluster_hierarchy_(global_dtype):
     assert diff / len(X) < 0.05
 
 
-def test_correct_number_of_clusters():
+@pytest.mark.parametrize(
+    "metric, is_sparse",
+    [["minkowski", False], ["euclidean", True]],
+)
+def test_correct_number_of_clusters(metric, is_sparse):
     # in 'auto' mode
 
     n_clusters = 3
     X = generate_clustered_data(n_clusters=n_clusters)
     # Parameters chosen specifically for this task.
     # Compute OPTICS
-    clust = OPTICS(max_eps=5.0 * 6.0, min_samples=4, xi=0.1)
-    clust.fit(X)
+    clust = OPTICS(max_eps=5.0 * 6.0, min_samples=4, xi=0.1, metric=metric)
+    clust.fit(sparse.csr_matrix(X) if is_sparse else X)
     # number of clusters, ignoring noise if present
     n_clusters_1 = len(set(clust.labels_)) - int(-1 in clust.labels_)
     assert n_clusters_1 == n_clusters
@@ -286,18 +291,25 @@ def test_close_extract():
 
 @pytest.mark.parametrize("eps", [0.1, 0.3, 0.5])
 @pytest.mark.parametrize("min_samples", [3, 10, 20])
-def test_dbscan_optics_parity(eps, min_samples, global_dtype):
+@pytest.mark.parametrize(
+    "metric, is_sparse",
+    [["minkowski", False], ["euclidean", False], ["euclidean", True]],
+)
+def test_dbscan_optics_parity(eps, min_samples, metric, is_sparse, global_dtype):
     # Test that OPTICS clustering labels are <= 5% difference of DBSCAN
 
     centers = [[1, 1], [-1, -1], [1, -1]]
     X, labels_true = make_blobs(
         n_samples=750, centers=centers, cluster_std=0.4, random_state=0
     )
+    X = sparse.csr_matrix(X) if is_sparse else X
 
     X = X.astype(global_dtype, copy=False)
 
     # calculate optics with dbscan extract at 0.3 epsilon
-    op = OPTICS(min_samples=min_samples, cluster_method="dbscan", eps=eps).fit(X)
+    op = OPTICS(
+        min_samples=min_samples, cluster_method="dbscan", eps=eps, metric=metric
+    ).fit(X)
 
     # calculate dbscan labels
     db = DBSCAN(eps=eps, min_samples=min_samples).fit(X)
@@ -344,7 +356,8 @@ def test_min_cluster_size(min_cluster_size, global_dtype):
         assert min(cluster_sizes) >= min_cluster_size
     # check behaviour is the same when min_cluster_size is a fraction
     clust_frac = OPTICS(
-        min_samples=9, min_cluster_size=min_cluster_size / redX.shape[0]
+        min_samples=9,
+        min_cluster_size=min_cluster_size / redX.shape[0],
     )
     clust_frac.fit(redX)
     assert_array_equal(clust.labels_, clust_frac.labels_)
@@ -356,17 +369,26 @@ def test_min_cluster_size_invalid(min_cluster_size):
     with pytest.raises(ValueError, match="must be a positive integer or a "):
         clust.fit(X)
 
+    clust = OPTICS(min_cluster_size=min_cluster_size, metric="euclidean")
+    with pytest.raises(ValueError, match="must be a positive integer or a "):
+        clust.fit(sparse.csr_matrix(X))
+
 
 def test_min_cluster_size_invalid2():
     clust = OPTICS(min_cluster_size=len(X) + 1)
     with pytest.raises(ValueError, match="must be no greater than the "):
         clust.fit(X)
 
+    clust = OPTICS(min_cluster_size=len(X) + 1, metric="euclidean")
+    with pytest.raises(ValueError, match="must be no greater than the "):
+        clust.fit(sparse.csr_matrix(X))
+
 
 def test_processing_order():
     # Ensure that we consider all unprocessed points,
     # not only direct neighbors. when picking the next point.
     Y = [[0], [10], [-10], [25]]
+
     clust = OPTICS(min_samples=3, max_eps=15).fit(Y)
     assert_array_equal(clust.reachability_, [np.inf, 10, 10, 15])
     assert_array_equal(clust.core_distances_, [10, 15, np.inf, np.inf])
@@ -796,10 +818,16 @@ def test_extract_dbscan(global_dtype):
     assert_array_equal(np.sort(np.unique(clust.labels_)), [0, 1, 2, 3])
 
 
-def test_precomputed_dists(global_dtype):
+@pytest.mark.parametrize("is_sparse", [False, True])
+def test_precomputed_dists(is_sparse, global_dtype):
     redX = X[::2].astype(global_dtype, copy=False)
     dists = pairwise_distances(redX, metric="euclidean")
-    clust1 = OPTICS(min_samples=10, algorithm="brute", metric="precomputed").fit(dists)
+    dists = sparse.csr_matrix(dists) if is_sparse else dists
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", EfficiencyWarning)
+        clust1 = OPTICS(min_samples=10, algorithm="brute", metric="precomputed").fit(
+            dists
+        )
     clust2 = OPTICS(min_samples=10, algorithm="brute", metric="euclidean").fit(redX)
 
     assert_allclose(clust1.reachability_, clust2.reachability_)
