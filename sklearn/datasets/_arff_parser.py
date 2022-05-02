@@ -369,6 +369,15 @@ def _pandas_arff_parser(
         if line.decode("utf-8").lower().startswith("@data"):
             break
 
+    dtypes = {}
+    for name in openml_columns_info:
+        column_dtype = openml_columns_info[name]["data_type"]
+        if column_dtype.lower() == "integer":
+            # Use Int64 to infer missing values from data
+            dtypes[name] = "Int64"
+        elif column_dtype.lower() == "nominal":
+            dtypes[name] = "category"
+
     # ARFF represents missing values with "?"
     frame = pd.read_csv(
         gzip_file,
@@ -376,14 +385,13 @@ def _pandas_arff_parser(
         na_values=["?"],  # missing values are represented by `?`
         comment="%",  # skip line starting by `%` since they are comments
         names=[name for name in openml_columns_info],
-        dtypes=dtypes
+        dtype=dtypes,
     )
 
     columns_to_select = feature_names_to_select + target_names_to_select
     columns_to_keep = [col for col in frame.columns if col in columns_to_select]
     frame = frame[columns_to_keep]
 
-    frame = _cast_frame(frame, openml_columns_info)
     X, y = _post_process_frame(frame, feature_names_to_select, target_names_to_select)
 
     if output_type == "pandas":
