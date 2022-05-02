@@ -2084,7 +2084,7 @@ def test_multi_core_gridsearch_and_early_stopping():
     }
 
     clf = SGDClassifier(tol=1e-2, max_iter=1000, early_stopping=True, random_state=0)
-    search = RandomizedSearchCV(clf, param_grid, n_iter=3, n_jobs=2, random_state=0)
+    search = RandomizedSearchCV(clf, param_grid, n_iter=5, n_jobs=2, random_state=0)
     search.fit(iris.data, iris.target)
     assert search.best_score_ > 0.8
 
