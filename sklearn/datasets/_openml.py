@@ -952,7 +952,7 @@ def fetch_openml(
                     "Alternatively, explicitely set `parser='liac-arff'`."
                 )
                 if parser == "auto":
-                    # TODO (1.3): In version 1.3, we will raise an error instead of
+                    # TODO(1.3): In version 1.3, we will raise an error instead of
                     # a warning.
                     warn(
                         "From version 1.3, `parser='auto'` with `as_frame=False` "
