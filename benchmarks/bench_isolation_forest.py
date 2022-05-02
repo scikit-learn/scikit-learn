@@ -48,7 +48,8 @@ fig_roc, ax_roc = plt.subplots(1, 1, figsize=(8, 5))
 with_decision_function_histograms = False
 
 # datasets available = ['http', 'smtp', 'SA', 'SF', 'shuttle', 'forestcover']
-datasets = ["http", "smtp", "SA", "SF", "shuttle", "forestcover"]
+# datasets = ["http", "smtp", "SA", "SF", "shuttle", "forestcover"]
+datasets = ["shuttle"]
 
 # Loop over all datasets for fitting and scoring the estimator:
 for dat in datasets:
@@ -64,9 +65,9 @@ for dat in datasets:
         y = dataset.target
 
     if dat == "shuttle":
-        dataset = fetch_openml("shuttle")
+        dataset = fetch_openml("shuttle", as_frame=False, parser="pandas")
         X = dataset.data
-        y = dataset.target
+        y = dataset.target.astype(np.int64)
         X, y = sh(X, y, random_state=random_state)
         # we remove data with label 4
         # normal data are then those of class 1
