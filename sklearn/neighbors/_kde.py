@@ -136,13 +136,7 @@ class KernelDensity(BaseEstimator):
         self.breadth_first = breadth_first
         self.leaf_size = leaf_size
         self.metric_params = metric_params
-
-        if bandwidth in ['scott', 'silvermann']:
-            self.bandwidth = bandwidth
-        elif bandwidth > 0:
-            self.bandwidth = bandwidth
-        else:
-            self.bandwidth = -1
+        self.bandwidth = bandwidth
 
     def _choose_algorithm(self, algorithm, metric):
         # given the algorithm string + metric string, choose the optimal
@@ -189,13 +183,13 @@ class KernelDensity(BaseEstimator):
         """
 
         algorithm = self._choose_algorithm(self.algorithm, self.metric)
-
+        
         if self.bandwidth == 'scott':
             self.bandwidth = X.shape[0]**(-1 / (X.shape[1]+4))
         elif self.bandwidth == 'silvermann':
             self.bandwidth = (X.shape[0] * (X.shape[1]+2) / 4)**(-1 / (X.shape[1]+4))
-        elif self.bandwidth <= 0:
-            raise ValueError("bandwidth must be positive")
+        else:
+            raise ValueError("Bandwidth must be positive, 'scott' or 'silvermann'")
         if self.kernel not in VALID_KERNELS:
             raise ValueError("invalid kernel: '{0}'".format(self.kernel))
 
