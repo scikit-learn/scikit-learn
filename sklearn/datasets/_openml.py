@@ -832,9 +832,8 @@ def fetch_openml(
 
     Notes
     -----
-    It should be noted that the `"pandas"` and `"liac-arff"` parsers can lead
-    to different data types in the output. The notable differences are the
-    following:
+    The `"pandas"` and `"liac-arff"` parsers can lead to different data types 
+    in the output. The notable differences are the following:
 
     - The `"liac-arff"` parser always encodes categorical features as `str` objects.
       To the contrary, the `"pandas"` parser instead infers the type while
@@ -843,7 +842,7 @@ def fetch_openml(
     - The `"liac-arff"` parser uses floats to encode numerical features
       tagged as 'REAL' and 'NUMERICAL' in the metadata. The `"pandas"`
       parser instead infers if these numerical features corresponds
-      to integers.
+      to integers and uses panda's Integer extension dtype.
     """
     if cache is False:
         # no caching will be applied
@@ -903,7 +902,7 @@ def fetch_openml(
             "unusable. Warning: {}".format(data_description["warning"])
         )
 
-    # TODO (1.3): remove "deprecated" from the valid parser
+    # TODO(1.3): remove "deprecated" from the valid parser
     valid_parsers = ("auto", "pandas", "liac-arff", "deprecated")
     if parser not in valid_parsers:
         raise ValueError(
@@ -912,13 +911,15 @@ def fetch_openml(
         )
 
     if parser == "deprecated":
-        # TODO (1.3): remove this warning
+        # TODO(1.3): remove this warning
         parser = "liac-arff"
         warn(
             "The default value of `parser` will change from `'liac-arff'` to "
             "`'auto'` in 1.3. You can set `parser='auto'` to silence this "
             "warning. Therefore, an `ImportError` will be raised from 1.3 if "
-            "the dataset is dense and pandas is not installed.",
+            "the dataset is dense and pandas is not installed. Note that the pandas "
+            "parser may return different data types. See the Notes Section in " 
+            "fetch_openml's API doc for details.",
             FutureWarning,
         )
 

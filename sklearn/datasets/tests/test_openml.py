@@ -62,9 +62,8 @@ class _MockHTTPResponse:
         return False
 
 
-# Do not use a cache for `fetch_openml` to avoid concurrent writing
-# issues with `pytest-xdist`.
-# Furthermore sklearn/datasets/tests/data/openml/ is not always consistent
+# Disable the disk-based cache when testing `fetch_openml`:
+# the mock data in sklearn/datasets/tests/data/openml/ is not always consistent
 # with the version on openml.org. If one were to load the dataset outside of
 # the tests, it may result in data that does not represent openml.org.
 fetch_openml = partial(fetch_openml_orig, data_home=None)
@@ -297,7 +296,7 @@ def test_fetch_openml_as_frame_false(
 ):
     """Check the behaviour of `fetch_openml` with `as_frame=False`.
 
-    Fetch by ID and/or name (depending if the file was previously cached).
+    Fetch both by ID and/or name + version.
     """
     pytest.importorskip("pandas")
 
@@ -1003,7 +1002,7 @@ def test_fetch_openml_requires_pandas_in_future(monkeypatch):
 
 
 @pytest.mark.filterwarnings("ignore:Version 1 of dataset Australian is inactive")
-# TODO (1.3): remove this filterwarning decorator for `parser`
+# TODO(1.3): remove this filterwarning decorator for `parser`
 @pytest.mark.filterwarnings("ignore:The default value of `parser` will change")
 @pytest.mark.parametrize(
     "params, err_msg",
