@@ -48,8 +48,7 @@ fig_roc, ax_roc = plt.subplots(1, 1, figsize=(8, 5))
 with_decision_function_histograms = False
 
 # datasets available = ['http', 'smtp', 'SA', 'SF', 'shuttle', 'forestcover']
-# datasets = ["http", "smtp", "SA", "SF", "shuttle", "forestcover"]
-datasets = ["shuttle"]
+datasets = ["http", "smtp", "SA", "SF", "shuttle", "forestcover"]
 
 # Loop over all datasets for fitting and scoring the estimator:
 for dat in datasets:
