@@ -1,7 +1,6 @@
 from sklearn.utils import all_estimators
 from sklearn.compose import ColumnTransformer
 from sklearn.utils.estimator_checks import _construct_instance
-from io import StringIO
 from docutils import nodes
 import warnings
 
@@ -11,12 +10,12 @@ from docutils.parsers.rst import Directive
 class Allow_Nan(Directive):
     @staticmethod
     def make_paragraph_for_estimator_type(estimator_type):
-        output = StringIO()
-        output.write(
-            f"* List of estimators that allow NaN values for type *{estimator_type}*:\n"
-        )
-
+        intro = nodes.list_item()
+        intro += nodes.strong(text="Estimators that allow NaN values for type ")
+        intro += nodes.literal(text=f"{estimator_type}")
+        intro += nodes.strong(text=":\n" )
         exists = False
+        lst = nodes.bullet_list()
         for name, est_class in all_estimators(type_filter=estimator_type):
             try:
                 est = _construct_instance(est_class)
@@ -31,17 +30,29 @@ class Allow_Nan(Directive):
             if est._get_tags().get("allow_nan"):
                 module_name = est_class.__module__
                 class_name = est_class.__name__
-                output.write(f" * :class:`{module_name}.{class_name}`\n")
+                class_title = f"{est_class.__name__}"
+                class_url = f"generated/{module_name}.{est_class.__name__}.html"
+                item = nodes.list_item()
+                para = nodes.paragraph()
+                para += nodes.reference(
+                    class_title,
+                    text=class_title,
+                    internal=False,
+                    refuri=class_url
+                )
                 exists = True
-        return nodes.paragraph(text=output.getvalue()) if exists else None
+                item += para
+                lst += item
+        intro += lst
+        return [intro] if exists else None
 
     def run(self):
-        output = []
+        lst = nodes.bullet_list()
         for i in ["cluster", "regressor", "classifier", "transformer"]:
-            paragraph = self.make_paragraph_for_estimator_type(i)
-            if paragraph is not None:
-                output.append(paragraph)
-        return output
+            item = self.make_paragraph_for_estimator_type(i)
+            if item is not None:
+                lst += item
+        return [lst]
 
 
 def setup(app):
