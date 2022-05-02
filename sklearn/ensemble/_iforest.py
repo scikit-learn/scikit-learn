@@ -304,7 +304,12 @@ class IsolationForest(OutlierMixin, BaseBagging):
         self.max_samples_ = max_samples
         max_depth = int(np.ceil(np.log2(max(max_samples, 2))))
         super()._fit(
-            X, y, max_samples, max_depth=max_depth, sample_weight=sample_weight
+            X,
+            y,
+            max_samples,
+            max_depth=max_depth,
+            sample_weight=sample_weight,
+            check_input=False,
         )
 
         if self.contamination == "auto":

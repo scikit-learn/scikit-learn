@@ -324,7 +324,8 @@ In general, the run time cost to construct a balanced binary tree is
 to generate balanced trees, they will not always be balanced.  Assuming that the
 subtrees remain approximately balanced, the cost at each node consists of
 searching through :math:`O(n_{features})` to find the feature that offers the
-largest reduction in entropy.  This has a cost of
+largest reduction in the impurity criterion, e.g. log loss (which is equivalent to an
+information gain). This has a cost of
 :math:`O(n_{features}n_{samples}\log(n_{samples}))` at each node, leading to a
 total cost over the entire trees (by summing the cost at each node) of
 :math:`O(n_{features}n_{samples}^{2}\log(n_{samples}))`.
@@ -494,7 +495,7 @@ Gini:
 
     H(Q_m) = \sum_k p_{mk} (1 - p_{mk})
 
-Entropy:
+Log Loss or Entropy:
 
 .. math::
 
