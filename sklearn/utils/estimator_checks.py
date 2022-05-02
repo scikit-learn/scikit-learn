@@ -675,7 +675,7 @@ def _set_checking_parameters(estimator):
     if "n_init" in params:
         # K-Means
         estimator.set_params(n_init=2)
-    if "batch_size" in params:
+    if "batch_size" in params and not name.startswith("MLP"):
         estimator.set_params(batch_size=10)
 
     if name == "MeanShift":

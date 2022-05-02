@@ -12,6 +12,15 @@ Version 1.1.1
 Changelog
 ---------
 
+:mod:`sklearn.metrics`
+......................
+
+- |Fix| Fixes `metrics.precision_recall_curve` to compute precision-recall at 100%
+  recall. The Precision-Recall curve now displays the last point corresponding to a
+  classifier that always predicts the positive class: recall=100% and
+  precision=class balance.
+  :pr:`23214` by :user:`Stéphane Collot <stephanecollot>` and :user:`Max Baak <mbaak>`.
+
 .. _changes_1_1:
 
 Version 1.1.0
@@ -102,26 +111,27 @@ Changelog
   for dense float64 datasets have been refactored. The following functions
   and estimators now benefit from improved performances in terms of hardware
   scalability and speed-ups:
-    - :func:`sklearn.metrics.pairwise_distances_argmin`
-    - :func:`sklearn.metrics.pairwise_distances_argmin_min`
-    - :class:`sklearn.cluster.AffinityPropagation`
-    - :class:`sklearn.cluster.Birch`
-    - :class:`sklearn.cluster.MeanShift`
-    - :class:`sklearn.cluster.OPTICS`
-    - :class:`sklearn.cluster.SpectralClustering`
-    - :func:`sklearn.feature_selection.mutual_info_regression`
-    - :class:`sklearn.neighbors.KNeighborsClassifier`
-    - :class:`sklearn.neighbors.KNeighborsRegressor`
-    - :class:`sklearn.neighbors.RadiusNeighborsClassifier`
-    - :class:`sklearn.neighbors.RadiusNeighborsRegressor`
-    - :class:`sklearn.neighbors.LocalOutlierFactor`
-    - :class:`sklearn.neighbors.NearestNeighbors`
-    - :class:`sklearn.manifold.Isomap`
-    - :class:`sklearn.manifold.LocallyLinearEmbedding`
-    - :class:`sklearn.manifold.TSNE`
-    - :func:`sklearn.manifold.trustworthiness`
-    - :class:`sklearn.semi_supervised.LabelPropagation`
-    - :class:`sklearn.semi_supervised.LabelSpreading`
+
+  - :func:`sklearn.metrics.pairwise_distances_argmin`
+  - :func:`sklearn.metrics.pairwise_distances_argmin_min`
+  - :class:`sklearn.cluster.AffinityPropagation`
+  - :class:`sklearn.cluster.Birch`
+  - :class:`sklearn.cluster.MeanShift`
+  - :class:`sklearn.cluster.OPTICS`
+  - :class:`sklearn.cluster.SpectralClustering`
+  - :func:`sklearn.feature_selection.mutual_info_regression`
+  - :class:`sklearn.neighbors.KNeighborsClassifier`
+  - :class:`sklearn.neighbors.KNeighborsRegressor`
+  - :class:`sklearn.neighbors.RadiusNeighborsClassifier`
+  - :class:`sklearn.neighbors.RadiusNeighborsRegressor`
+  - :class:`sklearn.neighbors.LocalOutlierFactor`
+  - :class:`sklearn.neighbors.NearestNeighbors`
+  - :class:`sklearn.manifold.Isomap`
+  - :class:`sklearn.manifold.LocallyLinearEmbedding`
+  - :class:`sklearn.manifold.TSNE`
+  - :func:`sklearn.manifold.trustworthiness`
+  - :class:`sklearn.semi_supervised.LabelPropagation`
+  - :class:`sklearn.semi_supervised.LabelSpreading`
 
   For instance :class:`sklearn.neighbors.NearestNeighbors.kneighbors` and
   :class:`sklearn.neighbors.NearestNeighbors.radius_neighbors`
@@ -781,6 +791,10 @@ Changelog
   `solver="sparse_cg"` and `solver="lbfgs"` are now correctly computed in the presence
   of sample weights when the input is sparse.
   :pr:`22899` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |Fix| :class:`linear_model.SGDRegressor` and :class:`linear_model.SGDClassifier` now
+  computes the validation error correctly when early stopping is enabled.
+  :pr:`23256` by :user:`Zhehao Liu <MaxwellLZH>`.
 
 - |API| :class:`linear_model.LassoLarsIC` now exposes `noise_variance` as
   a parameter in order to provide an estimate of the noise variance.
