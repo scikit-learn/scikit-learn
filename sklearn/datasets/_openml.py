@@ -688,7 +688,7 @@ def fetch_openml(
     as_frame: Union[str, bool] = "auto",
     n_retries: int = 3,
     delay: float = 1.0,
-    parser: Optional[str] = "deprecated",
+    parser: Optional[str] = "warn",
 ):
     """Fetch dataset from openml by name or dataset id.
 
@@ -832,7 +832,7 @@ def fetch_openml(
 
     Notes
     -----
-    The `"pandas"` and `"liac-arff"` parsers can lead to different data types 
+    The `"pandas"` and `"liac-arff"` parsers can lead to different data types
     in the output. The notable differences are the following:
 
     - The `"liac-arff"` parser always encodes categorical features as `str` objects.
@@ -902,15 +902,15 @@ def fetch_openml(
             "unusable. Warning: {}".format(data_description["warning"])
         )
 
-    # TODO(1.3): remove "deprecated" from the valid parser
-    valid_parsers = ("auto", "pandas", "liac-arff", "deprecated")
+    # TODO(1.3): remove "warn" from the valid parser
+    valid_parsers = ("auto", "pandas", "liac-arff", "warn")
     if parser not in valid_parsers:
         raise ValueError(
             f"`parser` must be one of {', '.join(repr(p) for p in valid_parsers)}. Got"
             f" {parser!r} instead."
         )
 
-    if parser == "deprecated":
+    if parser == "warn":
         # TODO(1.3): remove this warning
         parser = "liac-arff"
         warn(
@@ -918,7 +918,7 @@ def fetch_openml(
             "`'auto'` in 1.3. You can set `parser='auto'` to silence this "
             "warning. Therefore, an `ImportError` will be raised from 1.3 if "
             "the dataset is dense and pandas is not installed. Note that the pandas "
-            "parser may return different data types. See the Notes Section in " 
+            "parser may return different data types. See the Notes Section in "
             "fetch_openml's API doc for details.",
             FutureWarning,
         )
