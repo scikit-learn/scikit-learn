@@ -14,8 +14,9 @@ detail.
 """
 
 # %%
-# Creating dummy dataset with a sinusoidal relationship and some gaussian noise
-# -----------------------------------------------------------------------------
+# Preparing the data
+# ------------------
+# First, we prepare dummy data with a sinusoidal relationship and some gaussian noise.
 
 # Author: Noel Dawe <noel.dawe@gmail.com>
 #
@@ -28,10 +29,14 @@ X = np.linspace(0, 6, 100)[:, np.newaxis]
 y = np.sin(X).ravel() + np.sin(6 * X).ravel() + rng.normal(0, 0.1, X.shape[0])
 
 # %%
-# Training and prediction with AdaBoost and DecisionTree Regressors
+# Training and prediction with DecisionTree and AdaBoost Regressors
 # -----------------------------------------------------------------
-# The base learner is a DecisionTreeRegressor with `max_depth=4`.
-# AdaBoostRegressor will be built with `n_estimators=300` of those base learners.
+# Now, we define the classifiers and fit them to the data.
+# Then we predict on that same data to see how well they could fit it.
+# The first regressor is a `DecisionTreeRegressor` with `max_depth=4`.
+# The second regressor is an `AdaBoostRegressor` with a `DecisionTreeRegressor`
+# of `max_depth=4` as base learner and will be built with `n_estimators=300`
+# of those base learners.
 
 from sklearn.ensemble import AdaBoostRegressor
 from sklearn.tree import DecisionTreeRegressor
@@ -51,6 +56,8 @@ y_2 = regr_2.predict(X)
 # %%
 # Plotting the results
 # --------------------
+# Finally, we plot how well our two regressors,
+# single decision tree regressor and AdaBoost regressor, could fit the data.
 
 import matplotlib.pyplot as plt
 import seaborn as sns
