@@ -14,8 +14,8 @@ detail.
 """
 
 # %%
-# Create dummy dataset with a sinusoidal relationship and some gaussian noise
-# ---------------------------------------------------------------------------
+# Creating dummy dataset with a sinusoidal relationship and some gaussian noise
+# -----------------------------------------------------------------------------
 
 # Author: Noel Dawe <noel.dawe@gmail.com>
 #
@@ -28,8 +28,8 @@ X = np.linspace(0, 6, 100)[:, np.newaxis]
 y = np.sin(X).ravel() + np.sin(6 * X).ravel() + rng.normal(0, 0.1, X.shape[0])
 
 # %%
-# Train and predict with AdaBoost and DecisionTree Regressors
-# -----------------------------------------------------------
+# Training and prediction with AdaBoost and DecisionTree Regressors
+# -----------------------------------------------------------------
 # The base learner is a DecisionTreeRegressor with `max_depth=4`.
 # AdaBoostRegressor will be built with `n_estimators=300` of those base learners.
 
@@ -49,8 +49,8 @@ y_1 = regr_1.predict(X)
 y_2 = regr_2.predict(X)
 
 # %%
-# Plot the results
-# ----------------
+# Plotting the results
+# --------------------
 
 import matplotlib.pyplot as plt
 import seaborn as sns
