@@ -772,6 +772,10 @@ Changelog
   of sample weights when the input is sparse.
   :pr:`22899` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+- |Fix| :class:`linear_model.SGDRegressor` and :class:`linear_model.SGDClassifier` now
+  computes the validation error correctly when early stopping is enabled.
+  :pr:`23256` by :user:`Zhehao Liu <MaxwellLZH>`.
+
 - |API| :class:`linear_model.LassoLarsIC` now exposes `noise_variance` as
   a parameter in order to provide an estimate of the noise variance.
   This is particularly relevant when `n_features > n_samples` and the
