@@ -58,6 +58,12 @@ pre_python_environment_install() {
         apt-get -yq update
         apt-get -yq install build-essential
 
+    elif [[ "$DISTRIB" == "pip-nogil" ]]; then
+        echo "deb-src http://archive.ubuntu.com/ubuntu/ focal main" | sudo tee -a /etc/apt/sources.list
+        sudo apt-get -yq update
+        sudo apt-get install -yq ccache
+        sudo apt-get build-dep -yq python3 python3-dev
+
     elif [[ "$BUILD_WITH_ICC" == "true" ]]; then
         wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
         sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
@@ -66,11 +72,7 @@ pre_python_environment_install() {
         sudo apt-get update
         sudo apt-get install intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic
         source /opt/intel/oneapi/setvars.sh
-    elif [[ "$DISTRIB" == "pip-nogil" ]]; then
-        echo "deb-src http://archive.ubuntu.com/ubuntu/ focal main" | sudo tee -a /etc/apt/sources.list
-        sudo apt-get -yq update
-        sudo apt-get install -yq ccache
-        sudo apt-get build-dep -yq python3 python3-dev
+
     fi
 }
 
@@ -124,6 +126,18 @@ python_environment_install() {
         # do not install dependencies for lightgbm since it requires scikit-learn.
         python -m pip install "lightgbm>=3.0.0" --no-deps
 
+    elif [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
+        make_conda "ccache python=$PYTHON_VERSION"
+        python -m pip install -U pip
+        echo "Installing numpy and scipy master wheels"
+        dev_anaconda_url=https://pypi.anaconda.org/scipy-wheels-nightly/simple
+        pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url numpy pandas scipy
+        pip install --pre cython
+        echo "Installing joblib master"
+        pip install https://github.com/joblib/joblib/archive/master.zip
+        echo "Installing pillow master"
+        pip install https://github.com/python-pillow/Pillow/archive/main.zip
+
     elif [[ "$DISTRIB" == "pip-nogil" ]]; then
         setup_ccache  # speed-up the build of CPython it-self
         ORIGINAL_FOLDER=`pwd`
@@ -142,18 +156,6 @@ python_environment_install() {
         # would otherwise depend on the GIL.
         echo "Installing build dependencies with pip from the nogil repository: https://d1yxz45j0ypngg.cloudfront.net/"
         pip install numpy scipy cython joblib threadpoolctl
-
-    elif [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
-        make_conda "ccache python=$PYTHON_VERSION"
-        python -m pip install -U pip
-        echo "Installing numpy and scipy master wheels"
-        dev_anaconda_url=https://pypi.anaconda.org/scipy-wheels-nightly/simple
-        pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url numpy pandas scipy
-        pip install --pre cython
-        echo "Installing joblib master"
-        pip install https://github.com/joblib/joblib/archive/master.zip
-        echo "Installing pillow master"
-        pip install https://github.com/python-pillow/Pillow/archive/main.zip
 
     fi
 
