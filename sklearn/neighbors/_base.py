@@ -209,6 +209,8 @@ def _check_precomputed(X):
 def sort_graph_by_row_values(graph, copy=False, warn_when_not_sorted=True):
     """Sort a sparse graph such that each row is stored with increasing values.
 
+    .. versionadded:: 1.2
+
     Parameters
     ----------
     graph : sparse matrix of shape (n_samples, n_samples)
