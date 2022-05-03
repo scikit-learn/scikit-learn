@@ -430,10 +430,9 @@ def test_prefit_max_features():
     """Check the interaction between `prefit` and `max_features`."""
     # case 1: an error should be raised at `transform` if `fit` was not called to
     # validate the attributes
-    prefit, max_features = True, lambda X: X.shape[1]
     estimator = RandomForestClassifier(n_estimators=5, random_state=0)
     estimator.fit(data, y)
-    model = SelectFromModel(estimator, prefit=prefit, max_features=max_features)
+    model = SelectFromModel(estimator, prefit=True, max_features=lambda X: X.shape[1])
 
     err_msg = (
         "When `prefit=True` and `max_features` is a callable, call `fit` "
