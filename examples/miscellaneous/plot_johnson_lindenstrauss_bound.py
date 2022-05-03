@@ -192,7 +192,7 @@ plt.show()
 # Remarks
 # =======
 #
-# According to the JL lemma, projecting 500 samples without too much distortion
+# According to the JL lemma, projecting 300 samples without too much distortion
 # will require at least several thousands dimensions, irrespective of the
 # number of features of the original dataset.
 #
