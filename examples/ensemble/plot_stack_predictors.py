@@ -117,7 +117,9 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import OrdinalEncoder
 
 cat_tree_processor = OrdinalEncoder(
-    handle_unknown="use_encoded_value", unknown_value=-1
+    handle_unknown="use_encoded_value",
+    unknown_value=-1,
+    encoded_missing_value=-2,
 )
 num_tree_processor = SimpleImputer(strategy="mean", add_indicator=True)
 
