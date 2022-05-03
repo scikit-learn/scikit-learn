@@ -211,11 +211,12 @@ def run_benchmark():
     n_neighbors = int(3.0 * perplexity + 1) + 1
 
     tsne_params = dict(
+        init="random",  # pca not supported for sparse matrices
         perplexity=perplexity,
         method="barnes_hut",
         random_state=42,
         n_iter=n_iter,
-        square_distances=True,
+        learning_rate="auto",
     )
 
     transformers = [
