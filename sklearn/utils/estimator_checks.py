@@ -242,6 +242,7 @@ def _yield_transformer_checks(transformer):
         "LocallyLinearEmbedding",
         "RandomizedLasso",
         "LogisticRegressionCV",
+        "BisectingKMeans",
     ]
 
     name = transformer.__class__.__name__
@@ -258,7 +259,8 @@ def _yield_clustering_checks(clusterer):
         yield check_clustering
         yield partial(check_clustering, readonly_memmap=True)
         yield check_estimators_partial_fit_n_features
-    yield check_non_transformer_estimators_n_iter
+    if not hasattr(clusterer, "transform"):
+        yield check_non_transformer_estimators_n_iter
 
 
 def _yield_outliers_checks(estimator):
@@ -647,14 +649,21 @@ def _set_checking_parameters(estimator):
         if estimator.max_iter is not None:
             estimator.set_params(max_iter=min(5, estimator.max_iter))
         # LinearSVR, LinearSVC
-        if estimator.__class__.__name__ in ["LinearSVR", "LinearSVC"]:
+        if name in ["LinearSVR", "LinearSVC"]:
             estimator.set_params(max_iter=20)
         # NMF
-        if estimator.__class__.__name__ == "NMF":
+        if name == "NMF":
             estimator.set_params(max_iter=500)
+        # MiniBatchNMF
+        if estimator.__class__.__name__ == "MiniBatchNMF":
+            estimator.set_params(max_iter=20, fresh_restarts=True)
         # MLP
-        if estimator.__class__.__name__ in ["MLPClassifier", "MLPRegressor"]:
+        if name in ["MLPClassifier", "MLPRegressor"]:
             estimator.set_params(max_iter=100)
+        # MiniBatchDictionaryLearning
+        if name == "MiniBatchDictionaryLearning":
+            estimator.set_params(max_iter=5)
+
     if "n_resampling" in params:
         # randomized lasso
         estimator.set_params(n_resampling=5)
@@ -666,6 +675,9 @@ def _set_checking_parameters(estimator):
     if "n_init" in params:
         # K-Means
         estimator.set_params(n_init=2)
+    if "batch_size" in params and not name.startswith("MLP"):
+        estimator.set_params(batch_size=10)
+
     if name == "MeanShift":
         # In the case of check_fit2d_1sample, bandwidth is set to None and
         # is thus estimated. De facto it is 0.0 as a single sample is provided
@@ -1098,7 +1110,7 @@ def check_sample_weights_not_overwritten(name, estimator_orig):
 
     estimator.fit(X, y, sample_weight=sample_weight_fit)
 
-    err_msg = "{name} overwrote the original `sample_weight` given during fit"
+    err_msg = f"{name} overwrote the original `sample_weight` given during fit"
     assert_allclose(sample_weight_fit, sample_weight_original, err_msg=err_msg)
 
 
@@ -2128,7 +2140,7 @@ def check_classifiers_train(
     if not tags["binary_only"]:
         problems.append((X_m, y_m))
 
-    for (X, y) in problems:
+    for X, y in problems:
         classes = np.unique(y)
         n_classes = len(classes)
         n_samples, n_features = X.shape

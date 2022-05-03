@@ -78,7 +78,7 @@ push datafiles to them.
 .. _gitter:
 
 Gitter
-===
+======
 
 Some developers like to hang out on scikit-learn Gitter room:
 https://gitter.im/scikit-learn/scikit-learn.

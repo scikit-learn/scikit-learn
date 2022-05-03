@@ -554,9 +554,6 @@ def test_linear_model_sample_weights_normalize_in_pipeline(
     # a StandardScaler and sample_weight.
     model_name = estimator.__name__
 
-    if model_name in ["Lasso", "ElasticNet"] and is_sparse:
-        pytest.skip(f"{model_name} does not support sample_weight with sparse")
-
     rng = np.random.RandomState(0)
     X, y = make_regression(n_samples=20, n_features=5, noise=1e-2, random_state=rng)
 
@@ -1483,15 +1480,17 @@ def test_multi_task_lasso_cv_dtype():
 
 @pytest.mark.parametrize("fit_intercept", [True, False])
 @pytest.mark.parametrize("alpha", [0.01])
-@pytest.mark.parametrize("normalize", [False, True])
 @pytest.mark.parametrize("precompute", [False, True])
-def test_enet_sample_weight_consistency(fit_intercept, alpha, normalize, precompute):
+@pytest.mark.parametrize("sparseX", [False, True])
+def test_enet_sample_weight_consistency(fit_intercept, alpha, precompute, sparseX):
     """Test that the impact of sample_weight is consistent."""
     rng = np.random.RandomState(0)
     n_samples, n_features = 10, 5
 
     X = rng.rand(n_samples, n_features)
     y = rng.rand(n_samples)
+    if sparseX:
+        X = sparse.csc_matrix(X)
     params = dict(
         alpha=alpha,
         fit_intercept=fit_intercept,
@@ -1541,7 +1540,10 @@ def test_enet_sample_weight_consistency(fit_intercept, alpha, normalize, precomp
 
     # check that multiplying sample_weight by 2 is equivalent
     # to repeating corresponding samples twice
-    X2 = np.concatenate([X, X[: n_samples // 2]], axis=0)
+    if sparseX:
+        X2 = sparse.vstack([X, X[: n_samples // 2]], format="csc")
+    else:
+        X2 = np.concatenate([X, X[: n_samples // 2]], axis=0)
     y2 = np.concatenate([y, y[: n_samples // 2]])
     sample_weight_1 = np.ones(len(y))
     sample_weight_1[: n_samples // 2] = 2
@@ -1549,23 +1551,12 @@ def test_enet_sample_weight_consistency(fit_intercept, alpha, normalize, precomp
     reg1 = ElasticNet(**params).fit(X, y, sample_weight=sample_weight_1)
 
     reg2 = ElasticNet(**params).fit(X2, y2, sample_weight=None)
-    assert_allclose(reg1.coef_, reg2.coef_)
-
-
-@pytest.mark.parametrize("estimator", (Lasso, ElasticNet))
-def test_enet_sample_weight_sparse(estimator):
-    reg = estimator()
-    X = sparse.csc_matrix(np.zeros((3, 2)))
-    y = np.array([-1, 0, 1])
-    sw = np.array([1, 2, 3])
-    with pytest.raises(
-        ValueError, match="Sample weights do not.*support sparse matrices"
-    ):
-        reg.fit(X, y, sample_weight=sw, check_input=True)
+    assert_allclose(reg1.coef_, reg2.coef_, rtol=1e-6)
 
 
 @pytest.mark.parametrize("fit_intercept", [True, False])
-def test_enet_cv_sample_weight_correctness(fit_intercept):
+@pytest.mark.parametrize("sparseX", [False, True])
+def test_enet_cv_sample_weight_correctness(fit_intercept, sparseX):
     """Test that ElasticNetCV with sample weights gives correct results."""
     rng = np.random.RandomState(42)
     n_splits, n_samples, n_features = 3, 10, 5
@@ -1574,6 +1565,9 @@ def test_enet_cv_sample_weight_correctness(fit_intercept):
     beta[0:2] = 0
     y = X @ beta + rng.rand(n_splits * n_samples)
     sw = np.ones_like(y)
+    if sparseX:
+        X = sparse.csc_matrix(X)
+    params = dict(tol=1e-6)
 
     # Set alphas, otherwise the two cv models might use different ones.
     if fit_intercept:
@@ -1588,20 +1582,22 @@ def test_enet_cv_sample_weight_correctness(fit_intercept):
     ]
     splits_sw = list(LeaveOneGroupOut().split(X, groups=groups_sw))
     reg_sw = ElasticNetCV(
-        alphas=alphas,
-        cv=splits_sw,
-        fit_intercept=fit_intercept,
+        alphas=alphas, cv=splits_sw, fit_intercept=fit_intercept, **params
     )
     reg_sw.fit(X, y, sample_weight=sw)
 
     # We repeat the first fold 2 times and provide splits ourselves
+    if sparseX:
+        X = X.toarray()
     X = np.r_[X[:n_samples], X]
+    if sparseX:
+        X = sparse.csc_matrix(X)
     y = np.r_[y[:n_samples], y]
     groups = np.r_[
         np.full(2 * n_samples, 0), np.full(n_samples, 1), np.full(n_samples, 2)
     ]
     splits = list(LeaveOneGroupOut().split(X, groups=groups))
-    reg = ElasticNetCV(alphas=alphas, cv=splits, fit_intercept=fit_intercept)
+    reg = ElasticNetCV(alphas=alphas, cv=splits, fit_intercept=fit_intercept, **params)
     reg.fit(X, y)
 
     # ensure that we chose meaningful alphas, i.e. not boundaries
@@ -1649,7 +1645,10 @@ def test_enet_cv_grid_search(sample_weight):
 @pytest.mark.parametrize("fit_intercept", [True, False])
 @pytest.mark.parametrize("l1_ratio", [0, 0.5, 1])
 @pytest.mark.parametrize("precompute", [False, True])
-def test_enet_cv_sample_weight_consistency(fit_intercept, l1_ratio, precompute):
+@pytest.mark.parametrize("sparseX", [False, True])
+def test_enet_cv_sample_weight_consistency(
+    fit_intercept, l1_ratio, precompute, sparseX
+):
     """Test that the impact of sample_weight is consistent."""
     rng = np.random.RandomState(0)
     n_samples, n_features = 10, 5
@@ -1663,6 +1662,8 @@ def test_enet_cv_sample_weight_consistency(fit_intercept, l1_ratio, precompute):
         tol=1e-6,
         cv=3,
     )
+    if sparseX:
+        X = sparse.csc_matrix(X)
 
     if l1_ratio == 0:
         params.pop("l1_ratio", None)
@@ -1693,18 +1694,6 @@ def test_enet_cv_sample_weight_consistency(fit_intercept, l1_ratio, precompute):
     assert_allclose(reg.coef_, coef, rtol=1e-6)
     if fit_intercept:
         assert_allclose(reg.intercept_, intercept)
-
-
-@pytest.mark.parametrize("estimator", (LassoCV, ElasticNetCV))
-def test_enet_cv_sample_weight_sparse(estimator):
-    reg = estimator()
-    X = sparse.csc_matrix(np.zeros((3, 2)))
-    y = np.array([-1, 0, 1])
-    sw = np.array([1, 2, 3])
-    with pytest.raises(
-        ValueError, match="Sample weights do not.*support sparse matrices"
-    ):
-        reg.fit(X, y, sample_weight=sw)
 
 
 @pytest.mark.parametrize("estimator", [ElasticNetCV, LassoCV])
