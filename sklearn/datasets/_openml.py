@@ -844,7 +844,7 @@ def fetch_openml(
       To the contrary, the `"pandas"` parser instead infers the type while
       reading and numerical categories will be casted into integers or floats
       whenever possible.
-    - The `"liac-arff"` parser uses floats to encode numerical features
+    - The `"liac-arff"` parser uses float64 to encode numerical features
       tagged as 'REAL' and 'NUMERICAL' in the metadata. The `"pandas"`
       parser instead infers if these numerical features corresponds
       to integers and uses panda's Integer extension dtype.
