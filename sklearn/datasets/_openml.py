@@ -842,12 +842,16 @@ def fetch_openml(
 
     - The `"liac-arff"` parser always encodes categorical features as `str` objects.
       To the contrary, the `"pandas"` parser instead infers the type while
-      reading and numerical categories will be casted into integers or floats
-      whenever possible.
+      reading and numerical categories will be casted into integers whenever
+      possible.
     - The `"liac-arff"` parser uses float64 to encode numerical features
       tagged as 'REAL' and 'NUMERICAL' in the metadata. The `"pandas"`
       parser instead infers if these numerical features corresponds
       to integers and uses panda's Integer extension dtype.
+    - In particular, classification datasets with integer categories are
+      typically loaded as such `(0, 1, ...)` with the `"pandas"` parser while
+      `"liac-arff"` will force the use of string encoded class labels such as
+      `"0"`, `"1"` and so on.
 
     In addition, when `as_frame=False` is used, the `"liac-arff"` parser
     returns ordinally encoded data where the categories are provided in the
