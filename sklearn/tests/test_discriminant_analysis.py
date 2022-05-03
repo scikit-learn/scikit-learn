@@ -491,8 +491,7 @@ def test_lda_dimension_warning(n_classes, n_features):
     for n_components in [max_components - 1, None, max_components]:
         # if n_components <= min(n_classes - 1, n_features), no warning
         lda = LinearDiscriminantAnalysis(n_components=n_components)
-        with pytest.warns(None):
-            lda.fit(X, y)
+        lda.fit(X, y)
 
     for n_components in [max_components + 1, max(n_features, n_classes - 1) + 1]:
         # if n_components > min(n_classes - 1, n_features), raise error.
@@ -515,14 +514,14 @@ def test_lda_dimension_warning(n_classes, n_features):
     ],
 )
 def test_lda_dtype_match(data_type, expected_type):
-    for (solver, shrinkage) in solver_shrinkage:
+    for solver, shrinkage in solver_shrinkage:
         clf = LinearDiscriminantAnalysis(solver=solver, shrinkage=shrinkage)
         clf.fit(X.astype(data_type), y.astype(data_type))
         assert clf.coef_.dtype == expected_type
 
 
 def test_lda_numeric_consistency_float32_float64():
-    for (solver, shrinkage) in solver_shrinkage:
+    for solver, shrinkage in solver_shrinkage:
         clf_32 = LinearDiscriminantAnalysis(solver=solver, shrinkage=shrinkage)
         clf_32.fit(X.astype(np.float32), y.astype(np.float32))
         clf_64 = LinearDiscriminantAnalysis(solver=solver, shrinkage=shrinkage)
