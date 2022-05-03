@@ -94,7 +94,7 @@ random sampling procedures.
 
 - |Fix| :meth:`feature_selection.SelectFromModel.fit` and
   :meth:`feature_selection.SelectFromModel.partial_fit` can now be called with
-  `prefit=True`.
+  `prefit=True`. :pr:`23271` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 Changelog
 ---------
