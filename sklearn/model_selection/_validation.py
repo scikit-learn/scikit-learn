@@ -15,7 +15,7 @@ import warnings
 import numbers
 import time
 from functools import partial
-from traceback import format_exc, format_exception
+from traceback import format_exc
 from contextlib import suppress
 from collections import Counter
 
