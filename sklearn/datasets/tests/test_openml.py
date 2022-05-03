@@ -569,6 +569,35 @@ def test_fetch_openml_equivalence_array_return_X_y(monkeypatch, data_id, parser)
     assert_array_equal(bunch.target, y)
 
 
+# Known failure of PyPy for OpenML. See the following issue:
+# https://github.com/scikit-learn/scikit-learn/issues/18906
+@fails_if_pypy
+def test_fetch_openml_difference_parsers(monkeypatch):
+    """Check the difference between liac-arff and pandas parser."""
+    pytest.importorskip("pandas")
+
+    data_id = 1119
+    _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response=True)
+    # When `as_frame=False`, the categories will be ordinally encoded with
+    # liac-arff parser while this is not the case with pandas parser.
+    as_frame = False
+    bunch_liac_arff = fetch_openml(
+        data_id=data_id,
+        as_frame=as_frame,
+        cache=False,
+        parser="liac-arff",
+    )
+    bunch_pandas = fetch_openml(
+        data_id=data_id,
+        as_frame=as_frame,
+        cache=False,
+        parser="pandas",
+    )
+
+    assert bunch_liac_arff.data.dtype.kind == "f"
+    assert bunch_pandas.data.dtype == "O"
+
+
 ###############################################################################
 # Test the ARFF parsing on several dataset to check if detect the correct
 # types (categories, intgers, floats).
