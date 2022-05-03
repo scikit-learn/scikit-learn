@@ -60,7 +60,7 @@ for eps, color in zip(eps_range, colors):
     min_n_components = johnson_lindenstrauss_min_dim(n_samples_range, eps=eps)
     plt.loglog(n_samples_range, min_n_components, color=color)
 
-plt.legend(["eps = %0.1f" % eps for eps in eps_range], loc="lower right")
+plt.legend([f"eps = {eps:0.1f}" for eps in eps_range], loc="lower right")
 plt.xlabel("Number of observations to eps-embed")
 plt.ylabel("Minimum number of dimensions")
 plt.title("Johnson-Lindenstrauss bounds:\nn_samples vs n_components")
@@ -84,7 +84,7 @@ for n_samples, color in zip(n_samples_range, colors):
     min_n_components = johnson_lindenstrauss_min_dim(n_samples, eps=eps_range)
     plt.semilogy(eps_range, min_n_components, color=color)
 
-plt.legend(["n_samples = %d" % n for n in n_samples_range], loc="upper right")
+plt.legend([f"n_samples = {n}" for n in n_samples_range], loc="upper right")
 plt.xlabel("Distortion eps")
 plt.ylabel("Minimum number of dimensions")
 plt.title("Johnson-Lindenstrauss bounds:\nn_components vs eps")
@@ -125,11 +125,11 @@ else:
 
 n_samples, n_features = data.shape
 print(
-    "Embedding %d samples with dim %d using various random projections"
-    % (n_samples, n_features)
+    f"Embedding {n_samples} samples with dim {n_features} using various "
+    "random projections"
 )
 
-n_components_range = np.array([300, 1000, 10000])
+n_components_range = np.array([300, 1_000, 10_000])
 dists = euclidean_distances(data, squared=True).ravel()
 
 # select only non-identical samples pairs
@@ -141,13 +141,13 @@ for n_components in n_components_range:
     rp = SparseRandomProjection(n_components=n_components)
     projected_data = rp.fit_transform(data)
     print(
-        "Projected %d samples from %d to %d in %0.3fs"
-        % (n_samples, n_features, n_components, time() - t0)
+        f"Projected {n_samples} samples from {n_features} to {n_components} in "
+        f"{time() - t0:0.3f}s"
     )
     if hasattr(rp, "components_"):
         n_bytes = rp.components_.data.nbytes
         n_bytes += rp.components_.indices.nbytes
-        print("Random matrix with size: %0.3fMB" % (n_bytes / 1e6))
+        print(f"Random matrix with size: {n_bytes / 1e6:0.3f} MB")
 
     projected_dists = euclidean_distances(projected_data, squared=True).ravel()[nonzero]
 
@@ -168,7 +168,7 @@ for n_components in n_components_range:
     cb.set_label("Sample pairs counts")
 
     rates = projected_dists / dists
-    print("Mean distances rate: %0.2f (%0.2f)" % (np.mean(rates), np.std(rates)))
+    print(f"Mean distances rate: {np.mean(rates):.2f} ({np.std(rates):.2f})")
 
     plt.figure()
     plt.hist(rates, bins=50, range=(0.0, 2.0), edgecolor="k", density=True)
