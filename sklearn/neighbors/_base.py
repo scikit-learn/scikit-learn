@@ -219,12 +219,13 @@ def sort_graph_by_row_values(graph, copy=False, warn_when_not_sorted=True):
 
     copy : bool
         If True, the graph is copied before sorting. If False, the sorting is
-        performed inplace. If graph is not of CSR format, a copy is always
-        returned.
+        performed inplace. If the graph is not of CSR format, `copy` must be
+        True to allow the conversion to CSR format, otherwise an error is
+        raised.
 
     warn_when_not_sorted : bool
-        If True, a warning is raised when the input graph is not sorted by row
-        values.
+        If True, a :class:`~sklearn.exceptions.EfficiencyWarning` is raised
+        when the input graph is not sorted by row values.
 
     Returns
     -------
@@ -232,6 +233,11 @@ def sort_graph_by_row_values(graph, copy=False, warn_when_not_sorted=True):
         Distance matrix to other samples, where only non-zero elements are
         considered neighbors. Matrix is in CSR format.
     """
+    if not issparse(graph):
+        raise TypeError(
+            "Input graph must be a sparse matrix, got %s instead." % (type(graph),)
+        )
+
     if graph.format == "csr" and _is_sorted_by_row_values(graph):
         return graph
 
@@ -249,9 +255,16 @@ def sort_graph_by_row_values(graph, copy=False, warn_when_not_sorted=True):
             "its handling of explicit zeros".format(graph.format)
         )
     elif graph.format != "csr":
+        if not copy:
+            raise ValueError(
+                "The input graph is not in CSR format. Use copy=True to allow "
+                "the conversion to CSR format."
+            )
         graph = graph.asformat("csr")
     elif copy:  # csr format with copy=True
         graph = graph.copy()
+
+    # After all input checks, sort the graph inplace by row values.
 
     # if each sample has the same number of provided neighbors
     row_nnz = np.diff(graph.indptr)

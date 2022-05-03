@@ -501,12 +501,17 @@ def test_sort_graph_by_row_values_copy():
     X = X_.copy()
     assert sort_graph_by_row_values(X, copy=True).data is not X.data
 
-    X = X_.copy()
-    assert sort_graph_by_row_values(X.tocsc(), copy=False).data is not X.data
-
     # _check_precomputed is never done inplace
     X = X_.copy()
     assert _check_precomputed(X).data is not X.data
+
+    # raise if X is not CSR and copy=False
+    with pytest.raises(ValueError, match="Use copy=True to allow the conversion"):
+        sort_graph_by_row_values(X.tocsc(), copy=False)
+
+    # raise if X is not even sparse
+    with pytest.raises(TypeError, match="Input graph must be a sparse matrix"):
+        sort_graph_by_row_values(X.toarray())
 
 
 def test_sort_graph_by_row_values_warning():
