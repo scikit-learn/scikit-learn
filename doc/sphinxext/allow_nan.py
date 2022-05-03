@@ -9,7 +9,7 @@ import warnings
 from docutils.parsers.rst import Directive
 
 
-class Allow_Nan(Directive):
+class AllowNanEstimators(Directive):
     @staticmethod
     def make_paragraph_for_estimator_type(estimator_type):
         intro = nodes.list_item()
