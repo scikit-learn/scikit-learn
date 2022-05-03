@@ -160,7 +160,7 @@ class KNNImputer(_BaseImputer):
             :, :n_neighbors
         ]
 
-        # Get weight matrix from from distance matrix
+        # Get weight matrix from distance matrix
         donors_dist = dist_pot_donors[
             np.arange(donors_idx.shape[0])[:, None], donors_idx
         ]
