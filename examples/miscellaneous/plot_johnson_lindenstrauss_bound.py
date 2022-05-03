@@ -33,9 +33,9 @@ from sklearn.metrics.pairwise import euclidean_distances
 # .. math::
 #    (1 - eps) \|u - v\|^2 < \|p(u) - p(v)\|^2 < (1 + eps) \|u - v\|^2
 #
-# Where u and v are any rows taken from a dataset of shape (n_samples,
-# n_features) and p is a projection by a random Gaussian N(0, 1) matrix
-# of shape (n_components, n_features) (or a sparse Achlioptas matrix).
+# Where `u` and `v` are any rows taken from a dataset of shape `(n_samples,
+# n_features)` and `p` is a projection by a random Gaussian `N(0, 1)` matrix
+# of shape `(n_components, n_features)` (or a sparse Achlioptas matrix).
 #
 # The minimum number of components to guarantees the eps-embedding is
 # given by:
@@ -97,12 +97,12 @@ plt.show()
 # We validate the above bounds on the 20 newsgroups text document
 # (TF-IDF word frequencies) dataset or on the digits dataset:
 #
-# - for the 20 newsgroups dataset some 500 documents with 100k
+# - for the 20 newsgroups dataset some 300 documents with 100k
 #   features in total are projected using a sparse random matrix to smaller
 #   euclidean spaces with various values for the target number of dimensions
 #   ``n_components``.
 #
-# - for the digits dataset, some 8x8 gray level pixels data for 500
+# - for the digits dataset, some 8x8 gray level pixels data for 300
 #   handwritten digits pictures are randomly projected to spaces for various
 #   larger number of dimensions ``n_components``.
 #
@@ -119,7 +119,7 @@ else:
 # For each value of ``n_components``, we plot:
 #
 # - 2D distribution of sample pairs with pairwise distances in original
-#   and projected spaces as x and y axis respectively.
+#   and projected spaces as x- and y-axis respectively.
 #
 # - 1D histogram of the ratio of those distances (projected / original).
 
@@ -186,11 +186,9 @@ plt.show()
 # We can see that for low values of ``n_components`` the distribution is wide
 # with many distorted pairs and a skewed distribution (due to the hard
 # limit of zero ratio on the left as distances are always positives)
-# while for larger values of n_components the distortion is controlled
+# while for larger values of `n_components` the distortion is controlled
 # and the distances are well preserved by the random projection.
-
-
-# %%
+#
 # Remarks
 # =======
 #
@@ -203,5 +201,5 @@ plt.show()
 # for dimensionality reduction in this case.
 #
 # On the twenty newsgroups on the other hand the dimensionality can be
-# decreased from 56436 down to 10000 while reasonably preserving
+# decreased from 56,436 down to 10,000 while reasonably preserving
 # pairwise distances.
