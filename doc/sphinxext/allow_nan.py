@@ -3,8 +3,10 @@ from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import FeatureUnion
 from sklearn.decomposition import SparseCoder
 from sklearn.utils.estimator_checks import _construct_instance
+from sklearn.utils._testing import SkipTest
 from docutils import nodes
 import warnings
+from contextlib import suppress
 
 from docutils.parsers.rst import Directive
 
@@ -19,19 +21,8 @@ class AllowNanEstimators(Directive):
         exists = False
         lst = nodes.bullet_list()
         for name, est_class in all_estimators(type_filter=estimator_type):
-            try:
+            with suppress(SkipTest):
                 est = _construct_instance(est_class)
-            except:
-                if name == "ColumnTransformer":
-                    est = ColumnTransformer(None)
-                elif name == "SparseCoder":
-                    est = SparseCoder({})
-                elif name == "FeatureUnion":
-                    est = FeatureUnion([(None, None)])
-                else:
-                    warnings.warn(
-                        f"Estimator {est_class.__name__} failed to construct."
-                    )
 
             if est._get_tags().get("allow_nan"):
                 module_name = ".".join(est_class.__module__.split(".")[:2])
