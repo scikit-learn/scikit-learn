@@ -151,9 +151,9 @@ def test_incremental_pca_validation():
 
 def test_n_samples_equal_n_components():
     # Ensures no warning is raised when n_samples==n_components
-    ipca=IncrementalPCA(n_components=5)
-    ipca.partial_fit(np.random.randn(5,7))
-    ipca.fit(np.random.randn(5,7))
+    ipca = IncrementalPCA(n_components=5)
+    ipca.partial_fit(np.random.randn(5, 7))
+    ipca.fit(np.random.randn(5, 7))
 
 
 def test_n_components_none():
