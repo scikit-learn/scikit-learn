@@ -759,7 +759,7 @@ def _score(estimator, X_test, y_test, scorer, error_score="raise"):
     """
     if isinstance(scorer, dict):
         # will cache method calls if needed. scorer() returns a dict
-        scorer = _MultimetricScorer(**scorer)
+        scorer = _MultimetricScorer(raise_exc=(error_score == "raise"), **scorer)
 
     try:
         if y_test is None:
@@ -767,38 +767,42 @@ def _score(estimator, X_test, y_test, scorer, error_score="raise"):
         else:
             scores = scorer(estimator, X_test, y_test)
     except Exception:
-        if error_score == "raise":
+        if isinstance(scorer, _MultimetricScorer):
+            assert error_score == "raise", (
+                "If `_MultimetricScorer` raises exception, the `error_score`"
+                " parameter should be equal to 'raise'."
+            )
             raise
         else:
-            if isinstance(scorer, _MultimetricScorer):
-                scores = {name: error_score for name in scorer._scorers}
+            if error_score == "raise":
+                raise
             else:
                 scores = error_score
-            warnings.warn(
-                "Scoring failed. The score on this train-test partition for "
-                f"these parameters will be set to {error_score}. Details: \n"
-                f"{format_exc()}",
-                UserWarning,
-            )
+                warnings.warn(
+                    "Scoring failed. The score on this train-test partition for "
+                    f"these parameters will be set to {error_score}. Details: \n"
+                    f"{format_exc()}",
+                    UserWarning,
+                )
 
-    # Check errors in `_MultimetricScorer`
+    # Check non-raised error messages in `_MultimetricScorer`
     if isinstance(scorer, _MultimetricScorer):
-        exceptions = [
-            (name, e) for name, e in scores.items() if isinstance(e, Exception)
+        exception_messages = [
+            (name, str_e) for name, str_e in scores.items() if isinstance(str_e, str)
         ]
-        if exceptions:
-            if error_score == "raise":
-                raise exceptions[0][1]
-            else:
-                for name, e in exceptions:
-                    scores[name] = error_score
-                    details = "".join(format_exception(type(e), e, e.__traceback__))
-                    warnings.warn(
-                        "Scoring failed. The score on this train-test partition for "
-                        f"these parameters will be set to {error_score}. Details: \n"
-                        f"{details}",
-                        UserWarning,
-                    )
+        if exception_messages:
+            assert error_score != "raise", (
+                "`error_score` == 'raise', but the exception is not raised in"
+                " `_MultimetricScorer`."
+            )
+            for name, str_e in exception_messages:
+                scores[name] = error_score
+                warnings.warn(
+                    "Scoring failed. The score on this train-test partition for "
+                    f"these parameters will be set to {error_score}. Details: \n"
+                    f"{str_e}",
+                    UserWarning,
+                )
 
     error_msg = "scoring must return a number, got %s (%s) instead. (scorer=%s)"
     if isinstance(scores, dict):

@@ -871,7 +871,8 @@ def test_multimetric_scorer_sanity_check():
         assert_allclose(value, separate_scores[score_name])
 
 
-def test_multimetric_scorer_returning_exceptions_in_dictianary():
+@pytest.mark.parametrize("raise_exc", [True, False])
+def test_multimetric_scorer_exception_handling(raise_exc):
     scorers = {
         "failing_1": "neg_mean_squared_log_error",
         "non_failing": "neg_median_absolute_error",
@@ -887,22 +888,26 @@ def test_multimetric_scorer_returning_exceptions_in_dictianary():
     clf.fit(X, y)
 
     scorer_dict = _check_multimetric_scoring(clf, scorers)
-    multi_scorer = _MultimetricScorer(**scorer_dict)
-
-    result = multi_scorer(clf, X, y)
-
-    e1 = result["failing_1"]
-    score = result["non_failing"]
-    e2 = result["failing_2"]
+    multi_scorer = _MultimetricScorer(raise_exc=raise_exc, **scorer_dict)
 
     error_msg = (
-        "Mean Squared Logarithmic Error cannot be used when targets contain negative"
-        " values."
+        "Mean Squared Logarithmic Error cannot be used when targets contain"
+        " negative values."
     )
 
-    assert type(e1) is ValueError and str(e1) == error_msg
-    assert isinstance(score, float)
-    assert type(e2) is ValueError and str(e2) == error_msg
+    if raise_exc:
+        with pytest.raises(ValueError, match=error_msg):
+            multi_scorer(clf, X, y)
+    else:
+        result = multi_scorer(clf, X, y)
+
+        exception_message_1 = result["failing_1"]
+        score = result["non_failing"]
+        exception_message_2 = result["failing_2"]
+
+        assert isinstance(exception_message_1, str) and error_msg in exception_message_1
+        assert isinstance(score, float)
+        assert isinstance(exception_message_2, str) and error_msg in exception_message_2
 
 
 @pytest.mark.parametrize(

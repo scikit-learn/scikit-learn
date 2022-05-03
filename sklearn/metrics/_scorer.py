@@ -21,6 +21,7 @@ ground truth labeling (or ``None`` in the case of unsupervised models).
 from collections.abc import Iterable
 from functools import partial
 from collections import Counter
+from traceback import format_exc
 
 import numpy as np
 import copy
@@ -88,11 +89,17 @@ class _MultimetricScorer:
 
     Parameters
     ----------
+    raise_exc : bool
+        Whether to raise the exception in `__call__` or not. If set to False
+        a formatted string of the exception details is passed as result of
+        the failing scorer.
+
     scorers : dict
         Dictionary mapping names to callable scorers.
     """
 
-    def __init__(self, **scorers):
+    def __init__(self, *, raise_exc=True, **scorers):
+        self._raise_exc = raise_exc
         self._scorers = scorers
 
     def __call__(self, estimator, *args, **kwargs):
@@ -109,7 +116,10 @@ class _MultimetricScorer:
                     score = scorer(estimator, *args, **kwargs)
                 scores[name] = score
             except Exception as e:
-                scores[name] = e
+                if self._raise_exc:
+                    raise e
+                else:
+                    scores[name] = format_exc()
 
         return scores
 
