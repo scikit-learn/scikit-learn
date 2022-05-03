@@ -36,7 +36,7 @@ class KernelDensity(BaseEstimator):
 
     Parameters
     ----------
-    bandwidth : float | string, default=1.0
+    bandwidth : float | str, default=1.0
         The bandwidth of the kernel. If bandwidth is a float it defines the
         bandwidth of the kernel. If bandwidth is a string one of the estimation
         methods is implemented. Valid options are: ['scott'|'silvermann'].
@@ -136,7 +136,6 @@ class KernelDensity(BaseEstimator):
         self.breadth_first = breadth_first
         self.leaf_size = leaf_size
         self.metric_params = metric_params
-        self.bandwidth = bandwidth
 
     def _choose_algorithm(self, algorithm, metric):
         # given the algorithm string + metric string, choose the optimal
@@ -185,13 +184,13 @@ class KernelDensity(BaseEstimator):
         algorithm = self._choose_algorithm(self.algorithm, self.metric)
 
         if self.bandwidth == "scott":
-            self.bandwidth = X.shape[0] ** (-1 / (X.shape[1] + 4))
+            self.bandwidth_ = X.shape[0] ** (-1 / (X.shape[1] + 4))
         elif self.bandwidth == "silvermann":
-            self.bandwidth = (X.shape[0] * (X.shape[1] + 2) / 4) ** (
+            self.bandwidth_ = (X.shape[0] * (X.shape[1] + 2) / 4) ** (
                 -1 / (X.shape[1] + 4)
             )
         elif self.bandwidth > 0:
-            pass
+            self.bandwidth_ = self.bandwidth
         else:
             raise ValueError("Bandwidth must be positive, 'scott' or 'silvermann'")
         if self.kernel not in VALID_KERNELS:
@@ -244,7 +243,7 @@ class KernelDensity(BaseEstimator):
         atol_N = self.atol * N
         log_density = self.tree_.kernel_density(
             X,
-            h=self.bandwidth,
+            h=self.bandwidth_,
             kernel=self.kernel,
             atol=atol_N,
             rtol=self.rtol,
@@ -313,7 +312,7 @@ class KernelDensity(BaseEstimator):
             sum_weight = cumsum_weight[-1]
             i = np.searchsorted(cumsum_weight, u * sum_weight)
         if self.kernel == "gaussian":
-            return np.atleast_2d(rng.normal(data[i], self.bandwidth))
+            return np.atleast_2d(rng.normal(data[i], self.bandwidth_))
 
         elif self.kernel == "tophat":
             # we first draw points from a d-dimensional normal distribution,
@@ -324,7 +323,7 @@ class KernelDensity(BaseEstimator):
             s_sq = row_norms(X, squared=True)
             correction = (
                 gammainc(0.5 * dim, 0.5 * s_sq) ** (1.0 / dim)
-                * self.bandwidth
+                * self.bandwidth_
                 / np.sqrt(s_sq)
             )
             return data[i] + X * correction[:, np.newaxis]
