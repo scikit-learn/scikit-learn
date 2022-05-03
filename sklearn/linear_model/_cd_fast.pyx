@@ -100,13 +100,57 @@ def enet_coordinate_descent(floating[::1] w,
                             floating[::1] y,
                             int max_iter, floating tol,
                             object rng, bint random=0, bint positive=0):
-    """Cython version of the coordinate descent algorithm
-        for Elastic-Net regression
+    """Cython version of the coordinate descent algorithm for Elastic-Net regression.
 
-        We minimize
+    We minimize the primal:
 
-        (1/2) * norm(y - X w, 2)^2 + alpha norm(w, 1) + (beta/2) norm(w, 2)^2
+        P(w) = 1/2 ||y - X w||_2^2 + alpha ||w||_1 + beta/2 ||w||_2^2               (1)
 
+    As ultimate stopping criterion, we use the dual gap. There are two version for it.
+
+    A) Write Z' = [X', sqrt(beta) * identity], i.e. append rows to X, and use u to
+    denote y with appended zeros such that the primal reduces to the Lasso via the
+    usual Lagrangian
+
+        L(w, r, v) = 1/2 ||r||_2^2  + alpha ||w||_1 + v'(Z w - u - r)               (2)
+
+        D(v) = inf_{w, z} L(w, r, v) = -1/2 ||v||_2^2 - v'u    if ||Z'v||_inf <= alpha
+                                       - inf                   else
+
+    with supremum norm ||Z'v||_inf = max_j |(Z'v)_j| and v = Z w - u at optimum.
+    Replacing Z and choosing v = (Z w - u) * c for some constant c:
+
+        D(v) = -c^2/2 ||y - Xw||_2^2 - c^2 alpha/2 ||w||_2^2  - c y'(X w - y)       (3)
+                        if |c| * ||X'(X w - y) + beta * w||_inf <= alpha
+               - inf    else
+
+    One often sets c = min(1, alpha/||X'(X w - y) + beta * w||_inf), which ensures
+    D(v) > - inf. See [1, 2].
+
+    B) Direct calculation based on
+
+        L(w, r, v) = 1/2 ||r||_2^2  + alpha ||w||_1 + beta/2 ||w||_2^2              (4)
+                     + v'(X w - y - r)
+
+    gives
+
+        D(v) = -1/2 ||v||_2^2 - v'y - 1/(2 beta) sum_j max(0, |v'X_j| - alpha)^2    (5)
+
+    valid for all v, and again v = X w - y at optimum. See [3].
+
+    The duality gap G(w, v) = P(w) - D(v) based on (3) seems better for early
+    iterations, the one based on (5) better for later iterations.
+
+    References
+    ----------
+    .. [1] Zou, Hui and Trevor J. Hastie. "Regularization and variable selection via
+           the elastic net." Journal of the Royal Statistical Society: Series B
+           (Statistical Methodology) 67 (2005): n. pag.
+    .. [2] Kim, Seung-Jean et al. "An Interior-Point Method for Large-Scale
+           $\ell_1$-Regularized Least Squares." IEEE Journal of Selected Topics in
+           Signal Processing 1 (2007): 606-617.
+    .. [3] Mendler-Dünner, Celestine et al. "Primal-Dual Rates and Certificates." ICML
+           (2016).
     """
 
     if floating is float:
@@ -198,10 +242,10 @@ def enet_coordinate_descent(floating[::1] w,
             if (w_max == 0.0 or
                 d_w_max / w_max < d_w_tol or
                 n_iter == max_iter - 1):
-                # the biggest coordinate update of this iteration was smaller
-                # than the tolerance: check the duality gap as ultimate
-                # stopping criterion
+                # the biggest coordinate update of this iteration was smaller than the
+                # tolerance: check the duality gap as ultimate stopping criterion.
 
+                # Duality gap according to Eq (3) above.
                 # XtA = np.dot(X.T, R) - beta * w
                 _copy(n_features, &w[0], 1, &XtA[0], 1)
                 _gemv(ColMajor, Trans,
@@ -230,15 +274,38 @@ def enet_coordinate_descent(floating[::1] w,
 
                 l1_norm = _asum(n_features, &w[0], 1)
 
-                # np.dot(R.T, y)
+                # duality gap according to Eq. (3) above
+                # tmp = np.dot(R.T, y)
+                tmp = _dot(n_samples, &R[0], 1, &y[0], 1)
                 gap += (alpha * l1_norm
-                        - const * _dot(n_samples, &R[0], 1, &y[0], 1)
+                        - const * tmp
                         + 0.5 * beta * (1 + const ** 2) * (w_norm2))
 
                 if gap < tol:
                     # return if we reached desired tolerance
                     break
 
+                if not positive and beta > 0:
+                    # Try alternative duality gap according to Eq. (5) above.
+                    # TODO: As this computation has a cost, we could try it only every
+                    # few iterations.
+                    # Note: When starting from w=0, the very first iterations usually
+                    # give a poor bound (much too large).
+
+                    # XtA += beta * w, such that XtA = np.dot(X.T, R)
+                    _axpy(n_features, beta, &w[0], 1, &XtA[0], 1)
+
+                    # 1/(2 beta) sum_j max(0, |v'X_j| - alpha)^2 with v = -R
+                    gap = 0.0
+                    for ii in range(n_features):
+                        gap += fmax(fabs(XtA[ii]) - alpha, 0) ** 2
+                    gap /= 2 * beta
+                    # primal + 1/2 ||R||_2^2 - R'y
+                    gap += R_norm2 + alpha * l1_norm + 0.5 * beta * w_norm2 - tmp
+
+                    if gap < tol:
+                        # return if we reached desired tolerance
+                        break
         else:
             # for/else, runs if for doesn't end with a `break`
             with gil:
