@@ -454,10 +454,9 @@ def test_prefit_max_features():
 
 def test_prefit_get_feature_names_out():
     """Check the interaction between prefit and the feature names."""
-    prefit, max_features = True, 1
     clf = RandomForestClassifier(n_estimators=2, random_state=0)
     clf.fit(data, y)
-    model = SelectFromModel(clf, prefit=prefit, max_features=max_features)
+    model = SelectFromModel(clf, prefit=True, max_features=1)
 
     # FIXME: the error message should be improved. Raising a `NotFittedError`
     # would be better since it would force to validate all class attribute and
