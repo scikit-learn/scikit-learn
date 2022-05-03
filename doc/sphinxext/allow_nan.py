@@ -59,7 +59,7 @@ class AllowNanEstimators(Directive):
 
 def setup(app):
 
-    app.add_directive("allow_nan", Allow_Nan)
+    app.add_directive("allow_nan_estimators", AllowNanEstimators)
 
     return {
         "version": "0.1",
