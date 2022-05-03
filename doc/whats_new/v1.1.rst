@@ -92,6 +92,10 @@ random sampling procedures.
   the correct variance-scaling coefficient which may result in different model
   behavior.
 
+- |Fix| :meth:`feature_selection.SelectFromModel.fit` and
+  :meth:`feature_selection.SelectFromModel.partial_fit` can now be called with
+  `prefit=True`.
+
 Changelog
 ---------
 

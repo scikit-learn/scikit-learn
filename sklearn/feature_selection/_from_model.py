@@ -1,6 +1,8 @@
 # Authors: Gilles Louppe, Mathieu Blondel, Maheshakya Wijewardena
 # License: BSD 3 clause
 
+from copy import deepcopy
+
 import numpy as np
 import numbers
 
@@ -237,17 +239,30 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         self.max_features = max_features
 
     def _get_support_mask(self):
-        # SelectFromModel can directly call on transform.
+        estimator = getattr(self, "estimator_", self.estimator)
+        max_features = getattr(self, "max_features_", self.max_features)
+
         if self.prefit:
-            estimator = self.estimator
-        elif hasattr(self, "estimator_"):
-            estimator = self.estimator_
-        else:
-            raise ValueError(
-                "Either fit the model before transform or set"
-                ' "prefit=True" while passing the fitted'
-                " estimator to the constructor."
+            try:
+                check_is_fitted(self.estimator)
+            except NotFittedError as exc:
+                raise NotFittedError(
+                    "When `prefit=True`, `estimator` is expected to be a fitted "
+                    "estimator."
+                ) from exc
+        if callable(max_features):
+            raise NotFittedError(
+                "When `prefit=True` and `max_features` is a callable, call `fit` "
+                "before calling `transform`."
             )
+        elif max_features is not None and not isinstance(
+            max_features, numbers.Integral
+        ):
+            raise ValueError(
+                f"`max_features` must be an integer. Got `max_features={max_features}` "
+                "instead."
+            )
+
         scores = _get_feature_importances(
             estimator=estimator,
             getter=self.importance_getter,
@@ -257,9 +272,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         threshold = _calculate_threshold(estimator, scores, self.threshold)
         if self.max_features is not None:
             mask = np.zeros_like(scores, dtype=bool)
-            candidate_indices = np.argsort(-scores, kind="mergesort")[
-                : self.max_features_
-            ]
+            candidate_indices = np.argsort(-scores, kind="mergesort")[:max_features]
             mask[candidate_indices] = True
         else:
             mask = np.ones_like(scores, dtype=bool)
@@ -313,9 +326,17 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
                 )
 
         if self.prefit:
-            raise NotFittedError("Since 'prefit=True', call transform directly")
-        self.estimator_ = clone(self.estimator)
-        self.estimator_.fit(X, y, **fit_params)
+            try:
+                check_is_fitted(self.estimator)
+            except NotFittedError as exc:
+                raise NotFittedError(
+                    "When `prefit=True`, `estimator` is expected to be a fitted "
+                    "estimator."
+                ) from exc
+            self.estimator_ = deepcopy(self.estimator)
+        else:
+            self.estimator_ = clone(self.estimator)
+            self.estimator_.fit(X, y, **fit_params)
 
         if hasattr(self.estimator_, "feature_names_in_"):
             self.feature_names_in_ = self.estimator_.feature_names_in_
@@ -356,9 +377,16 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
-        if self.prefit:
-            raise NotFittedError("Since 'prefit=True', call transform directly")
-        if not hasattr(self, "estimator_"):
+        if self.prefit and not hasattr(self, "estimator_"):
+            try:
+                check_is_fitted(self.estimator)
+            except NotFittedError as exc:
+                raise NotFittedError(
+                    "When `prefit=True`, `estimator` is expected to be a fitted "
+                    "estimator."
+                ) from exc
+            self.estimator_ = deepcopy(self.estimator)
+        elif not hasattr(self, "estimator_"):
             self.estimator_ = clone(self.estimator)
         self.estimator_.partial_fit(X, y, **fit_params)
         return self

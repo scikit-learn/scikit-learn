@@ -13,6 +13,7 @@ from sklearn.utils._testing import MinimalClassifier
 from sklearn import datasets
 from sklearn.cross_decomposition import CCA, PLSCanonical, PLSRegression
 from sklearn.datasets import make_friedman1
+from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LogisticRegression, SGDClassifier, Lasso
 from sklearn.svm import LinearSVC
 from sklearn.feature_selection import SelectFromModel
@@ -412,10 +413,62 @@ def test_prefit():
     model.fit(data, y)
     assert_array_almost_equal(model.transform(data), X_transform)
 
-    # Check that prefit=True and calling fit raises a ValueError
+    # Check that passing an unfitted estimator with `prefit=True` raises a
+    # `ValueError`
+    clf = SGDClassifier(alpha=0.1, max_iter=10, shuffle=True, random_state=0, tol=None)
     model = SelectFromModel(clf, prefit=True)
-    with pytest.raises(ValueError):
+    err_msg = "When `prefit=True`, `estimator` is expected to be a fitted estimator."
+    with pytest.raises(NotFittedError, match=err_msg):
         model.fit(data, y)
+    with pytest.raises(NotFittedError, match=err_msg):
+        model.partial_fit(data, y)
+    with pytest.raises(NotFittedError, match=err_msg):
+        model.transform(data)
+
+
+def test_prefit_max_features():
+    """Check the interaction between `prefit` and `max_features`."""
+    # case 1: an error should be raised at `transform` if `fit` was not called to
+    # validate the attributes
+    prefit, max_features = True, lambda X: X.shape[1]
+    estimator = RandomForestClassifier(n_estimators=5, random_state=0)
+    estimator.fit(data, y)
+    model = SelectFromModel(estimator, prefit=prefit, max_features=max_features)
+
+    err_msg = (
+        "When `prefit=True` and `max_features` is a callable, call `fit` "
+        "before calling `transform`."
+    )
+    with pytest.raises(NotFittedError, match=err_msg):
+        model.transform(data)
+
+    # case 2: `max_features` is not validated and different from an integer
+    # FIXME: we cannot validate the upper bound of the attribute at transform
+    # and we should force calling `fit` if we intend to force the attribute
+    # to have such an upper bound.
+    max_features = 2.5
+    model.set_params(max_features=max_features)
+    with pytest.raises(ValueError, match="`max_features` must be an integer"):
+        model.transform(data)
+
+
+def test_prefit_get_feature_names_out():
+    """Check the interaction between prefit and the feature names."""
+    prefit, max_features = True, 1
+    clf = RandomForestClassifier(n_estimators=2, random_state=0)
+    clf.fit(data, y)
+    model = SelectFromModel(clf, prefit=prefit, max_features=max_features)
+
+    # FIXME: the error message should be improved. Raising a `NotFittedError`
+    # would be better since it would force to validate all class attribute and
+    # create all the necessary fitted attribute
+    err_msg = "Unable to generate feature names without n_features_in_"
+    with pytest.raises(ValueError, match=err_msg):
+        model.get_feature_names_out()
+
+    model.fit(data, y)
+    feature_names = model.get_feature_names_out()
+    assert feature_names == ["x3"]
 
 
 def test_threshold_string():
