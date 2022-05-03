@@ -782,7 +782,7 @@ def fetch_openml(
         - `"liac-arff"`: this is a pure Python ARFF parser that is much less
           memory- and CPU-efficient. It deals with sparse ARFF dataset.
 
-        If `"auto"` (default), the parser is chosen automatically such that
+        If `"auto"` (future default), the parser is chosen automatically such that
         `"liac-arff"` is selected for sparse ARFF datasets, otherwise
         `"pandas"` is selected.
 
