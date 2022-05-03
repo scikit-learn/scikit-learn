@@ -249,7 +249,7 @@ def test_check_is_fitted(method):
         getattr(kde, method)(X)
 
 
-@pytest.mark.parametrize("bandwidth", ['scott', 'silvermann', 0.1])
+@pytest.mark.parametrize("bandwidth", ["scott", "silvermann", 0.1])
 def test_bandwidth(bandwidth):
     n_samples, n_features = (100, 3)
     rng = np.random.RandomState(0)

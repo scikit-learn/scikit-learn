@@ -6,13 +6,13 @@ Kernel Density Estimation
 
 import numpy as np
 from scipy.special import gammainc
-from base import BaseEstimator
-from utils import check_random_state
-from utils.validation import _check_sample_weight, check_is_fitted
+from ..base import BaseEstimator
+from ..utils import check_random_state
+from ..utils.validation import _check_sample_weight, check_is_fitted
 
-from utils.extmath import row_norms
-from _ball_tree import BallTree, DTYPE
-from _kd_tree import KDTree
+from ..utils.extmath import row_norms
+from ._ball_tree import BallTree, DTYPE
+from ._kd_tree import KDTree
 
 
 VALID_KERNELS = [
@@ -183,12 +183,14 @@ class KernelDensity(BaseEstimator):
         """
 
         algorithm = self._choose_algorithm(self.algorithm, self.metric)
-        
-        if self.bandwidth == 'scott':
-            self.bandwidth = X.shape[0]**(-1 / (X.shape[1]+4))
-        elif self.bandwidth == 'silvermann':
-            self.bandwidth = (X.shape[0] * (X.shape[1]+2) / 4)**(-1 / (X.shape[1]+4))
-        elif self.bandwidth>0:
+
+        if self.bandwidth == "scott":
+            self.bandwidth = X.shape[0] ** (-1 / (X.shape[1] + 4))
+        elif self.bandwidth == "silvermann":
+            self.bandwidth = (X.shape[0] * (X.shape[1] + 2) / 4) ** (
+                -1 / (X.shape[1] + 4)
+            )
+        elif self.bandwidth > 0:
             pass
         else:
             raise ValueError("Bandwidth must be positive, 'scott' or 'silvermann'")
