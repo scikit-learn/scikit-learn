@@ -256,4 +256,6 @@ def test_bandwidth(bandwidth):
     X = rng.randn(n_samples, n_features)
     kde = KernelDensity(bandwidth=bandwidth).fit(X)
     samp = kde.sample(100)
+    kde_sc = kde.score_samples(X)
     assert X.shape == samp.shape
+    assert kde_sc.shape == (n_samples,)
