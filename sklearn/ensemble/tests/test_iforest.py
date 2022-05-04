@@ -73,13 +73,13 @@ def test_iforest_sparse(global_random_seed):
         for params in grid:
             # Trained on sparse format
             sparse_classifier = IsolationForest(
-                n_estimators=10, random_state=1, **params
+                n_estimators=10, random_state=global_random_seed, **params
             ).fit(X_train_sparse)
             sparse_results = sparse_classifier.predict(X_test_sparse)
 
             # Trained on dense format
             dense_classifier = IsolationForest(
-                n_estimators=10, random_state=1, **params
+                n_estimators=10, random_state=global_random_seed, **params
             ).fit(X_train)
             dense_results = dense_classifier.predict(X_test)
 
@@ -151,7 +151,7 @@ def test_iforest_parallel_regression(global_random_seed):
         diabetes.data, diabetes.target, random_state=rng
     )
 
-    ensemble = IsolationForest(n_jobs=3, random_state=0).fit(X_train)
+    ensemble = IsolationForest(n_jobs=3, random_state=global_random_seed).fit(X_train)
 
     ensemble.set_params(n_jobs=1)
     y1 = ensemble.predict(X_test)
@@ -159,7 +159,7 @@ def test_iforest_parallel_regression(global_random_seed):
     y2 = ensemble.predict(X_test)
     assert_array_almost_equal(y1, y2)
 
-    ensemble = IsolationForest(n_jobs=1, random_state=0).fit(X_train)
+    ensemble = IsolationForest(n_jobs=1, random_state=global_random_seed).fit(X_train)
 
     y3 = ensemble.predict(X_test)
     assert_array_almost_equal(y1, y3)
