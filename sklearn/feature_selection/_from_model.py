@@ -123,7 +123,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
           allow.
         - If a callable, then it specifies how to calculate the maximum number of
           features allowed by using the output of `max_feaures(X)`.
-        - If `None, then all features are kept.
+        - If `None`, then all features are kept.
 
         To only select based on ``max_features``, set ``threshold=-np.inf``.
 
@@ -150,7 +150,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
 
     Attributes
     ----------
-    estimator_ : an estimator
+    estimator_ : estimator
         The base estimator from which the transformer is built. This attribute
         exist only when `fit` has been called.
 
