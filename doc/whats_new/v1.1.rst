@@ -195,6 +195,11 @@ Changelog
   :class:`impute.IterativeImputer` without importing the experimental flag.
   :pr:`23194` by `Thomas Fan`_.
 
+- |Enhancement| Added an extension in doc/conf.py to automatically generate
+  the list of estimators that handle NaN values. 
+  :pr:`23198` by `Lise Kleiber <lisekleiber>`_, :user:`Zhehao Liu <MaxwellLZH>`
+  and :user:`Chiara Marmo <cmarmo>`.
+
 :mod:`sklearn.calibration`
 ..........................
 
