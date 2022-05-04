@@ -2214,7 +2214,7 @@ def test_validation_mask_correctly_subsets(monkeypatch):
 
 
 def test_validation_mask_using_positive_sample_weight(monkeypatch):
-    """Test that validation data is only chosen from samples with positive sample_weight"""
+    """Test validation data chosen from samples with positive sample_weight"""
     X, Y = iris.data, iris.target
     n_samples = X.shape[0]
     sample_weight = np.ones_like(Y)
