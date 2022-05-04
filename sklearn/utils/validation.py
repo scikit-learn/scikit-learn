@@ -342,17 +342,19 @@ def check_memory(memory):
     Parameters
     ----------
     memory : None, str or object with the joblib.Memory interface
+        - If string, the location where to create the `joblib.Memory` interface.
+        - If None, no caching is done and the Memory object is completely transparent.
 
     Returns
     -------
     memory : object with the joblib.Memory interface
+        A correct joblib.Memory object.
 
     Raises
     ------
     ValueError
         If ``memory`` is not joblib.Memory-like.
     """
-
     if memory is None or isinstance(memory, str):
         memory = joblib.Memory(location=memory, verbose=0)
     elif not hasattr(memory, "cache"):
@@ -573,19 +575,31 @@ def _check_estimator_name(estimator):
 
 def _pandas_dtype_needs_early_conversion(pd_dtype):
     """Return True if pandas extension pd_dtype need to be converted early."""
+    # Check these early for pandas versions without extension dtypes
+    from pandas.api.types import (
+        is_bool_dtype,
+        is_sparse,
+        is_float_dtype,
+        is_integer_dtype,
+    )
+
+    if is_bool_dtype(pd_dtype):
+        # bool and extension booleans need early converstion because __array__
+        # converts mixed dtype dataframes into object dtypes
+        return True
+
+    if is_sparse(pd_dtype):
+        # Sparse arrays will be converted later in `check_array`
+        return False
+
     try:
-        from pandas.api.types import (
-            is_extension_array_dtype,
-            is_float_dtype,
-            is_integer_dtype,
-            is_sparse,
-        )
+        from pandas.api.types import is_extension_array_dtype
     except ImportError:
         return False
 
     if is_sparse(pd_dtype) or not is_extension_array_dtype(pd_dtype):
         # Sparse arrays will be converted later in `check_array`
-        # Only handle extension arrays for interger and floats
+        # Only handle extension arrays for integer and floats
         return False
     elif is_float_dtype(pd_dtype):
         # Float ndarrays can normally support nans. They need to be converted
@@ -742,16 +756,10 @@ def check_array(
                     "It will be converted to a dense numpy array."
                 )
 
-        dtypes_orig = []
-        for dtype_iter in array.dtypes:
-            if dtype_iter.kind == "b":
-                # pandas boolean dtype __array__ interface coerces bools to objects
-                dtype_iter = np.dtype(object)
-            elif _pandas_dtype_needs_early_conversion(dtype_iter):
-                pandas_requires_conversion = True
-
-            dtypes_orig.append(dtype_iter)
-
+        dtypes_orig = list(array.dtypes)
+        pandas_requires_conversion = any(
+            _pandas_dtype_needs_early_conversion(i) for i in dtypes_orig
+        )
         if all(isinstance(dtype_iter, np.dtype) for dtype_iter in dtypes_orig):
             dtype_orig = np.result_type(*dtypes_orig)
 
@@ -774,7 +782,9 @@ def check_array(
     if pandas_requires_conversion:
         # pandas dataframe requires conversion earlier to handle extension dtypes with
         # nans
-        array = array.astype(dtype)
+        # Use the original dtype for conversion if dtype is None
+        new_dtype = dtype_orig if dtype is None else dtype
+        array = array.astype(new_dtype)
         # Since we converted here, we do not need to convert again later
         dtype = None
 
@@ -869,23 +879,12 @@ def check_array(
                     "if it contains a single sample.".format(array)
                 )
 
-        # make sure we actually converted to numeric:
-        if dtype_numeric and array.dtype.kind in "OUSV":
-            warnings.warn(
-                "Arrays of bytes/strings is being converted to decimal "
-                "numbers if dtype='numeric'. This behavior is deprecated in "
-                "0.24 and will be removed in 1.1 (renaming of 0.26). Please "
-                "convert your data to numeric values explicitly instead.",
-                FutureWarning,
-                stacklevel=2,
+        if dtype_numeric and array.dtype.kind in "USV":
+            raise ValueError(
+                "dtype='numeric' is not compatible with arrays of bytes/strings."
+                "Convert your data to numeric values explicitly instead."
             )
-            try:
-                array = array.astype(np.float64)
-            except ValueError as e:
-                raise ValueError(
-                    "Unable to convert array of bytes/strings "
-                    "into decimal numbers with dtype='numeric'"
-                ) from e
+
         if not allow_nd and array.ndim >= 3:
             raise ValueError(
                 "Found array with dim %d. %s expected <= 2."

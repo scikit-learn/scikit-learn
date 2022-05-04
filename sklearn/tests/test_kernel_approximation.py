@@ -363,7 +363,7 @@ def test_get_feature_names_out(Estimator):
 
 
 def test_additivechi2sampler_get_feature_names_out():
-    """Check get_feature_names_out for for AdditiveChi2Sampler."""
+    """Check get_feature_names_out for AdditiveChi2Sampler."""
     rng = np.random.RandomState(0)
     X = rng.random_sample(size=(300, 3))
 

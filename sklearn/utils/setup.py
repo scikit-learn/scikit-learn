@@ -109,6 +109,14 @@ def configuration(parent_package="", top_path=None):
         libraries=libraries,
     )
 
+    config.add_extension(
+        "_vector_sentinel",
+        sources=["_vector_sentinel.pyx"],
+        include_dirs=[numpy.get_include()],
+        libraries=libraries,
+        language="c++",
+    )
+
     config.add_subpackage("tests")
 
     return config
