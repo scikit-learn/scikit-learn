@@ -349,8 +349,11 @@ def test_n_features_deprecation():
         est.n_features_
 
 
-def test_iforest_with_n_jobs():
-    """This is a non-regression test for PR #23252"""
+def test_iforest_with_n_jobs_does_not_segfault():
+    """Check that Isolation Forest does not segfault with n_jobs=2
+    
+    Non-regression test for #23252
+    """
     X, _ = make_classification(n_samples=50000, n_features=100)
     X = csc_matrix(X)
     X.sort_indices()
