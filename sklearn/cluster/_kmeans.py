@@ -702,7 +702,9 @@ def _kmeans_single_lloyd(
     return labels, inertia, centers, i + 1
 
 
-def _labels_inertia(X, sample_weight, x_squared_norms, centers, n_threads=1):
+def _labels_inertia(
+    X, sample_weight, x_squared_norms, centers, n_threads=1, return_inertia=True
+):
     """E step of the K-means EM algorithm.
 
     Compute the labels and the inertia of the given samples and centers.
@@ -728,6 +730,9 @@ def _labels_inertia(X, sample_weight, x_squared_norms, centers, n_threads=1):
         sample-wise on the main cython loop which assigns each sample to its
         closest center.
 
+    return_inertia : bool, default=True
+        Whether to compute and return the inertia.
+
     Returns
     -------
     labels : ndarray of shape (n_samples,)
@@ -735,6 +740,7 @@ def _labels_inertia(X, sample_weight, x_squared_norms, centers, n_threads=1):
 
     inertia : float
         Sum of squared distances of samples to their closest cluster center.
+        Inertia is only returned if return_inertia is True.
     """
     n_samples = X.shape[0]
     n_clusters = centers.shape[0]
@@ -764,21 +770,23 @@ def _labels_inertia(X, sample_weight, x_squared_norms, centers, n_threads=1):
         update_centers=False,
     )
 
-    inertia = _inertia(X, sample_weight, centers, labels, n_threads)
+    if return_inertia:
+        inertia = _inertia(X, sample_weight, centers, labels, n_threads)
+        return labels, inertia
 
-    return labels, inertia
+    return labels
 
 
 def _labels_inertia_threadpool_limit(
-    X, sample_weight, x_squared_norms, centers, n_threads=1
+    X, sample_weight, x_squared_norms, centers, n_threads=1, return_inertia=True
 ):
     """Same as _labels_inertia but in a threadpool_limits context."""
     with threadpool_limits(limits=1, user_api="blas"):
-        labels, inertia = _labels_inertia(
-            X, sample_weight, x_squared_norms, centers, n_threads
+        result = _labels_inertia(
+            X, sample_weight, x_squared_norms, centers, n_threads, return_inertia
         )
 
-    return labels, inertia
+    return result
 
 
 class _BaseKMeans(
@@ -896,7 +904,9 @@ class _BaseKMeans(
         )
         return X
 
-    def _init_centroids(self, X, x_squared_norms, init, random_state, init_size=None):
+    def _init_centroids(
+        self, X, x_squared_norms, init, random_state, init_size=None, n_centroids=None
+    ):
         """Compute the initial centroids.
 
         Parameters
@@ -920,12 +930,17 @@ class _BaseKMeans(
             Number of samples to randomly sample for speeding up the
             initialization (sometimes at the expense of accuracy).
 
+        n_centroids : int, default=None
+            Number of centroids to initialize.
+            If left to 'None' the number of centroids will be equal to
+            number of clusters to form (self.n_clusters)
+
         Returns
         -------
         centers : ndarray of shape (n_clusters, n_features)
         """
         n_samples = X.shape[0]
-        n_clusters = self.n_clusters
+        n_clusters = self.n_clusters if n_centroids is None else n_centroids
 
         if init_size is not None and init_size < n_samples:
             init_indices = random_state.randint(0, n_samples, init_size)

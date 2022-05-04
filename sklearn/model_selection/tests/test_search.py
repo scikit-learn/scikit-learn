@@ -1427,10 +1427,10 @@ def test_grid_search_correct_score_results():
         for candidate_i, C in enumerate(Cs):
             clf.set_params(C=C)
             cv_scores = np.array(
-                list(
+                [
                     grid_search.cv_results_["split%d_test_score" % s][candidate_i]
                     for s in range(n_splits)
-                )
+                ]
             )
             for i, (train, test) in enumerate(cv.split(X, y)):
                 clf.fit(X[train], y[train])
@@ -1584,9 +1584,7 @@ def test_grid_search_failing_classifier():
     # that are expected to fail.
     def get_cand_scores(i):
         return np.array(
-            list(
-                gs.cv_results_["split%d_test_score" % s][i] for s in range(gs.n_splits_)
-            )
+            [gs.cv_results_["split%d_test_score" % s][i] for s in range(gs.n_splits_)]
         )
 
     assert all(
@@ -1840,10 +1838,10 @@ def test_grid_search_cv_splits_consistency():
     for score_type in ("train", "test"):
         per_param_scores = {}
         for param_i in range(4):
-            per_param_scores[param_i] = list(
+            per_param_scores[param_i] = [
                 gs.cv_results_["split%d_%s_score" % (s, score_type)][param_i]
                 for s in range(5)
-            )
+            ]
 
         assert_array_almost_equal(per_param_scores[0], per_param_scores[1])
         assert_array_almost_equal(per_param_scores[2], per_param_scores[3])
