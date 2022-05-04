@@ -1052,7 +1052,8 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
 
             # Sort the positive and negative parts of `Xf`
             simultaneous_sort(&Xf[start], &samples[start], end_negative - start)
-            simultaneous_sort(&Xf[start_positive], &samples[start_positive], end - start_positive)
+            if start_positive < end:
+                simultaneous_sort(&Xf[start_positive], &samples[start_positive], end - start_positive)
 
             # Update index_to_samples to take into account the sort
             for p in range(start, end_negative):
