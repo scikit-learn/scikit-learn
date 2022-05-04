@@ -100,7 +100,7 @@ def test_max_features_error(max_features, err_type, err_msg):
         transformer.fit(data, y)
 
 
-@pytest.mark.parametrize("max_features", [0, 2, data.shape[1]])
+@pytest.mark.parametrize("max_features", [0, 2, data.shape[1], None])
 def test_inferred_max_features_integer(max_features):
     """Check max_features_ and output shape for integer max_features."""
     clf = RandomForestClassifier(n_estimators=5, random_state=0)
@@ -108,8 +108,12 @@ def test_inferred_max_features_integer(max_features):
         estimator=clf, max_features=max_features, threshold=-np.inf
     )
     X_trans = transformer.fit_transform(data, y)
-    assert transformer.max_features_ == max_features
-    assert X_trans.shape[1] == transformer.max_features_
+    if max_features is not None:
+        assert transformer.max_features_ == max_features
+        assert X_trans.shape[1] == transformer.max_features_
+    else:
+        assert not hasattr(transformer, "max_features_")
+        assert X_trans.shape[1] == data.shape[1]
 
 
 @pytest.mark.parametrize(
