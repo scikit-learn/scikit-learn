@@ -354,6 +354,6 @@ def test_iforest_with_n_jobs_does_not_segfault():
     
     Non-regression test for #23252
     """
-    X, _ = make_classification(n_samples=50000, n_features=100)
+    X, _ = make_classification(n_samples=85_000, n_features=100, random_state=0)
     X = csc_matrix(X)
     IsolationForest(n_estimators=10, max_samples=256, n_jobs=2).fit(X)
