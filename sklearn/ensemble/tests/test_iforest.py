@@ -356,5 +356,4 @@ def test_iforest_with_n_jobs_does_not_segfault():
     """
     X, _ = make_classification(n_samples=50000, n_features=100)
     X = csc_matrix(X)
-    X.sort_indices()
     IsolationForest(n_estimators=10, max_samples=256, n_jobs=2).fit(X)
