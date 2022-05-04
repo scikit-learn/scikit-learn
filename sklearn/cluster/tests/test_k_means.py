@@ -596,7 +596,7 @@ def test_score_max_iter(Estimator):
     [(KMeans, "lloyd"), (KMeans, "elkan"), (MiniBatchKMeans, None)],
 )
 @pytest.mark.parametrize("max_iter", [2, 100])
-def test_predict(
+def test_kmeans_predict(
     Estimator, algorithm, array_constr, max_iter, global_dtype, global_random_seed
 ):
     # Check the predict method and the equivalence between fit.predict and
