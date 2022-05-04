@@ -8,6 +8,9 @@ source build_tools/shared.sh
 
 UNAMESTR=`uname`
 
+CCACHE_LINKS_DIR="/tmp/ccache"
+
+
 make_conda() {
     TO_INSTALL="$@"
     if [[ "$DISTRIB" == *"mamba"* ]]; then
@@ -20,14 +23,21 @@ make_conda() {
 }
 
 setup_ccache() {
-    echo "Setting up ccache with CCACHE_DIR=${CCACHE_DIR}"
-    mkdir /tmp/ccache/
-    which ccache
-    for name in gcc g++ cc c++ clang clang++ i686-linux-gnu-gcc i686-linux-gnu-c++ x86_64-linux-gnu-gcc x86_64-linux-gnu-c++ x86_64-apple-darwin13.4.0-clang x86_64-apple-darwin13.4.0-clang++; do
-      ln -s $(which ccache) "/tmp/ccache/${name}"
-    done
-    export PATH="/tmp/ccache/:${PATH}"
-    ccache -M 256M
+    CCACHE_BIN=`which ccache || echo ""`
+    if [[ "${CCACHE_BIN}" == "" ]]; then
+        echo "ccache not found, skipping..."
+    elif [[ -d "${CCACHE_LINKS_DIR}" ]]; then
+        echo "ccache already configured, skipping..."
+    else
+        echo "Setting up ccache with CCACHE_DIR=${CCACHE_DIR}"
+        mkdir ${CCACHE_LINKS_DIR}
+        which ccache
+        for name in gcc g++ cc c++ clang clang++ i686-linux-gnu-gcc i686-linux-gnu-c++ x86_64-linux-gnu-gcc x86_64-linux-gnu-c++ x86_64-apple-darwin13.4.0-clang x86_64-apple-darwin13.4.0-clang++; do
+        ln -s ${CCACHE_BIN} "${CCACHE_LINKS_DIR}/${name}"
+        done
+        export PATH="${CCACHE_LINKS_DIR}:${PATH}"
+        ccache -M 256M
+    fi
 }
 
 pre_python_environment_install() {
@@ -48,6 +58,12 @@ pre_python_environment_install() {
         apt-get -yq update
         apt-get -yq install build-essential
 
+    elif [[ "$DISTRIB" == "pip-nogil" ]]; then
+        echo "deb-src http://archive.ubuntu.com/ubuntu/ focal main" | sudo tee -a /etc/apt/sources.list
+        sudo apt-get -yq update
+        sudo apt-get install -yq ccache
+        sudo apt-get build-dep -yq python3 python3-dev
+
     elif [[ "$BUILD_WITH_ICC" == "true" ]]; then
         wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
         sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
@@ -56,6 +72,7 @@ pre_python_environment_install() {
         sudo apt-get update
         sudo apt-get install intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic
         source /opt/intel/oneapi/setvars.sh
+
     fi
 }
 
@@ -120,6 +137,26 @@ python_environment_install() {
         pip install https://github.com/joblib/joblib/archive/master.zip
         echo "Installing pillow master"
         pip install https://github.com/python-pillow/Pillow/archive/main.zip
+
+    elif [[ "$DISTRIB" == "pip-nogil" ]]; then
+        setup_ccache  # speed-up the build of CPython it-self
+        ORIGINAL_FOLDER=`pwd`
+        cd ..
+        git clone --depth 1 https://github.com/colesbury/nogil
+        cd nogil
+        ./configure && make -j 2
+        ./python -m venv $ORIGINAL_FOLDER/$VIRTUALENV
+        cd $ORIGINAL_FOLDER
+        source $VIRTUALENV/bin/activate
+
+        python -m pip install -U pip
+        # The pip version that comes with the nogil branch of CPython
+        # automatically uses the custom nogil index as its highest priority
+        # index to fetch patched versions of libraries with native code that
+        # would otherwise depend on the GIL.
+        echo "Installing build dependencies with pip from the nogil repository: https://d1yxz45j0ypngg.cloudfront.net/"
+        pip install numpy scipy cython joblib threadpoolctl
+
     fi
 
     python -m pip install $(get_dep threadpoolctl $THREADPOOLCTL_VERSION) \

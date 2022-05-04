@@ -1384,7 +1384,7 @@ def test_shufflesplit_reproducible():
     # Check that iterating twice on the ShuffleSplit gives the same
     # sequence of train-test when the random_state is given
     ss = ShuffleSplit(random_state=21)
-    assert_array_equal(list(a for a, b in ss.split(X)), list(a for a, b in ss.split(X)))
+    assert_array_equal([a for a, b in ss.split(X)], [a for a, b in ss.split(X)])
 
 
 def test_stratifiedshufflesplit_list_input():

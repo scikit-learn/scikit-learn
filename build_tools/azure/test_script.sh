@@ -7,7 +7,7 @@ source build_tools/shared.sh
 
 if [[ "$DISTRIB" =~ ^conda.* ]]; then
     source activate $VIRTUALENV
-elif [[ "$DISTRIB" == "ubuntu" ]] || [[ "$DISTRIB" == "debian-32" ]]; then
+elif [[ "$DISTRIB" == "ubuntu" || "$DISTRIB" == "debian-32" || "$DISTRIB" == "pip-nogil" ]]; then
     source $VIRTUALENV/bin/activate
 fi
 
@@ -70,7 +70,7 @@ if [[ "$SHOW_SHORT_SUMMARY" == "true" ]]; then
     TEST_CMD="$TEST_CMD -ra"
 fi
 
-if [[ "$SELECTED_TESTS" != "" ]]; then
+if [[ -n "$SELECTED_TESTS" ]]; then
     TEST_CMD="$TEST_CMD -k $SELECTED_TESTS"
 
     # Override to make selected tests run on all random seeds
