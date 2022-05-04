@@ -810,10 +810,7 @@ def dict_learning_online(
     dict_init : ndarray of shape (n_components, n_features), default=None
         Initial values for the dictionary for warm restart scenarios.
         If `None`, the initial values for the dictionary are created
-        using :func:`randomized_svd` as::
-
-            _, S, dictionary = randomized_svc(X, n_components, random_state)
-            dictionary = S[:, np.newaxis] * dictionary
+        using :func:`~sklearn.utils.randomized_svd`.
 
     callback : callable, default=None
         A callable that gets invoked at the end of each iteration.
