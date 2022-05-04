@@ -92,6 +92,11 @@ random sampling procedures.
   the correct variance-scaling coefficient which may result in different model
   behavior.
 
+- |Fix| :meth:`feature_selection.SelectFromModel.fit` and
+  :meth:`feature_selection.SelectFromModel.partial_fit` can now be called with
+  `prefit=True`. `estimators_` will be a deep copy of `estimator` when
+  `prefit=True`. :pr:`23271` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 Changelog
 ---------
 
