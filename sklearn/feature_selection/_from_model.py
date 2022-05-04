@@ -251,6 +251,9 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
                     "estimator."
                 ) from exc
         if callable(max_features):
+            # This branch is executed when `transform` is called directly and thus
+            # `max_features_` is not set and we fallback using `self.max_features`
+            # that is not validated
             raise NotFittedError(
                 "When `prefit=True` and `max_features` is a callable, call `fit` "
                 "before calling `transform`."
@@ -377,16 +380,19 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
-        if self.prefit and not hasattr(self, "estimator_"):
-            try:
-                check_is_fitted(self.estimator)
-            except NotFittedError as exc:
-                raise NotFittedError(
-                    "When `prefit=True`, `estimator` is expected to be a fitted "
-                    "estimator."
-                ) from exc
-            self.estimator_ = deepcopy(self.estimator)
-        elif not hasattr(self, "estimator_"):
+        if self.prefit:
+            if not hasattr(self, "estimator_"):
+                try:
+                    check_is_fitted(self.estimator)
+                except NotFittedError as exc:
+                    raise NotFittedError(
+                        "When `prefit=True`, `estimator` is expected to be a fitted "
+                        "estimator."
+                    ) from exc
+                self.estimator_ = deepcopy(self.estimator)
+            return self
+
+        if not hasattr(self, "estimator_"):
             self.estimator_ = clone(self.estimator)
         self.estimator_.partial_fit(X, y, **fit_params)
         return self

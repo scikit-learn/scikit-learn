@@ -406,6 +406,8 @@ def test_prefit():
     clf.fit(data, y)
     model = SelectFromModel(clf, prefit=True)
     assert_array_almost_equal(model.transform(data), X_transform)
+    model.fit(data, y)
+    assert model.estimator_ is not clf
 
     # Check that the model is rewritten if prefit=False and a fitted model is
     # passed
@@ -424,6 +426,15 @@ def test_prefit():
         model.partial_fit(data, y)
     with pytest.raises(NotFittedError, match=err_msg):
         model.transform(data)
+
+    # Check that the internal parameters of prefitted model are not changed
+    # when calling `fit` or `partial_fit` with `prefit=True`
+    clf = SGDClassifier(alpha=0.1, max_iter=10, shuffle=True, tol=None).fit(data, y)
+    model = SelectFromModel(clf, prefit=True)
+    model.fit(data, y)
+    assert_allclose(model.estimator_.coef_, clf.coef_)
+    model.partial_fit(data, y)
+    assert_allclose(model.estimator_.coef_, clf.coef_)
 
 
 def test_prefit_max_features():
