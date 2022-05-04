@@ -8,6 +8,7 @@ from scipy.sparse import issparse
 from warnings import warn
 
 from ..tree import ExtraTreeRegressor
+from ..tree._tree import DTYPE as tree_dtype
 from ..utils import (
     check_random_state,
     check_array,
@@ -79,6 +80,9 @@ class IsolationForest(OutlierMixin, BaseBagging):
 
             - If int, then draw `max_features` features.
             - If float, then draw `max_features * X.shape[1]` features.
+
+        Note: using a float number less than 1.0 or integer less than number of
+        features will enable feature subsampling and leads to a longerr runtime.
 
     bootstrap : bool, default=False
         If True, individual trees are fit on random subsets of the training
@@ -254,7 +258,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         self : object
             Fitted estimator.
         """
-        X = self._validate_data(X, accept_sparse=["csc"])
+        X = self._validate_data(X, accept_sparse=["csc"], dtype=tree_dtype)
         if issparse(X):
             # Pre-sort indices to avoid that each individual tree of the
             # ensemble sorts the indices.
