@@ -104,11 +104,12 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
 
     prefit : bool, default=False
         Whether a prefit model is expected to be passed into the constructor
-        directly or not. If True, ``transform`` must be called directly
-        and SelectFromModel cannot be used with ``cross_val_score``,
-        ``GridSearchCV`` and similar utilities that clone the estimator.
-        Otherwise train the model using ``fit`` and then ``transform`` to do
-        feature selection.
+        directly or not.
+        If `True`, `estimator` must be a fitted estimator and will not be
+        be impacted by `fit` and `partial_fit` calls. `estimator_` is then
+        a deep copy of `estimator` to preserve its state.
+        If `False`, `estimator` is cloned and fitted and updated by calling
+        `fit` and `partial_fit`, respectively.
 
     norm_order : non-zero int, inf, -inf, default=1
         Order of the norm used to filter the vectors of coefficients below
@@ -122,10 +123,13 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
           allow.
         - If a callable, then it specifies how to calculate the maximum number of
           features allowed by using the output of `max_feaures(X)`.
+        - If `None, then all features are kept.
 
         To only select based on ``max_features``, set ``threshold=-np.inf``.
 
         .. versionadded:: 0.20
+        .. versionchanged:: 1.1
+           `max_features` accepts a callable.
 
     importance_getter : str or callable, default='auto'
         If 'auto', uses the feature importance either through a ``coef_``
@@ -147,9 +151,12 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
     Attributes
     ----------
     estimator_ : an estimator
-        The base estimator from which the transformer is built.
-        This is stored only when a non-fitted estimator is passed to the
-        ``SelectFromModel``, i.e when prefit is False.
+        The base estimator from which the transformer is built. This attribute
+        exist only when `fit` has been called.
+
+        - If `prefit=True`, it is a deep copy of `estimator`.
+        - If `prefit=False`, it is a clone of `estimator` and fit on the data
+          passed to `fit` or `partial_fit`.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if the
@@ -161,7 +168,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         Maximum number of features calculated during :term:`fit`. Only defined
         if the ``max_features`` is not `None`.
 
-        - If `max_features` is an int, then `max_features_ = max_features`.
+        - If `max_features` is an `int`, then `max_features_ = max_features`.
         - If `max_features` is a callable, then `max_features_ = max_features(X)`.
 
         .. versionadded:: 1.1
