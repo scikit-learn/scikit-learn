@@ -2211,3 +2211,28 @@ def test_validation_mask_correctly_subsets(monkeypatch):
     X_val, y_val = mock.call_args[0][1:3]
     assert X_val.shape[0] == int(n_samples * validation_fraction)
     assert y_val.shape[0] == int(n_samples * validation_fraction)
+
+
+def test_validation_mask_using_positive_sample_weight(monkeypatch):
+    """Test that validation data is only chosen from samples with positive sample_weight"""
+    X, Y = iris.data, iris.target
+    n_samples = X.shape[0]
+    sample_weight = np.ones_like(Y)
+    # set the first half of sample_weight to 0
+    sample_weight[: n_samples // 2] = 0
+    validation_fraction = 0.3
+
+    clf = linear_model.SGDClassifier(
+        early_stopping=True,
+        tol=1e-3,
+        max_iter=1000,
+        validation_fraction=validation_fraction,
+        random_state=0,
+    )
+
+    mock = Mock(side_effect=_stochastic_gradient._ValidationScoreCallback)
+    monkeypatch.setattr(_stochastic_gradient, "_ValidationScoreCallback", mock)
+    clf.fit(X, Y)
+
+    val_sample_weight = mock.call_args[0][3]
+    assert min(val_sample_weight) > 0
