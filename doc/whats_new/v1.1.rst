@@ -391,9 +391,6 @@ Changelog
   :pr:`19490` by :user:`Facundo Ferrin <fferrin>` and
   :user:`Julien Jerphanion <jjerphan>`.
 
-- |Fix| Avoid spurious warning in :class:`IncrementalPCA` when
-  `n_samples == n_components_`:pr:`23264` :user:`Lucy Liu <lucyleeow>`
-
 :mod:`sklearn.discriminant_analysis`
 ....................................
 
