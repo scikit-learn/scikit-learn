@@ -1232,6 +1232,7 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
         # start_negative = start
         cdef SIZE_t start_positive
         cdef SIZE_t end_negative
+        cdef SIZE_t zero_pos
 
         # Sample up to max_features without replacement using a
         # Fisher-Yates-based algorithm (using the local variables `f_i` and
@@ -1331,12 +1332,16 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
             if current.threshold == max_feature_value:
                 current.threshold = min_feature_value
 
+            if start_positive < end:
+                zero_pos = start_positive + (Xf[start_positive] == 0.)
+            else:
+                zero_pos = start_positive
+
             # Partition
             current.pos = self._partition(current.threshold,
                                           end_negative,
                                           start_positive,
-                                          start_positive +
-                                          (Xf[start_positive] == 0.))
+                                          zero_pos)
 
             # Reject if min_samples_leaf is not guaranteed
             if (((current.pos - start) < min_samples_leaf) or
