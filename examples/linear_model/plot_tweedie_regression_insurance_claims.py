@@ -563,7 +563,7 @@ print(pd.DataFrame(res).set_index("subset").T)
 # the models to make accurate predictions in terms of absolute value of total
 # claim amounts but only in terms of relative amounts as a ranking metric. The
 # Gini coefficient is upper bounded by 1.0 but even an oracle model that ranks
-# the policyholders by the true claim amounts cannot reach a score of 1.0.
+# the policyholders by the observed claim amounts cannot reach a score of 1.0.
 #
 # We observe that both models are able to rank policyholders by risky-ness
 # significantly better than chance although they are also both far from the
