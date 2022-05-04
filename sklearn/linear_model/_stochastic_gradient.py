@@ -449,7 +449,7 @@ def fit_binary(
     learning_rate_type = est._get_learning_rate_type(learning_rate)
 
     if validation_mask is None:
-        validation_mask = est._make_validation_split(y_i)
+        validation_mask = est._make_validation_split(y_i, sample_weight=sample_weight)
     classes = np.array([-1, 1], dtype=y_i.dtype)
     validation_score_cb = est._make_validation_score_cb(
         validation_mask, X, y_i, sample_weight, classes=classes
