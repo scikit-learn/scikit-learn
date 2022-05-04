@@ -105,10 +105,8 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
     prefit : bool, default=False
         Whether a prefit model is expected to be passed into the constructor
         directly or not.
-        If `True`, `estimator` must be a fitted estimator and will not be
-        be impacted by `fit` and `partial_fit` calls. `estimator_` is then
-        a deep copy of `estimator` to preserve its state.
-        If `False`, `estimator` is cloned and fitted and updated by calling
+        If `True`, `estimator` must be a fitted estimator.
+        If `False`, `estimator` is fitted and updated by calling
         `fit` and `partial_fit`, respectively.
 
     norm_order : non-zero int, inf, -inf, default=1
