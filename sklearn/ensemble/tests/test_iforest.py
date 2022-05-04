@@ -351,7 +351,7 @@ def test_n_features_deprecation():
 
 def test_iforest_with_n_jobs_does_not_segfault():
     """Check that Isolation Forest does not segfault with n_jobs=2
-    
+
     Non-regression test for #23252
     """
     X, _ = make_classification(n_samples=85_000, n_features=100, random_state=0)
