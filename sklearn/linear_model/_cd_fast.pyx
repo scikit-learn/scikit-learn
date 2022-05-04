@@ -115,7 +115,8 @@ def enet_coordinate_descent(
 
     Returns
     -------
-    w : ndarray of shape (n_features)
+    w : ndarray of shape (n_features,)
+        ElasticNet coefficients.
     gap : float
         Achieved dual gap.
     tol : float
@@ -307,7 +308,8 @@ def sparse_enet_coordinate_descent(
 
     Returns
     -------
-    w : ndarray of shape (n_features)
+    w : ndarray of shape (n_features,)
+        ElasticNet coefficients.
     gap : float
         Achieved dual gap.
     tol : float
@@ -590,7 +592,8 @@ def enet_coordinate_descent_gram(
 
     Returns
     -------
-    w : ndarray of shape (n_features)
+    w : ndarray of shape (n_features,)
+        ElasticNet coefficients.
     gap : float
         Achieved dual gap.
     tol : float
@@ -738,8 +741,9 @@ def enet_coordinate_descent_multi_task(
     floating[::1, :] W,
     floating l1_reg,
     floating l2_reg,
-    np.ndarray[floating, ndim=2, mode='fortran'] X,  # TODO: use views with Cython 3.0
-    np.ndarray[floating, ndim=2, mode='fortran'] Y,  # hopefully with skl 1.0
+    # TODO: use const qualified fused-typed memoryview when Cython 3.0 is used.
+    np.ndarray[floating, ndim=2, mode='fortran'] X,
+    np.ndarray[floating, ndim=2, mode='fortran'] Y,
     int max_iter,
     floating tol,
     object rng,
@@ -755,6 +759,7 @@ def enet_coordinate_descent_multi_task(
     Returns
     -------
     W : ndarray of shape (n_tasks, n_features)
+        ElasticNet coefficients.
     gap : float
         Achieved dual gap.
     tol : float
