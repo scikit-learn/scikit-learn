@@ -340,36 +340,6 @@ def test_fortran_aligned_data(Estimator):
     assert_array_equal(km_c.labels_, km_f.labels_)
 
 
-@pytest.mark.parametrize("algo", ["lloyd", "elkan"])
-@pytest.mark.parametrize("dtype", [np.float32, np.float64])
-@pytest.mark.parametrize("constructor", [np.asarray, sp.csr_matrix])
-@pytest.mark.parametrize(
-    "seed, max_iter, tol",
-    [
-        (0, 2, 1e-7),  # strict non-convergence
-        (1, 2, 1e-1),  # loose non-convergence
-        (3, 300, 1e-7),  # strict convergence
-        (4, 300, 1e-1),  # loose convergence
-    ],
-)
-def test_k_means_fit_predict(algo, dtype, constructor, seed, max_iter, tol):
-    # check that fit.predict gives same result as fit_predict
-    rng = np.random.RandomState(seed)
-
-    X = make_blobs(n_samples=1000, n_features=10, centers=10, random_state=rng)[
-        0
-    ].astype(dtype, copy=False)
-    X = constructor(X)
-
-    kmeans = KMeans(
-        algorithm=algo, n_clusters=10, random_state=seed, tol=tol, max_iter=max_iter
-    )
-
-    labels_1 = kmeans.fit(X).predict(X)
-    labels_2 = kmeans.fit_predict(X)
-    assert_array_equal(labels_1, labels_2)
-
-
 def test_minibatch_kmeans_verbose():
     # Check verbose mode of MiniBatchKMeans for better coverage.
     km = MiniBatchKMeans(n_clusters=n_clusters, random_state=42, verbose=1)
@@ -621,19 +591,28 @@ def test_score_max_iter(Estimator):
 @pytest.mark.parametrize(
     "array_constr", [np.array, sp.csr_matrix], ids=["dense", "sparse"]
 )
-@pytest.mark.parametrize("dtype", [np.float32, np.float64])
-@pytest.mark.parametrize("init", ["random", "k-means++"])
 @pytest.mark.parametrize(
     "Estimator, algorithm",
     [(KMeans, "lloyd"), (KMeans, "elkan"), (MiniBatchKMeans, None)],
 )
-def test_predict(Estimator, algorithm, init, dtype, array_constr):
+@pytest.mark.parametrize("max_iter", [2, 100])
+def test_kmeans_predict(
+    Estimator, algorithm, array_constr, max_iter, global_dtype, global_random_seed
+):
     # Check the predict method and the equivalence between fit.predict and
     # fit_predict.
-    X, _ = make_blobs(n_samples=500, n_features=10, centers=10, random_state=0)
-    X = array_constr(X)
+    X, _ = make_blobs(
+        n_samples=200, n_features=10, centers=10, random_state=global_random_seed
+    )
+    X = array_constr(X, dtype=global_dtype)
 
-    km = Estimator(n_clusters=10, init=init, n_init=10, random_state=0)
+    km = Estimator(
+        n_clusters=10,
+        init="random",
+        n_init=10,
+        max_iter=max_iter,
+        random_state=global_random_seed,
+    )
     if algorithm is not None:
         km.set_params(algorithm=algorithm)
     km.fit(X)
