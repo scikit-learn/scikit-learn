@@ -1283,6 +1283,7 @@ def test_check_psd_eigenvalues_valid(
 ):
     # Test that ``_check_psd_eigenvalues`` returns the right output for valid
     # input, possibly raising the right warning
+
     if not enable_warnings:
         w_type = None
 
