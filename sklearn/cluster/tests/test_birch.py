@@ -17,6 +17,7 @@ from sklearn.metrics import pairwise_distances_argmin, v_measure_score
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_allclose
 
 
 def test_n_samples_leaves_roots():
@@ -195,16 +196,14 @@ def test_birch_fit_attributes_deprecated(attribute):
         (
             {"branching_factor": 1.5},
             TypeError,
-            "branching_factor must be an instance of <class 'numbers.Integral'>, not"
-            " <class 'float'>.",
+            "branching_factor must be an instance of int, not float.",
         ),
         ({"branching_factor": -2}, ValueError, "branching_factor == -2, must be > 1."),
         ({"n_clusters": 0}, ValueError, "n_clusters == 0, must be >= 1."),
         (
             {"n_clusters": 2.5},
             TypeError,
-            "n_clusters must be an instance of <class 'numbers.Integral'>, not <class"
-            " 'float'>.",
+            "n_clusters must be an instance of int, not float.",
         ),
         (
             {"n_clusters": "whatever"},
@@ -219,3 +218,31 @@ def test_birch_params_validation(params, err_type, err_msg):
     X, _ = make_blobs(n_samples=80, centers=4)
     with pytest.raises(err_type, match=err_msg):
         Birch(**params).fit(X)
+
+
+def test_feature_names_out():
+    """Check `get_feature_names_out` for `Birch`."""
+    X, _ = make_blobs(n_samples=80, n_features=4, random_state=0)
+    brc = Birch(n_clusters=4)
+    brc.fit(X)
+    n_clusters = brc.subcluster_centers_.shape[0]
+
+    names_out = brc.get_feature_names_out()
+    assert_array_equal([f"birch{i}" for i in range(n_clusters)], names_out)
+
+
+def test_transform_match_across_dtypes():
+    X, _ = make_blobs(n_samples=80, n_features=4, random_state=0)
+    brc = Birch(n_clusters=4)
+    Y_64 = brc.fit_transform(X)
+    Y_32 = brc.fit_transform(X.astype(np.float32))
+
+    assert_allclose(Y_64, Y_32, atol=1e-6)
+
+
+def test_subcluster_dtype(global_dtype):
+    X = make_blobs(n_samples=80, n_features=4, random_state=0)[0].astype(
+        global_dtype, copy=False
+    )
+    brc = Birch(n_clusters=4)
+    assert brc.fit(X).subcluster_centers_.dtype == global_dtype

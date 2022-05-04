@@ -1,4 +1,5 @@
 import pytest
+import warnings
 
 import numpy as np
 from scipy import sparse
@@ -113,6 +114,37 @@ def test_imputation_deletion_warning(strategy):
         imputer.fit(X)
 
     with pytest.warns(UserWarning, match="Skipping"):
+        imputer.transform(X)
+
+
+@pytest.mark.parametrize("strategy", ["mean", "median", "most_frequent"])
+def test_imputation_deletion_warning_feature_names(strategy):
+
+    pd = pytest.importorskip("pandas")
+
+    missing_values = np.nan
+    feature_names = np.array(["a", "b", "c", "d"], dtype=object)
+    X = pd.DataFrame(
+        [
+            [missing_values, missing_values, 1, missing_values],
+            [4, missing_values, 2, 10],
+        ],
+        columns=feature_names,
+    )
+
+    imputer = SimpleImputer(strategy=strategy, verbose=1)
+
+    # TODO: Remove in 1.3
+    with pytest.warns(FutureWarning, match="The 'verbose' parameter"):
+        imputer.fit(X)
+
+    # check SimpleImputer returning feature name attribute correctly
+    assert_array_equal(imputer.feature_names_in_, feature_names)
+
+    # ensure that skipped feature warning includes feature name
+    with pytest.warns(
+        UserWarning, match=r"Skipping features without any observed values: \['b'\]"
+    ):
         imputer.transform(X)
 
 
@@ -948,9 +980,9 @@ def test_iterative_imputer_catch_warning():
         X[sample_idx, feat] = np.nan
 
     imputer = IterativeImputer(n_nearest_features=5, sample_posterior=True)
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
         X_fill = imputer.fit_transform(X, y)
-    assert not [w.message for w in record.list]
     assert not np.any(np.isnan(X_fill))
 
 
@@ -1510,7 +1542,7 @@ def test_most_frequent(expected, array, dtype, extra_value, n_repeat):
 
 
 def test_simple_impute_pd_na():
-    pd = pytest.importorskip("pandas", minversion="1.0")
+    pd = pytest.importorskip("pandas")
 
     # Impute pandas array of string types.
     df = pd.DataFrame({"feature": pd.Series(["abc", None, "de"], dtype="string")})
