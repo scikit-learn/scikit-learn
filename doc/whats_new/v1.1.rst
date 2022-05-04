@@ -299,6 +299,13 @@ Changelog
   specific shape for `coef_` (e.g. :class:`feature_selection.RFE`).
   :pr:`22016` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |API| add the fitted attribute `intercept_` to
+  :class:`cross_decomposition.PLSCanonical`,
+  :class:`cross_decomposition.PLSRegression`, and
+  :class:`cross_decomposition.CCA`. The method `predict` is indeed equivalent to
+  `Y = X @ coef_ + intercept_`.
+  :pr:`22015` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.datasets`
 .......................
 
