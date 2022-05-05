@@ -38,7 +38,7 @@ prevalence of the positive class.
 
 from sklearn.datasets import make_classification
 
-X, y = make_classification(n_samples=10000, weights=[0.9], random_state=0)
+X, y = make_classification(n_samples=10_000, weights=[0.9, 0.1], random_state=0)
 print(f"Percentage of people carrying the disease: {100*y.mean():.2f}%")
 
 # %%
@@ -204,18 +204,18 @@ pos_LRs_std = []
 neg_LRs_std = []
 prevalence = []
 
+common_params = {
+    "n_samples": 10_000,
+    "n_features": 2,
+    "n_informative": 2,
+    "n_redundant": 0,
+    "random_state": 0,
+}
 weights = np.linspace(0.1, 0.8, 6)
 weights = weights[::-1]
 
 # create base model
-X, y = make_classification(
-    n_samples=10_000,
-    n_features=2,
-    n_informative=2,
-    n_redundant=0,
-    weights=[0.5],
-    random_state=0,
-)
+X, y = make_classification(**common_params, weights=[0.5, 0.5])
 clf = LogisticRegression()
 
 # fit and evaluate base model
@@ -229,12 +229,8 @@ plt.subplots_adjust(hspace=0.25)
 for n, weight in enumerate(weights):
 
     X_test, y_test = make_classification(
-        n_samples=10_000,
-        n_features=2,
-        n_informative=2,
-        n_redundant=0,
-        weights=[weight],
-        random_state=0,
+        **common_params,
+        weights=[weight, 1 - weight],
     )
 
     # plot decision boundary of base model with varying prevalence
