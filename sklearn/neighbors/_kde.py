@@ -40,7 +40,7 @@ class KernelDensity(BaseEstimator):
     bandwidth : float or {"scott", "silverman"}, default=1.0
         The bandwidth of the kernel. If bandwidth is a float, it defines the
         bandwidth of the kernel. If bandwidth is a string, one of the estimation
-        methods is implemented. Valid options are: ['scott'|'silvermann'].
+        methods is implemented.
 
     algorithm : {'kd_tree', 'ball_tree', 'auto'}, default='auto'
         The tree algorithm to use.
