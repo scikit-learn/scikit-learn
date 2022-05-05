@@ -12,6 +12,12 @@ Version 1.1.1
 Changelog
 ---------
 
+:mod:`sklearn.decomposition`
+............................
+
+- |Fix| Avoid spurious warning in :class:`decomposition.IncrementalPCA` when
+  `n_samples == n_components`. :pr:`23264` by :user:`Lucy Liu <lucyleeow>`
+
 :mod:`sklearn.metrics`
 ......................
 
