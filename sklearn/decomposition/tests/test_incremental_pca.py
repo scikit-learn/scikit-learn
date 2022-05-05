@@ -152,6 +152,7 @@ def test_incremental_pca_validation():
 
 def test_n_samples_equal_n_components():
     # Ensures no warning is raised when n_samples==n_components
+    # Non-regression test for gh-19050
     ipca = IncrementalPCA(n_components=5)
     with warnings.catch_warnings():
         warnings.simplefilter("error", RuntimeWarning)
