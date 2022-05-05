@@ -505,6 +505,9 @@ def test_sort_graph_by_row_values_copy():
     X = X_.copy()
     assert _check_precomputed(X).data is not X.data
 
+    # do not raise if X is not CSR and copy=True
+    sort_graph_by_row_values(X.tocsc(), copy=True)
+
     # raise if X is not CSR and copy=False
     with pytest.raises(ValueError, match="Use copy=True to allow the conversion"):
         sort_graph_by_row_values(X.tocsc(), copy=False)
