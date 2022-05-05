@@ -286,6 +286,7 @@ def test_class_weight_does_not_contains_more_classses():
 
 
 def test_compute_sample_weight_sparse():
+    """Check that we can compute weight for sparse `y`."""
     y = sparse.csc_matrix(np.asarray([0, 0, 0, 1, 1, 1])).T
     sample_weight = compute_sample_weight("balanced", y)
-    assert_array_almost_equal(sample_weight, [1, 1, 1, 1, 1, 1])
+    assert_allclose(sample_weight, [1, 1, 1, 1, 1, 1])
