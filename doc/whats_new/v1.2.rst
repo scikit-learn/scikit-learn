@@ -44,14 +44,11 @@ Changelog
 - |Enhancement| :class:`cluster.Birch` now preserves dtype for `numpy.float32`
   inputs. :pr:`22968` by `Meekail Zain <micky774>`.
 
-<<<<<<< HEAD
-=======
 :mod:`sklearn.ensemble`
 .......................
 
 - |Efficiency| Improve runtime performance of :class:`ensemble.IsolationForest`
   by avoiding data copies. :pr:`23252` by :user:`Zhehao Liu <MaxwellLZH>`.
->>>>>>> main
 
 Code and Documentation Contributors
 -----------------------------------
