@@ -62,13 +62,12 @@ y_2 = regr_2.predict(X)
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-# reshape the colors as 1D array for matplotlib
-colors = np.asarray(sns.color_palette("colorblind")).reshape(10, 1, 3)
+colors = sns.color_palette("colorblind")
 
 plt.figure()
-plt.scatter(X, y, c=colors[0], label="training samples")
-plt.plot(X, y_1, c=colors[1], label="n_estimators=1", linewidth=2)
-plt.plot(X, y_2, c=colors[2], label="n_estimators=300", linewidth=2)
+plt.scatter(X, y, color=colors[0], label="training samples")
+plt.plot(X, y_1, color=colors[1], label="n_estimators=1", linewidth=2)
+plt.plot(X, y_2, color=colors[2], label="n_estimators=300", linewidth=2)
 plt.xlabel("data")
 plt.ylabel("target")
 plt.title("Boosted Decision Tree Regression")
