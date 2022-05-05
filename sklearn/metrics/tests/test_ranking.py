@@ -831,6 +831,12 @@ def test_precision_recall_curve():
     y_true, _, y_score = make_prediction(binary=True)
     _test_precision_recall_curve(y_true, y_score)
 
+    # Make sure the first point of the Precision-Recall on the right is:
+    # (p=1.0, r=class balance) on a non-balanced dataset [1:]
+    p, r, t = precision_recall_curve(y_true[1:], y_score[1:])
+    assert r[0] == 1.0
+    assert p[0] == y_true[1:].mean()
+
     # Use {-1, 1} for labels; make sure original labels aren't modified
     y_true[np.where(y_true == 0)] = -1
     y_true_copy = y_true.copy()
@@ -848,7 +854,7 @@ def test_precision_recall_curve():
 
 
 def _test_precision_recall_curve(y_true, y_score):
-    # Test Precision-Recall and aread under PR curve
+    # Test Precision-Recall and area under PR curve
     p, r, thresholds = precision_recall_curve(y_true, y_score)
     precision_recall_auc = _average_precision_slow(y_true, y_score)
     assert_array_almost_equal(precision_recall_auc, 0.859, 3)
@@ -874,8 +880,8 @@ def test_precision_recall_curve_toydata():
         y_score = [0, 1]
         p, r, _ = precision_recall_curve(y_true, y_score)
         auc_prc = average_precision_score(y_true, y_score)
-        assert_array_almost_equal(p, [1, 1])
-        assert_array_almost_equal(r, [1, 0])
+        assert_array_almost_equal(p, [0.5, 1, 1])
+        assert_array_almost_equal(r, [1, 1, 0])
         assert_almost_equal(auc_prc, 1.0)
 
         y_true = [0, 1]
@@ -901,8 +907,8 @@ def test_precision_recall_curve_toydata():
         y_score = [1, 0]
         p, r, _ = precision_recall_curve(y_true, y_score)
         auc_prc = average_precision_score(y_true, y_score)
-        assert_array_almost_equal(p, [1, 1])
-        assert_array_almost_equal(r, [1, 0])
+        assert_array_almost_equal(p, [0.5, 1, 1])
+        assert_array_almost_equal(r, [1, 1, 0])
         assert_almost_equal(auc_prc, 1.0)
 
         y_true = [1, 0]
@@ -919,8 +925,8 @@ def test_precision_recall_curve_toydata():
             p, r, _ = precision_recall_curve(y_true, y_score)
         with pytest.warns(UserWarning, match="No positive class found in y_true"):
             auc_prc = average_precision_score(y_true, y_score)
-        assert_allclose(p, [0, 1])
-        assert_allclose(r, [1, 0])
+        assert_allclose(p, [0, 0, 1])
+        assert_allclose(r, [1, 1, 0])
         assert_allclose(auc_prc, 0)
 
         y_true = [1, 1]
