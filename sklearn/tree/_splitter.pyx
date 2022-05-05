@@ -57,7 +57,7 @@ cdef class Splitter:
 
     def __cinit__(self, Criterion criterion, SIZE_t max_features,
                   SIZE_t min_samples_leaf, double min_weight_leaf,
-                  object random_state):
+                  object random_state, use_lower_index_on_ties):
         """
         Parameters
         ----------
@@ -79,6 +79,10 @@ cdef class Splitter:
 
         random_state : object
             The user inputted random state to be used for pseudo-randomness
+
+        use_lower_index_on_ties: bint
+            Whether to always split on the feature with lower index if multiple
+            features have same amount of improvement
         """
 
         self.criterion = criterion
@@ -95,6 +99,7 @@ cdef class Splitter:
         self.min_samples_leaf = min_samples_leaf
         self.min_weight_leaf = min_weight_leaf
         self.random_state = random_state
+        self.use_lower_index_on_ties = use_lower_index_on_ties
 
     def __dealloc__(self):
         """Destructor."""
@@ -259,7 +264,8 @@ cdef class BestSplitter(BaseDenseSplitter):
                                self.max_features,
                                self.min_samples_leaf,
                                self.min_weight_leaf,
-                               self.random_state), self.__getstate__())
+                               self.random_state,
+                               self.use_lower_index_on_ties), self.__getstate__())
 
     cdef int node_split(self, double impurity, SplitRecord* split,
                         SIZE_t* n_constant_features) nogil except -1:
@@ -282,6 +288,7 @@ cdef class BestSplitter(BaseDenseSplitter):
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf
         cdef double min_weight_leaf = self.min_weight_leaf
         cdef UINT32_t* random_state = &self.rand_r_state
+        cdef bint use_lower_index_on_ties = self.use_lower_index_on_ties
 
         cdef SplitRecord best, current
         cdef double current_proxy_improvement = -INFINITY
@@ -407,7 +414,8 @@ cdef class BestSplitter(BaseDenseSplitter):
                 if (current_proxy_improvement > best_proxy_improvement or
                     # Breaking ties on the feature with lowest index
                     (current_proxy_improvement == best_proxy_improvement and
-                     current.feature < best.feature)):
+                     current.feature < best.feature and
+                     use_lower_index_on_ties)):
                     best_proxy_improvement = current_proxy_improvement
                     # sum of halves is used to avoid infinite value
                     current.threshold = Xf[p - 1] / 2.0 + Xf[p] / 2.0
@@ -669,7 +677,7 @@ cdef class BaseSparseSplitter(Splitter):
 
     def __cinit__(self, Criterion criterion, SIZE_t max_features,
                   SIZE_t min_samples_leaf, double min_weight_leaf,
-                  object random_state):
+                  object random_state, bint use_lower_index_on_ties):
         # Parent __cinit__ is automatically called
 
         self.X_data = NULL
@@ -983,7 +991,8 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
                                      self.max_features,
                                      self.min_samples_leaf,
                                      self.min_weight_leaf,
-                                     self.random_state), self.__getstate__())
+                                     self.random_state,
+                                     self.use_lower_index_on_ties), self.__getstate__())
 
     cdef int node_split(self, double impurity, SplitRecord* split,
                         SIZE_t* n_constant_features) nogil except -1:
@@ -1012,6 +1021,7 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf
         cdef double min_weight_leaf = self.min_weight_leaf
         cdef UINT32_t* random_state = &self.rand_r_state
+        cdef bint use_lower_index_on_ties = self.use_lower_index_on_ties
 
         cdef SplitRecord best, current
         _init_split(&best, end)
@@ -1164,7 +1174,8 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
                 if (current_proxy_improvement > best_proxy_improvement or
                     # Breaking ties on the feature with lowest index
                     (current_proxy_improvement == best_proxy_improvement and
-                     current.feature < best.feature)):
+                     current.feature < best.feature and 
+                     use_lower_index_on_ties)):
                     best_proxy_improvement = current_proxy_improvement
                     # sum of halves used to avoid infinite values
                     current.threshold = Xf[p_prev] / 2.0 + Xf[p] / 2.0

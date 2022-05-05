@@ -113,6 +113,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         min_impurity_decrease,
         class_weight=None,
         ccp_alpha=0.0,
+        use_lower_index_on_ties=False,
     ):
         self.criterion = criterion
         self.splitter = splitter
@@ -126,6 +127,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         self.min_impurity_decrease = min_impurity_decrease
         self.class_weight = class_weight
         self.ccp_alpha = ccp_alpha
+        self.use_lower_index_on_ties = use_lower_index_on_ties
 
     def get_depth(self):
         """Return the depth of the decision tree.
@@ -414,6 +416,17 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         SPLITTERS = SPARSE_SPLITTERS if issparse(X) else DENSE_SPLITTERS
 
+        if self.use_lower_index_on_ties == "warn":
+            warnings.warn(
+                "Parameter `use_lower_index_on_ties` will by default set to True in"
+                " version 1.3. Set `use_lower_index_on_ties=True` for backward"
+                " compatibility.",
+                FutureWarning,
+            )
+            use_lower_index_on_ties = False
+        else:
+            use_lower_index_on_ties = self.use_lower_index_on_ties
+
         splitter = self.splitter
         if not isinstance(self.splitter, Splitter):
             splitter = SPLITTERS[self.splitter](
@@ -422,6 +435,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 min_samples_leaf,
                 min_weight_leaf,
                 random_state,
+                use_lower_index_on_ties,
             )
 
         if is_classifier(self):
@@ -808,6 +822,13 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
         .. versionadded:: 0.22
 
+    use_lower_index_on_ties : bool, default="warn"
+        Whether to split on the feature with lowest index when multiple features
+        share the same improvement. This usually happens when the dataset has
+        identically-ordered features.
+
+        .. versionadded:: 1.2
+
     Attributes
     ----------
     classes_ : ndarray of shape (n_classes,) or list of ndarray
@@ -920,6 +941,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         min_impurity_decrease=0.0,
         class_weight=None,
         ccp_alpha=0.0,
+        use_lower_index_on_ties="warn",
     ):
         super().__init__(
             criterion=criterion,
@@ -934,6 +956,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             random_state=random_state,
             min_impurity_decrease=min_impurity_decrease,
             ccp_alpha=ccp_alpha,
+            use_lower_index_on_ties=use_lower_index_on_ties,
         )
 
     def fit(self, X, y, sample_weight=None, check_input=True):
@@ -1198,6 +1221,13 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
         .. versionadded:: 0.22
 
+    use_lower_index_on_ties : bool, default="warn"
+        Whether to split on the feature with lowest index when multiple features
+        share the same improvement. This usually happens when the dataset has 
+        identically-ordered features.
+
+        .. versionadded:: 1.2
+
     Attributes
     ----------
     feature_importances_ : ndarray of shape (n_features,)
@@ -1295,6 +1325,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         max_leaf_nodes=None,
         min_impurity_decrease=0.0,
         ccp_alpha=0.0,
+        use_lower_index_on_ties="warn",
     ):
         super().__init__(
             criterion=criterion,
@@ -1308,6 +1339,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
             random_state=random_state,
             min_impurity_decrease=min_impurity_decrease,
             ccp_alpha=ccp_alpha,
+            use_lower_index_on_ties=use_lower_index_on_ties,
         )
 
     def fit(self, X, y, sample_weight=None, check_input=True):

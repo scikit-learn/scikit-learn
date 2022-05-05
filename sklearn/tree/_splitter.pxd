@@ -45,6 +45,7 @@ cdef class Splitter:
 
     cdef object random_state             # Random state
     cdef UINT32_t rand_r_state           # sklearn_rand_r random number state
+    cdef bint use_lower_index_on_ties    # Tie features are split on lower index
 
     cdef SIZE_t* samples                 # Sample indices in X, y
     cdef SIZE_t n_samples                # X.shape[0]
