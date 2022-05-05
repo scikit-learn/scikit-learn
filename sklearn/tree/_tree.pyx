@@ -574,7 +574,7 @@ cdef class Tree:
     n_node_samples : array of int, shape [node_count]
         n_node_samples[i] holds the number of training samples reaching node i.
 
-    weighted_n_node_samples : array of int, shape [node_count]
+    weighted_n_node_samples : array of double, shape [node_count]
         weighted_n_node_samples[i] holds the weighted number of training samples
         reaching node i.
     """
