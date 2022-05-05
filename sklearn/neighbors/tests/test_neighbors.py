@@ -38,7 +38,7 @@ from sklearn.neighbors import (
     KNeighborsRegressor,
 )
 from sklearn.neighbors._base import (
-    _is_sorted_by_row_values,
+    _is_sorted_by_data,
     _check_precomputed,
     sort_graph_by_row_values,
     KNeighborsMixin,
@@ -442,28 +442,28 @@ def test_precomputed_sparse_radius(fmt):
     check_precomputed(make_train_test, estimators)
 
 
-def test_is_sorted_by_row_values():
-    # Test that _is_sorted_by_row_values works as expected. In CSR sparse matrix,
+def test_is_sorted_by_data():
+    # Test that _is_sorted_by_data works as expected. In CSR sparse matrix,
     # entries in each row can be sorted by indices, by data, or unsorted.
-    # _is_sorted_by_row_values should return True when entries are sorted by data,
+    # _is_sorted_by_data should return True when entries are sorted by data,
     # and False in all other cases.
 
     # Test with sorted 1D array
     X = csr_matrix(np.arange(10))
-    assert _is_sorted_by_row_values(X)
+    assert _is_sorted_by_data(X)
     # Test with unsorted 1D array
     X[0, 2] = 5
-    assert not _is_sorted_by_row_values(X)
+    assert not _is_sorted_by_data(X)
 
     # Test when the data is sorted in each sample, but not necessarily
     # between samples
     X = csr_matrix([[0, 1, 2], [3, 0, 0], [3, 4, 0], [1, 0, 2]])
-    assert _is_sorted_by_row_values(X)
+    assert _is_sorted_by_data(X)
 
     # Test with duplicates entries in X.indptr
     data, indices, indptr = [0, 4, 2, 2], [0, 1, 1, 1], [0, 2, 2, 4]
     X = csr_matrix((data, indices, indptr), shape=(3, 3))
-    assert _is_sorted_by_row_values(X)
+    assert _is_sorted_by_data(X)
 
 
 @ignore_warnings(category=EfficiencyWarning)
@@ -471,25 +471,25 @@ def test_is_sorted_by_row_values():
 def test_sort_graph_by_row_values(function):
     # Test that sort_graph_by_row_values returns a graph sorted by row values
     X = csr_matrix(np.abs(np.random.RandomState(42).randn(10, 10)))
-    assert not _is_sorted_by_row_values(X)
+    assert not _is_sorted_by_data(X)
     Xt = function(X)
-    assert _is_sorted_by_row_values(Xt)
+    assert _is_sorted_by_data(Xt)
 
     # test with a different number of nonzero entries for each sample
     mask = np.random.RandomState(42).randint(2, size=(10, 10))
     X = X.toarray()
     X[mask == 1] = 0
     X = csr_matrix(X)
-    assert not _is_sorted_by_row_values(X)
+    assert not _is_sorted_by_data(X)
     Xt = function(X)
-    assert _is_sorted_by_row_values(Xt)
+    assert _is_sorted_by_data(Xt)
 
 
 @ignore_warnings(category=EfficiencyWarning)
 def test_sort_graph_by_row_values_copy():
     # Test if the sorting is done inplace if X is CSR, so that Xt is X.
     X_ = csr_matrix(np.abs(np.random.RandomState(42).randn(10, 10)))
-    assert not _is_sorted_by_row_values(X_)
+    assert not _is_sorted_by_data(X_)
 
     # sort_graph_by_row_values is done inplace if copy=False
     X = X_.copy()
@@ -517,7 +517,7 @@ def test_sort_graph_by_row_values_copy():
 def test_sort_graph_by_row_values_warning():
     # Test that the parameter warn_when_not_sorted works as expected.
     X = csr_matrix(np.abs(np.random.RandomState(42).randn(10, 10)))
-    assert not _is_sorted_by_row_values(X)
+    assert not _is_sorted_by_data(X)
 
     # warning
     with pytest.warns(EfficiencyWarning, match="was not sorted by row values"):
@@ -1063,7 +1063,7 @@ def test_radius_neighbors_sort_results(algorithm, metric):
     graph = model.radius_neighbors_graph(
         X=X, radius=np.inf, mode="distance", sort_results=True
     )
-    assert _is_sorted_by_row_values(graph)
+    assert _is_sorted_by_data(graph)
 
 
 def test_RadiusNeighborsClassifier_multioutput():

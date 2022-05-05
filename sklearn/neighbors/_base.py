@@ -141,7 +141,7 @@ def _get_weights(dist, weights):
         )
 
 
-def _is_sorted_by_row_values(graph):
+def _is_sorted_by_data(graph):
     """Return whether the graph's non-zero entries are sorted by data.
 
     The non-zero entries are stored in graph.data and graph.indices.
@@ -238,7 +238,7 @@ def sort_graph_by_row_values(graph, copy=False, warn_when_not_sorted=True):
             "Input graph must be a sparse matrix, got %s instead." % (type(graph),)
         )
 
-    if graph.format == "csr" and _is_sorted_by_row_values(graph):
+    if graph.format == "csr" and _is_sorted_by_data(graph):
         return graph
 
     if warn_when_not_sorted:
