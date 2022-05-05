@@ -88,6 +88,8 @@ def _parallel_build_estimators(
     bootstrap_features = ensemble.bootstrap_features
     support_sample_weight = has_fit_parameter(ensemble.base_estimator_, "sample_weight")
     has_check_input = has_fit_parameter(ensemble.base_estimator_, "check_input")
+    requires_feature_indexing = bootstrap_features or max_features != n_features
+
     if not support_sample_weight and sample_weight is not None:
         raise ValueError("The base estimator doesn't support sample weight")
 
@@ -135,10 +137,11 @@ def _parallel_build_estimators(
                 not_indices_mask = ~indices_to_mask(indices, n_samples)
                 curr_sample_weight[not_indices_mask] = 0
 
-            estimator_fit(X[:, features], y, sample_weight=curr_sample_weight)
-
+            X_ = X[:, features] if requires_feature_indexing else X
+            estimator_fit(X_, y, sample_weight=curr_sample_weight)
         else:
-            estimator_fit(X[indices][:, features], y[indices])
+            X_ = X[indices][:, features] if requires_feature_indexing else X[indices]
+            estimator_fit(X_, y[indices])
 
         estimators.append(estimator)
         estimators_features.append(features)
