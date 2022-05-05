@@ -91,7 +91,7 @@ class KernelDensity(BaseEstimator):
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
-        
+
     bandwidth_ : float
         Value of the bandwidth, given directly by the bandwidth parameter or
         estimated using the 'scott' or 'silvermann' method.
