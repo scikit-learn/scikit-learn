@@ -1806,7 +1806,9 @@ Values of :math:`LR_\pm\approx 1` correspond to chance level.
 
 Notice that probabilities differ from counts, for instance
 :math:`\operatorname{PR}(P+|T+)` is not equal to the number of true positive
-counts ``tp`` (see `the wikipedia page <https://en.wikipedia.org/wiki/Likelihood_ratios_in_diagnostic_testing>`_ for the actual formulas).
+counts ``tp`` (see `the wikipedia page
+<https://en.wikipedia.org/wiki/Likelihood_ratios_in_diagnostic_testing>`_ for
+the actual formulas).
 
 **Interpretation across varying prevalence:**
 
