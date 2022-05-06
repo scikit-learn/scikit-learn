@@ -44,7 +44,7 @@ diabetes.data = diabetes.data[perm]
 diabetes.target = diabetes.target[perm]
 
 
-def test_iforest():
+def test_iforest(global_random_seed):
     """Check Isolation Forest for various parameter settings."""
     X_train = np.array([[0, 1], [1, 2]])
     X_test = np.array([[2, 1], [1, 1]])
@@ -55,7 +55,7 @@ def test_iforest():
 
     with ignore_warnings():
         for params in grid:
-            IsolationForest(random_state=rng, **params).fit(X_train).predict(X_test)
+            IsolationForest(random_state=global_random_seed, **params).fit(X_train).predict(X_test)
 
 
 def test_iforest_sparse(global_random_seed):
@@ -190,12 +190,12 @@ def test_iforest_performance(global_random_seed):
 
 
 @pytest.mark.parametrize("contamination", [0.25, "auto"])
-def test_iforest_works(contamination):
+def test_iforest_works(contamination, global_random_seed):
     # toy sample (the last two samples are outliers)
-    X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1], [6, 3], [-4, 7]]
+    X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1], [7, 4], [-5, 9]]
 
     # Test IsolationForest
-    clf = IsolationForest(random_state=rng, contamination=contamination)
+    clf = IsolationForest(random_state=global_random_seed, contamination=contamination)
     clf.fit(X)
     decision_func = -clf.decision_function(X)
     pred = clf.predict(X)
