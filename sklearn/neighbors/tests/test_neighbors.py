@@ -485,7 +485,7 @@ def test_sort_graph_by_row_values(function):
     assert _is_sorted_by_data(Xt)
 
 
-@ignore_warnings(category=EfficiencyWarning)
+@pytest.mark.filterwarnings("ignore:EfficiencyWarning")
 def test_sort_graph_by_row_values_copy():
     # Test if the sorting is done inplace if X is CSR, so that Xt is X.
     X_ = csr_matrix(np.abs(np.random.RandomState(42).randn(10, 10)))

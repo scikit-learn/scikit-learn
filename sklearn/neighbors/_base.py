@@ -217,13 +217,13 @@ def sort_graph_by_row_values(graph, copy=False, warn_when_not_sorted=True):
         Distance matrix to other samples, where only non-zero elements are
         considered neighbors. Matrix is converted to CSR format if not already.
 
-    copy : bool
+    copy : bool, default=False
         If True, the graph is copied before sorting. If False, the sorting is
         performed inplace. If the graph is not of CSR format, `copy` must be
         True to allow the conversion to CSR format, otherwise an error is
         raised.
 
-    warn_when_not_sorted : bool
+    warn_when_not_sorted : bool, default=True
         If True, a :class:`~sklearn.exceptions.EfficiencyWarning` is raised
         when the input graph is not sorted by row values.
 
@@ -235,7 +235,7 @@ def sort_graph_by_row_values(graph, copy=False, warn_when_not_sorted=True):
     """
     if not issparse(graph):
         raise TypeError(
-            "Input graph must be a sparse matrix, got %s instead." % (type(graph),)
+            f"Input graph must be a sparse matrix, got {graph!r} instead."
         )
 
     if graph.format == "csr" and _is_sorted_by_data(graph):
@@ -251,8 +251,8 @@ def sort_graph_by_row_values(graph, copy=False, warn_when_not_sorted=True):
 
     if graph.format not in ("csr", "csc", "coo", "lil"):
         raise TypeError(
-            "Sparse matrix in {!r} format is not supported due to "
-            "its handling of explicit zeros".format(graph.format)
+            f"Sparse matrix in {graph.format!r} format is not supported due to "
+            "its handling of explicit zeros"
         )
     elif graph.format != "csr":
         if not copy:
@@ -264,11 +264,10 @@ def sort_graph_by_row_values(graph, copy=False, warn_when_not_sorted=True):
     elif copy:  # csr format with copy=True
         graph = graph.copy()
 
-    # After all input checks, sort the graph inplace by row values.
 
-    # if each sample has the same number of provided neighbors
     row_nnz = np.diff(graph.indptr)
     if row_nnz.max() == row_nnz.min():
+        # if each sample has the same number of provided neighbors
         n_samples = graph.shape[0]
         distances = graph.data.reshape(n_samples, -1)
 
