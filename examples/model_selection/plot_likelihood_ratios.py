@@ -66,27 +66,8 @@ print(f"LR+: {pos_LR:.3f}")
 # %%
 # Since the positive class likelihood ratio is much larger than 1.0, it means
 # that the machine learning-based diagnosis tool is useful: the post-test odds
-# are more than 12 times larger than the pre-test odds. We now choose the
-# pre-test probability to be the prevalence of the disease in the held-out
-# testing set.
-
-pretest_odds = y_test.mean() / (1 - y_test.mean())
-print(f"Observed pre-test odds: {pretest_odds:.3f}")
-print(f"Estimated post-test odds using LR+: {pretest_odds * pos_LR:.3f}")
-
-# %%
-# The post-test probability is the probability that the condition is truly
-# present given a positive test result, i.e. the number of true positives
-# divided by the total number of samples. In real life applications this is
-# unknown. Transforming post-test probabilities to odds, we can verify that the
-# positive likelihood ratio relates pre-test and post-test odds.
-
-posttest_prob = y_test[y_pred == 1].mean()
-posttest_odds = posttest_prob / (1 - posttest_prob)
-
-print(f"Observed post-test odds: {posttest_odds:.3f}")
-# %%
-# The estimated and the observed post-test odds do coincide.
+# that the condition is truly present given a positive test result are more than
+# 12 times larger than the pre-test odds.
 #
 # Cross-validation of likelihood ratios
 # =====================================
@@ -115,8 +96,8 @@ def extract_score(cv_results):
     neg_lr = lr["negative"].mean()
     neg_lr_std = lr["negative"].std()
 
-    print(f"The mean cross-validated LR+ is: {pos_lr:.2f} +/- {pos_lr_std:.2f}")
-    print(f"The mean cross-validated LR- is: {neg_lr:.2f} +/- {neg_lr_std:.2f}")
+    print(f"LR+: {pos_lr:.2f} +/- {pos_lr_std:.2f}")
+    print(f"LR-: {neg_lr:.2f} +/- {neg_lr_std:.2f}")
 
     return pos_lr, neg_lr, pos_lr_std, neg_lr_std
 
@@ -229,7 +210,7 @@ for ax, (n, weight) in zip(axs.ravel(), enumerate(weights)):
 
     # down-sample for plotting
     rng = np.random.RandomState(1)
-    plot_indices = rng.choice(np.arange(X.shape[0]), size=1000, replace=True)
+    plot_indices = rng.choice(np.arange(X.shape[0]), size=500, replace=True)
     X_plot, y_plot = X[plot_indices], y[plot_indices]
 
     # plot decision boundary of base model with varying prevalence
@@ -246,7 +227,6 @@ for ax, (n, weight) in zip(axs.ravel(), enumerate(weights)):
 
     # recompute likelihood ratios of base model for each prevalence
     pos_LR, neg_LR = scoring(estimator, X, y).values()
-
     pos_LRs.append(pos_LR)
     neg_LRs.append(neg_LR)
     prevalence.append(y.mean())
@@ -255,7 +235,7 @@ class_LRs = pd.DataFrame({"LR+": pos_LRs, "LR-": neg_LRs})
 # %%
 # In the plots below we observe that the class likelihood ratios re-computed
 # with different prevalences are indeed constant within one standard deviation
-# of those computed with the base model.
+# of those computed with on balanced classes.
 
 plt.figure(figsize=(15, 6))
 
