@@ -61,9 +61,7 @@ def test_iforest(global_random_seed):
 def test_iforest_sparse(global_random_seed):
     """Check IForest for various parameter settings on sparse input."""
     rng = check_random_state(global_random_seed)
-    X_train, X_test, y_train, y_test = train_test_split(
-        diabetes.data[:50], diabetes.target[:50], random_state=rng
-    )
+    X_train, X_test = train_test_split(diabetes.data[:50], random_state=rng)
     grid = ParameterGrid({"max_samples": [0.5, 1.0], "bootstrap": [True, False]})
 
     for sparse_format in [csc_matrix, csr_matrix]:
