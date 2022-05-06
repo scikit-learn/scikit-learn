@@ -58,8 +58,8 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 from sklearn.metrics import class_likelihood_ratios
 from sklearn.linear_model import LogisticRegression
 
-clf = LogisticRegression().fit(X_train, y_train)
-y_pred = clf.predict(X_test)
+estimator = LogisticRegression().fit(X_train, y_train)
+y_pred = estimator.predict(X_test)
 pos_LR, neg_LR = class_likelihood_ratios(y_test, y_pred)
 print(f"LR+: {pos_LR:.3f}")
 
@@ -92,49 +92,43 @@ print(f"Observed post-test odds: {posttest_odds:.3f}")
 # =====================================
 #
 # We assess the variability of the measurements for the class likelihood ratios
-# in some particular cases. For that purpose we define a cross validating
-# function that preserves the proportion of samples for both classes in each
-# fold:
+# in some particular cases.
 
-from sklearn.model_selection import StratifiedKFold
 import pandas as pd
 
 
-def cross_validate_LRs(clf, X, y, verbose=True, internal_fit=True):
+def scoring(estimator, X, y):
+    y_pred = estimator.predict(X)
+    pos_lr, neg_lr = class_likelihood_ratios(y, y_pred, raise_warning=False)
+    return {"positive_likelihood_ratio": pos_lr, "negative_likelihood_ratio": neg_lr}
 
-    pos_LRs = []
-    neg_LRs = []
 
-    for train_index, test_index in StratifiedKFold(n_splits=10).split(X, y):
+def extract_score(cv_results):
+    lr = pd.DataFrame(
+        {
+            "positive": cv_results["test_positive_likelihood_ratio"],
+            "negative": cv_results["test_negative_likelihood_ratio"],
+        }
+    )
+    pos_lr = lr["positive"].mean()
+    pos_lr_std = lr["positive"].std()
+    neg_lr = lr["negative"].mean()
+    neg_lr_std = lr["negative"].std()
 
-        X_train, X_test = X[train_index], X[test_index]
-        y_train, y_test = y[train_index], y[test_index]
+    print(f"The mean cross-validated LR+ is: {pos_lr:.2f} +/- {pos_lr_std:.2f}")
+    print(f"The mean cross-validated LR- is: {neg_lr:.2f} +/- {neg_lr_std:.2f}")
 
-        if internal_fit:
-            clf.fit(X_train, y_train)
-        y_pred = clf.predict(X_test)
-        pos_LR, neg_LR = class_likelihood_ratios(y_test, y_pred, raise_warning=False)
-        pos_LRs.append(pos_LR)
-        neg_LRs.append(neg_LR)
-
-    class_LRs = pd.DataFrame({"LR+": pos_LRs, "LR-": neg_LRs})
-    pos_LR = class_LRs["LR+"].mean()
-    pos_LR_std = class_LRs["LR+"].std()
-    neg_LR = class_LRs["LR-"].mean()
-    neg_LR_std = class_LRs["LR-"].std()
-
-    if verbose:
-        print(f"The mean cross-validated LR+ is: {pos_LR:.2f} +/- {pos_LR_std:.2f}")
-        print(f"The mean cross-validated LR- is: {neg_LR:.2f} +/- {neg_LR_std:.2f}")
-
-    return pos_LR, neg_LR, pos_LR_std, neg_LR_std
+    return pos_lr, neg_lr, pos_lr_std, neg_lr_std
 
 
 # %%
 # We first validate the `LogisticRegression` model with default hyperparameters
 # as used in the previous section.
 
-_ = cross_validate_LRs(LogisticRegression(), X, y)
+from sklearn.model_selection import cross_validate
+
+estimator = LogisticRegression()
+_ = extract_score(cross_validate(estimator, X, y, scoring=scoring, cv=10))
 
 # %%
 # We confirm that the model is useful: the post-test odds are between 12 and 20
@@ -146,7 +140,8 @@ _ = cross_validate_LRs(LogisticRegression(), X, y)
 
 from sklearn.dummy import DummyClassifier
 
-_ = cross_validate_LRs(DummyClassifier(strategy="stratified", random_state=1234), X, y)
+estimator = DummyClassifier(strategy="stratified", random_state=1234)
+_ = extract_score(cross_validate(estimator, X, y, scoring=scoring, cv=10))
 
 # %%
 # Here both class likelihood ratios are compatible with 1.0 which makes this
@@ -155,7 +150,8 @@ _ = cross_validate_LRs(DummyClassifier(strategy="stratified", random_state=1234)
 # Another option for the dummy model is to always predict the most frequent
 # class, which in this case is "no-disease".
 
-_ = cross_validate_LRs(DummyClassifier(strategy="most_frequent"), X, y)
+estimator = DummyClassifier(strategy="most_frequent")
+_ = extract_score(cross_validate(estimator, X, y, scoring=scoring, cv=10))
 
 # %%
 # The absence of positive predictions means there will be no true positives nor
@@ -173,8 +169,9 @@ _ = cross_validate_LRs(DummyClassifier(strategy="most_frequent"), X, y)
 # leads to a higher variance of the estimated likelihood ratios, but can still
 # be interpreted as an increment of the post-test odds of having the condition.
 
+estimator = LogisticRegression()
 X, y = make_classification(n_samples=300, weights=[0.9], random_state=0)
-_ = cross_validate_LRs(LogisticRegression(), X, y)
+_ = extract_score(cross_validate(estimator, X, y, scoring=scoring, cv=10))
 
 # %%
 # Plot class likelihood ratios
@@ -216,11 +213,11 @@ weights = weights[::-1]
 
 # create base model
 X, y = make_classification(**common_params, weights=[0.5, 0.5])
-clf = LogisticRegression()
+estimator = LogisticRegression().fit(X, y)
 
 # fit and evaluate base model
-pos_LR_base, neg_LR_base, pos_LR_base_std, neg_LR_base_std = cross_validate_LRs(
-    clf, X, y, verbose=False
+pos_LR_base, neg_LR_base, pos_LR_base_std, neg_LR_base_std = extract_score(
+    cross_validate(estimator, X, y, scoring=scoring, cv=10)
 )
 
 plt.figure(figsize=(15, 12))
@@ -228,38 +225,35 @@ plt.subplots_adjust(hspace=0.25)
 
 for n, weight in enumerate(weights):
 
-    X_test, y_test = make_classification(
+    X, y = make_classification(
         **common_params,
         weights=[weight, 1 - weight],
     )
+    rng = np.random.RandomState(1)
+    plot_indices = rng.choice(np.arange(X.shape[0]), size=1000, replace=True)
+    X_plot, y_plot = X[plot_indices], y[plot_indices]
 
     # plot decision boundary of base model with varying prevalence
     ax = plt.subplot(3, 2, n + 1)
     disp = DecisionBoundaryDisplay.from_estimator(
-        clf,
-        X_test,
+        estimator,
+        X_plot,
         response_method="predict",
         alpha=0.5,
         ax=ax,
     )
-    scatter = disp.ax_.scatter(X_test[:, 0], X_test[:, 1], c=y_test, edgecolor="k")
-    disp.ax_.set_title(f"prevalence = {y_test.mean():.2f}")
+    scatter = disp.ax_.scatter(X_plot[:, 0], X_plot[:, 1], c=y_plot, edgecolor="k")
+    disp.ax_.set_title(f"prevalence = {y_plot.mean():.2f}")
     disp.ax_.legend(*scatter.legend_elements())
 
     # recompute likelihood ratios for each prevalence
-    pos_LR, neg_LR, pos_LR_std, neg_LR_std = cross_validate_LRs(
-        clf, X_test, y_test, verbose=False, internal_fit=False
-    )
+    pos_LR, neg_LR = scoring(estimator, X, y).values()
 
     pos_LRs.append(pos_LR)
     neg_LRs.append(neg_LR)
-    pos_LRs_std.append(pos_LR_std)
-    neg_LRs_std.append(neg_LR_std)
-    prevalence.append(y_test.mean())
+    prevalence.append(y.mean())
 
-class_LRs = pd.DataFrame(
-    {"LR+": pos_LRs, "LR-": neg_LRs, "LR+_std": pos_LRs_std, "LR-_std": neg_LRs_std}
-)
+class_LRs = pd.DataFrame({"LR+": pos_LRs, "LR-": neg_LRs})
 # %%
 # In the plots below we observe that the class likelihood ratios re-computed
 # with different prevalences are indeed constant within one standard deviation
@@ -268,14 +262,7 @@ class_LRs = pd.DataFrame(
 plt.figure(figsize=(15, 6))
 
 ax1 = plt.subplot(1, 2, 1)
-ax1.plot(prevalence, class_LRs["LR+"], "r", label="extrapolation through populations")
-ax1.fill_between(
-    prevalence,
-    class_LRs["LR+"] - class_LRs["LR+_std"],
-    class_LRs["LR+"] + class_LRs["LR+_std"],
-    color="r",
-    alpha=0.3,
-)
+ax1.plot(prevalence, class_LRs["LR+"], "r+", label="extrapolation through populations")
 ax1.axhline(y=pos_LR_base + pos_LR_base_std, color="r", linestyle="--")
 ax1.axhline(
     y=pos_LR_base - pos_LR_base_std,
@@ -292,14 +279,7 @@ ax1.set(
 plt.legend(loc="lower right")
 
 ax2 = plt.subplot(1, 2, 2)
-ax2.plot(prevalence, class_LRs["LR-"], "b", label="extrapolation through populations")
-ax2.fill_between(
-    prevalence,
-    class_LRs["LR-"] + class_LRs["LR-_std"],
-    class_LRs["LR-"] - class_LRs["LR-_std"],
-    color="b",
-    alpha=0.3,
-)
+ax2.plot(prevalence, class_LRs["LR-"], "b+", label="extrapolation through populations")
 ax2.axhline(y=neg_LR_base + neg_LR_base_std, color="b", linestyle="--")
 ax2.axhline(
     y=neg_LR_base - neg_LR_base_std,
