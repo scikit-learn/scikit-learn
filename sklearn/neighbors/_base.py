@@ -234,9 +234,7 @@ def sort_graph_by_row_values(graph, copy=False, warn_when_not_sorted=True):
         considered neighbors. Matrix is in CSR format.
     """
     if not issparse(graph):
-        raise TypeError(
-            f"Input graph must be a sparse matrix, got {graph!r} instead."
-        )
+        raise TypeError(f"Input graph must be a sparse matrix, got {graph!r} instead.")
 
     if graph.format == "csr" and _is_sorted_by_data(graph):
         return graph
@@ -263,7 +261,6 @@ def sort_graph_by_row_values(graph, copy=False, warn_when_not_sorted=True):
         graph = graph.asformat("csr")
     elif copy:  # csr format with copy=True
         graph = graph.copy()
-
 
     row_nnz = np.diff(graph.indptr)
     if row_nnz.max() == row_nnz.min():
