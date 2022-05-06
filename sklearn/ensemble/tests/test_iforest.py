@@ -145,9 +145,7 @@ def test_iforest_parallel_regression(global_random_seed):
     """Check parallel regression."""
     rng = check_random_state(global_random_seed)
 
-    X_train, X_test, y_train, y_test = train_test_split(
-        diabetes.data, diabetes.target, random_state=rng
-    )
+    X_train, X_test, y_train, y_test = train_test_split(diabetes.data, random_state=rng)
 
     ensemble = IsolationForest(n_jobs=3, random_state=global_random_seed).fit(X_train)
 
