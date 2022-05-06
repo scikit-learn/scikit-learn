@@ -188,19 +188,28 @@ class KernelDensity(BaseEstimator):
 
         algorithm = self._choose_algorithm(self.algorithm, self.metric)
 
-        if self.bandwidth == "scott":
-            self.bandwidth_ = X.shape[0] ** (-1 / (X.shape[1] + 4))
-        elif self.bandwidth == "silvermann":
-            self.bandwidth_ = (X.shape[0] * (X.shape[1] + 2) / 4) ** (
-                -1 / (X.shape[1] + 4)
-            )
-        elif isinstance(self.bandwidth, numbers.Real) and self.bandwidth > 0:
-            self.bandwidth_ = self.bandwidth
+        if isinstance(self.bandwidth, str):
+            methods_supported = ("scott", "silvermann")
+            if self.bandwidth not in methods_supported:
+                raise ValueError(
+                    "When `bandwitdth` is a string, it should be one of: "
+                    f"{','.join(methods_supported)}. Got {self.bandwidth} instead."
+                )
+            if self.bandwidth == "scott":
+                self.bandwidth_ = X.shape[0] ** (-1 / (X.shape[1] + 4))
+            elif self.bandwidth == "silvermann":
+                self.bandwidth_ = (X.shape[0] * (X.shape[1] + 2) / 4) ** (
+                    -1 / (X.shape[1] + 4)
+                )
         else:
-            raise ValueError(
-                "Bandwidth must be a positive number, or the strings 'scott' or"
-                f" 'silvermann', but '{repr(self.bandwidth)}' was passed"
+            check_scalar(
+                self.bandwidth,
+                "bandwidth",
+                target_type=numbers.Real,
+                min_val=0,
+                include_boundaries="neither",
             )
+            self.bandwidth_ = self.bandwidth
         if self.kernel not in VALID_KERNELS:
             raise ValueError("invalid kernel: '{0}'".format(self.kernel))
 
