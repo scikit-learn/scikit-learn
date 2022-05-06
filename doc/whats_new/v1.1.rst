@@ -786,11 +786,6 @@ Changelog
   warning when `l1_ratio=0`.
   :pr:`21724` by :user:`Yar Khine Phyo <yarkhinephyo>`.
 
-- |Enhancement| :class:`linear_model.ElasticNet` and :class:`linear_model.Lasso`
-  now raise consistent error messages when passed invalid values for `l1_ratio`,
-  `alpha`, `max_iter` and `tol`.
-  :pr:`22240` by :user:`Arturo Amor <ArturoAmorQ>`.
-
 - |Fix| :class:`linear_model.LogisticRegression` and
   :class:`linear_model.LogisticRegressionCV` now set the `n_iter_` attribute
   with a shape that respects the docstring and that is consistent with the shape
