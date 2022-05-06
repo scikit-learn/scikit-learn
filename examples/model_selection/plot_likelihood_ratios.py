@@ -153,12 +153,12 @@ extract_score(cross_validate(estimator, X, y, scoring=scoring, cv=10))
 #
 # The likelihood ratios are independent of the disease prevalence and can be
 # extrapolated between populations regardless of any possible class imbalance,
-# **as long as the same model is applied to all of them**. In the case where
-# models/diagnostic tests are updated, for instance, to evolve along with the
-# spread of a disease, one has to account for the prevalence seen during
-# training before making a comparison analysis.
+# **as long as the same model is applied to all of them**. Notice that in the
+# plots below **the decision boundary is constant** (see
+# :ref:`sphx_glr_auto_examples_svm_plot_separating_hyperplane_unbalanced.py` for
+# a study of the boundary decision for unbalanced classes).
 #
-# Here we train a `LogisticRegression` base model on a population with a
+# Here we train a `LogisticRegression` base model on a case-control study with a
 # prevalence of 50%. It is then evaluated over populations with varying
 # prevalence. We use the `make_classification` function to ensure the
 # data-generating process is always the same as shown in the plots below. The
@@ -227,9 +227,6 @@ for ax, (n, weight) in zip(axs.ravel(), enumerate(weights)):
 class_LRs = pd.DataFrame({"LR+": pos_LRs, "LR-": neg_LRs})
 
 # %%
-
-
-# %%
 # In the plots below we observe that the class likelihood ratios re-computed
 # with different prevalences are indeed constant within one standard deviation
 # of those computed with on balanced classes.
@@ -251,7 +248,6 @@ ax1.set(
 )
 ax1.legend(loc="lower right")
 
-ax2 = plt.subplot(1, 2, 2)
 ax2.plot(prevalence, class_LRs["LR-"], "b+", label="extrapolation through populations")
 ax2.axhline(y=neg_lr_base + neg_lr_base_std, color="b", linestyle="--")
 ax2.axhline(
