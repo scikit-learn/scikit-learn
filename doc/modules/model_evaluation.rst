@@ -1770,8 +1770,8 @@ likelihood ratios
 :math:`LR_\pm` for binary classes, which can be interpreted as the ratio of
 post-test to pre-test odds as explained below. As a consequence, this metric is
 invariant w.r.t. the class prevalence (the number of samples in the positive
-class divided by the total number of samples) and can be extrapolated between
-populations regardless of any possible class imbalance.
+class divided by the total number of samples) and **can be extrapolated between
+populations regardless of any possible class imbalance.**
 
 The :math:`LR_\pm` metrics are therefore very useful in settings where the data
 available to learn and evaluate a classifier is a study population with nearly
@@ -1802,28 +1802,7 @@ classified:
 
 Notice that probabilities differ from counts, for instance
 :math:`\operatorname{PR}(P+|T+)` is not equal to the number of true positive
-counts ``tp``. In fact, the class likelihood ratios can be expressed in terms of
-the `sensitivity and specificity
-<https://en.wikipedia.org/wiki/Sensitivity_and_specificity>`_, which are further
-metrics derived from the :func:`confusion_matrix`:
-
-.. math::
-
-   \text{sensitivity} = \frac{tp}{tp + fn},
-
-.. math::
-
-   \text{specificity} = \frac{tn}{tn + fp},
-
-.. math::
-
-   LR_+ = \frac{\text{sensitivity}}{1 - \text{specificity}} = \frac{tp \times
-   (tn + fp)}{fp \times (tp + fn)},
-
-.. math::
-
-   LR_- = \frac{1 - \text{sensitivity}}{\text{specificity}} = \frac{fn \times
-   (tn + fp)}{tn \times (tp + fn)}.
+counts ``tp`` (see `the wikipedia page <https://en.wikipedia.org/wiki/Likelihood_ratios_in_diagnostic_testing>`_ for the actual formulas).
 
 **Interpretation across varying prevalence:**
 
