@@ -1692,9 +1692,9 @@ def class_likelihood_ratios(
 
     labels : array-like, default=None
         List of labels to index the matrix. This may be used to select the
-        positive and negative classes with the ordering labels=[negative_class,
-        positive_class]. If None is given, those that appear at least once in
-        y_true or y_pred are used in sorted order.
+        positive and negative classes with the ordering `labels=[negative_class,
+        positive_class]`. If `None` is given, those that appear at least once in
+        `y_true` or `y_pred` are used in sorted order.
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
@@ -1737,8 +1737,8 @@ def class_likelihood_ratios(
     >>> class_likelihood_ratios(y_true, y_pred)
     (1.5, 0.75)
 
-    To avoid ambiguities, use the notation labels=[negative_class,
-    positive_class]
+    To avoid ambiguities, use the notation `labels=[negative_class,
+    positive_class]`
 
     >>> y_true = np.array(["non-cat", "cat", "non-cat", "cat", "non-cat"])
     >>> y_pred = np.array(["cat", "cat", "non-cat", "non-cat", "non-cat"])
@@ -1760,9 +1760,9 @@ def class_likelihood_ratios(
         labels=labels,
     )
 
-    # limit case when y_test contains one class only and y_test==y_pred
-    # this may happen when cross-validating imbalanced data and should
-    # not be interpreted as a perfect score
+    # Case when `y_test` contains a single class and `y_test == y_pred`.
+    # This may happen when cross-validating imbalanced data and should
+    # not be interpreted as a perfect score.
     if cm.shape == (1, 1):
         msg = "samples of only one class were seen during testing "
         if raise_warning:
@@ -1787,7 +1787,7 @@ def class_likelihood_ratios(
             negative_likelihood_ratio = np.nan
         if fp == 0:
             if tp == 0:
-                msg = "no samples predicted for the positive class "
+                msg = "no samples predicted for the positive class"
             else:
                 msg = "positive_likelihood_ratio ill-defined and being set to nan "
             if raise_warning:

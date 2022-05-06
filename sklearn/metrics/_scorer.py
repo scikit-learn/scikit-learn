@@ -720,18 +720,18 @@ balanced_accuracy_scorer = make_scorer(balanced_accuracy_score)
 matthews_corrcoef_scorer = make_scorer(matthews_corrcoef)
 
 
-def pos_LR(y_true, y_pred):
-    pos_LR, _ = class_likelihood_ratios(y_true, y_pred)
-    return pos_LR
+def positive_likelihood_ratio(y_true, y_pred):
+    return class_likelihood_ratios(y_true, y_pred)[0]
 
 
-def neg_LR(y_true, y_pred):
-    _, neg_LR = class_likelihood_ratios(y_true, y_pred)
-    return neg_LR
+def negative_likelihood_ratio(y_true, y_pred):
+    return class_likelihood_ratios(y_true, y_pred)[1]
 
 
-positive_likelihood_ratio_scorer = make_scorer(pos_LR)
-neg_negative_likelihood_ratio_scorer = make_scorer(neg_LR, greater_is_better=False)
+positive_likelihood_ratio_scorer = make_scorer(positive_likelihood_ratio)
+neg_negative_likelihood_ratio_scorer = make_scorer(
+    negative_likelihood_ratio, greater_is_better=False
+)
 
 # Score functions that need decision values
 top_k_accuracy_scorer = make_scorer(
