@@ -1800,6 +1800,10 @@ classified:
 
    LR_- = \frac{\text{PR}(P-|T+)}{\text{PR}(P-|T-)}.
 
+:math:`LR_+` ranges from 1 to infinity and **higher is better**.
+:math:`LR_-` ranges from 0 to 1 and **lower is better**.
+Values of :math:`LR_\pm\approx 1` correspond to chance level.
+
 Notice that probabilities differ from counts, for instance
 :math:`\operatorname{PR}(P+|T+)` is not equal to the number of true positive
 counts ``tp`` (see `the wikipedia page <https://en.wikipedia.org/wiki/Likelihood_ratios_in_diagnostic_testing>`_ for the actual formulas).
