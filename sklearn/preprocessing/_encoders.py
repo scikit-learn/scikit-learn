@@ -320,8 +320,9 @@ class OneHotEncoder(_BaseEncoder):
             Read more in the :ref:`User Guide <one_hot_encoder_infrequent_categories>`.
 
     feature_name_combiner : {'concat_string'} or Callable, default='concat_string'
-        Callable with signature `def callable(input_feature, category)` that returns a string.
-        This is used to create feature names to be returned by :meth:`get_feature_names_out`.
+        Callable with signature `def callable(input_feature, category)` that returns a
+        string. This is used to create feature names to be returned by
+        :meth:`get_feature_names_out`.
 
         'concat_string' concatenates encoded feature name and category separated by
         '_'.  E.g. feature X with values 1, 6, 7 create feature names X_1, X_6, X_7.
@@ -453,18 +454,18 @@ class OneHotEncoder(_BaseEncoder):
         sparse=True,
         dtype=np.float64,
         handle_unknown="error",
-        feature_name_combiner="concat_string",
         min_frequency=None,
         max_categories=None,
+        feature_name_combiner="concat_string",
     ):
         self.categories = categories
         self.sparse = sparse
         self.dtype = dtype
         self.handle_unknown = handle_unknown
         self.drop = drop
-        self.feature_name_combiner = feature_name_combiner
         self.min_frequency = min_frequency
         self.max_categories = max_categories
+        self.feature_name_combiner = feature_name_combiner
 
     @property
     def infrequent_categories_(self):
