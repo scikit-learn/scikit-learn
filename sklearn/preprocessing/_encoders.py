@@ -320,8 +320,8 @@ class OneHotEncoder(_BaseEncoder):
             Read more in the :ref:`User Guide <one_hot_encoder_infrequent_categories>`.
 
     feature_name_combiner : {'concat_string'} or Callable, default='concat_string'
-        Callable that accepts (input_feature, category) and returns feature names out
-        for :meth:`get_feature_names_out` and :meth:`get_feature_names`.
+        Callable with signature `def callable(input_feature, category)` that returns a string.
+        This is used to create feature names to be returned by :meth:`get_feature_names_out`.
 
         'concat_string' concatenates encoded feature name and category separated by
         '_'.  E.g. feature X with values 1, 6, 7 create feature names X_1, X_6, X_7.
