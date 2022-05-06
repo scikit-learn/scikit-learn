@@ -55,7 +55,9 @@ def test_iforest(global_random_seed):
 
     with ignore_warnings():
         for params in grid:
-            IsolationForest(random_state=global_random_seed, **params).fit(X_train).predict(X_test)
+            IsolationForest(random_state=global_random_seed, **params).fit(
+                X_train
+            ).predict(X_test)
 
 
 def test_iforest_sparse(global_random_seed):
@@ -145,7 +147,7 @@ def test_iforest_parallel_regression(global_random_seed):
     """Check parallel regression."""
     rng = check_random_state(global_random_seed)
 
-    X_train, X_test, y_train, y_test = train_test_split(diabetes.data, random_state=rng)
+    X_train, X_test = train_test_split(diabetes.data, random_state=rng)
 
     ensemble = IsolationForest(n_jobs=3, random_state=global_random_seed).fit(X_train)
 
@@ -284,7 +286,7 @@ def test_iforest_warm_start():
 )
 @pytest.mark.parametrize("contamination, n_predict_calls", [(0.25, 3), ("auto", 2)])
 def test_iforest_chunks_works1(mocked_get_chunk, contamination, n_predict_calls):
-    test_iforest_works(contamination)
+    test_iforest_works(contamination, global_random_seed=0)
     assert mocked_get_chunk.call_count == n_predict_calls
 
 
@@ -295,7 +297,7 @@ def test_iforest_chunks_works1(mocked_get_chunk, contamination, n_predict_calls)
 )
 @pytest.mark.parametrize("contamination, n_predict_calls", [(0.25, 3), ("auto", 2)])
 def test_iforest_chunks_works2(mocked_get_chunk, contamination, n_predict_calls):
-    test_iforest_works(contamination)
+    test_iforest_works(contamination, global_random_seed=0)
     assert mocked_get_chunk.call_count == n_predict_calls
 
 
