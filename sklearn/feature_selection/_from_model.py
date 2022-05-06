@@ -1,6 +1,8 @@
 # Authors: Gilles Louppe, Mathieu Blondel, Maheshakya Wijewardena
 # License: BSD 3 clause
 
+from copy import deepcopy
+
 import numpy as np
 import numbers
 
@@ -11,7 +13,8 @@ from ..utils._tags import _safe_tags
 from ..utils.validation import check_is_fitted
 
 from ..exceptions import NotFittedError
-from ..utils.metaestimators import if_delegate_has_method
+from ..utils.metaestimators import available_if
+from ..utils.validation import check_scalar
 
 
 def _calculate_threshold(estimator, importances, threshold):
@@ -60,6 +63,19 @@ def _calculate_threshold(estimator, importances, threshold):
     return threshold
 
 
+def _estimator_has(attr):
+    """Check if we can delegate a method to the underlying estimator.
+
+    First, we check the fitted estimator if available, otherwise we
+    check the unfitted estimator.
+    """
+    return lambda self: (
+        hasattr(self.estimator_, attr)
+        if hasattr(self, "estimator_")
+        else hasattr(self.estimator, attr)
+    )
+
+
 class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
     """Meta-transformer for selecting features based on importance weights.
 
@@ -88,22 +104,30 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
 
     prefit : bool, default=False
         Whether a prefit model is expected to be passed into the constructor
-        directly or not. If True, ``transform`` must be called directly
-        and SelectFromModel cannot be used with ``cross_val_score``,
-        ``GridSearchCV`` and similar utilities that clone the estimator.
-        Otherwise train the model using ``fit`` and then ``transform`` to do
-        feature selection.
+        directly or not.
+        If `True`, `estimator` must be a fitted estimator.
+        If `False`, `estimator` is fitted and updated by calling
+        `fit` and `partial_fit`, respectively.
 
     norm_order : non-zero int, inf, -inf, default=1
         Order of the norm used to filter the vectors of coefficients below
         ``threshold`` in the case where the ``coef_`` attribute of the
         estimator is of dimension 2.
 
-    max_features : int, default=None
+    max_features : int, callable, default=None
         The maximum number of features to select.
+
+        - If an integer, then it specifies the maximum number of features to
+          allow.
+        - If a callable, then it specifies how to calculate the maximum number of
+          features allowed by using the output of `max_feaures(X)`.
+        - If `None`, then all features are kept.
+
         To only select based on ``max_features``, set ``threshold=-np.inf``.
 
         .. versionadded:: 0.20
+        .. versionchanged:: 1.1
+           `max_features` accepts a callable.
 
     importance_getter : str or callable, default='auto'
         If 'auto', uses the feature importance either through a ``coef_``
@@ -124,16 +148,28 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
 
     Attributes
     ----------
-    estimator_ : an estimator
-        The base estimator from which the transformer is built.
-        This is stored only when a non-fitted estimator is passed to the
-        ``SelectFromModel``, i.e when prefit is False.
+    estimator_ : estimator
+        The base estimator from which the transformer is built. This attribute
+        exist only when `fit` has been called.
+
+        - If `prefit=True`, it is a deep copy of `estimator`.
+        - If `prefit=False`, it is a clone of `estimator` and fit on the data
+          passed to `fit` or `partial_fit`.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if the
         underlying estimator exposes such an attribute when fit.
 
         .. versionadded:: 0.24
+
+    max_features_ : int
+        Maximum number of features calculated during :term:`fit`. Only defined
+        if the ``max_features`` is not `None`.
+
+        - If `max_features` is an `int`, then `max_features_ = max_features`.
+        - If `max_features` is a callable, then `max_features_ = max_features(X)`.
+
+        .. versionadded:: 1.1
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -177,6 +213,17 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
            [-0.02],
            [-0.48],
            [ 1.48]])
+
+    Using a callable to create a selector that can use no more than half
+    of the input features.
+
+    >>> def half_callable(X):
+    ...     return round(len(X[0]) / 2)
+    >>> half_selector = SelectFromModel(estimator=LogisticRegression(),
+    ...                                 max_features=half_callable)
+    >>> _ = half_selector.fit(X, y)
+    >>> half_selector.max_features_
+    2
     """
 
     def __init__(
@@ -197,17 +244,33 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         self.max_features = max_features
 
     def _get_support_mask(self):
-        # SelectFromModel can directly call on transform.
+        estimator = getattr(self, "estimator_", self.estimator)
+        max_features = getattr(self, "max_features_", self.max_features)
+
         if self.prefit:
-            estimator = self.estimator
-        elif hasattr(self, "estimator_"):
-            estimator = self.estimator_
-        else:
-            raise ValueError(
-                "Either fit the model before transform or set"
-                ' "prefit=True" while passing the fitted'
-                " estimator to the constructor."
+            try:
+                check_is_fitted(self.estimator)
+            except NotFittedError as exc:
+                raise NotFittedError(
+                    "When `prefit=True`, `estimator` is expected to be a fitted "
+                    "estimator."
+                ) from exc
+        if callable(max_features):
+            # This branch is executed when `transform` is called directly and thus
+            # `max_features_` is not set and we fallback using `self.max_features`
+            # that is not validated
+            raise NotFittedError(
+                "When `prefit=True` and `max_features` is a callable, call `fit` "
+                "before calling `transform`."
             )
+        elif max_features is not None and not isinstance(
+            max_features, numbers.Integral
+        ):
+            raise ValueError(
+                f"`max_features` must be an integer. Got `max_features={max_features}` "
+                "instead."
+            )
+
         scores = _get_feature_importances(
             estimator=estimator,
             getter=self.importance_getter,
@@ -217,9 +280,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         threshold = _calculate_threshold(estimator, scores, self.threshold)
         if self.max_features is not None:
             mask = np.zeros_like(scores, dtype=bool)
-            candidate_indices = np.argsort(-scores, kind="mergesort")[
-                : self.max_features
-            ]
+            candidate_indices = np.argsort(-scores, kind="mergesort")[:max_features]
             mask[candidate_indices] = True
         else:
             mask = np.ones_like(scores, dtype=bool)
@@ -247,24 +308,43 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
             Fitted estimator.
         """
         if self.max_features is not None:
-            if not isinstance(self.max_features, numbers.Integral):
-                raise TypeError(
-                    "'max_features' should be an integer between"
-                    " 0 and {} features. Got {!r} instead.".format(
-                        X.shape[1], self.max_features
-                    )
+            if isinstance(self.max_features, numbers.Integral):
+                check_scalar(
+                    self.max_features,
+                    "max_features",
+                    numbers.Integral,
+                    min_val=0,
+                    max_val=len(X[0]),
                 )
-            elif self.max_features < 0 or self.max_features > X.shape[1]:
-                raise ValueError(
-                    "'max_features' should be 0 and {} features.Got {} instead.".format(
-                        X.shape[1], self.max_features
-                    )
+                self.max_features_ = self.max_features
+            elif callable(self.max_features):
+                max_features = self.max_features(X)
+                check_scalar(
+                    max_features,
+                    "max_features(X)",
+                    numbers.Integral,
+                    min_val=0,
+                    max_val=len(X[0]),
+                )
+                self.max_features_ = max_features
+            else:
+                raise TypeError(
+                    "'max_features' must be either an int or a callable that takes"
+                    f" 'X' as input. Got {self.max_features} instead."
                 )
 
         if self.prefit:
-            raise NotFittedError("Since 'prefit=True', call transform directly")
-        self.estimator_ = clone(self.estimator)
-        self.estimator_.fit(X, y, **fit_params)
+            try:
+                check_is_fitted(self.estimator)
+            except NotFittedError as exc:
+                raise NotFittedError(
+                    "When `prefit=True`, `estimator` is expected to be a fitted "
+                    "estimator."
+                ) from exc
+            self.estimator_ = deepcopy(self.estimator)
+        else:
+            self.estimator_ = clone(self.estimator)
+            self.estimator_.fit(X, y, **fit_params)
 
         if hasattr(self.estimator_, "feature_names_in_"):
             self.feature_names_in_ = self.estimator_.feature_names_in_
@@ -284,7 +364,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         )
         return _calculate_threshold(self.estimator, scores, self.threshold)
 
-    @if_delegate_has_method("estimator")
+    @available_if(_estimator_has("partial_fit"))
     def partial_fit(self, X, y=None, **fit_params):
         """Fit the SelectFromModel meta-transformer only once.
 
@@ -306,7 +386,17 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
             Fitted estimator.
         """
         if self.prefit:
-            raise NotFittedError("Since 'prefit=True', call transform directly")
+            if not hasattr(self, "estimator_"):
+                try:
+                    check_is_fitted(self.estimator)
+                except NotFittedError as exc:
+                    raise NotFittedError(
+                        "When `prefit=True`, `estimator` is expected to be a fitted "
+                        "estimator."
+                    ) from exc
+                self.estimator_ = deepcopy(self.estimator)
+            return self
+
         if not hasattr(self, "estimator_"):
             self.estimator_ = clone(self.estimator)
         self.estimator_.partial_fit(X, y, **fit_params)

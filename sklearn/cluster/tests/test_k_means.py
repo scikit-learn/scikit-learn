@@ -9,7 +9,6 @@ import pytest
 
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_allclose
-from sklearn.utils.fixes import _astype_copy_false
 from sklearn.utils.fixes import threadpool_limits
 from sklearn.base import clone
 from sklearn.exceptions import ConvergenceWarning
@@ -149,9 +148,9 @@ def test_relocate_empty_clusters(array_constr):
     "array_constr", [np.array, sp.csr_matrix], ids=["dense", "sparse"]
 )
 @pytest.mark.parametrize("tol", [1e-2, 1e-8, 1e-100, 0])
-def test_kmeans_elkan_results(distribution, array_constr, tol):
+def test_kmeans_elkan_results(distribution, array_constr, tol, global_random_seed):
     # Check that results are identical between lloyd and elkan algorithms
-    rnd = np.random.RandomState(0)
+    rnd = np.random.RandomState(global_random_seed)
     if distribution == "normal":
         X = rnd.normal(size=(5000, 10))
     else:
@@ -339,36 +338,6 @@ def test_fortran_aligned_data(Estimator):
     ).fit(X_fortran)
     assert_allclose(km_c.cluster_centers_, km_f.cluster_centers_)
     assert_array_equal(km_c.labels_, km_f.labels_)
-
-
-@pytest.mark.parametrize("algo", ["lloyd", "elkan"])
-@pytest.mark.parametrize("dtype", [np.float32, np.float64])
-@pytest.mark.parametrize("constructor", [np.asarray, sp.csr_matrix])
-@pytest.mark.parametrize(
-    "seed, max_iter, tol",
-    [
-        (0, 2, 1e-7),  # strict non-convergence
-        (1, 2, 1e-1),  # loose non-convergence
-        (3, 300, 1e-7),  # strict convergence
-        (4, 300, 1e-1),  # loose convergence
-    ],
-)
-def test_k_means_fit_predict(algo, dtype, constructor, seed, max_iter, tol):
-    # check that fit.predict gives same result as fit_predict
-    rng = np.random.RandomState(seed)
-
-    X = make_blobs(n_samples=1000, n_features=10, centers=10, random_state=rng)[
-        0
-    ].astype(dtype, copy=False)
-    X = constructor(X)
-
-    kmeans = KMeans(
-        algorithm=algo, n_clusters=10, random_state=seed, tol=tol, max_iter=max_iter
-    )
-
-    labels_1 = kmeans.fit(X).predict(X)
-    labels_2 = kmeans.fit_predict(X)
-    assert_array_equal(labels_1, labels_2)
 
 
 def test_minibatch_kmeans_verbose():
@@ -622,19 +591,28 @@ def test_score_max_iter(Estimator):
 @pytest.mark.parametrize(
     "array_constr", [np.array, sp.csr_matrix], ids=["dense", "sparse"]
 )
-@pytest.mark.parametrize("dtype", [np.float32, np.float64])
-@pytest.mark.parametrize("init", ["random", "k-means++"])
 @pytest.mark.parametrize(
     "Estimator, algorithm",
     [(KMeans, "lloyd"), (KMeans, "elkan"), (MiniBatchKMeans, None)],
 )
-def test_predict(Estimator, algorithm, init, dtype, array_constr):
+@pytest.mark.parametrize("max_iter", [2, 100])
+def test_kmeans_predict(
+    Estimator, algorithm, array_constr, max_iter, global_dtype, global_random_seed
+):
     # Check the predict method and the equivalence between fit.predict and
     # fit_predict.
-    X, _ = make_blobs(n_samples=500, n_features=10, centers=10, random_state=0)
-    X = array_constr(X)
+    X, _ = make_blobs(
+        n_samples=200, n_features=10, centers=10, random_state=global_random_seed
+    )
+    X = array_constr(X, dtype=global_dtype)
 
-    km = Estimator(n_clusters=10, init=init, n_init=10, random_state=0)
+    km = Estimator(
+        n_clusters=10,
+        init="random",
+        n_init=10,
+        max_iter=max_iter,
+        random_state=global_random_seed,
+    )
     if algorithm is not None:
         km.set_params(algorithm=algorithm)
     km.fit(X)
@@ -783,7 +761,7 @@ def test_float_precision(Estimator, data):
     labels = {}
 
     for dtype in [np.float64, np.float32]:
-        X = data.astype(dtype, **_astype_copy_false(data))
+        X = data.astype(dtype, copy=False)
         km.fit(X)
 
         inertia[dtype] = km.inertia_
@@ -1033,6 +1011,23 @@ def test_inertia(dtype):
     assert_allclose(inertia_dense, expected, rtol=1e-6)
     assert_allclose(inertia_sparse, expected, rtol=1e-6)
 
+    # Check the single_label parameter.
+    label = 1
+    mask = labels == label
+    distances = ((X_dense[mask] - centers[label]) ** 2).sum(axis=1)
+    expected = np.sum(distances * sample_weight[mask])
+
+    inertia_dense = _inertia_dense(
+        X_dense, sample_weight, centers, labels, n_threads=1, single_label=label
+    )
+    inertia_sparse = _inertia_sparse(
+        X_sparse, sample_weight, centers, labels, n_threads=1, single_label=label
+    )
+
+    assert_allclose(inertia_dense, inertia_sparse, rtol=1e-6)
+    assert_allclose(inertia_dense, expected, rtol=1e-6)
+    assert_allclose(inertia_sparse, expected, rtol=1e-6)
+
 
 @pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
 def test_sample_weight_unchanged(Estimator):
@@ -1182,7 +1177,7 @@ def test_is_same_clustering():
     labels1 = np.array([1, 0, 0, 1, 2, 0, 2, 1], dtype=np.int32)
     assert _is_same_clustering(labels1, labels1, 3)
 
-    # these other labels represent the same clustering since we can retrive the first
+    # these other labels represent the same clustering since we can retrieve the first
     # labels by simply renaming the labels: 0 -> 1, 1 -> 2, 2 -> 0.
     labels2 = np.array([0, 2, 2, 0, 1, 2, 1, 0], dtype=np.int32)
     assert _is_same_clustering(labels1, labels2, 3)

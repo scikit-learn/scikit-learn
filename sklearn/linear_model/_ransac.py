@@ -1,5 +1,3 @@
-# coding: utf-8
-
 # Author: Johannes Schönberger
 #
 # License: BSD 3 clause
@@ -308,7 +306,7 @@ class RANSACRegressor(
             `is_data_valid` and `is_model_valid` return False for all
             `max_trials` randomly chosen sub-samples.
         """
-        # Need to validate separately here. We can't pass multi_ouput=True
+        # Need to validate separately here. We can't pass multi_output=True
         # because that would allow y to be csr. Delay expensive finiteness
         # check to the estimator's own input validation.
         check_X_params = dict(accept_sparse="csr", force_all_finite=False)

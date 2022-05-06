@@ -1,3 +1,4 @@
+import warnings
 from types import GeneratorType
 
 import numpy as np
@@ -192,18 +193,18 @@ def test_pairwise_boolean_distance(metric):
         pairwise_distances(X.astype(bool), Y=Y, metric=metric)
 
     # Check that no warning is raised if X is already boolean and Y is None:
-    with pytest.warns(None) as records:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", DataConversionWarning)
         pairwise_distances(X.astype(bool), metric=metric)
-    assert not [w.message for w in records]
 
 
 def test_no_data_conversion_warning():
     # No warnings issued if metric is not a boolean distance function
     rng = np.random.RandomState(0)
     X = rng.randn(5, 4)
-    with pytest.warns(None) as records:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", DataConversionWarning)
         pairwise_distances(X, metric="minkowski")
-    assert not [w.message for w in records]
 
 
 @pytest.mark.parametrize("func", [pairwise_distances, pairwise_kernels])
@@ -262,19 +263,11 @@ def callable_rbf_kernel(x, y, **kwds):
             pairwise_distances,
             minkowski,
             _minkowski_kwds,
-            marks=pytest.mark.skipif(
-                sp_version < parse_version("1.0"),
-                reason="minkowski does not accept the w parameter prior to scipy 1.0.",
-            ),
         ),
         pytest.param(
             pairwise_distances,
             "minkowski",
             _minkowski_kwds,
-            marks=pytest.mark.skipif(
-                sp_version < parse_version("1.0"),
-                reason="minkowski does not accept the w parameter prior to scipy 1.0.",
-            ),
         ),
         pytest.param(
             pairwise_distances,
@@ -432,10 +425,11 @@ def test_paired_distances_callable():
         paired_distances(X, Y)
 
 
-def test_pairwise_distances_argmin_min():
+@pytest.mark.parametrize("dtype", (np.float32, np.float64))
+def test_pairwise_distances_argmin_min(dtype):
     # Check pairwise minimum distances computation for any metric
-    X = [[0], [1]]
-    Y = [[-2], [3]]
+    X = np.asarray([[0], [1]], dtype=dtype)
+    Y = np.asarray([[-2], [3]], dtype=dtype)
 
     Xsp = dok_matrix(X)
     Ysp = csr_matrix(Y, dtype=np.float32)
@@ -458,12 +452,23 @@ def test_pairwise_distances_argmin_min():
     assert type(idxsp) == np.ndarray
     assert type(valssp) == np.ndarray
 
-    # euclidean metric squared
-    idx, vals = pairwise_distances_argmin_min(
+    # Squared Euclidean metric
+    idx, vals = pairwise_distances_argmin_min(X, Y, metric="sqeuclidean")
+    idx2, vals2 = pairwise_distances_argmin_min(
         X, Y, metric="euclidean", metric_kwargs={"squared": True}
     )
-    assert_array_almost_equal(idx, expected_idx)
+    idx3 = pairwise_distances_argmin(X, Y, metric="sqeuclidean")
+    idx4 = pairwise_distances_argmin(
+        X, Y, metric="euclidean", metric_kwargs={"squared": True}
+    )
+
     assert_array_almost_equal(vals, expected_vals_sq)
+    assert_array_almost_equal(vals2, expected_vals_sq)
+
+    assert_array_almost_equal(idx, expected_idx)
+    assert_array_almost_equal(idx2, expected_idx)
+    assert_array_almost_equal(idx3, expected_idx)
+    assert_array_almost_equal(idx4, expected_idx)
 
     # Non-euclidean scikit-learn metric
     idx, vals = pairwise_distances_argmin_min(X, Y, metric="manhattan")

@@ -33,7 +33,10 @@ from ..exceptions import DataConversionWarning
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 
 
-def _deprecate_positional_args(func=None, *, version="1.1 (renaming of 0.26)"):
+# This function is not used anymore at this moment in the code base but we keep it in
+# case that we merge a new public function without kwarg only by mistake, which would
+# require a deprecation cycle to fix.
+def _deprecate_positional_args(func=None, *, version="1.3"):
     """Decorator for methods that issues warnings for positional arguments.
 
     Using the keyword-only argument syntax in pep 3102, arguments after the
@@ -43,7 +46,7 @@ def _deprecate_positional_args(func=None, *, version="1.1 (renaming of 0.26)"):
     ----------
     func : callable, default=None
         Function to check arguments on.
-    version : callable, default="1.1 (renaming of 0.26)"
+    version : callable, default="1.3"
         The version when positional arguments will result in error.
     """
 
@@ -135,6 +138,10 @@ def _assert_all_finite(
                     " instance by using an imputer transformer in a pipeline or drop"
                     " samples with missing values. See"
                     " https://scikit-learn.org/stable/modules/impute.html"
+                    " You can find a list of all estimators that handle NaN values"
+                    " at the following page:"
+                    " https://scikit-learn.org/stable/modules/impute.html"
+                    "#estimators-that-handle-nan-values"
                 )
             raise ValueError(msg_err)
 
@@ -339,17 +346,19 @@ def check_memory(memory):
     Parameters
     ----------
     memory : None, str or object with the joblib.Memory interface
+        - If string, the location where to create the `joblib.Memory` interface.
+        - If None, no caching is done and the Memory object is completely transparent.
 
     Returns
     -------
     memory : object with the joblib.Memory interface
+        A correct joblib.Memory object.
 
     Raises
     ------
     ValueError
         If ``memory`` is not joblib.Memory-like.
     """
-
     if memory is None or isinstance(memory, str):
         memory = joblib.Memory(location=memory, verbose=0)
     elif not hasattr(memory, "cache"):
@@ -570,19 +579,31 @@ def _check_estimator_name(estimator):
 
 def _pandas_dtype_needs_early_conversion(pd_dtype):
     """Return True if pandas extension pd_dtype need to be converted early."""
+    # Check these early for pandas versions without extension dtypes
+    from pandas.api.types import (
+        is_bool_dtype,
+        is_sparse,
+        is_float_dtype,
+        is_integer_dtype,
+    )
+
+    if is_bool_dtype(pd_dtype):
+        # bool and extension booleans need early converstion because __array__
+        # converts mixed dtype dataframes into object dtypes
+        return True
+
+    if is_sparse(pd_dtype):
+        # Sparse arrays will be converted later in `check_array`
+        return False
+
     try:
-        from pandas.api.types import (
-            is_extension_array_dtype,
-            is_float_dtype,
-            is_integer_dtype,
-            is_sparse,
-        )
+        from pandas.api.types import is_extension_array_dtype
     except ImportError:
         return False
 
     if is_sparse(pd_dtype) or not is_extension_array_dtype(pd_dtype):
         # Sparse arrays will be converted later in `check_array`
-        # Only handle extension arrays for interger and floats
+        # Only handle extension arrays for integer and floats
         return False
     elif is_float_dtype(pd_dtype):
         # Float ndarrays can normally support nans. They need to be converted
@@ -739,16 +760,10 @@ def check_array(
                     "It will be converted to a dense numpy array."
                 )
 
-        dtypes_orig = []
-        for dtype_iter in array.dtypes:
-            if dtype_iter.kind == "b":
-                # pandas boolean dtype __array__ interface coerces bools to objects
-                dtype_iter = np.dtype(object)
-            elif _pandas_dtype_needs_early_conversion(dtype_iter):
-                pandas_requires_conversion = True
-
-            dtypes_orig.append(dtype_iter)
-
+        dtypes_orig = list(array.dtypes)
+        pandas_requires_conversion = any(
+            _pandas_dtype_needs_early_conversion(i) for i in dtypes_orig
+        )
         if all(isinstance(dtype_iter, np.dtype) for dtype_iter in dtypes_orig):
             dtype_orig = np.result_type(*dtypes_orig)
 
@@ -771,7 +786,9 @@ def check_array(
     if pandas_requires_conversion:
         # pandas dataframe requires conversion earlier to handle extension dtypes with
         # nans
-        array = array.astype(dtype)
+        # Use the original dtype for conversion if dtype is None
+        new_dtype = dtype_orig if dtype is None else dtype
+        array = array.astype(new_dtype)
         # Since we converted here, we do not need to convert again later
         dtype = None
 
@@ -866,23 +883,12 @@ def check_array(
                     "if it contains a single sample.".format(array)
                 )
 
-        # make sure we actually converted to numeric:
-        if dtype_numeric and array.dtype.kind in "OUSV":
-            warnings.warn(
-                "Arrays of bytes/strings is being converted to decimal "
-                "numbers if dtype='numeric'. This behavior is deprecated in "
-                "0.24 and will be removed in 1.1 (renaming of 0.26). Please "
-                "convert your data to numeric values explicitly instead.",
-                FutureWarning,
-                stacklevel=2,
+        if dtype_numeric and array.dtype.kind in "USV":
+            raise ValueError(
+                "dtype='numeric' is not compatible with arrays of bytes/strings."
+                "Convert your data to numeric values explicitly instead."
             )
-            try:
-                array = array.astype(np.float64)
-            except ValueError as e:
-                raise ValueError(
-                    "Unable to convert array of bytes/strings "
-                    "into decimal numbers with dtype='numeric'"
-                ) from e
+
         if not allow_nd and array.ndim >= 3:
             raise ValueError(
                 "Found array with dim %d. %s expected <= 2."
@@ -1057,7 +1063,13 @@ def check_X_y(
         The converted and validated y.
     """
     if y is None:
-        raise ValueError("y cannot be None")
+        if estimator is None:
+            estimator_name = "estimator"
+        else:
+            estimator_name = _check_estimator_name(estimator)
+        raise ValueError(
+            f"{estimator_name} requires y to be passed, but the target y is None"
+        )
 
     X = check_array(
         X,
@@ -1147,7 +1159,7 @@ def column_or_1d(y, *, warn=False):
 
 
 def check_random_state(seed):
-    """Turn seed into a np.random.RandomState instance
+    """Turn seed into a np.random.RandomState instance.
 
     Parameters
     ----------
@@ -1156,6 +1168,11 @@ def check_random_state(seed):
         If seed is an int, return a new RandomState instance seeded with seed.
         If seed is already a RandomState instance, return it.
         Otherwise raise ValueError.
+
+    Returns
+    -------
+    None
+        No returns.
     """
     if seed is None or seed is np.random:
         return np.random.mtrand._rand
@@ -1862,10 +1879,11 @@ def _check_feature_names_in(estimator, input_features=None, *, generate_names=Tr
         Input features.
 
         - If `input_features` is `None`, then `feature_names_in_` is
-            used as feature names in. If `feature_names_in_` is not defined,
-            then names are generated: `[x0, x1, ..., x(n_features_in_)]`.
+          used as feature names in. If `feature_names_in_` is not defined,
+          then the following input feature names are generated:
+          `["x0", "x1", ..., "x(n_features_in_ - 1)"]`.
         - If `input_features` is an array-like, then `input_features` must
-            match `feature_names_in_` if `feature_names_in_` is defined.
+          match `feature_names_in_` if `feature_names_in_` is defined.
 
     generate_names : bool, default=True
         Whether to generate names when `input_features` is `None` and

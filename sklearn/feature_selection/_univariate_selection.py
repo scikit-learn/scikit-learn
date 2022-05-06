@@ -211,7 +211,7 @@ def chi2(X, y):
     # XXX: we might want to do some of the following in logspace instead for
     # numerical stability.
     # Converting X to float allows getting better performance for the
-    # safe_sparse_dot call made bellow.
+    # safe_sparse_dot call made below.
     X = check_array(X, accept_sparse="csr", dtype=(np.float64, np.float32))
     if np.any((X.data if issparse(X) else X) < 0):
         raise ValueError("Input X must be non-negative.")
@@ -287,7 +287,7 @@ def r_regression(X, y, *, center=True, force_finite=True):
     See Also
     --------
     f_regression: Univariate linear regression tests returning f-statistic
-        and p-values
+        and p-values.
     mutual_info_regression: Mutual information for a continuous target.
     f_classif: ANOVA F-value between label/feature for classification tasks.
     chi2: Chi-squared stats of non-negative features for classification tasks.
