@@ -334,7 +334,7 @@ def test_not_fitted_error_gets_raised():
         neighbors_.radius_neighbors_graph(X)
 
 
-@ignore_warnings(category=EfficiencyWarning)
+@pytest.mark.filterwarnings("ignore:EfficiencyWarning")
 def check_precomputed(make_train_test, estimators):
     """Tests unsupervised NearestNeighbors with a distance matrix."""
     # Note: smaller samples may result in spurious test success
@@ -466,7 +466,7 @@ def test_is_sorted_by_data():
     assert _is_sorted_by_data(X)
 
 
-@ignore_warnings(category=EfficiencyWarning)
+@pytest.mark.filterwarnings("ignore:EfficiencyWarning")
 @pytest.mark.parametrize("function", [sort_graph_by_row_values, _check_precomputed])
 def test_sort_graph_by_row_values(function):
     # Test that sort_graph_by_row_values returns a graph sorted by row values
@@ -546,7 +546,7 @@ def test_sort_graph_by_row_values_bad_sparse_format(format):
         _check_precomputed(X)
 
 
-@ignore_warnings(category=EfficiencyWarning)
+@pytest.mark.filterwarnings("ignore:EfficiencyWarning")
 def test_precomputed_sparse_invalid():
     dist = np.array([[0.0, 2.0, 1.0], [2.0, 0.0, 3.0], [1.0, 3.0, 0.0]])
     dist_csr = csr_matrix(dist)
@@ -1335,7 +1335,7 @@ def test_RadiusNeighborsRegressor_multioutput(
         assert np.all(np.abs(y_pred - y_target) < 0.3)
 
 
-@ignore_warnings(category=EfficiencyWarning)
+@pytest.mark.filterwarnings("ignore:EfficiencyWarning")
 def test_kneighbors_regressor_sparse(
     n_samples=40, n_features=5, n_test_pts=10, n_neighbors=5, random_state=0
 ):
