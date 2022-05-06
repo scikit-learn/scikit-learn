@@ -145,10 +145,8 @@ mdi_importances = pd.Series(
 ).sort_values(ascending=True)
 
 # %%
-ax = mdi_importances.plot.box(vert=False, whis=10)
-ax.set_title("Permutation Importances (test set)")
-ax.axvline(x=0, color="k", linestyle="--")
-ax.set_xlabel("Decrease in accuracy score")
+ax = mdi_importances.plot.barh()
+ax.set_title("Random Forest Feature Importances (MDI)")
 ax.figure.tight_layout()
 
 # %%

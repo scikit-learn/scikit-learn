@@ -345,75 +345,78 @@ cdef class BestSplitter(BaseDenseSplitter):
                 features[n_drawn_constants], features[f_j] = features[f_j], features[n_drawn_constants]
 
                 n_drawn_constants += 1
+                continue
 
-            else:
-                # f_j in the interval [n_known_constants, f_i - n_found_constants[
-                f_j += n_found_constants
-                # f_j in the interval [n_total_constants, f_i[
-                current.feature = features[f_j]
+            # f_j in the interval [n_known_constants, f_i - n_found_constants[
+            f_j += n_found_constants
+            # f_j in the interval [n_total_constants, f_i[
+            current.feature = features[f_j]
 
-                # Sort samples along that feature; by
-                # copying the values into an array and
-                # sorting the array in a manner which utilizes the cache more
-                # effectively.
-                for i in range(start, end):
-                    Xf[i] = self.X[samples[i], current.feature]
+            # Sort samples along that feature; by
+            # copying the values into an array and
+            # sorting the array in a manner which utilizes the cache more
+            # effectively.
+            for i in range(start, end):
+                Xf[i] = self.X[samples[i], current.feature]
 
-                simultaneous_sort(Xf + start, samples + start, end - start)
+            simultaneous_sort(Xf + start, samples + start, end - start)
 
-                if Xf[end - 1] <= Xf[start] + FEATURE_THRESHOLD:
-                    features[f_j], features[n_total_constants] = features[n_total_constants], features[f_j]
+            if Xf[end - 1] <= Xf[start] + FEATURE_THRESHOLD:
+                features[f_j], features[n_total_constants] = features[n_total_constants], features[f_j]
 
-                    n_found_constants += 1
-                    n_total_constants += 1
+                n_found_constants += 1
+                n_total_constants += 1
+                continue
 
-                else:
-                    f_i -= 1
-                    features[f_i], features[f_j] = features[f_j], features[f_i]
+            f_i -= 1
+            features[f_i], features[f_j] = features[f_j], features[f_i]
 
-                    # Evaluate all splits
-                    self.criterion.reset()
-                    p = start
+            # Evaluate all splits
+            self.criterion.reset()
+            p = start
 
-                    while p < end:
-                        while (p + 1 < end and
-                               Xf[p + 1] <= Xf[p] + FEATURE_THRESHOLD):
-                            p += 1
+            while p < end:
+                while p + 1 < end and Xf[p + 1] <= Xf[p] + FEATURE_THRESHOLD:
+                    p += 1
 
-                        # (p + 1 >= end) or (X[samples[p + 1], current.feature] >
-                        #                    X[samples[p], current.feature])
-                        p += 1
-                        # (p >= end) or (X[samples[p], current.feature] >
-                        #                X[samples[p - 1], current.feature])
+                # (p + 1 >= end) or (X[samples[p + 1], current.feature] >
+                #                    X[samples[p], current.feature])
+                p += 1
+                # (p >= end) or (X[samples[p], current.feature] >
+                #                X[samples[p - 1], current.feature])
 
-                        if p < end:
-                            current.pos = p
+                if p >= end:
+                    continue
 
-                            # Reject if min_samples_leaf is not guaranteed
-                            if (((current.pos - start) < min_samples_leaf) or
-                                    ((end - current.pos) < min_samples_leaf)):
-                                continue
+                current.pos = p
 
-                            self.criterion.update(current.pos)
+                # Reject if min_samples_leaf is not guaranteed
+                if (((current.pos - start) < min_samples_leaf) or
+                        ((end - current.pos) < min_samples_leaf)):
+                    continue
 
-                            # Reject if min_weight_leaf is not satisfied
-                            if ((self.criterion.weighted_n_left < min_weight_leaf) or
-                                    (self.criterion.weighted_n_right < min_weight_leaf)):
-                                continue
+                self.criterion.update(current.pos)
 
-                            current_proxy_improvement = self.criterion.proxy_impurity_improvement()
+                # Reject if min_weight_leaf is not satisfied
+                if ((self.criterion.weighted_n_left < min_weight_leaf) or
+                        (self.criterion.weighted_n_right < min_weight_leaf)):
+                    continue
 
-                            if current_proxy_improvement > best_proxy_improvement:
-                                best_proxy_improvement = current_proxy_improvement
-                                # sum of halves is used to avoid infinite value
-                                current.threshold = Xf[p - 1] / 2.0 + Xf[p] / 2.0
+                current_proxy_improvement = self.criterion.proxy_impurity_improvement()
 
-                                if ((current.threshold == Xf[p]) or
-                                    (current.threshold == INFINITY) or
-                                    (current.threshold == -INFINITY)):
-                                    current.threshold = Xf[p - 1]
+                if current_proxy_improvement > best_proxy_improvement:
+                    best_proxy_improvement = current_proxy_improvement
+                    # sum of halves is used to avoid infinite value
+                    current.threshold = Xf[p - 1] / 2.0 + Xf[p] / 2.0
 
-                                best = current  # copy
+                    if (
+                        current.threshold == Xf[p] or
+                        current.threshold == INFINITY or
+                        current.threshold == -INFINITY
+                    ):
+                        current.threshold = Xf[p - 1]
+
+                    best = current  # copy
 
         # Reorganize into samples[start:best.pos] + samples[best.pos:end]
         if best.pos < end:
@@ -541,78 +544,78 @@ cdef class RandomSplitter(BaseDenseSplitter):
                 # f_j in the interval [n_drawn_constants, n_known_constants[
                 features[n_drawn_constants], features[f_j] = features[f_j], features[n_drawn_constants]
                 n_drawn_constants += 1
+                continue
 
-            else:
-                # f_j in the interval [n_known_constants, f_i - n_found_constants[
-                f_j += n_found_constants
-                # f_j in the interval [n_total_constants, f_i[
+            # f_j in the interval [n_known_constants, f_i - n_found_constants[
+            f_j += n_found_constants
+            # f_j in the interval [n_total_constants, f_i[
 
-                current.feature = features[f_j]
+            current.feature = features[f_j]
 
-                # Find min, max
-                min_feature_value = self.X[samples[start], current.feature]
-                max_feature_value = min_feature_value
-                Xf[start] = min_feature_value
+            # Find min, max
+            min_feature_value = self.X[samples[start], current.feature]
+            max_feature_value = min_feature_value
+            Xf[start] = min_feature_value
 
-                for p in range(start + 1, end):
-                    current_feature_value = self.X[samples[p], current.feature]
-                    Xf[p] = current_feature_value
+            for p in range(start + 1, end):
+                current_feature_value = self.X[samples[p], current.feature]
+                Xf[p] = current_feature_value
 
-                    if current_feature_value < min_feature_value:
-                        min_feature_value = current_feature_value
-                    elif current_feature_value > max_feature_value:
-                        max_feature_value = current_feature_value
+                if current_feature_value < min_feature_value:
+                    min_feature_value = current_feature_value
+                elif current_feature_value > max_feature_value:
+                    max_feature_value = current_feature_value
 
-                if max_feature_value <= min_feature_value + FEATURE_THRESHOLD:
-                    features[f_j], features[n_total_constants] = features[n_total_constants], current.feature
+            if max_feature_value <= min_feature_value + FEATURE_THRESHOLD:
+                features[f_j], features[n_total_constants] = features[n_total_constants], current.feature
 
-                    n_found_constants += 1
-                    n_total_constants += 1
+                n_found_constants += 1
+                n_total_constants += 1
+                continue
 
+            f_i -= 1
+            features[f_i], features[f_j] = features[f_j], features[f_i]
+
+            # Draw a random threshold
+            current.threshold = rand_uniform(min_feature_value,
+                                             max_feature_value,
+                                             random_state)
+
+            if current.threshold == max_feature_value:
+                current.threshold = min_feature_value
+
+            # Partition
+            p, partition_end = start, end
+            while p < partition_end:
+                if Xf[p] <= current.threshold:
+                    p += 1
                 else:
-                    f_i -= 1
-                    features[f_i], features[f_j] = features[f_j], features[f_i]
+                    partition_end -= 1
 
-                    # Draw a random threshold
-                    current.threshold = rand_uniform(min_feature_value,
-                                                     max_feature_value,
-                                                     random_state)
+                    Xf[p], Xf[partition_end] = Xf[partition_end], Xf[p]
+                    samples[p], samples[partition_end] = samples[partition_end], samples[p]
 
-                    if current.threshold == max_feature_value:
-                        current.threshold = min_feature_value
+            current.pos = partition_end
 
-                    # Partition
-                    p, partition_end = start, end
-                    while p < partition_end:
-                        if Xf[p] <= current.threshold:
-                            p += 1
-                        else:
-                            partition_end -= 1
+            # Reject if min_samples_leaf is not guaranteed
+            if (((current.pos - start) < min_samples_leaf) or
+                    ((end - current.pos) < min_samples_leaf)):
+                continue
 
-                            Xf[p], Xf[partition_end] = Xf[partition_end], Xf[p]
-                            samples[p], samples[partition_end] = samples[partition_end], samples[p]
+            # Evaluate split
+            self.criterion.reset()
+            self.criterion.update(current.pos)
 
-                    current.pos = partition_end
+            # Reject if min_weight_leaf is not satisfied
+            if ((self.criterion.weighted_n_left < min_weight_leaf) or
+                    (self.criterion.weighted_n_right < min_weight_leaf)):
+                continue
 
-                    # Reject if min_samples_leaf is not guaranteed
-                    if (((current.pos - start) < min_samples_leaf) or
-                            ((end - current.pos) < min_samples_leaf)):
-                        continue
+            current_proxy_improvement = self.criterion.proxy_impurity_improvement()
 
-                    # Evaluate split
-                    self.criterion.reset()
-                    self.criterion.update(current.pos)
-
-                    # Reject if min_weight_leaf is not satisfied
-                    if ((self.criterion.weighted_n_left < min_weight_leaf) or
-                            (self.criterion.weighted_n_right < min_weight_leaf)):
-                        continue
-
-                    current_proxy_improvement = self.criterion.proxy_impurity_improvement()
-
-                    if current_proxy_improvement > best_proxy_improvement:
-                        best_proxy_improvement = current_proxy_improvement
-                        best = current  # copy
+            if current_proxy_improvement > best_proxy_improvement:
+                best_proxy_improvement = current_proxy_improvement
+                best = current  # copy
 
         # Reorganize into samples[start:best.pos] + samples[best.pos:end]
         if best.pos < end:
@@ -1071,102 +1074,103 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
                 features[f_j], features[n_drawn_constants] = features[n_drawn_constants], features[f_j]
 
                 n_drawn_constants += 1
+                continue
 
-            else:
-                # f_j in the interval [n_known_constants, f_i - n_found_constants[
-                f_j += n_found_constants
-                # f_j in the interval [n_total_constants, f_i[
+            # f_j in the interval [n_known_constants, f_i - n_found_constants[
+            f_j += n_found_constants
+            # f_j in the interval [n_total_constants, f_i[
 
-                current.feature = features[f_j]
-                self.extract_nnz(current.feature,
-                                 &end_negative, &start_positive,
-                                 &is_samples_sorted)
+            current.feature = features[f_j]
+            self.extract_nnz(current.feature, &end_negative, &start_positive,
+                             &is_samples_sorted)
 
-                # Sort the positive and negative parts of `Xf`
-                simultaneous_sort(Xf + start, samples + start, end_negative - start)
-                simultaneous_sort(Xf + start_positive, samples + start_positive,
-                     end - start_positive)
+            # Sort the positive and negative parts of `Xf`
+            simultaneous_sort(Xf + start, samples + start, end_negative - start)
+            simultaneous_sort(Xf + start_positive, samples + start_positive, end - start_positive)
 
-                # Update index_to_samples to take into account the sort
-                for p in range(start, end_negative):
-                    index_to_samples[samples[p]] = p
-                for p in range(start_positive, end):
-                    index_to_samples[samples[p]] = p
+            # Update index_to_samples to take into account the sort
+            for p in range(start, end_negative):
+                index_to_samples[samples[p]] = p
+            for p in range(start_positive, end):
+                index_to_samples[samples[p]] = p
 
-                # Add one or two zeros in Xf, if there is any
-                if end_negative < start_positive:
-                    start_positive -= 1
-                    Xf[start_positive] = 0.
+            # Add one or two zeros in Xf, if there is any
+            if end_negative < start_positive:
+                start_positive -= 1
+                Xf[start_positive] = 0.
 
-                    if end_negative != start_positive:
-                        Xf[end_negative] = 0.
-                        end_negative += 1
+                if end_negative != start_positive:
+                    Xf[end_negative] = 0.
+                    end_negative += 1
 
-                if Xf[end - 1] <= Xf[start] + FEATURE_THRESHOLD:
-                    features[f_j], features[n_total_constants] = features[n_total_constants], features[f_j]
+            if Xf[end - 1] <= Xf[start] + FEATURE_THRESHOLD:
+                features[f_j], features[n_total_constants] = features[n_total_constants], features[f_j]
 
-                    n_found_constants += 1
-                    n_total_constants += 1
+                n_found_constants += 1
+                n_total_constants += 1
+                continue
 
+            f_i -= 1
+            features[f_i], features[f_j] = features[f_j], features[f_i]
+
+            # Evaluate all splits
+            self.criterion.reset()
+            p = start
+
+            while p < end:
+                if p + 1 != end_negative:
+                    p_next = p + 1
                 else:
-                    f_i -= 1
-                    features[f_i], features[f_j] = features[f_j], features[f_i]
+                    p_next = start_positive
 
-                    # Evaluate all splits
-                    self.criterion.reset()
-                    p = start
-
-                    while p < end:
-                        if p + 1 != end_negative:
-                            p_next = p + 1
-                        else:
-                            p_next = start_positive
-
-                        while (p_next < end and
-                               Xf[p_next] <= Xf[p] + FEATURE_THRESHOLD):
-                            p = p_next
-                            if p + 1 != end_negative:
-                                p_next = p + 1
-                            else:
-                                p_next = start_positive
+                while (p_next < end and
+                        Xf[p_next] <= Xf[p] + FEATURE_THRESHOLD):
+                    p = p_next
+                    if p + 1 != end_negative:
+                        p_next = p + 1
+                    else:
+                        p_next = start_positive
 
 
-                        # (p_next >= end) or (X[samples[p_next], current.feature] >
-                        #                     X[samples[p], current.feature])
-                        p_prev = p
-                        p = p_next
-                        # (p >= end) or (X[samples[p], current.feature] >
-                        #                X[samples[p_prev], current.feature])
+                # (p_next >= end) or (X[samples[p_next], current.feature] >
+                #                     X[samples[p], current.feature])
+                p_prev = p
+                p = p_next
+                # (p >= end) or (X[samples[p], current.feature] >
+                #                X[samples[p_prev], current.feature])
 
+                if p >= end:
+                    continue
 
-                        if p < end:
-                            current.pos = p
+                current.pos = p
 
-                            # Reject if min_samples_leaf is not guaranteed
-                            if (((current.pos - start) < min_samples_leaf) or
-                                    ((end - current.pos) < min_samples_leaf)):
-                                continue
+                # Reject if min_samples_leaf is not guaranteed
+                if (((current.pos - start) < min_samples_leaf) or
+                        ((end - current.pos) < min_samples_leaf)):
+                    continue
 
-                            self.criterion.update(current.pos)
+                self.criterion.update(current.pos)
 
-                            # Reject if min_weight_leaf is not satisfied
-                            if ((self.criterion.weighted_n_left < min_weight_leaf) or
-                                    (self.criterion.weighted_n_right < min_weight_leaf)):
-                                continue
+                # Reject if min_weight_leaf is not satisfied
+                if ((self.criterion.weighted_n_left < min_weight_leaf) or
+                        (self.criterion.weighted_n_right < min_weight_leaf)):
+                    continue
 
-                            current_proxy_improvement = self.criterion.proxy_impurity_improvement()
+                current_proxy_improvement = self.criterion.proxy_impurity_improvement()
 
-                            if current_proxy_improvement > best_proxy_improvement:
-                                best_proxy_improvement = current_proxy_improvement
-                                # sum of halves used to avoid infinite values
-                                current.threshold = Xf[p_prev] / 2.0 + Xf[p] / 2.0
+                if current_proxy_improvement > best_proxy_improvement:
+                    best_proxy_improvement = current_proxy_improvement
+                    # sum of halves used to avoid infinite values
+                    current.threshold = Xf[p_prev] / 2.0 + Xf[p] / 2.0
 
-                                if ((current.threshold == Xf[p]) or
-                                    (current.threshold == INFINITY) or
-                                    (current.threshold == -INFINITY)):
-                                    current.threshold = Xf[p_prev]
+                    if (
+                        current.threshold == Xf[p] or
+                        current.threshold == INFINITY or
+                        current.threshold == -INFINITY
+                    ):
+                        current.threshold = Xf[p_prev]
 
-                                best = current
+                    best = current
 
         # Reorganize into samples[start:best.pos] + samples[best.pos:end]
         if best.pos < end:
@@ -1304,97 +1308,97 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
                 features[f_j], features[n_drawn_constants] = features[n_drawn_constants], features[f_j]
 
                 n_drawn_constants += 1
+                continue
 
-            else:
-                # f_j in the interval [n_known_constants, f_i - n_found_constants[
-                f_j += n_found_constants
-                # f_j in the interval [n_total_constants, f_i[
+            # f_j in the interval [n_known_constants, f_i - n_found_constants[
+            f_j += n_found_constants
+            # f_j in the interval [n_total_constants, f_i[
 
-                current.feature = features[f_j]
+            current.feature = features[f_j]
 
-                self.extract_nnz(current.feature,
-                                 &end_negative, &start_positive,
-                                 &is_samples_sorted)
+            self.extract_nnz(current.feature,
+                             &end_negative, &start_positive,
+                             &is_samples_sorted)
 
-                # Add one or two zeros in Xf, if there is any
-                if end_negative < start_positive:
-                    start_positive -= 1
-                    Xf[start_positive] = 0.
+            # Add one or two zeros in Xf, if there is any
+            if end_negative < start_positive:
+                start_positive -= 1
+                Xf[start_positive] = 0.
 
-                    if end_negative != start_positive:
-                        Xf[end_negative] = 0.
-                        end_negative += 1
+                if end_negative != start_positive:
+                    Xf[end_negative] = 0.
+                    end_negative += 1
 
-                # Find min, max in Xf[start:end_negative]
-                min_feature_value = Xf[start]
-                max_feature_value = min_feature_value
+            # Find min, max in Xf[start:end_negative]
+            min_feature_value = Xf[start]
+            max_feature_value = min_feature_value
 
-                for p in range(start, end_negative):
-                    current_feature_value = Xf[p]
+            for p in range(start, end_negative):
+                current_feature_value = Xf[p]
 
-                    if current_feature_value < min_feature_value:
-                        min_feature_value = current_feature_value
-                    elif current_feature_value > max_feature_value:
-                        max_feature_value = current_feature_value
+                if current_feature_value < min_feature_value:
+                    min_feature_value = current_feature_value
+                elif current_feature_value > max_feature_value:
+                    max_feature_value = current_feature_value
 
-                # Update min, max given Xf[start_positive:end]
-                for p in range(start_positive, end):
-                    current_feature_value = Xf[p]
+            # Update min, max given Xf[start_positive:end]
+            for p in range(start_positive, end):
+                current_feature_value = Xf[p]
 
-                    if current_feature_value < min_feature_value:
-                        min_feature_value = current_feature_value
-                    elif current_feature_value > max_feature_value:
-                        max_feature_value = current_feature_value
+                if current_feature_value < min_feature_value:
+                    min_feature_value = current_feature_value
+                elif current_feature_value > max_feature_value:
+                    max_feature_value = current_feature_value
 
-                if max_feature_value <= min_feature_value + FEATURE_THRESHOLD:
-                    features[f_j] = features[n_total_constants]
-                    features[n_total_constants] = current.feature
+            if max_feature_value <= min_feature_value + FEATURE_THRESHOLD:
+                features[f_j] = features[n_total_constants]
+                features[n_total_constants] = current.feature
 
-                    n_found_constants += 1
-                    n_total_constants += 1
+                n_found_constants += 1
+                n_total_constants += 1
+                continue
 
-                else:
-                    f_i -= 1
-                    features[f_i], features[f_j] = features[f_j], features[f_i]
+            f_i -= 1
+            features[f_i], features[f_j] = features[f_j], features[f_i]
 
-                    # Draw a random threshold
-                    current.threshold = rand_uniform(min_feature_value,
-                                                     max_feature_value,
-                                                     random_state)
+            # Draw a random threshold
+            current.threshold = rand_uniform(min_feature_value,
+                                             max_feature_value,
+                                             random_state)
 
-                    if current.threshold == max_feature_value:
-                        current.threshold = min_feature_value
+            if current.threshold == max_feature_value:
+                current.threshold = min_feature_value
 
-                    # Partition
-                    current.pos = self._partition(current.threshold,
-                                                  end_negative,
-                                                  start_positive,
-                                                  start_positive +
-                                                  (Xf[start_positive] == 0.))
+            # Partition
+            current.pos = self._partition(current.threshold,
+                                          end_negative,
+                                          start_positive,
+                                          start_positive +
+                                          (Xf[start_positive] == 0.))
 
-                    # Reject if min_samples_leaf is not guaranteed
-                    if (((current.pos - start) < min_samples_leaf) or
-                            ((end - current.pos) < min_samples_leaf)):
-                        continue
+            # Reject if min_samples_leaf is not guaranteed
+            if (((current.pos - start) < min_samples_leaf) or
+                    ((end - current.pos) < min_samples_leaf)):
+                continue
 
-                    # Evaluate split
-                    self.criterion.reset()
-                    self.criterion.update(current.pos)
+            # Evaluate split
+            self.criterion.reset()
+            self.criterion.update(current.pos)
 
-                    # Reject if min_weight_leaf is not satisfied
-                    if ((self.criterion.weighted_n_left < min_weight_leaf) or
-                            (self.criterion.weighted_n_right < min_weight_leaf)):
-                        continue
+            # Reject if min_weight_leaf is not satisfied
+            if ((self.criterion.weighted_n_left < min_weight_leaf) or
+                    (self.criterion.weighted_n_right < min_weight_leaf)):
+                continue
 
-                    current_proxy_improvement = self.criterion.proxy_impurity_improvement()
+            current_proxy_improvement = self.criterion.proxy_impurity_improvement()
 
-                    if current_proxy_improvement > best_proxy_improvement:
-                        best_proxy_improvement = current_proxy_improvement
-                        self.criterion.children_impurity(&current.impurity_left,
-                                                         &current.impurity_right)
-                        current.improvement = self.criterion.impurity_improvement(
-                            impurity, current.impurity_left, current.impurity_right)
-                        best = current
+            if current_proxy_improvement > best_proxy_improvement:
+                best_proxy_improvement = current_proxy_improvement
+                self.criterion.children_impurity(&current.impurity_left,
+                                                 &current.impurity_right)
+                current.improvement = self.criterion.impurity_improvement(
+                    impurity, current.impurity_left, current.impurity_right)
+                best = current
 
         # Reorganize into samples[start:best.pos] + samples[best.pos:end]
         if best.pos < end:
