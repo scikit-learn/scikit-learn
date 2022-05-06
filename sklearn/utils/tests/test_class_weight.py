@@ -289,4 +289,4 @@ def test_compute_sample_weight_sparse():
     """Check that we can compute weight for sparse `y`."""
     y = sparse.csc_matrix(np.asarray([0, 1, 1])).T
     sample_weight = compute_sample_weight("balanced", y)
-    assert_allclose(sample_weight, [1.5, .75, .75])
+    assert_allclose(sample_weight, [1.5, 0.75, 0.75])
