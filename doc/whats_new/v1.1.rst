@@ -26,6 +26,12 @@ Changelog
   classifier that always predicts the positive class: recall=100% and
   precision=class balance.
   :pr:`23214` by :user:`Stéphane Collot <stephanecollot>` and :user:`Max Baak <mbaak>`.
+  
+:mod:`sklearn.utils`
+....................
+
+- |Fix| :func:`utils.class_weight.compute_sample_weight` now works with sparse `y`.
+  :pr:`23115` by :user:`kernc <kernc>`.
 
 .. _changes_1_1:
 
