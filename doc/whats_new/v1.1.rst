@@ -12,6 +12,12 @@ Version 1.1.1
 Changelog
 ---------
 
+:mod:`sklearn.decomposition`
+............................
+
+- |Fix| Avoid spurious warning in :class:`decomposition.IncrementalPCA` when
+  `n_samples == n_components`. :pr:`23264` by :user:`Lucy Liu <lucyleeow>`
+
 :mod:`sklearn.metrics`
 ......................
 
@@ -91,6 +97,11 @@ random sampling procedures.
 - |Fix| :class:`discriminant_analysis.LinearDiscriminantAnalysis` now uses
   the correct variance-scaling coefficient which may result in different model
   behavior.
+
+- |Fix| :meth:`feature_selection.SelectFromModel.fit` and
+  :meth:`feature_selection.SelectFromModel.partial_fit` can now be called with
+  `prefit=True`. `estimators_` will be a deep copy of `estimator` when
+  `prefit=True`. :pr:`23271` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 Changelog
 ---------
@@ -189,6 +200,11 @@ Changelog
   :class:`model_selection.HalvingRandomSearchCV`, or
   :class:`impute.IterativeImputer` without importing the experimental flag.
   :pr:`23194` by `Thomas Fan`_.
+
+- |Enhancement| Added an extension in doc/conf.py to automatically generate
+  the list of estimators that handle NaN values. 
+  :pr:`23198` by `Lise Kleiber <lisekleiber>`_, :user:`Zhehao Liu <MaxwellLZH>`
+  and :user:`Chiara Marmo <cmarmo>`.
 
 :mod:`sklearn.calibration`
 ..........................
