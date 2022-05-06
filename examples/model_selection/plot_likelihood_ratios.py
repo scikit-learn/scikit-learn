@@ -170,7 +170,7 @@ _ = extract_score(cross_validate(estimator, X, y, scoring=scoring, cv=10))
 # be interpreted as an increment of the post-test odds of having the condition.
 
 estimator = LogisticRegression()
-X, y = make_classification(n_samples=300, weights=[0.9], random_state=0)
+X, y = make_classification(n_samples=300, weights=[0.9, 0.1], random_state=0)
 _ = extract_score(cross_validate(estimator, X, y, scoring=scoring, cv=10))
 
 # %%
@@ -211,30 +211,28 @@ common_params = {
 weights = np.linspace(0.1, 0.8, 6)
 weights = weights[::-1]
 
-# create base model
+# fit and evaluate base model on balanced classes
 X, y = make_classification(**common_params, weights=[0.5, 0.5])
 estimator = LogisticRegression().fit(X, y)
-
-# fit and evaluate base model
 pos_LR_base, neg_LR_base, pos_LR_base_std, neg_LR_base_std = extract_score(
     cross_validate(estimator, X, y, scoring=scoring, cv=10)
 )
 
-plt.figure(figsize=(15, 12))
-plt.subplots_adjust(hspace=0.25)
+fig, axs = plt.subplots(nrows=3, ncols=2, figsize=(15, 12))
 
-for n, weight in enumerate(weights):
+for ax, (n, weight) in zip(axs.ravel(), enumerate(weights)):
 
     X, y = make_classification(
         **common_params,
         weights=[weight, 1 - weight],
     )
+
+    # down-sample for plotting
     rng = np.random.RandomState(1)
     plot_indices = rng.choice(np.arange(X.shape[0]), size=1000, replace=True)
     X_plot, y_plot = X[plot_indices], y[plot_indices]
 
     # plot decision boundary of base model with varying prevalence
-    ax = plt.subplot(3, 2, n + 1)
     disp = DecisionBoundaryDisplay.from_estimator(
         estimator,
         X_plot,
@@ -246,7 +244,7 @@ for n, weight in enumerate(weights):
     disp.ax_.set_title(f"prevalence = {y_plot.mean():.2f}")
     disp.ax_.legend(*scatter.legend_elements())
 
-    # recompute likelihood ratios for each prevalence
+    # recompute likelihood ratios of base model for each prevalence
     pos_LR, neg_LR = scoring(estimator, X, y).values()
 
     pos_LRs.append(pos_LR)
