@@ -91,15 +91,7 @@ def extract_score(cv_results):
             "negative": cv_results["test_negative_likelihood_ratio"],
         }
     )
-    pos_lr = lr["positive"].mean()
-    pos_lr_std = lr["positive"].std()
-    neg_lr = lr["negative"].mean()
-    neg_lr_std = lr["negative"].std()
-
-    print(f"LR+: {pos_lr:.2f} +/- {pos_lr_std:.2f}")
-    print(f"LR-: {neg_lr:.2f} +/- {neg_lr_std:.2f}")
-
-    return pos_lr, neg_lr, pos_lr_std, neg_lr_std
+    return lr.aggregate(["mean", "std"])
 
 
 # %%
@@ -109,7 +101,7 @@ def extract_score(cv_results):
 from sklearn.model_selection import cross_validate
 
 estimator = LogisticRegression()
-_ = extract_score(cross_validate(estimator, X, y, scoring=scoring, cv=10))
+extract_score(cross_validate(estimator, X, y, scoring=scoring, cv=10))
 
 # %%
 # We confirm that the model is useful: the post-test odds are between 12 and 20
@@ -122,7 +114,7 @@ _ = extract_score(cross_validate(estimator, X, y, scoring=scoring, cv=10))
 from sklearn.dummy import DummyClassifier
 
 estimator = DummyClassifier(strategy="stratified", random_state=1234)
-_ = extract_score(cross_validate(estimator, X, y, scoring=scoring, cv=10))
+extract_score(cross_validate(estimator, X, y, scoring=scoring, cv=10))
 
 # %%
 # Here both class likelihood ratios are compatible with 1.0 which makes this
@@ -132,15 +124,16 @@ _ = extract_score(cross_validate(estimator, X, y, scoring=scoring, cv=10))
 # class, which in this case is "no-disease".
 
 estimator = DummyClassifier(strategy="most_frequent")
-_ = extract_score(cross_validate(estimator, X, y, scoring=scoring, cv=10))
+extract_score(cross_validate(estimator, X, y, scoring=scoring, cv=10))
 
 # %%
 # The absence of positive predictions means there will be no true positives nor
 # false positives, leading to an undefined `LR+` that by no means should be
 # interpreted as an infinite `LR+` (the classifier perfectly identifying
-# positive cases). In such situation the :func:`class_likelihood_ratios` function
-# returns `nan` and raises a warning by default. Indeed, the value of `LR-` helps
-# us discard this model.
+# positive cases). In such situation the
+# :func:`~sklearn.metrics.class_likelihood_ratios` function returns `nan` and
+# raises a warning by default. Indeed, the value of `LR-` helps us discard this
+# model.
 #
 # A similar scenario may arise when cross-validating highly imbalanced data with
 # few samples: some folds will have no samples with the disease and therefore
@@ -152,15 +145,15 @@ _ = extract_score(cross_validate(estimator, X, y, scoring=scoring, cv=10))
 
 estimator = LogisticRegression()
 X, y = make_classification(n_samples=300, weights=[0.9, 0.1], random_state=0)
-_ = extract_score(cross_validate(estimator, X, y, scoring=scoring, cv=10))
+extract_score(cross_validate(estimator, X, y, scoring=scoring, cv=10))
 
 # %%
-# Plot class likelihood ratios
+# Invariance w.r.t. prevalence
 # ============================
 #
 # The likelihood ratios are independent of the disease prevalence and can be
 # extrapolated between populations regardless of any possible class imbalance,
-# as long as the same model is applied to all of them. In the case where
+# **as long as the same model is applied to all of them**. In the case where
 # models/diagnostic tests are updated, for instance, to evolve along with the
 # spread of a disease, one has to account for the prevalence seen during
 # training before making a comparison analysis.
@@ -195,9 +188,9 @@ weights = weights[::-1]
 # fit and evaluate base model on balanced classes
 X, y = make_classification(**common_params, weights=[0.5, 0.5])
 estimator = LogisticRegression().fit(X, y)
-pos_LR_base, neg_LR_base, pos_LR_base_std, neg_LR_base_std = extract_score(
-    cross_validate(estimator, X, y, scoring=scoring, cv=10)
-)
+lr_base = extract_score(cross_validate(estimator, X, y, scoring=scoring, cv=10))
+pos_lr_base, pos_lr_base_std = lr_base["positive"].values
+neg_lr_base, neg_lr_base_std = lr_base["negative"].values
 
 fig, axs = plt.subplots(nrows=3, ncols=2, figsize=(15, 12))
 
@@ -232,18 +225,20 @@ for ax, (n, weight) in zip(axs.ravel(), enumerate(weights)):
     prevalence.append(y.mean())
 
 class_LRs = pd.DataFrame({"LR+": pos_LRs, "LR-": neg_LRs})
+
+# %%
+
+
 # %%
 # In the plots below we observe that the class likelihood ratios re-computed
 # with different prevalences are indeed constant within one standard deviation
 # of those computed with on balanced classes.
 
-plt.figure(figsize=(15, 6))
-
-ax1 = plt.subplot(1, 2, 1)
+fig, (ax1, ax2) = plt.subplots(nrows=1, ncols=2, figsize=(15, 6))
 ax1.plot(prevalence, class_LRs["LR+"], "r+", label="extrapolation through populations")
-ax1.axhline(y=pos_LR_base + pos_LR_base_std, color="r", linestyle="--")
+ax1.axhline(y=pos_lr_base + pos_lr_base_std, color="r", linestyle="--")
 ax1.axhline(
-    y=pos_LR_base - pos_LR_base_std,
+    y=pos_lr_base - pos_lr_base_std,
     color="r",
     linestyle="--",
     label="base model confidence band",
@@ -254,13 +249,13 @@ ax1.set(
     ylabel="LR+",
     ylim=[0, 5],
 )
-plt.legend(loc="lower right")
+ax1.legend(loc="lower right")
 
 ax2 = plt.subplot(1, 2, 2)
 ax2.plot(prevalence, class_LRs["LR-"], "b+", label="extrapolation through populations")
-ax2.axhline(y=neg_LR_base + neg_LR_base_std, color="b", linestyle="--")
+ax2.axhline(y=neg_lr_base + neg_lr_base_std, color="b", linestyle="--")
 ax2.axhline(
-    y=neg_LR_base - neg_LR_base_std,
+    y=neg_lr_base - neg_lr_base_std,
     color="b",
     linestyle="--",
     label="base model confidence band",
@@ -271,6 +266,6 @@ ax2.set(
     ylabel="LR-",
     ylim=[0, 0.5],
 )
-plt.legend(loc="lower right")
+ax2.legend(loc="lower right")
 
 plt.show()
