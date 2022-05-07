@@ -385,6 +385,32 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
+        if self.max_features is not None:
+            if isinstance(self.max_features, numbers.Integral):
+                check_scalar(
+                    self.max_features,
+                    "max_features",
+                    numbers.Integral,
+                    min_val=0,
+                    max_val=len(X[0]),
+                )
+                self.max_features_ = self.max_features
+            elif callable(self.max_features):
+                max_features = self.max_features(X)
+                check_scalar(
+                    max_features,
+                    "max_features(X)",
+                    numbers.Integral,
+                    min_val=0,
+                    max_val=len(X[0]),
+                )
+                self.max_features_ = max_features
+            else:
+                raise TypeError(
+                    "'max_features' must be either an int or a callable that takes"
+                    f" 'X' as input. Got {self.max_features} instead."
+                )
+
         if self.prefit:
             if not hasattr(self, "estimator_"):
                 try:
@@ -400,6 +426,12 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         if not hasattr(self, "estimator_"):
             self.estimator_ = clone(self.estimator)
         self.estimator_.partial_fit(X, y, **fit_params)
+
+        if hasattr(self.estimator_, "feature_names_in_"):
+            self.feature_names_in_ = self.estimator_.feature_names_in_
+        else:
+            self._check_feature_names(X, reset=True)
+
         return self
 
     @property
