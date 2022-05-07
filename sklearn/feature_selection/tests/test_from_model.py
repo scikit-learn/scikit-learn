@@ -621,19 +621,17 @@ def test_partial_fit_validate_max_features():
     # `max_features` is out of the boundaries
     err_msg = "max_features == 10, must be <= 4."
     with pytest.raises(ValueError, match=err_msg):
-        SelectFromModel(
-            estimator=SGDClassifier(),
-            max_features=10
-        ).partial_fit(X, y, classes=[0, 1])
+        SelectFromModel(estimator=SGDClassifier(), max_features=10).partial_fit(
+            X, y, classes=[0, 1]
+        )
 
     # Case 2: Check if partial_fit raises TypeError when `max_features`
     # is neither an int nor a callable
     err_msg = "'max_features' must be either an int or a callable"
     with pytest.raises(TypeError, match=err_msg):
-        SelectFromModel(
-            estimator=SGDClassifier(),
-            max_features="a"
-        ).partial_fit(X, y, classes=[0, 1])
+        SelectFromModel(estimator=SGDClassifier(), max_features="a").partial_fit(
+            X, y, classes=[0, 1]
+        )
 
 
 def test_partial_fit_validate_feature_names():
@@ -646,10 +644,9 @@ def test_partial_fit_validate_feature_names():
         random_state=0,
     )
 
-    selector = SelectFromModel(
-        estimator=SGDClassifier(),
-        max_features=4
-    ).partial_fit(X, y, classes=[0, 1])
+    selector = SelectFromModel(estimator=SGDClassifier(), max_features=4).partial_fit(
+        X, y, classes=[0, 1]
+    )
     assert not hasattr(selector.estimator_, "feature_names_in_")
 
     # Case 2: Check if `feature_names_in_` is defined only when `X`
@@ -657,8 +654,7 @@ def test_partial_fit_validate_feature_names():
     pytest.importorskip("pandas")
     X, y = datasets.load_iris(as_frame=True, return_X_y=True)
 
-    selector = SelectFromModel(
-        estimator=SGDClassifier(),
-        max_features=4
-    ).partial_fit(X, y, classes=[0, 1])
+    selector = SelectFromModel(estimator=SGDClassifier(), max_features=4).partial_fit(
+        X, y, classes=[0, 1]
+    )
     assert_array_equal(selector.feature_names_in_, X.columns)
