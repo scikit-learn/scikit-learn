@@ -612,9 +612,9 @@ def test_estimator_does_not_support_feature_names():
 @pytest.mark.parametrize(
     "error, err_msg, max_features",
     (
-        [ValueError, "max_features == 10, must be <= 4.", 10],
+        [ValueError, "max_features == 10, must be <= 4", 10],
         [TypeError, "'max_features' must be either an int or a callable", "a"],
-        [ValueError, "max_features\(X\) == 5, must be <= 4.", lambda x: x.shape[1] + 1],
+        [ValueError, r"max_features\(X\) == 5, must be <= 4", lambda x: x.shape[1] + 1],
     ),
 )
 def test_partial_fit_validate_max_features(error, err_msg, max_features):
