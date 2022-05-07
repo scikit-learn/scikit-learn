@@ -51,7 +51,7 @@ Changelog
   by avoiding data copies. :pr:`23252` by :user:`Zhehao Liu <MaxwellLZH>`.
 
 :mod:`sklearn.feature_selection`
-.......................
+................................
 
 - |Fix| The `partial_fit` method of :class:`feature_selection.SelectFromModel`
   now conducts validation for `max_features` and `feature_names_in` parameters.
