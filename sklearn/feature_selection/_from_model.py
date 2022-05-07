@@ -308,13 +308,18 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
             Fitted estimator.
         """
         if self.max_features is not None:
+            if hasattr(X, "shape"):
+                n_features = X.shape[1]
+            else:
+                n_features = len(X[0])
+
             if isinstance(self.max_features, numbers.Integral):
                 check_scalar(
                     self.max_features,
                     "max_features",
                     numbers.Integral,
                     min_val=0,
-                    max_val=len(X[0]),
+                    max_val=n_features,
                 )
                 self.max_features_ = self.max_features
             elif callable(self.max_features):
@@ -324,7 +329,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
                     "max_features(X)",
                     numbers.Integral,
                     min_val=0,
-                    max_val=len(X[0]),
+                    max_val=n_features,
                 )
                 self.max_features_ = max_features
             else:
@@ -386,13 +391,18 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
             Fitted estimator.
         """
         if self.max_features is not None:
+            if hasattr(X, "shape"):
+                n_features = X.shape[1]
+            else:
+                n_features = len(X[0])
+
             if isinstance(self.max_features, numbers.Integral):
                 check_scalar(
                     self.max_features,
                     "max_features",
                     numbers.Integral,
                     min_val=0,
-                    max_val=len(X[0]),
+                    max_val=n_features,
                 )
                 self.max_features_ = self.max_features
             elif callable(self.max_features):
@@ -402,7 +412,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
                     "max_features(X)",
                     numbers.Integral,
                     min_val=0,
-                    max_val=len(X[0]),
+                    max_val=n_features,
                 )
                 self.max_features_ = max_features
             else:

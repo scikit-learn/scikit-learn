@@ -655,6 +655,6 @@ def test_partial_fit_validate_feature_names():
     X, y = datasets.load_iris(as_frame=True, return_X_y=True)
 
     selector = SelectFromModel(estimator=SGDClassifier(), max_features=4).partial_fit(
-        X, y, classes=[0, 1]
+        X, y, classes=[0, 1, 2]
     )
     assert_array_equal(selector.feature_names_in_, X.columns)
