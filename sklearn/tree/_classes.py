@@ -1223,7 +1223,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
     use_lower_index_on_ties : bool, default="warn"
         Whether to split on the feature with lowest index when multiple features
-        share the same improvement. This usually happens when the dataset has 
+        share the same improvement. This usually happens when the dataset has
         identically-ordered features.
 
         .. versionadded:: 1.2
