@@ -577,7 +577,7 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
                 # Faster when num_samples >> n_features
                 d, u = linalg.eigh(XT.dot(X))
                 sort_indices = np.argsort(d)[::-1]
-                eps = np.finfo(np.double).eps
+                eps = np.finfo(d.dtype).eps
                 degenerate_idx = d < eps
                 if np.any(degenerate_idx):
                     warnings.warn(
