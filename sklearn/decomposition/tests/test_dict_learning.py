@@ -290,6 +290,7 @@ def test_dict_learning_online_shapes():
         n_components=n_components,
         batch_size=4,
         max_iter=10,
+        method="cd",
         random_state=rng,
         return_code=True,
     )
@@ -302,6 +303,7 @@ def test_dict_learning_online_shapes():
         n_components=n_components,
         batch_size=4,
         max_iter=10,
+        method="cd",
         random_state=rng,
         return_code=False,
     )
@@ -331,6 +333,7 @@ def test_minibatch_dictionary_learning_positivity(
     dico = MiniBatchDictionaryLearning(
         n_components,
         batch_size=4,
+        max_iter=10,
         transform_algorithm=transform_algorithm,
         random_state=0,
         positive_code=positive_code,
@@ -356,6 +359,7 @@ def test_minibatch_dictionary_learning_lars(positive_dict):
     dico = MiniBatchDictionaryLearning(
         n_components,
         batch_size=4,
+        max_iter=10,
         transform_algorithm="lars",
         random_state=0,
         positive_dict=positive_dict,
@@ -789,7 +793,7 @@ def test_update_dict():
 @pytest.mark.filterwarnings("ignore:The default value of batch_size will change")
 @pytest.mark.parametrize("Estimator", [DictionaryLearning, MiniBatchDictionaryLearning])
 def test_warning_default_transform_alpha(Estimator):
-    dl = Estimator(alpha=0.1)
+    dl = Estimator(alpha=0.1, max_iter=5)
     with pytest.warns(FutureWarning, match="default transform_alpha"):
         dl.fit_transform(X)
 
@@ -1050,7 +1054,11 @@ def test_dict_learning_online_numerical_consistency(method):
 
 @pytest.mark.parametrize(
     "estimator",
-    [SparseCoder(X.T), DictionaryLearning(), MiniBatchDictionaryLearning(batch_size=4)],
+    [
+        SparseCoder(X.T),
+        DictionaryLearning(),
+        MiniBatchDictionaryLearning(batch_size=4, max_iter=10),
+    ],
     ids=lambda x: x.__class__.__name__,
 )
 def test_get_feature_names_out(estimator):

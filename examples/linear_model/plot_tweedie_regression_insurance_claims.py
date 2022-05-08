@@ -37,7 +37,7 @@ helper functions for loading the data and visualizing results.
     <http://dx.doi.org/10.2139/ssrn.3164764>`_
 
 """
-
+# %%
 # Authors: Christian Lorentzen <lorentzen.ch@gmail.com>
 #          Roman Yurchak <rth.yurchak@gmail.com>
 #          Olivier Grisel <olivier.grisel@ensta.org>
@@ -50,16 +50,9 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 from sklearn.datasets import fetch_openml
-from sklearn.compose import ColumnTransformer
-from sklearn.linear_model import PoissonRegressor, GammaRegressor
-from sklearn.linear_model import TweedieRegressor
 from sklearn.metrics import mean_tweedie_deviance
-from sklearn.model_selection import train_test_split
-from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import FunctionTransformer, OneHotEncoder
-from sklearn.preprocessing import StandardScaler, KBinsDiscretizer
-
-from sklearn.metrics import mean_absolute_error, mean_squared_error, auc
+from sklearn.metrics import mean_absolute_error
+from sklearn.metrics import mean_squared_error
 
 
 def load_mtpl2(n_samples=100000):
@@ -215,6 +208,11 @@ def score_estimator(
 # containing the number of claims (``ClaimNb``), with the freMTPL2sev table,
 # containing the claim amount (``ClaimAmount``) for the same policy ids
 # (``IDpol``).
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import FunctionTransformer, OneHotEncoder
+from sklearn.preprocessing import StandardScaler, KBinsDiscretizer
+from sklearn.compose import ColumnTransformer
+
 
 df = load_mtpl2(n_samples=60000)
 
@@ -271,6 +269,9 @@ with pd.option_context("display.max_columns", 15):
 # constant rate in a given time interval (``Exposure``, in units of years).
 # Here we model the frequency ``y = ClaimNb / Exposure``, which is still a
 # (scaled) Poisson distribution, and use ``Exposure`` as `sample_weight`.
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import PoissonRegressor
+
 
 df_train, df_test, X_train, X_test = train_test_split(df, X, random_state=0)
 
@@ -366,6 +367,8 @@ plot_obs_pred(
 #   on :math:`(0, \infty)`, not :math:`[0, \infty)`.
 # - We use ``ClaimNb`` as `sample_weight` to account for policies that contain
 #   more than one claim.
+from sklearn.linear_model import GammaRegressor
+
 
 mask_train = df_train["ClaimAmount"] > 0
 mask_test = df_test["ClaimAmount"] > 0
@@ -474,6 +477,8 @@ plt.tight_layout()
 # models side by side, i.e. we compare them at identical values of `power`.
 # Ideally, we hope that one model will be consistently better than the other,
 # regardless of `power`.
+from sklearn.linear_model import TweedieRegressor
+
 
 glm_pure_premium = TweedieRegressor(power=1.9, alpha=0.1, max_iter=10000)
 glm_pure_premium.fit(
@@ -545,29 +550,37 @@ for subset_label, X, df in [
 print(pd.DataFrame(res).set_index("subset").T)
 
 # %%
+#
 # Finally, we can compare the two models using a plot of cumulated claims: for
-# each model, the policyholders are ranked from safest to riskiest and the
-# fraction of observed total cumulated claims is plotted on the y axis. This
-# plot is often called the ordered Lorenz curve of the model.
+# each model, the policyholders are ranked from safest to riskiest based on the
+# model predictions and the fraction of observed total cumulated claims is
+# plotted on the y axis. This plot is often called the ordered Lorenz curve of
+# the model.
 #
-# The Gini coefficient (based on the area under the curve) can be used as a
-# model selection metric to quantify the ability of the model to rank
-# policyholders. Note that this metric does not reflect the ability of the
-# models to make accurate predictions in terms of absolute value of total
-# claim amounts but only in terms of relative amounts as a ranking metric.
+# The Gini coefficient (based on the area between the curve and the diagonal)
+# can be used as a model selection metric to quantify the ability of the model
+# to rank policyholders. Note that this metric does not reflect the ability of
+# the models to make accurate predictions in terms of absolute value of total
+# claim amounts but only in terms of relative amounts as a ranking metric. The
+# Gini coefficient is upper bounded by 1.0 but even an oracle model that ranks
+# the policyholders by the observed claim amounts cannot reach a score of 1.0.
 #
-# Both models are able to rank policyholders by risky-ness significantly
-# better than chance although they are also both far from perfect due to the
-# natural difficulty of the prediction problem from few features.
+# We observe that both models are able to rank policyholders by risky-ness
+# significantly better than chance although they are also both far from the
+# oracle model due to the natural difficulty of the prediction problem from a
+# few features: most accidents are not predictable and can be caused by
+# environmental circumstances that are not described at all by the input
+# features of the models.
 #
-# Note that the Gini index only characterize the ranking performance of the
-# model but not its calibration: any monotonic transformation of the
-# predictions leaves the Gini index of the model unchanged.
+# Note that the Gini index only characterizes the ranking performance of the
+# model but not its calibration: any monotonic transformation of the predictions
+# leaves the Gini index of the model unchanged.
 #
-# Finally one should highlight that the Compound Poisson Gamma model that
-# is directly fit on the pure premium is operationally simpler to develop and
-# maintain as it consists in a single scikit-learn estimator instead of a
-# pair of models, each with its own set of hyperparameters.
+# Finally one should highlight that the Compound Poisson Gamma model that is
+# directly fit on the pure premium is operationally simpler to develop and
+# maintain as it consists of a single scikit-learn estimator instead of a pair
+# of models, each with its own set of hyperparameters.
+from sklearn.metrics import auc
 
 
 def lorenz_curve(y_true, y_pred, exposure):
