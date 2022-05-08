@@ -1015,8 +1015,8 @@ def nan_manhattan_distances(X, Y=None, *, missing_values=np.nan, copy=True):
 
     >>> # get distance to origin
     >>> nan_manhattan_distances(X, [[0, 0]])
-    array([[1. ],
-           [2. ]])
+    array([[1.],
+           [2.]])
     """
 
     force_all_finite = "allow-nan" if is_scalar_nan(missing_values) else True
