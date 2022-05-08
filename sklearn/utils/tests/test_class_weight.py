@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose
+from scipy import sparse
 
 from sklearn.datasets import make_blobs
 from sklearn.linear_model import LogisticRegression
@@ -282,3 +283,10 @@ def test_class_weight_does_not_contains_more_classses():
 
     # Does not raise
     tree.fit([[0, 0, 1], [1, 0, 1], [1, 2, 0]], [0, 0, 1])
+
+
+def test_compute_sample_weight_sparse():
+    """Check that we can compute weight for sparse `y`."""
+    y = sparse.csc_matrix(np.asarray([0, 1, 1])).T
+    sample_weight = compute_sample_weight("balanced", y)
+    assert_allclose(sample_weight, [1.5, 0.75, 0.75])

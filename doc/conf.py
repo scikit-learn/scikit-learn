@@ -47,6 +47,7 @@ extensions = [
     "sphinx-prompt",
     "sphinxext.opengraph",
     "doi_role",
+    "allow_nan_estimators",
     "matplotlib.sphinxext.plot_directive",
 ]
 
