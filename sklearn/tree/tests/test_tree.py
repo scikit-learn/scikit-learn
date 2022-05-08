@@ -2524,3 +2524,16 @@ def test_tree_split_with_identical_feature(global_random_seed):
 
     tree.fit(X, y)
     assert tree.feature_importances_[1] == 0
+
+
+# TODO(1.3): Remove
+@pytest.mark.parametrize("Tree", [DecisionTreeClassifier, DecisionTreeRegressor])
+def test_tree_raise_warning_for_use_lower_index_on_ties(Tree):
+    tree = Tree(use_lower_index_on_ties="warn")
+    msg = (
+        "Parameter `use_lower_index_on_ties` will by default set to True in"
+        " version 1.3. Set `use_lower_index_on_ties=True` for backward"
+        " compatibility."
+    )
+    with pytest.warns(FutureWarning, match=msg):
+        tree.fit(X_small, y_small)
