@@ -34,7 +34,8 @@ from io import StringIO
 
 # TODO(1.4): Remove
 msg = (
-    r"The default value of `n_init` will change from \d* to 'auto' in 1.4:FutureWarning"
+    r"The default value of `n_init` will change from \d* to 'auto' in 1.4. Set the"
+    r" value of `n_init` explicitly to suppress the warning:FutureWarning"
 )
 pytestmark = pytest.mark.filterwarnings("ignore:" + msg)
 
