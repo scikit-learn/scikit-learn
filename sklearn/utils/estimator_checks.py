@@ -392,6 +392,7 @@ def _construct_instance(Estimator):
             elif issubclass(Estimator, RegressorMixin):
                 estimator = Estimator(Ridge())
             elif issubclass(Estimator, SelectFromModel):
+                # Increases coverage because SGDRegressor has partial_fit
                 estimator = Estimator(SGDRegressor(random_state=0))
             else:
                 estimator = Estimator(LogisticRegression(C=1))
