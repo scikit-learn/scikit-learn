@@ -347,13 +347,11 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
 
     whiten : str or bool, default="warn"
         Specify the whitening strategy to use.
-
-        - If 'arbitrary-variance' (default), a whitening with variance
-          arbitrary is used.
-        - If 'unit-variance', the whitening matrix is rescaled to ensure that
-          each recovered source has unit variance.
-        - If False, the data is already considered to be whitened, and no
-          whitening is performed.
+        If 'arbitrary-variance' (default), a whitening with variance arbitrary is used.
+        If 'unit-variance', the whitening matrix is rescaled to ensure that each
+        recovered source has unit variance.
+        If False, the data is already considered to be whitened, and no
+        whitening is performed.
 
         .. deprecated:: 1.1
             From version 1.3 whiten='unit-variance' will be used by default.
