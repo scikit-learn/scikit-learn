@@ -1172,11 +1172,8 @@ class SVR(RegressorMixin, BaseLibSVM):
 
         .. versionadded:: 1.1
 
-    n_support_ : ndarray of shape (n_classes,), dtype=int32
-        Number of support vectors for each class.
-
-        .. deprecated:: 1.2
-            `n_support_` was deprecated in version 1.2 and will be removed in 1.4.
+    n_support_ : ndarray of shape (1,), dtype=int32
+        Number of support vectors.
 
     shape_fit_ : tuple of int of shape (n_dimensions_of_X,)
         Array dimensions of training vector ``X``.
@@ -1256,7 +1253,7 @@ class SVR(RegressorMixin, BaseLibSVM):
             random_state=None,
         )
 
-    # TODO(1.3): Remove
+    # TODO(1.4): Remove
     @deprecated(  # type: ignore
         "Attribute `class_weight_` was deprecated in version 1.2 and will be removed in"
         " 1.4."
@@ -1265,11 +1262,6 @@ class SVR(RegressorMixin, BaseLibSVM):
     def class_weight_(self):
         return np.empty(0)
 
-    # TODO(1.3): Remove
-    @deprecated(  # type: ignore
-        "Attribute `n_support_` was deprecated in version 1.2 and will be removed in"
-        " 1.4."
-    )
     @property
     def n_support_(self):
         # _n_support has size 2, we make it size 1
@@ -1389,11 +1381,8 @@ class NuSVR(RegressorMixin, BaseLibSVM):
 
         .. versionadded:: 1.1
 
-    n_support_ : ndarray of shape (n_classes,), dtype=int32
-        Number of support vectors for each class.
-
-        .. deprecated:: 1.2
-            `n_support_` was deprecated in version 1.2 and will be removed in 1.4.
+    n_support_ : ndarray of shape (1,), dtype=int32
+        Number of support vectors.
 
     shape_fit_ : tuple of int of shape (n_dimensions_of_X,)
         Array dimensions of training vector ``X``.
@@ -1473,7 +1462,7 @@ class NuSVR(RegressorMixin, BaseLibSVM):
             random_state=None,
         )
 
-    # TODO(1.3): Remove
+    # TODO(1.4): Remove
     @deprecated(  # type: ignore
         "Attribute `class_weight_` was deprecated in version 1.2 and will be removed in"
         " 1.4."
@@ -1482,11 +1471,6 @@ class NuSVR(RegressorMixin, BaseLibSVM):
     def class_weight_(self):
         return np.empty(0)
 
-    # TODO(1.3): Remove
-    @deprecated(  # type: ignore
-        "Attribute `n_support_` was deprecated in version 1.2 and will be removed in"
-        " 1.4."
-    )
     @property
     def n_support_(self):
         # _n_support has size 2, we make it size 1
@@ -1605,9 +1589,6 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
     n_support_ : ndarray of shape (n_classes,), dtype=int32
         Number of support vectors for each class.
 
-        .. deprecated:: 1.2
-            `n_support_` was deprecated in version 1.2 and will be removed in 1.4.
-
     offset_ : float
         Offset used to define the decision function from the raw scores.
         We have the relation: decision_function = score_samples - `offset_`.
@@ -1679,7 +1660,7 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
             random_state=None,
         )
 
-    # TODO(1.3): Remove
+    # TODO(1.4): Remove
     @deprecated(  # type: ignore
         "Attribute `class_weight_` was deprecated in version 1.2 and will be removed in"
         " 1.4."
@@ -1688,11 +1669,6 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
     def class_weight_(self):
         return np.empty(0)
 
-    # TODO(1.3): Remove
-    @deprecated(  # type: ignore
-        "Attribute `n_support_` was deprecated in version 1.2 and will be removed in"
-        " 1.4."
-    )
     @property
     def n_support_(self):
         # _n_support has size 2, we make it size 1
