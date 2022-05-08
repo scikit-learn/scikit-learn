@@ -217,12 +217,12 @@ WARNING: Do not edit `sklearn/_loss/_loss.pyx` file directly, as it is generated
 cimport cython
 from cython.parallel import parallel, prange
 import numpy as np
-cimport numpy as np
+cimport numpy as cnp
 
 from libc.math cimport exp, fabs, log, log1p, pow
 from libc.stdlib cimport malloc, free
 
-np.import_array()
+cnp.import_array()
 
 
 # -------------------------------------
