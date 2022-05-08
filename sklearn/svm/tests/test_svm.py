@@ -1509,6 +1509,6 @@ def test_libsvm_nclass_attrs_deprecated(Klass, attr):
     with warnings.catch_warnings():
         warnings.simplefilter("error", FutureWarning)
         clf.fit(X, Y)
-    msg = f"Attribute `{attr}` was deprecated in version 1.1 and will be removed in 1.3"
+    msg = f"Attribute `{attr}` was deprecated in version 1.2 and will be removed in 1.4"
     with pytest.warns(FutureWarning, match=re.escape(msg)):
         getattr(clf, attr)
