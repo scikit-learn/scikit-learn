@@ -1010,8 +1010,8 @@ def nan_manhattan_distances(X, Y=None, *, missing_values=np.nan, copy=True):
     >>> nan = float("NaN")
     >>> X = [[0, 1], [1, nan]]
     >>> nan_manhattan_distances(X, X) # distance between rows of X
-    array([[0. , 2.0 ],
-           [2.0, 0.  ]])
+    array([[0., 2.],
+           [2., 0.]])
 
     >>> # get distance to origin
     >>> nan_manhattan_distances(X, [[0, 0]])
