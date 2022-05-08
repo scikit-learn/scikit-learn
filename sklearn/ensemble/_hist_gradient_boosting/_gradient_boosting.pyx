@@ -3,12 +3,12 @@
 cimport cython
 from cython.parallel import prange
 import numpy as np
-cimport numpy as np
+cimport numpy as cnp
 
 from .common import Y_DTYPE
 from .common cimport Y_DTYPE_C
 
-np.import_array()
+cnp.import_array()
 
 
 def _update_raw_predictions(
@@ -32,11 +32,11 @@ def _update_raw_predictions(
         list leaves
 
     leaves = grower.finalized_leaves
-    starts = np.array([leaf.partition_start for leaf in leaves],
-                      dtype=np.uint32)
-    stops = np.array([leaf.partition_stop for leaf in leaves],
-                     dtype=np.uint32)
-    values = np.array([leaf.value for leaf in leaves], dtype=Y_DTYPE)
+    starts = cnp.array([leaf.partition_start for leaf in leaves],
+                      dtype=cnp.uint32)
+    stops = cnp.array([leaf.partition_stop for leaf in leaves],
+                     dtype=cnp.uint32)
+    values = cnp.array([leaf.value for leaf in leaves], dtype=Y_DTYPE)
 
     _update_raw_predictions_helper(raw_predictions, starts, stops, partition,
                                    values, n_threads)

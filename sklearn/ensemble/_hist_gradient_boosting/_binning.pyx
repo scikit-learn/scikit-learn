@@ -3,14 +3,14 @@
 cimport cython
 
 import numpy as np
-cimport numpy as np
+cimport numpy as cnp
 from numpy.math cimport INFINITY
 from cython.parallel import prange
 from libc.math cimport isnan
 
 from .common cimport X_DTYPE_C, X_BINNED_DTYPE_C
 
-np.import_array()
+cnp.import_array()
 
 
 def _map_to_bins(const X_DTYPE_C [:, :] data,

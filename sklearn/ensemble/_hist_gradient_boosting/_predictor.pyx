@@ -4,7 +4,7 @@ cimport cython
 from cython.parallel import prange
 from libc.math cimport isnan
 import numpy as np
-cimport numpy as np
+cimport numpy as cnp
 from numpy.math cimport INFINITY
 
 from .common cimport X_DTYPE_C
@@ -16,7 +16,7 @@ from .common cimport BITSET_DTYPE_C
 from .common cimport node_struct
 from ._bitset cimport in_bitset_2d_memoryview
 
-np.import_array()
+cnp.import_array()
 
 
 def _predict_from_raw_data(  # raw data = non-binned data
@@ -184,9 +184,9 @@ def _compute_partial_dependence(
 
     cdef:
         unsigned int current_node_idx
-        unsigned int [:] node_idx_stack = np.zeros(shape=nodes.shape[0],
-                                                   dtype=np.uint32)
-        Y_DTYPE_C [::1] weight_stack = np.zeros(shape=nodes.shape[0],
+        unsigned int [:] node_idx_stack = cnp.zeros(shape=nodes.shape[0],
+                                                   dtype=cnp.uint32)
+        Y_DTYPE_C [::1] weight_stack = cnp.zeros(shape=nodes.shape[0],
                                                 dtype=Y_DTYPE)
         node_struct * current_node  # pointer to avoid copying attributes
 
