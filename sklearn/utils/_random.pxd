@@ -4,8 +4,8 @@
 
 
 import numpy as np
-cimport numpy as np
-ctypedef np.npy_uint32 UINT32_t
+cimport numpy as cnp
+ctypedef cnp.npy_uint32 UINT32_t
 
 cdef inline UINT32_t DEFAULT_SEED = 1
 
@@ -15,8 +15,8 @@ cdef enum:
     # particularly tiny on Windows/MSVC.
     RAND_R_MAX = 0x7FFFFFFF
 
-cpdef sample_without_replacement(np.int_t n_population,
-                                 np.int_t n_samples,
+cpdef sample_without_replacement(cnp.int_t n_population,
+                                 cnp.int_t n_samples,
                                  method=*,
                                  random_state=*)
 
