@@ -145,7 +145,7 @@ def spectral_embedding(
     n_components=8,
     eigen_solver=None,
     random_state=None,
-    eigen_tol="warn",
+    eigen_tol="auto",
     norm_laplacian=True,
     drop_first=True,
 ):
@@ -204,16 +204,18 @@ def spectral_embedding(
 
         - If `eigen_solver="arpack"`, then `eigen_tol=0.0`;
         - If `eigen_solver="lobpcg"` or `eigen_solver="amg"`, then
-          `eigen_tol=1e-5`.
+          `eigen_tol=None` which allows the underlying SciPy solver to
+          automaticaly resolve the value according to their heuristics.
+
+          .. note::
+            For details on the heuristics used by SciPy, please see:
+            https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.linalg.lobpcg.html
 
         Note that when using `eigen_solver="amg"` values of `tol<1e-5` may lead
         to convergence issues and should be avoided.
 
         .. versionadded:: 1.2
            Added 'auto' option.
-
-        .. deprecated:: 1.2
-           Default value will change to 'auto' in v1.4.
 
     norm_laplacian : bool, default=True
         If True, then compute symmetric normalized Laplacian.
@@ -261,13 +263,6 @@ def spectral_embedding(
             "Unknown value for eigen_solver: '%s'."
             "Should be 'amg', 'arpack', or 'lobpcg'" % eigen_solver
         )
-    # TODO(1.4): Remove
-    if eigen_tol == "warn":
-        warnings.warn(
-            "The default value for `eigen_tol` will be changed from 0 to 'auto' in 1.4",
-            FutureWarning,
-        )
-        eigen_tol = 0
 
     random_state = check_random_state(random_state)
 
@@ -363,7 +358,7 @@ def spectral_embedding(
         # While scikit-learn has a minimum scipy dependency <1.4.0 we require
         # high tolerance as explained in:
         # https://github.com/scikit-learn/scikit-learn/pull/13707#discussion_r314028509
-        tol = 1e-5 if eigen_tol == "auto" else eigen_tol
+        tol = None if eigen_tol == "auto" else eigen_tol
         _, diffusion_map = lobpcg(laplacian, X, M=M, tol=tol, largest=False)
         embedding = diffusion_map.T
         if norm_laplacian:
@@ -397,7 +392,7 @@ def spectral_embedding(
             )
             X[:, 0] = dd.ravel()
             X = X.astype(laplacian.dtype)
-            tol = 1e-5 if eigen_tol == "auto" else eigen_tol
+            tol = None if eigen_tol == "auto" else eigen_tol
             _, diffusion_map = lobpcg(
                 laplacian, X, tol=tol, largest=False, maxiter=2000
             )
@@ -478,7 +473,12 @@ class SpectralEmbedding(BaseEstimator):
 
         - If `eigen_solver="arpack"`, then `eigen_tol=0.0`;
         - If `eigen_solver="lobpcg"` or `eigen_solver="amg"`, then
-          `eigen_tol=1e-5`.
+          `eigen_tol=None` which allows the underlying SciPy solver to
+          automaticaly resolve the value according to their heuristics.
+
+          .. note::
+            For details on the heuristics used by SciPy, please see:
+            https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.linalg.lobpcg.html
 
         Note that when using `eigen_solver="lobpcg"` or `eigen_solver="amg"`
         values of `tol<1e-5` may lead to convergence issues and should be
@@ -558,7 +558,7 @@ class SpectralEmbedding(BaseEstimator):
         gamma=None,
         random_state=None,
         eigen_solver=None,
-        eigen_tol="warn",
+        eigen_tol="auto",
         n_neighbors=None,
         n_jobs=None,
     ):

@@ -1,5 +1,4 @@
 from unittest.mock import Mock
-import warnings
 import pytest
 
 import numpy as np
@@ -496,8 +495,10 @@ def test_spectral_eigen_tol_auto(monkeypatch, solver):
     S = np.max(D) - D  # Similarity matrix
 
     solver_func = eigsh if solver == "arpack" else lobpcg
-    default_value = 0 if solver == "arpack" else 1e-5
+    default_value = 0 if solver == "arpack" else None
     if solver == "amg":
+        if not pyamg_available:
+            pytest.skip("PyAMG is not available.")
         S = sparse.csr_matrix(S)
 
     mocked_solver = Mock(side_effect=solver_func)
@@ -507,21 +508,3 @@ def test_spectral_eigen_tol_auto(monkeypatch, solver):
     spectral_embedding(S, random_state=42, eigen_solver=solver, eigen_tol="auto")
     mocked_solver.assert_called()
     assert mocked_solver.call_args.kwargs["tol"] == default_value
-
-
-def test_spectral_eigen_tol_future_warn():
-    msg = "The default value for `eigen_tol` will be changed from 0 to 'auto' in 1.4"
-    X = make_blobs(
-        n_samples=20, random_state=0, centers=[[1, 1], [-1, -1]], cluster_std=0.01
-    )[0]
-    D = pairwise_distances(X)  # Distance matrix
-    S = np.max(D) - D  # Similarity matrix
-
-    with pytest.warns(FutureWarning, match=msg):
-        SpectralEmbedding(random_state=42).fit(X)
-        spectral_embedding(S, random_state=42)
-
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", FutureWarning)
-        SpectralEmbedding(random_state=42, eigen_tol=0).fit(X)
-        spectral_embedding(S, random_state=42, eigen_tol=0)

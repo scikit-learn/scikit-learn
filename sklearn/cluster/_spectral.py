@@ -198,7 +198,7 @@ def spectral_clustering(
     eigen_solver=None,
     random_state=None,
     n_init=10,
-    eigen_tol="warn",
+    eigen_tol="auto",
     assign_labels="kmeans",
     verbose=False,
 ):
@@ -266,7 +266,12 @@ def spectral_clustering(
 
         - If `eigen_solver="arpack"`, then `eigen_tol=0.0`;
         - If `eigen_solver="lobpcg"` or `eigen_solver="amg"`, then
-          `eigen_tol=1e-5`.
+          `eigen_tol=None` which allows the underlying SciPy solver to
+          automaticaly resolve the value according to their heuristics.
+
+          .. note::
+            For details on the heuristics used by SciPy, please see:
+            https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.linalg.lobpcg.html
 
         Note that when using `eigen_solver="lobpcg"` or `eigen_solver="amg"`
         values of `tol<1e-5` may lead to convergence issues and should be
@@ -274,9 +279,6 @@ def spectral_clustering(
 
         .. versionadded:: 1.2
            Added 'auto' option.
-
-        .. deprecated:: 1.2
-           Default value will change to 'auto' in v1.4.
 
     assign_labels : {'kmeans', 'discretize', 'cluster_qr'}, default='kmeans'
         The strategy to use to assign labels in the embedding
@@ -361,14 +363,6 @@ def spectral_clustering(
 
     random_state = check_random_state(random_state)
     n_components = n_clusters if n_components is None else n_components
-    # TODO(1.4): Remove
-    if eigen_tol == "warn":
-        warnings.warn(
-            "The default value for `eigen_tol` will be changed from 0 to 'auto' in 1.4",
-            FutureWarning,
-        )
-        eigen_tol = 0
-
     # We now obtain the real valued solution matrix to the
     # relaxed Ncut problem, solving the eigenvalue problem
     # L_sym x = lambda x  and recovering u = D^-1/2 x.
@@ -490,7 +484,12 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
 
         - If `eigen_solver="arpack"`, then `eigen_tol=0.0`;
         - If `eigen_solver="lobpcg"` or `eigen_solver="amg"`, then
-          `eigen_tol=1e-5`.
+          `eigen_tol=None` which allows the underlying SciPy solver to
+          automaticaly resolve the value according to their heuristics.
+
+          .. note::
+            For details on the heuristics used by SciPy, please see:
+            https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.linalg.lobpcg.html
 
         Note that when using `eigen_solver="lobpcg"` or `eigen_solver="amg"`
         values of `tol<1e-5` may lead to convergence issues and should be
@@ -498,9 +497,6 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
 
         .. versionadded:: 1.2
            Added 'auto' option.
-
-        .. deprecated:: 1.2
-           Default value will change to 'auto' in v1.4.
 
     assign_labels : {'kmeans', 'discretize', 'cluster_qr'}, default='kmeans'
         The strategy for assigning labels in the embedding space. There are two
@@ -635,7 +631,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         gamma=1.0,
         affinity="rbf",
         n_neighbors=10,
-        eigen_tol="warn",
+        eigen_tol="auto",
         assign_labels="kmeans",
         degree=3,
         coef0=1,
@@ -731,19 +727,10 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
             include_boundaries="left",
         )
 
-        self._eigen_tol = self.eigen_tol
-        # TODO(1.4): Remove
-        if self.eigen_tol == "warn":
-            warnings.warn(
-                "The default value for `eigen_tol` will be changed from 0 to 'auto'"
-                " in 1.4",
-                FutureWarning,
-            )
-            self._eigen_tol = 0
-
-        if self._eigen_tol != "auto":
+        self.eigen_tol
+        if self.eigen_tol != "auto":
             check_scalar(
-                self._eigen_tol,
+                self.eigen_tol,
                 "eigen_tol",
                 target_type=numbers.Real,
                 min_val=0,
@@ -791,7 +778,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
             eigen_solver=self.eigen_solver,
             random_state=random_state,
             n_init=self.n_init,
-            eigen_tol=self._eigen_tol,
+            eigen_tol=self.eigen_tol,
             assign_labels=self.assign_labels,
             verbose=self.verbose,
         )
