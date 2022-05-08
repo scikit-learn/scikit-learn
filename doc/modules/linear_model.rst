@@ -1046,10 +1046,9 @@ to warm-starting (see :term:`Glossary <warm_start>`).
     .. [9] `"Performance Evaluation of Lbfgs vs other solvers"
             <http://www.fuzihao.org/blog/2016/01/16/Comparison-of-Gradient-Descent-Stochastic-Gradient-Descent-and-L-BFGS/>`_
 
-    .. [16] Simon, Noah, J. Friedman and T. Hastie.
+    .. [16] :arxiv:`Simon, Noah, J. Friedman and T. Hastie.
         "A Blockwise Descent Algorithm for Group-penalized Multiresponse and
-        Multinomial Regression."
-        https://arxiv.org/pdf/1311.6529.pdf
+        Multinomial Regression." <1311.6529>`
 
 .. _Generalized_linear_regression:
 
