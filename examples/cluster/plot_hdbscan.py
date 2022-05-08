@@ -18,9 +18,7 @@ from sklearn.datasets import make_blobs
 import matplotlib.pyplot as plt
 
 
-def plot(
-    X, labels=None, probabilities=None, parameters=None, ground_truth=False, ax=None
-):
+def plot(X, labels, probabilities=None, parameters=None, ground_truth=False, ax=None):
     if ax is None:
         _, ax = plt.subplots()
     labels = labels if labels is not None else np.ones(X.shape[0])
