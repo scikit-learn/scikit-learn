@@ -242,6 +242,7 @@ def _yield_transformer_checks(transformer):
         "LocallyLinearEmbedding",
         "RandomizedLasso",
         "LogisticRegressionCV",
+        "BisectingKMeans",
     ]
 
     name = transformer.__class__.__name__
@@ -258,7 +259,8 @@ def _yield_clustering_checks(clusterer):
         yield check_clustering
         yield partial(check_clustering, readonly_memmap=True)
         yield check_estimators_partial_fit_n_features
-    yield check_non_transformer_estimators_n_iter
+    if not hasattr(clusterer, "transform"):
+        yield check_non_transformer_estimators_n_iter
 
 
 def _yield_outliers_checks(estimator):
@@ -673,7 +675,7 @@ def _set_checking_parameters(estimator):
     if "n_init" in params:
         # K-Means
         estimator.set_params(n_init=2)
-    if "batch_size" in params:
+    if "batch_size" in params and not name.startswith("MLP"):
         estimator.set_params(batch_size=10)
 
     if name == "MeanShift":
@@ -1108,7 +1110,7 @@ def check_sample_weights_not_overwritten(name, estimator_orig):
 
     estimator.fit(X, y, sample_weight=sample_weight_fit)
 
-    err_msg = "{name} overwrote the original `sample_weight` given during fit"
+    err_msg = f"{name} overwrote the original `sample_weight` given during fit"
     assert_allclose(sample_weight_fit, sample_weight_original, err_msg=err_msg)
 
 
