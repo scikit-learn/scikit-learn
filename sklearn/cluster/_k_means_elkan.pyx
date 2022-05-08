@@ -7,7 +7,7 @@
 # provided by the user). This is fixed in cython > 0.3.
 
 import numpy as np
-cimport numpy as np
+cimport numpy as cnp
 IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
     cimport openmp
 cimport cython
@@ -27,7 +27,7 @@ from ._k_means_common cimport _average_centers
 from ._k_means_common cimport _center_shift
 
 
-np.import_array()
+cnp.import_array()
 
 
 def init_bounds_dense(

@@ -9,7 +9,7 @@
 # provided by the user). This is fixed in cython > 0.3.
 
 import numpy as np
-cimport numpy as np
+cimport numpy as cnp
 from cython cimport floating
 from cython.parallel cimport prange
 from libc.math cimport sqrt
@@ -17,7 +17,7 @@ from libc.math cimport sqrt
 from ..utils.extmath import row_norms
 
 
-np.import_array()
+cnp.import_array()
 
 
 # Number of samples per data chunk defined as a global constant.
@@ -136,7 +136,7 @@ cpdef floating _inertia_sparse(
     """Compute inertia for sparse input data
 
     Sum of squared distance between each sample and its assigned center.
-    
+
     If single_label is >= 0, the inertia is computed only for that label.
     """
     cdef:

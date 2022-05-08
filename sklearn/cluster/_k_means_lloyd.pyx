@@ -5,7 +5,7 @@
 # provided by the user). This is fixed in cython > 0.3.
 
 import numpy as np
-cimport numpy as np
+cimport numpy as cnp
 IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
     cimport openmp
 from cython cimport floating
@@ -23,7 +23,7 @@ from ._k_means_common cimport _relocate_empty_clusters_sparse
 from ._k_means_common cimport _average_centers, _center_shift
 
 
-np.import_array()
+cnp.import_array()
 
 
 def lloyd_iter_chunked_dense(

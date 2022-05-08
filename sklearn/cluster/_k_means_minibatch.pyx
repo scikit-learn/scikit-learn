@@ -2,13 +2,13 @@
 # fused types and when the array may be read-only (for instance when it's
 # provided by the user). This will be fixed in cython >= 0.3.
 
-cimport numpy as np
+cimport numpy as cnp
 from cython cimport floating
 from cython.parallel cimport parallel, prange
 from libc.stdlib cimport malloc, free
 
 
-np.import_array()
+cnp.import_array()
 
 
 def _minibatch_update_dense(
