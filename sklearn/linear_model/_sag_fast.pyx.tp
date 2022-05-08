@@ -727,7 +727,7 @@ cdef void predict_sample{{name_suffix}}({{c_type}}* x_data_ptr, int* x_ind_ptr, 
 
 def _multinomial_grad_loss_all_samples(
         SequentialDataset64 dataset,
-        cndarray[double, ndim=2, mode='c'] weights_array,
+        cnp.ndarray[double, ndim=2, mode='c'] weights_array,
         cnp.ndarray[double, ndim=1, mode='c'] intercept_array,
         int n_samples, int n_features, int n_classes):
     """Compute multinomial gradient and loss across all samples.
