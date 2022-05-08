@@ -390,7 +390,7 @@ def hdbscan(
     max_cluster_size=0,
     metric="euclidean",
     leaf_size=40,
-    algorithm="best",
+    algorithm="auto",
     memory=None,
     approx_min_span_tree=True,
     n_jobs=4,
@@ -446,18 +446,25 @@ def hdbscan(
         Leaf size for trees responsible for fast nearest
         neighbour queries.
 
-    algorithm : str, default='best'
+    algorithm : str, default='auto'
         Exactly which algorithm to use; hdbscan has variants specialised
         for different characteristics of the data. By default this is set
-        to `best` which chooses the "best" algorithm given the nature of
-        the data. You can force other options if you believe you know
-        better. Options are:
-        - `best`
-        - `generic`
-        - `prims_kdtree`
-        - `prims_balltree`
-        - `boruvka_kdtree`
-        - `boruvka_balltree`
+        to `'auto'` which attempts to use a `KDTree` method if possible,
+        otherwise it uses a `BallTree` method. If the `X` passed during `fit`
+        has `n_features>60` then a `boruvka` approach is used, otherwise a
+        `prims` approach is used.
+
+        If the `X` passed during `fit` is sparse or `metric` is not a valid
+        metric for neither `KDTree` nor `BallTree` and is something other than
+        "cosine" and "arccos", then it resolves to use the `generic` algorithm.
+
+        Available algorithms:
+        - `'best'`
+        - `'generic'`
+        - `'prims_kdtree'`
+        - `'prims_balltree'`
+        - `'boruvka_kdtree'`
+        - `'boruvka_balltree'`
 
     memory : str, default=None
         Used to cache the output of the computation of the tree.
@@ -573,7 +580,7 @@ def hdbscan(
         min_samples = 1
 
     metric_params = metric_params or {}
-    if algorithm != "best":
+    if algorithm != "auto":
         if metric != "precomputed" and issparse(X) and algorithm != "generic":
             raise ValueError("Sparse data matrices only support algorithm 'generic'.")
 
@@ -751,18 +758,25 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         A distance scaling parameter as used in robust single linkage.
         See [3]_ for more information.
 
-    algorithm : str, default='best'
+    algorithm : str, default='auto'
         Exactly which algorithm to use; hdbscan has variants specialised
         for different characteristics of the data. By default this is set
-        to `best` which chooses the "best" algorithm given the nature of
-        the data. You can force other options if you believe you know
-        better. Options are:
-        - `best`
-        - `generic`
-        - `prims_kdtree`
-        - `prims_balltree`
-        - `boruvka_kdtree`
-        - `boruvka_balltree`
+        to `'auto'` which attempts to use a `KDTree` method if possible,
+        otherwise it uses a `BallTree` method. If the `X` passed during `fit`
+        has `n_features>60` then a `boruvka` approach is used, otherwise a
+        `prims` approach is used.
+
+        If the `X` passed during `fit` is sparse or `metric` is not a valid
+        metric for neither `KDTree` nor `BallTree` and is something other than
+        "cosine" and "arccos", then it resolves to use the `generic` algorithm.
+
+        Available algorithms:
+        - `'best'`
+        - `'generic'`
+        - `'prims_kdtree'`
+        - `'prims_balltree'`
+        - `'boruvka_kdtree'`
+        - `'boruvka_balltree'`
 
     leaf_size : int, default=40
         If using a space tree algorithm (`KDTree`, or `BallTree`) the number
@@ -877,7 +891,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         max_cluster_size=0,
         metric="euclidean",
         alpha=1.0,
-        algorithm="best",
+        algorithm="auto",
         leaf_size=40,
         memory=None,
         approx_min_span_tree=True,

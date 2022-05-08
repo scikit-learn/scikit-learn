@@ -130,7 +130,7 @@ def test_hdbscan_feature_vector():
         "boruvka_kdtree",
         "boruvka_balltree",
         "generic",
-        "best",
+        "auto",
     ],
 )
 @pytest.mark.parametrize("metric", _VALID_METRICS)
@@ -155,7 +155,7 @@ def test_hdbscan_algorithms(algo, metric):
         "minkowski": {"p": 2},
         "wminkowski": {"p": 2, "w": np.ones(X.shape[1])},
     }
-    if algo not in ("best", "generic"):
+    if algo not in ("auto", "generic"):
         if metric not in ALGOS_TREES[algo].valid_metrics:
             with pytest.raises(ValueError):
                 hdbscan(
@@ -198,7 +198,7 @@ def test_hdbscan_high_dimensional():
 
     labels = (
         HDBSCAN(
-            algorithm="best",
+            algorithm="auto",
             metric="seuclidean",
             metric_params={"V": np.ones(H.shape[1])},
         )
