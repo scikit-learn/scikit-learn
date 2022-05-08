@@ -221,12 +221,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         # TODO(1.3): Remove
         # use_lower_index_on_ties = "warn" would cause warnings in every call
         if self.use_lower_index_on_ties == "warn":
-            warnings.warn(
-                "Parameter `use_lower_index_on_ties` will by default set to True in"
-                " version 1.3. Set `use_lower_index_on_ties=True` for backward"
-                " compatibility.",
-                FutureWarning,
-            )
             use_lower_index_on_ties = False
         else:
             use_lower_index_on_ties = self.use_lower_index_on_ties
@@ -559,6 +553,16 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 "Criterion 'mse' was deprecated in v1.0 and will be "
                 "removed in version 1.2. Use `criterion='squared_error'` "
                 "which is equivalent.",
+                FutureWarning,
+            )
+
+        # TODO(1.3): Remove.
+        # Raise a single warning here
+        if getattr(self, "use_lower_index_on_ties", None) == "warn":
+            warnings.warn(
+                "Parameter `use_lower_index_on_ties` will by default set to True in"
+                " version 1.3. Set `use_lower_index_on_ties=True` for backward"
+                " compatibility.",
                 FutureWarning,
             )
 

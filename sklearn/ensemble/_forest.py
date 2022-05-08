@@ -469,11 +469,19 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
             # TODO(1.3): Remove
             # use_lower_index_on_ties = "warn" would cause warnings in every call
-            # to estimator.fit
-            if isinstance(self, (RandomForestRegressor, RandomForestClassifier)):
+            # should only raise a single one
+            if (
+                isinstance(self, (RandomForestRegressor, RandomForestClassifier))
+                and self.use_lower_index_on_ties == "warn"
+            ):
+                warn(
+                    "Parameter `use_lower_index_on_ties` will by default set to True in"
+                    " version 1.3. Set `use_lower_index_on_ties=True` for backward"
+                    " compatibility.",
+                    FutureWarning,
+                )
                 for tree in trees:
-                    if getattr(tree, "use_lower_index_on_ties", None) == "warn":
-                        tree.set_params(use_lower_index_on_ties=False)
+                    tree.set_params(use_lower_index_on_ties=False)
 
             # Parallel loop: we prefer the threading backend as the Cython code
             # for fitting the trees is internally releasing the Python GIL
