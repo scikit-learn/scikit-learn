@@ -209,7 +209,7 @@ cdef class Splitter:
         # partition = [cef|abdghijkl]
         # we have 2 leaves, the left one is at position 0 and the second one at
         # position 3. The order of the samples is irrelevant.
-        self.partition = np.arange(X_binned.shape[0], dtype=cnp.uint32)
+        self.partition = np.arange(X_binned.shape[0], dtype=np.uint32)
         # buffers used in split_indices to support parallel splitting.
         self.left_indices_buffer = np.empty_like(self.partition)
         self.right_indices_buffer = np.empty_like(self.partition)
@@ -305,10 +305,10 @@ cdef class Splitter:
             int n_threads = self.n_threads
 
             int [:] sizes = np.full(n_threads, n_samples // n_threads,
-                                    dtype=cnp.int32)
-            int [:] offset_in_buffers = np.zeros(n_threads, dtype=cnp.int32)
-            int [:] left_counts = np.empty(n_threads, dtype=cnp.int32)
-            int [:] right_counts = np.empty(n_threads, dtype=cnp.int32)
+                                    dtype=np.int32)
+            int [:] offset_in_buffers = np.zeros(n_threads, dtype=np.int32)
+            int [:] left_counts = np.empty(n_threads, dtype=np.int32)
+            int [:] right_counts = np.empty(n_threads, dtype=np.int32)
             int left_count
             int right_count
             int start
@@ -318,8 +318,8 @@ cdef class Splitter:
             int sample_idx
             int right_child_position
             unsigned char turn_left
-            int [:] left_offset = np.zeros(n_threads, dtype=cnp.int32)
-            int [:] right_offset = np.zeros(n_threads, dtype=cnp.int32)
+            int [:] left_offset = np.zeros(n_threads, dtype=np.int32)
+            int [:] right_offset = np.zeros(n_threads, dtype=np.int32)
 
         # only set left_cat_bitset when is_categorical is True
         if is_categorical:
@@ -538,7 +538,7 @@ cdef class Splitter:
         )
         # Only set bitset if the split is categorical
         if split_info.is_categorical:
-            out.left_cat_bitset = np.asarray(split_info.left_cat_bitset, dtype=cnp.uint32)
+            out.left_cat_bitset = np.asarray(split_info.left_cat_bitset, dtype=np.uint32)
 
         free(split_infos)
         return out

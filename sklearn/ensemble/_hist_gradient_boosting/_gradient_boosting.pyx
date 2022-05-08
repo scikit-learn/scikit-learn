@@ -33,9 +33,9 @@ def _update_raw_predictions(
 
     leaves = grower.finalized_leaves
     starts = np.array([leaf.partition_start for leaf in leaves],
-                      dtype=cnp.uint32)
+                      dtype=np.uint32)
     stops = np.array([leaf.partition_stop for leaf in leaves],
-                     dtype=cnp.uint32)
+                     dtype=np.uint32)
     values = np.array([leaf.value for leaf in leaves], dtype=Y_DTYPE)
 
     _update_raw_predictions_helper(raw_predictions, starts, stops, partition,
