@@ -45,7 +45,6 @@ def _tree_to_labels(
     min_cluster_size=10,
     cluster_selection_method="eom",
     allow_single_cluster=False,
-    match_reference_implementation=False,
     cluster_selection_epsilon=0.0,
     max_cluster_size=0,
 ):
@@ -59,7 +58,6 @@ def _tree_to_labels(
         stability_dict,
         cluster_selection_method,
         allow_single_cluster,
-        match_reference_implementation,
         cluster_selection_epsilon,
         max_cluster_size,
     )
@@ -330,49 +328,6 @@ def _hdbscan_boruvka_balltree(
     return single_linkage_tree
 
 
-def remap_condensed_tree(tree, internal_to_raw, outliers):
-    """
-    Takes an internal condensed_tree structure and adds back in a set of points
-    that were initially detected as non-finite and returns that new tree.
-    These points will all be split off from the maximal node at lambda zero and
-    considered noise points.
-
-    Parameters
-    ----------
-    tree: condensed_tree
-    internal_to_raw: dict
-        a mapping from internal integer index to the raw integer index
-    finite_index: ndarray
-        Boolean array of which entries in the raw data were finite
-    """
-    finite_count = len(internal_to_raw)
-
-    outlier_count = len(outliers)
-    for i, (parent, child, lambda_val, child_size) in enumerate(tree):
-        if child < finite_count:
-            child = internal_to_raw[child]
-        else:
-            child = child + outlier_count
-        tree[i] = (parent + outlier_count, child, lambda_val, child_size)
-
-    outlier_list = []
-    root = tree[0][0]  # Should I check to be sure this is the minimal lambda?
-    for outlier in outliers:
-        outlier_list.append((root, outlier, 0, 1))
-
-    outlier_tree = np.array(
-        outlier_list,
-        dtype=[
-            ("parent", np.intp),
-            ("child", np.intp),
-            ("lambda_val", float),
-            ("child_size", np.intp),
-        ],
-    )
-    tree = np.append(outlier_tree, tree)
-    return tree
-
-
 def remap_single_linkage_tree(tree, internal_to_raw, outliers):
     """
     Takes an internal single_linkage_tree structure and adds back in a set of points
@@ -441,7 +396,6 @@ def hdbscan(
     n_jobs=4,
     cluster_selection_method="eom",
     allow_single_cluster=False,
-    match_reference_implementation=False,
     metric_params=None,
 ):
     """Perform HDBSCAN clustering from a vector array or distance matrix.
@@ -536,14 +490,6 @@ def hdbscan(
         `True` will allow single cluster results in the case that you feel this
         is a valid result for your dataset.
 
-    match_reference_implementation : bool, default=False
-        There exist some interpretational differences between this
-        HDBSCAN* implementation and the original authors reference
-        implementation in Java. This can result in very minor differences
-        in clustering results. Setting this flag to True will, at a some
-        performance cost, ensure that the clustering results match the
-        reference implementation.
-
     metric_params : dict, default=None
         Arguments passed to the distance metric.
 
@@ -599,11 +545,6 @@ def hdbscan(
 
     if leaf_size < 1:
         raise ValueError("Leaf size must be greater than 0!")
-
-    if match_reference_implementation:
-        min_samples = min_samples - 1
-        min_cluster_size = min_cluster_size + 1
-        approx_min_span_tree = False
 
     if cluster_selection_method not in ("eom", "leaf"):
         raise ValueError(
@@ -758,7 +699,6 @@ def hdbscan(
         min_cluster_size,
         cluster_selection_method,
         allow_single_cluster,
-        match_reference_implementation,
         cluster_selection_epsilon,
         max_cluster_size,
     )
@@ -861,14 +801,6 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         to True will override this and allow single cluster results in
         the case that you feel this is a valid result for your dataset.
 
-    match_reference_implementation : bool, default=False
-        There exist some interpretational differences between this
-        HDBSCAN* implementation and the original authors reference
-        implementation in Java. This can result in very minor differences
-        in clustering results. Setting this flag to True will, at a some
-        performance cost, ensure that the clustering results match the
-        reference implementation.
-
     metric_params : dict, default=None
         Arguments passed to the distance metric.
 
@@ -952,7 +884,6 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         n_jobs=4,
         cluster_selection_method="eom",
         allow_single_cluster=False,
-        match_reference_implementation=False,
         metric_params=None,
     ):
         self.min_cluster_size = min_cluster_size
@@ -968,7 +899,6 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         self.n_jobs = n_jobs
         self.cluster_selection_method = cluster_selection_method
         self.allow_single_cluster = allow_single_cluster
-        self.match_reference_implementation = match_reference_implementation
         self.metric_params = metric_params
 
     def fit(self, X, y=None):

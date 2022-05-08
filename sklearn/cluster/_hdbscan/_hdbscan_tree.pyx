@@ -418,8 +418,7 @@ cdef np.ndarray[np.intp_t, ndim=1] do_labelling(
         set clusters,
         dict cluster_label_map,
         np.intp_t allow_single_cluster,
-        np.double_t cluster_selection_epsilon,
-        np.intp_t match_reference_implementation):
+        np.double_t cluster_selection_epsilon):
 
     cdef np.intp_t root_cluster
     cdef np.ndarray[np.intp_t, ndim=1] result_arr
@@ -468,15 +467,7 @@ cdef np.ndarray[np.intp_t, ndim=1] do_labelling(
             else:
                 result[n] = -1
         else:
-            if match_reference_implementation:
-                point_lambda = lambda_array[child_array == n][0]
-                cluster_lambda = lambda_array[child_array == cluster][0]
-                if point_lambda > cluster_lambda:
-                    result[n] = cluster_label_map[cluster]
-                else:
-                    result[n] = -1
-            else:
-                result[n] = cluster_label_map[cluster]
+            result[n] = cluster_label_map[cluster]
 
     return result_arr
 
@@ -579,7 +570,6 @@ cpdef set epsilon_search(set leaves, np.ndarray cluster_tree, np.double_t cluste
 cpdef tuple get_clusters(np.ndarray tree, dict stability,
                          cluster_selection_method='eom',
                          allow_single_cluster=False,
-                         match_reference_implementation=False,
                          cluster_selection_epsilon=0.0,
                          max_cluster_size=0):
     """Given a tree and stability dict, produce the cluster labels
@@ -602,10 +592,6 @@ cpdef tuple get_clusters(np.ndarray tree, dict stability,
     allow_single_cluster : boolean, optional (default False)
         Whether to allow a single cluster to be selected by the
         Excess of Mass algorithm.
-
-    match_reference_implementation : boolean, optional (default False)
-        Whether to match the reference implementation in how to handle
-        certain edge cases.
 
     cluster_selection_epsilon: float, optional (default 0.0)
         A distance threshold for cluster splits.
@@ -718,8 +704,7 @@ cpdef tuple get_clusters(np.ndarray tree, dict stability,
     reverse_cluster_map = {n: c for c, n in cluster_map.items()}
 
     labels = do_labelling(tree, clusters, cluster_map,
-                          allow_single_cluster, cluster_selection_epsilon,
-                          match_reference_implementation)
+                          allow_single_cluster, cluster_selection_epsilon)
     probs = get_probabilities(tree, reverse_cluster_map, labels)
 
     return (labels, probs)
