@@ -156,6 +156,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         subsample,
         max_features,
         ccp_alpha,
+        use_lower_index_on_ties,
         random_state,
         alpha=0.9,
         verbose=0,
@@ -178,6 +179,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         self.max_depth = max_depth
         self.min_impurity_decrease = min_impurity_decrease
         self.ccp_alpha = ccp_alpha
+        self.use_lower_index_on_ties = use_lower_index_on_ties
         self.init = init
         self.random_state = random_state
         self.alpha = alpha
@@ -216,6 +218,19 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         # iteration i - 1.
         raw_predictions_copy = raw_predictions.copy()
 
+        # TODO(1.3): Remove
+        # use_lower_index_on_ties = "warn" would cause warnings in every call
+        if self.use_lower_index_on_ties == "warn":
+            warnings.warn(
+                "Parameter `use_lower_index_on_ties` will by default set to True in"
+                " version 1.3. Set `use_lower_index_on_ties=True` for backward"
+                " compatibility.",
+                FutureWarning,
+            )
+            use_lower_index_on_ties = False
+        else:
+            use_lower_index_on_ties = self.use_lower_index_on_ties
+
         for k in range(loss.K):
             if loss.is_multi_class:
                 y = np.array(original_y == k, dtype=np.float64)
@@ -237,6 +252,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 max_leaf_nodes=self.max_leaf_nodes,
                 random_state=random_state,
                 ccp_alpha=self.ccp_alpha,
+                use_lower_index_on_ties=use_lower_index_on_ties,
             )
 
             if self.subsample < 1.0:
@@ -1188,6 +1204,13 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
 
         .. versionadded:: 0.22
 
+    use_lower_index_on_ties : bool, default="warn"
+        Whether to split on the feature with lowest index when multiple features
+        share the same improvement. This usually happens when the dataset has
+        identically-ordered features.
+
+        .. versionadded:: 1.2
+
     Attributes
     ----------
     n_estimators_ : int
@@ -1340,6 +1363,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         n_iter_no_change=None,
         tol=1e-4,
         ccp_alpha=0.0,
+        use_lower_index_on_ties="warn",
     ):
 
         super().__init__(
@@ -1363,6 +1387,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
             n_iter_no_change=n_iter_no_change,
             tol=tol,
             ccp_alpha=ccp_alpha,
+            use_lower_index_on_ties=use_lower_index_on_ties,
         )
 
     def _validate_y(self, y, sample_weight):
@@ -1766,6 +1791,13 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
 
         .. versionadded:: 0.22
 
+    use_lower_index_on_ties : bool, default="warn"
+        Whether to split on the feature with lowest index when multiple features
+        share the same improvement. This usually happens when the dataset has
+        identically-ordered features.
+
+        .. versionadded:: 1.2
+
     Attributes
     ----------
     feature_importances_ : ndarray of shape (n_features,)
@@ -1908,6 +1940,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         n_iter_no_change=None,
         tol=1e-4,
         ccp_alpha=0.0,
+        use_lower_index_on_ties="warn",
     ):
 
         super().__init__(
@@ -1932,6 +1965,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
             n_iter_no_change=n_iter_no_change,
             tol=tol,
             ccp_alpha=ccp_alpha,
+            use_lower_index_on_ties=use_lower_index_on_ties,
         )
 
     def _validate_y(self, y, sample_weight=None):
