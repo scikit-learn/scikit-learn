@@ -507,7 +507,10 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
 
     def _validate_estimator(self):
         """Check the estimator and set the base_estimator_ attribute."""
-        super()._validate_estimator(default=DecisionTreeClassifier(max_depth=1))
+        # TODO(1.3): Change the default value of `use_lower_index_on_ties` to True.
+        super()._validate_estimator(
+            default=DecisionTreeClassifier(max_depth=1, use_lower_index_on_ties=False)
+        )
 
         #  SAMME-R requires predict_proba-enabled base estimators
         if self.algorithm == "SAMME.R":
@@ -1091,7 +1094,10 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
 
     def _validate_estimator(self):
         """Check the estimator and set the base_estimator_ attribute."""
-        super()._validate_estimator(default=DecisionTreeRegressor(max_depth=3))
+        # TODO(1.3): Change the default value of `use_lower_index_on_ties` to True.
+        super()._validate_estimator(
+            default=DecisionTreeRegressor(max_depth=3, use_lower_index_on_ties=False)
+        )
 
     def _boost(self, iboost, X, y, sample_weight, random_state):
         """Implement a single boost for regression
