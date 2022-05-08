@@ -184,9 +184,9 @@ def _compute_partial_dependence(
 
     cdef:
         unsigned int current_node_idx
-        unsigned int [:] node_idx_stack = cnp.zeros(shape=nodes.shape[0],
+        unsigned int [:] node_idx_stack = np.zeros(shape=nodes.shape[0],
                                                    dtype=cnp.uint32)
-        Y_DTYPE_C [::1] weight_stack = cnp.zeros(shape=nodes.shape[0],
+        Y_DTYPE_C [::1] weight_stack = np.zeros(shape=nodes.shape[0],
                                                 dtype=Y_DTYPE)
         node_struct * current_node  # pointer to avoid copying attributes
 

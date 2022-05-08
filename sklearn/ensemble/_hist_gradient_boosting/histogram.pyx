@@ -132,7 +132,7 @@ cdef class HistogramBuilder:
             G_H_DTYPE_C [::1] ordered_hessians = self.ordered_hessians
             G_H_DTYPE_C [::1] hessians = self.hessians
             # Histograms will be initialized to zero later within a prange
-            hist_struct [:, ::1] histograms = cnp.empty(
+            hist_struct [:, ::1] histograms = np.empty(
                 shape=(self.n_features, self.n_bins),
                 dtype=HISTOGRAM_DTYPE
             )
@@ -237,7 +237,7 @@ cdef class HistogramBuilder:
         cdef:
             int feature_idx
             int n_features = self.n_features
-            hist_struct [:, ::1] histograms = cnp.empty(
+            hist_struct [:, ::1] histograms = np.empty(
                 shape=(self.n_features, self.n_bins),
                 dtype=HISTOGRAM_DTYPE
             )
