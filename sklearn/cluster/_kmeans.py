@@ -318,8 +318,9 @@ def k_means(
 
         .. versionadded:: 1.2
            Added 'auto' option for `n_init`.
+
         .. versionchanged:: 1.4
-           Default value for `n_init` will change from 10 to `'auto'` in version 1.4
+           Default value for `n_init` will change from 10 to `'auto'` in version 1.4.
 
     max_iter : int, default=300
         Maximum number of iterations of the k-means algorithm to run.
@@ -1186,8 +1187,9 @@ class KMeans(_BaseKMeans):
 
         .. versionadded:: 1.2
            Added 'auto' option for `n_init`.
+
         .. versionchanged:: 1.4
-           Default value for `n_init` will change from 10 to `'auto'` in version 1.4
+           Default value for `n_init` will change from 10 to `'auto'` in version 1.4.
 
     max_iter : int, default=300
         Maximum number of iterations of the k-means algorithm for a
@@ -1707,8 +1709,9 @@ class MiniBatchKMeans(_BaseKMeans):
 
         .. versionadded:: 1.2
            Added 'auto' option for `n_init`.
+
         .. versionchanged:: 1.4
-           Default value for `n_init` will change from 3 to `'auto'` in version 1.4
+           Default value for `n_init` will change from 3 to `'auto'` in version 1.4.
 
     reassignment_ratio : float, default=0.01
         Control the fraction of the maximum number of counts for a center to
