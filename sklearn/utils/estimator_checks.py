@@ -31,7 +31,6 @@ from ..linear_model import LinearRegression
 from ..linear_model import LogisticRegression
 from ..linear_model import RANSACRegressor
 from ..linear_model import Ridge
-from ..linear_model import SGDRegressor
 
 from ..base import (
     clone,
@@ -45,7 +44,6 @@ from ..base import (
 from ..metrics import accuracy_score, adjusted_rand_score, f1_score
 from ..random_projection import BaseRandomProjection
 from ..feature_selection import SelectKBest
-from ..feature_selection import SelectFromModel
 from ..pipeline import make_pipeline
 from ..exceptions import DataConversionWarning
 from ..exceptions import NotFittedError
@@ -391,8 +389,6 @@ def _construct_instance(Estimator):
                 estimator = Estimator(LinearRegression())
             elif issubclass(Estimator, RegressorMixin):
                 estimator = Estimator(Ridge())
-            elif issubclass(Estimator, SelectFromModel):
-                estimator = Estimator(SGDRegressor())
             else:
                 estimator = Estimator(LogisticRegression(C=1))
         elif required_parameters in (["estimators"],):

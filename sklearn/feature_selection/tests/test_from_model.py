@@ -629,3 +629,18 @@ def test_partial_fit_validate_max_features(error, err_msg, max_features):
         SelectFromModel(
             estimator=SGDClassifier(), max_features=max_features
         ).partial_fit(X, y, classes=[0, 1])
+
+
+@pytest.mark.parametrize("as_frame", [True, False])
+def test_partial_fit_validate_feature_names(as_frame):
+    """Test that partial_fit from SelectFromModel validates `feature_names_in_`."""
+    pytest.importorskip("pandas")
+    X, y = datasets.load_iris(as_frame=as_frame, return_X_y=True)
+
+    selector = SelectFromModel(estimator=SGDClassifier(), max_features=4).partial_fit(
+        X, y, classes=[0, 1, 2]
+    )
+    if as_frame:
+        assert_array_equal(selector.feature_names_in_, X.columns)
+    else:
+        assert not hasattr(selector, "feature_names_in_")
