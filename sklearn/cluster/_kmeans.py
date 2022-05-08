@@ -822,7 +822,7 @@ class _BaseKMeans(
         self.verbose = verbose
         self.random_state = random_state
 
-    def _check_params(self, X, default_n_init):
+    def _check_params(self, X, default_n_init=None):
         # n_init
         # TODO(1.4): Remove
         if self.n_init not in ("auto", "warn") and self.n_init <= 0:
