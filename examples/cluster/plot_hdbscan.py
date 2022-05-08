@@ -10,7 +10,7 @@ We'll compare both algorithms on specific datasets. Finally we'll evaluate
 HDBSCAN's sensitivity to certain hyperparameters. We first define a couple
 utility functions for convenience.
 """
-
+# %%
 import numpy as np
 
 from sklearn.cluster import HDBSCAN, DBSCAN
@@ -19,10 +19,11 @@ from sklearn.datasets import make_blobs
 import matplotlib.pyplot as plt
 
 
-def plot(X, labels=None, probabilities=None, kwargs=None, ground_truth=False):
+def plot(X, labels=None, probabilities=None, kwargs=None, ground_truth=False, ax=None):
+    if ax is None:
+        _, ax = plt.subplots()
     labels = labels if labels is not None else np.ones(X.shape[0])
     probabilities = probabilities if probabilities is not None else np.ones(X.shape[0])
-    _, ax = plt.subplots()
     # Black removed and is used for noise instead.
     unique_labels = set(labels)
     colors = [plt.cm.Spectral(each) for each in np.linspace(0, 1, len(unique_labels))]
@@ -48,9 +49,9 @@ def plot(X, labels=None, probabilities=None, kwargs=None, ground_truth=False):
     preamble = "True" if ground_truth else "Estimated"
     title = f"{preamble} number of clusters: {n_clusters_}"
     if kwargs is not None:
-        title += f" | {kwargs=}"
+        kwargs_str = ", ".join(f"{k}={v}" for k, v in kwargs.items())
+        title += f" | {kwargs_str}"
     ax.set_title(title)
-    plt.show()
 
 
 def print_scores(labels, labels_true, kwargs):
@@ -96,18 +97,20 @@ plot(X, labels=labels_true, ground_truth=True)
 # epsilon value that works for one dataset, and try to apply it to a
 # similar but rescaled versions of the dataset. Below are plots of the original
 # dataset, and versions rescaled by 0.5 and 3 respectively.
-dbs = DBSCAN(eps=0.3).fit(X)
-plot(X, dbs.labels_, np.ones_like(dbs.labels_), {"eps": 0.3})
+fig, axes = plt.subplots(3, 1, figsize=(12, 16))
+parameters = {"eps": 0.3}
+dbs = DBSCAN(**parameters).fit(X)
+plot(X, dbs.labels_, kwargs=parameters, ax=axes[0])
 dbs.fit(0.5 * X)
-plot(0.5 * X, dbs.labels_, np.ones_like(dbs.labels_), {"eps": 0.3})
+plot(0.5 * X, dbs.labels_, kwargs=parameters, ax=axes[1])
 dbs.fit(3 * X)
-plot(3 * X, dbs.labels_, np.ones_like(dbs.labels_), {"eps": 0.3})
+plot(3 * X, dbs.labels_, kwargs=parameters, ax=axes[2])
 
 # %%
 # Indeed, in order to maintain the same results we would have to scale `eps` by
 # the same factor.
 dbs = DBSCAN(eps=0.9).fit(3 * X)
-plot(3 * X, dbs.labels_, np.ones_like(dbs.labels_), {"eps": 0.9})
+plot(3 * X, dbs.labels_, kwargs={"eps": 0.9})
 
 # %%
 # While standardizing data (e.g. using
