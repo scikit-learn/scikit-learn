@@ -467,6 +467,14 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                 for i in range(n_more_estimators)
             ]
 
+            # TODO(1.3): Remove
+            # use_lower_index_on_ties = "warn" would cause warnings in every call
+            # to estimator.fit
+            if isinstance(self, (RandomForestRegressor, RandomForestClassifier)):
+                for tree in trees:
+                    if getattr(tree, "use_lower_index_on_ties", None) == "warn":
+                        tree.set_params(use_lower_index_on_ties=False)
+
             # Parallel loop: we prefer the threading backend as the Cython code
             # for fitting the trees is internally releasing the Python GIL
             # making threading more efficient than multiprocessing in
