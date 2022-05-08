@@ -2,10 +2,8 @@
 # Author: Lars Buitinck
 # License: 3-clause BSD
 
-cimport cython
 from libcpp.vector cimport vector
 cimport numpy as cnp
-import numpy as np
 
 cnp.import_array()
 

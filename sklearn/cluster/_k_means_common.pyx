@@ -9,15 +9,11 @@
 # provided by the user). This is fixed in cython > 0.3.
 
 import numpy as np
-cimport numpy as cnp
 from cython cimport floating
 from cython.parallel cimport prange
 from libc.math cimport sqrt
 
 from ..utils.extmath import row_norms
-
-
-cnp.import_array()
 
 
 # Number of samples per data chunk defined as a global constant.
