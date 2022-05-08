@@ -1273,6 +1273,13 @@ class RandomForestClassifier(ForestClassifier):
 
         .. versionadded:: 0.22
 
+    use_lower_index_on_ties : bool, default="warn"
+        Whether to split on the feature with lowest index when multiple features
+        share the same improvement. This usually happens when the dataset has
+        identically-ordered features.
+
+        .. versionadded:: 1.2
+
     Attributes
     ----------
     base_estimator_ : DecisionTreeClassifier
@@ -1394,6 +1401,7 @@ class RandomForestClassifier(ForestClassifier):
         class_weight=None,
         ccp_alpha=0.0,
         max_samples=None,
+        use_lower_index_on_ties="warn",
     ):
         super().__init__(
             base_estimator=DecisionTreeClassifier(),
@@ -1409,6 +1417,7 @@ class RandomForestClassifier(ForestClassifier):
                 "min_impurity_decrease",
                 "random_state",
                 "ccp_alpha",
+                "use_lower_index_on_ties",
             ),
             bootstrap=bootstrap,
             oob_score=oob_score,
@@ -1429,6 +1438,7 @@ class RandomForestClassifier(ForestClassifier):
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_decrease = min_impurity_decrease
         self.ccp_alpha = ccp_alpha
+        self.use_lower_index_on_ties = use_lower_index_on_ties
 
 
 class RandomForestRegressor(ForestRegressor):
@@ -1612,6 +1622,13 @@ class RandomForestRegressor(ForestRegressor):
 
         .. versionadded:: 0.22
 
+    use_lower_index_on_ties : bool, default="warn"
+        Whether to split on the feature with lowest index when multiple features
+        share the same improvement. This usually happens when the dataset has
+        identically-ordered features.
+
+        .. versionadded:: 1.2
+
     Attributes
     ----------
     base_estimator_ : DecisionTreeRegressor
@@ -1726,6 +1743,7 @@ class RandomForestRegressor(ForestRegressor):
         warm_start=False,
         ccp_alpha=0.0,
         max_samples=None,
+        use_lower_index_on_ties="warn",
     ):
         super().__init__(
             base_estimator=DecisionTreeRegressor(),
@@ -1741,6 +1759,7 @@ class RandomForestRegressor(ForestRegressor):
                 "min_impurity_decrease",
                 "random_state",
                 "ccp_alpha",
+                "use_lower_index_on_ties",
             ),
             bootstrap=bootstrap,
             oob_score=oob_score,
@@ -1760,6 +1779,7 @@ class RandomForestRegressor(ForestRegressor):
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_decrease = min_impurity_decrease
         self.ccp_alpha = ccp_alpha
+        self.use_lower_index_on_ties = use_lower_index_on_ties
 
 
 class ExtraTreesClassifier(ForestClassifier):
