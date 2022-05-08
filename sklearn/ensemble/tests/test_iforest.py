@@ -27,21 +27,10 @@ from sklearn.metrics import roc_auc_score
 from scipy.sparse import csc_matrix, csr_matrix
 from unittest.mock import Mock, patch
 
-rng = check_random_state(0)
 
-# load the iris dataset
-# and randomly permute it
+# load iris & diabetes dataset
 iris = load_iris()
-perm = rng.permutation(iris.target.size)
-iris.data = iris.data[perm]
-iris.target = iris.target[perm]
-
-# also load the diabetes dataset
-# and randomly permute it
 diabetes = load_diabetes()
-perm = rng.permutation(diabetes.target.size)
-diabetes.data = diabetes.data[perm]
-diabetes.target = diabetes.target[perm]
 
 
 def test_iforest(global_random_seed):
