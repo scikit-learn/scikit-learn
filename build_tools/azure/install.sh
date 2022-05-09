@@ -50,6 +50,14 @@ pre_python_environment_install() {
         sudo apt-get -yq update
         sudo apt-get install -yq ccache
         sudo apt-get build-dep -yq python3 python3-dev
+        setup_ccache  # speed-up the build of CPython itself
+        # build Python nogil
+        PYTHON_NOGIL_CLONE_PATH=../nogil
+        git clone --depth 1 https://github.com/colesbury/nogil $PYTHON_NOGIL_CLONE_PATH
+        cd $PYTHON_NOGIL_CLONE_PATH
+        ./configure && make -j 2
+        export PYTHON_NOGIL_PATH="${PYTHON_NOGIL_CLONE_PATH}/python"
+        cd $OLDPWD
 
     elif [[ "$BUILD_WITH_ICC" == "true" ]]; then
         wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
@@ -75,6 +83,11 @@ python_environment_install_and_activate() {
         python3 -m virtualenv --system-site-packages --python=python3 $VIRTUALENV
         source $VIRTUALENV/bin/activate
         pip install -r "${LOCK_FILE}"
+
+    elif [[ "$DISTRIB" == "python-nogil" ]]; then
+        ${PYTHON_NOGIL_PATH} -m venv $VIRTUALENV
+        source $VIRTUALENV/bin/activate
+        pip install -r "${LOCK_FILE}"
     fi
 
     if [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
@@ -87,26 +100,6 @@ python_environment_install_and_activate() {
         pip install https://github.com/joblib/joblib/archive/master.zip
         echo "Installing pillow master"
         pip install https://github.com/python-pillow/Pillow/archive/main.zip
-
-    elif [[ "$DISTRIB" == "pip-nogil" ]]; then
-        setup_ccache  # speed-up the build of CPython it-self
-        ORIGINAL_FOLDER=`pwd`
-        cd ..
-        git clone --depth 1 https://github.com/colesbury/nogil
-        cd nogil
-        ./configure && make -j 2
-        ./python -m venv $ORIGINAL_FOLDER/$VIRTUALENV
-        cd $ORIGINAL_FOLDER
-        source $VIRTUALENV/bin/activate
-
-        python -m pip install -U pip
-        # The pip version that comes with the nogil branch of CPython
-        # automatically uses the custom nogil index as its highest priority
-        # index to fetch patched versions of libraries with native code that
-        # would otherwise depend on the GIL.
-        echo "Installing build dependencies with pip from the nogil repository: https://d1yxz45j0ypngg.cloudfront.net/"
-        pip install numpy scipy cython joblib threadpoolctl
-
     fi
 }
 

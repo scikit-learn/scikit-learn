@@ -103,6 +103,7 @@ jobs:
     matrix:
       pylatest_pip_nogil:
         DISTRIB: 'pip-nogil'
+        LOCK_FILE: './build_tools/azure/python_nogil_lock.txt'
         COVERAGE: 'false'
 
 # Check compilation with intel C++ compiler (ICC)
