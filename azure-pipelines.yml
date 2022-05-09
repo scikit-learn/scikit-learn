@@ -71,6 +71,40 @@ jobs:
         # Here we make sure, that they are still run on a regular basis.
         SKLEARN_SKIP_NETWORK_TESTS: '0'
 
+- template: build_tools/azure/posix.yml
+  # Experimental CPython branch without the Global Interpreter Lock:
+  # https://github.com/colesbury/nogil/
+  #
+  # The nogil build relies on a dedicated PyPI-style index to install patched
+  # versions of NumPy, SciPy and Cython maintained by @colesbury and that
+  # include specifc fixes to make them run correctly without relying on the GIL.
+  #
+  # The goal of this CI entry is to make sure that we do not introduce any
+  # dependency on the GIL in scikit-learn itself. An auxiliary goal is to early
+  # detect any regression in the patched build dependencies to report them
+  # upstream. The long-term goal is to be able to stop having to maintain
+  # multiprocessing based workaround / hacks in joblib / loky to make multi-CPU
+  # computing in scikit-learn efficient by default using regular threads.
+  #
+  # If this experimental entry becomes too unstable, feel free to disable it.
+  parameters:
+    name: Linux_nogil
+    vmImage: ubuntu-20.04
+    dependsOn: [git_commit, linting]
+    condition: |
+      and(
+        succeeded(),
+        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]')),
+        or(eq(variables['Build.Reason'], 'Schedule'),
+           contains(dependencies['git_commit']['outputs']['commit.message'], '[nogil]'
+          )
+        )
+      )
+    matrix:
+      pylatest_pip_nogil:
+        DISTRIB: 'pip-nogil'
+        COVERAGE: 'false'
+
 # Check compilation with intel C++ compiler (ICC)
 - template: build_tools/azure/posix.yml
   parameters:
