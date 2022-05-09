@@ -198,8 +198,7 @@ WARNING: Do not edit `sklearn/_loss/_loss.pyx` file directly, as it is generated
 #     function "wrap" that carries out the loop and gets as argument a function
 #     pointer to one of the C functions from b), e.g.
 #     wrap(closs_half_poisson, y_true, ...)
-#   - Pass n_threads as argument to p
-range and propagate option to all callers.
+#   - Pass n_threads as argument to prange and propagate option to all callers.
 # d) Provide classes (Cython extension types) per loss (names start with Cy) in
 #    order to have semantical structured objects.
 #    - Member functions for single points just call the C function from b).
