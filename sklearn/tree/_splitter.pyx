@@ -19,8 +19,8 @@ from libc.string cimport memcpy
 from libc.string cimport memset
 
 import numpy as np
-cimport numpy as np
-np.import_array()
+cimport numpy as cnp
+cnp.import_array()
 
 from scipy.sparse import csc_matrix
 
@@ -702,9 +702,9 @@ cdef class BaseSparseSplitter(Splitter):
         cdef SIZE_t n_samples = self.n_samples
 
         # Initialize X
-        cdef np.ndarray[dtype=DTYPE_t, ndim=1] data = X.data
-        cdef np.ndarray[dtype=INT32_t, ndim=1] indices = X.indices
-        cdef np.ndarray[dtype=INT32_t, ndim=1] indptr = X.indptr
+        cdef cnp.ndarray[dtype=DTYPE_t, ndim=1] data = X.data
+        cdef cnp.ndarray[dtype=INT32_t, ndim=1] indices = X.indices
+        cdef cnp.ndarray[dtype=INT32_t, ndim=1] indptr = X.indptr
         cdef SIZE_t n_total_samples = X.shape[0]
 
         self.X_data = <DTYPE_t*> data.data
