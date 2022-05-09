@@ -157,7 +157,7 @@ def check_iris_criterion(name, criterion):
 
 
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS)
-@pytest.mark.parametrize("criterion", ("gini", "entropy"))
+@pytest.mark.parametrize("criterion", ("gini", "log_loss"))
 def test_iris(name, criterion):
     check_iris_criterion(name, criterion)
 
@@ -347,7 +347,7 @@ def check_importances(name, criterion, dtype, tolerance):
 @pytest.mark.parametrize(
     "name, criterion",
     itertools.chain(
-        product(FOREST_CLASSIFIERS, ["gini", "entropy"]),
+        product(FOREST_CLASSIFIERS, ["gini", "log_loss"]),
         product(FOREST_REGRESSORS, ["squared_error", "friedman_mse", "absolute_error"]),
     ),
 )
@@ -451,7 +451,7 @@ def test_importances_asymptotic():
 
     # Estimate importances with totally randomized trees
     clf = ExtraTreesClassifier(
-        n_estimators=500, max_features=1, criterion="entropy", random_state=0
+        n_estimators=500, max_features=1, criterion="log_loss", random_state=0
     ).fit(X, y)
 
     importances = (
@@ -1807,23 +1807,23 @@ def test_max_features_deprecation(Estimator):
         est.fit(X, y)
 
 
-# TODO: Remove in v1.2
 @pytest.mark.parametrize(
-    "old_criterion, new_criterion",
+    "old_criterion, new_criterion, Estimator",
     [
-        ("mse", "squared_error"),
-        ("mae", "absolute_error"),
+        # TODO(1.2): Remove "mse" and "mae"
+        ("mse", "squared_error", RandomForestRegressor),
+        ("mae", "absolute_error", RandomForestRegressor),
     ],
 )
-def test_criterion_deprecated(old_criterion, new_criterion):
-    est1 = RandomForestRegressor(criterion=old_criterion, random_state=0)
+def test_criterion_deprecated(old_criterion, new_criterion, Estimator):
+    est1 = Estimator(criterion=old_criterion, random_state=0)
 
     with pytest.warns(
         FutureWarning, match=f"Criterion '{old_criterion}' was deprecated"
     ):
         est1.fit(X, y)
 
-    est2 = RandomForestRegressor(criterion=new_criterion, random_state=0)
+    est2 = Estimator(criterion=new_criterion, random_state=0)
     est2.fit(X, y)
     assert_allclose(est1.predict(X), est2.predict(X))
 

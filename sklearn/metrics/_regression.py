@@ -23,6 +23,7 @@ the lower the better.
 #          Ashutosh Hathidara <ashutoshhathidara98@gmail.com>
 #          Uttam kumar <bajiraouttamsinha@gmail.com>
 #          Sylvain Marie <sylvain.marie@se.com>
+#          Ohad Michel <ohadmich@gmail.com>
 # License: BSD 3 clause
 
 import numbers
@@ -56,6 +57,9 @@ __ALL__ = [
     "mean_tweedie_deviance",
     "mean_poisson_deviance",
     "mean_gamma_deviance",
+    "d2_tweedie_score",
+    "d2_pinball_score",
+    "d2_absolute_error_score",
 ]
 
 
@@ -71,6 +75,9 @@ def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric"):
     multioutput : array-like or string in ['raw_values', uniform_average',
         'variance_weighted'] or None
         None is accepted due to backward compatibility of r2_score().
+
+    dtype : str or list, default="numeric"
+        the dtype argument passed to check_array.
 
     Returns
     -------
@@ -89,9 +96,6 @@ def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric"):
         Custom output weights if ``multioutput`` is array-like or
         just the corresponding argument if ``multioutput`` is a
         correct keyword.
-
-    dtype : str or list, default="numeric"
-        the dtype argument passed to check_array.
     """
     check_consistent_length(y_true, y_pred)
     y_true = check_array(y_true, ensure_2d=False, dtype=dtype)
@@ -1160,13 +1164,13 @@ def mean_gamma_deviance(y_true, y_pred, *, sample_weight=None):
 
 
 def d2_tweedie_score(y_true, y_pred, *, sample_weight=None, power=0):
-    """D^2 regression score function, percentage of Tweedie deviance explained.
+    """D^2 regression score function, fraction of Tweedie deviance explained.
 
     Best possible score is 1.0 and it can be negative (because the model can be
     arbitrarily worse). A model that always uses the empirical mean of `y_true` as
     constant prediction, disregarding the input features, gets a D^2 score of 0.0.
 
-    Read more in the :ref:`User Guide <d2_tweedie_score>`.
+    Read more in the :ref:`User Guide <d2_score>`.
 
     .. versionadded:: 1.0
 
@@ -1257,3 +1261,237 @@ def d2_tweedie_score(y_true, y_pred, *, sample_weight=None, power=0):
     )
 
     return 1 - numerator / denominator
+
+
+def d2_pinball_score(
+    y_true, y_pred, *, sample_weight=None, alpha=0.5, multioutput="uniform_average"
+):
+    """
+    :math:`D^2` regression score function, fraction of pinball loss explained.
+
+    Best possible score is 1.0 and it can be negative (because the model can be
+    arbitrarily worse). A model that always uses the empirical alpha-quantile of
+    `y_true` as constant prediction, disregarding the input features,
+    gets a :math:`D^2` score of 0.0.
+
+    Read more in the :ref:`User Guide <d2_score>`.
+
+    .. versionadded:: 1.1
+
+    Parameters
+    ----------
+    y_true : array-like of shape (n_samples,) or (n_samples, n_outputs)
+        Ground truth (correct) target values.
+
+    y_pred : array-like of shape (n_samples,) or (n_samples, n_outputs)
+        Estimated target values.
+
+    sample_weight : array-like of shape (n_samples,), optional
+        Sample weights.
+
+    alpha : float, default=0.5
+        Slope of the pinball deviance. It determines the quantile level alpha
+        for which the pinball deviance and also D2 are optimal.
+        The default `alpha=0.5` is equivalent to `d2_absolute_error_score`.
+
+    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
+            (n_outputs,), default='uniform_average'
+        Defines aggregating of multiple output values.
+        Array-like value defines weights used to average scores.
+
+        'raw_values' :
+            Returns a full set of errors in case of multioutput input.
+
+        'uniform_average' :
+            Scores of all outputs are averaged with uniform weight.
+
+    Returns
+    -------
+    score : float or ndarray of floats
+        The :math:`D^2` score with a pinball deviance
+        or ndarray of scores if `multioutput='raw_values'`.
+
+    Notes
+    -----
+    Like :math:`R^2`, :math:`D^2` score may be negative
+    (it need not actually be the square of a quantity D).
+
+    This metric is not well-defined for a single point and will return a NaN
+    value if n_samples is less than two.
+
+     References
+    ----------
+    .. [1] Eq. (7) of `Koenker, Roger; Machado, José A. F. (1999).
+           "Goodness of Fit and Related Inference Processes for Quantile Regression"
+           <http://dx.doi.org/10.1080/01621459.1999.10473882>`_
+    .. [2] Eq. (3.11) of Hastie, Trevor J., Robert Tibshirani and Martin J.
+           Wainwright. "Statistical Learning with Sparsity: The Lasso and
+           Generalizations." (2015). https://trevorhastie.github.io
+
+    Examples
+    --------
+    >>> from sklearn.metrics import d2_pinball_score
+    >>> y_true = [1, 2, 3]
+    >>> y_pred = [1, 3, 3]
+    >>> d2_pinball_score(y_true, y_pred)
+    0.5
+    >>> d2_pinball_score(y_true, y_pred, alpha=0.9)
+    0.772...
+    >>> d2_pinball_score(y_true, y_pred, alpha=0.1)
+    -1.045...
+    >>> d2_pinball_score(y_true, y_true, alpha=0.1)
+    1.0
+    """
+    y_type, y_true, y_pred, multioutput = _check_reg_targets(
+        y_true, y_pred, multioutput
+    )
+    check_consistent_length(y_true, y_pred, sample_weight)
+
+    if _num_samples(y_pred) < 2:
+        msg = "D^2 score is not well-defined with less than two samples."
+        warnings.warn(msg, UndefinedMetricWarning)
+        return float("nan")
+
+    numerator = mean_pinball_loss(
+        y_true,
+        y_pred,
+        sample_weight=sample_weight,
+        alpha=alpha,
+        multioutput="raw_values",
+    )
+
+    if sample_weight is None:
+        y_quantile = np.tile(
+            np.percentile(y_true, q=alpha * 100, axis=0), (len(y_true), 1)
+        )
+    else:
+        sample_weight = _check_sample_weight(sample_weight, y_true)
+        y_quantile = np.tile(
+            _weighted_percentile(
+                y_true, sample_weight=sample_weight, percentile=alpha * 100
+            ),
+            (len(y_true), 1),
+        )
+
+    denominator = mean_pinball_loss(
+        y_true,
+        y_quantile,
+        sample_weight=sample_weight,
+        alpha=alpha,
+        multioutput="raw_values",
+    )
+
+    nonzero_numerator = numerator != 0
+    nonzero_denominator = denominator != 0
+    valid_score = nonzero_numerator & nonzero_denominator
+    output_scores = np.ones(y_true.shape[1])
+
+    output_scores[valid_score] = 1 - (numerator[valid_score] / denominator[valid_score])
+    output_scores[nonzero_numerator & ~nonzero_denominator] = 0.0
+
+    if isinstance(multioutput, str):
+        if multioutput == "raw_values":
+            # return scores individually
+            return output_scores
+        elif multioutput == "uniform_average":
+            # passing None as weights to np.average results in uniform mean
+            avg_weights = None
+        else:
+            raise ValueError(
+                "multioutput is expected to be 'raw_values' "
+                "or 'uniform_average' but we got %r"
+                " instead." % multioutput
+            )
+    else:
+        avg_weights = multioutput
+
+    return np.average(output_scores, weights=avg_weights)
+
+
+def d2_absolute_error_score(
+    y_true, y_pred, *, sample_weight=None, multioutput="uniform_average"
+):
+    """
+    :math:`D^2` regression score function, \
+    fraction of absolute error explained.
+
+    Best possible score is 1.0 and it can be negative (because the model can be
+    arbitrarily worse). A model that always uses the empirical median of `y_true`
+    as constant prediction, disregarding the input features,
+    gets a :math:`D^2` score of 0.0.
+
+    Read more in the :ref:`User Guide <d2_score>`.
+
+    .. versionadded:: 1.1
+
+    Parameters
+    ----------
+    y_true : array-like of shape (n_samples,) or (n_samples, n_outputs)
+        Ground truth (correct) target values.
+
+    y_pred : array-like of shape (n_samples,) or (n_samples, n_outputs)
+        Estimated target values.
+
+    sample_weight : array-like of shape (n_samples,), optional
+        Sample weights.
+
+    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
+            (n_outputs,), default='uniform_average'
+        Defines aggregating of multiple output values.
+        Array-like value defines weights used to average scores.
+
+        'raw_values' :
+            Returns a full set of errors in case of multioutput input.
+
+        'uniform_average' :
+            Scores of all outputs are averaged with uniform weight.
+
+    Returns
+    -------
+    score : float or ndarray of floats
+        The :math:`D^2` score with an absolute error deviance
+        or ndarray of scores if 'multioutput' is 'raw_values'.
+
+    Notes
+    -----
+    Like :math:`R^2`, :math:`D^2` score may be negative
+    (it need not actually be the square of a quantity D).
+
+    This metric is not well-defined for single samples and will return a NaN
+    value if n_samples is less than two.
+
+     References
+    ----------
+    .. [1] Eq. (3.11) of Hastie, Trevor J., Robert Tibshirani and Martin J.
+           Wainwright. "Statistical Learning with Sparsity: The Lasso and
+           Generalizations." (2015). https://trevorhastie.github.io
+
+    Examples
+    --------
+    >>> from sklearn.metrics import d2_absolute_error_score
+    >>> y_true = [3, -0.5, 2, 7]
+    >>> y_pred = [2.5, 0.0, 2, 8]
+    >>> d2_absolute_error_score(y_true, y_pred)
+    0.764...
+    >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
+    >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
+    >>> d2_absolute_error_score(y_true, y_pred, multioutput='uniform_average')
+    0.691...
+    >>> d2_absolute_error_score(y_true, y_pred, multioutput='raw_values')
+    array([0.8125    , 0.57142857])
+    >>> y_true = [1, 2, 3]
+    >>> y_pred = [1, 2, 3]
+    >>> d2_absolute_error_score(y_true, y_pred)
+    1.0
+    >>> y_true = [1, 2, 3]
+    >>> y_pred = [2, 2, 2]
+    >>> d2_absolute_error_score(y_true, y_pred)
+    0.0
+    >>> y_true = [1, 2, 3]
+    >>> y_pred = [3, 2, 1]
+    >>> d2_absolute_error_score(y_true, y_pred)
+    -1.0
+    """
+    return d2_pinball_score(
+        y_true, y_pred, sample_weight=sample_weight, alpha=0.5, multioutput=multioutput
+    )

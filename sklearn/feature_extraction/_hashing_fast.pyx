@@ -80,13 +80,13 @@ def transform(raw_X, Py_ssize_t n_features, dtype,
 
         indptr.push_back(size)
 
-    indicies_array = vector_to_nd_array(&indices)
+    indices_array = vector_to_nd_array(&indices)
     indptr_array = vector_to_nd_array(&indptr)
 
     if indptr_array[indptr_array.shape[0]-1] > np.iinfo(np.int32).max:  # = 2**31 - 1
         # both indices and indptr have the same dtype in CSR arrays
-        indicies_array = indicies_array.astype(np.int64, copy=False)
+        indices_array = indices_array.astype(np.int64, copy=False)
     else:
         indptr_array = indptr_array.astype(np.int32, copy=False)
 
-    return (indicies_array, indptr_array, values[:size])
+    return (indices_array, indptr_array, values[:size])

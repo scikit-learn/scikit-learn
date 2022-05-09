@@ -128,7 +128,7 @@ by quite a bit as only the non zero valued features impact the dot product
 and thus the model predictions. Hence if you have 100 non zeros in 1e6
 dimensional space, you only need 100 multiply and add operation instead of 1e6.
 
-Calculation over a dense representation, however, may leverage highly optimised
+Calculation over a dense representation, however, may leverage highly optimized
 vector operations and multithreading in BLAS, and tends to result in fewer CPU
 cache misses. So the sparsity should typically be quite high (10% non-zeros
 max, to be checked depending on the hardware) for the sparse input
