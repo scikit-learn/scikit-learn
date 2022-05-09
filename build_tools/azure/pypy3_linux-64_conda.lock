@@ -24,7 +24,7 @@ https://conda.anaconda.org/conda-forge/linux-64/libwebp-base-1.2.2-h7f98852_1.ta
 https://conda.anaconda.org/conda-forge/linux-64/libzlib-1.2.11-h166bdaf_1014.tar.bz2#757138ba3ddc6777b82e91d9ff62e7b9
 https://conda.anaconda.org/conda-forge/linux-64/lz4-c-1.9.3-h9c3ff4c_1.tar.bz2#fbe97e8fa6f275d7c76a09e795adc3e6
 https://conda.anaconda.org/conda-forge/linux-64/ncurses-6.3-h27087fc_1.tar.bz2#4acfc691e64342b9dae57cf2adc63238
-https://conda.anaconda.org/conda-forge/linux-64/openssl-3.0.2-h166bdaf_1.tar.bz2#49bf4e64d1e86676b90a8657c1142f01
+https://conda.anaconda.org/conda-forge/linux-64/openssl-3.0.3-h166bdaf_0.tar.bz2#f4c4e71d7cf611b513170eaa0852bf1d
 https://conda.anaconda.org/conda-forge/linux-64/pthread-stubs-0.4-h36c2ea0_1001.tar.bz2#22dad4df6e8630e8dff2428f6f6a7036
 https://conda.anaconda.org/conda-forge/linux-64/xorg-libxau-1.0.9-h7f98852_0.tar.bz2#bf6f803a544f26ebbdc3bfff272eb179
 https://conda.anaconda.org/conda-forge/linux-64/xorg-libxdmcp-1.1.3-h7f98852_0.tar.bz2#be93aabceefa2fac576e971aef407908
@@ -33,7 +33,7 @@ https://conda.anaconda.org/conda-forge/linux-64/libblas-3.9.0-14_linux64_openbla
 https://conda.anaconda.org/conda-forge/linux-64/libbrotlidec-1.0.9-h166bdaf_7.tar.bz2#37a460703214d0d1b421e2a47eb5e6d0
 https://conda.anaconda.org/conda-forge/linux-64/libbrotlienc-1.0.9-h166bdaf_7.tar.bz2#785a9296ea478eb78c47593c4da6550f
 https://conda.anaconda.org/conda-forge/linux-64/libxcb-1.13-h7f98852_1004.tar.bz2#b3653fdc58d03face9724f602218a904
-https://conda.anaconda.org/conda-forge/linux-64/llvm-openmp-14.0.0-he0ac6c6_0.tar.bz2#16b88bebe2e2c99cfeead895b2e9f4f2
+https://conda.anaconda.org/conda-forge/linux-64/llvm-openmp-14.0.3-he0ac6c6_0.tar.bz2#f3ab3fe1a6e6cef77d4d3e7523b603cb
 https://conda.anaconda.org/conda-forge/linux-64/openblas-0.3.20-pthreads_h320a7e8_0.tar.bz2#4cc467036ee23a4e7dac2d2c53cc7c21
 https://conda.anaconda.org/conda-forge/linux-64/readline-8.1-h46c0cb4_0.tar.bz2#5788de3c8d7a7d64ac56c784c4ef48e6
 https://conda.anaconda.org/conda-forge/linux-64/tk-8.6.12-h27826a3_0.tar.bz2#5b8c42eb62e9fc961af70bdd6a26e168
@@ -46,7 +46,7 @@ https://conda.anaconda.org/conda-forge/linux-64/libcblas-3.9.0-14_linux64_openbl
 https://conda.anaconda.org/conda-forge/linux-64/liblapack-3.9.0-14_linux64_openblas.tar.bz2#13367ebd0243a949cee7564b13c3cd42
 https://conda.anaconda.org/conda-forge/linux-64/libpng-1.6.37-h21135ba_2.tar.bz2#b6acf807307d033d4b7e758b4f44b036
 https://conda.anaconda.org/conda-forge/linux-64/libtiff-4.3.0-h542a066_3.tar.bz2#1a0efb4dfd880b0376da8e1ba39fa838
-https://conda.anaconda.org/conda-forge/linux-64/sqlite-3.38.3-h4ff8645_0.tar.bz2#987ea6cb07fd358ad52dd1c938367967
+https://conda.anaconda.org/conda-forge/linux-64/sqlite-3.38.5-h4ff8645_0.tar.bz2#a1448f0c31baec3946d2dcf09f905c9e
 https://conda.anaconda.org/conda-forge/linux-64/brotli-1.0.9-h166bdaf_7.tar.bz2#3889dec08a472eb0f423e5609c76bde1
 https://conda.anaconda.org/conda-forge/linux-64/freetype-2.10.4-h0708190_1.tar.bz2#4a06f2ac2e5bfae7b6b245171c3f07aa
 https://conda.anaconda.org/conda-forge/linux-64/lcms2-2.12-hddcbb42_0.tar.bz2#797117394a4aa588de6d741b06fad80f
@@ -88,9 +88,9 @@ https://conda.anaconda.org/conda-forge/noarch/typing-extensions-4.2.0-hd8ed1ab_1
 https://conda.anaconda.org/conda-forge/noarch/importlib_metadata-4.11.3-hd8ed1ab_1.tar.bz2#bd6b6ae37c03e68061574d5e32fe5bd1
 https://conda.anaconda.org/conda-forge/linux-64/kiwisolver-1.4.2-py37h506a98e_0.tar.bz2#6e29b82c7ac67717d9e6c834e0760efe
 https://conda.anaconda.org/conda-forge/linux-64/pyamg-4.2.3-py37h1903001_0.tar.bz2#fa07775fa3ba272a9edaf38bca8581b8
-https://conda.anaconda.org/conda-forge/linux-64/matplotlib-base-3.5.1-py37h086f52f_0.tar.bz2#5ec078fd86b746f46ab953632b55f4f1
+https://conda.anaconda.org/conda-forge/linux-64/matplotlib-base-3.5.2-py37he341ac4_0.tar.bz2#1b13b927abe70400d6b9c71ac69fed15
 https://conda.anaconda.org/conda-forge/linux-64/pluggy-1.0.0-py37h9c2f6ca_2.tar.bz2#01f62860cfd125f2d103146495ae6312
-https://conda.anaconda.org/conda-forge/linux-64/matplotlib-3.5.1-py37h9c2f6ca_0.tar.bz2#b61a74d17eace9876ed4a41b2419335b
+https://conda.anaconda.org/conda-forge/linux-64/matplotlib-3.5.2-py37h9c2f6ca_0.tar.bz2#a9050f7b5a866766f69fac8d19b39bc3
 https://conda.anaconda.org/conda-forge/linux-64/pytest-6.2.5-py37h9c2f6ca_2.tar.bz2#2cba70607a1c89ff472d07e3c1e26323
 https://conda.anaconda.org/conda-forge/noarch/pytest-forked-1.4.0-pyhd8ed1ab_0.tar.bz2#95286e05a617de9ebfe3246cecbfb72f
 https://conda.anaconda.org/conda-forge/noarch/pytest-xdist-2.5.0-pyhd8ed1ab_0.tar.bz2#1fdd1f3baccf0deb647385c677a1a48e
