@@ -59,9 +59,8 @@ pre_python_environment_install() {
         apt-get -yq install build-essential
 
     elif [[ "$DISTRIB" == "pip-nogil" ]]; then
-        echo "deb-src http://archive.ubuntu.com/ubuntu/ focal main" | sudo tee -a /etc/apt/sources.list
-        sudo apt-get -yq update
-        sudo apt-get install -yq ccache
+        apt-get -yq update
+        apt-get install -yq ccache
 
     elif [[ "$BUILD_WITH_ICC" == "true" ]]; then
         wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
