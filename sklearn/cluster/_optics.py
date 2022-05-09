@@ -20,6 +20,7 @@ from ..utils.validation import check_memory
 from ..neighbors import NearestNeighbors
 from ..base import BaseEstimator, ClusterMixin
 from ..metrics import pairwise_distances
+from scipy.sparse import issparse, SparseEfficiencyWarning
 
 
 class OPTICS(ClusterMixin, BaseEstimator):
@@ -81,6 +82,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
           'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean',
           'yule']
 
+        Sparse matrices are only supported by scikit-learn metrics.
         See the documentation for scipy.spatial.distance for details on these
         metrics.
 
@@ -263,10 +265,11 @@ class OPTICS(ClusterMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : ndarray of shape (n_samples, n_features), or \
+        X : {ndarray, sparse matrix} of shape (n_samples, n_features), or \
                 (n_samples, n_samples) if metric=’precomputed’
             A feature array, or array of distances between samples if
-            metric='precomputed'.
+            metric='precomputed'. If a sparse matrix is provided, it will be
+            converted into CSR format.
 
         y : Ignored
             Not used, present for API consistency by convention.
@@ -285,7 +288,13 @@ class OPTICS(ClusterMixin, BaseEstimator):
             )
             warnings.warn(msg, DataConversionWarning)
 
-        X = self._validate_data(X, dtype=dtype)
+        X = self._validate_data(X, dtype=dtype, accept_sparse="csr")
+        if self.metric == "precomputed" and issparse(X):
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", SparseEfficiencyWarning)
+                # Set each diagonal to an explicit value so each point is its
+                # own neighbor
+                X.setdiag(X.diagonal())
         memory = check_memory(self.memory)
 
         if self.cluster_method not in ["dbscan", "xi"]:
@@ -603,15 +612,16 @@ def _set_reach_dist(
     # Only compute distances to unprocessed neighbors:
     if metric == "precomputed":
         dists = X[point_index, unproc]
+        if issparse(dists):
+            dists.sort_indices()
+            dists = dists.data
     else:
         _params = dict() if metric_params is None else metric_params.copy()
         if metric == "minkowski" and "p" not in _params:
             # the same logic as neighbors, p is ignored if explicitly set
             # in the dict params
             _params["p"] = p
-        dists = pairwise_distances(
-            P, np.take(X, unproc, axis=0), metric=metric, n_jobs=None, **_params
-        ).ravel()
+        dists = pairwise_distances(P, X[unproc], metric, n_jobs=None, **_params).ravel()
 
     rdists = np.maximum(dists, core_distances_[point_index])
     np.around(rdists, decimals=np.finfo(rdists.dtype).precision, out=rdists)
