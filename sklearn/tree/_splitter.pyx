@@ -1232,7 +1232,6 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
         # start_negative = start
         cdef SIZE_t start_positive
         cdef SIZE_t end_negative
-        cdef SIZE_t zero_pos
 
         # Sample up to max_features without replacement using a
         # Fisher-Yates-based algorithm (using the local variables `f_i` and
@@ -1283,19 +1282,15 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
                              &end_negative, &start_positive,
                              &is_samples_sorted)
 
-            # Add one or two zeros in Xf, if there is any
-            if end_negative < start_positive:
-                start_positive -= 1
-                Xf[start_positive] = 0.
-
-                if end_negative != start_positive:
-                    Xf[end_negative] = 0.
-                    end_negative += 1
+            if end_negative != start_positive:
+                # There is a zero
+                min_feature_value = 0
+                max_feature_value = 0
+            else:
+                min_feature_value = Xf[start]
+                max_feature_value = min_feature_value
 
             # Find min, max in Xf[start:end_negative]
-            min_feature_value = Xf[start]
-            max_feature_value = min_feature_value
-
             for p in range(start, end_negative):
                 current_feature_value = Xf[p]
 
@@ -1332,16 +1327,11 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
             if current.threshold == max_feature_value:
                 current.threshold = min_feature_value
 
-            if start_positive < end:
-                zero_pos = start_positive + (Xf[start_positive] == 0.)
-            else:
-                zero_pos = start_positive
-
             # Partition
             current.pos = self._partition(current.threshold,
                                           end_negative,
                                           start_positive,
-                                          zero_pos)
+                                          start_positive)
 
             # Reject if min_samples_leaf is not guaranteed
             if (((current.pos - start) < min_samples_leaf) or
