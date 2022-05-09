@@ -81,7 +81,7 @@ def random_X_y_coef(
 @pytest.mark.parametrize("fit_intercept", [False, True])
 @pytest.mark.parametrize("sample_weight", [None, "range"])
 @pytest.mark.parametrize("l2_reg_strength", [0, 1])
-def test_loss_gradients_are_the_same(
+def test_loss_grad_hess_are_the_same(
     base_loss, fit_intercept, sample_weight, l2_reg_strength
 ):
     """Test that loss and gradient are the same across different functions."""
@@ -105,10 +105,17 @@ def test_loss_gradients_are_the_same(
     g3, h3 = loss.gradient_hessian_product(
         coef, X, y, sample_weight=sample_weight, l2_reg_strength=l2_reg_strength
     )
+    if not base_loss.is_multiclass:
+        g4, h4, _ = loss.gradient_hessian(
+            coef, X, y, sample_weight=sample_weight, l2_reg_strength=l2_reg_strength
+        )
 
     assert_allclose(l1, l2)
     assert_allclose(g1, g2)
     assert_allclose(g1, g3)
+    if not base_loss.is_multiclass:
+        assert_allclose(g1, g4)
+        assert_allclose(h4 @ g4, h3(g3))
 
     # same for sparse X
     X = sparse.csr_matrix(X)
@@ -124,6 +131,10 @@ def test_loss_gradients_are_the_same(
     g3_sp, h3_sp = loss.gradient_hessian_product(
         coef, X, y, sample_weight=sample_weight, l2_reg_strength=l2_reg_strength
     )
+    if not base_loss.is_multiclass:
+        g4_sp, h4_sp, _ = loss.gradient_hessian(
+            coef, X, y, sample_weight=sample_weight, l2_reg_strength=l2_reg_strength
+        )
 
     assert_allclose(l1, l1_sp)
     assert_allclose(l1, l2_sp)
@@ -131,6 +142,9 @@ def test_loss_gradients_are_the_same(
     assert_allclose(g1, g2_sp)
     assert_allclose(g1, g3_sp)
     assert_allclose(h3(g1), h3_sp(g1_sp))
+    if not base_loss.is_multiclass:
+        assert_allclose(g1, g4_sp)
+        assert_allclose(h4 @ g4, h4_sp @ g1_sp)
 
 
 @pytest.mark.parametrize("base_loss", LOSSES)

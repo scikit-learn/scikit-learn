@@ -6,9 +6,12 @@ Generalized Linear Models with Exponential Dispersion Family
 # some parts and tricks stolen from other sklearn files.
 # License: BSD 3 clause
 
+from abc import ABC, abstractmethod
 import numbers
+import warnings
 
 import numpy as np
+import scipy.linalg
 import scipy.optimize
 
 from ..._loss.glm_distribution import TweedieDistribution
@@ -20,11 +23,517 @@ from ..._loss.loss import (
     HalfTweedieLossIdentity,
 )
 from ...base import BaseEstimator, RegressorMixin
-from ...utils.optimize import _check_optimize_result
+from ...exceptions import ConvergenceWarning
 from ...utils import check_scalar, check_array, deprecated
-from ...utils.validation import check_is_fitted, _check_sample_weight
 from ...utils._openmp_helpers import _openmp_effective_n_threads
+from ...utils.optimize import _check_optimize_result
+from ...utils.validation import check_is_fitted, _check_sample_weight
 from .._linear_loss import LinearModelLoss
+
+
+class NewtonSolver(ABC):
+    """Newton solver for GLMs.
+
+    This class implements Newton/2nd-order optimization for GLMs. Each Newton iteration
+    aims at finding the Newton step which is done by the inner solver. With hessian H,
+    gradient g and coefficients coef, one step solves
+
+        H @ coef_newton = -g
+
+    For our GLM / LinearModelLoss, we have gradient g and hessian H:
+
+        g = X.T @ loss.gradient + l2_reg_strength * coef
+        H = X.T @ diag(loss.hessian) @ X + l2_reg_strength * identity
+
+    Backtracking line seach updates coef = coef_old + t * coef_newton for some t in
+    (0, 1].
+
+    This is a base class, actual implementations (child classes) may deviate from the
+    above pattern and use structure specific tricks.
+
+    Usage pattern:
+        - initialize solver: sol = NewtonSolver(...)
+        - solve the problem: sol.solve(X, y, sample_weight)
+
+    References
+    ----------
+    - Jorge Nocedal, Stephen J. Wright. (2006) "Numerical Optimization"
+      2nd edition
+      https://doi.org/10.1007/978-0-387-40065-5
+
+    - Stephen P. Boyd, Lieven Vandenberghe. (2004) "Convex Optimization."
+      Cambridge University Press, 2004.
+      https://web.stanford.edu/~boyd/cvxbook/bv_cvxbook.pdf
+
+    Parameters
+    ----------
+    coef : ndarray of shape (n_dof,), (n_classes, n_dof) or (n_classes * n_dof,), \
+        default=None
+        Start coefficients of a linear model.
+        If shape (n_classes * n_dof,), the classes of one feature are contiguous,
+        i.e. one reconstructs the 2d-array via
+        coef.reshape((n_classes, -1), order="F").
+        If None, they are initialized with zero.
+
+    linear_loss : LinearModelLoss
+        The loss to be minimized.
+
+    l2_reg_strength : float, default=0.0
+            L2 regularization strength
+
+    tol : float, default=1e-4
+        The optimization problem is solved when each of the following condition is
+        fulfilled:
+        1. maximum |gradient| <= tol
+        2. Newton decrement d: 1/2 * d^2 <= tol
+
+    max_iter : int, default=100
+        Maximum number of Newton steps allowed.
+
+    n_threads : int, default=1
+        Number of OpenMP threads to use.
+    """
+
+    def __init__(
+        self,
+        *,
+        coef=None,
+        linear_loss=LinearModelLoss(base_loss=HalfSquaredError, fit_intercept=True),
+        l2_reg_strength=0.0,
+        tol=1e-4,
+        max_iter=100,
+        n_threads=1,
+        verbose=0,
+    ):
+        self.coef = coef
+        self.linear_loss = linear_loss
+        self.l2_reg_strength = l2_reg_strength
+        self.tol = tol
+        self.max_iter = max_iter
+        self.n_threads = n_threads
+        self.verbose = verbose
+
+    def setup(self, X, y, sample_weight):
+        """Precomputations
+
+        If None, initializes:
+            - self.coef
+        Sets:
+            - self.raw_prediction
+            - self.loss_value
+        """
+        if self.coef is None:
+            self.coef = self.linear_loss.init_zero_coef(X)
+            self.raw_prediction = np.zeros_like(y)
+        else:
+            _, _, self.raw_prediction = self.linear_loss.weight_intercept_raw(
+                self.coef, X
+            )
+        self.loss_value = self.linear_loss.loss(
+            coef=self.coef,
+            X=X,
+            y=y,
+            sample_weight=sample_weight,
+            l2_reg_strength=self.l2_reg_strength,
+            n_threads=self.n_threads,
+            raw_prediction=self.raw_prediction,
+        )
+
+    @abstractmethod
+    def update_gradient_hessian(X, y, sample_weight):
+        """Update gradient and hessian."""
+
+    @abstractmethod
+    def inner_solve(self):
+        """Compute Newton step.
+
+        Sets self.coef_newton.
+        """
+
+    def line_search(self, X, y, sample_weight):
+        """Backtracking line search.
+
+        Sets:
+            - self.coef_old
+            - self.coef
+            - self.loss_value_old
+            - self.loss_value
+            - self.gradient_old
+            - self.gradient
+            - self.raw_prediction
+        """
+        # line search parameters
+        beta, sigma = 0.5, 0.00048828125  # 1/2, 1/2**11
+        eps = 16 * np.finfo(self.loss_value.dtype).eps
+        t = 1  # step size
+
+        armijo_term = sigma * self.gradient @ self.coef_newton
+        _, _, raw_prediction_newton = self.linear_loss.weight_intercept_raw(
+            self.coef_newton, X
+        )
+
+        self.coef_old = self.coef
+        self.loss_value_old = self.loss_value
+        self.gradient_old = self.gradient
+
+        # np.sum(np.abs(self.gradient_old))
+        sum_abs_grad_old = -1
+        sum_abs_grad_previous = -1  # Used to track sum|gradients| of i-1
+        has_improved_sum_abs_grad_previous = False
+
+        is_verbose = self.verbose >= 2
+        if is_verbose:
+            print("  Backtracking Line Search")
+            print(f"    eps=10 * finfo.eps={eps}")
+
+        for i in range(21):  # until and including t = beta**20 ~ 1e-6
+            self.coef = self.coef_old + t * self.coef_newton
+            raw = self.raw_prediction + t * raw_prediction_newton
+            self.loss_value, self.gradient = self.linear_loss.loss_gradient(
+                coef=self.coef,
+                X=X,
+                y=y,
+                sample_weight=sample_weight,
+                l2_reg_strength=self.l2_reg_strength,
+                n_threads=self.n_threads,
+                raw_prediction=raw,
+            )
+
+            # 1. Check Armijo / sufficient decrease condition.
+            # The smaller (more negative) the better.
+            loss_improvement = self.loss_value - self.loss_value_old
+            check = loss_improvement <= t * armijo_term
+            if is_verbose:
+                print(
+                    f"    line search iteration={i+1}, step size={t}\n"
+                    f"      check loss improvement <= armijo term: {loss_improvement} "
+                    f"<= {t * armijo_term} {check}"
+                )
+            if check:
+                break
+            # 2. Deal with relative loss differences around machine precision.
+            tiny_loss = np.abs(self.loss_value_old * eps)
+            check = np.abs(loss_improvement) <= tiny_loss
+            if is_verbose:
+                print(
+                    "      check loss |improvement| <= eps * |loss_old|:"
+                    f" {np.abs(loss_improvement)} <= {tiny_loss} {check}"
+                )
+            if check:
+                if sum_abs_grad_old < 0:
+                    sum_abs_grad_old = scipy.linalg.norm(self.gradient_old, ord=1)
+                # 2.1 Check sum of absolute gradients as alternative condition.
+                sum_abs_grad = scipy.linalg.norm(self.gradient, ord=1)
+                check = sum_abs_grad < sum_abs_grad_old
+                if is_verbose:
+                    print(
+                        "      check sum(|gradient|) <= sum(|gradient_old|): "
+                        f"{sum_abs_grad} <= {sum_abs_grad_old} {check}"
+                    )
+                if check:
+                    break
+                # 2.2 Deal with relative gradient differences around machine precision.
+                tiny_grad = sum_abs_grad_old * eps
+                abs_grad_improvement = np.abs(sum_abs_grad - sum_abs_grad_old)
+                check = abs_grad_improvement <= tiny_grad
+                if is_verbose:
+                    print(
+                        "      check |sum(|gradient|) - sum(|gradient_old|)| <= eps * "
+                        "sum(|gradient_old|):"
+                        f" {abs_grad_improvement} <= {tiny_grad} {check}"
+                    )
+                if check:
+                    break
+                # 2.3 This is really the last resort.
+                # Check that sum(|gradient_{i-1}| < |sum(|gradient_{i-2}|
+                #            = has_improved_sum_abs_grad_previous
+                # If now sum(|gradient_{i}| >= |sum(|gradient_{i-1}|, this iteration
+                # made things worse and we should have stoped at i-1.
+                check = (
+                    has_improved_sum_abs_grad_previous
+                    and sum_abs_grad >= sum_abs_grad_previous
+                )
+                if is_verbose:
+                    print(
+                        "      check if previously "
+                        "sum(|gradient_{i-1}|) < sum(|gradient_{i-2}|) but now "
+                        f"sum(|gradient_{i}|) >= sum(|gradient_{i-1}|) {check}"
+                    )
+                if check:
+                    t /= beta  # we go back to i-1
+                    self.coef = self.coef_old + t * self.coef_newton
+                    raw = self.raw_prediction + t * raw_prediction_newton
+                    self.loss_value, self.gradient = self.linear_loss.loss_gradient(
+                        coef=self.coef,
+                        X=X,
+                        y=y,
+                        sample_weight=sample_weight,
+                        l2_reg_strength=self.l2_reg_strength,
+                        n_threads=self.n_threads,
+                        raw_prediction=raw,
+                    )
+                    break
+                # Calculate for the next iteration
+                has_improved_sum_abs_grad_previous = (
+                    sum_abs_grad < sum_abs_grad_previous
+                )
+                sum_abs_grad_previous = sum_abs_grad
+
+            t *= beta
+        else:
+            warnings.warn(
+                f"Line search of Newton solver {self.__class__.__name__} did not "
+                "converge after 21 line search refinement iterations.",
+                ConvergenceWarning,
+            )
+
+        self.raw_prediction = raw
+
+    def check_convergence(self, X, y, sample_weight):
+        """Check for convergence."""
+        if self.verbose:
+            print("  Check Convergence")
+        # Note: Checking maximum relative change of coefficient <= tol is a bad
+        # convergence criterion because even a large step could have brought us close
+        # to the true minimum.
+        # coef_step = self.coef - self.coef_old
+        # check = np.max(np.abs(coef_step) / np.maximum(1, np.abs(self.coef_old)))
+
+        # 1. Criterion: maximum |gradient| <= tol
+        #    The gradient was already updated in line_search()
+        check = np.max(np.abs(self.gradient))
+        if self.verbose:
+            print(f"    1. max |gradient| {check} <= {self.tol}")
+        if check > self.tol:
+            return
+
+        # 2. Criterion: For Newton decrement d, check 1/2 * d^2 <= tol
+        #       d = sqrt(grad @ hessian^-1 @ grad)
+        #         = sqrt(coef_newton @ hessian @ coef_newton)
+        #    See Boyd, Vanderberghe (2009) "Convex Optimization" Chapter 9.5.1.
+        d2 = self.coef_newton @ self.hessian @ self.coef_newton
+        if self.verbose:
+            print(f"    2. Newton decrement {0.5 * d2} <= {self.tol}")
+        if 0.5 * d2 > self.tol:
+            return
+
+        if self.verbose:
+            loss_value = self.linear_loss.loss(
+                coef=self.coef,
+                X=X,
+                y=y,
+                sample_weight=sample_weight,
+                l2_reg_strength=self.l2_reg_strength,
+                n_threads=self.n_threads,
+            )
+            print(f"  Solver did converge at loss = {loss_value}.")
+        self.converged = True
+
+    def finalize(self, X, y, sample_weight):
+        """Finalize the solvers results.
+
+        Some solvers may need this, others not.
+        """
+        pass
+
+    def solve(self, X, y, sample_weight):
+        """Solve the optimization problem.
+
+        Order of calls:
+            self.setup()
+            while iteration:
+                self.update_gradient_hessian()
+                self.inner_solve()
+                self.line_search()
+                self.check_convergence()
+            self.finalize()
+        """
+        # setup usually:
+        #   - initializes self.coef if needed
+        #   - initializes and calculates self.raw_predictions, self.loss_value
+        self.setup(X, y, sample_weight)
+
+        self.iteration = 1
+        self.converged = False
+
+        while self.iteration <= self.max_iter and not self.converged:
+            if self.verbose:
+                print(f"Newton iter={self.iteration}")
+            # 1. Update hessian and gradient
+            self.update_gradient_hessian(X, y, sample_weight)
+
+            # TODO:
+            # if iteration == 1:
+            # We might stop early, e.g. we already are close to the optimum,
+            # usually detected by zero gradients at this stage.
+
+            # 2. Inner solver
+            #    Calculate Newton step/direction
+            #    This usually sets self.coef_newton.
+            self.inner_solve()
+
+            # 3. Backtracking line search
+            #    This usually sets self.coef_old, self.coef, self.loss_value_old
+            #    self.loss_value, self.gradient_old, self.gradient,
+            #    self.raw_prediction.
+            self.line_search(X, y, sample_weight)
+
+            # 4. Check convergence
+            #    Sets self.converged.
+            self.check_convergence(
+                X=X,
+                y=y,
+                sample_weight=sample_weight,
+            )
+
+            # 5. Next iteration
+            self.iteration += 1
+
+        if not self.converged:
+            warnings.warn(
+                "Newton solver did not converge after"
+                f" {self.iteration - 1} iterations.",
+                ConvergenceWarning,
+            )
+
+        self.iteration -= 1
+        self.finalize(X, y, sample_weight)
+        return self.coef
+
+
+class CholeskyNewtonSolver(NewtonSolver):
+    """Cholesky based Newton solver.
+
+    Inner solver for finding the Newton step H w_newton = -g uses Cholesky based linear
+    solver.
+    """
+
+    def setup(self, X, y, sample_weight):
+        super().setup(X=X, y=y, sample_weight=sample_weight)
+
+        n_dof = X.shape[1]
+        if self.linear_loss.fit_intercept:
+            n_dof += 1
+        self.gradient = np.empty_like(self.coef)
+        self.hessian = np.empty_like(self.coef, shape=(n_dof, n_dof))
+
+    def update_gradient_hessian(self, X, y, sample_weight):
+        self.linear_loss.gradient_hessian(
+            coef=self.coef,
+            X=X,
+            y=y,
+            sample_weight=sample_weight,
+            l2_reg_strength=self.l2_reg_strength,
+            n_threads=self.n_threads,
+            gradient_out=self.gradient,
+            hessian_out=self.hessian,
+            raw_prediction=self.raw_prediction,  # this was updated in line_search
+        )
+
+    def inner_solve(self):
+        try:
+            self.coef_newton = scipy.linalg.solve(
+                self.hessian, -self.gradient, check_finite=False, assume_a="sym"
+            )
+        except np.linalg.LinAlgError:
+            warnings.warn(
+                f"Inner solver of Newton solver {self.__class__.__name__} stumbbled "
+                "upon a singular matrix. Using SVD based least-squares solution "
+                "instead."
+            )
+            # default lapack_driver="gelsd" is SVD based.
+            self.coef_newton = scipy.linalg.lstsq(self.hessian, -self.gradient)[0]
+
+
+class QRCholeskyNewtonSolver(NewtonSolver):
+    """QR and Cholesky based Newton solver.
+
+    This is a good solver for n_features >> n_samples, see [1].
+
+    This solver uses the structure of the problem, i.e. the fact that coef enters the
+    loss function only as X @ coef and ||coef||_2, and starts with an economic QR
+    decomposition of X':
+
+        X' = QR with Q'Q = identity(k), k = min(n_samples, n_features)
+
+    This is the same as an LQ decomposition of X. We introduce the new variable t as,
+    see [1]:
+
+        (coef, intercept) = (Q @ t, intercept)
+
+    By using X @ coef = R' @ t and ||coef||_2 = ||t||_2, we can just replace X
+    by R', solve for t instead of coef, and finally get coef = Q @ t.
+    Note that t has less elements than coef if n_features > n_sampels:
+        len(t) = k = min(n_samples, n_features) <= n_features = len(coef).
+
+    [1] Hastie, T.J., & Tibshirani, R. (2003). Expression Arrays and the p n Problem.
+    https://web.stanford.edu/~hastie/Papers/pgtn.pdf
+    """
+
+    def setup(self, X, y, sample_weight):
+        n_samples, n_features = X.shape
+        # TODO: setting pivoting=True could improve stability
+        # QR of X'
+        self.Q, self.R = scipy.linalg.qr(X.T, mode="economic", pivoting=False)
+        # use k = min(n_features, n_samples) instead of n_features
+        k = self.R.T.shape[1]
+        n_dof = k
+        if self.linear_loss.fit_intercept:
+            n_dof += 1
+        # store original coef
+        self.coef_original = self.coef
+        # set self.coef = t (coef_original = Q @ t)
+        self.coef = np.zeros_like(self.coef, shape=n_dof)
+        if np.sum(np.abs(self.coef_original)) > 0:
+            self.coef[:k] = self.Q.T @ self.coef_original[:n_features]
+        self.gradient = np.empty_like(self.coef)
+        self.hessian = np.empty_like(self.coef, shape=(n_dof, n_dof))
+
+        super().setup(X=self.R.T, y=y, sample_weight=sample_weight)
+
+    def update_gradient_hessian(self, X, y, sample_weight):
+        # Use R' instead of X
+        self.linear_loss.gradient_hessian(
+            coef=self.coef,
+            X=self.R.T,
+            y=y,
+            sample_weight=sample_weight,
+            l2_reg_strength=self.l2_reg_strength,
+            n_threads=self.n_threads,
+            gradient_out=self.gradient,
+            hessian_out=self.hessian,
+            raw_prediction=self.raw_prediction,  # this was updated in line_search
+        )
+
+    def inner_solve(self):
+        try:
+            self.coef_newton = scipy.linalg.solve(
+                self.hessian, -self.gradient, check_finite=False, assume_a="sym"
+            )
+        except np.linalg.LinAlgError:
+            warnings.warn(
+                f"Inner solver of Newton solver {self.__class__.__name__} stumbbled "
+                "upon a singular matrix. Using SVD based least-squares solution "
+                "instead."
+            )
+            # default lapack_driver="gelsd" is SVD based.
+            self.coef_newton = scipy.linalg.lstsq(self.hessian, -self.gradient)[0]
+
+    def line_search(self, X, y, sample_weight):
+        # Use R' instead of X
+        super().line_search(X=self.R.T, y=y, sample_weight=sample_weight)
+
+    def check_convergence(self, X, y, sample_weight):
+        # Use R' instead of X
+        super().check_convergence(X=self.R.T, y=y, sample_weight=sample_weight)
+
+    def finalize(self, X, y, sample_weight):
+        n_features = X.shape[1]
+        w, intercept = self.linear_loss.weight_intercept(self.coef)
+        self.coef_original[:n_features] = self.Q @ w
+        if self.linear_loss.fit_intercept:
+            self.coef_original[-1] = intercept
+        self.coef = self.coef_original
 
 
 class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
@@ -64,11 +573,19 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         Specifies if a constant (a.k.a. bias or intercept) should be
         added to the linear predictor (X @ coef + intercept).
 
-    solver : 'lbfgs', default='lbfgs'
+    solver : {'lbfgs', 'newton-cholesky', 'newton-qr-cholesky'}, default='lbfgs'
         Algorithm to use in the optimization problem:
 
         'lbfgs'
             Calls scipy's L-BFGS-B optimizer.
+
+        'newton-cholesky'
+            Uses Newton-Raphson steps (equals iterated reweighted least squares) with
+            an inner cholesky based solver.
+
+        'newton-qr-cholesky'
+            Same as 'newton-cholesky' but uses a qr decomposition of X.T. This solver
+            is better for n_features >> n_samples than 'newton-cholesky'.
 
     max_iter : int, default=100
         The maximal number of iterations for the solver.
@@ -173,10 +690,18 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                     self.fit_intercept
                 )
             )
-        if self.solver not in ["lbfgs"]:
+        # We allow for NewtonSolver classes but do not make them public in the
+        # docstrings. This facilitates testing and benchmarking.
+        if self.solver not in [
+            "lbfgs",
+            "newton-cholesky",
+            "newton-qr-cholesky",
+        ] and not (
+            isinstance(self.solver, type) and issubclass(self.solver, NewtonSolver)
+        ):
             raise ValueError(
-                f"{self.__class__.__name__} supports only solvers 'lbfgs'; "
-                f"got {self.solver}"
+                f"{self.__class__.__name__} supports only solvers 'lbfgs', "
+                f"'newton-cholesky' and 'newton-qr-cholesky'; got {self.solver}"
             )
         solver = self.solver
         check_scalar(
@@ -271,12 +796,13 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             else:
                 coef = np.zeros(n_features, dtype=loss_dtype)
 
+        l2_reg_strength = self.alpha
+        n_threads = _openmp_effective_n_threads()
+
         # Algorithms for optimization:
         # Note again that our losses implement 1/2 * deviance.
         if solver == "lbfgs":
             func = self._linear_loss.loss_gradient
-            l2_reg_strength = self.alpha
-            n_threads = _openmp_effective_n_threads()
 
             opt_res = scipy.optimize.minimize(
                 func,
@@ -285,14 +811,41 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                 jac=True,
                 options={
                     "maxiter": self.max_iter,
+                    "maxls": 30,  # default is 20
                     "iprint": (self.verbose > 0) - 1,
                     "gtol": self.tol,
-                    "ftol": 1e3 * np.finfo(float).eps,
+                    "ftol": 64 * np.finfo(np.float64).eps,  # lbfgs is float64 land.
                 },
                 args=(X, y, sample_weight, l2_reg_strength, n_threads),
             )
             self.n_iter_ = _check_optimize_result("lbfgs", opt_res)
             coef = opt_res.x
+        elif solver in ["newton-cholesky", "newton-qr-cholesky"]:
+            sol_dict = {
+                "newton-cholesky": CholeskyNewtonSolver,
+                "newton-qr-cholesky": QRCholeskyNewtonSolver,
+            }
+            sol = sol_dict[solver](
+                coef=coef,
+                linear_loss=self._linear_loss,
+                l2_reg_strength=l2_reg_strength,
+                tol=self.tol,
+                max_iter=self.max_iter,
+                n_threads=n_threads,
+                verbose=self.verbose,
+            )
+            coef = sol.solve(X, y, sample_weight)
+            self.n_iter_ = sol.iteration
+        elif issubclass(solver, NewtonSolver):
+            sol = solver(
+                coef=coef,
+                linear_loss=self._linear_loss,
+                l2_reg_strength=l2_reg_strength,
+                tol=self.tol,
+                max_iter=self.max_iter,
+                n_threads=n_threads,
+            )
+            coef = sol.solve(X, y, sample_weight)
 
         if self.fit_intercept:
             self.intercept_ = coef[-1]
@@ -482,6 +1035,20 @@ class PoissonRegressor(_GeneralizedLinearRegressor):
         Specifies if a constant (a.k.a. bias or intercept) should be
         added to the linear predictor (X @ coef + intercept).
 
+    solver : {'lbfgs', 'newton-cholesky'}, default='lbfgs'
+        Algorithm to use in the optimization problem:
+
+        'lbfgs'
+            Calls scipy's L-BFGS-B optimizer.
+
+        'newton-cholesky'
+            Uses Newton-Raphson steps (equals iterated reweighted least squares) with
+            an inner cholesky based solver.
+
+        'newton-qr-cholesky'
+            Same as 'newton-cholesky' but uses a qr decomposition of X.T. This solver
+            is better for n_features >> n_samples than 'newton-cholesky'.
+
     max_iter : int, default=100
         The maximal number of iterations for the solver.
         Values must be in the range `[1, inf)`.
@@ -551,6 +1118,7 @@ class PoissonRegressor(_GeneralizedLinearRegressor):
         *,
         alpha=1.0,
         fit_intercept=True,
+        solver="lbfgs",
         max_iter=100,
         tol=1e-4,
         warm_start=False,
@@ -559,6 +1127,7 @@ class PoissonRegressor(_GeneralizedLinearRegressor):
         super().__init__(
             alpha=alpha,
             fit_intercept=fit_intercept,
+            solver=solver,
             max_iter=max_iter,
             tol=tol,
             warm_start=warm_start,
@@ -590,6 +1159,20 @@ class GammaRegressor(_GeneralizedLinearRegressor):
     fit_intercept : bool, default=True
         Specifies if a constant (a.k.a. bias or intercept) should be
         added to the linear predictor (X @ coef + intercept).
+
+    solver : {'lbfgs', 'newton-cholesky'}, default='lbfgs'
+        Algorithm to use in the optimization problem:
+
+        'lbfgs'
+            Calls scipy's L-BFGS-B optimizer.
+
+        'newton-cholesky'
+            Uses Newton-Raphson steps (equals iterated reweighted least squares) with
+            an inner cholesky based solver.
+
+        'newton-qr-cholesky'
+            Same as 'newton-cholesky' but uses a qr decomposition of X.T. This solver
+            is better for n_features >> n_samples than 'newton-cholesky'.
 
     max_iter : int, default=100
         The maximal number of iterations for the solver.
@@ -661,6 +1244,7 @@ class GammaRegressor(_GeneralizedLinearRegressor):
         *,
         alpha=1.0,
         fit_intercept=True,
+        solver="lbfgs",
         max_iter=100,
         tol=1e-4,
         warm_start=False,
@@ -669,6 +1253,7 @@ class GammaRegressor(_GeneralizedLinearRegressor):
         super().__init__(
             alpha=alpha,
             fit_intercept=fit_intercept,
+            solver=solver,
             max_iter=max_iter,
             tol=tol,
             warm_start=warm_start,
@@ -730,6 +1315,20 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
         - 'identity' for ``power <= 0``, e.g. for the Normal distribution
         - 'log' for ``power > 0``, e.g. for Poisson, Gamma and Inverse Gaussian
           distributions
+
+    solver : {'lbfgs', 'newton-cholesky'}, default='lbfgs'
+        Algorithm to use in the optimization problem:
+
+        'lbfgs'
+            Calls scipy's L-BFGS-B optimizer.
+
+        'newton-cholesky'
+            Uses Newton-Raphson steps (equals iterated reweighted least squares) with
+            an inner cholesky based solver.
+
+        'newton-qr-cholesky'
+            Same as 'newton-cholesky' but uses a qr decomposition of X.T. This solver
+            is better for n_features >> n_samples than 'newton-cholesky'.
 
     max_iter : int, default=100
         The maximal number of iterations for the solver.
@@ -803,6 +1402,7 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
         alpha=1.0,
         fit_intercept=True,
         link="auto",
+        solver="lbfgs",
         max_iter=100,
         tol=1e-4,
         warm_start=False,
@@ -811,6 +1411,7 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
         super().__init__(
             alpha=alpha,
             fit_intercept=fit_intercept,
+            solver=solver,
             max_iter=max_iter,
             tol=tol,
             warm_start=warm_start,
