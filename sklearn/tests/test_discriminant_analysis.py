@@ -143,7 +143,7 @@ def test_lda_predict():
 
     # test bad covariance estimator
     clf = LinearDiscriminantAnalysis(
-        solver="lsqr", covariance_estimator=KMeans(n_clusters=2)
+        solver="lsqr", covariance_estimator=KMeans(n_clusters=2, n_init="auto")
     )
     with pytest.raises(
         ValueError, match="KMeans does not have a covariance_ attribute"

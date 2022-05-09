@@ -930,7 +930,7 @@ def test_cross_val_predict():
     preds = cross_val_predict(est, Xsp, y)
     assert_array_almost_equal(len(preds), len(y))
 
-    preds = cross_val_predict(KMeans(), X)
+    preds = cross_val_predict(KMeans(n_init="auto"), X)
     assert len(preds) == len(y)
 
     class BadCV:
