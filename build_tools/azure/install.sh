@@ -58,12 +58,6 @@ pre_python_environment_install() {
         apt-get -yq update
         apt-get -yq install build-essential
 
-    elif [[ "$DISTRIB" == "pip-nogil" ]]; then
-        echo "deb-src http://archive.ubuntu.com/ubuntu/ focal main" | sudo tee -a /etc/apt/sources.list
-        sudo apt-get -yq update
-        sudo apt-get install -yq ccache
-        sudo apt-get build-dep -yq python3 python3-dev
-
     elif [[ "$BUILD_WITH_ICC" == "true" ]]; then
         wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
         sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
@@ -139,17 +133,6 @@ python_environment_install() {
         pip install https://github.com/python-pillow/Pillow/archive/main.zip
 
     elif [[ "$DISTRIB" == "pip-nogil" ]]; then
-        setup_ccache  # speed-up the build of CPython it-self
-        ORIGINAL_FOLDER=`pwd`
-        cd ..
-        git clone --depth 1 https://github.com/colesbury/nogil
-        cd nogil
-        ./configure && make -j 2
-        ./python -m venv $ORIGINAL_FOLDER/$VIRTUALENV
-        cd $ORIGINAL_FOLDER
-        source $VIRTUALENV/bin/activate
-
-        python -m pip install -U pip
         # The pip version that comes with the nogil branch of CPython
         # automatically uses the custom nogil index as its highest priority
         # index to fetch patched versions of libraries with native code that
