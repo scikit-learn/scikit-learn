@@ -214,7 +214,6 @@ WARNING: Do not edit `sklearn/_loss/_loss.pyx` file directly, as it is generated
 # TODO: Use const memoryviews with fused types with Cython 3.0 where
 #       appropriate (arguments marked by "# IN").
 
-cimport cython
 from cython.parallel import parallel, prange
 import numpy as np
 
