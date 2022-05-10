@@ -8,7 +8,7 @@ import numbers
 import numpy as np
 from scipy.special import gammainc
 from ..base import BaseEstimator
-from ..utils import check_random_state
+from ..utils import check_random_state, check_scalar
 from ..utils.validation import _check_sample_weight, check_is_fitted
 
 from ..utils.extmath import row_norms
