@@ -67,10 +67,6 @@ def test_kernel_density(kernel, bandwidth):
                 check_results(kernel, bandwidth, atol, rtol, X, Y, dens_true)
 
 
-@pytest.mark.parametrize(
-    "kernel", ["gaussian", "tophat", "epanechnikov", "exponential", "linear", "cosine"]
-)
-@pytest.mark.parametrize("bandwidth", [0.01, 0.1, 1])
 def test_kernel_density_sampling(n_samples=100, n_features=3):
     rng = np.random.RandomState(0)
     X = rng.randn(n_samples, n_features)
