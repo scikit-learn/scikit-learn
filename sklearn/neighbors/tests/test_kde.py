@@ -20,7 +20,7 @@ def compute_kernel_slow(Y, X, kernel, h):
     elif h == "silvermann":
         h = (X.shape[0] * (X.shape[1] + 2) / 4) ** (-1 / (X.shape[1] + 4))
 
-    d = np.sqrt(((Y[:, None, :] - X) ** 2).sum(-1))        
+    d = np.sqrt(((Y[:, None, :] - X) ** 2).sum(-1))
     norm = kernel_norm(h, X.shape[1], kernel) / X.shape[0]
 
     if kernel == "gaussian":
