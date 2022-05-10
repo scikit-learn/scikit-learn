@@ -281,34 +281,23 @@ def test_bandwidth(bandwidth):
         (
             "str test",
             ValueError,
-            r"When `bandwidth` is a string, it should be one of:"
-            r"scott,silvermann. Got {bandwidth} instead.",
+            r"When `bandwidth` is a string, it should be one of: "
+            r"scott,silvermann. Got str test instead.",
         ),
         (
             -2.0,
             ValueError,
-            r"`bandwidth` must be in range \(0.0, inf\) but got value -2.0",
+            r"bandwidth == -2.0, must be > 0.",
         ),
         (
             0.0,
             ValueError,
-            r"`bandwidth` must be in range \(0.0, inf\) but got value 0.0",
-        ),
-        (
-            np.nan,
-            ValueError,
-            r"`bandwidth` must be in range \(0.0, inf\) but got value nan",
-        ),
-        (
-            np.inf,
-            ValueError,
-            r"`bandwidth` must be in range \(0.0, inf\) but got value inf",
+            r"bandwidth == 0.0, must be > 0.",
         ),
         (
             np.ones(2),
             TypeError,
-            r"`bandwidth` should be str or float, but got type "
-            r"'\<class 'numpy.ndarray'\>'",
+            r"bandwidth must be an instance of float, not ndarray.",
         ),
     ],
     # Avoid long error messages in test names:
