@@ -497,6 +497,9 @@ Changelog
   `warm_start` enabled.
   :pr:`22106` by :user:`Pieter Gijsbers <PGijsbers>`.
 
+- |Efficiency| Improve runtime performance of :class:`ensemble.IsolationForest`
+  by skipping repetitive input checks. :pr:`23149` by :user:`Zhehao Liu <MaxwellLZH>`.
+
 - |Fix| Change the parameter `validation_fraction` in
   :class:`ensemble.GradientBoostingClassifier` and
   :class:`ensemble.GradientBoostingRegressor` so that an error is raised if anything
@@ -530,9 +533,6 @@ Changelog
   changes are also applied for :class:`ensemble.ExtraTreesRegressor` and
   :class:`ensemble.ExtraTreesClassifier`.
   :pr:`20803` by :user:`Brian Sun <bsun94>`.
-
-- |Efficiency| Improve runtime performance of :class:`ensemble.IsolationForest`
-  by skipping repetitive input checks. :pr:`23149` by :user:`Zhehao Liu <MaxwellLZH>`.
 
 :mod:`sklearn.feature_extraction`
 .................................
