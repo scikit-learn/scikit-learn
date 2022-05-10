@@ -281,8 +281,8 @@ def test_bandwidth(bandwidth):
         (
             "str test",
             ValueError,
-            r"When `bandwidth` is a string, it should be one of: "
-            r"scott,silvermann. Got str test instead.",
+            "When `bandwidth` is a string, it should be one of: scott, silvermann."
+            " Got str test instead.",
         ),
         (
             -2.0,

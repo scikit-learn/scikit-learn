@@ -192,8 +192,8 @@ class KernelDensity(BaseEstimator):
             methods_supported = ("scott", "silvermann")
             if self.bandwidth not in methods_supported:
                 raise ValueError(
-                    "When `bandwitdth` is a string, it should be one of: "
-                    f"{','.join(methods_supported)}. Got {self.bandwidth} instead."
+                    "When `bandwidth` is a string, it should be one of: "
+                    f"{', '.join(methods_supported)}. Got {self.bandwidth!r} instead."
                 )
             if self.bandwidth == "scott":
                 self.bandwidth_ = X.shape[0] ** (-1 / (X.shape[1] + 4))
