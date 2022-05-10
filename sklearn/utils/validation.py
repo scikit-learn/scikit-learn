@@ -1171,8 +1171,8 @@ def check_random_state(seed):
 
     Returns
     -------
-    None
-        No returns.
+    ``RandomState``
+        The appropriate ``RandomState`` based on the input.
     """
     if seed is None or seed is np.random:
         return np.random.mtrand._rand
