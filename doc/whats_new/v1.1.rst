@@ -923,11 +923,6 @@ Changelog
 :mod:`sklearn.neighbors`
 ........................
 
-- |Feature| :class:`neighbors.KernelDensity` bandwidth parameter now accepts
-  definition using Scott's and Silvermann's estimation methods.
-  :pr:`10468` by :user:`Ruben <icfly2>` and :pr:`22993` by
-  :user:`Jovan Stojanovic <jovan-stojanovic>`.
-  
 - |Enhancement| Adds :term:`get_feature_names_out` to
   :class:`neighbors.RadiusNeighborsTransformer`,
   :class:`neighbors.KNeighborsTransformer`
