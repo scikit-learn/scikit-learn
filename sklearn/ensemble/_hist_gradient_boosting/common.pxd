@@ -1,14 +1,14 @@
 import numpy as np
-cimport numpy as np
+cimport numpy as cnp
 
-np.import_array()
+cnp.import_array()
 
 
-ctypedef np.npy_float64 X_DTYPE_C
-ctypedef np.npy_uint8 X_BINNED_DTYPE_C
-ctypedef np.npy_float64 Y_DTYPE_C
-ctypedef np.npy_float32 G_H_DTYPE_C
-ctypedef np.npy_uint32 BITSET_INNER_DTYPE_C
+ctypedef cnp.npy_float64 X_DTYPE_C
+ctypedef cnp.npy_uint8 X_BINNED_DTYPE_C
+ctypedef cnp.npy_float64 Y_DTYPE_C
+ctypedef cnp.npy_float32 G_H_DTYPE_C
+ctypedef cnp.npy_uint32 BITSET_INNER_DTYPE_C
 ctypedef BITSET_INNER_DTYPE_C[8] BITSET_DTYPE_C
 
 cdef packed struct hist_struct:

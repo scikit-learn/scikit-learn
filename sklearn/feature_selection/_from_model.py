@@ -1,6 +1,8 @@
 # Authors: Gilles Louppe, Mathieu Blondel, Maheshakya Wijewardena
 # License: BSD 3 clause
 
+from copy import deepcopy
+
 import numpy as np
 import numbers
 
@@ -102,11 +104,10 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
 
     prefit : bool, default=False
         Whether a prefit model is expected to be passed into the constructor
-        directly or not. If True, ``transform`` must be called directly
-        and SelectFromModel cannot be used with ``cross_val_score``,
-        ``GridSearchCV`` and similar utilities that clone the estimator.
-        Otherwise train the model using ``fit`` and then ``transform`` to do
-        feature selection.
+        directly or not.
+        If `True`, `estimator` must be a fitted estimator.
+        If `False`, `estimator` is fitted and updated by calling
+        `fit` and `partial_fit`, respectively.
 
     norm_order : non-zero int, inf, -inf, default=1
         Order of the norm used to filter the vectors of coefficients below
@@ -120,10 +121,13 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
           allow.
         - If a callable, then it specifies how to calculate the maximum number of
           features allowed by using the output of `max_feaures(X)`.
+        - If `None`, then all features are kept.
 
         To only select based on ``max_features``, set ``threshold=-np.inf``.
 
         .. versionadded:: 0.20
+        .. versionchanged:: 1.1
+           `max_features` accepts a callable.
 
     importance_getter : str or callable, default='auto'
         If 'auto', uses the feature importance either through a ``coef_``
@@ -144,10 +148,13 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
 
     Attributes
     ----------
-    estimator_ : an estimator
-        The base estimator from which the transformer is built.
-        This is stored only when a non-fitted estimator is passed to the
-        ``SelectFromModel``, i.e when prefit is False.
+    estimator_ : estimator
+        The base estimator from which the transformer is built. This attribute
+        exist only when `fit` has been called.
+
+        - If `prefit=True`, it is a deep copy of `estimator`.
+        - If `prefit=False`, it is a clone of `estimator` and fit on the data
+          passed to `fit` or `partial_fit`.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if the
@@ -159,7 +166,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         Maximum number of features calculated during :term:`fit`. Only defined
         if the ``max_features`` is not `None`.
 
-        - If `max_features` is an int, then `max_features_ = max_features`.
+        - If `max_features` is an `int`, then `max_features_ = max_features`.
         - If `max_features` is a callable, then `max_features_ = max_features(X)`.
 
         .. versionadded:: 1.1
@@ -237,17 +244,33 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         self.max_features = max_features
 
     def _get_support_mask(self):
-        # SelectFromModel can directly call on transform.
+        estimator = getattr(self, "estimator_", self.estimator)
+        max_features = getattr(self, "max_features_", self.max_features)
+
         if self.prefit:
-            estimator = self.estimator
-        elif hasattr(self, "estimator_"):
-            estimator = self.estimator_
-        else:
-            raise ValueError(
-                "Either fit the model before transform or set"
-                ' "prefit=True" while passing the fitted'
-                " estimator to the constructor."
+            try:
+                check_is_fitted(self.estimator)
+            except NotFittedError as exc:
+                raise NotFittedError(
+                    "When `prefit=True`, `estimator` is expected to be a fitted "
+                    "estimator."
+                ) from exc
+        if callable(max_features):
+            # This branch is executed when `transform` is called directly and thus
+            # `max_features_` is not set and we fallback using `self.max_features`
+            # that is not validated
+            raise NotFittedError(
+                "When `prefit=True` and `max_features` is a callable, call `fit` "
+                "before calling `transform`."
             )
+        elif max_features is not None and not isinstance(
+            max_features, numbers.Integral
+        ):
+            raise ValueError(
+                f"`max_features` must be an integer. Got `max_features={max_features}` "
+                "instead."
+            )
+
         scores = _get_feature_importances(
             estimator=estimator,
             getter=self.importance_getter,
@@ -257,9 +280,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         threshold = _calculate_threshold(estimator, scores, self.threshold)
         if self.max_features is not None:
             mask = np.zeros_like(scores, dtype=bool)
-            candidate_indices = np.argsort(-scores, kind="mergesort")[
-                : self.max_features_
-            ]
+            candidate_indices = np.argsort(-scores, kind="mergesort")[:max_features]
             mask[candidate_indices] = True
         else:
             mask = np.ones_like(scores, dtype=bool)
@@ -313,9 +334,17 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
                 )
 
         if self.prefit:
-            raise NotFittedError("Since 'prefit=True', call transform directly")
-        self.estimator_ = clone(self.estimator)
-        self.estimator_.fit(X, y, **fit_params)
+            try:
+                check_is_fitted(self.estimator)
+            except NotFittedError as exc:
+                raise NotFittedError(
+                    "When `prefit=True`, `estimator` is expected to be a fitted "
+                    "estimator."
+                ) from exc
+            self.estimator_ = deepcopy(self.estimator)
+        else:
+            self.estimator_ = clone(self.estimator)
+            self.estimator_.fit(X, y, **fit_params)
 
         if hasattr(self.estimator_, "feature_names_in_"):
             self.feature_names_in_ = self.estimator_.feature_names_in_
@@ -357,7 +386,17 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
             Fitted estimator.
         """
         if self.prefit:
-            raise NotFittedError("Since 'prefit=True', call transform directly")
+            if not hasattr(self, "estimator_"):
+                try:
+                    check_is_fitted(self.estimator)
+                except NotFittedError as exc:
+                    raise NotFittedError(
+                        "When `prefit=True`, `estimator` is expected to be a fitted "
+                        "estimator."
+                    ) from exc
+                self.estimator_ = deepcopy(self.estimator)
+            return self
+
         if not hasattr(self, "estimator_"):
             self.estimator_ = clone(self.estimator)
         self.estimator_.partial_fit(X, y, **fit_params)

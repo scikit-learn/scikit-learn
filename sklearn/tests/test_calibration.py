@@ -400,20 +400,14 @@ def test_calibration_curve():
     y_true = np.array([0, 0, 0, 1, 1, 1])
     y_pred = np.array([0.0, 0.1, 0.2, 0.8, 0.9, 1.0])
     prob_true, prob_pred = calibration_curve(y_true, y_pred, n_bins=2)
-    prob_true_unnormalized, prob_pred_unnormalized = calibration_curve(
-        y_true, y_pred * 2, n_bins=2, normalize=True
-    )
     assert len(prob_true) == len(prob_pred)
     assert len(prob_true) == 2
     assert_almost_equal(prob_true, [0, 1])
     assert_almost_equal(prob_pred, [0.1, 0.9])
-    assert_almost_equal(prob_true, prob_true_unnormalized)
-    assert_almost_equal(prob_pred, prob_pred_unnormalized)
 
-    # probabilities outside [0, 1] should not be accepted when normalize
-    # is set to False
+    # Probabilities outside [0, 1] should not be accepted at all.
     with pytest.raises(ValueError):
-        calibration_curve([1.1], [-0.1], normalize=False)
+        calibration_curve([1], [-0.1])
 
     # test that quantiles work as expected
     y_true2 = np.array([0, 0, 0, 0, 1, 1])
@@ -430,6 +424,26 @@ def test_calibration_curve():
     # Check that error is raised when invalid strategy is selected
     with pytest.raises(ValueError):
         calibration_curve(y_true2, y_pred2, strategy="percentile")
+
+
+# TODO(1.3): Remove this test.
+def test_calibration_curve_with_unnormalized_proba():
+    """Tests the `normalize` parameter of `calibration_curve`"""
+    y_true = np.array([0, 0, 0, 1, 1, 1])
+    y_pred = np.array([0.0, 0.1, 0.2, 0.8, 0.9, 1.0])
+
+    # Ensure `normalize` == False raises a FutureWarning.
+    with pytest.warns(FutureWarning):
+        calibration_curve(y_true, y_pred, n_bins=2, normalize=False)
+
+    # Ensure `normalize` == True raises a FutureWarning and behaves as expected.
+    with pytest.warns(FutureWarning):
+        prob_true_unnormalized, prob_pred_unnormalized = calibration_curve(
+            y_true, y_pred * 2, n_bins=2, normalize=True
+        )
+        prob_true, prob_pred = calibration_curve(y_true, y_pred, n_bins=2)
+        assert_almost_equal(prob_true, prob_true_unnormalized)
+        assert_almost_equal(prob_pred, prob_pred_unnormalized)
 
 
 @pytest.mark.parametrize("ensemble", [True, False])
