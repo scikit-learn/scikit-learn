@@ -49,6 +49,13 @@ Changelog
 
 - |Efficiency| Improve runtime performance of :class:`ensemble.IsolationForest`
   by avoiding data copies. :pr:`23252` by :user:`Zhehao Liu <MaxwellLZH>`.
+
+:mod:`sklearn.linear_model`
+...........................
+
+- |Fix| :class:`linear_model.SGDClassifier` and :class:`linear_model.SGDRegressor` will
+  only use samples with non-zero sample weight for validation to avoid zero division
+  error. :pr:`23275` by `Zhehao Liu <MaxwellLZH>`.
   
 :mod:`sklearn.neighbors`
 ........................
