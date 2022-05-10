@@ -721,6 +721,7 @@ class KNeighborsMixin:
                [2]]...)
         """
         check_is_fitted(self)
+        original_n_neighbors = n_neighbors
 
         if n_neighbors is None:
             n_neighbors = self.n_neighbors
@@ -746,10 +747,18 @@ class KNeighborsMixin:
 
         n_samples_fit = self.n_samples_fit_
         if n_neighbors > n_samples_fit:
-            raise ValueError(
-                "Expected n_neighbors <= n_samples, "
-                " but n_samples = %d, n_neighbors = %d" % (n_samples_fit, n_neighbors)
-            )
+            if X is None:
+                raise ValueError(
+                    "Expected n_neighbors < n_samples, "
+                    " but n_samples = %d, n_neighbors = %d" %
+                    (n_samples_fit, original_n_neighbors)
+                )
+            else:
+                raise ValueError(
+                    "Expected n_neighbors <= n_samples, "
+                    " but n_samples = %d, n_neighbors = %d" %
+                    (n_samples_fit, original_n_neighbors)
+                )
 
         n_jobs = effective_n_jobs(self.n_jobs)
         chunked_results = None
