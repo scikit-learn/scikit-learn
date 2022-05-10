@@ -328,7 +328,7 @@ def test_string_target(pyplot):
     )
 
 
-def test_dataframe_support():
+def test_dataframe_support(pyplot):
     """Check that passing a dataframe at fit and to the Display does not
     raise warnings.
 
