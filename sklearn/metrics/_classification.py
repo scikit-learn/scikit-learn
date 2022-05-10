@@ -1647,27 +1647,26 @@ def class_likelihood_ratios(
 ):
     """Compute binary classification positive and negative likelihood ratios.
 
-    The positive likelihood ratio is ``LR+ = sensitivity / (1 - specificity)``
-    where the sensitivity or recall is the ratio ``tp / (tp + fn)`` and the
-    specificity is ``tn / (tn + fp)``. The negative likelihood ratio is ``LR- =
-    (1 - sensitivity) / specificity``. Here ``tp`` is the number of true
-    positives, ``fp`` the number of false positives, ``tn`` is the number of
-    true negatives and ``fn`` the number of false negatives. Both class
-    likelihood ratios can be used to obtain post-test probabilities given a
-    pre-test probability.
+    The positive likelihood ratio is `LR+ = sensitivity / (1 - specificity)`
+    where the sensitivity or recall is the ratio `tp / (tp + fn)` and the
+    specificity is `tn / (tn + fp)`. The negative likelihood ratio is `LR- = (1
+    - sensitivity) / specificity`. Here `tp` is the number of true positives,
+    `fp` the number of false positives, `tn` is the number of true negatives and
+    `fn` the number of false negatives. Both class likelihood ratios can be used
+    to obtain post-test probabilities given a pre-test probability.
 
-    ``LR+`` ranges from 1 to infinity. A ``LR+`` of 1 indicates that the
-    probability of predicting the positive class is the same for samples
-    belonging to either class; therefore, the test is useless. The greater
-    ``LR+`` is, the more a positive prediction is likely to be a true positive
-    when compared with the pre-test probability. A value of ``LR+`` lower than 1
-    is invalid as it would indicate that the odds of a sample being a true
-    positive decrease with respect to the pre-test odds.
+    `LR+` ranges from 1 to infinity. A `LR+` of 1 indicates that the probability
+    of predicting the positive class is the same for samples belonging to either
+    class; therefore, the test is useless. The greater `LR+` is, the more a
+    positive prediction is likely to be a true positive when compared with the
+    pre-test probability. A value of `LR+` lower than 1 is invalid as it would
+    indicate that the odds of a sample being a true positive decrease with
+    respect to the pre-test odds.
 
-    ``LR-`` ranges from 0 to 1. The closer it is to 0, the lower the probability
-    of a given sample to be a false negative. A ``LR-`` of 1 means the test is
+    `LR-` ranges from 0 to 1. The closer it is to 0, the lower the probability
+    of a given sample to be a false negative. A `LR-` of 1 means the test is
     useless because the odds of having the condition did not change after the
-    test. A value of ``LR-`` greater than 1 invalidates the classifier as it
+    test. A value of `LR-` greater than 1 invalidates the classifier as it
     indicates an increase in the odds of a sample belonging to the positive
     class after being classified as negative. This is the case when the
     classifier systematically predicts the opposite of the true label.
@@ -1710,12 +1709,12 @@ def class_likelihood_ratios(
         A tuple of two float, the first containing the Positive likelihood ratio
         and the second the Negative likelihood ratio.
 
-    Notes
+    Warns
     -----
-    When ``false positive == 0``, the positive likelihood ratio is undefined.
-    When ``true negative == 0``, the negative likelihood ratio is undefined.
-    When ``true positive + false negative == 0`` both ratios are undefined. In
-    such cases, ``UserWarning`` will be raised if raise_warning=True.
+    When `false positive == 0`, the positive likelihood ratio is undefined.
+    When `true negative == 0`, the negative likelihood ratio is undefined.
+    When `true positive + false negative == 0` both ratios are undefined.
+    In such cases, `UserWarning` will be raised if raise_warning=True.
 
     References
     ----------
@@ -1778,7 +1777,7 @@ def class_likelihood_ratios(
         neg_num = fn * support_neg
         neg_denom = tn * support_pos
 
-        # Divide, and on zero-division, warn and set scores to nan
+        # If zero division warn and set scores to nan, else divide
         if support_pos == 0:
             msg = "no samples of the positive class were present in the testing set "
             if raise_warning:
