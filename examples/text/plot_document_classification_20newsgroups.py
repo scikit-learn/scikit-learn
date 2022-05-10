@@ -94,22 +94,19 @@ def load_dataset(verbose=False, remove=()):
         data_test_size_mb = size_mb(data_test.data)
 
         print(
-            "%d documents - %0.3fMB (training set)"
-            % (len(data_train.data), data_train_size_mb)
+            f"{len(data_train.data)} documents - "
+            f"{data_train_size_mb:.2f}MB (training set)"
         )
-        print(
-            "%d documents - %0.3fMB (test set)"
-            % (len(data_test.data), data_test_size_mb)
-        )
+        print(f"{len(data_test.data)} documents - {data_test_size_mb:.2f}MB (test set)")
         print("%d categories" % len(target_names))
         print(
-            "vectorize training done in %fs at %0.3fMB/s"
-            % (duration_train, data_train_size_mb / duration_train)
+            f"vectorize training done in {duration_train:.3f}s "
+            f"at {data_train_size_mb / duration_train:.3f}MB/s"
         )
         print("n_samples: %d, n_features: %d" % X_train.shape)
         print(
-            "vectorize testing done in %fs at %0.3fMB/s"
-            % (duration_test, data_test_size_mb / duration_test)
+            f"vectorize testing done in {duration_test:.3f}s "
+            f"at {data_test_size_mb / duration_test:.3f}MB/s"
         )
         print("n_samples: %d, n_features: %d" % X_test.shape)
 
@@ -119,8 +116,8 @@ def load_dataset(verbose=False, remove=()):
 # %%
 # Compare feature effects
 # -----------------------
-# We train a first classification model without attempting to strip the metadata of
-# the dataset.
+# We train a first classification model without attempting to strip the metadata
+# of the dataset.
 
 X_train, X_test, y_train, y_test, feature_names, target_names = load_dataset(
     verbose=True
@@ -142,8 +139,8 @@ clf.fit(X_train, y_train)
 pred = clf.predict(X_test)
 
 # %%
-# We plot the confusion matrix of this classifier to find if there
-# is a pattern in the classification errors.
+# We plot the confusion matrix of this classifier to find if there is a pattern
+# in the classification errors.
 
 import matplotlib.pyplot as plt
 from sklearn.metrics import ConfusionMatrixDisplay
@@ -153,8 +150,7 @@ ConfusionMatrixDisplay.from_predictions(y_test, pred, ax=ax)
 ax.xaxis.set_ticklabels(target_names)
 ax.yaxis.set_ticklabels(target_names)
 _ = ax.set_title(
-    f"Confusion Matrix for {clf.__class__.__name__}\n"
-    "on the original documents"
+    f"Confusion Matrix for {clf.__class__.__name__}\non the original documents"
 )
 
 # %%
@@ -162,14 +158,14 @@ _ = ax.set_title(
 # often confused with documents with the class `talk.religion.misc` class while
 # and vice-versa which is expected since the topics are semantically related.
 #
-# We also observe that some documents of the `sci.space` class can be classified
+# We also observe that some documents of the `sci.space` class can be misclassified as
 # `comp.graphics` while the converse is much rarer. A manual inspection of those
-# badly classified documents would be required to get some insights on
-# this asymmetry. It could be the case that the vocabulary of the space topic
-# could be more specific than the vocabulary for computer graphics.
+# badly classified documents would be required to get some insights on this
+# asymmetry. It could be the case that the vocabulary of the space topic could
+# be more specific than the vocabulary for computer graphics.
 #
-# We can gain a deeper understanding of how this classifier makes its decision by 
-# looking at the words with the highest average feature effects:
+# We can gain a deeper understanding of how this classifier makes its decisions
+# by looking at the words with the highest average feature effects:
 
 import pandas as pd
 import numpy as np
@@ -177,10 +173,10 @@ import numpy as np
 
 def plot_feature_effects():
     # learned coefficients weighted by frequency of appearance
-    feature_effects = clf.coef_ * np.asarray(X_train.mean(axis=0)).ravel()
+    average_feature_effects = clf.coef_ * np.asarray(X_train.mean(axis=0)).ravel()
 
     for i, label in enumerate(target_names):
-        top5 = np.argsort(feature_effects[i])[-5:][::-1]
+        top5 = np.argsort(average_feature_effects[i])[-5:][::-1]
         if i == 0:
             top = pd.DataFrame(feature_names[top5], columns=[label])
             top_indices = top5
@@ -199,7 +195,7 @@ def plot_feature_effects():
     for i, label in enumerate(target_names):
         ax.barh(
             y_locs + (i - 2) * bar_size,
-            feature_effects[i, top_indices],
+            average_feature_effects[i, top_indices],
             height=bar_size,
             label=label,
         )
@@ -231,9 +227,9 @@ _ = plot_feature_effects().set_title("Average feature effect on the original dat
 # "christian" and "morality" that are only positively associated with
 # "talk.misc.religion". Furthermore, in this version of the dataset, the word
 # "caltech" is one of the top predictive features for atheism due to pollution
-# in the dataset coming from some sort of metadata such as the the
-# email addresses of the sender of previous emails in the
-# discussion as can be seen in bellow:
+# in the dataset coming from some sort of metadata such as the the email
+# addresses of the sender of previous emails in the discussion as can be seen
+# below:
 
 data_train = fetch_20newsgroups(
     subset="train", categories=categories, shuffle=True, random_state=42
@@ -245,21 +241,19 @@ for doc in data_train.data:
         break
 
 # %%
-# Such headers, signature footers (and quoted metadata from previous
-# messages) can be considered side information that artificially reveals
-# the newsgroup by identifying the registered members and one would rather
-# want our text classifier to only learn from the "main content" of each
-# text document instead of relying on the leaked identity of the writers.
+# Such headers, signature footers (and quoted metadata from previous messages)
+# can be considered side information that artificially reveals the newsgroup by
+# identifying the registered members and one would rather want our text
+# classifier to only learn from the "main content" of each text document instead
+# of relying on the leaked identity of the writers.
 #
-# The `remove` option of the 20 newsgroups dataset loader in scikit-learn
-# allows to heuristically attempt to filter out some of this unwanted
-# metadata that makes the classification problem artificially easier.
-# Beware that that filtering of the text contents of the document is far
-# from perfect though.
+# The `remove` option of the 20 newsgroups dataset loader in scikit-learn allows
+# to heuristically attempt to filter out some of this unwanted metadata that
+# makes the classification problem artificially easier. Be aware that such
+# filtering of the text contents is far from perfect.
 #
-# Let us try to leverage this option to train a text classifier that does
-# not rely to much on this kind of metadata to take its classification
-# decisions:
+# Let us try to leverage this option to train a text classifier that does not
+# rely too much on this kind of metadata to make its decisions:
 (
     X_train,
     X_test,
@@ -278,15 +272,14 @@ ConfusionMatrixDisplay.from_predictions(y_test, pred, ax=ax)
 ax.xaxis.set_ticklabels(target_names)
 ax.yaxis.set_ticklabels(target_names)
 _ = ax.set_title(
-    f"Confusion Matrix for {clf.__class__.__name__}\n"
-    "on filtered documents"
+    f"Confusion Matrix for {clf.__class__.__name__}\non filtered documents"
 )
 
 # %%
 # By looking at the confusion matrix, it is more evident that the scores of the
-# model trained with metadata were overoptimistic. The classification problem
-# without access to the metadata is less accurate but more representative
-# of the intended text classification problem.
+# model trained with metadata were over-optimistic. The classification problem
+# without access to the metadata is less accurate but more representative of the
+# intended text classification problem.
 
 _ = plot_feature_effects().set_title("Average feature effects on filtered documents")
 
@@ -299,6 +292,7 @@ _ = plot_feature_effects().set_title("Average feature effects on filtered docume
 # ------------------------
 #
 # First we define small benchmarking utilities
+
 from sklearn.utils.extmath import density
 from sklearn import metrics
 
@@ -310,19 +304,19 @@ def benchmark(clf, custom_name=False):
     t0 = time()
     clf.fit(X_train, y_train)
     train_time = time() - t0
-    print("train time: %0.3fs" % train_time)
+    print(f"train time: {train_time:.3}s")
 
     t0 = time()
     pred = clf.predict(X_test)
     test_time = time() - t0
-    print("test time:  %0.3fs" % test_time)
+    print(f"test time:  {test_time:.3}s")
 
     score = metrics.accuracy_score(y_test, pred)
-    print("accuracy:   %0.3f" % score)
+    print(f"accuracy:   {score:.3}")
 
     if hasattr(clf, "coef_"):
-        print("dimensionality: %d" % clf.coef_.shape[1])
-        print("density: %f" % density(clf.coef_))
+        print(f"dimensionality: {clf.coef_.shape[1]}")
+        print(f"density: {density(clf.coef_)}")
         print()
 
     print()
@@ -334,13 +328,14 @@ def benchmark(clf, custom_name=False):
 
 
 # %%
-# We now train and test the datasets with 8 different classification
-# models and get performance results for each model. The goal of this study
-# is to highlight the computation/accuracy tradeoffs of the choice of the
-# type of classifier for such a multi-class text classification problem.
+# We now train and test the datasets with 8 different classification models and
+# get performance results for each model. The goal of this study is to highlight
+# the computation/accuracy tradeoffs of different types of classifiers for
+# such a multi-class text classification problem.
 #
 # Notice that the most important hyperparameters values were tuned using a grid
 # search procedure not shown in this notebook for the sake of simplicity.
+
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import LinearSVC
 from sklearn.linear_model import SGDClassifier
@@ -360,7 +355,9 @@ for clf, name in (
     (LinearSVC(C=0.1, dual=False, max_iter=1000), "Linear SVC"),
     # L2 penalty Linear SGD
     (
-        SGDClassifier(loss="log", alpha=1e-4, n_iter_no_change=3, early_stopping=True),
+        SGDClassifier(
+            loss="log_loss", alpha=1e-4, n_iter_no_change=3, early_stopping=True
+        ),
         "log-loss SGD",
     ),
     # NearestCentroid (aka Rocchio classifier)
@@ -412,13 +409,21 @@ for i, txt in enumerate(clf_names):
 # training/testing time, while Random Forest is both slow to train, expensive to
 # predict and has a comparatively bad accuracy. This is expected: for
 # high-dimensional prediction problems, linear models are often better suited as
-# most problems become linearly separable when the dimensionality of the feature
-# space increases to 10,000 dimensions or more.
+# most problems become linearly separable when the feature space has 10,000
+# dimensions or more.
+#
+# The difference in training speed and accuracy of the linear models can be
+# explained by the choice of the loss function they optimize and the kind of
+# regularization they use. Be aware that some linear models with the same loss
+# but a different solver or regularization configuration may yield different
+# fitting times and test accuracy. We can observe on the second plot that once
+# trained, all linear models have approximately the same prediction speed which
+# is expected because they all implement the same prediction function.
 #
 # KNeighborsClassifier has a relatively low accuracy and has the highest testing
 # time. The long prediction time is also expected: for each prediction the model
 # has to compute the pairwise distances between the testing sample and each
-# document in the training set, which is very expensive. Furthermore, the "curse
-# of dimensionality" harms the ability of this model to yield competitive
-# accuracy in the high dimensional feature space of text classification
-# problems.
+# document in the training set, which is computationally expensive. Furthermore,
+# the "curse of dimensionality" harms the ability of this model to yield
+# competitive accuracy in the high dimensional feature space of text
+# classification problems.
