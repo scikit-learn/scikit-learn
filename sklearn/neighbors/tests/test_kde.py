@@ -15,13 +15,13 @@ import joblib
 
 # XXX Duplicated in test_neighbors_tree, test_kde
 def compute_kernel_slow(Y, X, kernel, h):
-    d = np.sqrt(((Y[:, None, :] - X) ** 2).sum(-1))
-    norm = kernel_norm(h, X.shape[1], kernel) / X.shape[0]
-
     if h == "scott":
         h = X.shape[0] ** (-1 / (X.shape[1] + 4))
     elif h == "silvermann":
         h = (X.shape[0] * (X.shape[1] + 2) / 4) ** (-1 / (X.shape[1] + 4))
+
+    d = np.sqrt(((Y[:, None, :] - X) ** 2).sum(-1))        
+    norm = kernel_norm(h, X.shape[1], kernel) / X.shape[0]
 
     if kernel == "gaussian":
         return norm * np.exp(-0.5 * (d * d) / (h * h)).sum(-1)
