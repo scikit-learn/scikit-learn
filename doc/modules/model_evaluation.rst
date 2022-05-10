@@ -1800,7 +1800,7 @@ classified:
 
    LR_- = \frac{\text{PR}(P-|T+)}{\text{PR}(P-|T-)}.
 
-:math:`LR_+` ranges from 1 to infinity and **higher is better**.
+For classifiers above chance :math:`LR_+` above 1 **higher is better**, while
 :math:`LR_-` ranges from 0 to 1 and **lower is better**.
 Values of :math:`LR_\pm\approx 1` correspond to chance level.
 
