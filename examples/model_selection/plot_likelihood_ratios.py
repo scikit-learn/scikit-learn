@@ -148,8 +148,8 @@ X, y = make_classification(n_samples=300, weights=[0.9, 0.1], random_state=0)
 extract_score(cross_validate(estimator, X, y, scoring=scoring, cv=10))
 
 # %%
-# Invariance w.r.t. prevalence
-# ============================
+# Invariance with respect to prevalence
+# =====================================
 #
 # The likelihood ratios are independent of the disease prevalence and can be
 # extrapolated between populations regardless of any possible class imbalance,
