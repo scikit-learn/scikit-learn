@@ -49,6 +49,14 @@ Changelog
 
 - |Efficiency| Improve runtime performance of :class:`ensemble.IsolationForest`
   by avoiding data copies. :pr:`23252` by :user:`Zhehao Liu <MaxwellLZH>`.
+  
+:mod:`sklearn.neighbors`
+........................
+
+- |Enhancement| :class:`neighbors.KernelDensity` bandwidth parameter now accepts
+  definition using Scott's and Silvermann's estimation methods.
+  :pr:`10468` by :user:`Ruben <icfly2>` and :pr:`22993` by
+  :user:`Jovan Stojanovic <jovan-stojanovic>`.
 
 Code and Documentation Contributors
 -----------------------------------
