@@ -272,7 +272,7 @@ def test_bandwidth(bandwidth):
         h = (X.shape[0] * (X.shape[1] + 2) / 4) ** (-1 / (X.shape[1] + 4))
     else:
         h = bandwidth
-    assert kde.bandwidth_ == h
+    assert kde.bandwidth_ == pytest.approx(h)
 
 
 @pytest.mark.parametrize(
