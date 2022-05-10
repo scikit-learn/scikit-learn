@@ -142,7 +142,8 @@ clf.fit(X_train, y_train)
 pred = clf.predict(X_test)
 
 # %%
-# Plot confusion matrix with metadata
+# We plot the confusion matrix of this classifier to find if there
+# is a pattern in the classification errors.
 
 import matplotlib.pyplot as plt
 from sklearn.metrics import ConfusionMatrixDisplay
@@ -151,10 +152,24 @@ fig, ax = plt.subplots(figsize=(10, 5))
 ConfusionMatrixDisplay.from_predictions(y_test, pred, ax=ax)
 ax.xaxis.set_ticklabels(target_names)
 ax.yaxis.set_ticklabels(target_names)
-_ = ax.set_title("Confusion Matrix with metadata using a\n" + str(clf).split("(")[0])
+_ = ax.set_title(
+    f"Confusion Matrix for {clf.__class__.__name__}\n"
+    "on the original documents"
+)
 
 # %%
-# Identify the words with the highest feature effects
+# The confusion matrix highlights that documents of the `alt.atheism` class are
+# often confused with documents with the class `talk.religion.misc` class while
+# and vice-versa which is expected since the topics are semantically related.
+#
+# We also observe that some documents of the `sci.space` class can be classified
+# `comp.graphics` while the converse is much rarer. A manual inspection of those
+# badly classified documents would be required to get some insights on
+# this asymmetry. It could be the case that the vocabulary of the space topic
+# could be more specific than the vocabulary for computer graphics.
+#
+# We can gain a deeper understanding of how this classifier makes its decision by 
+# looking at the words with the highest average feature effects:
 
 import pandas as pd
 import numpy as np
@@ -204,7 +219,7 @@ def plot_feature_effects():
     return ax
 
 
-_ = plot_feature_effects().set_title("Feature impact with headers")
+_ = plot_feature_effects().set_title("Average feature effect on the original data")
 
 # %%
 # We can observe that the most predictive words are often strongly positively
@@ -216,7 +231,9 @@ _ = plot_feature_effects().set_title("Feature impact with headers")
 # "christian" and "morality" that are only positively associated with
 # "talk.misc.religion". Furthermore, in this version of the dataset, the word
 # "caltech" is one of the top predictive features for atheism due to pollution
-# in the dataset introduced by the metadata.
+# in the dataset coming from some sort of metadata such as the the
+# email addresses of the sender of previous emails in the
+# discussion as can be seen in bellow:
 
 data_train = fetch_20newsgroups(
     subset="train", categories=categories, shuffle=True, random_state=42
@@ -228,8 +245,21 @@ for doc in data_train.data:
         break
 
 # %%
-# We can remove the metadata and repeat the experiment, but other sources of
-# pollution may still exist
+# Such headers, signature footers (and quoted metadata from previous
+# messages) can be considered side information that artificially reveals
+# the newsgroup by identifying the registered members and one would rather
+# want our text classifier to only learn from the "main content" of each
+# text document instead of relying on the leaked identity of the writers.
+#
+# The `remove` option of the 20 newsgroups dataset loader in scikit-learn
+# allows to heuristically attempt to filter out some of this unwanted
+# metadata that makes the classification problem artificially easier.
+# Beware that that filtering of the text contents of the document is far
+# from perfect though.
+#
+# Let us try to leverage this option to train a text classifier that does
+# not rely to much on this kind of metadata to take its classification
+# decisions:
 (
     X_train,
     X_test,
@@ -247,7 +277,10 @@ fig, ax = plt.subplots(figsize=(10, 5))
 ConfusionMatrixDisplay.from_predictions(y_test, pred, ax=ax)
 ax.xaxis.set_ticklabels(target_names)
 ax.yaxis.set_ticklabels(target_names)
-_ = ax.set_title("Confusion Matrix without metadata using a\n" + str(clf).split("(")[0])
+_ = ax.set_title(
+    f"Confusion Matrix for {clf.__class__.__name__}\n"
+    "on filtered documents"
+)
 
 # %%
 # By looking at the confusion matrix, it is more evident that the scores of the
@@ -255,24 +288,19 @@ _ = ax.set_title("Confusion Matrix without metadata using a\n" + str(clf).split(
 # without access to the metadata is less accurate but more representative
 # of the intended text classification problem.
 
-_ = plot_feature_effects().set_title("Feature impact without metadata")
+_ = plot_feature_effects().set_title("Average feature effects on filtered documents")
 
 # %%
 # In the next section we keep the dataset without metadata to compare several
 # classifiers
 
 # %%
-# Benchmark classifiers
-# ---------------------
+# Benchmarking classifiers
+# ------------------------
 #
 # First we define small benchmarking utilities
 from sklearn.utils.extmath import density
 from sklearn import metrics
-
-
-def trim(s):
-    """Trim string to fit on terminal (assuming 80-column display)"""
-    return s if len(s) <= 80 else s[:77] + "..."
 
 
 def benchmark(clf, custom_name=False):
@@ -297,14 +325,11 @@ def benchmark(clf, custom_name=False):
         print("density: %f" % density(clf.coef_))
         print()
 
-    print("classification report:")
-    print(metrics.classification_report(y_test, pred, target_names=target_names))
-
     print()
     if custom_name:
         clf_descr = str(custom_name)
     else:
-        clf_descr = str(clf).split("(")[0]
+        clf_descr = clf.__class__.__name__
     return clf_descr, score, train_time, test_time
 
 
@@ -387,7 +412,7 @@ for i, txt in enumerate(clf_names):
 # training/testing time, while Random Forest is both slow to train, expensive to
 # predict and has a comparatively bad accuracy. This is expected: for
 # high-dimensional prediction problems, linear models are often better suited as
-# all problem became linearly separable when the dimensionality of the feature
+# most problems become linearly separable when the dimensionality of the feature
 # space increases to 10,000 dimensions or more.
 #
 # KNeighborsClassifier has a relatively low accuracy and has the highest testing
