@@ -3,37 +3,43 @@
 Approximate nearest neighbors in TSNE
 =====================================
 
-This example presents how to chain KNeighborsTransformer and TSNE in a
-pipeline. It also shows how to wrap the packages `annoy` and `nmslib` to
-replace KNeighborsTransformer and perform approximate nearest neighbors.
-These packages can be installed with `pip install annoy nmslib`.
+This example presents how to chain KNeighborsTransformer and TSNE in a pipeline.
+It also shows how to wrap the packages `annoy` and `nmslib` to replace
+KNeighborsTransformer and perform approximate nearest neighbors. These packages
+can be installed with `pip install annoy nmslib`.
 
 Note: In KNeighborsTransformer we use the definition which includes each
 training point as its own neighbor in the count of `n_neighbors`, and for
-compatibility reasons, one extra neighbor is computed when
-`mode == 'distance'`. Please note that we do the same in the proposed wrappers.
+compatibility reasons, one extra neighbor is computed when `mode == 'distance'`.
+Please note that we do the same in the proposed wrappers.
 
 Sample output::
 
     Benchmarking on MNIST_2000:
     ---------------------------
-    AnnoyTransformer:                    0.583 sec
-    NMSlibTransformer:                   0.321 sec
-    KNeighborsTransformer:               1.225 sec
-    TSNE with AnnoyTransformer:          4.903 sec
-    TSNE with NMSlibTransformer:         5.009 sec
-    TSNE with KNeighborsTransformer:     6.210 sec
-    TSNE with internal NearestNeighbors: 6.365 sec
+    AnnoyTransformer:                    0.305 sec
+    NMSlibTransformer:                   0.144 sec
+    KNeighborsTransformer:               0.090 sec
+    TSNE with AnnoyTransformer:          2.818 sec
+    TSNE with NMSlibTransformer:         2.592 sec
+    TSNE with KNeighborsTransformer:     2.338 sec
+    TSNE with internal NearestNeighbors: 2.364 sec
 
     Benchmarking on MNIST_10000:
     ----------------------------
-    AnnoyTransformer:                    4.457 sec
-    NMSlibTransformer:                   2.080 sec
-    KNeighborsTransformer:               30.680 sec
-    TSNE with AnnoyTransformer:          30.225 sec
-    TSNE with NMSlibTransformer:         43.295 sec
-    TSNE with KNeighborsTransformer:     64.845 sec
-    TSNE with internal NearestNeighbors: 64.984 sec
+    AnnoyTransformer:                    2.874 sec
+    NMSlibTransformer:                   1.098 sec
+    KNeighborsTransformer:               1.264 sec
+    TSNE with AnnoyTransformer:          16.118 sec
+    TSNE with NMSlibTransformer:         15.281 sec
+    TSNE with KNeighborsTransformer:     15.400 sec
+    TSNE with internal NearestNeighbors: 15.573 sec
+
+
+Note that the prediction speed KNeighborsTransformer was optimized in
+scikit-learn 1.1 and therefore approximate methods are not necessarily faster
+because computing the index takes time and can nullify the gains obtained at
+prediction time.
 
 """
 
@@ -211,11 +217,12 @@ def run_benchmark():
     n_neighbors = int(3.0 * perplexity + 1) + 1
 
     tsne_params = dict(
+        init="random",  # pca not supported for sparse matrices
         perplexity=perplexity,
         method="barnes_hut",
         random_state=42,
         n_iter=n_iter,
-        square_distances=True,
+        learning_rate="auto",
     )
 
     transformers = [

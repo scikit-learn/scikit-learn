@@ -1,21 +1,21 @@
 # cython: language_level=3
 
 import numpy as np
-cimport numpy as np
+cimport numpy as cnp
 
-np.import_array()
+cnp.import_array()
 
 
 # Fused types for y_true, y_pred, raw_prediction
 ctypedef fused Y_DTYPE_C:
-    np.npy_float64
-    np.npy_float32
+    cnp.npy_float64
+    cnp.npy_float32
 
 
 # Fused types for gradient and hessian
 ctypedef fused G_DTYPE_C:
-    np.npy_float64
-    np.npy_float32
+    cnp.npy_float64
+    cnp.npy_float32
 
 
 # Struct to return 2 doubles

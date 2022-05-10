@@ -34,6 +34,24 @@ Changelog
     where 123456 is the *pull request* number, not the issue number.
 
 
+=======
+:mod:`sklearn.cluster`
+......................
+
+- |Enhancement| The `predict` and `fit_predict` methods of :class:`cluster.OPTICS` now
+  accept sparse data type for input data. :pr:`14736` by :user:`Hunt Zhan <huntzhan>`,
+  :pr:`20802` by :user:`Brandon Pokorny <Clickedbigfoot>`,
+  and :pr:`22965` by :user:`Meekail Zain <micky774>`.
+
+- |Enhancement| :class:`cluster.Birch` now preserves dtype for `numpy.float32`
+  inputs. :pr:`22968` by `Meekail Zain <micky774>`.
+
+:mod:`sklearn.ensemble`
+.......................
+
+- |Efficiency| Improve runtime performance of :class:`ensemble.IsolationForest`
+  by avoiding data copies. :pr:`23252` by :user:`Zhehao Liu <MaxwellLZH>`.
+  
 :mod:`sklearn.neighbors`
 ........................
 
@@ -41,7 +59,6 @@ Changelog
   definition using Scott's and Silvermann's estimation methods.
   :pr:`10468` by :user:`Ruben <icfly2>` and :pr:`22993` by
   :user:`Jovan Stojanovic <jovan-stojanovic>`.
-  
 
 Code and Documentation Contributors
 -----------------------------------
