@@ -1,3 +1,5 @@
+import warnings
+
 import pytest
 import numpy as np
 from numpy.testing import assert_allclose
@@ -265,6 +267,11 @@ def test_multioutput_regressor_error(pyplot):
         DecisionBoundaryDisplay.from_estimator(tree, X)
 
 
+@pytest.mark.filterwarnings(
+    # We expect to raise the following warning because the classifier is fit on a
+    # NumPy array
+    "ignore:X has feature names, but LogisticRegression was fitted without"
+)
 def test_dataframe_labels_used(pyplot, fitted_clf):
     """Check that column names are used for pandas."""
     pd = pytest.importorskip("pandas")
@@ -319,3 +326,20 @@ def test_string_target(pyplot):
         grid_resolution=5,
         response_method="predict",
     )
+
+
+def test_dataframe_support():
+    """Check that passing a dataframe at fit and to the Display does not
+    raise warnings.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/23311
+    """
+    pd = pytest.importorskip("pandas")
+    df = pd.DataFrame(X, columns=["col_x", "col_y"])
+    estimator = LogisticRegression().fit(df, y)
+
+    with warnings.catch_warnings():
+        # no warnings linked to feature names validation should be raised
+        warnings.simplefilter("error", UserWarning)
+        DecisionBoundaryDisplay.from_estimator(estimator, df, response_method="predict")
