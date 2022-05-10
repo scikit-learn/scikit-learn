@@ -18,11 +18,10 @@ def compute_kernel_slow(Y, X, kernel, h):
     d = np.sqrt(((Y[:, None, :] - X) ** 2).sum(-1))
     norm = kernel_norm(h, X.shape[1], kernel) / X.shape[0]
 
-    if h=='scott' :
+    if h == "scott":
         h = X.shape[0] ** (-1 / (X.shape[1] + 4))
-    elif h=='silvermann' :
-        h = (X.shape[0] * (X.shape[1] + 2) / 4) ** (
-            -1 / (X.shape[1] + 4))
+    elif h == "silvermann":
+        h = (X.shape[0] * (X.shape[1] + 2) / 4) ** (-1 / (X.shape[1] + 4))
 
     if kernel == "gaussian":
         return norm * np.exp(-0.5 * (d * d) / (h * h)).sum(-1)
@@ -52,7 +51,7 @@ def check_results(kernel, bandwidth, atol, rtol, X, Y, dens_true):
 @pytest.mark.parametrize(
     "kernel", ["gaussian", "tophat", "epanechnikov", "exponential", "linear", "cosine"]
 )
-@pytest.mark.parametrize("bandwidth", [0.01, 0.1, 1, 'scott', 'silvermann'])
+@pytest.mark.parametrize("bandwidth", [0.01, 0.1, 1, "scott", "silvermann"])
 def test_kernel_density(kernel, bandwidth):
     n_samples, n_features = (100, 3)
 
@@ -270,23 +269,24 @@ def test_bandwidth(bandwidth):
     assert X.shape == samp.shape
     assert kde_sc.shape == (n_samples,)
 
-    # Test that the attribute self.bandwidth_ has the expected value   
-    if bandwidth=='scott' :
+    # Test that the attribute self.bandwidth_ has the expected value
+    if bandwidth == "scott":
         h = X.shape[0] ** (-1 / (X.shape[1] + 4))
-    elif bandwidth=='silvermann' :
-        h = (X.shape[0] * (X.shape[1] + 2) / 4) ** (
-            -1 / (X.shape[1] + 4))
+    elif bandwidth == "silvermann":
+        h = (X.shape[0] * (X.shape[1] + 2) / 4) ** (-1 / (X.shape[1] + 4))
     else:
         h = bandwidth
     assert kde.bandwidth_ == h
-    
+
+
 @pytest.mark.parametrize(
     "bandwidth, exc_type, exc_msg",
     [
         (
             "str test",
             ValueError,
-            "When `bandwidth` is a string, it should be one of: scott,silvermann. Got {bandwidth} instead.",
+            r"When `bandwidth` is a string, it should be one of:"
+            r"scott,silvermann. Got {bandwidth} instead.",
         ),
         (
             -2.0,
@@ -325,4 +325,3 @@ def test_bandwidth_exceptions(bandwidth, exc_type, exc_msg):
     X = rng.randn(n_samples, n_features)
     with pytest.raises(exc_type, match=exc_msg):
         KernelDensity(bandwidth=bandwidth).fit(X)
-
