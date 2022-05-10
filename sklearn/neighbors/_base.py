@@ -747,18 +747,16 @@ class KNeighborsMixin:
 
         n_samples_fit = self.n_samples_fit_
         if n_neighbors > n_samples_fit:
-            if X is None:
-                raise ValueError(
-                    "Expected n_neighbors < n_samples, "
-                    " but n_samples = %d, n_neighbors = %d" %
-                    (n_samples_fit, original_n_neighbors)
-                )
+            if query_is_train:
+                n_neighbors -= 1
+                inequality_str = "n_neighbors < n_samples"
             else:
-                raise ValueError(
-                    "Expected n_neighbors <= n_samples, "
-                    " but n_samples = %d, n_neighbors = %d" %
-                    (n_samples_fit, original_n_neighbors)
-                )
+                inequality_str = "n_neighbors <= n_samples"
+                
+            raise ValueError(
+                f"Expected {inequality_str}, but "
+                f"n_neighbors = {n_neighbors}, n_samples = {n_samples}"
+            )
 
         n_jobs = effective_n_jobs(self.n_jobs)
         chunked_results = None
