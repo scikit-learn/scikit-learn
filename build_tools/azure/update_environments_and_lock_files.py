@@ -368,7 +368,7 @@ def write_all_pip_requirements(build_metadata_list, folder_path):
 
 
 def pip_compile(pip_compile_path, requirements_path, lock_file_path):
-    command = f"{pip_compile_path} {requirements_path} -o {lock_file_path}"
+    command = f"{pip_compile_path} --upgrade {requirements_path} -o {lock_file_path}"
 
     logger.debug("pip-compile command: %s", command)
     execute_command(shlex.split(command))
