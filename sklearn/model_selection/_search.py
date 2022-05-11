@@ -1018,6 +1018,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         return results
 
 
+# TODO
 class GridSearchCV(BaseSearchCV):
     """Exhaustive search over specified parameter values for an estimator.
 
