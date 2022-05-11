@@ -957,8 +957,8 @@ Changelog
   `n_components=1`.
   :pr:`23034` by :user:`Meekail Zain <micky774>`.
 
-- |Fix| :function:`model_selection.cross_validate` with multimetric scoring
-  in case of some failing scorers the non-failing scorers now returning proper
+- |Fix| :func:`model_selection.cross_validate` with multimetric scoring in
+  case of some failing scorers the non-failing scorers now returning proper
   scores instead of `error_score` values.
   :pr:`23101` by :user:`András Simon <simonandras>` and `Thomas Fan`_.
 

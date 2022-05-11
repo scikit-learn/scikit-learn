@@ -93,7 +93,7 @@ class _MultimetricScorer:
         Dictionary mapping names to callable scorers.
 
     raise_exc : bool
-        Whether to raise the exception in `__call__` or not. If set to False
+        Whether to raise the exception in `__call__` or not. If set to `False`
         a formatted string of the exception details is passed as result of
         the failing scorer.
     """

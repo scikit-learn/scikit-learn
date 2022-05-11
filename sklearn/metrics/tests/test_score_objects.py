@@ -873,9 +873,10 @@ def test_multimetric_scorer_sanity_check():
 
 @pytest.mark.parametrize("raise_exc", [True, False])
 def test_multimetric_scorer_exception_handling(raise_exc):
-    # Check that the `_MultimetricScorer` returns exception messages in the
-    # result dict for the failing scorers in case of `raise_exc` is False
-    # and if `raise_exc` is True, then the proper exception is raised.
+    # Check that the calling of the `_MultimetricScorer` returns
+    # exception messages in the result dict for the failing scorers
+    # in case of `raise_exc` is `False` and if `raise_exc` is `True`,
+    # then the proper exception is raised.
     scorers = {
         "failing_1": "neg_mean_squared_log_error",
         "non_failing": "neg_median_absolute_error",
