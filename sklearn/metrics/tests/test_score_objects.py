@@ -784,7 +784,7 @@ def test_multimetric_scorer_calls_method_once(
     mock_est.classes_ = np.array([0, 1])
 
     scorer_dict = _check_multimetric_scoring(LogisticRegression(), scorers)
-    multi_scorer = _MultimetricScorer(**scorer_dict)
+    multi_scorer = _MultimetricScorer(scorers=scorer_dict)
     results = multi_scorer(mock_est, X, y)
 
     assert set(scorers) == set(results)  # compare dict keys
@@ -811,7 +811,7 @@ def test_multimetric_scorer_calls_method_once_classifier_no_decision():
 
     scorers = ["roc_auc", "neg_log_loss"]
     scorer_dict = _check_multimetric_scoring(clf, scorers)
-    scorer = _MultimetricScorer(**scorer_dict)
+    scorer = _MultimetricScorer(scorers=scorer_dict)
     scorer(clf, X, y)
 
     assert predict_proba_call_cnt == 1
@@ -834,7 +834,7 @@ def test_multimetric_scorer_calls_method_once_regressor_threshold():
 
     scorers = {"neg_mse": "neg_mean_squared_error", "r2": "roc_auc"}
     scorer_dict = _check_multimetric_scoring(clf, scorers)
-    scorer = _MultimetricScorer(**scorer_dict)
+    scorer = _MultimetricScorer(scorers=scorer_dict)
     scorer(clf, X, y)
 
     assert predict_called_cnt == 1
@@ -857,7 +857,7 @@ def test_multimetric_scorer_sanity_check():
     clf.fit(X, y)
 
     scorer_dict = _check_multimetric_scoring(clf, scorers)
-    multi_scorer = _MultimetricScorer(**scorer_dict)
+    multi_scorer = _MultimetricScorer(scorers=scorer_dict)
 
     result = multi_scorer(clf, X, y)
 
@@ -891,7 +891,7 @@ def test_multimetric_scorer_exception_handling(raise_exc):
     clf.fit(X, y)
 
     scorer_dict = _check_multimetric_scoring(clf, scorers)
-    multi_scorer = _MultimetricScorer(raise_exc=raise_exc, **scorer_dict)
+    multi_scorer = _MultimetricScorer(scorers=scorer_dict, raise_exc=raise_exc)
 
     error_msg = (
         "Mean Squared Logarithmic Error cannot be used when targets contain"

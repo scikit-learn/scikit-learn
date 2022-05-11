@@ -98,9 +98,9 @@ class _MultimetricScorer:
         Dictionary mapping names to callable scorers.
     """
 
-    def __init__(self, *, raise_exc=True, **scorers):
-        self._raise_exc = raise_exc
+    def __init__(self, *, scorers, raise_exc=True):
         self._scorers = scorers
+        self._raise_exc = raise_exc
 
     def __call__(self, estimator, *args, **kwargs):
         """Evaluate predicted target values."""

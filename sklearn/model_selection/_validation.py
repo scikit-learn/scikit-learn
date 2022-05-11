@@ -759,7 +759,7 @@ def _score(estimator, X_test, y_test, scorer, error_score="raise"):
     """
     if isinstance(scorer, dict):
         # will cache method calls if needed. scorer() returns a dict
-        scorer = _MultimetricScorer(raise_exc=(error_score == "raise"), **scorer)
+        scorer = _MultimetricScorer(scorers=scorer, raise_exc=(error_score == "raise"))
 
     try:
         if y_test is None:
