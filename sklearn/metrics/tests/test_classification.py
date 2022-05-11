@@ -483,7 +483,7 @@ def test_multilabel_confusion_matrix_multiclass():
         )
 
     test(y_true, y_pred)
-    test(list(str(y) for y in y_true), list(str(y) for y in y_pred), string_type=True)
+    test([str(y) for y in y_true], [str(y) for y in y_pred], string_type=True)
 
 
 def test_multilabel_confusion_matrix_multilabel():

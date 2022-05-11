@@ -313,3 +313,12 @@ wrap this in a :class:`Pipeline` with a classifier (e.g., a
   >>> results = clf.predict(X_test)
   >>> results.shape
   (100,)
+
+Estimators that handle NaN values
+=================================
+
+Some estimators are designed to handle NaN values without preprocessing. 
+Below is the list of these estimators, classified by type 
+(cluster, regressor, classifier, transform) :
+
+.. allow_nan_estimators::

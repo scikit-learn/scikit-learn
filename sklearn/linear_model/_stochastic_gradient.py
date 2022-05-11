@@ -280,10 +280,10 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         Returns
         -------
         validation_mask : ndarray of shape (n_samples, )
-            Equal to 1 on the validation set, 0 on the training set.
+            Equal to True on the validation set, False on the training set.
         """
         n_samples = y.shape[0]
-        validation_mask = np.zeros(n_samples, dtype=np.uint8)
+        validation_mask = np.zeros(n_samples, dtype=np.bool_)
         if not self.early_stopping:
             # use the full set for training, with an empty validation set
             return validation_mask
@@ -310,7 +310,7 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
                 )
             )
 
-        validation_mask[idx_val] = 1
+        validation_mask[idx_val] = True
         return validation_mask
 
     def _make_validation_score_cb(
