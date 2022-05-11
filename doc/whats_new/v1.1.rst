@@ -960,7 +960,7 @@ Changelog
 - |Fix| :function:`model_selection.cross_validate` with multimetric scoring
   in case of some failing scorers the non-failing scorers now returning proper
   scores instead of `error_score` values.
-  :pr:`22969` by :user:`András Simon <simonandras>` and `Thomas Fan`_.
+  :pr:`23101` by :user:`András Simon <simonandras>` and `Thomas Fan`_.
 
 :mod:`sklearn.multiclass`
 .........................
