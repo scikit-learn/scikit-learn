@@ -31,6 +31,35 @@ from ...utils.validation import check_is_fitted, _check_sample_weight
 from .._linear_loss import LinearModelLoss
 
 
+def _solve_singular_cholesky(H, g):
+    """Find Newton step with singular hessian H.
+
+    Nocedal & Wright, Chapter 3.4 subsection
+    "Modified symmetric indefinite factorization"
+
+    Parameters
+    ----------
+    H : hessian matrix
+    g : gradient
+
+    Returns
+    -------
+    x : Newton step
+        H x = -g
+    """
+    # hessian = L B L' with block diagonal B, block size <= 2
+    L, B, perm = scipy.linalg.ldl(H, lower=True)
+    U, s, Vt = scipy.linalg.svd(B)
+    delta = 1e-3  # TODO: Decide on size of this number
+    tau = (s < delta) * (delta - s)
+    # F = U @ (tau[:, None] * Vt)
+    # hessian approximation = L (B + F) L' = L U (s + tau) Vt L'
+    w = scipy.linalg.solve_triangular(L, -g, lower=True)
+    # w = scipy.linalg.solve(B + F, w)
+    w = Vt.T @ (1 / (s + tau) * (U.T @ w))
+    return scipy.linalg.solve_triangular(L.T, w, lower=False)
+
+
 class NewtonSolver(ABC):
     """Newton solver for GLMs.
 
@@ -431,18 +460,25 @@ class CholeskyNewtonSolver(NewtonSolver):
         )
 
     def inner_solve(self):
+        # TODO: solve(..) may give a warning like
+        #     LinAlgWarning: Ill-conditioned matrix (rcond=9.52447e-17): result may not
+        #     be accurate.
+        # Should we treat this as error and deal with it in the except, or is it fine
+        # as is?
         try:
             self.coef_newton = scipy.linalg.solve(
                 self.hessian, -self.gradient, check_finite=False, assume_a="sym"
             )
-        except np.linalg.LinAlgError:
+        except np.linalg.LinAlgError as e:
             warnings.warn(
-                f"Inner solver of Newton solver {self.__class__.__name__} stumbbled "
-                "upon a singular matrix. Using SVD based least-squares solution "
-                "instead."
+                f"The inner solver of {self.__class__.__name__} stumbled upon a "
+                "singular hessian matrix. Therefore, this iteration uses a step closer"
+                " to a gradient descent direction. Removing collinear features of X or"
+                " increasing the penalization strengths may resolve this issue."
+                " The original Linear Algebra message was:\n"
+                + str(e)
             )
-            # default lapack_driver="gelsd" is SVD based.
-            self.coef_newton = scipy.linalg.lstsq(self.hessian, -self.gradient)[0]
+            self.coef_newton = _solve_singular_cholesky(self.hessian, -self.gradient)
 
 
 class QRCholeskyNewtonSolver(NewtonSolver):
@@ -510,14 +546,16 @@ class QRCholeskyNewtonSolver(NewtonSolver):
             self.coef_newton = scipy.linalg.solve(
                 self.hessian, -self.gradient, check_finite=False, assume_a="sym"
             )
-        except np.linalg.LinAlgError:
+        except np.linalg.LinAlgError as e:
             warnings.warn(
-                f"Inner solver of Newton solver {self.__class__.__name__} stumbbled "
-                "upon a singular matrix. Using SVD based least-squares solution "
-                "instead."
+                f"The inner solver of {self.__class__.__name__} stumbled upon a "
+                "singular hessian matrix. Therefore, this iteration uses a step closer"
+                " to a gradient descent direction. Removing collinear features of X or"
+                " increasing the penalization strengths may resolve this issue."
+                " The original Linear Algebra message was:\n"
+                + str(e)
             )
-            # default lapack_driver="gelsd" is SVD based.
-            self.coef_newton = scipy.linalg.lstsq(self.hessian, -self.gradient)[0]
+            self.coef_newton = _solve_singular_cholesky(self.hessian, -self.gradient)
 
     def line_search(self, X, y, sample_weight):
         # Use R' instead of X
