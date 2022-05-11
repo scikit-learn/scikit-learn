@@ -65,6 +65,15 @@ Changelog
   now conducts validation for `max_features` and `feature_names_in` parameters.
   :pr:`23299` by :user:`Long Bao <lorentzbao>`.
 
+:mod:`sklearn.neighbors`
+........................
+
+- |Feature| Adds new function :func:`neighbors.sort_graph_by_row_values` to
+  sort a CSR sparse graph such that each row is stored with increasing values.
+  This is useful to improve efficiency when using precomputed sparse distance
+  matrices in a variety of estimators and avoid an `EfficiencyWarning`.
+  :pr:`23139` by `Tom Dupre la Tour`_.
+
 Code and Documentation Contributors
 -----------------------------------
 
