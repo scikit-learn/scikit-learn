@@ -58,6 +58,13 @@ Changelog
   :pr:`10468` by :user:`Ruben <icfly2>` and :pr:`22993` by
   :user:`Jovan Stojanovic <jovan-stojanovic>`.
 
+:mod:`sklearn.feature_selection`
+................................
+
+- |Fix| The `partial_fit` method of :class:`feature_selection.SelectFromModel`
+  now conducts validation for `max_features` and `feature_names_in` parameters.
+  :pr:`23299` by :user:`Long Bao <lorentzbao>`.
+
 Code and Documentation Contributors
 -----------------------------------
 
