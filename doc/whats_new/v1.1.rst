@@ -551,10 +551,6 @@ Changelog
   for instance using cgroups quota in a docker container. :pr:`22566` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
-- |Fix| Fixed the issue where :class:`ensemble.AdaBoostClassifier` outputs
-  NaN in feature importance when fitted with very small sample weight.
-  :pr:`20415` by :user:`Zhehao Liu <MaxwellLZH>`.
-
 :mod:`sklearn.feature_extraction`
 .................................
 - |Fix| :class:`ensemble.HistGradientBoostingClassifier` and
