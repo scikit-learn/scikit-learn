@@ -4,7 +4,6 @@
 
 from functools import partial
 import re
-import warnings
 
 import numpy as np
 from numpy.testing import assert_allclose
@@ -569,10 +568,9 @@ def test_warm_start(solver, fit_intercept, global_random_seed):
     glm1.fit(X, y)
 
     glm2 = PoissonRegressor(warm_start=True, max_iter=1, **params)
-    # As we intentionally set max_iter=1, the solver will issue a
-    # ConvergenceWarning which we here simply ignore.
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", category=ConvergenceWarning)
+    # As we intentionally set max_iter=1 such that the solver should raise a
+    # ConvergenceWarning.
+    with pytest.warns(ConvergenceWarning):
         glm2.fit(X, y)
 
     linear_loss = LinearModelLoss(
