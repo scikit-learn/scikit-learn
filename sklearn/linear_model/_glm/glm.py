@@ -120,7 +120,8 @@ class NewtonSolver(ABC):
         Maximum number of Newton steps allowed.
 
     n_threads : int, default=1
-        Number of OpenMP threads to use.
+        Number of OpenMP threads to use for the computation of the hessian and gradient
+        of the loss function.
     """
 
     def __init__(
@@ -274,10 +275,10 @@ class NewtonSolver(ABC):
                 if check:
                     break
                 # 2.3 This is really the last resort.
-                # Check that sum(|gradient_{i-1}| < |sum(|gradient_{i-2}|
+                # Check that sum(|gradient_{i-1}|) < sum(|gradient_{i-2}|)
                 #            = has_improved_sum_abs_grad_previous
-                # If now sum(|gradient_{i}| >= |sum(|gradient_{i-1}|, this iteration
-                # made things worse and we should have stoped at i-1.
+                # If now sum(|gradient_{i}|) >= sum(|gradient_{i-1}|), this iteration
+                # made things worse and we should have stopped at i-1.
                 check = (
                     has_improved_sum_abs_grad_previous
                     and sum_abs_grad >= sum_abs_grad_previous
@@ -499,7 +500,7 @@ class QRCholeskyNewtonSolver(NewtonSolver):
 
     By using X @ coef = R' @ t and ||coef||_2 = ||t||_2, we can just replace X
     by R', solve for t instead of coef, and finally get coef = Q @ t.
-    Note that t has less elements than coef if n_features > n_sampels:
+    Note that t has less elements than coef if n_features > n_samples:
         len(t) = k = min(n_samples, n_features) <= n_features = len(coef).
 
     [1] Hastie, T.J., & Tibshirani, R. (2003). Expression Arrays and the p n Problem.
