@@ -30,4 +30,5 @@ exclude azure-pipelines.yml
 exclude lgtm.yml
 exclude CODE_OF_CONDUCT.md
 exclude CONTRIBUTING.md
+exclude SECURITY.md
 exclude PULL_REQUEST_TEMPLATE.md

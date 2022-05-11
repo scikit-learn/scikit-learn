@@ -222,6 +222,10 @@ def test_check_array_links_to_imputer_doc_only_for_X(input_name, retype):
         " data, for instance by using an imputer transformer in a pipeline"
         " or drop samples with missing values. See"
         " https://scikit-learn.org/stable/modules/impute.html"
+        " You can find a list of all estimators that handle NaN values"
+        " at the following page:"
+        " https://scikit-learn.org/stable/modules/impute.html"
+        "#estimators-that-handle-nan-values"
     )
 
     with pytest.raises(ValueError, match=f"Input {input_name} contains NaN") as ctx:
@@ -401,7 +405,6 @@ def test_check_array():
     assert isinstance(result, np.ndarray)
 
 
-# TODO: Check for error in 1.1 when implicit conversion is removed
 @pytest.mark.parametrize(
     "X",
     [
@@ -412,32 +415,11 @@ def test_check_array():
         np.array([[b"1", b"2"], [b"3", b"4"]], dtype="V1"),
     ],
 )
-def test_check_array_numeric_warns(X):
-    """Test that check_array warns when it converts a bytes/string into a
-    float."""
-    expected_msg = (
-        r"Arrays of bytes/strings is being converted to decimal .*"
-        r"deprecated in 0.24 and will be removed in 1.1"
-    )
-    with pytest.warns(FutureWarning, match=expected_msg):
-        check_array(X, dtype="numeric")
-
-
-# TODO: remove in 1.1
-@ignore_warnings(category=FutureWarning)
-@pytest.mark.parametrize(
-    "X",
-    [
-        [["11", "12"], ["13", "xx"]],
-        np.array([["11", "12"], ["13", "xx"]], dtype="U"),
-        np.array([["11", "12"], ["13", "xx"]], dtype="S"),
-        [[b"a", b"b"], [b"c", b"d"]],
-    ],
-)
-def test_check_array_dtype_numeric_errors(X):
-    """Error when string-ike array can not be converted"""
-    expected_warn_msg = "Unable to convert array of bytes/strings"
-    with pytest.raises(ValueError, match=expected_warn_msg):
+def test_check_array_numeric_error(X):
+    """Test that check_array errors when it receives an array of bytes/string
+    while a numeric dtype is required."""
+    expected_msg = r"dtype='numeric' is not compatible with arrays of bytes/strings"
+    with pytest.raises(ValueError, match=expected_msg):
         check_array(X, dtype="numeric")
 
 
@@ -454,7 +436,7 @@ def test_check_array_dtype_numeric_errors(X):
 )
 def test_check_array_pandas_na_support(pd_dtype, dtype, expected_dtype):
     # Test pandas numerical extension arrays with pd.NA
-    pd = pytest.importorskip("pandas", minversion="1.0")
+    pd = pytest.importorskip("pandas")
 
     if pd_dtype in {"Float32", "Float64"}:
         # Extension dtypes with Floats was added in 1.2
@@ -479,22 +461,6 @@ def test_check_array_pandas_na_support(pd_dtype, dtype, expected_dtype):
     msg = "Input contains NaN"
     with pytest.raises(ValueError, match=msg):
         check_array(X, force_all_finite=True)
-
-
-# TODO: remove test in 1.1 once this behavior is deprecated
-def test_check_array_pandas_dtype_object_conversion():
-    # test that data-frame like objects with dtype object
-    # get converted
-    X = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=object)
-    X_df = MockDataFrame(X)
-    with pytest.warns(FutureWarning):
-        assert check_array(X_df).dtype.kind == "f"
-    with pytest.warns(FutureWarning):
-        assert check_array(X_df, ensure_2d=False).dtype.kind == "f"
-    # smoke-test against dataframes with column named "dtype"
-    X_df.dtype = "Hans"
-    with pytest.warns(FutureWarning):
-        assert check_array(X_df, ensure_2d=False).dtype.kind == "f"
 
 
 def test_check_array_pandas_dtype_casting():
@@ -962,24 +928,67 @@ def test_check_array_series():
     assert_array_equal(res, np.array(["a", "b", "c"], dtype=object))
 
 
-def test_check_dataframe_mixed_float_dtypes():
+@pytest.mark.parametrize(
+    "dtype", ((np.float64, np.float32), np.float64, None, "numeric")
+)
+@pytest.mark.parametrize("bool_dtype", ("bool", "boolean"))
+def test_check_dataframe_mixed_float_dtypes(dtype, bool_dtype):
     # pandas dataframe will coerce a boolean into a object, this is a mismatch
     # with np.result_type which will return a float
     # check_array needs to explicitly check for bool dtype in a dataframe for
     # this situation
     # https://github.com/scikit-learn/scikit-learn/issues/15787
 
-    pd = importorskip("pandas")
+    if bool_dtype == "boolean":
+        # boolean extension arrays was introduced in 1.0
+        pd = importorskip("pandas", minversion="1.0")
+    else:
+        pd = importorskip("pandas")
+
     df = pd.DataFrame(
-        {"int": [1, 2, 3], "float": [0, 0.1, 2.1], "bool": [True, False, True]},
+        {
+            "int": [1, 2, 3],
+            "float": [0, 0.1, 2.1],
+            "bool": pd.Series([True, False, True], dtype=bool_dtype),
+        },
         columns=["int", "float", "bool"],
     )
 
-    array = check_array(df, dtype=(np.float64, np.float32, np.float16))
+    array = check_array(df, dtype=dtype)
+    assert array.dtype == np.float64
     expected_array = np.array(
         [[1.0, 0.0, 1.0], [2.0, 0.1, 0.0], [3.0, 2.1, 1.0]], dtype=float
     )
     assert_allclose_dense_sparse(array, expected_array)
+
+
+def test_check_dataframe_with_only_bool():
+    """Check that dataframe with bool return a boolean arrays."""
+    pd = importorskip("pandas")
+    df = pd.DataFrame({"bool": [True, False, True]})
+
+    array = check_array(df, dtype=None)
+    assert array.dtype == np.bool_
+    assert_array_equal(array, [[True], [False], [True]])
+
+    # common dtype is int for bool + int
+    df = pd.DataFrame(
+        {"bool": [True, False, True], "int": [1, 2, 3]},
+        columns=["bool", "int"],
+    )
+    array = check_array(df, dtype="numeric")
+    assert array.dtype == np.int64
+    assert_array_equal(array, [[1, 1], [0, 2], [1, 3]])
+
+
+def test_check_dataframe_with_only_boolean():
+    """Check that dataframe with boolean return a float array with dtype=None"""
+    pd = importorskip("pandas", minversion="1.0")
+    df = pd.DataFrame({"bool": pd.Series([True, False, True], dtype="boolean")})
+
+    array = check_array(df, dtype=None)
+    assert array.dtype == np.float64
+    assert_array_equal(array, [[True], [False], [True]])
 
 
 class DummyMemory:
@@ -1055,8 +1064,13 @@ def test_check_non_negative(retype):
 def test_check_X_y_informative_error():
     X = np.ones((2, 2))
     y = None
-    with pytest.raises(ValueError, match="y cannot be None"):
+    msg = "estimator requires y to be passed, but the target y is None"
+    with pytest.raises(ValueError, match=msg):
         check_X_y(X, y)
+
+    msg = "RandomForestRegressor requires y to be passed, but the target y is None"
+    with pytest.raises(ValueError, match=msg):
+        check_X_y(X, y, estimator=RandomForestRegressor())
 
 
 def test_retrieve_samples_from_non_standard_shape():
@@ -1083,7 +1097,8 @@ def test_retrieve_samples_from_non_standard_shape():
 def test_check_scalar_valid(x):
     """Test that check_scalar returns no error/warning if valid inputs are
     provided"""
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
         scalar = check_scalar(
             x,
             "test_name",
@@ -1092,7 +1107,6 @@ def test_check_scalar_valid(x):
             max_val=5,
             include_boundaries="both",
         )
-    assert not [w.message for w in record]
     assert scalar == x
 
 
@@ -1484,7 +1498,7 @@ def test_check_fit_params(indices):
 def test_check_sparse_pandas_sp_format(sp_format):
     # check_array converts pandas dataframe with only sparse arrays into
     # sparse matrix
-    pd = pytest.importorskip("pandas", minversion="0.25.0")
+    pd = pytest.importorskip("pandas")
     sp_mat = _sparse_random_matrix(10, 3)
 
     sdf = pd.DataFrame.sparse.from_spmatrix(sp_mat)
@@ -1518,7 +1532,7 @@ def test_check_pandas_sparse_invalid(ntype1, ntype2):
     sparse extension arrays with unsupported mixed dtype
     and pandas version below 1.1. pandas versions 1.1 and
     above fixed this issue so no error will be raised."""
-    pd = pytest.importorskip("pandas", minversion="0.25.0")
+    pd = pytest.importorskip("pandas")
     df = pd.DataFrame(
         {
             "col1": pd.arrays.SparseArray([0, 1, 0], dtype=ntype1, fill_value=0),
@@ -1560,7 +1574,7 @@ def test_check_pandas_sparse_invalid(ntype1, ntype2):
 def test_check_pandas_sparse_valid(ntype1, ntype2, expected_subtype):
     # check that we support the conversion of sparse dataframe with mixed
     # type which can be converted safely.
-    pd = pytest.importorskip("pandas", minversion="0.25.0")
+    pd = pytest.importorskip("pandas")
     df = pd.DataFrame(
         {
             "col1": pd.arrays.SparseArray([0, 1, 0], dtype=ntype1, fill_value=0),
@@ -1649,9 +1663,9 @@ def test_get_feature_names_pandas_with_ints_no_warning(names):
     pd = pytest.importorskip("pandas")
     X = pd.DataFrame([[1, 2], [4, 5], [5, 6]], columns=names)
 
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", FutureWarning)
         names = _get_feature_names(X)
-    assert not [w.message for w in record]
     assert names is None
 
 

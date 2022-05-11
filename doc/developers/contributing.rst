@@ -141,7 +141,8 @@ When you submit an issue to `Github
 follow these guidelines! This will make it a lot easier to provide you with good
 feedback:
 
-- The ideal bug report contains a **short reproducible code snippet**, this way
+- The ideal bug report contains a :ref:`short reproducible code snippet
+  <minimal_reproducer>`, this way
   anyone can try to reproduce the bug easily (see `this
   <https://stackoverflow.com/help/mcve>`_ for more details). If your snippet is
   longer than around 50 lines, please link to a `gist
@@ -158,17 +159,6 @@ feedback:
 
     >>> import sklearn
     >>> sklearn.show_versions()  # doctest: +SKIP
-
-  .. note::
-
-    This utility function is only available in scikit-learn v0.20+.
-    For previous versions, one has to explicitly run::
-
-     import platform; print(platform.platform())
-     import sys; print("Python", sys.version)
-     import numpy; print("NumPy", numpy.__version__)
-     import scipy; print("SciPy", scipy.__version__)
-     import sklearn; print("Scikit-Learn", sklearn.__version__)
 
 - Please ensure all **code snippets and error messages are formatted in
   appropriate code blocks**.  See `Creating and highlighting code blocks
@@ -264,7 +254,7 @@ how to set up your git repository:
 
    .. prompt:: bash $
 
-        pip install pytest pytest-cov flake8 mypy black==22.1.0
+        pip install pytest pytest-cov flake8 mypy numpydoc black==22.3.0
 
 .. _upstream:
 
@@ -391,9 +381,9 @@ In order to ease the reviewing process, we recommend that your contribution
 complies with the following rules before marking a PR as ``[MRG]``. The
 **bolded** ones are especially important:
 
-1. **Give your pull request a helpful title** that summarises what your
+1. **Give your pull request a helpful title** that summarizes what your
    contribution does. This title will often become the commit message once
-   merged so it should summarise your contribution for posterity. In some
+   merged so it should summarize your contribution for posterity. In some
    cases "Fix <ISSUE TITLE>" is enough. "Fix #<ISSUE NUMBER>" is never a
    good title.
 
@@ -401,10 +391,10 @@ complies with the following rules before marking a PR as ``[MRG]``. The
    with `pytest`, but it is usually not recommended since it takes a long
    time. It is often enough to only run the test related to your changes:
    for example, if you changed something in
-   `sklearn/linear_model/logistic.py`, running the following commands will
+   `sklearn/linear_model/_logistic.py`, running the following commands will
    usually be enough:
 
-   - `pytest sklearn/linear_model/logistic.py` to make sure the doctest
+   - `pytest sklearn/linear_model/_logistic.py` to make sure the doctest
      examples are correct
    - `pytest sklearn/linear_model/tests/test_logistic.py` to run the tests
      specific to the file
@@ -562,6 +552,7 @@ message, the following actions are taken.
     [cd build gh]          CD is run only for GitHub Actions
     [lint skip]            Azure pipeline skips linting
     [scipy-dev]            Build & test with our dependencies (numpy, scipy, etc ...) development builds
+    [nogil]                Build & test with the nogil experimental branches of CPython, Cython, NumPy, SciPy...
     [icc-build]            Build & test with the Intel C compiler (ICC)
     [pypy]                 Build & test with PyPy
     [doc skip]             Docs are not built
@@ -848,6 +839,10 @@ Finally, follow the formatting rules below to make it consistently good:
 
 * For unwritten formatting rules, try to follow existing good works:
 
+    * When bibliographic references are available with `arxiv <https://arxiv.org/>`_
+      or `Digital Object Identifier <https://www.doi.org/>`_ identification numbers,
+      use the sphinx directives `:arxiv:` or `:doi:`. For example, see references in
+      :ref:`Spectral Clustering Graphs <spectral_clustering_graph>`.
     * For "References" in docstrings, see the Silhouette Coefficient
       (:func:`sklearn.metrics.silhouette_score`).
 
@@ -1214,9 +1209,17 @@ When the change is in a class, we validate and raise warning in ``fit``::
 
 Similar to deprecations, the warning message should always give both the
 version in which the change happened and the version in which the old behavior
-will be removed. The docstring needs to be updated accordingly. We need a test
-which ensures that the warning is raised in relevant cases but not in other
-cases. The warning should be caught in all other tests
+will be removed.
+
+The parameter description in the docstring needs to be updated accordingly by adding
+a `versionchanged` directive with the old and new default value, pointing to the
+version when the change will be effective::
+
+    .. versionchanged:: 0.22
+       The default value for `n_clusters` will change from 5 to 10 in version 0.22.
+
+Finally, we need a test which ensures that the warning is raised in relevant cases but
+not in other cases. The warning should be caught in all other tests
 (using e.g., ``@pytest.mark.filterwarnings``), and there should be no warning
 in the examples.
 
