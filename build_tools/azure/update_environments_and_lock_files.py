@@ -225,19 +225,6 @@ pip_build_metadata_list = [
         # pip-compile
         "python_version": "3.8.5",
     },
-    {
-        "build_name": "python_nogil",
-        "pip_dependencies": [
-            "numpy",
-            "scipy",
-            "cython",
-            "joblib",
-            "threadpoolctl",
-            "pytest",
-            "pytest-xdist",
-        ],
-        "python_version": "3.9",
-    },
 ]
 
 
@@ -360,11 +347,6 @@ def get_pip_requirements_content(build_metadata):
 # DO NOT EDIT: this file is generated from the specification found in the
 # following script to centralize the configuration for all Azure CI builds:
 # build_tools/azure/update_environments_and_lock_files.py
-{% if build_metadata['build_name'] == 'python_nogil' %}
---index-url https://d1yxz45j0ypngg.cloudfront.net/
---extra-index-url https://pypi.org/simple
-matplotlib
-{% endif %}
 {% for pip_dep in build_metadata['pip_dependencies'] %}
 {{ pip_dep | get_package_with_constraint(build_metadata, uses_pip=True) }}
 {% endfor %}""".strip()
@@ -421,16 +403,15 @@ def write_pip_lock_file(build_metadata, folder_path):
 
 def write_all_pip_lock_files(build_metadata_list, folder_path):
     for build_metadata in build_metadata_list:
-        if "nogil" in build_metadata["build_name"]:
-            write_pip_lock_file(build_metadata, folder_path)
+        write_pip_lock_file(build_metadata, folder_path)
 
 
 if __name__ == "__main__":
     output_path = Path("build_tools/azure/")
-    # logger.info("Writing conda environments")
-    # write_all_conda_environments(conda_build_metadata_list, output_path)
-    # logger.info("Writing conda lock files")
-    # write_all_conda_lock_files(conda_build_metadata_list, output_path)
+    logger.info("Writing conda environments")
+    write_all_conda_environments(conda_build_metadata_list, output_path)
+    logger.info("Writing conda lock files")
+    write_all_conda_lock_files(conda_build_metadata_list, output_path)
 
     logger.info("Writing pip requirements")
     write_all_pip_requirements(pip_build_metadata_list, output_path)
