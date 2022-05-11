@@ -37,13 +37,10 @@ def _pairwise_similarity(a, b, similarity):
     n_a = a_rows.shape[0]
     n_b = b_rows.shape[0]
     result = np.array(
-        list(
-            list(
-                similarity(a_rows[i], a_cols[i], b_rows[j], b_cols[j])
-                for j in range(n_b)
-            )
+        [
+            [similarity(a_rows[i], a_cols[i], b_rows[j], b_cols[j]) for j in range(n_b)]
             for i in range(n_a)
-        )
+        ]
     )
     return result
 

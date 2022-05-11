@@ -616,6 +616,29 @@ def test_pls_coef_shape(PLSEstimator):
     assert pls._coef_.shape == (Y.shape[1], X.shape[1])
 
 
+# TODO (1.3): remove the filterwarnings and adapt the dot product between `X_trans` and
+# `pls.coef_`
+@pytest.mark.filterwarnings("ignore:The attribute `coef_` will be transposed")
+@pytest.mark.parametrize("scale", [True, False])
+@pytest.mark.parametrize("PLSEstimator", [PLSRegression, PLSCanonical, CCA])
+def test_pls_prediction(PLSEstimator, scale):
+    """Check the behaviour of the prediction function."""
+    d = load_linnerud()
+    X = d.data
+    Y = d.target
+
+    pls = PLSEstimator(copy=True, scale=scale).fit(X, Y)
+    Y_pred = pls.predict(X, copy=True)
+
+    y_mean = Y.mean(axis=0)
+    X_trans = X - X.mean(axis=0)
+    if scale:
+        X_trans /= X.std(axis=0, ddof=1)
+
+    assert_allclose(pls.intercept_, y_mean)
+    assert_allclose(Y_pred, X_trans @ pls.coef_ + pls.intercept_)
+
+
 @pytest.mark.parametrize("Klass", [CCA, PLSSVD, PLSRegression, PLSCanonical])
 def test_pls_feature_names_out(Klass):
     """Check `get_feature_names_out` cross_decomposition module."""

@@ -11,9 +11,9 @@ extraction pipelines to different subsets of features, using
 case of datasets that contain heterogeneous data types, since we may want to
 scale the numeric features and one-hot encode the categorical ones.
 
-In this example, the numeric data is standard-scaled after mean-imputation,
-while the categorical data is one-hot encoded after imputing missing values
-with a new category (``'missing'``).
+In this example, the numeric data is standard-scaled after mean-imputation. The
+categorical data is one-hot encoded via ``OneHotEncoder``, which
+creates a new category for missing values.
 
 In addition, we show two different ways to dispatch the columns to the
 particular pre-processor: by column names and by column data types.
