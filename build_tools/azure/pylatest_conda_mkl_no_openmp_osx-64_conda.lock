@@ -20,7 +20,7 @@ https://repo.anaconda.com/pkgs/main/osx-64/libffi-3.3-hb1e8313_2.conda#0c959d444
 https://repo.anaconda.com/pkgs/main/osx-64/libpng-1.6.37-ha441bb4_0.conda#d69245a20ec59d8dc534c65308607129
 https://repo.anaconda.com/pkgs/main/osx-64/lz4-c-1.9.3-h23ab428_1.conda#dc70fec3978d3189741886cc05fcb145
 https://repo.anaconda.com/pkgs/main/osx-64/mkl-2021.4.0-hecd8cb5_637.conda#07d14ece4a852cefa17c1c156db8134e
-https://repo.anaconda.com/pkgs/main/osx-64/openssl-1.1.1n-hca72f7f_0.conda#bc164c37a7706bb3d7e0a43435bcdae7
+https://repo.anaconda.com/pkgs/main/osx-64/openssl-1.1.1o-hca72f7f_0.conda#2b44a8f7a0051ffbc4814e9f99114222
 https://repo.anaconda.com/pkgs/main/osx-64/readline-8.1.2-hca72f7f_1.conda#c54a6153e7ef82f55e7a0ae2f6749592
 https://repo.anaconda.com/pkgs/main/osx-64/tk-8.6.11-h3fd3227_1.conda#30fd8466573613aadae5fe013306b51b
 https://repo.anaconda.com/pkgs/main/osx-64/freetype-2.11.0-hd8bbffd_0.conda#a06dcb72dc6961d37f280b4b97d74f43
@@ -60,7 +60,7 @@ https://repo.anaconda.com/pkgs/main/osx-64/pillow-9.0.1-py39hde71d04_0.conda#f72
 https://repo.anaconda.com/pkgs/main/noarch/python-dateutil-2.8.2-pyhd3eb1b0_0.conda#211ee00320b08a1ac9fea6677649f6c9
 https://repo.anaconda.com/pkgs/main/osx-64/setuptools-61.2.0-py39hecd8cb5_0.conda#e262d518e990f236ada779f23d58ed18
 https://repo.anaconda.com/pkgs/main/osx-64/brotlipy-0.7.0-py39h9ed2024_1003.conda#a08f6f5f899aff4a07351217b36fae41
-https://repo.anaconda.com/pkgs/main/osx-64/cryptography-36.0.0-py39hf6deb26_0.conda#a8df4a8cd13757546685c4127d0854c3
+https://repo.anaconda.com/pkgs/main/osx-64/cryptography-37.0.1-py39hf6deb26_0.conda#5f4c90fdfd8a45bc7060dbc3b65f025a
 https://repo.anaconda.com/pkgs/main/osx-64/numpy-base-1.21.5-py39h3b1a694_2.conda#40a831ef5bc18c617f72d6ca2df74486
 https://repo.anaconda.com/pkgs/main/osx-64/pytest-6.2.5-py39hecd8cb5_2.conda#69fc26ab7be8e3e94bc67bd80a01dd66
 https://repo.anaconda.com/pkgs/main/noarch/pyopenssl-22.0.0-pyhd3eb1b0_0.conda#1dbbf9422269cd62c7094960d9b43f36

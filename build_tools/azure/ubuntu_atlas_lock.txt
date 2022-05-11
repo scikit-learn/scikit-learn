@@ -22,7 +22,7 @@ py==1.11.0
     # via
     #   pytest
     #   pytest-forked
-pyparsing==3.0.7
+pyparsing==3.0.9
     # via packaging
 pytest==6.2.5
     # via

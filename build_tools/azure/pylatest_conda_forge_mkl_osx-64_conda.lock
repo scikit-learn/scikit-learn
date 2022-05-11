@@ -77,7 +77,7 @@ https://conda.anaconda.org/conda-forge/noarch/munkres-1.1.4-pyh9f0ad1d_0.tar.bz2
 https://conda.anaconda.org/conda-forge/osx-64/openjpeg-2.4.0-h6e7aa92_1.tar.bz2#c8cbb6d99f6467246ac26a139256e50f
 https://conda.anaconda.org/conda-forge/noarch/py-1.11.0-pyh6c4a22f_0.tar.bz2#b4613d7e7a493916d867842a6a148054
 https://conda.anaconda.org/conda-forge/noarch/pycparser-2.21-pyhd8ed1ab_0.tar.bz2#076becd9e05608f8dc72757d5f3a91ff
-https://conda.anaconda.org/conda-forge/noarch/pyparsing-3.0.8-pyhd8ed1ab_0.tar.bz2#7f5738c49fdccd0fc755bfd25a5ea66c
+https://conda.anaconda.org/conda-forge/noarch/pyparsing-3.0.9-pyhd8ed1ab_0.tar.bz2#e8fbc1b54b25f4b08281467bc13b70cc
 https://conda.anaconda.org/conda-forge/osx-64/python_abi-3.10-2_cp310.tar.bz2#502ca4a8b43b424316f380d864832877
 https://conda.anaconda.org/conda-forge/noarch/pytz-2022.1-pyhd8ed1ab_0.tar.bz2#b87d66d6d3991d988fb31510c95a9267
 https://conda.anaconda.org/conda-forge/noarch/six-1.16.0-pyh6c4a22f_0.tar.bz2#e5f25f8dbc060e9a8d912e432202afc2
@@ -98,7 +98,7 @@ https://conda.anaconda.org/conda-forge/osx-64/pillow-9.1.0-py310h382dc3b_2.tar.b
 https://conda.anaconda.org/conda-forge/osx-64/pluggy-1.0.0-py310h2ec42d9_3.tar.bz2#b2349ab9b4c83ae573a6985f728e5f37
 https://conda.anaconda.org/conda-forge/osx-64/pysocks-1.7.1-py310h2ec42d9_5.tar.bz2#8b7a82347d1ed70878126333339f4969
 https://conda.anaconda.org/conda-forge/noarch/python-dateutil-2.8.2-pyhd8ed1ab_0.tar.bz2#dd999d1cc9f79e67dbb855c8924c7984
-https://conda.anaconda.org/conda-forge/osx-64/setuptools-62.1.0-py310h2ec42d9_0.tar.bz2#5dbfb1680c0f48fb94085b77248c5d05
+https://conda.anaconda.org/conda-forge/osx-64/setuptools-62.2.0-py310h2ec42d9_0.tar.bz2#b361f098d343fa2d7c7ad01ac77cd7a1
 https://conda.anaconda.org/conda-forge/osx-64/tornado-6.1-py310h1961e1f_3.tar.bz2#84d43324014a93910f008ada676ca542
 https://conda.anaconda.org/conda-forge/osx-64/unicodedata2-14.0.0-py310h1961e1f_1.tar.bz2#3fe48797c02b3b467efd4d9bc53d1624
 https://conda.anaconda.org/conda-forge/osx-64/blas-devel-3.9.0-14_osx64_mkl.tar.bz2#e0784569bc28feea5a24b9c469001407

@@ -23,7 +23,7 @@ https://repo.anaconda.com/pkgs/main/linux-64/libwebp-base-1.2.2-h7f8727e_0.conda
 https://repo.anaconda.com/pkgs/main/linux-64/libxcb-1.14-h7b6447c_0.conda#05811f2f9a9af28f3d7d665dca4d573e
 https://repo.anaconda.com/pkgs/main/linux-64/lz4-c-1.9.3-h295c915_1.conda#d9bd18f73ff566e08add10a54a3463cf
 https://repo.anaconda.com/pkgs/main/linux-64/ncurses-6.3-h7f8727e_2.conda#4edf660a09cc7adcb21120464b2a1783
-https://repo.anaconda.com/pkgs/main/linux-64/openssl-1.1.1n-h7f8727e_0.conda#6a628baa5cc1c79c86026c21abfed46d
+https://repo.anaconda.com/pkgs/main/linux-64/openssl-1.1.1o-h7f8727e_0.conda#dff07c1e2347fed6e5a3afbbcd5bddcc
 https://repo.anaconda.com/pkgs/main/linux-64/pcre-8.45-h295c915_0.conda#b32ccc24d1d9808618c1e898da60f68d
 https://repo.anaconda.com/pkgs/main/linux-64/xz-5.2.5-h7f8727e_1.conda#5d01fcf310bf465237f6b95a019d73bc
 https://repo.anaconda.com/pkgs/main/linux-64/zlib-1.2.12-h7f8727e_2.conda#4f4080e9939f082332cd8be7fedad087
@@ -76,7 +76,7 @@ https://repo.anaconda.com/pkgs/main/linux-64/pyqt-5.9.2-py38h05f1152_4.conda#d3e
 https://repo.anaconda.com/pkgs/main/noarch/python-dateutil-2.8.2-pyhd3eb1b0_0.conda#211ee00320b08a1ac9fea6677649f6c9
 https://repo.anaconda.com/pkgs/main/linux-64/setuptools-61.2.0-py38h06a4308_0.conda#c5e94bc1e8e443ae6d53b191a351591e
 https://repo.anaconda.com/pkgs/main/linux-64/brotlipy-0.7.0-py38h27cfd23_1003.conda#e881c8ee8a4048f29da5d20f0330fe37
-https://repo.anaconda.com/pkgs/main/linux-64/cryptography-36.0.0-py38h9ce1e76_0.conda#c09592544c145d9a803cf1cdb2b43b42
+https://repo.anaconda.com/pkgs/main/linux-64/cryptography-37.0.1-py38h9ce1e76_0.conda#16d301ed789096eb9881a25ed7a1155e
 https://repo.anaconda.com/pkgs/main/linux-64/matplotlib-base-3.1.2-py38hef1b27d_1.conda#5e99f974f4c2757791aa10a27596230a
 https://repo.anaconda.com/pkgs/main/linux-64/pandas-1.2.4-py38ha9443f7_0.conda#5bd3fd807a294f387feabc65821b75d0
 https://repo.anaconda.com/pkgs/main/linux-64/pytest-6.2.5-py38h06a4308_2.conda#52a6739ba472ddd5aeaf0fd495827c38

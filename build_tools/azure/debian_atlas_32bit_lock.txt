@@ -10,11 +10,11 @@ attrs==21.4.0
     # via pytest
 cython==0.29.28
     # via -r build_tools/azure/debian_atlas_32bit_requirements.txt
-importlib-metadata==4.11.2
+importlib-metadata==4.11.3
     # via pytest
 joblib==1.0.0
     # via -r build_tools/azure/debian_atlas_32bit_requirements.txt
-more-itertools==8.12.0
+more-itertools==8.13.0
     # via pytest
 packaging==21.3
     # via pytest
@@ -22,7 +22,7 @@ pluggy==0.13.1
     # via pytest
 py==1.11.0
     # via pytest
-pyparsing==3.0.7
+pyparsing==3.0.9
     # via packaging
 pytest==5.0.1
     # via -r build_tools/azure/debian_atlas_32bit_requirements.txt
@@ -30,5 +30,5 @@ threadpoolctl==2.2.0
     # via -r build_tools/azure/debian_atlas_32bit_requirements.txt
 wcwidth==0.2.5
     # via pytest
-zipp==3.7.0
+zipp==3.8.0
     # via importlib-metadata
