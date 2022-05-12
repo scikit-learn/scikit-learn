@@ -242,21 +242,21 @@ cdef class Splitter:
 
         return self.criterion.node_impurity()
 
-    cdef inline bint check_monotonicity(self, INT32_t monotonic_cst, double lower_bound, double upper_bound) nogil:
+    cdef inline bint check_monotonicity(self, INT32_t monotonic_cst, double lower_bound, double upper_bound):
         """Check monotonic constraint is satisfied at the current split"""
         cdef:
-            double sum_left = deref(self.criterion.sum_left)
-            double sum_right = deref(self.criterion.sum_right)
+            double sum_left = self.criterion.sum_left
+            double sum_right = self.criterion.sum_right
             double weighted_n_left = self.criterion.weighted_n_left
             double weighted_n_right  = self.criterion.weighted_n_right
 
             bint check_lower = (
-                sum_left >= lower_bound * weighted_n_left &
-                sum_right >= lower_bound * weighted_n_right
+                (sum_left >= lower_bound * weighted_n_left) &
+                (sum_right >= lower_bound * weighted_n_right)
             )
             bint check_upper = (
-                sum_left <= upper_bound * weighted_n_left &
-                sum_right <= upper_bound * weighted_n_right
+                (sum_left <= upper_bound * weighted_n_left) &
+                (sum_right <= upper_bound * weighted_n_right)
             )
             bint check_monotonic
         if monotonic_cst == 0: # No constraint
@@ -443,8 +443,9 @@ cdef class BestSplitter(BaseDenseSplitter):
                 self.criterion.update(current.pos)
 
                 # Reject if monotonicity constraints are not satisfied
-                if not self.check_monotonicity(monotonic_constraint, lower_bound, upper_bound):
-                    continue
+                with gil:
+                    if not self.check_monotonicity(monotonic_constraint, lower_bound, upper_bound):
+                        continue
 
                 # Reject if min_weight_leaf is not satisfied
                 if ((self.criterion.weighted_n_left < min_weight_leaf) or
@@ -669,8 +670,9 @@ cdef class RandomSplitter(BaseDenseSplitter):
                 continue
 
             # Reject if monotonicity constraints are not satisfied
-            if not self.check_monotonicity(monotonic_constraint, lower_bound, upper_bound):
-                continue
+            with gil:
+                if not self.check_monotonicity(monotonic_constraint, lower_bound, upper_bound):
+                    continue
 
             current_proxy_improvement = self.criterion.proxy_impurity_improvement()
 
@@ -1227,8 +1229,9 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
                     continue
 
                 # Reject if monotonicity constraints are not satisfied
-                if not self.check_monotonicity(monotonic_constraint, lower_bound, upper_bound):
-                    continue
+                with gil:
+                    if not self.check_monotonicity(monotonic_constraint, lower_bound, upper_bound):
+                        continue
 
                 current_proxy_improvement = self.criterion.proxy_impurity_improvement()
 
@@ -1464,8 +1467,9 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
                 continue
 
             # Reject if monotonicity constraints are not satisfied
-            if not self.check_monotonicity(monotonic_constraint, lower_bound, upper_bound):
-                continue
+            with gil:
+                if not self.check_monotonicity(monotonic_constraint, lower_bound, upper_bound):
+                    continue
 
             # Evaluate split
             self.criterion.reset()
