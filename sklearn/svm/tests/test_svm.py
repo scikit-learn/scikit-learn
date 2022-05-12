@@ -3,7 +3,6 @@ Testing for Support Vector Machine module (sklearn.svm)
 
 TODO: remove hard coded numerical results when possible
 """
-import warnings
 import numpy as np
 import itertools
 import pytest
@@ -1399,7 +1398,7 @@ def test_linearsvm_liblinear_sample_weight(SVM, params):
 
 
 @pytest.mark.parametrize("Klass", (OneClassSVM, SVR, NuSVR))
-def test_n_support_oneclass_svr(Klass):
+def test_n_support(Klass):
     # Make n_support is correct for oneclass and SVR (used to be
     # non-initialized)
     # this is a non regression test for issue #14774
@@ -1409,12 +1408,10 @@ def test_n_support_oneclass_svr(Klass):
     fit_data = {"X": X}
     if Klass.__name__ != "OneClassSVM":
         fit_data.update({"y": y})
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", FutureWarning)
-        assert not hasattr(est, "n_support_")
-        est.fit(**fit_data)
-        assert est.n_support_[0] == est.support_vectors_.shape[0]
-        assert est.n_support_.size == 1
+    assert not hasattr(est, "n_support_")
+    est.fit(**fit_data)
+    assert est.n_support_[0] == est.support_vectors_.shape[0]
+    assert est.n_support_.size == 1
 
 
 @pytest.mark.parametrize("Estimator", [svm.SVC, svm.SVR])
