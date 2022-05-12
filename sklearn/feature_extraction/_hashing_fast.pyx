@@ -13,6 +13,8 @@ from ..utils._typedefs cimport INT32TYPE_t, INT64TYPE_t
 from ..utils.murmurhash cimport murmurhash3_bytes_s32
 from ..utils._vector_sentinel cimport vector_to_nd_array
 
+cnp.import_array()
+
 
 def transform(raw_X, Py_ssize_t n_features, dtype,
               bint alternate_sign=1, unsigned int seed=0):
