@@ -41,7 +41,12 @@ mamba update --yes conda
 mamba create -n testenv --yes $(get_dep python $PYTHON_VERSION)
 source activate testenv
 
-# Use the latest by default
+# pin pip to 22.0.4 because pip 22.1 validates build dependencies in
+# pyproject.toml when using --no-build-isolation. oldest-supported-numpy is
+# part of the build dependencies in pyproject.toml so using pip 22.1 will cause
+# an error since oldest-supported-numpy is not really meant to be installed in
+# the environment. See https://github.com/scikit-learn/scikit-learn/pull/23336
+# for more details
 mamba install --verbose -y  ccache \
                             pip==22.0.4 \
                             $(get_dep numpy $NUMPY_VERSION) \
