@@ -128,9 +128,10 @@ X_train, X_test, y_train, y_test, feature_names, target_names = load_dataset(
 # :class:`~sklearn.linear_model.RidgeClassifier` class. This is a linear
 # classification model that uses the mean squared error on {-1, 1} encoded
 # targets, one for each possible class. Contrary to
-# :class:`~sklearn.linear_model.LogisticRegression`, `RidgeClassifier` does not
-# provide probabilistic predictions (no `predict_proba` method), but it is often
-# faster to train.
+# :class:`~sklearn.linear_model.LogisticRegression`,
+# :class:`~sklearn.linear_model.RidgeClassifier` does not
+# provide probabilistic predictions (no `predict_proba` method),
+# but it is often faster to train.
 
 from sklearn.linear_model import RidgeClassifier
 
@@ -155,8 +156,8 @@ _ = ax.set_title(
 
 # %%
 # The confusion matrix highlights that documents of the `alt.atheism` class are
-# often confused with documents with the class `talk.religion.misc` class while
-# and vice-versa which is expected since the topics are semantically related.
+# often confused with documents with the class `talk.religion.misc` class and
+# vice-versa which is expected since the topics are semantically related.
 #
 # We also observe that some documents of the `sci.space` class can be misclassified as
 # `comp.graphics` while the converse is much rarer. A manual inspection of those
@@ -221,15 +222,14 @@ _ = plot_feature_effects().set_title("Average feature effect on the original dat
 # We can observe that the most predictive words are often strongly positively
 # associated with a single class and negatively associated with all the other
 # classes. Most of those positive associations are quite easy to interpret.
-# However, some words such as "god" and "people" are positively associated to
-# both "talk.misc.religion" and "alt.atheism" as those two classes expectedly
+# However, some words such as `"god"` and `"people"` are positively associated to
+# both `"talk.misc.religion"` and `"alt.atheism"` as those two classes expectedly
 # share some common vocabulary. Notice however that there are also words such as
-# "christian" and "morality" that are only positively associated with
-# "talk.misc.religion". Furthermore, in this version of the dataset, the word
-# "caltech" is one of the top predictive features for atheism due to pollution
-# in the dataset coming from some sort of metadata such as the the email
-# addresses of the sender of previous emails in the discussion as can be seen
-# below:
+# `"christian"` and `"morality"` that are only positively associated with
+# `"talk.misc.religion"`. Furthermore, in this version of the dataset, the word
+# `"caltech"` is one of the top predictive features for atheism due to pollution
+# in the dataset coming from some sort of metadata such as the email addresses
+# of the sender of previous emails in the discussion as can be seen below:
 
 data_train = fetch_20newsgroups(
     subset="train", categories=categories, shuffle=True, random_state=42
@@ -285,7 +285,7 @@ _ = plot_feature_effects().set_title("Average feature effects on filtered docume
 
 # %%
 # In the next section we keep the dataset without metadata to compare several
-# classifiers
+# classifiers.
 
 # %%
 # Benchmarking classifiers
