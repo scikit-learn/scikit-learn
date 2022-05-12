@@ -118,13 +118,20 @@ class BayesianGaussianMixture(BaseMixture):
         The number of initializations to perform. The result with the highest
         lower bound value on the likelihood is kept.
 
-    init_params : {'kmeans', 'random'}, default='kmeans'
+    init_params : {'kmeans', 'k-means++', 'random', 'random_from_data'}, \
+    default='kmeans'
         The method used to initialize the weights, the means and the
         covariances.
-        Must be one of::
+        String must be one of:
 
             'kmeans' : responsibilities are initialized using kmeans.
+            'k-means++' : use the k-means++ method to initialize.
             'random' : responsibilities are initialized randomly.
+            'random_from_data' : initial means are randomly selected data points.
+
+        .. versionchanged:: v1.1
+            `init_params` now accepts 'random_from_data' and 'k-means++' as
+            initialization methods.
 
     weight_concentration_prior_type : str, default='dirichlet_process'
         String describing the type of the weight concentration prior.
@@ -243,8 +250,8 @@ class BayesianGaussianMixture(BaseMixture):
         convergence.
 
     lower_bound_ : float
-        Lower bound value on the likelihood (of the training data with
-        respect to the model) of the best fit of inference.
+        Lower bound value on the model evidence (of the training data) of the
+        best fit of inference.
 
     weight_concentration_prior_ : tuple or float
         The dirichlet concentration of each component on the weight
@@ -893,4 +900,4 @@ class BayesianGaussianMixture(BaseMixture):
                 self.precisions_cholesky_, self.precisions_cholesky_.T
             )
         else:
-            self.precisions_ = self.precisions_cholesky_ ** 2
+            self.precisions_ = self.precisions_cholesky_**2

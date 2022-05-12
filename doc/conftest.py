@@ -109,7 +109,7 @@ def skip_if_matplotlib_not_installed(fname):
 
 def pytest_runtest_setup(item):
     fname = item.fspath.strpath
-    # normalise filename to use forward slashes on Windows for easier handling
+    # normalize filename to use forward slashes on Windows for easier handling
     # later
     fname = fname.replace(os.sep, "/")
 
@@ -126,8 +126,6 @@ def pytest_runtest_setup(item):
         setup_working_with_text_data()
     elif fname.endswith("modules/compose.rst") or is_index:
         setup_compose()
-    elif IS_PYPY and fname.endswith("modules/feature_extraction.rst"):
-        raise SkipTest("FeatureHasher is not compatible with PyPy")
     elif fname.endswith("datasets/loading_other_datasets.rst"):
         setup_loading_other_datasets()
     elif fname.endswith("modules/impute.rst"):

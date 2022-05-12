@@ -4,6 +4,8 @@
 
 import numpy as np
 
+from scipy import sparse
+
 
 def compute_class_weight(class_weight, *, classes, y):
     """Estimate class weights for unbalanced datasets.
@@ -58,12 +60,18 @@ def compute_class_weight(class_weight, *, classes, y):
             raise ValueError(
                 "class_weight must be dict, 'balanced', or None, got: %r" % class_weight
             )
-        for c in class_weight:
-            i = np.searchsorted(classes, c)
-            if i >= len(classes) or classes[i] != c:
-                raise ValueError("Class label {} not present.".format(c))
-            else:
+        unweighted_classes = []
+        for i, c in enumerate(classes):
+            if c in class_weight:
                 weight[i] = class_weight[c]
+            else:
+                unweighted_classes.append(c)
+
+        n_weighted_classes = len(classes) - len(unweighted_classes)
+        if unweighted_classes and n_weighted_classes != len(class_weight):
+            raise ValueError(
+                f"The classes, {unweighted_classes}, are not in class_weight"
+            )
 
     return weight
 
@@ -91,7 +99,7 @@ def compute_sample_weight(class_weight, y, *, indices=None):
 
         For multi-output, the weights of each column of y will be multiplied.
 
-    y : array-like of shape (n_samples,) or (n_samples, n_outputs)
+    y : {array-like, sparse matrix} of shape (n_samples,) or (n_samples, n_outputs)
         Array of original class labels per sample.
 
     indices : array-like of shape (n_subsample,), default=None
@@ -107,9 +115,11 @@ def compute_sample_weight(class_weight, y, *, indices=None):
         Array with sample weights as applied to the original y.
     """
 
-    y = np.atleast_1d(y)
-    if y.ndim == 1:
-        y = np.reshape(y, (-1, 1))
+    # Ensure y is 2D. Sparse matrices are already 2D.
+    if not sparse.issparse(y):
+        y = np.atleast_1d(y)
+        if y.ndim == 1:
+            y = np.reshape(y, (-1, 1))
     n_outputs = y.shape[1]
 
     if isinstance(class_weight, str):
@@ -139,6 +149,9 @@ def compute_sample_weight(class_weight, y, *, indices=None):
     for k in range(n_outputs):
 
         y_full = y[:, k]
+        if sparse.issparse(y_full):
+            # Ok to densify a single column at a time
+            y_full = y_full.toarray().flatten()
         classes_full = np.unique(y_full)
         classes_missing = None
 
@@ -151,7 +164,7 @@ def compute_sample_weight(class_weight, y, *, indices=None):
             # Get class weights for the subsample, covering all classes in
             # case some labels that were present in the original data are
             # missing from the sample.
-            y_subsample = y[indices, k]
+            y_subsample = y_full[indices]
             classes_subsample = np.unique(y_subsample)
 
             weight_k = np.take(

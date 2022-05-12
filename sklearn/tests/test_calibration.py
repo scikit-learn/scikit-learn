@@ -14,7 +14,6 @@ from sklearn.utils._testing import (
     assert_array_almost_equal,
     assert_almost_equal,
     assert_array_equal,
-    ignore_warnings,
 )
 from sklearn.utils.extmath import softmax
 from sklearn.exceptions import NotFittedError
@@ -36,14 +35,24 @@ from sklearn.isotonic import IsotonicRegression
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.impute import SimpleImputer
 from sklearn.metrics import brier_score_loss
-from sklearn.calibration import CalibratedClassifierCV, _CalibratedClassifier
-from sklearn.calibration import _sigmoid_calibration, _SigmoidCalibration
-from sklearn.calibration import calibration_curve, CalibrationDisplay
+from sklearn.calibration import (
+    _CalibratedClassifier,
+    _SigmoidCalibration,
+    _sigmoid_calibration,
+    CalibratedClassifierCV,
+    CalibrationDisplay,
+    calibration_curve,
+)
+from sklearn.utils._mocking import CheckingClassifier
+from sklearn.utils._testing import _convert_container
+
+
+N_SAMPLES = 200
 
 
 @pytest.fixture(scope="module")
 def data():
-    X, y = make_classification(n_samples=200, n_features=6, random_state=42)
+    X, y = make_classification(n_samples=N_SAMPLES, n_features=6, random_state=42)
     return X, y
 
 
@@ -51,7 +60,7 @@ def data():
 @pytest.mark.parametrize("ensemble", [True, False])
 def test_calibration(data, method, ensemble):
     # Test calibration objects with isotonic and sigmoid
-    n_samples = 100
+    n_samples = N_SAMPLES // 2
     X, y = data
     sample_weight = np.random.RandomState(seed=42).uniform(size=y.size)
 
@@ -159,7 +168,7 @@ def test_calibration_cv_splitter(data, ensemble):
 @pytest.mark.parametrize("method", ["sigmoid", "isotonic"])
 @pytest.mark.parametrize("ensemble", [True, False])
 def test_sample_weight(data, method, ensemble):
-    n_samples = 100
+    n_samples = N_SAMPLES // 2
     X, y = data
 
     sample_weight = np.random.RandomState(seed=42).uniform(size=len(y))
@@ -391,20 +400,14 @@ def test_calibration_curve():
     y_true = np.array([0, 0, 0, 1, 1, 1])
     y_pred = np.array([0.0, 0.1, 0.2, 0.8, 0.9, 1.0])
     prob_true, prob_pred = calibration_curve(y_true, y_pred, n_bins=2)
-    prob_true_unnormalized, prob_pred_unnormalized = calibration_curve(
-        y_true, y_pred * 2, n_bins=2, normalize=True
-    )
     assert len(prob_true) == len(prob_pred)
     assert len(prob_true) == 2
     assert_almost_equal(prob_true, [0, 1])
     assert_almost_equal(prob_pred, [0.1, 0.9])
-    assert_almost_equal(prob_true, prob_true_unnormalized)
-    assert_almost_equal(prob_pred, prob_pred_unnormalized)
 
-    # probabilities outside [0, 1] should not be accepted when normalize
-    # is set to False
+    # Probabilities outside [0, 1] should not be accepted at all.
     with pytest.raises(ValueError):
-        calibration_curve([1.1], [-0.1], normalize=False)
+        calibration_curve([1], [-0.1])
 
     # test that quantiles work as expected
     y_true2 = np.array([0, 0, 0, 0, 1, 1])
@@ -421,6 +424,26 @@ def test_calibration_curve():
     # Check that error is raised when invalid strategy is selected
     with pytest.raises(ValueError):
         calibration_curve(y_true2, y_pred2, strategy="percentile")
+
+
+# TODO(1.3): Remove this test.
+def test_calibration_curve_with_unnormalized_proba():
+    """Tests the `normalize` parameter of `calibration_curve`"""
+    y_true = np.array([0, 0, 0, 1, 1, 1])
+    y_pred = np.array([0.0, 0.1, 0.2, 0.8, 0.9, 1.0])
+
+    # Ensure `normalize` == False raises a FutureWarning.
+    with pytest.warns(FutureWarning):
+        calibration_curve(y_true, y_pred, n_bins=2, normalize=False)
+
+    # Ensure `normalize` == True raises a FutureWarning and behaves as expected.
+    with pytest.warns(FutureWarning):
+        prob_true_unnormalized, prob_pred_unnormalized = calibration_curve(
+            y_true, y_pred * 2, n_bins=2, normalize=True
+        )
+        prob_true, prob_pred = calibration_curve(y_true, y_pred, n_bins=2)
+        assert_almost_equal(prob_true, prob_true_unnormalized)
+        assert_almost_equal(prob_pred, prob_pred_unnormalized)
 
 
 @pytest.mark.parametrize("ensemble", [True, False])
@@ -481,7 +504,6 @@ def test_calibration_less_classes(ensemble):
             assert np.allclose(proba, 1 / proba.shape[0])
 
 
-@ignore_warnings(category=FutureWarning)
 @pytest.mark.parametrize(
     "X",
     [
@@ -916,6 +938,82 @@ def test_calibrated_classifier_cv_double_sample_weights_equivalence(method, ense
     y_pred_without_weights = calibrated_clf_without_weights.predict_proba(X)
 
     assert_allclose(y_pred_with_weights, y_pred_without_weights)
+
+
+@pytest.mark.parametrize("fit_params_type", ["list", "array"])
+def test_calibration_with_fit_params(fit_params_type, data):
+    """Tests that fit_params are passed to the underlying base estimator.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/12384
+    """
+    X, y = data
+    fit_params = {
+        "a": _convert_container(y, fit_params_type),
+        "b": _convert_container(y, fit_params_type),
+    }
+
+    clf = CheckingClassifier(expected_fit_params=["a", "b"])
+    pc_clf = CalibratedClassifierCV(clf)
+
+    pc_clf.fit(X, y, **fit_params)
+
+
+@pytest.mark.parametrize(
+    "sample_weight",
+    [
+        [1.0] * N_SAMPLES,
+        np.ones(N_SAMPLES),
+    ],
+)
+def test_calibration_with_sample_weight_base_estimator(sample_weight, data):
+    """Tests that sample_weight is passed to the underlying base
+    estimator.
+    """
+    X, y = data
+    clf = CheckingClassifier(expected_sample_weight=True)
+    pc_clf = CalibratedClassifierCV(clf)
+
+    pc_clf.fit(X, y, sample_weight=sample_weight)
+
+
+def test_calibration_without_sample_weight_base_estimator(data):
+    """Check that even if the base_estimator doesn't support
+    sample_weight, fitting with sample_weight still works.
+
+    There should be a warning, since the sample_weight is not passed
+    on to the base_estimator.
+    """
+    X, y = data
+    sample_weight = np.ones_like(y)
+
+    class ClfWithoutSampleWeight(CheckingClassifier):
+        def fit(self, X, y, **fit_params):
+            assert "sample_weight" not in fit_params
+            return super().fit(X, y, **fit_params)
+
+    clf = ClfWithoutSampleWeight()
+    pc_clf = CalibratedClassifierCV(clf)
+
+    with pytest.warns(UserWarning):
+        pc_clf.fit(X, y, sample_weight=sample_weight)
+
+
+def test_calibration_with_fit_params_inconsistent_length(data):
+    """fit_params having different length than data should raise the
+    correct error message.
+    """
+    X, y = data
+    fit_params = {"a": y[:5]}
+    clf = CheckingClassifier(expected_fit_params=fit_params)
+    pc_clf = CalibratedClassifierCV(clf)
+
+    msg = (
+        r"Found input variables with inconsistent numbers of "
+        r"samples: \[" + str(N_SAMPLES) + r", 5\]"
+    )
+    with pytest.raises(ValueError, match=msg):
+        pc_clf.fit(X, y, **fit_params)
 
 
 @pytest.mark.parametrize("method", ["sigmoid", "isotonic"])

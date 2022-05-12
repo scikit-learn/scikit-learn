@@ -50,9 +50,10 @@ Conclusion
 
 References
 ----------
-(1) Finding structure with randomness: Stochastic algorithms for constructing
-    approximate matrix decompositions
-    Halko, et al., 2009 https://arxiv.org/abs/0909.4061
+(1) :arxiv:`"Finding structure with randomness:
+    Stochastic algorithms for constructing approximate matrix decompositions."
+    <0909.4061>`
+    Halko, et al., (2009)
 
 (2) A randomized algorithm for the decomposition of matrices
     Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert
@@ -190,7 +191,7 @@ def get_data(dataset_name):
         del row
         del col
     else:
-        X = fetch_openml(dataset_name).data
+        X = fetch_openml(dataset_name, parser="auto").data
     return X
 
 
@@ -280,9 +281,9 @@ def svd_timing(
         U, mu, V = randomized_svd(
             X,
             n_comps,
-            n_oversamples,
-            n_iter,
-            power_iteration_normalizer,
+            n_oversamples=n_oversamples,
+            n_iter=n_iter,
+            power_iteration_normalizer=power_iteration_normalizer,
             random_state=random_state,
             transpose=False,
         )

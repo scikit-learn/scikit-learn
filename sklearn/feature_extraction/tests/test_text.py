@@ -1,8 +1,8 @@
-# -*- coding: utf-8 -*-
 from collections.abc import Mapping
 import re
 
 import pytest
+import warnings
 from scipy import sparse
 
 from sklearn.feature_extraction.text import strip_tags
@@ -451,9 +451,9 @@ def test_countvectorizer_uppercase_in_vocab():
     with pytest.warns(UserWarning, match=message):
         vectorizer.fit(vocabulary)
 
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
         vectorizer.transform(vocabulary)
-    assert not record
 
 
 def test_tf_transformer_feature_names_out():
@@ -473,7 +473,7 @@ def test_tf_idf_smoothing():
     assert (tfidf >= 0).all()
 
     # check normalization
-    assert_array_almost_equal((tfidf ** 2).sum(axis=1), [1.0, 1.0, 1.0])
+    assert_array_almost_equal((tfidf**2).sum(axis=1), [1.0, 1.0, 1.0])
 
     # this is robust to features with only zeros
     X = [[1, 1, 0], [1, 1, 0], [1, 0, 0]]
@@ -489,7 +489,7 @@ def test_tfidf_no_smoothing():
     assert (tfidf >= 0).all()
 
     # check normalization
-    assert_array_almost_equal((tfidf ** 2).sum(axis=1), [1.0, 1.0, 1.0])
+    assert_array_almost_equal((tfidf**2).sum(axis=1), [1.0, 1.0, 1.0])
 
     # the lack of smoothing make IDF fragile in the presence of feature with
     # only zeros
@@ -616,15 +616,32 @@ def test_vectorizer():
 
 
 def test_tfidf_vectorizer_setters():
-    tv = TfidfVectorizer(norm="l2", use_idf=False, smooth_idf=False, sublinear_tf=False)
+    norm, use_idf, smooth_idf, sublinear_tf = "l2", False, False, False
+    tv = TfidfVectorizer(
+        norm=norm, use_idf=use_idf, smooth_idf=smooth_idf, sublinear_tf=sublinear_tf
+    )
+    tv.fit(JUNK_FOOD_DOCS)
+    assert tv._tfidf.norm == norm
+    assert tv._tfidf.use_idf == use_idf
+    assert tv._tfidf.smooth_idf == smooth_idf
+    assert tv._tfidf.sublinear_tf == sublinear_tf
+
+    # assigning value to `TfidfTransformer` should not have any effect until
+    # fitting
     tv.norm = "l1"
-    assert tv._tfidf.norm == "l1"
     tv.use_idf = True
-    assert tv._tfidf.use_idf
     tv.smooth_idf = True
-    assert tv._tfidf.smooth_idf
     tv.sublinear_tf = True
-    assert tv._tfidf.sublinear_tf
+    assert tv._tfidf.norm == norm
+    assert tv._tfidf.use_idf == use_idf
+    assert tv._tfidf.smooth_idf == smooth_idf
+    assert tv._tfidf.sublinear_tf == sublinear_tf
+
+    tv.fit(JUNK_FOOD_DOCS)
+    assert tv._tfidf.norm == tv.norm
+    assert tv._tfidf.use_idf == tv.use_idf
+    assert tv._tfidf.smooth_idf == tv.smooth_idf
+    assert tv._tfidf.sublinear_tf == tv.sublinear_tf
 
 
 @fails_if_pypy
@@ -852,8 +869,7 @@ def test_vectorizer_min_df():
         (
             {"max_features": 3.5},
             TypeError,
-            "max_features must be an instance of <class 'numbers.Integral'>, not <class"
-            " 'float'>",
+            "max_features must be an instance of int, not float",
         ),
     ),
 )
@@ -1049,7 +1065,7 @@ def test_vectorizer_unicode():
 
     vect = HashingVectorizer(norm=None, alternate_sign=False)
     X_hashed = vect.transform([document])
-    assert X_hashed.shape == (1, 2 ** 20)
+    assert X_hashed.shape == (1, 2**20)
 
     # No collisions on such a small dataset
     assert X_counted.nnz == X_hashed.nnz
@@ -1227,6 +1243,11 @@ def test_tfidf_vectorizer_setter():
         copy.transform(JUNK_FOOD_DOCS).toarray(),
         orig.transform(JUNK_FOOD_DOCS).toarray(),
     )
+    # `idf_` cannot be set with `use_idf=False`
+    copy = TfidfVectorizer(vocabulary=orig.vocabulary_, use_idf=False)
+    err_msg = "`idf_` cannot be set when `user_idf=False`."
+    with pytest.raises(ValueError, match=err_msg):
+        copy.idf_ = orig.idf_
 
 
 def test_tfidfvectorizer_invalid_idf_attr():
@@ -1336,13 +1357,13 @@ def test_tfidf_vectorizer_type(vectorizer_dtype, output_dtype, warning_expected)
     vectorizer = TfidfVectorizer(dtype=vectorizer_dtype)
 
     warning_msg_match = "'dtype' should be used."
-    warning_cls = UserWarning
-    expected_warning_cls = warning_cls if warning_expected else None
-    with pytest.warns(expected_warning_cls, match=warning_msg_match) as record:
-        X_idf = vectorizer.fit_transform(X)
-    if expected_warning_cls is None:
-        relevant_warnings = [w for w in record if isinstance(w, warning_cls)]
-        assert len(relevant_warnings) == 0
+    if warning_expected:
+        with pytest.warns(UserWarning, match=warning_msg_match):
+            X_idf = vectorizer.fit_transform(X)
+    else:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", UserWarning)
+            X_idf = vectorizer.fit_transform(X)
     assert X_idf.dtype == output_dtype
 
 
@@ -1400,9 +1421,9 @@ def test_vectorizer_stop_words_inconsistent():
         assert _check_stop_words_consistency(vec) is False
 
     # Only one warning per stop list
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
         vec.fit_transform(["hello world"])
-    assert not len(record)
     assert _check_stop_words_consistency(vec) is None
 
     # Test caching of inconsistency assessment

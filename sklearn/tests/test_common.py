@@ -115,8 +115,6 @@ def test_check_estimator_generate_only():
     assert isgenerator(all_instance_gen_checks)
 
 
-@ignore_warnings(category=(DeprecationWarning, FutureWarning))
-# ignore deprecated open(.., 'U') in numpy distutils
 def test_configure():
     # Smoke test the 'configure' step of setup, this tests all the
     # 'configure' functions in the setup.pys in scikit-learn
@@ -369,7 +367,7 @@ column_name_estimators = list(
 def test_pandas_column_name_consistency(estimator):
     _set_checking_parameters(estimator)
     with ignore_warnings(category=(FutureWarning)):
-        with pytest.warns(None) as record:
+        with warnings.catch_warnings(record=True) as record:
             check_dataframe_column_names_consistency(
                 estimator.__class__.__name__, estimator
             )
@@ -380,16 +378,8 @@ def test_pandas_column_name_consistency(estimator):
 # TODO: As more modules support get_feature_names_out they should be removed
 # from this list to be tested
 GET_FEATURES_OUT_MODULES_TO_IGNORE = [
-    "cluster",
-    "cross_decomposition",
-    "discriminant_analysis",
     "ensemble",
-    "isotonic",
     "kernel_approximation",
-    "preprocessing",
-    "manifold",
-    "neighbors",
-    "neural_network",
 ]
 
 
@@ -423,15 +413,7 @@ def test_transformers_get_feature_names_out(transformer):
 
 
 VALIDATE_ESTIMATOR_INIT = [
-    "ColumnTransformer",
-    "FeatureHasher",
-    "FeatureUnion",
-    "GridSearchCV",
-    "HalvingGridSearchCV",
-    "Pipeline",
     "SGDOneClassSVM",
-    "TheilSenRegressor",
-    "TweedieRegressor",
 ]
 VALIDATE_ESTIMATOR_INIT = set(VALIDATE_ESTIMATOR_INIT)
 
@@ -451,7 +433,7 @@ def test_estimators_do_not_raise_errors_in_init_or_set_params(Estimator):
         if param.kind != Parameter.VAR_KEYWORD
     ]
 
-    smoke_test_values = [-1, 3.0, "helloworld", np.array([1.0, 4.0]), {}, []]
+    smoke_test_values = [-1, 3.0, "helloworld", np.array([1.0, 4.0]), [1], {}, []]
     for value in smoke_test_values:
         new_params = {key: value for key in params}
 
