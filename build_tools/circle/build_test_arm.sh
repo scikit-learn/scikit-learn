@@ -43,8 +43,7 @@ source activate testenv
 
 # Use the latest by default
 mamba install --verbose -y  ccache \
-                            pip \
-                      			'setuptools<60' \
+                            pip==22.0.4 \
                             $(get_dep numpy $NUMPY_VERSION) \
                             $(get_dep scipy $SCIPY_VERSION) \
                             $(get_dep cython $CYTHON_VERSION) \
