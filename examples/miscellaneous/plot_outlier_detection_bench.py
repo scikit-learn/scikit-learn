@@ -79,7 +79,9 @@ def preprocess_dataset(dataset_name):
         y = y[s]
         y = (y != 2).astype(int)
     if dataset_name in ["glass", "wdbc", "cardiotocography"]:
-        dataset = fetch_openml(name=dataset_name, version=1, as_frame=False)
+        dataset = fetch_openml(
+            name=dataset_name, version=1, as_frame=False, parser="pandas"
+        )
         X = dataset.data
         y = dataset.target
 
