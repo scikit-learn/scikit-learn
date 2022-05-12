@@ -867,7 +867,7 @@ def test_router_deprecation_warning():
             return (
                 MetadataRouter(owner=self.__class__.__name__)
                 .add(estimator=self.estimator, method_mapping="one-to-one")
-                .warn_on(child="estimator", methods=["fit"], raise_on="1.3")
+                .warn_on(child="estimator", methods=["fit"], raise_on="1.4")
             )
 
     class Estimator(BaseEstimator):
@@ -923,7 +923,7 @@ def test_router_deprecation_warning():
     ):
         est.fit(X, y, sample_weight=my_weights)
 
-    # but if the inner estimator has a non-default request, we fall ack to
+    # but if the inner estimator has a non-default request, we fall back to
     # raising an error
     est = MetaEstimator(
         estimator=WarningWeightedMetaRegressor(

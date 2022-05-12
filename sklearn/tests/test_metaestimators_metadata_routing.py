@@ -17,7 +17,7 @@ metadata = np.random.randint(0, 10, size=N)
 sample_weight = np.random.rand(N)
 
 
-class RegressorSubEstimator(RegressorMixin, BaseEstimator):
+class ConsumingRegressor(RegressorMixin, BaseEstimator):
     """A regressor consuming metadata."""
 
     def __init__(self, **kwargs):
@@ -39,7 +39,7 @@ class RegressorSubEstimator(RegressorMixin, BaseEstimator):
         return np.zeros(shape=(len(X)))
 
 
-class ClassifierSubEstimator(ClassifierMixin, BaseEstimator):
+class ConsumingClassifier(ClassifierMixin, BaseEstimator):
     """A regressor consuming metadata."""
 
     def __init__(self, **kwargs):
@@ -76,8 +76,8 @@ class ClassifierSubEstimator(ClassifierMixin, BaseEstimator):
 
 
 def get_empty_metaestimators():
-    yield MultiOutputRegressor(estimator=RegressorSubEstimator())
-    yield MultiOutputClassifier(estimator=ClassifierSubEstimator())
+    yield MultiOutputRegressor(estimator=ConsumingRegressor())
+    yield MultiOutputClassifier(estimator=ConsumingClassifier())
 
 
 @pytest.mark.parametrize(
@@ -94,8 +94,8 @@ def test_default_request(metaestimator):
 @pytest.mark.parametrize(
     "MultiOutput, Estimator",
     [
-        (MultiOutputClassifier, ClassifierSubEstimator),
-        (MultiOutputRegressor, RegressorSubEstimator),
+        (MultiOutputClassifier, ConsumingClassifier),
+        (MultiOutputRegressor, ConsumingRegressor),
     ],
     ids=["Classifier", "Regressor"],
 )
@@ -106,10 +106,16 @@ def test_multioutput_metadata_routing(MultiOutput, Estimator):
         FutureWarning,
         match=(
             "You are passing metadata for which the request values are not explicitly"
-            " set. From version 1.3 this results in the following error"
+            " set. From version 1.4 this results in the following error"
         ),
     ):
         metaest.fit(X, y_multi, sample_weight=sample_weight, metadata=metadata)
+        check_recorded_metadata(
+            metaest.estimators_[0],
+            "fit",
+            sample_weight=sample_weight,
+            metadata=metadata,
+        )
 
     metaest = MultiOutput(
         Estimator()

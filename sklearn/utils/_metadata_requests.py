@@ -863,10 +863,10 @@ class MetadataRouter:
         try:
             res = router._route_params(params=params, method=method)
         except UnsetMetadataPassedError as e:
-            warn_on = self._warn_on.get(child, {"methods": [], "raise_on": "1.3"})
+            warn_on = self._warn_on.get(child, {"methods": [], "raise_on": "1.4"})
             if method not in warn_on["methods"]:
                 # there is no warn_on set for this method of this child object,
-                # we raise as usual
+                # we raise as usual.
                 raise
             if not getattr(router, "_is_default_request", None):
                 # the user has set at least one request value for this child
@@ -913,7 +913,7 @@ class MetadataRouter:
                 "not requested metadata in any object."
             )
 
-    def warn_on(self, child, methods, raise_on="1.3"):
+    def warn_on(self, child, methods, raise_on="1.4"):
         """Set where deprecation warnings on no set requests should occur.
 
         This method is used in meta-estimators during the transition period for
@@ -937,7 +937,7 @@ class MetadataRouter:
             List of methods for which there should be a ``FutureWarning``
             instead of a ``ValueError``.
 
-        raise_on : str, default="1.3"
+        raise_on : str, default="1.4"
             The version after which there should be an error. Used in the
             warning message to inform users.
 

@@ -354,7 +354,7 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
         **partial_fit_params : dict of string -> object
             Parameters passed to the ``estimator.partial_fit`` method of each step.
 
-            .. versionadded:: 1.1
+            .. versionadded:: 1.2
 
         Returns
         -------
