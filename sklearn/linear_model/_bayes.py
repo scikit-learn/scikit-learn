@@ -230,58 +230,60 @@ class BayesianRidge(RegressorMixin, LinearModel):
             self.alpha_1,
             name="alpha_1",
             target_type=numbers.Real,
-            include_boundaries="neither",
+            min_val=0.0,
+            include_boundaries="left",
         )
 
         check_scalar(
             self.alpha_2,
             name="alpha_2",
             target_type=numbers.Real,
-            include_boundaries="neither",
+            min_val=0.0,
+            include_boundaries="left",
         )
 
         check_scalar(
             self.lambda_1,
             name="lambda_1",
             target_type=numbers.Real,
-            include_boundaries="neither",
+            min_val=0.0,
+            include_boundaries="left",
         )
 
         check_scalar(
             self.lambda_2,
             name="lambda_2",
             target_type=numbers.Real,
-            include_boundaries="neither",
+            min_val=0.0,
+            include_boundaries="left",
         )
 
-        check_scalar(
-            self.alpha_init,
-            name="alpha_init",
-            target_type=(numbers.Real, type(None)),
-            include_boundaries="neither",
-        )
+        if self.alpha_init is not None:
+            check_scalar(
+                self.alpha_init,
+                name="alpha_init",
+                target_type=numbers.Real,
+                include_boundaries="neither",
+            )
 
-        check_scalar(
-            self.lambda_init,
-            name="lambda_init",
-            target_type=(numbers.Real, type(None)),
-            include_boundaries="neither",
-        )
+        if self.lambda_init is not None:
+            check_scalar(
+                self.lambda_init,
+                name="lambda_init",
+                target_type=numbers.Real,
+                include_boundaries="neither",
+            )
 
         check_scalar(
             self.compute_score,
             name="compute_score",
-            target_type=(numbers.Integral, np.bool_, bool),
-            min_val=0,
-            max_val=1,
+            target_type=(np.bool_, bool),
         )
 
         check_scalar(
             self.fit_intercept,
             name="fit_intercept",
-            target_type=(numbers.Integral, np.bool_, bool),
-            min_val=0,
-            max_val=1,
+            target_type=(np.bool_, bool),
         )
 
         self._normalize = _deprecate_normalize(
@@ -291,9 +293,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
         check_scalar(
             self.copy_X,
             name="copy_X",
-            target_type=(numbers.Integral, np.bool_, bool),
-            min_val=0,
-            max_val=1,
+            target_type=(np.bool_, bool),
         )
 
         check_scalar(
