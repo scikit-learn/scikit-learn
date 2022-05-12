@@ -791,7 +791,7 @@ for ax, pred, label in zip(axes, predictions, labels):
     )
     ax.legend()
 
-
+plt.show()
 # %%
 # This visualization confirms the conclusions we draw on the previous plot.
 #
