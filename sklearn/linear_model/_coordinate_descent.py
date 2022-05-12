@@ -614,8 +614,12 @@ def enet_path(
                 X_data=ReadonlyArrayWrapper(
                     X.data
                 ),  # TODO: Remove after release of Cython 3 (#23147)
-                X_indices=X.indices,
-                X_indptr=X.indptr,
+                X_indices=ReadonlyArrayWrapper(
+                    X.indices
+                ),  # TODO: Remove after release of Cython 3 (#23147)
+                X_indptr=ReadonlyArrayWrapper(
+                    X.indptr
+                ),  # TODO: Remove after release of Cython 3 (#23147)
                 y=y,
                 sample_weight=sample_weight,
                 X_mean=X_sparse_scaling,
