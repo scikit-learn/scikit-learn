@@ -1167,8 +1167,8 @@ class SVR(RegressorMixin, BaseLibSVM):
 
         .. versionadded:: 1.1
 
-    n_support_ : ndarray of shape (n_classes,), dtype=int32
-        Number of support vectors for each class.
+    n_support_ : ndarray of shape (1,), dtype=int32
+        Number of support vectors.
 
     shape_fit_ : tuple of int of shape (n_dimensions_of_X,)
         Array dimensions of training vector ``X``.
@@ -1247,6 +1247,11 @@ class SVR(RegressorMixin, BaseLibSVM):
             max_iter=max_iter,
             random_state=None,
         )
+
+    @property
+    def n_support_(self):
+        # _n_support has size 2, we make it size 1
+        return np.array([self._n_support[0]])
 
     def _more_tags(self):
         return {
@@ -1359,8 +1364,8 @@ class NuSVR(RegressorMixin, BaseLibSVM):
 
         .. versionadded:: 1.1
 
-    n_support_ : ndarray of shape (n_classes,), dtype=int32
-        Number of support vectors for each class.
+    n_support_ : ndarray of shape (1,), dtype=int32
+        Number of support vectors.
 
     shape_fit_ : tuple of int of shape (n_dimensions_of_X,)
         Array dimensions of training vector ``X``.
@@ -1439,6 +1444,11 @@ class NuSVR(RegressorMixin, BaseLibSVM):
             max_iter=max_iter,
             random_state=None,
         )
+
+    @property
+    def n_support_(self):
+        # _n_support has size 2, we make it size 1
+        return np.array([self._n_support[0]])
 
     def _more_tags(self):
         return {
@@ -1719,6 +1729,11 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
         """
         y = super().predict(X)
         return np.asarray(y, dtype=np.intp)
+
+    @property
+    def n_support_(self):
+        # _n_support has size 2, we make it size 1
+        return np.array([self._n_support[0]])
 
     def _more_tags(self):
         return {

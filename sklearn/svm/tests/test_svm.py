@@ -3,6 +3,7 @@ Testing for Support Vector Machine module (sklearn.svm)
 
 TODO: remove hard coded numerical results when possible
 """
+import warnings
 import numpy as np
 import itertools
 import pytest
@@ -13,8 +14,7 @@ from numpy.testing import assert_almost_equal
 from numpy.testing import assert_allclose
 from scipy import sparse
 from sklearn import svm, linear_model, datasets, metrics, base
-from sklearn.svm import LinearSVC
-from sklearn.svm import LinearSVR
+from sklearn.svm import LinearSVC, LinearSVR, NuSVR, SVR, OneClassSVM
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import make_classification, make_blobs
 from sklearn.metrics import f1_score
@@ -1398,23 +1398,23 @@ def test_linearsvm_liblinear_sample_weight(SVM, params):
             assert_allclose(X_est_no_weight, X_est_with_weight)
 
 
-def test_n_support_oneclass_svr():
+@pytest.mark.parametrize("Klass", (OneClassSVM, SVR, NuSVR))
+def test_n_support_oneclass_svr(Klass):
     # Make n_support is correct for oneclass and SVR (used to be
     # non-initialized)
     # this is a non regression test for issue #14774
     X = np.array([[0], [0.44], [0.45], [0.46], [1]])
-    clf = svm.OneClassSVM()
-    assert not hasattr(clf, "n_support_")
-    clf.fit(X)
-    assert clf.n_support_ == clf.support_vectors_.shape[0]
-    assert clf.n_support_.size == 1
-    assert clf.n_support_ == 3
-
     y = np.arange(X.shape[0])
-    reg = svm.SVR().fit(X, y)
-    assert reg.n_support_ == reg.support_vectors_.shape[0]
-    assert reg.n_support_.size == 1
-    assert reg.n_support_ == 4
+    est = Klass()
+    fit_data = {"X": X}
+    if Klass.__name__ != "OneClassSVM":
+        fit_data.update({"y": y})
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", FutureWarning)
+        assert not hasattr(est, "n_support_")
+        est.fit(**fit_data)
+        assert est.n_support_[0] == est.support_vectors_.shape[0]
+        assert est.n_support_.size == 1
 
 
 @pytest.mark.parametrize("Estimator", [svm.SVC, svm.SVR])
