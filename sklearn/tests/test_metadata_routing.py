@@ -739,9 +739,12 @@ def test_methodmapping():
         str(mm)
         == "[{'callee': 'fit', 'caller': 'fit'}, {'callee': 'partial_fit', 'caller':"
         " 'partial_fit'}, {'callee': 'predict', 'caller': 'predict'}, {'callee':"
-        " 'score', 'caller': 'score'}, {'callee': 'split', 'caller': 'split'},"
-        " {'callee': 'transform', 'caller': 'transform'}, {'callee':"
-        " 'inverse_transform', 'caller': 'inverse_transform'}]"
+        " 'predict_proba', 'caller': 'predict_proba'}, {'callee':"
+        " 'predict_log_proba', 'caller': 'predict_log_proba'}, {'callee':"
+        " 'decision_function', 'caller': 'decision_function'}, {'callee': 'score',"
+        " 'caller': 'score'}, {'callee': 'split', 'caller': 'split'}, {'callee':"
+        " 'transform', 'caller': 'transform'}, {'callee': 'inverse_transform',"
+        " 'caller': 'inverse_transform'}]"
     )
 
     mm = MethodMapping.from_str("score")
@@ -844,3 +847,77 @@ def test_metadata_routing_get_param_names():
     assert router._get_param_names(
         method="fit", return_alias=True, ignore_self=True
     ) == router._get_param_names(method="fit", return_alias=False, ignore_self=True)
+
+
+def test_method_generation():
+    # Test if all required request methods are generated.
+
+    class SimpleEstimator(BaseEstimator):
+        # This class should have no set_{method}_request
+        def fit(self, X, y):
+            pass
+
+        def partial_fit(self, X, y):
+            pass
+
+        def predict(self, X):
+            pass
+
+        def predict_proba(self, X):
+            pass
+
+        def predict_log_proba(self, X):
+            pass
+
+        def decision_function(self, X):
+            pass
+
+        def score(self, X, y):
+            pass
+
+        def split(self, X, y=None):
+            pass
+
+        def transform(self, X):
+            pass
+
+        def inverse_transform(self, X):
+            pass
+
+    for method in METHODS:
+        assert not hasattr(SimpleEstimator(), f"set_{method}_request")
+
+    class SimpleEstimator(BaseEstimator):
+        # This class should have every set_{method}_request
+        def fit(self, X, y, sample_weight=None):
+            pass
+
+        def partial_fit(self, X, y, sample_weight=None):
+            pass
+
+        def predict(self, X, sample_weight=None):
+            pass
+
+        def predict_proba(self, X, sample_weight=None):
+            pass
+
+        def predict_log_proba(self, X, sample_weight=None):
+            pass
+
+        def decision_function(self, X, sample_weight=None):
+            pass
+
+        def score(self, X, y, sample_weight=None):
+            pass
+
+        def split(self, X, y=None, sample_weight=None):
+            pass
+
+        def transform(self, X, sample_weight=None):
+            pass
+
+        def inverse_transform(self, X, sample_weight=None):
+            pass
+
+    for method in METHODS:
+        assert hasattr(SimpleEstimator(), f"set_{method}_request")
