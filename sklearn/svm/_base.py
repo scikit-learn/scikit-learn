@@ -638,13 +638,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         # Fixes https://nvd.nist.gov/vuln/detail/CVE-2020-28975
         # Check that _n_support is consistent with support_vectors
         sv = self.support_vectors_
-        svm_type = LIBSVM_IMPL.index(self._impl)
-        if svm_type in (0, 1):
-            total_support = self._n_support.sum()
-        else:
-            total_support = self._n_support[0]
-
-        if not self._sparse and sv.size > 0 and total_support != sv.shape[0]:
+        if not self._sparse and sv.size > 0 and self.n_support_.sum() != sv.shape[0]:
             raise ValueError(
                 f"The internal representation of {self.__class__.__name__} was altered"
             )
@@ -675,6 +669,22 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
     def _get_coef(self):
         return safe_sparse_dot(self._dual_coef_, self.support_vectors_)
+
+    @property
+    def n_support_(self):
+        """Number of support vectors for each class."""
+        try:
+            check_is_fitted(self)
+        except NotFittedError:
+            raise AttributeError
+
+        svm_type = LIBSVM_IMPL.index(self._impl)
+        if svm_type in (0, 1):
+            return self._n_support
+        else:
+            # SVR and OneClass
+            # _n_support has size 2, we make it size 1
+            return np.array([self._n_support[0]])
 
 
 class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
@@ -977,15 +987,6 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
         ndarray of shape  (n_classes * (n_classes - 1) / 2)
         """
         return self._probB
-
-    @property
-    def n_support_(self):
-        """Number of support vectors for each class."""
-        try:
-            check_is_fitted(self)
-        except NotFittedError:
-            raise AttributeError
-        return self._n_support
 
 
 def _get_liblinear_solver_type(multi_class, penalty, loss, dual):

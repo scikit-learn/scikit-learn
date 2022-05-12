@@ -1248,11 +1248,6 @@ class SVR(RegressorMixin, BaseLibSVM):
             random_state=None,
         )
 
-    @property
-    def n_support_(self):
-        # _n_support has size 2, we make it size 1
-        return np.array([self._n_support[0]])
-
     def _more_tags(self):
         return {
             "_xfail_checks": {
@@ -1444,11 +1439,6 @@ class NuSVR(RegressorMixin, BaseLibSVM):
             max_iter=max_iter,
             random_state=None,
         )
-
-    @property
-    def n_support_(self):
-        # _n_support has size 2, we make it size 1
-        return np.array([self._n_support[0]])
 
     def _more_tags(self):
         return {
@@ -1729,11 +1719,6 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
         """
         y = super().predict(X)
         return np.asarray(y, dtype=np.intp)
-
-    @property
-    def n_support_(self):
-        # _n_support has size 2, we make it size 1
-        return np.array([self._n_support[0]])
 
     def _more_tags(self):
         return {
