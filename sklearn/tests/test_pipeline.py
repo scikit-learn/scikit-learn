@@ -426,7 +426,7 @@ def test_fit_predict_on_pipeline():
     # As pipeline doesn't clone estimators on construction,
     # it must have its own estimators
     scaler_for_pipeline = StandardScaler()
-    km_for_pipeline = KMeans(random_state=0)
+    km_for_pipeline = KMeans(random_state=0, n_init="auto")
 
     # first compute the transform and clustering step separately
     scaled = scaler.fit_transform(iris.data)

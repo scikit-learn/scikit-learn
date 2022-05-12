@@ -1299,7 +1299,7 @@ class KMeans(_BaseKMeans):
     >>> import numpy as np
     >>> X = np.array([[1, 2], [1, 4], [1, 0],
     ...               [10, 2], [10, 4], [10, 0]])
-    >>> kmeans = KMeans(n_clusters=2, random_state=0).fit(X)
+    >>> kmeans = KMeans(n_clusters=2, random_state=0, n_init="auto").fit(X)
     >>> kmeans.labels_
     array([1, 1, 1, 0, 0, 0], dtype=int32)
     >>> kmeans.predict([[0, 0], [12, 3]])
@@ -1778,7 +1778,8 @@ class MiniBatchKMeans(_BaseKMeans):
     >>> # manually fit on batches
     >>> kmeans = MiniBatchKMeans(n_clusters=2,
     ...                          random_state=0,
-    ...                          batch_size=6)
+    ...                          batch_size=6,
+    ...                          n_init="auto")
     >>> kmeans = kmeans.partial_fit(X[0:6,:])
     >>> kmeans = kmeans.partial_fit(X[6:12,:])
     >>> kmeans.cluster_centers_
@@ -1790,7 +1791,8 @@ class MiniBatchKMeans(_BaseKMeans):
     >>> kmeans = MiniBatchKMeans(n_clusters=2,
     ...                          random_state=0,
     ...                          batch_size=6,
-    ...                          max_iter=10).fit(X)
+    ...                          max_iter=10,
+    ...                          n_init="auto").fit(X)
     >>> kmeans.cluster_centers_
     array([[1.19..., 1.22...],
            [4.03..., 2.46...]])
