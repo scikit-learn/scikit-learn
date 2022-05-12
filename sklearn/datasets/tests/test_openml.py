@@ -361,7 +361,7 @@ def test_fetch_openml_consistency_parser(monkeypatch, data_id):
     data_liac_with_fixed_dtypes = data_liac.apply(convert_numerical_dtypes)
     pd.testing.assert_frame_equal(data_liac_with_fixed_dtypes, data_pandas)
 
-    # Let's also check that the .frame attribute also match
+    # Let's also check that the .frame attributes also match
     frame_liac, frame_pandas = bunch_liac.frame, bunch_pandas.frame
 
     # Note that the .frame attribute is a superset of the .data attribute:
