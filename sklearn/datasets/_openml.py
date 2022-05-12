@@ -971,8 +971,7 @@ def fetch_openml(
                     warn(
                         "From version 1.3, `parser='auto'` with `as_frame=False` "
                         "will use pandas. Either install pandas or set explicitely "
-                        "`parser='liac-arff'`. In between, the parser used is set to "
-                        "'liac-arff'",
+                        "`parser='liac-arff'` to preserve the current behavior.",
                         FutureWarning,
                     )
                     parser_ = "liac-arff"

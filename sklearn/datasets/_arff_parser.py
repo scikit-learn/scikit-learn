@@ -357,6 +357,7 @@ def _pandas_arff_parser(
         column_dtype = openml_columns_info[name]["data_type"]
         if column_dtype.lower() == "integer":
             # Use Int64 to infer missing values from data
+            # XXX: this line is not covered by our tests. Is this really needed?
             dtypes[name] = "Int64"
         elif column_dtype.lower() == "nominal":
             dtypes[name] = "category"

@@ -230,12 +230,12 @@ identifies the dataset::
 ARFF parser
 ~~~~~~~~~~~
 
-From version 1.1, scikit-learn provide a new keyword argument `parser` that
+From version 1.1, scikit-learn provides a new keyword argument `parser` that
 provides several options to parse the ARFF files provided by OpenML. The legacy
 parser (i.e. `parser="liac-arff"`) is based on the project
 `LIAC-ARFF <https://github.com/renatopp/liac-arff>`_. This parser is however
 slow and consume more memory than required. A new parser based on pandas
-(i.e. `parser="pandas"`) provides a faster and less memory consuming parser.
+(i.e. `parser="pandas"`) is both faster and more memory efficient.
 However, this parser does not support sparse data.
 Therefore, we recommend using `parser="auto"` which will use the best parser
 available for the requested dataset.
@@ -259,7 +259,10 @@ the output. The notable differences are the following:
 In addition, when `as_frame=False` is used, the `"liac-arff"` parser returns
 ordinally encoded data where the categories are provided in the attribute
 `categories` of the `Bunch` instance. Instead, `"pandas"` returns a NumPy array
-were the categories are not encoded.
+were the categories. Then it's up to the user to design a feature
+engineering pipeline with an instance of  `OneHotEncoder` or
+`OrdinalEncoder` typically wrapped in a `ColumnTransformer` to
+preprocess the categorical columns explicitly. See for instance: :ref:`sphx_glr_auto_examples_compose_plot_column_transformer_mixed_types.py`.
 
 .. _external_datasets:
 
