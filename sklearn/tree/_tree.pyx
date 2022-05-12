@@ -425,17 +425,20 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                 else:
                     # Node is expandable
                     if splitter.monotonic_cst[node.feature] == 0:
+                        # No constraint
                         left_child_min = record.lower_bound
                         left_child_max = record.upper_bound
                         right_child_min = record.lower_bound
                         right_child_max = record.upper_bound
                     elif splitter.monotonic_cst[node.feature] == 1:
+                        # Monotonically increasing constraint
                         middle_value = tree._get_middle_value(record.node_id)
                         left_child_min = record.lower_bound
                         left_child_max = middle_value
                         right_child_min = middle_value
                         right_child_max = record.upper_bound
                     elif splitter.monotonic_cst[node.feature] == -1:
+                        # Monotonically decreasing constraint
                         middle_value = tree._get_middle_value(record.node_id)
                         left_child_min = middle_value
                         left_child_max = record.upper_bound
