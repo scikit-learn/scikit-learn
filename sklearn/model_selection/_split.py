@@ -59,7 +59,7 @@ class GroupsComsumerMixin(_MetadataRequester):
     This Mixin makes the object to request ``groups`` by default as
     ``REQUESTED``.
 
-    .. versionadded:: 1.1
+    .. versionadded:: 1.2
     """
 
     __metadata_request__split = {"groups": RequestType.REQUESTED}
