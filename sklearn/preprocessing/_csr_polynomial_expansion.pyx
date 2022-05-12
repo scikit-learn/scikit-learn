@@ -1,7 +1,7 @@
 # Author: Andrew nystrom <awnystrom@gmail.com>
 
 from scipy.sparse import csr_matrix
-from numpy cimport ndarray
+import numpy as np
 cimport numpy as cnp
 
 cnp.import_array()
@@ -44,9 +44,9 @@ cdef inline INDEX_T _deg3_column(INDEX_T d, INDEX_T i, INDEX_T j, INDEX_T k,
                 + d * j + k)
 
 
-def _csr_polynomial_expansion(ndarray[DATA_T, ndim=1] data,
-                              ndarray[INDEX_T, ndim=1] indices,
-                              ndarray[INDEX_T, ndim=1] indptr,
+def _csr_polynomial_expansion(cnp.ndarray[DATA_T, ndim=1] data,
+                              cnp.ndarray[INDEX_T, ndim=1] indices,
+                              cnp.ndarray[INDEX_T, ndim=1] indptr,
                               INDEX_T d, INDEX_T interaction_only,
                               INDEX_T degree):
     """
@@ -106,12 +106,12 @@ def _csr_polynomial_expansion(ndarray[DATA_T, ndim=1] data,
                           - interaction_only * nnz ** 2)
 
     # Make the arrays that will form the CSR matrix of the expansion.
-    cdef ndarray[DATA_T, ndim=1] expanded_data = ndarray(
+    cdef cnp.ndarray[DATA_T, ndim=1] expanded_data = np.ndarray(
         shape=total_nnz, dtype=data.dtype)
-    cdef ndarray[INDEX_T, ndim=1] expanded_indices = ndarray(
+    cdef cnp.ndarray[INDEX_T, ndim=1] expanded_indices = np.ndarray(
         shape=total_nnz, dtype=indices.dtype)
     cdef INDEX_T num_rows = indptr.shape[0] - 1
-    cdef ndarray[INDEX_T, ndim=1] expanded_indptr = ndarray(
+    cdef cnp.ndarray[INDEX_T, ndim=1] expanded_indptr = np.ndarray(
         shape=num_rows + 1, dtype=indptr.dtype)
 
     cdef INDEX_T expanded_index = 0, row_starts, row_ends, i, j, k, \
