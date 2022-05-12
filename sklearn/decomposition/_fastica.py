@@ -183,7 +183,7 @@ def fastica(
         Number of components to use. If None is passed, all are used.
 
     algorithm : {'parallel', 'deflation'}, default='parallel'
-        Apply either a parallel or deflational algorithm for FastICA.
+        Specify which algorithm to use for FastICA.
 
     whiten : str or bool, default="warn"
         Specify the whitening strategy to use.
@@ -196,7 +196,7 @@ def fastica(
           whitening is performed.
 
         .. deprecated:: 1.1
-            From version 1.3 `whiten='unit-variance'` will be used by default.
+            Starting in v1.3, `whiten='unit-variance'` will be used by default.
             `whiten=True` is deprecated from 1.1 and will raise ValueError in 1.3.
             Use `whiten=arbitrary-variance` instead.
 
@@ -225,8 +225,8 @@ def fastica(
         un-mixing matrix is considered to have converged.
 
     w_init : ndarray of shape (n_components, n_components), default=None
-        Initial un-mixing array. If `w_init=None` then an array of normal
-        r.v.'s is used.
+        Initial un-mixing array. If `w_init=None`, then an array of values
+        drawn from a normal distribution is used.
 
     random_state : int, RandomState instance or None, default=None
         Used to initialize ``w_init`` when not specified, with a
@@ -333,7 +333,7 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         Number of components to use. If None is passed, all are used.
 
     algorithm : {'parallel', 'deflation'}, default='parallel'
-        Apply either a parallel or deflational algorithm for FastICA.
+        Specify which algorithm to use for FastICA.
 
     whiten : str or bool, default="warn"
         Specify the whitening strategy to use.
@@ -346,7 +346,7 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
           whitening is performed.
 
         .. deprecated:: 1.1
-            From version 1.3 `whiten='unit-variance'` will be used by default.
+            Starting in v1.3, `whiten='unit-variance'` will be used by default.
             `whiten=True` is deprecated from 1.1 and will raise ValueError in 1.3.
             Use `whiten=arbitrary-variance` instead.
 
@@ -375,8 +375,8 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         un-mixing matrix is considered to have converged.
 
     w_init : ndarray of shape (n_components, n_components), default=None
-        Initial un-mixing array. If `w_init=None` then an array of normal
-        r.v.'s is used.
+        Initial un-mixing array. If `w_init=None`, then an array of values
+        drawn from a normal distribution is used.
 
     random_state : int, RandomState instance or None, default=None
         Used to initialize ``w_init`` when not specified, with a
@@ -492,14 +492,14 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
 
         if self._whiten == "warn":
             warnings.warn(
-                "From version 1.3 whiten='unit-variance' will be used by default.",
+                "Starting in v1.3, whiten='unit-variance' will be used by default.",
                 FutureWarning,
             )
             self._whiten = "arbitrary-variance"
 
         if self._whiten is True:
             warnings.warn(
-                "From version 1.3 whiten=True should be specified as "
+                "Starting in v1.3, whiten=True should be specified as "
                 "whiten='arbitrary-variance' (its current behaviour). This "
                 "behavior is deprecated in 1.1 and will raise ValueError in 1.3.",
                 FutureWarning,
