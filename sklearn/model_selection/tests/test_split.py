@@ -1041,6 +1041,26 @@ def test_leave_group_out_changing_groups():
     assert 3 == LeaveOneGroupOut().get_n_splits(X, y=X, groups=groups)
 
 
+def test_leave_group_out_order_dependence():
+    # Check that LeaveOneGroupOut orders the splits according to the index
+    # of the group left out.
+    groups = np.array([2, 2, 0, 0, 1, 1])
+    X = np.ones(len(groups))
+
+    splits = iter(LeaveOneGroupOut().split(X, groups=groups))
+
+    expected_indices = [
+        ([0, 1, 4, 5], [2, 3]),
+        ([0, 1, 2, 3], [4, 5]),
+        ([2, 3, 4, 5], [0, 1]),
+    ]
+
+    for expected_train, expected_test in expected_indices:
+        train, test = next(splits)
+        assert_array_equal(train, expected_train)
+        assert_array_equal(test, expected_test)
+
+
 def test_leave_one_p_group_out_error_on_fewer_number_of_groups():
     X = y = groups = np.ones(0)
     msg = re.escape("Found array with 0 sample(s)")

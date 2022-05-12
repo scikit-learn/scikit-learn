@@ -26,7 +26,6 @@ or with conda::
 # ----------------------------------------------------------------
 # :class:`ensemble.HistGradientBoostingRegressor` can model quantiles with
 # `loss="quantile"` and the new parameter `quantile`.
-from sklearn.datasets import make_regression
 from sklearn.ensemble import HistGradientBoostingRegressor
 import numpy as np
 import matplotlib.pyplot as plt
