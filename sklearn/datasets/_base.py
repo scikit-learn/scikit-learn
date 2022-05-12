@@ -1065,7 +1065,7 @@ def load_diabetes(*, return_X_y=False, as_frame=False, scaled=True):
 def load_linnerud(*, return_X_y=False, as_frame=False):
     """Load and return the physical exercise Linnerud dataset.
 
-    This dataset is suitable for multi-ouput regression tasks.
+    This dataset is suitable for multi-output regression tasks.
 
     ==============   ============================
     Samples total    20
@@ -1251,7 +1251,7 @@ def load_boston(*, return_X_y=False):
         for the California housing dataset and::
 
             from sklearn.datasets import fetch_openml
-            housing = fetch_openml(name="house_prices", as_frame=True)  # noqa
+            housing = fetch_openml(name="house_prices", as_frame=True)
 
         for the Ames housing dataset.
 
