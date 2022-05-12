@@ -786,11 +786,11 @@ def fetch_openml(
         `"liac-arff"` is selected for sparse ARFF datasets, otherwise
         `"pandas"` is selected.
 
-        .. versionadded:: 1.1
-        .. versionchanged:: 1.3
+        .. versionadded:: 1.2
+        .. versionchanged:: 1.4
            The default value of `parser` will change from `"liac-arff"` to
-           `"auto"` in 1.3. You can set `parser="auto"` to silence this
-           warning. Therefore, an `ImportError` will be raised from 1.3 if
+           `"auto"` in 1.4. You can set `parser="auto"` to silence this
+           warning. Therefore, an `ImportError` will be raised from 1.4 if
            the dataset is dense and pandas is not installed.
 
     Returns
@@ -916,7 +916,7 @@ def fetch_openml(
             "unusable. Warning: {}".format(data_description["warning"])
         )
 
-    # TODO(1.3): remove "warn" from the valid parser
+    # TODO(1.4): remove "warn" from the valid parser
     valid_parsers = ("auto", "pandas", "liac-arff", "warn")
     if parser not in valid_parsers:
         raise ValueError(
@@ -925,12 +925,12 @@ def fetch_openml(
         )
 
     if parser == "warn":
-        # TODO(1.3): remove this warning
+        # TODO(1.4): remove this warning
         parser = "liac-arff"
         warn(
             "The default value of `parser` will change from `'liac-arff'` to "
-            "`'auto'` in 1.3. You can set `parser='auto'` to silence this "
-            "warning. Therefore, an `ImportError` will be raised from 1.3 if "
+            "`'auto'` in 1.4. You can set `parser='auto'` to silence this "
+            "warning. Therefore, an `ImportError` will be raised from 1.4 if "
             "the dataset is dense and pandas is not installed. Note that the pandas "
             "parser may return different data types. See the Notes Section in "
             "fetch_openml's API doc for details.",
@@ -966,10 +966,10 @@ def fetch_openml(
                     "Alternatively, explicitely set `parser='liac-arff'`."
                 )
                 if parser == "auto":
-                    # TODO(1.3): In version 1.3, we will raise an error instead of
+                    # TODO(1.4): In version 1.4, we will raise an error instead of
                     # a warning.
                     warn(
-                        "From version 1.3, `parser='auto'` with `as_frame=False` "
+                        "From version 1.4, `parser='auto'` with `as_frame=False` "
                         "will use pandas. Either install pandas or set explicitely "
                         "`parser='liac-arff'` to preserve the current behavior.",
                         FutureWarning,

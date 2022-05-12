@@ -974,7 +974,7 @@ def test_fetch_openml_types_inference(
 ###############################################################################
 # Test some more specific behaviour
 
-# TODO(1.3): remove this filterwarning decorator
+# TODO(1.4): remove this filterwarning decorator
 @pytest.mark.filterwarnings("ignore:The default value of `parser` will change")
 @pytest.mark.parametrize(
     "params, err_msg",
@@ -1012,7 +1012,7 @@ def test_fetch_openml_requires_pandas_error(monkeypatch, params):
         raise SkipTest("This test requires pandas to not be installed.")
 
 
-# TODO(1.3): move this parameter option in`test_fetch_openml_requires_pandas_error`
+# TODO(1.4): move this parameter option in`test_fetch_openml_requires_pandas_error`
 def test_fetch_openml_requires_pandas_in_future(monkeypatch):
     """Check that we raise a warning that pandas will be required in the future."""
     params = {"as_frame": False, "parser": "auto"}
@@ -1022,7 +1022,7 @@ def test_fetch_openml_requires_pandas_in_future(monkeypatch):
     except ImportError:
         _monkey_patch_webbased_functions(monkeypatch, data_id, True)
         warn_msg = (
-            "From version 1.3, `parser='auto'` with `as_frame=False` will use pandas"
+            "From version 1.4, `parser='auto'` with `as_frame=False` will use pandas"
         )
         with pytest.warns(FutureWarning, match=warn_msg):
             fetch_openml(data_id=data_id, **params)
@@ -1031,7 +1031,7 @@ def test_fetch_openml_requires_pandas_in_future(monkeypatch):
 
 
 @pytest.mark.filterwarnings("ignore:Version 1 of dataset Australian is inactive")
-# TODO(1.3): remove this filterwarning decorator for `parser`
+# TODO(1.4): remove this filterwarning decorator for `parser`
 @pytest.mark.filterwarnings("ignore:The default value of `parser` will change")
 @pytest.mark.parametrize(
     "params, err_msg",
@@ -1575,7 +1575,7 @@ def test_fetch_openml_with_ignored_feature(monkeypatch, gzip_response, parser):
 ###############################################################################
 # Deprecation-changed parameters
 
-# TODO(1.3): remove this test
+# TODO(1.4): remove this test
 def test_fetch_openml_deprecation_parser(monkeypatch):
     """Check that we raise a deprecation warning for parser parameter."""
     pytest.importorskip("pandas")
