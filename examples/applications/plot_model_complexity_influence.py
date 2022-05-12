@@ -24,8 +24,9 @@ We will model the complexity influence on three different estimators:
     - :class:`~sklearn.ensemble.GradientBoostingRegressor` (for regression data)
       which builds an additive model in a forward stage-wise fashion. Notice
       that the :func:`~sklearn.ensemble.HistGradientBoostingRegressor` estimator
-      is much faster than GB for big datasets (n_samples >= 10_000), which is not
-      the case for this example.
+      is much faster than :func:`~sklearn.ensemble.GradientBoostingRegressor for
+      big datasets (n_samples >= 10_000), which is not the case for this
+      example.
 
 
 We make the model complexity vary through the choice of relevant model
