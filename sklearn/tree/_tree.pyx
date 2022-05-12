@@ -235,7 +235,13 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                 is_leaf = is_leaf or impurity <= EPSILON
 
                 if not is_leaf:
-                    splitter.node_split(impurity, &split, &n_constant_features, lower_bound, upper_bound)
+                    splitter.node_split(
+                                        impurity,
+                                        &split,
+                                        &n_constant_features,
+                                        lower_bound,
+                                        upper_bound
+                    )
                     # If EPSILON=0 in the below comparison, float precision
                     # issues stop splitting, producing trees that are
                     # dissimilar to v0.18
@@ -560,8 +566,13 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                    )
 
         if not is_leaf:
-            splitter.node_split(impurity, &split, &n_constant_features, lower_bound,
-                                upper_bound)
+            splitter.node_split(
+                                impurity,
+                                &split,
+                                &n_constant_features,
+                                lower_bound,
+                                upper_bound
+            )
             # If EPSILON=0 in the below comparison, float precision issues stop
             # splitting early, producing trees that are dissimilar to v0.18
             is_leaf = (is_leaf or split.pos >= end or

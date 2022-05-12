@@ -213,9 +213,14 @@ cdef class Splitter:
         weighted_n_node_samples[0] = self.criterion.weighted_n_node_samples
         return 0
 
-    cdef int node_split(self, double impurity, SplitRecord* split,
-                        SIZE_t* n_constant_features, double lower_bound,
-                        double upper_bound) nogil except -1:
+    cdef int node_split(
+                        self,
+                        double impurity,
+                        SplitRecord* split,
+                        SIZE_t* n_constant_features,
+                        double lower_bound,
+                        double upper_bound,
+                    ) nogil except -1:
         """Find the best split on node samples[start:end].
 
         This is a placeholder method. The majority of computation will be done
@@ -293,9 +298,14 @@ cdef class BestSplitter(BaseDenseSplitter):
                                self.min_weight_leaf,
                                self.random_state), self.__getstate__())
 
-    cdef int node_split(self, double impurity, SplitRecord* split,
-                        SIZE_t* n_constant_features, double lower_bound,
-                        double upper_bound) nogil except -1:
+    cdef int node_split(
+                        self,
+                        double impurity,
+                        SplitRecord* split,
+                        SIZE_t* n_constant_features,
+                        double lower_bound,
+                        double upper_bound
+                    ) nogil except -1:
         """Find the best split on node samples[start:end]
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
@@ -613,9 +623,14 @@ cdef class RandomSplitter(BaseDenseSplitter):
                                  self.min_weight_leaf,
                                  self.random_state), self.__getstate__())
 
-    cdef int node_split(self, double impurity, SplitRecord* split,
-                        SIZE_t* n_constant_features, double lower_bound,
-                        double upper_bound) nogil except -1:
+    cdef int node_split(
+                        self,
+                        double impurity,
+                        SplitRecord* split,
+                        SIZE_t* n_constant_features,
+                        double lower_bound,
+                        double upper_bound
+                    ) nogil except -1:
         """Find the best random split on node samples[start:end]
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
@@ -1139,9 +1154,14 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
                                      self.min_weight_leaf,
                                      self.random_state), self.__getstate__())
 
-    cdef int node_split(self, double impurity, SplitRecord* split,
-                        SIZE_t* n_constant_features, double lower_bound,
-                        double upper_bound) nogil except -1:
+    cdef int node_split(
+                    self,
+                    double impurity,
+                    SplitRecord* split,
+                    SIZE_t* n_constant_features,
+                    double lower_bound,
+                    double upper_bound
+                ) nogil except -1:
         """Find the best split on node samples[start:end], using sparse features
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
@@ -1376,9 +1396,14 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
                                        self.min_weight_leaf,
                                        self.random_state), self.__getstate__())
 
-    cdef int node_split(self, double impurity, SplitRecord* split,
-                        SIZE_t* n_constant_features, double lower_bound,
-                        double upper_bound) nogil except -1:
+    cdef int node_split(
+                        self,
+                        double impurity,
+                        SplitRecord* split,
+                        SIZE_t* n_constant_features,
+                        double lower_bound,
+                        double upper_bound
+                    ) nogil except -1:
         """Find a random split on node samples[start:end], using sparse features
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
