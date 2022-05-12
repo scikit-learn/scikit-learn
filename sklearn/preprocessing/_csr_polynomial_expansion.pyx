@@ -2,16 +2,16 @@
 
 from scipy.sparse import csr_matrix
 from numpy cimport ndarray
-cimport numpy as np
+cimport numpy as cnp
 
-np.import_array()
-ctypedef np.int32_t INDEX_T
+cnp.import_array()
+ctypedef cnp.int32_t INDEX_T
 
 ctypedef fused DATA_T:
-    np.float32_t
-    np.float64_t
-    np.int32_t
-    np.int64_t
+    cnp.float32_t
+    cnp.float64_t
+    cnp.int32_t
+    cnp.int64_t
 
 
 cdef inline INDEX_T _deg2_column(INDEX_T d, INDEX_T i, INDEX_T j,
