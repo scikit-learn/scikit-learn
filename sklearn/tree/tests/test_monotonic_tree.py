@@ -98,7 +98,7 @@ def test_montonic_constraints_regressions(seed, depth_first):
                 max_leaf_nodes=n_samples_train,
             )
         if hasattr(est, "random_state"):
-            est.set_params(**{"random_state": seed})
+            est.set_params(random_state=seed)
         if hasattr(est, "n_estimators"):
             est.set_params(**{"n_estimators": 5})
         est.fit(X_train, y_train)
@@ -158,10 +158,17 @@ def test_bad_monotonic_cst_raises():
         msg = "monotonic_cst has shape 3 but the input data X has 2 features."
         with pytest.raises(ValueError, match=msg):
             est.fit(X, y)
+        msg = "monotonic_cst must be None or an array-like of -1, 0 or 1."
+        
         est = TreeClassifier(
             max_depth=None, monotonic_cst=np.array([-2, 2]), random_state=0
         )
-        msg = "monotonic_cst must be None or an array-like of -1, 0 or 1."
+        with pytest.raises(ValueError, match=msg):
+            est.fit(X, y)
+        
+        est = TreeClassifier(
+            max_depth=None, monotonic_cst=np.array([-1, 0.8]), random_state=0
+        )
         with pytest.raises(ValueError, match=msg):
             est.fit(X, y)
 
