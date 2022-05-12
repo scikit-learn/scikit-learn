@@ -71,7 +71,7 @@ export SKLEARN_BUILD_PARALLEL=$(($N_CORES + 1))
 
 # Disable the build isolation and build in the tree so that the same folder can be
 # cached between CI runs.
-pip install --verbose --no-build-isolation --no-use-pep517 .
+pip install --verbose --no-use-pep517 .
 
 # Report cache usage
 ccache -s --verbose
