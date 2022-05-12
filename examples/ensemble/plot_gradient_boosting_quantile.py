@@ -73,8 +73,9 @@ for alpha in [0.05, 0.5, 0.95]:
 
 # %%
 # Notice that the :func:`~sklearn.ensemble.HistGradientBoostingRegressor`
-# estimator is much faster than GB for big datasets (n_samples >= 10_000), which
-# is not the case of the present example.
+# estimator is much faster than
+# :func:`~sklearn.ensemble.GradientBoostingRegressor` for big datasets
+# (n_samples >= 10_000), which is not the case of the present example.
 #
 # For the sake of comparison, we also fit a baseline model trained with the
 # usual (mean) squared error (MSE).
