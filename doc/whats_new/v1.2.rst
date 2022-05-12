@@ -44,6 +44,20 @@ Changelog
 - |Enhancement| :class:`cluster.Birch` now preserves dtype for `numpy.float32`
   inputs. :pr:`22968` by `Meekail Zain <micky774>`.
 
+:mod:`sklearn.datasets`
+.......................
+
+- |Enhancement| Introduce the new parameter `parser` in
+  :func:`datasets.fetch_openml`. `parser="pandas"` allows to use the very CPU
+  and memory efficient `pandas.read_csv` parser to load dense ARFF
+  formatted dataset files. It is possible to pass `parser="liac-arff"`
+  to use the old LIAC parser.
+  When `parser="auto"`, dense datasets are loaded with "pandas" and sparse
+  datasets are loaded with "liac-arff".
+  Currently, `parser="liac-arff"` by default and will change to `parser="auto"`
+  in version 1.4
+  :pr:`21938` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.ensemble`
 .......................
 
