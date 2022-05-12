@@ -1398,23 +1398,23 @@ def test_linearsvm_liblinear_sample_weight(SVM, params):
             assert_allclose(X_est_no_weight, X_est_with_weight)
 
 
-@pytest.mark.parametrize("Klass", (OneClassSVM, SVR, NuSVR))
-def test_n_support_oneclass_svr(Klass):
+def test_n_support_oneclass_svr():
     # Make n_support is correct for oneclass and SVR (used to be
     # non-initialized)
     # this is a non regression test for issue #14774
     X = np.array([[0], [0.44], [0.45], [0.46], [1]])
+    clf = svm.OneClassSVM()
+    assert not hasattr(clf, "n_support_")
+    clf.fit(X)
+    assert clf.n_support_ == clf.support_vectors_.shape[0]
+    assert clf.n_support_.size == 1
+    assert clf.n_support_ == 3
+
     y = np.arange(X.shape[0])
-    est = Klass()
-    fit_data = {"X": X}
-    if Klass.__name__ != "OneClassSVM":
-        fit_data.update({"y": y})
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", FutureWarning)
-        assert not hasattr(est, "n_support_")
-        est.fit(**fit_data)
-        assert est.n_support_[0] == est.support_vectors_.shape[0]
-        assert est.n_support_.size == 1
+    reg = svm.SVR().fit(X, y)
+    assert reg.n_support_ == reg.support_vectors_.shape[0]
+    assert reg.n_support_.size == 1
+    assert reg.n_support_ == 4
 
 
 @pytest.mark.parametrize("Estimator", [svm.SVC, svm.SVR])
