@@ -152,20 +152,20 @@ def test_bad_monotonic_cst_raises():
     y = [1, 0, 1, 0, 1]
 
     for name, TreeClassifier in CLF_TREES.items():
+        msg = "monotonic_cst has shape 3 but the input data X has 2 features."
         est = TreeClassifier(
             max_depth=None, monotonic_cst=np.array([-1, 1, 0]), random_state=0
         )
-        msg = "monotonic_cst has shape 3 but the input data X has 2 features."
         with pytest.raises(ValueError, match=msg):
             est.fit(X, y)
+
         msg = "monotonic_cst must be None or an array-like of -1, 0 or 1."
-        
         est = TreeClassifier(
             max_depth=None, monotonic_cst=np.array([-2, 2]), random_state=0
         )
         with pytest.raises(ValueError, match=msg):
             est.fit(X, y)
-        
+
         est = TreeClassifier(
             max_depth=None, monotonic_cst=np.array([-1, 0.8]), random_state=0
         )

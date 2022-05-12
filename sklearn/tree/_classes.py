@@ -444,9 +444,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         # Applying element-wise logical conjunction
         # for monotonic constraints' support.
         unsatisfied_constraints_conditions = (
-            (monotonic_cst != -1) * 
-            (monotonic_cst != 0) * 
-            (monotonic_cst != 1)
+            (monotonic_cst != -1) * (monotonic_cst != 0) * (monotonic_cst != 1)
         )
         if np.any(unsatisfied_constraints_conditions):
             raise ValueError(
