@@ -398,10 +398,20 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
 
         with nogil:
             # add root to frontier
-            rc = self._add_split_node(splitter, tree, 0, n_node_samples,
-                                      INFINITY, IS_FIRST, IS_LEFT, NULL, 0,
-                                      -INFINITY, INFINITY,
-                                      &split_node_left)
+            rc = self._add_split_node(
+                                      splitter,         # splitter
+                                      tree,             # tree
+                                      0,                # start
+                                      n_node_samples,   # end
+                                      INFINITY,         # impurity
+                                      IS_FIRST,         # is_first
+                                      IS_LEFT,          # is_left
+                                      NULL,             # parent
+                                      0,                # depth
+                                      -INFINITY,        # lower_bound
+                                      INFINITY,         # upper_bound
+                                      &split_node_left  # res
+            )
             if rc >= 0:
                 rc = _add_to_frontier(&split_node_left, frontier)
 
@@ -449,14 +459,20 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                     max_split_nodes -= 1
 
                     # Compute left split node
-                    rc = self._add_split_node(splitter, tree,
-                                              record.start, record.pos,
-                                              record.impurity_left,
-                                              IS_NOT_FIRST, IS_LEFT, node,
-                                              record.depth + 1,
-                                              left_child_min,
-                                              left_child_max,
-                                              &split_node_left)
+                    rc = self._add_split_node(
+                                              splitter,             # splitter
+                                              tree,                 # tree
+                                              record.start,         # start
+                                              record.pos,           # end
+                                              record.impurity_left, # impurity
+                                              IS_NOT_FIRST,         # is_first
+                                              IS_LEFT,              # is_left
+                                              node,                 # parent
+                                              record.depth + 1,     # depth
+                                              left_child_min,       # lower_bound
+                                              left_child_max,       # upper_bound
+                                              &split_node_left      # res
+                    )
                     if rc == -1:
                         break
 
@@ -464,14 +480,20 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                     node = &tree.nodes[record.node_id]
 
                     # Compute right split node
-                    rc = self._add_split_node(splitter, tree, record.pos,
-                                              record.end,
-                                              record.impurity_right,
-                                              IS_NOT_FIRST, IS_NOT_LEFT, node,
-                                              record.depth + 1,
-                                              right_child_min,
-                                              right_child_max,
-                                              &split_node_right)
+                    rc = self._add_split_node(
+                                              splitter,             # splitter
+                                              tree,                 # tree
+                                              record.pos,           # start
+                                              record.end,           # end
+                                              record.impurity_right,# impurity
+                                              IS_NOT_FIRST,         # is_first
+                                              IS_NOT_LEFT,          # is_left
+                                              node,                 # parent
+                                              record.depth + 1,     # depth
+                                              right_child_min,      # lower_bound
+                                              right_child_max,      # upper_bound
+                                              &split_node_right     # res
+                    )
                     if rc == -1:
                         break
 
@@ -496,12 +518,21 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         if rc == -1:
             raise MemoryError()
 
-    cdef inline int _add_split_node(self, Splitter splitter, Tree tree,
-                                    SIZE_t start, SIZE_t end, double impurity,
-                                    bint is_first, bint is_left, Node* parent,
-                                    SIZE_t depth, double lower_bound,
+    cdef inline int _add_split_node(
+                                    self,
+                                    Splitter splitter,
+                                    Tree tree,
+                                    SIZE_t start,
+                                    SIZE_t end,
+                                    double impurity,
+                                    bint is_first,
+                                    bint is_left,
+                                    Node* parent,
+                                    SIZE_t depth,
+                                    double lower_bound,
                                     double upper_bound,
-                                    PriorityHeapRecord* res) nogil except -1:
+                                    PriorityHeapRecord* res
+    ) nogil except -1:
         """Adds node w/ partition ``[start, end)`` to the frontier. """
         cdef SplitRecord split
         cdef SIZE_t node_id
@@ -1687,7 +1718,17 @@ cdef _cost_complexity_prune(unsigned char[:] leaves_in_subtree, # OUT
                 break
 
             # stack uses only the start variable
-            rc = stack.push(pruned_branch_node_idx, 0, 0, 0, 0, 0, 0, -INFINITY, INFINITY)
+            rc = stack.push(
+                            pruned_branch_node_idx,     # start
+                            0,                          # end
+                            0,                          # depth
+                            0,                          # parent
+                            0,                          # is_left
+                            0,                          # impurity
+                            0,                          # n_constant_features
+                            -INFINITY,                  # lower_bound
+                            INFINITY                    # upper_bound
+            )
             if rc == -1:
                 with gil:
                     raise MemoryError("pruning tree")
@@ -1705,11 +1746,31 @@ cdef _cost_complexity_prune(unsigned char[:] leaves_in_subtree, # OUT
 
                 if child_l[node_idx] != _TREE_LEAF:
                     # ... and child_r[node_idx] != _TREE_LEAF:
-                    rc = stack.push(child_l[node_idx], 0, 0, 0, 0, 0, 0, -INFINITY, INFINITY)
+                    rc = stack.push(
+                                    child_l[node_idx],  # start
+                                    0,                  # end
+                                    0,                  # depth
+                                    0,                  # parent
+                                    0,                  # is_left
+                                    0,                  # impurity
+                                    0,                  # n_constant_features
+                                    -INFINITY,          # lower_bound
+                                    INFINITY            # upper_bound
+                    )
                     if rc == -1:
                         with gil:
                             raise MemoryError("pruning tree")
-                    rc = stack.push(child_r[node_idx], 0, 0, 0, 0, 0, 0, -INFINITY, INFINITY)
+                    rc = stack.push(
+                                    child_r[node_idx],  # start
+                                    0,                  # end
+                                    0,                  # depth
+                                    0,                  # parent
+                                    0,                  # is_left
+                                    0,                  # impurity
+                                    0,                  # n_constant_features
+                                    -INFINITY,          # lower_bound
+                                    INFINITY            # upper_bound
+                    )
                     if rc == -1:
                         with gil:
                             raise MemoryError("pruning tree")
