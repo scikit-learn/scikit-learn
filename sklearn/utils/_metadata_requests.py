@@ -27,7 +27,7 @@ MethodPair = namedtuple("MethodPair", ["callee", "caller"])
 class RequestType(Enum):
     """A metadata is requested either with a string alias or this enum.
 
-    .. versionadded:: 1.1
+    .. versionadded:: 1.2
     """
 
     # Metadata is not requested. It will not be routed to the object having the
@@ -117,7 +117,7 @@ REQUESTER_DOC = """        Request metadata passed to the ``{method}`` method.
         Please see :ref:`User Guide <metadata_routing>` on how the routing
         mechanism works.
 
-        .. versionadded:: 1.1
+        .. versionadded:: 1.2
 
         Parameters
         ----------
@@ -157,7 +157,7 @@ class MethodMetadataRequest:
 
     Refer to :class:`MetadataRequest` for how this class is used.
 
-    .. versionadded:: 1.1
+    .. versionadded:: 1.2
 
     Parameters
     ----------
@@ -356,7 +356,7 @@ class MetadataRequest:
     Consumer-only classes such as simple estimators return a serialized
     version of this class as the output of `get_metadata_routing()`.
 
-    .. versionadded:: 1.1
+    .. versionadded:: 1.2
 
     Parameters
     ----------
@@ -487,7 +487,7 @@ class MethodMapping:
     Iterating through an instance of this class will yield named
     ``MethodPair(callee, caller)`` tuples.
 
-    .. versionadded:: 1.1
+    .. versionadded:: 1.2
     """
 
     def __init__(self):
@@ -584,7 +584,7 @@ class MetadataRouter:
     :class:`~utils.metadata_requests.MetadataRequest` or a
     :class:`~utils.metadata_requests.MetadataRouter` instance.
 
-    .. versionadded:: 1.1
+    .. versionadded:: 1.2
 
     Parameters
     ----------
@@ -993,7 +993,7 @@ def get_routing_for_object(obj=None):
     intput, such that changing the output of this function will not change the
     original object.
 
-    .. versionadded:: 1.1
+    .. versionadded:: 1.2
 
     Parameters
     ----------
@@ -1031,7 +1031,7 @@ class RequestMethod:
     """
     A descriptor for request methods.
 
-    .. versionadded:: 1.1
+    .. versionadded:: 1.2
 
     Parameters
     ----------
@@ -1121,7 +1121,7 @@ class RequestMethod:
 class _MetadataRequester:
     """Mixin class for adding metadata request functionality.
 
-    .. versionadded:: 1.1
+    .. versionadded:: 1.2
     """
 
     def __init_subclass__(cls, **kwargs):
@@ -1292,7 +1292,7 @@ def process_routing(obj, method, other_params, **kwargs):
     a call to this function would be:
     ``process_routing(self, fit_params, sample_weight=sample_weight)``.
 
-    .. versionadded:: 1.1
+    .. versionadded:: 1.2
 
     Parameters
     ----------
