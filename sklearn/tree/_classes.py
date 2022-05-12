@@ -391,7 +391,14 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 "monotonic_cst has shape {} but the input data "
                 "X has {} features.".format(monotonic_cst.shape[0], X.shape[1])
             )
-        if np.any(monotonic_cst < -1) or np.any(monotonic_cst > 1):
+        # Applying element-wise logical conjunction
+        # for monotonic constraints' support.
+        unsatisfied_constraints_conditions = (
+            (monotonic_cst != -1) * 
+            (monotonic_cst != 0) * 
+            (monotonic_cst != 1)
+        )
+        if np.any(unsatisfied_constraints_conditions):
             raise ValueError(
                 "monotonic_cst must be None or an array-like of -1, 0 or 1."
             )
