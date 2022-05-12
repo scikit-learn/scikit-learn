@@ -238,17 +238,28 @@ cdef class Splitter:
 
     cdef inline bint check_monotonicity(self, INT32_t monotonic_cst, double lower_bound, double upper_bound) nogil:
         """Check monotonic constraint is satisfied at the current split"""
-        cdef bint check_lower, check_upper, check_monotonic
-        check_lower = (deref(self.criterion.sum_left) >= lower_bound * self.criterion.weighted_n_left) \
-                      & (deref(self.criterion.sum_right) >= lower_bound * self.criterion.weighted_n_right)
-        check_upper = (deref(self.criterion.sum_left) <= upper_bound * self.criterion.weighted_n_left) \
-                      & (deref(self.criterion.sum_right) <= upper_bound * self.criterion.weighted_n_right)
+        cdef:
+            double sum_left = deref(self.criterion.sum_left)
+            double sum_right = deref(self.criterion.sum_right)
+            double weighted_n_left = self.criterion.weighted_n_left
+            double weighted_n_right  = self.criterion.weighted_n_right
+
+            bint check_lower = (
+                sum_left >= lower_bound * weighted_n_left &
+                sum_right >= lower_bound * weighted_n_right
+            )
+            bint check_upper = (
+                sum_left <= upper_bound * weighted_n_left &
+                sum_right <= upper_bound * weighted_n_right
+            )
+            bint check_monotonic
         if monotonic_cst == 0: # No constraint
             return check_lower & check_upper
         else:
-            check_monotonic = (deref(self.criterion.sum_left) * self.criterion.weighted_n_right
-                               - deref(self.criterion.sum_right) * self.criterion.weighted_n_left) \
-                              * monotonic_cst <= 0
+            check_monotonic = (
+                (sum_left * weighted_n_right - 
+                 sum_right * weighted_n_left) * monotonic_cst <= 0
+            )
             return check_lower & check_upper & check_monotonic
 
 cdef class BaseDenseSplitter(Splitter):
