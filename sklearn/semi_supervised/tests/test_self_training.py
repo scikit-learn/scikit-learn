@@ -11,8 +11,13 @@ from sklearn.svm import SVC
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_iris, make_blobs
 from sklearn.metrics import accuracy_score
+from sklearn.pipeline import make_pipeline
+from sklearn.feature_extraction.tests.test_text import JUNK_FOOD_DOCS, NOTJUNK_FOOD_DOCS
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.linear_model import LogisticRegression
 
 from sklearn.semi_supervised import SelfTrainingClassifier
+
 
 # Author: Oliver Rausch <rauscho@ethz.ch>
 # License: BSD 3 clause
@@ -350,3 +355,24 @@ def test_missing_predict_proba():
 
     with pytest.raises(AttributeError, match="predict_proba is not available"):
         self_training.fit(X_train, y_train_missing_labels)
+
+
+def test_vectorizer_pipeline():
+    """Check that SelfTrainingClassifier works with vectorizer pipeline.
+
+    Non-regression test for #23323.
+    """
+    data = JUNK_FOOD_DOCS + NOTJUNK_FOOD_DOCS
+    target = (
+        [0] * (len(JUNK_FOOD_DOCS) - 1)
+        + [-1]
+        + [1] * (len(NOTJUNK_FOOD_DOCS) - 1)
+        + [-1]
+    )
+
+    train_data, test_data, target_train, target_test = train_test_split(
+        data, target, test_size=0.2, random_state=0
+    )
+    pipe = make_pipeline(CountVectorizer(), LogisticRegression())
+    self_training = SelfTrainingClassifier(pipe)
+    self_training.fit(data, target)

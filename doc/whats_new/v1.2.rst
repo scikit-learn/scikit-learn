@@ -71,6 +71,12 @@ Changelog
   matrices in a variety of estimators and avoid an `EfficiencyWarning`.
   :pr:`23139` by `Tom Dupre la Tour`_.
 
+:mod:`sklearn.semi_supervised`
+..............................
+
+- |Fix| :class:`semi_supervised.SelfTrainingClassifier` now delegates validation
+  to it's base estimator. :pr:`xxxxx` by `Thomas Fan`_.
+
 Code and Documentation Contributors
 -----------------------------------
 
