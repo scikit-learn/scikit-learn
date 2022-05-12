@@ -237,7 +237,7 @@ class _BaseScorer(_MetadataRequester):
             Other parameters passed to the scorer, e.g. sample_weight.
             Refer to :func:`set_score_request` for more details.
 
-            .. versionadded:: 1.1
+            .. versionadded:: 1.2
 
         Returns
         -------
@@ -269,7 +269,7 @@ class _BaseScorer(_MetadataRequester):
         Please see :ref:`User Guide <metadata_routing>` on how the routing
         mechanism works.
 
-        .. versionadded:: 1.1
+        .. versionadded:: 1.2
 
         Parameters
         ----------
@@ -317,7 +317,7 @@ class _PredictScorer(_BaseScorer):
             Other parameters passed to the scorer, e.g. sample_weight.
             Refer to :func:`set_score_request` for more details.
 
-            .. versionadded:: 1.1
+            .. versionadded:: 1.2
 
         Returns
         -------
@@ -362,7 +362,7 @@ class _ProbaScorer(_BaseScorer):
             Other parameters passed to the scorer, e.g. sample_weight.
             Refer to :func:`set_score_request` for more details.
 
-            .. versionadded:: 1.1
+            .. versionadded:: 1.2
 
         Returns
         -------
@@ -426,7 +426,7 @@ class _ThresholdScorer(_BaseScorer):
             Other parameters passed to the scorer, e.g. sample_weight.
             Refer to :func:`set_score_request` for more details.
 
-            .. versionadded:: 1.1
+            .. versionadded:: 1.2
 
         Returns
         -------
@@ -531,7 +531,7 @@ class _PassthroughScorer:
     def get_metadata_routing(self):
         """Get requested data properties.
 
-        .. versionadded:: 1.1
+        .. versionadded:: 1.2
 
         Returns
         -------
