@@ -31,4 +31,5 @@ cdef class ObliqueTree(Tree):
     cdef DTYPE_t _compute_feature(self, const DTYPE_t[:] X_ndarray, Node *node, SIZE_t node_id) nogil
     cdef int _resize_c(self, SIZE_t capacity=*) nogil except -1
 
+    cpdef DTYPE_t compute_feature_value(self, object X, SIZE_t node_id)
     cpdef np.ndarray get_projection_matrix(self)

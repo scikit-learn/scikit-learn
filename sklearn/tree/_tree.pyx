@@ -766,7 +766,7 @@ cdef class Tree:
 
         self.capacity = capacity
         return 0
-    
+
     cdef int _set_node_values(self, SplitRecord* split_node,
             Node *node) nogil except -1:
         """Set node data.
@@ -774,7 +774,7 @@ cdef class Tree:
         node.feature = split_node.feature
         node.threshold = split_node.threshold
         return 1
-    
+
     cdef DTYPE_t _compute_feature(self, const DTYPE_t[:] X_ndarray,
             Node *node, SIZE_t node_id) nogil:
         """Compute feature from a given data matrix, X.

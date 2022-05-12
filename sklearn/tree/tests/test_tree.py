@@ -998,7 +998,7 @@ def test_pickle():
         else:
             X, y = diabetes.data, diabetes.target
 
-        est = TreeEstimator(random_state=0, max_depth=5)
+        est = TreeEstimator(random_state=0)
         est.fit(X, y)
         score = est.score(X, y)
 
@@ -1032,9 +1032,7 @@ def test_pickle():
             est2_proj_mat = est2.tree_.get_projection_matrix()
             assert_array_equal(est_proj_mat, est2_proj_mat)
 
-        # TODO: this works when `max_depth=5`, but not 6?
-        # Must be some machine rounding error occurring
-        # probably needs ``_compute_feature`` to do some rounding?
+        # score should match before/after pickling
         score2 = est2.score(X, y)
         assert (
             score == score2

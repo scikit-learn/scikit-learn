@@ -20,7 +20,6 @@ from libc.stdio cimport printf
 from libcpp.vector cimport vector
 
 from cython.operator cimport dereference as deref
-from cython.parallel import prange
 
 from ._utils cimport log
 from ._utils cimport rand_int
@@ -55,7 +54,7 @@ cdef class ObliqueSplitter(Splitter):
 
     def __cinit__(self, Criterion criterion, SIZE_t max_features,
                   SIZE_t min_samples_leaf, double min_weight_leaf,
-                  double feature_combinations, object random_state):
+                  double feature_combinations, object random_state, *argv):
         """
         Parameters
         ----------

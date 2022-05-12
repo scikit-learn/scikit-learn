@@ -244,6 +244,12 @@ cdef class ObliqueTree(Tree):
         self.proj_vec_weights[node_id] = deref(deref(oblique_split_node).proj_vec_weights)
         self.proj_vec_indices[node_id] = deref(deref(oblique_split_node).proj_vec_indices)
         return 1
+        
+    cpdef DTYPE_t compute_feature_value(self, object X, SIZE_t node_id):
+        cdef const DTYPE_t[:] X_vector = X
+        cdef Node* node = &self.nodes[node_id]
+        feature_value = self._compute_feature(X_vector, node, node_id)
+        return feature_value
 
     cdef DTYPE_t _compute_feature(self, const DTYPE_t[:] X_ndarray, Node *node, SIZE_t node_id) nogil:
         """Compute feature from a given data matrix, X.
@@ -254,11 +260,19 @@ cdef class ObliqueTree(Tree):
         cdef vector[DTYPE_t] proj_vec_weights
         cdef vector[SIZE_t] proj_vec_indices
         cdef DTYPE_t proj_feat = 0.0
+        cdef DTYPE_t weight = 0.0
+        cdef SIZE_t j = 0
+        cdef SIZE_t n_projections = proj_vec_indices.size()
 
         # compute projection of the data based on trained tree
         proj_vec_weights = self.proj_vec_weights[node_id]
         proj_vec_indices = self.proj_vec_indices[node_id]
-        for j in range(proj_vec_indices.size()):
-            proj_feat += X_ndarray[proj_vec_indices[j]] * proj_vec_weights[j]
+        for j in range(n_projections):
+            weight = proj_vec_weights[j]
+            
+            # skip a multiplication step if there is nothing to be done
+            if weight == 0:
+                continue
+            proj_feat += X_ndarray[proj_vec_indices[j]] * weight
 
         return proj_feat
