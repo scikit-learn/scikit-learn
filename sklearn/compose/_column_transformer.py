@@ -7,7 +7,6 @@ different columns.
 #         Joris Van den Bossche
 # License: BSD
 from itertools import chain
-from typing import Iterable
 from collections import Counter
 
 import numpy as np
@@ -436,16 +435,12 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
         Used in conjunction with self._iter(fitted=True) in get_feature_names_out.
         """
+        column_indices = self._transformer_to_input_indices[name]
+        names = feature_names_in[column_indices]
         if trans == "drop" or _is_empty_column_selection(column):
             return
         elif trans == "passthrough":
-            if (not isinstance(column, slice)) and all(
-                isinstance(col, str) for col in column
-            ):
-                # selection was already strings
-                return column
-            else:
-                return feature_names_in[column]
+            return names
 
         # An actual transformer
         if not hasattr(trans, "get_feature_names_out"):
@@ -453,12 +448,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 f"Transformer {name} (type {type(trans).__name__}) does "
                 "not provide get_feature_names_out."
             )
-        if isinstance(column, slice) or (
-            isinstance(column, Iterable)
-            and not all(isinstance(col, str) for col in column)
-        ):
-            column = _safe_indexing(feature_names_in, column)
-        return trans.get_feature_names_out(column)
+        return trans.get_feature_names_out(names)
 
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.

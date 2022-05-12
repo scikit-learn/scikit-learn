@@ -574,7 +574,7 @@ cdef class Tree:
     n_node_samples : array of int, shape [node_count]
         n_node_samples[i] holds the number of training samples reaching node i.
 
-    weighted_n_node_samples : array of int, shape [node_count]
+    weighted_n_node_samples : array of double, shape [node_count]
         weighted_n_node_samples[i] holds the weighted number of training samples
         reaching node i.
     """
@@ -1458,9 +1458,10 @@ cdef _cost_complexity_prune(unsigned char[:] leaves_in_subtree, # OUT
     """Perform cost complexity pruning.
 
     This function takes an already grown tree, `orig_tree` and outputs a
-    boolean mask `leaves_in_subtree` to are the leaves in the pruned tree. The
-    controller signals when the pruning should stop and is passed the
-    metrics of the subtrees during the pruning process.
+    boolean mask `leaves_in_subtree` which are the leaves in the pruned tree.
+    During the pruning process, the controller is passed the effective alpha and
+    the subtree impurities. Furthermore, the controller signals when to stop
+    pruning.
 
     Parameters
     ----------

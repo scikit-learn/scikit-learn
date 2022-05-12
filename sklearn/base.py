@@ -492,7 +492,7 @@ class BaseEstimator(_MetadataRequester):
                 message += "Feature names seen at fit time, yet now missing:\n"
                 message += add_names(missing_names)
 
-            if not missing_names and not missing_names:
+            if not missing_names and not unexpected_names:
                 message += (
                     "Feature names must be in the same order as they were in fit.\n"
                 )
