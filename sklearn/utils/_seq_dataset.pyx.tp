@@ -262,7 +262,7 @@ cdef class ArrayDataset{{name_suffix}}(SequentialDataset{{name_suffix}}):
 
         # Use index array for fast shuffling
         cdef cnp.ndarray[int, ndim=1, mode='c'] index = \
-            cnp.arange(0, self.n_samples, dtype=np.intc)
+            np.arange(0, self.n_samples, dtype=np.intc)
         self.index = index
         self.index_data_ptr = <int *>index.data
         # seed should not be 0 for our_rand_r
