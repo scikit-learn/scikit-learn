@@ -1353,6 +1353,7 @@ Model validation
 
    neighbors.kneighbors_graph
    neighbors.radius_neighbors_graph
+   neighbors.sort_graph_by_row_values
 
 .. _neural_network_ref:
 
