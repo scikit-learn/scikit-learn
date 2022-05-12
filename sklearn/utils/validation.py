@@ -1171,8 +1171,8 @@ def check_random_state(seed):
 
     Returns
     -------
-    ``RandomState``
-        The appropriate ``RandomState`` based on the input.
+    :class:`numpy:numpy.random.RandomState`
+        The random state object based on `seed` parameter.
     """
     if seed is None or seed is np.random:
         return np.random.mtrand._rand
