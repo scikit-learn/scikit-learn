@@ -230,7 +230,7 @@ identifies the dataset::
 ARFF parser
 ~~~~~~~~~~~
 
-From version 1.1, scikit-learn provides a new keyword argument `parser` that
+From version 1.2, scikit-learn provides a new keyword argument `parser` that
 provides several options to parse the ARFF files provided by OpenML. The legacy
 parser (i.e. `parser="liac-arff"`) is based on the project
 `LIAC-ARFF <https://github.com/renatopp/liac-arff>`_. This parser is however
