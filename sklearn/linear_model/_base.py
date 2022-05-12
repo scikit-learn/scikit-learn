@@ -388,7 +388,9 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
     def _set_intercept(self, X_offset, y_offset, X_scale):
         """Set the intercept_"""
         if self.fit_intercept:
-            self.coef_ = self.coef_ / X_scale
+            # We always want coef_.dtype=X.dtype. For instance, X.dtype can differ from
+            # coef_.dtype if warm_start=True.
+            self.coef_ = np.divide(self.coef_, X_scale, dtype=X_scale.dtype)
             self.intercept_ = y_offset - np.dot(X_offset, self.coef_.T)
         else:
             self.intercept_ = 0.0
