@@ -6,6 +6,7 @@ import scipy.sparse as sp
 from sklearn.datasets import make_regression
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import create_memmap_backed_data
 
 from sklearn.utils._testing import ignore_warnings
 from sklearn.exceptions import ConvergenceWarning
@@ -374,3 +375,20 @@ def test_sparse_enet_coordinate_descent():
     )
     with pytest.warns(ConvergenceWarning, match=warning_message):
         clf.fit(X, y)
+
+
+def test_read_only_buffer():
+    """Test that sparse coordinate descent works for read-only buffers"""
+    clf = ElasticNet(alpha=0.1, copy_X=False)
+    X = sp.random(100, 20, format="csc")
+
+    def make_read_only(obj, attr):
+        curr_attr = getattr(obj, attr)
+        RO_attr = create_memmap_backed_data(curr_attr)
+        setattr(obj, attr, RO_attr)
+
+    make_read_only(X, "data")
+    make_read_only(X, "indices")
+    make_read_only(X, "indptr")
+    y = np.random.rand(100)
+    clf.fit(X, y)
