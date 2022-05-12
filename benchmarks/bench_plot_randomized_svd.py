@@ -191,7 +191,7 @@ def get_data(dataset_name):
         del row
         del col
     else:
-        X = fetch_openml(dataset_name).data
+        X = fetch_openml(dataset_name, parser="auto").data
     return X
 
 
@@ -281,9 +281,9 @@ def svd_timing(
         U, mu, V = randomized_svd(
             X,
             n_comps,
-            n_oversamples,
-            n_iter,
-            power_iteration_normalizer,
+            n_oversamples=n_oversamples,
+            n_iter=n_iter,
+            power_iteration_normalizer=power_iteration_normalizer,
             random_state=random_state,
             transpose=False,
         )
