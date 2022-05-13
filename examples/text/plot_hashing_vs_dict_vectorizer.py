@@ -3,17 +3,20 @@
 FeatureHasher and DictVectorizer Comparison
 ===========================================
 
-Compares FeatureHasher and DictVectorizer by using both to vectorize text
-documents.
+Compares :func:`~sklearn.feature_extraction.FeatureHasher` and
+:func:`~sklearn.feature_extraction.DictVectorizer` by using both to vectorize
+text documents.
 
 The example demonstrates syntax and speed only; it doesn't actually do anything
 useful with the extracted vectors. See the example scripts
-:ref:`sphx_glr_auto_examples_text_plot_document_classification.py` and
+:ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py` and
 :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py` for actual
 learning on text documents.
 
-A discrepancy between the number of terms reported for DictVectorizer and for
-FeatureHasher is to be expected due to hash collisions.
+A discrepancy between the number of terms reported for
+:func:`~sklearn.feature_extraction.DictVectorizer` and for
+:func:`~sklearn.feature_extraction.FeatureHasher` is to be expected due to hash
+collisions.
 
 """
 
