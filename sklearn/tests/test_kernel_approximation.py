@@ -69,7 +69,7 @@ def test_polynomial_count_sketch_dense_sparse(gamma, degree, coef0):
     input.
     """
     ps_dense = PolynomialCountSketch(
-        n_components=500, gamma=gamma, degree=degree, coef0=coef0, random_state=0
+        n_components=500, gamma=gamma, degree=degree, coef0=coef0, random_state=42
     )
     Xt_dense = ps_dense.fit_transform(X)
     Yt_dense = ps_dense.transform(Y)
