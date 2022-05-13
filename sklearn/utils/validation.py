@@ -108,25 +108,17 @@ def _assert_all_finite(
     if is_float and (np.isfinite(_safe_accumulator_op(np.sum, X))):
         pass
     elif is_float:
-        if (
-            allow_nan
-            and np.isinf(X).any()
-            or not allow_nan
-            and not np.isfinite(X).all()
-        ):
-            if not allow_nan and np.isnan(X).any():
+        has_inf = np.isinf(X).any()
+        has_nan = np.isnan(X).any()
+        if has_inf or not allow_nan and has_nan:
+            if not allow_nan and has_nan:
                 type_err = "NaN"
             else:
                 msg_dtype = msg_dtype if msg_dtype is not None else X.dtype
                 type_err = f"infinity or a value too large for {msg_dtype!r}"
             padded_input_name = input_name + " " if input_name else ""
             msg_err = f"Input {padded_input_name}contains {type_err}."
-            if (
-                not allow_nan
-                and estimator_name
-                and input_name == "X"
-                and np.isnan(X).any()
-            ):
+            if not allow_nan and estimator_name and input_name == "X" and has_nan:
                 # Improve the error message on how to handle missing values in
                 # scikit-learn.
                 msg_err += (
