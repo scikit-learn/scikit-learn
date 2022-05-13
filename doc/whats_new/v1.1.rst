@@ -18,6 +18,12 @@ Changelog
 - |Fix| Avoid spurious warning in :class:`decomposition.IncrementalPCA` when
   `n_samples == n_components`. :pr:`23264` by :user:`Lucy Liu <lucyleeow>`
 
+:mod:`sklearn.datasets`
+.......................
+
+- |Fix| Avoid timeouts in :func:`datasets.fetch_openml` by not passing a
+  `timeout` argument, :pr:`23358` by `Loïc Estève <lesteve>`.
+
 :mod:`sklearn.metrics`
 ......................
 
@@ -26,7 +32,7 @@ Changelog
   classifier that always predicts the positive class: recall=100% and
   precision=class balance.
   :pr:`23214` by :user:`Stéphane Collot <stephanecollot>` and :user:`Max Baak <mbaak>`.
-  
+
 :mod:`sklearn.utils`
 ....................
 
@@ -208,7 +214,7 @@ Changelog
   :pr:`23194` by `Thomas Fan`_.
 
 - |Enhancement| Added an extension in doc/conf.py to automatically generate
-  the list of estimators that handle NaN values. 
+  the list of estimators that handle NaN values.
   :pr:`23198` by `Lise Kleiber <lisekleiber>`_, :user:`Zhehao Liu <MaxwellLZH>`
   and :user:`Chiara Marmo <cmarmo>`.
 
