@@ -257,22 +257,23 @@ cdef class ObliqueTree(Tree):
         In oblique-aligned trees, this is the projection of X.
         In this case, we take a simple linear combination of some columns of X.
         """
-        cdef vector[DTYPE_t] proj_vec_weights
-        cdef vector[SIZE_t] proj_vec_indices
+        # cdef vector[DTYPE_t] proj_vec_weights
+        # cdef vector[SIZE_t] proj_vec_indices
         cdef DTYPE_t proj_feat = 0.0
         cdef DTYPE_t weight = 0.0
         cdef SIZE_t j = 0
-        cdef SIZE_t n_projections = proj_vec_indices.size()
+        # cdef SIZE_t n_projections = proj_vec_indices.size()
 
         # compute projection of the data based on trained tree
-        proj_vec_weights = self.proj_vec_weights[node_id]
-        proj_vec_indices = self.proj_vec_indices[node_id]
-        for j in range(n_projections):
-            weight = proj_vec_weights[j]
+        # proj_vec_weights = self.proj_vec_weights[node_id]
+        # proj_vec_indices = self.proj_vec_indices[node_id]
+        for j in range(0, self.proj_vec_indices[node_id].size()):
+            feature_index = self.proj_vec_indices[node_id][j]
+            weight = self.proj_vec_weights[node_id][j]
             
             # skip a multiplication step if there is nothing to be done
             if weight == 0:
                 continue
-            proj_feat += X_ndarray[proj_vec_indices[j]] * weight
+            proj_feat += X_ndarray[feature_index] * weight
 
         return proj_feat

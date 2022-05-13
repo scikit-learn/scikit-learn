@@ -25,7 +25,6 @@ from ._utils cimport log
 from ._utils cimport rand_int
 from ._utils cimport rand_uniform
 from ._utils cimport RAND_R_MAX
-from ._utils cimport safe_realloc
 
 cdef double INFINITY = np.inf
 
@@ -84,11 +83,8 @@ cdef class ObliqueSplitter(Splitter):
         """
         self.criterion = criterion
 
-        self.samples = NULL
         self.n_samples = 0
-        self.features = NULL
         self.n_features = 0
-        self.feature_values = NULL
 
         self.sample_weight = NULL
 
@@ -137,7 +133,7 @@ cdef class ObliqueSplitter(Splitter):
         self.criterion.init(self.y,
                             self.sample_weight,
                             self.weighted_n_samples,
-                            self.samples,
+                            &self.samples[0],
                             start,
                             end)
 
@@ -218,7 +214,7 @@ cdef class BestObliqueSplitter(BaseDenseObliqueSplitter):
         cdef int i, feat_i, proj_i
         cdef DTYPE_t weight
 
-        for i in range(n_non_zeros):
+        for i in range(0, n_non_zeros):
             proj_i = rand_int(0, max_features, random_state)
             feat_i = rand_int(0, n_features, random_state)
             weight = 1 if (rand_int(0, 2, random_state) == 1) else -1
@@ -237,16 +233,16 @@ cdef class BestObliqueSplitter(BaseDenseObliqueSplitter):
         cdef ObliqueSplitRecord* oblique_split = <ObliqueSplitRecord*>(split)
 
         # Draw random splits and pick the best
-        cdef SIZE_t* samples = self.samples
+        cdef SIZE_t[::1] samples = self.samples
         cdef SIZE_t start = self.start
         cdef SIZE_t end = self.end
 
-        cdef SIZE_t* features = self.features
-        cdef SIZE_t* constant_features = self.constant_features
+        cdef SIZE_t[::1] features = self.features
+        cdef SIZE_t[::1]  constant_features = self.constant_features
         cdef SIZE_t n_features = self.n_features
 
         # pointer array to store feature values to split on
-        cdef DTYPE_t* Xf = self.feature_values
+        cdef DTYPE_t[::1]  Xf = self.feature_values
         cdef SIZE_t max_features = self.max_features
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf
         cdef double min_weight_leaf = self.min_weight_leaf
@@ -286,16 +282,18 @@ cdef class BestObliqueSplitter(BaseDenseObliqueSplitter):
             current.proj_vec_indices = &self.proj_mat_indices[feat_i]
 
             # fill memory block with 0's for Xf from start to end with DTYPE_t
-            memset(Xf + start, 0, (end - start) * sizeof(DTYPE_t))
+            # memset(Xf + start, 0, (end - start) * sizeof(DTYPE_t))
 
             # Compute linear combination of features and then
             # sort samples according to the feature values.
             for idx in range(start, end):
+                # initialize the feature value to 0
+                Xf[idx] = 0
                 for jdx in range(0, current.proj_vec_indices.size()):
                     Xf[idx] += self.X[samples[idx], deref(current.proj_vec_indices)[jdx]] * deref(current.proj_vec_weights)[jdx]
 
             # Sort the samples
-            simultaneous_sort(Xf + start, samples + start, end - start)
+            simultaneous_sort(&Xf[start], &samples[start], end - start)
 
             # Evaluate all splits
             self.criterion.reset()
