@@ -135,9 +135,7 @@ def _open_openml_url(
     req.add_header("Accept-encoding", "gzip")
 
     if data_home is None:
-        fsrc = _retry_on_network_error(n_retries, delay, req.full_url)(urlopen)(
-            req, timeout=delay
-        )
+        fsrc = _retry_on_network_error(n_retries, delay, req.full_url)(urlopen)(req)
         if is_gzip_encoded(fsrc):
             return gzip.GzipFile(fileobj=fsrc, mode="rb")
         return fsrc
@@ -154,7 +152,7 @@ def _open_openml_url(
             with TemporaryDirectory(dir=dir_name) as tmpdir:
                 with closing(
                     _retry_on_network_error(n_retries, delay, req.full_url)(urlopen)(
-                        req, timeout=delay
+                        req
                     )
                 ) as fsrc:
                     opener: Callable
