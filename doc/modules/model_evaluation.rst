@@ -1057,29 +1057,29 @@ the model and the data using
 that considers only prediction errors. (Hinge
 loss is used in maximal margin classifiers such as support vector machines.)
 
-If the labels are encoded with +1 and -1,  :math:`y`: is the true
-value, and :math:`w` is the predicted decisions as output by
+If the labels are encoded with +1 and -1, :math:`y` is the set of true
+values, and :math:`w` is the set of predicted decisions as output by
 ``decision_function``, then the hinge loss is defined as:
 
 .. math::
 
-  L_\text{Hinge}(y, w) = \max\left\{1 - wy, 0\right\} = \left|1 - wy\right|_+
+  L_\text{Hinge}(y, w) = \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples}-1} \max\left\{1 - w_i y_i, 0\right\}
 
 If there are more than two labels, :func:`hinge_loss` uses a multiclass variant
 due to Crammer & Singer.
 `Here <http://jmlr.csail.mit.edu/papers/volume2/crammer01a/crammer01a.pdf>`_ is
 the paper describing it.
 
-If :math:`y_w` is the predicted decision for true label and :math:`y_t` is the
-maximum of the predicted decisions for all other labels, where predicted
-decisions are output by decision function, then multiclass hinge loss is defined
-by:
+For a sample `i`, if :math:`y_{w,i}` is the predicted decision for true label 
+and :math:`y_{t,i}` is the maximum of the predicted decisions for all other 
+labels, where predicted decisions are output by decision function, then 
+multiclass hinge loss is defined by:
 
 .. math::
 
-  L_\text{Hinge}(y_w, y_t) = \max\left\{1 + y_t - y_w, 0\right\}
+  L_\text{Hinge}(y_w, y_t) = \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples}-1} \max\left\{1 + y_{t,i} - y_{w,i}, 0\right\}
 
-Here a small example demonstrating the use of the :func:`hinge_loss` function
+Here is a small example demonstrating the use of the :func:`hinge_loss` function
 with a svm classifier in a binary class problem::
 
   >>> from sklearn import svm
