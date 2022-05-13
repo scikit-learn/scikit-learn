@@ -9,8 +9,8 @@ sinusoidal dataset with a small amount of Gaussian noise.
 regressor. As the number of boosts is increased the regressor can fit more
 detail.
 
-.. [1] :doi:`H. Drucker, "Improving Regressors using Boosting Techniques", 1997.
-       <10.1145/1390156.1390273>`
+.. [1] `H. Drucker, "Improving Regressors using Boosting Techniques", 1997.
+        <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.31.314&rep=rep1&type=pdf>`_
 
 """
 
