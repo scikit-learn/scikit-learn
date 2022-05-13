@@ -20,3 +20,7 @@ repos:
      -  id: mypy
         files: sklearn/
         additional_dependencies: [pytest==6.2.4]
+-   repo: https://github.com/PyCQA/isort
+    rev: 5.10.1
+    hooks:
+    -   id: isort

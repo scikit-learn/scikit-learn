@@ -33,3 +33,6 @@ exclude = '''
   | asv_benchmarks/env
 )/
 '''
+
+[tool.isort]
+profile = "black"
