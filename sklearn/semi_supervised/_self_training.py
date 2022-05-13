@@ -1,11 +1,16 @@
 import warnings
 
 import numpy as np
+from scipy.sparse import issparse
 
 from ..base import MetaEstimatorMixin, clone, BaseEstimator
-from ..utils.validation import check_is_fitted
+from ..utils.validation import (
+    check_is_fitted,
+    check_consistent_length,
+    _ensure_sparse_format,
+)
 from ..utils.metaestimators import available_if
-from ..utils import safe_mask
+from ..utils import _safe_indexing
 
 __all__ = ["SelfTrainingClassifier"]
 
@@ -176,11 +181,17 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
-        # we need row slicing support for sparce matrices, but costly finiteness check
-        # can be delegated to the base estimator.
-        X, y = self._validate_data(
-            X, y, accept_sparse=["csr", "csc", "lil", "dok"], force_all_finite=False
-        )
+        y = self._validate_data(X="no_validation", y=y)
+        check_consistent_length(X, y)
+        if issparse(X):
+            X = _ensure_sparse_format(
+                X,
+                accept_sparse=["csr", "csc", "lil", "dok"],
+                dtype=None,
+                copy=False,
+                force_all_finite=False,
+                accept_large_sparse=True,
+            )
 
         if self.base_estimator is None:
             raise ValueError("base_estimator cannot be None!")
@@ -232,11 +243,13 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         ):
             self.n_iter_ += 1
             self.base_estimator_.fit(
-                X[safe_mask(X, has_label)], self.transduction_[has_label]
+                _safe_indexing(X, has_label, axis=0), self.transduction_[has_label]
             )
 
             # Predict on the unlabeled samples
-            prob = self.base_estimator_.predict_proba(X[safe_mask(X, ~has_label)])
+            prob = self.base_estimator_.predict_proba(
+                _safe_indexing(X, ~has_label, axis=0)
+            )
             pred = self.base_estimator_.classes_[np.argmax(prob, axis=1)]
             max_proba = np.max(prob, axis=1)
 
@@ -276,8 +289,19 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             self.termination_condition_ = "all_labeled"
 
         self.base_estimator_.fit(
-            X[safe_mask(X, has_label)], self.transduction_[has_label]
+            _safe_indexing(X, has_label, axis=0), self.transduction_[has_label]
         )
+
+        if hasattr(self.base_estimator_, "n_features_in_"):
+            self.n_features_in_ = self.base_estimator_.n_features_in_
+        else:
+            self._check_n_features(X, reset=True)
+
+        if hasattr(self.base_estimator_, "feature_names_in_"):
+            self.feature_names_in_ = self.base_estimator_.feature_names_in_
+        else:
+            self._check_feature_names(X, reset=True)
+
         self.classes_ = self.base_estimator_.classes_
         return self
 
@@ -296,12 +320,11 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             Array with predicted labels.
         """
         check_is_fitted(self)
-        X = self._validate_data(
-            X,
-            accept_sparse=True,
-            force_all_finite=False,
-            reset=False,
-        )
+        if not hasattr(self.base_estimator_, "feature_names_in_"):
+            self._check_feature_names(X, reset=False)
+        if not hasattr(self.base_estimator_, "n_features_in_"):
+            self._check_n_features(X, reset=False)
+
         return self.base_estimator_.predict(X)
 
     @available_if(_estimator_has("predict_proba"))
@@ -319,12 +342,10 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             Array with prediction probabilities.
         """
         check_is_fitted(self)
-        X = self._validate_data(
-            X,
-            accept_sparse=True,
-            force_all_finite=False,
-            reset=False,
-        )
+        if not hasattr(self.base_estimator_, "feature_names_in_"):
+            self._check_feature_names(X, reset=False)
+        if not hasattr(self.base_estimator_, "n_features_in_"):
+            self._check_n_features(X, reset=False)
         return self.base_estimator_.predict_proba(X)
 
     @available_if(_estimator_has("decision_function"))
@@ -342,12 +363,10 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             Result of the decision function of the `base_estimator`.
         """
         check_is_fitted(self)
-        X = self._validate_data(
-            X,
-            accept_sparse=True,
-            force_all_finite=False,
-            reset=False,
-        )
+        if not hasattr(self.base_estimator_, "feature_names_in_"):
+            self._check_feature_names(X, reset=False)
+        if not hasattr(self.base_estimator_, "n_features_in_"):
+            self._check_n_features(X, reset=False)
         return self.base_estimator_.decision_function(X)
 
     @available_if(_estimator_has("predict_log_proba"))
@@ -365,12 +384,10 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             Array with log prediction probabilities.
         """
         check_is_fitted(self)
-        X = self._validate_data(
-            X,
-            accept_sparse=True,
-            force_all_finite=False,
-            reset=False,
-        )
+        if not hasattr(self.base_estimator_, "feature_names_in_"):
+            self._check_feature_names(X, reset=False)
+        if not hasattr(self.base_estimator_, "n_features_in_"):
+            self._check_n_features(X, reset=False)
         return self.base_estimator_.predict_log_proba(X)
 
     @available_if(_estimator_has("score"))
@@ -391,10 +408,8 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             Result of calling score on the `base_estimator`.
         """
         check_is_fitted(self)
-        X = self._validate_data(
-            X,
-            accept_sparse=True,
-            force_all_finite=False,
-            reset=False,
-        )
+        if not hasattr(self.base_estimator_, "feature_names_in_"):
+            self._check_feature_names(X, reset=False)
+        if not hasattr(self.base_estimator_, "n_features_in_"):
+            self._check_n_features(X, reset=False)
         return self.base_estimator_.score(X, y)
