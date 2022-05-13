@@ -95,8 +95,8 @@ def extract_score(cv_results):
 
 
 # %%
-# We first validate the :class:`~sklearn.linear_model.LogisticRegression` model with default hyperparameters
-# as used in the previous section.
+# We first validate the :class:`~sklearn.linear_model.LogisticRegression` model
+# with default hyperparameters as used in the previous section.
 
 from sklearn.model_selection import cross_validate
 
@@ -158,9 +158,10 @@ extract_score(cross_validate(estimator, X, y, scoring=scoring, cv=10))
 # :ref:`sphx_glr_auto_examples_svm_plot_separating_hyperplane_unbalanced.py` for
 # a study of the boundary decision for unbalanced classes).
 #
-# Here we train a :class:`~sklearn.linear_model.LogisticRegression` base model on a case-control study with a
-# prevalence of 50%. It is then evaluated over populations with varying
-# prevalence. We use the :func:`~sklearn.datasets.make_classification` function to ensure the
+# Here we train a :class:`~sklearn.linear_model.LogisticRegression` base model
+# on a case-control study with a prevalence of 50%. It is then evaluated over
+# populations with varying prevalence. We use the
+# :func:`~sklearn.datasets.make_classification` function to ensure the
 # data-generating process is always the same as shown in the plots below. The
 # label `1` corresponds to the positive class "disease", whereas the label `0`
 # stands for "no-disease".
@@ -187,11 +188,12 @@ estimator = LogisticRegression().fit(X, y)
 lr_base = extract_score(cross_validate(estimator, X, y, scoring=scoring, cv=10))
 pos_lr_base, pos_lr_base_std = lr_base["positive"].values
 neg_lr_base, neg_lr_base_std = lr_base["negative"].values
-# %% [markdown]
-#
+
+# %%
 # We will now show the decision boundary for each level of prevalence. Note that
 # we only plot a subset of the original data to better assess the linear model
 # decision boundary.
+
 fig, axs = plt.subplots(nrows=3, ncols=2, figsize=(15, 12))
 
 for ax, (n, weight) in zip(axs.ravel(), enumerate(weights)):
@@ -210,7 +212,7 @@ for ax, (n, weight) in zip(axs.ravel(), enumerate(weights)):
     plot_indices = rng.choice(np.arange(X.shape[0]), size=500, replace=True)
     X_plot, y_plot = X[plot_indices], y[plot_indices]
 
-    # plot decision boundary of base model with varying prevalence
+    # plot fixed decision boundary of base model with varying prevalence
     disp = DecisionBoundaryDisplay.from_estimator(
         estimator,
         X_plot,
@@ -223,7 +225,7 @@ for ax, (n, weight) in zip(axs.ravel(), enumerate(weights)):
     disp.ax_.legend(*scatter.legend_elements())
 
 # %%
-# We score the base model for each prevalence using bootstraping.
+# We define a function for bootstraping.
 
 
 def scoring_on_bootstrap(estimator, X, y, rng, n_bootstrap=100):
@@ -240,6 +242,8 @@ def scoring_on_bootstrap(estimator, X, y, rng, n_bootstrap=100):
 
 
 # %%
+# We score the base model for each prevalence using bootstraping.
+
 results = defaultdict(list)
 n_bootstrap = 100
 rng = np.random.default_rng(seed=0)
