@@ -428,7 +428,7 @@ class NoPredictProbaNoDecisionFunction(ClassifierMixin, BaseEstimator):
     [
         (
             KMeans(),
-            {"features": [0]},
+            {"features": [0], "n_init": "auto"},
             "'estimator' must be a fitted regressor or classifier",
         ),
         (
