@@ -40,6 +40,9 @@ jobs:
         black --check --diff .
       displayName: Run black
     - bash: |
+        black --check --diff .
+      displayName: Run black
+    - bash: |
         ./build_tools/circle/linting.sh
       displayName: Run linting
     - bash: |
