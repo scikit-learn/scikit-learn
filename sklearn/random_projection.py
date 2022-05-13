@@ -30,17 +30,15 @@ import warnings
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
-from scipy import linalg
 import scipy.sparse as sp
+from scipy import linalg
 
-from .base import BaseEstimator, TransformerMixin
-from .base import _ClassNamePrefixFeaturesOutMixin
-
+from .base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
+from .exceptions import DataDimensionalityWarning
 from .utils import check_random_state
 from .utils.extmath import safe_sparse_dot
 from .utils.random import sample_without_replacement
 from .utils.validation import check_array, check_is_fitted
-from .exceptions import DataDimensionalityWarning
 
 __all__ = [
     "SparseRandomProjection",

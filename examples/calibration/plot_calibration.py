@@ -88,11 +88,12 @@ print("With isotonic calibration: %1.3f" % clf_isotonic_score)
 clf_sigmoid_score = brier_score_loss(y_test, prob_pos_sigmoid, sample_weight=sw_test)
 print("With sigmoid calibration: %1.3f" % clf_sigmoid_score)
 
+import matplotlib.pyplot as plt
+
 # %%
 # Plot data and the predicted probabilities
 # -----------------------------------------
 from matplotlib import cm
-import matplotlib.pyplot as plt
 
 plt.figure()
 y_unique = np.unique(y)

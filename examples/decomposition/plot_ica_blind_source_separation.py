@@ -14,11 +14,11 @@ non-Gaussian processes.
 
 """
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from scipy import signal
 
-from sklearn.decomposition import FastICA, PCA
+from sklearn.decomposition import PCA, FastICA
 
 # #############################################################################
 # Generate sample data

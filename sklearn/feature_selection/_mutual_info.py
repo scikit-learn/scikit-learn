@@ -6,11 +6,11 @@ from scipy.sparse import issparse
 from scipy.special import digamma
 
 from ..metrics.cluster import mutual_info_score
-from ..neighbors import NearestNeighbors, KDTree
+from ..neighbors import KDTree, NearestNeighbors
 from ..preprocessing import scale
 from ..utils import check_random_state
-from ..utils.validation import check_array, check_X_y
 from ..utils.multiclass import check_classification_targets
+from ..utils.validation import check_array, check_X_y
 
 
 def _compute_mi_cc(x, y, n_neighbors):

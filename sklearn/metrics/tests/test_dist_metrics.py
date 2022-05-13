@@ -1,19 +1,18 @@
+import copy
 import itertools
 import pickle
-import copy
 
 import numpy as np
-from numpy.testing import assert_array_almost_equal
-
 import pytest
-
 import scipy.sparse as sp
+from numpy.testing import assert_array_almost_equal
 from scipy.spatial.distance import cdist
+
 from sklearn.metrics import DistanceMetric
 from sklearn.metrics._dist_metrics import BOOL_METRICS
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import create_memmap_backed_data
-from sklearn.utils.fixes import sp_version, parse_version
+from sklearn.utils.fixes import parse_version, sp_version
 
 
 def dist_func(x1, x2, p):

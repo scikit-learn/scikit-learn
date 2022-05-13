@@ -6,23 +6,20 @@
 #          Hamzeh Alsalhi <ha258@cornell.edu>
 # License: BSD 3 clause
 
-from collections import defaultdict
-import itertools
 import array
+import itertools
 import warnings
+from collections import defaultdict
 
 import numpy as np
 import scipy.sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin
-
-from ..utils.sparsefuncs import min_max_axis
 from ..utils import column_or_1d
-from ..utils.validation import _num_samples, check_array, check_is_fitted
-from ..utils.multiclass import unique_labels
-from ..utils.multiclass import type_of_target
 from ..utils._encode import _encode, _unique
-
+from ..utils.multiclass import type_of_target, unique_labels
+from ..utils.sparsefuncs import min_max_axis
+from ..utils.validation import _num_samples, check_array, check_is_fitted
 
 __all__ = [
     "label_binarize",

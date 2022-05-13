@@ -2,10 +2,10 @@ import warnings
 
 import numpy as np
 
-from ..base import MetaEstimatorMixin, clone, BaseEstimator
-from ..utils.validation import check_is_fitted
-from ..utils.metaestimators import available_if
+from ..base import BaseEstimator, MetaEstimatorMixin, clone
 from ..utils import safe_mask
+from ..utils.metaestimators import available_if
+from ..utils.validation import check_is_fitted
 
 __all__ = ["SelfTrainingClassifier"]
 

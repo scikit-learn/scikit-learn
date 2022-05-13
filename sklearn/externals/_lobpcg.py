@@ -21,11 +21,11 @@ References
 """
 
 import warnings
+
 import numpy as np
-from scipy.linalg import (inv, eigh, cho_factor, cho_solve,
-                          cholesky, LinAlgError)
-from scipy.sparse.linalg import aslinearoperator
 from numpy import block as bmat
+from scipy.linalg import LinAlgError, cho_factor, cho_solve, cholesky, eigh, inv
+from scipy.sparse.linalg import aslinearoperator
 
 __all__ = ["lobpcg"]
 
@@ -42,10 +42,12 @@ def _report_nonhermitian(M, name):
     tol = max(tol, tol * norm(M, 1))
     if nmd > tol:
         warnings.warn(
-              f"Matrix {name} of the type {M.dtype} is not Hermitian: "
-              f"condition: {nmd} < {tol} fails.",
-              UserWarning, stacklevel=4
-         )
+            f"Matrix {name} of the type {M.dtype} is not Hermitian: "
+            f"condition: {nmd} < {tol} fails.",
+            UserWarning,
+            stacklevel=4,
+        )
+
 
 def _as2d(ar):
     """
@@ -121,7 +123,7 @@ def _get_indx(_lambda, num, largest):
     """Get `num` indices into `_lambda` depending on `largest` option."""
     ii = np.argsort(_lambda)
     if largest:
-        ii = ii[:-num - 1:-1]
+        ii = ii[: -num - 1 : -1]
     else:
         ii = ii[:num]
 
@@ -341,8 +343,9 @@ def lobpcg(
         warnings.warn(
             f"The problem size {n} minus the constraints size {sizeY} "
             f"is too small relative to the block size {sizeX}. "
-            f"Using a dense eigensolver instead of LOBPCG.",
-            UserWarning, stacklevel=2
+            "Using a dense eigensolver instead of LOBPCG.",
+            UserWarning,
+            stacklevel=2,
         )
 
         sizeX = min(sizeX, n)
@@ -361,10 +364,7 @@ def lobpcg(
         A_dense = A(np.eye(n, dtype=A.dtype))
         B_dense = None if B is None else B(np.eye(n, dtype=B.dtype))
 
-        vals, vecs = eigh(A_dense,
-                          B_dense,
-                          eigvals=eigvals,
-                          check_finite=False)
+        vals, vecs = eigh(A_dense, B_dense, eigvals=eigvals, check_finite=False)
         if largest:
             # Reverse order to be compatible with eigs() in 'LM' mode.
             vals = vals[::-1]
@@ -438,7 +438,7 @@ def lobpcg(
     while iterationNumber < maxiter:
         iterationNumber += 1
         if verbosityLevel > 0:
-            print("-"*50)
+            print("-" * 50)
             print(f"iteration {iterationNumber}")
 
         if B is not None:
@@ -488,22 +488,17 @@ def lobpcg(
         ##
         # Apply constraints to the preconditioned residuals.
         if blockVectorY is not None:
-            _applyConstraints(activeBlockVectorR,
-                              gramYBY,
-                              blockVectorBY,
-                              blockVectorY)
+            _applyConstraints(activeBlockVectorR, gramYBY, blockVectorBY, blockVectorY)
 
         ##
         # B-orthogonalize the preconditioned residuals to X.
         if B is not None:
             activeBlockVectorR = activeBlockVectorR - (
-                blockVectorX @
-                (blockVectorBX.T.conj() @ activeBlockVectorR)
+                blockVectorX @ (blockVectorBX.T.conj() @ activeBlockVectorR)
             )
         else:
             activeBlockVectorR = activeBlockVectorR - (
-                blockVectorX @
-                (blockVectorX.T.conj() @ activeBlockVectorR)
+                blockVectorX @ (blockVectorX.T.conj() @ activeBlockVectorR)
             )
 
         ##
@@ -516,7 +511,8 @@ def lobpcg(
                 f"Failed at iteration {iterationNumber} with accuracies "
                 f"{residualNorms}\n not reaching the requested "
                 f"tolerance {residualTolerance}.",
-                UserWarning, stacklevel=2
+                UserWarning,
+                stacklevel=2,
             )
             break
         activeBlockVectorAR = A(activeBlockVectorR)
@@ -596,8 +592,7 @@ def lobpcg(
             gramRBP = np.dot(activeBlockVectorR.T.conj(), activeBlockVectorBP)
             if explicitGramFlag:
                 gramPAP = (gramPAP + gramPAP.T.conj()) / 2
-                gramPBP = np.dot(activeBlockVectorP.T.conj(),
-                                 activeBlockVectorBP)
+                gramPBP = np.dot(activeBlockVectorP.T.conj(), activeBlockVectorBP)
             else:
                 gramPBP = ident
 
@@ -619,9 +614,7 @@ def lobpcg(
             _handle_gramA_gramB_verbosity(gramA, gramB)
 
             try:
-                _lambda, eigBlockVector = eigh(gramA,
-                                               gramB,
-                                               check_finite=False)
+                _lambda, eigBlockVector = eigh(gramA, gramB, check_finite=False)
             except LinAlgError:
                 # try again after dropping the direction vectors P from RR
                 restart = True
@@ -633,9 +626,7 @@ def lobpcg(
             _handle_gramA_gramB_verbosity(gramA, gramB)
 
             try:
-                _lambda, eigBlockVector = eigh(gramA,
-                                               gramB,
-                                               check_finite=False)
+                _lambda, eigBlockVector = eigh(gramA, gramB, check_finite=False)
             except LinAlgError as e:
                 raise ValueError("eigh has failed in lobpcg iterations") from e
 
@@ -664,9 +655,8 @@ def lobpcg(
         if B is not None:
             if not restart:
                 eigBlockVectorX = eigBlockVector[:sizeX]
-                eigBlockVectorR = eigBlockVector[sizeX:
-                                                 sizeX + currentBlockSize]
-                eigBlockVectorP = eigBlockVector[sizeX + currentBlockSize:]
+                eigBlockVectorR = eigBlockVector[sizeX : sizeX + currentBlockSize]
+                eigBlockVectorP = eigBlockVector[sizeX + currentBlockSize :]
 
                 pp = np.dot(activeBlockVectorR, eigBlockVectorR)
                 pp += np.dot(activeBlockVectorP, eigBlockVectorP)
@@ -698,9 +688,8 @@ def lobpcg(
         else:
             if not restart:
                 eigBlockVectorX = eigBlockVector[:sizeX]
-                eigBlockVectorR = eigBlockVector[sizeX:
-                                                 sizeX + currentBlockSize]
-                eigBlockVectorP = eigBlockVector[sizeX + currentBlockSize:]
+                eigBlockVectorR = eigBlockVector[sizeX : sizeX + currentBlockSize]
+                eigBlockVectorP = eigBlockVector[sizeX + currentBlockSize :]
 
                 pp = np.dot(activeBlockVectorR, eigBlockVectorR)
                 pp += np.dot(activeBlockVectorP, eigBlockVectorP)
@@ -739,7 +728,8 @@ def lobpcg(
             f"Exited at iteration {iterationNumber} with accuracies \n"
             f"{residualNorms}\n"
             f"not reaching the requested tolerance {residualTolerance}.",
-            UserWarning, stacklevel=2
+            UserWarning,
+            stacklevel=2,
         )
 
     # Future work: Need to add Postprocessing here:

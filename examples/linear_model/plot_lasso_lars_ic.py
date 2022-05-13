@@ -36,6 +36,9 @@ X, y = load_diabetes(return_X_y=True, as_frame=True)
 n_samples = X.shape[0]
 X.head()
 
+from sklearn.linear_model import LassoLarsIC
+from sklearn.pipeline import make_pipeline
+
 # %%
 # Scikit-learn provides an estimator called
 # :class:`~sklearn.linear_model.LinearLarsIC` that uses either Akaike's
@@ -46,8 +49,6 @@ X.head()
 # In the following, we are going to fit two models to compare the values
 # reported by AIC and BIC.
 from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model import LassoLarsIC
-from sklearn.pipeline import make_pipeline
 
 lasso_lars_ic = make_pipeline(
     StandardScaler(), LassoLarsIC(criterion="aic", normalize=False)

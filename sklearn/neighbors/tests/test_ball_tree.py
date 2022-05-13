@@ -3,10 +3,11 @@ import itertools
 import numpy as np
 import pytest
 from numpy.testing import assert_array_almost_equal
+
 from sklearn.neighbors._ball_tree import BallTree
 from sklearn.utils import check_random_state
-from sklearn.utils.validation import check_array
 from sklearn.utils._testing import _convert_container
+from sklearn.utils.validation import check_array
 
 rng = np.random.RandomState(10)
 V_mahalanobis = rng.rand(3, 3)

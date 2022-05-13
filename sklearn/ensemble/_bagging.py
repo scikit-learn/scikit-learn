@@ -6,25 +6,24 @@
 
 import itertools
 import numbers
-import numpy as np
 from abc import ABCMeta, abstractmethod
-from warnings import warn
 from functools import partial
+from warnings import warn
+
+import numpy as np
 
 from joblib import Parallel
 
-from ._base import BaseEnsemble, _partition_estimators
 from ..base import ClassifierMixin, RegressorMixin
-from ..metrics import r2_score, accuracy_score
+from ..metrics import accuracy_score, r2_score
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
-from ..utils import check_random_state, column_or_1d, deprecated
-from ..utils import indices_to_mask
+from ..utils import check_random_state, column_or_1d, deprecated, indices_to_mask
+from ..utils.fixes import delayed
 from ..utils.metaestimators import available_if
 from ..utils.multiclass import check_classification_targets
 from ..utils.random import sample_without_replacement
-from ..utils.validation import has_fit_parameter, check_is_fitted, _check_sample_weight
-from ..utils.fixes import delayed
-
+from ..utils.validation import _check_sample_weight, check_is_fitted, has_fit_parameter
+from ._base import BaseEnsemble, _partition_estimators
 
 __all__ = ["BaggingClassifier", "BaggingRegressor"]
 

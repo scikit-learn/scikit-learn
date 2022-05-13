@@ -12,6 +12,7 @@ Machine Intelligence. 2002. pp. 603-619.
 """
 
 import numpy as np
+
 from sklearn.cluster import MeanShift, estimate_bandwidth
 from sklearn.datasets import make_blobs
 
@@ -38,11 +39,12 @@ n_clusters_ = len(labels_unique)
 
 print("number of estimated clusters : %d" % n_clusters_)
 
+from itertools import cycle
+
 # %%
 # Plot result
 # -----------
 import matplotlib.pyplot as plt
-from itertools import cycle
 
 plt.figure(1)
 plt.clf()

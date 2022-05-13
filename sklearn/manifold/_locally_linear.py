@@ -5,22 +5,21 @@
 # License: BSD 3 clause (C) INRIA 2011
 
 import numpy as np
-from scipy.linalg import eigh, svd, qr, solve
-from scipy.sparse import eye, csr_matrix
+from scipy.linalg import eigh, qr, solve, svd
+from scipy.sparse import csr_matrix, eye
 from scipy.sparse.linalg import eigsh
 
 from ..base import (
     BaseEstimator,
     TransformerMixin,
-    _UnstableArchMixin,
     _ClassNamePrefixFeaturesOutMixin,
+    _UnstableArchMixin,
 )
-from ..utils import check_random_state, check_array
+from ..neighbors import NearestNeighbors
+from ..utils import check_array, check_random_state
 from ..utils._arpack import _init_arpack_v0
 from ..utils.extmath import stable_cumsum
-from ..utils.validation import check_is_fitted
-from ..utils.validation import FLOAT_DTYPES
-from ..neighbors import NearestNeighbors
+from ..utils.validation import FLOAT_DTYPES, check_is_fitted
 
 
 def barycenter_weights(X, Y, indices, reg=1e-3):

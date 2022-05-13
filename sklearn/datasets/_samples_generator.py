@@ -6,14 +6,14 @@ Generate samples of synthetic data sets.
 #          G. Louppe, J. Nothman
 # License: BSD 3 clause
 
-import numbers
 import array
+import numbers
 import warnings
 from collections.abc import Iterable
 
 import numpy as np
-from scipy import linalg
 import scipy.sparse as sp
+from scipy import linalg
 
 from ..preprocessing import MultiLabelBinarizer
 from ..utils import check_array, check_random_state

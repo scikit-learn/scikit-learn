@@ -7,22 +7,23 @@ A Theil-Sen Estimator for Multiple Linear Regression Model
 # License: BSD 3 clause
 
 
-import warnings
 import numbers
+import warnings
 from itertools import combinations
 
 import numpy as np
 from scipy import linalg
-from scipy.special import binom
 from scipy.linalg.lapack import get_lapack_funcs
+from scipy.special import binom
+
 from joblib import Parallel, effective_n_jobs
 
-from ._base import LinearModel
 from ..base import RegressorMixin
-from ..utils import check_random_state
-from ..utils.validation import check_scalar
-from ..utils.fixes import delayed
 from ..exceptions import ConvergenceWarning
+from ..utils import check_random_state
+from ..utils.fixes import delayed
+from ..utils.validation import check_scalar
+from ._base import LinearModel
 
 _EPSILON = np.finfo(np.double).eps
 

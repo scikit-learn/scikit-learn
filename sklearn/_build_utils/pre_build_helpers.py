@@ -1,16 +1,16 @@
 """Helpers to check build environment before actual build of scikit-learn"""
 
-import os
-import sys
 import glob
+import os
+import subprocess
+import sys
 import tempfile
 import textwrap
-import setuptools  # noqa
-import subprocess
 import warnings
-
 from distutils.dist import Distribution
 from distutils.sysconfig import customize_compiler
+
+import setuptools  # noqa
 
 # NumPy 1.23 deprecates numpy.distutils
 with warnings.catch_warnings():

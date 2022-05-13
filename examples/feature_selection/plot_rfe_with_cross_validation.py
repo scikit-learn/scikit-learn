@@ -9,10 +9,11 @@ number of features selected with cross-validation.
 """
 
 import matplotlib.pyplot as plt
-from sklearn.svm import SVC
-from sklearn.model_selection import StratifiedKFold
-from sklearn.feature_selection import RFECV
+
 from sklearn.datasets import make_classification
+from sklearn.feature_selection import RFECV
+from sklearn.model_selection import StratifiedKFold
+from sklearn.svm import SVC
 
 # Build a classification task using 3 informative features
 X, y = make_classification(

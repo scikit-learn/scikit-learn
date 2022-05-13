@@ -16,7 +16,6 @@
 """
 
 from docutils import nodes, utils
-
 from sphinx.util.nodes import split_explicit_title
 
 

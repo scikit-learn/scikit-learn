@@ -10,11 +10,10 @@ Finds core samples of high density and expands clusters from them.
 
 import numpy as np
 
-from sklearn.cluster import DBSCAN
 from sklearn import metrics
+from sklearn.cluster import DBSCAN
 from sklearn.datasets import make_blobs
 from sklearn.preprocessing import StandardScaler
-
 
 # %%
 # Generate sample data

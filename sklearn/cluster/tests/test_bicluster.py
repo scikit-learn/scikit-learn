@@ -4,23 +4,21 @@ import numpy as np
 import pytest
 from scipy.sparse import csr_matrix, issparse
 
-from sklearn.model_selection import ParameterGrid
-
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
-
 from sklearn.base import BaseEstimator, BiclusterMixin
-
-from sklearn.cluster import SpectralCoclustering
-from sklearn.cluster import SpectralBiclustering
-from sklearn.cluster._bicluster import _scale_normalize
-from sklearn.cluster._bicluster import _bistochastic_normalize
-from sklearn.cluster._bicluster import _log_normalize
-
-from sklearn.metrics import consensus_score, v_measure_score
-
+from sklearn.cluster import SpectralBiclustering, SpectralCoclustering
+from sklearn.cluster._bicluster import (
+    _bistochastic_normalize,
+    _log_normalize,
+    _scale_normalize,
+)
 from sklearn.datasets import make_biclusters, make_checkerboard
+from sklearn.metrics import consensus_score, v_measure_score
+from sklearn.model_selection import ParameterGrid
+from sklearn.utils._testing import (
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+)
 
 
 class MockBiclustering(BiclusterMixin, BaseEstimator):

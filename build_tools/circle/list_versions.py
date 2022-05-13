@@ -4,7 +4,6 @@
 import json
 import re
 import sys
-
 from distutils.version import LooseVersion
 from urllib.request import urlopen
 

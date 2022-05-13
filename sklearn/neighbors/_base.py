@@ -6,37 +6,30 @@
 #          Multi-output support by Arnaud Joly <a.joly@ulg.ac.be>
 #
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
-from functools import partial
-
+import numbers
 import warnings
 from abc import ABCMeta, abstractmethod
-import numbers
+from functools import partial
 
 import numpy as np
 from scipy.sparse import csr_matrix, issparse
+
 from joblib import Parallel, effective_n_jobs
 
-from ._ball_tree import BallTree
-from ._kd_tree import KDTree
-from ..base import BaseEstimator, MultiOutputMixin
-from ..base import is_classifier
+from ..base import BaseEstimator, MultiOutputMixin, is_classifier
+from ..exceptions import DataConversionWarning, EfficiencyWarning
 from ..metrics import pairwise_distances_chunked
-from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..metrics._pairwise_distances_reduction import (
     PairwiseDistancesArgKmin,
     PairwiseDistancesRadiusNeighborhood,
 )
-from ..utils import (
-    check_array,
-    gen_even_slices,
-    _to_object_array,
-)
+from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
+from ..utils import _to_object_array, check_array, gen_even_slices
+from ..utils.fixes import delayed, parse_version, sp_version
 from ..utils.multiclass import check_classification_targets
-from ..utils.validation import check_is_fitted
-from ..utils.validation import check_non_negative
-from ..utils.fixes import delayed, sp_version
-from ..utils.fixes import parse_version
-from ..exceptions import DataConversionWarning, EfficiencyWarning
+from ..utils.validation import check_is_fitted, check_non_negative
+from ._ball_tree import BallTree
+from ._kd_tree import KDTree
 
 VALID_METRICS = dict(
     ball_tree=BallTree.valid_metrics,

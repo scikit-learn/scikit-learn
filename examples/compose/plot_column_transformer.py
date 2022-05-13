@@ -24,14 +24,14 @@ helpful, but serves to illustrate the technique.
 
 import numpy as np
 
-from sklearn.preprocessing import FunctionTransformer
+from sklearn.compose import ColumnTransformer
 from sklearn.datasets import fetch_20newsgroups
 from sklearn.decomposition import TruncatedSVD
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics import classification_report
 from sklearn.pipeline import Pipeline
-from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import FunctionTransformer
 from sklearn.svm import LinearSVC
 
 ##############################################################################

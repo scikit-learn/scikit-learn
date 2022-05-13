@@ -3,10 +3,12 @@
 # License: BSD 3 clause
 
 from libc.math cimport exp, lgamma
-from scipy.special import gammaln
+
 import numpy as np
-cimport numpy as cnp
+from scipy.special import gammaln
+
 cimport cython
+cimport numpy as cnp
 
 cnp.import_array()
 ctypedef cnp.float64_t DOUBLE

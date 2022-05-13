@@ -1,19 +1,18 @@
 import numpy as np
 import pytest
 import threadpoolctl
-from numpy.testing import assert_array_equal, assert_allclose
+from numpy.testing import assert_allclose, assert_array_equal
 from scipy.sparse import csr_matrix
 from scipy.spatial.distance import cdist
 
+from sklearn.metrics import euclidean_distances
 from sklearn.metrics._pairwise_distances_reduction import (
-    PairwiseDistancesReduction,
     PairwiseDistancesArgKmin,
     PairwiseDistancesRadiusNeighborhood,
+    PairwiseDistancesReduction,
     _sqeuclidean_row_norms,
 )
-
-from sklearn.metrics import euclidean_distances
-from sklearn.utils.fixes import sp_version, parse_version
+from sklearn.utils.fixes import parse_version, sp_version
 
 # Common supported metric between scipy.spatial.distance.cdist
 # and PairwiseDistancesReduction.

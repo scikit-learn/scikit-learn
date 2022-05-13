@@ -33,16 +33,15 @@ import numpy as np
 from scipy.special import xlogy
 
 from ..exceptions import UndefinedMetricWarning
+from ..utils.stats import _weighted_percentile
 from ..utils.validation import (
+    _check_sample_weight,
+    _num_samples,
     check_array,
     check_consistent_length,
     check_scalar,
-    _num_samples,
     column_or_1d,
-    _check_sample_weight,
 )
-from ..utils.stats import _weighted_percentile
-
 
 __ALL__ = [
     "max_error",

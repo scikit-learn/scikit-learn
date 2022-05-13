@@ -57,6 +57,7 @@ forest.fit(X_train, y_train)
 #     cardinality** features (many unique values). See
 #     :ref:`permutation_importance` as an alternative below.
 import time
+
 import numpy as np
 
 start_time = time.time()

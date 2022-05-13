@@ -13,11 +13,12 @@ significant speedups.
 # Modifications by Gael Varoquaux, Mathieu Blondel and Tom Dupre la Tour
 # License: BSD
 
-import numpy as np
 import warnings
 
-from .fixes import line_search_wolfe1, line_search_wolfe2
+import numpy as np
+
 from ..exceptions import ConvergenceWarning
+from .fixes import line_search_wolfe1, line_search_wolfe2
 
 
 class _LineSearchError(RuntimeError):

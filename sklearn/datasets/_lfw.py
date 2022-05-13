@@ -8,21 +8,16 @@ over the internet, all details are available on the official website:
 # Copyright (c) 2011 Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
 
-from os import listdir, makedirs, remove
-from os.path import join, exists, isdir
-
 import logging
+from os import listdir, makedirs, remove
+from os.path import exists, isdir, join
 
 import numpy as np
+
 from joblib import Memory
 
-from ._base import (
-    get_data_home,
-    _fetch_remote,
-    RemoteFileMetadata,
-    load_descr,
-)
 from ..utils import Bunch
+from ._base import RemoteFileMetadata, _fetch_remote, get_data_home, load_descr
 
 logger = logging.getLogger(__name__)
 

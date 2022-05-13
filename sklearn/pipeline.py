@@ -14,24 +14,19 @@ from itertools import islice
 
 import numpy as np
 from scipy import sparse
+
 from joblib import Parallel
 
-from .base import clone, TransformerMixin
-from .preprocessing import FunctionTransformer
-from .utils._estimator_html_repr import _VisualBlock
-from .utils.metaestimators import available_if
-from .utils import (
-    Bunch,
-    _print_elapsed_time,
-)
-from .utils.deprecation import deprecated
-from .utils._tags import _safe_tags
-from .utils.validation import check_memory
-from .utils.validation import check_is_fitted
-from .utils.fixes import delayed
+from .base import TransformerMixin, clone
 from .exceptions import NotFittedError
-
-from .utils.metaestimators import _BaseComposition
+from .preprocessing import FunctionTransformer
+from .utils import Bunch, _print_elapsed_time
+from .utils._estimator_html_repr import _VisualBlock
+from .utils._tags import _safe_tags
+from .utils.deprecation import deprecated
+from .utils.fixes import delayed
+from .utils.metaestimators import _BaseComposition, available_if
+from .utils.validation import check_is_fitted, check_memory
 
 __all__ = ["Pipeline", "FeatureUnion", "make_pipeline", "make_union"]
 

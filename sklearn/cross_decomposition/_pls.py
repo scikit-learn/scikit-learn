@@ -12,15 +12,18 @@ from abc import ABCMeta, abstractmethod
 import numpy as np
 from scipy.linalg import svd
 
-from ..base import BaseEstimator, RegressorMixin, TransformerMixin
-from ..base import MultiOutputMixin
-from ..base import _ClassNamePrefixFeaturesOutMixin
-from ..utils import check_array, check_scalar, check_consistent_length
-from ..utils.fixes import sp_version
-from ..utils.fixes import parse_version
-from ..utils.extmath import svd_flip
-from ..utils.validation import check_is_fitted, FLOAT_DTYPES
+from ..base import (
+    BaseEstimator,
+    MultiOutputMixin,
+    RegressorMixin,
+    TransformerMixin,
+    _ClassNamePrefixFeaturesOutMixin,
+)
 from ..exceptions import ConvergenceWarning
+from ..utils import check_array, check_consistent_length, check_scalar
+from ..utils.extmath import svd_flip
+from ..utils.fixes import parse_version, sp_version
+from ..utils.validation import FLOAT_DTYPES, check_is_fitted
 
 __all__ = ["PLSCanonical", "PLSRegression", "PLSSVD"]
 

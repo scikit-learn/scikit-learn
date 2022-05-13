@@ -12,22 +12,23 @@ from scipy import sparse
 from scipy.stats.mstats import mquantiles
 
 from ..base import is_classifier, is_regressor
-from ..utils.extmath import cartesian
-from ..utils import check_array
-from ..utils import check_matplotlib_support  # noqa
-from ..utils import _safe_indexing
-from ..utils import _determine_key_type
-from ..utils import _get_column_indices
-from ..utils.validation import check_is_fitted
-from ..utils import Bunch
-from ..tree import DecisionTreeRegressor
 from ..ensemble import RandomForestRegressor
-from ..exceptions import NotFittedError
 from ..ensemble._gb import BaseGradientBoosting
 from ..ensemble._hist_gradient_boosting.gradient_boosting import (
     BaseHistGradientBoosting,
 )
-
+from ..exceptions import NotFittedError
+from ..tree import DecisionTreeRegressor
+from ..utils import check_matplotlib_support  # noqa
+from ..utils import (
+    Bunch,
+    _determine_key_type,
+    _get_column_indices,
+    _safe_indexing,
+    check_array,
+)
+from ..utils.extmath import cartesian
+from ..utils.validation import check_is_fitted
 
 __all__ = [
     "partial_dependence",

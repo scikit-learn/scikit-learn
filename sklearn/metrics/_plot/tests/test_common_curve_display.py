@@ -5,15 +5,10 @@ from sklearn.compose import make_column_transformer
 from sklearn.datasets import load_iris
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.tree import DecisionTreeClassifier
-
-from sklearn.metrics import (
-    DetCurveDisplay,
-    PrecisionRecallDisplay,
-    RocCurveDisplay,
-)
 
 
 @pytest.fixture(scope="module")

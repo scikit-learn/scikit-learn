@@ -29,9 +29,9 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import os
-import sys
-import subprocess
 import re
+import subprocess
+import sys
 from distutils.errors import DistutilsExecError
 
 from numpy.distutils import log

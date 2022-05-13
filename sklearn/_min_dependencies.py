@@ -1,7 +1,6 @@
 """All minimum dependencies for scikit-learn."""
-import platform
 import argparse
-
+import platform
 
 # scipy and cython should by in sync with pyproject.toml
 

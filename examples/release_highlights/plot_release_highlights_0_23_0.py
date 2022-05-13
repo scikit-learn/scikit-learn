@@ -35,9 +35,10 @@ or with conda::
 # 'poisson' loss as well.
 
 import numpy as np
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import PoissonRegressor
+
 from sklearn.ensemble import HistGradientBoostingRegressor
+from sklearn.linear_model import PoissonRegressor
+from sklearn.model_selection import train_test_split
 
 n_samples, n_features = 1000, 20
 rng = np.random.RandomState(0)
@@ -63,11 +64,11 @@ print(gbdt.score(X_test, y_test))
 # this feature.
 
 from sklearn import set_config
+from sklearn.compose import make_column_transformer
+from sklearn.impute import SimpleImputer
+from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
-from sklearn.impute import SimpleImputer
-from sklearn.compose import make_column_transformer
-from sklearn.linear_model import LogisticRegression
 
 set_config(display="diagram")
 
@@ -85,6 +86,8 @@ preprocessor = make_column_transformer(
 clf = make_pipeline(preprocessor, LogisticRegression())
 clf
 
+import numpy as np
+
 ##############################################################################
 # Scalability and stability improvements to KMeans
 # ------------------------------------------------
@@ -95,11 +98,11 @@ clf
 # effect anymore. For more details on how to control the number of threads,
 # please refer to our :ref:`parallelism` notes.
 import scipy
-import numpy as np
-from sklearn.model_selection import train_test_split
+
 from sklearn.cluster import KMeans
 from sklearn.datasets import make_blobs
 from sklearn.metrics import completeness_score
+from sklearn.model_selection import train_test_split
 
 rng = np.random.RandomState(0)
 X, y = make_blobs(random_state=rng)
@@ -125,9 +128,10 @@ print(completeness_score(kmeans.predict(X_test), y_test))
 # effect of the first feature, instead of fitting the noise.
 import numpy as np
 from matplotlib import pyplot as plt
-from sklearn.model_selection import train_test_split
-from sklearn.inspection import plot_partial_dependence
+
 from sklearn.ensemble import HistGradientBoostingRegressor
+from sklearn.inspection import plot_partial_dependence
+from sklearn.model_selection import train_test_split
 
 n_samples = 500
 rng = np.random.RandomState(0)
@@ -166,10 +170,11 @@ plt.show()
 # The two linear regressors :class:`~sklearn.linear_model.Lasso` and
 # :class:`~sklearn.linear_model.ElasticNet` now support sample weights.
 
-from sklearn.model_selection import train_test_split
+import numpy as np
+
 from sklearn.datasets import make_regression
 from sklearn.linear_model import Lasso
-import numpy as np
+from sklearn.model_selection import train_test_split
 
 n_samples, n_features = 1000, 20
 rng = np.random.RandomState(0)

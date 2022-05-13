@@ -5,16 +5,15 @@ Utilities useful during the build.
 # license: BSD
 
 
-import os
-import sklearn
 import contextlib
-
+import os
 from distutils.version import LooseVersion
 
-from .pre_build_helpers import basic_check_build
-from .openmp_helpers import check_openmp_support
-from .._min_dependencies import CYTHON_MIN_VERSION
+import sklearn
 
+from .._min_dependencies import CYTHON_MIN_VERSION
+from .openmp_helpers import check_openmp_support
+from .pre_build_helpers import basic_check_build
 
 DEFAULT_ROOT = "sklearn"
 

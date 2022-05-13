@@ -19,13 +19,14 @@ At the end, the top 10 most uncertain predictions will be shown.
 # Authors: Clay Woolam <clay@woolam.org>
 # License: BSD
 
+import numpy as np
+
 # %%
 # Data generation
 # ---------------
 #
 # We use the digits dataset. We only use a subset of randomly selected samples.
 from sklearn import datasets
-import numpy as np
 
 digits = datasets.load_digits()
 rng = np.random.RandomState(2)
@@ -53,6 +54,8 @@ unlabeled_set = indices[n_labeled_points:]
 y_train = np.copy(y)
 y_train[unlabeled_set] = -1
 
+from sklearn.metrics import classification_report
+
 # %%
 # Semi-supervised learning
 # ------------------------
@@ -60,7 +63,6 @@ y_train[unlabeled_set] = -1
 # We fit a :class:`~sklearn.semi_supervised.LabelSpreading` and use it to predict
 # the unknown labels.
 from sklearn.semi_supervised import LabelSpreading
-from sklearn.metrics import classification_report
 
 lp_model = LabelSpreading(gamma=0.25, max_iter=20)
 lp_model.fit(X, y_train)

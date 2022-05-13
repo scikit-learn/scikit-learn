@@ -2,20 +2,19 @@
 # Author: Joel Nothman
 #         Andreas Mueller
 # License: BSD
-from typing import List, Any
-from types import MethodType
 import warnings
-from functools import wraps
-
 from abc import ABCMeta, abstractmethod
-from operator import attrgetter
-from functools import update_wrapper
-import numpy as np
 from contextlib import suppress
+from functools import update_wrapper, wraps
+from operator import attrgetter
+from types import MethodType
+from typing import Any, List
 
+import numpy as np
+
+from ..base import BaseEstimator
 from ..utils import _safe_indexing
 from ..utils._tags import _safe_tags
-from ..base import BaseEstimator
 
 __all__ = ["available_if", "if_delegate_has_method"]
 

@@ -43,6 +43,7 @@ California housing dataset. The example is taken from [1]_.
 # (here the average target, by default).
 
 import pandas as pd
+
 from sklearn.datasets import fetch_california_housing
 from sklearn.model_selection import train_test_split
 
@@ -71,9 +72,10 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_
 # single-variable partial dependence plots.
 
 from time import time
+
+from sklearn.neural_network import MLPRegressor
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import QuantileTransformer
-from sklearn.neural_network import MLPRegressor
 
 print("Training MLPRegressor...")
 tic = time()
@@ -247,6 +249,9 @@ display.figure_.suptitle(
 )
 display.figure_.subplots_adjust(wspace=0.4, hspace=0.3)
 
+# unused but required import for doing 3d projections with matplotlib < 3.2
+import mpl_toolkits.mplot3d  # noqa: F401
+
 # %%
 # The two-way partial dependence plot shows the dependence of median house
 # price on joint values of house age and average occupants per household. We
@@ -261,9 +266,6 @@ display.figure_.subplots_adjust(wspace=0.4, hspace=0.3)
 # Let's make the same partial dependence plot for the 2 features interaction,
 # this time in 3 dimensions.
 import numpy as np
-
-# unused but required import for doing 3d projections with matplotlib < 3.2
-import mpl_toolkits.mplot3d  # noqa: F401
 
 from sklearn.inspection import partial_dependence
 

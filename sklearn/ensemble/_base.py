@@ -3,26 +3,22 @@
 # Authors: Gilles Louppe
 # License: BSD 3 clause
 
-from abc import ABCMeta, abstractmethod
 import numbers
+from abc import ABCMeta, abstractmethod
 from typing import List
 
 import numpy as np
 
 from joblib import effective_n_jobs
 
-from ..base import clone
-from ..base import is_classifier, is_regressor
-from ..base import BaseEstimator
-from ..base import MetaEstimatorMixin
+from ..base import BaseEstimator, MetaEstimatorMixin, clone, is_classifier, is_regressor
 from ..tree import (
-    DecisionTreeRegressor,
-    ExtraTreeRegressor,
     BaseDecisionTree,
     DecisionTreeClassifier,
+    DecisionTreeRegressor,
+    ExtraTreeRegressor,
 )
-from ..utils import Bunch, _print_elapsed_time
-from ..utils import check_random_state
+from ..utils import Bunch, _print_elapsed_time, check_random_state
 from ..utils.metaestimators import _BaseComposition
 
 

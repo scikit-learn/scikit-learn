@@ -7,6 +7,7 @@
 # License: 3-clause BSD.
 
 from numbers import Integral
+
 import numpy as np
 import scipy.sparse as sp
 from scipy.sparse.linalg import svds

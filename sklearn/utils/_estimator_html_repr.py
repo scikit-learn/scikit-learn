@@ -1,8 +1,7 @@
-from contextlib import closing
-from contextlib import suppress
+import html
+from contextlib import closing, suppress
 from io import StringIO
 from string import Template
-import html
 
 from .. import config_context
 

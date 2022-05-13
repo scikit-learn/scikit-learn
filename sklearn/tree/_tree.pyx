@@ -13,28 +13,26 @@
 # License: BSD 3 clause
 
 from cpython cimport Py_INCREF, PyObject, PyTypeObject
-
-from libc.stdlib cimport free
 from libc.math cimport fabs
-from libc.string cimport memcpy
-from libc.string cimport memset
 from libc.stdint cimport SIZE_MAX
-from libcpp.vector cimport vector
-from libcpp.algorithm cimport pop_heap
-from libcpp.algorithm cimport push_heap
+from libc.stdlib cimport free
+from libc.string cimport memcpy, memset
 from libcpp cimport bool
+from libcpp.algorithm cimport pop_heap, push_heap
+from libcpp.vector cimport vector
 
 import struct
 
 import numpy as np
+
 cimport numpy as np
+
 np.import_array()
 
-from scipy.sparse import issparse
-from scipy.sparse import csr_matrix
+from scipy.sparse import csr_matrix, issparse
 
-from ._utils cimport safe_realloc
-from ._utils cimport sizet_ptr_to_ndarray
+from ._utils cimport safe_realloc, sizet_ptr_to_ndarray
+
 
 cdef extern from "numpy/arrayobject.h":
     object PyArray_NewFromDescr(PyTypeObject* subtype, np.dtype descr,
@@ -58,6 +56,7 @@ cdef extern from "<stack>" namespace "std" nogil:
 
 from numpy import float32 as DTYPE
 from numpy import float64 as DOUBLE
+
 
 cdef double INFINITY = np.inf
 cdef double EPSILON = np.finfo('double').eps

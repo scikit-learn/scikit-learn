@@ -1,21 +1,20 @@
 # TODO: remove this file when plot_confusion_matrix will be deprecated in 1.2
-import pytest
 import numpy as np
-from numpy.testing import assert_allclose
-from numpy.testing import assert_array_equal
+import pytest
+from numpy.testing import assert_allclose, assert_array_equal
 
 from sklearn.compose import make_column_transformer
 from sklearn.datasets import make_classification
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import (
+    ConfusionMatrixDisplay,
+    confusion_matrix,
+    plot_confusion_matrix,
+)
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC, SVR
-
-from sklearn.metrics import confusion_matrix
-from sklearn.metrics import plot_confusion_matrix
-from sklearn.metrics import ConfusionMatrixDisplay
-
 
 # TODO: Remove when https://github.com/numpy/numpy/issues/14397 is resolved
 pytestmark = pytest.mark.filterwarnings(

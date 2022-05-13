@@ -7,34 +7,34 @@ from abc import ABCMeta, abstractmethod
 from copy import deepcopy
 
 import numpy as np
-from joblib import Parallel
 import scipy.sparse as sparse
 
-from ..base import clone
-from ..base import ClassifierMixin, RegressorMixin, TransformerMixin
-from ..base import is_classifier, is_regressor
+from joblib import Parallel
+
+from ..base import (
+    ClassifierMixin,
+    RegressorMixin,
+    TransformerMixin,
+    clone,
+    is_classifier,
+    is_regressor,
+)
 from ..exceptions import NotFittedError
-from ..utils._estimator_html_repr import _VisualBlock
-
-from ._base import _fit_single_estimator
-from ._base import _BaseHeterogeneousEnsemble
-
-from ..linear_model import LogisticRegression
-from ..linear_model import RidgeCV
-
-from ..model_selection import cross_val_predict
-from ..model_selection import check_cv
-
+from ..linear_model import LogisticRegression, RidgeCV
+from ..model_selection import check_cv, cross_val_predict
 from ..preprocessing import LabelEncoder
-
 from ..utils import Bunch
+from ..utils._estimator_html_repr import _VisualBlock
+from ..utils.fixes import delayed
 from ..utils.metaestimators import available_if
 from ..utils.multiclass import check_classification_targets
-from ..utils.validation import check_is_fitted
-from ..utils.validation import check_scalar
-from ..utils.validation import column_or_1d
-from ..utils.fixes import delayed
-from ..utils.validation import _check_feature_names_in
+from ..utils.validation import (
+    _check_feature_names_in,
+    check_is_fitted,
+    check_scalar,
+    column_or_1d,
+)
+from ._base import _BaseHeterogeneousEnsemble, _fit_single_estimator
 
 
 def _estimator_has(attr):

@@ -23,6 +23,7 @@ that are linked tend to fluctuate in relation to each other during a day.
 # alphavantage.co .
 
 import sys
+
 import numpy as np
 import pandas as pd
 

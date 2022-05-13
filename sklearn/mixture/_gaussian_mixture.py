@@ -5,13 +5,11 @@
 # License: BSD 3 clause
 
 import numpy as np
-
 from scipy import linalg
 
-from ._base import BaseMixture, _check_shape
 from ..utils import check_array
 from ..utils.extmath import row_norms
-
+from ._base import BaseMixture, _check_shape
 
 ###############################################################################
 # Gaussian mixture shape checkers used by the GaussianMixture class

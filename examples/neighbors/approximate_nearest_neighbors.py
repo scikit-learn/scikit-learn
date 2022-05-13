@@ -43,11 +43,12 @@ prediction time.
 
 """
 
+import sys
+
 # Author: Tom Dupre la Tour
 #
 # License: BSD 3 clause
 import time
-import sys
 
 try:
     import annoy
@@ -61,18 +62,18 @@ except ImportError:
     print("The package 'nmslib' is required to run this example.")
     sys.exit()
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.ticker import NullFormatter
 from scipy.sparse import csr_matrix
 
 from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.neighbors import KNeighborsTransformer
-from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.datasets import fetch_openml
-from sklearn.pipeline import make_pipeline
 from sklearn.manifold import TSNE
+from sklearn.neighbors import KNeighborsTransformer
+from sklearn.pipeline import make_pipeline
 from sklearn.utils import shuffle
+from sklearn.utils._testing import assert_array_almost_equal
 
 
 class NMSlibTransformer(TransformerMixin, BaseEstimator):

@@ -6,21 +6,33 @@
 #
 # License: BSD 3 clause
 
-from libc.math cimport fabs
 cimport numpy as cnp
+from libc.math cimport fabs
+
 import numpy as np
 import numpy.linalg as linalg
 
 from cpython cimport bool
 from cython cimport floating
+
 import warnings
+
 from ..exceptions import ConvergenceWarning
 
-from ..utils._cython_blas cimport (_axpy, _dot, _asum, _ger, _gemv, _nrm2,
-                                   _copy, _scal)
-from ..utils._cython_blas cimport RowMajor, ColMajor, Trans, NoTrans
-
-
+from ..utils._cython_blas cimport (
+    ColMajor,
+    NoTrans,
+    RowMajor,
+    Trans,
+    _asum,
+    _axpy,
+    _copy,
+    _dot,
+    _gemv,
+    _ger,
+    _nrm2,
+    _scal,
+)
 from ..utils._random cimport our_rand_r
 
 ctypedef cnp.float64_t DOUBLE

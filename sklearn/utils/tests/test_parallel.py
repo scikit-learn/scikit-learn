@@ -1,8 +1,7 @@
 import pytest
-from joblib import Parallel
-
 from numpy.testing import assert_array_equal
 
+from joblib import Parallel
 from sklearn._config import config_context, get_config
 from sklearn.utils.fixes import delayed
 

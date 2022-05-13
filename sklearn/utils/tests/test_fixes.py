@@ -10,9 +10,7 @@ import pytest
 import scipy.stats
 
 from sklearn.utils._testing import assert_array_equal
-
-from sklearn.utils.fixes import _object_dtype_isnan
-from sklearn.utils.fixes import loguniform
+from sklearn.utils.fixes import _object_dtype_isnan, loguniform
 
 
 @pytest.mark.parametrize("dtype, val", ([object, 1], [object, "a"], [float, 1]))

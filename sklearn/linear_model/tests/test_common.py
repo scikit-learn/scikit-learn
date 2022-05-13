@@ -2,23 +2,24 @@
 #
 # License: BSD 3 clause
 
-import pytest
-
 import sys
 import warnings
+
 import numpy as np
+import pytest
 
 from sklearn.base import is_classifier
-from sklearn.linear_model import LinearRegression
-from sklearn.linear_model import Ridge
-from sklearn.linear_model import RidgeCV
-from sklearn.linear_model import RidgeClassifier
-from sklearn.linear_model import RidgeClassifierCV
-from sklearn.linear_model import BayesianRidge
-from sklearn.linear_model import ARDRegression
-
-from sklearn.utils.fixes import np_version, parse_version
+from sklearn.linear_model import (
+    ARDRegression,
+    BayesianRidge,
+    LinearRegression,
+    Ridge,
+    RidgeClassifier,
+    RidgeClassifierCV,
+    RidgeCV,
+)
 from sklearn.utils import check_random_state
+from sklearn.utils.fixes import np_version, parse_version
 
 
 @pytest.mark.parametrize(

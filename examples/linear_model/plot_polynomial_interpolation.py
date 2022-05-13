@@ -42,13 +42,12 @@ infinite) dimensional feature spaces.
 #         Malte Londschien
 # License: BSD 3 clause
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 from sklearn.linear_model import Ridge
-from sklearn.preprocessing import PolynomialFeatures, SplineTransformer
 from sklearn.pipeline import make_pipeline
-
+from sklearn.preprocessing import PolynomialFeatures, SplineTransformer
 
 # %%
 # We start by defining a function that we intend to approximate and prepare

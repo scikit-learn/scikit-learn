@@ -75,11 +75,12 @@ graph = image.img_to_graph(img, mask=mask)
 # that is close to a Voronoi partition
 graph.data = np.exp(-graph.data / graph.data.std())
 
+import matplotlib.pyplot as plt
+
 # %%
 # Here we perform spectral clustering using the arpack solver since amg is
 # numerically unstable on this example. We then plot the results.
 from sklearn.cluster import spectral_clustering
-import matplotlib.pyplot as plt
 
 labels = spectral_clustering(graph, n_clusters=4, eigen_solver="arpack")
 label_im = np.full(mask.shape, -1.0)

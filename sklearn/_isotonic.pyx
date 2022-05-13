@@ -5,8 +5,9 @@
 # pool at each step.
 
 import numpy as np
-cimport numpy as cnp
+
 cimport cython
+cimport numpy as cnp
 from cython cimport floating
 
 cnp.import_array()

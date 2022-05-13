@@ -8,14 +8,16 @@ integers, and values float.
 cimport cython
 
 # C++
-from cython.operator cimport dereference as deref, preincrement as inc, \
-    predecrement as dec
-from libcpp.utility cimport pair
+from cython.operator cimport dereference as deref
+from cython.operator cimport predecrement as dec
+from cython.operator cimport preincrement as inc
 from libcpp.map cimport map as cpp_map
+from libcpp.utility cimport pair
 
 import numpy as np
 
 # Import the C-level symbols of numpy
+
 cimport numpy as np
 
 # Numpy must be initialized. When using numpy from C or Cython you must
@@ -68,7 +70,7 @@ cdef class IntFloatDict:
     #    while it != end:
     #        yield deref(it).first, deref(it).second
     #        inc(it)
-    
+
     def __iter__(self):
         cdef int size = self.my_map.size()
         cdef ITYPE_t [:] keys = np.empty(size, dtype=np.intp)
@@ -147,4 +149,3 @@ def argmin(IntFloatDict d):
             min_key = deref(it).first
         inc(it)
     return min_key, min_value
-

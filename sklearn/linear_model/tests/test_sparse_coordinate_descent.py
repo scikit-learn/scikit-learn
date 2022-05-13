@@ -1,17 +1,16 @@
 import numpy as np
-from numpy.testing import assert_allclose
 import pytest
 import scipy.sparse as sp
+from numpy.testing import assert_allclose
 
 from sklearn.datasets import make_regression
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_almost_equal
-
-from sklearn.utils._testing import ignore_warnings
 from sklearn.exceptions import ConvergenceWarning
-
-from sklearn.linear_model import Lasso, ElasticNet, LassoCV, ElasticNetCV
-
+from sklearn.linear_model import ElasticNet, ElasticNetCV, Lasso, LassoCV
+from sklearn.utils._testing import (
+    assert_almost_equal,
+    assert_array_almost_equal,
+    ignore_warnings,
+)
 
 # FIXME: 'normalize' to be removed in 1.2
 filterwarnings_normalize = pytest.mark.filterwarnings(

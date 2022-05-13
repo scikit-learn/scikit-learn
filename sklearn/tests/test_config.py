@@ -1,10 +1,10 @@
 import time
 from concurrent.futures import ThreadPoolExecutor
 
-from joblib import Parallel
 import pytest
 
-from sklearn import get_config, set_config, config_context
+from joblib import Parallel
+from sklearn import config_context, get_config, set_config
 from sklearn.utils.fixes import delayed
 
 

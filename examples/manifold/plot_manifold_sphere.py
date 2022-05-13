@@ -29,16 +29,18 @@ that of representing a flat map of the Earth, as with
 # Author: Jaques Grobler <jaques.grobler@inria.fr>
 # License: BSD 3 clause
 
+import warnings
 from time import time
-import numpy as np
+
 import matplotlib.pyplot as plt
-from matplotlib.ticker import NullFormatter
-from sklearn import manifold
-from sklearn.utils import check_random_state
 
 # Unused but required import for doing 3d projections with matplotlib < 3.2
 import mpl_toolkits.mplot3d  # noqa: F401
-import warnings
+import numpy as np
+from matplotlib.ticker import NullFormatter
+
+from sklearn import manifold
+from sklearn.utils import check_random_state
 
 # Variables for manifold learning.
 n_neighbors = 10

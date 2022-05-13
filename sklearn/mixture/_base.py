@@ -13,9 +13,8 @@ import numpy as np
 from scipy.special import logsumexp
 
 from .. import cluster
+from ..base import BaseEstimator, DensityMixin
 from ..cluster import kmeans_plusplus
-from ..base import BaseEstimator
-from ..base import DensityMixin
 from ..exceptions import ConvergenceWarning
 from ..utils import check_random_state, check_scalar
 from ..utils.validation import check_is_fitted

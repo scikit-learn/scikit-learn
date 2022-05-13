@@ -3,10 +3,11 @@
 # License: BSD 3 clause
 
 import numpy as np
-from . import MinCovDet
-from ..utils.validation import check_is_fitted
-from ..metrics import accuracy_score
+
 from ..base import OutlierMixin
+from ..metrics import accuracy_score
+from ..utils.validation import check_is_fitted
+from ._robust_covariance import MinCovDet
 
 
 class EllipticEnvelope(OutlierMixin, MinCovDet):

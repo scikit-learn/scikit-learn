@@ -1,8 +1,8 @@
-from cython.operator cimport dereference as deref
-from cpython.ref cimport Py_INCREF
 cimport numpy as np
+from cpython.ref cimport Py_INCREF
+from cython.operator cimport dereference as deref
 
-from ._typedefs cimport DTYPECODE, ITYPECODE, INT32TYPECODE, INT64TYPECODE
+from ._typedefs cimport DTYPECODE, INT32TYPECODE, INT64TYPECODE, ITYPECODE
 
 np.import_array()
 

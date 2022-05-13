@@ -5,18 +5,20 @@
 
 
 import numbers
-import numpy as np
 import warnings
 
-from . import OneHotEncoder
+import numpy as np
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils.validation import check_array
-from ..utils.validation import check_is_fitted
-from ..utils.validation import check_random_state
-from ..utils.validation import _check_feature_names_in
-from ..utils.validation import check_scalar
 from ..utils import _safe_indexing
+from ..utils.validation import (
+    _check_feature_names_in,
+    check_array,
+    check_is_fitted,
+    check_random_state,
+    check_scalar,
+)
+from ._encoders import OneHotEncoder
 
 
 class KBinsDiscretizer(TransformerMixin, BaseEstimator):

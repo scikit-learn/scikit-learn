@@ -6,17 +6,14 @@ from math import ceil
 import numpy as np
 from scipy import sparse
 from scipy.stats.mstats import mquantiles
+
 from joblib import Parallel
 
-from .. import partial_dependence
 from ...base import is_regressor
-from ...utils import Bunch
-from ...utils import check_array
-from ...utils import deprecated
 from ...utils import check_matplotlib_support  # noqa
-from ...utils import check_random_state
-from ...utils import _safe_indexing
+from ...utils import Bunch, _safe_indexing, check_array, check_random_state, deprecated
 from ...utils.fixes import delayed
+from .. import partial_dependence
 
 
 @deprecated(

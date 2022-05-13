@@ -14,9 +14,14 @@ import warnings
 
 import numpy as np
 
-from ._base import _get_weights, _check_weights
-from ._base import NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin
 from ..base import RegressorMixin
+from ._base import (
+    KNeighborsMixin,
+    NeighborsBase,
+    RadiusNeighborsMixin,
+    _check_weights,
+    _get_weights,
+)
 
 
 class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):

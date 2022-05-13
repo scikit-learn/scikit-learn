@@ -11,38 +11,34 @@
 import warnings
 
 import numpy as np
-from scipy import sparse
-from scipy import stats
-from scipy import optimize
+from scipy import optimize, sparse, stats
 from scipy.special import boxcox
 
 from ..base import (
     BaseEstimator,
     TransformerMixin,
-    _OneToOneFeatureMixin,
     _ClassNamePrefixFeaturesOutMixin,
+    _OneToOneFeatureMixin,
 )
 from ..utils import check_array
 from ..utils.extmath import _incremental_mean_and_var, row_norms
+from ..utils.sparsefuncs import (
+    incr_mean_variance_axis,
+    inplace_column_scale,
+    mean_variance_axis,
+    min_max_axis,
+)
 from ..utils.sparsefuncs_fast import (
     inplace_csr_row_normalize_l1,
     inplace_csr_row_normalize_l2,
 )
-from ..utils.sparsefuncs import (
-    inplace_column_scale,
-    mean_variance_axis,
-    incr_mean_variance_axis,
-    min_max_axis,
-)
 from ..utils.validation import (
+    FLOAT_DTYPES,
+    _check_sample_weight,
     check_is_fitted,
     check_random_state,
-    _check_sample_weight,
-    FLOAT_DTYPES,
 )
-
 from ._encoders import OneHotEncoder
-
 
 BOUNDS_THRESHOLD = 1e-7
 

@@ -1,9 +1,15 @@
 import warnings
-import  numpy as np
+
+import numpy as np
+
 cimport numpy as np
+
 from scipy import sparse
+
 from ..exceptions import ConvergenceWarning
+
 from ..utils._cython_blas cimport _dot
+
 np.import_array()
 
 cdef extern from *:

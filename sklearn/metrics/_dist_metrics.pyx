@@ -3,6 +3,7 @@
 # License: BSD
 
 import numpy as np
+
 cimport numpy as cnp
 from cython cimport final
 
@@ -25,14 +26,19 @@ cdef inline cnp.ndarray _buffer_to_ndarray(const DTYPE_t* x, cnp.npy_intp n):
     return PyArray_SimpleNewFromData(1, &n, DTYPECODE, <void*>x)
 
 
-from libc.math cimport fabs, sqrt, exp, pow, cos, sin, asin
+from libc.math cimport asin, cos, exp, fabs, pow, sin, sqrt
+
+
 cdef DTYPE_t INF = np.inf
 
 from scipy.sparse import csr_matrix, issparse
-from ..utils._typedefs cimport DTYPE_t, ITYPE_t, DTYPECODE
-from ..utils._typedefs import DTYPE, ITYPE
-from ..utils._readonly_array_wrapper import ReadonlyArrayWrapper
+
+from ..utils._typedefs cimport DTYPECODE, DTYPE_t, ITYPE_t
+
 from ..utils import check_array
+from ..utils._readonly_array_wrapper import ReadonlyArrayWrapper
+from ..utils._typedefs import DTYPE, ITYPE
+
 
 ######################################################################
 # newObj function

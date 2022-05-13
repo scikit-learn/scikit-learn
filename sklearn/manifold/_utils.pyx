@@ -1,6 +1,8 @@
-from libc cimport math
 cimport cython
+from libc cimport math
+
 import numpy as np
+
 cimport numpy as np
 from libc.stdio cimport printf
 

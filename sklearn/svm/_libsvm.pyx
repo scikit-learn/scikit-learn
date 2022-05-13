@@ -28,9 +28,12 @@ Authors
 """
 
 import warnings
-import  numpy as np
+
+import numpy as np
+
 cimport numpy as np
 from libc.stdlib cimport free
+
 from ..utils._cython_blas cimport _dot
 
 include "_libsvm.pxi"

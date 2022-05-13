@@ -5,16 +5,16 @@ Kernel Density Estimation
 # Author: Jake Vanderplas <jakevdp@cs.washington.edu>
 
 import numbers
+
 import numpy as np
 from scipy.special import gammainc
+
 from ..base import BaseEstimator
 from ..utils import check_random_state, check_scalar
-from ..utils.validation import _check_sample_weight, check_is_fitted
-
 from ..utils.extmath import row_norms
-from ._ball_tree import BallTree, DTYPE
+from ..utils.validation import _check_sample_weight, check_is_fitted
+from ._ball_tree import DTYPE, BallTree
 from ._kd_tree import KDTree
-
 
 VALID_KERNELS = [
     "gaussian",

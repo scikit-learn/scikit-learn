@@ -9,8 +9,8 @@ Between Data Points", Science Feb. 2007
 
 """
 
-from sklearn.cluster import AffinityPropagation
 from sklearn import metrics
+from sklearn.cluster import AffinityPropagation
 from sklearn.datasets import make_blobs
 
 # %%
@@ -44,11 +44,12 @@ print(
     % metrics.silhouette_score(X, labels, metric="sqeuclidean")
 )
 
+from itertools import cycle
+
 # %%
 # Plot result
 # -----------
 import matplotlib.pyplot as plt
-from itertools import cycle
 
 plt.close("all")
 plt.figure(1)

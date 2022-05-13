@@ -34,29 +34,35 @@ case.
 # License: BSD 3 clause
 
 import array
-import numpy as np
-import warnings
-import scipy.sparse as sp
 import itertools
+import warnings
 
-from .base import BaseEstimator, ClassifierMixin, clone, is_classifier
-from .base import MultiOutputMixin
-from .base import MetaEstimatorMixin, is_regressor
-from .preprocessing import LabelBinarizer
-from .metrics.pairwise import euclidean_distances
-from .utils import check_random_state
-from .utils._tags import _safe_tags
-from .utils.validation import _num_samples
-from .utils.validation import check_is_fitted
-from .utils.multiclass import (
-    _check_partial_fit_first_call,
-    check_classification_targets,
-    _ovr_decision_function,
-)
-from .utils.metaestimators import _safe_split, available_if
-from .utils.fixes import delayed
+import numpy as np
+import scipy.sparse as sp
 
 from joblib import Parallel
+
+from .base import (
+    BaseEstimator,
+    ClassifierMixin,
+    MetaEstimatorMixin,
+    MultiOutputMixin,
+    clone,
+    is_classifier,
+    is_regressor,
+)
+from .metrics.pairwise import euclidean_distances
+from .preprocessing import LabelBinarizer
+from .utils import check_random_state
+from .utils._tags import _safe_tags
+from .utils.fixes import delayed
+from .utils.metaestimators import _safe_split, available_if
+from .utils.multiclass import (
+    _check_partial_fit_first_call,
+    _ovr_decision_function,
+    check_classification_targets,
+)
+from .utils.validation import _num_samples, check_is_fitted
 
 __all__ = [
     "OneVsRestClassifier",

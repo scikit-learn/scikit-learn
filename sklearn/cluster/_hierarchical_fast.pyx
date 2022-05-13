@@ -1,8 +1,9 @@
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
 
 import numpy as np
-cimport numpy as cnp
+
 cimport cython
+cimport numpy as cnp
 
 ctypedef cnp.float64_t DOUBLE
 ctypedef cnp.npy_intp INTP
@@ -10,13 +11,14 @@ ctypedef cnp.int8_t INT8
 
 cnp.import_array()
 
+# C++
+from cython.operator cimport dereference as deref
+from cython.operator cimport preincrement as inc
+from libc.math cimport fmax
+from libcpp.map cimport map as cpp_map
+
 from ..metrics._dist_metrics cimport DistanceMetric
 from ..utils._fast_dict cimport IntFloatDict
-
-# C++
-from cython.operator cimport dereference as deref, preincrement as inc
-from libcpp.map cimport map as cpp_map
-from libc.math cimport fmax
 
 DTYPE = np.float64
 ctypedef cnp.float64_t DTYPE_t

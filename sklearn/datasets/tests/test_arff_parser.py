@@ -1,9 +1,6 @@
 import pytest
 
-from sklearn.datasets._arff_parser import (
-    _post_process_frame,
-    load_arff_from_gzip_file,
-)
+from sklearn.datasets._arff_parser import _post_process_frame, load_arff_from_gzip_file
 
 
 @pytest.mark.parametrize(

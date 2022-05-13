@@ -9,13 +9,12 @@ Distribution functions used in GLM
 #       This is only used for backward compatibility in _GeneralizedLinearRegressor
 #       for the deprecated family attribute.
 
+import numbers
 from abc import ABCMeta, abstractmethod
 from collections import namedtuple
-import numbers
 
 import numpy as np
 from scipy.special import xlogy
-
 
 DistributionBoundary = namedtuple("DistributionBoundary", ("value", "inclusive"))
 

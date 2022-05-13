@@ -10,17 +10,18 @@ at which the fix is no longer needed.
 #
 # License: BSD 3 clause
 
-from functools import update_wrapper
 import functools
+from functools import update_wrapper
 
-import sklearn
 import numpy as np
 import scipy
 import scipy.stats
 import threadpoolctl
+
+import sklearn
+
 from .._config import config_context, get_config
 from ..externals._packaging.version import parse as parse_version
-
 
 np_version = parse_version(np.__version__)
 sp_version = parse_version(scipy.__version__)
@@ -35,9 +36,12 @@ else:
     from ..externals._lobpcg import lobpcg  # type: ignore  # noqa
 
 try:
-    from scipy.optimize._linesearch import line_search_wolfe2, line_search_wolfe1
+    from scipy.optimize._linesearch import line_search_wolfe1, line_search_wolfe2
 except ImportError:  # SciPy < 1.8
-    from scipy.optimize.linesearch import line_search_wolfe2, line_search_wolfe1  # type: ignore  # noqa
+    from scipy.optimize.linesearch import (  # type: ignore  # noqa
+        line_search_wolfe1,
+        line_search_wolfe2,
+    )
 
 
 def _object_dtype_isnan(X):

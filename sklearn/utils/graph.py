@@ -13,8 +13,8 @@ sparse matrices.
 import numpy as np
 from scipy import sparse
 
-from .deprecation import deprecated
 from ..metrics.pairwise import pairwise_distances
+from .deprecation import deprecated
 
 
 ###############################################################################

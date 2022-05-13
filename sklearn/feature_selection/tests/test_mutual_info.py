@@ -2,13 +2,10 @@ import numpy as np
 import pytest
 from scipy.sparse import csr_matrix
 
-from sklearn.utils import check_random_state
-from sklearn.utils._testing import (
-    assert_array_equal,
-    assert_allclose,
-)
+from sklearn.feature_selection import mutual_info_classif, mutual_info_regression
 from sklearn.feature_selection._mutual_info import _compute_mi
-from sklearn.feature_selection import mutual_info_regression, mutual_info_classif
+from sklearn.utils import check_random_state
+from sklearn.utils._testing import assert_allclose, assert_array_equal
 
 
 def test_compute_mi_dd():

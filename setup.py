@@ -4,18 +4,17 @@
 #               2010 Fabian Pedregosa <fabian.pedregosa@inria.fr>
 # License: 3-clause BSD
 
-import sys
+import importlib
 import os
 import platform
 import shutil
-
-# We need to import setuptools before because it monkey-patches distutils
-import setuptools  # noqa
+import sys
+import traceback
 from distutils.command.clean import clean as Clean
 from distutils.command.sdist import sdist
 
-import traceback
-import importlib
+# We need to import setuptools before because it monkey-patches distutils
+import setuptools  # noqa
 
 try:
     import builtins
@@ -52,7 +51,6 @@ PROJECT_URLS = {
 import sklearn  # noqa
 import sklearn._min_dependencies as min_deps  # noqa
 from sklearn.externals._packaging.version import parse as parse_version  # noqa
-
 
 VERSION = sklearn.__version__
 
@@ -165,6 +163,7 @@ def configuration(parent_package="", top_path=None):
         os.remove("MANIFEST")
 
     from numpy.distutils.misc_util import Configuration
+
     from sklearn._build_utils import _check_cython_version
 
     config = Configuration(None, parent_package, top_path)
@@ -305,7 +304,7 @@ def setup_package():
 
         # These commands require the setup from numpy.distutils because they
         # may use numpy.distutils compiler classes.
-        from numpy.distutils.core import setup
+        from distutils.ccompiler import CCompiler
 
         # Monkeypatches CCompiler.spawn to prevent random wheel build errors on Windows
         # The build errors on Windows was because msvccompiler spawn was not threadsafe
@@ -314,7 +313,8 @@ def setup_package():
         # https://github.com/scikit-learn/scikit-learn/issues/22310
         # https://github.com/numpy/numpy/pull/20640
         from numpy.distutils.ccompiler import replace_method
-        from distutils.ccompiler import CCompiler
+        from numpy.distutils.core import setup
+
         from sklearn.externals._numpy_compiler_patch import CCompiler_spawn
 
         replace_method(CCompiler, "spawn", CCompiler_spawn)

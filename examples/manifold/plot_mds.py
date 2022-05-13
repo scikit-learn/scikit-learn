@@ -14,13 +14,12 @@ shifted to avoid overlapping.
 # License: BSD
 
 import numpy as np
-
 from matplotlib import pyplot as plt
 from matplotlib.collections import LineCollection
 
 from sklearn import manifold
-from sklearn.metrics import euclidean_distances
 from sklearn.decomposition import PCA
+from sklearn.metrics import euclidean_distances
 
 EPSILON = np.finfo(np.float32).eps
 n_samples = 20

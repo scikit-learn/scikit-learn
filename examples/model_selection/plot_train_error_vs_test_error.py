@@ -19,6 +19,7 @@ measured using the explained variance a.k.a. R^2.
 # Generate sample data
 # --------------------
 import numpy as np
+
 from sklearn import linear_model
 from sklearn.datasets import make_regression
 from sklearn.model_selection import train_test_split

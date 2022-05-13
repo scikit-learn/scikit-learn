@@ -38,7 +38,6 @@ necessarily related to visualisation.
 import numpy as np
 import scipy as sp
 
-
 try:  # SciPy >= 0.16 have face in misc
     from scipy.misc import face
 

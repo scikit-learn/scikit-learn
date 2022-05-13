@@ -8,15 +8,16 @@ Nearest Centroid Classification
 # License: BSD 3 clause
 
 import warnings
+
 import numpy as np
 from scipy import sparse as sp
 
 from ..base import BaseEstimator, ClassifierMixin
 from ..metrics.pairwise import pairwise_distances
 from ..preprocessing import LabelEncoder
-from ..utils.validation import check_is_fitted
-from ..utils.sparsefuncs import csc_median_axis_0
 from ..utils.multiclass import check_classification_targets
+from ..utils.sparsefuncs import csc_median_axis_0
+from ..utils.validation import check_is_fitted
 
 
 class NearestCentroid(ClassifierMixin, BaseEstimator):

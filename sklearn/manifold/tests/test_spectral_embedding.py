@@ -1,23 +1,21 @@
-import pytest
-
 import numpy as np
-
+import pytest
 from scipy import sparse
-from scipy.sparse import csgraph
 from scipy.linalg import eigh
+from scipy.sparse import csgraph
 
-from sklearn.manifold import SpectralEmbedding
-from sklearn.manifold._spectral_embedding import _graph_is_connected
-from sklearn.manifold._spectral_embedding import _graph_connected_component
-from sklearn.manifold import spectral_embedding
-from sklearn.metrics.pairwise import rbf_kernel
-from sklearn.metrics import normalized_mutual_info_score
-from sklearn.neighbors import NearestNeighbors
 from sklearn.cluster import KMeans
 from sklearn.datasets import make_blobs
+from sklearn.manifold import SpectralEmbedding, spectral_embedding
+from sklearn.manifold._spectral_embedding import (
+    _graph_connected_component,
+    _graph_is_connected,
+)
+from sklearn.metrics import normalized_mutual_info_score
+from sklearn.metrics.pairwise import rbf_kernel
+from sklearn.neighbors import NearestNeighbors
+from sklearn.utils._testing import assert_array_almost_equal, assert_array_equal
 from sklearn.utils.extmath import _deterministic_vector_sign_flip
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_array_equal
 
 try:
     from pyamg import smoothed_aggregation_solver  # noqa

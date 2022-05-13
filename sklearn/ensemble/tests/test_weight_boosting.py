@@ -1,33 +1,27 @@
 """Testing for the boost module (sklearn.ensemble.boost)."""
 
-import numpy as np
-import pytest
 import re
 
-from scipy.sparse import csc_matrix
-from scipy.sparse import csr_matrix
-from scipy.sparse import coo_matrix
-from scipy.sparse import dok_matrix
-from scipy.sparse import lil_matrix
+import numpy as np
+import pytest
+from scipy.sparse import coo_matrix, csc_matrix, csr_matrix, dok_matrix, lil_matrix
 
-from sklearn.utils._testing import assert_array_equal, assert_array_less
-from sklearn.utils._testing import assert_array_almost_equal
-
-from sklearn.base import BaseEstimator
-from sklearn.base import clone
+from sklearn import datasets
+from sklearn.base import BaseEstimator, clone
 from sklearn.dummy import DummyClassifier, DummyRegressor
-from sklearn.linear_model import LinearRegression
-from sklearn.model_selection import train_test_split
-from sklearn.model_selection import GridSearchCV
-from sklearn.ensemble import AdaBoostClassifier
-from sklearn.ensemble import AdaBoostRegressor
+from sklearn.ensemble import AdaBoostClassifier, AdaBoostRegressor
 from sklearn.ensemble._weight_boosting import _samme_proba
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.svm import SVC, SVR
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import shuffle
 from sklearn.utils._mocking import NoSampleWeightWrapper
-from sklearn import datasets
-
+from sklearn.utils._testing import (
+    assert_array_almost_equal,
+    assert_array_equal,
+    assert_array_less,
+)
 
 # Common random state
 rng = np.random.RandomState(0)

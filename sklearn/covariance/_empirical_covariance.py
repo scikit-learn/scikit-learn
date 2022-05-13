@@ -11,14 +11,15 @@ Maximum likelihood covariance estimator.
 
 # avoid division truncation
 import warnings
+
 import numpy as np
 from scipy import linalg
 
 from .. import config_context
 from ..base import BaseEstimator
+from ..metrics.pairwise import pairwise_distances
 from ..utils import check_array
 from ..utils.extmath import fast_logdet
-from ..metrics.pairwise import pairwise_distances
 
 
 def log_likelihood(emp_cov, precision):

@@ -1,5 +1,6 @@
 from cython cimport floating
 
+
 cdef inline void dual_swap(
     floating* darr,
     ITYPE_t *iarr,

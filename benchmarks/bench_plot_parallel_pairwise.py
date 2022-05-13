@@ -4,9 +4,8 @@ import time
 
 import matplotlib.pyplot as plt
 
+from sklearn.metrics.pairwise import pairwise_distances, pairwise_kernels
 from sklearn.utils import check_random_state
-from sklearn.metrics.pairwise import pairwise_distances
-from sklearn.metrics.pairwise import pairwise_kernels
 
 
 def plot(func):

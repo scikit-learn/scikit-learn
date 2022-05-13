@@ -2,11 +2,10 @@ from functools import reduce
 
 import numpy as np
 
-from ...preprocessing import LabelEncoder
-from ...utils import check_matplotlib_support
-from ...utils import _safe_indexing
 from ...base import is_regressor
-from ...utils.validation import check_is_fitted, _is_arraylike_not_scalar
+from ...preprocessing import LabelEncoder
+from ...utils import _safe_indexing, check_matplotlib_support
+from ...utils.validation import _is_arraylike_not_scalar, check_is_fitted
 
 
 def _check_boundary_response_method(estimator, response_method):

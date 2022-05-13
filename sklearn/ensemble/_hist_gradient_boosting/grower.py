@@ -6,22 +6,25 @@ the gradients and hessians of the training data.
 """
 # Author: Nicolas Hug
 
-from heapq import heappush, heappop
-import numpy as np
-from timeit import default_timer as time
 import numbers
+from heapq import heappop, heappush
+from timeit import default_timer as time
 
-from .splitting import Splitter
-from .histogram import HistogramBuilder
-from .predictor import TreePredictor
-from .utils import sum_parallel
-from .common import PREDICTOR_RECORD_DTYPE
-from .common import X_BITSET_INNER_DTYPE
-from .common import Y_DTYPE
-from .common import MonotonicConstraint
-from ._bitset import set_raw_bitset_from_binned_bitset
+import numpy as np
+
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 
+from ._bitset import set_raw_bitset_from_binned_bitset
+from .common import (
+    PREDICTOR_RECORD_DTYPE,
+    X_BITSET_INNER_DTYPE,
+    Y_DTYPE,
+    MonotonicConstraint,
+)
+from .histogram import HistogramBuilder
+from .predictor import TreePredictor
+from .splitting import Splitter
+from .utils import sum_parallel
 
 EPS = np.finfo(Y_DTYPE).eps  # to avoid zero division errors
 

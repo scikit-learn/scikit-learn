@@ -12,27 +12,26 @@ build feature vectors from text documents.
 """
 
 import array
-from collections import defaultdict
-from collections.abc import Mapping
-from functools import partial
 import numbers
-from operator import itemgetter
 import re
 import unicodedata
 import warnings
+from collections import defaultdict
+from collections.abc import Mapping
+from functools import partial
+from operator import itemgetter
 
 import numpy as np
 import scipy.sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin, _OneToOneFeatureMixin
+from ..exceptions import NotFittedError
 from ..preprocessing import normalize
+from ..utils import _IS_32BIT
+from ..utils.deprecation import deprecated
+from ..utils.validation import FLOAT_DTYPES, check_array, check_is_fitted, check_scalar
 from ._hash import FeatureHasher
 from ._stop_words import ENGLISH_STOP_WORDS
-from ..utils.validation import check_is_fitted, check_array, FLOAT_DTYPES, check_scalar
-from ..utils.deprecation import deprecated
-from ..utils import _IS_32BIT
-from ..exceptions import NotFittedError
-
 
 __all__ = [
     "HashingVectorizer",

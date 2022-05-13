@@ -20,41 +20,31 @@ The module structure is the following:
 #          Arnaud Joly, Jacob Schreiber
 # License: BSD 3 clause
 
-from abc import ABCMeta
-from abc import abstractmethod
-import warnings
-
-from ._base import BaseEnsemble
-from ..base import ClassifierMixin
-from ..base import RegressorMixin
-from ..base import BaseEstimator
-from ..base import is_classifier
-from ..utils import deprecated
-
-from ._gradient_boosting import predict_stages
-from ._gradient_boosting import predict_stage
-from ._gradient_boosting import _random_sample_mask
-
 import numbers
-import numpy as np
-
-from scipy.sparse import csc_matrix
-from scipy.sparse import csr_matrix
-from scipy.sparse import issparse
-
+import warnings
+from abc import ABCMeta, abstractmethod
 from time import time
+
+import numpy as np
+from scipy.sparse import csc_matrix, csr_matrix, issparse
+
+from ..base import BaseEstimator, ClassifierMixin, RegressorMixin, is_classifier
+from ..exceptions import NotFittedError
 from ..model_selection import train_test_split
 from ..tree import DecisionTreeRegressor
-from ..tree._tree import DTYPE, DOUBLE
-from . import _gb_losses
-
-from ..utils import check_random_state
-from ..utils import check_array
-from ..utils import check_scalar
-from ..utils import column_or_1d
-from ..utils.validation import check_is_fitted, _check_sample_weight
+from ..tree._tree import DOUBLE, DTYPE
+from ..utils import (
+    check_array,
+    check_random_state,
+    check_scalar,
+    column_or_1d,
+    deprecated,
+)
 from ..utils.multiclass import check_classification_targets
-from ..exceptions import NotFittedError
+from ..utils.validation import _check_sample_weight, check_is_fitted
+from . import _gb_losses
+from ._base import BaseEnsemble
+from ._gradient_boosting import _random_sample_mask, predict_stage, predict_stages
 
 
 class VerboseReporter:

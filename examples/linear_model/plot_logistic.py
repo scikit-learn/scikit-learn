@@ -13,11 +13,11 @@ i.e. class one or two, using the logistic curve.
 # Code source: Gael Varoquaux
 # License: BSD 3 clause
 
-import numpy as np
 import matplotlib.pyplot as plt
-
-from sklearn.linear_model import LogisticRegression, LinearRegression
+import numpy as np
 from scipy.special import expit
+
+from sklearn.linear_model import LinearRegression, LogisticRegression
 
 # Generate a toy dataset, it's just a straight line with some Gaussian noise:
 xmin, xmax = -5, 5

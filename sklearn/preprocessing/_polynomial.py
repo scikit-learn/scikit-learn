@@ -14,12 +14,14 @@ from scipy.special import comb
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
 from ..utils.deprecation import deprecated
-from ..utils.validation import check_is_fitted, FLOAT_DTYPES, _check_sample_weight
-from ..utils.validation import _check_feature_names_in
 from ..utils.stats import _weighted_percentile
-
+from ..utils.validation import (
+    FLOAT_DTYPES,
+    _check_feature_names_in,
+    _check_sample_weight,
+    check_is_fitted,
+)
 from ._csr_polynomial_expansion import _csr_polynomial_expansion
-
 
 __all__ = [
     "PolynomialFeatures",

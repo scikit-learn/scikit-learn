@@ -46,14 +46,16 @@ helper functions for loading the data and visualizing results.
 
 from functools import partial
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 
 from sklearn.datasets import fetch_openml
-from sklearn.metrics import mean_tweedie_deviance
-from sklearn.metrics import mean_absolute_error
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import (
+    mean_absolute_error,
+    mean_squared_error,
+    mean_tweedie_deviance,
+)
 
 
 def load_mtpl2(n_samples=100000):
@@ -201,6 +203,8 @@ def score_estimator(
     return res
 
 
+from sklearn.compose import ColumnTransformer
+
 # %%
 # Loading datasets, basic feature extraction and target definitions
 # -----------------------------------------------------------------
@@ -210,10 +214,12 @@ def score_estimator(
 # containing the claim amount (``ClaimAmount``) for the same policy ids
 # (``IDpol``).
 from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import FunctionTransformer, OneHotEncoder
-from sklearn.preprocessing import StandardScaler, KBinsDiscretizer
-from sklearn.compose import ColumnTransformer
-
+from sklearn.preprocessing import (
+    FunctionTransformer,
+    KBinsDiscretizer,
+    OneHotEncoder,
+    StandardScaler,
+)
 
 df = load_mtpl2(n_samples=60000)
 
@@ -259,6 +265,8 @@ df["AvgClaimAmount"] = df["ClaimAmount"] / np.fmax(df["ClaimNb"], 1)
 with pd.option_context("display.max_columns", 15):
     print(df[df.ClaimAmount > 0].head())
 
+from sklearn.linear_model import PoissonRegressor
+
 # %%
 #
 # Frequency model -- Poisson distribution
@@ -271,8 +279,6 @@ with pd.option_context("display.max_columns", 15):
 # Here we model the frequency ``y = ClaimNb / Exposure``, which is still a
 # (scaled) Poisson distribution, and use ``Exposure`` as `sample_weight`.
 from sklearn.model_selection import train_test_split
-from sklearn.linear_model import PoissonRegressor
-
 
 df_train, df_test, X_train, X_test = train_test_split(df, X, random_state=0)
 
@@ -369,7 +375,6 @@ plot_obs_pred(
 # - We use ``ClaimNb`` as `sample_weight` to account for policies that contain
 #   more than one claim.
 from sklearn.linear_model import GammaRegressor
-
 
 mask_train = df_train["ClaimAmount"] > 0
 mask_test = df_test["ClaimAmount"] > 0
@@ -479,7 +484,6 @@ plt.tight_layout()
 # Ideally, we hope that one model will be consistently better than the other,
 # regardless of `power`.
 from sklearn.linear_model import TweedieRegressor
-
 
 glm_pure_premium = TweedieRegressor(power=1.9, alpha=0.1, max_iter=10000)
 glm_pure_premium.fit(

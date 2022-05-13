@@ -125,6 +125,7 @@ _ = plt.title("Limitation of a linear model such as ridge")
 #
 # Thus, let's use such a :class:`~sklearn.kernel_ridge.KernelRidge`.
 import time
+
 from sklearn.gaussian_process.kernels import ExpSineSquared
 from sklearn.kernel_ridge import KernelRidge
 

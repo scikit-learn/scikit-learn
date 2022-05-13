@@ -7,9 +7,9 @@
 import numpy as np
 from scipy import linalg, sparse
 
-from ._base import _BasePCA
 from ..utils import gen_batches
-from ..utils.extmath import svd_flip, _incremental_mean_and_var
+from ..utils.extmath import _incremental_mean_and_var, svd_flip
+from ._base import _BasePCA
 
 
 class IncrementalPCA(_BasePCA):

@@ -6,18 +6,21 @@ import warnings
 import numpy as np
 import scipy.sparse as sp
 
-from ._kmeans import _BaseKMeans
-from ._kmeans import _kmeans_single_elkan
-from ._kmeans import _kmeans_single_lloyd
-from ._kmeans import _labels_inertia_threadpool_limit
-from ._k_means_common import _inertia_dense
-from ._k_means_common import _inertia_sparse
-from ..utils.extmath import row_norms
 from ..utils._openmp_helpers import _openmp_effective_n_threads
-from ..utils.validation import check_is_fitted
-from ..utils.validation import _check_sample_weight
-from ..utils.validation import check_random_state
-from ..utils.validation import _is_arraylike_not_scalar
+from ..utils.extmath import row_norms
+from ..utils.validation import (
+    _check_sample_weight,
+    _is_arraylike_not_scalar,
+    check_is_fitted,
+    check_random_state,
+)
+from ._k_means_common import _inertia_dense, _inertia_sparse
+from ._kmeans import (
+    _BaseKMeans,
+    _kmeans_single_elkan,
+    _kmeans_single_lloyd,
+    _labels_inertia_threadpool_limit,
+)
 
 
 class _BisectingTree:

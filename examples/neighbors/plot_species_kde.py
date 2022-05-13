@@ -40,8 +40,9 @@ References
 #
 # License: BSD 3 clause
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+
 from sklearn.datasets import fetch_species_distributions
 from sklearn.neighbors import KernelDensity
 

@@ -58,9 +58,8 @@ X_rand = rng.normal(size=(X.shape[0], n_uncorrelated_features))
 # the percentage of permutations for which the score obtained is greater
 # that the score obtained using the original data.
 
+from sklearn.model_selection import StratifiedKFold, permutation_test_score
 from sklearn.svm import SVC
-from sklearn.model_selection import StratifiedKFold
-from sklearn.model_selection import permutation_test_score
 
 clf = SVC(kernel="linear", random_state=7)
 cv = StratifiedKFold(2, shuffle=True, random_state=0)

@@ -15,9 +15,9 @@ from scipy import sparse
 from scipy.sparse.csgraph import connected_components
 
 from ..base import BaseEstimator, ClusterMixin, _ClassNamePrefixFeaturesOutMixin
-from ..metrics.pairwise import paired_distances
 from ..metrics import DistanceMetric
 from ..metrics._dist_metrics import METRIC_MAPPING
+from ..metrics.pairwise import paired_distances
 from ..utils import check_array
 from ..utils._fast_dict import IntFloatDict
 from ..utils.graph import _fix_connected_components

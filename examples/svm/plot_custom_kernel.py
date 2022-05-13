@@ -8,9 +8,10 @@ plot the decision surface and the support vectors.
 
 """
 
-import numpy as np
 import matplotlib.pyplot as plt
-from sklearn import svm, datasets
+import numpy as np
+
+from sklearn import datasets, svm
 from sklearn.inspection import DecisionBoundaryDisplay
 
 # import some data to play with

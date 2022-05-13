@@ -7,11 +7,14 @@ is too big to use in unit-testing.
 """
 
 from functools import partial
+
 import pytest
 
-from sklearn.datasets.tests.test_common import check_as_frame
-from sklearn.datasets.tests.test_common import check_pandas_dependency_message
-from sklearn.datasets.tests.test_common import check_return_X_y
+from sklearn.datasets.tests.test_common import (
+    check_as_frame,
+    check_pandas_dependency_message,
+    check_return_X_y,
+)
 
 
 @pytest.mark.parametrize("as_frame", [True, False])

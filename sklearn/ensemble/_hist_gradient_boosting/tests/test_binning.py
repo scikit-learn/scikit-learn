@@ -1,15 +1,17 @@
 import numpy as np
-from numpy.testing import assert_array_equal, assert_allclose
 import pytest
+from numpy.testing import assert_allclose, assert_array_equal
 
 from sklearn.ensemble._hist_gradient_boosting.binning import (
     _BinMapper,
     _find_binning_thresholds,
     _map_to_bins,
 )
-from sklearn.ensemble._hist_gradient_boosting.common import X_DTYPE
-from sklearn.ensemble._hist_gradient_boosting.common import X_BINNED_DTYPE
-from sklearn.ensemble._hist_gradient_boosting.common import ALMOST_INF
+from sklearn.ensemble._hist_gradient_boosting.common import (
+    ALMOST_INF,
+    X_BINNED_DTYPE,
+    X_DTYPE,
+)
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 
 n_threads = _openmp_effective_n_threads()

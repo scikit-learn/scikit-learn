@@ -2,22 +2,22 @@
 Tests for the birch clustering algorithm.
 """
 
-from scipy import sparse
 import numpy as np
 import pytest
+from scipy import sparse
 
+from sklearn.cluster import AgglomerativeClustering, Birch
 from sklearn.cluster.tests.common import generate_clustered_data
-from sklearn.cluster import Birch
-from sklearn.cluster import AgglomerativeClustering
 from sklearn.datasets import make_blobs
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import ElasticNet
 from sklearn.metrics import pairwise_distances_argmin, v_measure_score
-
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+)
 
 
 def test_n_samples_leaves_roots():

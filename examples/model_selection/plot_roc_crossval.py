@@ -54,8 +54,7 @@ X = np.c_[X, random_state.randn(n_samples, 200 * n_features)]
 import matplotlib.pyplot as plt
 
 from sklearn import svm
-from sklearn.metrics import auc
-from sklearn.metrics import RocCurveDisplay
+from sklearn.metrics import RocCurveDisplay, auc
 from sklearn.model_selection import StratifiedKFold
 
 # Run classifier with cross-validation and plot ROC curves

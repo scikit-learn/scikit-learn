@@ -6,12 +6,11 @@ python check_pxd_in_installation.py path/to/install_dir/of/scikit-learn
 """
 
 import os
-import sys
 import pathlib
+import subprocess
+import sys
 import tempfile
 import textwrap
-import subprocess
-
 
 sklearn_dir = pathlib.Path(sys.argv[1])
 pxd_files = list(sklearn_dir.glob("**/*.pxd"))

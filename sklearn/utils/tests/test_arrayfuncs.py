@@ -1,5 +1,5 @@
-import pytest
 import numpy as np
+import pytest
 
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils.arrayfuncs import min_pos

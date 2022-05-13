@@ -17,9 +17,8 @@ sections on :ref:`cross_validation` and :ref:`grid_search`.
 """
 
 from sklearn import datasets
-from sklearn.model_selection import train_test_split
-from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import classification_report
+from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.svm import SVC
 
 # Loading the Digits dataset

@@ -11,16 +11,17 @@ License: BSD 3 clause
 """
 
 import warnings
-import numpy as np
 
+import numpy as np
+from scipy.sparse import SparseEfficiencyWarning, issparse
+
+from ..base import BaseEstimator, ClusterMixin
 from ..exceptions import DataConversionWarning
+from ..metrics import pairwise_distances
 from ..metrics.pairwise import PAIRWISE_BOOLEAN_FUNCTIONS
+from ..neighbors import NearestNeighbors
 from ..utils import gen_batches, get_chunk_n_rows
 from ..utils.validation import check_memory
-from ..neighbors import NearestNeighbors
-from ..base import BaseEstimator, ClusterMixin
-from ..metrics import pairwise_distances
-from scipy.sparse import issparse, SparseEfficiencyWarning
 
 
 class OPTICS(ClusterMixin, BaseEstimator):

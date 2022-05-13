@@ -3,17 +3,19 @@
 
 
 from cpython cimport Py_INCREF, PyObject, PyTypeObject
-
-from libc.stdlib cimport malloc, free
-from libc.string cimport memcpy
-from libc.stdio cimport printf
 from libc.stdint cimport SIZE_MAX
+from libc.stdio cimport printf
+from libc.stdlib cimport free, malloc
+from libc.string cimport memcpy
 
 from ..tree._utils cimport safe_realloc, sizet_ptr_to_ndarray
-from ..utils import check_array
 
 import numpy as np
+
+from ..utils import check_array
+
 cimport numpy as np
+
 np.import_array()
 
 cdef extern from "math.h":

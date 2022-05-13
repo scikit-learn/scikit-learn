@@ -1,10 +1,12 @@
 # Author: Nicolas Hug
 
 cimport cython
-from cython.parallel import prange
+
 import numpy as np
+from cython.parallel import prange
 
 from .common import Y_DTYPE
+
 from .common cimport Y_DTYPE_C
 
 

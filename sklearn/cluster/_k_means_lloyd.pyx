@@ -6,19 +6,27 @@
 
 IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
     cimport openmp
+
 from cython cimport floating
-from cython.parallel import prange, parallel
-from libc.stdlib cimport malloc, calloc, free
-from libc.string cimport memset
+
+from cython.parallel import parallel, prange
+
 from libc.float cimport DBL_MAX, FLT_MAX
+from libc.stdlib cimport calloc, free, malloc
+from libc.string cimport memset
 
 from ..utils.extmath import row_norms
-from ..utils._cython_blas cimport _gemm
-from ..utils._cython_blas cimport RowMajor, Trans, NoTrans
+
+from ..utils._cython_blas cimport NoTrans, RowMajor, Trans, _gemm
+
 from ._k_means_common import CHUNK_SIZE
-from ._k_means_common cimport _relocate_empty_clusters_dense
-from ._k_means_common cimport _relocate_empty_clusters_sparse
-from ._k_means_common cimport _average_centers, _center_shift
+
+from ._k_means_common cimport (
+    _average_centers,
+    _center_shift,
+    _relocate_empty_clusters_dense,
+    _relocate_empty_clusters_sparse,
+)
 
 
 def lloyd_iter_chunked_dense(

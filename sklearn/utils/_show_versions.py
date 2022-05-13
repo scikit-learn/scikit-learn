@@ -7,10 +7,9 @@ adapted from :func:`pandas.show_versions`
 
 import platform
 import sys
-from ..utils.fixes import threadpool_info
+
 from .. import __version__
-
-
+from ..utils.fixes import threadpool_info
 from ._openmp_helpers import _openmp_parallelism_enabled
 
 
@@ -68,7 +67,7 @@ def _get_deps_info():
         # therefore on our CI.
         # https://github.com/conda-forge/conda-forge-pinning-feedstock/issues/2089
         try:
-            from pkg_resources import get_distribution, DistributionNotFound
+            from pkg_resources import DistributionNotFound, get_distribution
 
             for modname in deps:
                 try:
@@ -82,7 +81,7 @@ def _get_deps_info():
                 deps_info[modname] = None
 
     else:
-        from importlib.metadata import version, PackageNotFoundError
+        from importlib.metadata import PackageNotFoundError, version
 
         for modname in deps:
             try:

@@ -9,12 +9,11 @@ data and that in the case of sparse data the speed is improved.
 """
 
 from time import time
-from scipy import sparse
-from scipy import linalg
+
+from scipy import linalg, sparse
 
 from sklearn.datasets import make_regression
 from sklearn.linear_model import Lasso
-
 
 # %%
 # Comparing the two Lasso implementations on Dense data

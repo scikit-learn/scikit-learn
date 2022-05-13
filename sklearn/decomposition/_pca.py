@@ -10,21 +10,20 @@
 #
 # License: BSD 3 clause
 
-from math import log, sqrt
 import numbers
+from math import log, sqrt
 
 import numpy as np
 from scipy import linalg
-from scipy.special import gammaln
 from scipy.sparse import issparse
 from scipy.sparse.linalg import svds
+from scipy.special import gammaln
 
-from ._base import _BasePCA
 from ..utils import check_random_state, check_scalar
 from ..utils._arpack import _init_arpack_v0
-from ..utils.extmath import fast_logdet, randomized_svd, svd_flip
-from ..utils.extmath import stable_cumsum
+from ..utils.extmath import fast_logdet, randomized_svd, stable_cumsum, svd_flip
 from ..utils.validation import check_is_fitted
+from ._base import _BasePCA
 
 
 def _assess_dimension(spectrum, rank, n_samples):

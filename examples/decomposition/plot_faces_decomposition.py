@@ -21,12 +21,11 @@ matrix decomposition (dimension reduction) methods from the module
 
 import logging
 
-from numpy.random import RandomState
 import matplotlib.pyplot as plt
+from numpy.random import RandomState
 
+from sklearn import cluster, decomposition
 from sklearn.datasets import fetch_olivetti_faces
-from sklearn import cluster
-from sklearn import decomposition
 
 rng = RandomState(0)
 

@@ -5,18 +5,15 @@
 import warnings
 
 import numpy as np
-
 from scipy.sparse import issparse
-from scipy.sparse.csgraph import shortest_path
-from scipy.sparse.csgraph import connected_components
+from scipy.sparse.csgraph import connected_components, shortest_path
 
 from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
-from ..neighbors import NearestNeighbors, kneighbors_graph
-from ..neighbors import radius_neighbors_graph
-from ..utils.validation import check_is_fitted
 from ..decomposition import KernelPCA
+from ..neighbors import NearestNeighbors, kneighbors_graph, radius_neighbors_graph
 from ..preprocessing import KernelCenterer
 from ..utils.graph import _fix_connected_components
+from ..utils.validation import check_is_fitted
 
 
 class Isomap(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):

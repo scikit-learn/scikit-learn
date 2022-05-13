@@ -10,9 +10,10 @@ K-Means++ is used as the default initialization for :ref:`k_means`.
 
 """
 
+import matplotlib.pyplot as plt
+
 from sklearn.cluster import kmeans_plusplus
 from sklearn.datasets import make_blobs
-import matplotlib.pyplot as plt
 
 # Generate sample data
 n_samples = 4000

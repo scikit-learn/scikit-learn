@@ -12,19 +12,20 @@
 #
 # License: BSD 3 clause
 
-from libc.string cimport memcpy
-from libc.string cimport memset
 from libc.math cimport fabs
+from libc.string cimport memcpy, memset
 
 import numpy as np
+
 cimport numpy as np
+
 np.import_array()
 
 from numpy.math cimport INFINITY
 from scipy.special.cython_special cimport xlogy
 
-from ._utils cimport log
-from ._utils cimport WeightedMedianCalculator
+from ._utils cimport WeightedMedianCalculator, log
+
 
 # EPSILON is used in the Poisson criterion
 cdef double EPSILON = 10 * np.finfo('double').eps

@@ -15,21 +15,20 @@ use a kernel approximation prior to the application of :class:`SGDOneClassSVM`.
 """
 
 from time import time
-import numpy as np
 
+import matplotlib
+import matplotlib.pyplot as plt
+import numpy as np
 from scipy.interpolate import interp1d
 
-from sklearn.metrics import roc_curve, auc
-from sklearn.datasets import fetch_kddcup99, fetch_covtype
-from sklearn.preprocessing import LabelBinarizer, StandardScaler
-from sklearn.pipeline import make_pipeline
-from sklearn.utils import shuffle
+from sklearn.datasets import fetch_covtype, fetch_kddcup99
 from sklearn.kernel_approximation import Nystroem
-from sklearn.svm import OneClassSVM
 from sklearn.linear_model import SGDOneClassSVM
-
-import matplotlib.pyplot as plt
-import matplotlib
+from sklearn.metrics import auc, roc_curve
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import LabelBinarizer, StandardScaler
+from sklearn.svm import OneClassSVM
+from sklearn.utils import shuffle
 
 font = {"weight": "normal", "size": 15}
 

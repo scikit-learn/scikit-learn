@@ -11,25 +11,22 @@
 #
 # License: BSD 3 clause
 
+from libc.stdlib cimport free, qsort
+from libc.string cimport memcpy, memset
+
 from ._criterion cimport Criterion
 
-from libc.stdlib cimport free
-from libc.stdlib cimport qsort
-from libc.string cimport memcpy
-from libc.string cimport memset
-
 import numpy as np
+
 cimport numpy as np
+
 np.import_array()
 
 from scipy.sparse import csc_matrix
 
-from ._utils cimport log
-from ._utils cimport rand_int
-from ._utils cimport rand_uniform
-from ._utils cimport RAND_R_MAX
-from ._utils cimport safe_realloc
 from ..utils._sorting cimport simultaneous_sort
+from ._utils cimport RAND_R_MAX, log, rand_int, rand_uniform, safe_realloc
+
 
 cdef double INFINITY = np.inf
 

@@ -6,24 +6,23 @@ Covariance estimation is closely related to the theory of Gaussian Graphical
 Models.
 """
 
+from ._elliptic_envelope import EllipticEnvelope
 from ._empirical_covariance import (
-    empirical_covariance,
     EmpiricalCovariance,
+    empirical_covariance,
     log_likelihood,
 )
+from ._graph_lasso import GraphicalLasso, GraphicalLassoCV, graphical_lasso
+from ._robust_covariance import MinCovDet, fast_mcd
 from ._shrunk_covariance import (
-    shrunk_covariance,
+    OAS,
+    LedoitWolf,
     ShrunkCovariance,
     ledoit_wolf,
     ledoit_wolf_shrinkage,
-    LedoitWolf,
     oas,
-    OAS,
+    shrunk_covariance,
 )
-from ._robust_covariance import fast_mcd, MinCovDet
-from ._graph_lasso import graphical_lasso, GraphicalLasso, GraphicalLassoCV
-from ._elliptic_envelope import EllipticEnvelope
-
 
 __all__ = [
     "EllipticEnvelope",

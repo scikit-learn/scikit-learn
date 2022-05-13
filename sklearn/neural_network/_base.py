@@ -5,7 +5,6 @@
 # License: BSD 3 clause
 
 import numpy as np
-
 from scipy.special import expit as logistic_sigmoid
 from scipy.special import xlogy
 

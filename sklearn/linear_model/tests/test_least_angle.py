@@ -3,20 +3,29 @@ import warnings
 import numpy as np
 import pytest
 from scipy import linalg
+
+from sklearn import datasets, linear_model
 from sklearn.base import clone
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.linear_model import (
+    Lars,
+    LarsCV,
+    LassoLars,
+    LassoLarsCV,
+    LassoLarsIC,
+    lars_path,
+)
+from sklearn.linear_model._least_angle import _lars_path_residues
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import ignore_warnings
-from sklearn.utils._testing import TempMemmap
 from sklearn.utils import check_random_state
-from sklearn.exceptions import ConvergenceWarning
-from sklearn import linear_model, datasets
-from sklearn.linear_model._least_angle import _lars_path_residues
-from sklearn.linear_model import LassoLarsIC, lars_path
-from sklearn.linear_model import Lars, LassoLars, LarsCV, LassoLarsCV
+from sklearn.utils._testing import (
+    TempMemmap,
+    assert_allclose,
+    assert_array_almost_equal,
+    ignore_warnings,
+)
 
 # TODO: use another dataset that has multiple drops
 diabetes = datasets.load_diabetes()
@@ -59,8 +68,8 @@ def test_simple():
     # Principle of Lars is to keep covariances tied and decreasing
 
     # also test verbose output
-    from io import StringIO
     import sys
+    from io import StringIO
 
     old_stdout = sys.stdout
     try:

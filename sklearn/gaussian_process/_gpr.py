@@ -8,15 +8,15 @@ import warnings
 from operator import itemgetter
 
 import numpy as np
-from scipy.linalg import cholesky, cho_solve, solve_triangular
 import scipy.optimize
+from scipy.linalg import cho_solve, cholesky, solve_triangular
 
-from ..base import BaseEstimator, RegressorMixin, clone
-from ..base import MultiOutputMixin
-from .kernels import RBF, ConstantKernel as C
+from ..base import BaseEstimator, MultiOutputMixin, RegressorMixin, clone
 from ..preprocessing._data import _handle_zeros_in_scale
 from ..utils import check_random_state
 from ..utils.optimize import _check_optimize_result
+from .kernels import RBF
+from .kernels import ConstantKernel as C
 
 GPR_CHOLESKY_LOWER = True
 

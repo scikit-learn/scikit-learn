@@ -4,16 +4,17 @@ or if specifically requested via environment variable
 from functools import partial
 from unittest.mock import patch
 
-import pytest
-
 import numpy as np
+import pytest
 import scipy.sparse as sp
 
-from sklearn.datasets.tests.test_common import check_as_frame
-from sklearn.datasets.tests.test_common import check_pandas_dependency_message
-from sklearn.datasets.tests.test_common import check_return_X_y
-from sklearn.utils._testing import assert_allclose_dense_sparse
+from sklearn.datasets.tests.test_common import (
+    check_as_frame,
+    check_pandas_dependency_message,
+    check_return_X_y,
+)
 from sklearn.preprocessing import normalize
+from sklearn.utils._testing import assert_allclose_dense_sparse
 
 
 def test_20news(fetch_20newsgroups_fxt):

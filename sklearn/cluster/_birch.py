@@ -3,26 +3,27 @@
 #          Joel Nothman <joel.nothman@gmail.com>
 # License: BSD 3 clause
 
-import warnings
 import numbers
-import numpy as np
-from scipy import sparse
+import warnings
 from math import sqrt
 
-from ..metrics import pairwise_distances_argmin
-from ..metrics.pairwise import euclidean_distances
+import numpy as np
+from scipy import sparse
+
+from .._config import config_context
 from ..base import (
-    TransformerMixin,
-    ClusterMixin,
     BaseEstimator,
+    ClusterMixin,
+    TransformerMixin,
     _ClassNamePrefixFeaturesOutMixin,
 )
-from ..utils.extmath import row_norms
-from ..utils import check_scalar, deprecated
-from ..utils.validation import check_is_fitted
 from ..exceptions import ConvergenceWarning
+from ..metrics import pairwise_distances_argmin
+from ..metrics.pairwise import euclidean_distances
+from ..utils import check_scalar, deprecated
+from ..utils.extmath import row_norms
+from ..utils.validation import check_is_fitted
 from . import AgglomerativeClustering
-from .._config import config_context
 
 
 def _iterate_sparse_X(X):

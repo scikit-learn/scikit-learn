@@ -14,45 +14,49 @@
 # (using Cython prange loops) which gives another multiplicative speed-up in
 # favorable cases on many-core machines.
 cimport numpy as cnp
-import numpy as np
+
 import warnings
 
+import numpy as np
+
 from .. import get_config
-from libc.stdlib cimport free, malloc
-from libc.float cimport DBL_MAX
-from libcpp.memory cimport shared_ptr, make_shared
-from libcpp.vector cimport vector
+
+from cpython.ref cimport Py_INCREF
 from cython cimport final
 from cython.operator cimport dereference as deref
 from cython.parallel cimport parallel, prange
-from cpython.ref cimport Py_INCREF
+from libc.float cimport DBL_MAX
+from libc.stdlib cimport free, malloc
+from libcpp.memory cimport make_shared, shared_ptr
+from libcpp.vector cimport vector
 
-from ._dist_metrics cimport DatasetsPair, DenseDenseDatasetsPair
 from ..utils._cython_blas cimport (
-  BLAS_Order,
-  BLAS_Trans,
-  ColMajor,
-  NoTrans,
-  RowMajor,
-  Trans,
-  _dot,
-  _gemm,
+    BLAS_Order,
+    BLAS_Trans,
+    ColMajor,
+    NoTrans,
+    RowMajor,
+    Trans,
+    _dot,
+    _gemm,
 )
 from ..utils._heap cimport heap_push
-from ..utils._sorting cimport simultaneous_sort
 from ..utils._openmp_helpers cimport _openmp_thread_num
-from ..utils._typedefs cimport ITYPE_t, DTYPE_t
+from ..utils._sorting cimport simultaneous_sort
+from ..utils._typedefs cimport DTYPE_t, ITYPE_t
 from ..utils._vector_sentinel cimport vector_to_nd_array
+from ._dist_metrics cimport DatasetsPair, DenseDenseDatasetsPair
 
 from numbers import Integral, Real
 from typing import List
-from scipy.sparse import issparse
-from ._dist_metrics import BOOL_METRICS, METRIC_MAPPING
-from ..utils import check_scalar, _in_unstable_openblas_configuration
-from ..utils.fixes import threadpool_limits
-from ..utils._openmp_helpers import _openmp_effective_n_threads
-from ..utils._typedefs import ITYPE, DTYPE
 
+from scipy.sparse import issparse
+
+from ..utils import _in_unstable_openblas_configuration, check_scalar
+from ..utils._openmp_helpers import _openmp_effective_n_threads
+from ..utils._typedefs import DTYPE, ITYPE
+from ..utils.fixes import threadpool_limits
+from ._dist_metrics import BOOL_METRICS, METRIC_MAPPING
 
 cnp.import_array()
 

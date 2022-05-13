@@ -87,8 +87,7 @@ y_train, y_test = data_train.target, data_test.target
 # Extracting features from the training data using a sparse vectorizer
 from time import time
 
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.feature_extraction.text import HashingVectorizer
+from sklearn.feature_extraction.text import HashingVectorizer, TfidfVectorizer
 
 t0 = time()
 
@@ -142,6 +141,7 @@ if SELECT_CHI2:
 #
 # First we define small benchmarking utilities
 import numpy as np
+
 from sklearn import metrics
 from sklearn.utils.extmath import density
 
@@ -190,21 +190,22 @@ def benchmark(clf):
     return clf_descr, score, train_time, test_time
 
 
+from sklearn.ensemble import RandomForestClassifier
+
 # %%
 # We now train and test the datasets with 15 different classification
 # models and get performance results for each model.
 from sklearn.feature_selection import SelectFromModel
-from sklearn.linear_model import RidgeClassifier
+from sklearn.linear_model import (
+    PassiveAggressiveClassifier,
+    Perceptron,
+    RidgeClassifier,
+    SGDClassifier,
+)
+from sklearn.naive_bayes import BernoulliNB, ComplementNB, MultinomialNB
+from sklearn.neighbors import KNeighborsClassifier, NearestCentroid
 from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVC
-from sklearn.linear_model import SGDClassifier
-from sklearn.linear_model import Perceptron
-from sklearn.linear_model import PassiveAggressiveClassifier
-from sklearn.naive_bayes import BernoulliNB, ComplementNB, MultinomialNB
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.neighbors import NearestCentroid
-from sklearn.ensemble import RandomForestClassifier
-
 
 results = []
 for clf, name in (

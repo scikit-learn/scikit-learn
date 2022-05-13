@@ -16,9 +16,7 @@ The final 2 plots use :func:`~sklearn.datasets.make_blobs` and
 
 import matplotlib.pyplot as plt
 
-from sklearn.datasets import make_classification
-from sklearn.datasets import make_blobs
-from sklearn.datasets import make_gaussian_quantiles
+from sklearn.datasets import make_blobs, make_classification, make_gaussian_quantiles
 
 plt.figure(figsize=(8, 8))
 plt.subplots_adjust(bottom=0.05, top=0.9, left=0.05, right=0.95)

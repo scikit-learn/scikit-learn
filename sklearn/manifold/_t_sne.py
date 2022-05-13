@@ -10,25 +10,24 @@
 
 import warnings
 from time import time
+
 import numpy as np
 from scipy import linalg
-from scipy.spatial.distance import pdist
-from scipy.spatial.distance import squareform
 from scipy.sparse import csr_matrix, issparse
-from ..neighbors import NearestNeighbors
+from scipy.spatial.distance import pdist, squareform
+
 from ..base import BaseEstimator
+from ..decomposition import PCA
+from ..metrics.pairwise import pairwise_distances
+from ..neighbors import NearestNeighbors
 from ..utils import check_random_state
 from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..utils.validation import check_non_negative
-from ..decomposition import PCA
-from ..metrics.pairwise import pairwise_distances
-
-# mypy error: Module 'sklearn.manifold' has no attribute '_utils'
-from . import _utils  # type: ignore
 
 # mypy error: Module 'sklearn.manifold' has no attribute '_barnes_hut_tsne'
+# mypy error: Module 'sklearn.manifold' has no attribute '_utils'
 from . import _barnes_hut_tsne  # type: ignore
-
+from . import _utils  # type: ignore
 
 MACHINE_EPSILON = np.finfo(np.double).eps
 

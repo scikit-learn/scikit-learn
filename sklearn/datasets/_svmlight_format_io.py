@@ -15,16 +15,15 @@ libsvm command line programs.
 #          Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
 
-from contextlib import closing
 import io
 import os.path
+from contextlib import closing
 
 import numpy as np
 import scipy.sparse as sp
 
 from .. import __version__
-
-from ..utils import check_array, IS_PYPY
+from ..utils import IS_PYPY, check_array
 
 if not IS_PYPY:
     from ._svmlight_format_fast import _load_svmlight_file

@@ -1,12 +1,10 @@
 from sklearn.base import is_classifier
-from .base import _get_response
-
-from .. import average_precision_score
-from .. import precision_recall_curve
-from .._base import _check_pos_label_consistency
-from .._classification import check_consistent_length
 
 from ...utils import check_matplotlib_support, deprecated
+from .._base import _check_pos_label_consistency
+from .._classification import check_consistent_length
+from .._ranking import average_precision_score, precision_recall_curve
+from .base import _get_response
 
 
 class PrecisionRecallDisplay:

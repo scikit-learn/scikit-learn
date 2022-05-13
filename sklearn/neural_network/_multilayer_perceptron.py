@@ -6,36 +6,35 @@
 #          Jiyuan Qian
 # License: BSD 3 clause
 
-import numpy as np
-
-from abc import ABCMeta, abstractmethod
 import warnings
+from abc import ABCMeta, abstractmethod
 from itertools import chain
 
+import numpy as np
 import scipy.optimize
 
-from ..base import (
-    BaseEstimator,
-    ClassifierMixin,
-    RegressorMixin,
-)
-from ..base import is_classifier
-from ._base import ACTIVATIONS, DERIVATIVES, LOSS_FUNCTIONS
-from ._stochastic_optimizers import SGDOptimizer, AdamOptimizer
+from ..base import BaseEstimator, ClassifierMixin, RegressorMixin, is_classifier
+from ..exceptions import ConvergenceWarning
 from ..model_selection import train_test_split
 from ..preprocessing import LabelBinarizer
-from ..utils import gen_batches, check_random_state
-from ..utils import shuffle
-from ..utils import _safe_indexing
-from ..utils import column_or_1d
-from ..exceptions import ConvergenceWarning
+from ..utils import (
+    _safe_indexing,
+    check_random_state,
+    column_or_1d,
+    gen_batches,
+    shuffle,
+)
 from ..utils.extmath import safe_sparse_dot
-from ..utils.validation import check_is_fitted
-from ..utils.multiclass import _check_partial_fit_first_call, unique_labels
-from ..utils.multiclass import type_of_target
-from ..utils.optimize import _check_optimize_result
 from ..utils.metaestimators import available_if
-
+from ..utils.multiclass import (
+    _check_partial_fit_first_call,
+    type_of_target,
+    unique_labels,
+)
+from ..utils.optimize import _check_optimize_result
+from ..utils.validation import check_is_fitted
+from ._base import ACTIVATIONS, DERIVATIVES, LOSS_FUNCTIONS
+from ._stochastic_optimizers import AdamOptimizer, SGDOptimizer
 
 _STOCHASTIC_SOLVERS = ["sgd", "adam"]
 
