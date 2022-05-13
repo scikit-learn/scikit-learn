@@ -26,7 +26,7 @@ Changelog
   classifier that always predicts the positive class: recall=100% and
   precision=class balance.
   :pr:`23214` by :user:`Stéphane Collot <stephanecollot>` and :user:`Max Baak <mbaak>`.
-  
+
 :mod:`sklearn.utils`
 ....................
 
@@ -208,7 +208,7 @@ Changelog
   :pr:`23194` by `Thomas Fan`_.
 
 - |Enhancement| Added an extension in doc/conf.py to automatically generate
-  the list of estimators that handle NaN values. 
+  the list of estimators that handle NaN values.
   :pr:`23198` by `Lise Kleiber <lisekleiber>`_, :user:`Zhehao Liu <MaxwellLZH>`
   and :user:`Chiara Marmo <cmarmo>`.
 
