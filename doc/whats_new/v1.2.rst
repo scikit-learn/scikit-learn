@@ -58,9 +58,6 @@ Changelog
   in version 1.4
   :pr:`21938` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-- |Fix| Avoid timeouts in :func:`datasets.fetch_openml` by not passing a
-  `timeout` argument, :pr:`23358` by `Loïc Estève <lesteve>`.
-
 :mod:`sklearn.ensemble`
 .......................
 
