@@ -10,7 +10,7 @@ regressor. As the number of boosts is increased the regressor can fit more
 detail.
 
 .. [1] `H. Drucker, "Improving Regressors using Boosting Techniques", 1997.
-        <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.31.314&rep=rep1&type=pdf>`_
+        <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.31.314>`_
 
 """
 
