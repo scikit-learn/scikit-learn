@@ -996,13 +996,13 @@ The :func:`jaccard_score` function computes the average of `Jaccard similarity
 coefficients <https://en.wikipedia.org/wiki/Jaccard_index>`_, also called the
 Jaccard index, between pairs of label sets.
 
-The Jaccard similarity coefficient of the :math:`i`-th samples,
-with a ground truth label set :math:`y_i` and predicted label set
-:math:`\hat{y}_i`, is defined as
+The Jaccard similarity coefficient 
+with a ground truth label set :math:`y` and predicted label set
+:math:`\hat{y}`, is defined as
 
 .. math::
 
-    J(y_i, \hat{y}_i) = \frac{|y_i \cap \hat{y}_i|}{|y_i \cup \hat{y}_i|}.
+    J(y, \hat{y}) = \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples}-1} \frac{|y_i \cap \hat{y}_i|}{|y_i \cup \hat{y}_i|}.
 
 :func:`jaccard_score` works like :func:`precision_recall_fscore_support` as a
 naively set-wise measure applying natively to binary targets, and extended to
