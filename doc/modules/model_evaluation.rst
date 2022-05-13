@@ -710,14 +710,14 @@ The :func:`hamming_loss` computes the average Hamming loss or `Hamming
 distance <https://en.wikipedia.org/wiki/Hamming_distance>`_ between two sets
 of samples.
 
-If :math:`\hat{y}_j` is the predicted value for the :math:`j`-th label of
-a given sample, :math:`y_j` is the corresponding true value, and
+If :math:`\hat{y}_{i,j}` is the predicted value for the :math:`j`-th label of
+a given sample `i`, :math:`y_{i,j}` is the corresponding true value, and
 :math:`n_\text{labels}` is the number of classes or labels, then the
-Hamming loss :math:`L_{Hamming}` between two samples is defined as:
+Hamming loss :math:`L_{Hamming}` is defined as:
 
 .. math::
 
-   L_{Hamming}(y, \hat{y}) = \frac{1}{n_\text{labels}} \sum_{j=0}^{n_\text{labels} - 1} 1(\hat{y}_j \not= y_j)
+   L_{Hamming}(y, \hat{y}) = \frac{1}{n_\text{samples} * n_\text{labels}} \sum_{i=0}^{n_\text{samples}-1} \sum_{j=0}^{n_\text{labels} - 1} 1(\hat{y}_{i,j} \not= y_{i,j})
 
 where :math:`1(x)` is the `indicator function
 <https://en.wikipedia.org/wiki/Indicator_function>`_. ::
