@@ -148,6 +148,10 @@ def _assert_all_finite(
                     " instance by using an imputer transformer in a pipeline or drop"
                     " samples with missing values. See"
                     " https://scikit-learn.org/stable/modules/impute.html"
+                    " You can find a list of all estimators that handle NaN values"
+                    " at the following page:"
+                    " https://scikit-learn.org/stable/modules/impute.html"
+                    "#estimators-that-handle-nan-values"
                 )
             raise ValueError(msg_err)
 
@@ -1177,8 +1181,8 @@ def check_random_state(seed):
 
     Returns
     -------
-    None
-        No returns.
+    :class:`numpy:numpy.random.RandomState`
+        The random state object based on `seed` parameter.
     """
     if seed is None or seed is np.random:
         return np.random.mtrand._rand

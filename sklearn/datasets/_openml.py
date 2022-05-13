@@ -1,24 +1,24 @@
 import gzip
+import hashlib
 import json
 import os
 import shutil
-import hashlib
-from os.path import join
 import time
-from warnings import warn
 from contextlib import closing
 from functools import wraps
+from os.path import join
 from typing import Callable, Optional, Dict, Tuple, List, Any, Union
 from tempfile import TemporaryDirectory
-from urllib.request import urlopen, Request
 from urllib.error import HTTPError, URLError
+from urllib.request import urlopen, Request
+from warnings import warn
 
 import numpy as np
 
-from ..externals import _arff
 from . import get_data_home
-from ._arff_parser import _liac_arff_parser
+from ._arff_parser import load_arff_from_gzip_file
 from ..utils import Bunch
+from ..utils import check_pandas_support  # noqa
 
 __all__ = ["fetch_openml"]
 
@@ -189,7 +189,7 @@ def _get_json_content_from_openml_api(
     delay: float = 1.0,
 ) -> Dict:
     """
-    Loads json data from the openml api
+    Loads json data from the openml api.
 
     Parameters
     ----------
@@ -412,64 +412,102 @@ def _get_num_samples(data_qualities: OpenmlQualitiesType) -> int:
 def _load_arff_response(
     url: str,
     data_home: Optional[str],
-    output_arrays_type: str,
-    features_dict: Dict,
-    data_columns: List,
-    target_columns: List,
-    col_slice_x: List,
-    col_slice_y: List,
-    shape: Tuple,
+    parser: str,
+    output_type: str,
+    openml_columns_info: dict,
+    feature_names_to_select: List[str],
+    target_names_to_select: List[str],
+    shape: Optional[Tuple[int, int]],
     md5_checksum: str,
     n_retries: int = 3,
     delay: float = 1.0,
-) -> Tuple:
-    """Load arff data with url and parses arff response with parse_arff"""
-    response = _open_openml_url(url, data_home, n_retries=n_retries, delay=delay)
+):
+    """Load the ARFF data associated with the OpenML URL.
 
-    with closing(response):
-        # Note that if the data is dense, no reading is done until the data
-        # generator is iterated.
-        actual_md5_checksum = hashlib.md5()
+    In addition of loading the data, this function will also check the
+    integrity of the downloaded file from OpenML using MD5 checksum.
 
-        def _stream_checksum_generator(response):
-            for line in response:
-                actual_md5_checksum.update(line)
-                yield line.decode("utf-8")
+    Parameters
+    ----------
+    url : str
+        The URL of the ARFF file on OpenML.
 
-        stream = _stream_checksum_generator(response)
+    data_home : str
+        The location where to cache the data.
 
-        encode_nominal = not output_arrays_type == "pandas"
-        return_type = _arff.COO if output_arrays_type == "sparse" else _arff.DENSE_GEN
+    parser : {"liac-arff", "pandas"}
+        The parser used to parse the ARFF file.
 
-        arff = _arff.load(
-            stream, return_type=return_type, encode_nominal=encode_nominal
+    output_type : {"numpy", "pandas", "sparse"}
+        The type of the arrays that will be returned. The possibilities are:
+
+        - `"numpy"`: both `X` and `y` will be NumPy arrays;
+        - `"sparse"`: `X` will be sparse matrix and `y` will be a NumPy array;
+        - `"pandas"`: `X` will be a pandas DataFrame and `y` will be either a
+          pandas Series or DataFrame.
+
+    openml_columns_info : dict
+        The information provided by OpenML regarding the columns of the ARFF
+        file.
+
+    feature_names_to_select : list of str
+        The list of the features to be selected.
+
+    target_names_to_select : list of str
+        The list of the target variables to be selected.
+
+    shape : tuple or None
+        With `parser="liac-arff"`, when using a generator to load the data,
+        one needs to provide the shape of the data beforehand.
+
+    md5_checksum : str
+        The MD5 checksum provided by OpenML to check the data integrity.
+
+    Returns
+    -------
+    X : {ndarray, sparse matrix, dataframe}
+        The data matrix.
+
+    y : {ndarray, dataframe, series}
+        The target.
+
+    frame : dataframe or None
+        A dataframe containing both `X` and `y`. `None` if
+        `output_array_type != "pandas"`.
+
+    categories : list of str or None
+        The names of the features that are categorical. `None` if
+        `output_array_type == "pandas"`.
+    """
+    gzip_file = _open_openml_url(url, data_home, n_retries=n_retries, delay=delay)
+    with closing(gzip_file):
+        md5 = hashlib.md5()
+        for chunk in iter(lambda: gzip_file.read(4096), b""):
+            md5.update(chunk)
+        actual_md5_checksum = md5.hexdigest()
+
+    if actual_md5_checksum != md5_checksum:
+        raise ValueError(
+            f"md5 checksum of local file for {url} does not match description: "
+            f"expected: {md5_checksum} but got {actual_md5_checksum}. "
+            "Downloaded file could have been modified / corrupted, clean cache "
+            "and retry..."
         )
 
-        X, y, frame, nominal_attributes = _liac_arff_parser(
-            arff,
-            output_arrays_type,
-            features_dict,
-            data_columns,
-            target_columns,
-            col_slice_x,
-            col_slice_y,
-            shape,
+    gzip_file = _open_openml_url(url, data_home, n_retries=n_retries, delay=delay)
+    with closing(gzip_file):
+
+        X, y, frame, categories = load_arff_from_gzip_file(
+            gzip_file,
+            parser=parser,
+            output_type=output_type,
+            openml_columns_info=openml_columns_info,
+            feature_names_to_select=feature_names_to_select,
+            target_names_to_select=target_names_to_select,
+            shape=shape,
         )
 
-        # consume remaining stream, if early exited
-        for _ in stream:
-            pass
-
-        if actual_md5_checksum.hexdigest() != md5_checksum:
-            raise ValueError(
-                "md5 checksum of local file for "
-                + url
-                + " does not match description. "
-                "Downloaded file could have been modified / "
-                "corrupted, clean cache and retry..."
-            )
-
-        return X, y, frame, nominal_attributes
+        return X, y, frame, categories
 
 
 def _download_data_to_bunch(
@@ -478,59 +516,108 @@ def _download_data_to_bunch(
     data_home: Optional[str],
     *,
     as_frame: bool,
-    features_list: List,
-    data_columns: List[int],
-    target_columns: List,
+    openml_columns_info: List[dict],
+    data_columns: List[str],
+    target_columns: List[str],
     shape: Optional[Tuple[int, int]],
     md5_checksum: str,
     n_retries: int = 3,
     delay: float = 1.0,
+    parser: str,
 ):
-    """Download OpenML ARFF and convert to Bunch of data"""
-    # NB: this function is long in order to handle retry for any failure
-    #     during the streaming parse of the ARFF.
+    """Download ARFF data, load it to a specific container and create to Bunch.
 
+    This function has a mechanism to retry/cache/clean the data.
+
+    Parameters
+    ----------
+    url : str
+        The URL of the ARFF file on OpenML.
+
+    sparse : bool
+        Whether the dataset is expected to use the sparse ARFF format.
+
+    data_home : str
+        The location where to cache the data.
+
+    as_frame : bool
+        Whether or not to return the data into a pandas DataFrame.
+
+    openml_columns_info : list of dict
+        The information regarding the columns provided by OpenML for the
+        ARFF dataset. The information is stored as a list of dictionaries.
+
+    data_columns : list of str
+        The list of the features to be selected.
+
+    target_columns : list of str
+        The list of the target variables to be selected.
+
+    shape : tuple or None
+        With `parser="liac-arff"`, when using a generator to load the data,
+        one needs to provide the shape of the data beforehand.
+
+    md5_checksum : str
+        The MD5 checksum provided by OpenML to check the data integrity.
+
+    n_retries : int, default=3
+        Number of retries when HTTP errors are encountered. Error with status
+        code 412 won't be retried as they represent OpenML generic errors.
+
+    delay : float, default=1.0
+        Number of seconds between retries.
+
+    parser : {"liac-arff", "pandas"}
+        The parser used to parse the ARFF file.
+
+    Returns
+    -------
+    data : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
+
+        X : {ndarray, sparse matrix, dataframe}
+            The data matrix.
+        y : {ndarray, dataframe, series}
+            The target.
+        frame : dataframe or None
+            A dataframe containing both `X` and `y`. `None` if
+            `output_array_type != "pandas"`.
+        categories : list of str or None
+            The names of the features that are categorical. `None` if
+            `output_array_type == "pandas"`.
+    """
     # Prepare which columns and data types should be returned for the X and y
-    features_dict = {feature["name"]: feature for feature in features_list}
+    features_dict = {feature["name"]: feature for feature in openml_columns_info}
 
-    # XXX: col_slice_y should be all nominal or all numeric
+    if sparse:
+        output_type = "sparse"
+    elif as_frame:
+        output_type = "pandas"
+    else:
+        output_type = "numpy"
+
+    # XXX: target columns should all be categorical or all numeric
     _verify_target_data_type(features_dict, target_columns)
-
-    col_slice_y = [int(features_dict[col_name]["index"]) for col_name in target_columns]
-
-    col_slice_x = [int(features_dict[col_name]["index"]) for col_name in data_columns]
-    for col_idx in col_slice_y:
-        feat = features_list[col_idx]
-        nr_missing = int(feat["number_of_missing_values"])
-        if nr_missing > 0:
+    for name in target_columns:
+        column_info = features_dict[name]
+        n_missing_values = int(column_info["number_of_missing_values"])
+        if n_missing_values > 0:
             raise ValueError(
-                "Target column {} has {} missing values. "
-                "Missing values are not supported for target "
-                "columns. ".format(feat["name"], nr_missing)
+                f"Target column '{column_info['name']}' has {n_missing_values} missing "
+                "values. Missing values are not supported for target columns."
             )
 
-    # Access an ARFF file on the OpenML server. Documentation:
-    # https://www.openml.org/api_data_docs#!/data/get_download_id
-
-    if as_frame:
-        output_arrays_type = "pandas"
-    elif sparse:
-        output_arrays_type = "sparse"
-    else:
-        output_arrays_type = "numpy"
-
-    X, y, frame, nominal_attributes = _retry_with_clean_cache(url, data_home)(
+    X, y, frame, categories = _retry_with_clean_cache(url, data_home)(
         _load_arff_response
     )(
         url,
         data_home,
-        output_arrays_type,
-        features_dict,
-        data_columns,
-        target_columns,
-        col_slice_x,
-        col_slice_y,
-        shape,
+        parser=parser,
+        output_type=output_type,
+        openml_columns_info=features_dict,
+        feature_names_to_select=data_columns,
+        target_names_to_select=target_columns,
+        shape=shape,
         md5_checksum=md5_checksum,
         n_retries=n_retries,
         delay=delay,
@@ -540,7 +627,7 @@ def _download_data_to_bunch(
         data=X,
         target=y,
         frame=frame,
-        categories=nominal_attributes,
+        categories=categories,
         feature_names=data_columns,
         target_names=target_columns,
     )
@@ -554,7 +641,7 @@ def _verify_target_data_type(features_dict, target_columns):
     found_types = set()
     for target_column in target_columns:
         if target_column not in features_dict:
-            raise KeyError("Could not find target_column={}")
+            raise KeyError(f"Could not find target_column='{target_column}'")
         if features_dict[target_column]["data_type"] == "numeric":
             found_types.add(np.float64)
         else:
@@ -562,9 +649,9 @@ def _verify_target_data_type(features_dict, target_columns):
 
         # note: we compare to a string, not boolean
         if features_dict[target_column]["is_ignore"] == "true":
-            warn("target_column={} has flag is_ignore.".format(target_column))
+            warn(f"target_column='{target_column}' has flag is_ignore.")
         if features_dict[target_column]["is_row_identifier"] == "true":
-            warn("target_column={} has flag is_row_identifier.".format(target_column))
+            warn(f"target_column='{target_column}' has flag is_row_identifier.")
     if len(found_types) > 1:
         raise ValueError(
             "Can only handle homogeneous multi-target datasets, "
@@ -601,6 +688,7 @@ def fetch_openml(
     as_frame: Union[str, bool] = "auto",
     n_retries: int = 3,
     delay: float = 1.0,
+    parser: Optional[str] = "warn",
 ):
     """Fetch dataset from openml by name or dataset id.
 
@@ -665,9 +753,14 @@ def fetch_openml(
         data. If ``return_X_y`` is True, then ``(data, target)`` will be pandas
         DataFrames or Series as describe above.
 
-        If as_frame is 'auto', the data and target will be converted to
-        DataFrame or Series as if as_frame is set to True, unless the dataset
+        If `as_frame` is 'auto', the data and target will be converted to
+        DataFrame or Series as if `as_frame` is set to True, unless the dataset
         is stored in sparse format.
+
+        If `as_frame` is False, the data and target will be NumPy arrays and
+        the `data` will only contain numerical values when `parser="liac-arff"`
+        where the categories are provided in the attribute `categories` of the
+        `Bunch` instance. When `parser="pandas"`, no ordinal encoding is made.
 
         .. versionchanged:: 0.24
            The default value of `as_frame` changed from `False` to `'auto'`
@@ -681,9 +774,27 @@ def fetch_openml(
     delay : float, default=1.0
         Number of seconds between retries.
 
+    parser : {"auto", "pandas", "liac-arff"}, default="liac-arff"
+        Parser used to load the ARFF file. Two parsers are implemented:
+
+        - `"pandas"`: this is the most efficient parser. However, it requires
+          pandas to be installed and can only open dense datasets.
+        - `"liac-arff"`: this is a pure Python ARFF parser that is much less
+          memory- and CPU-efficient. It deals with sparse ARFF dataset.
+
+        If `"auto"` (future default), the parser is chosen automatically such that
+        `"liac-arff"` is selected for sparse ARFF datasets, otherwise
+        `"pandas"` is selected.
+
+        .. versionadded:: 1.2
+        .. versionchanged:: 1.4
+           The default value of `parser` will change from `"liac-arff"` to
+           `"auto"` in 1.4. You can set `parser="auto"` to silence this
+           warning. Therefore, an `ImportError` will be raised from 1.4 if
+           the dataset is dense and pandas is not installed.
+
     Returns
     -------
-
     data : :class:`~sklearn.utils.Bunch`
         Dictionary-like object, with the following attributes.
 
@@ -723,6 +834,29 @@ def fetch_openml(
         Missing values in the 'data' are represented as NaN's. Missing values
         in 'target' are represented as NaN's (numerical target) or None
         (categorical target).
+
+    Notes
+    -----
+    The `"pandas"` and `"liac-arff"` parsers can lead to different data types
+    in the output. The notable differences are the following:
+
+    - The `"liac-arff"` parser always encodes categorical features as `str` objects.
+      To the contrary, the `"pandas"` parser instead infers the type while
+      reading and numerical categories will be casted into integers whenever
+      possible.
+    - The `"liac-arff"` parser uses float64 to encode numerical features
+      tagged as 'REAL' and 'NUMERICAL' in the metadata. The `"pandas"`
+      parser instead infers if these numerical features corresponds
+      to integers and uses panda's Integer extension dtype.
+    - In particular, classification datasets with integer categories are
+      typically loaded as such `(0, 1, ...)` with the `"pandas"` parser while
+      `"liac-arff"` will force the use of string encoded class labels such as
+      `"0"`, `"1"` and so on.
+
+    In addition, when `as_frame=False` is used, the `"liac-arff"` parser
+    returns ordinally encoded data where the categories are provided in the
+    attribute `categories` of the `Bunch` instance. Instead, `"pandas"` returns
+    a NumPy array were the categories are not encoded.
     """
     if cache is False:
         # no caching will be applied
@@ -782,15 +916,79 @@ def fetch_openml(
             "unusable. Warning: {}".format(data_description["warning"])
         )
 
-    return_sparse = False
-    if data_description["format"].lower() == "sparse_arff":
-        return_sparse = True
+    # TODO(1.4): remove "warn" from the valid parser
+    valid_parsers = ("auto", "pandas", "liac-arff", "warn")
+    if parser not in valid_parsers:
+        raise ValueError(
+            f"`parser` must be one of {', '.join(repr(p) for p in valid_parsers)}. Got"
+            f" {parser!r} instead."
+        )
 
-    if as_frame == "auto":
-        as_frame = not return_sparse
+    if parser == "warn":
+        # TODO(1.4): remove this warning
+        parser = "liac-arff"
+        warn(
+            "The default value of `parser` will change from `'liac-arff'` to "
+            "`'auto'` in 1.4. You can set `parser='auto'` to silence this "
+            "warning. Therefore, an `ImportError` will be raised from 1.4 if "
+            "the dataset is dense and pandas is not installed. Note that the pandas "
+            "parser may return different data types. See the Notes Section in "
+            "fetch_openml's API doc for details.",
+            FutureWarning,
+        )
 
-    if as_frame and return_sparse:
-        raise ValueError("Cannot return dataframe with sparse data")
+    if as_frame not in ("auto", True, False):
+        raise ValueError(
+            f"`as_frame` must be one of 'auto', True, or False. Got {as_frame} instead."
+        )
+
+    return_sparse = data_description["format"].lower() == "sparse_arff"
+    as_frame = not return_sparse if as_frame == "auto" else as_frame
+    if parser == "auto":
+        parser_ = "liac-arff" if return_sparse else "pandas"
+    else:
+        parser_ = parser
+
+    if as_frame or parser_ == "pandas":
+        try:
+            check_pandas_support("`fetch_openml`")
+        except ImportError as exc:
+            if as_frame:
+                err_msg = (
+                    "Returning pandas objects requires pandas to be installed. "
+                    "Alternatively, explicitely set `as_frame=False` and "
+                    "`parser='liac-arff'`."
+                )
+                raise ImportError(err_msg) from exc
+            else:
+                err_msg = (
+                    f"Using `parser={parser_!r}` requires pandas to be installed. "
+                    "Alternatively, explicitely set `parser='liac-arff'`."
+                )
+                if parser == "auto":
+                    # TODO(1.4): In version 1.4, we will raise an error instead of
+                    # a warning.
+                    warn(
+                        "From version 1.4, `parser='auto'` with `as_frame=False` "
+                        "will use pandas. Either install pandas or set explicitely "
+                        "`parser='liac-arff'` to preserve the current behavior.",
+                        FutureWarning,
+                    )
+                    parser_ = "liac-arff"
+                else:
+                    raise ImportError(err_msg) from exc
+
+    if return_sparse:
+        if as_frame:
+            raise ValueError(
+                "Sparse ARFF datasets cannot be loaded with as_frame=True. "
+                "Use as_frame=False or as_frame='auto' instead."
+            )
+        if parser_ == "pandas":
+            raise ValueError(
+                f"Sparse ARFF datasets cannot be loaded with parser={parser!r}. "
+                "Use parser='liac-arff' or parser='auto' instead."
+            )
 
     # download data features, meta-info about column types
     features_list = _get_data_features(data_id, data_home)
@@ -846,13 +1044,14 @@ def fetch_openml(
         return_sparse,
         data_home,
         as_frame=bool(as_frame),
-        features_list=features_list,
+        openml_columns_info=features_list,
         shape=shape,
         target_columns=target_columns,
         data_columns=data_columns,
         md5_checksum=data_description["md5_checksum"],
         n_retries=n_retries,
         delay=delay,
+        parser=parser_,
     )
 
     if return_X_y:
