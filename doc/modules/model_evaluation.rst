@@ -904,11 +904,11 @@ Here are some small examples in binary classification::
   >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
   >>> precision, recall, threshold = precision_recall_curve(y_true, y_scores)
   >>> precision
-  array([0.66..., 0.5       , 1.        , 1.        ])
+  array([0.5       , 0.66..., 0.5       , 1.        , 1.        ])
   >>> recall
-  array([1. , 0.5, 0.5, 0. ])
+  array([1. , 1. , 0.5, 0.5, 0. ])
   >>> threshold
-  array([0.35, 0.4 , 0.8 ])
+  array([0.1 , 0.35, 0.4 , 0.8 ])
   >>> average_precision_score(y_true, y_scores)
   0.83...
 
