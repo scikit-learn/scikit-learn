@@ -18,19 +18,15 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.datasets._samples_generator.make_gaussian_quantiles",
     "sklearn.datasets._samples_generator.make_spd_matrix",
     "sklearn.datasets._species_distributions.fetch_species_distributions",
-    "sklearn.datasets._svmlight_format_io.dump_svmlight_file",
     "sklearn.datasets._svmlight_format_io.load_svmlight_file",
     "sklearn.datasets._svmlight_format_io.load_svmlight_files",
     "sklearn.decomposition._dict_learning.dict_learning",
     "sklearn.decomposition._dict_learning.dict_learning_online",
-    "sklearn.decomposition._fastica.fastica",
     "sklearn.decomposition._nmf.non_negative_factorization",
     "sklearn.externals._packaging.version.parse",
     "sklearn.feature_extraction.image.extract_patches_2d",
     "sklearn.feature_extraction.image.img_to_graph",
-    "sklearn.feature_extraction.text.strip_accents_ascii",
     "sklearn.feature_extraction.text.strip_accents_unicode",
-    "sklearn.feature_extraction.text.strip_tags",
     "sklearn.feature_selection._univariate_selection.chi2",
     "sklearn.feature_selection._univariate_selection.f_oneway",
     "sklearn.inspection._partial_dependence.partial_dependence",
@@ -73,7 +69,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.metrics.pairwise.cosine_distances",
     "sklearn.metrics.pairwise.cosine_similarity",
     "sklearn.metrics.pairwise.distance_metrics",
-    "sklearn.metrics.pairwise.haversine_distances",
     "sklearn.metrics.pairwise.kernel_metrics",
     "sklearn.metrics.pairwise.paired_manhattan_distances",
     "sklearn.metrics.pairwise.pairwise_distances_argmin",
@@ -83,7 +78,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.metrics.pairwise.polynomial_kernel",
     "sklearn.metrics.pairwise.rbf_kernel",
     "sklearn.metrics.pairwise.sigmoid_kernel",
-    "sklearn.model_selection._validation.cross_validate",
     "sklearn.model_selection._validation.learning_curve",
     "sklearn.model_selection._validation.permutation_test_score",
     "sklearn.model_selection._validation.validation_curve",
@@ -152,7 +146,7 @@ def get_all_methods():
                 methods.append(name)
         methods.append(None)
 
-        for method in sorted(methods, key=lambda x: str(x)):
+        for method in sorted(methods, key=str):
             yield Estimator, method
 
 

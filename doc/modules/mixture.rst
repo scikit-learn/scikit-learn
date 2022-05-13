@@ -139,7 +139,7 @@ Choice of the Initialization Method
 -----------------------------------
 
 There is a choice of four initialization methods (as well as inputting user defined
-initial means) to generate the initial centers for the model components: 
+initial means) to generate the initial centers for the model components:
 
 k-means (default)
   This applies a traditional k-means clustering algorithm.
@@ -159,7 +159,7 @@ random_from_data
   results if the chosen points are too close to each other.
 
 random
-  Centers are chosen as a small pertubation away from the mean of all data.
+  Centers are chosen as a small perturbation away from the mean of all data.
   This method is simple but can lead to the model taking longer to converge.
 
 .. figure:: ../auto_examples/mixture/images/sphx_glr_plot_gmm_init_001.png

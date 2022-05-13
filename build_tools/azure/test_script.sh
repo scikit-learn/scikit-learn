@@ -7,7 +7,7 @@ source build_tools/shared.sh
 
 if [[ "$DISTRIB" =~ ^conda.* ]]; then
     source activate $VIRTUALENV
-elif [[ "$DISTRIB" == "ubuntu" ]] || [[ "$DISTRIB" == "debian-32" ]]; then
+elif [[ "$DISTRIB" == "ubuntu" || "$DISTRIB" == "debian-32" || "$DISTRIB" == "pip-nogil" ]]; then
     source $VIRTUALENV/bin/activate
 fi
 
@@ -20,6 +20,11 @@ if [[ "$BUILD_REASON" == "Schedule" ]]; then
     # only on nightly builds.
     # https://scikit-learn.org/stable/computing/parallelism.html#environment-variables
     export SKLEARN_TESTS_GLOBAL_RANDOM_SEED="any"
+
+    # Enable global dtype fixture for all nightly builds to discover
+    # numerical-sensitive tests.
+    # https://scikit-learn.org/stable/computing/parallelism.html#environment-variables
+    export SKLEARN_RUN_FLOAT32_TESTS=1
 fi
 
 mkdir -p $TEST_DIR
@@ -44,11 +49,17 @@ if [[ "$COVERAGE" == "true" ]]; then
 fi
 
 if [[ -n "$CHECK_WARNINGS" ]]; then
-    # numpy's 1.19.0's tostring() deprecation is ignored until scipy and joblib removes its usage
-    TEST_CMD="$TEST_CMD -Werror::DeprecationWarning -Werror::FutureWarning -Wignore:tostring:DeprecationWarning"
+    TEST_CMD="$TEST_CMD -Werror::DeprecationWarning -Werror::FutureWarning"
+
+    # numpy's 1.19.0's tostring() deprecation is ignored until scipy and joblib
+    # removes its usage
+    TEST_CMD="$TEST_CMD -Wignore:tostring:DeprecationWarning"
 
     # Python 3.10 deprecates distutils, which is imported by numpy internally
     TEST_CMD="$TEST_CMD -Wignore:The\ distutils:DeprecationWarning"
+
+    # Ignore distutils deprecation warning, used by joblib internally
+    TEST_CMD="$TEST_CMD -Wignore:distutils\ Version\ classes\ are\ deprecated:DeprecationWarning"
 fi
 
 if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then
@@ -57,6 +68,13 @@ fi
 
 if [[ "$SHOW_SHORT_SUMMARY" == "true" ]]; then
     TEST_CMD="$TEST_CMD -ra"
+fi
+
+if [[ -n "$SELECTED_TESTS" ]]; then
+    TEST_CMD="$TEST_CMD -k $SELECTED_TESTS"
+
+    # Override to make selected tests run on all random seeds
+    export SKLEARN_TESTS_GLOBAL_RANDOM_SEED="all"
 fi
 
 set -x
