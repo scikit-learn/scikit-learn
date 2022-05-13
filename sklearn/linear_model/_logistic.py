@@ -874,9 +874,6 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
            :class:`LogisticRegression` and more specifically the
            `Table <https://scikit-learn.org/dev/modules/linear_model.html#logistic-regression>`_
            summarazing solver/penalty supports.
-           <!--
-           # noqa: E501
-           -->
 
         .. versionadded:: 0.17
            Stochastic Average Gradient descent solver.

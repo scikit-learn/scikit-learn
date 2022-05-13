@@ -7,11 +7,10 @@
 # License: BSD 3 clause
 
 from libc.math cimport fabs
-cimport numpy as np
+cimport numpy as cnp
 import numpy as np
 import numpy.linalg as linalg
 
-cimport cython
 from cpython cimport bool
 from cython cimport floating
 import warnings
@@ -37,10 +36,10 @@ from ..utils._cython_blas cimport (
 
 from ..utils._random cimport our_rand_r
 
-ctypedef np.float64_t DOUBLE
-ctypedef np.uint32_t UINT32_t
+ctypedef cnp.float64_t DOUBLE
+ctypedef cnp.uint32_t UINT32_t
 
-np.import_array()
+cnp.import_array()
 
 # The following two functions are shamelessly copied from the tree code.
 
@@ -107,12 +106,18 @@ cdef floating diff_abs_max(int n, floating* a, floating* b) nogil:
     return m
 
 
-def enet_coordinate_descent(floating[::1] w,
-                            floating alpha, floating beta,
-                            floating[::1, :] X,
-                            floating[::1] y,
-                            int max_iter, floating tol,
-                            object rng, bint random=0, bint positive=0):
+def enet_coordinate_descent(
+    floating[::1] w,
+    floating alpha,
+    floating beta,
+    floating[::1, :] X,
+    floating[::1] y,
+    int max_iter,
+    floating tol,
+    object rng,
+    bint random=0,
+    bint positive=0
+):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net regression
 
@@ -120,6 +125,16 @@ def enet_coordinate_descent(floating[::1] w,
 
         (1/2) * norm(y - X w, 2)^2 + alpha norm(w, 1) + (beta/2) norm(w, 2)^2
 
+    Returns
+    -------
+    w : ndarray of shape (n_features,)
+        ElasticNet coefficients.
+    gap : float
+        Achieved dual gap.
+    tol : float
+        Equals input `tol` times `np.dot(y, y)`. The tolerance used for the dual gap.
+    n_iter : int
+        Number of coordinate descent iterations.
     """
 
     if floating is float:
@@ -272,16 +287,16 @@ def enet_coordinate_descent(floating[::1] w,
                     )
                 warnings.warn(message, ConvergenceWarning)
 
-    return w, gap, tol, n_iter + 1
+    return np.asarray(w), gap, tol, n_iter + 1
 
 
 def sparse_enet_coordinate_descent(
     floating [::1] w,
     floating alpha,
     floating beta,
-    np.ndarray[floating, ndim=1, mode='c'] X_data,
-    np.ndarray[int, ndim=1, mode='c'] X_indices,
-    np.ndarray[int, ndim=1, mode='c'] X_indptr,
+    cnp.ndarray[floating, ndim=1, mode='c'] X_data,
+    cnp.ndarray[int, ndim=1, mode='c'] X_indices,
+    cnp.ndarray[int, ndim=1, mode='c'] X_indptr,
     floating[::1] y,
     floating[::1] sample_weight,
     floating[::1] X_mean,
@@ -304,6 +319,17 @@ def sparse_enet_coordinate_descent(
         + (beta/2) * norm(w, 2)^2
 
     and X_mean is the weighted average of X (per column).
+
+    Returns
+    -------
+    w : ndarray of shape (n_features,)
+        ElasticNet coefficients.
+    gap : float
+        Achieved dual gap.
+    tol : float
+        Equals input `tol` times `np.dot(y, y)`. The tolerance used for the dual gap.
+    n_iter : int
+        Number of coordinate descent iterations.
     """
     # Notes for sample_weight:
     # For dense X, one centers X and y and then rescales them by sqrt(sample_weight).
@@ -551,16 +577,22 @@ def sparse_enet_coordinate_descent(
                               "gap: {}, tolerance: {}".format(gap, tol),
                               ConvergenceWarning)
 
-    return w, gap, tol, n_iter + 1
+    return np.asarray(w), gap, tol, n_iter + 1
 
 
-def enet_coordinate_descent_gram(floating[::1] w,
-                                 floating alpha, floating beta,
-                                 np.ndarray[floating, ndim=2, mode='c'] Q,
-                                 np.ndarray[floating, ndim=1, mode='c'] q,
-                                 np.ndarray[floating, ndim=1] y,
-                                 int max_iter, floating tol, object rng,
-                                 bint random=0, bint positive=0):
+def enet_coordinate_descent_gram(
+    floating[::1] w,
+    floating alpha,
+    floating beta,
+    cnp.ndarray[floating, ndim=2, mode='c'] Q,
+    cnp.ndarray[floating, ndim=1, mode='c'] q,
+    cnp.ndarray[floating, ndim=1] y,
+    int max_iter,
+    floating tol,
+    object rng,
+    bint random=0,
+    bint positive=0
+):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net regression
 
@@ -571,6 +603,17 @@ def enet_coordinate_descent_gram(floating[::1] w,
         which amount to the Elastic-Net problem when:
         Q = X^T X (Gram matrix)
         q = X^T y
+
+    Returns
+    -------
+    w : ndarray of shape (n_features,)
+        ElasticNet coefficients.
+    gap : float
+        Achieved dual gap.
+    tol : float
+        Equals input `tol` times `np.dot(y, y)`. The tolerance used for the dual gap.
+    n_iter : int
+        Number of coordinate descent iterations.
     """
 
     if floating is float:
@@ -707,10 +750,17 @@ def enet_coordinate_descent_gram(floating[::1] w,
 
 
 def enet_coordinate_descent_multi_task(
-        floating[::1, :] W, floating l1_reg, floating l2_reg,
-        np.ndarray[floating, ndim=2, mode='fortran'] X,  # TODO: use views with Cython 3.0
-        np.ndarray[floating, ndim=2, mode='fortran'] Y,  # hopefully with skl 1.0
-        int max_iter, floating tol, object rng, bint random=0):
+    floating[::1, :] W,
+    floating l1_reg,
+    floating l2_reg,
+    # TODO: use const qualified fused-typed memoryview when Cython 3.0 is used.
+    cnp.ndarray[floating, ndim=2, mode='fortran'] X,
+    cnp.ndarray[floating, ndim=2, mode='fortran'] Y,
+    int max_iter,
+    floating tol,
+    object rng,
+    bint random=0
+):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net mult-task regression
 
@@ -723,6 +773,17 @@ def enet_coordinate_descent_multi_task(
     W : F-contiguous ndarray of shape (n_tasks, n_features)
     X : F-contiguous ndarray of shape (n_samples, n_features)
     Y : F-contiguous ndarray of shape (n_samples, n_tasks)
+
+    Returns
+    -------
+    W : ndarray of shape (n_tasks, n_features)
+        ElasticNet coefficients.
+    gap : float
+        Achieved dual gap.
+    tol : float
+        Equals input `tol` times `np.dot(y, y)`. The tolerance used for the dual gap.
+    n_iter : int
+        Number of coordinate descent iterations.
     """
 
     if floating is float:
