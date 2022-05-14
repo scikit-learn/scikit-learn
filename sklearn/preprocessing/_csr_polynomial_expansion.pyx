@@ -1,7 +1,6 @@
 # Author: Andrew nystrom <awnystrom@gmail.com>
 
 from scipy.sparse import csr_matrix
-import numpy as np
 cimport numpy as cnp
 
 cnp.import_array()
