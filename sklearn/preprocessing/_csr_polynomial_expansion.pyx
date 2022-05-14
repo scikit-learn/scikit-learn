@@ -106,7 +106,7 @@ def _csr_polynomial_expansion(cnp.ndarray[DATA_T, ndim=1] data,
                           - interaction_only * nnz ** 2)
 
     # Make the arrays that will form the CSR matrix of the expansion.
-    cdef cnp.ndarray[DATA_T, ndim=1] expanded_data = np.ndarray(
+    cdef cnp.ndarray[DATA_T, ndim=1] expanded_data = cnp.ndarray(
         shape=total_nnz, dtype=data.dtype)
     cdef cnp.ndarray[INDEX_T, ndim=1] expanded_indices = np.ndarray(
         shape=total_nnz, dtype=indices.dtype)
