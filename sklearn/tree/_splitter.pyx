@@ -19,8 +19,6 @@ from libc.string cimport memcpy
 from libc.string cimport memset
 
 import numpy as np
-cimport numpy as cnp
-cnp.import_array()
 
 from scipy.sparse import csc_matrix
 
