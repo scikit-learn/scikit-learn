@@ -898,3 +898,21 @@ def test_get_feature_names_deprecated(Transformer):
     msg = "get_feature_names is deprecated in 1.0"
     with pytest.warns(FutureWarning, match=msg):
         poly.get_feature_names()
+
+
+def test_polynomial_features_behaviour_on_zero_degree():
+    """Check that PolynomialFeatures raises error when degree=0 and include_bias=False,
+    and output a single constant column when include_bias=True
+    """
+    X = np.ones((10, 2))
+    poly = PolynomialFeatures(degree=0, include_bias=False)
+    err_msg = (
+        "Setting degree to zero and include_bias to False will result to an empty"
+        " dataframe."
+    )
+    with pytest.raises(ValueError, match=err_msg):
+        poly.fit_transform(X)
+
+    for _X in [X, sparse.csr_matrix(X), sparse.csc_matrix(X)]:
+        poly = PolynomialFeatures(degree=0, include_bias=True)
+        assert poly.fit_transform(_X).shape[1] == 1
