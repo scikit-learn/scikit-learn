@@ -907,12 +907,24 @@ def test_polynomial_features_behaviour_on_zero_degree():
     X = np.ones((10, 2))
     poly = PolynomialFeatures(degree=0, include_bias=False)
     err_msg = (
-        "Setting degree to zero and include_bias to False will result to an empty"
-        " dataframe."
+        "Setting degree to zero and include_bias to False would result in"
+        " an empty output array."
+    )
+    with pytest.raises(ValueError, match=err_msg):
+        poly.fit_transform(X)
+
+    poly = PolynomialFeatures(degree=(0, 0), include_bias=False)
+    err_msg = (
+        "Setting both min_deree and max_degree to zero and include_bias to"
+        " False would result in an empty output array."
     )
     with pytest.raises(ValueError, match=err_msg):
         poly.fit_transform(X)
 
     for _X in [X, sparse.csr_matrix(X), sparse.csc_matrix(X)]:
         poly = PolynomialFeatures(degree=0, include_bias=True)
-        assert poly.fit_transform(_X).shape[1] == 1
+        output = poly.fit_transform(_X)
+        # convert to dense array if needed
+        if sparse.issparse(output):
+            output = output.toarray()
+        assert_array_equal(output, np.ones((X.shape[0], 1)))
