@@ -3,7 +3,6 @@
 
 # See quad_tree.pyx for details.
 
-import numpy as np
 cimport numpy as cnp
 
 ctypedef cnp.npy_float32 DTYPE_t          # Type of X
