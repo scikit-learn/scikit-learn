@@ -72,9 +72,6 @@ cdef extern from "libsvm_sparse_helper.c":
     void set_verbosity(int)
 
 
-cnp.import_array()
-
-
 def libsvm_sparse_train (int n_features,
                          cnp.ndarray[cnp.float64_t, ndim=1, mode='c'] values,
                          cnp.ndarray[cnp.int32_t,   ndim=1, mode='c'] indices,
