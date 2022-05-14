@@ -34,7 +34,7 @@ X, y = datasets.make_classification(
 )
 
 # criteria to compare
-criterions = ["gini", "hellinger"]
+criterions = ["gini", 'entropy', "hellinger"]
 
 # plot parameters
 fig = plt.figure(figsize=(10, 6))
