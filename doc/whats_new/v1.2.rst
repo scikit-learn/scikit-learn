@@ -58,6 +58,13 @@ Changelog
   :pr:`10468` by :user:`Ruben <icfly2>` and :pr:`22993` by
   :user:`Jovan Stojanovic <jovan-stojanovic>`.
 
+:mode:`sklearn.preprocessing`
+.............................
+
+- |Fix| :class:`preprocessing.PolynomialFeatures` with ``degree`` equal to 0 will raise
+  error when ``include_bias`` is set to False, and outputs a single constant array when
+  ``include_bias`` is set to True. :pr:`23370` by :user:`Zhehao Liu <MaxwellLZH>`. 
+
 Code and Documentation Contributors
 -----------------------------------
 
