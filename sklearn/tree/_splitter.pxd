@@ -9,9 +9,6 @@
 
 # See _splitter.pyx for details.
 
-import numpy as np
-cimport numpy as np
-
 from ._criterion cimport Criterion
 
 from ._tree cimport DTYPE_t          # Type of X
