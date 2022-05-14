@@ -7,13 +7,13 @@ cimport cython
 from libc.stdlib cimport abs
 from libcpp.vector cimport vector
 
-cimport numpy as np
+cimport numpy as cnp
 import numpy as np
 from ..utils._typedefs cimport INT32TYPE_t, INT64TYPE_t
 from ..utils.murmurhash cimport murmurhash3_bytes_s32
 from ..utils._vector_sentinel cimport vector_to_nd_array
 
-np.import_array()
+cnp.import_array()
 
 
 def transform(raw_X, Py_ssize_t n_features, dtype,
@@ -37,8 +37,8 @@ def transform(raw_X, Py_ssize_t n_features, dtype,
     # Since Python array does not understand Numpy dtypes, we grow the indices
     # and values arrays ourselves. Use a Py_ssize_t capacity for safety.
     cdef Py_ssize_t capacity = 8192     # arbitrary
-    cdef np.int64_t size = 0
-    cdef np.ndarray values = np.empty(capacity, dtype=dtype)
+    cdef cnp.int64_t size = 0
+    cdef cnp.ndarray values = np.empty(capacity, dtype=dtype)
 
     for x in raw_X:
         for f, v in x:
