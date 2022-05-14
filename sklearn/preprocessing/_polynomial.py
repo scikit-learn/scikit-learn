@@ -294,8 +294,8 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
 
             if self.degree == 0 and not self.include_bias:
                 raise ValueError(
-                    "Setting degree to zero and include_bias to False will result to an"
-                    " empty dataframe."
+                    "Setting degree to zero and include_bias to False would result in an"
+                    " empty output array."
                 )
 
             self._min_degree = 0
