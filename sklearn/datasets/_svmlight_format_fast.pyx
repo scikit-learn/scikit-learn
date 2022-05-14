@@ -155,15 +155,18 @@ def _dump_svmlight_file_dense(int_or_float1[:,:] X, int_or_float2[:,:] y, f, bin
         Py_ssize_t col_start
         Py_ssize_t col_end
         bint first
-        cython.long[:] x_inds
-        int_or_float1[:] x_vals
-        int_or_float2[:] y_vals
-        array.array[cython.long] int_template = array.array('l',[])
+        array.array[long long] int_template = array.array('q',[])
         array.array[cython.double] float_template = array.array('d',[])
-        Py_ssize_t x_nz_used = 0
-        Py_ssize_t y_nz_used = 0
+        Py_ssize_t x_nz_used
+        Py_ssize_t y_nz_used
+        array.array x_inds
+        array.array x_vals
+        array.array y_vals
 
     for i in range(x_len):
+        x_nz_used = 0
+        y_nz_used = 0
+
         if int_or_float1 not in cython.floating:
             x_vals = array.clone(int_template, row_length, False)
         else:
