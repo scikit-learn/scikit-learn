@@ -291,8 +291,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                 raise ValueError(
                     f"degree must be a non-negative integer, got {self.degree}."
                 )
-
-            if self.degree == 0 and not self.include_bias:
+            elif self.degree == 0 and not self.include_bias:
                 raise ValueError(
                     "Setting degree to zero and include_bias to False would result in an"
                     " empty output array."
