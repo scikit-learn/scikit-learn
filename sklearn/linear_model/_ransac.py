@@ -357,9 +357,21 @@ class RANSACRegressor(
         if self.stop_probability < 0 or self.stop_probability > 1:
             raise ValueError("`stop_probability` must be in range [0, 1].")
 
+        estimator_fit_has_sample_weight = has_fit_parameter(estimator, "sample_weight")
+        estimator_name = type(estimator).__name__
+        if sample_weight is not None and not estimator_fit_has_sample_weight:
+            raise ValueError(
+                "%s does not support sample_weight. Samples"
+                " weights are only used for the calibration"
+                " itself." % estimator_name
+            )
+        sample_weight = _check_sample_weight(sample_weight, X)
+
         if self.residual_threshold is None:
             # MAD (median absolute deviation)
-            residual_threshold = np.median(np.abs(y - np.median(y)))
+            residual_threshold = np.median(
+                sample_weight * np.abs(y - np.median(y)) / np.sum(sample_weight)
+            )
         else:
             residual_threshold = self.residual_threshold
 
@@ -410,17 +422,6 @@ class RANSACRegressor(
             estimator.set_params(random_state=random_state)
         except ValueError:
             pass
-
-        estimator_fit_has_sample_weight = has_fit_parameter(estimator, "sample_weight")
-        estimator_name = type(estimator).__name__
-        if sample_weight is not None and not estimator_fit_has_sample_weight:
-            raise ValueError(
-                "%s does not support sample_weight. Samples"
-                " weights are only used for the calibration"
-                " itself." % estimator_name
-            )
-        if sample_weight is not None:
-            sample_weight = _check_sample_weight(sample_weight, X)
 
         n_inliers_best = 1
         score_best = -np.inf
