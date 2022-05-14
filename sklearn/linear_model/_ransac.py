@@ -370,7 +370,9 @@ class RANSACRegressor(
         if self.residual_threshold is None:
             # MAD (median absolute deviation)
             residual_threshold = np.median(
-                sample_weight * np.abs(y - np.median(y)) / np.sum(sample_weight)
+                sample_weight[:, np.newaxis]
+                * np.abs(y - np.median(y))
+                / np.sum(sample_weight)
             )
         else:
             residual_threshold = self.residual_threshold
