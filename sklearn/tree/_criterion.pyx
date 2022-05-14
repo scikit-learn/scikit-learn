@@ -17,8 +17,8 @@ from libc.string cimport memset
 from libc.math cimport fabs
 
 import numpy as np
-cimport numpy as np
-np.import_array()
+cimport numpy as cnp
+cnp.import_array()
 
 from numpy.math cimport INFINITY
 from scipy.special.cython_special cimport xlogy
@@ -197,7 +197,7 @@ cdef class ClassificationCriterion(Criterion):
     """Abstract criterion for classification."""
 
     def __cinit__(self, SIZE_t n_outputs,
-                  np.ndarray[SIZE_t, ndim=1] n_classes):
+                  cnp.ndarray[SIZE_t, ndim=1] n_classes):
         """Initialize attributes for this criterion.
 
         Parameters
@@ -874,8 +874,8 @@ cdef class MAE(RegressionCriterion):
        MAE = (1 / n)*(\sum_i |y_i - f_i|), where y_i is the true
        value and f_i is the predicted value."""
 
-    cdef np.ndarray left_child
-    cdef np.ndarray right_child
+    cdef cnp.ndarray left_child
+    cdef cnp.ndarray right_child
     cdef DOUBLE_t[::1] node_medians
 
     def __cinit__(self, SIZE_t n_outputs, SIZE_t n_samples):
