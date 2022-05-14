@@ -14,7 +14,6 @@ This way, we can use it on arrays that we don't touch.
 from cpython cimport Py_buffer
 from cpython.buffer cimport PyObject_GetBuffer, PyBuffer_Release, PyBUF_WRITABLE
 
-import numpy as np
 cimport numpy as cnp
 
 
