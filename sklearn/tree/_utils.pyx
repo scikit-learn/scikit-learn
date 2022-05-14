@@ -12,7 +12,6 @@ from libc.stdlib cimport malloc
 from libc.stdlib cimport realloc
 from libc.math cimport log as ln
 
-import numpy as np
 cimport numpy as cnp
 cnp.import_array()
 

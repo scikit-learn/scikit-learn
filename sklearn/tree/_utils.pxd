@@ -8,7 +8,6 @@
 
 # See _utils.pyx for details.
 
-import numpy as np
 cimport numpy as cnp
 from ._tree cimport Node
 from ..neighbors._quad_tree cimport Cell
