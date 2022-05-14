@@ -111,7 +111,7 @@ def _csr_polynomial_expansion(cnp.ndarray[DATA_T, ndim=1] data,
     cdef cnp.ndarray[INDEX_T, ndim=1] expanded_indices = cnp.ndarray(
         shape=total_nnz, dtype=indices.dtype)
     cdef INDEX_T num_rows = indptr.shape[0] - 1
-    cdef cnp.ndarray[INDEX_T, ndim=1] expanded_indptr = np.ndarray(
+    cdef cnp.ndarray[INDEX_T, ndim=1] expanded_indptr = cnp.ndarray(
         shape=num_rows + 1, dtype=indptr.dtype)
 
     cdef INDEX_T expanded_index = 0, row_starts, row_ends, i, j, k, \
