@@ -7,20 +7,7 @@ set -x
 source build_tools/shared.sh
 
 UNAMESTR=`uname`
-
 CCACHE_LINKS_DIR="/tmp/ccache"
-
-
-make_conda() {
-    TO_INSTALL="$@"
-    if [[ "$DISTRIB" == *"mamba"* ]]; then
-        mamba create -n $VIRTUALENV --yes $TO_INSTALL
-    else
-        conda config --show
-        conda create -n $VIRTUALENV --yes $TO_INSTALL
-    fi
-    source activate $VIRTUALENV
-}
 
 setup_ccache() {
     CCACHE_BIN=`which ccache || echo ""`
@@ -53,8 +40,8 @@ pre_python_environment_install() {
                 python3-matplotlib libatlas3-base libatlas-base-dev \
                 python3-virtualenv python3-pandas ccache
 
-    elif [[ "$DISTRIB" == "conda-mamba-pypy3" ]]; then
-        # condaforge/mambaforge-pypy3 needs compilers
+    elif [[ "$DISTRIB" == "conda-pypy3" ]]; then
+        # need compilers
         apt-get -yq update
         apt-get -yq install build-essential
 
@@ -63,6 +50,14 @@ pre_python_environment_install() {
         sudo apt-get -yq update
         sudo apt-get install -yq ccache
         sudo apt-get build-dep -yq python3 python3-dev
+        setup_ccache  # speed-up the build of CPython itself
+        # build Python nogil
+        PYTHON_NOGIL_CLONE_PATH=../nogil
+        git clone --depth 1 https://github.com/colesbury/nogil $PYTHON_NOGIL_CLONE_PATH
+        cd $PYTHON_NOGIL_CLONE_PATH
+        ./configure && make -j 2
+        export PYTHON_NOGIL_PATH="${PYTHON_NOGIL_CLONE_PATH}/python"
+        cd $OLDPWD
 
     elif [[ "$BUILD_WITH_ICC" == "true" ]]; then
         wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
@@ -76,103 +71,35 @@ pre_python_environment_install() {
     fi
 }
 
-python_environment_install() {
-    if [[ "$DISTRIB" == "conda" || "$DISTRIB" == *"mamba"* ]]; then
+python_environment_install_and_activate() {
+    if [[ "$DISTRIB" == "conda"* ]]; then
+        conda update -n base conda -y
+        # pin conda-lock to latest released version (needs manual update from time to time)
+        conda install -c conda-forge conda-lock==1.0.5 -y
+        conda-lock install --name $VIRTUALENV $LOCK_FILE
+        source activate $VIRTUALENV
 
-        if [[ "$CONDA_CHANNEL" != "" ]]; then
-            TO_INSTALL="--override-channels -c $CONDA_CHANNEL"
-        else
-            TO_INSTALL=""
-        fi
-
-        if [[ "$DISTRIB" == *"pypy"* ]]; then
-            TO_INSTALL="$TO_INSTALL pypy"
-        else
-            TO_INSTALL="$TO_INSTALL python=$PYTHON_VERSION"
-        fi
-
-        TO_INSTALL="$TO_INSTALL ccache pip blas[build=$BLAS]"
-
-        TO_INSTALL="$TO_INSTALL $(get_dep numpy $NUMPY_VERSION)"
-        TO_INSTALL="$TO_INSTALL $(get_dep scipy $SCIPY_VERSION)"
-        TO_INSTALL="$TO_INSTALL $(get_dep cython $CYTHON_VERSION)"
-        TO_INSTALL="$TO_INSTALL $(get_dep joblib $JOBLIB_VERSION)"
-        TO_INSTALL="$TO_INSTALL $(get_dep pandas $PANDAS_VERSION)"
-        TO_INSTALL="$TO_INSTALL $(get_dep pyamg $PYAMG_VERSION)"
-        TO_INSTALL="$TO_INSTALL $(get_dep Pillow $PILLOW_VERSION)"
-        TO_INSTALL="$TO_INSTALL $(get_dep matplotlib $MATPLOTLIB_VERSION)"
-
-        if [[ "$UNAMESTR" == "Darwin" ]] && [[ "$SKLEARN_TEST_NO_OPENMP" != "true" ]]; then
-                TO_INSTALL="$TO_INSTALL compilers llvm-openmp"
-        fi
-
-        make_conda $TO_INSTALL
-
-    elif [[ "$DISTRIB" == "ubuntu" ]] || [[ "$DISTRIB" == "debian-32" ]]; then
+    elif [[ "$DISTRIB" == "ubuntu" || "$DISTRIB" == "debian-32" ]]; then
         python3 -m virtualenv --system-site-packages --python=python3 $VIRTUALENV
         source $VIRTUALENV/bin/activate
+        pip install -r "${LOCK_FILE}"
 
-        python -m pip install $(get_dep cython $CYTHON_VERSION) \
-                $(get_dep joblib $JOBLIB_VERSION)
+    elif [[ "$DISTRIB" == "pip-nogil" ]]; then
+        ${PYTHON_NOGIL_PATH} -m venv $VIRTUALENV
+        source $VIRTUALENV/bin/activate
+        pip install -r "${LOCK_FILE}"
+    fi
 
-    elif [[ "$DISTRIB" == "conda-pip-latest" ]]; then
-        # Since conda main channel usually lacks behind on the latest releases,
-        # we use pypi to test against the latest releases of the dependencies.
-        # conda is still used as a convenient way to install Python and pip.
-        make_conda "ccache python=$PYTHON_VERSION"
-        python -m pip install -U pip
-
-        python -m pip install pandas matplotlib scikit-image pyamg
-        # do not install dependencies for lightgbm since it requires scikit-learn.
-        python -m pip install "lightgbm>=3.0.0" --no-deps
-
-    elif [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
-        make_conda "ccache python=$PYTHON_VERSION"
-        python -m pip install -U pip
-        echo "Installing numpy and scipy master wheels"
+    if [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
+        echo "Installing development dependency wheels"
         dev_anaconda_url=https://pypi.anaconda.org/scipy-wheels-nightly/simple
         pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url numpy pandas scipy
+        echo "Installing Cython from PyPI enabling pre-releases"
         pip install --pre cython
         echo "Installing joblib master"
         pip install https://github.com/joblib/joblib/archive/master.zip
         echo "Installing pillow master"
         pip install https://github.com/python-pillow/Pillow/archive/main.zip
-
-    elif [[ "$DISTRIB" == "pip-nogil" ]]; then
-        setup_ccache  # speed-up the build of CPython it-self
-        ORIGINAL_FOLDER=`pwd`
-        cd ..
-        git clone --depth 1 https://github.com/colesbury/nogil
-        cd nogil
-        ./configure && make -j 2
-        ./python -m venv $ORIGINAL_FOLDER/$VIRTUALENV
-        cd $ORIGINAL_FOLDER
-        source $VIRTUALENV/bin/activate
-
-        python -m pip install -U pip
-        # The pip version that comes with the nogil branch of CPython
-        # automatically uses the custom nogil index as its highest priority
-        # index to fetch patched versions of libraries with native code that
-        # would otherwise depend on the GIL.
-        echo "Installing build dependencies with pip from the nogil repository: https://d1yxz45j0ypngg.cloudfront.net/"
-        pip install numpy scipy cython joblib threadpoolctl
-
-    fi
-
-    python -m pip install $(get_dep threadpoolctl $THREADPOOLCTL_VERSION) \
-            $(get_dep pytest $PYTEST_VERSION) \
-            $(get_dep pytest-xdist $PYTEST_XDIST_VERSION)
-
-    if [[ "$COVERAGE" == "true" ]]; then
-        # XXX: coverage is temporary pinned to 6.2 because 6.3 is not fork-safe
-        # cf. https://github.com/nedbat/coveragepy/issues/1310
-        python -m pip install codecov pytest-cov coverage==6.2
-    fi
-
-    if [[ "$TEST_DOCSTRINGS" == "true" ]]; then
-        # numpydoc requires sphinx
-        python -m pip install sphinx
-        python -m pip install numpydoc
     fi
 }
 
@@ -184,7 +111,7 @@ scikit_learn_install() {
     # workers with 2 cores when building the compiled extensions of scikit-learn.
     export SKLEARN_BUILD_PARALLEL=3
 
-    if [[ "$UNAMESTR" == "Darwin" ]] && [[ "$SKLEARN_TEST_NO_OPENMP" == "true" ]]; then
+    if [[ "$UNAMESTR" == "Darwin" && "$SKLEARN_TEST_NO_OPENMP" == "true" ]]; then
         # Without openmp, we use the system clang. Here we use /usr/bin/ar
         # instead because llvm-ar errors
         export AR=/usr/bin/ar
@@ -220,7 +147,7 @@ scikit_learn_install() {
 
 main() {
     pre_python_environment_install
-    python_environment_install
+    python_environment_install_and_activate
     scikit_learn_install
 }
 
