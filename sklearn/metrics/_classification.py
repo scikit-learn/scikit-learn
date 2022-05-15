@@ -1836,19 +1836,21 @@ def recall_score(
             This is applicable only if targets (``y_{true,pred}``) are binary.
         ``'micro'``:
             Calculate metrics globally by counting the total true positives,
-            false negatives and false positives. This gives the
-            same result as 'weighted' and is identical to the 
-            :func:`accuracy_score`.
+            false negatives and false positives. This is identical to the 
+            :func:`accuracy_score`, and except in multi-label classification,
+            gives the same result as 'weighted' as well.
         ``'macro'``:
             Calculate metrics for each label, and find their unweighted
-            mean.  This does not take label imbalance into account.  The result
-            is identical to the result of :func:`balanced_accuracy_score` (with
-            its default adjusted=False).
+            mean.  This does not take label imbalance into account.  At least
+            for binary and multi-class classification, this is identical
+            to the result of :func:`balanced_accuracy_score` (with its
+            default adjusted=False).
         ``'weighted'``:
             Calculate metrics for each label, and find their average weighted
             by support (the number of true instances for each label). This
-            alters 'macro' to account for label imbalance and gives the same
-            result as 'micro', and in fact the same result as 
+            alters 'macro' to account for label imbalance and, except in
+            the multi-label case, gives the same result
+            as 'micro' and therefeore the same result as 
             :func:`accuracy_score`. It can result in an
             F-score that is not between precision and recall.
         ``'samples'``:
