@@ -327,6 +327,10 @@ Changelog
   :class:`svm.NuSVR`, :class:`svm.SVR`, :class:`svm.OneClassSVM`.
   :pr:`22898` by :user:`Meekail Zain <micky774>`.
 
+- |Feature| Added the :class:`svm.SVDD` class for novelty detection based
+  on soft minimal volume hypersphere around the sample data. :pr:`7910`
+  by :user:`Ivan Nazarov <ivannz>`.
+
 :mod:`sklearn.tree`
 ...................
 

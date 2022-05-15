@@ -1234,10 +1234,6 @@ Changelog
   parameters in `fit` instead of `__init__`.
   :pr:`21436` by :user:`Haidar Almubarak <Haidar13 >`.
 
-- |Feature| Added the :class:`svm.SVDD` class for novelty detection based
-  on soft minimal volume hypersphere around the sample data. :pr:`7910`
-  by :user:`Ivan Nazarov <ivannz>`.
-
 :mod:`sklearn.tree`
 ...................
 
