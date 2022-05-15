@@ -11,6 +11,7 @@ from ._base import _get_feature_importances
 from ..base import BaseEstimator, clone, MetaEstimatorMixin
 from ..utils._tags import _safe_tags
 from ..utils.validation import check_is_fitted, check_scalar, _num_features
+from ..inspection import permutation_importance
 
 from ..exceptions import NotFittedError
 from ..utils.metaestimators import available_if
@@ -145,6 +146,66 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
+    importance_type : {'model', 'permutation'}, default='model'
+        Type of feature importance used to select features. Setting it to
+        'model' will use the importance retrieved by ``importance_getter``,
+        setting it to `permutation` will use permutation importance.
+
+        .. versionadded:: 1.2
+
+    scoring : str, callable, list, tuple, or dict, default=None
+        Scorer to use when calculating permutation importance.
+        If `scoring` represents a single score, one can use:
+
+        - a single string (see :ref:`scoring_parameter`);
+        - a callable (see :ref:`scoring`) that returns a single value.
+
+        If `scoring` represents multiple scores, one can use:
+
+        - a list or tuple of unique strings;
+        - a callable returning a dictionary where the keys are the metric
+          names and the values are the metric scores;
+        - a dictionary with metric names as keys and callables a values.
+
+        Passing multiple scores to `scoring` is more efficient than calling
+        `permutation_importance` for each of the scores as it reuses
+        predictions to avoid redundant computation.
+
+        If None, the estimator's default scorer is used.
+
+    n_repeats : int, default=5
+        Number of times to permute a feature.
+
+    n_jobs : int or None, default=None
+        Number of jobs to run in parallel. The computation is done by computing
+        permutation score for each columns and parallelized over the columns.
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details. Only used when ``importance_type='permutation'``.
+
+    random_state : int, RandomState instance, default=None
+        Pseudo-random number generator to control the permutations of each
+        feature.
+        Pass an int to get reproducible results across function calls.
+        See :term:`Glossary <random_state>`.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights used for calculating permutation importance.
+
+    max_samples : int or float, default=1.0
+        The number of samples to draw from X to compute feature importance
+        in each repeat (without replacement).
+
+        - If int, then draw `max_samples` samples.
+        - If float, then draw `max_samples * X.shape[0]` samples.
+        - If `max_samples` is equal to `1.0` or `X.shape[0]`, all samples
+          will be used.
+
+        While using this option may provide less accurate importance estimates,
+        it keeps the method tractable when evaluating feature importance on
+        large datasets. In combination with `n_repeats`, this allows to control
+        the computational speed vs statistical accuracy trade-off of this method.
+
     Attributes
     ----------
     estimator_ : estimator
@@ -234,6 +295,13 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         norm_order=1,
         max_features=None,
         importance_getter="auto",
+        importance_type="model",
+        scoring=None,
+        n_repeats=5,
+        n_jobs=None,
+        random_state=None,
+        sample_weight=None,
+        max_samples=1.0,
     ):
         self.estimator = estimator
         self.threshold = threshold
@@ -241,19 +309,28 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         self.importance_getter = importance_getter
         self.norm_order = norm_order
         self.max_features = max_features
+        self.importance_type = importance_type
+        self.scoring = scoring
+        self.n_repeats = n_repeats
+        self.n_jobs = n_jobs
+        self.random_state = random_state
+        self.sample_weight = sample_weight
+        self.max_samples = max_samples
 
     def _get_support_mask(self):
         estimator = getattr(self, "estimator_", self.estimator)
         max_features = getattr(self, "max_features_", self.max_features)
 
-        if self.prefit:
+        if self.prefit or self.importance_type == "permutation":
             try:
                 check_is_fitted(self.estimator)
             except NotFittedError as exc:
                 raise NotFittedError(
-                    "When `prefit=True`, `estimator` is expected to be a fitted "
-                    "estimator."
+                    "When `prefit=True` and `importance_type='model'` or"
+                    " `importance_type='permutation'`, `estimator` is expected to be a"
+                    " fitted estimator."
                 ) from exc
+
         if callable(max_features):
             # This branch is executed when `transform` is called directly and thus
             # `max_features_` is not set and we fallback using `self.max_features`
@@ -270,12 +347,25 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
                 "instead."
             )
 
-        scores = _get_feature_importances(
-            estimator=estimator,
-            getter=self.importance_getter,
-            transform_func="norm",
-            norm_order=self.norm_order,
-        )
+        if self.importance_type == "model":
+            scores = _get_feature_importances(
+                estimator=estimator,
+                getter=self.importance_getter,
+                transform_func="norm",
+                norm_order=self.norm_order,
+            )
+        elif self.importance_type == "permutation":
+            if not hasattr(self, "_score"):
+                raise NotFittedError(
+                    "The `fit` method must be called to calculate feature importance"
+                    " when using permutation importance."
+                )
+            scores = self._score
+        else:
+            raise ValueError(
+                "Only `model` and `permutation` is supported for importance_type."
+            )
+
         threshold = _calculate_threshold(estimator, scores, self.threshold)
         if self.max_features is not None:
             mask = np.zeros_like(scores, dtype=bool)
@@ -337,13 +427,14 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         """
         self._check_max_features(X)
 
-        if self.prefit:
+        if self.prefit or self.importance_type == "permutation":
             try:
                 check_is_fitted(self.estimator)
             except NotFittedError as exc:
                 raise NotFittedError(
-                    "When `prefit=True`, `estimator` is expected to be a fitted "
-                    "estimator."
+                    "When `prefit=True` and `importance_type='model'` or"
+                    " `importance_type='permutation'`, `estimator` is expected to be a"
+                    " fitted estimator."
                 ) from exc
             self.estimator_ = deepcopy(self.estimator)
         else:
@@ -355,6 +446,18 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         else:
             self._check_feature_names(X, reset=True)
 
+        if self.importance_type == "permutation":
+            self._score = permutation_importance(
+                estimator=self.estimator_,
+                X=X,
+                y=y,
+                scoring=self.scoring,
+                n_repeats=self.n_repeats,
+                n_jobs=self.n_jobs,
+                random_state=self.random_state,
+                sample_weight=self.sample_weight,
+                max_samples=self.max_samples,
+            )["importances_mean"]
         return self
 
     @property
@@ -391,27 +494,40 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         """
         self._check_max_features(X)
 
-        if self.prefit:
+        if self.prefit or self.importance_type == "permutation":
             if not hasattr(self, "estimator_"):
                 try:
                     check_is_fitted(self.estimator)
                 except NotFittedError as exc:
                     raise NotFittedError(
-                        "When `prefit=True`, `estimator` is expected to be a fitted "
-                        "estimator."
+                        "When `prefit=True` and `importance_type='model'` or"
+                        " `importance_type='permutation'`, `estimator` is expected to"
+                        " be a fitted estimator."
                     ) from exc
                 self.estimator_ = deepcopy(self.estimator)
-            return self
-
-        first_call = not hasattr(self, "estimator_")
-        if first_call:
-            self.estimator_ = clone(self.estimator)
-        self.estimator_.partial_fit(X, y, **fit_params)
-
-        if hasattr(self.estimator_, "feature_names_in_"):
-            self.feature_names_in_ = self.estimator_.feature_names_in_
         else:
-            self._check_feature_names(X, reset=first_call)
+            first_call = not hasattr(self, "estimator_")
+            if first_call:
+                self.estimator_ = clone(self.estimator)
+            self.estimator_.partial_fit(X, y, **fit_params)
+
+            if hasattr(self.estimator_, "feature_names_in_"):
+                self.feature_names_in_ = self.estimator_.feature_names_in_
+            else:
+                self._check_feature_names(X, reset=first_call)
+
+        if self.importance_type == "permutation":
+            self._score = permutation_importance(
+                estimator=self.estimator_,
+                X=X,
+                y=y,
+                scoring=self.scoring,
+                n_repeats=self.n_repeats,
+                n_jobs=self.n_jobs,
+                random_state=self.random_state,
+                sample_weight=sample_weight,
+                max_samples=self.max_samples,
+            )["importances_mean"]
 
         return self
 

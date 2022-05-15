@@ -423,7 +423,11 @@ def test_prefit():
     # `ValueError`
     clf = SGDClassifier(alpha=0.1, max_iter=10, shuffle=True, random_state=0, tol=None)
     model = SelectFromModel(clf, prefit=True)
-    err_msg = "When `prefit=True`, `estimator` is expected to be a fitted estimator."
+    err_msg = (
+        "When `prefit=True` and `importance_type='model'` or"
+        " `importance_type='permutation'`, `estimator` is expected to"
+        " be a fitted estimator."
+    )
     with pytest.raises(NotFittedError, match=err_msg):
         model.fit(data, y)
     with pytest.raises(NotFittedError, match=err_msg):
