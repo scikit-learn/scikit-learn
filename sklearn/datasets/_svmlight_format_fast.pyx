@@ -1,6 +1,3 @@
-# cython: linetrace=True
-# cython: profile=True
-# cython: binding=True
 # Optimized inner loop of load_svmlight_file.
 #
 # Authors: Mathieu Blondel <mathieu@mblondel.org>
@@ -158,25 +155,17 @@ def _dump_svmlight_file_dense(int_or_float1[:,:] X, int_or_float2[:,:] y, f, bin
         array.array[long long] int_template = array.array('q',[])
         array.array[cython.double] float_template = array.array('d',[])
         Py_ssize_t x_nz_used
-        Py_ssize_t y_nz_used
         array.array x_inds
         array.array x_vals
-        array.array y_vals
 
     for i in range(x_len):
         x_nz_used = 0
-        y_nz_used = 0
 
         if int_or_float1 not in cython.floating:
             x_vals = array.clone(int_template, row_length, False)
         else:
             x_vals = array.clone(float_template, row_length, False)
         x_inds = array.clone(int_template, row_length, False)
-
-        if int_or_float1 not in cython.floating:
-            y_vals = array.clone(int_template, row_length, False)
-        else:
-            y_vals = array.clone(float_template, row_length, False)
 
         for j in range(row_length):
             val = X[i,j]
@@ -209,7 +198,8 @@ def _dump_svmlight_file_dense(int_or_float1[:,:] X, int_or_float2[:,:] y, f, bin
         f.write((line_pattern % feat).encode("ascii"))
 
 def _dump_svmlight_file_general(X, y, f, bint multilabel, bint one_based, int_or_longlong[:] query_id, bint X_is_sp, bint y_is_sp):
-    if X.dtype.kind == "i":
+    cdef bint X_is_integral = X.dtype.kind == "i"
+    if X_is_integral:
         value_pattern = "%d:%d"
     else:
         value_pattern = "%d:%.16g"
@@ -223,33 +213,42 @@ def _dump_svmlight_file_general(X, y, f, bint multilabel, bint one_based, int_or
         line_pattern += " qid:%d"
     line_pattern += " %s\n"
 
-    cdef Py_ssize_t num_labels = y.shape[1]
-    cdef Py_ssize_t x_len = X.shape[0]
-    cdef Py_ssize_t row_length = X.shape[1]
-    cdef Py_ssize_t i
-    cdef Py_ssize_t j
-    cdef Py_ssize_t col_start
-    cdef Py_ssize_t col_end
-    cdef bint first
+    cdef:
+        Py_ssize_t num_labels = y.shape[1]
+        Py_ssize_t x_len = X.shape[0]
+        Py_ssize_t row_length = X.shape[1]
+        Py_ssize_t i
+        Py_ssize_t j
+        Py_ssize_t col_start
+        Py_ssize_t col_end
+        bint first
+        array.array[long long] int_template = array.array('q',[])
+        array.array[cython.double] float_template = array.array('d',[])
+        Py_ssize_t x_nz_used
+        array.array x_inds
+        array.array x_vals
     for i in range(x_len):
-        s = ""
-        first = True
+        x_nz_used = 0
+
         if X_is_sp:
-            col_start = X.indptr[i]
-            col_end = X.indptr[i+1]
-            for j in range(col_start, col_end):
-                if not first:
-                    s += " "
-                first = False
-                s += value_pattern % (X.indices[j] + one_based, X.data[j])
+            span = slice(X.indptr[i], X.indptr[i + 1])
+            row = zip(X.indices[span], X.data[span])
+            s = " ".join(value_pattern % (j + one_based, x) for j, x in row)
         else:
+            if X_is_integral:
+                x_vals = array.clone(int_template, row_length, False)
+            else:
+                x_vals = array.clone(float_template, row_length, False)
+            x_inds = array.clone(int_template, row_length, False)
             for j in range(row_length):
                 val = X[i,j]
-                if val != 0:
-                    if not first:
-                        s += " "
-                    first = False
-                    s += value_pattern % (j+one_based, val)
+                if val!=0:
+                    x_inds[x_nz_used]=j
+                    x_vals[x_nz_used]=val
+                    x_nz_used += 1
+            array.resize(x_inds, x_nz_used)
+            array.resize(x_vals, x_nz_used)
+            s = " ".join(value_pattern % (j+one_based, val) for j, val in zip(x_inds, x_vals))
 
         if multilabel:
             labels_str = ""

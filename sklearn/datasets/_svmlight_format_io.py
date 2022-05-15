@@ -367,7 +367,7 @@ def load_svmlight_files(
     return result
 
 
-def _dump_svmlight(X, y, f, multilabel, one_based, comment, query_id):
+def _dump_svmlight(X, y, f, multilabel, one_based, comment, query_id, use_dense=True):
     if comment:
         f.write(
             (
@@ -384,7 +384,7 @@ def _dump_svmlight(X, y, f, multilabel, one_based, comment, query_id):
     y_is_sp = hasattr(y, "tocsr")
     if not multilabel and not y_is_sp:
         y = y[:, np.newaxis]
-    if not (X_is_sp or y_is_sp):
+    if not (X_is_sp or y_is_sp) and use_dense:
         _dump_svmlight_file_dense(X, y, f, multilabel, one_based, query_id)
     else:
         _dump_svmlight_file_general(
@@ -408,6 +408,7 @@ def dump_svmlight_file(
     comment=None,
     query_id=None,
     multilabel=False,
+    use_dense=True,
 ):
     """Dump the dataset in svmlight / libsvm file format.
 
@@ -510,7 +511,7 @@ def dump_svmlight_file(
 
     one_based = not zero_based
     if hasattr(f, "write"):
-        _dump_svmlight(X, y, f, multilabel, one_based, comment, query_id)
+        _dump_svmlight(X, y, f, multilabel, one_based, comment, query_id, use_dense)
     else:
         with open(f, "wb") as f:
-            _dump_svmlight(X, y, f, multilabel, one_based, comment, query_id)
+            _dump_svmlight(X, y, f, multilabel, one_based, comment, query_id, use_dense)
