@@ -1653,7 +1653,6 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
     sklearn.neighbors.LocalOutlierFactor : Unsupervised Outlier Detection using
         Local Outlier Factor (LOF).
     sklearn.ensemble.IsolationForest : Isolation Forest Algorithm.
-
     sklearn.svm.SVDD : Support vector method for outlier detection via
         a separating soft-margin hypesphere implemented with libsvm with
         a parameter to control the number of support vectors.
@@ -1830,21 +1829,20 @@ class SVDD(OutlierMixin, BaseLibSVM):
     """Support Vector Data Description for Unsupervised Outlier Detection.
 
     Estimate the support of a high-dimensional distribution by finding the
-    tightest soft hypersphere around a data set, which permits at most a
-    fraction ``nu`` (``0 < nu <= 1``) of the data as outliers.
+    tightest soft boundary hypersphere around a data set, which permits at
+    most a fraction ``nu`` (``0 < nu <= 1``) of the data as outliers.
 
     The implementation is based on libsvm.
 
-    Read more in the :ref:`User Guide <svm_outlier_detection>`.
+    Read more in the :ref:`User Guide <outlier_detection>`.
 
-    ..versionadded: 1.1
+    ..versionadded: 1.2
 
     Parameters
     ----------
-    kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'}, default='rbf'
+    kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'} or callable,  \
+        default='rbf'
          Specifies the kernel type to be used in the algorithm.
-         It must be one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed' or
-         a callable.
          If none is given, 'rbf' will be used. If a callable is given it is
          used to precompute the kernel matrix.
 
@@ -1916,6 +1914,9 @@ class SVDD(OutlierMixin, BaseLibSVM):
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
 
+    n_iter_ : int
+        Number of iterations run by the optimization routine to fit the model.
+
     n_support_ : ndarray of shape (n_classes,), dtype=int32
         Number of support vectors for each class.
 
@@ -1980,20 +1981,20 @@ class SVDD(OutlierMixin, BaseLibSVM):
     ):
 
         super().__init__(
-            kernel=kernel,
-            degree=degree,
-            gamma=gamma,
-            coef0=coef0,
-            tol=tol,
-            C=0.0,
-            nu=nu,
-            epsilon=0.0,
-            shrinking=shrinking,
-            probability=False,
-            cache_size=cache_size,
-            class_weight=None,
-            verbose=verbose,
-            max_iter=max_iter,
+            kernel,
+            degree,
+            gamma,
+            coef0,
+            tol,
+            0.0,
+            nu,
+            0.0,
+            shrinking,
+            False,
+            cache_size,
+            None,
+            verbose,
+            max_iter,
             random_state=None,
         )
 
@@ -2030,7 +2031,7 @@ class SVDD(OutlierMixin, BaseLibSVM):
         -----
         If X is not a C-ordered contiguous array it is copied.
         """
-        super().fit(X, np.ones(_num_samples(X)), sample_weight=sample_weight, **params)
+        super().fit(X, np.ones(_num_samples(X)), sample_weight=sample_weight)
         self.offset_ = -self._intercept_
         return self
 

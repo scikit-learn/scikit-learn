@@ -14,7 +14,7 @@ from numpy.testing import assert_almost_equal
 from numpy.testing import assert_allclose
 from scipy import sparse
 from sklearn import svm, linear_model, datasets, metrics, base
-from sklearn.svm import LinearSVC, OneClassSVM, SVR, NuSVR, LinearSVR
+from sklearn.svm import LinearSVC, OneClassSVM, SVR, NuSVR, LinearSVR, SVDD
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import make_classification, make_blobs
 from sklearn.metrics import f1_score
@@ -1441,9 +1441,9 @@ def test_linearsvm_liblinear_sample_weight(SVM, params):
             assert_allclose(X_est_no_weight, X_est_with_weight)
 
 
-@pytest.mark.parametrize("Klass", (OneClassSVM, SVR, NuSVR))
+@pytest.mark.parametrize("Klass", (OneClassSVM, SVR, NuSVR, SVDD))
 def test_n_support(Klass):
-    # Make n_support is correct for oneclass and SVR (used to be
+    # Make sure n_support is correct for oneclass, SVDD and SVR (used to be
     # non-initialized)
     # this is a non regression test for issue #14774
     X = np.array([[0], [0.44], [0.45], [0.46], [1]])
@@ -1514,6 +1514,7 @@ def test_svc_raises_error_internal_representation():
         (svm.SVR, int),
         (svm.NuSVR, int),
         (svm.OneClassSVM, int),
+        (svm.SVDD, int),
     ],
 )
 @pytest.mark.parametrize(
@@ -1527,8 +1528,8 @@ def test_svc_raises_error_internal_representation():
 def test_n_iter_libsvm(estimator, expected_n_iter_type, dataset):
     # Check that the type of n_iter_ is correct for the classes that inherit
     # from BaseSVC.
-    # Note that for SVC, and NuSVC this is an ndarray; while for SVR, NuSVR, and
-    # OneClassSVM, it is an int.
+    # Note that for SVC, and NuSVC this is an ndarray; while for SVR, NuSVR,
+    # SVDD and OneClassSVM, it is an int.
     # For SVC and NuSVC also check the shape of n_iter_.
     X, y = dataset
     n_iter = estimator(kernel="linear").fit(X, y).n_iter_
