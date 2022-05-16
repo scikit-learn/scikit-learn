@@ -240,6 +240,11 @@ def randomized_range_finder(
     # Sample the range of A using by linear projection of Q
     # Extract an orthonormal basis
     Q, _ = linalg.qr(safe_sparse_dot(A, Q), mode="economic")
+
+    if hasattr(A, "dtype") and A.dtype.kind == "f":
+        # Ensure f32 is preserved as f32
+        Q = Q.astype(A.dtype, copy=False)
+
     return Q
 
 
