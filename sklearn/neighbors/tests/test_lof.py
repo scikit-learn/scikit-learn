@@ -13,7 +13,6 @@ from sklearn import metrics
 from sklearn.metrics import roc_auc_score
 
 from sklearn.utils import check_random_state
-from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils.estimator_checks import check_outlier_corruption
@@ -42,6 +41,7 @@ def test_lof(global_dtype):
     clf = neighbors.LocalOutlierFactor(n_neighbors=5)
     score = clf.fit(X).negative_outlier_factor_
     assert_array_equal(clf._fit_X, X)
+    assert score.dtype == global_dtype
 
     # Assert largest outlier score is smaller than smallest inlier score:
     assert np.min(score[:-2]) > np.max(score[-2:])
@@ -178,10 +178,10 @@ def test_novelty_errors():
         getattr(clf, "fit_predict")
 
 
-def test_novelty_training_scores():
+def test_novelty_training_scores(global_dtype):
     # check that the scores of the training samples are still accessible
     # when novelty=True through the negative_outlier_factor_ attribute
-    X = iris.data
+    X = iris.data.astype(global_dtype)
 
     # fit with novelty=False
     clf_1 = neighbors.LocalOutlierFactor()
@@ -193,7 +193,8 @@ def test_novelty_training_scores():
     clf_2.fit(X)
     scores_2 = clf_2.negative_outlier_factor_
 
-    assert_array_almost_equal(scores_1, scores_2)
+    assert_allclose(scores_1, scores_2)
+    assert scores_1.dtype == scores_2.dtype == global_dtype
 
 
 def test_hasattr_prediction():
