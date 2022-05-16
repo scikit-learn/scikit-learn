@@ -525,7 +525,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
                 n_repeats=self.n_repeats,
                 n_jobs=self.n_jobs,
                 random_state=self.random_state,
-                sample_weight=sample_weight,
+                sample_weight=self.sample_weight,
                 max_samples=self.max_samples,
             )["importances_mean"]
 

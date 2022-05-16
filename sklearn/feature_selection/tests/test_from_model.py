@@ -652,10 +652,9 @@ def test_partial_fit_validate_feature_names(as_frame):
 
 
 def test_permutation_feature_importance():
-    X, y = datasets.make_classification(n_samples=1000, 
-                                        n_features=10,
-                                        n_informative=3,
-                                        random_state=147)
+    X, y = datasets.make_classification(
+        n_samples=1000, n_features=10, n_informative=3, random_state=147
+    )
     rf = RandomForestClassifier().fit(X, y)
     selector = SelectFromModel(estimator=rf, importance_type="permutation")
     X_new = selector.fit_transform(X, y)
@@ -665,9 +664,9 @@ def test_permutation_feature_importance():
 
     # check the selected indices is the same as calling permutation_importance directly
     n_selected = X_new.shape[1]
-    importance = permutation_importance(rf, X, y)['importances_mean']
+    importance = permutation_importance(rf, X, y)["importances_mean"]
     indices = np.argsort(-importance)[:n_selected]
-    assert(selected_indices, sorted(indices))    
+    assert_array_equal(selected_indices, sorted(indices))
 
 
 def test_not_refitted_with_permutation_importance():
@@ -681,3 +680,15 @@ def test_not_refitted_with_permutation_importance():
     selector = SelectFromModel(lr, importance_type="permutation")
     selector.fit(X, y)
     assert_array_equal(selector.estimator.coef_, coef)
+
+
+def test_transform_raise_error_with_permutation_importance():
+    X, y = datasets.make_regression(random_state=17)
+    lr = LinearRegression().fit(X, y)
+    selector = SelectFromModel(lr, importance_type="permutation")
+    err_msg = (
+        "The `fit` method must be called to calculate feature importance"
+        " when using permutation importance."
+    )
+    with pytest.raises(ValueError, match=err_msg):
+        selector.transform(X)
