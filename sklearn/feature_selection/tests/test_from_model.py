@@ -18,10 +18,11 @@ from sklearn.linear_model import LogisticRegression, SGDClassifier, Lasso
 from sklearn.svm import LinearSVC
 from sklearn.feature_selection import SelectFromModel
 from sklearn.ensemble import RandomForestClassifier, HistGradientBoostingClassifier
-from sklearn.linear_model import PassiveAggressiveClassifier
+from sklearn.linear_model import PassiveAggressiveClassifier, LinearRegression
 from sklearn.base import BaseEstimator
 from sklearn.pipeline import make_pipeline
 from sklearn.decomposition import PCA
+from sklearn.inspection import permutation_importance
 
 
 class NaNTag(BaseEstimator):
@@ -648,3 +649,35 @@ def test_partial_fit_validate_feature_names(as_frame):
         assert_array_equal(selector.feature_names_in_, X.columns)
     else:
         assert not hasattr(selector, "feature_names_in_")
+
+
+def test_permutation_feature_importance():
+    X, y = datasets.make_classification(n_samples=1000, 
+                                        n_features=10,
+                                        n_informative=3,
+                                        random_state=147)
+    rf = RandomForestClassifier().fit(X, y)
+    selector = SelectFromModel(estimator=rf, importance_type="permutation")
+    X_new = selector.fit_transform(X, y)
+
+    selected_indices = selector.transform(np.arange(X.shape[1])[np.newaxis, :])[0]
+    assert_allclose(X_new, X[:, selected_indices])
+
+    # check the selected indices is the same as calling permutation_importance directly
+    n_selected = X_new.shape[1]
+    importance = permutation_importance(rf, X, y)['importances_mean']
+    indices = np.argsort(-importance)[:n_selected]
+    assert(selected_indices, sorted(indices))    
+
+
+def test_not_refitted_with_permutation_importance():
+    """Test that the fitted estimator will not get refitted"""
+    X, y = datasets.make_regression(random_state=17)
+    X_2, y_2 = datasets.make_regression(random_state=14)
+
+    lr = LinearRegression().fit(X, y)
+    coef = lr.coef_
+
+    selector = SelectFromModel(lr, importance_type="permutation")
+    selector.fit(X, y)
+    assert_array_equal(selector.estimator.coef_, coef)

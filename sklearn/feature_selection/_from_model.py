@@ -148,7 +148,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
 
     importance_type : {'model', 'permutation'}, default='model'
         Type of feature importance used to select features. Setting it to
-        'model' will use the importance retrieved by ``importance_getter``,
+        'model' will use the feature importance retrieved by ``importance_getter``,
         setting it to `permutation` will use permutation importance.
 
         .. versionadded:: 1.2
