@@ -46,14 +46,14 @@ categories = [
 print("Loading 20 newsgroups training data")
 raw_data, _ = fetch_20newsgroups(subset="train", categories=categories, return_X_y=True)
 data_size_mb = sum(len(s.encode("utf-8")) for s in raw_data) / 1e6
-print("%d documents - %0.3fMB" % (len(raw_data), data_size_mb))
+print(f"{len(raw_data)} documents - {data_size_mb:.3f}MB")
 print()
 
 # %%
 # Define preprocessing functions
 # ------------------------------
-# This functions are later used for passing either a list of lists or a
-# dictionary to the vectorizers.
+# These functions extract the tokens either as a list of lists or a dictionary
+# to be used by the vectorizers.
 
 import re
 from collections import defaultdict
@@ -96,8 +96,8 @@ vectorizer.fit_transform(token_freqs(d) for d in raw_data)
 duration = time() - t0
 dict_count_vectorizers["vectorizer"].append(vectorizer.__class__.__name__)
 dict_count_vectorizers["speed"].append(data_size_mb / duration)
-print("done in %fs at %0.3fMB/s" % (duration, data_size_mb / duration))
-print("Found %d unique tokens" % len(vectorizer.get_feature_names_out()))
+print(f"done in {duration:.3f}s at {data_size_mb / duration:.3f}MB/s")
+print(f"Found {len(vectorizer.get_feature_names_out())} unique terms")
 print()
 
 print("CountVectorizer")
@@ -107,9 +107,13 @@ vectorizer.fit_transform(raw_data)
 duration = time() - t0
 dict_count_vectorizers["vectorizer"].append(vectorizer.__class__.__name__)
 dict_count_vectorizers["speed"].append(data_size_mb / duration)
-print("done in %fs at %0.3fMB/s" % (duration, data_size_mb / duration))
-print("Found %d unique terms" % len(vectorizer.get_feature_names_out()))
+print(f"done in {duration:.3f}s at {data_size_mb / duration:.3f}MB/s")
+print(f"Found {len(vectorizer.get_feature_names_out())} unique terms")
 print()
+
+# %%
+# Notice that `CountVectorizer` and `TfidfTransformer` perform the same
+# procedure as `TfidfVectorizer`.
 
 print("TfidfVectorizer")
 t0 = time()
@@ -118,12 +122,12 @@ vectorizer.fit_transform(raw_data)
 duration = time() - t0
 dict_count_vectorizers["vectorizer"].append(vectorizer.__class__.__name__)
 dict_count_vectorizers["speed"].append(data_size_mb / duration)
-print("done in %fs at %0.3fMB/s" % (duration, data_size_mb / duration))
-print("Found %d unique terms" % len(vectorizer.get_feature_names_out()))
+print(f"done in {duration:.3f}s at {data_size_mb / duration:.3f}MB/s")
+print(f"Found {len(vectorizer.get_feature_names_out())} unique terms")
 print()
 
 # %%
-# We plot the speed of both methods for vectorizing.
+# We plot the speed of the above methods for vectorizing.
 
 import numpy as np
 
@@ -171,8 +175,8 @@ X = hasher.transform(token_freqs(d) for d in raw_data)
 duration = time() - t0
 hasher_hashing_vectorizer["vectorizer"].append(hasher.__class__.__name__)
 hasher_hashing_vectorizer["speed"].append(data_size_mb / duration)
-print("done in %fs at %0.3fMB/s" % (duration, data_size_mb / duration))
-print("Found %d unique tokens" % n_nonzero_columns(X))
+print(f"done in {duration:.3f}s at {data_size_mb / duration:.3f}MB/s")
+print(f"Found {n_nonzero_columns(X)} unique tokens")
 print()
 
 print("FeatureHasher on raw tokens")
@@ -182,8 +186,8 @@ X = hasher.transform(tokens(d) for d in raw_data)
 duration = time() - t0
 hasher_hashing_vectorizer["vectorizer"].append(hasher.__class__.__name__)
 hasher_hashing_vectorizer["speed"].append(data_size_mb / duration)
-print("done in %fs at %0.3fMB/s" % (duration, data_size_mb / duration))
-print("Found %d unique tokens" % n_nonzero_columns(X))
+print(f"done in {duration:.3f}s at {data_size_mb / duration:.3f}MB/s")
+print(f"Found {n_nonzero_columns(X)} unique tokens")
 print()
 
 print("HashingVectorizer")
@@ -193,7 +197,7 @@ vectorizer.fit_transform(raw_data)
 duration = time() - t0
 hasher_hashing_vectorizer["vectorizer"].append(vectorizer.__class__.__name__)
 hasher_hashing_vectorizer["speed"].append(data_size_mb / duration)
-print("done in %fs at %0.3fMB/s" % (duration, data_size_mb / duration))
+print(f"done in {duration:.3f}s at {data_size_mb / duration:.3f}MB/s")
 print()
 
 fig, ax = plt.subplots()
@@ -208,3 +212,6 @@ _ = ax.set_xlabel("speed (MB/s)")
 # The number of unique tokens when using the `FeatureHasher` is lower than those
 # obtained using the `DictVectorizer` and `CountVectorizer`. This is due to hash
 # collisions.
+#
+# The `FeatureHasher` on frequency dictionaries is approximately as fast as the
+# `CountVectorizer`. The `FeatureHasher` on raw tokens is even faster.
