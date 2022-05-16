@@ -12,9 +12,8 @@ from libc.stdlib cimport malloc
 from libc.stdlib cimport realloc
 from libc.math cimport log as ln
 
-import numpy as np
-cimport numpy as np
-np.import_array()
+cimport numpy as cnp
+cnp.import_array()
 
 from ..utils._random cimport our_rand_r
 
@@ -50,11 +49,11 @@ def _realloc_test():
         assert False
 
 
-cdef inline np.ndarray sizet_ptr_to_ndarray(SIZE_t* data, SIZE_t size):
+cdef inline cnp.ndarray sizet_ptr_to_ndarray(SIZE_t* data, SIZE_t size):
     """Return copied data as 1D numpy array of intp's."""
-    cdef np.npy_intp shape[1]
-    shape[0] = <np.npy_intp> size
-    return np.PyArray_SimpleNewFromData(1, shape, np.NPY_INTP, data).copy()
+    cdef cnp.npy_intp shape[1]
+    shape[0] = <cnp.npy_intp> size
+    return cnp.PyArray_SimpleNewFromData(1, shape, cnp.NPY_INTP, data).copy()
 
 
 cdef inline SIZE_t rand_int(SIZE_t low, SIZE_t high,

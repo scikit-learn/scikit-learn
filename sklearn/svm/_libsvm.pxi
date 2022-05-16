@@ -44,30 +44,30 @@ cdef extern from "svm.h":
 
 cdef extern from "libsvm_helper.c":
     # this file contains methods for accessing libsvm 'hidden' fields
-    svm_node **dense_to_sparse (char *, np.npy_intp *)
+    svm_node **dense_to_sparse (char *, cnp.npy_intp *)
     void set_parameter (svm_parameter *, int , int , int , double, double ,
                                   double , double , double , double,
                                   double, int, int, int, char *, char *, int,
                                   int)
-    void set_problem (svm_problem *, char *, char *, char *, np.npy_intp *, int)
+    void set_problem (svm_problem *, char *, char *, char *, cnp.npy_intp *, int)
 
-    svm_model *set_model (svm_parameter *, int, char *, np.npy_intp *,
-                         char *, np.npy_intp *, np.npy_intp *, char *,
+    svm_model *set_model (svm_parameter *, int, char *, cnp.npy_intp *,
+                         char *, cnp.npy_intp *, cnp.npy_intp *, char *,
                          char *, char *, char *, char *)
 
     void copy_sv_coef   (char *, svm_model *)
     void copy_n_iter  (char *, svm_model *)
-    void copy_intercept (char *, svm_model *, np.npy_intp *)
-    void copy_SV        (char *, svm_model *, np.npy_intp *)
+    void copy_intercept (char *, svm_model *, cnp.npy_intp *)
+    void copy_SV        (char *, svm_model *, cnp.npy_intp *)
     int copy_support (char *data, svm_model *model)
-    int copy_predict (char *, svm_model *, np.npy_intp *, char *, BlasFunctions *) nogil
-    int copy_predict_proba (char *, svm_model *, np.npy_intp *, char *, BlasFunctions *) nogil
-    int copy_predict_values(char *, svm_model *, np.npy_intp *, char *, int, BlasFunctions *) nogil
+    int copy_predict (char *, svm_model *, cnp.npy_intp *, char *, BlasFunctions *) nogil
+    int copy_predict_proba (char *, svm_model *, cnp.npy_intp *, char *, BlasFunctions *) nogil
+    int copy_predict_values(char *, svm_model *, cnp.npy_intp *, char *, int, BlasFunctions *) nogil
     void copy_nSV     (char *, svm_model *)
-    void copy_probA   (char *, svm_model *, np.npy_intp *)
-    void copy_probB   (char *, svm_model *, np.npy_intp *)
-    np.npy_intp  get_l  (svm_model *)
-    np.npy_intp  get_nr (svm_model *)
+    void copy_probA   (char *, svm_model *, cnp.npy_intp *)
+    void copy_probB   (char *, svm_model *, cnp.npy_intp *)
+    cnp.npy_intp  get_l  (svm_model *)
+    cnp.npy_intp  get_nr (svm_model *)
     int  free_problem   (svm_problem *)
     int  free_model     (svm_model *)
     void set_verbosity(int)

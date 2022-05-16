@@ -85,6 +85,13 @@ Changelog
   matrices in a variety of estimators and avoid an `EfficiencyWarning`.
   :pr:`23139` by `Tom Dupre la Tour`_.
 
+:mod:`sklearn.tree`
+...................
+
+- |Fix| Fixed invalid memory access bug during fit in
+  :class:`tree.DecisionTreeRegressor` and :class:`tree.DecisionTreeClassifier`.
+  :pr:`23273` by `Thomas Fan`_.
+
 Code and Documentation Contributors
 -----------------------------------
 

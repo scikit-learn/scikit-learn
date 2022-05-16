@@ -18,6 +18,12 @@ Changelog
 - |Fix| Avoid spurious warning in :class:`decomposition.IncrementalPCA` when
   `n_samples == n_components`. :pr:`23264` by :user:`Lucy Liu <lucyleeow>`
 
+:mod:`sklearn.datasets`
+.......................
+
+- |Fix| Avoid timeouts in :func:`datasets.fetch_openml` by not passing a
+  `timeout` argument, :pr:`23358` by `Loïc Estève <lesteve>`.
+
 :mod:`sklearn.metrics`
 ......................
 
