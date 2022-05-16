@@ -120,14 +120,7 @@ jobs:
       - PYTHON_VERSION: '3.9'
       - OMP_NUM_THREADS: 2
       - OPENBLAS_NUM_THREADS: 2
-      - NUMPY_VERSION: 'latest'
-      - SCIPY_VERSION: 'latest'
-      - CYTHON_VERSION: 'latest'
-      - JOBLIB_VERSION: 'latest'
-      - THREADPOOLCTL_VERSION: 'latest'
-      - PYTEST_VERSION: 'latest'
-      - PYTEST_XDIST_VERSION: 'latest'
-      - TEST_DOCSTRINGS: 'true'
+      - CONDA_ENV_NAME: testenv
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
