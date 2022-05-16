@@ -46,7 +46,7 @@ def test_estimate_bandwidth_1sample(global_dtype):
     )
 
     assert bandwidth.dtype == X.dtype
-    assert_allclose(bandwidth, 0.0, atol=1e-5)
+    assert bandwidth == pytest.approx(0.0, abs=1e-5)
 
 
 @pytest.mark.parametrize(
@@ -64,12 +64,14 @@ def test_mean_shift(
     n_clusters_ = len(labels_unique)
     assert n_clusters_ == expected
     assert labels_unique[0] == first_cluster_label
+    assert ms.cluster_centers_.dtype == global_dtype
 
     cluster_centers, labels_mean_shift = mean_shift(X_, cluster_all=cluster_all)
     labels_mean_shift_unique = np.unique(labels_mean_shift)
     n_clusters_mean_shift = len(labels_mean_shift_unique)
     assert n_clusters_mean_shift == expected
     assert labels_mean_shift_unique[0] == first_cluster_label
+    assert cluster_centers.dtype == global_dtype
 
 
 def test_mean_shift_negative_bandwidth():
@@ -108,6 +110,7 @@ def test_parallel(global_dtype):
     ms2.fit(X)
 
     assert_allclose(ms1.cluster_centers_, ms2.cluster_centers_)
+    assert ms1.cluster_centers_.dtype == ms2.cluster_centers_.dtype
     assert_array_equal(ms1.labels_, ms2.labels_)
 
 
