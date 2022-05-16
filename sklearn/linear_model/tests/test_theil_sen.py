@@ -5,6 +5,7 @@ Testing for Theil-Sen module (sklearn.linear_model.theil_sen)
 # Author: Florian Wilhelm <florian.wilhelm@gmail.com>
 # License: BSD 3 clause
 import os
+import re
 import sys
 from contextlib import contextmanager
 import numpy as np
@@ -111,9 +112,7 @@ def test_modweiszfeld_step_1d():
     assert_array_less(new_y, y)
     # Check that a single vector is identity
     X = np.array([1.0, 2.0, 3.0]).reshape(1, 3)
-    y = X[
-        0,
-    ]
+    y = X[0]
     new_y = _modified_weiszfeld_step(X, y)
     assert_array_equal(y, new_y)
 
@@ -203,25 +202,35 @@ def test_calc_breakdown_point():
     assert np.abs(bp - 1 + 1 / (np.sqrt(2))) < 1.0e-6
 
 
-def test_checksubparams_negative_subpopulation():
+@pytest.mark.parametrize(
+    "param, ExceptionCls, match",
+    [
+        (
+            {"max_subpopulation": "hello"},
+            TypeError,
+            "max_subpopulation must be an instance of {float, int}",
+        ),
+        (
+            {"max_subpopulation": -1},
+            ValueError,
+            "max_subpopulation == -1, must be >= 1",
+        ),
+        (
+            {"n_subsamples": 1},
+            ValueError,
+            re.escape("Invalid parameter since n_features+1 > n_subsamples (2 > 1)"),
+        ),
+        (
+            {"n_subsamples": 101},
+            ValueError,
+            re.escape("Invalid parameter since n_subsamples > n_samples (101 > 50)"),
+        ),
+    ],
+)
+def test_checksubparams_invalid_input(param, ExceptionCls, match):
     X, y, w, c = gen_toy_problem_1d()
-    theil_sen = TheilSenRegressor(max_subpopulation=-1, random_state=0)
-
-    with pytest.raises(ValueError):
-        theil_sen.fit(X, y)
-
-
-def test_checksubparams_too_few_subsamples():
-    X, y, w, c = gen_toy_problem_1d()
-    theil_sen = TheilSenRegressor(n_subsamples=1, random_state=0)
-    with pytest.raises(ValueError):
-        theil_sen.fit(X, y)
-
-
-def test_checksubparams_too_many_subsamples():
-    X, y, w, c = gen_toy_problem_1d()
-    theil_sen = TheilSenRegressor(n_subsamples=101, random_state=0)
-    with pytest.raises(ValueError):
+    theil_sen = TheilSenRegressor(**param, random_state=0)
+    with pytest.raises(ExceptionCls, match=match):
         theil_sen.fit(X, y)
 
 
