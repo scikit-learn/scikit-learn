@@ -2085,8 +2085,18 @@ def classification_report(
         See also :func:`precision_recall_fscore_support` for more details
         on averages.
 
-        Note that in binary classification, recall of the positive class
-        is also known as "sensitivity"; recall of the negative class is
+        Note that whenever accuracy is shown in the report, i.e. for binary 
+        or multiclass (not multilabel) classification, it is identical to the 
+        weighted average recall which is also being shown.  (See 
+        :func:`recall_score` with average='weighted' and average='micro'.)
+
+        Also note that the macro average recall is identical to 
+        :func:`balanced_accuracy_score` (with its default adjusted=False), 
+        except in multilabel classification (which is not supported by 
+        :func:`balanced_accuracy_score` anyway).
+
+        Finally, note that in binary classification, recall of the positive
+        class is also known as "sensitivity"; recall of the negative class is
         "specificity".
 
     See Also
