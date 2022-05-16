@@ -542,6 +542,7 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "MinCovDet",
     "MinMaxScaler",
     "MiniBatchDictionaryLearning",
+    "MiniBatchNMF",
     "MiniBatchSparsePCA",
     "MissingIndicator",
     "MultiLabelBinarizer",
