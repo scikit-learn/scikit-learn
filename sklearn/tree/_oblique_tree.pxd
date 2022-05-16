@@ -9,7 +9,7 @@
 # See _oblique_tree.pyx for details.
 
 import numpy as np
-cimport numpy as np
+cimport numpy as cnp
 
 from libcpp.vector cimport vector
 
@@ -32,4 +32,4 @@ cdef class ObliqueTree(Tree):
     cdef int _resize_c(self, SIZE_t capacity=*) nogil except -1
 
     cpdef DTYPE_t compute_feature_value(self, object X, SIZE_t node_id)
-    cpdef np.ndarray get_projection_matrix(self)
+    cpdef cnp.ndarray get_projection_matrix(self)

@@ -9,7 +9,7 @@
 # See _oblique_splitter.pyx for details.
 
 import numpy as np
-cimport numpy as np
+cimport numpy as cnp
 
 from ._criterion cimport Criterion
 

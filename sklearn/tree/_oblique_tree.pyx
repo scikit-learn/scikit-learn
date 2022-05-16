@@ -17,8 +17,8 @@ from libc.string cimport memset
 from libc.stdint cimport SIZE_MAX
 
 import numpy as np
-cimport numpy as np
-np.import_array()
+cimport numpy as cnp
+cnp.import_array()
 
 from scipy.sparse import issparse
 from scipy.sparse import csr_matrix
@@ -94,7 +94,7 @@ cdef class ObliqueTree(Tree):
         weighted_n_node_samples[i] holds the weighted number of training samples
         reaching node i.
     """
-    def __cinit__(self, int n_features, np.ndarray[SIZE_t, ndim=1] n_classes,
+    def __cinit__(self, int n_features, cnp.ndarray[SIZE_t, ndim=1] n_classes,
                 int n_outputs):
         """Constructor."""
         # Input/Output layout
@@ -176,12 +176,12 @@ cdef class ObliqueTree(Tree):
                 self.proj_vec_weights[i].push_back(weight)
                 self.proj_vec_indices[i].push_back(j)
 
-        nodes = memcpy(self.nodes, (<np.ndarray> node_ndarray).data,
+        nodes = memcpy(self.nodes, (<cnp.ndarray> node_ndarray).data,
                     self.capacity * sizeof(Node))
-        value = memcpy(self.value, (<np.ndarray> value_ndarray).data,
+        value = memcpy(self.value, (<cnp.ndarray> value_ndarray).data,
                     self.capacity * self.value_stride * sizeof(double))
 
-    cpdef np.ndarray get_projection_matrix(self):
+    cpdef cnp.ndarray get_projection_matrix(self):
         """Get the projection matrix of shape (node_count, n_features)."""
         proj_vecs = np.zeros((self.node_count, self.n_features))
         for i in range(0, self.node_count):

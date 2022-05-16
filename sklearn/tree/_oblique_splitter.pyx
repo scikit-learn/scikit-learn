@@ -6,8 +6,8 @@
 
 cimport cython
 import numpy as np
-cimport numpy as np
-np.import_array()
+cimport numpy as cnp
+cnp.import_array()
 
 from ._criterion cimport Criterion
 
