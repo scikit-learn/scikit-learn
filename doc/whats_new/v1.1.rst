@@ -1123,11 +1123,6 @@ Changelog
   for :class:`tree.DecisionTreeClassifier` and :class:`tree.DecisionTreeRegressor`.
   :pr:`22476` by :user:`Zhehao Liu <MaxwellLZH>`.
 
-- |MajorFeature| Add oblique decision trees and forests for classification
-  with :class:`tree.ObliqueDecisionTreeClassifier` and
-  :class:`ensemble.ObliqueRandomForestClassifier`. :pr:`22754` by
-  `Adam Li <adam2392>`.
-
 :mod:`sklearn.utils`
 ....................
 
@@ -1191,7 +1186,7 @@ Code and Documentation Contributors
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.0, including:
 
-2357juan, Abhishek Gupta, adamgonzo, Adam Li, adijohar, Aditya Kumawat, Aditya
+2357juan, Abhishek Gupta, adamgonzo, adijohar, Aditya Kumawat, Aditya
 Raghuwanshi, Aditya Singh, Adrian Trujillo Duron, Adrin Jalali, ahmadjubair33,
 AJ Druck, aj-white, Alan Peixinho, Alberto Mario Ceballos-Arroyo, Alek
 Lefebvre, Alex, Alexandre Gramfort, alexanmv, almeidayoel, Amanda Dsouza, Aman
