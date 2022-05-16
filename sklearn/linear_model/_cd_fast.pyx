@@ -7,11 +7,10 @@
 # License: BSD 3 clause
 
 from libc.math cimport fabs
-cimport numpy as np
+cimport numpy as cnp
 import numpy as np
 import numpy.linalg as linalg
 
-cimport cython
 from cpython cimport bool
 from cython cimport floating
 import warnings
@@ -24,10 +23,10 @@ from ..utils._cython_blas cimport RowMajor, ColMajor, Trans, NoTrans
 
 from ..utils._random cimport our_rand_r
 
-ctypedef np.float64_t DOUBLE
-ctypedef np.uint32_t UINT32_t
+ctypedef cnp.float64_t DOUBLE
+ctypedef cnp.uint32_t UINT32_t
 
-np.import_array()
+cnp.import_array()
 
 # The following two functions are shamelessly copied from the tree code.
 
@@ -570,9 +569,9 @@ def enet_coordinate_descent_gram(
     floating[::1] w,
     floating alpha,
     floating beta,
-    np.ndarray[floating, ndim=2, mode='c'] Q,
-    np.ndarray[floating, ndim=1, mode='c'] q,
-    np.ndarray[floating, ndim=1] y,
+    cnp.ndarray[floating, ndim=2, mode='c'] Q,
+    cnp.ndarray[floating, ndim=1, mode='c'] q,
+    cnp.ndarray[floating, ndim=1] y,
     int max_iter,
     floating tol,
     object rng,
@@ -742,8 +741,8 @@ def enet_coordinate_descent_multi_task(
     floating l1_reg,
     floating l2_reg,
     # TODO: use const qualified fused-typed memoryview when Cython 3.0 is used.
-    np.ndarray[floating, ndim=2, mode='fortran'] X,
-    np.ndarray[floating, ndim=2, mode='fortran'] Y,
+    cnp.ndarray[floating, ndim=2, mode='fortran'] X,
+    cnp.ndarray[floating, ndim=2, mode='fortran'] Y,
     int max_iter,
     floating tol,
     object rng,
