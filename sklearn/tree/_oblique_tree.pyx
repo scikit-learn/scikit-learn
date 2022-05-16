@@ -191,6 +191,26 @@ cdef class ObliqueTree(Tree):
                 proj_vecs[i, feat] = weight
         return proj_vecs
 
+    # cpdef np.ndarray get_projection_weights(self):
+    #     """Get the projection matrix of shape (node_count, n_features)."""
+
+    #     proj_vecs = np.zeros((self.node_count, self.n_features))
+    #     for i in range(0, self.node_count):
+    #         for j in range(0, self.proj_vec_indices[i].size()):
+    #             feat = self.proj_vec_indices[i][j]
+    #             weight = self.proj_vec_weights[i][j]
+    #             proj_vecs[i, feat] = 1
+    #     return proj_vecs
+
+    # cpdef np.ndarray get_projection_indices(self):
+    #     """Get the projection matrix of shape (node_count, n_features)."""
+    #     proj_vecs = np.zeros((self.node_count, self.n_features))
+    #     for i in range(0, self.node_count):
+    #         for j in range(0, self.proj_vec_indices[i].size()):
+    #             feat = self.proj_vec_indices[i][j]
+    #             proj_vecs[i, j] = 1
+    #     return proj_vecs
+
     cdef int _resize_c(self, SIZE_t capacity=SIZE_MAX) nogil except -1:
         """Guts of _resize.
 
@@ -262,15 +282,17 @@ cdef class ObliqueTree(Tree):
         cdef DTYPE_t proj_feat = 0.0
         cdef DTYPE_t weight = 0.0
         cdef SIZE_t j = 0
-        # cdef SIZE_t n_projections = proj_vec_indices.size()
+        cdef SIZE_t feature_index
+        cdef SIZE_t n_features = self.n_features
 
+        # cdef SIZE_t n_projections = proj_vec_indices.size()
         # compute projection of the data based on trained tree
         # proj_vec_weights = self.proj_vec_weights[node_id]
         # proj_vec_indices = self.proj_vec_indices[node_id]
         for j in range(0, self.proj_vec_indices[node_id].size()):
             feature_index = self.proj_vec_indices[node_id][j]
             weight = self.proj_vec_weights[node_id][j]
-            
+
             # skip a multiplication step if there is nothing to be done
             if weight == 0:
                 continue

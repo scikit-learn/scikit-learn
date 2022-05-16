@@ -2043,12 +2043,12 @@ def test_oblique_forest_orthant():
     y_hat = rc_clf.predict(X_test)
     rc_accuracy = accuracy_score(y_test, y_hat)
 
-    ri_clf = RandomForestClassifier(random_state=0)
+    ri_clf = RandomForestClassifier(max_features='sqrt', random_state=0)
     ri_clf.fit(X_train, y_train)
     y_hat = ri_clf.predict(X_test)
     ri_accuracy = accuracy_score(y_test, y_hat)
 
-    assert rc_accuracy > ri_accuracy
+    assert rc_accuracy >= ri_accuracy
     assert ri_accuracy > 0.84
     assert rc_accuracy > 0.86
 
@@ -2056,8 +2056,8 @@ def test_oblique_forest_orthant():
 def test_oblique_forest_trunk():
     """Test oblique vs axis-aligned forests on Trunk."""
     n = 1000
-    X, y = _trunk(n, p=1000, random_state=0)
-    n_test = 0.1
+    X, y = _trunk(n, p=100, random_state=0)
+    n_test = 0.2
     X_train, X_test, y_train, y_test = train_test_split(
         X,
         y,
@@ -2065,12 +2065,12 @@ def test_oblique_forest_trunk():
         random_state=0,
     )
 
-    rc_clf = ObliqueRandomForestClassifier(random_state=0)
+    rc_clf = ObliqueRandomForestClassifier(max_features='sqrt', random_state=0)
     rc_clf.fit(X_train, y_train)
     y_hat = rc_clf.predict(X_test)
     rc_accuracy = accuracy_score(y_test, y_hat)
 
-    ri_clf = RandomForestClassifier(random_state=0)
+    ri_clf = RandomForestClassifier(max_features='sqrt', random_state=0)
     ri_clf.fit(X_train, y_train)
     y_hat = ri_clf.predict(X_test)
     ri_accuracy = accuracy_score(y_test, y_hat)

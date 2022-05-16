@@ -16,7 +16,6 @@ from libc.stdlib cimport free
 from libc.stdlib cimport qsort
 from libc.string cimport memcpy
 from libc.string cimport memset
-from libc.stdio cimport printf
 from libcpp.vector cimport vector
 
 from cython.operator cimport dereference as deref
@@ -25,6 +24,7 @@ from ._utils cimport log
 from ._utils cimport rand_int
 from ._utils cimport rand_uniform
 from ._utils cimport RAND_R_MAX
+
 
 cdef double INFINITY = np.inf
 
@@ -110,6 +110,14 @@ cdef class ObliqueSplitter(Splitter):
     def __setstate__(self, d):
         pass
 
+    cdef int init(self, object X, const DOUBLE_t[:, ::1] y,
+                  DOUBLE_t* sample_weight) except -1:
+        Splitter.init(self, X, y, sample_weight)
+
+        # create a helper array for allowing efficient Fisher-Yates
+        self.indices_to_sample = np.arange(self.max_features * self.n_features, dtype=np.intp)
+        return 0
+
     cdef int node_reset(self, SIZE_t start, SIZE_t end,
                         double* weighted_n_node_samples) nogil except -1:
         """Reset splitter on node samples[start:end].
@@ -185,6 +193,8 @@ cdef class BaseDenseObliqueSplitter(ObliqueSplitter):
         ObliqueSplitter.init(self, X, y, sample_weight)
 
         self.X = X
+        return 0
+
 
 cdef class BestObliqueSplitter(BaseDenseObliqueSplitter):
     def __reduce__(self):
@@ -211,12 +221,29 @@ cdef class BestObliqueSplitter(BaseDenseObliqueSplitter):
         cdef SIZE_t n_non_zeros = self.n_non_zeros
         cdef UINT32_t* random_state = &self.rand_r_state
 
-        cdef int i, feat_i, proj_i
+        cdef int i, feat_i, proj_i, rand_vec_index
         cdef DTYPE_t weight
+        
+        # construct an array to sample from mTry x n_features set of indices
+        cdef SIZE_t[::1] indices_to_sample = self.indices_to_sample
+        cdef SIZE_t grid_size = self.max_features * self.n_features
 
+        # shuffle indices over the 2D grid to sample using Fisher-Yates
+        for i in range(0, grid_size):
+            j = rand_int(0, grid_size - i, random_state)
+            indices_to_sample[j], indices_to_sample[i] = indices_to_sample[i], indices_to_sample[j]
+            
+        # sample 'n_non_zeros' in a mtry X n_features projection matrix
+        # which consists of +/- 1's chosen at a 1/2s rate
         for i in range(0, n_non_zeros):
-            proj_i = rand_int(0, max_features, random_state)
-            feat_i = rand_int(0, n_features, random_state)
+            # get the next index from the shuffled index array
+            rand_vec_index = indices_to_sample[i]
+
+            # get the projection index and feature index
+            proj_i = rand_vec_index / n_features
+            feat_i = rand_vec_index % n_features
+
+            # sample a random weight
             weight = 1 if (rand_int(0, 2, random_state) == 1) else -1
 
             proj_mat_indices[proj_i].push_back(feat_i)  # Store index of nonzero
@@ -265,10 +292,6 @@ cdef class BestObliqueSplitter(BaseDenseObliqueSplitter):
         # Sample the projection matrix
         self.sample_proj_mat(self.proj_mat_weights, self.proj_mat_indices)
 
-        # define vector pointers to the projection weights and indices
-        cdef vector[DTYPE_t]* proj_vec_weights
-        cdef vector[SIZE_t]* proj_vec_indices
-
         # For every vector in the projection matrix
         for feat_i in range(max_features):
             # Projection vector has no nonzeros
@@ -280,9 +303,6 @@ cdef class BestObliqueSplitter(BaseDenseObliqueSplitter):
             current.feature = feat_i
             current.proj_vec_weights = &self.proj_mat_weights[feat_i]
             current.proj_vec_indices = &self.proj_mat_indices[feat_i]
-
-            # fill memory block with 0's for Xf from start to end with DTYPE_t
-            # memset(Xf + start, 0, (end - start) * sizeof(DTYPE_t))
 
             # Compute linear combination of features and then
             # sort samples according to the feature values.

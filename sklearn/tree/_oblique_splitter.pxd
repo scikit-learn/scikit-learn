@@ -51,6 +51,7 @@ cdef class ObliqueSplitter(Splitter):
     cdef SIZE_t n_non_zeros                             # Number of non-zero features
     cdef vector[vector[DTYPE_t]] proj_mat_weights       # nonzero weights of sparse proj_mat matrix
     cdef vector[vector[SIZE_t]] proj_mat_indices        # nonzero indices of sparse proj_mat matrix
+    cdef SIZE_t[::1] indices_to_sample                  # an array of indices to sample of size mtry X n_features
 
     # All oblique splitters (i.e. non-axis aligned splitters) require a
     # function to sample a projection matrix that is applied to the feature matrix
