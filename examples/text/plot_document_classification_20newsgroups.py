@@ -98,17 +98,17 @@ def load_dataset(verbose=False, remove=()):
             f"{data_train_size_mb:.2f}MB (training set)"
         )
         print(f"{len(data_test.data)} documents - {data_test_size_mb:.2f}MB (test set)")
-        print("%d categories" % len(target_names))
+        print(f"{len(target_names)} categories")
         print(
             f"vectorize training done in {duration_train:.3f}s "
             f"at {data_train_size_mb / duration_train:.3f}MB/s"
         )
-        print("n_samples: %d, n_features: %d" % X_train.shape)
+        print(f"n_samples: {X_train.shape[0]}, n_features: {X_train.shape[1]}")
         print(
             f"vectorize testing done in {duration_test:.3f}s "
             f"at {data_test_size_mb / duration_test:.3f}MB/s"
         )
-        print("n_samples: %d, n_features: %d" % X_test.shape)
+        print(f"n_samples: {X_test.shape[0]}, n_features: {X_test.shape[1]}")
 
     return X_train, X_test, y_train, y_test, feature_names, target_names
 
