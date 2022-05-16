@@ -2494,7 +2494,7 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
     Returns
     -------
     loss : float
-        Return a cumulated hinge loss, which is an upper bound of the number
+        Return a cumulated hinge loss value, which is an upper bound of the number
         of mistakes made by the classifier.
 
     References
