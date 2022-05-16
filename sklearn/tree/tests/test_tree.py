@@ -1302,7 +1302,7 @@ def check_class_weights(name):
 
 @pytest.mark.parametrize("name", CLF_TREES)
 def test_class_weights(name):
-    if 'Oblique' not in name:
+    if "Oblique" not in name:
         check_class_weights(name)
 
 
@@ -2550,7 +2550,7 @@ def test_oblique_tree_sampling():
     # oblique decision trees can sample significantly more
     # diverse sets of splits and will do better if allowed
     # to sample more
-    tree_ri = DecisionTreeClassifier(random_state=0, max_features='sqrt')
+    tree_ri = DecisionTreeClassifier(random_state=0, max_features="sqrt")
     tree_rc = ObliqueDecisionTreeClassifier(random_state=0, max_features=n_features)
     ri_cv_scores = cross_val_score(
         tree_ri, X, y, scoring="accuracy", cv=10, error_score="raise"

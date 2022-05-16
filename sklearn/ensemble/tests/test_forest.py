@@ -471,7 +471,7 @@ def test_importances(dtype, name, criterion):
     tolerance = 0.01
     if name in FOREST_REGRESSORS and criterion == "absolute_error":
         tolerance = 0.05
-    if 'Oblique' not in name:
+    if "Oblique" not in name:
         check_importances(name, criterion, dtype, tolerance)
 
 
@@ -1389,7 +1389,7 @@ def check_class_weights(name):
 
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS)
 def test_class_weights(name):
-    if 'Oblique' not in name:
+    if "Oblique" not in name:
         check_class_weights(name)
 
 
@@ -2045,7 +2045,7 @@ def test_oblique_forest_orthant():
     y_hat = rc_clf.predict(X_test)
     rc_accuracy = accuracy_score(y_test, y_hat)
 
-    ri_clf = RandomForestClassifier(max_features='sqrt', random_state=0)
+    ri_clf = RandomForestClassifier(max_features="sqrt", random_state=0)
     ri_clf.fit(X_train, y_train)
     y_hat = ri_clf.predict(X_test)
     ri_accuracy = accuracy_score(y_test, y_hat)
@@ -2067,12 +2067,12 @@ def test_oblique_forest_trunk():
         random_state=0,
     )
 
-    rc_clf = ObliqueRandomForestClassifier(max_features='sqrt', random_state=0)
+    rc_clf = ObliqueRandomForestClassifier(max_features="sqrt", random_state=0)
     rc_clf.fit(X_train, y_train)
     y_hat = rc_clf.predict(X_test)
     rc_accuracy = accuracy_score(y_test, y_hat)
 
-    ri_clf = RandomForestClassifier(max_features='sqrt', random_state=0)
+    ri_clf = RandomForestClassifier(max_features="sqrt", random_state=0)
     ri_clf.fit(X_train, y_train)
     y_hat = ri_clf.predict(X_test)
     ri_accuracy = accuracy_score(y_test, y_hat)
