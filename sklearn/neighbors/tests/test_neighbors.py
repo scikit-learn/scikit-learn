@@ -1,5 +1,6 @@
 from itertools import product
 from contextlib import nullcontext
+import warnings
 
 import pytest
 import re
@@ -10,6 +11,7 @@ from scipy.sparse import (
     csc_matrix,
     csr_matrix,
     dok_matrix,
+    dia_matrix,
     lil_matrix,
     issparse,
 )
@@ -38,6 +40,7 @@ from sklearn.neighbors import (
 from sklearn.neighbors._base import (
     _is_sorted_by_data,
     _check_precomputed,
+    sort_graph_by_row_values,
     KNeighborsMixin,
 )
 from sklearn.pipeline import make_pipeline
@@ -331,7 +334,7 @@ def test_not_fitted_error_gets_raised():
         neighbors_.radius_neighbors_graph(X)
 
 
-@ignore_warnings(category=EfficiencyWarning)
+@pytest.mark.filterwarnings("ignore:EfficiencyWarning")
 def check_precomputed(make_train_test, estimators):
     """Tests unsupervised NearestNeighbors with a distance matrix."""
     # Note: smaller samples may result in spurious test success
@@ -463,25 +466,87 @@ def test_is_sorted_by_data():
     assert _is_sorted_by_data(X)
 
 
-@ignore_warnings(category=EfficiencyWarning)
-def test_check_precomputed():
-    # Test that _check_precomputed returns a graph sorted by data
+@pytest.mark.filterwarnings("ignore:EfficiencyWarning")
+@pytest.mark.parametrize("function", [sort_graph_by_row_values, _check_precomputed])
+def test_sort_graph_by_row_values(function):
+    # Test that sort_graph_by_row_values returns a graph sorted by row values
     X = csr_matrix(np.abs(np.random.RandomState(42).randn(10, 10)))
     assert not _is_sorted_by_data(X)
-    Xt = _check_precomputed(X)
+    Xt = function(X)
     assert _is_sorted_by_data(Xt)
 
-    # est with a different number of nonzero entries for each sample
+    # test with a different number of nonzero entries for each sample
     mask = np.random.RandomState(42).randint(2, size=(10, 10))
     X = X.toarray()
     X[mask == 1] = 0
     X = csr_matrix(X)
     assert not _is_sorted_by_data(X)
-    Xt = _check_precomputed(X)
+    Xt = function(X)
     assert _is_sorted_by_data(Xt)
 
 
-@ignore_warnings(category=EfficiencyWarning)
+@pytest.mark.filterwarnings("ignore:EfficiencyWarning")
+def test_sort_graph_by_row_values_copy():
+    # Test if the sorting is done inplace if X is CSR, so that Xt is X.
+    X_ = csr_matrix(np.abs(np.random.RandomState(42).randn(10, 10)))
+    assert not _is_sorted_by_data(X_)
+
+    # sort_graph_by_row_values is done inplace if copy=False
+    X = X_.copy()
+    assert sort_graph_by_row_values(X).data is X.data
+
+    X = X_.copy()
+    assert sort_graph_by_row_values(X, copy=False).data is X.data
+
+    X = X_.copy()
+    assert sort_graph_by_row_values(X, copy=True).data is not X.data
+
+    # _check_precomputed is never done inplace
+    X = X_.copy()
+    assert _check_precomputed(X).data is not X.data
+
+    # do not raise if X is not CSR and copy=True
+    sort_graph_by_row_values(X.tocsc(), copy=True)
+
+    # raise if X is not CSR and copy=False
+    with pytest.raises(ValueError, match="Use copy=True to allow the conversion"):
+        sort_graph_by_row_values(X.tocsc(), copy=False)
+
+    # raise if X is not even sparse
+    with pytest.raises(TypeError, match="Input graph must be a sparse matrix"):
+        sort_graph_by_row_values(X.toarray())
+
+
+def test_sort_graph_by_row_values_warning():
+    # Test that the parameter warn_when_not_sorted works as expected.
+    X = csr_matrix(np.abs(np.random.RandomState(42).randn(10, 10)))
+    assert not _is_sorted_by_data(X)
+
+    # warning
+    with pytest.warns(EfficiencyWarning, match="was not sorted by row values"):
+        sort_graph_by_row_values(X, copy=True)
+    with pytest.warns(EfficiencyWarning, match="was not sorted by row values"):
+        sort_graph_by_row_values(X, copy=True, warn_when_not_sorted=True)
+    with pytest.warns(EfficiencyWarning, match="was not sorted by row values"):
+        _check_precomputed(X)
+
+    # no warning
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        sort_graph_by_row_values(X, copy=True, warn_when_not_sorted=False)
+
+
+@pytest.mark.parametrize("format", [dok_matrix, bsr_matrix, dia_matrix])
+def test_sort_graph_by_row_values_bad_sparse_format(format):
+    # Test that sort_graph_by_row_values and _check_precomputed error on bad formats
+    X = format(np.abs(np.random.RandomState(42).randn(10, 10)))
+    with pytest.raises(TypeError, match="format is not supported"):
+        sort_graph_by_row_values(X)
+    with pytest.raises(TypeError, match="format is not supported"):
+        _check_precomputed(X)
+
+
+@pytest.mark.filterwarnings("ignore:EfficiencyWarning")
 def test_precomputed_sparse_invalid():
     dist = np.array([[0.0, 2.0, 1.0], [2.0, 0.0, 3.0], [1.0, 3.0, 0.0]])
     dist_csr = csr_matrix(dist)
@@ -1270,7 +1335,7 @@ def test_RadiusNeighborsRegressor_multioutput(
         assert np.all(np.abs(y_pred - y_target) < 0.3)
 
 
-@ignore_warnings(category=EfficiencyWarning)
+@pytest.mark.filterwarnings("ignore:EfficiencyWarning")
 def test_kneighbors_regressor_sparse(
     n_samples=40, n_features=5, n_test_pts=10, n_neighbors=5, random_state=0
 ):

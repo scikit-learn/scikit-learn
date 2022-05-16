@@ -36,7 +36,7 @@ print(__doc__)
 # in OpenML.
 from sklearn.datasets import fetch_openml
 
-co2 = fetch_openml(data_id=41187, as_frame=True)
+co2 = fetch_openml(data_id=41187, as_frame=True, parser="pandas")
 co2.frame.head()
 
 # %%

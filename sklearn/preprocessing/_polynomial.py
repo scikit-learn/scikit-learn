@@ -291,6 +291,12 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                 raise ValueError(
                     f"degree must be a non-negative integer, got {self.degree}."
                 )
+            elif self.degree == 0 and not self.include_bias:
+                raise ValueError(
+                    "Setting degree to zero and include_bias to False would result in"
+                    " an empty output array."
+                )
+
             self._min_degree = 0
             self._max_degree = self.degree
         elif (
@@ -308,6 +314,11 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                     "be non-negative integers that fulfil "
                     "min_degree <= max_degree, got "
                     f"{self.degree}."
+                )
+            elif self._max_degree == 0 and not self.include_bias:
+                raise ValueError(
+                    "Setting both min_deree and max_degree to zero and include_bias to"
+                    " False would result in an empty output array."
                 )
         else:
             raise ValueError(
@@ -380,7 +391,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                 to_stack.append(
                     sparse.csc_matrix(np.ones(shape=(n_samples, 1), dtype=X.dtype))
                 )
-            if self._min_degree <= 1:
+            if self._min_degree <= 1 and self._max_degree > 0:
                 to_stack.append(X)
             for deg in range(max(2, self._min_degree), self._max_degree + 1):
                 Xp_next = _csr_polynomial_expansion(
@@ -441,6 +452,9 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                 current_col = 1
             else:
                 current_col = 0
+
+            if self._max_degree == 0:
+                return XP
 
             # degree 1 term
             XP[:, current_col : current_col + n_features] = X

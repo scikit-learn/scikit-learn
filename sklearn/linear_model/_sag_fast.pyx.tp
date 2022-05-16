@@ -38,7 +38,7 @@ SAG and SAGA implementation
 WARNING: Do not edit .pyx file directly, it is generated from .pyx.tp
 """
 
-cimport numpy as np
+cimport numpy as cnp
 import numpy as np
 from libc.math cimport fabs, exp, log
 from libc.time cimport time, time_t
@@ -50,7 +50,7 @@ from ..utils._seq_dataset cimport SequentialDataset32, SequentialDataset64
 
 from libc.stdio cimport printf
 
-np.import_array()
+cnp.import_array()
 
 
 {{for name_suffix, c_type, np_type in dtypes}}
@@ -212,8 +212,8 @@ cdef inline {{c_type}} _soft_thresholding{{name_suffix}}({{c_type}} x, {{c_type}
 {{for name_suffix, c_type, np_type in dtypes}}
 
 def sag{{name_suffix}}(SequentialDataset{{name_suffix}} dataset,
-        np.ndarray[{{c_type}}, ndim=2, mode='c'] weights_array,
-        np.ndarray[{{c_type}}, ndim=1, mode='c'] intercept_array,
+        cnp.ndarray[{{c_type}}, ndim=2, mode='c'] weights_array,
+        cnp.ndarray[{{c_type}}, ndim=1, mode='c'] intercept_array,
         int n_samples,
         int n_features,
         int n_classes,
@@ -223,12 +223,12 @@ def sag{{name_suffix}}(SequentialDataset{{name_suffix}} dataset,
         double step_size,
         double alpha,
         double beta,
-        np.ndarray[{{c_type}}, ndim=2, mode='c'] sum_gradient_init,
-        np.ndarray[{{c_type}}, ndim=2, mode='c'] gradient_memory_init,
-        np.ndarray[bint, ndim=1, mode='c'] seen_init,
+        cnp.ndarray[{{c_type}}, ndim=2, mode='c'] sum_gradient_init,
+        cnp.ndarray[{{c_type}}, ndim=2, mode='c'] gradient_memory_init,
+        cnp.ndarray[bint, ndim=1, mode='c'] seen_init,
         int num_seen,
         bint fit_intercept,
-        np.ndarray[{{c_type}}, ndim=1, mode='c'] intercept_sum_gradient_init,
+        cnp.ndarray[{{c_type}}, ndim=1, mode='c'] intercept_sum_gradient_init,
         double intercept_decay,
         bint saga,
         bint verbose):
@@ -302,25 +302,25 @@ def sag{{name_suffix}}(SequentialDataset{{name_suffix}} dataset,
     cdef {{c_type}}* gradient_memory = <{{c_type}}*> gradient_memory_init.data
 
     # the cumulative sums needed for JIT params
-    cdef np.ndarray[{{c_type}}, ndim=1] cumulative_sums_array = \
+    cdef cnp.ndarray[{{c_type}}, ndim=1] cumulative_sums_array = \
         np.empty(n_samples, dtype={{np_type}}, order="c")
     cdef {{c_type}}* cumulative_sums = <{{c_type}}*> cumulative_sums_array.data
 
     # the index for the last time this feature was updated
-    cdef np.ndarray[int, ndim=1] feature_hist_array = \
+    cdef cnp.ndarray[int, ndim=1] feature_hist_array = \
         np.zeros(n_features, dtype=np.int32, order="c")
     cdef int* feature_hist = <int*> feature_hist_array.data
 
     # the previous weights to use to compute stopping criteria
-    cdef np.ndarray[{{c_type}}, ndim=2] previous_weights_array = \
+    cdef cnp.ndarray[{{c_type}}, ndim=2] previous_weights_array = \
         np.zeros((n_features, n_classes), dtype={{np_type}}, order="c")
     cdef {{c_type}}* previous_weights = <{{c_type}}*> previous_weights_array.data
 
-    cdef np.ndarray[{{c_type}}, ndim=1] prediction_array = \
+    cdef cnp.ndarray[{{c_type}}, ndim=1] prediction_array = \
         np.zeros(n_classes, dtype={{np_type}}, order="c")
     cdef {{c_type}}* prediction = <{{c_type}}*> prediction_array.data
 
-    cdef np.ndarray[{{c_type}}, ndim=1] gradient_array = \
+    cdef cnp.ndarray[{{c_type}}, ndim=1] gradient_array = \
         np.zeros(n_classes, dtype={{np_type}}, order="c")
     cdef {{c_type}}* gradient = <{{c_type}}*> gradient_array.data
 
@@ -340,7 +340,7 @@ def sag{{name_suffix}}(SequentialDataset{{name_suffix}} dataset,
     cumulative_sums[0] = 0.0
 
     # the multipliative scale needed for JIT params
-    cdef np.ndarray[{{c_type}}, ndim=1] cumulative_sums_prox_array
+    cdef cnp.ndarray[{{c_type}}, ndim=1] cumulative_sums_prox_array
     cdef {{c_type}}* cumulative_sums_prox
 
     cdef bint prox = beta > 0 and saga
@@ -727,8 +727,8 @@ cdef void predict_sample{{name_suffix}}({{c_type}}* x_data_ptr, int* x_ind_ptr, 
 
 def _multinomial_grad_loss_all_samples(
         SequentialDataset64 dataset,
-        np.ndarray[double, ndim=2, mode='c'] weights_array,
-        np.ndarray[double, ndim=1, mode='c'] intercept_array,
+        cnp.ndarray[double, ndim=2, mode='c'] weights_array,
+        cnp.ndarray[double, ndim=1, mode='c'] intercept_array,
         int n_samples, int n_features, int n_classes):
     """Compute multinomial gradient and loss across all samples.
 
@@ -750,15 +750,15 @@ def _multinomial_grad_loss_all_samples(
 
     cdef MultinomialLogLoss64 multiloss = MultinomialLogLoss64()
 
-    cdef np.ndarray[double, ndim=2] sum_gradient_array = \
+    cdef cnp.ndarray[double, ndim=2] sum_gradient_array = \
         np.zeros((n_features, n_classes), dtype=np.double, order="c")
     cdef double* sum_gradient = <double*> sum_gradient_array.data
 
-    cdef np.ndarray[double, ndim=1] prediction_array = \
+    cdef cnp.ndarray[double, ndim=1] prediction_array = \
         np.zeros(n_classes, dtype=np.double, order="c")
     cdef double* prediction = <double*> prediction_array.data
 
-    cdef np.ndarray[double, ndim=1] gradient_array = \
+    cdef cnp.ndarray[double, ndim=1] gradient_array = \
         np.zeros(n_classes, dtype=np.double, order="c")
     cdef double* gradient = <double*> gradient_array.data
 
