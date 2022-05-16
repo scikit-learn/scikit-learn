@@ -1836,23 +1836,23 @@ def recall_score(
             This is applicable only if targets (``y_{true,pred}``) are binary.
         ``'micro'``:
             Calculate metrics globally by counting the total true positives,
-            false negatives and false positives. This is identical to the 
-            :func:`accuracy_score`, and except in multi-label classification,
-            gives the same result as 'weighted' as well.
+            false negatives and false positives (or summing their weights).  
+            Except in multilabel classification, this and 'weighted' are both  
+            identical to the result of :func:`accuracy_score`.   It can result 
+            in an F-score that is not between precision and recall.
         ``'macro'``:
-            Calculate metrics for each label, and find their unweighted
-            mean.  This does not take label imbalance into account.  At least
-            for binary and multi-class classification, this is identical
-            to the result of :func:`balanced_accuracy_score` (with its
-            default adjusted=False).
+            Calculate metrics for each label, and find their simple (unweighted)
+            mean.  This does not take label imbalance into account.  This is 
+            identical to the result of :func:`balanced_accuracy_score` (with 
+            its default adjusted=False), except in multilabel classification
+            which is not supported by :func:`balanced_accuracy_score`.
         ``'weighted'``:
             Calculate metrics for each label, and find their average weighted
-            by support (the number of true instances for each label). This
-            alters 'macro' to account for label imbalance and, except in
-            the multi-label case, gives the same result
-            as 'micro' and therefeore the same result as 
-            :func:`accuracy_score`. It can result in an
-            F-score that is not between precision and recall.
+            by support (the number or total weight of true instances for each 
+            label). This alters 'macro' to account for label imbalance.  Except 
+            in multilabel classification, this and 'micro' are both  
+            identical to the result of :func:`accuracy_score`.   It can result 
+            in an F-score that is not between precision and recall.
         ``'samples'``:
             Calculate metrics for each instance, and find their average (only
             meaningful for multilabel classification where this differs from
