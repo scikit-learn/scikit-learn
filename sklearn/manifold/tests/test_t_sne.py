@@ -4,6 +4,7 @@ import numpy as np
 from numpy.testing import assert_allclose
 import scipy.sparse as sp
 import pytest
+import warnings
 
 from sklearn.neighbors import NearestNeighbors
 from sklearn.neighbors import kneighbors_graph
@@ -274,6 +275,22 @@ def test_trustworthiness():
     X = np.arange(5).reshape(-1, 1)
     X_embedded = np.array([[0], [2], [4], [1], [3]])
     assert_almost_equal(trustworthiness(X, X_embedded, n_neighbors=1), 0.2)
+
+
+def test_trustworthiness_n_neighbors_error():
+    """Raise an error when n_neighbors >= n_samples / 2.
+
+    Non-regression test for #18567.
+    """
+    regex = "n_neighbors .+ should be less than .+"
+    rng = np.random.RandomState(42)
+    X = rng.rand(7, 4)
+    X_embedded = rng.rand(7, 2)
+    with pytest.raises(ValueError, match=regex):
+        trustworthiness(X, X_embedded, n_neighbors=5)
+
+    trust = trustworthiness(X, X_embedded, n_neighbors=3)
+    assert 0 <= trust <= 1
 
 
 @pytest.mark.parametrize("method", ["exact", "barnes_hut"])
@@ -1134,9 +1151,9 @@ def test_tsne_init_futurewarning(init):
         with pytest.warns(FutureWarning, match="The PCA initialization.*"):
             tsne.fit_transform(X)
     else:
-        with pytest.warns(None) as record:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", FutureWarning)
             tsne.fit_transform(X)
-        assert not [w.message for w in record]
 
 
 # TODO: Remove in 1.2
@@ -1154,9 +1171,9 @@ def test_tsne_learning_rate_futurewarning(learning_rate):
         with pytest.warns(FutureWarning, match="The default learning rate.*"):
             tsne.fit_transform(X)
     else:
-        with pytest.warns(None) as record:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", FutureWarning)
             tsne.fit_transform(X)
-        assert not [w.message for w in record]
 
 
 @pytest.mark.filterwarnings("ignore:The default initialization in TSNE")

@@ -7,6 +7,7 @@ Testing for Isolation Forest algorithm (sklearn.ensemble.iforest).
 # License: BSD 3 clause
 
 import pytest
+import warnings
 
 import numpy as np
 
@@ -19,7 +20,7 @@ from sklearn.model_selection import ParameterGrid
 from sklearn.ensemble import IsolationForest
 from sklearn.ensemble._iforest import _average_path_length
 from sklearn.model_selection import train_test_split
-from sklearn.datasets import load_diabetes, load_iris
+from sklearn.datasets import load_diabetes, load_iris, make_classification
 from sklearn.utils import check_random_state
 from sklearn.metrics import roc_auc_score
 
@@ -102,18 +103,12 @@ def test_iforest_error():
     warn_msg = "max_samples will be set to n_samples for estimation"
     with pytest.warns(UserWarning, match=warn_msg):
         IsolationForest(max_samples=1000).fit(X)
-    # note that assert_no_warnings does not apply since it enables a
-    # PendingDeprecationWarning triggered by scipy.sparse's use of
-    # np.matrix. See issue #11251.
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
         IsolationForest(max_samples="auto").fit(X)
-    user_warnings = [each for each in record if issubclass(each.category, UserWarning)]
-    assert not user_warnings
-
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
         IsolationForest(max_samples=np.int64(2)).fit(X)
-    user_warnings = [each for each in record if issubclass(each.category, UserWarning)]
-    assert not user_warnings
 
     with pytest.raises(ValueError):
         IsolationForest(max_samples="foobar").fit(X)
@@ -352,3 +347,13 @@ def test_n_features_deprecation():
 
     with pytest.warns(FutureWarning, match="`n_features_` was deprecated"):
         est.n_features_
+
+
+def test_iforest_with_n_jobs_does_not_segfault():
+    """Check that Isolation Forest does not segfault with n_jobs=2
+
+    Non-regression test for #23252
+    """
+    X, _ = make_classification(n_samples=85_000, n_features=100, random_state=0)
+    X = csc_matrix(X)
+    IsolationForest(n_estimators=10, max_samples=256, n_jobs=2).fit(X)
