@@ -224,6 +224,6 @@ def test_mean_shift_zero_bandwidth(global_dtype):
     ms_nobinning = MeanShift(bin_seeding=False).fit(X)
     expected_labels = np.array([0, 0, 0, 1, 1, 1, 2, 2])
 
-    assert_allclose(v_measure_score(ms_binning.labels_, expected_labels), 1)
-    assert_allclose(v_measure_score(ms_nobinning.labels_, expected_labels), 1)
+    assert v_measure_score(ms_binning.labels_, expected_labels) == pytest.approx(1)
+    assert v_measure_score(ms_nobinning.labels_, expected_labels) == pytest.approx(1)
     assert_allclose(ms_binning.cluster_centers_, ms_nobinning.cluster_centers_)
