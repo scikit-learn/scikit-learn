@@ -17,7 +17,6 @@ from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _check_sample_weight
 from ..utils.validation import check_random_state
-from ..utils.validation import _is_arraylike_not_scalar
 from ..utils._param_validation import StrOptions
 
 
