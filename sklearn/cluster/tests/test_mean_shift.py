@@ -57,16 +57,18 @@ def test_mean_shift(
     global_dtype, bandwidth, cluster_all, expected, first_cluster_label
 ):
     # Test MeanShift algorithm
-    X_ = X.astype(global_dtype, copy=False)
+    X_with_global_dtype = X.astype(global_dtype, copy=False)
     ms = MeanShift(bandwidth=bandwidth, cluster_all=cluster_all)
-    labels = ms.fit(X_).labels_
+    labels = ms.fit(X_with_global_dtype).labels_
     labels_unique = np.unique(labels)
     n_clusters_ = len(labels_unique)
     assert n_clusters_ == expected
     assert labels_unique[0] == first_cluster_label
     assert ms.cluster_centers_.dtype == global_dtype
 
-    cluster_centers, labels_mean_shift = mean_shift(X_, cluster_all=cluster_all)
+    cluster_centers, labels_mean_shift = mean_shift(
+        X_with_global_dtype, cluster_all=cluster_all
+    )
     labels_mean_shift_unique = np.unique(labels_mean_shift)
     n_clusters_mean_shift = len(labels_mean_shift_unique)
     assert n_clusters_mean_shift == expected
@@ -117,9 +119,9 @@ def test_parallel(global_dtype):
 def test_meanshift_predict(global_dtype):
     # Test MeanShift.predict
     ms = MeanShift(bandwidth=1.2)
-    X_ = X.astype(global_dtype, copy=False)
-    labels = ms.fit_predict(X_)
-    labels2 = ms.predict(X_)
+    X_with_global_dtype = X.astype(global_dtype, copy=False)
+    labels = ms.fit_predict(X_with_global_dtype)
+    labels2 = ms.predict(X_with_global_dtype)
     assert_array_equal(labels, labels2)
 
 
@@ -207,11 +209,7 @@ def test_max_iter(max_iter):
 
 def test_mean_shift_zero_bandwidth(global_dtype):
     # Check that mean shift works when the estimated bandwidth is 0.
-    X = (
-        np.array([1, 1, 1, 2, 2, 2, 3, 3])
-        .reshape(-1, 1)
-        .astype(global_dtype, copy=False)
-    )
+    X = np.array([1, 1, 1, 2, 2, 2, 3, 3], dtype=global_dtype).reshape(-1, 1)
 
     # estimate_bandwidth with default args returns 0 on this dataset
     bandwidth = estimate_bandwidth(X)
