@@ -22,7 +22,17 @@ class UnsetMetadataPassedError(ValueError):
         requested.
 
     .. versionadded:: 1.2
+
+    Parameters
+    ----------
+    message : str
+        The message
     """
+
+    def __init__(self, message, unrequested_params, routed_params):
+        super().__init__(message)
+        self.unrequested_params = unrequested_params
+        self.routed_params = routed_params
 
 
 class NotFittedError(ValueError, AttributeError):

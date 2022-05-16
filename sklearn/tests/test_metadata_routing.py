@@ -867,11 +867,16 @@ def test_router_deprecation_warning():
             return (
                 MetadataRouter(owner=self.__class__.__name__)
                 .add(estimator=self.estimator, method_mapping="one-to-one")
-                .warn_on(child="estimator", methods=["fit"], raise_on="1.4")
+                .warn_on(
+                    child="estimator",
+                    method="fit",
+                    params=["sample_weight"],
+                    raise_on="1.4",
+                )
             )
 
     class Estimator(BaseEstimator):
-        def fit(self, X, y, sample_weight=None):
+        def fit(self, X, y, sample_weight=None, groups=None):
             return self
 
         def predict(self, X, sample_weight=None):
@@ -880,9 +885,19 @@ def test_router_deprecation_warning():
     est = MetaEstimator(estimator=Estimator())
     # the meta-estimator has est to have a warning on `fit`.
     with pytest.warns(
-        FutureWarning, match="From version 1.3 this results in the following error"
+        FutureWarning, match="From version 1.4 this results in the following error"
     ):
         est.fit(X, y, sample_weight=my_weights)
+
+    # we should raise because there is no warn_on for groups
+    with pytest.raises(
+        ValueError, match="sample_weight is passed but is not explicitly set"
+    ):
+        # the sample_weight should still warn
+        with pytest.warns(
+            FutureWarning, match="From version 1.4 this results in the following error"
+        ):
+            est.fit(X, y, sample_weight=my_weights, groups=1)
 
     # but predict should raise since there is no warn_on set for it.
     with pytest.raises(
@@ -898,7 +913,7 @@ def test_router_deprecation_warning():
         ValueError, match="sample_weight is passed but is not explicitly set"
     ):
         with pytest.warns(
-            FutureWarning, match="From version 1.3 this results in the following error"
+            FutureWarning, match="From version 1.4 this results in the following error"
         ):
             est.fit(X, y, sample_weight=my_weights)
 
@@ -910,7 +925,18 @@ def test_router_deprecation_warning():
                 MetadataRouter(owner=self.__class__.__name__)
                 .add_self(self)
                 .add(estimator=self.estimator, method_mapping="one-to-one")
-                .warn_on(child="estimator", methods=["fit", "score"], raise_on="1.3")
+                .warn_on(
+                    child="estimator",
+                    methods="fit",
+                    params=["sample_weight"],
+                    raise_on="1.4",
+                )
+                .warn_on(
+                    child="estimator",
+                    methods="score",
+                    params=["sample_weight"],
+                    raise_on="1.4",
+                )
             )
             return router
 
@@ -919,7 +945,7 @@ def test_router_deprecation_warning():
         estimator=WarningWeightedMetaRegressor(estimator=RegressorMetadata())
     )
     with pytest.warns(
-        FutureWarning, match="From version 1.3 this results in the following error"
+        FutureWarning, match="From version 1.4 this results in the following error"
     ):
         est.fit(X, y, sample_weight=my_weights)
 

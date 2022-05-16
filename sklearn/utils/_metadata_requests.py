@@ -307,6 +307,7 @@ class MethodMetadataRequest:
             corresponding method.
         """
         self._check_warnings(params=params)
+        unrequested = dict()
         params = {} if params is None else params
         args = {arg: value for arg, value in params.items() if value is not None}
         res = Bunch()
@@ -319,12 +320,19 @@ class MethodMetadataRequest:
             elif alias == RequestType.REQUESTED and prop in args:
                 res[prop] = args[prop]
             elif alias == RequestType.ERROR_IF_PASSED and prop in args:
-                raise UnsetMetadataPassedError(
-                    f"{prop} is passed but is not explicitly set as "
-                    f"requested or not for {self.owner}.{self.method}"
-                )
+                unrequested[prop] = args[prop]
             elif alias in args:
                 res[prop] = args[alias]
+        if unrequested:
+            raise UnsetMetadataPassedError(
+                message=(
+                    f"[{', '.join([key for key in unrequested])} are passed but is not"
+                    " explicitly set as requested or not for"
+                    f" {self.owner}.{self.method}"
+                ),
+                unrequested_params=unrequested,
+                routed_params=res,
+            )
         return res
 
     def _serialize(self):
@@ -861,9 +869,9 @@ class MetadataRouter:
             The routed parameters.
         """
         try:
-            res = router._route_params(params=params, method=method)
+            routed_params = router._route_params(params=params, method=method)
         except UnsetMetadataPassedError as e:
-            warn_on = self._warn_on.get(child, {"methods": [], "raise_on": "1.4"})
+            warn_on = self._warn_on.get(child, {})
             if method not in warn_on["methods"]:
                 # there is no warn_on set for this method of this child object,
                 # we raise as usual.
@@ -872,16 +880,30 @@ class MetadataRouter:
                 # the user has set at least one request value for this child
                 # object, but not for all of them. Therefore we raise as usual.
                 raise
-            # otherwise raise a FutureWarning
-            router = router._assume_requested()
-            res = router._route_params(params=params, method=method)
+            # now we move everything which has a warn_on flag from
+            # `unrequested_params` to routed_params, and then raise if anything
+            # is left. Otherwise we have a perfectly formed `routed_params` and
+            # we return that.
+            warn_on_params = warn_on.get(method, {"params": [], "raise_on": "1.4"})
+            warn_keys = list(e.unrequested_params.keys())
+            routed_params = e.routed_params
+            for param in warn_on_params["params"]:
+                if param in e.unrequested_params:
+                    routed_params[param] = e.unrequested_params.pop(param)
+
+            # check if anything is left, and if yes, we raise as usual
+            if e.unrequested_params:
+                raise
+
+            # Finally warn before returning the routed parameters.
             warn(
                 "You are passing metadata for which the request values are not"
-                f" explicitly set. From version {warn_on['raise_on']} this results in"
-                f" the following error: {str(e)}",
+                f" explicitly set: {', '.join(warn_keys)}. From version"
+                f" {warn_on_params['raise_on']} this results in the following error:"
+                f" {str(e)}",
                 FutureWarning,
             )
-        return res
+        return routed_params
 
     def validate_metadata(self, *, method, params):
         """Validate given metadata for a method.
@@ -913,7 +935,7 @@ class MetadataRouter:
                 "not requested metadata in any object."
             )
 
-    def warn_on(self, child, methods, raise_on="1.4"):
+    def warn_on(self, *, child, method, params, raise_on="1.4"):
         """Set where deprecation warnings on no set requests should occur.
 
         This method is used in meta-estimators during the transition period for
@@ -924,18 +946,23 @@ class MetadataRouter:
         this breaks backward compatibility for existing meta-estimators.
 
         Calling this method on a ``MetadataRouter`` object such as
-        ``warn_on(child='estimator', methods=['fit', 'score'])`` tells the
-        router to raise a ``FutureWarning`` instead of a ``ValueError`` if the
-        child object has no set requests.
+        ``warn_on(child='estimator', method='fit', params=['sample_weight'])``
+        tells the router to raise a ``FutureWarning`` instead of a
+        ``ValueError`` if the child object has no set requests for
+        ``sample_weight`` during ``fit``.
 
         Parameters
         ----------
         child : str
             The name of the child object.
 
-        methods : list of str
-            List of methods for which there should be a ``FutureWarning``
-            instead of a ``ValueError``.
+        method : str
+            The method for which there should be a ``FutureWarning``
+            instead of a ``ValueError`` for given params.
+
+        params : list of str
+            The list of parameters for which there should be a
+            ``FutureWarning`` instead of a ``ValueError``.
 
         raise_on : str, default="1.4"
             The version after which there should be an error. Used in the
@@ -946,7 +973,9 @@ class MetadataRouter:
         self : MetadataRouter
             Returns `self`.
         """
-        self._warn_on[child] = {"methods": methods, "raise_on": raise_on}
+        if child not in self._warn_on:
+            self._warn_on[child] = dict()
+        self._warn_on[child][method] = {"params": params, "raise_on": raise_on}
         return self
 
     def _serialize(self):
