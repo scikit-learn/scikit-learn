@@ -453,14 +453,11 @@ def test_importances():
         clf = Tree(random_state=0)
 
         clf.fit(X, y)
-        importances = clf.feature_importances_
-        n_important = np.sum(importances > 0.1)
+        if "Oblique" not in name:
+            importances = clf.feature_importances_
+            n_important = np.sum(importances > 0.1)
 
-        assert importances.shape[0] == 10, "Failed with {0}".format(name)
-        if "Oblique" in name:
-            # oblique trees can find multiple informative splits
-            assert n_important > 4, "Failed with {0}".format(name)
-        else:
+            assert importances.shape[0] == 10, "Failed with {0}".format(name)
             assert n_important == 4, "Failed with {0}".format(name)
 
     # Check on iris that importances are the same for all builders
@@ -1305,7 +1302,8 @@ def check_class_weights(name):
 
 @pytest.mark.parametrize("name", CLF_TREES)
 def test_class_weights(name):
-    check_class_weights(name)
+    if 'Oblique' not in name:
+        check_class_weights(name)
 
 
 def check_class_weight_errors(name):

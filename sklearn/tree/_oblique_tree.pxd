@@ -33,3 +33,4 @@ cdef class ObliqueTree(Tree):
 
     cpdef DTYPE_t compute_feature_value(self, object X, SIZE_t node_id)
     cpdef cnp.ndarray get_projection_matrix(self)
+    cpdef compute_feature_importances(self, normalize=*)
