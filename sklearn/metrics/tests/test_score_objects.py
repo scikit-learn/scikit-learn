@@ -75,6 +75,7 @@ REGRESSION_SCORERS = [
     "max_error",
     "neg_mean_poisson_deviance",
     "neg_mean_gamma_deviance",
+    "oob",
 ]
 
 CLF_SCORERS = [
@@ -106,6 +107,7 @@ CLF_SCORERS = [
     "roc_auc_ovr_weighted",
     "roc_auc_ovo_weighted",
     "matthews_corrcoef",
+    "oob",
 ]
 
 # All supervised cluster scorers (They behave like classification metric)
