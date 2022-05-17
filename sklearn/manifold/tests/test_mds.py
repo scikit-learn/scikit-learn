@@ -1,6 +1,6 @@
 import numpy as np
-import pytest
 from numpy.testing import assert_array_almost_equal
+import pytest
 
 from sklearn.manifold import _mds as mds
 

@@ -1,14 +1,13 @@
-import importlib
-import inspect
-import pkgutil
 import re
 from inspect import signature
+import pkgutil
+import inspect
+import importlib
 from typing import Optional
 
 import pytest
-
-import sklearn
 from sklearn.utils import all_estimators
+import sklearn
 
 numpydoc_validation = pytest.importorskip("numpydoc.validate")
 
@@ -328,8 +327,8 @@ def test_docstring(Estimator, method, request):
 
 
 if __name__ == "__main__":
-    import argparse
     import sys
+    import argparse
 
     parser = argparse.ArgumentParser(description="Validate docstring with numpydoc.")
     parser.add_argument("import_path", help="Import path to validate")

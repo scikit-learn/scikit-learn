@@ -21,11 +21,11 @@ Chen et al., IEEE Trans. on Sign. Proc., Volume 58, Issue 10, October 2010.
 
 """
 
-import matplotlib.pyplot as plt
 import numpy as np
-from scipy.linalg import cholesky, toeplitz
+import matplotlib.pyplot as plt
+from scipy.linalg import toeplitz, cholesky
 
-from sklearn.covariance import OAS, LedoitWolf
+from sklearn.covariance import LedoitWolf, OAS
 
 np.random.seed(0)
 # %%

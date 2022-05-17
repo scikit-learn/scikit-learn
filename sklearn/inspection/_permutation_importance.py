@@ -1,15 +1,15 @@
 """Permutation importance for estimators."""
 import numbers
-
 import numpy as np
-
 from joblib import Parallel
 
 from ..ensemble._bagging import _generate_indices
 from ..metrics import check_scoring
 from ..metrics._scorer import _check_multimetric_scoring, _MultimetricScorer
 from ..model_selection._validation import _aggregate_score_dicts
-from ..utils import Bunch, _safe_indexing, check_array, check_random_state
+from ..utils import Bunch, _safe_indexing
+from ..utils import check_random_state
+from ..utils import check_array
 from ..utils.fixes import delayed
 
 

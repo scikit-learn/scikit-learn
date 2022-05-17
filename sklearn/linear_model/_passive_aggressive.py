@@ -1,7 +1,9 @@
 # Authors: Rob Zinkov, Mathieu Blondel
 # License: BSD 3 clause
 
-from ._stochastic_gradient import DEFAULT_EPSILON, BaseSGDClassifier, BaseSGDRegressor
+from ._stochastic_gradient import BaseSGDClassifier
+from ._stochastic_gradient import BaseSGDRegressor
+from ._stochastic_gradient import DEFAULT_EPSILON
 
 
 class PassiveAggressiveClassifier(BaseSGDClassifier):

@@ -4,17 +4,20 @@
 #
 # TODO(1.3): remove file
 import numpy as np
-import pytest
-from numpy.testing import assert_allclose, assert_array_equal
+from numpy.testing import (
+    assert_allclose,
+    assert_array_equal,
+)
 from scipy.optimize import check_grad
+import pytest
 
 from sklearn._loss.glm_distribution import (
-    DistributionBoundary,
-    GammaDistribution,
-    InverseGaussianDistribution,
+    TweedieDistribution,
     NormalDistribution,
     PoissonDistribution,
-    TweedieDistribution,
+    GammaDistribution,
+    InverseGaussianDistribution,
+    DistributionBoundary,
 )
 
 

@@ -4,29 +4,29 @@
 # License: BSD 3 clause
 
 import copy
-import inspect
-import platform
-import re
 import warnings
 from collections import defaultdict
+import platform
+import inspect
+import re
 
 import numpy as np
 
 from . import __version__
 from ._config import get_config
 from .utils import _IS_32BIT
-from .utils._estimator_html_repr import estimator_html_repr
-from .utils._tags import _DEFAULT_TAGS
-from .utils.validation import (
-    _check_feature_names_in,
-    _check_y,
-    _generate_get_feature_names_out,
-    _get_feature_names,
-    _num_features,
-    check_array,
-    check_is_fitted,
-    check_X_y,
+from .utils._tags import (
+    _DEFAULT_TAGS,
 )
+from .utils.validation import check_X_y
+from .utils.validation import check_array
+from .utils.validation import _check_y
+from .utils.validation import _num_features
+from .utils.validation import _check_feature_names_in
+from .utils.validation import _generate_get_feature_names_out
+from .utils.validation import check_is_fitted
+from .utils._estimator_html_repr import estimator_html_repr
+from .utils.validation import _get_feature_names
 
 
 def clone(estimator, *, safe=True):

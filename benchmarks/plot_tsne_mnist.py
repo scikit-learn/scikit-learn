@@ -1,8 +1,9 @@
-import argparse
-import os.path as op
-
 import matplotlib.pyplot as plt
 import numpy as np
+import os.path as op
+
+import argparse
+
 
 LOG_DIR = "mnist_tsne_output"
 

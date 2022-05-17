@@ -100,7 +100,6 @@ matrix as a binary prediction (micro-averaging).
 #
 # We will use a Linear SVC classifier to differentiate two types of irises.
 import numpy as np
-
 from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split
 
@@ -195,7 +194,8 @@ y_score = classifier.decision_function(X_test)
 # %%
 # The average precision score in multi-label settings
 # ...................................................
-from sklearn.metrics import average_precision_score, precision_recall_curve
+from sklearn.metrics import precision_recall_curve
+from sklearn.metrics import average_precision_score
 
 # For each class
 precision = dict()
@@ -222,12 +222,11 @@ display = PrecisionRecallDisplay(
 display.plot()
 _ = display.ax_.set_title("Micro-averaged over all classes")
 
-from itertools import cycle
-
 # %%
 # Plot Precision-Recall curve for each class and iso-f1 curves
 # ............................................................
 import matplotlib.pyplot as plt
+from itertools import cycle
 
 # setup plot details
 colors = cycle(["navy", "turquoise", "darkorange", "cornflowerblue", "teal"])

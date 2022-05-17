@@ -2,19 +2,24 @@
 # Authors : Kemal Eren
 # License: BSD 3 clause
 
-import numbers
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
+import numbers
+
 from scipy.linalg import norm
 from scipy.sparse import dia_matrix, issparse
 from scipy.sparse.linalg import eigsh, svds
 
+from . import KMeans, MiniBatchKMeans
 from ..base import BaseEstimator, BiclusterMixin
-from ..utils import check_random_state, check_scalar
+from ..utils import check_random_state
+from ..utils import check_scalar
+
 from ..utils.extmath import make_nonnegative, randomized_svd, safe_sparse_dot
+
 from ..utils.validation import assert_all_finite
-from ._kmeans import KMeans, MiniBatchKMeans
+
 
 __all__ = ["SpectralCoclustering", "SpectralBiclustering"]
 

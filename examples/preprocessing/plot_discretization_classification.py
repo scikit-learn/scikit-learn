@@ -34,19 +34,20 @@ set.
 #
 # License: BSD 3 clause
 
-import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
-
-from sklearn.datasets import make_circles, make_classification, make_moons
-from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.exceptions import ConvergenceWarning
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.datasets import make_moons, make_circles, make_classification
 from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import GridSearchCV, train_test_split
+from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import KBinsDiscretizer, StandardScaler
+from sklearn.preprocessing import KBinsDiscretizer
 from sklearn.svm import SVC, LinearSVC
+from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.utils._testing import ignore_warnings
+from sklearn.exceptions import ConvergenceWarning
 
 h = 0.02  # step size in the mesh
 

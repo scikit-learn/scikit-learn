@@ -1,5 +1,4 @@
 import os
-
 import numpy
 
 from sklearn._build_utils import gen_from_templates

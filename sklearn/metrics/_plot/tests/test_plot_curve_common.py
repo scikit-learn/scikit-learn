@@ -1,14 +1,17 @@
 import pytest
 
-from sklearn.base import ClassifierMixin, clone
+from sklearn.base import ClassifierMixin
+from sklearn.base import clone
 from sklearn.compose import make_column_transformer
 from sklearn.datasets import load_iris
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import plot_det_curve, plot_roc_curve
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.tree import DecisionTreeClassifier
+
+from sklearn.metrics import plot_det_curve
+from sklearn.metrics import plot_roc_curve
 
 pytestmark = pytest.mark.filterwarnings(
     "ignore:Function plot_roc_curve is deprecated",

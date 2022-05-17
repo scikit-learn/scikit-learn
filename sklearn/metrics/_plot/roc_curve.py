@@ -1,7 +1,10 @@
-from ...utils import check_matplotlib_support, deprecated
-from .._base import _check_pos_label_consistency
-from .._ranking import auc, roc_curve
 from .base import _get_response
+
+from .. import auc
+from .. import roc_curve
+from .._base import _check_pos_label_consistency
+
+from ...utils import check_matplotlib_support, deprecated
 
 
 class RocCurveDisplay:

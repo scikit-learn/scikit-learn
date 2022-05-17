@@ -1,27 +1,31 @@
 import warnings
 
-import numpy as np
 import pytest
+import numpy as np
+
 from scipy import sparse
 
-from sklearn.base import clone
 from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import (
-    MaxAbsScaler,
-    MinMaxScaler,
-    PowerTransformer,
-    QuantileTransformer,
-    RobustScaler,
-    StandardScaler,
-    maxabs_scale,
-    minmax_scale,
-    power_transform,
-    quantile_transform,
-    robust_scale,
-    scale,
-)
-from sklearn.utils._testing import assert_allclose, assert_array_equal
+
+from sklearn.base import clone
+
+from sklearn.preprocessing import maxabs_scale
+from sklearn.preprocessing import minmax_scale
+from sklearn.preprocessing import scale
+from sklearn.preprocessing import power_transform
+from sklearn.preprocessing import quantile_transform
+from sklearn.preprocessing import robust_scale
+
+from sklearn.preprocessing import MaxAbsScaler
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import PowerTransformer
+from sklearn.preprocessing import QuantileTransformer
+from sklearn.preprocessing import RobustScaler
+
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_allclose
 
 iris = load_iris()
 

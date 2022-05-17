@@ -8,16 +8,16 @@ DBSCAN: Density-Based Spatial Clustering of Applications with Noise
 #
 # License: BSD 3 clause
 
+import numpy as np
 import numbers
 import warnings
-
-import numpy as np
 from scipy import sparse
 
-from ..base import BaseEstimator, ClusterMixin
-from ..neighbors import NearestNeighbors
 from ..utils import check_scalar
+from ..base import BaseEstimator, ClusterMixin
 from ..utils.validation import _check_sample_weight
+from ..neighbors import NearestNeighbors
+
 from ._dbscan_inner import dbscan_inner
 
 

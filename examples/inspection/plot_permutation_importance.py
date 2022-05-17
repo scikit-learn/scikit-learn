@@ -56,8 +56,6 @@ numerical_columns = ["age", "sibsp", "parch", "fare", "random_num"]
 X = X[categorical_columns + numerical_columns]
 X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, random_state=42)
 
-from sklearn.compose import ColumnTransformer
-
 # %%
 # We define a predictive model based on a random forest. Therefore, we will make
 # the following preprocessing steps:
@@ -68,6 +66,7 @@ from sklearn.compose import ColumnTransformer
 #   numerical features using a mean strategy.
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.impute import SimpleImputer
+from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OrdinalEncoder
 

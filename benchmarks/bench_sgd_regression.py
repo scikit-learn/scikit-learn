@@ -1,15 +1,16 @@
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 # License: BSD 3 clause
 
+import numpy as np
+import matplotlib.pyplot as plt
+
 import gc
+
 from time import time
 
-import matplotlib.pyplot as plt
-import numpy as np
-
-from sklearn.datasets import make_regression
-from sklearn.linear_model import ElasticNet, Ridge, SGDRegressor
+from sklearn.linear_model import Ridge, SGDRegressor, ElasticNet
 from sklearn.metrics import mean_squared_error
+from sklearn.datasets import make_regression
 
 """
 Benchmark for SGD regression

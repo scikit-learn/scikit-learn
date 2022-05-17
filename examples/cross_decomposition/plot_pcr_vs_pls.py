@@ -33,8 +33,6 @@ example, it does not suffer from the issue we just mentioned.
 
 """
 
-import matplotlib.pyplot as plt
-
 # %%
 # The data
 # --------
@@ -44,7 +42,7 @@ import matplotlib.pyplot as plt
 # components of this dataset, i.e. the two directions that explain the most
 # variance in the data.
 import numpy as np
-
+import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 
 rng = np.random.RandomState(0)
@@ -89,10 +87,6 @@ axes[1].set(xlabel="Projected data onto second PCA component", ylabel="y")
 plt.tight_layout()
 plt.show()
 
-from sklearn.cross_decomposition import PLSRegression
-from sklearn.decomposition import PCA
-from sklearn.linear_model import LinearRegression
-
 # %%
 # Projection on one component and predictive power
 # ------------------------------------------------
@@ -107,7 +101,10 @@ from sklearn.linear_model import LinearRegression
 # use as training data.
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
+from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+from sklearn.cross_decomposition import PLSRegression
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=rng)
 

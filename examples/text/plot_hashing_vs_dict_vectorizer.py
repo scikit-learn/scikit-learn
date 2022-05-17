@@ -19,9 +19,9 @@ for FeatureHasher is to be expected due to hash collisions.
 # Author: Lars Buitinck
 # License: BSD 3 clause
 
+from collections import defaultdict
 import re
 import sys
-from collections import defaultdict
 from time import time
 
 import numpy as np

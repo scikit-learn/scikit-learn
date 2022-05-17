@@ -30,18 +30,18 @@ What we can see that:
 
 """
 
-import numpy as np
 from matplotlib import pyplot as plt
+import numpy as np
 
 from sklearn.linear_model import (
-    HuberRegressor,
     LinearRegression,
-    RANSACRegressor,
     TheilSenRegressor,
+    RANSACRegressor,
+    HuberRegressor,
 )
 from sklearn.metrics import mean_squared_error
-from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import PolynomialFeatures
+from sklearn.pipeline import make_pipeline
 
 np.random.seed(42)
 

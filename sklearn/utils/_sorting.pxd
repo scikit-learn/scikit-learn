@@ -1,7 +1,6 @@
-from cython cimport floating
-
 from ._typedefs cimport DTYPE_t, ITYPE_t
 
+from cython cimport floating
 
 cdef int simultaneous_sort(
     floating *dist,

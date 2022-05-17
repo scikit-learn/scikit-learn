@@ -14,7 +14,6 @@ that our model achieves best performance when we select around 10% of features.
 # Load some data to play with
 # ---------------------------
 import numpy as np
-
 from sklearn.datasets import load_iris
 
 X, y = load_iris(return_X_y=True)
@@ -23,12 +22,11 @@ X, y = load_iris(return_X_y=True)
 rng = np.random.RandomState(0)
 X = np.hstack((X, 2 * rng.random((X.shape[0], 36))))
 
-from sklearn.feature_selection import SelectPercentile, chi2
-
 # %%
 # Create the pipeline
 # -------------------
 from sklearn.pipeline import Pipeline
+from sklearn.feature_selection import SelectPercentile, chi2
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
 
@@ -47,7 +45,6 @@ clf = Pipeline(
 # Plot the cross-validation score as a function of percentile of features
 # -----------------------------------------------------------------------
 import matplotlib.pyplot as plt
-
 from sklearn.model_selection import cross_val_score
 
 score_means = list()

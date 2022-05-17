@@ -52,24 +52,23 @@ Learning (2006), pp. 193-216
 Non-Parametric Function Induction in Semi-Supervised Learning. AISTAT 2005
 """
 
-import warnings
-
 # Authors: Clay Woolam <clay@woolam.org>
 #          Utkarsh Upadhyay <mail@musicallyut.in>
 # License: BSD
 from abc import ABCMeta, abstractmethod
 
+import warnings
 import numpy as np
 from scipy import sparse
 from scipy.sparse import csgraph
 
 from ..base import BaseEstimator, ClassifierMixin
-from ..exceptions import ConvergenceWarning
 from ..metrics.pairwise import rbf_kernel
 from ..neighbors import NearestNeighbors
 from ..utils.extmath import safe_sparse_dot
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
+from ..exceptions import ConvergenceWarning
 
 
 class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):

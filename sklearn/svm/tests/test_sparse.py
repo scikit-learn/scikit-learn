@@ -1,14 +1,16 @@
-import numpy as np
 import pytest
+
+import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 from scipy import sparse
 
-from sklearn import base, datasets, linear_model, svm
-from sklearn.datasets import load_digits, make_blobs, make_classification
-from sklearn.exceptions import ConvergenceWarning
+from sklearn import datasets, svm, linear_model, base
+from sklearn.datasets import make_classification, load_digits, make_blobs
 from sklearn.svm.tests import test_svm
-from sklearn.utils._testing import ignore_warnings, skip_if_32bit
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils.extmath import safe_sparse_dot
+from sklearn.utils._testing import ignore_warnings, skip_if_32bit
+
 
 # test sample 1
 X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]])

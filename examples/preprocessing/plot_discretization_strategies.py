@@ -20,11 +20,11 @@ The plot shows the regions where the discretized encoding is constant.
 # Author: Tom Dupré la Tour
 # License: BSD 3 clause
 
-import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.pyplot as plt
 
-from sklearn.datasets import make_blobs
 from sklearn.preprocessing import KBinsDiscretizer
+from sklearn.datasets import make_blobs
 
 strategies = ["uniform", "quantile", "kmeans"]
 

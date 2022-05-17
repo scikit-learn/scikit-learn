@@ -4,7 +4,7 @@
 
 from cython cimport floating
 from cython.parallel cimport parallel, prange
-from libc.stdlib cimport free, malloc
+from libc.stdlib cimport malloc, free
 
 
 def _minibatch_update_dense(

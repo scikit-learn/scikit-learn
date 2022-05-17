@@ -1,22 +1,21 @@
-import numpy as np
 import pytest
+import numpy as np
 from numpy.testing import assert_allclose
 
 from sklearn.base import BaseEstimator, ClassifierMixin
-from sklearn.compose import make_column_transformer
-from sklearn.datasets import load_breast_cancer, make_classification
-from sklearn.exceptions import NotFittedError
+from sklearn.metrics import plot_precision_recall_curve
+from sklearn.metrics import average_precision_score
+from sklearn.metrics import precision_recall_curve
+from sklearn.datasets import make_classification
+from sklearn.datasets import load_breast_cancer
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import (
-    average_precision_score,
-    plot_precision_recall_curve,
-    precision_recall_curve,
-)
 from sklearn.model_selection import train_test_split
+from sklearn.exceptions import NotFittedError
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import shuffle
+from sklearn.compose import make_column_transformer
 
 pytestmark = pytest.mark.filterwarnings(
     # TODO: Remove when https://github.com/numpy/numpy/issues/14397 is resolved

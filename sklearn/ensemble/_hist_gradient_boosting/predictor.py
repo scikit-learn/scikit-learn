@@ -5,12 +5,10 @@ This module contains the TreePredictor class which is used for prediction.
 
 import numpy as np
 
-from ._predictor import (
-    _compute_partial_dependence,
-    _predict_from_binned_data,
-    _predict_from_raw_data,
-)
 from .common import Y_DTYPE
+from ._predictor import _predict_from_raw_data
+from ._predictor import _predict_from_binned_data
+from ._predictor import _compute_partial_dependence
 
 
 class TreePredictor:

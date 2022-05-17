@@ -19,15 +19,15 @@ try:
 except ImportError:  # scipy < 1.4
     from scipy.fftpack import fft, ifft
 
-from .base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
-from .metrics.pairwise import KERNEL_PARAMS, pairwise_kernels
+from .base import BaseEstimator
+from .base import TransformerMixin
+from .base import _ClassNamePrefixFeaturesOutMixin
 from .utils import check_random_state
 from .utils.extmath import safe_sparse_dot
-from .utils.validation import (
-    _check_feature_names_in,
-    check_is_fitted,
-    check_non_negative,
-)
+from .utils.validation import check_is_fitted
+from .utils.validation import _check_feature_names_in
+from .metrics.pairwise import pairwise_kernels, KERNEL_PARAMS
+from .utils.validation import check_non_negative
 
 
 class PolynomialCountSketch(

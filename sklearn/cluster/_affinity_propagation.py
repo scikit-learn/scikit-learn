@@ -10,12 +10,14 @@ import warnings
 
 import numpy as np
 
-from .._config import config_context
-from ..base import BaseEstimator, ClusterMixin
 from ..exceptions import ConvergenceWarning
-from ..metrics import euclidean_distances, pairwise_distances_argmin
-from ..utils import as_float_array, check_random_state, check_scalar
+from ..base import BaseEstimator, ClusterMixin
+from ..utils import as_float_array, check_random_state
+from ..utils import check_scalar
 from ..utils.validation import check_is_fitted
+from ..metrics import euclidean_distances
+from ..metrics import pairwise_distances_argmin
+from .._config import config_context
 
 
 def _equal_similarities_and_preferences(S, preference):

@@ -38,10 +38,11 @@ memory usage and prediction latency.
 
 import time
 
-import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.pyplot as plt
 
-from sklearn import datasets, ensemble
+from sklearn import ensemble
+from sklearn import datasets
 from sklearn.model_selection import train_test_split
 
 data_list = [

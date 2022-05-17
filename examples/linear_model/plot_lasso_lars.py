@@ -14,10 +14,11 @@ of the regularization parameter.
 #         Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # License: BSD 3 clause
 
-import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.pyplot as plt
 
-from sklearn import datasets, linear_model
+from sklearn import linear_model
+from sklearn import datasets
 
 X, y = datasets.load_diabetes(return_X_y=True)
 

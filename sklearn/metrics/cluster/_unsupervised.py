@@ -10,9 +10,12 @@ import functools
 
 import numpy as np
 
+from ...utils import check_random_state
+from ...utils import check_X_y
+from ...utils import _safe_indexing
+from ..pairwise import pairwise_distances_chunked
+from ..pairwise import pairwise_distances
 from ...preprocessing import LabelEncoder
-from ...utils import _safe_indexing, check_random_state, check_X_y
-from ..pairwise import pairwise_distances, pairwise_distances_chunked
 
 
 def check_number_of_labels(n_labels, n_samples):

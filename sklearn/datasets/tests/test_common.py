@@ -2,8 +2,8 @@
 import inspect
 import os
 
-import numpy as np
 import pytest
+import numpy as np
 
 import sklearn.datasets
 

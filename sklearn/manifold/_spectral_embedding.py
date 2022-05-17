@@ -10,17 +10,21 @@ import warnings
 import numpy as np
 from scipy import sparse
 from scipy.linalg import eigh
+from scipy.sparse.linalg import eigsh
 from scipy.sparse.csgraph import connected_components
 from scipy.sparse.csgraph import laplacian as csgraph_laplacian
-from scipy.sparse.linalg import eigsh
 
 from ..base import BaseEstimator
-from ..metrics.pairwise import rbf_kernel
-from ..neighbors import NearestNeighbors, kneighbors_graph
-from ..utils import check_array, check_random_state, check_symmetric
+from ..utils import (
+    check_array,
+    check_random_state,
+    check_symmetric,
+)
 from ..utils._arpack import _init_arpack_v0
 from ..utils.extmath import _deterministic_vector_sign_flip
 from ..utils.fixes import lobpcg
+from ..metrics.pairwise import rbf_kernel
+from ..neighbors import kneighbors_graph, NearestNeighbors
 
 
 def _graph_connected_component(graph, node_id):

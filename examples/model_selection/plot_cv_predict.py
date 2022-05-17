@@ -9,10 +9,10 @@ errors.
 
 """
 
-import matplotlib.pyplot as plt
-
-from sklearn import datasets, linear_model
+from sklearn import datasets
 from sklearn.model_selection import cross_val_predict
+from sklearn import linear_model
+import matplotlib.pyplot as plt
 
 lr = linear_model.LinearRegression()
 X, y = datasets.load_diabetes(return_X_y=True)

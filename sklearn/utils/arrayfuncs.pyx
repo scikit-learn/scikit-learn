@@ -4,15 +4,13 @@ Small collection of auxiliary functions that operate on arrays
 """
 
 cimport numpy as np
-
-import numpy as np
-
+import  numpy as np
 cimport cython
 from cython cimport floating
-from libc.float cimport DBL_MAX, FLT_MAX
 from libc.math cimport fabs
+from libc.float cimport DBL_MAX, FLT_MAX
 
-from ._cython_blas cimport _copy, _rot, _rotg
+from ._cython_blas cimport _copy, _rotg, _rot
 
 ctypedef np.float64_t DOUBLE
 
@@ -56,7 +54,7 @@ def cholesky_delete(np.ndarray[floating, ndim=2] L, int go_out):
       floating c, s
       floating *L1
       int i
-
+   
    if floating is float:
       m /= sizeof(float)
    else:

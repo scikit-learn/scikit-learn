@@ -26,19 +26,17 @@ import numpy as np
 from scipy.sparse import csr_matrix
 from scipy.stats import rankdata
 
+from ..utils import assert_all_finite
+from ..utils import check_consistent_length
+from ..utils.validation import _check_sample_weight
+from ..utils import column_or_1d, check_array
+from ..utils.multiclass import type_of_target
+from ..utils.extmath import stable_cumsum
+from ..utils.sparsefuncs import count_nonzero
 from ..exceptions import UndefinedMetricWarning
 from ..preprocessing import label_binarize
-from ..utils import (
-    assert_all_finite,
-    check_array,
-    check_consistent_length,
-    column_or_1d,
-)
 from ..utils._encode import _encode, _unique
-from ..utils.extmath import stable_cumsum
-from ..utils.multiclass import type_of_target
-from ..utils.sparsefuncs import count_nonzero
-from ..utils.validation import _check_sample_weight
+
 from ._base import (
     _average_binary_score,
     _average_multiclass_ovo_score,

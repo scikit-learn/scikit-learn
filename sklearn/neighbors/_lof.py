@@ -2,15 +2,16 @@
 #          Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
 # License: BSD 3 clause
 
+import numpy as np
 import warnings
 
-import numpy as np
-
+from ._base import NeighborsBase
+from ._base import KNeighborsMixin
 from ..base import OutlierMixin
-from ..utils import check_array
+
 from ..utils.metaestimators import available_if
 from ..utils.validation import check_is_fitted
-from ._base import KNeighborsMixin, NeighborsBase
+from ..utils import check_array
 
 __all__ = ["LocalOutlierFactor"]
 

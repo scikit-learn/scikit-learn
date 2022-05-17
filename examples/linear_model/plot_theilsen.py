@@ -39,11 +39,10 @@ it then works on a random subset.
 # License: BSD 3 clause
 
 import time
-
-import matplotlib.pyplot as plt
 import numpy as np
-
-from sklearn.linear_model import LinearRegression, RANSACRegressor, TheilSenRegressor
+import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression, TheilSenRegressor
+from sklearn.linear_model import RANSACRegressor
 
 estimators = [
     ("OLS", LinearRegression()),

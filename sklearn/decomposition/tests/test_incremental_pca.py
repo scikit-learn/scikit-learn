@@ -1,18 +1,17 @@
 """Tests for Incremental PCA."""
-import warnings
-
 import numpy as np
 import pytest
+import warnings
+
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_allclose_dense_sparse
 from numpy.testing import assert_array_equal
-from scipy import sparse
 
 from sklearn import datasets
 from sklearn.decomposition import PCA, IncrementalPCA
-from sklearn.utils._testing import (
-    assert_allclose_dense_sparse,
-    assert_almost_equal,
-    assert_array_almost_equal,
-)
+
+from scipy import sparse
 
 iris = datasets.load_iris()
 

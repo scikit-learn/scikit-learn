@@ -19,20 +19,21 @@ optimization.
 # Note: this module is strongly inspired by the kernel module of the george
 #       package.
 
-import math
-import warnings
 from abc import ABCMeta, abstractmethod
 from collections import namedtuple
+import math
 from inspect import signature
 
 import numpy as np
-from scipy.spatial.distance import cdist, pdist, squareform
-from scipy.special import gamma, kv
+from scipy.special import kv, gamma
+from scipy.spatial.distance import pdist, cdist, squareform
 
-from ..base import clone
-from ..exceptions import ConvergenceWarning
 from ..metrics.pairwise import pairwise_kernels
+from ..base import clone
 from ..utils.validation import _num_samples
+from ..exceptions import ConvergenceWarning
+
+import warnings
 
 
 def _check_length_scale(X, length_scale):

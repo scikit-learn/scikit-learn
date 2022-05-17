@@ -1,7 +1,6 @@
+import numpy
 import os
 import platform
-
-import numpy
 
 
 def configuration(parent_package="", top_path=None):

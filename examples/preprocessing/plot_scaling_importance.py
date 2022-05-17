@@ -43,13 +43,13 @@ which is scaled before PCA vastly outperforms the unscaled version.
 """
 import matplotlib.pyplot as plt
 
-from sklearn.datasets import load_wine
-from sklearn.decomposition import PCA
-from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
-from sklearn.naive_bayes import GaussianNB
-from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+from sklearn.naive_bayes import GaussianNB
+from sklearn.metrics import accuracy_score
+from sklearn.datasets import load_wine
+from sklearn.pipeline import make_pipeline
 
 # Code source: Tyler Lanigan <tylerlanigan@gmail.com>
 #              Sebastian Raschka <mail@sebastianraschka.com>

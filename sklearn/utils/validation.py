@@ -9,24 +9,26 @@
 #          Sylvain Marie
 # License: BSD 3 clause
 
+from functools import wraps
+import warnings
 import numbers
 import operator
-import warnings
-from contextlib import suppress
-from functools import wraps
-from inspect import Parameter, isclass, signature
 
 import numpy as np
 import scipy.sparse as sp
+from inspect import signature, isclass, Parameter
 
 # mypy error: Module 'numpy.core.numeric' has no attribute 'ComplexWarning'
 from numpy.core.numeric import ComplexWarning  # type: ignore
-
 import joblib
 
-from .. import get_config as _get_config
-from ..exceptions import DataConversionWarning, NotFittedError, PositiveSpectrumWarning
+from contextlib import suppress
+
 from .fixes import _object_dtype_isnan
+from .. import get_config as _get_config
+from ..exceptions import PositiveSpectrumWarning
+from ..exceptions import NotFittedError
+from ..exceptions import DataConversionWarning
 
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 
@@ -580,9 +582,9 @@ def _pandas_dtype_needs_early_conversion(pd_dtype):
     # Check these early for pandas versions without extension dtypes
     from pandas.api.types import (
         is_bool_dtype,
+        is_sparse,
         is_float_dtype,
         is_integer_dtype,
-        is_sparse,
     )
 
     if is_bool_dtype(pd_dtype):

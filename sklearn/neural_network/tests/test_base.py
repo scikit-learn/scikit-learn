@@ -1,7 +1,8 @@
-import numpy as np
 import pytest
+import numpy as np
 
-from sklearn.neural_network._base import binary_log_loss, log_loss
+from sklearn.neural_network._base import binary_log_loss
+from sklearn.neural_network._base import log_loss
 
 
 def test_binary_log_loss_1_prob_finite():

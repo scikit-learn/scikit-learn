@@ -10,15 +10,14 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import os
-import re
 import sys
+import os
 import warnings
+import re
 from datetime import datetime
-from io import StringIO
-from pathlib import Path
-
 from packaging.version import parse
+from pathlib import Path
+from io import StringIO
 
 # If extensions (or modules to document with autodoc) are in another
 # directory, add these directories to sys.path here. If the directory
@@ -26,8 +25,8 @@ from packaging.version import parse
 # absolute, like shown here.
 sys.path.insert(0, os.path.abspath("sphinxext"))
 
-import sphinx_gallery
 from github_link import make_linkcode_resolve
+import sphinx_gallery
 from sphinx_gallery.sorting import ExampleTitleSortKey
 
 # -- General configuration ---------------------------------------------------
@@ -414,8 +413,8 @@ carousel_thumbs = {"sphx_glr_plot_classifier_comparison_001.png": 600}
 
 # enable experimental module so that experimental estimators can be
 # discovered properly by sphinx
-from sklearn.experimental import enable_halving_search_cv  # noqa
 from sklearn.experimental import enable_iterative_imputer  # noqa
+from sklearn.experimental import enable_halving_search_cv  # noqa
 
 
 def make_carousel_thumbs(app, exception):

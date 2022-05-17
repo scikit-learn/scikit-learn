@@ -1,12 +1,11 @@
+import numpy as np
 import warnings
 
-import numpy as np
-
-from ..base import BaseEstimator, OutlierMixin, RegressorMixin
-from ..linear_model._base import LinearClassifierMixin, LinearModel, SparseCoefMixin
-from ..utils.multiclass import check_classification_targets
+from ._base import _fit_liblinear, BaseSVC, BaseLibSVM
+from ..base import BaseEstimator, RegressorMixin, OutlierMixin
+from ..linear_model._base import LinearClassifierMixin, SparseCoefMixin, LinearModel
 from ..utils.validation import _num_samples
-from ._base import BaseLibSVM, BaseSVC, _fit_liblinear
+from ..utils.multiclass import check_classification_targets
 
 
 class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):

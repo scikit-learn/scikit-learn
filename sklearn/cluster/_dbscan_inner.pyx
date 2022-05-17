@@ -2,8 +2,8 @@
 # Author: Lars Buitinck
 # License: 3-clause BSD
 
-cimport numpy as cnp
 from libcpp.vector cimport vector
+cimport numpy as cnp
 
 cnp.import_array()
 

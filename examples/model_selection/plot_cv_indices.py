@@ -12,20 +12,19 @@ for comparison.
 
 """
 
-import matplotlib.pyplot as plt
-import numpy as np
-from matplotlib.patches import Patch
-
 from sklearn.model_selection import (
-    GroupKFold,
-    GroupShuffleSplit,
+    TimeSeriesSplit,
     KFold,
     ShuffleSplit,
-    StratifiedGroupKFold,
     StratifiedKFold,
+    GroupShuffleSplit,
+    GroupKFold,
     StratifiedShuffleSplit,
-    TimeSeriesSplit,
+    StratifiedGroupKFold,
 )
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.patches import Patch
 
 rng = np.random.RandomState(1338)
 cmap_data = plt.cm.Paired

@@ -1,25 +1,26 @@
 import sys
-from io import StringIO
 
 import numpy as np
-import pytest
-from numpy.testing import assert_array_equal
 from scipy.linalg import block_diag
 from scipy.sparse import csr_matrix
 from scipy.special import psi
+from numpy.testing import assert_array_equal
+
+import pytest
 
 from sklearn.decomposition import LatentDirichletAllocation
 from sklearn.decomposition._lda import (
     _dirichlet_expectation_1d,
     _dirichlet_expectation_2d,
 )
+
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import if_safe_multiprocessing_with_blas
+
 from sklearn.exceptions import NotFittedError
-from sklearn.utils._testing import (
-    assert_allclose,
-    assert_almost_equal,
-    assert_array_almost_equal,
-    if_safe_multiprocessing_with_blas,
-)
+from io import StringIO
 
 
 def _build_sparse_mtx():

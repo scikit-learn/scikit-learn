@@ -8,21 +8,15 @@
 #
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
 
-import warnings
-
 import numpy as np
 from scipy import stats
-
-from ..base import ClassifierMixin
 from ..utils.extmath import weighted_mode
 from ..utils.validation import _is_arraylike, _num_samples
-from ._base import (
-    KNeighborsMixin,
-    NeighborsBase,
-    RadiusNeighborsMixin,
-    _check_weights,
-    _get_weights,
-)
+
+import warnings
+from ._base import _check_weights, _get_weights
+from ._base import NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin
+from ..base import ClassifierMixin
 
 
 class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):

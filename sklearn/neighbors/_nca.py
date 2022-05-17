@@ -6,23 +6,21 @@ Neighborhood Component Analysis
 #          John Chiotellis <ioannis.chiotellis@in.tum.de>
 # License: BSD 3 clause
 
-import numbers
+from warnings import warn
+import numpy as np
 import sys
 import time
-from warnings import warn
-
-import numpy as np
+import numbers
 from scipy.optimize import minimize
-
-from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
-from ..decomposition import PCA
-from ..exceptions import ConvergenceWarning
-from ..metrics import pairwise_distances
-from ..preprocessing import LabelEncoder
 from ..utils.extmath import softmax
+from ..metrics import pairwise_distances
+from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
+from ..preprocessing import LabelEncoder
+from ..decomposition import PCA
 from ..utils.multiclass import check_classification_targets
 from ..utils.random import check_random_state
-from ..utils.validation import check_array, check_is_fitted, check_scalar
+from ..utils.validation import check_is_fitted, check_array, check_scalar
+from ..exceptions import ConvergenceWarning
 
 
 class NeighborhoodComponentsAnalysis(

@@ -26,14 +26,14 @@ dimensional data.
 
 import time
 import warnings
-from itertools import cycle, islice
 
-import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.pyplot as plt
 
 from sklearn import cluster, datasets, mixture
 from sklearn.neighbors import kneighbors_graph
 from sklearn.preprocessing import StandardScaler
+from itertools import cycle, islice
 
 np.random.seed(0)
 

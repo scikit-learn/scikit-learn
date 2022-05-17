@@ -3,13 +3,15 @@
 # Author: Nicolas Hug
 
 cimport cython
-
-import numpy as np
 from cython.parallel import prange
 
-from .common import HISTOGRAM_DTYPE
+import numpy as np
 
-from .common cimport G_H_DTYPE_C, X_BINNED_DTYPE_C, hist_struct
+from .common import HISTOGRAM_DTYPE
+from .common cimport hist_struct
+from .common cimport X_BINNED_DTYPE_C
+from .common cimport G_H_DTYPE_C
+
 
 # Notes:
 # - IN views are read-only, OUT views are write-only
@@ -178,7 +180,7 @@ cdef class HistogramBuilder:
             unsigned char hessians_are_constant = \
                 self.hessians_are_constant
             unsigned int bin_idx = 0
-
+        
         for bin_idx in range(self.n_bins):
             histograms[feature_idx, bin_idx].sum_gradients = 0.
             histograms[feature_idx, bin_idx].sum_hessians = 0.

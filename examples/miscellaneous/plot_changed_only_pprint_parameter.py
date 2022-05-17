@@ -11,8 +11,9 @@ values. This can be used to have more compact representations.
 
 """
 
-from sklearn import set_config
 from sklearn.linear_model import LogisticRegression
+from sklearn import set_config
+
 
 lr = LogisticRegression(penalty="l1")
 print("Default representation:")

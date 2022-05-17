@@ -9,15 +9,14 @@ extract features from images.
 #          Vlad Niculae
 # License: BSD 3 clause
 
-import numbers
 from itertools import product
-
+import numbers
 import numpy as np
-from numpy.lib.stride_tricks import as_strided
 from scipy import sparse
+from numpy.lib.stride_tricks import as_strided
 
-from ..base import BaseEstimator
 from ..utils import check_array, check_random_state
+from ..base import BaseEstimator
 
 __all__ = [
     "PatchExtractor",

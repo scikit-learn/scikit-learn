@@ -1,21 +1,21 @@
-import warnings
-
 import numpy as np
-import pytest
-from numpy.testing import assert_allclose
 from scipy.stats.mstats import mquantiles
 
-from sklearn.datasets import (
-    load_diabetes,
-    load_iris,
-    make_classification,
-    make_regression,
-)
-from sklearn.ensemble import GradientBoostingClassifier, GradientBoostingRegressor
-from sklearn.inspection import PartialDependenceDisplay
-from sklearn.inspection import plot_partial_dependence as plot_partial_dependence_func
+import pytest
+from numpy.testing import assert_allclose
+import warnings
+
+from sklearn.datasets import load_diabetes
+from sklearn.datasets import load_iris
+from sklearn.datasets import make_classification, make_regression
+from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.linear_model import LinearRegression
 from sklearn.utils._testing import _convert_container
+
+from sklearn.inspection import plot_partial_dependence as plot_partial_dependence_func
+from sklearn.inspection import PartialDependenceDisplay
+
 
 # TODO: Remove when https://github.com/numpy/numpy/issues/14397 is resolved
 pytestmark = pytest.mark.filterwarnings(

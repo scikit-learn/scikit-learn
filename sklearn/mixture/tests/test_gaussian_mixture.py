@@ -2,40 +2,39 @@
 #         Thierry Guillemot <thierry.guillemot.work@gmail.com>
 # License: BSD 3 clause
 
-import copy
 import itertools
 import re
 import sys
+import copy
 import warnings
-from io import StringIO
+import pytest
 
 import numpy as np
-import pytest
-from scipy import linalg, stats
+from scipy import stats, linalg
 
 from sklearn.cluster import KMeans
 from sklearn.covariance import EmpiricalCovariance
 from sklearn.datasets import make_spd_matrix
-from sklearn.exceptions import ConvergenceWarning, NotFittedError
+from io import StringIO
 from sklearn.metrics.cluster import adjusted_rand_score
 from sklearn.mixture import GaussianMixture
 from sklearn.mixture._gaussian_mixture import (
-    _compute_log_det_cholesky,
-    _compute_precision_cholesky,
-    _estimate_gaussian_covariances_diag,
     _estimate_gaussian_covariances_full,
-    _estimate_gaussian_covariances_spherical,
     _estimate_gaussian_covariances_tied,
+    _estimate_gaussian_covariances_diag,
+    _estimate_gaussian_covariances_spherical,
     _estimate_gaussian_parameters,
+    _compute_precision_cholesky,
+    _compute_log_det_cholesky,
 )
-from sklearn.utils._testing import (
-    assert_allclose,
-    assert_almost_equal,
-    assert_array_almost_equal,
-    assert_array_equal,
-    ignore_warnings,
-)
+from sklearn.exceptions import ConvergenceWarning, NotFittedError
 from sklearn.utils.extmath import fast_logdet
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import ignore_warnings
+
 
 COVARIANCE_TYPE = ["full", "tied", "diag", "spherical"]
 

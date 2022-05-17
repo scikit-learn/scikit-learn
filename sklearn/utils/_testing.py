@@ -10,25 +10,27 @@
 #          Giorgio Patrini
 #          Thierry Guillemot
 # License: BSD 3 clause
-import atexit
-import contextlib
-import functools
-import inspect
 import os
 import os.path as op
-import re
-import shutil
-import sys
-import tempfile
-import unittest
+import inspect
 import warnings
+import sys
+import functools
+import tempfile
+from subprocess import check_output, STDOUT, CalledProcessError
+from subprocess import TimeoutExpired
+import re
+import contextlib
 from collections.abc import Iterable
-from functools import wraps
-from inspect import signature
-from subprocess import STDOUT, CalledProcessError, TimeoutExpired, check_output
-from unittest import TestCase
 
 import scipy as sp
+from functools import wraps
+from inspect import signature
+
+import shutil
+import atexit
+import unittest
+from unittest import TestCase
 
 # WindowsError only exist on Windows
 try:
@@ -36,26 +38,29 @@ try:
 except NameError:
     WindowsError = None
 
-import numpy as np
 from numpy.testing import assert_allclose as np_assert_allclose
-from numpy.testing import (
-    assert_almost_equal,
-    assert_approx_equal,
-    assert_array_almost_equal,
-    assert_array_equal,
-    assert_array_less,
-)
-
+from numpy.testing import assert_almost_equal
+from numpy.testing import assert_approx_equal
+from numpy.testing import assert_array_equal
+from numpy.testing import assert_array_almost_equal
+from numpy.testing import assert_array_less
+import numpy as np
 import joblib
+
 import sklearn
 from sklearn.utils import (
-    _IS_32BIT,
     IS_PYPY,
-    _in_unstable_openblas_configuration,
+    _IS_32BIT,
     deprecated,
+    _in_unstable_openblas_configuration,
 )
 from sklearn.utils.multiclass import check_classification_targets
-from sklearn.utils.validation import check_array, check_is_fitted, check_X_y
+from sklearn.utils.validation import (
+    check_array,
+    check_is_fitted,
+    check_X_y,
+)
+
 
 __all__ = [
     "assert_raises",

@@ -1,8 +1,14 @@
 import numpy as np
-import pytest
 from numpy.testing import assert_allclose, assert_array_equal
+import pytest
 
-from sklearn._loss.link import _LINKS, Interval, MultinomialLogit, _inclusive_low_high
+from sklearn._loss.link import (
+    _LINKS,
+    _inclusive_low_high,
+    MultinomialLogit,
+    Interval,
+)
+
 
 LINK_FUNCTIONS = list(_LINKS.values())
 

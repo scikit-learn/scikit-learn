@@ -3,11 +3,11 @@ Plot the scaling of the nearest neighbors algorithms with k, D, and N
 """
 from time import time
 
-import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.pyplot as plt
 from matplotlib import ticker
 
-from sklearn import datasets, neighbors
+from sklearn import neighbors, datasets
 
 
 def get_data(N, D, dataset="dense"):

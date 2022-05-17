@@ -3,14 +3,14 @@ Benchmarks for sampling without replacement of integer.
 
 """
 import gc
-import operator
-import optparse
-import random
 import sys
+import optparse
 from datetime import datetime
+import operator
 
 import matplotlib.pyplot as plt
 import numpy as np
+import random
 
 from sklearn.utils.random import sample_without_replacement
 

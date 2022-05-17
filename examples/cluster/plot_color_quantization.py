@@ -26,15 +26,13 @@ randomly) is also shown.
 #
 # License: BSD 3 clause
 
-from time import time
-
-import matplotlib.pyplot as plt
 import numpy as np
-
+import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
-from sklearn.datasets import load_sample_image
 from sklearn.metrics import pairwise_distances_argmin
+from sklearn.datasets import load_sample_image
 from sklearn.utils import shuffle
+from time import time
 
 n_colors = 64
 

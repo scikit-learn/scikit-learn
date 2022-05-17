@@ -18,51 +18,51 @@ ground truth labeling (or ``None`` in the case of unsupervised models).
 #          Arnaud Joly <arnaud.v.joly@gmail.com>
 # License: Simplified BSD
 
-import copy
-import warnings
-from collections import Counter
 from collections.abc import Iterable
 from functools import partial
+from collections import Counter
 
 import numpy as np
+import copy
+import warnings
 
-from ..base import is_regressor
-from ..utils.multiclass import type_of_target
 from . import (
-    accuracy_score,
-    average_precision_score,
-    balanced_accuracy_score,
-    brier_score_loss,
-    explained_variance_score,
-    f1_score,
-    jaccard_score,
-    log_loss,
-    matthews_corrcoef,
+    r2_score,
+    median_absolute_error,
     max_error,
     mean_absolute_error,
-    mean_absolute_percentage_error,
-    mean_gamma_deviance,
-    mean_poisson_deviance,
     mean_squared_error,
     mean_squared_log_error,
-    median_absolute_error,
-    precision_score,
-    r2_score,
-    recall_score,
-    roc_auc_score,
+    mean_poisson_deviance,
+    mean_gamma_deviance,
+    accuracy_score,
     top_k_accuracy_score,
+    f1_score,
+    roc_auc_score,
+    average_precision_score,
+    precision_score,
+    recall_score,
+    log_loss,
+    balanced_accuracy_score,
+    explained_variance_score,
+    brier_score_loss,
+    jaccard_score,
+    mean_absolute_percentage_error,
+    matthews_corrcoef,
 )
-from .cluster import (
-    adjusted_mutual_info_score,
-    adjusted_rand_score,
-    completeness_score,
-    fowlkes_mallows_score,
-    homogeneity_score,
-    mutual_info_score,
-    normalized_mutual_info_score,
-    rand_score,
-    v_measure_score,
-)
+
+from .cluster import adjusted_rand_score
+from .cluster import rand_score
+from .cluster import homogeneity_score
+from .cluster import completeness_score
+from .cluster import v_measure_score
+from .cluster import mutual_info_score
+from .cluster import adjusted_mutual_info_score
+from .cluster import normalized_mutual_info_score
+from .cluster import fowlkes_mallows_score
+
+from ..utils.multiclass import type_of_target
+from ..base import is_regressor
 
 
 def _cached_call(cache, estimator, method, *args, **kwargs):

@@ -23,11 +23,13 @@ feature extraction.
 # linear shifts of 1 pixel in each direction.
 
 import numpy as np
+
 from scipy.ndimage import convolve
 
 from sklearn import datasets
-from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import minmax_scale
+
+from sklearn.model_selection import train_test_split
 
 
 def nudge_dataset(X, Y):

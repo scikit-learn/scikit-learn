@@ -1,11 +1,12 @@
 import numpy as np
-import pytest
 import scipy.sparse as sp
+import pytest
 
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils import check_random_state
 from sklearn.datasets import load_iris
 from sklearn.linear_model import Perceptron
-from sklearn.utils import check_random_state
-from sklearn.utils._testing import assert_allclose, assert_array_almost_equal
 
 iris = load_iris()
 random_state = check_random_state(12)

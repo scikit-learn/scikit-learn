@@ -8,16 +8,15 @@ Here are implemented estimators that are resistant to outliers.
 #
 # License: BSD 3 clause
 
-import numbers
 import warnings
-
+import numbers
 import numpy as np
 from scipy import linalg
 from scipy.stats import chi2
 
-from ..utils import check_array, check_random_state
+from . import empirical_covariance, EmpiricalCovariance
 from ..utils.extmath import fast_logdet
-from ._empirical_covariance import EmpiricalCovariance, empirical_covariance
+from ..utils import check_random_state, check_array
 
 
 # Minimum Covariance Determinant

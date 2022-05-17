@@ -14,31 +14,31 @@ Generalized Linear Models.
 #         Maria Telenczuk <https://github.com/maikia>
 # License: BSD 3 clause
 
+from abc import ABCMeta, abstractmethod
 import numbers
 import warnings
-from abc import ABCMeta, abstractmethod
 
 import numpy as np
 import scipy.sparse as sp
-from scipy import linalg, optimize, sparse
+from scipy import linalg
+from scipy import optimize
+from scipy import sparse
 from scipy.sparse.linalg import lsqr
 from scipy.special import expit
-
 from joblib import Parallel
 
-from ..base import BaseEstimator, ClassifierMixin, MultiOutputMixin, RegressorMixin
+from ..base import BaseEstimator, ClassifierMixin, RegressorMixin, MultiOutputMixin
 from ..preprocessing._data import _is_constant_feature
-from ..utils import check_array, check_random_state
-from ..utils._seq_dataset import (
-    ArrayDataset32,
-    ArrayDataset64,
-    CSRDataset32,
-    CSRDataset64,
-)
-from ..utils.extmath import _incremental_mean_and_var, safe_sparse_dot
+from ..utils import check_array
+from ..utils.validation import FLOAT_DTYPES
+from ..utils import check_random_state
+from ..utils.extmath import safe_sparse_dot
+from ..utils.extmath import _incremental_mean_and_var
+from ..utils.sparsefuncs import mean_variance_axis, inplace_column_scale
+from ..utils._seq_dataset import ArrayDataset32, CSRDataset32
+from ..utils._seq_dataset import ArrayDataset64, CSRDataset64
+from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.fixes import delayed
-from ..utils.sparsefuncs import inplace_column_scale, mean_variance_axis
-from ..utils.validation import FLOAT_DTYPES, _check_sample_weight, check_is_fitted
 
 # TODO: bayesian_ridge_regression and bayesian_regression_ard
 # should be squashed into its respective objects.

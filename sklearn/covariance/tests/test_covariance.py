@@ -7,22 +7,21 @@
 import numpy as np
 import pytest
 
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_equal
+
 from sklearn import datasets
 from sklearn.covariance import (
-    OAS,
-    EmpiricalCovariance,
-    LedoitWolf,
-    ShrunkCovariance,
     empirical_covariance,
+    EmpiricalCovariance,
+    ShrunkCovariance,
+    shrunk_covariance,
+    LedoitWolf,
     ledoit_wolf,
     ledoit_wolf_shrinkage,
+    OAS,
     oas,
-    shrunk_covariance,
-)
-from sklearn.utils._testing import (
-    assert_almost_equal,
-    assert_array_almost_equal,
-    assert_array_equal,
 )
 
 X, _ = datasets.load_diabetes(return_X_y=True)

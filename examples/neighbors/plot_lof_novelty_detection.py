@@ -25,10 +25,9 @@ n_neighbors=20 appears to work well in general.
 
 """
 
+import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
-import numpy as np
-
 from sklearn.neighbors import LocalOutlierFactor
 
 np.random.seed(42)

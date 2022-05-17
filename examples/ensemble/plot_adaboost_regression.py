@@ -17,13 +17,11 @@ detail.
 #
 # License: BSD 3 clause
 
-import matplotlib.pyplot as plt
-
 # importing necessary libraries
 import numpy as np
-
-from sklearn.ensemble import AdaBoostRegressor
+import matplotlib.pyplot as plt
 from sklearn.tree import DecisionTreeRegressor
+from sklearn.ensemble import AdaBoostRegressor
 
 # Create the dataset
 rng = np.random.RandomState(1)

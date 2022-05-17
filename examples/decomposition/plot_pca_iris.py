@@ -14,10 +14,12 @@ information on this dataset.
 # Code source: Gaël Varoquaux
 # License: BSD 3 clause
 
-import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.pyplot as plt
 
-from sklearn import datasets, decomposition
+
+from sklearn import decomposition
+from sklearn import datasets
 
 np.random.seed(5)
 

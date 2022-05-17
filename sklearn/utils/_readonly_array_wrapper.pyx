@@ -12,11 +12,11 @@ This way, we can use it on arrays that we don't touch.
 # TODO: Remove with Cython >= 3.0 which supports const memoryviews for fused types.
 
 from cpython cimport Py_buffer
-from cpython.buffer cimport PyBUF_WRITABLE, PyBuffer_Release, PyObject_GetBuffer
+from cpython.buffer cimport PyObject_GetBuffer, PyBuffer_Release, PyBUF_WRITABLE
 
 import numpy as np
-
 cimport numpy as np
+
 
 np.import_array()
 

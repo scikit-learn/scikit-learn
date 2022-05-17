@@ -2,10 +2,13 @@ import numpy as np
 import scipy.sparse as sp
 
 from sklearn.datasets import make_regression
-from sklearn.kernel_ridge import KernelRidge
 from sklearn.linear_model import Ridge
+from sklearn.kernel_ridge import KernelRidge
 from sklearn.metrics.pairwise import pairwise_kernels
-from sklearn.utils._testing import assert_array_almost_equal, ignore_warnings
+from sklearn.utils._testing import ignore_warnings
+
+from sklearn.utils._testing import assert_array_almost_equal
+
 
 X, y = make_regression(n_features=10, random_state=0)
 Xcsr = sp.csr_matrix(X)

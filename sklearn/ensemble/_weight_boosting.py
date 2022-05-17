@@ -23,25 +23,28 @@ The module structure is the following:
 #
 # License: BSD 3 clause
 
-import numbers
-import warnings
 from abc import ABCMeta, abstractmethod
 
+import numbers
 import numpy as np
+
+import warnings
+
 from scipy.special import xlogy
 
-from ..base import ClassifierMixin, RegressorMixin, is_classifier, is_regressor
-from ..metrics import accuracy_score, r2_score
-from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
-from ..utils import _safe_indexing, check_random_state, check_scalar
-from ..utils.extmath import softmax, stable_cumsum
-from ..utils.validation import (
-    _check_sample_weight,
-    _num_samples,
-    check_is_fitted,
-    has_fit_parameter,
-)
 from ._base import BaseEnsemble
+from ..base import ClassifierMixin, RegressorMixin, is_classifier, is_regressor
+
+from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
+from ..utils import check_random_state, _safe_indexing
+from ..utils import check_scalar
+from ..utils.extmath import softmax
+from ..utils.extmath import stable_cumsum
+from ..metrics import accuracy_score, r2_score
+from ..utils.validation import check_is_fitted
+from ..utils.validation import _check_sample_weight
+from ..utils.validation import has_fit_parameter
+from ..utils.validation import _num_samples
 
 __all__ = [
     "AdaBoostClassifier",

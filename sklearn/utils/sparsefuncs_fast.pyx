@@ -8,11 +8,9 @@
 
 #!python
 
+from libc.math cimport fabs, sqrt, pow
 cimport numpy as np
-from libc.math cimport fabs, pow, sqrt
-
 import numpy as np
-
 cimport cython
 from cython cimport floating
 from numpy.math cimport isnan

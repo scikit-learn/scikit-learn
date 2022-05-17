@@ -2,22 +2,24 @@
 #          Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
 # License: BSD 3 clause
 
-import re
 from math import sqrt
 
 import numpy as np
+from sklearn import neighbors
+import re
 import pytest
 from numpy.testing import assert_array_equal
 
-from sklearn import metrics, neighbors
-from sklearn.datasets import load_iris
+from sklearn import metrics
 from sklearn.metrics import roc_auc_score
+
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils.estimator_checks import (
-    check_outlier_corruption,
-    parametrize_with_checks,
-)
+from sklearn.utils.estimator_checks import check_outlier_corruption
+from sklearn.utils.estimator_checks import parametrize_with_checks
+
+from sklearn.datasets import load_iris
+
 
 # load the iris dataset
 # and randomly permute it

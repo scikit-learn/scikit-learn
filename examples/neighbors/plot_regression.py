@@ -15,13 +15,11 @@ target using both barycenter and constant weights.
 # License: BSD 3 clause (C) INRIA
 
 
-import matplotlib.pyplot as plt
-
 # %%
 # Generate sample data
 # --------------------
 import numpy as np
-
+import matplotlib.pyplot as plt
 from sklearn import neighbors
 
 np.random.seed(0)

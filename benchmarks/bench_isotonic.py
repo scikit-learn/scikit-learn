@@ -10,15 +10,13 @@ with matplotlib.
 This allows the scaling of the algorithm with the problem size to be
 visualized and understood.
 """
-import argparse
+import numpy as np
 import gc
 from datetime import datetime
-
-import matplotlib.pyplot as plt
-import numpy as np
-from scipy.special import expit
-
 from sklearn.isotonic import isotonic_regression
+from scipy.special import expit
+import matplotlib.pyplot as plt
+import argparse
 
 
 def generate_perturbed_logarithm_dataset(size):

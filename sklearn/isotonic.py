@@ -3,17 +3,17 @@
 #          Nelle Varoquaux <nelle.varoquaux@gmail.com>
 # License: BSD 3 clause
 
-import math
-import warnings
-
 import numpy as np
 from scipy import interpolate
 from scipy.stats import spearmanr
+import warnings
+import math
 
-from ._isotonic import _inplace_contiguous_isotonic_regression, _make_unique
-from .base import BaseEstimator, RegressorMixin, TransformerMixin
+from .base import BaseEstimator, TransformerMixin, RegressorMixin
 from .utils import check_array, check_consistent_length
 from .utils.validation import _check_sample_weight
+from ._isotonic import _inplace_contiguous_isotonic_regression, _make_unique
+
 
 __all__ = ["check_increasing", "isotonic_regression", "IsotonicRegression"]
 

@@ -3,16 +3,21 @@
 # License: BSD 3 clause
 
 import numbers
-from warnings import warn
-
 import numpy as np
 from scipy.sparse import issparse
+from warnings import warn
 
-from ..base import OutlierMixin
 from ..tree import ExtraTreeRegressor
 from ..tree._tree import DTYPE as tree_dtype
-from ..utils import check_array, check_random_state, gen_batches, get_chunk_n_rows
-from ..utils.validation import _num_samples, check_is_fitted
+from ..utils import (
+    check_random_state,
+    check_array,
+    gen_batches,
+    get_chunk_n_rows,
+)
+from ..utils.validation import check_is_fitted, _num_samples
+from ..base import OutlierMixin
+
 from ._bagging import BaseBagging
 
 __all__ = ["IsolationForest"]

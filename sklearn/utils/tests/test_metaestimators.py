@@ -1,10 +1,11 @@
-import pickle
-import warnings
-
 import numpy as np
 import pytest
+import warnings
 
-from sklearn.utils.metaestimators import available_if, if_delegate_has_method
+import pickle
+
+from sklearn.utils.metaestimators import if_delegate_has_method
+from sklearn.utils.metaestimators import available_if
 
 
 class Prefix:

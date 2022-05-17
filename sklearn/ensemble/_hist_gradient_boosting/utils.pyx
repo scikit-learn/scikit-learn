@@ -5,8 +5,8 @@ from cython.parallel import prange
 
 from ...base import is_classifier
 from .binning import _BinMapper
-
-from .common cimport G_H_DTYPE_C, Y_DTYPE_C
+from .common cimport G_H_DTYPE_C
+from .common cimport Y_DTYPE_C
 
 
 def get_equivalent_estimator(estimator, lib='lightgbm', n_classes=None):
@@ -115,21 +115,24 @@ def get_equivalent_estimator(estimator, lib='lightgbm', n_classes=None):
     }
 
     if lib == 'lightgbm':
-        from lightgbm import LGBMClassifier, LGBMRegressor
+        from lightgbm import LGBMRegressor
+        from lightgbm import LGBMClassifier
         if is_classifier(estimator):
             return LGBMClassifier(**lightgbm_params)
         else:
             return LGBMRegressor(**lightgbm_params)
 
     elif lib == 'xgboost':
-        from xgboost import XGBClassifier, XGBRegressor
+        from xgboost import XGBRegressor
+        from xgboost import XGBClassifier
         if is_classifier(estimator):
             return XGBClassifier(**xgboost_params)
         else:
             return XGBRegressor(**xgboost_params)
 
     else:
-        from catboost import CatBoostClassifier, CatBoostRegressor
+        from catboost import CatBoostRegressor
+        from catboost import CatBoostClassifier
         if is_classifier(estimator):
             return CatBoostClassifier(**catboost_params)
         else:

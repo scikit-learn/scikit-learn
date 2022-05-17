@@ -21,7 +21,6 @@ multi-layer perceptron model on this dataset.
 # License: BSD 3 clause
 
 import time
-
 import matplotlib.pyplot as plt
 import numpy as np
 

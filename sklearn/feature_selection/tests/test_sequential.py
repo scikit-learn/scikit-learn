@@ -1,16 +1,16 @@
-import numpy as np
 import pytest
 import scipy
+import numpy as np
 from numpy.testing import assert_array_equal
 
-from sklearn.cluster import KMeans
-from sklearn.datasets import make_blobs, make_regression
-from sklearn.ensemble import HistGradientBoostingRegressor
-from sklearn.feature_selection import SequentialFeatureSelector
-from sklearn.linear_model import LinearRegression
-from sklearn.model_selection import cross_val_score
-from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import make_pipeline
+from sklearn.feature_selection import SequentialFeatureSelector
+from sklearn.datasets import make_regression, make_blobs
+from sklearn.linear_model import LinearRegression
+from sklearn.ensemble import HistGradientBoostingRegressor
+from sklearn.model_selection import cross_val_score
+from sklearn.cluster import KMeans
 
 
 @pytest.mark.parametrize("n_features_to_select", (0, 5, 0.0, -1, 1.1))

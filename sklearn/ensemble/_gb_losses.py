@@ -2,14 +2,16 @@
 decision trees.
 """
 
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta
+from abc import abstractmethod
 
 import numpy as np
 from scipy.special import expit, logsumexp
 
-from ..dummy import DummyClassifier, DummyRegressor
 from ..tree._tree import TREE_LEAF
 from ..utils.stats import _weighted_percentile
+from ..dummy import DummyClassifier
+from ..dummy import DummyRegressor
 
 
 class LossFunction(metaclass=ABCMeta):

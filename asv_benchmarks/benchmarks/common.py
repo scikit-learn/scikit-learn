@@ -1,11 +1,11 @@
-import itertools
-import json
 import os
-import pickle
+import json
 import timeit
+import pickle
+import itertools
 from abc import ABC, abstractmethod
-from multiprocessing import cpu_count
 from pathlib import Path
+from multiprocessing import cpu_count
 
 import numpy as np
 

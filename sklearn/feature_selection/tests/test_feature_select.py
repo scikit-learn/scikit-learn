@@ -3,36 +3,35 @@ Todo: cross-check the F-value with stats model
 """
 import itertools
 import warnings
-
 import numpy as np
-import pytest
 from numpy.testing import assert_allclose
-from scipy import sparse, stats
+from scipy import stats, sparse
+
+import pytest
+
+from sklearn.utils._testing import assert_almost_equal, _convert_container
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import ignore_warnings
+from sklearn.utils import safe_mask
 
 from sklearn.datasets import make_classification, make_regression
 from sklearn.feature_selection import (
-    GenericUnivariateSelect,
-    SelectFdr,
-    SelectFpr,
-    SelectFwe,
-    SelectKBest,
-    SelectPercentile,
     chi2,
     f_classif,
     f_oneway,
     f_regression,
+    GenericUnivariateSelect,
     mutual_info_classif,
     mutual_info_regression,
     r_regression,
+    SelectPercentile,
+    SelectKBest,
+    SelectFpr,
+    SelectFdr,
+    SelectFwe,
 )
-from sklearn.utils import safe_mask
-from sklearn.utils._testing import (
-    _convert_container,
-    assert_almost_equal,
-    assert_array_almost_equal,
-    assert_array_equal,
-    ignore_warnings,
-)
+
 
 ##############################################################################
 # Test the score functions

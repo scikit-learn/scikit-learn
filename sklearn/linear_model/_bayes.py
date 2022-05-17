@@ -6,15 +6,16 @@ Various bayesian regression
 # License: BSD 3 clause
 
 from math import log
-
 import numpy as np
 from scipy import linalg
-from scipy.linalg import pinvh
 
+from ._base import LinearModel, _preprocess_data, _rescale_data
 from ..base import RegressorMixin
+from ._base import _deprecate_normalize
 from ..utils.extmath import fast_logdet
+from scipy.linalg import pinvh
 from ..utils.validation import _check_sample_weight
-from ._base import LinearModel, _deprecate_normalize, _preprocess_data, _rescale_data
+
 
 ###############################################################################
 # BayesianRidge regression

@@ -3,7 +3,6 @@ Loss functions for linear models with raw_prediction = X @ coef
 """
 import numpy as np
 from scipy import sparse
-
 from ..utils.extmath import squared_norm
 
 

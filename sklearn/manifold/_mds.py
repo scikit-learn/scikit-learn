@@ -5,16 +5,15 @@ Multi-dimensional Scaling (MDS).
 # author: Nelle Varoquaux <nelle.varoquaux@gmail.com>
 # License: BSD
 
-import warnings
-
 import numpy as np
-
 from joblib import Parallel, effective_n_jobs
 
+import warnings
+
 from ..base import BaseEstimator
-from ..isotonic import IsotonicRegression
 from ..metrics import euclidean_distances
-from ..utils import check_array, check_random_state, check_symmetric
+from ..utils import check_random_state, check_array, check_symmetric
+from ..isotonic import IsotonicRegression
 from ..utils.fixes import delayed
 
 

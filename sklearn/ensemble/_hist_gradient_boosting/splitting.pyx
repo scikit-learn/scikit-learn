@@ -8,20 +8,22 @@
 # Author: Nicolas Hug
 
 cimport cython
-
-import numpy as np
 from cython.parallel import prange
-
-from libc.stdlib cimport free, malloc, qsort
+import numpy as np
+from libc.stdlib cimport malloc, free, qsort
 from libc.string cimport memcpy
 from numpy.math cimport INFINITY
 
-from .common cimport X_BINNED_DTYPE_C, Y_DTYPE_C, hist_struct
-
+from .common cimport X_BINNED_DTYPE_C
+from .common cimport Y_DTYPE_C
+from .common cimport hist_struct
 from .common import HISTOGRAM_DTYPE
-
-from ._bitset cimport in_bitset, init_bitset, set_bitset
-from .common cimport BITSET_DTYPE_C, BITSET_INNER_DTYPE_C, MonotonicConstraint
+from .common cimport BITSET_INNER_DTYPE_C
+from .common cimport BITSET_DTYPE_C
+from .common cimport MonotonicConstraint
+from ._bitset cimport init_bitset
+from ._bitset cimport set_bitset
+from ._bitset cimport in_bitset
 
 
 cdef struct split_info_struct:

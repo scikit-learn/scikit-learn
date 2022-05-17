@@ -1,4 +1,5 @@
 import numpy as np
+
 import pytest
 
 from sklearn.utils._readonly_array_wrapper import ReadonlyArrayWrapper, _test_sum

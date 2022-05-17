@@ -32,10 +32,9 @@ print(__doc__)
 # The `preprocess_dataset` function returns data and target.
 
 import numpy as np
-import pandas as pd
-
-from sklearn.datasets import fetch_covtype, fetch_kddcup99, fetch_openml
+from sklearn.datasets import fetch_kddcup99, fetch_covtype, fetch_openml
 from sklearn.preprocessing import LabelBinarizer
+import pandas as pd
 
 rng = np.random.RandomState(42)
 
@@ -119,8 +118,8 @@ def preprocess_dataset(dataset_name):
 # `compute_prediction` function returns average outlier score of X.
 
 
-from sklearn.ensemble import IsolationForest
 from sklearn.neighbors import LocalOutlierFactor
+from sklearn.ensemble import IsolationForest
 
 
 def compute_prediction(X, model_name):
@@ -148,9 +147,7 @@ def compute_prediction(X, model_name):
 
 
 import math
-
 import matplotlib.pyplot as plt
-
 from sklearn.metrics import RocCurveDisplay
 
 datasets_name = [

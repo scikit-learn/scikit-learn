@@ -1,9 +1,12 @@
 import scipy as sp
 
-from ...utils import check_matplotlib_support, deprecated
-from .._base import _check_pos_label_consistency
-from .._ranking import det_curve
 from .base import _get_response
+
+from .. import det_curve
+from .._base import _check_pos_label_consistency
+
+from ...utils import check_matplotlib_support
+from ...utils import deprecated
 
 
 class DetCurveDisplay:

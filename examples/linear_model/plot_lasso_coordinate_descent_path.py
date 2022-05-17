@@ -14,12 +14,12 @@ The coefficients can be forced to be positive.
 # License: BSD 3 clause
 
 from itertools import cycle
-
-import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.pyplot as plt
 
+from sklearn.linear_model import lasso_path, enet_path
 from sklearn import datasets
-from sklearn.linear_model import enet_path, lasso_path
+
 
 X, y = datasets.load_diabetes(return_X_y=True)
 

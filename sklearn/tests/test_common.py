@@ -7,44 +7,52 @@ General tests for all estimators in sklearn.
 # License: BSD 3 clause
 
 import os
-import pkgutil
-import re
-import sys
 import warnings
+import sys
+import re
+import pkgutil
+from inspect import isgenerator, signature, Parameter
+from itertools import product, chain
 from functools import partial
-from inspect import Parameter, isgenerator, signature
-from itertools import chain, product
 
-import numpy as np
 import pytest
+import numpy as np
+
+from sklearn.utils import all_estimators
+from sklearn.utils._testing import ignore_warnings
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.exceptions import FitFailedWarning
+from sklearn.utils.estimator_checks import check_estimator
 
 import sklearn
+
 from sklearn.decomposition import PCA
-from sklearn.exceptions import ConvergenceWarning, FitFailedWarning
-from sklearn.experimental import enable_halving_search_cv  # noqa
-from sklearn.linear_model import LogisticRegression, Ridge
 from sklearn.linear_model._base import LinearClassifierMixin
-from sklearn.model_selection import (
-    GridSearchCV,
-    HalvingGridSearchCV,
-    HalvingRandomSearchCV,
-    RandomizedSearchCV,
-)
+from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import Ridge
+from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import RandomizedSearchCV
+from sklearn.experimental import enable_halving_search_cv  # noqa
+from sklearn.model_selection import HalvingGridSearchCV
+from sklearn.model_selection import HalvingRandomSearchCV
 from sklearn.pipeline import make_pipeline
-from sklearn.utils import IS_PYPY, all_estimators
+
+from sklearn.utils import IS_PYPY
 from sklearn.utils._tags import _DEFAULT_TAGS, _safe_tags
-from sklearn.utils._testing import SkipTest, ignore_warnings, set_random_state
+from sklearn.utils._testing import (
+    SkipTest,
+    set_random_state,
+)
 from sklearn.utils.estimator_checks import (
     _construct_instance,
-    _get_check_estimator_ids,
     _set_checking_parameters,
+    _get_check_estimator_ids,
     check_class_weight_balanced_linear_classifier,
+    parametrize_with_checks,
     check_dataframe_column_names_consistency,
-    check_estimator,
     check_n_features_in_after_fitting,
     check_transformer_get_feature_names_out,
     check_transformer_get_feature_names_out_pandas,
-    parametrize_with_checks,
 )
 
 

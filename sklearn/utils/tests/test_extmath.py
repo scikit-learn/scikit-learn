@@ -5,38 +5,35 @@
 # License: BSD 3 clause
 
 import numpy as np
-import pytest
-from scipy import linalg, sparse, stats
+from scipy import sparse
+from scipy import linalg
+from scipy import stats
 from scipy.sparse.linalg import eigsh
 from scipy.special import expit
 
-from sklearn.datasets import make_low_rank_matrix, make_sparse_spd_matrix
+import pytest
 from sklearn.utils import gen_batches
 from sklearn.utils._arpack import _init_arpack_v0
-from sklearn.utils._testing import (
-    assert_allclose,
-    assert_allclose_dense_sparse,
-    assert_almost_equal,
-    assert_array_almost_equal,
-    assert_array_equal,
-    skip_if_32bit,
-)
-from sklearn.utils.extmath import (
-    _deterministic_vector_sign_flip,
-    _incremental_mean_and_var,
-    _randomized_eigsh,
-    _safe_accumulator_op,
-    cartesian,
-    density,
-    log_logistic,
-    randomized_svd,
-    row_norms,
-    safe_sparse_dot,
-    softmax,
-    stable_cumsum,
-    svd_flip,
-    weighted_mode,
-)
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_allclose_dense_sparse
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import skip_if_32bit
+
+from sklearn.utils.extmath import density, _safe_accumulator_op
+from sklearn.utils.extmath import randomized_svd, _randomized_eigsh
+from sklearn.utils.extmath import row_norms
+from sklearn.utils.extmath import weighted_mode
+from sklearn.utils.extmath import cartesian
+from sklearn.utils.extmath import log_logistic
+from sklearn.utils.extmath import svd_flip
+from sklearn.utils.extmath import _incremental_mean_and_var
+from sklearn.utils.extmath import _deterministic_vector_sign_flip
+from sklearn.utils.extmath import softmax
+from sklearn.utils.extmath import stable_cumsum
+from sklearn.utils.extmath import safe_sparse_dot
+from sklearn.datasets import make_low_rank_matrix, make_sparse_spd_matrix
 
 
 def test_density():

@@ -19,15 +19,15 @@ and finally the ground truth.
 # Modified for documentation by Jaques Grobler
 # License: BSD 3 clause
 
+import numpy as np
 import matplotlib.pyplot as plt
 
 # Though the following import is not directly being used, it is required
 # for 3D projection to work with matplotlib < 3.2
 import mpl_toolkits.mplot3d  # noqa: F401
-import numpy as np
 
-from sklearn import datasets
 from sklearn.cluster import KMeans
+from sklearn import datasets
 
 np.random.seed(5)
 

@@ -1,32 +1,29 @@
 import pickle
-from unittest.mock import Mock
-
-import numpy as np
-import pytest
-import scipy.sparse as sp
 
 import joblib
-from sklearn import datasets, linear_model, metrics
+import pytest
+import numpy as np
+import scipy.sparse as sp
+from unittest.mock import Mock
+
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import ignore_warnings
+
+from sklearn import linear_model, datasets, metrics
 from sklearn.base import clone, is_classifier
-from sklearn.exceptions import ConvergenceWarning
+from sklearn.svm import OneClassSVM
+from sklearn.preprocessing import LabelEncoder, scale, MinMaxScaler
+from sklearn.preprocessing import StandardScaler
 from sklearn.kernel_approximation import Nystroem
+from sklearn.pipeline import make_pipeline
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.model_selection import StratifiedShuffleSplit, ShuffleSplit
 from sklearn.linear_model import _sgd_fast as sgd_fast
 from sklearn.linear_model import _stochastic_gradient
-from sklearn.model_selection import (
-    RandomizedSearchCV,
-    ShuffleSplit,
-    StratifiedShuffleSplit,
-)
-from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import LabelEncoder, MinMaxScaler, StandardScaler, scale
-from sklearn.svm import OneClassSVM
-from sklearn.utils._testing import (
-    assert_allclose,
-    assert_almost_equal,
-    assert_array_almost_equal,
-    assert_array_equal,
-    ignore_warnings,
-)
+from sklearn.model_selection import RandomizedSearchCV
 
 
 def _update_kwargs(kwargs):

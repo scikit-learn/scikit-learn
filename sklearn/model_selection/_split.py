@@ -11,22 +11,24 @@ functions to split the data based on a preset strategy.
 #         Rodion Martynov <marrodion@gmail.com>
 # License: BSD 3 clause
 
-import numbers
-import warnings
-from abc import ABCMeta, abstractmethod
-from collections import defaultdict
 from collections.abc import Iterable
-from inspect import signature
+from collections import defaultdict
+import warnings
 from itertools import chain, combinations
 from math import ceil, floor
+import numbers
+from abc import ABCMeta, abstractmethod
+from inspect import signature
 
 import numpy as np
 from scipy.special import comb
 
-from ..base import _pprint
-from ..utils import _approximate_mode, _safe_indexing, check_random_state, indexable
+from ..utils import indexable, check_random_state, _safe_indexing
+from ..utils import _approximate_mode
+from ..utils.validation import _num_samples, column_or_1d
+from ..utils.validation import check_array
 from ..utils.multiclass import type_of_target
-from ..utils.validation import _num_samples, check_array, column_or_1d
+from ..base import _pprint
 
 __all__ = [
     "BaseCrossValidator",

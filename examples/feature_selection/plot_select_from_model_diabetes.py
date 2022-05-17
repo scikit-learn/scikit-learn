@@ -46,7 +46,6 @@ print(diabetes.DESCR)
 # :ref:`sphx_glr_auto_examples_inspection_plot_linear_model_coefficient_interpretation.py`.
 import matplotlib.pyplot as plt
 import numpy as np
-
 from sklearn.linear_model import RidgeCV
 
 ridge = RidgeCV(alphas=np.logspace(-6, 6, num=5)).fit(X, y)
@@ -55,8 +54,6 @@ feature_names = np.array(diabetes.feature_names)
 plt.bar(height=importance, x=feature_names)
 plt.title("Feature importances via coefficients")
 plt.show()
-
-from time import time
 
 # %%
 # Selecting features based on importance
@@ -71,6 +68,7 @@ from time import time
 # Since we want to select only 2 features, we will set this threshold slightly
 # above the coefficient of third most important feature.
 from sklearn.feature_selection import SelectFromModel
+from time import time
 
 threshold = np.sort(importance)[-3] + 0.01
 

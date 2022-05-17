@@ -6,21 +6,18 @@
 # License: BSD 3 clause
 
 
+import numpy as np
 import sys
 from time import time
 
-import numpy as np
-
+from libc.math cimport exp, log, sqrt, pow, fabs
 cimport numpy as cnp
-from libc.math cimport exp, fabs, log, pow, sqrt
 from numpy.math cimport INFINITY
-
-
 cdef extern from "_sgd_fast_helpers.h":
     bint skl_isfinite(double) nogil
 
-from ..utils._seq_dataset cimport SequentialDataset64 as SequentialDataset
 from ..utils._weight_vector cimport WeightVector64 as WeightVector
+from ..utils._seq_dataset cimport SequentialDataset64 as SequentialDataset
 
 cnp.import_array()
 

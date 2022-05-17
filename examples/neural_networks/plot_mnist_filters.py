@@ -25,13 +25,11 @@ to build this documentation on a regular basis.
 """
 
 import warnings
-
 import matplotlib.pyplot as plt
-
 from sklearn.datasets import fetch_openml
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPClassifier
+from sklearn.model_selection import train_test_split
 
 # Load data from https://www.openml.org/d/554
 X, y = fetch_openml(

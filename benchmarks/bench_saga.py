@@ -4,25 +4,25 @@ Benchmarks of sklearn SAGA vs lightning SAGA vs Liblinear. Shows the gain
 in using multinomial logistic regression in term of learning time.
 """
 import json
-import os
 import time
+import os
 
+from joblib import Parallel
+from sklearn.utils.fixes import delayed
 import matplotlib.pyplot as plt
 import numpy as np
 
-from joblib import Parallel
 from sklearn.datasets import (
-    fetch_20newsgroups_vectorized,
     fetch_rcv1,
-    load_digits,
     load_iris,
+    load_digits,
+    fetch_20newsgroups_vectorized,
 )
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import log_loss
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelBinarizer, LabelEncoder
 from sklearn.utils.extmath import safe_sparse_dot, softmax
-from sklearn.utils.fixes import delayed
 
 
 def fit_single(

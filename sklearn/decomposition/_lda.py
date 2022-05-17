@@ -14,17 +14,18 @@ Link: https://github.com/blei-lab/onlineldavb
 import numpy as np
 import scipy.sparse as sp
 from scipy.special import gammaln, logsumexp
-
 from joblib import Parallel, effective_n_jobs
 
 from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
 from ..utils import check_random_state, gen_batches, gen_even_slices
+from ..utils.validation import check_non_negative
+from ..utils.validation import check_is_fitted
 from ..utils.fixes import delayed
-from ..utils.validation import check_is_fitted, check_non_negative
+
 from ._online_lda_fast import (
+    mean_change,
     _dirichlet_expectation_1d,
     _dirichlet_expectation_2d,
-    mean_change,
 )
 
 EPS = np.finfo(float).eps

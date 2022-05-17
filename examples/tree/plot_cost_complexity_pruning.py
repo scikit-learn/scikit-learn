@@ -18,9 +18,8 @@ See also :ref:`minimal_cost_complexity_pruning` for details on pruning.
 """
 
 import matplotlib.pyplot as plt
-
-from sklearn.datasets import load_breast_cancer
 from sklearn.model_selection import train_test_split
+from sklearn.datasets import load_breast_cancer
 from sklearn.tree import DecisionTreeClassifier
 
 # %%

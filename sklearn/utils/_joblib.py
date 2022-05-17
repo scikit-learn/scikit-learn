@@ -5,20 +5,13 @@ with _warnings.catch_warnings():
     # joblib imports may raise DeprecationWarning on certain Python
     # versions
     import joblib
-    from joblib import (
-        Memory,
-        Parallel,
-        __version__,
-        cpu_count,
-        delayed,
-        dump,
-        effective_n_jobs,
-        hash,
-        load,
-        logger,
-        parallel_backend,
-        register_parallel_backend,
-    )
+    from joblib import logger
+    from joblib import dump, load
+    from joblib import __version__
+    from joblib import effective_n_jobs
+    from joblib import hash
+    from joblib import cpu_count, Parallel, Memory, delayed
+    from joblib import parallel_backend, register_parallel_backend
 
 
 __all__ = [

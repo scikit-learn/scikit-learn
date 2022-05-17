@@ -2,15 +2,16 @@
 Sequential feature selection
 """
 import numbers
-import warnings
 
 import numpy as np
 
+import warnings
+
+from ._base import SelectorMixin
 from ..base import BaseEstimator, MetaEstimatorMixin, clone
-from ..model_selection import cross_val_score
 from ..utils._tags import _safe_tags
 from ..utils.validation import check_is_fitted
-from ._base import SelectorMixin
+from ..model_selection import cross_val_score
 
 
 class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator):

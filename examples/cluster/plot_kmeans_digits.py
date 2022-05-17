@@ -34,7 +34,6 @@ silhouette   silhouette coefficient
 # to group images such that the handwritten digits on the image are the same.
 
 import numpy as np
-
 from sklearn.datasets import load_digits
 
 data, labels = load_digits(return_X_y=True)
@@ -54,7 +53,6 @@ print(f"# digits: {n_digits}; # samples: {n_samples}; # features {n_features}")
 # * train and time the pipeline fitting;
 # * measure the performance of the clustering obtained via different metrics.
 from time import time
-
 from sklearn import metrics
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler

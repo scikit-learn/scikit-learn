@@ -1,11 +1,14 @@
+from sklearn.utils import all_estimators
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import FeatureUnion
+from sklearn.decomposition import SparseCoder
+from sklearn.utils.estimator_checks import _construct_instance
+from sklearn.utils._testing import SkipTest
+from docutils import nodes
+import warnings
 from contextlib import suppress
 
-from docutils import nodes
 from docutils.parsers.rst import Directive
-
-from sklearn.utils import all_estimators
-from sklearn.utils._testing import SkipTest
-from sklearn.utils.estimator_checks import _construct_instance
 
 
 class AllowNanEstimators(Directive):

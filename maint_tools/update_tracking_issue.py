@@ -11,9 +11,9 @@ This scope allows the bot to create and edit its own issues. It is best to use a
 github account that does **not** have commit access to the public repo.
 """
 
-import argparse
-import sys
 from pathlib import Path
+import sys
+import argparse
 
 import defusedxml.ElementTree as ET
 from github import Github

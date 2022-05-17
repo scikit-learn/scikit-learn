@@ -1,42 +1,58 @@
-import re
-import warnings
-from contextlib import nullcontext
 from itertools import product
+from contextlib import nullcontext
+import warnings
 
-import numpy as np
 import pytest
+import re
+import numpy as np
 from scipy.sparse import (
     bsr_matrix,
     coo_matrix,
     csc_matrix,
     csr_matrix,
-    dia_matrix,
     dok_matrix,
-    issparse,
+    dia_matrix,
     lil_matrix,
+    issparse,
 )
 
-import joblib
-from sklearn import config_context, datasets, metrics, neighbors
+from sklearn import (
+    config_context,
+    datasets,
+    metrics,
+    neighbors,
+)
 from sklearn.base import clone
-from sklearn.exceptions import DataConversionWarning, EfficiencyWarning, NotFittedError
+from sklearn.exceptions import DataConversionWarning
+from sklearn.exceptions import EfficiencyWarning
+from sklearn.exceptions import NotFittedError
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.metrics.tests.test_dist_metrics import BOOL_METRICS
 from sklearn.metrics.tests.test_pairwise_distances_reduction import (
     assert_radius_neighborhood_results_equality,
 )
-from sklearn.model_selection import cross_val_score, train_test_split
-from sklearn.neighbors import VALID_METRICS_SPARSE, KNeighborsRegressor
+from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import (
+    VALID_METRICS_SPARSE,
+    KNeighborsRegressor,
+)
 from sklearn.neighbors._base import (
-    KNeighborsMixin,
-    _check_precomputed,
     _is_sorted_by_data,
+    _check_precomputed,
     sort_graph_by_row_values,
+    KNeighborsMixin,
 )
 from sklearn.pipeline import make_pipeline
-from sklearn.utils._testing import assert_allclose, assert_array_equal, ignore_warnings
-from sklearn.utils.fixes import parse_version, sp_version
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_array_equal,
+)
+from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.validation import check_random_state
+from sklearn.utils.fixes import sp_version, parse_version
+
+import joblib
 
 rng = np.random.RandomState(0)
 # load and shuffle iris dataset
@@ -2120,8 +2136,8 @@ def test_auto_algorithm(X, metric, metric_params, expected_algo):
 
 # TODO: Remove in 1.3
 def test_neighbors_distance_metric_deprecation():
-    from sklearn.metrics import DistanceMetric as ActualDistanceMetric
     from sklearn.neighbors import DistanceMetric
+    from sklearn.metrics import DistanceMetric as ActualDistanceMetric
 
     msg = r"This import path will be removed in 1\.3"
     with pytest.warns(FutureWarning, match=msg):

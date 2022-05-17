@@ -3,39 +3,50 @@
 # Authors: Guillaume Lemaitre <g.lemaitre58@gmail.com>
 # License: BSD 3 clause
 
-from unittest.mock import Mock
-
-import numpy as np
 import pytest
-import scipy.sparse as sparse
+import numpy as np
 from numpy.testing import assert_array_equal
+import scipy.sparse as sparse
 
-from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin, clone
-from sklearn.datasets import (
-    load_breast_cancer,
-    load_diabetes,
-    load_iris,
-    make_classification,
-    make_regression,
-)
-from sklearn.dummy import DummyClassifier, DummyRegressor
-from sklearn.ensemble import (
-    RandomForestClassifier,
-    RandomForestRegressor,
-    StackingClassifier,
-    StackingRegressor,
-)
-from sklearn.exceptions import ConvergenceWarning, NotFittedError
-from sklearn.linear_model import LinearRegression, LogisticRegression
-from sklearn.model_selection import KFold, StratifiedKFold, train_test_split
+from sklearn.base import BaseEstimator
+from sklearn.base import ClassifierMixin
+from sklearn.base import RegressorMixin
+from sklearn.base import clone
+
+from sklearn.exceptions import ConvergenceWarning
+
+from sklearn.datasets import load_iris
+from sklearn.datasets import load_diabetes
+from sklearn.datasets import load_breast_cancer
+from sklearn.datasets import make_regression
+from sklearn.datasets import make_classification
+
+from sklearn.dummy import DummyClassifier
+from sklearn.dummy import DummyRegressor
+from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LinearRegression
+from sklearn.svm import LinearSVC
+from sklearn.svm import LinearSVR
+from sklearn.svm import SVC
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestRegressor
 from sklearn.preprocessing import scale
-from sklearn.svm import SVC, LinearSVC, LinearSVR
+
+from sklearn.ensemble import StackingClassifier
+from sklearn.ensemble import StackingRegressor
+
+from sklearn.model_selection import train_test_split
+from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import KFold
+
 from sklearn.utils._mocking import CheckingClassifier
-from sklearn.utils._testing import (
-    assert_allclose,
-    assert_allclose_dense_sparse,
-    ignore_warnings,
-)
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_allclose_dense_sparse
+from sklearn.utils._testing import ignore_warnings
+
+from sklearn.exceptions import NotFittedError
+
+from unittest.mock import Mock
 
 diabetes = load_diabetes()
 X_diabetes, y_diabetes = diabetes.data, diabetes.target

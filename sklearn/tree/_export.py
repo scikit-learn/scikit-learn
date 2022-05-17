@@ -16,10 +16,13 @@ from numbers import Integral
 
 import numpy as np
 
-from ..base import is_classifier
 from ..utils.validation import check_is_fitted
-from . import DecisionTreeClassifier, _criterion, _tree
-from ._reingold_tilford import Tree, buchheim
+from ..base import is_classifier
+
+from . import _criterion
+from . import _tree
+from ._reingold_tilford import buchheim, Tree
+from . import DecisionTreeClassifier
 
 
 def _color_brew(n):

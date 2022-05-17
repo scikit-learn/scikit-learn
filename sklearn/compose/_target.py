@@ -7,11 +7,11 @@ import warnings
 import numpy as np
 
 from ..base import BaseEstimator, RegressorMixin, clone
-from ..exceptions import NotFittedError
-from ..preprocessing import FunctionTransformer
-from ..utils import _safe_indexing, check_array
-from ..utils._tags import _safe_tags
 from ..utils.validation import check_is_fitted
+from ..utils._tags import _safe_tags
+from ..utils import check_array, _safe_indexing
+from ..preprocessing import FunctionTransformer
+from ..exceptions import NotFittedError
 
 __all__ = ["TransformedTargetRegressor"]
 

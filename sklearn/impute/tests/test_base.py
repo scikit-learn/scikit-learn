@@ -1,5 +1,6 @@
-import numpy as np
 import pytest
+
+import numpy as np
 
 from sklearn.impute._base import _BaseImputer
 from sklearn.utils._mask import _get_mask

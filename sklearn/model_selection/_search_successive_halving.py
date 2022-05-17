@@ -1,17 +1,17 @@
-from abc import abstractmethod
 from copy import deepcopy
 from math import ceil, floor, log
+from abc import abstractmethod
 from numbers import Integral
 
 import numpy as np
-
+from ._search import BaseSearchCV
+from . import ParameterGrid, ParameterSampler
 from ..base import is_classifier
+from ._split import check_cv, _yields_constant_splits
 from ..utils import resample
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import _num_samples
-from . import ParameterGrid, ParameterSampler
-from ._search import BaseSearchCV
-from ._split import _yields_constant_splits, check_cv
+
 
 __all__ = ["HalvingGridSearchCV", "HalvingRandomSearchCV"]
 

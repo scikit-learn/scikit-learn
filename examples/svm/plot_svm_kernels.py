@@ -14,10 +14,10 @@ data-points are not linearly separable.
 # Code source: Gaël Varoquaux
 # License: BSD 3 clause
 
-import matplotlib.pyplot as plt
 import numpy as np
-
+import matplotlib.pyplot as plt
 from sklearn import svm
+
 
 # Our dataset and targets
 X = np.c_[

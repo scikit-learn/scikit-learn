@@ -12,7 +12,6 @@ intervals.
 # Generate some data for a synthetic regression problem by applying the
 # function f to uniformly sampled random inputs.
 import numpy as np
-
 from sklearn.model_selection import train_test_split
 
 
@@ -59,6 +58,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.metrics import mean_pinball_loss, mean_squared_error
 
+
 all_models = {}
 common_params = dict(
     learning_rate=0.05,
@@ -87,6 +87,7 @@ xx = np.atleast_2d(np.linspace(0, 10, 1000)).T
 # mean (loss equals squared error), the conditional median and the conditional
 # 90% interval (from 5th to 95th conditional percentiles).
 import matplotlib.pyplot as plt
+
 
 y_pred = all_models["mse"].predict(xx)
 y_lower = all_models["q 0.05"].predict(xx)
@@ -230,12 +231,11 @@ coverage_fraction(
 # of the 5th percentile by selecting the best model parameters by
 # cross-validation on the pinball loss with alpha=0.05:
 
-from pprint import pprint
-
 # %%
 from sklearn.experimental import enable_halving_search_cv  # noqa
-from sklearn.metrics import make_scorer
 from sklearn.model_selection import HalvingRandomSearchCV
+from sklearn.metrics import make_scorer
+from pprint import pprint
 
 param_grid = dict(
     learning_rate=[0.05, 0.1, 0.2],

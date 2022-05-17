@@ -1,10 +1,10 @@
-import numpy as np
 import pytest
+import numpy as np
 from numpy.testing import assert_allclose
 
 from sklearn.ensemble._hist_gradient_boosting._bitset import (
-    in_bitset_memoryview,
     set_bitset_memoryview,
+    in_bitset_memoryview,
     set_raw_bitset_from_binned_bitset,
 )
 from sklearn.ensemble._hist_gradient_boosting.common import X_DTYPE

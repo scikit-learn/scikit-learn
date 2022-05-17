@@ -25,8 +25,8 @@ of the standard linear regression
 # License: BSD 3 clause
 
 
-import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.pyplot as plt
 
 from sklearn import linear_model
 

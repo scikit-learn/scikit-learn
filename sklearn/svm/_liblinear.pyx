@@ -4,11 +4,10 @@ Wrapper for liblinear
 Author: fabian.pedregosa@inria.fr
 """
 
-import numpy as np
-
+import  numpy as np
 cimport numpy as np
 
-from ..utils._cython_blas cimport _axpy, _dot, _nrm2, _scal
+from ..utils._cython_blas cimport _dot, _axpy, _scal, _nrm2
 
 include "_liblinear.pxi"
 
@@ -51,7 +50,7 @@ def train_wrap(X, np.ndarray[np.float64_t, ndim=1, mode='c'] Y,
         free_problem(problem)
         free_parameter(param)
         raise ValueError(error_msg)
-
+    
     cdef BlasFunctions blas_functions
     blas_functions.dot = _dot[double]
     blas_functions.axpy = _axpy[double]

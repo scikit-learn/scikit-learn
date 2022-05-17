@@ -8,20 +8,23 @@ neighbors.
 import numpy as np
 import pytest
 
-from sklearn.base import clone
-from sklearn.cluster import DBSCAN, SpectralClustering
+from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.cluster.tests.common import generate_clustered_data
 from sklearn.datasets import make_blobs
-from sklearn.manifold import TSNE, Isomap, SpectralEmbedding
-from sklearn.neighbors import (
-    KNeighborsRegressor,
-    KNeighborsTransformer,
-    LocalOutlierFactor,
-    RadiusNeighborsRegressor,
-    RadiusNeighborsTransformer,
-)
 from sklearn.pipeline import make_pipeline
-from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.base import clone
+
+from sklearn.neighbors import KNeighborsTransformer
+from sklearn.neighbors import RadiusNeighborsTransformer
+
+from sklearn.cluster import DBSCAN
+from sklearn.cluster import SpectralClustering
+from sklearn.neighbors import KNeighborsRegressor
+from sklearn.neighbors import RadiusNeighborsRegressor
+from sklearn.neighbors import LocalOutlierFactor
+from sklearn.manifold import SpectralEmbedding
+from sklearn.manifold import Isomap
+from sklearn.manifold import TSNE
 
 
 def test_spectral_clustering():

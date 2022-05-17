@@ -6,14 +6,17 @@ Multi-class / multi-label utility function
 ==========================================
 
 """
-import warnings
 from collections.abc import Sequence
 from itertools import chain
+import warnings
+
+from scipy.sparse import issparse
+from scipy.sparse import dok_matrix
+from scipy.sparse import lil_matrix
 
 import numpy as np
-from scipy.sparse import dok_matrix, issparse, lil_matrix
 
-from .validation import _assert_all_finite, check_array
+from .validation import check_array, _assert_all_finite
 
 
 def _unique_multiclass(y):

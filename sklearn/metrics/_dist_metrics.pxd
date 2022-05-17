@@ -1,8 +1,7 @@
 cimport numpy as cnp
-from libc.math cimport exp, sqrt
+from libc.math cimport sqrt, exp
 
 from ..utils._typedefs cimport DTYPE_t, ITYPE_t
-
 
 ######################################################################
 # Inline distance functions

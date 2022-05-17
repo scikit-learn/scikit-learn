@@ -1,22 +1,21 @@
-from pathlib import Path
-
 import numpy as np
 import scipy.sparse as sp
-
 from joblib import Memory
+from pathlib import Path
+
+from sklearn.decomposition import TruncatedSVD
 from sklearn.datasets import (
+    make_blobs,
     fetch_20newsgroups,
-    fetch_olivetti_faces,
     fetch_openml,
     load_digits,
-    make_blobs,
-    make_classification,
     make_regression,
+    make_classification,
+    fetch_olivetti_faces,
 )
-from sklearn.decomposition import TruncatedSVD
+from sklearn.preprocessing import MaxAbsScaler, StandardScaler
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import MaxAbsScaler, StandardScaler
 
 # memory location for caching datasets
 M = Memory(location=str(Path(__file__).resolve().parent / "cache"))

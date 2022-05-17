@@ -3,24 +3,20 @@
 # License: BSD 3 clause
 
 import re
+import numpy as np
+from numpy.testing import assert_allclose
+import pytest
 import warnings
 
-import numpy as np
-import pytest
-from numpy.testing import assert_allclose
-
+from sklearn.base import clone
 from sklearn._loss.glm_distribution import TweedieDistribution
 from sklearn._loss.link import IdentityLink, LogLink
-from sklearn.base import clone
+
 from sklearn.datasets import make_regression
-from sklearn.exceptions import ConvergenceWarning
-from sklearn.linear_model import (
-    GammaRegressor,
-    PoissonRegressor,
-    Ridge,
-    TweedieRegressor,
-)
 from sklearn.linear_model._glm import _GeneralizedLinearRegressor
+from sklearn.linear_model import TweedieRegressor, PoissonRegressor, GammaRegressor
+from sklearn.linear_model import Ridge
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.metrics import d2_tweedie_score
 from sklearn.model_selection import train_test_split
 

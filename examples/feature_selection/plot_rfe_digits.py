@@ -12,11 +12,10 @@ a digit classification task.
 
 """  # noqa: E501
 
-import matplotlib.pyplot as plt
-
+from sklearn.svm import SVC
 from sklearn.datasets import load_digits
 from sklearn.feature_selection import RFE
-from sklearn.svm import SVC
+import matplotlib.pyplot as plt
 
 # Load the digits dataset
 digits = load_digits()

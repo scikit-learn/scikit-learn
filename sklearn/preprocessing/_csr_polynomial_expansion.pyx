@@ -1,9 +1,8 @@
 # Author: Andrew nystrom <awnystrom@gmail.com>
 
 from scipy.sparse import csr_matrix
-
-cimport numpy as np
 from numpy cimport ndarray
+cimport numpy as np
 
 np.import_array()
 ctypedef np.int32_t INDEX_T

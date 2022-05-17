@@ -39,12 +39,13 @@ of components (this takes more time).
 
 import time
 
-import matplotlib.pyplot as plt
 import numpy as np
-from numpy.testing import assert_array_almost_equal
+import matplotlib.pyplot as plt
 
-from sklearn.datasets import make_circles
+from numpy.testing import assert_array_almost_equal
 from sklearn.decomposition import KernelPCA
+from sklearn.datasets import make_circles
+
 
 print(__doc__)
 

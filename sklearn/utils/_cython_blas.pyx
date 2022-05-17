@@ -1,28 +1,17 @@
 from cython cimport floating
-from scipy.linalg.cython_blas cimport (
-    dasum,
-    daxpy,
-    dcopy,
-    ddot,
-    dgemm,
-    dgemv,
-    dger,
-    dnrm2,
-    drot,
-    drotg,
-    dscal,
-    sasum,
-    saxpy,
-    scopy,
-    sdot,
-    sgemm,
-    sgemv,
-    sger,
-    snrm2,
-    srot,
-    srotg,
-    sscal,
-)
+
+from scipy.linalg.cython_blas cimport sdot, ddot
+from scipy.linalg.cython_blas cimport sasum, dasum
+from scipy.linalg.cython_blas cimport saxpy, daxpy
+from scipy.linalg.cython_blas cimport snrm2, dnrm2
+from scipy.linalg.cython_blas cimport scopy, dcopy
+from scipy.linalg.cython_blas cimport sscal, dscal
+from scipy.linalg.cython_blas cimport srotg, drotg
+from scipy.linalg.cython_blas cimport srot, drot
+from scipy.linalg.cython_blas cimport sgemv, dgemv
+from scipy.linalg.cython_blas cimport sger, dger
+from scipy.linalg.cython_blas cimport sgemm, dgemm
+
 
 ################
 # BLAS Level 1 #

@@ -20,10 +20,9 @@ weak: the point cloud is very spherical.
 
 """
 
-import matplotlib.pyplot as plt
 import numpy as np
-
-from sklearn.cross_decomposition import CCA, PLSCanonical, PLSRegression
+import matplotlib.pyplot as plt
+from sklearn.cross_decomposition import PLSCanonical, PLSRegression, CCA
 
 # #############################################################################
 # Dataset based latent variables model

@@ -1,11 +1,13 @@
 # TODO: remove this file when plot_det_curve will be deprecated in 1.2
-import numpy as np
 import pytest
+import numpy as np
 from numpy.testing import assert_allclose
 
 from sklearn.datasets import load_iris
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import det_curve, plot_det_curve
+
+from sklearn.metrics import det_curve
+from sklearn.metrics import plot_det_curve
 
 
 @pytest.fixture(scope="module")

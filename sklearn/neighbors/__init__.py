@@ -4,22 +4,19 @@ algorithm.
 """
 
 from ._ball_tree import BallTree
-from ._base import VALID_METRICS, VALID_METRICS_SPARSE, sort_graph_by_row_values
-from ._classification import KNeighborsClassifier, RadiusNeighborsClassifier
-from ._distance_metric import DistanceMetric
-from ._graph import (
-    KNeighborsTransformer,
-    RadiusNeighborsTransformer,
-    kneighbors_graph,
-    radius_neighbors_graph,
-)
 from ._kd_tree import KDTree
+from ._distance_metric import DistanceMetric
+from ._graph import kneighbors_graph, radius_neighbors_graph
+from ._graph import KNeighborsTransformer, RadiusNeighborsTransformer
+from ._unsupervised import NearestNeighbors
+from ._classification import KNeighborsClassifier, RadiusNeighborsClassifier
+from ._regression import KNeighborsRegressor, RadiusNeighborsRegressor
+from ._nearest_centroid import NearestCentroid
 from ._kde import KernelDensity
 from ._lof import LocalOutlierFactor
 from ._nca import NeighborhoodComponentsAnalysis
-from ._nearest_centroid import NearestCentroid
-from ._regression import KNeighborsRegressor, RadiusNeighborsRegressor
-from ._unsupervised import NearestNeighbors
+from ._base import sort_graph_by_row_values
+from ._base import VALID_METRICS, VALID_METRICS_SPARSE
 
 __all__ = [
     "BallTree",

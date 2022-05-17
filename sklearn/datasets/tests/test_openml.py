@@ -9,18 +9,11 @@ from io import BytesIO
 from urllib.error import HTTPError
 
 import numpy as np
-import pytest
 import scipy.sparse
+import pytest
 
 import sklearn
 from sklearn import config_context
-from sklearn.datasets import fetch_openml as fetch_openml_orig
-from sklearn.datasets._openml import (
-    _OPENML_PREFIX,
-    _get_local_path,
-    _open_openml_url,
-    _retry_with_clean_cache,
-)
 from sklearn.utils import Bunch, check_pandas_support
 from sklearn.utils._testing import (
     SkipTest,
@@ -28,6 +21,15 @@ from sklearn.utils._testing import (
     assert_array_equal,
     fails_if_pypy,
 )
+
+from sklearn.datasets import fetch_openml as fetch_openml_orig
+from sklearn.datasets._openml import (
+    _OPENML_PREFIX,
+    _open_openml_url,
+    _get_local_path,
+    _retry_with_clean_cache,
+)
+
 
 OPENML_TEST_DATA_MODULE = "sklearn.datasets.tests.data.openml"
 # if True, urlopen will be monkey patched to only use local files

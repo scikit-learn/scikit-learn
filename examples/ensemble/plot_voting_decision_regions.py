@@ -28,11 +28,11 @@ from itertools import product
 import matplotlib.pyplot as plt
 
 from sklearn import datasets
-from sklearn.ensemble import VotingClassifier
-from sklearn.inspection import DecisionBoundaryDisplay
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
-from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import VotingClassifier
+from sklearn.inspection import DecisionBoundaryDisplay
 
 # Loading some example data
 iris = datasets.load_iris()

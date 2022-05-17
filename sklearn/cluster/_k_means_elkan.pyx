@@ -8,26 +8,20 @@
 
 IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
     cimport openmp
-
 from cython cimport floating
-
-from cython.parallel import parallel, prange
-
+from cython.parallel import prange, parallel
 from libc.math cimport sqrt
 from libc.stdlib cimport calloc, free
-from libc.string cimport memcpy, memset
+from libc.string cimport memset, memcpy
 
 from ..utils.extmath import row_norms
 from ._k_means_common import CHUNK_SIZE
-
-from ._k_means_common cimport (
-    _average_centers,
-    _center_shift,
-    _euclidean_dense_dense,
-    _euclidean_sparse_dense,
-    _relocate_empty_clusters_dense,
-    _relocate_empty_clusters_sparse,
-)
+from ._k_means_common cimport _relocate_empty_clusters_dense
+from ._k_means_common cimport _relocate_empty_clusters_sparse
+from ._k_means_common cimport _euclidean_dense_dense
+from ._k_means_common cimport _euclidean_sparse_dense
+from ._k_means_common cimport _average_centers
+from ._k_means_common cimport _center_shift
 
 
 def init_bounds_dense(

@@ -44,12 +44,11 @@ between their scores.
 
 """
 
-import numpy as np
-from matplotlib import pyplot as plt
-
 from sklearn.datasets import load_iris
-from sklearn.model_selection import GridSearchCV, KFold, cross_val_score
+from matplotlib import pyplot as plt
 from sklearn.svm import SVC
+from sklearn.model_selection import GridSearchCV, cross_val_score, KFold
+import numpy as np
 
 # Number of random trials
 NUM_TRIALS = 30

@@ -1,7 +1,7 @@
 cimport numpy as np
-from libcpp.vector cimport vector
 
-from ..utils._typedefs cimport DTYPE_t, INT32TYPE_t, INT64TYPE_t, ITYPE_t
+from libcpp.vector cimport vector
+from ..utils._typedefs cimport ITYPE_t, DTYPE_t, INT32TYPE_t, INT64TYPE_t
 
 ctypedef fused vector_typed:
     vector[DTYPE_t]

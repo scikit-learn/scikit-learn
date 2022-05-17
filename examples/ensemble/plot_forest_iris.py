@@ -42,15 +42,15 @@ samples are built sequentially and so do not use multiple cores.
 
 """
 
-import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 
 from sklearn.datasets import load_iris
 from sklearn.ensemble import (
-    AdaBoostClassifier,
-    ExtraTreesClassifier,
     RandomForestClassifier,
+    ExtraTreesClassifier,
+    AdaBoostClassifier,
 )
 from sklearn.tree import DecisionTreeClassifier
 

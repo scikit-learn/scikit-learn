@@ -1,34 +1,34 @@
-import itertools
+import pytest
 import warnings
-from functools import partial
 
 import numpy as np
-import pytest
+from functools import partial
+import itertools
 
 from sklearn.base import clone
-from sklearn.decomposition import (
-    DictionaryLearning,
-    MiniBatchDictionaryLearning,
-    SparseCoder,
-    dict_learning,
-    dict_learning_online,
-    sparse_encode,
-)
-from sklearn.decomposition._dict_learning import _update_dict
+
 from sklearn.exceptions import ConvergenceWarning
+
 from sklearn.utils import check_array
-from sklearn.utils._testing import (
-    TempMemmap,
-    assert_allclose,
-    assert_array_almost_equal,
-    assert_array_equal,
-    ignore_warnings,
-)
-from sklearn.utils.estimator_checks import (
-    check_transformer_data_not_an_array,
-    check_transformer_general,
-    check_transformers_unfitted,
-)
+
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import ignore_warnings
+from sklearn.utils._testing import TempMemmap
+
+from sklearn.decomposition import DictionaryLearning
+from sklearn.decomposition import MiniBatchDictionaryLearning
+from sklearn.decomposition import SparseCoder
+from sklearn.decomposition import dict_learning
+from sklearn.decomposition import dict_learning_online
+from sklearn.decomposition import sparse_encode
+from sklearn.utils.estimator_checks import check_transformer_data_not_an_array
+from sklearn.utils.estimator_checks import check_transformer_general
+from sklearn.utils.estimator_checks import check_transformers_unfitted
+
+from sklearn.decomposition._dict_learning import _update_dict
+
 
 rng_global = np.random.RandomState(0)
 n_samples, n_features = 10, 8
@@ -401,8 +401,8 @@ def test_dict_learning_online_positivity(positive_code, positive_dict):
 def test_dict_learning_online_verbosity():
     # test verbosity for better coverage
     n_components = 5
-    import sys
     from io import StringIO
+    import sys
 
     old_stdout = sys.stdout
     try:

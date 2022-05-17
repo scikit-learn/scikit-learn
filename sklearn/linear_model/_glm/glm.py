@@ -20,10 +20,10 @@ from ..._loss.loss import (
     HalfTweedieLossIdentity,
 )
 from ...base import BaseEstimator, RegressorMixin
-from ...utils import check_array, check_scalar, deprecated
-from ...utils._openmp_helpers import _openmp_effective_n_threads
 from ...utils.optimize import _check_optimize_result
-from ...utils.validation import _check_sample_weight, check_is_fitted
+from ...utils import check_scalar, check_array, deprecated
+from ...utils.validation import check_is_fitted, _check_sample_weight
+from ...utils._openmp_helpers import _openmp_effective_n_threads
 from .._linear_loss import LinearModelLoss
 
 

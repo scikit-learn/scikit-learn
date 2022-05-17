@@ -2,29 +2,28 @@
 estimator.
 """
 
-import operator
-import sys
-import time
-
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
 # License: BSD 3 clause
 # Copyright: INRIA
 import warnings
+import operator
+import sys
+import time
 
 import numpy as np
 from scipy import linalg
-
 from joblib import Parallel
 
+from . import empirical_covariance, EmpiricalCovariance, log_likelihood
+
 from ..exceptions import ConvergenceWarning
+from ..utils.validation import _is_arraylike_not_scalar, check_random_state
+from ..utils.fixes import delayed
 
 # mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
 from ..linear_model import _cd_fast as cd_fast  # type: ignore
 from ..linear_model import lars_path_gram
 from ..model_selection import check_cv, cross_val_score
-from ..utils.fixes import delayed
-from ..utils.validation import _is_arraylike_not_scalar, check_random_state
-from . import EmpiricalCovariance, empirical_covariance, log_likelihood
 
 
 # Helper functions to compute the objective and dual objective functions

@@ -6,9 +6,8 @@
 # License: BSD 3 clause
 
 import array
-
-cimport cython
 from cpython cimport array
+cimport cython
 from libc.string cimport strchr
 
 import numpy as np

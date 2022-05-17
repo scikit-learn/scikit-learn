@@ -3,8 +3,9 @@ import pytest
 
 from sklearn.datasets import load_iris
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics._plot.base import _get_response
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+
+from sklearn.metrics._plot.base import _get_response
 
 
 @pytest.mark.parametrize(

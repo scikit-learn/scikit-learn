@@ -19,9 +19,9 @@ for more information about this dataset.
 # Modified for documentation by Jaques Grobler
 # License: BSD 3 clause
 
-import matplotlib.pyplot as plt
-
 from sklearn import datasets
+
+import matplotlib.pyplot as plt
 
 # Load the digits dataset
 digits = datasets.load_digits()

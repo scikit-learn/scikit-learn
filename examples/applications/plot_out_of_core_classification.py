@@ -18,23 +18,25 @@ features (words) may appear in each batch.
 #          @FedericoV <https://github.com/FedericoV/>
 # License: BSD 3 clause
 
+from glob import glob
 import itertools
 import os.path
 import re
-import sys
 import tarfile
 import time
-from glob import glob
-from html.parser import HTMLParser
-from urllib.request import urlretrieve
+import sys
 
-import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.pyplot as plt
 from matplotlib import rcParams
 
+from html.parser import HTMLParser
+from urllib.request import urlretrieve
 from sklearn.datasets import get_data_home
 from sklearn.feature_extraction.text import HashingVectorizer
-from sklearn.linear_model import PassiveAggressiveClassifier, Perceptron, SGDClassifier
+from sklearn.linear_model import SGDClassifier
+from sklearn.linear_model import PassiveAggressiveClassifier
+from sklearn.linear_model import Perceptron
 from sklearn.naive_bayes import MultinomialNB
 
 

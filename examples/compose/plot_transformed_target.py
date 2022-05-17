@@ -15,14 +15,14 @@ example is based on the Ames housing data set.
 # Author: Guillaume Lemaitre <guillaume.lemaitre@inria.fr>
 # License: BSD 3 clause
 
-import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.pyplot as plt
 
-from sklearn.compose import TransformedTargetRegressor
 from sklearn.datasets import make_regression
-from sklearn.linear_model import RidgeCV
-from sklearn.metrics import median_absolute_error, r2_score
 from sklearn.model_selection import train_test_split
+from sklearn.linear_model import RidgeCV
+from sklearn.compose import TransformedTargetRegressor
+from sklearn.metrics import median_absolute_error, r2_score
 
 # %%
 # Synthetic example

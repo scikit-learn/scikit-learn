@@ -1,17 +1,22 @@
 import pickle
 
 import numpy as np
-import pytest
 from numpy.testing import assert_allclose, assert_array_equal
+import pytest
 from pytest import approx
-from scipy.optimize import LinearConstraint, minimize, minimize_scalar, newton
+from scipy.optimize import (
+    minimize,
+    minimize_scalar,
+    newton,
+    LinearConstraint,
+)
 from scipy.special import logsumexp
 
-from sklearn._loss.link import IdentityLink, _inclusive_low_high
+from sklearn._loss.link import _inclusive_low_high, IdentityLink
 from sklearn._loss.loss import (
     _LOSSES,
-    AbsoluteError,
     BaseLoss,
+    AbsoluteError,
     HalfBinomialLoss,
     HalfGammaLoss,
     HalfMultinomialLoss,
@@ -23,6 +28,7 @@ from sklearn._loss.loss import (
 )
 from sklearn.utils import assert_all_finite
 from sklearn.utils._testing import create_memmap_backed_data, skip_if_32bit
+
 
 ALL_LOSSES = list(_LOSSES.values())
 

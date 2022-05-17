@@ -1,10 +1,9 @@
 """Labels PRs based on title. Must be run in a github action with the
 pull_request_target event."""
-import json
-import os
-import re
-
 from github import Github
+import os
+import json
+import re
 
 context_dict = json.loads(os.getenv("CONTEXT_GITHUB"))
 

@@ -7,10 +7,11 @@ refurbished versions of Pipeline and FeatureUnion.
 
 from ._column_transformer import (
     ColumnTransformer,
-    make_column_selector,
     make_column_transformer,
+    make_column_selector,
 )
 from ._target import TransformedTargetRegressor
+
 
 __all__ = [
     "ColumnTransformer",

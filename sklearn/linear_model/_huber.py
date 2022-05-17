@@ -2,14 +2,15 @@
 # License: BSD 3 clause
 
 import numpy as np
+
 from scipy import optimize
 
 from ..base import BaseEstimator, RegressorMixin
+from ._base import LinearModel
 from ..utils import axis0_safe_slice
+from ..utils.validation import _check_sample_weight
 from ..utils.extmath import safe_sparse_dot
 from ..utils.optimize import _check_optimize_result
-from ..utils.validation import _check_sample_weight
-from ._base import LinearModel
 
 
 def _huber_loss_and_gradient(w, X, y, epsilon, alpha, sample_weight=None):

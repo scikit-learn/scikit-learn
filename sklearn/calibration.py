@@ -8,33 +8,34 @@
 # License: BSD 3 clause
 
 import warnings
-from functools import partial
 from inspect import signature
+from functools import partial
+
 from math import log
-
 import numpy as np
-from scipy.optimize import fmin_bfgs
-from scipy.special import expit, xlogy
-
 from joblib import Parallel
+
+from scipy.special import expit
+from scipy.special import xlogy
+from scipy.optimize import fmin_bfgs
 
 from .base import (
     BaseEstimator,
     ClassifierMixin,
-    MetaEstimatorMixin,
     RegressorMixin,
     clone,
+    MetaEstimatorMixin,
     is_classifier,
 )
-from .isotonic import IsotonicRegression
-from .metrics._base import _check_pos_label_consistency
-from .metrics._plot.base import _get_response
-from .model_selection import check_cv, cross_val_predict
-from .preprocessing import LabelEncoder, label_binarize
-from .svm import LinearSVC
-from .utils import _safe_indexing, check_matplotlib_support, column_or_1d, indexable
-from .utils.fixes import delayed
+from .preprocessing import label_binarize, LabelEncoder
+from .utils import (
+    column_or_1d,
+    indexable,
+    check_matplotlib_support,
+)
+
 from .utils.multiclass import check_classification_targets
+from .utils.fixes import delayed
 from .utils.validation import (
     _check_fit_params,
     _check_sample_weight,
@@ -42,6 +43,12 @@ from .utils.validation import (
     check_consistent_length,
     check_is_fitted,
 )
+from .utils import _safe_indexing
+from .isotonic import IsotonicRegression
+from .svm import LinearSVC
+from .model_selection import check_cv, cross_val_predict
+from .metrics._base import _check_pos_label_consistency
+from .metrics._plot.base import _get_response
 
 
 class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):

@@ -14,27 +14,19 @@ extends single output estimators to multioutput estimators.
 #
 # License: BSD 3 clause
 
-from abc import ABCMeta, abstractmethod
-
 import numpy as np
 import scipy.sparse as sp
-
 from joblib import Parallel
 
-from .base import (
-    BaseEstimator,
-    ClassifierMixin,
-    MetaEstimatorMixin,
-    RegressorMixin,
-    clone,
-    is_classifier,
-)
+from abc import ABCMeta, abstractmethod
+from .base import BaseEstimator, clone, MetaEstimatorMixin
+from .base import RegressorMixin, ClassifierMixin, is_classifier
 from .model_selection import cross_val_predict
-from .utils import check_random_state
-from .utils.fixes import delayed
 from .utils.metaestimators import available_if
+from .utils import check_random_state
+from .utils.validation import check_is_fitted, has_fit_parameter, _check_fit_params
 from .utils.multiclass import check_classification_targets
-from .utils.validation import _check_fit_params, check_is_fitted, has_fit_parameter
+from .utils.fixes import delayed
 
 __all__ = [
     "MultiOutputRegressor",

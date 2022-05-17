@@ -19,7 +19,7 @@ point. This makes feature selection by the Lasso more stable.
 import matplotlib.pyplot as plt
 import numpy as np
 
-from sklearn.linear_model import Lasso, MultiTaskLasso
+from sklearn.linear_model import MultiTaskLasso, Lasso
 
 rng = np.random.RandomState(42)
 

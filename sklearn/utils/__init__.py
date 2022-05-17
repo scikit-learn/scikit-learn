@@ -1,45 +1,48 @@
 """
 The :mod:`sklearn.utils` module includes various utilities.
 """
+import pkgutil
 import inspect
+from importlib import import_module
+from operator import itemgetter
+from collections.abc import Sequence
+from contextlib import contextmanager
+from itertools import compress
+from itertools import islice
 import math
 import numbers
-import pkgutil
 import platform
 import struct
 import timeit
-import warnings
-from collections.abc import Sequence
-from contextlib import contextmanager, suppress
-from importlib import import_module
-from itertools import compress, islice
-from operator import itemgetter
 from pathlib import Path
+from contextlib import suppress
 
+import warnings
 import numpy as np
 from scipy.sparse import issparse
 
-from .. import get_config
-from ..exceptions import DataConversionWarning
-from . import _joblib
-from ._bunch import Bunch
-from ._estimator_html_repr import estimator_html_repr
+from .murmurhash import murmurhash3_32
 from .class_weight import compute_class_weight, compute_sample_weight
+from . import _joblib
+from ..exceptions import DataConversionWarning
 from .deprecation import deprecated
 from .fixes import parse_version, threadpool_info
-from .murmurhash import murmurhash3_32
+from ._estimator_html_repr import estimator_html_repr
 from .validation import (
     as_float_array,
     assert_all_finite,
+    check_random_state,
+    column_or_1d,
     check_array,
     check_consistent_length,
-    check_random_state,
-    check_scalar,
-    check_symmetric,
     check_X_y,
-    column_or_1d,
     indexable,
+    check_symmetric,
+    check_scalar,
 )
+from .. import get_config
+from ._bunch import Bunch
+
 
 # Do not deprecate parallel_backend and register_parallel_backend as they are
 # needed to tune `scikit-learn` behavior and have different effect if called
@@ -1168,14 +1171,14 @@ def all_estimators(type_filter=None):
         and ``class`` is the actual type of the class.
     """
     # lazy import to avoid circular imports from sklearn.base
+    from ._testing import ignore_warnings
     from ..base import (
         BaseEstimator,
         ClassifierMixin,
-        ClusterMixin,
         RegressorMixin,
         TransformerMixin,
+        ClusterMixin,
     )
-    from ._testing import ignore_warnings
 
     def is_abstract(c):
         if not (hasattr(c, "__abstractmethods__")):

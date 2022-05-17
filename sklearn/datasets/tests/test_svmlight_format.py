@@ -1,22 +1,22 @@
+from bz2 import BZ2File
 import gzip
+from io import BytesIO
+import numpy as np
+import scipy.sparse as sp
 import os
 import shutil
-from bz2 import BZ2File
 from importlib import resources
-from io import BytesIO
 from tempfile import NamedTemporaryFile
 
-import numpy as np
 import pytest
-import scipy.sparse as sp
+
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import fails_if_pypy
 
 import sklearn
-from sklearn.datasets import dump_svmlight_file, load_svmlight_file, load_svmlight_files
-from sklearn.utils._testing import (
-    assert_array_almost_equal,
-    assert_array_equal,
-    fails_if_pypy,
-)
+from sklearn.datasets import load_svmlight_file, load_svmlight_files, dump_svmlight_file
+
 
 TEST_DATA_MODULE = "sklearn.datasets.tests.data"
 datafile = "svmlight_classification.txt"

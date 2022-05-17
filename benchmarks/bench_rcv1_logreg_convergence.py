@@ -3,15 +3,14 @@
 #
 # License: BSD 3 clause
 
+import matplotlib.pyplot as plt
+from joblib import Memory
+import numpy as np
 import gc
 import time
 
-import matplotlib.pyplot as plt
-import numpy as np
-
-from joblib import Memory
-from sklearn.datasets import fetch_rcv1
 from sklearn.linear_model import LogisticRegression, SGDClassifier
+from sklearn.datasets import fetch_rcv1
 from sklearn.linear_model._sag import get_auto_step_size
 
 try:

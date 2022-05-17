@@ -10,10 +10,13 @@ from scipy import sparse
 
 from ..base import BaseEstimator, TransformerMixin, _OneToOneFeatureMixin
 from ..utils import check_array, is_scalar_nan
-from ..utils._encode import _check_unknown, _encode, _get_counts, _unique
-from ..utils._mask import _get_mask
 from ..utils.deprecation import deprecated
-from ..utils.validation import _check_feature_names_in, check_is_fitted
+from ..utils.validation import check_is_fitted
+from ..utils.validation import _check_feature_names_in
+from ..utils._mask import _get_mask
+
+from ..utils._encode import _encode, _check_unknown, _unique, _get_counts
+
 
 __all__ = ["OneHotEncoder", "OrdinalEncoder"]
 

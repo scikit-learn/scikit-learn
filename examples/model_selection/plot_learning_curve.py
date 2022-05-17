@@ -17,13 +17,13 @@ the models for each training sizes.
 
 """
 
-import matplotlib.pyplot as plt
 import numpy as np
-
-from sklearn.datasets import load_digits
-from sklearn.model_selection import ShuffleSplit, learning_curve
+import matplotlib.pyplot as plt
 from sklearn.naive_bayes import GaussianNB
 from sklearn.svm import SVC
+from sklearn.datasets import load_digits
+from sklearn.model_selection import learning_curve
+from sklearn.model_selection import ShuffleSplit
 
 
 def plot_learning_curve(

@@ -9,24 +9,23 @@ https://archive.ics.uci.edu/ml/machine-learning-databases/kddcup99-mld/kddcup.da
 """
 
 import errno
+from gzip import GzipFile
 import logging
 import os
-from gzip import GzipFile
 from os.path import exists, join
 
 import numpy as np
-
 import joblib
 
-from ..utils import Bunch, check_random_state
-from ..utils import shuffle as shuffle_method
+from ._base import _fetch_remote
+from ._base import _convert_data_dataframe
 from . import get_data_home
-from ._base import (
-    RemoteFileMetadata,
-    _convert_data_dataframe,
-    _fetch_remote,
-    load_descr,
-)
+from ._base import RemoteFileMetadata
+from ._base import load_descr
+from ..utils import Bunch
+from ..utils import check_random_state
+from ..utils import shuffle as shuffle_method
+
 
 # The original data can be found at:
 # https://archive.ics.uci.edu/ml/machine-learning-databases/kddcup99-mld/kddcup.data.gz

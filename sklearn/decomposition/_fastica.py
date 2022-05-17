@@ -16,7 +16,8 @@ from scipy import linalg
 
 from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
 from ..exceptions import ConvergenceWarning
-from ..utils import as_float_array, check_array, check_random_state
+
+from ..utils import check_array, as_float_array, check_random_state
 from ..utils.validation import check_is_fitted
 
 __all__ = ["fastica", "FastICA"]

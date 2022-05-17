@@ -1,16 +1,24 @@
-import numpy as np
 import pytest
+import numpy as np
 from numpy.testing import assert_allclose
 
+
 from sklearn.compose import make_column_transformer
-from sklearn.datasets import load_breast_cancer, load_iris, make_classification
+from sklearn.datasets import load_iris
+
+from sklearn.datasets import load_breast_cancer, make_classification
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import RocCurveDisplay, auc, plot_roc_curve, roc_curve
+from sklearn.metrics import roc_curve
+from sklearn.metrics import auc
+
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils import shuffle
+
+
+from sklearn.metrics import RocCurveDisplay, plot_roc_curve
 
 
 @pytest.fixture(scope="module")

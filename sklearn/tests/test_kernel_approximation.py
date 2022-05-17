@@ -1,24 +1,20 @@
 import re
 
 import numpy as np
-import pytest
 from scipy.sparse import csr_matrix
+import pytest
 
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_almost_equal
+
+from sklearn.metrics.pairwise import kernel_metrics
+from sklearn.kernel_approximation import RBFSampler
+from sklearn.kernel_approximation import AdditiveChi2Sampler
+from sklearn.kernel_approximation import SkewedChi2Sampler
+from sklearn.kernel_approximation import Nystroem
+from sklearn.kernel_approximation import PolynomialCountSketch
 from sklearn.datasets import make_classification
-from sklearn.kernel_approximation import (
-    AdditiveChi2Sampler,
-    Nystroem,
-    PolynomialCountSketch,
-    RBFSampler,
-    SkewedChi2Sampler,
-)
-from sklearn.metrics.pairwise import (
-    chi2_kernel,
-    kernel_metrics,
-    polynomial_kernel,
-    rbf_kernel,
-)
-from sklearn.utils._testing import assert_array_almost_equal, assert_array_equal
+from sklearn.metrics.pairwise import polynomial_kernel, rbf_kernel, chi2_kernel
 
 # generate data
 rng = np.random.RandomState(0)

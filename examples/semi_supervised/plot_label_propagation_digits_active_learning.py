@@ -23,13 +23,13 @@ model with their true labels.
 # Authors: Clay Woolam <clay@woolam.org>
 # License: BSD
 
-import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.pyplot as plt
 from scipy import stats
 
 from sklearn import datasets
-from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.semi_supervised import LabelSpreading
+from sklearn.metrics import classification_report, confusion_matrix
 
 digits = datasets.load_digits()
 rng = np.random.RandomState(0)

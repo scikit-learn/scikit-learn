@@ -24,11 +24,9 @@ value of k on various overlapping sub-samples of the dataset.
 # Author: Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
 
-from time import time
-
-import matplotlib.pyplot as plt
 import numpy as np
-
+import matplotlib.pyplot as plt
+from time import time
 from sklearn import metrics
 
 

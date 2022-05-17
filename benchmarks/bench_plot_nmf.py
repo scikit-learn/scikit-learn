@@ -6,24 +6,27 @@ Benchmarks of Non-Negative Matrix Factorization
 #          Anthony Di Franco (projected gradient, Python and NumPy port)
 # License: BSD 3 clause
 
-import numbers
+from time import time
 import sys
 import warnings
-from time import time
+import numbers
 
-import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.pyplot as plt
+from joblib import Memory
 import pandas
 
-from joblib import Memory
-from sklearn.decomposition import NMF
-from sklearn.decomposition._nmf import _beta_divergence, _check_init, _initialize_nmf
-from sklearn.exceptions import ConvergenceWarning
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.utils import check_array
 from sklearn.utils._testing import ignore_warnings
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.decomposition import NMF
+from sklearn.decomposition._nmf import _initialize_nmf
+from sklearn.decomposition._nmf import _beta_divergence
+from sklearn.decomposition._nmf import _check_init
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils.extmath import safe_sparse_dot, squared_norm
+from sklearn.utils import check_array
 from sklearn.utils.validation import check_is_fitted, check_non_negative
+
 
 mem = Memory(cachedir=".", verbose=0)
 

@@ -1,7 +1,6 @@
-from libc.math cimport exp, log
+from libc.math cimport log, exp
 
 import numpy as np
-
 cimport numpy as np
 
 np.import_array()

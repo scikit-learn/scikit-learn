@@ -35,6 +35,7 @@ df = bike_sharing.frame
 # demand around the middle of the days:
 import matplotlib.pyplot as plt
 
+
 fig, ax = plt.subplots(figsize=(12, 4))
 average_week_demand = df.groupby(["weekday", "hour"]).mean()["count"]
 average_week_demand.plot(ax=ax)
@@ -160,10 +161,6 @@ X.iloc[test_4]
 # %%
 X.iloc[train_4]
 
-from sklearn.compose import ColumnTransformer
-from sklearn.ensemble import HistGradientBoostingRegressor
-from sklearn.model_selection import cross_validate
-
 # %%
 # All is well. We are now ready to do some predictive modeling!
 #
@@ -186,6 +183,10 @@ from sklearn.model_selection import cross_validate
 # we only try the default hyper-parameters for this model:
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import OrdinalEncoder
+from sklearn.compose import ColumnTransformer
+from sklearn.ensemble import HistGradientBoostingRegressor
+from sklearn.model_selection import cross_validate
+
 
 categorical_columns = [
     "weather",
@@ -238,10 +239,6 @@ def evaluate(model, X, y, cv):
 
 evaluate(gbrt_pipeline, X, y, cv=ts_cv)
 
-import numpy as np
-
-from sklearn.linear_model import RidgeCV
-
 # %%
 # This model has an average error around 4 to 5% of the maximum demand. This is
 # quite good for a first trial without any hyper-parameter tuning! We just had
@@ -260,7 +257,11 @@ from sklearn.linear_model import RidgeCV
 # For consistency, we scale the numerical features to the same 0-1 range using
 # class:`sklearn.preprocessing.MinMaxScaler`, although in this case it does not
 # impact the results much because they are already on comparable scales:
-from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.linear_model import RidgeCV
+import numpy as np
+
 
 one_hot_encoder = OneHotEncoder(handle_unknown="ignore", sparse=False)
 alphas = np.logspace(-6, 6, 25)
@@ -601,8 +602,6 @@ cyclic_spline_linear_pipeline[:-1].transform(X).shape
 # "workingday" and features derived from "hours". This issue will be addressed
 # in the following section.
 
-from sklearn.pipeline import FeatureUnion
-
 # %%
 # Modeling pairwise interactions with splines and polynomial features
 # -------------------------------------------------------------------
@@ -616,6 +615,8 @@ from sklearn.pipeline import FeatureUnion
 # grained spline encoded hours to model the "workingday"/"hours" interaction
 # explicitly without introducing too many new variables:
 from sklearn.preprocessing import PolynomialFeatures
+from sklearn.pipeline import FeatureUnion
+
 
 hour_workday_interaction = make_pipeline(
     ColumnTransformer(
@@ -661,6 +662,7 @@ evaluate(cyclic_spline_interactions_pipeline, X, y, cv=ts_cv)
 # Alternatively, we can use the Nyström method to compute an approximate
 # polynomial kernel expansion. Let us try the latter:
 from sklearn.kernel_approximation import Nystroem
+
 
 cyclic_spline_poly_pipeline = make_pipeline(
     cyclic_spline_transformer,

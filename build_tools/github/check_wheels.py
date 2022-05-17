@@ -1,9 +1,8 @@
 """Checks that dist/* contains the number of wheels built from the
 .github/workflows/wheels.yml config."""
-import sys
-from pathlib import Path
-
 import yaml
+from pathlib import Path
+import sys
 
 gh_wheel_path = Path.cwd() / ".github" / "workflows" / "wheels.yml"
 with gh_wheel_path.open("r") as f:

@@ -7,13 +7,13 @@
 #
 # License: BSD 3 clause
 
+from libc.stdlib cimport free
+from libc.stdlib cimport malloc
+from libc.stdlib cimport realloc
 from libc.math cimport log as ln
-from libc.stdlib cimport free, malloc, realloc
 
 import numpy as np
-
 cimport numpy as np
-
 np.import_array()
 
 from ..utils._random cimport our_rand_r

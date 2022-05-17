@@ -3,7 +3,8 @@ import pytest
 
 from sklearn import config_context
 from sklearn.impute import KNNImputer
-from sklearn.metrics.pairwise import nan_euclidean_distances, pairwise_distances
+from sklearn.metrics.pairwise import nan_euclidean_distances
+from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.utils._testing import assert_allclose
 

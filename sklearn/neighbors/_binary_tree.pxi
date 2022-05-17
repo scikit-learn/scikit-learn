@@ -143,31 +143,28 @@
 #     """Compute the maximum distance between two nodes"""
 
 cimport numpy as np
-from libc.math cimport cos, exp, fabs, fmax, fmin, lgamma, log, pow, sqrt
-from libc.stdlib cimport calloc, free, malloc
+from libc.math cimport fabs, sqrt, exp, cos, pow, log, lgamma
+from libc.math cimport fmin, fmax
+from libc.stdlib cimport calloc, malloc, free
 from libc.string cimport memcpy
 
-import warnings
-
 import numpy as np
+import warnings
 
 from ..metrics._dist_metrics cimport (
     DistanceMetric,
     euclidean_dist,
-    euclidean_dist_to_rdist,
     euclidean_rdist,
+    euclidean_dist_to_rdist,
 )
+
 from ._partition_nodes cimport partition_node_indices
 
 from ..utils import check_array
-
 from ..utils._typedefs cimport DTYPE_t, ITYPE_t
-
 from ..utils._typedefs import DTYPE, ITYPE
-
 from ..utils._heap cimport heap_push
 from ..utils._sorting cimport simultaneous_sort as _simultaneous_sort
-
 
 cdef extern from "numpy/arrayobject.h":
     void PyArray_ENABLEFLAGS(np.ndarray arr, int flags)
@@ -762,9 +759,7 @@ def newObj(obj):
 
 ######################################################################
 # define the reverse mapping of VALID_METRICS
-
 from sklearn.metrics._dist_metrics import get_valid_metric_ids
-
 VALID_METRIC_IDS = get_valid_metric_ids(VALID_METRICS)
 
 

@@ -8,12 +8,13 @@ Approximating (OAS) estimators of covariance can improve classification.
 
 """
 
-import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.pyplot as plt
 
-from sklearn.covariance import OAS
 from sklearn.datasets import make_blobs
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.covariance import OAS
+
 
 n_train = 20  # samples for training
 n_test = 200  # samples for testing

@@ -3,9 +3,9 @@
 # License: BSD 3 clause
 
 from array import array
-from collections.abc import Iterable, Mapping
-from numbers import Number
+from collections.abc import Mapping, Iterable
 from operator import itemgetter
+from numbers import Number
 
 import numpy as np
 import scipy.sparse as sp

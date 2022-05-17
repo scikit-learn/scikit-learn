@@ -1,4 +1,8 @@
-from .common cimport BITSET_DTYPE_C, BITSET_INNER_DTYPE_C, X_BINNED_DTYPE_C, X_DTYPE_C
+from .common cimport BITSET_INNER_DTYPE_C
+from .common cimport BITSET_DTYPE_C
+from .common cimport X_DTYPE_C
+from .common cimport X_BINNED_DTYPE_C
+
 
 # A bitset is a data structure used to represent sets of integers in [0, n]. We
 # use them to represent sets of features indices (e.g. features that go to the

@@ -9,7 +9,11 @@ import scipy as sp
 
 from ..externals import _arff
 from ..externals._arff import ArffSparseDataType
-from ..utils import _chunk_generator, check_pandas_support, get_chunk_n_rows
+from ..utils import (
+    _chunk_generator,
+    check_pandas_support,
+    get_chunk_n_rows,
+)
 
 
 def _split_sparse_columns(

@@ -5,16 +5,16 @@
 # License: BSD 3 clause
 
 
+import numpy as np
 import warnings
 
-import numpy as np
 from scipy import special, stats
 from scipy.sparse import issparse
 
 from ..base import BaseEstimator
 from ..preprocessing import LabelBinarizer
-from ..utils import as_float_array, check_array, check_X_y, safe_mask, safe_sqr
-from ..utils.extmath import row_norms, safe_sparse_dot
+from ..utils import as_float_array, check_array, check_X_y, safe_sqr, safe_mask
+from ..utils.extmath import safe_sparse_dot, row_norms
 from ..utils.validation import check_is_fitted
 from ._base import SelectorMixin
 

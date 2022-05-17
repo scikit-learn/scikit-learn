@@ -6,23 +6,25 @@
 #         Tom Dupre la Tour
 # License: BSD 3 clause
 
-import itertools
 import numbers
-import time
-import warnings
-from math import sqrt
-
 import numpy as np
 import scipy.sparse as sp
+import time
+import itertools
+import warnings
+from math import sqrt
 from scipy import linalg
 
+from ._cdnmf_fast import _update_cdnmf_fast
 from .._config import config_context
 from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
 from ..exceptions import ConvergenceWarning
-from ..utils import check_array, check_random_state, gen_batches
+from ..utils import check_random_state, check_array, gen_batches
 from ..utils.extmath import randomized_svd, safe_sparse_dot, squared_norm
-from ..utils.validation import check_is_fitted, check_non_negative
-from ._cdnmf_fast import _update_cdnmf_fast
+from ..utils.validation import (
+    check_is_fitted,
+    check_non_negative,
+)
 
 EPSILON = np.finfo(np.float32).eps
 

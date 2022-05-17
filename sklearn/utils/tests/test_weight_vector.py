@@ -1,7 +1,9 @@
 import numpy as np
 import pytest
-
-from sklearn.utils._weight_vector import WeightVector32, WeightVector64
+from sklearn.utils._weight_vector import (
+    WeightVector32,
+    WeightVector64,
+)
 
 
 @pytest.mark.parametrize(

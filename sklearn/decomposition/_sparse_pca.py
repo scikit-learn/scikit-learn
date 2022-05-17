@@ -6,10 +6,10 @@ import warnings
 
 import numpy as np
 
-from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
-from ..linear_model import ridge_regression
 from ..utils import check_random_state
 from ..utils.validation import check_is_fitted
+from ..linear_model import ridge_regression
+from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
 from ._dict_learning import dict_learning, dict_learning_online
 
 

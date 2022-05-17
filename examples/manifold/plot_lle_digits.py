@@ -45,7 +45,6 @@ _ = fig.suptitle("A selection from the 64-dimensional digits dataset", fontsize=
 # scattered across it.
 import numpy as np
 from matplotlib import offsetbox
-
 from sklearn.preprocessing import MinMaxScaler
 
 
@@ -104,11 +103,11 @@ from sklearn.decomposition import TruncatedSVD
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.ensemble import RandomTreesEmbedding
 from sklearn.manifold import (
-    MDS,
-    TSNE,
     Isomap,
     LocallyLinearEmbedding,
+    MDS,
     SpectralEmbedding,
+    TSNE,
 )
 from sklearn.neighbors import NeighborhoodComponentsAnalysis
 from sklearn.pipeline import make_pipeline

@@ -3,26 +3,26 @@ The :mod:`sklearn.cluster` module gathers popular unsupervised clustering
 algorithms.
 """
 
-from ._affinity_propagation import AffinityPropagation, affinity_propagation
+from ._spectral import spectral_clustering, SpectralClustering
+from ._mean_shift import mean_shift, MeanShift, estimate_bandwidth, get_bin_seeds
+from ._affinity_propagation import affinity_propagation, AffinityPropagation
 from ._agglomerative import (
-    AgglomerativeClustering,
-    FeatureAgglomeration,
-    linkage_tree,
     ward_tree,
+    AgglomerativeClustering,
+    linkage_tree,
+    FeatureAgglomeration,
 )
-from ._bicluster import SpectralBiclustering, SpectralCoclustering
-from ._birch import Birch
+from ._kmeans import k_means, KMeans, MiniBatchKMeans, kmeans_plusplus
 from ._bisect_k_means import BisectingKMeans
-from ._dbscan import DBSCAN, dbscan
-from ._kmeans import KMeans, MiniBatchKMeans, k_means, kmeans_plusplus
-from ._mean_shift import MeanShift, estimate_bandwidth, get_bin_seeds, mean_shift
+from ._dbscan import dbscan, DBSCAN
 from ._optics import (
     OPTICS,
     cluster_optics_dbscan,
-    cluster_optics_xi,
     compute_optics_graph,
+    cluster_optics_xi,
 )
-from ._spectral import SpectralClustering, spectral_clustering
+from ._bicluster import SpectralBiclustering, SpectralCoclustering
+from ._birch import Birch
 
 __all__ = [
     "AffinityPropagation",

@@ -27,13 +27,12 @@ those effects.
 # Author: Narine Kokhlikyan <narine@slice.com>
 # License: BSD
 
-from time import time
-
-import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.ticker import NullFormatter
+import matplotlib.pyplot as plt
 
-from sklearn import datasets, manifold
+from matplotlib.ticker import NullFormatter
+from sklearn import manifold, datasets
+from time import time
 
 n_samples = 150
 n_components = 2

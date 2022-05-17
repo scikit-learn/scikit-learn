@@ -2,22 +2,17 @@
 #
 # License: BSD 3 clause
 
+import numpy as np
 import warnings
 
-import numpy as np
-
-from ..base import (
-    BaseEstimator,
-    MetaEstimatorMixin,
-    MultiOutputMixin,
-    RegressorMixin,
-    clone,
-)
-from ..exceptions import ConvergenceWarning
-from ..utils import check_consistent_length, check_random_state
+from ..base import BaseEstimator, MetaEstimatorMixin, RegressorMixin, clone
+from ..base import MultiOutputMixin
+from ..utils import check_random_state, check_consistent_length
 from ..utils.random import sample_without_replacement
-from ..utils.validation import _check_sample_weight, check_is_fitted, has_fit_parameter
+from ..utils.validation import check_is_fitted, _check_sample_weight
 from ._base import LinearRegression
+from ..utils.validation import has_fit_parameter
+from ..exceptions import ConvergenceWarning
 
 _EPSILON = np.spacing(1)
 
