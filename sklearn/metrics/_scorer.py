@@ -775,7 +775,8 @@ def oob_score(estimator, X, y):
     """Out-of-Bag scorer
 
     This function can be used wherever a scoring function is expected, but delegates its functionality
-    to the oob_score_ field of certain classifiers if they have one, notably the RandomForest type
+    to the oob_score_ field of certain classifiers if they have one, notably the RandomForest set of
+    Estimators.
 
     Parameters
     ----------

@@ -70,6 +70,15 @@ Changelog
 - |Fix| The `partial_fit` method of :class:`feature_selection.SelectFromModel`
   now conducts validation for `max_features` and `feature_names_in` parameters.
   :pr:`23299` by :user:`Long Bao <lorentzbao>`.
+- |Enhancement| Added :class:`IdentitySplitter`, a dummy splitter that returns a single split containing all the data.
+  This is useful for estimators that are able to estimate their own performance without retraining, such as when using
+  out-of-bag error.
+
+:mod:`sklearn.metrics`
+......................
+- |Enhancement| Added :func:`oob_score`. This function can be used wherever a scoring function is expected,
+    but delegates its functionality to the oob_score_ field of certain classifiers if they have one, notably the
+    RandomForest set of Estimators.
 
 :mod:`sklearn.neighbors`
 ........................
@@ -98,6 +107,9 @@ Changelog
 - |Fix| Fixed invalid memory access bug during fit in
   :class:`tree.DecisionTreeRegressor` and :class:`tree.DecisionTreeClassifier`.
   :pr:`23273` by `Thomas Fan`_.
+
+:mod:`sklearn.model_selection`
+- |Enhancement| Add  :class:`ensemble.IsolationForest`
 
 Code and Documentation Contributors
 -----------------------------------
