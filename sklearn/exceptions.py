@@ -27,9 +27,16 @@ class UnsetMetadataPassedError(ValueError):
     ----------
     message : str
         The message
+
+    unrequested_params : dict
+        A dictionary of parameters and their values which are provided but not
+        requested.
+
+    routed_params : dict
+        A dictionary of routed parameters.
     """
 
-    def __init__(self, message, unrequested_params, routed_params):
+    def __init__(self, *, message, unrequested_params, routed_params):
         super().__init__(message)
         self.unrequested_params = unrequested_params
         self.routed_params = routed_params
