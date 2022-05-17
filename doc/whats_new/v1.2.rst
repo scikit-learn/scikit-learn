@@ -70,7 +70,7 @@ Changelog
 - |Fix| The `partial_fit` method of :class:`feature_selection.SelectFromModel`
   now conducts validation for `max_features` and `feature_names_in` parameters.
   :pr:`23299` by :user:`Long Bao <lorentzbao>`.
-- |Enhancement| Added :class:`IdentitySplitter`, a dummy splitter that returns a single split containing all the data.
+- |Enhancement| Added :class:`model_selection.IdentitySplitter`, a dummy splitter that returns a single split containing all the data.
   This is useful for estimators that are able to estimate their own performance without retraining, such as when using
   out-of-bag error.
   :pr:`23391` by :user:`Michael Milton <multimeric>`.
@@ -78,8 +78,8 @@ Changelog
 :mod:`sklearn.metrics`
 ......................
 
-- |Enhancement| Added :func:`oob_score`. This function can be used wherever a scoring function is expected,
-  but delegates its functionality to the oob_score_ field of certain classifiers if they have one, notably the
+- |Enhancement| Added :func:`metrics.oob_score`. This function can be used wherever a scoring function is expected,
+  but delegates its functionality to the `oob_score_` field of certain classifiers if they have one, notably the
   RandomForest set of Estimators.
   :pr:`23391` by :user:`Michael Milton <multimeric>`.
 
