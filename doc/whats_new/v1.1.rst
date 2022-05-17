@@ -557,8 +557,6 @@ Changelog
   for instance using cgroups quota in a docker container. :pr:`22566` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
-:mod:`sklearn.feature_extraction`
-.................................
 - |Fix| :class:`ensemble.HistGradientBoostingClassifier` and
   :class:`ensemble.HistGradientBoostingRegressor` no longer warns when
   fitting on a pandas DataFrame with a non-default `scoring` parameter and
