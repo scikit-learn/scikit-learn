@@ -44,6 +44,20 @@ Changelog
 - |Enhancement| :class:`cluster.Birch` now preserves dtype for `numpy.float32`
   inputs. :pr:`22968` by `Meekail Zain <micky774>`.
 
+:mod:`sklearn.datasets`
+.......................
+
+- |Enhancement| Introduce the new parameter `parser` in
+  :func:`datasets.fetch_openml`. `parser="pandas"` allows to use the very CPU
+  and memory efficient `pandas.read_csv` parser to load dense ARFF
+  formatted dataset files. It is possible to pass `parser="liac-arff"`
+  to use the old LIAC parser.
+  When `parser="auto"`, dense datasets are loaded with "pandas" and sparse
+  datasets are loaded with "liac-arff".
+  Currently, `parser="liac-arff"` by default and will change to `parser="auto"`
+  in version 1.4
+  :pr:`21938` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.ensemble`
 .......................
 
@@ -56,6 +70,14 @@ Changelog
 - |Fix| The `partial_fit` method of :class:`feature_selection.SelectFromModel`
   now conducts validation for `max_features` and `feature_names_in` parameters.
   :pr:`23299` by :user:`Long Bao <lorentzbao>`.
+
+:mod:`sklearn.metrics`
+......................
+
+- |Feature| :func:`class_likelihood_ratios` is added to compute the positive and
+  negative likelihood ratios derived from the confusion matrix
+  of a binary classification problem. :pr:`22518` by
+  :user:`Arturo Amor <ArturoAmorQ>`.
 
 :mod:`sklearn.neighbors`
 ........................
@@ -70,6 +92,28 @@ Changelog
   This is useful to improve efficiency when using precomputed sparse distance
   matrices in a variety of estimators and avoid an `EfficiencyWarning`.
   :pr:`23139` by `Tom Dupre la Tour`_.
+
+:mod:`sklearn.preprocessing`
+............................
+
+- |Fix| :class:`preprocessing.PolynomialFeatures` with ``degree`` equal to 0 will raise
+  error when ``include_bias`` is set to False, and outputs a single constant array when
+  ``include_bias`` is set to True. :pr:`23370` by :user:`Zhehao Liu <MaxwellLZH>`.
+
+:mod:`sklearn.tree`
+...................
+
+- |Fix| Fixed invalid memory access bug during fit in
+  :class:`tree.DecisionTreeRegressor` and :class:`tree.DecisionTreeClassifier`.
+  :pr:`23273` by `Thomas Fan`_.
+
+:mod:`sklearn.utils`
+....................
+
+- |Enhancement| :func:`utils.extmath.randomized_svd` now accepts an argument,
+  `lapack_svd_driver`, to specify the lapack driver used in the internal
+  deterministic SVD used by the randomized SVD algorithm.
+  :pr:`20617` by :user:`Srinath Kailasa <skailasa>`
 
 Code and Documentation Contributors
 -----------------------------------
