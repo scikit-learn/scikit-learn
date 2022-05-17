@@ -890,7 +890,7 @@ class MetadataRouter:
             # if params is None, we accept and warn on everything.
             warn_params = warn_on_params["params"]
             if warn_params is None:
-                warn_params = e.unrequested_params.keys()
+                warn_params = list(e.unrequested_params.keys())
 
             for param in warn_params:
                 if param in e.unrequested_params:

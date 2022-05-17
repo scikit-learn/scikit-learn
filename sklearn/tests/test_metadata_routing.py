@@ -872,7 +872,7 @@ def test_router_deprecation_warning():
                 .warn_on(
                     child="estimator",
                     method="fit",
-                    params=["sample_weight"],
+                    params=None,
                     raise_on="1.4",
                 )
             )
@@ -890,20 +890,6 @@ def test_router_deprecation_warning():
         FutureWarning, match="From version 1.4 this results in the following error"
     ):
         est.fit(X, y, sample_weight=my_weights)
-
-    # we should raise because there is no warn_on for groups
-    with pytest.raises(
-        ValueError,
-        match=re.escape(
-            "[sample_weight, groups] are passed but is not explicitly set as requested"
-            " or not for Estimator.fit"
-        ),
-    ):
-        # the sample_weight should still warn
-        with pytest.warns(
-            FutureWarning, match="From version 1.4 this results in the following error"
-        ):
-            est.fit(X, y, sample_weight=my_weights, groups=1)
 
     # but predict should raise since there is no warn_on set for it.
     with pytest.raises(
@@ -962,6 +948,22 @@ def test_router_deprecation_warning():
         FutureWarning, match="From version 1.4 this results in the following error"
     ):
         est.fit(X, y, sample_weight=my_weights)
+
+    # here we should raise because there is no warn_on for groups
+    with pytest.raises(
+        ValueError,
+        match=re.escape(
+            "[sample_weight, groups] are passed but is not explicitly set as requested"
+            " or not for Estimator.fit"
+        ),
+    ):
+        # the sample_weight should still warn
+        with pytest.warns(
+            FutureWarning, match="From version 1.4 this results in the following error"
+        ):
+            WarningWeightedMetaRegressor(estimator=Estimator()).fit(
+                X, y, sample_weight=my_weights, groups=1
+            )
 
     # but if the inner estimator has a non-default request, we fall back to
     # raising an error

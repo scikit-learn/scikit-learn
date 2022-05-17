@@ -106,7 +106,7 @@ def test_multioutput_metadata_routing(MultiOutput, Estimator):
         FutureWarning,
         match=(
             "You are passing metadata for which the request values are not explicitly"
-            " set. From version 1.4 this results in the following error"
+            " set: sample_weight, metadata."
         ),
     ):
         metaest.fit(X, y_multi, sample_weight=sample_weight, metadata=metadata)
