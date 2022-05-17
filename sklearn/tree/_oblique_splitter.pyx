@@ -151,6 +151,7 @@ cdef class ObliqueSplitter(Splitter):
         for i in range(self.max_features):
             self.proj_mat_weights[i].clear()
             self.proj_mat_indices[i].clear()
+        return 0
 
     cdef void sample_proj_mat(self, 
                               vector[vector[DTYPE_t]]& proj_mat_weights, 

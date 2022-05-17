@@ -786,7 +786,7 @@ def check_min_weight_fraction_leaf(name, datasets, sparse=False):
     else:
         X = DATASETS[datasets]["X"].astype(np.float32)
     y = DATASETS[datasets]["y"]
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(42)
     weights = rng.rand(X.shape[0])
     total_weight = np.sum(weights)
 
