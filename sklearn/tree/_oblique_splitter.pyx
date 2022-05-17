@@ -320,8 +320,7 @@ cdef class BestObliqueSplitter(BaseDenseObliqueSplitter):
             self.criterion.reset()
             p = start
             while p < end:
-                while (p + 1 < end and
-                        Xf[p + 1] <= Xf[p] + FEATURE_THRESHOLD):
+                while (p + 1 < end and Xf[p + 1] <= Xf[p] + FEATURE_THRESHOLD):
                     p += 1
 
                 p += 1
