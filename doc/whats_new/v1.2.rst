@@ -71,6 +71,14 @@ Changelog
   now conducts validation for `max_features` and `feature_names_in` parameters.
   :pr:`23299` by :user:`Long Bao <lorentzbao>`.
 
+:mod:`sklearn.metrics`
+......................
+
+- |Feature| :func:`class_likelihood_ratios` is added to compute the positive and
+  negative likelihood ratios derived from the confusion matrix
+  of a binary classification problem. :pr:`22518` by
+  :user:`Arturo Amor <ArturoAmorQ>`.
+
 :mod:`sklearn.neighbors`
 ........................
 
