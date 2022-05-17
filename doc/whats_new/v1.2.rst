@@ -94,11 +94,11 @@ Changelog
   :pr:`23139` by `Tom Dupre la Tour`_.
 
 :mod:`sklearn.preprocessing`
-.............................
+............................
 
 - |Fix| :class:`preprocessing.PolynomialFeatures` with ``degree`` equal to 0 will raise
   error when ``include_bias`` is set to False, and outputs a single constant array when
-  ``include_bias`` is set to True. :pr:`23370` by :user:`Zhehao Liu <MaxwellLZH>`. 
+  ``include_bias`` is set to True. :pr:`23370` by :user:`Zhehao Liu <MaxwellLZH>`.
 
 :mod:`sklearn.tree`
 ...................
@@ -106,6 +106,14 @@ Changelog
 - |Fix| Fixed invalid memory access bug during fit in
   :class:`tree.DecisionTreeRegressor` and :class:`tree.DecisionTreeClassifier`.
   :pr:`23273` by `Thomas Fan`_.
+
+:mod:`sklearn.utils`
+....................
+
+- |Enhancement| :func:`utils.extmath.randomized_svd` now accepts an argument,
+  `lapack_svd_driver`, to specify the lapack driver used in the internal
+  deterministic SVD used by the randomized SVD algorithm.
+  :pr:`20617` by :user:`Srinath Kailasa <skailasa>`
 
 Code and Documentation Contributors
 -----------------------------------

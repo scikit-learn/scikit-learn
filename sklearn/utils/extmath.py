@@ -256,11 +256,12 @@ def randomized_svd(
     transpose="auto",
     flip_sign=True,
     random_state="warn",
+    svd_lapack_driver="gesdd",
 ):
     """Computes a truncated randomized SVD.
 
-    This method solves the fixed-rank approximation problem described in the
-    Halko et al paper (problem (1.5), p5).
+    This method solves the fixed-rank approximation problem described in [1]_
+    (problem (1.5), p5).
 
     Parameters
     ----------
@@ -278,8 +279,8 @@ def randomized_svd(
         approximation of singular vectors and singular values. Users might wish
         to increase this parameter up to `2*k - n_components` where k is the
         effective rank, for large matrices, noisy problems, matrices with
-        slowly decaying spectrums, or to increase precision accuracy. See Halko
-        et al (pages 5, 23 and 26).
+        slowly decaying spectrums, or to increase precision accuracy. See [1]_
+        (pages 5, 23 and 26).
 
     n_iter : int or 'auto', default='auto'
         Number of power iterations. It can be used to deal with very noisy
@@ -291,7 +292,7 @@ def randomized_svd(
         more costly power iterations steps. When `n_components` is equal
         or greater to the effective matrix rank and the spectrum does not
         present a slow decay, `n_iter=0` or `1` should even work fine in theory
-        (see Halko et al paper, page 9).
+        (see [1]_ page 9).
 
         .. versionchanged:: 0.18
 
@@ -332,6 +333,14 @@ def randomized_svd(
             the value of `random_state` explicitly to suppress the deprecation
             warning.
 
+    svd_lapack_driver : {"gesdd", "gesvd"}, default="gesdd"
+        Whether to use the more efficient divide-and-conquer approach
+        (`"gesdd"`) or more general rectangular approach (`"gesvd"`) to compute
+        the SVD of the matrix B, which is the projection of M into a low
+        dimensional subspace, as described in [1]_.
+
+        .. versionadded:: 1.2
+
     Notes
     -----
     This algorithm finds a (usually very good) approximate truncated
@@ -346,17 +355,16 @@ def randomized_svd(
 
     References
     ----------
-    * :arxiv:`"Finding structure with randomness:
+    .. [1] :arxiv:`"Finding structure with randomness:
       Stochastic algorithms for constructing approximate matrix decompositions"
       <0909.4061>`
       Halko, et al. (2009)
 
-    * A randomized algorithm for the decomposition of matrices
+    .. [2] A randomized algorithm for the decomposition of matrices
       Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert
 
-    * An implementation of a randomized algorithm for principal component
-      analysis
-      A. Szlam et al. 2014
+    .. [3] An implementation of a randomized algorithm for principal component
+      analysis A. Szlam et al. 2014
     """
     if isinstance(M, (sparse.lil_matrix, sparse.dok_matrix)):
         warnings.warn(
@@ -405,7 +413,7 @@ def randomized_svd(
     B = safe_sparse_dot(Q.T, M)
 
     # compute the SVD on the thin matrix: (k + p) wide
-    Uhat, s, Vt = linalg.svd(B, full_matrices=False)
+    Uhat, s, Vt = linalg.svd(B, full_matrices=False, lapack_driver=svd_lapack_driver)
 
     del B
     U = np.dot(Q, Uhat)
