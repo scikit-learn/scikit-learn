@@ -326,7 +326,7 @@ class MethodMetadataRequest:
         if unrequested:
             raise UnsetMetadataPassedError(
                 message=(
-                    f"[{', '.join([key for key in unrequested])} are passed but is not"
+                    f"[{', '.join([key for key in unrequested])}] are passed but is not"
                     " explicitly set as requested or not for"
                     f" {self.owner}.{self.method}"
                 ),
@@ -872,7 +872,7 @@ class MetadataRouter:
             routed_params = router._route_params(params=params, method=method)
         except UnsetMetadataPassedError as e:
             warn_on = self._warn_on.get(child, {})
-            if method not in warn_on["methods"]:
+            if method not in warn_on:
                 # there is no warn_on set for this method of this child object,
                 # we raise as usual.
                 raise
@@ -887,7 +887,12 @@ class MetadataRouter:
             warn_on_params = warn_on.get(method, {"params": [], "raise_on": "1.4"})
             warn_keys = list(e.unrequested_params.keys())
             routed_params = e.routed_params
-            for param in warn_on_params["params"]:
+            # if params is None, we accept and warn on everything.
+            warn_params = warn_on_params["params"]
+            if warn_params is None:
+                warn_params = e.unrequested_params.keys()
+
+            for param in warn_params:
                 if param in e.unrequested_params:
                     routed_params[param] = e.unrequested_params.pop(param)
 

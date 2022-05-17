@@ -342,8 +342,10 @@ def test_simple_metadata_routing():
     with pytest.raises(
         ValueError,
         match=(
-            "sample_weight is passed but is not explicitly set as requested or not for"
-            " ClassifierFitMetadata.fit"
+            re.escape(
+                "[sample_weight] are passed but is not explicitly set as requested or"
+                " not for ClassifierFitMetadata.fit"
+            )
         ),
     ):
         clf.fit(X, y, sample_weight=my_weights)
@@ -891,7 +893,11 @@ def test_router_deprecation_warning():
 
     # we should raise because there is no warn_on for groups
     with pytest.raises(
-        ValueError, match="sample_weight is passed but is not explicitly set"
+        ValueError,
+        match=re.escape(
+            "[sample_weight, groups] are passed but is not explicitly set as requested"
+            " or not for Estimator.fit"
+        ),
     ):
         # the sample_weight should still warn
         with pytest.warns(
@@ -901,7 +907,11 @@ def test_router_deprecation_warning():
 
     # but predict should raise since there is no warn_on set for it.
     with pytest.raises(
-        ValueError, match="sample_weight is passed but is not explicitly set"
+        ValueError,
+        match=re.escape(
+            "[sample_weight] are passed but is not explicitly set as requested or not"
+            " for Estimator.predict"
+        ),
     ):
         est.predict(X, sample_weight=my_weights)
 
@@ -910,7 +920,11 @@ def test_router_deprecation_warning():
     # doesn't have any warn_on set but sample_weight is passed.
     est = MetaEstimator(estimator=WeightedMetaRegressor(estimator=RegressorMetadata()))
     with pytest.raises(
-        ValueError, match="sample_weight is passed but is not explicitly set"
+        ValueError,
+        match=re.escape(
+            "[sample_weight] are passed but is not explicitly set as requested or not"
+            " for RegressorMetadata.fit"
+        ),
     ):
         with pytest.warns(
             FutureWarning, match="From version 1.4 this results in the following error"
@@ -927,13 +941,13 @@ def test_router_deprecation_warning():
                 .add(estimator=self.estimator, method_mapping="one-to-one")
                 .warn_on(
                     child="estimator",
-                    methods="fit",
+                    method="fit",
                     params=["sample_weight"],
                     raise_on="1.4",
                 )
                 .warn_on(
                     child="estimator",
-                    methods="score",
+                    method="score",
                     params=["sample_weight"],
                     raise_on="1.4",
                 )
@@ -957,6 +971,10 @@ def test_router_deprecation_warning():
         )
     )
     with pytest.raises(
-        ValueError, match="sample_weight is passed but is not explicitly set"
+        ValueError,
+        match=re.escape(
+            "[sample_weight] are passed but is not explicitly set as requested or not"
+            " for WarningWeightedMetaRegressor.fit"
+        ),
     ):
         est.fit(X, y, sample_weight=my_weights)

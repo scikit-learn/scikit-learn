@@ -253,14 +253,18 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
             routing information.
         """
         router = (
-            MetadataRouter(owner=self.__class__.__name__)
-            .add(
+            MetadataRouter(owner=self.__class__.__name__).add(
                 estimator=self.estimator,
                 method_mapping=MethodMapping()
                 .add(callee="partial_fit", caller="partial_fit")
                 .add(callee="fit", caller="fit"),
             )
-            .warn_on(child="estimator", methods=["fit", "partial_fit"])
+            # the fit method already accepts everything, therefore we don't
+            # specify parameters
+            .warn_on(child="estimator", method="fit", params=None)
+            # the partial_fit method at the time of this change only supports
+            # sample_weight, therefore we only include this metadata.
+            .warn_on(child="estimator", method="partial_fit", params=["sample_weight"])
         )
         return router
 
