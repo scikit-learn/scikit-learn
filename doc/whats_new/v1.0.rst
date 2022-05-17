@@ -1209,10 +1209,6 @@ Changelog
   these functions were not documented and part from the public API.
   :pr:`20521` by :user:`Olivier Grisel <ogrisel>`.
 
-- |Enhancement| :func:`utils.extmath.randomized_svd` now accepts an argument
-  to specify the lapack driver used in the internal deterministic SVD used by
-  the randomized SVD algorithm. :pr:`20617` by :user:`Srinath Kailasa <skailasa>`
-
 - |API| Fixed several bugs in :func:`utils.graph.graph_shortest_path`, which is
   now deprecated. Use `scipy.sparse.csgraph.shortest_path` instead. :pr:`20531`
   by `Tom Dupre la Tour`_.
