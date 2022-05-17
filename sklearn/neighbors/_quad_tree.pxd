@@ -1,19 +1,14 @@
-# cython: boundscheck=False
-# cython: wraparound=False
-# cython: cdivision=True
-#
 # Author: Thomas Moreau <thomas.moreau.2010@gmail.com>
 # Author: Olivier Grisel <olivier.grisel@ensta.fr>
 
 # See quad_tree.pyx for details.
 
-import numpy as np
-cimport numpy as np
+cimport numpy as cnp
 
-ctypedef np.npy_float32 DTYPE_t          # Type of X
-ctypedef np.npy_intp SIZE_t              # Type for indices and counters
-ctypedef np.npy_int32 INT32_t            # Signed 32 bit integer
-ctypedef np.npy_uint32 UINT32_t          # Unsigned 32 bit integer
+ctypedef cnp.npy_float32 DTYPE_t          # Type of X
+ctypedef cnp.npy_intp SIZE_t              # Type for indices and counters
+ctypedef cnp.npy_int32 INT32_t            # Signed 32 bit integer
+ctypedef cnp.npy_uint32 UINT32_t          # Unsigned 32 bit integer
 
 # This is effectively an ifdef statement in Cython
 # It allows us to write printf debugging lines
@@ -31,7 +26,7 @@ cdef struct Cell:
 
     # Tree structure
     SIZE_t parent              # Parent cell of this cell
-    SIZE_t[8] children         # Array pointing to childrens of this cell
+    SIZE_t[8] children         # Array pointing to children of this cell
 
     # Cell description
     SIZE_t cell_id             # Id of the cell in the cells array in the Tree
@@ -82,7 +77,7 @@ cdef class _QuadTree:
 
     # Create a summary of the Tree compare to a query point
     cdef long summarize(self, DTYPE_t[3] point, DTYPE_t* results,
-                        float squared_theta=*, int cell_id=*, long idx=*
+                        float squared_theta=*, SIZE_t cell_id=*, long idx=*
                         ) nogil
 
     # Internal cell initialization methods
@@ -98,4 +93,4 @@ cdef class _QuadTree:
     cdef int _resize(self, SIZE_t capacity) nogil except -1
     cdef int _resize_c(self, SIZE_t capacity=*) nogil except -1
     cdef int _get_cell(self, DTYPE_t[3] point, SIZE_t cell_id=*) nogil except -1
-    cdef np.ndarray _get_cell_ndarray(self)
+    cdef cnp.ndarray _get_cell_ndarray(self)

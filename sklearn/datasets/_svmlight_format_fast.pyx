@@ -4,19 +4,14 @@
 #          Lars Buitinck
 #          Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
-#
-# cython: boundscheck=False, wraparound=False
 
 import array
 from cpython cimport array
 cimport cython
 from libc.string cimport strchr
 
-cimport numpy as np
 import numpy as np
 import scipy.sparse as sp
-
-np.import_array()
 
 
 cdef bytes COMMA = u','.encode('ascii')

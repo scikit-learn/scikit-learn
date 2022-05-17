@@ -6,7 +6,7 @@ MNIST dataset benchmark
 Benchmark on the MNIST dataset.  The dataset comprises 70,000 samples
 and 784 features. Here, we consider the task of predicting
 10 classes -  digits from 0 to 9 from their raw images. By contrast to the
-covertype dataset, the feature space is homogenous.
+covertype dataset, the feature space is homogeneous.
 
 Example of output :
     [..]
@@ -53,18 +53,17 @@ from sklearn.neural_network import MLPClassifier
 
 # Memoize the data extraction and memory map the resulting
 # train / test splits in readonly mode
-memory = Memory(os.path.join(get_data_home(), 'mnist_benchmark_data'),
-                mmap_mode='r')
+memory = Memory(os.path.join(get_data_home(), "mnist_benchmark_data"), mmap_mode="r")
 
 
 @memory.cache
-def load_data(dtype=np.float32, order='F'):
+def load_data(dtype=np.float32, order="F"):
     """Load the data, then cache and memmap the train/test split"""
     ######################################################################
     # Load dataset
     print("Loading dataset...")
-    data = fetch_openml('mnist_784')
-    X = check_array(data['data'], dtype=dtype, order=order)
+    data = fetch_openml("mnist_784", as_frame=True, parser="pandas")
+    X = check_array(data["data"], dtype=dtype, order=order)
     y = data["target"]
 
     # Normalize features
@@ -83,43 +82,76 @@ def load_data(dtype=np.float32, order='F'):
 
 ESTIMATORS = {
     "dummy": DummyClassifier(),
-    'CART': DecisionTreeClassifier(),
-    'ExtraTrees': ExtraTreesClassifier(),
-    'RandomForest': RandomForestClassifier(),
-    'Nystroem-SVM': make_pipeline(
-        Nystroem(gamma=0.015, n_components=1000), LinearSVC(C=100)),
-    'SampledRBF-SVM': make_pipeline(
-        RBFSampler(gamma=0.015, n_components=1000), LinearSVC(C=100)),
-    'LogisticRegression-SAG': LogisticRegression(solver='sag', tol=1e-1,
-                                                 C=1e4),
-    'LogisticRegression-SAGA': LogisticRegression(solver='saga', tol=1e-1,
-                                                  C=1e4),
-    'MultilayerPerceptron': MLPClassifier(
-        hidden_layer_sizes=(100, 100), max_iter=400, alpha=1e-4,
-        solver='sgd', learning_rate_init=0.2, momentum=0.9, verbose=1,
-        tol=1e-4, random_state=1),
-    'MLP-adam': MLPClassifier(
-        hidden_layer_sizes=(100, 100), max_iter=400, alpha=1e-4,
-        solver='adam', learning_rate_init=0.001, verbose=1,
-        tol=1e-4, random_state=1)
+    "CART": DecisionTreeClassifier(),
+    "ExtraTrees": ExtraTreesClassifier(),
+    "RandomForest": RandomForestClassifier(),
+    "Nystroem-SVM": make_pipeline(
+        Nystroem(gamma=0.015, n_components=1000), LinearSVC(C=100)
+    ),
+    "SampledRBF-SVM": make_pipeline(
+        RBFSampler(gamma=0.015, n_components=1000), LinearSVC(C=100)
+    ),
+    "LogisticRegression-SAG": LogisticRegression(solver="sag", tol=1e-1, C=1e4),
+    "LogisticRegression-SAGA": LogisticRegression(solver="saga", tol=1e-1, C=1e4),
+    "MultilayerPerceptron": MLPClassifier(
+        hidden_layer_sizes=(100, 100),
+        max_iter=400,
+        alpha=1e-4,
+        solver="sgd",
+        learning_rate_init=0.2,
+        momentum=0.9,
+        verbose=1,
+        tol=1e-4,
+        random_state=1,
+    ),
+    "MLP-adam": MLPClassifier(
+        hidden_layer_sizes=(100, 100),
+        max_iter=400,
+        alpha=1e-4,
+        solver="adam",
+        learning_rate_init=0.001,
+        verbose=1,
+        tol=1e-4,
+        random_state=1,
+    ),
 }
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--classifiers', nargs="+",
-                        choices=ESTIMATORS, type=str,
-                        default=['ExtraTrees', 'Nystroem-SVM'],
-                        help="list of classifiers to benchmark.")
-    parser.add_argument('--n-jobs', nargs="?", default=1, type=int,
-                        help="Number of concurrently running workers for "
-                             "models that support parallelism.")
-    parser.add_argument('--order', nargs="?", default="C", type=str,
-                        choices=["F", "C"],
-                        help="Allow to choose between fortran and C ordered "
-                             "data")
-    parser.add_argument('--random-seed', nargs="?", default=0, type=int,
-                        help="Common seed used by random number generator.")
+    parser.add_argument(
+        "--classifiers",
+        nargs="+",
+        choices=ESTIMATORS,
+        type=str,
+        default=["ExtraTrees", "Nystroem-SVM"],
+        help="list of classifiers to benchmark.",
+    )
+    parser.add_argument(
+        "--n-jobs",
+        nargs="?",
+        default=1,
+        type=int,
+        help=(
+            "Number of concurrently running workers for "
+            "models that support parallelism."
+        ),
+    )
+    parser.add_argument(
+        "--order",
+        nargs="?",
+        default="C",
+        type=str,
+        choices=["F", "C"],
+        help="Allow to choose between fortran and C ordered data",
+    )
+    parser.add_argument(
+        "--random-seed",
+        nargs="?",
+        default=0,
+        type=int,
+        help="Common seed used by random number generator.",
+    )
     args = vars(parser.parse_args())
 
     print(__doc__)
@@ -132,10 +164,22 @@ if __name__ == "__main__":
     print("%s %d" % ("number of features:".ljust(25), X_train.shape[1]))
     print("%s %d" % ("number of classes:".ljust(25), np.unique(y_train).size))
     print("%s %s" % ("data type:".ljust(25), X_train.dtype))
-    print("%s %d (size=%dMB)" % ("number of train samples:".ljust(25),
-                                 X_train.shape[0], int(X_train.nbytes / 1e6)))
-    print("%s %d (size=%dMB)" % ("number of test samples:".ljust(25),
-                                 X_test.shape[0], int(X_test.nbytes / 1e6)))
+    print(
+        "%s %d (size=%dMB)"
+        % (
+            "number of train samples:".ljust(25),
+            X_train.shape[0],
+            int(X_train.nbytes / 1e6),
+        )
+    )
+    print(
+        "%s %d (size=%dMB)"
+        % (
+            "number of test samples:".ljust(25),
+            X_test.shape[0],
+            int(X_test.nbytes / 1e6),
+        )
+    )
 
     print()
     print("Training Classifiers")
@@ -146,9 +190,13 @@ if __name__ == "__main__":
         estimator = ESTIMATORS[name]
         estimator_params = estimator.get_params()
 
-        estimator.set_params(**{p: args["random_seed"]
-                                for p in estimator_params
-                                if p.endswith("random_state")})
+        estimator.set_params(
+            **{
+                p: args["random_seed"]
+                for p in estimator_params
+                if p.endswith("random_state")
+            }
+        )
 
         if "n_jobs" in estimator_params:
             estimator.set_params(n_jobs=args["n_jobs"])
@@ -168,12 +216,18 @@ if __name__ == "__main__":
     print()
     print("Classification performance:")
     print("===========================")
-    print("{0: <24} {1: >10} {2: >11} {3: >12}"
-          "".format("Classifier  ", "train-time", "test-time", "error-rate"))
+    print(
+        "{0: <24} {1: >10} {2: >11} {3: >12}".format(
+            "Classifier  ", "train-time", "test-time", "error-rate"
+        )
+    )
     print("-" * 60)
     for name in sorted(args["classifiers"], key=error.get):
 
-        print("{0: <23} {1: >10.2f}s {2: >10.2f}s {3: >12.4f}"
-              "".format(name, train_time[name], test_time[name], error[name]))
+        print(
+            "{0: <23} {1: >10.2f}s {2: >10.2f}s {3: >12.4f}".format(
+                name, train_time[name], test_time[name], error[name]
+            )
+        )
 
     print()

@@ -110,9 +110,9 @@ construction.  The prediction of the ensemble is given as the averaged
 prediction of the individual classifiers.
 
 As other classifiers, forest classifiers have to be fitted with two
-arrays: a sparse or dense array X of size ``[n_samples, n_features]`` holding the
-training samples, and an array Y of size ``[n_samples]`` holding the
-target values (class labels) for the training samples::
+arrays: a sparse or dense array X of shape ``(n_samples, n_features)``
+holding the training samples, and an array Y of shape ``(n_samples,)``
+holding the target values (class labels) for the training samples::
 
     >>> from sklearn.ensemble import RandomForestClassifier
     >>> X = [[0, 0], [1, 1]]
@@ -120,9 +120,9 @@ target values (class labels) for the training samples::
     >>> clf = RandomForestClassifier(n_estimators=10)
     >>> clf = clf.fit(X, Y)
 
-Like :ref:`decision trees <tree>`, forests of trees also extend
-to :ref:`multi-output problems <tree_multioutput>`  (if Y is an array of size
-``[n_samples, n_outputs]``).
+Like :ref:`decision trees <tree>`, forests of trees also extend to
+:ref:`multi-output problems <tree_multioutput>`  (if Y is an array
+of shape ``(n_samples, n_outputs)``).
 
 Random Forests
 --------------
@@ -207,19 +207,22 @@ results will stop getting significantly better beyond a critical number of
 trees. The latter is the size of the random subsets of features to consider
 when splitting a node. The lower the greater the reduction of variance, but
 also the greater the increase in bias. Empirical good default values are
-``max_features=None`` (always considering all features instead of a random
-subset) for regression problems, and ``max_features="sqrt"`` (using a random
-subset of size ``sqrt(n_features)``) for classification tasks (where
-``n_features`` is the number of features in the data). Good results are often
-achieved when setting ``max_depth=None`` in combination with
-``min_samples_split=2`` (i.e., when fully developing the trees). Bear in mind
-though that these values are usually not optimal, and might result in models
-that consume a lot of RAM. The best parameter values should always be
-cross-validated. In addition, note that in random forests, bootstrap samples
-are used by default (``bootstrap=True``) while the default strategy for
-extra-trees is to use the whole dataset (``bootstrap=False``). When using
-bootstrap sampling the generalization accuracy can be estimated on the left out
-or out-of-bag samples. This can be enabled by setting ``oob_score=True``.
+``max_features=1.0`` or equivalently ``max_features=None`` (always considering
+all features instead of a random subset) for regression problems, and
+``max_features="sqrt"`` (using a random subset of size ``sqrt(n_features)``)
+for classification tasks (where ``n_features`` is the number of features in
+the data). The default value of ``max_features=1.0`` is equivalent to bagged
+trees and more randomness can be achieved by setting smaller values (e.g. 0.3
+is a typical default in the literature). Good results are often achieved when
+setting ``max_depth=None`` in combination with ``min_samples_split=2`` (i.e.,
+when fully developing the trees). Bear in mind though that these values are
+usually not optimal, and might result in models that consume a lot of RAM.
+The best parameter values should always be cross-validated. In addition, note
+that in random forests, bootstrap samples are used by default
+(``bootstrap=True``) while the default strategy for extra-trees is to use the
+whole dataset (``bootstrap=False``). When using bootstrap sampling the
+generalization error can be estimated on the left out or out-of-bag samples.
+This can be enabled by setting ``oob_score=True``.
 
 .. note::
 
@@ -246,7 +249,7 @@ amount of time (e.g., on large datasets).
 
  * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_iris.py`
  * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_importances_faces.py`
- * :ref:`sphx_glr_auto_examples_plot_multioutput_face_completion.py`
+ * :ref:`sphx_glr_auto_examples_miscellaneous_plot_multioutput_face_completion.py`
 
 .. topic:: References
 
@@ -455,10 +458,9 @@ Gradient Tree Boosting
 
 `Gradient Tree Boosting <https://en.wikipedia.org/wiki/Gradient_boosting>`_
 or Gradient Boosted Decision Trees (GBDT) is a generalization
-of boosting to arbitrary
-differentiable loss functions. GBDT is an accurate and effective
-off-the-shelf procedure that can be used for both regression and
-classification problems in a
+of boosting to arbitrary differentiable loss functions, see the seminal work of
+[Friedman2001]_. GBDT is an accurate and effective off-the-shelf procedure that can be
+used for both regression and classification problems in a
 variety of areas including Web search ranking and ecology.
 
 The module :mod:`sklearn.ensemble` provides methods
@@ -467,7 +469,7 @@ trees.
 
 .. note::
 
-  Scikit-learn 0.21 introduces two new experimental implementations of
+  Scikit-learn 0.21 introduces two new implementations of
   gradient boosting trees, namely :class:`HistGradientBoostingClassifier`
   and :class:`HistGradientBoostingRegressor`, inspired by
   `LightGBM <https://github.com/Microsoft/LightGBM>`__ (See [LightGBM]_).
@@ -537,7 +539,8 @@ Regression
 :class:`GradientBoostingRegressor` supports a number of
 :ref:`different loss functions <gradient_boosting_loss>`
 for regression which can be specified via the argument
-``loss``; the default loss function for regression is least squares (``'ls'``).
+``loss``; the default loss function for regression is squared error
+(``'squared_error'``).
 
 ::
 
@@ -549,14 +552,16 @@ for regression which can be specified via the argument
     >>> X, y = make_friedman1(n_samples=1200, random_state=0, noise=1.0)
     >>> X_train, X_test = X[:200], X[200:]
     >>> y_train, y_test = y[:200], y[200:]
-    >>> est = GradientBoostingRegressor(n_estimators=100, learning_rate=0.1,
-    ...     max_depth=1, random_state=0, loss='ls').fit(X_train, y_train)
+    >>> est = GradientBoostingRegressor(
+    ...     n_estimators=100, learning_rate=0.1, max_depth=1, random_state=0,
+    ...     loss='squared_error'
+    ... ).fit(X_train, y_train)
     >>> mean_squared_error(y_test, est.predict(X_test))
     5.00...
 
 The figure below shows the results of applying :class:`GradientBoostingRegressor`
-with least squares loss and 500 base learners to the Boston house price dataset
-(:func:`sklearn.datasets.load_boston`).
+with least squares loss and 500 base learners to the diabetes dataset
+(:func:`sklearn.datasets.load_diabetes`).
 The plot on the left shows the train and test error at each iteration.
 The train error at each iteration is stored in the
 :attr:`~GradientBoostingRegressor.train_score_` attribute
@@ -564,8 +569,6 @@ of the gradient boosting model. The test error at each iterations can be obtaine
 via the :meth:`~GradientBoostingRegressor.staged_predict` method which returns a
 generator that yields the predictions at each stage. Plots like these can be used
 to determine the optimal number of trees (i.e. ``n_estimators``) by early stopping.
-The plot on the right shows the impurity-based feature importances which can be
-obtained via the ``feature_importances_`` property.
 
 .. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_gradient_boosting_regression_001.png
    :target: ../auto_examples/ensemble/plot_gradient_boosting_regression.html
@@ -619,7 +622,7 @@ We found that ``max_leaf_nodes=k`` gives comparable results to ``max_depth=k-1``
 but is significantly faster to train at the expense of a slightly higher
 training error.
 The parameter ``max_leaf_nodes`` corresponds to the variable ``J`` in the
-chapter on gradient boosting in [F2001]_ and is related to the parameter
+chapter on gradient boosting in [Friedman2001]_ and is related to the parameter
 ``interaction.depth`` in R's gbm package where ``max_leaf_nodes == interaction.depth + 1`` .
 
 Mathematical formulation
@@ -631,12 +634,12 @@ case.
 Regression
 ^^^^^^^^^^
 
-GBRT regressors are additive models whose prediction :math:`y_i` for a
+GBRT regressors are additive models whose prediction :math:`\hat{y}_i` for a
 given input :math:`x_i` is of the following form:
 
   .. math::
 
-    \hat{y_i} = F_M(x_i) = \sum_{m=1}^{M} h_m(x_i)
+    \hat{y}_i = F_M(x_i) = \sum_{m=1}^{M} h_m(x_i)
 
 where the :math:`h_m` are estimators called *weak learners* in the context
 of boosting. Gradient Tree Boosting uses :ref:`decision tree regressors
@@ -720,9 +723,9 @@ homogeneous to a prediction: it cannot be a class, since the trees predict
 continuous values.
 
 The mapping from the value :math:`F_M(x_i)` to a class or a probability is
-loss-dependent. For the deviance (or log-loss), the probability that
+loss-dependent. For the log-loss, the probability that
 :math:`x_i` belongs to the positive class is modeled as :math:`p(y_i = 1 |
-x_i) = \sigma(F_M(x_i))` where :math:`\sigma` is the sigmoid function.
+x_i) = \sigma(F_M(x_i))` where :math:`\sigma` is the sigmoid or expit function.
 
 For multiclass classification, K trees (for K classes) are built at each of
 the :math:`M` iterations. The probability that :math:`x_i` belongs to class
@@ -743,15 +746,15 @@ the parameter ``loss``:
 
   * Regression
 
-    * Least squares (``'ls'``): The natural choice for regression due
-      to its superior computational properties. The initial model is
+    * Squared error (``'squared_error'``): The natural choice for regression
+      due to its superior computational properties. The initial model is
       given by the mean of the target values.
     * Least absolute deviation (``'lad'``): A robust loss function for
       regression. The initial model is given by the median of the
       target values.
     * Huber (``'huber'``): Another robust loss function that combines
       least squares and least absolute deviation; use ``alpha`` to
-      control the sensitivity with regards to outliers (see [F2001]_ for
+      control the sensitivity with regards to outliers (see [Friedman2001]_ for
       more details).
     * Quantile (``'quantile'``): A loss function for quantile regression.
       Use ``0 < alpha < 1`` to specify the quantile. This loss function
@@ -760,12 +763,12 @@ the parameter ``loss``:
 
   * Classification
 
-    * Binomial deviance (``'deviance'``): The negative binomial
-      log-likelihood loss function for binary classification (provides
-      probability estimates).  The initial model is given by the
+    * Binary log-loss (``'log-loss'``): The binomial
+      negative log-likelihood loss function for binary classification. It provides
+      probability estimates.  The initial model is given by the
       log odds-ratio.
-    * Multinomial deviance (``'deviance'``): The negative multinomial
-      log-likelihood loss function for multi-class classification with
+    * Multi-class log-loss (``'log-loss'``): The multinomial
+      negative log-likelihood loss function for multi-class classification with
       ``n_classes`` mutually exclusive classes. It provides
       probability estimates.  The initial model is given by the
       prior probability of each class. At each iteration ``n_classes``
@@ -773,7 +776,7 @@ the parameter ``loss``:
       inefficient for data sets with a large number of classes.
     * Exponential loss (``'exponential'``): The same loss function
       as :class:`AdaBoostClassifier`. Less robust to mislabeled
-      examples than ``'deviance'``; can only be used for binary
+      examples than ``'log-loss'``; can only be used for binary
       classification.
 
 .. _gradient_boosting_shrinkage:
@@ -781,7 +784,7 @@ the parameter ``loss``:
 Shrinkage via learning rate
 ---------------------------
 
-[F2001]_ proposed a simple regularization strategy that scales
+[Friedman2001]_ proposed a simple regularization strategy that scales
 the contribution of each weak learner by a constant factor :math:`\nu`:
 
 .. math::
@@ -805,7 +808,7 @@ stopping. For a more detailed discussion of the interaction between
 Subsampling
 -----------
 
-[F1999]_ proposed stochastic gradient boosting, which combines gradient
+[Friedman2002]_ proposed stochastic gradient boosting, which combines gradient
 boosting with bootstrap averaging (bagging). At each iteration
 the base classifier is trained on a fraction ``subsample`` of
 the available training data. The subsample is drawn without replacement.
@@ -892,12 +895,25 @@ based on permutation of the features.
 
  * :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_regression.py`
 
+.. topic:: References
+
+  .. [Friedman2001] Friedman, J.H. (2001). :doi:`Greedy function approximation: A gradient
+      boosting machine <10.1214/aos/1013203451>`.
+      Annals of Statistics, 29, 1189-1232.
+
+  .. [Friedman2002] Friedman, J.H. (2002). `Stochastic gradient boosting.
+     <https://statweb.stanford.edu/~jhf/ftp/stobst.pdf>`_.
+     Computational Statistics & Data Analysis, 38, 367-378.
+
+  .. [R2007] G. Ridgeway (2006). `Generalized Boosted Models: A guide to the gbm
+     package <https://cran.r-project.org/web/packages/gbm/vignettes/gbm.pdf>`_
+
 .. _histogram_based_gradient_boosting:
 
 Histogram-Based Gradient Boosting
 =================================
 
-Scikit-learn 0.21 introduced two new experimental implementations of
+Scikit-learn 0.21 introduced two new implementations of
 gradient boosting trees, namely :class:`HistGradientBoostingClassifier`
 and :class:`HistGradientBoostingRegressor`, inspired by
 `LightGBM <https://github.com/Microsoft/LightGBM>`__ (See [LightGBM]_).
@@ -919,15 +935,6 @@ estimators is slightly different, and some of the features from
 :class:`GradientBoostingClassifier` and :class:`GradientBoostingRegressor`
 are not yet supported, for instance some loss functions.
 
-These estimators are still **experimental**: their predictions
-and their API might change without any deprecation cycle. To use them, you
-need to explicitly import ``enable_hist_gradient_boosting``::
-
-  >>> # explicitly require this experimental feature
-  >>> from sklearn.experimental import enable_hist_gradient_boosting  # noqa
-  >>> # now you can import normally from ensemble
-  >>> from sklearn.ensemble import HistGradientBoostingClassifier
-
 .. topic:: Examples:
 
  * :ref:`sphx_glr_auto_examples_inspection_plot_partial_dependence.py`
@@ -940,7 +947,6 @@ Most of the parameters are unchanged from
 One exception is the ``max_iter`` parameter that replaces ``n_estimators``, and
 controls the number of iterations of the boosting process::
 
-  >>> from sklearn.experimental import enable_hist_gradient_boosting
   >>> from sklearn.ensemble import HistGradientBoostingClassifier
   >>> from sklearn.datasets import make_hastie_10_2
 
@@ -952,12 +958,14 @@ controls the number of iterations of the boosting process::
   >>> clf.score(X_test, y_test)
   0.8965
 
-Available losses for regression are 'least_squares' and
-'least_absolute_deviation', which is less sensitive to outliers. For
-classification, 'binary_crossentropy' is used for binary classification and
-'categorical_crossentropy' is used for multiclass classification. By default
-the loss is 'auto' and will select the appropriate loss depending on
-:term:`y` passed to :term:`fit`.
+Available losses for regression are 'squared_error',
+'absolute_error', which is less sensitive to outliers, and
+'poisson', which is well suited to model counts and frequencies. For
+classification, 'log_loss' is the only option. For binary classification it uses the
+binary log loss, also kown as binomial deviance or binary cross-entropy. For
+`n_classes >= 3`, it uses the multi-class log loss function, with multinomial deviance
+and categorical cross-entropy as alternative names. The appropriate loss version is
+selected based on :term:`y` passed to :term:`fit`.
 
 The size of the trees can be controlled through the ``max_leaf_nodes``,
 ``max_depth``, and ``min_samples_leaf`` parameters.
@@ -990,7 +998,6 @@ with missing values should go to the left or right child, based on the
 potential gain. When predicting, samples with missing values are assigned to
 the left or right child consequently::
 
-  >>> from sklearn.experimental import enable_hist_gradient_boosting  # noqa
   >>> from sklearn.ensemble import HistGradientBoostingClassifier
   >>> import numpy as np
 
@@ -1016,6 +1023,8 @@ whether the feature value is missing or not::
 If no missing values were encountered for a given feature during training,
 then samples with missing values are mapped to whichever child has the most
 samples.
+
+.. _sw_hgbdt:
 
 Sample weight support
 ---------------------
@@ -1050,6 +1059,68 @@ multiplying the gradients (and the hessians) by the sample weights. Note that
 the binning stage (specifically the quantiles computation) does not take the
 weights into account.
 
+.. _categorical_support_gbdt:
+
+Categorical Features Support
+----------------------------
+
+:class:`HistGradientBoostingClassifier` and
+:class:`HistGradientBoostingRegressor` have native support for categorical
+features: they can consider splits on non-ordered, categorical data.
+
+For datasets with categorical features, using the native categorical support
+is often better than relying on one-hot encoding
+(:class:`~sklearn.preprocessing.OneHotEncoder`), because one-hot encoding
+requires more tree depth to achieve equivalent splits. It is also usually
+better to rely on the native categorical support rather than to treat
+categorical features as continuous (ordinal), which happens for ordinal-encoded
+categorical data, since categories are nominal quantities where order does not
+matter.
+
+To enable categorical support, a boolean mask can be passed to the
+`categorical_features` parameter, indicating which feature is categorical. In
+the following, the first feature will be treated as categorical and the
+second feature as numerical::
+
+  >>> gbdt = HistGradientBoostingClassifier(categorical_features=[True, False])
+
+Equivalently, one can pass a list of integers indicating the indices of the
+categorical features::
+
+  >>> gbdt = HistGradientBoostingClassifier(categorical_features=[0])
+
+The cardinality of each categorical feature should be less than the `max_bins`
+parameter, and each categorical feature is expected to be encoded in
+`[0, max_bins - 1]`. To that end, it might be useful to pre-process the data
+with an :class:`~sklearn.preprocessing.OrdinalEncoder` as done in
+:ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_categorical.py`.
+
+If there are missing values during training, the missing values will be
+treated as a proper category. If there are no missing values during training,
+then at prediction time, missing values are mapped to the child node that has
+the most samples (just like for continuous features). When predicting,
+categories that were not seen during fit time will be treated as missing
+values.
+
+**Split finding with categorical features**: The canonical way of considering
+categorical splits in a tree is to consider
+all of the :math:`2^{K - 1} - 1` partitions, where :math:`K` is the number of
+categories. This can quickly become prohibitive when :math:`K` is large.
+Fortunately, since gradient boosting trees are always regression trees (even
+for classification problems), there exist a faster strategy that can yield
+equivalent splits. First, the categories of a feature are sorted according to
+the variance of the target, for each category `k`. Once the categories are
+sorted, one can consider *continuous partitions*, i.e. treat the categories
+as if they were ordered continuous values (see Fisher [Fisher1958]_ for a
+formal proof). As a result, only :math:`K - 1` splits need to be considered
+instead of :math:`2^{K - 1} - 1`. The initial sorting is a
+:math:`\mathcal{O}(K \log(K))` operation, leading to a total complexity of
+:math:`\mathcal{O}(K \log(K) + K)`, instead of :math:`\mathcal{O}(2^K)`.
+
+.. topic:: Examples:
+
+  * :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_categorical.py`
+
 .. _monotonic_cst_gbdt:
 
 Monotonic Constraints
@@ -1080,7 +1151,6 @@ You can specify a monotonic constraint on each feature using the
 constraint, while -1 and 1 indicate a negative and positive constraint,
 respectively::
 
-  >>> from sklearn.experimental import enable_hist_gradient_boosting  # noqa
   >>> from sklearn.ensemble import HistGradientBoostingRegressor
 
   ... # positive, negative, and no constraint on the 3 features
@@ -1090,6 +1160,10 @@ In a binary classification context, imposing a monotonic constraint means
 that the feature is supposed to have a positive / negative effect on the
 probability to belong to the positive class. Monotonic constraints are not
 supported for multiclass context.
+
+.. note::
+    Since categories are unordered quantities, it is not possible to enforce
+    monotonic constraints on categorical features.
 
 .. topic:: Examples:
 
@@ -1148,15 +1222,16 @@ Finally, many parts of the implementation of
 
 .. topic:: References
 
-  .. [F1999] Friedmann, Jerome H., 2007, `"Stochastic Gradient Boosting"
-     <https://statweb.stanford.edu/~jhf/ftp/stobst.pdf>`_
-  .. [R2007] G. Ridgeway, "Generalized Boosted Models: A guide to the gbm
-     package", 2007
-  .. [XGBoost] Tianqi Chen, Carlos Guestrin, `"XGBoost: A Scalable Tree
-     Boosting System" <https://arxiv.org/abs/1603.02754>`_
+  .. [XGBoost] Tianqi Chen, Carlos Guestrin, :arxiv:`"XGBoost: A Scalable Tree
+     Boosting System" <1603.02754>`
+
   .. [LightGBM] Ke et. al. `"LightGBM: A Highly Efficient Gradient
      BoostingDecision Tree" <https://papers.nips.cc/paper/
      6907-lightgbm-a-highly-efficient-gradient-boosting-decision-tree>`_
+
+  .. [Fisher1958] Fisher, W.D. (1958). `"On Grouping for Maximum Homogeneity"
+     <http://csiss.ncgia.ucsb.edu/SPACE/workshops/2004/SAC/files/fisher.pdf>`_
+     Journal of the American Statistical Association, 53, 789-798.
 
 .. _voting_classifier:
 
@@ -1345,18 +1420,18 @@ Usage
 
 The following example shows how to fit the VotingRegressor::
 
-   >>> from sklearn.datasets import load_boston
+   >>> from sklearn.datasets import load_diabetes
    >>> from sklearn.ensemble import GradientBoostingRegressor
    >>> from sklearn.ensemble import RandomForestRegressor
    >>> from sklearn.linear_model import LinearRegression
    >>> from sklearn.ensemble import VotingRegressor
 
    >>> # Loading some example data
-   >>> X, y = load_boston(return_X_y=True)
+   >>> X, y = load_diabetes(return_X_y=True)
 
    >>> # Training classifiers
-   >>> reg1 = GradientBoostingRegressor(random_state=1, n_estimators=10)
-   >>> reg2 = RandomForestRegressor(random_state=1, n_estimators=10)
+   >>> reg1 = GradientBoostingRegressor(random_state=1)
+   >>> reg2 = RandomForestRegressor(random_state=1)
    >>> reg3 = LinearRegression()
    >>> ereg = VotingRegressor(estimators=[('gb', reg1), ('rf', reg2), ('lr', reg3)])
    >>> ereg = ereg.fit(X, y)
@@ -1389,10 +1464,11 @@ are stacked together in parallel on the input data. It should be given as a
 list of names and estimators::
 
   >>> from sklearn.linear_model import RidgeCV, LassoCV
-  >>> from sklearn.svm import SVR
+  >>> from sklearn.neighbors import KNeighborsRegressor
   >>> estimators = [('ridge', RidgeCV()),
   ...               ('lasso', LassoCV(random_state=42)),
-  ...               ('svr', SVR(C=1, gamma=1e-6))]
+  ...               ('knr', KNeighborsRegressor(n_neighbors=20,
+  ...                                           metric='euclidean'))]
 
 The `final_estimator` will use the predictions of the `estimators` as input. It
 needs to be a classifier or a regressor when using :class:`StackingClassifier`
@@ -1400,15 +1476,18 @@ or :class:`StackingRegressor`, respectively::
 
   >>> from sklearn.ensemble import GradientBoostingRegressor
   >>> from sklearn.ensemble import StackingRegressor
+  >>> final_estimator = GradientBoostingRegressor(
+  ...     n_estimators=25, subsample=0.5, min_samples_leaf=25, max_features=1,
+  ...     random_state=42)
   >>> reg = StackingRegressor(
   ...     estimators=estimators,
-  ...     final_estimator=GradientBoostingRegressor(random_state=42))
+  ...     final_estimator=final_estimator)
 
 To train the `estimators` and `final_estimator`, the `fit` method needs
 to be called on the training data::
 
-  >>> from sklearn.datasets import load_boston
-  >>> X, y = load_boston(return_X_y=True)
+  >>> from sklearn.datasets import load_diabetes
+  >>> X, y = load_diabetes(return_X_y=True)
   >>> from sklearn.model_selection import train_test_split
   >>> X_train, X_test, y_train, y_test = train_test_split(X, y,
   ...                                                     random_state=42)
@@ -1434,21 +1513,21 @@ any other regressor or classifier, exposing a `predict`, `predict_proba`, and
    >>> y_pred = reg.predict(X_test)
    >>> from sklearn.metrics import r2_score
    >>> print('R2 score: {:.2f}'.format(r2_score(y_test, y_pred)))
-   R2 score: 0.81
+   R2 score: 0.53
 
-Note that it is also possible to get the output of the stacked outputs of the
+Note that it is also possible to get the output of the stacked
 `estimators` using the `transform` method::
 
   >>> reg.transform(X_test[:5])
-  array([[28.78..., 28.43...  , 22.62...],
-         [35.96..., 32.58..., 23.68...],
-         [14.97..., 14.05..., 16.45...],
-         [25.19..., 25.54..., 22.92...],
-         [18.93..., 19.26..., 17.03... ]])
+  array([[142..., 138..., 146...],
+         [179..., 182..., 151...],
+         [139..., 132..., 158...],
+         [286..., 292..., 225...],
+         [126..., 124..., 164...]])
 
-In practise, a stacking predictor predict as good as the best predictor of the
-base layer and even sometimes outputperform it by combining the different
-strength of the these predictors. However, training a stacking predictor is
+In practice, a stacking predictor predicts as good as the best predictor of the
+base layer and even sometimes outperforms it by combining the different
+strengths of the these predictors. However, training a stacking predictor is
 computationally expensive.
 
 .. note::
@@ -1461,22 +1540,27 @@ computationally expensive.
    Multiple stacking layers can be achieved by assigning `final_estimator` to
    a :class:`StackingClassifier` or :class:`StackingRegressor`::
 
+    >>> final_layer_rfr = RandomForestRegressor(
+    ...     n_estimators=10, max_features=1, max_leaf_nodes=5,random_state=42)
+    >>> final_layer_gbr = GradientBoostingRegressor(
+    ...     n_estimators=10, max_features=1, max_leaf_nodes=5,random_state=42)
     >>> final_layer = StackingRegressor(
-    ...     estimators=[('rf', RandomForestRegressor(random_state=42)),
-    ...                 ('gbrt', GradientBoostingRegressor(random_state=42))],
+    ...     estimators=[('rf', final_layer_rfr),
+    ...                 ('gbrt', final_layer_gbr)],
     ...     final_estimator=RidgeCV()
     ...     )
     >>> multi_layer_regressor = StackingRegressor(
     ...     estimators=[('ridge', RidgeCV()),
     ...                 ('lasso', LassoCV(random_state=42)),
-    ...                 ('svr', SVR(C=1, gamma=1e-6, kernel='rbf'))],
+    ...                 ('knr', KNeighborsRegressor(n_neighbors=20,
+    ...                                             metric='euclidean'))],
     ...     final_estimator=final_layer
     ... )
     >>> multi_layer_regressor.fit(X_train, y_train)
     StackingRegressor(...)
     >>> print('R2 score: {:.2f}'
     ...       .format(multi_layer_regressor.score(X_test, y_test)))
-    R2 score: 0.83
+    R2 score: 0.53
 
 .. topic:: References
 
