@@ -86,6 +86,7 @@ from ._scorer import make_scorer
 from ._scorer import SCORERS
 from ._scorer import get_scorer
 from ._scorer import get_scorer_names
+from ._scorer import oob_score
 
 
 from ._plot.det_curve import plot_det_curve

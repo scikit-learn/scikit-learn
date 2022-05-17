@@ -2,6 +2,7 @@ import typing
 
 from ._split import BaseCrossValidator
 from ._split import BaseShuffleSplit
+from ._split import IdentitySplitter
 from ._split import KFold
 from ._split import GroupKFold
 from ._split import StratifiedKFold

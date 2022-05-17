@@ -771,6 +771,34 @@ class _DeprecatedScorers(dict):
         return super().__getitem__(item)
 
 
+def oob_score(estimator, X, y):
+    """
+
+    Parameters
+    ----------
+    estimator
+    X
+    y
+
+    Returns
+    -------
+
+    """
+    if hasattr(estimator, "oob_score_"):
+        return estimator.oob_score_
+    else:
+        if hasattr(estimator, "oob_score"):
+            raise TypeError(
+                "The classifier needs oob_score set to True to enable OOB scoring"
+            )
+        else:
+            raise TypeError(
+                oob_score.__name__ +
+                " can only be used on classifiers with an out-of-bag error estimate, such as RandomForest based"
+                "estimators."
+            )
+
+
 _SCORERS = dict(
     explained_variance=explained_variance_scorer,
     r2=r2_scorer,
@@ -805,6 +833,7 @@ _SCORERS = dict(
     adjusted_mutual_info_score=adjusted_mutual_info_scorer,
     normalized_mutual_info_score=normalized_mutual_info_scorer,
     fowlkes_mallows_score=fowlkes_mallows_scorer,
+    oob=oob_score,
 )
 
 

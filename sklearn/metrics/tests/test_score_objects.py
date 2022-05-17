@@ -40,7 +40,9 @@ from sklearn.metrics._scorer import (
     _passthrough_scorer,
     _MultimetricScorer,
     _check_multimetric_scoring,
+    oob_score
 )
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import make_scorer, get_scorer, SCORERS, get_scorer_names
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import LinearSVC
@@ -1153,3 +1155,26 @@ def test_scorer_no_op_multiclass_select_proba():
         labels=lr.classes_,
     )
     scorer(lr, X_test, y_test)
+
+def test_oob_scorer():
+    # Test that oob works for RandomForest
+    X, y = make_classification()
+    oob_forest = RandomForestClassifier(oob_score=True)
+    oob_forest.fit(X, y)
+    score = oob_score(oob_forest, X, y)
+    assert score == oob_forest.oob_score_
+
+    # Test that the scorer reports a reasonable error for invalid Forests
+    non_oob_forest = RandomForestClassifier(oob_score=False)
+    non_oob_forest.fit(X, y)
+    with pytest.raises(TypeError, match="oob_score"):
+        oob_score(non_oob_forest, X, y)
+
+    # Test that the scorer reports a reasonable error for non-Forests
+    knn = KNeighborsClassifier()
+    knn.fit(X, y)
+    with pytest.raises(TypeError, match="out-of-bag"):
+        oob_score(knn, X, y)
+
+
+

@@ -35,6 +35,7 @@ from sklearn.model_selection import GroupKFold
 from sklearn.model_selection import GroupShuffleSplit
 from sklearn.model_selection import learning_curve
 from sklearn.model_selection import validation_curve
+from sklearn.model_selection import IdentitySplitter
 from sklearn.model_selection._validation import _check_is_permutation
 from sklearn.model_selection._validation import _fit_and_score
 from sklearn.model_selection._validation import _score
@@ -52,6 +53,7 @@ from sklearn.metrics import precision_score
 from sklearn.metrics import r2_score
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import check_scoring
+from sklearn.metrics import oob_score
 
 from sklearn.linear_model import Ridge, LogisticRegression, SGDClassifier
 from sklearn.linear_model import PassiveAggressiveClassifier, RidgeClassifier
@@ -2372,3 +2374,19 @@ def test_learning_curve_partial_fit_regressors():
 
     # Does not error
     learning_curve(MLPRegressor(), X, y, exploit_incremental_learning=True, cv=2)
+
+
+def test_random_forest_oob():
+    X, y = make_classification()
+    cv = GridSearchCV(
+        RandomForestClassifier(oob_score=True, random_state=0),
+        {
+            "n_estimators": [1, 20, 100]
+        },
+        cv=IdentitySplitter(),
+        scoring="oob"
+    )
+    results = cv.fit(X, y)
+    scores = results.cv_results_["mean_test_score"]
+    assert scores[2] > scores[1] > scores[0]
+    assert results.best_params_["n_estimators"] == 100
