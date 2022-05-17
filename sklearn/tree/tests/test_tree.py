@@ -457,7 +457,10 @@ def test_importances():
         n_important = np.sum(importances > 0.1)
 
         assert importances.shape[0] == 10, "Failed with {0}".format(name)
-        assert n_important == 4, "Failed with {0}".format(name)
+        if 'Oblique' in name:
+            assert n_important >= 4, "Failed with {0}".format(name)    
+        else:
+            assert n_important == 4, "Failed with {0}".format(name)
 
     # Check on iris that importances are the same for all builders
     clf = DecisionTreeClassifier(random_state=0)
@@ -2546,19 +2549,23 @@ def test_oblique_tree_sampling():
     a normal axis-aligned tree.
     """
     X, y = iris.data, iris.target
-    _, n_features = X.shape
+    n_samples, n_features = X.shape
+
+    # add additional noise dimensions
+    X_noise = rng.random((n_samples, n_features))
+    X = np.concatenate((X, X_noise), axis=1)
 
     # oblique decision trees can sample significantly more
     # diverse sets of splits and will do better if allowed
     # to sample more
-    tree_ri = DecisionTreeClassifier(random_state=0, max_features="sqrt")
-    tree_rc = ObliqueDecisionTreeClassifier(random_state=0, max_features=n_features)
+    tree_ri = DecisionTreeClassifier(random_state=0, max_features=n_features)
+    tree_rc = ObliqueDecisionTreeClassifier(random_state=0, max_features=n_features*2)
     ri_cv_scores = cross_val_score(
         tree_ri, X, y, scoring="accuracy", cv=10, error_score="raise"
     )
     rc_cv_scores = cross_val_score(
         tree_rc, X, y, scoring="accuracy", cv=10, error_score="raise"
     )
-    assert rc_cv_scores.mean() >= ri_cv_scores.mean()
+    assert rc_cv_scores.mean() > ri_cv_scores.mean()
     assert rc_cv_scores.std() < ri_cv_scores.std()
-    assert rc_cv_scores.mean() > 0.9
+    assert rc_cv_scores.mean() > 0.91

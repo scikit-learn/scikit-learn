@@ -2065,7 +2065,7 @@ def test_oblique_forest_trunk():
         random_state=0,
     )
 
-    rc_clf = ObliqueRandomForestClassifier(max_features="sqrt", random_state=0)
+    rc_clf = ObliqueRandomForestClassifier(max_features=X.shape[1], random_state=0)
     rc_clf.fit(X_train, y_train)
     y_hat = rc_clf.predict(X_test)
     rc_accuracy = accuracy_score(y_test, y_hat)
