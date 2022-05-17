@@ -342,7 +342,7 @@ cdef class BestSplitter(BaseDenseSplitter):
             for i in range(start, end):
                 Xf[i] = self.X[samples[i], current.feature]
 
-            simultaneous_sort(&Xf[start], &samples[start], end - start)
+            simultaneous_sort(&Xf[start], &samples[start], end - start, use_introsort=1)
 
             if Xf[end - 1] <= Xf[start] + FEATURE_THRESHOLD:
                 features[f_j], features[n_total_constants] = features[n_total_constants], features[f_j]
@@ -1049,9 +1049,11 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
                              &is_samples_sorted)
 
             # Sort the positive and negative parts of `Xf`
-            simultaneous_sort(&Xf[start], &samples[start], end_negative - start)
+            simultaneous_sort(&Xf[start], &samples[start], end_negative - start,
+                              use_introsort=1)
             if start_positive < end:
-                simultaneous_sort(&Xf[start_positive], &samples[start_positive], end - start_positive)
+                simultaneous_sort(&Xf[start_positive], &samples[start_positive],
+                                  end - start_positive, use_introsort=1)
 
             # Update index_to_samples to take into account the sort
             for p in range(start, end_negative):

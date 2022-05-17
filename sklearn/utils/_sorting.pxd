@@ -6,4 +6,5 @@ cdef int simultaneous_sort(
     floating *dist,
     ITYPE_t *idx,
     ITYPE_t size,
+    bint use_introsort=*,
 ) nogil
