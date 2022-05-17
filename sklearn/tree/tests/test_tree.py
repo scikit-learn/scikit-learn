@@ -453,12 +453,11 @@ def test_importances():
         clf = Tree(random_state=0)
 
         clf.fit(X, y)
-        if "Oblique" not in name:
-            importances = clf.feature_importances_
-            n_important = np.sum(importances > 0.1)
+        importances = clf.feature_importances_
+        n_important = np.sum(importances > 0.1)
 
-            assert importances.shape[0] == 10, "Failed with {0}".format(name)
-            assert n_important == 4, "Failed with {0}".format(name)
+        assert importances.shape[0] == 10, "Failed with {0}".format(name)
+        assert n_important == 4, "Failed with {0}".format(name)
 
     # Check on iris that importances are the same for all builders
     clf = DecisionTreeClassifier(random_state=0)
@@ -469,9 +468,11 @@ def test_importances():
     assert_array_equal(clf.feature_importances_, clf2.feature_importances_)
 
 
-def test_importances_raises():
+@pytest.mark.parametrize(
+    "clf", [DecisionTreeClassifier(), ObliqueDecisionTreeClassifier()]
+)
+def test_importances_raises(clf):
     # Check if variable importance before fit raises ValueError.
-    clf = DecisionTreeClassifier()
     with pytest.raises(ValueError):
         getattr(clf, "feature_importances_")
 
@@ -1302,8 +1303,7 @@ def check_class_weights(name):
 
 @pytest.mark.parametrize("name", CLF_TREES)
 def test_class_weights(name):
-    if "Oblique" not in name:
-        check_class_weights(name)
+    check_class_weights(name)
 
 
 def check_class_weight_errors(name):

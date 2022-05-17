@@ -256,8 +256,6 @@ cdef class ObliqueTree(Tree):
         In oblique-aligned trees, this is the projection of X.
         In this case, we take a simple linear combination of some columns of X.
         """
-        # cdef vector[DTYPE_t] proj_vec_weights
-        # cdef vector[SIZE_t] proj_vec_indices
         cdef DTYPE_t proj_feat = 0.0
         cdef DTYPE_t weight = 0.0
         cdef SIZE_t j = 0
@@ -279,6 +277,29 @@ cdef class ObliqueTree(Tree):
 
         return proj_feat
 
-    cpdef compute_feature_importances(self, normalize=True):
-        """Computes the importance of each feature (aka variable)."""
-        raise RuntimeError("Computing feature importances not done yet for oblique trees.")
+    cdef void _compute_feature_importances(self, DOUBLE_t* importance_data,
+                                Node* node, SIZE_t node_id) nogil:
+        """Compute feature importances from a Node in the Tree.
+        
+        Wrapped in a private function to allow subclassing that
+        computes feature importances.
+        """
+        cdef Node* nodes = self.nodes
+        cdef Node* left
+        cdef Node* right
+
+        left = &nodes[node.left_child]
+        right = &nodes[node.right_child]
+
+        cdef int i, feature_index
+        cdef DTYPE_t weight
+        for i in range(0, self.proj_vec_indices[node_id].size()):
+            feature_index = self.proj_vec_indices[node_id][i]
+            weight = self.proj_vec_weights[node_id][i]
+            if weight < 0:
+                weight *= -1
+
+            importance_data[feature_index] += weight * (
+                node.weighted_n_node_samples * node.impurity -
+                left.weighted_n_node_samples * left.impurity -
+                right.weighted_n_node_samples * right.impurity)

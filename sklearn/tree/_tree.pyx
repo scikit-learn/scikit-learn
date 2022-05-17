@@ -1140,8 +1140,6 @@ cdef class Tree:
 
     cpdef compute_feature_importances(self, normalize=True):
         """Computes the importance of each feature (aka variable)."""
-        cdef Node* left
-        cdef Node* right
         cdef Node* nodes = self.nodes
         cdef Node* node = nodes
         cdef Node* end_node = node + self.node_count
@@ -1152,18 +1150,20 @@ cdef class Tree:
         importances = np.zeros((self.n_features,))
         cdef DOUBLE_t* importance_data = <DOUBLE_t*>importances.data
 
+        # to keep track of the current ID of each node
+        cdef SIZE_t node_id = 0
+
         with nogil:
+            node_id = 0
+
             while node != end_node:
                 if node.left_child != _TREE_LEAF:
                     # ... and node.right_child != _TREE_LEAF:
-                    left = &nodes[node.left_child]
-                    right = &nodes[node.right_child]
-
-                    importance_data[node.feature] += (
-                        node.weighted_n_node_samples * node.impurity -
-                        left.weighted_n_node_samples * left.impurity -
-                        right.weighted_n_node_samples * right.impurity)
+                    self._compute_feature_importances(
+                        importance_data, node, node_id)
+                    
                 node += 1
+                node_id += 1
 
         importances /= nodes[0].weighted_n_node_samples
 
@@ -1175,6 +1175,25 @@ cdef class Tree:
                 importances /= normalizer
 
         return importances
+
+    cdef void _compute_feature_importances(self, DOUBLE_t* importance_data,
+                                Node* node, SIZE_t node_id) nogil:
+        """Compute feature importances from a Node in the Tree.
+        
+        Wrapped in a private function to allow subclassing that
+        computes feature importances.
+        """
+        cdef Node* nodes = self.nodes
+        cdef Node* left
+        cdef Node* right
+
+        left = &nodes[node.left_child]
+        right = &nodes[node.right_child]
+
+        importance_data[node.feature] += (
+            node.weighted_n_node_samples * node.impurity -
+            left.weighted_n_node_samples * left.impurity -
+            right.weighted_n_node_samples * right.impurity)
 
     cdef cnp.ndarray _get_value_ndarray(self):
         """Wraps value as a 3-d NumPy array.

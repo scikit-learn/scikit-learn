@@ -69,6 +69,10 @@ cdef class Tree:
     cdef int _resize(self, SIZE_t capacity) nogil except -1
     cdef int _resize_c(self, SIZE_t capacity=*) nogil except -1
 
+    cdef void _compute_feature_importances(self,
+        DOUBLE_t* importance_data, Node* node,
+        SIZE_t node_id) nogil
+
     cdef cnp.ndarray _get_value_ndarray(self)
     cdef cnp.ndarray _get_node_ndarray(self)
 
