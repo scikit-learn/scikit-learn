@@ -2552,6 +2552,7 @@ def test_oblique_tree_sampling():
     n_samples, n_features = X.shape
 
     # add additional noise dimensions
+    rng = np.random.RandomState(42)
     X_noise = rng.random((n_samples, n_features))
     X = np.concatenate((X, X_noise), axis=1)
 
@@ -2559,7 +2560,7 @@ def test_oblique_tree_sampling():
     # diverse sets of splits and will do better if allowed
     # to sample more
     tree_ri = DecisionTreeClassifier(random_state=0, max_features=n_features)
-    tree_rc = ObliqueDecisionTreeClassifier(random_state=0, max_features=n_features * 2)
+    tree_rc = ObliqueDecisionTreeClassifier(random_state=0, max_features=n_features * 3)
     ri_cv_scores = cross_val_score(
         tree_ri, X, y, scoring="accuracy", cv=10, error_score="raise"
     )
