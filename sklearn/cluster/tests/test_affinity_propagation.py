@@ -248,7 +248,11 @@ def test_affinity_propagation_random_state():
 
 @pytest.mark.parametrize("centers", [csr_matrix(np.zeros((1, 10))), np.zeros((1, 10))])
 def test_affinity_propagation_convergence_warning_dense_sparse(centers, global_dtype):
-    """Non-regression, see #13334"""
+    """
+    Check that having sparse or dense `centers` format should not
+    influence the convergence.
+    Non-regression test for gh-13334.
+    """
     rng = np.random.RandomState(42)
     X = rng.rand(40, 10).astype(global_dtype, copy=False)
     y = (4 * rng.rand(40)).astype(int)
