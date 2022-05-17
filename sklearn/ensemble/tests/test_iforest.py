@@ -268,25 +268,29 @@ def test_iforest_warm_start():
 
 
 # mock get_chunk_n_rows to actually test more than one chunk (here one
-# chunk = 3 rows:
+# chunk has 3 rows):
 @patch(
     "sklearn.ensemble._iforest.get_chunk_n_rows",
     side_effect=Mock(**{"return_value": 3}),
 )
 @pytest.mark.parametrize("contamination, n_predict_calls", [(0.25, 3), ("auto", 2)])
-def test_iforest_chunks_works1(mocked_get_chunk, contamination, n_predict_calls):
-    test_iforest_works(contamination, global_random_seed=0)
+def test_iforest_chunks_works1(
+    mocked_get_chunk, contamination, n_predict_calls, global_random_seed
+):
+    test_iforest_works(contamination, global_random_seed)
     assert mocked_get_chunk.call_count == n_predict_calls
 
 
-# idem with chunk_size = 5 rows
+# idem with chunk_size = 10 rows
 @patch(
     "sklearn.ensemble._iforest.get_chunk_n_rows",
     side_effect=Mock(**{"return_value": 10}),
 )
 @pytest.mark.parametrize("contamination, n_predict_calls", [(0.25, 3), ("auto", 2)])
-def test_iforest_chunks_works2(mocked_get_chunk, contamination, n_predict_calls):
-    test_iforest_works(contamination, global_random_seed=0)
+def test_iforest_chunks_works2(
+    mocked_get_chunk, contamination, n_predict_calls, global_random_seed
+):
+    test_iforest_works(contamination, global_random_seed)
     assert mocked_get_chunk.call_count == n_predict_calls
 
 
