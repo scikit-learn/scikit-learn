@@ -111,9 +111,6 @@ Changelog
   :class:`tree.DecisionTreeRegressor` and :class:`tree.DecisionTreeClassifier`.
   :pr:`23273` by `Thomas Fan`_.
 
-:mod:`sklearn.model_selection`
-- |Enhancement| Add  :class:`ensemble.IsolationForest`
-
 Code and Documentation Contributors
 -----------------------------------
 
