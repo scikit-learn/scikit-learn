@@ -457,8 +457,8 @@ def test_importances():
         n_important = np.sum(importances > 0.1)
 
         assert importances.shape[0] == 10, "Failed with {0}".format(name)
-        if 'Oblique' in name:
-            assert n_important >= 4, "Failed with {0}".format(name)    
+        if "Oblique" in name:
+            assert n_important >= 4, "Failed with {0}".format(name)
         else:
             assert n_important == 4, "Failed with {0}".format(name)
 
@@ -2559,7 +2559,7 @@ def test_oblique_tree_sampling():
     # diverse sets of splits and will do better if allowed
     # to sample more
     tree_ri = DecisionTreeClassifier(random_state=0, max_features=n_features)
-    tree_rc = ObliqueDecisionTreeClassifier(random_state=0, max_features=n_features*2)
+    tree_rc = ObliqueDecisionTreeClassifier(random_state=0, max_features=n_features * 2)
     ri_cv_scores = cross_val_score(
         tree_ri, X, y, scoring="accuracy", cv=10, error_score="raise"
     )
