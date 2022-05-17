@@ -53,7 +53,6 @@ from sklearn.metrics import precision_score
 from sklearn.metrics import r2_score
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import check_scoring
-from sklearn.metrics import oob_score
 
 from sklearn.linear_model import Ridge, LogisticRegression, SGDClassifier
 from sklearn.linear_model import PassiveAggressiveClassifier, RidgeClassifier
