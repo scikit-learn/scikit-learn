@@ -11,12 +11,6 @@ functions to split the data based on a preset strategy.
 #         Rodion Martynov <marrodion@gmail.com>
 # License: BSD 3 clause
 
-from ..base import _pprint
-from ..utils import _approximate_mode, _safe_indexing, check_random_state, indexable
-from ..utils.multiclass import type_of_target
-from ..utils.validation import _num_samples, check_array, column_or_1d
-
-
 import numbers
 import warnings
 from abc import ABCMeta, abstractmethod
@@ -28,6 +22,11 @@ from math import ceil, floor
 
 import numpy as np
 from scipy.special import comb
+
+from ..base import _pprint
+from ..utils import _approximate_mode, _safe_indexing, check_random_state, indexable
+from ..utils.multiclass import type_of_target
+from ..utils.validation import _num_samples, check_array, column_or_1d
 
 __all__ = [
     "BaseCrossValidator",
