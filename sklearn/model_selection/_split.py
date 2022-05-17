@@ -20,8 +20,8 @@ import numbers
 from abc import ABCMeta, abstractmethod
 from inspect import signature
 
-import numpy as np
 from scipy.special import comb
+import numpy as np
 
 from ..utils import indexable, check_random_state, _safe_indexing
 from ..utils import _approximate_mode
