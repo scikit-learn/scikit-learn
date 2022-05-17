@@ -129,7 +129,6 @@ cdef inline int _simultaneous_sort(
             if values[0] > values[1]:
                 dual_swap(values, indices, 0, 1)
     elif use_introsort and max_depth <= 0:
-        # heapsort
         heapsort(values, indices, size)
     else:
         if use_introsort:

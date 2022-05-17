@@ -33,6 +33,16 @@ Changelog
   precision=class balance.
   :pr:`23214` by :user:`Stéphane Collot <stephanecollot>` and :user:`Max Baak <mbaak>`.
 
+:mod:`sklearn.tree`
+...................
+
+- |Fix| Fixes performance regression :class:`tree.DecisionTreeClassifier`,
+  :class:`tree.DecisionTreeRegressor`,
+  :class:`ensemble.RandomForestClassifier`,
+  :class:`ensemble.RandomForestRegressor`,
+  :class:`ensemble.GradientBoostingClassifier`, and
+  :class:`ensemble.GradientBoostingRegressor`. :pr:`xxxxx` by `Thomas Fan`_.
+
 :mod:`sklearn.utils`
 ....................
 
