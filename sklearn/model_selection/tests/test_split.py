@@ -109,7 +109,7 @@ def test_cross_validator_with_default_params():
         n_shuffle_splits,
         2,
         n_splits,
-        1
+        1,
     ]
 
     for i, (cv, cv_repr) in enumerate(
@@ -125,7 +125,7 @@ def test_cross_validator_with_default_params():
                 ss_repr,
                 ps_repr,
                 sgkf_repr,
-                ident_repr
+                ident_repr,
             ],
         )
     ):

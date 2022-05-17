@@ -2379,11 +2379,9 @@ def test_random_forest_oob():
     X, y = make_classification()
     cv = GridSearchCV(
         RandomForestClassifier(oob_score=True, random_state=0),
-        {
-            "n_estimators": [1, 20, 100]
-        },
+        {"n_estimators": [1, 20, 100]},
         cv=IdentitySplitter(),
-        scoring="oob"
+        scoring="oob",
     )
     results = cv.fit(X, y)
     scores = results.cv_results_["mean_test_score"]

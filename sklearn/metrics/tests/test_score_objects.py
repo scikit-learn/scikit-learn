@@ -40,7 +40,7 @@ from sklearn.metrics._scorer import (
     _passthrough_scorer,
     _MultimetricScorer,
     _check_multimetric_scoring,
-    oob_score
+    oob_score,
 )
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import make_scorer, get_scorer, SCORERS, get_scorer_names
