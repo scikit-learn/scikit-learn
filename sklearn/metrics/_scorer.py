@@ -802,8 +802,8 @@ def oob_score(estimator, X, y):
         else:
             raise TypeError(
                 oob_score.__name__ +
-                " can only be used on classifiers with an out-of-bag error estimate, such as"
-                "RandomForest-based estimators."
+                " can only be used on classifiers with an out-of-bag error estimate,"
+                " such as RandomForest-based estimators."
             )
 
 
