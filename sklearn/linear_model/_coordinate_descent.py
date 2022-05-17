@@ -164,7 +164,7 @@ def _alpha_grid(
             # Workaround to find alpha_max for sparse matrices.
             # since we should not destroy the sparsity of such matrices.
             _, _, X_offset, _, X_scale = _preprocess_data(
-                X, y, fit_intercept, normalize, return_mean=True
+                X, y, fit_intercept, normalize
             )
             mean_dot = X_offset * np.sum(y)
 
@@ -499,6 +499,7 @@ def enet_path(
     """
     X_offset_param = params.pop("X_offset", None)
     X_scale_param = params.pop("X_scale", None)
+    sample_weight = params.pop("sample_weight", None)
     tol = params.pop("tol", 1e-4)
     max_iter = params.pop("max_iter", 1000)
     random_state = params.pop("random_state", None)
@@ -544,14 +545,14 @@ def enet_path(
     # MultiTaskElasticNet does not support sparse matrices
     if not multi_output and sparse.isspmatrix(X):
         if X_offset_param is not None:
-            # As sparse matrices are not actually centered we need this
-            # to be passed to the CD solver.
+            # As sparse matrices are not actually centered we need this to be passed to
+            # the CD solver.
             X_sparse_scaling = X_offset_param / X_scale_param
             X_sparse_scaling = np.asarray(X_sparse_scaling, dtype=X.dtype)
         else:
             X_sparse_scaling = np.zeros(n_features, dtype=X.dtype)
 
-    # X should be normalized and fit already if function is called
+    # X should have been passed through _pre_fit already if function is called
     # from ElasticNet.fit
     if check_input:
         X, y, X_offset, y_offset, X_scale, precompute, Xy = _pre_fit(
@@ -578,7 +579,7 @@ def enet_path(
             normalize=False,
             copy_X=False,
         )
-    else:
+    elif len(alphas) > 1:
         alphas = np.sort(alphas)[::-1]  # make sure alphas are properly ordered
 
     n_alphas = len(alphas)
@@ -606,19 +607,20 @@ def enet_path(
         l2_reg = alpha * (1.0 - l1_ratio) * n_samples
         if not multi_output and sparse.isspmatrix(X):
             model = cd_fast.sparse_enet_coordinate_descent(
-                coef_,
-                l1_reg,
-                l2_reg,
-                X.data,
-                X.indices,
-                X.indptr,
-                y,
-                X_sparse_scaling,
-                max_iter,
-                tol,
-                rng,
-                random,
-                positive,
+                w=coef_,
+                alpha=l1_reg,
+                beta=l2_reg,
+                X_data=X.data,
+                X_indices=X.indices,
+                X_indptr=X.indptr,
+                y=y,
+                sample_weight=sample_weight,
+                X_mean=X_sparse_scaling,
+                max_iter=max_iter,
+                tol=tol,
+                rng=rng,
+                random=random,
+                positive=positive,
             )
         elif multi_output:
             model = cd_fast.enet_coordinate_descent_multi_task(
@@ -748,7 +750,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         The tolerance for the optimization: if the updates are
         smaller than ``tol``, the optimization code checks the
         dual gap for optimality and continues until it is smaller
-        than ``tol``.
+        than ``tol``, see Notes below.
 
     warm_start : bool, default=False
         When set to ``True``, reuse the solution of the previous call to fit as
@@ -807,12 +809,18 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         cross-validation.
     SGDRegressor : Implements elastic net regression with incremental training.
     SGDClassifier : Implements logistic regression with elastic net penalty
-        (``SGDClassifier(loss="log", penalty="elasticnet")``).
+        (``SGDClassifier(loss="log_loss", penalty="elasticnet")``).
 
     Notes
     -----
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a Fortran-contiguous numpy array.
+
+    The precise stopping criteria based on `tol` are the following: First, check that
+    that maximum coordinate update, i.e. :math:`\\max_j |w_j^{new} - w_j^{old}|`
+    is smaller than `tol` times the maximum absolute coefficient, :math:`\\max_j |w_j|`.
+    If so, then additionally check whether the dual gap is smaller than `tol` times
+    :math:`||y||_2^2 / n_{\text{samples}}`.
 
     Examples
     --------
@@ -965,10 +973,6 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
             sample_weight = None
         if sample_weight is not None:
             if check_input:
-                if sparse.issparse(X):
-                    raise ValueError(
-                        "Sample weights do not (yet) support sparse matrices."
-                    )
                 sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
             # TLDR: Rescale sw to sum up to n_samples.
             # Long: The objective function of Enet
@@ -1057,17 +1061,19 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
                 precompute=precompute,
                 Xy=this_Xy,
                 copy_X=True,
+                coef_init=coef_[k],
                 verbose=False,
-                tol=self.tol,
+                return_n_iter=True,
                 positive=self.positive,
+                check_input=False,
+                # from here on **params
+                tol=self.tol,
                 X_offset=X_offset,
                 X_scale=X_scale,
-                return_n_iter=True,
-                coef_init=coef_[k],
                 max_iter=self.max_iter,
                 random_state=self.random_state,
                 selection=self.selection,
-                check_input=False,
+                sample_weight=sample_weight,
             )
             coef_[k] = this_coef[:, 0]
             dual_gaps_[k] = this_dual_gap[0]
@@ -1082,9 +1088,6 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
             self.dual_gap_ = dual_gaps_
 
         self._set_intercept(X_offset, y_offset, X_scale)
-
-        # workaround since _set_intercept will cast self.coef_ into X.dtype
-        self.coef_ = np.asarray(self.coef_, dtype=X.dtype)
 
         # check for finiteness of coefficients
         if not all(np.isfinite(w).all() for w in [self.coef_, self.intercept_]):
@@ -1181,7 +1184,7 @@ class Lasso(ElasticNet):
         The tolerance for the optimization: if the updates are
         smaller than ``tol``, the optimization code checks the
         dual gap for optimality and continues until it is smaller
-        than ``tol``.
+        than ``tol``, see Notes below.
 
     warm_start : bool, default=False
         When set to True, reuse the solution of the previous call to fit as
@@ -1257,6 +1260,12 @@ class Lasso(ElasticNet):
     :class:`~sklearn.svm.LinearSVC`. If an array is passed, penalties are
     assumed to be specific to the targets. Hence they must correspond in
     number.
+
+    The precise stopping criteria based on `tol` are the following: First, check that
+    that maximum coordinate update, i.e. :math:`\\max_j |w_j^{new} - w_j^{old}|`
+    is smaller than `tol` times the maximum absolute coefficient, :math:`\\max_j |w_j|`.
+    If so, then additionally check whether the dual gap is smaller than `tol` times
+    :math:`||y||_2^2 / n_{\text{samples}}`.
 
     Examples
     --------
@@ -1421,6 +1430,8 @@ def _path_residuals(
     path_params["precompute"] = precompute
     path_params["copy_X"] = False
     path_params["alphas"] = alphas
+    # needed for sparse cd solver
+    path_params["sample_weight"] = sw_train
 
     if "l1_ratio" in path_params:
         path_params["l1_ratio"] = l1_ratio
@@ -1555,7 +1566,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
             # by the model fitting itself
 
             # Need to validate separately here.
-            # We can't pass multi_ouput=True because that would allow y to be
+            # We can't pass multi_output=True because that would allow y to be
             # csr. We also want to allow y to be 64 or 32 but check_X_y only
             # allows to convert for 64.
             check_X_params = dict(
@@ -1576,7 +1587,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
             del reference_to_old_X
         else:
             # Need to validate separately here.
-            # We can't pass multi_ouput=True because that would allow y to be
+            # We can't pass multi_output=True because that would allow y to be
             # csr. We also want to allow y to be 64 or 32 but check_X_y only
             # allows to convert for 64.
             check_X_params = dict(
@@ -1609,8 +1620,6 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         if isinstance(sample_weight, numbers.Number):
             sample_weight = None
         if sample_weight is not None:
-            if sparse.issparse(X):
-                raise ValueError("Sample weights do not (yet) support sparse matrices.")
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         model = self._get_estimator()
@@ -2443,7 +2452,7 @@ class MultiTaskElasticNet(Lasso):
         )
 
         # Need to validate separately here.
-        # We can't pass multi_ouput=True because that would allow y to be csr.
+        # We can't pass multi_output=True because that would allow y to be csr.
         check_X_params = dict(
             dtype=[np.float64, np.float32],
             order="F",

@@ -203,7 +203,7 @@ Note that scikit-learn tests are expected to run deterministically with
 explicit seeding of their own independent RNG instances instead of relying on
 the numpy or Python standard library RNG singletons to make sure that test
 results are independent of the test execution order. However some tests might
-forget to use explicit seeding and this variable is a way to control the intial
+forget to use explicit seeding and this variable is a way to control the initial
 state of the aforementioned singletons.
 
 `SKLEARN_TESTS_GLOBAL_RANDOM_SEED`
@@ -262,6 +262,14 @@ admissible seeds on your local machine:
 When this environment variable is set to a non zero value, the tests that need
 network access are skipped. When this environment variable is not set then
 network tests are skipped.
+
+`SKLEARN_RUN_FLOAT32_TESTS`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When this environment variable is set to '1', the tests using the
+`global_dtype` fixture are also run on float32 data.
+When this environment variable is not set, the tests are only run on
+float64 data.
 
 `SKLEARN_ENABLE_DEBUG_CYTHON_DIRECTIVES`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
