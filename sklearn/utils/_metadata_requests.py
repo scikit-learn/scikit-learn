@@ -179,21 +179,6 @@ class MethodMetadataRequest:
         """Dictionary of the form: ``{key: alias}``."""
         return self._requests
 
-    def _assume_requested(self, router):
-        """Convert all ERROR_IF_PASSED to REQUESTED.
-
-        This method returns a new object with the above change and leaves the
-        original object unchanged.
-        """
-        res = MethodMetadataRequest(router=router, owner=self.owner, method=self.method)
-        res._requests = {
-            param: (
-                alias if alias != RequestType.ERROR_IF_PASSED else RequestType.REQUESTED
-            )
-            for param, alias in self._requests.items()
-        }
-        return res
-
     def add_request(
         self,
         *,
@@ -386,17 +371,6 @@ class MetadataRequest:
                 method,
                 MethodMetadataRequest(router=self, owner=owner, method=method),
             )
-
-    def _assume_requested(self):
-        """Convert all ERROR_IF_PASSED to REQUESTED.
-
-        This method returns a new object with the above change and leaves the
-        original object unchanged.
-        """
-        res = MetadataRequest(owner=None)
-        for method in METHODS:
-            setattr(self, method, getattr(self, method)._assume_requested(router=res))
-        return res
 
     def _get_param_names(self, method, return_alias, ignore_self=None):
         """Get names of all metadata that can be consumed or routed by specified \
@@ -628,18 +602,6 @@ class MetadataRouter:
                 return False
 
         return True
-
-    def _assume_requested(self):
-        """Convert all ERROR_IF_PASSED to REQUESTED.
-
-        This method returns a new object with the above change and leaves the
-        original object unchanged.
-        """
-        res = MetadataRouter(owner=self.owner)
-        if self._self:
-            res._self = self._self._assume_requested()
-        res._route_mappings = deepcopy(self._route_mappings)
-        return res
 
     def add_self(self, obj):
         """Add `self` (as a consumer) to the routing.
