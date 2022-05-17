@@ -2275,8 +2275,8 @@ class _CVIterableWrapper(BaseCrossValidator):
 class IdentitySplitter(BaseCrossValidator):
     """A dummy splitter that returns a single split containing all the data.
 
-    This is useful for estimators that are able to estimate their own performance without retraining,
-    such as when using out-of-bag error.
+    This is useful for estimators that are able to estimate their own performance
+    without retraining, such as when using out-of-bag error.
     """
     def split(self, X, y=None, groups=None):
         yield np.arange(X.shape[0]), np.empty(0, dtype=int)

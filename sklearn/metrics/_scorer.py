@@ -774,9 +774,9 @@ class _DeprecatedScorers(dict):
 def oob_score(estimator, X, y):
     """Out-of-Bag scorer
 
-    This function can be used wherever a scoring function is expected, but delegates its functionality
-    to the oob_score_ field of certain classifiers if they have one, notably the RandomForest set of
-    Estimators.
+    This function can be used wherever a scoring function is expected, but delegates
+    its functionality to the oob_score_ field of certain classifiers if they have one,
+    notably the RandomForest set of Estimators.
 
     Parameters
     ----------
@@ -802,8 +802,8 @@ def oob_score(estimator, X, y):
         else:
             raise TypeError(
                 oob_score.__name__ +
-                " can only be used on classifiers with an out-of-bag error estimate, such as RandomForest based"
-                "estimators."
+                " can only be used on classifiers with an out-of-bag error estimate, such as"
+                "RandomForest-based estimators."
             )
 
 

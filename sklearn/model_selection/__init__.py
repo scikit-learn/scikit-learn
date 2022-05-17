@@ -46,6 +46,7 @@ __all__ = [
     "BaseCrossValidator",
     "BaseShuffleSplit",
     "GridSearchCV",
+    "IdentitySplitter",
     "TimeSeriesSplit",
     "KFold",
     "GroupKFold",
