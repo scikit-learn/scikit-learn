@@ -168,6 +168,7 @@ You can also provide custom feature names for the input data using
  * :ref:`sphx_glr_auto_examples_miscellaneous_plot_kernel_approximation.py`
  * :ref:`sphx_glr_auto_examples_svm_plot_svm_anova.py`
  * :ref:`sphx_glr_auto_examples_compose_plot_compare_reduction.py`
+ * :ref:`sphx_glr_auto_examples_miscellaneous_plot_pipeline_display.py`
 
 .. topic:: See Also:
 
@@ -449,13 +450,13 @@ By default, the remaining rating columns are ignored (``remainder='drop'``)::
   >>> column_trans = ColumnTransformer(
   ...     [('categories', OneHotEncoder(dtype='int'), ['city']),
   ...      ('title_bow', CountVectorizer(), 'title')],
-  ...     remainder='drop', prefix_feature_names_out=False)
+  ...     remainder='drop', verbose_feature_names_out=False)
 
   >>> column_trans.fit(X)
-  ColumnTransformer(prefix_feature_names_out=False,
-                    transformers=[('categories', OneHotEncoder(dtype='int'),
+  ColumnTransformer(transformers=[('categories', OneHotEncoder(dtype='int'),
                                    ['city']),
-                                  ('title_bow', CountVectorizer(), 'title')])
+                                  ('title_bow', CountVectorizer(), 'title')],
+                    verbose_feature_names_out=False)
 
   >>> column_trans.get_feature_names_out()
   array(['city_London', 'city_Paris', 'city_Sallisaw', 'bow', 'feast',
@@ -566,14 +567,18 @@ will use the column names to select the columns::
 Visualizing Composite Estimators
 ================================
 
-Estimators can be displayed with a HTML representation when shown in a
-jupyter notebook. This can be useful to diagnose or visualize a Pipeline with
-many estimators. This visualization is activated by setting the
-`display` option in :func:`~sklearn.set_config`::
+Estimators are displayed with an HTML representation when shown in a
+jupyter notebook. This is useful to diagnose or visualize a Pipeline with
+many estimators. This visualization is activated by default::
+
+  >>> column_trans  # doctest: +SKIP
+
+It can be deactivated by setting the `display` option in :func:`~sklearn.set_config`
+to 'text'::
 
   >>> from sklearn import set_config
-  >>> set_config(display='diagram')   # doctest: +SKIP
-  >>> # diplays HTML representation in a jupyter context
+  >>> set_config(display='text')  # doctest: +SKIP
+  >>> # displays text representation in a jupyter context
   >>> column_trans  # doctest: +SKIP
 
 An example of the HTML output can be seen in the

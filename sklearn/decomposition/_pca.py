@@ -20,7 +20,7 @@ from scipy.sparse import issparse
 from scipy.sparse.linalg import svds
 
 from ._base import _BasePCA
-from ..utils import check_random_state
+from ..utils import check_random_state, check_scalar
 from ..utils._arpack import _init_arpack_v0
 from ..utils.extmath import fast_logdet, randomized_svd, svd_flip
 from ..utils.extmath import stable_cumsum
@@ -203,6 +203,21 @@ class PCA(_BasePCA):
 
         .. versionadded:: 0.18.0
 
+    n_oversamples : int, default=10
+        This parameter is only relevant when `svd_solver="randomized"`.
+        It corresponds to the additional number of random vectors to sample the
+        range of `X` so as to ensure proper conditioning. See
+        :func:`~sklearn.utils.extmath.randomized_svd` for more details.
+
+        .. versionadded:: 1.1
+
+    power_iteration_normalizer : {‘auto’, ‘QR’, ‘LU’, ‘none’}, default=’auto’
+        Power iteration normalizer for randomized SVD solver.
+        Not used by ARPACK. See :func:`~sklearn.utils.extmath.randomized_svd`
+        for more details.
+
+        .. versionadded:: 1.1
+
     random_state : int, RandomState instance or None, default=None
         Used when the 'arpack' or 'randomized' solvers are used. Pass an int
         for reproducible results across multiple function calls.
@@ -302,16 +317,16 @@ class PCA(_BasePCA):
     For svd_solver == 'arpack', refer to `scipy.sparse.linalg.svds`.
 
     For svd_solver == 'randomized', see:
-    `Halko, N., Martinsson, P. G., and Tropp, J. A. (2011).
+    :doi:`Halko, N., Martinsson, P. G., and Tropp, J. A. (2011).
     "Finding structure with randomness: Probabilistic algorithms for
     constructing approximate matrix decompositions".
     SIAM review, 53(2), 217-288.
-    <https://doi.org/10.1137/090771806>`_
+    <10.1137/090771806>`
     and also
-    `Martinsson, P. G., Rokhlin, V., and Tygert, M. (2011).
+    :doi:`Martinsson, P. G., Rokhlin, V., and Tygert, M. (2011).
     "A randomized algorithm for the decomposition of matrices".
-    Applied and Computational Harmonic Analysis, 30(1), 47-68
-    <https://doi.org/10.1016/j.acha.2010.02.003>`_.
+    Applied and Computational Harmonic Analysis, 30(1), 47-68.
+    <10.1016/j.acha.2010.02.003>`
 
     Examples
     --------
@@ -352,6 +367,8 @@ class PCA(_BasePCA):
         svd_solver="auto",
         tol=0.0,
         iterated_power="auto",
+        n_oversamples=10,
+        power_iteration_normalizer="auto",
         random_state=None,
     ):
         self.n_components = n_components
@@ -360,6 +377,8 @@ class PCA(_BasePCA):
         self.svd_solver = svd_solver
         self.tol = tol
         self.iterated_power = iterated_power
+        self.n_oversamples = n_oversamples
+        self.power_iteration_normalizer = power_iteration_normalizer
         self.random_state = random_state
 
     def fit(self, X, y=None):
@@ -379,6 +398,13 @@ class PCA(_BasePCA):
         self : object
             Returns the instance itself.
         """
+        check_scalar(
+            self.n_oversamples,
+            "n_oversamples",
+            min_val=1,
+            target_type=numbers.Integral,
+        )
+
         self._fit(X)
         return self
 
@@ -496,7 +522,7 @@ class PCA(_BasePCA):
         components_ = Vt
 
         # Get variance explained by singular values
-        explained_variance_ = (S ** 2) / (n_samples - 1)
+        explained_variance_ = (S**2) / (n_samples - 1)
         total_var = explained_variance_.sum()
         explained_variance_ratio_ = explained_variance_ / total_var
         singular_values_ = S.copy()  # Store the singular values.
@@ -580,7 +606,9 @@ class PCA(_BasePCA):
             U, S, Vt = randomized_svd(
                 X,
                 n_components=n_components,
+                n_oversamples=self.n_oversamples,
                 n_iter=self.iterated_power,
+                power_iteration_normalizer=self.power_iteration_normalizer,
                 flip_sign=True,
                 random_state=random_state,
             )
@@ -590,13 +618,20 @@ class PCA(_BasePCA):
         self.n_components_ = n_components
 
         # Get variance explained by singular values
-        self.explained_variance_ = (S ** 2) / (n_samples - 1)
-        total_var = np.var(X, ddof=1, axis=0)
-        self.explained_variance_ratio_ = self.explained_variance_ / total_var.sum()
+        self.explained_variance_ = (S**2) / (n_samples - 1)
+
+        # Workaround in-place variance calculation since at the time numpy
+        # did not have a way to calculate variance in-place.
+        N = X.shape[0] - 1
+        np.square(X, out=X)
+        np.sum(X, axis=0, out=X[0])
+        total_var = (X[0] / N).sum()
+
+        self.explained_variance_ratio_ = self.explained_variance_ / total_var
         self.singular_values_ = S.copy()  # Store the singular values.
 
         if self.n_components_ < min(n_features, n_samples):
-            self.noise_variance_ = total_var.sum() - self.explained_variance_.sum()
+            self.noise_variance_ = total_var - self.explained_variance_.sum()
             self.noise_variance_ /= min(n_features, n_samples) - n_components
         else:
             self.noise_variance_ = 0.0

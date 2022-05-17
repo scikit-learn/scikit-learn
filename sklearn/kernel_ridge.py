@@ -10,7 +10,6 @@ from .base import BaseEstimator, RegressorMixin, MultiOutputMixin
 from .metrics.pairwise import pairwise_kernels
 from .linear_model._ridge import _solve_cholesky_kernel
 from .utils.validation import check_is_fitted, _check_sample_weight
-from .utils.deprecation import deprecated
 
 
 class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
@@ -52,7 +51,7 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
         Kernel mapping used internally. This parameter is directly passed to
         :class:`~sklearn.metrics.pairwise.pairwise_kernel`.
         If `kernel` is a string, it must be one of the metrics
-        in `pairwise.PAIRWISE_KERNEL_FUNCTIONS`.
+        in `pairwise.PAIRWISE_KERNEL_FUNCTIONS` or "precomputed".
         If `kernel` is "precomputed", X is assumed to be a kernel matrix.
         Alternatively, if `kernel` is a callable function, it is called on
         each pair of instances (rows) and the resulting value recorded. The
@@ -125,8 +124,8 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
     >>> rng = np.random.RandomState(0)
     >>> y = rng.randn(n_samples)
     >>> X = rng.randn(n_samples, n_features)
-    >>> clf = KernelRidge(alpha=1.0)
-    >>> clf.fit(X, y)
+    >>> krr = KernelRidge(alpha=1.0)
+    >>> krr.fit(X, y)
     KernelRidge(alpha=1.0)
     """
 
@@ -156,16 +155,6 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
     def _more_tags(self):
         return {"pairwise": self.kernel == "precomputed"}
-
-    # TODO: Remove in 1.1
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `_pairwise` was deprecated in "
-        "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def _pairwise(self):
-        return self.kernel == "precomputed"
 
     def fit(self, X, y, sample_weight=None):
         """Fit Kernel Ridge regression model.

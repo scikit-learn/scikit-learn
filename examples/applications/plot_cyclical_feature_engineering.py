@@ -12,6 +12,7 @@ the :class:`sklearn.preprocessing.SplineTransformer` class and its
 `extrapolation="periodic"` option.
 
 """
+
 # %%
 # Data exploration on the Bike Sharing Demand dataset
 # ---------------------------------------------------
@@ -19,7 +20,9 @@ the :class:`sklearn.preprocessing.SplineTransformer` class and its
 # We start by loading the data from the OpenML repository.
 from sklearn.datasets import fetch_openml
 
-bike_sharing = fetch_openml("Bike_Sharing_Demand", version=2, as_frame=True)
+bike_sharing = fetch_openml(
+    "Bike_Sharing_Demand", version=2, as_frame=True, parser="pandas"
+)
 df = bike_sharing.frame
 
 # %%
@@ -50,7 +53,7 @@ _ = ax.set(
 # a hourly basis:
 df["count"].max()
 
-# %% [markdown]
+# %%
 #
 # Let us rescale the target variable (number of hourly bike rentals) to predict
 # a relative demand so that the mean absolute error is more easily interpreted
@@ -67,7 +70,7 @@ df["count"].max()
 #     intuitive than the (root) mean squared error. Note, however, that the
 #     best models for one metric are also the best for the other in this
 #     study.
-y = df["count"] / 1000
+y = df["count"] / df["count"].max()
 
 # %%
 fig, ax = plt.subplots(figsize=(12, 4))
@@ -215,7 +218,7 @@ gbrt_pipeline = make_pipeline(
 # %%
 #
 # Lets evaluate our gradient boosting model with the mean absolute error of the
-# relative demand averaged accross our 5 time-based cross-validation splits:
+# relative demand averaged across our 5 time-based cross-validation splits:
 
 
 def evaluate(model, X, y, cv):
@@ -671,7 +674,7 @@ evaluate(cyclic_spline_poly_pipeline, X, y, cv=ts_cv)
 # %%
 #
 # We observe that this model can almost rival the performance of the gradient
-# boosted trees with an average error around 6% of the maximum demand.
+# boosted trees with an average error around 5% of the maximum demand.
 #
 # Note that while the final step of this pipeline is a linear regression model,
 # the intermediate steps such as the spline feature extraction and the Nyström
@@ -790,7 +793,7 @@ for ax, pred, label in zip(axes, predictions, labels):
     )
     ax.legend()
 
-
+plt.show()
 # %%
 # This visualization confirms the conclusions we draw on the previous plot.
 #

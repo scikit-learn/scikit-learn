@@ -8,13 +8,13 @@ from scipy.sparse import issparse
 from warnings import warn
 
 from ..tree import ExtraTreeRegressor
+from ..tree._tree import DTYPE as tree_dtype
 from ..utils import (
     check_random_state,
     check_array,
     gen_batches,
     get_chunk_n_rows,
 )
-from ..utils.fixes import _joblib_parallel_args
 from ..utils.validation import check_is_fitted, _num_samples
 from ..base import OutlierMixin
 
@@ -80,6 +80,9 @@ class IsolationForest(OutlierMixin, BaseBagging):
 
             - If int, then draw `max_features` features.
             - If float, then draw `max_features * X.shape[1]` features.
+
+        Note: using a float number less than 1.0 or integer less than number of
+        features will enable feature subsampling and leads to a longerr runtime.
 
     bootstrap : bool, default=False
         If True, individual trees are fit on random subsets of the training
@@ -158,6 +161,16 @@ class IsolationForest(OutlierMixin, BaseBagging):
 
         .. versionadded:: 1.0
 
+    See Also
+    --------
+    sklearn.covariance.EllipticEnvelope : An object for detecting outliers in a
+        Gaussian distributed dataset.
+    sklearn.svm.OneClassSVM : Unsupervised Outlier Detection.
+        Estimate the support of a high-dimensional distribution.
+        The implementation is based on libsvm.
+    sklearn.neighbors.LocalOutlierFactor : Unsupervised Outlier Detection
+        using Local Outlier Factor (LOF).
+
     Notes
     -----
     The implementation is based on an ensemble of ExtraTreeRegressor. The
@@ -172,16 +185,6 @@ class IsolationForest(OutlierMixin, BaseBagging):
     .. [2] Liu, Fei Tony, Ting, Kai Ming and Zhou, Zhi-Hua. "Isolation-based
            anomaly detection." ACM Transactions on Knowledge Discovery from
            Data (TKDD) 6.1 (2012): 3.
-
-    See Also
-    ----------
-    sklearn.covariance.EllipticEnvelope : An object for detecting outliers in a
-        Gaussian distributed dataset.
-    sklearn.svm.OneClassSVM : Unsupervised Outlier Detection.
-        Estimate the support of a high-dimensional distribution.
-        The implementation is based on libsvm.
-    sklearn.neighbors.LocalOutlierFactor : Unsupervised Outlier Detection
-        using Local Outlier Factor (LOF).
 
     Examples
     --------
@@ -231,7 +234,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         # a thread-based backend rather than a process-based backend so as
         # to avoid suffering from communication overhead and extra memory
         # copies.
-        return _joblib_parallel_args(prefer="threads")
+        return {"prefer": "threads"}
 
     def fit(self, X, y=None, sample_weight=None):
         """
@@ -255,7 +258,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         self : object
             Fitted estimator.
         """
-        X = self._validate_data(X, accept_sparse=["csc"])
+        X = self._validate_data(X, accept_sparse=["csc"], dtype=tree_dtype)
         if issparse(X):
             # Pre-sort indices to avoid that each individual tree of the
             # ensemble sorts the indices.
@@ -305,7 +308,12 @@ class IsolationForest(OutlierMixin, BaseBagging):
         self.max_samples_ = max_samples
         max_depth = int(np.ceil(np.log2(max(max_samples, 2))))
         super()._fit(
-            X, y, max_samples, max_depth=max_depth, sample_weight=sample_weight
+            X,
+            y,
+            max_samples,
+            max_depth=max_depth,
+            sample_weight=sample_weight,
+            check_input=False,
         )
 
         if self.contamination == "auto":
@@ -337,9 +345,9 @@ class IsolationForest(OutlierMixin, BaseBagging):
             be considered as an inlier according to the fitted model.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, accept_sparse="csr", reset=False)
-        is_inlier = np.ones(X.shape[0], dtype=int)
-        is_inlier[self.decision_function(X) < 0] = -1
+        decision_func = self.decision_function(X)
+        is_inlier = np.ones_like(decision_func, dtype=int)
+        is_inlier[decision_func < 0] = -1
         return is_inlier
 
     def decision_function(self, X):

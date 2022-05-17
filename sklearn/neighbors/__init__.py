@@ -5,7 +5,7 @@ algorithm.
 
 from ._ball_tree import BallTree
 from ._kd_tree import KDTree
-from ._dist_metrics import DistanceMetric
+from ._distance_metric import DistanceMetric
 from ._graph import kneighbors_graph, radius_neighbors_graph
 from ._graph import KNeighborsTransformer, RadiusNeighborsTransformer
 from ._unsupervised import NearestNeighbors
@@ -15,6 +15,7 @@ from ._nearest_centroid import NearestCentroid
 from ._kde import KernelDensity
 from ._lof import LocalOutlierFactor
 from ._nca import NeighborhoodComponentsAnalysis
+from ._base import sort_graph_by_row_values
 from ._base import VALID_METRICS, VALID_METRICS_SPARSE
 
 __all__ = [
@@ -34,6 +35,7 @@ __all__ = [
     "KernelDensity",
     "LocalOutlierFactor",
     "NeighborhoodComponentsAnalysis",
+    "sort_graph_by_row_values",
     "VALID_METRICS",
     "VALID_METRICS_SPARSE",
 ]

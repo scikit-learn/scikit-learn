@@ -47,6 +47,7 @@ example plot over other classifiers available in scikit-learn.
       example.
 
 """
+
 import matplotlib.pyplot as plt
 
 from sklearn.datasets import make_classification

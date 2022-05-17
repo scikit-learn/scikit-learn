@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Ordering Points To Identify the Clustering Structure (OPTICS)
 
 These routines execute the OPTICS algorithm, and implement various
@@ -21,6 +20,7 @@ from ..utils.validation import check_memory
 from ..neighbors import NearestNeighbors
 from ..base import BaseEstimator, ClusterMixin
 from ..metrics import pairwise_distances
+from scipy.sparse import issparse, SparseEfficiencyWarning
 
 
 class OPTICS(ClusterMixin, BaseEstimator):
@@ -68,7 +68,8 @@ class OPTICS(ClusterMixin, BaseEstimator):
         should take two arrays as input and return one value indicating the
         distance between them. This works for Scipy's metrics, but is less
         efficient than passing the metric name as a string. If metric is
-        "precomputed", X is assumed to be a distance matrix and must be square.
+        "precomputed", `X` is assumed to be a distance matrix and must be
+        square.
 
         Valid values for metric are:
 
@@ -81,6 +82,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
           'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean',
           'yule']
 
+        Sparse matrices are only supported by scikit-learn metrics.
         See the documentation for scipy.spatial.distance for details on these
         metrics.
 
@@ -124,11 +126,11 @@ class OPTICS(ClusterMixin, BaseEstimator):
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, default='auto'
         Algorithm used to compute the nearest neighbors:
 
-        - 'ball_tree' will use :class:`BallTree`
-        - 'kd_tree' will use :class:`KDTree`
+        - 'ball_tree' will use :class:`BallTree`.
+        - 'kd_tree' will use :class:`KDTree`.
         - 'brute' will use a brute-force search.
-        - 'auto' will attempt to decide the most appropriate algorithm
-          based on the values passed to :meth:`fit` method. (default)
+        - 'auto' (default) will attempt to decide the most appropriate
+          algorithm based on the values passed to :meth:`fit` method.
 
         Note: fitting on sparse input will override the setting of
         this parameter, using brute force.
@@ -263,18 +265,19 @@ class OPTICS(ClusterMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : ndarray of shape (n_samples, n_features), or \
+        X : {ndarray, sparse matrix} of shape (n_samples, n_features), or \
                 (n_samples, n_samples) if metric=’precomputed’
             A feature array, or array of distances between samples if
-            metric='precomputed'.
+            metric='precomputed'. If a sparse matrix is provided, it will be
+            converted into CSR format.
 
-        y : ignored
-            Ignored.
+        y : Ignored
+            Not used, present for API consistency by convention.
 
         Returns
         -------
-        self : instance of OPTICS
-            The instance.
+        self : object
+            Returns a fitted instance of self.
         """
         dtype = bool if self.metric in PAIRWISE_BOOLEAN_FUNCTIONS else float
         if dtype == bool and X.dtype != bool:
@@ -285,7 +288,13 @@ class OPTICS(ClusterMixin, BaseEstimator):
             )
             warnings.warn(msg, DataConversionWarning)
 
-        X = self._validate_data(X, dtype=dtype)
+        X = self._validate_data(X, dtype=dtype, accept_sparse="csr")
+        if self.metric == "precomputed" and issparse(X):
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", SparseEfficiencyWarning)
+                # Set each diagonal to an explicit value so each point is its
+                # own neighbor
+                X.setdiag(X.diagonal())
         memory = check_memory(self.memory)
 
         if self.cluster_method not in ["dbscan", "xi"]:
@@ -360,7 +369,7 @@ def _validate_size(size, n_samples, param_name):
 
 # OPTICS helper functions
 def _compute_core_distances_(X, neighbors, min_samples, working_memory):
-    """Compute the k-th nearest neighbor of each sample
+    """Compute the k-th nearest neighbor of each sample.
 
     Equivalent to neighbors.kneighbors(X, self.min_samples)[0][:, -1]
     but with more memory efficiency.
@@ -398,16 +407,16 @@ def _compute_core_distances_(X, neighbors, min_samples, working_memory):
 def compute_optics_graph(
     X, *, min_samples, max_eps, metric, p, metric_params, algorithm, leaf_size, n_jobs
 ):
-    """Computes the OPTICS reachability graph.
+    """Compute the OPTICS reachability graph.
 
     Read more in the :ref:`User Guide <optics>`.
 
     Parameters
     ----------
     X : ndarray of shape (n_samples, n_features), or \
-            (n_samples, n_samples) if metric=’precomputed’.
+            (n_samples, n_samples) if metric='precomputed'
         A feature array, or array of distances between samples if
-        metric='precomputed'
+        metric='precomputed'.
 
     min_samples : int > 1 or float between 0 and 1
         The number of samples in a neighborhood for a point to be considered
@@ -457,8 +466,8 @@ def compute_optics_graph(
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, default='auto'
         Algorithm used to compute the nearest neighbors:
 
-        - 'ball_tree' will use :class:`BallTree`
-        - 'kd_tree' will use :class:`KDTree`
+        - 'ball_tree' will use :class:`BallTree`.
+        - 'kd_tree' will use :class:`KDTree`.
         - 'brute' will use a brute-force search.
         - 'auto' will attempt to decide the most appropriate algorithm
           based on the values passed to :meth:`fit` method. (default)
@@ -603,15 +612,16 @@ def _set_reach_dist(
     # Only compute distances to unprocessed neighbors:
     if metric == "precomputed":
         dists = X[point_index, unproc]
+        if issparse(dists):
+            dists.sort_indices()
+            dists = dists.data
     else:
         _params = dict() if metric_params is None else metric_params.copy()
         if metric == "minkowski" and "p" not in _params:
             # the same logic as neighbors, p is ignored if explicitly set
             # in the dict params
             _params["p"] = p
-        dists = pairwise_distances(
-            P, np.take(X, unproc, axis=0), metric=metric, n_jobs=None, **_params
-        ).ravel()
+        dists = pairwise_distances(P, X[unproc], metric, n_jobs=None, **_params).ravel()
 
     rdists = np.maximum(dists, core_distances_[point_index])
     np.around(rdists, decimals=np.finfo(rdists.dtype).precision, out=rdists)
@@ -621,7 +631,7 @@ def _set_reach_dist(
 
 
 def cluster_optics_dbscan(*, reachability, core_distances, ordering, eps):
-    """Performs DBSCAN extraction for an arbitrary epsilon.
+    """Perform DBSCAN extraction for an arbitrary epsilon.
 
     Extracting the clusters runs in linear time. Note that this results in
     ``labels_`` which are close to a :class:`~sklearn.cluster.DBSCAN` with
@@ -630,13 +640,13 @@ def cluster_optics_dbscan(*, reachability, core_distances, ordering, eps):
     Parameters
     ----------
     reachability : array of shape (n_samples,)
-        Reachability distances calculated by OPTICS (``reachability_``)
+        Reachability distances calculated by OPTICS (``reachability_``).
 
     core_distances : array of shape (n_samples,)
-        Distances at which points become core (``core_distances_``)
+        Distances at which points become core (``core_distances_``).
 
     ordering : array of shape (n_samples,)
-        OPTICS ordered point indices (``ordering_``)
+        OPTICS ordered point indices (``ordering_``).
 
     eps : float
         DBSCAN ``eps`` parameter. Must be set to < ``max_eps``. Results
@@ -647,7 +657,6 @@ def cluster_optics_dbscan(*, reachability, core_distances, ordering, eps):
     -------
     labels_ : array of shape (n_samples,)
         The estimated labels.
-
     """
     n_samples = len(core_distances)
     labels = np.zeros(n_samples, dtype=int)
@@ -674,13 +683,13 @@ def cluster_optics_xi(
     Parameters
     ----------
     reachability : ndarray of shape (n_samples,)
-        Reachability distances calculated by OPTICS (`reachability_`)
+        Reachability distances calculated by OPTICS (`reachability_`).
 
     predecessor : ndarray of shape (n_samples,)
         Predecessors calculated by OPTICS.
 
     ordering : ndarray of shape (n_samples,)
-        OPTICS ordered point indices (`ordering_`)
+        OPTICS ordered point indices (`ordering_`).
 
     min_samples : int > 1 or float between 0 and 1
         The same as the min_samples given to OPTICS. Up and down steep regions
@@ -907,7 +916,7 @@ def _xi_cluster(
         downward = ratio > 1
         upward = ratio < 1
 
-    # the following loop is is almost exactly as Figure 19 of the paper.
+    # the following loop is almost exactly as Figure 19 of the paper.
     # it jumps over the areas which are not either steep down or up areas
     for steep_index in iter(np.flatnonzero(steep_upward | steep_downward)):
         # just continue if steep_index has been a part of a discovered xward
