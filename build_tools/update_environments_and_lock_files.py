@@ -210,7 +210,7 @@ conda_build_metadata_list = [
         "conda_dependencies": remove_from(
             common_dependencies_without_coverage, ["pandas", "pyamg"]
         )
-        + ["pip"],
+        + ["pip", "ccache"],
         "package_constraints": {
             "python": "3.9",
             # TODO remove constraint when pip > 22.1 is released. See
