@@ -162,7 +162,7 @@ def img_to_graph(img, *, mask=None, return_as=sparse.coo_matrix, dtype=None):
 
     Returns
     -------
-    graph : np.ndarray or a sparse matrix class
+    graph : ndarray or a sparse matrix class
         The computed adjacency matrix.
 
     Notes
