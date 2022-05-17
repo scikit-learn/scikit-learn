@@ -2377,7 +2377,7 @@ def test_learning_curve_partial_fit_regressors():
 
 
 def test_random_forest_oob():
-    X, y = make_classification()
+    X, y = make_classification(random_state=0)
     cv = GridSearchCV(
         RandomForestClassifier(oob_score=True, random_state=0),
         {"n_estimators": [1, 20, 100]},
