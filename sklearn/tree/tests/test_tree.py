@@ -1386,7 +1386,7 @@ def test_behaviour_constant_feature_after_splits():
     )
     y = [0, 0, 0, 1, 1, 2, 2, 2, 3, 3, 3]
     for name, TreeEstimator in ALL_TREES.items():
-        # do not check extra random trees
+        # do not check extra random trees or oblique trees
         if all(_name not in name for _name in ["ExtraTree", "Oblique"]):
             est = TreeEstimator(random_state=0, max_features=1)
             est.fit(X, y)
@@ -1722,6 +1722,7 @@ def check_min_weight_leaf_split_level(name):
     sample_weight = [0.2, 0.2, 0.2, 0.2, 0.2]
     _check_min_weight_leaf_split_level(TreeEstimator, X, y, sample_weight)
 
+    # skip for sparse inputs
     if name == "ObliqueDecisionTreeClassifier":
         pytest.skip()
     _check_min_weight_leaf_split_level(TreeEstimator, csc_matrix(X), y, sample_weight)
