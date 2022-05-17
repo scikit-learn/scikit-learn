@@ -841,7 +841,6 @@ _SCORERS = dict(
     adjusted_mutual_info_score=adjusted_mutual_info_scorer,
     normalized_mutual_info_score=normalized_mutual_info_scorer,
     fowlkes_mallows_score=fowlkes_mallows_scorer,
-    oob=oob_score,
 )
 
 
