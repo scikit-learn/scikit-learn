@@ -562,6 +562,8 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "NuSVR",
     "Nystroem",
     "OAS",
+    "ObliqueDecisionTreeClassifier",
+    "ObliqueRandomForestClassifier",
     "OPTICS",
     "OneClassSVM",
     "OneHotEncoder",
