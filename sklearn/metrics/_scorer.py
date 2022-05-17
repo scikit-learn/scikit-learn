@@ -772,16 +772,23 @@ class _DeprecatedScorers(dict):
 
 
 def oob_score(estimator, X, y):
-    """
+    """Out-of-Bag scorer
+
+    This function can be used wherever a scoring function is expected, but delegates its functionality
+    to the oob_score_ field of certain classifiers if they have one, notably the RandomForest type
 
     Parameters
     ----------
-    estimator
-    X
-    y
+    estimator: BaseEstimator with an oob_score_ field
+        Estimator to assess
+    X: array-like of shape (n_samples, n_variables)
+        Test set data
+    y: array-like of shape (n_samples,)
+        Ground truth for the test set
 
     Returns
     -------
+    OOB: float
 
     """
     if hasattr(estimator, "oob_score_"):

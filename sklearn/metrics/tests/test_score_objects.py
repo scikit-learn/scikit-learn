@@ -1156,6 +1156,7 @@ def test_scorer_no_op_multiclass_select_proba():
     )
     scorer(lr, X_test, y_test)
 
+
 def test_oob_scorer():
     # Test that oob works for RandomForest
     X, y = make_classification()
@@ -1175,6 +1176,3 @@ def test_oob_scorer():
     knn.fit(X, y)
     with pytest.raises(TypeError, match="out-of-bag"):
         oob_score(knn, X, y)
-
-
-
