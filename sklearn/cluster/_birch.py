@@ -92,7 +92,7 @@ def _split_node(node, threshold, branching_factor):
 
     node1_closer = node1_dist < node2_dist
     for idx, subcluster in enumerate(node.subclusters_):
-        if node1_closer[idx]:
+        if node1_closer[idx] or idx == farthest_idx[0]:
             new_node1.append_subcluster(subcluster)
             new_subcluster1.update(subcluster)
         else:
