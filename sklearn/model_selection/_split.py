@@ -2280,9 +2280,48 @@ class IdentitySplitter(BaseCrossValidator):
     """
 
     def split(self, X, y=None, groups=None):
+        """Generate indices to split data into training and test set.
+
+        Parameters
+        ----------
+        X : object
+            Always ignored, exists for compatibility.
+
+        y : object
+            Always ignored, exists for compatibility.
+
+        groups : object
+            Always ignored, exists for compatibility.
+
+        Yields
+        ------
+        train : ndarray
+            The training set indices for that split.
+
+        test : ndarray
+            The testing set indices for that split.
+        """
         yield np.arange(X.shape[0]), np.empty(0, dtype=int)
 
     def get_n_splits(self, X=None, y=None, groups=None):
+        """Returns the number of splitting iterations in the cross-validator.
+
+        Parameters
+        ----------
+        X : object
+            Always ignored, exists for compatibility.
+
+        y : object
+            Always ignored, exists for compatibility.
+
+        groups : object
+            Always ignored, exists for compatibility.
+
+        Returns
+        -------
+        n_splits : int
+            The number of splits that will be yielded by this splitter.
+        """
         return 1
 
 
