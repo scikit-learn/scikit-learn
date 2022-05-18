@@ -1395,10 +1395,6 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
                     ((end - current.pos) < min_samples_leaf)):
                 continue
 
-            # Reject if monotonicity constraints are not satisfied
-            if not self.criterion.check_monotonicity(monotonic_constraint, lower_bound, upper_bound):
-                continue
-
             # Evaluate split
             self.criterion.reset()
             self.criterion.update(current.pos)
@@ -1406,6 +1402,10 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
             # Reject if min_weight_leaf is not satisfied
             if ((self.criterion.weighted_n_left < min_weight_leaf) or
                     (self.criterion.weighted_n_right < min_weight_leaf)):
+                continue
+
+            # Reject if monotonicity constraints are not satisfied
+            if not self.criterion.check_monotonicity(monotonic_constraint, lower_bound, upper_bound):
                 continue
 
             current_proxy_improvement = self.criterion.proxy_impurity_improvement()
