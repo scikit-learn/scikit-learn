@@ -401,9 +401,8 @@ cdef class BestSplitter(BaseDenseSplitter):
                 self.criterion.update(current.pos)
 
                 # Reject if monotonicity constraints are not satisfied
-                with gil:
-                    if not self.criterion.check_monotonicity(monotonic_constraint, lower_bound, upper_bound):
-                        continue
+                if not self.criterion.check_monotonicity(monotonic_constraint, lower_bound, upper_bound):
+                    continue
 
                 # Reject if min_weight_leaf is not satisfied
                 if ((self.criterion.weighted_n_left < min_weight_leaf) or
@@ -628,9 +627,8 @@ cdef class RandomSplitter(BaseDenseSplitter):
                 continue
 
             # Reject if monotonicity constraints are not satisfied
-            with gil:
-                if not self.criterion.check_monotonicity(monotonic_constraint, lower_bound, upper_bound):
-                    continue
+            if not self.criterion.check_monotonicity(monotonic_constraint, lower_bound, upper_bound):
+                continue
 
             current_proxy_improvement = self.criterion.proxy_impurity_improvement()
 
