@@ -64,13 +64,6 @@ Changelog
 - |Efficiency| Improve runtime performance of :class:`ensemble.IsolationForest`
   by avoiding data copies. :pr:`23252` by :user:`Zhehao Liu <MaxwellLZH>`.
 
-:mod:`sklearn.feature_selection`
-................................
-
-- |Fix| The `partial_fit` method of :class:`feature_selection.SelectFromModel`
-  now conducts validation for `max_features` and `feature_names_in` parameters.
-  :pr:`23299` by :user:`Long Bao <lorentzbao>`.
-
 :mod:`sklearn.metrics`
 ......................
 
