@@ -25,10 +25,7 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.decomposition._nmf.non_negative_factorization",
     "sklearn.externals._packaging.version.parse",
     "sklearn.feature_extraction.image.extract_patches_2d",
-    "sklearn.feature_extraction.image.img_to_graph",
-    "sklearn.feature_extraction.text.strip_accents_ascii",
     "sklearn.feature_extraction.text.strip_accents_unicode",
-    "sklearn.feature_extraction.text.strip_tags",
     "sklearn.feature_selection._univariate_selection.chi2",
     "sklearn.feature_selection._univariate_selection.f_oneway",
     "sklearn.inspection._partial_dependence.partial_dependence",
@@ -40,7 +37,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.metrics._classification.brier_score_loss",
     "sklearn.metrics._classification.cohen_kappa_score",
     "sklearn.metrics._classification.fbeta_score",
-    "sklearn.metrics._classification.hinge_loss",
     "sklearn.metrics._classification.jaccard_score",
     "sklearn.metrics._classification.log_loss",
     "sklearn.metrics._plot.det_curve.plot_det_curve",
@@ -148,7 +144,7 @@ def get_all_methods():
                 methods.append(name)
         methods.append(None)
 
-        for method in sorted(methods, key=lambda x: str(x)):
+        for method in sorted(methods, key=str):
             yield Estimator, method
 
 

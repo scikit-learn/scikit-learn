@@ -324,6 +324,10 @@ random sampling procedures.
   :class:`tree.DecisionTreeRegressor` can be impacted by a fix in the handling
   of rounding errors. Previously some extra spurious splits could occur.
 
+- |Fix| :func:`model_selection.train_test_split` with a `stratify` parameter
+  and :class:`model_selection.StratifiedShuffleSplit` may lead to slightly
+  different results.
+
 Details are listed in the changelog below.
 
 (While we are trying to better inform users by providing this information, we
