@@ -167,7 +167,7 @@ def plot_partial_dependence(
         - integer or string array-like: integer indices or strings indicating
           categorical features.
 
-        .. versionadded:: 1.1
+        .. versionadded:: 1.2
 
     feature_names : array-like of shape (n_features,), dtype=str, default=None
         Name of each feature; `feature_names[i]` holds the name of the feature
@@ -774,7 +774,7 @@ class PartialDependenceDisplay:
         The list should be same size as `features`. If `None`, all features
         are assumed to be continuous.
 
-        .. versionadded:: 1.1
+        .. versionadded:: 1.2
 
     Attributes
     ----------
@@ -829,7 +829,7 @@ class PartialDependenceDisplay:
         correspond to a nonexisting axes or an axes that does not include a
         bar plot.
 
-        .. versionadded:: 1.1
+        .. versionadded:: 1.2
 
     heatmaps_ : ndarray of matplotlib Artists
         If `ax` is an axes or None, `heatmaps_[i, j]` is the partial dependence
@@ -839,7 +839,7 @@ class PartialDependenceDisplay:
         that are None correspond to a nonexisting axes or an axes that does not
         include a heatmap.
 
-        .. versionadded:: 1.1
+        .. versionadded:: 1.2
 
     figure_ : matplotlib Figure
         Figure containing partial dependence plots.
@@ -983,7 +983,7 @@ class PartialDependenceDisplay:
             - integer or string array-like: integer indices or strings
               indicating categorical features.
 
-            .. versionadded:: 1.1
+            .. versionadded:: 1.2
 
         feature_names : array-like of shape (n_features,), dtype=str, default=None
             Name of each feature; `feature_names[i]` holds the name of the feature
@@ -1548,13 +1548,13 @@ class PartialDependenceDisplay:
             Dict with keywords passed to the `matplotlib.pyplot.bar`
             call for one-way categorical partial dependence plots.
 
-            .. versionadded:: 1.1
+            .. versionadded:: 1.2
 
         heatmap_kw : dict, default=None
             Dict with keywords passed to the `matplotlib.pyplot.imshow`
             call for two-way categorical partial dependence plots.
 
-            .. versionadded:: 1.1
+            .. versionadded:: 1.2
 
         pdp_lim : dict, default=None
             Global min and max average predictions, such that all plots will have the
