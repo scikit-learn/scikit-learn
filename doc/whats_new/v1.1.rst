@@ -689,10 +689,6 @@ Changelog
   :pr:`18310` by :user:`Johannes Elfner <JoElfner>` and
   :user:`Guillaume Lemaitre <glemaitre>`.
 
-- |Enhancement| Extend :func:`plot_partial_dependence` to handle categorical
-  features. :pr:`18298` by :user:`Madhura Jayaratne <madhuracj>` and
-  :user:`Guillaume Lemaitre <glemaitre>`.
-
 :mod:`sklearn.isotonic`
 .......................
 

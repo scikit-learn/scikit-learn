@@ -71,6 +71,14 @@ Changelog
   now conducts validation for `max_features` and `feature_names_in` parameters.
   :pr:`23299` by :user:`Long Bao <lorentzbao>`.
 
+:mod:`sklearn.inspection`
+.........................
+
+- |Enhancement| Extend :func:`plot_partial_dependence` and
+  :class:`PartialDependenceDisplay` to handle categorical features.
+  :pr:`18298` by :user:`Madhura Jayaratne <madhuracj>` and
+  :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.metrics`
 ......................
 
