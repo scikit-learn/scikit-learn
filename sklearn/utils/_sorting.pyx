@@ -131,8 +131,6 @@ cdef inline int _simultaneous_sort(
     elif use_introsort and max_depth <= 0:
         heapsort(values, indices, size)
     else:
-        if use_introsort:
-            max_depth -= 1
         # Determine the pivot using the median-of-three rule.
         # The smallest of the three is moved to the beginning of the array,
         # the middle (the pivot value) is moved to the end, and the largest
@@ -159,9 +157,9 @@ cdef inline int _simultaneous_sort(
 
         # Recursively sort each side of the pivot
         if pivot_idx > 1:
-            _simultaneous_sort(values, indices, pivot_idx, max_depth, use_introsort)
+            _simultaneous_sort(values, indices, pivot_idx, max_depth - 1, use_introsort)
         if pivot_idx + 2 < size:
             _simultaneous_sort(values + pivot_idx + 1,
                                indices + pivot_idx + 1,
-                               size - pivot_idx - 1, max_depth, use_introsort)
+                               size - pivot_idx - 1, max_depth - 1, use_introsort)
     return 0
