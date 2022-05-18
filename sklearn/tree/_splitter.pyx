@@ -1162,7 +1162,8 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
                              &is_samples_sorted)
             # Sort the positive and negative parts of `Xf`
             sort(&Xf[start], &samples[start], end_negative - start)
-            sort(&Xf[start_positive], &samples[start_positive],
+            if start_positive < end:
+                sort(&Xf[start_positive], &samples[start_positive],
                  end - start_positive)
 
             # Update index_to_samples to take into account the sort
