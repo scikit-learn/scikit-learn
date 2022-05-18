@@ -10,11 +10,8 @@ from cpython cimport array
 cimport cython
 from libc.string cimport strchr
 
-cimport numpy as np
 import numpy as np
 import scipy.sparse as sp
-
-np.import_array()
 
 
 cdef bytes COMMA = u','.encode('ascii')
