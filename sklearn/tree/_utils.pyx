@@ -72,7 +72,6 @@ cdef inline double rand_uniform(double low, double high,
 cdef inline double log(double x) nogil:
     return ln(x) / ln(2.0)
 
-
 # =============================================================================
 # WeightedPQueue data structure
 # =============================================================================
