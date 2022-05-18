@@ -55,6 +55,9 @@ cdef class Criterion:
                                      double impurity_left,
                                      double impurity_right) nogil
     cdef double proxy_impurity_improvement(self) nogil
+    cdef double get_sum_total(self, INT32_t node_id) nogil
+    cdef bint check_monotonicity(self, INT32_t monotonic_cst,
+                                 double lower_bound, double upper_bound) nogil
 
 cdef class ClassificationCriterion(Criterion):
     """Abstract criterion for classification."""

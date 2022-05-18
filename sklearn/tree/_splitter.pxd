@@ -99,6 +99,3 @@ cdef class Splitter:
     cdef void node_value(self, double* dest) nogil
 
     cdef double node_impurity(self) nogil
-
-    cdef inline bint check_monotonicity(self, INT32_t monotonic_cst,
-                                        double lower_bound, double upper_bound)

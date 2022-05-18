@@ -192,6 +192,13 @@ cdef class Criterion:
                                  - (self.weighted_n_left /
                                     self.weighted_n_node_samples * impurity_left)))
 
+    cdef double get_sum_total(self, INT32_t node_id) nogil:
+        pass
+
+    cdef bint check_monotonicity(self, INT32_t monotonic_cst,
+                                        double lower_bound, double upper_bound) nogil:
+        pass
+
 
 cdef class ClassificationCriterion(Criterion):
     """Abstract criterion for classification."""
@@ -429,6 +436,36 @@ cdef class ClassificationCriterion(Criterion):
         for k in range(self.n_outputs):
             memcpy(dest, &self.sum_total[k, 0], self.n_classes[k] * sizeof(double))
             dest += self.max_n_classes
+
+    cdef inline double get_sum_total(self, INT32_t node_id) nogil:
+        """Get the weighted sum of the class 0 occurences in node"""
+        return self.sum_total[node_id][0]
+
+    cdef inline bint check_monotonicity(self, INT32_t monotonic_cst, double lower_bound, double upper_bound) nogil:
+        """Check monotonic constraint is satisfied at the current classification split"""
+        cdef:
+            double sum_left = self.sum_left[0][0]
+            double sum_right = self.sum_right[0][0]
+            double weighted_n_left = self.weighted_n_left
+            double weighted_n_right = self.weighted_n_right
+
+            bint check_lower = (
+                (sum_left >= lower_bound * weighted_n_left) &
+                (sum_right >= lower_bound * weighted_n_right)
+            )
+            bint check_upper = (
+                (sum_left <= upper_bound * weighted_n_left) &
+                (sum_right <= upper_bound * weighted_n_right)
+            )
+            bint check_monotonic
+        if monotonic_cst == 0: # No constraint
+            return check_lower & check_upper
+        else:
+            check_monotonic = (
+                (sum_left * weighted_n_right -
+                 sum_right * weighted_n_left) * monotonic_cst <= 0
+            )
+            return check_lower & check_upper & check_monotonic
 
 
 cdef class Entropy(ClassificationCriterion):
@@ -769,6 +806,35 @@ cdef class RegressionCriterion(Criterion):
         for k in range(self.n_outputs):
             dest[k] = self.sum_total[k] / self.weighted_n_node_samples
 
+    cdef inline double get_sum_total(self, INT32_t node_id) nogil:
+        """Get the weighted sum of the target values in node"""
+        return self.sum_total[node_id]
+
+    cdef inline bint check_monotonicity(self, INT32_t monotonic_cst, double lower_bound, double upper_bound) nogil:
+        """Check monotonic constraint is satisfied at the current regression split"""
+        cdef:
+            double sum_left = self.sum_left[0]
+            double sum_right = self.sum_right[0]
+            double weighted_n_left = self.weighted_n_left
+            double weighted_n_right = self.weighted_n_right
+
+            bint check_lower = (
+                (sum_left >= lower_bound * weighted_n_left) &
+                (sum_right >= lower_bound * weighted_n_right)
+            )
+            bint check_upper = (
+                (sum_left <= upper_bound * weighted_n_left) &
+                (sum_right <= upper_bound * weighted_n_right)
+            )
+            bint check_monotonic
+        if monotonic_cst == 0: # No constraint
+            return check_lower & check_upper
+        else:
+            check_monotonic = (
+                (sum_left * weighted_n_right -
+                 sum_right * weighted_n_left) * monotonic_cst <= 0
+            )
+            return check_lower & check_upper & check_monotonic
 
 cdef class MSE(RegressionCriterion):
     """Mean squared error impurity criterion.

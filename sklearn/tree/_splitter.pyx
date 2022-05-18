@@ -21,6 +21,7 @@ from libc.string cimport memset
 from cython.operator cimport dereference as deref
 
 import numpy as np
+cimport numpy as cnp
 
 from scipy.sparse import csc_matrix
 
@@ -56,7 +57,7 @@ cdef class Splitter:
 
     def __cinit__(self, Criterion criterion, SIZE_t max_features,
                   SIZE_t min_samples_leaf, double min_weight_leaf,
-                  object random_state, np.ndarray[INT32_t] monotonic_cst):
+                  object random_state, cnp.ndarray[INT32_t] monotonic_cst):
         """
         Parameters
         ----------
@@ -224,32 +225,6 @@ cdef class Splitter:
         """Return the impurity of the current node."""
 
         return self.criterion.node_impurity()
-
-    cdef inline bint check_monotonicity(self, INT32_t monotonic_cst, double lower_bound, double upper_bound):
-        """Check monotonic constraint is satisfied at the current split"""
-        cdef:
-            double sum_left = self.criterion.sum_left
-            double sum_right = self.criterion.sum_right
-            double weighted_n_left = self.criterion.weighted_n_left
-            double weighted_n_right  = self.criterion.weighted_n_right
-
-            bint check_lower = (
-                (sum_left >= lower_bound * weighted_n_left) &
-                (sum_right >= lower_bound * weighted_n_right)
-            )
-            bint check_upper = (
-                (sum_left <= upper_bound * weighted_n_left) &
-                (sum_right <= upper_bound * weighted_n_right)
-            )
-            bint check_monotonic
-        if monotonic_cst == 0: # No constraint
-            return check_lower & check_upper
-        else:
-            check_monotonic = (
-                (sum_left * weighted_n_right - 
-                 sum_right * weighted_n_left) * monotonic_cst <= 0
-            )
-            return check_lower & check_upper & check_monotonic
 
 cdef class BaseDenseSplitter(Splitter):
     cdef const DTYPE_t[:, :] X
@@ -427,7 +402,7 @@ cdef class BestSplitter(BaseDenseSplitter):
 
                 # Reject if monotonicity constraints are not satisfied
                 with gil:
-                    if not self.check_monotonicity(monotonic_constraint, lower_bound, upper_bound):
+                    if not self.criterion.check_monotonicity(monotonic_constraint, lower_bound, upper_bound):
                         continue
 
                 # Reject if min_weight_leaf is not satisfied
@@ -654,7 +629,7 @@ cdef class RandomSplitter(BaseDenseSplitter):
 
             # Reject if monotonicity constraints are not satisfied
             with gil:
-                if not self.check_monotonicity(monotonic_constraint, lower_bound, upper_bound):
+                if not self.criterion.check_monotonicity(monotonic_constraint, lower_bound, upper_bound):
                     continue
 
             current_proxy_improvement = self.criterion.proxy_impurity_improvement()
@@ -712,7 +687,7 @@ cdef class BaseSparseSplitter(Splitter):
 
     def __cinit__(self, Criterion criterion, SIZE_t max_features,
                   SIZE_t min_samples_leaf, double min_weight_leaf,
-                  object random_state, np.ndarray[INT32_t] monotonic_cst):
+                  object random_state, cnp.ndarray[INT32_t] monotonic_cst):
         # Parent __cinit__ is automatically called
         self.n_total_samples = 0
         self.monotonic_cst = <INT32_t*> monotonic_cst.data
@@ -1194,9 +1169,8 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
                     continue
 
                 # Reject if monotonicity constraints are not satisfied
-                with gil:
-                    if not self.check_monotonicity(monotonic_constraint, lower_bound, upper_bound):
-                        continue
+                if not self.criterion.check_monotonicity(monotonic_constraint, lower_bound, upper_bound):
+                    continue
 
                 current_proxy_improvement = self.criterion.proxy_impurity_improvement()
 
@@ -1422,9 +1396,8 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
                 continue
 
             # Reject if monotonicity constraints are not satisfied
-            with gil:
-                if not self.check_monotonicity(monotonic_constraint, lower_bound, upper_bound):
-                    continue
+            if not self.criterion.check_monotonicity(monotonic_constraint, lower_bound, upper_bound):
+                continue
 
             # Evaluate split
             self.criterion.reset()
