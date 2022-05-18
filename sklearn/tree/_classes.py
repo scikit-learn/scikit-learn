@@ -425,6 +425,16 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 raise ValueError(
                     "Monotonic constraints are not supported with multiple output"
                 )
+            # Applying element-wise logical conjunction
+            # for monotonic constraints' support.
+            monotonic_cst = np.asarray(self.monotonic_cst)
+            unsatisfied_constraints_conditions = (
+                    (monotonic_cst != -1) * (monotonic_cst != 0) * (monotonic_cst != 1)
+            )
+            if np.any(unsatisfied_constraints_conditions):
+                raise ValueError(
+                    "monotonic_cst must be None or an array-like of -1, 0 or 1."
+                )
             if is_classifier(self):
                 if self.n_classes_[0] > 2:
                     raise ValueError(
@@ -440,15 +450,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             raise ValueError(
                 "monotonic_cst has shape {} but the input data "
                 "X has {} features.".format(monotonic_cst.shape[0], X.shape[1])
-            )
-        # Applying element-wise logical conjunction
-        # for monotonic constraints' support.
-        unsatisfied_constraints_conditions = (
-            (monotonic_cst != -1) * (monotonic_cst != 0) * (monotonic_cst != 1)
-        )
-        if np.any(unsatisfied_constraints_conditions):
-            raise ValueError(
-                "monotonic_cst must be None or an array-like of -1, 0 or 1."
             )
         if not isinstance(self.splitter, Splitter):
             splitter = SPLITTERS[self.splitter](
