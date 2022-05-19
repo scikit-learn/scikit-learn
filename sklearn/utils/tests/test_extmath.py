@@ -3,7 +3,6 @@
 #          Denis Engemann <denis-alexander.engemann@inria.fr>
 #
 # License: BSD 3 clause
-
 import numpy as np
 from scipy import sparse
 from scipy import linalg
@@ -566,6 +565,32 @@ def test_randomized_svd_sign_flip_with_transpose():
     )
     assert u_based
     assert not v_based
+
+
+@pytest.mark.parametrize("n", [50, 100, 300])
+@pytest.mark.parametrize("m", [50, 100, 300])
+@pytest.mark.parametrize("k", [10, 20, 50])
+@pytest.mark.parametrize("seed", range(5))
+def test_randomized_svd_lapack_driver(n, m, k, seed):
+    # Check that different SVD drivers provide consistent results
+
+    # Matrix being compressed
+    rng = np.random.RandomState(seed)
+    X = rng.rand(n, m)
+
+    # Number of components
+    u1, s1, vt1 = randomized_svd(X, k, svd_lapack_driver="gesdd", random_state=0)
+    u2, s2, vt2 = randomized_svd(X, k, svd_lapack_driver="gesvd", random_state=0)
+
+    # Check shape and contents
+    assert u1.shape == u2.shape
+    assert_allclose(u1, u2, atol=0, rtol=1e-3)
+
+    assert s1.shape == s2.shape
+    assert_allclose(s1, s2, atol=0, rtol=1e-3)
+
+    assert vt1.shape == vt2.shape
+    assert_allclose(vt1, vt2, atol=0, rtol=1e-3)
 
 
 def test_cartesian():
