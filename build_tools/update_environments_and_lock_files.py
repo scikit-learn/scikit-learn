@@ -1,7 +1,7 @@
 """Script to update CI environment files and associated lock files.
 
 To run it you need to be in the root folder of the scikit-learn repo:
-python build_tools/azure/update_environments_and_lock_files.py
+python build_tools/update_environments_and_lock_files.py
 
 Two scenarios where this script can be useful:
 - make sure that the latest versions of all the dependencies are used in the CI.
@@ -310,7 +310,7 @@ def get_conda_environment_content(build_metadata):
         """
 # DO NOT EDIT: this file is generated from the specification found in the
 # following script to centralize the configuration for all Azure CI builds:
-# build_tools/azure/update_environments_and_lock_files.py
+# build_tools/update_environments_and_lock_files.py
 channels:
   - {{ build_metadata['channel'] }}
 dependencies:
@@ -375,7 +375,7 @@ def get_pip_requirements_content(build_metadata):
         """
 # DO NOT EDIT: this file is generated from the specification found in the
 # following script to centralize the configuration for all Azure CI builds:
-# build_tools/azure/update_environments_and_lock_files.py
+# build_tools/update_environments_and_lock_files.py
 {% for pip_dep in build_metadata['pip_dependencies'] %}
 {{ pip_dep | get_package_with_constraint(build_metadata, uses_pip=True) }}
 {% endfor %}""".strip()
