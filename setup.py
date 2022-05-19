@@ -274,6 +274,7 @@ def setup_package():
         cmdclass=cmdclass,
         python_requires=python_requires,
         install_requires=min_deps.tag_to_packages["install"],
+        packages=["sklearn"],
         package_data={"": ["*.pxd"]},
         **extra_setuptools_args,
     )
