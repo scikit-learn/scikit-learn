@@ -1,6 +1,7 @@
 """Tests for Incremental PCA."""
 import numpy as np
 import pytest
+import warnings
 
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
@@ -97,7 +98,7 @@ def test_incremental_pca_check_projection():
     Yt = IncrementalPCA(n_components=2).fit(X).transform(Xt)
 
     # Normalize
-    Yt /= np.sqrt((Yt ** 2).sum())
+    Yt /= np.sqrt((Yt**2).sum())
 
     # Make sure that the first element of Yt is ~1, this means
     # the reconstruction worked as expected
@@ -147,6 +148,18 @@ def test_incremental_pca_validation():
         ),
     ):
         IncrementalPCA(n_components=n_components).partial_fit(X)
+
+
+def test_n_samples_equal_n_components():
+    # Ensures no warning is raised when n_samples==n_components
+    # Non-regression test for gh-19050
+    ipca = IncrementalPCA(n_components=5)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
+        ipca.partial_fit(np.random.randn(5, 7))
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
+        ipca.fit(np.random.randn(5, 7))
 
 
 def test_n_components_none():
@@ -331,18 +344,18 @@ def test_singular_values():
     X_pca = pca.transform(X)
     X_ipca = ipca.transform(X)
     assert_array_almost_equal(
-        np.sum(pca.singular_values_ ** 2.0), np.linalg.norm(X_pca, "fro") ** 2.0, 12
+        np.sum(pca.singular_values_**2.0), np.linalg.norm(X_pca, "fro") ** 2.0, 12
     )
     assert_array_almost_equal(
-        np.sum(ipca.singular_values_ ** 2.0), np.linalg.norm(X_ipca, "fro") ** 2.0, 2
+        np.sum(ipca.singular_values_**2.0), np.linalg.norm(X_ipca, "fro") ** 2.0, 2
     )
 
     # Compare to the 2-norms of the score vectors
     assert_array_almost_equal(
-        pca.singular_values_, np.sqrt(np.sum(X_pca ** 2.0, axis=0)), 12
+        pca.singular_values_, np.sqrt(np.sum(X_pca**2.0, axis=0)), 12
     )
     assert_array_almost_equal(
-        ipca.singular_values_, np.sqrt(np.sum(X_ipca ** 2.0, axis=0)), 2
+        ipca.singular_values_, np.sqrt(np.sum(X_ipca**2.0, axis=0)), 2
     )
 
     # Set the singular values and see what we get back
@@ -358,7 +371,7 @@ def test_singular_values():
     ipca = IncrementalPCA(n_components=3, batch_size=100)
 
     X_pca = pca.fit_transform(X)
-    X_pca /= np.sqrt(np.sum(X_pca ** 2.0, axis=0))
+    X_pca /= np.sqrt(np.sum(X_pca**2.0, axis=0))
     X_pca[:, 0] *= 3.142
     X_pca[:, 1] *= 2.718
 

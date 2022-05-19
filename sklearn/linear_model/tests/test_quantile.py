@@ -13,6 +13,7 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import HuberRegressor, QuantileRegressor
 from sklearn.metrics import mean_pinball_loss
 from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import skip_if_32bit
 from sklearn.utils.fixes import parse_version, sp_version
 
 
@@ -46,10 +47,6 @@ def test_init_parameters_validation(X_y_data, params, err_msg):
         QuantileRegressor(**params).fit(X, y)
 
 
-@pytest.mark.skipif(
-    sp_version < parse_version("1.3.0"),
-    reason="Solver 'revised simplex' is only available with of scipy>=1.3.0",
-)
 @pytest.mark.parametrize("solver", ["interior-point", "revised simplex"])
 def test_incompatible_solver_for_sparse_input(X_y_data, solver):
     X, y = X_y_data
@@ -268,6 +265,7 @@ def test_linprog_failure():
         reg.fit(X, y)
 
 
+@skip_if_32bit
 @pytest.mark.skipif(
     sp_version <= parse_version("1.6.0"),
     reason="Solvers are available as of scipy 1.6.0",

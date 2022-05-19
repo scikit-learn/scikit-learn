@@ -6,7 +6,7 @@
 
 
 import numpy as np
-cimport numpy as np
+cimport numpy as cnp
 from libc.stdio cimport printf
 from libc.math cimport sqrt, log
 from libc.stdlib cimport malloc, free
@@ -14,7 +14,7 @@ from cython.parallel cimport prange, parallel
 
 from ..neighbors._quad_tree cimport _QuadTree
 
-np.import_array()
+cnp.import_array()
 
 
 cdef char* EMPTY_STRING = ""
@@ -45,8 +45,8 @@ cdef extern from "time.h":
 
 cdef float compute_gradient(float[:] val_P,
                             float[:, :] pos_reference,
-                            np.int64_t[:] neighbors,
-                            np.int64_t[:] indptr,
+                            cnp.int64_t[:] neighbors,
+                            cnp.int64_t[:] indptr,
                             float[:, :] tot_force,
                             _QuadTree qt,
                             float theta,
@@ -103,13 +103,13 @@ cdef float compute_gradient(float[:] val_P,
 
 cdef float compute_gradient_positive(float[:] val_P,
                                      float[:, :] pos_reference,
-                                     np.int64_t[:] neighbors,
-                                     np.int64_t[:] indptr,
+                                     cnp.int64_t[:] neighbors,
+                                     cnp.int64_t[:] indptr,
                                      float* pos_f,
                                      int n_dimensions,
                                      int dof,
                                      double sum_Q,
-                                     np.int64_t start,
+                                     cnp.int64_t start,
                                      int verbose,
                                      bint compute_error,
                                      int num_threads) nogil:
@@ -258,8 +258,8 @@ cdef double compute_gradient_negative(float[:, :] pos_reference,
 
 def gradient(float[:] val_P,
              float[:, :] pos_output,
-             np.int64_t[:] neighbors,
-             np.int64_t[:] indptr,
+             cnp.int64_t[:] neighbors,
+             cnp.int64_t[:] indptr,
              float[:, :] forces,
              float theta,
              int n_dimensions,

@@ -4,13 +4,13 @@ import joblib
 import pytest
 import numpy as np
 import scipy.sparse as sp
+from unittest.mock import Mock
 
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import ignore_warnings
-from sklearn.utils.fixes import parse_version
 
 from sklearn import linear_model, datasets, metrics
 from sklearn.base import clone, is_classifier
@@ -22,6 +22,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.model_selection import StratifiedShuffleSplit, ShuffleSplit
 from sklearn.linear_model import _sgd_fast as sgd_fast
+from sklearn.linear_model import _stochastic_gradient
 from sklearn.model_selection import RandomizedSearchCV
 
 
@@ -544,7 +545,7 @@ def test_not_enough_sample_for_early_stopping(klass):
 def test_sgd_clf(klass):
     # Check that SGD gives any results :-)
 
-    for loss in ("hinge", "squared_hinge", "log", "modified_huber"):
+    for loss in ("hinge", "squared_hinge", "log_loss", "modified_huber"):
         clf = klass(
             penalty="l2",
             alpha=0.01,
@@ -772,7 +773,8 @@ def test_sgd_predict_proba_method_access(klass):
     # details.
     for loss in linear_model.SGDClassifier.loss_functions:
         clf = SGDClassifier(loss=loss)
-        if loss in ("log", "modified_huber"):
+        # TODO(1.3): Remove "log"
+        if loss in ("log_loss", "log", "modified_huber"):
             assert hasattr(clf, "predict_proba")
             assert hasattr(clf, "predict_log_proba")
         else:
@@ -800,7 +802,7 @@ def test_sgd_proba(klass):
 
     # log and modified_huber losses can output probability estimates
     # binary case
-    for loss in ["log", "modified_huber"]:
+    for loss in ["log_loss", "modified_huber"]:
         clf = klass(loss=loss, alpha=0.01, max_iter=10)
         clf.fit(X, Y)
         p = clf.predict_proba([[3, 2]])
@@ -814,7 +816,7 @@ def test_sgd_proba(klass):
         assert p[0, 1] < p[0, 0]
 
     # log loss multiclass probability estimates
-    clf = klass(loss="log", alpha=0.01, max_iter=10).fit(X2, Y2)
+    clf = klass(loss="log_loss", alpha=0.01, max_iter=10).fit(X2, Y2)
 
     d = clf.decision_function([[0.1, -0.1], [0.3, 0.2]])
     p = clf.predict_proba([[0.1, -0.1], [0.3, 0.2]])
@@ -2082,7 +2084,7 @@ def test_multi_core_gridsearch_and_early_stopping():
     }
 
     clf = SGDClassifier(tol=1e-2, max_iter=1000, early_stopping=True, random_state=0)
-    search = RandomizedSearchCV(clf, param_grid, n_iter=3, n_jobs=2, random_state=0)
+    search = RandomizedSearchCV(clf, param_grid, n_iter=5, n_jobs=2, random_state=0)
     search.fit(iris.data, iris.target)
     assert search.best_score_ > 0.8
 
@@ -2102,9 +2104,6 @@ def test_SGDClassifier_fit_for_all_backends(backend):
     # this specific case, in-place modification of clf.coef_ would have caused
     # a segmentation fault when trying to write in a readonly memory mapped
     # buffer.
-
-    if parse_version(joblib.__version__) < parse_version("0.12") and backend == "loky":
-        pytest.skip("loky backend does not exist in joblib <0.12")
 
     random_state = np.random.RandomState(42)
 
@@ -2126,21 +2125,89 @@ def test_SGDClassifier_fit_for_all_backends(backend):
     assert_array_almost_equal(clf_sequential.coef_, clf_parallel.coef_)
 
 
-# TODO: Remove in v1.2
 @pytest.mark.parametrize(
-    "Estimator", [linear_model.SGDClassifier, linear_model.SGDRegressor]
+    "old_loss, new_loss, Estimator",
+    [
+        # TODO(1.2): Remove "squared_loss"
+        ("squared_loss", "squared_error", linear_model.SGDClassifier),
+        ("squared_loss", "squared_error", linear_model.SGDRegressor),
+        # TODO(1.3): Remove "log"
+        ("log", "log_loss", linear_model.SGDClassifier),
+    ],
 )
-def test_loss_squared_loss_deprecated(Estimator):
+def test_loss_deprecated(old_loss, new_loss, Estimator):
 
     # Note: class BaseSGD calls self._validate_params() in __init__, therefore
-    # even instatiation of class raises FutureWarning for squared_loss.
-    with pytest.warns(FutureWarning, match="The loss 'squared_loss' was deprecated"):
-        est1 = Estimator(loss="squared_loss", random_state=0)
+    # even instantiation of class raises FutureWarning for deprecated losses.
+    with pytest.warns(FutureWarning, match=f"The loss '{old_loss}' was deprecated"):
+        est1 = Estimator(loss=old_loss, random_state=0)
         est1.fit(X, Y)
 
-    est2 = Estimator(loss="squared_error", random_state=0)
+    est2 = Estimator(loss=new_loss, random_state=0)
     est2.fit(X, Y)
     if hasattr(est1, "predict_proba"):
         assert_allclose(est1.predict_proba(X), est2.predict_proba(X))
     else:
         assert_allclose(est1.predict(X), est2.predict(X))
+
+
+@pytest.mark.parametrize(
+    "Estimator", [linear_model.SGDClassifier, linear_model.SGDRegressor]
+)
+def test_sgd_random_state(Estimator, global_random_seed):
+    # Train the same model on the same data without converging and check that we
+    # get reproducible results by fixing the random seed.
+    if Estimator == linear_model.SGDRegressor:
+        X, y = datasets.make_regression(random_state=global_random_seed)
+    else:
+        X, y = datasets.make_classification(random_state=global_random_seed)
+
+    # Fitting twice a model with the same hyper-parameters on the same training
+    # set with the same seed leads to the same results deterministically.
+
+    est = Estimator(random_state=global_random_seed, max_iter=1)
+    with pytest.warns(ConvergenceWarning):
+        coef_same_seed_a = est.fit(X, y).coef_
+        assert est.n_iter_ == 1
+
+    est = Estimator(random_state=global_random_seed, max_iter=1)
+    with pytest.warns(ConvergenceWarning):
+        coef_same_seed_b = est.fit(X, y).coef_
+        assert est.n_iter_ == 1
+
+    assert_allclose(coef_same_seed_a, coef_same_seed_b)
+
+    # Fitting twice a model with the same hyper-parameters on the same training
+    # set but with different random seed leads to different results after one
+    # epoch because of the random shuffling of the dataset.
+
+    est = Estimator(random_state=global_random_seed + 1, max_iter=1)
+    with pytest.warns(ConvergenceWarning):
+        coef_other_seed = est.fit(X, y).coef_
+        assert est.n_iter_ == 1
+
+    assert np.abs(coef_same_seed_a - coef_other_seed).max() > 1.0
+
+
+def test_validation_mask_correctly_subsets(monkeypatch):
+    """Test that data passed to validation callback correctly subsets.
+
+    Non-regression test for #23255.
+    """
+    X, Y = iris.data, iris.target
+    n_samples = X.shape[0]
+    validation_fraction = 0.2
+    clf = linear_model.SGDClassifier(
+        early_stopping=True,
+        tol=1e-3,
+        max_iter=1000,
+        validation_fraction=validation_fraction,
+    )
+
+    mock = Mock(side_effect=_stochastic_gradient._ValidationScoreCallback)
+    monkeypatch.setattr(_stochastic_gradient, "_ValidationScoreCallback", mock)
+    clf.fit(X, Y)
+
+    X_val, y_val = mock.call_args[0][1:3]
+    assert X_val.shape[0] == int(n_samples * validation_fraction)
+    assert y_val.shape[0] == int(n_samples * validation_fraction)

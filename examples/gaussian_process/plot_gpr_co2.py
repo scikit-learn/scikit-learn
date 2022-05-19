@@ -32,11 +32,11 @@ print(__doc__)
 #
 # We will derive a dataset from the Mauna Loa Observatory that collected air
 # samples. We are interested in estimating the concentration of CO2 and
-# extrapolate it for futher year. First, we load the original dataset available
+# extrapolate it for further year. First, we load the original dataset available
 # in OpenML.
 from sklearn.datasets import fetch_openml
 
-co2 = fetch_openml(data_id=41187, as_frame=True)
+co2 = fetch_openml(data_id=41187, as_frame=True, parser="pandas")
 co2.frame.head()
 
 # %%
@@ -100,7 +100,7 @@ y = co2_data["co2"].to_numpy()
 # specific length-scale and the amplitude are free hyperparameters.
 from sklearn.gaussian_process.kernels import RBF
 
-long_term_trend_kernel = 50.0 ** 2 * RBF(length_scale=50.0)
+long_term_trend_kernel = 50.0**2 * RBF(length_scale=50.0)
 
 # %%
 # The seasonal variation is explained by the periodic exponential sine squared
@@ -113,7 +113,7 @@ long_term_trend_kernel = 50.0 ** 2 * RBF(length_scale=50.0)
 from sklearn.gaussian_process.kernels import ExpSineSquared
 
 seasonal_kernel = (
-    2.0 ** 2
+    2.0**2
     * RBF(length_scale=100.0)
     * ExpSineSquared(length_scale=1.0, periodicity=1.0, periodicity_bounds="fixed")
 )
@@ -126,7 +126,7 @@ seasonal_kernel = (
 # better accommodate the different irregularities.
 from sklearn.gaussian_process.kernels import RationalQuadratic
 
-irregularities_kernel = 0.5 ** 2 * RationalQuadratic(length_scale=1.0, alpha=1.0)
+irregularities_kernel = 0.5**2 * RationalQuadratic(length_scale=1.0, alpha=1.0)
 
 # %%
 # Finally, the noise in the dataset can be accounted with a kernel consisting
@@ -136,8 +136,8 @@ irregularities_kernel = 0.5 ** 2 * RationalQuadratic(length_scale=1.0, alpha=1.0
 # further free parameters.
 from sklearn.gaussian_process.kernels import WhiteKernel
 
-noise_kernel = 0.1 ** 2 * RBF(length_scale=0.1) + WhiteKernel(
-    noise_level=0.1 ** 2, noise_level_bounds=(1e-5, 1e5)
+noise_kernel = 0.1**2 * RBF(length_scale=0.1) + WhiteKernel(
+    noise_level=0.1**2, noise_level_bounds=(1e-5, 1e5)
 )
 
 # %%
@@ -208,7 +208,7 @@ _ = plt.title(
 gaussian_process.kernel_
 
 # %%
-# Thus, most of the target signal, with the mean substracted, is explained by a
+# Thus, most of the target signal, with the mean subtracted, is explained by a
 # long-term rising trend for ~45 ppm and a length-scale of ~52 years. The
 # periodic component has an amplitude of ~2.6ppm, a decay time of ~90 years and
 # a length-scale of ~1.5. The long decay time indicates that we have a

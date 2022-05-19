@@ -45,12 +45,6 @@ def configuration(parent_package="", top_path=None):
     )
 
     config.add_extension(
-        "_hist_gradient_boosting._loss",
-        sources=["_hist_gradient_boosting/_loss.pyx"],
-        include_dirs=[numpy.get_include()],
-    )
-
-    config.add_extension(
         "_hist_gradient_boosting._bitset",
         sources=["_hist_gradient_boosting/_bitset.pyx"],
         include_dirs=[numpy.get_include()],

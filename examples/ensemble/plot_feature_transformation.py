@@ -25,10 +25,6 @@ high-dimensional categorical embedding of the data.
 #
 # License: BSD 3 clause
 
-from sklearn import set_config
-
-set_config(display="diagram")
-
 # %%
 # First, we will create a large dataset and split it into three sets:
 #

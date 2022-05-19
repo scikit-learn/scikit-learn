@@ -14,7 +14,6 @@ from scipy.special import comb
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
 from ..utils.deprecation import deprecated
-from ..utils.fixes import linspace
 from ..utils.validation import check_is_fitted, FLOAT_DTYPES, _check_sample_weight
 from ..utils.validation import _check_feature_names_in
 from ..utils.stats import _weighted_percentile
@@ -241,7 +240,8 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
 
             - If `input_features is None`, then `feature_names_in_` is
               used as feature names in. If `feature_names_in_` is not defined,
-              then names are generated: `[x0, x1, ..., x(n_features_in_)]`.
+              then the following input feature names are generated:
+              `["x0", "x1", ..., "x(n_features_in_ - 1)"]`.
             - If `input_features` is an array-like, then `input_features` must
               match `feature_names_in_` if `feature_names_in_` is defined.
 
@@ -291,6 +291,12 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                 raise ValueError(
                     f"degree must be a non-negative integer, got {self.degree}."
                 )
+            elif self.degree == 0 and not self.include_bias:
+                raise ValueError(
+                    "Setting degree to zero and include_bias to False would result in"
+                    " an empty output array."
+                )
+
             self._min_degree = 0
             self._max_degree = self.degree
         elif (
@@ -308,6 +314,11 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                     "be non-negative integers that fulfil "
                     "min_degree <= max_degree, got "
                     f"{self.degree}."
+                )
+            elif self._max_degree == 0 and not self.include_bias:
+                raise ValueError(
+                    "Setting both min_deree and max_degree to zero and include_bias to"
+                    " False would result in an empty output array."
                 )
         else:
             raise ValueError(
@@ -380,7 +391,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                 to_stack.append(
                     sparse.csc_matrix(np.ones(shape=(n_samples, 1), dtype=X.dtype))
                 )
-            if self._min_degree <= 1:
+            if self._min_degree <= 1 and self._max_degree > 0:
                 to_stack.append(X)
             for deg in range(max(2, self._min_degree), self._max_degree + 1):
                 Xp_next = _csr_polynomial_expansion(
@@ -441,6 +452,9 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                 current_col = 1
             else:
                 current_col = 0
+
+            if self._max_degree == 0:
+                return XP
 
             # degree 1 term
             XP[:, current_col : current_col + n_features] = X
@@ -667,7 +681,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             x_min = np.amin(X[mask], axis=0)
             x_max = np.amax(X[mask], axis=0)
 
-            knots = linspace(
+            knots = np.linspace(
                 start=x_min,
                 stop=x_max,
                 num=n_knots,
@@ -714,7 +728,8 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
 
             - If `input_features` is `None`, then `feature_names_in_` is
               used as feature names in. If `feature_names_in_` is not defined,
-              then names are generated: `[x0, x1, ..., x(n_features_in_)]`.
+              then the following input feature names are generated:
+              `["x0", "x1", ..., "x(n_features_in_ - 1)"]`.
             - If `input_features` is an array-like, then `input_features` must
               match `feature_names_in_` if `feature_names_in_` is defined.
 
@@ -853,13 +868,13 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             dist_max = base_knots[-1] - base_knots[-2]
 
             knots = np.r_[
-                linspace(
+                np.linspace(
                     base_knots[0] - degree * dist_min,
                     base_knots[0] - dist_min,
                     num=degree,
                 ),
                 base_knots,
-                linspace(
+                np.linspace(
                     base_knots[-1] + dist_max,
                     base_knots[-1] + degree * dist_max,
                     num=degree,

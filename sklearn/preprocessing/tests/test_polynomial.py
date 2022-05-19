@@ -13,7 +13,6 @@ from sklearn.preprocessing import (
     PolynomialFeatures,
     SplineTransformer,
 )
-from sklearn.utils.fixes import linspace, sp_version, parse_version
 
 
 @pytest.mark.parametrize("est", (PolynomialFeatures, SplineTransformer))
@@ -253,8 +252,8 @@ def test_spline_transformer_get_base_knot_positions(
 )
 def test_spline_transformer_periodicity_of_extrapolation(knots, n_knots, degree):
     """Test that the SplineTransformer is periodic for multiple features."""
-    X_1 = linspace((-1, 0), (1, 5), 10)
-    X_2 = linspace((1, 5), (3, 10), 10)
+    X_1 = np.linspace((-1, 0), (1, 5), 10)
+    X_2 = np.linspace((1, 5), (3, 10), 10)
 
     splt = SplineTransformer(
         knots=knots, n_knots=n_knots, degree=degree, extrapolation="periodic"
@@ -295,10 +294,6 @@ def test_spline_transformer_periodic_linear_regression(bias, intercept):
     assert_allclose(predictions[0:100], predictions[100:200], rtol=1e-3)
 
 
-@pytest.mark.skipif(
-    sp_version < parse_version("1.0.0"),
-    reason="Periodic extrapolation not yet implemented for BSpline.",
-)
 def test_spline_transformer_periodic_spline_backport():
     """Test that the backport of extrapolate="periodic" works correctly"""
     X = np.linspace(-2, 3.5, 10)[:, None]
@@ -490,7 +485,7 @@ def test_polynomial_features_input_validation(params, err_msg):
 @pytest.fixture()
 def single_feature_degree3():
     X = np.arange(6)[:, np.newaxis]
-    P = np.hstack([np.ones_like(X), X, X ** 2, X ** 3])
+    P = np.hstack([np.ones_like(X), X, X**2, X**3])
     return X, P
 
 
@@ -541,16 +536,16 @@ def two_features_degree3():
     x2 = X[:, 1:]
     P = np.hstack(
         [
-            x1 ** 0 * x2 ** 0,  # 0
-            x1 ** 1 * x2 ** 0,  # 1
-            x1 ** 0 * x2 ** 1,  # 2
-            x1 ** 2 * x2 ** 0,  # 3
-            x1 ** 1 * x2 ** 1,  # 4
-            x1 ** 0 * x2 ** 2,  # 5
-            x1 ** 3 * x2 ** 0,  # 6
-            x1 ** 2 * x2 ** 1,  # 7
-            x1 ** 1 * x2 ** 2,  # 8
-            x1 ** 0 * x2 ** 3,  # 9
+            x1**0 * x2**0,  # 0
+            x1**1 * x2**0,  # 1
+            x1**0 * x2**1,  # 2
+            x1**2 * x2**0,  # 3
+            x1**1 * x2**1,  # 4
+            x1**0 * x2**2,  # 5
+            x1**3 * x2**0,  # 6
+            x1**2 * x2**1,  # 7
+            x1**1 * x2**2,  # 8
+            x1**0 * x2**3,  # 9
         ]
     )
     return X, P
@@ -903,3 +898,33 @@ def test_get_feature_names_deprecated(Transformer):
     msg = "get_feature_names is deprecated in 1.0"
     with pytest.warns(FutureWarning, match=msg):
         poly.get_feature_names()
+
+
+def test_polynomial_features_behaviour_on_zero_degree():
+    """Check that PolynomialFeatures raises error when degree=0 and include_bias=False,
+    and output a single constant column when include_bias=True
+    """
+    X = np.ones((10, 2))
+    poly = PolynomialFeatures(degree=0, include_bias=False)
+    err_msg = (
+        "Setting degree to zero and include_bias to False would result in"
+        " an empty output array."
+    )
+    with pytest.raises(ValueError, match=err_msg):
+        poly.fit_transform(X)
+
+    poly = PolynomialFeatures(degree=(0, 0), include_bias=False)
+    err_msg = (
+        "Setting both min_deree and max_degree to zero and include_bias to"
+        " False would result in an empty output array."
+    )
+    with pytest.raises(ValueError, match=err_msg):
+        poly.fit_transform(X)
+
+    for _X in [X, sparse.csr_matrix(X), sparse.csc_matrix(X)]:
+        poly = PolynomialFeatures(degree=0, include_bias=True)
+        output = poly.fit_transform(_X)
+        # convert to dense array if needed
+        if sparse.issparse(output):
+            output = output.toarray()
+        assert_array_equal(output, np.ones((X.shape[0], 1)))
