@@ -1164,7 +1164,7 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
             sort(&Xf[start], &samples[start], end_negative - start)
             if start_positive < end:
                 sort(&Xf[start_positive], &samples[start_positive],
-                 end - start_positive)
+                     end - start_positive)
 
             # Update index_to_samples to take into account the sort
             for p in range(start, end_negative):
