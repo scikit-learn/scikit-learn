@@ -10,7 +10,6 @@ from scipy import stats
 from scipy import linalg
 
 from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_allclose
 
 from sklearn.decomposition import FastICA, fastica, PCA
@@ -491,7 +490,7 @@ def test_fastica_simple_different_solvers(add_noise, global_random_seed):
         assert ica.components_.shape == (2, 2)
         assert sources.shape == (1000, 2)
 
-    assert_array_almost_equal(outs["eigh"], outs["svd"])
+    assert_allclose(outs["eigh"], outs["svd"])
 
 
 def test_fastica_eigh_low_rank_warning(global_random_seed):
@@ -507,3 +506,30 @@ def test_fastica_eigh_low_rank_warning(global_random_seed):
     msg = "There are some small singular values"
     with pytest.warns(UserWarning, match=msg):
         FastICA(random_state=0, whiten="unit-variance", whiten_solver="eigh").fit(T)
+
+
+@pytest.mark.parametrize("whiten_solver", ["svd", "eigh", "auto"])
+def test_fastica_whiten_solver(global_random_seed, whiten_solver):
+    rng = np.random.RandomState(global_random_seed)
+    X = rng.random_sample((100, 10))
+    ica = FastICA(random_state=rng, whiten_solver=whiten_solver, whiten="unit-variance")
+    ica.fit_transform(X)
+    correct_solver = whiten_solver
+    if correct_solver == "auto":
+        correct_solver = "eigh" if X.shape[0] > 50 * X.shape[1] else "svd"
+
+    assert ica.whiten_solver == whiten_solver
+    assert ica._whiten_solver == correct_solver
+
+
+@pytest.mark.parametrize("whiten_solver", ["this_should_fail", "test", 1])
+def test_fastica_whiten_solver_validation(whiten_solver):
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((100, 10))
+    ica = FastICA(random_state=rng, whiten_solver=whiten_solver, whiten="unit-variance")
+    msg = (
+        "`whiten_solver` must be 'auto', 'eigh' or 'svd' but got"
+        f" {whiten_solver} instead"
+    )
+    with pytest.raises(ValueError, match=msg):
+        ica.fit_transform(X)

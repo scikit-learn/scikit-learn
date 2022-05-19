@@ -161,7 +161,7 @@ def fastica(
     max_iter=200,
     tol=1e-04,
     w_init=None,
-    whiten_solver="svd",
+    whiten_solver="auto",
     random_state=None,
     return_X_mean=False,
     compute_sources=True,
@@ -227,15 +227,16 @@ def fastica(
         Initial un-mixing array of dimension (n.comp,n.comp).
         If None (default) then an array of normal r.v.'s is used.
 
-    whiten_solver : str, default='svd'
-        The solver to use for whitening. Can either be 'svd' or 'eigh'.
+    whiten_solver : {"auto", "eigh", "svd"}, default="auto"
+        The solver to use for whitening. When set to "auto", the "eigh" solver
+        will be used if `n_samples >= 50 * n_features` otherwise "svd" is used.
 
-        - 'svd' is more stable numerically if the problem is degenerate, and
-          often faster when `num_samples<=num_features`.
+        - "svd" is more stable numerically if the problem is degenerate, and
+          often faster when `n_samples <= n_features`.
 
-        - 'eigh' is generally more memory efficient when
-          `num_samples>=num_features`, and can be faster when
-          `num_samples>= 50*num_features`.
+        - "eigh" is generally more memory efficient when
+          `n_samples >= n_features`, and can be faster when
+          `n_samples >= 50 * n_features`.
 
     random_state : int, RandomState instance or None, default=None
         Used to initialize ``w_init`` when not specified, with a
@@ -383,14 +384,16 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
     w_init : ndarray of shape (n_components, n_components), default=None
         The mixing matrix to be used to initialize the algorithm.
 
-    whiten_solver : str, default='svd'
-        The solver to use for whitening. Can either be 'svd' or 'eigh'.
+    whiten_solver : {"auto", "eigh", "svd"}, default="auto"
+        The solver to use for whitening. When set to "auto", the "eigh" solver
+        will be used if `n_samples >= 50 * n_features` otherwise "svd" is used.
 
-        - 'svd' is more stable numerically if the problem is degenerate, and
-          often faster when `num_samples<=num_features`.
-        - 'eigh' is generally more memory efficient when
-          `num_samples>=num_features`, and can be faster when
-          `num_samples>= 50*num_features`.
+        - "svd" is more stable numerically if the problem is degenerate, and
+          often faster when `n_samples <= n_features`.
+
+        - "eigh" is generally more memory efficient when
+          `n_samples >= n_features`, and can be faster when
+          `n_samples >= 50 * n_features`.
 
     random_state : int, RandomState instance or None, default=None
         Used to initialize ``w_init`` when not specified, with a
@@ -471,7 +474,7 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         max_iter=200,
         tol=1e-4,
         w_init=None,
-        whiten_solver="svd",
+        whiten_solver="auto",
         random_state=None,
     ):
         super().__init__()
@@ -572,8 +575,13 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
             X_mean = XT.mean(axis=-1)
             XT -= X_mean[:, np.newaxis]
 
+            # Benchmark validated heuristic
+            self._whiten_solver = self.whiten_solver
+            if self._whiten_solver == "auto":
+                self._whiten_solver = "eigh" if X.shape[0] > 50 * X.shape[1] else "svd"
+
             # Whitening and preprocessing by PCA
-            if self.whiten_solver == "eigh":
+            if self._whiten_solver == "eigh":
                 # Faster when num_samples >> n_features
                 d, u = linalg.eigh(XT.dot(X))
                 sort_indices = np.argsort(d)[::-1]
@@ -588,8 +596,13 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
                 d[degenerate_idx] = eps  # For numerical issues
                 np.sqrt(d, out=d)
                 d, u = d[sort_indices], u[:, sort_indices]
-            else:
+            elif self._whiten_solver == "svd":
                 u, d = linalg.svd(XT, full_matrices=False, check_finite=False)[:2]
+            else:
+                raise ValueError(
+                    "`whiten_solver` must be 'auto', 'eigh' or 'svd' but got"
+                    f" {self.whiten_solver} instead"
+                )
 
             # Give consistent eigenvectors for both svd solvers
             u *= np.sign(u[0])
