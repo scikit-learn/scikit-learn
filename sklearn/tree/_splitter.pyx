@@ -1190,14 +1190,14 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
                 f_j += n_found_constants
                 # f_j in the interval [n_total_constants, f_i[
 
-            current.feature = features[f_j]
-            self.extract_nnz(current.feature, &end_negative, &start_positive,
-                             &is_samples_sorted)
-            # Sort the positive and negative parts of `Xf`
-            sort(Xf + start, samples + start, end_negative - start)
-            if start_positive < end:
-                sort(Xf + start_positive, samples + start_positive,
-                     end - start_positive)
+                current.feature = features[f_j]
+                self.extract_nnz(current.feature, &end_negative, &start_positive,
+                                &is_samples_sorted)
+                # Sort the positive and negative parts of `Xf`
+                sort(Xf + start, samples + start, end_negative - start)
+                if start_positive < end:
+                    sort(Xf + start_positive, samples + start_positive,
+                         end - start_positive)
 
                 # Update index_to_samples to take into account the sort
                 for p in range(start, end_negative):
