@@ -197,6 +197,29 @@ def _dump_svmlight_file_dense(int_or_float1[:,:] X, int_or_float2[:,:] y, f, bin
 
         f.write((line_pattern % feat).encode("ascii"))
 
+cdef inline str get_row_string(int_or_float1[:,:] X, Py_ssize_t row, str value_pattern, bint one_based):
+    cdef:
+        Py_ssize_t row_length = X.shape[1]
+        array.array[long long] int_template = array.array('q',[])
+        array.array[cython.double] float_template = array.array('d',[])
+        array.array x_inds
+        array.array x_vals
+        Py_ssize_t x_nz_used = 0
+
+    if int_or_float1 in cython.floating:
+        x_vals = array.clone(float_template, row_length, False)
+    else:
+        x_vals = array.clone(int_template, row_length, False)
+    x_inds = array.clone(int_template, row_length, False)
+
+    for j in range(row_length):
+        val = X[row,j]
+        if val!=0:
+            x_inds[x_nz_used]=j
+            x_vals[x_nz_used]=val
+            x_nz_used += 1
+    return " ".join(value_pattern % (j+one_based, val) for i, (j, val) in enumerate(zip(x_inds, x_vals)) if i < x_nz_used)
+
 def _dump_svmlight_file_general(X, y, f, bint multilabel, bint one_based, int_or_longlong[:] query_id, bint X_is_sp, bint y_is_sp):
     cdef bint X_is_integral = X.dtype.kind == "i"
     if X_is_integral:
@@ -214,6 +237,8 @@ def _dump_svmlight_file_general(X, y, f, bint multilabel, bint one_based, int_or
     line_pattern += " %s\n"
 
     cdef:
+        signed long long[:,:] X_dense_int
+        double[:,:] X_dense_float
         Py_ssize_t num_labels = y.shape[1]
         Py_ssize_t x_len = X.shape[0]
         Py_ssize_t row_length = X.shape[1]
@@ -235,21 +260,13 @@ def _dump_svmlight_file_general(X, y, f, bint multilabel, bint one_based, int_or
             row = zip(X.indices[span], X.data[span])
             s = " ".join(value_pattern % (j + one_based, x) for j, x in row)
         else:
+            #s = get_row_string(X, i, value_pattern, one_based)
             if X_is_integral:
-                x_vals = array.clone(int_template, row_length, False)
+                X_dense_int = X
+                s = get_row_string(X_dense_int, i, value_pattern, one_based)
             else:
-                x_vals = array.clone(float_template, row_length, False)
-            x_inds = array.clone(int_template, row_length, False)
-            for j in range(row_length):
-                val = X[i,j]
-                if val!=0:
-                    x_inds[x_nz_used]=j
-                    x_vals[x_nz_used]=val
-                    x_nz_used += 1
-            array.resize(x_inds, x_nz_used)
-            array.resize(x_vals, x_nz_used)
-            s = " ".join(value_pattern % (j+one_based, val) for j, val in zip(x_inds, x_vals))
-
+                X_dense_float = X
+                s = get_row_string(X_dense_float, i, value_pattern, one_based)
         if multilabel:
             labels_str = ""
             first = True
