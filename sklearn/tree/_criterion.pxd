@@ -9,9 +9,6 @@
 
 # See _criterion.pyx for implementation details.
 
-import numpy as np
-cimport numpy as np
-
 from ._tree cimport DTYPE_t          # Type of X
 from ._tree cimport DOUBLE_t         # Type of y, sample_weight
 from ._tree cimport SIZE_t           # Type for indices and counters
