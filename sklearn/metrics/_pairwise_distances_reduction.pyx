@@ -13,7 +13,7 @@
 # Furthermore, the chunking strategy is also used to leverage OpenMP-based parallelism
 # (using Cython prange loops) which gives another multiplicative speed-up in
 # favorable cases on many-core machines.
-cimport numpy as np
+cimport numpy as cnp
 import numpy as np
 import warnings
 
@@ -54,7 +54,7 @@ from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..utils._typedefs import ITYPE, DTYPE
 
 
-np.import_array()
+cnp.import_array()
 
 # TODO: change for `libcpp.algorithm.move` once Cython 3 is used
 # Introduction in Cython:
@@ -76,14 +76,14 @@ ctypedef fused vector_vector_DITYPE_t:
     vector[vector[DTYPE_t]]
 
 
-cdef np.ndarray[object, ndim=1] coerce_vectors_to_nd_arrays(
+cdef cnp.ndarray[object, ndim=1] coerce_vectors_to_nd_arrays(
     shared_ptr[vector_vector_DITYPE_t] vecs
 ):
     """Coerce a std::vector of std::vector to a ndarray of ndarray."""
     cdef:
         ITYPE_t n = deref(vecs).size()
-        np.ndarray[object, ndim=1] nd_arrays_of_nd_arrays = np.empty(n,
-                                                                     dtype=np.ndarray)
+        cnp.ndarray[object, ndim=1] nd_arrays_of_nd_arrays = np.empty(n,
+                                                                      dtype=np.ndarray)
 
     for i in range(n):
         nd_arrays_of_nd_arrays[i] = vector_to_nd_array(&(deref(vecs)[i]))
@@ -1511,8 +1511,7 @@ cdef class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
             # This is done in parallel sample-wise (no need for locks)
             # using dynamic scheduling because we might not have
             # the same number of neighbors for each query vector.
-            # TODO: compare 'dynamic' vs 'static' vs 'guided'
-            for idx in prange(self.n_samples_X, schedule='dynamic'):
+            for idx in prange(self.n_samples_X, schedule='static'):
                 self._merge_vectors(idx, self.chunks_n_threads)
 
             # The content of the vector have been std::moved.
@@ -1536,7 +1535,7 @@ cdef class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
         cdef:
             ITYPE_t i, j
 
-        for i in prange(self.n_samples_X, nogil=True, schedule='dynamic',
+        for i in prange(self.n_samples_X, nogil=True, schedule='static',
                         num_threads=self.effective_n_threads):
             for j in range(deref(self.neigh_indices)[i].size()):
                 deref(self.neigh_distances)[i][j] = (

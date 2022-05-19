@@ -294,9 +294,16 @@ class DecisionBoundaryDisplay:
             np.linspace(x0_min, x0_max, grid_resolution),
             np.linspace(x1_min, x1_max, grid_resolution),
         )
+        if hasattr(X, "iloc"):
+            # we need to preserve the feature names and therefore get an empty dataframe
+            X_grid = X.iloc[[], :].copy()
+            X_grid.iloc[:, 0] = xx0.ravel()
+            X_grid.iloc[:, 1] = xx1.ravel()
+        else:
+            X_grid = np.c_[xx0.ravel(), xx1.ravel()]
 
         pred_func = _check_boundary_response_method(estimator, response_method)
-        response = pred_func(np.c_[xx0.ravel(), xx1.ravel()])
+        response = pred_func(X_grid)
 
         # convert classes predictions into integers
         if pred_func.__name__ == "predict" and hasattr(estimator, "classes_"):
@@ -311,14 +318,10 @@ class DecisionBoundaryDisplay:
             # TODO: Support pos_label
             response = response[:, 1]
 
-        if xlabel is not None:
-            xlabel = xlabel
-        else:
+        if xlabel is None:
             xlabel = X.columns[0] if hasattr(X, "columns") else ""
 
-        if ylabel is not None:
-            ylabel = ylabel
-        else:
+        if ylabel is None:
             ylabel = X.columns[1] if hasattr(X, "columns") else ""
 
         display = DecisionBoundaryDisplay(

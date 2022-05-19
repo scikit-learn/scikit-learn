@@ -10,7 +10,6 @@
 cimport cython
 from cython.parallel import prange
 import numpy as np
-cimport numpy as np
 from libc.stdlib cimport malloc, free, qsort
 from libc.string cimport memcpy
 from numpy.math cimport INFINITY
@@ -25,8 +24,6 @@ from .common cimport MonotonicConstraint
 from ._bitset cimport init_bitset
 from ._bitset cimport set_bitset
 from ._bitset cimport in_bitset
-
-np.import_array()
 
 
 cdef struct split_info_struct:

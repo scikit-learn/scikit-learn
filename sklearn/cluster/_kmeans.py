@@ -12,6 +12,7 @@
 # License: BSD 3 clause
 
 from abc import ABC, abstractmethod
+from numbers import Integral, Real
 import warnings
 
 import numpy as np
@@ -34,6 +35,9 @@ from ..utils import check_array
 from ..utils import check_random_state
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.validation import _is_arraylike_not_scalar
+from ..utils._param_validation import Interval
+from ..utils._param_validation import StrOptions
+from ..utils._param_validation import validate_params
 from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..utils._readonly_array_wrapper import ReadonlyArrayWrapper
 from ..exceptions import ConvergenceWarning
@@ -56,6 +60,15 @@ from .._engine import get_engine_class
 # Initialization heuristic
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "n_clusters": [Interval(Integral, 1, None, closed="left")],
+        "x_squared_norms": ["array-like", None],
+        "random_state": ["random_state"],
+        "n_local_trials": [Interval(Integral, 1, None, closed="left"), None],
+    }
+)
 def kmeans_plusplus(
     X, n_clusters, *, x_squared_norms=None, random_state=None, n_local_trials=None
 ):
@@ -115,7 +128,6 @@ def kmeans_plusplus(
     >>> indices
     array([4, 2])
     """
-
     # Check data
     check_array(X, accept_sparse="csr", dtype=[np.float64, np.float32])
 
@@ -134,12 +146,6 @@ def kmeans_plusplus(
         raise ValueError(
             f"The length of x_squared_norms {x_squared_norms.shape[0]} should "
             f"be equal to the length of n_samples {X.shape[0]}."
-        )
-
-    if n_local_trials is not None and n_local_trials < 1:
-        raise ValueError(
-            f"n_local_trials is set to {n_local_trials} but should be an "
-            "integer value greater than zero."
         )
 
     random_state = check_random_state(random_state)
@@ -714,7 +720,9 @@ def _kmeans_single_lloyd(
     return labels, inertia, centers, i + 1
 
 
-def _labels_inertia(X, sample_weight, x_squared_norms, centers, n_threads=1):
+def _labels_inertia(
+    X, sample_weight, x_squared_norms, centers, n_threads=1, return_inertia=True
+):
     """E step of the K-means EM algorithm.
 
     Compute the labels and the inertia of the given samples and centers.
@@ -740,6 +748,9 @@ def _labels_inertia(X, sample_weight, x_squared_norms, centers, n_threads=1):
         sample-wise on the main cython loop which assigns each sample to its
         closest center.
 
+    return_inertia : bool, default=True
+        Whether to compute and return the inertia.
+
     Returns
     -------
     labels : ndarray of shape (n_samples,)
@@ -747,6 +758,7 @@ def _labels_inertia(X, sample_weight, x_squared_norms, centers, n_threads=1):
 
     inertia : float
         Sum of squared distances of samples to their closest cluster center.
+        Inertia is only returned if return_inertia is True.
     """
     n_samples = X.shape[0]
     n_clusters = centers.shape[0]
@@ -776,27 +788,39 @@ def _labels_inertia(X, sample_weight, x_squared_norms, centers, n_threads=1):
         update_centers=False,
     )
 
-    inertia = _inertia(X, sample_weight, centers, labels, n_threads)
+    if return_inertia:
+        inertia = _inertia(X, sample_weight, centers, labels, n_threads)
+        return labels, inertia
 
-    return labels, inertia
+    return labels
 
 
 def _labels_inertia_threadpool_limit(
-    X, sample_weight, x_squared_norms, centers, n_threads=1
+    X, sample_weight, x_squared_norms, centers, n_threads=1, return_inertia=True
 ):
     """Same as _labels_inertia but in a threadpool_limits context."""
     with threadpool_limits(limits=1, user_api="blas"):
-        labels, inertia = _labels_inertia(
-            X, sample_weight, x_squared_norms, centers, n_threads
+        result = _labels_inertia(
+            X, sample_weight, x_squared_norms, centers, n_threads, return_inertia
         )
 
-    return labels, inertia
+    return result
 
 
 class _BaseKMeans(
     _ClassNamePrefixFeaturesOutMixin, TransformerMixin, ClusterMixin, BaseEstimator, ABC
 ):
     """Base class for KMeans and MiniBatchKMeans"""
+
+    _parameter_constraints = {
+        "n_clusters": [Interval(Integral, 1, None, closed="left")],
+        "init": [StrOptions({"k-means++", "random"}), callable, "array-like"],
+        "n_init": [Interval(Integral, 1, None, closed="left")],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "verbose": [Interval(Integral, 0, None, closed="left"), bool],
+        "random_state": ["random_state"],
+    }
 
     def __init__(
         self,
@@ -817,16 +841,7 @@ class _BaseKMeans(
         self.verbose = verbose
         self.random_state = random_state
 
-    def _check_params(self, X):
-        # n_init
-        if self.n_init <= 0:
-            raise ValueError(f"n_init should be > 0, got {self.n_init} instead.")
-        self._n_init = self.n_init
-
-        # max_iter
-        if self.max_iter <= 0:
-            raise ValueError(f"max_iter should be > 0, got {self.max_iter} instead.")
-
+    def _check_params_vs_input(self, X):
         # n_clusters
         if X.shape[0] < self.n_clusters:
             raise ValueError(
@@ -837,16 +852,7 @@ class _BaseKMeans(
         self._tol = _tolerance(X, self.tol)
 
         # init
-        if not (
-            _is_arraylike_not_scalar(self.init)
-            or callable(self.init)
-            or (isinstance(self.init, str) and self.init in ["k-means++", "random"])
-        ):
-            raise ValueError(
-                "init should be either 'k-means++', 'random', an array-like or a "
-                f"callable, got '{self.init}' instead."
-            )
-
+        self._n_init = self.n_init
         if _is_arraylike_not_scalar(self.init) and self._n_init != 1:
             warnings.warn(
                 "Explicit initial center position passed: performing only"
@@ -908,7 +914,9 @@ class _BaseKMeans(
         )
         return X
 
-    def _init_centroids(self, X, x_squared_norms, init, random_state, init_size=None):
+    def _init_centroids(
+        self, X, x_squared_norms, init, random_state, init_size=None, n_centroids=None
+    ):
         """Compute the initial centroids.
 
         Parameters
@@ -932,12 +940,17 @@ class _BaseKMeans(
             Number of samples to randomly sample for speeding up the
             initialization (sometimes at the expense of accuracy).
 
+        n_centroids : int, default=None
+            Number of centroids to initialize.
+            If left to 'None' the number of centroids will be equal to
+            number of clusters to form (self.n_clusters)
+
         Returns
         -------
         centers : ndarray of shape (n_clusters, n_features)
         """
         n_samples = X.shape[0]
-        n_clusters = self.n_clusters
+        n_clusters = self.n_clusters if n_centroids is None else n_centroids
 
         if init_size is not None and init_size < n_samples:
             init_indices = random_state.randint(0, n_samples, init_size)
@@ -1272,6 +1285,14 @@ class KMeans(_BaseKMeans):
            [ 1.,  2.]])
     """
 
+    _parameter_constraints = {
+        **_BaseKMeans._parameter_constraints,
+        "copy_x": [bool],
+        "algorithm": [
+            StrOptions({"lloyd", "elkan", "auto", "full"}, deprecated={"auto", "full"})
+        ],
+    }
+
     def __init__(
         self,
         n_clusters=8,
@@ -1298,15 +1319,8 @@ class KMeans(_BaseKMeans):
         self.copy_x = copy_x
         self.algorithm = algorithm
 
-    def _check_params(self, X):
-        super()._check_params(X)
-
-        # algorithm
-        if self.algorithm not in ("lloyd", "elkan", "auto", "full"):
-            raise ValueError(
-                "Algorithm must be either 'lloyd' or 'elkan', "
-                f"got {self.algorithm} instead."
-            )
+    def _check_params_vs_input(self, X):
+        super()._check_params_vs_input(X)
 
         self._algorithm = self.algorithm
         if self._algorithm in ("auto", "full"):
@@ -1359,9 +1373,9 @@ class KMeans(_BaseKMeans):
         self : object
             Fitted estimator.
         """
+        self._validate_params()
         engine_class = get_engine_class("kmeans", default=KMeansCythonEngine)
         engine = engine_class(self)
-
         X = self._validate_data(
             X,
             accept_sparse="csr",
@@ -1371,7 +1385,8 @@ class KMeans(_BaseKMeans):
             accept_large_sparse=False,
         )
 
-        self._check_params(X)
+        self._check_params_vs_input(X)
+
         random_state = check_random_state(self.random_state)
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
         self._n_threads = _openmp_effective_n_threads()
@@ -1755,6 +1770,15 @@ class MiniBatchKMeans(_BaseKMeans):
     array([0, 1], dtype=int32)
     """
 
+    _parameter_constraints = {
+        **_BaseKMeans._parameter_constraints,
+        "batch_size": [Interval(Integral, 1, None, closed="left")],
+        "compute_labels": [bool],
+        "max_no_improvement": [Interval(Integral, 0, None, closed="left"), None],
+        "init_size": [Interval(Integral, 1, None, closed="left"), None],
+        "reassignment_ratio": [Interval(Real, 0, None, closed="left")],
+    }
+
     def __init__(
         self,
         n_clusters=8,
@@ -1788,26 +1812,12 @@ class MiniBatchKMeans(_BaseKMeans):
         self.init_size = init_size
         self.reassignment_ratio = reassignment_ratio
 
-    def _check_params(self, X):
-        super()._check_params(X)
+    def _check_params_vs_input(self, X):
+        super()._check_params_vs_input(X)
 
-        # max_no_improvement
-        if self.max_no_improvement is not None and self.max_no_improvement < 0:
-            raise ValueError(
-                "max_no_improvement should be >= 0, got "
-                f"{self.max_no_improvement} instead."
-            )
-
-        # batch_size
-        if self.batch_size <= 0:
-            raise ValueError(
-                f"batch_size should be > 0, got {self.batch_size} instead."
-            )
         self._batch_size = min(self.batch_size, X.shape[0])
 
         # init_size
-        if self.init_size is not None and self.init_size <= 0:
-            raise ValueError(f"init_size should be > 0, got {self.init_size} instead.")
         self._init_size = self.init_size
         if self._init_size is None:
             self._init_size = 3 * self._batch_size
@@ -1949,6 +1959,8 @@ class MiniBatchKMeans(_BaseKMeans):
         self : object
             Fitted estimator.
         """
+        self._validate_params()
+
         X = self._validate_data(
             X,
             accept_sparse="csr",
@@ -1957,7 +1969,7 @@ class MiniBatchKMeans(_BaseKMeans):
             accept_large_sparse=False,
         )
 
-        self._check_params(X)
+        self._check_params_vs_input(X)
         random_state = check_random_state(self.random_state)
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
         self._n_threads = _openmp_effective_n_threads()
@@ -2106,6 +2118,9 @@ class MiniBatchKMeans(_BaseKMeans):
         """
         has_centers = hasattr(self, "cluster_centers_")
 
+        if not has_centers:
+            self._validate_params()
+
         X = self._validate_data(
             X,
             accept_sparse="csr",
@@ -2126,7 +2141,7 @@ class MiniBatchKMeans(_BaseKMeans):
 
         if not has_centers:
             # this instance has not been fitted yet (fit or partial_fit)
-            self._check_params(X)
+            self._check_params_vs_input(X)
             self._n_threads = _openmp_effective_n_threads()
 
             # Validate init array
