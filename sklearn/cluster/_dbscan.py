@@ -190,7 +190,7 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         the options allowed by :func:`sklearn.metrics.pairwise_distances` for
         its metric parameter.
         If metric is "precomputed", X is assumed to be a distance matrix and
-        must be square. X may be a :term:`Glossary <sparse graph>`, in which
+        must be square. X may be a :term:`sparse graph`, in which
         case only "nonzero" elements may be considered neighbors for DBSCAN.
 
         .. versionadded:: 0.17
