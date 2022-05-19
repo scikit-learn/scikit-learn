@@ -39,7 +39,7 @@ Changelog
 - |API| Rename `base_estimator` to `estimator` in
   :class:`CalibratedClassifierCV` to improve readability and consistency. The
   parameter `base_estimator` is deprecated and will be removed in 1.4.
-  :pr:`9104` by :user:`Kevin Roice <kevroi>`.
+  :pr:`22054` by :user:`Kevin Roice <kevroi>`.
 
 :mod:`sklearn.cluster`
 ......................
