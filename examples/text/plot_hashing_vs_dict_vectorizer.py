@@ -79,8 +79,8 @@ def tokens(doc):
 list(tokens("This is a simple example, isn't it?"))
 
 # %%
-# We define an additional function that transforms a document into a
-# frequency dictionary to be used by the vectorizers.
+# We define an additional function that transforms a document into a frequency
+# dictionary to be used by the vectorizers.
 
 from collections import defaultdict
 
@@ -133,10 +133,10 @@ print(f"Found {len(vectorizer.get_feature_names_out())} unique terms")
 # (hash collisions). As a result, it is impossible to determine what object
 # generated any particular hash code.
 #
-# Because of the above it is impossible to recover the original tokens from the feature matrix and the best
-# approach to estimate the number of unique terms in the original dictionary is
-# to count the number of active columns in the encoded feature matrix. For such purpose we
-# define the following function:
+# Because of the above it is impossible to recover the original tokens from the
+# feature matrix and the best approach to estimate the number of unique terms in
+# the original dictionary is to count the number of active columns in the
+# encoded feature matrix. For such purpose we define the following function:
 
 import numpy as np
 
