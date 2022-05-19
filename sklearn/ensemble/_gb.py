@@ -1563,10 +1563,10 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
 class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     """Gradient Boosting for regression.
 
-    GB builds an additive model in a forward stage-wise fashion;
-    it allows for the optimization of arbitrary differentiable loss functions.
-    In each stage a regression tree is fit on the negative gradient of the
-    given loss function.
+    This estimator builds an additive model in a forward stage-wise fashion; it
+    allows for the optimization of arbitrary differentiable loss functions. In
+    each stage a regression tree is fit on the negative gradient of the given
+    loss function.
 
     The estimator
     :class:`HistGradientBoostingRegressor<sklearn.ensemble.HistGradientBoostingRegressor>`
