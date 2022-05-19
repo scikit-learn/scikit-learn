@@ -213,9 +213,9 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
     >>> X, y = make_classification(n_samples=100, n_features=2,
     ...                            n_redundant=0, random_state=42)
     >>> base_clf = GaussianNB()
-    >>> calibrated_clf = CalibratedClassifierCV(estimator=base_clf, cv=3)
+    >>> calibrated_clf = CalibratedClassifierCV(base_clf, cv=3)
     >>> calibrated_clf.fit(X, y)
-    CalibratedClassifierCV(estimator=GaussianNB(), cv=3)
+    CalibratedClassifierCV(...)
     >>> len(calibrated_clf.calibrated_classifiers_)
     3
     >>> calibrated_clf.predict_proba(X)[:5, :]
@@ -233,12 +233,9 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
     >>> base_clf = GaussianNB()
     >>> base_clf.fit(X_train, y_train)
     GaussianNB()
-    >>> calibrated_clf = CalibratedClassifierCV(
-    ...     estimator=base_clf,
-    ...     cv="prefit"
-    ... )
+    >>> calibrated_clf = CalibratedClassifierCV(base_clf, cv="prefit")
     >>> calibrated_clf.fit(X_calib, y_calib)
-    CalibratedClassifierCV(estimator=GaussianNB(), cv='prefit')
+    CalibratedClassifierCV(...)
     >>> len(calibrated_clf.calibrated_classifiers_)
     1
     >>> calibrated_clf.predict_proba([[-0.5, 0.5]])
