@@ -153,7 +153,7 @@ def get_data(dataset_name):
     elif dataset_name == "rcv1":
         X = fetch_rcv1().data
     elif dataset_name == "CIFAR":
-        if handle_missing_dataset(CIFAR_FOLDER) == 0:
+        if handle_missing_dataset(CIFAR_FOLDER) == "skip":
             return
         X1 = [unpickle("%sdata_batch_%d" % (CIFAR_FOLDER, i + 1)) for i in range(5)]
         X = np.vstack(X1)
