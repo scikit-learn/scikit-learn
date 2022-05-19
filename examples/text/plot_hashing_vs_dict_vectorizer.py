@@ -79,7 +79,7 @@ def tokens(doc):
 list(tokens("This is a simple example, isn't it?"))
 
 # %%
-# We define an additional function that transforms such object into a
+# We define an additional function that transforms a document into a
 # frequency dictionary to be used by the vectorizers.
 
 from collections import defaultdict
@@ -133,9 +133,9 @@ print(f"Found {len(vectorizer.get_feature_names_out())} unique terms")
 # (hash collisions). As a result, it is impossible to determine what object
 # generated any particular hash code.
 #
-# Because of the above it is impossible to recover the features and the best
+# Because of the above it is impossible to recover the original tokens from the feature matrix and the best
 # approach to estimate the number of unique terms in the original dictionary is
-# to count non-vanishing entries of the encoded features. For such purpose we
+# to count the number of active columns in the encoded feature matrix. For such purpose we
 # define the following function:
 
 import numpy as np
@@ -291,5 +291,5 @@ _ = ax.set_xlabel("speed (MB/s)")
 # `CountVectorizer` because of the extra operation induced by the
 # `TfidfTransformer`. Also notice that, by setting the number of features
 # `n_features = 2**18`, the `HashingVectorizer` performs much faster than the
-# `TfidfVectorizer`. Keep in mind that this may cause hash collisions and no
+# `CountVectorizer`. Keep in mind that this may cause hash collisions and no
 # inverse transform can be used to recover the original dictionary.
