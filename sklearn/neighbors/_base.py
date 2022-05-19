@@ -748,7 +748,7 @@ class KNeighborsMixin:
         if n_neighbors > n_samples_fit:
             if query_is_train:
                 n_neighbors -= 1
-                inequality_str = "n_neighbors < n_samples_fit"
+                inequality_str = "n_neighbors < n_samples"
             else:
                 inequality_str = "n_neighbors <= n_samples_fit"
             raise ValueError(
