@@ -423,7 +423,10 @@ def test_fastica_whiten_backwards_compatibility():
 
     # No warning must be raised in this case.
     av_ica = FastICA(
-        n_components=n_components, whiten="arbitrary-variance", random_state=0
+        n_components=n_components,
+        whiten="arbitrary-variance",
+        random_state=0,
+        whiten_solver="svd",
     )
     with warnings.catch_warnings():
         warnings.simplefilter("error", FutureWarning)
@@ -522,7 +525,7 @@ def test_fastica_whiten_solver(global_random_seed, whiten_solver):
     assert ica._whiten_solver == correct_solver
 
 
-@pytest.mark.parametrize("whiten_solver", ["this_should_fail", "test", 1])
+@pytest.mark.parametrize("whiten_solver", ["this_should_fail", "test", 1, None])
 def test_fastica_whiten_solver_validation(whiten_solver):
     rng = np.random.RandomState(0)
     X = rng.random_sample((100, 10))
@@ -533,3 +536,14 @@ def test_fastica_whiten_solver_validation(whiten_solver):
     )
     with pytest.raises(ValueError, match=msg):
         ica.fit_transform(X)
+
+
+def test_fastica_whiten_solver_future_warning():
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((100, 10))
+    ica = FastICA(random_state=rng, whiten="unit-variance")
+    msg = "From version 1.4 whiten_solver='auto' will be used by default."
+    with pytest.warns(FutureWarning, match=msg):
+        ica.fit_transform(X)
+    assert ica.whiten_solver == "warn"
+    assert ica._whiten_solver == "svd"

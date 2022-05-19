@@ -161,7 +161,7 @@ def fastica(
     max_iter=200,
     tol=1e-04,
     w_init=None,
-    whiten_solver="auto",
+    whiten_solver="warn",
     random_state=None,
     return_X_mean=False,
     compute_sources=True,
@@ -227,7 +227,7 @@ def fastica(
         Initial un-mixing array of dimension (n.comp,n.comp).
         If None (default) then an array of normal r.v.'s is used.
 
-    whiten_solver : {"auto", "eigh", "svd"}, default="auto"
+    whiten_solver : {"auto", "eigh", "svd"}, default="svd"
         The solver to use for whitening. When set to "auto", the "eigh" solver
         will be used if `n_samples >= 50 * n_features` otherwise "svd" is used.
 
@@ -237,6 +237,12 @@ def fastica(
         - "eigh" is generally more memory efficient when
           `n_samples >= n_features`, and can be faster when
           `n_samples >= 50 * n_features`.
+
+        .. versionadded:: 1.2
+
+        .. versionchanged:: 1.4
+           Default value for `whiten_solver` will change from "svd" to "auto"
+           in version 1.4.
 
     random_state : int, RandomState instance or None, default=None
         Used to initialize ``w_init`` when not specified, with a
@@ -384,7 +390,7 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
     w_init : ndarray of shape (n_components, n_components), default=None
         The mixing matrix to be used to initialize the algorithm.
 
-    whiten_solver : {"auto", "eigh", "svd"}, default="auto"
+    whiten_solver : {"auto", "eigh", "svd"}, default="svd"
         The solver to use for whitening. When set to "auto", the "eigh" solver
         will be used if `n_samples >= 50 * n_features` otherwise "svd" is used.
 
@@ -394,6 +400,12 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         - "eigh" is generally more memory efficient when
           `n_samples >= n_features`, and can be faster when
           `n_samples >= 50 * n_features`.
+
+        .. versionadded:: 1.2
+
+        .. versionchanged:: 1.4
+           Default value for `whiten_solver` will change from "svd" to "auto"
+           in version 1.4.
 
     random_state : int, RandomState instance or None, default=None
         Used to initialize ``w_init`` when not specified, with a
@@ -474,7 +486,7 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         max_iter=200,
         tol=1e-4,
         w_init=None,
-        whiten_solver="auto",
+        whiten_solver="warn",
         random_state=None,
     ):
         super().__init__()
@@ -577,6 +589,13 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
 
             # Benchmark validated heuristic
             self._whiten_solver = self.whiten_solver
+            if self._whiten_solver == "warn":
+                warnings.warn(
+                    "From version 1.4 whiten_solver='auto' will be used by default.",
+                    FutureWarning,
+                )
+                self._whiten_solver = "svd"
+
             if self._whiten_solver == "auto":
                 self._whiten_solver = "eigh" if X.shape[0] > 50 * X.shape[1] else "svd"
 
