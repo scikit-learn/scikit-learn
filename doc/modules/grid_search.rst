@@ -608,8 +608,8 @@ parameters of composite or nested estimators such as
   >>> search = GridSearchCV(calibrated_forest, param_grid, cv=5)
   >>> search.fit(X, y)
   GridSearchCV(cv=5,
-               estimator=CalibratedClassifierCV(...),
-               param_grid={'base_estimator__max_depth': [2, 4, 6, 8]})
+              estimator=CalibratedClassifierCV(...),
+              param_grid={'estimator__max_depth': [2, 4, 6, 8]})
 
 Here, ``<estimator>`` is the parameter name of the nested estimator,
 in this case ``estimator``.
@@ -625,7 +625,7 @@ levels of nesting::
   ...    ('model', calibrated_forest)])
   >>> param_grid = {
   ...    'select__k': [1, 2],
-  ...    'model__base_estimator__max_depth': [2, 4, 6, 8]}
+  ...    'model__estimator__max_depth': [2, 4, 6, 8]}
   >>> search = GridSearchCV(pipe, param_grid, cv=5).fit(X, y)
 
 Please refer to :ref:`pipeline` for performing parameter searches over

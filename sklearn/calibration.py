@@ -147,7 +147,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
 
         .. versionadded:: 0.24
 
-    base_estimator: estimator instance
+    base_estimator : estimator instance
         This parameter is deprecated. Use `estimator` instead.
 
         .. deprecated:: 1.2
