@@ -16,7 +16,7 @@ Changelog
 .......................
 
 - |Fix| Avoid timeouts in :func:`datasets.fetch_openml` by not passing a
-  `timeout` argument, :pr:`23358` by `Loïc Estève <lesteve>`.
+  `timeout` argument, :pr:`23358` by :user:`Loïc Estève <lesteve>`.
 
 :mod:`sklearn.decomposition`
 ............................
@@ -34,7 +34,7 @@ Changelog
 :mod:`sklearn.metrics`
 ......................
 
-- |Fix| Fixes `metrics.precision_recall_curve` to compute precision-recall at 100%
+- |Fix| Fixes :func:`metrics.precision_recall_curve` to compute precision-recall at 100%
   recall. The Precision-Recall curve now displays the last point corresponding to a
   classifier that always predicts the positive class: recall=100% and
   precision=class balance.
