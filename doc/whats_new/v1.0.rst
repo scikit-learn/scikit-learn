@@ -19,13 +19,6 @@ Version 1.0.2
 Changelog
 ---------
 
-:mod:`sklearn.calibration`
-......................
-
-- |Enhancement| Rename variable names in :class:`CalibratedClassifierCV` and
-   :class:`_CalibratedClassifier` to improve readability. `base_estimator`
-   is renamed to `estimator`. :pr:`9104` by :user:`Kevin Roice <kevroi>`.
-
 :mod:`sklearn.cluster`
 ......................
 

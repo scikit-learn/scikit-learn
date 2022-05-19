@@ -83,6 +83,8 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         accurate `predict_proba` outputs. The default classifier is
         a :class:`~sklearn.svm.LinearSVC`.
 
+        .. versionadded:: 1.2
+
     method : {'sigmoid', 'isotonic'}, default='sigmoid'
         The method to use for calibration. Can be 'sigmoid' which
         corresponds to Platt's method (i.e. a logistic regression model) or
@@ -144,6 +146,13 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         :mod:`sklearn.svm` estimators with the `probabilities=True` parameter.
 
         .. versionadded:: 0.24
+
+    base_estimator: estimator instance
+        This parameter is deprecated. Use `estimator` instead.
+
+        .. deprecated:: 1.2
+           The parameter `base_estimator` is deprecated in 1.2 and will be
+           removed in 1.4. Use `estimator` instead.
 
     Attributes
     ----------
@@ -244,19 +253,14 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         cv=None,
         n_jobs=None,
         ensemble=True,
-        base_estimator="deprecated"
+        base_estimator="deprecated",
     ):
         self.estimator = estimator
         self.method = method
         self.cv = cv
         self.n_jobs = n_jobs
         self.ensemble = ensemble
-
-        if base_estimator != "deprecated":
-            warnings.warn("'base_estimator' was renamed to estimator in version 1.0 and "
-                        "will be removed in 1.2.",
-                        FutureWarning)
-            self.estimator = base_estimator
+        self.base_estimator = base_estimator
 
     def fit(self, X, y, sample_weight=None, **fit_params):
         """Fit the calibrated model.
@@ -288,6 +292,19 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
 
         for sample_aligned_params in fit_params.values():
             check_consistent_length(y, sample_aligned_params)
+
+        if self.base_estimator != "deprecated":
+            if self.estimator is not None:
+                raise ValueError(
+                    "Both `base_estimator` and `estimator` are set. Only set "
+                    "`estimator` since `base_estimator` is deprecated."
+                )
+            warnings.warn(
+                "`base_estimator` was renamed to `estimator` in version 1.2 and "
+                "will be removed in 1.4.",
+                FutureWarning,
+            )
+            self.estimator = self.base_estimator
 
         if self.estimator is None:
             # we want all classifiers that don't expose a random_state
