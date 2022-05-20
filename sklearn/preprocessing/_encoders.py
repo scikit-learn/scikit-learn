@@ -1079,7 +1079,7 @@ class OneHotEncoder(_BaseEncoder):
 
         return np.array(feature_names, dtype=object)
 
-    def get_feature_names_out(self, input_features=None):
+    def get_feature_names_out(self, input_features=None, sep="_"):
         """Get output feature names for transformation.
 
         Parameters
@@ -1093,6 +1093,9 @@ class OneHotEncoder(_BaseEncoder):
               `["x0", "x1", ..., "x(n_features_in_ - 1)"]`.
             - If `input_features` is an array-like, then `input_features` must
               match `feature_names_in_` if `feature_names_in_` is defined.
+
+        sep : str, default="_"
+            Determines the separator between the input_features and the categories
 
         Returns
         -------
@@ -1108,7 +1111,7 @@ class OneHotEncoder(_BaseEncoder):
 
         feature_names = []
         for i in range(len(cats)):
-            names = [input_features[i] + "_" + str(t) for t in cats[i]]
+            names = [input_features[i] + sep + str(t) for t in cats[i]]
             feature_names.extend(names)
 
         return np.array(feature_names, dtype=object)
