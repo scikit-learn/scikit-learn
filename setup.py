@@ -290,6 +290,7 @@ def setup_package():
         from setuptools import setup
 
         metadata["version"] = VERSION
+        metadata["packages"] = ["sklearn"]
     else:
         if sys.version_info < required_python_version:
             required_version = "%d.%d" % required_python_version

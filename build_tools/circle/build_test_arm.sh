@@ -6,7 +6,6 @@ set -x
 UNAMESTR=`uname`
 N_CORES=`nproc --all`
 
-
 setup_ccache() {
     echo "Setting up ccache"
     mkdir /tmp/ccache/
@@ -20,13 +19,6 @@ setup_ccache() {
     ccache -M 0
 }
 
-# imports get_dep
-source build_tools/shared.sh
-
-sudo add-apt-repository --remove ppa:ubuntu-toolchain-r/test
-sudo apt-get update
-
-# Setup conda environment
 MINICONDA_URL="https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-Linux-aarch64.sh"
 
 # Install Mambaforge
@@ -36,39 +28,12 @@ chmod +x mambaforge.sh && ./mambaforge.sh -b -p $MINICONDA_PATH
 export PATH=$MINICONDA_PATH/bin:$PATH
 mamba init --all --verbose
 mamba update --yes conda
+# TODO Update conda-lock version from time to time
+mamba install conda-lock=1.0.5 -y
+conda-lock install --name $CONDA_ENV_NAME $LOCK_FILE
+source activate $CONDA_ENV_NAME
 
-# Create environment and install dependencies
-mamba create -n testenv --yes $(get_dep python $PYTHON_VERSION)
-source activate testenv
-
-# pin pip to 22.0.4 because pip 22.1 validates build dependencies in
-# pyproject.toml. oldest-supported-numpy is part of the build dependencies in
-# pyproject.toml so using pip 22.1 will cause an error since
-# oldest-supported-numpy is not really meant to be installed in the
-# environment. See https://github.com/scikit-learn/scikit-learn/pull/23336 for
-# more details.
-mamba install --verbose -y  ccache \
-                            pip==22.0.4 \
-                            $(get_dep numpy $NUMPY_VERSION) \
-                            $(get_dep scipy $SCIPY_VERSION) \
-                            $(get_dep cython $CYTHON_VERSION) \
-                            $(get_dep joblib $JOBLIB_VERSION) \
-                            $(get_dep threadpoolctl $THREADPOOLCTL_VERSION) \
-                            $(get_dep pytest $PYTEST_VERSION) \
-                            $(get_dep pytest-xdist $PYTEST_XDIST_VERSION)
 setup_ccache
-
-if [[ "$COVERAGE" == "true" ]]; then
-    # XXX: coverage is temporary pinned to 6.2 because 6.3 is not fork-safe
-    # cf. https://github.com/nedbat/coveragepy/issues/1310
-    mamba install --verbose -y codecov pytest-cov coverage=6.2
-fi
-
-if [[ "$TEST_DOCSTRINGS" == "true" ]]; then
-    # numpydoc requires sphinx
-    mamba install --verbose -y sphinx
-    mamba install --verbose -y numpydoc
-fi
 
 python --version
 
