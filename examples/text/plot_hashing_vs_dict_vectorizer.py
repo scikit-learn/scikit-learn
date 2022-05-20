@@ -4,7 +4,7 @@ FeatureHasher and DictVectorizer Comparison
 ===========================================
 
 In this example we illustrate text vectorization, which is the term for
-representing words, sentences, or even larger units of text as vectors.
+representing units of text (words, sentences, etc.) as vectors of real numbers.
 
 We first compare :func:`~sklearn.feature_extraction.FeatureHasher` and
 :func:`~sklearn.feature_extraction.DictVectorizer` by using both methods to
@@ -17,8 +17,9 @@ Later we introduce and analyze the text specific vectorizers
 :func:`~sklearn.feature_extraction.text.TfidfVectorizer` that handle both the
 tokenization and the assembling of the feature matrix within a single class.
 
-The objective of the example is to demonstrate syntax and speed only; it doesn't
-actually do anything useful with the extracted vectors. See the example scripts
+The objective of the example is to demonstrate syntax and speed only, as it
+doesn't actually do anything useful with the extracted vectors. See the example
+scripts
 :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
 and :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py` for actual
 learning on text documents.
