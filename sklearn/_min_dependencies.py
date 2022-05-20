@@ -1,4 +1,5 @@
 """All minimum dependencies for scikit-learn."""
+from collections import defaultdict
 import platform
 import argparse
 
@@ -53,18 +54,7 @@ dependent_packages = {
 
 
 # create inverse mapping for setuptools
-tag_to_packages: dict = {
-    extra: []
-    for extra in [
-        "build",
-        "install",
-        "docs",
-        "examples",
-        "tests",
-        "benchmark",
-        "maintenance",
-    ]
-}
+tag_to_packages: dict = defaultdict(list)
 for package, (min_version, extras) in dependent_packages.items():
     for extra in extras.split(", "):
         tag_to_packages[extra].append("{}>={}".format(package, min_version))
