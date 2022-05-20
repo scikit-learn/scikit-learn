@@ -26,7 +26,6 @@ To run this script you need:
 - conda-lock. The version should match the one used in the CI in
   build_tools/azure/install.sh
 - pip-tools
-- jinja2
 
 """
 
@@ -36,10 +35,11 @@ import sys
 from pathlib import Path
 import shlex
 import json
+import logging
+
+import click
 
 from jinja2 import Environment
-
-import logging
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -203,6 +203,15 @@ conda_build_metadata_list = [
         "package_constraints": {"blas": "[build=openblas]"},
     },
     {
+        "build_name": "py38_conda_forge_mkl",
+        "folder": "build_tools/azure",
+        "platform": "win-64",
+        "channel": "conda-forge",
+        "conda_dependencies": remove_from(common_dependencies, ["pandas", "pyamg"])
+        + ["wheel", "pip"],
+        "package_constraints": {"python": "3.8", "blas": "[build=mkl]"},
+    },
+    {
         "build_name": "py39_conda_forge",
         "folder": "build_tools/circle",
         "platform": "linux-aarch64",
@@ -251,6 +260,25 @@ pip_build_metadata_list = [
         # osx-arm64 machines. This should not matter for pining versions with
         # pip-compile
         "python_version": "3.8.5",
+    },
+    {
+        "build_name": "py38_pip_openblas_32bit",
+        "folder": "build_tools/azure",
+        "pip_dependencies": [
+            "numpy",
+            "scipy",
+            "cython",
+            "joblib",
+            "threadpoolctl",
+            "pytest",
+            "pytest-xdist",
+            "pillow",
+            "wheel",
+        ],
+        # The Windows 32bit build use 3.8.10. No cross-compilation support for
+        # pip-compile, we are going to assume the pip lock file on a Linux
+        # 64bit machine gives appropriate versions
+        "python_version": "3.8.10",
     },
 ]
 
@@ -437,13 +465,33 @@ def write_all_pip_lock_files(build_metadata_list):
         write_pip_lock_file(build_metadata)
 
 
-if __name__ == "__main__":
+@click.command()
+@click.option(
+    "--select-build",
+    default="",
+    help="Regex to restrict the builds we want to update environment and lock files",
+)
+def main(select_build):
+    filtered_conda_build_metadata_list = [
+        each
+        for each in conda_build_metadata_list
+        if re.search(select_build, each["build_name"])
+    ]
     logger.info("Writing conda environments")
-    write_all_conda_environments(conda_build_metadata_list)
+    write_all_conda_environments(filtered_conda_build_metadata_list)
     logger.info("Writing conda lock files")
-    write_all_conda_lock_files(conda_build_metadata_list)
+    write_all_conda_lock_files(filtered_conda_build_metadata_list)
 
+    filtered_pip_build_metadata_list = [
+        each
+        for each in pip_build_metadata_list
+        if re.search(select_build, each["build_name"])
+    ]
     logger.info("Writing pip requirements")
-    write_all_pip_requirements(pip_build_metadata_list)
+    write_all_pip_requirements(filtered_pip_build_metadata_list)
     logger.info("Writing pip lock files")
-    write_all_pip_lock_files(pip_build_metadata_list)
+    write_all_pip_lock_files(filtered_pip_build_metadata_list)
+
+
+if __name__ == "__main__":
+    main()
