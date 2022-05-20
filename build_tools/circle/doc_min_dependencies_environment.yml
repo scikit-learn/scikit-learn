@@ -19,11 +19,12 @@ dependencies:
   - memory_profiler
   - compilers
   - sphinx=4.0.1  # min
+  - sphinx-gallery=0.7.0  # min
   - numpydoc=1.2.0  # min
   - sphinx-prompt=1.3.0  # min
   - pip
   - pip:
     - matplotlib==3.1.2  # min
-    - scikit-image==0.14.3
+    - scikit-image==0.14.5  # min
     - seaborn
     - sphinxext-opengraph==0.4.2  # min
