@@ -323,7 +323,9 @@ def norm_diff(A, norm=2, msg=True, random_state=None):
 
 
 def scalable_frobenius_norm_discrepancy(X, U, s, V):
-    if not sp.sparse.issparse(X) or (X.size * X.dtype.itemsize < MAX_MEMORY):
+    if not sp.sparse.issparse(X) or (
+        X.shape[0] * X.shape[1] * X.dtype.itemsize < MAX_MEMORY
+    ):
         # if the input is not sparse or sparse but not too big,
         # U.dot(np.diag(s).dot(V)) will fit in RAM
         A = X - U.dot(np.diag(s).dot(V))
