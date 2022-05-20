@@ -229,7 +229,8 @@ conda_build_metadata_list = [
         ],
         # scikit-image min version (0.14.3) not available through conda-forge
         # for python 3.8. Installing matplotlib and its dependencies through
-        # pip to work-around for conda-lock issue
+        # pip to work around conda-lock issue with overlapping conda/pip
+        # dependencies:
         # https://github.com/conda-incubator/conda-lock/issues/179
         "pip_dependencies": [
             "matplotlib",
