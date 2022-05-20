@@ -3,13 +3,19 @@
 FeatureHasher and DictVectorizer Comparison
 ===========================================
 
-In this example we first compare
-:func:`~sklearn.feature_extraction.FeatureHasher` and
-:func:`~sklearn.feature_extraction.DictVectorizer` by using both to vectorize
-text documents. Then we introduce and further analyze the text specific
-vectorizers :func:`~sklearn.feature_extraction.text.HashingVectorizer`,
+In this example we illustrate text vectorization, which is the term for
+representing words, sentences, or even larger units of text as vectors.
+
+We first compare :func:`~sklearn.feature_extraction.FeatureHasher` and
+:func:`~sklearn.feature_extraction.DictVectorizer` by using both methods to
+vectorize text documents that are preprocessed (tokenized) with the help of a
+custom Python function.
+
+Later we introduce and analyze the text specific vectorizers
+:func:`~sklearn.feature_extraction.text.HashingVectorizer`,
 :func:`~sklearn.feature_extraction.text.CountVectorizer` and
-:func:`~sklearn.feature_extraction.text.TfidfVectorizer`.
+:func:`~sklearn.feature_extraction.text.TfidfVectorizer` that handle both the
+tokenization and the assembling of the feature matrix within a single class.
 
 The objective of the example is to demonstrate syntax and speed only; it doesn't
 actually do anything useful with the extracted vectors. See the example scripts
