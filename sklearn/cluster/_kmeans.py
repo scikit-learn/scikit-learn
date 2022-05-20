@@ -851,8 +851,7 @@ class _BaseKMeans(
         # tol
         self._tol = _tolerance(X, self.tol)
 
-        # init
-
+        # n-init
         # TODO(1.4): Remove
         self._n_init = self.n_init
         if self._n_init == "warn":
