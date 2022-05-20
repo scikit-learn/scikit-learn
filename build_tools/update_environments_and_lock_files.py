@@ -26,7 +26,6 @@ To run this script you need:
 - conda-lock. The version should match the one used in the CI in
   build_tools/azure/install.sh
 - pip-tools
-- jinja2
 
 """
 
