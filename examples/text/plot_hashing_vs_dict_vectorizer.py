@@ -17,11 +17,6 @@ actually do anything useful with the extracted vectors. See the example scripts
 and :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py` for actual
 learning on text documents.
 
-A discrepancy between the number of terms reported for
-:func:`~sklearn.feature_extraction.DictVectorizer` and for
-:func:`~sklearn.feature_extraction.FeatureHasher` is to be expected due to hash
-collisions.
-
 """
 
 # Author: Lars Buitinck
@@ -66,7 +61,7 @@ print(f"{len(raw_data)} documents - {data_size_mb:.3f}MB")
 import re
 
 
-def tokens(doc):
+def tokenize(doc):
     """Extract tokens from doc.
 
     This uses a simple regex that matches word characters to break strings
@@ -76,7 +71,7 @@ def tokens(doc):
     return (tok.lower() for tok in re.findall(r"\w+", doc))
 
 
-list(tokens("This is a simple example, isn't it?"))
+list(tokenize("This is a simple example, isn't it?"))
 
 # %%
 # We define an additional function that transforms a document into a frequency
@@ -92,7 +87,7 @@ def token_freqs(doc):
     """
 
     freq = defaultdict(int)
-    for tok in tokens(doc):
+    for tok in tokenize(doc):
         freq[tok] += 1
     return freq
 
@@ -129,9 +124,9 @@ print(f"Found {len(vectorizer.get_feature_names_out())} unique terms")
 # feature hashing builds a vector of pre-defined length by applying a hash
 # function `h` to the features (e.g., tokens), then using the hash values
 # directly as feature indices and updating the resulting vector at those
-# indices. Hashing functions tend to map distinct values to the same hash code
-# (hash collisions). As a result, it is impossible to determine what object
-# generated any particular hash code.
+# indices. When the feature space is not large enough, hashing functions tend to
+# map distinct values to the same hash code (hash collisions). As a result, it
+# is impossible to determine what object generated any particular hash code.
 #
 # Because of the above it is impossible to recover the original tokens from the
 # feature matrix and the best approach to estimate the number of unique terms in
@@ -152,9 +147,7 @@ def n_nonzero_columns(X):
 
 # %%
 # The default number of features for the `FeatureHasher` is 2**20. Here we set
-# `n_features = 2**18` to illustrate hash collisions. Notice that a large number
-# of features causes larger coefficient dimensions and then requires more
-# training time.
+# `n_features = 2**18` to illustrate hash collisions.
 #
 # **FeatureHasher on frequency dictionaries**
 
@@ -172,11 +165,37 @@ print(f"done in {duration:.3f}s at {data_size_mb / duration:.3f}MB/s")
 print(f"Found {n_nonzero_columns(X)} unique tokens")
 
 # %%
+# The number of unique tokens when using the `FeatureHasher` is lower than those
+# obtained using the `DictVectorizer`. This is due to hash collisions.
+#
+# The number of collisions can be reduced by increasing the feature space.
+# Notice that the speed of the vectorizer does not change significantly when
+# setting a large number of features, though it causes larger coefficient
+# dimensions and then requires more memory usage to store them, even if a
+# majority of them is inactive.
+
+t0 = time()
+hasher = FeatureHasher(n_features=2**22)
+X = hasher.transform(token_freqs(d) for d in raw_data)
+duration = time() - t0
+
+print(f"done in {duration:.3f}s at {data_size_mb / duration:.3f}MB/s")
+print(f"Found {n_nonzero_columns(X)} unique tokens")
+
+# %%
+# We confirm that the number of unique tokens gets closer to the number of
+# unique terms found by the `DictVectorizer`.
+#
 # **FeatureHasher on raw tokens**
+#
+# Alternatively, one can set `input_type="string"` in the `FeatureHasher` to
+# vectorize the strings output directly from the customized `tokenize` function.
+# This is equivalent to passing a dictionary with an implied frequency of 1 for
+# each feature name.
 
 t0 = time()
 hasher = FeatureHasher(n_features=2**18, input_type="string")
-X = hasher.transform(tokens(d) for d in raw_data)
+X = hasher.transform(tokenize(d) for d in raw_data)
 duration = time() - t0
 dict_count_vectorizers["vectorizer"].append(
     hasher.__class__.__name__ + "\non raw tokens"
@@ -186,9 +205,6 @@ print(f"done in {duration:.3f}s at {data_size_mb / duration:.3f}MB/s")
 print(f"Found {n_nonzero_columns(X)} unique tokens")
 
 # %%
-# The number of unique tokens when using the `FeatureHasher` is lower than those
-# obtained using the `DictVectorizer`. This is due to hash collisions.
-#
 # We now plot the speed of the above methods for vectorizing.
 
 import matplotlib.pyplot as plt
@@ -293,3 +309,9 @@ _ = ax.set_xlabel("speed (MB/s)")
 # `n_features = 2**18`, the `HashingVectorizer` performs much faster than the
 # `CountVectorizer`. Keep in mind that this may cause hash collisions and no
 # inverse transform can be used to recover the original dictionary.
+#
+# We highlight that `CountVectorizer` and `HashingVectorizer` are more efficient
+# than using their equivalent `DictVectorizer` and `FeatureHasher` on manually
+# tokenized documents. The reason is that the internal tokenization step of the
+# formers compiles a regular expression once and then reuses it for all the
+# documents.
