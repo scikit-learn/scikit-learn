@@ -8,6 +8,7 @@ jobs:
       - OMP_NUM_THREADS: 2
       - MKL_NUM_THREADS: 2
       - CONDA_ENV_NAME: testenv
+      - LOCK_FILE: build_tools/circle/doc_min_dependencies_linux-64_conda.lock
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
@@ -41,6 +42,7 @@ jobs:
       - OMP_NUM_THREADS: 2
       - MKL_NUM_THREADS: 2
       - CONDA_ENV_NAME: testenv
+      - LOCK_FILE: build_tools/circle/doc_linux-64_conda.lock
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
