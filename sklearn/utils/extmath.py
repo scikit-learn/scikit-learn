@@ -216,6 +216,9 @@ def randomized_range_finder(
 
     # Generating normal random vectors with shape: (A.shape[1], size)
     Q = random_state.normal(size=(A.shape[1], size))
+    if hasattr(A, "dtype") and A.dtype.kind == "f":
+        # Ensure f32 is preserved as f32
+        Q = Q.astype(A.dtype, copy=False)
 
     # Deal with "auto" mode
     if power_iteration_normalizer == "auto":
@@ -240,10 +243,6 @@ def randomized_range_finder(
     # Sample the range of A using by linear projection of Q
     # Extract an orthonormal basis
     Q, _ = linalg.qr(safe_sparse_dot(A, Q), mode="economic")
-
-    if hasattr(A, "dtype") and A.dtype.kind == "f":
-        # Ensure f32 is preserved as f32
-        Q = Q.astype(A.dtype, copy=False)
 
     return Q
 
