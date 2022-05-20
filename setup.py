@@ -274,7 +274,6 @@ def setup_package():
         cmdclass=cmdclass,
         python_requires=python_requires,
         install_requires=min_deps.tag_to_packages["install"],
-        packages=["sklearn"],
         package_data={"": ["*.pxd"]},
         **extra_setuptools_args,
     )
@@ -291,6 +290,7 @@ def setup_package():
         from setuptools import setup
 
         metadata["version"] = VERSION
+        metadata["packages"] = ["sklearn"]
     else:
         if sys.version_info < required_python_version:
             required_version = "%d.%d" % required_python_version
