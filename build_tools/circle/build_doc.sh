@@ -155,7 +155,7 @@ export CCACHE_COMPRESS=1
 
 # pin conda-lock to latest released version (needs manual update from time to time)
 mamba install conda-lock==1.0.5 -y
-conda-lock install --name $VIRTUALENV $LOCK_FILE
+conda-lock install --name $CONDA_ENV_NAME $LOCK_FILE
 source activate $CONDA_ENV_NAME
 
 mamba list
