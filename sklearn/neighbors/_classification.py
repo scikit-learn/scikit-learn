@@ -135,8 +135,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
 
        Regarding the Nearest Neighbors algorithms, if it is found that two
        neighbors, neighbor `k+1` and `k`, have identical distances
-       but different labels, the results will depend on the ordering of the
-       training data.
+       but different labels, the smallest label will be returned.
 
     https://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
 
