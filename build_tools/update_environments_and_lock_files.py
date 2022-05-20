@@ -212,6 +212,66 @@ conda_build_metadata_list = [
         "package_constraints": {"python": "3.8", "blas": "[build=mkl]"},
     },
     {
+        "build_name": "doc_min_dependencies",
+        "folder": "build_tools/circle",
+        "platform": "linux-64",
+        "channel": "conda-forge",
+        "conda_dependencies": remove_from(
+            common_dependencies_without_coverage, ["matplotlib"]
+        )
+        + [
+            "memory_profiler",
+            "compilers",
+            "sphinx",
+            "numpydoc",
+            "sphinx-prompt",
+        ],
+        # scikit-image min version (0.14.3) not available through conda-forge
+        # for python 3.8. Installing matplotlib and its dependencies through
+        # pip to work-around for conda-lock issue
+        # https://github.com/conda-incubator/conda-lock/issues/179
+        "pip_dependencies": [
+            "matplotlib",
+            "scikit-image",
+            "seaborn",
+            "sphinxext-opengraph",
+        ],
+        "package_constraints": {
+            "python": "3.8",
+            "numpy": "min",
+            "scipy": "min",
+            "matplotlib": "min",
+            "cython": "min",
+            "scikit-image": "min",
+            "sphinx": "min",
+            "pandas": "min",
+            "sphinx-gallery": "min",
+            "numpydoc": "min",
+            "sphinx-prompt": "min",
+            "sphinxext-opengraph": "min",
+        },
+    },
+    {
+        "build_name": "doc",
+        "folder": "build_tools/circle",
+        "platform": "linux-64",
+        "channel": "conda-forge",
+        "conda_dependencies": common_dependencies_without_coverage
+        + [
+            "scikit-image",
+            "seaborn",
+            "memory_profiler",
+            "compilers",
+            "sphinx",
+            "numpydoc",
+            "sphinx-prompt",
+        ],
+        "pip_dependencies": ["sphinxext-opengraph"],
+        "package_constraints": {
+            "python": "3.9",
+        },
+    },
+    {
         "build_name": "py39_conda_forge",
         "folder": "build_tools/circle",
         "platform": "linux-aarch64",
