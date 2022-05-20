@@ -46,6 +46,9 @@ dependent_packages = {
     "Pillow": ("7.1.2", "docs"),
     "sphinx-prompt": ("1.3.0", "docs"),
     "sphinxext-opengraph": ("0.4.2", "docs"),
+    # XXX: Pin conda-lock to the latest released version (needs manual update
+    # from time to time)
+    "conda-lock": ("1.0.5", "maintenance"),
 }
 
 
