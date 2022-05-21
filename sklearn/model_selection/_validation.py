@@ -767,10 +767,8 @@ def _score(estimator, X_test, y_test, scorer, error_score="raise"):
             scores = scorer(estimator, X_test, y_test)
     except Exception:
         if isinstance(scorer, _MultimetricScorer):
-            assert error_score == "raise", (
-                "If `_MultimetricScorer` raises exception, the `error_score`"
-                " parameter should be equal to 'raise'."
-            )
+            # If `_MultimetricScorer` raises exception, the `error_score`
+            # parameter is equal to "raise".
             raise
         else:
             if error_score == "raise":
@@ -790,10 +788,7 @@ def _score(estimator, X_test, y_test, scorer, error_score="raise"):
             (name, str_e) for name, str_e in scores.items() if isinstance(str_e, str)
         ]
         if exception_messages:
-            assert error_score != "raise", (
-                "`error_score` == 'raise', but the exception is not raised in"
-                " `_MultimetricScorer`."
-            )
+            # error_score != "raise"
             for name, str_e in exception_messages:
                 scores[name] = error_score
                 warnings.warn(
