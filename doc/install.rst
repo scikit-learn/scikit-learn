@@ -192,7 +192,7 @@ Alpine Linux
 ------------
 
 Alpine Linux's package is provided through the `official repositories
-<https://pkgs.alpinelinux.org/packages?name=py3-scikit-learn>`_ as
+<https://pkgs.alpinelinux.org/packages?name=py3-scikit-learn>`__ as
 ``py3-scikit-learn`` for Python.
 It can be installed by typing the following command:
 
