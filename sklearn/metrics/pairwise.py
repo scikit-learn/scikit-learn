@@ -1862,7 +1862,7 @@ def pairwise_distances(
     valid scipy.spatial.distance metrics), the scikit-learn implementation
     will be used, which is faster and has support for sparse matrices (except
     for 'cityblock'). For a verbose description of the metrics from
-    scikit-learn, see the __doc__ of the sklearn.pairwise.distance_metrics
+    scikit-learn, see :func:`sklearn.metrics.pairwise.distance_metrics`
     function.
 
     Read more in the :ref:`User Guide <metrics>`.
