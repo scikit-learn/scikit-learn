@@ -269,13 +269,64 @@ def _tolerance(X, tol):
 
 class KMeansCythonEngine:
     """Cython-based implementation of the core k-means routines
-    
+
     This implementation is meant to be swappable by alternative implementations
     in third-party packages via the sklearn_engines entry-point and the
     `engine_provider` kwarg of `sklearn.config_context`.
 
     TODO: see URL for more details.
     """
+
+    def _prepare_fit(self, estimator, X, y=None, sample_weight=None):
+        engine_fit_context = {}
+        X = estimator._validate_data(
+            X,
+            accept_sparse="csr",
+            dtype=[np.float64, np.float32],
+            order="C",
+            copy=estimator.copy_x,
+            accept_large_sparse=False,
+        )
+        # TODO: delegate rng and sample weight checks to engine
+        random_state = check_random_state(estimator.random_state)
+        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+        self._n_threads = _openmp_effective_n_threads()
+
+        # Validate init array
+        init = estimator.init
+        init_is_array_like = _is_arraylike_not_scalar(init)
+        if init_is_array_like:
+            init = check_array(init, dtype=X.dtype, copy=True, order="C")
+            estimator._validate_center_shape(X, init)
+
+        # subtract of mean of x for more accurate distance computations
+        if not sp.issparse(X):
+            X_mean = X.mean(axis=0)
+            # The copy was already done above
+            X -= X_mean
+
+            if init_is_array_like:
+                init -= X_mean
+
+        # precompute squared norms of data points
+        x_squared_norms = row_norms(X, squared=True)
+
+        if estimator._algorithm == "elkan":
+            kmeans_single = _kmeans_single_elkan
+        else:
+            kmeans_single = _kmeans_single_lloyd
+            estimator._check_mkl_vcomp(X, X.shape[0])
+
+        engine_fit_context = {
+            "x_squared_norms": x_squared_norms,
+            "kmeans_single_func": kmeans_single,
+            "random_state": random_state,
+        }
+        return X, init, engine_fit_context
+
+    def _init_centroids(self, estimator, *args, **kwargs):
+        # XXX: this implementation should be part of the engine.
+        return estimator._init_centroids(*args, **kwargs)
 
 
 def k_means(
@@ -1376,53 +1427,20 @@ class KMeans(_BaseKMeans):
         self._validate_params()
         engine_class = get_engine_class("kmeans", default=KMeansCythonEngine)
         engine = engine_class(self)
-        X = self._validate_data(
+        X, y, sample_weight, engine_fit_ctx = engine._prepare_fit(
+            self,
             X,
-            accept_sparse="csr",
-            dtype=[np.float64, np.float32],
-            order="C",
-            copy=self.copy_x,
-            accept_large_sparse=False,
+            y=y,
+            sample_weight=sample_weight,
         )
 
         self._check_params_vs_input(X)
-
-        random_state = check_random_state(self.random_state)
-        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
-        self._n_threads = _openmp_effective_n_threads()
-
-        # Validate init array
-        init = self.init
-        init_is_array_like = _is_arraylike_not_scalar(init)
-        if init_is_array_like:
-            init = check_array(init, dtype=X.dtype, copy=True, order="C")
-            self._validate_center_shape(X, init)
-
-        # subtract of mean of x for more accurate distance computations
-        if not sp.issparse(X):
-            X_mean = X.mean(axis=0)
-            # The copy was already done above
-            X -= X_mean
-
-            if init_is_array_like:
-                init -= X_mean
-
-        # precompute squared norms of data points
-        x_squared_norms = row_norms(X, squared=True)
-
-        if self._algorithm == "elkan":
-            kmeans_single = _kmeans_single_elkan
-        else:
-            kmeans_single = _kmeans_single_lloyd
-            self._check_mkl_vcomp(X, X.shape[0])
 
         best_inertia, best_labels = None, None
 
         for i in range(self._n_init):
             # Initialize centers
-            centers_init = self._init_centroids(
-                X, x_squared_norms=x_squared_norms, init=init, random_state=random_state
-            )
+            centers_init = engine._init_centroids(X, **engine_fit_ctx)
             if self.verbose:
                 print("Initialization complete")
 
