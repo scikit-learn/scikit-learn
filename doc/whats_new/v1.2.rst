@@ -86,13 +86,6 @@ Changelog
   matrices in a variety of estimators and avoid an `EfficiencyWarning`.
   :pr:`23139` by `Tom Dupre la Tour`_.
 
-:mod:`sklearn.preprocessing`
-............................
-
-- |Fix| :class:`preprocessing.PolynomialFeatures` with ``degree`` equal to 0 will raise
-  error when ``include_bias`` is set to False, and outputs a single constant array when
-  ``include_bias`` is set to True. :pr:`23370` by :user:`Zhehao Liu <MaxwellLZH>`.
-
 :mod:`sklearn.tree`
 ...................
 
