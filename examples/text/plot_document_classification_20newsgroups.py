@@ -362,8 +362,8 @@ for clf, name in (
     ),
     # NearestCentroid (aka Rocchio classifier)
     (NearestCentroid(), "NearestCentroid"),
-    # Sparse Naive Bayes classifier
-    (ComplementNB(alpha=0.1), "Complement Naive Bayes"),
+    # Sparse naive Bayes classifier
+    (ComplementNB(alpha=0.1), "Complement naive Bayes"),
 ):
     print("=" * 80)
     print(name)
@@ -405,7 +405,7 @@ for i, txt in enumerate(clf_names):
     ax2.annotate(txt, (score[i], test_time[i]))
 
 # %%
-# The Naive Bayes model has the best trade-off between score and
+# The naive Bayes model has the best trade-off between score and
 # training/testing time, while Random Forest is both slow to train, expensive to
 # predict and has a comparatively bad accuracy. This is expected: for
 # high-dimensional prediction problems, linear models are often better suited as
