@@ -1512,7 +1512,7 @@ see also :class:`~sklearn.metrics.mean_pinball_loss`,
     \begin{cases}
         q t, & t > 0, \\
         0,    & t = 0, \\
-        (1-q) t, & t < 0
+        (q-1) t, & t < 0
     \end{cases}
 
 and the L1 penalty controlled by parameter ``alpha``, similar to
