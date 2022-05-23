@@ -53,24 +53,11 @@ necessary to get a good convergence.
 #         Lars Buitinck
 # License: BSD 3 clause
 
-from sklearn.datasets import fetch_20newsgroups
-from sklearn.decomposition import TruncatedSVD
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.feature_extraction.text import HashingVectorizer
-from sklearn.feature_extraction.text import TfidfTransformer
-from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import Normalizer
-from sklearn import metrics
-
-from sklearn.cluster import KMeans, MiniBatchKMeans
+# %%
 
 import logging
 from optparse import OptionParser
 import sys
-from time import time
-
-import numpy as np
-
 
 # Display progress logs on stdout
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -117,8 +104,6 @@ op.add_option(
     help="Print progress reports inside k-means algorithm.",
 )
 
-print(__doc__)
-
 
 def is_interactive():
     return not hasattr(sys.modules["__main__"], "__file__")
@@ -140,6 +125,8 @@ if len(args) > 0:
 # Load some categories from the training set
 # ------------------------------------------
 
+from sklearn.datasets import fetch_20newsgroups
+
 categories = [
     "alt.atheism",
     "talk.religion.misc",
@@ -156,14 +143,21 @@ dataset = fetch_20newsgroups(
     subset="all", categories=categories, shuffle=True, random_state=42
 )
 
-print("%d documents" % len(dataset.data))
-print("%d categories" % len(dataset.target_names))
-print()
+print(f"{len(dataset.data)} documents - {len(dataset.target_names)} categories")
 
 
 # %%
 # Feature Extraction
 # ------------------
+
+import numpy as np
+from sklearn.decomposition import TruncatedSVD
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_extraction.text import HashingVectorizer
+from sklearn.feature_extraction.text import TfidfTransformer
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import Normalizer
+from time import time
 
 labels = dataset.target
 true_k = np.unique(labels).shape[0]
@@ -226,6 +220,8 @@ if opts.n_components:
 # Clustering
 # ----------
 
+from sklearn.cluster import KMeans, MiniBatchKMeans
+
 if opts.minibatch:
     km = MiniBatchKMeans(
         n_clusters=true_k,
@@ -254,6 +250,8 @@ print()
 # %%
 # Performance metrics
 # -------------------
+
+from sklearn import metrics
 
 print("Homogeneity: %0.3f" % metrics.homogeneity_score(labels, km.labels_))
 print("Completeness: %0.3f" % metrics.completeness_score(labels, km.labels_))
