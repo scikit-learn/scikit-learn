@@ -1405,11 +1405,8 @@ def test_n_support(Klass):
     X = np.array([[0], [0.44], [0.45], [0.46], [1]])
     y = np.arange(X.shape[0])
     est = Klass()
-    fit_data = {"X": X}
-    if Klass.__name__ != "OneClassSVM":
-        fit_data.update({"y": y})
     assert not hasattr(est, "n_support_")
-    est.fit(**fit_data)
+    est.fit(X, y)
     assert est.n_support_[0] == est.support_vectors_.shape[0]
     assert est.n_support_.size == 1
 
