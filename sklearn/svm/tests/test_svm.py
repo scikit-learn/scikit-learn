@@ -1502,12 +1502,14 @@ def test_n_iter_libsvm(estimator, expected_n_iter_type, dataset):
 
 # TODO(1.4): Remove
 @pytest.mark.parametrize("Klass", [SVR, NuSVR, OneClassSVM])
-def test_libsvm_nclass_attrs_deprecated(Klass):
+def test_svm_class_weights_deprecation(Klass):
     clf = Klass()
     with warnings.catch_warnings():
         warnings.simplefilter("error", FutureWarning)
         clf.fit(X, Y)
-    attr = "class_weight_"
-    msg = f"Attribute `{attr}` was deprecated in version 1.2 and will be removed in 1.4"
+    msg = (
+        "Attribute `class_weight_` was deprecated in version 1.2 and will be removed"
+        " in 1.4"
+    )
     with pytest.warns(FutureWarning, match=re.escape(msg)):
-        getattr(clf, attr)
+        getattr(clf, "class_weight_")
