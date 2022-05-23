@@ -23,7 +23,7 @@ import warnings
 from functools import partial
 
 import numpy as np
-from scipy.sparse import csr_matrix
+from scipy.sparse import csr_matrix, issparse
 from scipy.stats import rankdata
 
 from ..utils import assert_all_finite
@@ -36,6 +36,7 @@ from ..utils.sparsefuncs import count_nonzero
 from ..exceptions import UndefinedMetricWarning
 from ..preprocessing import label_binarize
 from ..utils._encode import _encode, _unique
+
 
 from ._base import (
     _average_binary_score,
@@ -1070,18 +1071,19 @@ def label_ranking_average_precision_score(y_true, y_score, *, sample_weight=None
 
     """
     check_consistent_length(y_true, y_score, sample_weight)
-    y_true = check_array(y_true, ensure_2d=False)
+    y_true = check_array(y_true, ensure_2d=False, accept_sparse="csr")
     y_score = check_array(y_score, ensure_2d=False)
 
     if y_true.shape != y_score.shape:
         raise ValueError("y_true and y_score have different shape")
 
     # Handle badly formatted array and the degenerate case with one label
-    y_type = type_of_target(y_true, input_name="y_true")
-    if y_type != "multilabel-indicator" and not (
-        y_type == "binary" and y_true.ndim == 2
-    ):
-        raise ValueError("{0} format is not supported".format(y_type))
+    if not issparse(y_true):
+        y_type = type_of_target(y_true, input_name="y_true")
+        if y_type != "multilabel-indicator" and not (
+            y_type == "binary" and y_true.ndim == 2
+        ):
+            raise ValueError("{0} format is not supported".format(y_type))
 
     y_true = csr_matrix(y_true)
     y_score = -y_score

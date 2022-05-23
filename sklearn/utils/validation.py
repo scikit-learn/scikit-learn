@@ -812,8 +812,8 @@ def check_array(
     if sp.issparse(array):
         _ensure_no_complex_data(array)
 
-        if accept_sparse is False:
-            accept_sparse = ["csr", "csc"]
+        # if accept_sparse is False:
+        #     accept_sparse = ["csr", "csc"]
 
         array = _ensure_sparse_format(
             array,
