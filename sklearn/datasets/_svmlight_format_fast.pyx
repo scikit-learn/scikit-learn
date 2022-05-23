@@ -197,7 +197,7 @@ def _dump_svmlight_file_dense(int_or_float1[:,:] X, int_or_float2[:,:] y, f, bin
 
         f.write((line_pattern % feat).encode("ascii"))
 
-cdef inline str get_row_string(int_or_float1[:,:] X, Py_ssize_t row, str value_pattern, bint one_based):
+def get_row_string(int_or_float1[:,:] X, Py_ssize_t row, str value_pattern, bint one_based):
     cdef:
         Py_ssize_t row_length = X.shape[1]
         array.array[long long] int_template = array.array('q',[])
