@@ -9,7 +9,7 @@ dependencies:
   - pip
   - pip:
     - threadpoolctl
-    - pytest==6.2.5
+    - pytest
     - pytest-xdist
     - codecov
     - pytest-cov
