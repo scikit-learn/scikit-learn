@@ -140,7 +140,11 @@ print("Loading 20 newsgroups dataset for categories:")
 print(categories)
 
 dataset = fetch_20newsgroups(
-    subset="all", categories=categories, shuffle=True, random_state=42
+    remove=("headers", "footers", "quotes"),
+    subset="all",
+    categories=categories,
+    shuffle=True,
+    random_state=42,
 )
 
 print(f"{len(dataset.data)} documents - {len(dataset.target_names)} categories")
@@ -149,6 +153,7 @@ print(f"{len(dataset.data)} documents - {len(dataset.target_names)} categories")
 # %%
 # Feature Extraction
 # ------------------
+# Extracting features from the training dataset using a sparse vectorizer
 
 import numpy as np
 from sklearn.decomposition import TruncatedSVD
@@ -162,13 +167,14 @@ from time import time
 labels = dataset.target
 true_k = np.unique(labels).shape[0]
 
-print("Extracting features from the training dataset using a sparse vectorizer")
+# Use hashing with idf
+
 t0 = time()
-if opts.use_hashing:
-    if opts.use_idf:
+if True:
+    if True:
         # Perform an IDF normalization on the output of HashingVectorizer
         hasher = HashingVectorizer(
-            n_features=opts.n_features,
+            # n_features=opts.n_features,
             stop_words="english",
             alternate_sign=False,
             norm=None,
@@ -195,12 +201,12 @@ print("done in %fs" % (time() - t0))
 print("n_samples: %d, n_features: %d" % X.shape)
 print()
 
-if opts.n_components:
+if True:
     print("Performing dimensionality reduction using LSA")
     t0 = time()
     # Since LSA/SVD results are not normalized,
     # we redo the normalization to improve the k-means result.
-    svd = TruncatedSVD(opts.n_components)
+    svd = TruncatedSVD(n_components=100)
     normalizer = Normalizer(copy=False)
     lsa = make_pipeline(svd, normalizer)
 
@@ -215,6 +221,59 @@ if opts.n_components:
 
     print()
 
+# %%
+# Use TfidfVectorizer
+
+t0 = time()
+if False:
+    if True:
+        # Perform an IDF normalization on the output of HashingVectorizer
+        hasher = HashingVectorizer(
+            # n_features=opts.n_features,
+            stop_words="english",
+            alternate_sign=False,
+            norm=None,
+        )
+        vectorizer = make_pipeline(hasher, TfidfTransformer())
+    else:
+        vectorizer = HashingVectorizer(
+            n_features=opts.n_features,
+            stop_words="english",
+            alternate_sign=False,
+            norm="l2",
+        )
+else:
+    vectorizer = TfidfVectorizer(
+        max_df=0.5,
+        # max_features=opts.n_features,
+        min_df=2,
+        stop_words="english",
+    )
+X = vectorizer.fit_transform(dataset.data)
+
+print("done in %fs" % (time() - t0))
+print("n_samples: %d, n_features: %d" % X.shape)
+print()
+
+if True:
+    print("Performing dimensionality reduction using LSA")
+    t0 = time()
+    # Since LSA/SVD results are not normalized,
+    # we redo the normalization to improve the k-means result.
+    svd = TruncatedSVD(n_components=100)
+    normalizer = Normalizer(copy=False)
+    lsa = make_pipeline(svd, normalizer)
+
+    X = lsa.fit_transform(X)
+
+    print("done in %fs" % (time() - t0))
+
+    explained_variance = svd.explained_variance_ratio_.sum()
+    print(
+        "Explained variance of the SVD step: {}%".format(int(explained_variance * 100))
+    )
+
+    print()
 
 # %%
 # Clustering
