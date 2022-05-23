@@ -216,10 +216,10 @@ conda_build_metadata_list = [
         "folder": "build_tools/circle",
         "platform": "linux-64",
         "channel": "conda-forge",
-        "conda_dependencies": remove_from(
-            common_dependencies_without_coverage, ["matplotlib"]
-        )
+        "conda_dependencies": common_dependencies_without_coverage
         + [
+            "scikit-image",
+            "seaborn",
             "memory_profiler",
             "compilers",
             "sphinx",
@@ -227,17 +227,7 @@ conda_build_metadata_list = [
             "numpydoc",
             "sphinx-prompt",
         ],
-        # scikit-image min version (0.14.3) not available through conda-forge
-        # for python 3.8. Installing matplotlib and its dependencies through
-        # pip to work around conda-lock issue with overlapping conda/pip
-        # dependencies:
-        # https://github.com/conda-incubator/conda-lock/issues/179
-        "pip_dependencies": [
-            "matplotlib",
-            "scikit-image",
-            "seaborn",
-            "sphinxext-opengraph",
-        ],
+        "pip_dependencies": ["sphinxext-opengraph"],
         "package_constraints": {
             "python": "3.8",
             "numpy": "min",
