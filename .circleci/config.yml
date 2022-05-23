@@ -116,18 +116,10 @@ jobs:
       image: ubuntu-2004:202101-01
     resource_class: arm.medium
     environment:
-      # Use the latest supported version of python
-      - PYTHON_VERSION: '3.9'
       - OMP_NUM_THREADS: 2
       - OPENBLAS_NUM_THREADS: 2
-      - NUMPY_VERSION: 'latest'
-      - SCIPY_VERSION: 'latest'
-      - CYTHON_VERSION: 'latest'
-      - JOBLIB_VERSION: 'latest'
-      - THREADPOOLCTL_VERSION: 'latest'
-      - PYTEST_VERSION: 'latest'
-      - PYTEST_XDIST_VERSION: 'latest'
-      - TEST_DOCSTRINGS: 'true'
+      - CONDA_ENV_NAME: testenv
+      - LOCK_FILE: build_tools/circle/py39_conda_forge_linux-aarch64_conda.lock
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
