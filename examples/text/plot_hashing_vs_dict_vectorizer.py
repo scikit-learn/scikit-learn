@@ -4,7 +4,7 @@ FeatureHasher and DictVectorizer Comparison
 ===========================================
 
 In this example we illustrate text vectorization, which is the term for
-representing non-numerical input data, such as dictionaries or text documents
+representing non-numerical input data (such as dictionaries or text documents)
 as vectors of real numbers.
 
 We first compare :func:`~sklearn.feature_extraction.FeatureHasher` and
