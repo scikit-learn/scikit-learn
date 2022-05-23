@@ -105,9 +105,9 @@ token_freqs("That is one example, but this is another one")
 # %%
 # Observe in particular that the repeated token "is" is counted twice for instance.
 #
-# Breaking a text document into word tokens, potentially loosing the order
-# information between the words in a sentence is often called a
-# [Bag of Words](https://en.wikipedia.org/wiki/Bag-of-words_model) representation.
+# Breaking a text document into word tokens, potentially losing the order
+# information between the words in a sentence is often called a [Bag of
+# Words](https://en.wikipedia.org/wiki/Bag-of-words_model) representation.
 
 # %%
 # DictVectorizer
@@ -134,8 +134,10 @@ print(f"done in {duration:.3f}s at {data_size_mb / duration:.3f}MB/s")
 print(f"Found {len(vectorizer.get_feature_names_out())} unique terms")
 
 # %%
-# The actual mapping from text to token to column index is explicitly stored in the
-# `.vocabulary_` attribute which is a potentially very large Python dictionary:
+# The actual mapping from text to token to column index is explicitly stored in
+# the `.vocabulary_` attribute which is a potentially very large Python
+# dictionary:
+
 type(vectorizer.vocabulary_)
 
 # %%
@@ -143,6 +145,7 @@ len(vectorizer.vocabulary_)
 
 # %%
 vectorizer.vocabulary_["example"]
+
 # %%
 # FeatureHasher
 # -------------
@@ -257,10 +260,11 @@ _ = ax.set_xlabel("speed (MB/s)")
 # the transformation, which in turn makes the interpretation of a model a more
 # complex task.
 #
-# The `FeatureHeasher` with `input_type="string"` is slightly faster than
-# the variant that works on frequency dict because it does not count repeated
-# tokens: each token is implicitly counted once, even it was repeated. Depending
-# on the downstream machine learning task, it can be a limitation or not.
+# The `FeatureHeasher` with `input_type="string"` is slightly faster than the
+# variant that works on frequency dict because it does not count repeated
+# tokens: each token is implicitly counted once, even if it was repeated.
+# Depending on the downstream machine learning task, it can be a limitation or
+# not.
 #
 # Comparison with special purpose text vectorizers
 # ------------------------------------------------
@@ -289,8 +293,9 @@ print(f"Found {len(vectorizer.get_feature_names_out())} unique terms")
 # implementation is approximately twice as fast as using the
 # :func:`~sklearn.feature_extraction.DictVectorizer` along with the simple
 # function we defined for mapping the tokens. The reason is that
-# :func:`~sklearn.feature_extraction.text.CountVectorizer` produces a sparse
-# representation of the counts using `scipy.sparse.csr_matrix`.
+# :func:`~sklearn.feature_extraction.text.CountVectorizer` is optimized by
+# reusing a compiled regular expression for the full training set instead of
+# creating one per document as done in our naive tokenize function.
 #
 # Now we make a similar experiment with the
 # :func:`~sklearn.feature_extraction.text.HashingVectorizer`, which is
@@ -310,9 +315,9 @@ dict_count_vectorizers["speed"].append(data_size_mb / duration)
 print(f"done in {duration:.3f}s at {data_size_mb / duration:.3f}MB/s")
 
 # %%
-# We can observe that this is the fastest text tokenization strategy
-# so far, assuming the that the downstream machine learning task can
-# tolerate a few collisions.
+# We can observe that this is the fastest text tokenization strategy so far,
+# assuming the that the downstream machine learning task can tolerate a few
+# collisions.
 # %%
 # TfidfVectorizer
 # ---------------
@@ -346,8 +351,9 @@ print(f"done in {duration:.3f}s at {data_size_mb / duration:.3f}MB/s")
 print(f"Found {len(vectorizer.get_feature_names_out())} unique terms")
 
 # %%
-# Let's conclude this notebook by summarizing all the recorded processing
-# speeds in a single plot:
+# Let's conclude this notebook by summarizing all the recorded processing speeds
+# in a single plot:
+
 fig, ax = plt.subplots(figsize=(12, 6))
 
 y_pos = np.arange(len(dict_count_vectorizers["vectorizer"]))
