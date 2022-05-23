@@ -6,6 +6,9 @@ set -x
 UNAMESTR=`uname`
 N_CORES=`nproc --all`
 
+# defines the get_dep and show_installed_libraries functions
+source build_tools/shared.sh
+
 setup_ccache() {
     echo "Setting up ccache"
     mkdir /tmp/ccache/
@@ -28,8 +31,7 @@ chmod +x mambaforge.sh && ./mambaforge.sh -b -p $MINICONDA_PATH
 export PATH=$MINICONDA_PATH/bin:$PATH
 mamba init --all --verbose
 mamba update --yes conda
-# TODO Update conda-lock version from time to time
-mamba install conda-lock=1.0.5 -y
+mamba install "$(get_dep conda-lock min)" -y
 conda-lock install --name $CONDA_ENV_NAME $LOCK_FILE
 source activate $CONDA_ENV_NAME
 
