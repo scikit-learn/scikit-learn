@@ -107,7 +107,7 @@ enable_spectral_norm = False
 
 # Determine when to switch to batch computation for matrix norms,
 # in case the reconstructed (dense) matrix is too large
-MAX_MEMORY = int(2e9)
+MAX_MEMORY = int(4e9)
 
 # The following datasets can be downloaded manually from:
 # CIFAR 10: https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz
@@ -323,8 +323,11 @@ def norm_diff(A, norm=2, msg=True, random_state=None):
 
 
 def scalable_frobenius_norm_discrepancy(X, U, s, V):
-    # if the input is not too big, just call scipy
-    if X.shape[0] * X.shape[1] < MAX_MEMORY:
+    if not sp.sparse.issparse(X) or (
+        X.shape[0] * X.shape[1] * X.dtype.itemsize < MAX_MEMORY
+    ):
+        # if the input is not sparse or sparse but not too big,
+        # U.dot(np.diag(s).dot(V)) will fit in RAM
         A = X - U.dot(np.diag(s).dot(V))
         return norm_diff(A, norm="fro")
 
@@ -498,7 +501,7 @@ def bench_c(datasets, n_comps):
 if __name__ == "__main__":
     random_state = check_random_state(1234)
 
-    power_iter = np.linspace(0, 6, 7, dtype=int)
+    power_iter = np.arange(0, 6)
     n_comps = 50
 
     for dataset_name in datasets:
