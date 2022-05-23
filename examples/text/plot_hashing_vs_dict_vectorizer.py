@@ -4,7 +4,8 @@ FeatureHasher and DictVectorizer Comparison
 ===========================================
 
 In this example we illustrate text vectorization, which is the term for
-representing units of text (words, sentences, etc.) as vectors of real numbers.
+representing non-numerical input data, such as dictionaries or text documents
+as vectors of real numbers.
 
 We first compare :func:`~sklearn.feature_extraction.FeatureHasher` and
 :func:`~sklearn.feature_extraction.DictVectorizer` by using both methods to
@@ -102,6 +103,13 @@ def token_freqs(doc):
 token_freqs("That is one example, but this is another one")
 
 # %%
+# Observe in particular that the repeated token "is" is counted twice for instance.
+#
+# Breaking a text document into word tokens, potentially loosing the order
+# information between the words in a sentence is often called a
+# [Bag of Words](https://en.wikipedia.org/wiki/Bag-of-words_model) representation.
+
+# %%
 # DictVectorizer
 # --------------
 #
@@ -118,11 +126,23 @@ t0 = time()
 vectorizer = DictVectorizer()
 vectorizer.fit_transform(token_freqs(d) for d in raw_data)
 duration = time() - t0
-dict_count_vectorizers["vectorizer"].append(vectorizer.__class__.__name__)
+dict_count_vectorizers["vectorizer"].append(
+    vectorizer.__class__.__name__ + "\non freq dicts"
+)
 dict_count_vectorizers["speed"].append(data_size_mb / duration)
 print(f"done in {duration:.3f}s at {data_size_mb / duration:.3f}MB/s")
 print(f"Found {len(vectorizer.get_feature_names_out())} unique terms")
 
+# %%
+# The actual mapping from text to token to column index is explicitly stored in the
+# `.vocabulary_` attribute which is a potentially very large Python dictionary:
+type(vectorizer.vocabulary_)
+
+# %%
+len(vectorizer.vocabulary_)
+
+# %%
+vectorizer.vocabulary_["example"]
 # %%
 # FeatureHasher
 # -------------
@@ -139,7 +159,7 @@ print(f"Found {len(vectorizer.get_feature_names_out())} unique terms")
 # Because of the above it is impossible to recover the original tokens from the
 # feature matrix and the best approach to estimate the number of unique terms in
 # the original dictionary is to count the number of active columns in the
-# encoded feature matrix. For such purpose we define the following function:
+# encoded feature matrix. For such a purpose we define the following function:
 
 import numpy as np
 
@@ -237,6 +257,11 @@ _ = ax.set_xlabel("speed (MB/s)")
 # the transformation, which in turn makes the interpretation of a model a more
 # complex task.
 #
+# The `FeatureHeasher` with `input_type="string"` is slightly faster than
+# the variant that works on frequency dict because it does not count repeated
+# tokens: each token is implicitly counted once, even it was repeated. Depending
+# on the downstream machine learning task, it can be a limitation or not.
+#
 # Comparison with special purpose text vectorizers
 # ------------------------------------------------
 #
@@ -285,6 +310,10 @@ dict_count_vectorizers["speed"].append(data_size_mb / duration)
 print(f"done in {duration:.3f}s at {data_size_mb / duration:.3f}MB/s")
 
 # %%
+# We can observe that this is the fastest text tokenization strategy
+# so far, assuming the that the downstream machine learning task can
+# tolerate a few collisions.
+# %%
 # TfidfVectorizer
 # ---------------
 #
@@ -295,7 +324,7 @@ print(f"done in {duration:.3f}s at {data_size_mb / duration:.3f}MB/s")
 # yet more interesting terms. In order to re-weight the count features into
 # floating point values suitable for usage by a classifier it is very common to
 # use the tf–idf transform as implemented by the
-# :func:`~sklearn.feature_extraction.text.TfidfTransformer`. Tf stands for
+# :func:`~sklearn.feature_extraction.text.TfidfTransformer`. TF stands for
 # "term-frequency" while "tf–idf" means term-frequency times inverse
 # document-frequency.
 #
@@ -316,6 +345,9 @@ dict_count_vectorizers["speed"].append(data_size_mb / duration)
 print(f"done in {duration:.3f}s at {data_size_mb / duration:.3f}MB/s")
 print(f"Found {len(vectorizer.get_feature_names_out())} unique terms")
 
+# %%
+# Let's conclude this notebook by summarizing all the recorded processing
+# speeds in a single plot:
 fig, ax = plt.subplots(figsize=(12, 6))
 
 y_pos = np.arange(len(dict_count_vectorizers["vectorizer"]))
