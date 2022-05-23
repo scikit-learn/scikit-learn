@@ -24,7 +24,7 @@ with pip.
 
 To run this script you need:
 - conda-lock. The version should match the one used in the CI in
-  build_tools/azure/install.sh
+  sklearn/_min_dependencies.py
 - pip-tools
 
 """
