@@ -1849,13 +1849,6 @@ class MiniBatchKMeans(_BaseKMeans):
     def _check_params_vs_input(self, X):
         super()._check_params_vs_input(X, default_n_init=3)
 
-        # max_no_improvement
-        if self.max_no_improvement is not None and self.max_no_improvement < 0:
-            raise ValueError(
-                "max_no_improvement should be >= 0, got "
-                f"{self.max_no_improvement} instead."
-            )
-
         self._batch_size = min(self.batch_size, X.shape[0])
 
         # init_size
