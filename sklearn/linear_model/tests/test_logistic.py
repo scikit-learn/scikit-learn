@@ -646,7 +646,7 @@ def test_ovr_multinomial_iris():
     assert scores.shape == (3, n_cv, 10)
 
     # Test that for the iris data multinomial gives a better accuracy than OvR
-    for solver in ["lbfgs", "newton-cg", "sag", "saga"]:
+    for solver in ["lbfgs", "trust-ncg", "newton-cg", "sag", "saga"]:
         max_iter = 500 if solver in ["sag", "saga"] else 15
         clf_multi = LogisticRegressionCV(
             solver=solver,
@@ -971,7 +971,7 @@ def test_logistic_regression_multinomial():
     # Test that the path give almost the same results. However since in this
     # case we take the average of the coefs after fitting across all the
     # folds, it need not be exactly the same.
-    for solver in ["lbfgs", "newton-cg", "sag", "saga"]:
+    for solver in ["lbfgs", "trust-ncg", "newton-cg", "sag", "saga"]:
         clf_path = LogisticRegressionCV(
             solver=solver, max_iter=2000, tol=1e-6, multi_class="multinomial", Cs=[1.0]
         )
@@ -1214,7 +1214,9 @@ def test_max_iter(max_iter, multi_class, solver, message):
     assert lr.n_iter_[0] == max_iter
 
 
-@pytest.mark.parametrize("solver", ["newton-cg", "liblinear", "sag", "saga", "lbfgs"])
+@pytest.mark.parametrize(
+    "solver", ["newton-cg", "liblinear", "sag", "saga", "lbfgs", "trust-ncg"]
+)
 def test_n_iter(solver):
     # Test that self.n_iter_ has the correct format.
     X, y = iris.data, iris.target
@@ -2063,7 +2065,9 @@ def test_sample_weight_not_modified(multi_class, class_weight):
     assert_allclose(expected, W)
 
 
-@pytest.mark.parametrize("solver", ["liblinear", "lbfgs", "newton-cg", "sag", "saga"])
+@pytest.mark.parametrize(
+    "solver", ["liblinear", "lbfgs", "trust-ncg", "newton-cg", "sag", "saga"]
+)
 def test_large_sparse_matrix(solver):
     # Solvers either accept large sparse matrices, or raise helpful error.
     # Non-regression test for pull-request #21093.

@@ -410,13 +410,11 @@ def _logistic_regression_path(
             hess = loss.gradient_hessian_product  # hess = [gradient, hessp]
         # TODO: Update w/ new loss module
         elif solver == "trust-ncg":
-            loss = LinearModelLoss(
-                base_loss=HalfMultinomialLoss(n_classes=classes.size),
-                fit_intercept=fit_intercept,
-            )
-            func = loss.loss
-            grad = loss.gradient
-            hess = loss.gradient_hessian_product  # hess = [gradient, hessp]
+            func = loss.loss_gradient
+
+            def hessp(x, *args):
+                return loss.gradient_hessian_product(x, *args)[1]
+
         warm_start_sag = {"coef": w0.T}
     else:
         target = y_bin
@@ -438,34 +436,38 @@ def _logistic_regression_path(
                 base_loss=HalfBinomialLoss(), fit_intercept=fit_intercept
             )
             func = loss.loss_gradient
-            hess = loss.gradient_hessian_product  # hess = [gradient, hessp]
+
+            def hessp(x, *args):
+                return loss.gradient_hessian_product(x, *args)[1]
+
         warm_start_sag = {"coef": np.expand_dims(w0, axis=1)}
 
     coefs = list()
     n_iter = np.zeros(len(Cs), dtype=np.int32)
     for i, C in enumerate(Cs):
-        if solver == "lbfgs":
-            l2_reg_strength = 1.0 / C
-            iprint = [-1, 50, 1, 100, 101][
-                np.searchsorted(np.array([0, 1, 2, 3]), verbose)
-            ]
-            opt_res = optimize.minimize(
-                func,
-                w0,
-                method="L-BFGS-B",
-                jac=True,
-                args=(X, target, sample_weight, l2_reg_strength, n_threads),
-                options={"iprint": iprint, "gtol": tol, "maxiter": max_iter},
-            )
-        elif solver == "trust-ncg":
-            opt_res = optimize.minimize(
-                func,
-                w0,
-                method=solver,
-                jac=True,
-                hessp=hess,
-                args=(X, target, 1.0 / C, sample_weight),
-            )
+        if solver in ["lbfgs", "trust-ncg"]:
+            if solver == "lbfgs":
+                l2_reg_strength = 1.0 / C
+                iprint = [-1, 50, 1, 100, 101][
+                    np.searchsorted(np.array([0, 1, 2, 3]), verbose)
+                ]
+                opt_res = optimize.minimize(
+                    func,
+                    w0,
+                    method="L-BFGS-B",
+                    jac=True,
+                    args=(X, target, sample_weight, l2_reg_strength, n_threads),
+                    options={"iprint": iprint, "gtol": tol, "maxiter": max_iter},
+                )
+            elif solver == "trust-ncg":
+                opt_res = optimize.minimize(
+                    func,
+                    w0,
+                    method=solver,
+                    jac=True,
+                    hessp=hessp,
+                    args=(X, target, 1.0 / C, sample_weight),
+                )
             n_iter_i = _check_optimize_result(
                 solver,
                 opt_res,
