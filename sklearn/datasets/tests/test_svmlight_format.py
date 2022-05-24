@@ -555,7 +555,7 @@ def test_load_with_offsets_error():
         _load_svmlight_local_test_file(datafile, offset=3, length=3)
 
 
-def test_y_explicit_zeros(tmp_path):
+def test_multilabel_y_explicit_zeros(tmp_path):
     save_path = str(tmp_path / "svm_explicit_zero")
     rng = np.random.RandomState(42)
     X = rng.randn(3, 5).astype(np.float64)
@@ -568,5 +568,7 @@ def test_y_explicit_zeros(tmp_path):
     dump_svmlight_file(X, y, save_path, multilabel=True)
 
     X_load, y_load = load_svmlight_file(save_path, multilabel=True)
+    y_true = [(2.0,), (2.0,), (0.0, 1.0, 2.0)]
     assert_allclose(X_load.toarray(), X)
-    assert_allclose(y_load.toarray(), y)
+    for u, v in zip(y_load, y_true):
+        assert u == v
