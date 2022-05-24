@@ -12,8 +12,19 @@ dependencies:
   - joblib
   - threadpoolctl
   - matplotlib
-  - pytest
+  - pandas
+  - pyamg
+  - pytest=6.2.5
   - pytest-xdist
   - pillow
-  - pip=22.0.4
-  - ccache
+  - scikit-image
+  - seaborn
+  - memory_profiler
+  - compilers
+  - sphinx
+  - sphinx-gallery
+  - numpydoc
+  - sphinx-prompt
+  - pip
+  - pip:
+    - sphinxext-opengraph
