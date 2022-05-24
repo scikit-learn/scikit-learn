@@ -101,6 +101,10 @@ Changelog
   deterministic SVD used by the randomized SVD algorithm.
   :pr:`20617` by :user:`Srinath Kailasa <skailasa>`
 
+- |Enhancement| :func:`utils.assert_all_finite` now significantly faster for
+  `np.float32` by leveraging numpy's SIMD optimized primitives.
+  :pr:`23446` by :user:`Meekail Zain <micky774>`
+
 Code and Documentation Contributors
 -----------------------------------
 
