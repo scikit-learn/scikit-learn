@@ -254,7 +254,7 @@ def setup_package():
         classifiers=[
             "Intended Audience :: Science/Research",
             "Intended Audience :: Developers",
-            "License :: OSI Approved",
+            "License :: OSI Approved :: BSD License",
             "Programming Language :: C",
             "Programming Language :: Python",
             "Topic :: Software Development",
@@ -264,7 +264,6 @@ def setup_package():
             "Operating System :: POSIX",
             "Operating System :: Unix",
             "Operating System :: MacOS",
-            "License :: OSI Approved :: BSD License",
             "Programming Language :: Python :: 3",
             "Programming Language :: Python :: 3.8",
             "Programming Language :: Python :: 3.9",
