@@ -488,12 +488,9 @@ def write_pip_lock_file(build_metadata):
     # create a conda environment with the correct Python version and
     # pip-compile and run pip-compile in this environment
 
-    # TODO: Unpin pip when https://github.com/jazzband/pip-tools/issues/1623
-    # is resolved
     command = (
         "conda create -c conda-forge -n"
-        f" pip-tools-python{python_version} python={python_version} pip-tools"
-        " pip<22.1 -y"
+        f" pip-tools-python{python_version} python={python_version} pip-tools -y"
     )
     execute_command(shlex.split(command))
 
