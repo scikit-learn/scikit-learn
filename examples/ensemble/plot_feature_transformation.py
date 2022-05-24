@@ -72,11 +72,10 @@ gradient_boosting = GradientBoostingClassifier(
 _ = gradient_boosting.fit(X_train_ensemble, y_train_ensemble)
 
 # %%
-# Notice that the :func:`~sklearn.ensemble.HistGradientBoostingClassifier`
-# estimator is much faster than
-# :func:`~sklearn.ensemble.GradientBoostingClassifier` for big datasets
-# (n_samples >= 10_000) such as this case. The use the latter is shown for
-# pedagogical reasons only.
+# Notice that :class:`~sklearn.ensemble.HistGradientBoostingClassifier`
+# is much faster than :class:`~sklearn.ensemble.GradientBoostingClassifier`
+# starting with intermediate datasets (`n_samples >= 10_000`), which is
+# not the case of the present example.
 #
 # The :class:`~sklearn.ensemble.RandomTreesEmbedding` is an unsupervised method
 # and thus does not required to be trained independently.

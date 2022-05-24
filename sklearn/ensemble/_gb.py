@@ -991,17 +991,15 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
     """Gradient Boosting for classification.
 
-    This estimator builds an additive model in a forward stage-wise fashion; it
+    This algorithm builds an additive model in a forward stage-wise fashion; it
     allows for the optimization of arbitrary differentiable loss functions. In
     each stage ``n_classes_`` regression trees are fit on the negative gradient
     of the loss function, e.g. binary or multiclass log loss. Binary
     classification is a special case where only a single regression tree is
     induced.
 
-    The estimator
-    :class:`HistGradientBoostingClassifier<sklearn.ensemble.HistGradientBoostingClassifier>`
-    is a much faster variant of this estimator for big datasets (n_samples >=
-    10_000).
+    :class:`sklearn.ensemble.HistGradientBoostingClassifier` is a much faster
+    variant of this algorithm for intermediate datasets (`n_samples >= 10_000`).
 
     Read more in the :ref:`User Guide <gradient_boosting>`.
 
@@ -1569,10 +1567,8 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     each stage a regression tree is fit on the negative gradient of the given
     loss function.
 
-    The estimator
-    :class:`HistGradientBoostingRegressor<sklearn.ensemble.HistGradientBoostingRegressor>`
-    is a much faster variant of this estimator for big datasets (n_samples >=
-    10_000).
+    :class:`sklearn.ensemble.HistGradientBoostingRegressor` is a much faster
+    variant of this algorithm for intermediate datasets (`n_samples >= 10_000`).
 
     Read more in the :ref:`User Guide <gradient_boosting>`.
 
