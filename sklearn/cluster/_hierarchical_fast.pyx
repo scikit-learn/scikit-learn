@@ -1,14 +1,14 @@
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
 
 import numpy as np
-cimport numpy as np
+cimport numpy as cnp
 cimport cython
 
-ctypedef np.float64_t DOUBLE
-ctypedef np.npy_intp INTP
-ctypedef np.int8_t INT8
+ctypedef cnp.float64_t DOUBLE
+ctypedef cnp.npy_intp INTP
+ctypedef cnp.int8_t INT8
 
-np.import_array()
+cnp.import_array()
 
 from ..metrics._dist_metrics cimport DistanceMetric
 from ..utils._fast_dict cimport IntFloatDict
@@ -19,21 +19,21 @@ from libcpp.map cimport map as cpp_map
 from libc.math cimport fmax
 
 DTYPE = np.float64
-ctypedef np.float64_t DTYPE_t
+ctypedef cnp.float64_t DTYPE_t
 
 ITYPE = np.intp
-ctypedef np.intp_t ITYPE_t
+ctypedef cnp.intp_t ITYPE_t
 
 from numpy.math cimport INFINITY
 
 ###############################################################################
 # Utilities for computing the ward momentum
 
-def compute_ward_dist(np.ndarray[DOUBLE, ndim=1, mode='c'] m_1,
-                      np.ndarray[DOUBLE, ndim=2, mode='c'] m_2,
-                      np.ndarray[INTP, ndim=1, mode='c'] coord_row,
-                      np.ndarray[INTP, ndim=1, mode='c'] coord_col,
-                      np.ndarray[DOUBLE, ndim=1, mode='c'] res):
+def compute_ward_dist(cnp.ndarray[DOUBLE, ndim=1, mode='c'] m_1,
+                      cnp.ndarray[DOUBLE, ndim=2, mode='c'] m_2,
+                      cnp.ndarray[INTP, ndim=1, mode='c'] coord_row,
+                      cnp.ndarray[INTP, ndim=1, mode='c'] coord_col,
+                      cnp.ndarray[DOUBLE, ndim=1, mode='c'] res):
     cdef INTP size_max = coord_row.shape[0]
     cdef INTP n_features = m_2.shape[1]
     cdef INTP i, j, row, col
@@ -95,7 +95,7 @@ def _hc_get_descendent(INTP node, children, INTP n_leaves):
     return descendent
 
 
-def hc_get_heads(np.ndarray[INTP, ndim=1] parents, copy=True):
+def hc_get_heads(cnp.ndarray[INTP, ndim=1] parents, copy=True):
     """Returns the heads of the forest, as defined by parents.
 
     Parameters
@@ -127,8 +127,8 @@ def hc_get_heads(np.ndarray[INTP, ndim=1] parents, copy=True):
     return parents
 
 
-def _get_parents(nodes, heads, np.ndarray[INTP, ndim=1] parents,
-                 np.ndarray[INT8, ndim=1, mode='c'] not_visited):
+def _get_parents(nodes, heads, cnp.ndarray[INTP, ndim=1] parents,
+                 cnp.ndarray[INT8, ndim=1, mode='c'] not_visited):
     """Returns the heads of the given nodes, as defined by parents.
 
     Modifies 'heads' and 'not_visited' in-place.
@@ -167,7 +167,7 @@ def _get_parents(nodes, heads, np.ndarray[INTP, ndim=1] parents,
 
 
 def max_merge(IntFloatDict a, IntFloatDict b,
-              np.ndarray[ITYPE_t, ndim=1] mask,
+              cnp.ndarray[ITYPE_t, ndim=1] mask,
               ITYPE_t n_a, ITYPE_t n_b):
     """Merge two IntFloatDicts with the max strategy: when the same key is
     present in the two dicts, the max of the two values is used.
@@ -220,7 +220,7 @@ def max_merge(IntFloatDict a, IntFloatDict b,
 
 
 def average_merge(IntFloatDict a, IntFloatDict b,
-              np.ndarray[ITYPE_t, ndim=1] mask,
+              cnp.ndarray[ITYPE_t, ndim=1] mask,
               ITYPE_t n_a, ITYPE_t n_b):
     """Merge two IntFloatDicts with the average strategy: when the
     same key is present in the two dicts, the weighted average of the two
@@ -354,8 +354,8 @@ cdef class UnionFind(object):
         return n
 
 
-cpdef np.ndarray[DTYPE_t, ndim=2] _single_linkage_label(
-    np.ndarray[DTYPE_t, ndim=2] L):
+cpdef cnp.ndarray[DTYPE_t, ndim=2] _single_linkage_label(
+    cnp.ndarray[DTYPE_t, ndim=2] L):
     """
     Convert an linkage array or MST to a tree by labelling clusters at merges.
     This is done by using a Union find structure to keep track of merges
@@ -375,7 +375,7 @@ cpdef np.ndarray[DTYPE_t, ndim=2] _single_linkage_label(
     A tree in the format used by scipy.cluster.hierarchy.
     """
 
-    cdef np.ndarray[DTYPE_t, ndim=2] result_arr
+    cdef cnp.ndarray[DTYPE_t, ndim=2] result_arr
     cdef DTYPE_t[:, ::1] result
 
     cdef ITYPE_t left, left_cluster, right, right_cluster, index
@@ -469,10 +469,10 @@ def mst_linkage_core(
     """
     cdef:
         ITYPE_t n_samples = raw_data.shape[0]
-        np.int8_t[:] in_tree = np.zeros(n_samples, dtype=np.int8)
+        cnp.int8_t[:] in_tree = np.zeros(n_samples, dtype=np.int8)
         DTYPE_t[:, ::1] result = np.zeros((n_samples - 1, 3))
 
-        np.ndarray label_filter
+        cnp.ndarray label_filter
 
         ITYPE_t current_node = 0
         ITYPE_t new_node

@@ -954,6 +954,7 @@ details.
    metrics.average_precision_score
    metrics.balanced_accuracy_score
    metrics.brier_score_loss
+   metrics.class_likelihood_ratios
    metrics.classification_report
    metrics.cohen_kappa_score
    metrics.confusion_matrix
@@ -1352,6 +1353,7 @@ Model validation
 
    neighbors.kneighbors_graph
    neighbors.radius_neighbors_graph
+   neighbors.sort_graph_by_row_values
 
 .. _neural_network_ref:
 
