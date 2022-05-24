@@ -37,7 +37,6 @@ from ..exceptions import UndefinedMetricWarning
 from ..preprocessing import label_binarize
 from ..utils._encode import _encode, _unique
 
-
 from ._base import (
     _average_binary_score,
     _average_multiclass_ovo_score,
@@ -1085,7 +1084,8 @@ def label_ranking_average_precision_score(y_true, y_score, *, sample_weight=None
         ):
             raise ValueError("{0} format is not supported".format(y_type))
 
-    y_true = csr_matrix(y_true)
+        y_true = csr_matrix(y_true)
+
     y_score = -y_score
 
     n_samples, n_labels = y_true.shape

@@ -71,6 +71,9 @@ Changelog
   negative likelihood ratios derived from the confusion matrix
   of a binary classification problem. :pr:`22518` by
   :user:`Arturo Amor <ArturoAmorQ>`.
+- |Fix| Allows `csr_matrix` as input for parameter: `y_true` of the `label_ranking_average_precision_score` metric.
+  Also added default parameter of `accept_sparse="csr"` to `check_array()`, which is used to calcuate the `y_true` value.
+  :pr:`23442` by :user:`Sean Atukorala <ShehanAT>`
 
 :mod:`sklearn.neighbors`
 ........................
