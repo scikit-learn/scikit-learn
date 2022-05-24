@@ -181,15 +181,14 @@ def _dump_svmlight_file(X, y, f, bint multilabel, bint one_based, int_or_longlon
         array.array[double] float_template = array.array('d',[])
         Py_ssize_t x_nz_used
         Py_ssize_t[:] x_inds = np.empty(row_length, dtype=np.intp)
-        array.array x_vals
         signed long long[:] x_vals_int
         double[:] x_vals_float
 
     if not X_is_sp:
         if X_is_integral:
-            x_vals = array.clone(int_template, row_length, False)
+            x_vals_int = np.zeros(row_length, dtype=np.longlong)
         else:
-            x_vals = array.clone(float_template, row_length, False)
+            x_vals_float = np.zeros(row_length, dtype=np.float64)
 
     for i in range(x_len):
         x_nz_used = 0
@@ -198,10 +197,8 @@ def _dump_svmlight_file(X, y, f, bint multilabel, bint one_based, int_or_longlon
             s = get_sparse_row_string(X.data, X.indptr, X.indices, i, value_pattern, one_based)
         else:
             if X_is_integral:
-                x_vals_int = x_vals
                 s = get_dense_row_string(X, x_inds, x_vals_int, i, value_pattern, one_based)
             else:
-                x_vals_float = x_vals
                 s = get_dense_row_string(X, x_inds, x_vals_float, i, value_pattern, one_based)
         if multilabel:
             labels_str = ""
