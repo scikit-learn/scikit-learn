@@ -463,7 +463,7 @@ def _logistic_regression_path(
                 w0,
                 method=solver,
                 jac=True,
-                hessp=hess[1],
+                hessp=hess,
                 args=(X, target, 1.0 / C, sample_weight),
             )
             n_iter_i = _check_optimize_result(
