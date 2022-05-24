@@ -1043,8 +1043,6 @@ def test_sample_weight_unchanged(Estimator):
 @pytest.mark.parametrize(
     "param, match",
     [
-        ({"n_init": 0}, r"n_init should be > 0"),
-        ({"max_iter": 0}, r"max_iter should be > 0"),
         ({"n_clusters": n_samples + 1}, r"n_samples.* should be >= n_clusters"),
         (
             {"init": X[:2]},
@@ -1066,11 +1064,6 @@ def test_sample_weight_unchanged(Estimator):
             r"The shape of the initial centers .* does not match "
             r"the number of features of the data",
         ),
-        (
-            {"init": "wrong"},
-            r"init should be either 'k-means\+\+', 'random', "
-            r"an array-like or a callable",
-        ),
     ],
 )
 def test_wrong_params(Estimator, param, match):
@@ -1084,39 +1077,7 @@ def test_wrong_params(Estimator, param, match):
 
 @pytest.mark.parametrize(
     "param, match",
-    [({"algorithm": "wrong"}, r"Algorithm must be either 'lloyd' or 'elkan'")],
-)
-def test_kmeans_wrong_params(param, match):
-    # Check that error are raised with clear error message when wrong values
-    # are passed for the KMeans specific parameters
-    with pytest.raises(ValueError, match=match):
-        KMeans(**param).fit(X)
-
-
-@pytest.mark.parametrize(
-    "param, match",
     [
-        ({"max_no_improvement": -1}, r"max_no_improvement should be >= 0"),
-        ({"batch_size": -1}, r"batch_size should be > 0"),
-        ({"init_size": -1}, r"init_size should be > 0"),
-        ({"reassignment_ratio": -1}, r"reassignment_ratio should be >= 0"),
-    ],
-)
-def test_minibatch_kmeans_wrong_params(param, match):
-    # Check that error are raised with clear error message when wrong values
-    # are passed for the MiniBatchKMeans specific parameters
-    with pytest.raises(ValueError, match=match):
-        MiniBatchKMeans(**param).fit(X)
-
-
-@pytest.mark.parametrize(
-    "param, match",
-    [
-        (
-            {"n_local_trials": 0},
-            r"n_local_trials is set to 0 but should be an "
-            r"integer value greater than zero",
-        ),
         (
             {"x_squared_norms": X[:2]},
             r"The length of x_squared_norms .* should "

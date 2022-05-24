@@ -3,7 +3,6 @@
 # License: BSD 3 clause
 
 
-import numpy as np
 cimport numpy as cnp
 ctypedef cnp.npy_uint32 UINT32_t
 

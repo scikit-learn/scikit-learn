@@ -104,6 +104,8 @@ CLF_SCORERS = [
     "roc_auc_ovr_weighted",
     "roc_auc_ovo_weighted",
     "matthews_corrcoef",
+    "positive_likelihood_ratio",
+    "neg_negative_likelihood_ratio",
 ]
 
 # All supervised cluster scorers (They behave like classification metric)
