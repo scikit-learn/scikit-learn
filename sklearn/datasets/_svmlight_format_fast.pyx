@@ -11,6 +11,9 @@ cimport cython
 from libc.string cimport strchr
 
 import numpy as np
+cimport numpy as cnp
+cnp.import_array()
+
 import scipy.sparse as sp
 
 
@@ -127,7 +130,7 @@ ctypedef fused int_or_longlong:
     cython.integral
     signed long long
 
-def get_dense_row_string(int_or_float1[:,:] X, size_t[:] x_inds, int_or_float2[:] x_vals, Py_ssize_t row, str value_pattern, bint one_based):
+def get_dense_row_string(int_or_float1[:,:] X, Py_ssize_t[:] x_inds, int_or_float2[:] x_vals, Py_ssize_t row, str value_pattern, bint one_based):
     cdef:
         Py_ssize_t row_length = X.shape[1]
         Py_ssize_t x_nz_used = 0
@@ -178,11 +181,10 @@ def _dump_svmlight_file(X, y, f, bint multilabel, bint one_based, int_or_longlon
         Py_ssize_t col_end
         bint first
         array.array[signed long long] int_template = array.array('q',[])
-        array.array[size_t] uint_template = array.array('Q',[])
         array.array[double] float_template = array.array('d',[])
         Py_ssize_t x_nz_used
-        array.array _x_inds
-        size_t[:] x_inds
+        cnp.ndarray _x_inds = np.empty(row_length, dtype=np.intp)
+        Py_ssize_t[:] x_inds = _x_inds
         array.array x_vals
         signed long long[:] x_vals_int
         double[:] x_vals_float
@@ -192,8 +194,6 @@ def _dump_svmlight_file(X, y, f, bint multilabel, bint one_based, int_or_longlon
             x_vals = array.clone(int_template, row_length, False)
         else:
             x_vals = array.clone(float_template, row_length, False)
-        _x_inds = array.clone(uint_template, row_length, False)
-        x_inds = _x_inds
 
     for i in range(x_len):
         x_nz_used = 0
