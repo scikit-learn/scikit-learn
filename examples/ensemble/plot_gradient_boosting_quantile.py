@@ -35,7 +35,7 @@ expected_y = f(X).ravel()
 # The lognormal distribution is non-symmetric and long tailed: observing large
 # outliers is likely but it is impossible to observe small outliers.
 sigma = 0.5 + X.ravel() / 10
-noise = rng.lognormal(sigma=sigma) - np.exp(sigma ** 2 / 2)
+noise = rng.lognormal(sigma=sigma) - np.exp(sigma**2 / 2)
 y = expected_y + noise
 
 # %%

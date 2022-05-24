@@ -288,7 +288,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
             last_iteration = n_required_iterations - 1
             self.min_resources_ = max(
                 self.min_resources_,
-                self.max_resources_ // self.factor ** last_iteration,
+                self.max_resources_ // self.factor**last_iteration,
             )
 
         # n_possible_iterations is the number of iterations that we can
@@ -327,7 +327,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 # eliminated), and then go on as usual.
                 power = max(0, itr - n_required_iterations + n_possible_iterations)
 
-            n_resources = int(self.factor ** power * self.min_resources_)
+            n_resources = int(self.factor**power * self.min_resources_)
             # guard, probably not needed
             n_resources = min(n_resources, self.max_resources_)
             self.n_resources_.append(n_resources)

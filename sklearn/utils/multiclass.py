@@ -187,6 +187,7 @@ def check_classification_targets(y):
     Parameters
     ----------
     y : array-like
+        Target values.
     """
     y_type = type_of_target(y, input_name="y")
     if y_type not in [

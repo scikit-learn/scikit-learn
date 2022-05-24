@@ -320,7 +320,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         gamma = LAMBDAS * f_star
         integrals = (
             np.sqrt(np.pi / alpha)
-            * erf(gamma * np.sqrt(alpha / (alpha + LAMBDAS ** 2)))
+            * erf(gamma * np.sqrt(alpha / (alpha + LAMBDAS**2)))
             / (2 * np.sqrt(var_f_star * 2 * np.pi))
         )
         pi_star = (COEFS * integrals).sum(axis=0) + 0.5 * COEFS.sum()

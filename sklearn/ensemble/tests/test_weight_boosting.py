@@ -564,8 +564,7 @@ def test_adaboostregressor_sample_weight():
         (
             {"n_estimators": 1.5},
             TypeError,
-            "n_estimators must be an instance of <class 'numbers.Integral'>,"
-            " not <class 'float'>",
+            "n_estimators must be an instance of int, not float",
         ),
         ({"learning_rate": -1}, ValueError, "learning_rate == -1, must be > 0."),
         ({"learning_rate": 0}, ValueError, "learning_rate == 0, must be > 0."),

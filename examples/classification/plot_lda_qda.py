@@ -11,17 +11,14 @@ class has its own standard deviation with QDA.
 
 """
 
-from scipy import linalg
-import numpy as np
+# %%
+# Colormap
+# --------
+
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 from matplotlib import colors
 
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
-
-# #############################################################################
-# Colormap
 cmap = colors.LinearSegmentedColormap(
     "red_blue_classes",
     {
@@ -33,8 +30,13 @@ cmap = colors.LinearSegmentedColormap(
 plt.cm.register_cmap(cmap=cmap)
 
 
-# #############################################################################
-# Generate datasets
+# %%
+# Datasets generation functions
+# -----------------------------
+
+import numpy as np
+
+
 def dataset_fixed_cov():
     """Generate 2 Gaussians samples with the same covariance matrix"""
     n, dim = 300, 2
@@ -61,8 +63,13 @@ def dataset_cov():
     return X, y
 
 
-# #############################################################################
+# %%
 # Plot functions
+# --------------
+
+from scipy import linalg
+
+
 def plot_data(lda, X, y, y_pred, fig_index):
     splot = plt.subplot(2, 2, fig_index)
     if fig_index == 1:
@@ -154,12 +161,20 @@ def plot_qda_cov(qda, splot):
     plot_ellipse(splot, qda.means_[1], qda.covariance_[1], "blue")
 
 
+# %%
+# Plot
+# ----
+
 plt.figure(figsize=(10, 8), facecolor="white")
 plt.suptitle(
     "Linear Discriminant Analysis vs Quadratic Discriminant Analysis",
     y=0.98,
     fontsize=15,
 )
+
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
+
 for i, (X, y) in enumerate([dataset_fixed_cov(), dataset_cov()]):
     # Linear Discriminant Analysis
     lda = LinearDiscriminantAnalysis(solver="svd", store_covariance=True)
@@ -174,6 +189,7 @@ for i, (X, y) in enumerate([dataset_fixed_cov(), dataset_cov()]):
     splot = plot_data(qda, X, y, y_pred, fig_index=2 * i + 2)
     plot_qda_cov(qda, splot)
     plt.axis("tight")
+
 plt.tight_layout()
 plt.subplots_adjust(top=0.92)
 plt.show()

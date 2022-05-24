@@ -1,7 +1,6 @@
 import numpy as np
 
 from .extmath import stable_cumsum
-from .fixes import _take_along_axis
 
 
 def _weighted_percentile(array, sample_weight, percentile=50):
@@ -39,7 +38,7 @@ def _weighted_percentile(array, sample_weight, percentile=50):
     if array.shape != sample_weight.shape and array.shape[0] == sample_weight.shape[0]:
         sample_weight = np.tile(sample_weight, (array.shape[1], 1)).T
     sorted_idx = np.argsort(array, axis=0)
-    sorted_weights = _take_along_axis(sample_weight, sorted_idx, axis=0)
+    sorted_weights = np.take_along_axis(sample_weight, sorted_idx, axis=0)
 
     # Find index of median prediction for each sample
     weight_cdf = stable_cumsum(sorted_weights, axis=0)

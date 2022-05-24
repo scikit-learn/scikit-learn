@@ -28,6 +28,7 @@ from sklearn.utils._testing import (
     _delete_folder,
     _convert_container,
     raises,
+    assert_allclose,
 )
 
 from sklearn.tree import DecisionTreeClassifier
@@ -370,7 +371,7 @@ def f_check_param_definition(a, b, c, d, e):
     b:
         Parameter b
     c :
-        Parameter c
+        This is parsed correctly in numpydoc 1.2
     d:int
         Parameter d
     e
@@ -387,7 +388,7 @@ class Klass:
         """Function f
 
         Parameter
-        ----------
+        ---------
         a : int
             Parameter a
         b : float
@@ -516,6 +517,7 @@ class MockMetaEstimatorDeprecatedDelegation:
         """Incorrect docstring but should not be tested"""
 
 
+@pytest.mark.filterwarnings("ignore:if_delegate_has_method was deprecated")
 @pytest.mark.parametrize(
     "mock_meta",
     [
@@ -525,7 +527,9 @@ class MockMetaEstimatorDeprecatedDelegation:
 )
 def test_check_docstring_parameters(mock_meta):
     pytest.importorskip(
-        "numpydoc", reason="numpydoc is required to test the docstrings"
+        "numpydoc",
+        reason="numpydoc is required to test the docstrings",
+        minversion="1.2.0",
     )
 
     incorrect = check_docstring_parameters(f_ok)
@@ -546,8 +550,6 @@ def test_check_docstring_parameters(mock_meta):
         "was no space between the param name and colon ('a: int')",
         "sklearn.utils.tests.test_testing.f_check_param_definition There "
         "was no space between the param name and colon ('b:')",
-        "sklearn.utils.tests.test_testing.f_check_param_definition "
-        "Parameter 'c :' has an empty type spec. Remove the colon",
         "sklearn.utils.tests.test_testing.f_check_param_definition There "
         "was no space between the param name and colon ('d:int')",
     ]
@@ -602,20 +604,16 @@ def test_check_docstring_parameters(mock_meta):
             "In function: "
             + f"sklearn.utils.tests.test_testing.{mock_meta_name}."
             + "predict_proba",
-            "Parameters in function docstring have less items w.r.t. function"
-            " signature, first missing item: X",
-            "Full diff:",
-            "- ['X']",
-            "+ []",
+            "potentially wrong underline length... ",
+            "Parameters ",
+            "--------- in ",
         ],
         [
             "In function: "
             + f"sklearn.utils.tests.test_testing.{mock_meta_name}.score",
-            "Parameters in function docstring have less items w.r.t. function"
-            " signature, first missing item: X",
-            "Full diff:",
-            "- ['X']",
-            "+ []",
+            "potentially wrong underline length... ",
+            "Parameters ",
+            "--------- in ",
         ],
         [
             "In function: " + f"sklearn.utils.tests.test_testing.{mock_meta_name}.fit",
@@ -718,7 +716,7 @@ def test_create_memmap_backed_data(monkeypatch, aligned):
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64, np.int32, np.int64])
 def test_memmap_on_contiguous_data(dtype):
-    """Test memory mapped array on contigous memoryview."""
+    """Test memory mapped array on contiguous memoryview."""
     x = np.arange(10).astype(dtype)
     assert x.flags["C_CONTIGUOUS"]
     assert x.flags["ALIGNED"]
@@ -858,3 +856,21 @@ def test_raises():
     with pytest.raises(AssertionError):
         with raises((TypeError, ValueError)):
             pass
+
+
+def test_float32_aware_assert_allclose():
+    # The relative tolerance for float32 inputs is 1e-4
+    assert_allclose(np.array([1.0 + 2e-5], dtype=np.float32), 1.0)
+    with pytest.raises(AssertionError):
+        assert_allclose(np.array([1.0 + 2e-4], dtype=np.float32), 1.0)
+
+    # The relative tolerance for other inputs is left to 1e-7 as in
+    # the original numpy version.
+    assert_allclose(np.array([1.0 + 2e-8], dtype=np.float64), 1.0)
+    with pytest.raises(AssertionError):
+        assert_allclose(np.array([1.0 + 2e-7], dtype=np.float64), 1.0)
+
+    # atol is left to 0.0 by default, even for float32
+    with pytest.raises(AssertionError):
+        assert_allclose(np.array([1e-5], dtype=np.float32), 0.0)
+    assert_allclose(np.array([1e-5], dtype=np.float32), 0.0, atol=2e-5)

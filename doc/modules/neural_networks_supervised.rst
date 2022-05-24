@@ -266,21 +266,22 @@ In regression, the output remains as :math:`f(x)`; therefore, output activation
 function is just the identity function.
 
 MLP uses different loss functions depending on the problem type. The loss
-function for classification is Cross-Entropy, which in binary case is given as,
+function for classification is Average Cross-Entropy, which in binary case is
+given as,
 
 .. math::
 
-    Loss(\hat{y},y,W) = -y \ln {\hat{y}} - (1-y) \ln{(1-\hat{y})} + \alpha ||W||_2^2
+    Loss(\hat{y},y,W) = -\dfrac{1}{n}\sum_{i=0}^n(y_i \ln {\hat{y_i}} + (1-y_i) \ln{(1-\hat{y_i})}) + \dfrac{\alpha}{2n} ||W||_2^2
 
 where :math:`\alpha ||W||_2^2` is an L2-regularization term (aka penalty)
 that penalizes complex models; and :math:`\alpha > 0` is a non-negative
 hyperparameter that controls the magnitude of the penalty.
 
-For regression, MLP uses the Square Error loss function; written as,
+For regression, MLP uses the Mean Square Error loss function; written as,
 
 .. math::
 
-    Loss(\hat{y},y,W) = \frac{1}{2}||\hat{y} - y ||_2^2 + \frac{\alpha}{2} ||W||_2^2
+    Loss(\hat{y},y,W) = \frac{1}{2n}\sum_{i=0}^n||\hat{y}_i - y_i ||_2^2 + \frac{\alpha}{2n} ||W||_2^2
 
 
 Starting from initial random weights, multi-layer perceptron (MLP) minimizes

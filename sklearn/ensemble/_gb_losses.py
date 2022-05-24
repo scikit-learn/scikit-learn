@@ -995,5 +995,6 @@ LOSS_FUNCTIONS = {
     "huber": HuberLossFunction,
     "quantile": QuantileLossFunction,
     "deviance": None,  # for both, multinomial and binomial
+    "log_loss": None,  # for both, multinomial and binomial
     "exponential": ExponentialLoss,
 }

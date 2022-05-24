@@ -100,7 +100,7 @@ def test_imputers_add_indicator_sparse(imputer, marker):
 @pytest.mark.parametrize("add_indicator", [True, False])
 def test_imputers_pandas_na_integer_array_support(imputer, add_indicator):
     # Test pandas IntegerArray with pd.NA
-    pd = pytest.importorskip("pandas", minversion="1.0")
+    pd = pytest.importorskip("pandas")
     marker = np.nan
     imputer = imputer.set_params(add_indicator=add_indicator, missing_values=marker)
 

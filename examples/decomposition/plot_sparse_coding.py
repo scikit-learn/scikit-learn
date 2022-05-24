@@ -20,16 +20,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from sklearn.decomposition import SparseCoder
-from sklearn.utils.fixes import np_version, parse_version
 
 
 def ricker_function(resolution, center, width):
     """Discrete sub-sampled Ricker (Mexican hat) wavelet"""
     x = np.linspace(0, resolution - 1, resolution)
     x = (
-        (2 / (np.sqrt(3 * width) * np.pi ** 0.25))
-        * (1 - (x - center) ** 2 / width ** 2)
-        * np.exp(-((x - center) ** 2) / (2 * width ** 2))
+        (2 / (np.sqrt(3 * width) * np.pi**0.25))
+        * (1 - (x - center) ** 2 / width**2)
+        * np.exp(-((x - center) ** 2) / (2 * width**2))
     )
     return x
 
@@ -40,7 +39,7 @@ def ricker_matrix(width, resolution, n_components):
     D = np.empty((n_components, resolution))
     for i, center in enumerate(centers):
         D[i] = ricker_function(resolution, center, width)
-    D /= np.sqrt(np.sum(D ** 2, axis=1))[:, np.newaxis]
+    D /= np.sqrt(np.sum(D**2, axis=1))[:, np.newaxis]
     return D
 
 
@@ -72,8 +71,6 @@ estimators = [
     ("Lasso", "lasso_lars", 2, None, "turquoise"),
 ]
 lw = 2
-# Avoid FutureWarning about default value change when numpy >= 1.14
-lstsq_rcond = None if np_version >= parse_version("1.14") else -1
 
 plt.figure(figsize=(13, 6))
 for subplot, (D, title) in enumerate(
@@ -107,7 +104,7 @@ for subplot, (D, title) in enumerate(
     )
     x = coder.transform(y.reshape(1, -1))
     _, idx = np.where(x != 0)
-    x[0, idx], _, _, _ = np.linalg.lstsq(D[idx, :].T, y, rcond=lstsq_rcond)
+    x[0, idx], _, _, _ = np.linalg.lstsq(D[idx, :].T, y, rcond=None)
     x = np.ravel(np.dot(x, D))
     squared_error = np.sum((y - x) ** 2)
     plt.plot(

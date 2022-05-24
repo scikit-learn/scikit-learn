@@ -469,6 +469,10 @@ class GroupKFold(_BaseKFold):
         .. versionchanged:: 0.22
             ``n_splits`` default value changed from 3 to 5.
 
+    Notes
+    -----
+    Groups appear in an arbitrary order throughout the folds.
+
     Examples
     --------
     >>> import numpy as np
@@ -1110,6 +1114,12 @@ class LeaveOneGroupOut(BaseCrossValidator):
 
     Read more in the :ref:`User Guide <leave_one_group_out>`.
 
+    Notes
+    -----
+    Splits are ordered according to the index of the group left out. The first
+    split has training set consting of the group whose index in `groups` is
+    lowest, and so on.
+
     Examples
     --------
     >>> import numpy as np
@@ -1137,7 +1147,6 @@ class LeaveOneGroupOut(BaseCrossValidator):
     [[1 2]
      [3 4]] [[5 6]
      [7 8]] [1 2] [1 2]
-
     """
 
     def _iter_test_masks(self, X, y, groups):
@@ -2264,7 +2273,7 @@ class _CVIterableWrapper(BaseCrossValidator):
 
 
 def check_cv(cv=5, y=None, *, classifier=False):
-    """Input checker utility for building a cross-validator
+    """Input checker utility for building a cross-validator.
 
     Parameters
     ----------
@@ -2274,7 +2283,7 @@ def check_cv(cv=5, y=None, *, classifier=False):
         - None, to use the default 5-fold cross validation,
         - integer, to specify the number of folds.
         - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - An iterable that generates (train, test) splits as arrays of indices.
 
         For integer/None inputs, if classifier is True and ``y`` is either
         binary or multiclass, :class:`StratifiedKFold` is used. In all other

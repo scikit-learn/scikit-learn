@@ -254,7 +254,7 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         check_classification_targets(y)
         self.classes_ = np.unique(y)
 
-        self.coef_, self.intercept_, self.n_iter_ = _fit_liblinear(
+        self.coef_, self.intercept_, n_iter_ = _fit_liblinear(
             X,
             y,
             self.C,
@@ -271,6 +271,11 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             self.loss,
             sample_weight=sample_weight,
         )
+        # Backward compatibility: _fit_liblinear is used both by LinearSVC/R
+        # and LogisticRegression but LogisticRegression sets a structured
+        # `n_iter_` attribute with information about the underlying OvR fits
+        # while LinearSVC/R only reports the maximum value.
+        self.n_iter_ = n_iter_.max().item()
 
         if self.multi_class == "crammer_singer" and len(self.classes_) == 2:
             self.coef_ = (self.coef_[1] - self.coef_[0]).reshape(1, -1)
@@ -481,7 +486,7 @@ class LinearSVR(RegressorMixin, LinearModel):
             accept_large_sparse=False,
         )
         penalty = "l2"  # SVR only accepts l2 penalty
-        self.coef_, self.intercept_, self.n_iter_ = _fit_liblinear(
+        self.coef_, self.intercept_, n_iter_ = _fit_liblinear(
             X,
             y,
             self.C,
@@ -499,6 +504,11 @@ class LinearSVR(RegressorMixin, LinearModel):
             sample_weight=sample_weight,
         )
         self.coef_ = self.coef_.ravel()
+        # Backward compatibility: _fit_liblinear is used both by LinearSVC/R
+        # and LogisticRegression but LogisticRegression sets a structured
+        # `n_iter_` attribute with information about the underlying OvR fits
+        # while LinearSVC/R only reports the maximum value.
+        self.n_iter_ = n_iter_.max().item()
 
         return self
 
@@ -599,9 +609,10 @@ class SVC(BaseSVC):
         Whether to return a one-vs-rest ('ovr') decision function of shape
         (n_samples, n_classes) as all other classifiers, or the original
         one-vs-one ('ovo') decision function of libsvm which has shape
-        (n_samples, n_classes * (n_classes - 1) / 2). However, one-vs-one
-        ('ovo') is always used as multi-class strategy. The parameter is
-        ignored for binary classification.
+        (n_samples, n_classes * (n_classes - 1) / 2). However, note that
+        internally, one-vs-one ('ovo') is always used as a multi-class strategy
+        to train models; an ovr matrix is only constructed from the ovo matrix.
+        The parameter is ignored for binary classification.
 
         .. versionchanged:: 0.19
             decision_function_shape is 'ovr' by default.

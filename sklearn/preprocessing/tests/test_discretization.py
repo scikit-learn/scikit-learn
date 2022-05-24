@@ -144,7 +144,7 @@ def test_numeric_stability(i):
     Xt_expected = np.array([0, 0, 1, 1, 1]).reshape(-1, 1)
 
     # Test up to discretizing nano units
-    X = X_init / 10 ** i
+    X = X_init / 10**i
     Xt = KBinsDiscretizer(n_bins=2, encode="ordinal").fit_transform(X)
     assert_array_equal(Xt_expected, Xt)
 
@@ -395,10 +395,7 @@ def test_kbinsdiscretizer_subsample_invalid_type():
         n_bins=10, encode="ordinal", strategy="quantile", subsample="full"
     )
 
-    msg = (
-        "subsample must be an instance of <class 'numbers.Integral'>, not "
-        "<class 'str'>."
-    )
+    msg = "subsample must be an instance of int, not str."
     with pytest.raises(TypeError, match=msg):
         kbd.fit(X)
 
@@ -435,3 +432,41 @@ def test_kbinsdiscretizer_subsample_values(subsample):
             kbd_default.bin_edges_[0] == kbd_with_subsampling.bin_edges_[0]
         )
         assert kbd_default.bin_edges_.shape == kbd_with_subsampling.bin_edges_.shape
+
+
+@pytest.mark.parametrize(
+    "encode, expected_names",
+    [
+        (
+            "onehot",
+            [
+                f"feat{col_id}_{float(bin_id)}"
+                for col_id in range(3)
+                for bin_id in range(4)
+            ],
+        ),
+        (
+            "onehot-dense",
+            [
+                f"feat{col_id}_{float(bin_id)}"
+                for col_id in range(3)
+                for bin_id in range(4)
+            ],
+        ),
+        ("ordinal", [f"feat{col_id}" for col_id in range(3)]),
+    ],
+)
+def test_kbinsdiscrtizer_get_feature_names_out(encode, expected_names):
+    """Check get_feature_names_out for different settings.
+    Non-regression test for #22731
+    """
+    X = [[-2, 1, -4], [-1, 2, -3], [0, 3, -2], [1, 4, -1]]
+
+    kbd = KBinsDiscretizer(n_bins=4, encode=encode).fit(X)
+    Xt = kbd.transform(X)
+
+    input_features = [f"feat{i}" for i in range(3)]
+    output_names = kbd.get_feature_names_out(input_features)
+    assert Xt.shape[1] == output_names.shape[0]
+
+    assert_array_equal(output_names, expected_names)

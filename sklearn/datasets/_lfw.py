@@ -14,7 +14,6 @@ from os.path import join, exists, isdir
 import logging
 
 import numpy as np
-import joblib
 from joblib import Memory
 
 from ._base import (
@@ -24,7 +23,6 @@ from ._base import (
     load_descr,
 )
 from ..utils import Bunch
-from ..utils.fixes import parse_version
 
 logger = logging.getLogger(__name__)
 
@@ -118,8 +116,15 @@ def _check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
 
 def _load_imgs(file_paths, slice_, color, resize):
     """Internally used to load images"""
-    # import PIL only when needed
-    from ..externals._pilutil import imread, imresize
+    try:
+        from PIL import Image
+    except ImportError:
+        raise ImportError(
+            "The Python Imaging Library (PIL) is required to load data "
+            "from jpeg files. Please refer to "
+            "https://pillow.readthedocs.io/en/stable/installation.html "
+            "for installing PIL."
+        )
 
     # compute the portion of the images to load to respect the slice_ parameter
     # given by the caller
@@ -153,17 +158,19 @@ def _load_imgs(file_paths, slice_, color, resize):
 
         # Checks if jpeg reading worked. Refer to issue #3594 for more
         # details.
-        img = imread(file_path)
-        if img.ndim == 0:
+        pil_img = Image.open(file_path)
+        pil_img.crop((w_slice.start, h_slice.start, w_slice.stop, h_slice.stop))
+        if resize is not None:
+            pil_img = pil_img.resize((w, h))
+        face = np.asarray(pil_img, dtype=np.float32)
+
+        if face.ndim == 0:
             raise RuntimeError(
                 "Failed to read the image file %s, "
                 "Please make sure that libjpeg is installed" % file_path
             )
 
-        face = np.asarray(img[slice_], dtype=np.float32)
         face /= 255.0  # scale uint8 coded colors to the [0.0, 1.0] floats
-        if resize is not None:
-            face = imresize(face, resize)
         if not color:
             # average the color channels to compute a gray levels
             # representation
@@ -316,11 +323,7 @@ def fetch_lfw_people(
 
     # wrap the loader in a memoizing function that will return memmaped data
     # arrays for optimal memory usage
-    if parse_version(joblib.__version__) < parse_version("0.12"):
-        # Deal with change of API in joblib
-        m = Memory(cachedir=lfw_home, compress=6, verbose=0)
-    else:
-        m = Memory(location=lfw_home, compress=6, verbose=0)
+    m = Memory(location=lfw_home, compress=6, verbose=0)
     load_func = m.cache(_fetch_lfw_people)
 
     # load and memoize the pairs as np arrays
@@ -497,11 +500,7 @@ def fetch_lfw_pairs(
 
     # wrap the loader in a memoizing function that will return memmaped data
     # arrays for optimal memory usage
-    if parse_version(joblib.__version__) < parse_version("0.12"):
-        # Deal with change of API in joblib
-        m = Memory(cachedir=lfw_home, compress=6, verbose=0)
-    else:
-        m = Memory(location=lfw_home, compress=6, verbose=0)
+    m = Memory(location=lfw_home, compress=6, verbose=0)
     load_func = m.cache(_fetch_lfw_pairs)
 
     # select the right metadata file according to the requested subset

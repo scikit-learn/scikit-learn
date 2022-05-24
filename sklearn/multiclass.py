@@ -42,11 +42,9 @@ import itertools
 from .base import BaseEstimator, ClassifierMixin, clone, is_classifier
 from .base import MultiOutputMixin
 from .base import MetaEstimatorMixin, is_regressor
-from .base import _is_pairwise
 from .preprocessing import LabelBinarizer
 from .metrics.pairwise import euclidean_distances
 from .utils import check_random_state
-from .utils.deprecation import deprecated
 from .utils._tags import _safe_tags
 from .utils.validation import _num_samples
 from .utils.validation import check_is_fitted
@@ -102,6 +100,15 @@ def _predict_binary(estimator, X):
         # probabilities of the positive class
         score = estimator.predict_proba(X)[:, 1]
     return score
+
+
+def _threshold_for_binary_predict(estimator):
+    """Threshold for predictions from binary estimator."""
+    if hasattr(estimator, "decision_function") and is_classifier(estimator):
+        return 0.0
+    else:
+        # predict_proba threshold
+        return 0.5
 
 
 def _check_estimator(estimator):
@@ -218,6 +225,15 @@ class OneVsRestClassifier(
         .. versionchanged:: 0.20
            `n_jobs` default changed from 1 to None
 
+    verbose : int, default=0
+        The verbosity level, if non zero, progress messages are printed.
+        Below 50, the output is sent to stderr. Otherwise, the output is sent
+        to stdout. The frequency of the messages increases with the verbosity
+        level, reporting all iterations at 10. See :class:`joblib.Parallel` for
+        more details.
+
+        .. versionadded:: 1.1
+
     Attributes
     ----------
     estimators_ : list of `n_classes` estimators
@@ -274,9 +290,10 @@ class OneVsRestClassifier(
     array([2, 0, 1])
     """
 
-    def __init__(self, estimator, *, n_jobs=None):
+    def __init__(self, estimator, *, n_jobs=None, verbose=0):
         self.estimator = estimator
         self.n_jobs = n_jobs
+        self.verbose = verbose
 
     def fit(self, X, y):
         """Fit underlying estimators.
@@ -307,7 +324,7 @@ class OneVsRestClassifier(
         # In cases where individual estimators are very fast to train setting
         # n_jobs > 1 in can results in slower performance due to the overhead
         # of spawning threads.  See joblib issue #112.
-        self.estimators_ = Parallel(n_jobs=self.n_jobs)(
+        self.estimators_ = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
             delayed(_fit_binary)(
                 self.estimator,
                 X,
@@ -418,12 +435,7 @@ class OneVsRestClassifier(
                 argmaxima[maxima == pred] = i
             return self.classes_[argmaxima]
         else:
-            if hasattr(self.estimators_[0], "decision_function") and is_classifier(
-                self.estimators_[0]
-            ):
-                thresh = 0
-            else:
-                thresh = 0.5
+            thresh = _threshold_for_binary_predict(self.estimators_[0])
             indices = array.array("i")
             indptr = array.array("i", [0])
             for e in self.estimators_:
@@ -515,17 +527,6 @@ class OneVsRestClassifier(
         """Number of classes."""
         return len(self.classes_)
 
-    # TODO: Remove in 1.1
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `_pairwise` was deprecated in "
-        "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def _pairwise(self):
-        """Indicate if wrapped estimator is using a precomputed Gram matrix"""
-        return getattr(self.estimator, "_pairwise", False)
-
     def _more_tags(self):
         """Indicate if wrapped estimator is using a precomputed Gram matrix"""
         return {"pairwise": _safe_tags(self.estimator, key="pairwise")}
@@ -606,12 +607,6 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         Indices of samples used when training the estimators.
         ``None`` when ``estimator``'s `pairwise` tag is False.
 
-        .. deprecated:: 0.24
-
-            The _pairwise attribute is deprecated in 0.24. From 1.1
-            (renaming of 0.25) and onward, `pairwise_indices_` will use the
-            pairwise estimator tag instead.
-
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
@@ -690,7 +685,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         self.estimators_ = estimators_indices[0]
 
-        pairwise = _is_pairwise(self)
+        pairwise = self._get_tags()["pairwise"]
         self.pairwise_indices_ = estimators_indices[1] if pairwise else None
 
         return self
@@ -779,7 +774,8 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         """
         Y = self.decision_function(X)
         if self.n_classes_ == 2:
-            return self.classes_[(Y > 0).astype(int)]
+            thresh = _threshold_for_binary_predict(self.estimators_[0])
+            return self.classes_[(Y > thresh).astype(int)]
         return self.classes_[Y.argmax(axis=1)]
 
     def decision_function(self, X):
@@ -833,17 +829,6 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     def n_classes_(self):
         """Number of classes."""
         return len(self.classes_)
-
-    # TODO: Remove in 1.1
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `_pairwise` was deprecated in "
-        "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def _pairwise(self):
-        """Indicate if wrapped estimator is using a precomputed Gram matrix"""
-        return getattr(self.estimator, "_pairwise", False)
 
     def _more_tags(self):
         """Indicate if wrapped estimator is using a precomputed Gram matrix"""
