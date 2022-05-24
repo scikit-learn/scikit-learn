@@ -10,7 +10,7 @@ from tempfile import NamedTemporaryFile
 
 import pytest
 
-from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_equal, assert_allclose
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import fails_if_pypy
 
@@ -553,3 +553,20 @@ def test_load_offset_exhaustive_splits():
 def test_load_with_offsets_error():
     with pytest.raises(ValueError, match="n_features is required"):
         _load_svmlight_local_test_file(datafile, offset=3, length=3)
+
+
+def test_y_explicit_zeros(tmp_path):
+    save_path = str(tmp_path / "svm_explicit_zero")
+    rng = np.random.RandomState(42)
+    X = rng.randn(3, 5).astype(np.float64)
+    indptr = np.array([0, 2, 3, 6])
+    indices = np.array([0, 2, 2, 0, 1, 2])
+
+    # explicit zero in `data`
+    data = np.array([0, 2, 3, 4, 5, 6])
+    y = sp.csr_matrix((data, indices, indptr), shape=(3, 3))
+    dump_svmlight_file(X, y, save_path, multilabel=True)
+
+    X_load, y_load = load_svmlight_file(save_path, multilabel=True)
+    assert_allclose(X_load.toarray(), X)
+    assert_allclose(y_load.toarray(), y)
