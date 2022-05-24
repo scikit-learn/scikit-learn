@@ -410,7 +410,7 @@ def _logistic_regression_path(
             hess = loss.gradient_hessian_product  # hess = [gradient, hessp]
         # TODO: Update w/ new loss module
         elif solver == "trust-ncg":
-            func = loss.loss_gradient
+            func = loss.loss
 
             def hessp(x, *args):
                 return loss.gradient_hessian_product(x, *args)[1]
