@@ -4,11 +4,14 @@
 #
 #    pip-compile --output-file=build_tools/azure/debian_atlas_32bit_lock.txt build_tools/azure/debian_atlas_32bit_requirements.txt
 #
+--index-url https://d1yxz45j0ypngg.cloudfront.net/
+--extra-index-url https://pypi.org/simple
+
 atomicwrites==1.4.0
     # via pytest
 attrs==21.4.0
     # via pytest
-cython==0.29.30
+cython==0.29.26
     # via -r build_tools/azure/debian_atlas_32bit_requirements.txt
 importlib-metadata==4.11.4
     # via pytest
