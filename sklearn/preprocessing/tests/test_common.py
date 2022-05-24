@@ -81,7 +81,7 @@ def test_missing_value_handling(
         Xt_class = est.transform(X_train)
     kwargs = est.get_params()
     # remove the parameters which should be omitted because they
-    # are not defined in the sister function of the preprocessing class
+    # are not defined in the counterpart function of the preprocessing class
     for kwarg in omit_kwargs:
         _ = kwargs.pop(kwarg)
     Xt_func = func(X_train, **kwargs)

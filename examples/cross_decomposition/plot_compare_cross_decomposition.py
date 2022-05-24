@@ -4,6 +4,7 @@ Compare cross decomposition methods
 ===================================
 
 Simple usage of various cross decomposition algorithms:
+
 - PLSCanonical
 - PLSRegression, with multivariate response, a.k.a. PLS2
 - PLSRegression, with univariate response, a.k.a. PLS1
@@ -20,12 +21,11 @@ weak: the point cloud is very spherical.
 
 """
 
-import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.cross_decomposition import PLSCanonical, PLSRegression, CCA
-
-# #############################################################################
+# %%
 # Dataset based latent variables model
+# ------------------------------------
+
+import numpy as np
 
 n = 500
 # 2 latents vars:
@@ -46,19 +46,27 @@ print(np.round(np.corrcoef(X.T), 2))
 print("Corr(Y)")
 print(np.round(np.corrcoef(Y.T), 2))
 
-# #############################################################################
+# %%
 # Canonical (symmetric) PLS
-
+# -------------------------
+#
 # Transform data
 # ~~~~~~~~~~~~~~
+
+from sklearn.cross_decomposition import PLSCanonical
+
 plsca = PLSCanonical(n_components=2)
 plsca.fit(X_train, Y_train)
 X_train_r, Y_train_r = plsca.transform(X_train, Y_train)
 X_test_r, Y_test_r = plsca.transform(X_test, Y_test)
 
+# %%
 # Scatter plot of scores
 # ~~~~~~~~~~~~~~~~~~~~~~
-# 1) On diagonal plot X vs Y scores on each components
+
+import matplotlib.pyplot as plt
+
+# On diagonal plot X vs Y scores on each components
 plt.figure(figsize=(12, 8))
 plt.subplot(221)
 plt.scatter(X_train_r[:, 0], Y_train_r[:, 0], label="train", marker="o", s=25)
@@ -86,7 +94,7 @@ plt.xticks(())
 plt.yticks(())
 plt.legend(loc="best")
 
-# 2) Off diagonal plot components 1 vs 2 for X and Y
+# Off diagonal plot components 1 vs 2 for X and Y
 plt.subplot(222)
 plt.scatter(X_train_r[:, 0], X_train_r[:, 1], label="train", marker="*", s=50)
 plt.scatter(X_test_r[:, 0], X_test_r[:, 1], label="test", marker="*", s=50)
@@ -114,8 +122,11 @@ plt.xticks(())
 plt.yticks(())
 plt.show()
 
-# #############################################################################
+# %%
 # PLS regression, with multivariate response, a.k.a. PLS2
+# -------------------------------------------------------
+
+from sklearn.cross_decomposition import PLSRegression
 
 n = 1000
 q = 3
@@ -134,7 +145,9 @@ print("Estimated B")
 print(np.round(pls2.coef_, 1))
 pls2.predict(X)
 
+# %%
 # PLS regression, with univariate response, a.k.a. PLS1
+# -----------------------------------------------------
 
 n = 1000
 p = 10
@@ -146,8 +159,11 @@ pls1.fit(X, y)
 print("Estimated betas")
 print(np.round(pls1.coef_, 1))
 
-# #############################################################################
+# %%
 # CCA (PLS mode B with symmetric deflation)
+# -----------------------------------------
+
+from sklearn.cross_decomposition import CCA
 
 cca = CCA(n_components=2)
 cca.fit(X_train, Y_train)
