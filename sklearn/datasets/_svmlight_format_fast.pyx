@@ -153,10 +153,7 @@ def get_sparse_row_string(int_or_float1[:] X_data, int[:] X_indptr, int[:] X_ind
 
 def _dump_svmlight_file(X, y, f, bint multilabel, bint one_based, int_or_longlong[:] query_id, bint X_is_sp, bint y_is_sp):
     cdef bint X_is_integral
-    if X_is_sp:
-        X_is_integral = X.data.dtype.kind == "i"
-    else:
-        X_is_integral = X.dtype.kind == "i"
+    X_is_integral = X.dtype.kind == "i"
     if X_is_integral:
         value_pattern = "%d:%d"
     else:
@@ -183,8 +180,7 @@ def _dump_svmlight_file(X, y, f, bint multilabel, bint one_based, int_or_longlon
         array.array[signed long long] int_template = array.array('q',[])
         array.array[double] float_template = array.array('d',[])
         Py_ssize_t x_nz_used
-        cnp.ndarray _x_inds = np.empty(row_length, dtype=np.intp)
-        Py_ssize_t[:] x_inds = _x_inds
+        Py_ssize_t[:] x_inds = np.empty(row_length, dtype=np.intp)
         array.array x_vals
         signed long long[:] x_vals_int
         double[:] x_vals_float
@@ -199,10 +195,7 @@ def _dump_svmlight_file(X, y, f, bint multilabel, bint one_based, int_or_longlon
         x_nz_used = 0
 
         if X_is_sp:
-            if X_is_integral:
-                s = get_sparse_row_string(X.data, X.indptr, X.indices, i, value_pattern, one_based)
-            else:
-                s = get_sparse_row_string(X.data, X.indptr, X.indices, i, value_pattern, one_based)
+            s = get_sparse_row_string(X.data, X.indptr, X.indices, i, value_pattern, one_based)
         else:
             if X_is_integral:
                 x_vals_int = x_vals
