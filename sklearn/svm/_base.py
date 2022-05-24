@@ -332,6 +332,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             y,
             svm_type=solver_type,
             sample_weight=sample_weight,
+            # TODO(1.4): Replace "_class_weight" with "class_weight_"
             class_weight=getattr(self, "_class_weight", np.empty(0)),
             kernel=kernel,
             C=self.C,
@@ -381,6 +382,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self.coef0,
             self.tol,
             self.C,
+            # TODO(1.4): Replace "_class_weight" with "class_weight_"
             getattr(self, "_class_weight", np.empty(0)),
             sample_weight,
             self.nu,
@@ -491,6 +493,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self.coef0,
             self.tol,
             C,
+            # TODO(1.4): Replace "_class_weight" with "class_weight_"
             getattr(self, "_class_weight", np.empty(0)),
             self.nu,
             self.epsilon,
@@ -591,6 +594,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self.coef0,
             self.tol,
             self.C,
+            # TODO(1.4): Replace "_class_weight" with "class_weight_"
             getattr(self, "_class_weight", np.empty(0)),
             self.nu,
             self.epsilon,
@@ -939,6 +943,7 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
             self.coef0,
             self.tol,
             self.C,
+            # TODO(1.4): Replace "_class_weight" with "class_weight_"
             getattr(self, "_class_weight", np.empty(0)),
             self.nu,
             self.epsilon,
