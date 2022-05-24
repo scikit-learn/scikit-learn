@@ -811,7 +811,6 @@ def check_array(
 
     if sp.issparse(array):
         _ensure_no_complex_data(array)
-
         array = _ensure_sparse_format(
             array,
             accept_sparse=accept_sparse,
