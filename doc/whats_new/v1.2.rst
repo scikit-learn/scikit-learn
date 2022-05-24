@@ -108,3 +108,10 @@ Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.1, including:
 
 TODO: update at the time of the release.
+
+:mod:`sklearn.svm`
+..................
+
+- |API| The `class_weight_` attribute is now deprecated for
+  :class:`svm.NuSVR`, :class:`svm.SVR`, :class:`svm.OneClassSVM`.
+  :pr:`22898` by :user:`Meekail Zain <micky774>`.
