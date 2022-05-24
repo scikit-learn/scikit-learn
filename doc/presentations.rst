@@ -9,7 +9,7 @@ New to Scientific Python?
 ==========================
 For those that are still new to the scientific Python ecosystem, we highly
 recommend the `Python Scientific Lecture Notes
-<https://www.scipy-lectures.org/>`_. This will help you find your footing a
+<https://scipy-lectures.org>`_. This will help you find your footing a
 bit and will definitely improve your scikit-learn experience.  A basic
 understanding of NumPy arrays is recommended to make the most of scikit-learn.
 
