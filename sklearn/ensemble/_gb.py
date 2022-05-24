@@ -1000,7 +1000,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
 
     The estimator
     :class:`HistGradientBoostingClassifier<sklearn.ensemble.HistGradientBoostingClassifier>`
-    is much faster than GB for big datasets (n_samples >= 10 000).
+    is a much faster variant of this estimator for big datasets (n_samples >= 10 000).
 
     Read more in the :ref:`User Guide <gradient_boosting>`.
 
@@ -1570,7 +1570,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
 
     The estimator
     :class:`HistGradientBoostingRegressor<sklearn.ensemble.HistGradientBoostingRegressor>`
-    is much faster than GB for big datasets (n_samples >= 10 000).
+    is a much faster variant of this estimator for big datasets (n_samples >= 10 000).
 
     Read more in the :ref:`User Guide <gradient_boosting>`.
 
