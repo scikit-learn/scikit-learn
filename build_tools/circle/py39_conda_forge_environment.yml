@@ -15,5 +15,5 @@ dependencies:
   - pytest=6.2.5
   - pytest-xdist
   - pillow
-  - pip=22.0.4
+  - pip
   - ccache
