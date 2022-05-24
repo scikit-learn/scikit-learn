@@ -264,6 +264,7 @@ def setup_package():
             "Operating System :: POSIX",
             "Operating System :: Unix",
             "Operating System :: MacOS",
+            "License :: OSI Approved :: BSD License",
             "Programming Language :: Python :: 3",
             "Programming Language :: Python :: 3.8",
             "Programming Language :: Python :: 3.9",
