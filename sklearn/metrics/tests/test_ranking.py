@@ -2020,7 +2020,7 @@ def test_top_k_accuracy_score_error(y_true, y_score, labels, msg):
 def test_label_ranking_avg_precision_score_should_allow_csr_matrix_for_y_true_input():
     # Test that label_ranking_avg_precision_score accept sparse y_true.
     # Non-regression test for #22575
-    y_true = csr_matrix(np.array([[1, 0, 0], [0, 0, 1]]))
+    y_true = csr_matrix([[1, 0, 0], [0, 0, 1]])
     y_score = np.array([[0.5, 0.9, 0.6], [0, 0, 1]])
     result = label_ranking_average_precision_score(y_true, y_score)
     assert result == pytest.approx(2 / 3)
