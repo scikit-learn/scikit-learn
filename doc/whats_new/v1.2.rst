@@ -44,6 +44,13 @@ Changelog
 - |Enhancement| :class:`cluster.Birch` now preserves dtype for `numpy.float32`
   inputs. :pr:`22968` by `Meekail Zain <micky774>`.
 
+- |Enhancement| :class:`cluster.SpectralClustering` and
+  :func:`cluster.spectral_clustering` now propogates the `eigen_tol` parameter
+  to all choices of `eigen_solver`. Includes a new option `eigen_tol="auto"`
+  and begins deprecation to change the default from `eigen_tol=0` to
+  `eigen_tol="auto"` in version 1.3.
+  :pr:`23210` by :user:`Meekail Zain <micky774>`.
+
 :mod:`sklearn.datasets`
 .......................
 
@@ -101,25 +108,10 @@ Changelog
   deterministic SVD used by the randomized SVD algorithm.
   :pr:`20617` by :user:`Srinath Kailasa <skailasa>`
 
-Code and Documentation Contributors
------------------------------------
-
-Thanks to everyone who has contributed to the maintenance and improvement of
-the project since version 1.1, including:
-
-TODO: update at the time of the release.
-
-:mod:`sklearn.cluster`
-......................
-- |Enhancement| :class:`cluster.SpectralClustering` and
-  :func:`cluster.spectral_clustering` now propogates the `eigen_tol` parameter
-  to all choices of `eigen_solver`. Includes a new option `eigen_tol="auto"`
-  and begins deprecation to change the default from `eigen_tol=0` to
-  `eigen_tol="auto"` in version 1.3.
-  :pr:`23210` by :user:`Meekail Zain <micky774>`.
 
 :mod:`sklearn.manifold`
 .......................
+
 - |Enhancement| Adds `eigen_tol` parameter to
   :class:`manifold.SpectralEmbedding`. Both :func:`manifold.spectral_embedding`
   and :class:`manifold.SpectralEmbedding` now propogate `eigen_tol` to all
@@ -134,3 +126,11 @@ TODO: update at the time of the release.
 - |API| The `class_weight_` attribute is now deprecated for
   :class:`svm.NuSVR`, :class:`svm.SVR`, :class:`svm.OneClassSVM`.
   :pr:`22898` by :user:`Meekail Zain <micky774>`.
+
+Code and Documentation Contributors
+-----------------------------------
+
+Thanks to everyone who has contributed to the maintenance and improvement of
+the project since version 1.1, including:
+
+TODO: update at the time of the release.
