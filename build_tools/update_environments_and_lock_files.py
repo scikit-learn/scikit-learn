@@ -275,9 +275,6 @@ conda_build_metadata_list = [
         + ["pip", "ccache"],
         "package_constraints": {
             "python": "3.9",
-            # TODO remove constraint when pip > 22.1 is released. See
-            # https://github.com/pypa/pip/issues/11116 for more details.
-            "pip": "22.0.4",
         },
     },
 ]
