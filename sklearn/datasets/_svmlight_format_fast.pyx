@@ -146,7 +146,6 @@ def get_sparse_row_string(int_or_float1[:] X_data, int[:] X_indptr, int[:] X_ind
         Py_ssize_t row_start = X_indptr[row]
         Py_ssize_t row_end = X_indptr[row+1]
 
-    #row = zip(X.indices[span], X.data[span])
     return " ".join(value_pattern % (X_indices[i]+one_based, X_data[i]) for i in range(row_start, row_end))
 
 def _dump_svmlight_file(X, y, f, bint multilabel, bint one_based, int_or_longlong[:] query_id, bint X_is_sp, bint y_is_sp):
