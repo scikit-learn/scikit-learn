@@ -29,8 +29,7 @@ from ..utils import check_array, IS_PYPY
 if not IS_PYPY:
     from ._svmlight_format_fast import (
         _load_svmlight_file,
-        _dump_svmlight_file_dense,
-        _dump_svmlight_file_general,
+        _dump_svmlight_file,
     )
 else:
 
@@ -384,19 +383,16 @@ def _dump_svmlight(X, y, f, multilabel, one_based, comment, query_id):
     y_is_sp = hasattr(y, "tocsr")
     if not multilabel and not y_is_sp:
         y = y[:, np.newaxis]
-    if not (X_is_sp or y_is_sp):
-        _dump_svmlight_file_dense(X, y, f, multilabel, one_based, query_id)
-    else:
-        _dump_svmlight_file_general(
-            X,
-            y,
-            f,
-            multilabel,
-            one_based,
-            query_id,
-            X_is_sp,
-            y_is_sp,
-        )
+    _dump_svmlight_file(
+        X,
+        y,
+        f,
+        multilabel,
+        one_based,
+        query_id,
+        X_is_sp,
+        y_is_sp,
+    )
 
 
 def dump_svmlight_file(
