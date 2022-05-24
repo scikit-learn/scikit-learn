@@ -488,6 +488,9 @@ def test_error_pyamg_not_available():
 @pytest.mark.parametrize("solver", ["arpack", "amg", "lobpcg"])
 def test_spectral_eigen_tol_auto(monkeypatch, solver):
     """Test that `eigen_tol="auto"` is resolved correctly"""
+    if solver == "amg":
+        if not pyamg_available:
+            pytest.skip("PyAMG is not available.")
     X = make_blobs(
         n_samples=200, random_state=0, centers=[[1, 1], [-1, -1]], cluster_std=0.01
     )[0]
@@ -497,8 +500,6 @@ def test_spectral_eigen_tol_auto(monkeypatch, solver):
     solver_func = eigsh if solver == "arpack" else lobpcg
     default_value = 0 if solver == "arpack" else None
     if solver == "amg":
-        if not pyamg_available:
-            pytest.skip("PyAMG is not available.")
         S = sparse.csr_matrix(S)
 
     mocked_solver = Mock(side_effect=solver_func)
