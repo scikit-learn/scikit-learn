@@ -212,6 +212,59 @@ conda_build_metadata_list = [
         "package_constraints": {"python": "3.8", "blas": "[build=mkl]"},
     },
     {
+        "build_name": "doc_min_dependencies",
+        "folder": "build_tools/circle",
+        "platform": "linux-64",
+        "channel": "conda-forge",
+        "conda_dependencies": common_dependencies_without_coverage
+        + [
+            "scikit-image",
+            "seaborn",
+            "memory_profiler",
+            "compilers",
+            "sphinx",
+            "sphinx-gallery",
+            "numpydoc",
+            "sphinx-prompt",
+        ],
+        "pip_dependencies": ["sphinxext-opengraph"],
+        "package_constraints": {
+            "python": "3.8",
+            "numpy": "min",
+            "scipy": "min",
+            "matplotlib": "min",
+            "cython": "min",
+            "scikit-image": "min",
+            "sphinx": "min",
+            "pandas": "min",
+            "sphinx-gallery": "min",
+            "numpydoc": "min",
+            "sphinx-prompt": "min",
+            "sphinxext-opengraph": "min",
+        },
+    },
+    {
+        "build_name": "doc",
+        "folder": "build_tools/circle",
+        "platform": "linux-64",
+        "channel": "conda-forge",
+        "conda_dependencies": common_dependencies_without_coverage
+        + [
+            "scikit-image",
+            "seaborn",
+            "memory_profiler",
+            "compilers",
+            "sphinx",
+            "sphinx-gallery",
+            "numpydoc",
+            "sphinx-prompt",
+        ],
+        "pip_dependencies": ["sphinxext-opengraph"],
+        "package_constraints": {
+            "python": "3.9",
+        },
+    },
+    {
         "build_name": "py39_conda_forge",
         "folder": "build_tools/circle",
         "platform": "linux-aarch64",
@@ -337,7 +390,7 @@ def get_conda_environment_content(build_metadata):
     template = environment.from_string(
         """
 # DO NOT EDIT: this file is generated from the specification found in the
-# following script to centralize the configuration for all Azure CI builds:
+# following script to centralize the configuration for CI builds:
 # build_tools/update_environments_and_lock_files.py
 channels:
   - {{ build_metadata['channel'] }}
@@ -402,7 +455,7 @@ def get_pip_requirements_content(build_metadata):
     template = environment.from_string(
         """
 # DO NOT EDIT: this file is generated from the specification found in the
-# following script to centralize the configuration for all Azure CI builds:
+# following script to centralize the configuration for CI builds:
 # build_tools/update_environments_and_lock_files.py
 {% for pip_dep in build_metadata['pip_dependencies'] %}
 {{ pip_dep | get_package_with_constraint(build_metadata, uses_pip=True) }}
