@@ -138,10 +138,11 @@ def get_dense_row_string(int_or_float1[:,:] X, Py_ssize_t[:] x_inds, int_or_floa
 
     for k in range(row_length):
         val = X[row,k]
-        if val!=0:
-            x_inds[x_nz_used] = k
-            x_vals[x_nz_used] = val
-            x_nz_used += 1
+        if val==0:
+            continue
+        x_inds[x_nz_used] = k
+        x_vals[x_nz_used] = val
+        x_nz_used += 1
     return " ".join(value_pattern % (j+one_based, val) for i, (j, val) in enumerate(zip(x_inds, x_vals)) if i < x_nz_used)
 
 def get_sparse_row_string(int_or_float1[:] X_data, int[:] X_indptr, int[:] X_indices, Py_ssize_t row, str value_pattern, bint one_based):
