@@ -44,6 +44,13 @@ Changelog
 - |Enhancement| :class:`cluster.Birch` now preserves dtype for `numpy.float32`
   inputs. :pr:`22968` by `Meekail Zain <micky774>`.
 
+- |Enhancement| :class:`cluster.KMeans` and :class:`cluster.MiniBatchKMeans`
+  now accept a new `'auto'` option for `n_init` which changes the number of
+  random initializations to one when using `init='k-means++'` for efficiency.
+  This begins deprecation for the default values of `n_init` in the two classes
+  and both will have their defaults changed to `n_init='auto'` in 1.4.
+  :pr:`23038` by :user:`Meekail Zain <micky774>`.
+
 :mod:`sklearn.datasets`
 .......................
 
@@ -64,12 +71,13 @@ Changelog
 - |Efficiency| Improve runtime performance of :class:`ensemble.IsolationForest`
   by avoiding data copies. :pr:`23252` by :user:`Zhehao Liu <MaxwellLZH>`.
 
-:mod:`sklearn.feature_selection`
-................................
+:mod:`sklearn.metrics`
+......................
 
-- |Fix| The `partial_fit` method of :class:`feature_selection.SelectFromModel`
-  now conducts validation for `max_features` and `feature_names_in` parameters.
-  :pr:`23299` by :user:`Long Bao <lorentzbao>`.
+- |Feature| :func:`class_likelihood_ratios` is added to compute the positive and
+  negative likelihood ratios derived from the confusion matrix
+  of a binary classification problem. :pr:`22518` by
+  :user:`Arturo Amor <ArturoAmorQ>`.
 
 :mod:`sklearn.neighbors`
 ........................
@@ -85,19 +93,20 @@ Changelog
   matrices in a variety of estimators and avoid an `EfficiencyWarning`.
   :pr:`23139` by `Tom Dupre la Tour`_.
 
-:mod:`sklearn.preprocessing`
-.............................
-
-- |Fix| :class:`preprocessing.PolynomialFeatures` with ``degree`` equal to 0 will raise
-  error when ``include_bias`` is set to False, and outputs a single constant array when
-  ``include_bias`` is set to True. :pr:`23370` by :user:`Zhehao Liu <MaxwellLZH>`. 
-
 :mod:`sklearn.tree`
 ...................
 
 - |Fix| Fixed invalid memory access bug during fit in
   :class:`tree.DecisionTreeRegressor` and :class:`tree.DecisionTreeClassifier`.
   :pr:`23273` by `Thomas Fan`_.
+
+:mod:`sklearn.utils`
+....................
+
+- |Enhancement| :func:`utils.extmath.randomized_svd` now accepts an argument,
+  `lapack_svd_driver`, to specify the lapack driver used in the internal
+  deterministic SVD used by the randomized SVD algorithm.
+  :pr:`20617` by :user:`Srinath Kailasa <skailasa>`
 
 Code and Documentation Contributors
 -----------------------------------
@@ -106,3 +115,10 @@ Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.1, including:
 
 TODO: update at the time of the release.
+
+:mod:`sklearn.svm`
+..................
+
+- |API| The `class_weight_` attribute is now deprecated for
+  :class:`svm.NuSVR`, :class:`svm.SVR`, :class:`svm.OneClassSVM`.
+  :pr:`22898` by :user:`Meekail Zain <micky774>`.
