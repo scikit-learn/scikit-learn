@@ -75,7 +75,7 @@ class KernelPCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
             default='auto'
         Select eigensolver to use. If `n_components` is much
         less than the number of training samples, randomized (or arpack to a
-        smaller extend) may be more efficient than the dense eigensolver.
+        smaller extent) may be more efficient than the dense eigensolver.
         Randomized SVD is performed according to the method of Halko et al
         [3]_.
 

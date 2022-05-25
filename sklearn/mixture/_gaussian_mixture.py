@@ -492,13 +492,20 @@ class GaussianMixture(BaseMixture):
     n_init : int, default=1
         The number of initializations to perform. The best results are kept.
 
-    init_params : {'kmeans', 'random'}, default='kmeans'
+    init_params : {'kmeans', 'k-means++', 'random', 'random_from_data'}, \
+    default='kmeans'
         The method used to initialize the weights, the means and the
         precisions.
-        Must be one of::
+        String must be one of:
 
-            'kmeans' : responsibilities are initialized using kmeans.
-            'random' : responsibilities are initialized randomly.
+        - 'kmeans' : responsibilities are initialized using kmeans.
+        - 'k-means++' : use the k-means++ method to initialize.
+        - 'random' : responsibilities are initialized randomly.
+        - 'random_from_data' : initial means are randomly selected data points.
+
+        .. versionchanged:: v1.1
+            `init_params` now accepts 'random_from_data' and 'k-means++' as
+            initialization methods.
 
     weights_init : array-like of shape (n_components, ), default=None
         The user-provided initial weights.
@@ -741,11 +748,10 @@ class GaussianMixture(BaseMixture):
             Logarithm of the posterior probabilities (or responsibilities) of
             the point of each sample in X.
         """
-        n_samples, _ = X.shape
         self.weights_, self.means_, self.covariances_ = _estimate_gaussian_parameters(
             X, np.exp(log_resp), self.reg_covar, self.covariance_type
         )
-        self.weights_ /= n_samples
+        self.weights_ /= self.weights_.sum()
         self.precisions_cholesky_ = _compute_precision_cholesky(
             self.covariances_, self.covariance_type
         )

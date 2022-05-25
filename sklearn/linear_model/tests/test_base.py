@@ -184,14 +184,15 @@ def test_deprecate_normalize(normalize, default):
             expected = None
             warning_msg = []
 
-    with pytest.warns(expected) as record:
-        _normalize = _deprecate_normalize(normalize, default, "estimator")
-    assert _normalize == output
-
-    n_warnings = 0 if expected is None else 1
-    assert len(record) == n_warnings
-    if n_warnings:
+    if expected is None:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", FutureWarning)
+            _normalize = _deprecate_normalize(normalize, default, "estimator")
+    else:
+        with pytest.warns(expected) as record:
+            _normalize = _deprecate_normalize(normalize, default, "estimator")
         assert all([warning in str(record[0].message) for warning in warning_msg])
+    assert _normalize == output
 
 
 def test_linear_regression_sparse(random_state=0):

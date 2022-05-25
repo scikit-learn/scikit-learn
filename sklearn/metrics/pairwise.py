@@ -833,13 +833,15 @@ def haversine_distances(X, Y=None):
     Parameters
     ----------
     X : array-like of shape (n_samples_X, 2)
+        A feature array.
 
     Y : array-like of shape (n_samples_Y, 2), default=None
-        If `None`, uses `Y=X`.
+        An optional second feature array. If `None`, uses `Y=X`.
 
     Returns
     -------
     distance : ndarray of shape (n_samples_X, n_samples_Y)
+        The distance matrix.
 
     Notes
     -----
@@ -1289,9 +1291,10 @@ def laplacian_kernel(X, Y=None, gamma=None):
     Parameters
     ----------
     X : ndarray of shape (n_samples_X, n_features)
+        A feature array.
 
     Y : ndarray of shape (n_samples_Y, n_features), default=None
-        If `None`, uses `Y=X`.
+        An optional second feature array. If `None`, uses `Y=X`.
 
     gamma : float, default=None
         If None, defaults to 1.0 / n_features.
@@ -1299,6 +1302,7 @@ def laplacian_kernel(X, Y=None, gamma=None):
     Returns
     -------
     kernel_matrix : ndarray of shape (n_samples_X, n_samples_Y)
+        The kernel matrix.
     """
     X, Y = check_pairwise_arrays(X, Y)
     if gamma is None:
@@ -1858,7 +1862,7 @@ def pairwise_distances(
     valid scipy.spatial.distance metrics), the scikit-learn implementation
     will be used, which is faster and has support for sparse matrices (except
     for 'cityblock'). For a verbose description of the metrics from
-    scikit-learn, see the __doc__ of the sklearn.pairwise.distance_metrics
+    scikit-learn, see :func:`sklearn.metrics.pairwise.distance_metrics`
     function.
 
     Read more in the :ref:`User Guide <metrics>`.

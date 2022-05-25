@@ -871,7 +871,13 @@ class _SigmoidCalibration(RegressorMixin, BaseEstimator):
 
 
 def calibration_curve(
-    y_true, y_prob, *, pos_label=None, normalize=False, n_bins=5, strategy="uniform"
+    y_true,
+    y_prob,
+    *,
+    pos_label=None,
+    normalize="deprecated",
+    n_bins=5,
+    strategy="uniform",
 ):
     """Compute true and predicted probabilities for a calibration curve.
 
@@ -895,10 +901,16 @@ def calibration_curve(
 
         .. versionadded:: 1.1
 
-    normalize : bool, default=False
+    normalize : bool, default="deprecated"
         Whether y_prob needs to be normalized into the [0, 1] interval, i.e.
         is not a proper probability. If True, the smallest value in y_prob
         is linearly mapped onto 0 and the largest one onto 1.
+
+        .. deprecated:: 1.1
+            The normalize argument is deprecated in v1.1 and will be removed in v1.3.
+            Explicitly normalizing `y_prob` will reproduce this behavior, but it is
+            recommended that a proper probability is used (i.e. a classifier's
+            `predict_proba` positive class).
 
     n_bins : int, default=5
         Number of bins to discretize the [0, 1] interval. A bigger number
@@ -947,12 +959,21 @@ def calibration_curve(
     check_consistent_length(y_true, y_prob)
     pos_label = _check_pos_label_consistency(pos_label, y_true)
 
-    if normalize:  # Normalize predicted values into interval [0, 1]
-        y_prob = (y_prob - y_prob.min()) / (y_prob.max() - y_prob.min())
-    elif y_prob.min() < 0 or y_prob.max() > 1:
-        raise ValueError(
-            "y_prob has values outside [0, 1] and normalize is set to False."
+    # TODO(1.3): Remove normalize conditional block.
+    if normalize != "deprecated":
+        warnings.warn(
+            "The normalize argument is deprecated in v1.1 and will be removed in v1.3."
+            " Explicitly normalizing y_prob will reproduce this behavior, but it is"
+            " recommended that a proper probability is used (i.e. a classifier's"
+            " `predict_proba` positive class or `decision_function` output calibrated"
+            " with `CalibratedClassifierCV`).",
+            FutureWarning,
         )
+        if normalize:  # Normalize predicted values into interval [0, 1]
+            y_prob = (y_prob - y_prob.min()) / (y_prob.max() - y_prob.min())
+
+    if y_prob.min() < 0 or y_prob.max() > 1:
+        raise ValueError("y_prob has values outside [0, 1].")
 
     labels = np.unique(y_true)
     if len(labels) > 2:

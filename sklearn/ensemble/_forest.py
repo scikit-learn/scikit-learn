@@ -394,7 +394,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
         # Check parameters
         self._validate_estimator()
-        # TODO: Remove in v1.2
+        # TODO(1.2): Remove "mse" and "mae"
         if isinstance(self, (RandomForestRegressor, ExtraTreesRegressor)):
             if self.criterion == "mse":
                 warn(
@@ -411,6 +411,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                     FutureWarning,
                 )
 
+            # TODO(1.3): Remove "auto"
             if self.max_features == "auto":
                 warn(
                     "`max_features='auto'` has been deprecated in 1.1 "
@@ -420,8 +421,8 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                     "RandomForestRegressors and ExtraTreesRegressors.",
                     FutureWarning,
                 )
-
         elif isinstance(self, (RandomForestClassifier, ExtraTreesClassifier)):
+            # TODO(1.3): Remove "auto"
             if self.max_features == "auto":
                 warn(
                     "`max_features='auto'` has been deprecated in 1.1 "
@@ -1109,10 +1110,11 @@ class RandomForestClassifier(ForestClassifier):
            The default value of ``n_estimators`` changed from 10 to 100
            in 0.22.
 
-    criterion : {"gini", "entropy"}, default="gini"
+    criterion : {"gini", "entropy", "log_loss"}, default="gini"
         The function to measure the quality of a split. Supported criteria are
-        "gini" for the Gini impurity and "entropy" for the information gain.
-        Note: this parameter is tree-specific.
+        "gini" for the Gini impurity and "log_loss" and "entropy" both for the
+        Shannon information gain, see :ref:`tree_mathematical_formulation`.
+        Note: This parameter is tree-specific.
 
     max_depth : int, default=None
         The maximum depth of the tree. If None, then nodes are expanded until
@@ -1780,9 +1782,11 @@ class ExtraTreesClassifier(ForestClassifier):
            The default value of ``n_estimators`` changed from 10 to 100
            in 0.22.
 
-    criterion : {"gini", "entropy"}, default="gini"
+    criterion : {"gini", "entropy", "log_loss"}, default="gini"
         The function to measure the quality of a split. Supported criteria are
-        "gini" for the Gini impurity and "entropy" for the information gain.
+        "gini" for the Gini impurity and "log_loss" and "entropy" both for the
+        Shannon information gain, see :ref:`tree_mathematical_formulation`.
+        Note: This parameter is tree-specific.
 
     max_depth : int, default=None
         The maximum depth of the tree. If None, then nodes are expanded until

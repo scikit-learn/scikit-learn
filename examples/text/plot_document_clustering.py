@@ -204,9 +204,8 @@ print()
 if opts.n_components:
     print("Performing dimensionality reduction using LSA")
     t0 = time()
-    # Vectorizer results are normalized, which makes KMeans behave as
-    # spherical k-means for better results. Since LSA/SVD results are
-    # not normalized, we have to redo the normalization.
+    # Since LSA/SVD results are not normalized,
+    # we redo the normalization to improve the k-means result.
     svd = TruncatedSVD(opts.n_components)
     normalizer = Normalizer(copy=False)
     lsa = make_pipeline(svd, normalizer)

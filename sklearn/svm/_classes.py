@@ -1,6 +1,8 @@
 import numpy as np
 import warnings
 
+from sklearn.utils import deprecated
+
 from ._base import _fit_liblinear, BaseSVC, BaseLibSVM
 from ..base import BaseEstimator, RegressorMixin, OutlierMixin
 from ..linear_model._base import LinearClassifierMixin, SparseCoefMixin, LinearModel
@@ -609,9 +611,10 @@ class SVC(BaseSVC):
         Whether to return a one-vs-rest ('ovr') decision function of shape
         (n_samples, n_classes) as all other classifiers, or the original
         one-vs-one ('ovo') decision function of libsvm which has shape
-        (n_samples, n_classes * (n_classes - 1) / 2). However, one-vs-one
-        ('ovo') is always used as multi-class strategy. The parameter is
-        ignored for binary classification.
+        (n_samples, n_classes * (n_classes - 1) / 2). However, note that
+        internally, one-vs-one ('ovo') is always used as a multi-class strategy
+        to train models; an ovr matrix is only constructed from the ovo matrix.
+        The parameter is ignored for binary classification.
 
         .. versionchanged:: 0.19
             decision_function_shape is 'ovr' by default.
@@ -1134,6 +1137,9 @@ class SVR(RegressorMixin, BaseLibSVM):
         Multipliers of parameter C for each class.
         Computed based on the ``class_weight`` parameter.
 
+        .. deprecated:: 1.2
+            `class_weight_` was deprecated in version 1.2 and will be removed in 1.4.
+
     coef_ : ndarray of shape (1, n_features)
         Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of a linear kernel.
@@ -1247,6 +1253,15 @@ class SVR(RegressorMixin, BaseLibSVM):
             random_state=None,
         )
 
+    # TODO(1.4): Remove
+    @deprecated(  # type: ignore
+        "Attribute `class_weight_` was deprecated in version 1.2 and will be removed in"
+        " 1.4."
+    )
+    @property
+    def class_weight_(self):
+        return np.empty(0)
+
     def _more_tags(self):
         return {
             "_xfail_checks": {
@@ -1325,6 +1340,9 @@ class NuSVR(RegressorMixin, BaseLibSVM):
     class_weight_ : ndarray of shape (n_classes,)
         Multipliers of parameter C for each class.
         Computed based on the ``class_weight`` parameter.
+
+        .. deprecated:: 1.2
+            `class_weight_` was deprecated in version 1.2 and will be removed in 1.4.
 
     coef_ : ndarray of shape (1, n_features)
         Weights assigned to the features (coefficients in the primal
@@ -1439,6 +1457,15 @@ class NuSVR(RegressorMixin, BaseLibSVM):
             random_state=None,
         )
 
+    # TODO(1.4): Remove
+    @deprecated(  # type: ignore
+        "Attribute `class_weight_` was deprecated in version 1.2 and will be removed in"
+        " 1.4."
+    )
+    @property
+    def class_weight_(self):
+        return np.empty(0)
+
     def _more_tags(self):
         return {
             "_xfail_checks": {
@@ -1513,6 +1540,9 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
     class_weight_ : ndarray of shape (n_classes,)
         Multipliers of parameter C for each class.
         Computed based on the ``class_weight`` parameter.
+
+        .. deprecated:: 1.2
+            `class_weight_` was deprecated in version 1.2 and will be removed in 1.4.
 
     coef_ : ndarray of shape (1, n_features)
         Weights assigned to the features (coefficients in the primal
@@ -1619,6 +1649,15 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
             max_iter,
             random_state=None,
         )
+
+    # TODO(1.4): Remove
+    @deprecated(  # type: ignore
+        "Attribute `class_weight_` was deprecated in version 1.2 and will be removed in"
+        " 1.4."
+    )
+    @property
+    def class_weight_(self):
+        return np.empty(0)
 
     def fit(self, X, y=None, sample_weight=None, **params):
         """Detect the soft boundary of the set of samples X.
