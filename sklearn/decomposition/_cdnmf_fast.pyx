@@ -1,21 +1,18 @@
-# cython: cdivision=True
-# cython: boundscheck=False
-# cython: wraparound=False
-
 # Author: Mathieu Blondel, Tom Dupre la Tour
 # License: BSD 3 clause
 
-cimport cython
+from cython cimport floating
 from libc.math cimport fabs
 
 
-def _update_cdnmf_fast(double[:, ::1] W, double[:, :] HHt, double[:, :] XHt,
-                       Py_ssize_t[::1] permutation):
-    cdef double violation = 0
-    cdef Py_ssize_t n_components = W.shape[1]
-    cdef Py_ssize_t n_samples = W.shape[0]  # n_features for H update
-    cdef double grad, pg, hess
-    cdef Py_ssize_t i, r, s, t
+def _update_cdnmf_fast(floating[:, ::1] W, floating[:, :] HHt,
+                       floating[:, :] XHt, Py_ssize_t[::1] permutation):
+    cdef:
+        floating violation = 0
+        Py_ssize_t n_components = W.shape[1]
+        Py_ssize_t n_samples = W.shape[0]  # n_features for H update
+        floating grad, pg, hess
+        Py_ssize_t i, r, s, t
 
     with nogil:
         for s in range(n_components):

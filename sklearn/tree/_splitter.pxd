@@ -9,9 +9,6 @@
 
 # See _splitter.pyx for details.
 
-import numpy as np
-cimport numpy as np
-
 from ._criterion cimport Criterion
 
 from ._tree cimport DTYPE_t          # Type of X
@@ -46,13 +43,13 @@ cdef class Splitter:
     cdef object random_state             # Random state
     cdef UINT32_t rand_r_state           # sklearn_rand_r random number state
 
-    cdef SIZE_t* samples                 # Sample indices in X, y
+    cdef SIZE_t[::1] samples             # Sample indices in X, y
     cdef SIZE_t n_samples                # X.shape[0]
     cdef double weighted_n_samples       # Weighted number of samples
-    cdef SIZE_t* features                # Feature indices in X
-    cdef SIZE_t* constant_features       # Constant features indices
+    cdef SIZE_t[::1] features            # Feature indices in X
+    cdef SIZE_t[::1] constant_features   # Constant features indices
     cdef SIZE_t n_features               # X.shape[1]
-    cdef DTYPE_t* feature_values         # temp. array holding feature values
+    cdef DTYPE_t[::1] feature_values     # temp. array holding feature values
 
     cdef SIZE_t start                    # Start position for the current node
     cdef SIZE_t end                      # End position for the current node
@@ -78,8 +75,7 @@ cdef class Splitter:
 
     # Methods
     cdef int init(self, object X, const DOUBLE_t[:, ::1] y,
-                  DOUBLE_t* sample_weight,
-                  np.ndarray X_idx_sorted=*) except -1
+                  DOUBLE_t* sample_weight) except -1
 
     cdef int node_reset(self, SIZE_t start, SIZE_t end,
                         double* weighted_n_node_samples) nogil except -1
