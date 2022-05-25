@@ -360,6 +360,7 @@ def spectral_clustering(
 
     random_state = check_random_state(random_state)
     n_components = n_clusters if n_components is None else n_components
+
     # We now obtain the real valued solution matrix to the
     # relaxed Ncut problem, solving the eigenvalue problem
     # L_sym x = lambda x  and recovering u = D^-1/2 x.

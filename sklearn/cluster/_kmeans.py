@@ -272,7 +272,7 @@ def k_means(
     *,
     sample_weight=None,
     init="k-means++",
-    n_init=10,
+    n_init="warn",
     max_iter=300,
     verbose=False,
     tol=1e-4,
@@ -314,10 +314,19 @@ def k_means(
         - If a callable is passed, it should take arguments `X`, `n_clusters` and a
           random state and return an initialization.
 
-    n_init : int, default=10
+    n_init : 'auto' or int, default=10
         Number of time the k-means algorithm will be run with different
         centroid seeds. The final results will be the best output of
-        `n_init` consecutive runs in terms of inertia.
+        n_init consecutive runs in terms of inertia.
+
+        When `n_init='auto'`, the number of runs will be 10 if using
+        `init='random'`, and 1 if using `init='kmeans++'`.
+
+        .. versionadded:: 1.2
+           Added 'auto' option for `n_init`.
+
+        .. versionchanged:: 1.4
+           Default value for `n_init` will change from 10 to `'auto'` in version 1.4.
 
     max_iter : int, default=300
         Maximum number of iterations of the k-means algorithm to run.
@@ -803,7 +812,10 @@ class _BaseKMeans(
     _parameter_constraints = {
         "n_clusters": [Interval(Integral, 1, None, closed="left")],
         "init": [StrOptions({"k-means++", "random"}), callable, "array-like"],
-        "n_init": [Interval(Integral, 1, None, closed="left")],
+        "n_init": [
+            StrOptions({"auto", "warn"}),
+            Interval(Integral, 1, None, closed="left"),
+        ],
         "max_iter": [Interval(Integral, 1, None, closed="left")],
         "tol": [Interval(Real, 0, None, closed="left")],
         "verbose": [Interval(Integral, 0, None, closed="left"), bool],
@@ -829,7 +841,7 @@ class _BaseKMeans(
         self.verbose = verbose
         self.random_state = random_state
 
-    def _check_params_vs_input(self, X):
+    def _check_params_vs_input(self, X, default_n_init=None):
         # n_clusters
         if X.shape[0] < self.n_clusters:
             raise ValueError(
@@ -839,8 +851,23 @@ class _BaseKMeans(
         # tol
         self._tol = _tolerance(X, self.tol)
 
-        # init
+        # n-init
+        # TODO(1.4): Remove
         self._n_init = self.n_init
+        if self._n_init == "warn":
+            warnings.warn(
+                "The default value of `n_init` will change from "
+                f"{default_n_init} to 'auto' in 1.4. Set the value of `n_init`"
+                " explicitly to suppress the warning",
+                FutureWarning,
+            )
+            self._n_init = default_n_init
+        if self._n_init == "auto":
+            if self.init == "k-means++":
+                self._n_init = 1
+            else:
+                self._n_init = default_n_init
+
         if _is_arraylike_not_scalar(self.init) and self._n_init != 1:
             warnings.warn(
                 "Explicit initial center position passed: performing only"
@@ -1150,10 +1177,19 @@ class KMeans(_BaseKMeans):
         If a callable is passed, it should take arguments X, n_clusters and a
         random state and return an initialization.
 
-    n_init : int, default=10
+    n_init : 'auto' or int, default=10
         Number of time the k-means algorithm will be run with different
         centroid seeds. The final results will be the best output of
         n_init consecutive runs in terms of inertia.
+
+        When `n_init='auto'`, the number of runs will be 10 if using
+        `init='random'`, and 1 if using `init='kmeans++'`.
+
+        .. versionadded:: 1.2
+           Added 'auto' option for `n_init`.
+
+        .. versionchanged:: 1.4
+           Default value for `n_init` will change from 10 to `'auto'` in version 1.4.
 
     max_iter : int, default=300
         Maximum number of iterations of the k-means algorithm for a
@@ -1263,7 +1299,7 @@ class KMeans(_BaseKMeans):
     >>> import numpy as np
     >>> X = np.array([[1, 2], [1, 4], [1, 0],
     ...               [10, 2], [10, 4], [10, 0]])
-    >>> kmeans = KMeans(n_clusters=2, random_state=0).fit(X)
+    >>> kmeans = KMeans(n_clusters=2, random_state=0, n_init="auto").fit(X)
     >>> kmeans.labels_
     array([1, 1, 1, 0, 0, 0], dtype=int32)
     >>> kmeans.predict([[0, 0], [12, 3]])
@@ -1286,7 +1322,7 @@ class KMeans(_BaseKMeans):
         n_clusters=8,
         *,
         init="k-means++",
-        n_init=10,
+        n_init="warn",
         max_iter=300,
         tol=1e-4,
         verbose=0,
@@ -1308,7 +1344,7 @@ class KMeans(_BaseKMeans):
         self.algorithm = algorithm
 
     def _check_params_vs_input(self, X):
-        super()._check_params_vs_input(X)
+        super()._check_params_vs_input(X, default_n_init=10)
 
         self._algorithm = self.algorithm
         if self._algorithm in ("auto", "full"):
@@ -1667,10 +1703,19 @@ class MiniBatchKMeans(_BaseKMeans):
         If `None`, the heuristic is `init_size = 3 * batch_size` if
         `3 * batch_size < n_clusters`, else `init_size = 3 * n_clusters`.
 
-    n_init : int, default=3
+    n_init : 'auto' or int, default=3
         Number of random initializations that are tried.
         In contrast to KMeans, the algorithm is only run once, using the
         best of the ``n_init`` initializations as measured by inertia.
+
+        When `n_init='auto'`, the number of runs will be 3 if using
+        `init='random'`, and 1 if using `init='kmeans++'`.
+
+        .. versionadded:: 1.2
+           Added 'auto' option for `n_init`.
+
+        .. versionchanged:: 1.4
+           Default value for `n_init` will change from 3 to `'auto'` in version 1.4.
 
     reassignment_ratio : float, default=0.01
         Control the fraction of the maximum number of counts for a center to
@@ -1737,7 +1782,8 @@ class MiniBatchKMeans(_BaseKMeans):
     >>> # manually fit on batches
     >>> kmeans = MiniBatchKMeans(n_clusters=2,
     ...                          random_state=0,
-    ...                          batch_size=6)
+    ...                          batch_size=6,
+    ...                          n_init="auto")
     >>> kmeans = kmeans.partial_fit(X[0:6,:])
     >>> kmeans = kmeans.partial_fit(X[6:12,:])
     >>> kmeans.cluster_centers_
@@ -1749,12 +1795,13 @@ class MiniBatchKMeans(_BaseKMeans):
     >>> kmeans = MiniBatchKMeans(n_clusters=2,
     ...                          random_state=0,
     ...                          batch_size=6,
-    ...                          max_iter=10).fit(X)
+    ...                          max_iter=10,
+    ...                          n_init="auto").fit(X)
     >>> kmeans.cluster_centers_
-    array([[1.19..., 1.22...],
-           [4.03..., 2.46...]])
+    array([[3.97727273, 2.43181818],
+           [1.125     , 1.6       ]])
     >>> kmeans.predict([[0, 0], [4, 4]])
-    array([0, 1], dtype=int32)
+    array([1, 0], dtype=int32)
     """
 
     _parameter_constraints = {
@@ -1779,7 +1826,7 @@ class MiniBatchKMeans(_BaseKMeans):
         tol=0.0,
         max_no_improvement=10,
         init_size=None,
-        n_init=3,
+        n_init="warn",
         reassignment_ratio=0.01,
     ):
 
@@ -1800,7 +1847,7 @@ class MiniBatchKMeans(_BaseKMeans):
         self.reassignment_ratio = reassignment_ratio
 
     def _check_params_vs_input(self, X):
-        super()._check_params_vs_input(X)
+        super()._check_params_vs_input(X, default_n_init=3)
 
         self._batch_size = min(self.batch_size, X.shape[0])
 
