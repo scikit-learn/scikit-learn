@@ -144,7 +144,7 @@ directory (you will need to have ``pytest`` >= |PyTestMinVersion| installed)::
 
     pytest sklearn
 
-See the web page https://scikit-learn.org/dev/developers/advanced_installation.html#testing
+See the web page https://scikit-learn.org/dev/developers/contributing.html#testing-and-improving-test-coverage
 for more information.
 
     Random number generation can be controlled during testing by setting
