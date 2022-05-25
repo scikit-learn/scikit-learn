@@ -7,6 +7,7 @@
 # License: BSD 3 clause
 
 import numbers
+from numbers import Integral, Real
 import numpy as np
 import scipy.sparse as sp
 import time
@@ -25,6 +26,10 @@ from ..utils.validation import (
     check_is_fitted,
     check_non_negative,
 )
+from ..utils._param_validation import Interval
+from ..utils._param_validation import StrOptions
+from ..utils._param_validation import validate_params
+
 
 EPSILON = np.finfo(np.float32).eps
 
@@ -197,7 +202,7 @@ def _special_sparse_dot(W, H, X):
 
 def _compute_regularization(alpha, alpha_W, alpha_H, l1_ratio, regularization):
     """Compute L1 and L2 regularization coefficients for W and H."""
-    if alpha_W != 0 or alpha_H != "same":
+    if alpha_W != 0 or alpha_H != "same" or regularization == "ignored":
         # if alpha_W or alpha_H is not left to its default value we ignore alpha and
         # regularization.
         alpha_H = alpha_W if alpha_H == "same" else alpha_H
@@ -220,15 +225,9 @@ def _compute_regularization(alpha, alpha_W, alpha_H, l1_ratio, regularization):
 
 def _beta_loss_to_float(beta_loss):
     """Convert string beta_loss to float."""
-    allowed_beta_loss = {"frobenius": 2, "kullback-leibler": 1, "itakura-saito": 0}
-    if isinstance(beta_loss, str) and beta_loss in allowed_beta_loss:
-        beta_loss = allowed_beta_loss[beta_loss]
-
-    if not isinstance(beta_loss, numbers.Number):
-        raise ValueError(
-            "Invalid beta_loss parameter: got %r instead of one of %r, or a float."
-            % (beta_loss, allowed_beta_loss.keys())
-        )
+    beta_loss_map = {"frobenius": 2, "kullback-leibler": 1, "itakura-saito": 0}
+    if isinstance(beta_loss, str):
+        beta_loss = beta_loss_map[beta_loss]
     return beta_loss
 
 
@@ -907,6 +906,43 @@ def _fit_multiplicative_update(
     return W, H, n_iter
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "W": ["array-like", None],
+        "H": ["array-like", None],
+        "n_components": [Interval(Integral, 1, None, closed="left"), None],
+        "init": [
+            StrOptions({"random", "nndsvd", "nndsvda", "nndsvdar", "custom"}),
+            None,
+        ],
+        "update_H": [bool],
+        "solver": [StrOptions({"mu", "cd"})],
+        "beta_loss": [
+            Interval(Real, None, None, closed="neither"),
+            StrOptions({"frobenius", "kullback-leibler", "itakura-saito"}),
+        ],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
+        "alpha": [
+            Interval(Real, 0, None, closed="left"),
+            StrOptions({"deprecated"}),  # internal={"deprecated"}),
+        ],
+        "alpha_W": [Interval(Real, 0, None, closed="left")],
+        "alpha_H": [Interval(Real, 0, None, closed="left"), StrOptions({"same"})],
+        "l1_ratio": [Interval(Real, 0, 1, closed="both")],
+        "regularization": [
+            StrOptions(
+                {"both", "components", "transformation", "deprecated"},
+                # internal={"deprecated"},
+            ),
+            None,
+        ],
+        "random_state": ["random_state"],
+        "verbose": [Interval(Integral, 0, None, closed="left"), bool],
+        "shuffle": [bool],
+    }
+)
 def non_negative_factorization(
     X,
     W=None,
@@ -972,7 +1008,7 @@ def non_negative_factorization(
 
     Parameters
     ----------
-    X : array-like of shape (n_samples, n_features)
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
         Constant matrix.
 
     W : array-like of shape (n_samples, n_components), default=None
@@ -1155,7 +1191,168 @@ def non_negative_factorization(
     return W, H, n_iter
 
 
-class NMF(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
+class _BaseNMF(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
+    """Base class for NMF and MiniBatchNMF."""
+
+    _parameter_constraints = {
+        "n_components": [Interval(Integral, 1, None, closed="left"), None],
+        "init": [
+            StrOptions({"random", "nndsvd", "nndsvda", "nndsvdar", "custom"}),
+            None,
+        ],
+        "beta_loss": [
+            Interval(Real, None, None, closed="neither"),
+            StrOptions({"frobenius", "kullback-leibler", "itakura-saito"}),
+        ],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
+        "random_state": ["random_state"],
+        "alpha_W": [Interval(Real, 0, None, closed="left")],
+        "alpha_H": [Interval(Real, 0, None, closed="left"), StrOptions({"same"})],
+        "l1_ratio": [Interval(Real, 0, 1, closed="both")],
+        "verbose": [Interval(Integral, 0, None, closed="left"), bool],
+    }
+
+    def __init__(
+        self,
+        n_components=None,
+        *,
+        init=None,
+        beta_loss="frobenius",
+        tol=1e-4,
+        max_iter=200,
+        random_state=None,
+        alpha_W=0.0,
+        alpha_H="same",
+        l1_ratio=0.0,
+        verbose=0,
+    ):
+        self.n_components = n_components
+        self.init = init
+        self.beta_loss = beta_loss
+        self.tol = tol
+        self.max_iter = max_iter
+        self.random_state = random_state
+        self.alpha_W = alpha_W
+        self.alpha_H = alpha_H
+        self.l1_ratio = l1_ratio
+        self.verbose = verbose
+
+    def _check_params(self, X):
+        # n_components
+        self._n_components = self.n_components
+        if self._n_components is None:
+            self._n_components = X.shape[1]
+
+        # beta_loss
+        self._beta_loss = _beta_loss_to_float(self.beta_loss)
+
+    def _check_w_h(self, X, W, H, update_H):
+        """Check W and H, or initialize them."""
+        n_samples, n_features = X.shape
+        if self.init == "custom" and update_H:
+            _check_init(H, (self._n_components, n_features), "NMF (input H)")
+            _check_init(W, (n_samples, self._n_components), "NMF (input W)")
+            if H.dtype != X.dtype or W.dtype != X.dtype:
+                raise TypeError(
+                    "H and W should have the same dtype as X. Got "
+                    "H.dtype = {} and W.dtype = {}.".format(H.dtype, W.dtype)
+                )
+        elif not update_H:
+            _check_init(H, (self._n_components, n_features), "NMF (input H)")
+            if H.dtype != X.dtype:
+                raise TypeError(
+                    "H should have the same dtype as X. Got H.dtype = {}.".format(
+                        H.dtype
+                    )
+                )
+            # 'mu' solver should not be initialized by zeros
+            if self.solver == "mu":
+                avg = np.sqrt(X.mean() / self._n_components)
+                W = np.full((n_samples, self._n_components), avg, dtype=X.dtype)
+            else:
+                W = np.zeros((n_samples, self._n_components), dtype=X.dtype)
+        else:
+            W, H = _initialize_nmf(
+                X, self._n_components, init=self.init, random_state=self.random_state
+            )
+        return W, H
+
+    def _scale_regularization(self, X):
+        """Scale regularization terms."""
+        n_samples, n_features = X.shape
+        if self.alpha_W != 0 or self.alpha_H != "same":
+            # if alpha_W or alpha_H is not left to its default value we ignore alpha
+            # and regularization, and we scale the regularization terms.
+            l1_reg_W = n_features * self._l1_reg_W
+            l1_reg_H = n_samples * self._l1_reg_H
+            l2_reg_W = n_features * self._l2_reg_W
+            l2_reg_H = n_samples * self._l2_reg_H
+        else:
+            # Otherwise we keep the old behavior with no scaling
+            # TODO remove in 1.2
+            l1_reg_W = self._l1_reg_W
+            l1_reg_H = self._l1_reg_H
+            l2_reg_W = self._l2_reg_W
+            l2_reg_H = self._l2_reg_H
+
+        return l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H
+
+    def fit(self, X, y=None, **params):
+        """Learn a NMF model for the data X.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Training vector, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
+
+        y : Ignored
+            Not used, present for API consistency by convention.
+
+        **params : kwargs
+            Parameters (keyword arguments) and values passed to
+            the fit_transform instance.
+
+        Returns
+        -------
+        self : object
+            Returns the instance itself.
+        """
+        self.fit_transform(X, **params)
+        return self
+
+    def inverse_transform(self, W):
+        """Transform data back to its original space.
+
+        .. versionadded:: 0.18
+
+        Parameters
+        ----------
+        W : {ndarray, sparse matrix} of shape (n_samples, n_components)
+            Transformed data matrix.
+
+        Returns
+        -------
+        X : {ndarray, sparse matrix} of shape (n_samples, n_features)
+            Returns a data matrix of the original shape.
+        """
+        check_is_fitted(self)
+        return np.dot(W, self.components_)
+
+    @property
+    def _n_features_out(self):
+        """Number of transformed output features."""
+        return self.components_.shape[0]
+
+    def _more_tags(self):
+        return {
+            "requires_positive_X": True,
+            "preserves_dtype": [np.float32, np.float64],
+        }
+
+
+class NMF(_BaseNMF):
     """Non-Negative Matrix Factorization (NMF).
 
     Find two non-negative matrices, i.e. matrices with all non-negative elements, (W, H)
@@ -1382,6 +1579,23 @@ class NMF(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     >>> H = model.components_
     """
 
+    _parameter_constraints = {
+        **_BaseNMF._parameter_constraints,
+        "solver": [StrOptions({"mu", "cd"})],
+        "alpha": [
+            Interval(Real, 0, None, closed="left"),
+            StrOptions({"deprecated"}),  #  internal={"deprecated"}),
+        ],
+        "shuffle": [bool],
+        "regularization": [
+            StrOptions(
+                {"both", "components", "transformation", "deprecated"},
+                # internal={"deprecated"},
+            ),
+            None,
+        ],
+    }
+
     def __init__(
         self,
         n_components=None,
@@ -1400,62 +1614,28 @@ class NMF(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         shuffle=False,
         regularization="deprecated",
     ):
-        self.n_components = n_components
-        self.init = init
+        super().__init__(
+            n_components=n_components,
+            init=init,
+            beta_loss=beta_loss,
+            tol=tol,
+            max_iter=max_iter,
+            random_state=random_state,
+            alpha_W=alpha_W,
+            alpha_H=alpha_H,
+            l1_ratio=l1_ratio,
+            verbose=verbose,
+        )
+
         self.solver = solver
-        self.beta_loss = beta_loss
-        self.tol = tol
-        self.max_iter = max_iter
-        self.random_state = random_state
         self.alpha = alpha
-        self.alpha_W = alpha_W
-        self.alpha_H = alpha_H
-        self.l1_ratio = l1_ratio
-        self.verbose = verbose
         self.shuffle = shuffle
         self.regularization = regularization
 
-    def _more_tags(self):
-        return {"requires_positive_X": True}
-
     def _check_params(self, X):
-        # n_components
-        self._n_components = self.n_components
-        if self._n_components is None:
-            self._n_components = X.shape[1]
-        if (
-            not isinstance(self._n_components, numbers.Integral)
-            or self._n_components <= 0
-        ):
-            raise ValueError(
-                "Number of components must be a positive integer; got "
-                f"(n_components={self._n_components!r})"
-            )
-
-        # max_iter
-        if not isinstance(self.max_iter, numbers.Integral) or self.max_iter < 0:
-            raise ValueError(
-                "Maximum number of iterations must be a positive "
-                f"integer; got (max_iter={self.max_iter!r})"
-            )
-
-        # tol
-        if not isinstance(self.tol, numbers.Number) or self.tol < 0:
-            raise ValueError(
-                "Tolerance for stopping criteria must be positive; got "
-                f"(tol={self.tol!r})"
-            )
-
-        # beta_loss
-        self._beta_loss = _beta_loss_to_float(self.beta_loss)
+        super()._check_params(X)
 
         # solver
-        allowed_solver = ("cd", "mu")
-        if self.solver not in allowed_solver:
-            raise ValueError(
-                f"Invalid solver parameter: got {self.solver!r} instead of one of "
-                f"{allowed_solver}"
-            )
         if self.solver != "mu" and self.beta_loss not in (2, "frobenius"):
             # 'mu' is the only solver that handles other beta losses than 'frobenius'
             raise ValueError(
@@ -1489,12 +1669,6 @@ class NMF(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
                 "removed in 1.2. Use `alpha_W` and `alpha_H` instead",
                 FutureWarning,
             )
-            allowed_regularization = ("both", "components", "transformation", None)
-            if self.regularization not in allowed_regularization:
-                raise ValueError(
-                    f"Invalid regularization parameter: got {self.regularization!r} "
-                    f"instead of one of {allowed_regularization}"
-                )
             regularization = self.regularization
         else:
             regularization = "both"
@@ -1509,56 +1683,6 @@ class NMF(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         )
 
         return self
-
-    def _check_w_h(self, X, W, H, update_H):
-        # check W and H, or initialize them
-        n_samples, n_features = X.shape
-        if self.init == "custom" and update_H:
-            _check_init(H, (self._n_components, n_features), "NMF (input H)")
-            _check_init(W, (n_samples, self._n_components), "NMF (input W)")
-            if H.dtype != X.dtype or W.dtype != X.dtype:
-                raise TypeError(
-                    "H and W should have the same dtype as X. Got "
-                    "H.dtype = {} and W.dtype = {}.".format(H.dtype, W.dtype)
-                )
-        elif not update_H:
-            _check_init(H, (self._n_components, n_features), "NMF (input H)")
-            if H.dtype != X.dtype:
-                raise TypeError(
-                    "H should have the same dtype as X. Got H.dtype = {}.".format(
-                        H.dtype
-                    )
-                )
-            # 'mu' solver should not be initialized by zeros
-            if self.solver == "mu":
-                avg = np.sqrt(X.mean() / self._n_components)
-                W = np.full((n_samples, self._n_components), avg, dtype=X.dtype)
-            else:
-                W = np.zeros((n_samples, self._n_components), dtype=X.dtype)
-        else:
-            W, H = _initialize_nmf(
-                X, self._n_components, init=self.init, random_state=self.random_state
-            )
-        return W, H
-
-    def _scale_regularization(self, X):
-        n_samples, n_features = X.shape
-        if self.alpha_W != 0 or self.alpha_H != "same":
-            # if alpha_W or alpha_H is not left to its default value we ignore alpha
-            # and regularization, and we scale the regularization terms.
-            l1_reg_W = n_features * self._l1_reg_W
-            l1_reg_H = n_samples * self._l1_reg_H
-            l2_reg_W = n_features * self._l2_reg_W
-            l2_reg_H = n_samples * self._l2_reg_H
-        else:
-            # Otherwise we keep the old behavior with no scaling
-            # TODO remove in 1.2
-            l1_reg_W = self._l1_reg_W
-            l1_reg_H = self._l1_reg_H
-            l2_reg_W = self._l2_reg_W
-            l2_reg_H = self._l2_reg_H
-
-        return l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H
 
     def fit_transform(self, X, y=None, W=None, H=None):
         """Learn a NMF model for the data X and returns the transformed data.
@@ -1585,6 +1709,8 @@ class NMF(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         W : ndarray of shape (n_samples, n_components)
             Transformed data.
         """
+        self._validate_params()
+
         X = self._validate_data(
             X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32]
         )
@@ -1698,30 +1824,6 @@ class NMF(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
 
         return W, H, n_iter
 
-    def fit(self, X, y=None, **params):
-        """Learn a NMF model for the data X.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vector, where `n_samples` is the number of samples
-            and `n_features` is the number of features.
-
-        y : Ignored
-            Not used, present for API consistency by convention.
-
-        **params : kwargs
-            Parameters (keyword arguments) and values passed to
-            the fit_transform instance.
-
-        Returns
-        -------
-        self : object
-            Returns the instance itself.
-        """
-        self.fit_transform(X, **params)
-        return self
-
     def transform(self, X):
         """Transform the data X according to the fitted NMF model.
 
@@ -1746,31 +1848,8 @@ class NMF(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
 
         return W
 
-    def inverse_transform(self, W):
-        """Transform data back to its original space.
 
-        .. versionadded:: 0.18
-
-        Parameters
-        ----------
-        W : {ndarray, sparse matrix} of shape (n_samples, n_components)
-            Transformed data matrix.
-
-        Returns
-        -------
-        X : {ndarray, sparse matrix} of shape (n_samples, n_features)
-            Returns a data matrix of the original shape.
-        """
-        check_is_fitted(self)
-        return np.dot(W, self.components_)
-
-    @property
-    def _n_features_out(self):
-        """Number of transformed output features."""
-        return self.components_.shape[0]
-
-
-class MiniBatchNMF(NMF):
+class MiniBatchNMF(_BaseNMF):
     """Mini-Batch Non-Negative Matrix Factorization (NMF).
 
     .. versionadded:: 1.1
@@ -1970,6 +2049,16 @@ class MiniBatchNMF(NMF):
     >>> H = model.components_
     """
 
+    _parameter_constraints = {
+        **_BaseNMF._parameter_constraints,
+        "max_no_improvement": [Interval(Integral, 1, None, closed="left"), None],
+        "batch_size": [Interval(Integral, 1, None, closed="left")],
+        "forget_factor": [Interval(Real, 0, 1, closed="both")],
+        "fresh_restarts": [bool],
+        "fresh_restarts_max_iter": [Interval(Integral, 1, None, closed="left")],
+        "transform_max_iter": [Interval(Integral, 1, None, closed="left"), None],
+    }
+
     def __init__(
         self,
         n_components=None,
@@ -1994,7 +2083,6 @@ class MiniBatchNMF(NMF):
         super().__init__(
             n_components=n_components,
             init=init,
-            solver="mu",
             beta_loss=beta_loss,
             tol=tol,
             max_iter=max_iter,
@@ -2016,13 +2104,7 @@ class MiniBatchNMF(NMF):
         super()._check_params(X)
 
         # batch_size
-        self._batch_size = self.batch_size
-        if not isinstance(self._batch_size, numbers.Integral) or self._batch_size <= 0:
-            raise ValueError(
-                "batch_size must be a positive integer, got "
-                f"{self._batch_size!r} instead."
-            )
-        self._batch_size = min(self._batch_size, X.shape[0])
+        self._batch_size = min(self.batch_size, X.shape[0])
 
         # forget_factor
         self._rho = self.forget_factor ** (self._batch_size / X.shape[0])
@@ -2040,6 +2122,15 @@ class MiniBatchNMF(NMF):
             self.max_iter
             if self.transform_max_iter is None
             else self.transform_max_iter
+        )
+
+        (
+            self._l1_reg_W,
+            self._l1_reg_H,
+            self._l2_reg_W,
+            self._l2_reg_H,
+        ) = _compute_regularization(
+            "ignored", self.alpha_W, self.alpha_H, self.l1_ratio, "ignored"
         )
 
         return self
@@ -2204,6 +2295,8 @@ class MiniBatchNMF(NMF):
         W : ndarray of shape (n_samples, n_components)
             Transformed data.
         """
+        self._validate_params()
+
         X = self._validate_data(
             X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32]
         )
@@ -2257,7 +2350,7 @@ class MiniBatchNMF(NMF):
         n_steps : int
             Number of mini-batches processed.
         """
-        check_non_negative(X, "NMF (input X)")
+        check_non_negative(X, "MiniBatchNMF (input X)")
         self._check_params(X)
 
         if X.min() == 0 and self._beta_loss <= 0:
@@ -2367,6 +2460,9 @@ class MiniBatchNMF(NMF):
             Returns the instance itself.
         """
         has_components = hasattr(self, "components_")
+
+        if not has_components:
+            self._validate_params()
 
         X = self._validate_data(
             X,
