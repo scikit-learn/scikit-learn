@@ -1,6 +1,7 @@
 import itertools
 import pickle
 import copy
+from os import environ
 
 import numpy as np
 from numpy.testing import assert_array_almost_equal
@@ -20,7 +21,9 @@ def dist_func(x1, x2, p):
     return np.sum((x1 - x2) ** p) ** (1.0 / p)
 
 
-rng = check_random_state(0)
+global_random_seed = environ.get("SKLEARN_TESTS_GLOBAL_RANDOM_SEED")
+np.random.seed(global_random_seed)
+rng = check_random_state(global_random_seed)
 d = 4
 n1 = 20
 n2 = 25
@@ -254,7 +257,7 @@ def test_input_data_size():
         assert x.shape[0] == 3
         return np.sum((x - y) ** 2)
 
-    rng = check_random_state(0)
+    rng = check_random_state(global_random_seed)
     X = rng.rand(10, 3)
 
     pyfunc = DistanceMetric.get_metric("pyfunc", func=custom_metric)
@@ -268,7 +271,7 @@ def test_readonly_kwargs():
     # Non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/21685
 
-    rng = check_random_state(0)
+    rng = check_random_state(global_random_seed)
 
     weights = rng.rand(100)
     VI = rng.rand(10, 10)
