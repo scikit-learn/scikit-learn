@@ -6,6 +6,7 @@ from functools import partial
 import re
 
 import numpy as np
+import scipy
 from numpy.testing import assert_allclose
 import pytest
 from scipy import linalg
@@ -783,3 +784,18 @@ def test_family_deprecation(est, family):
         else:
             assert est.family.__class__ == family.__class__
             assert est.family.power == family.power
+
+
+def test_linalg_warning_with_newton_solver(global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
+    X_orig = rng.normal(size=(100, 3))
+    X_colinear = np.hstack([X_orig] * 10)  # colinear design
+    y = rng.normal(size=X_orig.shape[0])
+    y[y < 0] = 0.0
+
+    with pytest.warns(None):
+        # No warning raised on well-conditioned design
+        PoissonRegressor(solver="newton-cholesky", alpha=0.0).fit(X_orig, y)
+
+    with pytest.warns(scipy.linalg.LinAlgWarning) as rec:
+        PoissonRegressor(solver="newton-cholesky", alpha=0.0).fit(X_colinear, y)

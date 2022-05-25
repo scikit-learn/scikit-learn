@@ -467,17 +467,20 @@ class CholeskyNewtonSolver(NewtonSolver):
         # Should we treat this as error and deal with it in the except, or is it fine
         # as is?
         try:
-            self.coef_newton = scipy.linalg.solve(
-                self.hessian, -self.gradient, check_finite=False, assume_a="sym"
-            )
-        except np.linalg.LinAlgError as e:
+            with warnings.catch_warnings():
+                warnings.simplefilter("error", scipy.linalg.LinAlgWarning)
+                self.coef_newton = scipy.linalg.solve(
+                    self.hessian, -self.gradient, check_finite=False, assume_a="sym"
+                )
+        except (np.linalg.LinAlgError, scipy.linalg.LinAlgWarning) as e:
             warnings.warn(
                 f"The inner solver of {self.__class__.__name__} stumbled upon a "
                 "singular hessian matrix. Therefore, this iteration uses a step closer"
                 " to a gradient descent direction. Removing collinear features of X or"
                 " increasing the penalization strengths may resolve this issue."
                 " The original Linear Algebra message was:\n"
-                + str(e)
+                + str(e),
+                scipy.linalg.LinAlgWarning
             )
             self.coef_newton = _solve_singular_cholesky(self.hessian, -self.gradient)
 
