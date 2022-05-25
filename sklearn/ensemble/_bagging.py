@@ -6,9 +6,9 @@
 
 import itertools
 import numbers
+import numpy as np
 from abc import ABCMeta, abstractmethod
 from warnings import warn
-import numpy as np
 from functools import partial
 
 from joblib import Parallel
