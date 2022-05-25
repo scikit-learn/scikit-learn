@@ -1641,9 +1641,11 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
     gain = _ndcg_sample_scores(y_true, y_score, k=k, ignore_ties=ignore_ties)
 
     if y_true.min() < 0:
+        # TODO(1.4): Replace warning w/ ValueError
         warnings.warn(
-            "ndcg_score should not be used on negative y_true values",
-            UserWarning,
+            "ndcg_score should not be used on negative y_true values. ndcg_score will"
+            " raise a ValueError on negative y_true values starting from version 1.4.",
+            DeprecationWarning,
         )
     return np.average(gain, weights=sample_weight)
 

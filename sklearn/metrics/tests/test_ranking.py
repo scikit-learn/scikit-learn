@@ -1694,11 +1694,15 @@ def test_ndcg_ignore_ties_with_k():
     )
 
 
+# TODO(1.4): Replace warning w/ ValueError
 def test_ndcg_negative_ndarray_warn():
     y_true = np.array([[-0.89, -0.53, -0.47, 0.39, 0.56]])
     y_score = np.array([[0.07, 0.31, 0.75, 0.33, 0.27]])
-    expected_message = "ndcg_score should not be used on negative y_true values"
-    with pytest.warns(UserWarning, match=expected_message):
+    expected_message = (
+        "ndcg_score should not be used on negative y_true values. ndcg_score will raise"
+        " a ValueError on negative y_true values starting from version 1.4."
+    )
+    with pytest.warns(DeprecationWarning, match=expected_message):
         ndcg_score(y_true, y_score)
 
 
@@ -1708,11 +1712,12 @@ def test_ndcg_negative_output():
     assert ndcg_score(y_true, y_score) == pytest.approx(396.0329)
 
 
+# TODO(1.4): Replace warning w/ ValueError
 def test_ndcg_positive_ndarray():
     y_true = np.array([[0.11, 0.47, 0.53, 1.39, 1.56]])
     y_score = np.array([[1.07, 1.31, 1.75, 1.33, 1.27]])
     with warnings.catch_warnings():
-        warnings.simplefilter("error", UserWarning)
+        warnings.simplefilter("error", DeprecationWarning)
         ndcg_score(y_true, y_score)
 
 
