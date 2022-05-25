@@ -53,78 +53,18 @@ necessary to get a good convergence.
 #         Lars Buitinck
 # License: BSD 3 clause
 
-# %%
-
-import logging
-from optparse import OptionParser
-import sys
-
-# Display progress logs on stdout
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
-
-# parse commandline arguments
-op = OptionParser()
-op.add_option(
-    "--lsa",
-    dest="n_components",
-    type="int",
-    help="Preprocess documents with latent semantic analysis.",
-)
-op.add_option(
-    "--no-minibatch",
-    action="store_false",
-    dest="minibatch",
-    default=True,
-    help="Use ordinary k-means algorithm (in batch mode).",
-)
-op.add_option(
-    "--no-idf",
-    action="store_false",
-    dest="use_idf",
-    default=True,
-    help="Disable Inverse Document Frequency feature weighting.",
-)
-op.add_option(
-    "--use-hashing",
-    action="store_true",
-    default=False,
-    help="Use a hashing feature vectorizer",
-)
-op.add_option(
-    "--n-features",
-    type=int,
-    default=10000,
-    help="Maximum number of features (dimensions) to extract from text.",
-)
-op.add_option(
-    "--verbose",
-    action="store_true",
-    dest="verbose",
-    default=False,
-    help="Print progress reports inside k-means algorithm.",
-)
-
-
-def is_interactive():
-    return not hasattr(sys.modules["__main__"], "__file__")
-
-
-if not is_interactive():
-    op.print_help()
-    print()
-
-# work-around for Jupyter notebook and IPython console
-argv = [] if is_interactive() else sys.argv[1:]
-(opts, args) = op.parse_args(argv)
-if len(args) > 0:
-    op.error("this script takes no arguments.")
-    sys.exit(1)
-
 
 # %%
-# Load some categories from the training set
-# ------------------------------------------
+# Load Data
+# =========
+#
+# We load data from the :ref:`20newsgroups_dataset`, which comprises around
+# 18000 newsgroups posts on 20 topics. For illustrative purposes and reducing
+# the computational cost, we select a subset of 4 topics only.  See the example
+# :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
+# to gain intuition on the overlap of such topics.
 
+import numpy as np
 from sklearn.datasets import fetch_20newsgroups
 
 categories = [
@@ -133,11 +73,6 @@ categories = [
     "comp.graphics",
     "sci.space",
 ]
-# Uncomment the following to do the analysis on all the categories
-# categories = None
-
-print("Loading 20 newsgroups dataset for categories:")
-print(categories)
 
 dataset = fetch_20newsgroups(
     remove=("headers", "footers", "quotes"),
@@ -147,157 +82,120 @@ dataset = fetch_20newsgroups(
     random_state=42,
 )
 
-print(f"{len(dataset.data)} documents - {len(dataset.target_names)} categories")
-
-
-# %%
-# Feature Extraction
-# ------------------
-# Extracting features from the training dataset using a sparse vectorizer
-
-import numpy as np
-from sklearn.decomposition import TruncatedSVD
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.feature_extraction.text import HashingVectorizer
-from sklearn.feature_extraction.text import TfidfTransformer
-from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import Normalizer
-from time import time
-
 labels = dataset.target
 true_k = np.unique(labels).shape[0]
 
-# Use hashing with idf
+print(f"{len(dataset.data)} documents - {true_k} categories")
 
-t0 = time()
-if True:
-    if True:
-        # Perform an IDF normalization on the output of HashingVectorizer
-        hasher = HashingVectorizer(
-            # n_features=opts.n_features,
-            stop_words="english",
-            alternate_sign=False,
-            norm=None,
-        )
-        vectorizer = make_pipeline(hasher, TfidfTransformer())
-    else:
-        vectorizer = HashingVectorizer(
-            n_features=opts.n_features,
-            stop_words="english",
-            alternate_sign=False,
-            norm="l2",
-        )
-else:
-    vectorizer = TfidfVectorizer(
-        max_df=0.5,
-        max_features=opts.n_features,
-        min_df=2,
-        stop_words="english",
-        use_idf=opts.use_idf,
-    )
-X = vectorizer.fit_transform(dataset.data)
-
-print("done in %fs" % (time() - t0))
-print("n_samples: %d, n_features: %d" % X.shape)
-print()
-
-if True:
-    print("Performing dimensionality reduction using LSA")
-    t0 = time()
-    # Since LSA/SVD results are not normalized,
-    # we redo the normalization to improve the k-means result.
-    svd = TruncatedSVD(n_components=100)
-    normalizer = Normalizer(copy=False)
-    lsa = make_pipeline(svd, normalizer)
-
-    X = lsa.fit_transform(X)
-
-    print("done in %fs" % (time() - t0))
-
-    explained_variance = svd.explained_variance_ratio_.sum()
-    print(
-        "Explained variance of the SVD step: {}%".format(int(explained_variance * 100))
-    )
-
-    print()
 
 # %%
-# Use TfidfVectorizer
+# Feature Extraction using sparse vectorizers
+# ===========================================
+
+from sklearn.feature_extraction.text import HashingVectorizer
+from sklearn.feature_extraction.text import TfidfTransformer
+from sklearn.pipeline import make_pipeline
+from time import time
+
+# Perform an IDF normalization on the output of HashingVectorizer
+
+hasher = HashingVectorizer(
+    stop_words="english",
+    alternate_sign=False,
+    norm=None,
+)
+vectorizer = make_pipeline(hasher, TfidfTransformer())
 
 t0 = time()
-if False:
-    if True:
-        # Perform an IDF normalization on the output of HashingVectorizer
-        hasher = HashingVectorizer(
-            # n_features=opts.n_features,
-            stop_words="english",
-            alternate_sign=False,
-            norm=None,
-        )
-        vectorizer = make_pipeline(hasher, TfidfTransformer())
-    else:
-        vectorizer = HashingVectorizer(
-            n_features=opts.n_features,
-            stop_words="english",
-            alternate_sign=False,
-            norm="l2",
-        )
-else:
-    vectorizer = TfidfVectorizer(
-        max_df=0.5,
-        # max_features=opts.n_features,
-        min_df=2,
-        stop_words="english",
-    )
 X = vectorizer.fit_transform(dataset.data)
+print(f"done in {time() - t0:.3f}s")
+print(f"n_samples: {X.shape[0]}, n_features: {X.shape[1]}")
 
-print("done in %fs" % (time() - t0))
-print("n_samples: %d, n_features: %d" % X.shape)
+# %%
+# Performing dimensionality reduction using LSA
+# Since LSA/SVD results are not normalized,
+# we redo the normalization to improve the k-means result.
+
+from sklearn.decomposition import TruncatedSVD
+from sklearn.preprocessing import Normalizer
+
+t0 = time()
+
+svd = TruncatedSVD(n_components=100)
+normalizer = Normalizer(copy=False)
+lsa = make_pipeline(svd, normalizer)
+
+X = lsa.fit_transform(X)
+
+print(f"done in {time() - t0:.3f}s")
+
+explained_variance = svd.explained_variance_ratio_.sum()
+print(f"Explained variance of the SVD step: {int(explained_variance * 100)}%")
+
 print()
 
-if True:
-    print("Performing dimensionality reduction using LSA")
-    t0 = time()
-    # Since LSA/SVD results are not normalized,
-    # we redo the normalization to improve the k-means result.
-    svd = TruncatedSVD(n_components=100)
-    normalizer = Normalizer(copy=False)
-    lsa = make_pipeline(svd, normalizer)
+# %%
+# TfidfVectorizer
+# ---------------
+from sklearn.feature_extraction.text import TfidfVectorizer
 
-    X = lsa.fit_transform(X)
+t0 = time()
 
-    print("done in %fs" % (time() - t0))
+vectorizer = TfidfVectorizer(
+    max_df=0.5,
+    min_df=2,
+    stop_words="english",
+)
+X = vectorizer.fit_transform(dataset.data)
 
-    explained_variance = svd.explained_variance_ratio_.sum()
-    print(
-        "Explained variance of the SVD step: {}%".format(int(explained_variance * 100))
-    )
+print(f"done in {time() - t0}s")
+print(f"n_samples: {X.shape[0]}, n_features: {X.shape[1]}")
 
-    print()
+# %%
+# Performing dimensionality reduction using LSA
+# Since LSA/SVD results are not normalized,
+# we redo the normalization to improve the k-means result.
+
+t0 = time()
+svd = TruncatedSVD(n_components=100)
+normalizer = Normalizer(copy=False)
+lsa = make_pipeline(svd, normalizer)
+X = lsa.fit_transform(X)
+
+print(f"done in {time() - t0}s")
+
+explained_variance = svd.explained_variance_ratio_.sum()
+print("Explained variance of the SVD step: {}%".format(int(explained_variance * 100)))
 
 # %%
 # Clustering
-# ----------
+# ==========
 
 from sklearn.cluster import KMeans, MiniBatchKMeans
 
-if opts.minibatch:
-    km = MiniBatchKMeans(
-        n_clusters=true_k,
-        init="k-means++",
-        n_init=1,
-        init_size=1000,
-        batch_size=1000,
-        verbose=opts.verbose,
-    )
-else:
-    km = KMeans(
-        n_clusters=true_k,
-        init="k-means++",
-        max_iter=100,
-        n_init=1,
-        verbose=opts.verbose,
-    )
+
+km = MiniBatchKMeans(
+    n_clusters=true_k,
+    init="k-means++",
+    n_init=1,
+    init_size=1000,
+    batch_size=1000,
+    # verbose=opts.verbose,
+)
+
+print("Clustering sparse data with %s" % km)
+t0 = time()
+km.fit(X)
+print("done in %0.3fs" % (time() - t0))
+print()
+
+km = KMeans(
+    n_clusters=true_k,
+    init="k-means++",
+    max_iter=100,
+    n_init=1,
+    # verbose=opts.verbose,
+)
 
 print("Clustering sparse data with %s" % km)
 t0 = time()
@@ -308,7 +206,7 @@ print()
 
 # %%
 # Performance metrics
-# -------------------
+# ===================
 
 from sklearn import metrics
 
@@ -325,19 +223,18 @@ print()
 
 
 # %%
+# Top terms per cluster
 
-if not opts.use_hashing:
-    print("Top terms per cluster:")
 
-    if opts.n_components:
-        original_space_centroids = svd.inverse_transform(km.cluster_centers_)
-        order_centroids = original_space_centroids.argsort()[:, ::-1]
-    else:
-        order_centroids = km.cluster_centers_.argsort()[:, ::-1]
+original_space_centroids = svd.inverse_transform(km.cluster_centers_)
+order_centroids = original_space_centroids.argsort()[:, ::-1]
 
-    terms = vectorizer.get_feature_names_out()
-    for i in range(true_k):
-        print("Cluster %d:" % i, end="")
-        for ind in order_centroids[i, :10]:
-            print(" %s" % terms[ind], end="")
-        print()
+
+terms = vectorizer.get_feature_names_out()
+for i in range(true_k):
+    print("Cluster %d:" % i, end="")
+    for ind in order_centroids[i, :10]:
+        print(" %s" % terms[ind], end="")
+    print()
+
+# %%
