@@ -1554,7 +1554,7 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
     ----------
     y_true : ndarray of shape (n_samples, n_labels)
         True targets of multilabel classification, or true scores of entities
-        to be ranked. Negative values in y_true may result in an output
+        to be ranked. Negative values in `y_true` may result in an output
         that is not between 0 and 1. These negative values are deprecated, and
         may cause an error in the future.
 
@@ -1634,26 +1634,17 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
     ...           scores, k=1, ignore_ties=True)
     0.5
     """
-
     y_true = check_array(y_true, ensure_2d=False)
     y_score = check_array(y_score, ensure_2d=False)
     check_consistent_length(y_true, y_score, sample_weight)
     _check_dcg_target_type(y_true)
     gain = _ndcg_sample_scores(y_true, y_score, k=k, ignore_ties=ignore_ties)
 
-    if (isinstance(y_true, np.ndarray)):
-        if (y_true.min() < 0):
-            warnings.warn(
-                "ndcg_score should not use negative y_true values",
-                DeprecationWarning,
-            )
-    else:
-        for value in y_true:
-            if (value < 0):
-                warnings.warn(
-                    "ndcg_score should not use negative y_true values",
-                    DeprecationWarning,
-                )
+    if y_true.min() < 0:
+        warnings.warn(
+            "ndcg_score should not be used on negative y_true values",
+            UserWarning,
+        )
     return np.average(gain, weights=sample_weight)
 
 
