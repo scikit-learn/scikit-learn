@@ -2662,6 +2662,7 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
     Returns
     -------
     loss : float
+        Average hinge loss.
 
     References
     ----------
