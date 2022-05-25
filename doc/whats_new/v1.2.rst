@@ -115,7 +115,7 @@ Changelog
   value contains a negative value. Users may still use negative values, but the
   result may not be between 0 and 1.
   :pr:`22710` by :user:`Conroy Trinh <trinhcon>` and
-  :pr:`` by :user:`Meekail Zain <micky774>`
+  :pr:`23461` by :user:`Meekail Zain <micky774>`
 
 Code and Documentation Contributors
 -----------------------------------
