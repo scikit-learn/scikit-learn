@@ -44,6 +44,13 @@ Changelog
 - |Enhancement| :class:`cluster.Birch` now preserves dtype for `numpy.float32`
   inputs. :pr:`22968` by `Meekail Zain <micky774>`.
 
+- |Enhancement| :class:`cluster.KMeans` and :class:`cluster.MiniBatchKMeans`
+  now accept a new `'auto'` option for `n_init` which changes the number of
+  random initializations to one when using `init='k-means++'` for efficiency.
+  This begins deprecation for the default values of `n_init` in the two classes
+  and both will have their defaults changed to `n_init='auto'` in 1.4.
+  :pr:`23038` by :user:`Meekail Zain <micky774>`.
+
 :mod:`sklearn.datasets`
 .......................
 
