@@ -57,8 +57,10 @@ def test_linear_regression():
 
 @pytest.mark.parametrize("array_constr", [np.array, sparse.csr_matrix])
 @pytest.mark.parametrize("fit_intercept", [True, False])
-def test_linear_regression_sample_weights(array_constr, fit_intercept):
-    rng = np.random.RandomState(0)
+def test_linear_regression_sample_weights(
+    array_constr, fit_intercept, global_random_seed
+):
+    rng = np.random.RandomState(global_random_seed)
 
     # It would not work with under-determined systems
     n_samples, n_features = 6, 5
