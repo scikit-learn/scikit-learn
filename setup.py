@@ -254,7 +254,7 @@ def setup_package():
         classifiers=[
             "Intended Audience :: Science/Research",
             "Intended Audience :: Developers",
-            "License :: OSI Approved",
+            "License :: OSI Approved :: BSD License",
             "Programming Language :: C",
             "Programming Language :: Python",
             "Topic :: Software Development",
@@ -290,6 +290,7 @@ def setup_package():
         from setuptools import setup
 
         metadata["version"] = VERSION
+        metadata["packages"] = ["sklearn"]
     else:
         if sys.version_info < required_python_version:
             required_version = "%d.%d" % required_python_version
@@ -306,6 +307,18 @@ def setup_package():
         # These commands require the setup from numpy.distutils because they
         # may use numpy.distutils compiler classes.
         from numpy.distutils.core import setup
+
+        # Monkeypatches CCompiler.spawn to prevent random wheel build errors on Windows
+        # The build errors on Windows was because msvccompiler spawn was not threadsafe
+        # This fixed can be removed when we build with numpy >= 1.22.2 on Windows.
+        # https://github.com/pypa/distutils/issues/5
+        # https://github.com/scikit-learn/scikit-learn/issues/22310
+        # https://github.com/numpy/numpy/pull/20640
+        from numpy.distutils.ccompiler import replace_method
+        from distutils.ccompiler import CCompiler
+        from sklearn.externals._numpy_compiler_patch import CCompiler_spawn
+
+        replace_method(CCompiler, "spawn", CCompiler_spawn)
 
         metadata["configuration"] = configuration
 

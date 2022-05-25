@@ -160,7 +160,7 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training data.
 
         y : Ignored

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Algorithms for spectral clustering"""
 
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>

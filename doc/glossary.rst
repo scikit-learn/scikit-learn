@@ -1257,7 +1257,7 @@ Methods
         be generated.  If `input_features` is not passed in, then the
         `feature_names_in_` attribute will be used. If the
         `feature_names_in_` attribute is not defined, then the
-        input names are named `[x0, x1, ..., x(n_features_in_)]`.
+        input names are named `[x0, x1, ..., x(n_features_in_ - 1)]`.
 
     ``get_n_splits``
         On a :term:`CV splitter` (not an estimator), returns the number of
@@ -1696,7 +1696,7 @@ See concept :term:`attribute`.
         predictors.
 
     ``coef_``
-        The weight/coefficient matrix of a generalised linear model
+        The weight/coefficient matrix of a generalized linear model
         :term:`predictor`, of shape ``(n_features,)`` for binary classification
         and single-output regression, ``(n_classes, n_features)`` for
         multiclass classification and ``(n_targets, n_features)`` for
