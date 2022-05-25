@@ -204,12 +204,9 @@ def spectral_embedding(
 
         - If `eigen_solver="arpack"`, then `eigen_tol=0.0`;
         - If `eigen_solver="lobpcg"` or `eigen_solver="amg"`, then
-          `eigen_tol=None` which allows the underlying SciPy solver to
-          automaticaly resolve the value according to their heuristics.
-
-          .. note::
-            For details on the heuristics used by SciPy, please see:
-            https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.linalg.lobpcg.html
+         `eigen_tol=None` which configures the underlying `lobpcg` solver to
+          automatically resolve the value according to their heuristics. See,
+          :func:`scipy.sparse.linalg.lobpcg` for details.
 
         Note that when using `eigen_solver="amg"` values of `tol<1e-5` may lead
         to convergence issues and should be avoided.
@@ -355,9 +352,7 @@ def spectral_embedding(
         X = random_state.standard_normal(size=(laplacian.shape[0], n_components + 1))
         X[:, 0] = dd.ravel()
         X = X.astype(laplacian.dtype)
-        # While scikit-learn has a minimum scipy dependency <1.4.0 we require
-        # high tolerance as explained in:
-        # https://github.com/scikit-learn/scikit-learn/pull/13707#discussion_r314028509
+
         tol = None if eigen_tol == "auto" else eigen_tol
         _, diffusion_map = lobpcg(laplacian, X, M=M, tol=tol, largest=False)
         embedding = diffusion_map.T
@@ -473,12 +468,9 @@ class SpectralEmbedding(BaseEstimator):
 
         - If `eigen_solver="arpack"`, then `eigen_tol=0.0`;
         - If `eigen_solver="lobpcg"` or `eigen_solver="amg"`, then
-          `eigen_tol=None` which allows the underlying SciPy solver to
-          automaticaly resolve the value according to their heuristics.
-
-          .. note::
-            For details on the heuristics used by SciPy, please see:
-            https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.linalg.lobpcg.html
+         `eigen_tol=None` which configures the underlying `lobpcg` solver to
+          automatically resolve the value according to their heuristics. See,
+          :func:`scipy.sparse.linalg.lobpcg` for details.
 
         Note that when using `eigen_solver="lobpcg"` or `eigen_solver="amg"`
         values of `tol<1e-5` may lead to convergence issues and should be

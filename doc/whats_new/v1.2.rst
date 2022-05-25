@@ -22,7 +22,7 @@ random sampling procedures.
 - |Enhancement| The default `eigen_tol` for :class:`cluster.SpectralClustering`,
   :class:`manifold.SpectralEmbedding`, :func:`cluster.spectral_clustering`,
   and :func:`manifold.spectral_embedding` is now `None` when using the `'amg'`
-  or `'lobpcg'` solvers. This change  improves numerical stability of the
+  or `'lobpcg'` solvers. This change improves numerical stability of the
   solver, but may result in a different model.
 
 Changelog
