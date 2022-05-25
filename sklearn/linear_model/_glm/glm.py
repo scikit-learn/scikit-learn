@@ -286,7 +286,7 @@ class NewtonSolver(ABC):
                 if is_verbose:
                     print(
                         "      check if previously "
-                        "sum(|gradient_{i-1}|) < sum(|gradient_{i-2}|) but now "
+                        f"sum(|gradient_{i-1}|) < sum(|gradient_{i-2}|) but now "
                         f"sum(|gradient_{i}|) >= sum(|gradient_{i-1}|) {check}"
                     )
                 if check:
@@ -431,7 +431,36 @@ class NewtonSolver(ABC):
         return self.coef
 
 
-class CholeskyNewtonSolver(NewtonSolver):
+class BaseCholeskyNewtonSolver(NewtonSolver):
+    """Cholesky based Newton solver.
+
+    Inner solver for finding the Newton step H w_newton = -g uses Cholesky based linear
+    solver.
+    """
+
+    def inner_solve(self):
+        # TODO: solve(..) may give a warning like
+        #     LinAlgWarning: Ill-conditioned matrix (rcond=9.52447e-17): result may not
+        #     be accurate.
+        # Should we treat this as error and deal with it in the except, or is it fine
+        # as is?
+        try:
+            self.coef_newton = scipy.linalg.solve(
+                self.hessian, -self.gradient, check_finite=False, assume_a="sym"
+            )
+        except np.linalg.LinAlgError as e:
+            warnings.warn(
+                f"The inner solver of {self.__class__.__name__} stumbled upon a "
+                "singular hessian matrix. Therefore, this iteration uses a step closer"
+                " to a gradient descent direction. Removing collinear features of X or"
+                " increasing the penalization strengths may resolve this issue."
+                " The original Linear Algebra message was:\n"
+                + str(e)
+            )
+            self.coef_newton = _solve_singular_cholesky(self.hessian, -self.gradient)
+
+
+class CholeskyNewtonSolver(BaseCholeskyNewtonSolver):
     """Cholesky based Newton solver.
 
     Inner solver for finding the Newton step H w_newton = -g uses Cholesky based linear
@@ -460,29 +489,8 @@ class CholeskyNewtonSolver(NewtonSolver):
             raw_prediction=self.raw_prediction,  # this was updated in line_search
         )
 
-    def inner_solve(self):
-        # TODO: solve(..) may give a warning like
-        #     LinAlgWarning: Ill-conditioned matrix (rcond=9.52447e-17): result may not
-        #     be accurate.
-        # Should we treat this as error and deal with it in the except, or is it fine
-        # as is?
-        try:
-            self.coef_newton = scipy.linalg.solve(
-                self.hessian, -self.gradient, check_finite=False, assume_a="sym"
-            )
-        except np.linalg.LinAlgError as e:
-            warnings.warn(
-                f"The inner solver of {self.__class__.__name__} stumbled upon a "
-                "singular hessian matrix. Therefore, this iteration uses a step closer"
-                " to a gradient descent direction. Removing collinear features of X or"
-                " increasing the penalization strengths may resolve this issue."
-                " The original Linear Algebra message was:\n"
-                + str(e)
-            )
-            self.coef_newton = _solve_singular_cholesky(self.hessian, -self.gradient)
 
-
-class QRCholeskyNewtonSolver(NewtonSolver):
+class QRCholeskyNewtonSolver(BaseCholeskyNewtonSolver):
     """QR and Cholesky based Newton solver.
 
     This is a good solver for n_features >> n_samples, see [1].
@@ -541,22 +549,6 @@ class QRCholeskyNewtonSolver(NewtonSolver):
             hessian_out=self.hessian,
             raw_prediction=self.raw_prediction,  # this was updated in line_search
         )
-
-    def inner_solve(self):
-        try:
-            self.coef_newton = scipy.linalg.solve(
-                self.hessian, -self.gradient, check_finite=False, assume_a="sym"
-            )
-        except np.linalg.LinAlgError as e:
-            warnings.warn(
-                f"The inner solver of {self.__class__.__name__} stumbled upon a "
-                "singular hessian matrix. Therefore, this iteration uses a step closer"
-                " to a gradient descent direction. Removing collinear features of X or"
-                " increasing the penalization strengths may resolve this issue."
-                " The original Linear Algebra message was:\n"
-                + str(e)
-            )
-            self.coef_newton = _solve_singular_cholesky(self.hessian, -self.gradient)
 
     def line_search(self, X, y, sample_weight):
         # Use R' instead of X
