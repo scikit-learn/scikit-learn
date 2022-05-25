@@ -180,22 +180,23 @@ def fastica(
         `n_features` is the number of features.
 
     n_components : int, default=None
-        Number of components to extract. If None no dimension reduction
-        is performed.
+        Number of components to use. If None is passed, all are used.
 
     algorithm : {'parallel', 'deflation'}, default='parallel'
-        Apply a parallel or deflational FASTICA algorithm.
+        Specify which algorithm to use for FastICA.
 
     whiten : str or bool, default="warn"
         Specify the whitening strategy to use.
-        If 'arbitrary-variance'  (default), a whitening with variance arbitrary is used.
-        If 'unit-variance', the whitening matrix is rescaled to ensure that each
-        recovered source has unit variance.
-        If False, the data is already considered to be whitened, and no
-        whitening is performed.
+
+        - If 'arbitrary-variance' (default), a whitening with variance
+          arbitrary is used.
+        - If 'unit-variance', the whitening matrix is rescaled to ensure that
+          each recovered source has unit variance.
+        - If False, the data is already considered to be whitened, and no
+          whitening is performed.
 
         .. deprecated:: 1.1
-            From version 1.3, `whiten='unit-variance'` will be used by default.
+            Starting in v1.3, `whiten='unit-variance'` will be used by default.
             `whiten=True` is deprecated from 1.1 and will raise ValueError in 1.3.
             Use `whiten=arbitrary-variance` instead.
 
@@ -206,10 +207,10 @@ def fastica(
         You can also provide your own function. It should return a tuple
         containing the value of the function, and of its derivative, in the
         point. The derivative should be averaged along its last dimension.
-        Example:
+        Example::
 
-        def my_g(x):
-            return x ** 3, np.mean(3 * x ** 2, axis=-1)
+            def my_g(x):
+                return x ** 3, (3 * x ** 2).mean(axis=-1)
 
     fun_args : dict, default=None
         Arguments to send to the functional form.
@@ -219,13 +220,13 @@ def fastica(
     max_iter : int, default=200
         Maximum number of iterations to perform.
 
-    tol : float, default=1e-04
+    tol : float, default=1e-4
         A positive scalar giving the tolerance at which the
         un-mixing matrix is considered to have converged.
 
     w_init : ndarray of shape (n_components, n_components), default=None
-        Initial un-mixing array of dimension (n.comp,n.comp).
-        If None (default) then an array of normal r.v.'s is used.
+        Initial un-mixing array. If `w_init=None`, then an array of values
+        drawn from a normal distribution is used.
 
     random_state : int, RandomState instance or None, default=None
         Used to initialize ``w_init`` when not specified, with a
@@ -332,18 +333,20 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         Number of components to use. If None is passed, all are used.
 
     algorithm : {'parallel', 'deflation'}, default='parallel'
-        Apply parallel or deflational algorithm for FastICA.
+        Specify which algorithm to use for FastICA.
 
     whiten : str or bool, default="warn"
         Specify the whitening strategy to use.
-        If 'arbitrary-variance' (default), a whitening with variance arbitrary is used.
-        If 'unit-variance', the whitening matrix is rescaled to ensure that each
-        recovered source has unit variance.
-        If False, the data is already considered to be whitened, and no
-        whitening is performed.
+
+        - If 'arbitrary-variance' (default), a whitening with variance
+          arbitrary is used.
+        - If 'unit-variance', the whitening matrix is rescaled to ensure that
+          each recovered source has unit variance.
+        - If False, the data is already considered to be whitened, and no
+          whitening is performed.
 
         .. deprecated:: 1.1
-            From version 1.3 whiten='unit-variance' will be used by default.
+            Starting in v1.3, `whiten='unit-variance'` will be used by default.
             `whiten=True` is deprecated from 1.1 and will raise ValueError in 1.3.
             Use `whiten=arbitrary-variance` instead.
 
@@ -353,24 +356,27 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         or 'cube'.
         You can also provide your own function. It should return a tuple
         containing the value of the function, and of its derivative, in the
-        point. Example::
+        point. The derivative should be averaged along its last dimension.
+        Example::
 
             def my_g(x):
                 return x ** 3, (3 * x ** 2).mean(axis=-1)
 
     fun_args : dict, default=None
         Arguments to send to the functional form.
-        If empty and if fun='logcosh', fun_args will take value
+        If empty or None and if fun='logcosh', fun_args will take value
         {'alpha' : 1.0}.
 
     max_iter : int, default=200
         Maximum number of iterations during fit.
 
     tol : float, default=1e-4
-        Tolerance on update at each iteration.
+        A positive scalar giving the tolerance at which the
+        un-mixing matrix is considered to have converged.
 
     w_init : ndarray of shape (n_components, n_components), default=None
-        The mixing matrix to be used to initialize the algorithm.
+        Initial un-mixing array. If `w_init=None`, then an array of values
+        drawn from a normal distribution is used.
 
     random_state : int, RandomState instance or None, default=None
         Used to initialize ``w_init`` when not specified, with a
@@ -486,14 +492,14 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
 
         if self._whiten == "warn":
             warnings.warn(
-                "From version 1.3 whiten='unit-variance' will be used by default.",
+                "Starting in v1.3, whiten='unit-variance' will be used by default.",
                 FutureWarning,
             )
             self._whiten = "arbitrary-variance"
 
         if self._whiten is True:
             warnings.warn(
-                "From version 1.3 whiten=True should be specified as "
+                "Starting in v1.3, whiten=True should be specified as "
                 "whiten='arbitrary-variance' (its current behaviour). This "
                 "behavior is deprecated in 1.1 and will raise ValueError in 1.3.",
                 FutureWarning,
