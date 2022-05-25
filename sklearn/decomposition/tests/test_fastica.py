@@ -511,18 +511,13 @@ def test_fastica_eigh_low_rank_warning(global_random_seed):
         FastICA(random_state=0, whiten="unit-variance", whiten_solver="eigh").fit(T)
 
 
-@pytest.mark.parametrize("whiten_solver", ["svd", "eigh", "auto"])
+@pytest.mark.parametrize("whiten_solver", ["svd", "eigh"])
 def test_fastica_whiten_solver(global_random_seed, whiten_solver):
     rng = np.random.RandomState(global_random_seed)
     X = rng.random_sample((100, 10))
     ica = FastICA(random_state=rng, whiten_solver=whiten_solver, whiten="unit-variance")
     ica.fit_transform(X)
-    correct_solver = whiten_solver
-    if correct_solver == "auto":
-        correct_solver = "eigh" if X.shape[0] > 50 * X.shape[1] else "svd"
-
     assert ica.whiten_solver == whiten_solver
-    assert ica._whiten_solver == correct_solver
 
 
 @pytest.mark.parametrize("whiten_solver", ["this_should_fail", "test", 1, None])
@@ -530,20 +525,6 @@ def test_fastica_whiten_solver_validation(whiten_solver):
     rng = np.random.RandomState(0)
     X = rng.random_sample((100, 10))
     ica = FastICA(random_state=rng, whiten_solver=whiten_solver, whiten="unit-variance")
-    msg = (
-        "`whiten_solver` must be 'auto', 'eigh' or 'svd' but got"
-        f" {whiten_solver} instead"
-    )
+    msg = f"`whiten_solver` must be 'eigh' or 'svd' but got {whiten_solver} instead"
     with pytest.raises(ValueError, match=msg):
         ica.fit_transform(X)
-
-
-def test_fastica_whiten_solver_future_warning():
-    rng = np.random.RandomState(0)
-    X = rng.random_sample((100, 10))
-    ica = FastICA(random_state=rng, whiten="unit-variance")
-    msg = "From version 1.4 whiten_solver='auto' will be used by default."
-    with pytest.warns(FutureWarning, match=msg):
-        ica.fit_transform(X)
-    assert ica.whiten_solver == "warn"
-    assert ica._whiten_solver == "svd"

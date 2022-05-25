@@ -228,9 +228,8 @@ def fastica(
         Initial un-mixing array. If `w_init=None`, then an array of values
         drawn from a normal distribution is used.
 
-    whiten_solver : {"auto", "eigh", "svd"}, default="svd"
-        The solver to use for whitening. When set to "auto", the "eigh" solver
-        will be used if `n_samples >= 50 * n_features` otherwise "svd" is used.
+    whiten_solver : {"eigh", "svd"}, default="svd"
+        The solver to use for whitening.
 
         - "svd" is more stable numerically if the problem is degenerate, and
           often faster when `n_samples <= n_features`.
@@ -240,10 +239,6 @@ def fastica(
           `n_samples >= 50 * n_features`.
 
         .. versionadded:: 1.2
-
-        .. versionchanged:: 1.4
-           Default value for `whiten_solver` will change from "svd" to "auto"
-           in version 1.4.
 
     random_state : int, RandomState instance or None, default=None
         Used to initialize ``w_init`` when not specified, with a
@@ -396,9 +391,8 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         Initial un-mixing array. If `w_init=None`, then an array of values
         drawn from a normal distribution is used.
 
-    whiten_solver : {"auto", "eigh", "svd"}, default="svd"
-        The solver to use for whitening. When set to "auto", the "eigh" solver
-        will be used if `n_samples >= 50 * n_features` otherwise "svd" is used.
+    whiten_solver : {"eigh", "svd"}, default="svd"
+        The solver to use for whitening.
 
         - "svd" is more stable numerically if the problem is degenerate, and
           often faster when `n_samples <= n_features`.
@@ -408,10 +402,6 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
           `n_samples >= 50 * n_features`.
 
         .. versionadded:: 1.2
-
-        .. versionchanged:: 1.4
-           Default value for `whiten_solver` will change from "svd" to "auto"
-           in version 1.4.
 
     random_state : int, RandomState instance or None, default=None
         Used to initialize ``w_init`` when not specified, with a
@@ -593,20 +583,8 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
             X_mean = XT.mean(axis=-1)
             XT -= X_mean[:, np.newaxis]
 
-            # Benchmark validated heuristic
-            self._whiten_solver = self.whiten_solver
-            if self._whiten_solver == "warn":
-                warnings.warn(
-                    "From version 1.4 whiten_solver='auto' will be used by default.",
-                    FutureWarning,
-                )
-                self._whiten_solver = "svd"
-
-            if self._whiten_solver == "auto":
-                self._whiten_solver = "eigh" if X.shape[0] > 50 * X.shape[1] else "svd"
-
             # Whitening and preprocessing by PCA
-            if self._whiten_solver == "eigh":
+            if self.whiten_solver == "eigh":
                 # Faster when num_samples >> n_features
                 d, u = linalg.eigh(XT.dot(X))
                 sort_indices = np.argsort(d)[::-1]
@@ -621,11 +599,11 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
                 d[degenerate_idx] = eps  # For numerical issues
                 np.sqrt(d, out=d)
                 d, u = d[sort_indices], u[:, sort_indices]
-            elif self._whiten_solver == "svd":
+            elif self.whiten_solver == "svd":
                 u, d = linalg.svd(XT, full_matrices=False, check_finite=False)[:2]
             else:
                 raise ValueError(
-                    "`whiten_solver` must be 'auto', 'eigh' or 'svd' but got"
+                    "`whiten_solver` must be 'eigh' or 'svd' but got"
                     f" {self.whiten_solver} instead"
                 )
 
