@@ -1,3 +1,4 @@
+# cython: profile=True, linetrace=True
 # Author: jakirkham
 
 cimport libc
@@ -40,7 +41,6 @@ cdef fused bint_type:
 def cy_isfinite(numpy.ndarray a, bint allow_nan=False):
     cdef char* a_data
     cdef numpy.NPY_TYPES a_type
-    cdef Py_ssize_t a_step
     cdef Py_ssize_t a_size = a.size
     cdef bint disallow_nan
 
@@ -55,9 +55,9 @@ def cy_isfinite(numpy.ndarray a, bint allow_nan=False):
 
         err = bint_enum.false
         if a_type == numpy.NPY_TYPES.NPY_FLOAT:
-            result = c_isfinite(<const float*>a_data, a_step, a_size, <bint_enum>disallow_nan)
+            result = c_isfinite(<const float*>a_data, a_size, <bint_enum>disallow_nan)
         elif a_type == numpy.NPY_TYPES.NPY_DOUBLE:
-            result = c_isfinite(<const double*>a_data, a_step, a_size, <bint_enum>disallow_nan)
+            result = c_isfinite(<const double*>a_data, a_size, <bint_enum>disallow_nan)
         else:
             err = bint_enum.true
 
@@ -67,14 +67,14 @@ def cy_isfinite(numpy.ndarray a, bint allow_nan=False):
         raise TypeError("Unsupported array type: %s" % repr(numpy.PyArray_TypeObjectFromType(a_type)))
 
 
-cdef inline bint c_isfinite(const_fprecision* a_ptr, Py_ssize_t step, Py_ssize_t size, bint_enum disallow_nan) nogil:
+cdef inline bint c_isfinite(const_fprecision* a_ptr, Py_ssize_t size, bint_enum disallow_nan) nogil:
     if disallow_nan == bint_enum.true:
-        return c_isfinite_bint_type(a_ptr, step, size, <bint_true_type*>NULL)
+        return c_isfinite_bint_type(a_ptr, size, <bint_true_type*>NULL)
     elif disallow_nan == bint_enum.false:
-        return c_isfinite_bint_type(a_ptr, step, size, <bint_false_type*>NULL)
+        return c_isfinite_bint_type(a_ptr, size, <bint_false_type*>NULL)
 
 
-cdef bint c_isfinite_bint_type(const_fprecision* a_ptr, Py_ssize_t step, Py_ssize_t size, bint_type* disallow_nan) nogil:
+cdef bint c_isfinite_bint_type(const_fprecision* a_ptr, Py_ssize_t size, bint_type* disallow_nan) nogil:
     cdef Py_ssize_t i
 
     for i from 0 <= i < size:
