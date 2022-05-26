@@ -302,13 +302,9 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
         they will be set to the median of the input similarities.
 
     affinity : {'euclidean', 'precomputed'}, default='euclidean'
-        Which metric to use. At the moment 'precomputed' and
-        'euclidean' are supported. 'euclidean' uses the
+        Which affinity to use. At the moment 'precomputed' and
+        ``euclidean`` are supported. 'euclidean' uses the
         negative squared euclidean distance between points.
-
-    .. deprecated:: 1.2
-       `affinity` was deprecated in version 1.2 and will be renamed to `metric`
-        in 1.4.
 
     verbose : bool, default=False
         Whether to be verbose.
@@ -417,8 +413,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
         convergence_iter=15,
         copy=True,
         preference=None,
-        affinity="deprecated",  # TODO(1.4): Remove
-        metric=None,  # TODO(1.4): Set default as "euclidean"
+        affinity="euclidean",
         verbose=False,
         random_state=None,
     ):
@@ -430,22 +425,21 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
         self.verbose = verbose
         self.preference = preference
         self.affinity = affinity
-        self.metric = metric
         self.random_state = random_state
 
     def _more_tags(self):
-        return {"pairwise": self.metric == "precomputed"}
+        return {"pairwise": self.affinity == "precomputed"}
 
     def fit(self, X, y=None):
-        """Fit the clustering from features, or distance matrix.
+        """Fit the clustering from features, or affinity matrix.
 
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features), or \
                 array-like of shape (n_samples, n_samples)
-            Training instances to cluster, or distances between instances if
-            ``metric='precomputed'``. If a sparse feature matrix is provided,
-            it will be converted into a sparse ``csr_matrix``.
+            Training instances to cluster, or similarities / affinities between
+            instances if ``affinity='precomputed'``. If a sparse feature matrix
+            is provided, it will be converted into a sparse ``csr_matrix``.
 
         y : Ignored
             Not used, present here for API consistency by convention.
@@ -455,30 +449,19 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
         self
             Returns the instance itself.
         """
-        # TODO(1.4): Remove
-        self._metric = self.metric or self.affinity
-        if self.affinity != "deprecated":
-            warnings.warn(
-                "Attribute `affinity` was deprecated in version 1.2 and will be removed"
-                " in 1.4. Use `metric` instead",
-                DeprecationWarning,
-            )
-        elif self._metric == "deprecated":
-            self._metric = "euclidean"
-
-        if self._metric == "precomputed":
+        if self.affinity == "precomputed":
             accept_sparse = False
         else:
             accept_sparse = "csr"
         X = self._validate_data(X, accept_sparse=accept_sparse)
-        if self._metric == "precomputed":
+        if self.affinity == "precomputed":
             self.affinity_matrix_ = X
-        elif self._metric == "euclidean":
+        elif self.affinity == "euclidean":
             self.affinity_matrix_ = -euclidean_distances(X, squared=True)
         else:
             raise ValueError(
-                "metric must be 'precomputed' or 'euclidean'. Got %s instead"
-                % str(self._metric)
+                "Affinity must be 'precomputed' or 'euclidean'. Got %s instead"
+                % str(self.affinity)
             )
 
         check_scalar(
@@ -513,7 +496,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
             random_state=self.random_state,
         )
 
-        if self.metric != "precomputed":
+        if self.affinity != "precomputed":
             self.cluster_centers_ = X[self.cluster_centers_indices_].copy()
 
         return self
@@ -536,7 +519,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
         X = self._validate_data(X, reset=False, accept_sparse="csr")
         if not hasattr(self, "cluster_centers_"):
             raise ValueError(
-                "Predict method is not supported when metric='precomputed'."
+                "Predict method is not supported when affinity='precomputed'."
             )
 
         if self.cluster_centers_.shape[0] > 0:
@@ -552,14 +535,14 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
             return np.array([-1] * X.shape[0])
 
     def fit_predict(self, X, y=None):
-        """Fit clustering from features/distance matrix; return cluster labels.
+        """Fit clustering from features/affinity matrix; return cluster labels.
 
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features), or \
                 array-like of shape (n_samples, n_samples)
             Training instances to cluster, or similarities / affinities between
-            instances if ``metric='precomputed'``. If a sparse feature matrix
+            instances if ``affinity='precomputed'``. If a sparse feature matrix
             is provided, it will be converted into a sparse ``csr_matrix``.
 
         y : Ignored

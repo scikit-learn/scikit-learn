@@ -45,7 +45,7 @@ def test_affinity_propagation():
     assert n_clusters == n_clusters_
 
     af = AffinityPropagation(
-        preference=preference, metric="precomputed", random_state=28
+        preference=preference, affinity="precomputed", random_state=28
     )
     labels_precomputed = af.fit(S).labels_
 
@@ -82,11 +82,10 @@ def test_affinity_propagation_affinity_shape():
         (X, {"damping": 2}, ValueError, "damping == 2, must be < 1"),
         (X, {"max_iter": 0}, ValueError, "max_iter == 0, must be >= 1."),
         (X, {"convergence_iter": 0}, ValueError, "convergence_iter == 0, must be >= 1"),
-        # TODO(1.4): Replace message "Affinity must be" with "metric must be"
-        (X, {"metric": "unknown"}, ValueError, "metric must be"),
+        (X, {"affinity": "unknown"}, ValueError, "Affinity must be"),
         (
             csr_matrix((3, 3)),
-            {"metric": "precomputed"},
+            {"affinity": "precomputed"},
             TypeError,
             "A sparse matrix was passed, but dense data is required",
         ),
@@ -100,7 +99,7 @@ def test_affinity_propagation_params_validation(input, params, err_type, err_msg
 
 def test_affinity_propagation_predict():
     # Test AffinityPropagation.predict
-    af = AffinityPropagation(metric="euclidean", random_state=63)
+    af = AffinityPropagation(affinity="euclidean", random_state=63)
     labels = af.fit_predict(X)
     labels2 = af.predict(X)
     assert_array_equal(labels, labels2)
@@ -109,13 +108,13 @@ def test_affinity_propagation_predict():
 def test_affinity_propagation_predict_error():
     # Test exception in AffinityPropagation.predict
     # Not fitted.
-    af = AffinityPropagation(metric="euclidean")
+    af = AffinityPropagation(affinity="euclidean")
     with pytest.raises(ValueError):
         af.predict(X)
 
     # Predict not supported when affinity="precomputed".
     S = np.dot(X, X.T)
-    af = AffinityPropagation(metric="precomputed", random_state=57)
+    af = AffinityPropagation(affinity="precomputed", random_state=57)
     af.fit(S)
     with pytest.raises(ValueError):
         af.predict(X)
@@ -187,7 +186,7 @@ def test_affinity_propagation_predict_non_convergence():
 
 def test_affinity_propagation_non_convergence_regressiontest():
     X = np.array([[1, 0, 0, 0, 0, 0], [0, 1, 1, 1, 0, 0], [0, 0, 1, 0, 0, 1]])
-    af = AffinityPropagation(metric="euclidean", max_iter=2, random_state=34)
+    af = AffinityPropagation(affinity="euclidean", max_iter=2, random_state=34)
     msg = (
         "Affinity propagation did not converge, this model may return degenerate"
         " cluster centers and labels."
@@ -259,7 +258,9 @@ def test_affinity_propagation_float32():
     X = np.array(
         [[1, 0, 0, 0], [0, 1, 1, 0], [0, 1, 1, 0], [0, 0, 0, 1]], dtype="float32"
     )
-    afp = AffinityPropagation(preference=1, metric="precomputed", random_state=0).fit(X)
+    afp = AffinityPropagation(preference=1, affinity="precomputed", random_state=0).fit(
+        X
+    )
     expected = np.array([0, 1, 1, 2])
     assert_array_equal(afp.labels_, expected)
 
@@ -267,7 +268,7 @@ def test_affinity_propagation_float32():
 def test_sparse_input_for_predict():
     # Test to make sure sparse inputs are accepted for predict
     # (non-regression test for issue #20049)
-    af = AffinityPropagation(metric="euclidean", random_state=42)
+    af = AffinityPropagation(affinity="euclidean", random_state=42)
     af.fit(X)
     labels = af.predict(csr_matrix((2, 2)))
     assert_array_equal(labels, (2, 2))
@@ -276,32 +277,8 @@ def test_sparse_input_for_predict():
 def test_sparse_input_for_fit_predict():
     # Test to make sure sparse inputs are accepted for fit_predict
     # (non-regression test for issue #20049)
-    af = AffinityPropagation(metric="euclidean", random_state=42)
+    af = AffinityPropagation(affinity="euclidean", random_state=42)
     rng = np.random.RandomState(42)
     X = csr_matrix(rng.randint(0, 2, size=(5, 5)))
     labels = af.fit_predict(X)
     assert_array_equal(labels, (0, 1, 1, 2, 3))
-
-
-# TODO(1.4): Remove
-def test_deprecate_affinity():
-    est = [
-        AffinityPropagation(random_state=42),
-        AffinityPropagation(metric="euclidean", random_state=42),
-    ]
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", DeprecationWarning)
-        for af in est:
-            af.fit(X)
-            af.predict(X)
-            af.fit_predict(X)
-
-    af = AffinityPropagation(affinity="euclidean", random_state=42)
-    msg = (
-        "Attribute `affinity` was deprecated in version 1.2 and will be removed in 1.4."
-        " Use `metric` instead"
-    )
-    with pytest.warns(DeprecationWarning, match=msg):
-        af.fit(X)
-        af.predict(X)
-        af.fit_predict(X)

@@ -755,6 +755,10 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         If "precomputed", a distance matrix (instead of a similarity matrix)
         is needed as input for the fit method.
 
+    .. deprecated:: 1.2
+       `affinity` was deprecated in version 1.2 and will be renamed to `metric`
+        in 1.4.
+
     memory : str or object with the joblib.Memory interface, default=None
         Used to cache the output of the computation of the tree.
         By default, no caching is done. If a string is given, it is the
@@ -876,7 +880,8 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         self,
         n_clusters=2,
         *,
-        affinity="euclidean",
+        affinity="deprecated",  # TODO(1.4): Remove
+        metric=None,  # TODO(1.4): Set default as "euclidean"
         memory=None,
         connectivity=None,
         compute_full_tree="auto",
@@ -891,6 +896,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         self.compute_full_tree = compute_full_tree
         self.linkage = linkage
         self.affinity = affinity
+        self.metric = metric
         self.compute_distances = compute_distances
 
     def fit(self, X, y=None):
@@ -901,7 +907,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         X : array-like, shape (n_samples, n_features) or \
                 (n_samples, n_samples)
             Training instances to cluster, or distances between instances if
-            ``affinity='precomputed'``.
+            ``metric='precomputed'``.
 
         y : Ignored
             Not used, present here for API consistency by convention.
@@ -930,6 +936,17 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         """
         memory = check_memory(self.memory)
 
+        # TODO(1.4): Remove
+        self._metric = self.metric or self.affinity
+        if self.affinity != "deprecated":
+            warnings.warn(
+                "Attribute `affinity` was deprecated in version 1.2 and will be removed"
+                " in 1.4. Use `metric` instead",
+                DeprecationWarning,
+            )
+        elif self._metric == "deprecated":
+            self._metric = "euclidean"
+
         if self.n_clusters is not None and self.n_clusters <= 0:
             raise ValueError(
                 "n_clusters should be an integer greater than 0. %s was provided."
@@ -948,10 +965,10 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
                 "compute_full_tree must be True if distance_threshold is set."
             )
 
-        if self.linkage == "ward" and self.affinity != "euclidean":
+        if self.linkage == "ward" and self._metric != "euclidean":
             raise ValueError(
                 "%s was provided as affinity. Ward can only "
-                "work with euclidean distances." % (self.affinity,)
+                "work with euclidean distances." % (self._metric,)
             )
 
         if self.linkage not in _TREE_BUILDERS:
@@ -989,7 +1006,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         kwargs = {}
         if self.linkage != "ward":
             kwargs["linkage"] = self.linkage
-            kwargs["affinity"] = self.affinity
+            kwargs["affinity"] = self._metric
 
         distance_threshold = self.distance_threshold
 
@@ -1070,6 +1087,10 @@ class FeatureAgglomeration(
         Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
         "manhattan", "cosine", or 'precomputed'.
         If linkage is "ward", only "euclidean" is accepted.
+
+    .. deprecated:: 1.2
+       `affinity` was deprecated in version 1.2 and will be renamed to `metric`
+        in 1.4.
 
     memory : str or object with the joblib.Memory interface, default=None
         Used to cache the output of the computation of the tree.
@@ -1196,7 +1217,8 @@ class FeatureAgglomeration(
         self,
         n_clusters=2,
         *,
-        affinity="euclidean",
+        affinity="deprecated",  # TODO(1.4): Remove
+        metric=None,  # TODO(1.4): Set default as "euclidean"
         memory=None,
         connectivity=None,
         compute_full_tree="auto",
@@ -1212,6 +1234,7 @@ class FeatureAgglomeration(
             compute_full_tree=compute_full_tree,
             linkage=linkage,
             affinity=affinity,
+            metric=metric,
             distance_threshold=distance_threshold,
             compute_distances=compute_distances,
         )
