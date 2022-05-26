@@ -266,7 +266,7 @@ def spectral_clustering(
 
         - If `eigen_solver="arpack"`, then `eigen_tol=0.0`;
         - If `eigen_solver="lobpcg"` or `eigen_solver="amg"`, then
-         `eigen_tol=None` which configures the underlying `lobpcg` solver to
+          `eigen_tol=None` which configures the underlying `lobpcg` solver to
           automatically resolve the value according to their heuristics. See,
           :func:`scipy.sparse.linalg.lobpcg` for details.
 
@@ -482,7 +482,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
 
         - If `eigen_solver="arpack"`, then `eigen_tol=0.0`;
         - If `eigen_solver="lobpcg"` or `eigen_solver="amg"`, then
-         `eigen_tol=None` which configures the underlying `lobpcg` solver to
+          `eigen_tol=None` which configures the underlying `lobpcg` solver to
           automatically resolve the value according to their heuristics. See,
           :func:`scipy.sparse.linalg.lobpcg` for details.
 
