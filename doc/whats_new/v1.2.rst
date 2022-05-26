@@ -25,6 +25,14 @@ random sampling procedures.
   or `'lobpcg'` solvers. This change improves numerical stability of the
   solver, but may result in a different model.
 
+Changes impacting all modules
+-----------------------------
+
+- |Enhancement| Finiteness checks (detection of NaN and infinite values) in all
+  estimators are now significantly more efficient for float32 data by leveraging
+  NumPy's SIMD optimized primitives.
+  :pr:`23446` by :user:`Meekail Zain <micky774>`
+
 Changelog
 ---------
 
@@ -50,19 +58,19 @@ Changelog
 - |Enhancement| :class:`cluster.Birch` now preserves dtype for `numpy.float32`
   inputs. :pr:`22968` by `Meekail Zain <micky774>`.
 
-- |Enhancement| :class:`cluster.SpectralClustering` and
-  :func:`cluster.spectral_clustering` now propogates the `eigen_tol` parameter
-  to all choices of `eigen_solver`. Includes a new option `eigen_tol="auto"`
-  and begins deprecation to change the default from `eigen_tol=0` to
-  `eigen_tol="auto"` in version 1.3.
-  :pr:`23210` by :user:`Meekail Zain <micky774>`.
-
 - |Enhancement| :class:`cluster.KMeans` and :class:`cluster.MiniBatchKMeans`
   now accept a new `'auto'` option for `n_init` which changes the number of
   random initializations to one when using `init='k-means++'` for efficiency.
   This begins deprecation for the default values of `n_init` in the two classes
   and both will have their defaults changed to `n_init='auto'` in 1.4.
   :pr:`23038` by :user:`Meekail Zain <micky774>`.
+
+- |Enhancement| :class:`cluster.SpectralClustering` and
+  :func:`cluster.spectral_clustering` now propogates the `eigen_tol` parameter
+  to all choices of `eigen_solver`. Includes a new option `eigen_tol="auto"`
+  and begins deprecation to change the default from `eigen_tol=0` to
+  `eigen_tol="auto"` in version 1.3.
+  :pr:`23210` by :user:`Meekail Zain <micky774>`.
 
 :mod:`sklearn.datasets`
 .......................
@@ -106,6 +114,13 @@ Changelog
   matrices in a variety of estimators and avoid an `EfficiencyWarning`.
   :pr:`23139` by `Tom Dupre la Tour`_.
 
+:mod:`sklearn.svm`
+..................
+
+- |API| The `class_weight_` attribute is now deprecated for
+  :class:`svm.NuSVR`, :class:`svm.SVR`, :class:`svm.OneClassSVM`.
+  :pr:`22898` by :user:`Meekail Zain <micky774>`.
+
 :mod:`sklearn.tree`
 ...................
 
@@ -121,7 +136,6 @@ Changelog
   deterministic SVD used by the randomized SVD algorithm.
   :pr:`20617` by :user:`Srinath Kailasa <skailasa>`
 
-
 :mod:`sklearn.manifold`
 .......................
 
@@ -132,13 +146,6 @@ Changelog
   and begins deprecation to change the default from `eigen_tol=0` to
   `eigen_tol="auto"` in version 1.3.
   :pr:`23210` by :user:`Meekail Zain <micky774>`.
-
-:mod:`sklearn.svm`
-..................
-
-- |API| The `class_weight_` attribute is now deprecated for
-  :class:`svm.NuSVR`, :class:`svm.SVR`, :class:`svm.OneClassSVM`.
-  :pr:`22898` by :user:`Meekail Zain <micky774>`.
 
 Code and Documentation Contributors
 -----------------------------------
