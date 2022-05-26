@@ -208,8 +208,7 @@ def _dump_svmlight_file(X, y, f, bint multilabel, bint one_based, int_or_longlon
                 col_start = y.indptr[i]
                 col_end = y.indptr[i+1]
                 for j in range(col_start, col_end):
-                    val = y.data[j]
-                    if val == 0:
+                    if y.data[j] == 0:
                         continue
                     if not first:
                         labels_str += ","
@@ -217,8 +216,7 @@ def _dump_svmlight_file(X, y, f, bint multilabel, bint one_based, int_or_longlon
                     labels_str += label_pattern % y.indices[j]
             else:
                 for j in range(num_labels):
-                    val = y[i,j]
-                    if val == 0:
+                    if y[i,j] == 0:
                         continue
                     if not first:
                         labels_str += ","
