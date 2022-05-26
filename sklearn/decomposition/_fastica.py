@@ -161,7 +161,7 @@ def fastica(
     max_iter=200,
     tol=1e-04,
     w_init=None,
-    whiten_solver="warn",
+    whiten_solver="svd",
     random_state=None,
     return_X_mean=False,
     compute_sources=True,
