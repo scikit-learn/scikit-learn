@@ -25,6 +25,14 @@ random sampling procedures.
   or `'lobpcg'` solvers. This change improves numerical stability of the
   solver, but may result in a different model.
 
+Changes impacting all modules
+-----------------------------
+
+- |Enhancement| Finiteness checks (detection of NaN and infinite values) in all
+  estimators are now significantly more efficient for float32 data by leveraging
+  NumPy's SIMD optimized primitives.
+  :pr:`23446` by :user:`Meekail Zain <micky774>`
+
 Changelog
 ---------
 
@@ -105,6 +113,13 @@ Changelog
   This is useful to improve efficiency when using precomputed sparse distance
   matrices in a variety of estimators and avoid an `EfficiencyWarning`.
   :pr:`23139` by `Tom Dupre la Tour`_.
+
+:mod:`sklearn.svm`
+..................
+
+- |API| The `class_weight_` attribute is now deprecated for
+  :class:`svm.NuSVR`, :class:`svm.SVR`, :class:`svm.OneClassSVM`.
+  :pr:`22898` by :user:`Meekail Zain <micky774>`.
 
 :mod:`sklearn.tree`
 ...................
