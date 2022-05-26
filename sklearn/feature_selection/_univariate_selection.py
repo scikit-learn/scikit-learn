@@ -198,14 +198,14 @@ def chi2(X, y):
     p_values : ndarray of shape (n_features,)
         P-values for each feature.
 
-    Notes
-    -----
-    Complexity of this algorithm is O(n_classes * n_features).
-
     See Also
     --------
     f_classif : ANOVA F-value between label/feature for classification tasks.
     f_regression : F-value between label/feature for regression tasks.
+
+    Notes
+    -----
+    Complexity of this algorithm is O(n_classes * n_features).
     """
 
     # XXX: we might want to do some of the following in logspace instead for
