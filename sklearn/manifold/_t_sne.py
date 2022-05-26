@@ -788,6 +788,10 @@ class TSNE(BaseEstimator):
         self.n_jobs = n_jobs
         self.square_distances = square_distances
 
+    def _check_params_vs_input(self, X):
+        if self.perplexity >= X.shape[0]:
+            raise ValueError("perplexity must be less than n_samples")
+
     def _fit(self, X, skip_num_points=0):
         """Private function to fit the model using X as training data."""
 
@@ -886,9 +890,6 @@ class TSNE(BaseEstimator):
             raise ValueError("n_iter should be at least 250")
 
         n_samples = X.shape[0]
-
-        if self.perplexity >= n_samples:
-            raise ValueError("perplexity must be less than n_samples")
 
         neighbors_nn = None
         if self.method == "exact":
@@ -1118,6 +1119,7 @@ class TSNE(BaseEstimator):
         X_new : ndarray of shape (n_samples, n_components)
             Embedding of the training data in low-dimensional space.
         """
+        self._check_params_vs_input(X)
         embedding = self._fit(X)
         self.embedding_ = embedding
         return self.embedding_
