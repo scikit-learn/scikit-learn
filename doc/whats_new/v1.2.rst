@@ -21,6 +21,7 @@ random sampling procedures.
 
 - |Fix| :class:`manifold.TSNE` now throws a `ValueError` when fit with
   `perplexity>=n_samples` to ensure mathematical correctness of the algorithm.
+  :pr:`10805` by :user:`Mathias Andersen <MrMathias>` and
   :pr:`23471` by :user:`Meekail Zain <micky774>`
 
 Changes impacting all modules
@@ -132,6 +133,7 @@ Changelog
 
 - |Fix| :class:`manifold.TSNE` now throws a `ValueError` when fit with
   `perplexity>=n_samples` to ensure mathematical correctness of the algorithm.
+  :pr:`10805` by :user:`Mathias Andersen <MrMathias>` and
   :pr:`23471` by :user:`Meekail Zain <micky774>`
 
 Code and Documentation Contributors
