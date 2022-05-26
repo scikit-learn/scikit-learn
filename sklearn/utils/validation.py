@@ -106,18 +106,21 @@ def _assert_all_finite(
     is_float = X.dtype.kind in "fc"
     # Cython implementation doesn't support FP16 or complex numbers
     # size > 5000 is a heuristic for when the python implementation is faster
-    use_cython = not (X.dtype.kind == "c" or X.dtype == np.float16) and X.size > 5000
     first_pass_isfinite = False
     if is_float:
-        if use_cython:
-            first_pass_isfinite = cy_isfinite(X, allow_nan=allow_nan)
-        else:
-            with np.errstate(over="ignore"):
-                first_pass_isfinite = np.isfinite(np.sum(X))
+        use_cython = not (X.dtype.kind == "c" or X.dtype == np.float16)
+        with np.errstate(over="ignore"):
+            first_pass_isfinite = np.isfinite(np.sum(X))
         if first_pass_isfinite:
             return
-        has_inf = np.isinf(X).any()
-        has_nan = np.isnan(X).any()
+        if use_cython:
+            out = cy_isfinite(X, allow_nan=allow_nan)
+            first_pass_isfinite = out == 0
+            has_nan = out == 1
+            has_inf = out == 2
+        else:
+            has_inf = np.isinf(X).any()
+            has_nan = np.isnan(X).any()
         if has_inf or not allow_nan and has_nan:
             if not allow_nan and has_nan:
                 type_err = "NaN"

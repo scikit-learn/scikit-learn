@@ -3,7 +3,7 @@
 
 cimport libc
 cimport libc.math
-from libc.math cimport isfinite as _isfinite, isinf as _isinf
+from libc.math cimport isnan as _isnan, isinf as _isinf
 
 cimport cython
 from cython.parallel import prange
@@ -44,7 +44,7 @@ def cy_isfinite(numpy.ndarray a, bint allow_nan=False):
     cdef Py_ssize_t a_size = a.size
     cdef bint disallow_nan
 
-    cdef bint result
+    cdef int result
     cdef bint_enum err
 
     with nogil:
@@ -67,25 +67,28 @@ def cy_isfinite(numpy.ndarray a, bint allow_nan=False):
         raise TypeError("Unsupported array type: %s" % repr(numpy.PyArray_TypeObjectFromType(a_type)))
 
 
-cdef inline bint c_isfinite(const_fprecision* a_ptr, Py_ssize_t size, bint_enum disallow_nan) nogil:
+cdef inline int c_isfinite(const_fprecision* a_ptr, Py_ssize_t size, bint_enum disallow_nan) nogil:
     if disallow_nan == bint_enum.true:
         return c_isfinite_bint_type(a_ptr, size, <bint_true_type*>NULL)
     elif disallow_nan == bint_enum.false:
         return c_isfinite_bint_type(a_ptr, size, <bint_false_type*>NULL)
 
 
-cdef bint c_isfinite_bint_type(const_fprecision* a_ptr, Py_ssize_t size, bint_type* disallow_nan) nogil:
+cdef int c_isfinite_bint_type(const_fprecision* a_ptr, Py_ssize_t size, bint_type* disallow_nan) nogil:
     cdef Py_ssize_t i
+    cdef int out = 0
 
     for i from 0 <= i < size:
-        if c_isnonfinite(a_ptr[i], disallow_nan):
-            return False
+        out = c_isnonfinite(a_ptr[i], disallow_nan)
+        if out !=0:
+            return out
+    return out
 
-    return True
+cdef inline int c_isnonfinite(fprecision v, bint_type* disallow_nan) nogil:
+    # Returns 0 if finite
+    # Returns 1 if NaN
+    # Returns 2 if inf
 
-cdef inline bint c_isnonfinite(fprecision v, bint_type* disallow_nan) nogil:
-
-    if bint_type is bint_true_type:
-        return _isfinite(v) == 0
-    else:
-        return _isinf(v) != 0
+    if bint_type is bint_true_type and _isnan(v) == 1:
+        return 1
+    return _isinf(v)*2
