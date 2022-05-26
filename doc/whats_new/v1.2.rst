@@ -26,6 +26,14 @@ random sampling procedures.
   consistent results between varying solvers. This may change the output of
   the model up to sign-flipping, but does not affect the overall correctness.
 
+Changes impacting all modules
+-----------------------------
+
+- |Enhancement| Finiteness checks (detection of NaN and infinite values) in all
+  estimators are now significantly more efficient for float32 data by leveraging
+  NumPy's SIMD optimized primitives.
+  :pr:`23446` by :user:`Meekail Zain <micky774>`
+
 Changelog
 ---------
 
@@ -111,6 +119,13 @@ Changelog
   matrices in a variety of estimators and avoid an `EfficiencyWarning`.
   :pr:`23139` by `Tom Dupre la Tour`_.
 
+:mod:`sklearn.svm`
+..................
+
+- |API| The `class_weight_` attribute is now deprecated for
+  :class:`svm.NuSVR`, :class:`svm.SVR`, :class:`svm.OneClassSVM`.
+  :pr:`22898` by :user:`Meekail Zain <micky774>`.
+
 :mod:`sklearn.tree`
 ...................
 
@@ -133,10 +148,3 @@ Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.1, including:
 
 TODO: update at the time of the release.
-
-:mod:`sklearn.svm`
-..................
-
-- |API| The `class_weight_` attribute is now deprecated for
-  :class:`svm.NuSVR`, :class:`svm.SVR`, :class:`svm.OneClassSVM`.
-  :pr:`22898` by :user:`Meekail Zain <micky774>`.
