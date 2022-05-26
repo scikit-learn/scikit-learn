@@ -4,7 +4,6 @@
 Based on: http://wxpsvg.googlecode.com/svn/trunk/svg/pathdata.py
 According to that project, this file is licensed under the LGPL
 """
-from __future__ import print_function
 
 try:
     from pyparsing import (ParserElement, Literal, Word, CaselessLiteral, 
@@ -29,7 +28,7 @@ class CaselessPreservingLiteral(CaselessLiteral):
         instead of as defined.
     """
     def __init__( self, matchString ):
-        super(CaselessPreservingLiteral,self).__init__( matchString.upper() )
+        super().__init__(matchString.upper())
         self.name = "'%s'" % matchString
         self.errmsg = "Expected " + self.name
         self.myException.msg = self.errmsg
@@ -55,8 +54,8 @@ sign = oneOf("+ -")
 def convertToFloat(s, loc, toks):
     try:
         return float(toks[0])
-    except:
-        raise ParseException(loc, "invalid float format %s"%toks[0])
+    except BaseException as e:
+        raise ParseException(loc, "invalid float format %s" % toks[0]) from e
 
 exponent = CaselessLiteral("e")+Optional(sign)+Word(nums)
 
@@ -90,7 +89,7 @@ maybeComma = Optional(Literal(',')).suppress()
 
 coordinateSequence = Sequence(coordinate)
 
-coordinatePair = (coordinate + maybeComma + coordinate).setParseAction(lambda t: tuple(t))
+coordinatePair = (coordinate + maybeComma + coordinate).setParseAction(tuple)
 coordinatePairSequence = Sequence(coordinatePair)
 
 coordinatePairPair = coordinatePair + maybeComma + coordinatePair
@@ -112,9 +111,9 @@ flag = oneOf("1 0").setParseAction(lambda t: bool(int((t[0]))))
 arcRadius = (
     nonnegativeNumber + maybeComma + #rx
     nonnegativeNumber #ry
-).setParseAction(lambda t: tuple(t))
+).setParseAction(tuple)
 
-arcFlags = (flag + maybeComma + flag).setParseAction(lambda t: tuple(t))
+arcFlags = (flag + maybeComma + flag).setParseAction(tuple)
 
 ellipticalArcArgument = Group(
     arcRadius + maybeComma + #rx, ry
