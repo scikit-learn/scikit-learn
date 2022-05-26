@@ -26,6 +26,7 @@ from sklearn.utils._mocking import MockDataFrame
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import average_precision_score
 from sklearn.metrics import balanced_accuracy_score
+from sklearn.metrics import class_likelihood_ratios
 from sklearn.metrics import classification_report
 from sklearn.metrics import cohen_kappa_score
 from sklearn.metrics import confusion_matrix
@@ -598,6 +599,104 @@ def test_confusion_matrix_normalize_single_class():
     with warnings.catch_warnings():
         warnings.simplefilter("error", RuntimeWarning)
         confusion_matrix(y_pred, y_test, normalize="true")
+
+
+@pytest.mark.parametrize(
+    "params, warn_msg",
+    [
+        # When y_test contains one class only and y_test==y_pred, LR+ is undefined
+        (
+            {
+                "y_true": np.array([0, 0, 0, 0, 0, 0]),
+                "y_pred": np.array([0, 0, 0, 0, 0, 0]),
+            },
+            "samples of only one class were seen during testing",
+        ),
+        # When `fp == 0` and `tp != 0`, LR+ is undefined
+        (
+            {
+                "y_true": np.array([1, 1, 1, 0, 0, 0]),
+                "y_pred": np.array([1, 1, 1, 0, 0, 0]),
+            },
+            "positive_likelihood_ratio ill-defined and being set to nan",
+        ),
+        # When `fp == 0` and `tp == 0`, LR+ is undefined
+        (
+            {
+                "y_true": np.array([1, 1, 1, 0, 0, 0]),
+                "y_pred": np.array([0, 0, 0, 0, 0, 0]),
+            },
+            "no samples predicted for the positive class",
+        ),
+        # When `tn == 0`, LR- is undefined
+        (
+            {
+                "y_true": np.array([1, 1, 1, 0, 0, 0]),
+                "y_pred": np.array([0, 0, 0, 1, 1, 1]),
+            },
+            "negative_likelihood_ratio ill-defined and being set to nan",
+        ),
+        # When `tp + fn == 0` both ratios are undefined
+        (
+            {
+                "y_true": np.array([0, 0, 0, 0, 0, 0]),
+                "y_pred": np.array([1, 1, 1, 0, 0, 0]),
+            },
+            "no samples of the positive class were present in the testing set",
+        ),
+    ],
+)
+def test_likelihood_ratios_warnings(params, warn_msg):
+    # likelihood_ratios must raise warnings when at
+    # least one of the ratios is ill-defined.
+
+    with pytest.warns(UserWarning, match=warn_msg):
+        class_likelihood_ratios(**params)
+
+
+@pytest.mark.parametrize(
+    "params, err_msg",
+    [
+        (
+            {
+                "y_true": np.array([0, 1, 0, 1, 0]),
+                "y_pred": np.array([1, 1, 0, 0, 2]),
+            },
+            "class_likelihood_ratios only supports binary classification "
+            "problems, got targets of type: multiclass",
+        ),
+    ],
+)
+def test_likelihood_ratios_errors(params, err_msg):
+    # likelihood_ratios must raise error when attempting
+    # non-binary classes to avoid Simpson's paradox
+    with pytest.raises(ValueError, match=err_msg):
+        class_likelihood_ratios(**params)
+
+
+def test_likelihood_ratios():
+    # Build confusion matrix with tn=9, fp=8, fn=1, tp=2,
+    # sensitivity=2/3, specificity=9/17, prevalence=3/20,
+    # LR+=34/24, LR-=17/27
+    y_true = np.array([1] * 3 + [0] * 17)
+    y_pred = np.array([1] * 2 + [0] * 10 + [1] * 8)
+
+    pos, neg = class_likelihood_ratios(y_true, y_pred)
+    assert_allclose(pos, 34 / 24)
+    assert_allclose(neg, 17 / 27)
+
+    # Build limit case with y_pred = y_true
+    pos, neg = class_likelihood_ratios(y_true, y_true)
+    assert_array_equal(pos, np.nan * 2)
+    assert_allclose(neg, np.zeros(2), rtol=1e-12)
+
+    # Ignore last 5 samples to get tn=9, fp=3, fn=1, tp=2,
+    # sensitivity=2/3, specificity=9/12, prevalence=3/20,
+    # LR+=24/9, LR-=12/27
+    sample_weight = np.array([1.0] * 15 + [0.0] * 5)
+    pos, neg = class_likelihood_ratios(y_true, y_pred, sample_weight=sample_weight)
+    assert_allclose(pos, 24 / 9)
+    assert_allclose(neg, 12 / 27)
 
 
 def test_cohen_kappa():
