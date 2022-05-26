@@ -98,45 +98,35 @@ def _assert_all_finite(
 
     if _get_config()["assume_finite"]:
         return
-    from sklearn.utils.extmath import _safe_accumulator_op
 
     X = np.asanyarray(X)
     # First try an O(n) time, O(1) space solution for the common case that
     # everything is finite; fall back to O(n) space np.isfinite to prevent
-    # false positives from overflow in sum method. The sum is also calculated
-    # safely to reduce dtype induced overflows.
+    # false positives from overflow in sum method.
     is_float = X.dtype.kind in "fc"
     # Cython implementation doesn't support FP16 or complex numbers
     # size > 5000 is a heuristic for when the python implementation is faster
     use_cython = not (X.dtype.kind == "c" or X.dtype == np.float16) and X.size > 5000
-    is_finite = False
+    first_pass_isfinite = False
     if is_float:
         if use_cython:
-            is_finite = cy_isfinite(X, allow_nan=allow_nan)
+            first_pass_isfinite = cy_isfinite(X, allow_nan=allow_nan)
         else:
-            is_finite = np.isfinite(_safe_accumulator_op(np.sum, X))
-    if is_finite:
-        pass
-    elif is_float:
-        if (
-            allow_nan
-            and np.isinf(X).any()
-            or not allow_nan
-            and not np.isfinite(X).all()
-        ):
-            if not allow_nan and np.isnan(X).any():
+            with np.errstate(over="ignore"):
+                first_pass_isfinite = np.isfinite(np.sum(X))
+        if first_pass_isfinite:
+            return
+        has_inf = np.isinf(X).any()
+        has_nan = np.isnan(X).any()
+        if has_inf or not allow_nan and has_nan:
+            if not allow_nan and has_nan:
                 type_err = "NaN"
             else:
                 msg_dtype = msg_dtype if msg_dtype is not None else X.dtype
                 type_err = f"infinity or a value too large for {msg_dtype!r}"
             padded_input_name = input_name + " " if input_name else ""
             msg_err = f"Input {padded_input_name}contains {type_err}."
-            if (
-                not allow_nan
-                and estimator_name
-                and input_name == "X"
-                and np.isnan(X).any()
-            ):
+            if not allow_nan and estimator_name and input_name == "X" and has_nan:
                 # Improve the error message on how to handle missing values in
                 # scikit-learn.
                 msg_err += (

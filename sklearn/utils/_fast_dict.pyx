@@ -16,17 +16,17 @@ from libcpp.map cimport map as cpp_map
 import numpy as np
 
 # Import the C-level symbols of numpy
-cimport numpy as np
+cimport numpy as cnp
 
 # Numpy must be initialized. When using numpy from C or Cython you must
 # _always_ do that, or you will have segfaults
-np.import_array()
+cnp.import_array()
 
 #DTYPE = np.float64
-#ctypedef np.float64_t DTYPE_t
+#ctypedef cnp.float64_t DTYPE_t
 
 #ITYPE = np.intp
-#ctypedef np.intp_t ITYPE_t
+#ctypedef cnp.intp_t ITYPE_t
 
 ###############################################################################
 # An object to be used in Python
@@ -38,8 +38,8 @@ np.import_array()
 
 cdef class IntFloatDict:
 
-    def __init__(self, np.ndarray[ITYPE_t, ndim=1] keys,
-                       np.ndarray[DTYPE_t, ndim=1] values):
+    def __init__(self, cnp.ndarray[ITYPE_t, ndim=1] keys,
+                       cnp.ndarray[DTYPE_t, ndim=1] values):
         cdef int i
         cdef int size = values.size
         # Should check that sizes for keys and values are equal, and
@@ -68,7 +68,7 @@ cdef class IntFloatDict:
     #    while it != end:
     #        yield deref(it).first, deref(it).second
     #        inc(it)
-    
+
     def __iter__(self):
         cdef int size = self.my_map.size()
         cdef ITYPE_t [:] keys = np.empty(size, dtype=np.intp)
@@ -94,9 +94,9 @@ cdef class IntFloatDict:
                 The values of the data points
         """
         cdef int size = self.my_map.size()
-        cdef np.ndarray[ITYPE_t, ndim=1] keys = np.empty(size,
+        cdef cnp.ndarray[ITYPE_t, ndim=1] keys = np.empty(size,
                                                          dtype=np.intp)
-        cdef np.ndarray[DTYPE_t, ndim=1] values = np.empty(size,
+        cdef cnp.ndarray[DTYPE_t, ndim=1] values = np.empty(size,
                                                            dtype=np.float64)
         self._to_arrays(keys, values)
         return keys, values
@@ -147,4 +147,3 @@ def argmin(IntFloatDict d):
             min_key = deref(it).first
         inc(it)
     return min_key, min_value
-

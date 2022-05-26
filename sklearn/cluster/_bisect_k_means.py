@@ -17,7 +17,7 @@ from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _check_sample_weight
 from ..utils.validation import check_random_state
-from ..utils.validation import _is_arraylike_not_scalar
+from ..utils._param_validation import StrOptions
 
 
 class _BisectingTree:
@@ -204,6 +204,14 @@ class BisectingKMeans(_BaseKMeans):
            [ 1., 2.]])
     """
 
+    _parameter_constraints = {
+        **_BaseKMeans._parameter_constraints,
+        "init": [StrOptions({"k-means++", "random"}), callable],
+        "copy_x": [bool],
+        "algorithm": [StrOptions({"lloyd", "elkan"})],
+        "bisecting_strategy": [StrOptions({"biggest_inertia", "largest_cluster"})],
+    }
+
     def __init__(
         self,
         n_clusters=8,
@@ -232,27 +240,6 @@ class BisectingKMeans(_BaseKMeans):
         self.copy_x = copy_x
         self.algorithm = algorithm
         self.bisecting_strategy = bisecting_strategy
-
-    def _check_params(self, X):
-        super()._check_params(X)
-
-        # algorithm
-        if self.algorithm not in ("lloyd", "elkan"):
-            raise ValueError(
-                "Algorithm must be either 'lloyd' or 'elkan', "
-                f"got {self.algorithm} instead."
-            )
-
-        # bisecting_strategy
-        if self.bisecting_strategy not in ["biggest_inertia", "largest_cluster"]:
-            raise ValueError(
-                "Bisect Strategy must be 'biggest_inertia' or 'largest_cluster'. "
-                f"Got {self.bisecting_strategy} instead."
-            )
-
-        # init
-        if _is_arraylike_not_scalar(self.init):
-            raise ValueError("BisectingKMeans does not support init as array.")
 
     def _warn_mkl_vcomp(self, n_active_threads):
         """Warn when vcomp and mkl are both present"""
@@ -380,6 +367,8 @@ class BisectingKMeans(_BaseKMeans):
         self
             Fitted estimator.
         """
+        self._validate_params()
+
         X = self._validate_data(
             X,
             accept_sparse="csr",
@@ -389,7 +378,8 @@ class BisectingKMeans(_BaseKMeans):
             accept_large_sparse=False,
         )
 
-        self._check_params(X)
+        self._check_params_vs_input(X)
+
         self._random_state = check_random_state(self.random_state)
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
         self._n_threads = _openmp_effective_n_threads()
