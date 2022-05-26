@@ -30,8 +30,8 @@ rng = check_random_state(0)
 d = 4
 n1 = 20
 n2 = 25
-X64 = rng.random_sample((n1, d)).astype("float64", copy=False)
-Y64 = rng.random_sample((n2, d)).astype("float64", copy=False)
+X64 = rng.random_sample((n1, d))
+Y64 = rng.random_sample((n2, d))
 X32 = X64.astype("float32")
 Y32 = Y64.astype("float32")
 

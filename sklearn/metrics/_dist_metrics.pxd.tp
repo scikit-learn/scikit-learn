@@ -5,11 +5,11 @@ implementation_specific_values = [
     #
     #       name_suffix, DTYPE_t, DTYPE
     #
-    # On the first hand, an empty string is use for `name_suffix`
+    # On the first hand, an empty string is used for `name_suffix`
     # for the float64 case as to still be able to expose the original
     # float64 implementation under the same API, namely `DistanceMetric`.
     #
-    # On the other hand, '32' bit is use for `name_suffix` for the float32
+    # On the other hand, '32' bit is used for `name_suffix` for the float32
     # case to remove ambiguity and use `DistanceMetric32`, which is not
     # publicly exposed.
     #
@@ -21,11 +21,11 @@ implementation_specific_values = [
     # safety.
     #
     ('', 'DTYPE_t', 'DTYPE'),
-    ('32', 'np.float32_t', 'np.float32')
+    ('32', 'cnp.float32_t', 'np.float32')
 ]
 
 }}
-cimport numpy as np
+cimport numpy as cnp
 from libc.math cimport sqrt, exp
 
 from ..utils._typedefs cimport DTYPE_t, ITYPE_t
@@ -43,7 +43,7 @@ cdef inline DTYPE_t euclidean_dist{{name_suffix}}(
     ITYPE_t size,
 ) nogil except -1:
     cdef DTYPE_t tmp, d=0
-    cdef np.intp_t j
+    cdef cnp.intp_t j
     for j in range(size):
         tmp = <DTYPE_t> (x1[j] - x2[j])
         d += tmp * tmp
@@ -56,9 +56,9 @@ cdef inline DTYPE_t euclidean_rdist{{name_suffix}}(
     ITYPE_t size,
 ) nogil except -1:
     cdef DTYPE_t tmp, d=0
-    cdef np.intp_t j
+    cdef cnp.intp_t j
     for j in range(size):
-        tmp = x1[j] - x2[j]
+        tmp = <DTYPE_t>(x1[j] - x2[j])
         d += tmp * tmp
     return d
 
