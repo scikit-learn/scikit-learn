@@ -864,7 +864,7 @@ As an optimization problem, binary
 class logistic regression with regularization term :math:`r(w)`  minimizes the
 following cost function:
 
-.. math:: \min_{w} C \sum_{i=1}^n \left[-y_i \log(\hat{p}(X_i)) - (1 - y_i) \log(1 - \hat{p}(X_i))\right] + r(w).
+.. math:: \min_{w} C \sum_{i=1}^n \left(-y_i \log(\hat{p}(X_i)) - (1 - y_i) \log(1 - \hat{p}(X_i))\right) + r(w).
 
 
 We currently provide four choices for the regularization term  :math:`r(w)`  via
@@ -890,7 +890,8 @@ regularization. Elastic-Net is equivalent to :math:`\ell_1` when
 Multinomial Case
 ----------------
 
-The binary case can be extended to :math:`K` classes leading to the multinomial logistic regression, see also `log-linear model
+The binary case can be extended to :math:`K` classes leading to the multinomial
+logistic regression, see also `log-linear model
 <https://en.wikipedia.org/wiki/Multinomial_logistic_regression#As_a_log-linear_model>`_.
 
 .. note::
@@ -913,12 +914,21 @@ The objective for the optimization becomes
 
 .. math:: \min_W -C \sum_{i=1}^n \sum_{k=0}^{K-1} [y_i = k] \log(\hat{p}_k(X_i)) + r(W).
 
-We currently implement four choices of regularization term
+Where :math:`[P]` represents the Iverson bracket which evaluates to :math:`0`
+if :math:`P` is false, otherwise it evaluates to :math:`1`. We currently provide fourchoices
+for the regularization term :math:`r(W)` via the `penalty` argument:
 
-#. None, :math:`r(W) = 0`
-#. :math:`\ell_1,\, r(W) = \|W\|_1`
-#. :math:`\ell_2,\, r(W) = \frac{1}{2}\|W\|_F^2 = \frac{1}{2}\sum_{i=1}^n\sum_{j=1}^K w_{i,j}^2`
-#. ElasticNet, :math:`r(W) = \frac{1 - \rho}{2}\|W\|_F^2 + \rho \|W\|_1`
++----------------+----------------------------------------------------------------------------------+
+| penalty        | :math:`r(W)`                                                                     |
++================+==================================================================================+
+| `None`         | :math:`0`                                                                        |
++----------------+----------------------------------------------------------------------------------+
+| :math:`\ell_1` | :math:`\|W\|_1`                                                                  |
++----------------+----------------------------------------------------------------------------------+
+| :math:`\ell_2` | :math:`\frac{1}{2}\|W\|_F^2 = \frac{1}{2}\sum_{i=1}^n\sum_{j=0}^{K-1} w_{i,j}^2` |
++----------------+----------------------------------------------------------------------------------+
+| `ElasticNet`   | :math:`\frac{1 - \rho}{2}\|W\|_F^2 + \rho \|W\|_1`                               |
++----------------+----------------------------------------------------------------------------------+
 
 Solvers
 -------
