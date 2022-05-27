@@ -498,8 +498,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "GraphicalLasso",
     "GraphicalLassoCV",
     "HashingVectorizer",
-    "HistGradientBoostingClassifier",
-    "HistGradientBoostingRegressor",
     "HuberRegressor",
     "IncrementalPCA",
     "IsolationForest",
