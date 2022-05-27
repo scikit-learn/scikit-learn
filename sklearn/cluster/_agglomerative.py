@@ -756,8 +756,8 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         is needed as input for the fit method.
 
         .. deprecated:: 1.2
-        `affinity` was deprecated in version 1.2 and will be renamed to `metric`
-            in 1.4.
+            `affinity` was deprecated in version 1.2 and will be renamed to
+            `metric` in 1.4.
 
     metric : str or callable, default='euclidean'
         Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
@@ -1095,8 +1095,8 @@ class FeatureAgglomeration(
         If linkage is "ward", only "euclidean" is accepted.
 
         .. deprecated:: 1.2
-        `affinity` was deprecated in version 1.2 and will be renamed to `metric`
-            in 1.4.
+            `affinity` was deprecated in version 1.2 and will be renamed to
+            `metric` in 1.4.
 
     metric : str or callable, default='euclidean'
         Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
