@@ -246,3 +246,39 @@ def test_subcluster_dtype(global_dtype):
     )
     brc = Birch(n_clusters=4)
     assert brc.fit(X).subcluster_centers_.dtype == global_dtype
+
+
+def test_both_subclusters_updated():
+    """Check that both subclusters are updated when a node a split, even when there are
+    duplicated data points. Non-regression test for #23269.
+    """
+
+    X = np.array(
+        [
+            [-2.6192791, -1.5053215],
+            [-2.9993038, -1.6863596],
+            [-2.3724914, -1.3438171],
+            [-2.336792, -1.3417323],
+            [-2.4089134, -1.3290224],
+            [-2.3724914, -1.3438171],
+            [-3.364009, -1.8846745],
+            [-2.3724914, -1.3438171],
+            [-2.617677, -1.5003285],
+            [-2.2960556, -1.3260119],
+            [-2.3724914, -1.3438171],
+            [-2.5459878, -1.4533926],
+            [-2.25979, -1.3003055],
+            [-2.4089134, -1.3290224],
+            [-2.3724914, -1.3438171],
+            [-2.4089134, -1.3290224],
+            [-2.5459878, -1.4533926],
+            [-2.3724914, -1.3438171],
+            [-2.9720619, -1.7058647],
+            [-2.336792, -1.3417323],
+            [-2.3724914, -1.3438171],
+        ],
+        dtype=np.float32,
+    )
+
+    # no error
+    Birch(branching_factor=5, threshold=1e-5, n_clusters=None).fit(X)

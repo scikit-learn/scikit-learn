@@ -571,7 +571,7 @@ The disadvantages of the LARS method include:
     in the discussion section of the Efron et al. (2004) Annals of
     Statistics article.
 
-The LARS model can be used using via the estimator :class:`Lars`, or its
+The LARS model can be used via the estimator :class:`Lars`, or its
 low-level implementation :func:`lars_path` or :func:`lars_path_gram`.
 
 
@@ -631,7 +631,7 @@ column is always zero.
 
 Orthogonal Matching Pursuit (OMP)
 =================================
-:class:`OrthogonalMatchingPursuit` and :func:`orthogonal_mp` implements the OMP
+:class:`OrthogonalMatchingPursuit` and :func:`orthogonal_mp` implement the OMP
 algorithm for approximating the fit of a linear model with constraints imposed
 on the number of non-zero coefficients (ie. the :math:`\ell_0` pseudo-norm).
 
@@ -1558,7 +1558,7 @@ see also :class:`~sklearn.metrics.mean_pinball_loss`,
     \begin{cases}
         q t, & t > 0, \\
         0,    & t = 0, \\
-        (1-q) t, & t < 0
+        (q-1) t, & t < 0
     \end{cases}
 
 and the L1 penalty controlled by parameter ``alpha``, similar to

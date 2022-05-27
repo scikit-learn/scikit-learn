@@ -6,6 +6,7 @@ import pytest
 
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_allclose
 
 from sklearn.metrics.pairwise import kernel_metrics
 from sklearn.kernel_approximation import RBFSampler
@@ -31,12 +32,10 @@ def test_polynomial_count_sketch_raises_if_degree_lower_than_one(degree):
         ps_transform.fit(X, Y)
 
 
-@pytest.mark.parametrize("X", [X, csr_matrix(X)])
-@pytest.mark.parametrize("Y", [Y, csr_matrix(Y)])
 @pytest.mark.parametrize("gamma", [0.1, 1, 2.5])
-@pytest.mark.parametrize("degree", [1, 2, 3])
-@pytest.mark.parametrize("coef0", [0, 1, 2.5])
-def test_polynomial_count_sketch(X, Y, gamma, degree, coef0):
+@pytest.mark.parametrize("degree, n_components", [(1, 500), (2, 500), (3, 5000)])
+@pytest.mark.parametrize("coef0", [0, 2.5])
+def test_polynomial_count_sketch(gamma, degree, coef0, n_components):
     # test that PolynomialCountSketch approximates polynomial
     # kernel on random data
 
@@ -45,7 +44,11 @@ def test_polynomial_count_sketch(X, Y, gamma, degree, coef0):
 
     # approximate kernel mapping
     ps_transform = PolynomialCountSketch(
-        n_components=5000, gamma=gamma, coef0=coef0, degree=degree, random_state=42
+        n_components=n_components,
+        gamma=gamma,
+        coef0=coef0,
+        degree=degree,
+        random_state=42,
     )
     X_trans = ps_transform.fit_transform(X)
     Y_trans = ps_transform.transform(Y)
@@ -56,6 +59,29 @@ def test_polynomial_count_sketch(X, Y, gamma, degree, coef0):
     np.abs(error, out=error)
     assert np.max(error) <= 0.1  # nothing too far off
     assert np.mean(error) <= 0.05  # mean is fairly close
+
+
+@pytest.mark.parametrize("gamma", [0.1, 1.0])
+@pytest.mark.parametrize("degree", [1, 2, 3])
+@pytest.mark.parametrize("coef0", [0, 2.5])
+def test_polynomial_count_sketch_dense_sparse(gamma, degree, coef0):
+    """Check that PolynomialCountSketch results are the same for dense and sparse
+    input.
+    """
+    ps_dense = PolynomialCountSketch(
+        n_components=500, gamma=gamma, degree=degree, coef0=coef0, random_state=42
+    )
+    Xt_dense = ps_dense.fit_transform(X)
+    Yt_dense = ps_dense.transform(Y)
+
+    ps_sparse = PolynomialCountSketch(
+        n_components=500, gamma=gamma, degree=degree, coef0=coef0, random_state=42
+    )
+    Xt_sparse = ps_sparse.fit_transform(csr_matrix(X))
+    Yt_sparse = ps_sparse.transform(csr_matrix(Y))
+
+    assert_allclose(Xt_dense, Xt_sparse)
+    assert_allclose(Yt_dense, Yt_sparse)
 
 
 def _linear_kernel(X, Y):

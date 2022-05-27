@@ -3,7 +3,7 @@ Small collection of auxiliary functions that operate on arrays
 
 """
 
-cimport numpy as np
+cimport numpy as cnp
 import  numpy as np
 cimport cython
 from cython cimport floating
@@ -12,13 +12,13 @@ from libc.float cimport DBL_MAX, FLT_MAX
 
 from ._cython_blas cimport _copy, _rotg, _rot
 
-ctypedef np.float64_t DOUBLE
+ctypedef cnp.float64_t DOUBLE
 
 
-np.import_array()
+cnp.import_array()
 
 
-def min_pos(np.ndarray X):
+def min_pos(cnp.ndarray X):
     """Find the minimum value of an array over positive values
 
     Returns the maximum representable value of the input dtype if none of the
@@ -47,14 +47,14 @@ cdef floating _min_pos(floating* X, Py_ssize_t size):
 # n = rows
 #
 # TODO: put transpose as an option
-def cholesky_delete(np.ndarray[floating, ndim=2] L, int go_out):
+def cholesky_delete(cnp.ndarray[floating, ndim=2] L, int go_out):
    cdef:
       int n = L.shape[0]
       int m = L.strides[0]
       floating c, s
       floating *L1
       int i
-   
+
    if floating is float:
       m /= sizeof(float)
    else:
