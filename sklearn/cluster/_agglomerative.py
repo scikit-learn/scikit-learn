@@ -888,7 +888,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         n_clusters=2,
         *,
         affinity="deprecated",  # TODO(1.4): Remove
-        metric=None,  # TODO(1.4): Set default as "euclidean"
+        metric="euclidean",
         memory=None,
         connectivity=None,
         compute_full_tree="auto",
@@ -943,16 +943,15 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         """
         memory = check_memory(self.memory)
 
+        self._metric = self.metric
         # TODO(1.4): Remove
-        self._metric = self.metric or self.affinity
         if self.affinity != "deprecated":
             warnings.warn(
                 "Attribute `affinity` was deprecated in version 1.2 and will be removed"
                 " in 1.4. Use `metric` instead",
                 DeprecationWarning,
             )
-        elif self._metric == "deprecated":
-            self._metric = "euclidean"
+            self._metric = self.affinity
 
         if self.n_clusters is not None and self.n_clusters <= 0:
             raise ValueError(
@@ -1230,7 +1229,7 @@ class FeatureAgglomeration(
         n_clusters=2,
         *,
         affinity="deprecated",  # TODO(1.4): Remove
-        metric=None,  # TODO(1.4): Set default as "euclidean"
+        metric="euclidean",
         memory=None,
         connectivity=None,
         compute_full_tree="auto",
