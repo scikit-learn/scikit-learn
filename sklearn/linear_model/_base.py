@@ -643,7 +643,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         "normalize": [StrOptions({"deprecated"}), bool],
         "copy_X": [bool],
         "n_jobs": [None, Integral],
-        "positive": [bool]
+        "positive": [bool],
     }
 
     def __init__(
