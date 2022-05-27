@@ -1033,7 +1033,7 @@ def test_bh_match_exact():
     # ``angle = 0`` and ``perplexity > n_samples / 3``
     random_state = check_random_state(0)
     n_features = 10
-    X = random_state.randn(60, n_features).astype(np.float32)
+    X = random_state.randn(30, n_features).astype(np.float32)
     X_embeddeds = {}
     n_iter = {}
     for method in ["exact", "barnes_hut"]:
@@ -1044,7 +1044,7 @@ def test_bh_match_exact():
             init="random",
             random_state=0,
             n_iter=251,
-            perplexity=30,
+            perplexity=29.5,
             angle=0,
         )
         # Kill the early_exaggeration
