@@ -91,4 +91,6 @@ cdef inline int c_isnonfinite(fprecision v, bint_type* disallow_nan) nogil:
 
     if bint_type is bint_true_type and _isnan(v) == 1:
         return 1
-    return _isinf(v)*2
+    if _isinf(v) == 0:
+        return 0
+    return 2
