@@ -755,9 +755,16 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         If "precomputed", a distance matrix (instead of a similarity matrix)
         is needed as input for the fit method.
 
-    .. deprecated:: 1.2
-       `affinity` was deprecated in version 1.2 and will be renamed to `metric`
-        in 1.4.
+        .. deprecated:: 1.2
+        `affinity` was deprecated in version 1.2 and will be renamed to `metric`
+            in 1.4.
+
+    metric : str or callable, default='euclidean'
+        Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
+        "manhattan", "cosine", or "precomputed".
+        If linkage is "ward", only "euclidean" is accepted.
+        If "precomputed", a distance matrix (instead of a similarity matrix)
+        is needed as input for the fit method.
 
     memory : str or object with the joblib.Memory interface, default=None
         Used to cache the output of the computation of the tree.
@@ -1088,9 +1095,14 @@ class FeatureAgglomeration(
         "manhattan", "cosine", or 'precomputed'.
         If linkage is "ward", only "euclidean" is accepted.
 
-    .. deprecated:: 1.2
-       `affinity` was deprecated in version 1.2 and will be renamed to `metric`
-        in 1.4.
+        .. deprecated:: 1.2
+        `affinity` was deprecated in version 1.2 and will be renamed to `metric`
+            in 1.4.
+
+    metric : str or callable, default='euclidean'
+        Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
+        "manhattan", "cosine", or 'precomputed'.
+        If linkage is "ward", only "euclidean" is accepted.
 
     memory : str or object with the joblib.Memory interface, default=None
         Used to cache the output of the computation of the tree.
