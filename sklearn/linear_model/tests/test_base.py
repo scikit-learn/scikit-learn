@@ -61,7 +61,7 @@ def xfail_selected_intercept_seed_combos(request):
     seed = request.getfixturevalue("global_random_seed")
 
     # test is known to fail on these seeds for `fit_intercep=False`
-    allowed_failures = [(False, s) for s in (3, 15, 17, 20, 23, 25, 54, 64, 79, 91, 99)]
+    allowed_failures = ((False, s) for s in (3, 15, 17, 20, 23, 25, 54, 64, 79, 91, 99))
     if (fit_intercept, seed) in allowed_failures:
         request.node.add_marker(
             pytest.mark.xfail(reason="skipping bad combinations of tests", strict=True)
