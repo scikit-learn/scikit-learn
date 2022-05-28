@@ -1,4 +1,4 @@
-cimport numpy as np
+cimport numpy as cnp
 from libc.math cimport sqrt, exp
 
 from ..utils._typedefs cimport DTYPE_t, ITYPE_t
@@ -11,7 +11,7 @@ from ..utils._typedefs cimport DTYPE_t, ITYPE_t
 cdef inline DTYPE_t euclidean_dist(const DTYPE_t* x1, const DTYPE_t* x2,
                                    ITYPE_t size) nogil except -1:
     cdef DTYPE_t tmp, d=0
-    cdef np.intp_t j
+    cdef cnp.intp_t j
     for j in range(size):
         tmp = x1[j] - x2[j]
         d += tmp * tmp
@@ -21,7 +21,7 @@ cdef inline DTYPE_t euclidean_dist(const DTYPE_t* x1, const DTYPE_t* x2,
 cdef inline DTYPE_t euclidean_rdist(const DTYPE_t* x1, const DTYPE_t* x2,
                                     ITYPE_t size) nogil except -1:
     cdef DTYPE_t tmp, d=0
-    cdef np.intp_t j
+    cdef cnp.intp_t j
     for j in range(size):
         tmp = x1[j] - x2[j]
         d += tmp * tmp

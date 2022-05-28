@@ -112,6 +112,13 @@ Overview of clustering methods
      - Large dataset, outlier removal, data reduction, inductive
      - Euclidean distance between points
 
+   * - :ref:`Bisecting K-Means <bisect_k_means>`
+     - number of clusters
+     - Very large ``n_samples``, medium ``n_clusters``
+     - General-purpose, even cluster size, flat geometry,
+       no empty clusters, inductive, hierarchical
+     - Distances between points
+
 Non-flat geometry clustering is useful when the clusters have a specific
 shape, i.e. a non-flat manifold, and the standard euclidean distance is
 not the right metric. This case arises in the two top rows of the figure
@@ -762,6 +769,65 @@ each class.
 
  * :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering_metrics.py`
 
+Bisecting K-Means
+-----------------
+
+.. _bisect_k_means:
+
+The :class:`BisectingKMeans` is an iterative variant of :class:`KMeans`, using
+divisive hierarchical clustering. Instead of creating all centroids at once, centroids
+are picked progressively based on a previous clustering: a cluster is split into two
+new clusters repeatedly until the target number of clusters is reached.
+
+:class:`BisectingKMeans` is more efficient than :class:`KMeans` when the number the
+number of clusters is large since it only works on a subset of the data at each
+bisection while :class:`KMeans` always works on the entire dataset.
+
+Although :class:`BisectingKMeans` can't benefit from the advantages of the `"k-means++"`
+initialization by design, it will still produce comparable results than
+`KMeans(init="k-means++")` in terms of inertia at cheaper computational costs, and will
+likely produce better results than `KMeans` with a random initialization.
+
+This variant is more efficient to agglomerative clustering if the number of clusters is
+small compared to the number of data points.
+
+This variant also does not produce empty clusters.
+
+There exist two strategies for selecting the cluster to split:
+ - ``bisecting_strategy="largest_cluster"`` selects the cluster having the most points
+ - ``bisecting_strategy="biggest_inertia"`` selects the cluster with biggest inertia
+   (cluster with biggest Sum of Squared Errors within)
+
+Picking by largest amount of data points in most cases produces result as
+accurate as picking by inertia and is faster (especially for larger amount of data
+points, where calculating error may be costly).
+
+Picking by largest amount of data points will also likely produce clusters of similar
+sizes while `KMeans` is known to produce clusters of different sizes.
+
+Difference between Bisecting K-Means and regular K-Means can be seen on example
+:ref:`sphx_glr_auto_examples_cluster_plot_bisect_kmeans.py`.
+While the regular K-Means algorithm tends to create non-related clusters,
+clusters from Bisecting K-Means are well ordered and create quite a visible hierarchy.
+
+.. topic:: References:
+
+ * `"A Comparison of Document Clustering Techniques"
+   <http://www.philippe-fournier-viger.com/spmf/bisectingkmeans.pdf>`_
+   Michael Steinbach, George Karypis and Vipin Kumar,
+   Department of Computer Science and Egineering, University of Minnesota
+   (June 2000)
+ * `"Performance Analysis of K-Means and Bisecting K-Means Algorithms in Weblog Data"
+   <https://ijeter.everscience.org/Manuscripts/Volume-4/Issue-8/Vol-4-issue-8-M-23.pdf>`_
+   K.Abirami and Dr.P.Mayilvahanan,
+   International Journal of Emerging Technologies in Engineering Research (IJETER)
+   Volume 4, Issue 8, (August 2016)
+ * `"Bisecting K-means Algorithm Based on K-valued Self-determining
+   and Clustering Center Optimization"
+   <http://www.jcomputers.us/vol13/jcp1306-01.pdf>`_
+   Jian Di, Xinyue Gou
+   School of Control and Computer Engineering,North China Electric Power University,
+   Baoding, Hebei, China (August 2017)
 
 .. _dbscan:
 
