@@ -1741,8 +1741,8 @@ def normalize(X, norm="l2", *, axis=1, copy=True, return_norm=False):
         feature if axis is 0).
 
     axis : {0, 1}, default=1
-        axis used to normalize the data along. If 1, independently normalize
-        each sample, otherwise (if 0) normalize each feature.
+        Define axis used to normalize the data along. If 1, independently
+        normalize each sample, otherwise (if 0) normalize each feature.
 
     copy : bool, default=True
         Set to False to perform inplace row normalization and avoid a

@@ -360,7 +360,7 @@ def _warn_or_raise_about_fit_failures(results, error_score):
         if num_failed_fits == num_fits:
             all_fits_failed_message = (
                 f"\nAll the {num_fits} fits failed.\n"
-                "It is is very likely that your model is misconfigured.\n"
+                "It is very likely that your model is misconfigured.\n"
                 "You can try to debug the error by setting error_score='raise'.\n\n"
                 f"Below are more details about the failures:\n{fit_errors_summary}"
             )
