@@ -151,6 +151,28 @@ def test_pdist(metric_param_grid, X, Y):
         assert_allclose(D12, D_true)
 
 
+# TODO: Remove filterwarnings in 1.3 when wminkowski is removed
+@pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
+@pytest.mark.parametrize("metric_param_grid", METRICS_DEFAULT_PARAMS)
+def test_distance_metrics_dtype_consistency(metric_param_grid):
+    # DistanceMetric must return similar distances for
+    # both 64bit and 32bit data.
+    metric, param_grid = metric_param_grid
+    keys = param_grid.keys()
+    for vals in itertools.product(*param_grid.values()):
+        kwargs = dict(zip(keys, vals))
+        dm64 = DistanceMetric.get_metric(metric, **kwargs)
+        dm32 = DistanceMetric32.get_metric(metric, **kwargs)
+
+        D64 = dm64.pairwise(X64)
+        D32 = dm32.pairwise(X32)
+        assert_allclose(D64, D32)
+
+        D64 = dm64.pairwise(X64, Y64)
+        D32 = dm32.pairwise(X32, Y32)
+        assert_allclose(D64, D32)
+
+
 @pytest.mark.parametrize("metric", BOOL_METRICS)
 @pytest.mark.parametrize("X_bool", [X_bool, X_bool_mmap])
 def test_pdist_bool_metrics(metric, X_bool):
