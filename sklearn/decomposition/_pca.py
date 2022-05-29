@@ -12,6 +12,7 @@
 
 from math import log, sqrt
 import numbers
+from numbers import Integral, Real
 
 import numpy as np
 from scipy import linalg
@@ -25,6 +26,10 @@ from ..utils._arpack import _init_arpack_v0
 from ..utils.extmath import fast_logdet, randomized_svd, svd_flip
 from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
+from ..utils._param_validation import Interval
+from ..utils._param_validation import StrOptions
+from ..utils._param_validation import validate_params
+
 
 
 def _assess_dimension(spectrum, rank, n_samples):
@@ -358,6 +363,19 @@ class PCA(_BasePCA):
     [6.30061...]
     """
 
+    _parameter_constraints = {
+        "n_components": [Interval(Integral, 1, None, closed="left"),  Interval(Real, 1, None, closed="left"),
+                         StrOptions({"mle"}), None],
+        "copy": [bool],
+        "whiten": [bool],
+        "svd_solver": [StrOptions({'auto', 'full', 'arpack', 'randomized'})],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "iterated_power": [StrOptions({"auto"}), Interval(Integral, 0, None, closed="left")],
+        "n_oversamples": [Interval(Integral, 0, None, closed="left")],
+        "power_iteration_normalizer": [StrOptions({'auto', 'QR', 'LU', 'none'},)],
+        "random_state": [Interval(Integral, 0, None, closed="left"), "random_state", None],
+    }
+
     def __init__(
         self,
         n_components=None,
@@ -398,6 +416,8 @@ class PCA(_BasePCA):
         self : object
             Returns the instance itself.
         """
+        self._validate_params()
+        
         check_scalar(
             self.n_oversamples,
             "n_oversamples",
