@@ -100,10 +100,14 @@ def assert_argkmin_results_quasi_equality(
     for i in range(n - 1):
         # We test the equality of pair of adjacent indices and distances
         # of the references against the results.
-        rd_current, rd_next = ref_dist[i], ref_dist[i + 1]
-        d_current, d_next = dist[i], dist[i + 1]
-        ri_current, ri_next = ref_indices[i], ref_indices[i + 1]
-        i_current, i_next = indices[i], indices[i + 1]
+        rd_prev, rd_current, rd_next = ref_dist[i - 1], ref_dist[i], ref_dist[i + 1]
+        d_prev, d_current, d_next = dist[i - 1], dist[i], dist[i + 1]
+        ri_prev, ri_current, ri_next = (
+            ref_indices[i - 1],
+            ref_indices[i],
+            ref_indices[i + 1],
+        )
+        i_prev, i_current, i_next = indices[i - 1], indices[i], indices[i + 1]
 
         assert np.isclose(
             d_current, rd_current, rtol=rtol
@@ -121,10 +125,10 @@ def assert_argkmin_results_quasi_equality(
             )
             assert skip_permutation_check or valid_permutation, (
                 "Query vectors have different neighbors' indices \n"
-                f"(i_current, i_next) = {i_current, i_next} \n"
-                f"(ri_current, ri_next) = {ri_current, ri_next} \n"
-                f"(d_current, d_next) = {d_current, d_next} \n"
-                f"(rd_current, rd_next) = {rd_current, rd_next} \n"
+                f"(i_prev, i_current, i_next) = {i_prev, i_current, i_next} \n"
+                f"(ri_prev, ri_current, ri_next) = {ri_prev, ri_current, ri_next} \n"
+                f"(d_prev, d_current, d_next) = {d_prev, d_current, d_next} \n"
+                f"(rd_prev, rd_current, rd_next) = {rd_prev, rd_current, rd_next} \n"
             )
             # If there's a permutation at this iteration, we need to
             # skip the following permutation check.
@@ -565,7 +569,7 @@ def test_pairwise_distances_argkmin(
     else:
         dist_matrix = cdist(X, Y, metric=metric, **metric_kwargs)
     # Taking argkmin (indices of the k smallest values)
-    argkmin_indices_ref = np.argsort(dist_matrix, axis=1)[:, :k]
+    argkmin_indices_ref = np.argsort(dist_matrix, kind="mergesort", axis=1)[:, :k]
     # Getting the associated distances
     argkmin_distances_ref = np.zeros(argkmin_indices_ref.shape, dtype=np.float64)
     for row_idx in range(argkmin_indices_ref.shape[0]):
@@ -655,7 +659,7 @@ def test_pairwise_distances_radius_neighbors(
         sort_results=True,
     )
 
-    ASSERT_RESULT[PairwiseDistancesRadiusNeighborhood](
+    ASSERT_RESULT[(PairwiseDistancesRadiusNeighborhood, dtype)](
         neigh_distances, neigh_distances_ref, neigh_indices, neigh_indices_ref
     )
 
