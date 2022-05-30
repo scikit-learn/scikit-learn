@@ -81,17 +81,15 @@ def tokenize(doc):
 list(tokenize("This is a simple example, isn't it?"))
 
 # %%
-# We define an additional function that transforms a document into a frequency
-# dictionary to be used by the vectorizers.
+# We define an additional function that counts the (frequency of) occurrence of
+# each token in a given document. It returns a frequency dictionary to be used
+# by the vectorizers.
 
 from collections import defaultdict
 
 
 def token_freqs(doc):
-    """Extract a dict mapping tokens from doc to their frequencies.
-
-    Count the number of occurrences of all tokens of each document.
-    """
+    """Extract a dict mapping tokens from doc to their occurrences."""
 
     freq = defaultdict(int)
     for tok in tokenize(doc):
@@ -102,7 +100,8 @@ def token_freqs(doc):
 token_freqs("That is one example, but this is another one")
 
 # %%
-# Observe in particular that the repeated token `"is"` is counted twice for instance.
+# Observe in particular that the repeated token `"is"` is counted twice for
+# instance.
 #
 # Breaking a text document into word tokens, potentially losing the order
 # information between the words in a sentence is often called a `Bag of Words
