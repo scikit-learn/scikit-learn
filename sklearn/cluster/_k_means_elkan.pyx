@@ -6,11 +6,8 @@
 # fused types and when the array may be read-only (for instance when it's
 # provided by the user). This is fixed in cython > 0.3.
 
-import numpy as np
-cimport numpy as np
 IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
     cimport openmp
-cimport cython
 from cython cimport floating
 from cython.parallel import prange, parallel
 from libc.math cimport sqrt
@@ -25,9 +22,6 @@ from ._k_means_common cimport _euclidean_dense_dense
 from ._k_means_common cimport _euclidean_sparse_dense
 from ._k_means_common cimport _average_centers
 from ._k_means_common cimport _center_shift
-
-
-np.import_array()
 
 
 def init_bounds_dense(
