@@ -264,24 +264,22 @@ class SimpleImputer(_BaseImputer):
                 )
             )
 
-        if in_fit:
-            if self.strategy in ("most_frequent", "constant"):
-                # If input is a list of strings, dtype = object.
-                # Otherwise ValueError is raised in SimpleImputer
-                # with strategy='most_frequent' or 'constant'
-                # because the list is converted to Unicode numpy array
-                if isinstance(X, list) and any(
-                    isinstance(elem, str) for row in X for elem in row
-                ):
-                    dtype = object
-                else:
-                    dtype = None
+        if self.strategy in ("most_frequent", "constant"):
+            # If input is a list of strings, dtype = object.
+            # Otherwise ValueError is raised in SimpleImputer
+            # with strategy='most_frequent' or 'constant'
+            # because the list is converted to Unicode numpy array
+            if isinstance(X, list) and any(
+                isinstance(elem, str) for row in X for elem in row
+            ):
+                dtype = object
             else:
-                dtype = FLOAT_DTYPES
-
-            self._fit_dtype = dtype
+                dtype = None
         else:
-            # Use the dtype seen in `fit` for non-`fit` validation
+            dtype = FLOAT_DTYPES
+
+        if not in_fit and self._fit_dtype.kind == "O":
+            # Use object dtype if fitted on object dtypes
             dtype = self._fit_dtype
 
         if _is_pandas_na(self.missing_values) or is_scalar_nan(self.missing_values):
@@ -308,6 +306,10 @@ class SimpleImputer(_BaseImputer):
                 raise new_ve from None
             else:
                 raise ve
+
+        if in_fit:
+            # Use the dtype seen in `fit` for non-`fit` conversion
+            self._fit_dtype = X.dtype
 
         _check_inputs_dtype(X, self.missing_values)
         if X.dtype.kind not in ("i", "u", "f", "O"):
