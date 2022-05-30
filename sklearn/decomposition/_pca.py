@@ -364,16 +364,17 @@ class PCA(_BasePCA):
     """
 
     _parameter_constraints = {
-        "n_components": [Interval(Integral, 1, None, closed="left"),  Interval(Real, 1, None, closed="left"),
+        "n_components": [Interval(Integral, 1, None, closed="left"),
+                         Interval(Real, 0, 1, closed="neither"),
                          StrOptions({"mle"}), None],
         "copy": [bool],
         "whiten": [bool],
         "svd_solver": [StrOptions({'auto', 'full', 'arpack', 'randomized'})],
         "tol": [Interval(Real, 0, None, closed="left")],
         "iterated_power": [StrOptions({"auto"}), Interval(Integral, 0, None, closed="left")],
-        "n_oversamples": [Interval(Integral, 0, None, closed="left")],
+        "n_oversamples": [Interval(Integral, 1, None, closed="left")],
         "power_iteration_normalizer": [StrOptions({'auto', 'QR', 'LU', 'none'},)],
-        "random_state": [Interval(Integral, 0, None, closed="left"), "random_state", None],
+        "random_state": ["random_state"]
     }
 
     def __init__(
@@ -416,14 +417,6 @@ class PCA(_BasePCA):
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
-        
-        check_scalar(
-            self.n_oversamples,
-            "n_oversamples",
-            min_val=1,
-            target_type=numbers.Integral,
-        )
 
         self._fit(X)
         return self
@@ -465,6 +458,8 @@ class PCA(_BasePCA):
     def _fit(self, X):
         """Dispatch to the right submethod depending on the chosen solver."""
 
+        self._validate_params()
+
         # Raise an error for sparse input.
         # This is more informative than the generic one raised by check_array.
         if issparse(X):
@@ -503,32 +498,17 @@ class PCA(_BasePCA):
             return self._fit_full(X, n_components)
         elif self._fit_svd_solver in ["arpack", "randomized"]:
             return self._fit_truncated(X, n_components, self._fit_svd_solver)
-        else:
-            raise ValueError(
-                "Unrecognized svd_solver='{0}'".format(self._fit_svd_solver)
-            )
 
     def _fit_full(self, X, n_components):
         """Fit the model by computing full SVD on X."""
+        self._validate_params()
+
         n_samples, n_features = X.shape
 
         if n_components == "mle":
             if n_samples < n_features:
                 raise ValueError(
                     "n_components='mle' is only supported if n_samples >= n_features"
-                )
-        elif not 0 <= n_components <= min(n_samples, n_features):
-            raise ValueError(
-                "n_components=%r must be between 0 and "
-                "min(n_samples, n_features)=%r with "
-                "svd_solver='full'" % (n_components, min(n_samples, n_features))
-            )
-        elif n_components >= 1:
-            if not isinstance(n_components, numbers.Integral):
-                raise ValueError(
-                    "n_components=%r must be of type int "
-                    "when greater than or equal to 1, "
-                    "was of type=%r" % (n_components, type(n_components))
                 )
 
         # Center data
@@ -578,6 +558,9 @@ class PCA(_BasePCA):
         """Fit the model by computing truncated SVD (by ARPACK or randomized)
         on X.
         """
+
+        self._validate_params()
+
         n_samples, n_features = X.shape
 
         if isinstance(n_components, str):
