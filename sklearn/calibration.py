@@ -290,6 +290,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         for sample_aligned_params in fit_params.values():
             check_consistent_length(y, sample_aligned_params)
 
+        # TODO(1.4): Remove when base_estimator is removed
         if self.base_estimator != "deprecated":
             if self.estimator is not None:
                 raise ValueError(
