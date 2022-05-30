@@ -3,6 +3,7 @@ import re
 import numpy as np
 import scipy.sparse
 import pytest
+import warnings
 
 from sklearn.datasets import load_digits, load_iris
 
@@ -12,7 +13,6 @@ from sklearn.model_selection import cross_val_score
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import ignore_warnings
 
 from sklearn.naive_bayes import GaussianNB, BernoulliNB
 from sklearn.naive_bayes import MultinomialNB, ComplementNB
@@ -289,8 +289,6 @@ def test_NB_partial_fit_no_first_classes(NaiveBayes):
         clf.partial_fit(X2, y2, classes=np.arange(42))
 
 
-# TODO: Remove in version 1.1
-@ignore_warnings(category=FutureWarning)
 def test_discretenb_predict_proba():
     # Test discrete NB classes' probability scores
 
@@ -516,18 +514,20 @@ def test_mnb_prior_unobserved_targets():
 
     clf = MultinomialNB()
 
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
+
         clf.partial_fit(X, y, classes=[0, 1, 2])
-    assert not [w.message for w in record]
 
     assert clf.predict([[0, 1]]) == 0
     assert clf.predict([[1, 0]]) == 1
     assert clf.predict([[1, 1]]) == 0
 
     # add a training example with previously unobserved class
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
+
         clf.partial_fit([[1, 1]], [2])
-    assert not [w.message for w in record]
 
     assert clf.predict([[0, 1]]) == 0
     assert clf.predict([[1, 0]]) == 1

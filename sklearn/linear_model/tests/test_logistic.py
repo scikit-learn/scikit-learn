@@ -1,7 +1,6 @@
 import itertools
 import os
 import re
-import warnings
 import numpy as np
 from numpy.testing import assert_allclose, assert_almost_equal
 from numpy.testing import assert_array_almost_equal, assert_array_equal
@@ -133,15 +132,6 @@ def test_logistic_cv_mock_scorer():
 
     assert custom_score == mock_scorer.scores[0]
     assert mock_scorer.calls == 1
-
-
-def test_logistic_cv_score_does_not_warn_by_default():
-    lr = LogisticRegressionCV(cv=2)
-    lr.fit(X, Y1)
-
-    with pytest.warns(None) as record:
-        lr.score(X, lr.predict(X))
-    assert not [w.message for w in record]
 
 
 @skip_if_no_parallel
@@ -442,12 +432,9 @@ def test_logistic_regression_path_convergence_fail():
     # advice (scaling the data) and to the logistic regression specific
     # documentation that includes hints on the solver configuration.
     with pytest.warns(ConvergenceWarning) as record:
-        with warnings.catch_warnings():
-            # scipy 1.3.0 uses tostring which is deprecated in numpy
-            warnings.filterwarnings("ignore", "tostring", DeprecationWarning)
-            _logistic_regression_path(
-                X, y, Cs=Cs, tol=0.0, max_iter=1, random_state=0, verbose=0
-            )
+        _logistic_regression_path(
+            X, y, Cs=Cs, tol=0.0, max_iter=1, random_state=0, verbose=0
+        )
 
     assert len(record) == 1
     warn_msg = record[0].message.args[0]
@@ -1322,7 +1309,7 @@ def test_saga_vs_liblinear():
     )
     X_sparse = sparse.csr_matrix(X_sparse)
 
-    for (X, y) in ((X_bin, y_bin), (X_sparse, y_sparse)):
+    for X, y in ((X_bin, y_bin), (X_sparse, y_sparse)):
         for penalty in ["l1", "l2"]:
             n_samples = X.shape[0]
             # alpha=1e-3 is time consuming
@@ -1788,7 +1775,7 @@ def test_elastic_net_versus_sgd(C, l1_ratio):
         max_iter=2000,
         l1_ratio=l1_ratio,
         alpha=1.0 / C / n_samples,
-        loss="log",
+        loss="log_loss",
     )
     log = LogisticRegression(
         penalty="elasticnet",
@@ -2019,18 +2006,17 @@ def test_multinomial_identifiability_on_iris(fit_intercept):
     satisfies the symmetric constraint:
     sum(coef_k, k=1..c) = 0
 
-    Further details can be found in the appendix of [2].
+    Further details can be found in [2].
 
     Reference
     ---------
-    .. [1] Zhu, Ji and Trevor J. Hastie. "Classification of gene microarrays by
+    .. [1] :doi:`Zhu, Ji and Trevor J. Hastie. "Classification of gene microarrays by
            penalized logistic regression". Biostatistics 5 3 (2004): 427-43.
-           https://doi.org/10.1093/biostatistics%2Fkxg046
+           <10.1093/biostatistics/kxg046>`
 
-    .. [2] :arxiv:`Powers, Scott, Trevor J. Hastie and Robert Tibshirani. (2017)
-           "Nuclear penalized multinomial regression with an application to
-           predicting at bat outcomes in baseball."
-           Statistical modelling, 18, 5-6, pp. 388-410. <1706.10272>.`
+    .. [2] :arxiv:`Noah Simon and Jerome Friedman and Trevor Hastie. (2013)
+           "A Blockwise Descent Algorithm for Group-penalized Multiresponse and
+           Multinomial Regression". <1311.6529>`
     """
     # Test logistic regression with the iris dataset
     n_samples, n_features = iris.data.shape

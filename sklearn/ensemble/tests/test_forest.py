@@ -35,7 +35,6 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import _convert_container
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import skip_if_no_parallel
-from sklearn.utils.fixes import parse_version
 
 from sklearn.exceptions import NotFittedError
 
@@ -158,7 +157,7 @@ def check_iris_criterion(name, criterion):
 
 
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS)
-@pytest.mark.parametrize("criterion", ("gini", "entropy"))
+@pytest.mark.parametrize("criterion", ("gini", "log_loss"))
 def test_iris(name, criterion):
     check_iris_criterion(name, criterion)
 
@@ -348,7 +347,7 @@ def check_importances(name, criterion, dtype, tolerance):
 @pytest.mark.parametrize(
     "name, criterion",
     itertools.chain(
-        product(FOREST_CLASSIFIERS, ["gini", "entropy"]),
+        product(FOREST_CLASSIFIERS, ["gini", "log_loss"]),
         product(FOREST_REGRESSORS, ["squared_error", "friedman_mse", "absolute_error"]),
     ),
 )
@@ -452,7 +451,7 @@ def test_importances_asymptotic():
 
     # Estimate importances with totally randomized trees
     clf = ExtraTreesClassifier(
-        n_estimators=500, max_features=1, criterion="entropy", random_state=0
+        n_estimators=500, max_features=1, criterion="log_loss", random_state=0
     ).fit(X, y)
 
     importances = (
@@ -852,7 +851,7 @@ def test_random_trees_dense_type():
     X, y = datasets.make_circles(factor=0.5)
     X_transformed = hasher.fit_transform(X)
 
-    # Assert that type is ndarray, not scipy.sparse.csr.csr_matrix
+    # Assert that type is ndarray, not scipy.sparse.csr_matrix
     assert type(X_transformed) == np.ndarray
 
 
@@ -1577,10 +1576,6 @@ class MyBackend(DEFAULT_JOBLIB_BACKEND):  # type: ignore
 joblib.register_parallel_backend("testing", MyBackend)
 
 
-@pytest.mark.skipif(
-    parse_version(joblib.__version__) < parse_version("0.12"),
-    reason="tests not yet supported in joblib <0.12",
-)
 @skip_if_no_parallel
 def test_backend_respected():
     clf = RandomForestClassifier(n_estimators=10, n_jobs=2)
@@ -1812,23 +1807,23 @@ def test_max_features_deprecation(Estimator):
         est.fit(X, y)
 
 
-# TODO: Remove in v1.2
 @pytest.mark.parametrize(
-    "old_criterion, new_criterion",
+    "old_criterion, new_criterion, Estimator",
     [
-        ("mse", "squared_error"),
-        ("mae", "absolute_error"),
+        # TODO(1.2): Remove "mse" and "mae"
+        ("mse", "squared_error", RandomForestRegressor),
+        ("mae", "absolute_error", RandomForestRegressor),
     ],
 )
-def test_criterion_deprecated(old_criterion, new_criterion):
-    est1 = RandomForestRegressor(criterion=old_criterion, random_state=0)
+def test_criterion_deprecated(old_criterion, new_criterion, Estimator):
+    est1 = Estimator(criterion=old_criterion, random_state=0)
 
     with pytest.warns(
         FutureWarning, match=f"Criterion '{old_criterion}' was deprecated"
     ):
         est1.fit(X, y)
 
-    est2 = RandomForestRegressor(criterion=new_criterion, random_state=0)
+    est2 = Estimator(criterion=new_criterion, random_state=0)
     est2.fit(X, y)
     assert_allclose(est1.predict(X), est2.predict(X))
 
@@ -1847,3 +1842,29 @@ def test_mse_criterion_object_segfault_smoke_test(Forest):
     est = FOREST_REGRESSORS[Forest](n_estimators=2, n_jobs=2, criterion=mse_criterion)
 
     est.fit(X_reg, y)
+
+
+def test_random_trees_embedding_feature_names_out():
+    """Check feature names out for Random Trees Embedding."""
+    random_state = np.random.RandomState(0)
+    X = np.abs(random_state.randn(100, 4))
+    hasher = RandomTreesEmbedding(
+        n_estimators=2, max_depth=2, sparse_output=False, random_state=0
+    ).fit(X)
+    names = hasher.get_feature_names_out()
+    expected_names = [
+        f"randomtreesembedding_{tree}_{leaf}"
+        # Note: nodes with indices 0, 1 and 4 are internal split nodes and
+        # therefore do not appear in the expected output feature names.
+        for tree, leaf in [
+            (0, 2),
+            (0, 3),
+            (0, 5),
+            (0, 6),
+            (1, 2),
+            (1, 3),
+            (1, 5),
+            (1, 6),
+        ]
+    ]
+    assert_array_equal(expected_names, names)

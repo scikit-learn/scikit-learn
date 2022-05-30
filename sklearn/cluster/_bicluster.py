@@ -297,9 +297,9 @@ class SpectralCoclustering(BaseSpectral):
 
     References
     ----------
-    * Dhillon, Inderjit S, 2001. `Co-clustering documents and words using
-      bipartite spectral graph partitioning
-      <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.140.3011>`__.
+    * :doi:`Dhillon, Inderjit S, 2001. Co-clustering documents and words using
+      bipartite spectral graph partitioning.
+      <10.1145/502512.502550>`
 
     Examples
     --------
@@ -465,9 +465,9 @@ class SpectralBiclustering(BaseSpectral):
     References
     ----------
 
-    * Kluger, Yuval, et. al., 2003. `Spectral biclustering of microarray
-      data: coclustering genes and conditions
-      <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.135.1608>`__.
+    * :doi:`Kluger, Yuval, et. al., 2003. Spectral biclustering of microarray
+      data: coclustering genes and conditions.
+      <10.1101/gr.648603>`
 
     Examples
     --------

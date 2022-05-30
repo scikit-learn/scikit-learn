@@ -529,7 +529,7 @@ dictionary fixed, and then updating the dictionary to best fit the sparse code.
    :target: ../auto_examples/decomposition/plot_faces_decomposition.html
    :scale: 60%
 
-.. |dict_img2| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_006.png
+.. |dict_img2| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_007.png
    :target: ../auto_examples/decomposition/plot_faces_decomposition.html
    :scale: 60%
 
@@ -548,19 +548,19 @@ different positivity constraints applied. Red indicates negative values, blue
 indicates positive values, and white represents zeros.
 
 
-.. |dict_img_pos1| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_011.png
+.. |dict_img_pos1| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_010.png
     :target: ../auto_examples/decomposition/plot_image_denoising.html
     :scale: 60%
 
-.. |dict_img_pos2| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_012.png
+.. |dict_img_pos2| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_011.png
     :target: ../auto_examples/decomposition/plot_image_denoising.html
     :scale: 60%
 
-.. |dict_img_pos3| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_013.png
+.. |dict_img_pos3| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_012.png
     :target: ../auto_examples/decomposition/plot_image_denoising.html
     :scale: 60%
 
-.. |dict_img_pos4| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_014.png
+.. |dict_img_pos4| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_013.png
     :target: ../auto_examples/decomposition/plot_image_denoising.html
     :scale: 60%
 
@@ -689,7 +689,7 @@ about these components (e.g. whether they are orthogonal):
     :target: ../auto_examples/decomposition/plot_faces_decomposition.html
     :scale: 60%
 
-.. |fa_img3| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_009.png
+.. |fa_img3| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_008.png
     :target: ../auto_examples/decomposition/plot_faces_decomposition.html
     :scale: 60%
 
@@ -699,7 +699,7 @@ The main advantage for Factor Analysis over :class:`PCA` is that
 it can model the variance in every direction of the input space independently
 (heteroscedastic noise):
 
-.. figure:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_008.png
+.. figure:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_009.png
     :target: ../auto_examples/decomposition/plot_faces_decomposition.html
     :align: center
     :scale: 75%
@@ -921,6 +921,29 @@ stored components::
     * :ref:`sphx_glr_auto_examples_applications_plot_topics_extraction_with_nmf_lda.py`
     * :ref:`sphx_glr_auto_examples_decomposition_plot_beta_divergence.py`
 
+.. _MiniBatchNMF:
+
+Mini-batch Non Negative Matrix Factorization
+--------------------------------------------
+
+:class:`MiniBatchNMF` [7]_ implements a faster, but less accurate version of the
+non negative matrix factorization (i.e. :class:`~sklearn.decomposition.NMF`),
+better suited for large datasets.
+
+By default, :class:`MiniBatchNMF` divides the data into mini-batches and
+optimizes the NMF model in an online manner by cycling over the mini-batches
+for the specified number of iterations. The ``batch_size`` parameter controls
+the size of the batches.
+
+In order to speed up the mini-batch algorithm it is also possible to scale
+past batches, giving them less importance than newer batches. This is done
+introducing a so-called forgetting factor controlled by the ``forget_factor``
+parameter.
+
+The estimator also implements ``partial_fit``, which updates ``H`` by iterating
+only once over a mini-batch. This can be used for online learning when the data
+is not readily available from the start, or when the data does not fit into memory.
+
 .. topic:: References:
 
     .. [1] `"Learning the parts of objects by non-negative matrix factorization"
@@ -945,6 +968,9 @@ stored components::
            the beta-divergence" <1010.1763>`
            C. Fevotte, J. Idier, 2011
 
+    .. [7] :arxiv:`"Online algorithms for nonnegative matrix factorization with the
+       Itakura-Saito divergence" <1106.4198>`
+       A. Lefevre, F. Bach, C. Fevotte, 2011
 
 .. _LatentDirichletAllocation:
 

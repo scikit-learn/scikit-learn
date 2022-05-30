@@ -7,7 +7,7 @@ Related Projects
 Projects implementing the scikit-learn estimator API are encouraged to use
 the `scikit-learn-contrib template <https://github.com/scikit-learn-contrib/project-template>`_
 which facilitates best practices for testing and documenting estimators.
-The `scikit-learn-contrib GitHub organisation <https://github.com/scikit-learn-contrib/scikit-learn-contrib>`_
+The `scikit-learn-contrib GitHub organization <https://github.com/scikit-learn-contrib/scikit-learn-contrib>`_
 also accepts high-quality contributions of repositories conforming to this
 template.
 
@@ -45,10 +45,10 @@ enhance the functionality of scikit-learn's estimators.
   operators to design a machine learning pipeline, including data and feature
   preprocessors as well as the estimators. Works as a drop-in replacement for a
   scikit-learn estimator.
-  
+
 - `Featuretools <https://github.com/alteryx/featuretools>`_
-  A framework to perform automated feature engineering. It can be used for 
-  transforming temporal and relational datasets into feature matrices for 
+  A framework to perform automated feature engineering. It can be used for
+  transforming temporal and relational datasets into feature matrices for
   machine learning.
 
 - `Neuraxle <https://github.com/Neuraxio/Neuraxle>`_
@@ -66,9 +66,9 @@ enhance the functionality of scikit-learn's estimators.
 
 **Experimentation frameworks**
 
-- `Neptune <https://neptune.ai/>`_ Metadata store for MLOps, 
-  built for teams that run a lot of experiments.‌ It gives you a single 
-  place to log, store, display, organize, compare, and query all your 
+- `Neptune <https://neptune.ai/>`_ Metadata store for MLOps,
+  built for teams that run a lot of experiments.‌ It gives you a single
+  place to log, store, display, organize, compare, and query all your
   model building metadata.
 
 - `Sacred <https://github.com/IDSIA/Sacred>`_ Tool to help you configure,
@@ -82,7 +82,7 @@ enhance the functionality of scikit-learn's estimators.
   wrapper around scikit-learn that makes it easy to run machine learning
   experiments with multiple learners and large feature sets.
 
-**Model inspection and visualisation**
+**Model inspection and visualization**
 
 - `dtreeviz <https://github.com/parrt/dtreeviz/>`_ A python library for
   decision tree visualization and model interpretation.
@@ -143,7 +143,7 @@ and tasks.
 
 **Structured learning**
 
-- `tslearn <https://github.com/tslearn-team/tslearn>`_ A machine learning library for time series 
+- `tslearn <https://github.com/tslearn-team/tslearn>`_ A machine learning library for time series
   that offers tools for pre-processing and feature extraction as well as dedicated models for clustering, classification and regression.
 
 - `sktime <https://github.com/alan-turing-institute/sktime>`_ A scikit-learn compatible toolbox for machine learning with time series including time series classification/regression and (supervised/panel) forecasting.
@@ -182,7 +182,7 @@ and tasks.
 
 **Federated Learning**
 
-- `Flower <https://flower.dev/>`_ A friendly federated learning framework with a 
+- `Flower <https://flower.dev/>`_ A friendly federated learning framework with a
   unified approach that can federate any workload, any ML framework, and any programming language.
 
 **Broad scope**
@@ -190,7 +190,7 @@ and tasks.
 - `mlxtend <https://github.com/rasbt/mlxtend>`_ Includes a number of additional
   estimators as well as model visualization utilities.
 
-- `scikit-lego <https://github.com/koaning/scikit-lego>`_ A number of scikit-learn compatible 
+- `scikit-lego <https://github.com/koaning/scikit-lego>`_ A number of scikit-learn compatible
   custom transformers, models and metrics, focusing on solving practical industry tasks.
 
 **Other regression and classification**
@@ -354,7 +354,7 @@ and promote community efforts.
   (`source <https://github.com/mehrdad-dev/scikit-learn>`__)
 - `Spanish translation <https://qu4nt.github.io/sklearn-doc-es/>`_
   (`source <https://github.com/qu4nt/sklearn-doc-es>`__)
-  
+
 
 .. rubric:: Footnotes
 

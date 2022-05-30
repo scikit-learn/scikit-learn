@@ -1,4 +1,5 @@
 import pytest
+import warnings
 
 import numpy as np
 from scipy import sparse
@@ -979,9 +980,9 @@ def test_iterative_imputer_catch_warning():
         X[sample_idx, feat] = np.nan
 
     imputer = IterativeImputer(n_nearest_features=5, sample_posterior=True)
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
         X_fill = imputer.fit_transform(X, y)
-    assert not [w.message for w in record]
     assert not np.any(np.isnan(X_fill))
 
 
@@ -1541,7 +1542,7 @@ def test_most_frequent(expected, array, dtype, extra_value, n_repeat):
 
 
 def test_simple_impute_pd_na():
-    pd = pytest.importorskip("pandas", minversion="1.0")
+    pd = pytest.importorskip("pandas")
 
     # Impute pandas array of string types.
     df = pd.DataFrame({"feature": pd.Series(["abc", None, "de"], dtype="string")})

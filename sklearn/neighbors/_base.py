@@ -24,6 +24,7 @@ from ..metrics import pairwise_distances_chunked
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..metrics._pairwise_distances_reduction import (
     PairwiseDistancesArgKmin,
+    PairwiseDistancesRadiusNeighborhood,
 )
 from ..utils import (
     check_array,
@@ -42,29 +43,30 @@ VALID_METRICS = dict(
     kd_tree=KDTree.valid_metrics,
     # The following list comes from the
     # sklearn.metrics.pairwise doc string
-    brute=(
-        list(PAIRWISE_DISTANCE_FUNCTIONS.keys())
-        + [
-            "braycurtis",
-            "canberra",
-            "chebyshev",
-            "correlation",
-            "cosine",
-            "dice",
-            "hamming",
-            "jaccard",
-            "kulsinski",
-            "mahalanobis",
-            "matching",
-            "minkowski",
-            "rogerstanimoto",
-            "russellrao",
-            "seuclidean",
-            "sokalmichener",
-            "sokalsneath",
-            "sqeuclidean",
-            "yule",
-        ]
+    brute=sorted(
+        set(PAIRWISE_DISTANCE_FUNCTIONS).union(
+            [
+                "braycurtis",
+                "canberra",
+                "chebyshev",
+                "correlation",
+                "cosine",
+                "dice",
+                "hamming",
+                "jaccard",
+                "kulsinski",
+                "mahalanobis",
+                "matching",
+                "minkowski",
+                "rogerstanimoto",
+                "russellrao",
+                "seuclidean",
+                "sokalmichener",
+                "sokalsneath",
+                "sqeuclidean",
+                "yule",
+            ]
+        )
     ),
 )
 
@@ -199,31 +201,85 @@ def _check_precomputed(X):
     copied = graph.format != "csr"
     graph = check_array(graph, accept_sparse="csr")
     check_non_negative(graph, whom="precomputed distance matrix.")
+    graph = sort_graph_by_row_values(graph, copy=not copied, warn_when_not_sorted=True)
 
-    if not _is_sorted_by_data(graph):
+    return graph
+
+
+def sort_graph_by_row_values(graph, copy=False, warn_when_not_sorted=True):
+    """Sort a sparse graph such that each row is stored with increasing values.
+
+    .. versionadded:: 1.2
+
+    Parameters
+    ----------
+    graph : sparse matrix of shape (n_samples, n_samples)
+        Distance matrix to other samples, where only non-zero elements are
+        considered neighbors. Matrix is converted to CSR format if not already.
+
+    copy : bool, default=False
+        If True, the graph is copied before sorting. If False, the sorting is
+        performed inplace. If the graph is not of CSR format, `copy` must be
+        True to allow the conversion to CSR format, otherwise an error is
+        raised.
+
+    warn_when_not_sorted : bool, default=True
+        If True, a :class:`~sklearn.exceptions.EfficiencyWarning` is raised
+        when the input graph is not sorted by row values.
+
+    Returns
+    -------
+    graph : sparse matrix of shape (n_samples, n_samples)
+        Distance matrix to other samples, where only non-zero elements are
+        considered neighbors. Matrix is in CSR format.
+    """
+    if not issparse(graph):
+        raise TypeError(f"Input graph must be a sparse matrix, got {graph!r} instead.")
+
+    if graph.format == "csr" and _is_sorted_by_data(graph):
+        return graph
+
+    if warn_when_not_sorted:
         warnings.warn(
-            "Precomputed sparse input was not sorted by data.", EfficiencyWarning
+            "Precomputed sparse input was not sorted by row values. Use the function"
+            " sklearn.neighbors.sort_graph_by_row_values to sort the input by row"
+            " values, with warn_when_not_sorted=False to remove this warning.",
+            EfficiencyWarning,
         )
-        if not copied:
-            graph = graph.copy()
 
+    if graph.format not in ("csr", "csc", "coo", "lil"):
+        raise TypeError(
+            f"Sparse matrix in {graph.format!r} format is not supported due to "
+            "its handling of explicit zeros"
+        )
+    elif graph.format != "csr":
+        if not copy:
+            raise ValueError(
+                "The input graph is not in CSR format. Use copy=True to allow "
+                "the conversion to CSR format."
+            )
+        graph = graph.asformat("csr")
+    elif copy:  # csr format with copy=True
+        graph = graph.copy()
+
+    row_nnz = np.diff(graph.indptr)
+    if row_nnz.max() == row_nnz.min():
         # if each sample has the same number of provided neighbors
-        row_nnz = np.diff(graph.indptr)
-        if row_nnz.max() == row_nnz.min():
-            n_samples = graph.shape[0]
-            distances = graph.data.reshape(n_samples, -1)
+        n_samples = graph.shape[0]
+        distances = graph.data.reshape(n_samples, -1)
 
-            order = np.argsort(distances, kind="mergesort")
-            order += np.arange(n_samples)[:, None] * row_nnz[0]
-            order = order.ravel()
-            graph.data = graph.data[order]
-            graph.indices = graph.indices[order]
+        order = np.argsort(distances, kind="mergesort")
+        order += np.arange(n_samples)[:, None] * row_nnz[0]
+        order = order.ravel()
+        graph.data = graph.data[order]
+        graph.indices = graph.indices[order]
 
-        else:
-            for start, stop in zip(graph.indptr, graph.indptr[1:]):
-                order = np.argsort(graph.data[start:stop], kind="mergesort")
-                graph.data[start:stop] = graph.data[start:stop][order]
-                graph.indices[start:stop] = graph.indices[start:stop][order]
+    else:
+        for start, stop in zip(graph.indptr, graph.indptr[1:]):
+            order = np.argsort(graph.data[start:stop], kind="mergesort")
+            graph.data[start:stop] = graph.data[start:stop][order]
+            graph.indices[start:stop] = graph.indices[start:stop][order]
+
     return graph
 
 
@@ -764,7 +820,6 @@ class KNeighborsMixin:
                 k=n_neighbors,
                 metric=self.effective_metric_,
                 metric_kwargs=self.effective_metric_params_,
-                n_threads=self.n_jobs,
                 strategy="auto",
                 return_distance=return_distance,
             )
@@ -1070,20 +1125,43 @@ class RadiusNeighborsMixin:
         """
         check_is_fitted(self)
 
-        if X is not None:
-            query_is_train = False
+        if sort_results and not return_distance:
+            raise ValueError("return_distance must be True if sort_results is True.")
+
+        query_is_train = X is None
+        if query_is_train:
+            X = self._fit_X
+        else:
             if self.metric == "precomputed":
                 X = _check_precomputed(X)
             else:
-                X = self._validate_data(X, accept_sparse="csr", reset=False)
-        else:
-            query_is_train = True
-            X = self._fit_X
+                X = self._validate_data(X, accept_sparse="csr", reset=False, order="C")
 
         if radius is None:
             radius = self.radius
 
-        if self._fit_method == "brute" and self.metric == "precomputed" and issparse(X):
+        use_pairwise_distances_reductions = (
+            self._fit_method == "brute"
+            and PairwiseDistancesRadiusNeighborhood.is_usable_for(
+                X if X is not None else self._fit_X, self._fit_X, self.effective_metric_
+            )
+        )
+
+        if use_pairwise_distances_reductions:
+            results = PairwiseDistancesRadiusNeighborhood.compute(
+                X=X,
+                Y=self._fit_X,
+                radius=radius,
+                metric=self.effective_metric_,
+                metric_kwargs=self.effective_metric_params_,
+                strategy="auto",
+                return_distance=return_distance,
+                sort_results=sort_results,
+            )
+
+        elif (
+            self._fit_method == "brute" and self.metric == "precomputed" and issparse(X)
+        ):
             results = _radius_neighbors_from_graph(
                 X, radius=radius, return_distance=return_distance
             )
@@ -1126,10 +1204,6 @@ class RadiusNeighborsMixin:
                 results = _to_object_array(neigh_ind_list)
 
             if sort_results:
-                if not return_distance:
-                    raise ValueError(
-                        "return_distance must be True if sort_results is True."
-                    )
                 for ii in range(len(neigh_dist)):
                     order = np.argsort(neigh_dist[ii], kind="mergesort")
                     neigh_ind[ii] = neigh_ind[ii][order]
