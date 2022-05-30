@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 import numpy as np
 import pytest
 import threadpoolctl
@@ -81,62 +83,48 @@ def assert_argkmin_results_equality(ref_dist, dist, ref_indices, indices, rtol=1
 
 
 def assert_argkmin_results_quasi_equality(
-    ref_dist, dist, ref_indices, indices, rtol=1e-4
+    ref_dist,
+    dist,
+    ref_indices,
+    indices,
+    rtol=1e-4,
+    decimals=5,
 ):
+    """Assert that argkmin results are valid up to:
+      - relative tolerance on distances
+      - permutations of indices for absolutely close distances
 
-    ref_dist, dist, ref_indices, indices = map(
-        np.ndarray.flatten, [ref_dist, dist, ref_indices, indices]
-    )
+    To be used for 32bits datasets tests.
+    """
 
     assert (
-        len(ref_dist) == len(dist) == len(ref_indices) == len(indices)
-    ), "Arrays of results have various length."
+        ref_dist.shape == dist.shape == ref_indices.shape == indices.shape
+    ), "Arrays of results have various shapes."
 
-    n = len(ref_dist)
+    n, k = ref_dist.shape
 
-    skip_permutation_check = False
+    # Asserting equality results one row at a time
+    for i in range(n):
+        ref_dist_row = ref_dist[i]
+        dist_row = dist[i]
 
-    for i in range(n - 1):
-        # We test the equality of pair of adjacent indices and distances
-        # of the references against the results.
-        rd_prev, rd_current, rd_next = ref_dist[i - 1], ref_dist[i], ref_dist[i + 1]
-        d_prev, d_current, d_next = dist[i - 1], dist[i], dist[i + 1]
-        ri_prev, ri_current, ri_next = (
-            ref_indices[i - 1],
-            ref_indices[i],
-            ref_indices[i + 1],
-        )
-        i_prev, i_current, i_next = indices[i - 1], indices[i], indices[i + 1]
+        assert_allclose(ref_dist_row, dist_row, rtol)
 
-        assert np.isclose(
-            d_current, rd_current, rtol=rtol
-        ), "Query vectors have different neighbors' distances"
+        ref_indices_row = ref_indices[i]
+        indices_row = indices[i]
 
-        if ri_current != i_current:
-            # If the current reference index and index are different,
-            # it might be that their were permuted because their distances
-            # are relatively close to each other.
-            # In this case, we need to check for a valid permutation.
-            valid_permutation = (
-                np.isclose(d_current, d_next, rtol=rtol)
-                and i_next == ri_current
-                and ri_next == i_current
-            )
-            assert skip_permutation_check or valid_permutation, (
-                "Query vectors have different neighbors' indices \n"
-                f"(i_prev, i_current, i_next) = {i_prev, i_current, i_next} \n"
-                f"(ri_prev, ri_current, ri_next) = {ri_prev, ri_current, ri_next} \n"
-                f"(d_prev, d_current, d_next) = {d_prev, d_current, d_next} \n"
-                f"(rd_prev, rd_current, rd_next) = {rd_prev, rd_current, rd_next} \n"
-            )
-            # If there's a permutation at this iteration, we need to
-            # skip the following permutation check.
-            skip_permutation_check = True
-            continue
+        # Grouping indices by distances using sets
+        ref_mapping = defaultdict(set)
+        mapping = defaultdict(set)
 
-        # We need to check for potential permutations for the next iterations.
-        if skip_permutation_check:
-            skip_permutation_check = False
+        for j in range(k):
+            rounded_dist = np.round(ref_dist_row[j], decimals=decimals)
+            ref_mapping[rounded_dist].add(ref_indices_row[j])
+            mapping[rounded_dist].add(indices_row[j])
+
+        # Asserting equality of groups (sets) for each distance
+        for j in ref_mapping.keys():
+            assert ref_mapping[j] == mapping[j]
 
 
 def assert_radius_neighborhood_results_equality(ref_dist, dist, ref_indices, indices):
@@ -171,6 +159,43 @@ ASSERT_RESULT = {
         np.float32,
     ): assert_radius_neighborhood_results_equality,
 }
+
+
+def test_assert_argkmin_results_quasi_equality():
+
+    rtol = 1e-7
+    atol = 1e-7
+    decimals = 6
+
+    ref_dist = np.array(
+        [
+            [1.2, 2.5, 6.1 + atol, 6.1, 6.1 - atol],
+            [1.0 + atol, 1.0 - atol, 1, 1.0 + atol, 1.0 - atol],
+        ]
+    )
+    ref_indices = np.array(
+        [
+            [1, 2, 3, 4, 5],
+            [6, 7, 8, 9, 10],
+        ]
+    )
+
+    assert_argkmin_results_quasi_equality(
+        ref_dist, ref_dist, ref_indices, ref_indices, rtol, decimals
+    )
+
+    dist = ref_dist
+
+    indices = np.array(
+        [
+            [1, 2, 4, 5, 3],
+            [6, 9, 7, 8, 10],
+        ]
+    )
+
+    assert_argkmin_results_quasi_equality(
+        ref_dist, dist, ref_indices, indices, rtol, decimals
+    )
 
 
 def test_pairwise_distances_reduction_is_usable_for():
