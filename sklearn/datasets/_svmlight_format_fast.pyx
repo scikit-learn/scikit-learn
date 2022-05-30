@@ -203,8 +203,6 @@ def _dump_svmlight_file(
         Py_ssize_t col_start
         Py_ssize_t col_end
         bint first
-        array.array[signed long long] int_template = array.array('q',[])
-        array.array[double] float_template = array.array('d',[])
         Py_ssize_t x_nz_used
         Py_ssize_t[:] x_inds = np.empty(row_length, dtype=np.intp)
         signed long long[:] x_vals_int
