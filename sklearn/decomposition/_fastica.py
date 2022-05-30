@@ -482,7 +482,7 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         max_iter=200,
         tol=1e-4,
         w_init=None,
-        whiten_solver="warn",
+        whiten_solver="svd",
         random_state=None,
     ):
         super().__init__()
