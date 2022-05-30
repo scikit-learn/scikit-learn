@@ -1069,7 +1069,8 @@ def test_elasticnet_precompute_gram():
     # Check the dtype-aware check for a precomputed Gram matrix
     # (see https://github.com/scikit-learn/scikit-learn/pull/22059
     # and https://github.com/scikit-learn/scikit-learn/issues/21997).
-    # Here: (X_c.T, X_c)[2, 3] is not equal to np.dot(X_c[:, 2], X_c[:, 3]) but within tolerance for np.float32
+    # Here: (X_c.T, X_c)[2, 3] is not equal to np.dot(X_c[:, 2], X_c[:, 3])
+    # but within tolerance for np.float32
 
     rng = np.random.RandomState(58)
     X = rng.binomial(1, 0.25, (1000, 4)).astype(np.float32)
