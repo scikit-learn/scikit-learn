@@ -226,8 +226,13 @@ class StrOptions(_Constraint):
     )
     def __init__(self, options, deprecated=None, internal=None):
         self.options = options
-        self.deprecated = deprecated or {}
-        self.internal = internal or {}
+        self.deprecated = deprecated or set()
+        self.internal = internal or set()
+
+        if self.deprecated & self.internal:
+            raise ValueError(
+                "The deprecated and internal parameters should not overlap."
+            )
 
     def is_satisfied_by(self, val):
         return isinstance(val, str) and val in self.options

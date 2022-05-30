@@ -325,3 +325,9 @@ def test_internal_values_not_exposed():
 
     # no error
     g(param="warn")
+
+
+def test_stroptions_deprecated_internal_overlap():
+    """Check that the internal and deprecated parameters are not allowed to overlap."""
+    with pytest.raises(ValueError, match="should not overlap"):
+        StrOptions({"a", "b", "c"}, deprecated={"b", "c"}, internal={"a", "b"})
