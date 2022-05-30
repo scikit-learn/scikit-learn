@@ -23,7 +23,26 @@ Manifold learning
 .. figure:: ../auto_examples/manifold/images/sphx_glr_plot_compare_methods_001.png
    :target: ../auto_examples/manifold/plot_compare_methods.html
    :align: center
-   :scale: 60
+   :scale: 70%
+
+.. |manifold_img3| image:: ../auto_examples/manifold/images/sphx_glr_plot_compare_methods_003.png
+  :target: ../auto_examples/manifold/plot_compare_methods.html
+  :scale: 60%
+
+.. |manifold_img4| image:: ../auto_examples/manifold/images/sphx_glr_plot_compare_methods_004.png
+    :target: ../auto_examples/manifold/plot_compare_methods.html
+    :scale: 60%
+
+.. |manifold_img5| image:: ../auto_examples/manifold/images/sphx_glr_plot_compare_methods_005.png
+    :target: ../auto_examples/manifold/plot_compare_methods.html
+    :scale: 60%
+
+.. |manifold_img6| image:: ../auto_examples/manifold/images/sphx_glr_plot_compare_methods_006.png
+    :target: ../auto_examples/manifold/plot_compare_methods.html
+    :scale: 60%
+
+.. centered:: |manifold_img3| |manifold_img4| |manifold_img5| |manifold_img6|
+
 
 Manifold learning is an approach to non-linear dimensionality reduction.
 Algorithms for this task are based on the idea that the dimensionality of
@@ -387,9 +406,9 @@ The overall complexity of standard LTSA is
 
 .. topic:: References:
 
-   * `"Principal manifolds and nonlinear dimensionality reduction via
+   * :arxiv:`"Principal manifolds and nonlinear dimensionality reduction via
      tangent space alignment"
-     <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.4.3693>`_
+     <cs/0212008>`
      Zhang, Z. & Zha, H. Journal of Shanghai Univ. 8:406 (2004)
 
 .. _multidimensional_scaling:
@@ -620,12 +639,12 @@ the internal structure of the data.
   * `"Accelerating t-SNE using Tree-Based Algorithms"
     <https://lvdmaaten.github.io/publications/papers/JMLR_2014.pdf>`_
     van der Maaten, L.J.P.; Journal of Machine Learning Research 15(Oct):3221-3245, 2014.
-    
+
   * `"Automated optimized parameters for T-distributed stochastic neighbor
     embedding improve visualization and analysis of large datasets"
     <https://www.nature.com/articles/s41467-019-13055-y>`_
     Belkina, A.C., Ciccolella, C.O., Anno, R., Halpert, R., Spidlen, J.,
-    Snyder-Cappione, J.E., Nature Communications 10, 5415 (2019). 
+    Snyder-Cappione, J.E., Nature Communications 10, 5415 (2019).
 
 Tips on practical use
 =====================

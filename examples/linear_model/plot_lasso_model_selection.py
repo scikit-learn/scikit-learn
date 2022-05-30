@@ -20,11 +20,6 @@ In what follows, we will discuss in details the different strategies.
 # License: BSD 3 clause
 
 # %%
-import sklearn
-
-sklearn.set_config(display="diagram")
-
-# %%
 # Dataset
 # -------
 # In this example, we will use the diabetes dataset.

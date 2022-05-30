@@ -44,7 +44,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
     ----------
     kernel : kernel instance, default=None
         The kernel specifying the covariance function of the GP. If None is
-        passed, the kernel ``ConstantKernel(1.0, constant_value_bounds="fixed"
+        passed, the kernel ``ConstantKernel(1.0, constant_value_bounds="fixed")
         * RBF(1.0, length_scale_bounds="fixed")`` is used as default. Note that
         the kernel hyperparameters are optimized during fitting unless the
         bounds are marked as "fixed".
@@ -239,8 +239,9 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             y = (y - self._y_train_mean) / self._y_train_std
 
         else:
-            self._y_train_mean = np.zeros(1)
-            self._y_train_std = 1
+            shape_y_stats = (y.shape[1],) if y.ndim == 2 else 1
+            self._y_train_mean = np.zeros(shape=shape_y_stats)
+            self._y_train_std = np.ones(shape=shape_y_stats)
 
         if np.iterable(self.alpha) and self.alpha.shape[0] != y.shape[0]:
             if self.alpha.shape[0] == 1:
@@ -394,6 +395,10 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             # undo normalisation
             y_mean = self._y_train_std * y_mean + self._y_train_mean
 
+            # if y_mean has shape (n_samples, 1), reshape to (n_samples,)
+            if y_mean.ndim > 1 and y_mean.shape[1] == 1:
+                y_mean = np.squeeze(y_mean, axis=1)
+
             # Alg 2.1, page 19, line 5 -> v = L \ K(X_test, X_train)^T
             V = solve_triangular(
                 self.L_, K_trans.T, lower=GPR_CHOLESKY_LOWER, check_finite=False
@@ -404,10 +409,9 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                 y_cov = self.kernel_(X) - V.T @ V
 
                 # undo normalisation
-                y_cov = np.outer(y_cov, self._y_train_std ** 2).reshape(
+                y_cov = np.outer(y_cov, self._y_train_std**2).reshape(
                     *y_cov.shape, -1
                 )
-
                 # if y_cov has shape (n_samples, n_samples, 1), reshape to
                 # (n_samples, n_samples)
                 if y_cov.shape[2] == 1:
@@ -432,7 +436,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                     y_var[y_var_negative] = 0.0
 
                 # undo normalisation
-                y_var = np.outer(y_var, self._y_train_std ** 2).reshape(
+                y_var = np.outer(y_var, self._y_train_std**2).reshape(
                     *y_var.shape, -1
                 )
 
@@ -475,8 +479,10 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             y_samples = rng.multivariate_normal(y_mean, y_cov, n_samples).T
         else:
             y_samples = [
-                rng.multivariate_normal(y_mean[:, i], y_cov, n_samples).T[:, np.newaxis]
-                for i in range(y_mean.shape[1])
+                rng.multivariate_normal(
+                    y_mean[:, target], y_cov[..., target], n_samples
+                ).T[:, np.newaxis]
+                for target in range(y_mean.shape[1])
             ]
             y_samples = np.hstack(y_samples)
         return y_samples

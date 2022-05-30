@@ -1,4 +1,5 @@
 import numbers
+import warnings
 from itertools import chain
 from math import ceil
 
@@ -9,12 +10,12 @@ from joblib import Parallel
 
 from .. import partial_dependence
 from ...base import is_regressor
+from ...utils import Bunch
 from ...utils import check_array
 from ...utils import deprecated
 from ...utils import check_matplotlib_support  # noqa
 from ...utils import check_random_state
 from ...utils import _safe_indexing
-from ...utils.validation import _deprecate_positional_args
 from ...utils.fixes import delayed
 
 
@@ -44,6 +45,7 @@ def plot_partial_dependence(
     kind="average",
     subsample=1000,
     random_state=None,
+    centered=False,
 ):
     """Partial dependence (PD) and individual conditional expectation (ICE)
     plots.
@@ -51,6 +53,9 @@ def plot_partial_dependence(
     Partial dependence plots, individual conditional expectation plots or an
     overlay of both of them can be plotted by setting the ``kind``
     parameter.
+
+    The ICE and PD plots can be centered with the parameter `centered`.
+
     The ``len(features)`` plots are arranged in a grid with ``n_cols``
     columns. Two-way partial dependence plots are plotted as contour plots. The
     deciles of the feature values will be shown with tick marks on the x-axes
@@ -61,7 +66,7 @@ def plot_partial_dependence(
     .. note::
 
         :func:`plot_partial_dependence` does not support using the same axes
-        with multiple calls. To plot the the partial dependence for multiple
+        with multiple calls. To plot the partial dependence for multiple
         estimators, please pass the axes created by the first call to the
         second call::
 
@@ -232,18 +237,38 @@ def plot_partial_dependence(
 
         .. versionadded:: 0.22
 
-    kind : {'average', 'individual', 'both'}, default='average'
+    kind : {'average', 'individual', 'both'} or list of such str, \
+            default='average'
         Whether to plot the partial dependence averaged across all the samples
         in the dataset or one line per sample or both.
 
         - ``kind='average'`` results in the traditional PD plot;
-        - ``kind='individual'`` results in the ICE plot.
+        - ``kind='individual'`` results in the ICE plot;
+        - ``kind='both'`` results in plotting both the ICE and PD on the same
+          plot.
 
-       Note that the fast ``method='recursion'`` option is only available for
-       ``kind='average'``. Plotting individual dependencies requires using the
-       slower ``method='brute'`` option.
+        A list of such strings can be provided to specify `kind` on a per-plot
+        basis. The length of the list should be the same as the number of
+        interaction requested in `features`.
+
+        .. note::
+           ICE ('individual' or 'both') is not a valid option for 2-ways
+           interactions plot. As a result, an error will be raised.
+           2-ways interaction plots should always be configured to
+           use the 'average' kind instead.
+
+        .. note::
+           The fast ``method='recursion'`` option is only available for
+           ``kind='average'``. Plotting individual dependencies requires using
+           the slower ``method='brute'`` option.
 
         .. versionadded:: 0.24
+           Add `kind` parameter with `'average'`, `'individual'`, and `'both'`
+           options.
+
+        .. versionadded:: 1.1
+           Add the possibility to pass a list of string specifying `kind`
+           for each plot.
 
     subsample : float, int or None, default=1000
         Sampling for ICE curves when `kind` is 'individual' or 'both'.
@@ -262,6 +287,12 @@ def plot_partial_dependence(
         See :term:`Glossary <random_state>` for details.
 
         .. versionadded:: 0.24
+
+    centered : bool, default=False
+        If `True`, the ICE and PD lines will start at the origin of the y-axis.
+        By default, no centering is done.
+
+        .. versionadded:: 1.1
 
     Returns
     -------
@@ -307,6 +338,7 @@ def plot_partial_dependence(
         kind=kind,
         subsample=subsample,
         random_state=random_state,
+        centered=centered,
     )
 
 
@@ -333,6 +365,7 @@ def _plot_partial_dependence(
     kind="average",
     subsample=1000,
     random_state=None,
+    centered=False,
 ):
     """See PartialDependenceDisplay.from_estimator for details"""
     import matplotlib.pyplot as plt  # noqa
@@ -371,6 +404,15 @@ def _plot_partial_dependence(
     if len(set(feature_names)) != len(feature_names):
         raise ValueError("feature_names should not contain duplicates.")
 
+    # expand kind to always be a list of str
+    kind_ = [kind] * len(features) if isinstance(kind, str) else kind
+    if len(kind_) != len(features):
+        raise ValueError(
+            "When `kind` is provided as a list of strings, it should contain "
+            f"as many elements as `features`. `kind` contains {len(kind_)} "
+            f"element(s) and `features` contains {len(features)} element(s)."
+        )
+
     def convert_feature(fx):
         if isinstance(fx, str):
             try:
@@ -380,8 +422,8 @@ def _plot_partial_dependence(
         return int(fx)
 
     # convert features into a seq of int tuples
-    tmp_features = []
-    for fxs in features:
+    tmp_features, ice_for_two_way_pd = [], []
+    for kind_plot, fxs in zip(kind_, features):
         if isinstance(fxs, (numbers.Integral, str)):
             fxs = (fxs,)
         try:
@@ -396,13 +438,27 @@ def _plot_partial_dependence(
                 "Each entry in features must be either an int, "
                 "a string, or an iterable of size at most 2."
             )
-        if kind != "average" and np.size(fxs) > 1:
-            raise ValueError(
-                "It is not possible to display individual effects for more "
-                f"than one feature at a time. Got: features={features}."
-            )
+        # store the information if 2-way PD was requested with ICE to later
+        # raise a ValueError with an exhaustive list of problematic
+        # settings.
+        ice_for_two_way_pd.append(kind_plot != "average" and np.size(fxs) > 1)
+
         tmp_features.append(fxs)
 
+    if any(ice_for_two_way_pd):
+        # raise an error an be specific regarding the parameter values
+        # when 1- and 2-way PD were requested
+        kind_ = [
+            "average" if forcing_average else kind_plot
+            for forcing_average, kind_plot in zip(ice_for_two_way_pd, kind_)
+        ]
+        raise ValueError(
+            "ICE plot cannot be rendered for 2-way feature interactions. "
+            "2-way feature interactions mandates PD plots using the "
+            "'average' kind: "
+            f"features={features!r} should be configured to use "
+            f"kind={kind_!r} explicitly."
+        )
     features = tmp_features
 
     # Early exit if the axes does not have the correct number of axes
@@ -442,9 +498,9 @@ def _plot_partial_dependence(
             method=method,
             grid_resolution=grid_resolution,
             percentiles=percentiles,
-            kind=kind,
+            kind=kind_plot,
         )
-        for fxs in features
+        for kind_plot, fxs in zip(kind_, features)
     )
 
     # For multioutput regression, we can only check the validity of target
@@ -455,7 +511,7 @@ def _plot_partial_dependence(
     pd_result = pd_results[0]  # checking the first result is enough
     n_tasks = (
         pd_result.average.shape[0]
-        if kind == "average"
+        if kind_[0] == "average"
         else pd_result.individual.shape[0]
     )
     if is_regressor(estimator) and n_tasks > 1:
@@ -464,19 +520,6 @@ def _plot_partial_dependence(
         if not 0 <= target <= n_tasks:
             raise ValueError("target must be in [0, n_tasks], got {}.".format(target))
         target_idx = target
-
-    # get global min and max average predictions of PD grouped by plot type
-    pdp_lim = {}
-    for pdp in pd_results:
-        values = pdp["values"]
-        preds = pdp.average if kind == "average" else pdp.individual
-        min_pd = preds[target_idx].min()
-        max_pd = preds[target_idx].max()
-        n_fx = len(values)
-        old_min_pd, old_max_pd = pdp_lim.get(n_fx, (min_pd, max_pd))
-        min_pd = min(min_pd, old_min_pd)
-        max_pd = max(max_pd, old_max_pd)
-        pdp_lim[n_fx] = (min_pd, max_pd)
 
     deciles = {}
     for fx in chain.from_iterable(features):
@@ -489,7 +532,6 @@ def _plot_partial_dependence(
         features=features,
         feature_names=feature_names,
         target_idx=target_idx,
-        pdp_lim=pdp_lim,
         deciles=deciles,
         kind=kind,
         subsample=subsample,
@@ -502,6 +544,7 @@ def _plot_partial_dependence(
         ice_lines_kw=ice_lines_kw,
         pd_line_kw=pd_line_kw,
         contour_kw=contour_kw,
+        centered=centered,
     )
 
 
@@ -518,7 +561,7 @@ class PartialDependenceDisplay:
 
     Read more in
     :ref:`sphx_glr_auto_examples_miscellaneous_plot_partial_dependence_visualization_api.py`
-    and the :ref:`User Guide <visualizations>`.
+    and the :ref:`User Guide <partial_dependence>`.
 
         .. versionadded:: 0.22
 
@@ -546,27 +589,53 @@ class PartialDependenceDisplay:
 
         Ignored in binary classification or classical regression settings.
 
-    pdp_lim : dict
-        Global min and max average predictions, such that all plots will have
-        the same scale and y limits. `pdp_lim[1]` is the global min and max for
-        single partial dependence curves. `pdp_lim[2]` is the global min and
-        max for two-way partial dependence curves.
-
     deciles : dict
         Deciles for feature indices in ``features``.
 
-    kind : {'average', 'individual', 'both'}, default='average'
+    pdp_lim : dict or None
+        Global min and max average predictions, such that all plots will have
+        the same scale and y limits. `pdp_lim[1]` is the global min and max for
+        single partial dependence curves. `pdp_lim[2]` is the global min and
+        max for two-way partial dependence curves. If `None`, the limit will be
+        inferred from the global minimum and maximum of all predictions.
+
+        .. deprecated:: 1.1
+           Pass the parameter `pdp_lim` to
+           :meth:`~sklearn.inspection.PartialDependenceDisplay.plot` instead.
+           It will be removed in 1.3.
+
+    kind : {'average', 'individual', 'both'} or list of such str, \
+            default='average'
         Whether to plot the partial dependence averaged across all the samples
         in the dataset or one line per sample or both.
 
         - ``kind='average'`` results in the traditional PD plot;
-        - ``kind='individual'`` results in the ICE plot.
+        - ``kind='individual'`` results in the ICE plot;
+        - ``kind='both'`` results in plotting both the ICE and PD on the same
+          plot.
 
-       Note that the fast ``method='recursion'`` option is only available for
-       ``kind='average'``. Plotting individual dependencies requires using the
-       slower ``method='brute'`` option.
+        A list of such strings can be provided to specify `kind` on a per-plot
+        basis. The length of the list should be the same as the number of
+        interaction requested in `features`.
+
+        .. note::
+           ICE ('individual' or 'both') is not a valid option for 2-ways
+           interactions plot. As a result, an error will be raised.
+           2-ways interaction plots should always be configured to
+           use the 'average' kind instead.
+
+        .. note::
+           The fast ``method='recursion'`` option is only available for
+           ``kind='average'``. Plotting individual dependencies requires using
+           the slower ``method='brute'`` option.
 
         .. versionadded:: 0.24
+           Add `kind` parameter with `'average'`, `'individual'`, and `'both'`
+           options.
+
+        .. versionadded:: 1.1
+           Add the possibility to pass a list of string specifying `kind`
+           for each plot.
 
     subsample : float, int or None, default=1000
         Sampling for ICE curves when `kind` is 'individual' or 'both'.
@@ -646,8 +715,8 @@ class PartialDependenceDisplay:
         features,
         feature_names,
         target_idx,
-        pdp_lim,
         deciles,
+        pdp_lim="deprecated",
         kind="average",
         subsample=1000,
         random_state=None,
@@ -684,6 +753,7 @@ class PartialDependenceDisplay:
         contour_kw=None,
         ax=None,
         kind="average",
+        centered=False,
         subsample=1000,
         random_state=None,
     ):
@@ -702,7 +772,7 @@ class PartialDependenceDisplay:
         .. note::
 
             :func:`PartialDependenceDisplay.from_estimator` does not support using the
-            same axes with multiple calls. To plot the the partial dependence for
+            same axes with multiple calls. To plot the partial dependence for
             multiple estimators, please pass the axes created by the first call to the
             second call::
 
@@ -875,6 +945,12 @@ class PartialDependenceDisplay:
            ``kind='average'``. Plotting individual dependencies requires using the
            slower ``method='brute'`` option.
 
+        centered : bool, default=False
+            If `True`, the ICE and PD lines will start at the origin of the
+            y-axis. By default, no centering is done.
+
+            .. versionadded:: 1.1
+
         subsample : float, int or None, default=1000
             Sampling for ICE curves when `kind` is 'individual' or 'both'.
             If `float`, should be between 0.0 and 1.0 and represent the proportion
@@ -931,6 +1007,7 @@ class PartialDependenceDisplay:
             kind=kind,
             subsample=subsample,
             random_state=random_state,
+            centered=centered,
         )
 
     def _get_sample_count(self, n_samples):
@@ -1010,12 +1087,14 @@ class PartialDependenceDisplay:
         feature_values : ndarray of shape (n_grid_points,)
             The feature values for which the predictions have been computed.
         ax : Matplotlib axes
-            The axis on which to plot the ICE lines.
+            The axis on which to plot the average PD.
         pd_line_idx : int
             The sequential index of the plot. It will be unraveled to find the
             matching 2D position in the grid layout.
         line_kw : dict
             Dict with keywords passed when plotting the PD plot.
+        centered : bool
+            Whether or not to center the average PD to start at the origin.
         """
         line_idx = np.unravel_index(pd_line_idx, self.lines_.shape)
         self.lines_[line_idx] = ax.plot(
@@ -1026,6 +1105,7 @@ class PartialDependenceDisplay:
 
     def _plot_one_way_partial_dependence(
         self,
+        kind,
         preds,
         avg_preds,
         feature_values,
@@ -1037,11 +1117,14 @@ class PartialDependenceDisplay:
         n_lines,
         ice_lines_kw,
         pd_line_kw,
+        pdp_lim,
     ):
         """Plot 1-way partial dependence: ICE and PDP.
 
         Parameters
         ----------
+        kind : str
+            The kind of partial plot to draw.
         preds : ndarray of shape \
                 (n_instances, n_grid_points) or None
             The predictions computed for all points of `feature_values` for a
@@ -1068,10 +1151,14 @@ class PartialDependenceDisplay:
             Dict with keywords passed when plotting the ICE lines.
         pd_line_kw : dict
             Dict with keywords passed when plotting the PD plot.
+        pdp_lim : dict
+            Global min and max average predictions, such that all plots will
+            have the same scale and y limits. `pdp_lim[1]` is the global min
+            and max for single partial dependence curves.
         """
         from matplotlib import transforms  # noqa
 
-        if self.kind in ("individual", "both"):
+        if kind in ("individual", "both"):
             self._plot_ice_lines(
                 preds[self.target_idx],
                 feature_values,
@@ -1082,9 +1169,9 @@ class PartialDependenceDisplay:
                 ice_lines_kw,
             )
 
-        if self.kind in ("average", "both"):
+        if kind in ("average", "both"):
             # the average is stored as the last line
-            if self.kind == "average":
+            if kind == "average":
                 pd_line_idx = pd_plot_idx
             else:
                 pd_line_idx = pd_plot_idx * n_lines + n_ice_lines
@@ -1107,7 +1194,7 @@ class PartialDependenceDisplay:
             color="k",
         )
         # reset ylim which was overwritten by vlines
-        ax.set_ylim(self.pdp_lim[1])
+        ax.set_ylim(pdp_lim[1])
 
         # Set xlabel if it is not already set
         if not ax.get_xlabel():
@@ -1119,7 +1206,7 @@ class PartialDependenceDisplay:
         else:
             ax.set_yticklabels([])
 
-        if pd_line_kw.get("label", None) and self.kind != "individual":
+        if pd_line_kw.get("label", None) and kind != "individual":
             ax.legend()
 
     def _plot_two_way_partial_dependence(
@@ -1201,7 +1288,6 @@ class PartialDependenceDisplay:
             ax.set_xlabel(self.feature_names[feature_idx[0]])
         ax.set_ylabel(self.feature_names[feature_idx[1]])
 
-    @_deprecate_positional_args(version="1.1")
     def plot(
         self,
         *,
@@ -1211,6 +1297,8 @@ class PartialDependenceDisplay:
         ice_lines_kw=None,
         pd_line_kw=None,
         contour_kw=None,
+        pdp_lim=None,
+        centered=False,
     ):
         """Plot partial dependence plots.
 
@@ -1254,6 +1342,21 @@ class PartialDependenceDisplay:
             Dict with keywords passed to the `matplotlib.pyplot.contourf`
             call for two-way partial dependence plots.
 
+        pdp_lim : dict, default=None
+            Global min and max average predictions, such that all plots will have the
+            same scale and y limits. `pdp_lim[1]` is the global min and max for single
+            partial dependence curves. `pdp_lim[2]` is the global min and max for
+            two-way partial dependence curves. If `None` (default), the limit will be
+            inferred from the global minimum and maximum of all predictions.
+
+            .. versionadded:: 1.1
+
+        centered : bool, default=False
+            If `True`, the ICE and PD lines will start at the origin of the
+            y-axis. By default, no centering is done.
+
+            .. versionadded:: 1.1
+
         Returns
         -------
         display : :class:`~sklearn.inspection.PartialDependenceDisplay`
@@ -1263,50 +1366,108 @@ class PartialDependenceDisplay:
         import matplotlib.pyplot as plt  # noqa
         from matplotlib.gridspec import GridSpecFromSubplotSpec  # noqa
 
+        if isinstance(self.kind, str):
+            kind = [self.kind] * len(self.features)
+        else:
+            kind = self.kind
+
+        if len(kind) != len(self.features):
+            raise ValueError(
+                "When `kind` is provided as a list of strings, it should "
+                "contain as many elements as `features`. `kind` contains "
+                f"{len(kind)} element(s) and `features` contains "
+                f"{len(self.features)} element(s)."
+            )
+
+        valid_kinds = {"average", "individual", "both"}
+        if any([k not in valid_kinds for k in kind]):
+            raise ValueError(
+                f"Values provided to `kind` must be one of: {valid_kinds!r} or a list"
+                f" of such values. Currently, kind={self.kind!r}"
+            )
+
+        # FIXME: remove in 1.3
+        if self.pdp_lim != "deprecated":
+            warnings.warn(
+                "The `pdp_lim` parameter is deprecated in version 1.1 and will be "
+                "removed in version 1.3. Provide `pdp_lim` to the `plot` method."
+                "instead.",
+                FutureWarning,
+            )
+            if pdp_lim is not None and self.pdp_lim != pdp_lim:
+                warnings.warn(
+                    "`pdp_lim` has been passed in both the constructor and the `plot` "
+                    "method. For backward compatibility, the parameter from the "
+                    "constructor will be used.",
+                    UserWarning,
+                )
+            pdp_lim = self.pdp_lim
+
+        # Center results before plotting
+        if not centered:
+            pd_results_ = self.pd_results
+        else:
+            pd_results_ = []
+            for kind_plot, pd_result in zip(kind, self.pd_results):
+                current_results = {"values": pd_result["values"]}
+
+                if kind_plot in ("individual", "both"):
+                    preds = pd_result.individual
+                    preds = preds - preds[self.target_idx, :, 0, None]
+                    current_results["individual"] = preds
+
+                if kind_plot in ("average", "both"):
+                    avg_preds = pd_result.average
+                    avg_preds = avg_preds - avg_preds[self.target_idx, 0, None]
+                    current_results["average"] = avg_preds
+
+                pd_results_.append(Bunch(**current_results))
+
+        if pdp_lim is None:
+            # get global min and max average predictions of PD grouped by plot type
+            pdp_lim = {}
+            for kind_plot, pdp in zip(kind, pd_results_):
+                values = pdp["values"]
+                preds = pdp.average if kind_plot == "average" else pdp.individual
+                min_pd = preds[self.target_idx].min()
+                max_pd = preds[self.target_idx].max()
+                n_fx = len(values)
+                old_min_pd, old_max_pd = pdp_lim.get(n_fx, (min_pd, max_pd))
+                min_pd = min(min_pd, old_min_pd)
+                max_pd = max(max_pd, old_max_pd)
+                pdp_lim[n_fx] = (min_pd, max_pd)
+
         if line_kw is None:
             line_kw = {}
         if ice_lines_kw is None:
             ice_lines_kw = {}
         if pd_line_kw is None:
             pd_line_kw = {}
-        if contour_kw is None:
-            contour_kw = {}
 
         if ax is None:
             _, ax = plt.subplots()
 
+        if contour_kw is None:
+            contour_kw = {}
         default_contour_kws = {"alpha": 0.75}
         contour_kw = {**default_contour_kws, **contour_kw}
 
-        default_line_kws = {
-            "color": "C0",
-            "label": "average" if self.kind == "both" else None,
-        }
-        if self.kind in ("individual", "both"):
-            default_ice_lines_kws = {"alpha": 0.3, "linewidth": 0.5}
-        else:
-            default_ice_lines_kws = {}
-
-        ice_lines_kw = {
-            **default_line_kws,
-            **line_kw,
-            **default_ice_lines_kws,
-            **ice_lines_kw,
-        }
-        del ice_lines_kw["label"]
-
-        pd_line_kw = {**default_line_kws, **line_kw, **pd_line_kw}
-
         n_features = len(self.features)
-        if self.kind in ("individual", "both"):
-            n_ice_lines = self._get_sample_count(len(self.pd_results[0].individual[0]))
-            if self.kind == "individual":
-                n_lines = n_ice_lines
-            else:
-                n_lines = n_ice_lines + 1
-        else:
+        is_average_plot = [kind_plot == "average" for kind_plot in kind]
+        if all(is_average_plot):
+            # only average plots are requested
             n_ice_lines = 0
             n_lines = 1
+        else:
+            # we need to determine the number of ICE samples computed
+            ice_plot_idx = is_average_plot.index(False)
+            n_ice_lines = self._get_sample_count(
+                len(pd_results_[ice_plot_idx].individual[0])
+            )
+            if any([kind_plot == "both" for kind_plot in kind]):
+                n_lines = n_ice_lines + 1  # account for the average line
+            else:
+                n_lines = n_ice_lines
 
         if isinstance(ax, plt.Axes):
             # If ax was set off, it has most likely been set to off
@@ -1326,7 +1487,7 @@ class PartialDependenceDisplay:
             n_rows = int(np.ceil(n_features / float(n_cols)))
 
             self.axes_ = np.empty((n_rows, n_cols), dtype=object)
-            if self.kind == "average":
+            if all(is_average_plot):
                 self.lines_ = np.empty((n_rows, n_cols), dtype=object)
             else:
                 self.lines_ = np.empty((n_rows, n_cols, n_lines), dtype=object)
@@ -1355,35 +1516,75 @@ class PartialDependenceDisplay:
             self.bounding_ax_ = None
             self.figure_ = ax.ravel()[0].figure
             self.axes_ = ax
-            if self.kind == "average":
+            if all(is_average_plot):
                 self.lines_ = np.empty_like(ax, dtype=object)
             else:
                 self.lines_ = np.empty(ax.shape + (n_lines,), dtype=object)
             self.contours_ = np.empty_like(ax, dtype=object)
 
         # create contour levels for two-way plots
-        if 2 in self.pdp_lim:
-            Z_level = np.linspace(*self.pdp_lim[2], num=8)
+        if 2 in pdp_lim:
+            Z_level = np.linspace(*pdp_lim[2], num=8)
 
         self.deciles_vlines_ = np.empty_like(self.axes_, dtype=object)
         self.deciles_hlines_ = np.empty_like(self.axes_, dtype=object)
 
-        for pd_plot_idx, (axi, feature_idx, pd_result) in enumerate(
-            zip(self.axes_.ravel(), self.features, self.pd_results)
+        for pd_plot_idx, (axi, feature_idx, pd_result, kind_plot) in enumerate(
+            zip(self.axes_.ravel(), self.features, pd_results_, kind)
         ):
             avg_preds = None
             preds = None
             feature_values = pd_result["values"]
-            if self.kind == "individual":
+            if kind_plot == "individual":
                 preds = pd_result.individual
-            elif self.kind == "average":
+            elif kind_plot == "average":
                 avg_preds = pd_result.average
-            else:  # kind='both'
+            else:  # kind_plot == 'both'
                 avg_preds = pd_result.average
                 preds = pd_result.individual
 
             if len(feature_values) == 1:
+                # define the line-style for the current plot
+                default_line_kws = {
+                    "color": "C0",
+                    "label": "average" if kind_plot == "both" else None,
+                }
+                if kind_plot == "individual":
+                    default_ice_lines_kws = {"alpha": 0.3, "linewidth": 0.5}
+                    default_pd_lines_kws = {}
+                elif kind_plot == "both":
+                    # by default, we need to distinguish the average line from
+                    # the individual lines via color and line style
+                    default_ice_lines_kws = {
+                        "alpha": 0.3,
+                        "linewidth": 0.5,
+                        "color": "tab:blue",
+                    }
+                    default_pd_lines_kws = {
+                        "color": "tab:orange",
+                        "linestyle": "--",
+                    }
+                else:
+                    default_ice_lines_kws = {}
+                    default_pd_lines_kws = {}
+
+                ice_lines_kw = {
+                    **default_line_kws,
+                    **default_ice_lines_kws,
+                    **line_kw,
+                    **ice_lines_kw,
+                }
+                del ice_lines_kw["label"]
+
+                pd_line_kw = {
+                    **default_line_kws,
+                    **default_pd_lines_kws,
+                    **line_kw,
+                    **pd_line_kw,
+                }
+
                 self._plot_one_way_partial_dependence(
+                    kind_plot,
                     preds,
                     avg_preds,
                     feature_values[0],
@@ -1395,6 +1596,7 @@ class PartialDependenceDisplay:
                     n_lines,
                     ice_lines_kw,
                     pd_line_kw,
+                    pdp_lim,
                 )
             else:
                 self._plot_two_way_partial_dependence(

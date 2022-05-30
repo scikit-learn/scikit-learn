@@ -567,14 +567,18 @@ will use the column names to select the columns::
 Visualizing Composite Estimators
 ================================
 
-Estimators can be displayed with a HTML representation when shown in a
-jupyter notebook. This can be useful to diagnose or visualize a Pipeline with
-many estimators. This visualization is activated by setting the
-`display` option in :func:`~sklearn.set_config`::
+Estimators are displayed with an HTML representation when shown in a
+jupyter notebook. This is useful to diagnose or visualize a Pipeline with
+many estimators. This visualization is activated by default::
+
+  >>> column_trans  # doctest: +SKIP
+
+It can be deactivated by setting the `display` option in :func:`~sklearn.set_config`
+to 'text'::
 
   >>> from sklearn import set_config
-  >>> set_config(display='diagram')   # doctest: +SKIP
-  >>> # displays HTML representation in a jupyter context
+  >>> set_config(display='text')  # doctest: +SKIP
+  >>> # displays text representation in a jupyter context
   >>> column_trans  # doctest: +SKIP
 
 An example of the HTML output can be seen in the

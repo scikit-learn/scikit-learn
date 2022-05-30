@@ -51,6 +51,7 @@ from sklearn.utils.estimator_checks import (
     parametrize_with_checks,
     check_dataframe_column_names_consistency,
     check_n_features_in_after_fitting,
+    check_param_validation,
     check_transformer_get_feature_names_out,
     check_transformer_get_feature_names_out_pandas,
 )
@@ -115,8 +116,6 @@ def test_check_estimator_generate_only():
     assert isgenerator(all_instance_gen_checks)
 
 
-@ignore_warnings(category=(DeprecationWarning, FutureWarning))
-# ignore deprecated open(.., 'U') in numpy distutils
 def test_configure():
     # Smoke test the 'configure' step of setup, this tests all the
     # 'configure' functions in the setup.pys in scikit-learn
@@ -369,7 +368,7 @@ column_name_estimators = list(
 def test_pandas_column_name_consistency(estimator):
     _set_checking_parameters(estimator)
     with ignore_warnings(category=(FutureWarning)):
-        with pytest.warns(None) as record:
+        with warnings.catch_warnings(record=True) as record:
             check_dataframe_column_names_consistency(
                 estimator.__class__.__name__, estimator
             )
@@ -380,16 +379,8 @@ def test_pandas_column_name_consistency(estimator):
 # TODO: As more modules support get_feature_names_out they should be removed
 # from this list to be tested
 GET_FEATURES_OUT_MODULES_TO_IGNORE = [
-    "cluster",
-    "cross_decomposition",
-    "discriminant_analysis",
     "ensemble",
-    "isotonic",
     "kernel_approximation",
-    "preprocessing",
-    "manifold",
-    "neighbors",
-    "neural_network",
 ]
 
 
@@ -423,11 +414,7 @@ def test_transformers_get_feature_names_out(transformer):
 
 
 VALIDATE_ESTIMATOR_INIT = [
-    "ColumnTransformer",
-    "FeatureUnion",
     "SGDOneClassSVM",
-    "TheilSenRegressor",
-    "TweedieRegressor",
 ]
 VALIDATE_ESTIMATOR_INIT = set(VALIDATE_ESTIMATOR_INIT)
 
@@ -447,7 +434,7 @@ def test_estimators_do_not_raise_errors_in_init_or_set_params(Estimator):
         if param.kind != Parameter.VAR_KEYWORD
     ]
 
-    smoke_test_values = [-1, 3.0, "helloworld", np.array([1.0, 4.0]), {}, []]
+    smoke_test_values = [-1, 3.0, "helloworld", np.array([1.0, 4.0]), [1], {}, []]
     for value in smoke_test_values:
         new_params = {key: value for key in params}
 
@@ -456,3 +443,213 @@ def test_estimators_do_not_raise_errors_in_init_or_set_params(Estimator):
 
         # Also do does not raise
         est.set_params(**new_params)
+
+
+PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
+    "ARDRegression",
+    "AdaBoostClassifier",
+    "AdaBoostRegressor",
+    "AdditiveChi2Sampler",
+    "AffinityPropagation",
+    "AgglomerativeClustering",
+    "BaggingClassifier",
+    "BaggingRegressor",
+    "BayesianGaussianMixture",
+    "BayesianRidge",
+    "BernoulliNB",
+    "BernoulliRBM",
+    "Binarizer",
+    "Birch",
+    "CCA",
+    "CalibratedClassifierCV",
+    "CategoricalNB",
+    "ClassifierChain",
+    "ComplementNB",
+    "CountVectorizer",
+    "DBSCAN",
+    "DecisionTreeClassifier",
+    "DecisionTreeRegressor",
+    "DictVectorizer",
+    "DictionaryLearning",
+    "DummyClassifier",
+    "DummyRegressor",
+    "ElasticNet",
+    "ElasticNetCV",
+    "EllipticEnvelope",
+    "EmpiricalCovariance",
+    "ExtraTreeClassifier",
+    "ExtraTreeRegressor",
+    "ExtraTreesClassifier",
+    "ExtraTreesRegressor",
+    "FactorAnalysis",
+    "FastICA",
+    "FeatureAgglomeration",
+    "FeatureHasher",
+    "FunctionTransformer",
+    "GammaRegressor",
+    "GaussianMixture",
+    "GaussianNB",
+    "GaussianProcessClassifier",
+    "GaussianProcessRegressor",
+    "GaussianRandomProjection",
+    "GenericUnivariateSelect",
+    "GradientBoostingClassifier",
+    "GradientBoostingRegressor",
+    "GraphicalLasso",
+    "GraphicalLassoCV",
+    "HashingVectorizer",
+    "HistGradientBoostingClassifier",
+    "HistGradientBoostingRegressor",
+    "HuberRegressor",
+    "IncrementalPCA",
+    "IsolationForest",
+    "Isomap",
+    "IsotonicRegression",
+    "IterativeImputer",
+    "KBinsDiscretizer",
+    "KNNImputer",
+    "KNeighborsClassifier",
+    "KNeighborsRegressor",
+    "KNeighborsTransformer",
+    "KernelDensity",
+    "KernelPCA",
+    "KernelRidge",
+    "LabelBinarizer",
+    "LabelPropagation",
+    "LabelSpreading",
+    "Lars",
+    "LarsCV",
+    "Lasso",
+    "LassoCV",
+    "LassoLars",
+    "LassoLarsCV",
+    "LassoLarsIC",
+    "LatentDirichletAllocation",
+    "LedoitWolf",
+    "LinearDiscriminantAnalysis",
+    "LinearRegression",
+    "LinearSVC",
+    "LinearSVR",
+    "LocalOutlierFactor",
+    "LocallyLinearEmbedding",
+    "LogisticRegression",
+    "LogisticRegressionCV",
+    "MDS",
+    "MLPClassifier",
+    "MLPRegressor",
+    "MaxAbsScaler",
+    "MeanShift",
+    "MinCovDet",
+    "MinMaxScaler",
+    "MiniBatchDictionaryLearning",
+    "MiniBatchNMF",
+    "MiniBatchSparsePCA",
+    "MissingIndicator",
+    "MultiLabelBinarizer",
+    "MultiOutputClassifier",
+    "MultiOutputRegressor",
+    "MultiTaskElasticNet",
+    "MultiTaskElasticNetCV",
+    "MultiTaskLasso",
+    "MultiTaskLassoCV",
+    "MultinomialNB",
+    "NMF",
+    "NearestCentroid",
+    "NearestNeighbors",
+    "NeighborhoodComponentsAnalysis",
+    "Normalizer",
+    "NuSVC",
+    "NuSVR",
+    "Nystroem",
+    "OAS",
+    "OPTICS",
+    "OneClassSVM",
+    "OneHotEncoder",
+    "OneVsOneClassifier",
+    "OneVsRestClassifier",
+    "OrdinalEncoder",
+    "OrthogonalMatchingPursuit",
+    "OrthogonalMatchingPursuitCV",
+    "OutputCodeClassifier",
+    "PCA",
+    "PLSCanonical",
+    "PLSRegression",
+    "PLSSVD",
+    "PassiveAggressiveClassifier",
+    "PassiveAggressiveRegressor",
+    "PatchExtractor",
+    "Perceptron",
+    "PoissonRegressor",
+    "PolynomialCountSketch",
+    "PolynomialFeatures",
+    "PowerTransformer",
+    "QuadraticDiscriminantAnalysis",
+    "QuantileRegressor",
+    "QuantileTransformer",
+    "RANSACRegressor",
+    "RBFSampler",
+    "RFE",
+    "RFECV",
+    "RadiusNeighborsClassifier",
+    "RadiusNeighborsRegressor",
+    "RadiusNeighborsTransformer",
+    "RandomForestClassifier",
+    "RandomForestRegressor",
+    "RandomTreesEmbedding",
+    "RegressorChain",
+    "Ridge",
+    "RidgeCV",
+    "RidgeClassifier",
+    "RidgeClassifierCV",
+    "RobustScaler",
+    "SGDClassifier",
+    "SGDOneClassSVM",
+    "SGDRegressor",
+    "SVC",
+    "SVR",
+    "SelectFdr",
+    "SelectFpr",
+    "SelectFromModel",
+    "SelectFwe",
+    "SelectKBest",
+    "SelectPercentile",
+    "SelfTrainingClassifier",
+    "SequentialFeatureSelector",
+    "ShrunkCovariance",
+    "SimpleImputer",
+    "SkewedChi2Sampler",
+    "SparsePCA",
+    "SparseRandomProjection",
+    "SpectralBiclustering",
+    "SpectralClustering",
+    "SpectralCoclustering",
+    "SpectralEmbedding",
+    "SplineTransformer",
+    "StackingClassifier",
+    "StackingRegressor",
+    "StandardScaler",
+    "TSNE",
+    "TfidfTransformer",
+    "TfidfVectorizer",
+    "TheilSenRegressor",
+    "TransformedTargetRegressor",
+    "TruncatedSVD",
+    "TweedieRegressor",
+    "VarianceThreshold",
+    "VotingClassifier",
+    "VotingRegressor",
+]
+
+
+@pytest.mark.parametrize(
+    "estimator", _tested_estimators(), ids=_get_check_estimator_ids
+)
+def test_check_param_validation(estimator):
+    name = estimator.__class__.__name__
+    if name in PARAM_VALIDATION_ESTIMATORS_TO_IGNORE:
+        pytest.skip(
+            f"Skipping check_param_validation for {name}: Does not use the "
+            "appropriate API for parameter validation yet."
+        )
+    _set_checking_parameters(estimator)
+    check_param_validation(name, estimator)

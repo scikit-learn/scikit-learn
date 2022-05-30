@@ -25,8 +25,10 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.multiclass import OneVsOneClassifier
 from sklearn.ensemble import StackingClassifier
 from sklearn.ensemble import StackingRegressor
-from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import RationalQuadratic
+from sklearn.gaussian_process.kernels import ExpSineSquared
+from sklearn.kernel_ridge import KernelRidge
+
+from sklearn.model_selection import RandomizedSearchCV
 from sklearn.utils._estimator_html_repr import _write_label_html
 from sklearn.utils._estimator_html_repr import _get_visual_block
 from sklearn.utils._estimator_html_repr import estimator_html_repr
@@ -265,13 +267,16 @@ def test_ovo_classifier_duck_typing_meta():
 
 
 def test_duck_typing_nested_estimator():
-    # Test duck typing metaestimators with GP
-    kernel = RationalQuadratic(length_scale=1.0, alpha=0.1)
-    gp = GaussianProcessRegressor(kernel=kernel)
-    html_output = estimator_html_repr(gp)
+    # Test duck typing metaestimators with random search
+    kernel_ridge = KernelRidge(kernel=ExpSineSquared())
+    param_distributions = {"alpha": [1, 2]}
 
-    assert f"<pre>{html.escape(str(kernel))}" in html_output
-    assert f"<pre>{html.escape(str(gp))}" in html_output
+    kernel_ridge_tuned = RandomizedSearchCV(
+        kernel_ridge,
+        param_distributions=param_distributions,
+    )
+    html_output = estimator_html_repr(kernel_ridge_tuned)
+    assert "estimator: KernelRidge</label>" in html_output
 
 
 @pytest.mark.parametrize("print_changed_only", [True, False])

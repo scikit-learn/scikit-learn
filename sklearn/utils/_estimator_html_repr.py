@@ -2,10 +2,25 @@ from contextlib import closing
 from contextlib import suppress
 from io import StringIO
 from string import Template
-import uuid
 import html
 
 from .. import config_context
+
+
+class _IDCounter:
+    """Generate sequential ids with a prefix."""
+
+    def __init__(self, prefix):
+        self.prefix = prefix
+        self.count = 0
+
+    def get_id(self):
+        self.count += 1
+        return f"{self.prefix}-{self.count}"
+
+
+_CONTAINER_ID_COUNTER = _IDCounter("sk-container-id")
+_ESTIMATOR_ID_COUNTER = _IDCounter("sk-estimator-id")
 
 
 class _VisualBlock:
@@ -73,7 +88,7 @@ def _write_label_html(
         label_class = "sk-toggleable__label sk-toggleable__label-arrow"
 
         checked_str = "checked" if checked else ""
-        est_id = uuid.uuid4()
+        est_id = _ESTIMATOR_ID_COUNTER.get_id()
         out.write(
             '<input class="sk-toggleable__control sk-hidden--visually" '
             f'id="{est_id}" type="checkbox" {checked_str}>'
@@ -100,13 +115,18 @@ def _get_visual_block(estimator):
 
     # check if estimator looks like a meta estimator wraps estimators
     if hasattr(estimator, "get_params"):
-        estimators = []
-        for key, value in estimator.get_params().items():
-            # Only look at the estimators in the first layer
-            if "__" not in key and hasattr(value, "get_params"):
-                estimators.append(value)
-        if len(estimators):
-            return _VisualBlock("parallel", estimators, names=None)
+        estimators = [
+            (key, est)
+            for key, est in estimator.get_params(deep=False).items()
+            if hasattr(est, "get_params") and hasattr(est, "fit")
+        ]
+        if estimators:
+            return _VisualBlock(
+                "parallel",
+                [est for _, est in estimators],
+                names=[f"{key}: {est.__class__.__name__}" for key, est in estimators],
+                name_details=[str(est) for _, est in estimators],
+            )
 
     return _VisualBlock(
         "single",
@@ -255,9 +275,10 @@ _STYLE = """
   position: absolute;
   border-left: 1px solid gray;
   box-sizing: border-box;
-  top: 2em;
+  top: 0;
   bottom: 0;
   left: 50%;
+  z-index: 0;
 }
 #$id div.sk-serial {
   display: flex;
@@ -266,8 +287,10 @@ _STYLE = """
   background-color: white;
   padding-right: 0.2em;
   padding-left: 0.2em;
+  position: relative;
 }
 #$id div.sk-item {
+  position: relative;
   z-index: 1;
 }
 #$id div.sk-parallel {
@@ -275,19 +298,22 @@ _STYLE = """
   align-items: stretch;
   justify-content: center;
   background-color: white;
+  position: relative;
 }
-#$id div.sk-parallel::before {
+#$id div.sk-item::before, #$id div.sk-parallel-item::before {
   content: "";
   position: absolute;
   border-left: 1px solid gray;
   box-sizing: border-box;
-  top: 2em;
+  top: 0;
   bottom: 0;
   left: 50%;
+  z-index: -1;
 }
 #$id div.sk-parallel-item {
   display: flex;
   flex-direction: column;
+  z-index: 1;
   position: relative;
   background-color: white;
 }
@@ -308,18 +334,14 @@ _STYLE = """
   box-sizing: border-box;
   padding-bottom: 0.4em;
   background-color: white;
-  position: relative;
 }
 #$id div.sk-label label {
   font-family: monospace;
   font-weight: bold;
-  background-color: white;
   display: inline-block;
   line-height: 1.2em;
 }
 #$id div.sk-label-container {
-  position: relative;
-  z-index: 2;
   text-align: center;
 }
 #$id div.sk-container {
@@ -357,7 +379,7 @@ def estimator_html_repr(estimator):
         HTML representation of estimator.
     """
     with closing(StringIO()) as out:
-        container_id = "sk-" + str(uuid.uuid4())
+        container_id = _CONTAINER_ID_COUNTER.get_id()
         style_template = Template(_STYLE)
         style_with_id = style_template.substitute(id=container_id)
         estimator_str = str(estimator)
@@ -372,7 +394,10 @@ def estimator_html_repr(estimator):
         # The reverse logic applies to HTML repr div.sk-container.
         # div.sk-container is hidden by default and the loading the CSS displays it.
         fallback_msg = (
-            "Please rerun this cell to show the HTML repr or trust the notebook."
+            "In a Jupyter environment, please rerun this cell to show the HTML"
+            " representation or trust the notebook. <br />On GitHub, the"
+            " HTML representation is unable to render, please try loading this page"
+            " with nbviewer.org."
         )
         out.write(
             f"<style>{style_with_id}</style>"

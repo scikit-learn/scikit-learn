@@ -23,7 +23,6 @@ import numpy as np
 from scipy import sparse as sp
 
 from ._expected_mutual_info_fast import expected_mutual_information
-from ...utils.fixes import _astype_copy_false
 from ...utils.multiclass import type_of_target
 from ...utils.validation import check_array, check_consistent_length
 
@@ -228,12 +227,12 @@ def pair_confusion_matrix(labels_true, labels_pred):
     )
     n_c = np.ravel(contingency.sum(axis=1))
     n_k = np.ravel(contingency.sum(axis=0))
-    sum_squares = (contingency.data ** 2).sum()
+    sum_squares = (contingency.data**2).sum()
     C = np.empty((2, 2), dtype=np.int64)
     C[1, 1] = sum_squares - n_samples
     C[0, 1] = contingency.dot(n_k).sum() - sum_squares
     C[1, 0] = contingency.transpose().dot(n_c).sum() - sum_squares
-    C[0, 0] = n_samples ** 2 - C[0, 1] - C[1, 0] - sum_squares
+    C[0, 0] = n_samples**2 - C[0, 1] - C[1, 0] - sum_squares
     return C
 
 
@@ -504,15 +503,20 @@ def homogeneity_score(labels_true, labels_pred):
     Parameters
     ----------
     labels_true : int array, shape = [n_samples]
-        ground truth class labels to be used as a reference
+        Ground truth class labels to be used as a reference.
 
     labels_pred : array-like of shape (n_samples,)
-        cluster labels to evaluate
+        Cluster labels to evaluate.
 
     Returns
     -------
     homogeneity : float
-       score between 0.0 and 1.0. 1.0 stands for perfectly homogeneous labeling
+       Score between 0.0 and 1.0. 1.0 stands for perfectly homogeneous labeling.
+
+    See Also
+    --------
+    completeness_score : Completeness metric of cluster labeling.
+    v_measure_score : V-Measure (NMI with arithmetic mean option).
 
     References
     ----------
@@ -520,11 +524,6 @@ def homogeneity_score(labels_true, labels_pred):
     .. [1] `Andrew Rosenberg and Julia Hirschberg, 2007. V-Measure: A
        conditional entropy-based external cluster evaluation measure
        <https://aclweb.org/anthology/D/D07/D07-1043.pdf>`_
-
-    See Also
-    --------
-    completeness_score
-    v_measure_score
 
     Examples
     --------
@@ -555,7 +554,7 @@ def homogeneity_score(labels_true, labels_pred):
 
 
 def completeness_score(labels_true, labels_pred):
-    """Completeness metric of a cluster labeling given a ground truth.
+    """Compute completeness metric of a cluster labeling given a ground truth.
 
     A clustering result satisfies completeness if all the data points
     that are members of a given class are elements of the same cluster.
@@ -573,15 +572,20 @@ def completeness_score(labels_true, labels_pred):
     Parameters
     ----------
     labels_true : int array, shape = [n_samples]
-        ground truth class labels to be used as a reference
+        Ground truth class labels to be used as a reference.
 
     labels_pred : array-like of shape (n_samples,)
-        cluster labels to evaluate
+        Cluster labels to evaluate.
 
     Returns
     -------
     completeness : float
-       score between 0.0 and 1.0. 1.0 stands for perfectly complete labeling
+       Score between 0.0 and 1.0. 1.0 stands for perfectly complete labeling.
+
+    See Also
+    --------
+    homogeneity_score : Homogeneity metric of cluster labeling.
+    v_measure_score : V-Measure (NMI with arithmetic mean option).
 
     References
     ----------
@@ -589,11 +593,6 @@ def completeness_score(labels_true, labels_pred):
     .. [1] `Andrew Rosenberg and Julia Hirschberg, 2007. V-Measure: A
        conditional entropy-based external cluster evaluation measure
        <https://aclweb.org/anthology/D/D07/D07-1043.pdf>`_
-
-    See Also
-    --------
-    homogeneity_score
-    v_measure_score
 
     Examples
     --------
@@ -801,6 +800,12 @@ def mutual_info_score(labels_true, labels_pred, *, contingency=None):
     contingency_sum = contingency.sum()
     pi = np.ravel(contingency.sum(axis=1))
     pj = np.ravel(contingency.sum(axis=0))
+
+    # Since MI <= min(H(X), H(Y)), any labelling with zero entropy, i.e. containing a
+    # single cluster, implies MI = 0
+    if pi.size == 1 or pj.size == 1:
+        return 0.0
+
     log_contingency_nm = np.log(nz_val)
     contingency_nm = nz_val / contingency_sum
     # Don't need to calculate the full outer product, just for non-zeroes
@@ -911,15 +916,18 @@ def adjusted_mutual_info_score(
     n_samples = labels_true.shape[0]
     classes = np.unique(labels_true)
     clusters = np.unique(labels_pred)
+
     # Special limit cases: no clustering since the data is not split.
+    # It corresponds to both labellings having zero entropy.
     # This is a perfect match hence return 1.0.
     if (
         classes.shape[0] == clusters.shape[0] == 1
         or classes.shape[0] == clusters.shape[0] == 0
     ):
         return 1.0
+
     contingency = contingency_matrix(labels_true, labels_pred, sparse=True)
-    contingency = contingency.astype(np.float64, **_astype_copy_false(contingency))
+    contingency = contingency.astype(np.float64, copy=False)
     # Calculate the MI for the two clusterings
     mi = mutual_info_score(labels_true, labels_pred, contingency=contingency)
     # Calculate the expected value for the mutual information
@@ -1022,24 +1030,30 @@ def normalized_mutual_info_score(
     clusters = np.unique(labels_pred)
 
     # Special limit cases: no clustering since the data is not split.
+    # It corresponds to both labellings having zero entropy.
     # This is a perfect match hence return 1.0.
     if (
         classes.shape[0] == clusters.shape[0] == 1
         or classes.shape[0] == clusters.shape[0] == 0
     ):
         return 1.0
+
     contingency = contingency_matrix(labels_true, labels_pred, sparse=True)
-    contingency = contingency.astype(np.float64, **_astype_copy_false(contingency))
+    contingency = contingency.astype(np.float64, copy=False)
     # Calculate the MI for the two clusterings
     mi = mutual_info_score(labels_true, labels_pred, contingency=contingency)
-    # Calculate the expected value for the mutual information
+
+    # At this point mi = 0 can't be a perfect match (the special case of a single
+    # cluster has been dealt with before). Hence, if mi = 0, the nmi must be 0 whatever
+    # the normalization.
+    if mi == 0:
+        return 0.0
+
     # Calculate entropy for each labeling
     h_true, h_pred = entropy(labels_true), entropy(labels_pred)
+
     normalizer = _generalized_average(h_true, h_pred, average_method)
-    # Avoid 0.0 / 0.0 when either entropy is zero.
-    normalizer = max(normalizer, np.finfo("float64").eps)
-    nmi = mi / normalizer
-    return nmi
+    return mi / normalizer
 
 
 def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
@@ -1113,7 +1127,7 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
     (n_samples,) = labels_true.shape
 
     c = contingency_matrix(labels_true, labels_pred, sparse=True)
-    c = c.astype(np.int64, **_astype_copy_false(c))
+    c = c.astype(np.int64, copy=False)
     tk = np.dot(c.data, c.data) - n_samples
     pk = np.sum(np.asarray(c.sum(axis=0)).ravel() ** 2) - n_samples
     qk = np.sum(np.asarray(c.sum(axis=1)).ravel() ** 2) - n_samples
@@ -1125,8 +1139,8 @@ def entropy(labels):
 
     Parameters
     ----------
-    labels : int array, shape = [n_samples]
-        The labels
+    labels : array-like of shape (n_samples,), dtype=int
+        The labels.
 
     Notes
     -----
@@ -1137,6 +1151,11 @@ def entropy(labels):
     label_idx = np.unique(labels, return_inverse=True)[1]
     pi = np.bincount(label_idx).astype(np.float64)
     pi = pi[pi > 0]
+
+    # single cluster => zero entropy
+    if pi.size == 1:
+        return 0.0
+
     pi_sum = np.sum(pi)
     # log(a / b) should be calculated as log(a) - log(b) for
     # possible loss of precision

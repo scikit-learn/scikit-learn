@@ -4,6 +4,7 @@
 # Modified by Thierry Guillemot <thierry.guillemot.work@gmail.com>
 # License: BSD 3 clause
 
+import numbers
 import warnings
 from abc import ABCMeta, abstractmethod
 from time import time
@@ -12,10 +13,11 @@ import numpy as np
 from scipy.special import logsumexp
 
 from .. import cluster
+from ..cluster import kmeans_plusplus
 from ..base import BaseEstimator
 from ..base import DensityMixin
 from ..exceptions import ConvergenceWarning
-from ..utils import check_random_state
+from ..utils import check_random_state, check_scalar
 from ..utils.validation import check_is_fitted
 
 
@@ -76,40 +78,26 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         ----------
         X : array-like of shape (n_samples, n_features)
         """
-        if self.n_components < 1:
-            raise ValueError(
-                "Invalid value for 'n_components': %d "
-                "Estimation requires at least one component"
-                % self.n_components
-            )
+        check_scalar(
+            self.n_components,
+            name="n_components",
+            target_type=numbers.Integral,
+            min_val=1,
+        )
 
-        if self.tol < 0.0:
-            raise ValueError(
-                "Invalid value for 'tol': %.5f "
-                "Tolerance used by the EM must be non-negative"
-                % self.tol
-            )
+        check_scalar(self.tol, name="tol", target_type=numbers.Real, min_val=0.0)
 
-        if self.n_init < 1:
-            raise ValueError(
-                "Invalid value for 'n_init': %d Estimation requires at least one run"
-                % self.n_init
-            )
+        check_scalar(
+            self.n_init, name="n_init", target_type=numbers.Integral, min_val=1
+        )
 
-        if self.max_iter < 1:
-            raise ValueError(
-                "Invalid value for 'max_iter': %d "
-                "Estimation requires at least one iteration"
-                % self.max_iter
-            )
+        check_scalar(
+            self.max_iter, name="max_iter", target_type=numbers.Integral, min_val=0
+        )
 
-        if self.reg_covar < 0.0:
-            raise ValueError(
-                "Invalid value for 'reg_covar': %.5f "
-                "regularization on covariance must be "
-                "non-negative"
-                % self.reg_covar
-            )
+        check_scalar(
+            self.reg_covar, name="reg_covar", target_type=numbers.Real, min_val=0.0
+        )
 
         # Check all the parameters values of the derived class
         self._check_parameters(X)
@@ -148,8 +136,22 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             )
             resp[np.arange(n_samples), label] = 1
         elif self.init_params == "random":
-            resp = random_state.rand(n_samples, self.n_components)
+            resp = random_state.uniform(size=(n_samples, self.n_components))
             resp /= resp.sum(axis=1)[:, np.newaxis]
+        elif self.init_params == "random_from_data":
+            resp = np.zeros((n_samples, self.n_components))
+            indices = random_state.choice(
+                n_samples, size=self.n_components, replace=False
+            )
+            resp[indices, np.arange(self.n_components)] = 1
+        elif self.init_params == "k-means++":
+            resp = np.zeros((n_samples, self.n_components))
+            _, indices = kmeans_plusplus(
+                X,
+                self.n_components,
+                random_state=random_state,
+            )
+            resp[indices, np.arange(self.n_components)] = 1
         else:
             raise ValueError(
                 "Unimplemented initialization method '%s'" % self.init_params
@@ -252,28 +254,35 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
 
             lower_bound = -np.inf if do_init else self.lower_bound_
 
-            for n_iter in range(1, self.max_iter + 1):
-                prev_lower_bound = lower_bound
-
-                log_prob_norm, log_resp = self._e_step(X)
-                self._m_step(X, log_resp)
-                lower_bound = self._compute_lower_bound(log_resp, log_prob_norm)
-
-                change = lower_bound - prev_lower_bound
-                self._print_verbose_msg_iter_end(n_iter, change)
-
-                if abs(change) < self.tol:
-                    self.converged_ = True
-                    break
-
-            self._print_verbose_msg_init_end(lower_bound)
-
-            if lower_bound > max_lower_bound or max_lower_bound == -np.inf:
-                max_lower_bound = lower_bound
+            if self.max_iter == 0:
                 best_params = self._get_parameters()
-                best_n_iter = n_iter
+                best_n_iter = 0
+            else:
+                for n_iter in range(1, self.max_iter + 1):
+                    prev_lower_bound = lower_bound
 
-        if not self.converged_:
+                    log_prob_norm, log_resp = self._e_step(X)
+                    self._m_step(X, log_resp)
+                    lower_bound = self._compute_lower_bound(log_resp, log_prob_norm)
+
+                    change = lower_bound - prev_lower_bound
+                    self._print_verbose_msg_iter_end(n_iter, change)
+
+                    if abs(change) < self.tol:
+                        self.converged_ = True
+                        break
+
+                self._print_verbose_msg_init_end(lower_bound)
+
+                if lower_bound > max_lower_bound or max_lower_bound == -np.inf:
+                    max_lower_bound = lower_bound
+                    best_params = self._get_parameters()
+                    best_n_iter = n_iter
+
+        # Should only warn about convergence if max_iter > 0, otherwise
+        # the user is assumed to have used 0-iters initialization
+        # to get the initial means.
+        if not self.converged_ and self.max_iter > 0:
             warnings.warn(
                 "Initialization %d did not converge. "
                 "Try different init parameters, "
@@ -456,7 +465,9 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         else:
             X = np.vstack(
                 [
-                    mean + rng.randn(sample, n_features) * np.sqrt(covariance)
+                    mean
+                    + rng.standard_normal(size=(sample, n_features))
+                    * np.sqrt(covariance)
                     for (mean, covariance, sample) in zip(
                         self.means_, self.covariances_, n_samples_comp
                     )

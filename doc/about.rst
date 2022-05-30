@@ -39,14 +39,14 @@ in the FAQ.
 
    :ref:`How you can contribute to the project <contributing>`
 
-Triage Team
------------
+Contributor Experience Team
+---------------------------
 
 The following people are active contributors who also help with
 :ref:`triaging issues <bug_triaging>`, PRs, and general
 maintenance:
 
-.. include:: triage_team.rst
+.. include:: contributor_experience_team.rst
 
 Communication Team
 ------------------
@@ -64,6 +64,14 @@ The following people have been active contributors in the past, but are no
 longer active in the project:
 
 .. include:: authors_emeritus.rst
+
+Emeritus Communication Team
+---------------------------
+
+The following people have been active in the communication team in the
+past, but no longer have communication responsibilities:
+
+.. include:: communication_team_emeritus.rst
 
 
 .. _citing-scikit-learn:
@@ -140,7 +148,7 @@ The project would like to thank the following funders.
 The `Members <https://scikit-learn.fondation-inria.fr/en/home/#sponsors>`_ of
 the `Scikit-Learn Consortium at Inria Foundation
 <https://scikit-learn.fondation-inria.fr/en/home/>`_  fund Olivier
-Grisel, Guillaume Lemaitre, Jérémie du Boisberranger and Chiara Marmo.
+Grisel, Guillaume Lemaitre, and Jérémie du Boisberranger.
 
 .. raw:: html
 
@@ -211,32 +219,6 @@ Grisel, Guillaume Lemaitre, Jérémie du Boisberranger and Chiara Marmo.
    </div>
    </div>
 
-........
-
-.. raw:: html
-
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
-
-`The University of Sydney <https://sydney.edu.au/>`_ funds Joel Nothman since
-July 2017.
-
-.. raw:: html
-
-   </div>
-
-   <div class="sk-sponsor-div-box">
-
-.. image:: images/sydney-primary.jpeg
-   :width: 100pt
-   :align: center
-   :target: https://sydney.edu.au/
-
-.. raw:: html
-
-   </div>
-   </div>
-
 ..........
 
 .. raw:: html
@@ -244,8 +226,7 @@ July 2017.
    <div class="sk-sponsor-div">
    <div class="sk-sponsor-div-box">
 
-`Zalando SE <https://corporate.zalando.com/en>`_ funds Adrin Jalali since
-August 2020.
+`Hugging Face <https://huggingface.co/>`_ funds Adrin Jalali since 2022.
 
 .. raw:: html
 
@@ -253,10 +234,10 @@ August 2020.
 
    <div class="sk-sponsor-div-box">
 
-.. image:: images/zalando_logo.png
-   :width: 100pt
+.. image:: images/huggingface_logo-noborder.png
+   :width: 55pt
    :align: center
-   :target: https://corporate.zalando.com/en
+   :target: https://huggingface.co/
 
 .. raw:: html
 
@@ -340,6 +321,32 @@ Past Sponsors
    </div>
    </div>
 
+........
+
+.. raw:: html
+
+   <div class="sk-sponsor-div">
+   <div class="sk-sponsor-div-box">
+
+`The University of Sydney <https://sydney.edu.au/>`_ funded Joel Nothman
+(2017-2021).
+
+.. raw:: html
+
+   </div>
+
+   <div class="sk-sponsor-div-box">
+
+.. image:: images/sydney-primary.jpeg
+   :width: 100pt
+   :align: center
+   :target: https://sydney.edu.au/
+
+.. raw:: html
+
+   </div>
+   </div>
+
 ...........
 
 .. raw:: html
@@ -417,31 +424,6 @@ time of Joris van den Bossche (2017-2018).
    :width: 100pt
    :align: center
    :target: https://www.datascience-paris-saclay.fr/
-
-.. raw:: html
-
-   </div>
-   </div>
-
-............
-
-.. raw:: html
-
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
-
-`Anaconda, Inc <https://www.anaconda.com/>`_ funded Adrin Jalali in 2019.
-
-.. raw:: html
-
-   </div>
-
-   <div class="sk-sponsor-div-box">
-
-.. image:: images/anaconda.png
-   :width: 100pt
-   :align: center
-   :target: https://www.anaconda.com/
 
 .. raw:: html
 

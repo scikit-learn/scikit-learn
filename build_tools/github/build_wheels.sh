@@ -7,8 +7,8 @@ set -x
 if [[ "$RUNNER_OS" == "macOS" ]]; then
     # Make sure to use a libomp version binary compatible with the oldest
     # supported version of the macos SDK as libomp will be vendored into the
-    # scikit-learn wheels for macos. The list of binaries are in
-    # https://packages.macports.org/libomp/.
+    # scikit-learn wheels for macos.
+
     if [[ "$CIBW_BUILD" == *-macosx_arm64 ]]; then
         # arm64 builds must cross compile because CI is on x64
         export PYTHON_CROSSENV=1
@@ -16,21 +16,23 @@ if [[ "$RUNNER_OS" == "macOS" ]]; then
         # https://github.com/scipy/scipy/issues/14688
         # We use the same deployment target to match SciPy.
         export MACOSX_DEPLOYMENT_TARGET=12.0
-        wget https://packages.macports.org/libomp/libomp-11.0.1_0.darwin_20.arm64.tbz2 -O libomp.tbz2
+        OPENMP_URL="https://anaconda.org/conda-forge/llvm-openmp/11.1.0/download/osx-arm64/llvm-openmp-11.1.0-hf3c4609_1.tar.bz2"
     else
         # Currently, the oldest supported macos version is: High Sierra / 10.13.
         # Note that Darwin_17 == High Sierra / 10.13.
         export MACOSX_DEPLOYMENT_TARGET=10.13
-        wget https://packages.macports.org/libomp/libomp-11.0.1_0+universal.darwin_17.i386-x86_64.tbz2 -O libomp.tbz2
+        OPENMP_URL="https://anaconda.org/conda-forge/llvm-openmp/11.1.0/download/osx-64/llvm-openmp-11.1.0-hda6cdc1_1.tar.bz2"
     fi
-    sudo tar -C / -xvjf libomp.tbz2 opt
+
+    sudo conda create -n build $OPENMP_URL
+    PREFIX="/usr/local/miniconda/envs/build"
 
     export CC=/usr/bin/clang
     export CXX=/usr/bin/clang++
     export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"
-    export CFLAGS="$CFLAGS -I/opt/local/include/libomp"
-    export CXXFLAGS="$CXXFLAGS -I/opt/local/include/libomp"
-    export LDFLAGS="$LDFLAGS -Wl,-rpath,/opt/local/lib/libomp -L/opt/local/lib/libomp -lomp"
+    export CFLAGS="$CFLAGS -I$PREFIX/include"
+    export CXXFLAGS="$CXXFLAGS -I$PREFIX/include"
+    export LDFLAGS="$LDFLAGS -Wl,-rpath,$PREFIX/lib -L$PREFIX/lib -lomp"
 fi
 
 # The version of the built dependencies are specified

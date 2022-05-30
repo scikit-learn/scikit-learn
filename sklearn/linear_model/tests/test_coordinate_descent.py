@@ -4,6 +4,7 @@
 
 import numpy as np
 import pytest
+import warnings
 from scipy import interpolate, sparse
 from copy import deepcopy
 import joblib
@@ -29,7 +30,6 @@ from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import _convert_container
 
 from sklearn.utils._testing import TempMemmap
-from sklearn.utils.fixes import parse_version
 from sklearn.utils import check_random_state
 from sklearn.utils.sparsefuncs import mean_variance_axis
 
@@ -99,24 +99,47 @@ def test_assure_warning_when_normalize(CoordinateDescentModel, normalize, n_warn
         y = np.stack((y, y), axis=1)
 
     model = CoordinateDescentModel(normalize=normalize)
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings(record=True) as rec:
+        warnings.simplefilter("always", FutureWarning)
         model.fit(X, y)
 
-    record = [r for r in record if r.category == FutureWarning]
-    assert len(record) == n_warnings
+    assert len([w.message for w in rec]) == n_warnings
 
 
-@pytest.mark.parametrize("l1_ratio", (-1, 2, None, 10, "something_wrong"))
-def test_l1_ratio_param_invalid(l1_ratio):
+@pytest.mark.parametrize(
+    "params, err_type, err_msg",
+    [
+        ({"alpha": -1}, ValueError, "alpha == -1, must be >= 0.0"),
+        ({"l1_ratio": -1}, ValueError, "l1_ratio == -1, must be >= 0.0"),
+        ({"l1_ratio": 2}, ValueError, "l1_ratio == 2, must be <= 1.0"),
+        (
+            {"l1_ratio": "1"},
+            TypeError,
+            "l1_ratio must be an instance of float, not str",
+        ),
+        ({"tol": -1.0}, ValueError, "tol == -1.0, must be >= 0."),
+        (
+            {"tol": "1"},
+            TypeError,
+            "tol must be an instance of float, not str",
+        ),
+        ({"max_iter": 0}, ValueError, "max_iter == 0, must be >= 1."),
+        (
+            {"max_iter": "1"},
+            TypeError,
+            "max_iter must be an instance of int, not str",
+        ),
+    ],
+)
+def test_param_invalid(params, err_type, err_msg):
     # Check that correct error is raised when l1_ratio in ElasticNet
     # is outside the correct range
     X = np.array([[-1.0], [0.0], [1.0]])
-    Y = [-1, 0, 1]  # just a straight line
+    y = [-1, 0, 1]  # just a straight line
 
-    msg = "l1_ratio must be between 0 and 1; got l1_ratio="
-    clf = ElasticNet(alpha=0.1, l1_ratio=l1_ratio)
-    with pytest.raises(ValueError, match=msg):
-        clf.fit(X, Y)
+    enet = ElasticNet(**params)
+    with pytest.raises(err_type, match=err_msg):
+        enet.fit(X, y)
 
 
 @pytest.mark.parametrize("order", ["C", "F"])
@@ -165,6 +188,21 @@ def test_lasso_zero():
     assert_array_almost_equal(clf.coef_, [0])
     assert_array_almost_equal(pred, [0, 0, 0])
     assert_almost_equal(clf.dual_gap_, 0)
+
+
+def test_enet_nonfinite_params():
+    # Check ElasticNet throws ValueError when dealing with non-finite parameter
+    # values
+    rng = np.random.RandomState(0)
+    n_samples = 10
+    fmax = np.finfo(np.float64).max
+    X = fmax * rng.uniform(size=(n_samples, 2))
+    y = rng.randint(0, 2, size=n_samples)
+
+    clf = ElasticNet(alpha=0.1)
+    msg = "Coordinate descent iterations resulted in non-finite parameter values"
+    with pytest.raises(ValueError, match=msg):
+        clf.fit(X, y)
 
 
 def test_lasso_toy():
@@ -263,10 +301,10 @@ def test_lasso_dual_gap():
     clf = Lasso(alpha=alpha, fit_intercept=False).fit(X, y)
     w = clf.coef_
     R = y - X @ w
-    primal = 0.5 * np.mean(R ** 2) + clf.alpha * np.sum(np.abs(w))
+    primal = 0.5 * np.mean(R**2) + clf.alpha * np.sum(np.abs(w))
     # dual pt: R / n_samples, dual constraint: norm(X.T @ theta, inf) <= alpha
     R /= np.max(np.abs(X.T @ R) / (n_samples * alpha))
-    dual = 0.5 * (np.mean(y ** 2) - np.mean((y - R) ** 2))
+    dual = 0.5 * (np.mean(y**2) - np.mean((y - R) ** 2))
     assert_allclose(clf.dual_gap_, primal - dual)
 
 
@@ -347,6 +385,35 @@ def test_lasso_cv_positive_constraint():
     )
     clf_constrained.fit(X, y)
     assert min(clf_constrained.coef_) >= 0
+
+
+@pytest.mark.parametrize(
+    "alphas, err_type, err_msg",
+    [
+        (-2, ValueError, r"alphas == -2, must be >= 0.0."),
+        ((1, -1, -100), ValueError, r"alphas\[1\] == -1, must be >= 0.0."),
+        (
+            (-0.1, -1.0, -10.0),
+            ValueError,
+            r"alphas\[0\] == -0.1, must be >= 0.0.",
+        ),
+        (
+            (1, 1.0, "1"),
+            TypeError,
+            r"alphas\[2\] must be an instance of float, not str",
+        ),
+    ],
+)
+def test_lassocv_alphas_validation(alphas, err_type, err_msg):
+    """Check the `alphas` validation in LassoCV."""
+
+    n_samples, n_features = 5, 5
+    rng = np.random.RandomState(0)
+    X = rng.randn(n_samples, n_features)
+    y = rng.randint(0, 2, n_samples)
+    lassocv = LassoCV(alphas=alphas)
+    with pytest.raises(err_type, match=err_msg):
+        lassocv.fit(X, y)
 
 
 def _scale_alpha_inplace(estimator, n_samples):
@@ -486,9 +553,6 @@ def test_linear_model_sample_weights_normalize_in_pipeline(
     # model with normalize set to False in a pipeline with
     # a StandardScaler and sample_weight.
     model_name = estimator.__name__
-
-    if model_name in ["Lasso", "ElasticNet"] and is_sparse:
-        pytest.skip(f"{model_name} does not support sample_weight with sparse")
 
     rng = np.random.RandomState(0)
     X, y = make_regression(n_samples=20, n_features=5, noise=1e-2, random_state=rng)
@@ -1280,6 +1344,16 @@ def test_enet_l1_ratio():
     with pytest.raises(ValueError, match=msg):
         MultiTaskElasticNetCV(l1_ratio=0, random_state=42).fit(X, y[:, None])
 
+    # Test that l1_ratio=0 with alpha>0 produces user warning
+    warning_message = (
+        "Coordinate descent without L1 regularization may "
+        "lead to unexpected results and is discouraged. "
+        "Set l1_ratio > 0 to add L1 regularization."
+    )
+    est = ElasticNetCV(l1_ratio=[0], alphas=[1])
+    with pytest.warns(UserWarning, match=warning_message):
+        est.fit(X, y)
+
     # Test that l1_ratio=0 is allowed if we supply a grid manually
     alphas = [0.1, 10]
     estkwds = {"alphas": alphas, "random_state": 42}
@@ -1351,11 +1425,10 @@ def test_convergence_warnings():
     with pytest.warns(ConvergenceWarning):
         MultiTaskElasticNet(max_iter=1, tol=-1).fit(X, y)
 
-    # check that the model converges w/o warnings
-    with pytest.warns(None) as record:
+    # check that the model converges w/o convergence warnings
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", ConvergenceWarning)
         MultiTaskElasticNet().fit(X, y)
-
-    assert not record.list
 
 
 def test_sparse_input_convergence_warning():
@@ -1364,11 +1437,10 @@ def test_sparse_input_convergence_warning():
     with pytest.warns(ConvergenceWarning):
         ElasticNet(max_iter=1, tol=0).fit(sparse.csr_matrix(X, dtype=np.float32), y)
 
-    # check that the model converges w/o warnings
-    with pytest.warns(None) as record:
+    # check that the model converges w/o convergence warnings
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", ConvergenceWarning)
         Lasso().fit(sparse.csr_matrix(X, dtype=np.float32), y)
-
-    assert not record.list
 
 
 @pytest.mark.parametrize(
@@ -1408,15 +1480,17 @@ def test_multi_task_lasso_cv_dtype():
 
 @pytest.mark.parametrize("fit_intercept", [True, False])
 @pytest.mark.parametrize("alpha", [0.01])
-@pytest.mark.parametrize("normalize", [False, True])
 @pytest.mark.parametrize("precompute", [False, True])
-def test_enet_sample_weight_consistency(fit_intercept, alpha, normalize, precompute):
+@pytest.mark.parametrize("sparseX", [False, True])
+def test_enet_sample_weight_consistency(fit_intercept, alpha, precompute, sparseX):
     """Test that the impact of sample_weight is consistent."""
     rng = np.random.RandomState(0)
     n_samples, n_features = 10, 5
 
     X = rng.rand(n_samples, n_features)
     y = rng.rand(n_samples)
+    if sparseX:
+        X = sparse.csc_matrix(X)
     params = dict(
         alpha=alpha,
         fit_intercept=fit_intercept,
@@ -1466,7 +1540,10 @@ def test_enet_sample_weight_consistency(fit_intercept, alpha, normalize, precomp
 
     # check that multiplying sample_weight by 2 is equivalent
     # to repeating corresponding samples twice
-    X2 = np.concatenate([X, X[: n_samples // 2]], axis=0)
+    if sparseX:
+        X2 = sparse.vstack([X, X[: n_samples // 2]], format="csc")
+    else:
+        X2 = np.concatenate([X, X[: n_samples // 2]], axis=0)
     y2 = np.concatenate([y, y[: n_samples // 2]])
     sample_weight_1 = np.ones(len(y))
     sample_weight_1[: n_samples // 2] = 2
@@ -1474,23 +1551,12 @@ def test_enet_sample_weight_consistency(fit_intercept, alpha, normalize, precomp
     reg1 = ElasticNet(**params).fit(X, y, sample_weight=sample_weight_1)
 
     reg2 = ElasticNet(**params).fit(X2, y2, sample_weight=None)
-    assert_allclose(reg1.coef_, reg2.coef_)
-
-
-@pytest.mark.parametrize("estimator", (Lasso, ElasticNet))
-def test_enet_sample_weight_sparse(estimator):
-    reg = estimator()
-    X = sparse.csc_matrix(np.zeros((3, 2)))
-    y = np.array([-1, 0, 1])
-    sw = np.array([1, 2, 3])
-    with pytest.raises(
-        ValueError, match="Sample weights do not.*support sparse matrices"
-    ):
-        reg.fit(X, y, sample_weight=sw, check_input=True)
+    assert_allclose(reg1.coef_, reg2.coef_, rtol=1e-6)
 
 
 @pytest.mark.parametrize("fit_intercept", [True, False])
-def test_enet_cv_sample_weight_correctness(fit_intercept):
+@pytest.mark.parametrize("sparseX", [False, True])
+def test_enet_cv_sample_weight_correctness(fit_intercept, sparseX):
     """Test that ElasticNetCV with sample weights gives correct results."""
     rng = np.random.RandomState(42)
     n_splits, n_samples, n_features = 3, 10, 5
@@ -1499,6 +1565,9 @@ def test_enet_cv_sample_weight_correctness(fit_intercept):
     beta[0:2] = 0
     y = X @ beta + rng.rand(n_splits * n_samples)
     sw = np.ones_like(y)
+    if sparseX:
+        X = sparse.csc_matrix(X)
+    params = dict(tol=1e-6)
 
     # Set alphas, otherwise the two cv models might use different ones.
     if fit_intercept:
@@ -1513,20 +1582,22 @@ def test_enet_cv_sample_weight_correctness(fit_intercept):
     ]
     splits_sw = list(LeaveOneGroupOut().split(X, groups=groups_sw))
     reg_sw = ElasticNetCV(
-        alphas=alphas,
-        cv=splits_sw,
-        fit_intercept=fit_intercept,
+        alphas=alphas, cv=splits_sw, fit_intercept=fit_intercept, **params
     )
     reg_sw.fit(X, y, sample_weight=sw)
 
     # We repeat the first fold 2 times and provide splits ourselves
+    if sparseX:
+        X = X.toarray()
     X = np.r_[X[:n_samples], X]
+    if sparseX:
+        X = sparse.csc_matrix(X)
     y = np.r_[y[:n_samples], y]
     groups = np.r_[
         np.full(2 * n_samples, 0), np.full(n_samples, 1), np.full(n_samples, 2)
     ]
     splits = list(LeaveOneGroupOut().split(X, groups=groups))
-    reg = ElasticNetCV(alphas=alphas, cv=splits, fit_intercept=fit_intercept)
+    reg = ElasticNetCV(alphas=alphas, cv=splits, fit_intercept=fit_intercept, **params)
     reg.fit(X, y)
 
     # ensure that we chose meaningful alphas, i.e. not boundaries
@@ -1574,7 +1645,10 @@ def test_enet_cv_grid_search(sample_weight):
 @pytest.mark.parametrize("fit_intercept", [True, False])
 @pytest.mark.parametrize("l1_ratio", [0, 0.5, 1])
 @pytest.mark.parametrize("precompute", [False, True])
-def test_enet_cv_sample_weight_consistency(fit_intercept, l1_ratio, precompute):
+@pytest.mark.parametrize("sparseX", [False, True])
+def test_enet_cv_sample_weight_consistency(
+    fit_intercept, l1_ratio, precompute, sparseX
+):
     """Test that the impact of sample_weight is consistent."""
     rng = np.random.RandomState(0)
     n_samples, n_features = 10, 5
@@ -1588,6 +1662,8 @@ def test_enet_cv_sample_weight_consistency(fit_intercept, l1_ratio, precompute):
         tol=1e-6,
         cv=3,
     )
+    if sparseX:
+        X = sparse.csc_matrix(X)
 
     if l1_ratio == 0:
         params.pop("l1_ratio", None)
@@ -1620,26 +1696,11 @@ def test_enet_cv_sample_weight_consistency(fit_intercept, l1_ratio, precompute):
         assert_allclose(reg.intercept_, intercept)
 
 
-@pytest.mark.parametrize("estimator", (LassoCV, ElasticNetCV))
-def test_enet_cv_sample_weight_sparse(estimator):
-    reg = estimator()
-    X = sparse.csc_matrix(np.zeros((3, 2)))
-    y = np.array([-1, 0, 1])
-    sw = np.array([1, 2, 3])
-    with pytest.raises(
-        ValueError, match="Sample weights do not.*support sparse matrices"
-    ):
-        reg.fit(X, y, sample_weight=sw)
-
-
 @pytest.mark.parametrize("estimator", [ElasticNetCV, LassoCV])
 def test_linear_models_cv_fit_with_loky(estimator):
     # LinearModelsCV.fit performs inplace operations on fancy-indexed memmapped
     # data when using the loky backend, causing an error due to unexpected
     # behavior of fancy indexing of read-only memmaps (cf. numpy#14132).
-
-    if parse_version(joblib.__version__) < parse_version("0.12"):
-        pytest.skip("loky backend does not exist in joblib <0.12")
 
     # Create a problem sufficiently large to cause memmapping (1MB).
     # Unfortunately the scikit-learn and joblib APIs do not make it possible to

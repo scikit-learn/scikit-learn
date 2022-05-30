@@ -207,6 +207,11 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
+        if y is None:
+            raise ValueError(
+                f"This {self.__class__.__name__} estimator "
+                "requires y to be passed, but the target y is None."
+            )
         y = check_array(
             y,
             input_name="y",

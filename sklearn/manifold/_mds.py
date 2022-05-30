@@ -14,7 +14,6 @@ from ..base import BaseEstimator
 from ..metrics import euclidean_distances
 from ..utils import check_random_state, check_array, check_symmetric
 from ..isotonic import IsotonicRegression
-from ..utils.deprecation import deprecated
 from ..utils.fixes import delayed
 
 
@@ -84,7 +83,7 @@ def _smacof_single(
     sim_flat_w = sim_flat[sim_flat != 0]
     if init is None:
         # Randomly choose initial configuration
-        X = random_state.rand(n_samples * n_components)
+        X = random_state.uniform(size=n_samples * n_components)
         X = X.reshape((n_samples, n_components))
     else:
         # overrides the parameter p
@@ -114,7 +113,7 @@ def _smacof_single(
             disparities[sim_flat != 0] = disparities_flat
             disparities = disparities.reshape((n_samples, n_samples))
             disparities *= np.sqrt(
-                (n_samples * (n_samples - 1) / 2) / (disparities ** 2).sum()
+                (n_samples * (n_samples - 1) / 2) / (disparities**2).sum()
             )
 
         # Compute stress
@@ -127,7 +126,7 @@ def _smacof_single(
         B[np.arange(len(B)), np.arange(len(B))] += ratio.sum(axis=1)
         X = 1.0 / n_samples * np.dot(B, X)
 
-        dis = np.sqrt((X ** 2).sum(axis=1)).sum()
+        dis = np.sqrt((X**2).sum(axis=1)).sum()
         if verbose >= 2:
             print("it: %d, stress %s" % (it, stress))
         if old_stress is not None:
@@ -450,16 +449,6 @@ class MDS(BaseEstimator):
 
     def _more_tags(self):
         return {"pairwise": self.dissimilarity == "precomputed"}
-
-    # TODO: Remove in 1.1
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `_pairwise` was deprecated in "
-        "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def _pairwise(self):
-        return self.dissimilarity == "precomputed"
 
     def fit(self, X, y=None, init=None):
         """

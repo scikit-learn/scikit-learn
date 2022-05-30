@@ -118,13 +118,15 @@ op.add_option(
 )
 
 print(__doc__)
-op.print_help()
-print()
 
 
 def is_interactive():
     return not hasattr(sys.modules["__main__"], "__file__")
 
+
+if not is_interactive():
+    op.print_help()
+    print()
 
 # work-around for Jupyter notebook and IPython console
 argv = [] if is_interactive() else sys.argv[1:]
@@ -134,8 +136,10 @@ if len(args) > 0:
     sys.exit(1)
 
 
-# #############################################################################
+# %%
 # Load some categories from the training set
+# ------------------------------------------
+
 categories = [
     "alt.atheism",
     "talk.religion.misc",
@@ -155,6 +159,11 @@ dataset = fetch_20newsgroups(
 print("%d documents" % len(dataset.data))
 print("%d categories" % len(dataset.target_names))
 print()
+
+
+# %%
+# Feature Extraction
+# ------------------
 
 labels = dataset.target
 true_k = np.unique(labels).shape[0]
@@ -195,9 +204,8 @@ print()
 if opts.n_components:
     print("Performing dimensionality reduction using LSA")
     t0 = time()
-    # Vectorizer results are normalized, which makes KMeans behave as
-    # spherical k-means for better results. Since LSA/SVD results are
-    # not normalized, we have to redo the normalization.
+    # Since LSA/SVD results are not normalized,
+    # we redo the normalization to improve the k-means result.
     svd = TruncatedSVD(opts.n_components)
     normalizer = Normalizer(copy=False)
     lsa = make_pipeline(svd, normalizer)
@@ -214,8 +222,9 @@ if opts.n_components:
     print()
 
 
-# #############################################################################
-# Do the actual clustering
+# %%
+# Clustering
+# ----------
 
 if opts.minibatch:
     km = MiniBatchKMeans(
@@ -241,6 +250,11 @@ km.fit(X)
 print("done in %0.3fs" % (time() - t0))
 print()
 
+
+# %%
+# Performance metrics
+# -------------------
+
 print("Homogeneity: %0.3f" % metrics.homogeneity_score(labels, km.labels_))
 print("Completeness: %0.3f" % metrics.completeness_score(labels, km.labels_))
 print("V-measure: %0.3f" % metrics.v_measure_score(labels, km.labels_))
@@ -252,6 +266,8 @@ print(
 
 print()
 
+
+# %%
 
 if not opts.use_hashing:
     print("Top terms per cluster:")
