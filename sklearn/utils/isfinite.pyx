@@ -1,14 +1,11 @@
 # cython: profile=True, linetrace=True
 # Author: jakirkham
 
-cimport libc
-cimport libc.math
-from libc.math cimport isnan as _isnan, isinf as _isinf
+from libc.math cimport isnan as c_isnan, isinf as c_isinf
 
 cimport cython
-from cython.parallel import prange
-cimport numpy
-import numpy
+cimport numpy as cnp
+import numpy as np
 numpy.import_array()
 
 
@@ -20,8 +17,7 @@ cdef fused const_fprecision:
     const numpy.npy_float32
     const numpy.npy_float64
 
-@cython.cdivision(True)
-def cy_isfinite(numpy.ndarray a, bint allow_nan=False):
+def cy_isfinite(numpy.ndarray X, bint allow_nan=False):
     cdef char* a_data
     cdef numpy.NPY_TYPES a_type
     cdef Py_ssize_t a_size = a.size
@@ -56,7 +52,7 @@ cdef inline int c_isfinite(const_fprecision* a_ptr, Py_ssize_t size, bint disall
     else:
         return c_isfinite_allow_nan(a_ptr, size)
 
-cdef enum FiniteStatus:
+cpdef enum FiniteStatus:
     all_finite = 0
     has_nan = 1
     has_infinite = 2
