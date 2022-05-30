@@ -139,7 +139,7 @@ def glm_dataset(global_random_seed, request):
         sample_weight=sw,
         l2_reg_strength=l2_reg_strength,
     )
-    # Note: Toot finding is more precise then minimizing a function.
+    # Note: Root finding is more precise then minimizing a function.
     res = root(
         fun,
         coef_unpenalized,
