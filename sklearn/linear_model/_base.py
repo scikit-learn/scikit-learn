@@ -768,7 +768,8 @@ def _check_precomputed_gram_matrix(
         Array of feature scale factors used to normalize design matrix.
 
     rtol : float, default=None
-        Relative tolerance; see numpy.allclose and sklearn.utils._testing.assert_allclose.
+        Relative tolerance; see numpy.allclose and
+        sklearn.utils._testing.assert_allclose.
         If None, it is set based on the provided arrays' dtypes.
 
     atol : float, default=1e-5
