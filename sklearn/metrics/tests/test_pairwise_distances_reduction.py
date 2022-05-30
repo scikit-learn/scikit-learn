@@ -131,7 +131,7 @@ def test_argkmin_factory_method_wrong_usages():
 
     msg = (
         "Only 64bit float datasets are supported at this time, "
-        "got: X.dtype=float32 and Y.dtype=float64."
+        "got: X.dtype=float32 and Y.dtype=float64"
     )
     with pytest.raises(ValueError, match=msg):
         PairwiseDistancesArgKmin.compute(
