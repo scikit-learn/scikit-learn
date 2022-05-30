@@ -41,6 +41,14 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.calibration`
+..........................
+
+- |API| Rename `base_estimator` to `estimator` in
+  :class:`CalibratedClassifierCV` to improve readability and consistency. The
+  parameter `base_estimator` is deprecated and will be removed in 1.4.
+  :pr:`22054` by :user:`Kevin Roice <kevroi>`.
+
 :mod:`sklearn.cluster`
 ......................
 
