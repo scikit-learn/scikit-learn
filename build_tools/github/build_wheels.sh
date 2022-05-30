@@ -24,6 +24,7 @@ if [[ "$RUNNER_OS" == "macOS" ]]; then
         OPENMP_URL="https://anaconda.org/conda-forge/llvm-openmp/11.1.0/download/osx-64/llvm-openmp-11.1.0-hda6cdc1_1.tar.bz2"
     fi
 
+    sudo conda update -n base conda -y
     sudo conda create -n build $OPENMP_URL
     PREFIX="/usr/local/miniconda/envs/build"
 
