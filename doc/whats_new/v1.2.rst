@@ -85,6 +85,15 @@ Changelog
   matrices in a variety of estimators and avoid an `EfficiencyWarning`.
   :pr:`23139` by `Tom Dupre la Tour`_.
 
+:mod:`sklearn.manifold`:
+
+- |Feature| :class:`manifold.MDS` now supports a Singular Value Decomposition
+  (SVD). Users can choose whether to use SVD or SMACOF-based solvers via the
+  `solver` parameter. The SVD-based solver is faster and more accurate, but only
+  works for euclidean dissimilarity matrices in the metric-MDS context.
+  :pr:`16067` by :user:`Piotr Gaiński <panpiort8>` and
+  :pr:`22330` by :user:`Meekail Zain <micky774>`.
+
 Code and Documentation Contributors
 -----------------------------------
 
