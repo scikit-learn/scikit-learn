@@ -370,7 +370,8 @@ class PCA(_BasePCA):
         "whiten": [bool],
         "svd_solver": [StrOptions({'auto', 'full', 'arpack', 'randomized'})],
         "tol": [Interval(Real, 0, None, closed="left")],
-        "iterated_power": [StrOptions({"auto"}), Interval(Integral, 0, None, closed="left")],
+        "iterated_power": [StrOptions({"auto"}),
+                           Interval(Integral, 0, None, closed="left")],
         "n_oversamples": [Interval(Integral, 1, None, closed="left")],
         "power_iteration_normalizer": [StrOptions({'auto', 'QR', 'LU', 'none'},)],
         "random_state": ["random_state"]
