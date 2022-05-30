@@ -6,7 +6,7 @@
 #
 attrs==21.4.0
     # via pytest
-cython==0.29.28
+cython==0.29.30
     # via -r build_tools/azure/ubuntu_atlas_requirements.txt
 execnet==1.9.0
     # via pytest-xdist
@@ -24,7 +24,7 @@ py==1.11.0
     #   pytest-forked
 pyparsing==3.0.9
     # via packaging
-pytest==6.2.5
+pytest==7.1.2
     # via
     #   -r build_tools/azure/ubuntu_atlas_requirements.txt
     #   pytest-forked
@@ -35,5 +35,5 @@ pytest-xdist==2.5.0
     # via -r build_tools/azure/ubuntu_atlas_requirements.txt
 threadpoolctl==2.0.0
     # via -r build_tools/azure/ubuntu_atlas_requirements.txt
-toml==0.10.2
+tomli==2.0.1
     # via pytest
