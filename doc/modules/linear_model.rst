@@ -903,7 +903,7 @@ logistic regression, see also `log-linear model
    symmetrical inductive bias regarding ordering of classes, see [16]_. This effect becomes
    especially important when using regularization.
 
-Let :math:`y_i \in {0, \ldots, K-1}` be the label (ordinal) encoded target variable for observation :math:`i`.
+Let :math:`y_i \in {1, \ldots, K}` be the label (ordinal) encoded target variable for observation :math:`i`.
 Instead of a single coefficient vector, we now have
 a matrix of coefficients :math:`W` where each row vector :math:`w_k` corresponds to class
 :math:`k`. We aim at predicting the class probabilities :math:`P(y_i=k|X_i)` via ``predict_proba`` as:
@@ -923,9 +923,9 @@ for the regularization term :math:`r(W)` via the `penalty` argument:
 +================+==================================================================================+
 | `None`         | :math:`0`                                                                        |
 +----------------+----------------------------------------------------------------------------------+
-| :math:`\ell_1` | :math:`\|W\|_{1,1} = \sum_{i,j}|W_{i,j}|`                                        |
+| :math:`\ell_1` | :math:`\|W\|_{1,1} = \sum_{i=1}^n\sum_{j=1}^{K}|W_{i,j}|`                        |
 +----------------+----------------------------------------------------------------------------------+
-| :math:`\ell_2` | :math:`\frac{1}{2}\|W\|_F^2 = \frac{1}{2}\sum_{i=1}^n\sum_{j=0}^{K-1} w_{i,j}^2` |
+| :math:`\ell_2` | :math:`\frac{1}{2}\|W\|_F^2 = \frac{1}{2}\sum_{i=1}^n\sum_{j=1}^{K} w_{i,j}^2`   |
 +----------------+----------------------------------------------------------------------------------+
 | `ElasticNet`   | :math:`\frac{1 - \rho}{2}\|W\|_F^2 + \rho \|W\|_1`                               |
 +----------------+----------------------------------------------------------------------------------+
