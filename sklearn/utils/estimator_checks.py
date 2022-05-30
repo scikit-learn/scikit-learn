@@ -1423,7 +1423,7 @@ def check_fit2d_1sample(name, estimator_orig):
     if name == "OPTICS":
         estimator.set_params(min_samples=1)
 
-    # perplexity cannot be less than the data size for TSNE.
+    # perplexity cannot be more than the number of samples for TSNE.
     if name == "TSNE":
         estimator.set_params(perplexity=0.5)
 
