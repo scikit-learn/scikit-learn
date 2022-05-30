@@ -10,11 +10,10 @@ from ._base import SelectorMixin
 from ._base import _get_feature_importances
 from ..base import BaseEstimator, clone, MetaEstimatorMixin
 from ..utils._tags import _safe_tags
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, check_scalar, _num_features
 
 from ..exceptions import NotFittedError
 from ..utils.metaestimators import available_if
-from ..utils.validation import check_scalar
 
 
 def _calculate_threshold(estimator, importances, threshold):
@@ -287,6 +286,35 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         mask[scores < threshold] = False
         return mask
 
+    def _check_max_features(self, X):
+        if self.max_features is not None:
+            n_features = _num_features(X)
+
+            if isinstance(self.max_features, numbers.Integral):
+                check_scalar(
+                    self.max_features,
+                    "max_features",
+                    numbers.Integral,
+                    min_val=0,
+                    max_val=n_features,
+                )
+                self.max_features_ = self.max_features
+            elif callable(self.max_features):
+                max_features = self.max_features(X)
+                check_scalar(
+                    max_features,
+                    "max_features(X)",
+                    numbers.Integral,
+                    min_val=0,
+                    max_val=n_features,
+                )
+                self.max_features_ = max_features
+            else:
+                raise TypeError(
+                    "'max_features' must be either an int or a callable that takes"
+                    f" 'X' as input. Got {self.max_features} instead."
+                )
+
     def fit(self, X, y=None, **fit_params):
         """Fit the SelectFromModel meta-transformer.
 
@@ -307,31 +335,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
-        if self.max_features is not None:
-            if isinstance(self.max_features, numbers.Integral):
-                check_scalar(
-                    self.max_features,
-                    "max_features",
-                    numbers.Integral,
-                    min_val=0,
-                    max_val=len(X[0]),
-                )
-                self.max_features_ = self.max_features
-            elif callable(self.max_features):
-                max_features = self.max_features(X)
-                check_scalar(
-                    max_features,
-                    "max_features(X)",
-                    numbers.Integral,
-                    min_val=0,
-                    max_val=len(X[0]),
-                )
-                self.max_features_ = max_features
-            else:
-                raise TypeError(
-                    "'max_features' must be either an int or a callable that takes"
-                    f" 'X' as input. Got {self.max_features} instead."
-                )
+        self._check_max_features(X)
 
         if self.prefit:
             try:
@@ -385,6 +389,8 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
+        self._check_max_features(X)
+
         if self.prefit:
             if not hasattr(self, "estimator_"):
                 try:
@@ -397,9 +403,16 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
                 self.estimator_ = deepcopy(self.estimator)
             return self
 
-        if not hasattr(self, "estimator_"):
+        first_call = not hasattr(self, "estimator_")
+        if first_call:
             self.estimator_ = clone(self.estimator)
         self.estimator_.partial_fit(X, y, **fit_params)
+
+        if hasattr(self.estimator_, "feature_names_in_"):
+            self.feature_names_in_ = self.estimator_.feature_names_in_
+        else:
+            self._check_feature_names(X, reset=first_call)
+
         return self
 
     @property

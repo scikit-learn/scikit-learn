@@ -8,8 +8,8 @@ from libc.stdlib cimport free
 from libc.string cimport memset
 
 import numpy as np
-cimport numpy as np
-np.import_array()
+cimport numpy as cnp
+cnp.import_array()
 
 from scipy.sparse import issparse
 from scipy.sparse import csr_matrix
@@ -21,9 +21,9 @@ from ..tree._tree cimport SIZE_t
 from ..tree._tree cimport INT32_t
 from ..tree._utils cimport safe_realloc
 
-ctypedef np.int32_t int32
-ctypedef np.float64_t float64
-ctypedef np.uint8_t uint8
+ctypedef cnp.int32_t int32
+ctypedef cnp.float64_t float64
+ctypedef cnp.uint8_t uint8
 
 # no namespace lookup for numpy dtype and array creation
 from numpy import zeros as np_zeros
@@ -94,16 +94,16 @@ cdef void _predict_regression_tree_inplace_fast_dense(DTYPE_t *X,
                 node = root_node + node.right_child
         out[i * K + k] += scale * value[node - root_node]
 
-def _predict_regression_tree_stages_sparse(np.ndarray[object, ndim=2] estimators,
+def _predict_regression_tree_stages_sparse(cnp.ndarray[object, ndim=2] estimators,
                                            object X, double scale,
-                                           np.ndarray[float64, ndim=2] out):
+                                           cnp.ndarray[float64, ndim=2] out):
     """Predicts output for regression tree inplace and adds scaled value to ``out[i, k]``.
 
     The function assumes that the ndarray that wraps ``X`` is csr_matrix.
     """
-    cdef DTYPE_t* X_data = <DTYPE_t*>(<np.ndarray> X.data).data
-    cdef INT32_t* X_indices = <INT32_t*>(<np.ndarray> X.indices).data
-    cdef INT32_t* X_indptr = <INT32_t*>(<np.ndarray> X.indptr).data
+    cdef DTYPE_t* X_data = <DTYPE_t*>(<cnp.ndarray> X.data).data
+    cdef INT32_t* X_indices = <INT32_t*>(<cnp.ndarray> X.indices).data
+    cdef INT32_t* X_indptr = <INT32_t*>(<cnp.ndarray> X.indptr).data
 
     cdef SIZE_t n_samples = X.shape[0]
     cdef SIZE_t n_features = X.shape[1]
@@ -183,9 +183,9 @@ def _predict_regression_tree_stages_sparse(np.ndarray[object, ndim=2] estimators
     free(values)
 
 
-def predict_stages(np.ndarray[object, ndim=2] estimators,
+def predict_stages(cnp.ndarray[object, ndim=2] estimators,
                    object X, double scale,
-                   np.ndarray[float64, ndim=2] out):
+                   cnp.ndarray[float64, ndim=2] out):
     """Add predictions of ``estimators`` to ``out``.
 
     Each estimator is scaled by ``scale`` before its prediction
@@ -215,17 +215,17 @@ def predict_stages(np.ndarray[object, ndim=2] estimators,
                 # and get data pointer
                 # need brackets because of casting operator priority
                 _predict_regression_tree_inplace_fast_dense(
-                    <DTYPE_t*> (<np.ndarray> X).data,
+                    <DTYPE_t*> (<cnp.ndarray> X).data,
                     tree.nodes, tree.value,
                     scale, k, K, X.shape[0], X.shape[1],
-                    <float64 *> (<np.ndarray> out).data)
+                    <float64 *> (<cnp.ndarray> out).data)
                 ## out[:, k] += scale * tree.predict(X).ravel()
 
 
-def predict_stage(np.ndarray[object, ndim=2] estimators,
+def predict_stage(cnp.ndarray[object, ndim=2] estimators,
                   int stage,
                   object X, double scale,
-                  np.ndarray[float64, ndim=2] out):
+                  cnp.ndarray[float64, ndim=2] out):
     """Add predictions of ``estimators[stage]`` to ``out``.
 
     Each estimator in the stage is scaled by ``scale`` before
@@ -234,8 +234,8 @@ def predict_stage(np.ndarray[object, ndim=2] estimators,
     return predict_stages(estimators[stage:stage + 1], X, scale, out)
 
 
-def _random_sample_mask(np.npy_intp n_total_samples,
-                        np.npy_intp n_total_in_bag, random_state):
+def _random_sample_mask(cnp.npy_intp n_total_samples,
+                        cnp.npy_intp n_total_in_bag, random_state):
      """Create a random sample mask where ``n_total_in_bag`` elements are set.
 
      Parameters
@@ -255,13 +255,13 @@ def _random_sample_mask(np.npy_intp n_total_samples,
          An ndarray where ``n_total_in_bag`` elements are set to ``True``
          the others are ``False``.
      """
-     cdef np.ndarray[float64, ndim=1, mode="c"] rand = \
+     cdef cnp.ndarray[float64, ndim=1, mode="c"] rand = \
           random_state.uniform(size=n_total_samples)
-     cdef np.ndarray[uint8, ndim=1, mode="c", cast=True] sample_mask = \
+     cdef cnp.ndarray[uint8, ndim=1, mode="c", cast=True] sample_mask = \
           np_zeros((n_total_samples,), dtype=bool)
 
-     cdef np.npy_intp n_bagged = 0
-     cdef np.npy_intp i = 0
+     cdef cnp.npy_intp n_bagged = 0
+     cdef cnp.npy_intp i = 0
 
      for i in range(n_total_samples):
          if rand[i] * (n_total_samples - i) < (n_total_in_bag - n_bagged):

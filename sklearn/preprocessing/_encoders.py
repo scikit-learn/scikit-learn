@@ -664,7 +664,7 @@ class OneHotEncoder(_BaseEncoder):
         to a single output:
         `_default_to_infrequent_mappings[7] = array([0, 3, 1, 3, 2, 3])`
 
-        Defines private attrite: `_infrequent_indices`. `_infrequent_indices[i]`
+        Defines private attribute: `_infrequent_indices`. `_infrequent_indices[i]`
         is an array of indices such that
         `categories_[i][_infrequent_indices[i]]` are all the infrequent category
         labels. If the feature `i` has no infrequent categories
