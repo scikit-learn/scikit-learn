@@ -1,43 +1,35 @@
 """
-=======================================
+=======================================================================
 PAUC - Partial Area Under Receiver Operating Characteristic (ROC) curve
-=======================================
+=======================================================================
 
-Example of setting False Positive Rate (FPR) or
-True Positive Rate (TPR) limitations,
-and calculate partial AUC to evaluate binary classifier output quality.
+Example of setting False Positive Rate (FPR) or True Positive Rate (TPR)
+limitations, and calculate partial AUC to evaluate binary classifier output
+quality.
 
 According to the definition of ROC, and as explained in
-:ref:`sphx_glr_auto_examples_model_selection_plot_roc.py`,
-a larger area under the curve (AUC) is usually better.
-However, in real life cases, we sometimes have strict requirements
-on keeping low false positive rate,
-or keeping high true positive rate, or both of them.
-In such scenarios, we are interested in a portion of the ROC curve
-which satisfies certain restrictions.
+:ref:`sphx_glr_auto_examples_model_selection_plot_roc.py`, a larger area under
+the curve (AUC) is usually better. However, in real life cases, we sometimes
+have strict requirements on keeping low false positive rate, or keeping high
+true positive rate, or both of them. In such scenarios, we are interested in a
+portion of the ROC curve which satisfies certain restrictions.
 
-For example, in fraud detection domain,
-there are requirements on building binary classifiers
-to distinguish fraud behavior from normal behavior.
-To reduce the workload of manually checking the model output on
-false positive cases (normal behavior),
-we need to keep a low level of FPR.
-At the same time, to mitigate the risk of missing fraud cases,
-we need to keep a low level of false negative rate (FNR).
-Please note that since `TPR = TP/P = (TP)/(TP + FN) = 1 - FNR`
-, the limitation on low FNR is
-equivalent to the limitation on high TPR.
+For example, in fraud detection domain, there are requirements on building
+binary classifiers to distinguish fraud behavior from normal behavior. To reduce
+the workload of manually checking the model output on false positive cases
+(normal behavior), we need to keep a low level of FPR. At the same time, to
+mitigate the risk of missing fraud cases, we need to keep a low level of false
+negative rate (FNR). Please note that since `TPR = TP/P = (TP)/(TP + FN) = 1 -
+FNR` , the limitation on low FNR is equivalent to the limitation on high TPR.
 
 
-In :func:`sklearn.metrics.roc_auc_score`,
-with the options ``max_fpr`` and ``min_tpr``,
-you could define the restrictions to ROC and
-get a standardized partial AUC value returned,
-which could be used as your model selection criteria.
+In :func:`sklearn.metrics.roc_auc_score`, with the options ``max_fpr`` and
+``min_tpr``, you could define the restrictions to ROC and get a standardized
+partial AUC value returned, which could be used as your model selection
+criteria.
 
-Let's visualize a ROC example to clarify the definitions.
-You could follow below examples and manually calculate
-standardized pAUC for better understanding.
+Let's visualize a ROC example to clarify the definitions. You could follow below
+examples and manually calculate standardized pAUC for better understanding.
 
 
 .. note::
@@ -65,14 +57,16 @@ min_tpr = 0.6
 
 # Calculate the fpr, tpr list
 fpr, tpr, thresholds = metrics.roc_curve(y_true=y_true, y_score=y_score, pos_label=1)
+auc = metrics.roc_auc_score(y_true=y_true, y_score=y_score)
 spauc = metrics.roc_auc_score(
     y_true=y_true, y_score=y_score, max_fpr=max_fpr, min_tpr=min_tpr
 )
 print(f"The fpr list is: {fpr}")
 print(f"The tpr list is: {tpr}")
+print(f"By default, the ROC AUC is {auc:.3f}.")
 print(
     f"With max_fpr {max_fpr} and min_tpr "
-    f"{min_tpr}, the standardized partial AUC is {spauc}."
+    f"{min_tpr}, the standardized partial AUC is {spauc:.3f}."
 )
 plt.rcParams["figure.figsize"] = (10, 10)
 
