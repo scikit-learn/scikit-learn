@@ -302,7 +302,7 @@ def test_hdbscan_boruvka_matches(tree):
         [{"alpha": -1}, ValueError],
         [{"alpha": "fail"}, ValueError],
         [{"leaf_size": 0}, ValueError],
-        [{"algorithm": "something_else"}, TypeError],
+        [{"algorithm": "something_else"}, ValueError],
         [{"metric": "minkowski", "metric_params": {"p": None}}, TypeError],
     ],
 )

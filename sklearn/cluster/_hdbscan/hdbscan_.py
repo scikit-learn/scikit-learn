@@ -8,7 +8,9 @@ HDBSCAN: Hierarchical Density-Based Spatial Clustering
 #
 # License: BSD 3 clause
 
+from numbers import Real, Integral
 import numpy as np
+from pathlib import Path
 
 from sklearn.base import BaseEstimator, ClusterMixin
 from sklearn.metrics import pairwise_distances
@@ -18,6 +20,7 @@ from joblib import Memory
 from warnings import warn
 from sklearn.utils import check_array
 from joblib.parallel import cpu_count
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 
 from scipy.sparse import csgraph
 
@@ -258,7 +261,7 @@ def _hdbscan_boruvka_kdtree(
         leaf_size = 3
 
     if n_jobs < 1:
-        n_jobs = max(cpu_count() + 1 + n_jobs, 1)
+        n_jobs = max(cpu_count() + n_jobs, 1)
 
     if X.dtype != np.float64:
         X = X.astype(np.float64)
@@ -381,6 +384,39 @@ def get_finite_row_indices(matrix):
     return row_indices
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "min_cluster_size": [Interval(Integral, left=2, right=None, closed="left")],
+        "min_samples": [Interval(Integral, left=1, right=None, closed="left"), None],
+        "cluster_selection_epsilon": [
+            Interval(Real, left=0, right=None, closed="left")
+        ],
+        "max_cluster_size": [Interval(Integral, left=0, right=None, closed="left")],
+        "metric": [StrOptions(set(FAST_METRICS + ["precomputed"])), callable],
+        "alpha": [Interval(Real, left=0, right=None, closed="neither")],
+        "algorithm": [
+            StrOptions(
+                {
+                    "auto",
+                    "best",
+                    "generic",
+                    "prims_kdtree",
+                    "prims_balltree",
+                    "boruvka_kdtree",
+                    "boruvka_balltree",
+                }
+            )
+        ],
+        "leaf_size": [Interval(Integral, left=1, right=None, closed="left")],
+        "memory": [str, None, Path],
+        "approx_min_span_tree": [bool],
+        "n_jobs": [int],
+        "cluster_selection_method": [StrOptions({"eom", "leaf"})],
+        "allow_single_cluster": [bool],
+        "metric_params": [dict, None],
+    }
+)
 def hdbscan(
     X,
     min_cluster_size=5,
@@ -480,8 +516,8 @@ def hdbscan(
 
     n_jobs : int, default=4
         Number of parallel jobs to run in core distance computations (if
-        supported by the specific algorithm). For `n_jobs`
-        below -1, (n_cpus + 1 + n_jobs) are used.
+        supported by the specific algorithm). For `n_jobs<=0`,
+        (n_cpus + n_jobs) are used.
 
     cluster_selection_method : str, default='eom'
         The method used to select clusters from the condensed tree. The
@@ -531,32 +567,6 @@ def hdbscan(
     """
     if min_samples is None:
         min_samples = min_cluster_size
-
-    if type(min_samples) is not int or type(min_cluster_size) is not int:
-        raise ValueError("Min samples and min cluster size must be integers!")
-
-    if min_samples <= 0 or min_cluster_size <= 0:
-        raise ValueError("Min samples and Min cluster size must be positive integers")
-
-    if min_cluster_size == 1:
-        raise ValueError("Min cluster size must be greater than one")
-
-    if type(cluster_selection_epsilon) is int:
-        cluster_selection_epsilon = float(cluster_selection_epsilon)
-
-    if type(cluster_selection_epsilon) is not float or cluster_selection_epsilon < 0.0:
-        raise ValueError("Epsilon must be a float value greater than or equal to 0!")
-
-    if not isinstance(alpha, float) or alpha <= 0.0:
-        raise ValueError("Alpha must be a positive float value greater than 0!")
-
-    if leaf_size < 1:
-        raise ValueError("Leaf size must be greater than 0!")
-
-    if cluster_selection_method not in ("eom", "leaf"):
-        raise ValueError(
-            'Invalid Cluster Selection Method: %s\nShould be one of: "eom", "leaf"\n'
-        )
 
     # Checks input and converts to an nd-array where possible
     if metric != "precomputed" or issparse(X):
@@ -880,8 +890,36 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
     array([ 2,  6, -1, ..., -1, -1, -1])
     """
 
-    def _more_tags(self):
-        return {"allow_nan": True}
+    _parameter_constraints = {
+        "min_cluster_size": [Interval(Integral, left=2, right=None, closed="left")],
+        "min_samples": [Interval(Integral, left=1, right=None, closed="left"), None],
+        "cluster_selection_epsilon": [
+            Interval(Real, left=0, right=None, closed="left")
+        ],
+        "max_cluster_size": [Interval(Integral, left=0, right=None, closed="left")],
+        "metric": [StrOptions(set(FAST_METRICS + ["precomputed"])), callable],
+        "alpha": [Interval(Real, left=0, right=None, closed="neither")],
+        "algorithm": [
+            StrOptions(
+                {
+                    "auto",
+                    "best",
+                    "generic",
+                    "prims_kdtree",
+                    "prims_balltree",
+                    "boruvka_kdtree",
+                    "boruvka_balltree",
+                }
+            )
+        ],
+        "leaf_size": [Interval(Integral, left=1, right=None, closed="left")],
+        "memory": [str, None, Path],
+        "approx_min_span_tree": [bool],
+        "n_jobs": [int],
+        "cluster_selection_method": [StrOptions({"eom", "leaf"})],
+        "allow_single_cluster": [bool],
+        "metric_params": [dict, None],
+    }
 
     def __init__(
         self,
@@ -933,6 +971,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         self : object
             Returns self.
         """
+        self._validate_params()
         metric_params = self.metric_params or {}
         if self.metric != "precomputed":
             # Non-precomputed matrices may contain non-finite values.
@@ -1120,3 +1159,6 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         return labelling_at_cut(
             self._single_linkage_tree_, cut_distance, min_cluster_size
         )
+
+    def _more_tags(self):
+        return {"allow_nan": True}
