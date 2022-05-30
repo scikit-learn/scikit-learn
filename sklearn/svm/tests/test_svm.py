@@ -3,6 +3,7 @@ Testing for Support Vector Machine module (sklearn.svm)
 
 TODO: remove hard coded numerical results when possible
 """
+import warnings
 import numpy as np
 import itertools
 import pytest
@@ -13,8 +14,7 @@ from numpy.testing import assert_almost_equal
 from numpy.testing import assert_allclose
 from scipy import sparse
 from sklearn import svm, linear_model, datasets, metrics, base
-from sklearn.svm import LinearSVC
-from sklearn.svm import LinearSVR
+from sklearn.svm import LinearSVC, OneClassSVM, SVR, NuSVR, LinearSVR
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import make_classification, make_blobs
 from sklearn.metrics import f1_score
@@ -1398,23 +1398,18 @@ def test_linearsvm_liblinear_sample_weight(SVM, params):
             assert_allclose(X_est_no_weight, X_est_with_weight)
 
 
-def test_n_support_oneclass_svr():
+@pytest.mark.parametrize("Klass", (OneClassSVM, SVR, NuSVR))
+def test_n_support(Klass):
     # Make n_support is correct for oneclass and SVR (used to be
     # non-initialized)
     # this is a non regression test for issue #14774
     X = np.array([[0], [0.44], [0.45], [0.46], [1]])
-    clf = svm.OneClassSVM()
-    assert not hasattr(clf, "n_support_")
-    clf.fit(X)
-    assert clf.n_support_ == clf.support_vectors_.shape[0]
-    assert clf.n_support_.size == 1
-    assert clf.n_support_ == 3
-
     y = np.arange(X.shape[0])
-    reg = svm.SVR().fit(X, y)
-    assert reg.n_support_ == reg.support_vectors_.shape[0]
-    assert reg.n_support_.size == 1
-    assert reg.n_support_ == 4
+    est = Klass()
+    assert not hasattr(est, "n_support_")
+    est.fit(X, y)
+    assert est.n_support_[0] == est.support_vectors_.shape[0]
+    assert est.n_support_.size == 1
 
 
 @pytest.mark.parametrize("Estimator", [svm.SVC, svm.SVR])
@@ -1498,3 +1493,18 @@ def test_n_iter_libsvm(estimator, expected_n_iter_type, dataset):
     if estimator in [svm.SVC, svm.NuSVC]:
         n_classes = len(np.unique(y))
         assert n_iter.shape == (n_classes * (n_classes - 1) // 2,)
+
+
+# TODO(1.4): Remove
+@pytest.mark.parametrize("Klass", [SVR, NuSVR, OneClassSVM])
+def test_svm_class_weights_deprecation(Klass):
+    clf = Klass()
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", FutureWarning)
+        clf.fit(X, Y)
+    msg = (
+        "Attribute `class_weight_` was deprecated in version 1.2 and will be removed"
+        " in 1.4"
+    )
+    with pytest.warns(FutureWarning, match=re.escape(msg)):
+        getattr(clf, "class_weight_")

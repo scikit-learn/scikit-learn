@@ -85,31 +85,6 @@ def test_one_cluster():
     assert_allclose(bisect_means.cluster_centers_, X.mean(axis=0).reshape(1, -1))
 
 
-@pytest.mark.parametrize(
-    "param, match",
-    [
-        # Test bisecting_strategy param
-        (
-            {"bisecting_strategy": "None"},
-            "Bisect Strategy must be 'biggest_inertia' or 'largest_cluster'",
-        ),
-        # Test init array
-        (
-            {"init": np.ones((5, 2))},
-            "BisectingKMeans does not support init as array.",
-        ),
-    ],
-)
-def test_wrong_params(param, match):
-    """Test Exceptions at check_params function."""
-    rng = np.random.RandomState(0)
-    X = rng.rand(5, 2)
-
-    with pytest.raises(ValueError, match=match):
-        bisect_means = BisectingKMeans(n_clusters=3, **param)
-        bisect_means.fit(X)
-
-
 @pytest.mark.parametrize("is_sparse", [True, False])
 def test_fit_predict(is_sparse):
     """Check if labels from fit(X) method are same as from fit(X).predict(X)."""

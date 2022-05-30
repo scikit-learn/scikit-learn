@@ -602,17 +602,17 @@ parameters of composite or nested estimators such as
   >>> from sklearn.datasets import make_moons
   >>> X, y = make_moons()
   >>> calibrated_forest = CalibratedClassifierCV(
-  ...    base_estimator=RandomForestClassifier(n_estimators=10))
+  ...    estimator=RandomForestClassifier(n_estimators=10))
   >>> param_grid = {
-  ...    'base_estimator__max_depth': [2, 4, 6, 8]}
+  ...    'estimator__max_depth': [2, 4, 6, 8]}
   >>> search = GridSearchCV(calibrated_forest, param_grid, cv=5)
   >>> search.fit(X, y)
   GridSearchCV(cv=5,
                estimator=CalibratedClassifierCV(...),
-               param_grid={'base_estimator__max_depth': [2, 4, 6, 8]})
+               param_grid={'estimator__max_depth': [2, 4, 6, 8]})
 
 Here, ``<estimator>`` is the parameter name of the nested estimator,
-in this case ``base_estimator``.
+in this case ``estimator``.
 If the meta-estimator is constructed as a collection of estimators as in
 `pipeline.Pipeline`, then ``<estimator>`` refers to the name of the estimator,
 see :ref:`pipeline_nested_parameters`.  In practice, there can be several
@@ -625,7 +625,7 @@ levels of nesting::
   ...    ('model', calibrated_forest)])
   >>> param_grid = {
   ...    'select__k': [1, 2],
-  ...    'model__base_estimator__max_depth': [2, 4, 6, 8]}
+  ...    'model__estimator__max_depth': [2, 4, 6, 8]}
   >>> search = GridSearchCV(pipe, param_grid, cv=5).fit(X, y)
 
 Please refer to :ref:`pipeline` for performing parameter searches over
