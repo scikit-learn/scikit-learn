@@ -800,8 +800,9 @@ def _check_precomputed_gram_matrix(
         f"{expected} but the user-supplied value was "
         f"{actual}."
     )
-    assert_allclose(expected, actual, rtol=rtol, atol=atol,
-                    err_msg=err_msg, verbose=False)
+    assert_allclose(
+        expected, actual, rtol=rtol, atol=atol, err_msg=err_msg, verbose=False
+    )
 
 
 def _pre_fit(
