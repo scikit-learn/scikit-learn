@@ -37,6 +37,7 @@ from ..utils.extmath import _incremental_mean_and_var
 from ..utils.sparsefuncs import mean_variance_axis, inplace_column_scale
 from ..utils._seq_dataset import ArrayDataset32, CSRDataset32
 from ..utils._seq_dataset import ArrayDataset64, CSRDataset64
+from ..utils._testing import assert_allclose
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.fixes import delayed
 
@@ -787,20 +788,19 @@ def _check_precomputed_gram_matrix(
     v1 = (X[:, f1] - X_offset[f1]) * X_scale[f1]
     v2 = (X[:, f2] - X_offset[f2]) * X_scale[f2]
 
-    # stack v1 and v2 such that np.dot is always applied to two 2d arrays
-    v1v2 = np.vstack((v1, v2))
-    expected = np.dot(v1v2, v1v2.T)[0, 1]
+    expected = np.dot(v1, v2)
     actual = precompute[f1, f2]
 
-    if not np.isclose(expected, actual, rtol=rtol, atol=atol):
-        raise ValueError(
-            "Gram matrix passed in via 'precompute' parameter "
-            "did not pass validation when a single element was "
-            "checked - please check that it was computed "
-            f"properly. For element ({f1},{f2}) we computed "
-            f"{expected} but the user-supplied value was "
-            f"{actual}."
-        )
+    err_msg = (
+        "Gram matrix passed in via 'precompute' parameter "
+        "did not pass validation when a single element was "
+        "checked - please check that it was computed "
+        f"properly. For element ({f1},{f2}) we computed "
+        f"{expected} but the user-supplied value was "
+        f"{actual}."
+    )
+    assert_allclose(expected, actual, rtol=rtol, atol=atol,
+                    err_msg=err_msg, verbose=False)
 
 
 def _pre_fit(

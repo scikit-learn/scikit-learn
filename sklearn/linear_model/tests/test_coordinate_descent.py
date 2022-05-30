@@ -1066,11 +1066,10 @@ def test_elasticnet_precompute_gram_weighted_samples():
 
 
 def test_elasticnet_precompute_gram():
-    # check the equivalence between passing a precomputed Gram matrix and
-    # internal computation in a case where np.dot does not give numerically
-    # the same result if either called with two 2d-arrays (specific element
-    # extracted) or with two 1d-arrays corresponding to that specific element.
-    # Here: (X_c.T, X_c)[2, 3] is not equal to np.dot(X_c[:, 2], X_c[:, 3]).
+    # Check the dtype-aware check for a precomputed Gram matrix
+    # (see https://github.com/scikit-learn/scikit-learn/pull/22059
+    # and https://github.com/scikit-learn/scikit-learn/issues/21997).
+    # Here: (X_c.T, X_c)[2, 3] is not equal to np.dot(X_c[:, 2], X_c[:, 3]) but within tolerance for np.float32
 
     rng = np.random.RandomState(58)
     X = rng.binomial(1, 0.25, (1000, 4)).astype(np.float32)
