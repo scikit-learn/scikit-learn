@@ -101,11 +101,11 @@ def _assert_all_finite(
 
     X = np.asanyarray(X)
     # First try an O(n) time, O(1) space solution for the common case that
-    # everything is finite; fall back to O(n) space np.isfinite to prevent
-    # false positives from overflow in sum method.
+    # everything is finite; fall back to O(n) space `np.isinf/isnan` or custom
+    # Cython implementation to prevent false positives and provide a detailed
+    # error message.
     is_float = X.dtype.kind in "fc"
     # Cython implementation doesn't support FP16 or complex numbers
-    # size > 5000 is a heuristic for when the python implementation is faster
     first_pass_isfinite = False
     if is_float:
         use_cython = X.dtype in {np.float32, np.float64}
