@@ -301,14 +301,14 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                 "will be removed in 1.4.",
                 FutureWarning,
             )
-            self.estimator = self.base_estimator
+            estimator = self.base_estimator
+        else:
+            estimator = self.estimator
 
-        if self.estimator is None:
+        if estimator is None:
             # we want all classifiers that don't expose a random_state
             # to be deterministic (and we don't want to expose this one).
             estimator = LinearSVC(random_state=0)
-        else:
-            estimator = self.estimator
 
         self.calibrated_classifiers_ = []
         if self.cv == "prefit":
