@@ -746,7 +746,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
 
 
 def _check_precomputed_gram_matrix(
-    X, precompute, X_offset, X_scale, rtol=1e-7, atol=1e-5
+    X, precompute, X_offset, X_scale, rtol=None, atol=1e-5
 ):
     """Computes a single element of the gram matrix and compares it to
     the corresponding element of the user supplied gram matrix.
@@ -767,8 +767,9 @@ def _check_precomputed_gram_matrix(
     X_scale : ndarray of shape (n_features,)
         Array of feature scale factors used to normalize design matrix.
 
-    rtol : float, default=1e-7
-        Relative tolerance; see numpy.allclose.
+    rtol : float, default=None
+        Relative tolerance; see numpy.allclose and sklearn.utils._testing.assert_allclose.
+        If None, it is set based on the provided arrays' dtypes.
 
     atol : float, default=1e-5
         absolute tolerance; see :func`numpy.allclose`. Note that the default
