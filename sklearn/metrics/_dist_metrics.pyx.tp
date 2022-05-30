@@ -1248,8 +1248,8 @@ cdef class DatasetsPair:
 
         if not(X.dtype == Y.dtype == np.float64):
             raise ValueError(
-                f"Datasets must be of np.float64 type. "
-                f"Currently: X.dtype={X.dtype} and Y.dtype={Y.dtype}."
+                f"Only 64bit float datasets are supported at this time, "
+                f"got: X.dtype={X.dtype} and Y.dtype={Y.dtype}."
             )
 
         # Metric-specific checks that do not replace nor duplicate `check_array`.
