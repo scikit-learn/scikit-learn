@@ -24,9 +24,8 @@ with pip.
 
 To run this script you need:
 - conda-lock. The version should match the one used in the CI in
-  build_tools/azure/install.sh
+  sklearn/_min_dependencies.py
 - pip-tools
-- jinja2
 
 """
 
@@ -36,10 +35,11 @@ import sys
 from pathlib import Path
 import shlex
 import json
+import logging
+
+import click
 
 from jinja2 import Environment
-
-import logging
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -203,6 +203,68 @@ conda_build_metadata_list = [
         "package_constraints": {"blas": "[build=openblas]"},
     },
     {
+        "build_name": "py38_conda_forge_mkl",
+        "folder": "build_tools/azure",
+        "platform": "win-64",
+        "channel": "conda-forge",
+        "conda_dependencies": remove_from(common_dependencies, ["pandas", "pyamg"])
+        + ["wheel", "pip"],
+        "package_constraints": {"python": "3.8", "blas": "[build=mkl]"},
+    },
+    {
+        "build_name": "doc_min_dependencies",
+        "folder": "build_tools/circle",
+        "platform": "linux-64",
+        "channel": "conda-forge",
+        "conda_dependencies": common_dependencies_without_coverage
+        + [
+            "scikit-image",
+            "seaborn",
+            "memory_profiler",
+            "compilers",
+            "sphinx",
+            "sphinx-gallery",
+            "numpydoc",
+            "sphinx-prompt",
+        ],
+        "pip_dependencies": ["sphinxext-opengraph"],
+        "package_constraints": {
+            "python": "3.8",
+            "numpy": "min",
+            "scipy": "min",
+            "matplotlib": "min",
+            "cython": "min",
+            "scikit-image": "min",
+            "sphinx": "min",
+            "pandas": "min",
+            "sphinx-gallery": "min",
+            "numpydoc": "min",
+            "sphinx-prompt": "min",
+            "sphinxext-opengraph": "min",
+        },
+    },
+    {
+        "build_name": "doc",
+        "folder": "build_tools/circle",
+        "platform": "linux-64",
+        "channel": "conda-forge",
+        "conda_dependencies": common_dependencies_without_coverage
+        + [
+            "scikit-image",
+            "seaborn",
+            "memory_profiler",
+            "compilers",
+            "sphinx",
+            "sphinx-gallery",
+            "numpydoc",
+            "sphinx-prompt",
+        ],
+        "pip_dependencies": ["sphinxext-opengraph"],
+        "package_constraints": {
+            "python": "3.9",
+        },
+    },
+    {
         "build_name": "py39_conda_forge",
         "folder": "build_tools/circle",
         "platform": "linux-aarch64",
@@ -213,9 +275,6 @@ conda_build_metadata_list = [
         + ["pip", "ccache"],
         "package_constraints": {
             "python": "3.9",
-            # TODO remove constraint when pip > 22.1 is released. See
-            # https://github.com/pypa/pip/issues/11116 for more details.
-            "pip": "22.0.4",
         },
     },
 ]
@@ -251,6 +310,25 @@ pip_build_metadata_list = [
         # osx-arm64 machines. This should not matter for pining versions with
         # pip-compile
         "python_version": "3.8.5",
+    },
+    {
+        "build_name": "py38_pip_openblas_32bit",
+        "folder": "build_tools/azure",
+        "pip_dependencies": [
+            "numpy",
+            "scipy",
+            "cython",
+            "joblib",
+            "threadpoolctl",
+            "pytest",
+            "pytest-xdist",
+            "pillow",
+            "wheel",
+        ],
+        # The Windows 32bit build use 3.8.10. No cross-compilation support for
+        # pip-compile, we are going to assume the pip lock file on a Linux
+        # 64bit machine gives appropriate versions
+        "python_version": "3.8.10",
     },
 ]
 
@@ -309,7 +387,7 @@ def get_conda_environment_content(build_metadata):
     template = environment.from_string(
         """
 # DO NOT EDIT: this file is generated from the specification found in the
-# following script to centralize the configuration for all Azure CI builds:
+# following script to centralize the configuration for CI builds:
 # build_tools/update_environments_and_lock_files.py
 channels:
   - {{ build_metadata['channel'] }}
@@ -374,7 +452,7 @@ def get_pip_requirements_content(build_metadata):
     template = environment.from_string(
         """
 # DO NOT EDIT: this file is generated from the specification found in the
-# following script to centralize the configuration for all Azure CI builds:
+# following script to centralize the configuration for CI builds:
 # build_tools/update_environments_and_lock_files.py
 {% for pip_dep in build_metadata['pip_dependencies'] %}
 {{ pip_dep | get_package_with_constraint(build_metadata, uses_pip=True) }}
@@ -437,13 +515,33 @@ def write_all_pip_lock_files(build_metadata_list):
         write_pip_lock_file(build_metadata)
 
 
-if __name__ == "__main__":
+@click.command()
+@click.option(
+    "--select-build",
+    default="",
+    help="Regex to restrict the builds we want to update environment and lock files",
+)
+def main(select_build):
+    filtered_conda_build_metadata_list = [
+        each
+        for each in conda_build_metadata_list
+        if re.search(select_build, each["build_name"])
+    ]
     logger.info("Writing conda environments")
-    write_all_conda_environments(conda_build_metadata_list)
+    write_all_conda_environments(filtered_conda_build_metadata_list)
     logger.info("Writing conda lock files")
-    write_all_conda_lock_files(conda_build_metadata_list)
+    write_all_conda_lock_files(filtered_conda_build_metadata_list)
 
+    filtered_pip_build_metadata_list = [
+        each
+        for each in pip_build_metadata_list
+        if re.search(select_build, each["build_name"])
+    ]
     logger.info("Writing pip requirements")
-    write_all_pip_requirements(pip_build_metadata_list)
+    write_all_pip_requirements(filtered_pip_build_metadata_list)
     logger.info("Writing pip lock files")
-    write_all_pip_lock_files(pip_build_metadata_list)
+    write_all_pip_lock_files(filtered_pip_build_metadata_list)
+
+
+if __name__ == "__main__":
+    main()

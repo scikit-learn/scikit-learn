@@ -55,14 +55,15 @@ def auc(x, y):
     Parameters
     ----------
     x : ndarray of shape (n,)
-        x coordinates. These must be either monotonic increasing or monotonic
+        X coordinates. These must be either monotonic increasing or monotonic
         decreasing.
     y : ndarray of shape, (n,)
-        y coordinates.
+        Y coordinates.
 
     Returns
     -------
     auc : float
+        Area Under the Curve.
 
     See Also
     --------

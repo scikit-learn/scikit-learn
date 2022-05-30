@@ -8,18 +8,7 @@ jobs:
       - OMP_NUM_THREADS: 2
       - MKL_NUM_THREADS: 2
       - CONDA_ENV_NAME: testenv
-      - PYTHON_VERSION: 3.8
-      - NUMPY_VERSION: 'min'
-      - SCIPY_VERSION: 'min'
-      - MATPLOTLIB_VERSION: 'min'
-      - CYTHON_VERSION: 'min'
-      - SCIKIT_IMAGE_VERSION: 'min'
-      - SPHINX_VERSION: 'min'
-      - PANDAS_VERSION: 'min'
-      - SPHINX_GALLERY_VERSION: 'min'
-      - NUMPYDOC_VERSION: 'min'
-      - SPHINX_PROMPT_VERSION: 'min'
-      - SPHINXEXT_OPENGRAPH_VERSION: 'min'
+      - LOCK_FILE: build_tools/circle/doc_min_dependencies_linux-64_conda.lock
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
@@ -53,20 +42,7 @@ jobs:
       - OMP_NUM_THREADS: 2
       - MKL_NUM_THREADS: 2
       - CONDA_ENV_NAME: testenv
-      - PYTHON_VERSION: '3.9'
-      - NUMPY_VERSION: 'latest'
-      - SCIPY_VERSION: 'latest'
-      - MATPLOTLIB_VERSION: 'latest'
-      - CYTHON_VERSION: 'latest'
-      - SCIKIT_IMAGE_VERSION: 'latest'
-      # Bump the sphinx version from time to time. Avoid latest sphinx version
-      # that tends to break things slightly too often
-      - SPHINX_VERSION: 4.2.0
-      - PANDAS_VERSION: 'latest'
-      - SPHINX_GALLERY_VERSION: 'latest'
-      - NUMPYDOC_VERSION: 'latest'
-      - SPHINX_PROMPT_VERSION: 'latest'
-      - SPHINXEXT_OPENGRAPH_VERSION: 'latest'
+      - LOCK_FILE: build_tools/circle/doc_linux-64_conda.lock
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
