@@ -905,10 +905,10 @@ logistic regression, see also `log-linear model
 
 Let :math:`y_i \in {1, \ldots, K}` be the label (ordinal) encoded target variable for observation :math:`i`.
 Instead of a single coefficient vector, we now have
-a matrix of coefficients :math:`W` where each row vector :math:`w_k` corresponds to class
+a matrix of coefficients :math:`W` where each row vector :math:`W_k` corresponds to class
 :math:`k`. We aim at predicting the class probabilities :math:`P(y_i=k|X_i)` via ``predict_proba`` as:
 
-.. math:: \hat{p}_k(X_i) = \frac{\exp(X_i w_k + w_{0, k})}{\sum_{l=0}^{K-1} \exp(X_i w_l + w_{0, l})}.
+.. math:: \hat{p}_k(X_i) = \frac{\exp(X_i W_k + W_{0, k})}{\sum_{l=0}^{K-1} \exp(X_i W_l + W_{0, l})}.
 
 The objective for the optimization becomes
 
@@ -925,9 +925,9 @@ for the regularization term :math:`r(W)` via the `penalty` argument:
 +----------------+----------------------------------------------------------------------------------+
 | :math:`\ell_1` | :math:`\|W\|_{1,1} = \sum_{i=1}^n\sum_{j=1}^{K}|W_{i,j}|`                        |
 +----------------+----------------------------------------------------------------------------------+
-| :math:`\ell_2` | :math:`\frac{1}{2}\|W\|_F^2 = \frac{1}{2}\sum_{i=1}^n\sum_{j=1}^{K} w_{i,j}^2`   |
+| :math:`\ell_2` | :math:`\frac{1}{2}\|W\|_F^2 = \frac{1}{2}\sum_{i=1}^n\sum_{j=1}^{K} W_{i,j}^2`   |
 +----------------+----------------------------------------------------------------------------------+
-| `ElasticNet`   | :math:`\frac{1 - \rho}{2}\|W\|_F^2 + \rho \|W\|_1`                               |
+| `ElasticNet`   | :math:`\frac{1 - \rho}{2}\|W\|_F^2 + \rho \|W\|_{1,1}`                           |
 +----------------+----------------------------------------------------------------------------------+
 
 Solvers
