@@ -351,7 +351,7 @@ class RANSACRegressor(
         if min_samples > X.shape[0]:
             raise ValueError(
                 "`min_samples` may not be larger than number "
-                "of samples: n_samples = %d." % (X.shape[0])
+                f"of samples: n_samples = {X.shape[0]}."
             )
 
         if self.stop_probability < 0 or self.stop_probability > 1:
@@ -361,9 +361,9 @@ class RANSACRegressor(
         estimator_name = type(estimator).__name__
         if sample_weight is not None and not estimator_fit_has_sample_weight:
             raise ValueError(
-                "%s does not support sample_weight. Samples"
+                f"{estimator_name} does not support sample_weight. Samples"
                 " weights are only used for the calibration"
-                " itself." % estimator_name
+                " itself."
             )
         sample_weight = _check_sample_weight(sample_weight, X)
 
@@ -414,8 +414,7 @@ class RANSACRegressor(
         else:
             raise ValueError(
                 "loss should be 'absolute_error', 'squared_error' or a "
-                "callable. Got %s. "
-                % self.loss
+                f"callable. Got {self.loss}. "
             )
 
         random_state = check_random_state(self.random_state)
