@@ -1058,7 +1058,7 @@ def test_calibrated_classifier_cv_zeros_sample_weights_equivalence(method, ensem
     assert_allclose(y_pred_with_weights, y_pred_without_weights)
 
 
-# TODO (remove in 1.4)
+# TODO(1.4): Remove
 def test_calibrated_classifier_error_base_estimator(data):
     """Check that we raise an error is a user set both `base_estimator` and
     `estimator`."""
@@ -1069,7 +1069,7 @@ def test_calibrated_classifier_error_base_estimator(data):
         calibrated_classifier.fit(*data)
 
 
-# TODO (remove in 1.4)
+# TODO(1.4): Remove
 def test_calibrated_classifier_deprecation_base_estimator(data):
     """Check that we raise a warning regarding the deprecation of
     `base_estimator`."""
