@@ -804,9 +804,6 @@ Changelog
   :class:`linear_model.ARDRegression` now preserve float32 dtype. :pr:`9087` by
   :user:`Arthur Imbert <Henley13>` and :pr:`22525` by :user:`Meekail Zain <micky774>`.
 
-- |Fix| :class:`impute.SimpleImputer` now uses the dtype seen in `fit` for
-  `transform`. :pr:`22063` by `Thomas Fan`_.
-
 - |Enhancement| :class:`linear_model.RidgeClassifier` is now supporting
   multilabel classification.
   :pr:`19689` by :user:`Guillaume Lemaitre <glemaitre>`.

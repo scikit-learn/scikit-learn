@@ -87,6 +87,12 @@ Changelog
 - |Efficiency| Improve runtime performance of :class:`ensemble.IsolationForest`
   by avoiding data copies. :pr:`23252` by :user:`Zhehao Liu <MaxwellLZH>`.
 
+:mod:`sklearn.impute`
+.....................
+
+- |Fix| :class:`impute.SimpleImputer` now uses the dtype seen in `fit` for
+  `transform`. :pr:`22063` by `Thomas Fan`_.
+
 :mod:`sklearn.metrics`
 ......................
 
