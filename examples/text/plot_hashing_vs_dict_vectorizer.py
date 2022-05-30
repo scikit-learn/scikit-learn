@@ -19,7 +19,7 @@ Later we introduce and analyze the text-specific vectorizers
 tokenization and the assembling of the feature matrix within a single class.
 
 The objective of the example is to demonstrate the usage of text vectorization
-API and to compare their processing time.
+API and to compare their processing time. See the example scripts
 :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
 and :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py` for actual
 learning on text documents.
@@ -105,8 +105,8 @@ token_freqs("That is one example, but this is another one")
 # Observe in particular that the repeated token `"is"` is counted twice for instance.
 #
 # Breaking a text document into word tokens, potentially losing the order
-# information between the words in a sentence is often called a `Bag of
-# Words representation <https://en.wikipedia.org/wiki/Bag-of-words_model>`_.
+# information between the words in a sentence is often called a `Bag of Words
+# representation <https://en.wikipedia.org/wiki/Bag-of-words_model>`_.
 
 # %%
 # DictVectorizer
@@ -316,18 +316,18 @@ print(f"done in {duration:.3f}s at {data_size_mb / duration:.3f}MB/s")
 # We can observe that this is the fastest text tokenization strategy so far,
 # assuming the that the downstream machine learning task can tolerate a few
 # collisions.
-# 
+#
 # %%
 # TfidfVectorizer
 # ---------------
 #
 # In a large text corpus, some words appear with higher frequency (e.g. “the”,
-# “a”, “is” in English) and do not carry meaningful information about the
-# actual contents of a document. If we were to feed the word count data directly
-# to a classifier, those very common terms would shadow the frequencies of rarer
-# yet more informative terms. In order to re-weight the count features into
-# floating point values suitable for usage by a classifier it is very common to
-# use the tf–idf transform as implemented by the
+# “a”, “is” in English) and do not carry meaningful information about the actual
+# contents of a document. If we were to feed the word count data directly to a
+# classifier, those very common terms would shadow the frequencies of rarer yet
+# more informative terms. In order to re-weight the count features into floating
+# point values suitable for usage by a classifier it is very common to use the
+# tf–idf transform as implemented by the
 # :func:`~sklearn.feature_extraction.text.TfidfTransformer`. TF stands for
 # "term-frequency" while "tf–idf" means term-frequency times inverse
 # document-frequency.
@@ -368,15 +368,15 @@ _ = ax.set_xlabel("speed (MB/s)")
 # than :func:`~sklearn.feature_extraction.text.CountVectorizer` because of the
 # extra operation induced by the
 # :func:`~sklearn.feature_extraction.text.TfidfTransformer`.
-# 
+#
 # Also notice that, by setting the number of features `n_features = 2**18`, the
 # :func:`~sklearn.feature_extraction.text.HashingVectorizer` performs better
-# than the :func:`~sklearn.feature_extraction.text.CountVectorizer` at 
-# the expense of inversibility of the transformation due to hash collisions.
+# than the :func:`~sklearn.feature_extraction.text.CountVectorizer` at the
+# expense of inversibility of the transformation due to hash collisions.
 #
 # We highlight that :func:`~sklearn.feature_extraction.text.CountVectorizer` and
-# :func:`~sklearn.feature_extraction.text.HashingVectorizer` perform better 
-# than their equivalent :func:`~sklearn.feature_extraction.DictVectorizer`
-# and :func:`~sklearn.feature_extraction.FeatureHasher` on manually tokenized
+# :func:`~sklearn.feature_extraction.text.HashingVectorizer` perform better than
+# their equivalent :func:`~sklearn.feature_extraction.DictVectorizer` and
+# :func:`~sklearn.feature_extraction.FeatureHasher` on manually tokenized
 # documents since the internal tokenization step of the former vectorizers
 # compiles a regular expression once and then reuses it for all the documents.
