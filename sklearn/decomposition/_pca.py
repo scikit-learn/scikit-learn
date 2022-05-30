@@ -11,7 +11,7 @@
 # License: BSD 3 clause
 
 from math import log, sqrt
-import numbers
+# import numbers
 from numbers import Integral, Real
 
 import numpy as np
@@ -21,14 +21,13 @@ from scipy.sparse import issparse
 from scipy.sparse.linalg import svds
 
 from ._base import _BasePCA
-from ..utils import check_random_state, check_scalar
+from ..utils import check_random_state
 from ..utils._arpack import _init_arpack_v0
 from ..utils.extmath import fast_logdet, randomized_svd, svd_flip
 from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
 from ..utils._param_validation import Interval
 from ..utils._param_validation import StrOptions
-from ..utils._param_validation import validate_params
 
 
 
@@ -575,7 +574,7 @@ class PCA(_BasePCA):
                 "svd_solver='%s'"
                 % (n_components, min(n_samples, n_features), svd_solver)
             )
-        elif not isinstance(n_components, numbers.Integral):
+        elif not isinstance(n_components, Integral):
             raise ValueError(
                 "n_components=%r must be of type int "
                 "when greater than or equal to 1, was of type=%r"
