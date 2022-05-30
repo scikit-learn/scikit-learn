@@ -35,7 +35,7 @@ learning on text documents.
 # Load Data
 # ---------
 #
-# We load data from the :ref:`20newsgroups_dataset`, which comprises around
+# We load data from :ref:`20newsgroups_dataset`, which comprises around
 # 18000 newsgroups posts on 20 topics split in two subsets: one for training and
 # one for testing. For the sake of simplicity and reducing the computational
 # cost, we select a subset of 7 topics and use the training set only.
