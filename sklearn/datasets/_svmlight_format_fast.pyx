@@ -117,6 +117,8 @@ def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based,
 
     return (dtype, data, indices, indptr, labels, query)
 
+# Two fused types are defined to be able to
+# use all possible combinations of parameters.
 ctypedef fused int_or_float1:
     cython.integral
     cython.floating
@@ -130,7 +132,14 @@ ctypedef fused int_or_longlong:
     cython.integral
     signed long long
 
-def get_dense_row_string(int_or_float1[:,:] X, Py_ssize_t[:] x_inds, int_or_float2[:] x_vals, Py_ssize_t row, str value_pattern, bint one_based):
+def get_dense_row_string(
+    int_or_float1[:,:] X,
+    Py_ssize_t[:] x_inds,
+    int_or_float2[:] x_vals,
+    Py_ssize_t row,
+    str value_pattern,
+    bint one_based,
+):
     cdef:
         Py_ssize_t row_length = X.shape[1]
         Py_ssize_t x_nz_used = 0
@@ -145,14 +154,30 @@ def get_dense_row_string(int_or_float1[:,:] X, Py_ssize_t[:] x_inds, int_or_floa
         x_nz_used += 1
     return " ".join(value_pattern % (j+one_based, val) for i, (j, val) in enumerate(zip(x_inds, x_vals)) if i < x_nz_used)
 
-def get_sparse_row_string(int_or_float1[:] X_data, int[:] X_indptr, int[:] X_indices, Py_ssize_t row, str value_pattern, bint one_based):
+def get_sparse_row_string(
+    int_or_float1[:] X_data,
+    int[:] X_indptr,
+    int[:] X_indices,
+    Py_ssize_t 
+    str value_pattern,
+    bint one_based
+):
     cdef:
         Py_ssize_t row_start = X_indptr[row]
         Py_ssize_t row_end = X_indptr[row+1]
 
     return " ".join(value_pattern % (X_indices[i]+one_based, X_data[i]) for i in range(row_start, row_end))
 
-def _dump_svmlight_file(X, y, f, bint multilabel, bint one_based, int_or_longlong[:] query_id, bint X_is_sp, bint y_is_sp):
+def _dump_svmlight_file(
+    X,
+    y,
+    f,
+    bint multilabel,
+    bint one_based,
+    int_or_longlong[:] query_id,
+    bint X_is_sp,
+    bint y_is_sp,
+):
     cdef bint X_is_integral
     X_is_integral = X.dtype.kind == "i"
     if X_is_integral:
