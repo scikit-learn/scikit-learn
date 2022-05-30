@@ -350,6 +350,8 @@ print(f"done in {duration:.3f} s at {data_size_mb / duration:.1f} MB/s")
 print(f"Found {len(vectorizer.get_feature_names_out())} unique terms")
 
 # %%
+# Summary
+# -------
 # Let's conclude this notebook by summarizing all the recorded processing speeds
 # in a single plot:
 
