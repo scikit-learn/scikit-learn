@@ -158,9 +158,9 @@ def get_sparse_row_string(
     int_or_float1[:] X_data,
     int[:] X_indptr,
     int[:] X_indices,
-    Py_ssize_t 
+    Py_ssize_t row,
     str value_pattern,
-    bint one_based
+    bint one_based,
 ):
     cdef:
         Py_ssize_t row_start = X_indptr[row]
