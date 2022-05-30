@@ -150,7 +150,7 @@ def test_sample_weight_deviance():
 
         deviance_w_w = loss(y, p, sample_weight)
         deviance_wo_w = loss(y, p)
-        assert deviance_wo_w == deviance_w_w
+        assert_allclose(deviance_wo_w, deviance_w_w)
 
 
 @pytest.mark.parametrize("n_classes, n_samples", [(3, 100), (5, 57), (7, 13)])
@@ -320,3 +320,18 @@ def test_lad_equals_quantiles(seed, alpha):
         y_true, raw_predictions, sample_weight=weights, alpha=alpha
     )
     assert pbl_weighted_loss == approx(ql_weighted_loss)
+
+
+def test_exponential_loss():
+    """Check that we compute the negative gradient of the exponential loss.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/9666
+    """
+    loss = ExponentialLoss(n_classes=2)
+    y_true = np.array([0])
+    y_pred = np.array([0])
+    # we expect to have loss = exp(0) = 1
+    assert loss(y_true, y_pred) == pytest.approx(1)
+    # we expect to have negative gradient = -1 * (1 * exp(0)) = -1
+    assert_allclose(loss.negative_gradient(y_true, y_pred), -1)

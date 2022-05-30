@@ -15,6 +15,7 @@ from scipy.special import expit  # logistic function
 
 from ..base import BaseEstimator
 from ..base import TransformerMixin
+from ..base import _ClassNamePrefixFeaturesOutMixin
 from ..utils import check_random_state
 from ..utils import gen_even_slices
 from ..utils.extmath import safe_sparse_dot
@@ -22,7 +23,7 @@ from ..utils.extmath import log_logistic
 from ..utils.validation import check_is_fitted
 
 
-class BernoulliRBM(TransformerMixin, BaseEstimator):
+class BernoulliRBM(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     """Bernoulli Restricted Boltzmann Machine (RBM).
 
     A Restricted Boltzmann Machine with binary visible units and
@@ -196,7 +197,7 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
             Values of the hidden layer.
         """
         p = self._mean_hiddens(v)
-        return rng.random_sample(size=p.shape) < p
+        return rng.uniform(size=p.shape) < p
 
     def _sample_visibles(self, h, rng):
         """Sample from the distribution P(v|h).
@@ -217,7 +218,7 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         p = np.dot(h, self.components_)
         p += self.intercept_visible_
         expit(p, out=p)
-        return rng.random_sample(size=p.shape) < p
+        return rng.uniform(size=p.shape) < p
 
     def _free_energy(self, v):
         """Computes the free energy F(v) = - log sum_h exp(-E(v,h)).
@@ -284,6 +285,7 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
                 self.random_state_.normal(0, 0.01, (self.n_components, X.shape[1])),
                 order="F",
             )
+            self._n_features_out = self.components_.shape[0]
         if not hasattr(self, "intercept_hidden_"):
             self.intercept_hidden_ = np.zeros(
                 self.n_components,
@@ -389,6 +391,7 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
             order="F",
             dtype=X.dtype,
         )
+        self._n_features_out = self.components_.shape[0]
         self.intercept_hidden_ = np.zeros(self.n_components, dtype=X.dtype)
         self.intercept_visible_ = np.zeros(X.shape[1], dtype=X.dtype)
         self.h_samples_ = np.zeros((self.batch_size, self.n_components), dtype=X.dtype)

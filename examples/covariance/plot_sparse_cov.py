@@ -54,14 +54,13 @@ iteratively refined in the neighborhood of the maximum.
 # License: BSD 3 clause
 # Copyright: INRIA
 
+# %%
+# Generate the data
+# -----------------
 import numpy as np
 from scipy import linalg
 from sklearn.datasets import make_sparse_spd_matrix
-from sklearn.covariance import GraphicalLassoCV, ledoit_wolf
-import matplotlib.pyplot as plt
 
-# #############################################################################
-# Generate the data
 n_samples = 60
 n_features = 20
 
@@ -79,8 +78,11 @@ X = prng.multivariate_normal(np.zeros(n_features), cov, size=n_samples)
 X -= X.mean(axis=0)
 X /= X.std(axis=0)
 
-# #############################################################################
+# %%
 # Estimate the covariance
+# -----------------------
+from sklearn.covariance import GraphicalLassoCV, ledoit_wolf
+
 emp_cov = np.dot(X.T, X) / n_samples
 
 model = GraphicalLassoCV()
@@ -91,8 +93,11 @@ prec_ = model.precision_
 lw_cov_, _ = ledoit_wolf(X)
 lw_prec_ = linalg.inv(lw_cov_)
 
-# #############################################################################
+# %%
 # Plot the results
+# ----------------
+import matplotlib.pyplot as plt
+
 plt.figure(figsize=(10, 6))
 plt.subplots_adjust(left=0.02, right=0.98)
 
@@ -139,10 +144,12 @@ for i, (name, this_prec) in enumerate(precs):
     else:
         ax.set_axis_bgcolor(".7")
 
+# %%
+
 # plot the model selection metric
 plt.figure(figsize=(4, 3))
 plt.axes([0.2, 0.15, 0.75, 0.7])
-plt.plot(model.cv_results_["alphas"], model.cv_results_["mean_score"], "o-")
+plt.plot(model.cv_results_["alphas"], model.cv_results_["mean_test_score"], "o-")
 plt.axvline(model.alpha_, color=".5")
 plt.title("Model selection")
 plt.ylabel("Cross-validation score")

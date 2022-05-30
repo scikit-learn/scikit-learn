@@ -141,7 +141,7 @@ X = np.vstack(
 y = np.concatenate([np.full(samples[j], j, dtype=int) for j in range(n_components)])
 
 # Plot results in two different figures
-for (title, estimator, concentrations_prior) in estimators:
+for title, estimator, concentrations_prior in estimators:
     plt.figure(figsize=(4.7 * 3, 8))
     plt.subplots_adjust(
         bottom=0.04, top=0.90, hspace=0.05, wspace=0.05, left=0.03, right=0.99

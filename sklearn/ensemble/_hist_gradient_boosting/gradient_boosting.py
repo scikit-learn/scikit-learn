@@ -7,6 +7,16 @@ import warnings
 
 import numpy as np
 from timeit import default_timer as time
+from ..._loss.loss import (
+    _LOSSES,
+    BaseLoss,
+    AbsoluteError,
+    HalfBinomialLoss,
+    HalfMultinomialLoss,
+    HalfPoissonLoss,
+    HalfSquaredError,
+    PinballLoss,
+)
 from ...base import BaseEstimator, RegressorMixin, ClassifierMixin, is_classifier
 from ...utils import check_random_state, resample
 from ...utils.validation import (
@@ -20,12 +30,56 @@ from ...metrics import check_scoring
 from ...model_selection import train_test_split
 from ...preprocessing import LabelEncoder
 from ._gradient_boosting import _update_raw_predictions
-from .common import Y_DTYPE, X_DTYPE, X_BINNED_DTYPE
+from .common import Y_DTYPE, X_DTYPE, G_H_DTYPE
 
 from .binning import _BinMapper
 from .grower import TreeGrower
-from .loss import _LOSSES
-from .loss import BaseLoss
+
+
+_LOSSES = _LOSSES.copy()
+# TODO(1.2): Remove "least_squares" and "least_absolute_deviation"
+# TODO(1.3): Remove "binary_crossentropy" and "categorical_crossentropy"
+_LOSSES.update(
+    {
+        "least_squares": HalfSquaredError,
+        "least_absolute_deviation": AbsoluteError,
+        "poisson": HalfPoissonLoss,
+        "quantile": PinballLoss,
+        "binary_crossentropy": HalfBinomialLoss,
+        "categorical_crossentropy": HalfMultinomialLoss,
+    }
+)
+
+
+def _update_leaves_values(loss, grower, y_true, raw_prediction, sample_weight):
+    """Update the leaf values to be predicted by the tree.
+
+    Update equals:
+        loss.fit_intercept_only(y_true - raw_prediction)
+
+    This is only applied if loss.need_update_leaves_values is True.
+    Note: It only works, if the loss is a function of the residual, as is the
+    case for AbsoluteError and PinballLoss. Otherwise, one would need to get
+    the minimum of loss(y_true, raw_prediction + x) in x. A few examples:
+      - AbsoluteError: median(y_true - raw_prediction).
+      - PinballLoss: quantile(y_true - raw_prediction).
+    See also notes about need_update_leaves_values in BaseLoss.
+    """
+    # TODO: Ideally this should be computed in parallel over the leaves using something
+    # similar to _update_raw_predictions(), but this requires a cython version of
+    # median().
+    for leaf in grower.finalized_leaves:
+        indices = leaf.sample_indices
+        if sample_weight is None:
+            sw = None
+        else:
+            sw = sample_weight[indices]
+        update = loss.fit_intercept_only(
+            y_true=y_true[indices] - raw_prediction[indices],
+            sample_weight=sw,
+        )
+        leaf.value = grower.shrinkage * update
+        # Note that the regularization is ignored here
 
 
 class BaseHistGradientBoosting(BaseEstimator, ABC):
@@ -270,9 +324,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         n_threads = _openmp_effective_n_threads()
 
         if isinstance(self.loss, str):
-            self._loss = self._get_loss(
-                sample_weight=sample_weight, n_threads=n_threads
-            )
+            self._loss = self._get_loss(sample_weight=sample_weight)
         elif isinstance(self.loss, BaseLoss):
             self._loss = self.loss
 
@@ -285,6 +337,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         self._use_validation_data = self.validation_fraction is not None
         if self.do_early_stopping_ and self._use_validation_data:
             # stratify for classification
+            # instead of checking predict_proba, loss.n_classes >= 2 would also work
             stratify = y if hasattr(self._loss, "predict_proba") else None
 
             # Save the state of the RNG for the training and validation split.
@@ -363,15 +416,17 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
             # initialize raw_predictions: those are the accumulated values
             # predicted by the trees for the training data. raw_predictions has
-            # shape (n_trees_per_iteration, n_samples) where
+            # shape (n_samples, n_trees_per_iteration) where
             # n_trees_per_iterations is n_classes in multiclass classification,
             # else 1.
-            self._baseline_prediction = self._loss.get_baseline_prediction(
-                y_train, sample_weight_train, self.n_trees_per_iteration_
-            )
+            # self._baseline_prediction has shape (1, n_trees_per_iteration)
+            self._baseline_prediction = self._loss.fit_intercept_only(
+                y_true=y_train, sample_weight=sample_weight_train
+            ).reshape((1, -1))
             raw_predictions = np.zeros(
-                shape=(self.n_trees_per_iteration_, n_samples),
+                shape=(n_samples, self.n_trees_per_iteration_),
                 dtype=self._baseline_prediction.dtype,
+                order="F",
             )
             raw_predictions += self._baseline_prediction
 
@@ -401,19 +456,21 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
                     if self._use_validation_data:
                         raw_predictions_val = np.zeros(
-                            shape=(self.n_trees_per_iteration_, X_binned_val.shape[0]),
+                            shape=(X_binned_val.shape[0], self.n_trees_per_iteration_),
                             dtype=self._baseline_prediction.dtype,
+                            order="F",
                         )
 
                         raw_predictions_val += self._baseline_prediction
 
                     self._check_early_stopping_loss(
-                        raw_predictions,
-                        y_train,
-                        sample_weight_train,
-                        raw_predictions_val,
-                        y_val,
-                        sample_weight_val,
+                        raw_predictions=raw_predictions,
+                        y_train=y_train,
+                        sample_weight_train=sample_weight_train,
+                        raw_predictions_val=raw_predictions_val,
+                        y_val=y_val,
+                        sample_weight_val=sample_weight_val,
+                        n_threads=n_threads,
                     )
                 else:
                     self._scorer = check_scoring(self, self.scoring)
@@ -482,11 +539,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             begin_at_stage = self.n_iter_
 
         # initialize gradients and hessians (empty arrays).
-        # shape = (n_trees_per_iteration, n_samples).
-        gradients, hessians = self._loss.init_gradients_and_hessians(
-            n_samples=n_samples,
-            prediction_dim=self.n_trees_per_iteration_,
-            sample_weight=sample_weight_train,
+        # shape = (n_samples, n_trees_per_iteration).
+        gradient, hessian = self._loss.init_gradient_and_hessian(
+            n_samples=n_samples, dtype=G_H_DTYPE, order="F"
         )
 
         for iteration in range(begin_at_stage, self.max_iter):
@@ -498,19 +553,44 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 )
 
             # Update gradients and hessians, inplace
-            self._loss.update_gradients_and_hessians(
-                gradients, hessians, y_train, raw_predictions, sample_weight_train
-            )
+            # Note that self._loss expects shape (n_samples,) for
+            # n_trees_per_iteration = 1 else shape (n_samples, n_trees_per_iteration).
+            if self._loss.constant_hessian:
+                self._loss.gradient(
+                    y_true=y_train,
+                    raw_prediction=raw_predictions,
+                    sample_weight=sample_weight_train,
+                    gradient_out=gradient,
+                    n_threads=n_threads,
+                )
+            else:
+                self._loss.gradient_hessian(
+                    y_true=y_train,
+                    raw_prediction=raw_predictions,
+                    sample_weight=sample_weight_train,
+                    gradient_out=gradient,
+                    hessian_out=hessian,
+                    n_threads=n_threads,
+                )
 
             # Append a list since there may be more than 1 predictor per iter
             predictors.append([])
 
+            # 2-d views of shape (n_samples, n_trees_per_iteration_) or (n_samples, 1)
+            # on gradient and hessian to simplify the loop over n_trees_per_iteration_.
+            if gradient.ndim == 1:
+                g_view = gradient.reshape((-1, 1))
+                h_view = hessian.reshape((-1, 1))
+            else:
+                g_view = gradient
+                h_view = hessian
+
             # Build `n_trees_per_iteration` trees.
             for k in range(self.n_trees_per_iteration_):
                 grower = TreeGrower(
-                    X_binned_train,
-                    gradients[k, :],
-                    hessians[k, :],
+                    X_binned=X_binned_train,
+                    gradients=g_view[:, k],
+                    hessians=h_view[:, k],
                     n_bins=n_bins,
                     n_bins_non_missing=self._bin_mapper.n_bins_non_missing_,
                     has_missing_values=has_missing_values,
@@ -530,8 +610,12 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 acc_compute_hist_time += grower.total_compute_hist_time
 
                 if self._loss.need_update_leaves_values:
-                    self._loss.update_leaves_values(
-                        grower, y_train, raw_predictions[k, :], sample_weight_train
+                    _update_leaves_values(
+                        loss=self._loss,
+                        grower=grower,
+                        y_true=y_train,
+                        raw_prediction=raw_predictions[:, k],
+                        sample_weight=sample_weight_train,
                     )
 
                 predictor = grower.make_predictor(
@@ -542,7 +626,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 # Update raw_predictions with the predictions of the newly
                 # created tree.
                 tic_pred = time()
-                _update_raw_predictions(raw_predictions[k, :], grower, n_threads)
+                _update_raw_predictions(raw_predictions[:, k], grower, n_threads)
                 toc_pred = time()
                 acc_prediction_time += toc_pred - tic_pred
 
@@ -552,19 +636,20 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     # Update raw_predictions_val with the newest tree(s)
                     if self._use_validation_data:
                         for k, pred in enumerate(self._predictors[-1]):
-                            raw_predictions_val[k, :] += pred.predict_binned(
+                            raw_predictions_val[:, k] += pred.predict_binned(
                                 X_binned_val,
                                 self._bin_mapper.missing_values_bin_idx_,
                                 n_threads,
                             )
 
                     should_early_stop = self._check_early_stopping_loss(
-                        raw_predictions,
-                        y_train,
-                        sample_weight_train,
-                        raw_predictions_val,
-                        y_val,
-                        sample_weight_val,
+                        raw_predictions=raw_predictions,
+                        y_train=y_train,
+                        sample_weight_train=sample_weight_train,
+                        raw_predictions_val=raw_predictions_val,
+                        y_val=y_val,
+                        sample_weight_val=sample_weight_val,
+                        n_threads=n_threads,
                     )
 
                 else:
@@ -715,19 +800,29 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         raw_predictions_val,
         y_val,
         sample_weight_val,
+        n_threads=1,
     ):
         """Check if fitting should be early-stopped based on loss.
 
         Scores are computed on validation data or on training data.
         """
-
         self.train_score_.append(
-            -self._loss(y_train, raw_predictions, sample_weight_train)
+            -self._loss(
+                y_true=y_train,
+                raw_prediction=raw_predictions,
+                sample_weight=sample_weight_train,
+                n_threads=n_threads,
+            )
         )
 
         if self._use_validation_data:
             self.validation_score_.append(
-                -self._loss(y_val, raw_predictions_val, sample_weight_val)
+                -self._loss(
+                    y_true=y_val,
+                    raw_prediction=raw_predictions_val,
+                    sample_weight=sample_weight_val,
+                    n_threads=n_threads,
+                )
             )
             return self._should_stop(self.validation_score_)
         else:
@@ -838,12 +933,14 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         Returns
         -------
-        raw_predictions : array, shape (n_trees_per_iteration, n_samples)
+        raw_predictions : array, shape (n_samples, n_trees_per_iteration)
             The raw predicted values.
         """
         is_binned = getattr(self, "_in_fit", False)
-        dtype = X_BINNED_DTYPE if is_binned else X_DTYPE
-        X = self._validate_data(X, dtype=dtype, force_all_finite=False, reset=False)
+        if not is_binned:
+            X = self._validate_data(
+                X, dtype=X_DTYPE, force_all_finite=False, reset=False
+            )
         check_is_fitted(self)
         if X.shape[1] != self._n_features:
             raise ValueError(
@@ -852,8 +949,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             )
         n_samples = X.shape[0]
         raw_predictions = np.zeros(
-            shape=(self.n_trees_per_iteration_, n_samples),
+            shape=(n_samples, self.n_trees_per_iteration_),
             dtype=self._baseline_prediction.dtype,
+            order="F",
         )
         raw_predictions += self._baseline_prediction
 
@@ -889,7 +987,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                         f_idx_map=f_idx_map,
                         n_threads=n_threads,
                     )
-                raw_predictions[k, :] += predict(X)
+                raw_predictions[:, k] += predict(X)
 
     def _staged_raw_predict(self, X):
         """Compute raw predictions of ``X`` for each iteration.
@@ -903,9 +1001,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             The input samples.
 
         Yields
-        -------
+        ------
         raw_predictions : generator of ndarray of shape \
-            (n_trees_per_iteration, n_samples)
+            (n_samples, n_trees_per_iteration)
             The raw predictions of the input samples. The order of the
             classes corresponds to that in the attribute :term:`classes_`.
         """
@@ -918,8 +1016,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             )
         n_samples = X.shape[0]
         raw_predictions = np.zeros(
-            shape=(self.n_trees_per_iteration_, n_samples),
+            shape=(n_samples, self.n_trees_per_iteration_),
             dtype=self._baseline_prediction.dtype,
+            order="F",
         )
         raw_predictions += self._baseline_prediction
 
@@ -983,7 +1082,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         return {"allow_nan": True}
 
     @abstractmethod
-    def _get_loss(self, sample_weight, n_threads):
+    def _get_loss(self, sample_weight):
         pass
 
     @abstractmethod
@@ -1021,16 +1120,20 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
 
     Parameters
     ----------
-    loss : {'squared_error', 'absolute_error', 'poisson'}, \
+    loss : {'squared_error', 'absolute_error', 'poisson', 'quantile'}, \
             default='squared_error'
         The loss function to use in the boosting process. Note that the
         "squared error" and "poisson" losses actually implement
         "half least squares loss" and "half poisson deviance" to simplify the
         computation of the gradient. Furthermore, "poisson" loss internally
         uses a log-link and requires ``y >= 0``.
+        "quantile" uses the pinball loss.
 
         .. versionchanged:: 0.23
            Added option 'poisson'.
+
+        .. versionchanged:: 1.1
+           Added option 'quantile'.
 
         .. deprecated:: 1.0
             The loss 'least_squares' was deprecated in v1.0 and will be removed
@@ -1041,6 +1144,9 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
             be removed in version 1.2. Use `loss='absolute_error'` which is
             equivalent.
 
+    quantile : float, default=None
+        If loss is "quantile", this parameter specifies which quantile to be estimated
+        and must be between 0 and 1.
     learning_rate : float, default=0.1
         The learning rate, also known as *shrinkage*. This is used as a
         multiplicative factor for the leaves values. Use ``1`` for no
@@ -1194,18 +1300,21 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     0.92...
     """
 
+    # TODO(1.2): remove "least_absolute_deviation"
     _VALID_LOSSES = (
         "squared_error",
         "least_squares",
         "absolute_error",
         "least_absolute_deviation",
         "poisson",
+        "quantile",
     )
 
     def __init__(
         self,
         loss="squared_error",
         *,
+        quantile=None,
         learning_rate=0.1,
         max_iter=100,
         max_leaf_nodes=31,
@@ -1244,6 +1353,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
             verbose=verbose,
             random_state=random_state,
         )
+        self.quantile = quantile
 
     def predict(self, X):
         """Predict values for X.
@@ -1261,7 +1371,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         check_is_fitted(self)
         # Return inverse link of raw predictions after converting
         # shape (n_samples, 1) to (n_samples,)
-        return self._loss.inverse_link_function(self._raw_predict(X).ravel())
+        return self._loss.link.inverse(self._raw_predict(X).ravel())
 
     def staged_predict(self, X):
         """Predict regression target for each iteration.
@@ -1277,12 +1387,12 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
             The input samples.
 
         Yields
-        -------
+        ------
         y : generator of ndarray of shape (n_samples,)
             The predicted values of the input samples, for each iteration.
         """
         for raw_predictions in self._staged_raw_predict(X):
-            yield self._loss.inverse_link_function(raw_predictions.ravel())
+            yield self._loss.link.inverse(raw_predictions.ravel())
 
     def _encode_y(self, y):
         # Just convert y to the expected dtype
@@ -1296,7 +1406,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
                 )
         return y
 
-    def _get_loss(self, sample_weight, n_threads):
+    def _get_loss(self, sample_weight):
         # TODO: Remove in v1.2
         if self.loss == "least_squares":
             warnings.warn(
@@ -1305,9 +1415,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
                 "equivalent.",
                 FutureWarning,
             )
-            return _LOSSES["squared_error"](
-                sample_weight=sample_weight, n_threads=n_threads
-            )
+            return _LOSSES["squared_error"](sample_weight=sample_weight)
         elif self.loss == "least_absolute_deviation":
             warnings.warn(
                 "The loss 'least_absolute_deviation' was deprecated in v1.0 "
@@ -1315,11 +1423,14 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
                 "which is equivalent.",
                 FutureWarning,
             )
-            return _LOSSES["absolute_error"](
-                sample_weight=sample_weight, n_threads=n_threads
-            )
+            return _LOSSES["absolute_error"](sample_weight=sample_weight)
 
-        return _LOSSES[self.loss](sample_weight=sample_weight, n_threads=n_threads)
+        if self.loss == "quantile":
+            return _LOSSES[self.loss](
+                sample_weight=sample_weight, quantile=self.quantile
+            )
+        else:
+            return _LOSSES[self.loss](sample_weight=sample_weight)
 
 
 class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
@@ -1346,13 +1457,25 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
 
     Parameters
     ----------
-    loss : {'auto', 'binary_crossentropy', 'categorical_crossentropy'}, \
-            default='auto'
-        The loss function to use in the boosting process. 'binary_crossentropy'
-        (also known as logistic loss) is used for binary classification and
-        generalizes to 'categorical_crossentropy' for multiclass
-        classification. 'auto' will automatically choose either loss depending
-        on the nature of the problem.
+    loss : {'log_loss', 'auto', 'binary_crossentropy', 'categorical_crossentropy'}, \
+            default='log_loss'
+        The loss function to use in the boosting process.
+
+        For binary classification problems, 'log_loss' is also known as logistic loss,
+        binomial deviance or binary crossentropy. Internally, the model fits one tree
+        per boosting iteration and uses the logistic sigmoid function (expit) as
+        inverse link function to compute the predicted positive class probability.
+
+        For multiclass classification problems, 'log_loss' is also known as multinomial
+        deviance or categorical crossentropy. Internally, the model fits one tree per
+        boosting iteration and per class and uses the softmax function as inverse link
+        function to compute the predicted probabilities of the classes.
+
+        .. deprecated:: 1.1
+            The loss arguments 'auto', 'binary_crossentropy' and
+            'categorical_crossentropy' were deprecated in v1.1 and will be removed in
+            version 1.3. Use `loss='log_loss'` which is equivalent.
+
     learning_rate : float, default=0.1
         The learning rate, also known as *shrinkage*. This is used as a
         multiplicative factor for the leaves values. Use ``1`` for no
@@ -1508,11 +1631,17 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
     1.0
     """
 
-    _VALID_LOSSES = ("binary_crossentropy", "categorical_crossentropy", "auto")
+    # TODO(1.3): Remove "binary_crossentropy", "categorical_crossentropy", "auto"
+    _VALID_LOSSES = (
+        "log_loss",
+        "binary_crossentropy",
+        "categorical_crossentropy",
+        "auto",
+    )
 
     def __init__(
         self,
-        loss="auto",
+        loss="log_loss",
         *,
         learning_rate=0.1,
         max_iter=100,
@@ -1584,7 +1713,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
             The input samples.
 
         Yields
-        -------
+        ------
         y : generator of ndarray of shape (n_samples,)
             The predicted classes of the input samples, for each iteration.
         """
@@ -1620,7 +1749,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
             The input samples.
 
         Yields
-        -------
+        ------
         y : generator of ndarray of shape (n_samples,)
             The predicted class probabilities of the input samples,
             for each iteration.
@@ -1645,9 +1774,9 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
             classes in multiclass classification.
         """
         decision = self._raw_predict(X)
-        if decision.shape[0] == 1:
+        if decision.shape[1] == 1:
             decision = decision.ravel()
-        return decision.T
+        return decision
 
     def staged_decision_function(self, X):
         """Compute decision function of ``X`` for each iteration.
@@ -1661,7 +1790,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
             The input samples.
 
         Yields
-        -------
+        ------
         decision : generator of ndarray of shape (n_samples,) or \
                 (n_samples, n_trees_per_iteration)
             The decision function of the input samples, which corresponds to
@@ -1669,9 +1798,9 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
             classes corresponds to that in the attribute :term:`classes_`.
         """
         for staged_decision in self._staged_raw_predict(X):
-            if staged_decision.shape[0] == 1:
+            if staged_decision.shape[1] == 1:
                 staged_decision = staged_decision.ravel()
-            yield staged_decision.T
+            yield staged_decision
 
     def _encode_y(self, y):
         # encode classes into 0 ... n_classes - 1 and sets attributes classes_
@@ -1688,22 +1817,38 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         encoded_y = encoded_y.astype(Y_DTYPE, copy=False)
         return encoded_y
 
-    def _get_loss(self, sample_weight, n_threads):
-        if self.loss == "categorical_crossentropy" and self.n_trees_per_iteration_ == 1:
-            raise ValueError(
-                "'categorical_crossentropy' is not suitable for "
-                "a binary classification problem. Please use "
-                "'auto' or 'binary_crossentropy' instead."
+    def _get_loss(self, sample_weight):
+        # TODO(1.3): Remove "auto", "binary_crossentropy", "categorical_crossentropy"
+        if self.loss in ("auto", "binary_crossentropy", "categorical_crossentropy"):
+            warnings.warn(
+                f"The loss '{self.loss}' was deprecated in v1.1 and will be removed in "
+                "version 1.3. Use 'log_loss' which is equivalent.",
+                FutureWarning,
             )
 
-        if self.loss == "auto":
+        if self.loss in ("log_loss", "auto"):
             if self.n_trees_per_iteration_ == 1:
-                return _LOSSES["binary_crossentropy"](
-                    sample_weight=sample_weight, n_threads=n_threads
+                return HalfBinomialLoss(sample_weight=sample_weight)
+            else:
+                return HalfMultinomialLoss(
+                    sample_weight=sample_weight, n_classes=self.n_trees_per_iteration_
+                )
+        if self.loss == "categorical_crossentropy":
+            if self.n_trees_per_iteration_ == 1:
+                raise ValueError(
+                    f"loss='{self.loss}' is not suitable for a binary classification "
+                    "problem. Please use loss='log_loss' instead."
                 )
             else:
-                return _LOSSES["categorical_crossentropy"](
-                    sample_weight=sample_weight, n_threads=n_threads
+                return HalfMultinomialLoss(
+                    sample_weight=sample_weight, n_classes=self.n_trees_per_iteration_
                 )
-
-        return _LOSSES[self.loss](sample_weight=sample_weight, n_threads=n_threads)
+        if self.loss == "binary_crossentropy":
+            if self.n_trees_per_iteration_ > 1:
+                raise ValueError(
+                    f"loss='{self.loss}' is not defined for multiclass "
+                    f"classification with n_classes={self.n_trees_per_iteration_}, "
+                    "use loss='log_loss' instead."
+                )
+            else:
+                return HalfBinomialLoss(sample_weight=sample_weight)

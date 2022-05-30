@@ -4,10 +4,10 @@
 # Modified by: Pete Green <p.l.green@liverpool.ac.uk>
 # License: BSD 3 clause
 
+import warnings
 import sys
 import re
 import numpy as np
-import warnings
 
 from scipy.optimize import approx_fprime
 
@@ -18,7 +18,6 @@ from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C, WhiteKern
 from sklearn.gaussian_process.kernels import DotProduct, ExpSineSquared
 from sklearn.gaussian_process.tests._mini_sequence_kernel import MiniSeqKernel
 from sklearn.exceptions import ConvergenceWarning
-
 from sklearn.utils._testing import (
     assert_array_less,
     assert_almost_equal,
@@ -51,7 +50,7 @@ non_fixed_kernels = [kernel for kernel in kernels if kernel != fixed_kernel]
 
 @pytest.mark.parametrize("kernel", kernels)
 def test_gpr_interpolation(kernel):
-    if sys.maxsize <= 2 ** 32:
+    if sys.maxsize <= 2**32:
         pytest.xfail("This test may fail on 32 bit Python")
 
     # Test the interpolating property for different kernels.
@@ -79,7 +78,7 @@ def test_gpr_interpolation_structured():
 
 @pytest.mark.parametrize("kernel", non_fixed_kernels)
 def test_lml_improving(kernel):
-    if sys.maxsize <= 2 ** 32:
+    if sys.maxsize <= 2**32:
         pytest.xfail("This test may fail on 32 bit Python")
 
     # Test that hyperparameter-tuning improves log-marginal likelihood.
@@ -192,7 +191,7 @@ def test_no_optimizer():
 @pytest.mark.parametrize("kernel", kernels)
 @pytest.mark.parametrize("target", [y, np.ones(X.shape[0], dtype=np.float64)])
 def test_predict_cov_vs_std(kernel, target):
-    if sys.maxsize <= 2 ** 32:
+    if sys.maxsize <= 2**32:
         pytest.xfail("This test may fail on 32 bit Python")
 
     # Test that predicted std.-dev. is consistent with cov's diagonal.
@@ -277,7 +276,7 @@ def test_y_normalization(kernel):
     assert_almost_equal(y_pred_std, y_pred_std_norm)
 
     _, y_cov = gpr.predict(X2, return_cov=True)
-    y_cov = y_cov * y_std ** 2
+    y_cov = y_cov * y_std**2
     _, y_cov_norm = gpr_norm.predict(X2, return_cov=True)
 
     assert_almost_equal(y_cov, y_cov_norm)
@@ -361,12 +360,17 @@ def test_y_multioutput():
     assert_almost_equal(y_pred_1d, y_pred_2d[:, 1] / 2)
 
     # Standard deviation and covariance do not depend on output
-    assert_almost_equal(y_std_1d, y_std_2d)
-    assert_almost_equal(y_cov_1d, y_cov_2d)
+    for target in range(y_2d.shape[1]):
+        assert_almost_equal(y_std_1d, y_std_2d[..., target])
+        assert_almost_equal(y_cov_1d, y_cov_2d[..., target])
 
     y_sample_1d = gpr.sample_y(X2, n_samples=10)
     y_sample_2d = gpr_2d.sample_y(X2, n_samples=10)
-    assert_almost_equal(y_sample_1d, y_sample_2d[:, 0])
+
+    assert y_sample_1d.shape == (5, 10)
+    assert y_sample_2d.shape == (5, 2, 10)
+    # Only the first target will be equal
+    assert_almost_equal(y_sample_1d, y_sample_2d[:, 0, :])
 
     # Test hyperparameter optimization
     for kernel in kernels:
@@ -475,70 +479,72 @@ def test_warning_bounds():
         length_scale_bounds=[1e3, 1e5]
     )
     gpr_sum = GaussianProcessRegressor(kernel=kernel_sum)
-    with pytest.warns(None) as record:
-        with warnings.catch_warnings():
-            # scipy 1.3.0 uses tostring which is deprecated in numpy
-            warnings.filterwarnings("ignore", "tostring", DeprecationWarning)
-            gpr_sum.fit(X, y)
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter("always")
+        gpr_sum.fit(X, y)
 
-    assert len(record) == 2
-    assert (
-        record[0].message.args[0]
-        == "The optimal value found for "
-        "dimension 0 of parameter "
-        "k1__noise_level is close to the "
-        "specified upper bound 0.001. "
-        "Increasing the bound and calling "
-        "fit again may find a better value."
-    )
+        assert len(record) == 2
 
-    assert (
-        record[1].message.args[0]
-        == "The optimal value found for "
-        "dimension 0 of parameter "
-        "k2__length_scale is close to the "
-        "specified lower bound 1000.0. "
-        "Decreasing the bound and calling "
-        "fit again may find a better value."
-    )
+        assert issubclass(record[0].category, ConvergenceWarning)
+        assert (
+            record[0].message.args[0]
+            == "The optimal value found for "
+            "dimension 0 of parameter "
+            "k1__noise_level is close to the "
+            "specified upper bound 0.001. "
+            "Increasing the bound and calling "
+            "fit again may find a better value."
+        )
+
+        assert issubclass(record[1].category, ConvergenceWarning)
+        assert (
+            record[1].message.args[0]
+            == "The optimal value found for "
+            "dimension 0 of parameter "
+            "k2__length_scale is close to the "
+            "specified lower bound 1000.0. "
+            "Decreasing the bound and calling "
+            "fit again may find a better value."
+        )
 
     X_tile = np.tile(X, 2)
     kernel_dims = RBF(length_scale=[1.0, 2.0], length_scale_bounds=[1e1, 1e2])
     gpr_dims = GaussianProcessRegressor(kernel=kernel_dims)
 
-    with pytest.warns(None) as record:
-        with warnings.catch_warnings():
-            # scipy 1.3.0 uses tostring which is deprecated in numpy
-            warnings.filterwarnings("ignore", "tostring", DeprecationWarning)
-            gpr_dims.fit(X_tile, y)
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter("always")
+        gpr_dims.fit(X_tile, y)
 
-    assert len(record) == 2
-    assert (
-        record[0].message.args[0]
-        == "The optimal value found for "
-        "dimension 0 of parameter "
-        "length_scale is close to the "
-        "specified lower bound 10.0. "
-        "Decreasing the bound and calling "
-        "fit again may find a better value."
-    )
+        assert len(record) == 2
 
-    assert (
-        record[1].message.args[0]
-        == "The optimal value found for "
-        "dimension 1 of parameter "
-        "length_scale is close to the "
-        "specified lower bound 10.0. "
-        "Decreasing the bound and calling "
-        "fit again may find a better value."
-    )
+        assert issubclass(record[0].category, ConvergenceWarning)
+        assert (
+            record[0].message.args[0]
+            == "The optimal value found for "
+            "dimension 0 of parameter "
+            "length_scale is close to the "
+            "specified lower bound 10.0. "
+            "Decreasing the bound and calling "
+            "fit again may find a better value."
+        )
+
+        assert issubclass(record[1].category, ConvergenceWarning)
+        assert (
+            record[1].message.args[0]
+            == "The optimal value found for "
+            "dimension 1 of parameter "
+            "length_scale is close to the "
+            "specified lower bound 10.0. "
+            "Decreasing the bound and calling "
+            "fit again may find a better value."
+        )
 
 
 def test_bound_check_fixed_hyperparameter():
     # Regression test for issue #17943
     # Check that having a hyperparameter with fixed bounds doesn't cause an
     # error
-    k1 = 50.0 ** 2 * RBF(length_scale=50.0)  # long term smooth rising trend
+    k1 = 50.0**2 * RBF(length_scale=50.0)  # long term smooth rising trend
     k2 = ExpSineSquared(
         length_scale=1.0, periodicity=1.0, periodicity_bounds="fixed"
     )  # seasonal component
@@ -546,8 +552,6 @@ def test_bound_check_fixed_hyperparameter():
     GaussianProcessRegressor(kernel=kernel).fit(X, y)
 
 
-# FIXME: we should test for multitargets as well. However, GPR is broken:
-# see: https://github.com/scikit-learn/scikit-learn/pull/19706
 @pytest.mark.parametrize("kernel", kernels)
 def test_constant_target(kernel):
     """Check that the std. dev. is affected to 1 when normalizing a constant
@@ -567,6 +571,26 @@ def test_constant_target(kernel):
     assert_allclose(y_pred, y_constant)
     # set atol because we compare to zero
     assert_allclose(np.diag(y_cov), 0.0, atol=1e-9)
+
+    # Test multi-target data
+    n_samples, n_targets = X.shape[0], 2
+    rng = np.random.RandomState(0)
+    y = np.concatenate(
+        [
+            rng.normal(size=(n_samples, 1)),  # non-constant target
+            np.full(shape=(n_samples, 1), fill_value=2),  # constant target
+        ],
+        axis=1,
+    )
+
+    gpr.fit(X, y)
+    Y_pred, Y_cov = gpr.predict(X, return_cov=True)
+
+    assert_allclose(Y_pred[:, 1], 2)
+    assert_allclose(np.diag(Y_cov[..., 1]), 0.0, atol=1e-9)
+
+    assert Y_pred.shape == (n_samples, n_targets)
+    assert Y_cov.shape == (n_samples, n_samples, n_targets)
 
 
 def test_gpr_consistency_std_cov_non_invertible_kernel():
@@ -654,31 +678,89 @@ def test_gpr_predict_error():
         gpr.predict(X, return_cov=True, return_std=True)
 
 
-def test_y_std_with_multitarget_normalized():
-    """Check the proper normalization of `y_std` and `y_cov` in multi-target scene.
+@pytest.mark.parametrize("normalize_y", [True, False])
+@pytest.mark.parametrize("n_targets", [None, 1, 10])
+def test_predict_shapes(normalize_y, n_targets):
+    """Check the shapes of y_mean, y_std, and y_cov in single-output
+    (n_targets=None) and multi-output settings, including the edge case when
+    n_targets=1, where the sklearn convention is to squeeze the predictions.
 
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/17394
     https://github.com/scikit-learn/scikit-learn/issues/18065
+    https://github.com/scikit-learn/scikit-learn/issues/22174
     """
     rng = np.random.RandomState(1234)
 
-    n_samples, n_features, n_targets = 12, 10, 6
+    n_features, n_samples_train, n_samples_test = 6, 9, 7
 
-    X_train = rng.randn(n_samples, n_features)
-    y_train = rng.randn(n_samples, n_targets)
-    X_test = rng.randn(n_samples, n_features)
+    y_train_shape = (n_samples_train,)
+    if n_targets is not None:
+        y_train_shape = y_train_shape + (n_targets,)
 
-    # Generic kernel
-    kernel = WhiteKernel(1.0, (1e-1, 1e3)) * C(10.0, (1e-3, 1e3))
+    # By convention single-output data is squeezed upon prediction
+    y_test_shape = (n_samples_test,)
+    if n_targets is not None and n_targets > 1:
+        y_test_shape = y_test_shape + (n_targets,)
 
-    model = GaussianProcessRegressor(
-        kernel=kernel, n_restarts_optimizer=10, alpha=0.1, normalize_y=True
-    )
+    X_train = rng.randn(n_samples_train, n_features)
+    X_test = rng.randn(n_samples_test, n_features)
+    y_train = rng.randn(*y_train_shape)
+
+    model = GaussianProcessRegressor(normalize_y=normalize_y)
     model.fit(X_train, y_train)
+
     y_pred, y_std = model.predict(X_test, return_std=True)
     _, y_cov = model.predict(X_test, return_cov=True)
 
-    assert y_pred.shape == (n_samples, n_targets)
-    assert y_std.shape == (n_samples, n_targets)
-    assert y_cov.shape == (n_samples, n_samples, n_targets)
+    assert y_pred.shape == y_test_shape
+    assert y_std.shape == y_test_shape
+    assert y_cov.shape == (n_samples_test,) + y_test_shape
+
+
+@pytest.mark.parametrize("normalize_y", [True, False])
+@pytest.mark.parametrize("n_targets", [None, 1, 10])
+def test_sample_y_shapes(normalize_y, n_targets):
+    """Check the shapes of y_samples in single-output (n_targets=0) and
+    multi-output settings, including the edge case when n_targets=1, where the
+    sklearn convention is to squeeze the predictions.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/22175
+    """
+    rng = np.random.RandomState(1234)
+
+    n_features, n_samples_train = 6, 9
+    # Number of spatial locations to predict at
+    n_samples_X_test = 7
+    # Number of sample predictions per test point
+    n_samples_y_test = 5
+
+    y_train_shape = (n_samples_train,)
+    if n_targets is not None:
+        y_train_shape = y_train_shape + (n_targets,)
+
+    # By convention single-output data is squeezed upon prediction
+    if n_targets is not None and n_targets > 1:
+        y_test_shape = (n_samples_X_test, n_targets, n_samples_y_test)
+    else:
+        y_test_shape = (n_samples_X_test, n_samples_y_test)
+
+    X_train = rng.randn(n_samples_train, n_features)
+    X_test = rng.randn(n_samples_X_test, n_features)
+    y_train = rng.randn(*y_train_shape)
+
+    model = GaussianProcessRegressor(normalize_y=normalize_y)
+
+    # FIXME: before fitting, the estimator does not have information regarding
+    # the number of targets and default to 1. This is inconsistent with the shape
+    # provided after `fit`. This assert should be made once the following issue
+    # is fixed:
+    # https://github.com/scikit-learn/scikit-learn/issues/22430
+    # y_samples = model.sample_y(X_test, n_samples=n_samples_y_test)
+    # assert y_samples.shape == y_test_shape
+
+    model.fit(X_train, y_train)
+
+    y_samples = model.sample_y(X_test, n_samples=n_samples_y_test)
+    assert y_samples.shape == y_test_shape

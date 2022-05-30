@@ -9,6 +9,7 @@ import numbers
 import numpy as np
 from abc import ABCMeta, abstractmethod
 from warnings import warn
+from functools import partial
 
 from joblib import Parallel
 
@@ -18,7 +19,7 @@ from ..metrics import r2_score, accuracy_score
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..utils import check_random_state, column_or_1d, deprecated
 from ..utils import indices_to_mask
-from ..utils.metaestimators import if_delegate_has_method
+from ..utils.metaestimators import available_if
 from ..utils.multiclass import check_classification_targets
 from ..utils.random import sample_without_replacement
 from ..utils.validation import has_fit_parameter, check_is_fitted, _check_sample_weight
@@ -68,7 +69,15 @@ def _generate_bagging_indices(
 
 
 def _parallel_build_estimators(
-    n_estimators, ensemble, X, y, sample_weight, seeds, total_n_estimators, verbose
+    n_estimators,
+    ensemble,
+    X,
+    y,
+    sample_weight,
+    seeds,
+    total_n_estimators,
+    verbose,
+    check_input,
 ):
     """Private function used to build a batch of estimators within a job."""
     # Retrieve settings
@@ -78,6 +87,9 @@ def _parallel_build_estimators(
     bootstrap = ensemble.bootstrap
     bootstrap_features = ensemble.bootstrap_features
     support_sample_weight = has_fit_parameter(ensemble.base_estimator_, "sample_weight")
+    has_check_input = has_fit_parameter(ensemble.base_estimator_, "check_input")
+    requires_feature_indexing = bootstrap_features or max_features != n_features
+
     if not support_sample_weight and sample_weight is not None:
         raise ValueError("The base estimator doesn't support sample weight")
 
@@ -94,6 +106,11 @@ def _parallel_build_estimators(
 
         random_state = seeds[i]
         estimator = ensemble._make_estimator(append=False, random_state=random_state)
+
+        if has_check_input:
+            estimator_fit = partial(estimator.fit, check_input=check_input)
+        else:
+            estimator_fit = estimator.fit
 
         # Draw random feature, sample indices
         features, indices = _generate_bagging_indices(
@@ -120,10 +137,11 @@ def _parallel_build_estimators(
                 not_indices_mask = ~indices_to_mask(indices, n_samples)
                 curr_sample_weight[not_indices_mask] = 0
 
-            estimator.fit(X[:, features], y, sample_weight=curr_sample_weight)
-
+            X_ = X[:, features] if requires_feature_indexing else X
+            estimator_fit(X_, y, sample_weight=curr_sample_weight)
         else:
-            estimator.fit((X[indices])[:, features], y[indices])
+            X_ = X[indices][:, features] if requires_feature_indexing else X[indices]
+            estimator_fit(X_, y[indices])
 
         estimators.append(estimator)
         estimators_features.append(features)
@@ -199,6 +217,19 @@ def _parallel_predict_regression(estimators, estimators_features, X):
     )
 
 
+def _estimator_has(attr):
+    """Check if we can delegate a method to the underlying estimator.
+
+    First, we check the first fitted estimator if available, otherwise we
+    check the base estimator.
+    """
+    return lambda self: (
+        hasattr(self.estimators_[0], attr)
+        if hasattr(self, "estimators_")
+        else hasattr(self.base_estimator, attr)
+    )
+
+
 class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
     """Base class for Bagging meta-estimator.
 
@@ -271,7 +302,15 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
     def _parallel_args(self):
         return {}
 
-    def _fit(self, X, y, max_samples=None, max_depth=None, sample_weight=None):
+    def _fit(
+        self,
+        X,
+        y,
+        max_samples=None,
+        max_depth=None,
+        sample_weight=None,
+        check_input=True,
+    ):
         """Build a Bagging ensemble of estimators from the training
            set (X, y).
 
@@ -296,6 +335,10 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
             Sample weights. If None, then samples are equally weighted.
             Note that this is supported only if the base estimator supports
             sample weighting.
+
+        check_input : bool, default=True
+            Override value used when fitting base estimator. Only supported
+            if the base estimator has a check_input parameter for fit function.
 
         Returns
         -------
@@ -403,6 +446,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
                 seeds[starts[i] : starts[i + 1]],
                 total_n_estimators,
                 verbose=self.verbose,
+                check_input=check_input,
             )
             for i in range(n_jobs)
         )
@@ -427,8 +471,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
     def _validate_y(self, y):
         if len(y.shape) == 1 or y.shape[1] == 1:
             return column_or_1d(y, warn=True)
-        else:
-            return y
+        return y
 
     def _get_estimators_indices(self):
         # Get drawn indices along both sample and feature axes
@@ -777,9 +820,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         )
 
         # Parallel loop
-        n_jobs, n_estimators, starts = _partition_estimators(
-            self.n_estimators, self.n_jobs
-        )
+        n_jobs, _, starts = _partition_estimators(self.n_estimators, self.n_jobs)
 
         all_proba = Parallel(
             n_jobs=n_jobs, verbose=self.verbose, **self._parallel_args()
@@ -829,9 +870,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
             )
 
             # Parallel loop
-            n_jobs, n_estimators, starts = _partition_estimators(
-                self.n_estimators, self.n_jobs
-            )
+            n_jobs, _, starts = _partition_estimators(self.n_estimators, self.n_jobs)
 
             all_log_proba = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
                 delayed(_parallel_predict_log_proba)(
@@ -851,12 +890,12 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
 
             log_proba -= np.log(self.n_estimators)
 
-            return log_proba
-
         else:
-            return np.log(self.predict_proba(X))
+            log_proba = np.log(self.predict_proba(X))
 
-    @if_delegate_has_method(delegate="base_estimator")
+        return log_proba
+
+    @available_if(_estimator_has("decision_function"))
     def decision_function(self, X):
         """Average of the decision functions of the base classifiers.
 
@@ -886,9 +925,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         )
 
         # Parallel loop
-        n_jobs, n_estimators, starts = _partition_estimators(
-            self.n_estimators, self.n_jobs
-        )
+        n_jobs, _, starts = _partition_estimators(self.n_estimators, self.n_jobs)
 
         all_decisions = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
             delayed(_parallel_decision_function)(
@@ -1122,9 +1159,7 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         )
 
         # Parallel loop
-        n_jobs, n_estimators, starts = _partition_estimators(
-            self.n_estimators, self.n_jobs
-        )
+        n_jobs, _, starts = _partition_estimators(self.n_estimators, self.n_jobs)
 
         all_y_hat = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
             delayed(_parallel_predict_regression)(

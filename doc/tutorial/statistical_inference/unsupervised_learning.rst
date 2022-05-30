@@ -152,7 +152,7 @@ also referred to as connected components) when clustering an image.
 ::
 
     >>> from skimage.data import coins
-    >>> from scipy.ndimage.filters import gaussian_filter
+    >>> from scipy.ndimage import gaussian_filter
     >>> from skimage.transform import rescale
     >>> rescaled_coins = rescale(
     ...     gaussian_filter(coins(), sigma=2),

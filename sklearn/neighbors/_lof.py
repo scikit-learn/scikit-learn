@@ -113,7 +113,8 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
         detection (novelty=False). Set novelty to True if you want to use
         LocalOutlierFactor for novelty detection. In this case be aware that
         you should only use predict, decision_function and score_samples
-        on new unseen data and not on the training set.
+        on new unseen data and not on the training set; and note that the
+        results obtained this way may differ from the standard LOF results.
 
         .. versionadded:: 0.20
 
@@ -170,8 +171,8 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
     n_samples_fit_ : int
         It is the number of samples in the fitted data.
 
-    See also
-    ----------
+    See Also
+    --------
     sklearn.svm.OneClassSVM: Unsupervised Outlier Detection using
         Support Vector Machine.
 
@@ -331,7 +332,9 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
 
         **Only available for novelty detection (when novelty is set to True).**
         This method allows to generalize prediction to *new observations* (not
-        in the training set).
+        in the training set). Note that the result of ``clf.fit(X)`` then
+        ``clf.predict(X)`` with ``novelty=True`` may differ from the result
+        obtained by ``clf.fit_predict(X)`` with ``novelty=False``.
 
         Parameters
         ----------
@@ -439,9 +442,10 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
         The argument X is supposed to contain *new data*: if X contains a
         point from training, it considers the later in its own neighborhood.
         Also, the samples in X are not considered in the neighborhood of any
-        point.
-        The score_samples on training data is available by considering the
-        the ``negative_outlier_factor_`` attribute.
+        point. Because of this, the scores obtained via ``score_samples`` may
+        differ from the standard LOF scores.
+        The standard LOF scores for the training data is available via the
+        ``negative_outlier_factor_`` attribute.
 
         Parameters
         ----------

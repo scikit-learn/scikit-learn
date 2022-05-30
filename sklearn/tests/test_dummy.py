@@ -425,6 +425,9 @@ def test_constant_strategy_regressor():
     reg.fit(X, y)
     assert_array_equal(reg.predict(X), [43] * len(X))
 
+    # non-regression test for #22478
+    assert not isinstance(reg.constant, np.ndarray)
+
 
 def test_constant_strategy_multioutput_regressor():
 
