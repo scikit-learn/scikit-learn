@@ -563,7 +563,7 @@ def test_multilabel_y_explicit_zeros(tmp_path):
     indices = np.array([0, 2, 2, 0, 1, 2])
     data = np.array([0, 2, 3, 4, 5, 6])
     y = sp.csr_matrix((data, indices, indptr), shape=(3, 3))
-    
+
     assert_array_equal(y.todense(), np.array([[0, 0, 2], [0, 0, 3], [4, 5, 6]]))
     dump_svmlight_file(X, y, save_path, multilabel=True)
 
