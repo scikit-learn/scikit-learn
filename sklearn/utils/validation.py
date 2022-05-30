@@ -29,7 +29,7 @@ from .. import get_config as _get_config
 from ..exceptions import PositiveSpectrumWarning
 from ..exceptions import NotFittedError
 from ..exceptions import DataConversionWarning
-from .isfinite import cy_isfinite
+from .isfinite import cy_isfinite, FiniteStatus
 
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 
@@ -108,16 +108,16 @@ def _assert_all_finite(
     # size > 5000 is a heuristic for when the python implementation is faster
     first_pass_isfinite = False
     if is_float:
-        use_cython = not (X.dtype.kind == "c" or X.dtype == np.float16)
+        use_cython = X.dtype in {np.float32, np.float64}
         with np.errstate(over="ignore"):
             first_pass_isfinite = np.isfinite(np.sum(X))
         if first_pass_isfinite:
             return
         if use_cython:
             out = cy_isfinite(X, allow_nan=allow_nan)
-            first_pass_isfinite = out == 0
-            has_nan = out == 1
-            has_inf = out == 2
+            first_pass_isfinite = out == FiniteStatus.all_finite
+            has_nan = out == FiniteStatus.has_nan
+            has_inf = out == FiniteStatus.has_infinite
         else:
             has_inf = np.isinf(X).any()
             has_nan = np.isnan(X).any()

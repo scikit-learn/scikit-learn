@@ -1,72 +1,65 @@
-# cython: profile=True, linetrace=True
-# Author: jakirkham
+# Author: jakirkham, Meekail Zain, Thomas Fan
 
 from libc.math cimport isnan as c_isnan, isinf as c_isinf
 
 cimport cython
 cimport numpy as cnp
 import numpy as np
-numpy.import_array()
+cnp.import_array()
 
 
 cdef fused fprecision:
-    numpy.npy_float32
-    numpy.npy_float64
+    cnp.npy_float32
+    cnp.npy_float64
 
 cdef fused const_fprecision:
-    const numpy.npy_float32
-    const numpy.npy_float64
+    const cnp.npy_float32
+    const cnp.npy_float64
 
-def cy_isfinite(numpy.ndarray X, bint allow_nan=False):
-    cdef char* a_data
-    cdef numpy.NPY_TYPES a_type
-    cdef Py_ssize_t a_size = a.size
-    cdef bint disallow_nan
+def cy_isfinite(cnp.ndarray a, bint allow_nan=False):
+    cdef:
+        char* a_data
+        cnp.NPY_TYPES a_type
+        Py_ssize_t a_size = a.size
+        bint disallow_nan
+        int result
+        bint err
 
-    cdef int result
-    cdef bint err
+    if a.dtype not in {np.float32, np.float64}:
+        raise TypeError("Unsupported array type: %s" % repr(a.dtype))
 
     with nogil:
         a_data = a.data
-        a_type = <numpy.NPY_TYPES>a.descr.type_num
+        a_type = <cnp.NPY_TYPES>a.descr.type_num
 
         disallow_nan = not allow_nan
 
-        err = False
-        if a_type == numpy.NPY_TYPES.NPY_FLOAT:
-            result = c_isfinite(<const float*>a_data, a_size, disallow_nan)
-        elif a_type == numpy.NPY_TYPES.NPY_DOUBLE:
-            result = c_isfinite(<const double*>a_data, a_size, disallow_nan)
-        else:
-            err = True
+        if a_type == cnp.NPY_TYPES.NPY_FLOAT:
+            result = _isfinite(<const float*>a_data, a_size, disallow_nan)
+        elif a_type == cnp.NPY_TYPES.NPY_DOUBLE:
+            result = _isfinite(<const double*>a_data, a_size, disallow_nan)
 
-    if err == False:
-        return result
-    elif err == True:
-        raise TypeError("Unsupported array type: %s" % repr(numpy.PyArray_TypeObjectFromType(a_type)))
-
-
-cdef inline int c_isfinite(const_fprecision* a_ptr, Py_ssize_t size, bint disallow_nan) nogil:
+cdef inline int _isfinite(const_fprecision* a_ptr, Py_ssize_t size, bint disallow_nan) nogil:
     if disallow_nan:
-        return c_isfinite_disable_nan(a_ptr, size)
+        return _isfinite_disable_nan(a_ptr, size)
     else:
-        return c_isfinite_allow_nan(a_ptr, size)
+        return _isfinite_allow_nan(a_ptr, size)
 
 cpdef enum FiniteStatus:
     all_finite = 0
     has_nan = 1
     has_infinite = 2
 
-cdef int c_isfinite_allow_nan(const_fprecision* a_ptr, Py_ssize_t size) nogil:
+cdef int _isfinite_allow_nan(const_fprecision* a_ptr, Py_ssize_t size) nogil:
     for i in range(size):
-        if _isinf(a_ptr[i]) != 0:
+        if c_isinf(a_ptr[i]) != 0:
             return FiniteStatus.has_infinite
     return FiniteStatus.all_finite
 
-cdef int c_isfinite_disable_nan(const_fprecision* a_ptr, Py_ssize_t size) nogil:
+cdef int _isfinite_disable_nan(const_fprecision* a_ptr, Py_ssize_t size) nogil:
     for i in range(size):
-        if _isnan(a_ptr[i]) != 0:
+        if c_isnan(a_ptr[i]) != 0:
             return FiniteStatus.has_nan
-        if _isinf(a_ptr[i]) != 0:
+        if c_isinf(a_ptr[i]) != 0:
             return FiniteStatus.has_infinite
     return FiniteStatus.all_finite
