@@ -1058,6 +1058,7 @@ def label_ranking_average_precision_score(y_true, y_score, *, sample_weight=None
     Returns
     -------
     score : float
+        Ranking-based average precision score.
 
     Examples
     --------
@@ -1067,7 +1068,6 @@ def label_ranking_average_precision_score(y_true, y_score, *, sample_weight=None
     >>> y_score = np.array([[0.75, 0.5, 1], [1, 0.2, 0.1]])
     >>> label_ranking_average_precision_score(y_true, y_score)
     0.416...
-
     """
     check_consistent_length(y_true, y_score, sample_weight)
     y_true = check_array(y_true, ensure_2d=False)
