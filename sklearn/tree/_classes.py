@@ -289,12 +289,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 max_features = max(1, int(np.sqrt(self.n_features_in_)))
             elif self.max_features == "log2":
                 max_features = max(1, int(np.log2(self.n_features_in_)))
-            else:
-                raise ValueError(
-                    "Invalid value for max_features. "
-                    "Allowed string values are 'auto', "
-                    "'sqrt' or 'log2'."
-                )
         elif self.max_features is None:
             max_features = self.n_features_in_
         elif isinstance(self.max_features, numbers.Integral):
@@ -1237,7 +1231,17 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
     _parameter_constraints = {
         **BaseDecisionTree._parameter_constraints,
         "criterion": [
-            StrOptions({"squared_error", "friedman_mse", "absolute_error", "poisson", "mse", "mae"}, deprecated={"mse", "mae"})
+            StrOptions(
+                {
+                    "squared_error",
+                    "friedman_mse",
+                    "absolute_error",
+                    "poisson",
+                    "mse",
+                    "mae",
+                },
+                deprecated={"mse", "mae"},
+            )
         ],
     }
 
