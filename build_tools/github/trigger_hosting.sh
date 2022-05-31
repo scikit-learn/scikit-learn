@@ -14,7 +14,7 @@ fi
 
 curl --request POST \
      --url https://circleci.com/api/v2/project/gh/$GITHUB_REPOSITORY/pipeline \
-     --header "Circle-Token: $CCI_TOKEN" \
+     --header "Circle-Token: $CIRCLE_CI_TOKEN" \
      --header "content-type: application/json" \
      --header "x-attribution-actor-id: github_actions" \
      --header "x-attribution-login: github_actions" \
