@@ -7,6 +7,7 @@ from typing import List
 import numpy as np
 import scipy as sp
 
+from ..compose import make_column_selector
 from ..externals import _arff
 from ..externals._arff import ArffSparseDataType
 from ..utils import (
@@ -375,6 +376,10 @@ def _pandas_arff_parser(
     columns_to_select = feature_names_to_select + target_names_to_select
     columns_to_keep = [col for col in frame.columns if col in columns_to_select]
     frame = frame[columns_to_keep]
+
+    # strip quotes to be consistent with LIAC ARFF
+    for col_str in make_column_selector(dtype_exclude="number")(frame):
+        frame[col_str] = frame[col_str].str.strip("\"'")
 
     X, y = _post_process_frame(frame, feature_names_to_select, target_names_to_select)
 

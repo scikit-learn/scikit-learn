@@ -1572,6 +1572,21 @@ def test_fetch_openml_with_ignored_feature(monkeypatch, gzip_response, parser):
     assert "animal" not in dataset["feature_names"]
 
 
+@pytest.mark.parametrize("gzip_response", [True, False])
+def test_fetch_openml_strip_quotes(monkeypatch, gzip_response):
+    """Check that we strip quotes that are superfluous as in LIAC ARFF.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/23381
+    """
+    pytest.importorskip("pandas")
+
+    mice_pandas = fetch_openml(name="miceprotein", version=4, parser="pandas")
+    mice_liac_arff = fetch_openml(name="miceprotein", version=4, parser="liac-arff")
+
+    assert_array_equal(mice_pandas.target, mice_liac_arff.target)
+
+
 ###############################################################################
 # Deprecation-changed parameters
 
