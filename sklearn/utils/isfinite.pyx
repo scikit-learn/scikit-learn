@@ -25,7 +25,7 @@ def cy_isfinite(cnp.ndarray a, bint allow_nan=False):
         bint err
 
     if a.dtype.type not in {np.float32, np.float64}:
-    if a.dtype.type not in {np.float32, np.float64}:
+        raise TypeError("Unsupported array type: %s" % repr(a.dtype))
 
     with nogil:
         a_data = a.data
