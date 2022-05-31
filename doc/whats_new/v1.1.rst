@@ -2,6 +2,23 @@
 
 .. currentmodule:: sklearn
 
+.. _changes_1_1_2:
+
+Version 1.1.2
+=============
+
+**In Development**
+
+Changelog
+---------
+
+:mod:`sklearn.cluster`
+......................
+
+- |Fix| Fixed a bug in :class:`cluster.Birch` that could trigger an error when splitting
+  a node if there are duplicates in the dataset.
+  :pr:`23395` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 .. _changes_1_1_1:
 
 Version 1.1.1
