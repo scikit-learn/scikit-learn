@@ -4,6 +4,7 @@
 
 from functools import partial
 import re
+import warnings
 
 import numpy as np
 import scipy
@@ -788,14 +789,19 @@ def test_family_deprecation(est, family):
 
 def test_linalg_warning_with_newton_solver(global_random_seed):
     rng = np.random.RandomState(global_random_seed)
-    X_orig = rng.normal(size=(100, 3))
+    X_orig = rng.normal(size=(10, 3))
     X_colinear = np.hstack([X_orig] * 10)  # colinear design
     y = rng.normal(size=X_orig.shape[0])
     y[y < 0] = 0.0
 
-    with pytest.warns(None):
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
         # No warning raised on well-conditioned design
         PoissonRegressor(solver="newton-cholesky", alpha=0.0).fit(X_orig, y)
 
-    with pytest.warns(scipy.linalg.LinAlgWarning) as rec:
+    msg = (
+        "The inner solver of CholeskyNewtonSolver stumbled upon a "
+        "singular hessian matrix. "
+    )
+    with pytest.warns(scipy.linalg.LinAlgWarning, match=msg):
         PoissonRegressor(solver="newton-cholesky", alpha=0.0).fit(X_colinear, y)
