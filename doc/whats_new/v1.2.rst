@@ -123,6 +123,14 @@ Changelog
   deterministic SVD used by the randomized SVD algorithm.
   :pr:`20617` by :user:`Srinath Kailasa <skailasa>`
 
+:mod:`sklearn.metrics`
+......................
+
+- |Enhancement| Add `min_tpr` parameters to :func:`metrics.roc_auc_score`
+  allowing to set restrictions on the True Positive Rates to compute partial
+  ROC AUC when used in conjunction with the existing `max_fpr` parameter.
+  :pr:`19751` by :user:`Fengjun Wang <Fengjun-Wang>`.
+
 Code and Documentation Contributors
 -----------------------------------
 

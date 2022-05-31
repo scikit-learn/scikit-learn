@@ -15,10 +15,11 @@ true positive rate, or both of them. In such scenarios, we are interested in a
 portion of the ROC curve which satisfies certain restrictions.
 
 For example, in fraud detection domain, there are requirements on building
-binary classifiers to distinguish fraud behavior from normal behavior. To reduce
-the workload of manually checking the model output on false positive cases
-(normal behavior), we need to keep a low level of FPR. At the same time, to
-mitigate the risk of missing fraud cases, we need to keep a low level of false
+binary classifiers to distinguish fraud behavior from normal behavior.
+To reduce the workload of manually checking the model output on
+false positive cases (normal behavior), we need to keep a low level of FPR.
+At the same time, to mitigate the risk of missing fraud cases,
+we need to keep a low level of false
 negative rate (FNR). Please note that since `TPR = TP/P = (TP)/(TP + FN) = 1 -
 FNR` , the limitation on low FNR is equivalent to the limitation on high TPR.
 
@@ -28,7 +29,8 @@ In :func:`sklearn.metrics.roc_auc_score`, with the options ``max_fpr`` and
 partial AUC value returned, which could be used as your model selection
 criteria.
 
-Let's visualize a ROC example to clarify the definitions. You could follow below
+Let's visualize a ROC example to clarify the definitions.
+You could follow below
 examples and manually calculate standardized pAUC for better understanding.
 
 
@@ -56,7 +58,9 @@ max_fpr = 0.9
 min_tpr = 0.6
 
 # Calculate the fpr, tpr list
-fpr, tpr, thresholds = metrics.roc_curve(y_true=y_true, y_score=y_score, pos_label=1)
+fpr, tpr, thresholds = metrics.roc_curve(
+    y_true=y_true, y_score=y_score, pos_label=1
+)
 auc = metrics.roc_auc_score(y_true=y_true, y_score=y_score)
 spauc = metrics.roc_auc_score(
     y_true=y_true, y_score=y_score, max_fpr=max_fpr, min_tpr=min_tpr
@@ -72,17 +76,26 @@ plt.rcParams["figure.figsize"] = (10, 10)
 
 # Plot the min_tpr horizontal line
 if min_tpr is not None:
-    plt.axhline(y=min_tpr, color="g", linestyle="--", alpha=0.5, label="min_tpr")
+    plt.axhline(
+        y=min_tpr, color="g", linestyle="--", alpha=0.5, label="min_tpr"
+    )
 
 # Plot the max_fpr vertical line
 if max_fpr is not None:
-    plt.axvline(x=max_fpr, color="r", linestyle="--", alpha=0.5, label="max_fpr")
+    plt.axvline(
+        x=max_fpr, color="r", linestyle="--", alpha=0.5, label="max_fpr"
+    )
 
 plt.plot(fpr, tpr, color="darkorange", lw=2, label="ROC curve")
 
 # Plot the non-discriminant ROC line for reference:
 plt.plot(
-    [0, 1], [0, 1], color="navy", lw=2, linestyle="--", label="non-discriminant ROC"
+    [0, 1],
+    [0, 1], 
+    color="navy",
+    lw=2,
+    linestyle="--",
+    label="non-discriminant ROC"
 )
 
 plt.xlim([0.0, 1.0])
