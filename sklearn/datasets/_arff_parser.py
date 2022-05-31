@@ -362,7 +362,6 @@ def _pandas_arff_parser(
             dtypes[name] = "Int64"
         elif column_dtype.lower() == "nominal":
             dtypes[name] = "category"
-    print(dtypes)
 
     # ARFF represents missing values with "?"
     frame = pd.read_csv(
