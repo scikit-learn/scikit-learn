@@ -30,7 +30,8 @@ MINICONDA_PATH=$HOME/miniconda
 chmod +x mambaforge.sh && ./mambaforge.sh -b -p $MINICONDA_PATH
 export PATH=$MINICONDA_PATH/bin:$PATH
 mamba init --all --verbose
-mamba update --yes conda mamba
+mamba update --yes conda
+mamba update --yes mamba
 mamba install "$(get_dep conda-lock min)" -y
 conda-lock install --name $CONDA_ENV_NAME $LOCK_FILE
 source activate $CONDA_ENV_NAME
