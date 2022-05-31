@@ -1235,7 +1235,10 @@ def fbeta_score(
 
     See Also
     --------
-    precision_recall_fscore_support, multilabel_confusion_matrix
+    precision_recall_fscore_support : Compute the precision, recall, F-score,
+        and support.
+    multilabel_confusion_matrix : Compute a confusion matrix for each class or
+        sample.
 
     Notes
     -----
