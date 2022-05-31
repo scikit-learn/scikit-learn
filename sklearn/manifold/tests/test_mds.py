@@ -101,9 +101,7 @@ def test_MDS_eigh():
 
     # Signs of columns are dependent on signs of computed eigenvectors
     # which are arbitrary and meaningless
-    assert (
-        np.allclose(mds_clf.embedding_, X_true_1)
-        or np.allclose(mds_clf.embedding_, -X_true_1)
-        or np.allclose(mds_clf.embedding_, X_true_2)
-        or np.allclose(mds_clf.embedding_, -X_true_2)
-    )
+    match = False
+    for X_possible in (X_true_1, -X_true_1, X_true_2, -X_true_2):
+        match = match or np.allclose(mds_clf.embedding_, X_possible)
+    assert match
