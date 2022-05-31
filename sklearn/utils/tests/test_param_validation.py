@@ -331,3 +331,12 @@ def test_stroptions_deprecated_internal_overlap():
     """Check that the internal and deprecated parameters are not allowed to overlap."""
     with pytest.raises(ValueError, match="should not overlap"):
         StrOptions({"a", "b", "c"}, deprecated={"b", "c"}, internal={"a", "b"})
+
+
+def test_stroptions_deprecated_internal_subset():
+    """Check that the deprecated and internal parameters must be subsets of options."""
+    with pytest.raises(ValueError, match="deprecated options must be a subset"):
+        StrOptions({"a", "b", "c"}, deprecated={"a", "d"})
+
+    with pytest.raises(ValueError, match="internal options must be a subset"):
+        StrOptions({"a", "b", "c"}, internal={"a", "d"})

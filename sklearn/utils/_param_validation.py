@@ -229,6 +229,16 @@ class StrOptions(_Constraint):
         self.deprecated = deprecated or set()
         self.internal = internal or set()
 
+        if self.deprecated - self.options:
+            raise ValueError(
+                "The deprecated options must be a subset of the options."
+            )
+        
+        if self.internal - self.options:
+            raise ValueError(
+                "The internal options must be a subset of the options."
+            )
+
         if self.deprecated & self.internal:
             raise ValueError(
                 "The deprecated and internal parameters should not overlap."
