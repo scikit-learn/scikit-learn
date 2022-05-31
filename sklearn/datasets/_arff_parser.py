@@ -362,6 +362,7 @@ def _pandas_arff_parser(
             dtypes[name] = "Int64"
         elif column_dtype.lower() == "nominal":
             dtypes[name] = "category"
+    print(dtypes)
 
     # ARFF represents missing values with "?"
     frame = pd.read_csv(
@@ -378,8 +379,14 @@ def _pandas_arff_parser(
     frame = frame[columns_to_keep]
 
     # strip quotes to be consistent with LIAC ARFF
-    for col_str in make_column_selector(dtype_exclude="number")(frame):
-        frame[col_str] = frame[col_str].str.strip("\"'")
+    quote_chars = "\"'"
+    for col in make_column_selector(dtype_exclude="number")(frame):
+        if frame[col].dtype == "category":
+            # modify the categories instead of each dataframe row
+            frame[col].cat.categories = frame[col].cat.categories.str.strip(quote_chars)
+        else:
+            # we deal with an object column
+            frame[col] = frame[col].str.strip(quote_chars)
 
     X, y = _post_process_frame(frame, feature_names_to_select, target_names_to_select)
 
