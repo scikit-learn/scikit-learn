@@ -471,7 +471,7 @@ def roc_auc_score(
     Returns
     -------
     auc : float
-        Area Under the Curve.
+        Area Under the Curve score.
 
     See Also
     --------
