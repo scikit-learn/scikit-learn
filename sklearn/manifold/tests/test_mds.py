@@ -46,6 +46,7 @@ def test_MDS():
 
 @pytest.mark.parametrize("k", [0.5, 1.5, 2])
 def test_normed_stress(k):
+    """Test that non-metric MDS normalized stress is scale-invariant."""
     sim = np.array([[0, 5, 3, 4], [5, 0, 2, 2], [3, 2, 0, 1], [4, 2, 1, 0]])
 
     X1, stress1 = mds.smacof(
@@ -60,6 +61,10 @@ def test_normed_stress(k):
 
 
 def test_normalize_metric_warning():
+    """
+    Test that a UserWarning is emitted when using normalized stress with
+    metric-MDS.
+    """
     msg = "Normalized stress is not supported"
     sim = np.array([[0, 5, 3, 4], [5, 0, 2, 2], [3, 2, 0, 1], [4, 2, 1, 0]])
     with pytest.warns(UserWarning, match=msg):

@@ -131,6 +131,17 @@ Changelog
   deterministic SVD used by the randomized SVD algorithm.
   :pr:`20617` by :user:`Srinath Kailasa <skailasa>`
 
+:mod:`sklearn.manifold`
+.......................
+
+- |Feature| Adds option to use the normalized stress in `manifold.MDS`. This is
+  enabled by setting the new `normalize` parameter to `True`.
+  :pr:`10168` by :user:`Łukasz Borchmann <Borchmann>`,
+  :pr:`12285` by :user:`Matthias Miltenberger <mattmilten>`,
+  :pr:`13042` by :user:`Matthieu Parizy <matthieu-pa>`,
+  :pr:`18094` by :user:`Roth E Conrad <rotheconrad>` and
+  :pr:`22562` by :user:`Meekail Zain <micky774>`.
+
 Code and Documentation Contributors
 -----------------------------------
 

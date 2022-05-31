@@ -67,7 +67,7 @@ def _smacof_single(
         Whether use and return normed stress value (Stress-1) instead of raw
         stress calculated by default. Only supported in non-metric MDS.
 
-        .. versionadded:: 1.1
+        .. versionadded:: 1.2
 
     Returns
     -------
@@ -77,12 +77,23 @@ def _smacof_single(
     stress : float
         The final value of the stress (sum of squared distance of the
         disparities and the distances for all constrained points).
-        If `normalized_stress =True`, and `metric=False` returns Stress-1
-        (according to Kruskal (1964, p. 3) value 0 indicates "perfect"
-        fit, 0.025 excellent, 0.05 good, 0.1 fair, and 0.2 poor).
+        If `normalized_stress=True`, and `metric=False` returns Stress-1.
+        A value of 0 indicates "perfect" fit, 0.025 excellent, 0.05 good,
+        0.1 fair, and 0.2 poor [1]_.
 
     n_iter : int
         The number of iterations corresponding to the best stress.
+
+    References
+    ----------
+    .. [1] "Nonmetric multidimensional scaling: a numerical method" Kruskal, J.
+           Psychometrika, 29 (1964)
+
+    .. [2] "Multidimensional scaling by optimizing goodness of fit to a nonmetric
+           hypothesis" Kruskal, J. Psychometrika, 29, (1964)
+
+    .. [3] "Modern Multidimensional Scaling - Theory and Applications" Borg, I.;
+           Groenen P. Springer Series in Statistics (1997)
     """
     dissimilarities = check_symmetric(dissimilarities, raise_exception=True)
 
@@ -238,7 +249,7 @@ def smacof(
         Whether use and return normed stress value (Stress-1) instead of raw
         stress calculated by default. Only supported in non-metric MDS.
 
-        .. versionadded:: 1.1
+        .. versionadded:: 1.2
 
     Returns
     -------
@@ -248,24 +259,24 @@ def smacof(
     stress : float
         The final value of the stress (sum of squared distance of the
         disparities and the distances for all constrained points).
-        If `normalized_stress =True`, and `metric=False` returns Stress-1
-        (according to Kruskal (1964, p. 3) value 0 indicates "perfect"
-        fit, 0.025 excellent, 0.05 good, 0.1 fair, and 0.2 poor).
+        If `normalized_stress=True`, and `metric=False` returns Stress-1.
+        A value of 0 indicates "perfect" fit, 0.025 excellent, 0.05 good,
+        0.1 fair, and 0.2 poor [1]_.
 
     n_iter : int
         The number of iterations corresponding to the best stress. Returned
         only if ``return_n_iter`` is set to ``True``.
 
-    Notes
-    -----
-    "Modern Multidimensional Scaling - Theory and Applications" Borg, I.;
-    Groenen P. Springer Series in Statistics (1997)
+    References
+    ----------
+    .. [1] "Nonmetric multidimensional scaling: a numerical method" Kruskal, J.
+           Psychometrika, 29 (1964)
 
-    "Nonmetric multidimensional scaling: a numerical method" Kruskal, J.
-    Psychometrika, 29 (1964)
+    .. [2] "Multidimensional scaling by optimizing goodness of fit to a nonmetric
+           hypothesis" Kruskal, J. Psychometrika, 29, (1964)
 
-    "Multidimensional scaling by optimizing goodness of fit to a nonmetric
-    hypothesis" Kruskal, J. Psychometrika, 29, (1964)
+    .. [3] "Modern Multidimensional Scaling - Theory and Applications" Borg, I.;
+           Groenen P. Springer Series in Statistics (1997)
     """
 
     dissimilarities = check_array(dissimilarities)
@@ -389,7 +400,7 @@ class MDS(BaseEstimator):
         Whether use and return normed stress value (Stress-1) instead of raw
         stress calculated by default. Only supported in non-metric MDS.
 
-        .. versionadded:: 1.1
+        .. versionadded:: 1.2
 
     Attributes
     ----------
@@ -399,9 +410,9 @@ class MDS(BaseEstimator):
     stress_ : float
         The final value of the stress (sum of squared distance of the
         disparities and the distances for all constrained points).
-        If `normalized_stress=True`, and `metric=False` returns Stress-1
-        (according to Kruskal (1964, p. 3) value 0 indicates "perfect"
-        fit, 0.025 excellent, 0.05 good, 0.1 fair, and 0.2 poor).
+        If `normalized_stress=True`, and `metric=False` returns Stress-1.
+        A value of 0 indicates "perfect" fit, 0.025 excellent, 0.05 good,
+        0.1 fair, and 0.2 poor [1]_.
 
     dissimilarity_matrix_ : ndarray of shape (n_samples, n_samples)
         Pairwise dissimilarities between the points. Symmetric matrix that:
@@ -438,14 +449,14 @@ class MDS(BaseEstimator):
 
     References
     ----------
-    "Modern Multidimensional Scaling - Theory and Applications" Borg, I.;
-    Groenen P. Springer Series in Statistics (1997)
+    .. [1] "Nonmetric multidimensional scaling: a numerical method" Kruskal, J.
+       Psychometrika, 29 (1964)
 
-    "Nonmetric multidimensional scaling: a numerical method" Kruskal, J.
-    Psychometrika, 29 (1964)
+    .. [2] "Multidimensional scaling by optimizing goodness of fit to a nonmetric
+       hypothesis" Kruskal, J. Psychometrika, 29, (1964)
 
-    "Multidimensional scaling by optimizing goodness of fit to a nonmetric
-    hypothesis" Kruskal, J. Psychometrika, 29, (1964)
+    .. [3] "Modern Multidimensional Scaling - Theory and Applications" Borg, I.;
+       Groenen P. Springer Series in Statistics (1997)
 
     Examples
     --------
