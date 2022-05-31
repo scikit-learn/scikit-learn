@@ -31,11 +31,13 @@ from ...utils.validation import check_is_fitted, _check_sample_weight
 from .._linear_loss import LinearModelLoss
 
 
-def _solve_singular_cholesky(H, g):
+def _solve_singular(H, g):
     """Find Newton step with singular hessian H.
 
-    Nocedal & Wright, Chapter 3.4 subsection
-    "Modified symmetric indefinite factorization"
+    We could use the approach with an L D L decomposition as in
+        Nocedal & Wright, Chapter 3.4 subsection
+        "Modified symmetric indefinite factorization"
+    but we use the much simpler (and more expensive?) least squares solver.
 
     Parameters
     ----------
@@ -48,16 +50,18 @@ def _solve_singular_cholesky(H, g):
         H x = -g
     """
     # hessian = L B L' with block diagonal B, block size <= 2
-    L, B, perm = scipy.linalg.ldl(H, lower=True)
-    U, s, Vt = scipy.linalg.svd(B)
-    delta = 1e-3  # TODO: Decide on size of this number
-    tau = (s < delta) * (delta - s)
+    # L[perm, :] is lower triangular
+    # CODE: L, B, perm = scipy.linalg.ldl(H, lower=True)
+    # CODE: U, s, Vt = scipy.linalg.svd(B)
+    # CODE: delta = 1e-3  # TODO: Decide on size of this number
+    # CODE: tau = (s < delta) * (delta - s)
     # F = U @ (tau[:, None] * Vt)
     # hessian approximation = L (B + F) L' = L U (s + tau) Vt L'
-    w = scipy.linalg.solve_triangular(L, -g, lower=True)
+    # CODE: w = scipy.linalg.solve_triangular(L[perm], -g[perm], lower=True)
     # w = scipy.linalg.solve(B + F, w)
-    w = Vt.T @ (1 / (s + tau) * (U.T @ w))
-    return scipy.linalg.solve_triangular(L.T, w, lower=False)
+    # CODE: w = Vt.T @ (1 / (s + tau) * (U.T @ w))
+    # CODE: return scipy.linalg.solve_triangular(L.T[:, perm], w, lower=False)[perm]
+    return scipy.linalg.lstsq(H, -g)[0]
 
 
 class NewtonSolver(ABC):
@@ -445,19 +449,22 @@ class BaseCholeskyNewtonSolver(NewtonSolver):
         # Should we treat this as error and deal with it in the except, or is it fine
         # as is?
         try:
-            self.coef_newton = scipy.linalg.solve(
-                self.hessian, -self.gradient, check_finite=False, assume_a="sym"
-            )
-        except np.linalg.LinAlgError as e:
+            with warnings.catch_warnings():
+                warnings.simplefilter("error", scipy.linalg.LinAlgWarning)
+                self.coef_newton = scipy.linalg.solve(
+                    self.hessian, -self.gradient, check_finite=False, assume_a="sym"
+                )
+        except (np.linalg.LinAlgError, scipy.linalg.LinAlgWarning) as e:
             warnings.warn(
                 f"The inner solver of {self.__class__.__name__} stumbled upon a "
                 "singular hessian matrix. Therefore, this iteration uses a step closer"
                 " to a gradient descent direction. Removing collinear features of X or"
                 " increasing the penalization strengths may resolve this issue."
                 " The original Linear Algebra message was:\n"
-                + str(e)
+                + str(e),
+                scipy.linalg.LinAlgWarning,
             )
-            self.coef_newton = _solve_singular_cholesky(self.hessian, -self.gradient)
+            self.coef_newton = _solve_singular(self.hessian, -self.gradient)
 
 
 class CholeskyNewtonSolver(BaseCholeskyNewtonSolver):
