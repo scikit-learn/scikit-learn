@@ -104,7 +104,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         "max_depth": [Interval(Integral, 1, None, closed="left"), None],
         "min_samples_split": [
             Interval(Integral, 2, None, closed="left"),
-            Interval(Real, 0.0, 1.0, closed="neither"),
+            Interval(Real, 0.0, 1.0, closed="right"),
         ],
         "min_samples_leaf": [
             Interval(Integral, 1, None, closed="left"),
