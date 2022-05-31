@@ -1288,15 +1288,18 @@ def test_tsne_deprecation_square_distances():
     assert_allclose(X_trans_1, X_trans_2)
 
 
-@pytest.mark.filterwarnings("ignore:The default learning rate in TSNE")
-@pytest.mark.filterwarnings("ignore:The default initialization in TSNE")
-def test_tsne_perplexity_validation():
+@pytest.mark.parametrize("perplexity", (20, 30))
+def test_tsne_perplexity_validation(perplexity):
     """Make sure that perplexity > n_samples results in a ValueError"""
 
     random_state = check_random_state(0)
     X = random_state.randn(20, 2)
-    TSNE(perplexity=5).fit_transform(X)
+    est = TSNE(
+        learning_rate="auto",
+        init="pca",
+        perplexity=perplexity,
+        random_state=random_state,
+    )
     msg = "perplexity must be less than n_samples"
     with pytest.raises(ValueError, match=msg):
-        TSNE(perplexity=20).fit_transform(X)
-        TSNE(perplexity=30).fit_transform(X)
+        est.fit_transform(X)
