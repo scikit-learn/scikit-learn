@@ -376,19 +376,20 @@ def _pandas_arff_parser(
     frame = frame[columns_to_keep]
 
     # strip quotes to be consistent with LIAC ARFF
-    re_start_end_quotes = ['^["](.*["])$', "^['](.*['])$"]
+    # quotes should be balanced: "contents" or 'contents'
+    pattern = r"^(?P<quotationsymbol>[\"'])(?P<contents>.*)(?P=quotationsymbol)$"
 
     def strip_quotes(s):
-        return s.group(0)[1:-1]
+        return s.group("contents")
 
     categorical_columns = [
         name
         for name, dtype in frame.dtypes.items()
         if pd.api.types.is_categorical_dtype(dtype)
     ]
-    for col, regex in itertools.product(categorical_columns, re_start_end_quotes):
+    for col in categorical_columns:
         frame[col].cat.categories = frame[col].cat.categories.str.replace(
-            regex, strip_quotes, regex=True
+            pattern, strip_quotes, regex=True
         )
 
     string_columns = [
@@ -396,9 +397,7 @@ def _pandas_arff_parser(
         for name, dtype in frame.dtypes.items()
         if not pd.api.types.is_categorical_dtype(dtype) and dtype == "object"
     ]
-    frame[string_columns].replace(
-        re_start_end_quotes, strip_quotes, regex=True, inplace=True
-    )
+    frame[string_columns].replace(pattern, strip_quotes, regex=True, inplace=True)
 
     X, y = _post_process_frame(frame, feature_names_to_select, target_names_to_select)
 
