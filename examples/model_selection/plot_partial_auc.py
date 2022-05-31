@@ -91,7 +91,7 @@ plt.plot(fpr, tpr, color="darkorange", lw=2, label="ROC curve")
 # Plot the non-discriminant ROC line for reference:
 plt.plot(
     [0, 1],
-    [0, 1], 
+    [0, 1],
     color="navy",
     lw=2,
     linestyle="--",
