@@ -19,7 +19,7 @@ jobs:
       - name: Trigger hosting jobs
         run: bash build_tools/github/trigger_hosting.sh
         env:
-          CCI_TOKEN: ${{ secrets.CCI_TOKEN }}
+          CCI_TOKEN: ${{ secrets.CIRCLE_CI_TOKEN }}
           EVENT: ${{ github.event.workflow_run.event }}
           RUN_ID: ${{ github.event.workflow_run.id }}
           HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}

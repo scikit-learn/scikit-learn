@@ -358,6 +358,7 @@ class _PLS(
         # TODO(1.3): change `self._coef_` to `self.coef_`
         self._coef_ = np.dot(self.x_rotations_, self.y_loadings_.T)
         self._coef_ = (self._coef_ * self._y_std).T
+        self.intercept_ = self._y_mean
         self._n_features_out = self.x_rotations_.shape[1]
         return self
 
@@ -473,7 +474,7 @@ class _PLS(
         X /= self._x_std
         # TODO(1.3): change `self._coef_` to `self.coef_`
         Ypred = X @ self._coef_.T
-        return Ypred + self._y_mean
+        return Ypred + self.intercept_
 
     def fit_transform(self, X, y=None):
         """Learn and apply the dimension reduction on the train data.
@@ -501,6 +502,7 @@ class _PLS(
         # TODO(1.3): remove and change `self._coef_` to `self.coef_`
         #            remove catch warnings from `_get_feature_importances`
         #            delete self._coef_no_warning
+        #            update the docstring of `coef_` and `intercept_` attribute
         if hasattr(self, "_coef_") and getattr(self, "_coef_warning", True):
             warnings.warn(
                 "The attribute `coef_` will be transposed in version 1.3 to be "
@@ -581,7 +583,13 @@ class PLSRegression(_PLS):
 
     coef_ : ndarray of shape (n_features, n_targets)
         The coefficients of the linear model such that `Y` is approximated as
-        `Y = X @ coef_`.
+        `Y = X @ coef_ + intercept_`.
+
+    intercept_ : ndarray of shape (n_targets,)
+        The intercepts of the linear model such that `Y` is approximated as
+        `Y = X @ coef_ + intercept_`.
+
+        .. versionadded:: 1.1
 
     n_iter_ : list of shape (n_components,)
         Number of iterations of the power method, for each
@@ -715,7 +723,13 @@ class PLSCanonical(_PLS):
 
     coef_ : ndarray of shape (n_features, n_targets)
         The coefficients of the linear model such that `Y` is approximated as
-        `Y = X @ coef_`.
+        `Y = X @ coef_ + intercept_`.
+
+    intercept_ : ndarray of shape (n_targets,)
+        The intercepts of the linear model such that `Y` is approximated as
+        `Y = X @ coef_ + intercept_`.
+
+        .. versionadded:: 1.1
 
     n_iter_ : list of shape (n_components,)
         Number of iterations of the power method, for each
@@ -827,7 +841,13 @@ class CCA(_PLS):
 
     coef_ : ndarray of shape (n_features, n_targets)
         The coefficients of the linear model such that `Y` is approximated as
-        `Y = X @ coef_`.
+        `Y = X @ coef_ + intercept_`.
+
+    intercept_ : ndarray of shape (n_targets,)
+        The intercepts of the linear model such that `Y` is approximated as
+        `Y = X @ coef_ + intercept_`.
+
+        .. versionadded:: 1.1
 
     n_iter_ : list of shape (n_components,)
         Number of iterations of the power method, for each

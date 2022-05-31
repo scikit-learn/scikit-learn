@@ -153,6 +153,11 @@ efficiently process ``scipy.sparse`` data.
   Used for scaling features to unit standard deviation in
   :class:`~sklearn.preprocessing.StandardScaler`.
 
+- :func:`~sklearn.neighbors.sort_graph_by_row_values`: can be used to sort a
+  CSR sparse matrix such that each row is stored with increasing values. This
+  is useful to improve efficiency when using precomputed sparse distance
+  matrices in estimators relying on nearest neighbors graph.
+
 
 Graph Routines
 ==============

@@ -808,7 +808,9 @@ def dict_learning_online(
         Whether to also return the code U or just the dictionary `V`.
 
     dict_init : ndarray of shape (n_components, n_features), default=None
-        Initial value for the dictionary for warm restart scenarios.
+        Initial values for the dictionary for warm restart scenarios.
+        If `None`, the initial values for the dictionary are created
+        with an SVD decomposition of the data via :func:`~sklearn.utils.randomized_svd`.
 
     callback : callable, default=None
         A callable that gets invoked at the end of each iteration.

@@ -15,7 +15,7 @@ import os
 import warnings
 import re
 from datetime import datetime
-from packaging.version import parse
+from sklearn.externals._packaging.version import parse
 from pathlib import Path
 from io import StringIO
 
@@ -47,6 +47,7 @@ extensions = [
     "sphinx-prompt",
     "sphinxext.opengraph",
     "doi_role",
+    "allow_nan_estimators",
     "matplotlib.sphinxext.plot_directive",
 ]
 

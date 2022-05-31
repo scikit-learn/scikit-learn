@@ -222,6 +222,10 @@ def test_check_array_links_to_imputer_doc_only_for_X(input_name, retype):
         " data, for instance by using an imputer transformer in a pipeline"
         " or drop samples with missing values. See"
         " https://scikit-learn.org/stable/modules/impute.html"
+        " You can find a list of all estimators that handle NaN values"
+        " at the following page:"
+        " https://scikit-learn.org/stable/modules/impute.html"
+        "#estimators-that-handle-nan-values"
     )
 
     with pytest.raises(ValueError, match=f"Input {input_name} contains NaN") as ctx:
@@ -1282,15 +1286,20 @@ def test_check_psd_eigenvalues_valid(
 
     if not enable_warnings:
         w_type = None
-        w_msg = ""
 
-    with pytest.warns(w_type, match=w_msg) as w:
-        assert_array_equal(
-            _check_psd_eigenvalues(lambdas, enable_warnings=enable_warnings),
-            expected_lambdas,
-        )
     if w_type is None:
-        assert not w
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", PositiveSpectrumWarning)
+            lambdas_fixed = _check_psd_eigenvalues(
+                lambdas, enable_warnings=enable_warnings
+            )
+    else:
+        with pytest.warns(w_type, match=w_msg):
+            lambdas_fixed = _check_psd_eigenvalues(
+                lambdas, enable_warnings=enable_warnings
+            )
+
+    assert_allclose(expected_lambdas, lambdas_fixed)
 
 
 _psd_cases_invalid = {
