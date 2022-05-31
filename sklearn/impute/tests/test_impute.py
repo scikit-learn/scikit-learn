@@ -1621,7 +1621,7 @@ def test_missing_indicator_feature_names_out():
 
 
 def test_imputer_lists_fit_transform():
-    """Check that transform uses the same dtype as seen in fit.
+    """Check transform uses object dtype when fitted on an object dtype.
 
     Non-regression test for #19572.
     """
@@ -1629,4 +1629,5 @@ def test_imputer_lists_fit_transform():
     X = [["a", "b"], ["c", "b"], ["a", "a"]]
     imp_frequent = SimpleImputer(strategy="most_frequent").fit(X)
     X_trans = imp_frequent.transform([[np.nan, np.nan]])
+    assert X_trans.dtype == object
     assert_array_equal(X_trans, [["a", "b"]])
