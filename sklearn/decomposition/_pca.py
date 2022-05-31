@@ -11,6 +11,7 @@
 # License: BSD 3 clause
 
 from math import log, sqrt
+
 # import numbers
 from numbers import Integral, Real
 
@@ -28,7 +29,6 @@ from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
 from ..utils._param_validation import Interval
 from ..utils._param_validation import StrOptions
-
 
 
 def _assess_dimension(spectrum, rank, n_samples):
@@ -363,18 +363,27 @@ class PCA(_BasePCA):
     """
 
     _parameter_constraints = {
-        "n_components": [Interval(Integral, 0, None, closed="left"),
-                         Interval(Real, 0, 1, closed="neither"),
-                         StrOptions({"mle"}), None],
+        "n_components": [
+            Interval(Integral, 0, None, closed="left"),
+            Interval(Real, 0, 1, closed="neither"),
+            StrOptions({"mle"}),
+            None,
+        ],
         "copy": [bool],
         "whiten": [bool],
-        "svd_solver": [StrOptions({'auto', 'full', 'arpack', 'randomized'})],
+        "svd_solver": [StrOptions({"auto", "full", "arpack", "randomized"})],
         "tol": [Interval(Real, 0, None, closed="left")],
-        "iterated_power": [StrOptions({"auto"}),
-                           Interval(Integral, 0, None, closed="left")],
+        "iterated_power": [
+            StrOptions({"auto"}),
+            Interval(Integral, 0, None, closed="left"),
+        ],
         "n_oversamples": [Interval(Integral, 1, None, closed="left")],
-        "power_iteration_normalizer": [StrOptions({'auto', 'QR', 'LU', 'none'},)],
-        "random_state": ["random_state"]
+        "power_iteration_normalizer": [
+            StrOptions(
+                {"auto", "QR", "LU", "none"},
+            )
+        ],
+        "random_state": ["random_state"],
     }
 
     def __init__(
