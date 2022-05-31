@@ -14,7 +14,7 @@ dependencies:
   - matplotlib
   - pandas
   - pyamg
-  - pytest=6.2.5
+  - pytest
   - pytest-xdist
   - pillow
   - ccache

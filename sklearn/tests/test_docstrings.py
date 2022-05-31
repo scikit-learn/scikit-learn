@@ -34,7 +34,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.manifold._t_sne.trustworthiness",
     "sklearn.metrics._classification.brier_score_loss",
     "sklearn.metrics._classification.cohen_kappa_score",
-    "sklearn.metrics._classification.fbeta_score",
     "sklearn.metrics._classification.jaccard_score",
     "sklearn.metrics._classification.log_loss",
     "sklearn.metrics._plot.det_curve.plot_det_curve",
