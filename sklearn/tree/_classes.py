@@ -1237,7 +1237,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
     _parameter_constraints = {
         **BaseDecisionTree._parameter_constraints,
         "criterion": [
-            StrOptions({"squared_error", "friedman_mse", "absolute_error", "poisson"})
+            StrOptions({"squared_error", "friedman_mse", "absolute_error", "poisson", "mse", "mae"}, deprecated={"mse", "mae"})
         ],
     }
 
