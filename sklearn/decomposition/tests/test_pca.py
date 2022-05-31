@@ -241,18 +241,16 @@ def test_pca_inverse(svd_solver, whiten):
 @pytest.mark.parametrize(
     "svd_solver, n_components, err_msg",
     [
-        ("arpack", 0, r"The 'n_components' parameter of PCA must be an int in the range \[1, inf\), a float in the "
-                      r"range \(0, 1\), a str among {'mle'} or None. Got 0 instead."),
+        ("arpack", 0, r"must be between 1 and min\(n_samples, n_features\)"),
         # must be between 1 and min\(n_samples, n_features\)
-        ("randomized", 0, r"The 'n_components' parameter of PCA must be an int in the range \[1, inf\), a float in the "
-                          r"range \(0, 1\), a str among {'mle'} or None. Got 0 instead."),
+        ("randomized", 0, r"must be between 1 and min\(n_samples, n_features\)"),
         # must be between 1 and min\(n_samples, n_features\)
         ("arpack", 2, r"must be strictly less than min"),
         (
                 "auto",
                 -1,
                 (
-                        r"The 'n_components' parameter of PCA must be an int in the range \[1, inf\), a float in the "
+                        r"The 'n_components' parameter of PCA must be an int in the range \[0, inf\), a float in the "
                         r"range \(0, 1\), a str among {'mle'} or None. Got -1 instead."
                         # n_components={}L? must be between {}L? and "
                         # r"min\(n_samples, n_features\)={}L? with "
@@ -263,12 +261,12 @@ def test_pca_inverse(svd_solver, whiten):
                 "auto",
                 3,
                 (
-                        r"n_components={}L? must be between {}L? and "
-                        r"min\(n_samples, n_features\)={}L? with "
-                        r"svd_solver=\'{}\'"
-                ),
+                        r"n_components=3 must be between 0 and min\(n_samples, n_features\)=2 with svd_solver='full'"
+                ),  # n_components={}L? must be between {}L? and "
+                # r"min\(n_samples, n_features\)={}L? with "
+                # r"svd_solver=\'{}\'
         ),
-        ("auto", 1.0, r"The 'n_components' parameter of PCA must be an int in the range \[1, inf\), a float in the "
+        ("auto", 1.0, r"The 'n_components' parameter of PCA must be an int in the range \[0, inf\), a float in the "
                       r"range \(0, 1\), a str among {'mle'} or None. Got 1.0 instead."),  # must be of type int
     ],
 )
@@ -705,12 +703,12 @@ def test_pca_randomized_svd_n_oversamples():
         (
                 {"n_oversamples": 0},
                 ValueError,
-                "n_oversamples == 0, must be >= 1.",
+                r"The 'n_oversamples' parameter of PCA must be an int in the range \[1, inf\). Got 0 instead.",
         ),
         (
                 {"n_oversamples": 1.5},
-                TypeError,
-                "n_oversamples must be an instance of int",
+                ValueError,
+                r"The 'n_oversamples' parameter of PCA must be an int in the range \[1, inf\). Got 1.5 instead.",
         ),
     ],
 )
