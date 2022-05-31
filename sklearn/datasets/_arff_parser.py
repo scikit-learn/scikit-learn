@@ -376,21 +376,29 @@ def _pandas_arff_parser(
     frame = frame[columns_to_keep]
 
     # strip quotes to be consistent with LIAC ARFF
-    re_start_end_quotes = "^[\"'](.*[\"'])$"
+    re_start_end_quotes = ['^["](.*["])$', "^['](.*['])$"]
 
     def strip_quotes(s):
         return s.group(0)[1:-1]
 
-    for cat_col in frame.select_dtypes(include="category").columns:
-        frame[cat_col].cat.categories = frame[cat_col].cat.categories.str.replace(
-            re_start_end_quotes, strip_quotes, regex=True
+    categorical_columns = [
+        name
+        for name, dtype in frame.dtypes.items()
+        if pd.api.types.is_categorical_dtype(dtype)
+    ]
+    for col, regex in itertools.product(categorical_columns, re_start_end_quotes):
+        frame[col].cat.categories = frame[col].cat.categories.str.replace(
+            regex, strip_quotes, regex=True
         )
 
-    for str_col in frame.select_dtypes(include="object").columns:
-        if frame[str_col].str.match(re_start_end_quotes).any():
-            frame[str_col] = frame[str_col].replace(
-                re_start_end_quotes, strip_quotes, regex=True
-            )
+    string_columns = [
+        name
+        for name, dtype in frame.dtypes.items()
+        if not pd.api.types.is_categorical_dtype(dtype) and dtype == "object"
+    ]
+    frame[string_columns].replace(
+        re_start_end_quotes, strip_quotes, regex=True, inplace=True
+    )
 
     X, y = _post_process_frame(frame, feature_names_to_select, target_names_to_select)
 
