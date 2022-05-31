@@ -377,7 +377,7 @@ def _pandas_arff_parser(
     frame = frame[columns_to_keep]
 
     # strip quotes to be consistent with LIAC ARFF
-    re_start_end_quotes = "^[\"'](.*[\"'])"
+    re_start_end_quotes = "^[\"'](.*[\"'])$"
 
     def strip_quotes(s):
         return s.group(0)[1:-1]
