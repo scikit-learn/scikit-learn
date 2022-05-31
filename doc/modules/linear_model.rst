@@ -901,7 +901,8 @@ logistic regression, see also `log-linear model
    class probabilities must sum to one. We deliberately choose to overparameterize the model
    using :math:`K` weight vectors for ease of implementation and to preserve the
    symmetrical inductive bias regarding ordering of classes, see [16]_. This effect becomes
-   especially important when using regularization.
+   especially important when using regularization. The choice of overparameterization can be
+   detrimental for unpenalized models since then the solution may not be unique, as shown in [16]_.
 
 Let :math:`y_i \in {1, \ldots, K}` be the label (ordinal) encoded target variable for observation :math:`i`.
 Instead of a single coefficient vector, we now have
