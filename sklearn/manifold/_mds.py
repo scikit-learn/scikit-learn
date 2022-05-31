@@ -370,7 +370,8 @@ class MDS(BaseEstimator):
 
     eps : float, default=1e-3
         Relative tolerance with respect to stress at which to declare
-        convergence.
+        convergence. The value of `eps` should be tuned separately depending
+        on whether or not `normalized_stress` is being used.
 
     n_jobs : int, default=None
         The number of jobs to use for the computation. If multiple
