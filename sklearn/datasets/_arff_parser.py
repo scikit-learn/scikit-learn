@@ -372,20 +372,27 @@ def _pandas_arff_parser(
         names=[name for name in openml_columns_info],
         dtype=dtypes,
     )
-
     columns_to_select = feature_names_to_select + target_names_to_select
     columns_to_keep = [col for col in frame.columns if col in columns_to_select]
     frame = frame[columns_to_keep]
 
     # strip quotes to be consistent with LIAC ARFF
-    quote_chars = "\"'"
+    re_start_end_quotes = "^[\"'](.*[\"'])"
+
+    def strip_quotes(s):
+        return s.group(0)[1:-1]
+
     for col in make_column_selector(dtype_exclude="number")(frame):
         if frame[col].dtype == "category":
             # modify the categories instead of each dataframe row
-            frame[col].cat.categories = frame[col].cat.categories.str.strip(quote_chars)
+            frame[col].cat.categories = frame[col].cat.categories.str.replace(
+                re_start_end_quotes, strip_quotes, regex=True
+            )
         else:
             # we deal with an object column
-            frame[col] = frame[col].str.strip(quote_chars)
+            frame[col] = frame[col].replace(
+                re_start_end_quotes, strip_quotes, regex=True
+            )
 
     X, y = _post_process_frame(frame, feature_names_to_select, target_names_to_select)
 
