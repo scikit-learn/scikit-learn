@@ -7,7 +7,6 @@ from typing import List
 import numpy as np
 import scipy as sp
 
-from ..compose import make_column_selector
 from ..externals import _arff
 from ..externals._arff import ArffSparseDataType
 from ..utils import (
@@ -382,15 +381,14 @@ def _pandas_arff_parser(
     def strip_quotes(s):
         return s.group(0)[1:-1]
 
-    for col in make_column_selector(dtype_exclude="number")(frame):
-        if pd.api.types.is_categorical_dtype(frame[col].dtype):
-            # modify the categories instead of each dataframe row
-            frame[col].cat.categories = frame[col].cat.categories.str.replace(
-                re_start_end_quotes, strip_quotes, regex=True
-            )
-        else:
-            # we deal with an object column
-            frame[col] = frame[col].replace(
+    for cat_col in frame.select_dtypes(include="category").columns:
+        frame[cat_col].cat.categories = frame[cat_col].cat.categories.str.replace(
+            re_start_end_quotes, strip_quotes, regex=True
+        )
+
+    for str_col in frame.select_dtypes(include="object").columns:
+        if frame[str_col].str.match(re_start_end_quotes).any():
+            frame[str_col] = frame[str_col].replace(
                 re_start_end_quotes, strip_quotes, regex=True
             )
 
