@@ -856,7 +856,7 @@ Binary Case
 For notational ease, we assume that the target :math:`y_i` takes values in the
 set :math:`\{0, 1\}` for data point :math:`i`.
 Once fitted, the ``predict_proba`` method of ``LogisticRegression`` predicts
-the probability of the positive class math:`P(y_i=1|X_i)` as
+the probability of the positive class :math:`P(y_i=1|X_i)` as
 
 .. math:: \hat{p}(X_i) = \operatorname{expit}(X_i w + w_0) = \frac{1}{1 + \exp(-X_i w - w_0)}.
 
@@ -915,7 +915,7 @@ The objective for the optimization becomes
 .. math:: \min_W -C \sum_{i=1}^n \sum_{k=0}^{K-1} [y_i = k] \log(\hat{p}_k(X_i)) + r(W).
 
 Where :math:`[P]` represents the Iverson bracket which evaluates to :math:`0`
-if :math:`P` is false, otherwise it evaluates to :math:`1`. We currently provide fourchoices
+if :math:`P` is false, otherwise it evaluates to :math:`1`. We currently provide four choices
 for the regularization term :math:`r(W)` via the `penalty` argument:
 
 +----------------+----------------------------------------------------------------------------------+
