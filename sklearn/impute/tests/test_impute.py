@@ -1631,3 +1631,16 @@ def test_imputer_lists_fit_transform():
     X_trans = imp_frequent.transform([[np.nan, np.nan]])
     assert X_trans.dtype == object
     assert_array_equal(X_trans, [["a", "b"]])
+
+
+@pytest.mark.parametrize("dtype_test", [np.float32, np.float64])
+def test_imputer_transform_preserves_numeric_dtype(dtype_test):
+    """Check transform preserves numeric dtype independent of fit dtype."""
+    X = np.asarray(
+        [[1.2, 3.4, np.nan], [np.nan, 1.2, 1.3], [4.2, 2, 1]], dtype=np.float64
+    )
+    imp = SimpleImputer().fit(X)
+
+    X_test = np.asarray([[np.nan, np.nan, np.nan]], dtype=dtype_test)
+    X_trans = imp.transform(X_test)
+    assert X_trans.dtype == dtype_test
