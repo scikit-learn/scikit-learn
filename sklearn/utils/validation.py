@@ -108,7 +108,7 @@ def _assert_all_finite(
     # Cython implementation doesn't support FP16 or complex numbers
     first_pass_isfinite = False
     if is_float:
-        use_cython = X.dtype in {np.float32, np.float64}
+        use_cython = X.data.contiguous and X.dtype.type in {np.float32, np.float64}
         with np.errstate(over="ignore"):
             first_pass_isfinite = np.isfinite(np.sum(X))
         if first_pass_isfinite:
