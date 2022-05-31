@@ -242,32 +242,31 @@ def test_pca_inverse(svd_solver, whiten):
     "svd_solver, n_components, err_msg",
     [
         ("arpack", 0, r"must be between 1 and min\(n_samples, n_features\)"),
-        # must be between 1 and min\(n_samples, n_features\)
+        
         ("randomized", 0, r"must be between 1 and min\(n_samples, n_features\)"),
-        # must be between 1 and min\(n_samples, n_features\)
+
         ("arpack", 2, r"must be strictly less than min"),
         (
                 "auto",
                 -1,
                 (
-                        r"The 'n_components' parameter of PCA must be an int in the range \[0, inf\), a float in the "
+                        r"The 'n_components' parameter of PCA must be an int "
+                        r"in the range \[0, inf\), a float in the "
                         r"range \(0, 1\), a str among {'mle'} or None. Got -1 instead."
-                        # n_components={}L? must be between {}L? and "
-                        # r"min\(n_samples, n_features\)={}L? with "
-                        # r"svd_solver=\'{}\'
                 ),
         ),
         (
                 "auto",
                 3,
                 (
-                        r"n_components=3 must be between 0 and min\(n_samples, n_features\)=2 with svd_solver='full'"
-                ),  # n_components={}L? must be between {}L? and "
-                # r"min\(n_samples, n_features\)={}L? with "
-                # r"svd_solver=\'{}\'
+                        r"n_components=3 must be between 0 and min\(n_samples, "
+                        r"n_features\)=2 with svd_solver='full'"
+                ),
         ),
-        ("auto", 1.0, r"The 'n_components' parameter of PCA must be an int in the range \[0, inf\), a float in the "
-                      r"range \(0, 1\), a str among {'mle'} or None. Got 1.0 instead."),  # must be of type int
+        ("auto", 1.0, r"The 'n_components' parameter of PCA must be an int"
+                      r" in the range \[0, inf\), a float in the "
+                      r"range \(0, 1\), a str among {'mle'} or None. "
+                      r"Got 1.0 instead."),
     ],
 )
 def test_pca_validation(svd_solver, data, n_components, err_msg):
