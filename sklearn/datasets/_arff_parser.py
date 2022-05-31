@@ -383,7 +383,7 @@ def _pandas_arff_parser(
         return s.group(0)[1:-1]
 
     for col in make_column_selector(dtype_exclude="number")(frame):
-        if frame[col].dtype == "category":
+        if pd.api.types.is_categorical_dtype(frame[col].dtype):
             # modify the categories instead of each dataframe row
             frame[col].cat.categories = frame[col].cat.categories.str.replace(
                 re_start_end_quotes, strip_quotes, regex=True
