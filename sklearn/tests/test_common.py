@@ -467,8 +467,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "ComplementNB",
     "CountVectorizer",
     "DBSCAN",
-    "DecisionTreeClassifier",
-    "DecisionTreeRegressor",
     "DictVectorizer",
     "DictionaryLearning",
     "DummyClassifier",
