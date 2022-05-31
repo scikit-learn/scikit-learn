@@ -21,29 +21,28 @@ def cy_isfinite(cnp.ndarray a, bint allow_nan=False):
         char* a_data
         cnp.NPY_TYPES a_type
         Py_ssize_t a_size = a.size
-        bint disallow_nan
         int result
         bint err
 
-    if a.dtype not in {np.float32, np.float64}:
+    if a.dtype.type not in {np.float32, np.float64}:
         raise TypeError("Unsupported array type: %s" % repr(a.dtype))
 
     with nogil:
         a_data = a.data
         a_type = <cnp.NPY_TYPES>a.descr.type_num
 
-        disallow_nan = not allow_nan
-
         if a_type == cnp.NPY_TYPES.NPY_FLOAT:
-            result = _isfinite(<const float*>a_data, a_size, disallow_nan)
+            result = _isfinite(<const float*>a_data, a_size, allow_nan)
         elif a_type == cnp.NPY_TYPES.NPY_DOUBLE:
-            result = _isfinite(<const double*>a_data, a_size, disallow_nan)
+            result = _isfinite(<const double*>a_data, a_size, allow_nan)
 
-cdef inline int _isfinite(const_fprecision* a_ptr, Py_ssize_t size, bint disallow_nan) nogil:
-    if disallow_nan:
-        return _isfinite_disable_nan(a_ptr, size)
-    else:
+    return result
+
+cdef inline int _isfinite(const_fprecision* a_ptr, Py_ssize_t size, bint allow_nan) nogil:
+    if allow_nan:
         return _isfinite_allow_nan(a_ptr, size)
+    else:
+        return _isfinite_disable_nan(a_ptr, size)
 
 cpdef enum FiniteStatus:
     all_finite = 0
