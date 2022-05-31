@@ -242,7 +242,7 @@ def test_pca_inverse(svd_solver, whiten):
     "svd_solver, n_components, err_msg",
     [
         ("arpack", 0, r"must be between 1 and min\(n_samples, n_features\)"),
-        
+
         ("randomized", 0, r"must be between 1 and min\(n_samples, n_features\)"),
 
         ("arpack", 2, r"must be strictly less than min"),
@@ -702,12 +702,14 @@ def test_pca_randomized_svd_n_oversamples():
         (
                 {"n_oversamples": 0},
                 ValueError,
-                r"The 'n_oversamples' parameter of PCA must be an int in the range \[1, inf\). Got 0 instead.",
+                r"The 'n_oversamples' parameter of PCA must be an "
+                r"int in the range \[1, inf\). Got 0 instead.",
         ),
         (
                 {"n_oversamples": 1.5},
                 ValueError,
-                r"The 'n_oversamples' parameter of PCA must be an int in the range \[1, inf\). Got 1.5 instead.",
+                r"The 'n_oversamples' parameter of PCA must be an "
+                r"int in the range \[1, inf\). Got 1.5 instead.",
         ),
     ],
 )
