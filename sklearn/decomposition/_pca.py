@@ -363,7 +363,7 @@ class PCA(_BasePCA):
     """
 
     _parameter_constraints = {
-        "n_components": [Interval(Integral, 1, None, closed="left"),
+        "n_components": [Interval(Integral, 0, None, closed="left"),
                          Interval(Real, 0, 1, closed="neither"),
                          StrOptions({"mle"}), None],
         "copy": [bool],
@@ -510,6 +510,12 @@ class PCA(_BasePCA):
                 raise ValueError(
                     "n_components='mle' is only supported if n_samples >= n_features"
                 )
+        elif not 0 <= n_components <= min(n_samples, n_features):
+            raise ValueError(
+                "n_components=%r must be between 0 and "
+                "min(n_samples, n_features)=%r with "
+                "svd_solver='full'" % (n_components, min(n_samples, n_features))
+            )
 
         # Center data
         self.mean_ = np.mean(X, axis=0)
