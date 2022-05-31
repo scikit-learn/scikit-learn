@@ -172,10 +172,10 @@ def test_pca_singular_values(svd_solver):
 
     # compare to the Frobenius norm
     assert_allclose(
-        np.sum(pca.singular_values_**2), np.linalg.norm(X_trans, "fro") ** 2
+        np.sum(pca.singular_values_ ** 2), np.linalg.norm(X_trans, "fro") ** 2
     )
     # Compare to the 2-norms of the score vectors
-    assert_allclose(pca.singular_values_, np.sqrt(np.sum(X_trans**2, axis=0)))
+    assert_allclose(pca.singular_values_, np.sqrt(np.sum(X_trans ** 2, axis=0)))
 
     # set the singular values and see what er get back
     n_samples, n_features = 100, 110
@@ -183,7 +183,7 @@ def test_pca_singular_values(svd_solver):
 
     pca = PCA(n_components=3, svd_solver=svd_solver, random_state=rng)
     X_trans = pca.fit_transform(X)
-    X_trans /= np.sqrt(np.sum(X_trans**2, axis=0))
+    X_trans /= np.sqrt(np.sum(X_trans ** 2, axis=0))
     X_trans[:, 0] *= 3.142
     X_trans[:, 1] *= 2.718
     X_hat = np.dot(X_trans, pca.components_)
@@ -201,7 +201,7 @@ def test_pca_check_projection(svd_solver):
     Xt = 0.1 * rng.randn(1, p) + np.array([3, 4, 5])
 
     Yt = PCA(n_components=2, svd_solver=svd_solver).fit(X).transform(Xt)
-    Yt /= np.sqrt((Yt**2).sum())
+    Yt /= np.sqrt((Yt ** 2).sum())
 
     assert_allclose(np.abs(Yt[0][0]), 1.0, rtol=5e-3)
 
@@ -241,28 +241,35 @@ def test_pca_inverse(svd_solver, whiten):
 @pytest.mark.parametrize(
     "svd_solver, n_components, err_msg",
     [
-        ("arpack", 0, r"must be between 1 and min\(n_samples, n_features\)"),
-        ("randomized", 0, r"must be between 1 and min\(n_samples, n_features\)"),
+        ("arpack", 0, r"The 'n_components' parameter of PCA must be an int in the range \[1, inf\), a float in the "
+                      r"range \(0, 1\), a str among {'mle'} or None. Got 0 instead."),
+        # must be between 1 and min\(n_samples, n_features\)
+        ("randomized", 0, r"The 'n_components' parameter of PCA must be an int in the range \[1, inf\), a float in the "
+                          r"range \(0, 1\), a str among {'mle'} or None. Got 0 instead."),
+        # must be between 1 and min\(n_samples, n_features\)
         ("arpack", 2, r"must be strictly less than min"),
         (
-            "auto",
-            -1,
-            (
-                r"n_components={}L? must be between {}L? and "
-                r"min\(n_samples, n_features\)={}L? with "
-                r"svd_solver=\'{}\'"
-            ),
+                "auto",
+                -1,
+                (
+                        r"The 'n_components' parameter of PCA must be an int in the range \[1, inf\), a float in the "
+                        r"range \(0, 1\), a str among {'mle'} or None. Got -1 instead."
+                        # n_components={}L? must be between {}L? and "
+                        # r"min\(n_samples, n_features\)={}L? with "
+                        # r"svd_solver=\'{}\'
+                ),
         ),
         (
-            "auto",
-            3,
-            (
-                r"n_components={}L? must be between {}L? and "
-                r"min\(n_samples, n_features\)={}L? with "
-                r"svd_solver=\'{}\'"
-            ),
+                "auto",
+                3,
+                (
+                        r"n_components={}L? must be between {}L? and "
+                        r"min\(n_samples, n_features\)={}L? with "
+                        r"svd_solver=\'{}\'"
+                ),
         ),
-        ("auto", 1.0, "must be of type int"),
+        ("auto", 1.0, r"The 'n_components' parameter of PCA must be an int in the range \[1, inf\), a float in the "
+                      r"range \(0, 1\), a str among {'mle'} or None. Got 1.0 instead."),  # must be of type int
     ],
 )
 def test_pca_validation(svd_solver, data, n_components, err_msg):
@@ -273,9 +280,9 @@ def test_pca_validation(svd_solver, data, n_components, err_msg):
     pca_fitted = PCA(n_components, svd_solver=svd_solver)
 
     solver_reported = "full" if svd_solver == "auto" else svd_solver
-    err_msg = err_msg.format(
-        n_components, lower_limit[svd_solver], smallest_d, solver_reported
-    )
+    # err_msg = err_msg.format(
+    #     n_components, lower_limit[svd_solver], smallest_d, solver_reported
+    # )
     with pytest.raises(ValueError, match=err_msg):
         pca_fitted.fit(data)
 
@@ -350,9 +357,9 @@ def test_infer_dim_1():
     n, p = 1000, 5
     rng = np.random.RandomState(0)
     X = (
-        rng.randn(n, p) * 0.1
-        + rng.randn(n, 1) * np.array([3, 4, 5, 1, 2])
-        + np.array([1, 0, 7, 4, 6])
+            rng.randn(n, p) * 0.1
+            + rng.randn(n, 1) * np.array([3, 4, 5, 1, 2])
+            + np.array([1, 0, 7, 4, 6])
     )
     pca = PCA(n_components=p, svd_solver="full")
     pca.fit(X)
@@ -413,7 +420,7 @@ def test_pca_score(svd_solver):
     pca.fit(X)
 
     ll1 = pca.score(X)
-    h = -0.5 * np.log(2 * np.pi * np.exp(1) * 0.1**2) * p
+    h = -0.5 * np.log(2 * np.pi * np.exp(1) * 0.1 ** 2) * p
     assert_allclose(ll1 / h, 1, rtol=5e-2)
 
     ll2 = pca.score(rng.randn(n, p) * 0.2 + np.array([3, 4, 5]))
@@ -636,8 +643,8 @@ def test_fit_mle_too_few_samples():
 
     pca = PCA(n_components="mle", svd_solver="full")
     with pytest.raises(
-        ValueError,
-        match="n_components='mle' is only supported if n_samples >= n_features",
+            ValueError,
+            match="n_components='mle' is only supported if n_samples >= n_features",
     ):
         pca.fit(X)
 
@@ -696,14 +703,14 @@ def test_pca_randomized_svd_n_oversamples():
     "params, err_type, err_msg",
     [
         (
-            {"n_oversamples": 0},
-            ValueError,
-            "n_oversamples == 0, must be >= 1.",
+                {"n_oversamples": 0},
+                ValueError,
+                "n_oversamples == 0, must be >= 1.",
         ),
         (
-            {"n_oversamples": 1.5},
-            TypeError,
-            "n_oversamples must be an instance of int",
+                {"n_oversamples": 1.5},
+                TypeError,
+                "n_oversamples must be an instance of int",
         ),
     ],
 )
