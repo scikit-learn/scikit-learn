@@ -32,7 +32,7 @@ from sklearn.metrics import d2_tweedie_score
 from sklearn.model_selection import train_test_split
 
 
-SOLVERS = ["lbfgs", "newton-cholesky", "newton-qr-cholesky"]
+SOLVERS = ["lbfgs", "newton-cholesky", "newton-qr-cholesky", "newton-lsmr"]
 
 
 class BinomialRegressor(_GeneralizedLinearRegressor):
@@ -208,7 +208,12 @@ def test_glm_regression(solver, fit_intercept, glm_dataset):
         intercept = 0
     model.fit(X, y)
 
-    rtol = 3e-5 if solver == "lbfgs" else 1e-11
+    if solver == "lbfgs":
+        rtol = 3e-5
+    elif solver == "newton-lsmr":
+        rtol = 1e-10
+    else:
+        rtol = 1e-11
     assert model.intercept_ == pytest.approx(intercept, rel=rtol)
     assert_allclose(model.coef_, coef, rtol=rtol)
 
@@ -268,7 +273,12 @@ def test_glm_regression_hstacked_X(solver, fit_intercept, glm_dataset):
         intercept = 0
     model.fit(X, y)
 
-    rtol = 3e-5 if solver == "lbfgs" else 1e-11
+    if solver == "lbfgs":
+        rtol = 3e-5
+    elif solver == "newton-lsmr":
+        rtol = 1e-9
+    else:
+        rtol = 1e-11
     assert model.intercept_ == pytest.approx(intercept, rel=rtol)
     assert_allclose(model.coef_, np.r_[coef, coef], rtol=rtol)
 
@@ -309,7 +319,12 @@ def test_glm_regression_vstacked_X(solver, fit_intercept, glm_dataset):
         intercept = 0
     model.fit(X, y)
 
-    rtol = 3e-5 if solver == "lbfgs" else 1e-11
+    if solver == "lbfgs":
+        rtol = 3e-5
+    elif solver == "newton-lsmr":
+        rtol = 1e-10
+    else:
+        rtol = 1e-11
     assert model.intercept_ == pytest.approx(intercept, rel=rtol)
     assert_allclose(model.coef_, coef, rtol=rtol)
 
