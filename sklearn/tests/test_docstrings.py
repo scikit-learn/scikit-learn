@@ -40,7 +40,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.metrics._plot.precision_recall_curve.plot_precision_recall_curve",
     "sklearn.metrics._ranking.coverage_error",
     "sklearn.metrics._ranking.dcg_score",
-    "sklearn.metrics._ranking.label_ranking_average_precision_score",
     "sklearn.metrics._ranking.roc_auc_score",
     "sklearn.metrics._ranking.roc_curve",
     "sklearn.metrics._ranking.top_k_accuracy_score",
