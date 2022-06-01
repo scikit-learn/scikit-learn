@@ -119,6 +119,9 @@ Changelog
 :mod:`sklearn.tree`
 ...................
 
+- |Enhancement| :func:`tree.plot_tree`, :func:`tree.export_graphviz` now uses
+  a lower case `x[i]` to represent feature `i`. :pr:`23480` by `Thomas Fan`_.
+
 - |Fix| Fixed invalid memory access bug during fit in
   :class:`tree.DecisionTreeRegressor` and :class:`tree.DecisionTreeClassifier`.
   :pr:`23273` by `Thomas Fan`_.
