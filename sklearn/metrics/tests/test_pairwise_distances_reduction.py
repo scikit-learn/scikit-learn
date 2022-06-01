@@ -110,8 +110,8 @@ def assert_argkmin_results_quasi_equality(
         ref_dist_row = ref_dist[i]
         dist_row = dist[i]
 
-        is_sorted(ref_dist_row), f"Reference distances aren't sorted on row {i}"
-        is_sorted(dist_row), f"Distances aren't sorted on row {i}"
+        assert is_sorted(ref_dist_row), f"Reference distances aren't sorted on row {i}"
+        assert is_sorted(dist_row), f"Distances aren't sorted on row {i}"
 
         assert_allclose(ref_dist_row, dist_row, rtol)
 
@@ -179,8 +179,8 @@ def assert_radius_neighborhood_results_quasi_equality(
         ref_dist_row = ref_dist[i]
         dist_row = dist[i]
 
-        is_sorted(ref_dist_row), f"Reference distances aren't sorted on row {i}"
-        is_sorted(dist_row), f"Distances aren't sorted on row {i}"
+        assert is_sorted(ref_dist_row), f"Reference distances aren't sorted on row {i}"
+        assert is_sorted(dist_row), f"Distances aren't sorted on row {i}"
 
         # Vectors' lengths might be different due to small
         # numerical differences of distance w.r.t the `radius` threshold,
@@ -250,7 +250,7 @@ def test_assert_argkmin_results_quasi_equality():
         ref_dist, ref_dist, ref_indices, ref_indices, rtol, decimals
     )
 
-    dist = ref_dist
+    dist = np.copy(ref_dist)
 
     # Apply valid permutation on indices
     indices = np.array(
@@ -296,7 +296,7 @@ def test_assert_argkmin_results_quasi_equality():
     # Distances aren't properly sorted
     dist[0][0], dist[0][1] = dist[0][1], dist[0][0]
 
-    msg = "Mismatched elements: 2 / 5"
+    msg = "Distances aren't sorted on row 0"
     with pytest.raises(AssertionError, match=msg):
         assert_argkmin_results_quasi_equality(
             ref_dist, dist, ref_indices, indices, rtol, decimals
@@ -309,7 +309,7 @@ def test_assert_argkmin_results_quasi_equality():
     indices[0][0], indices[0][1] = indices[0][1], indices[0][0]
     dist[0][0], dist[0][1] = dist[0][1], dist[0][0]
 
-    msg = "Mismatched elements: 2 / 5"
+    msg = "Distances aren't sorted on row 0"
     with pytest.raises(AssertionError, match=msg):
         assert_argkmin_results_quasi_equality(
             ref_dist, dist, ref_indices, indices, rtol, decimals
@@ -396,7 +396,7 @@ def test_assert_radius_neighborhood_results_quasi_equality():
     # Distances aren't properly sorted
     dist[0][0], dist[0][1] = dist[0][1], dist[0][0]
 
-    msg = "Mismatched elements: 2 / 5"
+    msg = "Distances aren't sorted on row 0"
     with pytest.raises(AssertionError, match=msg):
         assert_radius_neighborhood_results_quasi_equality(
             ref_dist, dist, ref_indices, indices, rtol, decimals
@@ -409,7 +409,7 @@ def test_assert_radius_neighborhood_results_quasi_equality():
     indices[0][0], indices[0][1] = indices[0][1], indices[0][0]
     dist[0][0], dist[0][1] = dist[0][1], dist[0][0]
 
-    msg = "Mismatched elements: 2 / 5"
+    msg = "Distances aren't sorted on row 0"
     with pytest.raises(AssertionError, match=msg):
         assert_radius_neighborhood_results_quasi_equality(
             ref_dist, dist, ref_indices, indices, rtol, decimals
