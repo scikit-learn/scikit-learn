@@ -24,7 +24,7 @@ with pip.
 
 To run this script you need:
 - conda-lock. The version should match the one used in the CI in
-  build_tools/azure/install.sh
+  sklearn/_min_dependencies.py
 - pip-tools
 
 """
@@ -72,9 +72,6 @@ common_dependencies = common_dependencies_without_coverage + [
 docstring_test_dependencies = ["sphinx", "numpydoc"]
 
 default_package_constraints = {
-    # XXX: pytest is temporary pinned to 6.2.5 because pytest 7 causes CI
-    # issues https://github.com/scikit-learn/scikit-learn/pull/22381
-    "pytest": "6.2.5",
     # XXX: coverage is temporary pinned to 6.2 because 6.3 is not fork-safe
     # cf. https://github.com/nedbat/coveragepy/issues/1310
     "coverage": "6.2",
@@ -212,6 +209,59 @@ conda_build_metadata_list = [
         "package_constraints": {"python": "3.8", "blas": "[build=mkl]"},
     },
     {
+        "build_name": "doc_min_dependencies",
+        "folder": "build_tools/github",
+        "platform": "linux-64",
+        "channel": "conda-forge",
+        "conda_dependencies": common_dependencies_without_coverage
+        + [
+            "scikit-image",
+            "seaborn",
+            "memory_profiler",
+            "compilers",
+            "sphinx",
+            "sphinx-gallery",
+            "numpydoc",
+            "sphinx-prompt",
+        ],
+        "pip_dependencies": ["sphinxext-opengraph"],
+        "package_constraints": {
+            "python": "3.8",
+            "numpy": "min",
+            "scipy": "min",
+            "matplotlib": "min",
+            "cython": "min",
+            "scikit-image": "min",
+            "sphinx": "min",
+            "pandas": "min",
+            "sphinx-gallery": "min",
+            "numpydoc": "min",
+            "sphinx-prompt": "min",
+            "sphinxext-opengraph": "min",
+        },
+    },
+    {
+        "build_name": "doc",
+        "folder": "build_tools/github",
+        "platform": "linux-64",
+        "channel": "conda-forge",
+        "conda_dependencies": common_dependencies_without_coverage
+        + [
+            "scikit-image",
+            "seaborn",
+            "memory_profiler",
+            "compilers",
+            "sphinx",
+            "sphinx-gallery",
+            "numpydoc",
+            "sphinx-prompt",
+        ],
+        "pip_dependencies": ["sphinxext-opengraph"],
+        "package_constraints": {
+            "python": "3.9",
+        },
+    },
+    {
         "build_name": "py39_conda_forge",
         "folder": "build_tools/circle",
         "platform": "linux-aarch64",
@@ -222,9 +272,6 @@ conda_build_metadata_list = [
         + ["pip", "ccache"],
         "package_constraints": {
             "python": "3.9",
-            # TODO remove constraint when pip > 22.1 is released. See
-            # https://github.com/pypa/pip/issues/11116 for more details.
-            "pip": "22.0.4",
         },
     },
 ]
@@ -337,7 +384,7 @@ def get_conda_environment_content(build_metadata):
     template = environment.from_string(
         """
 # DO NOT EDIT: this file is generated from the specification found in the
-# following script to centralize the configuration for all Azure CI builds:
+# following script to centralize the configuration for CI builds:
 # build_tools/update_environments_and_lock_files.py
 channels:
   - {{ build_metadata['channel'] }}
@@ -402,7 +449,7 @@ def get_pip_requirements_content(build_metadata):
     template = environment.from_string(
         """
 # DO NOT EDIT: this file is generated from the specification found in the
-# following script to centralize the configuration for all Azure CI builds:
+# following script to centralize the configuration for CI builds:
 # build_tools/update_environments_and_lock_files.py
 {% for pip_dep in build_metadata['pip_dependencies'] %}
 {{ pip_dep | get_package_with_constraint(build_metadata, uses_pip=True) }}
@@ -440,6 +487,7 @@ def write_pip_lock_file(build_metadata):
     # as the one used during the CI build where the lock file is used, we first
     # create a conda environment with the correct Python version and
     # pip-compile and run pip-compile in this environment
+
     command = (
         "conda create -c conda-forge -n"
         f" pip-tools-python{python_version} python={python_version} pip-tools -y"
