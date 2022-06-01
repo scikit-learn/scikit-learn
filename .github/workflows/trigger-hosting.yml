@@ -24,7 +24,7 @@ jobs:
         if: github.event.workflow_run.event == 'pull_request'
       - name: Get PR number
         run: |
-          PULL_REQUEST_NUMBER=$(python maint_tools/get_pr_number_from_run_id.py $GITHUB_REPOSITORY $RUN_ID)
+          PULL_REQUEST_NUMBER=$(python maint_tools/get_pr_number_from_run_id.py ${{ secrets.GITHUB_TOKEN }} $GITHUB_REPOSITORY $RUN_ID)
           echo "PULL_REQUEST_NUMBER=$PULL_REQUEST_NUMBER" >> $GITHUB_ENV
         if: github.event.workflow_run.event == 'pull_request'
         env:
