@@ -1,0 +1,66 @@
+# Workflow to build the documentation
+name: Documentation builder
+
+on:
+  push:
+    branches:
+      - main
+      # Release branches
+      - "[0-9]+.[0-9]+.X"
+  pull_request:
+    branches:
+      - main
+      - "[0-9]+.[0-9]+.X"
+
+jobs:
+  # Build the documentation against the minimum version of the dependencies
+  doc-min-dependencies:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout scikit-learn
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+
+      - name: Build documentation
+        run: bash build_tools/github/build_doc.sh
+        env:
+          OMP_NUM_THREADS: 2
+          MKL_NUM_THREADS: 2
+          CONDA_ENV_NAME: testenv
+          LOCK_FILE: build_tools/github/doc_min_dependencies_linux-64_conda.lock
+
+      - name: Upload documentation
+        uses: actions/upload-artifact@v2
+        with:
+          name: doc-min-dependencies
+          path: doc/_build/html/stable
+
+  # Build the documentation against the latest version of the dependencies
+  doc:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout scikit-learn
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+
+      - name: Build documentation
+        run: bash build_tools/github/build_doc.sh
+        env:
+          OMP_NUM_THREADS: 2
+          MKL_NUM_THREADS: 2
+          CONDA_ENV_NAME: testenv
+          LOCK_FILE: build_tools/github/doc_linux-64_conda.lock
+
+      - name: Upload documentation
+        uses: actions/upload-artifact@v2
+        with:
+          name: doc
+          path: doc/_build/html/stable
