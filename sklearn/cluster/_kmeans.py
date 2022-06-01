@@ -266,6 +266,27 @@ def _tolerance(X, tol):
     return np.mean(variances) * tol
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "n_clusters": [Interval(Integral, 1, None, closed="left")],
+        "sample_weight": ["array-like", None],
+        "init": [StrOptions({"k-means++", "random"}), callable, "array-like"],
+        "n_init": [
+            StrOptions({"auto", "warn"}, internal={"warn"}),
+            Interval(Integral, 1, None, closed="left"),
+        ],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
+        "verbose": [Interval(Integral, 0, None, closed="left"), bool],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "random_state": ["random_state"],
+        "copy_x": [bool],
+        "algorithm": [
+            StrOptions({"lloyd", "elkan", "auto", "full"}, deprecated={"auto", "full"})
+        ],
+        "return_n_iter": [bool],
+    }
+)
 def k_means(
     X,
     n_clusters,
@@ -813,7 +834,7 @@ class _BaseKMeans(
         "n_clusters": [Interval(Integral, 1, None, closed="left")],
         "init": [StrOptions({"k-means++", "random"}), callable, "array-like"],
         "n_init": [
-            StrOptions({"auto", "warn"}),
+            StrOptions({"auto", "warn"}, internal={"warn"}),
             Interval(Integral, 1, None, closed="left"),
         ],
         "max_iter": [Interval(Integral, 1, None, closed="left")],

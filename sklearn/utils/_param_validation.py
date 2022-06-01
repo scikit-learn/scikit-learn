@@ -52,6 +52,11 @@ def validate_parameter_constraints(parameter_constraints, params, caller_name):
                 break
         else:
             # No constraint is satisfied, raise with an informative message.
+
+            # Ignore constraints that only contains internal options that we don't want
+            # to expose in the error message
+            constraints = [constraint for constraint in constraints if str(constraint)]
+
             if len(constraints) == 1:
                 constraints_str = f"{constraints[0]}"
             else:
@@ -216,10 +221,24 @@ class StrOptions(_Constraint):
         A subset of the `options` to mark as deprecated in the repr of the constraint.
     """
 
-    @validate_params({"options": [set], "deprecated": [set, None]})
-    def __init__(self, options, deprecated=None):
+    @validate_params(
+        {"options": [set], "deprecated": [set, None], "internal": [set, None]}
+    )
+    def __init__(self, options, deprecated=None, internal=None):
         self.options = options
-        self.deprecated = deprecated or {}
+        self.deprecated = deprecated or set()
+        self.internal = internal or set()
+
+        if self.deprecated - self.options:
+            raise ValueError("The deprecated options must be a subset of the options.")
+
+        if self.internal - self.options:
+            raise ValueError("The internal options must be a subset of the options.")
+
+        if self.deprecated & self.internal:
+            raise ValueError(
+                "The deprecated and internal parameters should not overlap."
+            )
 
     def is_satisfied_by(self, val):
         return isinstance(val, str) and val in self.options
@@ -232,8 +251,13 @@ class StrOptions(_Constraint):
         return option_str
 
     def __str__(self):
+        visible_options = [o for o in self.options if o not in self.internal]
+
+        if not visible_options:
+            return ""
+
         options_str = (
-            f"{', '.join([self._mark_if_deprecated(o) for o in self.options])}"
+            f"{', '.join([self._mark_if_deprecated(o) for o in visible_options])}"
         )
         return f"a str among {{{options_str}}}"
 
