@@ -379,10 +379,10 @@ def _pandas_arff_parser(
 
     # `pd.read_csv` only consider double quotes as delimiters for strings.
     # In case that a single quote is used as a delimiter, we need to strip it.
-    pattern = r"^'.*'$"
+    pattern = r"^'(?P<contents>.*)'$"
 
     def strip_quotes(s):
-        return s.group(0)[1:-1]
+        return s.group("contents")
 
     categorical_columns = [
         name
