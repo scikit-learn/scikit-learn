@@ -77,7 +77,6 @@ def test_linear_regression_sample_weights(
     inter1 = reg.intercept_
 
     assert reg.coef_.shape == (X.shape[1],)  # sanity checks
-    assert reg.score(X, y) != 0
 
     # Closed form of the weighted least square
     # theta = (X^T W X)^(-1) @ X^T W y
