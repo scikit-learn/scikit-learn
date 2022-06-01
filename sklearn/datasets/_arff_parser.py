@@ -399,10 +399,8 @@ def _pandas_arff_parser(
         for name, dtype in frame.dtypes.items()
         if not pd.api.types.is_categorical_dtype(dtype) and dtype == "object"
     ]
-    frame[string_columns] = frame[string_columns].replace(
-        pattern, strip_quotes, regex=True
-    )
-
+    for col in string_columns:
+        frame[col] = frame[col].str.replace(pattern, strip_quotes, regex=True)
     X, y = _post_process_frame(frame, feature_names_to_select, target_names_to_select)
 
     if output_type == "pandas":

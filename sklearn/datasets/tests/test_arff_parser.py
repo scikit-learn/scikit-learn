@@ -1,6 +1,11 @@
+import gzip
+from importlib import resources
+from io import BytesIO
+
 import pytest
 
 from sklearn.datasets._arff_parser import (
+    _pandas_arff_parser,
     _post_process_frame,
     load_arff_from_gzip_file,
 )
@@ -71,3 +76,97 @@ def test_load_arff_from_gzip_file_error_parser():
     err_msg = "Unknown parser: 'xxx'. Should be 'liac-arff' or 'pandas'"
     with pytest.raises(ValueError, match=err_msg):
         load_arff_from_gzip_file("xxx", "xxx", "xxx", "xxx", "xxx", "xxx")
+
+
+def test_pandas_arff_parser_strip_quotes():
+    """Check that the pandas parser will strip properly quotes for string values."""
+    pd = pytest.importorskip("pandas")
+
+    TEST_DATA_MODULE = "sklearn.datasets.tests.data"
+    filename = "toy_quotes.arff"
+
+    # `columns_info` represents the minimal information given required to
+    # use the pandas parser. They would be provided by OpenML.
+    columns_info = {
+        "cat_single_quote": {
+            "data_type": "nominal",
+            "name": "cat_single_quote",
+        },
+        "cat_double_quote": {
+            "data_type": "nominal",
+            "name": "cat_double_quote",
+        },
+        "cat_without_quote": {
+            "data_type": "nominal",
+            "name": "cat_without_quote",
+        },
+        "str_single_quote": {
+            "data_type": "string",
+            "name": "str_single_quote",
+        },
+        "str_double_quote": {
+            "data_type": "string",
+            "name": "str_double_quote",
+        },
+        "str_without_quote": {
+            "data_type": "string",
+            "name": "str_without_quote",
+        },
+        "str_nested_quote_1": {
+            "data_type": "string",
+            "name": "str_nested_quote_1",
+        },
+        "str_nested_quote_2": {
+            "data_type": "string",
+            "name": "str_nested_quote_2",
+        },
+        "str_internal_quote": {
+            "data_type": "string",
+            "name": "str_internal_quote",
+        },
+        "class": {
+            "data_type": "numeric",
+            "name": "class",
+        },
+    }
+
+    feature_names = [
+        "cat_single_quote",
+        "cat_double_quote",
+        "cat_without_quote",
+        "str_single_quote",
+        "str_double_quote",
+        "str_without_quote",
+        "str_nested_quote_1",
+        "str_nested_quote_2",
+        "str_internal_quote",
+    ]
+    target_names = ["class"]
+
+    expected_values = {
+        "cat_single_quote": "A",
+        "cat_double_quote": "A",
+        "cat_without_quote": "A",
+        "str_single_quote": "some text",
+        "str_double_quote": "some text",
+        "str_without_quote": "some text",
+        "str_nested_quote_1": '"expect double quotes"',
+        "str_nested_quote_2": "expect no quotes",
+        "str_internal_quote": "internal' quote",
+        "class": 0,
+    }
+
+    with resources.open_binary(TEST_DATA_MODULE, filename) as arff_file:
+        bytes_file = BytesIO(gzip.compress(arff_file.read()))
+        with gzip.GzipFile(mode="rb", fileobj=bytes_file) as gzip_file:
+            _, _, frame, _ = _pandas_arff_parser(
+                gzip_file,
+                output_type="pandas",
+                openml_columns_info=columns_info,
+                feature_names_to_select=feature_names,
+                target_names_to_select=target_names,
+            )
+            assert frame.columns.tolist() == feature_names + target_names
+            pd.testing.assert_series_equal(
+                frame.iloc[0], pd.Series(expected_values, name=0)
+            )
