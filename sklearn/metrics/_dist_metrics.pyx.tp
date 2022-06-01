@@ -33,7 +33,6 @@ implementation_specific_values = [
 import numpy as np
 cimport numpy as cnp
 from cython cimport final
-from libc.math cimport fabs, sqrt, exp, pow, cos, sin, asin
 
 cnp.import_array()  # required in order to use C-API
 
@@ -42,6 +41,9 @@ cnp.import_array()  # required in order to use C-API
 cdef extern from "arrayobject.h":
     object PyArray_SimpleNewFromData(int nd, cnp.npy_intp* dims,
                                      int typenum, void* data)
+
+
+from libc.math cimport fabs, sqrt, exp, pow, cos, sin, asin
 
 from scipy.sparse import csr_matrix, issparse
 from ..utils._typedefs cimport DTYPE_t, ITYPE_t, DTYPECODE
@@ -468,6 +470,7 @@ cdef class DistanceMetric{{name_suffix}}:
 cdef class EuclideanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     r"""Euclidean Distance metric
 
+    .. math::
        D(x, y) = \sqrt{ \sum_i (x_i - y_i) ^ 2 }
     """
     def __init__(self):
@@ -500,6 +503,7 @@ cdef class EuclideanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 cdef class SEuclideanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     r"""Standardized Euclidean Distance metric
 
+    .. math::
        D(x, y) = \sqrt{ \sum_i \frac{ (x_i - y_i) ^ 2}{V_i} }
     """
     def __init__(self, V):
@@ -543,6 +547,7 @@ cdef class SEuclideanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 cdef class ManhattanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     r"""Manhattan/City-block Distance metric
 
+    .. math::
        D(x, y) = \sum_i |x_i - y_i|
     """
     def __init__(self):
@@ -563,6 +568,7 @@ cdef class ManhattanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 cdef class ChebyshevDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     """Chebyshev/Infinity Distance
 
+    .. math::
        D(x, y) = max_i (|x_i - y_i|)
 
     Examples
@@ -594,12 +600,14 @@ cdef class ChebyshevDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 cdef class MinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     r"""Minkowski Distance
 
+    .. math::
         D(x, y) = {||u-v||}_p
 
     when w is None.
 
     Here is the more general expanded expression for the weighted case:
 
+    .. math::
         D(x, y) = [\sum_i w_i *|x_i - y_i|^p] ^ (1/p)
 
     Parameters
@@ -676,6 +684,7 @@ cdef class MinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 cdef class WMinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     r"""Weighted Minkowski Distance
 
+    .. math::
        D(x, y) = [\sum_i |w_i * (x_i - y_i)|^p] ^ (1/p)
 
     Weighted Minkowski Distance requires p >= 1 and finite.
@@ -718,7 +727,6 @@ cdef class WMinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
         cdef DTYPE_t d = 0
         cdef cnp.intp_t j
-
         for j in range(size):
             d += <DTYPE_t> (pow(self.vec[j] * fabs(x1[j] - x2[j]), self.p))
         return d
@@ -746,6 +754,7 @@ cdef class WMinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 cdef class MahalanobisDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     """Mahalanobis Distance
 
+    .. math::
        D(x, y) = \sqrt{ (x - y)^T V^{-1} (x - y) }
 
     Parameters
@@ -819,6 +828,7 @@ cdef class HammingDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     Hamming distance is meant for discrete-valued vectors, though it is
     a valid metric for real-valued vectors.
 
+    .. math::
        D(x, y) = \frac{1}{N} \sum_i \delta_{x_i, y_i}
     """
     cdef inline DTYPE_t dist(self, const {{DTYPE_t}}* x1, const {{DTYPE_t}}* x2,
@@ -840,6 +850,7 @@ cdef class CanberraDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     Canberra distance is meant for discrete-valued vectors, though it is
     a valid metric for real-valued vectors.
 
+    .. math::
        D(x, y) = \sum_i \frac{|x_i - y_i|}{|x_i| + |y_i|}
     """
     cdef inline DTYPE_t dist(self, const {{DTYPE_t}}* x1, const {{DTYPE_t}}* x2,
@@ -862,6 +873,7 @@ cdef class BrayCurtisDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     Bray-Curtis distance is meant for discrete-valued vectors, though it is
     a valid metric for real-valued vectors.
 
+    .. math::
        D(x, y) = \frac{\sum_i |x_i - y_i|}{\sum_i(|x_i| + |y_i|)}
     """
     cdef inline DTYPE_t dist(self, const {{DTYPE_t}}* x1, const {{DTYPE_t}}* x2,
@@ -940,6 +952,7 @@ cdef class DiceDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     be treated as False.
 
         D(x, y) = (N_TF + N_FT) / (2 * N_TT + N_TF + N_FT)
+
     """
     cdef inline DTYPE_t dist(self, const {{DTYPE_t}}* x1, const {{DTYPE_t}}* x2,
                              ITYPE_t size) nogil except -1:
@@ -964,6 +977,7 @@ cdef class KulsinskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     be treated as False.
 
         D(x, y) = 1 - N_TT / (N + N_TF + N_FT)
+
     """
     cdef inline DTYPE_t dist(self, const {{DTYPE_t}}* x1, const {{DTYPE_t}}* x2,
                              ITYPE_t size) nogil except -1:
@@ -1082,7 +1096,8 @@ cdef class HaversineDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     to be the latitude, the second is the longitude, given in radians.
     The dimension of the points must be 2:
 
-        D(x, y) = 2 arcsin[sqrt{sin^2((x1 - y1) / 2) + cos(x1)cos(y1)sin^2((x2 - y2) / 2)}]
+    D(x, y) = 2 arcsin[sqrt{sin^2((x1 - y1) / 2) + cos(x1)cos(y1)sin^2((x2 - y2) / 2)}]
+
     """
 
     def _validate_data(self, X):
@@ -1146,7 +1161,6 @@ cdef class PyFuncDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
         cdef cnp.ndarray x2arr
         x1arr = _buffer_to_ndarray{{name_suffix}}(x1, size)
         x2arr = _buffer_to_ndarray{{name_suffix}}(x2, size)
-
         d = self.func(x1arr, x2arr, **self.kwargs)
         try:
             # Cython generates code here that results in a TypeError
