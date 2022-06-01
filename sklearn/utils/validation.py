@@ -98,7 +98,6 @@ def _assert_all_finite(
 
     if _get_config()["assume_finite"]:
         return
-
     X = np.asanyarray(X)
     # First try an O(n) time, O(1) space solution for the common case that
     # everything is finite; fall back to O(n) space `np.isinf/isnan` or custom
