@@ -11,7 +11,6 @@
 # License: BSD 3 clause
 
 from math import log, sqrt
-
 from numbers import Integral, Real
 
 import numpy as np
