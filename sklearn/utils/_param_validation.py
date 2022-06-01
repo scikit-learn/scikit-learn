@@ -415,7 +415,7 @@ class _RandomStates(_Constraint):
         )
 
 
-def generate_invalid_param_val(constraint):
+def generate_invalid_param_val(constraint, constraints=None):
     """Return a value that does not satisfy the constraint.
 
     This is only useful for testing purpose.
@@ -425,6 +425,10 @@ def generate_invalid_param_val(constraint):
     constraint : Constraint
         The constraint to generate a value for.
 
+    constraints : list of Constraint or None, default=None
+        The list of all constraints for this parameter. If None, the list containt only
+        the constraint is used.
+
     Returns
     -------
     val : object
@@ -432,14 +436,106 @@ def generate_invalid_param_val(constraint):
     """
     if isinstance(constraint, StrOptions):
         return f"not {' or '.join(constraint.options)}"
-    elif isinstance(constraint, Interval):
-        interval = constraint
-        if interval.left is None and interval.right is None:
-            raise NotImplementedError
 
-        if interval.left is not None:
-            return interval.left - 1
-        else:
-            return interval.right + 1
-    else:
+    if not isinstance(constraint, Interval):
         raise NotImplementedError
+
+    # constraint is an interval
+    constraints = [constraint] if constraints is None else constraints
+    return _generate_invalid_param_val_interval(constraint, constraints)
+
+
+def _generate_invalid_param_val_interval(interval, constraints):
+    """Return a value that does not satisfy an interval constraint.
+
+    Generating a invalid value for an integer interval depends on the other constraints
+    since an int is a real, meaning that it can be valid for a real interval.
+    Assumes that there can be at most 2 interval constraints: one integer interval
+    and/or one real interval.
+
+    This is only useful for testing purpose.
+
+    Parameters
+    ----------
+    interval : Interval
+        The interval to generate a value for.
+
+    constraints : list of Constraint
+        The list of all constraints for this parameter.
+
+    Returns
+    -------
+    val : object
+        A value that does not satisfy the interval constraint.
+    """
+    if interval.left is None and interval.right is None:
+        raise NotImplementedError
+
+    if interval.type is Real:
+        # generate a non-integer value such that it can't be valid even if there's also
+        # an integer interval constraint.
+        if interval.left is not None:
+            return np.floor(interval.left) - 0.5
+        else:  # right is not None
+            return np.ceil(interval.right) + 0.5
+
+    else:  # interval.type is Integral
+        # We need to check if there's also a real interval constraint to generate a
+        # value that is not valid for any of the 2 interval constraints.
+        real_intervals = [
+            i for i in constraints if isinstance(i, Interval) and i.type is Real
+        ]
+        real_interval = real_intervals[0] if real_intervals else None
+
+        if real_interval is None:
+            # Only the integer interval constraint -> easy
+            if interval.left is not None:
+                return interval.left - 1
+            else:
+                return interval.right + 1
+
+        # There's also a real interval constraint. Try to find a value left to both or
+        # right to both or in between them.
+
+        # redefine left and right bounds to be smallest and largest valid integers in
+        # both intervals.
+        int_left = interval.left
+        if int_left is not None and interval.closed in ("right", "neither"):
+            int_left = int_left + 1
+
+        int_right = interval.right
+        if int_right is not None and interval.closed in ("left", "neither"):
+            int_right = int_right - 1
+
+        real_left = real_interval.left
+        if real_interval.left is not None:
+            real_left = int(np.ceil(real_interval.left))
+            if real_interval.closed in ("right", "neither"):
+                real_left = real_left + 1
+
+        real_right = real_interval.right
+        if real_interval.right is not None:
+            real_right = int(np.floor(real_interval.right))
+            if real_interval.closed in ("left", "neither"):
+                real_right = real_right - 1
+
+        if int_left is not None and real_left is not None:
+            # there exists an int left to both intervals
+            return min(int_left, real_left) - 1
+
+        if int_right is not None and real_right is not None:
+            # there exists an int right to both intervals
+            return max(int_right, real_right) + 1
+
+        if int_left is not None:
+            if real_right is not None and int_left - real_right >= 2:
+                # there exists an int between the 2 intervals
+                return int_left - 1
+            else:
+                raise NotImplementedError
+        else:  # int_right is not None
+            if real_left is not None and real_left - int_right >= 2:
+                # there exists an int between the 2 intervals
+                return int_right + 1
+            else:
+                raise NotImplementedError
