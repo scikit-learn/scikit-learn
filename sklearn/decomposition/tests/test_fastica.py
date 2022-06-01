@@ -465,7 +465,7 @@ def test_fastica_output_shape(whiten, return_X_mean, return_n_iter):
 
 @pytest.mark.parametrize("add_noise", [True, False])
 def test_fastica_simple_different_solvers(add_noise, global_random_seed):
-    """Test FastICA is consistent between svd_solvers."""
+    """Test FastICA is consistent between whiten_solvers."""
     rng = np.random.RandomState(global_random_seed)
     n_samples = 1000
     # Generate two sources:

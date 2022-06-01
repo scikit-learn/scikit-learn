@@ -19,19 +19,17 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
-<<<<<<< HEAD
 :mod:`sklearn.decomposition`
 ............................
 
 - |Fix| :class:`decomposition.FastICA` now employs sign-flipping to produce
   consistent results between varying solvers. This may change the output of
   the model up to sign-flipping, but does not affect the overall correctness.
-=======
+
 - |Fix| :class:`manifold.TSNE` now throws a `ValueError` when fit with
   `perplexity>=n_samples` to ensure mathematical correctness of the algorithm.
   :pr:`10805` by :user:`Mathias Andersen <MrMathias>` and
   :pr:`23471` by :user:`Meekail Zain <micky774>`
->>>>>>> main
 
 Changes impacting all modules
 -----------------------------
