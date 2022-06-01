@@ -278,6 +278,10 @@ class SimpleImputer(_BaseImputer):
         else:
             dtype = FLOAT_DTYPES
 
+        if not in_fit and self._fit_dtype.kind == "O":
+            # Use object dtype if fitted on object dtypes
+            dtype = self._fit_dtype
+
         if _is_pandas_na(self.missing_values) or is_scalar_nan(self.missing_values):
             force_all_finite = "allow-nan"
         else:
@@ -302,6 +306,10 @@ class SimpleImputer(_BaseImputer):
                 raise new_ve from None
             else:
                 raise ve
+
+        if in_fit:
+            # Use the dtype seen in `fit` for non-`fit` conversion
+            self._fit_dtype = X.dtype
 
         _check_inputs_dtype(X, self.missing_values)
         if X.dtype.kind not in ("i", "u", "f", "O"):

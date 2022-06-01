@@ -19,6 +19,11 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
+- |Fix| :class:`manifold.TSNE` now throws a `ValueError` when fit with
+  `perplexity>=n_samples` to ensure mathematical correctness of the algorithm.
+  :pr:`10805` by :user:`Mathias Andersen <MrMathias>` and
+  :pr:`23471` by :user:`Meekail Zain <micky774>`
+
 Changes impacting all modules
 -----------------------------
 
@@ -87,6 +92,12 @@ Changelog
 - |Efficiency| Improve runtime performance of :class:`ensemble.IsolationForest`
   by avoiding data copies. :pr:`23252` by :user:`Zhehao Liu <MaxwellLZH>`.
 
+:mod:`sklearn.impute`
+.....................
+
+- |Fix| :class:`impute.SimpleImputer` uses the dtype seen in `fit` for
+  `transform` when the dtype is object. :pr:`22063` by `Thomas Fan`_.
+
 :mod:`sklearn.metrics`
 ......................
 
@@ -144,6 +155,11 @@ Changelog
   :pr:`13042` by :user:`Matthieu Parizy <matthieu-pa>`,
   :pr:`18094` by :user:`Roth E Conrad <rotheconrad>` and
   :pr:`22562` by :user:`Meekail Zain <micky774>`.
+
+- |Fix| :class:`manifold.TSNE` now throws a `ValueError` when fit with
+  `perplexity>=n_samples` to ensure mathematical correctness of the algorithm.
+  :pr:`10805` by :user:`Mathias Andersen <MrMathias>` and
+  :pr:`23471` by :user:`Meekail Zain <micky774>`
 
 Code and Documentation Contributors
 -----------------------------------
