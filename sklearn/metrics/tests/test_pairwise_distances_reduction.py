@@ -186,6 +186,7 @@ def test_assert_argkmin_results_quasi_equality():
 
     dist = ref_dist
 
+    # Apply valid permutation on indices
     indices = np.array(
         [
             [1, 2, 4, 5, 3],
@@ -197,6 +198,19 @@ def test_assert_argkmin_results_quasi_equality():
         ref_dist, dist, ref_indices, indices, rtol, decimals
     )
 
+    # Apply invalid permutation on indices
+    indices = np.array(
+        [
+            [2, 1, 3, 4, 5],
+            [6, 7, 8, 9, 10],
+        ]
+    )
+
+    msg = "Extra items in the left set"
+    with pytest.raises(AssertionError, match=msg):
+        assert_argkmin_results_quasi_equality(
+            ref_dist, dist, ref_indices, indices, rtol, decimals
+        )
 
 def test_pairwise_distances_reduction_is_usable_for():
     rng = np.random.RandomState(0)
