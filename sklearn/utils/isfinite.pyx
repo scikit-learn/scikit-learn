@@ -8,6 +8,11 @@ import numpy as np
 cnp.import_array()
 
 
+cpdef enum FiniteStatus:
+    all_finite = 0
+    has_nan = 1
+    has_infinite = 2
+
 cdef fused fprecision:
     cnp.npy_float32
     cnp.npy_float64
@@ -15,8 +20,7 @@ cdef fused fprecision:
 def cy_isfinite(fprecision[::1] a, bint allow_nan=False):
     cdef int result
     with nogil:
-            result = _isfinite(a, allow_nan)
-
+        result = _isfinite(a, allow_nan)
     return result
 
 cdef inline int _isfinite(fprecision[::1] a, bint allow_nan) nogil:
@@ -24,11 +28,6 @@ cdef inline int _isfinite(fprecision[::1] a, bint allow_nan) nogil:
         return _isfinite_allow_nan(a)
     else:
         return _isfinite_disable_nan(a)
-
-cpdef enum FiniteStatus:
-    all_finite = 0
-    has_nan = 1
-    has_infinite = 2
 
 cdef int _isfinite_allow_nan(fprecision[::1] a) nogil:
     for i in range(len(a)):
