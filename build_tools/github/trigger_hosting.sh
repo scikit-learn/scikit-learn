@@ -10,7 +10,7 @@ then
      PULL_REQUEST_NUMBER=$(curl \
           -H "Accept: application/vnd.github.v3+json" \
           -H "Authorization: token $GITHUB_TOKEN" \
-          https://api.github.com/repos/$REPO_NAME/commits//pulls 2>/dev/null \
+          https://api.github.com/repos/$REPO_NAME/commits/$COMMIT_SHA/pulls 2>/dev/null \
           | jq '.[0].number')
      BRANCH=pull/$PULL_REQUEST_NUMBER/head
 else
