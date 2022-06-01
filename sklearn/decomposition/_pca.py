@@ -376,11 +376,7 @@ class PCA(_BasePCA):
             Interval(Integral, 0, None, closed="left"),
         ],
         "n_oversamples": [Interval(Integral, 1, None, closed="left")],
-        "power_iteration_normalizer": [
-            StrOptions(
-                {"auto", "QR", "LU", "none"},
-            )
-        ],
+        "power_iteration_normalizer": [StrOptions({"auto", "QR", "LU", "none"})],
         "random_state": ["random_state"],
     }
 
