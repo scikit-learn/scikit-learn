@@ -10,7 +10,7 @@ from github import Github
 parser = argparse.ArgumentParser()
 parser.add_argument("token", help="GitHub API token")
 parser.add_argument("repo", help="Repo to query")
-parser.add_argument("run_id", help="Workflow run ID")
+parser.add_argument("run_id", help="Workflow run ID", type=int)
 args = parser.parse_args()
 
 gh = Github(args.token)
