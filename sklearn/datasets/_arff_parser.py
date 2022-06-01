@@ -372,6 +372,7 @@ def _pandas_arff_parser(
         names=[name for name in openml_columns_info],
         dtype=dtypes,
     )
+
     columns_to_select = feature_names_to_select + target_names_to_select
     columns_to_keep = [col for col in frame.columns if col in columns_to_select]
     frame = frame[columns_to_keep]
