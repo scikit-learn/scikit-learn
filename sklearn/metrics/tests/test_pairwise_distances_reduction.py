@@ -97,7 +97,7 @@ def assert_argkmin_results_quasi_equality(
 
     To be used for 32bits datasets tests.
     """
-    is_sorted = lambda a: np.all(a[:-1] - a[1:])
+    is_sorted = lambda a: np.all(a[:-1] - a[1:] <= 0)
 
     assert (
         ref_dist.shape == dist.shape == ref_indices.shape == indices.shape
@@ -165,7 +165,7 @@ def assert_radius_neighborhood_results_quasi_equality(
 
     Input arrays must be sorted w.r.t distances.
     """
-    is_sorted = lambda a: np.all(a[:-1] - a[1:])
+    is_sorted = lambda a: np.all(a[:-1] - a[1:] <= 0)
 
     assert (
         len(ref_dist) == len(dist) == len(ref_indices) == len(indices)
