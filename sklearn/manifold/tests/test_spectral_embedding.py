@@ -1,3 +1,4 @@
+from unittest.mock import Mock
 import pytest
 
 import numpy as np
@@ -5,19 +6,21 @@ import numpy as np
 from scipy import sparse
 from scipy.sparse import csgraph
 from scipy.linalg import eigh
+from scipy.sparse.linalg import eigsh
 
-from sklearn.manifold import SpectralEmbedding
+from sklearn.manifold import SpectralEmbedding, _spectral_embedding
 from sklearn.manifold._spectral_embedding import _graph_is_connected
 from sklearn.manifold._spectral_embedding import _graph_connected_component
 from sklearn.manifold import spectral_embedding
 from sklearn.metrics.pairwise import rbf_kernel
-from sklearn.metrics import normalized_mutual_info_score
+from sklearn.metrics import normalized_mutual_info_score, pairwise_distances
 from sklearn.neighbors import NearestNeighbors
 from sklearn.cluster import KMeans
 from sklearn.datasets import make_blobs
 from sklearn.utils.extmath import _deterministic_vector_sign_flip
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
+from sklearn.utils.fixes import lobpcg
 
 try:
     from pyamg import smoothed_aggregation_solver  # noqa
@@ -480,3 +483,28 @@ def test_error_pyamg_not_available():
     err_msg = "The eigen_solver was set to 'amg', but pyamg is not available."
     with pytest.raises(ValueError, match=err_msg):
         se_precomp.fit_transform(S)
+
+
+@pytest.mark.parametrize("solver", ["arpack", "amg", "lobpcg"])
+def test_spectral_eigen_tol_auto(monkeypatch, solver):
+    """Test that `eigen_tol="auto"` is resolved correctly"""
+    if solver == "amg" and not pyamg_available:
+        pytest.skip("PyAMG is not available.")
+    X, _ = make_blobs(
+        n_samples=200, random_state=0, centers=[[1, 1], [-1, -1]], cluster_std=0.01
+    )
+    D = pairwise_distances(X)  # Distance matrix
+    S = np.max(D) - D  # Similarity matrix
+
+    solver_func = eigsh if solver == "arpack" else lobpcg
+    default_value = 0 if solver == "arpack" else None
+    if solver == "amg":
+        S = sparse.csr_matrix(S)
+
+    mocked_solver = Mock(side_effect=solver_func)
+
+    monkeypatch.setattr(_spectral_embedding, solver_func.__qualname__, mocked_solver)
+
+    spectral_embedding(S, random_state=42, eigen_solver=solver, eigen_tol="auto")
+    mocked_solver.assert_called()
+    assert mocked_solver.call_args.kwargs["tol"] == default_value
