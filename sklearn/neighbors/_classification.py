@@ -17,7 +17,7 @@ import warnings
 from ._base import _check_weights, _get_weights
 from ._base import NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin
 from ..base import ClassifierMixin
-
+from ..utils._param_validation import Interval, Integral, StrOptions
 
 class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
     """Classifier implementing the k-nearest neighbors vote.
@@ -153,6 +153,16 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
     >>> print(neigh.predict_proba([[0.9]]))
     [[0.666... 0.333...]]
     """
+    _parameter_constraints = {
+        "n_neighbors": [Interval(Integral, 1, None, closed="left")],
+        "weights": [StrOptions({"uniform", "distance"}), callable],
+        "algorithm": [StrOptions({"auto", "ball_tree", "kd_tree", "brute"}), callable],
+        "leaf_size": [Interval(Integral, 1, None, closed="left")],
+        "p": [Interval(Integral, 1, None, closed="left")],
+        "metric": [StrOptions({"minkowski"}), callable],
+        "metric_params": [dict, None],
+        "n_jobs": [Interval(Integral, -1, None, closed="left"), None],
+    }
 
     def __init__(
         self,
@@ -195,7 +205,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         self : KNeighborsClassifier
             The fitted k-nearest neighbors classifier.
         """
-        self.weights = _check_weights(self.weights)
+        self._validate_params()
 
         return self._fit(X, y)
 
