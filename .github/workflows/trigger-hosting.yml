@@ -15,6 +15,7 @@ jobs:
     steps:
       - name: Checkout scikit-learn
         uses: actions/checkout@v2
+
       - name: Trigger hosting jobs
         run: bash build_tools/github/trigger_hosting.sh
         env:
