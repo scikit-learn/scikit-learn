@@ -3,26 +3,26 @@
 implementation_specific_values = [
     # Values are the following ones:
     #
-    #       name_suffix, bitness, DTYPE_t, DTYPE
+    #       name_suffix, DTYPE_t, DTYPE
     #
     #
-    # On the first hand, an empty string is use for `name_suffix`
+    # On the first hand, an empty string is used for `name_suffix`
     # for the 64bit case as to still be able to expose the original
     # 64bit implementation under the same API, namely `DistanceMetric`.
     #
-    # On the other hand, '32' bit is use for `name_suffix`
-    # for the 32bit case to remove ambiguity and use `DistanceMetric32`,
-    # which is not publicly exposed.
+    # On the other hand, '32' bit is used for `name_suffix` for the float32
+    # case to remove ambiguity and use `DistanceMetric32`, which is not
+    # publicly exposed.
     #
     # The metric mapping is adapted accordingly to route to the correct
     # implementations.
     #
     # We also use 64bit types as defined in `sklearn.utils._typedefs`
-    # to maintain backward compatibility as the symbol level for extra
+    # to maintain backward compatibility at the symbol level for extra
     # safety.
     #
-    ('', '64', 'DTYPE_t', 'DTYPE'),
-    ('32', '32', 'cnp.float32_t', 'np.float32')
+    ('', 'DTYPE_t', 'DTYPE'),
+    ('32', 'cnp.float32_t', 'np.float32')
 ]
 
 }}
@@ -85,7 +85,7 @@ def get_valid_metric_ids(L):
             if (val.__name__ in L) or (val in L)]
 
 
-{{for name_suffix, bitness, DTYPE_t, DTYPE in implementation_specific_values}}
+{{for name_suffix, DTYPE_t, DTYPE in implementation_specific_values}}
 
 ######################################################################
 # metric mappings
@@ -468,7 +468,6 @@ cdef class DistanceMetric{{name_suffix}}:
 cdef class EuclideanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     r"""Euclidean Distance metric
 
-    .. math::
        D(x, y) = \sqrt{ \sum_i (x_i - y_i) ^ 2 }
     """
     def __init__(self):
@@ -501,7 +500,6 @@ cdef class EuclideanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 cdef class SEuclideanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     r"""Standardized Euclidean Distance metric
 
-    .. math::
        D(x, y) = \sqrt{ \sum_i \frac{ (x_i - y_i) ^ 2}{V_i} }
     """
     def __init__(self, V):
@@ -545,7 +543,6 @@ cdef class SEuclideanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 cdef class ManhattanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     r"""Manhattan/City-block Distance metric
 
-    .. math::
        D(x, y) = \sum_i |x_i - y_i|
     """
     def __init__(self):
@@ -566,7 +563,6 @@ cdef class ManhattanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 cdef class ChebyshevDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     """Chebyshev/Infinity Distance
 
-    .. math::
        D(x, y) = max_i (|x_i - y_i|)
 
     Examples
@@ -598,14 +594,12 @@ cdef class ChebyshevDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 cdef class MinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     r"""Minkowski Distance
 
-    .. math::
         D(x, y) = {||u-v||}_p
 
     when w is None.
 
     Here is the more general expanded expression for the weighted case:
 
-    .. math::
         D(x, y) = [\sum_i w_i *|x_i - y_i|^p] ^ (1/p)
 
     Parameters
@@ -682,7 +676,6 @@ cdef class MinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 cdef class WMinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     r"""Weighted Minkowski Distance
 
-    .. math::
        D(x, y) = [\sum_i |w_i * (x_i - y_i)|^p] ^ (1/p)
 
     Weighted Minkowski Distance requires p >= 1 and finite.
@@ -722,6 +715,7 @@ cdef class WMinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
     cdef inline DTYPE_t rdist(self, const {{DTYPE_t}}* x1, const {{DTYPE_t}}* x2,
                               ITYPE_t size) nogil except -1:
+
         cdef DTYPE_t d = 0
         cdef cnp.intp_t j
 
@@ -752,7 +746,6 @@ cdef class WMinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 cdef class MahalanobisDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     """Mahalanobis Distance
 
-    .. math::
        D(x, y) = \sqrt{ (x - y)^T V^{-1} (x - y) }
 
     Parameters
@@ -826,7 +819,6 @@ cdef class HammingDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     Hamming distance is meant for discrete-valued vectors, though it is
     a valid metric for real-valued vectors.
 
-    .. math::
        D(x, y) = \frac{1}{N} \sum_i \delta_{x_i, y_i}
     """
     cdef inline DTYPE_t dist(self, const {{DTYPE_t}}* x1, const {{DTYPE_t}}* x2,
@@ -848,7 +840,6 @@ cdef class CanberraDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     Canberra distance is meant for discrete-valued vectors, though it is
     a valid metric for real-valued vectors.
 
-    .. math::
        D(x, y) = \sum_i \frac{|x_i - y_i|}{|x_i| + |y_i|}
     """
     cdef inline DTYPE_t dist(self, const {{DTYPE_t}}* x1, const {{DTYPE_t}}* x2,
@@ -871,7 +862,6 @@ cdef class BrayCurtisDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     Bray-Curtis distance is meant for discrete-valued vectors, though it is
     a valid metric for real-valued vectors.
 
-    .. math::
        D(x, y) = \frac{\sum_i |x_i - y_i|}{\sum_i(|x_i| + |y_i|)}
     """
     cdef inline DTYPE_t dist(self, const {{DTYPE_t}}* x1, const {{DTYPE_t}}* x2,
@@ -897,6 +887,7 @@ cdef class JaccardDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     vectors. All nonzero entries will be treated as True, zero entries will
     be treated as False.
 
+        D(x, y) = (N_TF + N_FT) / (N_TT + N_TF + N_FT)
     """
     cdef inline DTYPE_t dist(self, const {{DTYPE_t}}* x1, const {{DTYPE_t}}* x2,
                              ITYPE_t size) nogil except -1:
@@ -925,6 +916,7 @@ cdef class MatchingDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     vectors. All nonzero entries will be treated as True, zero entries will
     be treated as False.
 
+        D(x, y) = (N_TF + N_FT) / N
     """
     cdef inline DTYPE_t dist(self, const {{DTYPE_t}}* x1, const {{DTYPE_t}}* x2,
                              ITYPE_t size) nogil except -1:
@@ -947,6 +939,7 @@ cdef class DiceDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     vectors. All nonzero entries will be treated as True, zero entries will
     be treated as False.
 
+        D(x, y) = (N_TF + N_FT) / (2 * N_TT + N_TF + N_FT)
     """
     cdef inline DTYPE_t dist(self, const {{DTYPE_t}}* x1, const {{DTYPE_t}}* x2,
                              ITYPE_t size) nogil except -1:
@@ -970,6 +963,7 @@ cdef class KulsinskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     vectors. All nonzero entries will be treated as True, zero entries will
     be treated as False.
 
+        D(x, y) = 1 - N_TT / (N + N_TF + N_FT)
     """
     cdef inline DTYPE_t dist(self, const {{DTYPE_t}}* x1, const {{DTYPE_t}}* x2,
                              ITYPE_t size) nogil except -1:
@@ -993,6 +987,7 @@ cdef class RogersTanimotoDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     vectors. All nonzero entries will be treated as True, zero entries will
     be treated as False.
 
+        D(x, y) = 2 (N_TF + N_FT) / (N + N_TF + N_FT)
     """
     cdef inline DTYPE_t dist(self, const {{DTYPE_t}}* x1, const {{DTYPE_t}}* x2,
                              ITYPE_t size) nogil except -1:
@@ -1015,6 +1010,7 @@ cdef class RussellRaoDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     vectors. All nonzero entries will be treated as True, zero entries will
     be treated as False.
 
+        D(x, y) = (N - N_TT) / N
     """
     cdef inline DTYPE_t dist(self, const {{DTYPE_t}}* x1, const {{DTYPE_t}}* x2,
                              ITYPE_t size) nogil except -1:
@@ -1037,6 +1033,7 @@ cdef class SokalMichenerDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     vectors. All nonzero entries will be treated as True, zero entries will
     be treated as False.
 
+        D(x, y) = 2 (N_TF + N_FT) / (N + N_TF + N_FT)
     """
     cdef inline DTYPE_t dist(self, const {{DTYPE_t}}* x1, const {{DTYPE_t}}* x2,
                              ITYPE_t size) nogil except -1:
@@ -1059,6 +1056,7 @@ cdef class SokalSneathDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     vectors. All nonzero entries will be treated as True, zero entries will
     be treated as False.
 
+        D(x, y) = (N_TF + N_FT) / (N_TT / 2 + N_FT + N_TF)
     """
     cdef inline DTYPE_t dist(self, const {{DTYPE_t}}* x1, const {{DTYPE_t}}* x2,
                              ITYPE_t size) nogil except -1:
@@ -1084,6 +1082,7 @@ cdef class HaversineDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     to be the latitude, the second is the longitude, given in radians.
     The dimension of the points must be 2:
 
+        D(x, y) = 2 arcsin[sqrt{sin^2((x1 - y1) / 2) + cos(x1)cos(y1)sin^2((x2 - y2) / 2)}]
     """
 
     def _validate_data(self, X):
@@ -1232,10 +1231,10 @@ cdef class DatasetsPair{{name_suffix}}:
                 **(metric_kwargs or {})
             )
 
-        if not(X.dtype == Y.dtype == np.float{{bitness}}):
+        if not(X.dtype == Y.dtype and X.dtype in DatasetsPair{{name_suffix}}.valid_dtypes()):
             raise ValueError(
-                f"Datasets must be of np.float{{bitness}} type. "
-                f"Currently: X.dtype={X.dtype} and Y.dtype={Y.dtype}."
+                f"Only np.float64 and np.float32 datasets are supported at this time, "
+                f"got: X.dtype={X.dtype} and Y.dtype={Y.dtype}."
             )
 
         # Metric-specific checks that do not replace nor duplicate `check_array`.
@@ -1250,6 +1249,10 @@ cdef class DatasetsPair{{name_suffix}}:
 
     def __init__(self, DistanceMetric{{name_suffix}} distance_metric):
         self.distance_metric = distance_metric
+
+    @classmethod
+    def valid_dtypes(cls):
+        return (np.float64, np.float32)
 
     cdef ITYPE_t n_samples_X(self) nogil:
         """Number of samples in X."""

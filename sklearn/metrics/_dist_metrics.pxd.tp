@@ -3,15 +3,15 @@
 implementation_specific_values = [
     # Values are the following ones:
     #
-    #       name_suffix, bitness, DTYPE_t, DTYPE
+    #       name_suffix, DTYPE_t, DTYPE
     #
-    # On the first hand, an empty string is use for `name_suffix`
-    # for the 64bit case as to still be able to expose the original
-    # 64bit implementation under the same API, namely `DistanceMetric`.
+    # On the first hand, an empty string is used for `name_suffix`
+    # for the float64 case as to still be able to expose the original
+    # float64 implementation under the same API, namely `DistanceMetric`.
     #
-    # On the other hand, '32' bit is use for `name_suffix`
-    # for the 32bit case to remove ambiguity and use `DistanceMetric32`,
-    # which is not publicly exposed.
+    # On the other hand, '32' bit is used for `name_suffix` for the float32
+    # case to remove ambiguity and use `DistanceMetric32`, which is not
+    # publicly exposed.
     #
     # The metric mapping is adapted accordingly to route to the correct
     # implementations.
@@ -20,8 +20,8 @@ implementation_specific_values = [
     # to maintain backward compatibility at the symbol level for extra
     # safety.
     #
-    ('', '64', 'DTYPE_t', 'DTYPE'),
-    ('32', '32', 'cnp.float32_t', 'np.float32')
+    ('', 'DTYPE_t', 'DTYPE'),
+    ('32', 'cnp.float32_t', 'np.float32')
 ]
 
 }}
@@ -30,15 +30,18 @@ from libc.math cimport sqrt, exp
 
 from ..utils._typedefs cimport DTYPE_t, ITYPE_t
 
-{{for name_suffix, bitness, DTYPE_t, DTYPE in implementation_specific_values}}
+{{for name_suffix, DTYPE_t, DTYPE in implementation_specific_values}}
 
 ######################################################################
 # Inline distance functions
 #
 #  We use these for the default (euclidean) case so that they can be
 #  inlined.  This leads to faster computation for the most common case
-cdef inline DTYPE_t euclidean_dist{{name_suffix}}(const {{DTYPE_t}}* x1, const {{DTYPE_t}}* x2,
-                                   ITYPE_t size) nogil except -1:
+cdef inline DTYPE_t euclidean_dist{{name_suffix}}(
+    const {{DTYPE_t}}* x1,
+    const {{DTYPE_t}}* x2,
+    ITYPE_t size,
+) nogil except -1:
     cdef DTYPE_t tmp, d=0
     cdef cnp.intp_t j
     for j in range(size):
@@ -47,12 +50,15 @@ cdef inline DTYPE_t euclidean_dist{{name_suffix}}(const {{DTYPE_t}}* x1, const {
     return sqrt(d)
 
 
-cdef inline DTYPE_t euclidean_rdist{{name_suffix}}(const {{DTYPE_t}}* x1, const {{DTYPE_t}}* x2,
-                                    ITYPE_t size) nogil except -1:
+cdef inline DTYPE_t euclidean_rdist{{name_suffix}}(
+    const {{DTYPE_t}}* x1,
+    const {{DTYPE_t}}* x2,
+    ITYPE_t size,
+) nogil except -1:
     cdef DTYPE_t tmp, d=0
     cdef cnp.intp_t j
     for j in range(size):
-        tmp = x1[j] - x2[j]
+        tmp = <DTYPE_t>(x1[j] - x2[j])
         d += tmp * tmp
     return d
 
