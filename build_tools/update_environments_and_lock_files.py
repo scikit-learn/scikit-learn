@@ -210,7 +210,7 @@ conda_build_metadata_list = [
     },
     {
         "build_name": "doc_min_dependencies",
-        "folder": "build_tools/circle",
+        "folder": "build_tools/github",
         "platform": "linux-64",
         "channel": "conda-forge",
         "conda_dependencies": common_dependencies_without_coverage
@@ -242,7 +242,7 @@ conda_build_metadata_list = [
     },
     {
         "build_name": "doc",
-        "folder": "build_tools/circle",
+        "folder": "build_tools/github",
         "platform": "linux-64",
         "channel": "conda-forge",
         "conda_dependencies": common_dependencies_without_coverage
