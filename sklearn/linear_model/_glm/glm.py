@@ -649,6 +649,7 @@ class LSMRNewtonSolver(NewtonSolver):
         # self.A_norm = np.sqrt(A_norm)
         # As this all is a bit costly, we make life easier and start with 1:
         self.A_norm = 1
+        self.r_norm = 1
 
         self.X = X  # needed for inner_solve
 
@@ -683,7 +684,8 @@ class LSMRNewtonSolver(NewtonSolver):
         """Compute Newton step.
 
         Sets self.coef_newton via LSMR.
-        Also sets self.A_norm for better control over tolerance in LSMR.
+        Also sets self.A_norm and self.r_norm for better control over tolerance in
+        LSMR.
         """
         n_samples, n_features = self.X.shape
         sqrt_h = np.sqrt(self.h)
@@ -726,27 +728,31 @@ class LSMRNewtonSolver(NewtonSolver):
         # time. For n_samples > n_features, we most certainly have a least squares
         # problem (no solution to the linear equation A x = b), such that the following
         # stopping criterion with residual r = b - A x applies:
-        # ||A' r|| <= atol * ||A|| * ||r||. As we get the Frobenius norm of A, ||A||,
-        # for free by LSMR, we use it to set a tighter atol by deviding by ||A|| which
-        # very likely is larger than 1. The effective stopping criterion becomes
-        # approximately ||A' r|| <= self.tol * ||r|| with x = coef_newton and
-        # 1/2 * ||r||^2 = 1/2 * x X' diag(h) X x + g X x
-        #               + 1/2 * l2_reg_strength * (x+x0) P (x+x0)
-        #               + 1/2 *||g/sqrt(h)||^2
+        #   ||A' r|| <= atol * ||A|| * ||r||.
+        # As we get the Frobenius norm of A and the norm of r, ||A|| and ||r||
+        # respectively, for free by LSMR, we use it to set a tighter atol by dividing
+        # by ||A|| * min(1, ||r||) which is very likely larger than 1. The effective
+        # stopping criterion becomes approximately
+        #   ||A' r|| <= self.tol * ||r||   with   x = coef_newton   and
+        #   1/2 * ||r||^2 = 1/2 * x X' diag(h) X x + g X x
+        #                 + 1/2 * l2_reg_strength * (x+x0) P (x+x0)
+        #                 + 1/2 *||g/sqrt(h)||^2
         # Note that coef=x+x0 is just the solution after an iteration. In particular
-        # note that this is just the Taylor series of the objective with obj(x=0)
-        # replaced by ||g/sqrt(h)||^2.
+        # note that this is just the Taylor series of the objective with the zero
+        # order term obj(x=0) replaced by 1/2 * ||g/sqrt(h)||^2.
         result = scipy.sparse.linalg.lsmr(
             A,
             b,
             damp=0,
-            atol=self.tol / self.A_norm,
+            atol=self.tol / (self.A_norm * max(1, self.r_norm)),
             btol=self.tol,
             show=self.verbose >= 3,
         )
         self.coef_newton = result[0]
-        # Estimated Frobenius norm of A for tolerance of next iteration.
+        # Estimated Frobenius norm of A and norm of residual r for tolerance of
+        # next iteration.
         self.A_norm = result[5]
+        self.r_norm = result[3]
 
     def compute_d2(self):
         """Compute square of Newton decrement."""
