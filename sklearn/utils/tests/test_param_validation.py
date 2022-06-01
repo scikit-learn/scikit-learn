@@ -116,12 +116,13 @@ def test_interval_errors(params, error, match):
 
 def test_stroptions():
     """Sanity check for the StrOptions constraint"""
-    options = StrOptions({"a", "b", "c"}, deprecated={"c"})
+    options = StrOptions({"a", "b", "c"}, deprecated={"c"}, internal={"b"})
     assert options.is_satisfied_by("a")
     assert options.is_satisfied_by("c")
     assert not options.is_satisfied_by("d")
 
     assert "'c' (deprecated)" in str(options)
+    assert "'b'" not in str(options)
 
 
 @pytest.mark.parametrize(
@@ -215,6 +216,7 @@ def test_make_constraint(constraint_declaration, expected_constraint_class):
 
 
 def test_make_constraint_unknown():
+    """Check that an informative error is raised when an unknown constraint is passed"""
     with pytest.raises(ValueError, match="Unknown constraint"):
         make_constraint("not a valid constraint")
 
@@ -242,8 +244,10 @@ def test_validate_params():
 
 
 def test_validate_params_match_error():
-    # Check that an informative error is raised when the constraints do not match the
-    # function parameters.
+    """Check that an informative error is raised when the constraints do not match the
+    function parameters.
+    """
+
     @validate_params({"a": [int], "c": [int]})
     def func(a, b):
         pass
@@ -254,8 +258,7 @@ def test_validate_params_match_error():
 
 
 def test_decorate_validated_function():
-    # Check that validate_params functions can be decorated
-
+    """Check that validate_params functions can be decorated"""
     decorated_function = deprecated()(_func)
 
     with pytest.warns(FutureWarning, match="Function _func is deprecated"):
@@ -287,3 +290,53 @@ def test_validate_params_estimator():
 
     with pytest.raises(ValueError, match="The 'a' parameter of _Estimator must be"):
         est.fit()
+
+
+def test_internal_values_not_exposed():
+    """Check that valid values that are for internal purpose, e.g. "warn" or
+    "deprecated" are not exposed in the error message
+    """
+
+    @validate_params({"param": [StrOptions({"auto", "warn"}, internal={"warn"})]})
+    def f(param):
+        pass
+
+    with pytest.raises(ValueError, match="The 'param' parameter") as exc_info:
+        f(param="bad")
+
+    err_msg = str(exc_info.value)
+    assert "a str among" in err_msg
+    assert "auto" in err_msg
+    assert "warn" not in err_msg
+
+    # no error
+    f(param="warn")
+
+    @validate_params({"param": [int, StrOptions({"warn"}, internal={"warn"})]})
+    def g(param):
+        pass
+
+    with pytest.raises(ValueError, match="The 'param' parameter") as exc_info:
+        g(param="bad")
+
+    err_msg = str(exc_info.value)
+    assert "a str among" not in err_msg
+    assert "warn" not in err_msg
+
+    # no error
+    g(param="warn")
+
+
+def test_stroptions_deprecated_internal_overlap():
+    """Check that the internal and deprecated parameters are not allowed to overlap."""
+    with pytest.raises(ValueError, match="should not overlap"):
+        StrOptions({"a", "b", "c"}, deprecated={"b", "c"}, internal={"a", "b"})
+
+
+def test_stroptions_deprecated_internal_subset():
+    """Check that the deprecated and internal parameters must be subsets of options."""
+    with pytest.raises(ValueError, match="deprecated options must be a subset"):
+        StrOptions({"a", "b", "c"}, deprecated={"a", "d"})
+
+    with pytest.raises(ValueError, match="internal options must be a subset"):
+        StrOptions({"a", "b", "c"}, internal={"a", "d"})
