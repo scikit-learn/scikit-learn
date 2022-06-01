@@ -1,11 +1,16 @@
+"""Gets the Pull Request Number from a workflow's run ID.
+
+This script depends on
+- `PyGithub` for interacting with GitHub
+"""
 import argparse
 
 from github import Github
 
 parser = argparse.ArgumentParser()
-parser.add_argument("token")
-parser.add_argument("repo")
-parser.add_argument("run_id")
+parser.add_argument("token", help="GitHub API token")
+parser.add_argument("repo", help="Repo to query")
+parser.add_argument("run_id", help="Workflow run ID")
 args = parser.parse_args()
 
 gh = Github(args.token)
