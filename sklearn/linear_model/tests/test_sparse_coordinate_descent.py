@@ -388,7 +388,5 @@ def test_read_only_buffer():
         setattr(obj, attr, RO_attr)
 
     make_read_only(X, "data")
-    make_read_only(X, "indices")
-    make_read_only(X, "indptr")
     y = np.random.rand(100)
     clf.fit(X, y)
