@@ -143,6 +143,61 @@ def assert_radius_neighborhood_results_equality(ref_dist, dist, ref_indices, ind
         )
 
 
+def assert_radius_neighborhood_results_quasi_equality(
+    ref_dist,
+    dist,
+    ref_indices,
+    indices,
+    rtol=1e-4,
+    decimals=5,
+):
+    """Assert that radius neighborhood results are valid up to:
+      - relative tolerance on distances
+      - permutations of indices for absolutely close distances
+      - missing last elements if the threshold
+
+    To be used for 32bits datasets tests.
+    """
+
+    assert (
+        len(ref_dist) == len(dist) == len(ref_indices) == len(indices)
+    ), "Arrays of results have various lengths."
+
+    n = len(ref_dist)
+
+    # Asserting equality of results one vector at a time
+    for i in range(n):
+
+        ref_dist_row = ref_dist[i]
+        dist_row = dist[i]
+
+        # Vectors' lengths might be different due to small
+        # numerical differences of distance w.r.t the `radius` threshold,
+        # so we group vectors to match the smallest.
+        m = min(len(ref_dist_row), len(dist_row))
+
+        ref_dist_row = ref_dist_row[:m]
+        dist_row = dist_row[:m]
+
+        assert_allclose(ref_dist_row, dist_row, rtol)
+
+        ref_indices_row = ref_indices[i]
+        indices_row = indices[i]
+
+        # Grouping indices by distances using sets
+        ref_mapping = defaultdict(set)
+        mapping = defaultdict(set)
+
+        for j in range(m):
+            rounded_dist = np.round(ref_dist_row[j], decimals=decimals)
+            ref_mapping[rounded_dist].add(ref_indices_row[j])
+            mapping[rounded_dist].add(indices_row[j])
+
+        # Asserting equality of groups (sets) for each distance
+        for j in ref_mapping.keys():
+            assert ref_mapping[j] == mapping[j]
+
+
 ASSERT_RESULT = {
     # In the case of 64bit, we test for exact equality.
     (PairwiseDistancesArgKmin, np.float64): assert_argkmin_results_equality,
@@ -157,7 +212,7 @@ ASSERT_RESULT = {
     (
         PairwiseDistancesRadiusNeighborhood,
         np.float32,
-    ): assert_radius_neighborhood_results_equality,
+    ): assert_radius_neighborhood_results_quasi_equality,
 }
 
 
@@ -211,6 +266,70 @@ def test_assert_argkmin_results_quasi_equality():
         assert_argkmin_results_quasi_equality(
             ref_dist, dist, ref_indices, indices, rtol, decimals
         )
+
+
+def test_assert_radius_neighborhood_results_quasi_equality():
+
+    rtol = 1e-7
+    atol = 1e-7
+    decimals = 6
+
+    ref_dist = np.array(
+        [
+            np.array([1.2, 2.5, 6.1 + atol, 6.1, 6.1 - atol]),
+            np.array([1.0 + atol, 1.0 - atol, 1, 1.0 + atol]),
+        ]
+    )
+    ref_indices = np.array(
+        [
+            [1, 2, 3, 4, 5],
+            [6, 7, 8, 9],
+        ]
+    )
+
+    assert_radius_neighborhood_results_quasi_equality(
+        ref_dist, ref_dist, ref_indices, ref_indices, rtol, decimals
+    )
+
+    dist = np.copy(ref_dist)
+
+    # Apply valid permutation on indices
+    indices = np.array(
+        [
+            [1, 2, 4, 5, 3],
+            [6, 9, 7, 8],
+        ]
+    )
+
+    assert_radius_neighborhood_results_quasi_equality(
+        ref_dist, dist, ref_indices, indices, rtol, decimals
+    )
+
+    # Apply invalid permutation on indices
+    indices = np.array(
+        [
+            [2, 1, 3, 4, 5],
+            [6, 7, 8, 9],
+        ]
+    )
+
+    msg = "Extra items in the left set"
+    with pytest.raises(AssertionError, match=msg):
+        assert_radius_neighborhood_results_quasi_equality(
+            ref_dist, dist, ref_indices, indices, rtol, decimals
+        )
+
+    # Having missing last element is valid
+    dist = np.copy(ref_dist)
+    indices = np.copy(ref_indices)
+
+    dist[0] = dist[0][:-1]
+    indices[0] = indices[0][:-1]
+
+    assert_radius_neighborhood_results_quasi_equality(
+        ref_dist, dist, ref_indices, indices, rtol, decimals
+    )
+
 
 def test_pairwise_distances_reduction_is_usable_for():
     rng = np.random.RandomState(0)
