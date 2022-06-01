@@ -231,8 +231,10 @@ THRESHOLDED_METRICS = {
     "weighted_ovo_roc_auc": partial(
         roc_auc_score, average="weighted", multi_class="ovo"
     ),
-    "partial_roc_auc": partial(roc_auc_score, max_fpr=0.5),
-    "average_precision_score": average_precision_score,  # default: average="macro"
+    "partial_roc_auc_max_fpr": partial(roc_auc_score, max_fpr=0.5),
+    "partial_roc_auc_min_tpr": partial(roc_auc_score, min_tpr=0.5),
+    "average_precision_score": average_precision_score,
+    # default: average="macro"
     "weighted_average_precision_score": partial(
         average_precision_score, average="weighted"
     ),
@@ -282,7 +284,8 @@ METRIC_UNDEFINED_MULTICLASS = {
     "brier_score_loss",
     "micro_roc_auc",
     "samples_roc_auc",
-    "partial_roc_auc",
+    "partial_roc_auc_max_fpr",
+    "partial_roc_auc_min_tpr",
     "roc_auc_score",
     "weighted_roc_auc",
     "average_precision_score",
@@ -321,7 +324,8 @@ METRICS_WITH_AVERAGING = {
 THRESHOLDED_METRICS_WITH_AVERAGING = {
     "roc_auc_score",
     "average_precision_score",
-    "partial_roc_auc",
+    "partial_roc_auc_max_fpr",
+    "partial_roc_auc_min_tpr",
 }
 
 # Metrics with a "pos_label" argument
@@ -395,7 +399,8 @@ THRESHOLDED_MULTILABEL_METRICS = {
     "weighted_roc_auc",
     "samples_roc_auc",
     "micro_roc_auc",
-    "partial_roc_auc",
+    "partial_roc_auc_max_fpr",
+    "partial_roc_auc_min_tpr",
     "average_precision_score",
     "weighted_average_precision_score",
     "samples_average_precision_score",

@@ -159,31 +159,48 @@ def _average_precision_slow(y_true, y_score):
     return average_precision
 
 
-def _partial_roc_auc_score(y_true, y_predict, max_fpr):
+def _partial_roc_auc_score(y_true, y_predict, max_fpr, min_tpr):
     """Alternative implementation to check for correctness of `roc_auc_score`
-    with `max_fpr` set.
+    with `max_fpr` set and `min_tpr` set.
     """
 
-    def _partial_roc(y_true, y_predict, max_fpr):
+    def _partial_roc(y_true, y_predict, max_fpr, min_tpr):
         fpr, tpr, _ = roc_curve(y_true, y_predict)
         new_fpr = fpr[fpr <= max_fpr]
         new_fpr = np.append(new_fpr, max_fpr)
         new_tpr = tpr[fpr <= max_fpr]
         idx_out = np.argmax(fpr > max_fpr)
         idx_in = idx_out - 1
-        x_interp = [fpr[idx_in], fpr[idx_out]]
-        y_interp = [tpr[idx_in], tpr[idx_out]]
-        new_tpr = np.append(new_tpr, np.interp(max_fpr, x_interp, y_interp))
-        return (new_fpr, new_tpr)
+        x_interp_tpr = [fpr[idx_in], fpr[idx_out]]
+        y_interp_tpr = [tpr[idx_in], tpr[idx_out]]
+        new_tpr = np.append(new_tpr, np.interp(max_fpr, x_interp_tpr, y_interp_tpr))
 
-    new_fpr, new_tpr = _partial_roc(y_true, y_predict, max_fpr)
+        further_cut_new_tpr = new_tpr[new_tpr >= min_tpr]
+        if len(further_cut_new_tpr) == 0:
+            return (new_fpr, further_cut_new_tpr)
+        further_cut_new_tpr = np.append(min_tpr, further_cut_new_tpr)
+        further_cut_new_fpr = new_fpr[new_tpr >= min_tpr]
+        idx_in = np.argmax(new_tpr >= min_tpr)
+        idx_out = idx_in - 1
+        x_interp_fpr = [new_tpr[idx_out], new_tpr[idx_in]]
+        y_interp_fpr = [new_fpr[idx_out], new_fpr[idx_in]]
+        further_cut_new_fpr = np.append(
+            np.interp(min_tpr, x_interp_fpr, y_interp_fpr), further_cut_new_fpr
+        )
+        return (further_cut_new_fpr, further_cut_new_tpr)
+
+    new_fpr, new_tpr = _partial_roc(y_true, y_predict, max_fpr, min_tpr)
+    if len(new_tpr) == 0:
+        return 0.0
+    new_tpr = [x - min_tpr for x in new_tpr]
     partial_auc = auc(new_fpr, new_tpr)
 
-    # Formula (5) from McClish 1989
-    fpr1 = 0
-    fpr2 = max_fpr
-    min_area = 0.5 * (fpr2 - fpr1) * (fpr2 + fpr1)
-    max_area = fpr2 - fpr1
+    # Conforms with the proposal from
+    # Analyzing a portion of the ROC curve.
+    # McClish 1989 (see the definitions above Formula 7)
+    max_area = (1 - min_tpr) * max_fpr
+    # if max_fpr <= min_tpr, the min_area is 0
+    min_area = 0.5 * (max_fpr - min_tpr) ** 2 if max_fpr > min_tpr else 0
     return 0.5 * (1 + (partial_auc - min_area) / (max_area - min_area))
 
 
@@ -1769,10 +1786,26 @@ def _test_ndcg_score_for(y_true, y_score):
 
 
 def test_partial_roc_auc_score():
-    # Check `roc_auc_score` for max_fpr != `None`
     y_true = np.array([0, 0, 1, 1])
+    # Manually define y_scores, to construct a ROC curve
+    # with a special shape for several tests
+    # fpr = array([0. , 0.5, 0.5, 1. ])
+    # tpr = array([0. , 0.5, 1. , 1. ])
+    y_scores = np.array([0.1, 0, 0.1, 0.01])
+
+    # 0. Check when inputs are None:
+    assert roc_auc_score(y_true, y_true, max_fpr=None, min_tpr=0) == 1
+    assert roc_auc_score(y_true, y_true, max_fpr=1, min_tpr=None) == 1
+    assert roc_auc_score(y_true, y_true, max_fpr=None, min_tpr=None) == 1
+
+    # 1. Check functionality of full AUC for the perfect prediction case:
+    assert roc_auc_score(y_true, y_true, max_fpr=1, min_tpr=0) == 1
     assert roc_auc_score(y_true, y_true, max_fpr=1) == 1
-    assert roc_auc_score(y_true, y_true, max_fpr=0.001) == 1
+    assert roc_auc_score(y_true, y_true, min_tpr=0) == 1
+    assert roc_auc_score(y_true, y_true, max_fpr=0.001, min_tpr=0) == 1
+    assert roc_auc_score(y_true, y_true, max_fpr=1, min_tpr=0.001) == 1
+
+    # 2. Check out of range cases:
     with pytest.raises(ValueError):
         assert roc_auc_score(y_true, y_true, max_fpr=-0.1)
     with pytest.raises(ValueError):
@@ -1780,18 +1813,56 @@ def test_partial_roc_auc_score():
     with pytest.raises(ValueError):
         assert roc_auc_score(y_true, y_true, max_fpr=0)
 
-    y_scores = np.array([0.1, 0, 0.1, 0.01])
+    with pytest.raises(ValueError):
+        assert roc_auc_score(y_true, y_true, min_tpr=-0.1)
+    with pytest.raises(ValueError):
+        assert roc_auc_score(y_true, y_true, min_tpr=1.1)
+    with pytest.raises(ValueError):
+        assert roc_auc_score(y_true, y_true, min_tpr=1)
+
+    # 3. Compare the roc_auc_score when
+    # there is no actual max_fpr or min_tpr constrains:
     roc_auc_with_max_fpr_one = roc_auc_score(y_true, y_scores, max_fpr=1)
+    roc_auc_with_min_tpr_zero = roc_auc_score(y_true, y_scores, min_tpr=0)
     unconstrained_roc_auc = roc_auc_score(y_true, y_scores)
     assert roc_auc_with_max_fpr_one == unconstrained_roc_auc
-    assert roc_auc_score(y_true, y_scores, max_fpr=0.3) == 0.5
+    assert roc_auc_with_min_tpr_zero == unconstrained_roc_auc
 
+    # 4. Compare roc_auc_score value with manual calculation results:
+    # case 1: max_fpr = 0.3
+    assert roc_auc_score(y_true, y_scores, max_fpr=0.3) == 0.5
+    # case 2: min_tpr = 0.5
+    assert_almost_equal(2 / 3, roc_auc_score(y_true, y_scores, min_tpr=0.5), decimal=3)
+    # case 3: max_fpr = 0.9, min_tpr = 0.6
+    assert_almost_equal(
+        0.6825, roc_auc_score(y_true, y_scores, max_fpr=0.9, min_tpr=0.6), decimal=3
+    )
+
+    # 5. Compare two implementations
     y_true, y_pred, _ = make_prediction(binary=True)
-    for max_fpr in np.linspace(1e-4, 1, 5):
-        assert_almost_equal(
-            roc_auc_score(y_true, y_pred, max_fpr=max_fpr),
-            _partial_roc_auc_score(y_true, y_pred, max_fpr),
-        )
+    for max_fpr in np.linspace(0.1, 1, 5):
+        for min_tpr in np.linspace(1e-4, 1 - 1e-4, 5):
+            assert_almost_equal(
+                roc_auc_score(y_true, y_pred, max_fpr=max_fpr, min_tpr=min_tpr),
+                _partial_roc_auc_score(
+                    y_true, y_pred, max_fpr=max_fpr, min_tpr=min_tpr
+                ),
+                decimal=3,
+                err_msg=f"{max_fpr, min_tpr}",
+            )
+
+    # 6. Check multiclass and binary high dim cases:
+    y_true = np.array([0, 3, 1, 2])
+    with pytest.raises(ValueError):
+        roc_auc_score(y_true, y_true, max_fpr=0.8, min_tpr=None)
+    with pytest.raises(ValueError):
+        roc_auc_score(y_true, y_true, max_fpr=None, min_tpr=0.1)
+
+    y_true = np.array([[0, 0, 1, 1], [0, 1, 0, 1]])
+    with pytest.raises(ValueError):
+        roc_auc_score(y_true, y_true, max_fpr=0.8, min_tpr=None)
+    with pytest.raises(ValueError):
+        roc_auc_score(y_true, y_true, max_fpr=None, min_tpr=0.1)
 
 
 @pytest.mark.parametrize(
