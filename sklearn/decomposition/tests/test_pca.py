@@ -246,28 +246,11 @@ def test_pca_inverse(svd_solver, whiten):
         ("arpack", 2, r"must be strictly less than min"),
         (
             "auto",
-            -1,
-            (
-                r"The 'n_components' parameter of PCA must be an int "
-                r"in the range \[0, inf\), a float in the "
-                r"range \(0, 1\), a str among {'mle'} or None. Got -1 instead."
-            ),
-        ),
-        (
-            "auto",
             3,
             (
                 r"n_components=3 must be between 0 and min\(n_samples, "
                 r"n_features\)=2 with svd_solver='full'"
             ),
-        ),
-        (
-            "auto",
-            1.0,
-            r"The 'n_components' parameter of PCA must be an int"
-            r" in the range \[0, inf\), a float in the "
-            r"range \(0, 1\), a str among {'mle'} or None. "
-            r"Got 1.0 instead.",
         ),
     ],
 )
@@ -275,13 +258,9 @@ def test_pca_validation(svd_solver, data, n_components, err_msg):
     # Ensures that solver-specific extreme inputs for the n_components
     # parameter raise errors
     smallest_d = 2  # The smallest dimension
-    lower_limit = {"randomized": 1, "arpack": 1, "full": 0, "auto": 0}
+
     pca_fitted = PCA(n_components, svd_solver=svd_solver)
 
-    solver_reported = "full" if svd_solver == "auto" else svd_solver
-    # err_msg = err_msg.format(
-    #     n_components, lower_limit[svd_solver], smallest_d, solver_reported
-    # )
     with pytest.raises(ValueError, match=err_msg):
         pca_fitted.fit(data)
 
@@ -696,31 +675,6 @@ def test_pca_randomized_svd_n_oversamples():
 
     assert_allclose(np.abs(pca_full.components_), np.abs(pca_arpack.components_))
     assert_allclose(np.abs(pca_randomized.components_), np.abs(pca_arpack.components_))
-
-
-@pytest.mark.parametrize(
-    "params, err_type, err_msg",
-    [
-        (
-            {"n_oversamples": 0},
-            ValueError,
-            r"The 'n_oversamples' parameter of PCA must be an "
-            r"int in the range \[1, inf\). Got 0 instead.",
-        ),
-        (
-            {"n_oversamples": 1.5},
-            ValueError,
-            r"The 'n_oversamples' parameter of PCA must be an "
-            r"int in the range \[1, inf\). Got 1.5 instead.",
-        ),
-    ],
-)
-def test_pca_params_validation(params, err_type, err_msg):
-    """Check the parameters validation in `PCA`."""
-    rng = np.random.RandomState(0)
-    X = rng.randn(100, 20)
-    with pytest.raises(err_type, match=err_msg):
-        PCA(**params).fit(X)
 
 
 def test_feature_names_out():
