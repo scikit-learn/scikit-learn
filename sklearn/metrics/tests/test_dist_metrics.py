@@ -3,14 +3,20 @@ import pickle
 import copy
 
 import numpy as np
-from numpy.testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_allclose
 
 import pytest
 
 import scipy.sparse as sp
 from scipy.spatial.distance import cdist
 from sklearn.metrics import DistanceMetric
-from sklearn.metrics._dist_metrics import BOOL_METRICS
+
+from sklearn.metrics._dist_metrics import (
+    BOOL_METRICS,
+    # Unexposed private DistanceMetric for 32 bit
+    DistanceMetric32,
+)
+
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import create_memmap_backed_data
 from sklearn.utils.fixes import sp_version, parse_version
@@ -24,16 +30,18 @@ rng = check_random_state(0)
 d = 4
 n1 = 20
 n2 = 25
-X1 = rng.random_sample((n1, d)).astype("float64", copy=False)
-X2 = rng.random_sample((n2, d)).astype("float64", copy=False)
+X64 = rng.random_sample((n1, d))
+Y64 = rng.random_sample((n2, d))
+X32 = X64.astype("float32")
+Y32 = Y64.astype("float32")
 
-[X1_mmap, X2_mmap] = create_memmap_backed_data([X1, X2])
+[X_mmap, Y_mmap] = create_memmap_backed_data([X64, Y64])
 
 # make boolean arrays: ones and zeros
-X1_bool = X1.round(0)
-X2_bool = X2.round(0)
+X_bool = X64.round(0)
+Y_bool = Y64.round(0)
 
-[X1_bool_mmap, X2_bool_mmap] = create_memmap_backed_data([X1_bool, X2_bool])
+[X_bool_mmap, Y_bool_mmap] = create_memmap_backed_data([X_bool, Y_bool])
 
 
 V = rng.random_sample((d, d))
@@ -65,27 +73,14 @@ else:
     )
 
 
-def check_cdist(metric, kwargs, X1, X2):
-    if metric == "wminkowski":
-        # wminkoski is deprecated in SciPy 1.6.0 and removed in 1.8.0
-        WarningToExpect = None
-        if sp_version >= parse_version("1.6.0"):
-            WarningToExpect = DeprecationWarning
-        with pytest.warns(WarningToExpect):
-            D_scipy_cdist = cdist(X1, X2, metric, **kwargs)
-    else:
-        D_scipy_cdist = cdist(X1, X2, metric, **kwargs)
-
-    dm = DistanceMetric.get_metric(metric, **kwargs)
-    D_sklearn = dm.pairwise(X1, X2)
-    assert_array_almost_equal(D_sklearn, D_scipy_cdist)
-
-
 # TODO: Remove filterwarnings in 1.3 when wminkowski is removed
 @pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
 @pytest.mark.parametrize("metric_param_grid", METRICS_DEFAULT_PARAMS)
-@pytest.mark.parametrize("X1, X2", [(X1, X2), (X1_mmap, X2_mmap)])
-def test_cdist(metric_param_grid, X1, X2):
+@pytest.mark.parametrize("X, Y", [(X64, Y64), (X32, Y32), (X_mmap, Y_mmap)])
+def test_cdist(metric_param_grid, X, Y):
+    DistanceMetricInterface = (
+        DistanceMetric if X.dtype == Y.dtype == np.float64 else DistanceMetric32
+    )
     metric, param_grid = metric_param_grid
     keys = param_grid.keys()
     for vals in itertools.product(*param_grid.values()):
@@ -96,29 +91,41 @@ def test_cdist(metric_param_grid, X1, X2):
             pytest.xfail(
                 "scipy#13861: cdist with 'mahalanobis' fails on joblib memmap data"
             )
-        check_cdist(metric, kwargs, X1, X2)
+
+        if metric == "wminkowski":
+            # wminkoski is deprecated in SciPy 1.6.0 and removed in 1.8.0
+            WarningToExpect = None
+            if sp_version >= parse_version("1.6.0"):
+                WarningToExpect = DeprecationWarning
+            with pytest.warns(WarningToExpect):
+                D_scipy_cdist = cdist(X, Y, metric, **kwargs)
+        else:
+            D_scipy_cdist = cdist(X, Y, metric, **kwargs)
+
+        dm = DistanceMetricInterface.get_metric(metric, **kwargs)
+        D_sklearn = dm.pairwise(X, Y)
+        assert_allclose(D_sklearn, D_scipy_cdist)
 
 
 @pytest.mark.parametrize("metric", BOOL_METRICS)
 @pytest.mark.parametrize(
-    "X1_bool, X2_bool", [(X1_bool, X2_bool), (X1_bool_mmap, X2_bool_mmap)]
+    "X_bool, Y_bool", [(X_bool, Y_bool), (X_bool_mmap, Y_bool_mmap)]
 )
-def test_cdist_bool_metric(metric, X1_bool, X2_bool):
-    D_true = cdist(X1_bool, X2_bool, metric)
-    check_cdist_bool(metric, D_true)
-
-
-def check_cdist_bool(metric, D_true):
+def test_cdist_bool_metric(metric, X_bool, Y_bool):
+    D_true = cdist(X_bool, Y_bool, metric)
     dm = DistanceMetric.get_metric(metric)
-    D12 = dm.pairwise(X1_bool, X2_bool)
-    assert_array_almost_equal(D12, D_true)
+    D12 = dm.pairwise(X_bool, Y_bool)
+    assert_allclose(D12, D_true)
 
 
 # TODO: Remove filterwarnings in 1.3 when wminkowski is removed
 @pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
 @pytest.mark.parametrize("metric_param_grid", METRICS_DEFAULT_PARAMS)
-@pytest.mark.parametrize("X1, X2", [(X1, X2), (X1_mmap, X2_mmap)])
-def test_pdist(metric_param_grid, X1, X2):
+@pytest.mark.parametrize("X, Y", [(X64, Y64), (X32, Y32), (X_mmap, Y_mmap)])
+def test_pdist(metric_param_grid, X, Y):
+    DistanceMetricInterface = (
+        DistanceMetric if X.dtype == Y.dtype == np.float64 else DistanceMetric32
+    )
     metric, param_grid = metric_param_grid
     keys = param_grid.keys()
     for vals in itertools.product(*param_grid.values()):
@@ -135,42 +142,60 @@ def test_pdist(metric_param_grid, X1, X2):
             if sp_version >= parse_version("1.6.0"):
                 ExceptionToAssert = DeprecationWarning
             with pytest.warns(ExceptionToAssert):
-                D_true = cdist(X1, X1, metric, **kwargs)
+                D_true = cdist(X, X, metric, **kwargs)
         else:
-            D_true = cdist(X1, X1, metric, **kwargs)
+            D_true = cdist(X, X, metric, **kwargs)
 
-        check_pdist(metric, kwargs, D_true)
+        dm = DistanceMetricInterface.get_metric(metric, **kwargs)
+        D12 = dm.pairwise(X)
+        assert_allclose(D12, D_true)
+
+
+# TODO: Remove filterwarnings in 1.3 when wminkowski is removed
+@pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
+@pytest.mark.parametrize("metric_param_grid", METRICS_DEFAULT_PARAMS)
+def test_distance_metrics_dtype_consistency(metric_param_grid):
+    # DistanceMetric must return similar distances for
+    # both 64bit and 32bit data.
+    metric, param_grid = metric_param_grid
+    keys = param_grid.keys()
+    for vals in itertools.product(*param_grid.values()):
+        kwargs = dict(zip(keys, vals))
+        dm64 = DistanceMetric.get_metric(metric, **kwargs)
+        dm32 = DistanceMetric32.get_metric(metric, **kwargs)
+
+        D64 = dm64.pairwise(X64)
+        D32 = dm32.pairwise(X32)
+        assert_allclose(D64, D32)
+
+        D64 = dm64.pairwise(X64, Y64)
+        D32 = dm32.pairwise(X32, Y32)
+        assert_allclose(D64, D32)
 
 
 @pytest.mark.parametrize("metric", BOOL_METRICS)
-@pytest.mark.parametrize("X1_bool", [X1_bool, X1_bool_mmap])
-def test_pdist_bool_metrics(metric, X1_bool):
-    D_true = cdist(X1_bool, X1_bool, metric)
-    check_pdist_bool(metric, D_true)
-
-
-def check_pdist(metric, kwargs, D_true):
-    dm = DistanceMetric.get_metric(metric, **kwargs)
-    D12 = dm.pairwise(X1)
-    assert_array_almost_equal(D12, D_true)
-
-
-def check_pdist_bool(metric, D_true):
+@pytest.mark.parametrize("X_bool", [X_bool, X_bool_mmap])
+def test_pdist_bool_metrics(metric, X_bool):
+    D_true = cdist(X_bool, X_bool, metric)
     dm = DistanceMetric.get_metric(metric)
-    D12 = dm.pairwise(X1_bool)
+    D12 = dm.pairwise(X_bool)
     # Based on https://github.com/scipy/scipy/pull/7373
     # When comparing two all-zero vectors, scipy>=1.2.0 jaccard metric
     # was changed to return 0, instead of nan.
     if metric == "jaccard" and sp_version < parse_version("1.2.0"):
         D_true[np.isnan(D_true)] = 0
-    assert_array_almost_equal(D12, D_true)
+    assert_allclose(D12, D_true)
 
 
 # TODO: Remove filterwarnings in 1.3 when wminkowski is removed
 @pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
 @pytest.mark.parametrize("writable_kwargs", [True, False])
 @pytest.mark.parametrize("metric_param_grid", METRICS_DEFAULT_PARAMS)
-def test_pickle(writable_kwargs, metric_param_grid):
+@pytest.mark.parametrize("X", [X64, X32])
+def test_pickle(writable_kwargs, metric_param_grid, X):
+    DistanceMetricInterface = (
+        DistanceMetric if X.dtype == np.float64 else DistanceMetric32
+    )
     metric, param_grid = metric_param_grid
     keys = param_grid.keys()
     for vals in itertools.product(*param_grid.values()):
@@ -180,27 +205,23 @@ def test_pickle(writable_kwargs, metric_param_grid):
                 if isinstance(val, np.ndarray):
                     val.setflags(write=writable_kwargs)
         kwargs = dict(zip(keys, vals))
-        check_pickle(metric, kwargs)
+        dm = DistanceMetricInterface.get_metric(metric, **kwargs)
+        D1 = dm.pairwise(X)
+        dm2 = pickle.loads(pickle.dumps(dm))
+        D2 = dm2.pairwise(X)
+        assert_allclose(D1, D2)
 
 
 # TODO: Remove filterwarnings in 1.3 when wminkowski is removed
 @pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
 @pytest.mark.parametrize("metric", BOOL_METRICS)
-@pytest.mark.parametrize("X1_bool", [X1_bool, X1_bool_mmap])
-def test_pickle_bool_metrics(metric, X1_bool):
+@pytest.mark.parametrize("X_bool", [X_bool, X_bool_mmap])
+def test_pickle_bool_metrics(metric, X_bool):
     dm = DistanceMetric.get_metric(metric)
-    D1 = dm.pairwise(X1_bool)
+    D1 = dm.pairwise(X_bool)
     dm2 = pickle.loads(pickle.dumps(dm))
-    D2 = dm2.pairwise(X1_bool)
-    assert_array_almost_equal(D1, D2)
-
-
-def check_pickle(metric, kwargs):
-    dm = DistanceMetric.get_metric(metric, **kwargs)
-    D1 = dm.pairwise(X1)
-    dm2 = pickle.loads(pickle.dumps(dm))
-    D2 = dm2.pairwise(X1)
-    assert_array_almost_equal(D1, D2)
+    D2 = dm2.pairwise(X_bool)
+    assert_allclose(D1, D2)
 
 
 def test_haversine_metric():
@@ -222,8 +243,8 @@ def test_haversine_metric():
         for j, x2 in enumerate(X):
             D2[i, j] = haversine_slow(x1, x2)
 
-    assert_array_almost_equal(D1, D2)
-    assert_array_almost_equal(haversine.dist_to_rdist(D1), np.sin(0.5 * D2) ** 2)
+    assert_allclose(D1, D2)
+    assert_allclose(haversine.dist_to_rdist(D1), np.sin(0.5 * D2) ** 2)
 
 
 def test_pyfunc_metric():
@@ -243,8 +264,8 @@ def test_pyfunc_metric():
     D1_pkl = euclidean_pkl.pairwise(X)
     D2_pkl = pyfunc_pkl.pairwise(X)
 
-    assert_array_almost_equal(D1, D2)
-    assert_array_almost_equal(D1_pkl, D2_pkl)
+    assert_allclose(D1, D2)
+    assert_allclose(D1_pkl, D2_pkl)
 
 
 def test_input_data_size():
@@ -259,7 +280,7 @@ def test_input_data_size():
 
     pyfunc = DistanceMetric.get_metric("pyfunc", func=custom_metric)
     eucl = DistanceMetric.get_metric("euclidean")
-    assert_array_almost_equal(pyfunc.pairwise(X), eucl.pairwise(X) ** 2)
+    assert_allclose(pyfunc.pairwise(X), eucl.pairwise(X) ** 2)
 
 
 # TODO: Remove filterwarnings in 1.3 when wminkowski is removed
@@ -305,11 +326,11 @@ def test_minkowski_metric_validate_weights_size():
     dm = DistanceMetric.get_metric("minkowski", p=3, w=w2)
     msg = (
         "MinkowskiDistance: the size of w must match "
-        f"the number of features \\({X1.shape[1]}\\). "
+        f"the number of features \\({X64.shape[1]}\\). "
         f"Currently len\\(w\\)={w2.shape[0]}."
     )
     with pytest.raises(ValueError, match=msg):
-        dm.pairwise(X1, X2)
+        dm.pairwise(X64, Y64)
 
 
 # TODO: Remove in 1.3 when wminkowski is removed
@@ -328,6 +349,6 @@ def test_wminkowski_minkowski_equivalence(p):
     # Weights are rescaled for consistency w.r.t scipy 1.8 refactoring of 'minkowski'
     dm_wmks = DistanceMetric.get_metric("wminkowski", p=p, w=(w) ** (1 / p))
     dm_mks = DistanceMetric.get_metric("minkowski", p=p, w=w)
-    D_wmks = dm_wmks.pairwise(X1, X2)
-    D_mks = dm_mks.pairwise(X1, X2)
-    assert_array_almost_equal(D_wmks, D_mks)
+    D_wmks = dm_wmks.pairwise(X64, Y64)
+    D_mks = dm_mks.pairwise(X64, Y64)
+    assert_allclose(D_wmks, D_mks)
