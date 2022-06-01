@@ -59,7 +59,7 @@ from ._k_means_elkan import elkan_iter_chunked_sparse
 # Initialization heuristic
 
 
-_parameter_constraints_kmeans_plusplus = {
+_parameter_constraints_of_kmeans_plusplus = {
     "X": ["array-like", "sparse matrix"],
     "n_clusters": [Interval(Integral, 1, None, closed="left")],
     "x_squared_norms": ["array-like", None],
@@ -68,7 +68,7 @@ _parameter_constraints_kmeans_plusplus = {
 }
 
 
-@validate_params(_parameter_constraints_kmeans_plusplus)
+@validate_params(_parameter_constraints_of_kmeans_plusplus)
 def kmeans_plusplus(
     X, n_clusters, *, x_squared_norms=None, random_state=None, n_local_trials=None
 ):

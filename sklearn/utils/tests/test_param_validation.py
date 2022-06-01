@@ -16,6 +16,7 @@ from sklearn.utils._param_validation import _RandomStates
 from sklearn.utils._param_validation import _SparseMatrices
 from sklearn.utils._param_validation import make_constraint
 from sklearn.utils._param_validation import generate_invalid_param_val
+from sklearn.utils._param_validation import generate_valid_param
 from sklearn.utils._param_validation import validate_params
 
 
@@ -156,18 +157,38 @@ def test_generate_invalid_param_val(constraint):
 @pytest.mark.parametrize(
     "constraint",
     [
-        _ArrayLikes,
-        _Callables,
-        _InstancesOf,
-        _NoneConstraint,
-        _RandomStates,
-        _SparseMatrices,
+        _ArrayLikes(),
+        _Callables(),
+        _InstancesOf(list),
+        _NoneConstraint(),
+        _RandomStates(),
+        _SparseMatrices(),
     ],
 )
 def test_generate_invalid_param_val_not_error(constraint):
     """Check that the value generated does not satisfy the constraint"""
     with pytest.raises(NotImplementedError):
         generate_invalid_param_val(constraint)
+
+
+@pytest.mark.parametrize(
+    "constraint",
+    [
+        _ArrayLikes(),
+        _Callables(),
+        _InstancesOf(list),
+        _NoneConstraint(),
+        _RandomStates(),
+        _SparseMatrices(),
+        StrOptions({"a", "b", "c"}),
+        Interval(Integral, 0, 1, closed="left"),
+        Interval(Integral, 0, 2, closed="neither"),
+    ],
+)
+def test_generate_valid_param(constraint):
+    """Check that the value generated does satisfy the constraint"""
+    value = generate_valid_param(constraint)
+    assert constraint.is_satisfied_by(value)
 
 
 @pytest.mark.parametrize(

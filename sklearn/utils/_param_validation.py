@@ -8,6 +8,7 @@ import operator
 
 import numpy as np
 from scipy.sparse import issparse
+from scipy.sparse import csr_matrix
 
 from .validation import _is_arraylike_not_scalar
 
@@ -419,3 +420,44 @@ def generate_invalid_param_val(constraint):
             return interval.right + 1
     else:
         raise NotImplementedError
+
+
+def generate_valid_param(constraint):
+    """Return a value that does satisfy a constraint.
+
+    This is only useful for testing purpose.
+
+    Parameters
+    ----------
+    constraint : Constraint
+        The constraint to generate a value for.
+
+    Returns
+    -------
+    val : object
+        A value that does satisfy the constraint.
+    """
+    if isinstance(constraint, _ArrayLikes):
+        return np.array([1, 2, 3])
+    elif isinstance(constraint, _SparseMatrices):
+        return csr_matrix([[0, 1], [1, 0]])
+    elif isinstance(constraint, _RandomStates):
+        return np.random.RandomState(42)
+    elif isinstance(constraint, _Callables):
+        return lambda x: x
+    elif isinstance(constraint, _NoneConstraint):
+        return None
+    elif isinstance(constraint, _InstancesOf):
+        return constraint.type()
+    if isinstance(constraint, StrOptions):
+        for option in constraint.options:
+            return option
+    elif isinstance(constraint, Interval):
+        interval = constraint
+        if interval.type is Real:
+            return (interval.left + interval.right) / 2
+        else:
+            if interval.closed in ("left", "both"):
+                return interval.left
+            else:
+                return interval.left + 1
