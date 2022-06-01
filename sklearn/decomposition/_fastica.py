@@ -166,6 +166,7 @@ def fastica(
     return_X_mean=False,
     compute_sources=True,
     return_n_iter=False,
+    sign_flip=False,
 ):
     """Perform Fast Independent Component Analysis.
 
@@ -256,6 +257,19 @@ def fastica(
     return_n_iter : bool, default=False
         Whether or not to return the number of iterations.
 
+    sign_flip : bool, default=False
+        Used to determine whether to enable sign flipping during whitening for
+        consistency in output between solvers.
+
+        - If `sign_flip=False` then the output of different choices for
+          `whiten_solver` may not be equal. Both outputs will still be correct,
+          but may differ numerically.
+
+        - If `sign_flip=True` then the output of both solvers will be
+          reconciled during fit so that their outputs match. This may produce
+          a different output for each solver when compared to
+          `sign_flip=False`.
+
     Returns
     -------
     K : ndarray of shape (n_components, n_features) or None
@@ -314,6 +328,7 @@ def fastica(
         w_init=w_init,
         whiten_solver=whiten_solver,
         random_state=random_state,
+        sign_flip=sign_flip,
     )
     S = est._fit(X, compute_sources=compute_sources)
 
@@ -409,6 +424,19 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         across multiple function calls.
         See :term:`Glossary <random_state>`.
 
+    sign_flip : bool, default=False
+        Used to determine whether to enable sign flipping during whitening for
+        consistency in output between solvers.
+
+        - If `sign_flip=False` then the output of different choices for
+          `whiten_solver` may not be equal. Both outputs will still be correct,
+          but may differ numerically.
+
+        - If `sign_flip=True` then the output of both solvers will be
+          reconciled during fit so that their outputs match. This may produce
+          a different output for each solver when compared to
+          `sign_flip=False`.
+
     Attributes
     ----------
     components_ : ndarray of shape (n_components, n_features)
@@ -484,6 +512,7 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         w_init=None,
         whiten_solver="svd",
         random_state=None,
+        sign_flip=False,
     ):
         super().__init__()
         self.n_components = n_components
@@ -496,6 +525,7 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         self.w_init = w_init
         self.whiten_solver = whiten_solver
         self.random_state = random_state
+        self.sign_flip = sign_flip
 
     def _fit(self, X, compute_sources=False):
         """Fit the model.
@@ -608,7 +638,8 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
                 )
 
             # Give consistent eigenvectors for both svd solvers
-            u *= np.sign(u[0])
+            if self.sign_flip:
+                u *= np.sign(u[0])
 
             K = (u / d).T[:n_components]  # see (6.33) p.140
             del u, d

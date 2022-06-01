@@ -22,9 +22,10 @@ random sampling procedures.
 :mod:`sklearn.decomposition`
 ............................
 
-- |Fix| :class:`decomposition.FastICA` now employs sign-flipping to produce
-  consistent results between varying solvers. This may change the output of
-  the model up to sign-flipping, but does not affect the overall correctness.
+- |Fix| :class:`decomposition.FastICA` now allows the user to enable sign-flipping
+  to produce consistent results between varying whitening solvers. This may change
+  the output of the model up to sign-flipping, but does not affect the overall
+  correctness.
 
 - |Fix| :class:`manifold.TSNE` now throws a `ValueError` when fit with
   `perplexity>=n_samples` to ensure mathematical correctness of the algorithm.
@@ -106,9 +107,12 @@ Changelog
   how whitening is performed through the new `whiten_solver` parameter, which
   supports `svd` and `eigh`. `whiten_solver` defaults to `svd` although `eigh`
   may be faster and more memory efficient in cases where
-  `num_features > num_samples` :pr:`11860` by
-  :user:`Pierre Ablin <pierreablin>`, :pr:`22527` by
-  :user:`Meekail Zain <micky774>` and `Thomas Fan`_.
+  `num_features > num_samples`. An additional `sign_flip` parameter is added.
+  When `sign_flip=True`, then the output of both solvers will be reconciled
+  during fit so that their outputs match. This may change the output of the
+  default solver, and hence may not be backwards compatible.
+  :pr:`11860` by :user:`Pierre Ablin <pierreablin>`,
+  :pr:`22527` by :user:`Meekail Zain <micky774>` and `Thomas Fan`_.
 
 :mod:`sklearn.impute`
 .....................
