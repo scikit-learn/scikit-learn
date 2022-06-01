@@ -19,6 +19,19 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
+- |Fix| :class:`manifold.TSNE` now throws a `ValueError` when fit with
+  `perplexity>=n_samples` to ensure mathematical correctness of the algorithm.
+  :pr:`10805` by :user:`Mathias Andersen <MrMathias>` and
+  :pr:`23471` by :user:`Meekail Zain <micky774>`
+
+Changes impacting all modules
+-----------------------------
+
+- |Enhancement| Finiteness checks (detection of NaN and infinite values) in all
+  estimators are now significantly more efficient for float32 data by leveraging
+  NumPy's SIMD optimized primitives.
+  :pr:`23446` by :user:`Meekail Zain <micky774>`
+
 Changelog
 ---------
 
@@ -32,6 +45,14 @@ Changelog
     Entries should end with:
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
+
+:mod:`sklearn.calibration`
+..........................
+
+- |API| Rename `base_estimator` to `estimator` in
+  :class:`CalibratedClassifierCV` to improve readability and consistency. The
+  parameter `base_estimator` is deprecated and will be removed in 1.4.
+  :pr:`22054` by :user:`Kevin Roice <kevroi>`.
 
 :mod:`sklearn.cluster`
 ......................
@@ -71,6 +92,12 @@ Changelog
 - |Efficiency| Improve runtime performance of :class:`ensemble.IsolationForest`
   by avoiding data copies. :pr:`23252` by :user:`Zhehao Liu <MaxwellLZH>`.
 
+:mod:`sklearn.impute`
+.....................
+
+- |Fix| :class:`impute.SimpleImputer` uses the dtype seen in `fit` for
+  `transform` when the dtype is object. :pr:`22063` by `Thomas Fan`_.
+
 :mod:`sklearn.metrics`
 ......................
 
@@ -93,8 +120,18 @@ Changelog
   matrices in a variety of estimators and avoid an `EfficiencyWarning`.
   :pr:`23139` by `Tom Dupre la Tour`_.
 
+:mod:`sklearn.svm`
+..................
+
+- |API| The `class_weight_` attribute is now deprecated for
+  :class:`svm.NuSVR`, :class:`svm.SVR`, :class:`svm.OneClassSVM`.
+  :pr:`22898` by :user:`Meekail Zain <micky774>`.
+
 :mod:`sklearn.tree`
 ...................
+
+- |Enhancement| :func:`tree.plot_tree`, :func:`tree.export_graphviz` now uses
+  a lower case `x[i]` to represent feature `i`. :pr:`23480` by `Thomas Fan`_.
 
 - |Fix| Fixed invalid memory access bug during fit in
   :class:`tree.DecisionTreeRegressor` and :class:`tree.DecisionTreeClassifier`.
@@ -108,6 +145,14 @@ Changelog
   deterministic SVD used by the randomized SVD algorithm.
   :pr:`20617` by :user:`Srinath Kailasa <skailasa>`
 
+:mod:`sklearn.manifold`
+.......................
+
+- |Fix| :class:`manifold.TSNE` now throws a `ValueError` when fit with
+  `perplexity>=n_samples` to ensure mathematical correctness of the algorithm.
+  :pr:`10805` by :user:`Mathias Andersen <MrMathias>` and
+  :pr:`23471` by :user:`Meekail Zain <micky774>`
+
 Code and Documentation Contributors
 -----------------------------------
 
@@ -115,10 +160,3 @@ Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.1, including:
 
 TODO: update at the time of the release.
-
-:mod:`sklearn.svm`
-..................
-
-- |API| The `class_weight_` attribute is now deprecated for
-  :class:`svm.NuSVR`, :class:`svm.SVR`, :class:`svm.OneClassSVM`.
-  :pr:`22898` by :user:`Meekail Zain <micky774>`.
