@@ -368,6 +368,7 @@ def _pandas_arff_parser(
         header=None,
         na_values=["?"],  # missing values are represented by `?`
         comment="%",  # skip line starting by `%` since they are comments
+        quotechar='"',  # delimiter to use for quoted strings
         names=[name for name in openml_columns_info],
         dtype=dtypes,
     )
@@ -375,9 +376,9 @@ def _pandas_arff_parser(
     columns_to_keep = [col for col in frame.columns if col in columns_to_select]
     frame = frame[columns_to_keep]
 
-    # strip quotes to be consistent with LIAC ARFF
-    # quotes should be balanced: "contents" or 'contents'
-    pattern = r"^(?P<quotationsymbol>[\"'])(?P<contents>.*)(?P=quotationsymbol)$"
+    # `pd.read_csv` only consider double quotes as delimiters for strings.
+    # In case that a single quote is used as a delimiter, we need to strip it.
+    pattern = r"^(?P<quotationsymbol>['])(?P<contents>.*)(?P=quotationsymbol)$"
 
     def strip_quotes(s):
         return s.group("contents")

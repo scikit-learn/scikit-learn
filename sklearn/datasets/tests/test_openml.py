@@ -1579,12 +1579,22 @@ def test_fetch_openml_strip_quotes(monkeypatch, gzip_response):
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/23381
     """
-    pytest.importorskip("pandas")
+    pd = pytest.importorskip("pandas")
 
     mice_pandas = fetch_openml(name="miceprotein", version=4, parser="pandas")
     mice_liac_arff = fetch_openml(name="miceprotein", version=4, parser="liac-arff")
+    pd.testing.assert_series_equal(mice_pandas.target, mice_liac_arff.target)
 
-    assert_array_equal(mice_pandas.target, mice_liac_arff.target)
+    # similar behaviour should be observed when the column is not the target
+    mice_pandas = fetch_openml(
+        name="miceprotein", version=4, parser="pandas", target_column="NUMB_N"
+    )
+    mice_liac_arff = fetch_openml(
+        name="miceprotein", version=4, parser="liac-arff", target_column="NUMB_N"
+    )
+    pd.testing.assert_series_equal(
+        mice_pandas.frame["class"], mice_liac_arff.frame["class"]
+    )
 
 
 ###############################################################################
