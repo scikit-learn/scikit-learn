@@ -19,12 +19,19 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
+<<<<<<< HEAD
 :mod:`sklearn.decomposition`
 ............................
 
 - |Fix| :class:`decomposition.FastICA` now employs sign-flipping to produce
   consistent results between varying solvers. This may change the output of
   the model up to sign-flipping, but does not affect the overall correctness.
+=======
+- |Fix| :class:`manifold.TSNE` now throws a `ValueError` when fit with
+  `perplexity>=n_samples` to ensure mathematical correctness of the algorithm.
+  :pr:`10805` by :user:`Mathias Andersen <MrMathias>` and
+  :pr:`23471` by :user:`Meekail Zain <micky774>`
+>>>>>>> main
 
 Changes impacting all modules
 -----------------------------
@@ -105,6 +112,12 @@ Changelog
   :user:`Pierre Ablin <pierreablin>`, :pr:`22527` by
   :user:`Meekail Zain <micky774>` and `Thomas Fan`_.
 
+:mod:`sklearn.impute`
+.....................
+
+- |Fix| :class:`impute.SimpleImputer` uses the dtype seen in `fit` for
+  `transform` when the dtype is object. :pr:`22063` by `Thomas Fan`_.
+
 :mod:`sklearn.metrics`
 ......................
 
@@ -137,6 +150,9 @@ Changelog
 :mod:`sklearn.tree`
 ...................
 
+- |Enhancement| :func:`tree.plot_tree`, :func:`tree.export_graphviz` now uses
+  a lower case `x[i]` to represent feature `i`. :pr:`23480` by `Thomas Fan`_.
+
 - |Fix| Fixed invalid memory access bug during fit in
   :class:`tree.DecisionTreeRegressor` and :class:`tree.DecisionTreeClassifier`.
   :pr:`23273` by `Thomas Fan`_.
@@ -148,6 +164,14 @@ Changelog
   `lapack_svd_driver`, to specify the lapack driver used in the internal
   deterministic SVD used by the randomized SVD algorithm.
   :pr:`20617` by :user:`Srinath Kailasa <skailasa>`
+
+:mod:`sklearn.manifold`
+.......................
+
+- |Fix| :class:`manifold.TSNE` now throws a `ValueError` when fit with
+  `perplexity>=n_samples` to ensure mathematical correctness of the algorithm.
+  :pr:`10805` by :user:`Mathias Andersen <MrMathias>` and
+  :pr:`23471` by :user:`Meekail Zain <micky774>`
 
 Code and Documentation Contributors
 -----------------------------------
