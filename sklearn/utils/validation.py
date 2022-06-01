@@ -114,7 +114,7 @@ def _assert_all_finite(
         if first_pass_isfinite:
             return
         if use_cython:
-            out = cy_isfinite(X, allow_nan=allow_nan)
+            out = cy_isfinite(X.reshape(-1), allow_nan=allow_nan)
             first_pass_isfinite = out == FiniteStatus.all_finite
             has_nan = out == FiniteStatus.has_nan
             has_inf = out == FiniteStatus.has_infinite
