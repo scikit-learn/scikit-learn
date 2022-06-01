@@ -347,8 +347,6 @@ def _pandas_arff_parser(
     """
     import pandas as pd
 
-    print(openml_columns_info)
-
     # read the file until the data section to skip the ARFF metadata headers
     for line in gzip_file:
         if line.decode("utf-8").lower().startswith("@data"):
