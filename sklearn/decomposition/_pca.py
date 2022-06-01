@@ -12,7 +12,6 @@
 
 from math import log, sqrt
 
-# import numbers
 from numbers import Integral, Real
 
 import numpy as np
@@ -510,7 +509,6 @@ class PCA(_BasePCA):
 
     def _fit_full(self, X, n_components):
         """Fit the model by computing full SVD on X."""
-        self._validate_params()
 
         n_samples, n_features = X.shape
 
@@ -574,8 +572,6 @@ class PCA(_BasePCA):
         on X.
         """
 
-        self._validate_params()
-
         n_samples, n_features = X.shape
 
         if isinstance(n_components, str):
@@ -589,12 +585,6 @@ class PCA(_BasePCA):
                 "min(n_samples, n_features)=%r with "
                 "svd_solver='%s'"
                 % (n_components, min(n_samples, n_features), svd_solver)
-            )
-        elif not isinstance(n_components, Integral):
-            raise ValueError(
-                "n_components=%r must be of type int "
-                "when greater than or equal to 1, was of type=%r"
-                % (n_components, type(n_components))
             )
         elif svd_solver == "arpack" and n_components == min(n_samples, n_features):
             raise ValueError(
