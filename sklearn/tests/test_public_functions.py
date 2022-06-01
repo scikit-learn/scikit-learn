@@ -16,6 +16,9 @@ PARAM_VALIDATION_FUNCTION_LIST = [kmeans_plusplus]
 def test_function_param_validation(func):
     """Check that an informative error is raised when the value of a parameter does not
     have an appropriate type or value.
+
+    the parameter constraints for the function must be named
+    _parameter_constraints_of_<func_name> and be located in the same module.
     """
     func_sig = signature(func)
     func_params = [
