@@ -6,7 +6,7 @@
 #         Tom Dupre la Tour
 # License: BSD 3 clause
 
-import numbers
+from abc import ABC
 from numbers import Integral, Real
 import numpy as np
 import scipy.sparse as sp
@@ -1192,7 +1192,7 @@ def non_negative_factorization(
     return W, H, n_iter
 
 
-class _BaseNMF(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
+class _BaseNMF(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator, ABC):
     """Base class for NMF and MiniBatchNMF."""
 
     _parameter_constraints = {
