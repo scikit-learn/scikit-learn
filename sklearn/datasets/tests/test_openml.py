@@ -1572,9 +1572,8 @@ def test_fetch_openml_with_ignored_feature(monkeypatch, gzip_response, parser):
     assert "animal" not in dataset["feature_names"]
 
 
-@pytest.mark.parametrize("gzip_response", [True, False])
-def test_fetch_openml_strip_quotes(monkeypatch, gzip_response):
-    """Check that we strip quotes that are superfluous as in LIAC ARFF.
+def test_fetch_openml_strip_quotes(monkeypatch):
+    """Check that we strip the single quotes when used as a string delimiter.
 
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/23381
@@ -1583,14 +1582,15 @@ def test_fetch_openml_strip_quotes(monkeypatch, gzip_response):
     data_id = 40966
     _monkey_patch_webbased_functions(monkeypatch, data_id=data_id, gzip_response=False)
 
-    mice_pandas = fetch_openml(data_id=data_id, parser="pandas")
-    mice_liac_arff = fetch_openml(data_id=data_id, parser="liac-arff")
+    common_params = {"as_frame": True, "cache": False, "data_id": data_id}
+    mice_pandas = fetch_openml(parser="pandas", **common_params)
+    mice_liac_arff = fetch_openml(parser="liac-arff", **common_params)
     pd.testing.assert_series_equal(mice_pandas.target, mice_liac_arff.target)
 
     # similar behaviour should be observed when the column is not the target
-    mice_pandas = fetch_openml(data_id=data_id, parser="pandas", target_column="NUMB_N")
+    mice_pandas = fetch_openml(parser="pandas", target_column="NUMB_N", **common_params)
     mice_liac_arff = fetch_openml(
-        data_id=data_id, parser="liac-arff", target_column="NUMB_N"
+        parser="liac-arff", target_column="NUMB_N", **common_params
     )
     pd.testing.assert_series_equal(
         mice_pandas.frame["class"], mice_liac_arff.frame["class"]
