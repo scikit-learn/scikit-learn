@@ -1,3 +1,4 @@
+import copy
 from collections import defaultdict
 
 import numpy as np
@@ -96,6 +97,7 @@ def assert_argkmin_results_quasi_equality(
 
     To be used for 32bits datasets tests.
     """
+    is_sorted = lambda a: np.all(a[:-1] - a[1:])
 
     assert (
         ref_dist.shape == dist.shape == ref_indices.shape == indices.shape
@@ -107,6 +109,9 @@ def assert_argkmin_results_quasi_equality(
     for i in range(n):
         ref_dist_row = ref_dist[i]
         dist_row = dist[i]
+
+        is_sorted(ref_dist_row), f"Reference distances aren't sorted on row {i}"
+        is_sorted(dist_row), f"Distances aren't sorted on row {i}"
 
         assert_allclose(ref_dist_row, dist_row, rtol)
 
@@ -157,7 +162,10 @@ def assert_radius_neighborhood_results_quasi_equality(
       - missing last elements if the threshold
 
     To be used for 32bits datasets tests.
+
+    Input arrays must be sorted w.r.t distances.
     """
+    is_sorted = lambda a: np.all(a[:-1] - a[1:])
 
     assert (
         len(ref_dist) == len(dist) == len(ref_indices) == len(indices)
@@ -170,6 +178,9 @@ def assert_radius_neighborhood_results_quasi_equality(
 
         ref_dist_row = ref_dist[i]
         dist_row = dist[i]
+
+        is_sorted(ref_dist_row), f"Reference distances aren't sorted on row {i}"
+        is_sorted(dist_row), f"Distances aren't sorted on row {i}"
 
         # Vectors' lengths might be different due to small
         # numerical differences of distance w.r.t the `radius` threshold,
@@ -224,8 +235,8 @@ def test_assert_argkmin_results_quasi_equality():
 
     ref_dist = np.array(
         [
-            [1.2, 2.5, 6.1 + atol, 6.1, 6.1 - atol],
-            [1.0 + atol, 1.0 - atol, 1, 1.0 + atol, 1.0 - atol],
+            [1.2, 2.5, 6.1 - atol, 6.1, 6.1 + atol],
+            [1.0 - atol, 1.0 - atol, 1, 1.0 + atol, 1.0 + atol],
         ]
     )
     ref_indices = np.array(
@@ -267,6 +278,43 @@ def test_assert_argkmin_results_quasi_equality():
             ref_dist, dist, ref_indices, indices, rtol, decimals
         )
 
+    indices = np.copy(ref_indices)
+    dist = np.copy(ref_dist)
+
+    # Indices aren't properly sorted w.r.t their distances
+    indices[0][0], indices[0][1] = indices[0][1], indices[0][0]
+
+    msg = "Extra items in the left set"
+    with pytest.raises(AssertionError, match=msg):
+        assert_argkmin_results_quasi_equality(
+            ref_dist, dist, ref_indices, indices, rtol, decimals
+        )
+
+    indices = np.copy(ref_indices)
+    dist = np.copy(ref_dist)
+
+    # Distances aren't properly sorted
+    dist[0][0], dist[0][1] = dist[0][1], dist[0][0]
+
+    msg = "Mismatched elements: 2 / 5"
+    with pytest.raises(AssertionError, match=msg):
+        assert_argkmin_results_quasi_equality(
+            ref_dist, dist, ref_indices, indices, rtol, decimals
+        )
+
+    indices = np.copy(ref_indices)
+    dist = np.copy(ref_dist)
+
+    # Indices and distances aren't properly sorted
+    indices[0][0], indices[0][1] = indices[0][1], indices[0][0]
+    dist[0][0], dist[0][1] = dist[0][1], dist[0][0]
+
+    msg = "Mismatched elements: 2 / 5"
+    with pytest.raises(AssertionError, match=msg):
+        assert_argkmin_results_quasi_equality(
+            ref_dist, dist, ref_indices, indices, rtol, decimals
+        )
+
 
 def test_assert_radius_neighborhood_results_quasi_equality():
 
@@ -276,14 +324,14 @@ def test_assert_radius_neighborhood_results_quasi_equality():
 
     ref_dist = np.array(
         [
-            np.array([1.2, 2.5, 6.1 + atol, 6.1, 6.1 - atol]),
-            np.array([1.0 + atol, 1.0 - atol, 1, 1.0 + atol]),
+            np.array([1.2, 2.5, 6.1 - atol, 6.1, 6.1 + atol]),
+            np.array([1.0 - atol, 1, 1.0 + atol, 1.0 + atol]),
         ]
     )
     ref_indices = np.array(
         [
-            [1, 2, 3, 4, 5],
-            [6, 7, 8, 9],
+            np.array([1, 2, 3, 4, 5]),
+            np.array([6, 7, 8, 9]),
         ]
     )
 
@@ -291,13 +339,13 @@ def test_assert_radius_neighborhood_results_quasi_equality():
         ref_dist, ref_dist, ref_indices, ref_indices, rtol, decimals
     )
 
-    dist = np.copy(ref_dist)
+    dist = copy.deepcopy(ref_dist)
 
     # Apply valid permutation on indices
     indices = np.array(
         [
-            [1, 2, 4, 5, 3],
-            [6, 9, 7, 8],
+            np.array([1, 2, 4, 5, 3]),
+            np.array([6, 9, 7, 8]),
         ]
     )
 
@@ -308,8 +356,8 @@ def test_assert_radius_neighborhood_results_quasi_equality():
     # Apply invalid permutation on indices
     indices = np.array(
         [
-            [2, 1, 3, 4, 5],
-            [6, 7, 8, 9],
+            np.array([2, 1, 3, 4, 5]),
+            np.array([6, 7, 8, 9]),
         ]
     )
 
@@ -319,16 +367,53 @@ def test_assert_radius_neighborhood_results_quasi_equality():
             ref_dist, dist, ref_indices, indices, rtol, decimals
         )
 
-    # Having missing last element is valid
-    dist = np.copy(ref_dist)
-    indices = np.copy(ref_indices)
+    # Having missing last elements is valid
+    indices = copy.deepcopy(ref_indices)
+    dist = copy.deepcopy(ref_dist)
 
-    dist[0] = dist[0][:-1]
     indices[0] = indices[0][:-1]
+    dist[0] = dist[0][:-1]
 
     assert_radius_neighborhood_results_quasi_equality(
         ref_dist, dist, ref_indices, indices, rtol, decimals
     )
+
+    indices = copy.deepcopy(ref_indices)
+    dist = copy.deepcopy(ref_dist)
+
+    # Indices aren't properly sorted w.r.t their distances
+    indices[0][0], indices[0][1] = indices[0][1], indices[0][0]
+
+    msg = "Extra items in the left set"
+    with pytest.raises(AssertionError, match=msg):
+        assert_radius_neighborhood_results_quasi_equality(
+            ref_dist, dist, ref_indices, indices, rtol, decimals
+        )
+
+    indices = copy.deepcopy(ref_indices)
+    dist = copy.deepcopy(ref_dist)
+
+    # Distances aren't properly sorted
+    dist[0][0], dist[0][1] = dist[0][1], dist[0][0]
+
+    msg = "Mismatched elements: 2 / 5"
+    with pytest.raises(AssertionError, match=msg):
+        assert_radius_neighborhood_results_quasi_equality(
+            ref_dist, dist, ref_indices, indices, rtol, decimals
+        )
+
+    indices = copy.deepcopy(ref_indices)
+    dist = copy.deepcopy(ref_dist)
+
+    # Indices and distances aren't properly sorted
+    indices[0][0], indices[0][1] = indices[0][1], indices[0][0]
+    dist[0][0], dist[0][1] = dist[0][1], dist[0][0]
+
+    msg = "Mismatched elements: 2 / 5"
+    with pytest.raises(AssertionError, match=msg):
+        assert_radius_neighborhood_results_quasi_equality(
+            ref_dist, dist, ref_indices, indices, rtol, decimals
+        )
 
 
 def test_pairwise_distances_reduction_is_usable_for():
