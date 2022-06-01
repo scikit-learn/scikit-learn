@@ -372,7 +372,7 @@ def roc_auc_score(
     multi_class="raise",
     labels=None,
 ):
-    """Compute Area Under the Receiver Operating Characteristic Curve (ROC AUC)
+    """Compute Area Under the Receiver Operating Characteristic Curve (ROC AUC) \
     from prediction scores.
 
     Note: this implementation can be used with binary, multiclass and
@@ -471,6 +471,16 @@ def roc_auc_score(
     Returns
     -------
     auc : float
+        Area Under the Curve score.
+
+    See Also
+    --------
+    average_precision_score : Area under the precision-recall curve.
+    roc_curve : Compute Receiver operating characteristic (ROC) curve.
+    RocCurveDisplay.from_estimator : Plot Receiver Operating Characteristic
+        (ROC) curve given an estimator and some data.
+    RocCurveDisplay.from_predictions : Plot Receiver Operating Characteristic
+        (ROC) curve given the true and predicted values.
 
     References
     ----------
@@ -492,15 +502,6 @@ def roc_auc_score(
             Under the ROC Curve for Multiple Class Classification Problems.
             Machine Learning, 45(2), 171-186.
             <http://link.springer.com/article/10.1023/A:1010920819831>`_
-
-    See Also
-    --------
-    average_precision_score : Area under the precision-recall curve.
-    roc_curve : Compute Receiver operating characteristic (ROC) curve.
-    RocCurveDisplay.from_estimator : Plot Receiver Operating Characteristic
-        (ROC) curve given an estimator and some data.
-    RocCurveDisplay.from_predictions : Plot Receiver Operating Characteristic
-        (ROC) curve given the true and predicted values.
 
     Examples
     --------
