@@ -650,6 +650,8 @@ def _set_checking_parameters(estimator):
     # avoid deprecated behaviour
     params = estimator.get_params()
     name = estimator.__class__.__name__
+    if name == "TSNE":
+        estimator.set_params(perplexity=2)
     if "n_iter" in params and name != "TSNE":
         estimator.set_params(n_iter=5)
     if "max_iter" in params:
@@ -1420,6 +1422,10 @@ def check_fit2d_1sample(name, estimator_orig):
     # min_cluster_size cannot be less than the data size for OPTICS.
     if name == "OPTICS":
         estimator.set_params(min_samples=1)
+
+    # perplexity cannot be more than the number of samples for TSNE.
+    if name == "TSNE":
+        estimator.set_params(perplexity=0.5)
 
     msgs = [
         "1 sample",
