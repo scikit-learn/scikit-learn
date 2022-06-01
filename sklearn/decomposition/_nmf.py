@@ -906,43 +906,44 @@ def _fit_multiplicative_update(
     return W, H, n_iter
 
 
-@validate_params(
-    {
-        "X": ["array-like", "sparse matrix"],
-        "W": ["array-like", None],
-        "H": ["array-like", None],
-        "n_components": [Interval(Integral, 1, None, closed="left"), None],
-        "init": [
-            StrOptions({"random", "nndsvd", "nndsvda", "nndsvdar", "custom"}),
-            None,
-        ],
-        "update_H": [bool],
-        "solver": [StrOptions({"mu", "cd"})],
-        "beta_loss": [
-            Interval(Real, None, None, closed="neither"),
-            StrOptions({"frobenius", "kullback-leibler", "itakura-saito"}),
-        ],
-        "tol": [Interval(Real, 0, None, closed="left")],
-        "max_iter": [Interval(Integral, 0, None, closed="left")],
-        "alpha": [
-            Interval(Real, 0, None, closed="left"),
-            StrOptions({"deprecated"}),  # internal={"deprecated"}),
-        ],
-        "alpha_W": [Interval(Real, 0, None, closed="left")],
-        "alpha_H": [Interval(Real, 0, None, closed="left"), StrOptions({"same"})],
-        "l1_ratio": [Interval(Real, 0, 1, closed="both")],
-        "regularization": [
-            StrOptions(
-                {"both", "components", "transformation", "deprecated"},
-                # internal={"deprecated"},
-            ),
-            None,
-        ],
-        "random_state": ["random_state"],
-        "verbose": [Interval(Integral, 0, None, closed="left"), bool],
-        "shuffle": [bool],
-    }
-)
+_parameter_constraints_of_non_negative_factorization = {
+    "X": ["array-like", "sparse matrix"],
+    "W": ["array-like", None],
+    "H": ["array-like", None],
+    "n_components": [Interval(Integral, 1, None, closed="left"), None],
+    "init": [
+        StrOptions({"random", "nndsvd", "nndsvda", "nndsvdar", "custom"}),
+        None,
+    ],
+    "update_H": [bool],
+    "solver": [StrOptions({"mu", "cd"})],
+    "beta_loss": [
+        StrOptions({"frobenius", "kullback-leibler", "itakura-saito"}),
+        Real,
+    ],
+    "tol": [Interval(Real, 0, None, closed="left")],
+    "max_iter": [Interval(Integral, 0, None, closed="left")],
+    "alpha": [
+        Interval(Real, 0, None, closed="left"),
+        StrOptions({"deprecated"}, internal={"deprecated"}),
+    ],
+    "alpha_W": [Interval(Real, 0, None, closed="left")],
+    "alpha_H": [Interval(Real, 0, None, closed="left"), StrOptions({"same"})],
+    "l1_ratio": [Interval(Real, 0, 1, closed="both")],
+    "regularization": [
+        StrOptions(
+            {"both", "components", "transformation", "deprecated"},
+            internal={"deprecated"},
+        ),
+        None,
+    ],
+    "random_state": ["random_state"],
+    "verbose": [Interval(Integral, 0, None, closed="left"), bool],
+    "shuffle": [bool],
+}
+
+
+@validate_params(_parameter_constraints_of_non_negative_factorization)
 def non_negative_factorization(
     X,
     W=None,
@@ -1201,8 +1202,8 @@ class _BaseNMF(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
             None,
         ],
         "beta_loss": [
-            Interval(Real, None, None, closed="neither"),
             StrOptions({"frobenius", "kullback-leibler", "itakura-saito"}),
+            Real,
         ],
         "tol": [Interval(Real, 0, None, closed="left")],
         "max_iter": [Interval(Integral, 0, None, closed="left")],
@@ -1584,13 +1585,13 @@ class NMF(_BaseNMF):
         "solver": [StrOptions({"mu", "cd"})],
         "alpha": [
             Interval(Real, 0, None, closed="left"),
-            StrOptions({"deprecated"}),  #  internal={"deprecated"}),
+            StrOptions({"deprecated"}, internal={"deprecated"}),
         ],
         "shuffle": [bool],
         "regularization": [
             StrOptions(
                 {"both", "components", "transformation", "deprecated"},
-                # internal={"deprecated"},
+                internal={"deprecated"},
             ),
             None,
         ],

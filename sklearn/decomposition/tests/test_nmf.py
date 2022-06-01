@@ -393,35 +393,19 @@ def test_non_negative_factorization_consistency(init, solver, alpha_W, alpha_H):
     assert_allclose(W_nmf_2, W_cls_2)
 
 
-# def test_non_negative_factorization_checking():
-#     A = np.ones((2, 2))
-#     # Test parameters checking in public function
-#     nnmf = non_negative_factorization
-#     msg = re.escape(
-#         "Number of components must be a positive integer; got (n_components=1.5)"
-#     )
-#     with pytest.raises(ValueError, match=msg):
-#         nnmf(A, A, A, 1.5, init="random")
-#     msg = re.escape(
-#         "Number of components must be a positive integer; got (n_components='2')"
-#     )
-#     with pytest.raises(ValueError, match=msg):
-#         nnmf(A, A, A, "2", init="random")
-#     msg = re.escape("Negative values in data passed to NMF (input H)")
-#     with pytest.raises(ValueError, match=msg):
-#         nnmf(A, A, -A, 2, init="custom")
-#     msg = re.escape("Negative values in data passed to NMF (input W)")
-#     with pytest.raises(ValueError, match=msg):
-#         nnmf(A, -A, A, 2, init="custom")
-#     msg = re.escape("Array passed to NMF (input H) is full of zeros")
-#     with pytest.raises(ValueError, match=msg):
-#         nnmf(A, A, 0 * A, 2, init="custom")
-
-#     with ignore_warnings(category=FutureWarning):
-#         # TODO remove in 1.2
-#         msg = "Invalid regularization parameter: got 'spam' instead of one of"
-#         with pytest.raises(ValueError, match=msg):
-#             nnmf(A, A, 0 * A, 2, init="custom", regularization="spam")
+def test_non_negative_factorization_checking():
+    A = np.ones((2, 2))
+    # Test parameters checking in public function
+    nnmf = non_negative_factorization
+    msg = re.escape("Negative values in data passed to NMF (input H)")
+    with pytest.raises(ValueError, match=msg):
+        nnmf(A, A, -A, 2, init="custom")
+    msg = re.escape("Negative values in data passed to NMF (input W)")
+    with pytest.raises(ValueError, match=msg):
+        nnmf(A, -A, A, 2, init="custom")
+    msg = re.escape("Array passed to NMF (input H) is full of zeros")
+    with pytest.raises(ValueError, match=msg):
+        nnmf(A, A, 0 * A, 2, init="custom")
 
 
 def _beta_divergence_dense(X, W, H, beta):
