@@ -63,6 +63,20 @@ Changelog
 - |Efficiency| Improve runtime performance of :class:`ensemble.IsolationForest`
   by avoiding data copies. :pr:`23252` by :user:`Zhehao Liu <MaxwellLZH>`.
 
+:mod:`sklearn.impute`
+.....................
+
+- |Fix| :class:`impute.SimpleImputer` uses the dtype seen in `fit` for
+  `transform` when the dtype is object. :pr:`22063` by `Thomas Fan`_.
+
+:mod:`sklearn.metrics`
+......................
+
+- |Feature| :func:`class_likelihood_ratios` is added to compute the positive and
+  negative likelihood ratios derived from the confusion matrix
+  of a binary classification problem. :pr:`22518` by
+  :user:`Arturo Amor <ArturoAmorQ>`.
+
 :mod:`sklearn.neighbors`
 ........................
 
