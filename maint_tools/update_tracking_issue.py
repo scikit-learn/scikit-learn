@@ -71,18 +71,19 @@ def get_issue():
 
 def create_or_update_issue(body=""):
     # Interact with GitHub API to create issue
-    header = f"**CI Failed on [{args.ci_name}]({args.link_to_ci_run})**"
-    body_text = f"{header}\n{body}"
+    link = f"[{args.ci_name}]({args.link_to_ci_run})"
     issue = get_issue()
 
     if issue is None:
         # Create new issue
-        issue = issue_repo.create_issue(title=title, body=body_text)
+        header = f"**CI failed on {link}**"
+        issue = issue_repo.create_issue(title=title, body=f"{header}\n{body}")
         print(f"Created issue in {args.issue_repo}#{issue.number}")
         sys.exit()
     else:
         # Add comment to existing issue
-        issue.create_comment(body=body_text)
+        header = f"**CI is still failing on {link}**"
+        issue.create_comment(body=f"{header}\n{body}")
         print(f"Commented on issue: {args.issue_repo}#{issue.number}")
         sys.exit()
 

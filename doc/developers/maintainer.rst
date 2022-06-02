@@ -288,7 +288,7 @@ Making a release
        sed -i "s/latestStable = '.*/latestStable = '0.999';/" versionwarning.js
        git add stable versionwarning.js
        git commit -m "Update stable to point to 0.999"
-       git push origin master
+       git push origin main
 
 .. _release_checklist:
 

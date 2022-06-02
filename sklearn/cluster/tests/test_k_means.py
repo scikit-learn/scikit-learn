@@ -1,6 +1,7 @@
 """Testing for K-means"""
 import re
 import sys
+import warnings
 
 import numpy as np
 from scipy import sparse as sp
@@ -31,6 +32,12 @@ from sklearn.cluster._k_means_common import _is_same_clustering
 from sklearn.datasets import make_blobs
 from io import StringIO
 
+# TODO(1.4): Remove
+msg = (
+    r"The default value of `n_init` will change from \d* to 'auto' in 1.4. Set the"
+    r" value of `n_init` explicitly to suppress the warning:FutureWarning"
+)
+pytestmark = pytest.mark.filterwarnings("ignore:" + msg)
 
 # non centered, sparse centers to check the
 centers = np.array(
@@ -1029,6 +1036,35 @@ def test_inertia(dtype):
     assert_allclose(inertia_sparse, expected, rtol=1e-6)
 
 
+# TODO(1.4): Remove
+@pytest.mark.parametrize("Klass, default_n_init", [(KMeans, 10), (MiniBatchKMeans, 3)])
+def test_change_n_init_future_warning(Klass, default_n_init):
+    est = Klass(n_init=1)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", FutureWarning)
+        est.fit(X)
+
+    default_n_init = 10 if Klass.__name__ == "KMeans" else 3
+    msg = (
+        f"The default value of `n_init` will change from {default_n_init} to 'auto'"
+        " in 1.4"
+    )
+    est = Klass()
+    with pytest.warns(FutureWarning, match=msg):
+        est.fit(X)
+
+
+@pytest.mark.parametrize("Klass, default_n_init", [(KMeans, 10), (MiniBatchKMeans, 3)])
+def test_n_init_auto(Klass, default_n_init):
+    est = Klass(n_init="auto", init="k-means++")
+    est.fit(X)
+    assert est._n_init == 1
+
+    est = Klass(n_init="auto", init="random")
+    est.fit(X)
+    assert est._n_init == 10 if Klass.__name__ == "KMeans" else 3
+
+
 @pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
 def test_sample_weight_unchanged(Estimator):
     # Check that sample_weight is not modified in place by KMeans (#17204)
@@ -1043,8 +1079,6 @@ def test_sample_weight_unchanged(Estimator):
 @pytest.mark.parametrize(
     "param, match",
     [
-        ({"n_init": 0}, r"n_init should be > 0"),
-        ({"max_iter": 0}, r"max_iter should be > 0"),
         ({"n_clusters": n_samples + 1}, r"n_samples.* should be >= n_clusters"),
         (
             {"init": X[:2]},
@@ -1066,11 +1100,6 @@ def test_sample_weight_unchanged(Estimator):
             r"The shape of the initial centers .* does not match "
             r"the number of features of the data",
         ),
-        (
-            {"init": "wrong"},
-            r"init should be either 'k-means\+\+', 'random', "
-            r"an array-like or a callable",
-        ),
     ],
 )
 def test_wrong_params(Estimator, param, match):
@@ -1084,39 +1113,7 @@ def test_wrong_params(Estimator, param, match):
 
 @pytest.mark.parametrize(
     "param, match",
-    [({"algorithm": "wrong"}, r"Algorithm must be either 'lloyd' or 'elkan'")],
-)
-def test_kmeans_wrong_params(param, match):
-    # Check that error are raised with clear error message when wrong values
-    # are passed for the KMeans specific parameters
-    with pytest.raises(ValueError, match=match):
-        KMeans(**param).fit(X)
-
-
-@pytest.mark.parametrize(
-    "param, match",
     [
-        ({"max_no_improvement": -1}, r"max_no_improvement should be >= 0"),
-        ({"batch_size": -1}, r"batch_size should be > 0"),
-        ({"init_size": -1}, r"init_size should be > 0"),
-        ({"reassignment_ratio": -1}, r"reassignment_ratio should be >= 0"),
-    ],
-)
-def test_minibatch_kmeans_wrong_params(param, match):
-    # Check that error are raised with clear error message when wrong values
-    # are passed for the MiniBatchKMeans specific parameters
-    with pytest.raises(ValueError, match=match):
-        MiniBatchKMeans(**param).fit(X)
-
-
-@pytest.mark.parametrize(
-    "param, match",
-    [
-        (
-            {"n_local_trials": 0},
-            r"n_local_trials is set to 0 but should be an "
-            r"integer value greater than zero",
-        ),
         (
             {"x_squared_norms": X[:2]},
             r"The length of x_squared_norms .* should "

@@ -564,7 +564,8 @@ class TSNE(BaseEstimator):
         is used in other manifold learning algorithms. Larger datasets
         usually require a larger perplexity. Consider selecting a value
         between 5 and 50. Different values can result in significantly
-        different results.
+        different results. The perplexity must be less that the number
+        of samples.
 
     early_exaggeration : float, default=12.0
         Controls how tight natural clusters in the original space are in
@@ -739,7 +740,7 @@ class TSNE(BaseEstimator):
     >>> from sklearn.manifold import TSNE
     >>> X = np.array([[0, 0, 0], [0, 1, 1], [1, 0, 1], [1, 1, 1]])
     >>> X_embedded = TSNE(n_components=2, learning_rate='auto',
-    ...                   init='random').fit_transform(X)
+    ...                   init='random', perplexity=3).fit_transform(X)
     >>> X_embedded.shape
     (4, 2)
     """
@@ -786,6 +787,10 @@ class TSNE(BaseEstimator):
         self.angle = angle
         self.n_jobs = n_jobs
         self.square_distances = square_distances
+
+    def _check_params_vs_input(self, X):
+        if self.perplexity >= X.shape[0]:
+            raise ValueError("perplexity must be less than n_samples")
 
     def _fit(self, X, skip_num_points=0):
         """Private function to fit the model using X as training data."""
@@ -1114,6 +1119,7 @@ class TSNE(BaseEstimator):
         X_new : ndarray of shape (n_samples, n_components)
             Embedding of the training data in low-dimensional space.
         """
+        self._check_params_vs_input(X)
         embedding = self._fit(X)
         self.embedding_ = embedding
         return self.embedding_

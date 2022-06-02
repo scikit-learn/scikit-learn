@@ -99,7 +99,7 @@ from the repository using the function
 For example, to download a dataset of gene expressions in mice brains::
 
   >>> from sklearn.datasets import fetch_openml
-  >>> mice = fetch_openml(name='miceprotein', version=4)
+  >>> mice = fetch_openml(name='miceprotein', version=4, parser="auto")
 
 To fully specify a dataset, you need to provide a name and a version, though
 the version is optional, see :ref:`openml_versions` below.
@@ -147,7 +147,7 @@ dataset on the openml website::
 
 The ``data_id`` also uniquely identifies a dataset from OpenML::
 
-  >>> mice = fetch_openml(data_id=40966)
+  >>> mice = fetch_openml(data_id=40966, parser="auto")
   >>> mice.details # doctest: +SKIP
   {'id': '4550', 'name': 'MiceProtein', 'version': '1', 'format': 'ARFF',
   'creator': ...,
@@ -171,8 +171,8 @@ which can contain entirely different datasets.
 If a particular version of a dataset has been found to contain significant
 issues, it might be deactivated. Using a name to specify a dataset will yield
 the earliest version of a dataset that is still active. That means that
-``fetch_openml(name="miceprotein")`` can yield different results at different
-times if earlier versions become inactive.
+``fetch_openml(name="miceprotein", parser="auto")`` can yield different results
+at different times if earlier versions become inactive.
 You can see that the dataset with ``data_id`` 40966 that we fetched above is
 the first version of the "miceprotein" dataset::
 
@@ -182,19 +182,19 @@ the first version of the "miceprotein" dataset::
 In fact, this dataset only has one version. The iris dataset on the other hand
 has multiple versions::
 
-  >>> iris = fetch_openml(name="iris")
+  >>> iris = fetch_openml(name="iris", parser="auto")
   >>> iris.details['version']  #doctest: +SKIP
   '1'
   >>> iris.details['id']  #doctest: +SKIP
   '61'
 
-  >>> iris_61 = fetch_openml(data_id=61)
+  >>> iris_61 = fetch_openml(data_id=61, parser="auto")
   >>> iris_61.details['version']
   '1'
   >>> iris_61.details['id']
   '61'
 
-  >>> iris_969 = fetch_openml(data_id=969)
+  >>> iris_969 = fetch_openml(data_id=969, parser="auto")
   >>> iris_969.details['version']
   '3'
   >>> iris_969.details['id']
@@ -212,7 +212,7 @@ binarized version of the data::
 You can also specify both the name and the version, which also uniquely
 identifies the dataset::
 
-  >>> iris_version_3 = fetch_openml(name="iris", version=3)
+  >>> iris_version_3 = fetch_openml(name="iris", version=3, parser="auto")
   >>> iris_version_3.details['version']
   '3'
   >>> iris_version_3.details['id']
@@ -224,6 +224,45 @@ identifies the dataset::
  * :arxiv:`Vanschoren, van Rijn, Bischl and Torgo. "OpenML: networked science in
    machine learning" ACM SIGKDD Explorations Newsletter, 15(2), 49-60, 2014.
    <1407.7722>`
+
+.. _openml_parser:
+
+ARFF parser
+~~~~~~~~~~~
+
+From version 1.2, scikit-learn provides a new keyword argument `parser` that
+provides several options to parse the ARFF files provided by OpenML. The legacy
+parser (i.e. `parser="liac-arff"`) is based on the project
+`LIAC-ARFF <https://github.com/renatopp/liac-arff>`_. This parser is however
+slow and consume more memory than required. A new parser based on pandas
+(i.e. `parser="pandas"`) is both faster and more memory efficient.
+However, this parser does not support sparse data.
+Therefore, we recommend using `parser="auto"` which will use the best parser
+available for the requested dataset.
+
+The `"pandas"` and `"liac-arff"` parsers can lead to different data types in
+the output. The notable differences are the following:
+
+- The `"liac-arff"` parser always encodes categorical features as `str`
+  objects. To the contrary, the `"pandas"` parser instead infers the type while
+  reading and numerical categories will be casted into integers whenever
+  possible.
+- The `"liac-arff"` parser uses float64 to encode numerical features tagged as
+  'REAL' and 'NUMERICAL' in the metadata. The `"pandas"` parser instead infers
+  if these numerical features corresponds to integers and uses panda's Integer
+  extension dtype.
+- In particular, classification datasets with integer categories are typically
+  loaded as such `(0, 1, ...)` with the `"pandas"` parser while `"liac-arff"`
+  will force the use of string encoded class labels such as `"0"`, `"1"` and so
+  on.
+
+In addition, when `as_frame=False` is used, the `"liac-arff"` parser returns
+ordinally encoded data where the categories are provided in the attribute
+`categories` of the `Bunch` instance. Instead, `"pandas"` returns a NumPy array
+were the categories. Then it's up to the user to design a feature
+engineering pipeline with an instance of  `OneHotEncoder` or
+`OrdinalEncoder` typically wrapped in a `ColumnTransformer` to
+preprocess the categorical columns explicitly. See for instance: :ref:`sphx_glr_auto_examples_compose_plot_column_transformer_mixed_types.py`.
 
 .. _external_datasets:
 

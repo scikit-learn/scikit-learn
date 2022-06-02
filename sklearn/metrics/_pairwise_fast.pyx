@@ -4,24 +4,23 @@
 #
 # License: BSD 3 clause
 
-import numpy as np
-cimport numpy as np
+cimport numpy as cnp
 from cython cimport floating
 from cython.parallel cimport prange
 from libc.math cimport fabs
 
 from ..utils._openmp_helpers import _openmp_effective_n_threads
 
-np.import_array()
+cnp.import_array()
 
 
 def _chi2_kernel_fast(floating[:, :] X,
                       floating[:, :] Y,
                       floating[:, :] result):
-    cdef np.npy_intp i, j, k
-    cdef np.npy_intp n_samples_X = X.shape[0]
-    cdef np.npy_intp n_samples_Y = Y.shape[0]
-    cdef np.npy_intp n_features = X.shape[1]
+    cdef cnp.npy_intp i, j, k
+    cdef cnp.npy_intp n_samples_X = X.shape[0]
+    cdef cnp.npy_intp n_samples_Y = Y.shape[0]
+    cdef cnp.npy_intp n_features = X.shape[1]
     cdef double res, nom, denom
 
     with nogil:
@@ -47,7 +46,7 @@ def _sparse_manhattan(floating[::1] X_data, int[:] X_indices, int[:] X_indptr,
     ...                   Y.data, Y.indices, Y.indptr,
     ...                   D)
     """
-    cdef np.npy_intp px, py, i, j, ix, iy
+    cdef cnp.npy_intp px, py, i, j, ix, iy
     cdef double d = 0.0
 
     cdef int m = D.shape[0]
