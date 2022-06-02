@@ -34,6 +34,7 @@ from ..utils import (
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
 from ..utils.validation import check_non_negative
+from ..utils._param_validation import Interval, Integral, Real, StrOptions
 from ..utils.fixes import delayed, sp_version
 from ..utils.fixes import parse_version
 from ..exceptions import DataConversionWarning, EfficiencyWarning
@@ -385,6 +386,17 @@ def _radius_neighbors_from_graph(graph, radius, return_distance):
 
 class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
     """Base class for nearest neighbors estimators."""
+    _parameter_constraints = {
+        "n_neighbors": [Interval(Integral, 1, None, closed="left")],
+        "radius": [Interval(Integral, 1, None, closed="left"), None],
+        "weights": [StrOptions({"uniform", "distance"}), callable],
+        "algorithm": [StrOptions({"auto", "ball_tree", "kd_tree", "brute"}), callable],
+        "leaf_size": [Interval(Integral, 1, None, closed="left")],
+        "p": [Interval(Integral, 1, None, closed="left")],
+        "metric": [StrOptions({"minkowski"}), callable],
+        "metric_params": [dict, None],
+        "n_jobs": [Interval(Integral, -1, None, closed="left"), None],
+    }
 
     @abstractmethod
     def __init__(
