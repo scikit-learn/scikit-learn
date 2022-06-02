@@ -508,11 +508,5 @@ def test_spectral_eigen_tol_auto(monkeypatch, solver):
     spectral_embedding(S, random_state=42, eigen_solver=solver, eigen_tol="auto")
     mocked_solver.assert_called()
 
-    print(mocked_solver.call_args)
-
-    args, kwargs = mocked_solver.call_args
-
-    print(kwargs)
-    print(type(kwargs))
-
-    assert mocked_solver.call_args.kwargs["tol"] == default_value
+    _, kwargs = mocked_solver.call_args
+    assert kwargs["tol"] == default_value
