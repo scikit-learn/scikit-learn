@@ -311,6 +311,7 @@ Some of these are restricted to the binary classification case:
 
    precision_recall_curve
    roc_curve
+   class_likelihood_ratios
    det_curve
 
 
@@ -875,6 +876,8 @@ In this context, we can define the notions of precision, recall and F-measure:
 .. math::
 
    F_\beta = (1 + \beta^2) \frac{\text{precision} \times \text{recall}}{\beta^2 \text{precision} + \text{recall}}.
+
+Sometimes recall is also called ''sensitivity''.
 
 Here are some small examples in binary classification::
 
@@ -1755,6 +1758,133 @@ the same does a lower Brier score loss always mean better calibration"
   .. [Flach2008] Flach, Peter, and Edson Matsubara. `"On classification, ranking,
     and probability estimation." <https://drops.dagstuhl.de/opus/volltexte/2008/1382/>`_
     Dagstuhl Seminar Proceedings. Schloss Dagstuhl-Leibniz-Zentrum fr Informatik (2008).
+
+.. _class_likelihood_ratios:
+
+Class likelihood ratios
+-----------------------
+
+The :func:`class_likelihood_ratios` function computes the `positive and negative
+likelihood ratios
+<https://en.wikipedia.org/wiki/Likelihood_ratios_in_diagnostic_testing>`_
+:math:`LR_\pm` for binary classes, which can be interpreted as the ratio of
+post-test to pre-test odds as explained below. As a consequence, this metric is
+invariant w.r.t. the class prevalence (the number of samples in the positive
+class divided by the total number of samples) and **can be extrapolated between
+populations regardless of any possible class imbalance.**
+
+The :math:`LR_\pm` metrics are therefore very useful in settings where the data
+available to learn and evaluate a classifier is a study population with nearly
+balanced classes, such as a case-control study, while the target application,
+i.e. the general population, has very low prevalence.
+
+The positive likelihood ratio :math:`LR_+` is the probability of a classifier to
+correctly predict that a sample belongs to the positive class divided by the
+probability of predicting the positive class for a sample belonging to the
+negative class:
+
+.. math::
+
+   LR_+ = \frac{\text{PR}(P+|T+)}{\text{PR}(P+|T-)}.
+
+The notation here refers to predicted (:math:`P`) or true (:math:`T`) label and
+the sign :math:`+` and :math:`-` refer to the positive and negative class,
+respectively, e.g. :math:`P+` stands for "predicted positive".
+
+Analogously, the negative likelihood ratio :math:`LR_-` is the probability of a
+sample of the positive class being classified as belonging to the negative class
+divided by the probability of a sample of the negative class being correctly
+classified:
+
+.. math::
+
+   LR_- = \frac{\text{PR}(P-|T+)}{\text{PR}(P-|T-)}.
+
+For classifiers above chance :math:`LR_+` above 1 **higher is better**, while
+:math:`LR_-` ranges from 0 to 1 and **lower is better**.
+Values of :math:`LR_\pm\approx 1` correspond to chance level.
+
+Notice that probabilities differ from counts, for instance
+:math:`\operatorname{PR}(P+|T+)` is not equal to the number of true positive
+counts ``tp`` (see `the wikipedia page
+<https://en.wikipedia.org/wiki/Likelihood_ratios_in_diagnostic_testing>`_ for
+the actual formulas).
+
+**Interpretation across varying prevalence:**
+
+Both class likelihood ratios are interpretable in terms of an odds ratio
+(pre-test and post-tests):
+
+.. math::
+
+   \text{post-test odds} = \text{Likelihood ratio} \times \text{pre-test odds}.
+
+Odds are in general related to probabilities via
+
+.. math::
+
+   \text{odds} = \frac{\text{probability}}{1 - \text{probability}},
+
+or equivalently
+
+.. math::
+
+   \text{probability} = \frac{\text{odds}}{1 + \text{odds}}.
+
+On a given population, the pre-test probability is given by the prevalence. By
+converting odds to probabilities, the likelihood ratios can be translated into a
+probability of truly belonging to either class before and after a classifier
+prediction:
+
+.. math::
+
+   \text{post-test odds} = \text{Likelihood ratio} \times
+   \frac{\text{pre-test probability}}{1 - \text{pre-test probability}},
+
+.. math::
+
+   \text{post-test probability} = \frac{\text{post-test odds}}{1 + \text{post-test odds}}.
+
+**Mathematical divergences:**
+
+The positive likelihood ratio is undefined when :math:`fp = 0`, which can be
+interpreted as the classifier perfectly identifying positive cases. If :math:`fp
+= 0` and additionally :math:`tp = 0`, this leads to a zero/zero division. This
+happens, for instance, when using a `DummyClassifier` that always predicts the
+negative class and therefore the interpretation as a perfect classifier is lost.
+
+The negative likelihood ratio is undefined when :math:`tn = 0`. Such divergence
+is invalid, as :math:`LR_- > 1` would indicate an increase in the odds of a
+sample belonging to the positive class after being classified as negative, as if
+the act of classifying caused the positive condition. This includes the case of
+a `DummyClassifier` that always predicts the positive class (i.e. when
+:math:`tn=fn=0`).
+
+Both class likelihood ratios are undefined when :math:`tp=fn=0`, which means
+that no samples of the positive class were present in the testing set. This can
+also happen when cross-validating highly imbalanced data.
+
+In all the previous cases the :func:`class_likelihood_ratios` function raises by
+default an appropriate warning message and returns `nan` to avoid pollution when
+averaging over cross-validation folds.
+
+For a worked-out demonstration of the :func:`class_likelihood_ratios` function,
+see the example below.
+
+.. topic:: Examples:
+
+  * :ref:`sphx_glr_auto_examples_model_selection_plot_likelihood_ratios.py`
+
+.. topic:: References:
+
+  * `Wikipedia entry for Likelihood ratios in diagnostic testing
+    <https://en.wikipedia.org/wiki/Likelihood_ratios_in_diagnostic_testing>`_
+
+  * Brenner, H., & Gefeller, O. (1997).
+    Variation of sensitivity, specificity, likelihood ratios and predictive
+    values with disease prevalence.
+    Statistics in medicine, 16(9), 981-991.
+
 
 .. _multilabel_ranking_metrics:
 

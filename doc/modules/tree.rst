@@ -452,7 +452,7 @@ feature :math:`j` and threshold :math:`t_m`, partition the data into
 
 .. math::
 
-    Q_m^{left}(\theta) = \{(x, y) | x_j <= t_m\}
+    Q_m^{left}(\theta) = \{(x, y) | x_j \leq t_m\}
 
     Q_m^{right}(\theta) = Q_m \setminus Q_m^{left}(\theta)
 
