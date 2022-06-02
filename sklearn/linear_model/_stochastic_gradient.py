@@ -22,6 +22,9 @@ from ..utils.metaestimators import available_if
 from ..utils.extmath import safe_sparse_dot
 from ..utils.multiclass import _check_partial_fit_first_call
 from ..utils.validation import check_is_fitted, _check_sample_weight
+from ..utils._param_validation import Interval
+from ..utils._param_validation import StrOptions
+from ..utils._param_validation import validate_params
 from ..utils.fixes import delayed
 from ..exceptions import ConvergenceWarning
 from ..model_selection import StratifiedShuffleSplit, ShuffleSplit
@@ -75,6 +78,28 @@ class _ValidationScoreCallback:
 
 class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
     """Base class for SGD classification and regression."""
+
+    _parameter_constraints = {
+        "penalty": [StrOptions({"l2", "l1", "elasticnet","none"}), None], #done
+        "alpha": [ Interval(Integral, 0, None, closed="left")], #done
+        "C": [Interval(Integral, 1, None, closed="left")],
+        "l1_ratio": [Interval(Real, 0.0, 1.0, closed="both")],
+        "fit_intercept": [bool],
+        "max_iter": [Interval(Real,0.0,1.0,closed="neither"), None],
+        "tol": ["random_state"],
+        "shuffle": [bool], #done
+        "verbose": ["random_state"],
+        "epsilon": ["random_state"],
+        "random_state": ["random_state"],
+        "learning_rate": [StrOptions({"constant", "optimal", "invscaling", "adaptive", "pa1", "pa2"}, internal={"optimal"})],
+        "eta0": ["random_state"],
+        "power_t": ["random_state"],
+        "early_stopping": [bool], #done
+        "validation_fraction": [Interval(Real, 0.0, 1.0, closed="neither")],
+        "n_iter_no_change": [Interval(Integer, 1, None, closed="left")],
+        "warm_start": [bool],
+        "average": [bool],
+    }
 
     def __init__(
         self,
