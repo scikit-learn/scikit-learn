@@ -766,6 +766,8 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         If "precomputed", a distance matrix (instead of a similarity matrix)
         is needed as input for the fit method.
 
+        .. versionadded:: 1.2
+
     memory : str or object with the joblib.Memory interface, default=None
         Used to cache the output of the computation of the tree.
         By default, no caching is done. If a string is given, it is the
@@ -973,7 +975,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
 
         if self.linkage == "ward" and self._metric != "euclidean":
             raise ValueError(
-                "%s was provided as affinity. Ward can only "
+                "%s was provided as metric. Ward can only "
                 "work with euclidean distances." % (self._metric,)
             )
 
@@ -1102,6 +1104,8 @@ class FeatureAgglomeration(
         Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
         "manhattan", "cosine", or 'precomputed'.
         If linkage is "ward", only "euclidean" is accepted.
+
+        .. versionadded:: 1.2
 
     memory : str or object with the joblib.Memory interface, default=None
         Used to cache the output of the computation of the tree.
