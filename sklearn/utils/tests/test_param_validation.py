@@ -78,8 +78,8 @@ def test_interval_inf_in_bounds():
     assert -np.inf in interval
 
     interval = Interval(Real, None, None, closed="neither")
-    assert not np.inf in interval
-    assert not -np.inf in interval
+    assert np.inf not in interval
+    assert -np.inf not in interval
 
 
 @pytest.mark.parametrize(
