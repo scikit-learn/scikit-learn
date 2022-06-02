@@ -582,8 +582,8 @@ class QRCholeskyNewtonSolver(BaseCholeskyNewtonSolver):
 class LSMRNewtonSolver(NewtonSolver):
     """LSMR based Newton solver.
 
-    The inner solver uses LSMR after the Newton update is cast into the IRLS
-    formulation. This means
+    The inner solver uses LSMR [1] after the Newton update is cast into the iteratively
+    reweighted least squares (IRLS) formulation. This means
 
         H @ coef_newton = -G
 
@@ -608,7 +608,15 @@ class LSMRNewtonSolver(NewtonSolver):
             for a pure L2 penalty without intercept it equals the identity matrix.
 
     Note that this solver can naturally deal with sparse X.
-    """
+
+    References
+    ----------
+    .. [1] :arxiv:`Fong & Saunders "LSMR: An iterative algorithm for sparse
+           least-squares problems" <1006.0758>`
+           See also
+           https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.linalg.lsmr.html
+
+    """  # noqa: E501
 
     def setup(self, X, y, sample_weight):
         """Setup.
