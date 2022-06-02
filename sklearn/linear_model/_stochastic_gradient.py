@@ -7,6 +7,7 @@ Descent (SGD).
 """
 
 import numpy as np
+from numbers import Integral, Real
 import warnings
 
 from abc import ABCMeta, abstractmethod
@@ -85,10 +86,10 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         "C": [Interval(Integral, 1, None, closed="left")],  # redundant?
         "l1_ratio": [Interval(Real, 0, 1, closed="both")],  # done
         "fit_intercept": [bool],  # done
-        "max_iter": [Interval(Integer, 1, None, closed="left")],  # done
+        "max_iter": [Interval(Integral, 1, None, closed="left")],  # done
         "tol": [Interval(Real,0,None,closed="left")],  # done
         "shuffle": [bool],  # done
-        "verbose": [Interval(Integer,0,None,closed="left")],
+        "verbose": [Interval(Integral,0,None,closed="left")],
         "epsilon": [Interval(Real,0,None,closed="left")],
         "random_state": ["random_state"],
         "learning_rate": [StrOptions({"constant", "optimal", "invscaling", "adaptive", "pa1", "pa2"})],
@@ -96,9 +97,9 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         "power_t": [Interval(Real, None,None,closed="neither")],
         "early_stopping": [bool],  # done
         "validation_fraction": [Interval(Real, 0, 1, closed="neither")],
-        "n_iter_no_change": [Interval(Integer, 1, None, closed="left")],
+        "n_iter_no_change": [Interval(Integral, 1, None, closed="left")],
         "warm_start": [bool],
-        "average": [Interval(Integer, 1, None, closed="left"),bool],
+        "average": [Interval(Integral, 1, None, closed="left"),bool],
     }
 
     def __init__(
