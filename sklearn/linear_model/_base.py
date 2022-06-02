@@ -640,7 +640,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
 
     _parameter_constraints = {
         "fit_intercept": [bool],
-        "normalize": [StrOptions({"deprecated"}), bool],
+        "normalize": [StrOptions({"deprecated"}, internal={"deprecated"}), bool],
         "copy_X": [bool],
         "n_jobs": [None, Integral],
         "positive": [bool],
