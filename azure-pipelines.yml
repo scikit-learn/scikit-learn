@@ -275,15 +275,13 @@ jobs:
     matrix:
       py38_conda_forge_mkl:
         DISTRIB: 'conda'
-        CONDA_CHANNEL: 'conda-forge'
-        PYTHON_VERSION: '3.8'
+        LOCK_FILE: ./build_tools/azure/py38_conda_forge_mkl_win-64_conda.lock
         CHECK_WARNINGS: 'true'
-        PYTHON_ARCH: '64'
-        # Unpin when pytest stalling issue is fixed
-        PYTEST_VERSION: '6.2.5'
         COVERAGE: 'true'
         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '7'  # non-default seed
       py38_pip_openblas_32bit:
+        DISTRIB: 'pip-windows'
         PYTHON_VERSION: '3.8'
         PYTHON_ARCH: '32'
+        LOCK_FILE: ./build_tools/azure/py38_pip_openblas_32bit_lock.txt
         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '8'  # non-default seed

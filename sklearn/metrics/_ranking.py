@@ -55,14 +55,15 @@ def auc(x, y):
     Parameters
     ----------
     x : ndarray of shape (n,)
-        x coordinates. These must be either monotonic increasing or monotonic
+        X coordinates. These must be either monotonic increasing or monotonic
         decreasing.
     y : ndarray of shape, (n,)
-        y coordinates.
+        Y coordinates.
 
     Returns
     -------
     auc : float
+        Area Under the Curve.
 
     See Also
     --------
@@ -371,7 +372,7 @@ def roc_auc_score(
     multi_class="raise",
     labels=None,
 ):
-    """Compute Area Under the Receiver Operating Characteristic Curve (ROC AUC)
+    """Compute Area Under the Receiver Operating Characteristic Curve (ROC AUC) \
     from prediction scores.
 
     Note: this implementation can be used with binary, multiclass and
@@ -470,6 +471,16 @@ def roc_auc_score(
     Returns
     -------
     auc : float
+        Area Under the Curve score.
+
+    See Also
+    --------
+    average_precision_score : Area under the precision-recall curve.
+    roc_curve : Compute Receiver operating characteristic (ROC) curve.
+    RocCurveDisplay.from_estimator : Plot Receiver Operating Characteristic
+        (ROC) curve given an estimator and some data.
+    RocCurveDisplay.from_predictions : Plot Receiver Operating Characteristic
+        (ROC) curve given the true and predicted values.
 
     References
     ----------
@@ -491,15 +502,6 @@ def roc_auc_score(
             Under the ROC Curve for Multiple Class Classification Problems.
             Machine Learning, 45(2), 171-186.
             <http://link.springer.com/article/10.1023/A:1010920819831>`_
-
-    See Also
-    --------
-    average_precision_score : Area under the precision-recall curve.
-    roc_curve : Compute Receiver operating characteristic (ROC) curve.
-    RocCurveDisplay.from_estimator : Plot Receiver Operating Characteristic
-        (ROC) curve given an estimator and some data.
-    RocCurveDisplay.from_predictions : Plot Receiver Operating Characteristic
-        (ROC) curve given the true and predicted values.
 
     Examples
     --------
@@ -1057,6 +1059,7 @@ def label_ranking_average_precision_score(y_true, y_score, *, sample_weight=None
     Returns
     -------
     score : float
+        Ranking-based average precision score.
 
     Examples
     --------
@@ -1066,7 +1069,6 @@ def label_ranking_average_precision_score(y_true, y_score, *, sample_weight=None
     >>> y_score = np.array([[0.75, 0.5, 1], [1, 0.2, 0.1]])
     >>> label_ranking_average_precision_score(y_true, y_score)
     0.416...
-
     """
     check_consistent_length(y_true, y_score, sample_weight)
     y_true = check_array(y_true, ensure_2d=False)
