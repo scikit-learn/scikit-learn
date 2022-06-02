@@ -2119,8 +2119,7 @@ def pairwise_kernels(
 
     Returns
     -------
-    K : ndarray of shape (n_samples_X, n_samples_X) or
-            (n_samples_X, n_samples_Y)
+    K : ndarray of shape (n_samples_X, n_samples_X) or (n_samples_X, n_samples_Y)
         A kernel matrix K such that K_{i, j} is the kernel between the
         ith and jth vectors of the given matrix X, if Y is None.
         If Y is not None, then K_{i, j} is the kernel between the ith array
