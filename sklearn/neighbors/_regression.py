@@ -152,6 +152,8 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
     >>> print(neigh.predict([[1.5]]))
     [0.5]
     """
+    _parameter_constraints = {**NeighborsBase._parameter_constraints}
+    _parameter_constraints.pop("radius")
 
     def __init__(
         self,
@@ -198,7 +200,7 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
         self : KNeighborsRegressor
             The fitted k-nearest neighbors regressor.
         """
-        self.weights = _check_weights(self.weights)
+        self._validate_params()
 
         return self._fit(X, y)
 

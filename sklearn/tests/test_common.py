@@ -508,7 +508,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "IterativeImputer",
     "KBinsDiscretizer",
     "KNNImputer",
-    "KNeighborsRegressor",
     "KNeighborsTransformer",
     "KernelDensity",
     "KernelPCA",
