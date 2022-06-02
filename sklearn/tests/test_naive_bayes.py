@@ -865,22 +865,34 @@ def test_alpha():
 
 
 def test_check_alpha():
-    # Non-regression test for:
-    # https://github.com/scikit-learn/scikit-learn/issues/10772
-    # Test force_alpha if alpha < _ALPHA_MIN
-    _ALPHA_MIN = 1e-10  # const
-    msg2 = (
+    """The provided value for alpha must only be
+    used if alpha < _ALPHA_MIN and force_alpha is True.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/10772
+    """
+    _ALPHA_MIN = 1e-10
+    b = BernoulliNB(alpha=0, force_alpha=True)
+    assert b._check_alpha() == 0
+
+    b = BernoulliNB(alpha=np.array([0.0, 1.0]), force_alpha=True)
+    assert_array_equal(b._check_alpha(), np.array([0.0, 1.0]))
+
+    msg = (
         "alpha too small will result in numeric errors, setting alpha = %.1e"
         % _ALPHA_MIN
     )
-    b = BernoulliNB(alpha=0, force_alpha=True)
-    assert b._check_alpha() == 0
     b = BernoulliNB(alpha=0, force_alpha=False)
-    with pytest.warns(UserWarning, match=msg2):
+    with pytest.warns(UserWarning, match=msg):
         assert b._check_alpha() == _ALPHA_MIN
+
     b = BernoulliNB(alpha=0)
-    with pytest.warns(UserWarning, match=msg2):
+    with pytest.warns(UserWarning, match=msg):
         assert b._check_alpha() == _ALPHA_MIN
+
+    b = BernoulliNB(alpha=np.array([0.0, 1.0]), force_alpha=False)
+    with pytest.warns(UserWarning, match=msg):
+        assert_array_equal(b._check_alpha(), np.array([_ALPHA_MIN, 1.0]))
 
 
 def test_alpha_vector():
