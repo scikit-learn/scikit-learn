@@ -1007,8 +1007,8 @@ Changelog
 - |Fix| A new parameter `force_alpha` was added to
   :class:`naive_bayes.BernoulliNB`, :class:`naive_bayes.ComplementNB`,
   :class:`naive_bayes.CategoricalNB`, and :class:`naive_bayes.MultinomialNB`,
-  allowing user to set parameter alpha to a very small number, greater or equal
-  0, which was earlier automatically changed to `1e-10` instead.
+  allowing user to set parameter `alpha` to a very small number, greater or equal
+  `0`, which was earlier automatically changed to `1e-10` instead.
   :pr:`16747`, :pr:`18805`, :pr:`22269` by :user:`arka204`, :user:`hongshaoyang`,
   and :user:`Meekail Zain <micky774>`.
 
