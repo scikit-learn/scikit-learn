@@ -41,6 +41,13 @@ from sklearn.exceptions import NotFittedError
 from sklearn import datasets
 from sklearn.datasets import load_breast_cancer
 
+# TODO(1.4): Remove
+msg = (
+    r"`force_alpha` was deprecated in 1.2 and will be removed in 1.4 with"
+    r".*:FutureWarning"
+)
+pytestmark = pytest.mark.filterwarnings("ignore:" + msg)
+
 iris = datasets.load_iris()
 rng = np.random.RandomState(0)
 perm = rng.permutation(iris.target.size)

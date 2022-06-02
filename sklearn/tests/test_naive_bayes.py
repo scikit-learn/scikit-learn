@@ -20,7 +20,12 @@ from sklearn.naive_bayes import CategoricalNB
 
 DISCRETE_NAIVE_BAYES_CLASSES = [BernoulliNB, CategoricalNB, ComplementNB, MultinomialNB]
 ALL_NAIVE_BAYES_CLASSES = DISCRETE_NAIVE_BAYES_CLASSES + [GaussianNB]
-
+# TODO(1.4): Remove
+msg = (
+    r"`force_alpha` was deprecated in 1.2 and will be removed in 1.4 with"
+    r".*:FutureWarning"
+)
+pytestmark = pytest.mark.filterwarnings("ignore:" + msg)
 
 # Data is just 6 separable points in the plane
 X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]])
@@ -964,3 +969,18 @@ def test_n_features_deprecation(Estimator):
 
     with pytest.warns(FutureWarning, match="`n_features_` was deprecated"):
         est.n_features_
+
+
+# TODO(1.4): Remove
+@pytest.mark.parametrize("Estimator", DISCRETE_NAIVE_BAYES_CLASSES)
+def test_force_alpha_deprecation(Estimator):
+    X = np.array([[1, 2], [3, 4]])
+    y = np.array([1, 0])
+    msg = "`force_alpha` was deprecated"
+    with pytest.warns(FutureWarning, match=msg):
+        Estimator().fit(X, y)
+    with pytest.warns(FutureWarning, match=msg):
+        Estimator(force_alpha=False).fit(X, y)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", FutureWarning)
+        Estimator(force_alpha=True).fit(X, y)

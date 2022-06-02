@@ -266,6 +266,15 @@ def test_fit_docstring_attributes(name, Estimator):
     if Estimator.__name__ in ("KMeans", "MiniBatchKMeans"):
         est.set_params(n_init="auto")
 
+    # TODO(1.4): TO BE REMOVED for 1.4 (avoid FutureWarning)
+    if Estimator.__name__ in (
+        "MultinomialNB",
+        "ComplementNB",
+        "BernoulliNB",
+        "CategoricalNB",
+    ):
+        est.set_params(force_alpha=True)
+
     # In case we want to deprecate some attributes in the future
     skipped_attributes = {}
 
