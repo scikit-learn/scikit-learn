@@ -458,12 +458,6 @@ def trustworthiness(X, X_embedded, *, n_neighbors=5, metric="euclidean"):
     neighbors in the output space are penalised in proportion to their rank in
     the input space.
 
-    * "Neighborhood Preservation in Nonlinear Projection Methods: An
-      Experimental Study"
-      J. Venna, S. Kaski
-    * "Learning a Parametric Embedding by Preserving Local Structure"
-      L.J.P. van der Maaten
-
     Parameters
     ----------
     X : ndarray of shape (n_samples, n_features) or (n_samples, n_samples)
@@ -474,7 +468,9 @@ def trustworthiness(X, X_embedded, *, n_neighbors=5, metric="euclidean"):
         Embedding of the training data in low-dimensional space.
 
     n_neighbors : int, default=5
-        Number of neighbors k that will be considered.
+        The number of neighbors that will be considered. Should be fewer than
+        `n_samples / 2` to ensure the trustworthiness to lies within [0, 1], as
+        mentioned in [1]_. An error will be raised otherwise.
 
     metric : str or callable, default='euclidean'
         Which metric to use for computing pairwise distances between samples
@@ -491,7 +487,24 @@ def trustworthiness(X, X_embedded, *, n_neighbors=5, metric="euclidean"):
     -------
     trustworthiness : float
         Trustworthiness of the low-dimensional embedding.
+
+    References
+    ----------
+    .. [1] Jarkko Venna and Samuel Kaski. 2001. Neighborhood
+           Preservation in Nonlinear Projection Methods: An Experimental Study.
+           In Proceedings of the International Conference on Artificial Neural Networks
+           (ICANN '01). Springer-Verlag, Berlin, Heidelberg, 485-491.
+
+    .. [2] Laurens van der Maaten. Learning a Parametric Embedding by Preserving
+           Local Structure. Proceedings of the Twelth International Conference on
+           Artificial Intelligence and Statistics, PMLR 5:384-391, 2009.
     """
+    n_samples = X.shape[0]
+    if n_neighbors >= n_samples / 2:
+        raise ValueError(
+            f"n_neighbors ({n_neighbors}) should be less than n_samples / 2"
+            f" ({n_samples / 2})"
+        )
     dist_X = pairwise_distances(X, metric=metric)
     if metric == "precomputed":
         dist_X = dist_X.copy()
@@ -509,7 +522,6 @@ def trustworthiness(X, X_embedded, *, n_neighbors=5, metric="euclidean"):
     # We build an inverted index of neighbors in the input space: For sample i,
     # we define `inverted_index[i]` as the inverted index of sorted distances:
     # inverted_index[i][ind_X[i]] = np.arange(1, n_sample + 1)
-    n_samples = X.shape[0]
     inverted_index = np.zeros((n_samples, n_samples), dtype=int)
     ordered_indices = np.arange(n_samples + 1)
     inverted_index[ordered_indices[:-1, np.newaxis], ind_X] = ordered_indices[1:]
@@ -552,7 +564,8 @@ class TSNE(BaseEstimator):
         is used in other manifold learning algorithms. Larger datasets
         usually require a larger perplexity. Consider selecting a value
         between 5 and 50. Different values can result in significantly
-        different results.
+        different results. The perplexity must be less that the number
+        of samples.
 
     early_exaggeration : float, default=12.0
         Controls how tight natural clusters in the original space are in
@@ -727,7 +740,7 @@ class TSNE(BaseEstimator):
     >>> from sklearn.manifold import TSNE
     >>> X = np.array([[0, 0, 0], [0, 1, 1], [1, 0, 1], [1, 1, 1]])
     >>> X_embedded = TSNE(n_components=2, learning_rate='auto',
-    ...                   init='random').fit_transform(X)
+    ...                   init='random', perplexity=3).fit_transform(X)
     >>> X_embedded.shape
     (4, 2)
     """
@@ -774,6 +787,10 @@ class TSNE(BaseEstimator):
         self.angle = angle
         self.n_jobs = n_jobs
         self.square_distances = square_distances
+
+    def _check_params_vs_input(self, X):
+        if self.perplexity >= X.shape[0]:
+            raise ValueError("perplexity must be less than n_samples")
 
     def _fit(self, X, skip_num_points=0):
         """Private function to fit the model using X as training data."""
@@ -1102,6 +1119,7 @@ class TSNE(BaseEstimator):
         X_new : ndarray of shape (n_samples, n_components)
             Embedding of the training data in low-dimensional space.
         """
+        self._check_params_vs_input(X)
         embedding = self._fit(X)
         self.embedding_ = embedding
         return self.embedding_
@@ -1128,3 +1146,6 @@ class TSNE(BaseEstimator):
         """
         self.fit_transform(X)
         return self
+
+    def _more_tags(self):
+        return {"pairwise": self.metric == "precomputed"}

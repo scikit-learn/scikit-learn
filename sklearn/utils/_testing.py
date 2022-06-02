@@ -38,7 +38,7 @@ try:
 except NameError:
     WindowsError = None
 
-from numpy.testing import assert_allclose
+from numpy.testing import assert_allclose as np_assert_allclose
 from numpy.testing import assert_almost_equal
 from numpy.testing import assert_approx_equal
 from numpy.testing import assert_array_equal
@@ -385,6 +385,80 @@ def assert_raise_message(exceptions, message, function, *args, **kwargs):
             names = exceptions.__name__
 
         raise AssertionError("%s not raised by %s" % (names, function.__name__))
+
+
+def assert_allclose(
+    actual, desired, rtol=None, atol=0.0, equal_nan=True, err_msg="", verbose=True
+):
+    """dtype-aware variant of numpy.testing.assert_allclose
+
+    This variant introspects the least precise floating point dtype
+    in the input argument and automatically sets the relative tolerance
+    parameter to 1e-4 float32 and use 1e-7 otherwise (typically float64
+    in scikit-learn).
+
+    `atol` is always left to 0. by default. It should be adjusted manually
+    to an assertion-specific value in case there are null values expected
+    in `desired`.
+
+    The aggregate tolerance is `atol + rtol * abs(desired)`.
+
+    Parameters
+    ----------
+    actual : array_like
+        Array obtained.
+    desired : array_like
+        Array desired.
+    rtol : float, optional, default=None
+        Relative tolerance.
+        If None, it is set based on the provided arrays' dtypes.
+    atol : float, optional, default=0.
+        Absolute tolerance.
+        If None, it is set based on the provided arrays' dtypes.
+    equal_nan : bool, optional, default=True
+        If True, NaNs will compare equal.
+    err_msg : str, optional, default=''
+        The error message to be printed in case of failure.
+    verbose : bool, optional, default=True
+        If True, the conflicting values are appended to the error message.
+
+    Raises
+    ------
+    AssertionError
+        If actual and desired are not equal up to specified precision.
+
+    See Also
+    --------
+    numpy.testing.assert_allclose
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.utils._testing import assert_allclose
+    >>> x = [1e-5, 1e-3, 1e-1]
+    >>> y = np.arccos(np.cos(x))
+    >>> assert_allclose(x, y, rtol=1e-5, atol=0)
+    >>> a = np.full(shape=10, fill_value=1e-5, dtype=np.float32)
+    >>> assert_allclose(a, 1e-5)
+    """
+    dtypes = []
+
+    actual, desired = np.asanyarray(actual), np.asanyarray(desired)
+    dtypes = [actual.dtype, desired.dtype]
+
+    if rtol is None:
+        rtols = [1e-4 if dtype == np.float32 else 1e-7 for dtype in dtypes]
+        rtol = max(rtols)
+
+    np_assert_allclose(
+        actual,
+        desired,
+        rtol=rtol,
+        atol=atol,
+        equal_nan=equal_nan,
+        err_msg=err_msg,
+        verbose=verbose,
+    )
 
 
 def assert_allclose_dense_sparse(x, y, rtol=1e-07, atol=1e-9, err_msg=""):

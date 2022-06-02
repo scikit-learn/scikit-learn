@@ -1,28 +1,28 @@
+"""Implementation of ARFF parsers: via LIAC-ARFF and pandas."""
 import itertools
 from collections import OrderedDict
 from collections.abc import Generator
-from typing import Any, Dict, List, Optional, Tuple
+from typing import List
 
 import numpy as np
-import scipy.sparse
+import scipy as sp
 
-from ..externals._arff import ArffSparseDataType, ArffContainerType
+from ..externals import _arff
+from ..externals._arff import ArffSparseDataType
 from ..utils import (
     _chunk_generator,
     check_pandas_support,
     get_chunk_n_rows,
-    is_scalar_nan,
 )
 
 
 def _split_sparse_columns(
     arff_data: ArffSparseDataType, include_columns: List
 ) -> ArffSparseDataType:
-    """
-    obtains several columns from sparse arff representation. Additionally, the
-    column indices are re-labelled, given the columns that are not included.
-    (e.g., when including [1, 2, 3], the columns will be relabelled to
-    [0, 1, 2])
+    """Obtains several columns from sparse ARFF representation. Additionally,
+    the column indices are re-labelled, given the columns that are not
+    included. (e.g., when including [1, 2, 3], the columns will be relabelled
+    to [0, 1, 2]).
 
     Parameters
     ----------
@@ -69,176 +69,200 @@ def _sparse_data_to_array(
     return y
 
 
-def _feature_to_dtype(feature: Dict[str, str]):
-    """Map feature to dtype for pandas DataFrame"""
-    if feature["data_type"] == "string":
-        return object
-    elif feature["data_type"] == "nominal":
-        return "category"
-    # only numeric, integer, real are left
-    elif feature["number_of_missing_values"] != "0" or feature["data_type"] in [
-        "numeric",
-        "real",
-    ]:
-        # cast to floats when there are any missing values
-        return np.float64
-    elif feature["data_type"] == "integer":
-        return np.int64
-    raise ValueError("Unsupported feature: {}".format(feature))
-
-
-def _convert_arff_data(
-    arff: ArffContainerType,
-    col_slice_x: List[int],
-    col_slice_y: List[int],
-    shape: Optional[Tuple] = None,
-) -> Tuple:
-    """
-    converts the arff object into the appropriate matrix type (np.array or
-    scipy.sparse.csr_matrix) based on the 'data part' (i.e., in the
-    liac-arff dict, the object from the 'data' key)
+def _post_process_frame(frame, feature_names, target_names):
+    """Post process a dataframe to select the desired columns in `X` and `y`.
 
     Parameters
     ----------
-    arff : dict
-        As obtained from liac-arff object.
+    frame : dataframe
+        The dataframe to split into `X` and `y`.
 
-    col_slice_x : list
-        The column indices that are sliced from the original array to return
-        as X data
+    feature_names : list of str
+        The list of feature names to populate `X`.
 
-    col_slice_y : list
-        The column indices that are sliced from the original array to return
-        as y data
+    target_names : list of str
+        The list of target names to populate `y`.
 
     Returns
     -------
-    X : np.array or scipy.sparse.csr_matrix
-    y : np.array
+    X : dataframe
+        The dataframe containing the features.
+
+    y : {series, dataframe} or None
+        The series or dataframe containing the target.
     """
-    arff_data = arff["data"]
-    if isinstance(arff_data, Generator):
-        if shape is None:
-            raise ValueError("shape must be provided when arr['data'] is a Generator")
-        if shape[0] == -1:
-            count = -1
-        else:
-            count = shape[0] * shape[1]
-        data = np.fromiter(
-            itertools.chain.from_iterable(arff_data), dtype="float64", count=count
-        )
-        data = data.reshape(*shape)
-        X = data[:, col_slice_x]
-        y = data[:, col_slice_y]
-        return X, y
-    elif isinstance(arff_data, tuple):
-        arff_data_X = _split_sparse_columns(arff_data, col_slice_x)
-        num_obs = max(arff_data[1]) + 1
-        X_shape = (num_obs, len(col_slice_x))
-        X = scipy.sparse.coo_matrix(
-            (arff_data_X[0], (arff_data_X[1], arff_data_X[2])),
-            shape=X_shape,
-            dtype=np.float64,
-        )
-        X = X.tocsr()
-        y = _sparse_data_to_array(arff_data, col_slice_y)
-        return X, y
+    X = frame[feature_names]
+    if len(target_names) >= 2:
+        y = frame[target_names]
+    elif len(target_names) == 1:
+        y = frame[target_names[0]]
     else:
-        # This should never happen
-        raise ValueError("Unexpected Data Type obtained from arff.")
-
-
-def _convert_arff_data_dataframe(
-    arff: ArffContainerType, columns: List, features_dict: Dict[str, Any]
-) -> Tuple:
-    """Convert the ARFF object into a pandas DataFrame.
-
-    Parameters
-    ----------
-    arff : dict
-        As obtained from liac-arff object.
-
-    columns : list
-        Columns from dataframe to return.
-
-    features_dict : dict
-        Maps feature name to feature info from openml.
-
-    Returns
-    -------
-    result : tuple
-        tuple with the resulting dataframe
-    """
-    pd = check_pandas_support("fetch_openml with as_frame=True")
-
-    attributes = OrderedDict(arff["attributes"])
-    arff_columns = list(attributes)
-
-    if not isinstance(arff["data"], Generator):
-        raise ValueError(
-            "arff['data'] must be a generator when converting to pd.DataFrame."
-        )
-
-    # calculate chunksize
-    first_row = next(arff["data"])
-    first_df = pd.DataFrame([first_row], columns=arff_columns)
-
-    row_bytes = first_df.memory_usage(deep=True).sum()
-    chunksize = get_chunk_n_rows(row_bytes)
-
-    # read arff data with chunks
-    columns_to_keep = [col for col in arff_columns if col in columns]
-    dfs = []
-    dfs.append(first_df[columns_to_keep])
-    for data in _chunk_generator(arff["data"], chunksize):
-        dfs.append(pd.DataFrame(data, columns=arff_columns)[columns_to_keep])
-    df = pd.concat(dfs, ignore_index=True)
-
-    for column in columns_to_keep:
-        dtype = _feature_to_dtype(features_dict[column])
-        if dtype == "category":
-            cats_without_missing = [
-                cat
-                for cat in attributes[column]
-                if cat is not None and not is_scalar_nan(cat)
-            ]
-            dtype = pd.api.types.CategoricalDtype(cats_without_missing)
-        df[column] = df[column].astype(dtype, copy=False)
-    return (df,)
+        y = None
+    return X, y
 
 
 def _liac_arff_parser(
-    arff_container,
+    gzip_file,
     output_arrays_type,
-    features_dict,
-    data_columns,
-    target_columns,
-    col_slice_x=None,
-    col_slice_y=None,
+    openml_columns_info,
+    feature_names_to_select,
+    target_names_to_select,
     shape=None,
 ):
-    if output_arrays_type == "pandas":
-        nominal_attributes = None
-        columns = data_columns + target_columns
-        (frame,) = _convert_arff_data_dataframe(arff_container, columns, features_dict)
-        X = frame[data_columns]
-        if len(target_columns) >= 2:
-            y = frame[target_columns]
-        elif len(target_columns) == 1:
-            y = frame[target_columns[0]]
-        else:
-            y = None
-    else:
-        frame = None
-        X, y = _convert_arff_data(arff_container, col_slice_x, col_slice_y, shape)
+    """ARFF parser using the LIAC-ARFF library coded purely in Python.
 
-        nominal_attributes = {
-            k: v
-            for k, v in arff_container["attributes"]
-            if isinstance(v, list) and k in data_columns + target_columns
-        }
+    This parser is quite slow but consumes a generator. Currently it is needed
+    to parse sparse datasets. For dense datasets, it is recommended to instead
+    use the pandas-based parser, although it does not always handles the
+    dtypes exactly the same.
+
+    Parameters
+    ----------
+    gzip_file : GzipFile instance
+        The file compressed to be read.
+
+    output_array_type : {"numpy", "sparse", "pandas"}
+        The type of the arrays that will be returned. The possibilities ara:
+
+        - `"numpy"`: both `X` and `y` will be NumPy arrays;
+        - `"sparse"`: `X` will be sparse matrix and `y` will be a NumPy array;
+        - `"pandas"`: `X` will be a pandas DataFrame and `y` will be either a
+          pandas Series or DataFrame.
+
+    columns_info : dict
+        The information provided by OpenML regarding the columns of the ARFF
+        file.
+
+    feature_names_to_select : list of str
+        A list of the feature names to be selected.
+
+    target_names_to_select : list of str
+        A list of the target names to be selected.
+
+    Returns
+    -------
+    X : {ndarray, sparse matrix, dataframe}
+        The data matrix.
+
+    y : {ndarray, dataframe, series}
+        The target.
+
+    frame : dataframe or None
+        A dataframe containing both `X` and `y`. `None` if
+        `output_array_type != "pandas"`.
+
+    categories : list of str or None
+        The names of the features that are categorical. `None` if
+        `output_array_type == "pandas"`.
+    """
+
+    def _io_to_generator(gzip_file):
+        for line in gzip_file:
+            yield line.decode("utf-8")
+
+    stream = _io_to_generator(gzip_file)
+
+    # find which type (dense or sparse) ARFF type we will have to deal with
+    return_type = _arff.COO if output_arrays_type == "sparse" else _arff.DENSE_GEN
+    # we should not let LIAC-ARFF to encode the nominal attributes with NumPy
+    # arrays to have only numerical values.
+    encode_nominal = not (output_arrays_type == "pandas")
+    arff_container = _arff.load(
+        stream, return_type=return_type, encode_nominal=encode_nominal
+    )
+    columns_to_select = feature_names_to_select + target_names_to_select
+
+    categories = {
+        name: cat
+        for name, cat in arff_container["attributes"]
+        if isinstance(cat, list) and name in columns_to_select
+    }
+    if output_arrays_type == "pandas":
+        pd = check_pandas_support("fetch_openml with as_frame=True")
+
+        columns_info = OrderedDict(arff_container["attributes"])
+        columns_names = list(columns_info.keys())
+
+        # calculate chunksize
+        first_row = next(arff_container["data"])
+        first_df = pd.DataFrame([first_row], columns=columns_names)
+
+        row_bytes = first_df.memory_usage(deep=True).sum()
+        chunksize = get_chunk_n_rows(row_bytes)
+
+        # read arff data with chunks
+        columns_to_keep = [col for col in columns_names if col in columns_to_select]
+        dfs = [first_df[columns_to_keep]]
+        for data in _chunk_generator(arff_container["data"], chunksize):
+            dfs.append(pd.DataFrame(data, columns=columns_names)[columns_to_keep])
+        frame = pd.concat(dfs, ignore_index=True)
+        del dfs, first_df
+
+        # cast the columns frame
+        dtypes = {}
+        for name in frame.columns:
+            column_dtype = openml_columns_info[name]["data_type"]
+            if column_dtype.lower() == "integer":
+                # Use a pandas extension array instead of np.int64 to be able
+                # to support missing values.
+                dtypes[name] = "Int64"
+            elif column_dtype.lower() == "nominal":
+                dtypes[name] = "category"
+            else:
+                dtypes[name] = frame.dtypes[name]
+        frame = frame.astype(dtypes)
+
+        X, y = _post_process_frame(
+            frame, feature_names_to_select, target_names_to_select
+        )
+    else:
+        arff_data = arff_container["data"]
+
+        feature_indices_to_select = [
+            int(openml_columns_info[col_name]["index"])
+            for col_name in feature_names_to_select
+        ]
+        target_indices_to_select = [
+            int(openml_columns_info[col_name]["index"])
+            for col_name in target_names_to_select
+        ]
+
+        if isinstance(arff_data, Generator):
+            if shape is None:
+                raise ValueError(
+                    "shape must be provided when arr['data'] is a Generator"
+                )
+            if shape[0] == -1:
+                count = -1
+            else:
+                count = shape[0] * shape[1]
+            data = np.fromiter(
+                itertools.chain.from_iterable(arff_data),
+                dtype="float64",
+                count=count,
+            )
+            data = data.reshape(*shape)
+            X = data[:, feature_indices_to_select]
+            y = data[:, target_indices_to_select]
+        elif isinstance(arff_data, tuple):
+            arff_data_X = _split_sparse_columns(arff_data, feature_indices_to_select)
+            num_obs = max(arff_data[1]) + 1
+            X_shape = (num_obs, len(feature_indices_to_select))
+            X = sp.sparse.coo_matrix(
+                (arff_data_X[0], (arff_data_X[1], arff_data_X[2])),
+                shape=X_shape,
+                dtype=np.float64,
+            )
+            X = X.tocsr()
+            y = _sparse_data_to_array(arff_data, target_indices_to_select)
+        else:
+            # This should never happen
+            raise ValueError(
+                f"Unexpected type for data obtained from arff: {type(arff_data)}"
+            )
+
         is_classification = {
-            col_name in nominal_attributes for col_name in target_columns
+            col_name in categories for col_name in target_names_to_select
         }
         if not is_classification:
             # No target
@@ -247,10 +271,10 @@ def _liac_arff_parser(
             y = np.hstack(
                 [
                     np.take(
-                        np.asarray(nominal_attributes.pop(col_name), dtype="O"),
+                        np.asarray(categories.pop(col_name), dtype="O"),
                         y[:, i : i + 1].astype(int, copy=False),
                     )
-                    for i, col_name in enumerate(target_columns)
+                    for i, col_name in enumerate(target_names_to_select)
                 ]
             )
         elif any(is_classification):
@@ -265,4 +289,180 @@ def _liac_arff_parser(
         elif y.shape[1] == 0:
             y = None
 
-    return X, y, frame, nominal_attributes
+    if output_arrays_type == "pandas":
+        return X, y, frame, None
+    return X, y, None, categories
+
+
+def _pandas_arff_parser(
+    gzip_file,
+    output_type,
+    openml_columns_info,
+    feature_names_to_select,
+    target_names_to_select,
+):
+    """ARFF parser using `pandas.read_csv`.
+
+    This parser uses the metadata fetched directly from OpenML and skips the metadata
+    headers of ARFF file itself. The data is loaded as a CSV file.
+
+    Parameters
+    ----------
+    gzip_file : GzipFile instance
+        The GZip compressed file with the ARFF formatted payload.
+
+    output_type : {"numpy", "sparse", "pandas"}
+        The type of the arrays that will be returned. The possibilities are:
+
+        - `"numpy"`: both `X` and `y` will be NumPy arrays;
+        - `"sparse"`: `X` will be sparse matrix and `y` will be a NumPy array;
+        - `"pandas"`: `X` will be a pandas DataFrame and `y` will be either a
+          pandas Series or DataFrame.
+
+    openml_columns_info : dict
+        The information provided by OpenML regarding the columns of the ARFF
+        file.
+
+    feature_names_to_select : list of str
+        A list of the feature names to be selected to build `X`.
+
+    target_names_to_select : list of str
+        A list of the target names to be selected to build `y`.
+
+    Returns
+    -------
+    X : {ndarray, sparse matrix, dataframe}
+        The data matrix.
+
+    y : {ndarray, dataframe, series}
+        The target.
+
+    frame : dataframe or None
+        A dataframe containing both `X` and `y`. `None` if
+        `output_array_type != "pandas"`.
+
+    categories : list of str or None
+        The names of the features that are categorical. `None` if
+        `output_array_type == "pandas"`.
+    """
+    import pandas as pd
+
+    # read the file until the data section to skip the ARFF metadata headers
+    for line in gzip_file:
+        if line.decode("utf-8").lower().startswith("@data"):
+            break
+
+    dtypes = {}
+    for name in openml_columns_info:
+        column_dtype = openml_columns_info[name]["data_type"]
+        if column_dtype.lower() == "integer":
+            # Use Int64 to infer missing values from data
+            # XXX: this line is not covered by our tests. Is this really needed?
+            dtypes[name] = "Int64"
+        elif column_dtype.lower() == "nominal":
+            dtypes[name] = "category"
+
+    # ARFF represents missing values with "?"
+    frame = pd.read_csv(
+        gzip_file,
+        header=None,
+        na_values=["?"],  # missing values are represented by `?`
+        comment="%",  # skip line starting by `%` since they are comments
+        names=[name for name in openml_columns_info],
+        dtype=dtypes,
+    )
+
+    columns_to_select = feature_names_to_select + target_names_to_select
+    columns_to_keep = [col for col in frame.columns if col in columns_to_select]
+    frame = frame[columns_to_keep]
+
+    X, y = _post_process_frame(frame, feature_names_to_select, target_names_to_select)
+
+    if output_type == "pandas":
+        return X, y, frame, None
+    else:
+        X, y = X.to_numpy(), y.to_numpy()
+
+    categories = {
+        name: dtype.categories.tolist()
+        for name, dtype in frame.dtypes.items()
+        if pd.api.types.is_categorical_dtype(dtype)
+    }
+    return X, y, None, categories
+
+
+def load_arff_from_gzip_file(
+    gzip_file,
+    parser,
+    output_type,
+    openml_columns_info,
+    feature_names_to_select,
+    target_names_to_select,
+    shape=None,
+):
+    """Load a compressed ARFF file using a given parser.
+
+    Parameters
+    ----------
+    gzip_file : GzipFile instance
+        The file compressed to be read.
+
+    parser : {"pandas", "liac-arff"}
+        The parser used to parse the ARFF file. "pandas" is recommended
+        but only supports loading dense datasets.
+
+    output_type : {"numpy", "sparse", "pandas"}
+        The type of the arrays that will be returned. The possibilities ara:
+
+        - `"numpy"`: both `X` and `y` will be NumPy arrays;
+        - `"sparse"`: `X` will be sparse matrix and `y` will be a NumPy array;
+        - `"pandas"`: `X` will be a pandas DataFrame and `y` will be either a
+          pandas Series or DataFrame.
+
+    openml_columns_info : dict
+        The information provided by OpenML regarding the columns of the ARFF
+        file.
+
+    feature_names_to_select : list of str
+        A list of the feature names to be selected.
+
+    target_names_to_select : list of str
+        A list of the target names to be selected.
+
+    Returns
+    -------
+    X : {ndarray, sparse matrix, dataframe}
+        The data matrix.
+
+    y : {ndarray, dataframe, series}
+        The target.
+
+    frame : dataframe or None
+        A dataframe containing both `X` and `y`. `None` if
+        `output_array_type != "pandas"`.
+
+    categories : list of str or None
+        The names of the features that are categorical. `None` if
+        `output_array_type == "pandas"`.
+    """
+    if parser == "liac-arff":
+        return _liac_arff_parser(
+            gzip_file,
+            output_type,
+            openml_columns_info,
+            feature_names_to_select,
+            target_names_to_select,
+            shape,
+        )
+    elif parser == "pandas":
+        return _pandas_arff_parser(
+            gzip_file,
+            output_type,
+            openml_columns_info,
+            feature_names_to_select,
+            target_names_to_select,
+        )
+    else:
+        raise ValueError(
+            f"Unknown parser: '{parser}'. Should be 'liac-arff' or 'pandas'."
+        )

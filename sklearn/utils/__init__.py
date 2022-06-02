@@ -1210,16 +1210,6 @@ def all_estimators(type_filter=None):
             classes = [
                 (name, est_cls) for name, est_cls in classes if not name.startswith("_")
             ]
-
-            # TODO: Remove when FeatureHasher is implemented in PYPY
-            # Skips FeatureHasher for PYPY
-            if IS_PYPY and "feature_extraction" in modname:
-                classes = [
-                    (name, est_cls)
-                    for name, est_cls in classes
-                    if name == "FeatureHasher"
-                ]
-
             all_classes.extend(classes)
 
     all_classes = set(all_classes)

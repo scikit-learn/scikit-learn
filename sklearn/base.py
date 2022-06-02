@@ -25,8 +25,9 @@ from .utils.validation import _num_features
 from .utils.validation import _check_feature_names_in
 from .utils.validation import _generate_get_feature_names_out
 from .utils.validation import check_is_fitted
-from .utils._estimator_html_repr import estimator_html_repr
 from .utils.validation import _get_feature_names
+from .utils._estimator_html_repr import estimator_html_repr
+from .utils._param_validation import validate_parameter_constraints
 
 
 def clone(estimator, *, safe=True):
@@ -331,8 +332,8 @@ class BaseEstimator:
                     "using version {2}. This might lead to breaking code or "
                     "invalid results. Use at your own risk. "
                     "For more info please refer to:\n"
-                    "https://scikit-learn.org/stable/modules/model_persistence"
-                    ".html#security-maintainability-limitations".format(
+                    "https://scikit-learn.org/stable/model_persistence.html"
+                    "#security-maintainability-limitations".format(
                         self.__class__.__name__, pickle_version, __version__
                     ),
                     UserWarning,
@@ -485,7 +486,7 @@ class BaseEstimator:
                 message += "Feature names seen at fit time, yet now missing:\n"
                 message += add_names(missing_names)
 
-            if not missing_names and not missing_names:
+            if not missing_names and not unexpected_names:
                 message += (
                     "Feature names must be in the same order as they were in fit.\n"
                 )
@@ -600,6 +601,20 @@ class BaseEstimator:
             self._check_n_features(X, reset=reset)
 
         return out
+
+    def _validate_params(self):
+        """Validate types and values of constructor parameters
+
+        The expected type and values must be defined in the `_parameter_constraints`
+        class attribute, which is a dictionary `param_name: list of constraints`. See
+        the docstring of `validate_parameter_constraints` for a description of the
+        accepted constraints.
+        """
+        validate_parameter_constraints(
+            self._parameter_constraints,
+            self.get_params(deep=False),
+            caller_name=self.__class__.__name__,
+        )
 
     @property
     def _repr_html_(self):
@@ -887,7 +902,8 @@ class _OneToOneFeatureMixin:
 
             - If `input_features` is `None`, then `feature_names_in_` is
               used as feature names in. If `feature_names_in_` is not defined,
-              then names are generated: `[x0, x1, ..., x(n_features_in_)]`.
+              then the following input feature names are generated:
+              `["x0", "x1", ..., "x(n_features_in_ - 1)"]`.
             - If `input_features` is an array-like, then `input_features` must
               match `feature_names_in_` if `feature_names_in_` is defined.
 

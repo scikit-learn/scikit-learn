@@ -30,8 +30,6 @@ from sklearn.utils import Bunch
 from sklearn.utils._testing import SkipTest
 from sklearn.datasets.tests.test_common import check_as_frame
 
-from sklearn.externals._pilutil import pillow_installed
-
 
 def _remove_dir(path):
     if os.path.isdir(path):
@@ -226,11 +224,9 @@ def test_load_sample_image():
 
 
 def test_load_missing_sample_image_error():
-    if pillow_installed:
-        with pytest.raises(AttributeError):
-            load_sample_image("blop.jpg")
-    else:
-        warnings.warn("Could not load sample images, PIL is not available.")
+    pytest.importorskip("PIL")
+    with pytest.raises(AttributeError):
+        load_sample_image("blop.jpg")
 
 
 def test_load_diabetes_raw():

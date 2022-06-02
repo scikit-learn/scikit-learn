@@ -13,6 +13,7 @@ import warnings
 import numpy as np
 from scipy import linalg
 from scipy.special import expit
+from numbers import Real
 
 from .base import BaseEstimator, TransformerMixin, ClassifierMixin
 from .base import _ClassNamePrefixFeaturesOutMixin
@@ -72,7 +73,7 @@ def _cov(X, shrinkage=None, covariance_estimator=None):
                 s = empirical_covariance(X)
             else:
                 raise ValueError("unknown shrinkage parameter")
-        elif isinstance(shrinkage, float) or isinstance(shrinkage, int):
+        elif isinstance(shrinkage, Real):
             if shrinkage < 0 or shrinkage > 1:
                 raise ValueError("shrinkage parameter must be between 0 and 1")
             s = shrunk_covariance(empirical_covariance(X), shrinkage)
@@ -494,6 +495,7 @@ class LinearDiscriminantAnalysis(
         rank = np.sum(S > self.tol)
         # Scaling of within covariance is: V' 1/S
         scalings = (Vt[:rank] / std).T / S[:rank]
+        fac = 1.0 if n_classes == 1 else 1.0 / (n_classes - 1)
 
         # 3) Between variance scaling
         # Scale weighted centers
