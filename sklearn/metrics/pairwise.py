@@ -1506,7 +1506,8 @@ def distance_metrics():
     'nan_euclidean' metrics.pairwise.nan_euclidean_distances
     =============== ========================================
 
-    Read more in the :ref:`User Guide <metrics>`."""
+    Read more in the :ref:`User Guide <metrics>`.
+    """
     return PAIRWISE_DISTANCE_FUNCTIONS
 
 
