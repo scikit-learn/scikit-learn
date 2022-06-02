@@ -81,25 +81,27 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
     """Base class for SGD classification and regression."""
 
     _parameter_constraints = {
-        "penalty": [StrOptions({"l2", "l1", "elasticnet"})],  # done
-        "alpha": [Interval(Real, 0, None, closed="left")],  # done
+        "penalty": [StrOptions({"l2", "l1", "elasticnet"})],
+        "alpha": [Interval(Real, 0, None, closed="left")],
         "C": [Interval(Integral, 1, None, closed="left")],  # redundant?
-        "l1_ratio": [Interval(Real, 0, 1, closed="both")],  # done
-        "fit_intercept": [bool],  # done
-        "max_iter": [Interval(Integral, 1, None, closed="left")],  # done
-        "tol": [Interval(Real,0,None,closed="left")],  # done
-        "shuffle": [bool],  # done
-        "verbose": [Interval(Integral,0,None,closed="left")],
-        "epsilon": [Interval(Real,0,None,closed="left")],
+        "l1_ratio": [Interval(Real, 0, 1, closed="both")],
+        "fit_intercept": [bool],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "shuffle": [bool],
+        "verbose": [Interval(Integral, 0, None, closed="left")],
+        "epsilon": [Interval(Real, 0, None, closed="left")],
         "random_state": ["random_state"],
-        "learning_rate": [StrOptions({"constant", "optimal", "invscaling", "adaptive", "pa1", "pa2"})],
-        "eta0": [Interval(Real,0,None,closed="neither")],
-        "power_t": [Interval(Real, None,None,closed="neither")],
+        "learning_rate": [
+            StrOptions({"constant", "optimal", "invscaling", "adaptive", "pa1", "pa2"})
+        ],
+        "eta0": [Interval(Real, 0, None, closed="neither")],
+        "power_t": [Interval(Real, None, None, closed="neither")],
         "early_stopping": [bool],  # done
         "validation_fraction": [Interval(Real, 0, 1, closed="neither")],
         "n_iter_no_change": [Interval(Integral, 1, None, closed="left")],
         "warm_start": [bool],
-        "average": [Interval(Integral, 1, None, closed="left"),bool],
+        "average": [Interval(Integral, 1, None, closed="left"), bool],
     }
 
     def __init__(
@@ -535,6 +537,14 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         "huber": (Huber, DEFAULT_EPSILON),
         "epsilon_insensitive": (EpsilonInsensitive, DEFAULT_EPSILON),
         "squared_epsilon_insensitive": (SquaredEpsilonInsensitive, DEFAULT_EPSILON),
+    }
+
+    _parameter_constraints = {
+        "loss": [StrOptions({"hinge", "squared_hinge", "perceptron", "log_loss", "log", "modified_huber",
+                             "squared_error", "squared_loss", "huber", "epsilon_insensitive",
+                             "squared_epsilon_insensitive"})],
+        "n_jobs": [Interval(Integral,None,None,closed="neither"),None],
+        "class_weight": [StrOptions({"balanced"}), None] # a bit tricky?
     }
 
     @abstractmethod
