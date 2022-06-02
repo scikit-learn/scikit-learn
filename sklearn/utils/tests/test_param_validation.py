@@ -67,7 +67,7 @@ def test_interval_range(interval_type):
 
 
 def test_interval_inf_in_bounds():
-    """Check that inf is included if a bound is closed and set to None.
+    """Check that inf is included iff a bound is closed and set to None.
 
     Only valid for real intervals.
     """
@@ -76,6 +76,19 @@ def test_interval_inf_in_bounds():
 
     interval = Interval(Real, None, 0, closed="left")
     assert -np.inf in interval
+
+    interval = Interval(Real, None, None, closed="neither")
+    assert not np.inf in interval
+    assert not -np.inf in interval
+
+
+@pytest.mark.parametrize(
+    "interval",
+    [Interval(Real, 0, 1, closed="left"), Interval(Real, None, None, closed="both")],
+)
+def test_nan_not_in_interval(interval):
+    """Check that np.nan is not in any interval."""
+    assert np.nan not in interval
 
 
 @pytest.mark.parametrize(
@@ -145,6 +158,7 @@ def test_instances_of_type_human_readable(type, expected_type_name):
     [
         Interval(Real, None, 0, closed="left"),
         Interval(Real, 0, None, closed="left"),
+        Interval(Real, None, None, closed="neither"),
         StrOptions({"a", "b", "c"}),
     ],
 )
@@ -246,6 +260,26 @@ def test_generate_invalid_param_val_2_intervals(integer_interval, real_interval)
     )
     assert not real_interval.is_satisfied_by(bad_value)
     assert not integer_interval.is_satisfied_by(bad_value)
+
+
+@pytest.mark.parametrize(
+    "constraints",
+    [
+        [_ArrayLikes()],
+        [_InstancesOf(list)],
+        [Interval(Real, None, None, closed="both")],
+        [
+            Interval(Integral, 0, None, closed="left"),
+            Interval(Real, None, 0, closed="neither"),
+        ],
+    ],
+)
+def test_generate_invalid_param_val_all_valid(constraints):
+    """Check that the function raises NotImplementedError when there's no invalid value
+    for the constraint.
+    """
+    with pytest.raises(NotImplementedError):
+        generate_invalid_param_val(constraints[0], constraints=constraints)
 
 
 @pytest.mark.parametrize(

@@ -334,12 +334,18 @@ class Interval(_Constraint):
             )
 
     def __contains__(self, val):
+        if np.isnan(val):
+            return False
+
         left_cmp = operator.lt if self.closed in ("left", "both") else operator.le
         right_cmp = operator.gt if self.closed in ("right", "both") else operator.ge
 
-        if self.left is not None and left_cmp(val, self.left):
+        left = -np.inf if self.left is None else self.left
+        right = np.inf if self.right is None else self.right
+
+        if left_cmp(val, left):
             return False
-        if self.right is not None and right_cmp(val, self.right):
+        if right_cmp(val, right):
             return False
         return True
 
@@ -418,6 +424,8 @@ class _RandomStates(_Constraint):
 def generate_invalid_param_val(constraint, constraints=None):
     """Return a value that does not satisfy the constraint.
 
+    Raises a NotImplementedError if there exists no invalid value for this constraint.
+
     This is only useful for testing purpose.
 
     Parameters
@@ -448,7 +456,7 @@ def generate_invalid_param_val(constraint, constraints=None):
 def _generate_invalid_param_val_interval(interval, constraints):
     """Return a value that does not satisfy an interval constraint.
 
-    Generating a invalid value for an integer interval depends on the other constraints
+    Generating an invalid value for an integer interval depends on the other constraints
     since an int is a real, meaning that it can be valid for a real interval.
     Assumes that there can be at most 2 interval constraints: one integer interval
     and/or one real interval.
@@ -468,18 +476,26 @@ def _generate_invalid_param_val_interval(interval, constraints):
     val : object
         A value that does not satisfy the interval constraint.
     """
-    if interval.left is None and interval.right is None:
-        raise NotImplementedError
-
     if interval.type is Real:
         # generate a non-integer value such that it can't be valid even if there's also
         # an integer interval constraint.
+        if interval.left is None and interval.right is None:
+            if interval.closed in ("left", "neither"):
+                return np.inf
+            elif interval.closed in ("right", "neither"):
+                return -np.inf
+            else:
+                raise NotImplementedError
+
         if interval.left is not None:
             return np.floor(interval.left) - 0.5
         else:  # right is not None
             return np.ceil(interval.right) + 0.5
 
     else:  # interval.type is Integral
+        if interval.left is None and interval.right is None:
+            raise NotImplementedError
+
         # We need to check if there's also a real interval constraint to generate a
         # value that is not valid for any of the 2 interval constraints.
         real_intervals = [
@@ -491,7 +507,7 @@ def _generate_invalid_param_val_interval(interval, constraints):
             # Only the integer interval constraint -> easy
             if interval.left is not None:
                 return interval.left - 1
-            else:
+            else:  # interval.right is not None
                 return interval.right + 1
 
         # There's also a real interval constraint. Try to find a value left to both or
