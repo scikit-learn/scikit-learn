@@ -15,7 +15,7 @@
 .. _Codecov: https://codecov.io/gh/scikit-learn/scikit-learn
 
 .. |Nightly wheels| image:: https://github.com/scikit-learn/scikit-learn/workflows/Wheel%20builder/badge.svg?event=schedule
-.. _`Nightly wheels`: https://github.com/scikit-learn/scikit-learn/actions?query=workflow%3A%22Wheel+builder%22+event%3Aschedule
+.. _` Nightly wheels`: https://github.com/scikit-learn/scikit-learn/actions?query=workflow%3A%22Wheel+builder%22+event%3Aschedule
 
 .. |PythonVersion| image:: https://img.shields.io/badge/python-3.8%20%7C%203.9%20%7C%203.10-blue
 .. _PythonVersion: https://pypi.org/project/scikit-learn/
@@ -47,7 +47,7 @@
   :target: https://scikit-learn.org/
 
 **scikit-learn** is a Python module for machine learning built on top of
-SciPy and is distributed under the 3-Clause BSD license.
+SciPy is distributed under the 3-Clause BSD license.
 
 The project was started in 2007 by David Cournapeau as a Google Summer
 of Code project, and since then many volunteers have contributed. See
@@ -88,7 +88,7 @@ require pandas >= |PandasMinVersion|, some examples require seaborn >=
 User installation
 ~~~~~~~~~~~~~~~~~
 
-If you already have a working installation of numpy and scipy,
+If you already have a working installation of NumPy and scipy,
 the easiest way to install scikit-learn is using ``pip``::
 
     pip install -U scikit-learn
@@ -201,3 +201,4 @@ Citation
 ~~~~~~~~
 
 If you use scikit-learn in a scientific publication, we would appreciate citations: https://scikit-learn.org/stable/about.html#citing-scikit-learn
+
