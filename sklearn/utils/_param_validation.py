@@ -111,6 +111,9 @@ def validate_params(parameter_constraints):
         A dictionary `param_name: list of constraints`. See the docstring of
         `validate_parameter_constraints` for a description of the accepted constraints.
 
+        Note that the *args and **kwargs parameters are not validated and must not be
+        present in the parameter_constraints dictionary.
+
     Returns
     -------
     decorated_function : function or method
@@ -423,7 +426,7 @@ def generate_invalid_param_val(constraint):
 
     Parameters
     ----------
-    constraint : Constraint
+    constraint : Constraint instance
         The constraint to generate a value for.
 
     Returns
@@ -453,7 +456,7 @@ def generate_valid_param(constraint):
 
     Parameters
     ----------
-    constraint : Constraint
+    constraint : Constraint instance
         The constraint to generate a value for.
 
     Returns

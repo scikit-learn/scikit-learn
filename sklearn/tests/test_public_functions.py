@@ -6,31 +6,40 @@ import pytest
 from sklearn.utils._param_validation import generate_invalid_param_val
 from sklearn.utils._param_validation import generate_valid_param
 from sklearn.utils._param_validation import make_constraint
-from sklearn.cluster import kmeans_plusplus
 
 
-PARAM_VALIDATION_FUNCTION_LIST = [kmeans_plusplus]
+PARAM_VALIDATION_FUNCTION_LIST = ["sklearn.cluster.kmeans_plusplus"]
 
 
-@pytest.mark.parametrize("func", PARAM_VALIDATION_FUNCTION_LIST)
-def test_function_param_validation(func):
+@pytest.mark.parametrize("func_module", PARAM_VALIDATION_FUNCTION_LIST)
+def test_function_param_validation(func_module):
     """Check that an informative error is raised when the value of a parameter does not
     have an appropriate type or value.
 
-    the parameter constraints for the function must be named
+    The parameter constraints for the function must be named
     _parameter_constraints_of_<func_name> and be located in the same module.
     """
+    module_name, func_name = func_module.rsplit(".", 1)
+    module = import_module(module_name)
+    func = getattr(module, func_name)
+
     func_sig = signature(func)
     func_params = [
         p.name
         for p in func_sig.parameters.values()
         if p.kind not in (p.VAR_POSITIONAL, p.VAR_KEYWORD)
     ]
+
     func_module = import_module(func.__module__)
-    func_name = func.__name__
     parameter_constraints = getattr(
-        func_module, f"_parameter_constraints_of_{func_name}"
+        func_module, f"_parameter_constraints_of_{func_name}", None
     )
+    if parameter_constraints is None:
+        raise ValueError(
+            f"The function {func_name} must have its parameter constraints defined in "
+            f"a dict named _parameter_constraints_of_{func_name} and located in the "
+            f"same module: {func_module}."
+        )
 
     # generate valid values for the required parameters
     required_params = [

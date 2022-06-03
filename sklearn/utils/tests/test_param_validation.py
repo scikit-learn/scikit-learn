@@ -187,7 +187,7 @@ def test_generate_invalid_param_val_not_error(constraint):
     ],
 )
 def test_generate_valid_param(constraint):
-    """Check that the value generated does satisfy the constraint"""
+    """Check that the value generated does satisfy the constraint."""
     value = generate_valid_param(constraint)
     assert constraint.is_satisfied_by(value)
 
