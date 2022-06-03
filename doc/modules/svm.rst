@@ -483,6 +483,8 @@ Different kernels are specified by the `kernel` parameter::
     >>> rbf_svc.kernel
     'rbf'
 
+See also :ref:`kernel_approximation` for usage with other algorithms.
+
 Parameters of the RBF Kernel
 ----------------------------
 
