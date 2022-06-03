@@ -15,6 +15,10 @@ on:
 jobs:
   # Build the documentation against the minimum version of the dependencies
   doc-min-dependencies:
+    # This prevents this workflow from running on a fork.
+    # To test this workflow on a fork, uncomment the following line.
+    if: github.repository == 'scikit-learn/scikit-learn'
+
     runs-on: ubuntu-latest
     steps:
       - name: Checkout scikit-learn
@@ -41,6 +45,10 @@ jobs:
 
   # Build the documentation against the latest version of the dependencies
   doc:
+    # This prevents this workflow from running on a fork.
+    # To test this workflow on a fork, uncomment the following line.
+    if: github.repository == 'scikit-learn/scikit-learn'
+
     runs-on: ubuntu-latest
     steps:
       - name: Checkout scikit-learn
