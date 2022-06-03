@@ -617,7 +617,7 @@ def test_error():
 
 
 @pytest.mark.parametrize(
-    "name, Tree", {k: v for k, v in ALL_TREES.items() if "ExtraTree" not in k}
+    "name, Tree", {k: v for k, v in ALL_TREES.items() if "ExtraTree" in k}
 )
 @pytest.mark.parametrize(
     "params, err_type, err_msg",
