@@ -33,7 +33,6 @@ from ..base import is_classifier
 from ..base import MultiOutputMixin
 from ..utils import Bunch
 from ..utils import check_random_state
-from ..utils import check_scalar
 from ..utils.deprecation import deprecated
 from ..utils.validation import _check_sample_weight
 from ..utils import compute_sample_weight
