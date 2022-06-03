@@ -17,7 +17,6 @@ import warnings
 from ._base import _check_weights, _get_weights
 from ._base import NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin
 from ..base import ClassifierMixin
-from ..utils._param_validation import Interval, Integral, Real, StrOptions
 
 class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
     """Classifier implementing the k-nearest neighbors vote.
