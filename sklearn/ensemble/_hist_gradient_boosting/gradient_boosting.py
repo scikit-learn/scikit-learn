@@ -98,7 +98,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         "monotonic_cst": ["array-like", None],
         "n_iter_no_change": [Interval(Integral, 1, None, closed="left")],
         "validation_fraction": [
-            Interval(Real, 0, None, closed="neither"),
+            Interval(Real, 0, 1, closed="neither"),
             Interval(Integral, 1, None, closed="left"),
             None,
         ],
