@@ -23,4 +23,6 @@ jobs:
           EVENT: ${{ github.event.workflow_run.event }}
           RUN_ID: ${{ github.event.workflow_run.id }}
           HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
-          PULL_REQUEST_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
+          COMMIT_SHA:  ${{ github.event.workflow_run.head_sha }}
+          REPO_NAME:  ${{ github.event.workflow_run.head_repository.full_name }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
