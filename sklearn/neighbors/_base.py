@@ -11,6 +11,7 @@ from functools import partial
 import warnings
 from abc import ABCMeta, abstractmethod
 import numbers
+from numbers import Integral
 
 import numpy as np
 from scipy.sparse import csr_matrix, issparse
@@ -34,7 +35,7 @@ from ..utils import (
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
 from ..utils.validation import check_non_negative
-from ..utils._param_validation import Interval, Integral, Real, StrOptions
+from ..utils._param_validation import Interval, StrOptions
 from ..utils.fixes import delayed, sp_version
 from ..utils.fixes import parse_version
 from ..exceptions import DataConversionWarning, EfficiencyWarning
@@ -395,7 +396,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         "p": [Interval(Integral, 1, None, closed="left")],
         "metric": [StrOptions({"minkowski"}), callable],
         "metric_params": [dict, None],
-        "n_jobs": [Interval(Integral, -1, None, closed="left"), None],
+        "n_jobs": [None, Integral],
     }
 
     @abstractmethod
@@ -421,9 +422,6 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         self.n_jobs = n_jobs
 
     def _check_algorithm_metric(self):
-        if self.algorithm not in ["auto", "brute", "kd_tree", "ball_tree"]:
-            raise ValueError("unrecognized algorithm: '%s'" % self.algorithm)
-
         if self.algorithm == "auto":
             if self.metric == "precomputed":
                 alg_check = "brute"
