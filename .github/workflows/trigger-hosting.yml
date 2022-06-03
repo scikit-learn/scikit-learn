@@ -11,7 +11,9 @@ jobs:
   push:
     runs-on: ubuntu-latest
     # Run the job only if the "Documentation builder" workflow succeeded
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    # Prevents this workflow from running on a fork.
+    # To test this workflow on a fork remove the `github.repository == scikit-learn/scikit-learn` condition
+    if: github.repository == 'scikit-learn/scikit-learn' && github.event.workflow_run.conclusion == 'success'
     steps:
       - name: Checkout scikit-learn
         uses: actions/checkout@v2
