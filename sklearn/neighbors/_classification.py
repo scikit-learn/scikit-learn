@@ -17,6 +17,8 @@ import warnings
 from ._base import _check_weights, _get_weights
 from ._base import NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin
 from ..base import ClassifierMixin
+from ..utils._param_validation import StrOptions
+
 
 class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
     """Classifier implementing the k-nearest neighbors vote.
@@ -152,8 +154,12 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
     >>> print(neigh.predict_proba([[0.9]]))
     [[0.666... 0.333...]]
     """
+
     _parameter_constraints = {**NeighborsBase._parameter_constraints}
     _parameter_constraints.pop("radius")
+    _parameter_constraints.update(
+        {"weights": [StrOptions({"uniform", "distance"}), callable]}
+    )
 
     def __init__(
         self,

@@ -17,6 +17,7 @@ import numpy as np
 from ._base import _get_weights, _check_weights
 from ._base import NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin
 from ..base import RegressorMixin
+from ..utils._param_validation import StrOptions
 
 
 class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
@@ -152,8 +153,12 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
     >>> print(neigh.predict([[1.5]]))
     [0.5]
     """
+
     _parameter_constraints = {**NeighborsBase._parameter_constraints}
     _parameter_constraints.pop("radius")
+    _parameter_constraints.update(
+        {"weights": [StrOptions({"uniform", "distance"}), callable]}
+    )
 
     def __init__(
         self,
