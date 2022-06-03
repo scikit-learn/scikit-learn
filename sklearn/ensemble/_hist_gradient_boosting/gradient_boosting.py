@@ -1295,7 +1295,6 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     """
 
     # TODO(1.2): remove "least_absolute_deviation"
-
     _parameter_constraints = {
         **BaseHistGradientBoosting._parameter_constraints,  # type: ignore
         "loss": [
