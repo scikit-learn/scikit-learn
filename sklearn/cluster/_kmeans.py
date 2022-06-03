@@ -325,7 +325,8 @@ class KMeansCythonEngine:
         return X, init, engine_fit_context
 
     def _init_centroids(self, estimator, *args, **kwargs):
-        # XXX: this implementation should be part of the engine.
+        # XXX: the actual implementation of the centroids init should also be
+        # moved to the engine.
         return estimator._init_centroids(*args, **kwargs)
 
 
@@ -1502,14 +1503,14 @@ class KMeans(_BaseKMeans):
                 print("Initialization complete")
 
             # run a k-means once
-            labels, inertia, centers, n_iter_ = kmeans_single(
+            labels, inertia, centers, n_iter_ = engine.kmeans_single(
                 X,
                 sample_weight,
                 centers_init,
                 max_iter=self.max_iter,
                 verbose=self.verbose,
                 tol=self._tol,
-                x_squared_norms=x_squared_norms,
+                x_squared_norms=engine_fit_ctx["x_squared_norms"],
                 n_threads=self._n_threads,
             )
 
