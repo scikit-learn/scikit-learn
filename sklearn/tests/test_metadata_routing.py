@@ -852,6 +852,8 @@ def test_metadata_routing_get_param_names():
 def test_method_generation():
     # Test if all required request methods are generated.
 
+    # TODO: these test classes can be moved to sklearn.utils._testing once we
+    # have a better idea of what the commonly used classes are.
     class SimpleEstimator(BaseEstimator):
         # This class should have no set_{method}_request
         def fit(self, X, y):
