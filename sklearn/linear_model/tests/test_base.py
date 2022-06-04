@@ -254,9 +254,9 @@ def test_linear_regression_multiple_outcome(global_random_seed):
     assert_array_almost_equal(np.vstack((y_pred, y_pred)).T, Y_pred, decimal=3)
 
 
-def test_linear_regression_sparse_multiple_outcome(random_state=0):
+def test_linear_regression_sparse_multiple_outcome(global_random_seed):
     # Test multiple-outcome linear regressions with sparse data
-    random_state = check_random_state(random_state)
+    random_state = check_random_state(global_random_seed)
     X, y = make_sparse_uncorrelated(random_state=random_state)
     X = sparse.coo_matrix(X)
     Y = np.vstack((y, y)).T
