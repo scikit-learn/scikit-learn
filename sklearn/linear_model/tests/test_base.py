@@ -294,9 +294,9 @@ def test_linear_regression_positive():
     assert_allclose(reg.predict(X), [0])
 
 
-def test_linear_regression_positive_multiple_outcome(random_state=0):
+def test_linear_regression_positive_multiple_outcome(global_random_seed):
     # Test multiple-outcome nonnegative linear regressions
-    random_state = check_random_state(random_state)
+    random_state = check_random_state(global_random_seed)
     X, y = make_sparse_uncorrelated(random_state=random_state)
     Y = np.vstack((y, y)).T
     n_features = X.shape[1]
