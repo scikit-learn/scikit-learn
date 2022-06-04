@@ -59,7 +59,7 @@ def test_linear_regression():
 def test_linear_regression_sample_weights(
     array_constr, fit_intercept, global_random_seed
 ):
-    rng = np.random.RandomState(global_random_seed)
+    rng = check_random_state(global_random_seed)
 
     # It would not work with under-determined systems
     n_samples, n_features = 6, 5
@@ -111,7 +111,7 @@ def test_raises_value_error_if_sample_weights_greater_than_1d(global_random_seed
     n_sampless = [2, 3]
     n_featuress = [3, 2]
 
-    rng = np.random.RandomState(global_random_seed)
+    rng = check_random_state(global_random_seed)
 
     for n_samples, n_features in zip(n_sampless, n_featuress):
         X = rng.randn(n_samples, n_features)
@@ -325,7 +325,7 @@ def test_linear_regression_positive_vs_nonpositive(global_random_seed):
 def test_linear_regression_positive_vs_nonpositive_when_positive(global_random_seed):
     # Test LinearRegression fitted coefficients
     # when the problem is positive.
-    rng = np.random.RandomState(global_random_seed)
+    rng = check_random_state(global_random_seed)
     n_samples = 200
     n_features = 4
     X = rng.rand(n_samples, n_features)
@@ -368,7 +368,7 @@ def test_linear_regression_pd_sparse_dataframe_warning():
 
 
 def test_preprocess_data(global_random_seed):
-    rng = np.random.RandomState(global_random_seed)
+    rng = check_random_state(global_random_seed)
     n_samples = 200
     n_features = 2
     X = rng.rand(n_samples, n_features)
@@ -406,7 +406,7 @@ def test_preprocess_data(global_random_seed):
 
 
 def test_preprocess_data_multioutput(global_random_seed):
-    rng = np.random.RandomState(global_random_seed)
+    rng = check_random_state(global_random_seed)
     n_samples = 200
     n_features = 3
     n_outputs = 2
@@ -435,7 +435,7 @@ def test_preprocess_data_multioutput(global_random_seed):
 
 @pytest.mark.parametrize("is_sparse", [False, True])
 def test_preprocess_data_weighted(is_sparse, global_random_seed):
-    rng = np.random.RandomState(global_random_seed)
+    rng = check_random_state(global_random_seed)
     n_samples = 200
     n_features = 4
     # Generate random data with 50% of zero values to make sure
@@ -539,7 +539,7 @@ def test_preprocess_data_weighted(is_sparse, global_random_seed):
 
 
 def test_sparse_preprocess_data_offsets(global_random_seed):
-    rng = np.random.RandomState(global_random_seed)
+    rng = check_random_state(global_random_seed)
     n_samples = 200
     n_features = 2
     X = sparse.rand(n_samples, n_features, density=0.5, random_state=rng)
@@ -607,7 +607,7 @@ def test_preprocess_copy_data_no_checks(is_sparse, to_copy):
 
 
 def test_dtype_preprocess_data(global_random_seed):
-    rng = np.random.RandomState(global_random_seed)
+    rng = check_random_state(global_random_seed)
     n_samples = 200
     n_features = 2
     X = rng.rand(n_samples, n_features)
@@ -687,7 +687,7 @@ def test_dtype_preprocess_data(global_random_seed):
 
 @pytest.mark.parametrize("n_targets", [None, 2])
 def test_rescale_data_dense(n_targets, global_random_seed):
-    rng = np.random.RandomState(global_random_seed)
+    rng = check_random_state(global_random_seed)
     n_samples = 200
     n_features = 2
 
