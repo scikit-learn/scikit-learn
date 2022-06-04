@@ -539,11 +539,11 @@ def test_preprocess_data_weighted(is_sparse, global_random_seed):
     assert_array_almost_equal(yt, y - expected_y_mean)
 
 
-def test_sparse_preprocess_data_offsets():
+def test_sparse_preprocess_data_offsets(global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
     n_samples = 200
     n_features = 2
-    # random_state not supported yet in sparse.rand
-    X = sparse.rand(n_samples, n_features, density=0.5)  # , random_state=rng
+    X = sparse.rand(n_samples, n_features, density=0.5, random_state=rng)
     X = X.tolil()
     y = rng.rand(n_samples)
     XA = X.toarray()
