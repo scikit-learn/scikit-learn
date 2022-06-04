@@ -238,9 +238,9 @@ def test_linear_regression_sparse_equal_dense(
     assert_allclose(clf_dense.coef_, clf_sparse.coef_)
 
 
-def test_linear_regression_multiple_outcome(random_state=0):
+def test_linear_regression_multiple_outcome(global_random_seed):
     # Test multiple-outcome linear regressions
-    X, y = make_regression(random_state=random_state)
+    X, y = make_regression(random_state=global_random_seed)
 
     Y = np.vstack((y, y)).T
     n_features = X.shape[1]
