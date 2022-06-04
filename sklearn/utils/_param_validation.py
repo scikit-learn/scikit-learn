@@ -263,7 +263,7 @@ class StrOptions(_Constraint):
 
 
 class Interval(_Constraint):
-    """Constraint representing an typed interval.
+    """Constraint representing a typed interval.
 
     Parameters
     ----------
