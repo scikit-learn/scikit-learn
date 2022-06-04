@@ -368,7 +368,8 @@ def test_linear_regression_pd_sparse_dataframe_warning():
         reg.fit(df.iloc[:, 0:2], df.iloc[:, 3])
 
 
-def test_preprocess_data():
+def test_preprocess_data(global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
     n_samples = 200
     n_features = 2
     X = rng.rand(n_samples, n_features)
