@@ -687,7 +687,8 @@ def test_dtype_preprocess_data(global_random_seed):
 
 
 @pytest.mark.parametrize("n_targets", [None, 2])
-def test_rescale_data_dense(n_targets):
+def test_rescale_data_dense(n_targets, global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
     n_samples = 200
     n_features = 2
 
