@@ -6,6 +6,8 @@ Frequently Asked Questions
 
 .. currentmodule:: sklearn
 
+Just testing.
+
 Here we try to give some answers to questions that regularly pop up on the mailing list.
 
 What is the project name (a lot of people get it wrong)?
