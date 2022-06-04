@@ -71,7 +71,7 @@ def test_fastica_return_dtypes(global_dtype):
 
 # FIXME remove filter in 1.3
 @pytest.mark.filterwarnings(
-    "ignore:From version 1.3 whiten='unit-variance' will be used by default."
+    "ignore:Starting in v1.3, whiten='unit-variance' will be used by default."
 )
 @pytest.mark.parametrize("add_noise", [True, False])
 def test_fastica_simple(add_noise, global_random_seed, global_dtype):
@@ -353,7 +353,7 @@ def test_inverse_transform(
 
 # FIXME remove filter in 1.3
 @pytest.mark.filterwarnings(
-    "ignore:From version 1.3 whiten='unit-variance' will be used by default."
+    "ignore:Starting in v1.3, whiten='unit-variance' will be used by default."
 )
 def test_fastica_errors():
     n_features = 3
@@ -398,7 +398,7 @@ def test_fastica_whiten_default_value_deprecation(ica):
     """
     rng = np.random.RandomState(0)
     X = rng.random_sample((100, 10))
-    with pytest.warns(FutureWarning, match=r"From version 1.3 whiten="):
+    with pytest.warns(FutureWarning, match=r"Starting in v1.3, whiten="):
         ica.fit(X)
         assert ica._whiten == "arbitrary-variance"
 
