@@ -406,7 +406,8 @@ def test_preprocess_data(global_random_seed):
     assert_array_almost_equal(yt, y - expected_y_mean)
 
 
-def test_preprocess_data_multioutput():
+def test_preprocess_data_multioutput(global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
     n_samples = 200
     n_features = 3
     n_outputs = 2
