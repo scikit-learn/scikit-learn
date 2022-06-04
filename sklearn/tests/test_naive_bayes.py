@@ -954,7 +954,7 @@ def test_n_features_deprecation(Estimator):
         est.n_features_
 
 
-def test_cwnb_union():
+def test_cwnb_union_gnb_fit():
     # A union of GaussianNB's yields the same prediction a single GaussianNB (fit)
     clf1 = ColumnwiseNB(
         nb_estimators=[("g1", GaussianNB(), [0]), ("g2", GaussianNB(), [1])]
@@ -966,6 +966,8 @@ def test_cwnb_union():
     assert_array_almost_equal(clf1.predict_proba(X), clf2.predict_proba(X), 8)
     assert_array_almost_equal(clf1.predict_log_proba(X), clf2.predict_log_proba(X), 8)
 
+
+def test_cwnb_union_bnb_fit():
     # A union of BernoulliNB's yields the same prediction a single BernoulliNB (fit)
     clf1 = ColumnwiseNB(
         nb_estimators=[("b1", BernoulliNB(), [0]), ("b2", BernoulliNB(), [1, 2])]
@@ -977,6 +979,8 @@ def test_cwnb_union():
     assert_array_almost_equal(clf1.predict_log_proba(X1), clf2.predict_log_proba(X1), 8)
     assert_array_almost_equal(clf1.predict(X1), clf2.predict(X1), 8)
 
+
+def test_cwnb_union_bnb_partial_fit():
     # A union of BernoulliNB's yields the same prediction a single BernoulliNB
     # (partial_fit)
     clf1 = ColumnwiseNB(
@@ -990,6 +994,8 @@ def test_cwnb_union():
     assert_array_almost_equal(clf1.predict_log_proba(X1), clf2.predict_log_proba(X1), 8)
     assert_array_almost_equal(clf1.predict(X1), clf2.predict(X1), 8)
 
+
+def test_cwnb_union_permutation():
     # A union of several different NB's is permutation-invariant
     clf1 = ColumnwiseNB(
         nb_estimators=[
@@ -1092,7 +1098,7 @@ def test_cwnb_estimators_pandas():
     )
 
 
-def test_cwnb_estimators_1():
+def test_cwnb_repeated_columns():
     # Subestimators spec: repeated col ints have the same effect as repeating data
     clf1 = ColumnwiseNB(
         nb_estimators=[
@@ -1112,6 +1118,8 @@ def test_cwnb_estimators_1():
         clf1.predict_log_proba(X1), clf2.predict_log_proba(X1[:, [1, 1, 0, 0, 1, 1]]), 8
     )
 
+
+def test_cwnb_empty_columns():
     # Subestimators spec: empty cols have the same effect as an absent estimator
     clf1 = ColumnwiseNB(
         nb_estimators=[
@@ -1132,6 +1140,8 @@ def test_cwnb_estimators_1():
     # No cloning of the empty-columns estimators took place:
     assert id(clf1.nb_estimators[1][1]) == id(clf1.named_estimators_["g2"])
 
+
+def test_cwnb_estimators_unique_names():
     # Subestimators spec: error on repeated names
     clf1 = ColumnwiseNB(
         nb_estimators=[("g1", GaussianNB(), [1]), ("g1", GaussianNB(), [0, 1])]
@@ -1146,7 +1156,7 @@ def test_cwnb_estimators_1():
     clf1.fit(X, y)
 
 
-def test_cwnb_estimators_2():
+def test_cwnb_estimators_nonempty_list():
     # Subestimators spec: error on empty list
     clf = ColumnwiseNB(
         nb_estimators=[],
@@ -1163,6 +1173,8 @@ def test_cwnb_estimators_2():
     with pytest.raises(ValueError, match=msg):
         clf.fit(X1, y1)
 
+
+def test_cwnb_estimators_support_jll():
     # Subestimators spec: error when some don't support _joint_log_likelihood
     class notNB(BaseEstimator):
         def __init__(self):
@@ -1183,6 +1195,8 @@ def test_cwnb_estimators_2():
     with pytest.raises(TypeError, match=msg):
         clf1.partial_fit(X, y)
 
+
+def test_cwnb_estimators_support_fit():
     # Subestimators spec: error when some don't support fit
     class notNB(BaseEstimator):
         def __init__(self):
@@ -1203,6 +1217,8 @@ def test_cwnb_estimators_2():
     with pytest.raises(TypeError, match=msg):
         clf1.fit(X, y)
 
+
+def test_cwnb_estimators_support_partial_fit():
     # Subestimators spec: error when some don't support partial_fit
     class notNB(BaseEstimator):
         def __init__(self):
@@ -1223,6 +1239,8 @@ def test_cwnb_estimators_2():
     with pytest.raises(TypeError, match=msg):
         clf1.partial_fit(X, y)
 
+
+def test_cwnb_estimators_setter():
     # _estimators setter works
     clf1 = ColumnwiseNB(
         nb_estimators=[("g1", GaussianNB(), [0]), ("b1", BernoulliNB(), [1])]
@@ -1238,7 +1256,7 @@ def test_cwnb_estimators_2():
     assert clf1.nb_estimators[1][1] is clf1.named_estimators_["g1"]
 
 
-def test_cwnb_prior():
+def test_cwnb_prior_valid_spec():
     # prior spec: error when negative, sum!=1 or bad length
     clf1 = ColumnwiseNB(
         nb_estimators=[("g1", GaussianNB(), [1]), ("g2", GaussianNB(), [0, 1])],
@@ -1264,34 +1282,39 @@ def test_cwnb_prior():
     with pytest.raises(ValueError, match=msg):
         clf1.fit(X, y)
 
-    # prior spec: specified prior equals calculated and subestimators' priors
-    # prior spec: str prior ties subestimators'
+
+def test_cwnb_prior_match():
+    # prior spec: all these ways work (and agree in our example)
+    #   (1) an array of values
+    #   (2a) a str name of a subestimator supporting class_prior_
+    #   (2b) a str name of a subestimator supporting class_log_prior_
+    #   (3) nothing (ColumnwiseNB will calculate relative frequencies)
     clf1 = ColumnwiseNB(
         nb_estimators=[
             ("g1", GaussianNB(), [0, 1]),
             ("m1", MultinomialNB(), [2, 3, 4, 5, 6]),
         ],
-        priors=np.array([1 / 3, 1 / 3, 1 / 3]),
+        priors=np.array([1 / 3, 1 / 3, 1 / 3]),  # prior is provided by user
     )
     clf2a = ColumnwiseNB(
         nb_estimators=[
             ("g1", GaussianNB(), [0, 1]),
             ("m1", MultinomialNB(), [2, 3, 4, 5, 6]),
         ],
-        priors="g1",
+        priors="g1",  # prior will be estimated by sub-estimator "g1"
     )
     clf2b = ColumnwiseNB(
         nb_estimators=[
             ("g1", GaussianNB(), [0, 1]),
             ("m1", MultinomialNB(), [2, 3, 4, 5, 6]),
         ],
-        priors="m1",
+        priors="m1",  # prior will be estimated by sub-estimator "m1"
     )
     clf3 = ColumnwiseNB(
         nb_estimators=[
             ("g1", GaussianNB(), [0, 1]),
             ("m1", MultinomialNB(), [2, 3, 4, 5, 6]),
-        ],
+        ],  # prior will be estimated by the meta-estimator
     )
     clf1.fit(X2, y2)
     clf2a.fit(X2, y2)
@@ -1308,18 +1331,16 @@ def test_cwnb_prior():
     assert_array_almost_equal(clf1.class_prior_, clf2b.class_prior_, 8)
     assert_array_almost_equal(clf1.class_prior_, clf3.class_prior_, 8)
 
+
+def test_cwnb_estimators_support_class_prior_gnb():
     # prior spec: error message when can't extract prior from subestimator
+    # ColumnwiseNB tries both class_prior_ and class_log_prior, which is tested
+    # in test_cwnb_prior_match()
     class GaussianNB_hide_prior(GaussianNB):
         def fit(self, X, y, sample_weight=None):
             super().fit(X, y, sample_weight=None)
             self.qwerqwer = self.class_prior_
             del self.class_prior_
-
-    class MultinomialNB_hide_log_prior(MultinomialNB):
-        def fit(self, X, y, sample_weight=None):
-            super().fit(X, y, sample_weight=None)
-            self.qwerqwer = self.class_log_prior_
-            del self.class_log_prior_
 
     clf = ColumnwiseNB(
         nb_estimators=[
@@ -1331,6 +1352,17 @@ def test_cwnb_prior():
     msg = "Unable to extract class prior from estimator g2*"
     with pytest.raises(AttributeError, match=msg):
         clf.fit(X, y)
+
+
+def test_cwnb_estimators_support_class_prior_mnb():
+    # prior spec: error message when can't extract prior from subestimator
+    # ColumnwiseNB tries both class_prior_ and class_log_prior, which is tested
+    # in test_cwnb_prior_match()
+    class MultinomialNB_hide_log_prior(MultinomialNB):
+        def fit(self, X, y, sample_weight=None):
+            super().fit(X, y, sample_weight=None)
+            self.qwerqwer = self.class_log_prior_
+            del self.class_log_prior_
 
     clf = ColumnwiseNB(
         nb_estimators=[
@@ -1344,8 +1376,13 @@ def test_cwnb_prior():
         clf.fit(X2, y2)
 
 
-def test_cwnb_zero_prior():
-    # P(y)=0 in a subestimator results in P(y|x)=0 of meta-estimator
+def test_cwnb_prior_nonzero():
+    # P(y)=0 in one or two subestimators results in P(y|x)=0 of meta-estimator.
+    # Despite attempted Log[0], predicted class probabilities are all finite.
+    # On a related note, meaningless results (including NaNs) may be produced
+    # - if P(y)=0 in the meta-estimator, or/and
+    # - if class priors differ across subestimators,
+    # but this is not what is tested here.
     clf1 = ColumnwiseNB(
         nb_estimators=[
             ("g1", GaussianNB(), [1, 3, 5]),
@@ -1364,30 +1401,25 @@ def test_cwnb_zero_prior():
     assert_almost_equal(np.abs(p).sum(), 0)
     assert np.isfinite(p).all()
 
-    # P(y)=0 in the meta-estimator, as well as class priors that differ across
-    # subestimators may produce meaningless results, including NaNs. This case
-    # is not tested here.
-
-    # P(y)=0 in two subestimators results in P(y|x)=0 of meta-estimator
     clf1 = ColumnwiseNB(
         nb_estimators=[
             ("g1", GaussianNB(priors=np.array([0.6, 0, 0.4])), [1, 3, 5]),
-            ("g2", GaussianNB(priors=np.array([0.5, 0, 0.5])), [0, 1]),
+            ("g2", GaussianNB(priors=np.array([0.5, 0.5, 0])), [0, 1]),
         ]
     )
     clf1.fit(X2, y2)
     with pytest.warns(RuntimeWarning, match=msg):
-        p = clf1.predict_proba(X2)[:, 1]
+        p = clf1.predict_proba(X2)[:, 1:]
     assert_almost_equal(np.abs(p).sum(), 0)
     assert np.isfinite(p).all()
     Xt = rng.randint(5, size=(6, 100))
     with pytest.warns(RuntimeWarning, match=msg):
-        p = clf1.predict_proba(Xt)[:, 1]
+        p = clf1.predict_proba(Xt)[:, 1:]
     assert_almost_equal(np.abs(p).sum(), 0)
     assert np.isfinite(p).all()
 
 
-def test_cwnb_sample_weight():
+def test_cwnb_fit_sample_weight_ones():
     # weights in fit have no effect if all ones
     weights = [1, 1, 1, 1, 1, 1]
     clf1 = ColumnwiseNB(
@@ -1404,7 +1436,10 @@ def test_cwnb_sample_weight():
     assert_array_almost_equal(clf1.predict_log_proba(X), clf2.predict_log_proba(X), 8)
     assert_array_equal(clf1.predict(X), clf2.predict(X))
 
+
+def test_cwnb_partial_fit_sample_weight_ones():
     # weights in partial_fit have no effect if all ones
+    weights = [1, 1, 1, 1, 1, 1]
     clf1 = ColumnwiseNB(
         nb_estimators=[
             ("b1", BernoulliNB(binarize=2), [1]),
@@ -1425,6 +1460,8 @@ def test_cwnb_sample_weight():
     assert_array_almost_equal(clf1.predict_log_proba(X2), clf2.predict_log_proba(X2), 8)
     assert_array_equal(clf1.predict(X2), clf2.predict(X2))
 
+
+def test_cwnb_fit_sample_weight_repeated():
     # weights in fit have the same effect as repeating data
     weights = [1, 2, 3, 1, 4, 2]
     idx = list(chain(*([i] * w for i, w in enumerate(weights))))
@@ -1451,7 +1488,11 @@ def test_cwnb_sample_weight():
     for attr_name in ("class_count_", "class_prior_", "classes_"):
         assert_array_equal(getattr(clf1, attr_name), getattr(clf1, attr_name))
 
+
+def test_cwnb_partial_fit_sample_weight_repeated():
     # weights in partial_fit have the same effect as repeating data
+    weights = [1, 2, 3, 1, 4, 2]
+    idx = list(chain(*([i] * w for i, w in enumerate(weights))))
     clf1 = ColumnwiseNB(
         nb_estimators=[
             ("b1", BernoulliNB(binarize=2), [1]),
@@ -1492,6 +1533,8 @@ def test_cwnb_partial_fit():
     for attr_name in ("class_count_", "class_prior_", "classes_"):
         assert_array_equal(getattr(clf1, attr_name), getattr(clf1, attr_name))
 
+
+def test_cwnb_partial_fit_classes():
     # partial_fit: error when classes are not provided at the first call
     clf1 = ColumnwiseNB(
         nb_estimators=[("b1", BernoulliNB(), [1]), ("m1", MultinomialNB(), [0, 2, 3])]
@@ -1501,7 +1544,7 @@ def test_cwnb_partial_fit():
         clf1.partial_fit(X2, y2)
 
 
-def test_cwnb_consistency():
+def test_cwnb_class_attributes_consistency():
     # class_count_, classes_, class_prior_ are consistent in meta-, sub-estimators
     clf1 = ColumnwiseNB(
         nb_estimators=[
@@ -1546,7 +1589,7 @@ def test_cwnb_params():
 
 
 def test_cwnb_n_jobs():
-    # n_jobs: same results wether with it or without
+    # n_jobs: same result whether with it or without
     clf1 = ColumnwiseNB(
         nb_estimators=[
             ("b1", BernoulliNB(binarize=2), [1]),
@@ -1608,8 +1651,7 @@ def test_cwnb_verbose(capsys):
 
 
 def test_cwnb_sk_visual_block(capsys):
-    # Setting verbose=True does not result in an error.
-    # This DOES NOT test if the desired output is generated.
+    # visual block representation correctly extracts names, cols and estimators
     estimators = (MultinomialNB(), MultinomialNB(), GaussianNB())
     clf = ColumnwiseNB(
         nb_estimators=[
@@ -1617,8 +1659,6 @@ def test_cwnb_sk_visual_block(capsys):
             ("mnb2", estimators[1], [3, 4]),
             ("gnb1", estimators[2], [5]),
         ],
-        verbose=True,
-        n_jobs=4,
     )
     visual_block = clf._sk_visual_block_()
     assert visual_block.names == ("mnb1", "mnb2", "gnb1")
