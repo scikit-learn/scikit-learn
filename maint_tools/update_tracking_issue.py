@@ -81,9 +81,9 @@ def create_or_update_issue(body=""):
         print(f"Created issue in {args.issue_repo}#{issue.number}")
         sys.exit()
     else:
-        # Add comment to existing issue
+        # Update existing issue
         header = f"**CI is still failing on {link}**"
-        issue.create_comment(body=f"{header}\n{body}")
+        issue.edit(body=f"{header}\n{body}")
         print(f"Commented on issue: {args.issue_repo}#{issue.number}")
         sys.exit()
 
