@@ -311,9 +311,9 @@ def test_linear_regression_positive_multiple_outcome(global_random_seed):
     assert_allclose(np.vstack((y_pred, y_pred)).T, Y_pred)
 
 
-def test_linear_regression_positive_vs_nonpositive():
+def test_linear_regression_positive_vs_nonpositive(global_random_seed):
     # Test differences with LinearRegression when positive=False.
-    X, y = make_sparse_uncorrelated(random_state=0)
+    X, y = make_sparse_uncorrelated(random_state=global_random_seed)
 
     reg = LinearRegression(positive=True)
     reg.fit(X, y)
