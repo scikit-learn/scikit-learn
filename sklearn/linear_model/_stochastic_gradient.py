@@ -87,7 +87,7 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         "C": [Interval(Integral, 1, None, closed="left")],  # redundant?
         "l1_ratio": [Interval(Real, 0, 1, closed="both")],
         "fit_intercept": [bool],
-        "max_iter": [Interval(Integral, 1, None, closed="left")],
+        "max_iter": [Interval(Integral, 1, None, closed="left")], # None
         "tol": [Interval(Real, 0, None, closed="left")],
         "shuffle": [bool],
         "verbose": [Interval(Integral, 0, None, closed="left")],
@@ -156,26 +156,10 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
 
     def _revalidate_params(self, for_partial_fit=False):
         """Validate input params."""
+        self._validate_params()
 
-        if not isinstance(self.shuffle, bool):
-            raise ValueError("shuffle must be either True or False")
-        if not isinstance(self.early_stopping, bool):
-            raise ValueError("early_stopping must be either True or False")
         if self.early_stopping and for_partial_fit:
             raise ValueError("early_stopping should be False with partial_fit")
-        if self.max_iter is not None and self.max_iter <= 0:
-            raise ValueError("max_iter must be > zero. Got %f" % self.max_iter)
-        if not (0.0 <= self.l1_ratio <= 1.0):
-            raise ValueError("l1_ratio must be in [0, 1]")
-        if not isinstance(self, SGDOneClassSVM) and self.alpha < 0.0:
-            raise ValueError("alpha must be >= 0")
-        if self.n_iter_no_change < 1:
-            raise ValueError("n_iter_no_change must be >= 1")
-        if not (0.0 < self.validation_fraction < 1.0):
-            raise ValueError("validation_fraction must be in range (0, 1)")
-        if self.learning_rate in ("constant", "invscaling", "adaptive"):
-            if self.eta0 <= 0.0:
-                raise ValueError("eta0 must be > 0")
         if self.learning_rate == "optimal" and self.alpha == 0:
             raise ValueError(
                 "alpha must be > 0 since "
@@ -186,25 +170,6 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         # raises ValueError if not registered
         self._get_penalty_type(self.penalty)
         self._get_learning_rate_type(self.learning_rate)
-
-        if self.loss not in self.loss_functions:
-            raise ValueError("The loss %s is not supported. " % self.loss)
-
-        # TODO(1.2): remove "squared_loss"
-        if self.loss == "squared_loss":
-            warnings.warn(
-                "The loss 'squared_loss' was deprecated in v1.0 and will be "
-                "removed in version 1.2. Use `loss='squared_error'` which is "
-                "equivalent.",
-                FutureWarning,
-            )
-        # TODO(1.3): remove "log"
-        if self.loss == "log":
-            warnings.warn(
-                "The loss 'log' was deprecated in v1.1 and will be removed in version "
-                "1.3. Use `loss='log_loss'` which is equivalent.",
-                FutureWarning,
-            )
 
     def _get_loss_function(self, loss):
         """Get concrete ``LossFunction`` object for str ``loss``."""
@@ -546,7 +511,7 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         **BaseSGD._parameter_constraints,
         "loss": [StrOptions({"hinge", "squared_hinge", "perceptron", "log_loss", "log", "modified_huber",
                              "squared_error", "squared_loss", "huber", "epsilon_insensitive",
-                             "squared_epsilon_insensitive"})],
+                             "squared_epsilon_insensitive"}, deprecated={"squared_loss","log"})],
         "n_jobs": [None, Integral],
         "class_weight": [StrOptions({"balanced"}), None]  # a bit tricky?
     }
@@ -616,7 +581,6 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
             coef_init,
             intercept_init,
     ):
-        self._validate_params()
         first_call = not hasattr(self, "classes_")
         X, y = self._validate_data(
             X,
@@ -1506,7 +1470,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         self : object
             Returns an instance of self.
         """
-        self._validate_params(for_partial_fit=True)
+        self._revalidate_params(for_partial_fit=True)
         return self._partial_fit(
             X,
             y,
@@ -1532,7 +1496,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
             intercept_init=None,
             sample_weight=None,
     ):
-        self._validate_params()
+        self._revalidate_params()
 
         if self.warm_start and getattr(self, "coef_", None) is not None:
             if coef_init is None:
