@@ -607,7 +607,8 @@ def test_preprocess_copy_data_no_checks(is_sparse, to_copy):
         assert np.may_share_memory(X_, X)
 
 
-def test_dtype_preprocess_data():
+def test_dtype_preprocess_data(global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
     n_samples = 200
     n_features = 2
     X = rng.rand(n_samples, n_features)
