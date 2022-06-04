@@ -24,6 +24,7 @@ jobs:
       - name: Checkout scikit-learn
         uses: actions/checkout@v2
         with:
+          fetch-depth: 1
           ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Setup Python
@@ -54,6 +55,7 @@ jobs:
       - name: Checkout scikit-learn
         uses: actions/checkout@v2
         with:
+          fetch-depth: 1
           ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Setup Python
