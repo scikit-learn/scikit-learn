@@ -11,6 +11,7 @@
 import warnings
 
 import numpy as np
+from numbers import Real
 from scipy import sparse
 from scipy import stats
 from scipy import optimize
@@ -23,6 +24,7 @@ from ..base import (
     _ClassNamePrefixFeaturesOutMixin,
 )
 from ..utils import check_array
+from ..utils._param_validation import Interval
 from ..utils.extmath import _incremental_mean_and_var, row_norms
 from ..utils.sparsefuncs_fast import (
     inplace_csr_row_normalize_l1,
@@ -377,6 +379,11 @@ class MinMaxScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     >>> print(scaler.transform([[2, 2]]))
     [[1.5 0. ]]
     """
+    _parameter_constraints = {
+        "feature_range": [Interval(Real, 0, 1, closed="neither")],
+        "copy": [bool],
+        "clip": [bool]
+    }
 
     def __init__(self, feature_range=(0, 1), *, copy=True, clip=False):
         self.feature_range = feature_range
@@ -415,6 +422,8 @@ class MinMaxScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         self : object
             Fitted scaler.
         """
+        self._validate_params()
+
         # Reset internal state before fitting
         self._reset()
         return self.partial_fit(X, y)
@@ -440,6 +449,8 @@ class MinMaxScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         self : object
             Fitted scaler.
         """
+        self._validate_params()
+
         feature_range = self.feature_range
         if feature_range[0] >= feature_range[1]:
             raise ValueError(
@@ -762,6 +773,11 @@ class StandardScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     >>> print(scaler.transform([[2, 2]]))
     [[3. 3.]]
     """
+    _parameter_constraints = {
+        "copy": [bool],
+        "with_mean": [bool],
+        "with_std": [bool]
+    }
 
     def __init__(self, *, copy=True, with_mean=True, with_std=True):
         self.with_mean = with_mean
@@ -804,6 +820,8 @@ class StandardScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         self : object
             Fitted scaler.
         """
+        self._validate_params()
+
         # Reset internal state before fitting
         self._reset()
         return self.partial_fit(X, y, sample_weight)
@@ -840,6 +858,8 @@ class StandardScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         self : object
             Fitted scaler.
         """
+        self._validate_params()
+        
         first_call = not hasattr(self, "n_samples_seen_")
         X = self._validate_data(
             X,
@@ -1112,6 +1132,9 @@ class MaxAbsScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
            [ 1. ,  0. ,  0. ],
            [ 0. ,  1. , -0.5]])
     """
+    _parameter_constraints = {
+        "copy": [bool]
+    }
 
     def __init__(self, *, copy=True):
         self.copy = copy
@@ -1145,6 +1168,8 @@ class MaxAbsScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         self : object
             Fitted scaler.
         """
+        self._validate_params()
+
         # Reset internal state before fitting
         self._reset()
         return self.partial_fit(X, y)
@@ -1170,6 +1195,8 @@ class MaxAbsScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         self : object
             Fitted scaler.
         """
+        self._validate_params()
+        
         first_pass = not hasattr(self, "n_samples_seen_")
         X = self._validate_data(
             X,
