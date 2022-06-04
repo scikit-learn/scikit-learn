@@ -239,7 +239,8 @@ def test_linear_regression_sparse_equal_dense(
 
 def test_linear_regression_multiple_outcome(global_random_seed):
     # Test multiple-outcome linear regressions
-    X, y = make_regression(random_state=global_random_seed)
+    random_state = check_random_state(global_random_seed)
+    X, y = make_regression(random_state=random_state)
 
     Y = np.vstack((y, y)).T
     n_features = X.shape[1]
@@ -312,7 +313,8 @@ def test_linear_regression_positive_multiple_outcome(global_random_seed):
 
 def test_linear_regression_positive_vs_nonpositive(global_random_seed):
     # Test differences with LinearRegression when positive=False.
-    X, y = make_sparse_uncorrelated(random_state=global_random_seed)
+    random_state = check_random_state(global_random_seed)
+    X, y = make_sparse_uncorrelated(random_state=random_state)
 
     reg = LinearRegression(positive=True)
     reg.fit(X, y)
