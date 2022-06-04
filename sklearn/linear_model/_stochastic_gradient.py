@@ -84,17 +84,20 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         "loss": [],
         "penalty": [StrOptions({"l2", "l1", "elasticnet"}), None],
         "alpha": [Interval(Real, 0, None, closed="left")],
-        "C": [Interval(Integral, 1, None, closed="left")],  # redundant?
+        "C": [Interval(Integral, 1, None, closed="left")],
         "l1_ratio": [Interval(Real, 0, 1, closed="both")],
         "fit_intercept": [bool],
-        "max_iter": [Interval(Integral, 1, None, closed="left")], # None
+        "max_iter": [Interval(Integral, 1, None, closed="left")],  # None
         "tol": [Interval(Real, 0, None, closed="left")],
         "shuffle": [bool],
         "verbose": [Interval(Integral, 0, None, closed="left")],
         "epsilon": [Interval(Real, 0, None, closed="left")],
         "random_state": ["random_state"],
         "learning_rate": [
-            StrOptions({"constant", "optimal", "invscaling", "adaptive"}, internal={"pa1","pa2"})
+            StrOptions(
+                {"constant", "optimal", "invscaling", "adaptive"},
+                internal={"pa1", "pa2"},
+            )
         ],
         "eta0": [Interval(Real, 0, None, closed="neither")],
         "power_t": [Interval(Real, None, None, closed="neither")],
@@ -106,28 +109,28 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
     }
 
     def __init__(
-            self,
-            loss,
-            *,
-            penalty="l2",
-            alpha=0.0001,
-            C=1.0,
-            l1_ratio=0.15,
-            fit_intercept=True,
-            max_iter=1000,
-            tol=1e-3,
-            shuffle=True,
-            verbose=0,
-            epsilon=0.1,
-            random_state=None,
-            learning_rate="optimal",
-            eta0=0.0,
-            power_t=0.5,
-            early_stopping=False,
-            validation_fraction=0.1,
-            n_iter_no_change=5,
-            warm_start=False,
-            average=False,
+        self,
+        loss,
+        *,
+        penalty="l2",
+        alpha=0.0001,
+        C=1.0,
+        l1_ratio=0.15,
+        fit_intercept=True,
+        max_iter=1000,
+        tol=1e-3,
+        shuffle=True,
+        verbose=0,
+        epsilon=0.1,
+        random_state=None,
+        learning_rate="optimal",
+        eta0=0.0,
+        power_t=0.5,
+        early_stopping=False,
+        validation_fraction=0.1,
+        n_iter_no_change=5,
+        warm_start=False,
+        average=False,
     ):
         self.loss = loss
         self.penalty = penalty
@@ -198,7 +201,7 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
             raise ValueError("Penalty %s is not supported. " % penalty) from e
 
     def _allocate_parameter_mem(
-            self, n_classes, n_features, coef_init=None, intercept_init=None, one_class=0
+        self, n_classes, n_features, coef_init=None, intercept_init=None, one_class=0
     ):
         """Allocate mem for parameters; initialize if provided."""
         if n_classes > 2:
@@ -309,7 +312,7 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         return validation_mask
 
     def _make_validation_score_cb(
-            self, validation_mask, X, y, sample_weight, classes=None
+        self, validation_mask, X, y, sample_weight, classes=None
     ):
         if not self.early_stopping:
             return None
@@ -357,19 +360,19 @@ def _prepare_fit_binary(est, y, i):
 
 @validate_params()
 def fit_binary(
-        est,
-        i,
-        X,
-        y,
-        alpha,
-        C,
-        learning_rate,
-        max_iter,
-        pos_weight,
-        neg_weight,
-        sample_weight,
-        validation_mask=None,
-        random_state=None,
+    est,
+    i,
+    X,
+    y,
+    alpha,
+    C,
+    learning_rate,
+    max_iter,
+    pos_weight,
+    neg_weight,
+    sample_weight,
+    validation_mask=None,
+    random_state=None,
 ):
     """Fit a single binary classifier.
 
@@ -509,38 +512,53 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
 
     _parameter_constraints = {
         **BaseSGD._parameter_constraints,
-        "loss": [StrOptions({"hinge", "squared_hinge", "perceptron", "log_loss", "log", "modified_huber",
-                             "squared_error", "squared_loss", "huber", "epsilon_insensitive",
-                             "squared_epsilon_insensitive"}, deprecated={"squared_loss","log"})],
+        "loss": [
+            StrOptions(
+                {
+                    "hinge",
+                    "squared_hinge",
+                    "perceptron",
+                    "log_loss",
+                    "log",
+                    "modified_huber",
+                    "squared_error",
+                    "squared_loss",
+                    "huber",
+                    "epsilon_insensitive",
+                    "squared_epsilon_insensitive",
+                },
+                deprecated={"squared_loss", "log"},
+            )
+        ],
         "n_jobs": [None, Integral],
-        "class_weight": [StrOptions({"balanced"}), None]  # a bit tricky?
+        "class_weight": [StrOptions({"balanced"}), None],  # a bit tricky?
     }
 
     @abstractmethod
     def __init__(
-            self,
-            loss="hinge",
-            *,
-            penalty="l2",
-            alpha=0.0001,
-            l1_ratio=0.15,
-            fit_intercept=True,
-            max_iter=1000,
-            tol=1e-3,
-            shuffle=True,
-            verbose=0,
-            epsilon=DEFAULT_EPSILON,
-            n_jobs=None,
-            random_state=None,
-            learning_rate="optimal",
-            eta0=0.0,
-            power_t=0.5,
-            early_stopping=False,
-            validation_fraction=0.1,
-            n_iter_no_change=5,
-            class_weight=None,
-            warm_start=False,
-            average=False,
+        self,
+        loss="hinge",
+        *,
+        penalty="l2",
+        alpha=0.0001,
+        l1_ratio=0.15,
+        fit_intercept=True,
+        max_iter=1000,
+        tol=1e-3,
+        shuffle=True,
+        verbose=0,
+        epsilon=DEFAULT_EPSILON,
+        n_jobs=None,
+        random_state=None,
+        learning_rate="optimal",
+        eta0=0.0,
+        power_t=0.5,
+        early_stopping=False,
+        validation_fraction=0.1,
+        n_iter_no_change=5,
+        class_weight=None,
+        warm_start=False,
+        average=False,
     ):
 
         super().__init__(
@@ -568,18 +586,18 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         self.n_jobs = n_jobs
 
     def _partial_fit(
-            self,
-            X,
-            y,
-            alpha,
-            C,
-            loss,
-            learning_rate,
-            max_iter,
-            classes,
-            sample_weight,
-            coef_init,
-            intercept_init,
+        self,
+        X,
+        y,
+        alpha,
+        C,
+        loss,
+        learning_rate,
+        max_iter,
+        classes,
+        sample_weight,
+        coef_init,
+        intercept_init,
     ):
         first_call = not hasattr(self, "classes_")
         X, y = self._validate_data(
@@ -648,16 +666,16 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         return self
 
     def _fit(
-            self,
-            X,
-            y,
-            alpha,
-            C,
-            loss,
-            learning_rate,
-            coef_init=None,
-            intercept_init=None,
-            sample_weight=None,
+        self,
+        X,
+        y,
+        alpha,
+        C,
+        loss,
+        learning_rate,
+        coef_init=None,
+        intercept_init=None,
+        sample_weight=None,
     ):
         self._revalidate_params()
         if hasattr(self, "classes_"):
@@ -702,9 +720,9 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         )
 
         if (
-                self.tol is not None
-                and self.tol > -np.inf
-                and self.n_iter_ == self.max_iter
+            self.tol is not None
+            and self.tol > -np.inf
+            and self.n_iter_ == self.max_iter
         ):
             warnings.warn(
                 "Maximum number of iteration reached before "
@@ -1172,29 +1190,29 @@ class SGDClassifier(BaseSGDClassifier):
     """
 
     def __init__(
-            self,
-            loss="hinge",
-            *,
-            penalty="l2",
-            alpha=0.0001,
-            l1_ratio=0.15,
-            fit_intercept=True,
-            max_iter=1000,
-            tol=1e-3,
-            shuffle=True,
-            verbose=0,
-            epsilon=DEFAULT_EPSILON,
-            n_jobs=None,
-            random_state=None,
-            learning_rate="optimal",
-            eta0=0.0,
-            power_t=0.5,
-            early_stopping=False,
-            validation_fraction=0.1,
-            n_iter_no_change=5,
-            class_weight=None,
-            warm_start=False,
-            average=False,
+        self,
+        loss="hinge",
+        *,
+        penalty="l2",
+        alpha=0.0001,
+        l1_ratio=0.15,
+        fit_intercept=True,
+        max_iter=1000,
+        tol=1e-3,
+        shuffle=True,
+        verbose=0,
+        epsilon=DEFAULT_EPSILON,
+        n_jobs=None,
+        random_state=None,
+        learning_rate="optimal",
+        eta0=0.0,
+        power_t=0.5,
+        early_stopping=False,
+        validation_fraction=0.1,
+        n_iter_no_change=5,
+        class_weight=None,
+        warm_start=False,
+        average=False,
     ):
         super().__init__(
             loss=loss,
@@ -1358,27 +1376,27 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
 
     @abstractmethod
     def __init__(
-            self,
-            loss="squared_error",
-            *,
-            penalty="l2",
-            alpha=0.0001,
-            l1_ratio=0.15,
-            fit_intercept=True,
-            max_iter=1000,
-            tol=1e-3,
-            shuffle=True,
-            verbose=0,
-            epsilon=DEFAULT_EPSILON,
-            random_state=None,
-            learning_rate="invscaling",
-            eta0=0.01,
-            power_t=0.25,
-            early_stopping=False,
-            validation_fraction=0.1,
-            n_iter_no_change=5,
-            warm_start=False,
-            average=False,
+        self,
+        loss="squared_error",
+        *,
+        penalty="l2",
+        alpha=0.0001,
+        l1_ratio=0.15,
+        fit_intercept=True,
+        max_iter=1000,
+        tol=1e-3,
+        shuffle=True,
+        verbose=0,
+        epsilon=DEFAULT_EPSILON,
+        random_state=None,
+        learning_rate="invscaling",
+        eta0=0.01,
+        power_t=0.25,
+        early_stopping=False,
+        validation_fraction=0.1,
+        n_iter_no_change=5,
+        warm_start=False,
+        average=False,
     ):
         super().__init__(
             loss=loss,
@@ -1403,17 +1421,17 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         )
 
     def _partial_fit(
-            self,
-            X,
-            y,
-            alpha,
-            C,
-            loss,
-            learning_rate,
-            max_iter,
-            sample_weight,
-            coef_init,
-            intercept_init,
+        self,
+        X,
+        y,
+        alpha,
+        C,
+        loss,
+        learning_rate,
+        max_iter,
+        sample_weight,
+        coef_init,
+        intercept_init,
     ):
         first_call = getattr(self, "coef_", None) is None
         X, y = self._validate_data(
@@ -1485,16 +1503,16 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         )
 
     def _fit(
-            self,
-            X,
-            y,
-            alpha,
-            C,
-            loss,
-            learning_rate,
-            coef_init=None,
-            intercept_init=None,
-            sample_weight=None,
+        self,
+        X,
+        y,
+        alpha,
+        C,
+        loss,
+        learning_rate,
+        coef_init=None,
+        intercept_init=None,
+        sample_weight=None,
     ):
         self._revalidate_params()
 
@@ -1524,9 +1542,9 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         )
 
         if (
-                self.tol is not None
-                and self.tol > -np.inf
-                and self.n_iter_ == self.max_iter
+            self.tol is not None
+            and self.tol > -np.inf
+            and self.n_iter_ == self.max_iter
         ):
             warnings.warn(
                 "Maximum number of iteration reached before "
@@ -1610,7 +1628,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         return self._decision_function(X)
 
     def _fit_regressor(
-            self, X, y, alpha, C, loss, learning_rate, sample_weight, max_iter
+        self, X, y, alpha, C, loss, learning_rate, sample_weight, max_iter
     ):
         loss_function = self._get_loss_function(loss)
         penalty_type = self._get_penalty_type(self.penalty)
@@ -1917,27 +1935,27 @@ class SGDRegressor(BaseSGDRegressor):
     """
 
     def __init__(
-            self,
-            loss="squared_error",
-            *,
-            penalty="l2",
-            alpha=0.0001,
-            l1_ratio=0.15,
-            fit_intercept=True,
-            max_iter=1000,
-            tol=1e-3,
-            shuffle=True,
-            verbose=0,
-            epsilon=DEFAULT_EPSILON,
-            random_state=None,
-            learning_rate="invscaling",
-            eta0=0.01,
-            power_t=0.25,
-            early_stopping=False,
-            validation_fraction=0.1,
-            n_iter_no_change=5,
-            warm_start=False,
-            average=False,
+        self,
+        loss="squared_error",
+        *,
+        penalty="l2",
+        alpha=0.0001,
+        l1_ratio=0.15,
+        fit_intercept=True,
+        max_iter=1000,
+        tol=1e-3,
+        shuffle=True,
+        verbose=0,
+        epsilon=DEFAULT_EPSILON,
+        random_state=None,
+        learning_rate="invscaling",
+        eta0=0.01,
+        power_t=0.25,
+        early_stopping=False,
+        validation_fraction=0.1,
+        n_iter_no_change=5,
+        warm_start=False,
+        average=False,
     ):
         super().__init__(
             loss=loss,
@@ -2114,19 +2132,19 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
     loss_functions = {"hinge": (Hinge, 1.0)}
 
     def __init__(
-            self,
-            nu=0.5,
-            fit_intercept=True,
-            max_iter=1000,
-            tol=1e-3,
-            shuffle=True,
-            verbose=0,
-            random_state=None,
-            learning_rate="optimal",
-            eta0=0.0,
-            power_t=0.5,
-            warm_start=False,
-            average=False,
+        self,
+        nu=0.5,
+        fit_intercept=True,
+        max_iter=1000,
+        tol=1e-3,
+        shuffle=True,
+        verbose=0,
+        random_state=None,
+        learning_rate="optimal",
+        eta0=0.0,
+        power_t=0.5,
+        warm_start=False,
+        average=False,
     ):
 
         alpha = nu / 2
@@ -2258,16 +2276,16 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
             self.offset_ = 1 - np.atleast_1d(intercept)
 
     def _partial_fit(
-            self,
-            X,
-            alpha,
-            C,
-            loss,
-            learning_rate,
-            max_iter,
-            sample_weight,
-            coef_init,
-            offset_init,
+        self,
+        X,
+        alpha,
+        C,
+        loss,
+        learning_rate,
+        max_iter,
+        sample_weight,
+        coef_init,
+        offset_init,
     ):
         first_call = getattr(self, "coef_", None) is None
         X = self._validate_data(
@@ -2352,15 +2370,15 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         )
 
     def _fit(
-            self,
-            X,
-            alpha,
-            C,
-            loss,
-            learning_rate,
-            coef_init=None,
-            offset_init=None,
-            sample_weight=None,
+        self,
+        X,
+        alpha,
+        C,
+        loss,
+        learning_rate,
+        coef_init=None,
+        offset_init=None,
+        sample_weight=None,
     ):
         self._validate_params()
 
@@ -2389,9 +2407,9 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         )
 
         if (
-                self.tol is not None
-                and self.tol > -np.inf
-                and self.n_iter_ == self.max_iter
+            self.tol is not None
+            and self.tol > -np.inf
+            and self.n_iter_ == self.max_iter
         ):
             warnings.warn(
                 "Maximum number of iteration reached before "
