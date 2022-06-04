@@ -425,4 +425,4 @@ See `joblib documentation <https://joblib.readthedocs.io>`_
 A simple algorithmic trick: warm restarts
 =========================================
 
-See the glossary entry for `warm_start <http://scikit-learn.org/dev/glossary.html#term-warm_start>`_
+See the glossary entry for :term:`warm_start`
