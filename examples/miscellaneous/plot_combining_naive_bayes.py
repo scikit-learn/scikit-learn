@@ -19,7 +19,7 @@ We consider the titanic dataset, in which:
 """
 
 # Author: Andrey V. Melnik <andrey.melnik.maths@gmail.com>
-#         (based on a related work by Pedro Morales <part.morales@gmail.com>)
+#         Pedro Morales <part.morales@gmail.com>
 #
 # License: BSD 3 clause
 
