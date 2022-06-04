@@ -198,9 +198,9 @@ def test_deprecate_normalize(normalize, default):
     assert _normalize == output
 
 
-def test_linear_regression_sparse(random_state=0):
+def test_linear_regression_sparse(global_random_seed):
     # Test that linear regression also works with sparse data
-    random_state = check_random_state(random_state)
+    random_state = check_random_state(global_random_seed)
     for i in range(10):
         n = 100
         X = sparse.eye(n, n)
