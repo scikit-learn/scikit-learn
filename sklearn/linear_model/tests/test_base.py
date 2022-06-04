@@ -323,9 +323,10 @@ def test_linear_regression_positive_vs_nonpositive(global_random_seed):
     assert np.mean((reg.coef_ - regn.coef_) ** 2) > 1e-3
 
 
-def test_linear_regression_positive_vs_nonpositive_when_positive():
+def test_linear_regression_positive_vs_nonpositive_when_positive(global_random_seed):
     # Test LinearRegression fitted coefficients
     # when the problem is positive.
+    rng = np.random.RandomState(global_random_seed)
     n_samples = 200
     n_features = 4
     X = rng.rand(n_samples, n_features)
