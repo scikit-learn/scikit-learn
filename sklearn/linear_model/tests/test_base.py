@@ -435,7 +435,8 @@ def test_preprocess_data_multioutput(global_random_seed):
 
 
 @pytest.mark.parametrize("is_sparse", [False, True])
-def test_preprocess_data_weighted(is_sparse):
+def test_preprocess_data_weighted(is_sparse, global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
     n_samples = 200
     n_features = 4
     # Generate random data with 50% of zero values to make sure
