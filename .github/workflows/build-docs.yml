@@ -24,6 +24,8 @@ jobs:
       - name: Checkout scikit-learn
         uses: actions/checkout@v2
         with:
+          # needed by build_doc.sh to compute the list of changed doc files:
+          fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Setup Python
@@ -54,6 +56,8 @@ jobs:
       - name: Checkout scikit-learn
         uses: actions/checkout@v2
         with:
+          # needed by build_doc.sh to compute the list of changed doc files:
+          fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Setup Python
