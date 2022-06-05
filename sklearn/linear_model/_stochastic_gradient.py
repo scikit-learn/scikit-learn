@@ -1373,11 +1373,11 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
                     "squared_loss",
                     "huber",
                     "epsilon_insensitive",
-                    "squared_epsilon_insensitive"
+                    "squared_epsilon_insensitive",
                 },
                 deprecated={"squared_loss"},
             )
-        ]
+        ],
     }
 
     @abstractmethod
@@ -2141,12 +2141,10 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         **BaseSGD._parameter_constraints,
         "loss": [
             StrOptions(
-                {
-                    "hinge"
-                },
+                {"hinge"},
             )
         ],
-        "nu":[Interval(Integral,0,1,closed="right")]
+        "nu": [Interval(Integral, 0, 1, closed="right")],
     }
 
     def __init__(
