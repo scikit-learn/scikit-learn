@@ -967,6 +967,25 @@ def test_cwnb_union_gnb():
     assert_array_almost_equal(clf1.predict_log_proba(X), clf2.predict_log_proba(X), 8)
 
 
+def test_cwnb_union_prior_gnb():
+    # A union of GaussianNB's yields the same prediction as a single GaussianNB
+    # when class priors are provided by user
+    priors = np.array([1 / 3, 2 / 3])
+    clf1 = ColumnwiseNB(
+        nb_estimators=[
+            ("g1", GaussianNB(priors=priors), [0]),
+            ("g2", GaussianNB(priors=priors), [1]),
+        ],
+        priors=priors,
+    )
+    clf2 = GaussianNB(priors=priors)
+    clf1.fit(X, y)
+    clf2.fit(X, y)
+    assert_array_almost_equal(clf1.predict(X), clf2.predict(X), 8)
+    assert_array_almost_equal(clf1.predict_proba(X), clf2.predict_proba(X), 8)
+    assert_array_almost_equal(clf1.predict_log_proba(X), clf2.predict_log_proba(X), 8)
+
+
 def test_cwnb_union_bnb_fit():
     # A union of BernoulliNB's yields the same prediction as a single BernoulliNB
     # (fit)

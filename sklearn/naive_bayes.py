@@ -1509,6 +1509,8 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
         Prior probabilities of classes. If unspecified, the priors are
         calculated as relative frequencies of classes in the training data.
         If str, the priors are taken from the estimator with the given name.
+        If array-like, the same priors might have to be specified manually in
+        each sub-estimator, in order to ensure consistent predictions.
 
     n_jobs : int, default=None
         Number of jobs to run in parallel.
