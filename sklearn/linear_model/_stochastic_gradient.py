@@ -25,7 +25,6 @@ from ..utils.multiclass import _check_partial_fit_first_call
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils._param_validation import Interval
 from ..utils._param_validation import StrOptions
-from ..utils._param_validation import validate_params
 from ..utils.fixes import delayed
 from ..exceptions import ConvergenceWarning
 from ..model_selection import StratifiedShuffleSplit, ShuffleSplit
@@ -87,8 +86,8 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         "C": [Interval(Integral, 1, None, closed="left")],
         "l1_ratio": [Interval(Real, 0, 1, closed="both")],
         "fit_intercept": [bool],
-        "max_iter": [Interval(Integral, 1, None, closed="left")],  # None
-        "tol": [Interval(Real, 0, None, closed="left")],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
+        "tol": [Interval(Real, 0, None, closed="left"), None],
         "shuffle": [bool],
         "verbose": [Interval(Integral, 0, None, closed="left")],
         "epsilon": [Interval(Real, 0, None, closed="left")],
@@ -99,7 +98,7 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
                 internal={"pa1", "pa2"},
             )
         ],
-        "eta0": [Interval(Real, 0, None, closed="neither")],
+        "eta0": [Interval(Real, 0, None, closed="left")],
         "power_t": [Interval(Real, None, None, closed="neither")],
         "early_stopping": [bool],
         "validation_fraction": [Interval(Real, 0, 1, closed="neither")],
@@ -186,19 +185,11 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
             raise ValueError("The loss %s is not supported. " % loss) from e
 
     def _get_learning_rate_type(self, learning_rate):
-        try:
-            return LEARNING_RATE_TYPES[learning_rate]
-        except KeyError as e:
-            raise ValueError(
-                "learning rate %s is not supported. " % learning_rate
-            ) from e
+        return LEARNING_RATE_TYPES[learning_rate]
 
     def _get_penalty_type(self, penalty):
         penalty = str(penalty).lower()
-        try:
-            return PENALTY_TYPES[penalty]
-        except KeyError as e:
-            raise ValueError("Penalty %s is not supported. " % penalty) from e
+        return PENALTY_TYPES[penalty]
 
     def _allocate_parameter_mem(
         self, n_classes, n_features, coef_init=None, intercept_init=None, one_class=0
@@ -358,7 +349,6 @@ def _prepare_fit_binary(est, y, i):
     return y_i, coef, intercept, average_coef, average_intercept
 
 
-@validate_params()
 def fit_binary(
     est,
     i,
@@ -1374,6 +1364,22 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         "squared_epsilon_insensitive": (SquaredEpsilonInsensitive, DEFAULT_EPSILON),
     }
 
+    _parameter_constraints = {
+        **BaseSGD._parameter_constraints,
+        "loss": [
+            StrOptions(
+                {
+                    "squared_error",
+                    "squared_loss",
+                    "huber",
+                    "epsilon_insensitive",
+                    "squared_epsilon_insensitive"
+                },
+                deprecated={"squared_loss"},
+            )
+        ]
+    }
+
     @abstractmethod
     def __init__(
         self,
@@ -2131,6 +2137,18 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
 
     loss_functions = {"hinge": (Hinge, 1.0)}
 
+    _parameter_constraints = {
+        **BaseSGD._parameter_constraints,
+        "loss": [
+            StrOptions(
+                {
+                    "hinge"
+                },
+            )
+        ],
+        "nu":[Interval(Integral,0,1,closed="right")]
+    }
+
     def __init__(
         self,
         nu=0.5,
@@ -2171,13 +2189,6 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
             warm_start=warm_start,
             average=average,
         )
-
-    def _validate_params(self, for_partial_fit=False):
-        """Validate input params."""
-        if not (0 < self.nu <= 1):
-            raise ValueError("nu must be in (0, 1], got nu=%f" % self.nu)
-
-        super(SGDOneClassSVM, self)._validate_params(for_partial_fit=for_partial_fit)
 
     def _fit_one_class(self, X, alpha, C, sample_weight, learning_rate, max_iter):
         """Uses SGD implementation with X and y=np.ones(n_samples)."""
@@ -2355,7 +2366,7 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         """
 
         alpha = self.nu / 2
-        self._validate_params(for_partial_fit=True)
+        self._revalidate_params(for_partial_fit=True)
 
         return self._partial_fit(
             X,
@@ -2380,7 +2391,7 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         offset_init=None,
         sample_weight=None,
     ):
-        self._validate_params()
+        self._revalidate_params()
 
         if self.warm_start and hasattr(self, "coef_"):
             if coef_init is None:
