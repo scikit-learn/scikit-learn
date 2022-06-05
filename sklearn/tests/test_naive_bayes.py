@@ -954,8 +954,8 @@ def test_n_features_deprecation(Estimator):
         est.n_features_
 
 
-def test_cwnb_union_gnb_fit():
-    # A union of GaussianNB's yields the same prediction a single GaussianNB (fit)
+def test_cwnb_union_gnb():
+    # A union of GaussianNB's yields the same prediction as a single GaussianNB
     clf1 = ColumnwiseNB(
         nb_estimators=[("g1", GaussianNB(), [0]), ("g2", GaussianNB(), [1])]
     )
@@ -968,7 +968,8 @@ def test_cwnb_union_gnb_fit():
 
 
 def test_cwnb_union_bnb_fit():
-    # A union of BernoulliNB's yields the same prediction a single BernoulliNB (fit)
+    # A union of BernoulliNB's yields the same prediction as a single BernoulliNB
+    # (fit)
     clf1 = ColumnwiseNB(
         nb_estimators=[("b1", BernoulliNB(), [0]), ("b2", BernoulliNB(), [1, 2])]
     )
@@ -981,7 +982,7 @@ def test_cwnb_union_bnb_fit():
 
 
 def test_cwnb_union_bnb_partial_fit():
-    # A union of BernoulliNB's yields the same prediction a single BernoulliNB
+    # A union of BernoulliNB's yields the same prediction as a single BernoulliNB
     # (partial_fit)
     clf1 = ColumnwiseNB(
         nb_estimators=[("b1", BernoulliNB(), [0]), ("b2", BernoulliNB(), [1, 2])]
