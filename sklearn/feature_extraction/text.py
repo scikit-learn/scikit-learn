@@ -1595,12 +1595,10 @@ class TfidfTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     """
 
     _parameter_constraints = {
-        "norm": [
-            StrOptions({"l1", "l2"})
-        ],
+        "norm": [StrOptions({"l1", "l2"}), None],
         "use_idf": [bool],
         "smooth_idf": [bool],
-        "sublinear_tf": [bool]
+        "sublinear_tf": [bool],
     }
 
     def __init__(self, *, norm="l2", use_idf=True, smooth_idf=True, sublinear_tf=False):
