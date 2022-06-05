@@ -1519,6 +1519,7 @@ class TfidfTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
           been applied.
         - 'l1': Sum of absolute values of vector elements is 1.
           See :func:`preprocessing.normalize`.
+        - None: The program does not normalize the vectors at the end.
 
     use_idf : bool, default=True
         Enable inverse-document-frequency reweighting. If False, idf(t) = 1.
