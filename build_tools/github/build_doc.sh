@@ -19,7 +19,9 @@ set -e
 
 if [ -n "$GITHUB_ACTION" ]
 then
-    CIRCLE_SHA1=$GITHUB_SHA
+    # Map the variables for the new documentation builder to the old one
+    CIRCLE_SHA1=$(git log -1 --pretty=format:%H)
+
     CIRCLE_JOB=$GITHUB_JOB
 
     if [ "$GITHUB_EVENT_NAME" == "pull_request" ]
