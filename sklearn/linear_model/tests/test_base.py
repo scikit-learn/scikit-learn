@@ -105,13 +105,13 @@ def test_raises_value_error_if_positive_and_sparse():
         reg.fit(X, y)
 
 
-def test_raises_value_error_if_sample_weights_greater_than_1d(global_random_seed):
+def test_raises_value_error_if_sample_weights_greater_than_1d(random_state=0):
     # Sample weights must be either scalar or 1D
 
     n_sampless = [2, 3]
     n_featuress = [3, 2]
 
-    rng = check_random_state(global_random_seed)
+    rng = check_random_state(random_state)
 
     for n_samples, n_features in zip(n_sampless, n_featuress):
         X = rng.randn(n_samples, n_features)
