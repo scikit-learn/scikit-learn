@@ -910,6 +910,9 @@ invalids_nan_inf = [
 )
 @pytest.mark.parametrize("y_true, y_score", invalids_nan_inf)
 def test_regression_thresholded_inf_nan_input(metric, y_true, y_score):
+    if metric == coverage_error:
+        y_true = [y_true]
+        y_score = [y_score]
     with pytest.raises(ValueError, match=r"contains (NaN|infinity)"):
         metric(y_true, y_score)
 
