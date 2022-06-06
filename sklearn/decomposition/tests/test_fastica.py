@@ -513,15 +513,6 @@ def test_fastica_eigh_low_rank_warning(global_random_seed):
         FastICA(random_state=0, whiten="unit-variance", whiten_solver="eigh").fit(T)
 
 
-@pytest.mark.parametrize("whiten_solver", ["svd", "eigh"])
-def test_fastica_whiten_solver(global_random_seed, whiten_solver):
-    rng = np.random.RandomState(global_random_seed)
-    X = rng.random_sample((100, 10))
-    ica = FastICA(random_state=rng, whiten_solver=whiten_solver, whiten="unit-variance")
-    ica.fit_transform(X)
-    assert ica.whiten_solver == whiten_solver
-
-
 @pytest.mark.parametrize("whiten_solver", ["this_should_fail", "test", 1, None])
 def test_fastica_whiten_solver_validation(whiten_solver):
     rng = np.random.RandomState(0)
