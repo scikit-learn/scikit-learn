@@ -94,7 +94,7 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         "random_state": ["random_state"],
         "learning_rate": [
             StrOptions(
-                {"constant", "optimal", "invscaling", "adaptive","pa1", "pa2"},
+                {"constant", "optimal", "invscaling", "adaptive", "pa1", "pa2"},
                 internal={"pa1", "pa2"},
             )
         ],
