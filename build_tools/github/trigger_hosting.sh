@@ -7,6 +7,11 @@ GITHUB_RUN_URL=https://nightly.link/$GITHUB_REPOSITORY/actions/runs/$RUN_ID
 
 if [ "$EVENT" == pull_request ]
 then
+     PULL_REQUEST_NUMBER=$(curl \
+          -H "Accept: application/vnd.github.v3+json" \
+          -H "Authorization: token $GITHUB_TOKEN" \
+          https://api.github.com/repos/$REPO_NAME/commits/$COMMIT_SHA/pulls 2>/dev/null \
+          | jq '.[0].number')
      BRANCH=pull/$PULL_REQUEST_NUMBER/head
 else
      BRANCH=$HEAD_BRANCH
