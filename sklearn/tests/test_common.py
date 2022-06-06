@@ -577,7 +577,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "PassiveAggressiveClassifier",
     "PassiveAggressiveRegressor",
     "PatchExtractor",
-    "Perceptron",
     "PoissonRegressor",
     "PolynomialCountSketch",
     "PolynomialFeatures",

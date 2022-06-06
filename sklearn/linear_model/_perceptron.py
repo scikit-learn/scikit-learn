@@ -1,7 +1,9 @@
 # Author: Mathieu Blondel
 # License: BSD 3 clause
+from numbers import Integral, Real
 
-from ._stochastic_gradient import BaseSGDClassifier
+from ._stochastic_gradient import BaseSGDClassifier, BaseSGD
+from ..utils._param_validation import StrOptions, Interval
 
 
 class Perceptron(BaseSGDClassifier):
@@ -163,6 +165,25 @@ class Perceptron(BaseSGDClassifier):
     >>> clf.score(X, y)
     0.939...
     """
+
+    _parameter_constraints = {
+        "penalty": [StrOptions({"l2", "l1", "elasticnet"}), None],
+        "alpha": [Interval(Real, 0, None, closed="left")],
+        "l1_ratio": [Interval(Real, 0, 1, closed="both")],
+        "fit_intercept": [bool],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
+        "tol": [Interval(Real, 0, None, closed="left"), None],
+        "shuffle": [bool],
+        "verbose": [Interval(Integral, 0, None, closed="left")],
+        "eta0": [Interval(Real, 0, None, closed="left")],
+        "random_state": ["random_state"],
+        "early_stopping": [bool],
+        "validation_fraction": [Interval(Real, 0, 1, closed="neither")],
+        "n_iter_no_change": [Interval(Integral, 1, None, closed="left")],
+        "warm_start": [bool],
+        "n_jobs": [None, Integral],
+        "class_weight": [StrOptions({"balanced"}), None],  # a bit tricky?
+    }
 
     def __init__(
         self,
