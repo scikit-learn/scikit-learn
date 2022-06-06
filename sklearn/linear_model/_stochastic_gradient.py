@@ -6,39 +6,37 @@
 Descent (SGD).
 """
 
-import numpy as np
-from numbers import Integral, Real
 import warnings
-
 from abc import ABCMeta, abstractmethod
+from numbers import Integral, Real
 
+import numpy as np
 from joblib import Parallel
 
-from ..base import clone, is_classifier
 from ._base import LinearClassifierMixin, SparseCoefMixin
 from ._base import make_dataset
-from ..base import BaseEstimator, RegressorMixin, OutlierMixin
-from ..utils import check_random_state
-from ..utils.metaestimators import available_if
-from ..utils.extmath import safe_sparse_dot
-from ..utils.multiclass import _check_partial_fit_first_call
-from ..utils.validation import check_is_fitted, _check_sample_weight
-from ..utils._param_validation import Interval
-from ..utils._param_validation import StrOptions
-from ..utils.fixes import delayed
-from ..exceptions import ConvergenceWarning
-from ..model_selection import StratifiedShuffleSplit, ShuffleSplit
-
-from ._sgd_fast import _plain_sgd
-from ..utils import compute_class_weight
+from ._sgd_fast import EpsilonInsensitive
 from ._sgd_fast import Hinge
-from ._sgd_fast import SquaredHinge
+from ._sgd_fast import Huber
 from ._sgd_fast import Log
 from ._sgd_fast import ModifiedHuber
-from ._sgd_fast import SquaredLoss
-from ._sgd_fast import Huber
-from ._sgd_fast import EpsilonInsensitive
 from ._sgd_fast import SquaredEpsilonInsensitive
+from ._sgd_fast import SquaredHinge
+from ._sgd_fast import SquaredLoss
+from ._sgd_fast import _plain_sgd
+from ..base import BaseEstimator, RegressorMixin, OutlierMixin
+from ..base import clone, is_classifier
+from ..exceptions import ConvergenceWarning
+from ..model_selection import StratifiedShuffleSplit, ShuffleSplit
+from ..utils import check_random_state
+from ..utils import compute_class_weight
+from ..utils._param_validation import Interval
+from ..utils._param_validation import StrOptions
+from ..utils.extmath import safe_sparse_dot
+from ..utils.fixes import delayed
+from ..utils.metaestimators import available_if
+from ..utils.multiclass import _check_partial_fit_first_call
+from ..utils.validation import check_is_fitted, _check_sample_weight
 
 LEARNING_RATE_TYPES = {
     "constant": 1,

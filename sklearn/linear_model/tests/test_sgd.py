@@ -1,29 +1,28 @@
 import pickle
-
-import joblib
-import pytest
-import numpy as np
-import scipy.sparse as sp
 from unittest.mock import Mock
 
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import ignore_warnings
+import joblib
+import numpy as np
+import pytest
+import scipy.sparse as sp
 
 from sklearn import linear_model, datasets, metrics
 from sklearn.base import clone, is_classifier
-from sklearn.svm import OneClassSVM
-from sklearn.preprocessing import LabelEncoder, scale, MinMaxScaler
-from sklearn.preprocessing import StandardScaler
-from sklearn.kernel_approximation import Nystroem
-from sklearn.pipeline import make_pipeline
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.model_selection import StratifiedShuffleSplit, ShuffleSplit
+from sklearn.kernel_approximation import Nystroem
 from sklearn.linear_model import _sgd_fast as sgd_fast
 from sklearn.linear_model import _stochastic_gradient
 from sklearn.model_selection import RandomizedSearchCV
+from sklearn.model_selection import StratifiedShuffleSplit, ShuffleSplit
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import LabelEncoder, scale, MinMaxScaler
+from sklearn.preprocessing import StandardScaler
+from sklearn.svm import OneClassSVM
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import ignore_warnings
 
 
 def _update_kwargs(kwargs):
@@ -2121,7 +2120,6 @@ def test_SGDClassifier_fit_for_all_backends(backend):
     ],
 )
 def test_loss_deprecated(old_loss, new_loss, Estimator):
-
     # Note: class BaseSGD calls self._validate_params() in __init__, therefore
     # even instantiation of class raises FutureWarning for deprecated losses.
     with pytest.warns(FutureWarning, match=f"The loss '{old_loss}' was deprecated"):
