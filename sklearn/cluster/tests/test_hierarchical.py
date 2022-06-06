@@ -928,7 +928,7 @@ def test_deprecate_affinity():
         AgglomerativeClustering(metric="euclidean"),
     ]
     with warnings.catch_warnings():
-        warnings.simplefilter("error", DeprecationWarning)
+        warnings.simplefilter("error", FutureWarning)
         for af in est:
             af.fit(X)
             af.fit_predict(X)
@@ -938,6 +938,6 @@ def test_deprecate_affinity():
         "Attribute `affinity` was deprecated in version 1.2 and will be removed in 1.4."
         " Use `metric` instead"
     )
-    with pytest.warns(DeprecationWarning, match=msg):
+    with pytest.warns(FutureWarning, match=msg):
         af.fit(X)
         af.fit_predict(X)
