@@ -89,6 +89,9 @@ feature, code or documentation improvement).
    .. prompt:: bash $
 
      pip install --verbose --no-build-isolation --editable .
+     
+   Be sure to be in the folder of the scikit-learn repository before run the above command,
+   otherwise you will face errors.
 
 #. Check that the installed scikit-learn has a version number ending with
    `.dev0`:
