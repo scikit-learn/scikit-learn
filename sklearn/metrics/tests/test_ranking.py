@@ -1569,11 +1569,17 @@ def test_coverage_tie_handling():
     assert_almost_equal(coverage_error([[1, 1, 1]], [[0.25, 0.5, 0.5]]), 3)
 
 
-def test_coverage_1d_error_message():
+@pytest.mark.parametrize(
+    "y_true, y_score",
+    [
+        ([1, 0, 1], [0.25, 0.5, 0.5]),
+        ([1, 0, 1], [[0.25, 0.5, 0.5]]),
+        ([[1, 0, 1]], [0.25, 0.5, 0.5]),
+    ],
+)
+def test_coverage_1d_error_message(y_true, y_score):
     with pytest.raises(ValueError, match=r"Expected 2D array, got 1D array instead"):
-        coverage_error([1, 0, 1], [0.25, 0.5, 0.5])
-        coverage_error([1, 0, 1], [[0.25, 0.5, 0.5]])
-        coverage_error([[1, 0, 1]], [0.25, 0.5, 0.5])
+        coverage_error(y_true, y_score)
 
 
 def test_label_ranking_loss():
