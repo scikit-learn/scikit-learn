@@ -176,7 +176,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
 
     _parameter_constraints = {
         "loss": [StrOptions({"hinge", "squared_hinge"})],
-         "C": [Interval(Real , None, None, closed="neither")],
+        "C": [Interval(Real, None, None, closed="neither")],
         "fit_intercept": [bool],
         "max_iter": [Interval(Integral, 1, None, closed="left")],
         "tol": [Interval(Real, None, None, closed="neither"), None],
@@ -464,8 +464,9 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     >>> print(regr.predict([[0, 0, 0, 0]]))
     [-0.02306214]
     """
+
     _parameter_constraints = {
-        "loss": [StrOptions({"epsilon_insensitive","squared_epsilon_insensitive"})],
+        "loss": [StrOptions({"epsilon_insensitive", "squared_epsilon_insensitive"})],
         "C": [Interval(Real, None, None, closed="neither")],
         "fit_intercept": [bool],
         "max_iter": [Interval(Integral, 1, None, closed="left")],
@@ -479,7 +480,6 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
         "warm_start": [bool],
         "average": [Interval(Integral, 0, None, closed="left"), bool],
         "epsilon": [Interval(Real, 0, None, closed="left")],
-
     }
 
     def __init__(
