@@ -951,7 +951,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
             warnings.warn(
                 "Attribute `affinity` was deprecated in version 1.2 and will be removed"
                 " in 1.4. Use `metric` instead",
-                DeprecationWarning,
+                FutureWarning,
             )
             self._metric = self.affinity
 
