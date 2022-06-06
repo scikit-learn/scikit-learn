@@ -19,6 +19,17 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
+- |Enhancement| The default `eigen_tol` for :class:`cluster.SpectralClustering`,
+  :class:`manifold.SpectralEmbedding`, :func:`cluster.spectral_clustering`,
+  and :func:`manifold.spectral_embedding` is now `None` when using the `'amg'`
+  or `'lobpcg'` solvers. This change improves numerical stability of the
+  solver, but may result in a different model.
+
+- |Fix| :class:`manifold.TSNE` now throws a `ValueError` when fit with
+  `perplexity>=n_samples` to ensure mathematical correctness of the algorithm.
+  :pr:`10805` by :user:`Mathias Andersen <MrMathias>` and
+  :pr:`23471` by :user:`Meekail Zain <micky774>`
+
 Changes impacting all modules
 -----------------------------
 
@@ -67,6 +78,13 @@ Changelog
   and both will have their defaults changed to `n_init='auto'` in 1.4.
   :pr:`23038` by :user:`Meekail Zain <micky774>`.
 
+- |Enhancement| :class:`cluster.SpectralClustering` and
+  :func:`cluster.spectral_clustering` now propogates the `eigen_tol` parameter
+  to all choices of `eigen_solver`. Includes a new option `eigen_tol="auto"`
+  and begins deprecation to change the default from `eigen_tol=0` to
+  `eigen_tol="auto"` in version 1.3.
+  :pr:`23210` by :user:`Meekail Zain <micky774>`.
+
 :mod:`sklearn.datasets`
 .......................
 
@@ -90,6 +108,12 @@ Changelog
 
 - |Efficiency| Improve runtime performance of :class:`ensemble.IsolationForest`
   by avoiding data copies. :pr:`23252` by :user:`Zhehao Liu <MaxwellLZH>`.
+
+:mod:`sklearn.impute`
+.....................
+
+- |Fix| :class:`impute.SimpleImputer` uses the dtype seen in `fit` for
+  `transform` when the dtype is object. :pr:`22063` by `Thomas Fan`_.
 
 :mod:`sklearn.metrics`
 ......................
@@ -123,6 +147,9 @@ Changelog
 :mod:`sklearn.tree`
 ...................
 
+- |Enhancement| :func:`tree.plot_tree`, :func:`tree.export_graphviz` now uses
+  a lower case `x[i]` to represent feature `i`. :pr:`23480` by `Thomas Fan`_.
+
 - |Fix| Fixed invalid memory access bug during fit in
   :class:`tree.DecisionTreeRegressor` and :class:`tree.DecisionTreeClassifier`.
   :pr:`23273` by `Thomas Fan`_.
@@ -134,6 +161,22 @@ Changelog
   `lapack_svd_driver`, to specify the lapack driver used in the internal
   deterministic SVD used by the randomized SVD algorithm.
   :pr:`20617` by :user:`Srinath Kailasa <skailasa>`
+
+:mod:`sklearn.manifold`
+.......................
+
+- |Enhancement| Adds `eigen_tol` parameter to
+  :class:`manifold.SpectralEmbedding`. Both :func:`manifold.spectral_embedding`
+  and :class:`manifold.SpectralEmbedding` now propogate `eigen_tol` to all
+  choices of `eigen_solver`. Includes a new option `eigen_tol="auto"`
+  and begins deprecation to change the default from `eigen_tol=0` to
+  `eigen_tol="auto"` in version 1.3.
+  :pr:`23210` by :user:`Meekail Zain <micky774>`.
+
+- |Fix| :class:`manifold.TSNE` now throws a `ValueError` when fit with
+  `perplexity>=n_samples` to ensure mathematical correctness of the algorithm.
+  :pr:`10805` by :user:`Mathias Andersen <MrMathias>` and
+  :pr:`23471` by :user:`Meekail Zain <micky774>`
 
 Code and Documentation Contributors
 -----------------------------------

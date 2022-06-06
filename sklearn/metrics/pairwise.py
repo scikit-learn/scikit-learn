@@ -135,7 +135,6 @@ def check_pairwise_arrays(
     safe_Y : {array-like, sparse matrix} of shape (n_samples_Y, n_features)
         An array equal to Y if Y was not None, guaranteed to be a numpy array.
         If Y was None, safe_Y will be a pointer to X.
-
     """
     X, Y, dtype_float = _return_float_dtype(X, Y)
 
@@ -1508,7 +1507,6 @@ def distance_metrics():
     =============== ========================================
 
     Read more in the :ref:`User Guide <metrics>`.
-
     """
     return PAIRWISE_DISTANCE_FUNCTIONS
 
@@ -2082,8 +2080,7 @@ def pairwise_kernels(
 
     Parameters
     ----------
-    X : ndarray of shape (n_samples_X, n_samples_X) or \
-            (n_samples_X, n_features)
+    X : ndarray of shape (n_samples_X, n_samples_X) or (n_samples_X, n_features)
         Array of pairwise kernels between samples, or a feature array.
         The shape of the array should be (n_samples_X, n_samples_X) if
         metric == "precomputed" and (n_samples_X, n_features) otherwise.
@@ -2121,8 +2118,7 @@ def pairwise_kernels(
 
     Returns
     -------
-    K : ndarray of shape (n_samples_X, n_samples_X) or \
-            (n_samples_X, n_samples_Y)
+    K : ndarray of shape (n_samples_X, n_samples_X) or (n_samples_X, n_samples_Y)
         A kernel matrix K such that K_{i, j} is the kernel between the
         ith and jth vectors of the given matrix X, if Y is None.
         If Y is not None, then K_{i, j} is the kernel between the ith array
@@ -2131,7 +2127,6 @@ def pairwise_kernels(
     Notes
     -----
     If metric is 'precomputed', Y is ignored and X is returned.
-
     """
     # import GPKernel locally to prevent circular imports
     from ..gaussian_process.kernels import Kernel as GPKernel
