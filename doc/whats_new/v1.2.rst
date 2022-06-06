@@ -19,6 +19,12 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
+- |Enhancement| The default `eigen_tol` for :class:`cluster.SpectralClustering`,
+  :class:`manifold.SpectralEmbedding`, :func:`cluster.spectral_clustering`,
+  and :func:`manifold.spectral_embedding` is now `None` when using the `'amg'`
+  or `'lobpcg'` solvers. This change improves numerical stability of the
+  solver, but may result in a different model.
+
 - |Fix| :class:`manifold.TSNE` now throws a `ValueError` when fit with
   `perplexity>=n_samples` to ensure mathematical correctness of the algorithm.
   :pr:`10805` by :user:`Mathias Andersen <MrMathias>` and
@@ -71,6 +77,13 @@ Changelog
   This begins deprecation for the default values of `n_init` in the two classes
   and both will have their defaults changed to `n_init='auto'` in 1.4.
   :pr:`23038` by :user:`Meekail Zain <micky774>`.
+
+- |Enhancement| :class:`cluster.SpectralClustering` and
+  :func:`cluster.spectral_clustering` now propogates the `eigen_tol` parameter
+  to all choices of `eigen_solver`. Includes a new option `eigen_tol="auto"`
+  and begins deprecation to change the default from `eigen_tol=0` to
+  `eigen_tol="auto"` in version 1.3.
+  :pr:`23210` by :user:`Meekail Zain <micky774>`.
 
 :mod:`sklearn.datasets`
 .......................
@@ -147,6 +160,14 @@ Changelog
 
 :mod:`sklearn.manifold`
 .......................
+
+- |Enhancement| Adds `eigen_tol` parameter to
+  :class:`manifold.SpectralEmbedding`. Both :func:`manifold.spectral_embedding`
+  and :class:`manifold.SpectralEmbedding` now propogate `eigen_tol` to all
+  choices of `eigen_solver`. Includes a new option `eigen_tol="auto"`
+  and begins deprecation to change the default from `eigen_tol=0` to
+  `eigen_tol="auto"` in version 1.3.
+  :pr:`23210` by :user:`Meekail Zain <micky774>`.
 
 - |Fix| :class:`manifold.TSNE` now throws a `ValueError` when fit with
   `perplexity>=n_samples` to ensure mathematical correctness of the algorithm.
