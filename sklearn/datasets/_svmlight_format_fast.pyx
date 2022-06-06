@@ -225,26 +225,13 @@ def _dump_svmlight_file(
             else:
                 s = get_dense_row_string(X, x_inds, x_vals_float, i, value_pattern, one_based)
         if multilabel:
-            labels_str = ""
             first = True
             if y_is_sp:
                 col_start = y.indptr[i]
                 col_end = y.indptr[i+1]
-                for j in range(col_start, col_end):
-                    if y.data[j] == 0:
-                        continue
-                    if not first:
-                        labels_str += ","
-                    first = False
-                    labels_str += label_pattern % y.indices[j]
+                labels_str = ','.join(tuple(label_pattern % y.indices[j] for j in range(col_start, col_end) if y.data[j] != 0))
             else:
-                for j in range(num_labels):
-                    if y[i,j] == 0:
-                        continue
-                    if not first:
-                        labels_str += ","
-                    first = False
-                    labels_str += label_pattern % j
+                labels_str = ','.join(label_pattern % j for j in range(num_labels) if y[i,j] != 0)
         else:
             if y_is_sp:
                 labels_str = label_pattern % y.data[i]
