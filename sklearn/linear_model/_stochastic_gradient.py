@@ -83,7 +83,7 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         "loss": [],
         "penalty": [StrOptions({"l2", "l1", "elasticnet"}), None],
         "alpha": [Interval(Real, 0, None, closed="left")],
-        "C": [Interval(Integral, 1, None, closed="left")],
+        # "C": [Interval(Integral, 1, None, closed="left")],
         "l1_ratio": [Interval(Real, 0, 1, closed="both")],
         "fit_intercept": [bool],
         "max_iter": [Interval(Integral, 1, None, closed="left")],
@@ -94,7 +94,7 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         "random_state": ["random_state"],
         "learning_rate": [
             StrOptions(
-                {"constant", "optimal", "invscaling", "adaptive"},
+                {"constant", "optimal", "invscaling", "adaptive","pa1", "pa2"},
                 internal={"pa1", "pa2"},
             )
         ],
@@ -1179,6 +1179,8 @@ class SGDClassifier(BaseSGDClassifier):
     [1]
     """
 
+    _parameter_constraints = BaseSGDClassifier._parameter_constraints
+
     def __init__(
         self,
         loss="hinge",
@@ -2138,13 +2140,24 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
     loss_functions = {"hinge": (Hinge, 1.0)}
 
     _parameter_constraints = {
-        **BaseSGD._parameter_constraints,
-        "loss": [
+        # **BaseSGD._parameter_constraints,
+        "nu": [Interval(Real, 0.0, 1.0, closed="right")],
+        "fit_intercept": [bool],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
+        "tol": [Interval(Real, 0, None, closed="left"), None],
+        "shuffle": [bool],
+        "verbose": [Interval(Integral, 0, None, closed="left")],
+        "random_state": ["random_state"],
+        "learning_rate": [
             StrOptions(
-                {"hinge"},
+                {"constant", "optimal", "invscaling", "adaptive", "pa1", "pa2"},
+                internal={"pa1", "pa2"},
             )
         ],
-        "nu": [Interval(Integral, 0, 1, closed="right")],
+        "eta0": [Interval(Real, 0, None, closed="left")],
+        "power_t": [Interval(Real, None, None, closed="neither")],
+        "warm_start": [bool],
+        "average": [Interval(Integral, 1, None, closed="left"), bool],
     }
 
     def __init__(
@@ -2162,7 +2175,6 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         warm_start=False,
         average=False,
     ):
-
         alpha = nu / 2
         self.nu = nu
         super(SGDOneClassSVM, self).__init__(
@@ -2363,9 +2375,8 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
             Returns a fitted instance of self.
         """
 
-        alpha = self.nu / 2
         self._revalidate_params(for_partial_fit=True)
-
+        alpha = self.nu / 2
         return self._partial_fit(
             X,
             alpha,
@@ -2389,8 +2400,6 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         offset_init=None,
         sample_weight=None,
     ):
-        self._revalidate_params()
-
         if self.warm_start and hasattr(self, "coef_"):
             if coef_init is None:
                 coef_init = self.coef_
@@ -2461,7 +2470,7 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         self : object
             Returns a fitted instance of self.
         """
-
+        self._revalidate_params()
         alpha = self.nu / 2
         self._fit(
             X,
