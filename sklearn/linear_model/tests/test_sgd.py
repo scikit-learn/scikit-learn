@@ -232,7 +232,7 @@ def asgd(klass, X, y, eta, alpha, weight_init=None, intercept_init=0.0):
     "params, err_msg",
     [
         ({"alpha": 0, "learning_rate": "optimal"}, "alpha must be > 0"),
-        ({"eta0": 0, "learning_rate": "constant"}, "eta0 must be > 0")
+        ({"eta0": 0, "learning_rate": "constant"}, "eta0 must be > 0"),
     ],
     # Avoid long error messages in test names:
     # https://github.com/scikit-learn/scikit-learn/issues/21362
