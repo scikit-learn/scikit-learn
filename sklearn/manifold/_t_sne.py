@@ -396,7 +396,6 @@ def _gradient_descent(
         kwargs["compute_error"] = check_convergence or i == n_iter - 1
 
         error, grad = objective(p, *args, **kwargs)
-        grad_norm = linalg.norm(grad)
 
         inc = update * grad < 0.0
         dec = np.invert(inc)
@@ -411,6 +410,7 @@ def _gradient_descent(
             toc = time()
             duration = toc - tic
             tic = toc
+            grad_norm = linalg.norm(grad)
 
             if verbose >= 2:
                 print(
