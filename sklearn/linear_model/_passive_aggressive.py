@@ -1,9 +1,11 @@
 # Authors: Rob Zinkov, Mathieu Blondel
 # License: BSD 3 clause
+from numbers import Integral, Real
 
 from ._stochastic_gradient import BaseSGDClassifier
 from ._stochastic_gradient import BaseSGDRegressor
 from ._stochastic_gradient import DEFAULT_EPSILON
+from ..utils._param_validation import Interval, StrOptions
 
 
 class PassiveAggressiveClassifier(BaseSGDClassifier):
@@ -172,6 +174,24 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     [1]
     """
 
+    _parameter_constraints = {
+        "loss": [StrOptions({"hinge", "squared_hinge"})],
+         "C": [Interval(Real , None, None, closed="neither")],
+        "fit_intercept": [bool],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
+        "tol": [Interval(Real, None, None, closed="neither"), None],
+        "shuffle": [bool],
+        "verbose": [Interval(Integral, 0, None, closed="left")],
+        "random_state": ["random_state"],
+        "early_stopping": [bool],
+        "validation_fraction": [Interval(Real, 0, 1, closed="neither")],
+        "n_iter_no_change": [Interval(Integral, 1, None, closed="left")],
+        "warm_start": [bool],
+        "average": [Interval(Integral, 0, None, closed="left"), bool],
+        "n_jobs": [None, Integral],
+        "class_weight": [StrOptions({"balanced"}), dict, None],
+    }
+
     def __init__(
         self,
         *,
@@ -236,7 +256,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         self : object
             Fitted estimator.
         """
-        self._validate_params(for_partial_fit=True)
+        self._revalidate_params(for_partial_fit=True)
         if self.class_weight == "balanced":
             raise ValueError(
                 "class_weight 'balanced' is not supported for "
@@ -286,7 +306,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
+        self._revalidate_params()
         lr = "pa1" if self.loss == "hinge" else "pa2"
         return self._fit(
             X,
@@ -444,6 +464,23 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     >>> print(regr.predict([[0, 0, 0, 0]]))
     [-0.02306214]
     """
+    _parameter_constraints = {
+        "loss": [StrOptions({"epsilon_insensitive","squared_epsilon_insensitive"})],
+        "C": [Interval(Real, None, None, closed="neither")],
+        "fit_intercept": [bool],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
+        "tol": [Interval(Real, None, None, closed="neither"), None],
+        "shuffle": [bool],
+        "verbose": [Interval(Integral, 0, None, closed="left")],
+        "random_state": ["random_state"],
+        "early_stopping": [bool],
+        "validation_fraction": [Interval(Real, 0, 1, closed="neither")],
+        "n_iter_no_change": [Interval(Integral, 1, None, closed="left")],
+        "warm_start": [bool],
+        "average": [Interval(Integral, 0, None, closed="left"), bool],
+        "epsilon": [Interval(Real, 0, None, closed="left")],
+
+    }
 
     def __init__(
         self,
@@ -499,7 +536,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
         self : object
             Fitted estimator.
         """
-        self._validate_params(for_partial_fit=True)
+        self._revalidate_params(for_partial_fit=True)
         lr = "pa1" if self.loss == "epsilon_insensitive" else "pa2"
         return self._partial_fit(
             X,

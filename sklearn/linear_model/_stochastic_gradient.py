@@ -78,10 +78,9 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
     """Base class for SGD classification and regression."""
 
     _parameter_constraints = {
-        "loss": [],
         "penalty": [StrOptions({"l2", "l1", "elasticnet"}), None],
         "alpha": [Interval(Real, 0, None, closed="left")],
-        # "C": [Interval(Integral, 1, None, closed="left")],
+        # "C": [Interval(Real , 1, None, closed="left")],
         "l1_ratio": [Interval(Real, 0, 1, closed="both")],
         "fit_intercept": [bool],
         "max_iter": [Interval(Integral, 1, None, closed="left")],
@@ -927,6 +926,10 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
             intercept_init=intercept_init,
             sample_weight=sample_weight,
         )
+
+    @property
+    def parameter_constraints(self):
+        return self._parameter_constraints
 
 
 class SGDClassifier(BaseSGDClassifier):

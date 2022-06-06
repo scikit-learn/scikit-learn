@@ -284,35 +284,3 @@ def test_regressor_undefined_methods():
     reg = PassiveAggressiveRegressor(max_iter=100)
     with pytest.raises(AttributeError):
         reg.transform(X)
-
-
-@pytest.mark.parametrize(
-    "klass", [PassiveAggressiveClassifier, PassiveAggressiveRegressor]
-)
-@pytest.mark.parametrize("fit_method", ["fit", "partial_fit"])
-@pytest.mark.parametrize(
-    "params, err_msg",
-    [
-        ({"loss": "foobar"}, "The loss foobar is not supported"),
-        ({"max_iter": -1}, "max_iter must be > zero"),
-        ({"shuffle": "false"}, "shuffle must be either True or False"),
-        ({"early_stopping": "false"}, "early_stopping must be either True or False"),
-        (
-            {"validation_fraction": -0.1},
-            r"validation_fraction must be in range \(0, 1\)",
-        ),
-        ({"n_iter_no_change": 0}, "n_iter_no_change must be >= 1"),
-    ],
-)
-def test_passive_aggressive_estimator_params_validation(
-    klass, fit_method, params, err_msg
-):
-    """Validate parameters in the different PassiveAggressive estimators."""
-    sgd_estimator = klass(**params)
-
-    with pytest.raises(ValueError, match=err_msg):
-        if is_classifier(sgd_estimator) and fit_method == "partial_fit":
-            fit_params = {"classes": np.unique(y)}
-        else:
-            fit_params = {}
-        getattr(sgd_estimator, fit_method)(X, y, **fit_params)

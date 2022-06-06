@@ -36,6 +36,13 @@ def validate_parameter_constraints(parameter_constraints, params, caller_name):
     caller_name : str
         The name of the estimator or function or method that called this function.
     """
+    for hh in params.keys():
+        if not hh in parameter_constraints.keys():
+            print(f"{hh} not found in _parameter_constraints")
+    for hh in parameter_constraints.keys():
+        if not hh in params.keys():
+            print(f"{hh} not found in constructor")
+
     if params.keys() != parameter_constraints.keys():
         raise ValueError(
             f"The parameter constraints {list(parameter_constraints.keys())} do not "
@@ -119,7 +126,6 @@ def validate_params(parameter_constraints):
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-
             func_sig = signature(func)
 
             # Map *args/**kwargs to the function signature
@@ -400,7 +406,7 @@ class _RandomStates(_Constraint):
 
     def __init__(self):
         self._constraints = [
-            Interval(Integral, 0, 2**32 - 1, closed="both"),
+            Interval(Integral, 0, 2 ** 32 - 1, closed="both"),
             _InstancesOf(np.random.RandomState),
             _NoneConstraint(),
         ]
