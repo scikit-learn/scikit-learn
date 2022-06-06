@@ -76,6 +76,9 @@ feature, code or documentation improvement).
      python3 -m venv sklearn-env
      source sklearn-env/bin/activate
      pip install wheel numpy scipy cython
+     
+   On Windows, after having installed python, you should substitute ``source sklearn-env/bin/activate``
+   with ``sklearn-env\Scripts\activate.bat``.
 
 #. Install a compiler with OpenMP_ support for your platform. See instructions
    for :ref:`compiler_windows`, :ref:`compiler_macos`, :ref:`compiler_linux`
