@@ -247,6 +247,9 @@ how to set up your git repository:
       git clone git@github.com:YourLogin/scikit-learn.git  # add --depth 1 if your connection is slow
       cd scikit-learn
 
+   In order to run the above clone command you should have an SSH key to connect to your GitHub account.
+   Please refer to `this guide <https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent>`_ if you hadn't set it yet.
+
 3. Follow steps 2-7 in :ref:`install_bleeding_edge` to build scikit-learn in
    development mode and return to this document.
 
