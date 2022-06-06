@@ -1570,15 +1570,10 @@ def test_coverage_tie_handling():
 
 
 def test_coverage_1d_error_message():
-    y_true = [1, 0, 1]
-    msg = (
-        "Expected 2D array, got 1D array instead:\narray=[1 0 1].\n"
-        "Reshape your data either using array.reshape(-1, 1) if "
-        "your data has a single feature or array.reshape(1, -1) "
-        "if it contains a single sample."
-    )
-    with pytest.raises(ValueError, match=re.escape(msg)):
-        coverage_error(y_true, [0.25, 0.5, 0.5])
+    with pytest.raises(ValueError, match=r"Expected 2D array, got 1D array instead"):
+        coverage_error([1, 0, 1], [0.25, 0.5, 0.5])
+        coverage_error([1, 0, 1], [[0.25, 0.5, 0.5]])
+        coverage_error([[1, 0, 1]], [0.25, 0.5, 0.5])
 
 
 def test_label_ranking_loss():
