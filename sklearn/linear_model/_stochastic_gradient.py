@@ -87,7 +87,7 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         "l1_ratio": [Interval(Real, 0, 1, closed="both")],
         "fit_intercept": [bool],
         "max_iter": [Interval(Integral, 1, None, closed="left")],
-        "tol": [Interval(Real, 0, None, closed="left"), None],
+        "tol": [Interval(Real, None, None, closed="neither"), None],
         "shuffle": [bool],
         "verbose": [Interval(Integral, 0, None, closed="left")],
         "epsilon": [Interval(Real, 0, None, closed="left")],
@@ -104,7 +104,7 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         "validation_fraction": [Interval(Real, 0, 1, closed="neither")],
         "n_iter_no_change": [Interval(Integral, 1, None, closed="left")],
         "warm_start": [bool],
-        "average": [Interval(Integral, 1, None, closed="left"), bool],
+        "average": [Interval(Integral, 0, None, closed="left"), bool],
     }
 
     def __init__(
@@ -162,6 +162,9 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
 
         if self.early_stopping and for_partial_fit:
             raise ValueError("early_stopping should be False with partial_fit")
+        if self.learning_rate in ("constant", "invscaling", "adaptive"):
+            if self.eta0 <= 0.0:
+                raise ValueError("eta0 must be > 0")
         if self.learning_rate == "optimal" and self.alpha == 0:
             raise ValueError(
                 "alpha must be > 0 since "
@@ -172,6 +175,22 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         # raises ValueError if not registered
         self._get_penalty_type(self.penalty)
         self._get_learning_rate_type(self.learning_rate)
+
+        # TODO(1.2): remove "squared_loss"
+        if self.loss == "squared_loss":
+            warnings.warn(
+                "The loss 'squared_loss' was deprecated in v1.0 and will be "
+                "removed in version 1.2. Use `loss='squared_error'` which is "
+                "equivalent.",
+                FutureWarning,
+            )
+        # TODO(1.3): remove "log"
+        if self.loss == "log":
+            warnings.warn(
+                "The loss 'log' was deprecated in v1.1 and will be removed in version "
+                "1.3. Use `loss='log_loss'` which is equivalent.",
+                FutureWarning,
+            )
 
     def _get_loss_function(self, loss):
         """Get concrete ``LossFunction`` object for str ``loss``."""
@@ -521,7 +540,7 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
             )
         ],
         "n_jobs": [None, Integral],
-        "class_weight": [StrOptions({"balanced"}), None],  # a bit tricky?
+        "class_weight": [StrOptions({"balanced"}), dict, None],  # a bit tricky?
     }
 
     @abstractmethod
@@ -2144,7 +2163,7 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         "nu": [Interval(Real, 0.0, 1.0, closed="right")],
         "fit_intercept": [bool],
         "max_iter": [Interval(Integral, 1, None, closed="left")],
-        "tol": [Interval(Real, 0, None, closed="left"), None],
+        "tol": [Interval(Real, None, None, closed="left"), None],
         "shuffle": [bool],
         "verbose": [Interval(Integral, 0, None, closed="left")],
         "random_state": ["random_state"],
@@ -2157,7 +2176,7 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         "eta0": [Interval(Real, 0, None, closed="left")],
         "power_t": [Interval(Real, None, None, closed="neither")],
         "warm_start": [bool],
-        "average": [Interval(Integral, 1, None, closed="left"), bool],
+        "average": [Interval(Integral, 0, None, closed="left"), bool],
     }
 
     def __init__(
