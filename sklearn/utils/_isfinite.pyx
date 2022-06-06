@@ -1,6 +1,6 @@
 # Author: jakirkham, Meekail Zain, Thomas Fan
 
-from libc.math cimport isnan as c_isnan, isinf as c_isinf
+from libc.math cimport isnan, isinf
 
 cimport cython
 cimport numpy as cnp
@@ -31,14 +31,14 @@ cdef inline int _isfinite(fprecision[::1] a, bint allow_nan) nogil:
 
 cdef int _isfinite_allow_nan(fprecision[::1] a) nogil:
     for i in range(len(a)):
-        if c_isinf(a[i]) != 0:
+        if isinf(a[i]) != 0:
             return FiniteStatus.has_infinite
     return FiniteStatus.all_finite
 
 cdef int _isfinite_disable_nan(fprecision[::1] a) nogil:
     for i in range(len(a)):
-        if c_isnan(a[i]) != 0:
+        if isnan(a[i]) != 0:
             return FiniteStatus.has_nan
-        if c_isinf(a[i]) != 0:
+        if isinf(a[i]) != 0:
             return FiniteStatus.has_infinite
     return FiniteStatus.all_finite

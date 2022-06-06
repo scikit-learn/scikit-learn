@@ -117,8 +117,8 @@ def configuration(parent_package="", top_path=None):
         language="c++",
     )
     config.add_extension(
-        "isfinite",
-        sources=["isfinite.pyx"],
+        "_isfinite",
+        sources=["_isfinite.pyx"],
         include_dirs=[numpy.get_include()],
         libraries=libraries,
     )

@@ -105,13 +105,12 @@ def _assert_all_finite(
     # error message.
     is_float = X.dtype.kind in "fc"
     # Cython implementation doesn't support FP16 or complex numbers
-    first_pass_isfinite = False
     if is_float:
-        use_cython = X.data.contiguous and X.dtype.type in {np.float32, np.float64}
         with np.errstate(over="ignore"):
             first_pass_isfinite = np.isfinite(np.sum(X))
         if first_pass_isfinite:
             return
+        use_cython = X.data.contiguous and X.dtype.type in {np.float32, np.float64}
         if use_cython:
             out = cy_isfinite(X.reshape(-1), allow_nan=allow_nan)
             has_nan = out == FiniteStatus.has_nan
