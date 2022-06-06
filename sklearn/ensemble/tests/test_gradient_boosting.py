@@ -595,9 +595,9 @@ def test_staged_predict_proba():
 
 
 @pytest.mark.parametrize("Estimator", GRADIENT_BOOSTING_ESTIMATORS)
-def test_staged_functions_defensive(Estimator):
+def test_staged_functions_defensive(Estimator, global_random_seed):
     # test that staged_functions make defensive copies
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     X = rng.uniform(size=(10, 3))
     y = (4 * X[:, 0]).astype(int) + 1  # don't predict zeros
     estimator = Estimator()
@@ -1391,14 +1391,16 @@ def _make_multiclass():
     ],
     ids=["binary classification", "multiclass classification", "regression"],
 )
-def test_gradient_boosting_with_init(gb, dataset_maker, init_estimator):
+def test_gradient_boosting_with_init(
+    gb, dataset_maker, init_estimator, global_random_seed
+):
     # Check that GradientBoostingRegressor works when init is a sklearn
     # estimator.
     # Check that an error is raised if trying to fit with sample weight but
     # initial estimator does not support sample weight
 
     X, y = dataset_maker()
-    sample_weight = np.random.RandomState(42).rand(100)
+    sample_weight = np.random.RandomState(global_random_seed).rand(100)
 
     # init supports sample weights
     init_est = init_estimator()
