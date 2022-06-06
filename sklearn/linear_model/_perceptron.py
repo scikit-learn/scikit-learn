@@ -2,7 +2,7 @@
 # License: BSD 3 clause
 from numbers import Integral, Real
 
-from ._stochastic_gradient import BaseSGDClassifier, BaseSGD
+from ._stochastic_gradient import BaseSGDClassifier
 from ..utils._param_validation import StrOptions, Interval
 
 
