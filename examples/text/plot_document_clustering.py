@@ -142,11 +142,6 @@ def fit_and_evaluate(km, X, custom_name=False):
 #   (projected to the euclidean unit-ball) which seems to be important for
 #   k-means to work in high dimensional space.
 #
-#   :func:`~sklearn.feature_extraction.text.HashingVectorizer` does not provide
-#   IDF weighting as this is a stateless model (the fit method does nothing).
-#   When IDF weighting is needed it can be added by pipelining its output to a
-#   :func:`~sklearn.feature_extraction.text.TfidfTransformer` instance.
-#
 # TfidfVectorizer
 # ---------------
 #
@@ -172,10 +167,11 @@ print(f"n_samples: {X.shape[0]}, n_features: {X.shape[1]}")
 # %%
 # **Clustering sparse data with MiniBatchKMeans**
 #
-# As both KMeans and MiniBatchKMeans optimize a non-convex objective function,
-# they will likely end up in a local optimum. Several runs with independent
-# random init might be necessary to get a good convergence. The parameter
-# `n_init` controls the number of such initializations.
+# As both :func:`~sklearn.cluster.KMeans` and
+# :func:`~sklearn.cluster.MiniBatchKMeans` optimize a non-convex objective
+# function, they will likely end up in a local optimum. Several runs with
+# independent random init might be necessary to get a good convergence. The
+# parameter `n_init` controls the number of such initializations.
 
 from sklearn.cluster import MiniBatchKMeans
 
@@ -207,7 +203,7 @@ fit_and_evaluate(km, X)
 # **Performing dimensionality reduction using LSA**
 #
 # Since LSA/SVD results are not normalized, we redo the normalization to improve
-# the k-means result.
+# the :func:`~sklearn.cluster.KMeans` result.
 
 from sklearn.decomposition import TruncatedSVD
 from sklearn.pipeline import make_pipeline
@@ -240,9 +236,12 @@ for i in range(true_k):
 # HashingVectorizer
 # -----------------
 # A similar experiment can be done using a
-# :func:`~sklearn.feature_extraction.text.HashingVectorizer` instance. Here
-# we illustrate the effect of Tfidf weighting by benchmarking the KMeans
-# algorithm with and without such normalization.
+# :func:`~sklearn.feature_extraction.text.HashingVectorizer` instance, which
+# does not provide IDF weighting as this is a stateless model (the fit method
+# does nothing). When IDF weighting is needed it can be added by pipelining its
+# output to a :func:`~sklearn.feature_extraction.text.TfidfTransformer`
+# instance. Here we illustrate the effect of Tfidf weighting by benchmarking the
+# :func:`~sklearn.cluster.KMeans` algorithm with and without such normalization.
 
 from sklearn.feature_extraction.text import HashingVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
@@ -302,19 +301,19 @@ ax.legend(loc="lower right", labels=df.columns)
 _ = ax.set_title("Clustering scores")
 
 # %%
-# It can be noted that k-means (and minibatch k-means) are very sensitive to
-# feature scaling and that in this case the IDF weighting helps improve the
-# quality of the clustering by quite a lot as measured against the "ground
-# truth" provided by the class label assignments of
-# :ref:`20newsgroups_dataset`.
+# It can be noted that :func:`~sklearn.cluster.KMeans` (and
+# :func:`~sklearn.cluster.MiniBatchKMeans`) are very sensitive to feature
+# scaling and that in this case the IDF weighting helps improve the quality of
+# the clustering by quite a lot as measured against the "ground truth" provided
+# by the class label assignments of :ref:`20newsgroups_dataset`.
 #
 # This improvement is not visible in the Silhouette Coefficient which is small
 # for both as this measure seem to suffer from the phenomenon called
 # "Concentration of Measure" or "Curse of Dimensionality" for high dimensional
 # datasets such as text data. Other measures such as V-measure and Adjusted Rand
-# Index are information-theory-based evaluation scores: as they are only
-# based on cluster assignments rather than distances, hence not affected by the
-# curse of dimensionality.
+# Index are information-theory-based evaluation scores: as they are only based
+# on cluster assignments rather than distances, hence not affected by the curse
+# of dimensionality.
 
 
 # %%
