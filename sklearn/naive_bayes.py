@@ -854,9 +854,9 @@ class MultinomialNB(_BaseDiscreteNB):
     >>> X = rng.randint(5, size=(6, 100))
     >>> y = np.array([1, 2, 3, 4, 5, 6])
     >>> from sklearn.naive_bayes import MultinomialNB
-    >>> clf = MultinomialNB()
+    >>> clf = MultinomialNB(force_alpha=True)
     >>> clf.fit(X, y)
-    MultinomialNB()
+    MultinomialNB(force_alpha=True)
     >>> print(clf.predict(X[2:3]))
     [3]
     """
@@ -995,9 +995,9 @@ class ComplementNB(_BaseDiscreteNB):
     >>> X = rng.randint(5, size=(6, 100))
     >>> y = np.array([1, 2, 3, 4, 5, 6])
     >>> from sklearn.naive_bayes import ComplementNB
-    >>> clf = ComplementNB()
+    >>> clf = ComplementNB(force_alpha=True)
     >>> clf.fit(X, y)
-    ComplementNB()
+    ComplementNB(force_alpha=True)
     >>> print(clf.predict(X[2:3]))
     [3]
     """
@@ -1151,9 +1151,9 @@ class BernoulliNB(_BaseDiscreteNB):
     >>> X = rng.randint(5, size=(6, 100))
     >>> Y = np.array([1, 2, 3, 4, 4, 5])
     >>> from sklearn.naive_bayes import BernoulliNB
-    >>> clf = BernoulliNB()
+    >>> clf = BernoulliNB(force_alpha=True)
     >>> clf.fit(X, Y)
-    BernoulliNB()
+    BernoulliNB(force_alpha=True)
     >>> print(clf.predict(X[2:3]))
     [3]
     """
@@ -1325,9 +1325,9 @@ class CategoricalNB(_BaseDiscreteNB):
     >>> X = rng.randint(5, size=(6, 100))
     >>> y = np.array([1, 2, 3, 4, 5, 6])
     >>> from sklearn.naive_bayes import CategoricalNB
-    >>> clf = CategoricalNB()
+    >>> clf = CategoricalNB(force_alpha=True)
     >>> clf.fit(X, y)
-    CategoricalNB()
+    CategoricalNB(force_alpha=True)
     >>> print(clf.predict(X[2:3]))
     [3]
     """
