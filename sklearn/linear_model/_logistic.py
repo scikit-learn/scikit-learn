@@ -873,7 +873,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
            Refer to the User Guide for more information regarding
            :class:`LogisticRegression` and more specifically the
            :ref:`Table <Logistic_regression>`
-           summarazing solver/penalty supports.
+           summarizing solver/penalty supports.
 
         .. versionadded:: 0.17
            Stochastic Average Gradient descent solver.
