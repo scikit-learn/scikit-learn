@@ -39,7 +39,6 @@ from ..utils.extmath import _incremental_mean_and_var
 from ..utils.sparsefuncs import mean_variance_axis, inplace_column_scale
 from ..utils._seq_dataset import ArrayDataset32, CSRDataset32
 from ..utils._seq_dataset import ArrayDataset64, CSRDataset64
-from ..utils._testing import assert_allclose
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.fixes import delayed
 
@@ -780,9 +779,9 @@ def _check_precomputed_gram_matrix(
         Array of feature scale factors used to normalize design matrix.
 
     rtol : float, default=None
-        Relative tolerance; see numpy.allclose and
-        sklearn.utils._testing.assert_allclose.
-        If None, it is set based on the provided arrays' dtypes.
+        Relative tolerance; see numpy.allclose
+        If None, it is set to 1e-4 for arrays of dtype numpy.float32 and 1e-7
+        otherwise.
 
     atol : float, default=1e-5
         absolute tolerance; see :func`numpy.allclose`. Note that the default
@@ -805,17 +804,20 @@ def _check_precomputed_gram_matrix(
     expected = np.dot(v1, v2)
     actual = precompute[f1, f2]
 
-    err_msg = (
-        "Gram matrix passed in via 'precompute' parameter "
-        "did not pass validation when a single element was "
-        "checked - please check that it was computed "
-        f"properly. For element ({f1},{f2}) we computed "
-        f"{expected} but the user-supplied value was "
-        f"{actual}."
-    )
-    assert_allclose(
-        expected, actual, rtol=rtol, atol=atol, err_msg=err_msg, verbose=False
-    )
+    dtypes = [precompute.dtype, expected.dtype]
+    if rtol is None:
+        rtols = [1e-4 if dtype == np.float32 else 1e-7 for dtype in dtypes]
+        rtol = max(rtols)
+
+    if not np.isclose(expected, actual, rtol=rtol, atol=atol):
+        raise ValueError(
+            "Gram matrix passed in via 'precompute' parameter "
+            "did not pass validation when a single element was "
+            "checked - please check that it was computed "
+            f"properly. For element ({f1},{f2}) we computed "
+            f"{expected} but the user-supplied value was "
+            f"{actual}."
+        )
 
 
 def _pre_fit(

@@ -1039,7 +1039,7 @@ def test_elasticnet_precompute_incorrect_gram():
 
     clf = ElasticNet(alpha=0.01, precompute=precompute)
     msg = "Gram matrix.*did not pass validation.*"
-    with pytest.raises(AssertionError, match=msg):
+    with pytest.raises(ValueError, match=msg):
         clf.fit(X_centered, y)
 
 
