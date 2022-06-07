@@ -29,7 +29,7 @@ from .. import get_config as _get_config
 from ..exceptions import PositiveSpectrumWarning
 from ..exceptions import NotFittedError
 from ..exceptions import DataConversionWarning
-from .isfinite import cy_isfinite, FiniteStatus
+from ._isfinite import cy_isfinite, FiniteStatus
 
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 
