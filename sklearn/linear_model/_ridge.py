@@ -11,6 +11,7 @@ Ridge regression
 
 from abc import ABCMeta, abstractmethod
 from functools import partial
+from numbers import Integral, Real
 import warnings
 
 import numpy as np
@@ -33,6 +34,8 @@ from ..utils import compute_sample_weight
 from ..utils import column_or_1d
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _check_sample_weight
+from ..utils._param_validation import Interval
+from ..utils._param_validation import StrOptions
 from ..preprocessing import LabelBinarizer
 from ..model_selection import GridSearchCV
 from ..metrics import check_scoring
@@ -772,6 +775,22 @@ def _ridge_regression(
 
 
 class _BaseRidge(LinearModel, metaclass=ABCMeta):
+
+
+    _parameter_constraints = {
+        "alpha": [Interval(Real, 1, None, closed="left"), float, np.ndarray],
+        "fit_intercept": [bool],
+        "normalize": [StrOptions({"deprecated"}), bool],
+        "copy_X": [bool],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "solver": [StrOptions({'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', \
+            'sag', 'saga', 'lbfgs'})],
+        "positive": [bool],
+        "random_state": ["random_state"],
+    }
+
+
     @abstractmethod
     def __init__(
         self,
