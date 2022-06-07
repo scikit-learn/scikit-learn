@@ -499,6 +499,7 @@ cdef class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
                 chunk_size=chunk_size,
                 metric_kwargs=metric_kwargs,
                 strategy=strategy,
+                sort_results=sort_results,
                 return_distance=return_distance,
             )
         raise ValueError(
