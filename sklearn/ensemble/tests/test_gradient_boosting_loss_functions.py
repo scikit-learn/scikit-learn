@@ -230,10 +230,10 @@ def test_init_raw_predictions_shapes(global_random_seed):
         assert raw_predictions.dtype == np.float64
 
 
-def test_init_raw_predictions_values():
+def test_init_raw_predictions_values(global_random_seed):
     # Make sure the get_init_raw_predictions() returns the expected values for
     # each loss.
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
 
     n_samples = 100
     X = rng.normal(size=(n_samples, 5))
