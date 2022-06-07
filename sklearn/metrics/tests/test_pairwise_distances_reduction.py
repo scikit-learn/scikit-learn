@@ -132,9 +132,12 @@ def assert_argkmin_results_quasi_equality(
             assert ref_mapping[j] == mapping[j]
 
 
-def assert_radius_neighborhood_results_equality(ref_dist, dist, ref_indices, indices):
+def assert_radius_neighborhood_results_equality(
+    ref_dist, dist, ref_indices, indices, radius
+):
     # We get arrays of arrays and we need to check for individual pairs
     for i in range(ref_dist.shape[0]):
+        assert (ref_dist[i] <= radius).all()
         assert_array_equal(
             ref_indices[i],
             indices[i],
@@ -153,6 +156,7 @@ def assert_radius_neighborhood_results_quasi_equality(
     dist,
     ref_indices,
     indices,
+    radius,
     rtol=1e-4,
     decimals=5,
 ):
@@ -183,14 +187,21 @@ def assert_radius_neighborhood_results_quasi_equality(
         assert is_sorted(dist_row), f"Distances aren't sorted on row {i}"
 
         # Vectors' lengths might be different due to small
-        # numerical differences of distance w.r.t the `radius` threshold,
-        # so we group vectors to match the smallest.
-        m = min(len(ref_dist_row), len(dist_row))
+        # numerical differences of distance w.r.t the `radius` threshold.
+        largest_row = ref_dist_row if len(ref_dist_row) > len(dist_row) else dist_row
 
-        ref_dist_row = ref_dist_row[:m]
-        dist_row = dist_row[:m]
+        # For the longest distances vector, we check that elements that aren't present
+        # in the other vector are all in: [radius ± atol]
+        atol = 10 ** (-decimals)
+        min_length = min(len(ref_dist_row), len(dist_row))
+        assert np.all(radius - atol <= largest_row[min_length:] <= radius + atol)
 
-        assert_allclose(ref_dist_row, dist_row, rtol)
+        # We truncate the neighbors results list on the smallest length to
+        # be able to compare them, ignoring the elements checked above.
+        ref_dist_row = ref_dist_row[:min_length]
+        dist_row = dist_row[:min_length]
+
+        assert_allclose(ref_dist_row, dist_row, rtol=rtol)
 
         ref_indices_row = ref_indices[i]
         indices_row = indices[i]
@@ -200,7 +211,7 @@ def assert_radius_neighborhood_results_quasi_equality(
         ref_mapping = defaultdict(set)
         mapping = defaultdict(set)
 
-        for j in range(m):
+        for j in range(min_length):
             rounded_dist = np.round(ref_dist_row[j], decimals=decimals)
             ref_mapping[rounded_dist].add(ref_indices_row[j])
             mapping[rounded_dist].add(indices_row[j])
@@ -419,6 +430,7 @@ def test_assert_radius_neighborhood_results_quasi_equality():
     rtol = 1e-7
     atol = 1e-7
     decimals = 6
+    radius = 6.1
 
     ref_dist = np.array(
         [
@@ -459,6 +471,7 @@ def test_assert_radius_neighborhood_results_quasi_equality():
                 np.array([1, 2, 4, 5, 3]),
             ]
         ),
+        radius=radius,
         rtol=rtol,
         decimals=decimals,
     )
@@ -483,6 +496,7 @@ def test_assert_radius_neighborhood_results_quasi_equality():
                 np.array([6, 9, 7, 8, 10]),
             ]
         ),
+        radius=radius,
         rtol=rtol,
         decimals=decimals,
     )
@@ -511,6 +525,7 @@ def test_assert_radius_neighborhood_results_quasi_equality():
                     np.array([2, 1, 3, 4, 5]),
                 ]
             ),
+            radius=radius,
             rtol=rtol,
             decimals=decimals,
         )
@@ -537,6 +552,7 @@ def test_assert_radius_neighborhood_results_quasi_equality():
                 np.array([1, 2, 3, 4]),
             ]
         ),
+        radius=radius,
         rtol=rtol,
         decimals=decimals,
     )
@@ -565,6 +581,7 @@ def test_assert_radius_neighborhood_results_quasi_equality():
                     np.array([2, 1, 4, 5, 3]),
                 ]
             ),
+            radius=radius,
             rtol=rtol,
             decimals=decimals,
         )
@@ -593,6 +610,7 @@ def test_assert_radius_neighborhood_results_quasi_equality():
                     np.array([1, 2, 4, 5, 3]),
                 ]
             ),
+            radius=radius,
             rtol=rtol,
             decimals=decimals,
         )
@@ -621,6 +639,7 @@ def test_assert_radius_neighborhood_results_quasi_equality():
                     np.array([2, 1, 4, 5, 3]),
                 ]
             ),
+            radius=radius,
             rtol=rtol,
             decimals=decimals,
         )
@@ -790,12 +809,14 @@ def test_chunk_size_agnosticism(
     X = rng.rand(n_samples, n_features).astype(dtype) * spread
     Y = rng.rand(n_samples, n_features).astype(dtype) * spread
 
-    parameter = (
-        10
-        if PairwiseDistancesReduction is PairwiseDistancesArgKmin
+    if PairwiseDistancesReduction is PairwiseDistancesArgKmin:
+        parameter = 10
+        check_parameters = {}
+    else:
         # Scaling the radius slightly with the numbers of dimensions
-        else 10 ** np.log(n_features)
-    )
+        radius = 10 ** np.log(n_features)
+        parameter = radius
+        check_parameters = {"radius": radius}
 
     ref_dist, ref_indices = PairwiseDistancesReduction.compute(
         X,
@@ -815,7 +836,7 @@ def test_chunk_size_agnosticism(
     )
 
     ASSERT_RESULT[(PairwiseDistancesReduction, dtype)](
-        ref_dist, dist, ref_indices, indices
+        ref_dist, dist, ref_indices, indices, **check_parameters
     )
 
 
@@ -839,12 +860,14 @@ def test_n_threads_agnosticism(
     X = rng.rand(n_samples, n_features).astype(dtype) * spread
     Y = rng.rand(n_samples, n_features).astype(dtype) * spread
 
-    parameter = (
-        10
-        if PairwiseDistancesReduction is PairwiseDistancesArgKmin
+    if PairwiseDistancesReduction is PairwiseDistancesArgKmin:
+        parameter = 10
+        check_parameters = {}
+    else:
         # Scaling the radius slightly with the numbers of dimensions
-        else 10 ** np.log(n_features)
-    )
+        radius = 10 ** np.log(n_features)
+        parameter = radius
+        check_parameters = {"radius": radius}
 
     ref_dist, ref_indices = PairwiseDistancesReduction.compute(
         X,
@@ -859,7 +882,7 @@ def test_n_threads_agnosticism(
         )
 
     ASSERT_RESULT[(PairwiseDistancesReduction, dtype)](
-        ref_dist, dist, ref_indices, indices
+        ref_dist, dist, ref_indices, indices, **check_parameters
     )
 
 
@@ -890,12 +913,14 @@ def test_strategies_consistency(
         X = np.ascontiguousarray(X[:, :2])
         Y = np.ascontiguousarray(Y[:, :2])
 
-    parameter = (
-        10
-        if PairwiseDistancesReduction is PairwiseDistancesArgKmin
+    if PairwiseDistancesReduction is PairwiseDistancesArgKmin:
+        parameter = 10
+        check_parameters = {}
+    else:
         # Scaling the radius slightly with the numbers of dimensions
-        else 10 ** np.log(n_features)
-    )
+        radius = 10 ** np.log(n_features)
+        parameter = radius
+        check_parameters = {"radius": radius}
 
     dist_par_X, indices_par_X = PairwiseDistancesReduction.compute(
         X,
@@ -928,10 +953,7 @@ def test_strategies_consistency(
     )
 
     ASSERT_RESULT[(PairwiseDistancesReduction, dtype)](
-        dist_par_X,
-        dist_par_Y,
-        indices_par_X,
-        indices_par_Y,
+        dist_par_X, dist_par_Y, indices_par_X, indices_par_Y, **check_parameters
     )
 
 
@@ -1063,7 +1085,7 @@ def test_pairwise_distances_radius_neighbors(
     )
 
     ASSERT_RESULT[(PairwiseDistancesRadiusNeighborhood, dtype)](
-        neigh_distances, neigh_distances_ref, neigh_indices, neigh_indices_ref
+        neigh_distances, neigh_distances_ref, neigh_indices, neigh_indices_ref, radius
     )
 
 
