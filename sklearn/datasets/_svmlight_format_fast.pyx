@@ -11,9 +11,6 @@ cimport cython
 from libc.string cimport strchr
 
 import numpy as np
-cimport numpy as cnp
-cnp.import_array()
-
 import scipy.sparse as sp
 
 
@@ -119,23 +116,23 @@ def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based,
 
 # Two fused types are defined to be able to
 # use all possible combinations of parameters.
-ctypedef fused int_or_float1:
+ctypedef fused int_or_float:
     cython.integral
     cython.floating
     signed long long
 
-ctypedef fused int_or_float2:
-    signed long long
+ctypedef fused double_or_longlong:
     double
+    signed long long
 
 ctypedef fused int_or_longlong:
     cython.integral
     signed long long
 
 def get_dense_row_string(
-    int_or_float1[:,:] X,
+    int_or_float[:,:] X,
     Py_ssize_t[:] x_inds,
-    int_or_float2[:] x_vals,
+    double_or_longlong[:] x_vals,
     Py_ssize_t row,
     str value_pattern,
     bint one_based,
@@ -147,7 +144,7 @@ def get_dense_row_string(
 
     for k in range(row_length):
         val = X[row,k]
-        if val==0:
+        if val == 0:
             continue
         x_inds[x_nz_used] = k
         x_vals[x_nz_used] = val
@@ -155,7 +152,7 @@ def get_dense_row_string(
     return " ".join(value_pattern % (j+one_based, val) for i, (j, val) in enumerate(zip(x_inds, x_vals)) if i < x_nz_used)
 
 def get_sparse_row_string(
-    int_or_float1[:] X_data,
+    int_or_float[:] X_data,
     int[:] X_indptr,
     int[:] X_indices,
     Py_ssize_t row,
@@ -217,13 +214,13 @@ def _dump_svmlight_file(
     for i in range(x_len):
         x_nz_used = 0
 
-        if X_is_sp:
-            s = get_sparse_row_string(X.data, X.indptr, X.indices, i, value_pattern, one_based)
-        else:
+        if not X_is_sp:
             if X_is_integral:
                 s = get_dense_row_string(X, x_inds, x_vals_int, i, value_pattern, one_based)
             else:
                 s = get_dense_row_string(X, x_inds, x_vals_float, i, value_pattern, one_based)
+        else:
+            s = get_sparse_row_string(X.data, X.indptr, X.indices, i, value_pattern, one_based)
         if multilabel:
             first = True
             if y_is_sp:

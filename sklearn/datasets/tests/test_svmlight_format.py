@@ -10,7 +10,7 @@ from tempfile import NamedTemporaryFile
 
 import pytest
 
-from sklearn.utils._testing import assert_array_equal, assert_allclose
+from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import fails_if_pypy
 
@@ -556,19 +556,24 @@ def test_load_with_offsets_error():
 
 
 def test_multilabel_y_explicit_zeros(tmp_path):
+    """
+    Ensure that if y contains explicit zeros (i.e. y.data contains 0) then they
+    are not encoded.
+    """
     save_path = str(tmp_path / "svm_explicit_zero")
     rng = np.random.RandomState(42)
     X = rng.randn(3, 5).astype(np.float64)
     indptr = np.array([0, 2, 3, 6])
     indices = np.array([0, 2, 2, 0, 1, 2])
-    data = np.array([0, 2, 3, 4, 5, 6])
+    data = np.array([0, 2, 3, 4, 5, 6])  # The first element is an explicit zero
     y = sp.csr_matrix((data, indices, indptr), shape=(3, 3))
+    # y as a dense array would look like
+    # [[0, 0, 2],
+    #  [0, 0, 3],
+    #  [4, 5, 6]]
 
-    assert_array_equal(y.todense(), np.array([[0, 0, 2], [0, 0, 3], [4, 5, 6]]))
     dump_svmlight_file(X, y, save_path, multilabel=True)
 
-    X_load, y_load = load_svmlight_file(save_path, multilabel=True)
+    _, y_load = load_svmlight_file(save_path, multilabel=True)
     y_true = [(2.0,), (2.0,), (0.0, 1.0, 2.0)]
-    assert_allclose(X_load.toarray(), X)
-    for u, v in zip(y_load, y_true):
-        assert u == v
+    assert tuple(y_load) == tuple(y_true)
