@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-set -v
 set -e
 
 # Decide what kind of documentation build to run, and run it.
@@ -179,7 +178,7 @@ mamba list
 # Set parallelism to 3 to overlap IO bound tasks with CPU bound tasks on CI
 # workers with 2 cores when building the compiled extensions of scikit-learn.
 export SKLEARN_BUILD_PARALLEL=3
-python setup.py develop
+pip install -e . --no-build-isolation
 
 export OMP_NUM_THREADS=1
 
