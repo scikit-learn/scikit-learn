@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -x
+set -v
 set -e
 
 # Decide what kind of documentation build to run, and run it.
@@ -154,17 +154,17 @@ sudo -E apt-get -yq update --allow-releaseinfo-change
 sudo -E apt-get -yq --no-install-suggests --no-install-recommends \
     install dvipng gsfonts ccache zip optipng
 
-# deactivate circleci virtualenv and setup a miniconda env instead
+# deactivate circleci virtualenv and setup a conda env instead
 if [[ `type -t deactivate` ]]; then
   deactivate
 fi
 
-MINICONDA_PATH=$HOME/miniconda
-# Install dependencies with miniconda
-wget https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-Linux-x86_64.sh \
-    -O miniconda.sh
-chmod +x miniconda.sh && ./miniconda.sh -b -p $MINICONDA_PATH
-export PATH="/usr/lib/ccache:$MINICONDA_PATH/bin:$PATH"
+MAMBAFORGE_PATH=$HOME/mambaforge
+# Install dependencies with mamba
+wget -q https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-Linux-x86_64.sh \
+    -O mambaforge.sh
+chmod +x mambaforge.sh && ./mambaforge.sh -b -p $MAMBAFORGE_PATH
+export PATH="/usr/lib/ccache:$MAMBAFORGE_PATH/bin:$PATH"
 
 ccache -M 512M
 export CCACHE_COMPRESS=1
