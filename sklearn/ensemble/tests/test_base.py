@@ -47,6 +47,8 @@ def test_base(global_random_seed):
         base_estimator=Perceptron(), n_estimators=np.int32(3)
     )
     np_int_ensemble.fit(iris.data, iris.target)
+    assert 3 == len(np_int_ensemble)
+    assert 3 == len(np_int_ensemble.estimators_)
 
 
 def test_base_zero_n_estimators():
