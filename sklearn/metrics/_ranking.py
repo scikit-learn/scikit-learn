@@ -1559,8 +1559,7 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
         that is not between 0 and 1.
 
         .. versionchanged:: 1.2
-            These negative values are deprecated, and may cause an error in the
-            future.
+            These negative values are deprecated, and will raise an error in v1.4.
 
     y_score : ndarray of shape (n_samples, n_labels)
         Target scores, can either be probability estimates, confidence values,

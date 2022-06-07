@@ -179,7 +179,8 @@ Changelog
 
 - |Fix| :func:`metrics.ndcg_score` will now trigger a warning when the `y_true`
   value contains a negative value. Users may still use negative values, but the
-  result may not be between 0 and 1.
+  result may not be between 0 and 1. Starting in v1.4, passing in negative
+  values for `y_true` will raise an error.
   :pr:`22710` by :user:`Conroy Trinh <trinhcon>` and
   :pr:`23461` by :user:`Meekail Zain <micky774>`
 
