@@ -18,7 +18,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.feature_selection import SelectFromModel
 
 
-def test_base():
+def test_base(global_random_seed):
     # Check BaseEnsemble methods.
     ensemble = BaggingClassifier(
         base_estimator=Perceptron(random_state=None), n_estimators=3
@@ -29,7 +29,7 @@ def test_base():
     ensemble.estimators_ = []  # empty the list and create estimators manually
 
     ensemble._make_estimator()
-    random_state = np.random.RandomState(3)
+    random_state = np.random.RandomState(global_random_seed)
     ensemble._make_estimator(random_state=random_state)
     ensemble._make_estimator(random_state=random_state)
     ensemble._make_estimator(append=False)
