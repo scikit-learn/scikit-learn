@@ -1,3 +1,4 @@
+import re
 from collections import defaultdict
 
 import numpy as np
@@ -131,8 +132,12 @@ def assert_argkmin_results_quasi_equality(
             mapping[rounded_dist].add(indices_row[j])
 
         # Asserting equality of groups (sets) for each distance
+        msg = (
+            f"Neighbors indices for query {i} are not matching "
+            f"when rounding distances at decimals={decimals}"
+        )
         for j in ref_mapping.keys():
-            assert ref_mapping[j] == mapping[j]
+            assert ref_mapping[j] == mapping[j], msg
 
 
 def assert_radius_neighborhood_results_equality(
@@ -193,11 +198,15 @@ def assert_radius_neighborhood_results_quasi_equality(
         # numerical differences of distance w.r.t the `radius` threshold.
         largest_row = ref_dist_row if len(ref_dist_row) > len(dist_row) else dist_row
 
-        # For the longest distances vector, we check that elements that aren't present
-        # in the other vector are all in: [radius ± atol]
+        # For the longest distances vector, we check that last extra elements
+        # that aren't present in the other vector are all in: [radius ± atol]
         atol = 10 ** (-decimals)
         min_length = min(len(ref_dist_row), len(dist_row))
-        assert np.all(radius - atol <= largest_row[min_length:] <= radius + atol)
+        last_extra_elements = largest_row[min_length:]
+        assert np.all(radius - atol <= last_extra_elements <= radius + atol), (
+            f"The last extra elements ({last_extra_elements}) aren't in [radius ±"
+            f" atol]=[{radius} ± {atol}]"
+        )
 
         # We truncate the neighbors results list on the smallest length to
         # be able to compare them, ignoring the elements checked above.
@@ -220,8 +229,12 @@ def assert_radius_neighborhood_results_quasi_equality(
             mapping[rounded_dist].add(indices_row[j])
 
         # Asserting equality of groups (sets) for each distance
+        msg = (
+            f"Neighbors indices for query {i} are not matching "
+            f"when rounding distances at decimals={decimals}"
+        )
         for j in ref_mapping.keys():
-            assert ref_mapping[j] == mapping[j]
+            assert ref_mapping[j] == mapping[j], msg
 
 
 ASSERT_RESULT = {
@@ -322,7 +335,7 @@ def test_assert_argkmin_results_quasi_equality():
     # Apply invalid permutation on indices: permuting the ranks
     # of the 2 nearest neighbors is invalid because the distance
     # values are too different.
-    msg = "Extra items in the left set"
+    msg = "Neighbors indices for query 0 are not matching"
     with pytest.raises(AssertionError, match=msg):
         assert_argkmin_results_quasi_equality(
             ref_dist=np.array(
@@ -350,7 +363,7 @@ def test_assert_argkmin_results_quasi_equality():
         )
 
     # Indices aren't properly sorted w.r.t their distances
-    msg = "Extra items in the left set"
+    msg = "Neighbors indices for query 0 are not matching"
     with pytest.raises(AssertionError, match=msg):
         assert_argkmin_results_quasi_equality(
             ref_dist=np.array(
@@ -398,34 +411,6 @@ def test_assert_argkmin_results_quasi_equality():
             ),
             indices=np.array(
                 [
-                    [1, 2, 4, 5, 3],
-                ]
-            ),
-            rtol=rtol,
-            decimals=decimals,
-        )
-
-    # Indices and distances aren't properly sorted
-    msg = "Distances aren't sorted on row 0"
-    with pytest.raises(AssertionError, match=msg):
-        assert_argkmin_results_quasi_equality(
-            ref_dist=np.array(
-                [
-                    [1.2, 2.5, 6.1 - atol, 6.1, 6.1 + atol],
-                ]
-            ),
-            dist=np.array(
-                [
-                    [2.5, 1.2, 6.1 - atol, 6.1, 6.1 + atol],
-                ]
-            ),
-            ref_indices=np.array(
-                [
-                    [1, 2, 3, 4, 5],
-                ]
-            ),
-            indices=np.array(
-                [
                     [2, 1, 4, 5, 3],
                 ]
             ),
@@ -439,7 +424,6 @@ def test_assert_radius_neighborhood_results_quasi_equality():
     rtol = 1e-7
     atol = 1e-7
     decimals = 6
-    radius = 6.1
 
     ref_dist = np.array(
         [
@@ -480,7 +464,7 @@ def test_assert_radius_neighborhood_results_quasi_equality():
                 np.array([1, 2, 4, 5, 3]),
             ]
         ),
-        radius=radius,
+        radius=6.1,
         rtol=rtol,
         decimals=decimals,
     )
@@ -505,13 +489,13 @@ def test_assert_radius_neighborhood_results_quasi_equality():
                 np.array([6, 9, 7, 8, 10]),
             ]
         ),
-        radius=radius,
+        radius=6.1,
         rtol=rtol,
         decimals=decimals,
     )
 
     # Apply invalid permutation on indices
-    msg = "Extra items in the left set"
+    msg = "Neighbors indices for query 0 are not matching"
     with pytest.raises(AssertionError, match=msg):
         assert_radius_neighborhood_results_quasi_equality(
             ref_dist=np.array(
@@ -534,12 +518,12 @@ def test_assert_radius_neighborhood_results_quasi_equality():
                     np.array([2, 1, 3, 4, 5]),
                 ]
             ),
-            radius=radius,
+            radius=6.1,
             rtol=rtol,
             decimals=decimals,
         )
 
-    # Having missing last elements is valid
+    # Having extra last elements is valid if they are in: [radius ± atol]
     assert_radius_neighborhood_results_quasi_equality(
         ref_dist=np.array(
             [
@@ -561,13 +545,44 @@ def test_assert_radius_neighborhood_results_quasi_equality():
                 np.array([1, 2, 3, 4]),
             ]
         ),
-        radius=radius,
+        radius=6.1,
         rtol=rtol,
         decimals=decimals,
     )
 
+    # Having extra last elements is invalid if they are lesser than radius - atol
+    msg = re.escape(
+        "The last extra elements ([6.]) aren't in [radius ± atol]=[6.1 ± 1e-06]"
+    )
+    with pytest.raises(AssertionError, match=msg):
+        assert_radius_neighborhood_results_quasi_equality(
+            ref_dist=np.array(
+                [
+                    np.array([1.2, 2.5, 6]),
+                ]
+            ),
+            dist=np.array(
+                [
+                    np.array([1.2, 2.5]),
+                ]
+            ),
+            ref_indices=np.array(
+                [
+                    np.array([1, 2, 3]),
+                ]
+            ),
+            indices=np.array(
+                [
+                    np.array([1, 2]),
+                ]
+            ),
+            radius=6.1,
+            rtol=rtol,
+            decimals=decimals,
+        )
+
     # Indices aren't properly sorted w.r.t their distances
-    msg = "Extra items in the left set"
+    msg = "Neighbors indices for query 0 are not matching"
     with pytest.raises(AssertionError, match=msg):
         assert_radius_neighborhood_results_quasi_equality(
             ref_dist=np.array(
@@ -590,7 +605,7 @@ def test_assert_radius_neighborhood_results_quasi_equality():
                     np.array([2, 1, 4, 5, 3]),
                 ]
             ),
-            radius=radius,
+            radius=6.1,
             rtol=rtol,
             decimals=decimals,
         )
@@ -616,39 +631,10 @@ def test_assert_radius_neighborhood_results_quasi_equality():
             ),
             indices=np.array(
                 [
-                    np.array([1, 2, 4, 5, 3]),
-                ]
-            ),
-            radius=radius,
-            rtol=rtol,
-            decimals=decimals,
-        )
-
-    # Indices and distances aren't properly sorted
-    msg = "Distances aren't sorted on row 0"
-    with pytest.raises(AssertionError, match=msg):
-        assert_radius_neighborhood_results_quasi_equality(
-            ref_dist=np.array(
-                [
-                    np.array([1.2, 2.5, 6.1 - atol, 6.1, 6.1 + atol]),
-                ]
-            ),
-            dist=np.array(
-                [
-                    np.array([2.5, 1.2, 6.1 - atol, 6.1, 6.1 + atol]),
-                ]
-            ),
-            ref_indices=np.array(
-                [
-                    np.array([1, 2, 3, 4, 5]),
-                ]
-            ),
-            indices=np.array(
-                [
                     np.array([2, 1, 4, 5, 3]),
                 ]
             ),
-            radius=radius,
+            radius=6.1,
             rtol=rtol,
             decimals=decimals,
         )
