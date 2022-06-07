@@ -101,7 +101,7 @@ scores = defaultdict(list)
 train_times = defaultdict(list)
 
 
-def benchmark(km, X, custom_name=False):
+def fit_and_evaluate(km, X, custom_name=False):
     t0 = time()
     km.fit(X)
     train_time = time() - t0
@@ -187,7 +187,7 @@ km = MiniBatchKMeans(
     batch_size=1000,
 )
 
-benchmark(km, X)
+fit_and_evaluate(km, X)
 
 # %%
 # **Clustering sparse data with KMeans**
@@ -201,7 +201,7 @@ km = KMeans(
     n_init=5,
 )
 
-benchmark(km, X)
+fit_and_evaluate(km, X)
 
 # %%
 # **Performing dimensionality reduction using LSA**
@@ -217,7 +217,7 @@ svd = TruncatedSVD(n_components=100)
 normalizer = Normalizer(copy=False)
 lsa = make_pipeline(svd, normalizer)
 X = lsa.fit_transform(X)
-benchmark(km, X, custom_name=" with LSA")
+fit_and_evaluate(km, X, custom_name=" with LSA")
 
 explained_variance = svd.explained_variance_ratio_.sum()
 print(f"Explained variance of the SVD step: {int(explained_variance * 100)}%")
@@ -255,10 +255,10 @@ hasher = HashingVectorizer(
 vectorizer = make_pipeline(hasher, TfidfTransformer())
 
 X = hasher.fit_transform(dataset.data)
-benchmark(km, X, custom_name=" with\nsimple hashing")
+fit_and_evaluate(km, X, custom_name=" with\nsimple hashing")
 
 X = vectorizer.fit_transform(dataset.data)
-benchmark(km, X, custom_name=" with\nhashed Tfidf")
+fit_and_evaluate(km, X, custom_name=" with\nhashed Tfidf")
 
 # %%
 # Plot unsupervised evaluation metrics
