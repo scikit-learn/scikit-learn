@@ -152,16 +152,15 @@ def fit_and_evaluate(km, X, custom_name=False):
 from sklearn.feature_extraction.text import TfidfVectorizer
 from time import time
 
-t0 = time()
-
 vectorizer = TfidfVectorizer(
     max_df=0.5,
     min_df=5,
     stop_words="english",
 )
+t0 = time()
 X = vectorizer.fit_transform(dataset.data)
 
-print(f"done in {time() - t0}s")
+print(f"vectorizing done in {time() - t0:.3f} s")
 print(f"n_samples: {X.shape[0]}, n_features: {X.shape[1]}")
 
 # %%
@@ -181,6 +180,7 @@ km = MiniBatchKMeans(
     n_init=5,
     init_size=1000,
     batch_size=1000,
+    random_state=0,
 )
 
 fit_and_evaluate(km, X)
@@ -195,6 +195,7 @@ km = KMeans(
     init="k-means++",
     max_iter=100,
     n_init=5,
+    random_state=0,
 )
 
 fit_and_evaluate(km, X)
@@ -238,26 +239,39 @@ for i in range(true_k):
 # A similar experiment can be done using a
 # :func:`~sklearn.feature_extraction.text.HashingVectorizer` instance, which
 # does not provide IDF weighting as this is a stateless model (the fit method
-# does nothing). When IDF weighting is needed it can be added by pipelining its
-# output to a :func:`~sklearn.feature_extraction.text.TfidfTransformer`
-# instance. Here we illustrate the effect of Tfidf weighting by benchmarking the
-# :func:`~sklearn.cluster.KMeans` algorithm with and without such normalization.
+# does nothing). Here we illustrate the effect of Tfidf weighting by
+# benchmarking the function :func:`~sklearn.cluster.KMeans` with and without
+# such normalization.
 
 from sklearn.feature_extraction.text import HashingVectorizer
-from sklearn.feature_extraction.text import TfidfTransformer
 
 hasher = HashingVectorizer(
     stop_words="english",
     alternate_sign=False,
     norm=None,
 )
-vectorizer = make_pipeline(hasher, TfidfTransformer())
 
+t0 = time()
 X = hasher.fit_transform(dataset.data)
+print(f"vectorizing done in {time() - t0:.3f} s")
+print(f"n_samples: {X.shape[0]}, n_features: {X.shape[1]}")
+
 fit_and_evaluate(km, X, custom_name=" with\nsimple hashing")
 
+# %%
+# When IDF weighting is needed it can be added by pipelining the
+# :func:`~sklearn.feature_extraction.text.HashingVectorizer` output to a
+# :func:`~sklearn.feature_extraction.text.TfidfTransformer` instance.
+
+from sklearn.feature_extraction.text import TfidfTransformer
+
+vectorizer = make_pipeline(hasher, TfidfTransformer())
+
+t0 = time()
 X = vectorizer.fit_transform(dataset.data)
-fit_and_evaluate(km, X, custom_name=" with\nhashed Tfidf")
+print(f"vectorizing done in {time() - t0:.3f} s")
+
+fit_and_evaluate(km, X, custom_name=" with\nTfidf-scaled hashing")
 
 # %%
 # Plot unsupervised evaluation metrics
@@ -279,7 +293,7 @@ y_locs = np.arange(len(df.index)) * (bars_per_group * bar_size + padding)
 y_array = [y_locs + (j - bars_per_group / 2) * bar_size for j in range(bars_per_group)]
 colours = cycle([cmap(index) for index in np.linspace(0, 1, bars_per_group)])
 
-fig, ax = plt.subplots(figsize=(10, 8))
+fig, ax = plt.subplots(figsize=(12, 8))
 for i, estimator in enumerate(df.index):
     for j, label in enumerate(df.columns):
         ax.barh(
@@ -301,7 +315,7 @@ ax.legend(loc="lower right", labels=df.columns)
 _ = ax.set_title("Clustering scores")
 
 # %%
-# It can be noted that :func:`~sklearn.cluster.KMeans` (and
+# It can be noticed that :func:`~sklearn.cluster.KMeans` (and
 # :func:`~sklearn.cluster.MiniBatchKMeans`) are very sensitive to feature
 # scaling and that in this case the IDF weighting helps improve the quality of
 # the clustering by quite a lot as measured against the "ground truth" provided
