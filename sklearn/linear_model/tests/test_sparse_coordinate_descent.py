@@ -377,16 +377,15 @@ def test_sparse_enet_coordinate_descent():
         clf.fit(X, y)
 
 
-def test_read_only_buffer():
+def test_sparse_read_only_buffer():
     """Test that sparse coordinate descent works for read-only buffers"""
     clf = ElasticNet(alpha=0.1, copy_X=False)
     X = sp.random(100, 20, format="csc")
 
-    def make_read_only(obj, attr):
-        curr_attr = getattr(obj, attr)
-        RO_attr = create_memmap_backed_data(curr_attr)
-        setattr(obj, attr, RO_attr)
+    # Make X.data read-only
+    curr_attr = getattr(X, "data")
+    RO_attr = create_memmap_backed_data(curr_attr)
+    setattr(X, "data", RO_attr)
 
-    make_read_only(X, "data")
     y = np.random.rand(100)
     clf.fit(X, y)
