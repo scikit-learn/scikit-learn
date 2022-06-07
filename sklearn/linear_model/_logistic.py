@@ -33,7 +33,8 @@ from ..utils.multiclass import check_classification_targets
 from ..utils.fixes import delayed
 from ..model_selection import check_cv
 from ..metrics import get_scorer
-
+from ..utils._param_validation import StrOptions, Interval
+from numbers import Integral, Real
 
 _LOGISTIC_SOLVER_CONVERGENCE_MSG = (
     "Please also refer to the documentation for alternative solver options:\n"
@@ -1022,6 +1023,24 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     >>> clf.score(X, y)
     0.97...
     """
+
+    _parameter_constraints = {
+        "penalty": [StrOptions({"l1", "l2", "elasticnet", "none"})],
+        "dual": [bool],
+        "to1": [Interval(Real, 0, None, closed="left")],
+        "C": [Interval(Real, 0, None, closed="left")],
+        "fit_intercept": [bool],
+        "intercept_scaling": [Interval(Real, None, None, closed="neither")],
+        "class_weight": [dict, StrOptions({"balanced"}), None],
+        "random_state": ["random_state"],
+        "solver": [StrOptions({"newton-cg", "lbfgs", "liblinear", "sag", "saga"})],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
+        "multi_class": [StrOptions({"auto", "ovr", "multinomial"})],
+        "verbose": [Interval(Integral, 0, None, closed="left")],
+        "warm_start": [bool],
+        "n_jobs": [None, Integral],
+        "l1_ratio": [Interval(Real, 0, 1, closed="both")],
+    }
 
     def __init__(
         self,
