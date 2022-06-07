@@ -1650,7 +1650,6 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
         )
     _check_dcg_target_type(y_true)
     gain = _ndcg_sample_scores(y_true, y_score, k=k, ignore_ties=ignore_ties)
-
     return np.average(gain, weights=sample_weight)
 
 
