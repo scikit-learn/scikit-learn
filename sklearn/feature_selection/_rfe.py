@@ -721,7 +721,7 @@ class RFECV(RFE):
             func = delayed(_rfe_single_fit)
 
         scores = parallel(
-            func(rfe, self.estimator, X, y, train, test, scorer)
+            func(rfe, clone(self.estimator), X, y, train, test, scorer)
             for train, test in cv.split(X, y, groups)
         )
 
