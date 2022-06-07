@@ -557,8 +557,8 @@ def test_load_with_offsets_error():
 
 def test_multilabel_y_explicit_zeros(tmp_path):
     """
-    Ensure that if y contains explicit zeros (i.e. y.data contains 0) then they
-    are not encoded.
+    Ensure that if y contains explicit zeros (i.e. elements of y.data equal to
+    0) then those explicit zeros are not encoded.
     """
     save_path = str(tmp_path / "svm_explicit_zero")
     rng = np.random.RandomState(42)
