@@ -6,6 +6,7 @@ import pytest
 
 from sklearn.base import BaseEstimator
 from sklearn.utils import deprecated
+from sklearn.utils._param_validation import Internal
 from sklearn.utils._param_validation import Interval
 from sklearn.utils._param_validation import StrOptions
 from sklearn.utils._param_validation import _ArrayLikes
@@ -312,20 +313,6 @@ def test_internal_values_not_exposed():
     # no error
     f(param="warn")
 
-    @validate_params({"param": [int, StrOptions({"warn"}, internal={"warn"})]})
-    def g(param):
-        pass
-
-    with pytest.raises(ValueError, match="The 'param' parameter") as exc_info:
-        g(param="bad")
-
-    err_msg = str(exc_info.value)
-    assert "a str among" not in err_msg
-    assert "warn" not in err_msg
-
-    # no error
-    g(param="warn")
-
 
 def test_stroptions_deprecated_internal_overlap():
     """Check that the internal and deprecated parameters are not allowed to overlap."""
@@ -340,3 +327,29 @@ def test_stroptions_deprecated_internal_subset():
 
     with pytest.raises(ValueError, match="internal options must be a subset"):
         StrOptions({"a", "b", "c"}, internal={"a", "d"})
+
+
+def test_stroptions_not_all_internal():
+    """Check that all options can't be internal."""
+
+    with pytest.raises(ValueError, match="All options can't be internal"):
+        StrOptions({"a", "b"}, internal={"a", "b"})
+
+
+def test_internal_constraint():
+    """Check that internal constraints are not exposed in the error message."""
+    @validate_params({"param": [Internal(list), dict]})
+    def f(param):
+        pass
+
+    # list and dict are valid params
+    f({"a": 1, "b": 2, "c": 3})
+    f([1,2,3])
+
+    with pytest.raises(ValueError, match="The 'param' parameter") as exc_info:
+        f(param="bad")
+
+    # the list option is not exposed in the error message
+    err_msg = str(exc_info.value)
+    assert "an instance of 'dict'" in err_msg
+    assert "an instance of 'list'" not in err_msg

@@ -55,7 +55,7 @@ def validate_parameter_constraints(parameter_constraints, params, caller_name):
 
             # Ignore constraints that only contains internal options that we don't want
             # to expose in the error message
-            constraints = [constraint for constraint in constraints if str(constraint)]
+            constraints = [constraint for constraint in constraints if not getattr(constraint, "internal_constraint", False)]
 
             if len(constraints) == 1:
                 constraints_str = f"{constraints[0]}"
@@ -97,6 +97,10 @@ def make_constraint(constraint):
     if isinstance(constraint, type):
         return _InstancesOf(constraint)
     if isinstance(constraint, (Interval, StrOptions)):
+        return constraint
+    if isinstance(constraint, Internal):
+        constraint = make_constraint(constraint.constraint)
+        setattr(constraint, "internal_constraint", True)
         return constraint
     raise ValueError(f"Unknown constraint type: {constraint}")
 
@@ -219,6 +223,9 @@ class StrOptions(_Constraint):
 
     deprecated : set of str or None, default=None
         A subset of the `options` to mark as deprecated in the repr of the constraint.
+
+    internal : set of str or None, default=None
+        A subset of the `options` meant to not be exposed in the repr of the constraint.
     """
 
     @validate_params(
@@ -238,6 +245,12 @@ class StrOptions(_Constraint):
         if self.deprecated & self.internal:
             raise ValueError(
                 "The deprecated and internal parameters should not overlap."
+            )
+
+        if self.options == self.internal:
+            raise ValueError(
+                f"All options can't be internal, use "
+                f"Internal(StrOptions({self.options})) instead."
             )
 
     def is_satisfied_by(self, val):
@@ -413,6 +426,18 @@ class _RandomStates(_Constraint):
             f"{', '.join([repr(c) for c in self._constraints[:-1]])} or"
             f" {self._constraints[-1]}"
         )
+
+
+class Internal:
+    """Class encapsulating a constraint not meant to be exposed to the user.
+
+    Parameters
+    ----------
+    constraint : str or _Constraint instance
+        The constraint to be used internally.
+    """
+    def __init__(self, constraint):
+        self.constraint = constraint
 
 
 def generate_invalid_param_val(constraint):
