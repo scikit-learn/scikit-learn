@@ -92,9 +92,12 @@ def assert_argkmin_results_quasi_equality(
 ):
     """Assert that argkmin results are valid up to:
       - relative tolerance on distances
-      - permutations of indices for absolutely close distances
+      - permutations of indices for distances values that differ up to
+        a precision level set by `decimals`.
 
-    To be used for 32bits datasets tests.
+    To be used for testing neighbor queries on float32 datasets: we
+    accept neighbors rank swaps only if they are caused by small
+    rounding errors on the distance computations.
     """
     is_sorted = lambda a: np.all(a[:-1] - a[1:] <= 0)
 
@@ -112,7 +115,7 @@ def assert_argkmin_results_quasi_equality(
         assert is_sorted(ref_dist_row), f"Reference distances aren't sorted on row {i}"
         assert is_sorted(dist_row), f"Distances aren't sorted on row {i}"
 
-        assert_allclose(ref_dist_row, dist_row, rtol)
+        assert_allclose(ref_dist_row, dist_row, rtol=rtol)
 
         ref_indices_row = ref_indices[i]
         indices_row = indices[i]
@@ -262,7 +265,9 @@ def test_assert_argkmin_results_quasi_equality():
         ref_dist, ref_dist, ref_indices, ref_indices, rtol, decimals
     )
 
-    # Apply valid permutation on indices
+    # Apply valid permutation on indices: the last 3 points are
+    # all very close to one another so we accept any permutation
+    # on their rankings.
     assert_argkmin_results_quasi_equality(
         ref_dist=np.array(
             [
@@ -271,7 +276,7 @@ def test_assert_argkmin_results_quasi_equality():
         ),
         dist=np.array(
             [
-                [1.2, 2.5, 6.1 - atol, 6.1, 6.1 + atol],
+                [1.2, 2.5, 6.1, 6.1, 6.1],
             ]
         ),
         ref_indices=np.array(
@@ -287,6 +292,8 @@ def test_assert_argkmin_results_quasi_equality():
         rtol=rtol,
         decimals=decimals,
     )
+    # All points are have close distances so any ranking permutation
+    # is valid for this query result.
     assert_argkmin_results_quasi_equality(
         ref_dist=np.array(
             [
@@ -312,7 +319,9 @@ def test_assert_argkmin_results_quasi_equality():
         decimals=decimals,
     )
 
-    # Apply invalid permutation on indices
+    # Apply invalid permutation on indices: permuting the ranks
+    # of the 2 nearest neighbors is invalid because the distance
+    # values are too different.
     msg = "Extra items in the left set"
     with pytest.raises(AssertionError, match=msg):
         assert_argkmin_results_quasi_equality(
