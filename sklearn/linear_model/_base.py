@@ -26,7 +26,9 @@ from scipy import sparse
 from scipy.sparse.linalg import lsqr
 from scipy.special import expit
 from joblib import Parallel
+from numbers import Integral
 
+from ..utils._param_validation import StrOptions
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin, MultiOutputMixin
 from ..preprocessing._data import _is_constant_feature
 from ..utils import check_array
@@ -636,6 +638,14 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
     array([16.])
     """
 
+    _parameter_constraints = {
+        "fit_intercept": [bool],
+        "normalize": [StrOptions({"deprecated"}, internal={"deprecated"}), bool],
+        "copy_X": [bool],
+        "n_jobs": [None, Integral],
+        "positive": [bool],
+    }
+
     def __init__(
         self,
         *,
@@ -674,6 +684,8 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         self : object
             Fitted Estimator.
         """
+
+        self._validate_params()
 
         _normalize = _deprecate_normalize(
             self.normalize, default=False, estimator_name=self.__class__.__name__

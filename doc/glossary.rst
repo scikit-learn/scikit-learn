@@ -1492,7 +1492,13 @@ functions or non-estimator constructors.
         ``cv`` values are validated and interpreted with :func:`utils.check_cv`.
 
     ``kernel``
-        TODO
+        Specifies the kernel function to be used by Kernel Method algorithms.
+        For example, the estimators :class:`SVC` and
+        :class:`GaussianProcessClassifier` both have a ``kernel`` parameter
+        that takes the name of the kernel to use as string or a callable
+        kernel function used to compute the kernel matrix. For more reference,
+        see the :ref:`kernel_approximation` and the :ref:`gaussian_process`
+        user guides.
 
     ``max_iter``
         For estimators involving iterative optimization, this determines the
