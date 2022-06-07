@@ -161,7 +161,7 @@ t0 = time()
 
 vectorizer = TfidfVectorizer(
     max_df=0.5,
-    min_df=2,
+    min_df=5,
     stop_words="english",
 )
 X = vectorizer.fit_transform(dataset.data)
