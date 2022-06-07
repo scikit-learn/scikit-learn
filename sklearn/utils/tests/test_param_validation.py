@@ -338,13 +338,14 @@ def test_stroptions_not_all_internal():
 
 def test_internal_constraint():
     """Check that internal constraints are not exposed in the error message."""
+
     @validate_params({"param": [Internal(list), dict]})
     def f(param):
         pass
 
     # list and dict are valid params
     f({"a": 1, "b": 2, "c": 3})
-    f([1,2,3])
+    f([1, 2, 3])
 
     with pytest.raises(ValueError, match="The 'param' parameter") as exc_info:
         f(param="bad")

@@ -55,7 +55,11 @@ def validate_parameter_constraints(parameter_constraints, params, caller_name):
 
             # Ignore constraints that only contains internal options that we don't want
             # to expose in the error message
-            constraints = [constraint for constraint in constraints if not getattr(constraint, "internal_constraint", False)]
+            constraints = [
+                constraint
+                for constraint in constraints
+                if not getattr(constraint, "internal_constraint", False)
+            ]
 
             if len(constraints) == 1:
                 constraints_str = f"{constraints[0]}"
@@ -249,7 +253,7 @@ class StrOptions(_Constraint):
 
         if self.options == self.internal:
             raise ValueError(
-                f"All options can't be internal, use "
+                "All options can't be internal, use "
                 f"Internal(StrOptions({self.options})) instead."
             )
 
@@ -436,6 +440,7 @@ class Internal:
     constraint : str or _Constraint instance
         The constraint to be used internally.
     """
+
     def __init__(self, constraint):
         self.constraint = constraint
 
