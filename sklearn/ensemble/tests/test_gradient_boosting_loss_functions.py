@@ -294,7 +294,7 @@ def test_init_raw_predictions_values(global_random_seed):
             assert_allclose(raw_predictions[:, k], np.log(p))
 
 
-@pytest.mark.parametrize("seed", range(5))
+@pytest.mark.parametrize("seed", range(100))
 @pytest.mark.parametrize("alpha", [0.4, 0.5, 0.6])
 def test_lad_equals_quantiles(seed, alpha):
     # Make sure quantile loss with alpha = .5 is equivalent to LAD
