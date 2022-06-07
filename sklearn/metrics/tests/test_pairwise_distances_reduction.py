@@ -102,10 +102,10 @@ def assert_argkmin_results_quasi_equality(
         ref_dist.shape == dist.shape == ref_indices.shape == indices.shape
     ), "Arrays of results have various shapes."
 
-    n, k = ref_dist.shape
+    n_queries, n_neighbors = ref_dist.shape
 
     # Asserting equality results one row at a time
-    for i in range(n):
+    for i in range(n_queries):
         ref_dist_row = ref_dist[i]
         dist_row = dist[i]
 
@@ -122,7 +122,7 @@ def assert_argkmin_results_quasi_equality(
         ref_mapping = defaultdict(set)
         mapping = defaultdict(set)
 
-        for j in range(k):
+        for j in range(n_neighbors):
             rounded_dist = np.round(ref_dist_row[j], decimals=decimals)
             ref_mapping[rounded_dist].add(ref_indices_row[j])
             mapping[rounded_dist].add(indices_row[j])
