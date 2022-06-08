@@ -343,51 +343,19 @@ def test_assert_argkmin_results_quasi_equality():
     # all very close to one another so we accept any permutation
     # on their rankings.
     assert_argkmin_results_quasi_equality(
-        ref_dist=np.array(
-            [
-                [1.2, 2.5, _6_1m, 6.1, _6_1p],
-            ]
-        ),
-        dist=np.array(
-            [
-                [1.2, 2.5, 6.1, 6.1, 6.1],
-            ]
-        ),
-        ref_indices=np.array(
-            [
-                [1, 2, 3, 4, 5],
-            ]
-        ),
-        indices=np.array(
-            [
-                [1, 2, 4, 5, 3],
-            ]
-        ),
+        np.array([[1.2, 2.5, _6_1m, 6.1, _6_1p]]),
+        np.array([[1.2, 2.5, 6.1, 6.1, 6.1]]),
+        np.array([[1, 2, 3, 4, 5]]),
+        np.array([[1, 2, 4, 5, 3]]),
         rtol=rtol,
     )
     # All points are have close distances so any ranking permutation
     # is valid for this query result.
     assert_argkmin_results_quasi_equality(
-        ref_dist=np.array(
-            [
-                [_1m, _1m, 1, _1p, _1p],
-            ]
-        ),
-        dist=np.array(
-            [
-                [_1m, _1m, 1, _1p, _1p],
-            ]
-        ),
-        ref_indices=np.array(
-            [
-                [6, 7, 8, 9, 10],
-            ]
-        ),
-        indices=np.array(
-            [
-                [6, 9, 7, 8, 10],
-            ]
-        ),
+        np.array([[_1m, _1m, 1, _1p, _1p]]),
+        np.array([[_1m, _1m, 1, _1p, _1p]]),
+        np.array([[6, 7, 8, 9, 10]]),
+        np.array([[6, 9, 7, 8, 10]]),
         rtol=rtol,
     )
 
@@ -397,26 +365,10 @@ def test_assert_argkmin_results_quasi_equality():
     msg = "Neighbors indices for query 0 are not matching"
     with pytest.raises(AssertionError, match=msg):
         assert_argkmin_results_quasi_equality(
-            ref_dist=np.array(
-                [
-                    [1.2, 2.5, _6_1m, 6.1, _6_1p],
-                ]
-            ),
-            dist=np.array(
-                [
-                    [1.2, 2.5, _6_1m, 6.1, _6_1p],
-                ]
-            ),
-            ref_indices=np.array(
-                [
-                    [1, 2, 3, 4, 5],
-                ]
-            ),
-            indices=np.array(
-                [
-                    [2, 1, 3, 4, 5],
-                ]
-            ),
+            np.array([[1.2, 2.5, _6_1m, 6.1, _6_1p]]),
+            np.array([[1.2, 2.5, _6_1m, 6.1, _6_1p]]),
+            np.array([[1, 2, 3, 4, 5]]),
+            np.array([[2, 1, 3, 4, 5]]),
             rtol=rtol,
         )
 
@@ -424,26 +376,10 @@ def test_assert_argkmin_results_quasi_equality():
     msg = "Neighbors indices for query 0 are not matching"
     with pytest.raises(AssertionError, match=msg):
         assert_argkmin_results_quasi_equality(
-            ref_dist=np.array(
-                [
-                    [1.2, 2.5, _6_1m, 6.1, _6_1p],
-                ]
-            ),
-            dist=np.array(
-                [
-                    [1.2, 2.5, _6_1m, 6.1, _6_1p],
-                ]
-            ),
-            ref_indices=np.array(
-                [
-                    [1, 2, 3, 4, 5],
-                ]
-            ),
-            indices=np.array(
-                [
-                    [2, 1, 4, 5, 3],
-                ]
-            ),
+            np.array([[1.2, 2.5, _6_1m, 6.1, _6_1p]]),
+            np.array([[1.2, 2.5, _6_1m, 6.1, _6_1p]]),
+            np.array([[1, 2, 3, 4, 5]]),
+            np.array([[2, 1, 4, 5, 3]]),
             rtol=rtol,
         )
 
@@ -511,50 +447,18 @@ def test_assert_radius_neighborhood_results_quasi_equality():
 
     # Apply valid permutation on indices
     assert_radius_neighborhood_results_quasi_equality(
-        ref_dist=np.array(
-            [
-                np.array([1.2, 2.5, _6_1m, 6.1, _6_1p]),
-            ]
-        ),
-        dist=np.array(
-            [
-                np.array([1.2, 2.5, _6_1m, 6.1, _6_1p]),
-            ]
-        ),
-        ref_indices=np.array(
-            [
-                np.array([1, 2, 3, 4, 5]),
-            ]
-        ),
-        indices=np.array(
-            [
-                np.array([1, 2, 4, 5, 3]),
-            ]
-        ),
+        np.array([np.array([1.2, 2.5, _6_1m, 6.1, _6_1p])]),
+        np.array([np.array([1.2, 2.5, _6_1m, 6.1, _6_1p])]),
+        np.array([np.array([1, 2, 3, 4, 5])]),
+        np.array([np.array([1, 2, 4, 5, 3])]),
         radius=6.1,
         rtol=rtol,
     )
     assert_radius_neighborhood_results_quasi_equality(
-        ref_dist=np.array(
-            [
-                np.array([_1m, _1m, 1, _1p, _1p]),
-            ]
-        ),
-        dist=np.array(
-            [
-                np.array([_1m, _1m, 1, _1p, _1p]),
-            ]
-        ),
-        ref_indices=np.array(
-            [
-                np.array([6, 7, 8, 9, 10]),
-            ]
-        ),
-        indices=np.array(
-            [
-                np.array([6, 9, 7, 8, 10]),
-            ]
-        ),
+        np.array([np.array([_1m, _1m, 1, _1p, _1p])]),
+        np.array([np.array([_1m, _1m, 1, _1p, _1p])]),
+        np.array([np.array([6, 7, 8, 9, 10])]),
+        np.array([np.array([6, 9, 7, 8, 10])]),
         radius=6.1,
         rtol=rtol,
     )
@@ -563,52 +467,20 @@ def test_assert_radius_neighborhood_results_quasi_equality():
     msg = "Neighbors indices for query 0 are not matching"
     with pytest.raises(AssertionError, match=msg):
         assert_radius_neighborhood_results_quasi_equality(
-            ref_dist=np.array(
-                [
-                    np.array([1.2, 2.5, _6_1m, 6.1, _6_1p]),
-                ]
-            ),
-            dist=np.array(
-                [
-                    np.array([1.2, 2.5, _6_1m, 6.1, _6_1p]),
-                ]
-            ),
-            ref_indices=np.array(
-                [
-                    np.array([1, 2, 3, 4, 5]),
-                ]
-            ),
-            indices=np.array(
-                [
-                    np.array([2, 1, 3, 4, 5]),
-                ]
-            ),
+            np.array([np.array([1.2, 2.5, _6_1m, 6.1, _6_1p])]),
+            np.array([np.array([1.2, 2.5, _6_1m, 6.1, _6_1p])]),
+            np.array([np.array([1, 2, 3, 4, 5])]),
+            np.array([np.array([2, 1, 3, 4, 5])]),
             radius=6.1,
             rtol=rtol,
         )
 
     # Having extra last elements is valid if they are in: [radius ± atol]
     assert_radius_neighborhood_results_quasi_equality(
-        ref_dist=np.array(
-            [
-                np.array([1.2, 2.5, _6_1m, 6.1, _6_1p]),
-            ]
-        ),
-        dist=np.array(
-            [
-                np.array([1.2, 2.5, _6_1m, 6.1]),
-            ]
-        ),
-        ref_indices=np.array(
-            [
-                np.array([1, 2, 3, 4, 5]),
-            ]
-        ),
-        indices=np.array(
-            [
-                np.array([1, 2, 3, 4]),
-            ]
-        ),
+        np.array([np.array([1.2, 2.5, _6_1m, 6.1, _6_1p])]),
+        np.array([np.array([1.2, 2.5, _6_1m, 6.1])]),
+        np.array([np.array([1, 2, 3, 4, 5])]),
+        np.array([np.array([1, 2, 3, 4])]),
         radius=6.1,
         rtol=rtol,
     )
@@ -619,26 +491,10 @@ def test_assert_radius_neighborhood_results_quasi_equality():
     )
     with pytest.raises(AssertionError, match=msg):
         assert_radius_neighborhood_results_quasi_equality(
-            ref_dist=np.array(
-                [
-                    np.array([1.2, 2.5, 6]),
-                ]
-            ),
-            dist=np.array(
-                [
-                    np.array([1.2, 2.5]),
-                ]
-            ),
-            ref_indices=np.array(
-                [
-                    np.array([1, 2, 3]),
-                ]
-            ),
-            indices=np.array(
-                [
-                    np.array([1, 2]),
-                ]
-            ),
+            np.array([np.array([1.2, 2.5, 6])]),
+            np.array([np.array([1.2, 2.5])]),
+            np.array([np.array([1, 2, 3])]),
+            np.array([np.array([1, 2])]),
             radius=6.1,
             rtol=rtol,
         )
@@ -647,26 +503,10 @@ def test_assert_radius_neighborhood_results_quasi_equality():
     msg = "Neighbors indices for query 0 are not matching"
     with pytest.raises(AssertionError, match=msg):
         assert_radius_neighborhood_results_quasi_equality(
-            ref_dist=np.array(
-                [
-                    np.array([1.2, 2.5, _6_1m, 6.1, _6_1p]),
-                ]
-            ),
-            dist=np.array(
-                [
-                    np.array([1.2, 2.5, _6_1m, 6.1, _6_1p]),
-                ]
-            ),
-            ref_indices=np.array(
-                [
-                    np.array([1, 2, 3, 4, 5]),
-                ]
-            ),
-            indices=np.array(
-                [
-                    np.array([2, 1, 4, 5, 3]),
-                ]
-            ),
+            np.array([np.array([1.2, 2.5, _6_1m, 6.1, _6_1p])]),
+            np.array([np.array([1.2, 2.5, _6_1m, 6.1, _6_1p])]),
+            np.array([np.array([1, 2, 3, 4, 5])]),
+            np.array([np.array([2, 1, 4, 5, 3])]),
             radius=6.1,
             rtol=rtol,
         )
@@ -675,26 +515,10 @@ def test_assert_radius_neighborhood_results_quasi_equality():
     msg = "Distances aren't sorted on row 0"
     with pytest.raises(AssertionError, match=msg):
         assert_radius_neighborhood_results_quasi_equality(
-            ref_dist=np.array(
-                [
-                    np.array([1.2, 2.5, _6_1m, 6.1, _6_1p]),
-                ]
-            ),
-            dist=np.array(
-                [
-                    np.array([2.5, 1.2, _6_1m, 6.1, _6_1p]),
-                ]
-            ),
-            ref_indices=np.array(
-                [
-                    np.array([1, 2, 3, 4, 5]),
-                ]
-            ),
-            indices=np.array(
-                [
-                    np.array([2, 1, 4, 5, 3]),
-                ]
-            ),
+            np.array([np.array([1.2, 2.5, _6_1m, 6.1, _6_1p])]),
+            np.array([np.array([2.5, 1.2, _6_1m, 6.1, _6_1p])]),
+            np.array([np.array([1, 2, 3, 4, 5])]),
+            np.array([np.array([2, 1, 4, 5, 3])]),
             radius=6.1,
             rtol=rtol,
         )
