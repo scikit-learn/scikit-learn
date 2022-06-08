@@ -107,7 +107,6 @@ def fit_and_evaluate(km, X, name=None):
     km.fit(X)
     train_time = time() - t0
     name = km.__class__.__name__ if name is None else name
-    scores["estimator"].append(name)
     train_times["estimator"].append(name)
     train_times["train time"].append(train_time)
     scores["estimator"].append(name)
