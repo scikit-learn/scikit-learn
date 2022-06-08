@@ -15,7 +15,7 @@ in the data.
 This example uses two different text vectorizers: a
 :func:`~sklearn.feature_extraction.text.TfidfVectorizer` and a
 :func:`~sklearn.feature_extraction.text.HashingVectorizer`. See the example
-notebook :ref:`sphx_glr_auto_examples_text_plot_hashing_vs_dict_vectorizer.py`,
+notebook :ref:`sphx_glr_auto_examples_text_plot_hashing_vs_dict_vectorizer.py`
 for more information on vectorizers and a comparison of their processing times.
 
 For document analysis via a supervised learning approach, see the example script
@@ -34,15 +34,16 @@ For document analysis via a supervised learning approach, see the example script
 #
 # We load data from :ref:`20newsgroups_dataset`, which comprises around 18,000
 # newsgroups posts on 20 topics. For illustrative purposes and to reduce the
-# computational cost, we select a subset of 4 topics only accounting for around 3,400 documents. See the example
+# computational cost, we select a subset of 4 topics only accounting for around
+# 3,400 documents. See the example
 # :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
 # to gain intuition on the overlap of such topics.
 #
 # Notice that, by default, the text samples contain some message metadata such
 # as `"headers"`, `"footers"` (signatures) and `"quotes"` to other posts. The
-# :func:`~sklearn.datasets.fetch_20newsgroups` function therefore accepts a parameter named `remove` to
-# attempt stripping such information that can make the clustering problem "too
-# easy".
+# :func:`~sklearn.datasets.fetch_20newsgroups` function therefore accepts a
+# parameter named `remove` to attempt stripping such information that can make
+# the clustering problem "too easy".
 
 import numpy as np
 from sklearn.datasets import fetch_20newsgroups
@@ -95,6 +96,7 @@ print(f"{len(dataset.data)} documents - {true_k} categories")
 
 from collections import defaultdict
 from sklearn import metrics
+from time import time
 
 scores = defaultdict(list)
 train_times = defaultdict(list)
@@ -108,6 +110,7 @@ def fit_and_evaluate(km, X, name=None):
     scores["estimator"].append(name)
     train_times["estimator"].append(name)
     train_times["train time"].append(train_time)
+    scores["estimator"].append(name)
     scores["Homogeneity"].append(metrics.homogeneity_score(labels, km.labels_))
     scores["Completeness"].append(metrics.completeness_score(labels, km.labels_))
     scores["V-measure"].append(metrics.v_measure_score(labels, km.labels_))
@@ -146,7 +149,6 @@ def fit_and_evaluate(km, X, name=None):
 # :func:`~sklearn.feature_extraction.text.TfidfVectorizer`
 
 from sklearn.feature_extraction.text import TfidfVectorizer
-from time import time
 
 vectorizer = TfidfVectorizer(
     max_df=0.5,
@@ -206,9 +208,10 @@ from sklearn.decomposition import TruncatedSVD
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import Normalizer
 
-lsa = make_pipeline(TruncatedSVD(n_components=100), Normalizer(copy=False))
+svd = TruncatedSVD(n_components=100)
+lsa = make_pipeline(svd, Normalizer(copy=False))
 X = lsa.fit_transform(X)
-fit_and_evaluate(km, X, custom_name=" with LSA")
+fit_and_evaluate(km, X, name=km.__class__.__name__ + " with LSA")
 
 explained_variance = svd.explained_variance_ratio_.sum()
 print(f"Explained variance of the SVD step: {explained_variance * 100:.1f}%")
@@ -218,9 +221,8 @@ print(f"Explained variance of the SVD step: {explained_variance * 100:.1f}%")
 
 original_space_centroids = svd.inverse_transform(km.cluster_centers_)
 order_centroids = original_space_centroids.argsort()[:, ::-1]
-
-
 terms = vectorizer.get_feature_names_out()
+
 for i in range(true_k):
     print("Cluster %d:" % i, end="")
     for ind in order_centroids[i, :10]:
@@ -250,7 +252,7 @@ X = hasher.fit_transform(dataset.data)
 print(f"vectorizing done in {time() - t0:.3f} s")
 print(f"n_samples: {X.shape[0]}, n_features: {X.shape[1]}")
 
-fit_and_evaluate(km, X, custom_name=" with\nsimple hashing")
+fit_and_evaluate(km, X, name=km.__class__.__name__ + " with\nsimple hashing")
 
 # %%
 # When IDF weighting is needed it can be added by pipelining the
@@ -265,7 +267,7 @@ t0 = time()
 X = vectorizer.fit_transform(dataset.data)
 print(f"vectorizing done in {time() - t0:.3f} s")
 
-fit_and_evaluate(km, X, custom_name=" with\nTfidf-scaled hashing")
+fit_and_evaluate(km, X, name=km.__class__.__name__ + " with\nTfidf-scaled hashing")
 
 # %%
 # Plot unsupervised evaluation metrics
