@@ -7,10 +7,10 @@ This is an example showing how the scikit-learn API can be used to cluster
 documents by topics using a `Bag of Words approach
 <https://en.wikipedia.org/wiki/Bag-of-words_model>`_.
 
-Two algorithms are demoed: ordinary :func:`~sklearn.cluster.KMeans` and its more
-scalable cousin :func:`~sklearn.cluster.MiniBatchKMeans`. Additionally, latent
-semantic analysis is used to reduce dimensionality and discover latent patterns
-in the data.
+Two algorithms are demoed: :func:`~sklearn.cluster.KMeans` and its
+more scalable variant, :func:`~sklearn.cluster.MiniBatchKMeans`. Additionally,
+latent semantic analysis is used to reduce dimensionality and discover latent 
+patterns in the data.
 
 This example uses two different text vectorizers: a
 :func:`~sklearn.feature_extraction.text.TfidfVectorizer` and a
@@ -69,30 +69,32 @@ true_k = np.unique(labels).shape[0]
 print(f"{len(dataset.data)} documents - {true_k} categories")
 
 # %%
-# Benchmark Clustering
+# Comparing Clustering
 # ====================
 #
-# Here we define a function to score different clustering pipelines. For such
-# purpose we evaluate several metrics.
+# Here we define a function to score different clustering pipelines 
+# using several metrics.
 #
 # Given the knowledge of the ground truth class assignments of the samples, it
 # is possible to define metrics to test for different properties of a cluster:
 #
-# - homogeneity: each cluster contains only members of a single class;
+# - homogeneity, which quantifies cluster containing only members of a single
+# class;
 #
-# - completeness: all members of a given class are assigned to the same cluster;
+# - completeness, which quantifies cluster having members of a given class are
+# assigned to the same cluster;
 #
-# - V-measure: the harmonic mean of completeness and homogeneity;
+# - V-measure, the harmonic mean of completeness and homogeneity;
 #
-# - Rand-Index: similarity between pairs of clusters
-#   `RI = (number of agreeing pairs) / (number of pairs)` ;
+# - Rand-Index, which measures the similarity between pairs of clusters
 #
-# - Adjusted Rand-Index: Rand-Index adjusted for chance
-#   `ARI = (RI - Expected_RI) / (max(RI) - Expected_RI)` .
+# - Adjusted Rand-Index, a change-adjusted Rand-Index
 #
-# If the ground truth labels are not known, evaluation must be performed using
-# the model itself. The Silhouette Coefficient is an example of such metrics,
-# where the score is higher when clusters are dense and well separated.
+# If the ground truth labels are not known, evaluation can only be performed 
+# using the model results itself. In that case, the Silhouette Coefficient 
+# comes in handy.
+# 
+# For more reference, see :ref:`_clustering_evaluation`.
 
 from collections import defaultdict
 from sklearn import metrics
@@ -137,7 +139,7 @@ def fit_and_evaluate(km, X, name=None):
 # - :func:`~sklearn.feature_extraction.text.HashingVectorizer` hashes word
 #   occurrences to a fixed dimensional space, possibly with collisions. The word
 #   count vectors are then normalized to each have l2-norm equal to one
-#   (projected to the euclidean unit-ball) which seems to be important for
+#   (projected to the euclidean unit-sphere) which seems to be important for
 #   k-means to work in high dimensional space.
 #
 # TfidfVectorizer
@@ -165,9 +167,9 @@ print(f"n_samples: {X.shape[0]}, n_features: {X.shape[1]}")
 #
 # As both :func:`~sklearn.cluster.KMeans` and
 # :func:`~sklearn.cluster.MiniBatchKMeans` optimize a non-convex objective
-# function, they will likely end up in a local optimum. Several runs with
-# independent random init might be necessary to get a good convergence. The
-# parameter `n_init` controls the number of such initializations.
+# function, their clustering will likely be the a sub-optimal one.
+# Several runs with independent random initiations are performed using the
+# `n_init` and the clustering with the smallest inertia is chosen.
 
 from sklearn.cluster import MiniBatchKMeans
 
@@ -338,5 +340,6 @@ ax.invert_yaxis()
 _ = ax.set_xlabel("processing times (s)")
 
 # %%
-# :func:`~sklearn.cluster.MiniBatchKMeans` requires less time due to scalability.
-# That is, at the expense of clustering quality.
+# :func:`~sklearn.cluster.MiniBatchKMeans` requires less time since
+# it runs computations on batches of data. This comes at the expense
+# of clustering quality.
