@@ -1,6 +1,4 @@
-import gzip
 from importlib import resources
-from io import BytesIO
 
 import pytest
 
@@ -157,16 +155,14 @@ def test_pandas_arff_parser_strip_quotes():
     }
 
     with resources.open_binary(TEST_DATA_MODULE, filename) as arff_file:
-        bytes_file = BytesIO(gzip.compress(arff_file.read()))
-        with gzip.GzipFile(mode="rb", fileobj=bytes_file) as gzip_file:
-            _, _, frame, _ = _pandas_arff_parser(
-                gzip_file,
-                output_type="pandas",
-                openml_columns_info=columns_info,
-                feature_names_to_select=feature_names,
-                target_names_to_select=target_names,
-            )
-            assert frame.columns.tolist() == feature_names + target_names
-            pd.testing.assert_series_equal(
-                frame.iloc[0], pd.Series(expected_values, name=0)
-            )
+        _, _, frame, _ = _pandas_arff_parser(
+            arff_file,
+            output_type="pandas",
+            openml_columns_info=columns_info,
+            feature_names_to_select=feature_names,
+            target_names_to_select=target_names,
+        )
+        assert frame.columns.tolist() == feature_names + target_names
+        pd.testing.assert_series_equal(
+            frame.iloc[0], pd.Series(expected_values, name=0)
+        )

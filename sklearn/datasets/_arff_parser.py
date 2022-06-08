@@ -381,8 +381,11 @@ def _pandas_arff_parser(
     # In case that a single quote is used as a delimiter, we need to strip it.
     pattern = r"^'(?P<contents>.*)'$"
 
-    def strip_quotes(s):
+    def strip_quotes_regex(s):
         return s.group("contents")
+
+    def strip_quotes_str(s):
+        return s[1:-1]
 
     categorical_columns = [
         name
@@ -391,7 +394,7 @@ def _pandas_arff_parser(
     ]
     for col in categorical_columns:
         frame[col].cat.categories = frame[col].cat.categories.str.replace(
-            pattern, strip_quotes, regex=True
+            pattern, strip_quotes_regex, regex=True
         )
 
     string_columns = [
@@ -400,8 +403,10 @@ def _pandas_arff_parser(
         if not pd.api.types.is_categorical_dtype(dtype) and dtype == "object"
     ]
     for col in string_columns:
-        if frame[col].str.match(pattern).any():
-            frame[col] = frame[col].str.replace(pattern, strip_quotes, regex=True)
+        # replace NA values by False since it does not match the pattern
+        mask = frame[col].str.match(pattern).fillna(False)
+        if mask.any():
+            frame.loc[mask, col] = frame.loc[mask, col].apply(strip_quotes_str)
     X, y = _post_process_frame(frame, feature_names_to_select, target_names_to_select)
 
     if output_type == "pandas":
