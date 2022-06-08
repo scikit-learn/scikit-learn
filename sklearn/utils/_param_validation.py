@@ -430,10 +430,10 @@ def generate_invalid_param_val(constraint, constraints=None):
 
     Parameters
     ----------
-    constraint : Constraint
+    constraint : _Constraint instance
         The constraint to generate a value for.
 
-    constraints : list of Constraint or None, default=None
+    constraints : list of _Constraint instances or None, default=None
         The list of all constraints for this parameter. If None, the list containt only
         the constraint is used.
 
@@ -465,10 +465,10 @@ def _generate_invalid_param_val_interval(interval, constraints):
 
     Parameters
     ----------
-    interval : Interval
+    interval : Interval instance
         The interval to generate a value for.
 
-    constraints : list of Constraint
+    constraints : list of _Constraint instances
         The list of all constraints for this parameter.
 
     Returns
