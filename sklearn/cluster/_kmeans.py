@@ -317,7 +317,8 @@ class KMeansCythonEngine:
             "x_squared_norms": x_squared_norms,
             "kmeans_single_func": kmeans_single,
             "random_state": random_state,
-            "tol": self._tolerance(X, self.tol)
+            "tol": self._scale_tolerance(X, self.tol),
+            "X_mean": X_mean,
         }
         return X, init, engine_fit_context
 
@@ -326,7 +327,7 @@ class KMeansCythonEngine:
         # moved to the engine.
         return estimator._init_centroids(*args, **kwargs)
 
-    def _tolerance(self, X, tol):
+    def _scale_tolerance(self, X, tol):
         """Return a tolerance which is dependent on the dataset."""
         if tol == 0:
             return 0
@@ -1529,10 +1530,12 @@ class KMeans(_BaseKMeans):
                 best_inertia = inertia
                 best_n_iter = n_iter_
 
-        if not sp.issparse(X):
-            if not self.copy_x:
-                X += X_mean
-            best_centers += X_mean
+        engine._rescale_centers_and_data(X, best_centers, engine_fit_ctx[])
+        # XXX: 
+        # if not sp.issparse(X):
+        #     if not self.copy_x:
+        #         X += X_mean
+        #     best_centers += X_mean
 
         distinct_clusters = len(set(best_labels))
         if distinct_clusters < self.n_clusters:
