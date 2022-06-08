@@ -1,11 +1,13 @@
 """Implementation of ARFF parsers: via LIAC-ARFF and pandas."""
 import itertools
+import re
 from collections import OrderedDict
 from collections.abc import Generator
 from typing import List
 
 import numpy as np
 import scipy as sp
+
 
 from ..externals import _arff
 from ..externals._arff import ArffSparseDataType
@@ -121,7 +123,7 @@ def _liac_arff_parser(
     gzip_file : GzipFile instance
         The file compressed to be read.
 
-    output_array_type : {"numpy", "sparse", "pandas"}
+    output_arrays_type : {"numpy", "sparse", "pandas"}
         The type of the arrays that will be returned. The possibilities ara:
 
         - `"numpy"`: both `X` and `y` will be NumPy arrays;
@@ -296,7 +298,7 @@ def _liac_arff_parser(
 
 def _pandas_arff_parser(
     gzip_file,
-    output_type,
+    output_arrays_type,
     openml_columns_info,
     feature_names_to_select,
     target_names_to_select,
@@ -311,7 +313,7 @@ def _pandas_arff_parser(
     gzip_file : GzipFile instance
         The GZip compressed file with the ARFF formatted payload.
 
-    output_type : {"numpy", "sparse", "pandas"}
+    output_arrays_type : {"numpy", "sparse", "pandas"}
         The type of the arrays that will be returned. The possibilities are:
 
         - `"numpy"`: both `X` and `y` will be NumPy arrays;
@@ -377,15 +379,13 @@ def _pandas_arff_parser(
     columns_to_keep = [col for col in frame.columns if col in columns_to_select]
     frame = frame[columns_to_keep]
 
-    # `pd.read_csv` only consider double quotes as delimiters for strings.
-    # In case that a single quote is used as a delimiter, we need to strip it.
-    pattern = r"^'(?P<contents>.*)'$"
+    # `pd.read_csv` only considers double quotes as delimiters for strings.
+    # In case that a single quote is used as a delimiter, we strip it for
+    # categories.
+    single_quote_pattern = re.compile(r"^'(?P<contents>.*)'$")
 
     def strip_quotes_regex(s):
         return s.group("contents")
-
-    def strip_quotes_str(s):
-        return s[1:-1]
 
     categorical_columns = [
         name
@@ -394,22 +394,11 @@ def _pandas_arff_parser(
     ]
     for col in categorical_columns:
         frame[col].cat.categories = frame[col].cat.categories.str.replace(
-            pattern, strip_quotes_regex, regex=True
+            single_quote_pattern, strip_quotes_regex, regex=True
         )
-
-    string_columns = [
-        name
-        for name, dtype in frame.dtypes.items()
-        if not pd.api.types.is_categorical_dtype(dtype) and dtype == "object"
-    ]
-    for col in string_columns:
-        # replace NA values by False since it does not match the pattern
-        mask = frame[col].str.match(pattern).fillna(False)
-        if mask.any():
-            frame.loc[mask, col] = frame.loc[mask, col].apply(strip_quotes_str)
     X, y = _post_process_frame(frame, feature_names_to_select, target_names_to_select)
 
-    if output_type == "pandas":
+    if output_arrays_type == "pandas":
         return X, y, frame, None
     else:
         X, y = X.to_numpy(), y.to_numpy()

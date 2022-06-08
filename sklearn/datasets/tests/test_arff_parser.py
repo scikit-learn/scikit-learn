@@ -1,8 +1,9 @@
-from importlib import resources
+from io import BytesIO
 
 import pytest
 
 from sklearn.datasets._arff_parser import (
+    _liac_arff_parser,
     _pandas_arff_parser,
     _post_process_frame,
     load_arff_from_gzip_file,
@@ -76,47 +77,163 @@ def test_load_arff_from_gzip_file_error_parser():
         load_arff_from_gzip_file("xxx", "xxx", "xxx", "xxx", "xxx", "xxx")
 
 
-def test_pandas_arff_parser_strip_quotes():
-    """Check that the pandas parser will strip properly quotes for string values."""
+@pytest.mark.parametrize("parser_func", [_liac_arff_parser, _pandas_arff_parser])
+def test_pandas_arff_parser_strip_single_quotes(parser_func):
+    """Check that we properly strip single quotes from the data."""
     pd = pytest.importorskip("pandas")
 
-    TEST_DATA_MODULE = "sklearn.datasets.tests.data"
-    filename = "toy_quotes.arff"
+    arff_file = BytesIO(
+        b"@relation 'toy'\n"
+        b"@attribute 'cat_single_quote' {'A', 'B', 'C'}\n"
+        b"@attribute 'str_single_quote' string\n"
+        b"@attribute 'str_nested_quote' string\n"
+        b"@attribute 'class' numeric\n"
+        b"@data\n"
+        b"'A','some text','\"expect double quotes\"',0\n"
+    )
 
-    # `columns_info` represents the minimal information given required to
-    # use the pandas parser. They would be provided by OpenML.
     columns_info = {
         "cat_single_quote": {
             "data_type": "nominal",
             "name": "cat_single_quote",
         },
-        "cat_double_quote": {
-            "data_type": "nominal",
-            "name": "cat_double_quote",
-        },
-        "cat_without_quote": {
-            "data_type": "nominal",
-            "name": "cat_without_quote",
-        },
         "str_single_quote": {
             "data_type": "string",
             "name": "str_single_quote",
+        },
+        "str_nested_quote": {
+            "data_type": "string",
+            "name": "str_nested_quote",
+        },
+        "class": {
+            "data_type": "numeric",
+            "name": "class",
+        },
+    }
+
+    feature_names = [
+        "cat_single_quote",
+        "str_single_quote",
+        "str_nested_quote",
+    ]
+    target_names = ["class"]
+
+    # We don't strip single quotes for string columns with the pandas parser.
+    expected_values = {
+        "cat_single_quote": "A",
+        "str_single_quote": (
+            "some text" if parser_func is _liac_arff_parser else "'some text'"
+        ),
+        "str_nested_quote": (
+            '"expect double quotes"'
+            if parser_func is _liac_arff_parser
+            else "'\"expect double quotes\"'"
+        ),
+        "class": 0,
+    }
+
+    _, _, frame, _ = parser_func(
+        arff_file,
+        output_arrays_type="pandas",
+        openml_columns_info=columns_info,
+        feature_names_to_select=feature_names,
+        target_names_to_select=target_names,
+    )
+
+    assert frame.columns.tolist() == feature_names + target_names
+    pd.testing.assert_series_equal(frame.iloc[0], pd.Series(expected_values, name=0))
+
+
+@pytest.mark.parametrize("parser_func", [_liac_arff_parser, _pandas_arff_parser])
+def test_pandas_arff_parser_strip_double_quotes(parser_func):
+    """Check that we properly strip double quotes from the data."""
+    pd = pytest.importorskip("pandas")
+
+    arff_file = BytesIO(
+        b"@relation 'toy'\n"
+        b'@attribute \'cat_double_quote\' {"A", "B", "C"}\n'
+        b"@attribute 'str_double_quote' string\n"
+        b"@attribute 'str_nested_quote' string\n"
+        b"@attribute 'class' numeric\n"
+        b"@data\n"
+        b'"A","some text","\'expect double quotes\'",0\n'
+    )
+
+    columns_info = {
+        "cat_double_quote": {
+            "data_type": "nominal",
+            "name": "cat_double_quote",
         },
         "str_double_quote": {
             "data_type": "string",
             "name": "str_double_quote",
         },
+        "str_nested_quote": {
+            "data_type": "string",
+            "name": "str_nested_quote",
+        },
+        "class": {
+            "data_type": "numeric",
+            "name": "class",
+        },
+    }
+
+    feature_names = [
+        "cat_double_quote",
+        "str_double_quote",
+        "str_nested_quote",
+    ]
+    target_names = ["class"]
+
+    expected_values = {
+        "cat_double_quote": "A",
+        "str_double_quote": "some text",
+        "str_nested_quote": "'expect double quotes'",
+        "class": 0,
+    }
+
+    _, _, frame, _ = parser_func(
+        arff_file,
+        output_arrays_type="pandas",
+        openml_columns_info=columns_info,
+        feature_names_to_select=feature_names,
+        target_names_to_select=target_names,
+    )
+
+    assert frame.columns.tolist() == feature_names + target_names
+    pd.testing.assert_series_equal(frame.iloc[0], pd.Series(expected_values, name=0))
+
+
+@pytest.mark.parametrize(
+    "parser_func",
+    [
+        # internal quotes are not considered to follow the ARFF spec in LIAC ARFF
+        pytest.param(_liac_arff_parser, marks=pytest.mark.xfail),
+        _pandas_arff_parser,
+    ],
+)
+def test_pandas_arff_parser_strip_no_quotes(parser_func):
+    """Check that we properly parse with no quotes characters."""
+    pd = pytest.importorskip("pandas")
+
+    arff_file = BytesIO(
+        b"@relation 'toy'\n"
+        b"@attribute 'cat_without_quote' {A, B, C}\n"
+        b"@attribute 'str_without_quote' string\n"
+        b"@attribute 'str_internal_quote' string\n"
+        b"@attribute 'class' numeric\n"
+        b"@data\n"
+        b"A,some text,'internal' quote,0\n"
+    )
+
+    columns_info = {
+        "cat_without_quote": {
+            "data_type": "nominal",
+            "name": "cat_without_quote",
+        },
         "str_without_quote": {
             "data_type": "string",
             "name": "str_without_quote",
-        },
-        "str_nested_quote_1": {
-            "data_type": "string",
-            "name": "str_nested_quote_1",
-        },
-        "str_nested_quote_2": {
-            "data_type": "string",
-            "name": "str_nested_quote_2",
         },
         "str_internal_quote": {
             "data_type": "string",
@@ -129,40 +246,26 @@ def test_pandas_arff_parser_strip_quotes():
     }
 
     feature_names = [
-        "cat_single_quote",
-        "cat_double_quote",
         "cat_without_quote",
-        "str_single_quote",
-        "str_double_quote",
         "str_without_quote",
-        "str_nested_quote_1",
-        "str_nested_quote_2",
         "str_internal_quote",
     ]
     target_names = ["class"]
 
     expected_values = {
-        "cat_single_quote": "A",
-        "cat_double_quote": "A",
         "cat_without_quote": "A",
-        "str_single_quote": "some text",
-        "str_double_quote": "some text",
         "str_without_quote": "some text",
-        "str_nested_quote_1": '"expect double quotes"',
-        "str_nested_quote_2": "expect no quotes",
-        "str_internal_quote": "internal' quote",
+        "str_internal_quote": "'internal' quote",
         "class": 0,
     }
 
-    with resources.open_binary(TEST_DATA_MODULE, filename) as arff_file:
-        _, _, frame, _ = _pandas_arff_parser(
-            arff_file,
-            output_type="pandas",
-            openml_columns_info=columns_info,
-            feature_names_to_select=feature_names,
-            target_names_to_select=target_names,
-        )
-        assert frame.columns.tolist() == feature_names + target_names
-        pd.testing.assert_series_equal(
-            frame.iloc[0], pd.Series(expected_values, name=0)
-        )
+    _, _, frame, _ = parser_func(
+        arff_file,
+        output_arrays_type="pandas",
+        openml_columns_info=columns_info,
+        feature_names_to_select=feature_names,
+        target_names_to_select=target_names,
+    )
+
+    assert frame.columns.tolist() == feature_names + target_names
+    pd.testing.assert_series_equal(frame.iloc[0], pd.Series(expected_values, name=0))
