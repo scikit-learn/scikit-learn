@@ -40,10 +40,9 @@ For document analysis via a supervised learning approach, see the example script
 # to gain intuition on the overlap of such topics.
 #
 # Notice that, by default, the text samples contain some message metadata such
-# as `"headers"`, `"footers"` (signatures) and `"quotes"` to other posts. The
-# :func:`~sklearn.datasets.fetch_20newsgroups` function therefore accepts a
-# parameter named `remove` to attempt stripping such information that can make
-# the clustering problem "too easy".
+# as `"headers"`, `"footers"` (signatures) and `"quotes"` to other posts. We use
+# the `remove` parameter from :func:`sklearn.datasets.fetch_20newsgroups` to
+# strip those features and have a more sensible clustering problem.
 
 import numpy as np
 from sklearn.datasets import fetch_20newsgroups
