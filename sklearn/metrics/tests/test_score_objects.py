@@ -577,7 +577,7 @@ def test_supervised_cluster_scorers():
     # Test clustering scorers against gold standard labeling.
     X, y = make_blobs(random_state=0, centers=2)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
-    km = KMeans(n_clusters=3)
+    km = KMeans(n_clusters=3, n_init="auto")
     km.fit(X_train)
     for name in CLUSTER_SCORERS:
         score1 = get_scorer(name)(km, X_test, y_test)
