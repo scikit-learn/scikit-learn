@@ -316,7 +316,7 @@ def _logistic_regression_path(
         w0 = np.zeros(n_features + int(fit_intercept), dtype=X.dtype)
         mask = y == pos_class
         y_bin = np.ones(y.shape, dtype=X.dtype)
-        if solver in ["lbfgs", "newton-cg"]:
+        if solver in ["lbfgs", "newton-cg", "trust-ncg"]:
             # HalfBinomialLoss, used for those solvers, represents y in [0, 1] instead
             # of in [-1, 1].
             mask_classes = np.array([0, 1])
@@ -411,11 +411,14 @@ def _logistic_regression_path(
         # TODO: Update w/ new loss module
         # Debug in progress
         elif solver == "trust-ncg":
-            func = loss.loss_gradient
+            loss_ = LinearModelLoss(
+                base_loss=HalfMultinomialLoss(n_classes=classes.size),
+                fit_intercept=fit_intercept,
+            )
+            func = loss_.loss_gradient
 
             def hessp(x, p, *args):
-                assert not np.isscalar(loss)
-                return loss.gradient_hessian_product(x, *args)[1](p)
+                return loss_.gradient_hessian_product(x, *args)[1](p)
 
         warm_start_sag = {"coef": w0.T}
     else:
@@ -434,13 +437,13 @@ def _logistic_regression_path(
             hess = loss.gradient_hessian_product  # hess = [gradient, hessp]
         # TODO: Update w/ new loss module
         elif solver == "trust-ncg":
-            loss = LinearModelLoss(
+            loss_ = LinearModelLoss(
                 base_loss=HalfBinomialLoss(), fit_intercept=fit_intercept
             )
-            func = loss.loss_gradient
+            func = loss_.loss_gradient
 
             def hessp(x, p, *args):
-                return loss.gradient_hessian_product(x, *args)[1](p)
+                return loss_.gradient_hessian_product(x, *args)[1](p)
 
         warm_start_sag = {"coef": np.expand_dims(w0, axis=1)}
 
@@ -468,7 +471,7 @@ def _logistic_regression_path(
                     method=solver,
                     jac=True,
                     hessp=hessp,
-                    args=(X, target.astype(np.float64), sample_weight, 1.0 / C),
+                    args=(X, target, sample_weight, 1.0 / C),
                 )
             n_iter_i = _check_optimize_result(
                 solver,
@@ -546,7 +549,7 @@ def _logistic_regression_path(
 
         if multi_class == "multinomial":
             n_classes = max(2, classes.size)
-            if solver in ["lbfgs", "newton-cg"]:
+            if solver in ["lbfgs", "newton-cg", "trust-ncg"]:
                 multi_w0 = np.reshape(w0, (n_classes, -1), order="F")
             else:
                 multi_w0 = w0
