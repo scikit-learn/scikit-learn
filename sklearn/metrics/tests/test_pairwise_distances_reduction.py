@@ -5,7 +5,6 @@ import numpy as np
 import pytest
 import threadpoolctl
 from math import log10, floor
-from numpy.testing import assert_array_equal, assert_allclose
 from scipy.sparse import csr_matrix
 from scipy.spatial.distance import cdist
 
@@ -18,6 +17,10 @@ from sklearn.metrics._pairwise_distances_reduction import (
 
 from sklearn.metrics import euclidean_distances
 from sklearn.utils.fixes import sp_version, parse_version
+from sklearn.utils._testing import (
+    assert_array_equal,
+    assert_allclose,
+)
 
 # Common supported metric between scipy.spatial.distance.cdist
 # and PairwiseDistancesReduction.
@@ -84,21 +87,27 @@ def assert_argkmin_results_equality(ref_dist, dist, ref_indices, indices, rtol=1
     )
 
 
-def adaptive_rounding(scalar, n_significant_digits):
-    """Round a scalar to a number of significant digits adaptively to its value."""
+def relative_rounding(scalar, n_significant_digits):
+    """Round a scalar to a number of significant digits relatively to its value."""
     magnitude = int(floor(log10(abs(scalar)))) + 1
     return round(scalar, n_significant_digits - magnitude)
 
 
-def test_adaptive_rounding():
+def test_relative_rounding():
 
-    assert adaptive_rounding(123456789, 2) == 120000000
-    assert adaptive_rounding(123456789, 3) == 123000000
-    assert adaptive_rounding(123456789, 10) == 123456789
+    assert relative_rounding(123456789, 0) == 0
+    assert relative_rounding(123456789, 2) == 120000000
+    assert relative_rounding(123456789, 3) == 123000000
+    assert relative_rounding(123456789, 10) == 123456789
+    assert relative_rounding(123456789, 20) == 123456789
 
-    assert adaptive_rounding(1.23456789, 2) == 1.2
-    assert adaptive_rounding(1.23456789, 3) == 1.23
-    assert adaptive_rounding(1.23456789, 10) == 1.23456789
+    assert relative_rounding(1.23456789, 2) == 1.2
+    assert relative_rounding(1.23456789, 3) == 1.23
+    assert relative_rounding(1.23456789, 10) == 1.23456789
+
+    assert relative_rounding(123.456789, 3) == 123.0
+    assert relative_rounding(123.456789, 9) == 123.456789
+    assert relative_rounding(123.456789, 10) == 123.456789
 
 
 def assert_argkmin_results_quasi_equality(
@@ -107,18 +116,19 @@ def assert_argkmin_results_quasi_equality(
     ref_indices,
     indices,
     rtol=1e-4,
-    decimals=5,
 ):
     """Assert that argkmin results are valid up to:
       - relative tolerance on computed distance values
       - permutations of indices for distances values that differ up to
-        a precision level set by `decimals`.
+        a precision level
 
     To be used for testing neighbors queries on float32 datasets: we
     accept neighbors rank swaps only if they are caused by small
     rounding errors on the distance computations.
     """
-    is_sorted = lambda a: np.all(a[:-1] - a[1:] <= 0)
+    is_sorted = lambda a: np.all(a[:-1] <= a[1:])
+
+    n_significant_digits = -(int(floor(log10(abs(rtol)))) + 1)
 
     assert (
         ref_dist.shape == dist.shape == ref_indices.shape == indices.shape
@@ -145,8 +155,9 @@ def assert_argkmin_results_quasi_equality(
         effective_neighbors_groups = defaultdict(set)
 
         for neighbor_rank in range(n_neighbors):
-            rounded_dist = adaptive_rounding(
-                ref_dist_row[neighbor_rank], n_significant_digits=decimals
+            rounded_dist = relative_rounding(
+                ref_dist_row[neighbor_rank],
+                n_significant_digits=n_significant_digits,
             )
             reference_neighbors_groups[rounded_dist].add(ref_indices_row[neighbor_rank])
             effective_neighbors_groups[rounded_dist].add(indices_row[neighbor_rank])
@@ -154,7 +165,7 @@ def assert_argkmin_results_quasi_equality(
         # Asserting equality of groups (sets) for each distance
         msg = (
             f"Neighbors indices for query {i} are not matching "
-            f"when rounding distances at decimals={decimals}"
+            f"when rounding distances at n_significant_digits={n_significant_digits}"
         )
         for rounded_distance in reference_neighbors_groups.keys():
             assert (
@@ -189,7 +200,6 @@ def assert_radius_neighborhood_results_quasi_equality(
     indices,
     radius,
     rtol=1e-4,
-    decimals=5,
 ):
     """Assert that radius neighborhood results are valid up to:
       - relative tolerance on computed distance values
@@ -204,7 +214,9 @@ def assert_radius_neighborhood_results_quasi_equality(
 
     Input arrays must be sorted w.r.t distances.
     """
-    is_sorted = lambda a: np.all(a[:-1] - a[1:] <= 0)
+    is_sorted = lambda a: np.all(a[:-1] <= a[1:])
+
+    n_significant_digits = -(int(floor(log10(abs(rtol)))) + 1)
 
     assert (
         len(ref_dist) == len(dist) == len(ref_indices) == len(indices)
@@ -229,7 +241,7 @@ def assert_radius_neighborhood_results_quasi_equality(
 
         # For the longest distances vector, we check that last extra elements
         # that aren't present in the other vector are all in: [radius ± atol]
-        atol = 10 ** (-decimals)
+        atol = 10 ** (-n_significant_digits)
         min_length = min(len(ref_dist_row), len(dist_row))
         last_extra_elements = largest_row[min_length:]
         if last_extra_elements.size > 0:
@@ -256,8 +268,9 @@ def assert_radius_neighborhood_results_quasi_equality(
         effective_neighbors_groups = defaultdict(set)
 
         for neighbor_rank in range(min_length):
-            rounded_dist = adaptive_rounding(
-                ref_dist_row[neighbor_rank], n_significant_digits=decimals
+            rounded_dist = relative_rounding(
+                ref_dist_row[neighbor_rank],
+                n_significant_digits=n_significant_digits,
             )
             reference_neighbors_groups[rounded_dist].add(ref_indices_row[neighbor_rank])
             effective_neighbors_groups[rounded_dist].add(indices_row[neighbor_rank])
@@ -265,7 +278,7 @@ def assert_radius_neighborhood_results_quasi_equality(
         # Asserting equality of groups (sets) for each distance
         msg = (
             f"Neighbors indices for query {query_idx} are not matching "
-            f"when rounding distances at decimals={decimals}"
+            f"when rounding distances at n_significant_digits={n_significant_digits}"
         )
         for rounded_distance in reference_neighbors_groups.keys():
             assert (
@@ -277,6 +290,11 @@ def assert_radius_neighborhood_results_quasi_equality(
 ASSERT_RESULT = {
     # In the case of 64bit, we test for exact equality of the results rankings
     # and standard tolerance levels for the computed distance values.
+    #
+    # XXX: Note that in the future we might be interested in using quasi equality
+    # checks also for float64 data (with a larger number of significant digits)
+    # as the tests could be unstable because of numerically tied distances on
+    # some datasets (e.g. uniform grids).
     (PairwiseDistancesArgKmin, np.float64): assert_argkmin_results_equality,
     (
         PairwiseDistancesRadiusNeighborhood,
@@ -297,12 +315,16 @@ def test_assert_argkmin_results_quasi_equality():
 
     rtol = 1e-7
     atol = 1e-7
-    decimals = 6
+    _1m = 1.0 - atol
+    _1p = 1.0 + atol
+
+    _6_1m = 6.1 - atol
+    _6_1p = 6.1 + atol
 
     ref_dist = np.array(
         [
-            [1.2, 2.5, 6.1 - atol, 6.1, 6.1 + atol],
-            [1.0 - atol, 1.0 - atol, 1, 1.0 + atol, 1.0 + atol],
+            [1.2, 2.5, _6_1m, 6.1, _6_1p],
+            [_1m, _1m, 1, _1p, _1p],
         ]
     )
     ref_indices = np.array(
@@ -314,7 +336,7 @@ def test_assert_argkmin_results_quasi_equality():
 
     # Sanity check: compare the reference results to themselves.
     assert_argkmin_results_quasi_equality(
-        ref_dist, ref_dist, ref_indices, ref_indices, rtol, decimals
+        ref_dist, ref_dist, ref_indices, ref_indices, rtol
     )
 
     # Apply valid permutation on indices: the last 3 points are
@@ -323,7 +345,7 @@ def test_assert_argkmin_results_quasi_equality():
     assert_argkmin_results_quasi_equality(
         ref_dist=np.array(
             [
-                [1.2, 2.5, 6.1 - atol, 6.1, 6.1 + atol],
+                [1.2, 2.5, _6_1m, 6.1, _6_1p],
             ]
         ),
         dist=np.array(
@@ -342,19 +364,18 @@ def test_assert_argkmin_results_quasi_equality():
             ]
         ),
         rtol=rtol,
-        decimals=decimals,
     )
     # All points are have close distances so any ranking permutation
     # is valid for this query result.
     assert_argkmin_results_quasi_equality(
         ref_dist=np.array(
             [
-                [1.0 - atol, 1.0 - atol, 1, 1.0 + atol, 1.0 + atol],
+                [_1m, _1m, 1, _1p, _1p],
             ]
         ),
         dist=np.array(
             [
-                [1.0 - atol, 1.0 - atol, 1, 1.0 + atol, 1.0 + atol],
+                [_1m, _1m, 1, _1p, _1p],
             ]
         ),
         ref_indices=np.array(
@@ -368,7 +389,6 @@ def test_assert_argkmin_results_quasi_equality():
             ]
         ),
         rtol=rtol,
-        decimals=decimals,
     )
 
     # Apply invalid permutation on indices: permuting the ranks
@@ -379,12 +399,12 @@ def test_assert_argkmin_results_quasi_equality():
         assert_argkmin_results_quasi_equality(
             ref_dist=np.array(
                 [
-                    [1.2, 2.5, 6.1 - atol, 6.1, 6.1 + atol],
+                    [1.2, 2.5, _6_1m, 6.1, _6_1p],
                 ]
             ),
             dist=np.array(
                 [
-                    [1.2, 2.5, 6.1 - atol, 6.1, 6.1 + atol],
+                    [1.2, 2.5, _6_1m, 6.1, _6_1p],
                 ]
             ),
             ref_indices=np.array(
@@ -398,7 +418,6 @@ def test_assert_argkmin_results_quasi_equality():
                 ]
             ),
             rtol=rtol,
-            decimals=decimals,
         )
 
     # Indices aren't properly sorted w.r.t their distances
@@ -407,12 +426,12 @@ def test_assert_argkmin_results_quasi_equality():
         assert_argkmin_results_quasi_equality(
             ref_dist=np.array(
                 [
-                    [1.2, 2.5, 6.1 - atol, 6.1, 6.1 + atol],
+                    [1.2, 2.5, _6_1m, 6.1, _6_1p],
                 ]
             ),
             dist=np.array(
                 [
-                    [1.2, 2.5, 6.1 - atol, 6.1, 6.1 + atol],
+                    [1.2, 2.5, _6_1m, 6.1, _6_1p],
                 ]
             ),
             ref_indices=np.array(
@@ -426,7 +445,6 @@ def test_assert_argkmin_results_quasi_equality():
                 ]
             ),
             rtol=rtol,
-            decimals=decimals,
         )
 
     # Distances aren't properly sorted
@@ -435,12 +453,12 @@ def test_assert_argkmin_results_quasi_equality():
         assert_argkmin_results_quasi_equality(
             ref_dist=np.array(
                 [
-                    [1.2, 2.5, 6.1 - atol, 6.1, 6.1 + atol],
+                    [1.2, 2.5, _6_1m, 6.1, _6_1p],
                 ]
             ),
             dist=np.array(
                 [
-                    [2.5, 1.2, 6.1 - atol, 6.1, 6.1 + atol],
+                    [2.5, 1.2, _6_1m, 6.1, _6_1p],
                 ]
             ),
             ref_indices=np.array(
@@ -454,7 +472,6 @@ def test_assert_argkmin_results_quasi_equality():
                 ]
             ),
             rtol=rtol,
-            decimals=decimals,
         )
 
 
@@ -462,12 +479,17 @@ def test_assert_radius_neighborhood_results_quasi_equality():
 
     rtol = 1e-7
     atol = 1e-7
-    decimals = 6
+
+    _1m = 1.0 - atol
+    _1p = 1.0 + atol
+
+    _6_1m = 6.1 - atol
+    _6_1p = 6.1 + atol
 
     ref_dist = np.array(
         [
-            np.array([1.2, 2.5, 6.1 - atol, 6.1, 6.1 + atol]),
-            np.array([1.0 - atol, 1, 1.0 + atol, 1.0 + atol]),
+            np.array([1.2, 2.5, _6_1m, 6.1, _6_1p]),
+            np.array([_1m, 1, _1p, _1p]),
         ]
     )
     ref_indices = np.array(
@@ -485,19 +507,18 @@ def test_assert_radius_neighborhood_results_quasi_equality():
         ref_indices,
         radius=6.1,
         rtol=rtol,
-        decimals=decimals,
     )
 
     # Apply valid permutation on indices
     assert_radius_neighborhood_results_quasi_equality(
         ref_dist=np.array(
             [
-                np.array([1.2, 2.5, 6.1 - atol, 6.1, 6.1 + atol]),
+                np.array([1.2, 2.5, _6_1m, 6.1, _6_1p]),
             ]
         ),
         dist=np.array(
             [
-                np.array([1.2, 2.5, 6.1 - atol, 6.1, 6.1 + atol]),
+                np.array([1.2, 2.5, _6_1m, 6.1, _6_1p]),
             ]
         ),
         ref_indices=np.array(
@@ -512,17 +533,16 @@ def test_assert_radius_neighborhood_results_quasi_equality():
         ),
         radius=6.1,
         rtol=rtol,
-        decimals=decimals,
     )
     assert_radius_neighborhood_results_quasi_equality(
         ref_dist=np.array(
             [
-                np.array([1.0 - atol, 1.0 - atol, 1, 1.0 + atol, 1.0 + atol]),
+                np.array([_1m, _1m, 1, _1p, _1p]),
             ]
         ),
         dist=np.array(
             [
-                np.array([1.0 - atol, 1.0 - atol, 1, 1.0 + atol, 1.0 + atol]),
+                np.array([_1m, _1m, 1, _1p, _1p]),
             ]
         ),
         ref_indices=np.array(
@@ -537,7 +557,6 @@ def test_assert_radius_neighborhood_results_quasi_equality():
         ),
         radius=6.1,
         rtol=rtol,
-        decimals=decimals,
     )
 
     # Apply invalid permutation on indices
@@ -546,12 +565,12 @@ def test_assert_radius_neighborhood_results_quasi_equality():
         assert_radius_neighborhood_results_quasi_equality(
             ref_dist=np.array(
                 [
-                    np.array([1.2, 2.5, 6.1 - atol, 6.1, 6.1 + atol]),
+                    np.array([1.2, 2.5, _6_1m, 6.1, _6_1p]),
                 ]
             ),
             dist=np.array(
                 [
-                    np.array([1.2, 2.5, 6.1 - atol, 6.1, 6.1 + atol]),
+                    np.array([1.2, 2.5, _6_1m, 6.1, _6_1p]),
                 ]
             ),
             ref_indices=np.array(
@@ -566,19 +585,18 @@ def test_assert_radius_neighborhood_results_quasi_equality():
             ),
             radius=6.1,
             rtol=rtol,
-            decimals=decimals,
         )
 
     # Having extra last elements is valid if they are in: [radius ± atol]
     assert_radius_neighborhood_results_quasi_equality(
         ref_dist=np.array(
             [
-                np.array([1.2, 2.5, 6.1 - atol, 6.1, 6.1 + atol]),
+                np.array([1.2, 2.5, _6_1m, 6.1, _6_1p]),
             ]
         ),
         dist=np.array(
             [
-                np.array([1.2, 2.5, 6.1 - atol, 6.1]),
+                np.array([1.2, 2.5, _6_1m, 6.1]),
             ]
         ),
         ref_indices=np.array(
@@ -593,7 +611,6 @@ def test_assert_radius_neighborhood_results_quasi_equality():
         ),
         radius=6.1,
         rtol=rtol,
-        decimals=decimals,
     )
 
     # Having extra last elements is invalid if they are lesser than radius - atol
@@ -624,7 +641,6 @@ def test_assert_radius_neighborhood_results_quasi_equality():
             ),
             radius=6.1,
             rtol=rtol,
-            decimals=decimals,
         )
 
     # Indices aren't properly sorted w.r.t their distances
@@ -633,12 +649,12 @@ def test_assert_radius_neighborhood_results_quasi_equality():
         assert_radius_neighborhood_results_quasi_equality(
             ref_dist=np.array(
                 [
-                    np.array([1.2, 2.5, 6.1 - atol, 6.1, 6.1 + atol]),
+                    np.array([1.2, 2.5, _6_1m, 6.1, _6_1p]),
                 ]
             ),
             dist=np.array(
                 [
-                    np.array([1.2, 2.5, 6.1 - atol, 6.1, 6.1 + atol]),
+                    np.array([1.2, 2.5, _6_1m, 6.1, _6_1p]),
                 ]
             ),
             ref_indices=np.array(
@@ -653,7 +669,6 @@ def test_assert_radius_neighborhood_results_quasi_equality():
             ),
             radius=6.1,
             rtol=rtol,
-            decimals=decimals,
         )
 
     # Distances aren't properly sorted
@@ -662,12 +677,12 @@ def test_assert_radius_neighborhood_results_quasi_equality():
         assert_radius_neighborhood_results_quasi_equality(
             ref_dist=np.array(
                 [
-                    np.array([1.2, 2.5, 6.1 - atol, 6.1, 6.1 + atol]),
+                    np.array([1.2, 2.5, _6_1m, 6.1, _6_1p]),
                 ]
             ),
             dist=np.array(
                 [
-                    np.array([2.5, 1.2, 6.1 - atol, 6.1, 6.1 + atol]),
+                    np.array([2.5, 1.2, _6_1m, 6.1, _6_1p]),
                 ]
             ),
             ref_indices=np.array(
@@ -682,7 +697,6 @@ def test_assert_radius_neighborhood_results_quasi_equality():
             ),
             radius=6.1,
             rtol=rtol,
-            decimals=decimals,
         )
 
 
