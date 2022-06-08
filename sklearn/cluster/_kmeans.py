@@ -256,15 +256,6 @@ def _kmeans_plusplus(X, n_clusters, x_squared_norms, random_state, n_local_trial
 # K-means batch estimation by EM (expectation maximization)
 
 
-def _tolerance(X, tol):
-    """Return a tolerance which is dependent on the dataset."""
-    if tol == 0:
-        return 0
-    if sp.issparse(X):
-        variances = mean_variance_axis(X, axis=0)[1]
-    else:
-        variances = np.var(X, axis=0)
-    return np.mean(variances) * tol
 
 
 class KMeansCythonEngine:
@@ -290,7 +281,12 @@ class KMeansCythonEngine:
         # TODO: delegate rng and sample weight checks to engine
         random_state = check_random_state(estimator.random_state)
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
-        self._n_threads = _openmp_effective_n_threads()
+
+        # Also store the number of threads on the estimator to be reused at
+        # prediction time XXX: shall we wrap engine-specific private fit
+        # attributes in a predict context dict set as attribute on the
+        # estimator?
+        estimator._n_threads, self._n_threads = _openmp_effective_n_threads()
 
         # Validate init array
         init = estimator.init
@@ -321,6 +317,7 @@ class KMeansCythonEngine:
             "x_squared_norms": x_squared_norms,
             "kmeans_single_func": kmeans_single,
             "random_state": random_state,
+            "tol": self._tolerance(X, self.tol)
         }
         return X, init, engine_fit_context
 
@@ -328,6 +325,16 @@ class KMeansCythonEngine:
         # XXX: the actual implementation of the centroids init should also be
         # moved to the engine.
         return estimator._init_centroids(*args, **kwargs)
+
+    def _tolerance(self, X, tol):
+        """Return a tolerance which is dependent on the dataset."""
+        if tol == 0:
+            return 0
+        if sp.issparse(X):
+            variances = mean_variance_axis(X, axis=0)[1]
+        else:
+            variances = np.var(X, axis=0)
+        return np.mean(variances) * tol
 
 
 @validate_params(
@@ -933,9 +940,6 @@ class _BaseKMeans(
                 f"n_samples={X.shape[0]} should be >= n_clusters={self.n_clusters}."
             )
 
-        # tol
-        self._tol = _tolerance(X, self.tol)
-
         # n-init
         # TODO(1.4): Remove
         self._n_init = self.n_init
@@ -1491,7 +1495,6 @@ class KMeans(_BaseKMeans):
             y=y,
             sample_weight=sample_weight,
         )
-
         self._check_params_vs_input(X)
 
         best_inertia, best_labels = None, None
@@ -1509,9 +1512,7 @@ class KMeans(_BaseKMeans):
                 centers_init,
                 max_iter=self.max_iter,
                 verbose=self.verbose,
-                tol=self._tol,
-                x_squared_norms=engine_fit_ctx["x_squared_norms"],
-                n_threads=self._n_threads,
+                **engine_fit_ctx,
             )
 
             # determine if these results are the best so far
