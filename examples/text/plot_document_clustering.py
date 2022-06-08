@@ -8,7 +8,7 @@ documents by topics using a `Bag of Words approach
 <https://en.wikipedia.org/wiki/Bag-of-words_model>`_.
 
 Two algorithms are demoed: ordinary :func:`~sklearn.cluster.KMeans` and its more
-scalable cousin :func:`~sklearn.cluster.MiniBatchKMeans`. Additionally, latent
+scalable variant :func:`~sklearn.cluster.MiniBatchKMeans`. Additionally, latent
 semantic analysis is used to reduce dimensionality and discover latent patterns
 in the data.
 
