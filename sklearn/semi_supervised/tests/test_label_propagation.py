@@ -78,11 +78,12 @@ def test_label_spreading_closed_form(global_dtype, Estimator, parameters, alpha)
     Y = np.zeros((len(y), n_classes + 1))
     Y[np.arange(len(y)), y] = 1
     Y = Y[:, :-1]
-    expected = np.dot(np.linalg.inv(np.eye(len(S)) - alpha * S), Y)
-    expected /= expected.sum(axis=1)[:, np.newaxis]
+    numerator = np.dot(np.linalg.inv(np.eye(len(S)) - alpha * S), Y)
     # Inverting might cause zeros values to become NaN values in the case of float32.
     # Hence, we replace those NaN values to 0.
-    expected = np.nan_to_num(expected)
+    denominator = numerator.sum(axis=1)[:, np.newaxis]
+    expected = np.zeros_like(numerator)
+    np.divide(numerator, denominator, out=expected, where=denominator != 0)
     clf = label_propagation.LabelSpreading(max_iter=10000, alpha=alpha)
     clf.fit(X, y)
     assert_allclose(expected, clf.label_distributions_, atol=1e-4)
