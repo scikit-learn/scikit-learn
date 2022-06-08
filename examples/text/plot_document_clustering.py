@@ -280,34 +280,9 @@ from itertools import cycle
 
 df = pd.DataFrame(scores).set_index("estimator")
 
-bar_size = 0.25
-padding = 0.75
-bars_per_group = len(df.columns)
-cmap = matplotlib.cm.get_cmap("rainbow")
-y_locs = np.arange(len(df.index)) * (bars_per_group * bar_size + padding)
-y_array = [y_locs + (j - bars_per_group / 2) * bar_size for j in range(bars_per_group)]
-colours = cycle([cmap(index) for index in np.linspace(0, 1, bars_per_group)])
-
-fig, ax = plt.subplots(figsize=(12, 8))
-for i, estimator in enumerate(df.index):
-    for j, label in enumerate(df.columns):
-        ax.barh(
-            y_array[j][i],
-            df.loc[estimator][label],
-            height=bar_size,
-            color=next(colours),
-        )
-ax.set(
-    yticks=y_locs - bar_size / 2,
-    yticklabels=df.index,
-    ylim=[
-        0 - bars_per_group * bar_size,
-        len(df.index) * (bars_per_group * bar_size + padding)
-        - bars_per_group * bar_size,
-    ],
-)
-ax.legend(loc="lower right", labels=df.columns)
-_ = ax.set_title("Clustering scores")
+ax = df.plot.barh()
+ax.set_ylabel("")
+_ = ax.set_xlabel("Clustering scores")
 
 # %%
 # It can be noticed that :class:`~sklearn.cluster.KMeans` (and
