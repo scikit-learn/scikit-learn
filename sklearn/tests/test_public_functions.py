@@ -42,7 +42,7 @@ def test_function_param_validation(func_module):
     # check that there is a constraint for each parameter
     if func_params:
         err_msg = (
-            f"Mismatch between the parameter constraints defined in the "
+            "Mismatch between the parameter constraints defined in the "
             f"validate_params decorator and the parameters of {func_name}."
         )
         assert list(parameter_constraints.keys()) == func_params, err_msg
