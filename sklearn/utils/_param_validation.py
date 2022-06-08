@@ -58,7 +58,7 @@ def validate_parameter_constraints(parameter_constraints, params, caller_name):
             constraints = [
                 constraint
                 for constraint in constraints
-                if not getattr(constraint, "internal_constraint", False)
+                if not getattr(constraint, "hidden_constraint", False)
             ]
 
             if len(constraints) == 1:
@@ -102,9 +102,9 @@ def make_constraint(constraint):
         return _InstancesOf(constraint)
     if isinstance(constraint, (Interval, StrOptions)):
         return constraint
-    if isinstance(constraint, Internal):
+    if isinstance(constraint, Hidden):
         constraint = make_constraint(constraint.constraint)
-        setattr(constraint, "internal_constraint", True)
+        setattr(constraint, "hidden_constraint", True)
         return constraint
     raise ValueError(f"Unknown constraint type: {constraint}")
 
@@ -254,7 +254,7 @@ class StrOptions(_Constraint):
         if self.options == self.internal:
             raise ValueError(
                 "All options can't be internal, use "
-                f"Internal(StrOptions({self.options})) instead."
+                f"Hidden(StrOptions({self.options})) instead."
             )
 
     def is_satisfied_by(self, val):
@@ -432,7 +432,7 @@ class _RandomStates(_Constraint):
         )
 
 
-class Internal:
+class Hidden:
     """Class encapsulating a constraint not meant to be exposed to the user.
 
     Parameters

@@ -6,7 +6,7 @@ import pytest
 
 from sklearn.base import BaseEstimator
 from sklearn.utils import deprecated
-from sklearn.utils._param_validation import Internal
+from sklearn.utils._param_validation import Hidden
 from sklearn.utils._param_validation import Interval
 from sklearn.utils._param_validation import StrOptions
 from sklearn.utils._param_validation import _ArrayLikes
@@ -336,10 +336,10 @@ def test_stroptions_not_all_internal():
         StrOptions({"a", "b"}, internal={"a", "b"})
 
 
-def test_internal_constraint():
+def test_hidden_constraint():
     """Check that internal constraints are not exposed in the error message."""
 
-    @validate_params({"param": [Internal(list), dict]})
+    @validate_params({"param": [Hidden(list), dict]})
     def f(param):
         pass
 
