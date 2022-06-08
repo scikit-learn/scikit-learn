@@ -361,3 +361,11 @@ def test_stroptions_deprecated_internal_subset():
 
     with pytest.raises(ValueError, match="internal options must be a subset"):
         StrOptions({"a", "b", "c"}, internal={"a", "d"})
+
+
+def test_validate_params_set_param_constraints_attribute():
+    """Check that the validate_params decorator properly sets the parameter constraints
+    as attribute of the decorated function/method.
+    """
+    assert hasattr(_func, "_skl_parameter_constraints")
+    assert hasattr(_Class()._method, "_skl_parameter_constraints")

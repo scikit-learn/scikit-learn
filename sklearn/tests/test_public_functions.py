@@ -17,9 +17,6 @@ PARAM_VALIDATION_FUNCTION_LIST = [
 def test_function_param_validation(func_module):
     """Check that an informative error is raised when the value of a parameter does not
     have an appropriate type or value.
-
-    The parameter constraints for the function must be named
-    _parameter_constraints_of_<func_name> and be located in the same module.
     """
     module_name, func_name = func_module.rsplit(".", 1)
     module = import_module(module_name)
@@ -31,17 +28,7 @@ def test_function_param_validation(func_module):
         for p in func_sig.parameters.values()
         if p.kind not in (p.VAR_POSITIONAL, p.VAR_KEYWORD)
     ]
-
-    func_module = import_module(func.__module__)
-    parameter_constraints = getattr(
-        func_module, f"_parameter_constraints_of_{func_name}", None
-    )
-    if parameter_constraints is None:
-        raise ValueError(
-            f"The function {func_name} must have its parameter constraints defined in "
-            f"a dict named _parameter_constraints_of_{func_name} and located in the "
-            f"same module: {func_module}."
-        )
+    parameter_constraints = getattr(func, "_skl_parameter_constraints")
 
     # generate valid values for the required parameters
     required_params = [
@@ -55,8 +42,8 @@ def test_function_param_validation(func_module):
     # check that there is a constraint for each parameter
     if func_params:
         err_msg = (
-            f"Mismatch between _parameter_constraints_of_{func_name} and the parameters"
-            f" of {func_name}."
+            f"Mismatch between the parameter constraints defined in the "
+            f"validate_params decorator and the parameters of {func_name}."
         )
         assert list(parameter_constraints.keys()) == func_params, err_msg
 
