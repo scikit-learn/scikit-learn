@@ -117,7 +117,7 @@ def fit_and_evaluate(km, X, name=None):
         metrics.adjusted_rand_score(labels, km.labels_)
     )
     scores["Silhouette Coefficient"].append(
-        metrics.silhouette_score(X, km.labels_, sample_size=1000)
+        metrics.silhouette_score(X, km.labels_, sample_size=2000)
     )
     return
 
@@ -151,7 +151,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 
 vectorizer = TfidfVectorizer(
     max_df=0.5,
-    min_df=5,
+    min_df=2,
     stop_words="english",
 )
 t0 = time()
