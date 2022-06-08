@@ -14,7 +14,7 @@ iniconfig==1.1.1
     # via pytest
 joblib==1.1.0
     # via -r build_tools/azure/py38_pip_openblas_32bit_requirements.txt
-numpy==1.22.3
+numpy==1.22.4
     # via
     #   -r build_tools/azure/py38_pip_openblas_32bit_requirements.txt
     #   scipy
@@ -30,7 +30,7 @@ py==1.11.0
     #   pytest-forked
 pyparsing==3.0.9
     # via packaging
-pytest==6.2.5
+pytest==7.1.2
     # via
     #   -r build_tools/azure/py38_pip_openblas_32bit_requirements.txt
     #   pytest-forked
@@ -43,7 +43,7 @@ scipy==1.8.1
     # via -r build_tools/azure/py38_pip_openblas_32bit_requirements.txt
 threadpoolctl==3.1.0
     # via -r build_tools/azure/py38_pip_openblas_32bit_requirements.txt
-toml==0.10.2
+tomli==2.0.1
     # via pytest
 wheel==0.37.1
     # via -r build_tools/azure/py38_pip_openblas_32bit_requirements.txt

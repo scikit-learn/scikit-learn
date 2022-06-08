@@ -562,7 +562,7 @@ for regression which can be specified via the argument
 The figure below shows the results of applying :class:`GradientBoostingRegressor`
 with least squares loss and 500 base learners to the diabetes dataset
 (:func:`sklearn.datasets.load_diabetes`).
-The plot on the left shows the train and test error at each iteration.
+The plot shows the train and test error at each iteration.
 The train error at each iteration is stored in the
 :attr:`~GradientBoostingRegressor.train_score_` attribute
 of the gradient boosting model. The test error at each iterations can be obtained
@@ -826,7 +826,7 @@ does poorly.
    :scale: 75
 
 Another strategy to reduce the variance is by subsampling the features
-analogous to the random splits in :class:`RandomForestClassifier` .
+analogous to the random splits in :class:`RandomForestClassifier`.
 The number of subsampled features can be controlled via the ``max_features``
 parameter.
 
@@ -979,7 +979,7 @@ corresponds to :math:`\lambda` in equation (2) of [XGBoost]_.
 
 Note that **early-stopping is enabled by default if the number of samples is
 larger than 10,000**. The early-stopping behaviour is controlled via the
-``early-stopping``, ``scoring``, ``validation_fraction``,
+``early_stopping``, ``scoring``, ``validation_fraction``,
 ``n_iter_no_change``, and ``tol`` parameters. It is possible to early-stop
 using an arbitrary :term:`scorer`, or just the training or validation loss.
 Note that for technical reasons, using a scorer is significantly slower than

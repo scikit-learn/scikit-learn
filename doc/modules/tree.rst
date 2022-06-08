@@ -33,7 +33,7 @@ Some advantages of decision trees are:
     - The cost of using the tree (i.e., predicting data) is logarithmic in the
       number of data points used to train the tree.
 
-    - Able to handle both numerical and categorical data. However scikit-learn
+    - Able to handle both numerical and categorical data. However, the scikit-learn
       implementation does not support categorical variables for now. Other
       techniques are usually specialized in analyzing datasets that have only one type
       of variable. See :ref:`algorithms <tree_algorithms>` for more
@@ -415,7 +415,7 @@ must be categorical by dynamically defining a discrete attribute (based
 on numerical variables) that partitions the continuous attribute value
 into a discrete set of intervals. C4.5 converts the trained trees
 (i.e. the output of the ID3 algorithm) into sets of if-then rules.
-These accuracy of each rule is then evaluated to determine the order
+The accuracy of each rule is then evaluated to determine the order
 in which they should be applied. Pruning is done by removing a rule's
 precondition if the accuracy of the rule improves without it.
 
@@ -428,8 +428,8 @@ it differs in that it supports numerical target variables (regression) and
 does not compute rule sets. CART constructs binary trees using the feature
 and threshold that yield the largest information gain at each node.
 
-scikit-learn uses an optimized version of the CART algorithm; however, scikit-learn
-implementation does not support categorical variables for now.
+scikit-learn uses an optimized version of the CART algorithm; however, the 
+scikit-learn implementation does not support categorical variables for now.
 
 .. _ID3: https://en.wikipedia.org/wiki/ID3_algorithm
 .. _CART: https://en.wikipedia.org/wiki/Predictive_analytics#Classification_and_regression_trees_.28CART.29

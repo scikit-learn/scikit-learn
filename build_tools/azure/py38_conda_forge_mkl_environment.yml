@@ -1,5 +1,5 @@
 # DO NOT EDIT: this file is generated from the specification found in the
-# following script to centralize the configuration for all Azure CI builds:
+# following script to centralize the configuration for CI builds:
 # build_tools/update_environments_and_lock_files.py
 channels:
   - conda-forge
@@ -12,7 +12,7 @@ dependencies:
   - joblib
   - threadpoolctl
   - matplotlib
-  - pytest=6.2.5
+  - pytest
   - pytest-xdist
   - pillow
   - codecov
