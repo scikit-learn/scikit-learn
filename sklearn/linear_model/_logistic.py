@@ -333,7 +333,7 @@ def _logistic_regression_path(
             sample_weight *= class_weight_[le.fit_transform(y_bin)]
 
     else:
-        if solver in ["sag", "saga", "lbfgs", "newton-cg"]:
+        if solver in ["sag", "saga", "lbfgs", "newton-cg", "trust-ncg"]:
             # SAG, lbfgs and newton-cg multinomial solvers need LabelEncoder,
             # not LabelBinarizer, i.e. y as a 1d-array of integers.
             # LabelEncoder also saves memory compared to LabelBinarizer, especially
@@ -409,11 +409,13 @@ def _logistic_regression_path(
             grad = loss.gradient
             hess = loss.gradient_hessian_product  # hess = [gradient, hessp]
         # TODO: Update w/ new loss module
+        # Debug in progress
         elif solver == "trust-ncg":
-            func = loss.loss
+            func = loss.loss_gradient
 
-            def hessp(x, *args):
-                return loss.gradient_hessian_product(x, *args)[1]
+            def hessp(x, p, *args):
+                assert not np.isscalar(loss)
+                return loss.gradient_hessian_product(x, *args)[1](p)
 
         warm_start_sag = {"coef": w0.T}
     else:
@@ -437,8 +439,8 @@ def _logistic_regression_path(
             )
             func = loss.loss_gradient
 
-            def hessp(x, *args):
-                return loss.gradient_hessian_product(x, *args)[1]
+            def hessp(x, p, *args):
+                return loss.gradient_hessian_product(x, *args)[1](p)
 
         warm_start_sag = {"coef": np.expand_dims(w0, axis=1)}
 
@@ -466,7 +468,7 @@ def _logistic_regression_path(
                     method=solver,
                     jac=True,
                     hessp=hessp,
-                    args=(X, target, 1.0 / C, sample_weight),
+                    args=(X, target.astype(np.float64), sample_weight, 1.0 / C),
                 )
             n_iter_i = _check_optimize_result(
                 solver,
@@ -900,7 +902,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         .. seealso::
            Refer to the User Guide for more information regarding
            :class:`LogisticRegression` and more specifically the
-           `Table <https://scikit-learn.org/dev/modules/linear_model.html#logistic-regression>`_
+           `Table <https://scikit-learn.org/dev/modules/linear_model.html#logistic-regression>`_  # noqa
            summarazing solver/penalty supports.
 
         .. versionadded:: 0.17
