@@ -78,16 +78,16 @@ print(f"{len(dataset.data)} documents - {true_k} categories")
 # is possible to define metrics to test for different properties of a cluster:
 #
 # - homogeneity, which quantifies cluster containing only members of a single
-# class;
+#   class;
 #
 # - completeness, which quantifies cluster having members of a given class are
-# assigned to the same cluster;
+#   assigned to the same cluster;
 #
 # - V-measure, the harmonic mean of completeness and homogeneity;
 #
-# - Rand-Index, which measures the similarity between pairs of clusters
+# - Rand-Index, which measures the similarity between pairs of clusters;
 #
-# - Adjusted Rand-Index, a change-adjusted Rand-Index
+# - Adjusted Rand-Index, a change-adjusted Rand-Index.
 #
 # If the ground truth labels are not known, evaluation can only be performed
 # using the model results itself. In that case, the Silhouette Coefficient
