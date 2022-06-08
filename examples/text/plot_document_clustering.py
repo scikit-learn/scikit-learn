@@ -15,11 +15,10 @@ in the data.
 This example uses two different text vectorizers: a
 :func:`~sklearn.feature_extraction.text.TfidfVectorizer` and a
 :func:`~sklearn.feature_extraction.text.HashingVectorizer`. See the example
-notebook :ref:`sphx_glr_auto_examples_text_plot_hashing_vs_dict_vectorizer.py`.
-For more information on vectorizers and a comparison of their processing times.
+notebook :ref:`sphx_glr_auto_examples_text_plot_hashing_vs_dict_vectorizer.py`,
+for more information on vectorizers and a comparison of their processing times.
 
-Clustering is unsupervised learning. For the supervised learning version of
-document analysis, see the example script
+For document analysis via a supervised learning approach, see the example script
 :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`.
 
 """
@@ -33,17 +32,17 @@ document analysis, see the example script
 # Load Data
 # =========
 #
-# We load data from :ref:`20newsgroups_dataset`, which comprises around 18000
-# newsgroups posts on 20 topics. For illustrative purposes and reducing the
-# computational cost, we select a subset of 4 topics only. See the example
+# We load data from :ref:`20newsgroups_dataset`, which comprises around 18,000
+# newsgroups posts on 20 topics. For illustrative purposes and to reduce the
+# computational cost, we select a subset of 4 topics only accounting for around 3,400 documents. See the example
 # :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
 # to gain intuition on the overlap of such topics.
 #
 # Notice that, by default, the text samples contain some message metadata such
 # as `"headers"`, `"footers"` (signatures) and `"quotes"` to other posts. The
-# fetch_20newsgroups function therefore accepts a parameter named `remove` to
-# attempt stripping such information that can make the clustering problem “too
-# easy”.
+# :func:`~sklearn.datasets.fetch_20newsgroups` function therefore accepts a parameter named `remove` to
+# attempt stripping such information that can make the clustering problem "too
+# easy".
 
 import numpy as np
 from sklearn.datasets import fetch_20newsgroups
@@ -101,16 +100,13 @@ scores = defaultdict(list)
 train_times = defaultdict(list)
 
 
-def fit_and_evaluate(km, X, custom_name=False):
+def fit_and_evaluate(km, X, name=None):
     t0 = time()
     km.fit(X)
     train_time = time() - t0
-    if custom_name:
-        scores["estimator"].append(km.__class__.__name__ + custom_name)
-        train_times["estimator"].append(km.__class__.__name__ + custom_name)
-    else:
-        scores["estimator"].append(km.__class__.__name__)
-        train_times["estimator"].append(km.__class__.__name__)
+    name = km.__class__.__name__ if name is None else name
+    scores["estimator"].append(name)
+    train_times["estimator"].append(name)
     train_times["train time"].append(train_time)
     scores["Homogeneity"].append(metrics.homogeneity_score(labels, km.labels_))
     scores["Completeness"].append(metrics.completeness_score(labels, km.labels_))
@@ -210,14 +206,12 @@ from sklearn.decomposition import TruncatedSVD
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import Normalizer
 
-svd = TruncatedSVD(n_components=100)
-normalizer = Normalizer(copy=False)
-lsa = make_pipeline(svd, normalizer)
+lsa = make_pipeline(TruncatedSVD(n_components=100), Normalizer(copy=False))
 X = lsa.fit_transform(X)
 fit_and_evaluate(km, X, custom_name=" with LSA")
 
 explained_variance = svd.explained_variance_ratio_.sum()
-print(f"Explained variance of the SVD step: {int(explained_variance * 100)}%")
+print(f"Explained variance of the SVD step: {explained_variance * 100:.1f}%")
 
 # %%
 # **Top terms per cluster**
@@ -282,8 +276,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from itertools import cycle
 
-df = pd.DataFrame(scores)
-df = df.set_index("estimator")
+df = pd.DataFrame(scores).set_index("estimator")
 
 bar_size = 0.25
 padding = 0.75
