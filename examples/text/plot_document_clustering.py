@@ -172,7 +172,7 @@ print(f"n_samples: {X.shape[0]}, n_features: {X.shape[1]}")
 
 from sklearn.cluster import MiniBatchKMeans
 
-km = MiniBatchKMeans(
+minibatch_kmeans = MiniBatchKMeans(
     n_clusters=true_k,
     init="k-means++",
     n_init=5,
@@ -181,22 +181,22 @@ km = MiniBatchKMeans(
     random_state=0,
 )
 
-fit_and_evaluate(km, X)
+fit_and_evaluate(minibatch_kmeans, X)
 
 # %%
 # **Clustering sparse data with KMeans**
 
 from sklearn.cluster import KMeans
 
-km = KMeans(
+kmeans = KMeans(
     n_clusters=true_k,
-    init="k-means++",
+    init="random",
     max_iter=100,
-    n_init=5,
+    n_init=10,
     random_state=0,
 )
 
-fit_and_evaluate(km, X)
+fit_and_evaluate(kmeans, X)
 
 # %%
 # **Performing dimensionality reduction using LSA**
@@ -211,7 +211,7 @@ from sklearn.preprocessing import Normalizer
 svd = TruncatedSVD(n_components=100)
 lsa = make_pipeline(svd, Normalizer(copy=False))
 X = lsa.fit_transform(X)
-fit_and_evaluate(km, X, name=km.__class__.__name__ + " with LSA")
+fit_and_evaluate(kmeans, X, name="kmeans with LSA")
 
 explained_variance = svd.explained_variance_ratio_.sum()
 print(f"Explained variance of the SVD step: {explained_variance * 100:.1f}%")
@@ -219,7 +219,7 @@ print(f"Explained variance of the SVD step: {explained_variance * 100:.1f}%")
 # %%
 # **Top terms per cluster**
 
-original_space_centroids = svd.inverse_transform(km.cluster_centers_)
+original_space_centroids = svd.inverse_transform(kmeans.cluster_centers_)
 order_centroids = original_space_centroids.argsort()[:, ::-1]
 terms = vectorizer.get_feature_names_out()
 
@@ -252,7 +252,7 @@ X = hasher.fit_transform(dataset.data)
 print(f"vectorizing done in {time() - t0:.3f} s")
 print(f"n_samples: {X.shape[0]}, n_features: {X.shape[1]}")
 
-fit_and_evaluate(km, X, name=km.__class__.__name__ + " with\nsimple hashing")
+fit_and_evaluate(kmeans, X, name="kmeans with\nsimple hashing")
 
 # %%
 # When IDF weighting is needed it can be added by pipelining the
@@ -267,7 +267,7 @@ t0 = time()
 X = vectorizer.fit_transform(dataset.data)
 print(f"vectorizing done in {time() - t0:.3f} s")
 
-fit_and_evaluate(km, X, name=km.__class__.__name__ + " with\nTfidf-scaled hashing")
+fit_and_evaluate(kmeans, X, name="kmeans with\nTfidf-scaled hashing")
 
 # %%
 # Plot unsupervised evaluation metrics
