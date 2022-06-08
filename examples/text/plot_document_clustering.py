@@ -7,14 +7,14 @@ This is an example showing how the scikit-learn API can be used to cluster
 documents by topics using a `Bag of Words approach
 <https://en.wikipedia.org/wiki/Bag-of-words_model>`_.
 
-Two algorithms are demoed: :func:`~sklearn.cluster.KMeans` and its
-more scalable variant, :func:`~sklearn.cluster.MiniBatchKMeans`. Additionally,
+Two algorithms are demoed: :class:`~sklearn.cluster.KMeans` and its
+more scalable variant, :class:`~sklearn.cluster.MiniBatchKMeans`. Additionally,
 latent semantic analysis is used to reduce dimensionality and discover latent
 patterns in the data.
 
 This example uses two different text vectorizers: a
-:func:`~sklearn.feature_extraction.text.TfidfVectorizer` and a
-:func:`~sklearn.feature_extraction.text.HashingVectorizer`. See the example
+:class:`~sklearn.feature_extraction.text.TfidfVectorizer` and a
+:class:`~sklearn.feature_extraction.text.HashingVectorizer`. See the example
 notebook :ref:`sphx_glr_auto_examples_text_plot_hashing_vs_dict_vectorizer.py`
 for more information on vectorizers and a comparison of their processing times.
 
@@ -41,7 +41,7 @@ For document analysis via a supervised learning approach, see the example script
 #
 # Notice that, by default, the text samples contain some message metadata such
 # as `"headers"`, `"footers"` (signatures) and `"quotes"` to other posts. We use
-# the `remove` parameter from :func:`sklearn.datasets.fetch_20newsgroups` to
+# the `remove` parameter from :func:`~sklearn.datasets.fetch_20newsgroups` to
 # strip those features and have a more sensible clustering problem.
 
 import numpy as np
@@ -129,13 +129,13 @@ def fit_and_evaluate(km, X, name=None):
 #
 # Two feature extraction methods are used in this example:
 #
-# - :func:`~sklearn.feature_extraction.text.TfidfVectorizer` uses a in-memory
+# - :class:`~sklearn.feature_extraction.text.TfidfVectorizer` uses a in-memory
 #   vocabulary (a python dict) to map the most frequent words to features
 #   indices and hence compute a word occurrence frequency (sparse) matrix. The
 #   word frequencies are then reweighted using the Inverse Document Frequency
 #   (IDF) vector collected feature-wise over the corpus.
 #
-# - :func:`~sklearn.feature_extraction.text.HashingVectorizer` hashes word
+# - :class:`~sklearn.feature_extraction.text.HashingVectorizer` hashes word
 #   occurrences to a fixed dimensional space, possibly with collisions. The word
 #   count vectors are then normalized to each have l2-norm equal to one
 #   (projected to the euclidean unit-sphere) which seems to be important for
@@ -146,7 +146,7 @@ def fit_and_evaluate(km, X, name=None):
 #
 # We first benchmark the estimators using a dictionary vectorizer along with an
 # IDF normalization as provided by
-# :func:`~sklearn.feature_extraction.text.TfidfVectorizer`
+# :class:`~sklearn.feature_extraction.text.TfidfVectorizer`
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 
@@ -164,8 +164,8 @@ print(f"n_samples: {X.shape[0]}, n_features: {X.shape[1]}")
 # %%
 # **Clustering sparse data with MiniBatchKMeans**
 #
-# As both :func:`~sklearn.cluster.KMeans` and
-# :func:`~sklearn.cluster.MiniBatchKMeans` optimize a non-convex objective
+# As both :class:`~sklearn.cluster.KMeans` and
+# :class:`~sklearn.cluster.MiniBatchKMeans` optimize a non-convex objective
 # function, their clustering will likely be the a sub-optimal one.
 # Several runs with independent random initiations are performed using the
 # `n_init` and the clustering with the smallest inertia is chosen.
@@ -202,7 +202,7 @@ fit_and_evaluate(km, X)
 # **Performing dimensionality reduction using LSA**
 #
 # Since LSA/SVD results are not normalized, we redo the normalization to improve
-# the :func:`~sklearn.cluster.KMeans` result.
+# the :class:`~sklearn.cluster.KMeans` result.
 
 from sklearn.decomposition import TruncatedSVD
 from sklearn.pipeline import make_pipeline
@@ -233,10 +233,10 @@ for i in range(true_k):
 # HashingVectorizer
 # -----------------
 # A similar experiment can be done using a
-# :func:`~sklearn.feature_extraction.text.HashingVectorizer` instance, which
+# :class:`~sklearn.feature_extraction.text.HashingVectorizer` instance, which
 # does not provide IDF weighting as this is a stateless model (the fit method
 # does nothing). Here we illustrate the effect of Tfidf weighting by
-# benchmarking the function :func:`~sklearn.cluster.KMeans` with and without
+# benchmarking the function :class:`~sklearn.cluster.KMeans` with and without
 # such normalization.
 
 from sklearn.feature_extraction.text import HashingVectorizer
@@ -256,8 +256,8 @@ fit_and_evaluate(km, X, name=km.__class__.__name__ + " with\nsimple hashing")
 
 # %%
 # When IDF weighting is needed it can be added by pipelining the
-# :func:`~sklearn.feature_extraction.text.HashingVectorizer` output to a
-# :func:`~sklearn.feature_extraction.text.TfidfTransformer` instance.
+# :class:`~sklearn.feature_extraction.text.HashingVectorizer` output to a
+# :class:`~sklearn.feature_extraction.text.TfidfTransformer` instance.
 
 from sklearn.feature_extraction.text import TfidfTransformer
 
@@ -310,8 +310,8 @@ ax.legend(loc="lower right", labels=df.columns)
 _ = ax.set_title("Clustering scores")
 
 # %%
-# It can be noticed that :func:`~sklearn.cluster.KMeans` (and
-# :func:`~sklearn.cluster.MiniBatchKMeans`) are very sensitive to feature
+# It can be noticed that :class:`~sklearn.cluster.KMeans` (and
+# :class:`~sklearn.cluster.MiniBatchKMeans`) are very sensitive to feature
 # scaling and that in this case the IDF weighting helps improve the quality of
 # the clustering by quite a lot as measured against the "ground truth" provided
 # by the class label assignments of :ref:`20newsgroups_dataset`.
@@ -339,6 +339,6 @@ ax.invert_yaxis()
 _ = ax.set_xlabel("processing times (s)")
 
 # %%
-# :func:`~sklearn.cluster.MiniBatchKMeans` requires less time since
+# :class:`~sklearn.cluster.MiniBatchKMeans` requires less time since
 # it runs computations on batches of data. This comes at the expense
 # of clustering quality.
