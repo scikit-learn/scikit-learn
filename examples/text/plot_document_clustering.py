@@ -224,9 +224,9 @@ order_centroids = original_space_centroids.argsort()[:, ::-1]
 terms = vectorizer.get_feature_names_out()
 
 for i in range(true_k):
-    print("Cluster %d:" % i, end="")
+    print(f"Cluster {i}: ", end="")
     for ind in order_centroids[i, :10]:
-        print(" %s" % terms[ind], end="")
+        print(f"{terms[ind]} ", end="")
     print()
 
 # %%
