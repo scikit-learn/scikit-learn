@@ -576,4 +576,4 @@ def test_multilabel_y_explicit_zeros(tmp_path):
 
     _, y_load = load_svmlight_file(save_path, multilabel=True)
     y_true = [(2.0,), (2.0,), (0.0, 1.0, 2.0)]
-    assert tuple(y_load) == tuple(y_true)
+    assert y_load == y_true
