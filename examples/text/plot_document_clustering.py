@@ -277,7 +277,7 @@ import pandas as pd
 
 df = pd.DataFrame(scores).set_index("estimator")
 
-ax = df.plot.barh()
+ax = df.plot.barh(figsize=(11, 6))
 ax.set_ylabel("")
 _ = ax.set_xlabel("Clustering scores")
 
@@ -302,7 +302,7 @@ _ = ax.set_xlabel("Clustering scores")
 # ====================
 
 df = pd.DataFrame(train_times).set_index("estimator")
-ax = df.plot.barh()
+ax = df.plot.barh(figsize=(11, 6))
 ax.set_xlabel("Processing times (s)")
 _ = ax.set_ylabel("")
 
