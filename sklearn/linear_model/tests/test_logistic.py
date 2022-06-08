@@ -676,7 +676,7 @@ def test_logistic_regression_solvers():
     X, y = make_classification(n_features=10, n_informative=5, random_state=0)
 
     params = dict(fit_intercept=False, random_state=42, multi_class="ovr")
-    solvers = ("newton-cg", "lbfgs", "liblinear", "sag", "saga")
+    solvers = ("newton-cg", "lbfgs", "liblinear", "sag", "saga", "trust-ncg")
 
     regressors = {
         solver: LogisticRegression(solver=solver, **params).fit(X, y)
@@ -696,7 +696,7 @@ def test_logistic_regression_solvers_multiclass():
     )
     tol = 1e-7
     params = dict(fit_intercept=False, tol=tol, random_state=42, multi_class="ovr")
-    solvers = ("newton-cg", "lbfgs", "liblinear", "sag", "saga")
+    solvers = ("newton-cg", "lbfgs", "liblinear", "sag", "saga", "trust-ncg")
 
     # Override max iteration count for specific solvers to allow for
     # proper convergence.
