@@ -443,7 +443,7 @@ complies with the following rules before marking a PR as ``[MRG]``. The
 
         git diff upstream/main -u -- "*.py" | flake8 --diff
 
-   or `make flake8-diff` which should work on unix-like system.
+   or `make flake8-diff` which should work on Unix-like systems.
 
 7. Follow the :ref:`coding-guidelines`.
 
