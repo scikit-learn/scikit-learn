@@ -1586,6 +1586,8 @@ def test_fetch_openml_strip_quotes(monkeypatch):
     mice_pandas = fetch_openml(parser="pandas", **common_params)
     mice_liac_arff = fetch_openml(parser="liac-arff", **common_params)
     pd.testing.assert_series_equal(mice_pandas.target, mice_liac_arff.target)
+    assert not mice_pandas.target.str.startswith("'").any()
+    assert not mice_pandas.target.str.endswith("'").any()
 
     # similar behaviour should be observed when the column is not the target
     mice_pandas = fetch_openml(parser="pandas", target_column="NUMB_N", **common_params)
@@ -1595,6 +1597,8 @@ def test_fetch_openml_strip_quotes(monkeypatch):
     pd.testing.assert_series_equal(
         mice_pandas.frame["class"], mice_liac_arff.frame["class"]
     )
+    assert not mice_pandas.frame["class"].str.startswith("'").any()
+    assert not mice_pandas.frame["class"].str.endswith("'").any()
 
 
 ###############################################################################
