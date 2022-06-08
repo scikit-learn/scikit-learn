@@ -137,20 +137,22 @@ def assert_argkmin_results_quasi_equality(
     n_queries, n_neighbors = ref_dist.shape
 
     # Asserting equality results one row at a time
-    for i in range(n_queries):
-        ref_dist_row = ref_dist[i]
-        dist_row = dist[i]
+    for query_idx in range(n_queries):
+        ref_dist_row = ref_dist[query_idx]
+        dist_row = dist[query_idx]
 
-        assert is_sorted(ref_dist_row), f"Reference distances aren't sorted on row {i}"
-        assert is_sorted(dist_row), f"Distances aren't sorted on row {i}"
+        assert is_sorted(
+            ref_dist_row
+        ), f"Reference distances aren't sorted on row {query_idx}"
+        assert is_sorted(dist_row), f"Distances aren't sorted on row {query_idx}"
 
         assert_allclose(ref_dist_row, dist_row, rtol=rtol)
 
-        ref_indices_row = ref_indices[i]
-        indices_row = indices[i]
+        ref_indices_row = ref_indices[query_idx]
+        indices_row = indices[query_idx]
 
-        # Grouping indices by distances using sets on
-        # a rounded distances up to a given number of decimals
+        # Grouping indices by distances using sets on a rounded distances up
+        # to a given number of decimals of significant digits derived from rtol.
         reference_neighbors_groups = defaultdict(set)
         effective_neighbors_groups = defaultdict(set)
 
@@ -164,8 +166,9 @@ def assert_argkmin_results_quasi_equality(
 
         # Asserting equality of groups (sets) for each distance
         msg = (
-            f"Neighbors indices for query {i} are not matching "
-            f"when rounding distances at n_significant_digits={n_significant_digits}"
+            f"Neighbors indices for query {query_idx} are not matching "
+            f"when rounding distances at {n_significant_digits} significant digits "
+            f"derived from rtol={rtol:.1e}"
         )
         for rounded_distance in reference_neighbors_groups.keys():
             assert (
@@ -254,16 +257,14 @@ def assert_radius_neighborhood_results_quasi_equality(
         # be able to compare them, ignoring the elements checked above.
         ref_dist_row = ref_dist_row[:min_length]
         dist_row = dist_row[:min_length]
-        print(type(ref_dist_row))
-        print(type(dist_row))
 
         assert_allclose(ref_dist_row, dist_row, rtol=rtol)
 
         ref_indices_row = ref_indices[query_idx]
         indices_row = indices[query_idx]
 
-        # Grouping indices by distances using sets on
-        # a rounded distances up to a given number of decimals
+        # Grouping indices by distances using sets on a rounded distances up
+        # to a given number of significant digits derived from rtol.
         reference_neighbors_groups = defaultdict(set)
         effective_neighbors_groups = defaultdict(set)
 
@@ -278,7 +279,8 @@ def assert_radius_neighborhood_results_quasi_equality(
         # Asserting equality of groups (sets) for each distance
         msg = (
             f"Neighbors indices for query {query_idx} are not matching "
-            f"when rounding distances at n_significant_digits={n_significant_digits}"
+            f"when rounding distances at {n_significant_digits} significant digits "
+            f"derived from rtol={rtol:.1e}"
         )
         for rounded_distance in reference_neighbors_groups.keys():
             assert (
@@ -314,12 +316,12 @@ ASSERT_RESULT = {
 def test_assert_argkmin_results_quasi_equality():
 
     rtol = 1e-7
-    atol = 1e-7
-    _1m = 1.0 - atol
-    _1p = 1.0 + atol
+    eps = 1e-7
+    _1m = 1.0 - eps
+    _1p = 1.0 + eps
 
-    _6_1m = 6.1 - atol
-    _6_1p = 6.1 + atol
+    _6_1m = 6.1 - eps
+    _6_1p = 6.1 + eps
 
     ref_dist = np.array(
         [
@@ -387,26 +389,10 @@ def test_assert_argkmin_results_quasi_equality():
     msg = "Distances aren't sorted on row 0"
     with pytest.raises(AssertionError, match=msg):
         assert_argkmin_results_quasi_equality(
-            ref_dist=np.array(
-                [
-                    [1.2, 2.5, _6_1m, 6.1, _6_1p],
-                ]
-            ),
-            dist=np.array(
-                [
-                    [2.5, 1.2, _6_1m, 6.1, _6_1p],
-                ]
-            ),
-            ref_indices=np.array(
-                [
-                    [1, 2, 3, 4, 5],
-                ]
-            ),
-            indices=np.array(
-                [
-                    [2, 1, 4, 5, 3],
-                ]
-            ),
+            np.array([[1.2, 2.5, _6_1m, 6.1, _6_1p]]),
+            np.array([[2.5, 1.2, _6_1m, 6.1, _6_1p]]),
+            np.array([[1, 2, 3, 4, 5]]),
+            np.array([[2, 1, 4, 5, 3]]),
             rtol=rtol,
         )
 
@@ -414,13 +400,12 @@ def test_assert_argkmin_results_quasi_equality():
 def test_assert_radius_neighborhood_results_quasi_equality():
 
     rtol = 1e-7
-    atol = 1e-7
+    eps = 1e-7
+    _1m = 1.0 - eps
+    _1p = 1.0 + eps
 
-    _1m = 1.0 - atol
-    _1p = 1.0 + atol
-
-    _6_1m = 6.1 - atol
-    _6_1p = 6.1 + atol
+    _6_1m = 6.1 - eps
+    _6_1p = 6.1 + eps
 
     ref_dist = np.array(
         [
