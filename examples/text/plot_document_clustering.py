@@ -273,10 +273,7 @@ fit_and_evaluate(kmeans, X, name="kmeans with\nTfidf-scaled hashing")
 # Plot unsupervised evaluation metrics
 # ====================================
 
-import matplotlib
-import matplotlib.pyplot as plt
 import pandas as pd
-from itertools import cycle
 
 df = pd.DataFrame(scores).set_index("estimator")
 
@@ -304,14 +301,10 @@ _ = ax.set_xlabel("Clustering scores")
 # Plot processing time
 # ====================
 
-fig, ax = plt.subplots(figsize=(12, 6))
-
-y_pos = np.arange(len(train_times["estimator"]))
-ax.barh(y_pos, train_times["train time"], align="center")
-ax.set_yticks(y_pos)
-ax.set_yticklabels(train_times["estimator"])
-ax.invert_yaxis()
-_ = ax.set_xlabel("processing times (s)")
+df = pd.DataFrame(train_times).set_index("estimator")
+ax = df.plot.barh()
+ax.set_xlabel("Processing times (s)")
+_ = ax.set_ylabel("")
 
 # %%
 # :class:`~sklearn.cluster.MiniBatchKMeans` requires less time since
