@@ -3,16 +3,87 @@
 #
 #    Author: Julien Jerphanion <git@jjerphan.xyz>
 #
+# Overview
+# --------
 #
-# The abstractions defined here are used in various algorithms performing
-# the same structure of operations on distances between row vectors
-# of a datasets pair (X, Y).
+#    This module provides routines to compute pairwise distances between a set
+#    of row vectors of X and another set of row vectors of Y and apply a
+#    reduction on top.
 #
-# Importantly, the core of the computation is chunked to make sure that the pairwise
-# distance chunk matrices stay in CPU cache before applying the final reduction step.
-# Furthermore, the chunking strategy is also used to leverage OpenMP-based parallelism
-# (using Cython prange loops) which gives another multiplicative speed-up in
-# favorable cases on many-core machines.
+#    The reduction takes a matrix of pairwise distances between rows of X and Y
+#    as input and outputs an aggregate data-structure for each row of X. The
+#    aggregate values are typically smaller than the number of rows in Y, hence
+#    the term reduction.
+#
+#    For computational reasons, the reduction are performed on the fly on chunks
+#    of rows of X and Y so as to keep intermediate data-structures in CPU cache
+#    and avoid unnecessary round trips of large distance arrays with the RAM
+#    that would otherwise severely degrade the speed by making the overall
+#    processing memory-bound.
+#
+#    Finally, the routines follow a generic parallelization template to process
+#    chunks of data with OpenMP loops (via Cython prange), either on rows of X
+#    or rows of Y depending on their respective sizes.
+#
+#
+# Dispatcher and implementations
+# ------------------------------
+#
+#    Dispatchers are meant to be used in the Python code. Under the hood, a
+#    dispatch must only define the logic to choose at runtime to the correct
+#    dtype-specialized :class:`PairwiseDistancesReduction` implementation based
+#    on the dtype of X and of Y.
+#
+#
+# High-level diagrams
+# -------------------
+#
+#   Legend:
+#
+#      A ---⊳ B: A inherits from B
+#      A ---x B: A dispatches on B
+#      A ---* B: A composes B
+#
+#
+#                           (base dispatcher)
+#                       PairwiseDistancesReduction
+#                                   ∆
+#                                   |
+#                                   |
+#                 +-----------------+-----------------+
+#                 |                                   |
+#           (dispatcher)                        (dispatcher)
+#     PairwiseDistancesArgKmin           PairwiseDistancesRadiusNeighbors
+#           |                                              |
+#           |                                              |
+#           |                                              |
+#           |                  (64bit implem.)             |
+#           |          PairwiseDistancesReduction64        |
+#           |                       ∆                      |
+#           |                       |                      |
+#           |                       |                      |
+#           |     +-----------------+-----------------+    |
+#           |     |                                   |    |
+#           |     |                                   |    |
+#           x     |                                   |    x
+#    PairwiseDistancesArgKmin64       PairwiseDistancesRadiusNeighbors64
+#           |     ∆                                   ∆    |
+#           |     |                                   |    |
+#           x     |                                   |    |
+# FastEuclideanPairwiseDistancesArgKmin64             |    |
+#                 *                                   |    |
+#                 |                                   |    x
+#                 |            FastEuclideanPairwiseDistancesRadiusNeighbors64
+#                 |                                   *
+#                 |                                   |
+#                 +-----------------+-----------------+
+#                                   |
+#                            GEMMTermComputer64
+#
+#    Finally, the implementation might dispatch to a specialised implementation
+#    for the Euclidean Distance case using the Generalized Matrix Multiplication
+#    (see :class:`GEMMTermComputer64`).
+
 cimport numpy as cnp
 import numpy as np
 import warnings
@@ -114,85 +185,13 @@ cpdef DTYPE_t[::1] _sqeuclidean_row_norms(
     return squared_row_norms
 
 #####################
-# Dispatcher:
-#
-#   Those dispatchers are meant to be used in the Python code, decoupling the
-#   actual implementations from the Python code. This allows changing all the
-#   private implementations while maintaining the same contract for the
-#   Python callers.
-#
-#   Each dispatcher extending the base `PairwiseDistancesReduction` dispatcher
-#   must implement the :meth:`compute` classmethod.
-#
-#   Under the hood, such a function must only define the logic to dispatch
-#   at runtime to the correct dtype-specialized `PairwiseDistancesReduction`
-#   implementation based on the dtype of X and of Y.
-#
+# Dispatchers
 
-# Base dispatcher
 cdef class PairwiseDistancesReduction:
-    """Abstract base class for pairwise distance computation & reduction.
+    """Abstract base dispatcher for pairwise distance computation & reduction.
 
-    Subclasses of this class compute pairwise distances between a set of
-    row vectors of X and another set of row vectors of Y and apply a reduction on top.
-    The reduction takes a matrix of pairwise distances between rows of X and Y
-    as input and outputs an aggregate data-structure for each row of X.
-    The aggregate values are typically smaller than the number of rows in Y,
-    hence the term reduction.
-
-    For computational reasons, it is interesting to perform the reduction on
-    the fly on chunks of rows of X and Y so as to keep intermediate
-    data-structures in CPU cache and avoid unnecessary round trips of large
-    distance arrays with the RAM that would otherwise severely degrade the
-    speed by making the overall processing memory-bound.
-
-    The base class provides the generic chunked parallelization template using
-    OpenMP loops (Cython prange), either on rows of X or rows of Y depending on
-    their respective sizes.
-
-    The subclasses are specialized for reduction.
-
-    The actual distance computation for a given pair of rows of X and Y are
-    delegated to format-specific subclasses of the DatasetsPair companion base
-    class.
-
-    Parameters
-    ----------
-    datasets_pair: DatasetsPair
-        The pair of dataset to use.
-
-    chunk_size: int, default=None
-        The number of vectors per chunk. If None (default) looks-up in
-        scikit-learn configuration for `pairwise_dist_chunk_size`,
-        and use 256 if it is not set.
-
-    strategy : str, {'auto', 'parallel_on_X', 'parallel_on_Y'}, default=None
-        The chunking strategy defining which dataset parallelization are made on.
-
-        For both strategies the computations happens with two nested loops,
-        respectively on chunks of X and chunks of Y.
-        Strategies differs on which loop (outer or inner) is made to run
-        in parallel with the Cython `prange` construct:
-
-          - 'parallel_on_X' dispatches chunks of X uniformly on threads.
-          Each thread then iterates on all the chunks of Y. This strategy is
-          embarrassingly parallel and comes with no datastructures synchronisation.
-
-          - 'parallel_on_Y' dispatches chunks of Y uniformly on threads.
-          Each thread processes all the chunks of X in turn. This strategy is
-          a sequence of embarrassingly parallel subtasks (the inner loop on Y
-          chunks) with intermediate datastructures synchronisation at each
-          iteration of the sequential outer loop on X chunks.
-
-          - 'auto' relies on a simple heuristic to choose between
-          'parallel_on_X' and 'parallel_on_Y': when `X.shape[0]` is large enough,
-          'parallel_on_X' is usually the most efficient strategy. When `X.shape[0]`
-          is small but `Y.shape[0]` is large, 'parallel_on_Y' brings more opportunity
-          for parallelism and is therefore more efficient despite the synchronization
-          step at each iteration of the outer loop on chunks of `X`.
-
-          - None (default) looks-up in scikit-learn configuration for
-          `pairwise_dist_parallel_strategy`, and use 'auto' if it is not set.
+    Each dispatcher extending the base :class:`PairwiseDistancesReduction`
+    dispatcher must implement the :meth:`compute` classmethod.
     """
 
     @classmethod
@@ -211,7 +210,8 @@ cdef class PairwiseDistancesReduction:
 
     @classmethod
     def is_usable_for(cls, X, Y, metric) -> bool:
-        """Return True if the PairwiseDistancesReduction can be used for the given parameters.
+        """Return True if the PairwiseDistancesReduction can be used for the
+        given parameters.
 
         Parameters
         ----------
@@ -245,18 +245,9 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
     PairwiseDistancesArgKmin is typically used to perform
     bruteforce k-nearest neighbors queries.
 
-    Parameters
-    ----------
-    datasets_pair: DatasetsPair
-        The dataset pairs (X, Y) for the reduction.
-
-    chunk_size: int, default=None,
-        The number of vectors per chunk. If None (default) looks-up in
-        scikit-learn configuration for `pairwise_dist_chunk_size`,
-        and use 256 if it is not set.
-
-    k: int, default=1
-        The k for the argkmin reduction.
+    This class is not meant to be instanciated, one should only use
+    its :meth:`compute` classmethod which handles allocation and
+    deallocation consistently.
     """
 
     @classmethod
@@ -271,7 +262,7 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
         str strategy=None,
         bint return_distance=False,
     ):
-        """Return the results of the reduction for the given arguments.
+        """Compute the argkmin reduction.
 
         Parameters
         ----------
@@ -331,27 +322,26 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
 
         Returns
         -------
-            If return_distance=False:
-              - argkmin_indices : ndarray of shape (n_samples_X, k)
-                Indices of the argkmin for each vector in X.
+        If return_distance=False:
+          - argkmin_indices : ndarray of shape (n_samples_X, k)
+            Indices of the argkmin for each vector in X.
 
-            If return_distance=True:
-              - argkmin_distances : ndarray of shape (n_samples_X, k)
-                Distances to the argkmin for each vector in X.
-              - argkmin_indices : ndarray of shape (n_samples_X, k)
-                Indices of the argkmin for each vector in X.
+        If return_distance=True:
+          - argkmin_distances : ndarray of shape (n_samples_X, k)
+            Distances to the argkmin for each vector in X.
+          - argkmin_indices : ndarray of shape (n_samples_X, k)
+            Indices of the argkmin for each vector in X.
 
         Notes
         -----
-            This public classmethod is responsible for introspecting the arguments
-            values to dispatch to the private dtype-specialized implementation of
-            :class:`PairwiseDistancesArgKmin`.
+        This classmethod is responsible for introspecting the arguments
+        values to dispatch to the most appropriate implementation of
+        :class:`PairwiseDistancesArgKmin`.
 
-            All temporarily allocated datastructures necessary for the concrete
-            implementation are therefore freed when this classmethod returns.
-
-            This allows decoupling the API entirely from the
-            implementation details whilst maintaining RAII.
+        This allows decoupling the API entirely from the implementation details
+        whilst maintaining RAII: all temporarily allocated datastructures necessary
+        for the concrete implementation are therefore freed when this classmethod
+        returns.
         """
         if X.dtype == Y.dtype == np.float64:
             return PairwiseDistancesArgKmin64.compute(
@@ -381,18 +371,9 @@ cdef class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
     The distance function `dist` depends on the values of the `metric`
     and `metric_kwargs` parameters.
 
-    Parameters
-    ----------
-    datasets_pair: DatasetsPair
-        The dataset pair (X, Y) for the reduction.
-
-    chunk_size: int, default=None,
-        The number of vectors per chunk. If None (default) looks-up in
-        scikit-learn configuration for `pairwise_dist_chunk_size`,
-        and use 256 if it is not set.
-
-    radius: float
-        The radius defining the neighborhood.
+    This class is not meant to be instanciated, one should only use
+    its :meth:`compute` classmethod which handles allocation and
+    deallocation consistently.
     """
 
     @classmethod
@@ -483,15 +464,15 @@ cdef class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
 
         Notes
         -----
-            This public classmethod is responsible for introspecting the arguments
-            values to dispatch to the private dtype-specialized implementation of
-            :class:`PairwiseDistancesRadiusNeighborhood`.
+        This public classmethod is responsible for introspecting the arguments
+        values to dispatch to the private dtype-specialized implementation of
+        :class:`PairwiseDistancesRadiusNeighborhood`.
 
-            All temporarily allocated datastructures necessary for the concrete
-            implementation are therefore freed when this classmethod returns.
+        All temporarily allocated datastructures necessary for the concrete
+        implementation are therefore freed when this classmethod returns.
 
-            This allows entirely decoupling the API entirely from the
-            implementation details whilst maintaining RAII.
+        This allows entirely decoupling the API entirely from the
+        implementation details whilst maintaining RAII.
         """
         if X.dtype == Y.dtype == np.float64:
             return PairwiseDistancesRadiusNeighborhood64.compute(
@@ -511,12 +492,8 @@ cdef class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
         )
 
 #####################
-# dtype-specialized implementations:
-#
-#   For each dtype, an implementation of `PairwiseDistancesReductions` is generated
-#   by Tempita. Computations are dispatched to them at runtime via the dispatchers
-#   defined above. Other helpers are also made dtype-specialized.
-#
+# dtype-specialized implementations
+
 cpdef DTYPE_t[::1] _sqeuclidean_row_norms64(
     const DTYPE_t[:, ::1] X,
     ITYPE_t num_threads,
@@ -675,19 +652,19 @@ cdef class GEMMTermComputer64:
 
         return dist_middle_terms
 
-cdef class PairwiseDistancesReduction64(PairwiseDistancesReduction):
-    """64bit implementation of PairwiseDistancesReduction."""
+cdef class PairwiseDistancesReduction64:
+    """Base 64bit implementation of PairwiseDistancesReduction."""
 
     cdef:
         readonly DatasetsPair datasets_pair
 
         # The number of threads that can be used is stored in effective_n_threads.
         #
-        # The number of threads to use in the parallelisation strategy
+        # The number of threads to use in the parallelization strategy
         # (i.e. parallel_on_X or parallel_on_Y) can be smaller than effective_n_threads:
-        # for small datasets, less threads might be needed to loop over pair of chunks.
+        # for small datasets, fewer threads might be needed to loop over pair of chunks.
         #
-        # Hence the number of threads that _will_ be used for looping over chunks
+        # Hence, the number of threads that _will_ be used for looping over chunks
         # is stored in chunks_n_threads, allowing solely using what we need.
         #
         # Thus, an invariant is:
@@ -921,7 +898,7 @@ cdef class PairwiseDistancesReduction64(PairwiseDistancesReduction):
         """Compute the pairwise distances on two chunks of X and Y and reduce them.
 
         This is THE core computational method of PairwiseDistanceReductions64.
-        This must be implemented in subclasses agnostically from the parallelisation
+        This must be implemented in subclasses agnostically from the parallelization
         strategies.
         """
         return
@@ -1053,87 +1030,18 @@ cdef class PairwiseDistancesArgKmin64(PairwiseDistancesReduction64):
         str strategy=None,
         bint return_distance=False,
     ):
-        """Return the results of the reduction for the given arguments.
+        """Compute the argkmin reduction.
 
-        Parameters
-        ----------
-        X : ndarray or CSR matrix of shape (n_samples_X, n_features)
-            Input data.
+        This classmethod is responsible for introspecting the arguments
+        values to dispatch to the most appropriate implementation of
+        :class:`PairwiseDistancesArgKmin64`.
 
-        Y : ndarray or CSR matrix of shape (n_samples_Y, n_features)
-            Input data.
+        This allows decoupling the API entirely from the implementation details
+        whilst maintaining RAII: all temporarily allocated datastructures necessary
+        for the concrete implementation are therefore freed when this classmethod
+        returns.
 
-        k : int
-            The k for the argkmin reduction.
-
-        metric : str, default='euclidean'
-            The distance metric to use for argkmin.
-            For a list of available metrics, see the documentation of
-            :class:`~sklearn.metrics.DistanceMetric`.
-
-        chunk_size : int, default=None,
-            The number of vectors per chunk. If None (default) looks-up in
-            scikit-learn configuration for `pairwise_dist_chunk_size`,
-            and use 256 if it is not set.
-
-        metric_kwargs : dict, default=None
-            Keyword arguments to pass to specified metric function.
-
-        strategy : str, {'auto', 'parallel_on_X', 'parallel_on_Y'}, default=None
-            The chunking strategy defining which dataset parallelization are made on.
-
-            For both strategies the computations happens with two nested loops,
-            respectively on chunks of X and chunks of Y.
-            Strategies differs on which loop (outer or inner) is made to run
-            in parallel with the Cython `prange` construct:
-
-              - 'parallel_on_X' dispatches chunks of X uniformly on threads.
-              Each thread then iterates on all the chunks of Y. This strategy is
-              embarrassingly parallel and comes with no datastructures synchronisation.
-
-              - 'parallel_on_Y' dispatches chunks of Y uniformly on threads.
-              Each thread processes all the chunks of X in turn. This strategy is
-              a sequence of embarrassingly parallel subtasks (the inner loop on Y
-              chunks) with intermediate datastructures synchronisation at each
-              iteration of the sequential outer loop on X chunks.
-
-              - 'auto' relies on a simple heuristic to choose between
-              'parallel_on_X' and 'parallel_on_Y': when `X.shape[0]` is large enough,
-              'parallel_on_X' is usually the most efficient strategy. When `X.shape[0]`
-              is small but `Y.shape[0]` is large, 'parallel_on_Y' brings more opportunity
-              for parallelism and is therefore more efficient despite the synchronization
-              step at each iteration of the outer loop on chunks of `X`.
-
-              - None (default) looks-up in scikit-learn configuration for
-              `pairwise_dist_parallel_strategy`, and use 'auto' if it is not set.
-
-        return_distance : boolean, default=False
-            Return distances between each X vector and its
-            argkmin if set to True.
-
-        Returns
-        -------
-            If return_distance=False:
-              - argkmin_indices : ndarray of shape (n_samples_X, k)
-                Indices of the argkmin for each vector in X.
-
-            If return_distance=True:
-              - argkmin_distances : ndarray of shape (n_samples_X, k)
-                Distances to the argkmin for each vector in X.
-              - argkmin_indices : ndarray of shape (n_samples_X, k)
-                Indices of the argkmin for each vector in X.
-
-        Notes
-        -----
-            This public classmethod is responsible for introspecting the arguments
-            values to dispatch to the most appropriate concrete implementation
-            of :class:`PairwiseDistancesArgKmin64`.
-
-            All temporarily allocated datastructures necessary for the concrete
-            implementation are therefore freed when this classmethod returns.
-
-            This allows decoupling the API entirely from the
-            implementation details whilst maintaining RAII.
+        No instance should directly be created outside of this class method.
         """
         # Note (jjerphan): Some design thoughts for future extensions.
         # This factory comes to handle specialisations for the given arguments.
@@ -1638,90 +1546,18 @@ cdef class PairwiseDistancesRadiusNeighborhood64(PairwiseDistancesReduction64):
         bint return_distance=False,
         bint sort_results=False,
     ):
-        """Return the results of the reduction for the given arguments.
+        """Compute the radius-neighbors reduction.
 
-        Parameters
-        ----------
-        X : ndarray or CSR matrix of shape (n_samples_X, n_features)
-            Input data.
+        This classmethod is responsible for introspecting the arguments
+        values to dispatch to the most appropriate implementation of
+        :class:`PairwiseDistancesRadiusNeighborhood64`.
 
-        Y : ndarray or CSR matrix of shape (n_samples_Y, n_features)
-            Input data.
+        This allows decoupling the API entirely from the implementation details
+        whilst maintaining RAII: all temporarily allocated datastructures necessary
+        for the concrete implementation are therefore freed when this classmethod
+        returns.
 
-        radius : float
-            The radius defining the neighborhood.
-
-        metric : str, default='euclidean'
-            The distance metric to use.
-            For a list of available metrics, see the documentation of
-            :class:`~sklearn.metrics.DistanceMetric`.
-
-        chunk_size : int, default=None,
-            The number of vectors per chunk. If None (default) looks-up in
-            scikit-learn configuration for `pairwise_dist_chunk_size`,
-            and use 256 if it is not set.
-
-        metric_kwargs : dict, default=None
-            Keyword arguments to pass to specified metric function.
-
-        strategy : str, {'auto', 'parallel_on_X', 'parallel_on_Y'}, default=None
-            The chunking strategy defining which dataset parallelization are made on.
-
-            For both strategies the computations happens with two nested loops,
-            respectively on chunks of X and chunks of Y.
-            Strategies differs on which loop (outer or inner) is made to run
-            in parallel with the Cython `prange` construct:
-
-              - 'parallel_on_X' dispatches chunks of X uniformly on threads.
-              Each thread then iterates on all the chunks of Y. This strategy is
-              embarrassingly parallel and comes with no datastructures synchronisation.
-
-              - 'parallel_on_Y' dispatches chunks of Y uniformly on threads.
-              Each thread processes all the chunks of X in turn. This strategy is
-              a sequence of embarrassingly parallel subtasks (the inner loop on Y
-              chunks) with intermediate datastructures synchronisation at each
-              iteration of the sequential outer loop on X chunks.
-
-              - 'auto' relies on a simple heuristic to choose between
-              'parallel_on_X' and 'parallel_on_Y': when `X.shape[0]` is large enough,
-              'parallel_on_X' is usually the most efficient strategy. When `X.shape[0]`
-              is small but `Y.shape[0]` is large, 'parallel_on_Y' brings more opportunity
-              for parallelism and is therefore more efficient despite the synchronization
-              step at each iteration of the outer loop on chunks of `X`.
-
-              - None (default) looks-up in scikit-learn configuration for
-              `pairwise_dist_parallel_strategy`, and use 'auto' if it is not set.
-
-        return_distance : boolean, default=False
-            Return distances between each X vector and its neighbors if set to True.
-
-        sort_results : boolean, default=False
-            Sort results with respect to distances between each X vector and its
-            neighbors if set to True.
-
-        Returns
-        -------
-        If return_distance=False:
-          - neighbors_indices : ndarray of n_samples_X ndarray
-            Indices of the neighbors for each vector in X.
-
-        If return_distance=True:
-          - neighbors_indices : ndarray of n_samples_X ndarray
-            Indices of the neighbors for each vector in X.
-          - neighbors_distances : ndarray of n_samples_X ndarray
-            Distances to the neighbors for each vector in X.
-
-        Notes
-        -----
-            This public classmethod is responsible for introspecting the arguments
-            values to dispatch to the most appropriate concrete implementation
-            of :class:`PairwiseDistancesRadiusNeighborhood64`.
-
-            All temporarily allocated datastructures necessary for the concrete
-            implementation are therefore freed when this classmethod returns.
-
-            This allows entirely decoupling the API entirely from the
-            implementation details whilst maintaining RAII.
+        No instance should directly be created outside of this class method.
         """
         # Note (jjerphan): Some design thoughts for future extensions.
         # This factory comes to handle specialisations for the given arguments.
