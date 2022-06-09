@@ -285,39 +285,28 @@ for i in range(true_k):
 # A similar experiment can be done using a
 # :class:`~sklearn.feature_extraction.text.HashingVectorizer` instance, which
 # does not provide IDF weighting as this is a stateless model (the fit method
-# does nothing). Here we illustrate the effect of Tfidf weighting by
-# benchmarking the function :class:`~sklearn.cluster.KMeans` with and without
-# such normalization.
+# does nothing). When IDF weighting is needed it can be added by pipelining the
+# :class:`~sklearn.feature_extraction.text.HashingVectorizer` output to a
+# :class:`~sklearn.feature_extraction.text.TfidfTransformer` instance. In this
+# case we also add LSA to the pipeline to evaluate the `"k-means++"` init.
 
 from sklearn.feature_extraction.text import HashingVectorizer
+from sklearn.feature_extraction.text import TfidfTransformer
 
 hasher = HashingVectorizer(
     stop_words="english",
     alternate_sign=False,
     norm=None,
 )
+make_pipeline(TruncatedSVD(n_components=100), Normalizer(copy=False))
+
+lsa_vectorizer = make_pipeline(hasher, TfidfTransformer(), lsa)
 
 t0 = time()
-X = hasher.fit_transform(dataset.data)
-print(f"vectorizing done in {time() - t0:.3f} s")
-print(f"n_samples: {X.shape[0]}, n_features: {X.shape[1]}")
-
-fit_and_evaluate(kmeans, X, name="KMeans with\nsimple hashing")
-
-# %%
-# When IDF weighting is needed it can be added by pipelining the
-# :class:`~sklearn.feature_extraction.text.HashingVectorizer` output to a
-# :class:`~sklearn.feature_extraction.text.TfidfTransformer` instance.
-
-from sklearn.feature_extraction.text import TfidfTransformer
-
-vectorizer = make_pipeline(hasher, TfidfTransformer())
-
-t0 = time()
-X = vectorizer.fit_transform(dataset.data)
+X = lsa_vectorizer.fit_transform(dataset.data)
 print(f"vectorizing done in {time() - t0:.3f} s")
 
-fit_and_evaluate(kmeans, X, name="KMeans with\nTfidf-scaled hashing")
+fit_and_evaluate(kmeans, X, name="KMeans with\nhashing and LSA")
 
 # %%
 # Plot clustering evaluation metrics
@@ -334,20 +323,12 @@ ax.set_xlabel("Clustering scores")
 plt.tight_layout()
 
 # %%
-# It can be noticed that :class:`~sklearn.cluster.KMeans` (and
-# :class:`~sklearn.cluster.MiniBatchKMeans`) are very sensitive to feature
-# scaling. In this case, the KMeans with TF-IDF-scaled hashing has better
-# quality of the clustering than KMeans with simple hashing when using "ground
-# truth" metrics provided by the class label assignments of
-# :ref:`20newsgroups_dataset`.
-#
-# This improvement is not visible in the Silhouette Coefficient which suffers
-# from the phenomenon called "Concentration of Measure" or "Curse of
-# Dimensionality" for high dimensional datasets such as text data. Other
-# measures such as the V-measure and the Adjusted Rand Index are
-# information-theory-based evaluation scores: they are not affected by the curse
-# of dimensionality as they are only based on cluster assignments rather than
-# distances.
+# The Silhouette Coefficient improves when using LSA. It suffers from the
+# phenomenon called "Concentration of Measure" or "Curse of Dimensionality" for
+# high dimensional datasets such as text data. Other measures such as the
+# V-measure and the Adjusted Rand Index are information-theory-based evaluation
+# scores: they are not affected by the curse of dimensionality as they are only
+# based on cluster assignments rather than distances.
 
 # %%
 # Plot clustering time
