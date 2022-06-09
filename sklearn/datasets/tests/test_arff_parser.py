@@ -158,7 +158,7 @@ def test_pandas_arff_parser_strip_double_quotes(parser_func):
         textwrap.dedent(
             """
             @relation 'toy'
-            @attribute \'cat_double_quote\' {"A", "B", "C"}
+            @attribute 'cat_double_quote' {"A", "B", "C"}
             @attribute 'str_double_quote' string
             @attribute 'str_nested_quote' string
             @attribute 'class' numeric
