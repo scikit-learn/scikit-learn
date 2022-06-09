@@ -414,7 +414,6 @@ def assert_allclose(
         If None, it is set based on the provided arrays' dtypes.
     atol : float, optional, default=0.
         Absolute tolerance.
-        If None, it is set based on the provided arrays' dtypes.
     equal_nan : bool, optional, default=True
         If True, NaNs will compare equal.
     err_msg : str, optional, default=''
