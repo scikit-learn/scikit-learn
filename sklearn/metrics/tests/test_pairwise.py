@@ -1519,7 +1519,4 @@ def test_numeric_pairwise_distances_datatypes(metric, global_dtype, y_is_x):
 
     dist = pairwise_distances(X, Y, metric=metric, **params)
 
-    # the default rtol=1e-7 is too close to the float32 precision
-    # and fails due to rounding errors
-    rtol = 1e-5 if global_dtype is np.float32 else 1e-7
-    assert_allclose(dist, expected_dist, rtol=rtol)
+    assert_allclose(dist, expected_dist)
