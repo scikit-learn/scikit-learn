@@ -63,8 +63,12 @@ __all__ = [
 DTYPE = _tree.DTYPE
 DOUBLE = _tree.DOUBLE
 
-CRITERIA_CLF = {"gini": _criterion.Gini, "entropy": _criterion.Entropy}
-# TODO: Remove "mse" and "mae" in version 1.2.
+CRITERIA_CLF = {
+    "gini": _criterion.Gini,
+    "log_loss": _criterion.Entropy,
+    "entropy": _criterion.Entropy,
+}
+# TODO(1.2): Remove "mse" and "mae".
 CRITERIA_REG = {
     "squared_error": _criterion.MSE,
     "mse": _criterion.MSE,
@@ -161,7 +165,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         if check_input:
             # Need to validate separately here.
-            # We can't pass multi_ouput=True because that would allow y to be
+            # We can't pass multi_output=True because that would allow y to be
             # csr.
             check_X_params = dict(dtype=DTYPE, accept_sparse="csc")
             check_y_params = dict(ensure_2d=False, dtype=None)
@@ -291,8 +295,20 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             if self.max_features == "auto":
                 if is_classification:
                     max_features = max(1, int(np.sqrt(self.n_features_in_)))
+                    warnings.warn(
+                        "`max_features='auto'` has been deprecated in 1.1 "
+                        "and will be removed in 1.3. To keep the past behaviour, "
+                        "explicitly set `max_features='sqrt'`.",
+                        FutureWarning,
+                    )
                 else:
                     max_features = self.n_features_in_
+                    warnings.warn(
+                        "`max_features='auto'` has been deprecated in 1.1 "
+                        "and will be removed in 1.3. To keep the past behaviour, "
+                        "explicitly set `max_features=1.0'`.",
+                        FutureWarning,
+                    )
             elif self.max_features == "sqrt":
                 max_features = max(1, int(np.sqrt(self.n_features_in_)))
             elif self.max_features == "log2":
@@ -376,7 +392,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 )
             else:
                 criterion = CRITERIA_REG[self.criterion](self.n_outputs_, n_samples)
-            # TODO: Remove in v1.2
+            # TODO(1.2): Remove "mse" and "mae"
             if self.criterion == "mse":
                 warnings.warn(
                     "Criterion 'mse' was deprecated in v1.0 and will be "
@@ -662,9 +678,10 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
     Parameters
     ----------
-    criterion : {"gini", "entropy"}, default="gini"
+    criterion : {"gini", "entropy", "log_loss"}, default="gini"
         The function to measure the quality of a split. Supported criteria are
-        "gini" for the Gini impurity and "entropy" for the information gain.
+        "gini" for the Gini impurity and "log_loss" and "entropy" both for the
+        Shannon information gain, see :ref:`tree_mathematical_formulation`.
 
     splitter : {"best", "random"}, default="best"
         The strategy used to choose the split at each node. Supported
@@ -718,6 +735,10 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             - If "sqrt", then `max_features=sqrt(n_features)`.
             - If "log2", then `max_features=log2(n_features)`.
             - If None, then `max_features=n_features`.
+
+            .. deprecated:: 1.1
+                The `"auto"` option was deprecated in 1.1 and will be removed
+                in 1.3.
 
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
@@ -1126,6 +1147,10 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         - If "log2", then `max_features=log2(n_features)`.
         - If None, then `max_features=n_features`.
 
+        .. deprecated:: 1.1
+            The `"auto"` option was deprecated in 1.1 and will be removed
+            in 1.3.
+
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
         effectively inspect more than ``max_features`` features.
@@ -1374,9 +1399,10 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
 
     Parameters
     ----------
-    criterion : {"gini", "entropy"}, default="gini"
+    criterion : {"gini", "entropy", "log_loss"}, default="gini"
         The function to measure the quality of a split. Supported criteria are
-        "gini" for the Gini impurity and "entropy" for the information gain.
+        "gini" for the Gini impurity and "log_loss" and "entropy" both for the
+        Shannon information gain, see :ref:`tree_mathematical_formulation`.
 
     splitter : {"random", "best"}, default="random"
         The strategy used to choose the split at each node. Supported
@@ -1419,7 +1445,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
-    max_features : int, float, {"auto", "sqrt", "log2"} or None, default="auto"
+    max_features : int, float, {"auto", "sqrt", "log2"} or None, default="sqrt"
         The number of features to consider when looking for the best split:
 
             - If int, then consider `max_features` features at each split.
@@ -1430,6 +1456,13 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
             - If "sqrt", then `max_features=sqrt(n_features)`.
             - If "log2", then `max_features=log2(n_features)`.
             - If None, then `max_features=n_features`.
+
+            .. versionchanged:: 1.1
+                The default of `max_features` changed from `"auto"` to `"sqrt"`.
+
+            .. deprecated:: 1.1
+                The `"auto"` option was deprecated in 1.1 and will be removed
+                in 1.3.
 
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
@@ -1592,7 +1625,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         min_samples_split=2,
         min_samples_leaf=1,
         min_weight_fraction_leaf=0.0,
-        max_features="auto",
+        max_features="sqrt",
         random_state=None,
         max_leaf_nodes=None,
         min_impurity_decrease=0.0,
@@ -1692,7 +1725,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
-    max_features : int, float, {"auto", "sqrt", "log2"} or None, default="auto"
+    max_features : int, float, {"auto", "sqrt", "log2"} or None, default=1.0
         The number of features to consider when looking for the best split:
 
         - If int, then consider `max_features` features at each split.
@@ -1703,6 +1736,13 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         - If "sqrt", then `max_features=sqrt(n_features)`.
         - If "log2", then `max_features=log2(n_features)`.
         - If None, then `max_features=n_features`.
+
+        .. versionchanged:: 1.1
+            The default of `max_features` changed from `"auto"` to `1.0`.
+
+        .. deprecated:: 1.1
+            The `"auto"` option was deprecated in 1.1 and will be removed
+            in 1.3.
 
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
@@ -1828,7 +1868,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         min_samples_split=2,
         min_samples_leaf=1,
         min_weight_fraction_leaf=0.0,
-        max_features="auto",
+        max_features=1.0,
         random_state=None,
         min_impurity_decrease=0.0,
         max_leaf_nodes=None,

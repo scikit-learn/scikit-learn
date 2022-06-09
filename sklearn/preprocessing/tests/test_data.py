@@ -345,9 +345,9 @@ def test_standard_scaler_numerical_stability():
     x = np.full(8, np.log(1e-5), dtype=np.float64)
     # This does not raise a warning as the number of samples is too low
     # to trigger the problem in recent numpy
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
         scale(x)
-    assert not [w.message for w in record]
     assert_array_almost_equal(scale(x), np.zeros(8))
 
     # with 2 more samples, the std computation run into numerical issues:
@@ -358,9 +358,9 @@ def test_standard_scaler_numerical_stability():
     assert_array_almost_equal(x_scaled, np.zeros(10))
 
     x = np.full(10, 1e-100, dtype=np.float64)
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
         x_small_scaled = scale(x)
-    assert not [w.message for w in record]
     assert_array_almost_equal(x_small_scaled, np.zeros(10))
 
     # Large values can cause (often recoverable) numerical stability issues:
@@ -2631,6 +2631,30 @@ def test_standard_scaler_raise_error_for_1d_input():
     err_msg = "Expected 2D array, got 1D array instead"
     with pytest.raises(ValueError, match=err_msg):
         scaler.inverse_transform(X_2d[:, 0])
+
+
+def test_power_transformer_significantly_non_gaussian():
+    """Check that significantly non-Gaussian data before transforms correctly.
+
+    For some explored lambdas, the transformed data may be constant and will
+    be rejected. Non-regression test for
+    https://github.com/scikit-learn/scikit-learn/issues/14959
+    """
+
+    X_non_gaussian = 1e6 * np.array(
+        [0.6, 2.0, 3.0, 4.0] * 4 + [11, 12, 12, 16, 17, 20, 85, 90], dtype=np.float64
+    ).reshape(-1, 1)
+    pt = PowerTransformer()
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
+        X_trans = pt.fit_transform(X_non_gaussian)
+
+    assert not np.any(np.isnan(X_trans))
+    assert X_trans.mean() == pytest.approx(0.0)
+    assert X_trans.std() == pytest.approx(1.0)
+    assert X_trans.min() > -2
+    assert X_trans.max() < 2
 
 
 @pytest.mark.parametrize(

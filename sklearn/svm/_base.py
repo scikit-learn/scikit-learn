@@ -290,9 +290,6 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
         Default implementation for SVR and one-class; overridden in BaseSVC.
         """
-        # XXX this is ugly.
-        # Regression models should not have a class_weight_ attribute.
-        self.class_weight_ = np.empty(0)
         return column_or_1d(y, warn=True).astype(np.float64, copy=False)
 
     def _warn_from_fit_status(self):
@@ -335,7 +332,8 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             y,
             svm_type=solver_type,
             sample_weight=sample_weight,
-            class_weight=self.class_weight_,
+            # TODO(1.4): Replace "_class_weight" with "class_weight_"
+            class_weight=getattr(self, "_class_weight", np.empty(0)),
             kernel=kernel,
             C=self.C,
             nu=self.nu,
@@ -384,7 +382,8 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self.coef0,
             self.tol,
             self.C,
-            self.class_weight_,
+            # TODO(1.4): Replace "_class_weight" with "class_weight_"
+            getattr(self, "_class_weight", np.empty(0)),
             sample_weight,
             self.nu,
             self.cache_size,
@@ -494,7 +493,8 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self.coef0,
             self.tol,
             C,
-            self.class_weight_,
+            # TODO(1.4): Replace "_class_weight" with "class_weight_"
+            getattr(self, "_class_weight", np.empty(0)),
             self.nu,
             self.epsilon,
             self.shrinking,
@@ -594,7 +594,8 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self.coef0,
             self.tol,
             self.C,
-            self.class_weight_,
+            # TODO(1.4): Replace "_class_weight" with "class_weight_"
+            getattr(self, "_class_weight", np.empty(0)),
             self.nu,
             self.epsilon,
             self.shrinking,
@@ -942,7 +943,8 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
             self.coef0,
             self.tol,
             self.C,
-            self.class_weight_,
+            # TODO(1.4): Replace "_class_weight" with "class_weight_"
+            getattr(self, "_class_weight", np.empty(0)),
             self.nu,
             self.epsilon,
             self.shrinking,
@@ -987,6 +989,14 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
         ndarray of shape  (n_classes * (n_classes - 1) / 2)
         """
         return self._probB
+
+    # TODO(1.4): Remove
+    @property
+    def _class_weight(self):
+        """Weights per class"""
+        # Class weights are defined for classifiers during
+        # fit.
+        return self.class_weight_
 
 
 def _get_liblinear_solver_type(multi_class, penalty, loss, dual):

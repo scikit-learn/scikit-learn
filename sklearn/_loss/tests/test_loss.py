@@ -23,6 +23,7 @@ from sklearn._loss.loss import (
     HalfPoissonLoss,
     HalfSquaredError,
     HalfTweedieLoss,
+    HalfTweedieLossIdentity,
     PinballLoss,
 )
 from sklearn.utils import assert_all_finite
@@ -40,6 +41,10 @@ LOSS_INSTANCES += [
     HalfTweedieLoss(power=1),
     HalfTweedieLoss(power=2),
     HalfTweedieLoss(power=3.0),
+    HalfTweedieLossIdentity(power=0),
+    HalfTweedieLossIdentity(power=1),
+    HalfTweedieLossIdentity(power=2),
+    HalfTweedieLossIdentity(power=3.0),
 ]
 
 
@@ -70,8 +75,14 @@ def random_y_true_raw_prediction(
         )
         y_true = np.arange(n_samples).astype(float) % loss.n_classes
     else:
+        # If link is identity, we must respect the interval of y_pred:
+        if isinstance(loss.link, IdentityLink):
+            low, high = _inclusive_low_high(loss.interval_y_pred)
+            low = np.amax([low, raw_bound[0]])
+            high = np.amin([high, raw_bound[1]])
+            raw_bound = (low, high)
         raw_prediction = rng.uniform(
-            low=raw_bound[0], high=raw_bound[0], size=n_samples
+            low=raw_bound[0], high=raw_bound[1], size=n_samples
         )
         # generate a y_true in valid range
         low, high = _inclusive_low_high(loss.interval_y_true)
@@ -149,6 +160,11 @@ Y_COMMON_PARAMS = [
     (HalfTweedieLoss(power=1.5), [0.1, 100], [-np.inf, -3, -0.1, np.inf]),
     (HalfTweedieLoss(power=2), [0.1, 100], [-np.inf, -3, -0.1, 0, np.inf]),
     (HalfTweedieLoss(power=3), [0.1, 100], [-np.inf, -3, -0.1, 0, np.inf]),
+    (HalfTweedieLossIdentity(power=-3), [0.1, 100], [-np.inf, np.inf]),
+    (HalfTweedieLossIdentity(power=0), [-3, -0.1, 0, 0.1, 100], [-np.inf, np.inf]),
+    (HalfTweedieLossIdentity(power=1.5), [0.1, 100], [-np.inf, -3, -0.1, np.inf]),
+    (HalfTweedieLossIdentity(power=2), [0.1, 100], [-np.inf, -3, -0.1, 0, np.inf]),
+    (HalfTweedieLossIdentity(power=3), [0.1, 100], [-np.inf, -3, -0.1, 0, np.inf]),
     (HalfBinomialLoss(), [0.1, 0.5, 0.9], [-np.inf, -1, 2, np.inf]),
     (HalfMultinomialLoss(), [], [-np.inf, -1, 1.1, np.inf]),
 ]
@@ -160,6 +176,9 @@ Y_TRUE_PARAMS = [  # type: ignore
     (HalfTweedieLoss(power=-3), [-100, -0.1, 0], []),
     (HalfTweedieLoss(power=0), [-100, 0], []),
     (HalfTweedieLoss(power=1.5), [0], []),
+    (HalfTweedieLossIdentity(power=-3), [-100, -0.1, 0], []),
+    (HalfTweedieLossIdentity(power=0), [-100, 0], []),
+    (HalfTweedieLossIdentity(power=1.5), [0], []),
     (HalfBinomialLoss(), [0, 1], []),
     (HalfMultinomialLoss(), [0.0, 1.0, 2], []),
 ]
@@ -169,6 +188,9 @@ Y_PRED_PARAMS = [
     (HalfTweedieLoss(power=-3), [], [-3, -0.1, 0]),
     (HalfTweedieLoss(power=0), [], [-3, -0.1, 0]),
     (HalfTweedieLoss(power=1.5), [], [0]),
+    (HalfTweedieLossIdentity(power=-3), [], [-3, -0.1, 0]),
+    (HalfTweedieLossIdentity(power=0), [-3, -0.1, 0], []),
+    (HalfTweedieLossIdentity(power=1.5), [], [0]),
     (HalfBinomialLoss(), [], [0, 1]),
     (HalfMultinomialLoss(), [0.1, 0.5], [0, 1]),
 ]
@@ -207,6 +229,9 @@ def test_loss_boundary_y_pred(loss, y_pred_success, y_pred_fail):
         (HalfPoissonLoss(), 2.0, np.log(4), 4 - 2 * np.log(4)),
         (HalfGammaLoss(), 2.0, np.log(4), np.log(4) + 2 / 4),
         (HalfTweedieLoss(power=3), 2.0, np.log(4), -1 / 4 + 1 / 4**2),
+        (HalfTweedieLossIdentity(power=1), 2.0, 4.0, 2 - 2 * np.log(2)),
+        (HalfTweedieLossIdentity(power=2), 2.0, 4.0, np.log(2) - 1 / 2),
+        (HalfTweedieLossIdentity(power=3), 2.0, 4.0, -1 / 4 + 1 / 4**2 + 1 / 2 / 2),
         (HalfBinomialLoss(), 0.25, np.log(4), np.log(5) - 0.25 * np.log(4)),
         (
             HalfMultinomialLoss(n_classes=3),
@@ -604,6 +629,16 @@ def test_loss_of_perfect_prediction(loss, sample_weight):
     if not loss.is_multiclass:
         # Use small values such that exp(value) is not nan.
         raw_prediction = np.array([-10, -0.1, 0, 0.1, 3, 10])
+        # If link is identity, we must respect the interval of y_pred:
+        if isinstance(loss.link, IdentityLink):
+            eps = 1e-10
+            low = loss.interval_y_pred.low
+            if not loss.interval_y_pred.low_inclusive:
+                low = low + eps
+            high = loss.interval_y_pred.high
+            if not loss.interval_y_pred.high_inclusive:
+                high = high - eps
+            raw_prediction = np.clip(raw_prediction, low, high)
         y_true = loss.link.inverse(raw_prediction)
     else:
         # HalfMultinomialLoss
@@ -1090,4 +1125,49 @@ def test_loss_pickle(loss):
     unpickled_loss = pickle.loads(pickled_loss)
     assert loss(y_true=y_true, raw_prediction=raw_prediction) == approx(
         unpickled_loss(y_true=y_true, raw_prediction=raw_prediction)
+    )
+
+
+@pytest.mark.parametrize("p", [-1.5, 0, 1, 1.5, 2, 3])
+def test_tweedie_log_identity_consistency(p):
+    """Test for identical losses when only the link function is different."""
+    half_tweedie_log = HalfTweedieLoss(power=p)
+    half_tweedie_identity = HalfTweedieLossIdentity(power=p)
+    n_samples = 10
+    y_true, raw_prediction = random_y_true_raw_prediction(
+        loss=half_tweedie_log, n_samples=n_samples, seed=42
+    )
+    y_pred = half_tweedie_log.link.inverse(raw_prediction)  # exp(raw_prediction)
+
+    # Let's compare the loss values, up to some constant term that is dropped
+    # in HalfTweedieLoss but not in HalfTweedieLossIdentity.
+    loss_log = half_tweedie_log.loss(
+        y_true=y_true, raw_prediction=raw_prediction
+    ) + half_tweedie_log.constant_to_optimal_zero(y_true)
+    loss_identity = half_tweedie_identity.loss(
+        y_true=y_true, raw_prediction=y_pred
+    ) + half_tweedie_identity.constant_to_optimal_zero(y_true)
+    # Note that HalfTweedieLoss ignores different constant terms than
+    # HalfTweedieLossIdentity. Constant terms means terms not depending on
+    # raw_prediction. By adding these terms, `constant_to_optimal_zero`, both losses
+    # give the same values.
+    assert_allclose(loss_log, loss_identity)
+
+    # For gradients and hessians, the constant terms do not matter. We have, however,
+    # to account for the chain rule, i.e. with x=raw_prediction
+    #     gradient_log(x) = d/dx loss_log(x)
+    #                     = d/dx loss_identity(exp(x))
+    #                     = exp(x) * gradient_identity(exp(x))
+    # Similarly,
+    #     hessian_log(x) = exp(x) * gradient_identity(exp(x))
+    #                    + exp(x)**2 * hessian_identity(x)
+    gradient_log, hessian_log = half_tweedie_log.gradient_hessian(
+        y_true=y_true, raw_prediction=raw_prediction
+    )
+    gradient_identity, hessian_identity = half_tweedie_identity.gradient_hessian(
+        y_true=y_true, raw_prediction=y_pred
+    )
+    assert_allclose(gradient_log, y_pred * gradient_identity)
+    assert_allclose(
+        hessian_log, y_pred * gradient_identity + y_pred**2 * hessian_identity
     )

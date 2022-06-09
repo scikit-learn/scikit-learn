@@ -4,6 +4,7 @@ import numpy as np
 from numpy.testing import assert_allclose
 import scipy.sparse as sp
 import pytest
+import warnings
 
 from sklearn.neighbors import NearestNeighbors
 from sklearn.neighbors import kneighbors_graph
@@ -276,6 +277,22 @@ def test_trustworthiness():
     assert_almost_equal(trustworthiness(X, X_embedded, n_neighbors=1), 0.2)
 
 
+def test_trustworthiness_n_neighbors_error():
+    """Raise an error when n_neighbors >= n_samples / 2.
+
+    Non-regression test for #18567.
+    """
+    regex = "n_neighbors .+ should be less than .+"
+    rng = np.random.RandomState(42)
+    X = rng.rand(7, 4)
+    X_embedded = rng.rand(7, 2)
+    with pytest.raises(ValueError, match=regex):
+        trustworthiness(X, X_embedded, n_neighbors=5)
+
+    trust = trustworthiness(X, X_embedded, n_neighbors=3)
+    assert 0 <= trust <= 1
+
+
 @pytest.mark.parametrize("method", ["exact", "barnes_hut"])
 @pytest.mark.parametrize("init", ("random", "pca"))
 def test_preserve_trustworthiness_approximately(method, init):
@@ -372,7 +389,7 @@ def test_trustworthiness_not_euclidean_metric():
 @pytest.mark.filterwarnings("ignore:The default initialization in TSNE")
 def test_early_exaggeration_too_small():
     # Early exaggeration factor must be >= 1.
-    tsne = TSNE(early_exaggeration=0.99)
+    tsne = TSNE(early_exaggeration=0.99, perplexity=1)
     with pytest.raises(ValueError, match="early_exaggeration .*"):
         tsne.fit_transform(np.array([[0.0], [0.0]]))
 
@@ -381,7 +398,7 @@ def test_early_exaggeration_too_small():
 @pytest.mark.filterwarnings("ignore:The default initialization in TSNE")
 def test_too_few_iterations():
     # Number of gradient descent iterations must be at least 200.
-    tsne = TSNE(n_iter=199)
+    tsne = TSNE(n_iter=199, perplexity=1)
     with pytest.raises(ValueError, match="n_iter .*"):
         tsne.fit_transform(np.array([[0.0], [0.0]]))
 
@@ -408,6 +425,7 @@ def test_bad_precomputed_distances(method, D, retype, message_regex):
         method=method,
         init="random",
         random_state=42,
+        perplexity=1,
     )
     with pytest.raises(ValueError, match=message_regex):
         tsne.fit_transform(retype(D))
@@ -420,6 +438,7 @@ def test_exact_no_precomputed_sparse():
         method="exact",
         init="random",
         random_state=42,
+        perplexity=1,
     )
     with pytest.raises(TypeError, match="sparse"):
         tsne.fit_transform(sp.csr_matrix([[0, 5], [5, 0]]))
@@ -430,7 +449,7 @@ def test_high_perplexity_precomputed_sparse_distances():
     # Perplexity should be less than 50
     dist = np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [1.0, 0.0, 0.0]])
     bad_dist = sp.csr_matrix(dist)
-    tsne = TSNE(metric="precomputed", init="random", random_state=42)
+    tsne = TSNE(metric="precomputed", init="random", random_state=42, perplexity=1)
     msg = "3 neighbors per samples are required, but some samples have only 1"
     with pytest.raises(ValueError, match=msg):
         tsne.fit_transform(bad_dist)
@@ -465,7 +484,7 @@ def test_non_positive_computed_distances():
         return -1
 
     # Negative computed distances should be caught even if result is squared
-    tsne = TSNE(metric=metric, method="exact")
+    tsne = TSNE(metric=metric, method="exact", perplexity=1)
     X = np.array([[0.0, 0.0], [1.0, 1.0]])
     with pytest.raises(ValueError, match="All distances .*metric given.*"):
         tsne.fit_transform(X)
@@ -474,7 +493,7 @@ def test_non_positive_computed_distances():
 @pytest.mark.filterwarnings("ignore:The default learning rate in TSNE")
 def test_init_not_available():
     # 'init' must be 'pca', 'random', or numpy array.
-    tsne = TSNE(init="not available")
+    tsne = TSNE(init="not available", perplexity=1)
     m = "'init' must be 'pca', 'random', or a numpy array"
     with pytest.raises(ValueError, match=m):
         tsne.fit_transform(np.array([[0.0], [1.0]]))
@@ -502,11 +521,11 @@ def test_init_ndarray_precomputed():
 @pytest.mark.filterwarnings("ignore:The default initialization in TSNE")
 def test_distance_not_available():
     # 'metric' must be valid.
-    tsne = TSNE(metric="not available", method="exact")
+    tsne = TSNE(metric="not available", method="exact", perplexity=1)
     with pytest.raises(ValueError, match="Unknown metric not available.*"):
         tsne.fit_transform(np.array([[0.0], [1.0]]))
 
-    tsne = TSNE(metric="not available", method="barnes_hut")
+    tsne = TSNE(metric="not available", method="barnes_hut", perplexity=1)
     with pytest.raises(ValueError, match="Metric 'not available' not valid.*"):
         tsne.fit_transform(np.array([[0.0], [1.0]]))
 
@@ -515,7 +534,7 @@ def test_distance_not_available():
 @pytest.mark.filterwarnings("ignore:The default initialization in TSNE")
 def test_method_not_available():
     # 'nethod' must be 'barnes_hut' or 'exact'
-    tsne = TSNE(method="not available")
+    tsne = TSNE(method="not available", perplexity=1)
     with pytest.raises(ValueError, match="'method' must be 'barnes_hut' or "):
         tsne.fit_transform(np.array([[0.0], [1.0]]))
 
@@ -525,7 +544,7 @@ def test_method_not_available():
 def test_angle_out_of_range_checks():
     # check the angle parameter range
     for angle in [-1, -1e-6, 1 + 1e-6, 2]:
-        tsne = TSNE(angle=angle)
+        tsne = TSNE(angle=angle, perplexity=1)
         with pytest.raises(ValueError, match="'angle' must be between 0.0 - 1.0"):
             tsne.fit_transform(np.array([[0.0], [1.0]]))
 
@@ -533,7 +552,7 @@ def test_angle_out_of_range_checks():
 @pytest.mark.filterwarnings("ignore:The default learning rate in TSNE")
 def test_pca_initialization_not_compatible_with_precomputed_kernel():
     # Precomputed distance matrices cannot use PCA initialization.
-    tsne = TSNE(metric="precomputed", init="pca")
+    tsne = TSNE(metric="precomputed", init="pca", perplexity=1)
     with pytest.raises(
         ValueError,
         match='The parameter init="pca" cannot be used with metric="precomputed".',
@@ -543,7 +562,7 @@ def test_pca_initialization_not_compatible_with_precomputed_kernel():
 
 def test_pca_initialization_not_compatible_with_sparse_input():
     # Sparse input matrices cannot use PCA initialization.
-    tsne = TSNE(init="pca", learning_rate=100.0)
+    tsne = TSNE(init="pca", learning_rate=100.0, perplexity=1)
     with pytest.raises(TypeError, match="PCA initialization.*"):
         tsne.fit_transform(sp.csr_matrix([[0, 5], [5, 0]]))
 
@@ -552,7 +571,7 @@ def test_pca_initialization_not_compatible_with_sparse_input():
 @pytest.mark.filterwarnings("ignore:The default initialization in TSNE")
 def test_n_components_range():
     # barnes_hut method should only be used with n_components <= 3
-    tsne = TSNE(n_components=4, method="barnes_hut")
+    tsne = TSNE(n_components=4, method="barnes_hut", perplexity=1)
     with pytest.raises(ValueError, match="'n_components' should be .*"):
         tsne.fit_transform(np.array([[0.0], [1.0]]))
 
@@ -719,7 +738,7 @@ def _run_answer_test(
 def test_verbose():
     # Verbose options write to stdout.
     random_state = check_random_state(0)
-    tsne = TSNE(verbose=2)
+    tsne = TSNE(verbose=2, perplexity=4)
     X = random_state.randn(5, 2)
 
     old_stdout = sys.stdout
@@ -743,7 +762,7 @@ def test_verbose():
 def test_chebyshev_metric():
     # t-SNE should allow metrics that cannot be squared (issue #3526).
     random_state = check_random_state(0)
-    tsne = TSNE(metric="chebyshev")
+    tsne = TSNE(metric="chebyshev", perplexity=4)
     X = random_state.randn(5, 2)
     tsne.fit_transform(X)
 
@@ -753,7 +772,7 @@ def test_chebyshev_metric():
 def test_reduction_to_one_component():
     # t-SNE should allow reduction to one component (issue #4154).
     random_state = check_random_state(0)
-    tsne = TSNE(n_components=1)
+    tsne = TSNE(n_components=1, perplexity=4)
     X = random_state.randn(5, 2)
     X_embedded = tsne.fit(X).embedding_
     assert np.all(np.isfinite(X_embedded))
@@ -1025,7 +1044,7 @@ def test_bh_match_exact():
             init="random",
             random_state=0,
             n_iter=251,
-            perplexity=30.0,
+            perplexity=29.5,
             angle=0,
         )
         # Kill the early_exaggeration
@@ -1124,7 +1143,7 @@ def test_tsne_init_futurewarning(init):
     random_state = check_random_state(0)
 
     X = random_state.randn(5, 2)
-    kwargs = dict(learning_rate=200.0, init=init)
+    kwargs = dict(learning_rate=200.0, init=init, perplexity=4)
     tsne = TSNE(**{k: v for k, v in kwargs.items() if v is not None})
 
     if init is None:
@@ -1134,9 +1153,9 @@ def test_tsne_init_futurewarning(init):
         with pytest.warns(FutureWarning, match="The PCA initialization.*"):
             tsne.fit_transform(X)
     else:
-        with pytest.warns(None) as record:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", FutureWarning)
             tsne.fit_transform(X)
-        assert not [w.message for w in record]
 
 
 # TODO: Remove in 1.2
@@ -1147,16 +1166,16 @@ def test_tsne_learning_rate_futurewarning(learning_rate):
     random_state = check_random_state(0)
 
     X = random_state.randn(5, 2)
-    kwargs = dict(learning_rate=learning_rate, init="random")
+    kwargs = dict(learning_rate=learning_rate, init="random", perplexity=4)
     tsne = TSNE(**{k: v for k, v in kwargs.items() if v is not None})
 
     if learning_rate is None:
         with pytest.warns(FutureWarning, match="The default learning rate.*"):
             tsne.fit_transform(X)
     else:
-        with pytest.warns(None) as record:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", FutureWarning)
             tsne.fit_transform(X)
-        assert not [w.message for w in record]
 
 
 @pytest.mark.filterwarnings("ignore:The default initialization in TSNE")
@@ -1165,7 +1184,7 @@ def test_tsne_negative_learning_rate():
     random_state = check_random_state(0)
     X = random_state.randn(5, 2)
     with pytest.raises(ValueError, match="'learning_rate' must be.*"):
-        TSNE(learning_rate=-50.0).fit_transform(X)
+        TSNE(learning_rate=-50.0, perplexity=4).fit_transform(X)
 
 
 @pytest.mark.parametrize("method", ["exact", "barnes_hut"])
@@ -1177,7 +1196,7 @@ def test_tsne_n_jobs(method):
     X_tr_ref = TSNE(
         n_components=2,
         method=method,
-        perplexity=30.0,
+        perplexity=25.0,
         angle=0,
         n_jobs=1,
         random_state=0,
@@ -1187,7 +1206,7 @@ def test_tsne_n_jobs(method):
     X_tr = TSNE(
         n_components=2,
         method=method,
-        perplexity=30.0,
+        perplexity=25.0,
         angle=0,
         n_jobs=2,
         random_state=0,
@@ -1243,7 +1262,7 @@ def test_tsne_deprecation_square_distances():
         n_components=2,
         init="pca",
         learning_rate="auto",
-        perplexity=30.0,
+        perplexity=25.0,
         angle=0,
         n_jobs=1,
         random_state=0,
@@ -1260,10 +1279,27 @@ def test_tsne_deprecation_square_distances():
         n_components=2,
         init="pca",
         learning_rate="auto",
-        perplexity=30.0,
+        perplexity=25.0,
         angle=0,
         n_jobs=1,
         random_state=0,
     )
     X_trans_2 = tsne.fit_transform(X)
     assert_allclose(X_trans_1, X_trans_2)
+
+
+@pytest.mark.parametrize("perplexity", (20, 30))
+def test_tsne_perplexity_validation(perplexity):
+    """Make sure that perplexity > n_samples results in a ValueError"""
+
+    random_state = check_random_state(0)
+    X = random_state.randn(20, 2)
+    est = TSNE(
+        learning_rate="auto",
+        init="pca",
+        perplexity=perplexity,
+        random_state=random_state,
+    )
+    msg = "perplexity must be less than n_samples"
+    with pytest.raises(ValueError, match=msg):
+        est.fit_transform(X)
