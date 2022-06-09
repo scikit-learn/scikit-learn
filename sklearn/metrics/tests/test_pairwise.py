@@ -94,7 +94,7 @@ def test_pairwise_distances(global_dtype):
 
     # Test haversine distance
     # The data should be valid latitude and longitude
-    # haversine converts to float64 currently so we don't check dtypes. 
+    # haversine converts to float64 currently so we don't check dtypes.
     X = rng.random_sample((5, 2)).astype(global_dtype, copy=False)
     X[:, 0] = (X[:, 0] - 0.5) * 2 * np.pi / 2
     X[:, 1] = (X[:, 1] - 0.5) * 2 * np.pi
