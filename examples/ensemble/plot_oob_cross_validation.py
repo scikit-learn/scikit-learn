@@ -34,7 +34,7 @@ X, y = make_classification(
     n_clusters_per_class=1,
     n_informative=4,
     n_redundant=1,
-    random_state=0
+    random_state=0,
 )
 
 
@@ -55,29 +55,18 @@ def oob_scorer(estimator, X, y):
 
 # We use the same estimator and feature selection params for each selector
 kwargs = {
-    'estimator': RandomForestClassifier(
-        oob_score=True,
-        n_estimators=300
-    ),
-    'tol': 1,
-    'n_features_to_select': "auto"
+    "estimator": RandomForestClassifier(oob_score=True, n_estimators=300),
+    "tol": 1,
+    "n_features_to_select": "auto",
 }
 
 # Define 3 cross validators to compare
 selectors = {
     "OOB": SequentialFeatureSelector(
-        cv=list(oob_split(X)),
-        scoring=oob_scorer,
-        **kwargs
+        cv=list(oob_split(X)), scoring=oob_scorer, **kwargs
     ),
-    "3-fold": SequentialFeatureSelector(
-        cv=3,
-        **kwargs
-    ),
-    "5-fold": SequentialFeatureSelector(
-        **kwargs,
-        cv=5
-    ),
+    "3-fold": SequentialFeatureSelector(cv=3, **kwargs),
+    "5-fold": SequentialFeatureSelector(**kwargs, cv=5),
 }
 
 # Perform feature selection, and plot the results
@@ -88,8 +77,8 @@ for name, cv in selectors.items():
     end = default_timer()
     times.append(end - start)
 plt.bar(x=list(selectors.keys()), height=times)
-plt.xlabel('Cross Validator')
-plt.ylabel('Grid Search Time (s)')
+plt.xlabel("Cross Validator")
+plt.ylabel("Grid Search Time (s)")
 plt.tight_layout()
 plt.show()
 
