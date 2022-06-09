@@ -569,12 +569,12 @@ def test_multilabel_y_explicit_zeros(tmp_path):
     data = np.array([0, 1, 1, 1, 1, 0])
     y = sp.csr_matrix((data, indices, indptr), shape=(3, 3))
     # y as a dense array would look like
-    # [[0, 0, 2],
-    #  [0, 0, 3],
-    #  [4, 5, 6]]
+    # [[0, 0, 1],
+    #  [0, 0, 1],
+    #  [1, 1, 0]]
 
     dump_svmlight_file(X, y, save_path, multilabel=True)
 
     _, y_load = load_svmlight_file(save_path, multilabel=True)
-    y_true = [(2.0,), (2.0,), (0.0, 1.0, 2.0)]
+    y_true = [(2.0,), (2.0,), (0.0, 1.0)]
     assert y_load == y_true
