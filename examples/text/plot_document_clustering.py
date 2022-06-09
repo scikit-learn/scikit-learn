@@ -71,8 +71,8 @@ print(f"{len(dataset.data)} documents - {true_k} categories")
 # Comparing Clustering
 # ====================
 #
-# Here we define a function to score different clustering pipelines
-# using several metrics.
+# Here we define a function to score different clustering pipelines using
+# several metrics.
 #
 # Given the knowledge of the ground truth class assignments of the samples, it
 # is possible to define metrics to test for different properties of a cluster:
@@ -129,7 +129,7 @@ def fit_and_evaluate(km, X, name=None):
 #
 # Two feature extraction methods are used in this example:
 #
-# - :class:`~sklearn.feature_extraction.text.TfidfVectorizer` uses a in-memory
+# - :class:`~sklearn.feature_extraction.text.TfidfVectorizer` uses an in-memory
 #   vocabulary (a python dict) to map the most frequent words to features
 #   indices and hence compute a word occurrence frequency (sparse) matrix. The
 #   word frequencies are then reweighted using the Inverse Document Frequency
@@ -146,7 +146,7 @@ def fit_and_evaluate(km, X, name=None):
 #
 # We first benchmark the estimators using a dictionary vectorizer along with an
 # IDF normalization as provided by
-# :class:`~sklearn.feature_extraction.text.TfidfVectorizer`
+# :class:`~sklearn.feature_extraction.text.TfidfVectorizer`.
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 
@@ -174,7 +174,7 @@ from sklearn.cluster import MiniBatchKMeans
 
 minibatch_kmeans = MiniBatchKMeans(
     n_clusters=true_k,
-    init="k-means++",
+    init="random",
     n_init=5,
     init_size=1000,
     batch_size=1000,
@@ -208,14 +208,30 @@ fit_and_evaluate(kmeans, X)
 # **Performing dimensionality reduction using LSA**
 #
 # The `"k-means++"` init can still be used as long as the dimension of the
-# vectorized space is reduced first. For such purpose we use truncated SVD,
-# which works on term count/tf-idf matrices. In that context, it is known as
-# latent semantic analysis (LSA). Since LSA results are not normalized, we redo
-# the normalization to improve the :class:`~sklearn.cluster.KMeans` result.
+# vectorized space is reduced first. For such purpose we use
+# :class:`~sklearn.decomposition.TruncatedSVD`, which works on term count/tf-idf
+# matrices. Since SVD results are not normalized, we redo the normalization to
+# improve the :class:`~sklearn.cluster.KMeans` result. Such process is known as
+# latent semantic analysis (LSA).
 
 from sklearn.decomposition import TruncatedSVD
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import Normalizer
+
+
+svd = TruncatedSVD(n_components=100)
+lsa = make_pipeline(svd, Normalizer(copy=False))
+t0 = time()
+X = lsa.fit_transform(X)
+explained_variance = svd.explained_variance_ratio_.sum()
+
+print(f"LSA done in {time() - t0:.3f} s")
+print(f"Explained variance of the SVD step: {explained_variance * 100:.1f}%")
+
+# %%
+# We are now ready to use the `"k-means++"` init. As it requires a single
+# initialization, the processing time will be reduced for both
+# :class:`~sklearn.cluster.KMeans` and :class:`~sklearn.cluster.MiniBatchKMeans`.
 
 kmeans = KMeans(
     n_clusters=true_k,
@@ -224,18 +240,31 @@ kmeans = KMeans(
     n_init=1,
     random_state=0,
 )
-svd = TruncatedSVD(n_components=100)
-lsa = make_pipeline(svd, Normalizer(copy=False))
-X = lsa.fit_transform(X)
 
 fit_and_evaluate(kmeans, X, name="kmeans with LSA")
-fit_and_evaluate(minibatch_kmeans, X, name="minibatchkmeans with LSA")
 
-explained_variance = svd.explained_variance_ratio_.sum()
-print(f"Explained variance of the SVD step: {explained_variance * 100:.1f}%")
+# %%
+# We repeat the experiment with :class:`~sklearn.cluster.MiniBatchKMeans`.
+
+minibatch_kmeans = MiniBatchKMeans(
+    n_clusters=true_k,
+    init="k-means++",
+    n_init=1,
+    init_size=1000,
+    batch_size=1000,
+    random_state=0,
+)
+
+fit_and_evaluate(minibatch_kmeans, X, name="minibatchkmeans with LSA")
 
 # %%
 # **Top terms per cluster**
+#
+# Since :class:`~sklearn.feature_extraction.text.TfidfVectorizer` and can be
+# inverted we can identify the cluster centers, which provide an intuition of
+# the most predictive words **per cluster**. See the example script
+# :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
+# for a comparison with the most predictive words **per class**.
 
 original_space_centroids = svd.inverse_transform(kmeans.cluster_centers_)
 order_centroids = original_space_centroids.argsort()[:, ::-1]
