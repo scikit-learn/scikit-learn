@@ -593,9 +593,8 @@ class MetadataRouter:
     @property
     def _is_default_request(self):
         """Return ``True`` only if all sub-components have default values."""
-        if self._self:
-            if not self._self._is_default_request:
-                return False
+        if self._self and not self._self._is_default_request:
+            return False
 
         for router_mapping in self._route_mappings.values():
             if not router_mapping.router._is_default_request:
@@ -804,7 +803,7 @@ class MetadataRouter:
         return res
 
     def _route_warn_or_error(self, *, child, router, params, method):
-        """Route parameters wile handling error or deprecation warning choice.
+        """Route parameters while handling error or deprecation warning choice.
 
         This method warns instead of raising an error if the parent object
         has set ``warn_on`` for the child object's method and the user has not

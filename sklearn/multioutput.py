@@ -106,10 +106,10 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
             Only supported if the underlying regressor supports sample
             weights.
 
-        **partial_fit_params : dict of string -> object
+        **partial_fit_params : dict of str -> object
             Parameters passed to the ``estimator.partial_fit`` method of each step.
 
-            .. versionadded:: 1.1
+            .. versionadded:: 1.2
 
         Returns
         -------
@@ -262,8 +262,8 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
             # the fit method already accepts everything, therefore we don't
             # specify parameters
             .warn_on(child="estimator", method="fit", params=None)
-            # the partial_fit method at the time of this change only supports
-            # sample_weight, therefore we only include this metadata.
+            # the partial_fit method at the time of this change (v1.2) only
+            # supports sample_weight, therefore we only include this metadata.
             .warn_on(child="estimator", method="partial_fit", params=["sample_weight"])
         )
         return router
@@ -355,7 +355,7 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
             Only supported if the underlying regressor supports sample
             weights.
 
-        **partial_fit_params : dict of string -> object
+        **partial_fit_params : dict of str -> object
             Parameters passed to the ``estimator.partial_fit`` method of each step.
 
             .. versionadded:: 1.2

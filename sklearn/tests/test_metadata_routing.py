@@ -339,15 +339,11 @@ def test_simple_metadata_routing():
     # If the estimator accepts the metadata but doesn't explicitly say it doesn't
     # need it, there's an error
     clf = SimpleMetaClassifier(estimator=ClassifierFitMetadata())
-    with pytest.raises(
-        ValueError,
-        match=(
-            re.escape(
-                "[sample_weight] are passed but is not explicitly set as requested or"
-                " not for ClassifierFitMetadata.fit"
-            )
-        ),
-    ):
+    err_message = (
+        "[sample_weight] are passed but is not explicitly set as requested or"
+        " not for ClassifierFitMetadata.fit"
+    )
+    with pytest.raises(ValueError, match=(re.escape(err_message))):
         clf.fit(X, y, sample_weight=my_weights)
 
     # Explicitly saying the estimator doesn't need it, makes the error go away,
