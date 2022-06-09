@@ -93,7 +93,7 @@ print(f"{len(dataset.data)} documents - {true_k} categories")
 # using the model results itself. In that case, the Silhouette Coefficient
 # comes in handy.
 #
-# For more reference, see :ref:`_clustering_evaluation`.
+# For more reference, see :ref:`clustering_evaluation`.
 
 from collections import defaultdict
 from sklearn import metrics
