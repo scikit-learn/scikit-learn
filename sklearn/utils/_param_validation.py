@@ -233,9 +233,7 @@ class StrOptions(_Constraint):
         A subset of the `options` to mark as deprecated in the repr of the constraint.
     """
 
-    @validate_params(
-        {"options": [set], "deprecated": [set, None]}
-    )
+    @validate_params({"options": [set], "deprecated": [set, None]})
     def __init__(self, options, deprecated=None):
         super().__init__()
         self.options = options

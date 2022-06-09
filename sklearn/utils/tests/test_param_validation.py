@@ -448,6 +448,7 @@ def test_hidden_constraint():
 
 def test_hidden_stroptions():
     """Check that we can have 2 StrOptions constraints, one being hidden."""
+
     @validate_params({"param": [StrOptions({"auto"}), Hidden(StrOptions({"warn"}))]})
     def f(param):
         pass
