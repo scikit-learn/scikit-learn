@@ -104,12 +104,17 @@ train_times = defaultdict(list)
 
 
 def fit_and_evaluate(km, X, name=None):
+    name = km.__class__.__name__ if name is None else name
+    
     t0 = time()
     km.fit(X)
     train_time = time() - t0
-    name = km.__class__.__name__ if name is None else name
+    
+    # store the timing for each fit
     train_times["estimator"].append(name)
     train_times["train time"].append(train_time)
+    
+    # store the scores of the clustering
     scores["estimator"].append(name)
     scores["Homogeneity"].append(metrics.homogeneity_score(labels, km.labels_))
     scores["Completeness"].append(metrics.completeness_score(labels, km.labels_))
@@ -120,7 +125,6 @@ def fit_and_evaluate(km, X, name=None):
     scores["Silhouette Coefficient"].append(
         metrics.silhouette_score(X, km.labels_, sample_size=2000)
     )
-    return
 
 
 # %%
@@ -241,7 +245,7 @@ kmeans = KMeans(
     random_state=0,
 )
 
-fit_and_evaluate(kmeans, X, name="kmeans with LSA")
+fit_and_evaluate(kmeans, X, name="KMeans with LSA")
 
 # %%
 # We repeat the experiment with :class:`~sklearn.cluster.MiniBatchKMeans`.
@@ -266,7 +270,7 @@ fit_and_evaluate(minibatch_kmeans, X, name="minibatchkmeans with LSA")
 # :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
 # for a comparison with the most predictive words **per class**.
 
-original_space_centroids = svd.inverse_transform(kmeans.cluster_centers_)
+original_space_centroids = lsa[0].inverse_transform(kmeans.cluster_centers_)
 order_centroids = original_space_centroids.argsort()[:, ::-1]
 terms = vectorizer.get_feature_names_out()
 
@@ -299,7 +303,7 @@ X = hasher.fit_transform(dataset.data)
 print(f"vectorizing done in {time() - t0:.3f} s")
 print(f"n_samples: {X.shape[0]}, n_features: {X.shape[1]}")
 
-fit_and_evaluate(kmeans, X, name="kmeans with\nsimple hashing")
+fit_and_evaluate(kmeans, X, name="KMeans with\nsimple hashing")
 
 # %%
 # When IDF weighting is needed it can be added by pipelining the
@@ -314,7 +318,7 @@ t0 = time()
 X = vectorizer.fit_transform(dataset.data)
 print(f"vectorizing done in {time() - t0:.3f} s")
 
-fit_and_evaluate(kmeans, X, name="kmeans with\nTfidf-scaled hashing")
+fit_and_evaluate(kmeans, X, name="KMeans with\nTfidf-scaled hashing")
 
 # %%
 # Plot unsupervised evaluation metrics
@@ -331,7 +335,7 @@ _ = ax.set_xlabel("Clustering scores")
 # %%
 # It can be noticed that :class:`~sklearn.cluster.KMeans` (and
 # :class:`~sklearn.cluster.MiniBatchKMeans`) are very sensitive to feature
-# scaling and that in this case the IDF weighting helps improve the quality of
+# scaling and that, in this case, the IDF weighting helps at improving the quality of
 # the clustering by quite a lot as measured against the "ground truth" provided
 # by the class label assignments of :ref:`20newsgroups_dataset`.
 #
