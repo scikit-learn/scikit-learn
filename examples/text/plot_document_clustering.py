@@ -223,11 +223,10 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import Normalizer
 
 
-svd = TruncatedSVD(n_components=100)
-lsa = make_pipeline(svd, Normalizer(copy=False))
+lsa = make_pipeline(TruncatedSVD(n_components=100), Normalizer(copy=False))
 t0 = time()
 X = lsa.fit_transform(X)
-explained_variance = svd.explained_variance_ratio_.sum()
+explained_variance = lsa[0].explained_variance_ratio_.sum()
 
 print(f"LSA done in {time() - t0:.3f} s")
 print(f"Explained variance of the SVD step: {explained_variance * 100:.1f}%")
