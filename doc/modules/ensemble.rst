@@ -1241,7 +1241,7 @@ Voting Classifier
 The idea behind the :class:`VotingClassifier` is to combine
 conceptually different machine learning classifiers and use a majority vote
 or the average predicted probabilities (soft vote) to predict the class labels.
-Such a classifier can be useful for a set of equally well performing model
+Such a classifier can be useful for a set of equally well performing models
 in order to balance out their individual weaknesses.
 
 
