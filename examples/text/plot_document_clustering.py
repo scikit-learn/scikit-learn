@@ -185,7 +185,9 @@ minibatch_kmeans = MiniBatchKMeans(
     random_state=0,
 )
 
-fit_and_evaluate(minibatch_kmeans, X)
+fit_and_evaluate(
+    minibatch_kmeans, X, name="MiniBatchKMeans(init='random')\non tf-idf vectors"
+)
 
 # %%
 # **Clustering sparse data with KMeans**
@@ -206,7 +208,7 @@ kmeans = KMeans(
     random_state=0,
 )
 
-fit_and_evaluate(kmeans, X)
+fit_and_evaluate(kmeans, X, name="KMeans(init='random')\non tf-idf vectors")
 
 # %%
 # **Performing dimensionality reduction using LSA**
@@ -331,8 +333,8 @@ plt.tight_layout()
 # based on cluster assignments rather than distances.
 
 # %%
-# Plot clustering time
-# ====================
+# Computational performance
+# =========================
 
 df = pd.DataFrame(train_times).set_index("estimator")
 ax = df.plot.barh()
