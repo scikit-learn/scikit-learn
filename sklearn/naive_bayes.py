@@ -577,14 +577,14 @@ class _BaseDiscreteNB(_BaseNB):
             self.class_log_prior_ = np.full(n_classes, -np.log(n_classes))
 
     def _check_alpha(self):
-        # TODO(1.4): Remove
+        # TODO(1.4): Replace w/ deprecation of self.force_alpha
+        # See gh #22269
         self._force_alpha = self.force_alpha
-        if self._force_alpha == "deprecated" or self._force_alpha is False:
+        if self._force_alpha == "warn" or self._force_alpha is False:
             self._force_alpha = False
             warnings.warn(
-                "`force_alpha` was deprecated in 1.2 and will be removed in 1.4 with"
-                " models behaving as though it were set to `True`. To suppress this"
-                " warning, manually set the value of `force_alpha` to `True`.",
+                "The default value for `force_alpha` will change to `True` in 1.4. To"
+                " suppress this warning, manually set the value of `force_alpha`.",
                 FutureWarning,
             )
         if np.min(self.alpha) < 0:
@@ -783,9 +783,7 @@ class MultinomialNB(_BaseDiscreteNB):
 
         .. versionadded:: 1.2
         .. deprecated:: 1.2
-           `force_alpha` was deprecated in version 1.2 and will be removed in
-           version 1.4. After removal, models will behave as though
-           `force_alpha=True`.
+           The default value of `force_alpha` will change to `True` in v1.4.
 
     fit_prior : bool, default=True
         Whether to learn class prior probabilities or not.
@@ -862,7 +860,7 @@ class MultinomialNB(_BaseDiscreteNB):
     """
 
     def __init__(
-        self, *, alpha=1.0, force_alpha="deprecated", fit_prior=True, class_prior=None
+        self, *, alpha=1.0, force_alpha="warn", fit_prior=True, class_prior=None
     ):
         self.alpha = alpha
         self.force_alpha = force_alpha
@@ -916,9 +914,7 @@ class ComplementNB(_BaseDiscreteNB):
 
         .. versionadded:: 1.2
         .. deprecated:: 1.2
-           `force_alpha` was deprecated in version 1.2 and will be removed in
-           version 1.4. After removal, models will behave as though
-           `force_alpha=True`.
+           The default value of `force_alpha` will change to `True` in v1.4.
 
     fit_prior : bool, default=True
         Only used in edge case with a single class in the training set.
@@ -1006,7 +1002,7 @@ class ComplementNB(_BaseDiscreteNB):
         self,
         *,
         alpha=1.0,
-        force_alpha=False,
+        force_alpha="warn",
         fit_prior=True,
         class_prior=None,
         norm=False,
@@ -1069,9 +1065,7 @@ class BernoulliNB(_BaseDiscreteNB):
 
         .. versionadded:: 1.2
         .. deprecated:: 1.2
-           `force_alpha` was deprecated in version 1.2 and will be removed in
-           version 1.4. After removal, models will behave as though
-           `force_alpha=True`.
+           The default value of `force_alpha` will change to `True` in v1.4.
 
     binarize : float or None, default=0.0
         Threshold for binarizing (mapping to booleans) of sample features.
@@ -1162,7 +1156,7 @@ class BernoulliNB(_BaseDiscreteNB):
         self,
         *,
         alpha=1.0,
-        force_alpha=False,
+        force_alpha="warn",
         binarize=0.0,
         fit_prior=True,
         class_prior=None,
@@ -1241,9 +1235,7 @@ class CategoricalNB(_BaseDiscreteNB):
 
         .. versionadded:: 1.2
         .. deprecated:: 1.2
-           `force_alpha` was deprecated in version 1.2 and will be removed in
-           version 1.4. After removal, models will behave as though
-           `force_alpha=True`.
+           The default value of `force_alpha` will change to `True` in v1.4.
 
     fit_prior : bool, default=True
         Whether to learn class prior probabilities or not.
@@ -1336,7 +1328,7 @@ class CategoricalNB(_BaseDiscreteNB):
         self,
         *,
         alpha=1.0,
-        force_alpha=False,
+        force_alpha="warn",
         fit_prior=True,
         class_prior=None,
         min_categories=None,

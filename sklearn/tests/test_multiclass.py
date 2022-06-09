@@ -41,9 +41,9 @@ from sklearn.exceptions import NotFittedError
 from sklearn import datasets
 from sklearn.datasets import load_breast_cancer
 
-# TODO(1.4): Remove
+# TODO(1.4): Change for deprecation of `force_alpha`
 msg = (
-    r"`force_alpha` was deprecated in 1.2 and will be removed in 1.4 with"
+    r"The default value for `force_alpha` will change to `True` in 1.4"
     r".*:FutureWarning"
 )
 pytestmark = pytest.mark.filterwarnings("ignore:" + msg)
