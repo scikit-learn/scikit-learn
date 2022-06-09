@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-set -x
 set -e
 
 # Decide what kind of documentation build to run, and run it.
@@ -154,24 +153,24 @@ sudo -E apt-get -yq update --allow-releaseinfo-change
 sudo -E apt-get -yq --no-install-suggests --no-install-recommends \
     install dvipng gsfonts ccache zip optipng
 
-# deactivate circleci virtualenv and setup a miniconda env instead
+# deactivate circleci virtualenv and setup a conda env instead
 if [[ `type -t deactivate` ]]; then
   deactivate
 fi
 
-MINICONDA_PATH=$HOME/miniconda
-# Install dependencies with miniconda
-wget https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-Linux-x86_64.sh \
-    -O miniconda.sh
-chmod +x miniconda.sh && ./miniconda.sh -b -p $MINICONDA_PATH
-export PATH="/usr/lib/ccache:$MINICONDA_PATH/bin:$PATH"
+MAMBAFORGE_PATH=$HOME/mambaforge
+# Install dependencies with mamba
+wget -q https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-Linux-x86_64.sh \
+    -O mambaforge.sh
+chmod +x mambaforge.sh && ./mambaforge.sh -b -p $MAMBAFORGE_PATH
+export PATH="/usr/lib/ccache:$MAMBAFORGE_PATH/bin:$PATH"
 
 ccache -M 512M
 export CCACHE_COMPRESS=1
 
 # pin conda-lock to latest released version (needs manual update from time to time)
 mamba install conda-lock==1.0.5 -y
-conda-lock install --name $CONDA_ENV_NAME $LOCK_FILE
+conda-lock install --log-level WARNING --name $CONDA_ENV_NAME $LOCK_FILE
 source activate $CONDA_ENV_NAME
 
 mamba list
@@ -179,7 +178,10 @@ mamba list
 # Set parallelism to 3 to overlap IO bound tasks with CPU bound tasks on CI
 # workers with 2 cores when building the compiled extensions of scikit-learn.
 export SKLEARN_BUILD_PARALLEL=3
-python setup.py develop
+pip install -e . --no-build-isolation
+
+echo "ccache build summary:"
+ccache -s
 
 export OMP_NUM_THREADS=1
 
