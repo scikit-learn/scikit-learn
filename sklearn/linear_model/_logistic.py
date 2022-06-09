@@ -158,8 +158,8 @@ def _logistic_regression_path(
         Maximum number of iterations for the solver.
 
     tol : float, default=1e-4
-        Stopping criterion. For the newton-cg and lbfgs solvers, the iteration
-        will stop when ``max{|g_i | i = 1, ..., n} <= tol``
+        Stopping criterion. For the newton-cg, trust-ncg, and lbfgs solvers,
+        the iteration will stop when ``max{|g_i | i = 1, ..., n} <= tol``
         where ``g_i`` is the i-th component of the gradient.
 
     verbose : int, default=0
@@ -472,6 +472,7 @@ def _logistic_regression_path(
                     jac=True,
                     hessp=hessp,
                     args=(X, target, sample_weight, 1.0 / C),
+                    options={"gtol": tol, "maxiter": max_iter},
                 )
             n_iter_i = _check_optimize_result(
                 solver,

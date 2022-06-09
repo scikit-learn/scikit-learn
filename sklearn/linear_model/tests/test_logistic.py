@@ -180,6 +180,13 @@ def test_predict_iris():
             multi_class="ovr",
             random_state=42,
         ),
+        LogisticRegression(
+            C=len(iris.data),
+            solver="trust-ncg",
+            tol=1e-2,
+            multi_class="multinomial",
+            random_state=42,
+        ),
     ]:
         clf.fit(iris.data, target)
         assert_array_equal(np.unique(target), clf.classes_)
@@ -194,7 +201,7 @@ def test_predict_iris():
         assert np.mean(pred == target) > 0.95
 
 
-@pytest.mark.parametrize("solver", ["lbfgs", "newton-cg", "sag", "saga"])
+@pytest.mark.parametrize("solver", ["lbfgs", "newton-cg", "sag", "saga", "trust-ncg"])
 def test_multinomial_validation(solver):
     lr = LogisticRegression(C=-1, solver=solver, multi_class="multinomial")
 
@@ -255,7 +262,7 @@ def test_check_solver_option(LR):
         lr.fit(X, y)
 
 
-@pytest.mark.parametrize("solver", ["lbfgs", "newton-cg", "sag", "saga"])
+@pytest.mark.parametrize("solver", ["lbfgs", "newton-cg", "sag", "saga", "trust-ncg"])
 def test_multinomial_binary(solver):
     # Test multinomial LR on a binary problem.
     target = (iris.target > 0).astype(np.intp)
@@ -396,7 +403,7 @@ def test_consistency_path():
             )
 
     # test for fit_intercept=True
-    for solver in ("lbfgs", "newton-cg", "liblinear", "sag", "saga"):
+    for solver in ("lbfgs", "newton-cg", "liblinear", "sag", "saga", "trust-ncg"):
         Cs = [1e3]
         coefs, Cs, _ = f(_logistic_regression_path)(
             X,
@@ -770,15 +777,27 @@ def test_logistic_regressioncv_class_weights():
                 max_iter=10000,
                 random_state=0,
             )
+            clf_trust_ncg = LogisticRegressionCV(
+                solver="trust-ncg",
+                Cs=1,
+                fit_intercept=False,
+                multi_class="ovr",
+                class_weight=class_weight,
+                tol=1e-5,
+                max_iter=10000,
+                random_state=0,
+            )
             clf_lbf.fit(X, y)
             clf_ncg.fit(X, y)
             clf_lib.fit(X, y)
             clf_sag.fit(X, y)
             clf_saga.fit(X, y)
+            clf_trust_ncg.fit(X, y)
             assert_array_almost_equal(clf_lib.coef_, clf_lbf.coef_, decimal=4)
             assert_array_almost_equal(clf_ncg.coef_, clf_lbf.coef_, decimal=4)
             assert_array_almost_equal(clf_sag.coef_, clf_lbf.coef_, decimal=4)
             assert_array_almost_equal(clf_saga.coef_, clf_lbf.coef_, decimal=4)
+            assert_array_almost_equal(clf_trust_ncg.coef_, clf_lbf.coef_, decimal=4)
 
 
 def test_logistic_regression_sample_weights():
@@ -885,7 +904,7 @@ def test_logistic_regression_class_weights():
     # Multinomial case: remove 90% of class 0
     X = iris.data[45:, :]
     y = iris.target[45:]
-    solvers = ("lbfgs", "newton-cg")
+    solvers = ("lbfgs", "newton-cg", "trust-ncg")
     class_weight_dict = _compute_class_weight_dictionary(y)
 
     for solver in solvers:
@@ -902,7 +921,7 @@ def test_logistic_regression_class_weights():
     # Binary case: remove 90% of class 0 and 100% of class 2
     X = iris.data[45:100, :]
     y = iris.target[45:100]
-    solvers = ("lbfgs", "newton-cg", "liblinear")
+    solvers = ("lbfgs", "newton-cg", "liblinear", "trust-ncg")
     class_weight_dict = _compute_class_weight_dictionary(y)
 
     for solver in solvers:
@@ -1262,7 +1281,7 @@ def test_n_iter(solver):
     assert clf_cv.n_iter_.shape == (1, n_cv_fold, n_Cs)
 
 
-@pytest.mark.parametrize("solver", ("newton-cg", "sag", "saga", "lbfgs"))
+@pytest.mark.parametrize("solver", ("newton-cg", "sag", "saga", "lbfgs", "trust-ncg"))
 @pytest.mark.parametrize("warm_start", (True, False))
 @pytest.mark.parametrize("fit_intercept", (True, False))
 @pytest.mark.parametrize("multi_class", ["ovr", "multinomial"])
@@ -1280,6 +1299,8 @@ def test_warm_start(solver, warm_start, fit_intercept, multi_class):
         random_state=42,
         fit_intercept=fit_intercept,
     )
+    # if solver == 'trust-ncg' and not warm_start:
+    #     import pdb; pdb.set_trace()
     with ignore_warnings(category=ConvergenceWarning):
         clf.fit(X, y)
         coef_1 = clf.coef_
