@@ -678,7 +678,7 @@ def _kmeans_single_lloyd(
     strict_convergence = False
 
     # Threadpoolctl context to limit the number of threads in second level of
-    # nested parallelism (i.e. BLAS) to avoid oversubsciption.
+    # nested parallelism (i.e. BLAS) to avoid oversubscription.
     with threadpool_limits(limits=1, user_api="blas"):
         for i in range(max_iter):
             lloyd_iter(
