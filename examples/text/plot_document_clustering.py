@@ -246,7 +246,7 @@ kmeans = KMeans(
     random_state=0,
 )
 
-fit_and_evaluate(kmeans, X_lsa, name="KMeans with LSA")
+fit_and_evaluate(kmeans, X_lsa, name="KMeans(init='kmeans++') with LSA")
 
 # %%
 # We repeat the experiment with :class:`~sklearn.cluster.MiniBatchKMeans`.
@@ -260,7 +260,9 @@ minibatch_kmeans = MiniBatchKMeans(
     random_state=0,
 )
 
-fit_and_evaluate(minibatch_kmeans, X_lsa, name="MiniBatchKMeans\nwith LSA")
+fit_and_evaluate(
+    minibatch_kmeans, X_lsa, name="MiniBatchKMeans(init='kmeans++')\nwith LSA"
+)
 
 # %%
 # **Top terms per cluster**
