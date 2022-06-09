@@ -1,4 +1,5 @@
 from io import BytesIO
+import textwrap
 
 import pytest
 
@@ -83,13 +84,17 @@ def test_pandas_arff_parser_strip_single_quotes(parser_func):
     pd = pytest.importorskip("pandas")
 
     arff_file = BytesIO(
-        b"@relation 'toy'\n"
-        b"@attribute 'cat_single_quote' {'A', 'B', 'C'}\n"
-        b"@attribute 'str_single_quote' string\n"
-        b"@attribute 'str_nested_quote' string\n"
-        b"@attribute 'class' numeric\n"
-        b"@data\n"
-        b"'A','some text','\"expect double quotes\"',0\n"
+        textwrap.dedent(
+            """
+            @relation 'toy'
+            @attribute 'cat_single_quote' {'A', 'B', 'C'}
+            @attribute 'str_single_quote' string
+            @attribute 'str_nested_quote' string
+            @attribute 'class' numeric
+            @data
+            'A','some text','\"expect double quotes\"',0
+            """
+        ).encode("utf-8")
     )
 
     columns_info = {
@@ -150,13 +155,17 @@ def test_pandas_arff_parser_strip_double_quotes(parser_func):
     pd = pytest.importorskip("pandas")
 
     arff_file = BytesIO(
-        b"@relation 'toy'\n"
-        b'@attribute \'cat_double_quote\' {"A", "B", "C"}\n'
-        b"@attribute 'str_double_quote' string\n"
-        b"@attribute 'str_nested_quote' string\n"
-        b"@attribute 'class' numeric\n"
-        b"@data\n"
-        b'"A","some text","\'expect double quotes\'",0\n'
+        textwrap.dedent(
+            """
+            @relation 'toy'
+            @attribute \'cat_double_quote\' {"A", "B", "C"}
+            @attribute 'str_double_quote' string
+            @attribute 'str_nested_quote' string
+            @attribute 'class' numeric
+            @data
+            "A","some text","\'expect double quotes\'",0
+            """
+        ).encode("utf-8")
     )
 
     columns_info = {
@@ -217,13 +226,17 @@ def test_pandas_arff_parser_strip_no_quotes(parser_func):
     pd = pytest.importorskip("pandas")
 
     arff_file = BytesIO(
-        b"@relation 'toy'\n"
-        b"@attribute 'cat_without_quote' {A, B, C}\n"
-        b"@attribute 'str_without_quote' string\n"
-        b"@attribute 'str_internal_quote' string\n"
-        b"@attribute 'class' numeric\n"
-        b"@data\n"
-        b"A,some text,'internal' quote,0\n"
+        textwrap.dedent(
+            """
+            @relation 'toy'
+            @attribute 'cat_without_quote' {A, B, C}
+            @attribute 'str_without_quote' string
+            @attribute 'str_internal_quote' string
+            @attribute 'class' numeric
+            @data
+            A,some text,'internal' quote,0
+            """
+        ).encode("utf-8")
     )
 
     columns_info = {
