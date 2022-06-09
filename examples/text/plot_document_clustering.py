@@ -105,15 +105,15 @@ train_times = defaultdict(list)
 
 def fit_and_evaluate(km, X, name=None):
     name = km.__class__.__name__ if name is None else name
-    
+
     t0 = time()
     km.fit(X)
     train_time = time() - t0
-    
+
     # store the timing for each fit
     train_times["estimator"].append(name)
     train_times["train time"].append(train_time)
-    
+
     # store the scores of the clustering
     scores["estimator"].append(name)
     scores["Homogeneity"].append(metrics.homogeneity_score(labels, km.labels_))
@@ -259,7 +259,7 @@ minibatch_kmeans = MiniBatchKMeans(
     random_state=0,
 )
 
-fit_and_evaluate(minibatch_kmeans, X, name="minibatchkmeans with LSA")
+fit_and_evaluate(minibatch_kmeans, X, name="MiniBatchKMeans\nwith LSA")
 
 # %%
 # **Top terms per cluster**
@@ -325,12 +325,14 @@ fit_and_evaluate(kmeans, X, name="KMeans with\nTfidf-scaled hashing")
 # ====================================
 
 import pandas as pd
+import matplotlib.pyplot as plt
 
 df = pd.DataFrame(scores).set_index("estimator")
 
-ax = df.plot.barh(figsize=(12, 6))
+ax = df.plot.barh()
 ax.set_ylabel("")
-_ = ax.set_xlabel("Clustering scores")
+ax.set_xlabel("Clustering scores")
+plt.tight_layout()
 
 # %%
 # It can be noticed that :class:`~sklearn.cluster.KMeans` (and
@@ -353,9 +355,10 @@ _ = ax.set_xlabel("Clustering scores")
 # ====================
 
 df = pd.DataFrame(train_times).set_index("estimator")
-ax = df.plot.barh(figsize=(12, 6))
+ax = df.plot.barh()
 ax.set_xlabel("Processing times (s)")
-_ = ax.set_ylabel("")
+ax.set_ylabel("")
+plt.tight_layout()
 
 # %%
 # :class:`~sklearn.cluster.MiniBatchKMeans` requires less time since
