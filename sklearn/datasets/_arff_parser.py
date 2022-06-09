@@ -379,9 +379,17 @@ def _pandas_arff_parser(
     columns_to_keep = [col for col in frame.columns if col in columns_to_select]
     frame = frame[columns_to_keep]
 
-    # `pd.read_csv` only considers double quotes as delimiters for strings.
-    # In case that a single quote is used as a delimiter, we strip it for
-    # categories.
+    # `pd.read_csv` automatically handles double quotes for quoting non-numeric
+    # CSV cell values. Contrary to LIAC-ARFF, `pd.read_csv` cannot be configured to
+    # consider either single quotes and double quotes as valid quoting chars at
+    # the same time since this case does not occur in regular (non-ARFF) CSV files. 
+    # To mimic the behavior of LIAC-ARFF parser, we manually strip single quotes
+    # on categories as a post-processing steps if needed.
+    #
+    # Note however that we intentionally do not attempt to do this kind of manual
+    # post-processing of (non-categorical) string-typed columns because we cannot
+    # resolve the ambiguity of the case of CSV cell with nesting quoting such as
+    # `"'some string value'"` with pandas.
     single_quote_pattern = re.compile(r"^'(?P<contents>.*)'$")
 
     def strip_quotes_regex(s):
