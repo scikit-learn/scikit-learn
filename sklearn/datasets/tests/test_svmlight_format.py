@@ -565,7 +565,8 @@ def test_multilabel_y_explicit_zeros(tmp_path):
     X = rng.randn(3, 5).astype(np.float64)
     indptr = np.array([0, 2, 3, 6])
     indices = np.array([0, 2, 2, 0, 1, 2])
-    data = np.array([0, 2, 3, 4, 5, 6])  # The first element is an explicit zero
+    # The first and last element is an explicit zero
+    data = np.array([0, 1, 1, 1, 1, 0])
     y = sp.csr_matrix((data, indices, indptr), shape=(3, 3))
     # y as a dense array would look like
     # [[0, 0, 2],
