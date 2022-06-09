@@ -434,8 +434,8 @@ def generate_invalid_param_val(constraint, constraints=None):
         The constraint to generate a value for.
 
     constraints : list of _Constraint instances or None, default=None
-        The list of all constraints for this parameter. If None, the list containt only
-        the constraint is used.
+        The list of all constraints for this parameter. If None, the list only
+        containing `constraint` is used.
 
     Returns
     -------
