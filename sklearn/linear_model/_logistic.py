@@ -408,8 +408,7 @@ def _logistic_regression_path(
             func = loss.loss
             grad = loss.gradient
             hess = loss.gradient_hessian_product  # hess = [gradient, hessp]
-        # TODO: Update w/ new loss module
-        # Debug in progress
+        # TODO: remove local LinearModelLoss after renaming `loss`
         elif solver == "trust-ncg":
             loss_ = LinearModelLoss(
                 base_loss=HalfMultinomialLoss(n_classes=classes.size),
@@ -435,7 +434,7 @@ def _logistic_regression_path(
             func = loss.loss
             grad = loss.gradient
             hess = loss.gradient_hessian_product  # hess = [gradient, hessp]
-        # TODO: Update w/ new loss module
+        # TODO: remove local LinearModelLoss after renaming `loss`
         elif solver == "trust-ncg":
             loss_ = LinearModelLoss(
                 base_loss=HalfBinomialLoss(), fit_intercept=fit_intercept
