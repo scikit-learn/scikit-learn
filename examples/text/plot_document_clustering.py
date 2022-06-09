@@ -225,7 +225,7 @@ from sklearn.preprocessing import Normalizer
 
 lsa = make_pipeline(TruncatedSVD(n_components=100), Normalizer(copy=False))
 t0 = time()
-X = lsa.fit_transform(X)
+X_lsa = lsa.fit_transform(X)
 explained_variance = lsa[0].explained_variance_ratio_.sum()
 
 print(f"LSA done in {time() - t0:.3f} s")
@@ -244,7 +244,7 @@ kmeans = KMeans(
     random_state=0,
 )
 
-fit_and_evaluate(kmeans, X, name="KMeans with LSA")
+fit_and_evaluate(kmeans, X_lsa, name="KMeans with LSA")
 
 # %%
 # We repeat the experiment with :class:`~sklearn.cluster.MiniBatchKMeans`.
@@ -258,7 +258,7 @@ minibatch_kmeans = MiniBatchKMeans(
     random_state=0,
 )
 
-fit_and_evaluate(minibatch_kmeans, X, name="MiniBatchKMeans\nwith LSA")
+fit_and_evaluate(minibatch_kmeans, X_lsa, name="MiniBatchKMeans\nwith LSA")
 
 # %%
 # **Top terms per cluster**
@@ -320,8 +320,8 @@ print(f"vectorizing done in {time() - t0:.3f} s")
 fit_and_evaluate(kmeans, X, name="KMeans with\nTfidf-scaled hashing")
 
 # %%
-# Plot unsupervised evaluation metrics
-# ====================================
+# Plot clustering evaluation metrics
+# ==================================
 
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -350,16 +350,16 @@ plt.tight_layout()
 # distances.
 
 # %%
-# Plot processing time
+# Plot clustering time
 # ====================
 
 df = pd.DataFrame(train_times).set_index("estimator")
 ax = df.plot.barh()
-ax.set_xlabel("Processing times (s)")
+ax.set_xlabel("Clustering times (s)")
 ax.set_ylabel("")
 plt.tight_layout()
 
 # %%
-# :class:`~sklearn.cluster.MiniBatchKMeans` requires less time since
-# it runs computations on batches of data. This comes at the expense
-# of clustering quality.
+# :class:`~sklearn.cluster.MiniBatchKMeans` requires less time since it runs
+# computations on batches of data. This comes at the expense of clustering
+# quality.
