@@ -166,7 +166,7 @@ print(f"n_samples: {X.shape[0]}, n_features: {X.shape[1]}")
 #
 # As both :class:`~sklearn.cluster.KMeans` and
 # :class:`~sklearn.cluster.MiniBatchKMeans` optimize a non-convex objective
-# function, their clustering will likely be the a sub-optimal one.
+# function, their clustering will likely be sub-optimal.
 # Several runs with independent random initiations are performed using the
 # `n_init` and the clustering with the smallest inertia is chosen.
 
@@ -185,6 +185,12 @@ fit_and_evaluate(minibatch_kmeans, X)
 
 # %%
 # **Clustering sparse data with KMeans**
+#
+# Here we use a `"random"` init instead of the smart `"k-means++"` init. The
+# `"k-means++"` init picks centroids with proba inverse to square distance,
+# which means it will pick points extremely isolated if there are any, which
+# then stay their own centroids all along. That is usually the case for text
+# clustering, where the vectorized space is high dimensional and very sparse.
 
 from sklearn.cluster import KMeans
 
@@ -192,7 +198,7 @@ kmeans = KMeans(
     n_clusters=true_k,
     init="random",
     max_iter=100,
-    n_init=10,
+    n_init=5,
     random_state=0,
 )
 
@@ -201,17 +207,29 @@ fit_and_evaluate(kmeans, X)
 # %%
 # **Performing dimensionality reduction using LSA**
 #
-# Since LSA/SVD results are not normalized, we redo the normalization to improve
-# the :class:`~sklearn.cluster.KMeans` result.
+# The `"k-means++"` init can still be used as long as the dimension of the
+# vectorized space is reduced first. For such purpose we use truncated SVD,
+# which works on term count/tf-idf matrices. In that context, it is known as
+# latent semantic analysis (LSA). Since LSA results are not normalized, we redo
+# the normalization to improve the :class:`~sklearn.cluster.KMeans` result.
 
 from sklearn.decomposition import TruncatedSVD
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import Normalizer
 
+kmeans = KMeans(
+    n_clusters=true_k,
+    init="k-means++",
+    max_iter=100,
+    n_init=1,
+    random_state=0,
+)
 svd = TruncatedSVD(n_components=100)
 lsa = make_pipeline(svd, Normalizer(copy=False))
 X = lsa.fit_transform(X)
+
 fit_and_evaluate(kmeans, X, name="kmeans with LSA")
+fit_and_evaluate(minibatch_kmeans, X, name="minibatchkmeans with LSA")
 
 explained_variance = svd.explained_variance_ratio_.sum()
 print(f"Explained variance of the SVD step: {explained_variance * 100:.1f}%")
@@ -277,7 +295,7 @@ import pandas as pd
 
 df = pd.DataFrame(scores).set_index("estimator")
 
-ax = df.plot.barh(figsize=(11, 6))
+ax = df.plot.barh(figsize=(12, 6))
 ax.set_ylabel("")
 _ = ax.set_xlabel("Clustering scores")
 
@@ -302,7 +320,7 @@ _ = ax.set_xlabel("Clustering scores")
 # ====================
 
 df = pd.DataFrame(train_times).set_index("estimator")
-ax = df.plot.barh(figsize=(11, 6))
+ax = df.plot.barh(figsize=(12, 6))
 ax.set_xlabel("Processing times (s)")
 _ = ax.set_ylabel("")
 
