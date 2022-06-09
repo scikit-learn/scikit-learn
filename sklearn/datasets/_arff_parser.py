@@ -382,7 +382,7 @@ def _pandas_arff_parser(
     # `pd.read_csv` automatically handles double quotes for quoting non-numeric
     # CSV cell values. Contrary to LIAC-ARFF, `pd.read_csv` cannot be configured to
     # consider either single quotes and double quotes as valid quoting chars at
-    # the same time since this case does not occur in regular (non-ARFF) CSV files. 
+    # the same time since this case does not occur in regular (non-ARFF) CSV files.
     # To mimic the behavior of LIAC-ARFF parser, we manually strip single quotes
     # on categories as a post-processing steps if needed.
     #
