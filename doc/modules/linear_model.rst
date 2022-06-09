@@ -855,7 +855,8 @@ Binary Case
 
 For notational ease, we assume that the target :math:`y_i` takes values in the
 set :math:`\{0, 1\}` for data point :math:`i`.
-Once fitted, the :meth:`~sklearn.linear_model.LogisticRegression.predict_proba` method of :class:`~sklearn.linear_model.LogisticRegression` predicts
+Once fitted, the :meth:`~sklearn.linear_model.LogisticRegression.predict_proba`
+method of :class:`~sklearn.linear_model.LogisticRegression` predicts
 the probability of the positive class :math:`P(y_i=1|X_i)` as
 
 .. math:: \hat{p}(X_i) = \operatorname{expit}(X_i w + w_0) = \frac{1}{1 + \exp(-X_i w - w_0)}.
@@ -907,7 +908,8 @@ logistic regression, see also `log-linear model
 Let :math:`y_i \in {1, \ldots, K}` be the label (ordinal) encoded target variable for observation :math:`i`.
 Instead of a single coefficient vector, we now have
 a matrix of coefficients :math:`W` where each row vector :math:`W_k` corresponds to class
-:math:`k`. We aim at predicting the class probabilities :math:`P(y_i=k|X_i)` via :meth:`~sklearn.linear_model.LogisticRegression.predict_proba` as:
+:math:`k`. We aim at predicting the class probabilities :math:`P(y_i=k|X_i)` via
+:meth:`~sklearn.linear_model.LogisticRegression.predict_proba` as:
 
 .. math:: \hat{p}_k(X_i) = \frac{\exp(X_i W_k + W_{0, k})}{\sum_{l=0}^{K-1} \exp(X_i W_l + W_{0, l})}.
 
