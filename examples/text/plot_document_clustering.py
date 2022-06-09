@@ -336,18 +336,18 @@ plt.tight_layout()
 # %%
 # It can be noticed that :class:`~sklearn.cluster.KMeans` (and
 # :class:`~sklearn.cluster.MiniBatchKMeans`) are very sensitive to feature
-# scaling and that, in this case, the IDF weighting helps at improving the
-# quality of the clustering by quite a lot as measured against the "ground
-# truth" provided by the class label assignments of :ref:`20newsgroups_dataset`.
+# scaling. In this case, the KMeans with TF-IDF-scaled hashing has better
+# quality of the clustering than KMeans with simple hashing when using "ground
+# truth" metrics provided by the class label assignments of
+# :ref:`20newsgroups_dataset`.
 #
-# This improvement is not visible in the Silhouette Coefficient which is small
-# for both as this measure seem to suffer from the phenomenon called
-# "Concentration of Measure" or "Curse of Dimensionality" for high dimensional
-# datasets such as text data. Other measures such as V-measure and Adjusted Rand
-# Index are information-theory-based evaluation scores: as they are only based
-# on cluster assignments rather than distances, hence not affected by the curse
-# of dimensionality.
-
+# This improvement is not visible in the Silhouette Coefficient which suffers
+# from the phenomenon called "Concentration of Measure" or "Curse of
+# Dimensionality" for high dimensional datasets such as text data. Other
+# measures such as the V-measure and the Adjusted Rand Index are
+# information-theory-based evaluation scores: they are not affected by the curse
+# of dimensionality as they are only based on cluster assignments rather than
+# distances.
 
 # %%
 # Plot processing time
