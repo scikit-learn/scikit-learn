@@ -1852,9 +1852,9 @@ def test_read_only_buffer():
     """Test that sparse coordinate descent works for read-only buffers"""
 
     rng = np.random.RandomState(0)
-    clf = ElasticNet(alpha=0.1, copy_X=True)
+    clf = ElasticNet(alpha=0.1, copy_X=True, random_state=rng)
     X = np.asfortranarray(rng.uniform(size=(100, 10)))
     X.setflags(write=False)
 
-    y = np.random.rand(100)
+    y = rng.rand(100)
     clf.fit(X, y)
