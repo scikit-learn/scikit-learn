@@ -66,13 +66,13 @@ def test_pairwise_distances(global_dtype):
     S = pairwise_distances(X, metric="euclidean")
     S2 = euclidean_distances(X)
     assert_allclose(S, S2)
+    assert S.dtype == S2.dtype == global_dtype
 
     # Euclidean distance, with Y != X.
     Y = rng.random_sample((2, 4)).astype(global_dtype, copy=False)
     S = pairwise_distances(X, Y, metric="euclidean")
     S2 = euclidean_distances(X, Y)
     assert_allclose(S, S2)
-
     assert S.dtype == S2.dtype == global_dtype
 
     # Check to ensure NaNs work with pairwise_distances.
@@ -82,18 +82,19 @@ def test_pairwise_distances(global_dtype):
     Y_masked[0, 0] = np.nan
     S_masked = pairwise_distances(X_masked, Y_masked, metric="nan_euclidean")
     S2_masked = nan_euclidean_distances(X_masked, Y_masked)
-
+    assert_allclose(S_masked, S2_masked)
     assert S_masked.dtype == S2_masked.dtype == global_dtype
 
-    assert_allclose(S_masked, S2_masked)
     # Test with tuples as X and Y
     X_tuples = tuple([tuple([v for v in row]) for row in X])
     Y_tuples = tuple([tuple([v for v in row]) for row in Y])
     S2 = pairwise_distances(X_tuples, Y_tuples, metric="euclidean")
     assert_allclose(S, S2)
+    assert S.dtype == S2.dtype == global_dtype
 
     # Test haversine distance
     # The data should be valid latitude and longitude
+    # haversine converts to float64 currently so we don't check dtypes. 
     X = rng.random_sample((5, 2)).astype(global_dtype, copy=False)
     X[:, 0] = (X[:, 0] - 0.5) * 2 * np.pi / 2
     X[:, 1] = (X[:, 1] - 0.5) * 2 * np.pi
@@ -111,6 +112,7 @@ def test_pairwise_distances(global_dtype):
 
     # "cityblock" uses scikit-learn metric, cityblock (function) is
     # scipy.spatial.
+    # The metric functions from scipy converts to float64 so we don't check the dtypes.
     S = pairwise_distances(X, metric="cityblock")
     S2 = pairwise_distances(X, metric=cityblock)
     assert S.shape[0] == S.shape[1]
@@ -137,17 +139,39 @@ def test_pairwise_distances(global_dtype):
     # currently only supported for Euclidean, L1 and cosine.
     X_sparse = csr_matrix(X)
     Y_sparse = csr_matrix(Y)
+
     S = pairwise_distances(X_sparse, Y_sparse, metric="euclidean")
     S2 = euclidean_distances(X_sparse, Y_sparse)
     assert_allclose(S, S2)
+    assert S.dtype == S2.dtype == global_dtype
+
     S = pairwise_distances(X_sparse, Y_sparse, metric="cosine")
     S2 = cosine_distances(X_sparse, Y_sparse)
     assert_allclose(S, S2)
+    assert S.dtype == S2.dtype == global_dtype
+
     S = pairwise_distances(X_sparse, Y_sparse.tocsc(), metric="manhattan")
     S2 = manhattan_distances(X_sparse.tobsr(), Y_sparse.tocoo())
     assert_allclose(S, S2)
+    if global_dtype == np.float64:
+        assert S.dtype == S2.dtype == global_dtype
+    else:
+        # TODO Fix manhattan_distances to preserve dtype.
+        # currently pairwise_distances uses manhattan_distances but converts the result
+        # back to the input dtype
+        with pytest.raises(AssertionError):
+            assert S.dtype == S2.dtype == global_dtype
+
     S2 = manhattan_distances(X, Y)
     assert_allclose(S, S2)
+    if global_dtype == np.float64:
+        assert S.dtype == S2.dtype == global_dtype
+    else:
+        # TODO Fix manhattan_distances to preserve dtype.
+        # currently pairwise_distances uses manhattan_distances but converts the result
+        # back to the input dtype
+        with pytest.raises(AssertionError):
+            assert S.dtype == S2.dtype == global_dtype
 
     # Test with scipy.spatial.distance metric, with a kwd
     kwds = {"p": 2.0}
@@ -411,7 +435,7 @@ def test_paired_distances(metric, func):
 
 
 def test_paired_distances_callable(global_dtype):
-    # Test the pairwise_distance helper function
+    # Test the paired_distance helper function
     # with the callable implementation
     rng = np.random.RandomState(0)
     # Euclidean distance should be equivalent to calling the function.
@@ -425,7 +449,7 @@ def test_paired_distances_callable(global_dtype):
 
     # Test that a value error is raised when the lengths of X and Y should not
     # differ
-    Y = rng.random_sample((3, 4)).astype(global_dtype, copy=False)
+    Y = rng.random_sample((3, 4))
     with pytest.raises(ValueError):
         paired_distances(X, Y)
 
@@ -554,6 +578,8 @@ def test_pairwise_distances_chunked_reduce(global_dtype):
     assert isinstance(S_chunks, GeneratorType)
     S_chunks = list(S_chunks)
     assert len(S_chunks) > 1
+    assert S_chunks[0].dtype == X.dtype
+
     # atol is for diagonal where S is explicitly zeroed on the diagonal
     assert_allclose(np.vstack(S_chunks), S, atol=1e-7)
 
