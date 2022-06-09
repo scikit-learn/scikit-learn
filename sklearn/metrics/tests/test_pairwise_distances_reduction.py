@@ -206,10 +206,10 @@ def assert_radius_neighborhood_results_quasi_equality(
 ):
     """Assert that radius neighborhood results are valid up to:
       - relative tolerance on computed distance values
-      - permutations of indices for distances values that
-      differ up to a precision level set by `decimals`
+      - permutations of indices for distances values that differ up to
+        a precision level
       - missing or extra last elements if their distance is
-      close to the radius
+        close to the radius
 
     To be used for testing neighbors queries on float32 datasets: we
     accept neighbors rank swaps only if they are caused by small
@@ -243,14 +243,13 @@ def assert_radius_neighborhood_results_quasi_equality(
         largest_row = ref_dist_row if len(ref_dist_row) > len(dist_row) else dist_row
 
         # For the longest distances vector, we check that last extra elements
-        # that aren't present in the other vector are all in: [radius ± atol]
-        atol = 10 ** (-n_significant_digits)
+        # that aren't present in the other vector are all in: [radius ± rtol]
         min_length = min(len(ref_dist_row), len(dist_row))
         last_extra_elements = largest_row[min_length:]
         if last_extra_elements.size > 0:
-            assert np.all(radius - atol <= last_extra_elements <= radius + atol), (
+            assert np.all(radius - rtol <= last_extra_elements <= radius + rtol), (
                 f"The last extra elements ({last_extra_elements}) aren't in [radius ±"
-                f" atol]=[{radius} ± {atol}]"
+                f" rtol]=[{radius} ± {rtol}]"
             )
 
         # We truncate the neighbors results list on the smallest length to
@@ -460,7 +459,7 @@ def test_assert_radius_neighborhood_results_quasi_equality():
             rtol=rtol,
         )
 
-    # Having extra last elements is valid if they are in: [radius ± atol]
+    # Having extra last elements is valid if they are in: [radius ± rtol]
     assert_radius_neighborhood_results_quasi_equality(
         np.array([np.array([1.2, 2.5, _6_1m, 6.1, _6_1p])]),
         np.array([np.array([1.2, 2.5, _6_1m, 6.1])]),
@@ -470,9 +469,9 @@ def test_assert_radius_neighborhood_results_quasi_equality():
         rtol=rtol,
     )
 
-    # Having extra last elements is invalid if they are lesser than radius - atol
+    # Having extra last elements is invalid if they are lesser than radius - rtol
     msg = re.escape(
-        "The last extra elements ([6.]) aren't in [radius ± atol]=[6.1 ± 1e-06]"
+        "The last extra elements ([6.]) aren't in [radius ± rtol]=[6.1 ± 1e-07]"
     )
     with pytest.raises(AssertionError, match=msg):
         assert_radius_neighborhood_results_quasi_equality(
