@@ -1622,7 +1622,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         random_state = check_random_state(self.random_state)
         # numpy mtrand expects a C long which is a signed 32 bit integer under
         # Windows
-        seed = random_state.randint(0, np.iinfo(np.int32).max)
+        seed = random_state.randint(0, MAX_INT)
 
         dataset, intercept_decay = make_dataset(
             X, y, sample_weight, random_state=random_state
