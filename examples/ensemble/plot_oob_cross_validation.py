@@ -6,7 +6,7 @@ Cheap Cross Validation using Out of Bag Error
 Out-of-bag error is an estimation of the generalisation error of an estimator, much
 like the cross validation error. However, it is much cheaper to calculate the out-of-bag
 error, since we can do so with a single training pass of the dataset, as opposed to
-$k$ passes in $k$-fold cross validation.
+:math:`k` passes in :math:`k`-fold cross validation [1]_.
 
 In this example we perform greedy sequential feature selection with a small number of
 features, and compare the runtime for out-of-bag error and cross validation error.
@@ -43,10 +43,10 @@ def oob_split(X: np.ndarray):
     """
     "Split" the data into a training set with all the data, and an empty validation set
     """
-    yield np.arange(X.shape[0]), np.empty(0, dtype=X.dtype)
+    yield np.arange(X.shape[0]), np.empty(0, dtype=int)
 
 
-def oob_scorer(estimator, X, y) -> np.ndarray:
+def oob_scorer(estimator, X, y):
     """
     Score using the out-of-bag score
     """
