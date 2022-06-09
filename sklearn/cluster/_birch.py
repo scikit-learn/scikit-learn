@@ -91,6 +91,11 @@ def _split_node(node, threshold, branching_factor):
     node1_dist, node2_dist = dist[(farthest_idx,)]
 
     node1_closer = node1_dist < node2_dist
+    # make sure node1 is closest to itself even if all distances are equal.
+    # This can only happen when all node.centroids_ are duplicates leading to all
+    # distances between centroids being zero.
+    node1_closer[farthest_idx[0]] = True
+
     for idx, subcluster in enumerate(node.subclusters_):
         if node1_closer[idx]:
             new_node1.append_subcluster(subcluster)

@@ -248,7 +248,7 @@ def test_fit_docstring_attributes(name, Estimator):
 
     # FIXME: TO BE REMOVED for 1.2 (avoid FutureWarning)
     if Estimator.__name__ == "TSNE":
-        est.set_params(learning_rate=200.0, init="random")
+        est.set_params(learning_rate=200.0, init="random", perplexity=2)
 
     # FIXME: TO BE REMOVED for 1.3 (avoid FutureWarning)
     if Estimator.__name__ == "SequentialFeatureSelector":
@@ -261,6 +261,10 @@ def test_fit_docstring_attributes(name, Estimator):
     # FIXME: TO BE REMOVED for 1.3 (avoid FutureWarning)
     if Estimator.__name__ == "MiniBatchDictionaryLearning":
         est.set_params(batch_size=5)
+
+    # TODO(1.4): TO BE REMOVED for 1.4 (avoid FutureWarning)
+    if Estimator.__name__ in ("KMeans", "MiniBatchKMeans"):
+        est.set_params(n_init="auto")
 
     # In case we want to deprecate some attributes in the future
     skipped_attributes = {}

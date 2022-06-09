@@ -60,7 +60,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, random_sta
 # We define a predictive model based on a random forest. Therefore, we will make
 # the following preprocessing steps:
 #
-# - use :class:`~sklearn.preprocessing.OrdinaleEcnoder` to encode the
+# - use :class:`~sklearn.preprocessing.OrdinalEncoder` to encode the
 #   categorical features;
 # - use :class:`~sklearn.impute.SimpleImputer` to fill missing values for
 #   numerical features using a mean strategy.
