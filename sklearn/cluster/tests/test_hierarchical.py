@@ -940,4 +940,12 @@ def test_deprecate_affinity():
     )
     with pytest.warns(FutureWarning, match=msg):
         af.fit(X)
+    with pytest.warns(FutureWarning, match=msg):
+        af.fit_predict(X)
+
+    af = AgglomerativeClustering(metric="euclidean", affinity="euclidean")
+    msg = "Both `affinity` and `metric` attributes were set. Attribute"
+    with pytest.raises(ValueError, match=msg):
+        af.fit(X)
+    with pytest.raises(ValueError, match=msg):
         af.fit_predict(X)
