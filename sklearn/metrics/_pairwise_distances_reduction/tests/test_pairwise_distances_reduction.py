@@ -20,6 +20,7 @@ from sklearn.utils.fixes import sp_version, parse_version
 from sklearn.utils._testing import (
     assert_array_equal,
     assert_allclose,
+    assert_radius_neighborhood_results_equality,
 )
 
 # Common supported metric between scipy.spatial.distance.cdist
@@ -175,25 +176,6 @@ def assert_argkmin_results_quasi_equality(
                 reference_neighbors_groups[rounded_distance]
                 == effective_neighbors_groups[rounded_distance]
             ), msg
-
-
-def assert_radius_neighborhood_results_equality(
-    ref_dist, dist, ref_indices, indices, radius
-):
-    # We get arrays of arrays and we need to check for individual pairs
-    for i in range(ref_dist.shape[0]):
-        assert (ref_dist[i] <= radius).all()
-        assert_array_equal(
-            ref_indices[i],
-            indices[i],
-            err_msg=f"Query vector #{i} has different neighbors' indices",
-        )
-        assert_allclose(
-            ref_dist[i],
-            dist[i],
-            err_msg=f"Query vector #{i} has different neighbors' distances",
-            rtol=1e-7,
-        )
 
 
 def assert_radius_neighborhood_results_quasi_equality(
@@ -955,7 +937,7 @@ def test_pairwise_distances_radius_neighbors(
 @pytest.mark.parametrize("n_samples", [100, 1000])
 @pytest.mark.parametrize("n_features", [5, 10, 100])
 @pytest.mark.parametrize("num_threads", [1, 2, 8])
-def test_sqeuclidean_row_norms(
+def test_sqeuclidean_row_norms64(
     global_random_seed,
     n_samples,
     n_features,
