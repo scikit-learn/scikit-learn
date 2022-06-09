@@ -4,10 +4,11 @@ Kernel Density Estimation
 """
 # Author: Jake Vanderplas <jakevdp@cs.washington.edu>
 
+import numbers
 import numpy as np
 from scipy.special import gammainc
 from ..base import BaseEstimator
-from ..utils import check_random_state
+from ..utils import check_random_state, check_scalar
 from ..utils.validation import _check_sample_weight, check_is_fitted
 
 from ..utils.extmath import row_norms
@@ -36,8 +37,10 @@ class KernelDensity(BaseEstimator):
 
     Parameters
     ----------
-    bandwidth : float, default=1.0
-        The bandwidth of the kernel.
+    bandwidth : float or {"scott", "silverman"}, default=1.0
+        The bandwidth of the kernel. If bandwidth is a float, it defines the
+        bandwidth of the kernel. If bandwidth is a string, one of the estimation
+        methods is implemented.
 
     algorithm : {'kd_tree', 'ball_tree', 'auto'}, default='auto'
         The tree algorithm to use.
@@ -88,6 +91,10 @@ class KernelDensity(BaseEstimator):
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
+
+    bandwidth_ : float
+        Value of the bandwidth, given directly by the bandwidth parameter or
+        estimated using the 'scott' or 'silvermann' method.
 
         .. versionadded:: 1.0
 
@@ -181,8 +188,28 @@ class KernelDensity(BaseEstimator):
 
         algorithm = self._choose_algorithm(self.algorithm, self.metric)
 
-        if self.bandwidth <= 0:
-            raise ValueError("bandwidth must be positive")
+        if isinstance(self.bandwidth, str):
+            methods_supported = ("scott", "silvermann")
+            if self.bandwidth not in methods_supported:
+                raise ValueError(
+                    "When `bandwidth` is a string, it should be one of: "
+                    f"{', '.join(methods_supported)}. Got {self.bandwidth!r} instead."
+                )
+            if self.bandwidth == "scott":
+                self.bandwidth_ = X.shape[0] ** (-1 / (X.shape[1] + 4))
+            elif self.bandwidth == "silvermann":
+                self.bandwidth_ = (X.shape[0] * (X.shape[1] + 2) / 4) ** (
+                    -1 / (X.shape[1] + 4)
+                )
+        else:
+            check_scalar(
+                self.bandwidth,
+                "bandwidth",
+                target_type=numbers.Real,
+                min_val=0,
+                include_boundaries="neither",
+            )
+            self.bandwidth_ = self.bandwidth
         if self.kernel not in VALID_KERNELS:
             raise ValueError("invalid kernel: '{0}'".format(self.kernel))
 
@@ -233,7 +260,7 @@ class KernelDensity(BaseEstimator):
         atol_N = self.atol * N
         log_density = self.tree_.kernel_density(
             X,
-            h=self.bandwidth,
+            h=self.bandwidth_,
             kernel=self.kernel,
             atol=atol_N,
             rtol=self.rtol,
@@ -302,7 +329,7 @@ class KernelDensity(BaseEstimator):
             sum_weight = cumsum_weight[-1]
             i = np.searchsorted(cumsum_weight, u * sum_weight)
         if self.kernel == "gaussian":
-            return np.atleast_2d(rng.normal(data[i], self.bandwidth))
+            return np.atleast_2d(rng.normal(data[i], self.bandwidth_))
 
         elif self.kernel == "tophat":
             # we first draw points from a d-dimensional normal distribution,
@@ -313,7 +340,7 @@ class KernelDensity(BaseEstimator):
             s_sq = row_norms(X, squared=True)
             correction = (
                 gammainc(0.5 * dim, 0.5 * s_sq) ** (1.0 / dim)
-                * self.bandwidth
+                * self.bandwidth_
                 / np.sqrt(s_sq)
             )
             return data[i] + X * correction[:, np.newaxis]

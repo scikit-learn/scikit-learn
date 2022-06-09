@@ -307,8 +307,12 @@ make_plot(2)
 #
 # :class:`~sklearn.preprocessing.MaxAbsScaler` is similar to
 # :class:`~sklearn.preprocessing.MinMaxScaler` except that the
-# values are mapped in the range [0, 1]. On positive only data, both scalers
-# behave similarly.
+# values are mapped across several ranges depending on whether negative
+# OR positive values are present. If only positive values are present, the
+# range is [0, 1]. If only negative values are present, the range is [-1, 0].
+# If both negative and positive values are present, the range is [-1, 1].
+# On positive only data, both :class:`~sklearn.preprocessing.MinMaxScaler`
+# and :class:`~sklearn.preprocessing.MaxAbsScaler` behave similarly.
 # :class:`~sklearn.preprocessing.MaxAbsScaler` therefore also suffers from
 # the presence of large outliers.
 

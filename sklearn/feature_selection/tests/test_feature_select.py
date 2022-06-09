@@ -208,9 +208,9 @@ def test_r_regression_force_finite(X, y, expected_corr_coef, force_finite):
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/15672
     """
-    with pytest.warns(None) as records:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
         corr_coef = r_regression(X, y, force_finite=force_finite)
-    assert not [w.message for w in records]
     np.testing.assert_array_almost_equal(corr_coef, expected_corr_coef)
 
 
@@ -291,9 +291,9 @@ def test_f_regression_corner_case(
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/15672
     """
-    with pytest.warns(None) as records:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
         f_statistic, p_values = f_regression(X, y, force_finite=force_finite)
-    assert not [w.message for w in records]
     np.testing.assert_array_almost_equal(f_statistic, expected_f_statistic)
     np.testing.assert_array_almost_equal(p_values, expected_p_values)
 

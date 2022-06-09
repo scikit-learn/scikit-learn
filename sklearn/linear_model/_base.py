@@ -26,7 +26,9 @@ from scipy import sparse
 from scipy.sparse.linalg import lsqr
 from scipy.special import expit
 from joblib import Parallel
+from numbers import Integral
 
+from ..utils._param_validation import StrOptions
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin, MultiOutputMixin
 from ..preprocessing._data import _is_constant_feature
 from ..utils import check_array
@@ -176,7 +178,8 @@ def make_dataset(X, y, sample_weight, random_state=None):
         The weight of each sample
 
     random_state : int, RandomState instance or None (default)
-        Determines random number generation for dataset shuffling and noise.
+        Determines random number generation for dataset random sampling. It is not
+        used for dataset shuffling.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
@@ -217,7 +220,6 @@ def _preprocess_data(
     normalize=False,
     copy=True,
     sample_weight=None,
-    return_mean=False,
     check_input=True,
 ):
     """Center and scale data.
@@ -231,7 +233,7 @@ def _preprocess_data(
 
     X_scale is the L2 norm of X - X_offset. If sample_weight is not None,
     then the weighted mean of X and y is zero, and not the mean itself. If
-    return_mean=True, the mean, eventually weighted, is returned, independently
+    fit_intercept=True, the mean, eventually weighted, is returned, independently
     of whether X was centered (option used for optimization with sparse data in
     coordinate_descend).
 
@@ -271,8 +273,6 @@ def _preprocess_data(
     if fit_intercept:
         if sp.issparse(X):
             X_offset, X_var = mean_variance_axis(X, axis=0, weights=sample_weight)
-            if not return_mean:
-                X_offset[:] = X.dtype.type(0)
         else:
             if normalize:
                 X_offset, X_var, _ = _incremental_mean_and_var(
@@ -328,7 +328,18 @@ def _preprocess_data(
 def _rescale_data(X, y, sample_weight):
     """Rescale data sample-wise by square root of sample_weight.
 
-    For many linear models, this enables easy support for sample_weight.
+    For many linear models, this enables easy support for sample_weight because
+
+        (y - X w)' S (y - X w)
+
+    with S = diag(sample_weight) becomes
+
+        ||y_rescaled - X_rescaled w||_2^2
+
+    when setting
+
+        y_rescaled = sqrt(S) y
+        X_rescaled = sqrt(S) X
 
     Returns
     -------
@@ -379,7 +390,9 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
     def _set_intercept(self, X_offset, y_offset, X_scale):
         """Set the intercept_"""
         if self.fit_intercept:
-            self.coef_ = self.coef_ / X_scale
+            # We always want coef_.dtype=X.dtype. For instance, X.dtype can differ from
+            # coef_.dtype if warm_start=True.
+            self.coef_ = np.divide(self.coef_, X_scale, dtype=X_scale.dtype)
             self.intercept_ = y_offset - np.dot(X_offset, self.coef_.T)
         else:
             self.intercept_ = 0.0
@@ -625,6 +638,14 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
     array([16.])
     """
 
+    _parameter_constraints = {
+        "fit_intercept": [bool],
+        "normalize": [StrOptions({"deprecated"}, internal={"deprecated"}), bool],
+        "copy_X": [bool],
+        "n_jobs": [None, Integral],
+        "positive": [bool],
+    }
+
     def __init__(
         self,
         *,
@@ -664,6 +685,8 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
             Fitted Estimator.
         """
 
+        self._validate_params()
+
         _normalize = _deprecate_normalize(
             self.normalize, default=False, estimator_name=self.__class__.__name__
         )
@@ -687,7 +710,6 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
             normalize=_normalize,
             copy=self.copy_X,
             sample_weight=sample_weight,
-            return_mean=True,
         )
 
         # Sample weight can be implemented via a simple rescaling.
@@ -735,7 +757,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
 
 
 def _check_precomputed_gram_matrix(
-    X, precompute, X_offset, X_scale, rtol=1e-7, atol=1e-5
+    X, precompute, X_offset, X_scale, rtol=None, atol=1e-5
 ):
     """Computes a single element of the gram matrix and compares it to
     the corresponding element of the user supplied gram matrix.
@@ -756,8 +778,10 @@ def _check_precomputed_gram_matrix(
     X_scale : ndarray of shape (n_features,)
         Array of feature scale factors used to normalize design matrix.
 
-    rtol : float, default=1e-7
-        Relative tolerance; see numpy.allclose.
+    rtol : float, default=None
+        Relative tolerance; see numpy.allclose
+        If None, it is set to 1e-4 for arrays of dtype numpy.float32 and 1e-7
+        otherwise.
 
     atol : float, default=1e-5
         absolute tolerance; see :func`numpy.allclose`. Note that the default
@@ -779,6 +803,11 @@ def _check_precomputed_gram_matrix(
 
     expected = np.dot(v1, v2)
     actual = precompute[f1, f2]
+
+    dtypes = [precompute.dtype, expected.dtype]
+    if rtol is None:
+        rtols = [1e-4 if dtype == np.float32 else 1e-7 for dtype in dtypes]
+        rtol = max(rtols)
 
     if not np.isclose(expected, actual, rtol=rtol, atol=atol):
         raise ValueError(
@@ -824,8 +853,8 @@ def _pre_fit(
             fit_intercept=fit_intercept,
             normalize=normalize,
             copy=False,
-            return_mean=True,
             check_input=check_input,
+            sample_weight=sample_weight,
         )
     else:
         # copy was done in fit if necessary
@@ -838,8 +867,11 @@ def _pre_fit(
             check_input=check_input,
             sample_weight=sample_weight,
         )
-    if sample_weight is not None:
-        X, y, _ = _rescale_data(X, y, sample_weight=sample_weight)
+        # Rescale only in dense case. Sparse cd solver directly deals with
+        # sample_weight.
+        if sample_weight is not None:
+            # This triggers copies anyway.
+            X, y, _ = _rescale_data(X, y, sample_weight=sample_weight)
 
     # FIXME: 'normalize' to be removed in 1.2
     if hasattr(precompute, "__array__"):
