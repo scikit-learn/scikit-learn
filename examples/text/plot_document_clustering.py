@@ -337,9 +337,9 @@ plt.tight_layout()
 # %%
 # It can be noticed that :class:`~sklearn.cluster.KMeans` (and
 # :class:`~sklearn.cluster.MiniBatchKMeans`) are very sensitive to feature
-# scaling and that, in this case, the IDF weighting helps at improving the quality of
-# the clustering by quite a lot as measured against the "ground truth" provided
-# by the class label assignments of :ref:`20newsgroups_dataset`.
+# scaling and that, in this case, the IDF weighting helps at improving the
+# quality of the clustering by quite a lot as measured against the "ground
+# truth" provided by the class label assignments of :ref:`20newsgroups_dataset`.
 #
 # This improvement is not visible in the Silhouette Coefficient which is small
 # for both as this measure seem to suffer from the phenomenon called
