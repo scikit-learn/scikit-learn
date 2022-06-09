@@ -182,8 +182,13 @@ def test_generate_invalid_param_val_not_error(constraint):
         _RandomStates(),
         _SparseMatrices(),
         StrOptions({"a", "b", "c"}),
-        Interval(Integral, 0, 1, closed="left"),
-        Interval(Integral, 0, 2, closed="neither"),
+        Interval(Integral, None, None, closed="neither"),
+        Interval(Integral, 0, 10, closed="neither"),
+        Interval(Integral, 0, None, closed="neither"),
+        Interval(Integral, None, 0, closed="neither"),
+        Interval(Real, 0, 1, closed="neither"),
+        Interval(Real, 0, None, closed="both"),
+        Interval(Real, None, 0, closed="right"),
     ],
 )
 def test_generate_valid_param(constraint):

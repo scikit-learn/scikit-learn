@@ -486,10 +486,14 @@ def generate_valid_param(constraint):
             return option
     elif isinstance(constraint, Interval):
         interval = constraint
-        if interval.type is Real:
-            return (interval.left + interval.right) / 2
+        if interval.left is None and interval.right is None:
+            return 0
+        elif interval.left is None:
+            return interval.right - 1
+        elif interval.right is None:
+            return interval.left + 1
         else:
-            if interval.closed in ("left", "both"):
-                return interval.left
+            if interval.type is Real:
+                return (interval.left + interval.right) / 2
             else:
                 return interval.left + 1
