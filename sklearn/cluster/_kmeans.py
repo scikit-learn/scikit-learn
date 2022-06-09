@@ -1185,9 +1185,11 @@ class KMeans(_BaseKMeans):
             (n_clusters, n_features), default='k-means++'
         Method for initialization:
 
-        'k-means++' : selects initial cluster centers for k-mean
-        clustering in a smart way to speed up convergence. See section
-        Notes in k_init for more details.
+        'k-means++' : selects initial cluster centers for k-mean clustering in a
+        smart way to speed up convergence. Not recommended for sparse
+        high-dimensional problems (see
+        :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`). See
+        notes in n_init for more details.
 
         'random': choose `n_clusters` observations (rows) at random from data
         for the initial centroids.
