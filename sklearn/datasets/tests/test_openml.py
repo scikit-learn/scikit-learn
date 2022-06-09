@@ -1572,6 +1572,35 @@ def test_fetch_openml_with_ignored_feature(monkeypatch, gzip_response, parser):
     assert "animal" not in dataset["feature_names"]
 
 
+def test_fetch_openml_strip_quotes(monkeypatch):
+    """Check that we strip the single quotes when used as a string delimiter.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/23381
+    """
+    pd = pytest.importorskip("pandas")
+    data_id = 40966
+    _monkey_patch_webbased_functions(monkeypatch, data_id=data_id, gzip_response=False)
+
+    common_params = {"as_frame": True, "cache": False, "data_id": data_id}
+    mice_pandas = fetch_openml(parser="pandas", **common_params)
+    mice_liac_arff = fetch_openml(parser="liac-arff", **common_params)
+    pd.testing.assert_series_equal(mice_pandas.target, mice_liac_arff.target)
+    assert not mice_pandas.target.str.startswith("'").any()
+    assert not mice_pandas.target.str.endswith("'").any()
+
+    # similar behaviour should be observed when the column is not the target
+    mice_pandas = fetch_openml(parser="pandas", target_column="NUMB_N", **common_params)
+    mice_liac_arff = fetch_openml(
+        parser="liac-arff", target_column="NUMB_N", **common_params
+    )
+    pd.testing.assert_series_equal(
+        mice_pandas.frame["class"], mice_liac_arff.frame["class"]
+    )
+    assert not mice_pandas.frame["class"].str.startswith("'").any()
+    assert not mice_pandas.frame["class"].str.endswith("'").any()
+
+
 ###############################################################################
 # Deprecation-changed parameters
 
