@@ -54,6 +54,7 @@ EXAMPLES = {
         *_generate_sparse([[0, 1], [1, 0]]),
         *_generate_sparse([[0, 0], [0, 0]]),
         *_generate_sparse([[0, 1]]),
+        csr_matrix(np.array([[0, 1]])),
         # Only valid when data is dense
         [[-1, 1], [1, -1]],
         np.array([[-1, 1], [1, -1]]),

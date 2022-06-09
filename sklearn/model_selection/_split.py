@@ -947,47 +947,34 @@ class StratifiedGroupKFold(_BaseKFold):
 
 class TimeSeriesSplit(_BaseKFold):
     """Time Series cross-validator
-
     Provides train/test indices to split time series data samples
     that are observed at fixed time intervals, in train/test sets.
     In each split, test indices must be higher than before, and thus shuffling
     in cross validator is inappropriate.
-
     This cross-validation object is a variation of :class:`KFold`.
     In the kth split, it returns first k folds as train set and the
     (k+1)th fold as test set.
-
     Note that unlike standard cross-validation methods, successive
     training sets are supersets of those that come before them.
-
     Read more in the :ref:`User Guide <time_series_split>`.
-
     .. versionadded:: 0.18
-
     Parameters
     ----------
     n_splits : int, default=5
         Number of splits. Must be at least 2.
-
         .. versionchanged:: 0.22
             ``n_splits`` default value changed from 3 to 5.
-
     max_train_size : int, default=None
         Maximum size for a single training set.
-
     test_size : int, default=None
         Used to limit the size of the test set. Defaults to
         ``n_samples // (n_splits + 1)``, which is the maximum allowed value
         with ``gap=0``.
-
         .. versionadded:: 0.24
-
     gap : int, default=0
         Number of samples to exclude from the end of each train set before
         the test set.
-
         .. versionadded:: 0.24
-
     Examples
     --------
     >>> import numpy as np
@@ -1026,7 +1013,6 @@ class TimeSeriesSplit(_BaseKFold):
     TRAIN: [0 1 2 3] TEST: [6 7]
     TRAIN: [0 1 2 3 4 5] TEST: [8 9]
     TRAIN: [0 1 2 3 4 5 6 7] TEST: [10 11]
-
     Notes
     -----
     The training set has size ``i * n_samples // (n_splits + 1)
@@ -1043,24 +1029,19 @@ class TimeSeriesSplit(_BaseKFold):
 
     def split(self, X, y=None, groups=None):
         """Generate indices to split data into training and test set.
-
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
             Training data, where `n_samples` is the number of samples
             and `n_features` is the number of features.
-
         y : array-like of shape (n_samples,)
             Always ignored, exists for compatibility.
-
         groups : array-like of shape (n_samples,)
             Always ignored, exists for compatibility.
-
         Yields
         ------
         train : ndarray
             The training set indices for that split.
-
         test : ndarray
             The testing set indices for that split.
         """
