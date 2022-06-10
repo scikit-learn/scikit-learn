@@ -107,6 +107,7 @@ train_times = defaultdict(list)
 
 
 def fit_and_evaluate(km, X, name=None):
+    score = defaultdict(list)
     name = km.__class__.__name__ if name is None else name
 
     t0 = time()
@@ -118,16 +119,21 @@ def fit_and_evaluate(km, X, name=None):
     train_times["train time"].append(train_time)
 
     # store the scores of the clustering
-    scores["estimator"].append(name)
-    scores["Homogeneity"].append(metrics.homogeneity_score(labels, km.labels_))
-    scores["Completeness"].append(metrics.completeness_score(labels, km.labels_))
-    scores["V-measure"].append(metrics.v_measure_score(labels, km.labels_))
-    scores["Adjusted Rand-Index"].append(
-        metrics.adjusted_rand_score(labels, km.labels_)
-    )
-    scores["Silhouette Coefficient"].append(
+    score["estimator"].append(name)
+    score["Homogeneity"].append(metrics.homogeneity_score(labels, km.labels_))
+    score["Completeness"].append(metrics.completeness_score(labels, km.labels_))
+    score["V-measure"].append(metrics.v_measure_score(labels, km.labels_))
+    score["Adjusted Rand-Index"].append(metrics.adjusted_rand_score(labels, km.labels_))
+    score["Silhouette Coefficient"].append(
         metrics.silhouette_score(X, km.labels_, sample_size=2000)
     )
+
+    scores["estimator"].append(name)
+    for index in range(1, len(score)):
+        score_name = list(score.keys())[index]
+        score_value = list(score.values())[index]
+        scores[score_name].append(score_value[0])
+        print(f"'{score_name}': {score_value[0]:.3f}")
 
 
 # %%
@@ -249,7 +255,9 @@ kmeans = KMeans(
     random_state=0,
 )
 
-fit_and_evaluate(kmeans, X_lsa, name="KMeans(init='kmeans++') with LSA")
+fit_and_evaluate(
+    kmeans, X_lsa, name="KMeans(init='kmeans++')\nwith LSA on tf-idf vectors"
+)
 
 # %%
 # We repeat the experiment with :class:`~sklearn.cluster.MiniBatchKMeans`.
@@ -264,7 +272,9 @@ minibatch_kmeans = MiniBatchKMeans(
 )
 
 fit_and_evaluate(
-    minibatch_kmeans, X_lsa, name="MiniBatchKMeans(init='kmeans++')\nwith LSA"
+    minibatch_kmeans,
+    X_lsa,
+    name="MiniBatchKMeans(init='kmeans++')\nwith LSA on tf-idf vectors",
 )
 
 # %%
@@ -313,7 +323,9 @@ t0 = time()
 X_hashed_lsa = lsa_vectorizer.fit_transform(dataset.data)
 print(f"vectorizing done in {time() - t0:.3f} s")
 
-fit_and_evaluate(kmeans, X_hashed_lsa, name="KMeans with\nhashing and LSA")
+fit_and_evaluate(
+    kmeans, X_hashed_lsa, name="KMeans(init='kmeans++')\nwith LSA on hashed vectors"
+)
 
 # %%
 # Plot clustering evaluation metrics
