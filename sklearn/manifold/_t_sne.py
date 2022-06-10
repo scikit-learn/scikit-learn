@@ -700,6 +700,11 @@ class TSNE(BaseEstimator):
     LocallyLinearEmbedding : Manifold learning using Locally Linear Embedding.
     SpectralEmbedding : Spectral embedding for non-linear dimensionality.
 
+    Notes
+    -----
+    TSNE only preserves inputs' dtypes when `init` is provided as a float64 numpy array.
+    In all the other cases, the outputs' dtype is float32.
+
     References
     ----------
 

@@ -9,7 +9,6 @@ from sklearn.neighbors import kneighbors_graph
 from sklearn.exceptions import EfficiencyWarning
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import skip_if_32bit
@@ -235,7 +234,7 @@ def test_binary_perplexity_stability():
             assert_array_almost_equal(P1, last_P1, decimal=4)
 
 
-def test_gradient(global_dtype):
+def test_gradient():
     # Test gradient of Kullback-Leibler divergence.
     random_state = check_random_state(0)
 
@@ -244,10 +243,10 @@ def test_gradient(global_dtype):
     n_components = 2
     alpha = 1.0
 
-    distances = random_state.randn(n_samples, n_features).astype(global_dtype)
+    distances = random_state.randn(n_samples, n_features)
     distances = np.abs(distances.dot(distances.T))
     np.fill_diagonal(distances, 0.0)
-    X_embedded = random_state.randn(n_samples, n_components).astype(global_dtype)
+    X_embedded = random_state.randn(n_samples, n_components)
 
     P = _joint_probabilities(distances, desired_perplexity=25.0, verbose=0)
 
@@ -257,7 +256,7 @@ def test_gradient(global_dtype):
     def grad(params):
         return _kl_divergence(params, P, alpha, n_samples, n_components)[1]
 
-    assert_almost_equal(check_grad(fun, grad, X_embedded.ravel()), 0.0, decimal=5)
+    assert_allclose(check_grad(fun, grad, X_embedded.ravel()), 0.0, decimal=5)
 
 
 def test_trustworthiness(global_dtype):
@@ -269,15 +268,15 @@ def test_trustworthiness(global_dtype):
     assert trustworthiness(X, 5.0 + X / 10.0) == pytest.approx(1.0)
 
     # Randomly shuffled
-    X = np.arange(100).reshape(-1, 1)
+    X = np.arange(100).reshape(-1, 1).astype(global_dtype)
     X_embedded = X.copy()
     random_state.shuffle(X_embedded)
     assert trustworthiness(X, X_embedded) < 0.6
 
     # Completely different
-    X = np.arange(5).reshape(-1, 1)
-    X_embedded = np.array([[0], [2], [4], [1], [3]])
-    assert_almost_equal(trustworthiness(X, X_embedded, n_neighbors=1), 0.2)
+    X = np.arange(5).reshape(-1, 1).astype(global_dtype)
+    X_embedded = np.array([[0], [2], [4], [1], [3]], dtype=global_dtype)
+    assert trustworthiness(X, X_embedded, n_neighbors=1) == pytest.approx(0.2)
 
 
 @pytest.mark.parametrize("method", ["exact", "barnes_hut"])
@@ -296,7 +295,7 @@ def test_preserve_trustworthiness_approximately(method, init, global_dtype):
         learning_rate="auto",
     )
     X_embedded = tsne.fit_transform(X)
-    # TNSE.fit_transform does not preserves dtype in this case
+    # TNSE.fit_transform does not preserve dtype for the default initialisation
     assert X_embedded.dtype == np.float32
     t = trustworthiness(X, X_embedded, n_neighbors=1)
     assert t > 0.85
@@ -340,7 +339,9 @@ def test_fit_csr_matrix(method, global_dtype):
         n_iter=750,
     )
     X_embedded = tsne.fit_transform(X_csr)
-    assert_allclose(trustworthiness(X_csr, X_embedded, n_neighbors=1), 1.0, rtol=1.1e-1)
+    assert trustworthiness(X_csr, X_embedded, n_neighbors=1) == pytest.approx(
+        1.0, rel=1.1e-1
+    )
 
 
 def test_preserve_trustworthiness_approximately_with_precomputed_distances():
@@ -454,7 +455,7 @@ def test_sparse_precomputed_distance(global_dtype):
     ).astype(global_dtype)
     D = pairwise_distances(X).astype(global_dtype)
     assert sp.issparse(D_sparse)
-    assert_almost_equal(D_sparse.A, D)
+    assert_allclose(D_sparse.A, D)
 
     tsne = TSNE(
         metric="precomputed", random_state=0, init="random", learning_rate="auto"
@@ -463,7 +464,7 @@ def test_sparse_precomputed_distance(global_dtype):
 
     for fmt in ["csr", "lil"]:
         Xt_sparse = tsne.fit_transform(D_sparse.asformat(fmt))
-        assert_almost_equal(Xt_dense, Xt_sparse)
+        assert_allclose(Xt_dense, Xt_sparse)
 
 
 @pytest.mark.filterwarnings("ignore:The default learning rate in TSNE")
@@ -497,7 +498,7 @@ def test_init_ndarray(global_dtype):
     # TNSE.fit_transform _does_ preserves dtype in this case
     # (initialisation with a custom array)
     assert X_embedded.dtype == global_dtype
-    assert_array_equal(np.zeros((100, 2), dtype=global_dtype), X_embedded)
+    assert_allclose(np.zeros((100, 2), dtype=global_dtype), X_embedded)
 
 
 def test_init_ndarray_precomputed():
@@ -602,27 +603,26 @@ def test_early_exaggeration_used(method, global_dtype):
     assert not np.allclose(X_embedded1, X_embedded2)
 
 
-def test_n_iter_used(global_dtype):
+@pytest.mark.parametrize("method", ["exact", "barnes_hut"])
+@pytest.mark.parametrize("n_iter", [251, 500])
+def test_n_iter_used(method, n_iter, global_dtype):
     # check that the ``n_iter`` parameter has an effect
     random_state = check_random_state(0)
     n_components = 2
-    methods = ["exact", "barnes_hut"]
     X = random_state.randn(25, n_components).astype(global_dtype)
-    for method in methods:
-        for n_iter in [251, 500]:
-            tsne = TSNE(
-                n_components=n_components,
-                perplexity=1,
-                learning_rate=0.5,
-                init="random",
-                random_state=0,
-                method=method,
-                early_exaggeration=1.0,
-                n_iter=n_iter,
-            )
-            tsne.fit_transform(X)
+    tsne = TSNE(
+        n_components=n_components,
+        perplexity=1,
+        learning_rate=0.5,
+        init="random",
+        random_state=0,
+        method=method,
+        early_exaggeration=1.0,
+        n_iter=n_iter,
+    )
+    tsne.fit_transform(X)
 
-            assert tsne.n_iter_ == n_iter - 1
+    assert tsne.n_iter_ == n_iter - 1
 
 
 def test_answer_gradient_two_points():
@@ -859,34 +859,34 @@ def test_barnes_hut_angle(global_dtype):
 
 
 @skip_if_32bit
-def test_n_iter_without_progress(global_dtype):
+@pytest.mark.parametrize("method", ["barnes_hut", "exact"])
+def test_n_iter_without_progress(method, global_dtype):
     # Use a dummy negative n_iter_without_progress and check output on stdout
     random_state = check_random_state(0)
     X = random_state.randn(100, 10).astype(global_dtype)
-    for method in ["barnes_hut", "exact"]:
-        tsne = TSNE(
-            n_iter_without_progress=-1,
-            verbose=2,
-            learning_rate=1e8,
-            random_state=0,
-            method=method,
-            n_iter=351,
-            init="random",
-        )
-        tsne._N_ITER_CHECK = 1
-        tsne._EXPLORATION_N_ITER = 0
+    tsne = TSNE(
+        n_iter_without_progress=-1,
+        verbose=2,
+        learning_rate=1e8,
+        random_state=0,
+        method=method,
+        n_iter=351,
+        init="random",
+    )
+    tsne._N_ITER_CHECK = 1
+    tsne._EXPLORATION_N_ITER = 0
 
-        old_stdout = sys.stdout
-        sys.stdout = StringIO()
-        try:
-            tsne.fit_transform(X)
-        finally:
-            out = sys.stdout.getvalue()
-            sys.stdout.close()
-            sys.stdout = old_stdout
+    old_stdout = sys.stdout
+    sys.stdout = StringIO()
+    try:
+        tsne.fit_transform(X)
+    finally:
+        out = sys.stdout.getvalue()
+        sys.stdout.close()
+        sys.stdout = old_stdout
 
-        # The output needs to contain the value of n_iter_without_progress
-        assert "did not make any progress during the last -1 episodes. Finished." in out
+    # The output needs to contain the value of n_iter_without_progress
+    assert "did not make any progress during the last -1 episodes. Finished." in out
 
 
 @pytest.mark.filterwarnings("ignore:The default learning rate in TSNE")
@@ -1125,11 +1125,11 @@ def test_tsne_with_different_distance_metrics(global_dtype, metric, dist_func):
         learning_rate="auto",
     ).fit_transform(dist_func(X))
 
-    # TSNE does not preserve dtype in those cases
+    # TSNE does not preserve dtype for random initialisation (see docstring)
     assert (
         X_transformed_tsne.dtype == X_transformed_tsne_precomputed.dtype == np.float32
     )
-    assert_array_equal(X_transformed_tsne, X_transformed_tsne_precomputed)
+    assert_allclose(X_transformed_tsne, X_transformed_tsne_precomputed)
 
 
 # TODO: Remove in 1.2
