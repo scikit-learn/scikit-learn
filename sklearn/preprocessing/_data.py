@@ -1913,7 +1913,6 @@ class Normalizer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             Fitted transformer.
         """
         self._validate_params()
-        
         self._validate_data(X, accept_sparse="csr")
         return self
 
