@@ -256,7 +256,7 @@ def test_gradient():
     def grad(params):
         return _kl_divergence(params, P, alpha, n_samples, n_components)[1]
 
-    assert_allclose(check_grad(fun, grad, X_embedded.ravel()), 0.0, decimal=5)
+    assert_allclose(check_grad(fun, grad, X_embedded.ravel()), 0.0, atol=1e-5)
 
 
 def test_trustworthiness(global_dtype):
