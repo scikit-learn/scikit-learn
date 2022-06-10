@@ -11,10 +11,7 @@ from ...utils._openmp_helpers cimport _openmp_thread_num
 from ...utils._typedefs cimport ITYPE_t, DTYPE_t
 
 from numbers import Integral
-from typing import List
-from scipy.sparse import issparse
 from sklearn.utils import check_scalar
-from .._dist_metrics import BOOL_METRICS, METRIC_MAPPING
 from ...utils._openmp_helpers import _openmp_effective_n_threads
 from ...utils._typedefs import ITYPE, DTYPE
 
@@ -46,55 +43,6 @@ cpdef DTYPE_t[::1] _sqeuclidean_row_norms64(
 
     return squared_row_norms
 
-
-
-class PairwiseDistancesReduction:
-    """Abstract base dispatcher for pairwise distance computation & reduction.
-
-    Each dispatcher extending the base :class:`PairwiseDistancesReduction`
-    dispatcher must implement the :meth:`compute` classmethod.
-    """
-
-    @classmethod
-    def valid_metrics(cls) -> List[str]:
-        excluded = {
-            "pyfunc",  # is relatively slow because we need to coerce data as np arrays
-            "mahalanobis", # is numerically unstable
-            # TODO: In order to support discrete distance metrics, we need to have a
-            # stable simultaneous sort which preserves the order of the input.
-            # The best might be using std::stable_sort and a Comparator taking an
-            # Arrays of Structures instead of Structure of Arrays (currently used).
-            "hamming",
-            *BOOL_METRICS,
-        }
-        return sorted(set(METRIC_MAPPING.keys()) - excluded)
-
-    @classmethod
-    def is_usable_for(cls, X, Y, metric) -> bool:
-        """Return True if the PairwiseDistancesReduction can be used for the
-        given parameters.
-
-        Parameters
-        ----------
-        X : {ndarray, sparse matrix} of shape (n_samples_X, n_features)
-            Input data.
-
-        Y : {ndarray, sparse matrix} of shape (n_samples_Y, n_features)
-            Input data.
-
-        metric : str, default='euclidean'
-            The distance metric to use.
-            For a list of available metrics, see the documentation of
-            :class:`~sklearn.metrics.DistanceMetric`.
-
-        Returns
-        -------
-        True if the PairwiseDistancesReduction can be used, else False.
-        """
-        dtypes_validity = X.dtype == Y.dtype and Y.dtype == np.float64
-        return (get_config().get("enable_cython_pairwise_dist", True) and
-                not issparse(X) and not issparse(Y) and dtypes_validity and
-                metric in cls.valid_metrics())
 
 cdef class PairwiseDistancesReduction64:
     """Base 64bit implementation of PairwiseDistancesReduction."""
