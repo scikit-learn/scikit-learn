@@ -318,7 +318,7 @@ def test_generate_invalid_param_val_not_error(constraint):
         (Real, 0.5),
     ],
 )
-def test_is_satisified_by(constraint_declaration, value):
+def test_is_satisfied_by(constraint_declaration, value):
     """Sanity check for the is_satisfied_by method"""
     constraint = make_constraint(constraint_declaration)
     assert constraint.is_satisfied_by(value)

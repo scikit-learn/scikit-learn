@@ -850,28 +850,91 @@ regularization.
     that it improves numerical stability. No regularization amounts to
     setting C to a very high value.
 
-As an optimization problem, binary class :math:`\ell_2` penalized logistic
-regression minimizes the following cost function:
+Binary Case
+-----------
 
-.. math:: \min_{w, c} \frac{1}{2}w^T w + C \sum_{i=1}^n \log(\exp(- y_i (X_i^T w + c)) + 1) .
+For notational ease, we assume that the target :math:`y_i` takes values in the
+set :math:`\{0, 1\}` for data point :math:`i`.
+Once fitted, the :meth:`~sklearn.linear_model.LogisticRegression.predict_proba`
+method of :class:`~sklearn.linear_model.LogisticRegression` predicts
+the probability of the positive class :math:`P(y_i=1|X_i)` as
 
-Similarly, :math:`\ell_1` regularized logistic regression solves the following
-optimization problem:
+.. math:: \hat{p}(X_i) = \operatorname{expit}(X_i w + w_0) = \frac{1}{1 + \exp(-X_i w - w_0)}.
 
-.. math:: \min_{w, c} \|w\|_1 + C \sum_{i=1}^n \log(\exp(- y_i (X_i^T w + c)) + 1).
+As an optimization problem, binary
+class logistic regression with regularization term :math:`r(w)` minimizes the
+following cost function:
 
-Elastic-Net regularization is a combination of :math:`\ell_1` and
-:math:`\ell_2`, and minimizes the following cost function:
+.. math:: \min_{w} C \sum_{i=1}^n \left(-y_i \log(\hat{p}(X_i)) - (1 - y_i) \log(1 - \hat{p}(X_i))\right) + r(w).
 
-.. math:: \min_{w, c} \frac{1 - \rho}{2}w^T w + \rho \|w\|_1 + C \sum_{i=1}^n \log(\exp(- y_i (X_i^T w + c)) + 1),
 
-where :math:`\rho` controls the strength of :math:`\ell_1` regularization vs.
-:math:`\ell_2` regularization (it corresponds to the `l1_ratio` parameter).
+We currently provide four choices for the regularization term  :math:`r(w)`  via
+the `penalty` argument:
 
-Note that, in this notation, it's assumed that the target :math:`y_i` takes
-values in the set :math:`{-1, 1}` at trial :math:`i`. We can also see that
-Elastic-Net is equivalent to :math:`\ell_1` when :math:`\rho = 1` and equivalent
-to :math:`\ell_2` when :math:`\rho=0`.
++----------------+-------------------------------------------------+
+| penalty        | :math:`r(w)`                                    |
++================+=================================================+
+| `None`         | :math:`0`                                       |
++----------------+-------------------------------------------------+
+| :math:`\ell_1` | :math:`\|w\|_1`                                 |
++----------------+-------------------------------------------------+
+| :math:`\ell_2` | :math:`\frac{1}{2}\|w\|_2^2 = \frac{1}{2}w^T w` |
++----------------+-------------------------------------------------+
+| `ElasticNet`   | :math:`\frac{1 - \rho}{2}w^T w + \rho \|w\|_1`  |
++----------------+-------------------------------------------------+
+
+For ElasticNet, :math:`\rho` (which corresponds to the `l1_ratio` parameter)
+controls the strength of :math:`\ell_1` regularization vs. :math:`\ell_2`
+regularization. Elastic-Net is equivalent to :math:`\ell_1` when
+:math:`\rho = 1` and equivalent to :math:`\ell_2` when :math:`\rho=0`.
+
+Multinomial Case
+----------------
+
+The binary case can be extended to :math:`K` classes leading to the multinomial
+logistic regression, see also `log-linear model
+<https://en.wikipedia.org/wiki/Multinomial_logistic_regression#As_a_log-linear_model>`_.
+
+.. note::
+   It is possible to parameterize a :math:`K`-class classification model
+   using only :math:`K-1` weight vectors, leaving one class probability fully
+   determined by the other class probabilities by leveraging the fact that all
+   class probabilities must sum to one. We deliberately choose to overparameterize the model
+   using :math:`K` weight vectors for ease of implementation and to preserve the
+   symmetrical inductive bias regarding ordering of classes, see [16]_. This effect becomes
+   especially important when using regularization. The choice of overparameterization can be
+   detrimental for unpenalized models since then the solution may not be unique, as shown in [16]_.
+
+Let :math:`y_i \in {1, \ldots, K}` be the label (ordinal) encoded target variable for observation :math:`i`.
+Instead of a single coefficient vector, we now have
+a matrix of coefficients :math:`W` where each row vector :math:`W_k` corresponds to class
+:math:`k`. We aim at predicting the class probabilities :math:`P(y_i=k|X_i)` via
+:meth:`~sklearn.linear_model.LogisticRegression.predict_proba` as:
+
+.. math:: \hat{p}_k(X_i) = \frac{\exp(X_i W_k + W_{0, k})}{\sum_{l=0}^{K-1} \exp(X_i W_l + W_{0, l})}.
+
+The objective for the optimization becomes
+
+.. math:: \min_W -C \sum_{i=1}^n \sum_{k=0}^{K-1} [y_i = k] \log(\hat{p}_k(X_i)) + r(W).
+
+Where :math:`[P]` represents the Iverson bracket which evaluates to :math:`0`
+if :math:`P` is false, otherwise it evaluates to :math:`1`. We currently provide four choices
+for the regularization term :math:`r(W)` via the `penalty` argument:
+
++----------------+----------------------------------------------------------------------------------+
+| penalty        | :math:`r(W)`                                                                     |
++================+==================================================================================+
+| `None`         | :math:`0`                                                                        |
++----------------+----------------------------------------------------------------------------------+
+| :math:`\ell_1` | :math:`\|W\|_{1,1} = \sum_{i=1}^n\sum_{j=1}^{K}|W_{i,j}|`                        |
++----------------+----------------------------------------------------------------------------------+
+| :math:`\ell_2` | :math:`\frac{1}{2}\|W\|_F^2 = \frac{1}{2}\sum_{i=1}^n\sum_{j=1}^{K} W_{i,j}^2`   |
++----------------+----------------------------------------------------------------------------------+
+| `ElasticNet`   | :math:`\frac{1 - \rho}{2}\|W\|_F^2 + \rho \|W\|_{1,1}`                           |
++----------------+----------------------------------------------------------------------------------+
+
+Solvers
+-------
 
 The solvers implemented in the class :class:`LogisticRegression`
 are "liblinear", "newton-cg", "lbfgs", "sag" and "saga":
@@ -1003,6 +1066,10 @@ to warm-starting (see :term:`Glossary <warm_start>`).
 
     .. [9] `"Performance Evaluation of Lbfgs vs other solvers"
             <http://www.fuzihao.org/blog/2016/01/16/Comparison-of-Gradient-Descent-Stochastic-Gradient-Descent-and-L-BFGS/>`_
+
+    .. [16] :arxiv:`Simon, Noah, J. Friedman and T. Hastie.
+        "A Blockwise Descent Algorithm for Group-penalized Multiresponse and
+        Multinomial Regression." <1311.6529>`
 
 .. _Generalized_linear_regression:
 
