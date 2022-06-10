@@ -1778,10 +1778,10 @@ def make_biclusters(
     col_sizes = generator.multinomial(n_cols, np.repeat(1.0 / n_clusters, n_clusters))
 
     row_labels = np.hstack(
-        list(np.repeat(val, rep) for val, rep in zip(range(n_clusters), row_sizes))
+        [np.repeat(val, rep) for val, rep in zip(range(n_clusters), row_sizes)]
     )
     col_labels = np.hstack(
-        list(np.repeat(val, rep) for val, rep in zip(range(n_clusters), col_sizes))
+        [np.repeat(val, rep) for val, rep in zip(range(n_clusters), col_sizes)]
     )
 
     result = np.zeros(shape, dtype=np.float64)
@@ -1881,10 +1881,10 @@ def make_checkerboard(
     )
 
     row_labels = np.hstack(
-        list(np.repeat(val, rep) for val, rep in zip(range(n_row_clusters), row_sizes))
+        [np.repeat(val, rep) for val, rep in zip(range(n_row_clusters), row_sizes)]
     )
     col_labels = np.hstack(
-        list(np.repeat(val, rep) for val, rep in zip(range(n_col_clusters), col_sizes))
+        [np.repeat(val, rep) for val, rep in zip(range(n_col_clusters), col_sizes)]
     )
 
     result = np.zeros(shape, dtype=np.float64)

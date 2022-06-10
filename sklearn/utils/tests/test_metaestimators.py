@@ -2,6 +2,8 @@ import numpy as np
 import pytest
 import warnings
 
+import pickle
+
 from sklearn.utils.metaestimators import if_delegate_has_method
 from sklearn.utils.metaestimators import available_if
 
@@ -92,13 +94,14 @@ def test_if_delegate_has_method():
 class AvailableParameterEstimator:
     """This estimator's `available` parameter toggles the presence of a method"""
 
-    def __init__(self, available=True):
+    def __init__(self, available=True, return_value=1):
         self.available = available
+        self.return_value = return_value
 
     @available_if(lambda est: est.available)
     def available_func(self):
         """This is a mock available_if function"""
-        pass
+        return self.return_value
 
 
 def test_available_if_docstring():
@@ -155,3 +158,15 @@ def test_if_delegate_has_method_deprecated():
     # Only when calling it
     with pytest.warns(FutureWarning, match="if_delegate_has_method was deprecated"):
         hasattr(MetaEst(HasPredict()), "predict")
+
+
+def test_available_if_methods_can_be_pickled():
+    """Check that available_if methods can be pickled.
+
+    Non-regression test for #21344.
+    """
+    return_value = 10
+    est = AvailableParameterEstimator(available=True, return_value=return_value)
+    pickled_bytes = pickle.dumps(est.available_func)
+    unpickled_func = pickle.loads(pickled_bytes)
+    assert unpickled_func() == return_value
