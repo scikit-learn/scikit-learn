@@ -436,7 +436,7 @@ class OneHotEncoder(_BaseEncoder):
     _parameter_constraints = {
         "categories": [StrOptions({"auto"}), "array-like"],
         "drop": ["array-like", None],
-        "dtype": [callable],
+        "dtype": [type],
         "handle_unknown": [StrOptions({"error", "ignore", "infrequent_if_exist"})],
         "max_categories": [Interval(numbers.Integral, 1, None, closed="left"), None],
         "min_frequency": [
@@ -1220,7 +1220,7 @@ class OrdinalEncoder(_OneToOneFeatureMixin, _BaseEncoder):
 
     _parameter_constraints = {
         "categories": [StrOptions({"auto"}), "array-like"],
-        "dtype": [callable],
+        "dtype": [type],
         "encoded_missing_value": [
             Interval(numbers.Integral, None, None, closed="neither"),
             type(np.nan),
