@@ -30,7 +30,7 @@ from .utils.extmath import safe_sparse_dot
 from .utils.multiclass import _check_partial_fit_first_call
 from .utils.validation import check_is_fitted, check_non_negative
 from .utils.validation import _check_sample_weight
-
+from numbers import Real
 
 __all__ = [
     "BernoulliNB",
@@ -212,6 +212,8 @@ class GaussianNB(_BaseNB):
     [1]
     """
 
+    _parameter_constraints = {"priors": ["array-like", None], "var_smoothing": [Real]}
+
     def __init__(self, *, priors=None, var_smoothing=1e-9):
         self.priors = priors
         self.var_smoothing = var_smoothing
@@ -239,6 +241,7 @@ class GaussianNB(_BaseNB):
         self : object
             Returns the instance itself.
         """
+        self._validate_params()
         y = self._validate_data(y=y)
         return self._partial_fit(
             X, y, np.unique(y), _refit=True, sample_weight=sample_weight
@@ -360,6 +363,8 @@ class GaussianNB(_BaseNB):
         self : object
             Returns the instance itself.
         """
+        self._validate_params()
+
         return self._partial_fit(
             X, y, classes, _refit=False, sample_weight=sample_weight
         )
