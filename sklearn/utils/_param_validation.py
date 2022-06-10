@@ -56,9 +56,7 @@ def validate_parameter_constraints(parameter_constraints, params, caller_name):
             # Ignore constraints that we don't want to expose in the error message,
             # i.e. options that are for internal purpose or not officially supported.
             constraints = [
-                constraint
-                for constraint in constraints
-                if not getattr(constraint, "hidden_constraint", False)
+                constraint for constraint in constraints if not constraint.hidden
             ]
 
             if len(constraints) == 1:
@@ -104,7 +102,7 @@ def make_constraint(constraint):
         return constraint
     if isinstance(constraint, Hidden):
         constraint = make_constraint(constraint.constraint)
-        constraint.hidden_constraint = True
+        constraint.hidden = True
         return constraint
     raise ValueError(f"Unknown constraint type: {constraint}")
 
@@ -157,7 +155,7 @@ class _Constraint(ABC):
     """Base class for the constraint objects."""
 
     def __init__(self):
-        self.hidden_constraint = False
+        self.hidden = False
 
     @abstractmethod
     def is_satisfied_by(self, val):
