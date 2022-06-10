@@ -24,7 +24,6 @@ from ..base import (
 )
 from ..utils import check_array
 from ..utils.extmath import _incremental_mean_and_var, row_norms
-from ..utils._param_validation import Interval
 from ..utils.sparsefuncs_fast import (
     inplace_csr_row_normalize_l1,
     inplace_csr_row_normalize_l2,
@@ -2071,7 +2070,7 @@ class Binarizer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     """
 
     _parameter_constraints = {
-        "threshold": [Interval(Real, None, None, closed="both")],
+        "threshold": [Real],
         "copy": [bool],
     }
 
