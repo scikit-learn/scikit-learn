@@ -15,7 +15,7 @@ from scipy import sparse
 from scipy import stats
 from scipy import optimize
 from scipy.special import boxcox
-
+from numbers import Integral, Real
 from ..base import (
     BaseEstimator,
     TransformerMixin,
@@ -24,6 +24,7 @@ from ..base import (
 )
 from ..utils import check_array
 from ..utils.extmath import _incremental_mean_and_var, row_norms
+from ..utils._param_validation import Interval
 from ..utils.sparsefuncs_fast import (
     inplace_csr_row_normalize_l1,
     inplace_csr_row_normalize_l2,
@@ -2068,6 +2069,10 @@ class Binarizer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
            [1., 0., 0.],
            [0., 1., 0.]])
     """
+    _parameter_constraints = {
+        "threshold": [Interval(Real, None, None, closed = both)],
+        "copy": [bool]
+    }
 
     def __init__(self, *, threshold=0.0, copy=True):
         self.threshold = threshold
@@ -2092,6 +2097,7 @@ class Binarizer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         self : object
             Fitted transformer.
         """
+        self._validate_params()
         self._validate_data(X, accept_sparse="csr")
         return self
 
