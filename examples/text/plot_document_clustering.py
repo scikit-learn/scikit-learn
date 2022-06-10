@@ -163,10 +163,10 @@ vectorizer = TfidfVectorizer(
     stop_words="english",
 )
 t0 = time()
-X = vectorizer.fit_transform(dataset.data)
+X_tfidf = vectorizer.fit_transform(dataset.data)
 
 print(f"vectorizing done in {time() - t0:.3f} s")
-print(f"n_samples: {X.shape[0]}, n_features: {X.shape[1]}")
+print(f"n_samples: {X_tfidf.shape[0]}, n_features: {X_tfidf.shape[1]}")
 
 # %%
 # **Clustering sparse data with MiniBatchKMeans**
@@ -189,7 +189,7 @@ minibatch_kmeans = MiniBatchKMeans(
 )
 
 fit_and_evaluate(
-    minibatch_kmeans, X, name="MiniBatchKMeans(init='random')\non tf-idf vectors"
+    minibatch_kmeans, X_tfidf, name="MiniBatchKMeans(init='random')\non tf-idf vectors"
 )
 
 # %%
@@ -211,7 +211,7 @@ kmeans = KMeans(
     random_state=0,
 )
 
-fit_and_evaluate(kmeans, X, name="KMeans(init='random')\non tf-idf vectors")
+fit_and_evaluate(kmeans, X_tfidf, name="KMeans(init='random')\non tf-idf vectors")
 
 # %%
 # **Performing dimensionality reduction using LSA**
@@ -230,7 +230,7 @@ from sklearn.preprocessing import Normalizer
 
 lsa = make_pipeline(TruncatedSVD(n_components=100), Normalizer(copy=False))
 t0 = time()
-X_lsa = lsa.fit_transform(X)
+X_lsa = lsa.fit_transform(X_tfidf)
 explained_variance = lsa[0].explained_variance_ratio_.sum()
 
 print(f"LSA done in {time() - t0:.3f} s")
@@ -310,10 +310,10 @@ make_pipeline(TruncatedSVD(n_components=100), Normalizer(copy=False))
 lsa_vectorizer = make_pipeline(hasher, TfidfTransformer(), lsa)
 
 t0 = time()
-X = lsa_vectorizer.fit_transform(dataset.data)
+X_hashed_lsa = lsa_vectorizer.fit_transform(dataset.data)
 print(f"vectorizing done in {time() - t0:.3f} s")
 
-fit_and_evaluate(kmeans, X, name="KMeans with\nhashing and LSA")
+fit_and_evaluate(kmeans, X_hashed_lsa, name="KMeans with\nhashing and LSA")
 
 # %%
 # Plot clustering evaluation metrics
