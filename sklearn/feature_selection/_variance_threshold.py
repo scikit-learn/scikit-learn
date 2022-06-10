@@ -69,7 +69,7 @@ class VarianceThreshold(SelectorMixin, BaseEstimator):
                [1, 1]])
     """
 
-    _parameter_constraints = {"threshold": [Interval(Real, 0, 1, closed="both")]}
+    _parameter_constraints = {"threshold": [Interval(Real, 0, None, closed="left")]}
 
     def __init__(self, threshold=0.0):
         self.threshold = threshold
