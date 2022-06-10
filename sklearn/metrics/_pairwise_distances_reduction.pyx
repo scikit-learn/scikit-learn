@@ -8,7 +8,8 @@
 #
 #    This module provides routines to compute pairwise distances between a set
 #    of row vectors of X and another set of row vectors of Y and apply a
-#    reduction on top.
+#    reduction on top. The canonical example is the brute-force computation
+#    of the top k nearest neighbors by leveraging the arg-k-min reduction.
 #
 #    The reduction takes a matrix of pairwise distances between rows of X and Y
 #    as input and outputs an aggregate data-structure for each row of X. The
@@ -26,17 +27,17 @@
 #    or rows of Y depending on their respective sizes.
 #
 #
-# Dispatcher and implementations
-# ------------------------------
+# Dispatching to specialized implementations
+# ------------------------------------------
 #
 #    Dispatchers are meant to be used in the Python code. Under the hood, a
-#    dispatch must only define the logic to choose at runtime to the correct
+#    dispatcher must only define the logic to choose at runtime to the correct
 #    dtype-specialized :class:`PairwiseDistancesReduction` implementation based
 #    on the dtype of X and of Y.
 #
 #
-# High-level diagrams
-# -------------------
+# High-level diagram
+# ------------------
 #
 #   Legend:
 #
@@ -80,9 +81,15 @@
 #                                   |
 #                            GEMMTermComputer64
 #
-#    Finally, the implementation might dispatch to a specialised implementation
-#    for the Euclidean Distance case using the Generalized Matrix Multiplication
-#    (see :class:`GEMMTermComputer64`).
+# For instance :class:`PairwiseDistancesArgKmin`, dispatches to
+# :class:`PairwiseDistancesArgKmin64` if X and Y are both dense NumPy arrays
+# with a float64 dtype.
+#
+# In addition, if the metric parameter is set to "sqeuclidean",
+# :class:`PairwiseDistancesArgKmin64` further dispatches to a subclass
+# specialized to optimally handle the Euclidean distance case using the
+# Generalized Matrix Multiplication (see the docstring of
+# :class:`GEMMTermComputer64` for details).
 
 cimport numpy as cnp
 import numpy as np
@@ -779,7 +786,7 @@ cdef class PairwiseDistancesReduction64:
                     X_end = X_start + self.X_n_samples_chunk
 
                 # Reinitializing thread datastructures for the new X chunk
-                # Eventually upcast X[X_start:X_end] to 64bit
+                # If necessary, upcast X[X_start:X_end] to 64bit
                 self._parallel_on_X_init_chunk(thread_num, X_start, X_end)
 
                 for Y_chunk_idx in range(self.Y_n_chunks):
@@ -789,7 +796,7 @@ cdef class PairwiseDistancesReduction64:
                     else:
                         Y_end = Y_start + self.Y_n_samples_chunk
 
-                    # Eventually upcast Y[Y_start:Y_end] to 64bit
+                    # If necessary, upcast Y[Y_start:Y_end] to 64bit
                     self._parallel_on_X_pre_compute_and_reduce_distances_on_chunks(
                         X_start, X_end,
                         Y_start, Y_end,
@@ -848,7 +855,7 @@ cdef class PairwiseDistancesReduction64:
                 thread_num = _openmp_thread_num()
 
                 # Initializing datastructures used in this thread
-                # Eventually upcast X[X_start:X_end] to 64bit
+                # If necessary, upcast X[X_start:X_end] to 64bit
                 self._parallel_on_Y_parallel_init(thread_num, X_start, X_end)
 
                 for Y_chunk_idx in prange(self.Y_n_chunks, schedule='static'):
@@ -858,7 +865,7 @@ cdef class PairwiseDistancesReduction64:
                     else:
                         Y_end = Y_start + self.Y_n_samples_chunk
 
-                    # Eventually upcast Y[Y_start:Y_end] to 64bit
+                    # If necessary, upcast Y[Y_start:Y_end] to 64bit
                     self._parallel_on_Y_pre_compute_and_reduce_distances_on_chunks(
                         X_start, X_end,
                         Y_start, Y_end,
