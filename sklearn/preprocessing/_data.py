@@ -15,7 +15,7 @@ from scipy import sparse
 from scipy import stats
 from scipy import optimize
 from scipy.special import boxcox
-from numbers import Integral, Real
+from numbers import Real
 from ..base import (
     BaseEstimator,
     TransformerMixin,
@@ -2069,9 +2069,10 @@ class Binarizer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
            [1., 0., 0.],
            [0., 1., 0.]])
     """
+
     _parameter_constraints = {
-        "threshold": [Interval(Real, None, None, closed = both)],
-        "copy": [bool]
+        "threshold": [Interval(Real, None, None, closed="both")],
+        "copy": [bool],
     }
 
     def __init__(self, *, threshold=0.0, copy=True):
