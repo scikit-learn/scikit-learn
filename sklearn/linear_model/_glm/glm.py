@@ -13,6 +13,7 @@ import warnings
 import numpy as np
 import scipy.linalg
 import scipy.optimize
+import scipy.sparse
 
 from ..._loss.glm_distribution import TweedieDistribution
 from ..._loss.loss import (
@@ -29,39 +30,6 @@ from ...utils._openmp_helpers import _openmp_effective_n_threads
 from ...utils.optimize import _check_optimize_result
 from ...utils.validation import check_is_fitted, _check_sample_weight
 from .._linear_loss import LinearModelLoss
-
-
-def _solve_singular(H, g):
-    """Find Newton step with singular hessian H.
-
-    We could use the approach with an L D L decomposition as in
-        Nocedal & Wright, Chapter 3.4 subsection
-        "Modified symmetric indefinite factorization"
-    but we use the much simpler (and more expensive?) least squares solver.
-
-    Parameters
-    ----------
-    H : hessian matrix
-    g : gradient
-
-    Returns
-    -------
-    x : Newton step
-        H x = -g
-    """
-    # hessian = L B L' with block diagonal B, block size <= 2
-    # L[perm, :] is lower triangular
-    # CODE: L, B, perm = scipy.linalg.ldl(H, lower=True)
-    # CODE: U, s, Vt = scipy.linalg.svd(B)
-    # CODE: delta = 1e-3  # TODO: Decide on size of this number
-    # CODE: tau = (s < delta) * (delta - s)
-    # F = U @ (tau[:, None] * Vt)
-    # hessian approximation = L (B + F) L' = L U (s + tau) Vt L'
-    # CODE: w = scipy.linalg.solve_triangular(L[perm], -g[perm], lower=True)
-    # w = scipy.linalg.solve(B + F, w)
-    # CODE: w = Vt.T @ (1 / (s + tau) * (U.T @ w))
-    # CODE: return scipy.linalg.solve_triangular(L.T[:, perm], w, lower=False)[perm]
-    return scipy.linalg.lstsq(H, -g)[0]
 
 
 class NewtonSolver(ABC):
@@ -174,11 +142,11 @@ class NewtonSolver(ABC):
         )
 
     @abstractmethod
-    def update_gradient_hessian(X, y, sample_weight):
+    def update_gradient_hessian(self, X, y, sample_weight):
         """Update gradient and hessian."""
 
     @abstractmethod
-    def inner_solve(self):
+    def inner_solve(self, X, y, sample_weight):
         """Compute Newton step.
 
         Sets self.coef_newton.
@@ -385,16 +353,17 @@ class NewtonSolver(ABC):
         # setup usually:
         #   - initializes self.coef if needed
         #   - initializes and calculates self.raw_predictions, self.loss_value
-        self.setup(X, y, sample_weight)
+        self.setup(X=X, y=y, sample_weight=sample_weight)
 
         self.iteration = 1
         self.converged = False
+        self.stop = False
 
         while self.iteration <= self.max_iter and not self.converged:
             if self.verbose:
                 print(f"Newton iter={self.iteration}")
             # 1. Update hessian and gradient
-            self.update_gradient_hessian(X, y, sample_weight)
+            self.update_gradient_hessian(X=X, y=y, sample_weight=sample_weight)
 
             # TODO:
             # if iteration == 1:
@@ -404,26 +373,25 @@ class NewtonSolver(ABC):
             # 2. Inner solver
             #    Calculate Newton step/direction
             #    This usually sets self.coef_newton.
-            self.inner_solve()
+            #    It may set self.stop = True, e.g. for ill-conditioned systems.
+            self.inner_solve(X=X, y=y, sample_weight=sample_weight)
+            if self.stop:
+                break
 
             # 3. Backtracking line search
             #    This usually sets self.coef_old, self.coef, self.loss_value_old
             #    self.loss_value, self.gradient_old, self.gradient,
             #    self.raw_prediction.
-            self.line_search(X, y, sample_weight)
+            self.line_search(X=X, y=y, sample_weight=sample_weight)
 
             # 4. Check convergence
             #    Sets self.converged.
-            self.check_convergence(
-                X=X,
-                y=y,
-                sample_weight=sample_weight,
-            )
+            self.check_convergence(X=X, y=y, sample_weight=sample_weight)
 
             # 5. Next iteration
             self.iteration += 1
 
-        if not self.converged:
+        if not self.converged and not self.stop:
             warnings.warn(
                 "Newton solver did not converge after"
                 f" {self.iteration - 1} iterations.",
@@ -431,8 +399,74 @@ class NewtonSolver(ABC):
             )
 
         self.iteration -= 1
-        self.finalize(X, y, sample_weight)
+        self.finalize(X=X, y=y, sample_weight=sample_weight)
         return self.coef
+
+
+class SVDFallbackSolver(NewtonSolver):
+    """SVD based fallback Newton solver.
+
+    Inner solver for finding the Newton step H w_newton = -g uses SVD of X and is meant
+    for singular problems.
+    """
+
+    def setup(self, X, y, sample_weight):
+        super().setup(X=X, y=y, sample_weight=sample_weight)
+        n_samples, n_features = X.shape
+        n_dof = n_features
+        if self.linear_loss.fit_intercept:
+            n_dof += 1
+        self.gradient = np.empty_like(self.coef)
+        self.hessian = np.empty_like(self.coef, shape=(n_dof, n_dof))
+
+        # # SVD of X: This is expensive.
+        # if scipy.sparse.issparse(X):
+        #     X = X.toarray()
+        # if self.linear_loss.fit_intercept:
+        #     n_samples = X.shape[0]
+        #     X = np.c_[X, np.ones(shape=n_samples)]
+        # # X = U diag(s) Vt  and X' = V diag(s) U'
+        # U, s, Vt = scipy.linalg.svd(X, full_matrices=False)
+        # inv_s = np.zeros_like(s)
+        # inv_s[s > 0] = 1 / s[s > 0]
+        # # Adding a small positive constant brings us closer to the minimum
+        # # norm solution.
+        self.EPS = np.sqrt(np.finfo(X.dtype).eps)
+        # inv_s[s <= self.EPS] = self.EPS
+        # # All we need to store is this almost pseudo-inverse of X.T. See below.
+        # # Note that inv_Xt' = inv_X
+        # if n_samples > n_dof:
+        #     self.inv_Xt = U @ (inv_s[:, None] * Vt)
+        # else:
+        #     self.inv_Xt = U @ (inv_s[:, None] * Vt)
+
+    def update_gradient_hessian(self, X, y, sample_weight):
+        self.linear_loss.gradient_hessian(
+            coef=self.coef,
+            X=X,
+            y=y,
+            sample_weight=sample_weight,
+            l2_reg_strength=self.l2_reg_strength,
+            n_threads=self.n_threads,
+            gradient_out=self.gradient,
+            hessian_out=self.hessian,
+            raw_prediction=self.raw_prediction,  # this was updated in line_search
+        )
+
+    def inner_solve(self, X, y, sample_weight):
+        # hessian = self.inv_Xt @ self.hessian @ self.inv_Xt.T
+        # hessian[np.diag_indices_from(hessian)] += self.EPS
+        # gradient = self.inv_Xt @ self.gradient
+
+        # coef_newton = scipy.linalg.solve(
+        #     hessian, -gradient, check_finite=False, assume_a="sym"
+        # )
+        # self.coef_newton = self.inv_Xt.T @ coef_newton
+        U, s, Vt = scipy.linalg.svd(self.hessian, full_matrices=False)
+        inv_s = np.zeros_like(s)
+        inv_s[s > 0] = 1 / s[s > 0]
+        inv_s[s <= self.EPS] = self.EPS
+        self.coef_newton = -Vt.T @ (inv_s * (U.T @ self.gradient))
 
 
 class BaseCholeskyNewtonSolver(NewtonSolver):
@@ -442,29 +476,68 @@ class BaseCholeskyNewtonSolver(NewtonSolver):
     solver.
     """
 
-    def inner_solve(self):
-        # TODO: solve(..) may give a warning like
-        #     LinAlgWarning: Ill-conditioned matrix (rcond=9.52447e-17): result may not
-        #     be accurate.
-        # Should we treat this as error and deal with it in the except, or is it fine
-        # as is?
+    def setup(self, X, y, sample_weight):
+        super().setup(X=X, y=y, sample_weight=sample_weight)
+
+    def inner_solve(self, X, y, sample_weight):
         try:
             with warnings.catch_warnings():
                 warnings.simplefilter("error", scipy.linalg.LinAlgWarning)
                 self.coef_newton = scipy.linalg.solve(
                     self.hessian, -self.gradient, check_finite=False, assume_a="sym"
                 )
+            return
         except (np.linalg.LinAlgError, scipy.linalg.LinAlgWarning) as e:
             warnings.warn(
-                f"The inner solver of {self.__class__.__name__} stumbled upon a "
-                "singular hessian matrix. Therefore, this iteration uses a step closer"
-                " to a gradient descent direction. Removing collinear features of X or"
-                " increasing the penalization strengths may resolve this issue."
-                " The original Linear Algebra message was:\n"
+                f"The inner solver of {self.__class__.__name__} stumbled upon a"
+                " singular hessian matrix. This is dealt with a SVD of X which may"
+                " slow down fitting time and use excessive memory. It is best to"
+                " avoid such situations in the first place. Possible remedies are"
+                " removing collinear features of X or increasing the penalization"
+                " strengths. The original Linear Algebra message was:\n"
                 + str(e),
                 scipy.linalg.LinAlgWarning,
             )
-            self.coef_newton = _solve_singular(self.hessian, -self.gradient)
+            # Possible causes:
+            # 1. hess_pointwise is negative. But this is already taken care in
+            #    LinearModelLoss such that min(hess_pointwise) >= 0.
+            # 2. X is singular
+            #    This might be the most probable cause.
+            # We assume X singular and proceed with the slogan:
+            #   BETTER SAFE THAN EFFICIENT.
+            # There are many possible ways to deal with this situation (most of
+            # them adding, explicit or implicit, a matrix to the hessian to make it
+            # positive definite), confer to Chapter 3.4 of Nocedal & Wright 2nd ed.
+            # Instead, we employ the structure of the problem and do once an
+            # economic SVD of X.
+            if self.verbose >= 1:
+                print(
+                    "The inner solver detected a singular hessian matrix.\n From "
+                    "here on, we switch to the SVDFallbackSolver which uses a safer "
+                    "method to find a Newton step based on a SVD of X. "
+                    "Sparse X will be densified for this purpose."
+                )
+            # We stop self.solve(...) early
+            self.stop = True
+
+    def solve(self, X, y, sample_weight):
+        super().solve(X=X, y=y, sample_weight=sample_weight)
+        if not self.stop:
+            return self.coef
+        else:
+            # Fallback solver method for singular problems.
+            if self.verbose >= 1:
+                print("Call SVDFallbackSolver.solve(..)")
+            SVD_solver = SVDFallbackSolver(
+                coef=np.zeros_like(self.coef),
+                linear_loss=self.linear_loss,
+                l2_reg_strength=self.l2_reg_strength,
+                tol=self.tol,
+                max_iter=self.max_iter,
+                n_threads=self.n_threads,
+                verbose=self.verbose,
+            )
+        return SVD_solver.solve(X=X, y=y, sample_weight=sample_weight)
 
 
 class CholeskyNewtonSolver(BaseCholeskyNewtonSolver):
