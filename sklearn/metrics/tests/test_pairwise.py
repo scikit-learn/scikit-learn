@@ -1082,7 +1082,7 @@ def test_cosine_distances():
     x = np.abs(rng.rand(910))
     XA = np.vstack([x, x])
     D = cosine_distances(XA)
-    assert_allclose(D, [[0.0, 0.0], [0.0, 0.0]])
+    assert_allclose(D, [[0.0, 0.0], [0.0, 0.0]], atol=1e-10)
     # check that all elements are in [0, 2]
     assert np.all(D >= 0.0)
     assert np.all(D <= 2.0)
