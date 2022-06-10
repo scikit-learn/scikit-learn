@@ -8,11 +8,20 @@ like the cross validation error. However, it is much cheaper to calculate the ou
 error, since we can do so with a single training pass of the dataset, as opposed to
 :math:`k` passes in :math:`k`-fold cross validation [1]_.
 
-In this example we perform greedy sequential feature selection with a small number of
-features, and compare the runtime for out-of-bag error and cross validation error.
+In this example we perform grid search to select the optimal `max_depth` for the trees
+in the forest. In doing so, we compare the runtime and the predicted error for the
+out-of-bag error and 3-fold cross validation error.
+
+Note however that while this approach is fairly sensible for tuning parameters such as
+the tree depth, or parameter selection, it does not make sense to tune ``n_estimators``,
+the number of trees in the forest in this way. OOB error also tends to overestimate
+the true error, particularly when there are few observations or a large number of
+predictors [2]_.
 
 .. [1] D.H. Wolpert and W.G. Macready, "An Efficient Method To Estimate Bagging's
         Generalization Error.", 1999
+.. [2] S. Janitza and R. Hornung, “On the overestimation of random forest’s out-of-bag
+        error”, 2018
 """
 # Author: Michael Milton <michael.r.milton@gmail.com>
 #
@@ -25,11 +34,11 @@ import numpy as np
 
 from sklearn.datasets import make_classification
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.feature_selection import SequentialFeatureSelector
+from sklearn.model_selection import GridSearchCV
 
 # Generate a binary classification dataset.
 X, y = make_classification(
-    n_samples=500,
+    n_samples=200,
     n_features=5,
     n_clusters_per_class=1,
     n_informative=4,
@@ -53,35 +62,33 @@ def oob_scorer(estimator, X, y):
     return estimator.oob_score_
 
 
-# We use the same estimator and feature selection params for each selector
+# We use the same estimator and parameter grid for each cross validator
 kwargs = {
-    "estimator": RandomForestClassifier(oob_score=True, n_estimators=300),
-    "tol": 1,
-    "n_features_to_select": "auto",
+    "estimator": RandomForestClassifier(oob_score=True, n_estimators=100),
+    "param_grid": {"max_depth": [1, 2, 3, 4]},
 }
 
-# Define 3 cross validators to compare
-selectors = {
-    "OOB": SequentialFeatureSelector(
-        cv=list(oob_split(X)), scoring=oob_scorer, **kwargs
-    ),
-    "3-fold": SequentialFeatureSelector(cv=3, **kwargs),
-    "5-fold": SequentialFeatureSelector(**kwargs, cv=5),
+# Define the cross validators to compare
+cvs = {
+    "OOB": GridSearchCV(cv=list(oob_split(X)), scoring=oob_scorer, **kwargs),
+    "3-Fold": GridSearchCV(cv=3, **kwargs),
 }
 
 # Perform feature selection, and plot the results
+fig, (ax1, ax2) = plt.subplots(2)
 times = []
-for name, cv in selectors.items():
+colors = []
+for name, cv in cvs.items():
     start = default_timer()
     cv.fit(X, y)
     end = default_timer()
+    line = ax1.plot(cv.param_grid["max_depth"], cv.cv_results_["mean_test_score"])
     times.append(end - start)
-plt.bar(x=list(selectors.keys()), height=times)
-plt.xlabel("Cross Validator")
-plt.ylabel("Grid Search Time (s)")
+    colors.append(line[0].get_color())
+ax1.set_xlabel("Maximum Tree Depth")
+ax1.set_ylabel("Cross Validation Accuracy")
+ax2.bar(x=list(cvs.keys()), height=times, color=colors)
+ax2.set_xlabel("Cross Validator")
+ax2.set_ylabel("Grid Search Time (s)")
 plt.tight_layout()
 plt.show()
-
-# Check that we achieved the same results with all cross validators
-assert np.array_equal(selectors["OOB"].support_, selectors["3-fold"].support_)
-assert np.array_equal(selectors["3-fold"].support_, selectors["5-fold"].support_)

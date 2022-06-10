@@ -786,42 +786,6 @@ class _DeprecatedScorers(dict):
         return super().__getitem__(item)
 
 
-def oob_score(estimator, X, y):
-    """Out-of-Bag scorer.
-
-    This function can be used wherever a scoring function is expected, but delegates
-    its functionality to the oob_score_ field of certain classifiers if they have one,
-    notably the RandomForest set of Estimators.
-
-    Parameters
-    ----------
-    estimator : BaseEstimator with an oob_score_ field
-        Estimator to assess.
-    X : array-like of shape (n_samples, n_variables)
-        Test set data.
-    y : array-like of shape (n_samples,)
-        Ground truth for the test set.
-
-    Returns
-    -------
-    OOB : float
-        Out-of-bag score.
-    """
-    if hasattr(estimator, "oob_score_"):
-        return estimator.oob_score_
-    else:
-        if hasattr(estimator, "oob_score"):
-            raise TypeError(
-                "The classifier needs oob_score set to True to enable OOB scoring"
-            )
-        else:
-            raise TypeError(
-                oob_score.__name__
-                + " can only be used on classifiers with an out-of-bag error estimate,"
-                " such as RandomForest-based estimators."
-            )
-
-
 _SCORERS = dict(
     explained_variance=explained_variance_scorer,
     r2=r2_scorer,

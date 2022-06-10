@@ -114,23 +114,12 @@ Changelog
 :mod:`sklearn.linear_model`
 ...........................
 
-- |Fix| The `partial_fit` method of :class:`feature_selection.SelectFromModel`
-  now conducts validation for `max_features` and `feature_names_in` parameters.
-  :pr:`23299` by :user:`Long Bao <lorentzbao>`.
-- |Enhancement| Added :class:`model_selection.IdentitySplitter`, a dummy splitter that returns a single split containing all the data.
-  This is useful for estimators that are able to estimate their own performance without retraining, such as when using
-  out-of-bag error.
-  :pr:`23391` by :user:`Michael Milton <multimeric>`.
 - |Fix| Use dtype-aware tolerances for the validation of gram matrices (passed by users
   or precomputed). :pr:`22059` by :user:`Malte S. Kurz <MalteKurz>`.
 
 :mod:`sklearn.metrics`
 ......................
 
-- |Enhancement| Added :func:`metrics.oob_score`. This function can be used wherever a scoring function is expected,
-  but delegates its functionality to the `oob_score_` field of certain classifiers if they have one, notably the
-  RandomForest set of Estimators.
-  :pr:`23391` by :user:`Michael Milton <multimeric>`.
 - |Feature| :func:`class_likelihood_ratios` is added to compute the positive and
   negative likelihood ratios derived from the confusion matrix
   of a binary classification problem. :pr:`22518` by
