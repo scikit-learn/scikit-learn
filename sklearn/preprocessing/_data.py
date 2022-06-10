@@ -9,13 +9,13 @@
 
 
 import warnings
+from numbers import Real
 
 import numpy as np
 from scipy import sparse
 from scipy import stats
 from scipy import optimize
 from scipy.special import boxcox
-from numbers import Real
 from ..base import (
     BaseEstimator,
     TransformerMixin,
