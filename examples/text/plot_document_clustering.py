@@ -71,11 +71,14 @@ print(f"{len(dataset.data)} documents - {true_k} categories")
 # Comparing Clustering
 # ====================
 #
-# Here we define a function to score different clustering pipelines using
-# several metrics.
+# In this section we define a function to score different clustering pipelines
+# using several metrics.
 #
-# Given the knowledge of the ground truth class assignments of the samples, it
-# is possible to define metrics to test for different properties of a cluster:
+# Clustering algorithms are fundamentally unsupervised learning methods.
+# However, since we happen to have class labels for this specific dataset, it is
+# possible to use evaluation metrics that leverage this "supervised" ground
+# truth information to quantify the quality of the resulting clusters. Examples
+# of such metrics are the following:
 #
 # - homogeneity, which quantifies cluster containing only members of a single
 #   class;
