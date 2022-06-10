@@ -102,38 +102,48 @@ from collections import defaultdict
 from sklearn import metrics
 from time import time
 
-scores = defaultdict(list)
-train_times = defaultdict(list)
+
+evaluations = []
+evaluations_std = []
 
 
-def fit_and_evaluate(km, X, name=None):
-    score = defaultdict(list)
+def fit_and_evaluate(km, X, name=None, n_runs=5):
     name = km.__class__.__name__ if name is None else name
 
-    t0 = time()
-    km.fit(X)
-    train_time = time() - t0
+    train_times = []
+    scores = defaultdict(list)
+    for i in range(n_runs):
+        km.set_params(random_state=i)
+        t0 = time()
+        km.fit(X)
+        train_times.append(time() - t0)
+        scores["Homogeneity"].append(metrics.homogeneity_score(labels, km.labels_))
+        scores["Completeness"].append(metrics.completeness_score(labels, km.labels_))
+        scores["V-measure"].append(metrics.v_measure_score(labels, km.labels_))
+        scores["Adjusted Rand-Index"].append(
+            metrics.adjusted_rand_score(labels, km.labels_)
+        )
+        scores["Silhouette Coefficient"].append(
+            metrics.silhouette_score(X, km.labels_, sample_size=2000)
+        )
+    train_times = np.asarray(train_times)
 
-    # store the timing for each fit
-    train_times["estimator"].append(name)
-    train_times["train time"].append(train_time)
-
-    # store the scores of the clustering
-    score["estimator"].append(name)
-    score["Homogeneity"].append(metrics.homogeneity_score(labels, km.labels_))
-    score["Completeness"].append(metrics.completeness_score(labels, km.labels_))
-    score["V-measure"].append(metrics.v_measure_score(labels, km.labels_))
-    score["Adjusted Rand-Index"].append(metrics.adjusted_rand_score(labels, km.labels_))
-    score["Silhouette Coefficient"].append(
-        metrics.silhouette_score(X, km.labels_, sample_size=2000)
-    )
-
-    scores["estimator"].append(name)
-    for index in range(1, len(score)):
-        score_name = list(score.keys())[index]
-        score_value = list(score.values())[index]
-        scores[score_name].append(score_value[0])
-        print(f"'{score_name}': {score_value[0]:.3f}")
+    print(f"clustering done in {train_times.mean():.1f} ± {train_times.std():.1f} s ")
+    evaluation = {
+        "estimator": name,
+        "train_time": train_times.mean(),
+    }
+    evaluation_std = {
+        "estimator": name,
+        "train_time": train_times.std(),
+    }
+    for score_name, score_values in scores.items():
+        mean_score, std_score = np.mean(score_values), np.std(score_values)
+        print(f"{score_name}: {mean_score:.3f} ± {std_score:.3f}")
+        evaluation[score_name] = mean_score
+        evaluation_std[score_name] = std_score
+    evaluations.append(evaluation)
+    evaluations_std.append(evaluation_std)
 
 
 # %%
@@ -165,7 +175,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 
 vectorizer = TfidfVectorizer(
     max_df=0.5,
-    min_df=2,
+    min_df=5,
     stop_words="english",
 )
 t0 = time()
@@ -175,31 +185,13 @@ print(f"vectorizing done in {time() - t0:.3f} s")
 print(f"n_samples: {X_tfidf.shape[0]}, n_features: {X_tfidf.shape[1]}")
 
 # %%
-# **Clustering sparse data with MiniBatchKMeans**
+# **Clustering sparse data with KMeans**
 #
 # As both :class:`~sklearn.cluster.KMeans` and
 # :class:`~sklearn.cluster.MiniBatchKMeans` optimize a non-convex objective
 # function, their clustering will likely be sub-optimal.
 # Several runs with independent random initiations are performed using the
 # `n_init` and the clustering with the smallest inertia is chosen.
-
-from sklearn.cluster import MiniBatchKMeans
-
-minibatch_kmeans = MiniBatchKMeans(
-    n_clusters=true_k,
-    init="random",
-    n_init=5,
-    init_size=1000,
-    batch_size=1000,
-    random_state=0,
-)
-
-fit_and_evaluate(
-    minibatch_kmeans, X_tfidf, name="MiniBatchKMeans(init='random')\non tf-idf vectors"
-)
-
-# %%
-# **Clustering sparse data with KMeans**
 #
 # Here we use a `"random"` init instead of the smart `"k-means++"` init. The
 # `"k-means++"` init picks centroids with proba inverse to square distance,
@@ -214,7 +206,6 @@ kmeans = KMeans(
     init="random",
     max_iter=100,
     n_init=5,
-    random_state=0,
 )
 
 fit_and_evaluate(kmeans, X_tfidf, name="KMeans(init='random')\non tf-idf vectors")
@@ -252,7 +243,6 @@ kmeans = KMeans(
     init="k-means++",
     max_iter=100,
     n_init=1,
-    random_state=0,
 )
 
 fit_and_evaluate(
@@ -262,13 +252,14 @@ fit_and_evaluate(
 # %%
 # We repeat the experiment with :class:`~sklearn.cluster.MiniBatchKMeans`.
 
+from sklearn.cluster import MiniBatchKMeans
+
 minibatch_kmeans = MiniBatchKMeans(
     n_clusters=true_k,
     init="k-means++",
     n_init=1,
     init_size=1000,
     batch_size=1000,
-    random_state=0,
 )
 
 fit_and_evaluate(
@@ -312,12 +303,15 @@ from sklearn.feature_extraction.text import TfidfTransformer
 
 hasher = HashingVectorizer(
     stop_words="english",
-    alternate_sign=False,
-    norm=None,
+    n_features=50_000,
 )
-make_pipeline(TruncatedSVD(n_components=100), Normalizer(copy=False))
 
-lsa_vectorizer = make_pipeline(hasher, TfidfTransformer(), lsa)
+lsa_vectorizer = make_pipeline(
+    hasher,
+    TfidfTransformer(),
+    TruncatedSVD(n_components=100, random_state=0),
+    Normalizer(copy=False),
+)
 
 t0 = time()
 X_hashed_lsa = lsa_vectorizer.fit_transform(dataset.data)
@@ -328,38 +322,52 @@ fit_and_evaluate(
 )
 
 # %%
-# Plot clustering evaluation metrics
-# ==================================
+fit_and_evaluate(
+    minibatch_kmeans,
+    X_hashed_lsa,
+    name="MiniBatchKMeans(init='kmeans++')\nwith LSA on hashed vectors",
+)
+
+# %%
+# Clustering evaluation summary
+# ==============================
 
 import pandas as pd
 import matplotlib.pyplot as plt
 
-df = pd.DataFrame(scores).set_index("estimator")
+fig, (ax0, ax1) = plt.subplots(ncols=2, figsize=(16, 6), sharey=True)
 
-ax = df.plot.barh()
-ax.set_ylabel("")
-ax.set_xlabel("Clustering scores")
+df = pd.DataFrame(evaluations).set_index("estimator")
+df_std = pd.DataFrame(evaluations_std).set_index("estimator")
+
+df.drop(
+    ["train_time"],
+    axis="columns",
+).plot.barh(ax=ax0, xerr=df_std)
+ax0.set_xlabel("Clustering scores")
+ax0.set_ylabel("")
+
+df["train_time"].plot.barh(ax=ax1, xerr=df_std["train_time"])
+ax1.set_xlabel("Clustering time (s)")
 plt.tight_layout()
 
 # %%
-# The Silhouette Coefficient improves when using LSA. It suffers from the
-# phenomenon called "Concentration of Measure" or "Curse of Dimensionality" for
-# high dimensional datasets such as text data. Other measures such as the
-# V-measure and the Adjusted Rand Index are information-theory-based evaluation
-# scores: they are not affected by the curse of dimensionality as they are only
-# based on cluster assignments rather than distances.
-
-# %%
-# Computational performance
-# =========================
-
-df = pd.DataFrame(train_times).set_index("estimator")
-ax = df.plot.barh()
-ax.set_xlabel("Clustering times (s)")
-ax.set_ylabel("")
-plt.tight_layout()
-
-# %%
-# :class:`~sklearn.cluster.MiniBatchKMeans` requires less time since it runs
-# computations on batches of data. This comes at the expense of clustering
-# quality.
+# The Silhouette Coefficient suffers from the phenomenon called the "Curse of
+# Dimensionality" for high dimensional datasets such as text data. That is the
+# reason why it improves when using LSA. Other measures such as the V-measure
+# and the Adjusted Rand Index are information-theory-based evaluation scores:
+# they are not affected by the curse of dimensionality as they are only based on
+# cluster assignments rather than distances.
+#
+# :class:`~sklearn.cluster.MiniBatchKMeans` is inestable for this relatively
+# small dataset. It is more interesting to use when the number of samples is
+# much bigger, but it comes at the expense of clustering quality. Using the
+# `"k-means++"` init on LSA reduced data is both good in terms of metrics and
+# computing speed. LSA also increases stability as shown in the section below.
+#
+# Even if :class:`~sklearn.cluster.KMeans` has low clustering time when used
+# with LSA on hashed vectors, the LSA step itself takes a long time because the
+# hashed space is typically large (set to `n_features=50_000` in this example).
+# One can try lower number of features at the expense of having hash collisions
+# as shown in the example notebook
+# :ref:`sphx_glr_auto_examples_text_plot_hashing_vs_dict_vectorizer.py`.
