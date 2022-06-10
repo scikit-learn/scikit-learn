@@ -3,6 +3,7 @@
 # License: BSD 3 clause
 
 from functools import partial
+import itertools
 import re
 import warnings
 
@@ -11,7 +12,7 @@ import scipy
 from numpy.testing import assert_allclose
 import pytest
 from scipy import linalg
-from scipy.optimize import root
+from scipy.optimize import minimize, root
 
 from sklearn.base import clone
 from sklearn._loss import HalfBinomialLoss
@@ -40,6 +41,29 @@ class BinomialRegressor(_GeneralizedLinearRegressor):
         return HalfBinomialLoss()
 
 
+def is_canonical(model):
+    """True if model's link function is canonical to loss"""
+    if isinstance(model, (BinomialRegressor, PoissonRegressor)):
+        return True
+    elif isinstance(model, TweedieRegressor):
+        return model.power == 0 and model.link in ["auto", "identity"]
+
+
+def _special_minimize(fun, grad, x, tol_NM, tol):
+    # Find good starting point by Nelder-Mead
+    res_NM = minimize(
+        fun, x, method="Nelder-Mead", options={"xatol": tol_NM, "fatol": tol_NM}
+    )
+    # Now refine via root finding, wich is more precise then minimizing a function.
+    res = root(
+        grad,
+        res_NM.x,
+        method="lm",
+        options={"ftol": tol, "xtol": tol, "gtol": tol},
+    )
+    return res.x
+
+
 @pytest.fixture(scope="module")
 def regression_data():
     X, y = make_regression(
@@ -49,7 +73,7 @@ def regression_data():
 
 
 @pytest.fixture(
-    params=zip(
+    params=itertools.product(
         ["long", "wide"],
         [
             BinomialRegressor(),
@@ -134,36 +158,41 @@ def glm_dataset(global_random_seed, request):
     # results.
     l2_reg_strength = 1
     fun = partial(
+        linear_loss.loss,
+        X=X[:, :-1],
+        y=y,
+        sample_weight=sw,
+        l2_reg_strength=l2_reg_strength,
+    )
+    grad = partial(
         linear_loss.gradient,
         X=X[:, :-1],
         y=y,
         sample_weight=sw,
         l2_reg_strength=l2_reg_strength,
     )
-    # Note: Root finding is more precise then minimizing a function.
-    res = root(
-        fun,
-        coef_unpenalized,
-        method="lm",
-        options={"ftol": 1e-14, "xtol": 1e-14, "gtol": 1e-14},
+    coef_penalized_with_intercept = _special_minimize(
+        fun, grad, coef_unpenalized, tol_NM=1e-6, tol=1e-14
     )
-    coef_penalized_with_intercept = res.x
 
     linear_loss = LinearModelLoss(base_loss=model._get_loss(), fit_intercept=False)
     fun = partial(
+        linear_loss.loss,
+        X=X[:, :-1],
+        y=y,
+        sample_weight=sw,
+        l2_reg_strength=l2_reg_strength,
+    )
+    grad = partial(
         linear_loss.gradient,
         X=X[:, :-1],
         y=y,
         sample_weight=sw,
         l2_reg_strength=l2_reg_strength,
     )
-    res = root(
-        fun,
-        coef_unpenalized[:-1],
-        method="lm",
-        options={"ftol": 1e-14, "xtol": 1e-14, "gtol": 1e-14},
+    coef_penalized_without_intercept = _special_minimize(
+        fun, grad, coef_unpenalized[:-1], tol_NM=1e-6, tol=1e-14
     )
-    coef_penalized_without_intercept = res.x
 
     # To be sure
     assert np.linalg.norm(coef_penalized_with_intercept) < np.linalg.norm(
@@ -208,7 +237,7 @@ def test_glm_regression(solver, fit_intercept, glm_dataset):
         intercept = 0
     model.fit(X, y)
 
-    rtol = 3e-5 if solver == "lbfgs" else 1e-11
+    rtol = 3e-5 if solver == "lbfgs" else 1e-10
     assert model.intercept_ == pytest.approx(intercept, rel=rtol)
     assert_allclose(model.coef_, coef, rtol=rtol)
 
@@ -268,7 +297,7 @@ def test_glm_regression_hstacked_X(solver, fit_intercept, glm_dataset):
         intercept = 0
     model.fit(X, y)
 
-    rtol = 3e-5 if solver == "lbfgs" else 1e-11
+    rtol = 3e-5 if solver == "lbfgs" else 1e-10
     assert model.intercept_ == pytest.approx(intercept, rel=rtol)
     assert_allclose(model.coef_, np.r_[coef, coef], rtol=rtol)
 
@@ -309,11 +338,13 @@ def test_glm_regression_vstacked_X(solver, fit_intercept, glm_dataset):
         intercept = 0
     model.fit(X, y)
 
-    rtol = 3e-5 if solver == "lbfgs" else 1e-11
+    rtol = 3e-5 if solver == "lbfgs" else 1e-10
     assert model.intercept_ == pytest.approx(intercept, rel=rtol)
     assert_allclose(model.coef_, coef, rtol=rtol)
 
 
+@pytest.mark.filterwarnings("ignore::scipy.linalg.misc.LinAlgWarning")
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 @pytest.mark.parametrize("solver", SOLVERS)
 @pytest.mark.parametrize("fit_intercept", [True, False])
 def test_glm_regression_unpenalized(solver, fit_intercept, glm_dataset):
@@ -336,7 +367,6 @@ def test_glm_regression_unpenalized(solver, fit_intercept, glm_dataset):
     )
 
     model = clone(model).set_params(**params)
-    # Note that newton-cholesky might give a warning: XXX
     if fit_intercept:
         X = X[:, :-1]  # remove intercept
         intercept = coef[-1]
@@ -346,26 +376,30 @@ def test_glm_regression_unpenalized(solver, fit_intercept, glm_dataset):
     model.fit(X, y)
 
     # FIXME: `assert_allclose(model.coef_, coef)` should work for all cases but fails
-    # for the wide/fat case with n_features > n_samples. The current Ridge solvers do
+    # for the wide/fat case with n_features > n_samples. Most current GLM solvers do
     # NOT return the minimum norm solution with fit_intercept=True.
     if n_samples > n_features or not fit_intercept:
         assert model.intercept_ == pytest.approx(intercept)
-        assert_allclose(model.coef_, coef)
+        rtol = 5e-6 if solver == "lbfgs" else 1e-7
+        assert_allclose(model.coef_, coef, rtol=rtol)
     else:
-        # As it is an underdetermined problem, prediction = y. This shows that we get
-        # a solution, i.e. a (non-unique) minimum of the objective function ...
-        assert_allclose(model.predict(X), y)
-        assert_allclose(model._get_loss().link.inverse(X @ coef + intercept), y)
-        # But it is not the minimum norm solution. (This should be equal.)
-        assert np.linalg.norm(np.r_[model.intercept_, model.coef_]) > np.linalg.norm(
-            np.r_[intercept, coef]
-        )
+        # As it is an underdetermined problem, prediction = y. The following shows that
+        # we get a solution, i.e. a (non-unique) minimum of the objective function ...
+        if is_canonical(model):
+            assert_allclose(model.predict(X), y)
+            assert_allclose(model._get_loss().link.inverse(X @ coef + intercept), y)
+        if solver in ["lbfgs"]:
+            # But it is not the minimum norm solution. (This should be equal.)
+            assert np.linalg.norm(np.r_[model.intercept_, model.coef_]) > (
+                1 + 1e-12
+            ) * np.linalg.norm(np.r_[intercept, coef])
+            pytest.xfail(reason="GLM does not provide the minimum norm solution.")
 
-        pytest.xfail(reason="GLM does not provide the minimum norm solution.")
         assert model.intercept_ == pytest.approx(intercept)
         assert_allclose(model.coef_, coef)
 
 
+@pytest.mark.filterwarnings("ignore::scipy.linalg.misc.LinAlgWarning")
 @pytest.mark.parametrize("solver", SOLVERS)
 @pytest.mark.parametrize("fit_intercept", [True, False])
 def test_glm_regression_unpenalized_hstacked_X(solver, fit_intercept, glm_dataset):
@@ -375,7 +409,7 @@ def test_glm_regression_unpenalized_hstacked_X(solver, fit_intercept, glm_datase
     GLM fit on [X] is the same as fit on [X, X]/2.
     For long X, [X, X] is a singular matrix and we check against the minimum norm
     solution:
-        min ||w||_2 subject to min deviance
+        min ||w||_2 subject to w = argmin deviance(w)
     """
     model, X, y, coef, _, _ = glm_dataset
     n_samples, n_features = X.shape
@@ -390,37 +424,55 @@ def test_glm_regression_unpenalized_hstacked_X(solver, fit_intercept, glm_datase
 
     model = clone(model).set_params(**params)
     if fit_intercept:
-        X = X[:, :-1]  # remove intercept
         intercept = coef[-1]
         coef = coef[:-1]
+        if n_samples > n_features:
+            X = X[:, :-1]  # remove intercept
+            X = 0.5 * np.concatenate((X, X), axis=1)
+        else:
+            # To know the minimum norm solution, we keep one intercept column and do
+            # not divide by 2. Later on, we must take special care.
+            X = np.c_[X[:, :-1], X[:, :-1], X[:, -1]]
     else:
         intercept = 0
-    X = 0.5 * np.concatenate((X, X), axis=1)
+        X = 0.5 * np.concatenate((X, X), axis=1)
     assert np.linalg.matrix_rank(X) <= min(n_samples, n_features)
     model.fit(X, y)
 
-    if n_samples > n_features or not fit_intercept:
-        assert model.intercept_ == pytest.approx(intercept)
-        if solver in ["newton-cholesky"]:
-            # Cholesky is a bad choice for singular X.
-            pytest.skip()
-        rtol = 3e-5 if solver == "lbfgs" else 1e-11
-        assert_allclose(model.coef_, np.r_[coef, coef], rtol=rtol)
+    if fit_intercept and n_samples < n_features:
+        # Here we take special care.
+        model_intercept = 2 * model.intercept_
+        model_coef = 2 * model.coef_[:-1]  # exclude the other intercept term.
+        # For minimum norm solution, we would have
+        # assert model.intercept_ == pytest.approx(model.coef_[-1])
     else:
-        # FIXME: Same as in test_glm_regression_unpenalized.
-        # As it is an underdetermined problem, prediction = y. This shows that we get
-        # a solution, i.e. a (non-unique) minimum of the objective function ...
+        model_intercept = model.intercept_
+        model_coef = model.coef_
+
+    if n_samples > n_features or not fit_intercept:
+        assert model_intercept == pytest.approx(intercept)
+        rtol = 3e-5 if solver == "lbfgs" else 1e-6
+        assert_allclose(model_coef, np.r_[coef, coef], rtol=rtol)
+    else:
+        # As it is an underdetermined problem, prediction = y. The following shows that
+        # we get a solution, i.e. a (non-unique) minimum of the objective function ...
         assert_allclose(model.predict(X), y)
-        # But it is not the minimum norm solution. (This should be equal.)
-        assert np.linalg.norm(np.r_[model.intercept_, model.coef_]) > np.linalg.norm(
-            np.r_[intercept, coef, coef]
-        )
+        if solver in ["lbfgs", "newton-cholesky"]:
+            # FIXME: Same as in test_glm_regression_unpenalized.
+            # But it is not the minimum norm solution. (This should be equal.)
+            assert np.linalg.norm(np.r_[model.intercept_, model.coef_]) > (
+                1 + 1e-12
+            ) * np.linalg.norm(0.5 * np.r_[intercept, intercept, coef, coef])
+            pytest.xfail(
+                reason=f"GLM with {solver} does not provide the minimum norm solution."
+            )
 
-        pytest.xfail(reason="GLM does not provide the minimum norm solution.")
-        assert model.intercept_ == pytest.approx(intercept)
-        assert_allclose(model.coef_, np.r_[coef, coef])
+        assert model_intercept == pytest.approx(intercept)
+        assert model.intercept_ == pytest.approx(model.coef_[-1])
+        assert_allclose(model_coef, np.r_[coef, coef])
 
 
+@pytest.mark.filterwarnings("ignore::scipy.linalg.misc.LinAlgWarning")
 @pytest.mark.parametrize("solver", SOLVERS)
 @pytest.mark.parametrize("fit_intercept", [True, False])
 def test_glm_regression_unpenalized_vstacked_X(solver, fit_intercept, glm_dataset):
@@ -431,7 +483,7 @@ def test_glm_regression_unpenalized_vstacked_X(solver, fit_intercept, glm_datase
                                          [X], [y].
     For wide X, [X', X'] is a singular matrix and we check against the minimum norm
     solution:
-        min ||w||_2 subject to min deviance
+        min ||w||_2 subject to w = argmin deviance(w)
     """
     model, X, y, coef, _, _ = glm_dataset
     n_samples, n_features = X.shape
@@ -458,20 +510,24 @@ def test_glm_regression_unpenalized_vstacked_X(solver, fit_intercept, glm_datase
 
     if n_samples > n_features or not fit_intercept:
         assert model.intercept_ == pytest.approx(intercept)
-        assert_allclose(model.coef_, coef)
+        rtol = 3e-5 if solver == "lbfgs" else 1e-6
+        assert_allclose(model.coef_, coef, rtol=rtol)
     else:
-        # FIXME: Same as in test_glm_regression_unpenalized.
-        # As it is an underdetermined problem, prediction = y. This shows that we get
-        # a solution, i.e. a (non-unique) minimum of the objective function ...
+        # As it is an underdetermined problem, prediction = y. The following shows that
+        # we get a solution, i.e. a (non-unique) minimum of the objective function ...
         assert_allclose(model.predict(X), y)
-        # But it is not the minimum norm solution. (This should be equal.)
-        assert np.linalg.norm(np.r_[model.intercept_, model.coef_]) > np.linalg.norm(
-            np.r_[intercept, coef]
-        )
+        if solver in ["lbfgs", "newton-cholesky"]:
+            # FIXME: Same as in test_glm_regression_unpenalized.
+            # But it is not the minimum norm solution. (This should be equal.)
+            assert np.linalg.norm(np.r_[model.intercept_, model.coef_]) > (
+                1 + 1e-12
+            ) * np.linalg.norm(np.r_[intercept, coef])
+            pytest.xfail(
+                reason=f"GLM with {solver} does not provide the minimum norm solution."
+            )
 
-        pytest.xfail(reason="GLM does not provide the minimum norm solution.")
         assert model.intercept_ == pytest.approx(intercept)
-        assert_allclose(model.coef_, coef)
+        assert_allclose(model.coef_, coef, rtol=5e-5)
 
 
 def test_sample_weights_validation():
