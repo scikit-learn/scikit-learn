@@ -19,7 +19,6 @@ from ..utils._encode import _encode, _check_unknown, _unique, _get_counts
 
 from ..utils._param_validation import Interval
 from ..utils._param_validation import StrOptions
-from ..utils._param_validation import validate_params
 
 
 __all__ = ["OneHotEncoder", "OrdinalEncoder"]
@@ -439,13 +438,13 @@ class OneHotEncoder(_BaseEncoder):
         "drop": ["array-like", None],
         "dtype": [callable],
         "handle_unknown": [StrOptions({"error", "ignore", "infrequent_if_exist"})],
-        "max_categories": [Interval(numbers.Integral, 1, None, closed='left'), None],
+        "max_categories": [Interval(numbers.Integral, 1, None, closed="left"), None],
         "min_frequency": [
-            Interval(numbers.Integral, 1, None, closed='left'), 
-            Interval(numbers.Real, 0, 1, closed='neither'),
+            Interval(numbers.Integral, 1, None, closed="left"),
+            Interval(numbers.Real, 0, 1, closed="neither"),
             None,
         ],
-        "sparse": [bool],       
+        "sparse": [bool],
     }
 
     def __init__(
@@ -1251,11 +1250,17 @@ class OrdinalEncoder(_OneToOneFeatureMixin, _BaseEncoder):
     _parameter_constraints = {
         "categories": [StrOptions({"auto"}), "array-like"],
         "dtype": [callable],
-        "encoded_missing_value":[Interval(numbers.Integral, None, None, closed='neither'), type(np.nan)],
+        "encoded_missing_value": [
+            Interval(numbers.Integral, None, None, closed="neither"),
+            type(np.nan),
+        ],
         "handle_unknown": [StrOptions({"error", "use_encoded_value"})],
-        "unknown_value": [Interval(numbers.Integral, None, None, closed='neither'), type(np.nan), None]
+        "unknown_value": [
+            Interval(numbers.Integral, None, None, closed="neither"),
+            type(np.nan),
+            None,
+        ],
     }
-
 
     def __init__(
         self,
