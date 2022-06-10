@@ -104,6 +104,8 @@ Changelog
 
 - |Efficiency| Improve runtime performance of :class:`ensemble.IsolationForest`
   by avoiding data copies. :pr:`23252` by :user:`Zhehao Liu <MaxwellLZH>`.
+- |Enhancement| Add an example of using out-of-bag error to efficiently tune a
+    :class:`ensemble.RandomForestClassifier`. :pr:`23391` by :user:`Michael Milton <multimeric>`.
 
 :mod:`sklearn.impute`
 .....................
