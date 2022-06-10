@@ -537,8 +537,8 @@ scikit-learn estimators, as these expect continuous input, and would interpret
 the categories as being ordered, which is often not desired (i.e. the set of
 browsers was ordered arbitrarily).
 
-:class:`OrdinalEncoder` will also passthrough missing values that are
-indicated by `np.nan`.
+By default, :class:`OrdinalEncoder` will also passthrough missing values that
+are indicated by `np.nan`.
 
     >>> enc = preprocessing.OrdinalEncoder()
     >>> X = [['male'], ['female'], [np.nan], ['female']]
@@ -546,6 +546,32 @@ indicated by `np.nan`.
     array([[ 1.],
            [ 0.],
            [nan],
+           [ 0.]])
+
+:class:`OrdinalEncoder` provides a parameter `encoded_missing_value` to encode
+the missing values without the need to create a pipeline and using
+:class:`~sklearn.impute.SimpleImputer`.
+
+    >>> enc = preprocessing.OrdinalEncoder(encoded_missing_value=-1)
+    >>> X = [['male'], ['female'], [np.nan], ['female']]
+    >>> enc.fit_transform(X)
+    array([[ 1.],
+           [ 0.],
+           [-1.],
+           [ 0.]])
+
+The above processing is equivalent to the following pipeline::
+
+    >>> from sklearn.pipeline import Pipeline
+    >>> from sklearn.impute import SimpleImputer
+    >>> enc = Pipeline(steps=[
+    ...     ("encoder", preprocessing.OrdinalEncoder()),
+    ...     ("imputer", SimpleImputer(strategy="constant", fill_value=-1)),
+    ... ])
+    >>> enc.fit_transform(X)
+    array([[ 1.],
+           [ 0.],
+           [-1.],
            [ 0.]])
 
 Another possibility to convert categorical features to features that can be used
@@ -1103,6 +1129,7 @@ a transformer that applies a log transformation in a pipeline, do::
     >>> from sklearn.preprocessing import FunctionTransformer
     >>> transformer = FunctionTransformer(np.log1p, validate=True)
     >>> X = np.array([[0, 1], [2, 3]])
+    >>> # Since FunctionTransformer is no-op during fit, we can call transform directly
     >>> transformer.transform(X)
     array([[0.        , 0.69314718],
            [1.09861229, 1.38629436]])

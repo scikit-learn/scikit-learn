@@ -366,6 +366,10 @@ def test_attibutes_shapes(Est):
     )
 
 
+# TODO(1.3): remove the warning filter
+@pytest.mark.filterwarnings(
+    "ignore:The attribute `coef_` will be transposed in version 1.3"
+)
 @pytest.mark.parametrize("Est", (PLSRegression, PLSCanonical, CCA))
 def test_univariate_equivalence(Est):
     # Ensure 2D Y with 1 column is equivalent to 1D Y
@@ -583,6 +587,56 @@ def test_pls_constant_y():
         pls.fit(x, y)
 
     assert_allclose(pls.x_rotations_, 0)
+
+
+@pytest.mark.parametrize("PLSEstimator", [PLSRegression, PLSCanonical, CCA])
+def test_pls_coef_shape(PLSEstimator):
+    """Check the shape of `coef_` attribute.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/12410
+    """
+    d = load_linnerud()
+    X = d.data
+    Y = d.target
+
+    pls = PLSEstimator(copy=True).fit(X, Y)
+
+    # TODO(1.3): remove the warning check
+    warning_msg = "The attribute `coef_` will be transposed in version 1.3"
+    with pytest.warns(FutureWarning, match=warning_msg):
+        assert pls.coef_.shape == (X.shape[1], Y.shape[1])
+
+    # Next accesses do not warn
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", FutureWarning)
+        pls.coef_
+
+    # TODO(1.3): rename `_coef_` to `coef_`
+    assert pls._coef_.shape == (Y.shape[1], X.shape[1])
+
+
+# TODO (1.3): remove the filterwarnings and adapt the dot product between `X_trans` and
+# `pls.coef_`
+@pytest.mark.filterwarnings("ignore:The attribute `coef_` will be transposed")
+@pytest.mark.parametrize("scale", [True, False])
+@pytest.mark.parametrize("PLSEstimator", [PLSRegression, PLSCanonical, CCA])
+def test_pls_prediction(PLSEstimator, scale):
+    """Check the behaviour of the prediction function."""
+    d = load_linnerud()
+    X = d.data
+    Y = d.target
+
+    pls = PLSEstimator(copy=True, scale=scale).fit(X, Y)
+    Y_pred = pls.predict(X, copy=True)
+
+    y_mean = Y.mean(axis=0)
+    X_trans = X - X.mean(axis=0)
+    if scale:
+        X_trans /= X.std(axis=0, ddof=1)
+
+    assert_allclose(pls.intercept_, y_mean)
+    assert_allclose(Y_pred, X_trans @ pls.coef_ + pls.intercept_)
 
 
 @pytest.mark.parametrize("Klass", [CCA, PLSSVD, PLSRegression, PLSCanonical])

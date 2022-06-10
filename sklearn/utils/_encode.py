@@ -324,7 +324,7 @@ class _NaNCounter(Counter):
         super().__init__(self._generate_items(items))
 
     def _generate_items(self, items):
-        """Generate items without nans. Stores the nan counts seperately."""
+        """Generate items without nans. Stores the nan counts separately."""
         for item in items:
             if not is_scalar_nan(item):
                 yield item

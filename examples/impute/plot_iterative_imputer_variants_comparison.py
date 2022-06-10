@@ -37,7 +37,7 @@ For this particular pattern of missing values we see that
 :class:`~linear_model.BayesianRidge` and
 :class:`~ensemble.RandomForestRegressor` give the best results.
 
-It shoud be noted that some estimators such as
+It should be noted that some estimators such as
 :class:`~ensemble.HistGradientBoostingRegressor` can natively deal with
 missing features and are often recommended over building pipelines with
 complex and costly missing values imputation strategies.

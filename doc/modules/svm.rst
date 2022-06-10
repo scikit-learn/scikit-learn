@@ -483,6 +483,8 @@ Different kernels are specified by the `kernel` parameter::
     >>> rbf_svc.kernel
     'rbf'
 
+See also :ref:`kernel_approximation` for a solution to use RBF kernels that is much faster and more scalable.
+
 Parameters of the RBF Kernel
 ----------------------------
 
@@ -672,7 +674,7 @@ The primal problem can be equivalently formulated as
 
 .. math::
 
-    \min_ {w, b} \frac{1}{2} w^T w + C \sum_{i=1}\max(0, 1 - y_i (w^T \phi(x_i) + b)),
+    \min_ {w, b} \frac{1}{2} w^T w + C \sum_{i=1}^{n}\max(0, 1 - y_i (w^T \phi(x_i) + b)),
 
 where we make use of the `hinge loss
 <https://en.wikipedia.org/wiki/Hinge_loss>`_. This is the form that is
