@@ -40,6 +40,7 @@ from ..utils.validation import (
     _check_sample_weight,
     FLOAT_DTYPES,
 )
+from ..utils._param_validation import StrOptions
 
 from ._encoders import OneHotEncoder
 
@@ -1901,6 +1902,11 @@ class Normalizer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
            [0.5, 0.7, 0.5, 0.1]])
     """
 
+    _parameter_constraints = {
+        "norm": [StrOptions({"l1", "l2", "max"})],
+        "copy_x": [bool],
+    }
+
     def __init__(self, norm="l2", *, copy=True):
         self.norm = norm
         self.copy = copy
@@ -1924,6 +1930,8 @@ class Normalizer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         self : object
             Fitted transformer.
         """
+        self._validate_params()
+        
         self._validate_data(X, accept_sparse="csr")
         return self
 
