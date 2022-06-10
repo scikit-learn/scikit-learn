@@ -465,6 +465,9 @@ class OneHotEncoder(_BaseEncoder):
         self.drop = drop
         self.min_frequency = min_frequency
         self.max_categories = max_categories
+        self._infrequent_enabled = (
+            self.max_categories is not None and self.max_categories >= 1
+        ) or self.min_frequency is not None
 
     @property
     def infrequent_categories_(self):
@@ -476,36 +479,6 @@ class OneHotEncoder(_BaseEncoder):
             for category, indices in zip(self.categories_, infrequent_indices)
         ]
 
-    def _validate_keywords(self):
-
-        if self.handle_unknown not in {"error", "ignore", "infrequent_if_exist"}:
-            msg = (
-                "handle_unknown should be one of 'error', 'ignore', "
-                f"'infrequent_if_exist' got {self.handle_unknown}."
-            )
-            raise ValueError(msg)
-
-        if self.max_categories is not None and self.max_categories < 1:
-            raise ValueError("max_categories must be greater than 1")
-
-        if isinstance(self.min_frequency, numbers.Integral):
-            if not self.min_frequency >= 1:
-                raise ValueError(
-                    "min_frequency must be an integer at least "
-                    "1 or a float in (0.0, 1.0); got the "
-                    f"integer {self.min_frequency}"
-                )
-        elif isinstance(self.min_frequency, numbers.Real):
-            if not (0.0 < self.min_frequency < 1.0):
-                raise ValueError(
-                    "min_frequency must be an integer at least "
-                    "1 or a float in (0.0, 1.0); got the "
-                    f"float {self.min_frequency}"
-                )
-
-        self._infrequent_enabled = (
-            self.max_categories is not None and self.max_categories >= 1
-        ) or self.min_frequency is not None
 
     def _map_drop_idx_to_infrequent(self, feature_idx, drop_idx):
         """Convert `drop_idx` into the index for infrequent categories.
@@ -832,7 +805,6 @@ class OneHotEncoder(_BaseEncoder):
             Fitted encoder.
         """
         self._validate_params()
-        # self._validate_keywords()
         fit_results = self._fit(
             X,
             handle_unknown=self.handle_unknown,
@@ -869,7 +841,6 @@ class OneHotEncoder(_BaseEncoder):
             Transformed input. If `sparse=True`, a sparse matrix will be
             returned.
         """
-        # self._validate_keywords()
         self._validate_params()
         return super().fit_transform(X, y)
 
@@ -1296,34 +1267,28 @@ class OrdinalEncoder(_OneToOneFeatureMixin, _BaseEncoder):
             Fitted encoder.
         """
         self._validate_params()
-        # handle_unknown_strategies = ("error", "use_encoded_value")
-        # if self.handle_unknown not in handle_unknown_strategies:
-        #     raise ValueError(
-        #         "handle_unknown should be either 'error' or "
-        #         f"'use_encoded_value', got {self.handle_unknown}."
-        #     )
 
-        # if self.handle_unknown == "use_encoded_value":
-        #     if is_scalar_nan(self.unknown_value):
-        #         if np.dtype(self.dtype).kind != "f":
-        #             raise ValueError(
-        #                 "When unknown_value is np.nan, the dtype "
-        #                 "parameter should be "
-        #                 f"a float dtype. Got {self.dtype}."
-        #             )
-        #     elif not isinstance(self.unknown_value, numbers.Integral):
-        #         raise TypeError(
-        #             "unknown_value should be an integer or "
-        #             "np.nan when "
-        #             "handle_unknown is 'use_encoded_value', "
-        #             f"got {self.unknown_value}."
-        #         )
-        # elif self.unknown_value is not None:
-        #     raise TypeError(
-        #         "unknown_value should only be set when "
-        #         "handle_unknown is 'use_encoded_value', "
-        #         f"got {self.unknown_value}."
-        #     )
+        if self.handle_unknown == "use_encoded_value":
+            if is_scalar_nan(self.unknown_value):
+                if np.dtype(self.dtype).kind != "f":
+                    raise ValueError(
+                        "When unknown_value is np.nan, the dtype "
+                        "parameter should be "
+                        f"a float dtype. Got {self.dtype}."
+                    )
+            elif not isinstance(self.unknown_value, numbers.Integral):
+                raise TypeError(
+                    "unknown_value should be an integer or "
+                    "np.nan when "
+                    "handle_unknown is 'use_encoded_value', "
+                    f"got {self.unknown_value}."
+                )
+        elif self.unknown_value is not None:
+            raise TypeError(
+                "unknown_value should only be set when "
+                "handle_unknown is 'use_encoded_value', "
+                f"got {self.unknown_value}."
+            )
 
         # `_fit` will only raise an error when `self.handle_unknown="error"`
         self._fit(X, handle_unknown=self.handle_unknown, force_all_finite="allow-nan")
