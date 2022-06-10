@@ -187,7 +187,7 @@ cpdef DTYPE_t[::1] _sqeuclidean_row_norms(
 #####################
 # Dispatchers
 
-cdef class PairwiseDistancesReduction:
+class PairwiseDistancesReduction:
     """Abstract base dispatcher for pairwise distance computation & reduction.
 
     Each dispatcher extending the base :class:`PairwiseDistancesReduction`
@@ -236,7 +236,7 @@ cdef class PairwiseDistancesReduction:
                 metric in cls.valid_metrics())
 
 
-cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
+class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
     """Compute the argkmin of row vectors of X on the ones of Y.
 
     For each row vector of X, computes the indices of k first the rows
@@ -360,7 +360,7 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
         )
 
 
-cdef class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
+class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
     """Compute radius-based neighbors for two sets of vectors.
 
     For each row-vector X[i] of the queries X, find all the indices j of
