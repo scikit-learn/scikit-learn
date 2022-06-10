@@ -17,6 +17,10 @@ from ..utils._mask import _get_mask
 
 from ..utils._encode import _encode, _check_unknown, _unique, _get_counts
 
+from ..utils._param_validation import Interval
+from ..utils._param_validation import StrOptions
+from ..utils._param_validation import validate_params
+
 
 __all__ = ["OneHotEncoder", "OrdinalEncoder"]
 
@@ -27,6 +31,13 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
     transform the input features.
 
     """
+
+    _parameter_constraints = {
+        "categories": [
+            "auto",
+            Interval(numbers.Integral, 1, None, closed='left')
+        ]
+    }
 
     def _check_X(self, X, force_all_finite=True):
         """
@@ -430,6 +441,10 @@ class OneHotEncoder(_BaseEncoder):
            [1., 0., 0.]])
     """
 
+    _parameter_constraints = {
+        **_BaseEncoder._parameter_constraints
+    }
+
     def __init__(
         self,
         *,
@@ -814,6 +829,7 @@ class OneHotEncoder(_BaseEncoder):
         self
             Fitted encoder.
         """
+        self._validate_params()
         self._validate_keywords()
         fit_results = self._fit(
             X,
