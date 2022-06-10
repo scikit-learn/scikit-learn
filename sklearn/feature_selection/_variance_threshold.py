@@ -9,6 +9,7 @@ from ..utils.sparsefuncs import mean_variance_axis, min_max_axis
 from ..utils.validation import check_is_fitted
 from ..utils._param_validation import Interval
 
+
 class VarianceThreshold(SelectorMixin, BaseEstimator):
     """Feature selector that removes all low-variance features.
 
@@ -67,7 +68,8 @@ class VarianceThreshold(SelectorMixin, BaseEstimator):
                [1, 4],
                [1, 1]])
     """
-    _parameter_constraints = {"threshold": [Interval(Real, 0, 1, closed="both")]} 
+
+    _parameter_constraints = {"threshold": [Interval(Real, 0, 1, closed="both")]}
 
     def __init__(self, threshold=0.0):
         self.threshold = threshold
@@ -91,7 +93,6 @@ class VarianceThreshold(SelectorMixin, BaseEstimator):
             Returns the instance itself.
         """
         self._validate_params()
-        
         X = self._validate_data(
             X,
             accept_sparse=("csr", "csc"),
