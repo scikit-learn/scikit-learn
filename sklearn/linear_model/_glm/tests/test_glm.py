@@ -29,7 +29,7 @@ from sklearn.linear_model import (
 from sklearn.linear_model._glm import _GeneralizedLinearRegressor
 from sklearn.linear_model._linear_loss import LinearModelLoss
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.metrics import d2_tweedie_score
+from sklearn.metrics import d2_tweedie_score, mean_poisson_deviance
 from sklearn.model_selection import train_test_split
 
 
@@ -1017,19 +1017,33 @@ def test_family_deprecation(est, family):
 def test_linalg_warning_with_newton_solver(global_random_seed):
     rng = np.random.RandomState(global_random_seed)
     X_orig = rng.normal(size=(10, 3))
-    X_colinear = np.hstack([X_orig] * 10)  # collinear design
+    X_collinear = np.hstack([X_orig] * 10)  # collinear design
     y = rng.normal(size=X_orig.shape[0])
     y[y < 0] = 0.0
 
+    # No warning raised on well-conditioned design, even without regularization.
     with warnings.catch_warnings():
         warnings.simplefilter("error")
-        # No warning raised on well-conditioned design
-        PoissonRegressor(solver="newton-cholesky", alpha=0.0).fit(X_orig, y)
+        reg = PoissonRegressor(solver="newton-cholesky", alpha=0.0).fit(X_orig, y)
+    reference_deviance = mean_poisson_deviance(y, reg.predict(X_orig))
 
+    # Fitting on collinear data without regularization should raise an
+    # informative warning:
     msg = (
         "The inner solver of CholeskyNewtonSolver stumbled upon a"
-        " singular or very ill-conditioned hessian matrix. It will now try"
-        " a simple gradient step."
+        " singular or very ill-conditioned hessian matrix"
     )
     with pytest.warns(scipy.linalg.LinAlgWarning, match=msg):
-        PoissonRegressor(solver="newton-cholesky", alpha=0.0).fit(X_colinear, y)
+        PoissonRegressor(solver="newton-cholesky", alpha=0.0).fit(X_collinear, y)
+
+    msg = "Newton solver did not converge after.*iterations."
+    with pytest.warns(ConvergenceWarning, match=msg):
+        PoissonRegressor(solver="newton-cholesky", alpha=0.0).fit(X_collinear, y)
+
+    # Increasing the regularization slightly should make the problem go away:
+    reg = PoissonRegressor(solver="newton-cholesky", alpha=1e-12).fit(X_collinear, y)
+
+    # Since we use a small penalty, the deviance of the predictions should still
+    # be almost the same.
+    this_deviance = mean_poisson_deviance(y, reg.predict(X_collinear))
+    assert this_deviance == pytest.approx(reference_deviance)
