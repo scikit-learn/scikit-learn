@@ -287,8 +287,9 @@ class NewtonSolver(ABC):
             t *= beta
         else:
             warnings.warn(
-                f"Line search of Newton solver {self.__class__.__name__} did not "
-                "converge after 21 line search refinement iterations.",
+                f"Line search of Newton solver {self.__class__.__name__} at iteration "
+                "#{self.iteration} did no converge after 21 line search refinement "
+                "iterations.",
                 ConvergenceWarning,
             )
 
@@ -430,8 +431,8 @@ class BaseCholeskyNewtonSolver(NewtonSolver):
                 # We only need to throw this warning once.
                 warnings.warn(
                     f"The inner solver of {self.__class__.__name__} stumbled upon a"
-                    " singular or very ill-conditioned hessian matrix. It will now try"
-                    " a simple gradient step."
+                    " singular or very ill-conditioned hessian matrix at iteration "
+                    " #{self.iteration}. It will now try a simple gradient step."
                     " Note that this warning is only raised once, the problem may, "
                     " however, occur in several or all iterations. Set verbose >= 1"
                     " to get more information.\n"
