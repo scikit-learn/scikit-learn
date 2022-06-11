@@ -200,6 +200,9 @@ class NewtonSolver(ABC):
                 n_threads=self.n_threads,
                 raw_prediction=raw,
             )
+            # Note: If coef_newton is too large, loss_gradient may produce inf values,
+            # potentially accompanied by a RuntimeWarning.
+            # This case will be captured by the Armijo condition.
 
             # 1. Check Armijo / sufficient decrease condition.
             # The smaller (more negative) the better.
@@ -412,6 +415,7 @@ class BaseCholeskyNewtonSolver(NewtonSolver):
 
     def setup(self, X, y, sample_weight):
         super().setup(X=X, y=y, sample_weight=sample_weight)
+        self.count_singular = 0
 
     def inner_solve(self, X, y, sample_weight):
         try:
@@ -422,15 +426,23 @@ class BaseCholeskyNewtonSolver(NewtonSolver):
                 )
             return
         except (np.linalg.LinAlgError, scipy.linalg.LinAlgWarning) as e:
-            warnings.warn(
-                f"The inner solver of {self.__class__.__name__} stumbled upon a"
-                " singular hessian matrix and stopped. Your options are to use another"
-                " solver or to avoid such situations in the first place. Possible "
-                " remedies are removing collinear features of X or increasing the "
-                "penalization strengths. The original Linear Algebra message was:\n"
-                + str(e),
-                scipy.linalg.LinAlgWarning,
-            )
+            if self.count_singular == 0:
+                # We only need to throw this warning once.
+                warnings.warn(
+                    f"The inner solver of {self.__class__.__name__} stumbled upon a"
+                    " singular or very ill-conditioned hessian matrix. It will now try"
+                    " a simple gradient step."
+                    " Note that this warning is only raised once, the problem may, "
+                    " however, occur in several or all iterations. Set verbose >= 1"
+                    " to get more information.\n"
+                    "Your options are to use another solver or to avoid such situation"
+                    " in the first place. Possible  remedies are removing collinear"
+                    " features of X or increasing the penalization strengths.\n"
+                    "The original Linear Algebra message was:\n"
+                    + str(e),
+                    scipy.linalg.LinAlgWarning,
+                )
+            self.count_singular += 1
             # Possible causes:
             # 1. hess_pointwise is negative. But this is already taken care in
             #    LinearModelLoss such that min(hess_pointwise) >= 0.
@@ -440,8 +452,21 @@ class BaseCholeskyNewtonSolver(NewtonSolver):
             # There are many possible ways to deal with this situation (most of
             # them adding, explicit or implicit, a matrix to the hessian to make it
             # positive definite), confer to Chapter 3.4 of Nocedal & Wright 2nd ed.
+            # Instead, we resort to a simple gradient step, taking the diagonal part
+            # of the hessian.
+            if self.verbose:
+                print(
+                    "  The inner solver stumbled upon an singular or ill-conditioned "
+                    "hessian matrix and resorts to a simple gradient step."
+                )
+            # We add 1e-3 to the diagonal hessian part to make in invertible and to
+            # restrict coef_newton to at most ~1e3. The line search considerst step
+            # sizes until 1e-6 * newton_step ~1e-3 * newton_step.
+            # Deviding by self.iteration ensures (slow) convergence.
+            eps = 1e-3 / self.iteration
+            self.coef_newton = -self.gradient / (np.diag(self.hessian) + eps)
             # We have throw this above warning an just stop.
-            self.stop = True
+            # self.stop = True
 
 
 class CholeskyNewtonSolver(BaseCholeskyNewtonSolver):

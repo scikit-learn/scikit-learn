@@ -41,14 +41,6 @@ class BinomialRegressor(_GeneralizedLinearRegressor):
         return HalfBinomialLoss()
 
 
-def is_canonical(model):
-    """True if model's link function is canonical to loss"""
-    if isinstance(model, (BinomialRegressor, PoissonRegressor)):
-        return True
-    elif isinstance(model, TweedieRegressor):
-        return model.power == 0 and model.link in ["auto", "identity"]
-
-
 def _special_minimize(fun, grad, x, tol_NM, tol):
     # Find good starting point by Nelder-Mead
     res_NM = minimize(
@@ -343,8 +335,10 @@ def test_glm_regression_vstacked_X(solver, fit_intercept, glm_dataset):
     assert_allclose(model.coef_, coef, rtol=rtol)
 
 
+# TweedieRegressor(link='log', power=0) raises RuntimeWarning
 @pytest.mark.filterwarnings("ignore::scipy.linalg.misc.LinAlgWarning")
 @pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
+@pytest.mark.filterwarnings("ignore::RuntimeWarning")
 @pytest.mark.parametrize("solver", SOLVERS)
 @pytest.mark.parametrize("fit_intercept", [True, False])
 def test_glm_regression_unpenalized(solver, fit_intercept, glm_dataset):
@@ -378,28 +372,33 @@ def test_glm_regression_unpenalized(solver, fit_intercept, glm_dataset):
     # FIXME: `assert_allclose(model.coef_, coef)` should work for all cases but fails
     # for the wide/fat case with n_features > n_samples. Most current GLM solvers do
     # NOT return the minimum norm solution with fit_intercept=True.
-    if n_samples > n_features or not fit_intercept:
+    rtol = 5e-6 if solver == "lbfgs" else 1e-7
+    if n_samples > n_features:
         assert model.intercept_ == pytest.approx(intercept)
-        rtol = 5e-6 if solver == "lbfgs" else 1e-7
         assert_allclose(model.coef_, coef, rtol=rtol)
     else:
         # As it is an underdetermined problem, prediction = y. The following shows that
         # we get a solution, i.e. a (non-unique) minimum of the objective function ...
-        if is_canonical(model):
-            assert_allclose(model.predict(X), y)
-            assert_allclose(model._get_loss().link.inverse(X @ coef + intercept), y)
-        if solver in ["lbfgs"]:
-            # But it is not the minimum norm solution. (This should be equal.)
-            assert np.linalg.norm(np.r_[model.intercept_, model.coef_]) > (
-                1 + 1e-12
-            ) * np.linalg.norm(np.r_[intercept, coef])
-            pytest.xfail(reason="GLM does not provide the minimum norm solution.")
+        assert_allclose(model.predict(X), y)
+        assert_allclose(model._get_loss().link.inverse(X @ coef + intercept), y)
+        if (solver in ["lbfgs", "newton-qr-cholesky"] and fit_intercept) or solver in [
+            "newton-cholesky"
+        ]:
+            # But it is not the minimum norm solution. Otherwise the norms would be
+            # equal.
+            norm_solution = (1 + 1e-12) * np.linalg.norm(np.r_[intercept, coef])
+            norm_model = np.linalg.norm(np.r_[model.intercept_, model.coef_])
+            assert norm_model > norm_solution
+            pytest.xfail(
+                reason=f"GLM with {solver} does not provide the minimum norm solution."
+            )
 
         assert model.intercept_ == pytest.approx(intercept)
-        assert_allclose(model.coef_, coef)
+        assert_allclose(model.coef_, coef, rtol=rtol)
 
 
 @pytest.mark.filterwarnings("ignore::scipy.linalg.misc.LinAlgWarning")
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 @pytest.mark.parametrize("solver", SOLVERS)
 @pytest.mark.parametrize("fit_intercept", [True, False])
 def test_glm_regression_unpenalized_hstacked_X(solver, fit_intercept, glm_dataset):
@@ -449,30 +448,39 @@ def test_glm_regression_unpenalized_hstacked_X(solver, fit_intercept, glm_datase
         model_intercept = model.intercept_
         model_coef = model.coef_
 
-    if n_samples > n_features or not fit_intercept:
+    rtol = 3e-5 if solver == "lbfgs" else 1e-6
+    if n_samples > n_features:
         assert model_intercept == pytest.approx(intercept)
-        rtol = 3e-5 if solver == "lbfgs" else 1e-6
         assert_allclose(model_coef, np.r_[coef, coef], rtol=rtol)
     else:
         # As it is an underdetermined problem, prediction = y. The following shows that
         # we get a solution, i.e. a (non-unique) minimum of the objective function ...
         assert_allclose(model.predict(X), y)
-        if solver in ["lbfgs", "newton-cholesky"]:
+        if (solver in ["lbfgs", "newton-qr-cholesky"] and fit_intercept) or solver in [
+            "newton-cholesky"
+        ]:
             # FIXME: Same as in test_glm_regression_unpenalized.
-            # But it is not the minimum norm solution. (This should be equal.)
-            assert np.linalg.norm(np.r_[model.intercept_, model.coef_]) > (
-                1 + 1e-12
-            ) * np.linalg.norm(0.5 * np.r_[intercept, intercept, coef, coef])
+            # But it is not the minimum norm solution. Otherwise the norms would be
+            # equal.
+            norm_solution = (1 + 1e-12) * np.linalg.norm(
+                0.5 * np.r_[intercept, intercept, coef, coef]
+            )
+            norm_model = np.linalg.norm(np.r_[model.intercept_, model.coef_])
+            assert norm_model > norm_solution
             pytest.xfail(
                 reason=f"GLM with {solver} does not provide the minimum norm solution."
             )
 
+        if fit_intercept:
+            assert model.intercept_ == pytest.approx(model.coef_[-1])
         assert model_intercept == pytest.approx(intercept)
-        assert model.intercept_ == pytest.approx(model.coef_[-1])
-        assert_allclose(model_coef, np.r_[coef, coef])
+        assert_allclose(model_coef, np.r_[coef, coef], rtol=rtol)
 
 
+# TweedieRegressor(link='log', power=0) raises RuntimeWarning
 @pytest.mark.filterwarnings("ignore::scipy.linalg.misc.LinAlgWarning")
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
+@pytest.mark.filterwarnings("ignore::RuntimeWarning")
 @pytest.mark.parametrize("solver", SOLVERS)
 @pytest.mark.parametrize("fit_intercept", [True, False])
 def test_glm_regression_unpenalized_vstacked_X(solver, fit_intercept, glm_dataset):
@@ -508,26 +516,29 @@ def test_glm_regression_unpenalized_vstacked_X(solver, fit_intercept, glm_datase
     y = np.r_[y, y]
     model.fit(X, y)
 
-    if n_samples > n_features or not fit_intercept:
+    rtol = 3e-5 if solver == "lbfgs" else 1e-6
+    if n_samples > n_features:
         assert model.intercept_ == pytest.approx(intercept)
-        rtol = 3e-5 if solver == "lbfgs" else 1e-6
         assert_allclose(model.coef_, coef, rtol=rtol)
     else:
         # As it is an underdetermined problem, prediction = y. The following shows that
         # we get a solution, i.e. a (non-unique) minimum of the objective function ...
         assert_allclose(model.predict(X), y)
-        if solver in ["lbfgs", "newton-cholesky"]:
+        if (solver in ["lbfgs", "newton-qr-cholesky"] and fit_intercept) or solver in [
+            "newton-cholesky"
+        ]:
             # FIXME: Same as in test_glm_regression_unpenalized.
-            # But it is not the minimum norm solution. (This should be equal.)
-            assert np.linalg.norm(np.r_[model.intercept_, model.coef_]) > (
-                1 + 1e-12
-            ) * np.linalg.norm(np.r_[intercept, coef])
+            # But it is not the minimum norm solution. Otherwise the norms would be
+            # equal.
+            norm_solution = (1 + 1e-12) * np.linalg.norm(np.r_[intercept, coef])
+            norm_model = np.linalg.norm(np.r_[model.intercept_, model.coef_])
+            assert norm_model > norm_solution
             pytest.xfail(
                 reason=f"GLM with {solver} does not provide the minimum norm solution."
             )
 
         assert model.intercept_ == pytest.approx(intercept)
-        assert_allclose(model.coef_, coef, rtol=5e-5)
+        assert_allclose(model.coef_, coef, rtol=rtol)
 
 
 def test_sample_weights_validation():
@@ -1006,7 +1017,7 @@ def test_family_deprecation(est, family):
 def test_linalg_warning_with_newton_solver(global_random_seed):
     rng = np.random.RandomState(global_random_seed)
     X_orig = rng.normal(size=(10, 3))
-    X_colinear = np.hstack([X_orig] * 10)  # colinear design
+    X_colinear = np.hstack([X_orig] * 10)  # collinear design
     y = rng.normal(size=X_orig.shape[0])
     y[y < 0] = 0.0
 
@@ -1016,8 +1027,9 @@ def test_linalg_warning_with_newton_solver(global_random_seed):
         PoissonRegressor(solver="newton-cholesky", alpha=0.0).fit(X_orig, y)
 
     msg = (
-        "The inner solver of CholeskyNewtonSolver stumbled upon a "
-        "singular hessian matrix. "
+        "The inner solver of CholeskyNewtonSolver stumbled upon a"
+        " singular or very ill-conditioned hessian matrix. It will now try"
+        " a simple gradient step."
     )
     with pytest.warns(scipy.linalg.LinAlgWarning, match=msg):
         PoissonRegressor(solver="newton-cholesky", alpha=0.0).fit(X_colinear, y)
