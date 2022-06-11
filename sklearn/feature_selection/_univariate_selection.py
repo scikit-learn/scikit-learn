@@ -749,7 +749,7 @@ class SelectFpr(_BaseFilter):
     (569, 30)
     >>> X_new = SelectFpr(f_classif, alpha=0.01).fit_transform(X, y)
     >>> X_new.shape
-    (569, 16)
+    (569, 25)
     """
 
     def __init__(self, score_func=f_classif, *, alpha=5e-2):
@@ -828,7 +828,7 @@ class SelectFdr(_BaseFilter):
     (569, 30)
     >>> X_new = SelectFdr(f_classif, alpha=0.01).fit_transform(X, y)
     >>> X_new.shape
-    (569, 16)
+    (569, 25)
     """
 
     def __init__(self, score_func=f_classif, *, alpha=5e-2):
@@ -905,7 +905,7 @@ class SelectFwe(_BaseFilter):
     (569, 30)
     >>> X_new = SelectFwe(f_classif, alpha=0.01).fit_transform(X, y)
     >>> X_new.shape
-    (569, 15)
+    (569, 25)
     """
 
     def __init__(self, score_func=f_classif, *, alpha=5e-2):
