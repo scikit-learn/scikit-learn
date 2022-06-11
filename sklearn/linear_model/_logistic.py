@@ -19,7 +19,7 @@ from joblib import Parallel, effective_n_jobs
 from collections.abc import Iterable
 
 from sklearn.model_selection import BaseCrossValidator
-from sklearn.metrics import SCORERS
+from sklearn.metrics import get_scorer_names
 
 from ._base import LinearClassifierMixin, SparseCoefMixin, BaseEstimator
 from ._linear_loss import LinearModelLoss
@@ -37,6 +37,7 @@ from ..utils.multiclass import check_classification_targets
 from ..utils.fixes import delayed
 from ..model_selection import check_cv
 from ..metrics import get_scorer
+
 from ..utils._param_validation import StrOptions, Interval
 from numbers import Integral, Real
 
@@ -1014,13 +1015,13 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         "penalty": [StrOptions({"l1", "l2", "elasticnet", "none"})],
         "dual": [bool],
         "tol": [Interval(Real, 0, None, closed="left")],
-        "C": [Interval(Real, 0, None, closed="left")],
+        "C": [Interval(Real, 0, None, closed="neither")],
         "fit_intercept": [bool],
-        "intercept_scaling": [Interval(Real, None, None, closed="neither"), None],
+        "intercept_scaling": [Interval(Real, 0, None, closed="neither")],
         "class_weight": [dict, StrOptions({"balanced"}), None],
         "random_state": ["random_state"],
         "solver": [StrOptions({"newton-cg", "lbfgs", "liblinear", "sag", "saga"})],
-        "max_iter": [Interval(Integral, 1, None, closed="left")],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
         "multi_class": [StrOptions({"auto", "ovr", "multinomial"})],
         "verbose": [Interval(Integral, 0, None, closed="left")],
         "warm_start": [bool],
@@ -1605,30 +1606,28 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
     0.98...
     """
 
-    _parameter_constraints = {
-        "Cs": [Integral, Interval(Real, None, None, closed="neither"), "array-like"],
-        "fit_intercept": [bool],
-        "cv": [
-            Interval(Integral, 2, None, closed="left"),
-            Iterable,
-            BaseCrossValidator,
-            None,
-        ],
-        "dual": [bool],
-        "penalty": [StrOptions({"l1", "l2", "elasticnet"})],
-        "scoring": [StrOptions(set(SCORERS.keys())), callable, None],
-        "solver": [StrOptions({"newton-cg", "lbfgs", "liblinear", "sag", "saga"})],
-        "tol": [Interval(Real, 0, None, closed="left")],
-        "max_iter": [Interval(Integral, 1, None, closed="left")],
-        "class_weight": [dict, StrOptions({"balanced"}), None],
-        "n_jobs": [None, Integral],
-        "verbose": [Interval(Integral, 0, None, closed="left")],
-        "refit": [bool],
-        "intercept_scaling": [Interval(Real, None, None, closed="neither"), None],
-        "multi_class": [StrOptions({"auto", "ovr", "multinomial"})],
-        "random_state": ["random_state"],
-        "l1_ratios": [Interval(Real, 0, 1, closed="both"), None, "array-like"],
-    }
+    _parameter_constraints = {**LogisticRegression._parameter_constraints}
+
+    _parameters_to_remove = ["C", "warm_start", "l1_ratio"]
+
+    for _parameter in _parameters_to_remove:
+        _parameter_constraints.pop(_parameter)
+
+    _parameter_constraints.update(
+        {
+            "Cs": [Interval(Integral, 1, None, closed="left"), "array-like"],
+            "cv": [
+                Interval(Integral, 2, None, closed="left"),
+                Iterable,
+                BaseCrossValidator,
+                None,
+            ],
+            "scoring": [StrOptions(set(get_scorer_names())), callable, None],
+            "l1_ratios": ["array-like", None],
+            "refit": [bool],
+            "penalty": [StrOptions({"l1", "l2", "elasticnet"})],
+        }
+    )
 
     def __init__(
         self,
