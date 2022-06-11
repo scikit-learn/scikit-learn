@@ -352,7 +352,7 @@ def test_glm_regression_vstacked_X(solver, fit_intercept, glm_dataset):
 
 
 # TweedieRegressor(link='log', power=0) raises RuntimeWarning
-@pytest.mark.filterwarnings("ignore::scipy.linalg.misc.LinAlgWarning")
+@pytest.mark.filterwarnings("ignore::scipy.linalg.LinAlgWarning")
 @pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 @pytest.mark.filterwarnings("ignore::RuntimeWarning")
 @pytest.mark.parametrize("solver", SOLVERS)
@@ -413,7 +413,7 @@ def test_glm_regression_unpenalized(solver, fit_intercept, glm_dataset):
         assert_allclose(model.coef_, coef, rtol=rtol)
 
 
-@pytest.mark.filterwarnings("ignore::scipy.linalg.misc.LinAlgWarning")
+@pytest.mark.filterwarnings("ignore::scipy.linalg.LinAlgWarning")
 @pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 @pytest.mark.parametrize("solver", SOLVERS)
 @pytest.mark.parametrize("fit_intercept", [True, False])
@@ -494,7 +494,7 @@ def test_glm_regression_unpenalized_hstacked_X(solver, fit_intercept, glm_datase
 
 
 # TweedieRegressor(link='log', power=0) raises RuntimeWarning
-@pytest.mark.filterwarnings("ignore::scipy.linalg.misc.LinAlgWarning")
+@pytest.mark.filterwarnings("ignore::scipy.linalg.LinAlgWarning")
 @pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 @pytest.mark.filterwarnings("ignore::RuntimeWarning")
 @pytest.mark.parametrize("solver", SOLVERS)
