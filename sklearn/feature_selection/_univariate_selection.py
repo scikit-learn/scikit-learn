@@ -550,11 +550,11 @@ class SelectPercentile(_BaseFilter):
     Examples
     --------
     >>> from sklearn.datasets import load_digits
-    >>> from sklearn.feature_selection import SelectPercentile, chi2
+    >>> from sklearn.feature_selection import SelectPercentile, f_classif
     >>> X, y = load_digits(return_X_y=True)
     >>> X.shape
     (1797, 64)
-    >>> X_new = SelectPercentile(chi2, percentile=10).fit_transform(X, y)
+    >>> X_new = SelectPercentile(f_classif, percentile=10).fit_transform(X, y)
     >>> X_new.shape
     (1797, 7)
     """
@@ -650,11 +650,11 @@ class SelectKBest(_BaseFilter):
     Examples
     --------
     >>> from sklearn.datasets import load_digits
-    >>> from sklearn.feature_selection import SelectKBest, chi2
+    >>> from sklearn.feature_selection import SelectKBest, f_classif
     >>> X, y = load_digits(return_X_y=True)
     >>> X.shape
     (1797, 64)
-    >>> X_new = SelectKBest(chi2, k=20).fit_transform(X, y)
+    >>> X_new = SelectKBest(f_classif, k=20).fit_transform(X, y)
     >>> X_new.shape
     (1797, 20)
     """
@@ -743,11 +743,11 @@ class SelectFpr(_BaseFilter):
     Examples
     --------
     >>> from sklearn.datasets import load_breast_cancer
-    >>> from sklearn.feature_selection import SelectFpr, chi2
+    >>> from sklearn.feature_selection import SelectFpr, f_classif
     >>> X, y = load_breast_cancer(return_X_y=True)
     >>> X.shape
     (569, 30)
-    >>> X_new = SelectFpr(chi2, alpha=0.01).fit_transform(X, y)
+    >>> X_new = SelectFpr(f_classif, alpha=0.01).fit_transform(X, y)
     >>> X_new.shape
     (569, 16)
     """
@@ -822,11 +822,11 @@ class SelectFdr(_BaseFilter):
     Examples
     --------
     >>> from sklearn.datasets import load_breast_cancer
-    >>> from sklearn.feature_selection import SelectFdr, chi2
+    >>> from sklearn.feature_selection import SelectFdr, f_classif
     >>> X, y = load_breast_cancer(return_X_y=True)
     >>> X.shape
     (569, 30)
-    >>> X_new = SelectFdr(chi2, alpha=0.01).fit_transform(X, y)
+    >>> X_new = SelectFdr(f_classif, alpha=0.01).fit_transform(X, y)
     >>> X_new.shape
     (569, 16)
     """
@@ -899,11 +899,11 @@ class SelectFwe(_BaseFilter):
     Examples
     --------
     >>> from sklearn.datasets import load_breast_cancer
-    >>> from sklearn.feature_selection import SelectFwe, chi2
+    >>> from sklearn.feature_selection import SelectFwe, f_classif
     >>> X, y = load_breast_cancer(return_X_y=True)
     >>> X.shape
     (569, 30)
-    >>> X_new = SelectFwe(chi2, alpha=0.01).fit_transform(X, y)
+    >>> X_new = SelectFwe(f_classif, alpha=0.01).fit_transform(X, y)
     >>> X_new.shape
     (569, 15)
     """
@@ -978,11 +978,11 @@ class GenericUnivariateSelect(_BaseFilter):
     Examples
     --------
     >>> from sklearn.datasets import load_breast_cancer
-    >>> from sklearn.feature_selection import GenericUnivariateSelect, chi2
+    >>> from sklearn.feature_selection import GenericUnivariateSelect, f_classif
     >>> X, y = load_breast_cancer(return_X_y=True)
     >>> X.shape
     (569, 30)
-    >>> transformer = GenericUnivariateSelect(chi2, mode='k_best', param=20)
+    >>> transformer = GenericUnivariateSelect(f_classif, mode='k_best', param=20)
     >>> X_new = transformer.fit_transform(X, y)
     >>> X_new.shape
     (569, 20)
