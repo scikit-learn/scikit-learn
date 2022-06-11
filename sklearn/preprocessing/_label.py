@@ -255,11 +255,11 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
            [0, 0, 1],
            [0, 1, 0]])
     """
-    
+
     _parameter_constraints = {
         "neg_label": [Integral],
         "pos_label": [Integral],
-        "sparse_output": [bool]
+        "sparse_output": [bool],
     }
 
     def __init__(self, *, neg_label=0, pos_label=1, sparse_output=False):
@@ -282,7 +282,7 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        
+
         self._validate_params()
 
         if self.neg_label >= self.pos_label:
