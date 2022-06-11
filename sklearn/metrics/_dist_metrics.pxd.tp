@@ -79,8 +79,8 @@ cdef class DistanceMetric{{name_suffix}}:
     # Because we don't expect to instantiate a lot of these objects, the
     # extra memory overhead of this setup should not be an issue.
     cdef {{DTYPE_t}} p
-    cdef {{DTYPE_t}}[::1] vec
-    cdef {{DTYPE_t}}[:, ::1] mat
+    cdef DTYPE_t[::1] vec
+    cdef DTYPE_t[:, ::1] mat
     cdef ITYPE_t size
     cdef object func
     cdef object kwargs
@@ -91,10 +91,59 @@ cdef class DistanceMetric{{name_suffix}}:
     cdef DTYPE_t rdist(self, const {{DTYPE_t}}* x1, const {{DTYPE_t}}* x2,
                        ITYPE_t size) nogil except -1
 
-    cdef int pdist(self, const {{DTYPE_t}}[:, ::1] X, {{DTYPE_t}}[:, ::1] D) except -1
+    cdef DTYPE_t csr_dist(self,
+        const {{DTYPE_t}}[:] x1_data,
+        const cnp.int32_t[:] x1_indices,
+        const {{DTYPE_t}}[:] x2_data,
+        const cnp.int32_t[:] x2_indices,
+        const cnp.int32_t x1_start,
+        const cnp.int32_t x1_end,
+        const cnp.int32_t x2_start,
+        const cnp.int32_t x2_end,
+        const ITYPE_t size,
+    ) nogil except -1
 
-    cdef int cdist(self, const {{DTYPE_t}}[:, ::1] X, const {{DTYPE_t}}[:, ::1] Y,
-                   {{DTYPE_t}}[:, ::1] D) except -1
+    cdef DTYPE_t csr_rdist(self,
+        const {{DTYPE_t}}[:] x1_data,
+        const cnp.int32_t[:] x1_indices,
+        const {{DTYPE_t}}[:] x2_data,
+        const cnp.int32_t[:] x2_indices,
+        const cnp.int32_t x1_start,
+        const cnp.int32_t x1_end,
+        const cnp.int32_t x2_start,
+        const cnp.int32_t x2_end,
+        const ITYPE_t size,
+    ) nogil except -1
+
+    cdef int pdist(self,
+        const {{DTYPE_t}}[:, ::1] X,
+        DTYPE_t[:, ::1] D,
+    ) except -1
+
+    cdef int cdist(self,
+        const {{DTYPE_t}}[:, ::1] X,
+        const {{DTYPE_t}}[:, ::1] Y,
+        DTYPE_t[:, ::1] D,
+    ) except -1
+
+    cdef int csr_pdist(self,
+        const {{DTYPE_t}}[:] x1_data,
+        const cnp.int32_t[:] x1_indices,
+        const cnp.int32_t[:] x1_indptr,
+        const ITYPE_t size,
+        DTYPE_t[:, ::1] D,
+    ) nogil except -1
+
+    cdef int csr_cdist(self,
+        const {{DTYPE_t}}[:] x1_data,
+        const cnp.int32_t[:] x1_indices,
+        const cnp.int32_t[:] x1_indptr,
+        const {{DTYPE_t}}[:] x2_data,
+        const cnp.int32_t[:] x2_indices,
+        const cnp.int32_t[:] x2_indptr,
+        const ITYPE_t size,
+        DTYPE_t[:, ::1] D,
+    ) nogil except -1
 
     cdef DTYPE_t _rdist_to_dist(self, {{DTYPE_t}} rdist) nogil except -1
 

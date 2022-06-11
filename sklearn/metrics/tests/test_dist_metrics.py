@@ -83,14 +83,15 @@ def test_cdist(metric_param_grid, X, Y):
     )
     metric, param_grid = metric_param_grid
     keys = param_grid.keys()
+    X_csr, Y_csr = sp.csr_matrix(X), sp.csr_matrix(Y)
     for vals in itertools.product(*param_grid.values()):
         kwargs = dict(zip(keys, vals))
+        rtol_dict = {}
         if metric == "mahalanobis":
-            # See: https://github.com/scipy/scipy/issues/13861
-            # Possibly caused by: https://github.com/joblib/joblib/issues/563
-            pytest.xfail(
-                "scipy#13861: cdist with 'mahalanobis' fails on joblib memmap data"
-            )
+            # Computation of mahalanobis differs between
+            # the scipy and scikit-learn implementation.
+            # Hence, we increase the relative tolerance.
+            rtol_dict = {"rtol": 1e-6}
 
         if metric == "wminkowski":
             # wminkoski is deprecated in SciPy 1.6.0 and removed in 1.8.0
@@ -104,7 +105,10 @@ def test_cdist(metric_param_grid, X, Y):
 
         dm = DistanceMetricInterface.get_metric(metric, **kwargs)
         D_sklearn = dm.pairwise(X, Y)
-        assert_allclose(D_sklearn, D_scipy_cdist)
+        assert_allclose(D_sklearn, D_scipy_cdist, **rtol_dict)
+
+        D_sklearn_csr = dm.pairwise(X_csr, Y_csr)
+        assert_allclose(D_sklearn_csr, D_scipy_cdist, **rtol_dict)
 
 
 @pytest.mark.parametrize("metric", BOOL_METRICS)
@@ -112,28 +116,38 @@ def test_cdist(metric_param_grid, X, Y):
     "X_bool, Y_bool", [(X_bool, Y_bool), (X_bool_mmap, Y_bool_mmap)]
 )
 def test_cdist_bool_metric(metric, X_bool, Y_bool):
-    D_true = cdist(X_bool, Y_bool, metric)
+    D_scipy_cdist = cdist(X_bool, Y_bool, metric)
+
     dm = DistanceMetric.get_metric(metric)
-    D12 = dm.pairwise(X_bool, Y_bool)
-    assert_allclose(D12, D_true)
+    D_sklearn = dm.pairwise(X_bool, Y_bool)
+    assert_allclose(D_sklearn, D_scipy_cdist)
+
+    X_bool_csr, Y_csr = sp.csr_matrix(X_bool), sp.csr_matrix(Y_bool)
+    D_sklearn_csr = dm.pairwise(X_bool_csr, Y_csr)
+    assert_allclose(D_sklearn_csr, D_scipy_cdist)
 
 
 # TODO: Remove filterwarnings in 1.3 when wminkowski is removed
 @pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
 @pytest.mark.parametrize("metric_param_grid", METRICS_DEFAULT_PARAMS)
-@pytest.mark.parametrize("X, Y", [(X64, Y64), (X32, Y32), (X_mmap, Y_mmap)])
-def test_pdist(metric_param_grid, X, Y):
+@pytest.mark.parametrize("X", [X64, X32, X_mmap])
+def test_pdist(metric_param_grid, X):
     DistanceMetricInterface = (
-        DistanceMetric if X.dtype == Y.dtype == np.float64 else DistanceMetric32
+        DistanceMetric if X.dtype == np.float64 else DistanceMetric32
     )
     metric, param_grid = metric_param_grid
     keys = param_grid.keys()
+    X_csr = sp.csr_matrix(X)
     for vals in itertools.product(*param_grid.values()):
         kwargs = dict(zip(keys, vals))
+        rtol_dict = {}
         if metric == "mahalanobis":
-            # See: https://github.com/scipy/scipy/issues/13861
-            pytest.xfail("scipy#13861: pdist with 'mahalanobis' fails onmemmap data")
-        elif metric == "wminkowski":
+            # Computation of mahalanobis differs between
+            # the scipy and scikit-learn implementation.
+            # Hence, we increase the relative tolerance.
+            rtol_dict = {"rtol": 1e-6}
+
+        if metric == "wminkowski":
             if sp_version >= parse_version("1.8.0"):
                 pytest.skip("wminkowski will be removed in SciPy 1.8.0")
 
@@ -142,13 +156,16 @@ def test_pdist(metric_param_grid, X, Y):
             if sp_version >= parse_version("1.6.0"):
                 ExceptionToAssert = DeprecationWarning
             with pytest.warns(ExceptionToAssert):
-                D_true = cdist(X, X, metric, **kwargs)
+                D_scipy_pdist = cdist(X, X, metric, **kwargs)
         else:
-            D_true = cdist(X, X, metric, **kwargs)
+            D_scipy_pdist = cdist(X, X, metric, **kwargs)
 
         dm = DistanceMetricInterface.get_metric(metric, **kwargs)
-        D12 = dm.pairwise(X)
-        assert_allclose(D12, D_true)
+        D_sklearn = dm.pairwise(X)
+        assert_allclose(D_sklearn, D_scipy_pdist, **rtol_dict)
+
+        D_sklearn_csr = dm.pairwise(X_csr)
+        assert_allclose(D_sklearn_csr, D_scipy_pdist, **rtol_dict)
 
 
 # TODO: Remove filterwarnings in 1.3 when wminkowski is removed
@@ -166,25 +183,26 @@ def test_distance_metrics_dtype_consistency(metric_param_grid):
 
         D64 = dm64.pairwise(X64)
         D32 = dm32.pairwise(X32)
-        assert_allclose(D64, D32)
+        assert_allclose(D64, D32, rtol=1e-5)
 
         D64 = dm64.pairwise(X64, Y64)
         D32 = dm32.pairwise(X32, Y32)
-        assert_allclose(D64, D32)
+        assert_allclose(D64, D32, rtol=1e-5)
 
 
 @pytest.mark.parametrize("metric", BOOL_METRICS)
 @pytest.mark.parametrize("X_bool", [X_bool, X_bool_mmap])
 def test_pdist_bool_metrics(metric, X_bool):
-    D_true = cdist(X_bool, X_bool, metric)
-    dm = DistanceMetric.get_metric(metric)
-    D12 = dm.pairwise(X_bool)
+    D_scipy_pdist = cdist(X_bool, X_bool, metric)
     # Based on https://github.com/scipy/scipy/pull/7373
     # When comparing two all-zero vectors, scipy>=1.2.0 jaccard metric
     # was changed to return 0, instead of nan.
     if metric == "jaccard" and sp_version < parse_version("1.2.0"):
-        D_true[np.isnan(D_true)] = 0
-    assert_allclose(D12, D_true)
+        D_scipy_pdist[np.isnan(D_scipy_pdist)] = 0
+
+    dm = DistanceMetric.get_metric(metric)
+    D_sklearn = dm.pairwise(X_bool)
+    assert_allclose(D_sklearn, D_scipy_pdist)
 
 
 # TODO: Remove filterwarnings in 1.3 when wminkowski is removed
