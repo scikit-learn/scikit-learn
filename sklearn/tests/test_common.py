@@ -600,7 +600,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "RidgeCV",
     "RidgeClassifier",
     "RidgeClassifierCV",
-    "RobustScaler",
     "SGDClassifier",
     "SGDOneClassSVM",
     "SGDRegressor",
