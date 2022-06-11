@@ -691,7 +691,7 @@ class LSMRNewtonSolver(NewtonSolver):
         if self.linear_loss.fit_intercept:
             self.gradient[-1] = self.g.sum()
 
-    def inner_solve(self):
+    def inner_solve(self, X, y, sample_weight):
         """Compute Newton step.
 
         Sets self.coef_newton via LSMR.

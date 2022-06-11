@@ -229,7 +229,12 @@ def test_glm_regression(solver, fit_intercept, glm_dataset):
         intercept = 0
     model.fit(X, y)
 
-    rtol = 3e-5 if solver == "lbfgs" else 1e-10
+    if solver == "lbfgs":
+        rtol = 3e-5
+    elif solver == "newton-lsmr":
+        rtol = 1e-9
+    else:
+        rtol = 1e-10
     assert model.intercept_ == pytest.approx(intercept, rel=rtol)
     assert_allclose(model.coef_, coef, rtol=rtol)
 
@@ -335,7 +340,13 @@ def test_glm_regression_vstacked_X(solver, fit_intercept, glm_dataset):
         intercept = 0
     model.fit(X, y)
 
-    rtol = 3e-5 if solver == "lbfgs" else 1e-10
+    if solver == "lbfgs":
+        rtol = 3e-5
+    elif solver == "newton-lsmr":
+        rtol = 1e-9
+    else:
+        rtol = 1e-10
+
     assert model.intercept_ == pytest.approx(intercept, rel=rtol)
     assert_allclose(model.coef_, coef, rtol=rtol)
 
