@@ -764,7 +764,7 @@ class LSMRNewtonSolver(NewtonSolver):
             A,
             b,
             damp=0,
-            atol=self.tol / (self.A_norm * max(1, self.r_norm)),
+            atol=self.tol / (max(1, self.A_norm) * max(1, self.r_norm)),
             btol=self.tol,
             show=self.verbose >= 3,
         )
