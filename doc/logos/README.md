@@ -24,40 +24,27 @@ File types:
 
 ![#9B4600 Brown](brand_colors/colorswatch_9B4600_brown.png) `RGB 155/70/0| HEX #9B4600 | scikit-learn Brown` | More info: [#9B4600](https://www.color-hex.com/color/#9b4600)
 
-### Logos
-
-<br>
-<img src="logos/pymcdevs-logos-summary.png" >
-<br>
+### scikit-learn Logos
 
 #### Logo 1
 - File type: PNG
-- File size: 70 KB (1531 x 624 px)
-- File name: [1-pymcdevs.png](https://github.com/pymc-devs/brand/blob/main/logos/1-pymcdevs.png)
+- File size: 64 KB (1280 x 689 px)
+- File name: [1280px-scikit-learn-logo.png](https://github.com/scikit-learn/scikit-learn/blob/main/doc/logos/1280px-scikit-learn-logo.png)
 
-<img src="logos/1-pymcdevs.png" width="100" style="border:1px solid red">
-
-<br>
+<img src="1280px-scikit-learn-logo.png" width="200" style="border:1px solid red">
 
 #### Logo 2
-- File type: JPG
-- File size: 85 KB (1531 x 624)
-- File name: [2-pymcdevs.jpg](https://github.com/pymc-devs/brand/blob/main/logos/2-pymcdevs.jpg)
-
-<img src="logos/2-pymcdevs.jpg" width="100" style="border:1px solid red">
-
-<br>
-
-#### Logo 3
 - File type: ICO
-- File size: 4 KB (32 x 32 px)
-- File name: [3-pymcdevs.ico](https://github.com/pymc-devs/brand/blob/main/logos/3-pymcdevs.ico)
+- File size: 2 KB (32 x 32 px)
+- File name: [favicon.ico](https://github.com/scikit-learn/scikit-learn/blob/main/doc/logos/favicon.ico)
 
-<img src="logos/3-pymcdevs.ico" width="100" style="border:1px solid red">
+<img src="favicon.ico" width="100"  style="border:1px solid red">
 
-<br>
 
 ---
 
 ### Reference
 - [color-hex](https://www.color-hex.com): Glossary of Color Palettes
+
+### Other
+You can find more variations of the logos here:  https://github.com/scikit-learn/blog/tree/main/assets/images
