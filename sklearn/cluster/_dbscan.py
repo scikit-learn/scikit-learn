@@ -9,12 +9,13 @@ DBSCAN: Density-Based Spatial Clustering of Applications with Noise
 # License: BSD 3 clause
 
 import numpy as np
-import numbers
+from numbers import Integral, Real
 import warnings
 from scipy import sparse
 
-from ..utils import check_scalar
 from ..base import BaseEstimator, ClusterMixin
+from ..metrics.pairwise import _VALID_METRICS
+from ..utils._param_validation import Interval, StrOptions
 from ..utils.validation import _check_sample_weight
 from ..neighbors import NearestNeighbors
 
@@ -298,6 +299,17 @@ class DBSCAN(ClusterMixin, BaseEstimator):
     DBSCAN(eps=3, min_samples=2)
     """
 
+    _parameter_constraints = {
+        "eps": [Interval(Real, 0.0, None, closed="neither")],
+        "min_samples": [Interval(Integral, 1, None, closed="left")],
+        "metric": [StrOptions({metric for metric in _VALID_METRICS}), callable],
+        "metric_params": [dict, None],
+        "algorithm": [StrOptions({"kd_tree", "ball_tree", "auto", "brute"})],
+        "leaf_size": [Interval(Integral, 1, None, closed="left")],
+        "p": [Interval(Real, 0.0, None, closed="left"), None],
+        "n_jobs": [None, Integral],
+    }
+
     def __init__(
         self,
         eps=0.5,
@@ -344,6 +356,7 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         self : object
             Returns a fitted instance of self.
         """
+        self._validate_params()
         X = self._validate_data(X, accept_sparse="csr")
 
         if sample_weight is not None:
@@ -358,39 +371,6 @@ class DBSCAN(ClusterMixin, BaseEstimator):
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", sparse.SparseEfficiencyWarning)
                 X.setdiag(X.diagonal())  # XXX: modifies X's internals in-place
-
-        # Validating the scalar parameters.
-        check_scalar(
-            self.eps,
-            "eps",
-            target_type=numbers.Real,
-            min_val=0.0,
-            include_boundaries="neither",
-        )
-        check_scalar(
-            self.min_samples,
-            "min_samples",
-            target_type=numbers.Integral,
-            min_val=1,
-            include_boundaries="left",
-        )
-        check_scalar(
-            self.leaf_size,
-            "leaf_size",
-            target_type=numbers.Integral,
-            min_val=1,
-            include_boundaries="left",
-        )
-        if self.p is not None:
-            check_scalar(
-                self.p,
-                "p",
-                target_type=numbers.Real,
-                min_val=0.0,
-                include_boundaries="left",
-            )
-        if self.n_jobs is not None:
-            check_scalar(self.n_jobs, "n_jobs", target_type=numbers.Integral)
 
         neighbors_model = NearestNeighbors(
             radius=self.eps,
