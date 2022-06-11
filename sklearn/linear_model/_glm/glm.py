@@ -296,7 +296,7 @@ class NewtonSolver(ABC):
 
         self.raw_prediction = raw
 
-    def compute_d2(self):
+    def compute_d2(self, X):
         """Compute square of Newton decrement."""
         return self.coef_newton @ self.hessian @ self.coef_newton
 
@@ -322,7 +322,7 @@ class NewtonSolver(ABC):
         #       d = sqrt(grad @ hessian^-1 @ grad)
         #         = sqrt(coef_newton @ hessian @ coef_newton)
         #    See Boyd, Vanderberghe (2009) "Convex Optimization" Chapter 9.5.1.
-        d2 = self.compute_d2()
+        d2 = self.compute_d2(X)
         if self.verbose:
             print(f"    2. Newton decrement {0.5 * d2} <= {self.tol}")
         if 0.5 * d2 > self.tol:
@@ -610,6 +610,8 @@ class LSMRNewtonSolver(NewtonSolver):
         P = penalty matrix in 1/2 w @ P @ w,
             for a pure L2 penalty without intercept it equals the identity matrix.
 
+    The normal equation if this least squares problem is again: H @ coef_newton = -G.
+
     Note that this solver can naturally deal with sparse X.
 
     References
@@ -634,7 +636,7 @@ class LSMRNewtonSolver(NewtonSolver):
             - self.gradient
             - self.sqrt_P = sqrt(l2_reg_strength) * sqrt(P)
             - self.A_norm
-            - self.X = X
+            - self.gradient_step
         """
         super().setup(X=X, y=y, sample_weight=sample_weight)
         (self.g, self.h,) = self.linear_loss.base_loss.init_gradient_and_hessian(
@@ -662,7 +664,8 @@ class LSMRNewtonSolver(NewtonSolver):
         self.A_norm = 1
         self.r_norm = 1
 
-        self.X = X  # needed for inner_solve
+        # needed for inner_solve
+        self.gradient_step = 0
 
     def update_gradient_hessian(self, X, y, sample_weight):
         """Update gradient and hessian.
@@ -679,9 +682,10 @@ class LSMRNewtonSolver(NewtonSolver):
             n_threads=self.n_threads,
         )
         # For non-canonical link functions and far away from the optimum, we take
-        # care that the hessian is positive.
-        eps = np.finfo(y.dtype).eps
-        self.h[self.h <= eps] = eps
+        # care that the hessian is at least non-negative. Tiny positive values are set
+        # to zero, too.
+        eps = 16 * np.finfo(y.dtype).eps
+        self.h[self.h <= eps] = 0
 
         n_features = X.shape[1]
         # This duplicates a bit of code from LinearModelLoss.gradient.
@@ -698,10 +702,15 @@ class LSMRNewtonSolver(NewtonSolver):
         Also sets self.A_norm and self.r_norm for better control over tolerance in
         LSMR.
         """
-        n_samples, n_features = self.X.shape
+        n_samples, n_features = X.shape
         sqrt_h = np.sqrt(self.h)
+        # Take care of h = 0. Tiny h are already set to 0.
+        # If h = 0 we can exclude the corresponding row of X such that the value of b
+        # becomes irrelevant. We set it -g as if h = 1.
+        g_over_h_sqrt = self.g
+        g_over_h_sqrt[sqrt_h > 0] /= sqrt_h[sqrt_h > 0]
 
-        b = np.r_[-self.g / sqrt_h, -self.sqrt_P * self.coef[:n_features]]
+        b = np.r_[-g_over_h_sqrt, -self.sqrt_P * self.coef[:n_features]]
 
         if self.linear_loss.fit_intercept:
             n_dof = n_features + 1
@@ -710,12 +719,12 @@ class LSMRNewtonSolver(NewtonSolver):
                 # A @ x with intercept
                 # We assume self.sqrt_P to be 1-d array of shape (n_features,),
                 # representing a diagonal matrix.
-                return np.r_[sqrt_h * (self.X @ x[:-1] + x[-1]), self.sqrt_P * x[:-1]]
+                return np.r_[sqrt_h * (X @ x[:-1] + x[-1]), self.sqrt_P * x[:-1]]
 
             def rmatvec(x):
                 # A.T @ x with intercept
                 return np.r_[
-                    self.X.T @ (sqrt_h * x[:n_samples]) + self.sqrt_P * x[n_samples:],
+                    X.T @ (sqrt_h * x[:n_samples]) + self.sqrt_P * x[n_samples:],
                     sqrt_h @ x[:n_samples],
                 ]
 
@@ -724,11 +733,11 @@ class LSMRNewtonSolver(NewtonSolver):
 
             def matvec(x):
                 # A @ x without intercept
-                return np.r_[sqrt_h * (self.X @ x), self.sqrt_P * x]
+                return np.r_[sqrt_h * (X @ x), self.sqrt_P * x]
 
             def rmatvec(x):
                 # A.T @ x without intercept
-                return self.X.T @ (sqrt_h * x[:n_samples]) + self.sqrt_P * x[n_samples:]
+                return X.T @ (sqrt_h * x[:n_samples]) + self.sqrt_P * x[n_samples:]
 
         # Note that initializing LinearOperator seems to have some surprisingly sizable
         # overhead.
@@ -759,16 +768,54 @@ class LSMRNewtonSolver(NewtonSolver):
             btol=self.tol,
             show=self.verbose >= 3,
         )
-        self.coef_newton = result[0]
-        # Estimated Frobenius norm of A and norm of residual r for tolerance of
-        # next iteration.
-        self.A_norm = result[5]
-        self.r_norm = result[3]
+        # We store the estimated Frobenius norm of A and norm of residual r in
+        # self.A_norm and self.r_norm for tolerance of next iteration.
+        (
+            self.coef_newton,
+            istop,
+            itn,
+            self.r_norm,
+            normar,
+            self.A_norm,
+            conda,
+            normx,
+        ) = result
+        # LSMR reached maxiter.
+        eps = 4 * np.finfo(self.gradient.dtype).eps
+        if istop == 7:
+            if self.gradient_step == 0:
+                # We only need to throw this warning once.
+                warnings.warn(
+                    f"The inner solver of {self.__class__.__name__} reached "
+                    "maxiter={itn} before the other stopping conditions were "
+                    "satisfied at iteration #{self.iteration}. It will now try a "
+                    "simple gradient step. "
+                    "Note that this warning is only raised once, the problem may, "
+                    " however, occur in several or all iterations. Set verbose >= 1"
+                    " to get more information.\n"
+                    "This may be cause by an ill-conditioned or singular hessian. Your"
+                    " options are to use another solver or to avoid such situation"
+                    " in the first place. Possible  remedies are removing collinear"
+                    " features of X or increasing the penalization strengths.",
+                    ConvergenceWarning,
+                )
+            self.gradient_step += 1
+            if self.verbose:
+                print(
+                    "  The inner solver had problems to converge and resorts to a "
+                    "simple gradient step."
+                )
+            # We add 1e-3 to the diagonal hessian part to make in invertible and to
+            # restrict coef_newton to at most ~1e3. The line search considerst step
+            # sizes until 1e-6 * newton_step ~1e-3 * newton_step.
+            # Deviding by self.iteration ensures (slow) convergence.
+            eps = 1e-3 / self.iteration
+            self.coef_newton = -self.gradient / (np.sqrt(self.A_norm) + eps)
 
-    def compute_d2(self):
+    def compute_d2(self, X):
         """Compute square of Newton decrement."""
         weights, intercept, raw_prediction = self.linear_loss.weight_intercept_raw(
-            self.coef_newton, self.X
+            self.coef_newton, X
         )
         d2 = np.sum(raw_prediction * self.h * raw_prediction)
         d2 += 2 * self.linear_loss.l2_penalty(weights, self.l2_reg_strength)
