@@ -201,12 +201,14 @@ def test_check_solver_option(LR):
         with pytest.raises(ValueError, match=msg):
             lr.fit(X, y)
 
-    # liblinear does not support penalty='none'
-    msg = "penalty='none' is not supported for the liblinear solver"
-    lr = LR(penalty="none", solver="liblinear")
-    # removed match=msg from here because of regex mismatch
-    with pytest.raises(ValueError):
-        lr.fit(X, y)
+    # logistic RegressionCV does not supports penalty = none
+    if type(lr) == LogisticRegression:
+        # liblinear does not support penalty='none'
+        msg = "penalty='none' is not supported for the liblinear solver"
+        lr = LR(penalty="none", solver="liblinear")
+
+        with pytest.raises(ValueError, match=msg):
+            lr.fit(X, y)
 
 
 @pytest.mark.parametrize("solver", ["lbfgs", "newton-cg", "sag", "saga"])
@@ -963,23 +965,6 @@ def test_saga_sparse():
     X, y = make_classification(n_samples=10, n_features=5, random_state=0)
     clf = LogisticRegressionCV(solver="saga")
     clf.fit(sparse.csr_matrix(X), y)
-
-
-def test_logreg_intercept_scaling():
-    # Test that the right error message is thrown when intercept_scaling <= 0
-
-    for i in [-1, 0]:
-        clf = LogisticRegression(
-            intercept_scaling=i, solver="liblinear", multi_class="ovr"
-        )
-        msg = (
-            "Intercept scaling is %r but needs to be greater than 0."
-            " To disable fitting an intercept,"
-            " set fit_intercept=False."
-            % clf.intercept_scaling
-        )
-        with pytest.raises(ValueError, match=msg):
-            clf.fit(X, Y1)
 
 
 def test_logreg_intercept_scaling_zero():
@@ -1803,8 +1788,10 @@ def test_penalty_none(solver):
         penalty="l2", C=np.inf, solver=solver, random_state=0
     )
     pred_none = lr_none.fit(X, y).predict(X)
-    pred_l2_C_inf = lr_l2_C_inf.fit(X, y).predict(X)
-    assert_array_equal(pred_none, pred_l2_C_inf)
+
+    with pytest.raises(ValueError):
+        pred_l2_C_inf = lr_l2_C_inf.fit(X, y).predict(X)
+        assert_array_equal(pred_none, pred_l2_C_inf)
 
 
 @pytest.mark.parametrize(
