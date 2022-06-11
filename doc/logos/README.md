@@ -18,9 +18,11 @@ File types:
 - "learn": Script MT
 
 ### scikit-learn Color Palette
-![#29ABE2 Cyan](/brand_colors/colorswatch_29ABE2_cyan.png) `RGB 41/171/226 | HEX #29ABE2 | scikit-learn Cyan` | More info: [#29ABE2](https://www.color-hex.com/color/#29abe2)
-![#F7931E Orange](/brand_colors/colorswatch_F7931E_orange.png)  `RGB 247/147/30 | HEX #F7931E | scikit-learn Orange` | More info: [#F7931E](https://www.color-hex.com/color/#f7931e)
-![#9B4600 Brown](/brand_colors/colorswatch_9B4600_brown.png) `RGB 155/70/0| HEX #9B4600 | scikit-learn Brown` | More info: [#9B4600](https://www.color-hex.com/color/#9b4600)
+![#29ABE2 Cyan](brand_colors/colorswatch_29ABE2_cyan.png) `RGB 41/171/226 | HEX #29ABE2 | scikit-learn Cyan` | More info: [#29ABE2](https://www.color-hex.com/color/#29abe2)
+
+![#F7931E Orange](brand_colors/colorswatch_F7931E_orange.png)  `RGB 247/147/30 | HEX #F7931E | scikit-learn Orange` | More info: [#F7931E](https://www.color-hex.com/color/#f7931e)
+
+![#9B4600 Brown](brand_colors/colorswatch_9B4600_brown.png) `RGB 155/70/0| HEX #9B4600 | scikit-learn Brown` | More info: [#9B4600](https://www.color-hex.com/color/#9b4600)
 
 ### Logos
 
