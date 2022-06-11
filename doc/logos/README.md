@@ -2,11 +2,8 @@
 
 This section contains scikit-learn's branding standards.
 File types:
-- `AI` is the filename extension used by Adobe Illustrator
-- `EPS` is Encapsulated PostScript (EPS) format ([format was used previously](http://www.differencebetween.net/technology/difference-between-ai-and-eps-in-adobe-illustrator/#ixzz7U3iIOKeC.))
 - `SVG` Scalable Vector Graphics (SVG) are an XML-based markup language for describing two-dimensional based vector graphics. They can be created and edited with any text editor or with drawing software.
 - `PNG` is a higher-quality compression format; size of file is generally larger
-- `JPG` images are generally of lower quality, but are faster to load
 - `ICO` file format refers to an image file format that contains small size computer icon images
 
 ---
@@ -28,17 +25,17 @@ File types:
 
 #### Logo 1
 - File type: PNG
-- File size: 64 KB (1280 x 689 px)
+- File size: 49 KB (1280 x 689 px)
 - File name: [1280px-scikit-learn-logo.png](https://github.com/scikit-learn/scikit-learn/blob/main/doc/logos/1280px-scikit-learn-logo.png)
 
-<img src="1280px-scikit-learn-logo.png" width="200" style="border:1px solid red">
+<img src="1280px-scikit-learn-logo.png" width="200">
 
 #### Logo 2
 - File type: ICO
 - File size: 2 KB (32 x 32 px)
 - File name: [favicon.ico](https://github.com/scikit-learn/scikit-learn/blob/main/doc/logos/favicon.ico)
 
-<img src="favicon.ico" width="100"  style="border:1px solid red">
+<img src="favicon.ico" width="100">
 
 
 ---
