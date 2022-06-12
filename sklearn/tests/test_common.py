@@ -511,7 +511,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "KNeighborsClassifier",
     "KNeighborsRegressor",
     "KNeighborsTransformer",
-    "KernelCenterer",
     "KernelDensity",
     "KernelPCA",
     "KernelRidge",
