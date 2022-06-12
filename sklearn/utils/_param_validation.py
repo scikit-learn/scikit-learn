@@ -173,12 +173,12 @@ class _InstancesOf(_Constraint):
 
     Parameters
     ----------
-    type : type
-        The valid type.
+    param_type : param_type
+        The valid paramater type.
     """
 
-    def __init__(self, type):
-        self.type = type
+    def __init__(self, param_type):
+        self.param_type = param_type
 
     def _type_name(self, t):
         """Convert type into human readable string."""
@@ -193,10 +193,10 @@ class _InstancesOf(_Constraint):
         return f"{module}.{qualname}"
 
     def is_satisfied_by(self, val):
-        return isinstance(val, self.type)
+        return isinstance(val, self.param_type)
 
     def __str__(self):
-        return f"an instance of {self._type_name(self.type)!r}"
+        return f"an instance of {self._type_name(self.param_type)!r}"
 
 
 class _NoneConstraint(_Constraint):

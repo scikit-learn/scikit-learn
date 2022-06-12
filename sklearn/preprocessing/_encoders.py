@@ -436,7 +436,7 @@ class OneHotEncoder(_BaseEncoder):
     _parameter_constraints = {
         "categories": [StrOptions({"auto"}), "array-like"],
         "drop": ["array-like", None],
-        "dtype": [type],
+        "dtype": [type(np.float64)],
         "handle_unknown": [StrOptions({"error", "ignore", "infrequent_if_exist"})],
         "max_categories": [Interval(numbers.Integral, 1, None, closed="left"), None],
         "min_frequency": [
@@ -465,9 +465,6 @@ class OneHotEncoder(_BaseEncoder):
         self.drop = drop
         self.min_frequency = min_frequency
         self.max_categories = max_categories
-        self._infrequent_enabled = (
-            self.max_categories is not None and self.max_categories >= 1
-        ) or self.min_frequency is not None
 
     @property
     def infrequent_categories_(self):
@@ -479,6 +476,14 @@ class OneHotEncoder(_BaseEncoder):
             for category, indices in zip(self.categories_, infrequent_indices)
         ]
 
+    def _check_infrequent_enabled(self):
+        """
+        This functions checks whether _infrequent_enabled is True or False.
+        This has to be called after parameter validation in the fit function.
+        """
+        self._infrequent_enabled = (
+            self.max_categories is not None and self.max_categories >= 1
+        ) or self.min_frequency is not None
 
     def _map_drop_idx_to_infrequent(self, feature_idx, drop_idx):
         """Convert `drop_idx` into the index for infrequent categories.
@@ -805,6 +810,7 @@ class OneHotEncoder(_BaseEncoder):
             Fitted encoder.
         """
         self._validate_params()
+        self._check_infrequent_enabled()
         fit_results = self._fit(
             X,
             handle_unknown=self.handle_unknown,
@@ -842,6 +848,7 @@ class OneHotEncoder(_BaseEncoder):
             returned.
         """
         self._validate_params()
+        self._check_infrequent_enabled()
         return super().fit_transform(X, y)
 
     def transform(self, X):
