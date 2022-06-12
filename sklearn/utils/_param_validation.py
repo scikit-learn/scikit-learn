@@ -173,8 +173,8 @@ class _InstancesOf(_Constraint):
 
     Parameters
     ----------
-    param_type : param_type
-        The valid paramater type.
+    type : type
+        The valid type.
     """
 
     def __init__(self, type):

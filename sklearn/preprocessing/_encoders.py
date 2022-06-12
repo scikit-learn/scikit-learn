@@ -1240,7 +1240,7 @@ class OrdinalEncoder(_OneToOneFeatureMixin, _BaseEncoder):
         "unknown_value": [
             Interval(numbers.Integral, None, None, closed="neither"),
             type(np.nan),
-            None,
+            None
         ],
     }
 
