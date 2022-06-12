@@ -83,10 +83,11 @@ def test_n_clusters():
     assert_array_equal(brc1.subcluster_labels_, brc2.subcluster_labels_)
     assert_array_equal(brc1.labels_, brc2.labels_)
 
-    # Test that the wrong global clustering step raises an Error.
+    # Test that n_clusters being a non-cluster estimator raises an Error.
     clf = ElasticNet()
     brc3 = Birch(n_clusters=clf)
-    with pytest.raises(ValueError):
+    msg = r"The 'n_clusters' parameter of Birch must be .* Got .* instead."
+    with pytest.raises(ValueError, match=msg):
         brc3.fit(X)
 
     # Test that a small number of clusters raises a warning.

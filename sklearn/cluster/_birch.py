@@ -739,10 +739,6 @@ class Birch(
             # There is no need to perform the global clustering step.
             if len(centroids) < self.n_clusters:
                 not_enough_centroids = True
-        elif clusterer is not None and not hasattr(clusterer, "fit_predict"):
-            raise TypeError(
-                "n_clusters should be an instance of ClusterMixin or an int"
-            )
 
         # To use in predict to avoid recalculation.
         self._subcluster_norms = row_norms(self.subcluster_centers_, squared=True)
