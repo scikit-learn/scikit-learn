@@ -28,6 +28,8 @@ cdef class Criterion:
     cdef SIZE_t start                    # samples[start:pos] are the samples in the left node
     cdef SIZE_t pos                      # samples[pos:end] are the samples in the right node
     cdef SIZE_t end
+    cdef SIZE_t n_missing
+    cdef bint missing_go_to_left
 
     cdef SIZE_t n_outputs                # Number of outputs
     cdef SIZE_t n_samples                # Number of samples
@@ -36,6 +38,7 @@ cdef class Criterion:
     cdef double weighted_n_node_samples  # Weighted number of samples in the node
     cdef double weighted_n_left          # Weighted number of samples in the left node
     cdef double weighted_n_right         # Weighted number of samples in the right node
+    cdef double weighted_n_missing       # Weighted number of samples that are missing
 
     # The criterion object is maintained such that left and right collected
     # statistics correspond to samples[start:pos] and samples[pos:end].
@@ -44,6 +47,7 @@ cdef class Criterion:
     cdef int init(self, const DOUBLE_t[:, ::1] y, DOUBLE_t* sample_weight,
                   double weighted_n_samples, SIZE_t* samples, SIZE_t start,
                   SIZE_t end) nogil except -1
+    cdef void init_missing(self, SIZE_t n_missing) nogil
     cdef int reset(self) nogil except -1
     cdef int reverse_reset(self) nogil except -1
     cdef int update(self, SIZE_t new_pos) nogil except -1
@@ -65,6 +69,7 @@ cdef class ClassificationCriterion(Criterion):
     cdef double[:, ::1] sum_total   # The sum of the weighted count of each label.
     cdef double[:, ::1] sum_left    # Same as above, but for the left side of the split
     cdef double[:, ::1] sum_right   # Same as above, but for the right side of the split
+    cdef double[:, ::1] sum_missing # Same as above, but for missing values in X
 
 cdef class RegressionCriterion(Criterion):
     """Abstract regression criterion."""
@@ -74,3 +79,4 @@ cdef class RegressionCriterion(Criterion):
     cdef double[::1] sum_total   # The sum of w*y.
     cdef double[::1] sum_left    # Same as above, but for the left side of the split
     cdef double[::1] sum_right   # Same as above, but for the right side of the split
+    cdef double[::1] sum_missing # Same as above, but for missing values in X

@@ -19,6 +19,7 @@ from libc.math cimport fabs
 from libc.string cimport memcpy
 from libc.string cimport memset
 from libc.stdint cimport SIZE_MAX
+from libc.math cimport isnan
 from libcpp.vector cimport vector
 from libcpp.algorithm cimport pop_heap
 from libcpp.algorithm cimport push_heap
@@ -247,7 +248,8 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
                 node_id = tree._add_node(parent, is_left, is_leaf, split.feature,
                                          split.threshold, impurity, n_node_samples,
-                                         weighted_n_node_samples)
+                                         weighted_n_node_samples,
+                                         split.missing_go_to_left)
 
                 if node_id == SIZE_MAX:
                     rc = -1
@@ -488,7 +490,8 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                                  else _TREE_UNDEFINED,
                                  is_left, is_leaf,
                                  split.feature, split.threshold, impurity, n_node_samples,
-                                 weighted_n_node_samples)
+                                 weighted_n_node_samples,
+                                 split.missing_go_to_left)
         if node_id == SIZE_MAX:
             return -1
 
@@ -620,6 +623,10 @@ cdef class Tree:
         def __get__(self):
             return self._get_node_ndarray()['weighted_n_node_samples'][:self.node_count]
 
+    property missing_go_to_left:
+        def __get__(self):
+            return self._get_node_ndarray()['missing_go_to_left'][:self.node_count]
+
     property value:
         def __get__(self):
             return self._get_value_ndarray()[:self.node_count]
@@ -750,7 +757,8 @@ cdef class Tree:
     cdef SIZE_t _add_node(self, SIZE_t parent, bint is_left, bint is_leaf,
                           SIZE_t feature, double threshold, double impurity,
                           SIZE_t n_node_samples,
-                          double weighted_n_node_samples) nogil except -1:
+                          double weighted_n_node_samples,
+                          unsigned char missing_go_to_left) nogil except -1:
         """Add a node to the tree.
 
         The new node registers itself as the child of its parent.
@@ -784,6 +792,7 @@ cdef class Tree:
             # left_child and right_child will be set later
             node.feature = feature
             node.threshold = threshold
+            node.missing_go_to_left = missing_go_to_left
 
         self.node_count += 1
 
@@ -818,6 +827,7 @@ cdef class Tree:
         # Extract input
         cdef const DTYPE_t[:, :] X_ndarray = X
         cdef SIZE_t n_samples = X.shape[0]
+        cdef DTYPE_t tmp
 
         # Initialize output
         cdef cnp.ndarray[SIZE_t] out = np.zeros((n_samples,), dtype=np.intp)
@@ -832,8 +842,14 @@ cdef class Tree:
                 node = self.nodes
                 # While node not a leaf
                 while node.left_child != _TREE_LEAF:
+                    tmp = X_ndarray[i, node.feature]
                     # ... and node.right_child != _TREE_LEAF:
-                    if X_ndarray[i, node.feature] <= node.threshold:
+                    if isnan(tmp):
+                        if node.missing_go_to_left:
+                            node = &self.nodes[node.left_child]
+                        else:
+                            node = &self.nodes[node.right_child]
+                    elif tmp <= node.threshold:
                         node = &self.nodes[node.left_child]
                     else:
                         node = &self.nodes[node.right_child]
@@ -1761,7 +1777,7 @@ cdef _build_pruned_tree(
             new_node_id = tree._add_node(
                 parent, is_left, is_leaf, node.feature, node.threshold,
                 node.impurity, node.n_node_samples,
-                node.weighted_n_node_samples)
+                node.weighted_n_node_samples, node.missing_go_to_left)
 
             if new_node_id == SIZE_MAX:
                 rc = -1

@@ -149,6 +149,13 @@ Changelog
 :mod:`sklearn.tree`
 ...................
 
+- |MajorFeature| :class:`tree.DecisionTreeRegressor` and
+  :class:`tree.DecisionTreeClassifier` supports missing values when
+   when `splitter='best'` and criterion is
+   `'gini'`, `'entropy`', or `'log_loss'`, for classification' or
+   `squared_error'`, `'friedman_mse'`, or `'poisson'` for regression.
+   :pr:`xxxxx` by `Thomas Fan`_.
+
 - |Enhancement| :func:`tree.plot_tree`, :func:`tree.export_graphviz` now uses
   a lower case `x[i]` to represent feature `i`. :pr:`23480` by `Thomas Fan`_.
 

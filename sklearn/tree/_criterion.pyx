@@ -68,6 +68,19 @@ cdef class Criterion:
         """
         pass
 
+    cdef void init_missing(self, SIZE_t n_missing) nogil:
+        """Initalize sum_missing if there are missing values.
+
+        This method assumes that caller placed the missing samples in
+        self.samples[-n_missing:]
+
+        Parameters
+        ----------
+        n_missing: SIZE_t
+            Number of missing values for specific feature.
+        """
+        pass
+
     cdef int reset(self) nogil except -1:
         """Reset the criterion at pos=start.
 
@@ -213,6 +226,7 @@ cdef class ClassificationCriterion(Criterion):
         self.start = 0
         self.pos = 0
         self.end = 0
+        self.missing_go_to_left = 0
 
         self.n_outputs = n_outputs
         self.n_samples = 0
@@ -220,6 +234,7 @@ cdef class ClassificationCriterion(Criterion):
         self.weighted_n_node_samples = 0.0
         self.weighted_n_left = 0.0
         self.weighted_n_right = 0.0
+        self.weighted_n_missing = 0.0
 
         self.n_classes = np.empty(n_outputs, dtype=np.intp)
 
@@ -240,6 +255,9 @@ cdef class ClassificationCriterion(Criterion):
         self.sum_total = np.zeros((n_outputs, max_n_classes), dtype=np.float64)
         self.sum_left = np.zeros((n_outputs, max_n_classes), dtype=np.float64)
         self.sum_right = np.zeros((n_outputs, max_n_classes), dtype=np.float64)
+
+        # XXX: Only init if there are missing values in the first place
+        self.sum_missing = np.zeros((n_outputs, max_n_classes), dtype=np.float64)
 
     def __reduce__(self):
         return (type(self),
@@ -308,6 +326,36 @@ cdef class ClassificationCriterion(Criterion):
         self.reset()
         return 0
 
+    cdef void init_missing(self, SIZE_t n_missing) nogil:
+        """Initalize sum_missing if there are missing values.
+
+        This method assumes that caller placed the missing samples in
+        self.samples[-n_missing:]
+        """
+        cdef SIZE_t i, p, k, c
+        cdef DOUBLE_t* sample_weight = self.sample_weight
+        cdef SIZE_t* samples = self.samples
+        cdef DOUBLE_t w = 1.0
+
+        self.n_missing = n_missing
+        if n_missing == 0:
+            return
+
+        for k in range(self.n_outputs):
+            memset(&self.sum_missing[k, 0], 0, self.n_classes[k] * sizeof(double))
+
+        self.weighted_n_missing = 0.0
+        for p in range(self.end - n_missing, self.end):
+            i = samples[p]
+            if sample_weight != NULL:
+                w = sample_weight[i]
+
+            for k in range(self.n_outputs):
+                c = <SIZE_t> self.y[i, k]
+                self.sum_missing[k, c] += w
+
+            self.weighted_n_missing += w
+
     cdef int reset(self) nogil except -1:
         """Reset the criterion at pos=start.
 
@@ -316,13 +364,26 @@ cdef class ClassificationCriterion(Criterion):
         """
         self.pos = self.start
 
-        self.weighted_n_left = 0.0
-        self.weighted_n_right = self.weighted_n_node_samples
-        cdef SIZE_t k
+        cdef SIZE_t k, c
 
-        for k in range(self.n_outputs):
-            memset(&self.sum_left[k, 0], 0, self.n_classes[k] * sizeof(double))
-            memcpy(&self.sum_right[k, 0], &self.sum_total[k, 0], self.n_classes[k] * sizeof(double))
+        if self.n_missing == 0 or not self.missing_go_to_left:
+            for k in range(self.n_outputs):
+                memset(&self.sum_left[k, 0], 0, self.n_classes[k] * sizeof(double))
+                memcpy(&self.sum_right[k, 0], &self.sum_total[k, 0], self.n_classes[k] * sizeof(double))
+
+            self.weighted_n_left = 0.0
+            self.weighted_n_right = self.weighted_n_node_samples
+
+        else:
+            # n_missing != 0 and self.missing_go_to_left
+            for k in range(self.n_outputs):
+                memcpy(&self.sum_left[k, 0], &self.sum_missing[k, 0], self.n_classes[k] * sizeof(double))
+            for k in range(self.n_outputs):
+                for c in range(self.n_classes[k]):
+                    self.sum_right[k, c] = self.sum_total[k, c] - self.sum_missing[k, c]
+
+            self.weighted_n_left = self.weighted_n_missing
+            self.weighted_n_right = self.weighted_n_node_samples - self.weighted_n_missing
         return 0
 
     cdef int reverse_reset(self) nogil except -1:
@@ -333,13 +394,25 @@ cdef class ClassificationCriterion(Criterion):
         """
         self.pos = self.end
 
-        self.weighted_n_left = self.weighted_n_node_samples
-        self.weighted_n_right = 0.0
-        cdef SIZE_t k
+        cdef SIZE_t k, c
 
-        for k in range(self.n_outputs):
-            memset(&self.sum_right[k, 0], 0, self.n_classes[k] * sizeof(double))
-            memcpy(&self.sum_left[k, 0],  &self.sum_total[k, 0], self.n_classes[k] * sizeof(double))
+        if self.n_missing == 0 or self.missing_go_to_left:
+            for k in range(self.n_outputs):
+                memset(&self.sum_right[k, 0], 0, self.n_classes[k] * sizeof(double))
+                memcpy(&self.sum_left[k, 0], &self.sum_total[k, 0], self.n_classes[k] * sizeof(double))
+
+            self.weighted_n_right = 0.0
+            self.weighted_n_left = self.weighted_n_node_samples
+        else:
+            # n_missing != 0 and not self.missing_go_to_left
+            for k in range(self.n_outputs):
+                memcpy(&self.sum_right[k, 0], &self.sum_missing[k, 0], self.n_classes[k] * sizeof(double))
+            for k in range(self.n_outputs):
+                for c in range(self.n_classes[k]):
+                    self.sum_left[k, c] = self.sum_total[k, c] - self.sum_missing[k, c]
+
+            self.weighted_n_right = self.weighted_n_missing
+            self.weighted_n_left = self.weighted_n_node_samples - self.weighted_n_missing
         return 0
 
     cdef int update(self, SIZE_t new_pos) nogil except -1:
@@ -355,7 +428,7 @@ cdef class ClassificationCriterion(Criterion):
             child to the left child.
         """
         cdef SIZE_t pos = self.pos
-        cdef SIZE_t end = self.end
+        cdef SIZE_t end = self.end - self.n_missing
 
         cdef SIZE_t* samples = self.samples
         cdef DOUBLE_t* sample_weight = self.sample_weight
@@ -626,12 +699,16 @@ cdef class RegressionCriterion(Criterion):
         self.weighted_n_node_samples = 0.0
         self.weighted_n_left = 0.0
         self.weighted_n_right = 0.0
+        self.weighted_n_missing = 0.0
 
         self.sq_sum_total = 0.0
 
         self.sum_total = np.zeros(n_outputs, dtype=np.float64)
         self.sum_left = np.zeros(n_outputs, dtype=np.float64)
         self.sum_right = np.zeros(n_outputs, dtype=np.float64)
+
+        # XXX: Only init if there are missing values in the first place
+        self.sum_missing = np.zeros(n_outputs, dtype=np.float64)
 
     def __reduce__(self):
         return (type(self), (self.n_outputs, self.n_samples), self.__getstate__())
@@ -681,25 +758,78 @@ cdef class RegressionCriterion(Criterion):
         self.reset()
         return 0
 
+    cdef void init_missing(self, SIZE_t n_missing) nogil:
+        """Initalize sum_missing if there are missing values.
+
+        This method assumes that caller placed the missing samples in
+        self.samples[-n_missing:]
+        """
+        cdef SIZE_t i, p, k
+        cdef DOUBLE_t* sample_weight = self.sample_weight
+        cdef SIZE_t* samples = self.samples
+        cdef DOUBLE_t w
+        cdef DOUBLE_t y_ik
+        cdef DOUBLE_t w_y_ik
+
+        self.n_missing = n_missing
+        if n_missing == 0:
+            return
+
+        memset(&self.sum_missing[0], 0, self.n_outputs * sizeof(double))
+
+        self.weighted_n_missing = 0.0
+        for p in range(self.end - n_missing, self.end):
+            i = samples[p]
+            if sample_weight != NULL:
+                w = sample_weight[i]
+
+            for k in range(self.n_outputs):
+                y_ik = self.y[i, k]
+                w_y_ik = w * y_ik
+                self.sum_missing[k] += w
+
+            self.weighted_n_missing += w
+
+
     cdef int reset(self) nogil except -1:
         """Reset the criterion at pos=start."""
         cdef SIZE_t n_bytes = self.n_outputs * sizeof(double)
-        memset(&self.sum_left[0], 0, n_bytes)
-        memcpy(&self.sum_right[0], &self.sum_total[0], n_bytes)
+        cdef SIZE_t i
 
-        self.weighted_n_left = 0.0
-        self.weighted_n_right = self.weighted_n_node_samples
+        if self.n_missing == 0 or not self.missing_go_to_left:
+            memset(&self.sum_left[0], 0, n_bytes)
+            memcpy(&self.sum_right[0], &self.sum_total[0], n_bytes)
+            self.weighted_n_left = 0.0
+            self.weighted_n_right = self.weighted_n_node_samples
+        else:
+            # self.n_missing != 0 and self.missing_go_left
+            memcpy(&self.sum_left[0], &self.sum_missing[0], n_bytes)
+            for i in range(self.n_outputs):
+                self.sum_right[i] = self.sum_total[i] - self.sum_missing[i]
+            self.weighted_n_left = self.weighted_n_missing
+            self.weighted_n_right = self.weighted_n_node_samples - self.weighted_n_missing
+
         self.pos = self.start
         return 0
 
     cdef int reverse_reset(self) nogil except -1:
         """Reset the criterion at pos=end."""
         cdef SIZE_t n_bytes = self.n_outputs * sizeof(double)
-        memset(&self.sum_right[0], 0, n_bytes)
-        memcpy(&self.sum_left[0], &self.sum_total[0], n_bytes)
+        cdef SIZE_t i
 
-        self.weighted_n_right = 0.0
-        self.weighted_n_left = self.weighted_n_node_samples
+        if self.n_missing == 0 or self.missing_go_to_left:
+            memset(&self.sum_right[0], 0, n_bytes)
+            memcpy(&self.sum_left[0], &self.sum_total[0], n_bytes)
+            self.weighted_n_right = 0.0
+            self.weighted_n_left = self.weighted_n_node_samples
+        else:
+            # self.n_missing != 0 and not self.missing_go_left
+            memcpy(&self.sum_right[0], &self.sum_missing[0], n_bytes)
+            for i in range(self.n_outputs):
+                self.sum_left[i] = self.sum_total[i] - self.sum_missing[i]
+            self.weighted_n_right = self.weighted_n_missing
+            self.weighted_n_left = self.weighted_n_node_samples - self.weighted_n_missing
+
         self.pos = self.end
         return 0
 
@@ -709,7 +839,7 @@ cdef class RegressionCriterion(Criterion):
         cdef SIZE_t* samples = self.samples
 
         cdef SIZE_t pos = self.pos
-        cdef SIZE_t end = self.end
+        cdef SIZE_t end = self.end - self.n_missing
         cdef SIZE_t i
         cdef SIZE_t p
         cdef SIZE_t k
@@ -964,6 +1094,13 @@ cdef class MAE(RegressionCriterion):
         # Reset to pos=start
         self.reset()
         return 0
+
+    cdef void init_missing(self, SIZE_t n_missing) nogil:
+        """Raise error if n_missing != 0."""
+        if n_missing == 0:
+            return
+        with gil:
+            raise ValueError("missing values is not supported for MAE.")
 
     cdef int reset(self) nogil except -1:
         """Reset the criterion at pos=start.

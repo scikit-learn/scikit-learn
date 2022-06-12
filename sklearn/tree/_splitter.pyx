@@ -17,10 +17,12 @@ from libc.stdlib cimport free
 from libc.stdlib cimport qsort
 from libc.string cimport memcpy
 from libc.string cimport memset
+from libc.math cimport isnan
 
 import numpy as np
 
 from scipy.sparse import csc_matrix
+from scipy.sparse import issparse
 
 from ._utils cimport log
 from ._utils cimport rand_int
@@ -43,6 +45,8 @@ cdef inline void _init_split(SplitRecord* self, SIZE_t start_pos) nogil:
     self.feature = 0
     self.threshold = 0.
     self.improvement = -INFINITY
+    self.missing_go_to_left = False
+    self.n_missing = 0
 
 cdef class Splitter:
     """Abstract splitter class.
@@ -157,6 +161,11 @@ cdef class Splitter:
         self.y = y
 
         self.sample_weight = sample_weight
+        if issparse(X):
+            # Missing values does not support sparse yet
+            self.has_missings = np.zeros(X.shape[1], dtype=np.bool_)
+        else:
+            self.has_missings = np.isnan(X).any(axis=0)
         return 0
 
     cdef int node_reset(self, SIZE_t start, SIZE_t end,
@@ -264,6 +273,7 @@ cdef class BestSplitter(BaseDenseSplitter):
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf
         cdef double min_weight_leaf = self.min_weight_leaf
         cdef UINT32_t* random_state = &self.rand_r_state
+        cdef unsigned char[::1] has_missings = self.has_missings
 
         cdef SplitRecord best, current
         cdef double current_proxy_improvement = -INFINITY
@@ -276,6 +286,12 @@ cdef class BestSplitter(BaseDenseSplitter):
         cdef SIZE_t feature_offset
         cdef SIZE_t i
         cdef SIZE_t j
+        cdef SIZE_t n_missing
+        cdef SIZE_t directions
+        cdef SIZE_t end_non_missing
+        cdef SIZE_t n_left, n_right
+        cdef bint missing_go_to_left
+        cdef bint best_split_on_edge = False
 
         cdef SIZE_t n_visited_features = 0
         # Number of features discovered to be constant during the split search
@@ -286,7 +302,6 @@ cdef class BestSplitter(BaseDenseSplitter):
         # n_total_constants = n_known_constants + n_found_constants
         cdef SIZE_t n_total_constants = n_known_constants
         cdef DTYPE_t current_feature_value
-        cdef SIZE_t partition_end
 
         _init_split(&best, end)
 
@@ -334,16 +349,36 @@ cdef class BestSplitter(BaseDenseSplitter):
             # f_j in the interval [n_total_constants, f_i[
             current.feature = features[f_j]
 
-            # Sort samples along that feature; by
-            # copying the values into an array and
+            n_missing = 0
+            # Sort samples along that feature; by copying the values into an array and
             # sorting the array in a manner which utilizes the cache more
             # effectively.
-            for i in range(start, end):
-                Xf[i] = self.X[samples[i], current.feature]
+            # Missing values are placed at the end and do not participate in the sorting.
+            if has_missings[current.feature]:
+                i, j = start, end - 1
+                while i <= j:
+                    if isnan(self.X[samples[j], current.feature]):
+                        n_missing += 1
+                        j -= 1
+                        continue
 
-            sort(&Xf[start], &samples[start], end - start)
+                    if isnan(self.X[samples[i], current.feature]):
+                        # nan samples are moved to the end
+                        samples[i], samples[j] = samples[j], samples[i]
+                        n_missing += 1
+                        j -= 1
+                    Xf[i] = self.X[samples[i], current.feature]
+                    i += 1
+            else:
+                # Reduces the number of computations for the case where there
+                # is no missing values
+                for i in range(start, end):
+                    Xf[i] = self.X[samples[i], current.feature]
 
-            if Xf[end - 1] <= Xf[start] + FEATURE_THRESHOLD:
+            end_non_missing = end - n_missing
+            sort(&Xf[start], &samples[start], end_non_missing - start)
+
+            if n_missing == (end - start) or Xf[end_non_missing - 1] <= Xf[start] + FEATURE_THRESHOLD:
                 features[f_j], features[n_total_constants] = features[n_total_constants], features[f_j]
 
                 n_found_constants += 1
@@ -354,32 +389,84 @@ cdef class BestSplitter(BaseDenseSplitter):
             features[f_i], features[f_j] = features[f_j], features[f_i]
 
             # Evaluate all splits
-            self.criterion.reset()
-            p = start
+            self.criterion.init_missing(n_missing)
 
-            while p < end:
-                while p + 1 < end and Xf[p + 1] <= Xf[p] + FEATURE_THRESHOLD:
+            directions = 1 if n_missing == 0 else 2
+            for i in range(directions):
+                missing_go_to_left = i != 0
+                self.criterion.missing_go_to_left = missing_go_to_left
+                self.criterion.reset()
+
+                p = start
+
+                while p < end_non_missing:
+                    while p + 1 < end_non_missing and Xf[p + 1] <= Xf[p] + FEATURE_THRESHOLD:
+                        p += 1
+
+                    # (p + 1 >= end_non_missing) or
+                    #       (X[samples[p + 1], current.feature] >
+                    #        X[samples[p], current.feature])
                     p += 1
+                    # (p >= end_non_missing) or
+                    #       (X[samples[p], current.feature] >
+                    #        X[samples[p - 1], current.feature])
 
-                # (p + 1 >= end) or (X[samples[p + 1], current.feature] >
-                #                    X[samples[p], current.feature])
-                p += 1
-                # (p >= end) or (X[samples[p], current.feature] >
-                #                X[samples[p - 1], current.feature])
+                    if p >= end_non_missing:
+                        continue
 
-                if p >= end:
+                    if missing_go_to_left:
+                        n_left = p - start + n_missing
+                        n_right = end_non_missing - p
+                    else:
+                        n_left = p - start
+                        n_right = end_non_missing - p + n_missing
+
+                    # Reject if min_samples_leaf is not guaranteed
+                    if n_left < min_samples_leaf or n_right < min_samples_leaf:
+                        continue
+
+                    current.pos = p
+                    self.criterion.update(current.pos)
+
+                    # Reject if min_weight_leaf is not satisfied
+                    if ((self.criterion.weighted_n_left < min_weight_leaf) or
+                            (self.criterion.weighted_n_right < min_weight_leaf)):
+                        continue
+
+                    current_proxy_improvement = self.criterion.proxy_impurity_improvement()
+
+                    if current_proxy_improvement > best_proxy_improvement:
+                        best_proxy_improvement = current_proxy_improvement
+                        # sum of halves is used to avoid infinite value
+                        current.threshold = Xf[p - 1] / 2.0 + Xf[p] / 2.0
+
+                        if (
+                            current.threshold == Xf[p] or
+                            current.threshold == INFINITY or
+                            current.threshold == -INFINITY
+                        ):
+                            current.threshold = Xf[p - 1]
+
+                        current.n_missing = n_missing
+                        if n_missing == 0:
+                            current.missing_go_to_left = n_left > n_right
+                        else:
+                            current.missing_go_to_left = missing_go_to_left
+
+                        best = current  # copy
+
+            # Check edge cases when n_missing != 0 and all missing values goes
+            # to the right node
+            if n_missing > 0:
+                n_left = end - start - n_missing
+                n_right = n_missing
+
+                if n_left < min_samples_leaf or n_right < min_samples_leaf:
                     continue
 
-                current.pos = p
+                self.criterion.missing_go_to_left = 0
+                self.criterion.reverse_reset()
 
-                # Reject if min_samples_leaf is not guaranteed
-                if (((current.pos - start) < min_samples_leaf) or
-                        ((end - current.pos) < min_samples_leaf)):
-                    continue
-
-                self.criterion.update(current.pos)
-
-                # Reject if min_weight_leaf is not satisfied
                 if ((self.criterion.weighted_n_left < min_weight_leaf) or
                         (self.criterion.weighted_n_right < min_weight_leaf)):
                     continue
@@ -388,38 +475,67 @@ cdef class BestSplitter(BaseDenseSplitter):
 
                 if current_proxy_improvement > best_proxy_improvement:
                     best_proxy_improvement = current_proxy_improvement
-                    # sum of halves is used to avoid infinite value
-                    current.threshold = Xf[p - 1] / 2.0 + Xf[p] / 2.0
 
-                    if (
-                        current.threshold == Xf[p] or
-                        current.threshold == INFINITY or
-                        current.threshold == -INFINITY
-                    ):
-                        current.threshold = Xf[p - 1]
+                    current.threshold = INFINITY
+                    current.missing_go_to_left = 0
+                    current.pos = end - n_missing
 
+                    best_split_on_edge = True
                     best = current  # copy
 
         # Reorganize into samples[start:best.pos] + samples[best.pos:end]
-        if best.pos < end:
-            partition_end = end
-            p = start
-
-            while p < partition_end:
-                if self.X[samples[p], best.feature] <= best.threshold:
+        if best.pos < end or best_split_on_edge:
+            # Places missing values at the end for criterion to compute impurities
+            p = 0
+            n_missing = best.n_missing
+            i, j = start, end - 1
+            while i < j and p < n_missing:
+                if isnan(self.X[samples[j], best.feature]):
                     p += 1
+                    j -= 1
+                    continue
 
+                if isnan(self.X[samples[i], best.feature]):
+                    # nan samples are moved to the end
+                    samples[i], samples[j] = samples[j], samples[i]
+                    p += 1
+                    j -= 1
+                i += 1
+
+            # Split non-missing values according to the threshold
+            # If best_split_on_edge then all non-missing values are already in the
+            # correct position.
+            i, j = start, end - n_missing - 1
+            while i < j and not best_split_on_edge:
+                if self.X[samples[i], best.feature] <= best.threshold:
+                    i += 1
                 else:
-                    partition_end -= 1
+                    samples[i], samples[j] = samples[j], samples[i]
+                    j -= 1
 
-                    samples[p], samples[partition_end] = samples[partition_end], samples[p]
+            self.criterion.init_missing(n_missing)
+            self.criterion.missing_go_to_left = best.missing_go_to_left
 
-            self.criterion.reset()
-            self.criterion.update(best.pos)
+            if best_split_on_edge:
+                self.criterion.reverse_reset()
+            else:
+                self.criterion.reset()
+                self.criterion.update(best.pos)
+
             self.criterion.children_impurity(&best.impurity_left,
                                              &best.impurity_right)
             best.improvement = self.criterion.impurity_improvement(
                 impurity, best.impurity_left, best.impurity_right)
+
+            if n_missing > 0 and best.missing_go_to_left:
+                # move missing values from the end to the left
+                # Note if missing values are going to the right, then they are
+                # already in the correct position
+                for p in range(n_missing):
+                    i = best.pos + p
+                    j = end - 1 - p
+                    samples[i], samples[j] = samples[j], samples[i]
+                best.pos += n_missing
 
         # Respect invariant for constant features: the original order of
         # element in features[:n_known_constants] must be preserved for sibling

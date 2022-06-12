@@ -2508,3 +2508,120 @@ def test_max_features_auto_deprecated():
         )
         with pytest.warns(FutureWarning, match=msg):
             tree.fit(X, y)
+
+
+@pytest.mark.parametrize("criterion", ["squared_error", "friedman_mse"])
+def test_missing_values_on_equal_nodes_no_missing(criterion):
+    """Check missing values goes to correct node during predictions"""
+    X = np.asarray([[0, 1, 2, 3, 8, 9, 11, 12, 15]]).T
+    y = np.asarray([0.1, 0.2, 0.3, 0.2, 1.4, 1.4, 1.5, 1.6, 2.6])
+
+    dtc = DecisionTreeRegressor(random_state=42, max_depth=1, criterion=criterion)
+    dtc.fit(X, y)
+
+    # Goes to right node because it has the most data points
+    y_pred = dtc.predict([[np.nan]])
+    assert_allclose(y_pred, [np.mean(y[-5:])])
+
+    # equal number of elements in both nodes
+    X_equal = X[:-1]
+    y_equal = y[:-1]
+
+    dtc = DecisionTreeRegressor(random_state=42, max_depth=1, criterion=criterion)
+    dtc.fit(X_equal, y_equal)
+
+    # Goes to right node because the implementation sets:
+    # missing_go_to_left = n_left > n_right, which is False
+    y_pred = dtc.predict([[np.nan]])
+    assert_allclose(y_pred, [np.mean(y_equal[-4:])])
+
+
+@pytest.mark.parametrize("criterion", ["entropy", "gini"])
+def test_missing_values_best_splitter_three_classes(criterion):
+    """Missing values uniquely defines a class in three classes."""
+    X = np.asarray([[np.nan] * 4 + [0, 1, 2, 3, 8, 9, 11, 12]]).T
+    y = np.asarray([0] * 4 + [1] * 4 + [2] * 4)
+
+    dtc = DecisionTreeClassifier(random_state=42, max_depth=2, criterion=criterion)
+    dtc.fit(X, y)
+
+    X_test = np.asarray([[np.nan, 3, 12]]).T
+    y_nan_pred = dtc.predict(X_test)
+    assert_array_equal(y_nan_pred, [0, 1, 2])
+
+
+@pytest.mark.parametrize("criterion", ["entropy", "gini"])
+def test_missing_values_best_splitter_to_left(criterion):
+    """Missing value uniquely defines class."""
+    X = np.asarray([[np.nan] * 4 + [0, 1, 2, 3, 4, 5]]).T
+    y = np.asarray([0] * 4 + [1] * 6)
+
+    dtc = DecisionTreeClassifier(random_state=42, max_depth=2, criterion=criterion)
+    dtc.fit(X, y)
+
+    y_pred = dtc.predict(np.asarray([[np.nan, 4, np.nan]]).T)
+    assert_array_equal(y_pred, [0, 1, 0])
+
+
+@pytest.mark.parametrize("criterion", ["entropy", "gini"])
+def test_missing_values_best_splitter_to_right(criterion):
+    """Missing value shares a class with non-missing values."""
+    X = np.asarray([[np.nan] * 4 + [0, 1, 2, 3, 4, 5]]).T
+    y = np.asarray([1] * 4 + [0] * 4 + [1] * 2)
+
+    dtc = DecisionTreeClassifier(random_state=42, max_depth=2, criterion=criterion)
+    dtc.fit(X, y)
+
+    y_pred = dtc.predict(np.asarray([[np.nan, 1.2, 4.8]]).T)
+    assert_array_equal(y_pred, [1, 0, 1])
+
+
+@pytest.mark.parametrize("criterion", ["entropy", "gini"])
+def test_missing_values_missing_both_classes_has_nan(criterion):
+    """Check behavior of missing value when there is one missing value in each class."""
+    X = np.asarray([[1, 2, 3, 5, np.nan, 10, 20, 30, 60, np.nan]]).T
+    y = np.asarray([0] * 5 + [1] * 5)
+
+    dtc = DecisionTreeClassifier(random_state=42, max_depth=1, criterion=criterion)
+    dtc.fit(X, y)
+    X_test = np.asarray([[np.nan, 2.3, 34.2]]).T
+    y_pred = dtc.predict(X_test)
+
+    # Missing value goes right because the implementation searches right first
+    assert_array_equal(y_pred, [1, 0, 1])
+
+
+@pytest.mark.parametrize("is_sparse", [True, False])
+@pytest.mark.parametrize(
+    "tree",
+    [
+        DecisionTreeClassifier(splitter="random"),
+        DecisionTreeRegressor(criterion="absolute_error"),
+    ],
+)
+def test_missing_value_errors(is_sparse, tree):
+    """Check unsupported configurations for missing values."""
+
+    X = np.asarray([[1, 2, 3, 5, np.nan, 10, 20, 30, 60, np.nan]]).T
+    y = np.asarray([0] * 5 + [1] * 5)
+
+    if is_sparse:
+        X = csr_matrix(X)
+
+    with pytest.raises(ValueError, match="Input X contains NaN"):
+        tree.fit(X, y)
+
+
+def test_missing_values_poisson():
+    """Smoke test for poisson regression and missing values."""
+    X, y = diabetes.data.copy(), diabetes.target
+
+    # Set some values missing
+    X[::5, 0] = np.nan
+    X[::6, -1] = np.nan
+
+    reg = DecisionTreeRegressor(criterion="poisson", random_state=42)
+    reg.fit(X, y)
+
+    y_pred = reg.predict(X)
+    assert (y_pred >= 0.0).all()
