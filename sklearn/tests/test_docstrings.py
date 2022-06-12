@@ -23,6 +23,7 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.decomposition._dict_learning.dict_learning",
     "sklearn.decomposition._dict_learning.dict_learning_online",
     "sklearn.decomposition._nmf.non_negative_factorization",
+    "sklearn.externals._lobpcg.lobpcg",
     "sklearn.externals._packaging.version.parse",
     "sklearn.feature_extraction.image.extract_patches_2d",
     "sklearn.feature_extraction.text.strip_accents_unicode",
