@@ -428,8 +428,13 @@ class LinearModelLoss:
         )
 
         # For non-canonical link functions and far away from the optimum, we take
-        # care that the hessian is not negative.
-        hess_pointwise[hess_pointwise <= 0] = 0
+        # care that the hessian is positive.
+        positive_hess = hess_pointwise[hess_pointwise > 0]
+        if len(positive_hess) > 0:
+            min_hess = np.amin(positive_hess)
+        else:
+            min_hess = 1
+        hess_pointwise[hess_pointwise <= 0] = min_hess
 
         if not self.base_loss.is_multiclass:
             # gradient

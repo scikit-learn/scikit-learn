@@ -335,10 +335,6 @@ def test_glm_regression_vstacked_X(solver, fit_intercept, glm_dataset):
     assert_allclose(model.coef_, coef, rtol=rtol)
 
 
-# TweedieRegressor(link='log', power=0) raises RuntimeWarning
-@pytest.mark.filterwarnings("ignore::scipy.linalg.LinAlgWarning")
-@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
-@pytest.mark.filterwarnings("ignore::RuntimeWarning")
 @pytest.mark.parametrize("solver", SOLVERS)
 @pytest.mark.parametrize("fit_intercept", [True, False])
 def test_glm_regression_unpenalized(solver, fit_intercept, glm_dataset):
@@ -367,6 +363,10 @@ def test_glm_regression_unpenalized(solver, fit_intercept, glm_dataset):
         coef = coef[:-1]
     else:
         intercept = 0
+
+    if n_samples < n_features:
+        warnings.filterwarnings("ignore", category=scipy.linalg.LinAlgWarning)
+        warnings.filterwarnings("ignore", category=ConvergenceWarning)
     model.fit(X, y)
 
     # FIXME: `assert_allclose(model.coef_, coef)` should work for all cases but fails
@@ -477,10 +477,6 @@ def test_glm_regression_unpenalized_hstacked_X(solver, fit_intercept, glm_datase
         assert_allclose(model_coef, np.r_[coef, coef], rtol=rtol)
 
 
-# TweedieRegressor(link='log', power=0) raises RuntimeWarning
-@pytest.mark.filterwarnings("ignore::scipy.linalg.LinAlgWarning")
-@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
-@pytest.mark.filterwarnings("ignore::RuntimeWarning")
 @pytest.mark.parametrize("solver", SOLVERS)
 @pytest.mark.parametrize("fit_intercept", [True, False])
 def test_glm_regression_unpenalized_vstacked_X(solver, fit_intercept, glm_dataset):
@@ -514,6 +510,10 @@ def test_glm_regression_unpenalized_vstacked_X(solver, fit_intercept, glm_datase
     X = np.concatenate((X, X), axis=0)
     assert np.linalg.matrix_rank(X) <= min(n_samples, n_features)
     y = np.r_[y, y]
+
+    if n_samples < n_features:
+        warnings.filterwarnings("ignore", category=scipy.linalg.LinAlgWarning)
+        warnings.filterwarnings("ignore", category=ConvergenceWarning)
     model.fit(X, y)
 
     rtol = 3e-5 if solver == "lbfgs" else 1e-6

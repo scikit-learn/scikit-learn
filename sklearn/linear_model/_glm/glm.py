@@ -361,7 +361,7 @@ class NewtonSolver(ABC):
 
         self.iteration = 1
         self.converged = False
-        self.stop = False
+        self.stop = False  # Can be used by inner_solve to stop iteration.
 
         while self.iteration <= self.max_iter and not self.converged:
             if self.verbose:
@@ -432,7 +432,7 @@ class BaseCholeskyNewtonSolver(NewtonSolver):
                 warnings.warn(
                     f"The inner solver of {self.__class__.__name__} stumbled upon a"
                     " singular or very ill-conditioned hessian matrix at iteration "
-                    " #{self.iteration}. It will now try a simple gradient step."
+                    f"#{self.iteration}. It will now try a simple gradient step."
                     " Note that this warning is only raised once, the problem may, "
                     " however, occur in several or all iterations. Set verbose >= 1"
                     " to get more information.\n"
