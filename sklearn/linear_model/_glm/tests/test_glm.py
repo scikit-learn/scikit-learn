@@ -397,9 +397,9 @@ def test_glm_regression_unpenalized(solver, fit_intercept, glm_dataset):
         # we get a solution, i.e. a (non-unique) minimum of the objective function ...
         assert_allclose(model.predict(X), y)
         assert_allclose(model._get_loss().link.inverse(X @ coef + intercept), y)
-        if (solver in ["lbfgs", "newton-qr-cholesky"] and fit_intercept) or solver in [
-            "newton-cholesky"
-        ]:
+        if (
+            solver in ["lbfgs", "newton-lsmr", "newton-qr-cholesky"] and fit_intercept
+        ) or solver in ["newton-cholesky"]:
             # But it is not the minimum norm solution. Otherwise the norms would be
             # equal.
             norm_solution = (1 + 1e-12) * np.linalg.norm(np.r_[intercept, coef])
@@ -472,9 +472,9 @@ def test_glm_regression_unpenalized_hstacked_X(solver, fit_intercept, glm_datase
         # As it is an underdetermined problem, prediction = y. The following shows that
         # we get a solution, i.e. a (non-unique) minimum of the objective function ...
         assert_allclose(model.predict(X), y)
-        if (solver in ["lbfgs", "newton-qr-cholesky"] and fit_intercept) or solver in [
-            "newton-cholesky"
-        ]:
+        if (
+            solver in ["lbfgs", "newton-lsmr", "newton-qr-cholesky"] and fit_intercept
+        ) or solver in ["newton-cholesky"]:
             # FIXME: Same as in test_glm_regression_unpenalized.
             # But it is not the minimum norm solution. Otherwise the norms would be
             # equal.
@@ -540,9 +540,9 @@ def test_glm_regression_unpenalized_vstacked_X(solver, fit_intercept, glm_datase
         # As it is an underdetermined problem, prediction = y. The following shows that
         # we get a solution, i.e. a (non-unique) minimum of the objective function ...
         assert_allclose(model.predict(X), y)
-        if (solver in ["lbfgs", "newton-qr-cholesky"] and fit_intercept) or solver in [
-            "newton-cholesky"
-        ]:
+        if (
+            solver in ["lbfgs", "newton-lsmr", "newton-qr-cholesky"] and fit_intercept
+        ) or solver in ["newton-cholesky"]:
             # FIXME: Same as in test_glm_regression_unpenalized.
             # But it is not the minimum norm solution. Otherwise the norms would be
             # equal.

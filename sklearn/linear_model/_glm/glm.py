@@ -681,11 +681,10 @@ class LSMRNewtonSolver(NewtonSolver):
             hessian_out=self.h,
             n_threads=self.n_threads,
         )
-        # For non-canonical link functions and far away from the optimum, we take
-        # care that the hessian is at least non-negative. Tiny positive values are set
-        # to zero, too.
+        # For non-canonical link functions and far away from the optimum, we take care
+        # that the hessian is positive.
         eps = 16 * np.finfo(y.dtype).eps
-        self.h[self.h <= eps] = 0
+        self.h[self.h <= eps] = eps
 
         n_features = X.shape[1]
         # This duplicates a bit of code from LinearModelLoss.gradient.
@@ -704,13 +703,8 @@ class LSMRNewtonSolver(NewtonSolver):
         """
         n_samples, n_features = X.shape
         sqrt_h = np.sqrt(self.h)
-        # Take care of h = 0. Tiny h are already set to 0.
-        # If h = 0 we can exclude the corresponding row of X such that the value of b
-        # becomes irrelevant. We set it -g as if h = 1.
-        g_over_h_sqrt = self.g
-        g_over_h_sqrt[sqrt_h > 0] /= sqrt_h[sqrt_h > 0]
 
-        b = np.r_[-g_over_h_sqrt, -self.sqrt_P * self.coef[:n_features]]
+        b = np.r_[-self.g / sqrt_h, -self.sqrt_P * self.coef[:n_features]]
 
         if self.linear_loss.fit_intercept:
             n_dof = n_features + 1
@@ -766,6 +760,7 @@ class LSMRNewtonSolver(NewtonSolver):
             damp=0,
             atol=self.tol / (max(1, self.A_norm) * max(1, self.r_norm)),
             btol=self.tol,
+            maxiter=max(n_samples, n_dof),  # default is min(A.shape)
             show=self.verbose >= 3,
         )
         # We store the estimated Frobenius norm of A and norm of residual r in
@@ -780,15 +775,28 @@ class LSMRNewtonSolver(NewtonSolver):
             conda,
             normx,
         ) = result
-        # LSMR reached maxiter.
-        eps = 4 * np.finfo(self.gradient.dtype).eps
-        if istop == 7:
+        # LSMR reached maxiter or did produce an excessively large newton step.
+        # Note: We could detect too large steps by comparing norms(coef_newton) = normx
+        # with norm(gradient). Instead of the gradient, we use the already available
+        # condition number of A.
+        if istop == 7 or normx > 1e2 * conda:
             if self.gradient_step == 0:
                 # We only need to throw this warning once.
+                if istop == 7:
+                    msg = (
+                        f"The inner solver of {self.__class__.__name__} reached "
+                        "maxiter={itn} before the other stopping conditions were "
+                        "satisfied at iteration #{self.iteration}. "
+                    )
+                else:
+                    msg = (
+                        f"The inner solver of {self.__class__.__name__} produced an"
+                        " excessively large newton step at iteration"
+                        " #{self.iteration}. "
+                    )
                 warnings.warn(
-                    f"The inner solver of {self.__class__.__name__} reached "
-                    "maxiter={itn} before the other stopping conditions were "
-                    "satisfied at iteration #{self.iteration}. It will now try a "
+                    msg
+                    + "It will now try a "
                     "simple gradient step. "
                     "Note that this warning is only raised once, the problem may, "
                     " however, occur in several or all iterations. Set verbose >= 1"
