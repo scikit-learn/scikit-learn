@@ -428,7 +428,7 @@ it differs in that it supports numerical target variables (regression) and
 does not compute rule sets. CART constructs binary trees using the feature
 and threshold that yield the largest information gain at each node.
 
-scikit-learn uses an optimized version of the CART algorithm; however, the 
+scikit-learn uses an optimized version of the CART algorithm; however, the
 scikit-learn implementation does not support categorical variables for now.
 
 .. _ID3: https://en.wikipedia.org/wiki/ID3_algorithm
@@ -515,7 +515,7 @@ Log Loss or Entropy:
   computed on a dataset :math:`D` is defined as follows:
 
   .. math::
-  
+
       \mathrm{LL}(D, T) = -\frac{1}{n} \sum_{(x_i, y_i) \in D} \sum_k I(y_i = k) \log(T_k(x_i))
 
   where :math:`D` is a training dataset of :math:`n` pairs :math:`(x_i, y_i)`.
@@ -529,7 +529,7 @@ Log Loss or Entropy:
   the number of training data points that reached each leaf:
 
   .. math::
-  
+
       \mathrm{LL}(D, T) = \sum_{m \in T} \frac{n_m}{n} H(Q_m)
 
 Regression criteria
