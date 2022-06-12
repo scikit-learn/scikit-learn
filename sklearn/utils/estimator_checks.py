@@ -4070,29 +4070,36 @@ def check_param_validation(name, estimator_orig):
             f"parameter {param_name} does not have a valid type or value."
         )
 
-        estimator = clone(estimator_orig)
+        # If the parameter constraint equals object, the bad parameter
+        # doesn't raise an appropriate exception. Object is a placeholder
+        # for all kinds of types, that can't be tested properly at the
+        # moment, e.g. numpy data types
+        # TODO: Remove this, if all data types can be validated correctly
+        if estimator_orig._parameter_constraints[param_name] != [object]:
 
-        # First, check that the error is raised if param doesn't match any valid type.
-        estimator.set_params(**{param_name: param_with_bad_type})
+            estimator = clone(estimator_orig)
 
-        for method in methods:
-            with raises(ValueError, match=match, err_msg=err_msg):
-                getattr(estimator, method)(X, y)
-
-        # Then, for constraints that are more than a type constraint, check that the
-        # error is raised if param does match a valid type but does not match any valid
-        # value for this type.
-        constraints = estimator_orig._parameter_constraints[param_name]
-        constraints = [make_constraint(constraint) for constraint in constraints]
-
-        for constraint in constraints:
-            try:
-                bad_value = generate_invalid_param_val(constraint, constraints)
-            except NotImplementedError:
-                continue
-
-            estimator.set_params(**{param_name: bad_value})
+            # First, check that the error is raised if param doesn't match any valid type.
+            estimator.set_params(**{param_name: param_with_bad_type})
 
             for method in methods:
                 with raises(ValueError, match=match, err_msg=err_msg):
                     getattr(estimator, method)(X, y)
+
+            # Then, for constraints that are more than a type constraint, check that the
+            # error is raised if param does match a valid type but does not match any valid
+            # value for this type.
+            constraints = estimator_orig._parameter_constraints[param_name]
+            constraints = [make_constraint(constraint) for constraint in constraints]
+
+            for constraint in constraints:
+                try:
+                    bad_value = generate_invalid_param_val(constraint, constraints)
+                except NotImplementedError:
+                    continue
+
+                estimator.set_params(**{param_name: bad_value})
+
+                for method in methods:
+                    with raises(ValueError, match=match, err_msg=err_msg):
+                        getattr(estimator, method)(X, y)
