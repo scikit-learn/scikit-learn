@@ -1227,7 +1227,11 @@ class OrdinalEncoder(_OneToOneFeatureMixin, _BaseEncoder):
 
     _parameter_constraints = {
         "categories": [StrOptions({"auto"}), "array-like"],
-        "dtype": [type, np.dtype, StrOptions({"int8", "int16", "int32", "int64", "float32", "float64"})],
+        "dtype": [
+            type,
+            np.dtype,
+            StrOptions({"int8", "int16", "int32", "int64", "float32", "float64"}),
+        ],
         "encoded_missing_value": [
             Interval(numbers.Integral, None, None, closed="neither"),
             type(np.nan),
