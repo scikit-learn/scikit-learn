@@ -435,7 +435,7 @@ class OneHotEncoder(_BaseEncoder):
 
     _parameter_constraints = {
         "categories": [StrOptions({"auto"}), "array-like"],
-        "drop": ["array-like", None],
+        "drop": [StrOptions({"first", "if_binary"}), "array-like", None],
         "dtype": [type, np.dtype],
         "handle_unknown": [StrOptions({"error", "ignore", "infrequent_if_exist"})],
         "max_categories": [Interval(numbers.Integral, 1, None, closed="left"), None],
