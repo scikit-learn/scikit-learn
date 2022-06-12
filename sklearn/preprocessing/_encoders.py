@@ -436,7 +436,10 @@ class OneHotEncoder(_BaseEncoder):
     _parameter_constraints = {
         "categories": [StrOptions({"auto"}), "array-like"],
         "drop": [StrOptions({"first", "if_binary"}), "array-like", None],
-        "dtype": [type, np.dtype],
+        # By using object as parameter constraint, we are currently
+        # allowing numpy to do the validation. Numpy data types can take
+        # various inputs, that validate_params can't validate yet.
+        "dtype": [object],
         "handle_unknown": [StrOptions({"error", "ignore", "infrequent_if_exist"})],
         "max_categories": [Interval(numbers.Integral, 1, None, closed="left"), None],
         "min_frequency": [
@@ -1227,11 +1230,10 @@ class OrdinalEncoder(_OneToOneFeatureMixin, _BaseEncoder):
 
     _parameter_constraints = {
         "categories": [StrOptions({"auto"}), "array-like"],
-        "dtype": [
-            type,
-            np.dtype,
-            StrOptions({"int8", "int16", "int32", "int64", "float32", "float64"}),
-        ],
+        # By using object as parameter constraint, we are currently
+        # allowing numpy to do the validation. Numpy data types can take
+        # various inputs, that validate_params can't validate yet.
+        "dtype": [object],
         "encoded_missing_value": [
             Interval(numbers.Integral, None, None, closed="neither"),
             type(np.nan),
