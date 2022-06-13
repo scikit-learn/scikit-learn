@@ -4065,7 +4065,7 @@ def check_param_validation(name, estimator_orig):
 
     for param_name in estimator_params:
         constraints = estimator_orig._parameter_constraints[param_name]
- 
+
         if constraints == ["no validation"]:
             # This parameter is not validated
             continue
