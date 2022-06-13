@@ -84,7 +84,8 @@ The disadvantages of decision trees include:
 
     - Decision tree learners create biased trees if some classes dominate.
       It is therefore recommended to balance the dataset prior to fitting
-      with the decision tree. Or use Hellinger distance as split criterion.
+      with the decision tree. When dealing with a binary classification problem,
+      using the Hellinger distance as a split criterion will alleviate this bias.
 
 
 .. _tree_classification:
