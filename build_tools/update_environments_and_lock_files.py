@@ -72,9 +72,6 @@ common_dependencies = common_dependencies_without_coverage + [
 docstring_test_dependencies = ["sphinx", "numpydoc"]
 
 default_package_constraints = {
-    # XXX: pytest is temporary pinned to 6.2.5 because pytest 7 causes CI
-    # issues https://github.com/scikit-learn/scikit-learn/pull/22381
-    "pytest": "6.2.5",
     # XXX: coverage is temporary pinned to 6.2 because 6.3 is not fork-safe
     # cf. https://github.com/nedbat/coveragepy/issues/1310
     "coverage": "6.2",
@@ -213,7 +210,7 @@ conda_build_metadata_list = [
     },
     {
         "build_name": "doc_min_dependencies",
-        "folder": "build_tools/circle",
+        "folder": "build_tools/github",
         "platform": "linux-64",
         "channel": "conda-forge",
         "conda_dependencies": common_dependencies_without_coverage
@@ -245,7 +242,7 @@ conda_build_metadata_list = [
     },
     {
         "build_name": "doc",
-        "folder": "build_tools/circle",
+        "folder": "build_tools/github",
         "platform": "linux-64",
         "channel": "conda-forge",
         "conda_dependencies": common_dependencies_without_coverage
@@ -490,6 +487,7 @@ def write_pip_lock_file(build_metadata):
     # as the one used during the CI build where the lock file is used, we first
     # create a conda environment with the correct Python version and
     # pip-compile and run pip-compile in this environment
+
     command = (
         "conda create -c conda-forge -n"
         f" pip-tools-python{python_version} python={python_version} pip-tools -y"
