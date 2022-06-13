@@ -526,7 +526,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "LassoLarsIC",
     "LatentDirichletAllocation",
     "LedoitWolf",
-    "LinearDiscriminantAnalysis",
     "LinearSVC",
     "LinearSVR",
     "LocalOutlierFactor",

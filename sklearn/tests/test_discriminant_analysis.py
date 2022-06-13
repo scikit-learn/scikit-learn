@@ -60,10 +60,8 @@ solver_shrinkage = [
     ("lsqr", None),
     ("eigen", None),
     ("lsqr", "auto"),
-    ("lsqr", 0),
     ("lsqr", 0.43),
     ("eigen", "auto"),
-    ("eigen", 0),
     ("eigen", 0.43),
 ]
 
@@ -113,7 +111,7 @@ def test_lda_predict():
         clf.fit(X, y)
 
     clf = LinearDiscriminantAnalysis(solver="lsqr", shrinkage=np.array([1, 2]))
-    with pytest.raises(TypeError, match="shrinkage must be a float or a string"):
+    with pytest.raises(ValueError):
         clf.fit(X, y)
 
     clf = LinearDiscriminantAnalysis(
@@ -145,9 +143,7 @@ def test_lda_predict():
     clf = LinearDiscriminantAnalysis(
         solver="lsqr", covariance_estimator=KMeans(n_clusters=2, n_init="auto")
     )
-    with pytest.raises(
-        ValueError, match="KMeans does not have a covariance_ attribute"
-    ):
+    with pytest.raises(ValueError):
         clf.fit(X, y)
 
 
@@ -638,7 +634,7 @@ def test_covariance():
     assert_almost_equal(c_s, c_s.T)
 
 
-@pytest.mark.parametrize("solver", ["svd, lsqr", "eigen"])
+@pytest.mark.parametrize("solver", ["svd", "lsqr", "eigen"])
 def test_raises_value_error_on_same_number_of_classes_and_samples(solver):
     """
     Tests that if the number of samples equals the number
