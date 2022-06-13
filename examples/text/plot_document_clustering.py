@@ -359,15 +359,16 @@ plt.tight_layout()
 # they are not affected by the curse of dimensionality as they are only based on
 # cluster assignments rather than distances.
 #
-# :class:`~sklearn.cluster.MiniBatchKMeans` is inestable for this relatively
+# :class:`~sklearn.cluster.MiniBatchKMeans` is instable for this relatively
 # small dataset. It is more interesting to use when the number of samples is
 # much bigger, but it comes at the expense of clustering quality. Using the
 # `"k-means++"` init on LSA reduced data is both good in terms of metrics and
 # computing speed. LSA also increases stability as shown in the section below.
 #
 # Even if :class:`~sklearn.cluster.KMeans` has low clustering time when used
-# with LSA on hashed vectors, the LSA step itself takes a long time because the
+# with LSA (both from hashed and exact tf-idf vectors), the LSA step itself
+# takes a long time, especially with hashed vectors:
 # hashed space is typically large (set to `n_features=50_000` in this example).
-# One can try lower number of features at the expense of having hash collisions
-# as shown in the example notebook
+# One can try lower number of features at the expense of having a larger
+# fraction of features with hash collisions as shown in the example notebook
 # :ref:`sphx_glr_auto_examples_text_plot_hashing_vs_dict_vectorizer.py`.
