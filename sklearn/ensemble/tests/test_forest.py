@@ -184,12 +184,9 @@ def check_imbalanced_criterion(name, criterion):
     # score is a mean of minority class predict_proba
     score = clf.predict_proba(X_large_imbl)[:, 1].mean()
 
-    assert (
-        score > imbl_minority_class_ratio
-    ), "Failed with imbalanced criterion %s, score = %f, minority class ratio = %f" % (
-        criterion,
-        score,
-        imbl_minority_class_ratio,
+    assert score > imbl_minority_class_ratio, (
+        f"Failed with imbalanced criterion {criterion}, score = {score}, minority class"
+        f" ratio = {imbl_minority_class_ratio}"
     )
 
 
