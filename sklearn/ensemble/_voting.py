@@ -13,30 +13,28 @@ This module contains:
 #
 # License: BSD 3 clause
 
+import numbers
 from abc import abstractmethod
 
-import numbers
 import numpy as np
-
 from joblib import Parallel
 
+from ._base import _BaseHeterogeneousEnsemble
+from ._base import _fit_single_estimator
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..base import TransformerMixin
 from ..base import clone
-from ._base import _fit_single_estimator
-from ._base import _BaseHeterogeneousEnsemble
+from ..exceptions import NotFittedError
 from ..preprocessing import LabelEncoder
 from ..utils import Bunch
 from ..utils import check_scalar
-from ..utils.metaestimators import available_if
-from ..utils.validation import check_is_fitted
-from ..utils.validation import _check_feature_names_in
-from ..utils.multiclass import check_classification_targets
-from ..utils.validation import column_or_1d
-from ..exceptions import NotFittedError
 from ..utils._estimator_html_repr import _VisualBlock
 from ..utils.fixes import delayed
+from ..utils.metaestimators import available_if
+from ..utils.multiclass import check_classification_targets
+from ..utils.validation import _check_feature_names_in
+from ..utils.validation import check_is_fitted
 
 
 class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
@@ -597,7 +595,6 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         self : object
             Fitted estimator.
         """
-        y = column_or_1d(y, warn=True)
         return super().fit(X, y, sample_weight)
 
     def predict(self, X):
@@ -617,7 +614,13 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
             The predicted values.
         """
         check_is_fitted(self)
-        return np.average(self._predict(X), axis=1, weights=self._weights_not_none)
+        pred = self._predict(X)
+        avg_pred = np.average(self._predict(X), axis=-1, weights=self._weights_not_none)
+
+        if len(pred.shape) > 0:
+            avg_pred = avg_pred.T
+
+        return avg_pred
 
     def transform(self, X):
         """Return predictions for X for each estimator.
