@@ -852,8 +852,8 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                 jac=True,
                 options={
                     "maxiter": self.max_iter,
-                    "maxls": 30,  # default is 20
-                    "iprint": (self.verbose > 0) - 1,
+                    "maxls": 40,  # default is 20
+                    "iprint": self.verbose - 1,
                     "gtol": self.tol,
                     "ftol": 64 * np.finfo(np.float64).eps,  # lbfgs is float64 land.
                 },
