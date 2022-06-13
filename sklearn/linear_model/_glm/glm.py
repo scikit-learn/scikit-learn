@@ -152,6 +152,51 @@ class NewtonSolver(ABC):
         Sets self.coef_newton.
         """
 
+    def lbfgs_step(self, X, y, sample_weight):
+        """Fallback for inner solver.
+
+        Use 4 lbfgs steps. As in line_search sets:
+            - self.coef_old
+            - self.coef
+            - self.loss_value_old
+            - self.loss_value
+            - self.gradient_old
+            - self.gradient
+            - self.raw_prediction
+        As in inner_solver sets:
+            - self.coef_newton
+        """
+        self.coef_old = self.coef
+        self.loss_value_old = self.loss_value
+        self.gradient_old = self.gradient
+
+        opt_res = scipy.optimize.minimize(
+            self.linear_loss.loss_gradient,
+            self.coef,
+            method="L-BFGS-B",
+            jac=True,
+            options={
+                "maxiter": 4,
+                "maxls": 40,  # default is 20
+                "iprint": self.verbose - 2,
+                "gtol": self.tol,
+                "ftol": 64 * np.finfo(np.float64).eps,  # lbfgs is float64 land.
+            },
+            args=(X, y, sample_weight, self.l2_reg_strength, self.n_threads),
+        )
+        self.coef = opt_res.x
+        self.coef_newton = self.coef - self.coef_old
+        _, _, self.raw_prediction = self.linear_loss.weight_intercept_raw(self.coef, X)
+        self.loss_value, self.gradient = self.linear_loss.loss_gradient(
+            coef=self.coef,
+            X=X,
+            y=y,
+            sample_weight=sample_weight,
+            l2_reg_strength=self.l2_reg_strength,
+            n_threads=self.n_threads,
+            raw_prediction=self.raw_prediction,
+        )
+
     def line_search(self, X, y, sample_weight):
         """Backtracking line search.
 
