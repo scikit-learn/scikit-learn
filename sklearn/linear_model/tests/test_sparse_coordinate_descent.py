@@ -377,11 +377,12 @@ def test_sparse_enet_coordinate_descent():
         clf.fit(X, y)
 
 
-def test_sparse_read_only_buffer():
+@pytest.mark.parametrize("copy_X", (True, False))
+def test_sparse_read_only_buffer(copy_X):
     """Test that sparse coordinate descent works for read-only buffers"""
     rng = np.random.RandomState(0)
 
-    clf = ElasticNet(alpha=0.1, copy_X=False, random_state=rng)
+    clf = ElasticNet(alpha=0.1, copy_X=copy_X, random_state=rng)
     X = sp.random(100, 20, format="csc", random_state=rng)
 
     # Make X.data read-only
