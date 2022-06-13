@@ -318,6 +318,7 @@ class LinearDiscriminantAnalysis(
         "store_covariance": [bool],
         "tol": [Interval(Real, 0, None, closed="left")],
         "covariance_estimator": [EllipticEnvelope, EmpiricalCovariance, None],
+        "priors": ["array-like", None],
     }
 
     def __init__(
