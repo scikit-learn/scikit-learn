@@ -536,7 +536,7 @@ Log Loss or Entropy:
   
       \mathrm{LL}(D, T) = \sum_{m \in T} \frac{n_m}{n} H(Q_m)
 
-HellingerDistance:
+**HellingerDistance**
 
 Hellinger distance is implemented for the binary case only and a single label.
 
