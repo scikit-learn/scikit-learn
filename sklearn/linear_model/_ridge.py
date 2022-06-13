@@ -780,7 +780,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
     _parameter_constraints = {
         "alpha": [Interval(Real, 0, None, closed="left"), float, np.ndarray],
         "fit_intercept": [bool],
-        "normalize": [Hidden(StrOptions({"deprecated"})), bool],
+        "normalize": [StrOptions({"deprecated"}), bool],
         "copy_X": [bool],
         "max_iter": [Interval(Integral, 1, None, closed="left"), None],
         "tol": [Interval(Real, 0, None, closed="left")],
@@ -1384,6 +1384,11 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
     >>> clf.score(X, y)
     0.9595...
     """
+
+    _parameter_constraints = {
+        **_BaseRidge._parameter_constraints,
+        "class_weight": [dict, StrOptions({"balanced"}), None],
+    }
 
     def __init__(
         self,
