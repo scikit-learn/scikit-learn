@@ -778,7 +778,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
 
 
     _parameter_constraints = {
-        "alpha": [Interval(Real, 0, None, closed="left"), float, np.ndarray],
+        "alpha": [Interval(Real, 0, None, closed="left"), np.ndarray],
         "fit_intercept": [bool],
         "normalize": [Hidden(StrOptions({"deprecated"})), bool],
         "copy_X": [bool],
