@@ -22,3 +22,6 @@
 
 # PR 22474: Update to Black 22.1.0
 1fc86b6aacd89da44a3b4e8abf7c3e2ba4336ffe
+
+# PR 22983: Update to Black 22.3.0
+d4aad64b1eb2e42e76f49db2ccfbe4b4660d092b

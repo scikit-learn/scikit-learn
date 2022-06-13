@@ -55,14 +55,15 @@ def auc(x, y):
     Parameters
     ----------
     x : ndarray of shape (n,)
-        x coordinates. These must be either monotonic increasing or monotonic
+        X coordinates. These must be either monotonic increasing or monotonic
         decreasing.
     y : ndarray of shape, (n,)
-        y coordinates.
+        Y coordinates.
 
     Returns
     -------
     auc : float
+        Area Under the Curve.
 
     See Also
     --------
@@ -371,7 +372,7 @@ def roc_auc_score(
     multi_class="raise",
     labels=None,
 ):
-    """Compute Area Under the Receiver Operating Characteristic Curve (ROC AUC)
+    """Compute Area Under the Receiver Operating Characteristic Curve (ROC AUC) \
     from prediction scores.
 
     Note: this implementation can be used with binary, multiclass and
@@ -470,6 +471,16 @@ def roc_auc_score(
     Returns
     -------
     auc : float
+        Area Under the Curve score.
+
+    See Also
+    --------
+    average_precision_score : Area under the precision-recall curve.
+    roc_curve : Compute Receiver operating characteristic (ROC) curve.
+    RocCurveDisplay.from_estimator : Plot Receiver Operating Characteristic
+        (ROC) curve given an estimator and some data.
+    RocCurveDisplay.from_predictions : Plot Receiver Operating Characteristic
+        (ROC) curve given the true and predicted values.
 
     References
     ----------
@@ -491,15 +502,6 @@ def roc_auc_score(
             Under the ROC Curve for Multiple Class Classification Problems.
             Machine Learning, 45(2), 171-186.
             <http://link.springer.com/article/10.1023/A:1010920819831>`_
-
-    See Also
-    --------
-    average_precision_score : Area under the precision-recall curve.
-    roc_curve : Compute Receiver operating characteristic (ROC) curve.
-    RocCurveDisplay.from_estimator : Plot Receiver Operating Characteristic
-        (ROC) curve given an estimator and some data.
-    RocCurveDisplay.from_predictions : Plot Receiver Operating Characteristic
-        (ROC) curve given the true and predicted values.
 
     Examples
     --------
@@ -801,6 +803,9 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None, sample_weight
     have a corresponding threshold. This ensures that the graph starts on the
     y axis.
 
+    The first precision and recall values are precision=class balance and recall=1.0
+    which corresponds to a classifier that always predicts the positive class.
+
     Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
 
     Parameters
@@ -834,7 +839,7 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None, sample_weight
 
     thresholds : ndarray of shape (n_thresholds,)
         Increasing thresholds on the decision function used to compute
-        precision and recall. n_thresholds <= len(np.unique(probas_pred)).
+        precision and recall where `n_thresholds = len(np.unique(probas_pred))`.
 
     See Also
     --------
@@ -855,11 +860,11 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None, sample_weight
     >>> precision, recall, thresholds = precision_recall_curve(
     ...     y_true, y_scores)
     >>> precision
-    array([0.66666667, 0.5       , 1.        , 1.        ])
+    array([0.5       , 0.66666667, 0.5       , 1.        , 1.        ])
     >>> recall
-    array([1. , 0.5, 0.5, 0. ])
+    array([1. , 1. , 0.5, 0.5, 0. ])
     >>> thresholds
-    array([0.35, 0.4 , 0.8 ])
+    array([0.1 , 0.35, 0.4 , 0.8 ])
     """
     fps, tps, thresholds = _binary_clf_curve(
         y_true, probas_pred, pos_label=pos_label, sample_weight=sample_weight
@@ -879,10 +884,8 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None, sample_weight
     else:
         recall = tps / tps[-1]
 
-    # stop when full recall attained
-    # and reverse the outputs so recall is decreasing
-    last_ind = tps.searchsorted(tps[-1])
-    sl = slice(last_ind, None, -1)
+    # reverse the outputs so recall is decreasing
+    sl = slice(None, None, -1)
     return np.hstack((precision[sl], 1)), np.hstack((recall[sl], 0)), thresholds[sl]
 
 
@@ -1056,6 +1059,7 @@ def label_ranking_average_precision_score(y_true, y_score, *, sample_weight=None
     Returns
     -------
     score : float
+        Ranking-based average precision score.
 
     Examples
     --------
@@ -1065,7 +1069,6 @@ def label_ranking_average_precision_score(y_true, y_score, *, sample_weight=None
     >>> y_score = np.array([[0.75, 0.5, 1], [1, 0.2, 0.1]])
     >>> label_ranking_average_precision_score(y_true, y_score)
     0.416...
-
     """
     check_consistent_length(y_true, y_score, sample_weight)
     y_true = check_array(y_true, ensure_2d=False)

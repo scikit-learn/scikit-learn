@@ -280,10 +280,10 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         Returns
         -------
         validation_mask : ndarray of shape (n_samples, )
-            Equal to 1 on the validation set, 0 on the training set.
+            Equal to True on the validation set, False on the training set.
         """
         n_samples = y.shape[0]
-        validation_mask = np.zeros(n_samples, dtype=np.uint8)
+        validation_mask = np.zeros(n_samples, dtype=np.bool_)
         if not self.early_stopping:
             # use the full set for training, with an empty validation set
             return validation_mask
@@ -310,7 +310,7 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
                 )
             )
 
-        validation_mask[idx_val] = 1
+        validation_mask[idx_val] = True
         return validation_mask
 
     def _make_validation_score_cb(
@@ -1622,7 +1622,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         random_state = check_random_state(self.random_state)
         # numpy mtrand expects a C long which is a signed 32 bit integer under
         # Windows
-        seed = random_state.randint(0, np.iinfo(np.int32).max)
+        seed = random_state.randint(0, MAX_INT)
 
         dataset, intercept_decay = make_dataset(
             X, y, sample_weight, random_state=random_state

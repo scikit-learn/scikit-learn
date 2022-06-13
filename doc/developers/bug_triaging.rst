@@ -64,6 +64,10 @@ can do the following important tasks:
   or needs help (this is typically very important in the context
   of sprints, where the risk is to create many unfinished PRs)
 
+- If a stalled PR is taken over by a newer PR, then label the stalled PR as
+  "Superseded", leave a comment on the stalled PR linking to the new PR, and
+  likely close the stalled PR.
+
 - Triage issues:
 
   - **close usage questions** and politely point the reporter to use
