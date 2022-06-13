@@ -269,7 +269,7 @@ def fastica(
           reconciled during fit so that their outputs match. This may produce
           a different output for each solver when compared to
           `sign_flip=False`.
-          
+
         .. versionadded:: 1.2
 
     Returns
@@ -438,7 +438,7 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
           reconciled during fit so that their outputs match. This may produce
           a different output for each solver when compared to
           `sign_flip=False`.
-          
+
         .. versionadded:: 1.2
 
     Attributes
