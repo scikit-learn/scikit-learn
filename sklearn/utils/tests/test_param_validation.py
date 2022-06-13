@@ -464,3 +464,22 @@ def test_hidden_stroptions():
     err_msg = str(exc_info.value)
     assert "auto" in err_msg
     assert "warn" not in err_msg
+
+
+def test_no_validation():
+    """Check that validation can be skipped for a parameter."""
+
+    @validate_params({"param1": [int, None], "param2": ["no validation"]})
+    def f(param1=None, param2=None):
+        pass
+
+    # param1 is validated
+    with pytest.raises(ValueError, match="The 'param1' parameter"):
+        f(param1="wrong")
+
+    # param2 is not validated: any type is valid.
+    class SomeType:
+        pass
+
+    f(param2=SomeType)
+    f(param2=SomeType())
