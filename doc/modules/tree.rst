@@ -396,7 +396,7 @@ Tips on practical use
     most of the samples.
 
   * If the target is binary and imbalanced, it is recommended to use
-    Hellinger distance, ``criterion="hellinger"``.
+    Hellinger distance, `criterion="hellinger"`.
 
 
 .. _tree_algorithms:
