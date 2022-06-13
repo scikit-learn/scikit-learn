@@ -214,7 +214,7 @@ def test_glm_regression(solver, fit_intercept, glm_dataset):
     params = dict(
         alpha=alpha,
         fit_intercept=fit_intercept,
-        solver=solver,
+        # solver=solver,  # only lbfgs available
         tol=1e-12,
         max_iter=1000,
     )
@@ -231,7 +231,7 @@ def test_glm_regression(solver, fit_intercept, glm_dataset):
 
     model.fit(X, y)
 
-    rtol = 3e-5
+    rtol = 5e-5
     assert model.intercept_ == pytest.approx(intercept, rel=rtol)
     assert_allclose(model.coef_, coef, rtol=rtol)
 
@@ -258,7 +258,7 @@ def test_glm_regression_hstacked_X(solver, fit_intercept, glm_dataset):
     params = dict(
         alpha=alpha / 2,
         fit_intercept=fit_intercept,
-        solver=solver,
+        # solver=solver,  # only lbfgs available
         tol=1e-12,
         max_iter=1000,
     )
@@ -306,7 +306,7 @@ def test_glm_regression_vstacked_X(solver, fit_intercept, glm_dataset):
     params = dict(
         alpha=alpha,
         fit_intercept=fit_intercept,
-        solver=solver,
+        # solver=solver,  # only lbfgs available
         tol=1e-12,
         max_iter=1000,
     )
@@ -346,7 +346,7 @@ def test_glm_regression_unpenalized(solver, fit_intercept, glm_dataset):
     params = dict(
         alpha=alpha,
         fit_intercept=fit_intercept,
-        solver=solver,
+        # solver=solver,  # only lbfgs available
         tol=1e-12,
         max_iter=1000,
     )
@@ -411,7 +411,7 @@ def test_glm_regression_unpenalized_hstacked_X(solver, fit_intercept, glm_datase
     params = dict(
         alpha=alpha,
         fit_intercept=fit_intercept,
-        solver=solver,
+        # solver=solver,  # only lbfgs available
         tol=1e-12,
         max_iter=1000,
     )
@@ -488,7 +488,7 @@ def test_glm_regression_unpenalized_vstacked_X(solver, fit_intercept, glm_datase
     params = dict(
         alpha=alpha,
         fit_intercept=fit_intercept,
-        solver=solver,
+        # solver=solver,  # only lbfgs available
         tol=1e-12,
         max_iter=1000,
     )
@@ -767,38 +767,60 @@ def test_glm_log_regression(fit_intercept, estimator):
         assert_allclose(res.coef_, coef, rtol=2e-6)
 
 
+@pytest.mark.parametrize("solver", SOLVERS)
 @pytest.mark.parametrize("fit_intercept", [True, False])
-def test_warm_start(fit_intercept):
-    n_samples, n_features = 110, 10
+def test_warm_start(solver, fit_intercept, global_random_seed):
+    n_samples, n_features = 100, 10
     X, y = make_regression(
         n_samples=n_samples,
         n_features=n_features,
         n_informative=n_features - 2,
-        noise=0.5,
-        random_state=42,
+        bias=fit_intercept * 1.0,
+        noise=1.0,
+        random_state=global_random_seed,
     )
+    y = np.abs(y)  # Poisson requires non-negative targets.
+    params = {"solver": solver, "fit_intercept": fit_intercept, "tol": 1e-10}
 
-    glm1 = _GeneralizedLinearRegressor(
-        warm_start=False, fit_intercept=fit_intercept, max_iter=1000
-    )
+    glm1 = PoissonRegressor(warm_start=False, max_iter=1000, **params)
     glm1.fit(X, y)
 
-    glm2 = _GeneralizedLinearRegressor(
-        warm_start=True, fit_intercept=fit_intercept, max_iter=1
-    )
-    # As we intentionally set max_iter=1, L-BFGS-B will issue a
-    # ConvergenceWarning which we here simply ignore.
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", category=ConvergenceWarning)
+    glm2 = PoissonRegressor(warm_start=True, max_iter=1, **params)
+    # As we intentionally set max_iter=1 such that the solver should raise a
+    # ConvergenceWarning.
+    with pytest.warns(ConvergenceWarning):
         glm2.fit(X, y)
-    assert glm1.score(X, y) > glm2.score(X, y)
+
+    linear_loss = LinearModelLoss(
+        base_loss=glm1._get_loss(),
+        fit_intercept=fit_intercept,
+    )
+    sw = np.full_like(y, fill_value=1 / n_samples)
+
+    objective_glm1 = linear_loss.loss(
+        coef=np.r_[glm1.coef_, glm1.intercept_] if fit_intercept else glm1.coef_,
+        X=X,
+        y=y,
+        sample_weight=sw,
+        l2_reg_strength=1.0,
+    )
+    objective_glm2 = linear_loss.loss(
+        coef=np.r_[glm2.coef_, glm2.intercept_] if fit_intercept else glm2.coef_,
+        X=X,
+        y=y,
+        sample_weight=sw,
+        l2_reg_strength=1.0,
+    )
+    assert objective_glm1 < objective_glm2
+
     glm2.set_params(max_iter=1000)
     glm2.fit(X, y)
-    # The two model are not exactly identical since the lbfgs solver
+    # The two models are not exactly identical since the lbfgs solver
     # computes the approximate hessian from previous iterations, which
     # will not be strictly identical in the case of a warm start.
-    assert_allclose(glm1.coef_, glm2.coef_, rtol=1e-5)
-    assert_allclose(glm1.score(X, y), glm2.score(X, y), rtol=1e-4)
+    rtol = 2e-4
+    assert_allclose(glm1.coef_, glm2.coef_, rtol=rtol)
+    assert_allclose(glm1.score(X, y), glm2.score(X, y), rtol=1e-5)
 
 
 # FIXME: 'normalize' to be removed in 1.2 in LinearRegression
