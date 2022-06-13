@@ -1140,6 +1140,8 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         self : object
             Fitted estimator.
         """
+        self._validate_params()
+
         _accept_sparse = _get_valid_accept_sparse(sparse.issparse(X), self.solver)
         X, y = self._validate_data(
             X,
@@ -1439,6 +1441,8 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
         self : object
             Instance of the estimator.
         """
+        self._validate_params()
+        
         X, y, sample_weight, Y = self._prepare_data(X, y, sample_weight, self.solver)
 
         super().fit(X, Y, sample_weight=sample_weight)
