@@ -865,12 +865,6 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
-        if self.max_iter is not None:
-            self.max_iter = check_scalar(
-                self.max_iter, "max_iter", target_type=numbers.Integral, min_val=1
-            )
-
-        self.tol = check_scalar(self.tol, "tol", target_type=numbers.Real, min_val=0.0)
 
         # when X is sparse we only remove offset from y
         X, y, X_offset, y_offset, X_scale = _preprocess_data(
