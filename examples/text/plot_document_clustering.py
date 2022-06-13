@@ -25,6 +25,7 @@ For document analysis via a supervised learning approach, see the example script
 
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #         Lars Buitinck
+#         Olivier Grisel <olivier.grisel@ensta.org>
 #         Arturo Amor <david-arturo.amor-quiroz@inria.fr>
 # License: BSD 3 clause
 
@@ -112,8 +113,8 @@ def fit_and_evaluate(km, X, name=None, n_runs=5):
 
     train_times = []
     scores = defaultdict(list)
-    for i in range(n_runs):
-        km.set_params(random_state=i)
+    for seed in range(n_runs):
+        km.set_params(random_state=seed)
         t0 = time()
         km.fit(X)
         train_times.append(time() - t0)
@@ -352,23 +353,24 @@ ax1.set_xlabel("Clustering time (s)")
 plt.tight_layout()
 
 # %%
-# The Silhouette Coefficient suffers from the phenomenon called the "Curse of
-# Dimensionality" for high dimensional datasets such as text data. That is the
-# reason why it improves when using LSA. Other measures such as the V-measure
-# and the Adjusted Rand Index are information-theory-based evaluation scores:
-# they are not affected by the curse of dimensionality as they are only based on
-# cluster assignments rather than distances.
+# :class:`~sklearn.cluster.KMeans` and :class:`~sklearn.cluster.MiniBatchKMeans`
+# suffer from the phenomenon called the `Curse of Dimensionality
+# <https://en.wikipedia.org/wiki/Curse_of_dimensionality>`_ for high dimensional
+# datasets such as text data. That is the reason why the overall scores improve
+# when using LSA. The Silhouette Coefficient is particularly low because its
+# definition requires measuring distances, in contrast with other measures such
+# as the V-measure and the Adjusted Rand Index which are only based on cluster
+# assignments rather than distances.
 #
-# :class:`~sklearn.cluster.MiniBatchKMeans` is instable for this relatively
-# small dataset. It is more interesting to use when the number of samples is
-# much bigger, but it comes at the expense of clustering quality. Using the
-# `"k-means++"` init on LSA reduced data is both good in terms of metrics and
-# computing speed. LSA also increases stability as shown in the section below.
-#
-# Even if :class:`~sklearn.cluster.KMeans` has low clustering time when used
-# with LSA (both from hashed and exact tf-idf vectors), the LSA step itself
-# takes a long time, especially with hashed vectors:
-# hashed space is typically large (set to `n_features=50_000` in this example).
-# One can try lower number of features at the expense of having a larger
-# fraction of features with hash collisions as shown in the example notebook
+# Using the `"k-means++"` init on LSA reduced data is both good in terms of
+# metrics and stability as shown in the plot above. It also has low clustering
+# time though the LSA step itself takes a long time, especially with hashed
+# vectors. The reason is that a hashed space is typically large (set to
+# `n_features=50_000` in this example). One can try lowering the number of
+# features at the expense of having a larger fraction of features with hash
+# collisions as shown in the example notebook
 # :ref:`sphx_glr_auto_examples_text_plot_hashing_vs_dict_vectorizer.py`.
+#
+# :class:`~sklearn.cluster.MiniBatchKMeans` is unstable for this relatively
+# small dataset. It is more interesting to use when the number of samples is
+# much bigger, but it comes at the expense of clustering quality.
