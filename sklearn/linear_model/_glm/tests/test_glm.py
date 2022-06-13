@@ -380,15 +380,17 @@ def test_glm_regression_unpenalized(solver, fit_intercept, glm_dataset):
     # FIXME: `assert_allclose(model.coef_, coef)` should work for all cases but fails
     # for the wide/fat case with n_features > n_samples. Most current GLM solvers do
     # NOT return the minimum norm solution with fit_intercept=True.
-    rtol = 5e-6 if solver == "lbfgs" else 1e-7
+    rtol = 5e-5 if solver == "lbfgs" else 1e-7
     if n_samples > n_features:
         assert model.intercept_ == pytest.approx(intercept)
         assert_allclose(model.coef_, coef, rtol=rtol)
     else:
         # As it is an underdetermined problem, prediction = y. The following shows that
         # we get a solution, i.e. a (non-unique) minimum of the objective function ...
-        assert_allclose(model.predict(X), y)
-        assert_allclose(model._get_loss().link.inverse(X @ coef + intercept), y)
+        assert_allclose(model.predict(X), y, rtol=1e-6)
+        assert_allclose(
+            model._get_loss().link.inverse(X @ coef + intercept), y, rtol=5e-7
+        )
         if (solver in ["lbfgs", "newton-qr-cholesky"] and fit_intercept) or solver in [
             "newton-cholesky"
         ]:
@@ -456,14 +458,14 @@ def test_glm_regression_unpenalized_hstacked_X(solver, fit_intercept, glm_datase
         model_intercept = model.intercept_
         model_coef = model.coef_
 
-    rtol = 3e-5 if solver == "lbfgs" else 1e-6
+    rtol = 6e-5 if solver == "lbfgs" else 1e-6
     if n_samples > n_features:
         assert model_intercept == pytest.approx(intercept)
-        assert_allclose(model_coef, np.r_[coef, coef], rtol=rtol)
+        assert_allclose(model_coef, np.r_[coef, coef], rtol=1e-4)
     else:
         # As it is an underdetermined problem, prediction = y. The following shows that
         # we get a solution, i.e. a (non-unique) minimum of the objective function ...
-        assert_allclose(model.predict(X), y)
+        assert_allclose(model.predict(X), y, rtol=1e-6)
         if (solver in ["lbfgs", "newton-qr-cholesky"] and fit_intercept) or solver in [
             "newton-cholesky"
         ]:
@@ -524,14 +526,14 @@ def test_glm_regression_unpenalized_vstacked_X(solver, fit_intercept, glm_datase
         warnings.filterwarnings("ignore", category=ConvergenceWarning)
     model.fit(X, y)
 
-    rtol = 3e-5 if solver == "lbfgs" else 1e-6
+    rtol = 5e-5 if solver == "lbfgs" else 1e-6
     if n_samples > n_features:
         assert model.intercept_ == pytest.approx(intercept)
         assert_allclose(model.coef_, coef, rtol=rtol)
     else:
         # As it is an underdetermined problem, prediction = y. The following shows that
         # we get a solution, i.e. a (non-unique) minimum of the objective function ...
-        assert_allclose(model.predict(X), y)
+        assert_allclose(model.predict(X), y, rtol=1e-6)
         if (solver in ["lbfgs", "newton-qr-cholesky"] and fit_intercept) or solver in [
             "newton-cholesky"
         ]:
