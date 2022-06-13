@@ -411,6 +411,9 @@ class LinearModelLoss:
 
         hessian : ndarray
             Hessian matrix.
+
+        hessian_warning : bool
+            True if pointwise hessian has more than half of its elements non-positive.
         """
         n_samples, n_features = X.shape
         n_dof = n_features + int(self.fit_intercept)
@@ -427,14 +430,10 @@ class LinearModelLoss:
             n_threads=n_threads,
         )
 
-        # For non-canonical link functions and far away from the optimum, we take
-        # care that the hessian is positive.
-        positive_hess = hess_pointwise[hess_pointwise > 0]
-        if len(positive_hess) > 0:
-            min_hess = np.amin(positive_hess)
-        else:
-            min_hess = 1
-        hess_pointwise[hess_pointwise <= 0] = min_hess
+        # For non-canonical link functions and far away from the optimum, the pointwise
+        # hessian can be negative. We take care that the hessian is positive.
+        hessian_warning = np.sum(hess_pointwise <= 0) > len(hess_pointwise) / 2
+        hess_pointwise = np.abs(hess_pointwise)
 
         if not self.base_loss.is_multiclass:
             # gradient
@@ -451,6 +450,11 @@ class LinearModelLoss:
                 hess = np.empty(shape=(n_dof, n_dof), dtype=weights.dtype)
             else:
                 hess = hessian_out
+
+            if hessian_warning:
+                # Exit early without computing the hessian.
+                return grad, hess, hessian_warning
+
             # TODO: This "sandwich product", X' diag(W) X, can be greatly improved by
             # a dedicated Cython routine.
             if sparse.issparse(X):
@@ -487,7 +491,7 @@ class LinearModelLoss:
             # cross-entropy.
             raise NotImplementedError
 
-        return grad, hess
+        return grad, hess, hessian_warning
 
     def gradient_hessian_product(
         self, coef, X, y, sample_weight=None, l2_reg_strength=0.0, n_threads=1
