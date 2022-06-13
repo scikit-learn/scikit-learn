@@ -778,14 +778,17 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
 
 
     _parameter_constraints = {
-        "alpha": [Interval(Real, 1, None, closed="left"), float, np.ndarray],
+        "alpha": [Interval(Real, 0, None, closed="left"), float, np.ndarray],
         "fit_intercept": [bool],
-        "normalize": [StrOptions({"deprecated"}), bool],
+        "normalize": [Hidden(StrOptions({"deprecated"})), bool],
         "copy_X": [bool],
-        "max_iter": [Interval(Integral, 1, None, closed="left")],
+        "max_iter": [Interval(Integral, 1, None, closed="left"), None],
         "tol": [Interval(Real, 0, None, closed="left")],
-        "solver": [StrOptions({'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', \
-            'sag', 'saga', 'lbfgs'})],
+        "solver": [
+            StrOptions(
+            {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', 'sag', 'saga', 'lbfgs'}
+            )
+        ],
         "positive": [bool],
         "random_state": ["random_state"],
     }
