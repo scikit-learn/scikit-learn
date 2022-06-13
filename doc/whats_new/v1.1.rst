@@ -1024,7 +1024,8 @@ Changelog
 
 - |Feature| :class:`tree.DecisionTreeClassifier`, :class:`tree.ExtraTreeClassifier`,
   :class:`ensemble.RandomForestClassifier` and :class:`ensemble.ExtraTreesClassifier`
-  now support the Hellinger distance as a split criterion.
+  now support the Hellinger distance as a split criterion for
+  binary classification problem.
   :pr:`16478` by :user:`Evgeni Dubov <EvgeniDubov>`.
 
 :mod:`sklearn.utils`
