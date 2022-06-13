@@ -411,6 +411,9 @@ class NewtonSolver(ABC):
         while self.iteration <= self.max_iter and not self.converged:
             if self.verbose:
                 print(f"Newton iter={self.iteration}")
+
+            self.use_lbfgs_step = False  # Fallback for inner_solve.
+
             # 1. Update hessian and gradient
             self.update_gradient_hessian(X=X, y=y, sample_weight=sample_weight)
 
@@ -426,12 +429,15 @@ class NewtonSolver(ABC):
             self.inner_solve(X=X, y=y, sample_weight=sample_weight)
             if self.stop:
                 break
+            if self.use_lbfgs_step:
+                self.lbfgs_step(X=X, y=y, sample_weight=sample_weight)
 
             # 3. Backtracking line search
             #    This usually sets self.coef_old, self.coef, self.loss_value_old
             #    self.loss_value, self.gradient_old, self.gradient,
             #    self.raw_prediction.
-            self.line_search(X=X, y=y, sample_weight=sample_weight)
+            if not self.use_lbfgs_step:
+                self.line_search(X=X, y=y, sample_weight=sample_weight)
 
             # 4. Check convergence
             #    Sets self.converged.
@@ -462,8 +468,30 @@ class BaseCholeskyNewtonSolver(NewtonSolver):
     def setup(self, X, y, sample_weight):
         super().setup(X=X, y=y, sample_weight=sample_weight)
         self.count_singular = 0
+        self.count_hessian_warning = 0
 
     def inner_solve(self, X, y, sample_weight):
+        if self.hessian_warning:
+            if self.count_bad_hessian == 0:
+                # We only need to throw this warning once.
+                warnings.warn(
+                    f"The inner solver of {self.__class__.__name__} detected a "
+                    " pointwise hessian with many negative values at iteration "
+                    f"#{self.iteration}. It will now try a lbfgs step."
+                    " Note that this warning is only raised once, the problem may,"
+                    " however, occur in several or all iterations. Set verbose >= 1"
+                    " to get more information.\n",
+                    ConvergenceWarning,
+                )
+            self.count_hessian_warning += 1
+            if self.verbose:
+                print(
+                    "  The inner solver detected a pointwise hessian with many "
+                    "negative values and resorts to a lbfgs step."
+                )
+            self.use_lbfgs_step = True
+            return
+
         try:
             with warnings.catch_warnings():
                 warnings.simplefilter("error", scipy.linalg.LinAlgWarning)
@@ -529,7 +557,7 @@ class CholeskyNewtonSolver(BaseCholeskyNewtonSolver):
         self.hessian = np.empty_like(self.coef, shape=(n_dof, n_dof))
 
     def update_gradient_hessian(self, X, y, sample_weight):
-        self.linear_loss.gradient_hessian(
+        _, _, self.hessian_warning = self.linear_loss.gradient_hessian(
             coef=self.coef,
             X=X,
             y=y,
@@ -590,7 +618,7 @@ class QRCholeskyNewtonSolver(BaseCholeskyNewtonSolver):
 
     def update_gradient_hessian(self, X, y, sample_weight):
         # Use R' instead of X
-        self.linear_loss.gradient_hessian(
+        _, _, self.hessian_warning = self.linear_loss.gradient_hessian(
             coef=self.coef,
             X=self.R.T,
             y=y,
@@ -601,6 +629,10 @@ class QRCholeskyNewtonSolver(BaseCholeskyNewtonSolver):
             hessian_out=self.hessian,
             raw_prediction=self.raw_prediction,  # this was updated in line_search
         )
+
+    def lbfgs_step(self, X, y, sample_weight):
+        # Use R' instead of X
+        super().lbfgs_step(X=self.R.T, y=y, sample_weight=sample_weight)
 
     def line_search(self, X, y, sample_weight):
         # Use R' instead of X
