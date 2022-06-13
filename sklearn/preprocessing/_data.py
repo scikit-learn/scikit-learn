@@ -9,6 +9,7 @@
 
 
 import warnings
+from numbers import Real
 
 import numpy as np
 from scipy import sparse
@@ -24,6 +25,7 @@ from ..base import (
 )
 from ..utils import check_array
 from ..utils.extmath import _incremental_mean_and_var, row_norms
+from ..utils._param_validation import Interval
 from ..utils.sparsefuncs_fast import (
     inplace_csr_row_normalize_l1,
     inplace_csr_row_normalize_l2,
@@ -1451,7 +1453,10 @@ class RobustScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     _parameter_constraints = {
         "with_centering": [bool],
         "with_scaling": [bool],
-        "quantile_range": ["array-like"],
+        "quantile_range": [
+            Interval(Real, 0, 100, closed="both"),
+            Interval(Real, 0, 100, closed="both"),
+        ],
         "copy": [bool],
         "unit_variance": [bool],
     }
