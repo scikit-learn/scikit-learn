@@ -232,8 +232,8 @@ class NewtonSolver(ABC):
                 check = sum_abs_grad < sum_abs_grad_old
                 if is_verbose:
                     print(
-                        "      check sum(|gradient|) <= sum(|gradient_old|): "
-                        f"{sum_abs_grad} <= {sum_abs_grad_old} {check}"
+                        "      check sum(|gradient|) < sum(|gradient_old|): "
+                        f"{sum_abs_grad} < {sum_abs_grad_old} {check}"
                     )
                 if check:
                     break
@@ -288,7 +288,7 @@ class NewtonSolver(ABC):
         else:
             warnings.warn(
                 f"Line search of Newton solver {self.__class__.__name__} at iteration "
-                "#{self.iteration} did no converge after 21 line search refinement "
+                f"#{self.iteration} did no converge after 21 line search refinement "
                 "iterations.",
                 ConvergenceWarning,
             )
@@ -433,7 +433,7 @@ class BaseCholeskyNewtonSolver(NewtonSolver):
                     f"The inner solver of {self.__class__.__name__} stumbled upon a"
                     " singular or very ill-conditioned hessian matrix at iteration "
                     f"#{self.iteration}. It will now try a simple gradient step."
-                    " Note that this warning is only raised once, the problem may, "
+                    " Note that this warning is only raised once, the problem may,"
                     " however, occur in several or all iterations. Set verbose >= 1"
                     " to get more information.\n"
                     "Your options are to use another solver or to avoid such situation"
@@ -463,11 +463,8 @@ class BaseCholeskyNewtonSolver(NewtonSolver):
             # We add 1e-3 to the diagonal hessian part to make in invertible and to
             # restrict coef_newton to at most ~1e3. The line search considerst step
             # sizes until 1e-6 * newton_step ~1e-3 * newton_step.
-            # Deviding by self.iteration ensures (slow) convergence.
-            eps = 1e-3 / self.iteration
+            eps = 1e-3
             self.coef_newton = -self.gradient / (np.diag(self.hessian) + eps)
-            # We have throw this above warning an just stop.
-            # self.stop = True
 
 
 class CholeskyNewtonSolver(BaseCholeskyNewtonSolver):
