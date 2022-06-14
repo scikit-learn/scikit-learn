@@ -111,6 +111,12 @@ Changelog
 - |Fix| :class:`impute.SimpleImputer` uses the dtype seen in `fit` for
   `transform` when the dtype is object. :pr:`22063` by `Thomas Fan`_.
 
+:mod:`sklearn.linear_model`
+...........................
+
+- |Fix| Use dtype-aware tolerances for the validation of gram matrices (passed by users
+  or precomputed). :pr:`22059` by :user:`Malte S. Kurz <MalteKurz>`.
+
 :mod:`sklearn.metrics`
 ......................
 
