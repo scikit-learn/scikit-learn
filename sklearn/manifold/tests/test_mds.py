@@ -106,6 +106,7 @@ def test_MDS_eigh():
         match = match or np.allclose(mds_clf.embedding_, X_possible)
     assert match
 
+
 def test_nonmetric_mds_eigh_error():
     sim = np.ones((2, 2))
     mds_clf = mds.MDS(metric=False, solver="eigh")
