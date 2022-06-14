@@ -518,16 +518,11 @@ Changelog
   calling `fit` or `fit_transform`.
   :pr:`22553` by :user:`Meekail Zain <micky774>`.
 
-- |Efficiency| :func:`decomposition.FastICA.fit` has been optimised w.r.t
-  its memory footprint and runtime.
-  :pr:`22268` by :user:`MohamedBsh <Bsh>`.
-
 - |API| :func:`decomposition.FastICA` now supports unit variance for whitening.
   The default value of its `whiten` argument will change from `True`
   (which behaves like `'arbitrary-variance'`) to `'unit-variance'` in version 1.3.
   :pr:`19490` by :user:`Facundo Ferrin <fferrin>` and
   :user:`Julien Jerphanion <jjerphan>`.
-
 
 :mod:`sklearn.discriminant_analysis`
 ....................................
