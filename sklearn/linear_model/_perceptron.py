@@ -182,7 +182,7 @@ class Perceptron(BaseSGDClassifier):
         "n_iter_no_change": [Interval(Integral, 1, None, closed="left")],
         "warm_start": [bool],
         "n_jobs": [None, Integral],
-        "class_weight": [StrOptions({"balanced"}), None],  # a bit tricky?
+        "class_weight": [StrOptions({"balanced"}), dict, None],  # a bit tricky?
     }
 
     def __init__(
