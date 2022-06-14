@@ -2,10 +2,18 @@
 #
 
 # You can set these variables from the command line.
-SPHINXOPTS    = -j auto
+SPHINXOPTS    =
 SPHINXBUILD  ?= sphinx-build
 PAPER         =
 BUILDDIR      = _build
+
+# Disable multiple jobs on OSX
+ifeq ($(shell uname), Darwin)
+	SPHINX_NUMJOBS = 1
+else
+	SPHINX_NUMJOBS = auto
+endif
+
 ifneq ($(EXAMPLES_PATTERN),)
     EXAMPLES_PATTERN_OPTS := -D sphinx_gallery_conf.filename_pattern="$(EXAMPLES_PATTERN)"
 endif
@@ -14,7 +22,7 @@ endif
 PAPEROPT_a4     = -D latex_paper_size=a4
 PAPEROPT_letter = -D latex_paper_size=letter
 ALLSPHINXOPTS   = -T -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS)\
-    $(EXAMPLES_PATTERN_OPTS) .
+    -j$(SPHINX_NUMJOBS) $(EXAMPLES_PATTERN_OPTS) .
 
 
 .PHONY: help clean html dirhtml ziphtml pickle json latex latexpdf changes linkcheck doctest optipng
