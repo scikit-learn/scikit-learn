@@ -8,15 +8,17 @@ import warnings
 from operator import itemgetter
 
 import numpy as np
+from numbers import Integral, Real
 from scipy.linalg import cholesky, cho_solve, solve_triangular
 import scipy.optimize
 
 from ..base import BaseEstimator, RegressorMixin, clone
 from ..base import MultiOutputMixin
-from .kernels import RBF, ConstantKernel as C
+from .kernels import Kernel, RBF, ConstantKernel as C
 from ..preprocessing._data import _handle_zeros_in_scale
 from ..utils import check_random_state
 from ..utils.optimize import _check_optimize_result
+from ..utils._param_validation import Interval
 
 GPR_CHOLESKY_LOWER = True
 
@@ -173,6 +175,16 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
     (array([653.0..., 592.1...]), array([316.6..., 316.6...]))
     """
 
+    _parameter_constraints = {
+        "kernel": [None, Kernel],
+        "alpha": [Real, "array-like"],
+        "optimiser": ["fmin_l_bfgs_b", callable],
+        "n_restarts_optimizer": [Interval(Integral, 0, None, closed="left")],
+        "normalize_y": [bool],
+        "copy_X_train": [bool],
+        "random_state": ["random_state"],
+    }
+
     def __init__(
         self,
         kernel=None,
@@ -208,6 +220,8 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         self : object
             GaussianProcessRegressor class instance.
         """
+        self._validate_params()
+
         if self.kernel is None:  # Use an RBF kernel as default
             self.kernel_ = C(1.0, constant_value_bounds="fixed") * RBF(
                 1.0, length_scale_bounds="fixed"

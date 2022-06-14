@@ -7,15 +7,18 @@
 from operator import itemgetter
 
 import numpy as np
+from numbers import Integral
 from scipy.linalg import cholesky, cho_solve, solve
 import scipy.optimize
 from scipy.special import erf, expit
 
 from ..base import BaseEstimator, ClassifierMixin, clone
-from .kernels import RBF, CompoundKernel, ConstantKernel as C
+from .kernels import Kernel, RBF, CompoundKernel, ConstantKernel as C
 from ..utils.validation import check_is_fitted
 from ..utils import check_random_state
 from ..utils.optimize import _check_optimize_result
+from ..utils._param_validation import Interval
+from ..utils._param_validation import StrOptions
 from ..preprocessing import LabelEncoder
 from ..multiclass import OneVsRestClassifier, OneVsOneClassifier
 
@@ -145,6 +148,16 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
 
     """
 
+    _parameter_constraints = {
+        "kernel": [None, Kernel],
+        "optimiser": ["fmin_l_bfgs_b", callable],
+        "n_restarts_optimizer": [Interval(Integral, 0, None, closed="left")],
+        "max_iter_predict": [Interval(Integral, 1, None, closed="left")],
+        "warm_start": [bool],
+        "copy_X_train": [bool],
+        "random_state": ["random_state"],
+    }
+
     def __init__(
         self,
         kernel=None,
@@ -179,6 +192,8 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         -------
         self : returns an instance of self.
         """
+        self._validate_params()
+
         if self.kernel is None:  # Use an RBF kernel as default
             self.kernel_ = C(1.0, constant_value_bounds="fixed") * RBF(
                 1.0, length_scale_bounds="fixed"
@@ -635,6 +650,18 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
            [0.79064206, 0.06525643, 0.14410151]])
     """
 
+    _parameter_constraints = {
+        "kernel": [None, Kernel],
+        "optimiser": ["fmin_l_bfgs_b", callable],
+        "n_restarts_optimizer": [Interval(Integral, 0, None, closed="left")],
+        "max_iter_predict": [Interval(Integral, 1, None, closed="left")],
+        "warm_start": [bool],
+        "copy_X_train": [bool],
+        "random_state": ["random_state"],
+        "multi_class": [StrOptions({"one_vs_rest", "one_vs_one"})],
+        "n_jobs": [None, Integral],
+    }
+
     def __init__(
         self,
         kernel=None,
@@ -674,6 +701,8 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
         self : object
             Returns an instance of self.
         """
+        self._validate_params()
+
         if isinstance(self.kernel, CompoundKernel):
             raise ValueError("kernel cannot be a CompoundKernel")
 
