@@ -105,3 +105,12 @@ def test_MDS_eigh():
     for X_possible in (X_true_1, -X_true_1, X_true_2, -X_true_2):
         match = match or np.allclose(mds_clf.embedding_, X_possible)
     assert match
+
+def test_nonmetric_mds_eigh_error():
+    sim = np.ones((2, 2))
+    mds_clf = mds.MDS(metric=False, solver="eigh")
+    msg = "Using eigh requires metric=True"
+    with pytest.raises(ValueError, match=msg):
+        mds_clf.fit(sim)
+    with pytest.raises(ValueError, match=msg):
+        mds_clf.fit_transform(sim)

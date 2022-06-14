@@ -389,25 +389,24 @@ class MDS(BaseEstimator):
 
     metric : bool, default=True
         If ``True``, perform metric MDS; otherwise, perform nonmetric MDS.
-        If ``solver=='eigh'``, metric must be set to True.
+        If `solver=='eigh'`, metric must be set to `True`.
 
     n_init : int, default=4
         Number of times the SMACOF algorithm will be run with different
         initializations. The final results will be the best output of the runs,
         determined by the run with the smallest final stress.
-        Used only when ``solver=='smacof'``.
+        Ignored if `solver=='eigh'`.
 
     max_iter : int, optional, default=300
         Maximum number of iterations of the SMACOF algorithm for a single run.
-        Ignored if ``solver=='eigh'``.
+        Ignored if `solver=='eigh'`.
 
     verbose : int, optional, default=0
         Level of verbosity.
 
     eps : float, default=1e-3
         Relative tolerance with respect to stress at which to declare
-        convergence.
-        Ignored if ``solver=='eigh'``.
+        convergence. Ignored if `solver=='eigh'`.
 
     n_jobs : int or None, optional (default=None)
         The number of jobs to use for the computation. If multiple
@@ -416,8 +415,7 @@ class MDS(BaseEstimator):
 
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
-        for more details.
-        Ignored if ``solver=='eigh'``.
+        for more details. Ignored if `solver=='eigh'`.
 
     random_state : int, RandomState instance or None, default=None
         Determines the random number generator used to initialize the centers.
@@ -435,9 +433,10 @@ class MDS(BaseEstimator):
             ``fit_transform``.
 
     solver : {'smacof', 'eigh'}, default = 'smacof'
-        The solver used for solving the MDS problem.
+        The solver used for solving the MDS problem. The `eigh` solver is only
+        usable when `metric=False` but is often significantly faster.
 
-        .. versionadded:: 1.1
+        .. versionadded:: 1.2
 
     Attributes
     ----------
