@@ -64,6 +64,13 @@ Changelog
 - |Efficiency| Improve runtime performance of :class:`ensemble.IsolationForest`
   by avoiding data copies. :pr:`23252` by :user:`Zhehao Liu <MaxwellLZH>`.
 
+:mod:`sklearn.linear_model`
+...........................
+
+- |Fix| Fixed an error in :class:`linear_model.LogisticRegression` with
+  `solver="newton-cg"`, `fit_intercept=True`, and a single feature. :pr:`23608`
+  by `Tom Dupre la Tour`_.
+
 :mod:`sklearn.metrics`
 ......................
 
