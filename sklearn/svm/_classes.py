@@ -1887,10 +1887,6 @@ class SVDD(OutlierMixin, BaseLibSVM):
 
     Attributes
     ----------
-    class_weight_ : ndarray of shape (n_classes,)
-        Multipliers of parameter C for each class.
-        Computed based on the ``class_weight`` parameter.
-
     coef_ : ndarray of shape (1, n_features)
         Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of a linear kernel.
