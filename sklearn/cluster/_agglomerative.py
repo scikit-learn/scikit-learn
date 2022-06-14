@@ -9,6 +9,8 @@ License: BSD 3 clause
 """
 import warnings
 from heapq import heapify, heappop, heappush, heappushpop
+from numbers import Integral, Real
+import joblib
 
 import numpy as np
 from scipy import sparse
@@ -21,6 +23,8 @@ from ..metrics._dist_metrics import METRIC_MAPPING
 from ..utils import check_array
 from ..utils._fast_dict import IntFloatDict
 from ..utils.graph import _fix_connected_components
+from ..utils._param_validation import Interval
+from ..utils._param_validation import StrOptions
 from ..utils.validation import check_memory
 
 # mypy error: Module 'sklearn.cluster' has no attribute '_hierarchical_fast'
@@ -871,6 +875,20 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
     >>> clustering.labels_
     array([1, 1, 1, 0, 0, 0])
     """
+
+    _parameter_constraints = {
+        "n_clusters": [Interval(Integral, 1, None, closed="left")],
+        "affinity": [
+            StrOptions({"euclidean", "l1", "l2", "manhattan", "cosine", "precomputed"}),
+            callable,
+        ],
+        "memory": [str, joblib.memory],
+        "connectivity": ["array-like", callable],
+        "compute_full_tree": [StrOptions({"auto"}), bool],
+        "linkage": [StrOptions({"ward", "complete", "average", "single"})],
+        "distance_threshold": [Interval(Real, 0, None, left="closed"), None],
+        "compute_distance": [bool],
+    }
 
     def __init__(
         self,
