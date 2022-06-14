@@ -71,18 +71,28 @@ def get_issue():
 
 def create_or_update_issue(body=""):
     # Interact with GitHub API to create issue
-    header = f"**CI Failed on [{args.ci_name}]({args.link_to_ci_run})**"
-    body_text = f"{header}\n{body}"
+    link = f"[{args.ci_name}]({args.link_to_ci_run})"
     issue = get_issue()
+
+    max_body_length = 60_000
+    original_body_length = len(body)
+    # Avoid "body is too long (maximum is 65536 characters)" error from github REST API
+    if original_body_length > max_body_length:
+        body = (
+            f"{body[:max_body_length]}\n...\n"
+            f"Body was too long ({original_body_length} characters) and was shortened"
+        )
 
     if issue is None:
         # Create new issue
-        issue = issue_repo.create_issue(title=title, body=body_text)
+        header = f"**CI failed on {link}**"
+        issue = issue_repo.create_issue(title=title, body=f"{header}\n{body}")
         print(f"Created issue in {args.issue_repo}#{issue.number}")
         sys.exit()
     else:
-        # Add comment to existing issue
-        issue.create_comment(body=body_text)
+        # Update existing issue
+        header = f"**CI is still failing on {link}**"
+        issue.edit(body=f"{header}\n{body}")
         print(f"Commented on issue: {args.issue_repo}#{issue.number}")
         sys.exit()
 
