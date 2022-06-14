@@ -515,7 +515,8 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
     >>> X, _ = load_digits(return_X_y=True)
     >>> transformer = FastICA(n_components=7,
     ...         random_state=0,
-    ...         whiten='unit-variance')
+    ...         whiten='unit-variance',
+    ...         whiten_solver='auto')
     >>> X_transformed = transformer.fit_transform(X)
     >>> X_transformed.shape
     (1797, 7)
