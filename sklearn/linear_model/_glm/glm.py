@@ -285,9 +285,10 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                 jac=True,
                 options={
                     "maxiter": self.max_iter,
+                    "maxls": 40,  # default is 20
                     "iprint": (self.verbose > 0) - 1,
                     "gtol": self.tol,
-                    "ftol": 1e3 * np.finfo(float).eps,
+                    "ftol": 64 * np.finfo(float).eps,  # lbfgs is float64 land.
                 },
                 args=(X, y, sample_weight, l2_reg_strength, n_threads),
             )
