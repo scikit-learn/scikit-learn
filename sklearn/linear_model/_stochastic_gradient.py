@@ -90,9 +90,7 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         "epsilon": [Interval(Real, 0, None, closed="left")],
         "random_state": ["random_state"],
         "learning_rate": [
-            StrOptions(
-                {"constant", "optimal", "invscaling", "adaptive", "pa1", "pa2"}
-            )
+            StrOptions({"constant", "optimal", "invscaling", "adaptive", "pa1", "pa2"})
         ],
         "eta0": [Interval(Real, 0, None, closed="left")],
         "power_t": [Interval(Real, None, None, closed="neither")],
@@ -2168,9 +2166,7 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         "verbose": [Interval(Integral, 0, None, closed="left")],
         "random_state": ["random_state"],
         "learning_rate": [
-            StrOptions(
-                {"constant", "optimal", "invscaling", "adaptive", "pa1", "pa2"}
-            )
+            StrOptions({"constant", "optimal", "invscaling", "adaptive", "pa1", "pa2"})
         ],
         "eta0": [Interval(Real, 0, None, closed="left")],
         "power_t": [Interval(Real, None, None, closed="neither")],
