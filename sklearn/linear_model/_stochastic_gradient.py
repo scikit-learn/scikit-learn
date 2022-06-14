@@ -924,10 +924,6 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
             sample_weight=sample_weight,
         )
 
-    @property
-    def parameter_constraints(self):
-        return self._parameter_constraints
-
 
 class SGDClassifier(BaseSGDClassifier):
     """Linear classifiers (SVM, logistic regression, etc.) with SGD training.
