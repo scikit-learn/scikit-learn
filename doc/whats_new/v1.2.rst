@@ -105,6 +105,20 @@ Changelog
 - |Efficiency| Improve runtime performance of :class:`ensemble.IsolationForest`
   by avoiding data copies. :pr:`23252` by :user:`Zhehao Liu <MaxwellLZH>`.
 
+:mod:`sklearn.decomposition`
+............................
+
+- |Enhancement| :class:`decomposition.FastICA` now allows the user to select
+  how whitening is performed through the new `whiten_solver` parameter, which
+  supports `svd` and `eigh`. `whiten_solver` defaults to `svd` although `eigh`
+  may be faster and more memory efficient in cases where
+  `num_features > num_samples`. An additional `sign_flip` parameter is added.
+  When `sign_flip=True`, then the output of both solvers will be reconciled
+  during `fit` so that their outputs match. This may change the output of the
+  default solver, and hence may not be backwards compatible.
+  :pr:`11860` by :user:`Pierre Ablin <pierreablin>`,
+  :pr:`22527` by :user:`Meekail Zain <micky774>` and `Thomas Fan`_.
+
 :mod:`sklearn.impute`
 .....................
 
