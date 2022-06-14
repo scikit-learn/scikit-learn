@@ -4,6 +4,7 @@ Test the fastica algorithm.
 import itertools
 import pytest
 import warnings
+from functools import partial
 
 import numpy as np
 from scipy import stats
@@ -12,9 +13,25 @@ from sklearn.datasets import make_low_rank_matrix
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_allclose
 
-from sklearn.decomposition import FastICA, fastica, PCA
+from sklearn.decomposition import fastica, PCA
+from sklearn.decomposition import FastICA as _FastICA
+
 from sklearn.decomposition._fastica import _gs_decorrelation
 from sklearn.exceptions import ConvergenceWarning
+
+
+# TODO(1.4): Remove
+# Override defaults for smoother deprecation
+class FastICA(_FastICA):
+    def __init__(self, *args, whiten_solver="auto", **kwargs):
+        super().__init__(
+            *args,
+            whiten_solver=whiten_solver,
+            **kwargs,
+        )
+
+
+fastica = partial(fastica, whiten_solver="auto")
 
 
 def center_and_norm(x, axis=-1):
@@ -515,6 +532,28 @@ def test_fastica_whiten_solver_validation(whiten_solver):
     rng = np.random.RandomState(0)
     X = rng.random_sample((10, 2))
     ica = FastICA(random_state=rng, whiten_solver=whiten_solver, whiten="unit-variance")
-    msg = f"`whiten_solver` must be 'eigh' or 'svd' but got {whiten_solver} instead"
+    msg = "`whiten_solver` must be 'auto', 'eigh', or 'svd' but got"
     with pytest.raises(ValueError, match=msg):
         ica.fit_transform(X)
+
+
+def test_fastica_whiten_solver_future_warning():
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((10, 10))
+
+    ica = _FastICA(random_state=rng, whiten="unit-variance")
+    msg = "From version 1.4 `whiten_solver='auto'` will be used by default."
+    with pytest.warns(FutureWarning, match=msg):
+        ica.fit_transform(X)
+    assert ica.whiten_solver == "warn"
+    assert ica._whiten_solver == "svd"
+
+
+@pytest.mark.parametrize("n_samples", (199, 200))
+def test_fastica_whiten_solver_auto(n_samples):
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((n_samples, 4))
+    ica = FastICA(random_state=rng, whiten="unit-variance", whiten_solver="auto")
+    ica.fit_transform(X)
+    solver = "eigh" if X.shape[0] >= 50 * X.shape[1] else "svd"
+    assert ica._whiten_solver == solver
