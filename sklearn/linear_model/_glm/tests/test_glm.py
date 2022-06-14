@@ -780,7 +780,11 @@ def test_warm_start(solver, fit_intercept, global_random_seed):
         random_state=global_random_seed,
     )
     y = np.abs(y)  # Poisson requires non-negative targets.
-    params = {"solver": solver, "fit_intercept": fit_intercept, "tol": 1e-10}
+    params = {
+        # "solver": solver,  # only lbfgs available
+        "fit_intercept": fit_intercept,
+        "tol": 1e-10,
+    }
 
     glm1 = PoissonRegressor(warm_start=False, max_iter=1000, **params)
     glm1.fit(X, y)
