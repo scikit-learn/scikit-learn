@@ -17,6 +17,9 @@ from ..utils._mask import _get_mask
 
 from ..utils._encode import _encode, _check_unknown, _unique, _get_counts
 
+from ..utils._param_validation import Interval
+from ..utils._param_validation import StrOptions
+
 
 __all__ = ["OneHotEncoder", "OrdinalEncoder"]
 
@@ -430,6 +433,23 @@ class OneHotEncoder(_BaseEncoder):
            [1., 0., 0.]])
     """
 
+    _parameter_constraints = {
+        "categories": [StrOptions({"auto"}), "array-like"],
+        "drop": [StrOptions({"first", "if_binary"}), "array-like", None],
+        # By using object as parameter constraint, we are currently
+        # allowing numpy to do the validation. Numpy data types can take
+        # various inputs, that validate_params can't validate yet.
+        "dtype": [object],
+        "handle_unknown": [StrOptions({"error", "ignore", "infrequent_if_exist"})],
+        "max_categories": [Interval(numbers.Integral, 1, None, closed="left"), None],
+        "min_frequency": [
+            Interval(numbers.Integral, 1, None, closed="left"),
+            Interval(numbers.Real, 0, 1, closed="neither"),
+            None,
+        ],
+        "sparse": [bool],
+    }
+
     def __init__(
         self,
         *,
@@ -459,33 +479,11 @@ class OneHotEncoder(_BaseEncoder):
             for category, indices in zip(self.categories_, infrequent_indices)
         ]
 
-    def _validate_keywords(self):
-
-        if self.handle_unknown not in {"error", "ignore", "infrequent_if_exist"}:
-            msg = (
-                "handle_unknown should be one of 'error', 'ignore', "
-                f"'infrequent_if_exist' got {self.handle_unknown}."
-            )
-            raise ValueError(msg)
-
-        if self.max_categories is not None and self.max_categories < 1:
-            raise ValueError("max_categories must be greater than 1")
-
-        if isinstance(self.min_frequency, numbers.Integral):
-            if not self.min_frequency >= 1:
-                raise ValueError(
-                    "min_frequency must be an integer at least "
-                    "1 or a float in (0.0, 1.0); got the "
-                    f"integer {self.min_frequency}"
-                )
-        elif isinstance(self.min_frequency, numbers.Real):
-            if not (0.0 < self.min_frequency < 1.0):
-                raise ValueError(
-                    "min_frequency must be an integer at least "
-                    "1 or a float in (0.0, 1.0); got the "
-                    f"float {self.min_frequency}"
-                )
-
+    def _check_infrequent_enabled(self):
+        """
+        This functions checks whether _infrequent_enabled is True or False.
+        This has to be called after parameter validation in the fit function.
+        """
         self._infrequent_enabled = (
             self.max_categories is not None and self.max_categories >= 1
         ) or self.min_frequency is not None
@@ -814,7 +812,8 @@ class OneHotEncoder(_BaseEncoder):
         self
             Fitted encoder.
         """
-        self._validate_keywords()
+        self._validate_params()
+        self._check_infrequent_enabled()
         fit_results = self._fit(
             X,
             handle_unknown=self.handle_unknown,
@@ -851,7 +850,8 @@ class OneHotEncoder(_BaseEncoder):
             Transformed input. If `sparse=True`, a sparse matrix will be
             returned.
         """
-        self._validate_keywords()
+        self._validate_params()
+        self._check_infrequent_enabled()
         return super().fit_transform(X, y)
 
     def transform(self, X):
@@ -1228,6 +1228,24 @@ class OrdinalEncoder(_OneToOneFeatureMixin, _BaseEncoder):
            [ 0., -1.]])
     """
 
+    _parameter_constraints = {
+        "categories": [StrOptions({"auto"}), "array-like"],
+        # By using object as parameter constraint, we are currently
+        # allowing numpy to do the validation. Numpy data types can take
+        # various inputs, that validate_params can't validate yet.
+        "dtype": [object],
+        "encoded_missing_value": [
+            Interval(numbers.Integral, None, None, closed="neither"),
+            type(np.nan),
+        ],
+        "handle_unknown": [StrOptions({"error", "use_encoded_value"})],
+        "unknown_value": [
+            Interval(numbers.Integral, None, None, closed="neither"),
+            type(np.nan),
+            None,
+        ],
+    }
+
     def __init__(
         self,
         *,
@@ -1261,12 +1279,7 @@ class OrdinalEncoder(_OneToOneFeatureMixin, _BaseEncoder):
         self : object
             Fitted encoder.
         """
-        handle_unknown_strategies = ("error", "use_encoded_value")
-        if self.handle_unknown not in handle_unknown_strategies:
-            raise ValueError(
-                "handle_unknown should be either 'error' or "
-                f"'use_encoded_value', got {self.handle_unknown}."
-            )
+        self._validate_params()
 
         if self.handle_unknown == "use_encoded_value":
             if is_scalar_nan(self.unknown_value):
