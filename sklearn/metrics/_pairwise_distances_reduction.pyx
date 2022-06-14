@@ -43,53 +43,48 @@
 #
 #      A ---⊳ B: A inherits from B
 #      A ---x B: A dispatches on B
-#      A ---* B: A composes B
 #
 #
-#                           (base dispatcher)
-#                       PairwiseDistancesReduction
-#                                   ∆
-#                                   |
-#                                   |
-#                 +-----------------+-----------------+
-#                 |                                   |
-#           (dispatcher)                        (dispatcher)
-#     PairwiseDistancesArgKmin           PairwiseDistancesRadiusNeighbors
-#           |                                              |
-#           |                                              |
-#           |                                              |
-#           |                  (64bit implem.)             |
-#           |          PairwiseDistancesReduction64        |
-#           |                       ∆                      |
-#           |                       |                      |
-#           |                       |                      |
-#           |     +-----------------+-----------------+    |
-#           |     |                                   |    |
-#           |     |                                   |    |
-#           x     |                                   |    x
-#    PairwiseDistancesArgKmin64       PairwiseDistancesRadiusNeighbors64
-#           |     ∆                                   ∆    |
-#           |     |                                   |    |
-#           x     |                                   |    |
-# FastEuclideanPairwiseDistancesArgKmin64             |    |
-#                 *                                   |    |
-#                 |                                   |    x
-#                 |            FastEuclideanPairwiseDistancesRadiusNeighbors64
-#                 |                                   *
-#                 |                                   |
-#                 +-----------------+-----------------+
-#                                   |
-#                            GEMMTermComputer64
+#                               (base dispatcher)
+#                           PairwiseDistancesReduction
+#                                       ∆
+#                                       |
+#                                       |
+#                     +-----------------+-----------------+
+#                     |                                   |
+#               (dispatcher)                        (dispatcher)
+#         PairwiseDistancesArgKmin           PairwiseDistancesRadiusNeighbors
+#               |                                              |
+#               |                                              |
+#               |                                              |
+#               |                  (64bit implem.)             |
+#               |          PairwiseDistancesReduction64        |
+#               |                       ∆                      |
+#               |                       |                      |
+#               |                       |                      |
+#               |     +-----------------+-----------------+    |
+#               |     |                                   |    |
+#               |     |                                   |    |
+#               x     |                                   |    x
+#        PairwiseDistancesArgKmin64       PairwiseDistancesRadiusNeighbors64
+#               |     ∆                                   ∆    |
+#               |     |                                   |    |
+#               x     |                                   |    |
+#     FastEuclideanPairwiseDistancesArgKmin64             |    |
+#                                                         |    |
+#                                                         |    x
+#                                  FastEuclideanPairwiseDistancesRadiusNeighbors64
 #
-# For instance :class:`PairwiseDistancesArgKmin`, dispatches to
-# :class:`PairwiseDistancesArgKmin64` if X and Y are both dense NumPy arrays
-# with a float64 dtype.
+#     For instance :class:`PairwiseDistancesArgKmin`, dispatches to
+#     :class:`PairwiseDistancesArgKmin64` if X and Y are both dense NumPy arrays
+#     with a float64 dtype.
 #
-# In addition, if the metric parameter is set to "sqeuclidean",
-# :class:`PairwiseDistancesArgKmin64` further dispatches to a subclass
-# specialized to optimally handle the Euclidean distance case using the
-# Generalized Matrix Multiplication (see the docstring of
-# :class:`GEMMTermComputer64` for details).
+#     In addition, if the metric parameter is set to "euclidean" or "sqeuclidean",
+#     :class:`PairwiseDistancesArgKmin64` further dispatches to
+#     :class:`FastEuclideanPairwiseDistancesArgKmin64` a specialized subclass
+#     to optimally handle the Euclidean distance case using the Generalized Matrix
+#     Multiplication (see the docstring of :class:`GEMMTermComputer64` for details).
+from abc import abstractmethod
 
 cimport numpy as cnp
 import numpy as np
@@ -166,32 +161,6 @@ cdef cnp.ndarray[object, ndim=1] coerce_vectors_to_nd_arrays(
     return nd_arrays_of_nd_arrays
 
 #####################
-
-cpdef DTYPE_t[::1] _sqeuclidean_row_norms(
-    const DTYPE_t[:, ::1] X,
-    ITYPE_t num_threads,
-):
-    """Compute the squared euclidean norm of the rows of X in parallel.
-
-    This is faster than using np.einsum("ij, ij->i") even when using a single thread.
-    """
-    cdef:
-        # Casting for X to remove the const qualifier is needed because APIs
-        # exposed via scipy.linalg.cython_blas aren't reflecting the arguments'
-        # const qualifier.
-        # See: https://github.com/scipy/scipy/issues/14262
-        DTYPE_t * X_ptr = <DTYPE_t *> &X[0, 0]
-        ITYPE_t idx = 0
-        ITYPE_t n = X.shape[0]
-        ITYPE_t d = X.shape[1]
-        DTYPE_t[::1] squared_row_norms = np.empty(n, dtype=DTYPE)
-
-    for idx in prange(n, schedule='static', nogil=True, num_threads=num_threads):
-        squared_row_norms[idx] = _dot(d, X_ptr + idx * d, 1, X_ptr + idx * d, 1)
-
-    return squared_row_norms
-
-#####################
 # Dispatchers
 
 class PairwiseDistancesReduction:
@@ -242,6 +211,32 @@ class PairwiseDistancesReduction:
                 not issparse(X) and not issparse(Y) and dtypes_validity and
                 metric in cls.valid_metrics())
 
+    @classmethod
+    @abstractmethod
+    def compute(
+        cls,
+        X,
+        Y,
+        **kwargs,
+    ):
+        """Compute the reduction.
+
+        Parameters
+        ----------
+        X : ndarray or CSR matrix of shape (n_samples_X, n_features)
+            Input data.
+
+        Y : ndarray or CSR matrix of shape (n_samples_Y, n_features)
+            Input data.
+
+        **kwargs : additional parameters for the reduction
+
+        Notes
+        -----
+        This method is an abstract class method: it has to be implemented
+        for all
+
+        """
 
 class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
     """Compute the argkmin of row vectors of X on the ones of Y.
@@ -262,12 +257,12 @@ class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
         cls,
         X,
         Y,
-        ITYPE_t k,
-        str metric="euclidean",
+        k,
+        metric="euclidean",
         chunk_size=None,
-        dict metric_kwargs=None,
-        str strategy=None,
-        bint return_distance=False,
+        metric_kwargs=None,
+        strategy=None,
+        return_distance=False,
     ):
         """Compute the argkmin reduction.
 
@@ -350,6 +345,11 @@ class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
         for the concrete implementation are therefore freed when this classmethod
         returns.
         """
+        # Note (jjerphan): Some design thoughts for future extensions.
+        # This factory comes to handle specialisations for the given arguments.
+        # For future work, this might can be an entrypoint to specialise operations
+        # for various backend and/or hardware and/or datatypes, and/or fused
+        # {sparse, dense}-datasetspair etc.
         if X.dtype == Y.dtype == np.float64:
             return PairwiseDistancesArgKmin64.compute(
                 X=X,
@@ -388,13 +388,13 @@ class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
         cls,
         X,
         Y,
-        DTYPE_t radius,
-        str metric="euclidean",
+        radius,
+        metric="euclidean",
         chunk_size=None,
-        dict metric_kwargs=None,
-        str strategy=None,
-        bint return_distance=False,
-        bint sort_results=False,
+        metric_kwargs=None,
+        strategy=None,
+        return_distance=False,
+        sort_results=False,
     ):
         """Return the results of the reduction for the given arguments.
 
@@ -481,6 +481,11 @@ class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
         This allows entirely decoupling the API entirely from the
         implementation details whilst maintaining RAII.
         """
+        # Note (jjerphan): Some design thoughts for future extensions.
+        # This factory comes to handle specialisations for the given arguments.
+        # For future work, this might can be an entrypoint to specialise operations
+        # for various backend and/or hardware and/or datatypes, and/or fused
+        # {sparse, dense}-datasetspair etc.
         if X.dtype == Y.dtype == np.float64:
             return PairwiseDistancesRadiusNeighborhood64.compute(
                 X=X,
@@ -1050,11 +1055,6 @@ cdef class PairwiseDistancesArgKmin64(PairwiseDistancesReduction64):
 
         No instance should directly be created outside of this class method.
         """
-        # Note (jjerphan): Some design thoughts for future extensions.
-        # This factory comes to handle specialisations for the given arguments.
-        # For future work, this might can be an entrypoint to specialise operations
-        # for various backend and/or hardware and/or datatypes, and/or fused
-        # {sparse, dense}-datasetspair etc.
         if (
             metric in ("euclidean", "sqeuclidean")
             and not issparse(X)
@@ -1566,11 +1566,6 @@ cdef class PairwiseDistancesRadiusNeighborhood64(PairwiseDistancesReduction64):
 
         No instance should directly be created outside of this class method.
         """
-        # Note (jjerphan): Some design thoughts for future extensions.
-        # This factory comes to handle specialisations for the given arguments.
-        # For future work, this might can be an entrypoint to specialise operations
-        # for various backend and/or hardware and/or datatypes, and/or fused
-        # {sparse, dense}-datasetspair etc.
         if (
             metric in ("euclidean", "sqeuclidean")
             and not issparse(X)
