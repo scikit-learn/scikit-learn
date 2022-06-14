@@ -489,8 +489,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "GammaRegressor",
     "GaussianMixture",
     "GaussianNB",
-    "GaussianProcessClassifier",
-    "GaussianProcessRegressor",
     "GaussianRandomProjection",
     "GenericUnivariateSelect",
     "GradientBoostingClassifier",

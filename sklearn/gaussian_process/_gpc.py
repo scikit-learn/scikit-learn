@@ -150,7 +150,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
 
     _parameter_constraints = {
         "kernel": [None, Kernel],
-        "optimiser": ["fmin_l_bfgs_b", callable],
+        "optimizer": [StrOptions({"fmin_l_bfgs_b"}), callable],
         "n_restarts_optimizer": [Interval(Integral, 0, None, closed="left")],
         "max_iter_predict": [Interval(Integral, 1, None, closed="left")],
         "warm_start": [bool],
@@ -652,7 +652,7 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
 
     _parameter_constraints = {
         "kernel": [None, Kernel],
-        "optimiser": ["fmin_l_bfgs_b", callable],
+        "optimizer": [StrOptions({"fmin_l_bfgs_b"}), callable],
         "n_restarts_optimizer": [Interval(Integral, 0, None, closed="left")],
         "max_iter_predict": [Interval(Integral, 1, None, closed="left")],
         "warm_start": [bool],
