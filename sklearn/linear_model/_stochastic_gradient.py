@@ -84,7 +84,7 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         "l1_ratio": [Interval(Real, 0, 1, closed="both")],
         "fit_intercept": [bool],
         "max_iter": [Interval(Integral, 1, None, closed="left")],
-        "tol": [Interval(Real, None, None, closed="neither"), None],
+        "tol": [Interval(Real, None, None, closed="both"), None],
         "shuffle": [bool],
         "verbose": [Interval(Integral, 0, None, closed="left")],
         "epsilon": [Interval(Real, 0, None, closed="left")],
