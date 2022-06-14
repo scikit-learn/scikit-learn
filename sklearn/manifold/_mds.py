@@ -352,7 +352,7 @@ def eigh_scaler(dissimilarities, n_components=2):
 
     w, V = linalg.eigh(B, check_finite=False)
 
-    # ``dissimilarities`` is Euclidean iff ``B`` is positive semi-definite.
+    # `dissimilarities` is Euclidean iff `B` is positive semi-definite.
     # See "Metric and Euclidean properties of dissimilarity coefficients"
     # for details
     try:
