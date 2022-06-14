@@ -52,6 +52,13 @@ def validate_parameter_constraints(parameter_constraints, params, caller_name):
                 break
         else:
             # No constraint is satisfied, raise with an informative message.
+
+            # Ignore constraints that we don't want to expose in the error message,
+            # i.e. options that are for internal purpose or not officially supported.
+            constraints = [
+                constraint for constraint in constraints if not constraint.hidden
+            ]
+
             if len(constraints) == 1:
                 constraints_str = f"{constraints[0]}"
             else:
@@ -92,6 +99,10 @@ def make_constraint(constraint):
     if isinstance(constraint, type):
         return _InstancesOf(constraint)
     if isinstance(constraint, (Interval, StrOptions)):
+        return constraint
+    if isinstance(constraint, Hidden):
+        constraint = make_constraint(constraint.constraint)
+        constraint.hidden = True
         return constraint
     raise ValueError(f"Unknown constraint type: {constraint}")
 
@@ -143,6 +154,9 @@ def validate_params(parameter_constraints):
 class _Constraint(ABC):
     """Base class for the constraint objects."""
 
+    def __init__(self):
+        self.hidden = False
+
     @abstractmethod
     def is_satisfied_by(self, val):
         """Whether or not a value satisfies the constraint.
@@ -173,6 +187,7 @@ class _InstancesOf(_Constraint):
     """
 
     def __init__(self, type):
+        super().__init__()
         self.type = type
 
     def _type_name(self, t):
@@ -218,8 +233,12 @@ class StrOptions(_Constraint):
 
     @validate_params({"options": [set], "deprecated": [set, None]})
     def __init__(self, options, deprecated=None):
+        super().__init__()
         self.options = options
-        self.deprecated = deprecated or {}
+        self.deprecated = deprecated or set()
+
+        if self.deprecated - self.options:
+            raise ValueError("The deprecated options must be a subset of the options.")
 
     def is_satisfied_by(self, val):
         return isinstance(val, str) and val in self.options
@@ -239,7 +258,7 @@ class StrOptions(_Constraint):
 
 
 class Interval(_Constraint):
-    """Constraint representing an typed interval.
+    """Constraint representing a typed interval.
 
     Parameters
     ----------
@@ -280,6 +299,7 @@ class Interval(_Constraint):
         }
     )
     def __init__(self, type, left, right, *, closed):
+        super().__init__()
         self.type = type
         self.left = left
         self.right = right
@@ -310,12 +330,18 @@ class Interval(_Constraint):
             )
 
     def __contains__(self, val):
+        if np.isnan(val):
+            return False
+
         left_cmp = operator.lt if self.closed in ("left", "both") else operator.le
         right_cmp = operator.gt if self.closed in ("right", "both") else operator.ge
 
-        if self.left is not None and left_cmp(val, self.left):
+        left = -np.inf if self.left is None else self.left
+        right = np.inf if self.right is None else self.right
+
+        if left_cmp(val, left):
             return False
-        if self.right is not None and right_cmp(val, self.right):
+        if right_cmp(val, right):
             return False
         return True
 
@@ -375,6 +401,7 @@ class _RandomStates(_Constraint):
     """
 
     def __init__(self):
+        super().__init__()
         self._constraints = [
             Interval(Integral, 0, 2**32 - 1, closed="both"),
             _InstancesOf(np.random.RandomState),
@@ -391,15 +418,34 @@ class _RandomStates(_Constraint):
         )
 
 
-def generate_invalid_param_val(constraint):
+class Hidden:
+    """Class encapsulating a constraint not meant to be exposed to the user.
+
+    Parameters
+    ----------
+    constraint : str or _Constraint instance
+        The constraint to be used internally.
+    """
+
+    def __init__(self, constraint):
+        self.constraint = constraint
+
+
+def generate_invalid_param_val(constraint, constraints=None):
     """Return a value that does not satisfy the constraint.
+
+    Raises a NotImplementedError if there exists no invalid value for this constraint.
 
     This is only useful for testing purpose.
 
     Parameters
     ----------
-    constraint : Constraint
+    constraint : _Constraint instance
         The constraint to generate a value for.
+
+    constraints : list of _Constraint instances or None, default=None
+        The list of all constraints for this parameter. If None, the list only
+        containing `constraint` is used.
 
     Returns
     -------
@@ -408,14 +454,114 @@ def generate_invalid_param_val(constraint):
     """
     if isinstance(constraint, StrOptions):
         return f"not {' or '.join(constraint.options)}"
-    elif isinstance(constraint, Interval):
-        interval = constraint
+
+    if not isinstance(constraint, Interval):
+        raise NotImplementedError
+
+    # constraint is an interval
+    constraints = [constraint] if constraints is None else constraints
+    return _generate_invalid_param_val_interval(constraint, constraints)
+
+
+def _generate_invalid_param_val_interval(interval, constraints):
+    """Return a value that does not satisfy an interval constraint.
+
+    Generating an invalid value for an integer interval depends on the other constraints
+    since an int is a real, meaning that it can be valid for a real interval.
+    Assumes that there can be at most 2 interval constraints: one integer interval
+    and/or one real interval.
+
+    This is only useful for testing purpose.
+
+    Parameters
+    ----------
+    interval : Interval instance
+        The interval to generate a value for.
+
+    constraints : list of _Constraint instances
+        The list of all constraints for this parameter.
+
+    Returns
+    -------
+    val : object
+        A value that does not satisfy the interval constraint.
+    """
+    if interval.type is Real:
+        # generate a non-integer value such that it can't be valid even if there's also
+        # an integer interval constraint.
+        if interval.left is None and interval.right is None:
+            if interval.closed in ("left", "neither"):
+                return np.inf
+            elif interval.closed in ("right", "neither"):
+                return -np.inf
+            else:
+                raise NotImplementedError
+
+        if interval.left is not None:
+            return np.floor(interval.left) - 0.5
+        else:  # right is not None
+            return np.ceil(interval.right) + 0.5
+
+    else:  # interval.type is Integral
         if interval.left is None and interval.right is None:
             raise NotImplementedError
 
-        if interval.left is not None:
-            return interval.left - 1
-        else:
-            return interval.right + 1
-    else:
-        raise NotImplementedError
+        # We need to check if there's also a real interval constraint to generate a
+        # value that is not valid for any of the 2 interval constraints.
+        real_intervals = [
+            i for i in constraints if isinstance(i, Interval) and i.type is Real
+        ]
+        real_interval = real_intervals[0] if real_intervals else None
+
+        if real_interval is None:
+            # Only the integer interval constraint -> easy
+            if interval.left is not None:
+                return interval.left - 1
+            else:  # interval.right is not None
+                return interval.right + 1
+
+        # There's also a real interval constraint. Try to find a value left to both or
+        # right to both or in between them.
+
+        # redefine left and right bounds to be smallest and largest valid integers in
+        # both intervals.
+        int_left = interval.left
+        if int_left is not None and interval.closed in ("right", "neither"):
+            int_left = int_left + 1
+
+        int_right = interval.right
+        if int_right is not None and interval.closed in ("left", "neither"):
+            int_right = int_right - 1
+
+        real_left = real_interval.left
+        if real_interval.left is not None:
+            real_left = int(np.ceil(real_interval.left))
+            if real_interval.closed in ("right", "neither"):
+                real_left = real_left + 1
+
+        real_right = real_interval.right
+        if real_interval.right is not None:
+            real_right = int(np.floor(real_interval.right))
+            if real_interval.closed in ("left", "neither"):
+                real_right = real_right - 1
+
+        if int_left is not None and real_left is not None:
+            # there exists an int left to both intervals
+            return min(int_left, real_left) - 1
+
+        if int_right is not None and real_right is not None:
+            # there exists an int right to both intervals
+            return max(int_right, real_right) + 1
+
+        if int_left is not None:
+            if real_right is not None and int_left - real_right >= 2:
+                # there exists an int between the 2 intervals
+                return int_left - 1
+            else:
+                raise NotImplementedError
+        else:  # int_right is not None
+            if real_left is not None and real_left - int_right >= 2:
+                # there exists an int between the 2 intervals
+                return int_right + 1
+            else:
+                raise NotImplementedError

@@ -8,9 +8,8 @@ source build_tools/shared.sh
 
 if [[ "$DISTRIB" == "conda" ]]; then
     conda update -n base conda -y
-    # TODO: update conda-lock version from time to time
     conda install pip -y
-    pip install conda-lock==1.0.5
+    pip install "$(get_dep conda-lock min)"
     conda-lock install --name $VIRTUALENV $LOCK_FILE
     source activate $VIRTUALENV
 else

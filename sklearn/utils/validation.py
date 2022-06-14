@@ -94,18 +94,17 @@ def _assert_all_finite(
     X, allow_nan=False, msg_dtype=None, estimator_name=None, input_name=""
 ):
     """Like assert_all_finite, but only for ndarray."""
-    # validation is also imported in extmath
-    from .extmath import _safe_accumulator_op
 
     if _get_config()["assume_finite"]:
         return
     X = np.asanyarray(X)
     # First try an O(n) time, O(1) space solution for the common case that
     # everything is finite; fall back to O(n) space np.isfinite to prevent
-    # false positives from overflow in sum method. The sum is also calculated
-    # safely to reduce dtype induced overflows.
+    # false positives from overflow in sum method.
     is_float = X.dtype.kind in "fc"
-    if is_float and (np.isfinite(_safe_accumulator_op(np.sum, X))):
+    with np.errstate(over="ignore"):
+        first_pass_isfinite = is_float and np.isfinite(np.sum(X))
+    if first_pass_isfinite:
         pass
     elif is_float:
         has_inf = np.isinf(X).any()
