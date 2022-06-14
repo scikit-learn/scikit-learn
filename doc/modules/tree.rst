@@ -23,19 +23,19 @@ the tree, the more complex the decision rules and the fitter the model.
 
 Some advantages of decision trees are:
 
-    - Simple to understand and to interpret. Trees can be visualised.
+    - Simple to understand and to interpret. Trees can be visualized.
 
     - Requires little data preparation. Other techniques often require data
-      normalisation, dummy variables need to be created and blank values to
+      normalization, dummy variables need to be created and blank values to
       be removed. Note however that this module does not support missing
       values.
 
     - The cost of using the tree (i.e., predicting data) is logarithmic in the
       number of data points used to train the tree.
 
-    - Able to handle both numerical and categorical data. However scikit-learn
+    - Able to handle both numerical and categorical data. However, the scikit-learn
       implementation does not support categorical variables for now. Other
-      techniques are usually specialised in analysing datasets that have only one type
+      techniques are usually specialized in analyzing datasets that have only one type
       of variable. See :ref:`algorithms <tree_algorithms>` for more
       information.
 
@@ -56,7 +56,7 @@ Some advantages of decision trees are:
 The disadvantages of decision trees include:
 
     - Decision-tree learners can create over-complex trees that do not
-      generalise the data well. This is called overfitting. Mechanisms
+      generalize the data well. This is called overfitting. Mechanisms
       such as pruning, setting the minimum number of samples required
       at a leaf node or setting the maximum depth of the tree are
       necessary to avoid this problem.
@@ -324,7 +324,8 @@ In general, the run time cost to construct a balanced binary tree is
 to generate balanced trees, they will not always be balanced.  Assuming that the
 subtrees remain approximately balanced, the cost at each node consists of
 searching through :math:`O(n_{features})` to find the feature that offers the
-largest reduction in entropy.  This has a cost of
+largest reduction in the impurity criterion, e.g. log loss (which is equivalent to an
+information gain). This has a cost of
 :math:`O(n_{features}n_{samples}\log(n_{samples}))` at each node, leading to a
 total cost over the entire trees (by summing the cost at each node) of
 :math:`O(n_{features}n_{samples}^{2}\log(n_{samples}))`.
@@ -345,7 +346,7 @@ Tips on practical use
     in gaining more insights about how the decision tree makes predictions, which is
     important for understanding the important features in the data.
 
-  * Visualise your tree as you are training by using the ``export``
+  * Visualize your tree as you are training by using the ``export``
     function.  Use ``max_depth=3`` as an initial tree depth to get a feel for
     how the tree is fitting to your data, and then increase the depth.
 
@@ -407,14 +408,14 @@ The algorithm creates a multiway tree, finding for each node (i.e. in
 a greedy manner) the categorical feature that will yield the largest
 information gain for categorical targets. Trees are grown to their
 maximum size and then a pruning step is usually applied to improve the
-ability of the tree to generalise to unseen data.
+ability of the tree to generalize to unseen data.
 
 C4.5 is the successor to ID3 and removed the restriction that features
 must be categorical by dynamically defining a discrete attribute (based
 on numerical variables) that partitions the continuous attribute value
 into a discrete set of intervals. C4.5 converts the trained trees
 (i.e. the output of the ID3 algorithm) into sets of if-then rules.
-These accuracy of each rule is then evaluated to determine the order
+The accuracy of each rule is then evaluated to determine the order
 in which they should be applied. Pruning is done by removing a rule's
 precondition if the accuracy of the rule improves without it.
 
@@ -427,8 +428,8 @@ it differs in that it supports numerical target variables (regression) and
 does not compute rule sets. CART constructs binary trees using the feature
 and threshold that yield the largest information gain at each node.
 
-scikit-learn uses an optimised version of the CART algorithm; however, scikit-learn
-implementation does not support categorical variables for now.
+scikit-learn uses an optimized version of the CART algorithm; however, the 
+scikit-learn implementation does not support categorical variables for now.
 
 .. _ID3: https://en.wikipedia.org/wiki/ID3_algorithm
 .. _CART: https://en.wikipedia.org/wiki/Predictive_analytics#Classification_and_regression_trees_.28CART.29
@@ -451,7 +452,7 @@ feature :math:`j` and threshold :math:`t_m`, partition the data into
 
 .. math::
 
-    Q_m^{left}(\theta) = \{(x, y) | x_j <= t_m\}
+    Q_m^{left}(\theta) = \{(x, y) | x_j \leq t_m\}
 
     Q_m^{right}(\theta) = Q_m \setminus Q_m^{left}(\theta)
 
@@ -494,7 +495,7 @@ Gini:
 
     H(Q_m) = \sum_k p_{mk} (1 - p_{mk})
 
-Entropy:
+Log Loss or Entropy:
 
 .. math::
 
@@ -529,7 +530,7 @@ Entropy:
 
   .. math::
   
-      \mathrm{LL}(D, T) = -\sum_{m \in T} \frac{n_m}{n} H(Q_m)
+      \mathrm{LL}(D, T) = \sum_{m \in T} \frac{n_m}{n} H(Q_m)
 
 Regression criteria
 -------------------

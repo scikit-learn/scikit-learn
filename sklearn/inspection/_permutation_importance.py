@@ -33,7 +33,7 @@ def _calculate_permutation_scores(
     """Calculate score when `col_idx` is permuted."""
     random_state = check_random_state(random_state)
 
-    # Work on a copy of X to to ensure thread-safety in case of threading based
+    # Work on a copy of X to ensure thread-safety in case of threading based
     # parallelism. Furthermore, making a copy is also useful when the joblib
     # backend is 'loky' (default) or the old 'multiprocessing': in those cases,
     # if X is large it will be automatically be backed by a readonly memory map

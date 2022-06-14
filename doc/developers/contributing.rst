@@ -381,9 +381,9 @@ In order to ease the reviewing process, we recommend that your contribution
 complies with the following rules before marking a PR as ``[MRG]``. The
 **bolded** ones are especially important:
 
-1. **Give your pull request a helpful title** that summarises what your
+1. **Give your pull request a helpful title** that summarizes what your
    contribution does. This title will often become the commit message once
-   merged so it should summarise your contribution for posterity. In some
+   merged so it should summarize your contribution for posterity. In some
    cases "Fix <ISSUE TITLE>" is enough. "Fix #<ISSUE NUMBER>" is never a
    good title.
 
@@ -443,7 +443,7 @@ complies with the following rules before marking a PR as ``[MRG]``. The
 
         git diff upstream/main -u -- "*.py" | flake8 --diff
 
-   or `make flake8-diff` which should work on unix-like system.
+   or `make flake8-diff` which should work on Unix-like systems.
 
 7. Follow the :ref:`coding-guidelines`.
 
@@ -552,6 +552,7 @@ message, the following actions are taken.
     [cd build gh]          CD is run only for GitHub Actions
     [lint skip]            Azure pipeline skips linting
     [scipy-dev]            Build & test with our dependencies (numpy, scipy, etc ...) development builds
+    [nogil]                Build & test with the nogil experimental branches of CPython, Cython, NumPy, SciPy...
     [icc-build]            Build & test with the Intel C compiler (ICC)
     [pypy]                 Build & test with PyPy
     [doc skip]             Docs are not built
@@ -1208,9 +1209,17 @@ When the change is in a class, we validate and raise warning in ``fit``::
 
 Similar to deprecations, the warning message should always give both the
 version in which the change happened and the version in which the old behavior
-will be removed. The docstring needs to be updated accordingly. We need a test
-which ensures that the warning is raised in relevant cases but not in other
-cases. The warning should be caught in all other tests
+will be removed.
+
+The parameter description in the docstring needs to be updated accordingly by adding
+a `versionchanged` directive with the old and new default value, pointing to the
+version when the change will be effective::
+
+    .. versionchanged:: 0.22
+       The default value for `n_clusters` will change from 5 to 10 in version 0.22.
+
+Finally, we need a test which ensures that the warning is raised in relevant cases but
+not in other cases. The warning should be caught in all other tests
 (using e.g., ``@pytest.mark.filterwarnings``), and there should be no warning
 in the examples.
 

@@ -8,16 +8,15 @@
 
 # See _utils.pyx for details.
 
-import numpy as np
-cimport numpy as np
+cimport numpy as cnp
 from ._tree cimport Node
 from ..neighbors._quad_tree cimport Cell
 
-ctypedef np.npy_float32 DTYPE_t          # Type of X
-ctypedef np.npy_float64 DOUBLE_t         # Type of y, sample_weight
-ctypedef np.npy_intp SIZE_t              # Type for indices and counters
-ctypedef np.npy_int32 INT32_t            # Signed 32 bit integer
-ctypedef np.npy_uint32 UINT32_t          # Unsigned 32 bit integer
+ctypedef cnp.npy_float32 DTYPE_t          # Type of X
+ctypedef cnp.npy_float64 DOUBLE_t         # Type of y, sample_weight
+ctypedef cnp.npy_intp SIZE_t              # Type for indices and counters
+ctypedef cnp.npy_int32 INT32_t            # Signed 32 bit integer
+ctypedef cnp.npy_uint32 UINT32_t          # Unsigned 32 bit integer
 
 
 cdef enum:
@@ -47,7 +46,7 @@ ctypedef fused realloc_ptr:
 cdef realloc_ptr safe_realloc(realloc_ptr* p, size_t nelems) nogil except *
 
 
-cdef np.ndarray sizet_ptr_to_ndarray(SIZE_t* data, SIZE_t size)
+cdef cnp.ndarray sizet_ptr_to_ndarray(SIZE_t* data, SIZE_t size)
 
 
 cdef SIZE_t rand_int(SIZE_t low, SIZE_t high,
