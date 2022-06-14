@@ -100,7 +100,7 @@ Changelog
   :pr:`21938` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.decomposition`
-...........................
+............................
 
 - |Efficiency| :func:`decomposition.FastICA.fit` has been optimised w.r.t
   its memory footprint and runtime.
