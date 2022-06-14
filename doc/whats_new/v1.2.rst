@@ -174,7 +174,7 @@ Changelog
   with :class:`tree.ObliqueDecisionTreeClassifier` and
   :class:`ensemble.ObliqueRandomForestClassifier`. :pr:`22754` by
   `Adam Li <adam2392>`.
-  
+
 - |Enhancement| :func:`tree.plot_tree`, :func:`tree.export_graphviz` now uses
   a lower case `x[i]` to represent feature `i`. :pr:`23480` by `Thomas Fan`_.
 
