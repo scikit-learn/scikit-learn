@@ -111,7 +111,9 @@ def _ica_par(X, tol, g, fun_args, max_iter, w_init):
         W1 = _sym_decorrelation(np.dot(gwtx, X.T) / p_ - g_wtx[:, np.newaxis] * W)
         del gwtx, g_wtx
         # builtin max, abs are faster than numpy counter parts.
-        lim = max(abs(abs(np.diag(np.dot(W1, W.T))) - 1))
+        # np.einsum allows having the lowest memory footprint.
+        # It is faster than np.diag(np.dot(W1, W.T)).
+        lim = max(abs(abs(np.einsum("ij,ij->i", W1, W)) - 1))
         W = W1
         if lim < tol:
             break
