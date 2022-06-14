@@ -4080,7 +4080,7 @@ def check_param_validation(name, estimator_orig):
                 getattr(estimator, method)(X, y)
 
         # Then, for constraints that are more than a type constraint, check that the
-        # error is raised if param does match a valid type but does not match any  valid
+        # error is raised if param does match a valid type but does not match any valid
         # value for this type.
         constraints = estimator_orig._parameter_constraints[param_name]
         constraints = [make_constraint(constraint) for constraint in constraints]
