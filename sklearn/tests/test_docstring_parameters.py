@@ -266,6 +266,10 @@ def test_fit_docstring_attributes(name, Estimator):
     if Estimator.__name__ in ("KMeans", "MiniBatchKMeans"):
         est.set_params(n_init="auto")
 
+    # TODO(1.4): TO BE REMOVED for 1.4 (avoid FutureWarning)
+    if Estimator.__name__ in ("FastICA"):
+        est.set_params(whiten_solver="auto")
+
     # In case we want to deprecate some attributes in the future
     skipped_attributes = {}
 
