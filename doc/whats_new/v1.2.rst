@@ -138,6 +138,10 @@ Changelog
 - |Fix| Use dtype-aware tolerances for the validation of gram matrices (passed by users
   or precomputed). :pr:`22059` by :user:`Malte S. Kurz <MalteKurz>`.
 
+- |Fix| Fixed an error in :class:`linear_model.LogisticRegression` with
+  `solver="newton-cg"`, `fit_intercept=True`, and a single feature. :pr:`23608`
+  by `Tom Dupre la Tour`_.
+
 :mod:`sklearn.metrics`
 ......................
 
