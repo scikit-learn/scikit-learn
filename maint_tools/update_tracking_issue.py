@@ -74,6 +74,15 @@ def create_or_update_issue(body=""):
     link = f"[{args.ci_name}]({args.link_to_ci_run})"
     issue = get_issue()
 
+    max_body_length = 60_000
+    original_body_length = len(body)
+    # Avoid "body is too long (maximum is 65536 characters)" error from github REST API
+    if original_body_length > max_body_length:
+        body = (
+            f"{body[:max_body_length]}\n...\n"
+            f"Body was too long ({original_body_length} characters) and was shortened"
+        )
+
     if issue is None:
         # Create new issue
         header = f"**CI failed on {link}**"
