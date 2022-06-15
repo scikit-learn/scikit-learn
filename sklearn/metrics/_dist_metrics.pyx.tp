@@ -1709,19 +1709,19 @@ cdef class JaccardDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     """
     cdef inline DTYPE_t dist(self, const {{DTYPE_t}}* x1, const {{DTYPE_t}}* x2,
                              ITYPE_t size) nogil except -1:
-        cdef int tf1, tf2, n_tt = 0, nnz = 0
+        cdef int tf1, tf2, n_eq = 0, nnz = 0
         cdef cnp.intp_t j
         for j in range(size):
             tf1 = x1[j] != 0
             tf2 = x2[j] != 0
             nnz += (tf1 or tf2)
-            n_tt += (tf1 and tf2)
+            n_eq += (tf1 and tf2)
         # Based on https://github.com/scipy/scipy/pull/7373
         # When comparing two all-zero vectors, scipy>=1.2.0 jaccard metric
         # was changed to return 0, instead of nan.
         if nnz == 0:
             return 0
-        return (nnz - n_tt) * 1.0 / nnz
+        return (nnz - n_eq) * 1.0 / nnz
 
     cdef inline DTYPE_t csr_dist(self,
         const {{DTYPE_t}}[:] x1_data,

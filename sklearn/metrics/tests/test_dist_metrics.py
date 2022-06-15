@@ -17,7 +17,7 @@ from sklearn.metrics._dist_metrics import (
     DistanceMetric32,
 )
 
-from sklearn.utils import check_random_state
+from sklearn.utils import check_random_state, _IS_32BIT
 from sklearn.utils._testing import create_memmap_backed_data
 from sklearn.utils.fixes import sp_version, parse_version
 
@@ -117,6 +117,9 @@ def test_cdist(metric_param_grid, X, Y):
 )
 def test_cdist_bool_metric(metric, X_bool, Y_bool):
     D_scipy_cdist = cdist(X_bool, Y_bool, metric)
+
+    if metric == "jaccard" and _IS_32BIT:
+        pytest.skip("Jaccard Distance on 32bit architecture is unstable.")
 
     dm = DistanceMetric.get_metric(metric)
     D_sklearn = dm.pairwise(X_bool, Y_bool)
