@@ -138,11 +138,15 @@ Changelog
 - |Fix| Use dtype-aware tolerances for the validation of gram matrices (passed by users
   or precomputed). :pr:`22059` by :user:`Malte S. Kurz <MalteKurz>`.
 
+- |Fix| Fixed an error in :class:`linear_model.LogisticRegression` with
+  `solver="newton-cg"`, `fit_intercept=True`, and a single feature. :pr:`23608`
+  by `Tom Dupre la Tour`_.
+
 - |Enhancement| The `solver` parameter in `linear_model.QuantileRegressor`
   now accepts an `"auto"` option that will automatically use `"highs"` method
   if available, otherwise `"interior-point"`. `"auto"` will be come the default
   in 1.4 because `"interior-point"` will be removed from SciPy v. 1.11.
-  :pr:`xxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`23637` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.metrics`
 ......................
