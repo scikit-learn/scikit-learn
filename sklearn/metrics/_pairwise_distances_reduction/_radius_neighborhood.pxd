@@ -33,7 +33,7 @@ cdef cnp.ndarray[object, ndim=1] coerce_vectors_to_nd_arrays(
 #####################
 
 cdef class PairwiseDistancesRadiusNeighborhood64(PairwiseDistancesReduction64):
-    """64bit implementation of PairwiseDistancesArgKmin."""
+    """64bit implementation of PairwiseDistancesRadiusNeighborhood ."""
 
     cdef:
         DTYPE_t radius
