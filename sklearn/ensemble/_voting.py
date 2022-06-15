@@ -582,7 +582,8 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
             Training vectors, where `n_samples` is the number of samples and
             `n_features` is the number of features.
 
-        y : array-like of shape (n_samples,)
+        y : array-like of shape (n_samples, n_features) for multi-output
+            or (n_samples,) for single output
             Target values.
 
         sample_weight : array-like of shape (n_samples,), default=None
@@ -610,7 +611,8 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
 
         Returns
         -------
-        y : ndarray of shape (n_samples,)
+        y : ndarray of shape (n_samples, n_features) for multi-output
+            or (n_samples,) for single output
             The predicted values.
         """
         check_is_fitted(self)
