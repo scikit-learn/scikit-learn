@@ -297,8 +297,8 @@ class DecisionBoundaryDisplay:
         if hasattr(X, "iloc"):
             # we need to preserve the feature names and therefore get an empty dataframe
             X_grid = X.iloc[[], :].copy()
-            X_grid.iloc[:, 0] = xx0.ravel()
-            X_grid.iloc[:, 1] = xx1.ravel()
+            X_grid[X_grid.columns[0]] = xx0.ravel()
+            X_grid[X_grid.columns[1]] = xx1.ravel()
         else:
             X_grid = np.c_[xx0.ravel(), xx1.ravel()]
 
