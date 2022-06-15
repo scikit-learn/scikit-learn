@@ -17,8 +17,7 @@ from .kernels import Kernel, RBF, CompoundKernel, ConstantKernel as C
 from ..utils.validation import check_is_fitted
 from ..utils import check_random_state
 from ..utils.optimize import _check_optimize_result
-from ..utils._param_validation import Interval
-from ..utils._param_validation import StrOptions
+from ..utils._param_validation import Interval, StrOptions
 from ..preprocessing import LabelEncoder
 from ..multiclass import OneVsRestClassifier, OneVsOneClassifier
 
@@ -651,13 +650,6 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
     """
 
     _parameter_constraints = {
-        "kernel": [None, Kernel],
-        "optimizer": [StrOptions({"fmin_l_bfgs_b"}), callable],
-        "n_restarts_optimizer": [Interval(Integral, 0, None, closed="left")],
-        "max_iter_predict": [Interval(Integral, 1, None, closed="left")],
-        "warm_start": [bool],
-        "copy_X_train": [bool],
-        "random_state": ["random_state"],
         "multi_class": [StrOptions({"one_vs_rest", "one_vs_one"})],
         "n_jobs": [None, Integral],
     }

@@ -18,8 +18,7 @@ from .kernels import Kernel, RBF, ConstantKernel as C
 from ..preprocessing._data import _handle_zeros_in_scale
 from ..utils import check_random_state
 from ..utils.optimize import _check_optimize_result
-from ..utils._param_validation import Interval
-from ..utils._param_validation import StrOptions
+from ..utils._param_validation import Interval, StrOptions
 
 GPR_CHOLESKY_LOWER = True
 
@@ -179,7 +178,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
     _parameter_constraints = {
         "kernel": [None, Kernel],
         "alpha": [Real, "array-like"],
-        "optimizer": [StrOptions({"fmin_l_bfgs_b"}), callable],
+        "optimizer": [StrOptions({"fmin_l_bfgs_b"}), None, callable],
         "n_restarts_optimizer": [Interval(Integral, 0, None, closed="left")],
         "normalize_y": [bool],
         "copy_X_train": [bool],
