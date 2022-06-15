@@ -582,7 +582,7 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
             Training vectors, where `n_samples` is the number of samples and
             `n_features` is the number of features.
 
-        y : array-like of shape (n_samples, n_features) for multi-output
+        y : Array-like of shape (n_samples, n_features) for multi-output
             or (n_samples,) for single output
             Target values.
 
@@ -650,7 +650,7 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
 
         Returns
         -------
-        feature_names_out : ndarray of str objects
+        feature_names_out : Ndarray of str objects
             Transformed feature names.
         """
         _check_feature_names_in(self, input_features, generate_names=False)
