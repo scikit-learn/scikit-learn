@@ -40,6 +40,10 @@ def X_y_data():
         ),
     ],
 )
+@pytest.mark.filterwarnings(
+    # FIXME: remove once we changed the default solver to "auto"
+    "ignore:The default solver will change from 'interior-point'"
+)
 def test_init_parameters_validation(X_y_data, params, err_msg):
     """Test that invalid init parameters raise errors."""
     X, y = X_y_data
@@ -89,7 +93,7 @@ def test_quantile_toy_example(quantile, alpha, intercept, coef):
     # test how different parameters affect a small intuitive example
     X = [[0], [1], [1]]
     y = [1, 2, 11]
-    model = QuantileRegressor(quantile=quantile, alpha=alpha).fit(X, y)
+    model = QuantileRegressor(quantile=quantile, alpha=alpha, solver="auto").fit(X, y)
     assert_allclose(model.intercept_, intercept, atol=1e-2)
     if coef is not None:
         assert_allclose(model.coef_[0], coef, atol=1e-2)
@@ -105,7 +109,9 @@ def test_quantile_equals_huber_for_low_epsilon(fit_intercept):
     huber = HuberRegressor(
         epsilon=1 + 1e-4, alpha=alpha, fit_intercept=fit_intercept
     ).fit(X, y)
-    quant = QuantileRegressor(alpha=alpha, fit_intercept=fit_intercept).fit(X, y)
+    quant = QuantileRegressor(
+        alpha=alpha, fit_intercept=fit_intercept, solver="auto"
+    ).fit(X, y)
     assert_allclose(huber.coef_, quant.coef_, atol=1e-1)
     if fit_intercept:
         assert huber.intercept_ == approx(quant.intercept_, abs=1e-1)
@@ -120,7 +126,7 @@ def test_quantile_estimates_calibration(q):
     quant = QuantileRegressor(
         quantile=q,
         alpha=0,
-        solver_options={"lstsq": False},
+        solver="highs",
     ).fit(X, y)
     assert np.mean(y < quant.predict(X)) == approx(q, abs=1e-2)
 
@@ -133,7 +139,7 @@ def test_quantile_sample_weight():
     # when we increase weight of upper observations,
     # estimate of quantile should go up
     weight[y > y.mean()] = 100
-    quant = QuantileRegressor(quantile=0.5, alpha=1e-8, solver_options={"lstsq": False})
+    quant = QuantileRegressor(quantile=0.5, alpha=1e-8, solver="highs")
     quant.fit(X, y, sample_weight=weight)
     fraction_below = np.mean(y < quant.predict(X))
     assert fraction_below > 0.5
@@ -223,7 +229,7 @@ def test_equivariance(quantile):
     )
     # make y asymmetric
     y += rng.exponential(scale=100, size=y.shape)
-    params = dict(alpha=0, solver_options={"lstsq": True, "tol": 1e-10})
+    params = dict(alpha=0, solver="highs")
     model1 = QuantileRegressor(quantile=quantile, **params).fit(X, y)
 
     # coef(q; a*y, X) = a * coef(q; y, X)
@@ -252,6 +258,7 @@ def test_equivariance(quantile):
     assert_allclose(model2.coef_, np.linalg.solve(A, model1.coef_), rtol=1e-5)
 
 
+@pytest.mark.filterwarnings("ignore:`method='interior-point'` is deprecated")
 def test_linprog_failure():
     """Test that linprog fails."""
     X = np.linspace(0, 10, num=10).reshape(-1, 1)
@@ -280,7 +287,9 @@ def test_sparse_input(sparse_format, solver, fit_intercept):
     X, y = make_regression(n_samples=100, n_features=20, random_state=1, noise=1.0)
     X_sparse = sparse_format(X)
     alpha = 1e-4
-    quant_dense = QuantileRegressor(alpha=alpha, fit_intercept=fit_intercept).fit(X, y)
+    quant_dense = QuantileRegressor(
+        alpha=alpha, fit_intercept=fit_intercept, solver="auto"
+    ).fit(X, y)
     quant_sparse = QuantileRegressor(
         alpha=alpha, fit_intercept=fit_intercept, solver=solver
     ).fit(X_sparse, y)
@@ -289,3 +298,10 @@ def test_sparse_input(sparse_format, solver, fit_intercept):
         assert quant_sparse.intercept_ == approx(quant_dense.intercept_)
         # check that we still predict fraction
         assert 0.45 <= np.mean(y < quant_sparse.predict(X_sparse)) <= 0.55
+
+
+def test_warning_new_default(X_y_data):
+    X, y = X_y_data
+    model = QuantileRegressor()
+    with pytest.warns(FutureWarning, match="The default solver will change"):
+        model.fit(X, y)
