@@ -597,14 +597,13 @@ class _BaseDiscreteNB(_BaseNB):
                 raise ValueError(
                     "alpha should be a scalar or a numpy array with shape [n_features]"
                 )
-        if np.min(self.alpha) < _ALPHA_MIN:
-            if not self._force_alpha:
-                warnings.warn(
-                    "alpha too small will result in numeric errors, "
-                    f"setting alpha = {_ALPHA_MIN:.1e}. Use set_alpha ="
-                    "True to keep alpha unchanged."
-                )
-                return np.maximum(self.alpha, _ALPHA_MIN)
+        if np.min(self.alpha) < _ALPHA_MIN and not self._force_alpha:
+            warnings.warn(
+                "alpha too small will result in numeric errors, "
+                f"setting alpha = {_ALPHA_MIN:.1e}. Use set_alpha ="
+                "True to keep alpha unchanged."
+            )
+            return np.maximum(self.alpha, _ALPHA_MIN)
         return self.alpha
 
     def partial_fit(self, X, y, classes=None, sample_weight=None):
