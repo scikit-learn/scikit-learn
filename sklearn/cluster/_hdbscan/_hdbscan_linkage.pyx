@@ -58,7 +58,6 @@ cpdef np.ndarray[np.double_t, ndim=2] mst_linkage_core_vector(
         DistanceMetric dist_metric,
         np.double_t alpha=1.0):
 
-    # Add a comment
     cdef np.ndarray[np.double_t, ndim=1] current_distances_arr
     cdef np.ndarray[np.double_t, ndim=1] current_sources_arr
     cdef np.ndarray[np.int8_t, ndim=1] in_tree_arr

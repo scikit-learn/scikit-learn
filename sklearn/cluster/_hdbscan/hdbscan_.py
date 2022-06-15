@@ -18,10 +18,10 @@ from scipy.sparse import issparse
 from sklearn.neighbors import KDTree, BallTree
 from joblib import Memory
 from warnings import warn
-from sklearn.utils import check_array
+from sklearn.utils import check_array, gen_batches, get_chunk_n_rows
 from joblib.parallel import cpu_count
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
-
+from sklearn.neighbors import NearestNeighbors
 from scipy.sparse import csgraph
 
 from ._hdbscan_linkage import (
@@ -82,8 +82,7 @@ def _hdbscan_generic(
         #   sklearn.metrics.pairwise_distances handle it,
         #   enables the usage of numpy.inf in the distance
         #   matrix to indicate missing distance information.
-        # TODO: Check if copying is necessary
-        distance_matrix = X.copy()
+        distance_matrix = X
     else:
         distance_matrix = pairwise_distances(X, metric=metric, **metric_params)
 
@@ -178,29 +177,68 @@ def _hdbscan_sparse_distance_matrix(
     return single_linkage_tree
 
 
+def _compute_core_distances_prims(X, neighbors, min_samples):
+    """Compute the k-th nearest neighbor of each sample.
+
+    Equivalent to neighbors.kneighbors(X, self.min_samples)[0][:, -1]
+    but with more memory efficiency.
+
+    Parameters
+    ----------
+    X : array-like of shape (n_samples, n_features)
+        The data.
+    neighbors : NearestNeighbors instance
+        The fitted nearest neighbors estimator.
+    min_samples : int
+        The number of points used to calculate core distance.
+
+    Returns
+    -------
+    core_distances : ndarray of shape (n_samples,)
+        Distance at which each sample becomes a core point.
+        Points which will never be core have a distance of inf.
+    """
+    n_samples = X.shape[0]
+    core_distances = np.empty(n_samples)
+    core_distances.fill(np.nan)
+
+    chunk_n_rows = get_chunk_n_rows(row_bytes=16 * min_samples, max_n_rows=n_samples)
+    slices = gen_batches(n_samples, chunk_n_rows)
+    for sl in slices:
+        core_distances[sl] = neighbors.kneighbors(X[sl], min_samples)[0][:, -1]
+    return core_distances
+
+
 def _hdbscan_prims_kdtree(
     X,
     min_samples=5,
     alpha=1.0,
     metric="euclidean",
     leaf_size=40,
+    n_jobs=4,
     **metric_params,
 ):
+    # The Cython routines used require contiguous arrays
+    if not X.flags["C_CONTIGUOUS"]:
+        X = np.array(X, dtype=np.float64, order="C")
+
     if X.dtype != np.float64:
         X = X.astype(np.float64)
 
-    # The Cython routines used require contiguous arrays
-    if not X.flags["C_CONTIGUOUS"]:
-        X = np.array(X, dtype=np.double, order="C")
-
-    tree = KDTree(X, metric=metric, leaf_size=leaf_size, **metric_params)
-
-    dist_metric = DistanceMetric.get_metric(metric, **metric_params)
-
     # Get distance to kth nearest neighbour
-    core_distances = tree.query(
-        X, k=min_samples + 1, dualtree=True, breadth_first=True
-    )[0][:, -1].copy(order="C")
+    nbrs = NearestNeighbors(
+        n_neighbors=min_samples,
+        algorithm="kd_tree",
+        leaf_size=leaf_size,
+        metric=metric,
+        metric_params=metric_params,
+        p=2 if metric_params is None else metric_params.get("p", 2),
+        n_jobs=n_jobs,
+    ).fit(X)
+    core_distances = _compute_core_distances_prims(
+        X, neighbors=nbrs, min_samples=min_samples
+    )
+    dist_metric = DistanceMetric.get_metric(metric, **metric_params)
 
     # Mutual reachability distance is implicit in mst_linkage_core_vector
     min_spanning_tree = mst_linkage_core_vector(X, core_distances, dist_metric, alpha)
@@ -220,23 +258,30 @@ def _hdbscan_prims_balltree(
     alpha=1.0,
     metric="euclidean",
     leaf_size=40,
+    n_jobs=4,
     **metric_params,
 ):
+    # The Cython routines used require contiguous arrays
+    if not X.flags["C_CONTIGUOUS"]:
+        X = np.array(X, dtype=np.float64, order="C")
+
     if X.dtype != np.float64:
         X = X.astype(np.float64)
 
-    # The Cython routines used require contiguous arrays
-    if not X.flags["C_CONTIGUOUS"]:
-        X = np.array(X, dtype=np.double, order="C")
-
-    tree = BallTree(X, metric=metric, leaf_size=leaf_size, **metric_params)
-
-    dist_metric = DistanceMetric.get_metric(metric, **metric_params)
-
     # Get distance to kth nearest neighbour
-    core_distances = tree.query(
-        X, k=min_samples + 1, dualtree=True, breadth_first=True
-    )[0][:, -1].copy(order="C")
+    nbrs = NearestNeighbors(
+        n_neighbors=min_samples,
+        algorithm="ball_tree",
+        leaf_size=leaf_size,
+        metric=metric,
+        metric_params=metric_params,
+        p=2 if metric_params is None else metric_params.get("p", 2),
+        n_jobs=n_jobs,
+    ).fit(X)
+    core_distances = _compute_core_distances_prims(
+        X, neighbors=nbrs, min_samples=min_samples
+    )
+    dist_metric = DistanceMetric.get_metric(metric, **metric_params)
 
     # Mutual reachability distance is implicit in mst_linkage_core_vector
     min_spanning_tree = mst_linkage_core_vector(X, core_distances, dist_metric, alpha)
@@ -571,7 +616,7 @@ def hdbscan(
     # Checks input and converts to an nd-array where possible
     if metric != "precomputed" or issparse(X):
         X = check_array(X, accept_sparse="csr", force_all_finite=False)
-    else:
+    elif isinstance(X, np.ndarray):
         # Only non-sparse, precomputed distance matrices are handled here
         # and thereby allowed to contain numpy.inf for missing distances
 
@@ -581,7 +626,6 @@ def hdbscan(
         tmp[np.isinf(tmp)] = 1
         check_array(tmp)
 
-    # Python 2 and 3 compliant string_type checking
     memory = Memory(location=memory, verbose=0)
 
     size = X.shape[0]
@@ -610,6 +654,7 @@ def hdbscan(
                 min_samples,
                 alpha,
                 metric,
+                n_jobs=n_jobs,
                 **metric_params,
             )
         elif algorithm == "prims_balltree":
@@ -621,6 +666,7 @@ def hdbscan(
                 alpha,
                 metric,
                 leaf_size,
+                n_jobs=n_jobs,
                 **metric_params,
             )
         elif algorithm == "boruvka_kdtree":
@@ -632,7 +678,7 @@ def hdbscan(
                 metric,
                 leaf_size,
                 approx_min_span_tree,
-                n_jobs,
+                n_jobs=n_jobs,
                 **metric_params,
             )
         elif algorithm == "boruvka_balltree":
@@ -650,13 +696,12 @@ def hdbscan(
                 metric,
                 leaf_size,
                 approx_min_span_tree,
-                n_jobs,
+                n_jobs=n_jobs,
                 **metric_params,
             )
         else:
             raise TypeError("Unknown algorithm type %s specified" % algorithm)
     else:
-
         if issparse(X) or metric not in FAST_METRICS:
             # We can't do much with sparse matrices ...
             single_linkage_tree = memory.cache(_hdbscan_generic)(
@@ -676,6 +721,7 @@ def hdbscan(
                     alpha,
                     metric,
                     leaf_size,
+                    n_jobs=n_jobs,
                     **metric_params,
                 )
             else:
@@ -685,12 +731,11 @@ def hdbscan(
                     metric,
                     leaf_size,
                     approx_min_span_tree,
-                    n_jobs,
+                    n_jobs=n_jobs,
                     **metric_params,
                 )
         else:  # Metric is a valid BallTree metric
             # TO DO: Need heuristic to decide when to go to boruvka;
-            # still debugging for now
             if X.shape[1] > 60:
                 single_linkage_tree = memory.cache(_hdbscan_prims_balltree)(
                     X,
@@ -698,6 +743,7 @@ def hdbscan(
                     alpha,
                     metric,
                     leaf_size,
+                    n_jobs=n_jobs,
                     **metric_params,
                 )
             else:
@@ -707,7 +753,7 @@ def hdbscan(
                     metric,
                     leaf_size,
                     approx_min_span_tree,
-                    n_jobs,
+                    n_jobs=n_jobs,
                     **metric_params,
                 )
 
