@@ -99,21 +99,8 @@ def test_lda_predict():
         # LDA shouldn't be able to separate those
         assert np.any(y_pred3 != y3), "solver %s" % solver
 
-    # Test invalid shrinkages
-    clf = LinearDiscriminantAnalysis(solver="lsqr", shrinkage=-0.2231)
-    with pytest.raises(ValueError):
-        clf.fit(X, y)
-
-    clf = LinearDiscriminantAnalysis(solver="eigen", shrinkage="dummy")
-    with pytest.raises(ValueError):
-        clf.fit(X, y)
-
     clf = LinearDiscriminantAnalysis(solver="svd", shrinkage="auto")
     with pytest.raises(NotImplementedError):
-        clf.fit(X, y)
-
-    clf = LinearDiscriminantAnalysis(solver="lsqr", shrinkage=np.array([1, 2]))
-    with pytest.raises(ValueError):
         clf.fit(X, y)
 
     clf = LinearDiscriminantAnalysis(
@@ -127,11 +114,6 @@ def test_lda_predict():
             "Only one of the two can be set."
         ),
     ):
-        clf.fit(X, y)
-
-    # Test unknown solver
-    clf = LinearDiscriminantAnalysis(solver="dummy")
-    with pytest.raises(ValueError):
         clf.fit(X, y)
 
     # test bad solver with covariance_estimator
