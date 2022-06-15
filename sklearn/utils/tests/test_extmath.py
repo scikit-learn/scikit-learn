@@ -58,6 +58,9 @@ def test_uniform_weights():
     for axis in (None, 0, 1):
         mode, score = stats.mode(x, axis)
         mode2, score2 = weighted_mode(x, weights, axis=axis)
+        if axis is not None:
+            mode = np.expand_dims(mode, axis=axis)
+            score = np.expand_dims(score, axis=axis)
 
         assert_array_equal(mode, mode2)
         assert_array_equal(score, score2)
