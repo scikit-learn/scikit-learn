@@ -2555,14 +2555,16 @@ Pinball loss
 ------------
 
 The :func:`mean_pinball_loss` function is used to evaluate the predictive
-performance of quantile regression models. The `pinball loss
-<https://en.wikipedia.org/wiki/Quantile_regression#Computation>`_ is equivalent
-to :func:`mean_absolute_error` when the quantile parameter ``alpha`` is set to
-0.5.
+performance of `quantile regression
+<https://en.wikipedia.org/wiki/Quantile_regression>`_ models.
 
 .. math::
 
   \text{pinball}(y, \hat{y}) = \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}}-1}  \alpha \max(y_i - \hat{y}_i, 0) + (1 - \alpha) \max(\hat{y}_i - y_i, 0)
+
+The pinball loss is equivalent to :func:`mean_absolute_error` when the quantile
+parameter ``alpha`` is set to 0.5.
+
 
 Here is a small example of usage of the :func:`mean_pinball_loss` function::
 
