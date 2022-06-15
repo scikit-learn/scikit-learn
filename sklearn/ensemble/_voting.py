@@ -657,3 +657,6 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
             [f"{class_name}_{name}" for name, est in self.estimators if est != "drop"],
             dtype=object,
         )
+
+    def _more_tags(self):
+        return {"multioutput": True}
