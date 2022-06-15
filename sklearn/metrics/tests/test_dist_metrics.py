@@ -194,12 +194,6 @@ def test_distance_metrics_dtype_consistency(metric_param_grid):
 @pytest.mark.parametrize("X_bool", [X_bool, X_bool_mmap])
 def test_pdist_bool_metrics(metric, X_bool):
     D_scipy_pdist = cdist(X_bool, X_bool, metric)
-    # Based on https://github.com/scipy/scipy/pull/7373
-    # When comparing two all-zero vectors, scipy>=1.2.0 jaccard metric
-    # was changed to return 0, instead of nan.
-    if metric == "jaccard" and sp_version < parse_version("1.2.0"):
-        D_scipy_pdist[np.isnan(D_scipy_pdist)] = 0
-
     dm = DistanceMetric.get_metric(metric)
     D_sklearn = dm.pairwise(X_bool)
     assert_allclose(D_sklearn, D_scipy_pdist)
