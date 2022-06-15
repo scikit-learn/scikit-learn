@@ -650,6 +650,7 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
     """
 
     _parameter_constraints = {
+        **_BinaryGaussianProcessClassifierLaplace._parameter_constraints,
         "multi_class": [StrOptions({"one_vs_rest", "one_vs_one"})],
         "n_jobs": [None, Integral],
     }
