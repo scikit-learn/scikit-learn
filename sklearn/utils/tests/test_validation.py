@@ -358,7 +358,9 @@ def test_check_array():
 
     Xs = [X_csc, X_coo, X_dok, X_int, X_float]
     accept_sparses = [["csr", "coo"], ["coo", "dok"]]
-    for X, dtype, accept_sparse, copy in product(Xs, dtypes, accept_sparses, copys):
+    for X, dtype, accept_sparse, copy in product(
+        Xs, dtypes[:-1], accept_sparses, copys
+    ):
         with warnings.catch_warnings(record=True) as w:
             X_checked = check_array(
                 X, dtype=dtype, accept_sparse=accept_sparse, copy=copy
