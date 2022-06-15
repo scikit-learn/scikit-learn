@@ -40,7 +40,7 @@ from ._hdbscan_reachability import mutual_reachability, sparse_mutual_reachabili
 from ._hdbscan_boruvka import KDTreeBoruvkaAlgorithm, BallTreeBoruvkaAlgorithm
 from sklearn.metrics._dist_metrics import DistanceMetric
 
-FAST_METRICS = KDTree.valid_metrics + BallTree.valid_metrics + ["cosine", "arccos"]
+FAST_METRICS = KDTree.valid_metrics + BallTree.valid_metrics + ["cosine"]
 
 
 def _tree_to_labels(
