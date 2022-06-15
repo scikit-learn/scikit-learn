@@ -46,7 +46,7 @@ def _special_minimize(fun, grad, x, tol_NM, tol):
     res_NM = minimize(
         fun, x, method="Nelder-Mead", options={"xatol": tol_NM, "fatol": tol_NM}
     )
-    # Now refine via root finding, wich is more precise then minimizing a function.
+    # Now refine via root finding, wich is more precise than minimizing a function.
     res = root(
         grad,
         res_NM.x,
@@ -128,7 +128,7 @@ def glm_dataset(global_random_seed, request):
     )
     X[:, -1] = 1  # last columns acts as intercept
     U, s, Vt = linalg.svd(X)
-    assert np.all(s) > 1e-3  # to be sure
+    assert np.all(s > 1e-3)  # to be sure
     assert np.max(s) / np.min(s) < 100  # condition number
     U1, _ = U[:, :k], U[:, k:]
     Vt1, _ = Vt[:k, :], Vt[k:, :]
