@@ -421,7 +421,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
         scaled_sigma_ = np.dot(
             Vh.T, Vh / (eigen_vals_ + lambda_ / alpha_)[:, np.newaxis]
         )
-        self.sigma_ = (1.0 / alpha_) * scaled_sigma_
+        self.sigma_ = ((1.0 / alpha_) * scaled_sigma_).astype(X.dtype)
 
         self._set_intercept(X_offset_, y_offset_, X_scale_)
 
@@ -456,7 +456,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
             if self._normalize:
                 X = (X - self.X_offset_) / self.X_scale_
             sigmas_squared_data = (np.dot(X, self.sigma_) * X).sum(axis=1)
-            y_std = np.sqrt(sigmas_squared_data + (1.0 / self.alpha_))
+            y_std = np.sqrt(sigmas_squared_data + (1.0 / X.dtype.type(self.alpha_)))
             return y_mean, y_std
 
     def _update_coef_(
@@ -799,9 +799,9 @@ class ARDRegression(RegressorMixin, LinearModel):
         else:
             sigma_ = np.array([]).reshape(0, 0)
 
-        self.coef_ = coef_
+        self.coef_ = coef_.astype(X.dtype)
         self.alpha_ = alpha_
-        self.sigma_ = sigma_
+        self.sigma_ = sigma_.astype(X.dtype)
         self.lambda_ = lambda_
         self._set_intercept(X_offset_, y_offset_, X_scale_)
         return self
@@ -865,5 +865,5 @@ class ARDRegression(RegressorMixin, LinearModel):
                 X = (X - self.X_offset_) / self.X_scale_
             X = X[:, self.lambda_ < self.threshold_lambda]
             sigmas_squared_data = (np.dot(X, self.sigma_) * X).sum(axis=1)
-            y_std = np.sqrt(sigmas_squared_data + (1.0 / self.alpha_))
+            y_std = np.sqrt(sigmas_squared_data + (1.0 / X.dtype.type(self.alpha_)))
             return y_mean, y_std
