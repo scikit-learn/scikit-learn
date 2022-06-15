@@ -227,7 +227,6 @@ def _hdbscan_boruvka(
     min_samples=5,
     metric="euclidean",
     leaf_size=40,
-    approx_min_span_tree=True,
     n_jobs=4,
     **metric_params,
 ):
@@ -253,7 +252,7 @@ def _hdbscan_boruvka(
         min_samples,
         metric=metric,
         leaf_size=leaf_size // 3,
-        approx_min_span_tree=approx_min_span_tree,
+        approx_min_span_tree=True,
         n_jobs=n_jobs,
         **metric_params,
     )
@@ -341,7 +340,6 @@ def get_finite_row_indices(matrix):
         ],
         "leaf_size": [Interval(Integral, left=1, right=None, closed="left")],
         "memory": [str, None, Path],
-        "approx_min_span_tree": [bool],
         "n_jobs": [int],
         "cluster_selection_method": [StrOptions({"eom", "leaf"})],
         "allow_single_cluster": [bool],
@@ -359,7 +357,6 @@ def hdbscan(
     leaf_size=40,
     algorithm="auto",
     memory=None,
-    approx_min_span_tree=True,
     n_jobs=4,
     cluster_selection_method="eom",
     allow_single_cluster=False,
@@ -439,13 +436,6 @@ def hdbscan(
         Used to cache the output of the computation of the tree.
         By default, no caching is done. If a string is given, it is the
         path to the caching directory.
-
-    approx_min_span_tree : bool, default=True
-        Whether to accept an only approximate minimum spanning tree.
-        For some algorithms this can provide a significant speedup, but
-        the resulting clustering may be of marginally lower quality.
-        If you are willing to sacrifice speed for correctness you may want
-        to explore this; in general this should be left at the default True.
 
     n_jobs : int, default=4
         Number of parallel jobs to run in core distance computations (if
@@ -682,13 +672,6 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         By default, no caching is done. If a string is given, it is the
         path to the caching directory.
 
-    approx_min_span_tree : bool, default=True
-        Whether to accept an only approximate minimum spanning tree.
-        For some algorithms this can provide a significant speedup, but
-        the resulting clustering may be of marginally lower quality.
-        If you are willing to sacrifice speed for correctness you may want
-        to explore this; in general this should be left at the default `True`.
-
     n_jobs : int, default=4
         Number of parallel jobs to run in core distance computations (if
         supported by the specific algorithm). For `n_jobs<0`,
@@ -797,7 +780,6 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         ],
         "leaf_size": [Interval(Integral, left=1, right=None, closed="left")],
         "memory": [str, None, Path],
-        "approx_min_span_tree": [bool],
         "n_jobs": [int],
         "cluster_selection_method": [StrOptions({"eom", "leaf"})],
         "allow_single_cluster": [bool],
@@ -815,7 +797,6 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         algorithm="auto",
         leaf_size=40,
         memory=None,
-        approx_min_span_tree=True,
         n_jobs=4,
         cluster_selection_method="eom",
         allow_single_cluster=False,
@@ -830,7 +811,6 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         self.algorithm = algorithm
         self.leaf_size = leaf_size
         self.memory = memory
-        self.approx_min_span_tree = approx_min_span_tree
         self.n_jobs = n_jobs
         self.cluster_selection_method = cluster_selection_method
         self.allow_single_cluster = allow_single_cluster
