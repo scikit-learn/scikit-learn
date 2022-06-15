@@ -60,3 +60,21 @@ dense model.
 
     .. [M2012] "Machine Learning: A Probabilistic Perspective"
       Murphy, K. P. - chapter 14.4.3, pp. 492-493, The MIT Press, 2012
+
+
+Kernel ridge classification
+=============================
+
+The :class:`KernelRidge` regressor has a classifier variant:
+:class:`KernelRidgeClassifier` [Senjian2007]_. This classifier first converts binary targets to
+``{-1, 1}`` and then treats the problem as a nonlinear regression task, optimizing the
+same objective as in Kernel ridge regression. The predicted class corresponds to the sign of the
+regressor's prediction. For multiclass classification, the problem is
+treated as multi-output regression, and the predicted class corresponds to
+the output with the highest value.
+
+
+.. topic:: References:
+
+    .. [Senjian2007] An, S., Liu, W., & Venkatesh, S. "Face recognition using kernel ridge regression." 
+      In 2007 IEEE Conference on Computer Vision and Pattern Recognition (pp. 1-7).
