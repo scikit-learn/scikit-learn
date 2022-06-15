@@ -525,9 +525,18 @@ def generate_min_dependency_substitutions(app):
 issues_github_path = "scikit-learn/scikit-learn"
 
 
+def disable_plot_gallery_for_linkcheck(app):
+    if app.builder.name == "linkcheck":
+        sphinx_gallery_conf["plot_gallery"] = "False"
+
+
 def setup(app):
+    # do not run the examples when using linkcheck by using a small priority
+    # (default priority is 500 and sphinx-gallery using builder-inited event too)
+    app.connect("builder-inited", disable_plot_gallery_for_linkcheck, priority=50)
     app.connect("builder-inited", generate_min_dependency_table)
     app.connect("builder-inited", generate_min_dependency_substitutions)
+
     # to hide/show the prompt in code examples:
     app.connect("build-finished", make_carousel_thumbs)
     app.connect("build-finished", filter_search_index)
@@ -566,3 +575,54 @@ ogp_site_url = "https://scikit-learn/stable/"
 ogp_image = "https://scikit-learn.org/stable/_static/scikit-learn-logo-small.png"
 ogp_use_first_image = True
 ogp_site_name = "scikit-learn"
+
+# Config for linkcheck that checks the documentation for broken links
+
+# ignore all links in 'whats_new' to avoid doing many github requests and
+# hitting the github rate threshold that makes linkcheck take a lot of time
+linkcheck_exclude_documents = [r"whats_new/.*"]
+
+# default timeout to make some sites links fail faster
+linkcheck_timeout = 10
+
+# Allow redirects from doi.org
+linkcheck_allowed_redirects = {r"https://doi.org/.+": r".*"}
+linkcheck_ignore = [
+    # ignore links to local html files e.g. in image directive :target: field
+    r"^..?/",
+    # ignore links to specific pdf pages because linkcheck does not handle them
+    # ('utf-8' codec can't decode byte error)
+    r"http://www.utstat.toronto.edu/~rsalakhu/sta4273/notes/Lecture2.pdf#page=.*",
+    "https://www.fordfoundation.org/media/2976/"
+    "roads-and-bridges-the-unseen-labor-behind-our-digital-infrastructure.pdf#page=.*",
+    # Broken links from testimonials
+    "http://www.bestofmedia.com",
+    "http://www.data-publica.com/",
+    "https://livelovely.com",
+    "https://www.mars.com/global",
+    "https://www.yhat.com",
+    # Ignore some dynamically created anchors. See
+    # https://github.com/sphinx-doc/sphinx/issues/9016 for more details about
+    # the github example
+    r"https://github.com/conda-forge/miniforge#miniforge",
+    r"https://stackoverflow.com/questions/5836335/"
+    "consistently-create-same-random-numpy-array/5837352#comment6712034_5837352",
+]
+
+# Use a browser-like user agent to avoid some "403 Client Error: Forbidden for
+# url" errors. This is taken from the variable navigator.userAgent inside a
+# browser console.
+user_agent = (
+    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:100.0) Gecko/20100101 Firefox/100.0"
+)
+
+# Use Github token from environment variable to avoid Github rate limits when
+# checking Github links
+github_token = os.getenv("GITHUB_TOKEN")
+
+if github_token is None:
+    linkcheck_request_headers = {}
+else:
+    linkcheck_request_headers = {
+        "https://github.com/": {"Authorization": f"token {github_token}"},
+    }
