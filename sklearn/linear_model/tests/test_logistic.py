@@ -2071,3 +2071,13 @@ def test_large_sparse_matrix(solver):
             LogisticRegression(solver=solver).fit(X, y)
     else:
         LogisticRegression(solver=solver).fit(X, y)
+
+
+def test_single_feature_newton_cg():
+    # Test that Newton-CG works with a single feature and intercept.
+    # Non-regression test for issue #23605.
+
+    X = np.array([[0.5, 0.65, 1.1, 1.25, 0.8, 0.54, 0.95, 0.7]]).T
+    y = np.array([1, 1, 0, 0, 1, 1, 0, 1])
+    assert X.shape[1] == 1
+    LogisticRegression(solver="newton-cg", fit_intercept=True).fit(X, y)
