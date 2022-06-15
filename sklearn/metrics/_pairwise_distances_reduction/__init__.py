@@ -86,17 +86,16 @@
 #    Multiplication (see the docstring of :class:`GEMMTermComputer64` for details).
 
 
-from ._base import _sqeuclidean_row_norms64
-
 from ._dispatcher import (
     PairwiseDistancesReduction,
     PairwiseDistancesArgKmin,
     PairwiseDistancesRadiusNeighborhood,
+    _sqeuclidean_row_norms,
 )
 
 __all__ = [
     "PairwiseDistancesReduction",
     "PairwiseDistancesArgKmin",
     "PairwiseDistancesRadiusNeighborhood",
-    "_sqeuclidean_row_norms64",
+    "_sqeuclidean_row_norms",
 ]

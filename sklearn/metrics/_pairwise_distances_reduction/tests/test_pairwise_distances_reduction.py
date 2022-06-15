@@ -12,7 +12,7 @@ from sklearn.metrics._pairwise_distances_reduction import (
     PairwiseDistancesReduction,
     PairwiseDistancesArgKmin,
     PairwiseDistancesRadiusNeighborhood,
-    _sqeuclidean_row_norms64,
+    _sqeuclidean_row_norms,
 )
 
 from sklearn.metrics import euclidean_distances
@@ -937,7 +937,7 @@ def test_pairwise_distances_radius_neighbors(
 @pytest.mark.parametrize("n_samples", [100, 1000])
 @pytest.mark.parametrize("n_features", [5, 10, 100])
 @pytest.mark.parametrize("num_threads", [1, 2, 8])
-def test_sqeuclidean_row_norms64(
+def test_sqeuclidean_row_norms(
     global_random_seed,
     n_samples,
     n_features,
@@ -949,6 +949,6 @@ def test_sqeuclidean_row_norms64(
     X = rng.rand(n_samples, n_features).astype(dtype) * spread
 
     sq_row_norm_reference = np.linalg.norm(X, axis=1) ** 2
-    sq_row_norm = np.asarray(_sqeuclidean_row_norms64(X, num_threads=num_threads))
+    sq_row_norm = np.asarray(_sqeuclidean_row_norms(X, num_threads=num_threads))
 
     assert_allclose(sq_row_norm_reference, sq_row_norm)

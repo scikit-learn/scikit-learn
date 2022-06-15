@@ -4,10 +4,20 @@ from typing import List
 from scipy.sparse import issparse
 from .._dist_metrics import BOOL_METRICS, METRIC_MAPPING
 
+from ._base import _sqeuclidean_row_norms64
 from ._argkmin import PairwiseDistancesArgKmin64
 from ._radius_neighborhood import PairwiseDistancesRadiusNeighborhood64
 
 from ... import get_config
+
+
+def _sqeuclidean_row_norms(X, num_threads):
+    """Compute the squared euclidean norm of the rows of X in parallel."""
+    if X.dtype == np.float64:
+        return _sqeuclidean_row_norms64(X, num_threads)
+    raise ValueError(
+        f"Only 64bit float datasets are supported at this time, got: X.dtype={X.dtype}."
+    )
 
 
 class PairwiseDistancesReduction:
