@@ -10,6 +10,7 @@ from sklearn.utils._param_validation import Hidden
 from sklearn.utils._param_validation import Interval
 from sklearn.utils._param_validation import StrOptions
 from sklearn.utils._param_validation import _ArrayLikes
+from sklearn.utils._param_validation import _Booleans
 from sklearn.utils._param_validation import _Callables
 from sklearn.utils._param_validation import _InstancesOf
 from sklearn.utils._param_validation import _NoneConstraint
@@ -292,6 +293,7 @@ def test_generate_invalid_param_val_all_valid(constraints):
         _NoneConstraint(),
         _RandomStates(),
         _SparseMatrices(),
+        _Booleans(),
     ],
 )
 def test_generate_invalid_param_val_not_error(constraint):
@@ -342,6 +344,7 @@ def test_generate_valid_param(constraint):
         (_Class, _Class()),
         (int, 1),
         (Real, 0.5),
+        ("boolean", False),
     ],
 )
 def test_is_satisfied_by(constraint_declaration, value):
@@ -361,6 +364,7 @@ def test_is_satisfied_by(constraint_declaration, value):
         (None, _NoneConstraint),
         (callable, _Callables),
         (int, _InstancesOf),
+        ("boolean", _Booleans),
     ],
 )
 def test_make_constraint(constraint_declaration, expected_constraint_class):
@@ -498,3 +502,23 @@ def test_validate_params_set_param_constraints_attribute():
     """
     assert hasattr(_func, "_skl_parameter_constraints")
     assert hasattr(_Class()._method, "_skl_parameter_constraints")
+
+
+def test_boolean_constraint_deprecated_int():
+    """Check that validate_params raise a deprecation message but still passes validation
+    when using an int for a parameter accepting a boolean.
+    """
+
+    @validate_params({"param": ["boolean"]})
+    def f(param):
+        pass
+
+    # True/False and np.bool_(True/False) are valid params
+    f(True)
+    f(np.bool_(False))
+
+    # an int is also valid but deprecated
+    with pytest.warns(
+        FutureWarning, match="Passing an int for a boolean parameter is deprecated"
+    ):
+        f(1)
