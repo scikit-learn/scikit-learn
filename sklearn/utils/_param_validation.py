@@ -5,6 +5,7 @@ from inspect import signature
 from numbers import Integral
 from numbers import Real
 import operator
+import warnings
 
 import numpy as np
 from scipy.sparse import issparse
@@ -28,6 +29,7 @@ def validate_parameter_constraints(parameter_constraints, params, caller_name):
         - None, meaning that None is a valid value for the parameter
         - any type, meaning that any instance of this type is valid
         - a StrOptions object, representing a set of strings
+        - the string "boolean"
 
     params : dict
         A dictionary `param_name: param_value`. The parameters to validate against the
@@ -100,6 +102,8 @@ def make_constraint(constraint):
         return _InstancesOf(constraint)
     if isinstance(constraint, (Interval, StrOptions)):
         return constraint
+    if isinstance(constraint, str) and constraint == "boolean":
+        return _Booleans()
     if isinstance(constraint, Hidden):
         constraint = make_constraint(constraint.constraint)
         constraint.hidden = True
@@ -413,7 +417,40 @@ class _RandomStates(_Constraint):
 
     def __str__(self):
         return (
-            f"{', '.join([repr(c) for c in self._constraints[:-1]])} or"
+            f"{', '.join([str(c) for c in self._constraints[:-1]])} or"
+            f" {self._constraints[-1]}"
+        )
+
+
+class _Booleans(_Constraint):
+    """Constraint representing boolean likes.
+
+    Convenience class for
+    [bool, np.bool_, Integral (deprecated)]
+    """
+
+    def __init__(self):
+        super().__init__()
+        self._constraints = [
+            _InstancesOf(bool),
+            _InstancesOf(np.bool_),
+            _InstancesOf(Integral),
+        ]
+
+    def is_satisfied_by(self, val):
+        # TODO(1.4) remove support for Integral.
+        if isinstance(val, Integral) and not isinstance(val, bool):
+            warnings.warn(
+                "Passing an int for a boolean parameter is deprecated in version 1.2 "
+                "and won't be supported anymore in version 1.4.",
+                FutureWarning,
+            )
+
+        return any(c.is_satisfied_by(val) for c in self._constraints)
+
+    def __str__(self):
+        return (
+            f"{', '.join([str(c) for c in self._constraints[:-1]])} or"
             f" {self._constraints[-1]}"
         )
 
