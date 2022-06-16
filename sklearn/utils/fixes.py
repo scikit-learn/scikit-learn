@@ -10,6 +10,7 @@ at which the fix is no longer needed.
 #
 # License: BSD 3 clause
 
+from collections import namedtuple
 from functools import update_wrapper
 import functools
 
@@ -85,7 +86,8 @@ else:
         ModeResult(mode=3, count=3)
         """
         from scipy.stats import mode
-        from scipy.stats._stats_py import ModeResult
+
+        ModeResult = namedtuple("ModeResult", ("mode", "count"))
 
         mode_results = mode(a, axis=axis, nan_policy=nan_policy)
         return ModeResult(mode_results.mode[()], mode_results.count[()])
