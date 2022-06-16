@@ -2562,7 +2562,7 @@ performance of `quantile regression
 
   \text{pinball}(y, \hat{y}) = \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}}-1}  \alpha \max(y_i - \hat{y}_i, 0) + (1 - \alpha) \max(\hat{y}_i - y_i, 0)
 
-The pinball loss is equivalent to :func:`mean_absolute_error` when the quantile
+The value of pinball loss is equivalent to half of :func:`mean_absolute_error` when the quantile
 parameter ``alpha`` is set to 0.5.
 
 
