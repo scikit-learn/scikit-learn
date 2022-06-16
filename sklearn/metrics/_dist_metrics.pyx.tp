@@ -385,13 +385,13 @@ cdef class DistanceMetric{{name_suffix}}:
 
     cdef DTYPE_t csr_dist(self,
         const {{DTYPE_t}}[:] x1_data,
-        const cnp.int32_t[:] x1_indices,
+        const SPARSE_INDEX_TYPE_t[:] x1_indices,
         const {{DTYPE_t}}[:] x2_data,
-        const cnp.int32_t[:] x2_indices,
-        const cnp.int32_t x1_start,
-        const cnp.int32_t x1_end,
-        const cnp.int32_t x2_start,
-        const cnp.int32_t x2_end,
+        const SPARSE_INDEX_TYPE_t[:] x2_indices,
+        const SPARSE_INDEX_TYPE_t x1_start,
+        const SPARSE_INDEX_TYPE_t x1_end,
+        const SPARSE_INDEX_TYPE_t x2_start,
+        const SPARSE_INDEX_TYPE_t x2_end,
         const ITYPE_t size,
     ) nogil except -1:
         """Compute the distance between vectors x1 and x2 represented
@@ -407,13 +407,13 @@ cdef class DistanceMetric{{name_suffix}}:
 
     cdef DTYPE_t csr_rdist(self,
         const {{DTYPE_t}}[:] x1_data,
-        const cnp.int32_t[:] x1_indices,
+        const SPARSE_INDEX_TYPE_t[:] x1_indices,
         const {{DTYPE_t}}[:] x2_data,
-        const cnp.int32_t[:] x2_indices,
-        const cnp.int32_t x1_start,
-        const cnp.int32_t x1_end,
-        const cnp.int32_t x2_start,
-        const cnp.int32_t x2_end,
+        const SPARSE_INDEX_TYPE_t[:] x2_indices,
+        const SPARSE_INDEX_TYPE_t x1_start,
+        const SPARSE_INDEX_TYPE_t x1_end,
+        const SPARSE_INDEX_TYPE_t x2_start,
+        const SPARSE_INDEX_TYPE_t x2_end,
         const ITYPE_t size,
     ) nogil except -1:
         """Compute the distance between vectors x1 and x2 represented
@@ -444,8 +444,8 @@ cdef class DistanceMetric{{name_suffix}}:
 
     cdef int csr_pdist(self,
         const {{DTYPE_t}}[:] x1_data,
-        const cnp.int32_t[:] x1_indices,
-        const cnp.int32_t[:] x1_indptr,
+        const SPARSE_INDEX_TYPE_t[:] x1_indices,
+        const SPARSE_INDEX_TYPE_t[:] x1_indptr,
         const ITYPE_t size,
         DTYPE_t[:, ::1] D,
     ) nogil except -1:
@@ -477,11 +477,11 @@ cdef class DistanceMetric{{name_suffix}}:
 
     cdef int csr_cdist(self,
         const {{DTYPE_t}}[:] x1_data,
-        const cnp.int32_t[:] x1_indices,
-        const cnp.int32_t[:] x1_indptr,
+        const SPARSE_INDEX_TYPE_t[:] x1_indices,
+        const SPARSE_INDEX_TYPE_t[:] x1_indptr,
         const {{DTYPE_t}}[:] x2_data,
-        const cnp.int32_t[:] x2_indices,
-        const cnp.int32_t[:] x2_indptr,
+        const SPARSE_INDEX_TYPE_t[:] x2_indices,
+        const SPARSE_INDEX_TYPE_t[:] x2_indptr,
         const ITYPE_t size,
         DTYPE_t[:, ::1] D,
     ) nogil except -1:
@@ -677,13 +677,13 @@ cdef class EuclideanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
     cdef inline DTYPE_t csr_rdist(self,
         const {{DTYPE_t}}[:] x1_data,
-        const cnp.int32_t[:] x1_indices,
+        const SPARSE_INDEX_TYPE_t[:] x1_indices,
         const {{DTYPE_t}}[:] x2_data,
-        const cnp.int32_t[:] x2_indices,
-        const cnp.int32_t x1_start,
-        const cnp.int32_t x1_end,
-        const cnp.int32_t x2_start,
-        const cnp.int32_t x2_end,
+        const SPARSE_INDEX_TYPE_t[:] x2_indices,
+        const SPARSE_INDEX_TYPE_t x1_start,
+        const SPARSE_INDEX_TYPE_t x1_end,
+        const SPARSE_INDEX_TYPE_t x2_start,
+        const SPARSE_INDEX_TYPE_t x2_end,
         const ITYPE_t size,
     ) nogil except -1:
 
@@ -728,13 +728,13 @@ cdef class EuclideanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
     cdef inline DTYPE_t csr_dist(self,
         const {{DTYPE_t}}[:] x1_data,
-        const cnp.int32_t[:] x1_indices,
+        const SPARSE_INDEX_TYPE_t[:] x1_indices,
         const {{DTYPE_t}}[:] x2_data,
-        const cnp.int32_t[:] x2_indices,
-        const cnp.int32_t x1_start,
-        const cnp.int32_t x1_end,
-        const cnp.int32_t x2_start,
-        const cnp.int32_t x2_end,
+        const SPARSE_INDEX_TYPE_t[:] x2_indices,
+        const SPARSE_INDEX_TYPE_t x1_start,
+        const SPARSE_INDEX_TYPE_t x1_end,
+        const SPARSE_INDEX_TYPE_t x2_start,
+        const SPARSE_INDEX_TYPE_t x2_end,
         const ITYPE_t size,
     ) nogil except -1:
         return sqrt(self.csr_rdist(
@@ -794,13 +794,13 @@ cdef class SEuclideanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
     cdef inline DTYPE_t csr_rdist(self,
         const {{DTYPE_t}}[:] x1_data,
-        const cnp.int32_t[:] x1_indices,
+        const SPARSE_INDEX_TYPE_t[:] x1_indices,
         const {{DTYPE_t}}[:] x2_data,
-        const cnp.int32_t[:] x2_indices,
-        const cnp.int32_t x1_start,
-        const cnp.int32_t x1_end,
-        const cnp.int32_t x2_start,
-        const cnp.int32_t x2_end,
+        const SPARSE_INDEX_TYPE_t[:] x2_indices,
+        const SPARSE_INDEX_TYPE_t x1_start,
+        const SPARSE_INDEX_TYPE_t x1_end,
+        const SPARSE_INDEX_TYPE_t x2_start,
+        const SPARSE_INDEX_TYPE_t x2_end,
         const ITYPE_t size,
     ) nogil except -1:
 
@@ -846,13 +846,13 @@ cdef class SEuclideanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
     cdef inline DTYPE_t csr_dist(self,
         const {{DTYPE_t}}[:] x1_data,
-        const cnp.int32_t[:] x1_indices,
+        const SPARSE_INDEX_TYPE_t[:] x1_indices,
         const {{DTYPE_t}}[:] x2_data,
-        const cnp.int32_t[:] x2_indices,
-        const cnp.int32_t x1_start,
-        const cnp.int32_t x1_end,
-        const cnp.int32_t x2_start,
-        const cnp.int32_t x2_end,
+        const SPARSE_INDEX_TYPE_t[:] x2_indices,
+        const SPARSE_INDEX_TYPE_t x1_start,
+        const SPARSE_INDEX_TYPE_t x1_end,
+        const SPARSE_INDEX_TYPE_t x2_start,
+        const SPARSE_INDEX_TYPE_t x2_end,
         const ITYPE_t size,
     ) nogil except -1:
         return sqrt(self.csr_rdist(
@@ -889,13 +889,13 @@ cdef class ManhattanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
     cdef inline DTYPE_t csr_dist(self,
         const {{DTYPE_t}}[:] x1_data,
-        const cnp.int32_t[:] x1_indices,
+        const SPARSE_INDEX_TYPE_t[:] x1_indices,
         const {{DTYPE_t}}[:] x2_data,
-        const cnp.int32_t[:] x2_indices,
-        const cnp.int32_t x1_start,
-        const cnp.int32_t x1_end,
-        const cnp.int32_t x2_start,
-        const cnp.int32_t x2_end,
+        const SPARSE_INDEX_TYPE_t[:] x2_indices,
+        const SPARSE_INDEX_TYPE_t x1_start,
+        const SPARSE_INDEX_TYPE_t x1_end,
+        const SPARSE_INDEX_TYPE_t x2_start,
+        const SPARSE_INDEX_TYPE_t x2_end,
         const ITYPE_t size,
     ) nogil except -1:
 
@@ -968,13 +968,13 @@ cdef class ChebyshevDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
     cdef inline DTYPE_t csr_dist(self,
         const {{DTYPE_t}}[:] x1_data,
-        const cnp.int32_t[:] x1_indices,
+        const SPARSE_INDEX_TYPE_t[:] x1_indices,
         const {{DTYPE_t}}[:] x2_data,
-        const cnp.int32_t[:] x2_indices,
-        const cnp.int32_t x1_start,
-        const cnp.int32_t x1_end,
-        const cnp.int32_t x2_start,
-        const cnp.int32_t x2_end,
+        const SPARSE_INDEX_TYPE_t[:] x2_indices,
+        const SPARSE_INDEX_TYPE_t x1_start,
+        const SPARSE_INDEX_TYPE_t x1_end,
+        const SPARSE_INDEX_TYPE_t x2_start,
+        const SPARSE_INDEX_TYPE_t x2_end,
         const ITYPE_t size,
     ) nogil except -1:
 
@@ -1096,13 +1096,13 @@ cdef class MinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
     cdef inline DTYPE_t csr_rdist(self,
         const {{DTYPE_t}}[:] x1_data,
-        const cnp.int32_t[:] x1_indices,
+        const SPARSE_INDEX_TYPE_t[:] x1_indices,
         const {{DTYPE_t}}[:] x2_data,
-        const cnp.int32_t[:] x2_indices,
-        const cnp.int32_t x1_start,
-        const cnp.int32_t x1_end,
-        const cnp.int32_t x2_start,
-        const cnp.int32_t x2_end,
+        const SPARSE_INDEX_TYPE_t[:] x2_indices,
+        const SPARSE_INDEX_TYPE_t x1_start,
+        const SPARSE_INDEX_TYPE_t x1_end,
+        const SPARSE_INDEX_TYPE_t x2_start,
+        const SPARSE_INDEX_TYPE_t x2_end,
         const ITYPE_t size,
     ) nogil except -1:
 
@@ -1171,13 +1171,13 @@ cdef class MinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
     cdef inline DTYPE_t csr_dist(self,
         const {{DTYPE_t}}[:] x1_data,
-        const cnp.int32_t[:] x1_indices,
+        const SPARSE_INDEX_TYPE_t[:] x1_indices,
         const {{DTYPE_t}}[:] x2_data,
-        const cnp.int32_t[:] x2_indices,
-        const cnp.int32_t x1_start,
-        const cnp.int32_t x1_end,
-        const cnp.int32_t x2_start,
-        const cnp.int32_t x2_end,
+        const SPARSE_INDEX_TYPE_t[:] x2_indices,
+        const SPARSE_INDEX_TYPE_t x1_start,
+        const SPARSE_INDEX_TYPE_t x1_end,
+        const SPARSE_INDEX_TYPE_t x2_start,
+        const SPARSE_INDEX_TYPE_t x2_end,
         const ITYPE_t size,
     ) nogil except -1:
         return pow(
@@ -1266,13 +1266,13 @@ cdef class WMinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
     cdef inline DTYPE_t csr_rdist(self,
         const {{DTYPE_t}}[:] x1_data,
-        const cnp.int32_t[:] x1_indices,
+        const SPARSE_INDEX_TYPE_t[:] x1_indices,
         const {{DTYPE_t}}[:] x2_data,
-        const cnp.int32_t[:] x2_indices,
-        const cnp.int32_t x1_start,
-        const cnp.int32_t x1_end,
-        const cnp.int32_t x2_start,
-        const cnp.int32_t x2_end,
+        const SPARSE_INDEX_TYPE_t[:] x2_indices,
+        const SPARSE_INDEX_TYPE_t x1_start,
+        const SPARSE_INDEX_TYPE_t x1_end,
+        const SPARSE_INDEX_TYPE_t x2_start,
+        const SPARSE_INDEX_TYPE_t x2_end,
         const ITYPE_t size,
     ) nogil except -1:
 
@@ -1313,13 +1313,13 @@ cdef class WMinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
     cdef inline DTYPE_t csr_dist(self,
         const {{DTYPE_t}}[:] x1_data,
-        const cnp.int32_t[:] x1_indices,
+        const SPARSE_INDEX_TYPE_t[:] x1_indices,
         const {{DTYPE_t}}[:] x2_data,
-        const cnp.int32_t[:] x2_indices,
-        const cnp.int32_t x1_start,
-        const cnp.int32_t x1_end,
-        const cnp.int32_t x2_start,
-        const cnp.int32_t x2_end,
+        const SPARSE_INDEX_TYPE_t[:] x2_indices,
+        const SPARSE_INDEX_TYPE_t x1_start,
+        const SPARSE_INDEX_TYPE_t x1_end,
+        const SPARSE_INDEX_TYPE_t x2_start,
+        const SPARSE_INDEX_TYPE_t x2_end,
         const ITYPE_t size,
     ) nogil except -1:
         return pow(
@@ -1409,13 +1409,13 @@ cdef class MahalanobisDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
     cdef inline DTYPE_t csr_rdist(self,
         const {{DTYPE_t}}[:] x1_data,
-        const cnp.int32_t[:] x1_indices,
+        const SPARSE_INDEX_TYPE_t[:] x1_indices,
         const {{DTYPE_t}}[:] x2_data,
-        const cnp.int32_t[:] x2_indices,
-        const cnp.int32_t x1_start,
-        const cnp.int32_t x1_end,
-        const cnp.int32_t x2_start,
-        const cnp.int32_t x2_end,
+        const SPARSE_INDEX_TYPE_t[:] x2_indices,
+        const SPARSE_INDEX_TYPE_t x1_start,
+        const SPARSE_INDEX_TYPE_t x1_end,
+        const SPARSE_INDEX_TYPE_t x2_start,
+        const SPARSE_INDEX_TYPE_t x2_end,
         const ITYPE_t size,
     ) nogil except -1:
 
@@ -1462,13 +1462,13 @@ cdef class MahalanobisDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
     cdef inline DTYPE_t csr_dist(self,
         const {{DTYPE_t}}[:] x1_data,
-        const cnp.int32_t[:] x1_indices,
+        const SPARSE_INDEX_TYPE_t[:] x1_indices,
         const {{DTYPE_t}}[:] x2_data,
-        const cnp.int32_t[:] x2_indices,
-        const cnp.int32_t x1_start,
-        const cnp.int32_t x1_end,
-        const cnp.int32_t x2_start,
-        const cnp.int32_t x2_end,
+        const SPARSE_INDEX_TYPE_t[:] x2_indices,
+        const SPARSE_INDEX_TYPE_t x1_start,
+        const SPARSE_INDEX_TYPE_t x1_end,
+        const SPARSE_INDEX_TYPE_t x2_start,
+        const SPARSE_INDEX_TYPE_t x2_end,
         const ITYPE_t size,
     ) nogil except -1:
         return sqrt(self.csr_rdist(
@@ -1507,13 +1507,13 @@ cdef class HammingDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
     cdef inline DTYPE_t csr_dist(self,
         const {{DTYPE_t}}[:] x1_data,
-        const cnp.int32_t[:] x1_indices,
+        const SPARSE_INDEX_TYPE_t[:] x1_indices,
         const {{DTYPE_t}}[:] x2_data,
-        const cnp.int32_t[:] x2_indices,
-        const cnp.int32_t x1_start,
-        const cnp.int32_t x1_end,
-        const cnp.int32_t x2_start,
-        const cnp.int32_t x2_end,
+        const SPARSE_INDEX_TYPE_t[:] x2_indices,
+        const SPARSE_INDEX_TYPE_t x1_start,
+        const SPARSE_INDEX_TYPE_t x1_end,
+        const SPARSE_INDEX_TYPE_t x2_start,
+        const SPARSE_INDEX_TYPE_t x2_end,
         const ITYPE_t size,
     ) nogil except -1:
 
@@ -1577,13 +1577,13 @@ cdef class CanberraDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
     cdef inline DTYPE_t csr_dist(self,
         const {{DTYPE_t}}[:] x1_data,
-        const cnp.int32_t[:] x1_indices,
+        const SPARSE_INDEX_TYPE_t[:] x1_indices,
         const {{DTYPE_t}}[:] x2_data,
-        const cnp.int32_t[:] x2_indices,
-        const cnp.int32_t x1_start,
-        const cnp.int32_t x1_end,
-        const cnp.int32_t x2_start,
-        const cnp.int32_t x2_end,
+        const SPARSE_INDEX_TYPE_t[:] x2_indices,
+        const SPARSE_INDEX_TYPE_t x1_start,
+        const SPARSE_INDEX_TYPE_t x1_end,
+        const SPARSE_INDEX_TYPE_t x2_start,
+        const SPARSE_INDEX_TYPE_t x2_end,
         const ITYPE_t size,
     ) nogil except -1:
 
@@ -1646,13 +1646,13 @@ cdef class BrayCurtisDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
     cdef inline DTYPE_t csr_dist(self,
         const {{DTYPE_t}}[:] x1_data,
-        const cnp.int32_t[:] x1_indices,
+        const SPARSE_INDEX_TYPE_t[:] x1_indices,
         const {{DTYPE_t}}[:] x2_data,
-        const cnp.int32_t[:] x2_indices,
-        const cnp.int32_t x1_start,
-        const cnp.int32_t x1_end,
-        const cnp.int32_t x2_start,
-        const cnp.int32_t x2_end,
+        const SPARSE_INDEX_TYPE_t[:] x2_indices,
+        const SPARSE_INDEX_TYPE_t x1_start,
+        const SPARSE_INDEX_TYPE_t x1_end,
+        const SPARSE_INDEX_TYPE_t x2_start,
+        const SPARSE_INDEX_TYPE_t x2_end,
         const ITYPE_t size,
     ) nogil except -1:
 
@@ -1725,13 +1725,13 @@ cdef class JaccardDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
     cdef inline DTYPE_t csr_dist(self,
         const {{DTYPE_t}}[:] x1_data,
-        const cnp.int32_t[:] x1_indices,
+        const SPARSE_INDEX_TYPE_t[:] x1_indices,
         const {{DTYPE_t}}[:] x2_data,
-        const cnp.int32_t[:] x2_indices,
-        const cnp.int32_t x1_start,
-        const cnp.int32_t x1_end,
-        const cnp.int32_t x2_start,
-        const cnp.int32_t x2_end,
+        const SPARSE_INDEX_TYPE_t[:] x2_indices,
+        const SPARSE_INDEX_TYPE_t x1_start,
+        const SPARSE_INDEX_TYPE_t x1_end,
+        const SPARSE_INDEX_TYPE_t x2_start,
+        const SPARSE_INDEX_TYPE_t x2_end,
         const ITYPE_t size,
     ) nogil except -1:
 
@@ -1801,13 +1801,13 @@ cdef class MatchingDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
     cdef inline DTYPE_t csr_dist(self,
         const {{DTYPE_t}}[:] x1_data,
-        const cnp.int32_t[:] x1_indices,
+        const SPARSE_INDEX_TYPE_t[:] x1_indices,
         const {{DTYPE_t}}[:] x2_data,
-        const cnp.int32_t[:] x2_indices,
-        const cnp.int32_t x1_start,
-        const cnp.int32_t x1_end,
-        const cnp.int32_t x2_start,
-        const cnp.int32_t x2_end,
+        const SPARSE_INDEX_TYPE_t[:] x2_indices,
+        const SPARSE_INDEX_TYPE_t x1_start,
+        const SPARSE_INDEX_TYPE_t x1_end,
+        const SPARSE_INDEX_TYPE_t x2_start,
+        const SPARSE_INDEX_TYPE_t x2_end,
         const ITYPE_t size,
     ) nogil except -1:
 
@@ -1872,13 +1872,13 @@ cdef class DiceDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
     cdef inline DTYPE_t csr_dist(self,
         const {{DTYPE_t}}[:] x1_data,
-        const cnp.int32_t[:] x1_indices,
+        const SPARSE_INDEX_TYPE_t[:] x1_indices,
         const {{DTYPE_t}}[:] x2_data,
-        const cnp.int32_t[:] x2_indices,
-        const cnp.int32_t x1_start,
-        const cnp.int32_t x1_end,
-        const cnp.int32_t x2_start,
-        const cnp.int32_t x2_end,
+        const SPARSE_INDEX_TYPE_t[:] x2_indices,
+        const SPARSE_INDEX_TYPE_t x1_start,
+        const SPARSE_INDEX_TYPE_t x1_end,
+        const SPARSE_INDEX_TYPE_t x2_start,
+        const SPARSE_INDEX_TYPE_t x2_end,
         const ITYPE_t size,
     ) nogil except -1:
 
@@ -1946,13 +1946,13 @@ cdef class KulsinskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
     cdef inline DTYPE_t csr_dist(self,
         const {{DTYPE_t}}[:] x1_data,
-        const cnp.int32_t[:] x1_indices,
+        const SPARSE_INDEX_TYPE_t[:] x1_indices,
         const {{DTYPE_t}}[:] x2_data,
-        const cnp.int32_t[:] x2_indices,
-        const cnp.int32_t x1_start,
-        const cnp.int32_t x1_end,
-        const cnp.int32_t x2_start,
-        const cnp.int32_t x2_end,
+        const SPARSE_INDEX_TYPE_t[:] x2_indices,
+        const SPARSE_INDEX_TYPE_t x1_start,
+        const SPARSE_INDEX_TYPE_t x1_end,
+        const SPARSE_INDEX_TYPE_t x2_start,
+        const SPARSE_INDEX_TYPE_t x2_end,
         const ITYPE_t size,
     ) nogil except -1:
 
@@ -2017,13 +2017,13 @@ cdef class RogersTanimotoDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
     cdef inline DTYPE_t csr_dist(self,
         const {{DTYPE_t}}[:] x1_data,
-        const cnp.int32_t[:] x1_indices,
+        const SPARSE_INDEX_TYPE_t[:] x1_indices,
         const {{DTYPE_t}}[:] x2_data,
-        const cnp.int32_t[:] x2_indices,
-        const cnp.int32_t x1_start,
-        const cnp.int32_t x1_end,
-        const cnp.int32_t x2_start,
-        const cnp.int32_t x2_end,
+        const SPARSE_INDEX_TYPE_t[:] x2_indices,
+        const SPARSE_INDEX_TYPE_t x1_start,
+        const SPARSE_INDEX_TYPE_t x1_end,
+        const SPARSE_INDEX_TYPE_t x2_start,
+        const SPARSE_INDEX_TYPE_t x2_end,
         const ITYPE_t size,
     ) nogil except -1:
 
@@ -2087,13 +2087,13 @@ cdef class RussellRaoDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
     cdef inline DTYPE_t csr_dist(self,
         const {{DTYPE_t}}[:] x1_data,
-        const cnp.int32_t[:] x1_indices,
+        const SPARSE_INDEX_TYPE_t[:] x1_indices,
         const {{DTYPE_t}}[:] x2_data,
-        const cnp.int32_t[:] x2_indices,
-        const cnp.int32_t x1_start,
-        const cnp.int32_t x1_end,
-        const cnp.int32_t x2_start,
-        const cnp.int32_t x2_end,
+        const SPARSE_INDEX_TYPE_t[:] x2_indices,
+        const SPARSE_INDEX_TYPE_t x1_start,
+        const SPARSE_INDEX_TYPE_t x1_end,
+        const SPARSE_INDEX_TYPE_t x2_start,
+        const SPARSE_INDEX_TYPE_t x2_end,
         const ITYPE_t size,
     ) nogil except -1:
 
@@ -2152,13 +2152,13 @@ cdef class SokalMichenerDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
     cdef inline DTYPE_t csr_dist(self,
         const {{DTYPE_t}}[:] x1_data,
-        const cnp.int32_t[:] x1_indices,
+        const SPARSE_INDEX_TYPE_t[:] x1_indices,
         const {{DTYPE_t}}[:] x2_data,
-        const cnp.int32_t[:] x2_indices,
-        const cnp.int32_t x1_start,
-        const cnp.int32_t x1_end,
-        const cnp.int32_t x2_start,
-        const cnp.int32_t x2_end,
+        const SPARSE_INDEX_TYPE_t[:] x2_indices,
+        const SPARSE_INDEX_TYPE_t x1_start,
+        const SPARSE_INDEX_TYPE_t x1_end,
+        const SPARSE_INDEX_TYPE_t x2_start,
+        const SPARSE_INDEX_TYPE_t x2_end,
         const ITYPE_t size,
     ) nogil except -1:
 
@@ -2223,13 +2223,13 @@ cdef class SokalSneathDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
     cdef inline DTYPE_t csr_dist(self,
         const {{DTYPE_t}}[:] x1_data,
-        const cnp.int32_t[:] x1_indices,
+        const SPARSE_INDEX_TYPE_t[:] x1_indices,
         const {{DTYPE_t}}[:] x2_data,
-        const cnp.int32_t[:] x2_indices,
-        const cnp.int32_t x1_start,
-        const cnp.int32_t x1_end,
-        const cnp.int32_t x2_start,
-        const cnp.int32_t x2_end,
+        const SPARSE_INDEX_TYPE_t[:] x2_indices,
+        const SPARSE_INDEX_TYPE_t x1_start,
+        const SPARSE_INDEX_TYPE_t x1_end,
+        const SPARSE_INDEX_TYPE_t x2_start,
+        const SPARSE_INDEX_TYPE_t x2_end,
         const ITYPE_t size,
     ) nogil except -1:
 

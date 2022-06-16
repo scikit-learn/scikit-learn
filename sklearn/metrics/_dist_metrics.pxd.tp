@@ -28,7 +28,7 @@ implementation_specific_values = [
 cimport numpy as cnp
 from libc.math cimport sqrt, exp
 
-from ..utils._typedefs cimport DTYPE_t, ITYPE_t
+from ..utils._typedefs cimport DTYPE_t, ITYPE_t, SPARSE_INDEX_TYPE_t
 
 {{for name_suffix, DTYPE_t, DTYPE in implementation_specific_values}}
 
@@ -93,25 +93,25 @@ cdef class DistanceMetric{{name_suffix}}:
 
     cdef DTYPE_t csr_dist(self,
         const {{DTYPE_t}}[:] x1_data,
-        const cnp.int32_t[:] x1_indices,
+        const SPARSE_INDEX_TYPE_t[:] x1_indices,
         const {{DTYPE_t}}[:] x2_data,
-        const cnp.int32_t[:] x2_indices,
-        const cnp.int32_t x1_start,
-        const cnp.int32_t x1_end,
-        const cnp.int32_t x2_start,
-        const cnp.int32_t x2_end,
+        const SPARSE_INDEX_TYPE_t[:] x2_indices,
+        const SPARSE_INDEX_TYPE_t x1_start,
+        const SPARSE_INDEX_TYPE_t x1_end,
+        const SPARSE_INDEX_TYPE_t x2_start,
+        const SPARSE_INDEX_TYPE_t x2_end,
         const ITYPE_t size,
     ) nogil except -1
 
     cdef DTYPE_t csr_rdist(self,
         const {{DTYPE_t}}[:] x1_data,
-        const cnp.int32_t[:] x1_indices,
+        const SPARSE_INDEX_TYPE_t[:] x1_indices,
         const {{DTYPE_t}}[:] x2_data,
-        const cnp.int32_t[:] x2_indices,
-        const cnp.int32_t x1_start,
-        const cnp.int32_t x1_end,
-        const cnp.int32_t x2_start,
-        const cnp.int32_t x2_end,
+        const SPARSE_INDEX_TYPE_t[:] x2_indices,
+        const SPARSE_INDEX_TYPE_t x1_start,
+        const SPARSE_INDEX_TYPE_t x1_end,
+        const SPARSE_INDEX_TYPE_t x2_start,
+        const SPARSE_INDEX_TYPE_t x2_end,
         const ITYPE_t size,
     ) nogil except -1
 
@@ -128,19 +128,19 @@ cdef class DistanceMetric{{name_suffix}}:
 
     cdef int csr_pdist(self,
         const {{DTYPE_t}}[:] x1_data,
-        const cnp.int32_t[:] x1_indices,
-        const cnp.int32_t[:] x1_indptr,
+        const SPARSE_INDEX_TYPE_t[:] x1_indices,
+        const SPARSE_INDEX_TYPE_t[:] x1_indptr,
         const ITYPE_t size,
         DTYPE_t[:, ::1] D,
     ) nogil except -1
 
     cdef int csr_cdist(self,
         const {{DTYPE_t}}[:] x1_data,
-        const cnp.int32_t[:] x1_indices,
-        const cnp.int32_t[:] x1_indptr,
+        const SPARSE_INDEX_TYPE_t[:] x1_indices,
+        const SPARSE_INDEX_TYPE_t[:] x1_indptr,
         const {{DTYPE_t}}[:] x2_data,
-        const cnp.int32_t[:] x2_indices,
-        const cnp.int32_t[:] x2_indptr,
+        const SPARSE_INDEX_TYPE_t[:] x2_indices,
+        const SPARSE_INDEX_TYPE_t[:] x2_indptr,
         const ITYPE_t size,
         DTYPE_t[:, ::1] D,
     ) nogil except -1
