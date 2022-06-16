@@ -86,6 +86,7 @@ def get_valid_metric_ids(L):
     return [key for (key, val) in METRIC_MAPPING.items()
             if (val.__name__ in L) or (val in L)]
 
+from ..utils._typedefs import SPARSE_INDEX_TYPE
 
 {{for name_suffix, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
 
@@ -590,8 +591,8 @@ cdef class DistanceMetric{{name_suffix}}:
         X_csr = X.tocsr()
         n_X, size = X_csr.shape
         X_data = np.asarray(X_csr.data, dtype={{INPUT_DTYPE}})
-        X_indices = np.asarray(X_csr.indices, dtype=np.int32)
-        X_indptr = np.asarray(X_csr.indptr, dtype=np.int32)
+        X_indices = np.asarray(X_csr.indices, dtype=SPARSE_INDEX_TYPE)
+        X_indptr = np.asarray(X_csr.indptr, dtype=SPARSE_INDEX_TYPE)
 
         if Y is None:
             Darr = np.zeros((n_X, n_X), dtype=DTYPE, order='C')
@@ -606,8 +607,8 @@ cdef class DistanceMetric{{name_suffix}}:
             Y_csr = Y.tocsr()
             n_Y, _ = Y_csr.shape
             Y_data = np.asarray(Y_csr.data, dtype={{INPUT_DTYPE}})
-            Y_indices = np.asarray(Y_csr.indices, dtype=np.int32)
-            Y_indptr = np.asarray(Y_csr.indptr, dtype=np.int32)
+            Y_indices = np.asarray(Y_csr.indices, dtype=SPARSE_INDEX_TYPE)
+            Y_indptr = np.asarray(Y_csr.indptr, dtype=SPARSE_INDEX_TYPE)
 
             Darr = np.zeros((n_X, n_Y), dtype=DTYPE, order='C')
             self.csr_cdist(
