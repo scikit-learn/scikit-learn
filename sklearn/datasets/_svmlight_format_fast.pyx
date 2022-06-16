@@ -113,3 +113,131 @@ def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based,
             break
 
     return (dtype, data, indices, indptr, labels, query)
+
+# Two fused types are defined to be able to
+# use all possible combinations of parameters.
+ctypedef fused int_or_float:
+    cython.integral
+    cython.floating
+    signed long long
+
+ctypedef fused double_or_longlong:
+    double
+    signed long long
+
+ctypedef fused int_or_longlong:
+    cython.integral
+    signed long long
+
+def get_dense_row_string(
+    int_or_float[:,:] X,
+    Py_ssize_t[:] x_inds,
+    double_or_longlong[:] x_vals,
+    Py_ssize_t row,
+    str value_pattern,
+    bint one_based,
+):
+    cdef:
+        Py_ssize_t row_length = X.shape[1]
+        Py_ssize_t x_nz_used = 0
+        Py_ssize_t k
+
+    for k in range(row_length):
+        val = X[row,k]
+        if val == 0:
+            continue
+        x_inds[x_nz_used] = k
+        x_vals[x_nz_used] = val
+        x_nz_used += 1
+    return " ".join(value_pattern % (j+one_based, val) for i, (j, val) in enumerate(zip(x_inds, x_vals)) if i < x_nz_used)
+
+def get_sparse_row_string(
+    int_or_float[:] X_data,
+    int[:] X_indptr,
+    int[:] X_indices,
+    Py_ssize_t row,
+    str value_pattern,
+    bint one_based,
+):
+    cdef:
+        Py_ssize_t row_start = X_indptr[row]
+        Py_ssize_t row_end = X_indptr[row+1]
+
+    return " ".join(value_pattern % (X_indices[i]+one_based, X_data[i]) for i in range(row_start, row_end))
+
+def _dump_svmlight_file(
+    X,
+    y,
+    f,
+    bint multilabel,
+    bint one_based,
+    int_or_longlong[:] query_id,
+    bint X_is_sp,
+    bint y_is_sp,
+):
+    cdef bint X_is_integral
+    X_is_integral = X.dtype.kind == "i"
+    if X_is_integral:
+        value_pattern = "%d:%d"
+    else:
+        value_pattern = "%d:%.16g"
+    if y.dtype.kind == "i":
+        label_pattern = "%d"
+    else:
+        label_pattern = "%.16g"
+
+    line_pattern = "%s"
+    if query_id is not None:
+        line_pattern += " qid:%d"
+    line_pattern += " %s\n"
+
+    cdef:
+        Py_ssize_t num_labels = y.shape[1]
+        Py_ssize_t x_len = X.shape[0]
+        Py_ssize_t row_length = X.shape[1]
+        Py_ssize_t i
+        Py_ssize_t j
+        Py_ssize_t col_start
+        Py_ssize_t col_end
+        bint first
+        Py_ssize_t x_nz_used
+        Py_ssize_t[:] x_inds = np.empty(row_length, dtype=np.intp)
+        signed long long[:] x_vals_int
+        double[:] x_vals_float
+
+    if not X_is_sp:
+        if X_is_integral:
+            x_vals_int = np.zeros(row_length, dtype=np.longlong)
+        else:
+            x_vals_float = np.zeros(row_length, dtype=np.float64)
+
+    for i in range(x_len):
+        x_nz_used = 0
+
+        if not X_is_sp:
+            if X_is_integral:
+                s = get_dense_row_string(X, x_inds, x_vals_int, i, value_pattern, one_based)
+            else:
+                s = get_dense_row_string(X, x_inds, x_vals_float, i, value_pattern, one_based)
+        else:
+            s = get_sparse_row_string(X.data, X.indptr, X.indices, i, value_pattern, one_based)
+        if multilabel:
+            first = True
+            if y_is_sp:
+                col_start = y.indptr[i]
+                col_end = y.indptr[i+1]
+                labels_str = ','.join(tuple(label_pattern % y.indices[j] for j in range(col_start, col_end) if y.data[j] != 0))
+            else:
+                labels_str = ','.join(label_pattern % j for j in range(num_labels) if y[i,j] != 0)
+        else:
+            if y_is_sp:
+                labels_str = label_pattern % y.data[i]
+            else:
+                labels_str = label_pattern % y[i,0]
+
+        if query_id is not None:
+            feat = (labels_str, query_id[i], s)
+        else:
+            feat = (labels_str, s)
+
+        f.write((line_pattern % feat).encode("utf-8"))
