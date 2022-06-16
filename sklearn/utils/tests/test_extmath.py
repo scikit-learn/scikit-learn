@@ -63,6 +63,7 @@ def test_uniform_weights():
         mode, score = stats.mode(x, axis)
         mode2, score2 = weighted_mode(x, weights, axis=axis)
 
+        # See https://github.com/scipy/scipy/issues/16418
         if sp_version >= parse_version("1.9.0") and axis is not None:
             mode = np.expand_dims(mode, axis=axis)
             score = np.expand_dims(score, axis=axis)
