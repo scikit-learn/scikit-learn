@@ -9,6 +9,7 @@ Linear Discriminant Analysis and Quadratic Discriminant Analysis
 
 # License: BSD 3-Clause
 
+from typing import Protocol, runtime_checkable
 import warnings
 import numpy as np
 from scipy import linalg
@@ -25,10 +26,15 @@ from .utils.multiclass import check_classification_targets
 from .utils.extmath import softmax
 from .utils._param_validation import StrOptions, Interval
 from .preprocessing import StandardScaler
-from sklearn.covariance import EllipticEnvelope, EmpiricalCovariance
 
 
 __all__ = ["LinearDiscriminantAnalysis", "QuadraticDiscriminantAnalysis"]
+
+
+@runtime_checkable
+class HasFit(Protocol):
+    def fit(*args, **kwargs):
+        ...
 
 
 def _cov(X, shrinkage=None, covariance_estimator=None):
@@ -323,7 +329,7 @@ class LinearDiscriminantAnalysis(
         "priors": ["array-like", None],
         "store_covariance": [bool],
         "tol": [Interval(Real, 0, None, closed="left")],
-        "covariance_estimator": [EllipticEnvelope, EmpiricalCovariance, None],
+        "covariance_estimator": [HasFit, None],
     }
 
     def __init__(
