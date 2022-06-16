@@ -8,7 +8,7 @@ from sklearn.utils._testing import assert_allclose
 import pytest
 
 import scipy.sparse as sp
-from scipy.spatial.distance import cdist
+from scipy.spatial.distance import cdist, pdist
 from sklearn.metrics import DistanceMetric
 
 from sklearn.metrics._dist_metrics import (
@@ -87,7 +87,7 @@ def test_cdist(metric_param_grid, X, Y):
     for vals in itertools.product(*param_grid.values()):
         kwargs = dict(zip(keys, vals))
         rtol_dict = {}
-        if metric == "mahalanobis":
+        if metric == "mahalanobis" and X.dtype == np.float32:
             # Computation of mahalanobis differs between
             # the scipy and scikit-learn implementation.
             # Hence, we increase the relative tolerance.
@@ -119,7 +119,7 @@ def test_cdist_bool_metric(metric, X_bool, Y_bool):
     D_scipy_cdist = cdist(X_bool, Y_bool, metric)
 
     if metric == "jaccard" and _IS_32BIT:
-        pytest.skip("Jaccard Distance on 32bit architecture is unstable.")
+        pytest.xfail("Jaccard Distance on 32bit architecture is unstable.")
 
     dm = DistanceMetric.get_metric(metric)
     D_sklearn = dm.pairwise(X_bool, Y_bool)
@@ -144,7 +144,7 @@ def test_pdist(metric_param_grid, X):
     for vals in itertools.product(*param_grid.values()):
         kwargs = dict(zip(keys, vals))
         rtol_dict = {}
-        if metric == "mahalanobis":
+        if metric == "mahalanobis" and X.dtype == np.float32:
             # Computation of mahalanobis differs between
             # the scipy and scikit-learn implementation.
             # Hence, we increase the relative tolerance.
@@ -159,9 +159,9 @@ def test_pdist(metric_param_grid, X):
             if sp_version >= parse_version("1.6.0"):
                 ExceptionToAssert = DeprecationWarning
             with pytest.warns(ExceptionToAssert):
-                D_scipy_pdist = cdist(X, X, metric, **kwargs)
+                D_scipy_pdist = pdist(X, metric, **kwargs)
         else:
-            D_scipy_pdist = cdist(X, X, metric, **kwargs)
+            D_scipy_pdist = pdist(X, metric, **kwargs)
 
         dm = DistanceMetricInterface.get_metric(metric, **kwargs)
         D_sklearn = dm.pairwise(X)
@@ -196,7 +196,7 @@ def test_distance_metrics_dtype_consistency(metric_param_grid):
 @pytest.mark.parametrize("metric", BOOL_METRICS)
 @pytest.mark.parametrize("X_bool", [X_bool, X_bool_mmap])
 def test_pdist_bool_metrics(metric, X_bool):
-    D_scipy_pdist = cdist(X_bool, X_bool, metric)
+    D_scipy_pdist = pdist(X_bool, metric)
     dm = DistanceMetric.get_metric(metric)
     D_sklearn = dm.pairwise(X_bool)
     assert_allclose(D_sklearn, D_scipy_pdist)
