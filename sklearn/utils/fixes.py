@@ -90,8 +90,9 @@ else:
 
         ModeResult = namedtuple("ModeResult", ("mode", "count"))
 
-        mode_results = mode(a, axis=axis, nan_policy=nan_policy)
-        return ModeResult(mode_results.mode[()], mode_results.count[()])
+        m, c = mode(a, axis=axis, nan_policy=nan_policy)
+        m, c = m.squeeze(axis=axis), c.squeeze(axis=axis)
+        return ModeResult(m[()], c[()])
 
 
 def _object_dtype_isnan(X):
