@@ -6,7 +6,6 @@
 import numpy as np
 from scipy import sparse
 from scipy import linalg
-from scipy import stats
 from scipy.sparse.linalg import eigsh
 from scipy.special import expit
 
@@ -20,6 +19,7 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import skip_if_32bit
 
+from sklearn.utils import fixes
 from sklearn.utils.extmath import density, _safe_accumulator_op
 from sklearn.utils.extmath import randomized_svd, _randomized_eigsh
 from sklearn.utils.extmath import row_norms
@@ -56,8 +56,13 @@ def test_uniform_weights():
     weights = np.ones(x.shape)
 
     for axis in (None, 0, 1):
-        mode, score = stats.mode(x, axis)
+        mode, score = fixes.mode(x, axis)
         mode2, score2 = weighted_mode(x, weights, axis=axis)
+
+        if fixes.sp_version >= fixes.parse_version("1.9.0") and axis is not None:
+            # See https://github.com/scipy/scipy/issues/16418
+            mode = np.expand_dims(mode, axis=axis)
+            score = np.expand_dims(score, axis=axis)
 
         assert_array_equal(mode, mode2)
         assert_array_equal(score, score2)
