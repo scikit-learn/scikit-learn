@@ -150,7 +150,7 @@ def _partial_dependence_brute(est, grid, features, X, response_method):
     for new_values in grid:
         for i, variable in enumerate(features):
             if hasattr(X_eval, "iloc"):
-                X_eval[X_eval.columns[variable]] = new_values[i]
+                X_eval.iloc[:, variable] = new_values[i]
             else:
                 X_eval[:, variable] = new_values[i]
 
