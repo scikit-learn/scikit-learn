@@ -73,16 +73,17 @@ else:
 
         Examples
         --------
+        >>> import numpy as np
         >>> a = np.array([[6, 8, 3, 0],
         ...               [3, 2, 1, 7],
         ...               [8, 1, 8, 4],
         ...               [5, 3, 0, 5],
         ...               [4, 7, 5, 9]])
-        >>> from scipy import stats
-        >>> stats.mode(a)
+        >>> from sklearn.utils.fixes import mode
+        >>> mode(a)
         ModeResult(mode=array([3, 1, 0, 0]), count=array([1, 1, 1, 1]))
         To get mode of whole array, specify ``axis=None``:
-        >>> stats.mode(a, axis=None)
+        >>> mode(a, axis=None)
         ModeResult(mode=3, count=3)
         """
         from scipy.stats import mode
