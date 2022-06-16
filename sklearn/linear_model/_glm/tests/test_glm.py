@@ -343,7 +343,7 @@ def test_glm_regression_unpenalized(solver, fit_intercept, glm_dataset):
     We work with a simple constructed data set with known solution.
     Note: This checks the minimum norm solution for wide X, i.e.
     n_samples < n_features:
-        min ||w||_2 subject to w minimizing the mean deviviance.
+        min ||w||_2 subject to w = argmin deviance(X, y, w)
     """
     model, X, y, coef, _, _ = glm_dataset
     n_samples, n_features = X.shape
