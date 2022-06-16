@@ -89,7 +89,7 @@ def _random_choice_csc(n_samples, classes, class_probability=None, random_state=
                 class_probability_nz
             )
             classes_ind = np.searchsorted(
-                class_probability_nz_norm.cumsum(), rng.rand(nnz)
+                class_probability_nz_norm.cumsum(), rng.uniform(size=nnz)
             )
             data.extend(classes[j][classes_j_nonzero][classes_ind])
         indptr.append(len(indices))

@@ -13,6 +13,10 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import plot_det_curve
 from sklearn.metrics import plot_roc_curve
 
+pytestmark = pytest.mark.filterwarnings(
+    "ignore:Function plot_roc_curve is deprecated",
+)
+
 
 @pytest.fixture(scope="module")
 def data():
@@ -25,17 +29,21 @@ def data_binary(data):
     return X[y < 2], y[y < 2]
 
 
+@pytest.mark.filterwarnings("ignore: Function plot_det_curve is deprecated")
 @pytest.mark.parametrize("plot_func", [plot_det_curve, plot_roc_curve])
 def test_plot_curve_error_non_binary(pyplot, data, plot_func):
     X, y = data
     clf = DecisionTreeClassifier()
     clf.fit(X, y)
 
-    msg = "DecisionTreeClassifier should be a binary classifier"
+    msg = (
+        "Expected 'estimator' to be a binary classifier, but got DecisionTreeClassifier"
+    )
     with pytest.raises(ValueError, match=msg):
         plot_func(clf, X, y)
 
 
+@pytest.mark.filterwarnings("ignore: Function plot_det_curve is deprecated")
 @pytest.mark.parametrize(
     "response_method, msg",
     [
@@ -79,6 +87,7 @@ def test_plot_curve_error_no_response(
         plot_func(clf, X, y, response_method=response_method)
 
 
+@pytest.mark.filterwarnings("ignore: Function plot_det_curve is deprecated")
 @pytest.mark.parametrize("plot_func", [plot_det_curve, plot_roc_curve])
 def test_plot_curve_estimator_name_multiple_calls(pyplot, data_binary, plot_func):
     # non-regression test checking that the `name` used when calling
@@ -97,6 +106,7 @@ def test_plot_curve_estimator_name_multiple_calls(pyplot, data_binary, plot_func
     assert clf_name in disp.line_.get_label()
 
 
+@pytest.mark.filterwarnings("ignore: Function plot_det_curve is deprecated")
 @pytest.mark.parametrize(
     "clf",
     [

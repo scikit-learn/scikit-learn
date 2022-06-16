@@ -18,6 +18,7 @@ from sklearn.preprocessing import normalize
 
 def test_20news(fetch_20newsgroups_fxt):
     data = fetch_20newsgroups_fxt(subset="all", shuffle=False)
+    assert data.DESCR.startswith(".. _20newsgroups_dataset:")
 
     # Extract a reduced dataset
     data2cats = fetch_20newsgroups_fxt(
@@ -66,6 +67,7 @@ def test_20news_vectorized(fetch_20newsgroups_vectorized_fxt):
     assert bunch.data.shape == (11314, 130107)
     assert bunch.target.shape[0] == 11314
     assert bunch.data.dtype == np.float64
+    assert bunch.DESCR.startswith(".. _20newsgroups_dataset:")
 
     # test subset = test
     bunch = fetch_20newsgroups_vectorized_fxt(subset="test")
@@ -73,6 +75,7 @@ def test_20news_vectorized(fetch_20newsgroups_vectorized_fxt):
     assert bunch.data.shape == (7532, 130107)
     assert bunch.target.shape[0] == 7532
     assert bunch.data.dtype == np.float64
+    assert bunch.DESCR.startswith(".. _20newsgroups_dataset:")
 
     # test return_X_y option
     fetch_func = partial(fetch_20newsgroups_vectorized_fxt, subset="test")
@@ -84,6 +87,7 @@ def test_20news_vectorized(fetch_20newsgroups_vectorized_fxt):
     assert bunch.data.shape == (11314 + 7532, 130107)
     assert bunch.target.shape[0] == 11314 + 7532
     assert bunch.data.dtype == np.float64
+    assert bunch.DESCR.startswith(".. _20newsgroups_dataset:")
 
 
 def test_20news_normalization(fetch_20newsgroups_vectorized_fxt):

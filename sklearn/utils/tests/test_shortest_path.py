@@ -1,8 +1,17 @@
 from collections import defaultdict
 
 import numpy as np
+import pytest
 from numpy.testing import assert_array_almost_equal
 from sklearn.utils.graph import graph_shortest_path, single_source_shortest_path_length
+
+
+# FIXME: to be removed in 1.2
+def test_graph_shortest_path_deprecation():
+    dist_matrix = generate_graph(20)
+
+    with pytest.warns(FutureWarning, match="deprecated"):
+        _ = graph_shortest_path(dist_matrix)
 
 
 def floyd_warshall_slow(graph, directed=False):
@@ -45,6 +54,7 @@ def generate_graph(N=20):
     return dist_matrix
 
 
+@pytest.mark.filterwarnings("ignore:Function graph_shortest_path is deprecated")
 def test_floyd_warshall():
     dist_matrix = generate_graph(20)
 
@@ -55,6 +65,7 @@ def test_floyd_warshall():
         assert_array_almost_equal(graph_FW, graph_py)
 
 
+@pytest.mark.filterwarnings("ignore:Function graph_shortest_path is deprecated")
 def test_dijkstra():
     dist_matrix = generate_graph(20)
 
@@ -84,6 +95,7 @@ def test_shortest_path():
                 assert_array_almost_equal(dist_dict[j], graph_py[i, j])
 
 
+@pytest.mark.filterwarnings("ignore:Function graph_shortest_path is deprecated")
 def test_dijkstra_bug_fix():
     X = np.array([[0.0, 0.0, 4.0], [1.0, 0.0, 2.0], [0.0, 5.0, 0.0]])
     dist_FW = graph_shortest_path(X, directed=False, method="FW")

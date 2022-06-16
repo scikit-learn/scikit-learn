@@ -21,7 +21,7 @@ Statistics and Probability Letters, 33 (1997) 291-297.
 # Authors: Peter Prettenhofer
 # License: BSD 3 clause
 
-from os.path import dirname, exists, join
+from os.path import exists
 from os import makedirs, remove
 import tarfile
 
@@ -35,6 +35,7 @@ from ._base import _convert_data_dataframe
 from ._base import _fetch_remote
 from ._base import _pkl_filepath
 from ._base import RemoteFileMetadata
+from ._base import load_descr
 from ..utils import Bunch
 
 
@@ -73,8 +74,7 @@ def fetch_california_housing(
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
-
-    return_X_y : bool, default=False.
+    return_X_y : bool, default=False
         If True, returns ``(data.data, data.target)`` instead of a Bunch
         object.
 
@@ -101,7 +101,7 @@ def fetch_california_housing(
             If ``as_frame`` is True, ``target`` is a pandas object.
         feature_names : list of length 8
             Array of ordered feature names used in the dataset.
-        DESCR : string
+        DESCR : str
             Description of the California housing dataset.
         frame : pandas DataFrame
             Only present when `as_frame=True`. DataFrame with ``data`` and
@@ -110,6 +110,10 @@ def fetch_california_housing(
             .. versionadded:: 0.23
 
     (data, target) : tuple if ``return_X_y`` is True
+        A tuple of two ndarray. The first containing a 2D array of
+        shape (n_samples, n_features) with each row representing one
+        sample and each column representing the features. The second
+        ndarray of shape (n_samples,) containing the target samples.
 
         .. versionadded:: 0.20
 
@@ -173,9 +177,7 @@ def fetch_california_housing(
     # target in units of 100,000
     target = target / 100000.0
 
-    module_path = dirname(__file__)
-    with open(join(module_path, "descr", "california_housing.rst")) as dfile:
-        descr = dfile.read()
+    descr = load_descr("california_housing.rst")
 
     X = data
     y = target

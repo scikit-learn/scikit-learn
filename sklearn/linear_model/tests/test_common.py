@@ -4,6 +4,8 @@
 
 import pytest
 
+import sys
+import warnings
 import numpy as np
 
 from sklearn.base import is_classifier
@@ -15,6 +17,7 @@ from sklearn.linear_model import RidgeClassifierCV
 from sklearn.linear_model import BayesianRidge
 from sklearn.linear_model import ARDRegression
 
+from sklearn.utils.fixes import np_version, parse_version
 from sklearn.utils import check_random_state
 
 
@@ -35,6 +38,10 @@ from sklearn.utils import check_random_state
     ],
 )
 # FIXME remove test in 1.2
+@pytest.mark.xfail(
+    sys.platform == "darwin" and np_version < parse_version("1.22"),
+    reason="https://github.com/scikit-learn/scikit-learn/issues/21395",
+)
 def test_linear_model_normalize_deprecation_message(
     estimator, normalize, n_warnings, warning_category
 ):
@@ -50,6 +57,12 @@ def test_linear_model_normalize_deprecation_message(
         y = np.sign(y)
 
     model = estimator(normalize=normalize)
+    if warning_category is None:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", FutureWarning)
+            model.fit(X, y)
+        return
+
     with pytest.warns(warning_category) as record:
         model.fit(X, y)
     # Filter record in case other unrelated warnings are raised
@@ -61,6 +74,5 @@ def test_linear_model_normalize_deprecation_message(
             msg += "\n"
         raise AssertionError(msg)
     wanted = [r for r in record if r.category == warning_category]
-    if warning_category is not None:
-        assert "'normalize' was deprecated" in str(wanted[0].message)
+    assert "'normalize' was deprecated" in str(wanted[0].message)
     assert len(wanted) == n_warnings

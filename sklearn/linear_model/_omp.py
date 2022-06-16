@@ -342,7 +342,7 @@ def orthogonal_mp(
         Coefficients of the OMP solution. If `return_path=True`, this contains
         the whole coefficient path. In this case its shape is
         (n_features, n_features) or (n_features, n_targets, n_features) and
-        iterating over the last axis yields coefficients in increasing order
+        iterating over the last axis generates coefficients in increasing order
         of active features.
 
     n_iters : array-like or int
@@ -351,10 +351,10 @@ def orthogonal_mp(
 
     See Also
     --------
-    OrthogonalMatchingPursuit
-    orthogonal_mp_gram
-    lars_path
-    sklearn.decomposition.sparse_encode
+    OrthogonalMatchingPursuit : Orthogonal Matching Pursuit model.
+    orthogonal_mp_gram : Solve OMP problems using Gram matrix and the product X.T * y.
+    lars_path : Compute Least Angle Regression or Lasso path using LARS algorithm.
+    sklearn.decomposition.sparse_encode : Sparse coding.
 
     Notes
     -----
@@ -367,7 +367,6 @@ def orthogonal_mp(
     M., Efficient Implementation of the K-SVD Algorithm using Batch Orthogonal
     Matching Pursuit Technical Report - CS Technion, April 2008.
     https://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
-
     """
     X = check_array(X, order="F", copy=copy_X)
     copy_X = False
@@ -395,7 +394,7 @@ def orthogonal_mp(
         G = np.asfortranarray(G)
         Xy = np.dot(X.T, y)
         if tol is not None:
-            norms_squared = np.sum((y ** 2), axis=0)
+            norms_squared = np.sum((y**2), axis=0)
         else:
             norms_squared = None
         return orthogonal_mp_gram(
@@ -554,9 +553,9 @@ def orthogonal_mp_gram(
         )
 
     if return_path:
-        coef = np.zeros((len(Gram), Xy.shape[1], len(Gram)))
+        coef = np.zeros((len(Gram), Xy.shape[1], len(Gram)), dtype=Gram.dtype)
     else:
-        coef = np.zeros((len(Gram), Xy.shape[1]))
+        coef = np.zeros((len(Gram), Xy.shape[1]), dtype=Gram.dtype)
 
     n_iters = []
     for k in range(Xy.shape[1]):
@@ -604,7 +603,7 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         Maximum norm of the residual. If not None, overrides n_nonzero_coefs.
 
     fit_intercept : bool, default=True
-        whether to calculate the intercept for this model. If set
+        Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (i.e. data is expected to be centered).
 
@@ -647,16 +646,24 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
 
         .. versionadded:: 0.24
 
-    Examples
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
     --------
-    >>> from sklearn.linear_model import OrthogonalMatchingPursuit
-    >>> from sklearn.datasets import make_regression
-    >>> X, y = make_regression(noise=4, random_state=0)
-    >>> reg = OrthogonalMatchingPursuit(normalize=False).fit(X, y)
-    >>> reg.score(X, y)
-    0.9991...
-    >>> reg.predict(X[:1,])
-    array([-78.3854...])
+    orthogonal_mp : Solves n_targets Orthogonal Matching Pursuit problems.
+    orthogonal_mp_gram :  Solves n_targets Orthogonal Matching Pursuit
+        problems using only the Gram matrix X.T * X and the product X.T * y.
+    lars_path : Compute Least Angle Regression or Lasso path using LARS algorithm.
+    Lars : Least Angle Regression model a.k.a. LAR.
+    LassoLars : Lasso model fit with Least Angle Regression a.k.a. Lars.
+    sklearn.decomposition.sparse_encode : Generic sparse coding.
+        Each column of the result is the solution to a Lasso problem.
+    OrthogonalMatchingPursuitCV : Cross-validated
+        Orthogonal Matching Pursuit model (OMP).
 
     Notes
     -----
@@ -670,15 +677,16 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
     Matching Pursuit Technical Report - CS Technion, April 2008.
     https://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
 
-    See Also
+    Examples
     --------
-    orthogonal_mp
-    orthogonal_mp_gram
-    lars_path
-    Lars
-    LassoLars
-    sklearn.decomposition.sparse_encode
-    OrthogonalMatchingPursuitCV
+    >>> from sklearn.linear_model import OrthogonalMatchingPursuit
+    >>> from sklearn.datasets import make_regression
+    >>> X, y = make_regression(noise=4, random_state=0)
+    >>> reg = OrthogonalMatchingPursuit(normalize=False).fit(X, y)
+    >>> reg.score(X, y)
+    0.9991...
+    >>> reg.predict(X[:1,])
+    array([-78.3854...])
     """
 
     def __init__(
@@ -705,13 +713,12 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
             Training data.
 
         y : array-like of shape (n_samples,) or (n_samples, n_targets)
-            Target values. Will be cast to X's dtype if necessary
-
+            Target values. Will be cast to X's dtype if necessary.
 
         Returns
         -------
         self : object
-            returns an instance of self.
+            Returns an instance of self.
         """
         _normalize = _deprecate_normalize(
             self.normalize, default=True, estimator_name=self.__class__.__name__
@@ -745,7 +752,7 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
                 return_n_iter=True,
             )
         else:
-            norms_sq = np.sum(y ** 2, axis=0) if self.tol is not None else None
+            norms_sq = np.sum(y**2, axis=0) if self.tol is not None else None
 
             coef_, self.n_iter_ = orthogonal_mp_gram(
                 Gram,
@@ -836,7 +843,7 @@ def _omp_path_residues(
         y_test -= y_mean
 
     if normalize:
-        norms = np.sqrt(np.sum(X_train ** 2, axis=0))
+        norms = np.sqrt(np.sum(X_train**2, axis=0))
         nonzeros = np.flatnonzero(norms)
         X_train[:, nonzeros] /= norms[nonzeros]
 
@@ -872,7 +879,7 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         copy is made anyway.
 
     fit_intercept : bool, default=True
-        whether to calculate the intercept for this model. If set
+        Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (i.e. data is expected to be centered).
 
@@ -939,6 +946,31 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    orthogonal_mp : Solves n_targets Orthogonal Matching Pursuit problems.
+    orthogonal_mp_gram : Solves n_targets Orthogonal Matching Pursuit
+        problems using only the Gram matrix X.T * X and the product X.T * y.
+    lars_path : Compute Least Angle Regression or Lasso path using LARS algorithm.
+    Lars : Least Angle Regression model a.k.a. LAR.
+    LassoLars : Lasso model fit with Least Angle Regression a.k.a. Lars.
+    OrthogonalMatchingPursuit : Orthogonal Matching Pursuit model (OMP).
+    LarsCV : Cross-validated Least Angle Regression model.
+    LassoLarsCV : Cross-validated Lasso model fit with Least Angle Regression.
+    sklearn.decomposition.sparse_encode : Generic sparse coding.
+        Each column of the result is the solution to a Lasso problem.
+
+    Notes
+    -----
+    In `fit`, once the optimal number of non-zero coefficients is found through
+    cross-validation, the model is fit again using the entire training set.
+
     Examples
     --------
     >>> from sklearn.linear_model import OrthogonalMatchingPursuitCV
@@ -952,19 +984,6 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
     10
     >>> reg.predict(X[:1,])
     array([-78.3854...])
-
-    See Also
-    --------
-    orthogonal_mp
-    orthogonal_mp_gram
-    lars_path
-    Lars
-    LassoLars
-    OrthogonalMatchingPursuit
-    LarsCV
-    LassoLarsCV
-    sklearn.decomposition.sparse_encode
-
     """
 
     def __init__(
@@ -1000,16 +1019,14 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         Returns
         -------
         self : object
-            returns an instance of self.
+            Returns an instance of self.
         """
 
         _normalize = _deprecate_normalize(
             self.normalize, default=True, estimator_name=self.__class__.__name__
         )
 
-        X, y = self._validate_data(
-            X, y, y_numeric=True, ensure_min_features=2, estimator=self
-        )
+        X, y = self._validate_data(X, y, y_numeric=True, ensure_min_features=2)
         X = as_float_array(X, copy=False, force_all_finite=False)
         cv = check_cv(self.cv, classifier=False)
         max_iter = (

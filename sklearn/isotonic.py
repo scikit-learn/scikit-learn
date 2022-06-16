@@ -103,7 +103,7 @@ def isotonic_regression(
 
     increasing : bool, default=True
         Whether to compute ``y_`` is increasing (if set to True) or decreasing
-        (if set to False)
+        (if set to False).
 
     Returns
     -------
@@ -116,9 +116,9 @@ def isotonic_regression(
     by Michael J. Best and Nilotpal Chakravarti, section 3.
     """
     order = np.s_[:] if increasing else np.s_[::-1]
-    y = check_array(y, ensure_2d=False, dtype=[np.float64, np.float32])
+    y = check_array(y, ensure_2d=False, input_name="y", dtype=[np.float64, np.float32])
     y = np.array(y[order], dtype=y.dtype)
-    sample_weight = _check_sample_weight(sample_weight, y, dtype=y.dtype)
+    sample_weight = _check_sample_weight(sample_weight, y, dtype=y.dtype, copy=True)
     sample_weight = np.ascontiguousarray(sample_weight[order])
 
     _inplace_contiguous_isotonic_regression(y, sample_weight)
@@ -188,6 +188,14 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
 
     increasing_ : bool
         Inferred value for ``increasing``.
+
+    See Also
+    --------
+    sklearn.linear_model.LinearRegression : Ordinary least squares Linear
+        Regression.
+    sklearn.ensemble.HistGradientBoostingRegressor : Gradient boosting that
+        is a non-parametric model accepting monotonicity constraints.
+    isotonic_regression : Function to solve the isotonic regression model.
 
     Notes
     -----
@@ -329,8 +337,10 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         new input data.
         """
         check_params = dict(accept_sparse=False, ensure_2d=False)
-        X = check_array(X, dtype=[np.float64, np.float32], **check_params)
-        y = check_array(y, dtype=X.dtype, **check_params)
+        X = check_array(
+            X, input_name="X", dtype=[np.float64, np.float32], **check_params
+        )
+        y = check_array(y, input_name="y", dtype=X.dtype, **check_params)
         check_consistent_length(X, y, sample_weight)
 
         # Transform y by running the isotonic regression algorithm and
@@ -348,7 +358,7 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         return self
 
     def transform(self, T):
-        """Transform new data by linear interpolation
+        """Transform new data by linear interpolation.
 
         Parameters
         ----------
@@ -361,7 +371,7 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         Returns
         -------
         y_pred : ndarray of shape (n_samples,)
-            The transformed data
+            The transformed data.
         """
 
         if hasattr(self, "X_thresholds_"):
@@ -405,6 +415,26 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
             Transformed data.
         """
         return self.transform(T)
+
+    # We implement get_feature_names_out here instead of using
+    # `_ClassNamePrefixFeaturesOutMixin`` because `input_features` are ignored.
+    # `input_features` are ignored because `IsotonicRegression` accepts 1d
+    # arrays and the semantics of `feature_names_in_` are not clear for 1d arrays.
+    def get_feature_names_out(self, input_features=None):
+        """Get output feature names for transformation.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Ignored.
+
+        Returns
+        -------
+        feature_names_out : ndarray of str objects
+            An ndarray with one string i.e. ["isotonicregression0"].
+        """
+        class_name = self.__class__.__name__.lower()
+        return np.asarray([f"{class_name}0"], dtype=object)
 
     def __getstate__(self):
         """Pickle-protocol - return state of the estimator."""

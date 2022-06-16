@@ -3,14 +3,12 @@ from numpy.testing import assert_array_equal
 import pytest
 
 from sklearn.feature_extraction import FeatureHasher
-from sklearn.utils._testing import ignore_warnings, fails_if_pypy
-
-pytestmark = fails_if_pypy
+from sklearn.feature_extraction._hashing_fast import transform as _hashing_transform
 
 
 def test_feature_hasher_dicts():
-    h = FeatureHasher(n_features=16)
-    assert "dict" == h.input_type
+    feature_hasher = FeatureHasher(n_features=16)
+    assert "dict" == feature_hasher.input_type
 
     raw_X = [{"foo": "bar", "dada": 42, "tzara": 37}, {"foo": "baz", "gaga": "string1"}]
     X1 = FeatureHasher(n_features=16).transform(raw_X)
@@ -27,14 +25,14 @@ def test_feature_hasher_strings():
     ]
 
     for lg_n_features in (7, 9, 11, 16, 22):
-        n_features = 2 ** lg_n_features
+        n_features = 2**lg_n_features
 
         it = (x for x in raw_X)  # iterable
 
-        h = FeatureHasher(
+        feature_hasher = FeatureHasher(
             n_features=n_features, input_type="string", alternate_sign=False
         )
-        X = h.transform(it)
+        X = feature_hasher.transform(it)
 
         assert X.shape[0] == len(raw_X)
         assert X.shape[1] == n_features
@@ -47,24 +45,21 @@ def test_feature_hasher_strings():
 
 def test_hashing_transform_seed():
     # check the influence of the seed when computing the hashes
-    # import is here to avoid importing on pypy
-    from sklearn.feature_extraction._hashing_fast import transform as _hashing_transform
-
     raw_X = [
         ["foo", "bar", "baz", "foo".encode("ascii")],
         ["bar".encode("ascii"), "baz", "quux"],
     ]
 
     raw_X_ = (((f, 1) for f in x) for x in raw_X)
-    indices, indptr, _ = _hashing_transform(raw_X_, 2 ** 7, str, False)
+    indices, indptr, _ = _hashing_transform(raw_X_, 2**7, str, False)
 
     raw_X_ = (((f, 1) for f in x) for x in raw_X)
-    indices_0, indptr_0, _ = _hashing_transform(raw_X_, 2 ** 7, str, False, seed=0)
+    indices_0, indptr_0, _ = _hashing_transform(raw_X_, 2**7, str, False, seed=0)
     assert_array_equal(indices, indices_0)
     assert_array_equal(indptr, indptr_0)
 
     raw_X_ = (((f, 1) for f in x) for x in raw_X)
-    indices_1, _, _ = _hashing_transform(raw_X_, 2 ** 7, str, False, seed=1)
+    indices_1, _, _ = _hashing_transform(raw_X_, 2**7, str, False, seed=1)
     with pytest.raises(AssertionError):
         assert_array_equal(indices, indices_1)
 
@@ -74,8 +69,8 @@ def test_feature_hasher_pairs():
         iter(d.items())
         for d in [{"foo": 1, "bar": 2}, {"baz": 3, "quux": 4, "foo": -1}]
     )
-    h = FeatureHasher(n_features=16, input_type="pair")
-    x1, x2 = h.transform(raw_X).toarray()
+    feature_hasher = FeatureHasher(n_features=16, input_type="pair")
+    x1, x2 = feature_hasher.transform(raw_X).toarray()
     x1_nz = sorted(np.abs(x1[x1 != 0]))
     x2_nz = sorted(np.abs(x2[x2 != 0]))
     assert [1, 2] == x1_nz
@@ -87,15 +82,15 @@ def test_feature_hasher_pairs_with_string_values():
         iter(d.items())
         for d in [{"foo": 1, "bar": "a"}, {"baz": "abc", "quux": 4, "foo": -1}]
     )
-    h = FeatureHasher(n_features=16, input_type="pair")
-    x1, x2 = h.transform(raw_X).toarray()
+    feature_hasher = FeatureHasher(n_features=16, input_type="pair")
+    x1, x2 = feature_hasher.transform(raw_X).toarray()
     x1_nz = sorted(np.abs(x1[x1 != 0]))
     x2_nz = sorted(np.abs(x2[x2 != 0]))
     assert [1, 1] == x1_nz
     assert [1, 1, 4] == x2_nz
 
     raw_X = (iter(d.items()) for d in [{"bax": "abc"}, {"bax": "abc"}])
-    x1, x2 = h.transform(raw_X).toarray()
+    x1, x2 = feature_hasher.transform(raw_X).toarray()
     x1_nz = np.abs(x1[x1 != 0])
     x2_nz = np.abs(x2[x2 != 0])
     assert [1] == x1_nz
@@ -107,29 +102,35 @@ def test_hash_empty_input():
     n_features = 16
     raw_X = [[], (), iter(range(0))]
 
-    h = FeatureHasher(n_features=n_features, input_type="string")
-    X = h.transform(raw_X)
+    feature_hasher = FeatureHasher(n_features=n_features, input_type="string")
+    X = feature_hasher.transform(raw_X)
 
     assert_array_equal(X.A, np.zeros((len(raw_X), n_features)))
 
 
 def test_hasher_invalid_input():
-    with pytest.raises(ValueError):
-        FeatureHasher(input_type="gobbledygook")
-    with pytest.raises(ValueError):
-        FeatureHasher(n_features=-1)
-    with pytest.raises(ValueError):
-        FeatureHasher(n_features=0)
-    with pytest.raises(TypeError):
-        FeatureHasher(n_features="ham")
+    raw_X = [[], (), iter(range(0))]
 
-    h = FeatureHasher(n_features=np.uint16(2 ** 6))
+    feature_hasher = FeatureHasher(input_type="gobbledygook")
     with pytest.raises(ValueError):
-        h.transform([])
+        feature_hasher.transform(raw_X)
+    feature_hasher = FeatureHasher(n_features=-1)
+    with pytest.raises(ValueError):
+        feature_hasher.transform(raw_X)
+    feature_hasher = FeatureHasher(n_features=0)
+    with pytest.raises(ValueError):
+        feature_hasher.transform(raw_X)
+    feature_hasher = FeatureHasher(n_features="ham")
+    with pytest.raises(TypeError):
+        feature_hasher.transform(raw_X)
+
+    feature_hasher = FeatureHasher(n_features=np.uint16(2**6))
+    with pytest.raises(ValueError):
+        feature_hasher.transform([])
     with pytest.raises(Exception):
-        h.transform([[5.5]])
+        feature_hasher.transform([[5.5]])
     with pytest.raises(Exception):
-        h.transform([[None]])
+        feature_hasher.transform([[None]])
 
 
 def test_hasher_set_params():
@@ -146,7 +147,6 @@ def test_hasher_zeros():
     assert X.data.shape == (0,)
 
 
-@ignore_warnings(category=FutureWarning)
 def test_hasher_alternate_sign():
     X = [list("Thequickbrownfoxjumped")]
 

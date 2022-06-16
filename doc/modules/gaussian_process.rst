@@ -88,14 +88,14 @@ estimate the noise level of data. An illustration of the
 log-marginal-likelihood (LML) landscape shows that there exist two local
 maxima of LML.
 
-.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpr_noisy_001.png
+.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpr_noisy_003.png
    :target: ../auto_examples/gaussian_process/plot_gpr_noisy.html
    :align: center
 
 The first corresponds to a model with a high noise level and a
 large length scale, which explains all variations in the data by noise.
 
-.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpr_noisy_002.png
+.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpr_noisy_004.png
    :target: ../auto_examples/gaussian_process/plot_gpr_noisy.html
    :align: center
 
@@ -106,7 +106,7 @@ hyperparameters, the gradient-based optimization might also converge to the
 high-noise solution. It is thus important to repeat the optimization several
 times for different initializations.
 
-.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpr_noisy_003.png
+.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpr_noisy_005.png
    :target: ../auto_examples/gaussian_process/plot_gpr_noisy.html
    :align: center
 
@@ -142,7 +142,7 @@ Moreover, the noise level
 of the data is learned explicitly by GPR by an additional WhiteKernel component
 in the kernel and by the regularization parameter alpha of KRR.
 
-.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_compare_gpr_krr_001.png
+.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_compare_gpr_krr_005.png
    :target: ../auto_examples/gaussian_process/plot_compare_gpr_krr.html
    :align: center
 
@@ -220,7 +220,7 @@ overall noise level is very small, indicating that the data can be very well
 explained by the model. The figure shows also that the model makes very
 confident predictions until around 2015
 
-.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpr_co2_001.png
+.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpr_co2_003.png
    :target: ../auto_examples/gaussian_process/plot_gpr_co2.html
    :align: center
 
@@ -484,7 +484,7 @@ Note that magic methods ``__add__``, ``__mul___`` and ``__pow__`` are
 overridden on the Kernel objects, so one can use e.g. ``RBF() + RBF()`` as
 a shortcut for ``Sum(RBF(), RBF())``.
 
-Radial-basis function (RBF) kernel
+Radial basis function (RBF) kernel
 ----------------------------------
 The :class:`RBF` kernel is a stationary kernel. It is also known as the "squared
 exponential" kernel. It is parameterized by a length-scale parameter :math:`l>0`, which

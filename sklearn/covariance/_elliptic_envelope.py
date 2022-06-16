@@ -41,7 +41,7 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
     random_state : int, RandomState instance or None, default=None
         Determines the pseudo random number generator for shuffling
         the data. Pass an int for reproducible results across multiple function
-        calls. See :term: `Glossary <random_state>`.
+        calls. See :term:`Glossary <random_state>`.
 
     Attributes
     ----------
@@ -88,6 +88,35 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    EmpiricalCovariance : Maximum likelihood covariance estimator.
+    GraphicalLasso : Sparse inverse covariance estimation
+        with an l1-penalized estimator.
+    LedoitWolf : LedoitWolf Estimator.
+    MinCovDet : Minimum Covariance Determinant
+        (robust estimator of covariance).
+    OAS : Oracle Approximating Shrinkage Estimator.
+    ShrunkCovariance : Covariance estimator with shrinkage.
+
+    Notes
+    -----
+    Outlier detection from covariance estimation may break or not
+    perform well in high-dimensional settings. In particular, one will
+    always take care to work with ``n_samples > n_features ** 2``.
+
+    References
+    ----------
+    .. [1] Rousseeuw, P.J., Van Driessen, K. "A fast algorithm for the
+       minimum covariance determinant estimator" Technometrics 41(3), 212
+       (1999)
+
     Examples
     --------
     >>> import numpy as np
@@ -107,22 +136,6 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
            [0.2535..., 0.3053...]])
     >>> cov.location_
     array([0.0813... , 0.0427...])
-
-    See Also
-    --------
-    EmpiricalCovariance, MinCovDet
-
-    Notes
-    -----
-    Outlier detection from covariance estimation may break or not
-    perform well in high-dimensional settings. In particular, one will
-    always take care to work with ``n_samples > n_features ** 2``.
-
-    References
-    ----------
-    .. [1] Rousseeuw, P.J., Van Driessen, K. "A fast algorithm for the
-       minimum covariance determinant estimator" Technometrics 41(3), 212
-       (1999)
     """
 
     def __init__(
@@ -147,11 +160,16 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training data.
 
         y : Ignored
             Not used, present for API consistency by convention.
+
+        Returns
+        -------
+        self : object
+            Returns the instance itself.
         """
         if self.contamination != "auto":
             if not (0.0 < self.contamination <= 0.5):
@@ -197,13 +215,11 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
             Opposite of the Mahalanobis distances.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, reset=False)
         return -self.mahalanobis(X)
 
     def predict(self, X):
         """
-        Predict the labels (1 inlier, -1 outlier) of X according to the
-        fitted model.
+        Predict labels (1 inlier, -1 outlier) of X according to fitted model.
 
         Parameters
         ----------
@@ -222,7 +238,7 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
         return is_inlier
 
     def score(self, X, y, sample_weight=None):
-        """Returns the mean accuracy on the given test data and labels.
+        """Return the mean accuracy on the given test data and labels.
 
         In multi-label classification, this is the subset accuracy
         which is a harsh metric since you require for each sample that

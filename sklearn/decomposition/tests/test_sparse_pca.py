@@ -5,6 +5,7 @@ import sys
 import pytest
 
 import numpy as np
+from numpy.testing import assert_array_equal
 
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_allclose
@@ -203,3 +204,64 @@ def test_spca_n_components_(SPCA, n_components):
         assert model.n_components_ == n_components
     else:
         assert model.n_components_ == n_features
+
+
+@pytest.mark.parametrize("SPCA", (SparsePCA, MiniBatchSparsePCA))
+@pytest.mark.parametrize("method", ("lars", "cd"))
+@pytest.mark.parametrize(
+    "data_type, expected_type",
+    (
+        (np.float32, np.float32),
+        (np.float64, np.float64),
+        (np.int32, np.float64),
+        (np.int64, np.float64),
+    ),
+)
+def test_sparse_pca_dtype_match(SPCA, method, data_type, expected_type):
+    # Verify output matrix dtype
+    n_samples, n_features, n_components = 12, 10, 3
+    rng = np.random.RandomState(0)
+    input_array = rng.randn(n_samples, n_features).astype(data_type)
+    model = SPCA(n_components=n_components, method=method)
+    transformed = model.fit_transform(input_array)
+
+    assert transformed.dtype == expected_type
+    assert model.components_.dtype == expected_type
+
+
+@pytest.mark.parametrize("SPCA", (SparsePCA, MiniBatchSparsePCA))
+@pytest.mark.parametrize("method", ("lars", "cd"))
+def test_sparse_pca_numerical_consistency(SPCA, method):
+    # Verify numericall consistentency among np.float32 and np.float64
+    rtol = 1e-3
+    alpha = 2
+    n_samples, n_features, n_components = 12, 10, 3
+    rng = np.random.RandomState(0)
+    input_array = rng.randn(n_samples, n_features)
+
+    model_32 = SPCA(
+        n_components=n_components, alpha=alpha, method=method, random_state=0
+    )
+    transformed_32 = model_32.fit_transform(input_array.astype(np.float32))
+
+    model_64 = SPCA(
+        n_components=n_components, alpha=alpha, method=method, random_state=0
+    )
+    transformed_64 = model_64.fit_transform(input_array.astype(np.float64))
+
+    assert_allclose(transformed_64, transformed_32, rtol=rtol)
+    assert_allclose(model_64.components_, model_32.components_, rtol=rtol)
+
+
+@pytest.mark.parametrize("SPCA", [SparsePCA, MiniBatchSparsePCA])
+def test_spca_feature_names_out(SPCA):
+    """Check feature names out for *SparsePCA."""
+    rng = np.random.RandomState(0)
+    n_samples, n_features = 12, 10
+    X = rng.randn(n_samples, n_features)
+
+    model = SPCA(n_components=4).fit(X)
+    names = model.get_feature_names_out()
+
+    estimator_name = SPCA.__name__.lower()
+    assert_array_equal([f"{estimator_name}{i}" for i in range(4)], names)

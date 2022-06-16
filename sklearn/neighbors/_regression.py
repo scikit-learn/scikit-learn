@@ -1,4 +1,4 @@
-"""Nearest Neighbor Regression"""
+"""Nearest Neighbor Regression."""
 
 # Authors: Jake Vanderplas <vanderplas@astro.washington.edu>
 #          Fabian Pedregosa <fabian.pedregosa@inria.fr>
@@ -17,7 +17,6 @@ import numpy as np
 from ._base import _get_weights, _check_weights
 from ._base import NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin
 from ..base import RegressorMixin
-from ..utils.deprecation import deprecated
 
 
 class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
@@ -75,8 +74,10 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
     metric : str or callable, default='minkowski'
         The distance metric to use for the tree.  The default metric is
         minkowski, and with p=2 is equivalent to the standard Euclidean
-        metric. See the documentation of :class:`DistanceMetric` for a
-        list of available metrics.
+        metric. For a list of available metrics, see the documentation of
+        :class:`~sklearn.metrics.DistanceMetric` and the metrics listed in
+        `sklearn.metrics.pairwise.PAIRWISE_DISTANCE_FUNCTIONS`. Note that the
+        "cosine" metric uses :func:`~sklearn.metrics.pairwise.cosine_distances`.
         If metric is "precomputed", X is assumed to be a distance matrix and
         must be square during fit. X may be a :term:`sparse graph`,
         in which case only "nonzero" elements may be considered neighbors.
@@ -109,6 +110,12 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     n_samples_fit_ : int
         Number of samples in the fitted data.
 
@@ -132,7 +139,7 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
        different labels, the results will depend on the ordering of the
        training data.
 
-    https://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
+    https://en.wikipedia.org/wiki/K-nearest_neighbors_algorithm
 
     Examples
     --------
@@ -173,17 +180,6 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
         # For cross-validation routines to split data correctly
         return {"pairwise": self.metric == "precomputed"}
 
-    # TODO: Remove in 1.1
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `_pairwise` was deprecated in "
-        "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def _pairwise(self):
-        # For cross-validation routines to split data correctly
-        return self.metric == "precomputed"
-
     def fit(self, X, y):
         """Fit the k-nearest neighbors regressor from the training dataset.
 
@@ -220,9 +216,13 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
         y : ndarray of shape (n_queries,) or (n_queries, n_outputs), dtype=int
             Target values.
         """
-        X = self._validate_data(X, accept_sparse="csr", reset=False)
-
-        neigh_dist, neigh_ind = self.kneighbors(X)
+        if self.weights == "uniform":
+            # In that case, we do not need the distances to perform
+            # the weighting so we do not compute them.
+            neigh_ind = self.kneighbors(X, return_distance=False)
+            neigh_dist = None
+        else:
+            neigh_dist, neigh_ind = self.kneighbors(X)
 
         weights = _get_weights(neigh_dist, self.weights)
 
@@ -233,7 +233,7 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
         if weights is None:
             y_pred = np.mean(_y[neigh_ind], axis=1)
         else:
-            y_pred = np.empty((X.shape[0], _y.shape[1]), dtype=np.float64)
+            y_pred = np.empty((neigh_dist.shape[0], _y.shape[1]), dtype=np.float64)
             denom = np.sum(weights, axis=1)
 
             for j in range(_y.shape[1]):
@@ -263,7 +263,7 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin, RegressorMixin, NeighborsBa
         queries.
 
     weights : {'uniform', 'distance'} or callable, default='uniform'
-        weight function used in prediction.  Possible values:
+        Weight function used in prediction.  Possible values:
 
         - 'uniform' : uniform weights.  All points in each neighborhood
           are weighted equally.
@@ -300,7 +300,7 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin, RegressorMixin, NeighborsBa
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
     metric : str or callable, default='minkowski'
-        the distance metric to use for the tree.  The default metric is
+        The distance metric to use for the tree.  The default metric is
         minkowski, and with p=2 is equivalent to the standard Euclidean
         metric. See the documentation of :class:`DistanceMetric` for a
         list of available metrics.
@@ -335,8 +335,28 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin, RegressorMixin, NeighborsBa
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     n_samples_fit_ : int
         Number of samples in the fitted data.
+
+    See Also
+    --------
+    NearestNeighbors : Regression based on nearest neighbors.
+    KNeighborsRegressor : Regression based on k-nearest neighbors.
+    KNeighborsClassifier : Classifier based on the k-nearest neighbors.
+    RadiusNeighborsClassifier : Classifier based on neighbors within a given radius.
+
+    Notes
+    -----
+    See :ref:`Nearest Neighbors <neighbors>` in the online documentation
+    for a discussion of the choice of ``algorithm`` and ``leaf_size``.
+
+    https://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
 
     Examples
     --------
@@ -348,20 +368,6 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin, RegressorMixin, NeighborsBa
     RadiusNeighborsRegressor(...)
     >>> print(neigh.predict([[1.5]]))
     [0.5]
-
-    See Also
-    --------
-    NearestNeighbors
-    KNeighborsRegressor
-    KNeighborsClassifier
-    RadiusNeighborsClassifier
-
-    Notes
-    -----
-    See :ref:`Nearest Neighbors <neighbors>` in the online documentation
-    for a discussion of the choice of ``algorithm`` and ``leaf_size``.
-
-    https://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
     def __init__(
@@ -410,7 +416,7 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin, RegressorMixin, NeighborsBa
         return self._fit(X, y)
 
     def predict(self, X):
-        """Predict the target for the provided data
+        """Predict the target for the provided data.
 
         Parameters
         ----------
@@ -424,8 +430,6 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin, RegressorMixin, NeighborsBa
                 dtype=double
             Target values.
         """
-        X = self._validate_data(X, accept_sparse="csr", reset=False)
-
         neigh_dist, neigh_ind = self.radius_neighbors(X)
 
         weights = _get_weights(neigh_dist, self.weights)

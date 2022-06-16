@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-#
 # scikit-learn documentation build configuration file, created by
 # sphinx-quickstart on Fri Jan  8 09:13:42 2010.
 #
@@ -17,7 +15,7 @@ import os
 import warnings
 import re
 from datetime import datetime
-from packaging.version import parse
+from sklearn.externals._packaging.version import parse
 from pathlib import Path
 from io import StringIO
 
@@ -29,6 +27,7 @@ sys.path.insert(0, os.path.abspath("sphinxext"))
 
 from github_link import make_linkcode_resolve
 import sphinx_gallery
+from sphinx_gallery.sorting import ExampleTitleSortKey
 
 # -- General configuration ---------------------------------------------------
 
@@ -47,7 +46,21 @@ extensions = [
     "add_toctree_functions",
     "sphinx-prompt",
     "sphinxext.opengraph",
+    "doi_role",
+    "allow_nan_estimators",
+    "matplotlib.sphinxext.plot_directive",
 ]
+
+# Produce `plot::` directives for examples that contain `import matplotlib` or
+# `from matplotlib import`.
+numpydoc_use_plots = True
+
+# Options for the `::plot` directive:
+# https://matplotlib.org/stable/api/sphinxext_plot_directive_api.html
+plot_formats = ["png"]
+plot_include_source = True
+plot_html_show_formats = False
+plot_html_show_source_link = False
 
 # this is needed for some reason...
 # see https://github.com/numpy/numpydoc/issues/69
@@ -79,7 +92,7 @@ source_suffix = ".rst"
 # source_encoding = 'utf-8'
 
 # The main toctree document.
-main_doc = "contents"
+root_doc = "contents"
 
 # General information about the project.
 project = "scikit-learn"
@@ -146,7 +159,11 @@ html_theme = "scikit-learn-modern"
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-html_theme_options = {"google_analytics": True, "mathjax_path": mathjax_path}
+html_theme_options = {
+    "google_analytics": True,
+    "mathjax_path": mathjax_path,
+    "link_to_live_contributing_page": not parsed_version.is_devrelease,
+}
 
 # Add any paths that contain custom themes here, relative to this directory.
 html_theme_path = ["themes"]
@@ -182,10 +199,7 @@ html_static_path = ["images"]
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
-html_additional_pages = {
-    "index": "index.html",
-    "documentation": "documentation.html",
-}  # redirects to index
+html_additional_pages = {"index": "index.html"}
 
 # If false, no module index is generated.
 html_domain_indices = False
@@ -227,10 +241,27 @@ html_context[
     "release_highlights"
 ] = f"auto_examples/release_highlights/{latest_highlights}"
 
-# get version from higlight name assuming highlights have the form
+# get version from highlight name assuming highlights have the form
 # plot_release_highlights_0_22_0
 highlight_version = ".".join(latest_highlights.split("_")[-3:-1])
 html_context["release_highlights_version"] = highlight_version
+
+
+# redirects dictionary maps from old links to new links
+redirects = {
+    "documentation": "index",
+    "auto_examples/feature_selection/plot_permutation_test_for_classification": (
+        "auto_examples/model_selection/plot_permutation_tests_for_classification"
+    ),
+    "modules/model_persistence": "model_persistence",
+    "auto_examples/linear_model/plot_bayesian_ridge": (
+        "auto_examples/linear_model/plot_ard"
+    ),
+}
+html_context["redirects"] = redirects
+for old_link in redirects:
+    html_additional_pages[old_link] = "redirects.html"
+
 
 # -- Options for LaTeX output ------------------------------------------------
 latex_elements = {
@@ -276,7 +307,7 @@ trim_doctests_flags = True
 intersphinx_mapping = {
     "python": ("https://docs.python.org/{.major}".format(sys.version_info), None),
     "numpy": ("https://numpy.org/doc/stable", None),
-    "scipy": ("https://docs.scipy.org/doc/scipy/reference", None),
+    "scipy": ("https://docs.scipy.org/doc/scipy/", None),
     "matplotlib": ("https://matplotlib.org/", None),
     "pandas": ("https://pandas.pydata.org/pandas-docs/stable/", None),
     "joblib": ("https://joblib.readthedocs.io/en/latest/", None),
@@ -331,6 +362,24 @@ class SubSectionTitleOrder:
         return directory
 
 
+class SKExampleTitleSortKey(ExampleTitleSortKey):
+    """Sorts release highlights based on version number."""
+
+    def __call__(self, filename):
+        title = super().__call__(filename)
+        prefix = "plot_release_highlights_"
+
+        # Use title to sort if not a release highlight
+        if not filename.startswith(prefix):
+            return title
+
+        major_minor = filename[len(prefix) :].split("_")[:2]
+        version_float = float(".".join(major_minor))
+
+        # negate to place the newest version highlights first
+        return -version_float
+
+
 sphinx_gallery_conf = {
     "doc_module": "sklearn",
     "backreferences_dir": os.path.join("modules", "generated"),
@@ -339,6 +388,7 @@ sphinx_gallery_conf = {
     "examples_dirs": ["../examples"],
     "gallery_dirs": ["auto_examples"],
     "subsection_order": SubSectionTitleOrder("../examples"),
+    "within_subsection_order": SKExampleTitleSortKey,
     "binder": {
         "org": "scikit-learn",
         "repo": "scikit-learn",
@@ -350,6 +400,7 @@ sphinx_gallery_conf = {
     # avoid generating too many cross links
     "inspect_global_variables": False,
     "remove_config_comments": True,
+    "plot_gallery": "True",
 }
 
 
@@ -474,9 +525,18 @@ def generate_min_dependency_substitutions(app):
 issues_github_path = "scikit-learn/scikit-learn"
 
 
+def disable_plot_gallery_for_linkcheck(app):
+    if app.builder.name == "linkcheck":
+        sphinx_gallery_conf["plot_gallery"] = "False"
+
+
 def setup(app):
+    # do not run the examples when using linkcheck by using a small priority
+    # (default priority is 500 and sphinx-gallery using builder-inited event too)
+    app.connect("builder-inited", disable_plot_gallery_for_linkcheck, priority=50)
     app.connect("builder-inited", generate_min_dependency_table)
     app.connect("builder-inited", generate_min_dependency_substitutions)
+
     # to hide/show the prompt in code examples:
     app.connect("build-finished", make_carousel_thumbs)
     app.connect("build-finished", filter_search_index)
@@ -515,3 +575,54 @@ ogp_site_url = "https://scikit-learn/stable/"
 ogp_image = "https://scikit-learn.org/stable/_static/scikit-learn-logo-small.png"
 ogp_use_first_image = True
 ogp_site_name = "scikit-learn"
+
+# Config for linkcheck that checks the documentation for broken links
+
+# ignore all links in 'whats_new' to avoid doing many github requests and
+# hitting the github rate threshold that makes linkcheck take a lot of time
+linkcheck_exclude_documents = [r"whats_new/.*"]
+
+# default timeout to make some sites links fail faster
+linkcheck_timeout = 10
+
+# Allow redirects from doi.org
+linkcheck_allowed_redirects = {r"https://doi.org/.+": r".*"}
+linkcheck_ignore = [
+    # ignore links to local html files e.g. in image directive :target: field
+    r"^..?/",
+    # ignore links to specific pdf pages because linkcheck does not handle them
+    # ('utf-8' codec can't decode byte error)
+    r"http://www.utstat.toronto.edu/~rsalakhu/sta4273/notes/Lecture2.pdf#page=.*",
+    "https://www.fordfoundation.org/media/2976/"
+    "roads-and-bridges-the-unseen-labor-behind-our-digital-infrastructure.pdf#page=.*",
+    # Broken links from testimonials
+    "http://www.bestofmedia.com",
+    "http://www.data-publica.com/",
+    "https://livelovely.com",
+    "https://www.mars.com/global",
+    "https://www.yhat.com",
+    # Ignore some dynamically created anchors. See
+    # https://github.com/sphinx-doc/sphinx/issues/9016 for more details about
+    # the github example
+    r"https://github.com/conda-forge/miniforge#miniforge",
+    r"https://stackoverflow.com/questions/5836335/"
+    "consistently-create-same-random-numpy-array/5837352#comment6712034_5837352",
+]
+
+# Use a browser-like user agent to avoid some "403 Client Error: Forbidden for
+# url" errors. This is taken from the variable navigator.userAgent inside a
+# browser console.
+user_agent = (
+    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:100.0) Gecko/20100101 Firefox/100.0"
+)
+
+# Use Github token from environment variable to avoid Github rate limits when
+# checking Github links
+github_token = os.getenv("GITHUB_TOKEN")
+
+if github_token is None:
+    linkcheck_request_headers = {}
+else:
+    linkcheck_request_headers = {
+        "https://github.com/": {"Authorization": f"token {github_token}"},
+    }

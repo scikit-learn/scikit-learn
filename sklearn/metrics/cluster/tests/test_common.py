@@ -190,7 +190,7 @@ def test_format_invariance(metric_name):
         score_1 = metric(X, y_true)
         assert score_1 == metric(X.astype(float), y_true)
         y_true_gen = generate_formats(y_true)
-        for (y_true_fmt, fmt_name) in y_true_gen:
+        for y_true_fmt, fmt_name in y_true_gen:
             assert score_1 == metric(X, y_true_fmt)
 
 
@@ -214,6 +214,6 @@ def test_inf_nan_input(metric_name, metric_func):
     else:
         X = np.random.randint(10, size=(2, 10))
         invalids = [(X, [np.inf, np.inf]), (X, [np.nan, np.nan]), (X, [np.nan, np.inf])]
-    with pytest.raises(ValueError, match="contains NaN, infinity"):
+    with pytest.raises(ValueError, match=r"contains (NaN|infinity)"):
         for args in invalids:
             metric_func(*args)

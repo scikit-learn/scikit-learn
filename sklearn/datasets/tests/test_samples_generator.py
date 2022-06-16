@@ -9,6 +9,7 @@ import scipy.sparse as sp
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_allclose
 
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_multilabel_classification
@@ -491,15 +492,48 @@ def test_make_low_rank_matrix():
 
 def test_make_sparse_coded_signal():
     Y, D, X = make_sparse_coded_signal(
-        n_samples=5, n_components=8, n_features=10, n_nonzero_coefs=3, random_state=0
+        n_samples=5,
+        n_components=8,
+        n_features=10,
+        n_nonzero_coefs=3,
+        random_state=0,
+        data_transposed=False,
+    )
+    assert Y.shape == (5, 10), "Y shape mismatch"
+    assert D.shape == (8, 10), "D shape mismatch"
+    assert X.shape == (5, 8), "X shape mismatch"
+    for row in X:
+        assert len(np.flatnonzero(row)) == 3, "Non-zero coefs mismatch"
+    assert_allclose(Y, X @ D)
+    assert_allclose(np.sqrt((D**2).sum(axis=1)), np.ones(D.shape[0]))
+
+
+def test_make_sparse_coded_signal_transposed():
+    Y, D, X = make_sparse_coded_signal(
+        n_samples=5,
+        n_components=8,
+        n_features=10,
+        n_nonzero_coefs=3,
+        random_state=0,
+        data_transposed=True,
     )
     assert Y.shape == (10, 5), "Y shape mismatch"
     assert D.shape == (10, 8), "D shape mismatch"
     assert X.shape == (8, 5), "X shape mismatch"
     for col in X.T:
         assert len(np.flatnonzero(col)) == 3, "Non-zero coefs mismatch"
-    assert_array_almost_equal(np.dot(D, X), Y)
-    assert_array_almost_equal(np.sqrt((D ** 2).sum(axis=0)), np.ones(D.shape[1]))
+    assert_allclose(Y, D @ X)
+    assert_allclose(np.sqrt((D**2).sum(axis=0)), np.ones(D.shape[1]))
+
+
+# TODO(1.3): remove
+def test_make_sparse_code_signal_warning():
+    """Check the message for future deprecation."""
+    warn_msg = "The default value of data_transposed will change from True to False"
+    with pytest.warns(FutureWarning, match=warn_msg):
+        make_sparse_coded_signal(
+            n_samples=1, n_components=1, n_features=1, n_nonzero_coefs=1, random_state=0
+        )
 
 
 def test_make_sparse_uncorrelated():
@@ -523,11 +557,12 @@ def test_make_spd_matrix():
     )
 
 
-def test_make_swiss_roll():
-    X, t = make_swiss_roll(n_samples=5, noise=0.0, random_state=0)
+@pytest.mark.parametrize("hole", [False, True])
+def test_make_swiss_roll(hole):
+    X, t = make_swiss_roll(n_samples=5, noise=0.0, random_state=0, hole=hole)
 
-    assert X.shape == (5, 3), "X shape mismatch"
-    assert t.shape == (5,), "t shape mismatch"
+    assert X.shape == (5, 3)
+    assert t.shape == (5,)
     assert_array_almost_equal(X[:, 0], t * np.cos(t))
     assert_array_almost_equal(X[:, 2], t * np.sin(t))
 
@@ -622,7 +657,7 @@ def test_make_moons_unbalanced():
 def test_make_circles():
     factor = 0.3
 
-    for (n_samples, n_outer, n_inner) in [(7, 3, 4), (8, 4, 4)]:
+    for n_samples, n_outer, n_inner in [(7, 3, 4), (8, 4, 4)]:
         # Testing odd and even case, because in the past make_circles always
         # created an even number of samples.
         X, y = make_circles(n_samples, shuffle=False, noise=None, factor=factor)
@@ -631,8 +666,8 @@ def test_make_circles():
         center = [0.0, 0.0]
         for x, label in zip(X, y):
             dist_sqr = ((x - center) ** 2).sum()
-            dist_exp = 1.0 if label == 0 else factor ** 2
-            dist_exp = 1.0 if label == 0 else factor ** 2
+            dist_exp = 1.0 if label == 0 else factor**2
+            dist_exp = 1.0 if label == 0 else factor**2
             assert_almost_equal(
                 dist_sqr, dist_exp, err_msg="Point is not on expected circle"
             )

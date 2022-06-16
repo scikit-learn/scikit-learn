@@ -37,7 +37,7 @@ from sklearn.model_selection import RepeatedKFold
 from sklearn.model_selection import RepeatedStratifiedKFold
 from sklearn.model_selection import StratifiedGroupKFold
 
-from sklearn.linear_model import Ridge
+from sklearn.dummy import DummyClassifier
 
 from sklearn.model_selection._split import _validate_shuffle_split
 from sklearn.model_selection._split import _build_repr
@@ -1041,6 +1041,26 @@ def test_leave_group_out_changing_groups():
     assert 3 == LeaveOneGroupOut().get_n_splits(X, y=X, groups=groups)
 
 
+def test_leave_group_out_order_dependence():
+    # Check that LeaveOneGroupOut orders the splits according to the index
+    # of the group left out.
+    groups = np.array([2, 2, 0, 0, 1, 1])
+    X = np.ones(len(groups))
+
+    splits = iter(LeaveOneGroupOut().split(X, groups=groups))
+
+    expected_indices = [
+        ([0, 1, 4, 5], [2, 3]),
+        ([0, 1, 2, 3], [4, 5]),
+        ([2, 3, 4, 5], [0, 1]),
+    ]
+
+    for expected_train, expected_test in expected_indices:
+        train, test = next(splits)
+        assert_array_equal(train, expected_train)
+        assert_array_equal(test, expected_test)
+
+
 def test_leave_one_p_group_out_error_on_fewer_number_of_groups():
     X = y = groups = np.ones(0)
     msg = re.escape("Found array with 0 sample(s)")
@@ -1285,6 +1305,29 @@ def test_train_test_split():
         assert_array_equal(train, [0, 1, 2, 3, 4, 5, 6, 7])
 
 
+def test_train_test_split_32bit_overflow():
+    """Check for integer overflow on 32-bit platforms.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/20774
+    """
+
+    # A number 'n' big enough for expression 'n * n * train_size' to cause
+    # an overflow for signed 32-bit integer
+    big_number = 100000
+
+    # Definition of 'y' is a part of reproduction - population for at least
+    # one class should be in the same order of magnitude as size of X
+    X = np.arange(big_number)
+    y = X > (0.99 * big_number)
+
+    split = train_test_split(X, y, stratify=y, train_size=0.25)
+    X_train, X_test, y_train, y_test = split
+
+    assert X_train.size + X_test.size == big_number
+    assert y_train.size + y_test.size == big_number
+
+
 @ignore_warnings
 def test_train_test_split_pandas():
     # check train_test_split doesn't destroy pandas dataframe
@@ -1361,7 +1404,7 @@ def test_shufflesplit_reproducible():
     # Check that iterating twice on the ShuffleSplit gives the same
     # sequence of train-test when the random_state is given
     ss = ShuffleSplit(random_state=21)
-    assert_array_equal(list(a for a, b in ss.split(X)), list(a for a, b in ss.split(X)))
+    assert_array_equal([a for a, b in ss.split(X)], [a for a, b in ss.split(X)])
 
 
 def test_stratifiedshufflesplit_list_input():
@@ -1748,16 +1791,16 @@ def test_nested_cv():
 
     cvs = [
         LeaveOneGroupOut(),
-        LeaveOneOut(),
+        StratifiedKFold(n_splits=2),
         GroupKFold(n_splits=3),
-        StratifiedKFold(),
-        StratifiedGroupKFold(),
-        StratifiedShuffleSplit(n_splits=3, random_state=0),
     ]
 
     for inner_cv, outer_cv in combinations_with_replacement(cvs, 2):
         gs = GridSearchCV(
-            Ridge(), param_grid={"alpha": [1, 0.1]}, cv=inner_cv, error_score="raise"
+            DummyClassifier(),
+            param_grid={"strategy": ["stratified", "most_frequent"]},
+            cv=inner_cv,
+            error_score="raise",
         )
         cross_val_score(
             gs, X=X, y=y, groups=groups, cv=outer_cv, fit_params={"groups": groups}

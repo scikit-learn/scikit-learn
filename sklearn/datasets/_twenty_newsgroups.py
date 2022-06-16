@@ -25,7 +25,6 @@ uncompressed the train set is 52 MB and the test set is 34 MB.
 # License: BSD 3 clause
 
 import os
-from os.path import dirname, join
 import logging
 import tarfile
 import pickle
@@ -43,6 +42,7 @@ from ._base import _convert_data_dataframe
 from ._base import _pkl_filepath
 from ._base import _fetch_remote
 from ._base import RemoteFileMetadata
+from ._base import load_descr
 from ..feature_extraction.text import CountVectorizer
 from .. import preprocessing
 from ..utils import check_random_state, Bunch
@@ -184,7 +184,7 @@ def fetch_20newsgroups(
         Select the dataset to load: 'train' for the training set, 'test'
         for the test set, 'all' for both, with shuffled ordering.
 
-    categories : array-like, dtype=str or unicode, default=None
+    categories : array-like, dtype=str, default=None
         If None (default), load all the categories.
         If not None, list of category names to load (other categories
         ignored).
@@ -239,6 +239,11 @@ def fetch_20newsgroups(
             The names of target classes.
 
     (data, target) : tuple if `return_X_y=True`
+        A tuple of two ndarrays. The first contains a 2D array of shape
+        (n_samples, n_classes) with each row representing one sample and each
+        column representing the features. The second array of shape
+        (n_samples,) contains the target samples.
+
         .. versionadded:: 0.22
     """
 
@@ -287,9 +292,7 @@ def fetch_20newsgroups(
             "subset can only be 'train', 'test' or 'all', got '%s'" % subset
         )
 
-    module_path = dirname(__file__)
-    with open(join(module_path, "descr", "twenty_newsgroups.rst")) as rst_file:
-        fdescr = rst_file.read()
+    fdescr = load_descr("twenty_newsgroups.rst")
 
     data.DESCR = fdescr
 
@@ -481,7 +484,7 @@ def fetch_20newsgroups_vectorized(
         vectorizer = CountVectorizer(dtype=np.int16)
         X_train = vectorizer.fit_transform(data_train.data).tocsr()
         X_test = vectorizer.transform(data_test.data).tocsr()
-        feature_names = vectorizer.get_feature_names()
+        feature_names = vectorizer.get_feature_names_out()
 
         joblib.dump((X_train, X_test, feature_names), target_file, compress=9)
 
@@ -510,9 +513,7 @@ def fetch_20newsgroups_vectorized(
             % subset
         )
 
-    module_path = dirname(__file__)
-    with open(join(module_path, "descr", "twenty_newsgroups.rst")) as rst_file:
-        fdescr = rst_file.read()
+    fdescr = load_descr("twenty_newsgroups.rst")
 
     frame = None
     target_name = ["category_class"]

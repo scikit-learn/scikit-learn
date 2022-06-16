@@ -16,11 +16,14 @@ from scipy import stats
 from scipy import optimize
 from scipy.special import boxcox
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import (
+    BaseEstimator,
+    TransformerMixin,
+    _OneToOneFeatureMixin,
+    _ClassNamePrefixFeaturesOutMixin,
+)
 from ..utils import check_array
-from ..utils.deprecation import deprecated
-from ..utils.extmath import row_norms
-from ..utils.extmath import _incremental_mean_and_var
+from ..utils.extmath import _incremental_mean_and_var, row_norms
 from ..utils.sparsefuncs_fast import (
     inplace_csr_row_normalize_l1,
     inplace_csr_row_normalize_l2,
@@ -39,6 +42,7 @@ from ..utils.validation import (
 )
 
 from ._encoders import OneHotEncoder
+
 
 BOUNDS_THRESHOLD = 1e-7
 
@@ -103,7 +107,7 @@ def _handle_zeros_in_scale(scale, copy=True, constant_mask=None):
     elif isinstance(scale, np.ndarray):
         if constant_mask is None:
             # Detect near constant values to avoid dividing by a very small
-            # value that could lead to suprising results and numerical
+            # value that could lead to surprising results and numerical
             # stability issues.
             constant_mask = scale < 10 * np.finfo(scale.dtype).eps
 
@@ -262,7 +266,7 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
     return X
 
 
-class MinMaxScaler(TransformerMixin, BaseEstimator):
+class MinMaxScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     """Transform features by scaling each feature to a given range.
 
     This estimator scales and translates each feature individually such
@@ -337,6 +341,12 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
         It will be reset on new calls to fit, but increments across
         ``partial_fit`` calls.
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     See Also
     --------
     minmax_scale : Equivalent function without the estimator API.
@@ -378,8 +388,7 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
 
         __init__ parameters are not touched.
         """
-
-        # Checking one attribute is enough, becase they are all set together
+        # Checking one attribute is enough, because they are all set together
         # in partial_fit
         if hasattr(self, "scale_"):
             del self.scale_
@@ -406,7 +415,6 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
         self : object
             Fitted scaler.
         """
-
         # Reset internal state before fitting
         self._reset()
         return self.partial_fit(X, y)
@@ -449,7 +457,6 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
         X = self._validate_data(
             X,
             reset=first_pass,
-            estimator=self,
             dtype=FLOAT_DTYPES,
             force_all_finite="allow-nan",
         )
@@ -602,7 +609,7 @@ def minmax_scale(X, feature_range=(0, 1), *, axis=0, copy=True):
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
-    """  # noqa
+    """
     # Unlike the scaler object, this function allows 1d input.
     # If copy is required, it will be done inside the scaler object.
     X = check_array(
@@ -625,7 +632,7 @@ def minmax_scale(X, feature_range=(0, 1), *, axis=0, copy=True):
     return X
 
 
-class StandardScaler(TransformerMixin, BaseEstimator):
+class StandardScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     """Standardize features by removing the mean and scaling to unit variance.
 
     The standard score of a sample `x` is calculated as:
@@ -651,7 +658,7 @@ class StandardScaler(TransformerMixin, BaseEstimator):
     Machines or the L1 and L2 regularizers of linear models) assume that
     all features are centered around 0 and have variance in the same
     order. If a feature has a variance that is orders of magnitude larger
-    that others, it might dominate the objective function and make the
+    than others, it might dominate the objective function and make the
     estimator unable to learn from other features correctly as expected.
 
     This scaler can also be applied to sparse CSR or CSC matrices by passing
@@ -703,6 +710,12 @@ class StandardScaler(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     n_samples_seen_ : int or ndarray of shape (n_features,)
         The number of samples processed by the estimator for each feature.
         If there are no missing samples, the ``n_samples_seen`` will be an
@@ -748,7 +761,7 @@ class StandardScaler(TransformerMixin, BaseEstimator):
      [ 1.  1.]]
     >>> print(scaler.transform([[2, 2]]))
     [[3. 3.]]
-    """  # noqa
+    """
 
     def __init__(self, *, copy=True, with_mean=True, with_std=True):
         self.with_mean = with_mean
@@ -760,8 +773,7 @@ class StandardScaler(TransformerMixin, BaseEstimator):
 
         __init__ parameters are not touched.
         """
-
-        # Checking one attribute is enough, becase they are all set together
+        # Checking one attribute is enough, because they are all set together
         # in partial_fit
         if hasattr(self, "scale_"):
             del self.scale_
@@ -792,14 +804,12 @@ class StandardScaler(TransformerMixin, BaseEstimator):
         self : object
             Fitted scaler.
         """
-
         # Reset internal state before fitting
         self._reset()
         return self.partial_fit(X, y, sample_weight)
 
     def partial_fit(self, X, y=None, sample_weight=None):
-        """
-        Online computation of mean and std on X for later scaling.
+        """Online computation of mean and std on X for later scaling.
 
         All of X is processed as a single batch. This is intended for cases
         when :meth:`fit` is not feasible due to very large number of
@@ -834,7 +844,6 @@ class StandardScaler(TransformerMixin, BaseEstimator):
         X = self._validate_data(
             X,
             accept_sparse=("csr", "csc"),
-            estimator=self,
             dtype=FLOAT_DTYPES,
             force_all_finite="allow-nan",
             reset=first_call,
@@ -968,7 +977,6 @@ class StandardScaler(TransformerMixin, BaseEstimator):
             reset=False,
             accept_sparse="csr",
             copy=copy,
-            estimator=self,
             dtype=FLOAT_DTYPES,
             force_all_finite="allow-nan",
         )
@@ -1010,7 +1018,6 @@ class StandardScaler(TransformerMixin, BaseEstimator):
             X,
             accept_sparse="csr",
             copy=copy,
-            ensure_2d=False,
             dtype=FLOAT_DTYPES,
             force_all_finite="allow-nan",
         )
@@ -1034,7 +1041,7 @@ class StandardScaler(TransformerMixin, BaseEstimator):
         return {"allow_nan": True, "preserves_dtype": [np.float64, np.float32]}
 
 
-class MaxAbsScaler(TransformerMixin, BaseEstimator):
+class MaxAbsScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     """Scale each feature by its maximum absolute value.
 
     This estimator scales and translates each feature individually such
@@ -1067,6 +1074,12 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     n_samples_seen_ : int
         The number of samples processed by the estimator. Will be reset on
@@ -1108,8 +1121,7 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
 
         __init__ parameters are not touched.
         """
-
-        # Checking one attribute is enough, becase they are all set together
+        # Checking one attribute is enough, because they are all set together
         # in partial_fit
         if hasattr(self, "scale_"):
             del self.scale_
@@ -1138,8 +1150,7 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
         return self.partial_fit(X, y)
 
     def partial_fit(self, X, y=None):
-        """
-        Online computation of max absolute value of X for later scaling.
+        """Online computation of max absolute value of X for later scaling.
 
         All of X is processed as a single batch. This is intended for cases
         when :meth:`fit` is not feasible due to very large number of
@@ -1164,7 +1175,6 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
             X,
             reset=first_pass,
             accept_sparse=("csr", "csc"),
-            estimator=self,
             dtype=FLOAT_DTYPES,
             force_all_finite="allow-nan",
         )
@@ -1204,7 +1214,6 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
             accept_sparse=("csr", "csc"),
             copy=self.copy,
             reset=False,
-            estimator=self,
             dtype=FLOAT_DTYPES,
             force_all_finite="allow-nan",
         )
@@ -1233,7 +1242,6 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
             X,
             accept_sparse=("csr", "csc"),
             copy=self.copy,
-            estimator=self,
             dtype=FLOAT_DTYPES,
             force_all_finite="allow-nan",
         )
@@ -1277,8 +1285,8 @@ def maxabs_scale(X, *, axis=0, copy=True):
 
     .. warning:: Risk of data leak
 
-        Do not use :func:`~sklearn.preprocessing.maxabs_scale` unless you know what
-        you are doing. A common mistake is to apply it to the entire data
+        Do not use :func:`~sklearn.preprocessing.maxabs_scale` unless you know
+        what you are doing. A common mistake is to apply it to the entire data
         *before* splitting into training and test sets. This will bias the
         model evaluation because information would have leaked from the test
         set to the training set.
@@ -1301,7 +1309,7 @@ def maxabs_scale(X, *, axis=0, copy=True):
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
-    """  # noqa
+    """
     # Unlike the scaler object, this function allows 1d input.
 
     # If copy is required, it will be done inside the scaler object.
@@ -1330,7 +1338,7 @@ def maxabs_scale(X, *, axis=0, copy=True):
     return X
 
 
-class RobustScaler(TransformerMixin, BaseEstimator):
+class RobustScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     """Scale features using statistics that are robust to outliers.
 
     This Scaler removes the median and scales the data according to
@@ -1341,7 +1349,7 @@ class RobustScaler(TransformerMixin, BaseEstimator):
     Centering and scaling happen independently on each feature by
     computing the relevant statistics on the samples in the training
     set. Median and interquartile range are then stored to be used on
-    later data using the ``transform`` method.
+    later data using the :meth:`transform` method.
 
     Standardization of a dataset is a common requirement for many
     machine learning estimators. Typically this is done by removing the mean
@@ -1356,31 +1364,33 @@ class RobustScaler(TransformerMixin, BaseEstimator):
     Parameters
     ----------
     with_centering : bool, default=True
-        If True, center the data before scaling.
-        This will cause ``transform`` to raise an exception when attempted on
-        sparse matrices, because centering them entails building a dense
+        If `True`, center the data before scaling.
+        This will cause :meth:`transform` to raise an exception when attempted
+        on sparse matrices, because centering them entails building a dense
         matrix which in common use cases is likely to be too large to fit in
         memory.
 
     with_scaling : bool, default=True
-        If True, scale the data to interquartile range.
+        If `True`, scale the data to interquartile range.
 
     quantile_range : tuple (q_min, q_max), 0.0 < q_min < q_max < 100.0, \
-        default=(25.0, 75.0), == (1st quantile, 3rd quantile), == IQR
-        Quantile range used to calculate ``scale_``.
+        default=(25.0, 75.0)
+        Quantile range used to calculate `scale_`. By default this is equal to
+        the IQR, i.e., `q_min` is the first quantile and `q_max` is the third
+        quantile.
 
         .. versionadded:: 0.18
 
     copy : bool, default=True
-        If False, try to avoid a copy and do inplace scaling instead.
+        If `False`, try to avoid a copy and do inplace scaling instead.
         This is not guaranteed to always work inplace; e.g. if the data is
         not a NumPy array or scipy.sparse CSR matrix, a copy may still be
         returned.
 
     unit_variance : bool, default=False
-        If True, scale data so that normally distributed features have a
+        If `True`, scale data so that normally distributed features have a
         variance of 1. In general, if the difference between the x-values of
-        ``q_max`` and ``q_min`` for a standard normal distribution is greater
+        `q_max` and `q_min` for a standard normal distribution is greater
         than 1, the dataset will be scaled down. If less than 1, the dataset
         will be scaled up.
 
@@ -1402,6 +1412,27 @@ class RobustScaler(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    robust_scale : Equivalent function without the estimator API.
+    sklearn.decomposition.PCA : Further removes the linear correlation across
+        features with 'whiten=True'.
+
+    Notes
+    -----
+    For a comparison of the different scalers, transformers, and normalizers,
+    see :ref:`examples/preprocessing/plot_all_scaling.py
+    <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
+
+    https://en.wikipedia.org/wiki/Median
+    https://en.wikipedia.org/wiki/Interquartile_range
+
     Examples
     --------
     >>> from sklearn.preprocessing import RobustScaler
@@ -1415,23 +1446,6 @@ class RobustScaler(TransformerMixin, BaseEstimator):
     array([[ 0. , -2. ,  0. ],
            [-1. ,  0. ,  0.4],
            [ 1. ,  0. , -1.6]])
-
-    See Also
-    --------
-    robust_scale : Equivalent function without the estimator API.
-
-    :class:`~sklearn.decomposition.PCA`
-        Further removes the linear correlation across features with
-        'whiten=True'.
-
-    Notes
-    -----
-    For a comparison of the different scalers, transformers, and normalizers,
-    see :ref:`examples/preprocessing/plot_all_scaling.py
-    <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
-
-    https://en.wikipedia.org/wiki/Median
-    https://en.wikipedia.org/wiki/Interquartile_range
     """
 
     def __init__(
@@ -1458,8 +1472,8 @@ class RobustScaler(TransformerMixin, BaseEstimator):
             The data used to compute the median and quantiles
             used for later scaling along the features axis.
 
-        y : None
-            Ignored.
+        y : Ignored
+            Not used, present here for API consistency by convention.
 
         Returns
         -------
@@ -1471,7 +1485,6 @@ class RobustScaler(TransformerMixin, BaseEstimator):
         X = self._validate_data(
             X,
             accept_sparse="csc",
-            estimator=self,
             dtype=FLOAT_DTYPES,
             force_all_finite="allow-nan",
         )
@@ -1534,7 +1547,6 @@ class RobustScaler(TransformerMixin, BaseEstimator):
             X,
             accept_sparse=("csr", "csc"),
             copy=self.copy,
-            estimator=self,
             dtype=FLOAT_DTYPES,
             reset=False,
             force_all_finite="allow-nan",
@@ -1551,7 +1563,7 @@ class RobustScaler(TransformerMixin, BaseEstimator):
         return X
 
     def inverse_transform(self, X):
-        """Scale back the data to the original representation
+        """Scale back the data to the original representation.
 
         Parameters
         ----------
@@ -1568,7 +1580,6 @@ class RobustScaler(TransformerMixin, BaseEstimator):
             X,
             accept_sparse=("csr", "csc"),
             copy=self.copy,
-            estimator=self,
             dtype=FLOAT_DTYPES,
             force_all_finite="allow-nan",
         )
@@ -1597,7 +1608,7 @@ def robust_scale(
     copy=True,
     unit_variance=False,
 ):
-    """Standardize a dataset along any axis
+    """Standardize a dataset along any axis.
 
     Center to the median and component wise scale
     according to the interquartile range.
@@ -1610,32 +1621,34 @@ def robust_scale(
         The data to center and scale.
 
     axis : int, default=0
-        axis used to compute the medians and IQR along. If 0,
+        Axis used to compute the medians and IQR along. If 0,
         independently scale each feature, otherwise (if 1) scale
         each sample.
 
     with_centering : bool, default=True
-        If True, center the data before scaling.
+        If `True`, center the data before scaling.
 
     with_scaling : bool, default=True
-        If True, scale the data to unit variance (or equivalently,
+        If `True`, scale the data to unit variance (or equivalently,
         unit standard deviation).
 
-    quantile_range : tuple (q_min, q_max), 0.0 < q_min < q_max < 100.0
-        default=(25.0, 75.0), == (1st quantile, 3rd quantile), == IQR
-        Quantile range used to calculate ``scale_``.
+    quantile_range : tuple (q_min, q_max), 0.0 < q_min < q_max < 100.0,\
+        default=(25.0, 75.0)
+        Quantile range used to calculate `scale_`. By default this is equal to
+        the IQR, i.e., `q_min` is the first quantile and `q_max` is the third
+        quantile.
 
         .. versionadded:: 0.18
 
     copy : bool, default=True
-        set to False to perform inplace row normalization and avoid a
+        Set to `False` to perform inplace row normalization and avoid a
         copy (if the input is already a numpy array or a scipy.sparse
         CSR matrix and if axis is 1).
 
     unit_variance : bool, default=False
-        If True, scale data so that normally distributed features have a
+        If `True`, scale data so that normally distributed features have a
         variance of 1. In general, if the difference between the x-values of
-        ``q_max`` and ``q_min`` for a standard normal distribution is greater
+        `q_max` and `q_min` for a standard normal distribution is greater
         than 1, the dataset will be scaled down. If less than 1, the dataset
         will be scaled up.
 
@@ -1728,16 +1741,16 @@ def normalize(X, norm="l2", *, axis=1, copy=True, return_norm=False):
         feature if axis is 0).
 
     axis : {0, 1}, default=1
-        axis used to normalize the data along. If 1, independently normalize
-        each sample, otherwise (if 0) normalize each feature.
+        Define axis used to normalize the data along. If 1, independently
+        normalize each sample, otherwise (if 0) normalize each feature.
 
     copy : bool, default=True
-        set to False to perform inplace row normalization and avoid a
+        Set to False to perform inplace row normalization and avoid a
         copy (if the input is already a numpy array or a scipy.sparse
         CSR matrix and if axis is 1).
 
     return_norm : bool, default=False
-        whether to return the computed norms
+        Whether to return the computed norms.
 
     Returns
     -------
@@ -1759,7 +1772,6 @@ def normalize(X, norm="l2", *, axis=1, copy=True, return_norm=False):
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
-
     """
     if norm not in ("l1", "l2", "max"):
         raise ValueError("'%s' is not a supported norm" % norm)
@@ -1817,7 +1829,7 @@ def normalize(X, norm="l2", *, axis=1, copy=True, return_norm=False):
         return X
 
 
-class Normalizer(TransformerMixin, BaseEstimator):
+class Normalizer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     """Normalize samples individually to unit norm.
 
     Each sample (i.e. each row of the data matrix) with at least one
@@ -1844,7 +1856,7 @@ class Normalizer(TransformerMixin, BaseEstimator):
         values.
 
     copy : bool, default=True
-        set to False to perform inplace row normalization and avoid a
+        Set to False to perform inplace row normalization and avoid a
         copy (if the input is already a numpy array or a scipy.sparse
         CSR matrix).
 
@@ -1855,6 +1867,16 @@ class Normalizer(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    normalize : Equivalent function without the estimator API.
+
     Notes
     -----
     This estimator is stateless (besides constructor parameters), the
@@ -1863,10 +1885,6 @@ class Normalizer(TransformerMixin, BaseEstimator):
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
-
-    See Also
-    --------
-    normalize : Equivalent function without the estimator API.
 
     Examples
     --------
@@ -1888,7 +1906,7 @@ class Normalizer(TransformerMixin, BaseEstimator):
         self.copy = copy
 
     def fit(self, X, y=None):
-        """Do nothing and return the estimator unchanged
+        """Do nothing and return the estimator unchanged.
 
         This method is just there to implement the usual API and hence
         work in pipelines.
@@ -1898,8 +1916,8 @@ class Normalizer(TransformerMixin, BaseEstimator):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The data to estimate the normalization parameters.
 
-        y : None
-            Ignored.
+        y : Ignored
+            Not used, present here for API consistency by convention.
 
         Returns
         -------
@@ -1910,7 +1928,7 @@ class Normalizer(TransformerMixin, BaseEstimator):
         return self
 
     def transform(self, X, copy=None):
-        """Scale each non zero row of X to unit norm
+        """Scale each non zero row of X to unit norm.
 
         Parameters
         ----------
@@ -1951,7 +1969,7 @@ def binarize(X, *, threshold=0.0, copy=True):
         Threshold may not be less than 0 for operations on sparse matrices.
 
     copy : bool, default=True
-        set to False to perform inplace binarization and avoid a copy
+        Set to False to perform inplace binarization and avoid a copy
         (if the input is already a numpy array or a scipy.sparse CSR / CSC
         matrix and if axis is 1).
 
@@ -1982,7 +2000,7 @@ def binarize(X, *, threshold=0.0, copy=True):
     return X
 
 
-class Binarizer(TransformerMixin, BaseEstimator):
+class Binarizer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     """Binarize data (set feature values to 0 or 1) according to a threshold.
 
     Values greater than the threshold map to 1, while values less than
@@ -2015,6 +2033,12 @@ class Binarizer(TransformerMixin, BaseEstimator):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -2099,7 +2123,7 @@ class Binarizer(TransformerMixin, BaseEstimator):
         return {"stateless": True}
 
 
-class KernelCenterer(TransformerMixin, BaseEstimator):
+class KernelCenterer(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     r"""Center an arbitrary kernel matrix :math:`K`.
 
     Let define a kernel :math:`K` such that:
@@ -2138,6 +2162,17 @@ class KernelCenterer(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    sklearn.kernel_approximation.Nystroem : Approximate a kernel map
+        using a subset of the training data.
+
     References
     ----------
     .. [1] `Schölkopf, Bernhard, Alexander Smola, and Klaus-Robert Müller.
@@ -2171,7 +2206,7 @@ class KernelCenterer(TransformerMixin, BaseEstimator):
         pass
 
     def fit(self, K, y=None):
-        """Fit KernelCenterer
+        """Fit KernelCenterer.
 
         Parameters
         ----------
@@ -2184,9 +2219,8 @@ class KernelCenterer(TransformerMixin, BaseEstimator):
         Returns
         -------
         self : object
-            Fitted transformer.
+            Returns the instance itself.
         """
-
         K = self._validate_data(K, dtype=FLOAT_DTYPES)
 
         if K.shape[0] != K.shape[1]:
@@ -2214,6 +2248,7 @@ class KernelCenterer(TransformerMixin, BaseEstimator):
         Returns
         -------
         K_new : ndarray of shape (n_samples1, n_samples2)
+            Returns the instance itself.
         """
         check_is_fitted(self)
 
@@ -2227,18 +2262,17 @@ class KernelCenterer(TransformerMixin, BaseEstimator):
 
         return K
 
+    @property
+    def _n_features_out(self):
+        """Number of transformed output features."""
+        # Used by _ClassNamePrefixFeaturesOutMixin. This model preserves the
+        # number of input features but this is not a one-to-one mapping in the
+        # usual sense. Hence the choice not to use _OneToOneFeatureMixin to
+        # implement get_feature_names_out for this class.
+        return self.n_features_in_
+
     def _more_tags(self):
         return {"pairwise": True}
-
-    # TODO: Remove in 1.1
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `_pairwise` was deprecated in "
-        "version 0.24 and will be removed in 1.1."
-    )
-    @property
-    def _pairwise(self):
-        return True
 
 
 def add_dummy_feature(X, value=1.0):
@@ -2298,7 +2332,7 @@ def add_dummy_feature(X, value=1.0):
         return np.hstack((np.full((n_samples, 1), value), X))
 
 
-class QuantileTransformer(TransformerMixin, BaseEstimator):
+class QuantileTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     """Transform features using quantiles information.
 
     This method transforms the features to follow a uniform or a normal
@@ -2349,7 +2383,7 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
         noise.
         Please see ``subsample`` for more details.
         Pass an int for reproducible results across multiple function calls.
-        See :term:`Glossary <random_state>`
+        See :term:`Glossary <random_state>`.
 
     copy : bool, default=True
         Set to False to perform inplace transformation and avoid a copy (if the
@@ -2372,15 +2406,11 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from sklearn.preprocessing import QuantileTransformer
-    >>> rng = np.random.RandomState(0)
-    >>> X = np.sort(rng.normal(loc=0.5, scale=0.25, size=(25, 1)), axis=0)
-    >>> qt = QuantileTransformer(n_quantiles=10, random_state=0)
-    >>> qt.fit_transform(X)
-    array([...])
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -2400,6 +2430,16 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.preprocessing import QuantileTransformer
+    >>> rng = np.random.RandomState(0)
+    >>> X = np.sort(rng.normal(loc=0.5, scale=0.25, size=(25, 1)), axis=0)
+    >>> qt = QuantileTransformer(n_quantiles=10, random_state=0)
+    >>> qt.fit_transform(X)
+    array([...])
     """
 
     def __init__(
@@ -2671,7 +2711,6 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
         X : ndarray of shape (n_samples, n_features)
             Projected data.
         """
-
         if sparse.issparse(X):
             for feature_idx in range(X.shape[1]):
                 column_slice = slice(X.indptr[feature_idx], X.indptr[feature_idx + 1])
@@ -2800,7 +2839,7 @@ def quantile_transform(
         noise.
         Please see ``subsample`` for more details.
         Pass an int for reproducible results across multiple function calls.
-        See :term:`Glossary <random_state>`
+        See :term:`Glossary <random_state>`.
 
     copy : bool, default=True
         Set to False to perform inplace transformation and avoid a copy (if the
@@ -2814,15 +2853,6 @@ def quantile_transform(
     -------
     Xt : {ndarray, sparse matrix} of shape (n_samples, n_features)
         The transformed data.
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from sklearn.preprocessing import quantile_transform
-    >>> rng = np.random.RandomState(0)
-    >>> X = np.sort(rng.normal(loc=0.5, scale=0.25, size=(25, 1)), axis=0)
-    >>> quantile_transform(X, n_quantiles=10, random_state=0, copy=True)
-    array([...])
 
     See Also
     --------
@@ -2858,6 +2888,15 @@ def quantile_transform(
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.preprocessing import quantile_transform
+    >>> rng = np.random.RandomState(0)
+    >>> X = np.sort(rng.normal(loc=0.5, scale=0.25, size=(25, 1)), axis=0)
+    >>> quantile_transform(X, n_quantiles=10, random_state=0, copy=True)
+    array([...])
     """
     n = QuantileTransformer(
         n_quantiles=n_quantiles,
@@ -2877,7 +2916,7 @@ def quantile_transform(
         )
 
 
-class PowerTransformer(TransformerMixin, BaseEstimator):
+class PowerTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     """Apply a power transform featurewise to make data more Gaussian-like.
 
     Power transforms are a family of parametric, monotonic transformations
@@ -2924,20 +2963,11 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from sklearn.preprocessing import PowerTransformer
-    >>> pt = PowerTransformer()
-    >>> data = [[1, 2], [3, 2], [4, 5]]
-    >>> print(pt.fit(data))
-    PowerTransformer()
-    >>> print(pt.lambdas_)
-    [ 1.386... -3.100...]
-    >>> print(pt.transform(data))
-    [[-1.316... -0.707...]
-     [ 0.209... -0.707...]
-     [ 1.106...  1.414...]]
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -2964,6 +2994,21 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
 
     .. [2] G.E.P. Box and D.R. Cox, "An Analysis of Transformations", Journal
            of the Royal Statistical Society B, 26, 211-252 (1964).
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.preprocessing import PowerTransformer
+    >>> pt = PowerTransformer()
+    >>> data = [[1, 2], [3, 2], [4, 5]]
+    >>> print(pt.fit(data))
+    PowerTransformer()
+    >>> print(pt.lambdas_)
+    [ 1.386... -3.100...]
+    >>> print(pt.transform(data))
+    [[-1.316... -0.707...]
+     [ 0.209... -0.707...]
+     [ 1.106...  1.414...]]
     """
 
     def __init__(self, method="yeo-johnson", *, standardize=True, copy=True):
@@ -2994,6 +3039,22 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
         return self
 
     def fit_transform(self, X, y=None):
+        """Fit `PowerTransformer` to `X`, then transform `X`.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            The data used to estimate the optimal transformation parameters
+            and to be transformed using a power transformation.
+
+        y : Ignored
+            Not used, present for API consistency by convention.
+
+        Returns
+        -------
+        X_new : ndarray of shape (n_samples, n_features)
+            Transformed data.
+        """
         return self._fit(X, y, force_transform=True)
 
     def _fit(self, X, y=None, force_transform=False):
@@ -3175,14 +3236,21 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
 
         Like for Box-Cox, MLE is done via the brent optimizer.
         """
+        x_tiny = np.finfo(np.float64).tiny
 
         def _neg_log_likelihood(lmbda):
             """Return the negative log likelihood of the observed data x as a
             function of lambda."""
             x_trans = self._yeo_johnson_transform(x, lmbda)
             n_samples = x.shape[0]
+            x_trans_var = x_trans.var()
 
-            loglike = -n_samples / 2 * np.log(x_trans.var())
+            # Reject transformed data that would raise a RuntimeWarning in np.log
+            if x_trans_var < x_tiny:
+                return np.inf
+
+            log_var = np.log(x_trans_var)
+            loglike = -n_samples / 2 * log_var
             loglike += (lmbda - 1) * (np.sign(x) * np.log1p(np.abs(x))).sum()
 
             return -loglike
@@ -3256,7 +3324,8 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
 
 
 def power_transform(X, method="yeo-johnson", *, standardize=True, copy=True):
-    """
+    """Parametric, monotonic transformation to make data more Gaussian-like.
+
     Power transforms are a family of parametric, monotonic transformations
     that are applied to make data more Gaussian-like. This is useful for
     modeling issues related to heteroscedasticity (non-constant variance),
@@ -3273,7 +3342,6 @@ def power_transform(X, method="yeo-johnson", *, standardize=True, copy=True):
     transformed data.
 
     Read more in the :ref:`User Guide <preprocessing_transformer>`.
-
 
     Parameters
     ----------
@@ -3302,28 +3370,6 @@ def power_transform(X, method="yeo-johnson", *, standardize=True, copy=True):
     X_trans : ndarray of shape (n_samples, n_features)
         The transformed data.
 
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from sklearn.preprocessing import power_transform
-    >>> data = [[1, 2], [3, 2], [4, 5]]
-    >>> print(power_transform(data, method='box-cox'))
-    [[-1.332... -0.707...]
-     [ 0.256... -0.707...]
-     [ 1.076...  1.414...]]
-
-    .. warning:: Risk of data leak.
-        Do not use :func:`~sklearn.preprocessing.power_transform` unless you
-        know what you are doing. A common mistake is to apply it to the entire
-        data *before* splitting into training and test sets. This will bias the
-        model evaluation because information would have leaked from the test
-        set to the training set.
-        In general, we recommend using
-        :class:`~sklearn.preprocessing.PowerTransformer` within a
-        :ref:`Pipeline <pipeline>` in order to prevent most risks of data
-        leaking, e.g.: `pipe = make_pipeline(PowerTransformer(),
-        LogisticRegression())`.
-
     See Also
     --------
     PowerTransformer : Equivalent transformation with the
@@ -3351,6 +3397,28 @@ def power_transform(X, method="yeo-johnson", *, standardize=True, copy=True):
 
     .. [2] G.E.P. Box and D.R. Cox, "An Analysis of Transformations", Journal
            of the Royal Statistical Society B, 26, 211-252 (1964).
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.preprocessing import power_transform
+    >>> data = [[1, 2], [3, 2], [4, 5]]
+    >>> print(power_transform(data, method='box-cox'))
+    [[-1.332... -0.707...]
+     [ 0.256... -0.707...]
+     [ 1.076...  1.414...]]
+
+    .. warning:: Risk of data leak.
+        Do not use :func:`~sklearn.preprocessing.power_transform` unless you
+        know what you are doing. A common mistake is to apply it to the entire
+        data *before* splitting into training and test sets. This will bias the
+        model evaluation because information would have leaked from the test
+        set to the training set.
+        In general, we recommend using
+        :class:`~sklearn.preprocessing.PowerTransformer` within a
+        :ref:`Pipeline <pipeline>` in order to prevent most risks of data
+        leaking, e.g.: `pipe = make_pipeline(PowerTransformer(),
+        LogisticRegression())`.
     """
     pt = PowerTransformer(method=method, standardize=standardize, copy=copy)
     return pt.fit_transform(X)

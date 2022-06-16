@@ -18,6 +18,7 @@ been leading the development.
 
 Governance
 ----------
+
 The decision making process and governance structure of scikit-learn is laid
 out in the :ref:`governance document <governance>`.
 
@@ -38,14 +39,23 @@ in the FAQ.
 
    :ref:`How you can contribute to the project <contributing>`
 
-Triage Team
------------
+Contributor Experience Team
+---------------------------
 
 The following people are active contributors who also help with
 :ref:`triaging issues <bug_triaging>`, PRs, and general
 maintenance:
 
-.. include:: triage_team.rst
+.. include:: contributor_experience_team.rst
+
+Communication Team
+------------------
+
+The following people help with :ref:`communication around scikit-learn
+<communication_team>`.
+
+.. include:: communication_team.rst
+
 
 Emeritus Core Developers
 ------------------------
@@ -54,6 +64,14 @@ The following people have been active contributors in the past, but are no
 longer active in the project:
 
 .. include:: authors_emeritus.rst
+
+Emeritus Communication Team
+---------------------------
+
+The following people have been active in the communication team in the
+past, but no longer have communication responsibilities:
+
+.. include:: communication_team_emeritus.rst
 
 
 .. _citing-scikit-learn:
@@ -85,8 +103,8 @@ citations to the following paper:
 If you want to cite scikit-learn for its API or design, you may also want to consider the
 following paper:
 
-  `API design for machine learning software: experiences from the scikit-learn
-  project <https://arxiv.org/abs/1309.0238>`_, Buitinck *et al.*, 2013.
+  :arxiv:`API design for machine learning software: experiences from the scikit-learn
+  project <1309.0238>`, Buitinck *et al.*, 2013.
 
   Bibtex entry::
 
@@ -130,7 +148,7 @@ The project would like to thank the following funders.
 The `Members <https://scikit-learn.fondation-inria.fr/en/home/#sponsors>`_ of
 the `Scikit-Learn Consortium at Inria Foundation
 <https://scikit-learn.fondation-inria.fr/en/home/>`_  fund Olivier
-Grisel, Guillaume Lemaitre, Jérémie du Boisberranger and Chiara Marmo.
+Grisel, Guillaume Lemaitre, and Jérémie du Boisberranger.
 
 .. raw:: html
 
@@ -201,32 +219,6 @@ Grisel, Guillaume Lemaitre, Jérémie du Boisberranger and Chiara Marmo.
    </div>
    </div>
 
-........
-
-.. raw:: html
-
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
-
-`The University of Sydney <https://sydney.edu.au/>`_ funds Joel Nothman since
-July 2017.
-
-.. raw:: html
-
-   </div>
-
-   <div class="sk-sponsor-div-box">
-
-.. image:: themes/scikit-learn/static/img/sydney-primary.jpeg
-   :width: 100pt
-   :align: center
-   :target: https://sydney.edu.au/
-
-.. raw:: html
-
-   </div>
-   </div>
-
 ..........
 
 .. raw:: html
@@ -234,8 +226,7 @@ July 2017.
    <div class="sk-sponsor-div">
    <div class="sk-sponsor-div-box">
 
-`Zalando SE <https://corporate.zalando.com/en>`_ funds Adrin Jalali since
-August 2020.
+`Hugging Face <https://huggingface.co/>`_ funds Adrin Jalali since 2022.
 
 .. raw:: html
 
@@ -243,10 +234,10 @@ August 2020.
 
    <div class="sk-sponsor-div-box">
 
-.. image:: images/zalando_logo.png
-   :width: 100pt
+.. image:: images/huggingface_logo-noborder.png
+   :width: 55pt
    :align: center
-   :target: https://corporate.zalando.com/en
+   :target: https://huggingface.co/
 
 .. raw:: html
 
@@ -320,10 +311,36 @@ Past Sponsors
 
    <div class="sk-sponsor-div-box">
 
-.. image:: themes/scikit-learn/static/img/columbia.png
+.. image:: images/columbia.png
    :width: 50pt
    :align: center
    :target: https://www.columbia.edu/
+
+.. raw:: html
+
+   </div>
+   </div>
+
+........
+
+.. raw:: html
+
+   <div class="sk-sponsor-div">
+   <div class="sk-sponsor-div-box">
+
+`The University of Sydney <https://sydney.edu.au/>`_ funded Joel Nothman
+(2017-2021).
+
+.. raw:: html
+
+   </div>
+
+   <div class="sk-sponsor-div-box">
+
+.. image:: images/sydney-primary.jpeg
+   :width: 100pt
+   :align: center
+   :target: https://sydney.edu.au/
 
 .. raw:: html
 
@@ -413,31 +430,6 @@ time of Joris van den Bossche (2017-2018).
    </div>
    </div>
 
-............
-
-.. raw:: html
-
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
-
-`Anaconda, Inc <https://www.anaconda.com/>`_ funded Adrin Jalali in 2019.
-
-.. raw:: html
-
-   </div>
-
-   <div class="sk-sponsor-div-box">
-
-.. image:: images/anaconda.png
-   :width: 100pt
-   :align: center
-   :target: https://www.anaconda.com/
-
-.. raw:: html
-
-   </div>
-   </div>
-
 ..........................
 
 .. raw:: html
@@ -481,7 +473,7 @@ part-time.
    </div>
    <div class="sk-sponsor-div-box">
 
-.. image:: themes/scikit-learn/static/img/telecom.png
+.. image:: images/telecom.png
    :width: 50pt
    :align: center
    :target: https://www.telecom-paristech.fr/
@@ -508,7 +500,7 @@ funded a scikit-learn coding sprint in 2015.
    </div>
    <div class="sk-sponsor-div-box">
 
-.. image:: themes/scikit-learn/static/img/digicosme.png
+.. image:: images/digicosme.png
    :width: 100pt
    :align: center
    :target: https://digicosme.lri.fr
@@ -533,7 +525,7 @@ Hug to work full-time on scikit-learn in 2020.
    </div>
    <div class="sk-sponsor-div-box">
 
-.. image:: themes/scikit-learn/static/img/czi_logo.svg
+.. image:: images/czi_logo.svg
    :width: 100pt
    :align: center
    :target: https://chanzuckerberg.com

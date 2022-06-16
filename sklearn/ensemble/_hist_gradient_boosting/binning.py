@@ -12,6 +12,7 @@ import numpy as np
 from ...utils import check_random_state, check_array
 from ...base import BaseEstimator, TransformerMixin
 from ...utils.validation import check_is_fitted
+from ...utils.fixes import percentile
 from ...utils._openmp_helpers import _openmp_effective_n_threads
 from ._binning import _map_to_bins
 from .common import X_DTYPE, X_BINNED_DTYPE, ALMOST_INF, X_BITSET_INNER_DTYPE
@@ -57,9 +58,7 @@ def _find_binning_thresholds(col_data, max_bins):
         # work on a fixed-size subsample of the full data.
         percentiles = np.linspace(0, 100, num=max_bins + 1)
         percentiles = percentiles[1:-1]
-        midpoints = np.percentile(
-            col_data, percentiles, interpolation="midpoint"
-        ).astype(X_DTYPE)
+        midpoints = percentile(col_data, percentiles, method="midpoint").astype(X_DTYPE)
         assert midpoints.shape[0] == max_bins - 1
 
     # We avoid having +inf thresholds: +inf thresholds are only allowed in
@@ -115,7 +114,7 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         Pseudo-random number generator to control the random sub-sampling.
         Pass an int for reproducible output across multiple
         function calls.
-        See :term: `Glossary <random_state>`.
+        See :term:`Glossary <random_state>`.
     n_threads : int, default=None
         Number of OpenMP threads to use. `_openmp_effective_n_threads` is called
         to determine the effective number of threads use, which takes cgroups CPU

@@ -1,23 +1,24 @@
-# -*- coding: utf-8 -*-
 """Generic feature selection mixin"""
 
 # Authors: G. Varoquaux, A. Gramfort, L. Buitinck, J. Nothman
 # License: BSD 3 clause
 
+import warnings
 from abc import ABCMeta, abstractmethod
-from warnings import warn
 from operator import attrgetter
 
 import numpy as np
 from scipy.sparse import issparse, csc_matrix
 
 from ..base import TransformerMixin
+from ..cross_decomposition._pls import _PLS
 from ..utils import (
     check_array,
     safe_mask,
     safe_sqr,
 )
 from ..utils._tags import _safe_tags
+from ..utils.validation import _check_feature_names_in
 
 
 class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
@@ -86,14 +87,18 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
             force_all_finite=not _safe_tags(self, key="allow_nan"),
             reset=False,
         )
+        return self._transform(X)
+
+    def _transform(self, X):
+        """Reduce X to the selected features."""
         mask = self.get_support()
         if not mask.any():
-            warn(
+            warnings.warn(
                 "No features were selected: either the data is"
                 " too noisy or the selection test too strict.",
                 UserWarning,
             )
-            return np.empty(0).reshape((X.shape[0], 0))
+            return np.empty(0, dtype=X.dtype).reshape((X.shape[0], 0))
         if len(mask) != X.shape[1]:
             raise ValueError("X has a different shape than during fitting.")
         return X[:, safe_mask(X, mask)]
@@ -138,6 +143,29 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
         Xt[:, support] = X
         return Xt
 
+    def get_feature_names_out(self, input_features=None):
+        """Mask feature names according to selected features.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Input features.
+
+            - If `input_features` is `None`, then `feature_names_in_` is
+              used as feature names in. If `feature_names_in_` is not defined,
+              then the following input feature names are generated:
+              `["x0", "x1", ..., "x(n_features_in_ - 1)"]`.
+            - If `input_features` is an array-like, then `input_features` must
+              match `feature_names_in_` if `feature_names_in_` is defined.
+
+        Returns
+        -------
+        feature_names_out : ndarray of str objects
+            Transformed feature names.
+        """
+        input_features = _check_feature_names_in(self, input_features)
+        return input_features[self.get_support()]
+
 
 def _get_feature_importances(estimator, getter, transform_func=None, norm_order=1):
     """
@@ -169,7 +197,10 @@ def _get_feature_importances(estimator, getter, transform_func=None, norm_order=
     """
     if isinstance(getter, str):
         if getter == "auto":
-            if hasattr(estimator, "coef_"):
+            if isinstance(estimator, _PLS):
+                # TODO(1.3): remove this branch
+                getter = attrgetter("_coef_")
+            elif hasattr(estimator, "coef_"):
                 getter = attrgetter("coef_")
             elif hasattr(estimator, "feature_importances_"):
                 getter = attrgetter("feature_importances_")
@@ -185,6 +216,7 @@ def _get_feature_importances(estimator, getter, transform_func=None, norm_order=
             getter = attrgetter(getter)
     elif not callable(getter):
         raise ValueError("`importance_getter` has to be a string or `callable`")
+
     importances = getter(estimator)
 
     if transform_func is None:

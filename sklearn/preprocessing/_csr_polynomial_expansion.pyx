@@ -1,23 +1,20 @@
-# cython: cdivision=True
-# cython: boundscheck=False
-# cython: wraparound=False
-
 # Author: Andrew nystrom <awnystrom@gmail.com>
 
 from scipy.sparse import csr_matrix
-from numpy cimport ndarray
-cimport numpy as np
+cimport numpy as cnp
+cnp.import_array()
 
-np.import_array()
-ctypedef np.int32_t INDEX_A
-ctypedef fused INDEX_B:
-    np.int32_t
-    np.int64_t
 ctypedef np.int8_t FLAG_T
+ctypedef cnp.int32_t INDEX_A
 
+ctypedef fused INDEX_B:
+    cnp.int32_t
+    cnp.int64_t
 ctypedef fused DATA_T:
-    np.float32_t
-    np.float64_t
+    cnp.float32_t
+    cnp.float64_t
+    cnp.int32_t
+    cnp.int64_t
 
 cdef inline INDEX_B _deg2_column(INDEX_B d, INDEX_B i, INDEX_B j,
                                  FLAG_T interaction_only) nogil:

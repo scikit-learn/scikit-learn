@@ -278,7 +278,7 @@ can be used (otherwise, an exception is raised).
     over cross-validation folds, whereas :func:`cross_val_predict` simply
     returns the labels (or probabilities) from several distinct models
     undistinguished. Thus, :func:`cross_val_predict` is not an appropriate
-    measure of generalisation error.
+    measure of generalization error.
 
 
 The function :func:`cross_val_predict` is appropriate for:
@@ -679,7 +679,7 @@ Implementation notes:
 - With the current implementation full shuffle is not possible in most
   scenarios. When shuffle=True, the following happens:
 
-  1. All groups a shuffled.
+  1. All groups are shuffled.
   2. Groups are sorted by standard deviation of classes using stable sort.
   3. Sorted groups are iterated over and assigned to folds.
 
@@ -844,13 +844,13 @@ cross-validation splitter. For example::
 Cross validation of time series data
 ------------------------------------
 
-Time series data is characterised by the correlation between observations
+Time series data is characterized by the correlation between observations
 that are near in time (*autocorrelation*). However, classical
 cross-validation techniques such as :class:`KFold` and
 :class:`ShuffleSplit` assume the samples are independent and
 identically distributed, and would result in unreasonable correlation
 between training and testing instances (yielding poor estimates of
-generalisation error) on time series data. Therefore, it is very important
+generalization error) on time series data. Therefore, it is very important
 to evaluate our model for time series data on the "future" observations
 least like those that are used to train the model. To achieve this, one
 solution is provided by :class:`TimeSeriesSplit`.
@@ -954,7 +954,7 @@ to obtain good results. A high p-value could be due to a lack of dependency
 between features and labels (there is no difference in feature values between
 the classes) or because the classifier was not able to use the dependency in
 the data. In the latter case, using a more appropriate classifier that
-is able to utilize the structure in the data, would result in a low
+is able to utilize the structure in the data, would result in a lower
 p-value.
 
 Cross-validation provides information about how well a classifier generalizes,
@@ -974,13 +974,13 @@ test is therefore only able to show when the model reliably outperforms
 random guessing.
 
 Finally, :func:`~sklearn.model_selection.permutation_test_score` is computed
-using brute force and interally fits ``(n_permutations + 1) * n_cv`` models.
+using brute force and internally fits ``(n_permutations + 1) * n_cv`` models.
 It is therefore only tractable with small datasets for which fitting an
 individual model is very fast.
 
 .. topic:: Examples
 
-    * :ref:`sphx_glr_auto_examples_feature_selection_plot_permutation_test_for_classification.py`
+    * :ref:`sphx_glr_auto_examples_model_selection_plot_permutation_tests_for_classification.py`
 
 .. topic:: References:
 

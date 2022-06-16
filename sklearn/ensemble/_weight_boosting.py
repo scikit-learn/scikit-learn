@@ -25,7 +25,10 @@ The module structure is the following:
 
 from abc import ABCMeta, abstractmethod
 
+import numbers
 import numpy as np
+
+import warnings
 
 from scipy.special import xlogy
 
@@ -34,6 +37,7 @@ from ..base import ClassifierMixin, RegressorMixin, is_classifier, is_regressor
 
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..utils import check_random_state, _safe_indexing
+from ..utils import check_scalar
 from ..utils.extmath import softmax
 from ..utils.extmath import stable_cumsum
 from ..metrics import accuracy_score, r2_score
@@ -107,9 +111,22 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         -------
         self : object
         """
-        # Check parameters
-        if self.learning_rate <= 0:
-            raise ValueError("learning_rate must be greater than zero")
+        # Validate scalar parameters
+        check_scalar(
+            self.n_estimators,
+            "n_estimators",
+            target_type=numbers.Integral,
+            min_val=1,
+            include_boundaries="left",
+        )
+
+        check_scalar(
+            self.learning_rate,
+            "learning_rate",
+            target_type=numbers.Real,
+            min_val=0,
+            include_boundaries="neither",
+        )
 
         X, y = self._validate_data(
             X,
@@ -121,10 +138,10 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
             y_numeric=is_regressor(self),
         )
 
-        sample_weight = _check_sample_weight(sample_weight, X, np.float64)
+        sample_weight = _check_sample_weight(
+            sample_weight, X, np.float64, copy=True, only_non_negative=True
+        )
         sample_weight /= sample_weight.sum()
-        if np.any(sample_weight < 0):
-            raise ValueError("sample_weight cannot contain negative weights")
 
         # Check parameters
         self._validate_estimator()
@@ -134,7 +151,7 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         self.estimator_weights_ = np.zeros(self.n_estimators, dtype=np.float64)
         self.estimator_errors_ = np.ones(self.n_estimators, dtype=np.float64)
 
-        # Initializion of the random number instance that will be used to
+        # Initialization of the random number instance that will be used to
         # generate a seed at each iteration
         random_state = check_random_state(self.random_state)
 
@@ -147,7 +164,6 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
             # Early termination
             if sample_weight is None:
                 break
-
             self.estimator_weights_[iboost] = estimator_weight
             self.estimator_errors_[iboost] = estimator_error
 
@@ -156,6 +172,15 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
                 break
 
             sample_weight_sum = np.sum(sample_weight)
+
+            if not np.isfinite(sample_weight_sum):
+                warnings.warn(
+                    "Sample weights have reached infinite values,"
+                    f" at iteration {iboost}, causing overflow. "
+                    "Iterations stopped. Try lowering the learning rate.",
+                    stacklevel=2,
+                )
+                break
 
             # Stop if the sum of sample weights has become non-positive
             if sample_weight_sum <= 0:
@@ -327,11 +352,13 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
     n_estimators : int, default=50
         The maximum number of estimators at which boosting is terminated.
         In case of perfect fit, the learning procedure is stopped early.
+        Values must be in the range `[1, inf)`.
 
     learning_rate : float, default=1.0
         Weight applied to each classifier at each boosting iteration. A higher
         learning rate increases the contribution of each classifier. There is
         a trade-off between the `learning_rate` and `n_estimators` parameters.
+        Values must be in the range `(0.0, inf)`.
 
     algorithm : {'SAMME', 'SAMME.R'}, default='SAMME.R'
         If 'SAMME.R' then use the SAMME.R real boosting algorithm.
@@ -380,6 +407,12 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -464,7 +497,10 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         """
         # Check that algorithm is supported
         if self.algorithm not in ("SAMME", "SAMME.R"):
-            raise ValueError("algorithm %s is not supported" % self.algorithm)
+            raise ValueError(
+                "Algorithm must be 'SAMME' or 'SAMME.R'."
+                f" Got {self.algorithm!r} instead."
+            )
 
         # Fit
         return super().fit(X, y, sample_weight)
@@ -636,7 +672,10 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         # Only boost the weights if I will fit again
         if not iboost == self.n_estimators - 1:
             # Only boost positive weights
-            sample_weight *= np.exp(estimator_weight * incorrect * (sample_weight > 0))
+            sample_weight = np.exp(
+                np.log(sample_weight)
+                + estimator_weight * incorrect * (sample_weight > 0)
+            )
 
         return sample_weight, estimator_weight, estimator_error
 
@@ -657,8 +696,6 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         y : ndarray of shape (n_samples,)
             The predicted classes.
         """
-        X = self._check_X(X)
-
         pred = self.decision_function(X)
 
         if self.n_classes_ == 2:
@@ -833,8 +870,6 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
             outputs is the same of that of the :term:`classes_` attribute.
         """
         check_is_fitted(self)
-        X = self._check_X(X)
-
         n_classes = self.n_classes_
 
         if n_classes == 1:
@@ -862,12 +897,11 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
             DOK, or LIL. COO, DOK, and LIL are converted to CSR.
 
         Yields
-        -------
+        ------
         p : generator of ndarray of shape (n_samples,)
             The class probabilities of the input samples. The order of
             outputs is the same of that of the :term:`classes_` attribute.
         """
-        X = self._check_X(X)
 
         n_classes = self.n_classes_
 
@@ -893,7 +927,6 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
             The class probabilities of the input samples. The order of
             outputs is the same of that of the :term:`classes_` attribute.
         """
-        X = self._check_X(X)
         return np.log(self.predict_proba(X))
 
 
@@ -923,11 +956,13 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
     n_estimators : int, default=50
         The maximum number of estimators at which boosting is terminated.
         In case of perfect fit, the learning procedure is stopped early.
+        Values must be in the range `[1, inf)`.
 
     learning_rate : float, default=1.0
-        Weight applied to each classifier at each boosting iteration. A higher
-        learning rate increases the contribution of each classifier. There is
+        Weight applied to each regressor at each boosting iteration. A higher
+        learning rate increases the contribution of each regressor. There is
         a trade-off between the `learning_rate` and `n_estimators` parameters.
+        Values must be in the range `(0.0, inf)`.
 
     loss : {'linear', 'square', 'exponential'}, default='linear'
         The loss function to use when updating the weights after each
@@ -947,7 +982,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
     base_estimator_ : estimator
         The base estimator from which the ensemble is grown.
 
-    estimators_ : list of classifiers
+    estimators_ : list of regressors
         The collection of fitted sub-estimators.
 
     estimator_weights_ : ndarray of floats
@@ -968,6 +1003,12 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -1040,7 +1081,10 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         """
         # Check loss
         if self.loss not in ("linear", "square", "exponential"):
-            raise ValueError("loss must be 'linear', 'square', or 'exponential'")
+            raise ValueError(
+                "loss must be 'linear', 'square', or 'exponential'."
+                f" Got {self.loss!r} instead."
+            )
 
         # Fit
         return super().fit(X, y, sample_weight)
@@ -1168,7 +1212,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         """Predict regression value for X.
 
         The predicted regression value of an input sample is computed
-        as the weighted median prediction of the classifiers in the ensemble.
+        as the weighted median prediction of the regressors in the ensemble.
 
         Parameters
         ----------
@@ -1190,7 +1234,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         """Return staged predictions for X.
 
         The predicted regression value of an input sample is computed
-        as the weighted median prediction of the classifiers in the ensemble.
+        as the weighted median prediction of the regressors in the ensemble.
 
         This generator method yields the ensemble prediction after each
         iteration of boosting and therefore allows monitoring, such as to
@@ -1202,7 +1246,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
             The training input samples.
 
         Yields
-        -------
+        ------
         y : generator of ndarray of shape (n_samples,)
             The predicted regression values.
         """

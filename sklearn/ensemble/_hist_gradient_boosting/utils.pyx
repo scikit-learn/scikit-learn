@@ -1,7 +1,3 @@
-# cython: cdivision=True
-# cython: boundscheck=False
-# cython: wraparound=False
-# cython: language_level=3
 """This module contains utility routines."""
 # Author: Nicolas Hug
 
@@ -13,7 +9,7 @@ from .common cimport G_H_DTYPE_C
 from .common cimport Y_DTYPE_C
 
 
-def get_equivalent_estimator(estimator, lib='lightgbm'):
+def get_equivalent_estimator(estimator, lib='lightgbm', n_classes=None):
     """Return an unfitted estimator from another lib with matching hyperparams.
 
     This utility function takes care of renaming the sklearn parameters into
@@ -44,8 +40,7 @@ def get_equivalent_estimator(estimator, lib='lightgbm'):
     lightgbm_loss_mapping = {
         'squared_error': 'regression_l2',
         'absolute_error': 'regression_l1',
-        'binary_crossentropy': 'binary',
-        'categorical_crossentropy': 'multiclass'
+        'log_loss': 'binary' if n_classes == 2 else 'multiclass',
     }
 
     lightgbm_params = {
@@ -64,21 +59,23 @@ def get_equivalent_estimator(estimator, lib='lightgbm'):
         'verbosity': 10 if sklearn_params['verbose'] else -10,
         'boost_from_average': True,
         'enable_bundle': False,  # also makes feature order consistent
-        'min_data_in_bin': 1,
         'subsample_for_bin': _BinMapper().subsample,
     }
 
-    if sklearn_params['loss'] == 'categorical_crossentropy':
+    if sklearn_params['loss'] == 'log_loss' and n_classes > 2:
         # LightGBM multiplies hessians by 2 in multiclass loss.
         lightgbm_params['min_sum_hessian_in_leaf'] *= 2
-        lightgbm_params['learning_rate'] *= 2
+        # LightGBM 3.0 introduced a different scaling of the hessian for the multiclass case.
+        # It is equivalent of scaling the learning rate.
+        # See https://github.com/microsoft/LightGBM/pull/3256.
+        if n_classes is not None:
+            lightgbm_params['learning_rate'] *= n_classes / (n_classes - 1)
 
     # XGB
     xgboost_loss_mapping = {
         'squared_error': 'reg:linear',
         'absolute_error': 'LEAST_ABSOLUTE_DEV_NOT_SUPPORTED',
-        'binary_crossentropy': 'reg:logistic',
-        'categorical_crossentropy': 'multi:softmax'
+        'log_loss': 'reg:logistic' if n_classes == 2 else 'multi:softmax',
     }
 
     xgboost_params = {
@@ -102,8 +99,7 @@ def get_equivalent_estimator(estimator, lib='lightgbm'):
         'squared_error': 'RMSE',
         # catboost does not support MAE when leaf_estimation_method is Newton
         'absolute_error': 'LEAST_ASBOLUTE_DEV_NOT_SUPPORTED',
-        'binary_crossentropy': 'Logloss',
-        'categorical_crossentropy': 'MultiClass'
+        'log_loss': 'Logloss' if n_classes == 2 else 'MultiClass',
     }
 
     catboost_params = {

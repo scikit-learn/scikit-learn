@@ -71,7 +71,7 @@ def c_step(
     random_state : int, RandomState instance or None, default=None
         Determines the pseudo random number generator for shuffling the data.
         Pass an int for reproducible results across multiple function calls.
-        See :term: `Glossary <random_state>`.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -269,7 +269,7 @@ def select_candidates(
     random_state : int, RandomState instance or None, default=None
         Determines the pseudo random number generator for shuffling the data.
         Pass an int for reproducible results across multiple function calls.
-        See :term: `Glossary <random_state>`.
+        See :term:`Glossary <random_state>`.
 
     See Also
     ---------
@@ -357,7 +357,7 @@ def fast_mcd(
     cov_computation_method=empirical_covariance,
     random_state=None,
 ):
-    """Estimates the Minimum Covariance Determinant matrix.
+    """Estimate the Minimum Covariance Determinant matrix.
 
     Read more in the :ref:`User Guide <robust_covariance>`.
 
@@ -381,7 +381,7 @@ def fast_mcd(
     random_state : int, RandomState instance or None, default=None
         Determines the pseudo random number generator for shuffling the data.
         Pass an int for reproducible results across multiple function calls.
-        See :term: `Glossary <random_state>`.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -610,7 +610,7 @@ class MinCovDet(EmpiricalCovariance):
     random_state : int, RandomState instance or None, default=None
         Determines the pseudo random number generator for shuffling the data.
         Pass an int for reproducible results across multiple function calls.
-        See :term: `Glossary <random_state>`.
+        See :term:`Glossary <random_state>`.
 
     Attributes
     ----------
@@ -648,6 +648,37 @@ class MinCovDet(EmpiricalCovariance):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    EllipticEnvelope : An object for detecting outliers in
+        a Gaussian distributed dataset.
+    EmpiricalCovariance : Maximum likelihood covariance estimator.
+    GraphicalLasso : Sparse inverse covariance estimation
+        with an l1-penalized estimator.
+    GraphicalLassoCV : Sparse inverse covariance with cross-validated
+        choice of the l1 penalty.
+    LedoitWolf : LedoitWolf Estimator.
+    OAS : Oracle Approximating Shrinkage Estimator.
+    ShrunkCovariance : Covariance estimator with shrinkage.
+
+    References
+    ----------
+
+    .. [Rouseeuw1984] P. J. Rousseeuw. Least median of squares regression.
+        J. Am Stat Ass, 79:871, 1984.
+    .. [Rousseeuw] A Fast Algorithm for the Minimum Covariance Determinant
+        Estimator, 1999, American Statistical Association and the American
+        Society for Quality, TECHNOMETRICS
+    .. [ButlerDavies] R. W. Butler, P. L. Davies and M. Jhun,
+        Asymptotics For The Minimum Covariance Determinant Estimator,
+        The Annals of Statistics, 1993, Vol. 21, No. 3, 1385-1400
+
     Examples
     --------
     >>> import numpy as np
@@ -665,18 +696,6 @@ class MinCovDet(EmpiricalCovariance):
            [0.2535..., 0.3053...]])
     >>> cov.location_
     array([0.0813... , 0.0427...])
-
-    References
-    ----------
-
-    .. [Rouseeuw1984] P. J. Rousseeuw. Least median of squares regression.
-        J. Am Stat Ass, 79:871, 1984.
-    .. [Rousseeuw] A Fast Algorithm for the Minimum Covariance Determinant
-        Estimator, 1999, American Statistical Association and the American
-        Society for Quality, TECHNOMETRICS
-    .. [ButlerDavies] R. W. Butler, P. L. Davies and M. Jhun,
-        Asymptotics For The Minimum Covariance Determinant Estimator,
-        The Annals of Statistics, 1993, Vol. 21, No. 3, 1385-1400
     """
 
     _nonrobust_covariance = staticmethod(empirical_covariance)
@@ -695,7 +714,7 @@ class MinCovDet(EmpiricalCovariance):
         self.random_state = random_state
 
     def fit(self, X, y=None):
-        """Fits a Minimum Covariance Determinant with the FastMCD algorithm.
+        """Fit a Minimum Covariance Determinant with the FastMCD algorithm.
 
         Parameters
         ----------
@@ -709,6 +728,7 @@ class MinCovDet(EmpiricalCovariance):
         Returns
         -------
         self : object
+            Returns the instance itself.
         """
         X = self._validate_data(X, ensure_min_samples=2, estimator="MinCovDet")
         random_state = check_random_state(self.random_state)

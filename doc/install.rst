@@ -80,9 +80,8 @@ Then run:
         ><span class="sk-expandable" data-packager="pip" data-os="mac" data-venv="no">pip install -U scikit-learn</span
         ><span class="sk-expandable" data-packager="pip" data-os="windows" data-venv="no">pip install -U scikit-learn</span
         ><span class="sk-expandable" data-packager="pip" data-os="linux" data-venv="no">pip3 install -U scikit-learn</span
-        ><span class="sk-expandable" data-packager="conda" data-venv="">conda create -n sklearn-env</span
-        ><span class="sk-expandable" data-packager="conda" data-venv="">conda activate sklearn-env</span
-        ><span class="sk-expandable" data-packager="conda">conda install -c conda-forge scikit-learn </span
+        ><span class="sk-expandable" data-packager="conda">conda create -n sklearn-env -c conda-forge scikit-learn</span
+        ><span class="sk-expandable" data-packager="conda">conda activate sklearn-env</span
        ></code></pre></div>
 
 In order to check your installation you can use
@@ -143,7 +142,8 @@ purpose.
     Scikit-learn 0.21 supported Python 3.5-3.7.
     Scikit-learn 0.22 supported Python 3.5-3.8.
     Scikit-learn 0.23 - 0.24 require Python 3.6 or newer.
-    Scikit-learn 1.0 and later requires Python 3.7 or newer.
+    Scikit-learn 1.0 supported Python 3.7-3.10.
+    Scikit-learn 1.1 and later requires Python 3.8 or newer.
 
 
 .. note::
@@ -158,7 +158,7 @@ Installing on Apple Silicon M1 hardware
 
 The recently introduced `macos/arm64` platform (sometimes also known as
 `macos/aarch64`) requires the open source community to upgrade the build
-configuation and automation to properly support it.
+configuration and automation to properly support it.
 
 At the time of writing (January 2021), the only way to get a working
 installation of scikit-learn on this hardware is to install scikit-learn and its
@@ -188,6 +188,19 @@ dependencies (numpy, scipy) that scikit-learn requires.
 The following is an incomplete list of OS and python distributions
 that provide their own version of scikit-learn.
 
+Alpine Linux
+------------
+
+Alpine Linux's package is provided through the `official repositories
+<https://pkgs.alpinelinux.org/packages?name=py3-scikit-learn>`__ as
+``py3-scikit-learn`` for Python.
+It can be installed by typing the following command:
+
+.. prompt:: bash $
+
+  sudo apk add py3-scikit-learn
+
+
 Arch Linux
 ----------
 
@@ -204,7 +217,7 @@ It can be installed by typing the following command:
 Debian/Ubuntu
 -------------
 
-The Debian/Ubuntu package is splitted in three different packages called
+The Debian/Ubuntu package is split in three different packages called
 ``python3-sklearn`` (python modules), ``python3-sklearn-lib`` (low-level
 implementations and bindings), ``python3-sklearn-doc`` (documentation).
 Only the Python 3 version is available in the Debian Buster (the more recent
@@ -247,7 +260,7 @@ command:
 
 .. prompt:: bash $
 
-  sudo port install py36-scikit-learn
+  sudo port install py39-scikit-learn
 
 
 Anaconda and Enthought Deployment Manager for all supported platforms

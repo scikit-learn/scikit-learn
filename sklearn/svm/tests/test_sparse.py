@@ -24,11 +24,7 @@ X2 = np.array(
     [
         [0, 0, 0],
         [1, 1, 1],
-        [
-            2,
-            0,
-            0,
-        ],
+        [2, 0, 0],
         [0, 0, 2],
         [3, 3, 3],
     ]
@@ -176,6 +172,7 @@ def test_svc_with_custom_kernel():
     assert_array_equal(clf_lin.predict(X_sp), clf_mylin.predict(X_sp))
 
 
+@skip_if_32bit
 def test_svc_iris():
     # Test the sparse SVC with the iris dataset
     for k in ("linear", "poly", "rbf"):

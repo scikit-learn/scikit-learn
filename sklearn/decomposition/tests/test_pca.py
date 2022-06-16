@@ -1,7 +1,9 @@
 import numpy as np
 import scipy as sp
+from numpy.testing import assert_array_equal
 
 import pytest
+import warnings
 
 from sklearn.utils._testing import assert_allclose
 
@@ -43,9 +45,9 @@ def test_no_empty_slice_warning():
     n_features = n_components + 2  # anything > n_comps triggered it in 0.16
     X = np.random.uniform(-1, 1, size=(n_components, n_features))
     pca = PCA(n_components=n_components)
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
         pca.fit(X)
-    assert not record.list
 
 
 @pytest.mark.parametrize("copy", [True, False])
@@ -94,7 +96,7 @@ def test_whitening(solver, copy):
     X_ = X.copy()
     pca = PCA(
         n_components=n_components, whiten=False, copy=copy, svd_solver=solver
-    ).fit(X_)
+    ).fit(X_.copy())
     X_unwhitened = pca.transform(X_)
     assert X_unwhitened.shape == (n_samples, n_components)
 
@@ -170,10 +172,10 @@ def test_pca_singular_values(svd_solver):
 
     # compare to the Frobenius norm
     assert_allclose(
-        np.sum(pca.singular_values_ ** 2), np.linalg.norm(X_trans, "fro") ** 2
+        np.sum(pca.singular_values_**2), np.linalg.norm(X_trans, "fro") ** 2
     )
     # Compare to the 2-norms of the score vectors
-    assert_allclose(pca.singular_values_, np.sqrt(np.sum(X_trans ** 2, axis=0)))
+    assert_allclose(pca.singular_values_, np.sqrt(np.sum(X_trans**2, axis=0)))
 
     # set the singular values and see what er get back
     n_samples, n_features = 100, 110
@@ -181,7 +183,7 @@ def test_pca_singular_values(svd_solver):
 
     pca = PCA(n_components=3, svd_solver=svd_solver, random_state=rng)
     X_trans = pca.fit_transform(X)
-    X_trans /= np.sqrt(np.sum(X_trans ** 2, axis=0))
+    X_trans /= np.sqrt(np.sum(X_trans**2, axis=0))
     X_trans[:, 0] *= 3.142
     X_trans[:, 1] *= 2.718
     X_hat = np.dot(X_trans, pca.components_)
@@ -199,7 +201,7 @@ def test_pca_check_projection(svd_solver):
     Xt = 0.1 * rng.randn(1, p) + np.array([3, 4, 5])
 
     Yt = PCA(n_components=2, svd_solver=svd_solver).fit(X).transform(Xt)
-    Yt /= np.sqrt((Yt ** 2).sum())
+    Yt /= np.sqrt((Yt**2).sum())
 
     assert_allclose(np.abs(Yt[0][0]), 1.0, rtol=5e-3)
 
@@ -411,7 +413,7 @@ def test_pca_score(svd_solver):
     pca.fit(X)
 
     ll1 = pca.score(X)
-    h = -0.5 * np.log(2 * np.pi * np.exp(1) * 0.1 ** 2) * p
+    h = -0.5 * np.log(2 * np.pi * np.exp(1) * 0.1**2) * p
     assert_allclose(ll1 / h, 1, rtol=5e-2)
 
     ll2 = pca.score(rng.randn(n, p) * 0.2 + np.array([3, 4, 5]))
@@ -473,9 +475,15 @@ def test_pca_zero_noise_variance_edge_cases(svd_solver):
     pca = PCA(n_components=p, svd_solver=svd_solver)
     pca.fit(X)
     assert pca.noise_variance_ == 0
+    # Non-regression test for gh-12489
+    # ensure no divide-by-zero error for n_components == n_features < n_samples
+    pca.score(X)
 
     pca.fit(X.T)
     assert pca.noise_variance_ == 0
+    # Non-regression test for gh-12489
+    # ensure no divide-by-zero error for n_components == n_samples < n_features
+    pca.score(X.T)
 
 
 @pytest.mark.parametrize(
@@ -656,3 +664,71 @@ def test_assess_dimesion_rank_one():
     assert np.isfinite(_assess_dimension(s, rank=1, n_samples=n_samples))
     for rank in range(2, n_features):
         assert _assess_dimension(s, rank, n_samples) == -np.inf
+
+
+def test_pca_randomized_svd_n_oversamples():
+    """Check that exposing and setting `n_oversamples` will provide accurate results
+    even when `X` as a large number of features.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/20589
+    """
+    rng = np.random.RandomState(0)
+    n_features = 100
+    X = rng.randn(1_000, n_features)
+
+    # The default value of `n_oversamples` will lead to inaccurate results
+    # We force it to the number of features.
+    pca_randomized = PCA(
+        n_components=1,
+        svd_solver="randomized",
+        n_oversamples=n_features,
+        random_state=0,
+    ).fit(X)
+    pca_full = PCA(n_components=1, svd_solver="full").fit(X)
+    pca_arpack = PCA(n_components=1, svd_solver="arpack", random_state=0).fit(X)
+
+    assert_allclose(np.abs(pca_full.components_), np.abs(pca_arpack.components_))
+    assert_allclose(np.abs(pca_randomized.components_), np.abs(pca_arpack.components_))
+
+
+@pytest.mark.parametrize(
+    "params, err_type, err_msg",
+    [
+        (
+            {"n_oversamples": 0},
+            ValueError,
+            "n_oversamples == 0, must be >= 1.",
+        ),
+        (
+            {"n_oversamples": 1.5},
+            TypeError,
+            "n_oversamples must be an instance of int",
+        ),
+    ],
+)
+def test_pca_params_validation(params, err_type, err_msg):
+    """Check the parameters validation in `PCA`."""
+    rng = np.random.RandomState(0)
+    X = rng.randn(100, 20)
+    with pytest.raises(err_type, match=err_msg):
+        PCA(**params).fit(X)
+
+
+def test_feature_names_out():
+    """Check feature names out for PCA."""
+    pca = PCA(n_components=2).fit(iris.data)
+
+    names = pca.get_feature_names_out()
+    assert_array_equal([f"pca{i}" for i in range(2)], names)
+
+
+@pytest.mark.parametrize("copy", [True, False])
+def test_variance_correctness(copy):
+    """Check the accuracy of PCA's internal variance calculation"""
+    rng = np.random.RandomState(0)
+    X = rng.randn(1000, 200)
+    pca = PCA().fit(X)
+    pca_var = pca.explained_variance_ / pca.explained_variance_ratio_
+    true_var = np.var(X, ddof=1, axis=0).sum()
+    np.testing.assert_allclose(pca_var, true_var)

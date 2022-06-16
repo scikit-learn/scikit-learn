@@ -9,6 +9,7 @@ from scipy import linalg
 from numpy.testing import assert_allclose
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_less
+from sklearn.utils._testing import _convert_container
 
 from sklearn.covariance import (
     graphical_lasso,
@@ -155,15 +156,14 @@ def test_graphical_lasso_cv(random_state=1):
     finally:
         sys.stdout = orig_stdout
 
-    # Smoke test with specified alphas
-    GraphicalLassoCV(alphas=[0.8, 0.5], tol=1e-1, n_jobs=1).fit(X)
 
+@pytest.mark.parametrize("alphas_container_type", ["list", "tuple", "array"])
+def test_graphical_lasso_cv_alphas_iterable(alphas_container_type):
+    """Check that we can pass an array-like to `alphas`.
 
-# TODO: Remove in 1.1 when grid_scores_ is deprecated
-def test_graphical_lasso_cv_grid_scores_and_cv_alphas_deprecated():
-    splits = 4
-    n_alphas = 5
-    n_refinements = 3
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/22489
+    """
     true_cov = np.array(
         [
             [0.8, 0.0, 0.2, 0.0],
@@ -174,29 +174,14 @@ def test_graphical_lasso_cv_grid_scores_and_cv_alphas_deprecated():
     )
     rng = np.random.RandomState(0)
     X = rng.multivariate_normal(mean=[0, 0, 0, 0], cov=true_cov, size=200)
-    cov = GraphicalLassoCV(cv=splits, alphas=n_alphas, n_refinements=n_refinements).fit(
-        X
-    )
-
-    total_alphas = n_refinements * n_alphas + 1
-    msg = (
-        r"The `grid_scores_` attribute is deprecated in version 0\.24 in "
-        r"favor of `cv_results_` and will be removed in version 1\.1 "
-        r"\(renaming of 0\.26\)."
-    )
-    with pytest.warns(FutureWarning, match=msg):
-        assert cov.grid_scores_.shape == (total_alphas, splits)
-
-    msg = (
-        r"The `cv_alphas_` attribute is deprecated in version 0\.24 in "
-        r"favor of `cv_results_\['alpha'\]` and will be removed in version "
-        r"1\.1 \(renaming of 0\.26\)"
-    )
-    with pytest.warns(FutureWarning, match=msg):
-        assert len(cov.cv_alphas_) == total_alphas
+    alphas = _convert_container([0.02, 0.03], alphas_container_type)
+    GraphicalLassoCV(alphas=alphas, tol=1e-1, n_jobs=1).fit(X)
 
 
-def test_graphical_lasso_cv_scores():
+# TODO: Remove `score` and `test_score` suffix in 1.2
+@pytest.mark.parametrize("suffix", ["score", "test_score"])
+@pytest.mark.filterwarnings("ignore:Key*:FutureWarning:sklearn")
+def test_graphical_lasso_cv_scores(suffix):
     splits = 4
     n_alphas = 5
     n_refinements = 3
@@ -219,7 +204,7 @@ def test_graphical_lasso_cv_scores():
 
     total_alphas = n_refinements * n_alphas + 1
     keys = ["alphas"]
-    split_keys = ["split{}_score".format(i) for i in range(splits)]
+    split_keys = [f"split{i}_{suffix}" for i in range(splits)]
     for key in keys + split_keys:
         assert key in cv_results
         assert len(cv_results[key]) == total_alphas
@@ -228,5 +213,41 @@ def test_graphical_lasso_cv_scores():
     expected_mean = cv_scores.mean(axis=0)
     expected_std = cv_scores.std(axis=0)
 
-    assert_allclose(cov.cv_results_["mean_score"], expected_mean)
-    assert_allclose(cov.cv_results_["std_score"], expected_std)
+    assert_allclose(cov.cv_results_[f"mean_{suffix}"], expected_mean)
+    assert_allclose(cov.cv_results_[f"std_{suffix}"], expected_std)
+
+
+# TODO: Remove in 1.2 when mean_score, std_score, and split(k)_score is removed.
+def test_graphical_lasso_cv_scores_deprecated():
+    """Check that the following keys in cv_results_ are deprecated: `mean_score`,
+    `std_score`, and `split(k)_score`."""
+    splits = 4
+    n_alphas = 5
+    n_refinements = 3
+    true_cov = np.array(
+        [
+            [0.8, 0.0, 0.2, 0.0],
+            [0.0, 0.4, 0.0, 0.0],
+            [0.2, 0.0, 0.3, 0.1],
+            [0.0, 0.0, 0.1, 0.7],
+        ]
+    )
+    rng = np.random.RandomState(0)
+    X = rng.multivariate_normal(mean=[0, 0, 0, 0], cov=true_cov, size=200)
+    cov = GraphicalLassoCV(cv=splits, alphas=n_alphas, n_refinements=n_refinements).fit(
+        X
+    )
+    cv_results = cov.cv_results_
+
+    deprecated_keys = ["mean_score", "std_score"] + [
+        f"split{k}_score" for k in range(splits)
+    ]
+
+    for deprecated_key in deprecated_keys:
+        new_key = deprecated_key.replace("_score", "_test_score")
+        msg = (
+            f"Key: '{deprecated_key}', is deprecated in 1.0 and will be removed in 1.2."
+            f" Use '{new_key}' instead"
+        )
+        with pytest.warns(FutureWarning, match=msg):
+            cv_results[deprecated_key]
