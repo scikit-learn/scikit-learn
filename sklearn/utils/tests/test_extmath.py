@@ -4,6 +4,7 @@
 #
 # License: BSD 3 clause
 import numpy as np
+import scipy
 from scipy import sparse
 from scipy import linalg
 from scipy import stats
@@ -33,6 +34,9 @@ from sklearn.utils.extmath import softmax
 from sklearn.utils.extmath import stable_cumsum
 from sklearn.utils.extmath import safe_sparse_dot
 from sklearn.datasets import make_low_rank_matrix, make_sparse_spd_matrix
+from sklearn.externals._packaging.version import parse as parse_version
+
+sp_version = parse_version(scipy.__version__)
 
 
 def test_density():
@@ -58,7 +62,8 @@ def test_uniform_weights():
     for axis in (None, 0, 1):
         mode, score = stats.mode(x, axis)
         mode2, score2 = weighted_mode(x, weights, axis=axis)
-        if axis is not None:
+
+        if sp_version >= parse_version("1.9.0") and axis is not None:
             mode = np.expand_dims(mode, axis=axis)
             score = np.expand_dims(score, axis=axis)
 
