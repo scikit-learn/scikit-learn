@@ -30,8 +30,8 @@ For document analysis via a supervised learning approach, see the example script
 # License: BSD 3 clause
 
 # %%
-# Load Data
-# =========
+# Loading text data
+# =================
 #
 # We load data from :ref:`20newsgroups_dataset`, which comprises around 18,000
 # newsgroups posts on 20 topics. For illustrative purposes and to reduce the
@@ -64,13 +64,14 @@ dataset = fetch_20newsgroups(
 )
 
 labels = dataset.target
-true_k = np.unique(labels).shape[0]
+unique_labels, category_sizes = np.unique(labels, return_counts=True)
+true_k = unique_labels.shape[0]
 
 print(f"{len(dataset.data)} documents - {true_k} categories")
 
 # %%
-# Comparing Clustering
-# ====================
+# Quantifying the quality of clustering results
+# =============================================
 #
 # In this section we define a function to score different clustering pipelines
 # using several metrics.
@@ -91,18 +92,17 @@ print(f"{len(dataset.data)} documents - {true_k} categories")
 #
 # - Rand-Index, which measures the similarity between pairs of clusters;
 #
-# - Adjusted Rand-Index, a change-adjusted Rand-Index.
+# - Adjusted Rand-Index, a chance-adjusted Rand-Index.
 #
 # If the ground truth labels are not known, evaluation can only be performed
-# using the model results itself. In that case, the Silhouette Coefficient
-# comes in handy.
+# using the model results itself. In that case, the Silhouette Coefficient comes
+# in handy.
 #
 # For more reference, see :ref:`clustering_evaluation`.
 
 from collections import defaultdict
 from sklearn import metrics
 from time import time
-
 
 evaluations = []
 evaluations_std = []
@@ -148,8 +148,8 @@ def fit_and_evaluate(km, X, name=None, n_runs=5):
 
 
 # %%
-# Feature Extraction using sparse vectorizers
-# ===========================================
+# K-means clustering on text features
+# ===================================
 #
 # Two feature extraction methods are used in this example:
 #
@@ -165,8 +165,12 @@ def fit_and_evaluate(km, X, name=None, n_runs=5):
 #   (projected to the euclidean unit-sphere) which seems to be important for
 #   k-means to work in high dimensional space.
 #
-# TfidfVectorizer
-# ---------------
+# Furthermore it is possible to post-process those extracted features using
+# dimensionality reduction. We will explore the impact of those choices on the
+# clustering quality in the following.
+#
+# Feature Extraction using TfidfVectorizer
+# ----------------------------------------
 #
 # We first benchmark the estimators using a dictionary vectorizer along with an
 # IDF normalization as provided by
@@ -186,36 +190,70 @@ print(f"vectorizing done in {time() - t0:.3f} s")
 print(f"n_samples: {X_tfidf.shape[0]}, n_features: {X_tfidf.shape[1]}")
 
 # %%
-# **Clustering sparse data with KMeans**
+# After ignoring terms that appear in more than 50% of the documents (as set by
+# `max_df=0.5`) and terms that are not present in at least 5 documents (set by
+# `min_df=5`), the resulting number of unique terms `n_features` is around
+# 8,000. We can additionally quantify the sparsity of the `X_tfidf` matrix as
+# the fraction of non-zero entries devided by the total number of elements.
+
+print(f"{X_tfidf.nnz / np.prod(X_tfidf.shape):.3f}")
+
+# %%
+# We find that less than 1% of the entries of the `X_tfidf` matrix are non-zero.
+#
+# .. _kmeans_sparse_high_dim:
+#
+# Clustering sparse data with K-Means
+# -----------------------------------
 #
 # As both :class:`~sklearn.cluster.KMeans` and
 # :class:`~sklearn.cluster.MiniBatchKMeans` optimize a non-convex objective
-# function, their clustering will likely be sub-optimal.
-# Several runs with independent random initiations are performed using the
-# `n_init` and the clustering with the smallest inertia is chosen.
+# function, their clustering is not guaranteed to be optimal for a given random
+# init. Even further, on sparse high-dimensional data such as vectorized text,
+# K-means can initialize centroids on extremely isolated data points. Those data
+# points can stay their own centroids all along.
 #
-# Here we use a `"random"` init instead of the smart `"k-means++"` init. The
-# `"k-means++"` init picks centroids with proba inverse to square distance,
-# which means it will pick points extremely isolated if there are any, which
-# then stay their own centroids all along. That is usually the case for text
-# clustering, where the vectorized space is high dimensional and very sparse.
+# The following code illustrates how the previous phenomenon can sometimes lead
+# to highly imbalanced clusters, depending on the random initialization:
 
 from sklearn.cluster import KMeans
 
+for seed in range(5):
+    kmeans = KMeans(
+        n_clusters=true_k,
+        max_iter=100,
+        n_init=1,
+        random_state=seed,
+    ).fit(X_tfidf)
+    cluster_ids, cluster_sizes = np.unique(kmeans.labels_, return_counts=True)
+    print(f"Number of elements asigned to each cluster: {cluster_sizes}")
+print()
+print(f"Real number of elements in each category: {category_sizes}")
+
+# %%
+# To avoid this problem, one possibility is to increase the number of runs with
+# independent random initiations `n_init`. In such case the clustering with the smallest
+# inertia is chosen.
+
 kmeans = KMeans(
     n_clusters=true_k,
-    init="random",
     max_iter=100,
     n_init=5,
 )
 
-fit_and_evaluate(kmeans, X_tfidf, name="KMeans(init='random')\non tf-idf vectors")
+fit_and_evaluate(kmeans, X_tfidf, name="KMeans\non tf-idf vectors")
 
 # %%
-# **Performing dimensionality reduction using LSA**
+# Values of the Adjusted Rand-Index close to 0.0 correspond to a random
+# labelling, whereas perfect labeling is scored 1.0. Notice from the scores
+# above that the cluster assignment is indeed above chance level, but the
+# overall quality can certainly improve.
 #
-# The `"k-means++"` init can still be used as long as the dimension of the
-# vectorized space is reduced first. For such purpose we use
+# Performing dimensionality reduction using LSA
+# ---------------------------------------------
+#
+# A `n_init=1` can still be used as long as the dimension of the vectorized
+# space is reduced first to make K-means more stable. For such purpose we use
 # :class:`~sklearn.decomposition.TruncatedSVD`, which works on term count/tf-idf
 # matrices. Since SVD results are not normalized, we redo the normalization to
 # improve the :class:`~sklearn.cluster.KMeans` result. Such process is known as
@@ -235,20 +273,17 @@ print(f"LSA done in {time() - t0:.3f} s")
 print(f"Explained variance of the SVD step: {explained_variance * 100:.1f}%")
 
 # %%
-# We are now ready to use the `"k-means++"` init. As it requires a single
-# initialization, the processing time will be reduced for both
-# :class:`~sklearn.cluster.KMeans` and :class:`~sklearn.cluster.MiniBatchKMeans`.
+# Using a single initialization means the processing time will be reduced for
+# both :class:`~sklearn.cluster.KMeans` and
+# :class:`~sklearn.cluster.MiniBatchKMeans`.
 
 kmeans = KMeans(
     n_clusters=true_k,
-    init="k-means++",
     max_iter=100,
     n_init=1,
 )
 
-fit_and_evaluate(
-    kmeans, X_lsa, name="KMeans(init='kmeans++')\nwith LSA on tf-idf vectors"
-)
+fit_and_evaluate(kmeans, X_lsa, name="KMeans\nwith LSA on tf-idf vectors")
 
 # %%
 # We repeat the experiment with :class:`~sklearn.cluster.MiniBatchKMeans`.
@@ -257,7 +292,6 @@ from sklearn.cluster import MiniBatchKMeans
 
 minibatch_kmeans = MiniBatchKMeans(
     n_clusters=true_k,
-    init="k-means++",
     n_init=1,
     init_size=1000,
     batch_size=1000,
@@ -266,13 +300,14 @@ minibatch_kmeans = MiniBatchKMeans(
 fit_and_evaluate(
     minibatch_kmeans,
     X_lsa,
-    name="MiniBatchKMeans(init='kmeans++')\nwith LSA on tf-idf vectors",
+    name="MiniBatchKMeans\nwith LSA on tf-idf vectors",
 )
 
 # %%
-# **Top terms per cluster**
+# Top terms per cluster
+# ---------------------
 #
-# Since :class:`~sklearn.feature_extraction.text.TfidfVectorizer` and can be
+# Since :class:`~sklearn.feature_extraction.text.TfidfVectorizer` can be
 # inverted we can identify the cluster centers, which provide an intuition of
 # the most predictive words **per cluster**. See the example script
 # :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
@@ -291,24 +326,20 @@ for i in range(true_k):
 # %%
 # HashingVectorizer
 # -----------------
-# A similar experiment can be done using a
+# An alternative vectorization can be done using a
 # :class:`~sklearn.feature_extraction.text.HashingVectorizer` instance, which
 # does not provide IDF weighting as this is a stateless model (the fit method
 # does nothing). When IDF weighting is needed it can be added by pipelining the
 # :class:`~sklearn.feature_extraction.text.HashingVectorizer` output to a
 # :class:`~sklearn.feature_extraction.text.TfidfTransformer` instance. In this
-# case we also add LSA to the pipeline to evaluate the `"k-means++"` init.
+# case we also add LSA to the pipeline to reduce the dimension and sparcity of
+# the hashed vector space.
 
 from sklearn.feature_extraction.text import HashingVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
 
-hasher = HashingVectorizer(
-    stop_words="english",
-    n_features=50_000,
-)
-
 lsa_vectorizer = make_pipeline(
-    hasher,
+    HashingVectorizer(stop_words="english", n_features=50_000),
     TfidfTransformer(),
     TruncatedSVD(n_components=100, random_state=0),
     Normalizer(copy=False),
@@ -318,15 +349,24 @@ t0 = time()
 X_hashed_lsa = lsa_vectorizer.fit_transform(dataset.data)
 print(f"vectorizing done in {time() - t0:.3f} s")
 
-fit_and_evaluate(
-    kmeans, X_hashed_lsa, name="KMeans(init='kmeans++')\nwith LSA on hashed vectors"
-)
+# %%
+# One can observe that the LSA step takes a relatively long time to fit,
+# especially with hashed vectors. The reason is that a hashed space is typically
+# large (set to `n_features=50_000` in this example). One can try lowering the
+# number of features at the expense of having a larger fraction of features with
+# hash collisions as shown in the example notebook
+# :ref:`sphx_glr_auto_examples_text_plot_hashing_vs_dict_vectorizer.py`.
+#
+# We now fit and evaluate the `kmeans` and `minibatch_kmeans` instances on this
+# hashed-lsa-reduced data:
+
+fit_and_evaluate(kmeans, X_hashed_lsa, name="KMeans\nwith LSA on hashed vectors")
 
 # %%
 fit_and_evaluate(
     minibatch_kmeans,
     X_hashed_lsa,
-    name="MiniBatchKMeans(init='kmeans++')\nwith LSA on hashed vectors",
+    name="MiniBatchKMeans\nwith LSA on hashed vectors",
 )
 
 # %%
@@ -357,20 +397,29 @@ plt.tight_layout()
 # suffer from the phenomenon called the `Curse of Dimensionality
 # <https://en.wikipedia.org/wiki/Curse_of_dimensionality>`_ for high dimensional
 # datasets such as text data. That is the reason why the overall scores improve
-# when using LSA. The Silhouette Coefficient is particularly low because its
-# definition requires measuring distances, in contrast with other measures such
-# as the V-measure and the Adjusted Rand Index which are only based on cluster
-# assignments rather than distances.
+# when using LSA. Using LSA reduced data also improves the stability and
+# requires lower clustering time, though keep in mind that the LSA step itself
+# takes a long time, especially with hashed vectors.
 #
-# Using the `"k-means++"` init on LSA reduced data is both good in terms of
-# metrics and stability as shown in the plot above. It also has low clustering
-# time though the LSA step itself takes a long time, especially with hashed
-# vectors. The reason is that a hashed space is typically large (set to
-# `n_features=50_000` in this example). One can try lowering the number of
-# features at the expense of having a larger fraction of features with hash
-# collisions as shown in the example notebook
-# :ref:`sphx_glr_auto_examples_text_plot_hashing_vs_dict_vectorizer.py`.
+# The Silhouette Coefficient is defined between 0 and 1. In all cases we obtain
+# values close to 0 (even if they improve a bit after using LSA) because its
+# definition requires measuring distances, in contrast with other evaluation
+# metrics such as the V-measure and the Adjusted Rand Index which are only based
+# on cluster assignments rather than distances. Notice that strictly speaking,
+# one should not compare the Silhouette Coefficient between spaces of different
+# dimension, due to the different notions of distance they imply.
 #
-# :class:`~sklearn.cluster.MiniBatchKMeans` is unstable for this relatively
-# small dataset. It is more interesting to use when the number of samples is
-# much bigger, but it comes at the expense of clustering quality.
+# The homogeneity, completeness and hence v-measure metrics do not yield a
+# baseline with regards to random labeling: this means that depending on the
+# number of samples, clusters and ground truth classes, a completely random
+# labeling will not always yield the same values. In particular random labeling
+# won’t yield zero scores, especially when the number of clusters is large. This
+# problem can safely be ignored when the number of samples is more than a
+# thousand and the number of clusters is less than 10, which is the case of the
+# present example. For smaller sample sizes or larger number of clusters it is
+# safer to use an adjusted index such as the Adjusted Rand Index (ARI).
+#
+# The size of the error bars show that :class:`~sklearn.cluster.MiniBatchKMeans`
+# is less stable than :class:`~sklearn.cluster.KMeans` for this relatively small
+# dataset. It is more interesting to use when the number of samples is much
+# bigger, but it comes at the expense of clustering quality.
