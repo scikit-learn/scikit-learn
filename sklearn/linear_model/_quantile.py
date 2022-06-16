@@ -97,7 +97,10 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
     >>> rng = np.random.RandomState(0)
     >>> y = rng.randn(n_samples)
     >>> X = rng.randn(n_samples, n_features)
-    >>> reg = QuantileRegressor(quantile=0.8).fit(X, y)
+    >>> # the two following lines are optional in practice
+    >>> from sklearn.utils.fixes import sp_version, parser_version
+    >>> solver = "highs" if sp_version >= parse_version("1.6.0") else "interior-point"
+    >>> reg = QuantileRegressor(quantile=0.8, solver=solver).fit(X, y)
     >>> np.mean(y <= reg.predict(X))
     0.8
     """
