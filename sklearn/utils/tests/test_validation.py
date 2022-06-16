@@ -358,21 +358,13 @@ def test_check_array():
 
     Xs = [X_csc, X_coo, X_dok, X_int, X_float]
     accept_sparses = [["csr", "coo"], ["coo", "dok"]]
-    for X, dtype, accept_sparse, copy in product(Xs, dtypes, accept_sparses, copys):
-        with warnings.catch_warnings(record=True) as w:
-            X_checked = check_array(
-                X, dtype=dtype, accept_sparse=accept_sparse, copy=copy
-            )
-        if (dtype is object or sp.isspmatrix_dok(X)) and len(w):
-            # XXX unreached code as of v0.22
-            message = str(w[0].message)
-            messages = [
-                "object dtype is not supported by sparse matrices",
-                "Can't check dok sparse matrix for nan or inf.",
-            ]
-            assert message in messages
-        else:
-            assert len(w) == 0
+    # scipy sparse matrices do not support the object dtype so
+    # this dtype is skipped in this loop
+    non_object_dtypes = [dt for dt in dtypes if dt is not object]
+    for X, dtype, accept_sparse, copy in product(
+        Xs, non_object_dtypes, accept_sparses, copys
+    ):
+        X_checked = check_array(X, dtype=dtype, accept_sparse=accept_sparse, copy=copy)
         if dtype is not None:
             assert X_checked.dtype == dtype
         else:

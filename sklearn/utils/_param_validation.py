@@ -5,6 +5,7 @@ from inspect import signature
 from numbers import Integral
 from numbers import Real
 import operator
+import warnings
 
 import numpy as np
 from scipy.sparse import issparse
@@ -28,6 +29,7 @@ def validate_parameter_constraints(parameter_constraints, params, caller_name):
         - None, meaning that None is a valid value for the parameter
         - any type, meaning that any instance of this type is valid
         - a StrOptions object, representing a set of strings
+        - the string "boolean"
 
     params : dict
         A dictionary `param_name: param_value`. The parameters to validate against the
@@ -53,9 +55,11 @@ def validate_parameter_constraints(parameter_constraints, params, caller_name):
         else:
             # No constraint is satisfied, raise with an informative message.
 
-            # Ignore constraints that only contains internal options that we don't want
-            # to expose in the error message
-            constraints = [constraint for constraint in constraints if str(constraint)]
+            # Ignore constraints that we don't want to expose in the error message,
+            # i.e. options that are for internal purpose or not officially supported.
+            constraints = [
+                constraint for constraint in constraints if not constraint.hidden
+            ]
 
             if len(constraints) == 1:
                 constraints_str = f"{constraints[0]}"
@@ -97,6 +101,12 @@ def make_constraint(constraint):
     if isinstance(constraint, type):
         return _InstancesOf(constraint)
     if isinstance(constraint, (Interval, StrOptions)):
+        return constraint
+    if isinstance(constraint, str) and constraint == "boolean":
+        return _Booleans()
+    if isinstance(constraint, Hidden):
+        constraint = make_constraint(constraint.constraint)
+        constraint.hidden = True
         return constraint
     raise ValueError(f"Unknown constraint type: {constraint}")
 
@@ -148,6 +158,9 @@ def validate_params(parameter_constraints):
 class _Constraint(ABC):
     """Base class for the constraint objects."""
 
+    def __init__(self):
+        self.hidden = False
+
     @abstractmethod
     def is_satisfied_by(self, val):
         """Whether or not a value satisfies the constraint.
@@ -178,6 +191,7 @@ class _InstancesOf(_Constraint):
     """
 
     def __init__(self, type):
+        super().__init__()
         self.type = type
 
     def _type_name(self, t):
@@ -221,24 +235,14 @@ class StrOptions(_Constraint):
         A subset of the `options` to mark as deprecated in the repr of the constraint.
     """
 
-    @validate_params(
-        {"options": [set], "deprecated": [set, None], "internal": [set, None]}
-    )
-    def __init__(self, options, deprecated=None, internal=None):
+    @validate_params({"options": [set], "deprecated": [set, None]})
+    def __init__(self, options, deprecated=None):
+        super().__init__()
         self.options = options
         self.deprecated = deprecated or set()
-        self.internal = internal or set()
 
         if self.deprecated - self.options:
             raise ValueError("The deprecated options must be a subset of the options.")
-
-        if self.internal - self.options:
-            raise ValueError("The internal options must be a subset of the options.")
-
-        if self.deprecated & self.internal:
-            raise ValueError(
-                "The deprecated and internal parameters should not overlap."
-            )
 
     def is_satisfied_by(self, val):
         return isinstance(val, str) and val in self.options
@@ -251,13 +255,8 @@ class StrOptions(_Constraint):
         return option_str
 
     def __str__(self):
-        visible_options = [o for o in self.options if o not in self.internal]
-
-        if not visible_options:
-            return ""
-
         options_str = (
-            f"{', '.join([self._mark_if_deprecated(o) for o in visible_options])}"
+            f"{', '.join([self._mark_if_deprecated(o) for o in self.options])}"
         )
         return f"a str among {{{options_str}}}"
 
@@ -304,6 +303,7 @@ class Interval(_Constraint):
         }
     )
     def __init__(self, type, left, right, *, closed):
+        super().__init__()
         self.type = type
         self.left = left
         self.right = right
@@ -405,6 +405,7 @@ class _RandomStates(_Constraint):
     """
 
     def __init__(self):
+        super().__init__()
         self._constraints = [
             Interval(Integral, 0, 2**32 - 1, closed="both"),
             _InstancesOf(np.random.RandomState),
@@ -416,9 +417,55 @@ class _RandomStates(_Constraint):
 
     def __str__(self):
         return (
-            f"{', '.join([repr(c) for c in self._constraints[:-1]])} or"
+            f"{', '.join([str(c) for c in self._constraints[:-1]])} or"
             f" {self._constraints[-1]}"
         )
+
+
+class _Booleans(_Constraint):
+    """Constraint representing boolean likes.
+
+    Convenience class for
+    [bool, np.bool_, Integral (deprecated)]
+    """
+
+    def __init__(self):
+        super().__init__()
+        self._constraints = [
+            _InstancesOf(bool),
+            _InstancesOf(np.bool_),
+            _InstancesOf(Integral),
+        ]
+
+    def is_satisfied_by(self, val):
+        # TODO(1.4) remove support for Integral.
+        if isinstance(val, Integral) and not isinstance(val, bool):
+            warnings.warn(
+                "Passing an int for a boolean parameter is deprecated in version 1.2 "
+                "and won't be supported anymore in version 1.4.",
+                FutureWarning,
+            )
+
+        return any(c.is_satisfied_by(val) for c in self._constraints)
+
+    def __str__(self):
+        return (
+            f"{', '.join([str(c) for c in self._constraints[:-1]])} or"
+            f" {self._constraints[-1]}"
+        )
+
+
+class Hidden:
+    """Class encapsulating a constraint not meant to be exposed to the user.
+
+    Parameters
+    ----------
+    constraint : str or _Constraint instance
+        The constraint to be used internally.
+    """
+
+    def __init__(self, constraint):
+        self.constraint = constraint
 
 
 def generate_invalid_param_val(constraint, constraints=None):
