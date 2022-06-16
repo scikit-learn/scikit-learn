@@ -233,8 +233,6 @@ def test_classifier_prediction_independent_of_X(strategy):
 
 def test_classifier_exceptions():
     clf = DummyClassifier(strategy="unknown")
-    with pytest.raises(ValueError):
-        clf.fit([], [])
 
     with pytest.raises(NotFittedError):
         clf.predict([])
@@ -399,10 +397,6 @@ def test_quantile_invalid():
     with pytest.raises(ValueError):
         est.fit(X, y)
 
-    est = DummyRegressor(strategy="quantile", quantile="abc")
-    with pytest.raises(TypeError):
-        est.fit(X, y)
-
 
 def test_quantile_strategy_empty_train():
     est = DummyRegressor(strategy="quantile", quantile=0.4)
@@ -460,15 +454,6 @@ def test_y_mean_attribute_regressor():
     est.fit(X, y)
 
     assert est.constant_ == np.mean(y)
-
-
-def test_unknown_strategey_regressor():
-    X = [[0]] * 5
-    y = [1, 2, 4, 6, 8]
-
-    est = DummyRegressor(strategy="gona")
-    with pytest.raises(ValueError):
-        est.fit(X, y)
 
 
 def test_constants_not_specified_regressor():
