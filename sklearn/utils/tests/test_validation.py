@@ -363,9 +363,7 @@ def test_check_array():
     for X, dtype, accept_sparse, copy in product(
         Xs, dtypes[:-1], accept_sparses, copys
     ):
-        X_checked = check_array(
-            X, dtype=dtype, accept_sparse=accept_sparse, copy=copy
-        )
+        X_checked = check_array(X, dtype=dtype, accept_sparse=accept_sparse, copy=copy)
         if dtype is not None:
             assert X_checked.dtype == dtype
         else:
