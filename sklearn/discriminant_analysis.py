@@ -79,14 +79,8 @@ def _cov(X, shrinkage=None, covariance_estimator=None):
                 s = sc.scale_[:, np.newaxis] * s * sc.scale_[np.newaxis, :]
             elif shrinkage == "empirical":
                 s = empirical_covariance(X)
-            # else:
-            #     raise ValueError("unknown shrinkage parameter")
         elif isinstance(shrinkage, Real):
-            # if shrinkage < 0 or shrinkage > 1:
-            #     raise ValueError("shrinkage parameter must be between 0 and 1")
             s = shrunk_covariance(empirical_covariance(X), shrinkage)
-        # else:
-        #     raise TypeError("shrinkage must be a float or a string")
     else:
         if shrinkage is not None and shrinkage != 0:
             raise ValueError(
