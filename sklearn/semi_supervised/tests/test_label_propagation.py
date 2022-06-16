@@ -42,12 +42,14 @@ def test_fit_transduction(global_dtype, Estimator, parameters):
 
 @pytest.mark.parametrize("Estimator, parameters", ESTIMATORS)
 def test_distribution(global_dtype, Estimator, parameters):
+    if parameters["kernel"] == "knn":
+        pytest.skip(
+            "Unstable test for this configuration: changes in k-NN ordering break it."
+        )
     samples = np.asarray([[1.0, 0.0], [0.0, 1.0], [1.0, 1.0]], dtype=global_dtype)
     labels = [0, 1, -1]
     clf = Estimator(**parameters).fit(samples, labels)
-    # unstable test; changes in k-NN ordering break it
-    if parameters["kernel"] != "knn":
-        assert_allclose(clf.label_distributions_[2], [0.5, 0.5], atol=1e-2)
+    assert_allclose(clf.label_distributions_[2], [0.5, 0.5], atol=1e-2)
 
 
 @pytest.mark.parametrize("Estimator, parameters", ESTIMATORS)
@@ -103,7 +105,7 @@ def test_label_propagation_closed_form(global_dtype):
     unlabelled_idx = Y[:, (-1,)].nonzero()[0]
     labelled_idx = (Y[:, (-1,)] == 0).nonzero()[0]
 
-    clf = label_propagation.LabelPropagation(max_iter=10000, gamma=0.1)
+    clf = label_propagation.LabelPropagation(max_iter=100, tol=1e-10, gamma=0.1)
     clf.fit(X, y)
     # adopting notation from Zhu et al 2002
     T_bar = clf._build_graph()
@@ -120,12 +122,13 @@ def test_label_propagation_closed_form(global_dtype):
     assert_allclose(expected, clf.label_distributions_, atol=1e-4)
 
 
-def test_valid_alpha():
+@pytest.mark.parametrize("alpha", [-0.1, 0, 1, 1.1, None])
+def test_valid_alpha(global_dtype, alpha):
     n_classes = 2
     X, y = make_classification(n_classes=n_classes, n_samples=200, random_state=0)
-    for alpha in [-0.1, 0, 1, 1.1, None]:
-        with pytest.raises(ValueError):
-            label_propagation.LabelSpreading(alpha=alpha).fit(X, y)
+    X = X.astype(global_dtype)
+    with pytest.raises(ValueError):
+        label_propagation.LabelSpreading(alpha=alpha).fit(X, y)
 
 
 def test_convergence_speed():
