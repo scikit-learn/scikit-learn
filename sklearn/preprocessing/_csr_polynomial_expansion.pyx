@@ -4,7 +4,7 @@ from scipy.sparse import csr_matrix
 cimport numpy as cnp
 cnp.import_array()
 
-ctypedef np.int8_t FLAG_T
+ctypedef cnp.int8_t FLAG_T
 ctypedef cnp.int32_t INDEX_A
 
 ctypedef fused INDEX_B:
@@ -46,13 +46,13 @@ cdef inline INDEX_B _deg3_column(INDEX_B d, INDEX_B i, INDEX_B j, INDEX_B k,
                 + d * j + k)
 
 
-def _csr_polynomial_expansion(ndarray[DATA_T, ndim=1] data,
-                              ndarray[INDEX_A, ndim=1] indices,
-                              ndarray[INDEX_A, ndim=1] indptr,
+def _csr_polynomial_expansion(cnp.ndarray[DATA_T, ndim=1] data,
+                              cnp.ndarray[INDEX_A, ndim=1] indices,
+                              cnp.ndarray[INDEX_A, ndim=1] indptr,
                               INDEX_A d,
-                              ndarray[DATA_T, ndim=1] result_data,
-                              ndarray[INDEX_B, ndim=1] result_indices,
-                              ndarray[INDEX_B, ndim=1] result_indptr,
+                              cnp.ndarray[DATA_T, ndim=1] result_data,
+                              cnp.ndarray[INDEX_B, ndim=1] result_indices,
+                              cnp.ndarray[INDEX_B, ndim=1] result_indptr,
                               FLAG_T interaction_only,
                               FLAG_T degree):
     """

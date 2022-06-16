@@ -27,6 +27,13 @@ __all__ = [
 ]
 
 
+def _calc_expanded_dimensionality(d, interaction_only, degree):
+    if degree == 2:
+        return (d**2 + d) // 2 - interaction_only * d
+    else:
+        return (d**3 + 3 * d**2 + 2 * d) // 6 - interaction_only * d**2
+
+
 class PolynomialFeatures(TransformerMixin, BaseEstimator):
     """Generate polynomial and interaction features.
 
@@ -177,13 +184,6 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
             combinations += 1
 
         return combinations
-
-    @staticmethod
-    def _calc_expanded_dimensionality(d, interaction_only, degree):
-        if degree == 2:
-            return (d**2 + d) // 2 - interaction_only * d
-        else:
-            return (d**3 + 3 * d**2 + 2 * d) // 6 - interaction_only * d**2
 
     @property
     def powers_(self):
@@ -400,19 +400,21 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                 )
             if self._min_degree <= 1 and self._max_degree > 0:
                 to_stack.append(X)
+            total_nnz = self.n_output_features_
             for deg in range(max(2, self._min_degree), self._max_degree + 1):
                 # Count how many nonzero elements the expanded matrix will contain.
                 total_nnz = sum(
-                    self._calc_expanded_dimensionality(
+                    _calc_expanded_dimensionality(
                         X.indptr[row_i + 1] - X.indptr[row_i],
                         self.interaction_only,
                         deg,
                     )
                     for row_i in range(X.indptr.shape[0] - 1)
                 )
-                expanded_d = self._calc_expanded_dimensionality(
+                expanded_d = _calc_expanded_dimensionality(
                     X.shape[1], self.interaction_only, deg
                 )
+
                 if expanded_d == 0:
                     break
                 assert expanded_d > 0
