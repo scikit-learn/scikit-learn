@@ -76,7 +76,7 @@ def regression_data():
             TweedieRegressor(power=1.5),
         ],
     ),
-    ids=lambda param: f"{param[0]}-{param[1]}"
+    ids=lambda param: f"{param[0]}-{param[1]}",
 )
 def glm_dataset(global_random_seed, request):
     """Dataset with GLM solutions, well conditioned X.
