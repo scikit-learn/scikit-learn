@@ -53,7 +53,7 @@ else:
         Parameters
         ----------
         a : array_like
-            n-dimensional array of which to find mode(s).
+            N-dimensional array of which to find mode(s).
         axis : int or None, optional
             Axis along which to operate. Default is 0. If None, compute over
             the whole array `a`.
