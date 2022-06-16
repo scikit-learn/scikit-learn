@@ -42,7 +42,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         Whether or not to fit the intercept.
 
     solver : {'highs-ds', 'highs-ipm', 'highs', 'interior-point', \
-            'revised simplex', 'auto'}, default='interior-point'
+            'revised simplex'}, default='interior-point'
         Method used by :func:`scipy.optimize.linprog` to solve the linear
         programming formulation.
 
@@ -52,14 +52,8 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
 
         From `scipy>=1.11.0`, "interior-point" is not available anymore.
 
-        Use `solver="auto"` will use "highs" if available (most recent SciPy
-        version), otherwise it will use "interior-point" (old SciPy version).
-
-        .. versionadded:: 1.2
-           `"auto"` option was added in 1.2.
-
         .. versionchanged:: 1.4
-           The default of `solver` will change to `"auto"` in 1.4.
+           The default of `solver` will change to `"highs"` in version 1.4.
 
     solver_options : dict, default=None
         Additional parameters passed to :func:`scipy.optimize.linprog` as
@@ -180,16 +174,12 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
 
         if self.solver == "warn":
             warnings.warn(
-                "The default solver will change from 'interior-point' to 'auto' in "
-                "1.4. Set `solver='auto'` or to the desired solver to silence this "
-                "warning.",
+                "The default solver will change from 'interior-point' to 'highs' in "
+                "version 1.4. Set `solver='highs'` or to the desired solver to silence "
+                "this warning.",
                 FutureWarning,
             )
             solver = "interior-point"
-        elif self.solver == "auto":
-            solver = (
-                "interior-point" if sp_version < parse_version("1.6.0") else "highs"
-            )
         elif self.solver in (
             "highs-ds",
             "highs-ipm",
