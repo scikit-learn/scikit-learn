@@ -2679,8 +2679,7 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
 
     .. [3] `L1 AND L2 Regularization for Multiclass Hinge Loss Models
            by Robert C. Moore, John DeNero
-           <http://www.ttic.edu/sigml/symposium2011/papers/
-           Moore+DeNero_Regularization.pdf>`_.
+           <https://storage.googleapis.com/pub-tools-public-publication-data/pdf/37362.pdf>`_.
 
     Examples
     --------
