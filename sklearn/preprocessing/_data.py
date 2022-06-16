@@ -3293,8 +3293,8 @@ class PowerTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             reset=in_fit,
         )
 
-        with np.warnings.catch_warnings():
-            np.warnings.filterwarnings("ignore", r"All-NaN (slice|axis) encountered")
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", r"All-NaN (slice|axis) encountered")
             if check_positive and self.method == "box-cox" and np.nanmin(X) <= 0:
                 raise ValueError(
                     "The Box-Cox transformation can only be "
