@@ -360,8 +360,9 @@ def test_check_array():
     accept_sparses = [["csr", "coo"], ["coo", "dok"]]
     # scipy sparse matrices do not support the object dtype so
     # this dtype is skipped in this loop
+    non_object_dtypes = [dt for dt in dtypes if dt is not object]
     for X, dtype, accept_sparse, copy in product(
-        Xs, dtypes[:-1], accept_sparses, copys
+        Xs, non_object_dtypes, accept_sparses, copys
     ):
         X_checked = check_array(X, dtype=dtype, accept_sparse=accept_sparse, copy=copy)
         if dtype is not None:
