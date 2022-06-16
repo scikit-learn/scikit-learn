@@ -652,16 +652,17 @@ def test_base_estimator_deprecated():
 
 def test_residual_threshold_with_sample_weight():
     """Check that residual threshold is calculated with sample weight"""
-    # sample_weight = np.random.RandomState(1714).random(X.shape[0]) * 20
-    sample_weight = np.arange(1, X.shape[0]+1)
-    ransac_estimator = RANSACRegressor(loss='absolute_error').fit(X, y, sample_weight=sample_weight)
-    
-    # check error on inliners are smaller than the weighted residual threshold
+    sample_weight = np.random.RandomState(1714).random(X.shape[0]) * 20
+    ransac_estimator = RANSACRegressor(loss="absolute_error", max_trials=1).fit(
+        X, y, sample_weight=sample_weight
+    )
     inliner_mask = ransac_estimator.inlier_mask_
     inliner_error = np.abs(y[inliner_mask] - ransac_estimator.predict(X[inliner_mask]))
-
-    residual_threshold_a = np.median(np.abs(y - np.median(y)))
-    residual_threshold_b = np.median(sample_weight * np.abs(y - np.median(y)) / np.sum(sample_weight))
-    print(residual_threshold_a, residual_threshold_b, max(inliner_error))
-    raise ValueError
+    outlier_error = np.abs(
+        y[~inliner_mask] - ransac_estimator.predict(X[~inliner_mask])
+    )
+    residual_threshold = np.median(
+        sample_weight * np.abs(y - np.median(y)) / np.sum(sample_weight)
+    )
     assert all(inliner_error < residual_threshold)
+    assert all(outlier_error > residual_threshold)
