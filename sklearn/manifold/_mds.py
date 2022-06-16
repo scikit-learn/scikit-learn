@@ -6,6 +6,7 @@ Multi-dimensional Scaling (MDS).
 # License: BSD
 
 import numpy as np
+from numbers import Integral, Real
 from joblib import Parallel, effective_n_jobs
 
 import warnings
@@ -14,6 +15,7 @@ from ..base import BaseEstimator
 from ..metrics import euclidean_distances
 from ..utils import check_random_state, check_array, check_symmetric
 from ..isotonic import IsotonicRegression
+from ..utils._param_validation import Interval, StrOptions
 from ..utils.fixes import delayed
 
 
@@ -424,6 +426,18 @@ class MDS(BaseEstimator):
     (100, 2)
     """
 
+    _parameter_constraints = {
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "metric": ["boolean"],
+        "n_init": [Interval(Integral, 1, None, closed="left")],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
+        "verbose": [Interval(Integral, 0, None, closed="left")],
+        "eps": [Interval(Real, 0.0, None, closed="neither")],
+        "n_jobs": [None, Integral],
+        "random_state": ["random_state"],
+        "dissimilarity": [StrOptions({"euclidean", "precomputed"})],
+    }
+
     def __init__(
         self,
         n_components=2,
@@ -501,6 +515,7 @@ class MDS(BaseEstimator):
         X_new : ndarray of shape (n_samples, n_components)
             X transformed in the new space.
         """
+        self._validate_params()
         X = self._validate_data(X)
         if X.shape[0] == X.shape[1] and self.dissimilarity != "precomputed":
             warnings.warn(
@@ -514,11 +529,6 @@ class MDS(BaseEstimator):
             self.dissimilarity_matrix_ = X
         elif self.dissimilarity == "euclidean":
             self.dissimilarity_matrix_ = euclidean_distances(X)
-        else:
-            raise ValueError(
-                "Proximity must be 'precomputed' or 'euclidean'. Got %s instead"
-                % str(self.dissimilarity)
-            )
 
         self.embedding_, self.stress_, self.n_iter_ = smacof(
             self.dissimilarity_matrix_,

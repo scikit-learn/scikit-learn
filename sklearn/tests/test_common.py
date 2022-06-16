@@ -533,7 +533,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "LocallyLinearEmbedding",
     "LogisticRegression",
     "LogisticRegressionCV",
-    "MDS",
     "MLPClassifier",
     "MLPRegressor",
     "MaxAbsScaler",
