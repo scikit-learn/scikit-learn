@@ -483,8 +483,8 @@ class Birch(
         "threshold": [Interval(Real, 0.0, None, closed="neither")],
         "branching_factor": [Interval(Integral, 1, None, closed="neither")],
         "n_clusters": [None, ClusterMixin, Interval(Integral, 1, None, closed="left")],
-        "compute_labels": [bool],
-        "copy": [bool],
+        "compute_labels": ["boolean"],
+        "copy": ["boolean"],
     }
 
     def __init__(
