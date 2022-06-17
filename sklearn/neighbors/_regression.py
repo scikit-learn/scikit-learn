@@ -35,7 +35,7 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
     n_neighbors : int, default=5
         Number of neighbors to use by default for :meth:`kneighbors` queries.
 
-    weights : {'uniform', 'distance'} or callable, default='uniform'
+    weights : {'uniform', 'distance'} or callable or None, default='uniform'
         Weight function used in prediction.  Possible values:
 
         - 'uniform' : uniform weights.  All points in each neighborhood
@@ -157,7 +157,7 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
     _parameter_constraints = {**NeighborsBase._parameter_constraints}
     _parameter_constraints.pop("radius")
     _parameter_constraints.update(
-        {"weights": [StrOptions({"uniform", "distance"}), callable]}
+        {"weights": [StrOptions({"uniform", "distance"}), callable, None]}
     )
 
     def __init__(
