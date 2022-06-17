@@ -105,27 +105,23 @@ def test_raises_value_error_if_positive_and_sparse():
         reg.fit(X, y)
 
 
-def test_raises_value_error_if_sample_weights_greater_than_1d(random_state=0):
+@pytest.mark.parametrize("n_samples, n_features", [(2, 3), (3, 2)])
+def test_raises_value_error_if_sample_weights_greater_than_1d(n_samples, n_features):
     # Sample weights must be either scalar or 1D
+    rng = check_random_state(0)
 
-    n_sampless = [2, 3]
-    n_featuress = [3, 2]
+    X = rng.randn(n_samples, n_features)
+    y = rng.randn(n_samples)
+    sample_weights_OK = rng.randn(n_samples) ** 2 + 1
+    sample_weights_OK_1 = 1.0
+    sample_weights_OK_2 = 2.0
 
-    rng = check_random_state(random_state)
+    reg = LinearRegression()
 
-    for n_samples, n_features in zip(n_sampless, n_featuress):
-        X = rng.randn(n_samples, n_features)
-        y = rng.randn(n_samples)
-        sample_weights_OK = rng.randn(n_samples) ** 2 + 1
-        sample_weights_OK_1 = 1.0
-        sample_weights_OK_2 = 2.0
-
-        reg = LinearRegression()
-
-        # make sure the "OK" sample weights actually work
-        reg.fit(X, y, sample_weights_OK)
-        reg.fit(X, y, sample_weights_OK_1)
-        reg.fit(X, y, sample_weights_OK_2)
+    # make sure the "OK" sample weights actually work
+    reg.fit(X, y, sample_weights_OK)
+    reg.fit(X, y, sample_weights_OK_1)
+    reg.fit(X, y, sample_weights_OK_2)
 
 
 def test_fit_intercept():
