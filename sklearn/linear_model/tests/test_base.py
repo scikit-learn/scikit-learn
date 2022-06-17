@@ -27,6 +27,7 @@ from sklearn.datasets import load_iris
 from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import add_dummy_feature
 
+rng = check_random_state(0)
 rtol = 1e-6
 
 
@@ -108,8 +109,6 @@ def test_raises_value_error_if_positive_and_sparse():
 @pytest.mark.parametrize("n_samples, n_features", [(2, 3), (3, 2)])
 def test_raises_value_error_if_sample_weights_greater_than_1d(n_samples, n_features):
     # Sample weights must be either scalar or 1D
-    rng = check_random_state(0)
-
     X = rng.randn(n_samples, n_features)
     y = rng.randn(n_samples)
     sample_weights_OK = rng.randn(n_samples) ** 2 + 1
@@ -215,7 +214,6 @@ def test_linear_regression_sparse(global_random_seed):
 @pytest.mark.parametrize("fit_intercept", [True, False])
 def test_linear_regression_sparse_equal_dense(normalize, fit_intercept):
     # Test that linear regression agrees between sparse and dense
-    rng = check_random_state(0)
     n_samples = 200
     n_features = 2
     X = rng.randn(n_samples, n_features)
@@ -233,8 +231,7 @@ def test_linear_regression_sparse_equal_dense(normalize, fit_intercept):
 
 def test_linear_regression_multiple_outcome():
     # Test multiple-outcome linear regressions
-    random_state = check_random_state(0)
-    X, y = make_regression(random_state=random_state)
+    X, y = make_regression(random_state=rng)
 
     Y = np.vstack((y, y)).T
     n_features = X.shape[1]
