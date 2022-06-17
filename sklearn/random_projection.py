@@ -250,7 +250,7 @@ def _sparse_random_matrix(n_components, n_features, density="auto", random_state
            https://web.stanford.edu/~hastie/Papers/Ping/KDD06_rp.pdf
 
     .. [2] D. Achlioptas, 2001, "Database-friendly random projections",
-           http://www.cs.ucsc.edu/~optas/papers/jl.pdf
+           https://cgi.di.uoa.gr/~optas/papers/jl.pdf
 
     """
     _check_input_size(n_components, n_features)
