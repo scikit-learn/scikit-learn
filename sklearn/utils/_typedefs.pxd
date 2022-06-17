@@ -24,4 +24,5 @@ ctypedef cnp.int64_t INT64TYPE_t  # WARNING: should match INT32TYPE in typedefs.
 #   cases.
 #
 # TODO: support cnp.int64_t for this case
+# See: https://github.com/scikit-learn/scikit-learn/issues/23653
 ctypedef cnp.int32_t SPARSE_INDEX_TYPE_t
