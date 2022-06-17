@@ -924,7 +924,7 @@ Monitoring performance
 ======================
 
 *This section is heavily inspired from the* `pandas documentation
-<https://pandas.pydata.org/docs/development/contributing.html#running-the-performance-test-suite>`_.
+<https://pandas.pydata.org/docs/development/contributing_codebase.html#running-the-performance-test-suite>`_.
 
 When proposing changes to the existing code base, it's important to make sure
 that they don't introduce performance regressions. Scikit-learn uses
