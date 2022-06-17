@@ -8,6 +8,7 @@
 # License: BSD 3 clause
 
 
+from numbers import Integral
 import warnings
 
 import numpy as np
@@ -39,6 +40,10 @@ from ..utils.validation import (
     check_random_state,
     _check_sample_weight,
     FLOAT_DTYPES,
+)
+from ..utils._param_validation import (
+    Interval,
+    StrOptions,
 )
 
 from ._encoders import OneHotEncoder
@@ -2442,6 +2447,15 @@ class QuantileTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator
     array([...])
     """
 
+    _parameter_constraints = {
+        "n_quantiles": [Interval(Integral, 1, None, closed="left")],
+        "output_distribution": [StrOptions({"uniform", "normal"})],
+        "ignore_implicit_zeros": [bool],
+        "subsample": [Interval(Integral, 1, None, closed="left")],
+        "random_state": ["random_state"],
+        "copy": [bool],
+    }
+
     def __init__(
         self,
         *,
@@ -2555,19 +2569,7 @@ class QuantileTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator
         self : object
            Fitted transformer.
         """
-        if self.n_quantiles <= 0:
-            raise ValueError(
-                "Invalid value for 'n_quantiles': %d. "
-                "The number of quantiles must be at least one."
-                % self.n_quantiles
-            )
-
-        if self.subsample <= 0:
-            raise ValueError(
-                "Invalid value for 'subsample': %d. "
-                "The number of subsamples must be at least one."
-                % self.subsample
-            )
+        self._validate_params()
 
         if self.n_quantiles > self.subsample:
             raise ValueError(
@@ -2684,13 +2686,6 @@ class QuantileTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator
                 raise ValueError(
                     "QuantileTransformer only accepts non-negative sparse matrices."
                 )
-
-        # check the output distribution
-        if self.output_distribution not in ("normal", "uniform"):
-            raise ValueError(
-                "'output_distribution' has to be either 'normal'"
-                " or 'uniform'. Got '{}' instead.".format(self.output_distribution)
-            )
 
         return X
 
@@ -3011,6 +3006,12 @@ class PowerTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
      [ 1.106...  1.414...]]
     """
 
+    _parameter_constraints = {
+        "method": [StrOptions({"yeo-johnson", "box-cox"})],
+        "standardize": [bool],
+        "copy": [bool],
+    }
+
     def __init__(self, method="yeo-johnson", *, standardize=True, copy=True):
         self.method = method
         self.standardize = standardize
@@ -3058,7 +3059,8 @@ class PowerTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         return self._fit(X, y, force_transform=True)
 
     def _fit(self, X, y=None, force_transform=False):
-        X = self._check_input(X, in_fit=True, check_positive=True, check_method=True)
+        self._validate_params()
+        X = self._check_input(X, in_fit=True, check_positive=True)
 
         if not self.copy and not force_transform:  # if call from fit()
             X = X.copy()  # force copy so that fit does not change X inplace
@@ -3261,9 +3263,7 @@ class PowerTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         # choosing bracket -2, 2 like for boxcox
         return optimize.brent(_neg_log_likelihood, brack=(-2, 2))
 
-    def _check_input(
-        self, X, in_fit, check_positive=False, check_shape=False, check_method=False
-    ):
+    def _check_input(self, X, in_fit, check_positive=False, check_shape=False):
         """Validate the input before fit and transform.
 
         Parameters
@@ -3280,9 +3280,6 @@ class PowerTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
         check_shape : bool, default=False
             If True, check that n_features matches the length of self.lambdas_
-
-        check_method : bool, default=False
-            If True, check that the transformation method is valid.
         """
         X = self._validate_data(
             X,
@@ -3306,14 +3303,6 @@ class PowerTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
                 "Input data has a different number of features "
                 "than fitting data. Should have {n}, data has {m}".format(
                     n=len(self.lambdas_), m=X.shape[1]
-                )
-            )
-
-        valid_methods = ("box-cox", "yeo-johnson")
-        if check_method and self.method not in valid_methods:
-            raise ValueError(
-                "'method' must be one of {}, got {} instead.".format(
-                    valid_methods, self.method
                 )
             )
 

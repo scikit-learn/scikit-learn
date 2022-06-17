@@ -1235,12 +1235,6 @@ def test_quantile_transform_check_error():
     )
     X_neg = sparse.csc_matrix(X_neg)
 
-    err_msg = "Invalid value for 'n_quantiles': 0."
-    with pytest.raises(ValueError, match=err_msg):
-        QuantileTransformer(n_quantiles=0).fit(X)
-    err_msg = "Invalid value for 'subsample': 0."
-    with pytest.raises(ValueError, match=err_msg):
-        QuantileTransformer(subsample=0).fit(X)
     err_msg = (
         "The number of quantiles cannot be greater than "
         "the number of samples used. Got 1000 quantiles "
@@ -2424,16 +2418,6 @@ def test_power_transformer_shape_exception(method):
 
     with pytest.raises(ValueError, match=wrong_shape_message):
         pt.inverse_transform(X[:, 0:1])
-
-
-def test_power_transformer_method_exception():
-    pt = PowerTransformer(method="monty-python")
-    X = np.abs(X_2d)
-
-    # An exception should be raised if PowerTransformer.method isn't valid
-    bad_method_message = "'method' must be one of"
-    with pytest.raises(ValueError, match=bad_method_message):
-        pt.fit(X)
 
 
 def test_power_transformer_lambda_zero():
