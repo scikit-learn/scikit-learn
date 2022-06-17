@@ -522,7 +522,7 @@ class _BaseDiscreteNB(_BaseNB):
 
     # alpha too small will result in numeric errors,
     # setting min_alpha = 1.0e-10
-    _paramater_constraints = {
+    _parameter_constraints = {
         "alpha": [Interval(Real, 1e-10, None, closed="left"), "array-like"],
         "fit_prior": ["boolean"],
         "class_prior": ["array-like", None],
@@ -848,7 +848,7 @@ class MultinomialNB(_BaseDiscreteNB):
     [3]
     """
 
-    _parameter_constraints = {**_BaseDiscreteNB._paramater_constraints}
+    _parameter_constraints = {**_BaseDiscreteNB._parameter_constraints}
 
     def __init__(self, *, alpha=1.0, fit_prior=True, class_prior=None):
         self.alpha = alpha
@@ -977,7 +977,7 @@ class ComplementNB(_BaseDiscreteNB):
     """
 
     _parameter_constraints = {
-        **_BaseDiscreteNB._paramater_constraints,
+        **_BaseDiscreteNB._parameter_constraints,
         "norm": ["boolean"],
     }
 
@@ -1118,7 +1118,7 @@ class BernoulliNB(_BaseDiscreteNB):
     """
 
     _parameter_constraints = {
-        **_BaseDiscreteNB._paramater_constraints,
+        **_BaseDiscreteNB._parameter_constraints,
         "binarize": [None, Interval(Real, 0, None, closed="left")],
     }
 
@@ -1277,7 +1277,7 @@ class CategoricalNB(_BaseDiscreteNB):
     """
 
     _parameter_constraints = {
-        **_BaseDiscreteNB._paramater_constraints,
+        **_BaseDiscreteNB._parameter_constraints,
         "min_categories": [
             None,
             "array-like",
