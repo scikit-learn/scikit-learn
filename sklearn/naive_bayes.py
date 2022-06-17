@@ -524,7 +524,7 @@ class _BaseDiscreteNB(_BaseNB):
     # setting min_alpha = 1.0e-10
     _paramater_constraints = {
         "alpha": [Interval(Real, 1e-10, None, closed="left"), "array-like"],
-        "fit_prior": [bool],
+        "fit_prior": ["boolean"],
         "class_prior": ["array-like", None],
     }
 
@@ -591,11 +591,16 @@ class _BaseDiscreteNB(_BaseNB):
             self.class_log_prior_ = np.full(n_classes, -np.log(n_classes))
 
     def _check_alpha(self):
-        if np.min(self.alpha) < 0:
+        if np.min(self.alpha) < 1e-10:
             raise ValueError(
-                "Smoothing parameter alpha = %.1e. alpha should be > 0."
+                "Smoothing parameter alpha = %.1e. alpha should be >= 1e-10."
                 % np.min(self.alpha)
             )
+        if isinstance(self.alpha, np.ndarray):
+            if not self.alpha.shape[0] == self.n_features_in_:
+                raise ValueError(
+                    "alpha should be a scalar or a numpy array with shape [n_features]"
+                )
         return self.alpha
 
     def partial_fit(self, X, y, classes=None, sample_weight=None):
@@ -971,7 +976,10 @@ class ComplementNB(_BaseDiscreteNB):
     [3]
     """
 
-    _parameter_constraints = {**_BaseDiscreteNB._paramater_constraints, "norm": [bool]}
+    _parameter_constraints = {
+        **_BaseDiscreteNB._paramater_constraints,
+        "norm": ["boolean"],
+    }
 
     def __init__(self, *, alpha=1.0, fit_prior=True, class_prior=None, norm=False):
         self.alpha = alpha

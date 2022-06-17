@@ -813,16 +813,9 @@ def test_alpha_vector():
     # Test alpha non-negative
     alpha = np.array([1.0, -0.1])
     m_nb = MultinomialNB(alpha=alpha)
-    expected_msg = "Smoothing parameter alpha = -1.0e-01. alpha should be > 0."
+    expected_msg = "Smoothing parameter alpha = -1.0e-01. alpha should be >= 1e-10."
     with pytest.raises(ValueError, match=expected_msg):
         m_nb.fit(X, y)
-
-    # Test that too small pseudo-counts are replaced
-    ALPHA_MIN = 1e-10
-    alpha = np.array([ALPHA_MIN / 2, 0.5])
-    m_nb = MultinomialNB(alpha=alpha)
-    m_nb.partial_fit(X, y, classes=[0, 1])
-    assert_array_almost_equal(m_nb._check_alpha(), [ALPHA_MIN, 0.5], decimal=12)
 
     # Test correct dimensions
     alpha = np.array([1.0, 2.0, 3.0])
