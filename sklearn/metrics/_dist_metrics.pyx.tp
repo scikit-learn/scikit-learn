@@ -588,14 +588,12 @@ cdef class DistanceMetric{{name_suffix}}:
         Xarr = np.asarray(X, dtype={{INPUT_DTYPE}}, order='C')
         self._validate_data(Xarr)
         if X is Y:
-            Darr = np.empty((Xarr.shape[0], Xarr.shape[0]),
-                            dtype=DTYPE, order='C')
+            Darr = np.empty((Xarr.shape[0], Xarr.shape[0]), dtype=DTYPE, order='C')
             self.pdist(Xarr, Darr)
         else:
             Yarr = np.asarray(Y, dtype={{INPUT_DTYPE}}, order='C')
             self._validate_data(Yarr)
-            Darr = np.empty((Xarr.shape[0], Yarr.shape[0]),
-                            dtype=DTYPE, order='C')
+            Darr = np.empty((Xarr.shape[0], Yarr.shape[0]), dtype=DTYPE, order='C')
             self.cdist(Xarr, Yarr, Darr)
         return Darr
 
@@ -777,7 +775,7 @@ cdef class EuclideanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             ix2 = x2_indices[i2 % len_x2_indices]
 
             if ix1 == ix2:
-                unsquared = (x1_data[i1] - x2_data[i2])
+                unsquared = (<DTYPE_t>(x1_data[i1]) - <DTYPE_t>(x2_data[i2]))
                 d = d + (unsquared * unsquared)
                 i1 = i1 + 1
                 i2 = i2 + 1
@@ -852,8 +850,8 @@ cdef class SEuclideanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
         cdef DTYPE_t tmp, d=0
         cdef cnp.intp_t j
         for j in range(size):
-            tmp = <DTYPE_t> (x1[j] - x2[j])
-            d += <DTYPE_t> (tmp * tmp / self.vec[j])
+            tmp = (<DTYPE_t>(x1[j]) - <DTYPE_t>(x2[j]))
+            d += (tmp * tmp / self.vec[j])
         return d
 
     cdef inline DTYPE_t dist(self,
@@ -905,7 +903,7 @@ cdef class SEuclideanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             ix2 = x2_indices[i2 % len_x2_indices]
 
             if ix1 == ix2:
-                unsquared = (x1_data[i1] - x2_data[i2])
+                unsquared = (<DTYPE_t>(x1_data[i1]) - <DTYPE_t>(x2_data[i2]))
                 d = d + (unsquared * unsquared) / self.vec[ix1]
                 i1 = i1 + 1
                 i2 = i2 + 1
@@ -975,7 +973,7 @@ cdef class ManhattanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
         cdef DTYPE_t d = 0
         cdef cnp.intp_t j
         for j in range(size):
-            d += <DTYPE_t> fabs(x1[j] - x2[j])
+            d += fabs(<DTYPE_t>(x1[j]) - <DTYPE_t>(x2[j]))
         return d
 
     cdef inline DTYPE_t csr_dist(self,
@@ -1007,23 +1005,23 @@ cdef class ManhattanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             ix2 = x2_indices[i2 % len_x2_indices]
 
             if ix1 == ix2:
-                d = d + fabs(x1_data[i1] - x2_data[i2])
+                d = d + fabs(<DTYPE_t>(x1_data[i1]) - <DTYPE_t>(x2_data[i2]))
                 i1 = i1 + 1
                 i2 = i2 + 1
             elif ix1 < ix2:
-                d = d + fabs(x1_data[i1])
+                d = d + fabs(<DTYPE_t>x1_data[i1])
                 i1 = i1 + 1
             else:
-                d = d + fabs(x2_data[i2])
+                d = d + fabs(<DTYPE_t>x2_data[i2])
                 i2 = i2 + 1
 
         if i1 == x1_end:
             while i2 < x2_end:
-                d = d + fabs(x2_data[i2])
+                d = d + fabs(<DTYPE_t>x2_data[i2])
                 i2 = i2 + 1
         else:
             while i1 < x1_end:
-                d = d + fabs(x1_data[i1])
+                d = d + fabs(<DTYPE_t>x1_data[i1])
                 i1 = i1 + 1
 
         return d
@@ -1061,7 +1059,7 @@ cdef class ChebyshevDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
         cdef DTYPE_t d = 0
         cdef cnp.intp_t j
         for j in range(size):
-            d = <DTYPE_t> fmax(d, fabs(x1[j] - x2[j]))
+            d = fmax(d, fabs(<DTYPE_t> (x1[j]) - <DTYPE_t> (x2[j])))
         return d
 
 
@@ -1094,23 +1092,23 @@ cdef class ChebyshevDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             ix2 = x2_indices[i2 % len_x2_indices]
 
             if ix1 == ix2:
-                d = fmax(d, fabs(x1_data[i1] - x2_data[i2]))
+                d = fmax(d, fabs(<DTYPE_t>(x1_data[i1]) - <DTYPE_t>(x2_data[i2])))
                 i1 = i1 + 1
                 i2 = i2 + 1
             elif ix1 < ix2:
-                d = fmax(d, fabs(x1_data[i1]))
+                d = fmax(d, fabs(<DTYPE_t>x1_data[i1]))
                 i1 = i1 + 1
             else:
-                d = fmax(d, fabs(x2_data[i2]))
+                d = fmax(d, fabs(<DTYPE_t>x2_data[i2]))
                 i2 = i2 + 1
 
         if i1 == x1_end:
             while i2 < x2_end:
-                d = fmax(d, fabs(x2_data[i2]))
+                d = fmax(d, fabs(<DTYPE_t>x2_data[i2]))
                 i2 = i2 + 1
         else:
             while i1 < x1_end:
-                d = fmax(d, fabs(x1_data[i1]))
+                d = fmax(d, fabs(<DTYPE_t>x1_data[i1]))
                 i1 = i1 + 1
 
         return d
@@ -1179,10 +1177,12 @@ cdef class MinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
         cdef bint has_w = self.size > 0
         if has_w:
             for j in range(size):
-                d += <DTYPE_t> (self.vec[j] * pow(fabs(x1[j] - x2[j]), self.p))
+                d += <DTYPE_t> (self.vec[j] * pow(fabs(
+                    <DTYPE_t>(x1[j]) - <DTYPE_t>(x2[j])
+                ), self.p))
         else:
             for j in range(size):
-                d += <DTYPE_t> (pow(fabs(x1[j] - x2[j]), self.p))
+                d += <DTYPE_t> (pow(fabs(<DTYPE_t>(x1[j]) - <DTYPE_t>(x2[j])), self.p))
         return d
 
     cdef inline DTYPE_t dist(self,
@@ -1235,25 +1235,27 @@ cdef class MinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
                 ix2 = x2_indices[i2 % len_x2_indices]
 
                 if ix1 == ix2:
-                    d = d + (self.vec[ix1] * pow(fabs(x1_data[i1] - x2_data[i2]), self.p))
+                    d = d + (self.vec[ix1] * pow(fabs(
+                        <DTYPE_t>(x1_data[i1]) - <DTYPE_t>(x2_data[i2])
+                    ), self.p))
                     i1 = i1 + 1
                     i2 = i2 + 1
                 elif ix1 < ix2:
-                    d = d + (self.vec[ix1] * pow(fabs(x1_data[i1]), self.p))
+                    d = d + (self.vec[ix1] * pow(fabs(<DTYPE_t>x1_data[i1]), self.p))
                     i1 = i1 + 1
                 else:
-                    d = d + (self.vec[ix2] * pow(fabs(x2_data[i2]), self.p))
+                    d = d + (self.vec[ix2] * pow(fabs(<DTYPE_t>x2_data[i2]), self.p))
                     i2 = i2 + 1
 
             if i1 == x1_end:
                 while i2 < x2_end:
                     ix2 = x2_indices[i2 % len_x2_indices]
-                    d = d + (self.vec[ix2] * pow(fabs(x2_data[i2]), self.p))
+                    d = d + (self.vec[ix2] * pow(fabs(<DTYPE_t>x2_data[i2]), self.p))
                     i2 = i2 + 1
             else:
                 while i1 < x1_end:
                     ix1 = x1_indices[i1 % len_x1_indices]
-                    d = d + (self.vec[ix1] * pow(fabs(x1_data[i1]), self.p))
+                    d = d + (self.vec[ix1] * pow(fabs(<DTYPE_t>x1_data[i1]), self.p))
                     i1 = i1 + 1
 
             return d
@@ -1266,23 +1268,25 @@ cdef class MinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
                 ix2 = x2_indices[i2 % len_x2_indices]
 
                 if ix1 == ix2:
-                    d = d + (pow(fabs(x1_data[i1] - x2_data[i2]), self.p))
+                    d = d + (pow(fabs(
+                        <DTYPE_t>(x1_data[i1]) - <DTYPE_t>(x2_data[i2])
+                    ), self.p))
                     i1 = i1 + 1
                     i2 = i2 + 1
                 elif ix1 < ix2:
-                    d = d + (pow(fabs(x1_data[i1]), self.p))
+                    d = d + (pow(fabs(<DTYPE_t>x1_data[i1]), self.p))
                     i1 = i1 + 1
                 else:
-                    d = d + (pow(fabs(x2_data[i2]), self.p))
+                    d = d + (pow(fabs(<DTYPE_t>x2_data[i2]), self.p))
                     i2 = i2 + 1
 
             if i1 == x1_end:
                 while i2 < x2_end:
-                    d = d + (pow(fabs(x2_data[i2]), self.p))
+                    d = d + (pow(fabs(<DTYPE_t>x2_data[i2]), self.p))
                     i2 = i2 + 1
             else:
                 while i1 < x1_end:
-                    d = d + (pow(fabs(x1_data[i1]), self.p))
+                    d = d + (pow(fabs(<DTYPE_t>x1_data[i1]), self.p))
                     i1 = i1 + 1
 
             return d
@@ -1366,7 +1370,9 @@ cdef class WMinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
         cdef DTYPE_t d = 0
         cdef cnp.intp_t j
         for j in range(size):
-            d += <DTYPE_t> (pow(self.vec[j] * fabs(x1[j] - x2[j]), self.p))
+            d += <DTYPE_t> (pow(self.vec[j] * fabs(
+                <DTYPE_t>(x1[j]) - <DTYPE_t>(x2[j])
+            ), self.p))
         return d
 
     cdef inline DTYPE_t dist(self,
@@ -1417,25 +1423,27 @@ cdef class WMinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             ix2 = x2_indices[i2 % len_x2_indices]
 
             if ix1 == ix2:
-                d = d + pow(self.vec[ix1] * fabs(x1_data[i1] - x2_data[i2]), self.p)
+                d = d + pow(self.vec[ix1] * fabs(
+                    <DTYPE_t>(x1_data[i1]) - <DTYPE_t>(x2_data[i2])
+                ), self.p)
                 i1 = i1 + 1
                 i2 = i2 + 1
             elif ix1 < ix2:
-                d = d + pow(self.vec[ix1] * fabs(x1_data[i1]), self.p)
+                d = d + pow(self.vec[ix1] * fabs(<DTYPE_t>x1_data[i1]), self.p)
                 i1 = i1 + 1
             else:
-                d = d + pow(self.vec[ix2] * fabs(x2_data[i2]), self.p)
+                d = d + pow(self.vec[ix2] * fabs(<DTYPE_t>x2_data[i2]), self.p)
                 i2 = i2 + 1
 
         if i1 == x1_end:
             while i2 < x2_end:
                 ix2 = x2_indices[i2 % len_x2_indices]
-                d = d + pow(self.vec[ix2] * fabs(x2_data[i2]), self.p)
+                d = d + pow(self.vec[ix2] * fabs(<DTYPE_t>x2_data[i2]), self.p)
                 i2 = i2 + 1
         else:
             while i1 < x1_end:
                 ix1 = x1_indices[i1 % len_x1_indices]
-                d = d + pow(self.vec[ix1] * fabs(x1_data[i1]), self.p)
+                d = d + pow(self.vec[ix1] * fabs(<DTYPE_t>x1_data[i1]), self.p)
                 i1 = i1 + 1
 
         return d
@@ -1514,7 +1522,7 @@ cdef class MahalanobisDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
         # compute (x1 - x2).T * VI * (x1 - x2)
         for i in range(size):
-            self.vec[i] = x1[i] - x2[i]
+            self.vec[i] = <DTYPE_t>(x1[i]) - <DTYPE_t>(x2[i])
 
         for i in range(size):
             tmp = 0
@@ -1571,7 +1579,7 @@ cdef class MahalanobisDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             ix2 = x2_indices[i2 % len_x2_indices]
 
             if ix1 == ix2:
-                self.vec[ix1] = x1_data[i1] - x2_data[i2]
+                self.vec[ix1] = <DTYPE_t>(x1_data[i1]) - <DTYPE_t>(x2_data[i2])
                 i1 = i1 + 1
                 i2 = i2 + 1
             elif ix1 < ix2:
@@ -1721,9 +1729,9 @@ cdef class CanberraDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
         cdef DTYPE_t denom, d = 0
         cdef cnp.intp_t j
         for j in range(size):
-            denom = <DTYPE_t> (fabs(x1[j]) + fabs(x2[j]))
+            denom = fabs(<DTYPE_t>(x1[j])) + fabs(<DTYPE_t>(x2[j]))
             if denom > 0:
-                d += <DTYPE_t>(fabs(x1[j] - x2[j])) / denom
+                d += fabs(<DTYPE_t>(x1[j]) - <DTYPE_t>(x2[j])) / denom
         return d
 
     cdef inline DTYPE_t csr_dist(self,
@@ -1755,7 +1763,10 @@ cdef class CanberraDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             ix2 = x2_indices[i2 % len_x2_indices]
 
             if ix1 == ix2:
-                d += fabs(x1_data[i1] - x2_data[i2]) / (fabs(x1_data[i1]) + fabs(x2_data[i2]))
+                d += (
+                        fabs(<DTYPE_t>(x1_data[i1]) - <DTYPE_t>(x2_data[i2])) /
+                        (fabs(<DTYPE_t>(x1_data[i1])) + fabs(<DTYPE_t>(x2_data[i2])))
+                )
                 i1 = i1 + 1
                 i2 = i2 + 1
             elif ix1 < ix2:
@@ -1796,8 +1807,8 @@ cdef class BrayCurtisDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
         cdef DTYPE_t num = 0, denom = 0
         cdef cnp.intp_t j
         for j in range(size):
-            num += <DTYPE_t> fabs(x1[j] - x2[j])
-            denom += <DTYPE_t> (fabs(x1[j]) + fabs(x2[j]))
+            num += fabs(<DTYPE_t>(x1[j]) - <DTYPE_t>(x2[j]))
+            denom += <DTYPE_t> (fabs(<DTYPE_t>x1[j]) + fabs(<DTYPE_t>x2[j]))
         if denom > 0:
             return num / denom
         else:
@@ -1833,28 +1844,28 @@ cdef class BrayCurtisDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             ix2 = x2_indices[i2 % len_x2_indices]
 
             if ix1 == ix2:
-                num += fabs(x1_data[i1] - x2_data[i2])
-                denom += fabs(x1_data[i1]) + fabs(x2_data[i2])
+                num += fabs(<DTYPE_t>(x1_data[i1]) - <DTYPE_t>(x2_data[i2]))
+                denom += fabs(<DTYPE_t>x1_data[i1]) + fabs(<DTYPE_t>x2_data[i2])
                 i1 = i1 + 1
                 i2 = i2 + 1
             elif ix1 < ix2:
-                num += fabs(x1_data[i1])
-                denom += fabs(x1_data[i1])
+                num += fabs(<DTYPE_t>x1_data[i1])
+                denom += fabs(<DTYPE_t>x1_data[i1])
                 i1 = i1 + 1
             else:
-                num += fabs(x2_data[i2])
-                denom += fabs(x2_data[i2])
+                num += fabs(<DTYPE_t>x2_data[i2])
+                denom += fabs(<DTYPE_t>x2_data[i2])
                 i2 = i2 + 1
 
         if i1 == x1_end:
             while i2 < x2_end:
-                num += fabs(x1_data[i1])
-                denom += fabs(x1_data[i1])
+                num += fabs(<DTYPE_t>x1_data[i1])
+                denom += fabs(<DTYPE_t>x1_data[i1])
                 i2 = i2 + 1
         else:
             while i1 < x1_end:
-                num += fabs(x2_data[i2])
-                denom += fabs(x2_data[i2])
+                num += fabs(<DTYPE_t>x2_data[i2])
+                denom += fabs(<DTYPE_t>x2_data[i2])
                 i1 = i1 + 1
 
         return num / denom
@@ -2537,9 +2548,9 @@ cdef class HaversineDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
         const {{INPUT_DTYPE_t}}* x2,
         ITYPE_t size,
     ) nogil except -1:
-        cdef DTYPE_t sin_0 = <DTYPE_t> sin(0.5 * (x1[0] - x2[0]))
-        cdef DTYPE_t sin_1 = <DTYPE_t> sin(0.5 * (x1[1] - x2[1]))
-        return (sin_0 * sin_0 + cos(x1[0]) * cos(x2[0]) * sin_1 * sin_1)
+        cdef DTYPE_t sin_0 = sin(0.5 * (<DTYPE_t>(x1[0]) - <DTYPE_t>(x2[0])))
+        cdef DTYPE_t sin_1 = sin(0.5 * (<DTYPE_t>(x1[1]) - <DTYPE_t>(x2[1])))
+        return (sin_0 * sin_0 + cos(<DTYPE_t>x1[0]) * cos(<DTYPE_t>x2[0]) * sin_1 * sin_1)
 
     cdef inline DTYPE_t dist(self,
         const {{INPUT_DTYPE_t}}* x1,
