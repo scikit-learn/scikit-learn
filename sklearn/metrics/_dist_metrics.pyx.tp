@@ -423,10 +423,9 @@ cdef class DistanceMetric{{name_suffix}}:
         const SPARSE_INDEX_TYPE_t x2_end,
         const ITYPE_t size,
     ) nogil except -1:
-        """Compute the distance between vectors x1 and x2 represented
-        under the CSR format.
+        """Distance between rows of CSR matrices x1 and x2.
 
-        This can optionally be overridden in a base class.
+        This can optionally be overridden in a subclass.
 
         The rank-preserving surrogate distance is any measure that yields the same
         rank as the distance, but is more efficient to compute. For example, the
@@ -456,8 +455,11 @@ cdef class DistanceMetric{{name_suffix}}:
         const ITYPE_t size,
         DTYPE_t[:, ::1] D,
     ) nogil except -1:
-        """Compute the pairwise distances between points in X
-        represented in the CSR format."""
+        """Pairwise distances between rows in CSR matrix X.
+        
+        Note that this implementation is twice faster than csr_cdist(X, X)
+        because it leverages the symmetry of the problem.
+        """
         cdef:
             ITYPE_t i1, i2
             ITYPE_t n_x1 = x1_indptr.shape[0] - 1
