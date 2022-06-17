@@ -385,21 +385,11 @@ def test_glm_regression_unpenalized(solver, fit_intercept, glm_dataset):
             norm_model = np.linalg.norm(np.r_[model.intercept_, model.coef_])
             assert norm_model > (1 + 1e-12) * norm_solution
 
+            # See https://github.com/scikit-learn/scikit-learn/issues/23670.
             # Note: Even adding a tiny penalty does not give the minimal norm solution.
             # XXX: We could have naively expected LBFGS to find the minimal norm
-            # solution by adding a very small penalty. However, as the following code
-            # snippet shows, this does not work for a reason we do not properly
-            # understand at this point.
-            #   model_pen = clone(model).set_params(**params).set_params(alpha=1e-10)
-            #   model_pen.fit(X, y)
-            #   assert_allclose(model_pen.predict(X), y, rtol=1e-6)  # This is true.
-            #   norm_model_pen = np.linalg.norm(
-            #       np.r_[model_pen.intercept_, model_pen.coef_]
-            #   )
-            # All the following assertions fail.
-            #   assert norm_model_pen == pytest.approx(norm_solution)
-            #   assert model_pen.intercept_ == pytest.approx(intercept)
-            #   assert_allclose(model_pen.coef_, coef, rtol=rtol)
+            # solution by adding a very small penalty. Even that fails for a reason we
+            # do not properly
         else:
             # When `fit_intercept=False`, LBFGS naturally converges to the minimum norm
             # solution on this problem.
