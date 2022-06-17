@@ -4072,17 +4072,16 @@ def check_param_validation(name, estimator_orig):
 
         estimator = clone(estimator_orig)
 
-        # First, check that the error is raised if param doesn't match any valid
-        # type.
+        # First, check that the error is raised if param doesn't match any valid type.
         estimator.set_params(**{param_name: param_with_bad_type})
 
         for method in methods:
             with raises(ValueError, match=match, err_msg=err_msg):
                 getattr(estimator, method)(X, y)
 
-        # Then, for constraints that are more than a type constraint, check that
-        # the error is raised if param does match a valid type but does not match
-        # any valid value for this type.
+        # Then, for constraints that are more than a type constraint, check that the
+        # error is raised if param does match a valid type but does not match any valid
+        # value for this type.
         constraints = estimator_orig._parameter_constraints[param_name]
         constraints = [make_constraint(constraint) for constraint in constraints]
 
