@@ -8,7 +8,7 @@ from sklearn.utils._testing import assert_allclose
 import pytest
 
 import scipy.sparse as sp
-from scipy.spatial.distance import cdist, pdist
+from scipy.spatial.distance import cdist
 from sklearn.metrics import DistanceMetric
 
 from sklearn.metrics._dist_metrics import (
@@ -91,6 +91,8 @@ def test_cdist(metric_param_grid, X, Y):
             # Computation of mahalanobis differs between
             # the scipy and scikit-learn implementation.
             # Hence, we increase the relative tolerance.
+            # TODO: Inspect slight numerical discrepancy
+            # with scipy
             rtol_dict = {"rtol": 1e-6}
 
         if metric == "wminkowski":
@@ -148,6 +150,8 @@ def test_pdist(metric_param_grid, X):
             # Computation of mahalanobis differs between
             # the scipy and scikit-learn implementation.
             # Hence, we increase the relative tolerance.
+            # TODO: Inspect slight numerical discrepancy
+            # with scipy
             rtol_dict = {"rtol": 1e-6}
 
         if metric == "wminkowski":
@@ -159,9 +163,9 @@ def test_pdist(metric_param_grid, X):
             if sp_version >= parse_version("1.6.0"):
                 ExceptionToAssert = DeprecationWarning
             with pytest.warns(ExceptionToAssert):
-                D_scipy_pdist = pdist(X, metric, **kwargs)
+                D_scipy_pdist = cdist(X, X, metric, **kwargs)
         else:
-            D_scipy_pdist = pdist(X, metric, **kwargs)
+            D_scipy_pdist = cdist(X, X, metric, **kwargs)
 
         dm = DistanceMetricInterface.get_metric(metric, **kwargs)
         D_sklearn = dm.pairwise(X)
@@ -196,7 +200,7 @@ def test_distance_metrics_dtype_consistency(metric_param_grid):
 @pytest.mark.parametrize("metric", BOOL_METRICS)
 @pytest.mark.parametrize("X_bool", [X_bool, X_bool_mmap])
 def test_pdist_bool_metrics(metric, X_bool):
-    D_scipy_pdist = pdist(X_bool, metric)
+    D_scipy_pdist = cdist(X_bool, X_bool, metric)
     dm = DistanceMetric.get_metric(metric)
     D_sklearn = dm.pairwise(X_bool)
     assert_allclose(D_sklearn, D_scipy_pdist)
