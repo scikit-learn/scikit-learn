@@ -38,8 +38,8 @@ Y32 = Y64.astype("float32")
 [X_mmap, Y_mmap] = create_memmap_backed_data([X64, Y64])
 
 # make boolean arrays: ones and zeros
-X_bool = X64.round(0)
-Y_bool = Y64.round(0)
+X_bool = (X64 < 0.3).astype(np.float64)  # quite sparse
+Y_bool = (Y64 < 0.7).astype(np.float64)  # not too sparse
 
 [X_bool_mmap, Y_bool_mmap] = create_memmap_backed_data([X_bool, Y_bool])
 
