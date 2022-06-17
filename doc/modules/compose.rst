@@ -202,7 +202,7 @@ each configuration.
 
 The parameter ``memory`` is needed in order to cache the transformers.
 ``memory`` can be either a string containing the directory where to cache the
-transformers or a `joblib.Memory <https://pythonhosted.org/joblib/memory.html>`_
+transformers or a `joblib.Memory <https://joblib.readthedocs.io/en/latest/memory.html>`_
 object::
 
     >>> from tempfile import mkdtemp
