@@ -779,9 +779,7 @@ def test_categoricalnb_with_min_categories(
 @pytest.mark.parametrize(
     "min_categories, error_msg",
     [
-        ("bad_arg", "'min_categories' should have integral"),
         ([[3, 2], [2, 4]], "'min_categories' should have shape"),
-        (1.0, "'min_categories' should have integral"),
     ],
 )
 def test_categoricalnb_min_categories_errors(min_categories, error_msg):
@@ -792,71 +790,6 @@ def test_categoricalnb_min_categories_errors(min_categories, error_msg):
     clf = CategoricalNB(alpha=1, fit_prior=False, min_categories=min_categories)
     with pytest.raises(ValueError, match=error_msg):
         clf.fit(X, y)
-
-
-def test_alpha():
-    # Setting alpha=0 should not output nan results when p(x_i|y_j)=0 is a case
-    X = np.array([[1, 0], [1, 1]])
-    y = np.array([0, 1])
-    nb = BernoulliNB(alpha=0.0)
-    msg = "alpha too small will result in numeric errors, setting alpha = 1.0e-10"
-    with pytest.warns(UserWarning, match=msg):
-        nb.partial_fit(X, y, classes=[0, 1])
-    with pytest.warns(UserWarning, match=msg):
-        nb.fit(X, y)
-    prob = np.array([[1, 0], [0, 1]])
-    assert_array_almost_equal(nb.predict_proba(X), prob)
-
-    nb = MultinomialNB(alpha=0.0)
-    with pytest.warns(UserWarning, match=msg):
-        nb.partial_fit(X, y, classes=[0, 1])
-    with pytest.warns(UserWarning, match=msg):
-        nb.fit(X, y)
-    prob = np.array([[2.0 / 3, 1.0 / 3], [0, 1]])
-    assert_array_almost_equal(nb.predict_proba(X), prob)
-
-    nb = CategoricalNB(alpha=0.0)
-    with pytest.warns(UserWarning, match=msg):
-        nb.fit(X, y)
-    prob = np.array([[1.0, 0.0], [0.0, 1.0]])
-    assert_array_almost_equal(nb.predict_proba(X), prob)
-
-    # Test sparse X
-    X = scipy.sparse.csr_matrix(X)
-    nb = BernoulliNB(alpha=0.0)
-    with pytest.warns(UserWarning, match=msg):
-        nb.fit(X, y)
-    prob = np.array([[1, 0], [0, 1]])
-    assert_array_almost_equal(nb.predict_proba(X), prob)
-
-    nb = MultinomialNB(alpha=0.0)
-    with pytest.warns(UserWarning, match=msg):
-        nb.fit(X, y)
-    prob = np.array([[2.0 / 3, 1.0 / 3], [0, 1]])
-    assert_array_almost_equal(nb.predict_proba(X), prob)
-
-    # Test for alpha < 0
-    X = np.array([[1, 0], [1, 1]])
-    y = np.array([0, 1])
-    expected_msg = re.escape(
-        "Smoothing parameter alpha = -1.0e-01. alpha should be > 0."
-    )
-    b_nb = BernoulliNB(alpha=-0.1)
-    m_nb = MultinomialNB(alpha=-0.1)
-    c_nb = CategoricalNB(alpha=-0.1)
-    with pytest.raises(ValueError, match=expected_msg):
-        b_nb.fit(X, y)
-    with pytest.raises(ValueError, match=expected_msg):
-        m_nb.fit(X, y)
-    with pytest.raises(ValueError, match=expected_msg):
-        c_nb.fit(X, y)
-
-    b_nb = BernoulliNB(alpha=-0.1)
-    m_nb = MultinomialNB(alpha=-0.1)
-    with pytest.raises(ValueError, match=expected_msg):
-        b_nb.partial_fit(X, y, classes=[0, 1])
-    with pytest.raises(ValueError, match=expected_msg):
-        m_nb.partial_fit(X, y, classes=[0, 1])
 
 
 def test_alpha_vector():

@@ -16,6 +16,7 @@ are supervised learning methods based on applying Bayes' theorem with strong
 import warnings
 
 from abc import ABCMeta, abstractmethod
+from numbers import Real, Integral
 
 
 import numpy as np
@@ -30,6 +31,7 @@ from .utils.extmath import safe_sparse_dot
 from .utils.multiclass import _check_partial_fit_first_call
 from .utils.validation import check_is_fitted, check_non_negative
 from .utils.validation import _check_sample_weight
+from .utils._param_validation import Interval
 
 
 __all__ = [
@@ -137,7 +139,7 @@ class GaussianNB(_BaseNB):
 
     Parameters
     ----------
-    priors : array-like of shape (n_classes,)
+    priors : array-like of shape (n_classes,), default=None
         Prior probabilities of the classes. If specified, the priors are not
         adjusted according to the data.
 
@@ -212,6 +214,11 @@ class GaussianNB(_BaseNB):
     [1]
     """
 
+    _parameter_constraints = {
+        "priors": ["array-like", None],
+        "var_smoothing": [Interval(Real, 0, None, closed="left")],
+    }
+
     def __init__(self, *, priors=None, var_smoothing=1e-9):
         self.priors = priors
         self.var_smoothing = var_smoothing
@@ -239,6 +246,7 @@ class GaussianNB(_BaseNB):
         self : object
             Returns the instance itself.
         """
+        self._validate_params()
         y = self._validate_data(y=y)
         return self._partial_fit(
             X, y, np.unique(y), _refit=True, sample_weight=sample_weight
@@ -360,6 +368,7 @@ class GaussianNB(_BaseNB):
         self : object
             Returns the instance itself.
         """
+        self._validate_params()
         return self._partial_fit(
             X, y, classes, _refit=False, sample_weight=sample_weight
         )
@@ -514,6 +523,13 @@ class _BaseDiscreteNB(_BaseNB):
     _count(X, Y)
     """
 
+    # alpha too small will result in numeric errors, setting min_alpha = 1.0e-10
+    _paramater_constraints = {
+        "alpha": [Interval(Real, 1e-10, None, closed="left"), "array-like"],
+        "fit_prior": [bool],
+        "class_prior": ["array-like", None],
+    }
+
     @abstractmethod
     def _count(self, X, Y):
         """Update counts that are used to calculate probabilities.
@@ -632,6 +648,7 @@ class _BaseDiscreteNB(_BaseNB):
         self : object
             Returns the instance itself.
         """
+        self._validate_params()
         first_call = not hasattr(self, "classes_")
         X, y = self._check_X_y(X, y, reset=first_call)
         _, n_features = X.shape
@@ -696,6 +713,7 @@ class _BaseDiscreteNB(_BaseNB):
         self : object
             Returns the instance itself.
         """
+        self._validate_params()
         X, y = self._check_X_y(X, y)
         _, n_features = X.shape
 
@@ -760,9 +778,9 @@ class MultinomialNB(_BaseDiscreteNB):
 
     Parameters
     ----------
-    alpha : float, default=1.0
+    alpha : float or array-like of shape(n_features), default=1.0
         Additive (Laplace/Lidstone) smoothing parameter
-        (0 for no smoothing).
+        (alpha_min=1.0e-10).
 
     fit_prior : bool, default=True
         Whether to learn class prior probabilities or not.
@@ -838,6 +856,8 @@ class MultinomialNB(_BaseDiscreteNB):
     [3]
     """
 
+    _parameter_constraints = {**_BaseDiscreteNB._paramater_constraints}
+
     def __init__(self, *, alpha=1.0, fit_prior=True, class_prior=None):
         self.alpha = alpha
         self.fit_prior = fit_prior
@@ -879,8 +899,8 @@ class ComplementNB(_BaseDiscreteNB):
 
     Parameters
     ----------
-    alpha : float, default=1.0
-        Additive (Laplace/Lidstone) smoothing parameter (0 for no smoothing).
+    alpha : float or array-like of shape(n_features), default=1.0
+        Additive (Laplace/Lidstone) smoothing parameter (alpha_min=1.0e-10).
 
     fit_prior : bool, default=True
         Only used in edge case with a single class in the training set.
@@ -964,6 +984,8 @@ class ComplementNB(_BaseDiscreteNB):
     [3]
     """
 
+    _parameter_constraints = {**_BaseDiscreteNB._paramater_constraints, "norm": [bool]}
+
     def __init__(self, *, alpha=1.0, fit_prior=True, class_prior=None, norm=False):
         self.alpha = alpha
         self.fit_prior = fit_prior
@@ -1011,9 +1033,9 @@ class BernoulliNB(_BaseDiscreteNB):
 
     Parameters
     ----------
-    alpha : float, default=1.0
+    alpha : float or array-like of shape(n_features), default=1.0
         Additive (Laplace/Lidstone) smoothing parameter
-        (0 for no smoothing).
+        (alpha_min=1.0e-10).
 
     binarize : float or None, default=0.0
         Threshold for binarizing (mapping to booleans) of sample features.
@@ -1100,6 +1122,11 @@ class BernoulliNB(_BaseDiscreteNB):
     [3]
     """
 
+    _parameter_constraints = {
+        **_BaseDiscreteNB._paramater_constraints,
+        "binarize": [None, Interval(Real, 0, None, closed="left")],
+    }
+
     def __init__(self, *, alpha=1.0, binarize=0.0, fit_prior=True, class_prior=None):
         self.alpha = alpha
         self.binarize = binarize
@@ -1163,9 +1190,9 @@ class CategoricalNB(_BaseDiscreteNB):
 
     Parameters
     ----------
-    alpha : float, default=1.0
+    alpha : float or array-like of shape(n_features), default=1.0
         Additive (Laplace/Lidstone) smoothing parameter
-        (0 for no smoothing).
+        (alpha_min=1.0e-10).
 
     fit_prior : bool, default=True
         Whether to learn class prior probabilities or not.
@@ -1253,6 +1280,15 @@ class CategoricalNB(_BaseDiscreteNB):
     >>> print(clf.predict(X[2:3]))
     [3]
     """
+
+    _parameter_constraints = {
+        **_BaseDiscreteNB._paramater_constraints,
+        "min_categories": [
+            None,
+            "array-like",
+            Interval(Integral, 1, None, closed="left"),
+        ],
+    }
 
     def __init__(
         self, *, alpha=1.0, fit_prior=True, class_prior=None, min_categories=None
