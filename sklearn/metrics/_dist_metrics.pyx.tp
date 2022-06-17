@@ -2092,19 +2092,21 @@ cdef class DiceDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
                 i1 = i1 + 1
                 i2 = i2 + 1
             elif ix1 < ix2:
-                n_neq += 1
+                n_neq += tf1
                 i1 = i1 + 1
             else:
-                n_neq += 1
+                n_neq += tf2
                 i2 = i2 + 1
 
         if i1 == x1_end:
             while i2 < x2_end:
-                n_neq += 1
+                tf2 = x2_data[i2] != 0
+                n_neq += tf2
                 i2 = i2 + 1
         else:
             while i1 < x1_end:
-                n_neq += 1
+                tf1 = x1_data[i1] != 0
+                n_neq += tf1
                 i1 = i1 + 1
 
         return n_neq / (2.0 * n_tt + n_neq)
@@ -2174,19 +2176,21 @@ cdef class KulsinskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
                 i1 = i1 + 1
                 i2 = i2 + 1
             elif ix1 < ix2:
-                n_neq += 1
+                n_neq += tf1
                 i1 = i1 + 1
             else:
-                n_neq += 1
+                n_neq += tf2
                 i2 = i2 + 1
 
         if i1 == x1_end:
             while i2 < x2_end:
-                n_neq += 1
+                tf2 = x2_data[i2] != 0
+                n_neq += tf2
                 i2 = i2 + 1
         else:
             while i1 < x1_end:
-                n_neq += 1
+                tf1 = x1_data[i1] != 0
+                n_neq += tf1
                 i1 = i1 + 1
 
         return (n_neq - n_tt + size) * 1.0 / (n_neq + size)
@@ -2252,19 +2256,21 @@ cdef class RogersTanimotoDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
                 i1 = i1 + 1
                 i2 = i2 + 1
             elif ix1 < ix2:
-                n_neq += 1
+                n_neq += tf1
                 i1 = i1 + 1
             else:
-                n_neq += 1
+                n_neq += tf2
                 i2 = i2 + 1
 
         if i1 == x1_end:
             while i2 < x2_end:
-                n_neq += 1
+                tf2 = x2_data[i2] != 0
+                n_neq += tf2
                 i2 = i2 + 1
         else:
             while i1 < x1_end:
-                n_neq += 1
+                tf1 = x1_data[i1] != 0
+                n_neq += tf1
                 i1 = i1 + 1
 
         return (2.0 * n_neq) / (size + n_neq)
@@ -2403,19 +2409,21 @@ cdef class SokalMichenerDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
                 i1 = i1 + 1
                 i2 = i2 + 1
             elif ix1 < ix2:
-                n_neq += 1
+                n_neq += tf1
                 i1 = i1 + 1
             else:
-                n_neq += 1
+                n_neq += tf2
                 i2 = i2 + 1
 
         if i1 == x1_end:
             while i2 < x2_end:
-                n_neq += 1
+                tf2 = x2_data[i2] != 0
+                n_neq += tf2
                 i2 = i2 + 1
         else:
             while i1 < x1_end:
-                n_neq += 1
+                tf1 = x1_data[i1] != 0
+                n_neq += tf1
                 i1 = i1 + 1
 
         return (2.0 * n_neq) / (size + n_neq)
@@ -2483,19 +2491,21 @@ cdef class SokalSneathDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
                 i1 = i1 + 1
                 i2 = i2 + 1
             elif ix1 < ix2:
-                n_neq += 1
+                n_neq += tf1
                 i1 = i1 + 1
             else:
-                n_neq += 1
+                n_neq += tf2
                 i2 = i2 + 1
 
         if i1 == x1_end:
             while i2 < x2_end:
-                n_neq += 1
+                tf2 = x2_data[i2] != 0
+                n_neq += tf2
                 i2 = i2 + 1
         else:
             while i1 < x1_end:
-                n_neq += 1
+                tf1 = x1_data[i1] != 0
+                n_neq += tf1
                 i1 = i1 + 1
 
         return n_neq / (0.5 * n_tt + n_neq)
