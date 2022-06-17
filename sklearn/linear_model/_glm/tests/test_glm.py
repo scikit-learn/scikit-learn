@@ -45,7 +45,8 @@ def _special_minimize(fun, grad, x, tol_NM, tol):
     res_NM = minimize(
         fun, x, method="Nelder-Mead", options={"xatol": tol_NM, "fatol": tol_NM}
     )
-    # Now refine via root finding, wich is more precise than minimizing a function.
+    # Now refine via root finding on the gradient of the function, wich is more precise
+    # than minimizing the function itself.
     res = root(
         grad,
         res_NM.x,
@@ -384,6 +385,7 @@ def test_glm_regression_unpenalized(solver, fit_intercept, glm_dataset):
             assert norm_model > (1 + 1e-12) * norm_solution
 
             # Note: Even adding a tiny penalty does not give the minimal norm solution.
+            # XXX:
             # model_pen = clone(model).set_params(**params).set_params(alpha=1e-10)
             # model_pen.fit(X, y)
             # assert_allclose(model_pen.predict(X), y, rtol=1e-6)  # This is true.
@@ -822,8 +824,7 @@ def test_warm_start(solver, fit_intercept, global_random_seed):
     # The two models are not exactly identical since the lbfgs solver
     # computes the approximate hessian from previous iterations, which
     # will not be strictly identical in the case of a warm start.
-    rtol = 2e-4
-    assert_allclose(glm1.coef_, glm2.coef_, rtol=rtol)
+    assert_allclose(glm1.coef_, glm2.coef_, rtol=2e-4)
     assert_allclose(glm1.score(X, y), glm2.score(X, y), rtol=1e-5)
 
 
