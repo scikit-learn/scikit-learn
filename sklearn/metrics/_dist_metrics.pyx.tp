@@ -406,7 +406,12 @@ cdef class DistanceMetric{{name_suffix}}:
 
         This must be overridden in a base class.
 
-        Note that we pass all the parameter as to not use memoryview slicing
+        Notes
+        -----
+        The implementation of this method in subclasses must be robust to the
+        presence of explicit zeros in the CSR representation.
+
+        All the parameters are passed as to not use memoryview slicing
         because it is currently known to slow down execution as it
         takes the GIL. See: https://github.com/scikit-learn/scikit-learn/issues/17299
         """
@@ -432,7 +437,12 @@ cdef class DistanceMetric{{name_suffix}}:
         rank-preserving surrogate distance of the Euclidean metric is the
         squared-euclidean distance.
 
-        Note that we pass all the parameter as to not use memoryview slicing
+        Notes
+        -----
+        The implementation of this method in subclasses must be robust to the
+        presence of explicit zeros in the CSR representation.
+
+        All the parameters are passed as to not use memoryview slicing
         because it is currently known to slow down execution as it
         takes the GIL. See: https://github.com/scikit-learn/scikit-learn/issues/17299
         """
@@ -1671,19 +1681,19 @@ cdef class HammingDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
                 i1 = i1 + 1
                 i2 = i2 + 1
             elif ix1 < ix2:
-                d += 1
+                d += (x1_data[i1] != 0)
                 i1 = i1 + 1
             else:
-                d += 1
+                d += (x2_data[i2] != 0)
                 i2 = i2 + 1
 
         if i1 == x1_end:
             while i2 < x2_end:
-                d += 1
+                d += (x2_data[i2] != 0)
                 i2 = i2 + 1
         else:
             while i1 < x1_end:
-                d += 1
+                d += (x1_data[i1] != 0)
                 i1 = i1 + 1
 
         d /= size
@@ -1925,10 +1935,12 @@ cdef class JaccardDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
         if i1 == x1_end:
             while i2 < x2_end:
+                tf2 = x2_data[i2] != 0
                 nnz += tf2
                 i2 = i2 + 1
         else:
             while i1 < x1_end:
+                tf1 = x1_data[i1] != 0
                 nnz += tf1
                 i1 = i1 + 1
 
@@ -1999,19 +2011,19 @@ cdef class MatchingDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
                 i1 = i1 + 1
                 i2 = i2 + 1
             elif ix1 < ix2:
-                n_neq += 1
+                n_neq += (x1_data[i1] != 0)
                 i1 = i1 + 1
             else:
-                n_neq += 1
+                n_neq += (x2_data[i2] != 0)
                 i2 = i2 + 1
 
         if i1 == x1_end:
             while i2 < x2_end:
-                n_neq += 1
+                n_neq += (x2_data[i2] != 0)
                 i2 = i2 + 1
         else:
             while i1 < x1_end:
-                n_neq += 1
+                n_neq += (x1_data[i1] != 0)
                 i1 = i1 + 1
 
         return n_neq * 1.0 / size

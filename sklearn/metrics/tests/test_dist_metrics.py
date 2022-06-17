@@ -144,12 +144,11 @@ def test_cdist_bool_metric(metric, X_bool, Y_bool):
     D_sklearn = dm.pairwise(X_bool_csr, Y_bool_csr)
     assert_allclose(D_sklearn, D_scipy_cdist)
 
-    # TODO: inspect failures on Boolean DistanceMetric
-    # D_sklearn = dm.pairwise(X_bool, Y_bool_csr)
-    # assert_allclose(D_sklearn, D_scipy_cdist)
+    D_sklearn = dm.pairwise(X_bool, Y_bool_csr)
+    assert_allclose(D_sklearn, D_scipy_cdist)
 
-    # D_sklearn = dm.pairwise(X_bool_csr, Y_bool)
-    # assert_allclose(D_sklearn, D_scipy_cdist)
+    D_sklearn = dm.pairwise(X_bool_csr, Y_bool)
+    assert_allclose(D_sklearn, D_scipy_cdist)
 
 
 # TODO: Remove filterwarnings in 1.3 when wminkowski is removed
