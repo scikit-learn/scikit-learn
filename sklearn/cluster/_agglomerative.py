@@ -894,10 +894,10 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         ],
         "memory": [str, joblib.Memory, None],
         "connectivity": ["array-like", callable, None],
-        "compute_full_tree": [StrOptions({"auto"}), bool],
+        "compute_full_tree": [StrOptions({"auto"}), "boolean"],
         "linkage": [StrOptions({"ward", "complete", "average", "single"})],
         "distance_threshold": [Interval(Real, 0, None, closed="left"), None],
-        "compute_distances": [bool],
+        "compute_distances": ["boolean"],
     }
 
     def __init__(
@@ -1239,11 +1239,11 @@ class FeatureAgglomeration(
         ],
         "memory": [str, joblib.Memory, None],
         "connectivity": ["array-like", callable, None],
-        "compute_full_tree": [StrOptions({"auto"}), bool],
+        "compute_full_tree": [StrOptions({"auto"}), "boolean"],
         "linkage": [StrOptions({"ward", "complete", "average", "single"})],
         "pooling_func": [callable],
         "distance_threshold": [Interval(Real, 0, None, closed="left"), None],
-        "compute_distances": [bool],
+        "compute_distances": ["boolean"],
     }
 
     def __init__(
