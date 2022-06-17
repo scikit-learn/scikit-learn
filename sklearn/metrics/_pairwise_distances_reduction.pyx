@@ -234,8 +234,7 @@ class PairwiseDistancesReduction:
         Notes
         -----
         This method is an abstract class method: it has to be implemented
-        for all
-
+        for all subclasses.
         """
 
 class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
