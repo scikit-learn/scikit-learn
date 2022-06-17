@@ -456,7 +456,7 @@ cdef class DistanceMetric{{name_suffix}}:
         DTYPE_t[:, ::1] D,
     ) nogil except -1:
         """Pairwise distances between rows in CSR matrix X.
-        
+
         Note that this implementation is twice faster than csr_cdist(X, X)
         because it leverages the symmetry of the problem.
         """
@@ -570,34 +570,34 @@ cdef class DistanceMetric{{name_suffix}}:
         """
         return dist
 
-    def _pairwise_dense(self, X, Y=None):
+    def _pairwise_dense_dense(self, X, Y):
         cdef cnp.ndarray[{{INPUT_DTYPE_t}}, ndim=2, mode='c'] Xarr
         cdef cnp.ndarray[{{INPUT_DTYPE_t}}, ndim=2, mode='c'] Yarr
         cdef cnp.ndarray[DTYPE_t, ndim=2, mode='c'] Darr
 
         Xarr = np.asarray(X, dtype={{INPUT_DTYPE}}, order='C')
         self._validate_data(Xarr)
-        if Y is None:
-            Darr = np.zeros((Xarr.shape[0], Xarr.shape[0]),
+        if X is Y:
+            Darr = np.empty((Xarr.shape[0], Xarr.shape[0]),
                             dtype=DTYPE, order='C')
             self.pdist(Xarr, Darr)
         else:
             Yarr = np.asarray(Y, dtype={{INPUT_DTYPE}}, order='C')
             self._validate_data(Yarr)
-            Darr = np.zeros((Xarr.shape[0], Yarr.shape[0]),
+            Darr = np.empty((Xarr.shape[0], Yarr.shape[0]),
                             dtype=DTYPE, order='C')
             self.cdist(Xarr, Yarr, Darr)
         return Darr
 
-    def _pairwise_sparse(self, X, Y=None):
+    def _pairwise_sparse_sparse(self, X, Y):
         X_csr = X.tocsr()
         n_X, size = X_csr.shape
         X_data = np.asarray(X_csr.data, dtype={{INPUT_DTYPE}})
         X_indices = np.asarray(X_csr.indices, dtype=SPARSE_INDEX_TYPE)
         X_indptr = np.asarray(X_csr.indptr, dtype=SPARSE_INDEX_TYPE)
 
-        if Y is None:
-            Darr = np.zeros((n_X, n_X), dtype=DTYPE, order='C')
+        if X is Y:
+            Darr = np.empty((n_X, n_X), dtype=DTYPE, order='C')
             self.csr_pdist(
                 x1_data=X_data,
                 x1_indices=X_indices,
@@ -612,7 +612,7 @@ cdef class DistanceMetric{{name_suffix}}:
             Y_indices = np.asarray(Y_csr.indices, dtype=SPARSE_INDEX_TYPE)
             Y_indptr = np.asarray(Y_csr.indptr, dtype=SPARSE_INDEX_TYPE)
 
-            Darr = np.zeros((n_X, n_Y), dtype=DTYPE, order='C')
+            Darr = np.empty((n_X, n_Y), dtype=DTYPE, order='C')
             self.csr_cdist(
                 x1_data=X_data,
                 x1_indices=X_indices,
@@ -623,6 +623,31 @@ cdef class DistanceMetric{{name_suffix}}:
                 size=size,
                 D=Darr,
             )
+        return Darr
+
+    def _pairwise_sparse_dense(self, X, Y):
+        X_csr = X.tocsr()
+        n_X, size = X_csr.shape
+        X_data = np.asarray(X_csr.data, dtype={{INPUT_DTYPE}})
+        X_indices = np.asarray(X_csr.indices, dtype=SPARSE_INDEX_TYPE)
+        X_indptr = np.asarray(X_csr.indptr, dtype=SPARSE_INDEX_TYPE)
+
+        n_Y, _ = Y.shape
+        Y_data = Y.reshape(-1)
+        Y_indices = np.arange(size, dtype=SPARSE_INDEX_TYPE)
+        Y_indptr = np.arange(stop=size*(n_Y + 1), step=size, dtype=SPARSE_INDEX_TYPE)
+
+        Darr = np.empty((n_X, n_Y), dtype=DTYPE, order='C')
+        self.csr_cdist(
+            x1_data=X_data,
+            x1_indices=X_indices,
+            x1_indptr=X_indptr,
+            x2_data=Y_data,
+            x2_indices=Y_indices,
+            x2_indptr=Y_indptr,
+            size=size,
+            D=Darr,
+        )
         return Darr
 
     def pairwise(self, X, Y=None):
@@ -646,11 +671,20 @@ cdef class DistanceMetric{{name_suffix}}:
             The shape (Nx, Ny) array of pairwise distances between points in
             X and Y.
         """
-        if not issparse(X) and (Y is None or not issparse(Y)):
-            return self._pairwise_dense(X, Y)
-        if issparse(X) and (Y is None or issparse(Y)):
-            return self._pairwise_sparse(X, Y)
+        Y = X if Y is None else Y
 
+        X_is_sparse = issparse(X)
+        Y_is_sparse = issparse(Y)
+
+        if not X_is_sparse and not Y_is_sparse:
+            return self._pairwise_dense_dense(X, Y)
+        if X_is_sparse and Y_is_sparse:
+            return self._pairwise_sparse_sparse(X, Y)
+        if X_is_sparse and not Y_is_sparse:
+            return self._pairwise_sparse_dense(X, Y)
+        if not X_is_sparse and Y_is_sparse:
+            # Swapping argument and transposing the result
+            return self._pairwise_sparse_dense(Y, X).T
 
 #------------------------------------------------------------
 # Euclidean Distance
@@ -706,13 +740,21 @@ cdef class EuclideanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             cnp.npy_intp ix1, ix2
             cnp.npy_intp i1 = x1_start
             cnp.npy_intp i2 = x2_start
+            cnp.npy_intp len_x1_indices = x1_indices.shape[0]
+            cnp.npy_intp len_x2_indices = x2_indices.shape[0]
 
             DTYPE_t d = 0.0
             DTYPE_t unsquared = 0
 
         while i1 < x1_end and i2 < x2_end:
-            ix1 = x1_indices[i1]
-            ix2 = x2_indices[i2]
+            # In the case of dense vectors, indices are repeated in the normal
+            # representation for all the rows, replicating information.
+            # Hence indices can be stored once in a buffer of `n_features` elements
+            # instead of being stored in a buffer of
+            # `n_features × n_samples` elements with repetition.
+            # To support both representations, we wrap `indptr` values.
+            ix1 = x1_indices[i1 % len_x1_indices]
+            ix2 = x2_indices[i2 % len_x2_indices]
 
             if ix1 == ix2:
                 unsquared = (x1_data[i1] - x2_data[i2])
@@ -829,13 +871,21 @@ cdef class SEuclideanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             cnp.npy_intp ix1, ix2
             cnp.npy_intp i1 = x1_start
             cnp.npy_intp i2 = x2_start
+            cnp.npy_intp len_x1_indices = x1_indices.shape[0]
+            cnp.npy_intp len_x2_indices = x2_indices.shape[0]
 
             DTYPE_t d = 0.0
             DTYPE_t unsquared = 0
 
         while i1 < x1_end and i2 < x2_end:
-            ix1 = x1_indices[i1]
-            ix2 = x2_indices[i2]
+            # In the case of dense vectors, indices are repeated in the normal
+            # representation for all the rows, replicating information.
+            # Hence indices can be stored once in a buffer of `n_features` elements
+            # instead of being stored in a buffer of
+            # `n_features × n_samples` elements with repetition.
+            # To support both representations, we wrap `indptr` values.
+            ix1 = x1_indices[i1 % len_x1_indices]
+            ix2 = x2_indices[i2 % len_x2_indices]
 
             if ix1 == ix2:
                 unsquared = (x1_data[i1] - x2_data[i2])
@@ -927,12 +977,20 @@ cdef class ManhattanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             cnp.npy_intp ix1, ix2
             cnp.npy_intp i1 = x1_start
             cnp.npy_intp i2 = x2_start
+            cnp.npy_intp len_x1_indices = x1_indices.shape[0]
+            cnp.npy_intp len_x2_indices = x2_indices.shape[0]
 
             DTYPE_t d = 0.0
 
         while i1 < x1_end and i2 < x2_end:
-            ix1 = x1_indices[i1]
-            ix2 = x2_indices[i2]
+            # In the case of dense vectors, indices are repeated in the normal
+            # representation for all the rows, replicating information.
+            # Hence indices can be stored once in a buffer of `n_features` elements
+            # instead of being stored in a buffer of
+            # `n_features × n_samples` elements with repetition.
+            # To support both representations, we wrap `indptr` values.
+            ix1 = x1_indices[i1 % len_x1_indices]
+            ix2 = x2_indices[i2 % len_x2_indices]
 
             if ix1 == ix2:
                 d = d + fabs(x1_data[i1] - x2_data[i2])
@@ -1009,12 +1067,20 @@ cdef class ChebyshevDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             cnp.npy_intp ix1, ix2
             cnp.npy_intp i1 = x1_start
             cnp.npy_intp i2 = x2_start
+            cnp.npy_intp len_x1_indices = x1_indices.shape[0]
+            cnp.npy_intp len_x2_indices = x2_indices.shape[0]
 
             DTYPE_t d = 0.0
 
         while i1 < x1_end and i2 < x2_end:
-            ix1 = x1_indices[i1]
-            ix2 = x2_indices[i2]
+            # In the case of dense vectors, indices are repeated in the normal
+            # representation for all the rows, replicating information.
+            # Hence indices can be stored once in a buffer of `n_features` elements
+            # instead of being stored in a buffer of
+            # `n_features × n_samples` elements with repetition.
+            # To support both representations, we wrap `indptr` values.
+            ix1 = x1_indices[i1 % len_x1_indices]
+            ix2 = x2_indices[i2 % len_x2_indices]
 
             if ix1 == ix2:
                 d = fmax(d, fabs(x1_data[i1] - x2_data[i2]))
@@ -1143,14 +1209,22 @@ cdef class MinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             cnp.npy_intp ix1, ix2
             cnp.npy_intp i1 = x1_start
             cnp.npy_intp i2 = x2_start
+            cnp.npy_intp len_x1_indices = x1_indices.shape[0]
+            cnp.npy_intp len_x2_indices = x2_indices.shape[0]
 
             DTYPE_t d = 0.0
             bint has_w = self.size > 0
 
         if has_w:
             while i1 < x1_end and i2 < x2_end:
-                ix1 = x1_indices[i1]
-                ix2 = x2_indices[i2]
+                # In the case of dense vectors, indices are repeated in the normal
+                # representation for all the rows, replicating information.
+                # Hence indices can be stored once in a buffer of `n_features` elements
+                # instead of being stored in a buffer of
+                # `n_features × n_samples` elements with repetition.
+                # To support both representations, we wrap `indptr` values.
+                ix1 = x1_indices[i1 % len_x1_indices]
+                ix2 = x2_indices[i2 % len_x2_indices]
 
                 if ix1 == ix2:
                     d = d + (self.vec[ix1] * pow(fabs(x1_data[i1] - x2_data[i2]), self.p))
@@ -1175,8 +1249,14 @@ cdef class MinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             return d
         else:
             while i1 < x1_end and i2 < x2_end:
-                ix1 = x1_indices[i1]
-                ix2 = x2_indices[i2]
+                # In the case of dense vectors, indices are repeated in the normal
+                # representation for all the rows, replicating information.
+                # Hence indices can be stored once in a buffer of `n_features` elements
+                # instead of being stored in a buffer of
+                # `n_features × n_samples` elements with repetition.
+                # To support both representations, we wrap `indptr` values.
+                ix1 = x1_indices[i1 % len_x1_indices]
+                ix2 = x2_indices[i2 % len_x2_indices]
 
                 if ix1 == ix2:
                     d = d + (pow(fabs(x1_data[i1] - x2_data[i2]), self.p))
@@ -1319,12 +1399,20 @@ cdef class WMinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             cnp.npy_intp ix1, ix2
             cnp.npy_intp i1 = x1_start
             cnp.npy_intp i2 = x2_start
+            cnp.npy_intp len_x1_indices = x1_indices.shape[0]
+            cnp.npy_intp len_x2_indices = x2_indices.shape[0]
 
             DTYPE_t d = 0.0
 
         while i1 < x1_end and i2 < x2_end:
-            ix1 = x1_indices[i1]
-            ix2 = x2_indices[i2]
+            # In the case of dense vectors, indices are repeated in the normal
+            # representation for all the rows, replicating information.
+            # Hence indices can be stored once in a buffer of `n_features` elements
+            # instead of being stored in a buffer of
+            # `n_features × n_samples` elements with repetition.
+            # To support both representations, we wrap `indptr` values.
+            ix1 = x1_indices[i1 % len_x1_indices]
+            ix2 = x2_indices[i2 % len_x2_indices]
 
             if ix1 == ix2:
                 d = d + pow(self.vec[ix1] * fabs(x1_data[i1] - x2_data[i2]), self.p)
@@ -1468,12 +1556,20 @@ cdef class MahalanobisDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             cnp.npy_intp ix1, ix2
             cnp.npy_intp i1 = x1_start
             cnp.npy_intp i2 = x2_start
+            cnp.npy_intp len_x1_indices = x1_indices.shape[0]
+            cnp.npy_intp len_x2_indices = x2_indices.shape[0]
 
             DTYPE_t tmp, d = 0.0
 
         while i1 < x1_end and i2 < x2_end:
-            ix1 = x1_indices[i1]
-            ix2 = x2_indices[i2]
+            # In the case of dense vectors, indices are repeated in the normal
+            # representation for all the rows, replicating information.
+            # Hence indices can be stored once in a buffer of `n_features` elements
+            # instead of being stored in a buffer of
+            # `n_features × n_samples` elements with repetition.
+            # To support both representations, we wrap `indptr` values.
+            ix1 = x1_indices[i1 % len_x1_indices]
+            ix2 = x2_indices[i2 % len_x2_indices]
 
             if ix1 == ix2:
                 self.vec[ix1] = x1_data[i1] - x2_data[i2]
@@ -1569,12 +1665,20 @@ cdef class HammingDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             cnp.npy_intp ix1, ix2
             cnp.npy_intp i1 = x1_start
             cnp.npy_intp i2 = x2_start
+            cnp.npy_intp len_x1_indices = x1_indices.shape[0]
+            cnp.npy_intp len_x2_indices = x2_indices.shape[0]
 
             DTYPE_t d = 0.0
 
         while i1 < x1_end and i2 < x2_end:
-            ix1 = x1_indices[i1]
-            ix2 = x2_indices[i2]
+            # In the case of dense vectors, indices are repeated in the normal
+            # representation for all the rows, replicating information.
+            # Hence indices can be stored once in a buffer of `n_features` elements
+            # instead of being stored in a buffer of
+            # `n_features × n_samples` elements with repetition.
+            # To support both representations, we wrap `indptr` values.
+            ix1 = x1_indices[i1 % len_x1_indices]
+            ix2 = x2_indices[i2 % len_x2_indices]
 
             if ix1 == ix2:
                 d += (x1_data[i1] != x2_data[i2])
@@ -1642,12 +1746,20 @@ cdef class CanberraDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             cnp.npy_intp ix1, ix2
             cnp.npy_intp i1 = x1_start
             cnp.npy_intp i2 = x2_start
+            cnp.npy_intp len_x1_indices = x1_indices.shape[0]
+            cnp.npy_intp len_x2_indices = x2_indices.shape[0]
 
             DTYPE_t d = 0.0
 
         while i1 < x1_end and i2 < x2_end:
-            ix1 = x1_indices[i1]
-            ix2 = x2_indices[i2]
+            # In the case of dense vectors, indices are repeated in the normal
+            # representation for all the rows, replicating information.
+            # Hence indices can be stored once in a buffer of `n_features` elements
+            # instead of being stored in a buffer of
+            # `n_features × n_samples` elements with repetition.
+            # To support both representations, we wrap `indptr` values.
+            ix1 = x1_indices[i1 % len_x1_indices]
+            ix2 = x2_indices[i2 % len_x2_indices]
 
             if ix1 == ix2:
                 d += fabs(x1_data[i1] - x2_data[i2]) / (fabs(x1_data[i1]) + fabs(x2_data[i2]))
@@ -1714,13 +1826,21 @@ cdef class BrayCurtisDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             cnp.npy_intp ix1, ix2
             cnp.npy_intp i1 = x1_start
             cnp.npy_intp i2 = x2_start
+            cnp.npy_intp len_x1_indices = x1_indices.shape[0]
+            cnp.npy_intp len_x2_indices = x2_indices.shape[0]
 
             DTYPE_t num = 0.0
             DTYPE_t denom = 0.0
 
         while i1 < x1_end and i2 < x2_end:
-            ix1 = x1_indices[i1]
-            ix2 = x2_indices[i2]
+            # In the case of dense vectors, indices are repeated in the normal
+            # representation for all the rows, replicating information.
+            # Hence indices can be stored once in a buffer of `n_features` elements
+            # instead of being stored in a buffer of
+            # `n_features × n_samples` elements with repetition.
+            # To support both representations, we wrap `indptr` values.
+            ix1 = x1_indices[i1 % len_x1_indices]
+            ix2 = x2_indices[i2 % len_x2_indices]
 
             if ix1 == ix2:
                 num += fabs(x1_data[i1] - x2_data[i2])
@@ -1796,12 +1916,20 @@ cdef class JaccardDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             cnp.npy_intp ix1, ix2
             cnp.npy_intp i1 = x1_start
             cnp.npy_intp i2 = x2_start
+            cnp.npy_intp len_x1_indices = x1_indices.shape[0]
+            cnp.npy_intp len_x2_indices = x2_indices.shape[0]
 
             ITYPE_t tf1, tf2, n_tt = 0, nnz = 0
 
         while i1 < x1_end and i2 < x2_end:
-            ix1 = x1_indices[i1]
-            ix2 = x2_indices[i2]
+            # In the case of dense vectors, indices are repeated in the normal
+            # representation for all the rows, replicating information.
+            # Hence indices can be stored once in a buffer of `n_features` elements
+            # instead of being stored in a buffer of
+            # `n_features × n_samples` elements with repetition.
+            # To support both representations, we wrap `indptr` values.
+            ix1 = x1_indices[i1 % len_x1_indices]
+            ix2 = x2_indices[i2 % len_x2_indices]
 
             tf1 = x1_data[i1] != 0
             tf2 = x2_data[i2] != 0
@@ -1875,12 +2003,20 @@ cdef class MatchingDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             cnp.npy_intp ix1, ix2
             cnp.npy_intp i1 = x1_start
             cnp.npy_intp i2 = x2_start
+            cnp.npy_intp len_x1_indices = x1_indices.shape[0]
+            cnp.npy_intp len_x2_indices = x2_indices.shape[0]
 
             ITYPE_t tf1, tf2, n_neq = 0
 
         while i1 < x1_end and i2 < x2_end:
-            ix1 = x1_indices[i1]
-            ix2 = x2_indices[i2]
+            # In the case of dense vectors, indices are repeated in the normal
+            # representation for all the rows, replicating information.
+            # Hence indices can be stored once in a buffer of `n_features` elements
+            # instead of being stored in a buffer of
+            # `n_features × n_samples` elements with repetition.
+            # To support both representations, we wrap `indptr` values.
+            ix1 = x1_indices[i1 % len_x1_indices]
+            ix2 = x2_indices[i2 % len_x2_indices]
 
             if ix1 == ix2:
                 tf1 = x1_data[i1] != 0
@@ -1949,12 +2085,20 @@ cdef class DiceDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             cnp.npy_intp ix1, ix2
             cnp.npy_intp i1 = x1_start
             cnp.npy_intp i2 = x2_start
+            cnp.npy_intp len_x1_indices = x1_indices.shape[0]
+            cnp.npy_intp len_x2_indices = x2_indices.shape[0]
 
             ITYPE_t tf1, tf2, n_tt = 0, n_neq = 0
 
         while i1 < x1_end and i2 < x2_end:
-            ix1 = x1_indices[i1]
-            ix2 = x2_indices[i2]
+            # In the case of dense vectors, indices are repeated in the normal
+            # representation for all the rows, replicating information.
+            # Hence indices can be stored once in a buffer of `n_features` elements
+            # instead of being stored in a buffer of
+            # `n_features × n_samples` elements with repetition.
+            # To support both representations, we wrap `indptr` values.
+            ix1 = x1_indices[i1 % len_x1_indices]
+            ix2 = x2_indices[i2 % len_x2_indices]
 
             tf1 = x1_data[i1] != 0
             tf2 = x2_data[i2] != 0
@@ -2026,12 +2170,20 @@ cdef class KulsinskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             cnp.npy_intp ix1, ix2
             cnp.npy_intp i1 = x1_start
             cnp.npy_intp i2 = x2_start
+            cnp.npy_intp len_x1_indices = x1_indices.shape[0]
+            cnp.npy_intp len_x2_indices = x2_indices.shape[0]
 
             ITYPE_t tf1, tf2, n_tt = 0, n_neq = 0
 
         while i1 < x1_end and i2 < x2_end:
-            ix1 = x1_indices[i1]
-            ix2 = x2_indices[i2]
+            # In the case of dense vectors, indices are repeated in the normal
+            # representation for all the rows, replicating information.
+            # Hence indices can be stored once in a buffer of `n_features` elements
+            # instead of being stored in a buffer of
+            # `n_features × n_samples` elements with repetition.
+            # To support both representations, we wrap `indptr` values.
+            ix1 = x1_indices[i1 % len_x1_indices]
+            ix2 = x2_indices[i2 % len_x2_indices]
 
             tf1 = x1_data[i1] != 0
             tf2 = x2_data[i2] != 0
@@ -2100,12 +2252,20 @@ cdef class RogersTanimotoDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             cnp.npy_intp ix1, ix2
             cnp.npy_intp i1 = x1_start
             cnp.npy_intp i2 = x2_start
+            cnp.npy_intp len_x1_indices = x1_indices.shape[0]
+            cnp.npy_intp len_x2_indices = x2_indices.shape[0]
 
             ITYPE_t tf1, tf2, n_neq = 0
 
         while i1 < x1_end and i2 < x2_end:
-            ix1 = x1_indices[i1]
-            ix2 = x2_indices[i2]
+            # In the case of dense vectors, indices are repeated in the normal
+            # representation for all the rows, replicating information.
+            # Hence indices can be stored once in a buffer of `n_features` elements
+            # instead of being stored in a buffer of
+            # `n_features × n_samples` elements with repetition.
+            # To support both representations, we wrap `indptr` values.
+            ix1 = x1_indices[i1 % len_x1_indices]
+            ix2 = x2_indices[i2 % len_x2_indices]
 
             tf1 = x1_data[i1] != 0
             tf2 = x2_data[i2] != 0
@@ -2173,12 +2333,20 @@ cdef class RussellRaoDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             cnp.npy_intp ix1, ix2
             cnp.npy_intp i1 = x1_start
             cnp.npy_intp i2 = x2_start
+            cnp.npy_intp len_x1_indices = x1_indices.shape[0]
+            cnp.npy_intp len_x2_indices = x2_indices.shape[0]
 
             ITYPE_t tf1, tf2, n_tt = 0
 
         while i1 < x1_end and i2 < x2_end:
-            ix1 = x1_indices[i1]
-            ix2 = x2_indices[i2]
+            # In the case of dense vectors, indices are repeated in the normal
+            # representation for all the rows, replicating information.
+            # Hence indices can be stored once in a buffer of `n_features` elements
+            # instead of being stored in a buffer of
+            # `n_features × n_samples` elements with repetition.
+            # To support both representations, we wrap `indptr` values.
+            ix1 = x1_indices[i1 % len_x1_indices]
+            ix2 = x2_indices[i2 % len_x2_indices]
 
             tf1 = x1_data[i1] != 0
             tf2 = x2_data[i2] != 0
@@ -2241,12 +2409,20 @@ cdef class SokalMichenerDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             cnp.npy_intp ix1, ix2
             cnp.npy_intp i1 = x1_start
             cnp.npy_intp i2 = x2_start
+            cnp.npy_intp len_x1_indices = x1_indices.shape[0]
+            cnp.npy_intp len_x2_indices = x2_indices.shape[0]
 
             ITYPE_t tf1, tf2, n_neq = 0
 
         while i1 < x1_end and i2 < x2_end:
-            ix1 = x1_indices[i1]
-            ix2 = x2_indices[i2]
+            # In the case of dense vectors, indices are repeated in the normal
+            # representation for all the rows, replicating information.
+            # Hence indices can be stored once in a buffer of `n_features` elements
+            # instead of being stored in a buffer of
+            # `n_features × n_samples` elements with repetition.
+            # To support both representations, we wrap `indptr` values.
+            ix1 = x1_indices[i1 % len_x1_indices]
+            ix2 = x2_indices[i2 % len_x2_indices]
 
             tf1 = x1_data[i1] != 0
             tf2 = x2_data[i2] != 0
@@ -2315,12 +2491,20 @@ cdef class SokalSneathDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             cnp.npy_intp ix1, ix2
             cnp.npy_intp i1 = x1_start
             cnp.npy_intp i2 = x2_start
+            cnp.npy_intp len_x1_indices = x1_indices.shape[0]
+            cnp.npy_intp len_x2_indices = x2_indices.shape[0]
 
             ITYPE_t tf1, tf2, n_tt = 0, n_neq = 0
 
         while i1 < x1_end and i2 < x2_end:
-            ix1 = x1_indices[i1]
-            ix2 = x2_indices[i2]
+            # In the case of dense vectors, indices are repeated in the normal
+            # representation for all the rows, replicating information.
+            # Hence indices can be stored once in a buffer of `n_features` elements
+            # instead of being stored in a buffer of
+            # `n_features × n_samples` elements with repetition.
+            # To support both representations, we wrap `indptr` values.
+            ix1 = x1_indices[i1 % len_x1_indices]
+            ix2 = x2_indices[i2 % len_x2_indices]
 
             tf1 = x1_data[i1] != 0
             tf2 = x2_data[i2] != 0
