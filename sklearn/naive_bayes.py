@@ -509,9 +509,6 @@ class GaussianNB(_BaseNB):
         return self.var_
 
 
-_ALPHA_MIN = 1e-10
-
-
 class _BaseDiscreteNB(_BaseNB):
     """Abstract base class for naive Bayes on discrete/categorical data
 
@@ -523,7 +520,8 @@ class _BaseDiscreteNB(_BaseNB):
     _count(X, Y)
     """
 
-    # alpha too small will result in numeric errors, setting min_alpha = 1.0e-10
+    # alpha too small will result in numeric errors,
+    # setting min_alpha = 1.0e-10
     _paramater_constraints = {
         "alpha": [Interval(Real, 1e-10, None, closed="left"), "array-like"],
         "fit_prior": [bool],
@@ -598,17 +596,6 @@ class _BaseDiscreteNB(_BaseNB):
                 "Smoothing parameter alpha = %.1e. alpha should be > 0."
                 % np.min(self.alpha)
             )
-        if isinstance(self.alpha, np.ndarray):
-            if not self.alpha.shape[0] == self.n_features_in_:
-                raise ValueError(
-                    "alpha should be a scalar or a numpy array with shape [n_features]"
-                )
-        if np.min(self.alpha) < _ALPHA_MIN:
-            warnings.warn(
-                "alpha too small will result in numeric errors, setting alpha = %.1e"
-                % _ALPHA_MIN
-            )
-            return np.maximum(self.alpha, _ALPHA_MIN)
         return self.alpha
 
     def partial_fit(self, X, y, classes=None, sample_weight=None):
