@@ -8,7 +8,6 @@ import re
 import warnings
 
 import numpy as np
-import scipy
 from numpy.testing import assert_allclose
 import pytest
 from scipy import linalg
@@ -364,9 +363,6 @@ def test_glm_regression_unpenalized(solver, fit_intercept, glm_dataset):
     else:
         intercept = 0
 
-    if n_samples < n_features:
-        warnings.filterwarnings("ignore", category=scipy.linalg.LinAlgWarning)
-        warnings.filterwarnings("ignore", category=ConvergenceWarning)
     model.fit(X, y)
 
     # FIXME: `assert_allclose(model.coef_, coef)` should work for all cases but fails
@@ -403,8 +399,6 @@ def test_glm_regression_unpenalized(solver, fit_intercept, glm_dataset):
             assert_allclose(model.coef_, coef, rtol=rtol)
 
 
-@pytest.mark.filterwarnings("ignore::scipy.linalg.LinAlgWarning")
-@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 @pytest.mark.parametrize("solver", SOLVERS)
 @pytest.mark.parametrize("fit_intercept", [True, False])
 def test_glm_regression_unpenalized_hstacked_X(solver, fit_intercept, glm_dataset):
@@ -442,6 +436,9 @@ def test_glm_regression_unpenalized_hstacked_X(solver, fit_intercept, glm_datase
         intercept = 0
         X = 0.5 * np.concatenate((X, X), axis=1)
     assert np.linalg.matrix_rank(X) <= min(n_samples, n_features)
+
+    if fit_intercept and n_samples < n_features:
+        warnings.filterwarnings("ignore", category=ConvergenceWarning)
     model.fit(X, y)
 
     if fit_intercept and n_samples < n_features:
@@ -512,9 +509,6 @@ def test_glm_regression_unpenalized_vstacked_X(solver, fit_intercept, glm_datase
     assert np.linalg.matrix_rank(X) <= min(n_samples, n_features)
     y = np.r_[y, y]
 
-    if n_samples < n_features:
-        warnings.filterwarnings("ignore", category=scipy.linalg.LinAlgWarning)
-        warnings.filterwarnings("ignore", category=ConvergenceWarning)
     model.fit(X, y)
 
     rtol = 5e-5
