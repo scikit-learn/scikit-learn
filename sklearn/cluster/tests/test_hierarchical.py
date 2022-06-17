@@ -713,20 +713,6 @@ def test_n_components():
         assert ignore_warnings(linkage_func)(X, connectivity=connectivity)[1] == 5
 
 
-def test_agg_n_clusters():
-    # Test that an error is raised when n_clusters <= 0
-
-    rng = np.random.RandomState(0)
-    X = rng.rand(20, 10)
-    for n_clus in [-1, 0]:
-        agc = AgglomerativeClustering(n_clusters=n_clus)
-        msg = "n_clusters should be an integer greater than 0. %s was provided." % str(
-            agc.n_clusters
-        )
-        with pytest.raises(ValueError, match=msg):
-            agc.fit(X)
-
-
 def test_affinity_passed_to_fix_connectivity():
     # Test that the affinity parameter is actually passed to the pairwise
     # function

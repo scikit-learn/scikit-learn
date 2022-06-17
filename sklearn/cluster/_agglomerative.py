@@ -754,7 +754,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
 
     affinity : str or callable, default='euclidean'
         Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
-        "manhattan", "cosine", or "precomputed".
+        "manhattan", "cosine", "cityblock" or "precomputed".
         If linkage is "ward", only "euclidean" is accepted.
         If "precomputed", a distance matrix (instead of a similarity matrix)
         is needed as input for the fit method.
@@ -877,17 +877,27 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
     """
 
     _parameter_constraints = {
-        "n_clusters": [Interval(Integral, 1, None, closed="left")],
+        "n_clusters": [Interval(Integral, 1, None, closed="left"), None],
         "affinity": [
-            StrOptions({"euclidean", "l1", "l2", "manhattan", "cosine", "precomputed"}),
+            StrOptions(
+                {
+                    "euclidean",
+                    "l1",
+                    "l2",
+                    "manhattan",
+                    "cosine",
+                    "precomputed",
+                    "cityblock",
+                }
+            ),
             callable,
         ],
-        "memory": [str, joblib.memory],
-        "connectivity": ["array-like", callable],
+        "memory": [str, joblib.Memory, None],
+        "connectivity": ["array-like", callable, None],
         "compute_full_tree": [StrOptions({"auto"}), bool],
         "linkage": [StrOptions({"ward", "complete", "average", "single"})],
-        "distance_threshold": [Interval(Real, 0, None, left="closed"), None],
-        "compute_distance": [bool],
+        "distance_threshold": [Interval(Real, 0, None, closed="left"), None],
+        "compute_distances": [bool],
     }
 
     def __init__(
@@ -929,6 +939,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         self : object
             Returns the fitted instance.
         """
+        self._validate_params()
         X = self._validate_data(X, ensure_min_samples=2)
         return self._fit(X)
 
@@ -1086,7 +1097,7 @@ class FeatureAgglomeration(
 
     affinity : str or callable, default='euclidean'
         Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
-        "manhattan", "cosine", or 'precomputed'.
+        "manhattan", "cosine", "cityblock" or 'precomputed'.
         If linkage is "ward", only "euclidean" is accepted.
 
     memory : str or object with the joblib.Memory interface, default=None
@@ -1210,6 +1221,31 @@ class FeatureAgglomeration(
     (1797, 32)
     """
 
+    _parameter_constraints = {
+        "n_clusters": [Interval(Integral, 1, None, closed="left"), None],
+        "affinity": [
+            StrOptions(
+                {
+                    "euclidean",
+                    "l1",
+                    "l2",
+                    "manhattan",
+                    "cosine",
+                    "precomputed",
+                    "cityblock",
+                }
+            ),
+            callable,
+        ],
+        "memory": [str, joblib.Memory, None],
+        "connectivity": ["array-like", callable, None],
+        "compute_full_tree": [StrOptions({"auto"}), bool],
+        "linkage": [StrOptions({"ward", "complete", "average", "single"})],
+        "pooling_func": [callable],
+        "distance_threshold": [Interval(Real, 0, None, closed="left"), None],
+        "compute_distances": [bool],
+    }
+
     def __init__(
         self,
         n_clusters=2,
@@ -1251,6 +1287,7 @@ class FeatureAgglomeration(
         self : object
             Returns the transformer.
         """
+        self._validate_params()
         X = self._validate_data(X, ensure_min_features=2)
         super()._fit(X.T)
         self._n_features_out = self.n_clusters_
