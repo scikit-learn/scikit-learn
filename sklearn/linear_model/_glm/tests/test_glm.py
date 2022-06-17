@@ -436,9 +436,12 @@ def test_glm_regression_unpenalized_hstacked_X(solver, fit_intercept, glm_datase
         X = 0.5 * np.concatenate((X, X), axis=1)
     assert np.linalg.matrix_rank(X) <= min(n_samples, n_features)
 
-    if fit_intercept and n_samples < n_features:
-        warnings.filterwarnings("ignore", category=ConvergenceWarning)
-    model.fit(X, y)
+    with warnings.catch_warnings():
+        if fit_intercept and n_samples < n_features:
+            # XXX: Investigate if the lack of convergence in this case should be
+            # considered a bug or not.
+            warnings.filterwarnings("ignore", category=ConvergenceWarning)
+        model.fit(X, y)
 
     if fit_intercept and n_samples < n_features:
         # Here we take special care.
