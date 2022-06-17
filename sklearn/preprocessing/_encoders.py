@@ -447,7 +447,7 @@ class OneHotEncoder(_BaseEncoder):
             Interval(numbers.Real, 0, 1, closed="neither"),
             None,
         ],
-        "sparse": [bool],
+        "sparse": ["boolean"],
     }
 
     def __init__(
