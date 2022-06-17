@@ -910,15 +910,15 @@ cdef class SEuclideanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
         if i1 == x1_end:
             while i2 < x2_end:
-                ix2 = x2_indices[i2]
+                ix2 = x2_indices[i2 % len_x2_indices]
                 unsquared = x2_data[i2]
-                d = d + (unsquared * unsquared) / self.vec[ix1]
+                d = d + (unsquared * unsquared) / self.vec[ix2]
                 i2 = i2 + 1
         else:
             while i1 < x1_end:
-                ix1 = x1_indices[i1]
+                ix1 = x1_indices[i1 % len_x1_indices]
                 unsquared = x1_data[i1]
-                d = d + (unsquared * unsquared) / self.vec[ix2]
+                d = d + (unsquared * unsquared) / self.vec[ix1]
                 i1 = i1 + 1
         return d
 
@@ -1218,12 +1218,9 @@ cdef class MinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
         if has_w:
             while i1 < x1_end and i2 < x2_end:
-                # In the case of dense vectors, indices are repeated in the normal
-                # representation for all the rows, replicating information.
-                # Hence indices can be stored once in a buffer of `n_features` elements
-                # instead of being stored in a buffer of
-                # `n_features × n_samples` elements with repetition.
-                # To support both representations, we wrap `indptr` values.
+                # Use the modulo-trick to implement support for CSR × dense array
+                # with the CSR × CSR routine. See _pairwise_sparse_dense for more
+                # details.
                 ix1 = x1_indices[i1 % len_x1_indices]
                 ix2 = x2_indices[i2 % len_x2_indices]
 
@@ -1240,22 +1237,21 @@ cdef class MinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
             if i1 == x1_end:
                 while i2 < x2_end:
+                    ix2 = x2_indices[i2 % len_x2_indices]
                     d = d + (self.vec[ix2] * pow(fabs(x2_data[i2]), self.p))
                     i2 = i2 + 1
             else:
                 while i1 < x1_end:
+                    ix1 = x1_indices[i1 % len_x1_indices]
                     d = d + (self.vec[ix1] * pow(fabs(x1_data[i1]), self.p))
                     i1 = i1 + 1
 
             return d
         else:
             while i1 < x1_end and i2 < x2_end:
-                # In the case of dense vectors, indices are repeated in the normal
-                # representation for all the rows, replicating information.
-                # Hence indices can be stored once in a buffer of `n_features` elements
-                # instead of being stored in a buffer of
-                # `n_features × n_samples` elements with repetition.
-                # To support both representations, we wrap `indptr` values.
+                # Use the modulo-trick to implement support for CSR × dense array
+                # with the CSR × CSR routine. See _pairwise_sparse_dense for more
+                # details.
                 ix1 = x1_indices[i1 % len_x1_indices]
                 ix2 = x2_indices[i2 % len_x2_indices]
 
@@ -1272,12 +1268,10 @@ cdef class MinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
             if i1 == x1_end:
                 while i2 < x2_end:
-                    ix2 = x2_indices[i2]
                     d = d + (pow(fabs(x2_data[i2]), self.p))
                     i2 = i2 + 1
             else:
                 while i1 < x1_end:
-                    ix1 = x1_indices[i1]
                     d = d + (pow(fabs(x1_data[i1]), self.p))
                     i1 = i1 + 1
 
@@ -1425,12 +1419,12 @@ cdef class WMinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
         if i1 == x1_end:
             while i2 < x2_end:
-                ix2 = x2_indices[i2]
+                ix2 = x2_indices[i2 % len_x2_indices]
                 d = d + pow(self.vec[ix2] * fabs(x2_data[i2]), self.p)
                 i2 = i2 + 1
         else:
             while i1 < x1_end:
-                ix1 = x1_indices[i1]
+                ix1 = x1_indices[i1 % len_x1_indices]
                 d = d + pow(self.vec[ix1] * fabs(x1_data[i1]), self.p)
                 i1 = i1 + 1
 
@@ -1579,12 +1573,12 @@ cdef class MahalanobisDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
         if i1 == x1_end:
             while i2 < x2_end:
-                ix2 = x2_indices[i2]
+                ix2 = x2_indices[i2 % len_x2_indices]
                 self.vec[ix2] = - x2_data[i2]
                 i2 = i2 + 1
         else:
             while i1 < x1_end:
-                ix1 = x1_indices[i1]
+                ix1 = x1_indices[i1 % len_x1_indices]
                 self.vec[ix1] = x1_data[i1]
                 i1 = i1 + 1
 

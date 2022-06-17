@@ -3,8 +3,6 @@ import pickle
 import copy
 
 import numpy as np
-from sklearn.utils._testing import assert_allclose
-
 import pytest
 
 import scipy.sparse as sp
@@ -18,7 +16,7 @@ from sklearn.metrics._dist_metrics import (
 )
 
 from sklearn.utils import check_random_state, _IS_32BIT
-from sklearn.utils._testing import create_memmap_backed_data
+from sklearn.utils._testing import assert_allclose, create_memmap_backed_data
 from sklearn.utils.fixes import sp_version, parse_version
 
 
