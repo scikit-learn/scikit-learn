@@ -953,6 +953,26 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 estimator = self.estimators_[i, j]
                 leaves[:, i, j] = estimator.apply(X, check_input=False)
 
+                children_left = estimator.tree_.children_left
+                children_right = estimator.tree_.children_right
+                n_nodes = estimator.tree_.node_count
+                is_leaves = np.zeros(shape=n_nodes, dtype=bool)
+
+                stack = [(0, 0)]
+                while len(stack) > 0:
+                    node_id, depth = stack.pop()
+
+                    is_split_node = children_left[node_id] != children_right[node_id]
+
+                    if is_split_node:
+                        stack.append((children_left[node_id], depth + 1))
+                        stack.append((children_right[node_id], depth + 1))
+                    else:
+                        is_leaves[node_id] = True
+
+                terminal_leave = estimator.tree_.value[np.where(is_leaves == True)]
+                self.terminal_leave = terminal_leave.reshape(-1, 1)[:, 0]
+
         return leaves
 
     # TODO: Remove in 1.2
