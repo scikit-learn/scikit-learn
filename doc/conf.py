@@ -595,6 +595,7 @@ linkcheck_ignore = [
     r"http://www.utstat.toronto.edu/~rsalakhu/sta4273/notes/Lecture2.pdf#page=.*",
     "https://www.fordfoundation.org/media/2976/"
     "roads-and-bridges-the-unseen-labor-behind-our-digital-infrastructure.pdf#page=.*",
+    "http://users.jyu.fi/~samiayr/pdf/ayramo_eurogen05.pdf",
     # Broken links from testimonials
     "http://www.bestofmedia.com",
     "http://www.data-publica.com/",
