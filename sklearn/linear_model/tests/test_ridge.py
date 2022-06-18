@@ -125,7 +125,7 @@ def ols_ridge_dataset(global_random_seed, request):
     )
     X[:, -1] = 1  # last columns acts as intercept
     U, s, Vt = linalg.svd(X)
-    assert np.all(s) > 1e-3  # to be sure
+    assert np.all(s > 1e-3)  # to be sure
     U1, U2 = U[:, :k], U[:, k:]
     Vt1, _ = Vt[:k, :], Vt[k:, :]
 

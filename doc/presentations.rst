@@ -74,5 +74,5 @@ Videos
 
 
 .. _Gael Varoquaux: http://gael-varoquaux.info
-.. _Jake Vanderplas: https://staff.washington.edu/jakevdp
+.. _Jake Vanderplas: http://www.vanderplas.com
 .. _Olivier Grisel: https://twitter.com/ogrisel
