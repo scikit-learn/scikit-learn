@@ -82,17 +82,20 @@ print(f"{len(dataset.data)} documents - {true_k} categories")
 # truth information to quantify the quality of the resulting clusters. Examples
 # of such metrics are the following:
 #
-# - homogeneity, which quantifies cluster containing only members of a single
+# - homogeneity, which quantifies how much clusters contain only members of a single
 #   class;
 #
-# - completeness, which quantifies cluster having members of a given class are
-#   assigned to the same cluster;
+# - completeness, which quantifies how much members of a given class are assigned
+#   to the same clusters;
 #
 # - V-measure, the harmonic mean of completeness and homogeneity;
 #
-# - Rand-Index, which measures the similarity between pairs of clusters;
+# - Rand-Index, which measures how frequently pairs of data points are grouped
+#   consistently according to the result of the clustering algorithm and the
+#   ground truth class assignment; 
 #
-# - Adjusted Rand-Index, a chance-adjusted Rand-Index.
+# - Adjusted Rand-Index, a chance-adjusted Rand-Index such that random cluster
+#   assignment have an ARI of 0.0 in expectation.
 #
 # If the ground truth labels are not known, evaluation can only be performed
 # using the model results itself. In that case, the Silhouette Coefficient comes
@@ -154,7 +157,7 @@ def fit_and_evaluate(km, X, name=None, n_runs=5):
 # Two feature extraction methods are used in this example:
 #
 # - :class:`~sklearn.feature_extraction.text.TfidfVectorizer` uses an in-memory
-#   vocabulary (a python dict) to map the most frequent words to features
+#   vocabulary (a Python dict) to map the most frequent words to features
 #   indices and hence compute a word occurrence frequency (sparse) matrix. The
 #   word frequencies are then reweighted using the Inverse Document Frequency
 #   (IDF) vector collected feature-wise over the corpus.
@@ -186,7 +189,7 @@ vectorizer = TfidfVectorizer(
 t0 = time()
 X_tfidf = vectorizer.fit_transform(dataset.data)
 
-print(f"vectorizing done in {time() - t0:.3f} s")
+print(f"vectorization done in {time() - t0:.3f} s")
 print(f"n_samples: {X_tfidf.shape[0]}, n_features: {X_tfidf.shape[1]}")
 
 # %%
@@ -228,12 +231,15 @@ for seed in range(5):
     cluster_ids, cluster_sizes = np.unique(kmeans.labels_, return_counts=True)
     print(f"Number of elements asigned to each cluster: {cluster_sizes}")
 print()
-print(f"Real number of elements in each category: {category_sizes}")
+print(
+    "True number of documents in each category according to the class labels: "
+    f"{category_sizes}"
+)
 
 # %%
 # To avoid this problem, one possibility is to increase the number of runs with
-# independent random initiations `n_init`. In such case the clustering with the smallest
-# inertia is chosen.
+# independent random initiations `n_init`. In such case the clustering with the best
+# inertia (objective function of k-means) is chosen.
 
 kmeans = KMeans(
     n_clusters=true_k,
@@ -244,10 +250,16 @@ kmeans = KMeans(
 fit_and_evaluate(kmeans, X_tfidf, name="KMeans\non tf-idf vectors")
 
 # %%
+# All those clustering evaluation metrics have a maximum value of 1.0
+# (for a perfect clustering result). Higher values are better.
 # Values of the Adjusted Rand-Index close to 0.0 correspond to a random
-# labelling, whereas perfect labeling is scored 1.0. Notice from the scores
-# above that the cluster assignment is indeed above chance level, but the
-# overall quality can certainly improve.
+# labelling. Notice from the scores above that the cluster assignment is
+# indeed well above chance level, but the overall quality can certainly
+# improve.
+#
+# But let's keep in mind that the class labels are not necessarily reflecting
+# accurately the document topics and therefore not necessarily the best at
+# to evaluate the quality of our clustering pipeline.
 #
 # Performing dimensionality reduction using LSA
 # ---------------------------------------------
@@ -256,8 +268,11 @@ fit_and_evaluate(kmeans, X_tfidf, name="KMeans\non tf-idf vectors")
 # space is reduced first to make K-means more stable. For such purpose we use
 # :class:`~sklearn.decomposition.TruncatedSVD`, which works on term count/tf-idf
 # matrices. Since SVD results are not normalized, we redo the normalization to
-# improve the :class:`~sklearn.cluster.KMeans` result. Such process is known as
-# latent semantic analysis (LSA).
+# improve the :class:`~sklearn.cluster.KMeans` result. Using SVD to
+# to reduce the dimensionality of TF-IDF document vectors is often
+# known as `latent semantic analysis
+# <https://en.wikipedia.org/wiki/Latent_semantic_analysis>`_ (LSA) in the
+# information retrieval and text mining literature.
 
 from sklearn.decomposition import TruncatedSVD
 from sklearn.pipeline import make_pipeline
@@ -286,6 +301,10 @@ kmeans = KMeans(
 fit_and_evaluate(kmeans, X_lsa, name="KMeans\nwith LSA on tf-idf vectors")
 
 # %%
+# We can observe that clustering on the LSA representation of the document is
+# significantly faster (both because of `n_init=1` and because the dimensionality
+# of the LSA feature space is much smaller). Furthermore, all the clustering
+# evaluation metrics have improved.
 # We repeat the experiment with :class:`~sklearn.cluster.MiniBatchKMeans`.
 
 from sklearn.cluster import MiniBatchKMeans
@@ -309,9 +328,9 @@ fit_and_evaluate(
 #
 # Since :class:`~sklearn.feature_extraction.text.TfidfVectorizer` can be
 # inverted we can identify the cluster centers, which provide an intuition of
-# the most predictive words **per cluster**. See the example script
+# the most influential words **for each cluster**. See the example script
 # :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
-# for a comparison with the most predictive words **per class**.
+# for a comparison with the most predictive words **for each target class**.
 
 original_space_centroids = lsa[0].inverse_transform(kmeans.cluster_centers_)
 order_centroids = original_space_centroids.argsort()[:, ::-1]
@@ -347,7 +366,7 @@ lsa_vectorizer = make_pipeline(
 
 t0 = time()
 X_hashed_lsa = lsa_vectorizer.fit_transform(dataset.data)
-print(f"vectorizing done in {time() - t0:.3f} s")
+print(f"vectorization done in {time() - t0:.3f} s")
 
 # %%
 # One can observe that the LSA step takes a relatively long time to fit,
@@ -370,6 +389,9 @@ fit_and_evaluate(
 )
 
 # %%
+#
+# Both methods lead to good results that are similar to running the same models on
+# the traditional LSA vectors (without hashing).
 # Clustering evaluation summary
 # ==============================
 
@@ -378,8 +400,8 @@ import matplotlib.pyplot as plt
 
 fig, (ax0, ax1) = plt.subplots(ncols=2, figsize=(16, 6), sharey=True)
 
-df = pd.DataFrame(evaluations).set_index("estimator")
-df_std = pd.DataFrame(evaluations_std).set_index("estimator")
+df = pd.DataFrame(evaluations[::-1]).set_index("estimator")
+df_std = pd.DataFrame(evaluations_std[::-1]).set_index("estimator")
 
 df.drop(
     ["train_time"],
@@ -422,4 +444,5 @@ plt.tight_layout()
 # The size of the error bars show that :class:`~sklearn.cluster.MiniBatchKMeans`
 # is less stable than :class:`~sklearn.cluster.KMeans` for this relatively small
 # dataset. It is more interesting to use when the number of samples is much
-# bigger, but it comes at the expense of clustering quality.
+# bigger, but it can come at the expense of a small degradation in
+# clustering quality compared to the traditional k-means algorithm.
