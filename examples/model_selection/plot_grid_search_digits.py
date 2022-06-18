@@ -26,9 +26,9 @@ from sklearn import datasets
 digits = datasets.load_digits()
 
 # %%
-# To apply a classifier on this data, we need to flatten the images.
+# In order to train a classifier on images, we need to flatten them into vectors.
 # Each image of 8 by 8 pixels needs to be transformed to a vector of 64 pixels.
-# Thus, we will get a final data array of shape (n_images, n_pixels)
+# Thus, we will get a final data array of shape `(n_images, n_pixels)`.
 n_samples = len(digits.images)
 X = digits.images.reshape((n_samples, -1))
 y = digits.target == 7
@@ -37,19 +37,20 @@ print(
 )
 
 # %%
-# As presented in the introduction, the data will be split into a development
-# and evaluation set of equal size.
+# As presented in the introduction, the data will be split into a training
+# and an testing sets of equal size.
 from sklearn.model_selection import train_test_split
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5, random_state=0)
 
 # %%
-# Define our grid-search framework
-# --------------------------------
+# Define our grid-search strategy
+# -------------------------------
 #
-# We will fine-tune a classifier by searching the best hyper-parameters on the
-# development dataset. We need to define the values of the hyper-parameters
-# and the scores to compute to later on select the best candidate.
+# We will select a classifier by searching the best hyper-parameters on folds
+# of the training set. To do this, we first need to define the values of 
+# the hyper-parameters and the scores to compute to later select the 
+# best candidate.
 
 tuned_parameters = [
     {"kernel": ["rbf"], "gamma": [1e-3, 1e-4], "C": [1, 10, 100, 1000]},
@@ -180,7 +181,7 @@ from sklearn.metrics import classification_report
 y_pred = clf.predict(X_test)
 print(
     "\nOur selected model will have the following performance on the "
-    f"evaluation set:\n\n {classification_report(y_test, y_pred)}"
+    f"testing set:\n\n {classification_report(y_test, y_pred)}"
 )
 
 # %%

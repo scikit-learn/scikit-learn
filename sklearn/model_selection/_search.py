@@ -1102,7 +1102,8 @@ class GridSearchCV(BaseSearchCV):
         evaluation.
 
         See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py`
-        for an example about how to use a callable for refit.
+        to see how to design a custom selection strategy using a callable
+        via `refit`.
 
         .. versionchanged:: 0.20
             Support for callable added.
