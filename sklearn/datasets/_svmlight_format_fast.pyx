@@ -141,13 +141,14 @@ def get_dense_row_string(
         Py_ssize_t row_length = X.shape[1]
         Py_ssize_t x_nz_used = 0
         Py_ssize_t k
+        int_or_float val
 
     for k in range(row_length):
         val = X[row,k]
         if val == 0:
             continue
         x_inds[x_nz_used] = k
-        x_vals[x_nz_used] = val
+        x_vals[x_nz_used] = <double_or_longlong> val
         x_nz_used += 1
     return " ".join(value_pattern % (j+one_based, val) for i, (j, val) in enumerate(zip(x_inds, x_vals)) if i < x_nz_used)
 
