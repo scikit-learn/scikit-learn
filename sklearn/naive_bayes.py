@@ -65,10 +65,10 @@ class _BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         """
 
     def predict_joint_log_proba(self, X):
-        """Compute the joint log probability ``log P(X, y)``.
+        """Return joint log probability estimates for the test vector X.
 
         For each row x of X and class y, the joint log probability is given by
-            ``log P(x, y) = log P(y) + log P(x|y),``
+        ``log P(x, y) = log P(y) + log P(x|y),``
         where ``log P(y)`` is the class prior probability and ``log P(x|y)`` is
         the class-conditional probability.
 
