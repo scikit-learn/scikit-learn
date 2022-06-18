@@ -1484,11 +1484,11 @@ def _partial_fit_one(estimator, X, y, message_clsname="", message=None, **fit_pa
 
 
 def _jll_one(estimator, X):
-    """Call ``estimator._joint_log_likelihood``.
+    """Call ``estimator.predict_joint_log_proba``.
 
     See :func:`sklearn.pipeline._transform_one`.
     """
-    return estimator._joint_log_likelihood(estimator._check_X(X))
+    return estimator.predict_joint_log_proba(X)
 
 
 class ColumnwiseNB(_BaseNB, _BaseComposition):
@@ -1516,10 +1516,10 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
         nb_estimator : estimator
             The estimator must support :term:`fit` or :term:`partial_fit`,
             depending on how the meta-estimator is fitted. In addition, the
-            estimator must support ``_joint_log_likelihood`` method, which
+            estimator must support ``predict_joint_log_proba`` method, which
             takes :term:`X` of shape (n_samples, n_features) and returns a
             numpy array of shape (n_samples, n_classes) containing joint
-            log-likelihoods, ``log P(x,c)`` for each sample point and class.
+            log-probabilities, ``log P(x,y)`` for each sample point and class.
         columns :  str, array-like of str, int, array-like of int, \
                 array-like of bool, slice or callable
             Indexes the data on its second axis. Integers are interpreted as
@@ -1654,11 +1654,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
         return X
 
     def _joint_log_likelihood(self, X):
-        """Calculate the meta-estimator's joint log likelihood ``log P(x,c)``."""
-        # Because data must follow the same path as it would in subestimators,
-        # _jll_one(nb_estimator, X) passes it through nb_estimator._check_X to
-        # match the implementation of _BaseNB.predict_log_proba.
-        # Changes therein must be reflected in _jll_one or here.
+        """Calculate the meta-estimator's joint log-probability ``log P(x,y)``."""
         estimators = self._iter(fitted=True, replace_strings=True)
         all_jlls = Parallel(n_jobs=self.n_jobs)(
             delayed(_jll_one)(estimator=nb_estimator, X=_safe_indexing(X, cols, axis=1))
@@ -1669,7 +1665,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
         return np.sum(all_jlls, axis=0) - (n_estimators - 1) * log_prior
 
     def _validate_estimators(self, check_partial=False):
-        # Check if estimators have fit/partial_fit and jll methods
+        # Check if estimators have fit/partial_fit and joint log prob methods
         # Validate estimator names via _BaseComposition._validate_names(self, names)
         if not self.nb_estimators:
             raise ValueError(
@@ -1679,18 +1675,20 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
         names, estimators, _ = zip(*self.nb_estimators)
         for e in estimators:
             if (not check_partial) and (
-                not (hasattr(e, "fit") and hasattr(e, "_joint_log_likelihood"))
+                not (hasattr(e, "fit") and hasattr(e, "predict_joint_log_proba"))
             ):
                 raise TypeError(
                     "Estimators must be naive Bayes estimators implementing "
-                    "`fit` and `_joint_log_likelihood` methods."
+                    "`fit` and `predict_joint_log_proba` methods."
                 )
             if check_partial and (
-                not (hasattr(e, "partial_fit") and hasattr(e, "_joint_log_likelihood"))
+                not (
+                    hasattr(e, "partial_fit") and hasattr(e, "predict_joint_log_proba")
+                )
             ):
                 raise TypeError(
                     "Estimators must be Naive Bayes estimators implementing "
-                    "`partial_fit` and `_joint_log_likelihood` methods."
+                    "`partial_fit` and `predict_joint_log_proba` methods."
                 )
         self._validate_names(names)
 

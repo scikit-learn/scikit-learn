@@ -1206,7 +1206,7 @@ def test_cwnb_estimators_nonempty_list():
 
 
 def test_cwnb_estimators_support_jll():
-    # Subestimators spec: error when some don't support _joint_log_likelihood
+    # Subestimators spec: error when some don't support predict_joint_log_proba
     class notNB(BaseEstimator):
         def __init__(self):
             pass
@@ -1217,7 +1217,7 @@ def test_cwnb_estimators_support_jll():
         def partial_fit(self, X, y):
             pass
 
-        # def _joint_log_likelihood(self, X): pass
+        # def predict_joint_log_proba(self, X): pass
         def predict(self, X):
             pass
 
@@ -1237,7 +1237,7 @@ def test_cwnb_estimators_support_fit():
         def partial_fit(self, X, y):
             pass
 
-        def _joint_log_likelihood(self, X):
+        def predict_joint_log_proba(self, X):
             pass
 
         def predict(self, X):
@@ -1259,7 +1259,7 @@ def test_cwnb_estimators_support_partial_fit():
             pass
 
         # def partial_fit(self, X, y): pass
-        def _joint_log_likelihood(self, X):
+        def predict_joint_log_proba(self, X):
             pass
 
         def predict(self, X):
@@ -1462,7 +1462,7 @@ def test_cwnb_fit_sample_weight_ones():
     clf1.fit(X, y, sample_weight=weights)
     clf2.fit(X, y)
     assert_array_almost_equal(
-        clf1._joint_log_likelihood(X), clf2._joint_log_likelihood(X), 8
+        clf1.predict_joint_log_proba(X), clf2.predict_joint_log_proba(X), 8
     )
     assert_array_almost_equal(clf1.predict_log_proba(X), clf2.predict_log_proba(X), 8)
     assert_array_equal(clf1.predict(X), clf2.predict(X))
@@ -1486,7 +1486,7 @@ def test_cwnb_partial_fit_sample_weight_ones():
     clf1.partial_fit(X2, y2, sample_weight=weights, classes=np.unique(y2))
     clf2.partial_fit(X2, y2, classes=np.unique(y2))
     assert_array_almost_equal(
-        clf1._joint_log_likelihood(X2), clf2._joint_log_likelihood(X2), 8
+        clf1.predict_joint_log_proba(X2), clf2.predict_joint_log_proba(X2), 8
     )
     assert_array_almost_equal(clf1.predict_log_proba(X2), clf2.predict_log_proba(X2), 8)
     assert_array_equal(clf1.predict(X2), clf2.predict(X2))
@@ -1512,7 +1512,7 @@ def test_cwnb_fit_sample_weight_repeated():
     clf1.fit(X, y, sample_weight=weights)
     clf2.fit(X[idx], y[idx])
     assert_array_almost_equal(
-        clf1._joint_log_likelihood(X), clf2._joint_log_likelihood(X), 8
+        clf1.predict_joint_log_proba(X), clf2.predict_joint_log_proba(X), 8
     )
     assert_array_almost_equal(clf1.predict_log_proba(X), clf2.predict_log_proba(X), 8)
     assert_array_equal(clf1.predict(X), clf2.predict(X), 8)
@@ -1538,7 +1538,9 @@ def test_cwnb_partial_fit_sample_weight_repeated():
     )
     clf1.partial_fit(X2, y2, sample_weight=weights, classes=np.unique(y2))
     clf2.partial_fit(X2[idx], y2[idx], classes=np.unique(y2))
-    assert_array_equal(clf1._joint_log_likelihood(X2), clf2._joint_log_likelihood(X2))
+    assert_array_equal(
+        clf1.predict_joint_log_proba(X2), clf2.predict_joint_log_proba(X2)
+    )
     assert_array_equal(clf1.predict_log_proba(X2), clf2.predict_log_proba(X2))
     assert_array_equal(clf1.predict(X2), clf2.predict(X2))
     for attr_name in ("class_count_", "class_prior_", "classes_"):
@@ -1557,7 +1559,7 @@ def test_cwnb_partial_fit():
     clf2.partial_fit(X2[:4], y2[:4], classes=np.unique(y2))
     clf2.partial_fit(X2[4:], y2[4:])
     assert_array_almost_equal(
-        clf1._joint_log_likelihood(X2), clf2._joint_log_likelihood(X2), 8
+        clf1.predict_joint_log_proba(X2), clf2.predict_joint_log_proba(X2), 8
     )
     assert_array_almost_equal(clf1.predict_log_proba(X2), clf2.predict_log_proba(X2), 8)
     assert_array_equal(clf1.predict(X2), clf2.predict(X2))
@@ -1642,7 +1644,7 @@ def test_cwnb_n_jobs():
     clf2.partial_fit(X2, y2, classes=np.unique(y2))
 
     assert_array_almost_equal(
-        clf1._joint_log_likelihood(X2), clf2._joint_log_likelihood(X2), 8
+        clf1.predict_joint_log_proba(X2), clf2.predict_joint_log_proba(X2), 8
     )
     assert_array_almost_equal(clf1.predict_log_proba(X2), clf2.predict_log_proba(X2), 8)
     assert_array_equal(clf1.predict(X2), clf2.predict(X2))
