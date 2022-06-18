@@ -390,7 +390,7 @@ def test_glm_regression_unpenalized(solver, fit_intercept, glm_dataset):
         # As it is an underdetermined problem, prediction = y. The following shows that
         # we get a solution, i.e. a (non-unique) minimum of the objective function ...
         assert_allclose(model.predict(X), y, rtol=1e-6)
-        if fit_intercept:
+        if fit_intercept or solver in ["newton-cholesky"]:
             # But it is not the minimum norm solution. Otherwise the norms would be
             # equal.
             norm_solution = np.linalg.norm(np.r_[intercept, coef])
@@ -449,9 +449,12 @@ def test_glm_regression_unpenalized_hstacked_X(solver, fit_intercept, glm_datase
     assert np.linalg.matrix_rank(X) <= min(n_samples, n_features)
 
     with warnings.catch_warnings():
-        if fit_intercept and n_samples < n_features:
+        if (
+            solver == "lbfgs" and fit_intercept and n_samples < n_features
+        ) or solver in ["newton-cholesky", "newton-qr-cholesky"]:
             # XXX: Investigate if the lack of convergence in this case should be
             # considered a bug or not.
+            warnings.filterwarnings("ignore", category=scipy.linalg.LinAlgWarning)
             warnings.filterwarnings("ignore", category=ConvergenceWarning)
         model.fit(X, y)
 
@@ -473,7 +476,7 @@ def test_glm_regression_unpenalized_hstacked_X(solver, fit_intercept, glm_datase
         # As it is an underdetermined problem, prediction = y. The following shows that
         # we get a solution, i.e. a (non-unique) minimum of the objective function ...
         assert_allclose(model.predict(X), y, rtol=1e-6)
-        if fit_intercept:
+        if fit_intercept or solver in ["newton-cholesky"]:
             # Same as in test_glm_regression_unpenalized.
             # But it is not the minimum norm solution. Otherwise the norms would be
             # equal.
@@ -537,7 +540,7 @@ def test_glm_regression_unpenalized_vstacked_X(solver, fit_intercept, glm_datase
         # As it is an underdetermined problem, prediction = y. The following shows that
         # we get a solution, i.e. a (non-unique) minimum of the objective function ...
         assert_allclose(model.predict(X), y, rtol=1e-6)
-        if fit_intercept:
+        if fit_intercept or solver in ["newton-cholesky"]:
             # Same as in test_glm_regression_unpenalized.
             # But it is not the minimum norm solution. Otherwise the norms would be
             # equal.
