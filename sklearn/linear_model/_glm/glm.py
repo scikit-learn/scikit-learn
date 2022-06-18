@@ -34,7 +34,7 @@ from .._linear_loss import LinearModelLoss
     {
         "alpha": [Interval(Real, 0.0, None, closed="left")],
         "fit_intercept": [bool],
-        "solver": [StrOptions("lbfgs")],
+        "solver": [StrOptions({"lbfgs"})],
         "max_iter": [Interval(Integral, 1, None, closed="left")],
         "tol": [Interval(Real, 0.0, None, closed="neither")],
         "warm_start": [bool],
@@ -139,7 +139,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
     _parameter_constraints = {
         "alpha": [Interval(Real, 0.0, None, closed="left")],
         "fit_intercept": [bool],
-        "solver": [StrOptions("lbfgs")],
+        "solver": [StrOptions({"lbfgs"})],
         "max_iter": [Interval(Integral, 1, None, closed="left")],
         "tol": [Interval(Real, 0.0, None, closed="neither")],
         "warm_start": [bool],
@@ -715,7 +715,7 @@ class GammaRegressor(_GeneralizedLinearRegressor):
 @validate_params(
     {
         "power": [Interval(Real, None, None, closed="neither")],
-        "link": [StrOptions("auto", "identity", "loss")],
+        "link": [StrOptions({"auto", "identity", "loss"})],
     }
 )
 class TweedieRegressor(_GeneralizedLinearRegressor):
@@ -838,7 +838,7 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
     _parameter_constraints = {
         **_GeneralizedLinearRegressor._parameter_constraints,
         "power": [Interval(Real, None, None, closed="neither")],
-        "link": [StrOptions("auto", "identity", "loss")],
+        "link": [StrOptions({"auto", "identity", "loss"})],
     }
 
     def __init__(
