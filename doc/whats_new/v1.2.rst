@@ -154,6 +154,12 @@ Changelog
   of a binary classification problem. :pr:`22518` by
   :user:`Arturo Amor <ArturoAmorQ>`.
 
+:mod:`sklearn.naive_bayes`
+..........................
+
+- |Feature| Add methods `predict_joint_log_proba` to all naive Bayes classifiers.
+  :pr:`23683` by :user:`Andrey Melnik <avm19>`.
+
 :mod:`sklearn.neighbors`
 ........................
 
