@@ -185,48 +185,13 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             Fitted model.
         """
         self._validate_params()
-        # check_scalar(
-        #     self.alpha,
-        #     name="alpha",
-        #     target_type=numbers.Real,
-        #     min_val=0.0,
-        #     include_boundaries="left",
-        # )
-        # if not isinstance(self.fit_intercept, bool):
-        #     raise ValueError(
-        #         "The argument fit_intercept must be bool; got {0}".format(
-        #             self.fit_intercept
-        #         )
-        #     )
+
         if self.solver not in ["lbfgs"]:
             raise ValueError(
                 f"{self.__class__.__name__} supports only solvers 'lbfgs'; "
                 f"got {self.solver}"
             )
         solver = self.solver
-        # check_scalar(
-        #     self.max_iter,
-        #     name="max_iter",
-        #     target_type=numbers.Integral,
-        #     min_val=1,
-        # )
-        # check_scalar(
-        #     self.tol,
-        #     name="tol",
-        #     target_type=numbers.Real,
-        #     min_val=0.0,
-        #     include_boundaries="neither",
-        # )
-        # check_scalar(
-        #     self.verbose,
-        #     name="verbose",
-        #     target_type=numbers.Integral,
-        #     min_val=0,
-        # )
-        # if not isinstance(self.warm_start, bool):
-        #     raise ValueError(
-        #        "Argument warm_start must be bool; got {0}".format(self.warm_start)
-        #     )
 
         X, y = self._validate_data(
             X,
