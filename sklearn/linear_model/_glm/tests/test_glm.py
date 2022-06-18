@@ -236,13 +236,14 @@ def test_glm_regression(solver, fit_intercept, glm_dataset):
         coef = coef_without_intercept
         intercept = 0
 
-    if solver in ["newton-cholesky", "newton-qr-cholesky"]:
-        warnings.filterwarnings(
-            action="ignore",
-            message=".*pointwise hessian to have many non-positive values.*",
-            category=ConvergenceWarning,
-        )
-    model.fit(X, y)
+    with warnings.catch_warnings():
+        if solver in ["newton-cholesky", "newton-qr-cholesky"]:
+            warnings.filterwarnings(
+                action="ignore",
+                message=".*pointwise hessian to have many non-positive values.*",
+                category=ConvergenceWarning,
+            )
+        model.fit(X, y)
 
     rtol = 5e-5 if solver == "lbfgs" else 1e-9
     assert model.intercept_ == pytest.approx(intercept, rel=rtol)
@@ -372,10 +373,11 @@ def test_glm_regression_unpenalized(solver, fit_intercept, glm_dataset):
     else:
         intercept = 0
 
-    if n_samples < n_features:
-        warnings.filterwarnings("ignore", category=scipy.linalg.LinAlgWarning)
-        warnings.filterwarnings("ignore", category=ConvergenceWarning)
-    model.fit(X, y)
+    with warnings.catch_warnings():
+        if n_samples < n_features:
+            warnings.filterwarnings("ignore", category=scipy.linalg.LinAlgWarning)
+            warnings.filterwarnings("ignore", category=ConvergenceWarning)
+        model.fit(X, y)
 
     # FIXME: `assert_allclose(model.coef_, coef)` should work for all cases but fails
     # for the wide/fat case with n_features > n_samples. Most current GLM solvers do
@@ -521,10 +523,11 @@ def test_glm_regression_unpenalized_vstacked_X(solver, fit_intercept, glm_datase
     assert np.linalg.matrix_rank(X) <= min(n_samples, n_features)
     y = np.r_[y, y]
 
-    if n_samples < n_features:
-        warnings.filterwarnings("ignore", category=scipy.linalg.LinAlgWarning)
-        warnings.filterwarnings("ignore", category=ConvergenceWarning)
-    model.fit(X, y)
+    with warnings.catch_warnings():
+        if n_samples < n_features:
+            warnings.filterwarnings("ignore", category=scipy.linalg.LinAlgWarning)
+            warnings.filterwarnings("ignore", category=ConvergenceWarning)
+        model.fit(X, y)
 
     rtol = 5e-5 if solver == "lbfgs" else 1e-6
     if n_samples > n_features:
