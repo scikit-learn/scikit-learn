@@ -285,7 +285,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                 jac=True,
                 options={
                     "maxiter": self.max_iter,
-                    "maxls": 40,  # default is 20
+                    "maxls": 50,  # default is 20
                     "iprint": self.verbose - 1,
                     "gtol": self.tol,
                     # The constant 64 was found empirically to pass the test suite. The
