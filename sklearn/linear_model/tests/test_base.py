@@ -27,7 +27,6 @@ from sklearn.datasets import load_iris
 from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import add_dummy_feature
 
-rng = check_random_state(0)
 rtol = 1e-6
 
 
