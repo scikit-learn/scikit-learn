@@ -6,6 +6,8 @@ The :mod:`sklearn.pls` module implements Partial Least Squares (PLS).
 # License: BSD 3 clause
 
 import numbers
+from numbers import Integral, Real
+
 import warnings
 from abc import ABCMeta, abstractmethod
 
@@ -20,6 +22,9 @@ from ..utils.fixes import sp_version
 from ..utils.fixes import parse_version
 from ..utils.extmath import svd_flip
 from ..utils.validation import check_is_fitted, FLOAT_DTYPES
+from ..utils._param_validation import Interval
+from ..utils._param_validation import StrOptions
+from ..utils._param_validation import validate_params
 from ..exceptions import ConvergenceWarning
 
 __all__ = ["PLSCanonical", "PLSRegression", "PLSSVD"]
@@ -173,6 +178,17 @@ class _PLS(
     https://www.stat.washington.edu/research/reports/2000/tr371.pdf
     """
 
+    _parameter_constraints = {
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "scale": [bool],
+        "deflation_mode": [StrOptions({"regression", "canonical"})],
+        "mode": [StrOptions({"A", "B"})],
+        "algorithm": [StrOptions({"svd", "nipals"})],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "copy": [bool],
+    }
+
     @abstractmethod
     def __init__(
         self,
@@ -213,6 +229,7 @@ class _PLS(
         self : object
             Fitted model.
         """
+        self._validate_params()
 
         check_consistent_length(X, Y)
         X = self._validate_data(
@@ -250,11 +267,6 @@ class _PLS(
                 numbers.Integral,
                 min_val=1,
                 max_val=rank_upper_bound,
-            )
-
-        if self.algorithm not in ("svd", "nipals"):
-            raise ValueError(
-                f"algorithm should be 'svd' or 'nipals', got {self.algorithm}."
             )
 
         self._norm_y_weights = self.deflation_mode == "canonical"  # 1.1
@@ -619,6 +631,14 @@ class PLSRegression(_PLS):
     >>> Y_pred = pls2.predict(X)
     """
 
+    _parameter_constraints = {
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "scale": [bool],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "copy": [bool],
+    }
+
     # This implementation provides the same results that 3 PLS packages
     # provided in the R language (R-project):
     #     - "mixOmics" with function pls(X, Y, mode = "regression")
@@ -657,6 +677,8 @@ class PLSRegression(_PLS):
         self : object
             Fitted model.
         """
+        self._validate_params()
+
         super().fit(X, Y)
         # expose the fitted attributes `x_scores_` and `y_scores_`
         self.x_scores_ = self._x_scores
@@ -759,6 +781,15 @@ class PLSCanonical(_PLS):
     PLSCanonical()
     >>> X_c, Y_c = plsca.transform(X, Y)
     """
+
+    _parameter_constraints = {
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "scale": [bool],
+        "algorithm": [StrOptions({"svd", "nipals"})],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "copy": [bool],
+    }
 
     # This implementation provides the same results that the "plspm" package
     # provided in the R language (R-project), using the function plsca(X, Y).
@@ -878,6 +909,14 @@ class CCA(_PLS):
     >>> X_c, Y_c = cca.transform(X, Y)
     """
 
+    _parameter_constraints = {
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "scale": [bool],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "copy": [bool],
+    }
+
     def __init__(
         self, n_components=2, *, scale=True, max_iter=500, tol=1e-06, copy=True
     ):
@@ -961,6 +1000,12 @@ class PLSSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     ((4, 2), (4, 2))
     """
 
+    _parameter_constraints = {
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "scale": [bool],
+        "copy": [bool],
+    }
+
     def __init__(self, n_components=2, *, scale=True, copy=True):
         self.n_components = n_components
         self.scale = scale
@@ -982,6 +1027,8 @@ class PLSSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
+        self._validate_params()
+
         check_consistent_length(X, Y)
         X = self._validate_data(
             X, dtype=np.float64, copy=self.copy, ensure_min_samples=2
