@@ -35,9 +35,9 @@ from .._linear_loss import LinearModelLoss
 class NewtonSolver(ABC):
     """Newton solver for GLMs.
 
-    This class implements Newton/2nd-order optimization for GLMs. Each Newton iteration
-    aims at finding the Newton step which is done by the inner solver. With hessian H,
-    gradient g and coefficients coef, one step solves
+    This class implements Newton/2nd-order optimization routines for GLMs. Each Newton
+    iteration aims at finding the Newton step which is done by the inner solver. With
+    hessian H, gradient g and coefficients coef, one step solves:
 
         H @ coef_newton = -g
 
@@ -94,6 +94,42 @@ class NewtonSolver(ABC):
     n_threads : int, default=1
         Number of OpenMP threads to use for the computation of the hessian and gradient
         of the loss function.
+
+    Attributes
+    ----------
+    coef_old : ndarray of shape coef.shape
+        Coefficient of previous iteration.
+
+    coef_newton : ndarray of shape coef.shape
+        Newton step.
+
+    gradient : ndarray of shape coef.shape
+        Gradient of the loss wrt. the coefficients.
+
+    gradient_old : ndarray of shape coef.shape
+        Gradient of previous iteration.
+
+    loss_value : float
+        Value of objective function = loss + penalty.
+
+    loss_value_old : float
+        Value of objective function of previous itertion.
+
+    raw_prediction : ndarray of shape (n_samples,) or \
+            (n_samples, n_classes)
+
+    converged : bool
+        Indicator for convergence of the solver.
+
+    iteration : int
+        Number of Newton steps, i.e. calls to inner_solve
+
+    use_lbfgs_step : bool
+        An inner solver can set this to True to resort to LBFGS for one iteration.
+
+    gradient_times_newton : float
+        gradient @ coef_newton, set in inner_solve and used by line_search. If the
+        Newton step is a descent direction, this is negative.
     """
 
     def __init__(
@@ -149,11 +185,15 @@ class NewtonSolver(ABC):
     def inner_solve(self, X, y, sample_weight):
         """Compute Newton step.
 
-        Sets self.coef_newton.
+        Sets:
+            - self.coef_newton
+            - gradient_times_newton
         """
 
     def lbfgs_step(self, X, y, sample_weight):
         """Fallback for inner solver.
+
+        This is like inner_solve and line_search together.
 
         Use 4 lbfgs steps. As in line_search sets:
             - self.coef_old
@@ -214,7 +254,9 @@ class NewtonSolver(ABC):
         eps = 16 * np.finfo(self.loss_value.dtype).eps
         t = 1  # step size
 
-        armijo_term = sigma * self.gradient @ self.coef_newton
+        # gradient_times_newton = self.gradient @ self.coef_newton
+        # was computed in inner_solve.
+        armijo_term = sigma * self.gradient_times_newton
         _, _, raw_prediction_newton = self.linear_loss.weight_intercept_raw(
             self.coef_newton, X
         )
@@ -341,7 +383,10 @@ class NewtonSolver(ABC):
         self.raw_prediction = raw
 
     def check_convergence(self, X, y, sample_weight):
-        """Check for convergence."""
+        """Check for convergence.
+
+        Sets self.converged.
+        """
         if self.verbose:
             print("  Check Convergence")
         # Note: Checking maximum relative change of coefficient <= tol is a bad
@@ -390,6 +435,8 @@ class NewtonSolver(ABC):
     def solve(self, X, y, sample_weight):
         """Solve the optimization problem.
 
+        This is the main routine.
+
         Order of calls:
             self.setup()
             while iteration:
@@ -398,6 +445,11 @@ class NewtonSolver(ABC):
                 self.line_search()
                 self.check_convergence()
             self.finalize()
+
+        Returns
+        -------
+        coef : ndarray of shape (n_dof,), (n_classes, n_dof) or (n_classes * n_dof,)
+            Solution of the optimization problem.
         """
         # setup usually:
         #   - initializes self.coef if needed
@@ -406,7 +458,6 @@ class NewtonSolver(ABC):
 
         self.iteration = 1
         self.converged = False
-        self.stop = False  # Can be used by inner_solve to stop iteration.
 
         while self.iteration <= self.max_iter and not self.converged:
             if self.verbose:
@@ -425,10 +476,7 @@ class NewtonSolver(ABC):
             # 2. Inner solver
             #    Calculate Newton step/direction
             #    This usually sets self.coef_newton.
-            #    It may set self.stop = True, e.g. for ill-conditioned systems.
             self.inner_solve(X=X, y=y, sample_weight=sample_weight)
-            if self.stop:
-                break
             if self.use_lbfgs_step:
                 self.lbfgs_step(X=X, y=y, sample_weight=sample_weight)
 
@@ -492,13 +540,20 @@ class BaseCholeskyNewtonSolver(NewtonSolver):
             self.use_lbfgs_step = True
             return
 
+        gradient_step = False
         try:
             with warnings.catch_warnings():
                 warnings.simplefilter("error", scipy.linalg.LinAlgWarning)
                 self.coef_newton = scipy.linalg.solve(
                     self.hessian, -self.gradient, check_finite=False, assume_a="sym"
                 )
-            return
+                self.gradient_times_newton = self.gradient @ self.coef_newton
+                gradient_step = self.gradient_times_newton > 0
+                if gradient_step and self.verbose:
+                    print(
+                        "  The inner solver found a Newton step that is not a descent "
+                        "direction and resorts to a simple gradient step."
+                    )
         except (np.linalg.LinAlgError, scipy.linalg.LinAlgWarning) as e:
             if self.count_singular == 0:
                 # We only need to throw this warning once.
@@ -519,13 +574,13 @@ class BaseCholeskyNewtonSolver(NewtonSolver):
             self.count_singular += 1
             # Possible causes:
             # 1. hess_pointwise is negative. But this is already taken care in
-            #    LinearModelLoss such that min(hess_pointwise) >= 0.
+            #    LinearModelLoss.gradient_hessian.
             # 2. X is singular or ill-conditioned
             #    This might be the most probable cause.
             #
-            # There are many possible ways to deal with this situation (most of
-            # them adding, explicit or implicit, a matrix to the hessian to make it
-            # positive definite), confer to Chapter 3.4 of Nocedal & Wright 2nd ed.
+            # There are many possible ways to deal with this situation. Most of them
+            # add, explicit or implicit, a matrix to the hessian to make it positive
+            # definite, confer to Chapter 3.4 of Nocedal & Wright 2nd ed.
             # Instead, we resort to a simple gradient step, taking the diagonal part
             # of the hessian.
             if self.verbose:
@@ -533,11 +588,15 @@ class BaseCholeskyNewtonSolver(NewtonSolver):
                     "  The inner solver stumbled upon an singular or ill-conditioned "
                     "hessian matrix and resorts to a simple gradient step."
                 )
-            # We add 1e-3 to the diagonal hessian part to make in invertible and to
-            # restrict coef_newton to at most ~1e3. The line search considerst step
-            # sizes until 1e-6 * newton_step ~1e-3 * newton_step.
+            gradient_step = True
+
+        if gradient_step:
+            # We add 1e-3 to the diagonal hessian part to make it invertible and to
+            # restrict coef_newton to at most ~1e3. The line search considers step
+            # sizes until 2**-20 ~ 1e-6 * newton_step >~ 1e-3 * gradient.
             eps = 1e-3
-            self.coef_newton = -self.gradient / (np.diag(self.hessian) + eps)
+            self.coef_newton = -self.gradient / (np.abs(np.diag(self.hessian)) + eps)
+            self.gradient_times_newton = self.gradient @ self.coef_newton
 
 
 class CholeskyNewtonSolver(BaseCholeskyNewtonSolver):

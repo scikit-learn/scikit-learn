@@ -431,8 +431,9 @@ class LinearModelLoss:
         )
 
         # For non-canonical link functions and far away from the optimum, the pointwise
-        # hessian can be negative. We take care that the hessian is positive.
-        hessian_warning = np.sum(hess_pointwise <= 0) > len(hess_pointwise) / 2
+        # hessian can be negative. We take care that 75% ot the hessian entries are
+        # positive.
+        hessian_warning = np.sum(hess_pointwise <= 0) > len(hess_pointwise) * 0.25
         hess_pointwise = np.abs(hess_pointwise)
 
         if not self.base_loss.is_multiclass:
