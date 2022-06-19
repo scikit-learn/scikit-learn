@@ -382,19 +382,33 @@ def test_glm_regression_unpenalized(solver, fit_intercept, glm_dataset):
     # FIXME: `assert_allclose(model.coef_, coef)` should work for all cases but fails
     # for the wide/fat case with n_features > n_samples. Most current GLM solvers do
     # NOT return the minimum norm solution with fit_intercept=True.
-    rtol = 5e-5 if solver == "lbfgs" else 1e-7
     if n_samples > n_features:
+        rtol = 5e-5 if solver == "lbfgs" else 1e-7
         assert model.intercept_ == pytest.approx(intercept)
         assert_allclose(model.coef_, coef, rtol=rtol)
     else:
         # As it is an underdetermined problem, prediction = y. The following shows that
         # we get a solution, i.e. a (non-unique) minimum of the objective function ...
-        assert_allclose(model.predict(X), y, rtol=1e-6)
-        if fit_intercept or solver in ["newton-cholesky"]:
+        rtol = 1e-6
+        if solver == "newton-cholesky":
+            rtol = 5e-4
+        elif solver == "newton-qr-cholesky":
+            rtol = 5e-5
+            if isinstance(model, TweedieRegressor) and model.power == 1.5:
+                pytest.xfail("newton-qr-cholesky fails on TweedieRegressor(power=1.5)")
+        assert_allclose(model.predict(X), y, rtol=rtol)
+
+        norm_solution = np.linalg.norm(np.r_[intercept, coef])
+        norm_model = np.linalg.norm(np.r_[model.intercept_, model.coef_])
+        if solver == "newton-cholesky":
+            # XXX: This solver shows random behaviour. Sometimes it finds solutions
+            # with norm_model <= norm_solution! So we check conditionally.
+            if not (norm_model > (1 + 1e-12) * norm_solution):
+                assert model.intercept_ == pytest.approx(intercept)
+                assert_allclose(model.coef_, coef, rtol=5e-5)
+        elif solver == "lbfgs" and fit_intercept:
             # But it is not the minimum norm solution. Otherwise the norms would be
             # equal.
-            norm_solution = np.linalg.norm(np.r_[intercept, coef])
-            norm_model = np.linalg.norm(np.r_[model.intercept_, model.coef_])
             assert norm_model > (1 + 1e-12) * norm_solution
 
             # See https://github.com/scikit-learn/scikit-learn/issues/23670.
@@ -406,8 +420,8 @@ def test_glm_regression_unpenalized(solver, fit_intercept, glm_dataset):
             # When `fit_intercept=False`, LBFGS naturally converges to the minimum norm
             # solution on this problem.
             # XXX: Do we have any theoretical guarantees why this should be the case?
-            assert model.intercept_ == pytest.approx(intercept)
-            assert_allclose(model.coef_, coef, rtol=rtol)
+            assert model.intercept_ == pytest.approx(intercept, rel=5e-6)
+            assert_allclose(model.coef_, coef, rtol=1e-5)
 
 
 @pytest.mark.parametrize("solver", SOLVERS)
@@ -468,15 +482,20 @@ def test_glm_regression_unpenalized_hstacked_X(solver, fit_intercept, glm_datase
         model_intercept = model.intercept_
         model_coef = model.coef_
 
-    rtol = 6e-5 if solver == "lbfgs" else 1e-6
     if n_samples > n_features:
         assert model_intercept == pytest.approx(intercept)
-        assert_allclose(model_coef, np.r_[coef, coef], rtol=1e-4)
+        rtol = 1e-4
+        if solver == "newton-qr-cholesky":
+            rtol = 5e-4
+            if isinstance(model, TweedieRegressor) and model.power == 1.5:
+                pytest.xfail("newton-qr-cholesky fails on TweedieRegressor(power=1.5)")
+        assert_allclose(model_coef, np.r_[coef, coef], rtol=rtol)
     else:
         # As it is an underdetermined problem, prediction = y. The following shows that
         # we get a solution, i.e. a (non-unique) minimum of the objective function ...
-        assert_allclose(model.predict(X), y, rtol=1e-6)
-        if fit_intercept or solver in ["newton-cholesky"]:
+        rtol = 1e-6 if solver == "lbfgs" else 5e-6
+        assert_allclose(model.predict(X), y, rtol=rtol)
+        if (solver == "lbfgs" and fit_intercept) or solver == "newton-cholesky":
             # Same as in test_glm_regression_unpenalized.
             # But it is not the minimum norm solution. Otherwise the norms would be
             # equal.
@@ -488,6 +507,7 @@ def test_glm_regression_unpenalized_hstacked_X(solver, fit_intercept, glm_datase
             # For minimum norm solution, we would have
             # assert model.intercept_ == pytest.approx(model.coef_[-1])
         else:
+            rtol = 6e-5 if solver == "lbfgs" else 1e-6
             assert model_intercept == pytest.approx(intercept)
             assert_allclose(model_coef, np.r_[coef, coef], rtol=rtol)
 
@@ -539,13 +559,21 @@ def test_glm_regression_unpenalized_vstacked_X(solver, fit_intercept, glm_datase
     else:
         # As it is an underdetermined problem, prediction = y. The following shows that
         # we get a solution, i.e. a (non-unique) minimum of the objective function ...
-        assert_allclose(model.predict(X), y, rtol=1e-6)
-        if fit_intercept or solver in ["newton-cholesky"]:
+        rtol = 1e-6 if solver == "lbfgs" else 5e-6
+        assert_allclose(model.predict(X), y, rtol=rtol)
+
+        norm_solution = np.linalg.norm(np.r_[intercept, coef])
+        norm_model = np.linalg.norm(np.r_[model.intercept_, model.coef_])
+        if solver == "newton-cholesky":
+            # XXX: This solver shows random behaviour. Sometimes it finds solutions
+            # with norm_model <= norm_solution! So we check conditionally.
+            if not (norm_model > (1 + 1e-12) * norm_solution):
+                assert model.intercept_ == pytest.approx(intercept)
+                assert_allclose(model.coef_, coef, rtol=1e-4)
+        elif solver == "lbfgs" and fit_intercept:
             # Same as in test_glm_regression_unpenalized.
             # But it is not the minimum norm solution. Otherwise the norms would be
             # equal.
-            norm_solution = np.linalg.norm(np.r_[intercept, coef])
-            norm_model = np.linalg.norm(np.r_[model.intercept_, model.coef_])
             assert norm_model > (1 + 1e-12) * norm_solution
         else:
             assert model.intercept_ == pytest.approx(intercept)

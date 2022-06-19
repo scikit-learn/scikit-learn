@@ -194,8 +194,11 @@ class NewtonSolver(ABC):
         """Fallback for inner solver.
 
         This is like inner_solve and line_search together.
+        It uses 4 lbfgs steps such that it takes advantage of updates of the
+        quasi-hessian, but not more steps in the hope that the normal inner solver can
+        take over again.
 
-        Use 4 lbfgs steps. As in line_search sets:
+        As in line_search sets:
             - self.coef_old
             - self.coef
             - self.loss_value_old
@@ -535,12 +538,11 @@ class BaseCholeskyNewtonSolver(NewtonSolver):
             if self.verbose:
                 print(
                     "  The inner solver detected a pointwise hessian with many "
-                    "negative values and resorts to a lbfgs step."
+                    "negative values and resorts to a few lbfgs steps."
                 )
             self.use_lbfgs_step = True
             return
 
-        gradient_step = False
         try:
             with warnings.catch_warnings():
                 warnings.simplefilter("error", scipy.linalg.LinAlgWarning)
@@ -548,12 +550,14 @@ class BaseCholeskyNewtonSolver(NewtonSolver):
                     self.hessian, -self.gradient, check_finite=False, assume_a="sym"
                 )
                 self.gradient_times_newton = self.gradient @ self.coef_newton
-                gradient_step = self.gradient_times_newton > 0
-                if gradient_step and self.verbose:
-                    print(
-                        "  The inner solver found a Newton step that is not a descent "
-                        "direction and resorts to a simple gradient step."
-                    )
+                if self.gradient_times_newton > 0:
+                    if self.verbose:
+                        print(
+                            "  The inner solver found a Newton step that is not a "
+                            "descent direction and resorts to a few lbfgs steps."
+                        )
+                    self.use_lbfgs_step = True
+                    return
         except (np.linalg.LinAlgError, scipy.linalg.LinAlgWarning) as e:
             if self.count_singular == 0:
                 # We only need to throw this warning once.
@@ -581,22 +585,14 @@ class BaseCholeskyNewtonSolver(NewtonSolver):
             # There are many possible ways to deal with this situation. Most of them
             # add, explicit or implicit, a matrix to the hessian to make it positive
             # definite, confer to Chapter 3.4 of Nocedal & Wright 2nd ed.
-            # Instead, we resort to a simple gradient step, taking the diagonal part
-            # of the hessian.
+            # Instead, we resort to a few lbfgs steps.
             if self.verbose:
                 print(
                     "  The inner solver stumbled upon an singular or ill-conditioned "
-                    "hessian matrix and resorts to a simple gradient step."
+                    "hessian matrix and resorts to a few lbfgs steps."
                 )
-            gradient_step = True
-
-        if gradient_step:
-            # We add 1e-3 to the diagonal hessian part to make it invertible and to
-            # restrict coef_newton to at most ~1e3. The line search considers step
-            # sizes until 2**-20 ~ 1e-6 * newton_step >~ 1e-3 * gradient.
-            eps = 1e-3
-            self.coef_newton = -self.gradient / (np.abs(np.diag(self.hessian)) + eps)
-            self.gradient_times_newton = self.gradient @ self.coef_newton
+            self.use_lbfgs_step = True
+            return
 
 
 class CholeskyNewtonSolver(BaseCholeskyNewtonSolver):
