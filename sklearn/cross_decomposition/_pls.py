@@ -24,7 +24,6 @@ from ..utils.extmath import svd_flip
 from ..utils.validation import check_is_fitted, FLOAT_DTYPES
 from ..utils._param_validation import Interval
 from ..utils._param_validation import StrOptions
-from ..utils._param_validation import validate_params
 from ..exceptions import ConvergenceWarning
 
 __all__ = ["PLSCanonical", "PLSRegression", "PLSSVD"]
