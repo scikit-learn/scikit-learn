@@ -1149,3 +1149,42 @@ class TSNE(BaseEstimator):
 
     def _more_tags(self):
         return {"pairwise": self.metric == "precomputed"}
+
+def t_sne_score(
+        perplexity : float = 30.0,
+        metric : str = 'euclidean',
+        squared : bool = True,
+        n_jobs : int = 4,
+        domain,
+        embedding,
+    ):
+    """
+        Comparative metric that allows to 
+        asses the effectiveness of a generalized
+        embedding method given the domain variable
+        and the embedded variable. Computes the cost of 
+        t-SNE for an embedding that may not be t-SNE.
+        
+        domain : NDArray is a 2D array that describes the data
+                    to be embedded
+        embedding: NDArray is a 2D array of shape 
+                  (domain.shape[0], latent_space_dim) that describes 
+                  the output of the embedding 
+    """
+    assert domain.shape[0] == embedding.shape[0], "Sample size between 
+                                            domain variable and embedding
+                                            must be the same"
+    latent_space_dim = embedding.shape[1]
+    degrees_of_freedom = max(embedding.shape[1] - 1, 1)
+    distances = pairwise_distances(X = domain,
+                                metric = metric,
+                                squared = squared,
+                                n_jobs = n_jobs)
+    P = _t_sne._joint_probabilities(distances, perplexity, False)
+    dist = pdist(embedding, 'sqeuclidean')
+    dist /= degrees_of_freedom
+    dist += 1.0
+    dist **=(degrees_of_freedom + 1.0) / -2.0
+    Q = np.maximum(dist / (2.0 * np.sum(dist)), MACHINE_EPSILON)
+    return 2.0 * np.dot(P, np.log(np.maximum(P, MACHINE_EPSILON) / Q))
+
