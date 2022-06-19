@@ -415,13 +415,13 @@ def test_glm_regression_unpenalized(solver, fit_intercept, glm_dataset):
             # Note: Even adding a tiny penalty does not give the minimal norm solution.
             # XXX: We could have naively expected LBFGS to find the minimal norm
             # solution by adding a very small penalty. Even that fails for a reason we
-            # do not properly
+            # do not properly understand.
         else:
             # When `fit_intercept=False`, LBFGS naturally converges to the minimum norm
             # solution on this problem.
             # XXX: Do we have any theoretical guarantees why this should be the case?
             assert model.intercept_ == pytest.approx(intercept, rel=5e-6)
-            assert_allclose(model.coef_, coef, rtol=1e-5)
+            assert_allclose(model.coef_, coef, rtol=5e-5)
 
 
 @pytest.mark.parametrize("solver", SOLVERS)
@@ -507,9 +507,9 @@ def test_glm_regression_unpenalized_hstacked_X(solver, fit_intercept, glm_datase
             # For minimum norm solution, we would have
             # assert model.intercept_ == pytest.approx(model.coef_[-1])
         else:
-            rtol = 6e-5 if solver == "lbfgs" else 1e-6
-            assert model_intercept == pytest.approx(intercept)
-            assert_allclose(model_coef, np.r_[coef, coef], rtol=rtol)
+            rtol = 5e-5 if solver == "newton-qr-cholesky" else 5e-6
+            assert model_intercept == pytest.approx(intercept, rel=rtol)
+            assert_allclose(model_coef, np.r_[coef, coef], rtol=1e-4)
 
 
 @pytest.mark.parametrize("solver", SOLVERS)
@@ -552,8 +552,8 @@ def test_glm_regression_unpenalized_vstacked_X(solver, fit_intercept, glm_datase
             warnings.filterwarnings("ignore", category=ConvergenceWarning)
         model.fit(X, y)
 
-    rtol = 5e-5 if solver == "lbfgs" else 1e-6
     if n_samples > n_features:
+        rtol = 5e-5 if solver == "lbfgs" else 1e-6
         assert model.intercept_ == pytest.approx(intercept)
         assert_allclose(model.coef_, coef, rtol=rtol)
     else:
@@ -576,7 +576,8 @@ def test_glm_regression_unpenalized_vstacked_X(solver, fit_intercept, glm_datase
             # equal.
             assert norm_model > (1 + 1e-12) * norm_solution
         else:
-            assert model.intercept_ == pytest.approx(intercept)
+            rtol = 1e-5 if solver == "newton-cholesky" else 1e-4
+            assert model.intercept_ == pytest.approx(intercept, rel=rtol)
             assert_allclose(model.coef_, coef, rtol=rtol)
 
 
