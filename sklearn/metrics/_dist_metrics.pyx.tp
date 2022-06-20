@@ -2626,6 +2626,105 @@ cdef class HaversineDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
         tmp = np.sin(0.5 * dist)
         return tmp * tmp
 
+    cdef inline DTYPE_t dist_csr(
+         self,
+         const {{INPUT_DTYPE_t}}[:] x1_data,
+         const SPARSE_INDEX_TYPE_t[:] x1_indices,
+         const {{INPUT_DTYPE_t}}[:] x2_data,
+         const SPARSE_INDEX_TYPE_t[:] x2_indices,
+         const SPARSE_INDEX_TYPE_t x1_start,
+         const SPARSE_INDEX_TYPE_t x1_end,
+         const SPARSE_INDEX_TYPE_t x2_start,
+         const SPARSE_INDEX_TYPE_t x2_end,
+         const ITYPE_t size,
+    ) nogil except -1:
+        return 2 * asin(sqrt(self.rdist_csr(
+            x1_data,
+            x1_indices,
+            x2_data,
+            x2_indices,
+            x1_start,
+            x1_end,
+            x2_start,
+            x2_end,
+            size,
+        )))
+
+    cdef inline DTYPE_t rdist_csr(
+        self,
+        const {{INPUT_DTYPE_t}}[:] x1_data,
+        const SPARSE_INDEX_TYPE_t[:] x1_indices,
+        const {{INPUT_DTYPE_t}}[:] x2_data,
+        const SPARSE_INDEX_TYPE_t[:] x2_indices,
+        const SPARSE_INDEX_TYPE_t x1_start,
+        const SPARSE_INDEX_TYPE_t x1_end,
+        const SPARSE_INDEX_TYPE_t x2_start,
+        const SPARSE_INDEX_TYPE_t x2_end,
+        const ITYPE_t size,
+    ) nogil except -1:
+
+        cdef:
+            cnp.npy_intp ix1, ix2
+            cnp.npy_intp i1 = x1_start
+            cnp.npy_intp i2 = x2_start
+            cnp.npy_intp len_x1_indices = x1_indices.shape[0]
+            cnp.npy_intp len_x2_indices = x2_indices.shape[0]
+
+            DTYPE_t x1_0 = 0
+            DTYPE_t x1_1 = 0
+            DTYPE_t x2_0 = 0
+            DTYPE_t x2_1 = 0
+            DTYPE_t sin_0
+            DTYPE_t sin_1
+
+        while i1 < x1_end and i2 < x2_end:
+            # Use the modulo-trick to implement support for CSR × dense array
+            # with the CSR × CSR routine. See _pairwise_sparse_dense for more
+            # details.
+            ix1 = x1_indices[i1 % len_x1_indices]
+            ix2 = x2_indices[i2 % len_x2_indices]
+
+            # Find the components in the 2D vectors to work with
+            x1_component = ix1 if (x1_start == 0) else ix1 % x1_start
+            x2_component = ix2 if (x2_start == 0) else ix2 % x2_start
+
+            if x1_component == 0:
+                x1_0 = x1_data[i1]
+            else:
+                x1_1 = x1_data[i1]
+
+            if x2_component == 0:
+                x2_0 = x2_data[i2]
+            else:
+                x2_1 = x2_data[i2]
+
+            i1 = i1 + 1
+            i2 = i2 + 1
+
+        if i1 == x1_end:
+            while i2 < x2_end:
+                ix2 = x2_indices[i2 % len_x2_indices]
+                x2_component = ix2 if (x2_start == 0) else ix2 % x2_start
+                if x2_component == 0:
+                    x2_0 = x2_data[i2]
+                else:
+                    x2_1 = x2_data[i2]
+                i2 = i2 + 1
+        else:
+            while i1 < x1_end:
+                ix1 = x1_indices[i1 % len_x1_indices]
+                x1_component = ix1 if (x1_start == 0) else ix1 % x1_start
+                if x1_component == 0:
+                    x1_0 = x1_data[i1]
+                else:
+                    x1_1 = x1_data[i1]
+                i1 = i1 + 1
+
+        sin_0 = sin(0.5 * (x1_0 - x2_0))
+        sin_1 = sin(0.5 * (x1_1 - x2_1))
+
+        return (sin_0 * sin_0 + cos(x1_0) * cos(x2_0) * sin_1 * sin_1)
+
 #------------------------------------------------------------
 # User-defined distance
 #

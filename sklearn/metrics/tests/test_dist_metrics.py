@@ -266,7 +266,20 @@ def test_pickle_bool_metrics(metric, X_bool):
     assert_allclose(D1, D2)
 
 
-def test_haversine_metric():
+@pytest.mark.parametrize("X, Y", [(X64, Y64), (X32, Y32), (X_mmap, Y_mmap)])
+def test_haversine_metric(X, Y):
+    DistanceMetricInterface = (
+        DistanceMetric if X.dtype == np.float64 else DistanceMetric32
+    )
+
+    # The Haversine DistanceMetric only works on 2 features.
+    X = np.asarray(X[:, :2])
+    Y = np.asarray(Y[:, :2])
+
+    X_csr, Y_csr = sp.csr_matrix(X), sp.csr_matrix(Y)
+
+    # Haversine is not supported by scipy.special.distance.{cdist,pdist}
+    # So we reimplement it to have a reference.
     def haversine_slow(x1, x2):
         return 2 * np.arcsin(
             np.sqrt(
@@ -275,18 +288,28 @@ def test_haversine_metric():
             )
         )
 
-    X = np.random.random((10, 2))
+    D_reference = np.zeros((X_csr.shape[0], Y_csr.shape[0]))
+    for i, xi in enumerate(X):
+        for j, yj in enumerate(Y):
+            D_reference[i, j] = haversine_slow(xi, yj)
 
-    haversine = DistanceMetric.get_metric("haversine")
+    haversine = DistanceMetricInterface.get_metric("haversine")
 
-    D1 = haversine.pairwise(X)
-    D2 = np.zeros_like(D1)
-    for i, x1 in enumerate(X):
-        for j, x2 in enumerate(X):
-            D2[i, j] = haversine_slow(x1, x2)
+    D_sklearn = haversine.pairwise(X, Y)
+    assert_allclose(
+        haversine.dist_to_rdist(D_sklearn), np.sin(0.5 * D_reference) ** 2, rtol=1e-6
+    )
 
-    assert_allclose(D1, D2)
-    assert_allclose(haversine.dist_to_rdist(D1), np.sin(0.5 * D2) ** 2)
+    assert_allclose(D_sklearn, D_reference)
+
+    D_sklearn = haversine.pairwise(X_csr, Y_csr)
+    assert_allclose(D_sklearn, D_reference)
+
+    D_sklearn = haversine.pairwise(X_csr, Y)
+    assert_allclose(D_sklearn, D_reference)
+
+    D_sklearn = haversine.pairwise(X, Y_csr)
+    assert_allclose(D_sklearn, D_reference)
 
 
 def test_pyfunc_metric():
