@@ -3,30 +3,28 @@
 Adjustment for chance in clustering performance evaluation
 ==========================================================
 
-The following plots demonstrate the impact of the number of clusters and
-number of samples on various clustering performance evaluation metrics.
+The following plots demonstrate the impact of the number of clusters and number
+of samples on various clustering performance evaluation metrics.
 
-Non-adjusted measures such as the V-Measure show a dependency between
-the number of clusters and the number of samples: the mean V-Measure
-of random labeling increases significantly as the number of clusters is
-closer to the total number of samples used to compute the measure.
+Non-adjusted measures such as the V-Measure show a dependency between the number
+of clusters and the number of samples: the mean V-Measure of random labeling
+increases significantly as the number of clusters is closer to the total number
+of samples used to compute the measure.
 
-Adjusted for chance measure such as ARI display some random variations
-centered around a mean score of 0.0 for any number of samples and
-clusters.
+Adjusted for chance measure such as ARI display some random variations centered
+around a mean score of 0.0 for any number of samples and clusters.
 
-Only adjusted measures can hence safely be used as a consensus index
-to evaluate the average stability of clustering algorithms for a given
-value of k on various overlapping sub-samples of the dataset.
+Only adjusted measures can hence safely be used as a consensus index to evaluate
+the average stability of clustering algorithms for a given value of k on various
+overlapping sub-samples of the dataset.
 
 """
 
 # Author: Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
 
+# %%
 import numpy as np
-import matplotlib.pyplot as plt
-from time import time
 from sklearn import metrics
 
 
@@ -67,7 +65,11 @@ score_funcs = [
     metrics.mutual_info_score,
 ]
 
+# %%
 # 2 independent random clusterings with equal cluster number
+
+import matplotlib.pyplot as plt
+from time import time
 
 n_samples = 100
 n_clusters_range = np.linspace(2, n_samples, 10).astype(int)
@@ -86,7 +88,9 @@ for score_func in score_funcs:
     scores = uniform_labelings_scores(score_func, n_samples, n_clusters_range)
     print("done in %0.3fs" % (time() - t0))
     plots.append(
-        plt.errorbar(n_clusters_range, np.median(scores, axis=1), scores.std(axis=1))[0]
+        plt.errorbar(
+            n_clusters_range, np.median(scores, axis=1), scores.std(axis=1), alpha=0.8
+        )[0]
     )
     names.append(score_func.__name__)
 
@@ -98,7 +102,7 @@ plt.ylabel("Score value")
 plt.legend(plots, names)
 plt.ylim(bottom=-0.05, top=1.05)
 
-
+# %%
 # Random labeling with varying n_clusters against ground class labels
 # with fixed number of clusters
 
@@ -122,7 +126,9 @@ for score_func in score_funcs:
     )
     print("done in %0.3fs" % (time() - t0))
     plots.append(
-        plt.errorbar(n_clusters_range, scores.mean(axis=1), scores.std(axis=1))[0]
+        plt.errorbar(
+            n_clusters_range, scores.mean(axis=1), scores.std(axis=1), alpha=0.8
+        )[0]
     )
     names.append(score_func.__name__)
 
