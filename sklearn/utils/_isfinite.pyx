@@ -29,13 +29,13 @@ cdef inline int _isfinite(fprecision[::1] a, bint allow_nan) nogil:
     else:
         return _isfinite_disable_nan(a)
 
-cdef int _isfinite_allow_nan(fprecision[::1] a) nogil:
+cdef inline int _isfinite_allow_nan(fprecision[::1] a) nogil:
     for i in range(len(a)):
         if isinf(a[i]) != 0:
             return FiniteStatus.has_infinite
     return FiniteStatus.all_finite
 
-cdef int _isfinite_disable_nan(fprecision[::1] a) nogil:
+cdef inline int _isfinite_disable_nan(fprecision[::1] a) nogil:
     for i in range(len(a)):
         if isnan(a[i]) != 0:
             return FiniteStatus.has_nan
