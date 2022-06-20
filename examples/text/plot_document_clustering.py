@@ -82,17 +82,17 @@ print(f"{len(dataset.data)} documents - {true_k} categories")
 # truth information to quantify the quality of the resulting clusters. Examples
 # of such metrics are the following:
 #
-# - homogeneity, which quantifies how much clusters contain only members of a single
-#   class;
+# - homogeneity, which quantifies how much clusters contain only members of a
+#   single class;
 #
-# - completeness, which quantifies how much members of a given class are assigned
-#   to the same clusters;
+# - completeness, which quantifies how much members of a given class are
+#   assigned to the same clusters;
 #
 # - V-measure, the harmonic mean of completeness and homogeneity;
 #
 # - Rand-Index, which measures how frequently pairs of data points are grouped
 #   consistently according to the result of the clustering algorithm and the
-#   ground truth class assignment; 
+#   ground truth class assignment;
 #
 # - Adjusted Rand-Index, a chance-adjusted Rand-Index such that random cluster
 #   assignment have an ARI of 0.0 in expectation.
@@ -132,7 +132,7 @@ def fit_and_evaluate(km, X, name=None, n_runs=5):
         )
     train_times = np.asarray(train_times)
 
-    print(f"clustering done in {train_times.mean():.1f} ± {train_times.std():.1f} s ")
+    print(f"clustering done in {train_times.mean():.2f} ± {train_times.std():.2f} s ")
     evaluation = {
         "estimator": name,
         "train_time": train_times.mean(),
@@ -202,7 +202,7 @@ print(f"n_samples: {X_tfidf.shape[0]}, n_features: {X_tfidf.shape[1]}")
 print(f"{X_tfidf.nnz / np.prod(X_tfidf.shape):.3f}")
 
 # %%
-# We find that less than 1% of the entries of the `X_tfidf` matrix are non-zero.
+# We find that around 0.7% of the entries of the `X_tfidf` matrix are non-zero.
 #
 # .. _kmeans_sparse_high_dim:
 #
@@ -238,8 +238,8 @@ print(
 
 # %%
 # To avoid this problem, one possibility is to increase the number of runs with
-# independent random initiations `n_init`. In such case the clustering with the best
-# inertia (objective function of k-means) is chosen.
+# independent random initiations `n_init`. In such case the clustering with the
+# best inertia (objective function of k-means) is chosen.
 
 kmeans = KMeans(
     n_clusters=true_k,
@@ -250,16 +250,15 @@ kmeans = KMeans(
 fit_and_evaluate(kmeans, X_tfidf, name="KMeans\non tf-idf vectors")
 
 # %%
-# All those clustering evaluation metrics have a maximum value of 1.0
-# (for a perfect clustering result). Higher values are better.
-# Values of the Adjusted Rand-Index close to 0.0 correspond to a random
-# labelling. Notice from the scores above that the cluster assignment is
-# indeed well above chance level, but the overall quality can certainly
-# improve.
+# All those clustering evaluation metrics have a maximum value of 1.0 (for a
+# perfect clustering result). Higher values are better. Values of the Adjusted
+# Rand-Index close to 0.0 correspond to a random labeling. Notice from the
+# scores above that the cluster assignment is indeed well above chance level,
+# but the overall quality can certainly improve.
 #
-# But let's keep in mind that the class labels are not necessarily reflecting
-# accurately the document topics and therefore not necessarily the best at
-# to evaluate the quality of our clustering pipeline.
+# Keep in mind that the class labels may not reflect accurately the document
+# topics and therefore metrics that use labels are not necessarily the best to
+# evaluate the quality of our clustering pipeline.
 #
 # Performing dimensionality reduction using LSA
 # ---------------------------------------------
@@ -268,11 +267,10 @@ fit_and_evaluate(kmeans, X_tfidf, name="KMeans\non tf-idf vectors")
 # space is reduced first to make K-means more stable. For such purpose we use
 # :class:`~sklearn.decomposition.TruncatedSVD`, which works on term count/tf-idf
 # matrices. Since SVD results are not normalized, we redo the normalization to
-# improve the :class:`~sklearn.cluster.KMeans` result. Using SVD to
-# to reduce the dimensionality of TF-IDF document vectors is often
-# known as `latent semantic analysis
-# <https://en.wikipedia.org/wiki/Latent_semantic_analysis>`_ (LSA) in the
-# information retrieval and text mining literature.
+# improve the :class:`~sklearn.cluster.KMeans` result. Using SVD to reduce the
+# dimensionality of TF-IDF document vectors is often known as `latent semantic
+# analysis <https://en.wikipedia.org/wiki/Latent_semantic_analysis>`_ (LSA) in
+# the information retrieval and text mining literature.
 
 from sklearn.decomposition import TruncatedSVD
 from sklearn.pipeline import make_pipeline
@@ -302,10 +300,10 @@ fit_and_evaluate(kmeans, X_lsa, name="KMeans\nwith LSA on tf-idf vectors")
 
 # %%
 # We can observe that clustering on the LSA representation of the document is
-# significantly faster (both because of `n_init=1` and because the dimensionality
-# of the LSA feature space is much smaller). Furthermore, all the clustering
-# evaluation metrics have improved.
-# We repeat the experiment with :class:`~sklearn.cluster.MiniBatchKMeans`.
+# significantly faster (both because of `n_init=1` and because the
+# dimensionality of the LSA feature space is much smaller). Furthermore, all the
+# clustering evaluation metrics have improved. We repeat the experiment with
+# :class:`~sklearn.cluster.MiniBatchKMeans`.
 
 from sklearn.cluster import MiniBatchKMeans
 
@@ -389,9 +387,9 @@ fit_and_evaluate(
 )
 
 # %%
+# Both methods lead to good results that are similar to running the same models
+# on the traditional LSA vectors (without hashing).
 #
-# Both methods lead to good results that are similar to running the same models on
-# the traditional LSA vectors (without hashing).
 # Clustering evaluation summary
 # ==============================
 
@@ -439,10 +437,13 @@ plt.tight_layout()
 # problem can safely be ignored when the number of samples is more than a
 # thousand and the number of clusters is less than 10, which is the case of the
 # present example. For smaller sample sizes or larger number of clusters it is
-# safer to use an adjusted index such as the Adjusted Rand Index (ARI).
+# safer to use an adjusted index such as the Adjusted Rand Index (ARI). See the
+# example
+# :ref:`sphx_glr_auto_examples_cluster_plot_adjusted_for_chance_measures.py` for
+# a demo on the effect of random labeling.
 #
 # The size of the error bars show that :class:`~sklearn.cluster.MiniBatchKMeans`
 # is less stable than :class:`~sklearn.cluster.KMeans` for this relatively small
 # dataset. It is more interesting to use when the number of samples is much
-# bigger, but it can come at the expense of a small degradation in
-# clustering quality compared to the traditional k-means algorithm.
+# bigger, but it can come at the expense of a small degradation in clustering
+# quality compared to the traditional k-means algorithm.
