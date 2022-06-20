@@ -1077,10 +1077,6 @@ def test_linalg_warning_with_newton_solver(global_random_seed):
     with pytest.warns(scipy.linalg.LinAlgWarning, match=msg):
         PoissonRegressor(solver="newton-cholesky", alpha=0.0).fit(X_collinear, y)
 
-    msg = "Newton solver did not converge after.*iterations."
-    with pytest.warns(ConvergenceWarning, match=msg):
-        PoissonRegressor(solver="newton-cholesky", alpha=0.0).fit(X_collinear, y)
-
     # Increasing the regularization slightly should make the problem go away:
     reg = PoissonRegressor(solver="newton-cholesky", alpha=1e-12).fit(X_collinear, y)
 
