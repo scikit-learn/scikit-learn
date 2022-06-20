@@ -11,10 +11,10 @@ Partial dependence plots (PDP) and individual conditional expectation (ICE)
 plots can be used to visualize and analyze interaction between the target
 response [1]_ and a set of input features of interest.
 
-Both PDPs and ICEs assume that the input features of interest are independent
-from the complement features, and this assumption is often violated in practice.
-Thus, in the case of correlated features, we will create absurd data points to
-compute the PDP/ICE.
+Both PDPs [H2009]_ and ICEs [G2015]_ assume that the input features of interest
+are independent from the complement features, and this assumption is often
+violated in practice. Thus, in the case of correlated features, we will
+create absurd data points to compute the PDP/ICE [M2019]_.
 
 Partial dependence plots
 ========================
@@ -55,20 +55,21 @@ independent of the house age, whereas for values less than 2 there is a strong
 dependence on age.
 
 The :mod:`sklearn.inspection` module provides a convenience function
-:func:`plot_partial_dependence` to create one-way and two-way partial
+:func:`~PartialDependenceDisplay.from_estimator` to create one-way and two-way partial
 dependence plots. In the below example we show how to create a grid of
 partial dependence plots: two one-way PDPs for the features ``0`` and ``1``
 and a two-way PDP between the two features::
 
     >>> from sklearn.datasets import make_hastie_10_2
     >>> from sklearn.ensemble import GradientBoostingClassifier
-    >>> from sklearn.inspection import plot_partial_dependence
+    >>> from sklearn.inspection import PartialDependenceDisplay
 
     >>> X, y = make_hastie_10_2(random_state=0)
     >>> clf = GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,
     ...     max_depth=1, random_state=0).fit(X, y)
     >>> features = [0, 1, (0, 1)]
-    >>> plot_partial_dependence(clf, X, features) #doctest: +SKIP
+    >>> PartialDependenceDisplay.from_estimator(clf, X, features)
+    <...>
 
 You can access the newly created figure and Axes objects using ``plt.gcf()``
 and ``plt.gca()``.
@@ -81,7 +82,8 @@ the PDPs should be created via the ``target`` argument::
     >>> mc_clf = GradientBoostingClassifier(n_estimators=10,
     ...     max_depth=1).fit(iris.data, iris.target)
     >>> features = [3, 2, (3, 2)]
-    >>> plot_partial_dependence(mc_clf, X, features, target=0) #doctest: +SKIP
+    >>> PartialDependenceDisplay.from_estimator(mc_clf, X, features, target=0)
+    <...>
 
 The same parameter ``target`` is used to specify the target in multi-output
 regression settings.
@@ -92,10 +94,10 @@ the plots, you can use the
 
     >>> from sklearn.inspection import partial_dependence
 
-    >>> pdp, axes = partial_dependence(clf, X, [0])
-    >>> pdp
+    >>> results = partial_dependence(clf, X, [0])
+    >>> results["average"]
     array([[ 2.466...,  2.466..., ...
-    >>> axes
+    >>> results["values"]
     [array([-1.624..., -1.592..., ...
 
 The values at which the partial dependence should be evaluated are directly
@@ -104,6 +106,8 @@ generated. The ``values`` field returned by
 :func:`sklearn.inspection.partial_dependence` gives the actual values
 used in the grid for each input feature of interest. They also correspond to
 the axis of the plots.
+
+.. _individual_conditional:
 
 Individual conditional expectation (ICE) plot
 =============================================
@@ -134,29 +138,43 @@ and the house price in the PD line. However, the ICE lines show that there
 are some exceptions, where the house price remains constant in some ranges of
 the median income.
 
-The :mod:`sklearn.inspection` module's :func:`plot_partial_dependence`
+The :mod:`sklearn.inspection` module's :meth:`PartialDependenceDisplay.from_estimator`
 convenience function can be used to create ICE plots by setting
 ``kind='individual'``. In the example below, we show how to create a grid of
 ICE plots:
 
     >>> from sklearn.datasets import make_hastie_10_2
     >>> from sklearn.ensemble import GradientBoostingClassifier
-    >>> from sklearn.inspection import plot_partial_dependence
+    >>> from sklearn.inspection import PartialDependenceDisplay
 
     >>> X, y = make_hastie_10_2(random_state=0)
     >>> clf = GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,
     ...     max_depth=1, random_state=0).fit(X, y)
     >>> features = [0, 1]
-    >>> plot_partial_dependence(clf, X, features,
-    ...     kind='individual')  # doctest: +SKIP
+    >>> PartialDependenceDisplay.from_estimator(clf, X, features,
+    ...     kind='individual')
+    <...>
 
 In ICE plots it might not be easy to see the average effect of the input
 feature of interest. Hence, it is recommended to use ICE plots alongside
 PDPs. They can be plotted together with
 ``kind='both'``.
 
-    >>> plot_partial_dependence(clf, X, features,
-    ...     kind='both')  # doctest: +SKIP
+    >>> PartialDependenceDisplay.from_estimator(clf, X, features,
+    ...     kind='both')
+    <...>
+
+If there are too many lines in an ICE plot, it can be difficult to see
+differences between individual samples and interpret the model. Centering the
+ICE at the first value on the x-axis, produces centered Individual Conditional
+Expectation (cICE) plots [G2015]_. This puts emphasis on the divergence of
+individual conditional expectations from the mean line, thus making it easier
+to explore heterogeneous relationships. cICE plots can be plotted by setting
+`centered=True`:
+
+    >>> PartialDependenceDisplay.from_estimator(clf, X, features,
+    ...     kind='both', centered=True)
+    <...>
 
 Mathematical Definition
 =======================
@@ -180,7 +198,7 @@ values are defined by :math:`x_S` for the features in :math:`X_S`, and by
 
 Computing this integral for various values of :math:`x_S` produces a PDP plot
 as above. An ICE line is defined as a single :math:`f(x_{S}, x_{C}^{(i)})`
-evaluated at at :math:`x_{S}`.
+evaluated at :math:`x_{S}`.
 
 Computation methods
 ===================
@@ -249,15 +267,19 @@ estimators that support it, and 'brute' is used for the rest.
 
 .. topic:: References
 
-    T. Hastie, R. Tibshirani and J. Friedman, `The Elements of
-    Statistical Learning <https://web.stanford.edu/~hastie/ElemStatLearn//>`_,
-    Second Edition, Section 10.13.2, Springer, 2009.
+    .. [H2009] T. Hastie, R. Tibshirani and J. Friedman,
+               `The Elements of Statistical Learning
+               <https://web.stanford.edu/~hastie/ElemStatLearn//>`_,
+               Second Edition, Section 10.13.2, Springer, 2009.
 
-    C. Molnar, `Interpretable Machine Learning
-    <https://christophm.github.io/interpretable-ml-book/>`_, Section 5.1, 2019.
+    .. [M2019] C. Molnar,
+               `Interpretable Machine Learning
+               <https://christophm.github.io/interpretable-ml-book/>`_,
+               Section 5.1, 2019.
 
-    A. Goldstein, A. Kapelner, J. Bleich, and E. Pitkin, `Peeking Inside the
-    Black Box: Visualizing Statistical Learning With Plots of Individual
-    Conditional Expectation <https://arxiv.org/abs/1309.6392>`_,
-    Journal of Computational and Graphical Statistics, 24(1): 44-65, Springer,
-    2015.
+    .. [G2015] :arxiv:`A. Goldstein, A. Kapelner, J. Bleich, and E. Pitkin,
+               "Peeking Inside the Black Box: Visualizing Statistical
+               Learning With Plots of Individual Conditional Expectation"
+               Journal of Computational and Graphical Statistics,
+               24(1): 44-65, Springer, 2015.
+               <1309.6392>`

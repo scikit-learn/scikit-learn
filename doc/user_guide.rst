@@ -28,3 +28,5 @@ User Guide
    data_transforms.rst
    datasets.rst
    computing.rst
+   model_persistence.rst
+   common_pitfalls.rst

@@ -151,14 +151,6 @@ Changelog
   deprecated. This change is made to restore some backward compatibility with
   the behavior of this utility in version 0.21. :pr:`15947` by `Thomas Fan`_.
 
-:mod:`sklearn.multioutput`
-..........................
-
-- |Feature| :func:`multioutput.MultiOutputRegressor.fit` and
-  :func:`multioutput.MultiOutputClassifier.fit` now can accept `fit_params`
-  to pass to the `estimator.fit` method of each step. :issue:`15953`
-  :pr:`15959` by :user:`Ke Huang <huangk10>`.
-
 .. _changes_0_22:
 
 Version 0.22.0
@@ -926,7 +918,7 @@ Changelog
 
 - |Fix| :class:`model_selection.GridSearchCV` and
   `model_selection.RandomizedSearchCV` now supports the
-  :term:`_pairwise` property, which prevents an error during cross-validation
+  `_pairwise` property, which prevents an error during cross-validation
   for estimators with pairwise inputs (such as
   :class:`neighbors.KNeighborsClassifier` when :term:`metric` is set to
   'precomputed').
