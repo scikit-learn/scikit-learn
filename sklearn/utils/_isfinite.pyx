@@ -1,12 +1,7 @@
 # Author: jakirkham, Meekail Zain, Thomas Fan
 
 from libc.math cimport isnan, isinf
-
 cimport cython
-cimport numpy as cnp
-import numpy as np
-cnp.import_array()
-
 
 cpdef enum FiniteStatus:
     all_finite = 0
