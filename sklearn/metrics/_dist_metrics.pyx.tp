@@ -1198,12 +1198,12 @@ cdef class MinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
         cdef bint has_w = self.size > 0
         if has_w:
             for j in range(size):
-                d += <DTYPE_t> (self.vec[j] * pow(fabs(
+                d += (self.vec[j] * pow(fabs(
                     <DTYPE_t>(x1[j]) - <DTYPE_t>(x2[j])
                 ), self.p))
         else:
             for j in range(size):
-                d += <DTYPE_t> (pow(fabs(<DTYPE_t>(x1[j]) - <DTYPE_t>(x2[j])), self.p))
+                d += (pow(fabs(<DTYPE_t>(x1[j]) - <DTYPE_t>(x2[j])), self.p))
         return d
 
     cdef inline DTYPE_t dist(
@@ -1212,13 +1212,13 @@ cdef class MinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
         const {{INPUT_DTYPE_t}}* x2,
         ITYPE_t size,
     ) nogil except -1:
-        return <DTYPE_t> pow(self.rdist(x1, x2, size), 1. / self.p)
+        return pow(self.rdist(x1, x2, size), 1. / self.p)
 
     cdef inline DTYPE_t _rdist_to_dist(self, {{INPUT_DTYPE_t}} rdist) nogil except -1:
-        return <DTYPE_t> pow(rdist, 1. / self.p)
+        return pow(<DTYPE_t> rdist, 1. / self.p)
 
     cdef inline DTYPE_t _dist_to_rdist(self, {{INPUT_DTYPE_t}} dist) nogil except -1:
-        return <DTYPE_t> pow(dist, self.p)
+        return pow(<DTYPE_t> dist, self.p)
 
     def rdist_to_dist(self, rdist):
         return rdist ** (1. / self.p)
@@ -1395,9 +1395,7 @@ cdef class WMinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
         cdef DTYPE_t d = 0
         cdef cnp.intp_t j
         for j in range(size):
-            d += <DTYPE_t> (pow(self.vec[j] * fabs(
-                <DTYPE_t>(x1[j]) - <DTYPE_t>(x2[j])
-            ), self.p))
+            d += (pow(self.vec[j] * fabs(<DTYPE_t>(x1[j]) - <DTYPE_t>(x2[j])), self.p))
         return d
 
     cdef inline DTYPE_t dist(
@@ -1406,13 +1404,13 @@ cdef class WMinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
         const {{INPUT_DTYPE_t}}* x2,
         ITYPE_t size,
     ) nogil except -1:
-        return <DTYPE_t> pow(self.rdist(x1, x2, size), 1. / self.p)
+        return pow(self.rdist(x1, x2, size), 1. / self.p)
 
     cdef inline DTYPE_t _rdist_to_dist(self, {{INPUT_DTYPE_t}} rdist) nogil except -1:
-        return <DTYPE_t> pow(rdist, 1. / self.p)
+        return pow(<DTYPE_t> rdist, 1. / self.p)
 
     cdef inline DTYPE_t _dist_to_rdist(self, {{INPUT_DTYPE_t}} dist) nogil except -1:
-        return <DTYPE_t> pow(dist, self.p)
+        return pow(<DTYPE_t> dist, self.p)
 
     def rdist_to_dist(self, rdist):
         return rdist ** (1. / self.p)
@@ -1846,7 +1844,7 @@ cdef class BrayCurtisDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
         cdef cnp.intp_t j
         for j in range(size):
             num += fabs(<DTYPE_t>(x1[j]) - <DTYPE_t>(x2[j]))
-            denom += <DTYPE_t> (fabs(<DTYPE_t>x1[j]) + fabs(<DTYPE_t>x2[j]))
+            denom += (fabs(<DTYPE_t>x1[j]) + fabs(<DTYPE_t>x2[j]))
         if denom > 0:
             return num / denom
         else:
@@ -2618,7 +2616,7 @@ cdef class HaversineDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
         return 2 * asin(sqrt(rdist))
 
     cdef inline DTYPE_t _dist_to_rdist(self, {{INPUT_DTYPE_t}} dist) nogil except -1:
-        cdef DTYPE_t tmp = <DTYPE_t> sin(0.5 * dist)
+        cdef DTYPE_t tmp = sin(0.5 * <DTYPE_t> dist)
         return tmp * tmp
 
     def rdist_to_dist(self, rdist):
