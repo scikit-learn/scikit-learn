@@ -42,9 +42,9 @@ def test_feature_agglomeration():
     assert_array_almost_equal(agglo_median.transform(X_full_median), Xt_median)
 
 
-def test_feature_agglomeration_feature_names_out():
+def test_feature_agglomeration_feature_names_out(global_random_seed):
     """Check `get_feature_names_out` for `FeatureAgglomeration`."""
-    X, _ = make_blobs(n_features=6, random_state=0)
+    X, _ = make_blobs(n_features=6, random_state=global_random_seed)
     agglo = FeatureAgglomeration(n_clusters=3)
     agglo.fit(X)
     n_clusters = agglo.n_clusters_
