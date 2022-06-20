@@ -475,6 +475,7 @@ def test_safe_indexing_pandas_no_settingwithcopy_warning():
     if hasattr(pd.errors, "SettingWithCopyWarning"):
         SettingWithCopyWarning = pd.errors.SettingWithCopyWarning
     else:
+        # backward compatibility for pandas < 1.5
         SettingWithCopyWarning = pd.core.common.SettingWithCopyWarning
     with warnings.catch_warnings():
         warnings.simplefilter("error", SettingWithCopyWarning)
