@@ -19,7 +19,7 @@ geospatial coordinates.
 The two species are:
 
  - `"Bradypus variegatus"
-   <http://www.iucnredlist.org/apps/redlist/details/3038/0>`_ ,
+   <https://www.iucnredlist.org/species/3038/47437046>`_ ,
    the Brown-throated Sloth.
 
  - `"Microryzomys minutus"
