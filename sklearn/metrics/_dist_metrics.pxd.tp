@@ -85,19 +85,22 @@ cdef class DistanceMetric{{name_suffix}}:
     cdef object func
     cdef object kwargs
 
-    cdef DTYPE_t dist(self,
+    cdef DTYPE_t dist(
+        self,
         const {{INPUT_DTYPE_t}}* x1,
         const {{INPUT_DTYPE_t}}* x2,
         ITYPE_t size,
     ) nogil except -1
 
-    cdef DTYPE_t rdist(self,
+    cdef DTYPE_t rdist(
+        self,
         const {{INPUT_DTYPE_t}}* x1,
         const {{INPUT_DTYPE_t}}* x2,
         ITYPE_t size,
     ) nogil except -1
 
-    cdef DTYPE_t csr_dist(self,
+    cdef DTYPE_t dist_csr(
+        self,
         const {{INPUT_DTYPE_t}}[:] x1_data,
         const SPARSE_INDEX_TYPE_t[:] x1_indices,
         const {{INPUT_DTYPE_t}}[:] x2_data,
@@ -109,7 +112,8 @@ cdef class DistanceMetric{{name_suffix}}:
         const ITYPE_t size,
     ) nogil except -1
 
-    cdef DTYPE_t csr_rdist(self,
+    cdef DTYPE_t rdist_csr(
+        self,
         const {{INPUT_DTYPE_t}}[:] x1_data,
         const SPARSE_INDEX_TYPE_t[:] x1_indices,
         const {{INPUT_DTYPE_t}}[:] x2_data,
@@ -121,18 +125,21 @@ cdef class DistanceMetric{{name_suffix}}:
         const ITYPE_t size,
     ) nogil except -1
 
-    cdef int pdist(self,
+    cdef int pdist(
+        self,
         const {{INPUT_DTYPE_t}}[:, ::1] X,
         DTYPE_t[:, ::1] D,
     ) except -1
 
-    cdef int cdist(self,
+    cdef int cdist(
+        self,
         const {{INPUT_DTYPE_t}}[:, ::1] X,
         const {{INPUT_DTYPE_t}}[:, ::1] Y,
         DTYPE_t[:, ::1] D,
     ) except -1
 
-    cdef int csr_pdist(self,
+    cdef int pdist_csr(
+        self,
         const {{INPUT_DTYPE_t}}[:] x1_data,
         const SPARSE_INDEX_TYPE_t[:] x1_indices,
         const SPARSE_INDEX_TYPE_t[:] x1_indptr,
@@ -140,7 +147,8 @@ cdef class DistanceMetric{{name_suffix}}:
         DTYPE_t[:, ::1] D,
     ) nogil except -1
 
-    cdef int csr_cdist(self,
+    cdef int cdist_csr(
+        self,
         const {{INPUT_DTYPE_t}}[:] x1_data,
         const SPARSE_INDEX_TYPE_t[:] x1_indices,
         const SPARSE_INDEX_TYPE_t[:] x1_indptr,

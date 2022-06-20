@@ -105,8 +105,8 @@ def test_cdist(metric_param_grid, X, Y):
 
         dm = DistanceMetricInterface.get_metric(metric, **kwargs)
 
-        # DistanceMetric.pairwise must be consistent
-        # on all combinations of format in {sparse, dense}².
+        # DistanceMetric.pairwise must be consistent for all
+        # combinations of formats in {sparse, dense}.
         D_sklearn = dm.pairwise(X, Y)
         assert_allclose(D_sklearn, D_scipy_cdist, **rtol_dict)
 
