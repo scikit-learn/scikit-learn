@@ -956,7 +956,7 @@ is not readily available from the start, or when the data does not fit into memo
 
     .. [4] `"SVD based initialization: A head start for nonnegative
       matrix factorization"
-      <http://scgroup.hpclab.ceid.upatras.gr/faculty/stratis/Papers/HPCLAB020107.pdf>`_
+      <https://www.cb.uu.se/~milan/histo/before2011august/Boutsidis.pdf>`_
       C. Boutsidis, E. Gallopoulos, 2008
 
     .. [5] `"Fast local algorithms for large scale nonnegative matrix and tensor
