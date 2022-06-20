@@ -1337,7 +1337,7 @@ class KMeans(_BaseKMeans):
 
     _parameter_constraints = {
         **_BaseKMeans._parameter_constraints,
-        "copy_x": [bool],
+        "copy_x": ["boolean"],
         "algorithm": [
             StrOptions({"lloyd", "elkan", "auto", "full"}, deprecated={"auto", "full"})
         ],
@@ -1835,7 +1835,7 @@ class MiniBatchKMeans(_BaseKMeans):
     _parameter_constraints = {
         **_BaseKMeans._parameter_constraints,
         "batch_size": [Interval(Integral, 1, None, closed="left")],
-        "compute_labels": [bool],
+        "compute_labels": ["boolean"],
         "max_no_improvement": [Interval(Integral, 0, None, closed="left"), None],
         "init_size": [Interval(Integral, 1, None, closed="left"), None],
         "reassignment_ratio": [Interval(Real, 0, None, closed="left")],
