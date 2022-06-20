@@ -591,7 +591,6 @@ please donate via the `NumFOCUS Donations Page
 
 .. raw :: html
 
-   </br></br>
    <div style="text-align: center;">
    <a class="btn btn-warning btn-big sk-donate-btn mb-1" href="https://numfocus.org/donate-to-scikit-learn">Help us, <strong>donate!</strong></a>
    </div>
