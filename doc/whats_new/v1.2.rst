@@ -99,11 +99,36 @@ Changelog
   in version 1.4
   :pr:`21938` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Enhancement| :func:`datasets.dump_svmlight_file` is now accelerated with a
+  Cython implementation, providing 2-4x speedups.
+  :pr:`23127` by :user:`Meekail Zain <micky774>`
+
+:mod:`sklearn.decomposition`
+............................
+
+- |Efficiency| :func:`decomposition.FastICA.fit` has been optimised w.r.t
+  its memory footprint and runtime.
+  :pr:`22268` by :user:`MohamedBsh <Bsh>`.
+
 :mod:`sklearn.ensemble`
 .......................
 
 - |Efficiency| Improve runtime performance of :class:`ensemble.IsolationForest`
   by avoiding data copies. :pr:`23252` by :user:`Zhehao Liu <MaxwellLZH>`.
+
+:mod:`sklearn.decomposition`
+............................
+
+- |Enhancement| :class:`decomposition.FastICA` now allows the user to select
+  how whitening is performed through the new `whiten_solver` parameter, which
+  supports `svd` and `eigh`. `whiten_solver` defaults to `svd` although `eigh`
+  may be faster and more memory efficient in cases where
+  `num_features > num_samples`. An additional `sign_flip` parameter is added.
+  When `sign_flip=True`, then the output of both solvers will be reconciled
+  during `fit` so that their outputs match. This may change the output of the
+  default solver, and hence may not be backwards compatible.
+  :pr:`11860` by :user:`Pierre Ablin <pierreablin>`,
+  :pr:`22527` by :user:`Meekail Zain <micky774>` and `Thomas Fan`_.
 
 :mod:`sklearn.impute`
 .....................
@@ -125,6 +150,10 @@ Changelog
   penalty.
   :pr:`17877` by :user:`Rithvik Rao <rithvikrao>` and :user:`Ruby Werman <rubywerman>`,
   and :pr:`22236` by :user:`Meekail Zain <micky774>`.
+
+- |Fix| Fixed an error in :class:`linear_model.LogisticRegression` with
+  `solver="newton-cg"`, `fit_intercept=True`, and a single feature. :pr:`23608`
+  by `Tom Dupre la Tour`_.
 
 :mod:`sklearn.metrics`
 ......................

@@ -7,6 +7,7 @@ import warnings
 
 import numpy as np
 from scipy import stats
+from sklearn.datasets import make_low_rank_matrix
 
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_allclose
@@ -422,7 +423,10 @@ def test_fastica_whiten_backwards_compatibility():
 
     # No warning must be raised in this case.
     av_ica = FastICA(
-        n_components=n_components, whiten="arbitrary-variance", random_state=0
+        n_components=n_components,
+        whiten="arbitrary-variance",
+        random_state=0,
+        whiten_solver="svd",
     )
     with warnings.catch_warnings():
         warnings.simplefilter("error", FutureWarning)
@@ -457,3 +461,60 @@ def test_fastica_output_shape(whiten, return_X_mean, return_n_iter):
     assert len(out) == expected_len
     if not whiten:
         assert out[0] is None
+
+
+@pytest.mark.parametrize("add_noise", [True, False])
+def test_fastica_simple_different_solvers(add_noise, global_random_seed):
+    """Test FastICA is consistent between whiten_solvers when `sign_flip=True`."""
+    rng = np.random.RandomState(global_random_seed)
+    n_samples = 1000
+    # Generate two sources:
+    s1 = (2 * np.sin(np.linspace(0, 100, n_samples)) > 0) - 1
+    s2 = stats.t.rvs(1, size=n_samples, random_state=rng)
+    s = np.c_[s1, s2].T
+    center_and_norm(s)
+    s1, s2 = s
+
+    # Mixing angle
+    phi = rng.rand() * 2 * np.pi
+    mixing = np.array([[np.cos(phi), np.sin(phi)], [np.sin(phi), -np.cos(phi)]])
+    m = np.dot(mixing, s)
+
+    if add_noise:
+        m += 0.1 * rng.randn(2, 1000)
+
+    center_and_norm(m)
+
+    outs = {}
+    for solver in ("svd", "eigh"):
+        ica = FastICA(
+            random_state=0, whiten="unit-variance", whiten_solver=solver, sign_flip=True
+        )
+        sources = ica.fit_transform(m.T)
+        outs[solver] = sources
+        assert ica.components_.shape == (2, 2)
+        assert sources.shape == (1000, 2)
+
+    assert_allclose(outs["eigh"], outs["svd"])
+
+
+def test_fastica_eigh_low_rank_warning(global_random_seed):
+    """Test FastICA eigh solver raises warning for low-rank data."""
+    rng = np.random.RandomState(global_random_seed)
+    X = make_low_rank_matrix(
+        n_samples=10, n_features=10, random_state=rng, effective_rank=2
+    )
+    ica = FastICA(random_state=0, whiten="unit-variance", whiten_solver="eigh")
+    msg = "There are some small singular values"
+    with pytest.warns(UserWarning, match=msg):
+        ica.fit(X)
+
+
+@pytest.mark.parametrize("whiten_solver", ["this_should_fail", "test", 1, None])
+def test_fastica_whiten_solver_validation(whiten_solver):
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((10, 2))
+    ica = FastICA(random_state=rng, whiten_solver=whiten_solver, whiten="unit-variance")
+    msg = f"`whiten_solver` must be 'eigh' or 'svd' but got {whiten_solver} instead"
+    with pytest.raises(ValueError, match=msg):
+        ica.fit_transform(X)

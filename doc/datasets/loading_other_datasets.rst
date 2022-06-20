@@ -300,7 +300,7 @@ For some miscellaneous data such as images, videos, and audio, you may wish to
 refer to:
 
 * `skimage.io <https://scikit-image.org/docs/dev/api/skimage.io.html>`_ or
-  `Imageio <https://imageio.readthedocs.io/en/latest/userapi.html>`_
+  `Imageio <https://imageio.readthedocs.io/en/stable/reference/core_v3.html>`_
   for loading images and videos into numpy arrays
 * `scipy.io.wavfile.read
   <https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.io.wavfile.read.html>`_
