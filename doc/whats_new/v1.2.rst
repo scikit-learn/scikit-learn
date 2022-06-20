@@ -99,6 +99,10 @@ Changelog
   in version 1.4
   :pr:`21938` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Enhancement| :func:`datasets.dump_svmlight_file` is now accelerated with a
+  Cython implementation, providing 2-4x speedups.
+  :pr:`23127` by :user:`Meekail Zain <micky774>`
+
 :mod:`sklearn.decomposition`
 ............................
 
