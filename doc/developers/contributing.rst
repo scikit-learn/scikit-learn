@@ -528,7 +528,7 @@ profiling and Cython optimizations.
 
    For two very well documented and more detailed guides on development
    workflow, please pay a visit to the `Scipy Development Workflow
-   <https://docs.scipy.org/doc/scipy/reference/dev/contributor/development_workflow.html>`_ -
+   <http://scipy.github.io/devdocs/dev/dev_quickstart.html>`_ -
    and the `Astropy Workflow for Developers
    <https://astropy.readthedocs.io/en/latest/development/workflow/development_workflow.html>`_
    sections.
