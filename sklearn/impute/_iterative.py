@@ -183,7 +183,8 @@ class IterativeImputer(_BaseImputer):
 
     See Also
     --------
-    SimpleImputer : Univariate imputation of missing values.
+    SimpleImputer : Univariate imputer for completing missing values
+        with simple strategies.
     KNNImputer : Multivariate imputer that estimates missing features using
         nearest samples.
 

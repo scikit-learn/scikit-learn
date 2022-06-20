@@ -90,7 +90,7 @@ class KNNImputer(_BaseImputer):
 
     See Also
     --------
-    SimpleImputer : Imputation transformer for completing missing values
+    SimpleImputer : Univariate imputer for completing missing values
         with simple strategies.
     IterativeImputer : Multivariate imputer that estimates each feature
         from all the others.
