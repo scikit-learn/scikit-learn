@@ -64,9 +64,9 @@ if [[ -n "$CHECK_WARNINGS" ]]; then
     TEST_CMD="$TEST_CMD -Wignore:distutils\ Version\ classes\ are\ deprecated:DeprecationWarning"
 fi
 
-if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then
-    TEST_CMD="$TEST_CMD -n$CPU_COUNT"
-fi
+# if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then
+#     TEST_CMD="$TEST_CMD -n$CPU_COUNT"
+# fi
 
 if [[ "$SHOW_SHORT_SUMMARY" == "true" ]]; then
     TEST_CMD="$TEST_CMD -ra"
