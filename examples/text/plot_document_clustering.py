@@ -92,7 +92,7 @@ print(f"{len(dataset.data)} documents - {true_k} categories")
 #
 # - Rand-Index, which measures how frequently pairs of data points are grouped
 #   consistently according to the result of the clustering algorithm and the
-#   ground truth class assignment; 
+#   ground truth class assignment;
 #
 # - Adjusted Rand-Index, a chance-adjusted Rand-Index such that random cluster
 #   assignment have an ARI of 0.0 in expectation.
