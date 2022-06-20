@@ -639,11 +639,11 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
     """
 
     _parameter_constraints = {
-        "fit_intercept": [bool],
-        "normalize": [Hidden(StrOptions({"deprecated"})), bool],
-        "copy_X": [bool],
+        "fit_intercept": ["boolean"],
+        "normalize": [Hidden(StrOptions({"deprecated"})), "boolean"],
+        "copy_X": ["boolean"],
         "n_jobs": [None, Integral],
-        "positive": [bool],
+        "positive": ["boolean"],
     }
 
     def __init__(
