@@ -82,6 +82,7 @@ else:
         >>> from sklearn.utils.fixes import mode
         >>> mode(a)
         ModeResult(mode=array([3, 1, 0, 0]), count=array([1, 1, 1, 1]))
+
         To get mode of whole array, specify ``axis=None``:
         >>> mode(a, axis=None)
         ModeResult(mode=3, count=3)
