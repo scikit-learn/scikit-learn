@@ -46,7 +46,7 @@ class NewtonSolver(ABC):
         g = X.T @ loss.gradient + l2_reg_strength * coef
         H = X.T @ diag(loss.hessian) @ X + l2_reg_strength * identity
 
-    Backtracking line seach updates coef = coef_old + t * coef_newton for some t in
+    Backtracking line search updates coef = coef_old + t * coef_newton for some t in
     (0, 1].
 
     This is a base class, actual implementations (child classes) may deviate from the
@@ -80,7 +80,7 @@ class NewtonSolver(ABC):
         The loss to be minimized.
 
     l2_reg_strength : float, default=0.0
-            L2 regularization strength
+        L2 regularization strength.
 
     tol : float, default=1e-4
         The optimization problem is solved when each of the following condition is
@@ -639,12 +639,12 @@ class QRCholeskyNewtonSolver(BaseCholeskyNewtonSolver):
     This is the same as an LQ decomposition of X. We introduce the new variable t as,
     see [1]:
 
-        (coef, intercept) = (Q @ t, intercept)
+        (coef, intercept) = (Q @ z, intercept)
 
-    By using X @ coef = R' @ t and ||coef||_2 = ||t||_2, we can just replace X
-    by R', solve for t instead of coef, and finally get coef = Q @ t.
-    Note that t has less elements than coef if n_features > n_samples:
-        len(t) = k = min(n_samples, n_features) <= n_features = len(coef).
+    By using X @ coef = R' @ z and ||coef||_2 = ||z||_2, we can just replace X
+    by R', solve for z instead of coef, and finally get coef = Q @ z.
+    Note that z has less elements than coef if n_features > n_samples:
+        len(z) = k = min(n_samples, n_features) <= n_features = len(coef).
 
     [1] Hastie, T.J., & Tibshirani, R. (2003). Expression Arrays and the p n Problem.
     https://web.stanford.edu/~hastie/Papers/pgtn.pdf
@@ -654,7 +654,9 @@ class QRCholeskyNewtonSolver(BaseCholeskyNewtonSolver):
         n_samples, n_features = X.shape
         # TODO: setting pivoting=True could improve stability
         # QR of X'
-        self.Q, self.R = scipy.linalg.qr(X.T, mode="economic", pivoting=False)
+        self.Q, self.R = scipy.linalg.qr(
+            X.T, mode="economic", pivoting=False, check_finite=False
+        )
         # use k = min(n_features, n_samples) instead of n_features
         k = self.R.T.shape[1]
         n_dof = k
@@ -662,7 +664,7 @@ class QRCholeskyNewtonSolver(BaseCholeskyNewtonSolver):
             n_dof += 1
         # store original coef
         self.coef_original = self.coef
-        # set self.coef = t (coef_original = Q @ t)
+        # set self.coef = z (coef_original = Q @ z)
         self.coef = np.zeros_like(self.coef, shape=n_dof)
         if np.sum(np.abs(self.coef_original)) > 0:
             self.coef[:k] = self.Q.T @ self.coef_original[:n_features]
@@ -750,12 +752,12 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             Calls scipy's L-BFGS-B optimizer.
 
         'newton-cholesky'
-            Uses Newton-Raphson steps (equals iterated reweighted least squares) with
-            an inner cholesky based solver.
+            Uses Newton-Raphson steps (equivalent to iterated reweighted least squares)
+            with an inner cholesky based solver.
 
         'newton-qr-cholesky'
-            Same as 'newton-cholesky' but uses a qr decomposition of X.T. This solver
-            is better for n_features >> n_samples than 'newton-cholesky'.
+            Same as 'newton-cholesky' but uses a QR decomposition of X.T. This solver
+            is better for `n_features >> n_samples` than 'newton-cholesky'.
 
     max_iter : int, default=100
         The maximal number of iterations for the solver.
@@ -984,10 +986,10 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                     "maxls": 50,  # default is 20
                     "iprint": self.verbose - 1,
                     "gtol": self.tol,
-                    # The constant 64 was found empirically to pass the test suite. The
-                    # point is that ftol is very small, but a bit larger than machine
-                    # precision.
-                    "ftol": 64 * np.finfo(float).eps,  # lbfgs is float64 land.
+                    # The constant 64 was found empirically to pass the test suite.
+                    # The point is that ftol is very small, but a bit larger than
+                    # machine precision for float64, which is the dtype used by lbfgs.
+                    "ftol": 64 * np.finfo(float).eps,
                 },
                 args=(X, y, sample_weight, l2_reg_strength, n_threads),
             )
@@ -1019,6 +1021,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                 n_threads=n_threads,
             )
             coef = sol.solve(X, y, sample_weight)
+            self.n_iter_ = sol.iteration
 
         if self.fit_intercept:
             self.intercept_ = coef[-1]
@@ -1208,19 +1211,19 @@ class PoissonRegressor(_GeneralizedLinearRegressor):
         Specifies if a constant (a.k.a. bias or intercept) should be
         added to the linear predictor (X @ coef + intercept).
 
-    solver : {'lbfgs', 'newton-cholesky'}, default='lbfgs'
+    solver : {'lbfgs', 'newton-cholesky', 'newton-qr-cholesky'}, default='lbfgs'
         Algorithm to use in the optimization problem:
 
         'lbfgs'
             Calls scipy's L-BFGS-B optimizer.
 
         'newton-cholesky'
-            Uses Newton-Raphson steps (equals iterated reweighted least squares) with
-            an inner cholesky based solver.
+            Uses Newton-Raphson steps (equivalent to iterated reweighted least squares)
+            with an inner cholesky based solver.
 
         'newton-qr-cholesky'
-            Same as 'newton-cholesky' but uses a qr decomposition of X.T. This solver
-            is better for n_features >> n_samples than 'newton-cholesky'.
+            Same as 'newton-cholesky' but uses a QR decomposition of X.T. This solver
+            is better for `n_features >> n_samples` than 'newton-cholesky'.
 
     max_iter : int, default=100
         The maximal number of iterations for the solver.
@@ -1333,19 +1336,19 @@ class GammaRegressor(_GeneralizedLinearRegressor):
         Specifies if a constant (a.k.a. bias or intercept) should be
         added to the linear predictor (X @ coef + intercept).
 
-    solver : {'lbfgs', 'newton-cholesky'}, default='lbfgs'
+    solver : {'lbfgs', 'newton-cholesky', 'newton-qr-cholesky'}, default='lbfgs'
         Algorithm to use in the optimization problem:
 
         'lbfgs'
             Calls scipy's L-BFGS-B optimizer.
 
         'newton-cholesky'
-            Uses Newton-Raphson steps (equals iterated reweighted least squares) with
-            an inner cholesky based solver.
+            Uses Newton-Raphson steps (equivalent to iterated reweighted least squares)
+            with an inner cholesky based solver.
 
         'newton-qr-cholesky'
-            Same as 'newton-cholesky' but uses a qr decomposition of X.T. This solver
-            is better for n_features >> n_samples than 'newton-cholesky'.
+            Same as 'newton-cholesky' but uses a QR decomposition of X.T. This solver
+            is better for `n_features >> n_samples` than 'newton-cholesky'.
 
     max_iter : int, default=100
         The maximal number of iterations for the solver.
@@ -1489,19 +1492,19 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
         - 'log' for ``power > 0``, e.g. for Poisson, Gamma and Inverse Gaussian
           distributions
 
-    solver : {'lbfgs', 'newton-cholesky'}, default='lbfgs'
+    solver : {'lbfgs', 'newton-cholesky', 'newton-qr-cholesky'}, default='lbfgs'
         Algorithm to use in the optimization problem:
 
         'lbfgs'
             Calls scipy's L-BFGS-B optimizer.
 
         'newton-cholesky'
-            Uses Newton-Raphson steps (equals iterated reweighted least squares) with
-            an inner cholesky based solver.
+            Uses Newton-Raphson steps (equivalent to iterated reweighted least squares)
+            with an inner cholesky based solver.
 
         'newton-qr-cholesky'
-            Same as 'newton-cholesky' but uses a qr decomposition of X.T. This solver
-            is better for n_features >> n_samples than 'newton-cholesky'.
+            Same as 'newton-cholesky' but uses a QR decomposition of X.T. This solver
+            is better for `n_features >> n_samples` than 'newton-cholesky'.
 
     max_iter : int, default=100
         The maximal number of iterations for the solver.
