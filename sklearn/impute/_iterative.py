@@ -29,6 +29,16 @@ class IterativeImputer(_BaseImputer):
     A strategy for imputing missing values by modeling each feature with
     missing values as a function of other features in a round-robin fashion.
 
+    Using defaults, the imputer scales in :math:`\mathcal{O}(knp^3\min(n,p))`
+    where :math:`k` = `max_iter`, :math:`n` the number of samples and
+    :math:`p` the number of features. It thus becomes prohibitively costly when
+    the number of features increases. Setting `n_nearest_features` <<
+    `n_features`, `skip_complete` = `True` or increasing `tol` can help to
+    reduce its computational cost.
+
+    Depending on the nature of missing values, simple imputers can be
+    preferable in a prediction context.
+
     Read more in the :ref:`User Guide <iterative_imputer>`.
 
     .. versionadded:: 0.21
