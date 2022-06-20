@@ -587,7 +587,7 @@ Donating to the project
 
 If you are interested in donating to the project or to one of our code-sprints,
 please donate via the `NumFOCUS Donations Page
-<https://numfocus.org/donate-to-scikit-learn>`_  (please make sure that you are donating for the scikit-learn project).
+<https://numfocus.org/donate-to-scikit-learn>`_.
 
 All donations will be handled by `NumFOCUS
 <https://numfocus.org/>`_, a non-profit-organization which is
