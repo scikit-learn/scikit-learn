@@ -7,8 +7,8 @@ This is an example showing how the scikit-learn API can be used to cluster
 documents by topics using a `Bag of Words approach
 <https://en.wikipedia.org/wiki/Bag-of-words_model>`_.
 
-Two algorithms are demoed: :class:`~sklearn.cluster.KMeans` and its
-more scalable variant, :class:`~sklearn.cluster.MiniBatchKMeans`. Additionally,
+Two algorithms are demoed: :class:`~sklearn.cluster.KMeans` and its more
+scalable variant, :class:`~sklearn.cluster.MiniBatchKMeans`. Additionally,
 latent semantic analysis is used to reduce dimensionality and discover latent
 patterns in the data.
 
@@ -206,15 +206,16 @@ print(f"{X_tfidf.nnz / np.prod(X_tfidf.shape):.3f}")
 #
 # .. _kmeans_sparse_high_dim:
 #
-# Clustering sparse data with K-Means
+# Clustering sparse data with k-means
 # -----------------------------------
 #
 # As both :class:`~sklearn.cluster.KMeans` and
 # :class:`~sklearn.cluster.MiniBatchKMeans` optimize a non-convex objective
 # function, their clustering is not guaranteed to be optimal for a given random
-# init. Even further, on sparse high-dimensional data such as vectorized text,
-# K-means can initialize centroids on extremely isolated data points. Those data
-# points can stay their own centroids all along.
+# init. Even further, on sparse high-dimensional data such as text vectorized
+# using the Bag of Words approach, k-means can initialize centroids on extremely
+# isolated data points. Those data points can stay their own centroids all
+# along.
 #
 # The following code illustrates how the previous phenomenon can sometimes lead
 # to highly imbalanced clusters, depending on the random initialization:
@@ -264,7 +265,7 @@ fit_and_evaluate(kmeans, X_tfidf, name="KMeans\non tf-idf vectors")
 # ---------------------------------------------
 #
 # A `n_init=1` can still be used as long as the dimension of the vectorized
-# space is reduced first to make K-means more stable. For such purpose we use
+# space is reduced first to make k-means more stable. For such purpose we use
 # :class:`~sklearn.decomposition.TruncatedSVD`, which works on term count/tf-idf
 # matrices. Since SVD results are not normalized, we redo the normalization to
 # improve the :class:`~sklearn.cluster.KMeans` result. Using SVD to reduce the
