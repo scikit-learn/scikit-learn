@@ -574,7 +574,7 @@ The 2013 International Paris Sprint was made possible thanks to the support of
 `Télécom Paristech <https://www.telecom-paristech.fr/>`_, `tinyclues
 <https://www.tinyclues.com/>`_, the `French Python Association
 <https://www.afpy.org/>`_ and the `Fonds de la Recherche Scientifique
-<https://www.frs-fnrs.be/-fnrs>`_.
+<https://www.frs-fnrs.be>`_.
 
 ..............
 
