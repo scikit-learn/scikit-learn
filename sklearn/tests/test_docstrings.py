@@ -23,10 +23,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.decomposition._dict_learning.dict_learning",
     "sklearn.decomposition._dict_learning.dict_learning_online",
     "sklearn.decomposition._nmf.non_negative_factorization",
-    # TODO: externals are not ignored get_all_functions_names on some systems.
-    # Remove these functions from the ignore list when get_all_functions_names
-    # is fixed.
-    "sklearn.externals._lobpcg.lobpcg",
     "sklearn.externals._packaging.version.parse",
     "sklearn.feature_extraction.image.extract_patches_2d",
     "sklearn.feature_extraction.text.strip_accents_unicode",
