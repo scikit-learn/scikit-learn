@@ -430,27 +430,65 @@ def test_dbscan_precomputed_metric_with_initial_rows_zero():
 @pytest.mark.parametrize(
     "params, err_type, err_msg",
     [
-        ({"eps": -1.0}, ValueError, "eps == -1.0, must be > 0.0."),
-        ({"eps": 0.0}, ValueError, "eps == 0.0, must be > 0.0."),
-        ({"min_samples": 0}, ValueError, "min_samples == 0, must be >= 1."),
+        (
+            {"eps": -1.0},
+            ValueError,
+            "The 'eps' parameter of DBSCAN must be a float in the range \(0.0, inf\)."
+            " Got -1.0 instead.",
+        ),
+        (
+            {"eps": 0.0},
+            ValueError,
+            "The 'eps' parameter of DBSCAN must be a float in the range \(0.0, inf\)."
+            " Got 0.0 instead.",
+        ),
+        (
+            {"min_samples": 0},
+            ValueError,
+            "The 'min_samples' parameter of DBSCAN must be an int in the range \[1,"
+            " inf\). Got 0 instead",
+        ),
         (
             {"min_samples": 1.5},
-            TypeError,
-            "min_samples must be an instance of int, not float.",
+            ValueError,
+            "The 'min_samples' parameter of DBSCAN must be an int in the range \[1,"
+            " inf\). Got 1.5 instead",
         ),
-        ({"min_samples": -2}, ValueError, "min_samples == -2, must be >= 1."),
-        ({"leaf_size": 0}, ValueError, "leaf_size == 0, must be >= 1."),
+        (
+            {"min_samples": -2},
+            ValueError,
+            "The 'min_samples' parameter of DBSCAN must be an int in the range \[1,"
+            " inf\). Got -2 instead.",
+        ),
+        (
+            {"leaf_size": 0},
+            ValueError,
+            "The 'leaf_size' parameter of DBSCAN must be an int in the range \[1,"
+            " inf\). Got 0 instead.",
+        ),
         (
             {"leaf_size": 2.5},
-            TypeError,
-            "leaf_size must be an instance of int, not float.",
+            ValueError,
+            "The 'leaf_size' parameter of DBSCAN must be an int in the range \[1,"
+            " inf\). Got 2.5 instead.",
         ),
-        ({"leaf_size": -3}, ValueError, "leaf_size == -3, must be >= 1."),
-        ({"p": -2}, ValueError, "p == -2, must be >= 0.0."),
+        (
+            {"leaf_size": -3},
+            ValueError,
+            "The 'leaf_size' parameter of DBSCAN must be an int in the range \[1,"
+            " inf\). Got -3 instead.",
+        ),
+        (
+            {"p": -2},
+            ValueError,
+            "The 'p' parameter of DBSCAN must be a float in the range \[0.0, inf\) or"
+            " None. Got -2 instead.",
+        ),
         (
             {"n_jobs": 2.5},
-            TypeError,
-            "n_jobs must be an instance of int, not float.",
+            ValueError,
+            "The 'n_jobs' parameter of DBSCAN must be an int in the range \[-1, inf\)"
+            " or None. Got 2.5 instead.",
         ),
     ],
 )
