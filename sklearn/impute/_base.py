@@ -130,7 +130,10 @@ class _BaseImputer(TransformerMixin, BaseEstimator):
 
 
 class SimpleImputer(_BaseImputer):
-    """Imputation transformer for completing missing values.
+    """Univariate imputer for completing missing values with simple strategies.
+
+    Replace missing values using the mean, median or most frequent value along
+    each column, or using a constant.
 
     Read more in the :ref:`User Guide <impute>`.
 
