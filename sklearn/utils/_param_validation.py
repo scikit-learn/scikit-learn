@@ -9,6 +9,7 @@ import warnings
 
 import numpy as np
 from scipy.sparse import issparse
+from scipy.sparse import csr_matrix
 
 from .validation import _is_arraylike_not_scalar
 
@@ -120,6 +121,9 @@ def validate_params(parameter_constraints):
         A dictionary `param_name: list of constraints`. See the docstring of
         `validate_parameter_constraints` for a description of the accepted constraints.
 
+        Note that the *args and **kwargs parameters are not validated and must not be
+        present in the parameter_constraints dictionary.
+
     Returns
     -------
     decorated_function : function or method
@@ -127,6 +131,11 @@ def validate_params(parameter_constraints):
     """
 
     def decorator(func):
+        # The dict of parameter constraints is set as an attribute of the function
+        # to make it possible to dynamically introspect the constraints for
+        # automatic testing.
+        setattr(func, "_skl_parameter_constraints", parameter_constraints)
+
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
 
@@ -602,3 +611,48 @@ def _generate_invalid_param_val_interval(interval, constraints):
                 return int_right + 1
             else:
                 raise NotImplementedError
+
+
+def generate_valid_param(constraint):
+    """Return a value that does satisfy a constraint.
+
+    This is only useful for testing purpose.
+
+    Parameters
+    ----------
+    constraint : Constraint instance
+        The constraint to generate a value for.
+
+    Returns
+    -------
+    val : object
+        A value that does satisfy the constraint.
+    """
+    if isinstance(constraint, _ArrayLikes):
+        return np.array([1, 2, 3])
+    elif isinstance(constraint, _SparseMatrices):
+        return csr_matrix([[0, 1], [1, 0]])
+    elif isinstance(constraint, _RandomStates):
+        return np.random.RandomState(42)
+    elif isinstance(constraint, _Callables):
+        return lambda x: x
+    elif isinstance(constraint, _NoneConstraint):
+        return None
+    elif isinstance(constraint, _InstancesOf):
+        return constraint.type()
+    if isinstance(constraint, StrOptions):
+        for option in constraint.options:
+            return option
+    elif isinstance(constraint, Interval):
+        interval = constraint
+        if interval.left is None and interval.right is None:
+            return 0
+        elif interval.left is None:
+            return interval.right - 1
+        elif interval.right is None:
+            return interval.left + 1
+        else:
+            if interval.type is Real:
+                return (interval.left + interval.right) / 2
+            else:
+                return interval.left + 1

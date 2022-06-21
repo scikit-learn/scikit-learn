@@ -18,6 +18,7 @@ from sklearn.utils._param_validation import _RandomStates
 from sklearn.utils._param_validation import _SparseMatrices
 from sklearn.utils._param_validation import make_constraint
 from sklearn.utils._param_validation import generate_invalid_param_val
+from sklearn.utils._param_validation import generate_valid_param
 from sklearn.utils._param_validation import validate_params
 
 
@@ -302,6 +303,31 @@ def test_generate_invalid_param_val_not_error(constraint):
 
 
 @pytest.mark.parametrize(
+    "constraint",
+    [
+        _ArrayLikes(),
+        _Callables(),
+        _InstancesOf(list),
+        _NoneConstraint(),
+        _RandomStates(),
+        _SparseMatrices(),
+        StrOptions({"a", "b", "c"}),
+        Interval(Integral, None, None, closed="neither"),
+        Interval(Integral, 0, 10, closed="neither"),
+        Interval(Integral, 0, None, closed="neither"),
+        Interval(Integral, None, 0, closed="neither"),
+        Interval(Real, 0, 1, closed="neither"),
+        Interval(Real, 0, None, closed="both"),
+        Interval(Real, None, 0, closed="right"),
+    ],
+)
+def test_generate_valid_param(constraint):
+    """Check that the value generated does satisfy the constraint."""
+    value = generate_valid_param(constraint)
+    assert constraint.is_satisfied_by(value)
+
+
+@pytest.mark.parametrize(
     "constraint_declaration, value",
     [
         (Interval(Real, 0, 1, closed="both"), 0.42),
@@ -468,6 +494,14 @@ def test_hidden_stroptions():
     err_msg = str(exc_info.value)
     assert "auto" in err_msg
     assert "warn" not in err_msg
+
+
+def test_validate_params_set_param_constraints_attribute():
+    """Check that the validate_params decorator properly sets the parameter constraints
+    as attribute of the decorated function/method.
+    """
+    assert hasattr(_func, "_skl_parameter_constraints")
+    assert hasattr(_Class()._method, "_skl_parameter_constraints")
 
 
 def test_boolean_constraint_deprecated_int():
