@@ -24,6 +24,17 @@ overlapping sub-samples of the dataset.
 # License: BSD 3 clause
 
 # %%
+# We first define a function that computes the score for 2 random uniform
+# cluster labelings.
+#
+# Both random labelings have the same number of clusters for each value possible
+# value in `n_clusters_range`. When fixed_n_classes is not None the first
+# labeling is considered a ground truth class assignment with fixed number of
+# classes.
+#
+# A second function computes de `Adjusted mutual information
+# <https://en.wikipedia.org/wiki/Adjusted_mutual_information>`_.
+
 import numpy as np
 from sklearn import metrics
 
@@ -31,14 +42,6 @@ from sklearn import metrics
 def uniform_labelings_scores(
     score_func, n_samples, n_clusters_range, fixed_n_classes=None, n_runs=5, seed=42
 ):
-    """Compute score for 2 random uniform cluster labelings.
-
-    Both random labelings have the same number of clusters for each value
-    possible value in ``n_clusters_range``.
-
-    When fixed_n_classes is not None the first labeling is considered a ground
-    truth class assignment with fixed number of classes.
-    """
     random_labels = np.random.RandomState(seed).randint
     scores = np.zeros((len(n_clusters_range), n_runs))
 
