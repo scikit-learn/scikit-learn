@@ -231,6 +231,11 @@ class SimpleImputer(_BaseImputer):
     Columns which only contained missing values at :meth:`fit` are discarded
     upon :meth:`transform` if strategy is not `"constant"`.
 
+    In a prediction context, simple imputation usually performs poorly when
+    associated with a weak learner. However, with a powerful learner, it can
+    lead to as good or better performance than complex imputation such as
+    :obj:`IterativeImputer` or :obj:`KNNImputer`.
+
     Examples
     --------
     >>> import numpy as np
