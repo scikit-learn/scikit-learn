@@ -152,8 +152,8 @@ A continuous log-uniform random variable is available through
 :class:`~sklearn.utils.fixes.loguniform`. This is a continuous version of
 log-spaced parameters. For example to specify ``C`` above, ``loguniform(1,
 100)`` can be used instead of ``[1, 10, 100]`` or ``np.logspace(0, 2,
-num=1000)``. This is an alias to SciPy's `stats.reciprocal
-<https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.reciprocal.html>`_.
+num=1000)``. This is an alias to `scipy.stats.loguniform
+<https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.loguniform.html>`_.
 
 Mirroring the example above in grid search, we can specify a continuous random
 variable that is log-uniformly distributed between ``1e0`` and ``1e3``::
