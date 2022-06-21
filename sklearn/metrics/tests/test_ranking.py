@@ -1569,6 +1569,21 @@ def test_coverage_tie_handling():
     assert_almost_equal(coverage_error([[1, 1, 1]], [[0.25, 0.5, 0.5]]), 3)
 
 
+@pytest.mark.parametrize(
+    "y_true, y_score",
+    [
+        ([1, 0, 1], [0.25, 0.5, 0.5]),
+        ([1, 0, 1], [[0.25, 0.5, 0.5]]),
+        ([[1, 0, 1]], [0.25, 0.5, 0.5]),
+    ],
+)
+def test_coverage_1d_error_message(y_true, y_score):
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/23368
+    with pytest.raises(ValueError, match=r"Expected 2D array, got 1D array instead"):
+        coverage_error(y_true, y_score)
+
+
 def test_label_ranking_loss():
     assert_almost_equal(label_ranking_loss([[0, 1]], [[0.25, 0.75]]), 0)
     assert_almost_equal(label_ranking_loss([[0, 1]], [[0.75, 0.25]]), 1)
