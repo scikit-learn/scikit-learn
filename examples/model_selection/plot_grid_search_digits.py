@@ -55,8 +55,11 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5, random_
 
 tuned_parameters = [
     {"solver": ["newton-cg"], "penalty": ["l2", "None"], "C": [1, 10, 100, 1000]},
-    {"solver": ["saga"], "penalty": ["elasticnet", "l2", "None"],
-     "C": [1, 10, 100, 1000]},
+    {
+     "solver": ["saga"],
+     "penalty": ["elasticnet", "l2", "None"],
+     "C": [1, 10, 100, 1000]
+    },
 ]
 
 scores = ["precision", "recall"]
@@ -167,8 +170,9 @@ def refit_strategy(cv_results):
 from sklearn.model_selection import GridSearchCV
 from sklearn.linear_model import LogisticRegression
 
-clf = GridSearchCV(LogisticRegression(), tuned_parameters,
-                   scoring=scores, refit=refit_strategy)
+clf = GridSearchCV(
+    LogisticRegression(), tuned_parameters, scoring=scores, refit=refit_strategy
+)
 
 # %%
 # Tuning hyper-parameters
