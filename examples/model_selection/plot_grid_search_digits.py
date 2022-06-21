@@ -56,9 +56,9 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5, random_
 tuned_parameters = [
     {"solver": ["newton-cg"], "penalty": ["l2", "None"], "C": [1, 10, 100, 1000]},
     {
-     "solver": ["saga"],
-     "penalty": ["elasticnet", "l2", "None"],
-     "C": [1, 10, 100, 1000]
+        "solver": ["saga"],
+        "penalty": ["elasticnet", "l2", "None"],
+        "C": [1, 10, 100, 1000],
     },
 ]
 
