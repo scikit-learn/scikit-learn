@@ -1155,8 +1155,8 @@ def coverage_error(y_true, y_score, *, sample_weight=None):
            handbook (pp. 667-685). Springer US.
 
     """
-    y_true = check_array(y_true, ensure_2d=False)
-    y_score = check_array(y_score, ensure_2d=False)
+    y_true = check_array(y_true, ensure_2d=True)
+    y_score = check_array(y_score, ensure_2d=True)
     check_consistent_length(y_true, y_score, sample_weight)
 
     y_type = type_of_target(y_true, input_name="y_true")
