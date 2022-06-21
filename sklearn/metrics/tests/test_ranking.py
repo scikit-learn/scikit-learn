@@ -1578,6 +1578,8 @@ def test_coverage_tie_handling():
     ],
 )
 def test_coverage_1d_error_message(y_true, y_score):
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/23368
     with pytest.raises(ValueError, match=r"Expected 2D array, got 1D array instead"):
         coverage_error(y_true, y_score)
 
