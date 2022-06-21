@@ -25,7 +25,7 @@ def validate_parameter_constraints(parameter_constraints, params, caller_name):
         - an Interval object, representing a continuous or discrete range of numbers
         - the string "array-like"
         - the string "sparse matrix"
-        - the string "random state"
+        - the string "random_state"
         - callable
         - None, meaning that None is a valid value for the parameter
         - any type, meaning that any instance of this type is valid
