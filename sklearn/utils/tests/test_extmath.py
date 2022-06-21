@@ -31,7 +31,7 @@ from sklearn.utils.extmath import _incremental_mean_and_var
 from sklearn.utils.extmath import _deterministic_vector_sign_flip
 from sklearn.utils.extmath import softmax
 from sklearn.utils.extmath import stable_cumsum
-from sklearn.utils.extmath import safe_sparse_dot, _fast_mode
+from sklearn.utils.extmath import safe_sparse_dot
 from sklearn.datasets import make_low_rank_matrix, make_sparse_spd_matrix
 
 
@@ -925,71 +925,6 @@ def test_stable_cumsum():
     assert_array_equal(stable_cumsum(A, axis=0), np.cumsum(A, axis=0))
     assert_array_equal(stable_cumsum(A, axis=1), np.cumsum(A, axis=1))
     assert_array_equal(stable_cumsum(A, axis=2), np.cumsum(A, axis=2))
-
-
-def test_fast_mode_scipy_stats_axis_1():
-    rng = np.random.RandomState(0)
-
-    X = rng.randint(10, size=(100, 20))
-    mode_ref, _ = stats.mode(X, axis=1)
-    mode = _fast_mode(X, axis=1)
-    assert_array_equal(mode, mode_ref)
-
-
-@pytest.mark.parametrize(
-    "x",
-    [np.ones((10, 10), dtype=np.float), 1, np.ones(5, dtype=np.int)],
-    ids=["array_float64", "int", "1D-array"],
-)
-def test_fast_mode_input_validation(x):
-    with pytest.raises(ValueError, match="only implemented for 2D integer arrays"):
-        _fast_mode(x)
-
-
-def test_fast_mode_negative_values():
-    x = -np.ones((10, 10), dtype=np.int)
-    with pytest.raises(ValueError, match="only positive data is supported"):
-        _fast_mode(x)
-
-
-def test_fast_mode_ties():
-    # Check that ties are resolved in the same way as in stats.mode
-    X = np.ones((6, 9), dtype=np.int)
-    X[:, 3:] = 2
-    X[:, 6:] = 3
-    mode_ref, _ = stats.mode(X, axis=1)
-    mode = _fast_mode(X, axis=1)
-    assert_array_equal(mode, mode_ref)
-
-
-def test_fast_mode_uniform_weights():
-    # with uniform weights, results should be identical to
-    # stats.mode
-    rng = np.random.RandomState(0)
-    x = rng.randint(10, size=(10, 5))
-    weights = np.ones(x.shape)
-
-    mode, _ = stats.mode(x, axis=1)
-    mode2 = _fast_mode(x, weights, axis=1)
-
-    assert_array_equal(mode, mode2)
-
-
-def test_fast_mode_random_weights():
-    # set this up so that each row should have a weighted mode of 6,
-    # with a score that is easily reproduced
-    mode_result = 6
-
-    rng = np.random.RandomState(0)
-    x = rng.randint(mode_result, size=(100, 10))
-    w = rng.random_sample(x.shape)
-
-    x[:, :5] = mode_result
-    w[:, :5] += 1
-
-    mode = _fast_mode(x, w, axis=1)
-
-    assert_array_equal(mode, mode_result)
 
 
 @pytest.mark.parametrize(

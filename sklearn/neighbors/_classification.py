@@ -9,8 +9,8 @@
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
 
 import numpy as np
-from ..utils.extmath import _fast_mode
 from ..utils.validation import _is_arraylike, _num_samples
+from scipy import sparse
 
 import warnings
 from ._base import _check_weights, _get_weights
@@ -198,6 +198,15 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
 
         return self._fit(X, y)
 
+    def _build_sparse_matrix(self, neighbor_labels, weights):
+        data = weights.ravel()
+        indices = neighbor_labels.ravel()
+        indptr = np.arange(neighbor_labels.shape[0] + 1) * self.n_neighbors
+        return sparse.csr_matrix(
+            (data, indices, indptr),
+            shape=(neighbor_labels.shape[0], neighbor_labels.max() + 1),
+        )
+
     def predict(self, X):
         """Predict the class labels for the provided data.
 
@@ -228,11 +237,14 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
 
         n_outputs = len(classes_)
         n_queries = _num_samples(X)
-        weights = _get_weights(neigh_dist, self.weights)
 
         y_pred = np.empty((n_queries, n_outputs), dtype=classes_[0].dtype)
         for k, classes_k in enumerate(classes_):
-            mode = _fast_mode(_y[neigh_ind, k], weights=weights, axis=1)
+
+            weights = _get_weights(neigh_dist, self.weights)
+            if weights is None:
+                weights = np.ones(neigh_ind.shape, dtype=np.int)
+            mode = self._build_sparse_matrix(_y[neigh_ind, k], weights).argmax(axis=1)
             mode = np.asarray(mode.ravel(), dtype=np.intp)
             y_pred[:, k] = classes_k.take(mode)
 
