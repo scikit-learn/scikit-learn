@@ -25,13 +25,13 @@ def validate_parameter_constraints(parameter_constraints, params, caller_name):
         - an Interval object, representing a continuous or discrete range of numbers
         - the string "array-like"
         - the string "sparse matrix"
-        - the string "random state"
+        - the string "random_state"
         - callable
         - None, meaning that None is a valid value for the parameter
         - any type, meaning that any instance of this type is valid
         - a StrOptions object, representing a set of strings
         - the string "boolean"
-        - the string "no validation", skipping validation of the parameter
+        - the string "no_validation", skipping validation of the parameter
 
     params : dict
         A dictionary `param_name: param_value`. The parameters to validate against the
@@ -49,7 +49,7 @@ def validate_parameter_constraints(parameter_constraints, params, caller_name):
     for param_name, param_val in params.items():
         constraints = parameter_constraints[param_name]
 
-        if constraints == ["no validation"]:
+        if constraints == ["no_validation"]:
             continue
 
         constraints = [make_constraint(constraint) for constraint in constraints]

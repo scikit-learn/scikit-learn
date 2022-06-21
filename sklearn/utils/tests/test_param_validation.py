@@ -527,7 +527,7 @@ def test_boolean_constraint_deprecated_int():
 def test_no_validation():
     """Check that validation can be skipped for a parameter."""
 
-    @validate_params({"param1": [int, None], "param2": ["no validation"]})
+    @validate_params({"param1": [int, None], "param2": ["no_validation"]})
     def f(param1=None, param2=None):
         pass
 
