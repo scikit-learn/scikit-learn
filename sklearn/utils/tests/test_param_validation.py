@@ -10,6 +10,7 @@ from sklearn.utils._param_validation import Hidden
 from sklearn.utils._param_validation import Interval
 from sklearn.utils._param_validation import StrOptions
 from sklearn.utils._param_validation import _ArrayLikes
+from sklearn.utils._param_validation import _Booleans
 from sklearn.utils._param_validation import _Callables
 from sklearn.utils._param_validation import _InstancesOf
 from sklearn.utils._param_validation import _NoneConstraint
@@ -17,6 +18,7 @@ from sklearn.utils._param_validation import _RandomStates
 from sklearn.utils._param_validation import _SparseMatrices
 from sklearn.utils._param_validation import make_constraint
 from sklearn.utils._param_validation import generate_invalid_param_val
+from sklearn.utils._param_validation import generate_valid_param
 from sklearn.utils._param_validation import validate_params
 
 
@@ -285,18 +287,44 @@ def test_generate_invalid_param_val_all_valid(constraints):
 @pytest.mark.parametrize(
     "constraint",
     [
-        _ArrayLikes,
-        _Callables,
-        _InstancesOf,
-        _NoneConstraint,
-        _RandomStates,
-        _SparseMatrices,
+        _ArrayLikes(),
+        _Callables(),
+        _InstancesOf(list),
+        _NoneConstraint(),
+        _RandomStates(),
+        _SparseMatrices(),
+        _Booleans(),
     ],
 )
 def test_generate_invalid_param_val_not_error(constraint):
     """Check that the value generated does not satisfy the constraint"""
     with pytest.raises(NotImplementedError):
         generate_invalid_param_val(constraint)
+
+
+@pytest.mark.parametrize(
+    "constraint",
+    [
+        _ArrayLikes(),
+        _Callables(),
+        _InstancesOf(list),
+        _NoneConstraint(),
+        _RandomStates(),
+        _SparseMatrices(),
+        StrOptions({"a", "b", "c"}),
+        Interval(Integral, None, None, closed="neither"),
+        Interval(Integral, 0, 10, closed="neither"),
+        Interval(Integral, 0, None, closed="neither"),
+        Interval(Integral, None, 0, closed="neither"),
+        Interval(Real, 0, 1, closed="neither"),
+        Interval(Real, 0, None, closed="both"),
+        Interval(Real, None, 0, closed="right"),
+    ],
+)
+def test_generate_valid_param(constraint):
+    """Check that the value generated does satisfy the constraint."""
+    value = generate_valid_param(constraint)
+    assert constraint.is_satisfied_by(value)
 
 
 @pytest.mark.parametrize(
@@ -316,6 +344,7 @@ def test_generate_invalid_param_val_not_error(constraint):
         (_Class, _Class()),
         (int, 1),
         (Real, 0.5),
+        ("boolean", False),
     ],
 )
 def test_is_satisfied_by(constraint_declaration, value):
@@ -335,6 +364,7 @@ def test_is_satisfied_by(constraint_declaration, value):
         (None, _NoneConstraint),
         (callable, _Callables),
         (int, _InstancesOf),
+        ("boolean", _Booleans),
     ],
 )
 def test_make_constraint(constraint_declaration, expected_constraint_class):
@@ -464,6 +494,34 @@ def test_hidden_stroptions():
     err_msg = str(exc_info.value)
     assert "auto" in err_msg
     assert "warn" not in err_msg
+
+
+def test_validate_params_set_param_constraints_attribute():
+    """Check that the validate_params decorator properly sets the parameter constraints
+    as attribute of the decorated function/method.
+    """
+    assert hasattr(_func, "_skl_parameter_constraints")
+    assert hasattr(_Class()._method, "_skl_parameter_constraints")
+
+
+def test_boolean_constraint_deprecated_int():
+    """Check that validate_params raise a deprecation message but still passes validation
+    when using an int for a parameter accepting a boolean.
+    """
+
+    @validate_params({"param": ["boolean"]})
+    def f(param):
+        pass
+
+    # True/False and np.bool_(True/False) are valid params
+    f(True)
+    f(np.bool_(False))
+
+    # an int is also valid but deprecated
+    with pytest.warns(
+        FutureWarning, match="Passing an int for a boolean parameter is deprecated"
+    ):
+        f(1)
 
 
 def test_no_validation():
