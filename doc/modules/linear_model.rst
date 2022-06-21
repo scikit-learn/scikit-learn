@@ -1549,7 +1549,7 @@ in the following ways.
   * Peter J. Huber, Elvezio M. Ronchetti: Robust Statistics, Concomitant scale estimates, pg 172
 
 Note that this estimator is different from the R implementation of Robust Regression
-(http://www.ats.ucla.edu/stat/r/dae/rreg.htm) because the R implementation does a weighted least
+(https://stats.oarc.ucla.edu/r/dae/robust-regression/) because the R implementation does a weighted least
 squares implementation with weights given to each sample on the basis of how much the residual is
 greater than a certain threshold.
 
