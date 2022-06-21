@@ -154,6 +154,9 @@ Changelog
   of a binary classification problem. :pr:`22518` by
   :user:`Arturo Amor <ArturoAmorQ>`.
 
+- |Fix| Fixed error message of :class:`metrics.coverage_error` for 1D array input.
+  :pr:`23548` by :user:`Hao Chun Chang <haochunchang>`.
+
 :mod:`sklearn.neighbors`
 ........................
 
