@@ -9,6 +9,7 @@
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
 
 import numpy as np
+from ..utils.extmath import weighted_mode
 from ..utils.validation import _is_arraylike, _num_samples
 from scipy import sparse
 
@@ -239,12 +240,15 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         n_queries = _num_samples(X)
 
         y_pred = np.empty((n_queries, n_outputs), dtype=classes_[0].dtype)
+        weights = _get_weights(neigh_dist, self.weights)
         for k, classes_k in enumerate(classes_):
-
-            weights = _get_weights(neigh_dist, self.weights)
             if weights is None:
-                weights = np.ones(neigh_ind.shape, dtype=np.int)
-            mode = self._build_sparse_matrix(_y[neigh_ind, k], weights).argmax(axis=1)
+                _weights = np.ones(neigh_ind.shape, dtype=np.int)
+                mode = self._build_sparse_matrix(_y[neigh_ind, k], _weights).argmax(
+                    axis=1
+                )
+            else:
+                mode, _ = weighted_mode(_y[neigh_ind, k], weights, axis=1)
             mode = np.asarray(mode.ravel(), dtype=np.intp)
             y_pred[:, k] = classes_k.take(mode)
 
