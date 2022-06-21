@@ -243,14 +243,14 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         y_pred = np.empty((n_queries, n_outputs), dtype=classes_[0].dtype)
         for k, classes_k in enumerate(classes_):
             if weights is None:
-                _weights = np.ones(neigh_ind.shape, dtype=np.int)
+                _weights = np.ones(neigh_ind.shape, dtype=int)
                 mode = self._build_sparse_matrix(_y[neigh_ind, k], _weights).argmax(
                     axis=1
                 )
             else:
                 mode, _ = weighted_mode(_y[neigh_ind, k], weights, axis=1)
 
-            mode = np.asarray(mode.ravel(), dtype=np.intp)
+            mode = np.asarray(mode.ravel(), dtype=int)
             y_pred[:, k] = classes_k.take(mode)
 
         if not self.outputs_2d_:
