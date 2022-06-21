@@ -140,8 +140,7 @@ class IncrementalPCA(_BasePCA):
     *A. Levy and M. Lindenbaum, Sequential Karhunen-Loeve Basis Extraction and
     its Application to Images, IEEE Transactions on Image Processing, Volume 9,
     Number 8, pp. 1371-1374, August 2000.*
-    See https://citeseerx.ist.psu.edu/viewdoc/
-        download?doi=10.1.1.4.8032&rep=rep1&type=pdf
+    See https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.4.8032&rep=rep1&type=pdf
 
     We have specifically abstained from an optimization used by authors of both
     papers, a QR decomposition used in specific situations to reduce the
