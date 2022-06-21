@@ -2,11 +2,13 @@
 # Author: Vlad Niculae, Gael Varoquaux, Alexandre Gramfort
 # License: BSD 3 clause
 
+from numbers import Integral, Real
 import warnings
 
 import numpy as np
 
 from ..utils import check_random_state
+from ..utils._param_validation import Interval, StrOptions
 from ..utils.validation import check_is_fitted
 from ..linear_model import ridge_regression
 from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
@@ -127,6 +129,20 @@ class SparsePCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
     0.9666...
     """
 
+    _parameter_constraints = {
+        "n_components": [None, Integral],
+        "alpha": [Interval(Real, 0.0, None, closed="left")],
+        "ridge_alpha": [Interval(Real, 0.0, None, closed="left")],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
+        "tol": [Interval(Real, 0.0, None, closed="left")],
+        "method": [StrOptions({"lars", "cd"})],
+        "n_jobs": [None, Interval(Integral, -1, None, closed="left")],
+        "U_init": [None, np.ndarray],
+        "V_init": [None, np.ndarray],
+        "verbose": [Interval(Integral, 0, None, closed="left"), bool],
+        "random_state": ["random_state"],
+    }
+
     def __init__(
         self,
         n_components=None,
@@ -171,6 +187,9 @@ class SparsePCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
         self : object
             Returns the instance itself.
         """
+
+        self._validate_params()
+
         random_state = check_random_state(self.random_state)
         X = self._validate_data(X)
 
@@ -361,6 +380,28 @@ class MiniBatchSparsePCA(SparsePCA):
     0.94
     """
 
+    _parameter_constraints = {
+        **dict(
+            filter(
+                lambda item: item[0]
+                in (
+                    "n_components",
+                    "alpha",
+                    "ridge_alpha",
+                    "verbose",
+                    "n_jobs",
+                    "method",
+                    "random_state",
+                ),
+                SparsePCA._parameter_constraints.items(),
+            )
+        ),
+        "n_iter": [Interval(Integral, 1, None, closed="left")],
+        "callback": [None, callable],
+        "batch_size": [Interval(Integral, 1, None, closed="left")],
+        "shuffle": ["boolean"],
+    }
+
     def __init__(
         self,
         n_components=None,
@@ -407,6 +448,9 @@ class MiniBatchSparsePCA(SparsePCA):
         self : object
             Returns the instance itself.
         """
+
+        self._validate_params()
+
         random_state = check_random_state(self.random_state)
         X = self._validate_data(X)
 
