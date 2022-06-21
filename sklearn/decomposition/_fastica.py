@@ -15,9 +15,11 @@ import numpy as np
 from scipy import linalg
 from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
 from ..exceptions import ConvergenceWarning
+from numbers import Integral, Real
 
 from ..utils import check_array, as_float_array, check_random_state
 from ..utils.validation import check_is_fitted
+from ..utils._param_validation import Interval, StrOptions
 
 __all__ = ["fastica", "FastICA"]
 
@@ -505,6 +507,23 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
     (1797, 7)
     """
 
+    _parameter_constraints = {
+        "n_components": [Interval(Integral, 1, None, closed="left"), None],
+        "algorithm": [StrOptions({"parallel", "deflation"})],
+        "whiten": [
+            StrOptions({"warn", "arbitrary-variance", "unit-variance"}),
+            "boolean",
+        ],
+        "fun": [StrOptions({"logcosh", "exp", "cube"}), callable],
+        "fun_args": [dict, None],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
+        "tol": [Interval(Real, 0.0, None, closed="left")],
+        "w_init": ["array-like", None],
+        "whiten_solver": [StrOptions({"eigh", "svd"})],
+        "random_state": ["random_state"],
+        "sign_flip": ["boolean"],
+    }
+
     def __init__(
         self,
         n_components=None,
@@ -551,6 +570,8 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         S : ndarray of shape (n_samples, n_components) or None
             Sources matrix. `None` if `compute_sources` is `False`.
         """
+        self._validate_params()
+
         self._whiten = self.whiten
 
         if self._whiten == "warn":
@@ -671,13 +692,6 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
                     "w_init has invalid shape -- should be %(shape)s"
                     % {"shape": (n_components, n_components)}
                 )
-
-        if self.max_iter < 1:
-            raise ValueError(
-                "max_iter should be greater than 1, got (max_iter={})".format(
-                    self.max_iter
-                )
-            )
 
         kwargs = {
             "tol": self.tol,

@@ -482,7 +482,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "ExtraTreesClassifier",
     "ExtraTreesRegressor",
     "FactorAnalysis",
-    "FastICA",
     "FeatureAgglomeration",
     "FeatureHasher",
     "FunctionTransformer",
