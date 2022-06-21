@@ -381,26 +381,22 @@ class MiniBatchSparsePCA(SparsePCA):
     """
 
     _parameter_constraints = {
-        **dict(
-            filter(
-                lambda item: item[0]
-                in (
-                    "n_components",
-                    "alpha",
-                    "ridge_alpha",
-                    "verbose",
-                    "n_jobs",
-                    "method",
-                    "random_state",
-                ),
-                SparsePCA._parameter_constraints.items(),
-            )
-        ),
+        k: v for k, v in SparsePCA._parameter_constraints.items() if k in [
+            "n_components",
+            "alpha",
+            "ridge_alpha",
+            "verbose",
+            "n_jobs",
+            "method",
+            "random_state",
+        ]
+    }
+    _parameter_constraints.update({
         "n_iter": [Interval(Integral, 1, None, closed="left")],
         "callback": [None, callable],
         "batch_size": [Interval(Integral, 1, None, closed="left")],
         "shuffle": ["boolean"],
-    }
+    })
 
     def __init__(
         self,
