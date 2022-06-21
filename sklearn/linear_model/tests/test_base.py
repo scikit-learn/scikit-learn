@@ -197,7 +197,7 @@ def test_linear_regression_sparse(global_random_seed):
     n = 100
     X = sparse.eye(n, n)
     beta = rng.rand(n)
-    y = X * beta[:, np.newaxis]
+    y = X @ beta
 
     ols = LinearRegression()
     ols.fit(X, y.ravel())
