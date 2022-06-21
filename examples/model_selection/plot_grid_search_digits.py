@@ -21,6 +21,7 @@ sections on :ref:`cross_validation` and :ref:`grid_search`.
 #
 # We will work with the `digits` dataset. The goal is to classify handwritten
 # digits images.
+# We set the problem to a binary classification one for better understanding.
 from sklearn import datasets
 
 digits = datasets.load_digits()
@@ -48,13 +49,14 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5, random_
 # -------------------------------
 #
 # We will select a classifier by searching the best hyper-parameters on folds
-# of the training set. To do this, we first need to define the values of 
-# the hyper-parameters and the scores to compute to later select the 
+# of the training set. To do this, we first need to define the values of
+# the hyper-parameters and the scores to compute to later select the
 # best candidate.
 
 tuned_parameters = [
-    {"kernel": ["rbf"], "gamma": [1e-3, 1e-4], "C": [1, 10, 100, 1000]},
-    {"kernel": ["linear"], "C": [1, 10, 100, 1000]},
+    {"solver": ["newton-cg"], "penalty": ["l2", "None"], "C": [1, 10, 100, 1000]},
+    {"solver": ["saga"], "penalty": ["elasticnet", "l2", "None"],
+     "C": [1, 10, 100, 1000]},
 ]
 
 scores = ["precision", "recall"]
@@ -163,9 +165,10 @@ def refit_strategy(cv_results):
 # Once we defined our strategy to select the best model, we can create the
 # grid-search instance. Subsequently, we can check the best parameters found.
 from sklearn.model_selection import GridSearchCV
-from sklearn.svm import SVC
+from sklearn.linear_model import LogisticRegression
 
-clf = GridSearchCV(SVC(), tuned_parameters, scoring=scores, refit=refit_strategy)
+clf = GridSearchCV(LogisticRegression(), tuned_parameters,
+                   scoring=scores, refit=refit_strategy)
 
 # %%
 # Tuning hyper-parameters
