@@ -2738,6 +2738,7 @@ class QuantileTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator
         """
         check_is_fitted(self)
         X = self._check_inputs(X, in_fit=False, copy=self.copy)
+        self._validate_params()
 
         return self._transform(X, inverse=False)
 
@@ -2761,6 +2762,7 @@ class QuantileTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator
         X = self._check_inputs(
             X, in_fit=False, accept_sparse_negative=True, copy=self.copy
         )
+        self._validate_params()
 
         return self._transform(X, inverse=True)
 
