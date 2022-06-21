@@ -2545,8 +2545,7 @@ def log_loss(
     Returns
     -------
     loss : float
-        Raw Log Loss value. This is the value calculated using the 
-        ``y_pred`` and ``y_true`` based on the abover formula.
+        Log loss, aka logistic loss or cross-entropy loss.
 
     Notes
     -----
