@@ -283,7 +283,7 @@ prediction (kernel dependency estimation). :class:`KernelPCA` supports both
 .. note::
     :meth:`KernelPCA.inverse_transform` relies on a kernel ridge to learn the
     function mapping samples from the PCA basis into the original feature
-    space [Bakir2004]_. Thus, the reconstruction obtained with
+    space [Bakir2003]_. Thus, the reconstruction obtained with
     :meth:`KernelPCA.inverse_transform` is an approximation. See the example
     linked below for more details.
 
@@ -299,10 +299,10 @@ prediction (kernel dependency estimation). :class:`KernelPCA` supports both
        International conference on artificial neural networks.
        Springer, Berlin, Heidelberg, 1997.
 
-    .. [Bakir2004] Bakır, Gökhan H., Jason Weston, and Bernhard Schölkopf.
+    .. [Bakir2003] Bakır, Gökhan H., Jason Weston, and Bernhard Schölkopf.
        `"Learning to find pre-images."
-       <https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.68.5164&rep=rep1&type=pdf>`_
-       Advances in neural information processing systems 16 (2004): 449-456.
+       <https://papers.nips.cc/paper/2003/file/ac1ad983e08ad3304a97e147f522747e-Paper.pdf>`_
+       Advances in neural information processing systems 16 (2003): 449-456.
 
 .. _kPCA_Solvers:
 
