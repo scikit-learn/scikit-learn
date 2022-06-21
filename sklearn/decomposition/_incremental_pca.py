@@ -137,7 +137,7 @@ class IncrementalPCA(_BasePCA):
     See https://www.cs.toronto.edu/~dross/ivt/RossLimLinYang_ijcv.pdf
 
     This model is an extension of the Sequential Karhunen-Loeve Transform from:
-    :doi: `A. Levy and M. Lindenbaum, Sequential Karhunen-Loeve Basis Extraction and
+    :doi:`A. Levy and M. Lindenbaum, Sequential Karhunen-Loeve Basis Extraction and
     its Application to Images, IEEE Transactions on Image Processing, Volume 9,
     Number 8, pp. 1371-1374, August 2000. <10.1109/83.855432>`
 
