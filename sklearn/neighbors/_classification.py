@@ -238,9 +238,9 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
 
         n_outputs = len(classes_)
         n_queries = _num_samples(X)
+        weights = _get_weights(neigh_dist, self.weights)
 
         y_pred = np.empty((n_queries, n_outputs), dtype=classes_[0].dtype)
-        weights = _get_weights(neigh_dist, self.weights)
         for k, classes_k in enumerate(classes_):
             if weights is None:
                 _weights = np.ones(neigh_ind.shape, dtype=np.int)
