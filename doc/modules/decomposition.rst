@@ -961,7 +961,7 @@ is not readily available from the start, or when the data does not fit into memo
 
     .. [5] `"Fast local algorithms for large scale nonnegative matrix and tensor
       factorizations."
-      <https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.214.6398&rep=rep1&type=pdf>`_
+      <https://www.researchgate.net/profile/Anh-Huy-Phan/publication/220241471_Fast_Local_Algorithms_for_Large_Scale_Nonnegative_Matrix_and_Tensor_Factorizations/links/00b7d519df30965c23000000/Fast-Local-Algorithms-for-Large-Scale-Nonnegative-Matrix-and-Tensor-Factorizations.pdf>`_
       A. Cichocki, A. Phan, 2009
 
     .. [6] :arxiv:`"Algorithms for nonnegative matrix factorization with
