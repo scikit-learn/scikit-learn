@@ -307,8 +307,24 @@ def test_sparse_input(sparse_format, solver, fit_intercept, default_solver):
         assert 0.45 <= np.mean(y < quant_sparse.predict(X_sparse)) <= 0.55
 
 
+# TODO (1.4): remove this test in 1.4
 def test_warning_new_default(X_y_data):
+    """Check that we warn about the new default solver."""
     X, y = X_y_data
     model = QuantileRegressor()
     with pytest.warns(FutureWarning, match="The default solver will change"):
         model.fit(X, y)
+
+
+def test_error_interior_point_future(X_y_data, monkeypatch):
+    """Check that we will raise a proper error when requesting
+    `solver='interior-point'` in SciPy >= 1.11.
+    """
+    X, y = X_y_data
+    import sklearn.linear_model._quantile
+
+    with monkeypatch.context() as m:
+        m.setattr(sklearn.linear_model._quantile, "sp_version", parse_version("1.11.0"))
+        err_msg = "Solver interior-point is not anymore available in SciPy >= 1.11.0."
+        with pytest.raises(ValueError, match=err_msg):
+            QuantileRegressor(solver="interior-point").fit(X, y)

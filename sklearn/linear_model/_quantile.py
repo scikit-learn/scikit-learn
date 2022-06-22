@@ -203,6 +203,10 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
             "revised simplex",
         ):
             raise ValueError(f"Invalid value for argument solver, got {solver}")
+        elif solver == "interior-point" and sp_version >= parse_version("1.11.0"):
+            raise ValueError(
+                f"Solver {solver} is not anymore available in SciPy >= 1.11.0."
+            )
 
         if sparse.issparse(X) and solver not in ["highs", "highs-ds", "highs-ipm"]:
             raise ValueError(
