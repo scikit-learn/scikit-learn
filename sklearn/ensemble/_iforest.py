@@ -212,11 +212,11 @@ class IsolationForest(OutlierMixin, BaseBagging):
             Integral,
             Interval(Real, 0, 1, closed="right"),
         ],
-        "bootstrap": [bool],
+        "bootstrap": ["boolean"],
         "n_jobs": [Integral, None],
         "random_state": ["random_state"],
         "verbose": [Integral],
-        "warm_start": [bool],
+        "warm_start": ["boolean"],
     }
 
     def __init__(
