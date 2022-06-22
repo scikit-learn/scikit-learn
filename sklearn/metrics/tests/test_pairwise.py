@@ -122,7 +122,7 @@ def test_pairwise_distances():
     # Test manhattan distance works with NaN
     S_masked = pairwise_distances(X_masked, Y_masked, metric="nan_manhattan")
     S2_masked = nan_manhattan_distances(X_masked, Y_masked)
-    assert_array_almost_equal(S_masked, S2_masked)
+    assert_allclose(S_masked, S2_masked)
 
     # Test cosine as a string metric versus cosine callable
     # The string "cosine" uses sklearn.metric,
@@ -1102,7 +1102,7 @@ def test_nan_distances_metrics_complete_nan(metric_fn, missing_value):
 )
 @pytest.mark.parametrize("X", [np.array([[np.inf, 0]]), np.array([[0, -np.inf]])])
 @pytest.mark.parametrize("Y", [np.array([[np.inf, 0]]), np.array([[0, -np.inf]]), None])
-def test_nan_euclidean_distances_infinite_values(metric_fn, X, Y):
+def test_nan_distances_infinite_values(metric_fn, X, Y):
     with pytest.raises(ValueError) as excinfo:
         metric_fn(X, Y=Y)
 
@@ -1116,7 +1116,7 @@ def test_nan_manhattan_distances_equal_to_manhattan_distances():
     Y = rng.randn(4, 4)
     normal_distance = manhattan_distances(X, Y=Y)
     nan_distance = nan_manhattan_distances(X, Y=Y)
-    assert_allclose(normal_distance, nan_distance)
+    assert_array_equal(normal_distance, nan_distance)
 
 
 @pytest.mark.parametrize("missing_value", [np.nan, -1])
