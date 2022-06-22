@@ -122,7 +122,7 @@ def test_pairwise_distances():
     # Test manhattan distance works with NaN
     S_masked = pairwise_distances(X_masked, Y_masked, metric="nan_manhattan")
     S2_masked = nan_manhattan_distances(X_masked, Y_masked)
-    assert_array_almost_equal(S_masked, S2_masked)
+    assert_allclose(S_masked, S2_masked)
 
     # Test cosine as a string metric versus cosine callable
     # The string "cosine" uses sklearn.metric,
