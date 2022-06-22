@@ -113,13 +113,13 @@ def _assert_all_finite(
         use_cython = X.data.contiguous and X.dtype.type in {np.float32, np.float64}
         if use_cython:
             out = cy_isfinite(X.reshape(-1), allow_nan=allow_nan)
-            has_nan = out == FiniteStatus.has_nan
+            has_nan = False if allow_nan else out == FiniteStatus.has_nan
             has_inf = out == FiniteStatus.has_infinite
         else:
             has_inf = np.isinf(X).any()
-            has_nan = np.isnan(X).any()
-        if has_inf or not allow_nan and has_nan:
-            if not allow_nan and has_nan:
+            has_nan = False if allow_nan else np.isnan(X).any()
+        if has_inf or has_nan:
+            if has_nan:
                 type_err = "NaN"
             else:
                 msg_dtype = msg_dtype if msg_dtype is not None else X.dtype
