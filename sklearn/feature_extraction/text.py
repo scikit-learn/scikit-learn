@@ -1685,7 +1685,7 @@ class TfidfTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             # *= doesn't work
             X = X * self._idf_diag
 
-        if self.norm:
+        if self.norm is not None:
             X = normalize(X, norm=self.norm, copy=False)
 
         return X
