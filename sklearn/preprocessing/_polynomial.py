@@ -400,7 +400,6 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                 )
             if self._min_degree <= 1 and self._max_degree > 0:
                 to_stack.append(X)
-            total_nnz = self.n_output_features_
             for deg in range(max(2, self._min_degree), self._max_degree + 1):
                 # Count how many nonzero elements the expanded matrix will contain.
                 total_nnz = sum(
