@@ -3,14 +3,10 @@
 #          Lars Buitinck
 # License: BSD 3 clause
 
-import math
-
 import numpy as np
 import pytest
-import scipy.stats
 
 from sklearn.utils._testing import assert_array_equal
-
 from sklearn.utils.fixes import _object_dtype_isnan
 
 
