@@ -1102,7 +1102,7 @@ def test_nan_distances_metrics_complete_nan(metric_fn, missing_value):
 )
 @pytest.mark.parametrize("X", [np.array([[np.inf, 0]]), np.array([[0, -np.inf]])])
 @pytest.mark.parametrize("Y", [np.array([[np.inf, 0]]), np.array([[0, -np.inf]]), None])
-def test_nan_euclidean_distances_infinite_values(metric_fn, X, Y):
+def test_nan_distances_infinite_values(metric_fn, X, Y):
     with pytest.raises(ValueError) as excinfo:
         metric_fn(X, Y=Y)
 
