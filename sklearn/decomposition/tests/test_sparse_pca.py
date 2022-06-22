@@ -269,7 +269,7 @@ def test_spca_feature_names_out(SPCA):
 
 # TODO (1.3): remove this test
 def test_spca_n_iter_deprecation():
-    """Check that we raise a warning for the deprecation of `n_iter` and it is ignore
+    """Check that we raise a warning for the deprecation of `n_iter` and it is ignored
     when `max_iter` is specified.
     """
     rng = np.random.RandomState(0)
@@ -302,7 +302,7 @@ def test_spca_early_stopping(global_random_seed):
     assert model_early_stopped.n_iter_ < model_not_early_stopped.n_iter_
 
     # force the max number of no improvement to a large value to check that
-    # it does help to early stopping
+    # it does help to early stop
     model_early_stopped = MiniBatchSparsePCA(
         max_iter=100, tol=1e-6, max_no_improvement=2, random_state=global_random_seed
     ).fit(X)
