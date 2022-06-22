@@ -1511,7 +1511,7 @@ class TfidfTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    norm : {'l1', 'l2'}, default='l2'
+    norm : {'l1', 'l2'} or None, default='l2'
         Each output row will have unit norm, either:
 
         - 'l2': Sum of squares of vector elements is 1. The cosine
@@ -1519,6 +1519,7 @@ class TfidfTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
           been applied.
         - 'l1': Sum of absolute values of vector elements is 1.
           See :func:`preprocessing.normalize`.
+        - None: No normalization.
 
     use_idf : bool, default=True
         Enable inverse-document-frequency reweighting. If False, idf(t) = 1.
@@ -1684,7 +1685,7 @@ class TfidfTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             # *= doesn't work
             X = X * self._idf_diag
 
-        if self.norm:
+        if self.norm is not None:
             X = normalize(X, norm=self.norm, copy=False)
 
         return X
