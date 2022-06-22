@@ -71,8 +71,8 @@ Changelog
 :mod:`sklearn.neighbors`
 ........................
 
-- |Fix| The tie break of :func:`neighbors.BallTree.query` has been reverted to have the
-  same behavior than the one used in previous version is preserved.
+- |Fix| The tie break of :func:`neighbors.BallTree.query` has been restored to the
+  one of scikit-lean<1.0.
   :pr:`23667` by :user:`Julien Jerphanion <jjerphan>`
 
 :mod:`sklearn.preprocessing`

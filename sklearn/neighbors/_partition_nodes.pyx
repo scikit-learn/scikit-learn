@@ -35,6 +35,8 @@ cdef extern from *:
         bool operator()(const I &a, const I &b) const {
             D a_value = data[a * n_features + split_dim];
             D b_value = data[b * n_features + split_dim];
+            // The condition on indices (a <= b) is less natural but it preserves
+            // the tie break of queries to be the one of scikit-learn<1.0.
             return a_value == b_value ? a <= b : a_value < b_value;
         }
     };
