@@ -99,6 +99,19 @@ Changelog
   in version 1.4
   :pr:`21938` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Enhancement| Adds optional arguments `n_retries` and `delay` to functions 
+  :func:`datasets.fetch_20newsgroups`,
+  :func:`datasets.fetch_20newsgroups_vectorized`,
+  :func:`datasets.fetch_california_housing`,
+  :func:`datasets.fetch_covtype`,
+  :func:`datasets.fetch_kddcup99`,
+  :func:`datasets.fetch_lfw_pairs`,
+  :func:`datasets.fetch_lfw_people`,
+  :func:`datasets.fetch_olivetti_faces`,
+  and :func:`datasets.fetch_species_distributions`.
+  By default, all those functions will retry 3 times by default in case of network failure.
+  :pr:`21691` by :user:`Zhehao Liu <MaxwellLZH>`.
+
 :mod:`sklearn.decomposition`
 ............................
 

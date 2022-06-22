@@ -390,19 +390,6 @@ Changelog
   hole; when set to True, it returns the swiss-hole dataset. :pr:`21482` by
   :user:`Sebastian Pujalte <pujaltes>`.
 
-- |Enhancement| Adds optional arguments `n_retries` and `delay` to functions 
-  :func:`datasets.fetch_20newsgroups`,
-  :func:`datasets.fetch_20newsgroups_vectorized`,
-  :func:`datasets.fetch_california_housing`,
-  :func:`datasets.fetch_covtype`,
-  :func:`datasets.fetch_kddcup99`,
-  :func:`datasets.fetch_lfw_pairs`,
-  :func:`datasets.fetch_lfw_people`,
-  :func:`datasets.fetch_olivetti_faces`,
-  and :func:`datasets.fetch_species_distributions`.
-  By default, all those functions will retry 3 times by default in case of network failure.
-  :pr:`21691` by :user:`Zhehao Liu <MaxwellLZH>`.
-
 - |Enhancement| :func:`datasets.make_blobs` no longer copies data during the generation
   process, therefore uses less memory.
   :pr:`22412` by :user:`Zhehao Liu <MaxwellLZH>`.
