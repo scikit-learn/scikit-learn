@@ -26,6 +26,7 @@ from ..utils.validation import (
     check_is_fitted,
     check_non_negative,
 )
+from ..utils._param_validation import Hidden
 from ..utils._param_validation import Interval
 from ..utils._param_validation import StrOptions
 from ..utils._param_validation import validate_params
@@ -906,44 +907,41 @@ def _fit_multiplicative_update(
     return W, H, n_iter
 
 
-_parameter_constraints_of_non_negative_factorization = {
-    "X": ["array-like", "sparse matrix"],
-    "W": ["array-like", None],
-    "H": ["array-like", None],
-    "n_components": [Interval(Integral, 1, None, closed="left"), None],
-    "init": [
-        StrOptions({"random", "nndsvd", "nndsvda", "nndsvdar", "custom"}),
-        None,
-    ],
-    "update_H": [bool],
-    "solver": [StrOptions({"mu", "cd"})],
-    "beta_loss": [
-        StrOptions({"frobenius", "kullback-leibler", "itakura-saito"}),
-        Real,
-    ],
-    "tol": [Interval(Real, 0, None, closed="left")],
-    "max_iter": [Interval(Integral, 0, None, closed="left")],
-    "alpha": [
-        Interval(Real, 0, None, closed="left"),
-        StrOptions({"deprecated"}, internal={"deprecated"}),
-    ],
-    "alpha_W": [Interval(Real, 0, None, closed="left")],
-    "alpha_H": [Interval(Real, 0, None, closed="left"), StrOptions({"same"})],
-    "l1_ratio": [Interval(Real, 0, 1, closed="both")],
-    "regularization": [
-        StrOptions(
-            {"both", "components", "transformation", "deprecated"},
-            internal={"deprecated"},
-        ),
-        None,
-    ],
-    "random_state": ["random_state"],
-    "verbose": [Interval(Integral, 0, None, closed="left"), bool],
-    "shuffle": [bool],
-}
-
-
-@validate_params(_parameter_constraints_of_non_negative_factorization)
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "W": ["array-like", None],
+        "H": ["array-like", None],
+        "n_components": [Interval(Integral, 1, None, closed="left"), None],
+        "init": [
+            StrOptions({"random", "nndsvd", "nndsvda", "nndsvdar", "custom"}),
+            None,
+        ],
+        "update_H": ["boolean"],
+        "solver": [StrOptions({"mu", "cd"})],
+        "beta_loss": [
+            StrOptions({"frobenius", "kullback-leibler", "itakura-saito"}),
+            Real,
+        ],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
+        "alpha": [
+            Interval(Real, 0, None, closed="left"),
+            Hidden(StrOptions({"deprecated"})),
+        ],
+        "alpha_W": [Interval(Real, 0, None, closed="left")],
+        "alpha_H": [Interval(Real, 0, None, closed="left"), StrOptions({"same"})],
+        "l1_ratio": [Interval(Real, 0, 1, closed="both")],
+        "regularization": [
+            StrOptions({"both", "components", "transformation"}),
+            Hidden(StrOptions({"deprecated"})),
+            None,
+        ],
+        "random_state": ["random_state"],
+        "verbose": [Interval(Integral, 0, None, closed="left"), bool, np.bool_],
+        "shuffle": ["boolean"],
+    }
+)
 def non_negative_factorization(
     X,
     W=None,
@@ -1211,7 +1209,7 @@ class _BaseNMF(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
         "alpha_W": [Interval(Real, 0, None, closed="left")],
         "alpha_H": [Interval(Real, 0, None, closed="left"), StrOptions({"same"})],
         "l1_ratio": [Interval(Real, 0, 1, closed="both")],
-        "verbose": [Interval(Integral, 0, None, closed="left"), bool],
+        "verbose": [Interval(Integral, 0, None, closed="left"), bool, np.bool_],
     }
 
     def __init__(
@@ -1585,14 +1583,12 @@ class NMF(_BaseNMF):
         "solver": [StrOptions({"mu", "cd"})],
         "alpha": [
             Interval(Real, 0, None, closed="left"),
-            StrOptions({"deprecated"}, internal={"deprecated"}),
+            Hidden(StrOptions({"deprecated"})),
         ],
-        "shuffle": [bool],
+        "shuffle": ["boolean"],
         "regularization": [
-            StrOptions(
-                {"both", "components", "transformation", "deprecated"},
-                internal={"deprecated"},
-            ),
+            StrOptions({"both", "components", "transformation"}),
+            Hidden(StrOptions({"deprecated"})),
             None,
         ],
     }
@@ -2055,7 +2051,7 @@ class MiniBatchNMF(_BaseNMF):
         "max_no_improvement": [Interval(Integral, 1, None, closed="left"), None],
         "batch_size": [Interval(Integral, 1, None, closed="left")],
         "forget_factor": [Interval(Real, 0, 1, closed="both")],
-        "fresh_restarts": [bool],
+        "fresh_restarts": ["boolean"],
         "fresh_restarts_max_iter": [Interval(Integral, 1, None, closed="left")],
         "transform_max_iter": [Interval(Integral, 1, None, closed="left"), None],
     }
