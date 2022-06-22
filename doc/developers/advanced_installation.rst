@@ -177,11 +177,11 @@ each time you update the sources. Therefore it is recommended that you install
 in with the ``pip install --no-build-isolation --editable .`` command, which
 allows you to edit the code in-place. This builds the extension in place and
 creates a link to the development directory (see `the pip docs
-<https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs>`_).
+<https://pip.pypa.io/en/stable/topics/local-project-installs/#editable-installs>`_).
 
-This is fundamentally similar to using the command ``python setup.py develop``
-(see `the setuptool docs
-<https://setuptools.readthedocs.io/en/latest/setuptools.html#development-mode>`_).
+As the doc aboves explains, this is fundamentally similar to using the command
+``python setup.py develop``. (see `the setuptool docs
+<https://setuptools.pypa.io/en/latest/userguide/development_mode.html>`_).
 It is however preferred to use pip.
 
 On Unix-like systems, you can equivalently type ``make in`` from the top-level
