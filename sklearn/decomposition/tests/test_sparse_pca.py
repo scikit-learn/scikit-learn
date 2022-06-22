@@ -281,7 +281,10 @@ def test_spca_n_iter_deprecation():
         MiniBatchSparsePCA(n_iter=2).fit(X)
 
     n_iter, max_iter = 1, 100
-    model = MiniBatchSparsePCA(n_iter=n_iter, max_iter=max_iter, random_state=0).fit(X)
+    with pytest.warns(FutureWarning, match=warn_msg):
+        model = MiniBatchSparsePCA(
+            n_iter=n_iter, max_iter=max_iter, random_state=0
+        ).fit(X)
     assert model.n_iter_ > 1
     assert model.n_iter_ <= max_iter
 

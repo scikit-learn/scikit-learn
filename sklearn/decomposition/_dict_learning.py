@@ -2251,6 +2251,15 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         )
 
         self._check_params(X)
+
+        if self.n_iter != "deprecated":
+            warnings.warn(
+                "'n_iter' is deprecated in version 1.1 and will be removed"
+                " in version 1.3. Use 'max_iter' instead.",
+                FutureWarning,
+            )
+            n_iter = self.n_iter
+
         self._random_state = check_random_state(self.random_state)
 
         dictionary = self._initialize_dict(X, self._random_state)
@@ -2310,15 +2319,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
             self.n_iter_ = np.ceil(self.n_steps_ / n_steps_per_iter)
         else:
             # TODO remove this branch in 1.3
-            if self.n_iter != "deprecated":
-                warnings.warn(
-                    "'n_iter' is deprecated in version 1.1 and will be removed"
-                    " in version 1.3. Use 'max_iter' instead.",
-                    FutureWarning,
-                )
-                n_iter = self.n_iter
-            else:
-                n_iter = 1000
+            n_iter = 1000 if self.n_iter == "deprecated" else self.n_iter
 
             batches = gen_batches(n_samples, self._batch_size)
             batches = itertools.cycle(batches)

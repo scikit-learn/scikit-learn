@@ -1072,3 +1072,13 @@ def test_get_feature_names_out(estimator):
         feature_names_out,
         [f"{estimator_name}{i}" for i in range(n_components)],
     )
+
+
+def test_minibatch_dictionary_learning_warns_and_ignore_n_iter():
+    """Check that we always raise a warning when `n_iter` is set even if it is
+    ignored if `max_iter` is set.
+    """
+    warn_msg = "'n_iter' is deprecated in version 1.1"
+    with pytest.warns(FutureWarning, match=warn_msg):
+        model = MiniBatchDictionaryLearning(batch_size=256, n_iter=2, max_iter=2).fit(X)
+    assert model.n_iter_ == 2
