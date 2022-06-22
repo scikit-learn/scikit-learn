@@ -46,7 +46,7 @@ def test_make_named_container_error_validation():
         make_named_container(X, dense_container="invalid")
 
     X_csr = csr_matrix(X)
-    match = "Sparse data does not support pandas output"
+    match = "Pandas output does not support sparse data"
     with pytest.raises(ValueError, match=match):
         make_named_container(X_csr, dense_container="pandas")
 

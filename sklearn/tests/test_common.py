@@ -699,9 +699,6 @@ def test_set_output(estimator):
             f"Skipping check_set_output for {name}: Does not support set_output API yet"
         )
     _set_checking_parameters(estimator)
-    # set_output does not support sparse
-    if name == "KBinsDiscretizer":
-        estimator.set_params(encode="onehot-dense")
     check_set_output(estimator.__class__.__name__, estimator)
 
 
@@ -719,7 +716,4 @@ def test_set_output_pandas(estimator):
             " API yet"
         )
     _set_checking_parameters(estimator)
-    # set_output does not support sparse
-    if name == "KBinsDiscretizer":
-        estimator.set_params(encode="onehot-dense")
     check_set_output_pandas(estimator.__class__.__name__, estimator)

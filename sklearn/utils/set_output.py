@@ -59,7 +59,7 @@ def make_named_container(
 
     # dense_container == "pandas"
     if issparse(output):
-        raise ValueError("Sparse data does not support pandas output")
+        raise ValueError("Pandas output does not support sparse data")
 
     if callable(columns):
         columns = columns()

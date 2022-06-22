@@ -4153,7 +4153,13 @@ def check_set_output_pandas(name, transformer_orig):
 
     X_trans_no_setting = transformer.fit_transform(df, y)
     transformer.set_output(transform="pandas")
-    X_trans_pandas = transformer.fit_transform(df, y)
+
+    try:
+        X_trans_pandas = transformer.fit_transform(df, y)
+    except ValueError as e:
+        # transformer does not support sparse data
+        assert str(e) == "Pandas output does not support sparse data", e
+        return
 
     # Return is a pandas DataFrame
     assert hasattr(X_trans_pandas, "iloc")
