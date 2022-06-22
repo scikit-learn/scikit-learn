@@ -145,7 +145,7 @@ def spectral_embedding(
     n_components=8,
     eigen_solver=None,
     random_state=None,
-    eigen_tol=0.0,
+    eigen_tol="auto",
     norm_laplacian=True,
     drop_first=True,
 ):
@@ -197,9 +197,22 @@ def spectral_embedding(
             https://github.com/pyamg/pyamg/issues/139 for further
             information.
 
-    eigen_tol : float, default=0.0
-        Stopping criterion for eigendecomposition of the Laplacian matrix
-        when using arpack eigen_solver.
+    eigen_tol : float, default="auto"
+        Stopping criterion for eigendecomposition of the Laplacian matrix.
+        If `eigen_tol="auto"` then the passed tolerance will depend on the
+        `eigen_solver`:
+
+        - If `eigen_solver="arpack"`, then `eigen_tol=0.0`;
+        - If `eigen_solver="lobpcg"` or `eigen_solver="amg"`, then
+          `eigen_tol=None` which configures the underlying `lobpcg` solver to
+          automatically resolve the value according to their heuristics. See,
+          :func:`scipy.sparse.linalg.lobpcg` for details.
+
+        Note that when using `eigen_solver="amg"` values of `tol<1e-5` may lead
+        to convergence issues and should be avoided.
+
+        .. versionadded:: 1.2
+           Added 'auto' option.
 
     norm_laplacian : bool, default=True
         If True, then compute symmetric normalized Laplacian.
@@ -293,10 +306,11 @@ def spectral_embedding(
         try:
             # We are computing the opposite of the laplacian inplace so as
             # to spare a memory allocation of a possibly very large array
+            tol = 0 if eigen_tol == "auto" else eigen_tol
             laplacian *= -1
             v0 = _init_arpack_v0(laplacian.shape[0], random_state)
             _, diffusion_map = eigsh(
-                laplacian, k=n_components, sigma=1.0, which="LM", tol=eigen_tol, v0=v0
+                laplacian, k=n_components, sigma=1.0, which="LM", tol=tol, v0=v0
             )
             embedding = diffusion_map.T[n_components::-1]
             if norm_laplacian:
@@ -338,7 +352,9 @@ def spectral_embedding(
         X = random_state.standard_normal(size=(laplacian.shape[0], n_components + 1))
         X[:, 0] = dd.ravel()
         X = X.astype(laplacian.dtype)
-        _, diffusion_map = lobpcg(laplacian, X, M=M, tol=1.0e-5, largest=False)
+
+        tol = None if eigen_tol == "auto" else eigen_tol
+        _, diffusion_map = lobpcg(laplacian, X, M=M, tol=tol, largest=False)
         embedding = diffusion_map.T
         if norm_laplacian:
             # recover u = D^-1/2 x from the eigenvector output x
@@ -371,8 +387,9 @@ def spectral_embedding(
             )
             X[:, 0] = dd.ravel()
             X = X.astype(laplacian.dtype)
+            tol = None if eigen_tol == "auto" else eigen_tol
             _, diffusion_map = lobpcg(
-                laplacian, X, tol=1e-5, largest=False, maxiter=2000
+                laplacian, X, tol=tol, largest=False, maxiter=2000
             )
             embedding = diffusion_map.T[:n_components]
             if norm_laplacian:
@@ -443,6 +460,23 @@ class SpectralEmbedding(BaseEstimator):
         The eigenvalue decomposition strategy to use. AMG requires pyamg
         to be installed. It can be faster on very large, sparse problems.
         If None, then ``'arpack'`` is used.
+
+    eigen_tol : float, default="auto"
+        Stopping criterion for eigendecomposition of the Laplacian matrix.
+        If `eigen_tol="auto"` then the passed tolerance will depend on the
+        `eigen_solver`:
+
+        - If `eigen_solver="arpack"`, then `eigen_tol=0.0`;
+        - If `eigen_solver="lobpcg"` or `eigen_solver="amg"`, then
+          `eigen_tol=None` which configures the underlying `lobpcg` solver to
+          automatically resolve the value according to their heuristics. See,
+          :func:`scipy.sparse.linalg.lobpcg` for details.
+
+        Note that when using `eigen_solver="lobpcg"` or `eigen_solver="amg"`
+        values of `tol<1e-5` may lead to convergence issues and should be
+        avoided.
+
+        .. versionadded:: 1.2
 
     n_neighbors : int, default=None
         Number of nearest neighbors for nearest_neighbors graph building.
@@ -516,6 +550,7 @@ class SpectralEmbedding(BaseEstimator):
         gamma=None,
         random_state=None,
         eigen_solver=None,
+        eigen_tol="auto",
         n_neighbors=None,
         n_jobs=None,
     ):
@@ -524,6 +559,7 @@ class SpectralEmbedding(BaseEstimator):
         self.gamma = gamma
         self.random_state = random_state
         self.eigen_solver = eigen_solver
+        self.eigen_tol = eigen_tol
         self.n_neighbors = n_neighbors
         self.n_jobs = n_jobs
 
@@ -641,6 +677,7 @@ class SpectralEmbedding(BaseEstimator):
             affinity_matrix,
             n_components=self.n_components,
             eigen_solver=self.eigen_solver,
+            eigen_tol=self.eigen_tol,
             random_state=random_state,
         )
         return self

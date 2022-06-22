@@ -372,7 +372,7 @@ def roc_auc_score(
     multi_class="raise",
     labels=None,
 ):
-    """Compute Area Under the Receiver Operating Characteristic Curve (ROC AUC)
+    """Compute Area Under the Receiver Operating Characteristic Curve (ROC AUC) \
     from prediction scores.
 
     Note: this implementation can be used with binary, multiclass and
@@ -471,6 +471,16 @@ def roc_auc_score(
     Returns
     -------
     auc : float
+        Area Under the Curve score.
+
+    See Also
+    --------
+    average_precision_score : Area under the precision-recall curve.
+    roc_curve : Compute Receiver operating characteristic (ROC) curve.
+    RocCurveDisplay.from_estimator : Plot Receiver Operating Characteristic
+        (ROC) curve given an estimator and some data.
+    RocCurveDisplay.from_predictions : Plot Receiver Operating Characteristic
+        (ROC) curve given the true and predicted values.
 
     References
     ----------
@@ -492,15 +502,6 @@ def roc_auc_score(
             Under the ROC Curve for Multiple Class Classification Problems.
             Machine Learning, 45(2), 171-186.
             <http://link.springer.com/article/10.1023/A:1010920819831>`_
-
-    See Also
-    --------
-    average_precision_score : Area under the precision-recall curve.
-    roc_curve : Compute Receiver operating characteristic (ROC) curve.
-    RocCurveDisplay.from_estimator : Plot Receiver Operating Characteristic
-        (ROC) curve given an estimator and some data.
-    RocCurveDisplay.from_predictions : Plot Receiver Operating Characteristic
-        (ROC) curve given the true and predicted values.
 
     Examples
     --------
@@ -1058,6 +1059,7 @@ def label_ranking_average_precision_score(y_true, y_score, *, sample_weight=None
     Returns
     -------
     score : float
+        Ranking-based average precision score.
 
     Examples
     --------
@@ -1067,7 +1069,6 @@ def label_ranking_average_precision_score(y_true, y_score, *, sample_weight=None
     >>> y_score = np.array([[0.75, 0.5, 1], [1, 0.2, 0.1]])
     >>> label_ranking_average_precision_score(y_true, y_score)
     0.416...
-
     """
     check_consistent_length(y_true, y_score, sample_weight)
     y_true = check_array(y_true, ensure_2d=False)
@@ -1154,8 +1155,8 @@ def coverage_error(y_true, y_score, *, sample_weight=None):
            handbook (pp. 667-685). Springer US.
 
     """
-    y_true = check_array(y_true, ensure_2d=False)
-    y_score = check_array(y_score, ensure_2d=False)
+    y_true = check_array(y_true, ensure_2d=True)
+    y_score = check_array(y_score, ensure_2d=True)
     check_consistent_length(y_true, y_score, sample_weight)
 
     y_type = type_of_target(y_true, input_name="y_true")
@@ -1554,7 +1555,11 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
     ----------
     y_true : ndarray of shape (n_samples, n_labels)
         True targets of multilabel classification, or true scores of entities
-        to be ranked.
+        to be ranked. Negative values in `y_true` may result in an output
+        that is not between 0 and 1.
+
+        .. versionchanged:: 1.2
+            These negative values are deprecated, and will raise an error in v1.4.
 
     y_score : ndarray of shape (n_samples, n_labels)
         Target scores, can either be probability estimates, confidence values,
@@ -1635,6 +1640,14 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
     y_true = check_array(y_true, ensure_2d=False)
     y_score = check_array(y_score, ensure_2d=False)
     check_consistent_length(y_true, y_score, sample_weight)
+
+    if y_true.min() < 0:
+        # TODO(1.4): Replace warning w/ ValueError
+        warnings.warn(
+            "ndcg_score should not be used on negative y_true values. ndcg_score will"
+            " raise a ValueError on negative y_true values starting from version 1.4.",
+            FutureWarning,
+        )
     _check_dcg_target_type(y_true)
     gain = _ndcg_sample_scores(y_true, y_score, k=k, ignore_ties=ignore_ties)
     return np.average(gain, weights=sample_weight)

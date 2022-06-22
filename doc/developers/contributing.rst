@@ -443,7 +443,7 @@ complies with the following rules before marking a PR as ``[MRG]``. The
 
         git diff upstream/main -u -- "*.py" | flake8 --diff
 
-   or `make flake8-diff` which should work on unix-like system.
+   or `make flake8-diff` which should work on Unix-like systems.
 
 7. Follow the :ref:`coding-guidelines`.
 
@@ -528,7 +528,7 @@ profiling and Cython optimizations.
 
    For two very well documented and more detailed guides on development
    workflow, please pay a visit to the `Scipy Development Workflow
-   <https://docs.scipy.org/doc/scipy/reference/dev/contributor/development_workflow.html>`_ -
+   <http://scipy.github.io/devdocs/dev/dev_quickstart.html>`_ -
    and the `Astropy Workflow for Developers
    <https://astropy.readthedocs.io/en/latest/development/workflow/development_workflow.html>`_
    sections.
@@ -924,7 +924,7 @@ Monitoring performance
 ======================
 
 *This section is heavily inspired from the* `pandas documentation
-<https://pandas.pydata.org/docs/development/contributing.html#running-the-performance-test-suite>`_.
+<https://pandas.pydata.org/docs/development/contributing_codebase.html#running-the-performance-test-suite>`_.
 
 When proposing changes to the existing code base, it's important to make sure
 that they don't introduce performance regressions. Scikit-learn uses
