@@ -409,7 +409,7 @@ cdef class DistanceMetric{{name_suffix}}:
         """Compute the distance between vectors x1 and x2 represented
         under the CSR format.
 
-        This must be overridden in a base class.
+        This must be overridden in a subclass.
 
         Notes
         -----
