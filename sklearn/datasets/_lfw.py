@@ -491,7 +491,6 @@ def fetch_lfw_pairs(
             The two label values being different persons or the same person.
         DESCR : str
             Description of the Labeled Faces in the Wild (LFW) dataset.
-            
     """
     lfw_home, data_folder_path = _check_fetch_lfw(
         data_home=data_home, funneled=funneled, download_if_missing=download_if_missing
