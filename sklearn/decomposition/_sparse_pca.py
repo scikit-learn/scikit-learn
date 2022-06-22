@@ -378,7 +378,7 @@ class MiniBatchSparsePCA(SparsePCA):
     >>> from sklearn.decomposition import MiniBatchSparsePCA
     >>> X, _ = make_friedman1(n_samples=200, n_features=30, random_state=0)
     >>> transformer = MiniBatchSparsePCA(n_components=5, batch_size=50,
-    ...                                  random_state=0)
+    ...                                  max_iter=10, random_state=0)
     >>> transformer.fit(X)
     MiniBatchSparsePCA(...)
     >>> X_transformed = transformer.transform(X)
@@ -386,7 +386,7 @@ class MiniBatchSparsePCA(SparsePCA):
     (200, 5)
     >>> # most values in the components_ are zero (sparsity)
     >>> np.mean(transformer.components_ == 0)
-    0.94
+    0.9...
     """
 
     def __init__(
