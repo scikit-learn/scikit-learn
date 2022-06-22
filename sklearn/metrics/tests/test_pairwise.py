@@ -1116,7 +1116,7 @@ def test_nan_manhattan_distances_equal_to_manhattan_distances():
     Y = rng.randn(4, 4)
     normal_distance = manhattan_distances(X, Y=Y)
     nan_distance = nan_manhattan_distances(X, Y=Y)
-    assert_allclose(normal_distance, nan_distance)
+    assert_array_equal(normal_distance, nan_distance)
 
 
 @pytest.mark.parametrize("missing_value", [np.nan, -1])
