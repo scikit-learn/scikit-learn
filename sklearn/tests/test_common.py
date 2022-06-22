@@ -27,6 +27,7 @@ from sklearn.utils.estimator_checks import check_estimator
 import sklearn
 
 from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.linear_model._base import LinearClassifierMixin
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import Ridge
@@ -54,6 +55,8 @@ from sklearn.utils.estimator_checks import (
     check_param_validation,
     check_transformer_get_feature_names_out,
     check_transformer_get_feature_names_out_pandas,
+    check_set_output,
+    check_set_output_pandas,
 )
 
 
@@ -652,3 +655,71 @@ def test_check_param_validation(estimator):
         )
     _set_checking_parameters(estimator)
     check_param_validation(name, estimator)
+
+
+SET_OUTPUT_MODULES_TO_SKIP = {
+    "cluster",
+    "compose",
+    "cross_decomposition",
+    "decomposition",
+    "discriminant_analysis",
+    "ensemble",
+    "feature_extraction",
+    "feature_selection",
+    "impute",
+    "isotonic",
+    "kernel_approximation",
+    "manifold",
+    "neighbors",
+    "neural_network",
+    "preprocessing",
+    "random_projection",
+}
+
+SET_OUTPUT_ESTIMATORS = list(
+    chain(
+        _tested_estimators("transformer"),
+        [
+            make_pipeline(StandardScaler(), MinMaxScaler()),
+        ],
+    )
+)
+
+
+@pytest.mark.parametrize(
+    "estimator", SET_OUTPUT_ESTIMATORS, ids=_get_check_estimator_ids
+)
+def test_set_output(estimator):
+    name = estimator.__class__.__name__
+    if (
+        not hasattr(estimator, "set_output")
+        and estimator.__module__.split(".")[1] in SET_OUTPUT_MODULES_TO_SKIP
+    ):
+        pytest.skip(
+            f"Skipping check_set_output for {name}: Does not support set_output API yet"
+        )
+    _set_checking_parameters(estimator)
+    # set_output does not support sparse
+    if name == "KBinsDiscretizer":
+        estimator.set_params(encode="onehot-dense")
+    check_set_output(estimator.__class__.__name__, estimator)
+
+
+@pytest.mark.parametrize(
+    "estimator", SET_OUTPUT_ESTIMATORS, ids=_get_check_estimator_ids
+)
+def test_set_output_pandas(estimator):
+    name = estimator.__class__.__name__
+    if (
+        not hasattr(estimator, "set_output")
+        and estimator.__module__.split(".")[1] in SET_OUTPUT_MODULES_TO_SKIP
+    ):
+        pytest.skip(
+            f"Skipping check_set_output_pandas for {name}: Does not support set_output"
+            " API yet"
+        )
+    _set_checking_parameters(estimator)
+    # set_output does not support sparse
+    if name == "KBinsDiscretizer":
+        estimator.set_params(encode="onehot-dense")
+    check_set_output_pandas(estimator.__class__.__name__, estimator)

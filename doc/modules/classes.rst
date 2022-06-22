@@ -1636,6 +1636,11 @@ Plotting
    utils.safe_mask
    utils.safe_sqr
    utils.shuffle
+   utils.set_output.get_output_config
+   utils.set_output.make_named_container
+   utils.set_output.OutputTypeMixin
+   utils.set_output.safe_set_output
+   utils.set_output.set_output_helper
    utils.sparsefuncs.incr_mean_variance_axis
    utils.sparsefuncs.inplace_column_scale
    utils.sparsefuncs.inplace_row_scale

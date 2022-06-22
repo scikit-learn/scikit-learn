@@ -11,6 +11,7 @@ import warnings
 from . import OneHotEncoder
 
 from ..base import BaseEstimator, TransformerMixin
+from ..utils.set_output import OutputTypeMixin
 from ..utils.validation import check_array
 from ..utils.validation import check_is_fitted
 from ..utils.validation import check_random_state
@@ -19,7 +20,7 @@ from ..utils.validation import check_scalar
 from ..utils import _safe_indexing
 
 
-class KBinsDiscretizer(TransformerMixin, BaseEstimator):
+class KBinsDiscretizer(OutputTypeMixin, TransformerMixin, BaseEstimator):
     """
     Bin continuous data into intervals.
 

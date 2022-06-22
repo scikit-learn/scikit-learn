@@ -98,6 +98,9 @@ def clone(estimator, *, safe=True):
                 "Cannot clone object %s, as the constructor "
                 "either does not set or modifies parameter %s" % (estimator, name)
             )
+
+    if hasattr(estimator, "_set_output_config"):
+        new_object._set_output_config = copy.deepcopy(estimator._set_output_config)
     return new_object
 
 

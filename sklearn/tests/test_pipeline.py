@@ -1560,3 +1560,19 @@ def test_pipeline_get_feature_names_out_passes_names_through():
     feature_names_out = pipe.get_feature_names_out(input_names)
 
     assert_array_equal(feature_names_out, [f"my_prefix_{name}" for name in input_names])
+
+
+def test_pipeline_set_output_integration():
+    """Test pipeline's set_output with feature names."""
+    pytest.importorskip("pandas")
+
+    X, y = load_iris(as_frame=True, return_X_y=True)
+
+    pipe = make_pipeline(StandardScaler(), LogisticRegression())
+    pipe.set_output(transform="pandas")
+    pipe.fit(X, y)
+
+    feature_names_in_ = pipe[:-1].get_feature_names_out()
+    log_reg_feature_names = pipe[-1].feature_names_in_
+
+    assert_array_equal(feature_names_in_, log_reg_feature_names)

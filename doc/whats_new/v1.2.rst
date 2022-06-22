@@ -38,6 +38,9 @@ Changes impacting all modules
   NumPy's SIMD optimized primitives.
   :pr:`23446` by :user:`Meekail Zain <micky774>`
 
+- |MajorFeature| The `set_output` API has been adopted by some transformers
+  in :mod:`sklearn.preprocessing`. :pr:`xxxxx` by `Thomas Fan`_.
+
 Changelog
 ---------
 
@@ -153,7 +156,7 @@ Changelog
   negative likelihood ratios derived from the confusion matrix
   of a binary classification problem. :pr:`22518` by
   :user:`Arturo Amor <ArturoAmorQ>`.
-  
+
 - |Fix| :func:`metrics.ndcg_score` will now trigger a warning when the `y_true`
   value contains a negative value. Users may still use negative values, but the
   result may not be between 0 and 1. Starting in v1.4, passing in negative

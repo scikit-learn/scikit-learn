@@ -4101,3 +4101,63 @@ def check_param_validation(name, estimator_orig):
             for method in methods:
                 with raises(ValueError, match=match, err_msg=err_msg):
                     getattr(estimator, method)(X, y)
+
+
+def check_set_output(name, transformer_orig):
+    # Check transformer.set_output configures the output of `transform`
+    tags = transformer_orig._get_tags()
+    if "2darray" not in tags["X_types"] or tags["no_validation"]:
+        return
+
+    rng = np.random.RandomState(0)
+    transformer = clone(transformer_orig)
+
+    X = rng.uniform(size=(20, 5))
+    X = _pairwise_estimator_convert_X(X, transformer_orig)
+    y = rng.randint(0, 2, size=20)
+    y = _enforce_estimator_tags_y(transformer_orig, y)
+    set_random_state(transformer)
+
+    X_trans_no_setting = transformer.fit_transform(X, y)
+    transformer.set_output(transform="default")
+    X_trans_default = transformer.fit_transform(X, y)
+
+    # Default and no setting returne the same transform
+    assert_allclose(X_trans_no_setting, X_trans_default)
+
+
+def check_set_output_pandas(name, transformer_orig):
+    # Check transformer.set_output configures the output of transform="pandas"
+    try:
+        import pandas as pd
+    except ImportError:
+        raise SkipTest(
+            "pandas is not installed: not checking column name consistency for pandas"
+        )
+
+    tags = transformer_orig._get_tags()
+    if "2darray" not in tags["X_types"] or tags["no_validation"]:
+        return
+
+    rng = np.random.RandomState(0)
+    transformer = clone(transformer_orig)
+
+    X = rng.uniform(size=(20, 5))
+    X = _pairwise_estimator_convert_X(X, transformer_orig)
+    y = rng.randint(0, 2, size=20)
+    y = _enforce_estimator_tags_y(transformer_orig, y)
+    set_random_state(transformer)
+
+    feature_names_in = [f"col{i}" for i in range(X.shape[1])]
+    df = pd.DataFrame(X, columns=feature_names_in)
+
+    X_trans_no_setting = transformer.fit_transform(df, y)
+    transformer.set_output(transform="pandas")
+    X_trans_pandas = transformer.fit_transform(df, y)
+
+    # Return is a pandas DataFrame
+    assert hasattr(X_trans_pandas, "iloc")
+    assert_array_equal(transformer.get_feature_names_out(), X_trans_pandas.columns)
+    assert_allclose(X_trans_pandas.to_numpy(), X_trans_no_setting)
+
+    assert_array_equal(X_trans_pandas.index, df.index)
