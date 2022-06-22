@@ -30,7 +30,7 @@ from ..utils._mask import _get_mask
 from ..utils.fixes import delayed
 from ..utils.fixes import sp_version, parse_version
 
-from ._pairwise_distances_reduction import PairwiseDistancesArgKmin
+from ._pairwise_distances_reduction import PairwiseDistancesArgKmin, PairwiseDistances
 from ._pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
 from ..exceptions import DataConversionWarning
 
@@ -1944,6 +1944,9 @@ def pairwise_distances(
             "Unknown metric %s. Valid metrics are %s, or 'precomputed', or a callable"
             % (metric, _VALID_METRICS)
         )
+
+    if PairwiseDistances.is_usable_for(X, Y, metric=metric):
+        return PairwiseDistances.compute(X, Y, metric=metric, metric_kwargs=kwds)
 
     if metric == "precomputed":
         X, _ = check_pairwise_arrays(
