@@ -198,10 +198,15 @@ def test_pdist(metric_param_grid, X):
 @pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
 @pytest.mark.parametrize("metric_param_grid", METRICS_DEFAULT_PARAMS)
 def test_distance_metrics_dtype_consistency(metric_param_grid):
-    # DistanceMetric must return similar distances for
-    # both 64bit and 32bit data.
+    # DistanceMetric must return similar distances for both float32 and float64
+    # input data.
     metric, param_grid = metric_param_grid
     keys = param_grid.keys()
+
+    # Chose rtol to make sure that this test is robust to changes in the random
+    # seed in the module-level test data generation code.
+    rtol = 1e-5
+
     for vals in itertools.product(*param_grid.values()):
         kwargs = dict(zip(keys, vals))
         dm64 = DistanceMetric.get_metric(metric, **kwargs)
@@ -209,11 +214,21 @@ def test_distance_metrics_dtype_consistency(metric_param_grid):
 
         D64 = dm64.pairwise(X64)
         D32 = dm32.pairwise(X32)
-        assert_allclose(D64, D32)
+
+        # Both results are np.float64 dtype because the accumulation accross
+        # features is done in float64. However the input data and the element
+        # wise arithmetic operations are done in float32 so we can expect a
+        # small discrepancy.
+        assert D64.dtype == D32.dtype == np.float64
+
+        # assert_allclose introspects the dtype of the input arrays to decide
+        # which rtol value to use by default but in this case we know that D32
+        # is not computed with the same precision so we set rtol manually.
+        assert_allclose(D64, D32, rtol=rtol)
 
         D64 = dm64.pairwise(X64, Y64)
         D32 = dm32.pairwise(X32, Y32)
-        assert_allclose(D64, D32)
+        assert_allclose(D64, D32, rtol=rtol)
 
 
 @pytest.mark.parametrize("metric", BOOL_METRICS)
