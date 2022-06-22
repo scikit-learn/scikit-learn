@@ -21,6 +21,7 @@ from sklearn.utils._testing import (
     assert_array_equal,
     assert_allclose,
     assert_radius_neighborhood_results_equality,
+    create_memmap_backed_data,
 )
 
 # Common supported metric between scipy.spatial.distance.cdist
@@ -648,7 +649,7 @@ def test_chunk_size_agnosticism(
     n_features=100,
     dtype=np.float64,
 ):
-    # Results should not depend on the chunk size
+    # Results must not depend on the chunk size
     rng = np.random.RandomState(global_random_seed)
     spread = 100
     X = rng.rand(n_samples, n_features).astype(dtype) * spread
@@ -699,7 +700,7 @@ def test_n_threads_agnosticism(
     n_features=100,
     dtype=np.float64,
 ):
-    # Results should not depend on the number of threads
+    # Results must not depend on the number of threads
     rng = np.random.RandomState(global_random_seed)
     spread = 100
     X = rng.rand(n_samples, n_features).astype(dtype) * spread
@@ -931,6 +932,58 @@ def test_pairwise_distances_radius_neighbors(
 
     ASSERT_RESULT[(PairwiseDistancesRadiusNeighborhood, dtype)](
         neigh_distances, neigh_distances_ref, neigh_indices, neigh_indices_ref, radius
+    )
+
+
+@pytest.mark.parametrize(
+    "PairwiseDistancesReduction",
+    [PairwiseDistancesArgKmin, PairwiseDistancesRadiusNeighborhood],
+)
+@pytest.mark.parametrize("metric", ["manhattan", "euclidean"])
+def test_memmap_backed_data(
+    global_random_seed,
+    metric,
+    PairwiseDistancesReduction,
+    n_samples=512,
+    n_features=100,
+    dtype=np.float64,
+):
+    # Results must not depend on the datasets writability
+    rng = np.random.RandomState(global_random_seed)
+    spread = 100
+    X = rng.rand(n_samples, n_features).astype(dtype) * spread
+    Y = rng.rand(n_samples, n_features).astype(dtype) * spread
+
+    # Create read only datasets
+    X_mm, Y_mm = create_memmap_backed_data([X, Y])
+
+    if PairwiseDistancesReduction is PairwiseDistancesArgKmin:
+        parameter = 10
+        check_parameters = {}
+    else:
+        # Scaling the radius slightly with the numbers of dimensions
+        radius = 10 ** np.log(n_features)
+        parameter = radius
+        check_parameters = {"radius": radius}
+
+    ref_dist, ref_indices = PairwiseDistancesReduction.compute(
+        X,
+        Y,
+        parameter,
+        metric=metric,
+        return_distance=True,
+    )
+
+    dist_mm, indices_mm = PairwiseDistancesReduction.compute(
+        X_mm,
+        Y_mm,
+        parameter,
+        metric=metric,
+        return_distance=True,
+    )
+
+    ASSERT_RESULT[(PairwiseDistancesReduction, dtype)](
+        ref_dist, dist_mm, ref_indices, indices_mm, **check_parameters
     )
 
 

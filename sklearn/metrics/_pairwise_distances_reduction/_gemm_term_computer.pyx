@@ -28,8 +28,8 @@ cdef class GEMMTermComputer64:
     """
 
     def __init__(self,
-        DTYPE_t[:, ::1] X,
-        DTYPE_t[:, ::1] Y,
+        const DTYPE_t[:, ::1] X,
+        const DTYPE_t[:, ::1] Y,
         ITYPE_t effective_n_threads,
         ITYPE_t chunks_n_threads,
         ITYPE_t dist_middle_terms_chunks_size,
