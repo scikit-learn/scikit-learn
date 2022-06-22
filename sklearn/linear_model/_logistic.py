@@ -539,7 +539,7 @@ def _log_reg_scoring_path(
     train,
     test,
     pos_class=None,
-    Cs=10,
+    Cs=9,
     scoring=None,
     fit_intercept=False,
     max_iter=100,
@@ -576,11 +576,12 @@ def _log_reg_scoring_path(
         The class with respect to which we perform a one-vs-all fit.
         If None, then it is assumed that the given problem is binary.
 
-    Cs : int or list of floats, default=10
+    Cs : int or list of floats, default=9
         Each of the values in Cs describes the inverse of
         regularization strength. If Cs is as an int, then a grid of Cs
         values are chosen in a logarithmic scale between 1e-4 and 1e4.
-        If not provided, then a fixed set of values for Cs are used.
+        If not provided, then Cs=9 is used, which is equivalent to
+        Cs=[.0001, .001, .01, .1, 1, 10, 100, 1000, 10000]
 
     scoring : callable, default=None
         A string (see model evaluation documentation) or
