@@ -1236,14 +1236,14 @@ def test_quantile_transform_check_error():
     X_neg = sparse.csc_matrix(X_neg)
 
     err_msg = (
-        "The 'n_quantiles' parameter of QuantileTransformer must "
-        "be an int in the range \[1, inf\). Got 0 instead."
+        r"The 'n_quantiles' parameter of QuantileTransformer must "
+        r"be an int in the range \[1, inf\). Got 0 instead."
     )
     with pytest.raises(ValueError, match=err_msg):
         QuantileTransformer(n_quantiles=0).fit(X)
     err_msg = (
-        "The 'subsample' parameter of QuantileTransformer must "
-        "be an int in the range \[1, inf\). Got 0 instead."
+        r"The 'subsample' parameter of QuantileTransformer must "
+        r"be an int in the range \[1, inf\). Got 0 instead."
     )
     with pytest.raises(ValueError, match=err_msg):
         QuantileTransformer(subsample=0).fit(X)
