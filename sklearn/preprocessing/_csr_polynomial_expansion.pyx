@@ -6,13 +6,17 @@ cimport numpy as cnp
 cnp.import_array()
 
 ctypedef cnp.int8_t FLAG_T
+
+# INDEX_A/B are defined to generate a proper
+# cartesian product of typings through Cython
+# fused-type expansion.
 ctypedef fused INDEX_A:
     cnp.int32_t
     cnp.int64_t
-
 ctypedef fused INDEX_B:
     cnp.int32_t
     cnp.int64_t
+
 ctypedef fused DATA_T:
     cnp.float32_t
     cnp.float64_t
