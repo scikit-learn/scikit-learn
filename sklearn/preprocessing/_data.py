@@ -23,7 +23,7 @@ from ..base import (
     _ClassNamePrefixFeaturesOutMixin,
 )
 from ..utils import check_array
-from ..utils.set_output import OutputTypeMixin
+from ..utils.set_output import SetOutputMixin
 from ..utils.extmath import _incremental_mean_and_var, row_norms
 from ..utils.sparsefuncs_fast import (
     inplace_csr_row_normalize_l1,
@@ -268,7 +268,7 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
 
 
 class MinMaxScaler(
-    _OneToOneFeatureMixin, OutputTypeMixin, TransformerMixin, BaseEstimator
+    _OneToOneFeatureMixin, SetOutputMixin, TransformerMixin, BaseEstimator
 ):
     """Transform features by scaling each feature to a given range.
 
@@ -636,7 +636,7 @@ def minmax_scale(X, feature_range=(0, 1), *, axis=0, copy=True):
 
 
 class StandardScaler(
-    _OneToOneFeatureMixin, OutputTypeMixin, TransformerMixin, BaseEstimator
+    _OneToOneFeatureMixin, SetOutputMixin, TransformerMixin, BaseEstimator
 ):
     """Standardize features by removing the mean and scaling to unit variance.
 
@@ -1047,7 +1047,7 @@ class StandardScaler(
 
 
 class MaxAbsScaler(
-    _OneToOneFeatureMixin, OutputTypeMixin, TransformerMixin, BaseEstimator
+    _OneToOneFeatureMixin, SetOutputMixin, TransformerMixin, BaseEstimator
 ):
     """Scale each feature by its maximum absolute value.
 
@@ -1346,7 +1346,7 @@ def maxabs_scale(X, *, axis=0, copy=True):
 
 
 class RobustScaler(
-    _OneToOneFeatureMixin, OutputTypeMixin, TransformerMixin, BaseEstimator
+    _OneToOneFeatureMixin, SetOutputMixin, TransformerMixin, BaseEstimator
 ):
     """Scale features using statistics that are robust to outliers.
 
@@ -1839,7 +1839,7 @@ def normalize(X, norm="l2", *, axis=1, copy=True, return_norm=False):
 
 
 class Normalizer(
-    _OneToOneFeatureMixin, OutputTypeMixin, TransformerMixin, BaseEstimator
+    _OneToOneFeatureMixin, SetOutputMixin, TransformerMixin, BaseEstimator
 ):
     """Normalize samples individually to unit norm.
 
@@ -2011,9 +2011,7 @@ def binarize(X, *, threshold=0.0, copy=True):
     return X
 
 
-class Binarizer(
-    _OneToOneFeatureMixin, OutputTypeMixin, TransformerMixin, BaseEstimator
-):
+class Binarizer(_OneToOneFeatureMixin, SetOutputMixin, TransformerMixin, BaseEstimator):
     """Binarize data (set feature values to 0 or 1) according to a threshold.
 
     Values greater than the threshold map to 1, while values less than
@@ -2137,7 +2135,7 @@ class Binarizer(
 
 
 class KernelCenterer(
-    _ClassNamePrefixFeaturesOutMixin, OutputTypeMixin, TransformerMixin, BaseEstimator
+    _ClassNamePrefixFeaturesOutMixin, SetOutputMixin, TransformerMixin, BaseEstimator
 ):
     r"""Center an arbitrary kernel matrix :math:`K`.
 
@@ -2348,7 +2346,7 @@ def add_dummy_feature(X, value=1.0):
 
 
 class QuantileTransformer(
-    _OneToOneFeatureMixin, OutputTypeMixin, TransformerMixin, BaseEstimator
+    _OneToOneFeatureMixin, SetOutputMixin, TransformerMixin, BaseEstimator
 ):
     """Transform features using quantiles information.
 
@@ -2934,7 +2932,7 @@ def quantile_transform(
 
 
 class PowerTransformer(
-    _OneToOneFeatureMixin, OutputTypeMixin, TransformerMixin, BaseEstimator
+    _OneToOneFeatureMixin, SetOutputMixin, TransformerMixin, BaseEstimator
 ):
     """Apply a power transform featurewise to make data more Gaussian-like.
 

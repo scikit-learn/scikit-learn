@@ -7,7 +7,7 @@ from numpy.testing import assert_array_equal
 from sklearn._config import config_context
 from sklearn.utils.set_output import make_named_container
 from sklearn.utils.set_output import safe_set_output
-from sklearn.utils.set_output import OutputTypeMixin
+from sklearn.utils.set_output import SetOutputMixin
 from sklearn.utils.set_output import get_output_config
 
 
@@ -60,7 +60,7 @@ class EstimatorNoSetOutputWithTransform:
         return X
 
 
-class EstimatorWithSetOutput(OutputTypeMixin):
+class EstimatorWithSetOutput(SetOutputMixin):
     def transform(self, X, y=None):
         return X
 

@@ -9,7 +9,7 @@ from sklearn.utils import Bunch
 __all__ = [
     "get_output_config",
     "make_named_container",
-    "OutputTypeMixin",
+    "SetOutputMixin",
     "safe_set_output",
 ]
 
@@ -140,7 +140,7 @@ def _wrap_output_with_container(
 
 
 def _wrap_method_output(f, method):
-    """Wrapper used by OutputTypeMixin to automatically wrap methods."""
+    """Wrapper used by SetOutputMixin to automatically wrap methods."""
 
     @wraps(f)
     def wrapped(self, X, *args, **kwargs):
@@ -152,10 +152,10 @@ def _wrap_method_output(f, method):
     return wrapped
 
 
-class OutputTypeMixin:
+class SetOutputMixin:
     """Mixin that dynamically wraps methods to return container based on config.
 
-    Currently `OutputTypeMixin` wraps `transform` and `fit_transform` and configures
+    Currently `SetOutputMixin` wraps `transform` and `fit_transform` and configures
     it based on `set_output` of the global configuration.
     """
 
