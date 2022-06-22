@@ -2361,13 +2361,6 @@ def check_outliers_train(name, estimator_orig, readonly_memmap=True):
             decision = estimator.decision_function(X)
             check_outlier_corruption(num_outliers, expected_outliers, decision)
 
-        # raises error when contamination is a scalar and not in [0,1]
-        msg = r"contamination must be in \(0, 0.5]"
-        for contamination in [-0.5, 2.3]:
-            estimator.set_params(contamination=contamination)
-            with raises(ValueError, match=msg):
-                estimator.fit(X)
-
 
 @ignore_warnings(category=FutureWarning)
 def check_classifiers_multilabel_representation_invariance(name, classifier_orig):
@@ -3523,13 +3516,6 @@ def check_outliers_fit_predict(name, estimator_orig):
         ):
             decision = estimator.decision_function(X)
             check_outlier_corruption(num_outliers, expected_outliers, decision)
-
-        # raises error when contamination is a scalar and not in [0,1]
-        msg = r"contamination must be in \(0, 0.5]"
-        for contamination in [-0.5, -0.001, 0.5001, 2.3]:
-            estimator.set_params(contamination=contamination)
-            with raises(ValueError, match=msg):
-                estimator.fit_predict(X)
 
 
 def check_fit_non_negative(name, estimator_orig):
