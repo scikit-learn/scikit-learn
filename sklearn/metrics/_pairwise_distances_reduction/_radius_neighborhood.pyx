@@ -92,7 +92,7 @@ cdef class PairwiseDistancesRadiusNeighborhood64(PairwiseDistancesReduction64):
             # Specialized implementation with improved arithmetic intensity
             # and vector instructions (SIMD) by processing several vectors
             # at time to leverage a call to the BLAS GEMM routine as explained
-            # in more details in the docstring.
+            # in more details in GEMMTermComputer docstring.
             use_squared_distances = metric == "sqeuclidean"
             pda = FastEuclideanPairwiseDistancesRadiusNeighborhood64(
                 X=X, Y=Y, radius=radius,
@@ -281,9 +281,7 @@ cdef class PairwiseDistancesRadiusNeighborhood64(PairwiseDistancesReduction64):
 
         with nogil, parallel(num_threads=self.effective_n_threads):
             # Merge vectors used in threads into the main ones.
-            # This is done in parallel sample-wise (no need for locks)
-            # using dynamic scheduling because we might not have
-            # the same number of neighbors for each query vector.
+            # This is done in parallel sample-wise (no need for locks).
             for idx in prange(self.n_samples_X, schedule='static'):
                 self._merge_vectors(idx, self.chunks_n_threads)
 
