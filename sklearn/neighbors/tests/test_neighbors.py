@@ -28,6 +28,9 @@ from sklearn.exceptions import EfficiencyWarning
 from sklearn.exceptions import NotFittedError
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.metrics.tests.test_dist_metrics import BOOL_METRICS
+from sklearn.metrics.tests.test_pairwise_distances_reduction import (
+    assert_radius_neighborhood_results_equality,
+)
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import (
@@ -44,7 +47,6 @@ from sklearn.pipeline import make_pipeline
 from sklearn.utils._testing import (
     assert_allclose,
     assert_array_equal,
-    assert_radius_neighborhood_results_equality,
 )
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.validation import check_random_state

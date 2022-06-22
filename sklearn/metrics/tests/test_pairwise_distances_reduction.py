@@ -20,7 +20,6 @@ from sklearn.utils.fixes import sp_version, parse_version
 from sklearn.utils._testing import (
     assert_array_equal,
     assert_allclose,
-    assert_radius_neighborhood_results_equality,
     create_memmap_backed_data,
 )
 
@@ -177,6 +176,25 @@ def assert_argkmin_results_quasi_equality(
                 reference_neighbors_groups[rounded_distance]
                 == effective_neighbors_groups[rounded_distance]
             ), msg
+
+
+def assert_radius_neighborhood_results_equality(
+    ref_dist, dist, ref_indices, indices, radius
+):
+    # We get arrays of arrays and we need to check for individual pairs
+    for i in range(ref_dist.shape[0]):
+        assert (ref_dist[i] <= radius).all()
+        assert_array_equal(
+            ref_indices[i],
+            indices[i],
+            err_msg=f"Query vector #{i} has different neighbors' indices",
+        )
+        assert_allclose(
+            ref_dist[i],
+            dist[i],
+            err_msg=f"Query vector #{i} has different neighbors' distances",
+            rtol=1e-7,
+        )
 
 
 def assert_radius_neighborhood_results_quasi_equality(
