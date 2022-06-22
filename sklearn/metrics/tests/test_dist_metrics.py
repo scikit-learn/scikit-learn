@@ -209,11 +209,15 @@ def test_distance_metrics_dtype_consistency(metric_param_grid):
 
         D64 = dm64.pairwise(X64)
         D32 = dm32.pairwise(X32)
-        assert_allclose(D64, D32, rtol=1e-5)
+
+        # The original rtol is 1e-4 in of presence of float32.
+        # We increase the tolerance to 1e-6 to be stricter.
+        rtol = 1e-6
+        assert_allclose(D64, D32, rtol=rtol)
 
         D64 = dm64.pairwise(X64, Y64)
         D32 = dm32.pairwise(X32, Y32)
-        assert_allclose(D64, D32, rtol=1e-5)
+        assert_allclose(D64, D32, rtol=rtol)
 
 
 @pytest.mark.parametrize("metric", BOOL_METRICS)
