@@ -68,6 +68,13 @@ Changelog
   precision=class balance.
   :pr:`23214` by :user:`Stéphane Collot <stephanecollot>` and :user:`Max Baak <mbaak>`.
 
+:mod:`sklearn.neighbors`
+........................
+
+- |Fix| The tie break of :func:`neighbors.BallTree.query` has been reverted to have the
+  same behavior than the one used in previous version is preserved.
+  :pr:`23667` by :user:`Julien Jerphanion <jjerphan>`
+
 :mod:`sklearn.preprocessing`
 ............................
 

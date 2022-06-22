@@ -35,7 +35,7 @@ cdef extern from *:
         bool operator()(const I &a, const I &b) const {
             D a_value = data[a * n_features + split_dim];
             D b_value = data[b * n_features + split_dim];
-            return a_value == b_value ? a < b : a_value < b_value;
+            return a_value == b_value ? a <= b : a_value < b_value;
         }
     };
 
