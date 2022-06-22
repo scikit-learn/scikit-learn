@@ -99,8 +99,10 @@ def clone(estimator, *, safe=True):
                 "either does not set or modifies parameter %s" % (estimator, name)
             )
 
-    if hasattr(estimator, "_set_output_config"):
-        new_object._set_output_config = copy.deepcopy(estimator._set_output_config)
+    if hasattr(estimator, "_sklearn_output_config"):
+        new_object._sklearn_output_config = copy.deepcopy(
+            estimator._sklearn_output_config
+        )
     return new_object
 
 

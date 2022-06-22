@@ -11,7 +11,6 @@ __all__ = [
     "make_named_container",
     "OutputTypeMixin",
     "safe_set_output",
-    "set_output_helper",
 ]
 
 
@@ -30,7 +29,7 @@ def make_named_container(
     output : ndarray, sparse matrix or pandas DataFrame
         Container to name.
 
-    index: array-like, default=None
+    index : array-like, default=None
         Index for data.
 
     columns : callable or ndarray, default=None
@@ -93,9 +92,9 @@ def get_output_config(estimator, method):
         Dictionary with keys, "dense", that specifies the
         container for `method`.
     """
-    est_set_output_config = getattr(estimator, "_set_output_config", {})
-    if method in est_set_output_config:
-        container_str = est_set_output_config[method]
+    est_sklearn_output_config = getattr(estimator, "_sklearn_output_config", {})
+    if method in est_sklearn_output_config:
+        container_str = est_sklearn_output_config[method]
     else:
         container_str = get_config()[f"output_{method}"]
 
@@ -140,26 +139,6 @@ def _wrap_output_with_container(
     )
 
 
-def set_output_helper(estimator, transform=None):
-    """Set output for estimator.
-
-    Parameters
-    ----------
-    estimator : estimator instance
-        Estimator instance.
-
-    transform : {"default", "pandas"}, default=None
-        Configure output of `transform` and `fit_transform`.
-    """
-    if transform is None:
-        return
-
-    if not hasattr(estimator, "_set_output_config"):
-        estimator._set_output_config = {}
-
-    estimator._set_output_config["transform"] = transform
-
-
 def _wrap_method_output(f, method):
     """Wrapper used by OutputTypeMixin to automatically wrap methods."""
 
@@ -201,12 +180,20 @@ class OutputTypeMixin:
         self : estimator instance
             Estimator instance.
         """
-        set_output_helper(self, transform=transform)
+        if transform is None:
+            return
+
+        if not hasattr(self, "_sklearn_output_config"):
+            self._sklearn_output_config = {}
+
+        self._sklearn_output_config["transform"] = transform
         return self
 
 
 def safe_set_output(estimator, transform=None):
     """Safely call estimator.set_output and error if it not available.
+
+    This is used by meta-estimators to set the output for child estimators.
 
     Parameters
     ----------
