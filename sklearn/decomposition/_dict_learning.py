@@ -2255,7 +2255,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         if self.n_iter != "deprecated":
             warnings.warn(
                 "'n_iter' is deprecated in version 1.1 and will be removed"
-                " in version 1.3. Use 'max_iter' instead.",
+                " in version 1.3. Use 'max_iter' and let `n_iter` to its default value instead.",
                 FutureWarning,
             )
             n_iter = self.n_iter

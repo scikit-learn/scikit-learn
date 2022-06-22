@@ -1074,6 +1074,7 @@ def test_get_feature_names_out(estimator):
     )
 
 
+# TODO(1.3) remove
 def test_minibatch_dictionary_learning_warns_and_ignore_n_iter():
     """Check that we always raise a warning when `n_iter` is set even if it is
     ignored if `max_iter` is set.
