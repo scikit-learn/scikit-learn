@@ -1,11 +1,14 @@
 # Author: Andrew nystrom <awnystrom@gmail.com>
 
 from scipy.sparse import csr_matrix
+
 cimport numpy as cnp
 cnp.import_array()
 
 ctypedef cnp.int8_t FLAG_T
-ctypedef cnp.int32_t INDEX_A
+ctypedef fused INDEX_A:
+    cnp.int32_t
+    cnp.int64_t
 
 ctypedef fused INDEX_B:
     cnp.int32_t
