@@ -1143,14 +1143,14 @@ def test_nan_manhattan_distances_not_trival(missing_value):
     assert_almost_equal(D1, D2.T)
 
     # Check with explicit formula
-    assert_allclose(
+    assert_array_equal(
         nan_manhattan_distances(X[:1], Y[:1], missing_values=missing_value),
         [[5.0 / 2.0 * ((6 - 5) + (14 - 12))]],
     )
 
     # Check against hand-calculated result
     exp_res = [[7.5, 20.0, 27.5], [12.5, 15.0, 20.0], [20.0, 5.0, 10.0]]
-    assert_allclose(
+    assert_array_equal(
         nan_manhattan_distances(X, Y, missing_values=missing_value), exp_res
     )
 
@@ -1158,13 +1158,13 @@ def test_nan_manhattan_distances_not_trival(missing_value):
     D3 = nan_manhattan_distances(X, missing_values=missing_value)
     D4 = nan_manhattan_distances(X, X, missing_values=missing_value)
     D5 = nan_manhattan_distances(X, X.copy(), missing_values=missing_value)
-    assert_allclose(D3, D4)
-    assert_allclose(D4, D5)
+    assert_array_equal(D3, D4)
+    assert_array_equal(D4, D5)
 
     # Check copy = True against copy = False
     D6 = nan_manhattan_distances(X, Y, copy=True)
     D7 = nan_manhattan_distances(X, Y, copy=False)
-    assert_allclose(D6, D7)
+    assert_array_equal(D6, D7)
 
 
 # Paired distances
