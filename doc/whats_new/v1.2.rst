@@ -136,6 +136,9 @@ Changelog
 - |Fix| :class:`impute.SimpleImputer` uses the dtype seen in `fit` for
   `transform` when the dtype is object. :pr:`22063` by `Thomas Fan`_.
 
+- |Feature| :class:`impute.KNNImputer` now supports a new metric type `nan_manhattan`.
+  :pr:`23286` by `Zhehao Liu <MaxwellLZH>`
+
 :mod:`sklearn.linear_model`
 ...........................
 
