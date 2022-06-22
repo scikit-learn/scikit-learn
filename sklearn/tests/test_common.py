@@ -672,7 +672,6 @@ SET_OUTPUT_MODULES_TO_SKIP = {
     "manifold",
     "neighbors",
     "neural_network",
-    "preprocessing",
     "random_projection",
 }
 

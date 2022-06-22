@@ -4123,7 +4123,7 @@ def check_set_output(name, transformer_orig):
     X_trans_default = transformer.fit_transform(X, y)
 
     # Default and no setting returne the same transform
-    assert_allclose(X_trans_no_setting, X_trans_default)
+    assert_allclose_dense_sparse(X_trans_no_setting, X_trans_default)
 
 
 def check_set_output_pandas(name, transformer_orig):
