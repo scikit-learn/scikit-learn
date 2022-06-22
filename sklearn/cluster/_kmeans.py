@@ -1188,8 +1188,12 @@ class KMeans(_BaseKMeans):
             (n_clusters, n_features), default='k-means++'
         Method for initialization:
 
-        'k-means++' : selects initial cluster centers for k-mean clustering in a
-        smart way to speed up convergence. See notes in `n_init` for more details.
+        'k-means++' : selects initial cluster centroids using sampling 
+        based on a empirical probably distribution of the points
+        contribution to the overall inertia.
+        This technique speeds up convergence, and is theoretically
+        proven to be :math:`\mathcal{O}(\log k)`-optimal.
+        See the description of `n_init` for more details.
 
         'random': choose `n_clusters` observations (rows) at random from data
         for the initial centroids.
@@ -1663,8 +1667,12 @@ class MiniBatchKMeans(_BaseKMeans):
             (n_clusters, n_features), default='k-means++'
         Method for initialization:
 
-        'k-means++' : selects initial cluster centers for k-mean clustering in a
-        smart way to speed up convergence. See notes in `n_init` for more details.
+        'k-means++' : selects initial cluster centroids using sampling 
+        based on a empirical probably distribution of the points
+        contribution to the overall inertia.
+        This technique speeds up convergence, and is theoretically
+        proven to be :math:`\mathcal{O}(\log k)`-optimal.
+        See the description of `n_init` for more details.
 
         'random': choose `n_clusters` observations (rows) at random from data
         for the initial centroids.
