@@ -19,9 +19,12 @@ def validate_parameter_constraints(parameter_constraints, params, caller_name):
 
     Parameters
     ----------
-    parameter_constraints : dict
-        A dictionary `param_name: list of constraints`. A parameter is valid if it
-        satisfies one of the constraints from the list. Constraints can be:
+    parameter_constraints : dict or {"no_validation"}
+        If "no_validation", validation is skipped for this parameter.
+
+        If a dict, it must be a dictionary `param_name: list of constraints`.
+        A parameter is valid if it satisfies one of the constraints from the list.
+        Constraints can be:
         - an Interval object, representing a continuous or discrete range of numbers
         - the string "array-like"
         - the string "sparse matrix"
@@ -47,6 +50,10 @@ def validate_parameter_constraints(parameter_constraints, params, caller_name):
 
     for param_name, param_val in params.items():
         constraints = parameter_constraints[param_name]
+
+        if constraints == "no_validation":
+            continue
+
         constraints = [make_constraint(constraint) for constraint in constraints]
 
         for constraint in constraints:

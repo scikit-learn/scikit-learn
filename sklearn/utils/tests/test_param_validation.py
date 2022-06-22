@@ -522,3 +522,22 @@ def test_boolean_constraint_deprecated_int():
         FutureWarning, match="Passing an int for a boolean parameter is deprecated"
     ):
         f(1)
+
+
+def test_no_validation():
+    """Check that validation can be skipped for a parameter."""
+
+    @validate_params({"param1": [int, None], "param2": "no_validation"})
+    def f(param1=None, param2=None):
+        pass
+
+    # param1 is validated
+    with pytest.raises(ValueError, match="The 'param1' parameter"):
+        f(param1="wrong")
+
+    # param2 is not validated: any type is valid.
+    class SomeType:
+        pass
+
+    f(param2=SomeType)
+    f(param2=SomeType())
