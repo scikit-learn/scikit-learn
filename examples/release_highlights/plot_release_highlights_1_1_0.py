@@ -26,7 +26,6 @@ or with conda::
 # ----------------------------------------------------------------
 # :class:`ensemble.HistGradientBoostingRegressor` can model quantiles with
 # `loss="quantile"` and the new parameter `quantile`.
-from sklearn.datasets import make_regression
 from sklearn.ensemble import HistGradientBoostingRegressor
 import numpy as np
 import matplotlib.pyplot as plt
@@ -67,7 +66,9 @@ from sklearn.feature_selection import SelectKBest
 from sklearn.datasets import fetch_openml
 from sklearn.linear_model import LogisticRegression
 
-X, y = fetch_openml("titanic", version=1, as_frame=True, return_X_y=True)
+X, y = fetch_openml(
+    "titanic", version=1, as_frame=True, return_X_y=True, parser="pandas"
+)
 numeric_features = ["age", "fare"]
 numeric_transformer = make_pipeline(SimpleImputer(strategy="median"), StandardScaler())
 categorical_features = ["embarked", "pclass"]

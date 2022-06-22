@@ -472,7 +472,7 @@ class PCA(_BasePCA):
             # Small problem or n_components == 'mle', just call full PCA
             if max(X.shape) <= 500 or n_components == "mle":
                 self._fit_svd_solver = "full"
-            elif n_components >= 1 and n_components < 0.8 * min(X.shape):
+            elif 1 <= n_components < 0.8 * min(X.shape):
                 self._fit_svd_solver = "randomized"
             # This is also the case of n_components in (0,1)
             else:

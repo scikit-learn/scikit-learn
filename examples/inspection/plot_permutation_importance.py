@@ -43,7 +43,9 @@ import numpy as np
 from sklearn.datasets import fetch_openml
 from sklearn.model_selection import train_test_split
 
-X, y = fetch_openml("titanic", version=1, as_frame=True, return_X_y=True)
+X, y = fetch_openml(
+    "titanic", version=1, as_frame=True, return_X_y=True, parser="pandas"
+)
 rng = np.random.RandomState(seed=42)
 X["random_cat"] = rng.randint(3, size=X.shape[0])
 X["random_num"] = rng.randn(X.shape[0])
@@ -58,7 +60,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, random_sta
 # We define a predictive model based on a random forest. Therefore, we will make
 # the following preprocessing steps:
 #
-# - use :class:`~sklearn.preprocessing.OrdinaleEcnoder` to encode the
+# - use :class:`~sklearn.preprocessing.OrdinalEncoder` to encode the
 #   categorical features;
 # - use :class:`~sklearn.impute.SimpleImputer` to fill missing values for
 #   numerical features using a mean strategy.
@@ -145,10 +147,8 @@ mdi_importances = pd.Series(
 ).sort_values(ascending=True)
 
 # %%
-ax = mdi_importances.plot.box(vert=False, whis=10)
-ax.set_title("Permutation Importances (test set)")
-ax.axvline(x=0, color="k", linestyle="--")
-ax.set_xlabel("Decrease in accuracy score")
+ax = mdi_importances.plot.barh()
+ax.set_title("Random Forest Feature Importances (MDI)")
 ax.figure.tight_layout()
 
 # %%

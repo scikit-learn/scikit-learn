@@ -9,6 +9,8 @@ if [[ "$DISTRIB" =~ ^conda.* ]]; then
     source activate $VIRTUALENV
 elif [[ "$DISTRIB" == "ubuntu" || "$DISTRIB" == "debian-32" || "$DISTRIB" == "pip-nogil" ]]; then
     source $VIRTUALENV/bin/activate
+elif [[ "$DISTRIB" == "pip-windows" ]]; then
+    source $VIRTUALENV/Scripts/activate
 fi
 
 if [[ "$BUILD_WITH_ICC" == "true" ]]; then

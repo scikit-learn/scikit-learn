@@ -88,6 +88,8 @@ def _parallel_build_estimators(
     bootstrap_features = ensemble.bootstrap_features
     support_sample_weight = has_fit_parameter(ensemble.base_estimator_, "sample_weight")
     has_check_input = has_fit_parameter(ensemble.base_estimator_, "check_input")
+    requires_feature_indexing = bootstrap_features or max_features != n_features
+
     if not support_sample_weight and sample_weight is not None:
         raise ValueError("The base estimator doesn't support sample weight")
 
@@ -135,10 +137,11 @@ def _parallel_build_estimators(
                 not_indices_mask = ~indices_to_mask(indices, n_samples)
                 curr_sample_weight[not_indices_mask] = 0
 
-            estimator_fit(X[:, features], y, sample_weight=curr_sample_weight)
-
+            X_ = X[:, features] if requires_feature_indexing else X
+            estimator_fit(X_, y, sample_weight=curr_sample_weight)
         else:
-            estimator_fit(X[indices][:, features], y[indices])
+            X_ = X[indices][:, features] if requires_feature_indexing else X[indices]
+            estimator_fit(X_, y[indices])
 
         estimators.append(estimator)
         estimators_features.append(features)
@@ -468,8 +471,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
     def _validate_y(self, y):
         if len(y.shape) == 1 or y.shape[1] == 1:
             return column_or_1d(y, warn=True)
-        else:
-            return y
+        return y
 
     def _get_estimators_indices(self):
         # Get drawn indices along both sample and feature axes
@@ -818,9 +820,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         )
 
         # Parallel loop
-        n_jobs, n_estimators, starts = _partition_estimators(
-            self.n_estimators, self.n_jobs
-        )
+        n_jobs, _, starts = _partition_estimators(self.n_estimators, self.n_jobs)
 
         all_proba = Parallel(
             n_jobs=n_jobs, verbose=self.verbose, **self._parallel_args()
@@ -870,9 +870,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
             )
 
             # Parallel loop
-            n_jobs, n_estimators, starts = _partition_estimators(
-                self.n_estimators, self.n_jobs
-            )
+            n_jobs, _, starts = _partition_estimators(self.n_estimators, self.n_jobs)
 
             all_log_proba = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
                 delayed(_parallel_predict_log_proba)(
@@ -892,10 +890,10 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
 
             log_proba -= np.log(self.n_estimators)
 
-            return log_proba
-
         else:
-            return np.log(self.predict_proba(X))
+            log_proba = np.log(self.predict_proba(X))
+
+        return log_proba
 
     @available_if(_estimator_has("decision_function"))
     def decision_function(self, X):
@@ -927,9 +925,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         )
 
         # Parallel loop
-        n_jobs, n_estimators, starts = _partition_estimators(
-            self.n_estimators, self.n_jobs
-        )
+        n_jobs, _, starts = _partition_estimators(self.n_estimators, self.n_jobs)
 
         all_decisions = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
             delayed(_parallel_decision_function)(
@@ -1163,9 +1159,7 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         )
 
         # Parallel loop
-        n_jobs, n_estimators, starts = _partition_estimators(
-            self.n_estimators, self.n_jobs
-        )
+        n_jobs, _, starts = _partition_estimators(self.n_estimators, self.n_jobs)
 
         all_y_hat = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
             delayed(_parallel_predict_regression)(

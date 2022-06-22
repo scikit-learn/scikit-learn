@@ -39,7 +39,11 @@ def plot_partial_dependence(request):
 
 @pytest.fixture(scope="module")
 def diabetes():
-    return load_diabetes()
+    # diabetes dataset, subsampled for speed
+    data = load_diabetes()
+    data.data = data.data[:50]
+    data.target = data.target[:50]
+    return data
 
 
 @pytest.fixture(scope="module")
@@ -134,17 +138,17 @@ def test_plot_partial_dependence(
     "kind, centered, subsample, shape",
     [
         ("average", False, None, (1, 3)),
-        ("individual", False, None, (1, 3, 442)),
-        ("both", False, None, (1, 3, 443)),
-        ("individual", False, 50, (1, 3, 50)),
-        ("both", False, 50, (1, 3, 51)),
-        ("individual", False, 0.5, (1, 3, 221)),
-        ("both", False, 0.5, (1, 3, 222)),
+        ("individual", False, None, (1, 3, 50)),
+        ("both", False, None, (1, 3, 51)),
+        ("individual", False, 20, (1, 3, 20)),
+        ("both", False, 20, (1, 3, 21)),
+        ("individual", False, 0.5, (1, 3, 25)),
+        ("both", False, 0.5, (1, 3, 26)),
         ("average", True, None, (1, 3)),
-        ("individual", True, None, (1, 3, 442)),
-        ("both", True, None, (1, 3, 443)),
-        ("individual", True, 50, (1, 3, 50)),
-        ("both", True, 50, (1, 3, 51)),
+        ("individual", True, None, (1, 3, 50)),
+        ("both", True, None, (1, 3, 51)),
+        ("individual", True, 20, (1, 3, 20)),
+        ("both", True, 20, (1, 3, 21)),
     ],
 )
 def test_plot_partial_dependence_kind(
@@ -309,7 +313,7 @@ def test_plot_partial_dependence_custom_axes(
 
 @pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize(
-    "kind, lines", [("average", 1), ("individual", 442), ("both", 443)]
+    "kind, lines", [("average", 1), ("individual", 50), ("both", 51)]
 )
 def test_plot_partial_dependence_passing_numpy_axes(
     plot_partial_dependence, pyplot, clf_diabetes, diabetes, kind, lines
@@ -458,7 +462,7 @@ def test_plot_partial_dependence_multiclass(plot_partial_dependence, pyplot):
     # Test partial dependence plot function on multi-class input.
     clf_int.fit(iris.data, iris.target)
     disp_target_0 = plot_partial_dependence(
-        clf_int, iris.data, [0, 1], target=0, grid_resolution=grid_resolution
+        clf_int, iris.data, [0, 3], target=0, grid_resolution=grid_resolution
     )
     assert disp_target_0.figure_ is pyplot.gcf()
     assert disp_target_0.axes_.shape == (1, 2)
@@ -474,7 +478,7 @@ def test_plot_partial_dependence_multiclass(plot_partial_dependence, pyplot):
     clf_symbol = GradientBoostingClassifier(n_estimators=10, random_state=1)
     clf_symbol.fit(iris.data, target)
     disp_symbol = plot_partial_dependence(
-        clf_symbol, iris.data, [0, 1], target="setosa", grid_resolution=grid_resolution
+        clf_symbol, iris.data, [0, 3], target="setosa", grid_resolution=grid_resolution
     )
     assert disp_symbol.figure_ is pyplot.gcf()
     assert disp_symbol.axes_.shape == (1, 2)
@@ -493,7 +497,7 @@ def test_plot_partial_dependence_multiclass(plot_partial_dependence, pyplot):
 
     # check that the pd plots are different for another target
     disp_target_1 = plot_partial_dependence(
-        clf_int, iris.data, [0, 1], target=1, grid_resolution=grid_resolution
+        clf_int, iris.data, [0, 3], target=1, grid_resolution=grid_resolution
     )
     target_0_data_y = disp_target_0.lines_[0, 0].get_data()[1]
     target_1_data_y = disp_target_1.lines_[0, 0].get_data()[1]
@@ -679,7 +683,7 @@ def test_plot_partial_dependence_does_not_override_ylabel(
 
 @pytest.mark.parametrize(
     "kind, expected_shape",
-    [("average", (1, 2)), ("individual", (1, 2, 50)), ("both", (1, 2, 51))],
+    [("average", (1, 2)), ("individual", (1, 2, 20)), ("both", (1, 2, 21))],
 )
 def test_plot_partial_dependence_subsampling(
     plot_partial_dependence, pyplot, clf_diabetes, diabetes, kind, expected_shape
@@ -698,7 +702,7 @@ def test_plot_partial_dependence_subsampling(
         kind=kind,
         grid_resolution=grid_resolution,
         feature_names=feature_names,
-        subsample=50,
+        subsample=20,
         random_state=0,
     )
 

@@ -140,12 +140,12 @@ def test_calibration_regressor(data, ensemble):
 
 
 def test_calibration_default_estimator(data):
-    # Check base_estimator default is LinearSVC
+    # Check estimator default is LinearSVC
     X, y = data
     calib_clf = CalibratedClassifierCV(cv=2)
     calib_clf.fit(X, y)
 
-    base_est = calib_clf.calibrated_classifiers_[0].base_estimator
+    base_est = calib_clf.calibrated_classifiers_[0].estimator
     assert isinstance(base_est, LinearSVC)
 
 
@@ -175,10 +175,8 @@ def test_sample_weight(data, method, ensemble):
     X_train, y_train, sw_train = X[:n_samples], y[:n_samples], sample_weight[:n_samples]
     X_test = X[n_samples:]
 
-    base_estimator = LinearSVC(random_state=42)
-    calibrated_clf = CalibratedClassifierCV(
-        base_estimator, method=method, ensemble=ensemble
-    )
+    estimator = LinearSVC(random_state=42)
+    calibrated_clf = CalibratedClassifierCV(estimator, method=method, ensemble=ensemble)
     calibrated_clf.fit(X_train, y_train, sample_weight=sw_train)
     probs_with_sw = calibrated_clf.predict_proba(X_test)
 
@@ -198,16 +196,16 @@ def test_parallel_execution(data, method, ensemble):
     X, y = data
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
 
-    base_estimator = LinearSVC(random_state=42)
+    estimator = LinearSVC(random_state=42)
 
     cal_clf_parallel = CalibratedClassifierCV(
-        base_estimator, method=method, n_jobs=2, ensemble=ensemble
+        estimator, method=method, n_jobs=2, ensemble=ensemble
     )
     cal_clf_parallel.fit(X_train, y_train)
     probs_parallel = cal_clf_parallel.predict_proba(X_test)
 
     cal_clf_sequential = CalibratedClassifierCV(
-        base_estimator, method=method, n_jobs=1, ensemble=ensemble
+        estimator, method=method, n_jobs=1, ensemble=ensemble
     )
     cal_clf_sequential.fit(X_train, y_train)
     probs_sequential = cal_clf_sequential.predict_proba(X_test)
@@ -297,7 +295,7 @@ def test_calibration_zero_probability():
     clf = DummyClassifier().fit(X, y)
     calibrator = ZeroCalibrator()
     cal_clf = _CalibratedClassifier(
-        base_estimator=clf, calibrators=[calibrator], classes=clf.classes_
+        estimator=clf, calibrators=[calibrator], classes=clf.classes_
     )
 
     probas = cal_clf.predict_proba(X)
@@ -624,7 +622,7 @@ def test_calibration_votingclassifier():
     )
     vote.fit(X, y)
 
-    calib_clf = CalibratedClassifierCV(base_estimator=vote, cv="prefit")
+    calib_clf = CalibratedClassifierCV(estimator=vote, cv="prefit")
     # smoke test: should not raise an error
     calib_clf.fit(X, y)
 
@@ -911,9 +909,9 @@ def test_calibrated_classifier_cv_double_sample_weights_equivalence(method, ense
     y_twice[::2] = y
     y_twice[1::2] = y
 
-    base_estimator = LogisticRegression()
+    estimator = LogisticRegression()
     calibrated_clf_without_weights = CalibratedClassifierCV(
-        base_estimator,
+        estimator,
         method=method,
         ensemble=ensemble,
         cv=2,
@@ -929,8 +927,8 @@ def test_calibrated_classifier_cv_double_sample_weights_equivalence(method, ense
         calibrated_clf_without_weights.calibrated_classifiers_,
     ):
         assert_allclose(
-            est_with_weights.base_estimator.coef_,
-            est_without_weights.base_estimator.coef_,
+            est_with_weights.estimator.coef_,
+            est_without_weights.estimator.coef_,
         )
 
     # Check that the predictions are the same
@@ -978,11 +976,11 @@ def test_calibration_with_sample_weight_base_estimator(sample_weight, data):
 
 
 def test_calibration_without_sample_weight_base_estimator(data):
-    """Check that even if the base_estimator doesn't support
+    """Check that even if the estimator doesn't support
     sample_weight, fitting with sample_weight still works.
 
     There should be a warning, since the sample_weight is not passed
-    on to the base_estimator.
+    on to the estimator.
     """
     X, y = data
     sample_weight = np.ones_like(y)
@@ -1031,9 +1029,9 @@ def test_calibrated_classifier_cv_zeros_sample_weights_equivalence(method, ensem
     sample_weight = np.zeros_like(y)
     sample_weight[::2] = 1
 
-    base_estimator = LogisticRegression()
+    estimator = LogisticRegression()
     calibrated_clf_without_weights = CalibratedClassifierCV(
-        base_estimator,
+        estimator,
         method=method,
         ensemble=ensemble,
         cv=2,
@@ -1049,8 +1047,8 @@ def test_calibrated_classifier_cv_zeros_sample_weights_equivalence(method, ensem
         calibrated_clf_without_weights.calibrated_classifiers_,
     ):
         assert_allclose(
-            est_with_weights.base_estimator.coef_,
-            est_without_weights.base_estimator.coef_,
+            est_with_weights.estimator.coef_,
+            est_without_weights.estimator.coef_,
         )
 
     # Check that the predictions are the same
@@ -1058,3 +1056,24 @@ def test_calibrated_classifier_cv_zeros_sample_weights_equivalence(method, ensem
     y_pred_without_weights = calibrated_clf_without_weights.predict_proba(X)
 
     assert_allclose(y_pred_with_weights, y_pred_without_weights)
+
+
+# TODO(1.4): Remove
+def test_calibrated_classifier_error_base_estimator(data):
+    """Check that we raise an error is a user set both `base_estimator` and
+    `estimator`."""
+    calibrated_classifier = CalibratedClassifierCV(
+        base_estimator=LogisticRegression(), estimator=LogisticRegression()
+    )
+    with pytest.raises(ValueError, match="Both `base_estimator` and `estimator`"):
+        calibrated_classifier.fit(*data)
+
+
+# TODO(1.4): Remove
+def test_calibrated_classifier_deprecation_base_estimator(data):
+    """Check that we raise a warning regarding the deprecation of
+    `base_estimator`."""
+    calibrated_classifier = CalibratedClassifierCV(base_estimator=LogisticRegression())
+    warn_msg = "`base_estimator` was renamed to `estimator`"
+    with pytest.warns(FutureWarning, match=warn_msg):
+        calibrated_classifier.fit(*data)
