@@ -73,7 +73,7 @@ SPARSE_OR_DENSE = SPARSE_TYPES + (np.asarray,)
 ALGORITHMS = ("ball_tree", "brute", "kd_tree", "auto")
 COMMON_VALID_METRICS = sorted(
     set.intersection(*map(set, neighbors.VALID_METRICS.values()))
-)
+)  # type: ignore
 P = (1, 2, 3, 4, np.inf)
 JOBLIB_BACKENDS = list(joblib.parallel.BACKENDS.keys())
 
