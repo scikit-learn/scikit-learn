@@ -99,6 +99,8 @@ def clone(estimator, *, safe=True):
                 "either does not set or modifies parameter %s" % (estimator, name)
             )
 
+    # _sklearn_output_config is used by `set_output` to configure the output
+    # container of an estimator.
     if hasattr(estimator, "_sklearn_output_config"):
         new_object._sklearn_output_config = copy.deepcopy(
             estimator._sklearn_output_config
