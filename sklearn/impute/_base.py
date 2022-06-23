@@ -221,8 +221,8 @@ class SimpleImputer(_BaseImputer):
 
     See Also
     --------
-    IterativeImputer : Multivariate imputer that estimates each feature
-        from all the others.
+    IterativeImputer : Multivariate imputer that estimates values to impute for
+        each feature with missing values from all the others.
     KNNImputer : Multivariate imputer that estimates missing features using
         nearest samples.
 
