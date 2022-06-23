@@ -108,15 +108,19 @@ def test_cdist(metric_param_grid, X, Y):
         # DistanceMetric.pairwise must be consistent for all
         # combinations of formats in {sparse, dense}.
         D_sklearn = dm.pairwise(X, Y)
+        assert D_sklearn.flags.c_contiguous
         assert_allclose(D_sklearn, D_scipy_cdist, **rtol_dict)
 
         D_sklearn = dm.pairwise(X_csr, Y_csr)
+        assert D_sklearn.flags.c_contiguous
         assert_allclose(D_sklearn, D_scipy_cdist, **rtol_dict)
 
         D_sklearn = dm.pairwise(X_csr, Y)
+        assert D_sklearn.flags.c_contiguous
         assert_allclose(D_sklearn, D_scipy_cdist, **rtol_dict)
 
         D_sklearn = dm.pairwise(X, Y_csr)
+        assert D_sklearn.flags.c_contiguous
         assert_allclose(D_sklearn, D_scipy_cdist, **rtol_dict)
 
 
@@ -136,15 +140,19 @@ def test_cdist_bool_metric(metric, X_bool, Y_bool):
     X_bool_csr, Y_bool_csr = sp.csr_matrix(X_bool), sp.csr_matrix(Y_bool)
 
     D_sklearn = dm.pairwise(X_bool, Y_bool)
+    assert D_sklearn.flags.c_contiguous
     assert_allclose(D_sklearn, D_scipy_cdist)
 
     D_sklearn = dm.pairwise(X_bool_csr, Y_bool_csr)
+    assert D_sklearn.flags.c_contiguous
     assert_allclose(D_sklearn, D_scipy_cdist)
 
     D_sklearn = dm.pairwise(X_bool, Y_bool_csr)
+    assert D_sklearn.flags.c_contiguous
     assert_allclose(D_sklearn, D_scipy_cdist)
 
     D_sklearn = dm.pairwise(X_bool_csr, Y_bool)
+    assert D_sklearn.flags.c_contiguous
     assert_allclose(D_sklearn, D_scipy_cdist)
 
 
@@ -185,12 +193,15 @@ def test_pdist(metric_param_grid, X):
 
         dm = DistanceMetricInterface.get_metric(metric, **kwargs)
         D_sklearn = dm.pairwise(X)
+        assert D_sklearn.flags.c_contiguous
         assert_allclose(D_sklearn, D_scipy_pdist, **rtol_dict)
 
         D_sklearn_csr = dm.pairwise(X_csr)
+        assert D_sklearn.flags.c_contiguous
         assert_allclose(D_sklearn_csr, D_scipy_pdist, **rtol_dict)
 
         D_sklearn_csr = dm.pairwise(X_csr, X_csr)
+        assert D_sklearn.flags.c_contiguous
         assert_allclose(D_sklearn_csr, D_scipy_pdist, **rtol_dict)
 
 
@@ -203,7 +214,7 @@ def test_distance_metrics_dtype_consistency(metric_param_grid):
     metric, param_grid = metric_param_grid
     keys = param_grid.keys()
 
-    # Chose rtol to make sure that this test is robust to changes in the random
+    # Choose rtol to make sure that this test is robust to changes in the random
     # seed in the module-level test data generation code.
     rtol = 1e-5
 
@@ -318,12 +329,15 @@ def test_haversine_metric(X, Y):
     assert_allclose(D_sklearn, D_reference)
 
     D_sklearn = haversine.pairwise(X_csr, Y_csr)
+    assert D_sklearn.flags.c_contiguous
     assert_allclose(D_sklearn, D_reference)
 
     D_sklearn = haversine.pairwise(X_csr, Y)
+    assert D_sklearn.flags.c_contiguous
     assert_allclose(D_sklearn, D_reference)
 
     D_sklearn = haversine.pairwise(X, Y_csr)
+    assert D_sklearn.flags.c_contiguous
     assert_allclose(D_sklearn, D_reference)
 
 

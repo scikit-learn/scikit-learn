@@ -679,6 +679,39 @@ cdef class DistanceMetric{{name_suffix}}:
         )
         return Darr
 
+    def _pairwise_dense_sparse(self, X, Y):
+        # Same remark as in _pairwise_sparse_dense. We could
+        # have implemented this method using _pairwise_dense_sparse,
+        # but this would have come with an extra copy to ensure
+        # c-contiguity of the result.
+
+        Y_csr = Y.tocsr()
+        n_Y, size = Y_csr.shape
+        Y_data = np.asarray(Y_csr.data, dtype={{INPUT_DTYPE}})
+        Y_indices = np.asarray(Y_csr.indices, dtype=SPARSE_INDEX_TYPE)
+        Y_indptr = np.asarray(Y_csr.indptr, dtype=SPARSE_INDEX_TYPE)
+
+        n_X, _ = X.shape
+        X_data = X.reshape(-1)
+        X_indices = np.arange(size, dtype=SPARSE_INDEX_TYPE)
+        X_indptr = np.arange(
+            start=0, stop=size * (n_X + 1), step=size, dtype=SPARSE_INDEX_TYPE
+        )
+
+        Darr = np.empty((n_X, n_Y), dtype=DTYPE, order='C')
+        self.cdist_csr(
+            x1_data=X_data,
+            x1_indices=X_indices,
+            x1_indptr=X_indptr,
+            x2_data=Y_data,
+            x2_indices=Y_indices,
+            x2_indptr=Y_indptr,
+            size=size,
+            D=Darr,
+        )
+        return Darr
+
+
     def pairwise(self, X, Y=None):
         """Compute the pairwise distances between X and Y
 
@@ -711,9 +744,7 @@ cdef class DistanceMetric{{name_suffix}}:
             return self._pairwise_sparse_sparse(X, Y)
         if X_is_sparse and not Y_is_sparse:
             return self._pairwise_sparse_dense(X, Y)
-        if not X_is_sparse and Y_is_sparse:
-            # Swapping argument and transposing the result
-            return self._pairwise_sparse_dense(Y, X).T
+        return self._pairwise_dense_sparse(X, Y)
 
 #------------------------------------------------------------
 # Euclidean Distance
