@@ -24,7 +24,7 @@ _ImputerTriplet = namedtuple(
 
 
 class IterativeImputer(_BaseImputer):
-    r"""Multivariate imputer that estimates each feature from all the others.
+    """Multivariate imputer that estimates each feature from all the others.
 
     A strategy for imputing missing values by modeling each feature with
     missing values as a function of other features in a round-robin fashion.
@@ -197,7 +197,7 @@ class IterativeImputer(_BaseImputer):
     Features which contain all missing values at :meth:`fit` are discarded upon
     :meth:`transform`.
 
-    Using defaults, the imputer scales in :math:`\mathcal{O}(knp^3\min(n,p))`
+    Using defaults, the imputer scales in :math:`\\mathcal{O}(knp^3\\min(n,p))`
     where :math:`k` = `max_iter`, :math:`n` the number of samples and
     :math:`p` the number of features. It thus becomes prohibitively costly when
     the number of features increases. Setting
