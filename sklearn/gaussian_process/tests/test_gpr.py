@@ -769,7 +769,7 @@ def test_sample_y_shapes(normalize_y, n_targets):
 @pytest.mark.parametrize("n_targets", [None, 1, 2, 3])
 @pytest.mark.parametrize("n_samples", [1, 5])
 def test_sample_y_shape_with_prior(n_targets, n_samples):
-    """Check the output shape of `sample_y` is consistent before and after `fit`"""
+    """Check the output shape of `sample_y` is consistent before and after `fit`."""
     rng = np.random.RandomState(1024)
 
     X = rng.randn(10, 3)
