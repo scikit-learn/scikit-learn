@@ -13,12 +13,10 @@ numpydoc_validation = pytest.importorskip("numpydoc.validate")
 
 FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.datasets._kddcup99.fetch_kddcup99",
-    "sklearn.datasets._lfw.fetch_lfw_pairs",
     "sklearn.datasets._lfw.fetch_lfw_people",
     "sklearn.datasets._samples_generator.make_gaussian_quantiles",
     "sklearn.datasets._samples_generator.make_spd_matrix",
     "sklearn.datasets._species_distributions.fetch_species_distributions",
-    "sklearn.datasets._svmlight_format_io.dump_svmlight_file",
     "sklearn.datasets._svmlight_format_io.load_svmlight_file",
     "sklearn.datasets._svmlight_format_io.load_svmlight_files",
     "sklearn.decomposition._dict_learning.dict_learning",
@@ -26,12 +24,7 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.decomposition._nmf.non_negative_factorization",
     "sklearn.externals._packaging.version.parse",
     "sklearn.feature_extraction.image.extract_patches_2d",
-    "sklearn.feature_extraction.image.img_to_graph",
-    "sklearn.feature_extraction.text.strip_accents_ascii",
     "sklearn.feature_extraction.text.strip_accents_unicode",
-    "sklearn.feature_extraction.text.strip_tags",
-    "sklearn.feature_selection._univariate_selection.chi2",
-    "sklearn.feature_selection._univariate_selection.f_oneway",
     "sklearn.inspection._partial_dependence.partial_dependence",
     "sklearn.inspection._plot.partial_dependence.plot_partial_dependence",
     "sklearn.linear_model._least_angle.lars_path_gram",
@@ -40,17 +33,11 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.manifold._t_sne.trustworthiness",
     "sklearn.metrics._classification.brier_score_loss",
     "sklearn.metrics._classification.cohen_kappa_score",
-    "sklearn.metrics._classification.fbeta_score",
-    "sklearn.metrics._classification.hinge_loss",
     "sklearn.metrics._classification.jaccard_score",
-    "sklearn.metrics._classification.log_loss",
     "sklearn.metrics._plot.det_curve.plot_det_curve",
     "sklearn.metrics._plot.precision_recall_curve.plot_precision_recall_curve",
-    "sklearn.metrics._ranking.auc",
     "sklearn.metrics._ranking.coverage_error",
     "sklearn.metrics._ranking.dcg_score",
-    "sklearn.metrics._ranking.label_ranking_average_precision_score",
-    "sklearn.metrics._ranking.roc_auc_score",
     "sklearn.metrics._ranking.roc_curve",
     "sklearn.metrics._ranking.top_k_accuracy_score",
     "sklearn.metrics._regression.mean_pinball_loss",
@@ -67,7 +54,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.metrics.cluster._supervised.v_measure_score",
     "sklearn.metrics.pairwise.additive_chi2_kernel",
     "sklearn.metrics.pairwise.check_paired_arrays",
-    "sklearn.metrics.pairwise.check_pairwise_arrays",
     "sklearn.metrics.pairwise.chi2_kernel",
     "sklearn.metrics.pairwise.cosine_distances",
     "sklearn.metrics.pairwise.cosine_similarity",
@@ -77,11 +63,9 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.metrics.pairwise.pairwise_distances_argmin",
     "sklearn.metrics.pairwise.pairwise_distances_argmin_min",
     "sklearn.metrics.pairwise.pairwise_distances_chunked",
-    "sklearn.metrics.pairwise.pairwise_kernels",
     "sklearn.metrics.pairwise.polynomial_kernel",
     "sklearn.metrics.pairwise.rbf_kernel",
     "sklearn.metrics.pairwise.sigmoid_kernel",
-    "sklearn.model_selection._validation.cross_validate",
     "sklearn.model_selection._validation.learning_curve",
     "sklearn.model_selection._validation.permutation_test_score",
     "sklearn.model_selection._validation.validation_curve",
@@ -125,7 +109,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.utils.sparsefuncs.count_nonzero",
     "sklearn.utils.sparsefuncs.csc_median_axis_0",
     "sklearn.utils.sparsefuncs.incr_mean_variance_axis",
-    "sklearn.utils.sparsefuncs.inplace_swap_column",
     "sklearn.utils.sparsefuncs.inplace_swap_row",
     "sklearn.utils.sparsefuncs.inplace_swap_row_csc",
     "sklearn.utils.sparsefuncs.inplace_swap_row_csr",
@@ -150,7 +133,7 @@ def get_all_methods():
                 methods.append(name)
         methods.append(None)
 
-        for method in sorted(methods, key=lambda x: str(x)):
+        for method in sorted(methods, key=str):
             yield Estimator, method
 
 

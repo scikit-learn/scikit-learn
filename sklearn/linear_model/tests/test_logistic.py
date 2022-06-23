@@ -2006,7 +2006,7 @@ def test_multinomial_identifiability_on_iris(fit_intercept):
     satisfies the symmetric constraint:
     sum(coef_k, k=1..c) = 0
 
-    Further details can be found in the appendix of [2].
+    Further details can be found in [2].
 
     Reference
     ---------
@@ -2014,10 +2014,9 @@ def test_multinomial_identifiability_on_iris(fit_intercept):
            penalized logistic regression". Biostatistics 5 3 (2004): 427-43.
            <10.1093/biostatistics/kxg046>`
 
-    .. [2] :arxiv:`Powers, Scott, Trevor J. Hastie and Robert Tibshirani. (2017)
-           "Nuclear penalized multinomial regression with an application to
-           predicting at bat outcomes in baseball".
-           Statistical modelling, 18, 5-6, pp. 388-410. <1706.10272>`
+    .. [2] :arxiv:`Noah Simon and Jerome Friedman and Trevor Hastie. (2013)
+           "A Blockwise Descent Algorithm for Group-penalized Multiresponse and
+           Multinomial Regression". <1311.6529>`
     """
     # Test logistic regression with the iris dataset
     n_samples, n_features = iris.data.shape
@@ -2072,3 +2071,13 @@ def test_large_sparse_matrix(solver):
             LogisticRegression(solver=solver).fit(X, y)
     else:
         LogisticRegression(solver=solver).fit(X, y)
+
+
+def test_single_feature_newton_cg():
+    # Test that Newton-CG works with a single feature and intercept.
+    # Non-regression test for issue #23605.
+
+    X = np.array([[0.5, 0.65, 1.1, 1.25, 0.8, 0.54, 0.95, 0.7]]).T
+    y = np.array([1, 1, 0, 0, 1, 1, 0, 1])
+    assert X.shape[1] == 1
+    LogisticRegression(solver="newton-cg", fit_intercept=True).fit(X, y)

@@ -475,7 +475,7 @@ def test_max_feature_regression():
         random_state=1,
     )
     gbrt.fit(X_train, y_train)
-    log_loss = gbrt.loss_(y_test, gbrt.decision_function(X_test))
+    log_loss = gbrt._loss(y_test, gbrt.decision_function(X_test))
     assert log_loss < 0.5, "GB failed with deviance %.4f" % log_loss
 
 
@@ -1535,3 +1535,18 @@ def test_loss_deprecated(old_loss, new_loss, Estimator):
     est2 = Estimator(loss=new_loss, random_state=0)
     est2.fit(X, y)
     assert_allclose(est1.predict(X), est2.predict(X))
+
+
+# TODO(1.3): remove
+@pytest.mark.parametrize(
+    "Estimator", [GradientBoostingClassifier, GradientBoostingRegressor]
+)
+def test_loss_attribute_deprecation(Estimator):
+    # Check that we raise the proper deprecation warning if accessing
+    # `loss_`.
+    X = np.array([[1, 2], [3, 4]])
+    y = np.array([1, 0])
+    est = Estimator().fit(X, y)
+
+    with pytest.warns(FutureWarning, match="`loss_` was deprecated"):
+        est.loss_
