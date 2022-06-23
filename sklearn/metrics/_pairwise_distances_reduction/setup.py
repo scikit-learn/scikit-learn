@@ -29,8 +29,6 @@ def configuration(parent_package="", top_path=None):
             extra_compile_args=["-std=c++11"],
         )
 
-    config.add_subpackage("tests")
-
     return config
 
 

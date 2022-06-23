@@ -90,12 +90,12 @@ from ._dispatcher import (
     PairwiseDistancesReduction,
     PairwiseDistancesArgKmin,
     PairwiseDistancesRadiusNeighborhood,
-    _sqeuclidean_row_norms,
+    sqeuclidean_row_norms,
 )
 
 __all__ = [
     "PairwiseDistancesReduction",
     "PairwiseDistancesArgKmin",
     "PairwiseDistancesRadiusNeighborhood",
-    "_sqeuclidean_row_norms",
+    "sqeuclidean_row_norms",
 ]

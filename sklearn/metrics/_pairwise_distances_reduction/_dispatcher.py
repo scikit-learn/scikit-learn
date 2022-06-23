@@ -1,3 +1,5 @@
+from abc import abstractmethod
+
 import numpy as np
 
 from typing import List
@@ -11,8 +13,22 @@ from ._radius_neighborhood import PairwiseDistancesRadiusNeighborhood64
 from ... import get_config
 
 
-def _sqeuclidean_row_norms(X, num_threads):
-    """Compute the squared euclidean norm of the rows of X in parallel."""
+def sqeuclidean_row_norms(X, num_threads):
+    """Compute the squared euclidean norm of the rows of X in parallel.
+
+    Parameters
+    ----------
+    X : ndarray of shape (n_samples, n_features)
+        Input data. Must be c-contiguous.
+
+    num_threads : int
+        The number of OpenMP threads to use.
+
+    Returns
+    -------
+    sqeuclidean_row_norms : ndarray of shape (n_samples,)
+        Arrays containing the squared euclidean norm of each row of X.
+    """
     if X.dtype == np.float64:
         return _sqeuclidean_row_norms64(X, num_threads)
     raise ValueError(
@@ -71,6 +87,32 @@ class PairwiseDistancesReduction:
             and dtypes_validity
             and metric in cls.valid_metrics()
         )
+
+    @classmethod
+    @abstractmethod
+    def compute(
+        cls,
+        X,
+        Y,
+        **kwargs,
+    ):
+        """Compute the reduction.
+
+        Parameters
+        ----------
+        X : ndarray or CSR matrix of shape (n_samples_X, n_features)
+            Input data.
+
+        Y : ndarray or CSR matrix of shape (n_samples_Y, n_features)
+            Input data.
+
+        **kwargs : additional parameters for the reduction
+
+        Notes
+        -----
+        This method is an abstract class method: it has to be implemented
+        for all subclasses.
+        """
 
 
 class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
