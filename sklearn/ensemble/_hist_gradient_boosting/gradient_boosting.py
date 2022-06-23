@@ -105,10 +105,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         "tol": [Interval(Real, 0, None, closed="left")],
         "max_bins": [Interval(Integral, 2, 255, closed="both")],
         "categorical_features": ["array-like", None],
-        "warm_start": [bool],
-        "early_stopping": [StrOptions({"auto"}), bool],
+        "warm_start": ["boolean"],
+        "early_stopping": [StrOptions({"auto"}), "boolean"],
         "scoring": [str, callable, None],
-        "verbose": [Interval(Integral, 0, None, closed="left"), bool],
+        "verbose": ["verbose"],
         "random_state": ["random_state"],
     }
 
