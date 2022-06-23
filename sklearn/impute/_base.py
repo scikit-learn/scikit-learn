@@ -132,8 +132,8 @@ class _BaseImputer(TransformerMixin, BaseEstimator):
 class SimpleImputer(_BaseImputer):
     """Univariate imputer for completing missing values with simple strategies.
 
-    Replace missing values using the mean, median or most frequent value along
-    each column, or using a constant.
+    Replace missing values using a descriptive statistic (e.g. mean, median, or
+    most frequent) along each column, or using a constant value.
 
     Read more in the :ref:`User Guide <impute>`.
 
