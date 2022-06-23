@@ -38,6 +38,14 @@ data_train = fetch_20newsgroups(
     remove=("headers", "footers", "quotes"),
 )
 
+data_test = fetch_20newsgroups(
+    subset="test",
+    categories=categories,
+    shuffle=True,
+    random_state=42,
+    remove=("headers", "footers", "quotes"),
+)
+
 print(f"Loading 20 newsgroups dataset for {len(data_train.target_names)} categories:")
 print(data_train.target_names)
 print(f"{len(data_train.data)} documents")
@@ -89,11 +97,11 @@ t0 = time()
 grid_search.fit(data_train.data, data_train.target)
 print(f"done in {time() - t0:.3f}s")
 print()
-
-print("Best score: {grid_search.best_score_:.3f}")
 print("Best parameters set:")
 best_parameters = grid_search.best_estimator_.get_params()
 for param_name in sorted(parameters.keys()):
     print(f"{param_name}: {best_parameters[param_name]}")
 
-# %%
+accuracy = grid_search.score(data_test.data, data_test.target)
+print(f"Best train accuracy: {grid_search.best_score_:.3f}")
+print(f"Accuracy on test set: {accuracy:.3f}")
