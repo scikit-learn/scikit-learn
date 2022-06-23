@@ -35,6 +35,7 @@ from ..utils import check_array
 from ..utils import check_random_state
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.validation import _is_arraylike_not_scalar
+from ..utils._param_validation import Hidden
 from ..utils._param_validation import Interval
 from ..utils._param_validation import StrOptions
 from ..utils._param_validation import validate_params
@@ -266,6 +267,28 @@ def _tolerance(X, tol):
     return np.mean(variances) * tol
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "n_clusters": [Interval(Integral, 1, None, closed="left")],
+        "sample_weight": ["array-like", None],
+        "init": [StrOptions({"k-means++", "random"}), callable, "array-like"],
+        "n_init": [
+            StrOptions({"auto"}),
+            Hidden(StrOptions({"warn"})),
+            Interval(Integral, 1, None, closed="left"),
+        ],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
+        "verbose": [Interval(Integral, 0, None, closed="left"), bool],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "random_state": ["random_state"],
+        "copy_x": [bool],
+        "algorithm": [
+            StrOptions({"lloyd", "elkan", "auto", "full"}, deprecated={"auto", "full"})
+        ],
+        "return_n_iter": [bool],
+    }
+)
 def k_means(
     X,
     n_clusters,
@@ -657,7 +680,7 @@ def _kmeans_single_lloyd(
     strict_convergence = False
 
     # Threadpoolctl context to limit the number of threads in second level of
-    # nested parallelism (i.e. BLAS) to avoid oversubsciption.
+    # nested parallelism (i.e. BLAS) to avoid oversubscription.
     with threadpool_limits(limits=1, user_api="blas"):
         for i in range(max_iter):
             lloyd_iter(
@@ -813,12 +836,13 @@ class _BaseKMeans(
         "n_clusters": [Interval(Integral, 1, None, closed="left")],
         "init": [StrOptions({"k-means++", "random"}), callable, "array-like"],
         "n_init": [
-            StrOptions({"auto", "warn"}),
+            StrOptions({"auto"}),
+            Hidden(StrOptions({"warn"})),
             Interval(Integral, 1, None, closed="left"),
         ],
         "max_iter": [Interval(Integral, 1, None, closed="left")],
         "tol": [Interval(Real, 0, None, closed="left")],
-        "verbose": [Interval(Integral, 0, None, closed="left"), bool],
+        "verbose": ["verbose"],
         "random_state": ["random_state"],
     }
 
@@ -1311,7 +1335,7 @@ class KMeans(_BaseKMeans):
 
     _parameter_constraints = {
         **_BaseKMeans._parameter_constraints,
-        "copy_x": [bool],
+        "copy_x": ["boolean"],
         "algorithm": [
             StrOptions({"lloyd", "elkan", "auto", "full"}, deprecated={"auto", "full"})
         ],
@@ -1807,7 +1831,7 @@ class MiniBatchKMeans(_BaseKMeans):
     _parameter_constraints = {
         **_BaseKMeans._parameter_constraints,
         "batch_size": [Interval(Integral, 1, None, closed="left")],
-        "compute_labels": [bool],
+        "compute_labels": ["boolean"],
         "max_no_improvement": [Interval(Integral, 0, None, closed="left"), None],
         "init_size": [Interval(Integral, 1, None, closed="left"), None],
         "reassignment_ratio": [Interval(Real, 0, None, closed="left")],
