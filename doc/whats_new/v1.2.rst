@@ -228,8 +228,8 @@ Changelog
   can now output `csr` matrices with `np.int32` `indices/indptr` components
   when there are few enough elements, and will automatically use `np.int64`
   for sufficiently large matrices.
-  :pr:`#20524` by :user:`niuk-a <niuk-a>` and
-  :pr:`#23731` by :user:`Meekail Zain <micky774>`
+  :pr:`20524` by :user:`niuk-a <niuk-a>` and
+  :pr:`23731` by :user:`Meekail Zain <micky774>`
 
 Code and Documentation Contributors
 -----------------------------------
