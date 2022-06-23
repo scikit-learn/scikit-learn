@@ -112,7 +112,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         Dimension of the target values. Used to decide the output dimension
         when sampling with prior distribution.
 
-        .. versionadded:: 1.1
+        .. versionadded:: 1.2
 
     random_state : int, RandomState instance or None, default=None
         Determines random number generation used to initialize the centers.
