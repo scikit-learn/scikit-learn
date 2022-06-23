@@ -401,7 +401,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             callable,
         ],
         "metric_params": [dict, None],
-        "n_jobs": [None, Integral],
+        "n_jobs": [Integral, None],
     }
 
     @abstractmethod
@@ -427,6 +427,9 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         self.n_jobs = n_jobs
 
     def _check_algorithm_metric(self):
+        if self.algorithm not in ["auto", "brute", "kd_tree", "ball_tree"]:
+            raise ValueError("unrecognized algorithm: '%s'" % self.algorithm)
+
         if self.algorithm == "auto":
             if self.metric == "precomputed":
                 alg_check = "brute"

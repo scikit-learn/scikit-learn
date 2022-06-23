@@ -1482,6 +1482,60 @@ def test_radius_neighbors_graph_sparse(n_neighbors, mode, seed=36):
     )
 
 
+def test_neighbors_badargs():
+    # Test bad argument values: these should all raise ValueErrors
+    X = rng.random_sample((10, 2))
+    Xsparse = csr_matrix(X)
+    X3 = rng.random_sample((10, 3))
+    y = np.ones(10)
+
+    est = neighbors.NearestNeighbors(algorithm="blah")
+    with pytest.raises(ValueError):
+        est.fit(X)
+
+    for cls in (
+        neighbors.RadiusNeighborsClassifier,
+        neighbors.RadiusNeighborsRegressor,
+    ):
+        est = cls(weights="blah")
+        with pytest.raises(ValueError):
+            est.fit(X, y)
+        est = cls(p=-1)
+        with pytest.raises(ValueError):
+            est.fit(X, y)
+        est = cls(algorithm="blah")
+        with pytest.raises(ValueError):
+            est.fit(X, y)
+
+        nbrs = cls(algorithm="ball_tree", metric="haversine")
+        with pytest.raises(ValueError):
+            nbrs.predict(X)
+        with pytest.raises(ValueError):
+            ignore_warnings(nbrs.fit(Xsparse, y))
+
+        nbrs = cls(metric="haversine", algorithm="brute")
+        nbrs.fit(X3, y)
+        msg = "Haversine distance only valid in 2 dimensions"
+        with pytest.raises(ValueError, match=msg):
+            nbrs.predict(X3)
+
+        nbrs = cls()
+        with pytest.raises(ValueError):
+            nbrs.fit(np.ones((0, 2)), np.ones(0))
+        with pytest.raises(ValueError):
+            nbrs.fit(X[:, :, None], y)
+        nbrs.fit(X, y)
+        with pytest.raises(ValueError):
+            nbrs.predict([[]])
+
+    nbrs = neighbors.NearestNeighbors().fit(X)
+
+    with pytest.raises(ValueError):
+        nbrs.kneighbors_graph(X, mode="blah")
+    with pytest.raises(ValueError):
+        nbrs.radius_neighbors_graph(X, mode="blah")
+
+
 # TODO: Remove filterwarnings in 1.3 when wminkowski is removed
 @pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
 @pytest.mark.parametrize(
