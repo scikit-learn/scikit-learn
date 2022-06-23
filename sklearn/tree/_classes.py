@@ -39,6 +39,7 @@ from ..utils import compute_sample_weight
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
 from ..utils._param_validation import Interval, StrOptions
+from ..utils._param_validation import Hidden
 
 from ._criterion import Criterion
 from ._splitter import Splitter
@@ -113,7 +114,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         "max_features": [
             Interval(Integral, 1, None, closed="left"),
             Interval(Real, 0.0, 1.0, closed="right"),
-            StrOptions({"auto", "sqrt", "log2"}),
+            StrOptions({"auto", "sqrt", "log2"}, deprecated={"auto"}),
             None,
         ],
         "random_state": ["random_state"],
@@ -847,7 +848,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
     _parameter_constraints = {
         **BaseDecisionTree._parameter_constraints,
-        "criterion": [StrOptions({"gini", "entropy", "log_loss"})],
+        "criterion": [StrOptions({"gini", "entropy", "log_loss"}), Hidden(Criterion)],
         "class_weight": [dict, list, StrOptions({"balanced"}), None],
     }
 
@@ -1240,7 +1241,8 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
                     "mae",
                 },
                 deprecated={"mse", "mae"},
-            )
+            ),
+            Hidden(Criterion),
         ],
     }
 
