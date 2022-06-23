@@ -79,7 +79,7 @@ class PairwiseDistancesReduction:
         -------
         True if the PairwiseDistancesReduction can be used, else False.
         """
-        dtypes_validity = X.dtype == Y.dtype and Y.dtype == np.float64
+        dtypes_validity = X.dtype == Y.dtype == np.float64
         return (
             get_config().get("enable_cython_pairwise_dist", True)
             and not issparse(X)

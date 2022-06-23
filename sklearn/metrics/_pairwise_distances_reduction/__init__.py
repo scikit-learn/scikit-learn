@@ -42,7 +42,7 @@
 #    Legend:
 #
 #      A ---⊳ B: A inherits from B
-#      A ---x B: A dispatches on B
+#      A ---x B: A dispatches to B
 #
 #
 #                               (base dispatcher)
