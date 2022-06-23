@@ -34,6 +34,7 @@ from ..utils import _IS_32BIT
 from ..exceptions import NotFittedError
 from ..utils._param_validation import StrOptions
 
+
 __all__ = [
     "HashingVectorizer",
     "CountVectorizer",
@@ -1597,9 +1598,9 @@ class TfidfTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
     _parameter_constraints = {
         "norm": [StrOptions({"l1", "l2"}), None],
-        "use_idf": [bool],
-        "smooth_idf": [bool],
-        "sublinear_tf": [bool],
+        "use_idf": ["boolean"],
+        "smooth_idf": ["boolean"],
+        "sublinear_tf": ["boolean"],
     }
 
     def __init__(self, *, norm="l2", use_idf=True, smooth_idf=True, sublinear_tf=False):
