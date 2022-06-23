@@ -389,7 +389,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             else:
                 kernel = self.kernel
 
-            n_targets = self.n_targets or 1
+            n_targets = self.n_targets if self.n_targets is not None else 1
             if n_targets == 1:
                 y_mean = np.zeros(X.shape[0])
             else:
