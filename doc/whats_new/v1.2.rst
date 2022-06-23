@@ -149,10 +149,17 @@ Changelog
 :mod:`sklearn.metrics`
 ......................
 
-- |Feature| :func:`class_likelihood_ratios` is added to compute the positive and
+- |Feature| :func:`metrics.class_likelihood_ratios` is added to compute the positive and
   negative likelihood ratios derived from the confusion matrix
   of a binary classification problem. :pr:`22518` by
   :user:`Arturo Amor <ArturoAmorQ>`.
+  
+- |Fix| :func:`metrics.ndcg_score` will now trigger a warning when the `y_true`
+  value contains a negative value. Users may still use negative values, but the
+  result may not be between 0 and 1. Starting in v1.4, passing in negative
+  values for `y_true` will raise an error.
+  :pr:`22710` by :user:`Conroy Trinh <trinhcon>` and
+  :pr:`23461` by :user:`Meekail Zain <micky774>`.
 
 - |Fix| Fixed error message of :class:`metrics.coverage_error` for 1D array input.
   :pr:`23548` by :user:`Hao Chun Chang <haochunchang>`.
