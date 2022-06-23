@@ -475,8 +475,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "ElasticNetCV",
     "EllipticEnvelope",
     "EmpiricalCovariance",
-    "ExtraTreeClassifier",
-    "ExtraTreeRegressor",
     "ExtraTreesClassifier",
     "ExtraTreesRegressor",
     "FactorAnalysis",
