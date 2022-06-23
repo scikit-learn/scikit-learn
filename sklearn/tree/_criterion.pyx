@@ -255,8 +255,6 @@ cdef class ClassificationCriterion(Criterion):
         self.sum_total = np.zeros((n_outputs, max_n_classes), dtype=np.float64)
         self.sum_left = np.zeros((n_outputs, max_n_classes), dtype=np.float64)
         self.sum_right = np.zeros((n_outputs, max_n_classes), dtype=np.float64)
-
-        # XXX: Only init if there are missing values in the first place
         self.sum_missing = np.zeros((n_outputs, max_n_classes), dtype=np.float64)
 
     def __reduce__(self):
@@ -706,8 +704,6 @@ cdef class RegressionCriterion(Criterion):
         self.sum_total = np.zeros(n_outputs, dtype=np.float64)
         self.sum_left = np.zeros(n_outputs, dtype=np.float64)
         self.sum_right = np.zeros(n_outputs, dtype=np.float64)
-
-        # XXX: Only init if there are missing values in the first place
         self.sum_missing = np.zeros(n_outputs, dtype=np.float64)
 
     def __reduce__(self):

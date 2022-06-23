@@ -370,8 +370,8 @@ cdef class BestSplitter(BaseDenseSplitter):
                     Xf[i] = self.X[samples[i], current.feature]
                     i += 1
             else:
-                # Reduces the number of computations for the case where there
-                # is no missing values
+                # Reduces the number of computations for the case where there are
+                # no missing values
                 for i in range(start, end):
                     Xf[i] = self.X[samples[i], current.feature]
 
