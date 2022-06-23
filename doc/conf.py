@@ -597,6 +597,8 @@ linkcheck_ignore = [
     "roads-and-bridges-the-unseen-labor-behind-our-digital-infrastructure.pdf#page=.*",
     "https://www.researchgate.net/publication/"
     "233096619_A_Dendrite_Method_for_Cluster_Analysis",
+    "https://www.researchgate.net/publication/"
+    "354448354?channel=doi&linkId=6138e932a3a397270a8f1300&showFulltext=true",
     # Broken links from testimonials
     "http://www.bestofmedia.com",
     "http://www.data-publica.com/",
