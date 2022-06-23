@@ -784,7 +784,7 @@ def test_sample_y_shape_with_prior(n_targets, n_samples):
 
 @pytest.mark.parametrize("n_targets", [None, 1, 2, 3])
 def test_predict_shape_with_prior(n_targets):
-    """Check the output shape of `predict` with prior distribution"""
+    """Check the output shape of `predict` with prior distribution."""
     rng = np.random.RandomState(1024)
 
     n_sample = 10
