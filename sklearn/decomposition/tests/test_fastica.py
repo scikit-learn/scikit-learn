@@ -4,7 +4,6 @@ Test the fastica algorithm.
 import itertools
 import pytest
 import warnings
-from functools import partial
 
 import numpy as np
 from scipy import stats
@@ -14,24 +13,16 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_allclose
 
 from sklearn.decomposition import fastica, PCA
-from sklearn.decomposition import FastICA as _FastICA
+from sklearn.decomposition import FastICA
 
 from sklearn.decomposition._fastica import _gs_decorrelation
 from sklearn.exceptions import ConvergenceWarning
 
-
-# TODO(1.4): Remove
-# Override defaults for smoother deprecation
-class FastICA(_FastICA):
-    def __init__(self, *args, whiten_solver="auto", **kwargs):
-        super().__init__(
-            *args,
-            whiten_solver=whiten_solver,
-            **kwargs,
-        )
-
-
-fastica = partial(fastica, whiten_solver="auto")
+msg = (
+    r"From version 1.4 `whiten_solver='auto'` will be used by default. Manually set the"
+    r" value of `whiten_solver` to suppress this message."
+)
+pytestmark = pytest.mark.filterwarnings(f"ignore:{msg}:FutureWarning")
 
 
 def center_and_norm(x, axis=-1):
@@ -541,7 +532,7 @@ def test_fastica_whiten_solver_future_warning():
     rng = np.random.RandomState(0)
     X = rng.random_sample((10, 10))
 
-    ica = _FastICA(random_state=rng, whiten="unit-variance")
+    ica = FastICA(random_state=rng, whiten="unit-variance")
     msg = "From version 1.4 `whiten_solver='auto'` will be used by default."
     with pytest.warns(FutureWarning, match=msg):
         ica.fit_transform(X)
