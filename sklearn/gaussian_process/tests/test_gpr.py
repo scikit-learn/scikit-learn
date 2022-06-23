@@ -778,7 +778,7 @@ def test_sample_y_shape_with_prior(n_targets, n_samples):
     model = GaussianProcessRegressor(n_targets=n_targets)
     shape_before_fit = model.sample_y(X, n_samples=n_samples).shape
     model.fit(X, y)
-    shape_after_fit = model.sample_y(X).shape
+    shape_after_fit = model.sample_y(X, n_samples=n_samples).shape
     assert shape_before_fit == shape_after_fit
 
 
