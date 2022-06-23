@@ -789,7 +789,7 @@ def test_predict_shape_with_prior(n_targets):
 
     n_sample = 10
     X = rng.randn(n_sample, 3)
-    y = rng.randn(n_sample, n_targets or 1)
+    y = rng.randn(n_sample, n_targets if n_targets is not None else 1)
 
     model = GaussianProcessRegressor(n_targets=n_targets)
     mean_prior, cov_prior = model.predict(X, return_cov=True)
