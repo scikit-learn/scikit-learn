@@ -378,7 +378,11 @@ class MinMaxScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     [[1.5 0. ]]
     """
 
-    _parameter_constraints = {"feature_range": [tuple], "copy": [bool], "clip": [bool]}
+    _parameter_constraints = {
+        "feature_range": [tuple],
+        "copy": ["boolean"],
+        "clip": ["boolean"],
+    }
 
     def __init__(self, feature_range=(0, 1), *, copy=True, clip=False):
         self.feature_range = feature_range
@@ -767,7 +771,11 @@ class StandardScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     [[3. 3.]]
     """
 
-    _parameter_constraints = {"copy": [bool], "with_mean": [bool], "with_std": [bool]}
+    _parameter_constraints = {
+        "copy": ["boolean"],
+        "with_mean": ["boolean"],
+        "with_std": ["boolean"],
+    }
 
     def __init__(self, *, copy=True, with_mean=True, with_std=True):
         self.with_mean = with_mean
@@ -1121,7 +1129,7 @@ class MaxAbsScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
            [ 0. ,  1. , -0.5]])
     """
 
-    _parameter_constraints = {"copy": [bool]}
+    _parameter_constraints = {"copy": ["boolean"]}
 
     def __init__(self, *, copy=True):
         self.copy = copy
