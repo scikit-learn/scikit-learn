@@ -721,19 +721,25 @@ cdef class DistanceMetric{{name_suffix}}:
 
         Parameters
         ----------
-        X : array-like
-            Array of shape (Nx, D), representing Nx points in D dimensions.
-        Y : array-like (optional)
-            Array of shape (Ny, D), representing Ny points in D dimensions.
+        X : ndarray or CSR matrix of shape (n_samples_X, n_features)
+            Input data.
+        Y : ndarray or CSR matrix of shape (n_samples_Y, n_features)
+            Input data.
             If not specified, then Y=X.
 
         Returns
         -------
-        dist : ndarray
-            The shape (Nx, Ny) array of pairwise distances between points in
-            X and Y.
+        dist : ndarray of shape (n_samples_X, n_samples_Y)
+            The distance matrix of pairwise distances between points in X and Y.
         """
         Y = X if Y is None else Y
+        X_is_Y = X is Y
+        X = check_array(X, accept_sparse=['csr'])
+
+        if X_is_Y:
+            Y = X
+        else:
+            Y = check_array(Y, accept_sparse=['csr'])
 
         X_is_sparse = issparse(X)
         Y_is_sparse = issparse(Y)
