@@ -642,11 +642,10 @@ cdef class DistanceMetric{{name_suffix}}:
         return Darr
 
     def _pairwise_sparse_dense(self, X, Y):
-        X_csr = X.tocsr()
-        n_X, size = X_csr.shape
-        X_data = np.asarray(X_csr.data, dtype={{INPUT_DTYPE}})
-        X_indices = np.asarray(X_csr.indices, dtype=SPARSE_INDEX_TYPE)
-        X_indptr = np.asarray(X_csr.indptr, dtype=SPARSE_INDEX_TYPE)
+        n_X, size = X.shape
+        X_data = np.asarray(X.data, dtype={{INPUT_DTYPE}})
+        X_indices = np.asarray(X.indices, dtype=SPARSE_INDEX_TYPE)
+        X_indptr = np.asarray(X.indptr, dtype=SPARSE_INDEX_TYPE)
 
         # To avoid introducing redundant implementations for the CSR × dense array
         # case, we wrap the dense array into a fake CSR datastructure and leverage
@@ -684,12 +683,10 @@ cdef class DistanceMetric{{name_suffix}}:
         # have implemented this method using _pairwise_dense_sparse,
         # but this would have come with an extra copy to ensure
         # c-contiguity of the result.
-
-        Y_csr = Y.tocsr()
-        n_Y, size = Y_csr.shape
-        Y_data = np.asarray(Y_csr.data, dtype={{INPUT_DTYPE}})
-        Y_indices = np.asarray(Y_csr.indices, dtype=SPARSE_INDEX_TYPE)
-        Y_indptr = np.asarray(Y_csr.indptr, dtype=SPARSE_INDEX_TYPE)
+        n_Y, size = Y.shape
+        Y_data = np.asarray(Y.data, dtype={{INPUT_DTYPE}})
+        Y_indices = np.asarray(Y.indices, dtype=SPARSE_INDEX_TYPE)
+        Y_indptr = np.asarray(Y.indptr, dtype=SPARSE_INDEX_TYPE)
 
         n_X, _ = X.shape
         X_data = X.reshape(-1)
@@ -729,14 +726,12 @@ cdef class DistanceMetric{{name_suffix}}:
 
         Returns
         -------
-        dist : ndarray of shape (n_samples_X, n_samples_Y)
+        dist : ndarray of shape  (n_samples_X, n_samples_Y)
             The distance matrix of pairwise distances between points in X and Y.
         """
-        Y = X if Y is None else Y
-        X_is_Y = X is Y
         X = check_array(X, accept_sparse=['csr'])
 
-        if X_is_Y:
+        if Y is None:
             Y = X
         else:
             Y = check_array(Y, accept_sparse=['csr'])
