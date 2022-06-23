@@ -626,7 +626,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "StackingRegressor",
     "StandardScaler",
     "TSNE",
-    "TfidfTransformer",
     "TfidfVectorizer",
     "TheilSenRegressor",
     "TransformedTargetRegressor",
