@@ -269,6 +269,19 @@ def test_input_validation():
     DBSCAN().fit(X)  # must not raise exception
 
 
+@pytest.mark.parametrize(
+    "args",
+    [
+        {"algorithm": "blah"},
+        {"metric": "blah"},
+    ],
+)
+def test_dbscan_badargs(args):
+    # Test bad argument values: these should all raise ValueErrors
+    with pytest.raises(ValueError):
+        dbscan(X, **args)
+
+
 def test_pickle():
     obj = DBSCAN()
     s = pickle.dumps(obj)
