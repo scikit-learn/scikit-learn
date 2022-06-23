@@ -234,7 +234,7 @@ class SimpleImputer(_BaseImputer):
     In a prediction context, simple imputation usually performs poorly when
     associated with a weak learner. However, with a powerful learner, it can
     lead to as good or better performance than complex imputation such as
-    :obj:`IterativeImputer` or :obj:`KNNImputer`.
+    :class:`~sklearn.impute.IterativeImputer` or :class:`~sklearn.impute.KNNImputer`.
 
     Examples
     --------
