@@ -678,9 +678,7 @@ SET_OUTPUT_MODULES_TO_SKIP = {
 SET_OUTPUT_ESTIMATORS = list(
     chain(
         _tested_estimators("transformer"),
-        [
-            make_pipeline(StandardScaler(), MinMaxScaler()),
-        ],
+        [make_pipeline(StandardScaler(), MinMaxScaler())],
     )
 )
 
