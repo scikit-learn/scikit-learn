@@ -392,7 +392,7 @@ formula is valid only when `n_samples > n_features`.
   .. [13] `Cherkassky, Vladimir, and Yunqian Ma.
            "Comparison of model selection for regression."
            Neural computation 15.7 (2003): 1691-1714.
-           <https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.392.8794&rep=rep1&type=pdf>`_
+           <https://documents.pub/document/comparison-of-model-selection-for-regression-comparison-of-model-selection.html?page=1>`_
 
 Comparison with the regularization parameter of SVM
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
