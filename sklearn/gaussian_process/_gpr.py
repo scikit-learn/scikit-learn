@@ -109,8 +109,10 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         externally.
 
     n_targets : int, default=None
-        Dimension of the target values. Used to decide the output dimension
-        when sampling with prior distribution.
+        The number of dimensions of the target values. Used to decide the number
+        of outputs when sampling from the prior distributions (i.e. calling
+        :meth:`sample_y` before :meth:`fit`). This parameter is ignored once
+        :meth:`fit` has been called.
 
         .. versionadded:: 1.2
 
