@@ -30,11 +30,17 @@ categories = [
     "talk.religion.misc",
 ]
 
-data = fetch_20newsgroups(subset="train", categories=categories)
+data_train = fetch_20newsgroups(
+    subset="train",
+    categories=categories,
+    shuffle=True,
+    random_state=42,
+    remove=("headers", "footers", "quotes"),
+)
 
-print(f"Loading 20 newsgroups dataset for {len(data.target_names)} categories:")
-print(data.target_names)
-print(f"{len(data.data)} documents")
+print(f"Loading 20 newsgroups dataset for {len(data_train.target_names)} categories:")
+print(data_train.target_names)
+print(f"{len(data_train.data)} documents")
 
 # %%
 # Pipeline with hyperparameter tuning
@@ -45,26 +51,23 @@ print(f"{len(data.data)} documents")
 # increase processing time in a combinatorial way.
 
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.linear_model import SGDClassifier
+from sklearn.naive_bayes import ComplementNB
 from sklearn.pipeline import Pipeline
 
 pipeline = Pipeline(
     [
-        ("vect", TfidfVectorizer),
-        ("clf", SGDClassifier()),
+        ("vect", TfidfVectorizer()),
+        ("clf", ComplementNB()),
     ]
 )
 
 parameters = {
     "vect__max_df": (0.5, 0.75, 1.0),
+    "vect__min_df": (1, 3, 5),
     # 'vect__max_features': (None, 5000, 10000, 50000),
     "vect__ngram_range": ((1, 1), (1, 2)),  # unigrams or bigrams
-    # 'vect__use_idf': (True, False),
     # 'vect__norm': ('l1', 'l2'),
-    "clf__max_iter": (20,),
-    "clf__alpha": (0.00001, 0.000001),
-    "clf__penalty": ("l2", "elasticnet"),
-    # 'clf__max_iter': (10, 50, 80),
+    "clf__alpha": (0.01, 0.1),
 }
 
 # %%
@@ -83,7 +86,7 @@ print("pipeline:", [name for name, _ in pipeline.steps])
 print("parameters:")
 pprint(parameters)
 t0 = time()
-grid_search.fit(data.data, data.target)
+grid_search.fit(data_train.data, data_train.target)
 print(f"done in {time() - t0:.3f}s")
 print()
 
