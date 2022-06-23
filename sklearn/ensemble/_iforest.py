@@ -215,7 +215,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         "bootstrap": ["boolean"],
         "n_jobs": [Integral, None],
         "random_state": ["random_state"],
-        "verbose": [Integral],
+        "verbose": ["verbose"],
         "warm_start": ["boolean"],
     }
 
