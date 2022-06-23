@@ -367,8 +367,8 @@ class PCA(_BasePCA):
             StrOptions({"mle"}),
             None,
         ],
-        "copy": [bool],
-        "whiten": [bool],
+        "copy": ["boolean"],
+        "whiten": ["boolean"],
         "svd_solver": [StrOptions({"auto", "full", "arpack", "randomized"})],
         "tol": [Interval(Real, 0, None, closed="left")],
         "iterated_power": [
@@ -504,7 +504,6 @@ class PCA(_BasePCA):
 
     def _fit_full(self, X, n_components):
         """Fit the model by computing full SVD on X."""
-
         n_samples, n_features = X.shape
 
         if n_components == "mle":
@@ -566,7 +565,6 @@ class PCA(_BasePCA):
         """Fit the model by computing truncated SVD (by ARPACK or randomized)
         on X.
         """
-
         n_samples, n_features = X.shape
 
         if isinstance(n_components, str):

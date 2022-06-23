@@ -258,7 +258,6 @@ def test_pca_validation(svd_solver, data, n_components, err_msg):
     # Ensures that solver-specific extreme inputs for the n_components
     # parameter raise errors
     smallest_d = 2  # The smallest dimension
-
     pca_fitted = PCA(n_components, svd_solver=svd_solver)
 
     with pytest.raises(ValueError, match=err_msg):
