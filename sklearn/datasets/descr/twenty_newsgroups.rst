@@ -216,7 +216,7 @@ It loses even more if we also strip this metadata from the training data:
   0.76995...
 
 Some other classifiers cope better with this harder version of the task. Try
-running :ref:`sphx_glr_auto_examples_model_selection_grid_search_text_feature_extraction.py` with and without
+running :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_text_feature_extraction.py` with and without
 the ``--filter`` option to compare the results.
 
 .. topic:: Data Considerations
@@ -248,6 +248,6 @@ the ``--filter`` option to compare the results.
 
 .. topic:: Examples
 
-   * :ref:`sphx_glr_auto_examples_model_selection_grid_search_text_feature_extraction.py`
+   * :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_text_feature_extraction.py`
 
    * :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
