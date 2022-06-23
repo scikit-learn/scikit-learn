@@ -184,6 +184,7 @@ Communication
 
 - Mailing list: https://mail.python.org/mailman/listinfo/scikit-learn
 - Gitter: https://gitter.im/scikit-learn/scikit-learn
+- Logos & Branding: https://github.com/scikit-learn/scikit-learn/tree/main/doc/logos
 - Blog: https://blog.scikit-learn.org
 - Calendar: https://blog.scikit-learn.org/calendar/
 - Twitter: https://twitter.com/scikit_learn
