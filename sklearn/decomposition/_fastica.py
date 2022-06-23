@@ -241,6 +241,8 @@ def fastica(
           `n_samples >= n_features`, and can be faster when
           `n_samples >= 50 * n_features`.
 
+        - "auto" uses the `eigh` solver when `n_samples >= 50 * n_features`
+
         .. versionadded:: 1.2
 
         .. versionadded:: 1.2
