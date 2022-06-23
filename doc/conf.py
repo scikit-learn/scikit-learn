@@ -595,6 +595,8 @@ linkcheck_ignore = [
     r"http://www.utstat.toronto.edu/~rsalakhu/sta4273/notes/Lecture2.pdf#page=.*",
     "https://www.fordfoundation.org/media/2976/"
     "roads-and-bridges-the-unseen-labor-behind-our-digital-infrastructure.pdf#page=.*",
+    "https://www.researchgate.net/publication/"
+    "233096619_A_Dendrite_Method_for_Cluster_Analysis",
     # Broken links from testimonials
     "http://www.bestofmedia.com",
     "http://www.data-publica.com/",
