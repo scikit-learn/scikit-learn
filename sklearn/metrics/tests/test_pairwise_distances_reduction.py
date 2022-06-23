@@ -959,7 +959,6 @@ def test_pairwise_distances_radius_neighbors(
 )
 @pytest.mark.parametrize("metric", ["manhattan", "euclidean"])
 def test_memmap_backed_data(
-    global_random_seed,
     metric,
     PairwiseDistancesReduction,
     n_samples=512,
@@ -967,7 +966,7 @@ def test_memmap_backed_data(
     dtype=np.float64,
 ):
     # Results must not depend on the datasets writability
-    rng = np.random.RandomState(global_random_seed)
+    rng = np.random.RandomState(0)
     spread = 100
     X = rng.rand(n_samples, n_features).astype(dtype) * spread
     Y = rng.rand(n_samples, n_features).astype(dtype) * spread
