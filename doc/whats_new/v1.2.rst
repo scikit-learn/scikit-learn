@@ -130,6 +130,13 @@ Changelog
   :pr:`11860` by :user:`Pierre Ablin <pierreablin>`,
   :pr:`22527` by :user:`Meekail Zain <micky774>` and `Thomas Fan`_.
 
+:mod:`sklearn.gaussian_process`
+...............................
+
+- |Fix| :class:`gaussian_process.GaussianProcessRegressor` has a new argument
+  `n_targets`, which is used to decide the number of outputs when sampling
+  from the prior distributions. :pr:`23099` by :user:`Zhehao Liu <MaxwellLZH>`.
+
 :mod:`sklearn.impute`
 .....................
 
