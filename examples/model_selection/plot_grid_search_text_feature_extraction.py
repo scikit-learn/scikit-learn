@@ -4,11 +4,14 @@ Sample pipeline for text feature extraction and evaluation
 ==========================================================
 
 The dataset used in this example is the 20 newsgroups dataset which will be
-automatically downloaded and then cached and reused for the document
+automatically downloaded, cached and reused for the document
 classification example.
 
-You can adjust the number of categories by giving their names to the dataset
-loader or setting them to None to get the 20 of them.
+In this example we tune the hyperparameters of a particular classifier using a
+:class:`~sklearn.model_selection.GridSearchCV`. For a demo on the performance of
+some other classifiers, see the
+:ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
+notebook.
 
 """
 
@@ -20,8 +23,9 @@ loader or setting them to None to get the 20 of them.
 # %%
 # Data loading
 # ------------
-# We load two categories from the training set. Set `categories=None` to do the
-# analysis on all the categories.
+# We load two categories from the training set. You can adjust the number of
+# categories by giving their names to the dataset loader or setting them to None
+# to get the 20 of them.
 
 from sklearn.datasets import fetch_20newsgroups
 
