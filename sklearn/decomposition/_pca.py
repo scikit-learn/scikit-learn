@@ -420,6 +420,7 @@ class PCA(_BasePCA):
         self : object
             Returns the instance itself.
         """
+        self._validate_params()
 
         self._fit(X)
         return self
@@ -446,6 +447,8 @@ class PCA(_BasePCA):
         This method returns a Fortran-ordered array. To convert it to a
         C-ordered array, use 'np.ascontiguousarray'.
         """
+        self._validate_params()
+
         U, S, Vt = self._fit(X)
         U = U[:, : self.n_components_]
 
@@ -460,8 +463,6 @@ class PCA(_BasePCA):
 
     def _fit(self, X):
         """Dispatch to the right submethod depending on the chosen solver."""
-
-        self._validate_params()
 
         # Raise an error for sparse input.
         # This is more informative than the generic one raised by check_array.
