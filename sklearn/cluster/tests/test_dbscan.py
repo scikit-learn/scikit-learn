@@ -272,7 +272,6 @@ def test_input_validation():
 @pytest.mark.parametrize(
     "args",
     [
-        {"algorithm": "blah"},
         {"metric": "blah"},
     ],
 )
