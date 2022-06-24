@@ -34,7 +34,7 @@ jobs:
         versionSpec: '3.9'
     - bash: |
         # Include pytest compatibility with mypy
-        pip install pytest flake8 mypy==0.782 black==22.3.0
+        pip install pytest flake8 mypy==0.961 black==22.3.0
       displayName: Install linters
     - bash: |
         black --check --diff .
