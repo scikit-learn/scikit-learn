@@ -1902,7 +1902,10 @@ class Normalizer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
            [0.5, 0.7, 0.5, 0.1]])
     """
 
-    _parameter_constraints = {"norm": [StrOptions({"l1", "l2", "max"})], "copy": [bool]}
+    _parameter_constraints = {
+        "norm": [StrOptions({"l1", "l2", "max"})],
+        "copy": ["boolean"],
+    }
 
     def __init__(self, norm="l2", *, copy=True):
         self.norm = norm
