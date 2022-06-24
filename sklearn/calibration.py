@@ -14,6 +14,7 @@ from functools import partial
 from math import log
 import numpy as np
 from joblib import Parallel
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 from scipy.special import expit
 from scipy.special import xlogy
@@ -1116,11 +1117,12 @@ class CalibrationDisplay:
     """
 
     def __init__(
-        self, prob_true, prob_pred, y_prob, *, estimator_name=None, pos_label=None
+        self, prob_true, prob_pred, y_prob, bins, *, estimator_name=None, pos_label=None
     ):
         self.prob_true = prob_true
         self.prob_pred = prob_pred
         self.y_prob = y_prob
+        self.bins = bins
         self.estimator_name = estimator_name
         self.pos_label = pos_label
 
@@ -1160,7 +1162,7 @@ class CalibrationDisplay:
 
         name = self.estimator_name if name is None else name
         info_pos_label = (
-            f"(Positive class: {self.pos_label})" if self.pos_label is not None else ""
+            f"(Class {self.pos_label})" if self.pos_label is not None else ""
         )
 
         line_kwargs = {}
@@ -1171,13 +1173,38 @@ class CalibrationDisplay:
         ref_line_label = "Perfectly calibrated"
         existing_ref_line = ref_line_label in ax.get_legend_handles_labels()[1]
         if ref_line and not existing_ref_line:
-            ax.plot([0, 1], [0, 1], "k:", label=ref_line_label)
-        self.line_ = ax.plot(self.prob_pred, self.prob_true, "s-", **line_kwargs)[0]
+            ax.plot([0, 1], [0, 1], "k--", label=ref_line_label, lw=1)
+        self.line_ = ax.plot(self.prob_pred, self.prob_true, "o-", **line_kwargs)[0]
+
+        for x in self.bins:
+            ax.axvline(x, lw=0.5, ls="--", color="grey", zorder=-1)
 
         # We always have to show the legend for at least the reference line
         ax.legend(loc="lower right")
 
-        xlabel = f"Mean predicted probability {info_pos_label}"
+        ax.set_aspect("equal")
+
+        # Plot histogram
+        divider = make_axes_locatable(ax)
+        ax_hist = divider.append_axes("top", size="10%", pad=0.0)
+
+        ax_hist.set_xlim(ax.get_xlim())
+        ax_hist.set_xticklabels([])
+        ax_hist.set_yticks([])
+        ax_hist.spines["right"].set_visible(False)
+        ax_hist.spines["top"].set_visible(False)
+        ax_hist.spines["left"].set_visible(False)
+
+        ax_hist.hist(
+            self.y_prob,
+            bins=self.bins,
+            label=name,
+            density=True,
+            histtype="step",
+            color=self.line_.get_color(),
+        )
+
+        xlabel = f"Mean predicted confidence {info_pos_label}"
         ylabel = f"Fraction of positives {info_pos_label}"
         ax.set(xlabel=xlabel, ylabel=ylabel)
 
@@ -1411,8 +1438,10 @@ class CalibrationDisplay:
         method_name = f"{cls.__name__}.from_estimator"
         check_matplotlib_support(method_name)
 
+        bins = bins_from_strategy(n_bins, strategy, y_prob)
+
         prob_true, prob_pred = calibration_curve(
-            y_true, y_prob, n_bins=n_bins, strategy=strategy, pos_label=pos_label
+            y_true, y_prob, n_bins=bins, pos_label=pos_label
         )
         name = "Classifier" if name is None else name
         pos_label = _check_pos_label_consistency(pos_label, y_true)
@@ -1421,6 +1450,7 @@ class CalibrationDisplay:
             prob_true=prob_true,
             prob_pred=prob_pred,
             y_prob=y_prob,
+            bins=bins,
             estimator_name=name,
             pos_label=pos_label,
         )
