@@ -26,10 +26,12 @@ from ..utils.validation import (
     check_is_fitted,
     check_non_negative,
 )
-from ..utils._param_validation import Hidden
-from ..utils._param_validation import Interval
-from ..utils._param_validation import StrOptions
-from ..utils._param_validation import validate_params
+from ..utils._param_validation import (
+    Hidden,
+    Interval,
+    StrOptions,
+    validate_params,
+)
 
 
 EPSILON = np.finfo(np.float32).eps
@@ -924,7 +926,7 @@ def _fit_multiplicative_update(
             Real,
         ],
         "tol": [Interval(Real, 0, None, closed="left")],
-        "max_iter": [Interval(Integral, 0, None, closed="left")],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
         "alpha": [
             Interval(Real, 0, None, closed="left"),
             Hidden(StrOptions({"deprecated"})),
@@ -938,7 +940,7 @@ def _fit_multiplicative_update(
             None,
         ],
         "random_state": ["random_state"],
-        "verbose": [Interval(Integral, 0, None, closed="left"), bool, np.bool_],
+        "verbose": ["verbose"],
         "shuffle": ["boolean"],
     }
 )
@@ -1027,20 +1029,15 @@ def non_negative_factorization(
         Valid options:
 
         - None: 'nndsvda' if n_components < n_features, otherwise 'random'.
-
         - 'random': non-negative random matrices, scaled with:
-            sqrt(X.mean() / n_components)
-
+          `sqrt(X.mean() / n_components)`
         - 'nndsvd': Nonnegative Double Singular Value Decomposition (NNDSVD)
-            initialization (better for sparseness)
-
+          initialization (better for sparseness)
         - 'nndsvda': NNDSVD with zeros filled with the average of X
-            (better when sparsity is not desired)
-
+          (better when sparsity is not desired)
         - 'nndsvdar': NNDSVD with zeros filled with small random values
-            (generally faster, less accurate alternative to NNDSVDa
-            for when sparsity is not desired)
-
+          (generally faster, less accurate alternative to NNDSVDa
+          for when sparsity is not desired)
         - 'custom': use custom matrices W and H if `update_H=True`. If
           `update_H=False`, then only custom matrix H is used.
 
@@ -1059,8 +1056,7 @@ def non_negative_factorization(
         Numerical solver to use:
 
         - 'cd' is a Coordinate Descent solver that uses Fast Hierarchical
-            Alternating Least Squares (Fast HALS).
-
+          Alternating Least Squares (Fast HALS).
         - 'mu' is a Multiplicative Update solver.
 
         .. versionadded:: 0.17
@@ -1151,8 +1147,8 @@ def non_negative_factorization(
     >>> import numpy as np
     >>> X = np.array([[1,1], [2, 1], [3, 1.2], [4, 1], [5, 0.8], [6, 1]])
     >>> from sklearn.decomposition import non_negative_factorization
-    >>> W, H, n_iter = non_negative_factorization(X, n_components=2,
-    ... init='random', random_state=0)
+    >>> W, H, n_iter = non_negative_factorization(
+    ...     X, n_components=2, init='random', random_state=0)
 
     References
     ----------
@@ -1204,12 +1200,12 @@ class _BaseNMF(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
             Real,
         ],
         "tol": [Interval(Real, 0, None, closed="left")],
-        "max_iter": [Interval(Integral, 0, None, closed="left")],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
         "random_state": ["random_state"],
         "alpha_W": [Interval(Real, 0, None, closed="left")],
         "alpha_H": [Interval(Real, 0, None, closed="left"), StrOptions({"same"})],
         "l1_ratio": [Interval(Real, 0, 1, closed="both")],
-        "verbose": [Interval(Integral, 0, None, closed="left"), bool, np.bool_],
+        "verbose": ["verbose"],
     }
 
     def __init__(
@@ -1318,6 +1314,8 @@ class _BaseNMF(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
         self : object
             Returns the instance itself.
         """
+        # param validation is done in fit_transform
+
         self.fit_transform(X, **params)
         return self
 
@@ -1403,7 +1401,6 @@ class NMF(_BaseNMF):
 
     init : {'random', 'nndsvd', 'nndsvda', 'nndsvdar', 'custom'}, default=None
         Method used to initialize the procedure.
-        Default: None.
         Valid options:
 
         - `None`: 'nndsvda' if n_components <= min(n_samples, n_features),
@@ -1430,8 +1427,9 @@ class NMF(_BaseNMF):
 
     solver : {'cd', 'mu'}, default='cd'
         Numerical solver to use:
-        'cd' is a Coordinate Descent solver.
-        'mu' is a Multiplicative Update solver.
+        
+        - 'cd' is a Coordinate Descent solver.
+        - 'mu' is a Multiplicative Update solver.
 
         .. versionadded:: 0.17
            Coordinate Descent solver.
