@@ -13,12 +13,11 @@ from ..utils import check_array, is_scalar_nan
 from ..utils.deprecation import deprecated
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _check_feature_names_in
+from ..utils._param_validation import Interval
+from ..utils._param_validation import StrOptions
 from ..utils._mask import _get_mask
 
 from ..utils._encode import _encode, _check_unknown, _unique, _get_counts
-
-from ..utils._param_validation import Interval
-from ..utils._param_validation import StrOptions
 
 
 __all__ = ["OneHotEncoder", "OrdinalEncoder"]
@@ -436,10 +435,7 @@ class OneHotEncoder(_BaseEncoder):
     _parameter_constraints = {
         "categories": [StrOptions({"auto"}), "array-like"],
         "drop": [StrOptions({"first", "if_binary"}), "array-like", None],
-        # By using object as parameter constraint, we are currently
-        # allowing numpy to do the validation. Numpy data types can take
-        # various inputs, that validate_params can't validate yet.
-        "dtype": [object],
+        "dtype": "no_validation",  # validation delegated to numpy
         "handle_unknown": [StrOptions({"error", "ignore", "infrequent_if_exist"})],
         "max_categories": [Interval(numbers.Integral, 1, None, closed="left"), None],
         "min_frequency": [
@@ -1230,10 +1226,7 @@ class OrdinalEncoder(_OneToOneFeatureMixin, _BaseEncoder):
 
     _parameter_constraints = {
         "categories": [StrOptions({"auto"}), "array-like"],
-        # By using object as parameter constraint, we are currently
-        # allowing numpy to do the validation. Numpy data types can take
-        # various inputs, that validate_params can't validate yet.
-        "dtype": [object],
+        "dtype": "no_validation",
         "encoded_missing_value": [
             Interval(numbers.Integral, None, None, closed="neither"),
             type(np.nan),
