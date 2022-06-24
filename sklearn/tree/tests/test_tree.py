@@ -1206,21 +1206,10 @@ def check_class_weight_errors(name):
     TreeClassifier = CLF_TREES[name]
     _y = np.vstack((y, np.array(y) * 2)).T
 
-    # Invalid preset string
-    clf = TreeClassifier(class_weight="the larch", random_state=0)
-    with pytest.raises(ValueError):
-        clf.fit(X, y)
-    with pytest.raises(ValueError):
-        clf.fit(X, _y)
-
-    # Not a list or preset for multi-output
-    clf = TreeClassifier(class_weight=1, random_state=0)
-    with pytest.raises(ValueError):
-        clf.fit(X, _y)
-
     # Incorrect length list for multi-output
     clf = TreeClassifier(class_weight=[{-1: 0.5, 1: 1.0}], random_state=0)
-    with pytest.raises(ValueError):
+    err_msg = "number of elements in class_weight should match number of outputs."
+    with pytest.raises(ValueError, match=err_msg):
         clf.fit(X, _y)
 
 

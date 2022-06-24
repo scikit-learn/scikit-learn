@@ -38,8 +38,7 @@ from ..utils.validation import _check_sample_weight
 from ..utils import compute_sample_weight
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
-from ..utils._param_validation import Interval, StrOptions
-from ..utils._param_validation import Hidden
+from ..utils._param_validation import Hidden, Interval, StrOptions
 
 from ._criterion import Criterion
 from ._splitter import Splitter
