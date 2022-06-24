@@ -10,7 +10,6 @@
 
 import warnings
 
-
 import numpy as np
 from scipy import sparse
 from scipy import stats
@@ -1450,11 +1449,11 @@ class RobustScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     """
 
     _parameter_constraints = {
-        "with_centering": [bool],
-        "with_scaling": [bool],
-        "quantile_range": ["array-like"],
-        "copy": [bool],
-        "unit_variance": [bool],
+        "with_centering": ["boolean"],
+        "with_scaling": ["boolean"],
+        "quantile_range": [tuple],
+        "copy": ["boolean"],
+        "unit_variance": ["boolean"],
     }
 
     def __init__(
@@ -1489,10 +1488,10 @@ class RobustScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         self : object
             Fitted scaler.
         """
-        # at fit, convert sparse matrices to csc for optimized computation of
-        # the quantiles
         self._validate_params()
 
+        # at fit, convert sparse matrices to csc for optimized computation of
+        # the quantiles
         X = self._validate_data(
             X,
             accept_sparse="csc",
