@@ -433,7 +433,7 @@ class OneHotEncoder(_BaseEncoder):
     """
 
     _parameter_constraints = {
-        "categories": [StrOptions({"auto"}), "array-like"],
+        "categories": [StrOptions({"auto"}), list],
         "drop": [StrOptions({"first", "if_binary"}), "array-like", None],
         "dtype": "no_validation",  # validation delegated to numpy
         "handle_unknown": [StrOptions({"error", "ignore", "infrequent_if_exist"})],
@@ -541,23 +541,11 @@ class OneHotEncoder(_BaseEncoder):
                     ],
                     dtype=object,
                 )
-            else:
-                msg = (
-                    "Wrong input for parameter `drop`. Expected "
-                    "'first', 'if_binary', None or array of objects, got {}"
-                )
-                raise ValueError(msg.format(type(self.drop)))
 
         else:
-            try:
-                drop_array = np.asarray(self.drop, dtype=object)
-                droplen = len(drop_array)
-            except (ValueError, TypeError):
-                msg = (
-                    "Wrong input for parameter `drop`. Expected "
-                    "'first', 'if_binary', None or array of objects, got {}"
-                )
-                raise ValueError(msg.format(type(drop_array)))
+            drop_array = np.asarray(self.drop, dtype=object)
+            droplen = len(drop_array)
+
             if droplen != len(self.categories_):
                 msg = (
                     "`drop` should have length equal to the number "
@@ -1225,7 +1213,7 @@ class OrdinalEncoder(_OneToOneFeatureMixin, _BaseEncoder):
     """
 
     _parameter_constraints = {
-        "categories": [StrOptions({"auto"}), "array-like"],
+        "categories": [StrOptions({"auto"}), list],
         "dtype": "no_validation",
         "encoded_missing_value": [
             Interval(numbers.Integral, None, None, closed="neither"),
