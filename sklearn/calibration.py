@@ -892,6 +892,25 @@ class _SigmoidCalibration(RegressorMixin, BaseEstimator):
         return expit(-(self.a_ * T + self.b_))
 
 
+def bins_from_strategy(n_bins, strategy, y_prob=None):
+    try:
+        if strategy == "quantile":  # Determine bin edges by distribution of data
+            quantiles = np.linspace(0, 1, n_bins + 1)
+            bins = np.percentile(y_prob, quantiles * 100)
+        elif strategy == "uniform":
+            bins = np.linspace(0.0, 1.0, n_bins + 1)
+        else:
+            raise ValueError(
+                "Invalid entry to 'strategy' input. Strategy "
+                "must be either 'quantile' or 'uniform'."
+            )
+
+    except TypeError:  # n_bins is not a scalar
+        bins = n_bins  # assumed to be an array-like of bins
+
+    return bins
+
+
 def calibration_curve(
     y_true,
     y_prob,
@@ -934,9 +953,10 @@ def calibration_curve(
             recommended that a proper probability is used (i.e. a classifier's
             `predict_proba` positive class).
 
-    n_bins : int, default=5
+    n_bins : int or sequence, default=5
         Number of bins to discretize the [0, 1] interval. A bigger number
-        requires more data. Bins with no samples (i.e. without
+        requires more data. A sequence of bins can also be given.
+        Bins with no samples (i.e. without
         corresponding values in `y_prob`) will not be returned, thus the
         returned arrays may have less than `n_bins` values.
 
@@ -947,6 +967,8 @@ def calibration_curve(
             The bins have identical widths.
         quantile
             The bins have the same number of samples and depend on `y_prob`.
+
+        Ignored if n_bins is an array of bins.
 
     Returns
     -------
@@ -1004,16 +1026,7 @@ def calibration_curve(
         )
     y_true = y_true == pos_label
 
-    if strategy == "quantile":  # Determine bin edges by distribution of data
-        quantiles = np.linspace(0, 1, n_bins + 1)
-        bins = np.percentile(y_prob, quantiles * 100)
-    elif strategy == "uniform":
-        bins = np.linspace(0.0, 1.0, n_bins + 1)
-    else:
-        raise ValueError(
-            "Invalid entry to 'strategy' input. Strategy "
-            "must be either 'quantile' or 'uniform'."
-        )
+    bins = bins_from_strategy(n_bins, strategy, y_prob)
 
     binids = np.searchsorted(bins[1:-1], y_prob)
 
