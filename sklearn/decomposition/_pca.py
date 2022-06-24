@@ -25,8 +25,7 @@ from ..utils._arpack import _init_arpack_v0
 from ..utils.extmath import fast_logdet, randomized_svd, svd_flip
 from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
-from ..utils._param_validation import Interval
-from ..utils._param_validation import StrOptions
+from ..utils._param_validation import Interval, StrOptions
 
 
 def _assess_dimension(spectrum, rank, n_samples):

@@ -503,13 +503,6 @@ def test_pca_sparse_input(svd_solver):
         pca.fit(X)
 
 
-def test_pca_bad_solver():
-    X = np.random.RandomState(0).rand(5, 4)
-    pca = PCA(n_components=3, svd_solver="bad_argument")
-    with pytest.raises(ValueError):
-        pca.fit(X)
-
-
 @pytest.mark.parametrize("svd_solver", PCA_SOLVERS)
 def test_pca_deterministic_output(svd_solver):
     rng = np.random.RandomState(0)
