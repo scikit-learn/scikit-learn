@@ -36,6 +36,7 @@ from ..utils.validation import check_is_fitted
 from ..utils.validation import _check_sample_weight
 from ..utils._param_validation import Interval
 from ..utils._param_validation import StrOptions
+from ..utils._param_validation import Hidden
 from ..preprocessing import LabelBinarizer
 from ..model_selection import GridSearchCV
 from ..metrics import check_scoring
@@ -776,23 +777,21 @@ def _ridge_regression(
 
 class _BaseRidge(LinearModel, metaclass=ABCMeta):
 
-
     _parameter_constraints = {
         "alpha": [Interval(Real, 0, None, closed="left"), np.ndarray],
-        "fit_intercept": [bool],
-        "normalize": [Hidden(StrOptions({"deprecated"})), bool],
-        "copy_X": [bool],
+        "fit_intercept": ["boolean"],
+        "normalize": [Hidden(StrOptions({"deprecated"})), "boolean"],
+        "copy_X": ["boolean"],
         "max_iter": [Interval(Integral, 1, None, closed="left"), None],
         "tol": [Interval(Real, 0, None, closed="left")],
         "solver": [
             StrOptions(
-            {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', 'sag', 'saga', 'lbfgs'}
+                {"auto", "svd", "cholesky", "lsqr", "sparse_cg", "sag", "saga", "lbfgs"}
             )
         ],
-        "positive": [bool],
+        "positive": ["boolean"],
         "random_state": ["random_state"],
     }
-
 
     @abstractmethod
     def __init__(
@@ -864,7 +863,6 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
 
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
-
 
         # when X is sparse we only remove offset from y
         X, y, X_offset, y_offset, X_scale = _preprocess_data(
@@ -1441,7 +1439,7 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
             Instance of the estimator.
         """
         self._validate_params()
-        
+
         X, y, sample_weight, Y = self._prepare_data(X, y, sample_weight, self.solver)
 
         super().fit(X, Y, sample_weight=sample_weight)
