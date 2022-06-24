@@ -12,6 +12,7 @@ import numpy as np
 import warnings
 from scipy import sparse
 from numbers import Integral, Real
+from sklearn.metrics.pairwise import _VALID_METRICS
 
 from ..base import BaseEstimator, ClusterMixin
 from ..utils.validation import _check_sample_weight
