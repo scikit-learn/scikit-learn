@@ -1023,7 +1023,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         "solver": [StrOptions({"newton-cg", "lbfgs", "liblinear", "sag", "saga"})],
         "max_iter": [Interval(Integral, 0, None, closed="left")],
         "multi_class": [StrOptions({"auto", "ovr", "multinomial"})],
-        "verbose": [Interval(Integral, 0, None, closed="left")],
+        "verbose": ["verbose"],
         "warm_start": ["boolean"],
         "n_jobs": [None, Integral],
         "l1_ratio": [Interval(Real, 0, 1, closed="both"), None],
@@ -1608,10 +1608,8 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
     _parameter_constraints = {**LogisticRegression._parameter_constraints}
 
-    _parameters_to_remove = ["C", "warm_start", "l1_ratio"]
-
-    for _parameter in _parameters_to_remove:
-        _parameter_constraints.pop(_parameter)
+    for param in ["C", "warm_start", "l1_ratio"]:
+        _parameter_constraints.pop(param)
 
     _parameter_constraints.update(
         {
