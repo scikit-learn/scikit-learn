@@ -46,7 +46,7 @@ def default_solver():
     ],
 )
 @pytest.mark.filterwarnings(
-    # FIXME (1.4): remove once we changed the default solver to "auto"
+    # FIXME (1.4): remove once we changed the default solver to "highs"
     "ignore:The default solver will change from 'interior-point'"
 )
 def test_init_parameters_validation(X_y_data, params, err_msg):
