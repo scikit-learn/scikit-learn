@@ -1532,9 +1532,9 @@ def make_swiss_roll(n_samples=100, *, noise=0.0, random_state=None, hole=False):
 
     References
     ----------
-    .. [1] S. Marsland, "Machine Learning: An Algorithmic Perspective",
-           Chapter 10, 2009.
-           http://seat.massey.ac.nz/personal/s.r.marsland/Code/10/lle.py
+    .. [1] S. Marsland, "Machine Learning: An Algorithmic Perspective", 2nd edition,
+           Chapter 6, 2014.
+           https://homepages.ecs.vuw.ac.nz/~marslast/Code/Ch6/lle.py
     """
     generator = check_random_state(random_state)
 
