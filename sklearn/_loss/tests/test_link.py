@@ -58,9 +58,9 @@ def test_is_in_range(interval):
 
 
 @pytest.mark.parametrize("link", LINK_FUNCTIONS)
-def test_link_inverse_identity(link):
+def test_link_inverse_identity(link, global_random_seed):
     # Test that link of inverse gives identity.
-    rng = np.random.RandomState(42)
+    rng = np.random.RandomState(global_random_seed)
     link = link()
     n_samples, n_classes = 100, None
     if link.is_multiclass:
@@ -73,15 +73,15 @@ def test_link_inverse_identity(link):
         # we do not need to distinguish.
         raw_prediction = rng.normal(loc=0, scale=10, size=(n_samples))
 
-    assert_allclose(link.link(link.inverse(raw_prediction)), raw_prediction)
+    assert_allclose(link.link(link.inverse(raw_prediction)), raw_prediction, rtol=1e-2)
     y_pred = link.inverse(raw_prediction)
     assert_allclose(link.inverse(link.link(y_pred)), y_pred)
 
 
 @pytest.mark.parametrize("link", LINK_FUNCTIONS)
-def test_link_out_argument(link):
+def test_link_out_argument(link, global_random_seed):
     # Test that out argument gets assigned the result.
-    rng = np.random.RandomState(42)
+    rng = np.random.RandomState(global_random_seed)
     link = link()
     n_samples, n_classes = 100, None
     if link.is_multiclass:
@@ -103,6 +103,6 @@ def test_link_out_argument(link):
 
     out = np.empty_like(y_pred)
     raw_prediction_2 = link.link(y_pred, out=out)
-    assert_allclose(raw_prediction, out)
+    assert_allclose(raw_prediction, out, rtol=1e-02)
     assert_array_equal(out, raw_prediction_2)
     assert np.shares_memory(out, raw_prediction_2)
