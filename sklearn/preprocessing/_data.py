@@ -23,6 +23,7 @@ from ..base import (
     _ClassNamePrefixFeaturesOutMixin,
 )
 from ..utils import check_array
+from ..utils._param_validation import StrOptions
 from ..utils.extmath import _incremental_mean_and_var, row_norms
 from ..utils.sparsefuncs_fast import (
     inplace_csr_row_normalize_l1,
@@ -1921,6 +1922,11 @@ class Normalizer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
            [0.5, 0.7, 0.5, 0.1]])
     """
 
+    _parameter_constraints = {
+        "norm": [StrOptions({"l1", "l2", "max"})],
+        "copy": ["boolean"],
+    }
+
     def __init__(self, norm="l2", *, copy=True):
         self.norm = norm
         self.copy = copy
@@ -1944,6 +1950,7 @@ class Normalizer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         self : object
             Fitted transformer.
         """
+        self._validate_params()
         self._validate_data(X, accept_sparse="csr")
         return self
 

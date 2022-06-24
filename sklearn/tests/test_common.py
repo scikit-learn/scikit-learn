@@ -548,7 +548,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "NearestCentroid",
     "NearestNeighbors",
     "NeighborhoodComponentsAnalysis",
-    "Normalizer",
     "NuSVC",
     "NuSVR",
     "Nystroem",
