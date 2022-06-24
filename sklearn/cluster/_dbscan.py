@@ -302,7 +302,10 @@ class DBSCAN(ClusterMixin, BaseEstimator):
     _parameter_constraints = {
         "eps": [Interval(Real, 0.0, None, closed="neither")],
         "min_samples": [Interval(Integral, 1, None, closed="left")],
-        "metric": [StrOptions(set(_VALID_METRICS)), callable],
+        "metric": [
+            StrOptions(set(_VALID_METRICS) | set(["precomputed"])),
+            callable,
+        ],
         "metric_params": [dict, None],
         "algorithm": [StrOptions({"auto", "ball_tree", "kd_tree", "brute"})],
         "leaf_size": [Interval(Integral, 1, None, closed="left")],
