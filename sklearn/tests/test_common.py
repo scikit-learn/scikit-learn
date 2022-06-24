@@ -609,7 +609,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "TransformedTargetRegressor",
     "TruncatedSVD",
     "TweedieRegressor",
-    "VarianceThreshold",
     "VotingClassifier",
     "VotingRegressor",
 ]
