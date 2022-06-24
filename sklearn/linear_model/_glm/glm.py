@@ -524,10 +524,6 @@ class PoissonRegressor(_GeneralizedLinearRegressor):
     array([10.676..., 21.875...])
     """
 
-    _parameter_constraints = {
-        **_GeneralizedLinearRegressor._parameter_constraints,
-    }
-
     def __init__(
         self,
         *,
