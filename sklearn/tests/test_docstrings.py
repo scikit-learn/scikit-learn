@@ -13,7 +13,6 @@ numpydoc_validation = pytest.importorskip("numpydoc.validate")
 
 FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.datasets._kddcup99.fetch_kddcup99",
-    "sklearn.datasets._lfw.fetch_lfw_pairs",
     "sklearn.datasets._lfw.fetch_lfw_people",
     "sklearn.datasets._samples_generator.make_gaussian_quantiles",
     "sklearn.datasets._samples_generator.make_spd_matrix",
@@ -35,7 +34,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.metrics._classification.brier_score_loss",
     "sklearn.metrics._classification.cohen_kappa_score",
     "sklearn.metrics._classification.jaccard_score",
-    "sklearn.metrics._classification.log_loss",
     "sklearn.metrics._plot.det_curve.plot_det_curve",
     "sklearn.metrics._plot.precision_recall_curve.plot_precision_recall_curve",
     "sklearn.metrics._ranking.coverage_error",

@@ -464,7 +464,7 @@ def fetch_lfw_pairs(
     slice_ : tuple of slice, default=(slice(70, 195), slice(78, 172))
         Provide a custom 2D slice (height, width) to extract the
         'interesting' part of the jpeg files and avoid use statistical
-        correlation from the background
+        correlation from the background.
 
     download_if_missing : bool, default=True
         If False, raise a IOError if the data is not locally available
@@ -491,7 +491,6 @@ def fetch_lfw_pairs(
             The two label values being different persons or the same person.
         DESCR : str
             Description of the Labeled Faces in the Wild (LFW) dataset.
-
     """
     lfw_home, data_folder_path = _check_fetch_lfw(
         data_home=data_home, funneled=funneled, download_if_missing=download_if_missing
