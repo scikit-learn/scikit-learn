@@ -25,6 +25,7 @@ from ..utils.multiclass import _check_partial_fit_first_call
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils._param_validation import Interval
 from ..utils._param_validation import StrOptions
+from ..utils._param_validation import Hidden
 from ..utils.fixes import delayed
 from ..exceptions import ConvergenceWarning
 from ..model_selection import StratifiedShuffleSplit, ShuffleSplit
@@ -995,7 +996,7 @@ class SGDClassifier(BaseSGDClassifier):
 
         .. versionadded:: 0.19
 
-    tol : float, default=1e-3
+    tol : float or None, default=1e-3
         The stopping criterion. If it is not None, training will stop
         when (loss > best_loss - tol) for ``n_iter_no_change`` consecutive
         epochs.
@@ -1185,7 +1186,8 @@ class SGDClassifier(BaseSGDClassifier):
         "power_t": [Interval(Real, None, None, closed="neither")],
         "epsilon": [Interval(Real, 0, None, closed="left")],
         "learning_rate": [
-            StrOptions({"constant", "optimal", "invscaling", "adaptive", "pa1", "pa2"})
+            StrOptions({"constant", "optimal", "invscaling", "adaptive"}),
+            Hidden(StrOptions({"pa1", "pa2"})),
         ],
         "eta0": [Interval(Real, 0, None, closed="left")],
     }
@@ -1800,7 +1802,7 @@ class SGDRegressor(BaseSGDRegressor):
 
         .. versionadded:: 0.19
 
-    tol : float, default=1e-3
+    tol : float or None, default=1e-3
         The stopping criterion. If it is not None, training will stop
         when (loss > best_loss - tol) for ``n_iter_no_change`` consecutive
         epochs.
@@ -1959,7 +1961,8 @@ class SGDRegressor(BaseSGDRegressor):
         "l1_ratio": [Interval(Real, 0, 1, closed="both")],
         "power_t": [Interval(Real, None, None, closed="neither")],
         "learning_rate": [
-            StrOptions({"constant", "optimal", "invscaling", "adaptive", "pa1", "pa2"})
+            StrOptions({"constant", "optimal", "invscaling", "adaptive"}),
+            Hidden(StrOptions({"pa1", "pa2"})),
         ],
         "epsilon": [Interval(Real, 0, None, closed="left")],
         "eta0": [Interval(Real, 0, None, closed="left")],
@@ -2166,7 +2169,8 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         **BaseSGD._parameter_constraints,
         "nu": [Interval(Real, 0.0, 1.0, closed="right")],
         "learning_rate": [
-            StrOptions({"constant", "optimal", "invscaling", "adaptive", "pa1", "pa2"})
+            StrOptions({"constant", "optimal", "invscaling", "adaptive"}),
+            Hidden(StrOptions({"pa1", "pa2"})),
         ],
         "eta0": [Interval(Real, 0, None, closed="left")],
         "power_t": [Interval(Real, None, None, closed="neither")],

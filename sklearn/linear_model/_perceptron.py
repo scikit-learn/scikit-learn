@@ -39,7 +39,7 @@ class Perceptron(BaseSGDClassifier):
 
         .. versionadded:: 0.19
 
-    tol : float, default=1e-3
+    tol : float or None, default=1e-3
         The stopping criterion. If it is not None, the iterations will stop
         when (loss > previous_loss - tol).
 
