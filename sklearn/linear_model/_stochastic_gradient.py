@@ -484,6 +484,7 @@ def fit_binary(
 
 
 class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
+
     # TODO(1.2): Remove "squared_loss"
     # TODO(1.3): Remove "log""
     loss_functions = {
@@ -1365,6 +1366,7 @@ class SGDClassifier(BaseSGDClassifier):
 
 
 class BaseSGDRegressor(RegressorMixin, BaseSGD):
+
     # TODO: Remove squared_loss in v1.2
     loss_functions = {
         "squared_error": (SquaredLoss,),
@@ -2185,6 +2187,7 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         warm_start=False,
         average=False,
     ):
+
         alpha = nu / 2
         self.nu = nu
         super(SGDOneClassSVM, self).__init__(
