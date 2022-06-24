@@ -1798,7 +1798,7 @@ def test_penalty_none(solver):
     pred_none = lr_none.fit(X, y).predict(X)
     pred_l2_C_inf = lr_l2_C_inf.fit(X, y).predict(X)
     assert_array_equal(pred_none, pred_l2_C_inf)
-    
+
 
 @pytest.mark.parametrize(
     "params",
