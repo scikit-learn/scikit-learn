@@ -271,14 +271,14 @@ SFS can be either forward or backward:
 
 Forward-SFS is a greedy procedure that iteratively finds the best new feature
 to add to the set of selected features. Concretely, we initially start with
-zero feature and find the one feature that maximizes a cross-validated score
+zero features and find the one feature that maximizes a cross-validated score
 when an estimator is trained on this single feature. Once that first feature
 is selected, we repeat the procedure by adding a new feature to the set of
 selected features. The procedure stops when the desired number of selected
 features is reached, as determined by the `n_features_to_select` parameter.
 
 Backward-SFS follows the same idea but works in the opposite direction:
-instead of starting with no feature and greedily adding features, we start
+instead of starting with no features and greedily adding features, we start
 with *all* the features and greedily *remove* features from the set. The
 `direction` parameter controls whether forward or backward SFS is used.
 
