@@ -160,14 +160,6 @@ def test_predict_iris():
         assert np.mean(pred == target) > 0.95
 
 
-@pytest.mark.parametrize("solver", ["lbfgs", "newton-cg", "sag", "saga"])
-def test_multinomial_validation(solver):
-    lr = LogisticRegression(C=-1, solver=solver, multi_class="multinomial")
-
-    with pytest.raises(ValueError):
-        lr.fit([[0, 1], [1, 0]], [0, 1])
-
-
 @pytest.mark.parametrize("LR", [LogisticRegression, LogisticRegressionCV])
 def test_check_solver_option(LR):
     X, y = iris.data, iris.target
