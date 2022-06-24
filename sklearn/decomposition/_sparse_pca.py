@@ -273,8 +273,8 @@ class MiniBatchSparsePCA(SparsePCA):
     n_iter : int, default=100
         Number of iterations to perform for each mini batch.
 
-        .. deprecated:: 1.1
-           `n_iter` is deprecated in 1.1 and will be removed in 1.3. Use
+        .. deprecated:: 1.2
+           `n_iter` is deprecated in 1.2 and will be removed in 1.4. Use
            `max_iter` instead.
 
     max_iter : int, default=None
@@ -282,7 +282,7 @@ class MiniBatchSparsePCA(SparsePCA):
         stopping independently of any early stopping criterion heuristics.
         If `max_iter` is not `None`, `n_iter` is ignored.
 
-        .. versionadded:: 1.1
+        .. versionadded:: 1.2
 
     callback : callable, default=None
         Callable that gets invoked every five iterations.

@@ -794,7 +794,7 @@ def dict_learning_online(
         Number of mini-batch iterations to perform.
 
         .. deprecated:: 1.1
-           `n_iter` is deprecated in 1.1 and will be removed in 1.3. Use
+           `n_iter` is deprecated in 1.1 and will be removed in 1.4. Use
            `max_iter` instead.
 
     max_iter : int, default=None
@@ -1758,7 +1758,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         Total number of iterations over data batches to perform.
 
         .. deprecated:: 1.1
-           ``n_iter`` is deprecated in 1.1 and will be removed in 1.3. Use
+           ``n_iter`` is deprecated in 1.1 and will be removed in 1.4. Use
            ``max_iter`` instead.
 
     max_iter : int, default=None
@@ -2255,7 +2255,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         if self.n_iter != "deprecated":
             warnings.warn(
                 "'n_iter' is deprecated in version 1.1 and will be removed "
-                "in version 1.3. Use 'max_iter' and let 'n_iter' to its default "
+                "in version 1.4. Use 'max_iter' and let 'n_iter' to its default "
                 "value instead. 'n_iter' is also ignored if 'max_iter' is "
                 "specified.",
                 FutureWarning,

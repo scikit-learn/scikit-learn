@@ -19,15 +19,6 @@ Changelog
   a node if there are duplicates in the dataset.
   :pr:`23395` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
-:mod:`sklearn.decomposition`
-............................
-
-- |Fix| Fixed a bug in :class:`decomposition.MiniBatchSparsePCA` where `n_iter`
-  was not deprecated as for :class:`decomposition.MiniBatchDictionaryLearning`.
-  We also introduce the parameters `max_iter`, `tol`, and `max_no_improvement`
-  for consistency. `n_iter` will be removed in version 1.3.
-  :pr:`23726` by :user:`Guillaume Lemaitre <glemaitre>`.
-
 .. _changes_1_1_1:
 
 Version 1.1.1

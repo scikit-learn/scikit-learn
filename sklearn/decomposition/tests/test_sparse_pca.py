@@ -267,7 +267,7 @@ def test_spca_feature_names_out(SPCA):
     assert_array_equal([f"{estimator_name}{i}" for i in range(4)], names)
 
 
-# TODO (1.3): remove this test
+# TODO (1.4): remove this test
 def test_spca_n_iter_deprecation():
     """Check that we raise a warning for the deprecation of `n_iter` and it is ignored
     when `max_iter` is specified.
