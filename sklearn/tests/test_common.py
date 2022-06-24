@@ -458,7 +458,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "BayesianRidge",
     "BernoulliNB",
     "BernoulliRBM",
-    "Binarizer",
     "Birch",
     "CCA",
     "CalibratedClassifierCV",
