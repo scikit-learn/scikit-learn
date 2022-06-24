@@ -5,9 +5,11 @@ from inspect import signature
 from numbers import Integral
 from numbers import Real
 import operator
+import warnings
 
 import numpy as np
 from scipy.sparse import issparse
+from scipy.sparse import csr_matrix
 
 from .validation import _is_arraylike_not_scalar
 
@@ -17,17 +19,22 @@ def validate_parameter_constraints(parameter_constraints, params, caller_name):
 
     Parameters
     ----------
-    parameter_constraints : dict
-        A dictionary `param_name: list of constraints`. A parameter is valid if it
-        satisfies one of the constraints from the list. Constraints can be:
+    parameter_constraints : dict or {"no_validation"}
+        If "no_validation", validation is skipped for this parameter.
+
+        If a dict, it must be a dictionary `param_name: list of constraints`.
+        A parameter is valid if it satisfies one of the constraints from the list.
+        Constraints can be:
         - an Interval object, representing a continuous or discrete range of numbers
         - the string "array-like"
         - the string "sparse matrix"
-        - the string "random state"
+        - the string "random_state"
         - callable
         - None, meaning that None is a valid value for the parameter
         - any type, meaning that any instance of this type is valid
         - a StrOptions object, representing a set of strings
+        - the string "boolean"
+        - the string "verbose"
 
     params : dict
         A dictionary `param_name: param_value`. The parameters to validate against the
@@ -44,6 +51,10 @@ def validate_parameter_constraints(parameter_constraints, params, caller_name):
 
     for param_name, param_val in params.items():
         constraints = parameter_constraints[param_name]
+
+        if constraints == "no_validation":
+            continue
+
         constraints = [make_constraint(constraint) for constraint in constraints]
 
         for constraint in constraints:
@@ -100,6 +111,10 @@ def make_constraint(constraint):
         return _InstancesOf(constraint)
     if isinstance(constraint, (Interval, StrOptions)):
         return constraint
+    if isinstance(constraint, str) and constraint == "boolean":
+        return _Booleans()
+    if isinstance(constraint, str) and constraint == "verbose":
+        return _VerboseHelper()
     if isinstance(constraint, Hidden):
         constraint = make_constraint(constraint.constraint)
         constraint.hidden = True
@@ -116,6 +131,9 @@ def validate_params(parameter_constraints):
         A dictionary `param_name: list of constraints`. See the docstring of
         `validate_parameter_constraints` for a description of the accepted constraints.
 
+        Note that the *args and **kwargs parameters are not validated and must not be
+        present in the parameter_constraints dictionary.
+
     Returns
     -------
     decorated_function : function or method
@@ -123,6 +141,11 @@ def validate_params(parameter_constraints):
     """
 
     def decorator(func):
+        # The dict of parameter constraints is set as an attribute of the function
+        # to make it possible to dynamically introspect the constraints for
+        # automatic testing.
+        setattr(func, "_skl_parameter_constraints", parameter_constraints)
+
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
 
@@ -413,7 +436,65 @@ class _RandomStates(_Constraint):
 
     def __str__(self):
         return (
-            f"{', '.join([repr(c) for c in self._constraints[:-1]])} or"
+            f"{', '.join([str(c) for c in self._constraints[:-1]])} or"
+            f" {self._constraints[-1]}"
+        )
+
+
+class _Booleans(_Constraint):
+    """Constraint representing boolean likes.
+
+    Convenience class for
+    [bool, np.bool_, Integral (deprecated)]
+    """
+
+    def __init__(self):
+        super().__init__()
+        self._constraints = [
+            _InstancesOf(bool),
+            _InstancesOf(np.bool_),
+            _InstancesOf(Integral),
+        ]
+
+    def is_satisfied_by(self, val):
+        # TODO(1.4) remove support for Integral.
+        if isinstance(val, Integral) and not isinstance(val, bool):
+            warnings.warn(
+                "Passing an int for a boolean parameter is deprecated in version 1.2 "
+                "and won't be supported anymore in version 1.4.",
+                FutureWarning,
+            )
+
+        return any(c.is_satisfied_by(val) for c in self._constraints)
+
+    def __str__(self):
+        return (
+            f"{', '.join([str(c) for c in self._constraints[:-1]])} or"
+            f" {self._constraints[-1]}"
+        )
+
+
+class _VerboseHelper(_Constraint):
+    """Helper constraint for the verbose parameter.
+
+    Convenience class for
+    [Interval(Integral, 0, None, closed="left"), bool, numpy.bool_]
+    """
+
+    def __init__(self):
+        super().__init__()
+        self._constraints = [
+            Interval(Integral, 0, None, closed="left"),
+            _InstancesOf(bool),
+            _InstancesOf(np.bool_),
+        ]
+
+    def is_satisfied_by(self, val):
+        return any(c.is_satisfied_by(val) for c in self._constraints)
+
+    def __str__(self):
+        return (
+            f"{', '.join([str(c) for c in self._constraints[:-1]])} or"
             f" {self._constraints[-1]}"
         )
 
@@ -454,6 +535,9 @@ def generate_invalid_param_val(constraint, constraints=None):
     """
     if isinstance(constraint, StrOptions):
         return f"not {' or '.join(constraint.options)}"
+
+    if isinstance(constraint, _VerboseHelper):
+        return -1
 
     if not isinstance(constraint, Interval):
         raise NotImplementedError
@@ -565,3 +649,63 @@ def _generate_invalid_param_val_interval(interval, constraints):
                 return int_right + 1
             else:
                 raise NotImplementedError
+
+
+def generate_valid_param(constraint):
+    """Return a value that does satisfy a constraint.
+
+    This is only useful for testing purpose.
+
+    Parameters
+    ----------
+    constraint : Constraint instance
+        The constraint to generate a value for.
+
+    Returns
+    -------
+    val : object
+        A value that does satisfy the constraint.
+    """
+    if isinstance(constraint, _ArrayLikes):
+        return np.array([1, 2, 3])
+
+    if isinstance(constraint, _SparseMatrices):
+        return csr_matrix([[0, 1], [1, 0]])
+
+    if isinstance(constraint, _RandomStates):
+        return np.random.RandomState(42)
+
+    if isinstance(constraint, _Callables):
+        return lambda x: x
+
+    if isinstance(constraint, _NoneConstraint):
+        return None
+
+    if isinstance(constraint, _InstancesOf):
+        return constraint.type()
+
+    if isinstance(constraint, _Booleans):
+        return True
+
+    if isinstance(constraint, _VerboseHelper):
+        return 1
+
+    if isinstance(constraint, StrOptions):
+        for option in constraint.options:
+            return option
+
+    if isinstance(constraint, Interval):
+        interval = constraint
+        if interval.left is None and interval.right is None:
+            return 0
+        elif interval.left is None:
+            return interval.right - 1
+        elif interval.right is None:
+            return interval.left + 1
+        else:
+            if interval.type is Real:
+                return (interval.left + interval.right) / 2
+            else:
+                return interval.left + 1
+
+    raise ValueError(f"Unknown constraint type: {constraint}")

@@ -46,7 +46,7 @@ File types:
 - File size: 5 KB
 - File name: [scikit-learn-logo-without-subtitle.svg](https://github.com/scikit-learn/scikit-learn/blob/main/doc/logos/scikit-learn-logo-without-subtitle.svg)
 
-<img src="scikit-learn-logo.svg" width="250px">
+<img src="scikit-learn-logo-without-subtitle.svg" width="250px">
 
 ---
 
