@@ -306,7 +306,7 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         "algorithm": [StrOptions({"auto", "ball_tree", "kd_tree", "brute"})],
         "leaf_size": [Interval(Integral, 1, None, closed="left")],
         "p": [Interval(Real, 0.0, None, closed="left"), None],
-        "n_jobs": [Interval(Integral, -1, None, closed="left"), None],
+        "n_jobs": [Integral, None],
     }
 
     def __init__(
