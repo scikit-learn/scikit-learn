@@ -25,8 +25,13 @@ def _calculate_threshold(estimator, importances, threshold):
         if (
             (hasattr(estimator, "penalty") and estimator.penalty == "l1")
             or "Lasso" in est_name
-            or (hasattr(estimator, "l1_ratio") and estimator.l1_ratio == 1)
-            or (hasattr(estimator, "l1_ratio_") and estimator.l1_ratio_ == 1)
+            or (
+                "ElasticNet" in est_name
+                and (
+                    (hasattr(estimator, "l1_ratio_") and estimator.l1_ratio_ == 1)
+                    or (hasattr(estimator, "l1_ratio") and estimator.l1_ratio == 1)
+                )
+            )
         ):
             # the natural default threshold is 0 when l1 penalty was used
             threshold = 1e-5
