@@ -12,6 +12,7 @@ import numpy as np
 import warnings
 from scipy import sparse
 from numbers import Integral, Real
+from sklearn.metrics.pairwise import _VALID_METRICS
 
 from ..base import BaseEstimator, ClusterMixin
 from ..utils.validation import _check_sample_weight
@@ -301,7 +302,7 @@ class DBSCAN(ClusterMixin, BaseEstimator):
     _parameter_constraints = {
         "eps": [Interval(Real, 0.0, None, closed="neither")],
         "min_samples": [Interval(Integral, 1, None, closed="left")],
-        "metric": [StrOptions(_VALID_METRICS), callable],
+        "metric": [StrOptions(set(_VALID_METRICS)), callable],
         "metric_params": [dict, None],
         "algorithm": [StrOptions({"auto", "ball_tree", "kd_tree", "brute"})],
         "leaf_size": [Interval(Integral, 1, None, closed="left")],
