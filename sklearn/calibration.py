@@ -1085,6 +1085,9 @@ class CalibrationDisplay:
     ax_ : matplotlib Axes
         Axes with calibration curve.
 
+    ax_hist_ : matplotlib Axes
+        Axes with histogram.
+
     figure_ : matplotlib Figure
         Figure containing the curve.
 
@@ -1126,7 +1129,16 @@ class CalibrationDisplay:
         self.estimator_name = estimator_name
         self.pos_label = pos_label
 
-    def plot(self, *, ax=None, name=None, ref_line=True, **kwargs):
+    def plot(
+        self,
+        *,
+        ax=None,
+        ax_hist=None,
+        name=None,
+        ref_line=True,
+        plot_bins=True,
+        **kwargs,
+    ):
         """Plot visualization.
 
         Extra keyword arguments will be passed to
@@ -1176,8 +1188,11 @@ class CalibrationDisplay:
             ax.plot([0, 1], [0, 1], "k--", label=ref_line_label, lw=1)
         self.line_ = ax.plot(self.prob_pred, self.prob_true, "o-", **line_kwargs)[0]
 
-        for x in self.bins:
-            ax.axvline(x, lw=0.5, ls="--", color="grey", zorder=-1)
+        if plot_bins:
+            for x in self.bins:
+                ax.axvline(x, lw=0.5, ls="--", color="grey", zorder=-1)
+        else:
+            ax.grid()
 
         # We always have to show the legend for at least the reference line
         ax.legend(loc="lower right")
@@ -1185,8 +1200,9 @@ class CalibrationDisplay:
         ax.set_aspect("equal")
 
         # Plot histogram
-        divider = make_axes_locatable(ax)
-        ax_hist = divider.append_axes("top", size="10%", pad=0.0)
+        if ax_hist is None:
+            divider = make_axes_locatable(ax)
+            ax_hist = divider.append_axes("top", size="10%", pad=0.0)
 
         ax_hist.set_xlim(ax.get_xlim())
         ax_hist.set_xticklabels([])
@@ -1197,7 +1213,7 @@ class CalibrationDisplay:
 
         ax_hist.hist(
             self.y_prob,
-            bins=self.bins,
+            bins=bins_from_strategy(len(self.bins), strategy="uniform"),
             label=name,
             density=True,
             histtype="step",
@@ -1209,6 +1225,7 @@ class CalibrationDisplay:
         ax.set(xlabel=xlabel, ylabel=ylabel)
 
         self.ax_ = ax
+        self.ax_hist_ = ax_hist
         self.figure_ = ax.figure
         return self
 
@@ -1225,6 +1242,8 @@ class CalibrationDisplay:
         name=None,
         ref_line=True,
         ax=None,
+        ax_hist=None,
+        plot_bins=True,
         **kwargs,
     ):
         """Plot calibration curve using a binary classifier and data.
@@ -1335,8 +1354,149 @@ class CalibrationDisplay:
             name=name,
             ref_line=ref_line,
             ax=ax,
+            ax_hist=ax_hist,
+            plot_bins=plot_bins,
             **kwargs,
         )
+
+    @classmethod
+    def from_estimators(
+        cls,
+        estimators,
+        X,
+        y,
+        *,
+        n_bins=5,
+        strategy="uniform",
+        pos_label=None,
+        names=None,
+        ref_line=True,
+        ax=None,
+        plot_bins=None,
+        **kwargs,
+    ):
+        """Plot calibration curve using a binary classifier and data.
+
+        A calibration curve, also known as a reliability diagram, uses inputs
+        from a binary classifier and plots the average predicted probability
+        for each bin against the fraction of positive classes, on the
+        y-axis.
+
+        Extra keyword arguments will be passed to
+        :func:`matplotlib.pyplot.plot`.
+
+        Read more about calibration in the :ref:`User Guide <calibration>` and
+        more about the scikit-learn visualization API in :ref:`visualizations`.
+
+        .. versionadded:: 1.0
+
+        Parameters
+        ----------
+        estimator : estimator instance
+            Fitted classifier or a fitted :class:`~sklearn.pipeline.Pipeline`
+            in which the last estimator is a classifier. The classifier must
+            have a :term:`predict_proba` method.
+
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Input values.
+
+        y : array-like of shape (n_samples,)
+            Binary target values.
+
+        n_bins : int, default=5
+            Number of bins to discretize the [0, 1] interval into when
+            calculating the calibration curve. A bigger number requires more
+            data.
+
+        strategy : {'uniform', 'quantile'}, default='uniform'
+            Strategy used to define the widths of the bins.
+
+            - `'uniform'`: The bins have identical widths.
+            - `'quantile'`: The bins have the same number of samples and depend
+              on predicted probabilities.
+
+        pos_label : str or int, default=None
+            The positive class when computing the calibration curve.
+            By default, `estimators.classes_[1]` is considered as the
+            positive class.
+
+            .. versionadded:: 1.1
+
+        name : str, default=None
+            Name for labeling curve. If `None`, the name of the estimator is
+            used.
+
+        ref_line : bool, default=True
+            If `True`, plots a reference line representing a perfectly
+            calibrated classifier.
+
+        ax : matplotlib axes, default=None
+            Axes object to plot on. If `None`, a new figure and axes is
+            created.
+
+        **kwargs : dict
+            Keyword arguments to be passed to :func:`matplotlib.pyplot.plot`.
+
+        Returns
+        -------
+        display : :class:`~sklearn.calibration.CalibrationDisplay`.
+            Object that stores computed values.
+
+        See Also
+        --------
+        CalibrationDisplay.from_predictions : Plot calibration curve using true
+            and predicted labels.
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+        >>> from sklearn.datasets import make_classification
+        >>> from sklearn.model_selection import train_test_split
+        >>> from sklearn.linear_model import LogisticRegression
+        >>> from sklearn.calibration import CalibrationDisplay
+        >>> X, y = make_classification(random_state=0)
+        >>> X_train, X_test, y_train, y_test = train_test_split(
+        ...     X, y, random_state=0)
+        >>> clf = LogisticRegression(random_state=0)
+        >>> clf.fit(X_train, y_train)
+        LogisticRegression(random_state=0)
+        >>> disp = CalibrationDisplay.from_estimator(clf, X_test, y_test)
+        >>> plt.show()
+        """
+        ax_hist = None
+        displays = []
+
+        if plot_bins is None:
+            plot_bins = strategy == "uniform" or ax is None
+
+        # Turn kwargs of lists into list of kwargs
+        kwargs = [
+            {k: v_list[i] for k, v_list in kwargs.items()}
+            for i in range(len(estimators))
+        ]
+
+        for i, (estimator, name) in enumerate(zip(estimators, names)):
+            display = CalibrationDisplay.from_estimator(
+                estimator=estimator,
+                X=X,
+                y=y,
+                n_bins=n_bins,
+                strategy=strategy,
+                pos_label=pos_label,
+                name=name,
+                ref_line=ref_line,
+                ax=ax,
+                ax_hist=ax_hist,
+                plot_bins=plot_bins,
+                **kwargs[i],
+            )
+            ax_hist = display.ax_hist_
+            displays.append(display)
+
+        if not plot_bins:
+            ax.grid()
+
+        return displays
 
     @classmethod
     def from_predictions(
@@ -1350,6 +1510,7 @@ class CalibrationDisplay:
         name=None,
         ref_line=True,
         ax=None,
+        plot_bins=True,
         **kwargs,
     ):
         """Plot calibration curve using true labels and predicted probabilities.
@@ -1454,4 +1615,4 @@ class CalibrationDisplay:
             estimator_name=name,
             pos_label=pos_label,
         )
-        return disp.plot(ax=ax, ref_line=ref_line, **kwargs)
+        return disp.plot(ax=ax, ref_line=ref_line, plot_bins=plot_bins, **kwargs)
