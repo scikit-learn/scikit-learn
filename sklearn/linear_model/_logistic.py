@@ -1013,10 +1013,10 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
 
     _parameter_constraints = {
         "penalty": [StrOptions({"l1", "l2", "elasticnet", "none"})],
-        "dual": [bool],
+        "dual": ["boolean"],
         "tol": [Interval(Real, 0, None, closed="left")],
         "C": [Interval(Real, 0, None, closed="neither")],
-        "fit_intercept": [bool],
+        "fit_intercept": ["boolean"],
         "intercept_scaling": [Interval(Real, 0, None, closed="neither")],
         "class_weight": [dict, StrOptions({"balanced"}), None],
         "random_state": ["random_state"],
@@ -1024,7 +1024,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         "max_iter": [Interval(Integral, 0, None, closed="left")],
         "multi_class": [StrOptions({"auto", "ovr", "multinomial"})],
         "verbose": [Interval(Integral, 0, None, closed="left")],
-        "warm_start": [bool],
+        "warm_start": ["boolean"],
         "n_jobs": [None, Integral],
         "l1_ratio": [Interval(Real, 0, 1, closed="both"), None],
     }
@@ -1624,7 +1624,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             ],
             "scoring": [StrOptions(set(get_scorer_names())), callable, None],
             "l1_ratios": ["array-like", None],
-            "refit": [bool],
+            "refit": ["boolean"],
             "penalty": [StrOptions({"l1", "l2", "elasticnet"})],
         }
     )
