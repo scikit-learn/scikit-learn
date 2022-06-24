@@ -2071,7 +2071,7 @@ class Binarizer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
     _parameter_constraints = {
         "threshold": [Real],
-        "copy": [bool],
+        "copy": ["boolean"],
     }
 
     def __init__(self, *, threshold=0.0, copy=True):
