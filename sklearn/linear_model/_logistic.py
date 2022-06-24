@@ -11,6 +11,7 @@ Logistic Regression
 #         Arthur Mensch <arthur.mensch@m4x.org
 
 import numbers
+from numbers import Integral, Real
 import warnings
 
 import numpy as np
@@ -39,7 +40,6 @@ from ..model_selection import check_cv
 from ..metrics import get_scorer
 
 from ..utils._param_validation import StrOptions, Interval
-from numbers import Integral, Real
 
 _LOGISTIC_SOLVER_CONVERGENCE_MSG = (
     "Please also refer to the documentation for alternative solver options:\n"
@@ -1015,7 +1015,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         "penalty": [StrOptions({"l1", "l2", "elasticnet", "none"})],
         "dual": ["boolean"],
         "tol": [Interval(Real, 0, None, closed="left")],
-        "C": [Interval(Real, 0, None, closed="neither")],
+        "C": [Interval(Real, 0, None, closed="right")],
         "fit_intercept": ["boolean"],
         "intercept_scaling": [Interval(Real, 0, None, closed="neither")],
         "class_weight": [dict, StrOptions({"balanced"}), None],
@@ -1099,22 +1099,13 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
 
         solver = _check_solver(self.solver, self.penalty, self.dual)
 
-        if self.penalty == "elasticnet":
-            if (
-                not isinstance(self.l1_ratio, numbers.Number)
-                or self.l1_ratio < 0
-                or self.l1_ratio > 1
-            ):
-                raise ValueError(
-                    "l1_ratio must be between 0 and 1; got (l1_ratio=%r)"
-                    % self.l1_ratio
-                )
-        elif self.l1_ratio is not None:
+        if self.penalty != "elasticnet" and self.l1_ratio is not None:
             warnings.warn(
                 "l1_ratio parameter is only used when penalty is "
                 "'elasticnet'. Got "
                 "(penalty={})".format(self.penalty)
             )
+
         if self.penalty == "none":
             if self.C != 1.0:  # default values
                 warnings.warn(
@@ -1609,7 +1600,6 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
     _parameter_constraints = {**LogisticRegression._parameter_constraints}
 
     _parameters_to_remove = ["C", "warm_start", "l1_ratio"]
-
     for _parameter in _parameters_to_remove:
         _parameter_constraints.pop(_parameter)
 
