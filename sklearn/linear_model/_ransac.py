@@ -12,6 +12,7 @@ from ..utils.random import sample_without_replacement
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ._base import LinearRegression
 from ..utils.validation import has_fit_parameter
+from ..utils.stats import _weighted_percentile
 from ..exceptions import ConvergenceWarning
 
 _EPSILON = np.spacing(1)
@@ -369,10 +370,8 @@ class RANSACRegressor(
 
         if self.residual_threshold is None:
             # MAD (median absolute deviation)
-            residual_threshold = np.median(
-                sample_weight[:, np.newaxis]
-                * np.abs(y - np.median(y))
-                / np.sum(sample_weight)
+            residual_threshold = _weighted_percentile(
+                np.abs(y - np.median(y)), sample_weight=sample_weight, percentile=50
             )
         else:
             residual_threshold = self.residual_threshold

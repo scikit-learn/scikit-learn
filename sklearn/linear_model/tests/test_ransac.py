@@ -7,6 +7,7 @@ from numpy.testing import assert_array_equal
 
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import assert_allclose
+from sklearn.utils.stats import _weighted_percentile
 from sklearn.datasets import make_regression
 from sklearn.linear_model import LinearRegression, RANSACRegressor, Ridge
 from sklearn.linear_model import OrthogonalMatchingPursuit
@@ -661,8 +662,9 @@ def test_residual_threshold_with_sample_weight():
     outlier_error = np.abs(
         y[~inliner_mask] - ransac_estimator.predict(X[~inliner_mask])
     )
-    residual_threshold = np.median(
-        sample_weight * np.abs(y - np.median(y)) / np.sum(sample_weight)
+
+    residual_threshold = _weighted_percentile(
+        np.abs(y - np.median(y)), sample_weight=sample_weight, percentile=50
     )
     assert all(inliner_error < residual_threshold)
     assert all(outlier_error > residual_threshold)
