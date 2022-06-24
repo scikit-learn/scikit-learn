@@ -4064,6 +4064,12 @@ def check_param_validation(name, estimator_orig):
     methods = [method for method in fit_methods if hasattr(estimator_orig, method)]
 
     for param_name in estimator_params:
+        constraints = estimator_orig._parameter_constraints[param_name]
+
+        if constraints == "no_validation":
+            # This parameter is not validated
+            continue
+
         match = rf"The '{param_name}' parameter of {name} must be .* Got .* instead."
         err_msg = (
             f"{name} does not raise an informative error message when the "
@@ -4082,7 +4088,6 @@ def check_param_validation(name, estimator_orig):
         # Then, for constraints that are more than a type constraint, check that the
         # error is raised if param does match a valid type but does not match any valid
         # value for this type.
-        constraints = estimator_orig._parameter_constraints[param_name]
         constraints = [make_constraint(constraint) for constraint in constraints]
 
         for constraint in constraints:
