@@ -6,37 +6,39 @@
 Descent (SGD).
 """
 
+import numpy as np
 import warnings
+
 from abc import ABCMeta, abstractmethod
 from numbers import Integral, Real
 
-import numpy as np
 from joblib import Parallel
 
+from ..base import clone, is_classifier
 from ._base import LinearClassifierMixin, SparseCoefMixin
 from ._base import make_dataset
-from ._sgd_fast import EpsilonInsensitive
-from ._sgd_fast import Hinge
-from ._sgd_fast import Huber
-from ._sgd_fast import Log
-from ._sgd_fast import ModifiedHuber
-from ._sgd_fast import SquaredEpsilonInsensitive
-from ._sgd_fast import SquaredHinge
-from ._sgd_fast import SquaredLoss
-from ._sgd_fast import _plain_sgd
 from ..base import BaseEstimator, RegressorMixin, OutlierMixin
-from ..base import clone, is_classifier
-from ..exceptions import ConvergenceWarning
-from ..model_selection import StratifiedShuffleSplit, ShuffleSplit
 from ..utils import check_random_state
-from ..utils import compute_class_weight
-from ..utils._param_validation import Interval
-from ..utils._param_validation import StrOptions
-from ..utils.extmath import safe_sparse_dot
-from ..utils.fixes import delayed
 from ..utils.metaestimators import available_if
+from ..utils.extmath import safe_sparse_dot
 from ..utils.multiclass import _check_partial_fit_first_call
 from ..utils.validation import check_is_fitted, _check_sample_weight
+from ..utils._param_validation import Interval
+from ..utils._param_validation import StrOptions
+from ..utils.fixes import delayed
+from ..exceptions import ConvergenceWarning
+from ..model_selection import StratifiedShuffleSplit, ShuffleSplit
+
+from ._sgd_fast import _plain_sgd
+from ..utils import compute_class_weight
+from ._sgd_fast import Hinge
+from ._sgd_fast import SquaredHinge
+from ._sgd_fast import Log
+from ._sgd_fast import ModifiedHuber
+from ._sgd_fast import SquaredLoss
+from ._sgd_fast import Huber
+from ._sgd_fast import EpsilonInsensitive
+from ._sgd_fast import SquaredEpsilonInsensitive
 
 LEARNING_RATE_TYPES = {
     "constant": 1,
@@ -78,15 +80,15 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
     """Base class for SGD classification and regression."""
 
     _parameter_constraints = {
-        "penalty": [StrOptions({"l2", "l1", "elasticnet"}), None],
+        "penalty": [StrOptions({"l2", "l1", "elasticnet"})],
         "alpha": [Interval(Real, 0, None, closed="left")],
-        # "C": [Interval(Real , 1, None, closed="left")],
+        # "C": [Interval(Real , 0, None, closed="right")],
         "l1_ratio": [Interval(Real, 0, 1, closed="both")],
-        "fit_intercept": [bool],
+        "fit_intercept": ["boolean"],
         "max_iter": [Interval(Integral, 1, None, closed="left")],
-        "tol": [Interval(Real, None, None, closed="both"), None],
-        "shuffle": [bool],
-        "verbose": [Interval(Integral, 0, None, closed="left")],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "shuffle": ["boolean"],
+        "verbose": ["verbose"],
         "epsilon": [Interval(Real, 0, None, closed="left")],
         "random_state": ["random_state"],
         "learning_rate": [
@@ -94,11 +96,11 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         ],
         "eta0": [Interval(Real, 0, None, closed="left")],
         "power_t": [Interval(Real, None, None, closed="neither")],
-        "early_stopping": [bool],
+        "early_stopping": ["boolean"],
         "validation_fraction": [Interval(Real, 0, 1, closed="neither")],
         "n_iter_no_change": [Interval(Integral, 1, None, closed="left")],
-        "warm_start": [bool],
-        "average": [Interval(Integral, 0, None, closed="left"), bool],
+        "warm_start": ["boolean"],
+        "average": [Interval(Integral, 1, None, closed="left"), bool, np.bool_],
     }
 
     def __init__(
@@ -152,8 +154,6 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
 
     def _revalidate_params(self, for_partial_fit=False):
         """Validate input params."""
-        self._validate_params()
-
         if self.early_stopping and for_partial_fit:
             raise ValueError("early_stopping should be False with partial_fit")
         if self.learning_rate in ("constant", "invscaling", "adaptive"):
@@ -533,8 +533,8 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
                 deprecated={"squared_loss", "log"},
             )
         ],
-        "n_jobs": [None, Integral],
-        "class_weight": [StrOptions({"balanced"}), dict, None],  # a bit tricky?
+        "n_jobs": [Integral, None],
+        "class_weight": [StrOptions({"balanced"}), dict, None],
     }
 
     @abstractmethod
@@ -857,6 +857,9 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         self : object
             Returns an instance of self.
         """
+        if not hasattr(self, "classes_"):
+            self._validate_params()
+
         self._revalidate_params(for_partial_fit=True)
         if self.class_weight in ["balanced"]:
             raise ValueError(
@@ -912,6 +915,8 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         self : object
             Returns an instance of self.
         """
+        self._validate_params()
+
         return self._fit(
             X,
             y,
@@ -1191,8 +1196,6 @@ class SGDClassifier(BaseSGDClassifier):
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
     """
-
-    _parameter_constraints = BaseSGDClassifier._parameter_constraints
 
     def __init__(
         self,
