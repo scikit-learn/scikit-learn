@@ -30,17 +30,6 @@ from ...utils._openmp_helpers import _openmp_effective_n_threads
 from .._linear_loss import LinearModelLoss
 
 
-@validate_params(
-    {
-        "alpha": [Interval(Real, 0.0, None, closed="left")],
-        "fit_intercept": [bool],
-        "solver": [StrOptions({"lbfgs"})],
-        "max_iter": [Interval(Integral, 1, None, closed="left")],
-        "tol": [Interval(Real, 0.0, None, closed="neither")],
-        "warm_start": [bool],
-        "verbose": [Interval(Integral, 0, None, closed="left")],
-    }
-)
 class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
     """Regression via a penalized Generalized Linear Model (GLM).
 
