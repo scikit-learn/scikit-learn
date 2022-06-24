@@ -1427,7 +1427,7 @@ class NMF(_BaseNMF):
 
     solver : {'cd', 'mu'}, default='cd'
         Numerical solver to use:
-        
+
         - 'cd' is a Coordinate Descent solver.
         - 'mu' is a Multiplicative Update solver.
 
