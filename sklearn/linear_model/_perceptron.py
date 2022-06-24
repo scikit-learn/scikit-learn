@@ -1,6 +1,6 @@
 # Author: Mathieu Blondel
 # License: BSD 3 clause
-from numbers import Integral, Real
+from numbers import Real
 
 from ._stochastic_gradient import BaseSGDClassifier
 from ..utils._param_validation import StrOptions, Interval
