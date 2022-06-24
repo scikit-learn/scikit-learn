@@ -568,7 +568,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "OrthogonalMatchingPursuit",
     "OrthogonalMatchingPursuitCV",
     "OutputCodeClassifier",
-    "PCA",
     "PLSCanonical",
     "PLSRegression",
     "PLSSVD",
