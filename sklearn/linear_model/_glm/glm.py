@@ -30,17 +30,6 @@ from ...utils._openmp_helpers import _openmp_effective_n_threads
 from .._linear_loss import LinearModelLoss
 
 
-@validate_params(
-    {
-        "alpha": [Interval(Real, 0.0, None, closed="left")],
-        "fit_intercept": [bool],
-        "solver": [StrOptions({"lbfgs"})],
-        "max_iter": [Interval(Integral, 1, None, closed="left")],
-        "tol": [Interval(Real, 0.0, None, closed="neither")],
-        "warm_start": [bool],
-        "verbose": [Interval(Integral, 0, None, closed="left")],
-    }
-)
 class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
     """Regression via a penalized Generalized Linear Model (GLM).
 
@@ -191,7 +180,6 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                 f"{self.__class__.__name__} supports only solvers 'lbfgs'; "
                 f"got {self.solver}"
             )
-        solver = self.solver
 
         X, y = self._validate_data(
             X,
@@ -535,10 +523,6 @@ class PoissonRegressor(_GeneralizedLinearRegressor):
     >>> clf.predict([[1, 1], [3, 4]])
     array([10.676..., 21.875...])
     """
-
-    _parameter_constraints = {
-        **_GeneralizedLinearRegressor._parameter_constraints,
-    }
 
     def __init__(
         self,
