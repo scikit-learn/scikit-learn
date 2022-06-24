@@ -144,9 +144,11 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         """Validate input params."""
         if self.early_stopping and for_partial_fit:
             raise ValueError("early_stopping should be False with partial_fit")
-        if self.learning_rate in ("constant", "invscaling", "adaptive"):
-            if self.eta0 <= 0.0:
-                raise ValueError("eta0 must be > 0")
+        if (
+            self.learning_rate in ("constant", "invscaling", "adaptive")
+            and self.eta0 <= 0.0
+        ):
+            raise ValueError("eta0 must be > 0")
         if self.learning_rate == "optimal" and self.alpha == 0:
             raise ValueError(
                 "alpha must be > 0 since "
@@ -176,14 +178,11 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
 
     def _get_loss_function(self, loss):
         """Get concrete ``LossFunction`` object for str ``loss``."""
-        try:
-            loss_ = self.loss_functions[loss]
-            loss_class, args = loss_[0], loss_[1:]
-            if loss in ("huber", "epsilon_insensitive", "squared_epsilon_insensitive"):
-                args = (self.epsilon,)
-            return loss_class(*args)
-        except KeyError as e:
-            raise ValueError("The loss %s is not supported. " % loss) from e
+        loss_ = self.loss_functions[loss]
+        loss_class, args = loss_[0], loss_[1:]
+        if loss in ("huber", "epsilon_insensitive", "squared_epsilon_insensitive"):
+            args = (self.epsilon,)
+        return loss_class(*args)
 
     def _get_learning_rate_type(self, learning_rate):
         return LEARNING_RATE_TYPES[learning_rate]
@@ -840,7 +839,7 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
             self._validate_params()
             self._more_validate_params(for_partial_fit=True)
 
-            if self.class_weight in ["balanced"]:
+            if self.class_weight == "balanced":
                 raise ValueError(
                     "class_weight '{0}' is not supported for "
                     "partial_fit. In order to use 'balanced' weights,"
