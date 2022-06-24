@@ -505,7 +505,7 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         **BaseSGD._parameter_constraints,
         "loss": [
             StrOptions(
-                set(loss_functions.keys()),
+                set(loss_functions),
                 deprecated={"squared_loss", "log"},
             )
         ],
@@ -1381,7 +1381,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         **BaseSGD._parameter_constraints,
         "loss": [
             StrOptions(
-                set(loss_functions.keys()),
+                set(loss_functions),
                 deprecated={"squared_loss"},
             )
         ],
