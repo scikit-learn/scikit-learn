@@ -378,6 +378,12 @@ class MinMaxScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     [[1.5 0. ]]
     """
 
+    _parameter_constraints = {
+        "feature_range": [tuple],
+        "copy": ["boolean"],
+        "clip": ["boolean"],
+    }
+
     def __init__(self, feature_range=(0, 1), *, copy=True, clip=False):
         self.feature_range = feature_range
         self.copy = copy
@@ -440,6 +446,8 @@ class MinMaxScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         self : object
             Fitted scaler.
         """
+        self._validate_params()
+
         feature_range = self.feature_range
         if feature_range[0] >= feature_range[1]:
             raise ValueError(
@@ -763,6 +771,12 @@ class StandardScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     [[3. 3.]]
     """
 
+    _parameter_constraints = {
+        "copy": ["boolean"],
+        "with_mean": ["boolean"],
+        "with_std": ["boolean"],
+    }
+
     def __init__(self, *, copy=True, with_mean=True, with_std=True):
         self.with_mean = with_mean
         self.with_std = with_std
@@ -840,6 +854,8 @@ class StandardScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         self : object
             Fitted scaler.
         """
+        self._validate_params()
+
         first_call = not hasattr(self, "n_samples_seen_")
         X = self._validate_data(
             X,
@@ -1113,6 +1129,8 @@ class MaxAbsScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
            [ 0. ,  1. , -0.5]])
     """
 
+    _parameter_constraints = {"copy": ["boolean"]}
+
     def __init__(self, *, copy=True):
         self.copy = copy
 
@@ -1170,6 +1188,8 @@ class MaxAbsScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         self : object
             Fitted scaler.
         """
+        self._validate_params()
+
         first_pass = not hasattr(self, "n_samples_seen_")
         X = self._validate_data(
             X,
