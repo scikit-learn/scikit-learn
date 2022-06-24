@@ -4055,7 +4055,6 @@ def check_param_validation(name, estimator_orig):
         err_msg = (
             f"Mismatch between _parameter_constraints and the parameters of {name}."
         )
-
         assert estimator_orig._parameter_constraints.keys() == estimator_params, err_msg
 
     # this object does not have a valid type for sure for all params

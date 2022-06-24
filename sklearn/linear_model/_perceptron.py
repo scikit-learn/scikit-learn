@@ -166,24 +166,17 @@ class Perceptron(BaseSGDClassifier):
     0.939...
     """
 
-    _parameter_constraints = {
-        "penalty": [StrOptions({"l2", "l1", "elasticnet"}), None],
-        "alpha": [Interval(Real, 0, None, closed="left")],
-        "l1_ratio": [Interval(Real, 0, 1, closed="both")],
-        "fit_intercept": [bool],
-        "max_iter": [Interval(Integral, 1, None, closed="left")],
-        "tol": [Interval(Real, 0, None, closed="left"), None],
-        "shuffle": [bool],
-        "verbose": [Interval(Integral, 0, None, closed="left")],
-        "eta0": [Interval(Real, 0, None, closed="left")],
-        "random_state": ["random_state"],
-        "early_stopping": [bool],
-        "validation_fraction": [Interval(Real, 0, 1, closed="neither")],
-        "n_iter_no_change": [Interval(Integral, 1, None, closed="left")],
-        "warm_start": [bool],
-        "n_jobs": [None, Integral],
-        "class_weight": [StrOptions({"balanced"}), dict, None],  # a bit tricky?
-    }
+    _parameter_constraints = {**BaseSGDClassifier._parameter_constraints}
+    _parameter_constraints.pop("loss")
+    _parameter_constraints.pop("average")
+    _parameter_constraints.update(
+        {
+            "penalty": [StrOptions({"l2", "l1", "elasticnet"}), None],
+            "alpha": [Interval(Real, 0, None, closed="left")],
+            "l1_ratio": [Interval(Real, 0, 1, closed="both")],
+            "eta0": [Interval(Real, 0, None, closed="left")],
+        }
+    )
 
     def __init__(
         self,

@@ -572,8 +572,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "PLSCanonical",
     "PLSRegression",
     "PLSSVD",
-    "PassiveAggressiveClassifier",
-    "PassiveAggressiveRegressor",
     "PatchExtractor",
     "PoissonRegressor",
     "PolynomialCountSketch",

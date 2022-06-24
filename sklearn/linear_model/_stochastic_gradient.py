@@ -80,27 +80,14 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
     """Base class for SGD classification and regression."""
 
     _parameter_constraints = {
-        "penalty": [StrOptions({"l2", "l1", "elasticnet"})],
-        "alpha": [Interval(Real, 0, None, closed="left")],
-        # "C": [Interval(Real , 0, None, closed="right")],
-        "l1_ratio": [Interval(Real, 0, 1, closed="both")],
         "fit_intercept": ["boolean"],
         "max_iter": [Interval(Integral, 1, None, closed="left")],
-        "tol": [Interval(Real, 0, None, closed="left")],
+        "tol": [Interval(Real, 0, None, closed="left"), None],
         "shuffle": ["boolean"],
         "verbose": ["verbose"],
-        "epsilon": [Interval(Real, 0, None, closed="left")],
         "random_state": ["random_state"],
-        "learning_rate": [
-            StrOptions({"constant", "optimal", "invscaling", "adaptive", "pa1", "pa2"})
-        ],
-        "eta0": [Interval(Real, 0, None, closed="left")],
-        "power_t": [Interval(Real, None, None, closed="neither")],
-        "early_stopping": ["boolean"],
-        "validation_fraction": [Interval(Real, 0, 1, closed="neither")],
-        "n_iter_no_change": [Interval(Integral, 1, None, closed="left")],
         "warm_start": ["boolean"],
-        "average": [Interval(Integral, 1, None, closed="left"), bool, np.bool_],
+        "average": [Interval(Integral, 0, None, closed="left"), bool, np.bool_],
     }
 
     def __init__(
@@ -152,7 +139,7 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
     def fit(self, X, y):
         """Fit model."""
 
-    def _revalidate_params(self, for_partial_fit=False):
+    def _more_validate_params(self, for_partial_fit=False):
         """Validate input params."""
         if self.early_stopping and for_partial_fit:
             raise ValueError("early_stopping should be False with partial_fit")
@@ -517,22 +504,13 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         **BaseSGD._parameter_constraints,
         "loss": [
             StrOptions(
-                {
-                    "hinge",
-                    "squared_hinge",
-                    "perceptron",
-                    "log_loss",
-                    "log",
-                    "modified_huber",
-                    "squared_error",
-                    "squared_loss",
-                    "huber",
-                    "epsilon_insensitive",
-                    "squared_epsilon_insensitive",
-                },
+                set(loss_functions.keys()),
                 deprecated={"squared_loss", "log"},
             )
         ],
+        "early_stopping": ["boolean"],
+        "validation_fraction": [Interval(Real, 0, 1, closed="neither")],
+        "n_iter_no_change": [Interval(Integral, 1, None, closed="left")],
         "n_jobs": [Integral, None],
         "class_weight": [StrOptions({"balanced"}), dict, None],
     }
@@ -680,7 +658,6 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         intercept_init=None,
         sample_weight=None,
     ):
-        self._revalidate_params()
         if hasattr(self, "classes_"):
             # delete the attribute otherwise _partial_fit thinks it's not the first call
             delattr(self, "classes_")
@@ -859,20 +836,21 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         """
         if not hasattr(self, "classes_"):
             self._validate_params()
+            self._more_validate_params(for_partial_fit=True)
 
-        self._revalidate_params(for_partial_fit=True)
-        if self.class_weight in ["balanced"]:
-            raise ValueError(
-                "class_weight '{0}' is not supported for "
-                "partial_fit. In order to use 'balanced' weights,"
-                " use compute_class_weight('{0}', "
-                "classes=classes, y=y). "
-                "In place of y you can us a large enough sample "
-                "of the full training set target to properly "
-                "estimate the class frequency distributions. "
-                "Pass the resulting weights as the class_weight "
-                "parameter.".format(self.class_weight)
-            )
+            if self.class_weight in ["balanced"]:
+                raise ValueError(
+                    "class_weight '{0}' is not supported for "
+                    "partial_fit. In order to use 'balanced' weights,"
+                    " use compute_class_weight('{0}', "
+                    "classes=classes, y=y). "
+                    "In place of y you can use a large enough sample "
+                    "of the full training set target to properly "
+                    "estimate the class frequency distributions. "
+                    "Pass the resulting weights as the class_weight "
+                    "parameter.".format(self.class_weight)
+                )
+
         return self._partial_fit(
             X,
             y,
@@ -916,6 +894,7 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
             Returns an instance of self.
         """
         self._validate_params()
+        self._more_validate_params()
 
         return self._fit(
             X,
@@ -1197,6 +1176,19 @@ class SGDClassifier(BaseSGDClassifier):
     [1]
     """
 
+    _parameter_constraints = {
+        **BaseSGDClassifier._parameter_constraints,
+        "penalty": [StrOptions({"l2", "l1", "elasticnet"}), None],
+        "alpha": [Interval(Real, 0, None, closed="left")],
+        "l1_ratio": [Interval(Real, 0, 1, closed="both")],
+        "power_t": [Interval(Real, None, None, closed="neither")],
+        "epsilon": [Interval(Real, 0, None, closed="left")],
+        "learning_rate": [
+            StrOptions({"constant", "optimal", "invscaling", "adaptive", "pa1", "pa2"})
+        ],
+        "eta0": [Interval(Real, 0, None, closed="left")],
+    }
+
     def __init__(
         self,
         loss="hinge",
@@ -1386,16 +1378,13 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         **BaseSGD._parameter_constraints,
         "loss": [
             StrOptions(
-                {
-                    "squared_error",
-                    "squared_loss",
-                    "huber",
-                    "epsilon_insensitive",
-                    "squared_epsilon_insensitive",
-                },
+                set(loss_functions.keys()),
                 deprecated={"squared_loss"},
             )
         ],
+        "early_stopping": ["boolean"],
+        "validation_fraction": [Interval(Real, 0, 1, closed="neither")],
+        "n_iter_no_change": [Interval(Integral, 1, None, closed="left")],
     }
 
     @abstractmethod
@@ -1512,7 +1501,10 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         self : object
             Returns an instance of self.
         """
-        self._revalidate_params(for_partial_fit=True)
+        if not hasattr(self, "coef_"):
+            self._validate_params()
+            self._more_validate_params(for_partial_fit=True)
+
         return self._partial_fit(
             X,
             y,
@@ -1538,8 +1530,6 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         intercept_init=None,
         sample_weight=None,
     ):
-        self._revalidate_params()
-
         if self.warm_start and getattr(self, "coef_", None) is not None:
             if coef_init is None:
                 coef_init = self.coef_
@@ -1604,6 +1594,8 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         self : object
             Fitted `SGDRegressor` estimator.
         """
+        self._validate_params()
+        self._more_validate_params()
 
         return self._fit(
             X,
@@ -1958,6 +1950,19 @@ class SGDRegressor(BaseSGDRegressor):
                     ('sgdregressor', SGDRegressor())])
     """
 
+    _parameter_constraints = {
+        **BaseSGDRegressor._parameter_constraints,
+        "penalty": [StrOptions({"l2", "l1", "elasticnet"}), None],
+        "alpha": [Interval(Real, 0, None, closed="left")],
+        "l1_ratio": [Interval(Real, 0, 1, closed="both")],
+        "power_t": [Interval(Real, None, None, closed="neither")],
+        "learning_rate": [
+            StrOptions({"constant", "optimal", "invscaling", "adaptive", "pa1", "pa2"})
+        ],
+        "epsilon": [Interval(Real, 0, None, closed="left")],
+        "eta0": [Interval(Real, 0, None, closed="left")],
+    }
+
     def __init__(
         self,
         loss="squared_error",
@@ -2156,21 +2161,13 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
     loss_functions = {"hinge": (Hinge, 1.0)}
 
     _parameter_constraints = {
-        # **BaseSGD._parameter_constraints,
+        **BaseSGD._parameter_constraints,
         "nu": [Interval(Real, 0.0, 1.0, closed="right")],
-        "fit_intercept": [bool],
-        "max_iter": [Interval(Integral, 1, None, closed="left")],
-        "tol": [Interval(Real, None, None, closed="left"), None],
-        "shuffle": [bool],
-        "verbose": [Interval(Integral, 0, None, closed="left")],
-        "random_state": ["random_state"],
         "learning_rate": [
             StrOptions({"constant", "optimal", "invscaling", "adaptive", "pa1", "pa2"})
         ],
         "eta0": [Interval(Real, 0, None, closed="left")],
         "power_t": [Interval(Real, None, None, closed="neither")],
-        "warm_start": [bool],
-        "average": [Interval(Integral, 0, None, closed="left"), bool],
     }
 
     def __init__(
@@ -2387,8 +2384,10 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         self : object
             Returns a fitted instance of self.
         """
+        if not hasattr(self, "coef_"):
+            self._validate_params()
+            self._more_validate_params(for_partial_fit=True)
 
-        self._revalidate_params(for_partial_fit=True)
         alpha = self.nu / 2
         return self._partial_fit(
             X,
@@ -2483,7 +2482,9 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         self : object
             Returns a fitted instance of self.
         """
-        self._revalidate_params()
+        self._validate_params()
+        self._more_validate_params()
+
         alpha = self.nu / 2
         self._fit(
             X,

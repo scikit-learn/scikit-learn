@@ -204,20 +204,6 @@ def test_wrong_class_weight_label():
         clf.fit(X2, y2)
 
 
-def test_wrong_class_weight_format():
-    # ValueError due to wrong class_weight argument type.
-    X2 = np.array([[-1.0, -1.0], [-1.0, 0], [-0.8, -1.0], [1.0, 1.0], [1.0, 0.0]])
-    y2 = [1, 1, 1, -1, -1]
-
-    clf = PassiveAggressiveClassifier(class_weight=[0.5], max_iter=100)
-    with pytest.raises(ValueError):
-        clf.fit(X2, y2)
-
-    clf = PassiveAggressiveClassifier(class_weight="the larch", max_iter=100)
-    with pytest.raises(ValueError):
-        clf.fit(X2, y2)
-
-
 def test_regressor_mse():
     y_bin = y.copy()
     y_bin[y != 1] = -1
