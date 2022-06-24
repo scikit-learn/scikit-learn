@@ -9,6 +9,7 @@
 
 
 import warnings
+from numbers import Real
 
 import numpy as np
 from scipy import sparse
@@ -2096,6 +2097,11 @@ class Binarizer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
            [0., 1., 0.]])
     """
 
+    _parameter_constraints = {
+        "threshold": [Real],
+        "copy": ["boolean"],
+    }
+
     def __init__(self, *, threshold=0.0, copy=True):
         self.threshold = threshold
         self.copy = copy
@@ -2119,6 +2125,7 @@ class Binarizer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         self : object
             Fitted transformer.
         """
+        self._validate_params()
         self._validate_data(X, accept_sparse="csr")
         return self
 
