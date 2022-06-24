@@ -20,6 +20,7 @@ from sklearn.utils import all_estimators
 from sklearn.utils.estimator_checks import _enforce_estimator_tags_y
 from sklearn.utils.estimator_checks import _enforce_estimator_tags_x
 from sklearn.utils.estimator_checks import _construct_instance
+from sklearn.utils.fixes import sp_version, parse_version
 from sklearn.utils.deprecation import _is_deprecated
 from sklearn.datasets import make_classification
 from sklearn.linear_model import LogisticRegression
@@ -265,6 +266,11 @@ def test_fit_docstring_attributes(name, Estimator):
     # TODO(1.4): TO BE REMOVED for 1.4 (avoid FutureWarning)
     if Estimator.__name__ in ("KMeans", "MiniBatchKMeans"):
         est.set_params(n_init="auto")
+
+    # TODO(1.4): TO BE REMOVED for 1.4 (avoid FutureWarning)
+    if Estimator.__name__ == "QuantileRegressor":
+        solver = "highs" if sp_version >= parse_version("1.6.0") else "interior-point"
+        est.set_params(solver=solver)
 
     # In case we want to deprecate some attributes in the future
     skipped_attributes = {}

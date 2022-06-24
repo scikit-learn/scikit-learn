@@ -2545,10 +2545,16 @@ def log_loss(
     Returns
     -------
     loss : float
+        Log loss, aka logistic loss or cross-entropy loss.
 
     Notes
     -----
     The logarithm used is the natural logarithm (base-e).
+
+    References
+    ----------
+    C.M. Bishop (2006). Pattern Recognition and Machine Learning. Springer,
+    p. 209.
 
     Examples
     --------
@@ -2556,11 +2562,6 @@ def log_loss(
     >>> log_loss(["spam", "ham", "ham", "spam"],
     ...          [[.1, .9], [.9, .1], [.8, .2], [.35, .65]])
     0.21616...
-
-    References
-    ----------
-    C.M. Bishop (2006). Pattern Recognition and Machine Learning. Springer,
-    p. 209.
     """
     y_pred = check_array(y_pred, ensure_2d=False)
     check_consistent_length(y_pred, y_true, sample_weight)
