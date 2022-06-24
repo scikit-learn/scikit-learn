@@ -201,12 +201,11 @@ def test_check_solver_option(LR):
         with pytest.raises(ValueError, match=msg):
             lr.fit(X, y)
 
-    # logistic RegressionCV does not supports penalty = none
-    if type(lr) == LogisticRegression:
-        # liblinear does not support penalty='none'
+    # liblinear does not support penalty='none'
+    # (LogisticRegressionCV does not supports penalty='none' at all)
+    if LR is LogisticRegression:
         msg = "penalty='none' is not supported for the liblinear solver"
         lr = LR(penalty="none", solver="liblinear")
-
         with pytest.raises(ValueError, match=msg):
             lr.fit(X, y)
 
@@ -1646,6 +1645,15 @@ def test_LogisticRegressionCV_elasticnet_attribute_shapes():
     assert lrcv.n_iter_.shape == (n_classes, n_folds, Cs.size, l1_ratios.size)
 
 
+def test_l1_ratio_non_elasticnet():
+    msg = (
+        r"l1_ratio parameter is only used when penalty is"
+        r" 'elasticnet'\. Got \(penalty=l1\)"
+    )
+    with pytest.warns(UserWarning, match=msg):
+        LogisticRegression(penalty="l1", solver="saga", l1_ratio=0.5).fit(X, Y1)
+
+
 @pytest.mark.parametrize("C", np.logspace(-3, 2, 4))
 @pytest.mark.parametrize("l1_ratio", [0.1, 0.5, 0.9])
 def test_elastic_net_versus_sgd(C, l1_ratio):
@@ -1788,10 +1796,8 @@ def test_penalty_none(solver):
         penalty="l2", C=np.inf, solver=solver, random_state=0
     )
     pred_none = lr_none.fit(X, y).predict(X)
-
-    with pytest.raises(ValueError):
-        pred_l2_C_inf = lr_l2_C_inf.fit(X, y).predict(X)
-        assert_array_equal(pred_none, pred_l2_C_inf)
+    pred_l2_C_inf = lr_l2_C_inf.fit(X, y).predict(X)
+    assert_array_equal(pred_none, pred_l2_C_inf)
 
 
 @pytest.mark.parametrize(
