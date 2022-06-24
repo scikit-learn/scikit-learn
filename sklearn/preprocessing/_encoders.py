@@ -3,6 +3,7 @@
 # License: BSD 3 clause
 
 import numbers
+from numbers import Integral, Real
 import warnings
 
 import numpy as np
@@ -437,10 +438,10 @@ class OneHotEncoder(_BaseEncoder):
         "drop": [StrOptions({"first", "if_binary"}), "array-like", None],
         "dtype": "no_validation",  # validation delegated to numpy
         "handle_unknown": [StrOptions({"error", "ignore", "infrequent_if_exist"})],
-        "max_categories": [Interval(numbers.Integral, 1, None, closed="left"), None],
+        "max_categories": [Interval(Integral, 1, None, closed="left"), None],
         "min_frequency": [
-            Interval(numbers.Integral, 1, None, closed="left"),
-            Interval(numbers.Real, 0, 1, closed="neither"),
+            Interval(Integral, 1, None, closed="left"),
+            Interval(Real, 0, 1, closed="neither"),
             None,
         ],
         "sparse": ["boolean"],
@@ -798,6 +799,7 @@ class OneHotEncoder(_BaseEncoder):
         """
         self._validate_params()
         self._check_infrequent_enabled()
+
         fit_results = self._fit(
             X,
             handle_unknown=self.handle_unknown,
@@ -811,32 +813,6 @@ class OneHotEncoder(_BaseEncoder):
         self.drop_idx_ = self._compute_drop_idx()
         self._n_features_outs = self._compute_n_features_outs()
         return self
-
-    def fit_transform(self, X, y=None):
-        """
-        Fit OneHotEncoder to X, then transform X.
-
-        Equivalent to fit(X).transform(X) but more convenient.
-
-        Parameters
-        ----------
-        X : array-like of shape (n_samples, n_features)
-            The data to encode.
-
-        y : None
-            Ignored. This parameter exists only for compatibility with
-            :class:`~sklearn.pipeline.Pipeline`.
-
-        Returns
-        -------
-        X_out : {ndarray, sparse matrix} of shape \
-                (n_samples, n_encoded_features)
-            Transformed input. If `sparse=True`, a sparse matrix will be
-            returned.
-        """
-        self._validate_params()
-        self._check_infrequent_enabled()
-        return super().fit_transform(X, y)
 
     def transform(self, X):
         """
@@ -1214,17 +1190,10 @@ class OrdinalEncoder(_OneToOneFeatureMixin, _BaseEncoder):
 
     _parameter_constraints = {
         "categories": [StrOptions({"auto"}), list],
-        "dtype": "no_validation",
-        "encoded_missing_value": [
-            Interval(numbers.Integral, None, None, closed="neither"),
-            type(np.nan),
-        ],
+        "dtype": "no_validation",  # validation delegated to numpy
+        "encoded_missing_value": [Integral, type(np.nan)],
         "handle_unknown": [StrOptions({"error", "use_encoded_value"})],
-        "unknown_value": [
-            Interval(numbers.Integral, None, None, closed="neither"),
-            type(np.nan),
-            None,
-        ],
+        "unknown_value": [Integral, type(np.nan), None],
     }
 
     def __init__(
