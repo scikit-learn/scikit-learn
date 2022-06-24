@@ -423,6 +423,9 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         self.n_jobs = n_jobs
 
     def _check_algorithm_metric(self):
+        if self.algorithm not in ["auto", "brute", "kd_tree", "ball_tree"]:
+            raise ValueError("unrecognized algorithm: '%s'" % self.algorithm)
+
         if self.algorithm == "auto":
             if self.metric == "precomputed":
                 alg_check = "brute"
@@ -660,6 +663,14 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             )
         elif self._fit_method == "brute":
             self._tree = None
+        if self.n_neighbors is not None:
+            if self.n_neighbors <= 0:
+                raise ValueError("Expected n_neighbors > 0. Got %d" % self.n_neighbors)
+            elif not isinstance(self.n_neighbors, numbers.Integral):
+                raise TypeError(
+                    "n_neighbors does not take %s value, enter integer value"
+                    % type(self.n_neighbors)
+                )
 
         return self
 
