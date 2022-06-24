@@ -180,7 +180,6 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                 f"{self.__class__.__name__} supports only solvers 'lbfgs'; "
                 f"got {self.solver}"
             )
-        solver = self.solver
 
         X, y = self._validate_data(
             X,
