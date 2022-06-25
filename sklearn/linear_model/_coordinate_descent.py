@@ -929,7 +929,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         To avoid memory re-allocation it is advised to allocate the
         initial data in memory directly using that format.
         """
-        print('hey')
+
         self._validate_params()
 
         _normalize = _deprecate_normalize(
