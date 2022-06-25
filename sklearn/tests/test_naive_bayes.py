@@ -792,6 +792,48 @@ def test_categoricalnb_min_categories_errors(min_categories, error_msg):
         clf.fit(X, y)
 
 
+def test_alpha():
+    # Setting alpha=0 should not output nan results when p(x_i|y_j)=0 is a case
+    X = np.array([[1, 0], [1, 1]])
+    y = np.array([0, 1])
+    nb = BernoulliNB(alpha=0.0)
+    msg = "alpha too small will result in numeric errors, setting alpha = 1.0e-10"
+    with pytest.warns(UserWarning, match=msg):
+        nb.partial_fit(X, y, classes=[0, 1])
+    with pytest.warns(UserWarning, match=msg):
+        nb.fit(X, y)
+    prob = np.array([[1, 0], [0, 1]])
+    assert_array_almost_equal(nb.predict_proba(X), prob)
+
+    nb = MultinomialNB(alpha=0.0)
+    with pytest.warns(UserWarning, match=msg):
+        nb.partial_fit(X, y, classes=[0, 1])
+    with pytest.warns(UserWarning, match=msg):
+        nb.fit(X, y)
+    prob = np.array([[2.0 / 3, 1.0 / 3], [0, 1]])
+    assert_array_almost_equal(nb.predict_proba(X), prob)
+
+    nb = CategoricalNB(alpha=0.0)
+    with pytest.warns(UserWarning, match=msg):
+        nb.fit(X, y)
+    prob = np.array([[1.0, 0.0], [0.0, 1.0]])
+    assert_array_almost_equal(nb.predict_proba(X), prob)
+
+    # Test sparse X
+    X = scipy.sparse.csr_matrix(X)
+    nb = BernoulliNB(alpha=0.0)
+    with pytest.warns(UserWarning, match=msg):
+        nb.fit(X, y)
+    prob = np.array([[1, 0], [0, 1]])
+    assert_array_almost_equal(nb.predict_proba(X), prob)
+
+    nb = MultinomialNB(alpha=0.0)
+    with pytest.warns(UserWarning, match=msg):
+        nb.fit(X, y)
+    prob = np.array([[2.0 / 3, 1.0 / 3], [0, 1]])
+    assert_array_almost_equal(nb.predict_proba(X), prob)
+
+
 def test_alpha_vector():
     X = np.array([[1, 0], [1, 1]])
     y = np.array([0, 1])
@@ -813,9 +855,16 @@ def test_alpha_vector():
     # Test alpha non-negative
     alpha = np.array([1.0, -0.1])
     m_nb = MultinomialNB(alpha=alpha)
-    expected_msg = "Smoothing parameter alpha = -1.0e-01. alpha should be >= 1e-10."
+    expected_msg = "Smoothing parameter alpha = -1.0e-01. alpha should be > 0."
     with pytest.raises(ValueError, match=expected_msg):
         m_nb.fit(X, y)
+
+    # Test that too small pseudo-counts are replaced
+    ALPHA_MIN = 1e-10
+    alpha = np.array([ALPHA_MIN / 2, 0.5])
+    m_nb = MultinomialNB(alpha=alpha)
+    m_nb.partial_fit(X, y, classes=[0, 1])
+    assert_array_almost_equal(m_nb._check_alpha(), [ALPHA_MIN, 0.5], decimal=12)
 
     # Test correct dimensions
     alpha = np.array([1.0, 2.0, 3.0])

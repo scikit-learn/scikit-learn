@@ -509,6 +509,9 @@ class GaussianNB(_BaseNB):
         return self.var_
 
 
+_ALPHA_MIN = 1e-10
+
+
 class _BaseDiscreteNB(_BaseNB):
     """Abstract base class for naive Bayes on discrete/categorical data
 
@@ -520,10 +523,8 @@ class _BaseDiscreteNB(_BaseNB):
     _count(X, Y)
     """
 
-    # alpha too small will result in numeric errors,
-    # setting min_alpha = 1.0e-10
     _parameter_constraints = {
-        "alpha": [Interval(Real, 1e-10, None, closed="left"), "array-like"],
+        "alpha": [Interval(Real, 0, None, closed="left"), "array-like"],
         "fit_prior": ["boolean"],
         "class_prior": ["array-like", None],
     }
@@ -591,9 +592,10 @@ class _BaseDiscreteNB(_BaseNB):
             self.class_log_prior_ = np.full(n_classes, -np.log(n_classes))
 
     def _check_alpha(self):
-        if np.min(self.alpha) < 1e-10:
+        # This test also covers array-like alpha.
+        if np.min(self.alpha) < 0:
             raise ValueError(
-                "Smoothing parameter alpha = %.1e. alpha should be >= 1e-10."
+                "Smoothing parameter alpha = %.1e. alpha should be > 0."
                 % np.min(self.alpha)
             )
         if isinstance(self.alpha, np.ndarray):
@@ -601,6 +603,12 @@ class _BaseDiscreteNB(_BaseNB):
                 raise ValueError(
                     "alpha should be a scalar or a numpy array with shape [n_features]"
                 )
+        if np.min(self.alpha) < _ALPHA_MIN:
+            warnings.warn(
+                "alpha too small will result in numeric errors, setting alpha = %.1e"
+                % _ALPHA_MIN
+            )
+            return np.maximum(self.alpha, _ALPHA_MIN)
         return self.alpha
 
     def partial_fit(self, X, y, classes=None, sample_weight=None):
@@ -772,7 +780,7 @@ class MultinomialNB(_BaseDiscreteNB):
     ----------
     alpha : float or array-like of shape(n_features), default=1.0
         Additive (Laplace/Lidstone) smoothing parameter
-        (alpha_min=1.0e-10).
+        (0 for no smoothing).
 
     fit_prior : bool, default=True
         Whether to learn class prior probabilities or not.
@@ -892,7 +900,7 @@ class ComplementNB(_BaseDiscreteNB):
     Parameters
     ----------
     alpha : float or array-like of shape(n_features), default=1.0
-        Additive (Laplace/Lidstone) smoothing parameter (alpha_min=1.0e-10).
+        Additive (Laplace/Lidstone) smoothing parameter (0 for no smoothing).
 
     fit_prior : bool, default=True
         Only used in edge case with a single class in the training set.
@@ -1030,7 +1038,7 @@ class BernoulliNB(_BaseDiscreteNB):
     ----------
     alpha : float or array-like of shape(n_features), default=1.0
         Additive (Laplace/Lidstone) smoothing parameter
-        (alpha_min=1.0e-10).
+        (0 for no smoothing).
 
     binarize : float or None, default=0.0
         Threshold for binarizing (mapping to booleans) of sample features.
@@ -1187,7 +1195,7 @@ class CategoricalNB(_BaseDiscreteNB):
     ----------
     alpha : float or array-like of shape(n_features), default=1.0
         Additive (Laplace/Lidstone) smoothing parameter
-        (alpha_min=1.0e-10).
+        (0 for no smoothing).
 
     fit_prior : bool, default=True
         Whether to learn class prior probabilities or not.
