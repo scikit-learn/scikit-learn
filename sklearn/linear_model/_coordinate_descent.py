@@ -845,7 +845,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
 
     _parameter_constraints = {
         "alpha": [Interval(Real, 0, None, closed="left"), np.ndarray],
-        "l1_ratio": [Interval(Real, 0, 1,closed="left"), None],
+        "l1_ratio": [Interval(Real, 0, 1, closed="left"), None],
         "fit_intercept": ["boolean"],
         "normalize": [Hidden(StrOptions({"deprecated"})), "boolean"],
         "precompute": ["boolean"],
@@ -855,11 +855,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         "warm_start": ["boolean"],
         "positive": ["boolean"],
         "random_state": ["random_state"],
-        "selection": [
-            StrOptions(
-                {"cyclic", "random"}
-            )
-        ],
+        "selection": [StrOptions({"cyclic", "random"})],
     }
 
     path = staticmethod(enet_path)
@@ -936,14 +932,11 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
             self.normalize, default=False, estimator_name=self.__class__.__name__
         )
 
-
         if isinstance(self.precompute, str):
             raise ValueError(
                 "precompute should be one of True, False or array-like. Got %r"
                 % self.precompute
             )
-
-
 
         # Remember if X is copied
         X_copied = False
