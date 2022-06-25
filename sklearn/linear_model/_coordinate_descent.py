@@ -10,6 +10,7 @@ import warnings
 import numbers
 from abc import ABC, abstractmethod
 from functools import partial
+from numbers import Integral, Real
 
 import numpy as np
 from scipy import sparse
@@ -21,6 +22,9 @@ from ._base import _preprocess_data, _deprecate_normalize
 from ..utils import check_array
 from ..utils import check_scalar
 from ..utils.validation import check_random_state
+from ..utils._param_validation import Interval
+from ..utils._param_validation import StrOptions
+from ..utils._param_validation import Hidden
 from ..model_selection import check_cv
 from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import (
@@ -839,6 +843,25 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
     [1.451...]
     """
 
+    _parameter_constraints = {
+        "alpha": [Interval(Real, 0, None, closed="left"), np.ndarray],
+        "l1_ratio": [Interval(Real, 0, 1,closed="left"), None],
+        "fit_intercept": ["boolean"],
+        "normalize": [Hidden(StrOptions({"deprecated"})), "boolean"],
+        "precompute": ["boolean"],
+        "max_iter": [Interval(Integral, 1, None, closed="left"), None],
+        "copy_X": ["boolean"],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "warm_start": ["boolean"],
+        "positive": ["boolean"],
+        "random_state": ["random_state"],
+        "selection": [
+            StrOptions(
+                {"cyclic", "random"}
+            )
+        ],
+    }
+
     path = staticmethod(enet_path)
 
     def __init__(
@@ -906,6 +929,9 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         To avoid memory re-allocation it is advised to allocate the
         initial data in memory directly using that format.
         """
+
+        self._validate_params()
+
         _normalize = _deprecate_normalize(
             self.normalize, default=False, estimator_name=self.__class__.__name__
         )
