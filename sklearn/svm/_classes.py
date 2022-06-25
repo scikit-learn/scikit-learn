@@ -9,9 +9,9 @@ from ..linear_model._base import LinearClassifierMixin, SparseCoefMixin, LinearM
 from ..utils.validation import _num_samples
 from ..utils.multiclass import check_classification_targets
 from ..utils._param_validation import StrOptions
+from ..utils._param_validation import Interval
 from numbers import Integral
 from numbers import Real
-from ..utils import check_random_state
 
 
 class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
@@ -194,18 +194,17 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     """
 
     _parameter_constraints = {
-        "penalty": StrOptions({"l1", "l2"}),
-        "loss": StrOptions({"hinge", "squared_hinge"}),
+        "penalty": [StrOptions({"l1", "l2"})],
+        "loss": [StrOptions({"hinge", "squared_hinge"})],
         "dual": ["boolean"],
-        "tol": [Real],
-        "C": [Real],
-        "multi_class": StrOptions({"ovr", "crammer_singer"}),
+        "tol": [Interval(Real, 0.0, None, closed="neither")],
+        "C": [Interval(Real, 0.0, None, closed="neither")],
+        "multi_class": [StrOptions({"ovr", "crammer_singer"})],
         "fit_intercept": ["boolean"],
         "intercept_scaling": [Real],
-        "class_weight": [None, dict, "balanced"],
+        "class_weight": [None, dict, StrOptions({"balanced"})],
         "verbose": [Integral],
-        "random_state": [None, Integral, "random_state"],
-        "shrinking": ["boolean"],
+        "random_state": ["random_state"],
         "max_iter": [Integral],
     }
 
@@ -263,11 +262,6 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             An instance of the estimator.
         """
         self._validate_params()
-
-        check_random_state(self.random_state)
-
-        if self.C < 0:
-            raise ValueError("Penalty term must be positive; got (C=%r)" % self.C)
 
         X, y = self._validate_data(
             X,
@@ -453,14 +447,14 @@ class LinearSVR(RegressorMixin, LinearModel):
 
     _parameter_constraints = {
         "epsilon": [Real],
-        "tol": [Real],
-        "C": [Real],
-        "loss": StrOptions({"epsilon_insensitive", "squared_epsilon_insensitive"}),
+        "tol": [Interval(Real, 0.0, None, closed="neither")],
+        "C": [Interval(Real, 0.0, None, closed="neither")],
+        "loss": [StrOptions({"epsilon_insensitive", "squared_epsilon_insensitive"})],
         "fit_intercept": ["boolean"],
         "intercept_scaling": [Real],
         "dual": ["boolean"],
         "verbose": [Integral],
-        "random_state": [None, Integral, "random_state"],
+        "random_state": ["random_state"],
         "max_iter": [Integral],
     }
 
@@ -514,11 +508,6 @@ class LinearSVR(RegressorMixin, LinearModel):
             An instance of the estimator.
         """
         self._validate_params()
-
-        check_random_state(self.random_state)
-
-        if self.C < 0:
-            raise ValueError("Penalty term must be positive; got (C=%r)" % self.C)
 
         X, y = self._validate_data(
             X,
