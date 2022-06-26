@@ -8,7 +8,7 @@ import numpy as np
 from numbers import Integral, Real
 from scipy.special import gammainc
 from ..base import BaseEstimator
-from ..utils import check_random_state, check_scalar
+from ..utils import check_random_state
 from ..utils.validation import _check_sample_weight, check_is_fitted
 from ..utils._param_validation import Interval, StrOptions
 
@@ -184,14 +184,12 @@ class KernelDensity(BaseEstimator):
                 return "ball_tree"
             else:
                 raise ValueError("invalid metric: '{0}'".format(metric))
-        elif algorithm in TREE_DICT:
+        else:
             if metric not in TREE_DICT[algorithm].valid_metrics:
                 raise ValueError(
                     "invalid metric for {0}: '{1}'".format(TREE_DICT[algorithm], metric)
                 )
             return algorithm
-        else:
-            raise ValueError("invalid algorithm: '{0}'".format(algorithm))
 
     def fit(self, X, y=None, sample_weight=None):
         """Fit the Kernel Density model on the data.
@@ -221,12 +219,6 @@ class KernelDensity(BaseEstimator):
         algorithm = self._choose_algorithm(self.algorithm, self.metric)
 
         if isinstance(self.bandwidth, str):
-            methods_supported = ("scott", "silverman")
-            if self.bandwidth not in methods_supported:
-                raise ValueError(
-                    "When `bandwidth` is a string, it should be one of: "
-                    f"{', '.join(methods_supported)}. Got {self.bandwidth!r} instead."
-                )
             if self.bandwidth == "scott":
                 self.bandwidth_ = X.shape[0] ** (-1 / (X.shape[1] + 4))
             elif self.bandwidth == "silverman":
@@ -234,16 +226,7 @@ class KernelDensity(BaseEstimator):
                     -1 / (X.shape[1] + 4)
                 )
         else:
-            check_scalar(
-                self.bandwidth,
-                "bandwidth",
-                target_type=Real,
-                min_val=0,
-                include_boundaries="neither",
-            )
             self.bandwidth_ = self.bandwidth
-        if self.kernel not in VALID_KERNELS:
-            raise ValueError("invalid kernel: '{0}'".format(self.kernel))
 
         X = self._validate_data(X, order="C", dtype=DTYPE)
 
