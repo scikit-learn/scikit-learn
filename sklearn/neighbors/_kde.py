@@ -4,12 +4,13 @@ Kernel Density Estimation
 """
 # Author: Jake Vanderplas <jakevdp@cs.washington.edu>
 
-import numbers
 import numpy as np
+from numbers import Integral, Real
 from scipy.special import gammainc
 from ..base import BaseEstimator
 from ..utils import check_random_state, check_scalar
 from ..utils.validation import _check_sample_weight, check_is_fitted
+from ..utils._param_validation import Interval, StrOptions
 
 from ..utils.extmath import row_norms
 from ._ball_tree import BallTree, DTYPE
@@ -119,6 +120,35 @@ class KernelDensity(BaseEstimator):
     array([-1.52955942, -1.51462041, -1.60244657])
     """
 
+    _parameter_constraints = {
+        "bandwidth": [
+            Interval(Real, 0, None, closed="right"),
+            StrOptions({"scott", "silverman"}),
+        ],
+        "algorithm": [StrOptions({"kd_tree", "ball_tree", "auto"})],
+        "kernel": [
+            StrOptions(
+                {
+                    "gaussian",
+                    "tophat",
+                    "epanechnikov",
+                    "exponential",
+                    "linear",
+                    "cosine",
+                }
+            )
+        ],
+        "metric": [
+            StrOptions(
+                {"euclidean", "minkowski", "manhattan", "chebyshev", "haversine"}
+            )
+        ],
+        "atol": [Interval(Integral, 0, None, closed="right")],
+        "rtol": [Interval(Interval)],
+        "breadth_first": ["boolean"],
+        "leaf_size": [Interval(Integral, 0, None, close="right")],
+    }
+
     def __init__(
         self,
         *,
@@ -185,6 +215,7 @@ class KernelDensity(BaseEstimator):
         self : object
             Returns the instance itself.
         """
+        self._validate_params()
 
         algorithm = self._choose_algorithm(self.algorithm, self.metric)
 
@@ -205,7 +236,7 @@ class KernelDensity(BaseEstimator):
             check_scalar(
                 self.bandwidth,
                 "bandwidth",
-                target_type=numbers.Real,
+                target_type=Real,
                 min_val=0,
                 include_boundaries="neither",
             )
