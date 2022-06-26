@@ -1771,7 +1771,7 @@ def test_elastic_net_versus_sgd(C, l1_ratio):
         penalty="elasticnet",
         random_state=1,
         fit_intercept=False,
-        tol=-np.inf,
+        tol=None,
         max_iter=2000,
         l1_ratio=l1_ratio,
         alpha=1.0 / C / n_samples,
