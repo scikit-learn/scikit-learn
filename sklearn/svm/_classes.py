@@ -1254,6 +1254,15 @@ class SVR(RegressorMixin, BaseLibSVM):
             random_state=None,
         )
 
+    # TODO(1.4): Remove
+    @deprecated(  # type: ignore
+        "Attribute `class_weight_` was deprecated in version 1.2 and will be removed in"
+        " 1.4."
+    )
+    @property
+    def class_weight_(self):
+        return np.empty(0)
+
     def _more_tags(self):
         return {
             "_xfail_checks": {
@@ -1337,6 +1346,9 @@ class QuantileSVR(RegressorMixin, BaseLibSVM):
     class_weight_ : ndarray of shape (n_classes,)
         Multipliers of parameter C for each class.
         Computed based on the ``class_weight`` parameter.
+
+        .. deprecated:: 1.2
+            `class_weight_` was deprecated in version 1.2 and will be removed in 1.4.
 
     coef_ : ndarray of shape (1, n_features)
         Weights assigned to the features (coefficients in the primal
