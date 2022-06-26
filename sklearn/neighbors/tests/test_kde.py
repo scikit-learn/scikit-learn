@@ -132,17 +132,6 @@ def test_kde_score(n_samples=100, n_features=3):
 
 
 def test_kde_badargs():
-    X = np.random.random((200, 10))
-    with pytest.raises(ValueError):
-        KernelDensity(algorithm="blah").fit(X)
-    with pytest.raises(ValueError):
-        KernelDensity(bandwidth=0).fit(X)
-    with pytest.raises(ValueError):
-        KernelDensity(kernel="blah").fit(X)
-    with pytest.raises(ValueError):
-        KernelDensity(metric="blah").fit(X)
-    with pytest.raises(ValueError):
-        KernelDensity(algorithm="kd_tree", metric="blah").fit(X)
     kde = KernelDensity()
     with pytest.raises(ValueError):
         kde.fit(np.random.random((200, 10)), sample_weight=np.random.random((200, 10)))
@@ -273,40 +262,3 @@ def test_bandwidth(bandwidth):
     else:
         h = bandwidth
     assert kde.bandwidth_ == pytest.approx(h)
-
-
-@pytest.mark.parametrize(
-    "bandwidth, exc_type, exc_msg",
-    [
-        (
-            "str test",
-            ValueError,
-            "When `bandwidth` is a string, it should be one of: scott, silvermann."
-            " Got 'str test' instead.",
-        ),
-        (
-            -2.0,
-            ValueError,
-            r"bandwidth == -2.0, must be > 0.",
-        ),
-        (
-            0.0,
-            ValueError,
-            r"bandwidth == 0.0, must be > 0.",
-        ),
-        (
-            np.ones(2),
-            TypeError,
-            r"bandwidth must be an instance of float, not ndarray.",
-        ),
-    ],
-    # Avoid long error messages in test names:
-    # https://github.com/scikit-learn/scikit-learn/issues/21362
-)
-def test_bandwidth_exceptions(bandwidth, exc_type, exc_msg):
-    # Check invalid `bandwidth` values
-    n_samples, n_features = (100, 3)
-    rng = np.random.RandomState(0)
-    X = rng.randn(n_samples, n_features)
-    with pytest.raises(exc_type, match=exc_msg):
-        KernelDensity(bandwidth=bandwidth).fit(X)
