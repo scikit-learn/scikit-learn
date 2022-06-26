@@ -147,6 +147,7 @@ class KernelDensity(BaseEstimator):
         "rtol": [Interval(Interval, 0, None, closed="neither")],
         "breadth_first": ["boolean"],
         "leaf_size": [Interval(Integral, 1, None, closed="left")],
+        "metric_params": [None],
     }
 
     def __init__(
