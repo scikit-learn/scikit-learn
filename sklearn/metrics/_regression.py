@@ -197,6 +197,7 @@ def mean_absolute_error(
         y_true, y_pred, multioutput
     )
     check_consistent_length(y_true, y_pred, sample_weight)
+    sample_weight /= np.mean(sample_weight)  # scale to mean of 1 (to match Tensorflow)
     output_errors = np.average(np.abs(y_pred - y_true), weights=sample_weight, axis=0)
     if isinstance(multioutput, str):
         if multioutput == "raw_values":
@@ -368,6 +369,7 @@ def mean_absolute_percentage_error(
     check_consistent_length(y_true, y_pred, sample_weight)
     epsilon = np.finfo(np.float64).eps
     mape = np.abs(y_pred - y_true) / np.maximum(np.abs(y_true), epsilon)
+    sample_weight /= np.mean(sample_weight)  # scale to mean of 1 (to match Tensorflow)
     output_errors = np.average(mape, weights=sample_weight, axis=0)
     if isinstance(multioutput, str):
         if multioutput == "raw_values":
@@ -443,6 +445,7 @@ def mean_squared_error(
         y_true, y_pred, multioutput
     )
     check_consistent_length(y_true, y_pred, sample_weight)
+    sample_weight /= np.mean(sample_weight)  # scale to mean of 1 (to match Tensorflow)
     output_errors = np.average((y_true - y_pred) ** 2, axis=0, weights=sample_weight)
 
     if not squared:
@@ -526,7 +529,7 @@ def mean_squared_log_error(
             "Mean Squared Logarithmic Error cannot be used when "
             "targets contain negative values."
         )
-
+    sample_weight /= np.mean(sample_weight)  # scale to mean of 1 (to match Tensorflow)
     return mean_squared_error(
         np.log1p(y_true),
         np.log1p(y_pred),
