@@ -502,7 +502,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "KBinsDiscretizer",
     "KNNImputer",
     "KNeighborsTransformer",
-    "KernelDensity",
     "KernelPCA",
     "KernelRidge",
     "LabelBinarizer",
