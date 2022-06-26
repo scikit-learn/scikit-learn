@@ -122,7 +122,7 @@ class KernelDensity(BaseEstimator):
 
     _parameter_constraints = {
         "bandwidth": [
-            Interval(Real, 0, None, closed="right"),
+            Interval(Real, 0, None, closed="neither"),
             StrOptions({"scott", "silverman"}),
         ],
         "algorithm": [StrOptions({"kd_tree", "ball_tree", "auto"})],
@@ -143,10 +143,10 @@ class KernelDensity(BaseEstimator):
                 {"euclidean", "minkowski", "manhattan", "chebyshev", "haversine"}
             )
         ],
-        "atol": [Interval(Integral, 0, None, closed="right")],
-        "rtol": [Interval(Interval)],
+        "atol": [Interval(Integral, 0, None, closed="neither")],
+        "rtol": [Interval(Interval, 0, None, closed="neither")],
         "breadth_first": ["boolean"],
-        "leaf_size": [Interval(Integral, 0, None, close="right")],
+        "leaf_size": [Interval(Integral, 1, None, closed="left")],
     }
 
     def __init__(
