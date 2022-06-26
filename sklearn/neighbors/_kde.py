@@ -17,15 +17,23 @@ from ._ball_tree import BallTree, DTYPE
 from ._kd_tree import KDTree
 
 
-VALID_KERNELS = [
+VALID_KERNELS = {
     "gaussian",
     "tophat",
     "epanechnikov",
     "exponential",
     "linear",
     "cosine",
-]
+}
+
 TREE_DICT = {"ball_tree": BallTree, "kd_tree": KDTree}
+
+
+VALID_METRICS = {
+    metric_id
+    for algorithm in TREE_DICT.values()
+    for metric_id in algorithm.valid_metrics
+}
 
 
 # TODO: implement a brute force version for testing purposes
@@ -126,23 +134,8 @@ class KernelDensity(BaseEstimator):
             StrOptions({"scott", "silverman"}),
         ],
         "algorithm": [StrOptions({"kd_tree", "ball_tree", "auto"})],
-        "kernel": [
-            StrOptions(
-                {
-                    "gaussian",
-                    "tophat",
-                    "epanechnikov",
-                    "exponential",
-                    "linear",
-                    "cosine",
-                }
-            )
-        ],
-        "metric": [
-            StrOptions(
-                {"euclidean", "minkowski", "manhattan", "chebyshev", "haversine"}
-            )
-        ],
+        "kernel": [StrOptions(VALID_KERNELS)],
+        "metric": [StrOptions(VALID_METRICS)],
         "atol": [Interval(Real, 0, None, closed="left")],
         "rtol": [Interval(Real, 0, None, closed="left")],
         "breadth_first": ["boolean"],
