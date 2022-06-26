@@ -17,7 +17,7 @@ import joblib
 def compute_kernel_slow(Y, X, kernel, h):
     if h == "scott":
         h = X.shape[0] ** (-1 / (X.shape[1] + 4))
-    elif h == "silvermann":
+    elif h == "silverman":
         h = (X.shape[0] * (X.shape[1] + 2) / 4) ** (-1 / (X.shape[1] + 4))
 
     d = np.sqrt(((Y[:, None, :] - X) ** 2).sum(-1))
@@ -51,7 +51,7 @@ def check_results(kernel, bandwidth, atol, rtol, X, Y, dens_true):
 @pytest.mark.parametrize(
     "kernel", ["gaussian", "tophat", "epanechnikov", "exponential", "linear", "cosine"]
 )
-@pytest.mark.parametrize("bandwidth", [0.01, 0.1, 1, "scott", "silvermann"])
+@pytest.mark.parametrize("bandwidth", [0.01, 0.1, 1, "scott", "silverman"])
 def test_kernel_density(kernel, bandwidth):
     n_samples, n_features = (100, 3)
 
@@ -243,7 +243,7 @@ def test_check_is_fitted(method):
         getattr(kde, method)(X)
 
 
-@pytest.mark.parametrize("bandwidth", ["scott", "silvermann", 0.1])
+@pytest.mark.parametrize("bandwidth", ["scott", "silverman", 0.1])
 def test_bandwidth(bandwidth):
     n_samples, n_features = (100, 3)
     rng = np.random.RandomState(0)
@@ -257,7 +257,7 @@ def test_bandwidth(bandwidth):
     # Test that the attribute self.bandwidth_ has the expected value
     if bandwidth == "scott":
         h = X.shape[0] ** (-1 / (X.shape[1] + 4))
-    elif bandwidth == "silvermann":
+    elif bandwidth == "silverman":
         h = (X.shape[0] * (X.shape[1] + 2) / 4) ** (-1 / (X.shape[1] + 4))
     else:
         h = bandwidth

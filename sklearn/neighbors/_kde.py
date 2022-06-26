@@ -95,7 +95,7 @@ class KernelDensity(BaseEstimator):
 
     bandwidth_ : float
         Value of the bandwidth, given directly by the bandwidth parameter or
-        estimated using the 'scott' or 'silvermann' method.
+        estimated using the 'scott' or 'silverman' method.
 
         .. versionadded:: 1.0
 
@@ -221,7 +221,7 @@ class KernelDensity(BaseEstimator):
         algorithm = self._choose_algorithm(self.algorithm, self.metric)
 
         if isinstance(self.bandwidth, str):
-            methods_supported = ("scott", "silvermann")
+            methods_supported = ("scott", "silverman")
             if self.bandwidth not in methods_supported:
                 raise ValueError(
                     "When `bandwidth` is a string, it should be one of: "
@@ -229,7 +229,7 @@ class KernelDensity(BaseEstimator):
                 )
             if self.bandwidth == "scott":
                 self.bandwidth_ = X.shape[0] ** (-1 / (X.shape[1] + 4))
-            elif self.bandwidth == "silvermann":
+            elif self.bandwidth == "silverman":
                 self.bandwidth_ = (X.shape[0] * (X.shape[1] + 2) / 4) ** (
                     -1 / (X.shape[1] + 4)
                 )
