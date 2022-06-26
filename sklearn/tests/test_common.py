@@ -583,6 +583,7 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "RobustScaler",
     "SVC",
     "SVR",
+    "QuantileSVR",
     "SelectFdr",
     "SelectFpr",
     "SelectFromModel",
