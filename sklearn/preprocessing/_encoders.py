@@ -3,6 +3,7 @@
 # License: BSD 3 clause
 
 import numbers
+from numbers import Integral, Real
 import warnings
 
 import numpy as np
@@ -13,6 +14,8 @@ from ..utils import check_array, is_scalar_nan
 from ..utils.deprecation import deprecated
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _check_feature_names_in
+from ..utils._param_validation import Interval
+from ..utils._param_validation import StrOptions
 from ..utils._mask import _get_mask
 
 from ..utils._encode import _encode, _check_unknown, _unique, _get_counts
@@ -430,6 +433,20 @@ class OneHotEncoder(_BaseEncoder):
            [1., 0., 0.]])
     """
 
+    _parameter_constraints = {
+        "categories": [StrOptions({"auto"}), list],
+        "drop": [StrOptions({"first", "if_binary"}), "array-like", None],
+        "dtype": "no_validation",  # validation delegated to numpy
+        "handle_unknown": [StrOptions({"error", "ignore", "infrequent_if_exist"})],
+        "max_categories": [Interval(Integral, 1, None, closed="left"), None],
+        "min_frequency": [
+            Interval(Integral, 1, None, closed="left"),
+            Interval(Real, 0, 1, closed="neither"),
+            None,
+        ],
+        "sparse": ["boolean"],
+    }
+
     def __init__(
         self,
         *,
@@ -459,33 +476,11 @@ class OneHotEncoder(_BaseEncoder):
             for category, indices in zip(self.categories_, infrequent_indices)
         ]
 
-    def _validate_keywords(self):
-
-        if self.handle_unknown not in {"error", "ignore", "infrequent_if_exist"}:
-            msg = (
-                "handle_unknown should be one of 'error', 'ignore', "
-                f"'infrequent_if_exist' got {self.handle_unknown}."
-            )
-            raise ValueError(msg)
-
-        if self.max_categories is not None and self.max_categories < 1:
-            raise ValueError("max_categories must be greater than 1")
-
-        if isinstance(self.min_frequency, numbers.Integral):
-            if not self.min_frequency >= 1:
-                raise ValueError(
-                    "min_frequency must be an integer at least "
-                    "1 or a float in (0.0, 1.0); got the "
-                    f"integer {self.min_frequency}"
-                )
-        elif isinstance(self.min_frequency, numbers.Real):
-            if not (0.0 < self.min_frequency < 1.0):
-                raise ValueError(
-                    "min_frequency must be an integer at least "
-                    "1 or a float in (0.0, 1.0); got the "
-                    f"float {self.min_frequency}"
-                )
-
+    def _check_infrequent_enabled(self):
+        """
+        This functions checks whether _infrequent_enabled is True or False.
+        This has to be called after parameter validation in the fit function.
+        """
         self._infrequent_enabled = (
             self.max_categories is not None and self.max_categories >= 1
         ) or self.min_frequency is not None
@@ -547,23 +542,11 @@ class OneHotEncoder(_BaseEncoder):
                     ],
                     dtype=object,
                 )
-            else:
-                msg = (
-                    "Wrong input for parameter `drop`. Expected "
-                    "'first', 'if_binary', None or array of objects, got {}"
-                )
-                raise ValueError(msg.format(type(self.drop)))
 
         else:
-            try:
-                drop_array = np.asarray(self.drop, dtype=object)
-                droplen = len(drop_array)
-            except (ValueError, TypeError):
-                msg = (
-                    "Wrong input for parameter `drop`. Expected "
-                    "'first', 'if_binary', None or array of objects, got {}"
-                )
-                raise ValueError(msg.format(type(drop_array)))
+            drop_array = np.asarray(self.drop, dtype=object)
+            droplen = len(drop_array)
+
             if droplen != len(self.categories_):
                 msg = (
                     "`drop` should have length equal to the number "
@@ -814,7 +797,9 @@ class OneHotEncoder(_BaseEncoder):
         self
             Fitted encoder.
         """
-        self._validate_keywords()
+        self._validate_params()
+        self._check_infrequent_enabled()
+
         fit_results = self._fit(
             X,
             handle_unknown=self.handle_unknown,
@@ -828,31 +813,6 @@ class OneHotEncoder(_BaseEncoder):
         self.drop_idx_ = self._compute_drop_idx()
         self._n_features_outs = self._compute_n_features_outs()
         return self
-
-    def fit_transform(self, X, y=None):
-        """
-        Fit OneHotEncoder to X, then transform X.
-
-        Equivalent to fit(X).transform(X) but more convenient.
-
-        Parameters
-        ----------
-        X : array-like of shape (n_samples, n_features)
-            The data to encode.
-
-        y : None
-            Ignored. This parameter exists only for compatibility with
-            :class:`~sklearn.pipeline.Pipeline`.
-
-        Returns
-        -------
-        X_out : {ndarray, sparse matrix} of shape \
-                (n_samples, n_encoded_features)
-            Transformed input. If `sparse=True`, a sparse matrix will be
-            returned.
-        """
-        self._validate_keywords()
-        return super().fit_transform(X, y)
 
     def transform(self, X):
         """
@@ -1228,6 +1188,14 @@ class OrdinalEncoder(_OneToOneFeatureMixin, _BaseEncoder):
            [ 0., -1.]])
     """
 
+    _parameter_constraints = {
+        "categories": [StrOptions({"auto"}), list],
+        "dtype": "no_validation",  # validation delegated to numpy
+        "encoded_missing_value": [Integral, type(np.nan)],
+        "handle_unknown": [StrOptions({"error", "use_encoded_value"})],
+        "unknown_value": [Integral, type(np.nan), None],
+    }
+
     def __init__(
         self,
         *,
@@ -1261,12 +1229,7 @@ class OrdinalEncoder(_OneToOneFeatureMixin, _BaseEncoder):
         self : object
             Fitted encoder.
         """
-        handle_unknown_strategies = ("error", "use_encoded_value")
-        if self.handle_unknown not in handle_unknown_strategies:
-            raise ValueError(
-                "handle_unknown should be either 'error' or "
-                f"'use_encoded_value', got {self.handle_unknown}."
-            )
+        self._validate_params()
 
         if self.handle_unknown == "use_encoded_value":
             if is_scalar_nan(self.unknown_value):
