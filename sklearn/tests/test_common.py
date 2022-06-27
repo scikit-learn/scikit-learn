@@ -578,7 +578,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "RegressorChain",
     "RidgeCV",
     "RidgeClassifierCV",
-    "RobustScaler",
     "SVC",
     "SVR",
     "SelectFdr",
