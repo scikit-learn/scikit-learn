@@ -1,17 +1,15 @@
-import numpy as np
+from numbers import Integral, Real
 import warnings
 
-from sklearn.utils import deprecated
+import numpy as np
 
 from ._base import _fit_liblinear, BaseSVC, BaseLibSVM
 from ..base import BaseEstimator, RegressorMixin, OutlierMixin
 from ..linear_model._base import LinearClassifierMixin, SparseCoefMixin, LinearModel
+from ..utils import deprecated
 from ..utils.validation import _num_samples
 from ..utils.multiclass import check_classification_targets
-from ..utils._param_validation import StrOptions
-from ..utils._param_validation import Interval
-from numbers import Integral
-from numbers import Real
+from ..utils._param_validation import Interval, StrOptions
 
 
 class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
