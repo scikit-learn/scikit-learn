@@ -162,13 +162,9 @@ def test_fastica_simple(add_noise, global_random_seed, global_dtype):
 
     assert ica.mixing_.shape == (2, 2)
 
-    for fn in [np.tanh, "exp(-.5(x^2))"]:
-        ica = FastICA(fun=fn, algorithm=algo)
-        with pytest.raises(ValueError):
-            ica.fit(m.T)
-
+    ica = FastICA(fun=np.tanh, algorithm=algo)
     with pytest.raises(ValueError):
-        FastICA(fun=range(10)).fit(m.T)
+        ica.fit(m.T)
 
 
 def test_fastica_nowhiten():
@@ -362,7 +358,6 @@ def test_fastica_errors():
     rng = np.random.RandomState(0)
     X = rng.random_sample((n_samples, n_features))
     w_init = rng.randn(n_features + 1, n_features + 1)
-    fastica_estimator = FastICA(max_iter=0)
     with pytest.raises(ValueError, match=r"alpha must be in \[1,2\]"):
         fastica(X, fun_args={"alpha": 0})
     with pytest.raises(
