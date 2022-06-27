@@ -53,7 +53,7 @@ cdef class FeatureTracker:
 
     cdef void reset(self, SIZE_t n_constant_features) nogil
     cdef FeatureSample sample(self, UINT32_t* random_state) nogil
-    cdef void is_constant(self, SIZE_t f_j) nogil
+    cdef void found_constant(self, SIZE_t f_j) nogil
     cdef void update_drawn_feature(self, SIZE_t f_j) nogil
     cdef SIZE_t update_constant_features(self) nogil
 

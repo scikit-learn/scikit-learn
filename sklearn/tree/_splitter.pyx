@@ -41,15 +41,14 @@ cdef DTYPE_t EXTRACT_NNZ_SWITCH = 0.1
 cdef class FeatureTracker:
     """Feature Sampler using Fisher-Yates-based algorithm.
 
-    Sample up to max_features without replacement using a
-    Fisher-Yates-based algorithm (using the local variables `f_i` and
-    `f_j` to compute a permutation of the `features` array).
+    Sample up to max_features without replacement using a Fisher-Yates-based algorithm
+    (using the local variables `f_i` and `f_j` to compute a permutation of the
+    `features` array).
 
-    Skip the CPU intensive evaluation of the impurity criterion for
-    features that were already detected as constant (hence not suitable
-    for good splitting) by ancestor nodes and save the information on
-    newly discovered constant features to spare computation on descendant
-    nodes.
+    Skip the CPU intensive evaluation of the impurity criterion for features that were
+    already detected as constant (hence not suitable for good splitting) by ancestor
+    nodes and save the information on newly discovered constant features to spare
+    computation on descendant nodes.
     """
 
     def __init__(self, SIZE_t n_features, SIZE_t max_features):
@@ -123,13 +122,12 @@ cdef class FeatureTracker:
         output.status = FeatureStatus.EVALUTE
         return output
 
-    cdef inline void is_constant(self, SIZE_t f_j) nogil:
+    cdef inline void found_constant(self, SIZE_t f_j) nogil:
         """Mark f_j as constant."""
         cdef SIZE_t[::1] features = self.features
         features[f_j], features[self.n_total_constants] = (
             features[self.n_total_constants], features[f_j]
         )
-
         self.n_found_constants += 1
         self.n_total_constants += 1
 
@@ -146,15 +144,11 @@ cdef class FeatureTracker:
         element in features[:n_known_constants] must be preserved for sibling
         and child nodes.
         """
-        cdef:
-            SIZE_t[::1] features = self.features
-            SIZE_t[::1] constant_features = self.constant_features
-        memcpy(&features[0], &constant_features[0],
-               sizeof(SIZE_t) * self.n_known_constants)
-
+        cdef SIZE_t[::1] features = self.features
+        cdef SIZE_t[::1] constant_features = self.constant_features
+        memcpy(&features[0], &constant_features[0], sizeof(SIZE_t) * self.n_known_constants)
         # Copy newly found constant features
-        memcpy(&constant_features[self.n_known_constants],
-               &features[self.n_known_constants],
+        memcpy(&constant_features[self.n_known_constants], &features[self.n_known_constants],
                sizeof(SIZE_t) * self.n_found_constants)
 
 
@@ -416,9 +410,8 @@ cdef class BestSplitter(BaseDenseSplitter):
             sort(&Xf[start], &samples[start], end - start)
 
             if Xf[end - 1] <= Xf[start] + FEATURE_THRESHOLD:
-                self.feature_tracker.is_constant(f_j)
+                self.feature_tracker.found_constant(f_j)
                 continue
-
             self.feature_tracker.update_drawn_feature(f_j)
 
             # Evaluate all splits
@@ -490,7 +483,6 @@ cdef class BestSplitter(BaseDenseSplitter):
                 impurity, best.impurity_left, best.impurity_right)
 
         self.feature_tracker.update_constant_features()
-
         # Return values
         split[0] = best
         n_constant_features[0] = self.feature_tracker.n_total_constants
@@ -679,7 +671,7 @@ cdef class RandomSplitter(BaseDenseSplitter):
                     max_feature_value = current_feature_value
 
             if max_feature_value <= min_feature_value + FEATURE_THRESHOLD:
-                self.feature_tracker.is_constant(f_j)
+                self.feature_tracker.found_constant(f_j)
                 continue
 
             self.feature_tracker.update_drawn_feature(f_j)
@@ -746,7 +738,6 @@ cdef class RandomSplitter(BaseDenseSplitter):
                 impurity, best.impurity_left, best.impurity_right)
 
         self.feature_tracker.update_constant_features()
-
         # Return values
         split[0] = best
         n_constant_features[0] = self.feature_tracker.n_total_constants
@@ -1142,7 +1133,7 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
                     end_negative += 1
 
             if Xf[end - 1] <= Xf[start] + FEATURE_THRESHOLD:
-                self.feature_tracker.is_constant(f_j)
+                self.feature_tracker.found_constant(f_j)
                 continue
 
             self.feature_tracker.update_drawn_feature(f_j)
@@ -1222,7 +1213,6 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
                 impurity, best.impurity_left, best.impurity_right)
 
         self.feature_tracker.update_constant_features()
-
         # Return values
         split[0] = best
         n_constant_features[0] = self.feature_tracker.n_total_constants
@@ -1322,7 +1312,7 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
                     max_feature_value = current_feature_value
 
             if max_feature_value <= min_feature_value + FEATURE_THRESHOLD:
-                self.feature_tracker.is_constant(f_j)
+                self.feature_tracker.found_constant(f_j)
                 continue
 
             self.feature_tracker.update_drawn_feature(f_j)
@@ -1382,7 +1372,6 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
                 impurity, best.impurity_left, best.impurity_right)
 
         self.feature_tracker.update_constant_features()
-
         # Return values
         split[0] = best
         n_constant_features[0] = self.feature_tracker.n_total_constants
