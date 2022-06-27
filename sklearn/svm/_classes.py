@@ -67,7 +67,7 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         to false, no intercept will be used in calculations
         (i.e. data is expected to be already centered).
 
-    intercept_scaling : float, default=1
+    intercept_scaling : float, default=1.0
         When self.fit_intercept is True, instance vector x becomes
         ``[x, self.intercept_scaling]``,
         i.e. a "synthetic" feature with constant value equals to
@@ -203,9 +203,9 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         "fit_intercept": ["boolean"],
         "intercept_scaling": [Real],
         "class_weight": [None, dict, StrOptions({"balanced"})],
-        "verbose": [Integral],
+        "verbose": ["verbose"],
         "random_state": ["random_state"],
-        "max_iter": [Integral],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
     }
 
     def __init__(
@@ -453,9 +453,9 @@ class LinearSVR(RegressorMixin, LinearModel):
         "fit_intercept": ["boolean"],
         "intercept_scaling": [Real],
         "dual": ["boolean"],
-        "verbose": [Integral],
+        "verbose": ["verbose"],
         "random_state": ["random_state"],
-        "max_iter": [Integral],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
     }
 
     def __init__(
