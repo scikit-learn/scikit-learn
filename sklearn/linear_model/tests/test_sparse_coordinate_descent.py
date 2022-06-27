@@ -242,8 +242,8 @@ def test_enet_multitarget():
     n_targets = 3
     X, y = make_sparse_data(n_targets=n_targets)
 
-    estimator = ElasticNet(alpha=0.01, precompute=None)
-    # XXX: There is a bug when precompute is not None!
+    estimator = ElasticNet(alpha=0.01, precompute=False)
+    # XXX: There is a bug when precompute is not False!
     estimator.fit(X, y)
     coef, intercept, dual_gap = (
         estimator.coef_,
