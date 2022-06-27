@@ -4077,7 +4077,13 @@ def check_param_validation(name, estimator_orig):
 
         for method in methods:
             with raises(ValueError, match=match, err_msg=err_msg):
-                getattr(estimator, method)(X, y)
+                method_to_call = getattr(estimator, method)
+                method_signature = signature(method_to_call)
+                if "X" not in method_signature.parameters:
+                    # The estimator is a label transformer and take only `y`
+                    method_to_call(y)
+                else:
+                    method_to_call(X, y)
 
         # Then, for constraints that are more than a type constraint, check that the
         # error is raised if param does match a valid type but does not match any valid
