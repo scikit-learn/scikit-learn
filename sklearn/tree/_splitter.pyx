@@ -68,8 +68,7 @@ cdef class FeatureTracker:
     cdef inline FeatureSample sample(self, UINT32_t* random_state) nogil:
         """Sample for new feature to check.
 
-        This function can return a struct with a feature index, it's value,
-        and status.
+        This function can return a struct with a feature index, it's value, and status.
         """
         cdef:
             SIZE_t f_j
@@ -140,9 +139,8 @@ cdef class FeatureTracker:
     cdef inline SIZE_t update_constant_features(self) nogil:
         """Move constant features.
 
-        Respect invariant for constant features: the original order of
-        element in features[:n_known_constants] must be preserved for sibling
-        and child nodes.
+        Respect invariant for constant features: the original order of element in
+        features[:n_known_constants] must be preserved for sibling and child nodes.
         """
         cdef SIZE_t[::1] features = self.features
         cdef SIZE_t[::1] constant_features = self.constant_features
