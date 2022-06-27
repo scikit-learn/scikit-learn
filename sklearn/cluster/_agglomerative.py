@@ -10,8 +10,8 @@ License: BSD 3 clause
 import warnings
 from heapq import heapify, heappop, heappush, heappushpop
 from numbers import Integral, Real
-import joblib
 
+import joblib
 import numpy as np
 from scipy import sparse
 from scipy.sparse.csgraph import connected_components
@@ -23,8 +23,7 @@ from ..metrics._dist_metrics import METRIC_MAPPING
 from ..utils import check_array
 from ..utils._fast_dict import IntFloatDict
 from ..utils.graph import _fix_connected_components
-from ..utils._param_validation import Interval
-from ..utils._param_validation import StrOptions
+from ..utils._param_validation import Interval, StrOptions
 from ..utils.validation import check_memory
 
 # mypy error: Module 'sklearn.cluster' has no attribute '_hierarchical_fast'
