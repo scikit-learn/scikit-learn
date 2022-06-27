@@ -257,6 +257,7 @@ conda_build_metadata_list = [
             "sphinx-gallery",
             "numpydoc",
             "sphinx-prompt",
+            "plotly",
         ],
         "pip_dependencies": ["sphinxext-opengraph"],
         "package_constraints": {
