@@ -259,7 +259,7 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
     _parameter_constraints = {
         "neg_label": [Integral],
         "pos_label": [Integral],
-        "sparse_output": [bool],
+        "sparse_output": ["boolean"],
     }
 
     def __init__(self, *, neg_label=0, pos_label=1, sparse_output=False):
