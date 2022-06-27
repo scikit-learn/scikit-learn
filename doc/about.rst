@@ -410,7 +410,7 @@ full-time. It also hosts coding sprints and other events.
    <div class="sk-sponsor-div-box">
 
 `Paris-Saclay Center for Data Science
-<https://www.datascience-paris-saclay.fr/>`_
+<http://www.datascience-paris-saclay.fr/>`_
 funded one year for a developer to work on the project full-time
 (2014-2015), 50% of the time of Guillaume Lemaitre (2016-2017) and 50% of the
 time of Joris van den Bossche (2017-2018).
