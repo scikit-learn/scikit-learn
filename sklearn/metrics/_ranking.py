@@ -1155,8 +1155,8 @@ def coverage_error(y_true, y_score, *, sample_weight=None):
            handbook (pp. 667-685). Springer US.
 
     """
-    y_true = check_array(y_true, ensure_2d=False)
-    y_score = check_array(y_score, ensure_2d=False)
+    y_true = check_array(y_true, ensure_2d=True)
+    y_score = check_array(y_score, ensure_2d=True)
     check_consistent_length(y_true, y_score, sample_weight)
 
     y_type = type_of_target(y_true, input_name="y_true")
@@ -1555,7 +1555,11 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
     ----------
     y_true : ndarray of shape (n_samples, n_labels)
         True targets of multilabel classification, or true scores of entities
-        to be ranked.
+        to be ranked. Negative values in `y_true` may result in an output
+        that is not between 0 and 1.
+
+        .. versionchanged:: 1.2
+            These negative values are deprecated, and will raise an error in v1.4.
 
     y_score : ndarray of shape (n_samples, n_labels)
         Target scores, can either be probability estimates, confidence values,
@@ -1619,23 +1623,31 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
     >>> # the normalization takes k into account so a perfect answer
     >>> # would still get 1.0
     >>> ndcg_score(true_relevance, true_relevance, k=4)
-    1.0
+    1.0...
     >>> # now we have some ties in our prediction
     >>> scores = np.asarray([[1, 0, 0, 0, 1]])
     >>> # by default ties are averaged, so here we get the average (normalized)
     >>> # true relevance of our top predictions: (10 / 10 + 5 / 10) / 2 = .75
     >>> ndcg_score(true_relevance, scores, k=1)
-    0.75
+    0.75...
     >>> # we can choose to ignore ties for faster results, but only
     >>> # if we know there aren't ties in our scores, otherwise we get
     >>> # wrong results:
     >>> ndcg_score(true_relevance,
     ...           scores, k=1, ignore_ties=True)
-    0.5
+    0.5...
     """
     y_true = check_array(y_true, ensure_2d=False)
     y_score = check_array(y_score, ensure_2d=False)
     check_consistent_length(y_true, y_score, sample_weight)
+
+    if y_true.min() < 0:
+        # TODO(1.4): Replace warning w/ ValueError
+        warnings.warn(
+            "ndcg_score should not be used on negative y_true values. ndcg_score will"
+            " raise a ValueError on negative y_true values starting from version 1.4.",
+            FutureWarning,
+        )
     _check_dcg_target_type(y_true)
     gain = _ndcg_sample_scores(y_true, y_score, k=k, ignore_ties=ignore_ties)
     return np.average(gain, weights=sample_weight)

@@ -17,6 +17,7 @@ import numpy as np
 from ._base import _get_weights, _check_weights
 from ._base import NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin
 from ..base import RegressorMixin
+from ..utils._param_validation import StrOptions
 
 
 class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
@@ -34,7 +35,7 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
     n_neighbors : int, default=5
         Number of neighbors to use by default for :meth:`kneighbors` queries.
 
-    weights : {'uniform', 'distance'} or callable, default='uniform'
+    weights : {'uniform', 'distance'}, callable or None, default='uniform'
         Weight function used in prediction.  Possible values:
 
         - 'uniform' : uniform weights.  All points in each neighborhood
@@ -153,6 +154,12 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
     [0.5]
     """
 
+    _parameter_constraints = {**NeighborsBase._parameter_constraints}
+    _parameter_constraints.pop("radius")
+    _parameter_constraints.update(
+        {"weights": [StrOptions({"uniform", "distance"}), callable, None]}
+    )
+
     def __init__(
         self,
         n_neighbors=5,
@@ -198,7 +205,7 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
         self : KNeighborsRegressor
             The fitted k-nearest neighbors regressor.
         """
-        self.weights = _check_weights(self.weights)
+        self._validate_params()
 
         return self._fit(X, y)
 

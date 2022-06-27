@@ -11,7 +11,7 @@
 # License: BSD 3 clause
 
 from math import log, sqrt
-import numbers
+from numbers import Integral, Real
 
 import numpy as np
 from scipy import linalg
@@ -20,11 +20,12 @@ from scipy.sparse import issparse
 from scipy.sparse.linalg import svds
 
 from ._base import _BasePCA
-from ..utils import check_random_state, check_scalar
+from ..utils import check_random_state
 from ..utils._arpack import _init_arpack_v0
 from ..utils.extmath import fast_logdet, randomized_svd, svd_flip
 from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
+from ..utils._param_validation import Interval, StrOptions
 
 
 def _assess_dimension(spectrum, rank, n_samples):
@@ -358,6 +359,26 @@ class PCA(_BasePCA):
     [6.30061...]
     """
 
+    _parameter_constraints = {
+        "n_components": [
+            Interval(Integral, 0, None, closed="left"),
+            Interval(Real, 0, 1, closed="neither"),
+            StrOptions({"mle"}),
+            None,
+        ],
+        "copy": ["boolean"],
+        "whiten": ["boolean"],
+        "svd_solver": [StrOptions({"auto", "full", "arpack", "randomized"})],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "iterated_power": [
+            StrOptions({"auto"}),
+            Interval(Integral, 0, None, closed="left"),
+        ],
+        "n_oversamples": [Interval(Integral, 1, None, closed="left")],
+        "power_iteration_normalizer": [StrOptions({"auto", "QR", "LU", "none"})],
+        "random_state": ["random_state"],
+    }
+
     def __init__(
         self,
         n_components=None,
@@ -398,12 +419,7 @@ class PCA(_BasePCA):
         self : object
             Returns the instance itself.
         """
-        check_scalar(
-            self.n_oversamples,
-            "n_oversamples",
-            min_val=1,
-            target_type=numbers.Integral,
-        )
+        self._validate_params()
 
         self._fit(X)
         return self
@@ -430,6 +446,8 @@ class PCA(_BasePCA):
         This method returns a Fortran-ordered array. To convert it to a
         C-ordered array, use 'np.ascontiguousarray'.
         """
+        self._validate_params()
+
         U, S, Vt = self._fit(X)
         U = U[:, : self.n_components_]
 
@@ -483,10 +501,6 @@ class PCA(_BasePCA):
             return self._fit_full(X, n_components)
         elif self._fit_svd_solver in ["arpack", "randomized"]:
             return self._fit_truncated(X, n_components, self._fit_svd_solver)
-        else:
-            raise ValueError(
-                "Unrecognized svd_solver='{0}'".format(self._fit_svd_solver)
-            )
 
     def _fit_full(self, X, n_components):
         """Fit the model by computing full SVD on X."""
@@ -503,13 +517,6 @@ class PCA(_BasePCA):
                 "min(n_samples, n_features)=%r with "
                 "svd_solver='full'" % (n_components, min(n_samples, n_features))
             )
-        elif n_components >= 1:
-            if not isinstance(n_components, numbers.Integral):
-                raise ValueError(
-                    "n_components=%r must be of type int "
-                    "when greater than or equal to 1, "
-                    "was of type=%r" % (n_components, type(n_components))
-                )
 
         # Center data
         self.mean_ = np.mean(X, axis=0)
@@ -571,12 +578,6 @@ class PCA(_BasePCA):
                 "min(n_samples, n_features)=%r with "
                 "svd_solver='%s'"
                 % (n_components, min(n_samples, n_features), svd_solver)
-            )
-        elif not isinstance(n_components, numbers.Integral):
-            raise ValueError(
-                "n_components=%r must be of type int "
-                "when greater than or equal to 1, was of type=%r"
-                % (n_components, type(n_components))
             )
         elif svd_solver == "arpack" and n_components == min(n_samples, n_features):
             raise ValueError(
