@@ -5,7 +5,6 @@ The :mod:`sklearn.pls` module implements Partial Least Squares (PLS).
 # Author: Edouard Duchesnay <edouard.duchesnay@cea.fr>
 # License: BSD 3 clause
 
-import numbers
 from numbers import Integral, Real
 
 import warnings
@@ -17,13 +16,12 @@ from scipy.linalg import svd
 from ..base import BaseEstimator, RegressorMixin, TransformerMixin
 from ..base import MultiOutputMixin
 from ..base import _ClassNamePrefixFeaturesOutMixin
-from ..utils import check_array, check_scalar, check_consistent_length
+from ..utils import check_array, check_consistent_length
 from ..utils.fixes import sp_version
 from ..utils.fixes import parse_version
 from ..utils.extmath import svd_flip
 from ..utils.validation import check_is_fitted, FLOAT_DTYPES
-from ..utils._param_validation import Interval
-from ..utils._param_validation import StrOptions
+from ..utils._param_validation import Interval, StrOptions
 from ..exceptions import ConvergenceWarning
 
 __all__ = ["PLSCanonical", "PLSRegression", "PLSSVD"]
@@ -179,13 +177,13 @@ class _PLS(
 
     _parameter_constraints = {
         "n_components": [Interval(Integral, 1, None, closed="left")],
-        "scale": [bool],
+        "scale": ["boolean"],
         "deflation_mode": [StrOptions({"regression", "canonical"})],
         "mode": [StrOptions({"A", "B"})],
         "algorithm": [StrOptions({"svd", "nipals"})],
         "max_iter": [Interval(Integral, 1, None, closed="left")],
         "tol": [Interval(Real, 0, None, closed="left")],
-        "copy": [bool],
+        "copy": ["boolean"],
     }
 
     @abstractmethod
@@ -245,27 +243,14 @@ class _PLS(
         q = Y.shape[1]
 
         n_components = self.n_components
-        if self.deflation_mode == "regression":
-            # With PLSRegression n_components is bounded by the rank of (X.T X)
-            # see Wegelin page 25
-            rank_upper_bound = p
-            check_scalar(
-                n_components,
-                "n_components",
-                numbers.Integral,
-                min_val=1,
-                max_val=rank_upper_bound,
-            )
-        else:
-            # With CCA and PLSCanonical, n_components is bounded by the rank of
-            # X and the rank of Y: see Wegelin page 12
-            rank_upper_bound = min(n, p, q)
-            check_scalar(
-                n_components,
-                "n_components",
-                numbers.Integral,
-                min_val=1,
-                max_val=rank_upper_bound,
+        # With PLSRegression n_components is bounded by the rank of (X.T X) see
+        # Wegelin page 25. With CCA and PLSCanonical, n_components is bounded
+        # by the rank of X and the rank of Y: see Wegelin page 12
+        rank_upper_bound = p if self.deflation_mode == "regression" else min(n, p, q)
+        if n_components > rank_upper_bound:
+            raise ValueError(
+                f"`n_components` upper bound is {rank_upper_bound}. "
+                f"Got {n_components} instead. Reduce `n_components`."
             )
 
         self._norm_y_weights = self.deflation_mode == "canonical"  # 1.1
@@ -630,13 +615,9 @@ class PLSRegression(_PLS):
     >>> Y_pred = pls2.predict(X)
     """
 
-    _parameter_constraints = {
-        "n_components": [Interval(Integral, 1, None, closed="left")],
-        "scale": [bool],
-        "max_iter": [Interval(Integral, 1, None, closed="left")],
-        "tol": [Interval(Real, 0, None, closed="left")],
-        "copy": [bool],
-    }
+    _parameter_constraints = {**_PLS._parameter_constraints}
+    for param in ("deflation_mode", "mode", "algorithm"):
+        _parameter_constraints.pop(param)
 
     # This implementation provides the same results that 3 PLS packages
     # provided in the R language (R-project):
@@ -676,8 +657,6 @@ class PLSRegression(_PLS):
         self : object
             Fitted model.
         """
-        self._validate_params()
-
         super().fit(X, Y)
         # expose the fitted attributes `x_scores_` and `y_scores_`
         self.x_scores_ = self._x_scores
@@ -781,14 +760,9 @@ class PLSCanonical(_PLS):
     >>> X_c, Y_c = plsca.transform(X, Y)
     """
 
-    _parameter_constraints = {
-        "n_components": [Interval(Integral, 1, None, closed="left")],
-        "scale": [bool],
-        "algorithm": [StrOptions({"svd", "nipals"})],
-        "max_iter": [Interval(Integral, 1, None, closed="left")],
-        "tol": [Interval(Real, 0, None, closed="left")],
-        "copy": [bool],
-    }
+    _parameter_constraints = {**_PLS._parameter_constraints}
+    for param in ("deflation_mode", "mode"):
+        _parameter_constraints.pop(param)
 
     # This implementation provides the same results that the "plspm" package
     # provided in the R language (R-project), using the function plsca(X, Y).
@@ -908,13 +882,9 @@ class CCA(_PLS):
     >>> X_c, Y_c = cca.transform(X, Y)
     """
 
-    _parameter_constraints = {
-        "n_components": [Interval(Integral, 1, None, closed="left")],
-        "scale": [bool],
-        "max_iter": [Interval(Integral, 1, None, closed="left")],
-        "tol": [Interval(Real, 0, None, closed="left")],
-        "copy": [bool],
-    }
+    _parameter_constraints = {**_PLS._parameter_constraints}
+    for param in ("deflation_mode", "mode", "algorithm"):
+        _parameter_constraints.pop(param)
 
     def __init__(
         self, n_components=2, *, scale=True, max_iter=500, tol=1e-06, copy=True
@@ -1001,8 +971,8 @@ class PLSSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
 
     _parameter_constraints = {
         "n_components": [Interval(Integral, 1, None, closed="left")],
-        "scale": [bool],
-        "copy": [bool],
+        "scale": ["boolean"],
+        "copy": ["boolean"],
     }
 
     def __init__(self, n_components=2, *, scale=True, copy=True):
@@ -1043,13 +1013,11 @@ class PLSSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         # n_components cannot be bigger than that.
         n_components = self.n_components
         rank_upper_bound = min(X.shape[0], X.shape[1], Y.shape[1])
-        check_scalar(
-            n_components,
-            "n_components",
-            numbers.Integral,
-            min_val=1,
-            max_val=rank_upper_bound,
-        )
+        if n_components > rank_upper_bound:
+            raise ValueError(
+                f"`n_components` upper bound is {rank_upper_bound}. "
+                f"Got {n_components} instead. Reduce `n_components`."
+            )
 
         X, Y, self._x_mean, self._y_mean, self._x_std, self._y_std = _center_scale_xy(
             X, Y, self.scale
