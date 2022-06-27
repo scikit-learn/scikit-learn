@@ -7,9 +7,9 @@
 # License: BSD 3 clause
 
 from collections import defaultdict
+from numbers import Integral
 import itertools
 import array
-from numbers import Integral
 import warnings
 
 import numpy as np
