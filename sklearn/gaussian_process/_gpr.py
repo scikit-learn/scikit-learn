@@ -5,10 +5,10 @@
 # License: BSD 3 clause
 
 import warnings
+from numbers import Integral, Real
 from operator import itemgetter
 
 import numpy as np
-from numbers import Integral, Real
 from scipy.linalg import cholesky, cho_solve, solve_triangular
 import scipy.optimize
 
@@ -180,8 +180,8 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         "alpha": [Real, "array-like"],
         "optimizer": [StrOptions({"fmin_l_bfgs_b"}), None, callable],
         "n_restarts_optimizer": [Interval(Integral, 0, None, closed="left")],
-        "normalize_y": [bool],
-        "copy_X_train": [bool],
+        "normalize_y": ["boolean"],
+        "copy_X_train": ["boolean"],
         "random_state": ["random_state"],
     }
 

@@ -4,10 +4,10 @@
 #
 # License: BSD 3 clause
 
+from numbers import Integral
 from operator import itemgetter
 
 import numpy as np
-from numbers import Integral
 from scipy.linalg import cholesky, cho_solve, solve
 import scipy.optimize
 from scipy.special import erf, expit
@@ -152,8 +152,8 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         "optimizer": [StrOptions({"fmin_l_bfgs_b"}), callable],
         "n_restarts_optimizer": [Interval(Integral, 0, None, closed="left")],
         "max_iter_predict": [Interval(Integral, 1, None, closed="left")],
-        "warm_start": [bool],
-        "copy_X_train": [bool],
+        "warm_start": ["boolean"],
+        "copy_X_train": ["boolean"],
         "random_state": ["random_state"],
     }
 
