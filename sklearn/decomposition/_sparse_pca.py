@@ -136,7 +136,7 @@ class SparsePCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
         "max_iter": [Interval(Integral, 0, None, closed="left")],
         "tol": [Interval(Real, 0.0, None, closed="left")],
         "method": [StrOptions({"lars", "cd"})],
-        "n_jobs": [None, Interval(Integral, -1, None, closed="left")],
+        "n_jobs": [Integral, None],
         "U_init": [None, np.ndarray],
         "V_init": [None, np.ndarray],
         "verbose": [Interval(Integral, 0, None, closed="left"), bool],
