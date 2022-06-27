@@ -8,8 +8,7 @@ from scipy import sparse
 from scipy import stats
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.cluster import HDBSCAN, hdbscan
-from sklearn.cluster._hdbscan._validity import validity_index
-
+from sklearn.metrics import fowlkes_mallows_score
 from sklearn.datasets import make_blobs
 from sklearn.utils import shuffle
 from sklearn.preprocessing import StandardScaler
@@ -85,8 +84,10 @@ def test_hdbscan_distance_matrix():
     n_clusters_2 = len(set(labels)) - int(-1 in labels)
     assert n_clusters_2 == n_clusters
 
-    validity = validity_index(D, labels, metric="precomputed", d=2)
-    assert validity >= 0.6
+    # Check that clustering is arbitrarily good
+    # This is a heuristic to guard against regression
+    score = fowlkes_mallows_score(y, labels)
+    assert score >= 0.98
 
 
 def test_hdbscan_sparse_distance_matrix():
@@ -118,8 +119,10 @@ def test_hdbscan_feature_vector():
     n_clusters_2 = len(set(labels)) - int(-1 in labels)
     assert n_clusters_2 == n_clusters
 
-    validity = validity_index(X, labels)
-    assert validity >= 0.4
+    # Check that clustering is arbitrarily good
+    # This is a heuristic to guard against regression
+    score = fowlkes_mallows_score(y, labels)
+    assert score >= 0.98
 
 
 @pytest.mark.parametrize(
@@ -376,3 +379,21 @@ def test_hdbscan_allow_single_cluster_with_epsilon():
     unique_labels, counts = np.unique(labels, return_counts=True)
     assert len(unique_labels) == 2
     assert counts[unique_labels == -1] == 2
+
+
+def test_hdbscan_not_dbscan():
+    """
+    Validate that HDBSCAN can properly cluster this difficult synthetic
+    dataset. Note that DBSCAN fails on this (see HDBSCAN plotting
+    example)
+    """
+    centers = [[-0.85, -0.85], [-0.85, 0.85], [3, 3], [3, -3]]
+    X, _ = make_blobs(
+        n_samples=750,
+        centers=centers,
+        cluster_std=[0.2, 0.35, 1.35, 1.35],
+        random_state=0,
+    )
+    hdb = HDBSCAN().fit(X)
+    n_clusters = len(set(hdb.labels_)) - int(-1 in hdb.labels_)
+    assert n_clusters == 4
