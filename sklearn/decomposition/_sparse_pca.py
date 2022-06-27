@@ -240,17 +240,9 @@ class SparsePCA(_BaseSparsePCA):
     """
 
     _parameter_constraints = {
-        "n_components": [None, Interval(Integral, 1, None, closed="left")],
-        "alpha": [Interval(Real, 0.0, None, closed="left")],
-        "ridge_alpha": [Interval(Real, 0.0, None, closed="left")],
-        "max_iter": [Interval(Integral, 0, None, closed="left")],
-        "tol": [Interval(Real, 0.0, None, closed="left")],
-        "method": [StrOptions({"lars", "cd"})],
-        "n_jobs": [Integral, None],
+        **_BaseSparsePCA._parameter_constraints,
         "U_init": [None, np.ndarray],
         "V_init": [None, np.ndarray],
-        "verbose": ["verbose"],
-        "random_state": ["random_state"],
     }
 
     def __init__(
