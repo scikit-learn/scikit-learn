@@ -214,7 +214,7 @@ def test_hdbscan_high_dimensional():
 
 def test_hdbscan_best_balltree_metric():
     kwargs = dict(metric="seuclidean", metric_params={"V": np.ones(X.shape[1])})
-    labels, _ = hdbscan(X, **kwargs)
+    labels, _, _ = hdbscan(X, **kwargs)
     n_clusters_1 = len(set(labels)) - int(-1 in labels)
     assert n_clusters_1 == n_clusters
 

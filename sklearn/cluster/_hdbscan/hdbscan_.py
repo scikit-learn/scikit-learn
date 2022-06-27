@@ -37,10 +37,37 @@ from ._hdbscan_tree import (
 )
 from ._hdbscan_reachability import mutual_reachability, sparse_mutual_reachability
 
-from ._hdbscan_boruvka import KDTreeBoruvkaAlgorithm, BallTreeBoruvkaAlgorithm
+from ._hdbscan_boruvka import BoruvkaAlgorithm
 from sklearn.metrics._dist_metrics import DistanceMetric
 
 FAST_METRICS = KDTree.valid_metrics + BallTree.valid_metrics + ["cosine"]
+_PARAM_CONSTRAINTS = {
+    "min_cluster_size": [Interval(Integral, left=2, right=None, closed="left")],
+    "min_samples": [Interval(Integral, left=1, right=None, closed="left"), None],
+    "cluster_selection_epsilon": [Interval(Real, left=0, right=None, closed="left")],
+    "max_cluster_size": [Interval(Integral, left=0, right=None, closed="left")],
+    "metric": [StrOptions(set(FAST_METRICS + ["precomputed"])), callable],
+    "alpha": [Interval(Real, left=0, right=None, closed="neither")],
+    "algorithm": [
+        StrOptions(
+            {
+                "auto",
+                "best",
+                "generic",
+                "prims_kdtree",
+                "prims_balltree",
+                "boruvka_kdtree",
+                "boruvka_balltree",
+            }
+        )
+    ],
+    "leaf_size": [Interval(Integral, left=1, right=None, closed="left")],
+    "memory": [str, None, Path],
+    "n_jobs": [int],
+    "cluster_selection_method": [StrOptions({"eom", "leaf"})],
+    "allow_single_cluster": ["boolean"],
+    "metric_params": [dict, None],
+}
 
 
 def _tree_to_labels(
@@ -246,10 +273,9 @@ def _hdbscan_boruvka(
             f" but {min_samples+1=}, {n_samples=}"
         )
 
-    alg = KDTreeBoruvkaAlgorithm if algo == "kd_tree" else BallTreeBoruvkaAlgorithm
-    out = alg(
-        tree,
-        min_samples,
+    out = BoruvkaAlgorithm(
+        tree=tree,
+        min_samples=min_samples,
         metric=metric,
         leaf_size=leaf_size // 3,
         approx_min_span_tree=True,
@@ -316,34 +342,8 @@ def get_finite_row_indices(matrix):
 
 @validate_params(
     {
+        **_PARAM_CONSTRAINTS,
         "X": ["array-like", "sparse matrix"],
-        "min_cluster_size": [Interval(Integral, left=2, right=None, closed="left")],
-        "min_samples": [Interval(Integral, left=1, right=None, closed="left"), None],
-        "cluster_selection_epsilon": [
-            Interval(Real, left=0, right=None, closed="left")
-        ],
-        "max_cluster_size": [Interval(Integral, left=0, right=None, closed="left")],
-        "metric": [StrOptions(set(FAST_METRICS + ["precomputed"])), callable],
-        "alpha": [Interval(Real, left=0, right=None, closed="neither")],
-        "algorithm": [
-            StrOptions(
-                {
-                    "auto",
-                    "best",
-                    "generic",
-                    "prims_kdtree",
-                    "prims_balltree",
-                    "boruvka_kdtree",
-                    "boruvka_balltree",
-                }
-            )
-        ],
-        "leaf_size": [Interval(Integral, left=1, right=None, closed="left")],
-        "memory": [str, None, Path],
-        "n_jobs": [int],
-        "cluster_selection_method": [StrOptions({"eom", "leaf"})],
-        "allow_single_cluster": [bool],
-        "metric_params": [dict, None],
     }
 )
 def hdbscan(
@@ -756,35 +756,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
     array([ 2,  6, -1, ..., -1, -1, -1])
     """
 
-    _parameter_constraints = {
-        "min_cluster_size": [Interval(Integral, left=2, right=None, closed="left")],
-        "min_samples": [Interval(Integral, left=1, right=None, closed="left"), None],
-        "cluster_selection_epsilon": [
-            Interval(Real, left=0, right=None, closed="left")
-        ],
-        "max_cluster_size": [Interval(Integral, left=0, right=None, closed="left")],
-        "metric": [StrOptions(set(FAST_METRICS + ["precomputed"])), callable],
-        "alpha": [Interval(Real, left=0, right=None, closed="neither")],
-        "algorithm": [
-            StrOptions(
-                {
-                    "auto",
-                    "best",
-                    "generic",
-                    "prims_kdtree",
-                    "prims_balltree",
-                    "boruvka_kdtree",
-                    "boruvka_balltree",
-                }
-            )
-        ],
-        "leaf_size": [Interval(Integral, left=1, right=None, closed="left")],
-        "memory": [str, None, Path],
-        "n_jobs": [int],
-        "cluster_selection_method": [StrOptions({"eom", "leaf"})],
-        "allow_single_cluster": [bool],
-        "metric_params": [dict, None],
-    }
+    _parameter_constraints = _PARAM_CONSTRAINTS
 
     def __init__(
         self,
