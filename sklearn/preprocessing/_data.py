@@ -2417,7 +2417,7 @@ class QuantileTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator
         matrix are discarded to compute the quantile statistics. If False,
         these entries are treated as zeros.
 
-    subsample : int, default=1e5
+    subsample : int, default=10_000
         Maximum number of samples used to estimate the quantiles for
         computational efficiency. Note that the subsampling procedure may
         differ for value-identical sparse and dense matrices.
@@ -2489,10 +2489,10 @@ class QuantileTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator
     _parameter_constraints = {
         "n_quantiles": [Interval(Integral, 1, None, closed="left")],
         "output_distribution": [StrOptions({"uniform", "normal"})],
-        "ignore_implicit_zeros": [bool],
+        "ignore_implicit_zeros": ["boolean"],
         "subsample": [Interval(Integral, 1, None, closed="left")],
         "random_state": ["random_state"],
-        "copy": [bool],
+        "copy": ["boolean"],
     }
 
     def __init__(
@@ -2501,7 +2501,7 @@ class QuantileTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator
         n_quantiles=1000,
         output_distribution="uniform",
         ignore_implicit_zeros=False,
-        subsample=int(1e5),
+        subsample=10_000,
         random_state=None,
         copy=True,
     ):
@@ -2777,7 +2777,6 @@ class QuantileTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator
         """
         check_is_fitted(self)
         X = self._check_inputs(X, in_fit=False, copy=self.copy)
-        self._validate_params()
 
         return self._transform(X, inverse=False)
 
@@ -2801,7 +2800,6 @@ class QuantileTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator
         X = self._check_inputs(
             X, in_fit=False, accept_sparse_negative=True, copy=self.copy
         )
-        self._validate_params()
 
         return self._transform(X, inverse=True)
 
@@ -3049,8 +3047,8 @@ class PowerTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
     _parameter_constraints = {
         "method": [StrOptions({"yeo-johnson", "box-cox"})],
-        "standardize": [bool],
-        "copy": [bool],
+        "standardize": ["boolean"],
+        "copy": ["boolean"],
     }
 
     def __init__(self, method="yeo-johnson", *, standardize=True, copy=True):
@@ -3077,6 +3075,7 @@ class PowerTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         self : object
             Fitted transformer.
         """
+        self._validate_params()
         self._fit(X, y=y, force_transform=False)
         return self
 
@@ -3097,10 +3096,10 @@ class PowerTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         X_new : ndarray of shape (n_samples, n_features)
             Transformed data.
         """
+        self._validate_params()
         return self._fit(X, y, force_transform=True)
 
     def _fit(self, X, y=None, force_transform=False):
-        self._validate_params()
         X = self._check_input(X, in_fit=True, check_positive=True)
 
         if not self.copy and not force_transform:  # if call from fit()

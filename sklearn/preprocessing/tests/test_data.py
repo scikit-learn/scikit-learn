@@ -1236,19 +1236,6 @@ def test_quantile_transform_check_error():
     X_neg = sparse.csc_matrix(X_neg)
 
     err_msg = (
-        r"The 'n_quantiles' parameter of QuantileTransformer must "
-        r"be an int in the range \[1, inf\). Got 0 instead."
-    )
-    with pytest.raises(ValueError, match=err_msg):
-        QuantileTransformer(n_quantiles=0).fit(X)
-    err_msg = (
-        r"The 'subsample' parameter of QuantileTransformer must "
-        r"be an int in the range \[1, inf\). Got 0 instead."
-    )
-    with pytest.raises(ValueError, match=err_msg):
-        QuantileTransformer(subsample=0).fit(X)
-
-    err_msg = (
         "The number of quantiles cannot be greater than "
         "the number of samples used. Got 1000 quantiles "
         "and 10 samples."
@@ -1274,32 +1261,7 @@ def test_quantile_transform_check_error():
     with pytest.raises(ValueError, match=err_msg):
         transformer.inverse_transform(X_bad_feat)
 
-    transformer = QuantileTransformer(n_quantiles=10, output_distribution="rnd")
-    # check that an error is raised at fit time
-    err_msg = (
-        "The 'output_distribution' parameter of QuantileTransformer must "
-        "be a str among "
-    )
-    with pytest.raises(ValueError, match=err_msg):
-        transformer.fit(X)
-    # check that an error is raised at transform time
-    transformer.output_distribution = "uniform"
-    transformer.fit(X)
-    X_tran = transformer.transform(X)
-    transformer.output_distribution = "rnd"
-    err_msg = (
-        "The 'output_distribution' parameter of QuantileTransformer must "
-        "be a str among "
-    )
-    with pytest.raises(ValueError, match=err_msg):
-        transformer.transform(X)
-    # check that an error is raised at inverse_transform time
-    err_msg = (
-        "The 'output_distribution' parameter of QuantileTransformer must "
-        "be a str among "
-    )
-    with pytest.raises(ValueError, match=err_msg):
-        transformer.inverse_transform(X_tran)
+    transformer = QuantileTransformer(n_quantiles=10).fit(X)
     # check that an error is raised if input is scalar
     with pytest.raises(ValueError, match="Expected 2D array, got scalar array instead"):
         transformer.transform(10)
