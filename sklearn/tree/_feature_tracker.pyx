@@ -1,4 +1,4 @@
-# Feature Tracker to be used with the splitter
+# Feature Tracker used with the splitter to sample features
 cimport cython
 
 from libc.string cimport memcpy

@@ -1,4 +1,4 @@
-# Feature Tracker to be used with the splitter
+# Feature Tracker used with the splitter to sample features
 from ._tree cimport SIZE_t
 from ._tree cimport UINT32_t
 
