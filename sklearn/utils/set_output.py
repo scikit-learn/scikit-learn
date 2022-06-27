@@ -89,8 +89,7 @@ def get_output_config(estimator, method):
     Returns
     -------
     config : Bunch
-        Dictionary with keys, "dense", that specifies the
-        container for `method`.
+        Dictionary with keys, "dense", that specifies the container for `method`.
     """
     est_sklearn_output_config = getattr(estimator, "_sklearn_output_config", {})
     if method in est_sklearn_output_config:
@@ -167,7 +166,7 @@ class SetOutputMixin:
         if hasattr(cls, "fit_transform"):
             cls.fit_transform = _wrap_method_output(cls.fit_transform, "transform")
 
-    def set_output(self, transform=None):
+    def set_output(self, *, transform=None):
         """Set output container.
 
         Parameters
@@ -190,7 +189,7 @@ class SetOutputMixin:
         return self
 
 
-def safe_set_output(estimator, transform=None):
+def safe_set_output(estimator, *, transform=None):
     """Safely call estimator.set_output and error if it not available.
 
     This is used by meta-estimators to set the output for child estimators.
