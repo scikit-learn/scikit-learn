@@ -602,6 +602,8 @@ linkcheck_ignore = [
     "221114584_Random_Fourier_Approximations_"
     "for_Skewed_Multiplicative_Histogram_Kernels",
     "https://doi.org/10.13140/RG.2.2.35280.02565",
+    "https://www.microsoft.com/en-us/research/uploads/prod/2006/01/"
+    "Bishop-Pattern-Recognition-and-Machine-Learning-2006.pdf",
     # Broken links from testimonials
     "http://www.bestofmedia.com",
     "http://www.data-publica.com/",
@@ -614,8 +616,6 @@ linkcheck_ignore = [
     r"https://github.com/conda-forge/miniforge#miniforge",
     r"https://stackoverflow.com/questions/5836335/"
     "consistently-create-same-random-numpy-array/5837352#comment6712034_5837352",
-    "https://www.microsoft.com/en-us/research/uploads/prod/2006/01/"
-    "Bishop-Pattern-Recognition-and-Machine-Learning-2006.pdf",
 ]
 
 # Use a browser-like user agent to avoid some "403 Client Error: Forbidden for
