@@ -3,41 +3,33 @@ Kernel Density Estimation
 -------------------------
 """
 # Author: Jake Vanderplas <jakevdp@cs.washington.edu>
-
-import numpy as np
 from numbers import Integral, Real
+import numpy as np
 from scipy.special import gammainc
+
 from ..base import BaseEstimator
+from ..neighbors._base import VALID_METRICS
 from ..utils import check_random_state
 from ..utils.validation import _check_sample_weight, check_is_fitted
 from ..utils._param_validation import Interval, StrOptions
-
 from ..utils.extmath import row_norms
 from ._ball_tree import BallTree, DTYPE
 from ._kd_tree import KDTree
 
 
-VALID_KERNELS = {
+VALID_KERNELS = [
     "gaussian",
     "tophat",
     "epanechnikov",
     "exponential",
     "linear",
     "cosine",
-}
+]
 
 TREE_DICT = {"ball_tree": BallTree, "kd_tree": KDTree}
 
 
-VALID_METRICS = {
-    metric_id
-    for algorithm in TREE_DICT.values()
-    for metric_id in algorithm.valid_metrics
-}
-
-
 # TODO: implement a brute force version for testing purposes
-# TODO: bandwidth estimation
 # TODO: create a density estimation base class?
 class KernelDensity(BaseEstimator):
     """Kernel Density Estimation.
@@ -134,13 +126,15 @@ class KernelDensity(BaseEstimator):
             StrOptions({"scott", "silverman"}),
         ],
         "algorithm": [StrOptions({"kd_tree", "ball_tree", "auto"})],
-        "kernel": [StrOptions(VALID_KERNELS)],
-        "metric": [StrOptions(VALID_METRICS)],
+        "kernel": [StrOptions(set(VALID_KERNELS))],
+        "metric": [
+            StrOptions(set(VALID_METRICS["kd_tree"] + VALID_METRICS["ball_tree"]))
+        ],
         "atol": [Interval(Real, 0, None, closed="left")],
         "rtol": [Interval(Real, 0, None, closed="left")],
         "breadth_first": ["boolean"],
         "leaf_size": [Interval(Integral, 1, None, closed="left")],
-        "metric_params": [None],
+        "metric_params": [None, dict],
     }
 
     def __init__(
@@ -175,8 +169,6 @@ class KernelDensity(BaseEstimator):
                 return "kd_tree"
             elif metric in BallTree.valid_metrics:
                 return "ball_tree"
-            else:
-                raise ValueError("invalid metric: '{0}'".format(metric))
         else:
             if metric not in TREE_DICT[algorithm].valid_metrics:
                 raise ValueError(
