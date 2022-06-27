@@ -139,7 +139,7 @@ class SparsePCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
         "n_jobs": [Integral, None],
         "U_init": [None, np.ndarray],
         "V_init": [None, np.ndarray],
-        "verbose": [Interval(Integral, 0, None, closed="left"), bool],
+        "verbose": ["verbose"],
         "random_state": ["random_state"],
     }
 
