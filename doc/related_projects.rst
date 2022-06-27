@@ -131,6 +131,11 @@ enhance the functionality of scikit-learn's estimators.
 - `treelite <https://treelite.readthedocs.io>`_
   Compiles tree-based ensemble models into C code for minimizing prediction
   latency.
+  
+**Model throughput**
+
+- `Intel(R) Extension for scikit-learn <https://github.com/intel/scikit-learn-intelex>`_
+  Accelerates scikit-learn models for both training and inference.
 
 
 Other estimators and tasks
