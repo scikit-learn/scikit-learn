@@ -7,14 +7,125 @@ from numbers import Integral, Real
 import numpy as np
 
 from ..utils import check_random_state
-from ..utils._param_validation import Interval, StrOptions
+from ..utils._param_validation import Hidden, Interval, StrOptions
 from ..utils.validation import check_is_fitted
 from ..linear_model import ridge_regression
 from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
 from ._dict_learning import dict_learning, MiniBatchDictionaryLearning
 
 
-class SparsePCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
+class _BaseSparsePCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
+
+    _parameter_constraints = {
+        "n_components": [None, Interval(Integral, 1, None, closed="left")],
+        "alpha": [Interval(Real, 0.0, None, closed="left")],
+        "ridge_alpha": [Interval(Real, 0.0, None, closed="left")],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
+        "tol": [Interval(Real, 0.0, None, closed="left")],
+        "method": [StrOptions({"lars", "cd"})],
+        "n_jobs": [Integral, None],
+        "verbose": ["verbose"],
+        "random_state": ["random_state"],
+    }
+
+    def __init__(
+        self,
+        n_components=None,
+        *,
+        alpha=1,
+        ridge_alpha=0.01,
+        max_iter=1000,
+        tol=1e-8,
+        method="lars",
+        n_jobs=None,
+        verbose=False,
+        random_state=None,
+    ):
+        self.n_components = n_components
+        self.alpha = alpha
+        self.ridge_alpha = ridge_alpha
+        self.max_iter = max_iter
+        self.tol = tol
+        self.method = method
+        self.n_jobs = n_jobs
+        self.verbose = verbose
+        self.random_state = random_state
+
+    def fit(self, X, y=None):
+        """Fit the model from data in X.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Training vector, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
+
+        y : Ignored
+            Not used, present here for API consistency by convention.
+
+        Returns
+        -------
+        self : object
+            Returns the instance itself.
+        """
+        self._validate_params()
+        random_state = check_random_state(self.random_state)
+        X = self._validate_data(X)
+
+        self.mean_ = X.mean(axis=0)
+        X = X - self.mean_
+
+        if self.n_components is None:
+            n_components = X.shape[1]
+        else:
+            n_components = self.n_components
+
+        return self._fit(X, n_components, random_state)
+
+    def transform(self, X):
+        """Least Squares projection of the data onto the sparse components.
+
+        To avoid instability issues in case the system is under-determined,
+        regularization can be applied (Ridge regression) via the
+        `ridge_alpha` parameter.
+
+        Note that Sparse PCA components orthogonality is not enforced as in PCA
+        hence one cannot use a simple linear projection.
+
+        Parameters
+        ----------
+        X : ndarray of shape (n_samples, n_features)
+            Test data to be transformed, must have the same number of
+            features as the data used to train the model.
+
+        Returns
+        -------
+        X_new : ndarray of shape (n_samples, n_components)
+            Transformed data.
+        """
+        check_is_fitted(self)
+
+        X = self._validate_data(X, reset=False)
+        X = X - self.mean_
+
+        U = ridge_regression(
+            self.components_.T, X.T, self.ridge_alpha, solver="cholesky"
+        )
+
+        return U
+
+    @property
+    def _n_features_out(self):
+        """Number of transformed output features."""
+        return self.components_.shape[0]
+
+    def _more_tags(self):
+        return {
+            "preserves_dtype": [np.float64, np.float32],
+        }
+
+
+class SparsePCA(_BaseSparsePCA):
     """Sparse Principal Components Analysis (SparsePCA).
 
     Finds the set of sparse components that can optimally reconstruct
@@ -157,46 +268,23 @@ class SparsePCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
         verbose=False,
         random_state=None,
     ):
-        self.n_components = n_components
-        self.alpha = alpha
-        self.ridge_alpha = ridge_alpha
-        self.max_iter = max_iter
-        self.tol = tol
-        self.method = method
-        self.n_jobs = n_jobs
+        super().__init__(
+            n_components=n_components,
+            alpha=alpha,
+            ridge_alpha=ridge_alpha,
+            max_iter=max_iter,
+            tol=tol,
+            method=method,
+            n_jobs=n_jobs,
+            verbose=verbose,
+            random_state=random_state,
+        )
         self.U_init = U_init
         self.V_init = V_init
-        self.verbose = verbose
-        self.random_state = random_state
 
-    def fit(self, X, y=None):
-        """Fit the model from data in X.
+    def _fit(self, X, n_components, random_state):
+        """Specialized `fit` for SparsePCA."""
 
-        Parameters
-        ----------
-        X : array-like of shape (n_samples, n_features)
-            Training vector, where `n_samples` is the number of samples
-            and `n_features` is the number of features.
-
-        y : Ignored
-            Not used, present here for API consistency by convention.
-
-        Returns
-        -------
-        self : object
-            Returns the instance itself.
-        """
-        self._validate_params()
-        random_state = check_random_state(self.random_state)
-        X = self._validate_data(X)
-
-        self.mean_ = X.mean(axis=0)
-        X = X - self.mean_
-
-        if self.n_components is None:
-            n_components = X.shape[1]
-        else:
-            n_components = self.n_components
         code_init = self.V_init.T if self.V_init is not None else None
         dict_init = self.U_init.T if self.U_init is not None else None
         Vt, _, E, self.n_iter_ = dict_learning(
@@ -222,50 +310,8 @@ class SparsePCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
         self.error_ = E
         return self
 
-    def transform(self, X):
-        """Least Squares projection of the data onto the sparse components.
 
-        To avoid instability issues in case the system is under-determined,
-        regularization can be applied (Ridge regression) via the
-        `ridge_alpha` parameter.
-
-        Note that Sparse PCA components orthogonality is not enforced as in PCA
-        hence one cannot use a simple linear projection.
-
-        Parameters
-        ----------
-        X : ndarray of shape (n_samples, n_features)
-            Test data to be transformed, must have the same number of
-            features as the data used to train the model.
-
-        Returns
-        -------
-        X_new : ndarray of shape (n_samples, n_components)
-            Transformed data.
-        """
-        check_is_fitted(self)
-
-        X = self._validate_data(X, reset=False)
-        X = X - self.mean_
-
-        U = ridge_regression(
-            self.components_.T, X.T, self.ridge_alpha, solver="cholesky"
-        )
-
-        return U
-
-    @property
-    def _n_features_out(self):
-        """Number of transformed output features."""
-        return self.components_.shape[0]
-
-    def _more_tags(self):
-        return {
-            "preserves_dtype": [np.float64, np.float32],
-        }
-
-
-class MiniBatchSparsePCA(SparsePCA):
+class MiniBatchSparsePCA(_BaseSparsePCA):
     """Mini-batch Sparse Principal Components Analysis.
 
     Finds the set of sparse components that can optimally reconstruct
@@ -408,15 +454,17 @@ class MiniBatchSparsePCA(SparsePCA):
     """
 
     _parameter_constraints = {
-        **SparsePCA._parameter_constraints,
-        "n_iter": [Interval(Integral, 0, None, closed="left")],
+        **_BaseSparsePCA._parameter_constraints,
+        "n_iter": [
+            Interval(Integral, 0, None, closed="left"),
+            Hidden(StrOptions({"deprecated"})),
+        ],
         "callback": [None, callable],
         "batch_size": [Interval(Integral, 1, None, closed="left")],
         "shuffle": ["boolean"],
         "max_no_improvement": [Interval(Integral, 0, None, closed="left")],
     }
-    for param in ("U_init", "V_init"):
-        _parameter_constraints.pop(param)
+    _parameter_constraints["max_iter"].append(None)
 
     def __init__(
         self,
@@ -439,48 +487,22 @@ class MiniBatchSparsePCA(SparsePCA):
         super().__init__(
             n_components=n_components,
             alpha=alpha,
-            verbose=verbose,
             ridge_alpha=ridge_alpha,
-            n_jobs=n_jobs,
+            max_iter=max_iter,
+            tol=tol,
             method=method,
+            n_jobs=n_jobs,
+            verbose=verbose,
             random_state=random_state,
         )
         self.n_iter = n_iter
-        self.max_iter = max_iter
         self.callback = callback
         self.batch_size = batch_size
         self.shuffle = shuffle
-        self.tol = tol
         self.max_no_improvement = max_no_improvement
 
-    def fit(self, X, y=None):
-        """Fit the model from data in X.
-
-        Parameters
-        ----------
-        X : array-like of shape (n_samples, n_features)
-            Training vector, where `n_samples` is the number of samples
-            and `n_features` is the number of features.
-
-        y : Ignored
-            Not used, present for API consistency by convention.
-
-        Returns
-        -------
-        self : object
-            Returns the instance itself.
-        """
-        self._validate_params()
-        random_state = check_random_state(self.random_state)
-        X = self._validate_data(X)
-
-        self.mean_ = X.mean(axis=0)
-        X = X - self.mean_
-
-        if self.n_components is None:
-            n_components = X.shape[1]
-        else:
-            n_components = self.n_components
+    def _fit(self, X, n_components, random_state):
+        """Specialized `fit` for MiniBatchSparsePCA."""
 
         transform_algorithm = "lasso_" + self.method
         est = MiniBatchDictionaryLearning(
