@@ -121,7 +121,7 @@ cdef class FeatureTracker:
         output.status = FeatureStatus.EVALUTE
         return output
 
-    cdef inline void found_constant(self, SIZE_t f_j) nogil:
+    cdef inline void update_found_constant(self, SIZE_t f_j) nogil:
         """Mark f_j as constant."""
         cdef SIZE_t[::1] features = self.features
         features[f_j], features[self.n_total_constants] = (
@@ -408,7 +408,7 @@ cdef class BestSplitter(BaseDenseSplitter):
             sort(&Xf[start], &samples[start], end - start)
 
             if Xf[end - 1] <= Xf[start] + FEATURE_THRESHOLD:
-                self.feature_tracker.found_constant(f_j)
+                self.feature_tracker.update_found_constant(f_j)
                 continue
             self.feature_tracker.update_drawn_feature(f_j)
 
@@ -669,7 +669,7 @@ cdef class RandomSplitter(BaseDenseSplitter):
                     max_feature_value = current_feature_value
 
             if max_feature_value <= min_feature_value + FEATURE_THRESHOLD:
-                self.feature_tracker.found_constant(f_j)
+                self.feature_tracker.update_found_constant(f_j)
                 continue
 
             self.feature_tracker.update_drawn_feature(f_j)
@@ -1131,7 +1131,7 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
                     end_negative += 1
 
             if Xf[end - 1] <= Xf[start] + FEATURE_THRESHOLD:
-                self.feature_tracker.found_constant(f_j)
+                self.feature_tracker.update_found_constant(f_j)
                 continue
 
             self.feature_tracker.update_drawn_feature(f_j)
@@ -1310,7 +1310,7 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
                     max_feature_value = current_feature_value
 
             if max_feature_value <= min_feature_value + FEATURE_THRESHOLD:
-                self.feature_tracker.found_constant(f_j)
+                self.feature_tracker.update_found_constant(f_j)
                 continue
 
             self.feature_tracker.update_drawn_feature(f_j)
