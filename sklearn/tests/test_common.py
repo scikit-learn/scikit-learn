@@ -522,8 +522,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "LinearSVR",
     "LocalOutlierFactor",
     "LocallyLinearEmbedding",
-    "LogisticRegression",
-    "LogisticRegressionCV",
     "MDS",
     "MLPClassifier",
     "MLPRegressor",
