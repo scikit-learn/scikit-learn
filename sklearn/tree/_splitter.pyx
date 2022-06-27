@@ -149,7 +149,7 @@ cdef class Splitter:
         self.weighted_n_samples = weighted_n_samples
 
         cdef SIZE_t n_features = X.shape[1]
-        self.feature_tracker = FeatureTracker(X.shape[1], self.max_features)
+        self.feature_tracker = FeatureTracker(n_features, self.max_features)
         self.feature_values = np.empty(n_samples, dtype=np.float32)
 
         self.y = y

@@ -1,4 +1,5 @@
 # Feature Tracker used with the splitter to sample features
+cimport cython
 from ._tree cimport SIZE_t
 from ._tree cimport UINT32_t
 
@@ -10,6 +11,7 @@ cdef struct FeatureSample:
     SIZE_t feature
     FeatureStatus status
 
+@cython.final
 cdef class FeatureTracker:
     cdef:
         SIZE_t[::1] features
@@ -25,8 +27,8 @@ cdef class FeatureTracker:
         # n_total_constants = n_known_constants + n_found_constants
         SIZE_t n_total_constants
 
-    cdef void reset(self, SIZE_t n_constant_features) nogil
-    cdef FeatureSample sample(self, UINT32_t* random_state) nogil
-    cdef void update_found_constant(self, SIZE_t f_j) nogil
-    cdef void update_drawn_feature(self, SIZE_t f_j) nogil
-    cdef SIZE_t update_constant_features(self) nogil
+    cdef inline void reset(self, SIZE_t n_constant_features) nogil
+    cdef inline FeatureSample sample(self, UINT32_t* random_state) nogil
+    cdef inline void update_found_constant(self, SIZE_t f_j) nogil
+    cdef inline void update_drawn_feature(self, SIZE_t f_j) nogil
+    cdef inline SIZE_t update_constant_features(self) nogil
