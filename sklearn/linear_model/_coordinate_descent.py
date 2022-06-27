@@ -22,9 +22,7 @@ from ._base import _preprocess_data, _deprecate_normalize
 from ..utils import check_array
 from ..utils import check_scalar
 from ..utils.validation import check_random_state
-from ..utils._param_validation import Interval
-from ..utils._param_validation import StrOptions
-from ..utils._param_validation import Hidden
+from ..utils._param_validation import Hidden, Interval, StrOptions
 from ..model_selection import check_cv
 from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import (
@@ -844,11 +842,11 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
     """
 
     _parameter_constraints = {
-        "alpha": [Interval(Real, 0, None, closed="left"), np.ndarray],
-        "l1_ratio": [Interval(Real, 0, 1, closed="left"), None],
+        "alpha": [Interval(Real, 0, None, closed="left")],
+        "l1_ratio": [Interval(Real, 0, 1, closed="left")],
         "fit_intercept": ["boolean"],
         "normalize": [Hidden(StrOptions({"deprecated"})), "boolean"],
-        "precompute": ["boolean"],
+        "precompute": ["boolean", "array-like"],
         "max_iter": [Interval(Integral, 1, None, closed="left"), None],
         "copy_X": ["boolean"],
         "tol": [Interval(Real, 0, None, closed="left")],
@@ -925,17 +923,16 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         To avoid memory re-allocation it is advised to allocate the
         initial data in memory directly using that format.
         """
-
         self._validate_params()
-
         _normalize = _deprecate_normalize(
             self.normalize, default=False, estimator_name=self.__class__.__name__
         )
-
-        if isinstance(self.precompute, str):
-            raise ValueError(
-                "precompute should be one of True, False or array-like. Got %r"
-                % self.precompute
+        if self.alpha == 0:
+            warnings.warn(
+                "With alpha=0, this algorithm does not converge "
+                "well. You are advised to use the LinearRegression "
+                "estimator",
+                stacklevel=2,
             )
 
         # Remember if X is copied
@@ -1024,9 +1021,6 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
             Xy = Xy[:, np.newaxis]
 
         n_targets = y.shape[1]
-
-        if self.selection not in ["cyclic", "random"]:
-            raise ValueError("selection should be either random or cyclic.")
 
         if not self.warm_start or not hasattr(self, "coef_"):
             coef_ = np.zeros((n_targets, n_features), dtype=X.dtype, order="F")
