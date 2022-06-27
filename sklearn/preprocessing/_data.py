@@ -1470,6 +1470,14 @@ class RobustScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
            [ 1. ,  0. , -1.6]])
     """
 
+    _parameter_constraints = {
+        "with_centering": ["boolean"],
+        "with_scaling": ["boolean"],
+        "quantile_range": [tuple],
+        "copy": ["boolean"],
+        "unit_variance": ["boolean"],
+    }
+
     def __init__(
         self,
         *,
@@ -1502,6 +1510,8 @@ class RobustScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         self : object
             Fitted scaler.
         """
+        self._validate_params()
+
         # at fit, convert sparse matrices to csc for optimized computation of
         # the quantiles
         X = self._validate_data(
