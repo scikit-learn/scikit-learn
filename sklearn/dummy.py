@@ -146,7 +146,6 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
             Interval(Integral, None, None, closed="neither"),
             str,
             "array-like",
-            "sparse matrix",
             None,
         ],
     }
@@ -539,7 +538,6 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         "constant": [
             Interval(Real, -np.inf, np.inf, closed="neither"),
             "array-like",
-            "sparse matrix",
             None,
         ],
     }
@@ -597,12 +595,11 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                 ]
 
         elif self.strategy == "quantile":
-            if self.quantile is None or not np.isscalar(self.quantile):
+            if self.quantile is None:
                 raise ValueError(
-                    "Quantile must be a scalar in the range [0.0, 1.0], but got %s."
-                    % self.quantile
+                    "When using `strategy='quantile', you have to specify the desired "
+                    "quantile in the range [0, 1]."
                 )
-
             percentile = self.quantile * 100.0
             if sample_weight is None:
                 self.constant_ = np.percentile(y, axis=0, q=percentile)

@@ -231,15 +231,6 @@ def test_classifier_prediction_independent_of_X(strategy):
     assert_array_equal(predictions1, predictions2)
 
 
-def test_classifier_exceptions():
-    clf = DummyClassifier(strategy="unknown")
-
-    with pytest.raises(NotFittedError):
-        clf.predict([])
-    with pytest.raises(NotFittedError):
-        clf.predict_proba([])
-
-
 def test_mean_strategy_regressor():
 
     random_state = np.random.RandomState(seed=1)
@@ -377,24 +368,11 @@ def test_quantile_invalid():
     X = [[0]] * 5  # ignored
     y = [0] * 5  # ignored
 
-    est = DummyRegressor(strategy="quantile")
-    with pytest.raises(ValueError):
-        est.fit(X, y)
-
     est = DummyRegressor(strategy="quantile", quantile=None)
-    with pytest.raises(ValueError):
-        est.fit(X, y)
-
-    est = DummyRegressor(strategy="quantile", quantile=[0])
-    with pytest.raises(ValueError):
-        est.fit(X, y)
-
-    est = DummyRegressor(strategy="quantile", quantile=-0.1)
-    with pytest.raises(ValueError):
-        est.fit(X, y)
-
-    est = DummyRegressor(strategy="quantile", quantile=1.1)
-    with pytest.raises(ValueError):
+    err_msg = (
+        "When using `strategy='quantile', you have to specify the desired quantile"
+    )
+    with pytest.raises(ValueError, match=err_msg):
         est.fit(X, y)
 
 
@@ -461,7 +439,8 @@ def test_constants_not_specified_regressor():
     y = [1, 2, 4, 6, 8]
 
     est = DummyRegressor(strategy="constant")
-    with pytest.raises(TypeError):
+    err_msg = "Constant target value has to be specified"
+    with pytest.raises(TypeError, match=err_msg):
         est.fit(X, y)
 
 
@@ -471,7 +450,8 @@ def test_constant_size_multioutput_regressor():
     y = random_state.randn(10, 5)
 
     est = DummyRegressor(strategy="constant", constant=[1, 2, 3, 4])
-    with pytest.raises(ValueError):
+    err_msg = r"Constant target value should have shape \(5, 1\)."
+    with pytest.raises(ValueError, match=err_msg):
         est.fit(X, y)
 
 
@@ -539,7 +519,6 @@ def test_constant_strategy_exceptions(y, params, err_msg):
     X = [[0], [0], [0], [0]]
 
     clf = DummyClassifier(strategy="constant", **params)
-
     with pytest.raises(ValueError, match=err_msg):
         clf.fit(X, y)
 
