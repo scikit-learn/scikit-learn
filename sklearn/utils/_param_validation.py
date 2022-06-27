@@ -47,7 +47,7 @@ def validate_parameter_constraints(parameter_constraints, params, caller_name):
         raise ValueError(
             f"The parameter constraints {list(parameter_constraints.keys())} do not"
             f" match the parameters to validate {list(params.keys())}.\nConsider the"
-            " extra constraints"
+            " unexpected constraints"
             f" {set(parameter_constraints.keys())-set(params.keys())} and missing"
             " expected constraints"
             f" {set(params.keys())-set(parameter_constraints.keys())}"

@@ -405,8 +405,8 @@ def test_validate_params_match_error():
 
     match = (
         r"The parameter constraints .* do not match the parameters to validate"
-        r" .*\nConsider the extra constraints {'c'} and missing expected constraints"
-        r" {'b'}"
+        r" .*\nConsider the unexpected constraints {'c'} and missing expected"
+        r" constraints {'b'}"
     )
     with pytest.raises(ValueError, match=match):
         func(1, 2)
