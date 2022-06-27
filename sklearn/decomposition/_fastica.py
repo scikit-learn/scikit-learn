@@ -245,9 +245,6 @@ def fastica(
 
         .. versionadded:: 1.2
 
-        .. versionadded:: 1.2
-            Added "auto" option.
-
         .. versionchanged:: 1.4
             The default value for `whiten_solver` will change to "auto" in
             version 1.4.
@@ -432,9 +429,6 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         - "auto" uses the `eigh` solver when `n_samples >= 50 * n_features`
 
         .. versionadded:: 1.2
-
-        .. versionadded:: 1.2
-            Added "auto" option.
 
         .. versionchanged:: 1.4
             The default value for `whiten_solver` will change to "auto" in
