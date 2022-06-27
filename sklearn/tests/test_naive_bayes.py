@@ -869,9 +869,7 @@ def test_alpha_vector():
     # Test correct dimensions
     alpha = np.array([1.0, 2.0, 3.0])
     m_nb = MultinomialNB(alpha=alpha)
-    expected_msg = re.escape(
-        "alpha should be a scalar or a numpy array with shape [n_features]"
-    )
+    expected_msg = "When alpha is an array, it should contains `n_features`"
     with pytest.raises(ValueError, match=expected_msg):
         m_nb.fit(X, y)
 
