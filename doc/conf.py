@@ -614,6 +614,7 @@ linkcheck_ignore = [
     r"https://github.com/conda-forge/miniforge#miniforge",
     r"https://stackoverflow.com/questions/5836335/"
     "consistently-create-same-random-numpy-array/5837352#comment6712034_5837352",
+    "https://www.microsoft.com/en-us/research/uploads/prod/2006/01/Bishop-Pattern-Recognition-and-Machine-Learning-2006.pdf",
 ]
 
 # Use a browser-like user agent to avoid some "403 Client Error: Forbidden for
