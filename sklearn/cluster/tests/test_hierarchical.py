@@ -54,8 +54,6 @@ def test_linkage_misc():
     # Misc tests on linkage
     rng = np.random.RandomState(42)
     X = rng.normal(size=(5, 5))
-    with pytest.raises(ValueError):
-        AgglomerativeClustering(linkage="foo").fit(X)
 
     with pytest.raises(ValueError):
         linkage_tree(X, linkage="foo")

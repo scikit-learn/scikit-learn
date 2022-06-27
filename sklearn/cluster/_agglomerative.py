@@ -18,6 +18,7 @@ from scipy.sparse.csgraph import connected_components
 
 from ..base import BaseEstimator, ClusterMixin, _ClassNamePrefixFeaturesOutMixin
 from ..metrics.pairwise import paired_distances
+from ..metrics.pairwise import _VALID_METRICS
 from ..metrics import DistanceMetric
 from ..metrics._dist_metrics import METRIC_MAPPING
 from ..utils import check_array
@@ -878,23 +879,13 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
     _parameter_constraints = {
         "n_clusters": [Interval(Integral, 1, None, closed="left"), None],
         "affinity": [
-            StrOptions(
-                {
-                    "euclidean",
-                    "l1",
-                    "l2",
-                    "manhattan",
-                    "cosine",
-                    "precomputed",
-                    "cityblock",
-                }
-            ),
+            StrOptions(set(_VALID_METRICS) | set(["precomputed"])),
             callable,
         ],
         "memory": [str, joblib.Memory, None],
         "connectivity": ["array-like", callable, None],
         "compute_full_tree": [StrOptions({"auto"}), "boolean"],
-        "linkage": [StrOptions({"ward", "complete", "average", "single"})],
+        "linkage": [StrOptions(set(_TREE_BUILDERS.keys()))],
         "distance_threshold": [Interval(Real, 0, None, closed="left"), None],
         "compute_distances": ["boolean"],
     }
@@ -958,12 +949,6 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         """
         memory = check_memory(self.memory)
 
-        if self.n_clusters is not None and self.n_clusters <= 0:
-            raise ValueError(
-                "n_clusters should be an integer greater than 0. %s was provided."
-                % str(self.n_clusters)
-            )
-
         if not ((self.n_clusters is None) ^ (self.distance_threshold is None)):
             raise ValueError(
                 "Exactly one of n_clusters and "
@@ -982,11 +967,6 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
                 "work with euclidean distances." % (self.affinity,)
             )
 
-        if self.linkage not in _TREE_BUILDERS:
-            raise ValueError(
-                "Unknown linkage type %s. Valid options are %s"
-                % (self.linkage, _TREE_BUILDERS.keys())
-            )
         tree_builder = _TREE_BUILDERS[self.linkage]
 
         connectivity = self.connectivity
@@ -1223,23 +1203,13 @@ class FeatureAgglomeration(
     _parameter_constraints = {
         "n_clusters": [Interval(Integral, 1, None, closed="left"), None],
         "affinity": [
-            StrOptions(
-                {
-                    "euclidean",
-                    "l1",
-                    "l2",
-                    "manhattan",
-                    "cosine",
-                    "precomputed",
-                    "cityblock",
-                }
-            ),
+            StrOptions(set(_VALID_METRICS) | set(["precomputed"])),
             callable,
         ],
         "memory": [str, joblib.Memory, None],
         "connectivity": ["array-like", callable, None],
         "compute_full_tree": [StrOptions({"auto"}), "boolean"],
-        "linkage": [StrOptions({"ward", "complete", "average", "single"})],
+        "linkage": [StrOptions(set(_TREE_BUILDERS.keys()))],
         "pooling_func": [callable],
         "distance_threshold": [Interval(Real, 0, None, closed="left"), None],
         "compute_distances": ["boolean"],
