@@ -1838,22 +1838,22 @@ def recall_score(
             Calculate metrics globally by counting the total true positives,
             false negatives and false positives (or summing their weights).
             Gives same result as 'weighted'.
-            Except in multilabel classification, this and 'weighted' are both  
-            identical to the result of :func:`accuracy_score`.   It can result 
+            Except in multilabel classification, this and 'weighted' are both
+            identical to the result of :func:`accuracy_score`.   It can result
             in an F-score that is not between precision and recall.
         ``'macro'``:
             Calculate metrics for each label, and find their simple (unweighted)
-            mean.  This does not take label imbalance into account.  This is 
-            identical to the result of :func:`balanced_accuracy_score` (with 
+            mean.  This does not take label imbalance into account.  This is
+            identical to the result of :func:`balanced_accuracy_score` (with
             its default adjusted=False), except in multilabel classification
             which is not supported by :func:`balanced_accuracy_score`.
         ``'weighted'``:
             Calculate metrics for each label, and find their average weighted
-            by support (the number or total weight of true instances for each 
-            label). This alters 'macro' to account for label imbalance.  
+            by support (the number or total weight of true instances for each
+            label). This alters 'macro' to account for label imbalance.
             Gives same result as 'micro'.
-            Except in multilabel classification, this and 'micro' are both  
-            identical to the result of :func:`accuracy_score`.   It can result 
+            Except in multilabel classification, this and 'micro' are both
+            identical to the result of :func:`accuracy_score`.   It can result
             in an F-score that is not between precision and recall.
         ``'samples'``:
             Calculate metrics for each instance, and find their average (only
@@ -2087,14 +2087,14 @@ def classification_report(
         See also :func:`precision_recall_fscore_support` for more details
         on averages.
 
-        Note that whenever accuracy is shown in the report, i.e. for binary 
-        or multiclass (not multilabel) classification, it is identical to the 
-        weighted average recall which is also being shown.  (See 
+        Note that whenever accuracy is shown in the report, i.e. for binary
+        or multiclass (not multilabel) classification, it is identical to the
+        weighted average recall which is also being shown.  (See
         :func:`recall_score` with average='weighted' and average='micro'.)
 
-        Also note that the macro average recall is identical to 
-        :func:`balanced_accuracy_score` (with its default adjusted=False), 
-        except in multilabel classification (which is not supported by 
+        Also note that the macro average recall is identical to
+        :func:`balanced_accuracy_score` (with its default adjusted=False),
+        except in multilabel classification (which is not supported by
         :func:`balanced_accuracy_score` anyway).
 
         Finally, note that in binary classification, recall of the positive
