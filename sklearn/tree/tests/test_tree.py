@@ -616,95 +616,6 @@ def test_error():
         est.fit([[0, 1, 2]], [5, -0.1, 2])
 
 
-@pytest.mark.parametrize("name, Tree", ALL_TREES.items())
-@pytest.mark.parametrize(
-    "params, err_type, err_msg",
-    [
-        ({"max_depth": -1}, ValueError, "max_depth == -1, must be >= 1"),
-        (
-            {"max_depth": 1.1},
-            TypeError,
-            "max_depth must be an instance of int",
-        ),
-        ({"min_samples_leaf": 0}, ValueError, "min_samples_leaf == 0, must be >= 1"),
-        ({"min_samples_leaf": 0.0}, ValueError, "min_samples_leaf == 0.0, must be > 0"),
-        (
-            {"min_samples_leaf": "foo"},
-            TypeError,
-            "min_samples_leaf must be an instance of float",
-        ),
-        ({"min_samples_split": 1}, ValueError, "min_samples_split == 1, must be >= 2"),
-        (
-            {"min_samples_split": 0.0},
-            ValueError,
-            "min_samples_split == 0.0, must be > 0.0",
-        ),
-        (
-            {"min_samples_split": 1.1},
-            ValueError,
-            "min_samples_split == 1.1, must be <= 1.0",
-        ),
-        (
-            {"min_samples_split": "foo"},
-            TypeError,
-            "min_samples_split must be an instance of float",
-        ),
-        (
-            {"min_weight_fraction_leaf": -1},
-            ValueError,
-            "min_weight_fraction_leaf == -1, must be >= 0.0",
-        ),
-        (
-            {"min_weight_fraction_leaf": 0.6},
-            ValueError,
-            "min_weight_fraction_leaf == 0.6, must be <= 0.5",
-        ),
-        (
-            {"min_weight_fraction_leaf": "foo"},
-            TypeError,
-            "min_weight_fraction_leaf must be an instance of float",
-        ),
-        ({"max_features": 0}, ValueError, "max_features == 0, must be >= 1"),
-        ({"max_features": 0.0}, ValueError, "max_features == 0.0, must be > 0.0"),
-        ({"max_features": 1.1}, ValueError, "max_features == 1.1, must be <= 1.0"),
-        ({"max_features": "foobar"}, ValueError, "Invalid value for max_features."),
-        ({"max_leaf_nodes": 0}, ValueError, "max_leaf_nodes == 0, must be >= 2"),
-        (
-            {"max_leaf_nodes": 1.5},
-            TypeError,
-            "max_leaf_nodes must be an instance of int",
-        ),
-        (
-            {"min_impurity_decrease": -1},
-            ValueError,
-            "min_impurity_decrease == -1, must be >= 0.0",
-        ),
-        (
-            {"min_impurity_decrease": "foo"},
-            TypeError,
-            "min_impurity_decrease must be an instance of float",
-        ),
-        ({"ccp_alpha": -1.0}, ValueError, "ccp_alpha == -1.0, must be >= 0.0"),
-        (
-            {"ccp_alpha": "foo"},
-            TypeError,
-            "ccp_alpha must be an instance of float",
-        ),
-    ],
-)
-def test_tree_params_validation(name, Tree, params, err_type, err_msg):
-    """Check parameter validation in DecisionTreeClassifier, DecisionTreeRegressor,
-    ExtraTreeClassifier, and ExtraTreeRegressor.
-    """
-    if "Classifier" in name:
-        X, y = iris.data, iris.target
-    else:
-        X, y = diabetes.data, diabetes.target
-    est = Tree(**params)
-    with pytest.raises(err_type, match=err_msg):
-        est.fit(X, y)
-
-
 def test_min_samples_split():
     """Test min_samples_split parameter"""
     X = np.asfortranarray(iris.data, dtype=tree._tree.DTYPE)
@@ -1295,21 +1206,10 @@ def check_class_weight_errors(name):
     TreeClassifier = CLF_TREES[name]
     _y = np.vstack((y, np.array(y) * 2)).T
 
-    # Invalid preset string
-    clf = TreeClassifier(class_weight="the larch", random_state=0)
-    with pytest.raises(ValueError):
-        clf.fit(X, y)
-    with pytest.raises(ValueError):
-        clf.fit(X, _y)
-
-    # Not a list or preset for multi-output
-    clf = TreeClassifier(class_weight=1, random_state=0)
-    with pytest.raises(ValueError):
-        clf.fit(X, _y)
-
     # Incorrect length list for multi-output
     clf = TreeClassifier(class_weight=[{-1: 0.5, 1: 1.0}], random_state=0)
-    with pytest.raises(ValueError):
+    err_msg = "number of elements in class_weight should match number of outputs."
+    with pytest.raises(ValueError, match=err_msg):
         clf.fit(X, _y)
 
 
