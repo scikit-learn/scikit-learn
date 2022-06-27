@@ -8,9 +8,8 @@
 # License: BSD 3 clause
 
 
-from numbers import Integral
 import warnings
-from numbers import Real
+from numbers import Integral, Real
 
 import numpy as np
 from scipy import sparse
@@ -25,7 +24,7 @@ from ..base import (
     _ClassNamePrefixFeaturesOutMixin,
 )
 from ..utils import check_array
-from ..utils._param_validation import StrOptions
+from ..utils._param_validation import Interval, StrOptions
 from ..utils.extmath import _incremental_mean_and_var, row_norms
 from ..utils.sparsefuncs_fast import (
     inplace_csr_row_normalize_l1,
@@ -42,10 +41,6 @@ from ..utils.validation import (
     check_random_state,
     _check_sample_weight,
     FLOAT_DTYPES,
-)
-from ..utils._param_validation import (
-    Interval,
-    StrOptions,
 )
 
 from ._encoders import OneHotEncoder
