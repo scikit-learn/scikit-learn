@@ -509,7 +509,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "LabelSpreading",
     "Lars",
     "LarsCV",
-    "Lasso",
     "LassoCV",
     "LassoLars",
     "LassoLarsCV",

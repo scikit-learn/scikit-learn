@@ -843,7 +843,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
 
     _parameter_constraints = {
         "alpha": [Interval(Real, 0, None, closed="left")],
-        "l1_ratio": [Interval(Real, 0, 1, closed="left")],
+        "l1_ratio": [Interval(Real, 0, 1, closed="both")],
         "fit_intercept": ["boolean"],
         "normalize": [Hidden(StrOptions({"deprecated"})), "boolean"],
         "precompute": ["boolean", "array-like"],
@@ -1264,6 +1264,11 @@ class Lasso(ElasticNet):
     >>> print(clf.intercept_)
     0.15...
     """
+
+    _parameter_constraints = {
+        **ElasticNet._parameter_constraints,
+    }
+    _parameter_constraints.pop("l1_ratio")
 
     path = staticmethod(enet_path)
 
