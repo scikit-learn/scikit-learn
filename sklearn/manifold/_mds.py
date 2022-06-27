@@ -5,8 +5,9 @@ Multi-dimensional Scaling (MDS).
 # author: Nelle Varoquaux <nelle.varoquaux@gmail.com>
 # License: BSD
 
-import numpy as np
 from numbers import Integral, Real
+
+import numpy as np
 from joblib import Parallel, effective_n_jobs
 
 import warnings
@@ -488,6 +489,7 @@ class MDS(BaseEstimator):
         self : object
             Fitted estimator.
         """
+        # parameter will be validated in `fit_transform` call
         self.fit_transform(X, init=init)
         return self
 
