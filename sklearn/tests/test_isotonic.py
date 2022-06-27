@@ -336,7 +336,7 @@ def test_isotonic_regression_oob_raise():
     ir.fit(x, y)
 
     # Check that an exception is thrown
-    msg = "A value in x_new is below the interpolation range"
+    msg = "in x_new is below the interpolation range"
     with pytest.raises(ValueError, match=msg):
         ir.predict([min(x) - 10, max(x) + 10])
 
