@@ -420,7 +420,7 @@ def test_stacking_classifier_stratify_default():
     # check that we stratify the classes for the default CV
     clf = StackingClassifier(
         estimators=[
-            ("lr", LogisticRegression(max_iter=1e4)),
+            ("lr", LogisticRegression(max_iter=10_000)),
             ("svm", LinearSVC(max_iter=1e4)),
         ]
     )
