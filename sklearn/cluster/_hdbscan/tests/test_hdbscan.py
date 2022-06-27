@@ -213,17 +213,12 @@ def test_hdbscan_high_dimensional():
 
 
 def test_hdbscan_best_balltree_metric():
-    labels = hdbscan(X, metric="seuclidean", metric_params={"V": np.ones(X.shape[1])})[
-        0
-    ]
+    kwargs = dict(metric="seuclidean", metric_params={"V": np.ones(X.shape[1])})
+    labels, _ = hdbscan(X, **kwargs)
     n_clusters_1 = len(set(labels)) - int(-1 in labels)
     assert n_clusters_1 == n_clusters
 
-    labels = (
-        HDBSCAN(metric="seuclidean", metric_params={"V": np.ones(X.shape[1])})
-        .fit(X)
-        .labels_
-    )
+    labels = HDBSCAN(**kwargs).fit(X).labels_
     n_clusters_2 = len(set(labels)) - int(-1 in labels)
     assert n_clusters_2 == n_clusters
 
@@ -381,7 +376,7 @@ def test_hdbscan_allow_single_cluster_with_epsilon():
     assert counts[unique_labels == -1] == 2
 
 
-def test_hdbscan_not_dbscan():
+def test_hdbscan_better_than_dbscan():
     """
     Validate that HDBSCAN can properly cluster this difficult synthetic
     dataset. Note that DBSCAN fails on this (see HDBSCAN plotting
