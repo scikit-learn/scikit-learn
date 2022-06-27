@@ -3,7 +3,9 @@ Kernel Density Estimation
 -------------------------
 """
 # Author: Jake Vanderplas <jakevdp@cs.washington.edu>
+import itertools
 from numbers import Integral, Real
+
 import numpy as np
 from scipy.special import gammainc
 
@@ -125,10 +127,12 @@ class KernelDensity(BaseEstimator):
             Interval(Real, 0, None, closed="neither"),
             StrOptions({"scott", "silverman"}),
         ],
-        "algorithm": [StrOptions({"kd_tree", "ball_tree", "auto"})],
+        "algorithm": [StrOptions(set(TREE_DICT.keys()) | {"auto"})],
         "kernel": [StrOptions(set(VALID_KERNELS))],
         "metric": [
-            StrOptions(set(VALID_METRICS["kd_tree"] + VALID_METRICS["ball_tree"]))
+            StrOptions(
+                set(itertools.chain(*[VALID_METRICS[alg] for alg in TREE_DICT.keys()]))
+            )
         ],
         "atol": [Interval(Real, 0, None, closed="left")],
         "rtol": [Interval(Real, 0, None, closed="left")],
