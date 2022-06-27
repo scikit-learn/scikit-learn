@@ -238,6 +238,7 @@ conda_build_metadata_list = [
             "numpydoc": "min",
             "sphinx-prompt": "min",
             "sphinxext-opengraph": "min",
+            "plotly": "min",
         },
     },
     {
