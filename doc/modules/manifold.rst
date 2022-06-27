@@ -427,7 +427,7 @@ distances in a geometric spaces. The data can be ratings of similarity between
 objects, interaction frequencies of molecules, or trade indices between
 countries.
 
-There exists two types of MDS algorithm: metric and non metric. In the
+There exists two types of MDS algorithm: metric and non metric. In
 scikit-learn, the class :class:`MDS` implements both. In Metric MDS, the input
 similarity matrix arises from a metric (and thus respects the triangular
 inequality), the distances between output two points are then set to be as
