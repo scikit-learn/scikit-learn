@@ -502,9 +502,6 @@ class GaussianNB(_BaseNB):
         return self.var_
 
 
-_ALPHA_MIN = 1e-10
-
-
 class _BaseDiscreteNB(_BaseNB):
     """Abstract base class for naive Bayes on discrete/categorical data
 
@@ -521,6 +518,11 @@ class _BaseDiscreteNB(_BaseNB):
         "fit_prior": ["boolean"],
         "class_prior": ["array-like", None],
     }
+
+    def __init__(self, alpha=1.0, fit_prior=True, class_prior=None):
+        self.alpha = alpha
+        self.fit_prior = fit_prior
+        self.class_prior = class_prior
 
     @abstractmethod
     def _count(self, X, Y):
@@ -585,24 +587,31 @@ class _BaseDiscreteNB(_BaseNB):
             self.class_log_prior_ = np.full(n_classes, -np.log(n_classes))
 
     def _check_alpha(self):
-        # This test also covers array-like alpha.
-        if np.min(self.alpha) < 0:
-            raise ValueError(
-                "Smoothing parameter alpha = %.1e. alpha should be > 0."
-                % np.min(self.alpha)
-            )
-        if isinstance(self.alpha, np.ndarray):
-            if not self.alpha.shape[0] == self.n_features_in_:
+        alpha = (
+            np.asarray(self.alpha) if not isinstance(self.alpha, Real) else self.alpha
+        )
+        if isinstance(alpha, np.ndarray):
+            if not alpha.shape[0] == self.n_features_in_:
                 raise ValueError(
-                    "alpha should be a scalar or a numpy array with shape [n_features]"
+                    "When alpha is an array, it should contains `n_features`. "
+                    f"Got {alpha.shape[0]} elements instead of {self.n_features_in_}."
                 )
-        if np.min(self.alpha) < _ALPHA_MIN:
+            # check that all alpha are positive
+            if not all(
+                [
+                    self._parameter_constraints["alpha"][0].is_satisfied_by(a)
+                    for a in alpha
+                ]
+            ):
+                raise ValueError("All values in alpha must be greater than 0.")
+        alpha_min = 1e-10
+        if np.min(alpha) < alpha_min:
             warnings.warn(
-                "alpha too small will result in numeric errors, setting alpha = %.1e"
-                % _ALPHA_MIN
+                "alpha too small will result in numeric errors, setting alpha ="
+                f" {alpha_min:.1e}"
             )
-            return np.maximum(self.alpha, _ALPHA_MIN)
-        return self.alpha
+            return np.maximum(alpha, alpha_min)
+        return alpha
 
     def partial_fit(self, X, y, classes=None, sample_weight=None):
         """Incremental fit on a batch of samples.
@@ -771,7 +780,7 @@ class MultinomialNB(_BaseDiscreteNB):
 
     Parameters
     ----------
-    alpha : float or array-like of shape(n_features), default=1.0
+    alpha : float or array-like of shape (n_features,), default=1.0
         Additive (Laplace/Lidstone) smoothing parameter
         (0 for no smoothing).
 
@@ -849,12 +858,8 @@ class MultinomialNB(_BaseDiscreteNB):
     [3]
     """
 
-    _parameter_constraints = {**_BaseDiscreteNB._parameter_constraints}
-
     def __init__(self, *, alpha=1.0, fit_prior=True, class_prior=None):
-        self.alpha = alpha
-        self.fit_prior = fit_prior
-        self.class_prior = class_prior
+        super().__init__(alpha=alpha, fit_prior=fit_prior, class_prior=class_prior)
 
     def _more_tags(self):
         return {"requires_positive_X": True}
@@ -892,7 +897,7 @@ class ComplementNB(_BaseDiscreteNB):
 
     Parameters
     ----------
-    alpha : float or array-like of shape(n_features), default=1.0
+    alpha : float or array-like of shape (n_features,), default=1.0
         Additive (Laplace/Lidstone) smoothing parameter (0 for no smoothing).
 
     fit_prior : bool, default=True
@@ -983,9 +988,7 @@ class ComplementNB(_BaseDiscreteNB):
     }
 
     def __init__(self, *, alpha=1.0, fit_prior=True, class_prior=None, norm=False):
-        self.alpha = alpha
-        self.fit_prior = fit_prior
-        self.class_prior = class_prior
+        super().__init__(alpha=alpha, fit_prior=fit_prior, class_prior=class_prior)
         self.norm = norm
 
     def _more_tags(self):
@@ -1029,7 +1032,7 @@ class BernoulliNB(_BaseDiscreteNB):
 
     Parameters
     ----------
-    alpha : float or array-like of shape(n_features), default=1.0
+    alpha : float or array-like of shape (n_features,), default=1.0
         Additive (Laplace/Lidstone) smoothing parameter
         (0 for no smoothing).
 
@@ -1124,10 +1127,8 @@ class BernoulliNB(_BaseDiscreteNB):
     }
 
     def __init__(self, *, alpha=1.0, binarize=0.0, fit_prior=True, class_prior=None):
-        self.alpha = alpha
+        super().__init__(alpha=alpha, fit_prior=fit_prior, class_prior=class_prior)
         self.binarize = binarize
-        self.fit_prior = fit_prior
-        self.class_prior = class_prior
 
     def _check_X(self, X):
         """Validate X, used only in predict* methods."""
@@ -1186,7 +1187,7 @@ class CategoricalNB(_BaseDiscreteNB):
 
     Parameters
     ----------
-    alpha : float or array-like of shape(n_features), default=1.0
+    alpha : float or array-like of shape (n_features,), default=1.0
         Additive (Laplace/Lidstone) smoothing parameter
         (0 for no smoothing).
 
@@ -1289,9 +1290,7 @@ class CategoricalNB(_BaseDiscreteNB):
     def __init__(
         self, *, alpha=1.0, fit_prior=True, class_prior=None, min_categories=None
     ):
-        self.alpha = alpha
-        self.fit_prior = fit_prior
-        self.class_prior = class_prior
+        super().__init__(alpha=alpha, fit_prior=fit_prior, class_prior=class_prior)
         self.min_categories = min_categories
 
     def fit(self, X, y, sample_weight=None):
