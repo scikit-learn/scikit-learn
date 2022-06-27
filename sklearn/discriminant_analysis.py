@@ -9,7 +9,6 @@ Linear Discriminant Analysis and Quadratic Discriminant Analysis
 
 # License: BSD 3-Clause
 
-from typing import Protocol, runtime_checkable
 import warnings
 import numpy as np
 from scipy import linalg
@@ -29,12 +28,6 @@ from .preprocessing import StandardScaler
 
 
 __all__ = ["LinearDiscriminantAnalysis", "QuadraticDiscriminantAnalysis"]
-
-
-@runtime_checkable
-class HasFit(Protocol):
-    def fit(*args, **kwargs):
-        ...
 
 
 def _cov(X, shrinkage=None, covariance_estimator=None):
@@ -321,9 +314,9 @@ class LinearDiscriminantAnalysis(
         "shrinkage": [StrOptions({"auto"}), Interval(Real, 0, 1, closed="both"), None],
         "n_components": [Interval(Integral, 1, None, closed="left"), None],
         "priors": ["array-like", None],
-        "store_covariance": [bool],
+        "store_covariance": ["boolean"],
         "tol": [Interval(Real, 0, None, closed="left")],
-        "covariance_estimator": [HasFit, None],
+        "covariance_estimator": "no_validation",
     }
 
     def __init__(
@@ -601,7 +594,7 @@ class LinearDiscriminantAnalysis(
 
         if self.solver == "svd":
             if self.shrinkage is not None:
-                raise NotImplementedError("shrinkage not supported")
+                raise NotImplementedError("shrinkage not supported with 'svd' solver.")
             if self.covariance_estimator is not None:
                 raise ValueError(
                     "covariance estimator "
