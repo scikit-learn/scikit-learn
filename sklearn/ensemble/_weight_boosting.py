@@ -45,6 +45,10 @@ from ..utils.validation import check_is_fitted
 from ..utils.validation import _check_sample_weight
 from ..utils.validation import has_fit_parameter
 from ..utils.validation import _num_samples
+from ..utils._param_validation import StrOptions
+from ..utils._param_validation import Interval
+from numbers import Integral
+from numbers import Real
 
 __all__ = [
     "AdaBoostClassifier",
@@ -455,6 +459,15 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
     0.983...
     """
 
+    _parameter_constraints = {
+        "base_estimator": [None, "base_estimator"],
+        "n_estimators": [Interval(Integral, 1, None, closed="left")],
+        "learning_rate": [Interval(Real, 0, None, closed="neither")],
+        "loalgorithmss": [StrOptions({"SAMME", "SAMME.R"})],
+        "loss": [StrOptions({"linear", "square", "exponential"})],
+        "random_state": ["random_state"],
+    }
+
     def __init__(
         self,
         base_estimator=None,
@@ -495,12 +508,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         self : object
             Fitted estimator.
         """
-        # Check that algorithm is supported
-        if self.algorithm not in ("SAMME", "SAMME.R"):
-            raise ValueError(
-                "Algorithm must be 'SAMME' or 'SAMME.R'."
-                f" Got {self.algorithm!r} instead."
-            )
+        self._validate_params()
 
         # Fit
         return super().fit(X, y, sample_weight)
@@ -1038,6 +1046,14 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
     0.9771...
     """
 
+    _parameter_constraints = {
+        "base_estimator": [None, "base_estimator"],
+        "n_estimators": [Interval(Integral, 1, None, closed="left")],
+        "learning_rate": [Interval(Real, 0, None, closed="neither")],
+        "loss": [StrOptions({"linear", "square", "exponential"})],
+        "random_state": ["random_state"],
+    }
+
     def __init__(
         self,
         base_estimator=None,
@@ -1079,12 +1095,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         self : object
             Fitted AdaBoostRegressor estimator.
         """
-        # Check loss
-        if self.loss not in ("linear", "square", "exponential"):
-            raise ValueError(
-                "loss must be 'linear', 'square', or 'exponential'."
-                f" Got {self.loss!r} instead."
-            )
+        self._validate_params()
 
         # Fit
         return super().fit(X, y, sample_weight)
