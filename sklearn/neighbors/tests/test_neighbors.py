@@ -1494,9 +1494,7 @@ def test_neighbors_badargs():
         est.fit(X)
 
     for cls in (
-        neighbors.KNeighborsClassifier,
         neighbors.RadiusNeighborsClassifier,
-        neighbors.KNeighborsRegressor,
         neighbors.RadiusNeighborsRegressor,
     ):
         est = cls(weights="blah")
@@ -1529,12 +1527,6 @@ def test_neighbors_badargs():
         nbrs.fit(X, y)
         with pytest.raises(ValueError):
             nbrs.predict([[]])
-        if issubclass(cls, neighbors.KNeighborsClassifier) or issubclass(
-            cls, neighbors.KNeighborsRegressor
-        ):
-            nbrs = cls(n_neighbors=-1)
-            with pytest.raises(ValueError):
-                nbrs.fit(X, y)
 
     nbrs = neighbors.NearestNeighbors().fit(X)
 

@@ -146,6 +146,11 @@ Changelog
   `solver="newton-cg"`, `fit_intercept=True`, and a single feature. :pr:`23608`
   by `Tom Dupre la Tour`_.
 
+- |API| The default value for the `solver` parameter in
+  :class:`linear_model.QuantileRegressor` will change from `"interior-point"`
+  to `"highs"` in version 1.4.
+  :pr:`23637` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.metrics`
 ......................
 
