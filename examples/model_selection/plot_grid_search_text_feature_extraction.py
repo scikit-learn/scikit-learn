@@ -107,5 +107,72 @@ for param_name in sorted(parameters.keys()):
     print(f"{param_name}: {best_parameters[param_name]}")
 
 accuracy = grid_search.score(data_test.data, data_test.target)
-print(f"Best train accuracy: {grid_search.best_score_:.3f}")
+print(f"Best accuracy on the grid search: {grid_search.best_score_:.3f}")
 print(f"Accuracy on test set: {accuracy:.3f}")
+
+# %%
+# Finally, we use a `plotly.express.parallel_coordinates
+# <https://plotly.com/python-api-reference/generated/plotly.express.parallel_coordinates.html>`_
+# to visualize the results from the
+# :class:`~sklearn.model_selection.GridSearchCV`.
+
+import pandas as pd
+import plotly.express as px
+
+
+def shorten_param(param_name):
+    if "__" in param_name:
+        return param_name.rsplit("__", 1)[1]
+    return param_name
+
+
+cv_results = pd.DataFrame(grid_search.cv_results_)
+# monograms are mapped to index 1 and bigrams to index 2
+cv_results["param_vect__ngram_range"] = cv_results["param_vect__ngram_range"].apply(
+    lambda x: x[1]
+)
+
+column_results = [f"param_{name}" for name in parameters.keys()]
+column_results += ["mean_test_score"]
+
+fig = px.parallel_coordinates(
+    cv_results[column_results]
+    .rename(shorten_param, axis=1)
+    .apply(dict.fromkeys(map(shorten_param, column_results), lambda x: x)),
+    color="mean_test_score",
+    color_continuous_scale=px.colors.sequential.Jet,
+)
+fig.show()
+
+# %%
+# The parallel coordinates plot displays the values of the hyperparameters on
+# different columns while the performance metric is color coded. It allows us to
+# quickly inspect the combinations of hyperparameters that maximize the
+# performance.
+#
+# It is possible to select a range of results by clicking and holding on any
+# axis of the parallel coordinate plot. You can then slide (move) the range
+# selection and cross two selections to see the intersections. You can undo a
+# selection by clicking once again on the same axis.
+#
+# In particular for this hyperparameter search, it is interesting to notice that
+# the top performing models (dark red lines with mean test score > 0.82) are
+# reached when `min_df=1` and `alpha=0.01`, regardless of the value of
+# `max_df` and the `ngram_range`.
+
+# %%
+column_results += ["std_test_score"]
+cv_results = (
+    cv_results[column_results]
+    .rename(shorten_param, axis=1)
+    .sort_values("mean_test_score", ascending=False)
+)
+cv_results
+
+# %%
+# By a manual inspection of the results, one can notice that the top performing
+# models overlap within one standard deviation of their test score, showing that
+# `max_df` and `ngram_range` are indeed not meaningful parameters in this
+# particular case. For more information on how to customize a
+# :class:`~sklearn.model_selection.GridSearchCV`, see the example notebook
+# :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py`.
