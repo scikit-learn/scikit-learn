@@ -19,7 +19,7 @@ from numbers import Integral, Real
 
 from ..utils import check_array, as_float_array, check_random_state
 from ..utils.validation import check_is_fitted
-from ..utils._param_validation import Interval, StrOptions
+from ..utils._param_validation import Hidden, Interval, StrOptions
 
 __all__ = ["fastica", "FastICA"]
 
@@ -408,7 +408,7 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         A positive scalar giving the tolerance at which the
         un-mixing matrix is considered to have converged.
 
-    w_init : ndarray of shape (n_components, n_components), default=None
+    w_init : array-like of shape (n_components, n_components), default=None
         Initial un-mixing array. If `w_init=None`, then an array of values
         drawn from a normal distribution is used.
 
@@ -511,7 +511,8 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         "n_components": [Interval(Integral, 1, None, closed="left"), None],
         "algorithm": [StrOptions({"parallel", "deflation"})],
         "whiten": [
-            StrOptions({"warn", "arbitrary-variance", "unit-variance"}),
+            Hidden(StrOptions({"warn"})),
+            StrOptions({"arbitrary-variance", "unit-variance"}),
             "boolean",
         ],
         "fun": [StrOptions({"logcosh", "exp", "cube"}), callable],
@@ -571,7 +572,6 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
             Sources matrix. `None` if `compute_sources` is `False`.
         """
         self._validate_params()
-
         self._whiten = self.whiten
 
         if self._whiten == "warn":
@@ -612,16 +612,7 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
             def g(x, fun_args):
                 return self.fun(x, **fun_args)
 
-        else:
-            exc = ValueError if isinstance(self.fun, str) else TypeError
-            raise exc(
-                "Unknown function %r;"
-                " should be one of 'logcosh', 'exp', 'cube' or callable"
-                % self.fun
-            )
-
         n_features, n_samples = XT.shape
-
         n_components = self.n_components
         if not self._whiten and n_components is not None:
             n_components = None
@@ -658,11 +649,6 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
                 d, u = d[sort_indices], u[:, sort_indices]
             elif self.whiten_solver == "svd":
                 u, d = linalg.svd(XT, full_matrices=False, check_finite=False)[:2]
-            else:
-                raise ValueError(
-                    "`whiten_solver` must be 'eigh' or 'svd' but got"
-                    f" {self.whiten_solver} instead"
-                )
 
             # Give consistent eigenvectors for both svd solvers
             if self.sign_flip:
@@ -705,10 +691,6 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
             W, n_iter = _ica_par(X1, **kwargs)
         elif self.algorithm == "deflation":
             W, n_iter = _ica_def(X1, **kwargs)
-        else:
-            raise ValueError(
-                "Invalid algorithm: must be either `parallel` or `deflation`."
-            )
         del X1
 
         self.n_iter_ = n_iter
