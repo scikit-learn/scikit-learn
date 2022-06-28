@@ -603,12 +603,7 @@ class _BaseDiscreteNB(_BaseNB):
                     f"Got {alpha.shape[0]} elements instead of {self.n_features_in_}."
                 )
             # check that all alpha are positive
-            if not all(
-                [
-                    self._parameter_constraints["alpha"][0].is_satisfied_by(a)
-                    for a in alpha
-                ]
-            ):
+            if np.min(alpha) < 0:
                 raise ValueError("All values in alpha must be greater than 0.")
         alpha_min = 1e-10
         if np.min(alpha) < alpha_min:
@@ -656,8 +651,11 @@ class _BaseDiscreteNB(_BaseNB):
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
         first_call = not hasattr(self, "classes_")
+
+        if first_call:
+            self._validate_params()
+
         X, y = self._check_X_y(X, y, reset=first_call)
         _, n_features = X.shape
 
