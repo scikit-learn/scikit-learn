@@ -265,3 +265,51 @@ def test_spca_feature_names_out(SPCA):
 
     estimator_name = SPCA.__name__.lower()
     assert_array_equal([f"{estimator_name}{i}" for i in range(4)], names)
+
+
+# TODO (1.4): remove this test
+def test_spca_n_iter_deprecation():
+    """Check that we raise a warning for the deprecation of `n_iter` and it is ignored
+    when `max_iter` is specified.
+    """
+    rng = np.random.RandomState(0)
+    n_samples, n_features = 12, 10
+    X = rng.randn(n_samples, n_features)
+
+    warn_msg = "'n_iter' is deprecated in version 1.1 and will be removed"
+    with pytest.warns(FutureWarning, match=warn_msg):
+        MiniBatchSparsePCA(n_iter=2).fit(X)
+
+    n_iter, max_iter = 1, 100
+    with pytest.warns(FutureWarning, match=warn_msg):
+        model = MiniBatchSparsePCA(
+            n_iter=n_iter, max_iter=max_iter, random_state=0
+        ).fit(X)
+    assert model.n_iter_ > 1
+    assert model.n_iter_ <= max_iter
+
+
+def test_spca_early_stopping(global_random_seed):
+    """Check that `tol` and `max_no_improvement` act as early stopping."""
+    rng = np.random.RandomState(global_random_seed)
+    n_samples, n_features = 50, 10
+    X = rng.randn(n_samples, n_features)
+
+    # vary the tolerance to force the early stopping of one of the model
+    model_early_stopped = MiniBatchSparsePCA(
+        max_iter=100, tol=0.5, random_state=global_random_seed
+    ).fit(X)
+    model_not_early_stopped = MiniBatchSparsePCA(
+        max_iter=100, tol=1e-3, random_state=global_random_seed
+    ).fit(X)
+    assert model_early_stopped.n_iter_ < model_not_early_stopped.n_iter_
+
+    # force the max number of no improvement to a large value to check that
+    # it does help to early stop
+    model_early_stopped = MiniBatchSparsePCA(
+        max_iter=100, tol=1e-6, max_no_improvement=2, random_state=global_random_seed
+    ).fit(X)
+    model_not_early_stopped = MiniBatchSparsePCA(
+        max_iter=100, tol=1e-6, max_no_improvement=100, random_state=global_random_seed
+    ).fit(X)
+    assert model_early_stopped.n_iter_ < model_not_early_stopped.n_iter_
