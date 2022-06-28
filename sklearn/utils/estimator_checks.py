@@ -31,6 +31,7 @@ from ..linear_model import LinearRegression
 from ..linear_model import LogisticRegression
 from ..linear_model import RANSACRegressor
 from ..linear_model import Ridge
+from ..linear_model import SGDRegressor
 
 from ..base import (
     clone,
@@ -44,6 +45,7 @@ from ..base import (
 from ..metrics import accuracy_score, adjusted_rand_score, f1_score
 from ..random_projection import BaseRandomProjection
 from ..feature_selection import SelectKBest
+from ..feature_selection import SelectFromModel
 from ..pipeline import make_pipeline
 from ..exceptions import DataConversionWarning
 from ..exceptions import NotFittedError
@@ -54,6 +56,8 @@ from ..model_selection._validation import _safe_split
 from ..metrics.pairwise import rbf_kernel, linear_kernel, pairwise_distances
 from ..utils.fixes import threadpool_info
 from ..utils.validation import check_is_fitted
+from ..utils._param_validation import make_constraint
+from ..utils._param_validation import generate_invalid_param_val
 
 from . import shuffle
 from ._tags import (
@@ -242,6 +246,7 @@ def _yield_transformer_checks(transformer):
         "LocallyLinearEmbedding",
         "RandomizedLasso",
         "LogisticRegressionCV",
+        "BisectingKMeans",
     ]
 
     name = transformer.__class__.__name__
@@ -258,7 +263,8 @@ def _yield_clustering_checks(clusterer):
         yield check_clustering
         yield partial(check_clustering, readonly_memmap=True)
         yield check_estimators_partial_fit_n_features
-    yield check_non_transformer_estimators_n_iter
+    if not hasattr(clusterer, "transform"):
+        yield check_non_transformer_estimators_n_iter
 
 
 def _yield_outliers_checks(estimator):
@@ -387,6 +393,9 @@ def _construct_instance(Estimator):
                 estimator = Estimator(LinearRegression())
             elif issubclass(Estimator, RegressorMixin):
                 estimator = Estimator(Ridge())
+            elif issubclass(Estimator, SelectFromModel):
+                # Increases coverage because SGDRegressor has partial_fit
+                estimator = Estimator(SGDRegressor(random_state=0))
             else:
                 estimator = Estimator(LogisticRegression(C=1))
         elif required_parameters in (["estimators"],):
@@ -641,6 +650,8 @@ def _set_checking_parameters(estimator):
     # avoid deprecated behaviour
     params = estimator.get_params()
     name = estimator.__class__.__name__
+    if name == "TSNE":
+        estimator.set_params(perplexity=2)
     if "n_iter" in params and name != "TSNE":
         estimator.set_params(n_iter=5)
     if "max_iter" in params:
@@ -652,6 +663,9 @@ def _set_checking_parameters(estimator):
         # NMF
         if name == "NMF":
             estimator.set_params(max_iter=500)
+        # MiniBatchNMF
+        if estimator.__class__.__name__ == "MiniBatchNMF":
+            estimator.set_params(max_iter=20, fresh_restarts=True)
         # MLP
         if name in ["MLPClassifier", "MLPRegressor"]:
             estimator.set_params(max_iter=100)
@@ -670,7 +684,7 @@ def _set_checking_parameters(estimator):
     if "n_init" in params:
         # K-Means
         estimator.set_params(n_init=2)
-    if "batch_size" in params:
+    if "batch_size" in params and not name.startswith("MLP"):
         estimator.set_params(batch_size=10)
 
     if name == "MeanShift":
@@ -1105,7 +1119,7 @@ def check_sample_weights_not_overwritten(name, estimator_orig):
 
     estimator.fit(X, y, sample_weight=sample_weight_fit)
 
-    err_msg = "{name} overwrote the original `sample_weight` given during fit"
+    err_msg = f"{name} overwrote the original `sample_weight` given during fit"
     assert_allclose(sample_weight_fit, sample_weight_original, err_msg=err_msg)
 
 
@@ -1408,6 +1422,10 @@ def check_fit2d_1sample(name, estimator_orig):
     # min_cluster_size cannot be less than the data size for OPTICS.
     if name == "OPTICS":
         estimator.set_params(min_samples=1)
+
+    # perplexity cannot be more than the number of samples for TSNE.
+    if name == "TSNE":
+        estimator.set_params(perplexity=0.5)
 
     msgs = [
         "1 sample",
@@ -4019,3 +4037,67 @@ def check_transformer_get_feature_names_out_pandas(name, transformer_orig):
     assert (
         len(feature_names_out_default) == n_features_out
     ), f"Expected {n_features_out} feature names, got {len(feature_names_out_default)}"
+
+
+def check_param_validation(name, estimator_orig):
+    # Check that an informative error is raised when the value of a constructor
+    # parameter does not have an appropriate type or value.
+    rng = np.random.RandomState(0)
+    X = rng.uniform(size=(20, 5))
+    X = _pairwise_estimator_convert_X(X, estimator_orig)
+    y = rng.randint(0, 2, size=20)
+    y = _enforce_estimator_tags_y(estimator_orig, y)
+
+    estimator_params = estimator_orig.get_params(deep=False).keys()
+
+    # check that there is a constraint for each parameter
+    if estimator_params:
+        err_msg = (
+            f"Mismatch between _parameter_constraints and the parameters of {name}."
+        )
+        assert estimator_orig._parameter_constraints.keys() == estimator_params, err_msg
+
+    # this object does not have a valid type for sure for all params
+    param_with_bad_type = type("BadType", (), {})()
+
+    fit_methods = ["fit", "partial_fit", "fit_transform", "fit_predict"]
+    methods = [method for method in fit_methods if hasattr(estimator_orig, method)]
+
+    for param_name in estimator_params:
+        constraints = estimator_orig._parameter_constraints[param_name]
+
+        if constraints == "no_validation":
+            # This parameter is not validated
+            continue
+
+        match = rf"The '{param_name}' parameter of {name} must be .* Got .* instead."
+        err_msg = (
+            f"{name} does not raise an informative error message when the "
+            f"parameter {param_name} does not have a valid type or value."
+        )
+
+        estimator = clone(estimator_orig)
+
+        # First, check that the error is raised if param doesn't match any valid type.
+        estimator.set_params(**{param_name: param_with_bad_type})
+
+        for method in methods:
+            with raises(ValueError, match=match, err_msg=err_msg):
+                getattr(estimator, method)(X, y)
+
+        # Then, for constraints that are more than a type constraint, check that the
+        # error is raised if param does match a valid type but does not match any valid
+        # value for this type.
+        constraints = [make_constraint(constraint) for constraint in constraints]
+
+        for constraint in constraints:
+            try:
+                bad_value = generate_invalid_param_val(constraint, constraints)
+            except NotImplementedError:
+                continue
+
+            estimator.set_params(**{param_name: bad_value})
+
+            for method in methods:
+                with raises(ValueError, match=match, err_msg=err_msg):
+                    getattr(estimator, method)(X, y)

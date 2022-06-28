@@ -17,7 +17,8 @@ Courtesy of Jock A. Blackard and Colorado State University.
 from gzip import GzipFile
 import logging
 from os.path import exists, join
-from os import remove, makedirs
+import os
+from tempfile import TemporaryDirectory
 
 import numpy as np
 import joblib
@@ -148,23 +149,29 @@ def fetch_covtype(
     covtype_dir = join(data_home, "covertype")
     samples_path = _pkl_filepath(covtype_dir, "samples")
     targets_path = _pkl_filepath(covtype_dir, "targets")
-    available = exists(samples_path)
+    available = exists(samples_path) and exists(targets_path)
 
     if download_if_missing and not available:
-        if not exists(covtype_dir):
-            makedirs(covtype_dir)
-        logger.info("Downloading %s" % ARCHIVE.url)
+        os.makedirs(covtype_dir, exist_ok=True)
 
-        archive_path = _fetch_remote(ARCHIVE, dirname=covtype_dir)
-        Xy = np.genfromtxt(GzipFile(filename=archive_path), delimiter=",")
-        # delete archive
-        remove(archive_path)
+        # Creating temp_dir as a direct subdirectory of the target directory
+        # guarantees that both reside on the same filesystem, so that we can use
+        # os.rename to atomically move the data files to their target location.
+        with TemporaryDirectory(dir=covtype_dir) as temp_dir:
+            logger.info(f"Downloading {ARCHIVE.url}")
+            archive_path = _fetch_remote(ARCHIVE, dirname=temp_dir)
+            Xy = np.genfromtxt(GzipFile(filename=archive_path), delimiter=",")
 
-        X = Xy[:, :-1]
-        y = Xy[:, -1].astype(np.int32, copy=False)
+            X = Xy[:, :-1]
+            y = Xy[:, -1].astype(np.int32, copy=False)
 
-        joblib.dump(X, samples_path, compress=9)
-        joblib.dump(y, targets_path, compress=9)
+            samples_tmp_path = _pkl_filepath(temp_dir, "samples")
+            joblib.dump(X, samples_tmp_path, compress=9)
+            os.rename(samples_tmp_path, samples_path)
+
+            targets_tmp_path = _pkl_filepath(temp_dir, "targets")
+            joblib.dump(y, targets_tmp_path, compress=9)
+            os.rename(targets_tmp_path, targets_path)
 
     elif not available and not download_if_missing:
         raise IOError("Data not found and `download_if_missing` is False")

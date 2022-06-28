@@ -19,6 +19,7 @@ from ._ranking import top_k_accuracy_score
 
 from ._classification import accuracy_score
 from ._classification import balanced_accuracy_score
+from ._classification import class_likelihood_ratios
 from ._classification import classification_report
 from ._classification import cohen_kappa_score
 from ._classification import confusion_matrix
@@ -77,6 +78,8 @@ from ._regression import mean_tweedie_deviance
 from ._regression import mean_poisson_deviance
 from ._regression import mean_gamma_deviance
 from ._regression import d2_tweedie_score
+from ._regression import d2_pinball_score
+from ._regression import d2_absolute_error_score
 
 
 from ._scorer import check_scoring
@@ -106,6 +109,7 @@ __all__ = [
     "balanced_accuracy_score",
     "calinski_harabasz_score",
     "check_scoring",
+    "class_likelihood_ratios",
     "classification_report",
     "cluster",
     "cohen_kappa_score",
@@ -115,6 +119,8 @@ __all__ = [
     "consensus_score",
     "coverage_error",
     "d2_tweedie_score",
+    "d2_absolute_error_score",
+    "d2_pinball_score",
     "dcg_score",
     "davies_bouldin_score",
     "DetCurveDisplay",

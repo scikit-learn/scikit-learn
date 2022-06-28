@@ -11,6 +11,7 @@ Ridge regression
 
 from abc import ABCMeta, abstractmethod
 from functools import partial
+from numbers import Integral, Real
 import warnings
 
 import numpy as np
@@ -33,6 +34,9 @@ from ..utils import compute_sample_weight
 from ..utils import column_or_1d
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _check_sample_weight
+from ..utils._param_validation import Interval
+from ..utils._param_validation import StrOptions
+from ..utils._param_validation import Hidden
 from ..preprocessing import LabelBinarizer
 from ..model_selection import GridSearchCV
 from ..metrics import check_scoring
@@ -209,12 +213,12 @@ def _solve_cholesky(X, y, alpha):
 
     if one_alpha:
         A.flat[:: n_features + 1] += alpha[0]
-        return linalg.solve(A, Xy, sym_pos=True, overwrite_a=True).T
+        return linalg.solve(A, Xy, assume_a="pos", overwrite_a=True).T
     else:
         coefs = np.empty([n_targets, n_features], dtype=X.dtype)
         for coef, target, current_alpha in zip(coefs, Xy.T, alpha):
             A.flat[:: n_features + 1] += current_alpha
-            coef[:] = linalg.solve(A, target, sym_pos=True, overwrite_a=False).ravel()
+            coef[:] = linalg.solve(A, target, assume_a="pos", overwrite_a=False).ravel()
             A.flat[:: n_features + 1] -= current_alpha
         return coefs
 
@@ -246,7 +250,7 @@ def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False):
             # Note: we must use overwrite_a=False in order to be able to
             #       use the fall-back solution below in case a LinAlgError
             #       is raised
-            dual_coef = linalg.solve(K, y, sym_pos=True, overwrite_a=False)
+            dual_coef = linalg.solve(K, y, assume_a="pos", overwrite_a=False)
         except np.linalg.LinAlgError:
             warnings.warn(
                 "Singular matrix in solving dual problem. Using "
@@ -270,7 +274,7 @@ def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False):
             K.flat[:: n_samples + 1] += current_alpha
 
             dual_coef[:] = linalg.solve(
-                K, target, sym_pos=True, overwrite_a=False
+                K, target, assume_a="pos", overwrite_a=False
             ).ravel()
 
             K.flat[:: n_samples + 1] -= current_alpha
@@ -637,7 +641,7 @@ def _ridge_regression(
 
     # Some callers of this method might pass alpha as single
     # element array which already has been validated.
-    if alpha is not None and not isinstance(alpha, (np.ndarray, tuple)):
+    if alpha is not None and not isinstance(alpha, np.ndarray):
         alpha = check_scalar(
             alpha,
             "alpha",
@@ -772,6 +776,23 @@ def _ridge_regression(
 
 
 class _BaseRidge(LinearModel, metaclass=ABCMeta):
+
+    _parameter_constraints = {
+        "alpha": [Interval(Real, 0, None, closed="left"), np.ndarray],
+        "fit_intercept": ["boolean"],
+        "normalize": [Hidden(StrOptions({"deprecated"})), "boolean"],
+        "copy_X": ["boolean"],
+        "max_iter": [Interval(Integral, 1, None, closed="left"), None],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "solver": [
+            StrOptions(
+                {"auto", "svd", "cholesky", "lsqr", "sparse_cg", "sag", "saga", "lbfgs"}
+            )
+        ],
+        "positive": ["boolean"],
+        "random_state": ["random_state"],
+    }
+
     @abstractmethod
     def __init__(
         self,
@@ -842,13 +863,6 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
 
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
-
-        if self.max_iter is not None:
-            self.max_iter = check_scalar(
-                self.max_iter, "max_iter", target_type=numbers.Integral, min_val=1
-            )
-
-        self.tol = check_scalar(self.tol, "tol", target_type=numbers.Real, min_val=0.0)
 
         # when X is sparse we only remove offset from y
         X, y, X_offset, y_offset, X_scale = _preprocess_data(
@@ -1118,6 +1132,8 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         self : object
             Fitted estimator.
         """
+        self._validate_params()
+
         _accept_sparse = _get_valid_accept_sparse(sparse.issparse(X), self.solver)
         X, y = self._validate_data(
             X,
@@ -1367,6 +1383,11 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
     0.9595...
     """
 
+    _parameter_constraints = {
+        **_BaseRidge._parameter_constraints,
+        "class_weight": [dict, StrOptions({"balanced"}), None],
+    }
+
     def __init__(
         self,
         alpha=1.0,
@@ -1417,6 +1438,8 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
         self : object
             Instance of the estimator.
         """
+        self._validate_params()
+
         X, y, sample_weight, Y = self._prepare_data(X, y, sample_weight, self.solver)
 
         super().fit(X, Y, sample_weight=sample_weight)

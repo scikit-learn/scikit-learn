@@ -60,12 +60,14 @@ def _split_node(node, threshold, branching_factor):
         branching_factor=branching_factor,
         is_leaf=node.is_leaf,
         n_features=node.n_features,
+        dtype=node.init_centroids_.dtype,
     )
     new_node2 = _CFNode(
         threshold=threshold,
         branching_factor=branching_factor,
         is_leaf=node.is_leaf,
         n_features=node.n_features,
+        dtype=node.init_centroids_.dtype,
     )
     new_subcluster1.child_ = new_node1
     new_subcluster2.child_ = new_node2
@@ -89,6 +91,11 @@ def _split_node(node, threshold, branching_factor):
     node1_dist, node2_dist = dist[(farthest_idx,)]
 
     node1_closer = node1_dist < node2_dist
+    # make sure node1 is closest to itself even if all distances are equal.
+    # This can only happen when all node.centroids_ are duplicates leading to all
+    # distances between centroids being zero.
+    node1_closer[farthest_idx[0]] = True
+
     for idx, subcluster in enumerate(node.subclusters_):
         if node1_closer[idx]:
             new_node1.append_subcluster(subcluster)
@@ -147,7 +154,7 @@ class _CFNode:
 
     """
 
-    def __init__(self, *, threshold, branching_factor, is_leaf, n_features):
+    def __init__(self, *, threshold, branching_factor, is_leaf, n_features, dtype):
         self.threshold = threshold
         self.branching_factor = branching_factor
         self.is_leaf = is_leaf
@@ -156,8 +163,8 @@ class _CFNode:
         # The list of subclusters, centroids and squared norms
         # to manipulate throughout.
         self.subclusters_ = []
-        self.init_centroids_ = np.zeros((branching_factor + 1, n_features))
-        self.init_sq_norm_ = np.zeros((branching_factor + 1))
+        self.init_centroids_ = np.zeros((branching_factor + 1, n_features), dtype=dtype)
+        self.init_sq_norm_ = np.zeros((branching_factor + 1), dtype)
         self.squared_norm_ = []
         self.prev_leaf_ = None
         self.next_leaf_ = None
@@ -221,7 +228,9 @@ class _CFNode:
             # subcluster to accommodate the new child.
             else:
                 new_subcluster1, new_subcluster2 = _split_node(
-                    closest_subcluster.child_, threshold, branching_factor
+                    closest_subcluster.child_,
+                    threshold,
+                    branching_factor,
                 )
                 self.update_split_subclusters(
                     closest_subcluster, new_subcluster1, new_subcluster2
@@ -552,7 +561,11 @@ class Birch(
         first_call = not (partial and has_root)
 
         X = self._validate_data(
-            X, accept_sparse="csr", copy=self.copy, reset=first_call
+            X,
+            accept_sparse="csr",
+            copy=self.copy,
+            reset=first_call,
+            dtype=[np.float64, np.float32],
         )
         threshold = self.threshold
         branching_factor = self.branching_factor
@@ -568,6 +581,7 @@ class Birch(
                 branching_factor=branching_factor,
                 is_leaf=True,
                 n_features=n_features,
+                dtype=X.dtype,
             )
 
             # To enable getting back subclusters.
@@ -576,6 +590,7 @@ class Birch(
                 branching_factor=branching_factor,
                 is_leaf=True,
                 n_features=n_features,
+                dtype=X.dtype,
             )
             self.dummy_leaf_.next_leaf_ = self.root_
             self.root_.prev_leaf_ = self.dummy_leaf_
@@ -600,6 +615,7 @@ class Birch(
                     branching_factor=branching_factor,
                     is_leaf=False,
                     n_features=n_features,
+                    dtype=X.dtype,
                 )
                 self.root_.append_subcluster(new_subcluster1)
                 self.root_.append_subcluster(new_subcluster2)
@@ -714,7 +730,7 @@ class Birch(
             Transformed data.
         """
         check_is_fitted(self)
-        self._validate_data(X, accept_sparse="csr", reset=False)
+        X = self._validate_data(X, accept_sparse="csr", reset=False)
         with config_context(assume_finite=True):
             return euclidean_distances(X, self.subcluster_centers_)
 
@@ -758,3 +774,6 @@ class Birch(
 
         if compute_labels:
             self.labels_ = self._predict(X)
+
+    def _more_tags(self):
+        return {"preserves_dtype": [np.float64, np.float32]}

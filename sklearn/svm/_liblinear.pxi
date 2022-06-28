@@ -33,7 +33,7 @@ cdef extern from "liblinear_helper.c":
     problem *set_problem (char *, int, int, int, int, double, char *, char *)
     problem *csr_set_problem (char *, int, char *, char *, int, int, int, double, char *, char *)
 
-    model *set_model(parameter *, char *, np.npy_intp *, char *, double)
+    model *set_model(parameter *, char *, cnp.npy_intp *, char *, double)
 
     double get_bias(model *)
     void free_problem (problem *)
