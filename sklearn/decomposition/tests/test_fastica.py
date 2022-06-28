@@ -564,6 +564,10 @@ def test_fastica_whiten_solver_future_warning():
     assert ica.whiten_solver == "warn"
     assert ica._whiten_solver == "svd"
 
+    # Test that it doesn't warn if whiten is explicitly set to False
+    ica = FastICA(random_state=rng, whiten=False)
+    ica.fit_transform(X)
+
 
 @pytest.mark.parametrize("n_samples", (199, 200))
 def test_fastica_whiten_solver_auto(n_samples):
