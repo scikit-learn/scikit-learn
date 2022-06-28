@@ -30,7 +30,6 @@ from .utils.validation import check_memory
 from .utils.validation import check_is_fitted
 from .utils.fixes import delayed
 from .exceptions import NotFittedError
-
 from .utils.metaestimators import _BaseComposition
 
 __all__ = ["Pipeline", "FeatureUnion", "make_pipeline", "make_union"]
