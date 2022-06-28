@@ -203,7 +203,7 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         "class_weight": [None, dict, StrOptions({"balanced"})],
         "verbose": ["verbose"],
         "random_state": ["random_state"],
-        "max_iter": [Interval(Integral, 1, None, closed="left")],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
     }
 
     def __init__(
@@ -453,7 +453,7 @@ class LinearSVR(RegressorMixin, LinearModel):
         "dual": ["boolean"],
         "verbose": ["verbose"],
         "random_state": ["random_state"],
-        "max_iter": [Interval(Integral, 1, None, closed="left")],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
     }
 
     def __init__(
