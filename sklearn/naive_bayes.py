@@ -18,7 +18,6 @@ import warnings
 from abc import ABCMeta, abstractmethod
 from numbers import Real, Integral
 
-
 import numpy as np
 from scipy.special import logsumexp
 
@@ -32,7 +31,6 @@ from .utils.multiclass import _check_partial_fit_first_call
 from .utils.validation import check_is_fitted, check_non_negative
 from .utils.validation import _check_sample_weight
 from .utils._param_validation import Interval
-
 
 __all__ = [
     "BernoulliNB",
@@ -139,7 +137,7 @@ class GaussianNB(_BaseNB):
 
     Parameters
     ----------
-    priors : array-like of shape (n_classes,)
+    priors : array-like of shape (n_classes,), default=None
         Prior probabilities of the classes. If specified, the priors are not
         adjusted according to the data.
 
@@ -214,6 +212,11 @@ class GaussianNB(_BaseNB):
     [1]
     """
 
+    _parameter_constraints = {
+        "priors": ["array-like", None],
+        "var_smoothing": [Interval(Real, 0, None, closed="left")],
+    }
+
     def __init__(self, *, priors=None, var_smoothing=1e-9):
         self.priors = priors
         self.var_smoothing = var_smoothing
@@ -241,6 +244,7 @@ class GaussianNB(_BaseNB):
         self : object
             Returns the instance itself.
         """
+        self._validate_params()
         y = self._validate_data(y=y)
         return self._partial_fit(
             X, y, np.unique(y), _refit=True, sample_weight=sample_weight
@@ -362,6 +366,8 @@ class GaussianNB(_BaseNB):
         self : object
             Returns the instance itself.
         """
+        self._validate_params()
+
         return self._partial_fit(
             X, y, classes, _refit=False, sample_weight=sample_weight
         )

@@ -7,7 +7,6 @@ import warnings
 
 import numpy as np
 from scipy import stats
-from sklearn.datasets import make_low_rank_matrix
 
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_allclose
@@ -501,9 +500,8 @@ def test_fastica_simple_different_solvers(add_noise, global_random_seed):
 def test_fastica_eigh_low_rank_warning(global_random_seed):
     """Test FastICA eigh solver raises warning for low-rank data."""
     rng = np.random.RandomState(global_random_seed)
-    X = make_low_rank_matrix(
-        n_samples=10, n_features=10, random_state=rng, effective_rank=2
-    )
+    A = rng.randn(10, 2)
+    X = A @ A.T
     ica = FastICA(random_state=0, whiten="unit-variance", whiten_solver="eigh")
     msg = "There are some small singular values"
     with pytest.warns(UserWarning, match=msg):
