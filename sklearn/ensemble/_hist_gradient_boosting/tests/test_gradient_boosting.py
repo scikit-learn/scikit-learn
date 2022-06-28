@@ -57,21 +57,6 @@ def _make_dumb_dataset(n_samples):
 @pytest.mark.parametrize(
     "params, err_msg",
     [
-        ({"loss": "blah"}, "Loss blah is not supported for"),
-        ({"learning_rate": 0}, "learning_rate=0 must be strictly positive"),
-        ({"learning_rate": -1}, "learning_rate=-1 must be strictly positive"),
-        ({"max_iter": 0}, "max_iter=0 must not be smaller than 1"),
-        ({"max_leaf_nodes": 0}, "max_leaf_nodes=0 should not be smaller than 2"),
-        ({"max_leaf_nodes": 1}, "max_leaf_nodes=1 should not be smaller than 2"),
-        ({"max_depth": 0}, "max_depth=0 should not be smaller than 1"),
-        ({"min_samples_leaf": 0}, "min_samples_leaf=0 should not be smaller"),
-        ({"l2_regularization": -1}, "l2_regularization=-1 must be positive"),
-        ({"max_bins": 1}, "max_bins=1 should be no smaller than 2 and no larger"),
-        ({"max_bins": 256}, "max_bins=256 should be no smaller than 2 and no"),
-        ({"n_iter_no_change": -1}, "n_iter_no_change=-1 must be positive"),
-        ({"validation_fraction": -1}, "validation_fraction=-1 must be strictly"),
-        ({"validation_fraction": 0}, "validation_fraction=0 must be strictly"),
-        ({"tol": -1}, "tol=-1 must not be smaller than 0"),
         (
             {"interaction_cst": "string"},
             "",
