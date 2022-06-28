@@ -485,7 +485,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "HashingVectorizer",
     "HuberRegressor",
     "IncrementalPCA",
-    "IsolationForest",
     "Isomap",
     "IsotonicRegression",
     "IterativeImputer",
