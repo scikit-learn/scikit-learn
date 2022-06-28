@@ -1142,7 +1142,7 @@ class TimeSeriesSplit(_BaseKFold):
         """
         Time Series `n_splits` value calculator
         Calculates the `n_splits` variable's value so that the "walk_forward"
-        functionality of the split time series data samples.
+        functionality of the split time series data samples is possible.
         The `n_splits` value is used to calculate the number of splits
         when creating train/test indices.
         While normally the `n_splits` value would be provided by the user,
