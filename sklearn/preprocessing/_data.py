@@ -9,6 +9,7 @@
 
 
 import warnings
+from numbers import Real
 
 import numpy as np
 from scipy import sparse
@@ -23,6 +24,7 @@ from ..base import (
     _ClassNamePrefixFeaturesOutMixin,
 )
 from ..utils import check_array
+from ..utils._param_validation import StrOptions
 from ..utils.extmath import _incremental_mean_and_var, row_norms
 from ..utils.sparsefuncs_fast import (
     inplace_csr_row_normalize_l1,
@@ -378,6 +380,12 @@ class MinMaxScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     [[1.5 0. ]]
     """
 
+    _parameter_constraints = {
+        "feature_range": [tuple],
+        "copy": ["boolean"],
+        "clip": ["boolean"],
+    }
+
     def __init__(self, feature_range=(0, 1), *, copy=True, clip=False):
         self.feature_range = feature_range
         self.copy = copy
@@ -440,6 +448,8 @@ class MinMaxScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         self : object
             Fitted scaler.
         """
+        self._validate_params()
+
         feature_range = self.feature_range
         if feature_range[0] >= feature_range[1]:
             raise ValueError(
@@ -763,6 +773,12 @@ class StandardScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     [[3. 3.]]
     """
 
+    _parameter_constraints = {
+        "copy": ["boolean"],
+        "with_mean": ["boolean"],
+        "with_std": ["boolean"],
+    }
+
     def __init__(self, *, copy=True, with_mean=True, with_std=True):
         self.with_mean = with_mean
         self.with_std = with_std
@@ -840,6 +856,8 @@ class StandardScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         self : object
             Fitted scaler.
         """
+        self._validate_params()
+
         first_call = not hasattr(self, "n_samples_seen_")
         X = self._validate_data(
             X,
@@ -1113,6 +1131,8 @@ class MaxAbsScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
            [ 0. ,  1. , -0.5]])
     """
 
+    _parameter_constraints = {"copy": ["boolean"]}
+
     def __init__(self, *, copy=True):
         self.copy = copy
 
@@ -1170,6 +1190,8 @@ class MaxAbsScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         self : object
             Fitted scaler.
         """
+        self._validate_params()
+
         first_pass = not hasattr(self, "n_samples_seen_")
         X = self._validate_data(
             X,
@@ -1448,6 +1470,14 @@ class RobustScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
            [ 1. ,  0. , -1.6]])
     """
 
+    _parameter_constraints = {
+        "with_centering": ["boolean"],
+        "with_scaling": ["boolean"],
+        "quantile_range": [tuple],
+        "copy": ["boolean"],
+        "unit_variance": ["boolean"],
+    }
+
     def __init__(
         self,
         *,
@@ -1480,6 +1510,8 @@ class RobustScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         self : object
             Fitted scaler.
         """
+        self._validate_params()
+
         # at fit, convert sparse matrices to csc for optimized computation of
         # the quantiles
         X = self._validate_data(
@@ -1741,8 +1773,8 @@ def normalize(X, norm="l2", *, axis=1, copy=True, return_norm=False):
         feature if axis is 0).
 
     axis : {0, 1}, default=1
-        axis used to normalize the data along. If 1, independently normalize
-        each sample, otherwise (if 0) normalize each feature.
+        Define axis used to normalize the data along. If 1, independently
+        normalize each sample, otherwise (if 0) normalize each feature.
 
     copy : bool, default=True
         Set to False to perform inplace row normalization and avoid a
@@ -1901,6 +1933,11 @@ class Normalizer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
            [0.5, 0.7, 0.5, 0.1]])
     """
 
+    _parameter_constraints = {
+        "norm": [StrOptions({"l1", "l2", "max"})],
+        "copy": ["boolean"],
+    }
+
     def __init__(self, norm="l2", *, copy=True):
         self.norm = norm
         self.copy = copy
@@ -1924,6 +1961,7 @@ class Normalizer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         self : object
             Fitted transformer.
         """
+        self._validate_params()
         self._validate_data(X, accept_sparse="csr")
         return self
 
@@ -2069,6 +2107,11 @@ class Binarizer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
            [0., 1., 0.]])
     """
 
+    _parameter_constraints = {
+        "threshold": [Real],
+        "copy": ["boolean"],
+    }
+
     def __init__(self, *, threshold=0.0, copy=True):
         self.threshold = threshold
         self.copy = copy
@@ -2092,6 +2135,7 @@ class Binarizer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         self : object
             Fitted transformer.
         """
+        self._validate_params()
         self._validate_data(X, accept_sparse="csr")
         return self
 
@@ -3293,8 +3337,8 @@ class PowerTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             reset=in_fit,
         )
 
-        with np.warnings.catch_warnings():
-            np.warnings.filterwarnings("ignore", r"All-NaN (slice|axis) encountered")
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", r"All-NaN (slice|axis) encountered")
             if check_positive and self.method == "box-cox" and np.nanmin(X) <= 0:
                 raise ValueError(
                     "The Box-Cox transformation can only be "

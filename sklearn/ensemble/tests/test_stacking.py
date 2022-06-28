@@ -317,6 +317,12 @@ class NoWeightClassifier(ClassifierMixin, BaseEstimator):
             TypeError,
             "does not support sample weight",
         ),
+        (
+            y_iris,
+            {"estimators": [("lr", LogisticRegression())], "passthrough": "foo"},
+            TypeError,
+            "passthrough must be an instance of",
+        ),
     ],
 )
 def test_stacking_classifier_error(y, params, type_err, msg_err):
@@ -349,6 +355,12 @@ def test_stacking_classifier_error(y, params, type_err, msg_err):
             },
             TypeError,
             "does not support sample weight",
+        ),
+        (
+            y_diabetes,
+            {"estimators": [("lr", LinearRegression())], "passthrough": "foo"},
+            TypeError,
+            "passthrough must be an instance of",
         ),
     ],
 )
@@ -408,7 +420,7 @@ def test_stacking_classifier_stratify_default():
     # check that we stratify the classes for the default CV
     clf = StackingClassifier(
         estimators=[
-            ("lr", LogisticRegression(max_iter=1e4)),
+            ("lr", LogisticRegression(max_iter=10_000)),
             ("svm", LinearSVC(max_iter=1e4)),
         ]
     )

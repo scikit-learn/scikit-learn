@@ -17,6 +17,7 @@ import warnings
 from ._base import _check_weights, _get_weights
 from ._base import NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin
 from ..base import ClassifierMixin
+from ..utils._param_validation import StrOptions
 
 
 class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
@@ -29,7 +30,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
     n_neighbors : int, default=5
         Number of neighbors to use by default for :meth:`kneighbors` queries.
 
-    weights : {'uniform', 'distance'} or callable, default='uniform'
+    weights : {'uniform', 'distance'}, callable or None, default='uniform'
         Weight function used in prediction.  Possible values:
 
         - 'uniform' : uniform weights.  All points in each neighborhood
@@ -154,6 +155,12 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
     [[0.666... 0.333...]]
     """
 
+    _parameter_constraints = {**NeighborsBase._parameter_constraints}
+    _parameter_constraints.pop("radius")
+    _parameter_constraints.update(
+        {"weights": [StrOptions({"uniform", "distance"}), callable, None]}
+    )
+
     def __init__(
         self,
         n_neighbors=5,
@@ -195,7 +202,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         self : KNeighborsClassifier
             The fitted k-nearest neighbors classifier.
         """
-        self.weights = _check_weights(self.weights)
+        self._validate_params()
 
         return self._fit(X, y)
 
