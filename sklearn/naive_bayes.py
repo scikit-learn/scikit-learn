@@ -706,8 +706,8 @@ class _BaseDiscreteNB(_BaseNB):
         # be called by the user explicitly just once after several consecutive
         # calls to partial_fit and prior any call to predict[_[log_]proba]
         # to avoid computing the smooth log probas at each call to partial fit
-        alpha = self._check_alpha()
-        self._update_feature_log_prob(alpha)
+        self._alpha = self._check_alpha()
+        self._update_feature_log_prob(self._alpha)
         self._update_class_log_prior(class_prior=class_prior)
         return self
 
@@ -760,8 +760,8 @@ class _BaseDiscreteNB(_BaseNB):
         n_classes = Y.shape[1]
         self._init_counters(n_classes, n_features)
         self._count(X, Y)
-        alpha = self._check_alpha()
-        self._update_feature_log_prob(alpha)
+        self._alpha = self._check_alpha()
+        self._update_feature_log_prob(self._alpha)
         self._update_class_log_prior(class_prior=class_prior)
         return self
 

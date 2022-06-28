@@ -846,15 +846,17 @@ def test_check_alpha():
     https://github.com/scikit-learn/scikit-learn/issues/10772
     """
     _ALPHA_MIN = 1e-10
+    X = np.array([[2, 1], [1, 1]])
+    y = np.array([0, 1])
     b = BernoulliNB(alpha=0, force_alpha=True)
-    assert b._check_alpha() == 0
+    b.fit(X, y)
+    assert b._alpha == 0
 
     alphas = np.array([0.0, 1.0])
 
     b = BernoulliNB(alpha=alphas, force_alpha=True)
-    # We manually set `n_features_in_` not to have `_check_alpha` err
-    b.n_features_in_ = alphas.shape[0]
-    assert_array_equal(b._check_alpha(), alphas)
+    b.fit(X, y)
+    assert_array_equal(b._alpha, alphas)
 
     msg = (
         "alpha too small will result in numeric errors, setting alpha = %.1e"
@@ -862,17 +864,18 @@ def test_check_alpha():
     )
     b = BernoulliNB(alpha=0, force_alpha=False)
     with pytest.warns(UserWarning, match=msg):
-        assert b._check_alpha() == _ALPHA_MIN
+        b.fit(X, y)
+        assert b._alpha == _ALPHA_MIN
 
     b = BernoulliNB(alpha=0)
     with pytest.warns(UserWarning, match=msg):
-        assert b._check_alpha() == _ALPHA_MIN
+        b.fit(X, y)
+        assert b._alpha == _ALPHA_MIN
 
     b = BernoulliNB(alpha=alphas, force_alpha=False)
-    # We manually set `n_features_in_` not to have `_check_alpha` err
-    b.n_features_in_ = alphas.shape[0]
     with pytest.warns(UserWarning, match=msg):
-        assert_array_equal(b._check_alpha(), np.array([_ALPHA_MIN, 1.0]))
+        b.fit(X, y)
+        assert_array_equal(b._alpha, np.array([_ALPHA_MIN, 1.0]))
 
 
 def test_alpha_vector():
