@@ -101,11 +101,19 @@ def close_issue_if_opened():
     print("Test has no failures!")
     issue = get_issue()
     if issue is not None:
-        comment = (
-            f"## CI is no longer failing! ✅\n\n[Successful run]({args.link_to_ci_run})"
+        # Comment only if the "## CI is no longer failing" comment does not exist
+        comment_exists = any(
+            c.body.startswith("## CI is no longer failing")
+            for c in issue.get_comments()
         )
-        print(f"Commented on issue #{issue.number}")
-        issue.create_comment(body=comment)
+        if not comment_exists:
+            comment = (
+                "## CI is no longer failing! ✅\n\n[Successful"
+                f" run]({args.link_to_ci_run})"
+            )
+            print(f"Commented on issue #{issue.number}")
+            issue.create_comment(body=comment)
+
         if args.auto_close.lower() == "true":
             print(f"Closing issue #{issue.number}")
             issue.edit(state="closed")
