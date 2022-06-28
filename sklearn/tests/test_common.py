@@ -460,7 +460,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "CalibratedClassifierCV",
     "ClassifierChain",
     "CountVectorizer",
-    "DBSCAN",
     "DictVectorizer",
     "DictionaryLearning",
     "ElasticNet",
