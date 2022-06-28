@@ -2369,7 +2369,7 @@ def check_outliers_train(name, estimator_orig, readonly_memmap=True):
 
 
 def check_outlier_contamination(name, estimator_orig):
-    # Check that the contamination parameter is in [0, 1] when it is an
+    # Check that the contamination parameter is in (0.0, 0.5] when it is an
     # interval constraint.
 
     if not hasattr(estimator_orig, "_parameter_constraints"):
@@ -2387,8 +2387,8 @@ def check_outlier_contamination(name, estimator_orig):
             assert (
                 constraint.type == Real
                 and constraint.left >= 0.0
-                and constraint.right <= 1.0
-            ), "contamination constraint should be an interval in [0, 1]"
+                and constraint.right <= 0.5
+            ), "contamination constraint should be an interval in (0, 0.5]"
 
 
 @ignore_warnings(category=FutureWarning)
