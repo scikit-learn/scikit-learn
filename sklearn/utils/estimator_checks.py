@@ -2376,6 +2376,9 @@ def check_outlier_contamination(name, estimator_orig):
         # Only estimator implementing parameter constraints will be checked
         return
 
+    if "contamination" not in estimator_orig._parameter_constraints:
+        return
+
     contamination_constraints = estimator_orig._parameter_constraints["contamination"]
     if not any([isinstance(c, Interval) for c in contamination_constraints]):
         assert (

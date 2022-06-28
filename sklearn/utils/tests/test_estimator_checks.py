@@ -1123,7 +1123,7 @@ def test_check_outlier_contamination():
 
     # Add a correct interval constraint and check that the test passes.
     OutlierDetectorWithConstraint._parameter_constraints["contamination"] = [
-        Interval(Real, 0, 1, closed="right")
+        Interval(Real, 0, 0.5, closed="right")
     ]
     detector = OutlierDetectorWithConstraint()
     check_outlier_contamination(detector.__class__.__name__, detector)
@@ -1134,7 +1134,7 @@ def test_check_outlier_contamination():
         Interval(Real, 0, 2, closed="right"),  # upper bound is greater than 1
     ]
 
-    err_msg = r"contamination constraint should be an interval in \[0, 1\]"
+    err_msg = r"contamination constraint should be an interval in \(0, 0.5\]"
     for interval in incorrect_intervals:
         OutlierDetectorWithConstraint._parameter_constraints["contamination"] = [
             interval
