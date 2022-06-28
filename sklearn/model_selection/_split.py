@@ -1214,22 +1214,7 @@ class TimeSeriesSplit(_BaseKFold):
         """
         x = np.arange(x_value)
         time_splits_storage = [
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
-            [],
+            [] for i in range(x_value)
         ]  # make the two array so that x_value defines its max length
         for i in range(2, x_value, 1):
             try:
