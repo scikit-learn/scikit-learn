@@ -32,6 +32,7 @@ from ..utils.validation import check_is_fitted, check_array, FLOAT_DTYPES, check
 from ..utils.deprecation import deprecated
 from ..utils import _IS_32BIT
 from ..exceptions import NotFittedError
+from ..utils._param_validation import StrOptions
 
 
 __all__ = [
@@ -1595,6 +1596,13 @@ class TfidfTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     (4, 8)
     """
 
+    _parameter_constraints = {
+        "norm": [StrOptions({"l1", "l2"}), None],
+        "use_idf": ["boolean"],
+        "smooth_idf": ["boolean"],
+        "sublinear_tf": ["boolean"],
+    }
+
     def __init__(self, *, norm="l2", use_idf=True, smooth_idf=True, sublinear_tf=False):
         self.norm = norm
         self.use_idf = use_idf
@@ -1617,6 +1625,8 @@ class TfidfTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         self : object
             Fitted transformer.
         """
+        self._validate_params()
+
         # large sparse data is not supported for 32bit platforms because
         # _document_frequency uses np.bincount which works on arrays of
         # dtype NPY_INTP which is int32 for 32bit platforms. See #20923

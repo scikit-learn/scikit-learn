@@ -12,7 +12,7 @@ from sklearn.metrics._pairwise_distances_reduction import (
     PairwiseDistancesReduction,
     PairwiseDistancesArgKmin,
     PairwiseDistancesRadiusNeighborhood,
-    _sqeuclidean_row_norms64,
+    sqeuclidean_row_norms,
 )
 
 from sklearn.metrics import euclidean_distances
@@ -20,6 +20,7 @@ from sklearn.utils.fixes import sp_version, parse_version
 from sklearn.utils._testing import (
     assert_array_equal,
     assert_allclose,
+    create_memmap_backed_data,
 )
 
 # Common supported metric between scipy.spatial.distance.cdist
@@ -666,7 +667,7 @@ def test_chunk_size_agnosticism(
     n_features=100,
     dtype=np.float64,
 ):
-    # Results should not depend on the chunk size
+    # Results must not depend on the chunk size
     rng = np.random.RandomState(global_random_seed)
     spread = 100
     X = rng.rand(n_samples, n_features).astype(dtype) * spread
@@ -717,7 +718,7 @@ def test_n_threads_agnosticism(
     n_features=100,
     dtype=np.float64,
 ):
-    # Results should not depend on the number of threads
+    # Results must not depend on the number of threads
     rng = np.random.RandomState(global_random_seed)
     spread = 100
     X = rng.rand(n_samples, n_features).astype(dtype) * spread
@@ -952,6 +953,57 @@ def test_pairwise_distances_radius_neighbors(
     )
 
 
+@pytest.mark.parametrize(
+    "PairwiseDistancesReduction",
+    [PairwiseDistancesArgKmin, PairwiseDistancesRadiusNeighborhood],
+)
+@pytest.mark.parametrize("metric", ["manhattan", "euclidean"])
+def test_memmap_backed_data(
+    metric,
+    PairwiseDistancesReduction,
+    n_samples=512,
+    n_features=100,
+    dtype=np.float64,
+):
+    # Results must not depend on the datasets writability
+    rng = np.random.RandomState(0)
+    spread = 100
+    X = rng.rand(n_samples, n_features).astype(dtype) * spread
+    Y = rng.rand(n_samples, n_features).astype(dtype) * spread
+
+    # Create read only datasets
+    X_mm, Y_mm = create_memmap_backed_data([X, Y])
+
+    if PairwiseDistancesReduction is PairwiseDistancesArgKmin:
+        parameter = 10
+        check_parameters = {}
+    else:
+        # Scaling the radius slightly with the numbers of dimensions
+        radius = 10 ** np.log(n_features)
+        parameter = radius
+        check_parameters = {"radius": radius}
+
+    ref_dist, ref_indices = PairwiseDistancesReduction.compute(
+        X,
+        Y,
+        parameter,
+        metric=metric,
+        return_distance=True,
+    )
+
+    dist_mm, indices_mm = PairwiseDistancesReduction.compute(
+        X_mm,
+        Y_mm,
+        parameter,
+        metric=metric,
+        return_distance=True,
+    )
+
+    ASSERT_RESULT[(PairwiseDistancesReduction, dtype)](
+        ref_dist, dist_mm, ref_indices, indices_mm, **check_parameters
+    )
+
+
 @pytest.mark.parametrize("n_samples", [100, 1000])
 @pytest.mark.parametrize("n_features", [5, 10, 100])
 @pytest.mark.parametrize("num_threads", [1, 2, 8])
@@ -967,6 +1019,10 @@ def test_sqeuclidean_row_norms(
     X = rng.rand(n_samples, n_features).astype(dtype) * spread
 
     sq_row_norm_reference = np.linalg.norm(X, axis=1) ** 2
-    sq_row_norm = np.asarray(_sqeuclidean_row_norms64(X, num_threads=num_threads))
+    sq_row_norm = np.asarray(sqeuclidean_row_norms(X, num_threads=num_threads))
 
     assert_allclose(sq_row_norm_reference, sq_row_norm)
+
+    with pytest.raises(ValueError):
+        X = np.asfortranarray(X)
+        sqeuclidean_row_norms(X, num_threads=num_threads)
