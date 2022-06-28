@@ -173,7 +173,7 @@ class KernelDensity(BaseEstimator):
                 return "kd_tree"
             elif metric in BallTree.valid_metrics:
                 return "ball_tree"
-        else:
+        else:  # kd_tree or ball_tree
             if metric not in TREE_DICT[algorithm].valid_metrics:
                 raise ValueError(
                     "invalid metric for {0}: '{1}'".format(TREE_DICT[algorithm], metric)
