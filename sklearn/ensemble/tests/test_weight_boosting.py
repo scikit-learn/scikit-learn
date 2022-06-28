@@ -271,19 +271,8 @@ def test_importances():
         assert (importances[:3, np.newaxis] >= importances[3:]).all()
 
 
-def test_error():
-    # Test that it gives proper exception on deficient input.
-
-    reg = AdaBoostRegressor(loss="foo")
-    msg = "loss must be 'linear', 'square', or 'exponential'. Got 'foo' instead."
-    with pytest.raises(ValueError, match=msg):
-        reg.fit(X, y_class)
-
-    clf = AdaBoostClassifier(algorithm="foo")
-    msg = "Algorithm must be 'SAMME' or 'SAMME.R'. Got 'foo' instead."
-    with pytest.raises(ValueError, match=msg):
-        clf.fit(X, y_class)
-
+def test_adaboost_classifier_sample_weight_error():
+    # Test that it gives proper exception on incorrect sample weight.
     clf = AdaBoostClassifier()
     msg = re.escape("sample_weight.shape == (1,), expected (6,)")
     with pytest.raises(ValueError, match=msg):
@@ -577,13 +566,6 @@ def test_adaboostregressor_sample_weight():
         (AdaBoostRegressor, X, y_regr),
     ],
 )
-def test_adaboost_params_validation(model, X, y, params, err_type, err_msg):
-    """Check input parameter validation in weight boosting."""
-    est = model(**params)
-    with pytest.raises(err_type, match=err_msg):
-        est.fit(X, y)
-
-
 @pytest.mark.parametrize("algorithm", ["SAMME", "SAMME.R"])
 def test_adaboost_consistent_predict(algorithm):
     # check that predict_proba and predict give consistent results
