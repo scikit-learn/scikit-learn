@@ -467,8 +467,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "DBSCAN",
     "DictVectorizer",
     "DictionaryLearning",
-    "DummyClassifier",
-    "DummyRegressor",
     "ElasticNet",
     "ElasticNetCV",
     "EllipticEnvelope",
