@@ -283,31 +283,11 @@ def test_hdbscan_boruvka_matches(tree):
     assert (num_mismatches / float(data.shape[0])) < 0.15
 
 
-@pytest.mark.parametrize(
-    "kwargs, error",
-    [
-        [{"X": "fail"}, ValueError],
-        [{"X": None}, ValueError],
-        [{"min_cluster_size": "fail"}, ValueError],
-        [{"min_samples": "fail"}, ValueError],
-        [{"min_samples": -1}, ValueError],
-        [{"metric": "imperial"}, ValueError],
-        [{"metric": None}, ValueError],
-        [{"metric": "precomputed", "algorithm": "boruvka_kdtree"}, ValueError],
-        [{"metric": "precomputed", "algorithm": "prims_kdtree"}, ValueError],
-        [{"metric": "precomputed", "algorithm": "boruvka_balltree"}, ValueError],
-        [{"metric": "precomputed", "algorithm": "prims_balltree"}, ValueError],
-        [{"alpha": -1}, ValueError],
-        [{"alpha": "fail"}, ValueError],
-        [{"leaf_size": 0}, ValueError],
-        [{"algorithm": "something_else"}, ValueError],
-        [{"metric": "minkowski", "metric_params": {"p": None}}, TypeError],
-    ],
-)
-def test_hdbscan_badargs(kwargs, error):
-    _X = kwargs.pop("X", X)
-    with pytest.raises(error):
-        hdbscan(_X, **kwargs)
+@pytest.mark.parametrize("strategy", ["prims", "boruvka"])
+@pytest.mark.parametrize("tree", ["kd", "ball"])
+def test_hdbscan_precomputed_non_generic(strategy, tree):
+    with pytest.raises(ValueError):
+        hdbscan(X, metric="precomputed", algorithm=f"{strategy}_{tree}tree")
 
 
 def test_hdbscan_sparse():
