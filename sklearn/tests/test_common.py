@@ -520,7 +520,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "LinearDiscriminantAnalysis",
     "LinearSVC",
     "LinearSVR",
-    "LocalOutlierFactor",
     "LocallyLinearEmbedding",
     "MDS",
     "MLPClassifier",
