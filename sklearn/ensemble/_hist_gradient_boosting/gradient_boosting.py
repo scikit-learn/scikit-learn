@@ -3,6 +3,7 @@
 
 from abc import ABC, abstractmethod
 from functools import partial
+from numbers import Real, Integral
 import warnings
 
 import numpy as np
@@ -24,6 +25,7 @@ from ...utils.validation import (
     check_consistent_length,
     _check_sample_weight,
 )
+from ...utils._param_validation import Interval, StrOptions
 from ...utils._openmp_helpers import _openmp_effective_n_threads
 from ...utils.multiclass import check_classification_targets
 from ...metrics import check_scoring
@@ -85,6 +87,31 @@ def _update_leaves_values(loss, grower, y_true, raw_prediction, sample_weight):
 class BaseHistGradientBoosting(BaseEstimator, ABC):
     """Base class for histogram-based gradient boosting estimators."""
 
+    _parameter_constraints = {
+        "loss": [BaseLoss],
+        "learning_rate": [Interval(Real, 0, None, closed="neither")],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
+        "max_leaf_nodes": [Interval(Integral, 2, None, closed="left"), None],
+        "max_depth": [Interval(Integral, 1, None, closed="left"), None],
+        "min_samples_leaf": [Interval(Integral, 1, None, closed="left")],
+        "l2_regularization": [Interval(Real, 0, None, closed="left")],
+        "monotonic_cst": ["array-like", None],
+        "n_iter_no_change": [Interval(Integral, 1, None, closed="left")],
+        "validation_fraction": [
+            Interval(Real, 0, 1, closed="neither"),
+            Interval(Integral, 1, None, closed="left"),
+            None,
+        ],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "max_bins": [Interval(Integral, 2, 255, closed="both")],
+        "categorical_features": ["array-like", None],
+        "warm_start": ["boolean"],
+        "early_stopping": [StrOptions({"auto"}), "boolean"],
+        "scoring": [str, callable, None],
+        "verbose": ["verbose"],
+        "random_state": ["random_state"],
+    }
+
     @abstractmethod
     def __init__(
         self,
@@ -132,41 +159,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         The parameters that are directly passed to the grower are checked in
         TreeGrower."""
-
-        if self.loss not in self._VALID_LOSSES and not isinstance(self.loss, BaseLoss):
-            raise ValueError(
-                "Loss {} is not supported for {}. Accepted losses: {}.".format(
-                    self.loss, self.__class__.__name__, ", ".join(self._VALID_LOSSES)
-                )
-            )
-
-        if self.learning_rate <= 0:
-            raise ValueError(
-                "learning_rate={} must be strictly positive".format(self.learning_rate)
-            )
-        if self.max_iter < 1:
-            raise ValueError(
-                "max_iter={} must not be smaller than 1.".format(self.max_iter)
-            )
-        if self.n_iter_no_change < 0:
-            raise ValueError(
-                "n_iter_no_change={} must be positive.".format(self.n_iter_no_change)
-            )
-        if self.validation_fraction is not None and self.validation_fraction <= 0:
-            raise ValueError(
-                "validation_fraction={} must be strictly positive, or None.".format(
-                    self.validation_fraction
-                )
-            )
-        if self.tol < 0:
-            raise ValueError("tol={} must not be smaller than 0.".format(self.tol))
-
-        if not (2 <= self.max_bins <= 255):
-            raise ValueError(
-                "max_bins={} should be no smaller than 2 "
-                "and no larger than 255.".format(self.max_bins)
-            )
-
         if self.monotonic_cst is not None and self.n_trees_per_iteration_ != 1:
             raise ValueError(
                 "monotonic constraints are not supported for multiclass classification."
@@ -278,6 +270,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         self : object
             Fitted estimator.
         """
+        self._validate_params()
+
         fit_start_time = time()
         acc_find_split_time = 0.0  # time spent finding the best splits
         acc_apply_split_time = 0.0  # time spent splitting nodes
@@ -1301,14 +1295,24 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     """
 
     # TODO(1.2): remove "least_absolute_deviation"
-    _VALID_LOSSES = (
-        "squared_error",
-        "least_squares",
-        "absolute_error",
-        "least_absolute_deviation",
-        "poisson",
-        "quantile",
-    )
+    _parameter_constraints = {
+        **BaseHistGradientBoosting._parameter_constraints,  # type: ignore
+        "loss": [
+            StrOptions(
+                {
+                    "squared_error",
+                    "least_squares",
+                    "absolute_error",
+                    "least_absolute_deviation",
+                    "poisson",
+                    "quantile",
+                },
+                deprecated={"least_squares", "least_absolute_deviation"},
+            ),
+            BaseLoss,
+        ],
+        "quantile": [Interval(Real, 0, 1, closed="both"), None],
+    }
 
     def __init__(
         self,
@@ -1632,12 +1636,25 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
     """
 
     # TODO(1.3): Remove "binary_crossentropy", "categorical_crossentropy", "auto"
-    _VALID_LOSSES = (
-        "log_loss",
-        "binary_crossentropy",
-        "categorical_crossentropy",
-        "auto",
-    )
+    _parameter_constraints = {
+        **BaseHistGradientBoosting._parameter_constraints,  # type: ignore
+        "loss": [
+            StrOptions(
+                {
+                    "log_loss",
+                    "binary_crossentropy",
+                    "categorical_crossentropy",
+                    "auto",
+                },
+                deprecated={
+                    "auto",
+                    "binary_crossentropy",
+                    "categorical_crossentropy",
+                },
+            ),
+            BaseLoss,
+        ],
+    }
 
     def __init__(
         self,
