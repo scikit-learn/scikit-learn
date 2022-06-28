@@ -511,8 +511,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "LatentDirichletAllocation",
     "LedoitWolf",
     "LinearDiscriminantAnalysis",
-    "LinearSVC",
-    "LinearSVR",
     "LocalOutlierFactor",
     "LocallyLinearEmbedding",
     "MLPClassifier",
