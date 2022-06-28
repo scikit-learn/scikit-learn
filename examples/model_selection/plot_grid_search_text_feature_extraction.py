@@ -72,7 +72,9 @@ pipeline = Pipeline(
         ("clf", ComplementNB()),
     ]
 )
+pipeline
 
+# %%
 parameters = {
     "vect__max_df": (0.5, 0.75, 1.0),
     "vect__min_df": (1, 3, 5),
@@ -90,11 +92,10 @@ from time import time
 from sklearn.model_selection import GridSearchCV
 
 grid_search = GridSearchCV(
-    estimator=pipeline, param_grid=parameters, n_jobs=-1, verbose=1
+    estimator=pipeline, param_grid=parameters, n_jobs=2, verbose=1
 )
 
 print("Performing grid search...")
-print("pipeline:", [name for name, _ in pipeline.steps])
 print("parameters:")
 pprint(parameters)
 t0 = time()
@@ -107,7 +108,10 @@ for param_name in sorted(parameters.keys()):
     print(f"{param_name}: {best_parameters[param_name]}")
 
 accuracy = grid_search.score(data_test.data, data_test.target)
-print(f"Best accuracy on the grid search: {grid_search.best_score_:.3f}")
+print(
+    "Accuracy of the best parameters using the inner CV of "
+    f"the grid search: {grid_search.best_score_:.3f}"
+)
 print(f"Accuracy on test set: {accuracy:.3f}")
 
 # %%
