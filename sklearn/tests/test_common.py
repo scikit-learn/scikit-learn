@@ -518,7 +518,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "LinearSVR",
     "LocalOutlierFactor",
     "LocallyLinearEmbedding",
-    "MDS",
     "MLPClassifier",
     "MLPRegressor",
     "MeanShift",
