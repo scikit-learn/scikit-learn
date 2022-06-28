@@ -118,6 +118,9 @@ print(f"Accuracy on test set: {accuracy:.3f}")
 
 import pandas as pd
 import plotly.express as px
+import plotly.io as pio
+
+pio.renderers.default = "sphinx_gallery"
 
 
 def shorten_param(param_name):
@@ -142,7 +145,7 @@ fig = px.parallel_coordinates(
     color="mean_test_score",
     color_continuous_scale=px.colors.sequential.Jet,
 )
-fig.show()
+fig
 
 # %%
 # The parallel coordinates plot displays the values of the hyperparameters on
