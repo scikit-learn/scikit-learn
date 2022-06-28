@@ -606,6 +606,7 @@ linkcheck_ignore = [
     "Bishop-Pattern-Recognition-and-Machine-Learning-2006.pdf",
     "https://www.researchgate.net/publication/4974606_"
     "Hedonic_housing_prices_and_the_demand_for_clean_air",
+    "https://www.jstor.org/stable/2984099",
     # Broken links from testimonials
     "http://www.bestofmedia.com",
     "http://www.data-publica.com/",
