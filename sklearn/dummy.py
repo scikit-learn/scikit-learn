@@ -142,12 +142,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
             StrOptions({"most_frequent", "prior", "stratified", "uniform", "constant"})
         ],
         "random_state": ["random_state"],
-        "constant": [
-            Interval(Integral, None, None, closed="neither"),
-            str,
-            "array-like",
-            None,
-        ],
+        "constant": [Integral, str, "array-like", None],
     }
 
     def __init__(self, *, strategy="prior", random_state=None, constant=None):
@@ -174,7 +169,6 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         self : object
             Returns the instance itself.
         """
-
         self._validate_params()
 
         self._strategy = self.strategy
@@ -536,7 +530,7 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         "strategy": [StrOptions({"mean", "median", "quantile", "constant"})],
         "quantile": [Interval(Real, 0.0, 1.0, closed="both"), None],
         "constant": [
-            Interval(Real, -np.inf, np.inf, closed="neither"),
+            Interval(Real, None, None, closed="neither"),
             "array-like",
             None,
         ],
@@ -566,7 +560,6 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
-
         self._validate_params()
 
         y = check_array(y, ensure_2d=False, input_name="y")
