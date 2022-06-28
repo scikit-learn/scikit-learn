@@ -1199,24 +1199,28 @@ class CalibrationDisplay:
 
         ax.set_aspect("equal")
 
+        density = False
+        histtype = "bar"
         # Plot histogram
         if ax_hist is None:
             divider = make_axes_locatable(ax)
             ax_hist = divider.append_axes("top", size="10%", pad=0.0)
 
-        ax_hist.set_xlim(ax.get_xlim())
-        ax_hist.set_xticklabels([])
-        ax_hist.set_yticks([])
-        ax_hist.spines["right"].set_visible(False)
-        ax_hist.spines["top"].set_visible(False)
-        ax_hist.spines["left"].set_visible(False)
+            ax_hist.set_xlim(ax.get_xlim())
+            ax_hist.set_xticklabels([])
+            ax_hist.set_yticks([])
+            ax_hist.spines["right"].set_visible(False)
+            ax_hist.spines["top"].set_visible(False)
+            ax_hist.spines["left"].set_visible(False)
+            density = True
+            histtype = "step"
 
         ax_hist.hist(
             self.y_prob,
             bins=bins_from_strategy(len(self.bins), strategy="uniform"),
             label=name,
-            density=True,
-            histtype="step",
+            density=density,
+            histtype=histtype,
             color=self.line_.get_color(),
         )
 
