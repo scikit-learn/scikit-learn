@@ -15,6 +15,7 @@ from ._dict_learning import dict_learning, MiniBatchDictionaryLearning
 
 
 class _BaseSparsePCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
+    """Base class for SparsePCA and MiniBatchSparsePCA"""
 
     _parameter_constraints = {
         "n_components": [None, Interval(Integral, 1, None, closed="left")],
@@ -381,7 +382,7 @@ class MiniBatchSparsePCA(_BaseSparsePCA):
 
         .. versionadded:: 1.1
 
-    max_no_improvement : int, default=10
+    max_no_improvement : int or None, default=10
         Control early stopping based on the consecutive number of mini batches
         that does not yield an improvement on the smoothed cost function. Used only if
         `max_iter` is not None.
@@ -447,6 +448,7 @@ class MiniBatchSparsePCA(_BaseSparsePCA):
 
     _parameter_constraints = {
         **_BaseSparsePCA._parameter_constraints,
+        "max_iter": [Interval(Integral, 0, None, closed="left"), None],
         "n_iter": [
             Interval(Integral, 0, None, closed="left"),
             Hidden(StrOptions({"deprecated"})),
@@ -454,9 +456,8 @@ class MiniBatchSparsePCA(_BaseSparsePCA):
         "callback": [None, callable],
         "batch_size": [Interval(Integral, 1, None, closed="left")],
         "shuffle": ["boolean"],
-        "max_no_improvement": [Interval(Integral, 0, None, closed="left")],
+        "max_no_improvement": [Interval(Integral, 0, None, closed="left"), None],
     }
-    _parameter_constraints["max_iter"].append(None)
 
     def __init__(
         self,
