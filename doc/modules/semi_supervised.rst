@@ -148,4 +148,4 @@ which can drastically reduce running times.
 
     [3] Olivier Delalleau, Yoshua Bengio, Nicolas Le Roux. Efficient
     Non-Parametric Function Induction in Semi-Supervised Learning. AISTAT 2005
-    http://www.gatsby.ucl.ac.uk/aistats/fullpapers/204.pdf
+    https://www.gatsby.ucl.ac.uk/aistats/fullpapers/204.pdf
