@@ -287,7 +287,7 @@ class NoWeightClassifier(ClassifierMixin, BaseEstimator):
             {
                 "estimators": [
                     ("lr", LogisticRegression()),
-                    ("svm", SVC(max_iter=5e4)),
+                    ("svm", SVC(max_iter=50_000)),
                 ],
                 "stack_method": "predict_proba",
             },
@@ -310,12 +310,18 @@ class NoWeightClassifier(ClassifierMixin, BaseEstimator):
             {
                 "estimators": [
                     ("lr", LogisticRegression()),
-                    ("cor", LinearSVC(max_iter=5e4)),
+                    ("cor", LinearSVC(max_iter=50_000)),
                 ],
                 "final_estimator": NoWeightClassifier(),
             },
             TypeError,
             "does not support sample weight",
+        ),
+        (
+            y_iris,
+            {"estimators": [("lr", LogisticRegression())], "passthrough": "foo"},
+            TypeError,
+            "passthrough must be an instance of",
         ),
     ],
 )
@@ -349,6 +355,12 @@ def test_stacking_classifier_error(y, params, type_err, msg_err):
             },
             TypeError,
             "does not support sample weight",
+        ),
+        (
+            y_diabetes,
+            {"estimators": [("lr", LinearRegression())], "passthrough": "foo"},
+            TypeError,
+            "passthrough must be an instance of",
         ),
     ],
 )
@@ -408,8 +420,8 @@ def test_stacking_classifier_stratify_default():
     # check that we stratify the classes for the default CV
     clf = StackingClassifier(
         estimators=[
-            ("lr", LogisticRegression(max_iter=1e4)),
-            ("svm", LinearSVC(max_iter=1e4)),
+            ("lr", LogisticRegression(max_iter=10_000)),
+            ("svm", LinearSVC(max_iter=10_000)),
         ]
     )
     # since iris is not shuffled, a simple k-fold would not contain the

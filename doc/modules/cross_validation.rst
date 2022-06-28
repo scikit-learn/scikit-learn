@@ -278,7 +278,7 @@ can be used (otherwise, an exception is raised).
     over cross-validation folds, whereas :func:`cross_val_predict` simply
     returns the labels (or probabilities) from several distinct models
     undistinguished. Thus, :func:`cross_val_predict` is not an appropriate
-    measure of generalisation error.
+    measure of generalization error.
 
 
 The function :func:`cross_val_predict` is appropriate for:
@@ -844,13 +844,13 @@ cross-validation splitter. For example::
 Cross validation of time series data
 ------------------------------------
 
-Time series data is characterised by the correlation between observations
+Time series data is characterized by the correlation between observations
 that are near in time (*autocorrelation*). However, classical
 cross-validation techniques such as :class:`KFold` and
 :class:`ShuffleSplit` assume the samples are independent and
 identically distributed, and would result in unreasonable correlation
 between training and testing instances (yielding poor estimates of
-generalisation error) on time series data. Therefore, it is very important
+generalization error) on time series data. Therefore, it is very important
 to evaluate our model for time series data on the "future" observations
 least like those that are used to train the model. To achieve this, one
 solution is provided by :class:`TimeSeriesSplit`.

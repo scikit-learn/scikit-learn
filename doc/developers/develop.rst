@@ -336,7 +336,7 @@ estimator::
     ...         self.my_extra_param = my_extra_param
 
 The parameter `deep` will control whether or not the parameters of the
-`subsestimator` should be reported. Thus when `deep=True`, the output will be::
+`subestimator` should be reported. Thus when `deep=True`, the output will be::
 
     >>> my_estimator = MyEstimator(subestimator=LogisticRegression())
     >>> for param, value in my_estimator.get_params(deep=True).items():
@@ -677,7 +677,8 @@ In addition, we add the following guidelines:
   find bugs in scikit-learn.
 
 * Use the `numpy docstring standard
-  <https://numpydoc.readthedocs.io/en/latest/format.html#numpydoc-docstring-guide>`_ in all your docstrings.
+  <https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard>`_
+  in all your docstrings.
 
 
 A good example of code that we like can be found `here

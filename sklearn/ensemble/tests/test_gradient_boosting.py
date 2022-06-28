@@ -139,74 +139,6 @@ def test_classification_toy(loss):
             TypeError,
             "tol must be an instance of float,",
         ),
-        # The following parameters are checked in BaseDecisionTree
-        ({"min_samples_leaf": 0}, ValueError, "min_samples_leaf == 0, must be >= 1"),
-        ({"min_samples_leaf": 0.0}, ValueError, "min_samples_leaf == 0.0, must be > 0"),
-        (
-            {"min_samples_leaf": "foo"},
-            TypeError,
-            "min_samples_leaf must be an instance of float",
-        ),
-        ({"min_samples_split": 1}, ValueError, "min_samples_split == 1, must be >= 2"),
-        (
-            {"min_samples_split": 0.0},
-            ValueError,
-            "min_samples_split == 0.0, must be > 0.0",
-        ),
-        (
-            {"min_samples_split": 1.1},
-            ValueError,
-            "min_samples_split == 1.1, must be <= 1.0",
-        ),
-        (
-            {"min_samples_split": "foo"},
-            TypeError,
-            "min_samples_split must be an instance of float",
-        ),
-        (
-            {"min_weight_fraction_leaf": -1},
-            ValueError,
-            "min_weight_fraction_leaf == -1, must be >= 0.0",
-        ),
-        (
-            {"min_weight_fraction_leaf": 0.6},
-            ValueError,
-            "min_weight_fraction_leaf == 0.6, must be <= 0.5",
-        ),
-        (
-            {"min_weight_fraction_leaf": "foo"},
-            TypeError,
-            "min_weight_fraction_leaf must be an instance of float",
-        ),
-        ({"max_leaf_nodes": 0}, ValueError, "max_leaf_nodes == 0, must be >= 2"),
-        (
-            {"max_leaf_nodes": 1.5},
-            TypeError,
-            "max_leaf_nodes must be an instance of int",
-        ),
-        ({"max_depth": -1}, ValueError, "max_depth == -1, must be >= 1"),
-        (
-            {"max_depth": 1.1},
-            TypeError,
-            "max_depth must be an instance of int",
-        ),
-        (
-            {"min_impurity_decrease": -1},
-            ValueError,
-            "min_impurity_decrease == -1, must be >= 0.0",
-        ),
-        (
-            {"min_impurity_decrease": "foo"},
-            TypeError,
-            "min_impurity_decrease must be an instance of float",
-        ),
-        ({"ccp_alpha": -1.0}, ValueError, "ccp_alpha == -1.0, must be >= 0.0"),
-        (
-            {"ccp_alpha": "foo"},
-            TypeError,
-            "ccp_alpha must be an instance of float",
-        ),
-        ({"criterion": "mae"}, ValueError, "criterion='mae' is not supported."),
     ],
     # Avoid long error messages in test names:
     # https://github.com/scikit-learn/scikit-learn/issues/21362
@@ -475,7 +407,7 @@ def test_max_feature_regression():
         random_state=1,
     )
     gbrt.fit(X_train, y_train)
-    log_loss = gbrt.loss_(y_test, gbrt.decision_function(X_test))
+    log_loss = gbrt._loss(y_test, gbrt.decision_function(X_test))
     assert log_loss < 0.5, "GB failed with deviance %.4f" % log_loss
 
 
@@ -1535,3 +1467,18 @@ def test_loss_deprecated(old_loss, new_loss, Estimator):
     est2 = Estimator(loss=new_loss, random_state=0)
     est2.fit(X, y)
     assert_allclose(est1.predict(X), est2.predict(X))
+
+
+# TODO(1.3): remove
+@pytest.mark.parametrize(
+    "Estimator", [GradientBoostingClassifier, GradientBoostingRegressor]
+)
+def test_loss_attribute_deprecation(Estimator):
+    # Check that we raise the proper deprecation warning if accessing
+    # `loss_`.
+    X = np.array([[1, 2], [3, 4]])
+    y = np.array([1, 0])
+    est = Estimator().fit(X, y)
+
+    with pytest.warns(FutureWarning, match="`loss_` was deprecated"):
+        est.loss_

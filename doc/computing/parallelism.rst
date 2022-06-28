@@ -152,7 +152,7 @@ Note that:
 
 You will find additional details about joblib mitigation of oversubscription
 in `joblib documentation
-<https://joblib.readthedocs.io/en/latest/parallel.html#avoiding-over-subscription-of-cpu-ressources>`_.
+<https://joblib.readthedocs.io/en/latest/parallel.html#avoiding-over-subscription-of-cpu-resources>`_.
 
 
 Configuration switches
