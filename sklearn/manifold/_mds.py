@@ -59,7 +59,8 @@ def _smacof_single(
 
     eps : float, default=1e-3
         Relative tolerance with respect to stress at which to declare
-        convergence.
+        convergence. The value of `eps` should be tuned separately depending
+        on whether or not `normalized_stress` is being used.
 
     random_state : int, RandomState instance or None, default=None
         Determines the random number generator used to initialize the centers.
@@ -123,6 +124,7 @@ def _smacof_single(
     for it in range(max_iter):
         # Compute distance and monotonic regression
         dis = euclidean_distances(X)
+
         if metric:
             disparities = dissimilarities
         else:
@@ -159,6 +161,7 @@ def _smacof_single(
                     print("breaking at iteration %d with stress %s" % (it, stress))
                 break
         old_stress = stress / dis
+
     return X, stress, it + 1
 
 
@@ -238,7 +241,8 @@ def smacof(
 
     eps : float, default=1e-3
         Relative tolerance with respect to stress at which to declare
-        convergence.
+        convergence. The value of `eps` should be tuned separately depending
+        on whether or not `normalized_stress` is being used.
 
     random_state : int, RandomState instance or None, default=None
         Determines the random number generator used to initialize the centers.
