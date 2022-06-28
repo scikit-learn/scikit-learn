@@ -1406,7 +1406,7 @@ def additive_chi2_kernel(X, Y=None):
       Local features and kernels for classification of texture and object
       categories: A comprehensive study
       International Journal of Computer Vision 2007
-      https://research.microsoft.com/en-us/um/people/manik/projects/trade-off/papers/ZhangIJCV06.pdf
+      https://hal.archives-ouvertes.fr/hal-00171412/document
     """
     if issparse(X) or issparse(Y):
         raise ValueError("additive_chi2 does not support sparse matrices.")
@@ -1461,7 +1461,7 @@ def chi2_kernel(X, Y=None, gamma=1.0):
       Local features and kernels for classification of texture and object
       categories: A comprehensive study
       International Journal of Computer Vision 2007
-      https://research.microsoft.com/en-us/um/people/manik/projects/trade-off/papers/ZhangIJCV06.pdf
+      https://hal.archives-ouvertes.fr/hal-00171412/document
     """
     K = additive_chi2_kernel(X, Y)
     K *= gamma
