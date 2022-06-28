@@ -3,10 +3,8 @@
 # License: 3-clause BSD
 
 # Code to implement a Dual Tree Boruvka Minimimum Spanning Tree computation
-# The algorithm is largely tree independent, but fine details of handling
-# different tree types has resulted in separate implementations. In
-# due course this should be cleaned up to remove unnecessarily duplicated
-# code, but it stands for now.
+# The algorithm is largely tree independent, but some fine details still
+# depend on the particular choice of tree.
 #
 # The core idea of the algorithm is to do repeated sweeps through the dataset,
 # adding edges to the tree with each sweep until a full tree is formed.
@@ -27,8 +25,7 @@
 # stages. Importantly, we can construct the full tree in O(log N) sweeps
 # and since each sweep has complexity equal to that of an all points
 # nearest neighbor query within the tree structure we are using we end
-# up with sub-quadratic complexity at worst, and in the case of cover
-# trees (still to be implemented) we can achieve O(N log N) complexity!
+# up with sub-quadratic complexity at worst.
 #
 # This code is based on the papers:
 #
@@ -44,8 +41,8 @@
 # 2013, arXiv 1304.4327
 #
 # As per the sklearn BallTree and KDTree implementations we make use of
-# the rdist, which is a faster to compute notion of distance (for example
-# in the euclidean case it is the distance squared).
+# the rdist for KDTree, which is a faster-to-compute notion of distance
+# (for example in the euclidean case it is the distance squared).
 #
 # To combine together components in between sweeps we make use of
 # a union find data structure. This is a separate implementation
@@ -163,7 +160,7 @@ cdef inline np.double_t kdtree_min_rdist_dual(
     return rdist
 
 
-cdef class BoruvkaUnionFind (object):
+cdef class BoruvkaUnionFind(object):
     """Efficient union find implementation.
 
     Parameters
@@ -240,7 +237,7 @@ cdef class BoruvkaUnionFind (object):
 def _core_dist_query(tree, data, min_samples):
     return tree.query(data, k=min_samples, dualtree=True, breadth_first=True)
 
-cdef class BoruvkaAlgorithm (object):
+cdef class BoruvkaAlgorithm(object):
     """A Dual Tree Boruvka Algorithm implemented for the sklearn
     KDTree space tree implementation.
 
