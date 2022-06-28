@@ -161,13 +161,9 @@ def test_fastica_simple(add_noise, global_random_seed, global_dtype):
 
     assert ica.mixing_.shape == (2, 2)
 
-    for fn in [np.tanh, "exp(-.5(x^2))"]:
-        ica = FastICA(fun=fn, algorithm=algo)
-        with pytest.raises(ValueError):
-            ica.fit(m.T)
-
-    with pytest.raises(TypeError):
-        FastICA(fun=range(10)).fit(m.T)
+    ica = FastICA(fun=np.tanh, algorithm=algo)
+    with pytest.raises(ValueError):
+        ica.fit(m.T)
 
 
 def test_fastica_nowhiten():
@@ -361,19 +357,12 @@ def test_fastica_errors():
     rng = np.random.RandomState(0)
     X = rng.random_sample((n_samples, n_features))
     w_init = rng.randn(n_features + 1, n_features + 1)
-    fastica_estimator = FastICA(max_iter=0)
-    with pytest.raises(ValueError, match="max_iter should be greater than 1"):
-        fastica_estimator.fit(X)
     with pytest.raises(ValueError, match=r"alpha must be in \[1,2\]"):
         fastica(X, fun_args={"alpha": 0})
     with pytest.raises(
         ValueError, match="w_init has invalid shape.+" r"should be \(3L?, 3L?\)"
     ):
         fastica(X, w_init=w_init)
-    with pytest.raises(
-        ValueError, match="Invalid algorithm.+must be.+parallel.+or.+deflation"
-    ):
-        fastica(X, algorithm="pizza")
 
 
 def test_fastica_whiten_unit_variance():
@@ -506,13 +495,3 @@ def test_fastica_eigh_low_rank_warning(global_random_seed):
     msg = "There are some small singular values"
     with pytest.warns(UserWarning, match=msg):
         ica.fit(X)
-
-
-@pytest.mark.parametrize("whiten_solver", ["this_should_fail", "test", 1, None])
-def test_fastica_whiten_solver_validation(whiten_solver):
-    rng = np.random.RandomState(0)
-    X = rng.random_sample((10, 2))
-    ica = FastICA(random_state=rng, whiten_solver=whiten_solver, whiten="unit-variance")
-    msg = f"`whiten_solver` must be 'eigh' or 'svd' but got {whiten_solver} instead"
-    with pytest.raises(ValueError, match=msg):
-        ica.fit_transform(X)
