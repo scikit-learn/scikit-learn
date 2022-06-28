@@ -428,7 +428,8 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
           `n_samples >= n_features`, and can be faster when
           `n_samples >= 50 * n_features`.
 
-        - "auto" uses the `eigh` solver when `n_samples >= 50 * n_features`
+        - "auto" uses the `eigh` solver when `n_samples >= 50 * n_features`,
+          `svd` otherwise.
 
         .. versionadded:: 1.2
 

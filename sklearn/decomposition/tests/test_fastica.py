@@ -505,6 +505,7 @@ def test_fastica_eigh_low_rank_warning(global_random_seed):
         ica.fit(X)
 
 
+# TODO(1.4): to be removed
 def test_fastica_whiten_solver_future_warning():
     rng = np.random.RandomState(0)
     X = rng.random_sample((10, 10))
@@ -519,6 +520,7 @@ def test_fastica_whiten_solver_future_warning():
 
 @pytest.mark.parametrize("n_samples", (199, 200))
 def test_fastica_whiten_solver_auto(n_samples):
+    """Check the heuristic that automatically chooses the solver."""
     rng = np.random.RandomState(0)
     X = rng.random_sample((n_samples, 4))
     ica = FastICA(random_state=rng, whiten="unit-variance", whiten_solver="auto")

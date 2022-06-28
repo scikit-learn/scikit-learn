@@ -140,9 +140,9 @@ Changelog
   :pr:`11860` by :user:`Pierre Ablin <pierreablin>`,
   :pr:`22527` by :user:`Meekail Zain <micky774>` and `Thomas Fan`_.
 
-- |Enhancement| Added `"auto"` option to `whiten_solver` parameter, which
-  then uses the `eigh` solver if `X.shape[0] >= 50*X.shape[1]` and the `svd`
-  solver otherwise.
+- |Enhancement| Added `"auto"` option to `whiten_solver` parameter, of
+  :class:`decomposition.FastICA` which then uses the `eigh` solver if
+  `X.shape[0] >= 50*X.shape[1]` and the `svd` solver otherwise.
   :pr:`23616` by :user:`Meekail Zain <micky774>`.
 
 :mod:`sklearn.impute`
