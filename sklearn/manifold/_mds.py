@@ -433,7 +433,7 @@ class MDS(BaseEstimator):
         "n_init": [Interval(Integral, 1, None, closed="left")],
         "max_iter": [Interval(Integral, 1, None, closed="left")],
         "verbose": ["verbose"],
-        "eps": [Interval(Real, 0.0, None, closed="neither")],
+        "eps": [Interval(Real, 0.0, None, closed="left")],
         "n_jobs": [None, Integral],
         "random_state": ["random_state"],
         "dissimilarity": [StrOptions({"euclidean", "precomputed"})],
