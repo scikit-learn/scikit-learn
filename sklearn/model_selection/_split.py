@@ -274,45 +274,22 @@ class _BaseKFold(BaseCrossValidator, metaclass=ABCMeta):
     """Base class for KFold, GroupKFold, and StratifiedKFold"""
 
     @abstractmethod
-    def __init__(
-        self,
-        n_splits,
-        *,
-        shuffle,
-        random_state,
-        x_shape=None,
-        max_train_size=None,
-        test_size=None,
-    ):
-        if isinstance(n_splits, int):
-            # self.n_splits = n_splits
-            n_splits = int(n_splits)
-
+    def __init__(self, n_splits, *, shuffle, random_state):
         if not isinstance(n_splits, numbers.Integral):
-            if (
-                x_shape
-                and max_train_size
-                and test_size
-                and isinstance(n_splits, str)
-                and n_splits == "walk_forward"
-            ):
-                n_splits = self.find_walk_forward_n_splits_value(
-                    x_shape, max_train_size, test_size
-                )
-            else:
+            if isinstance(n_splits, str) is False and n_splits != "walk_forward":
                 raise ValueError(
                     "The number of folds must be of Integral type. "
                     "%s of type %s was passed." % (n_splits, type(n_splits))
                 )
+        if isinstance(n_splits, int):
+            n_splits = int(n_splits)
 
-        # n_splits = int(n_splits)
-
-        if n_splits <= 1:
-            raise ValueError(
-                "k-fold cross-validation requires at least one"
-                " train/test split by setting n_splits=2 or more,"
-                " got n_splits={0}.".format(n_splits)
-            )
+            if n_splits <= 1:
+                raise ValueError(
+                    "k-fold cross-validation requires at least one"
+                    " train/test split by setting n_splits=2 or more,"
+                    " got n_splits={0}.".format(n_splits)
+                )
 
         if not isinstance(shuffle, bool):
             raise TypeError("shuffle must be True or False; got {0}".format(shuffle))
@@ -1060,20 +1037,8 @@ class TimeSeriesSplit(_BaseKFold):
     where ``n_samples`` is the number of samples.
     """
 
-    def __init__(
-        self, n_splits=5, x_shape=None, *, max_train_size=None, test_size=None, gap=0
-    ):
-        if x_shape and max_train_size and test_size:
-            super().__init__(
-                n_splits,
-                shuffle=False,
-                random_state=None,
-                x_shape=x_shape,
-                max_train_size=max_train_size,
-                test_size=test_size,
-            )
-        else:
-            super().__init__(n_splits, shuffle=False, random_state=None)
+    def __init__(self, n_splits=5, *, max_train_size=None, test_size=None, gap=0):
+        super().__init__(n_splits, shuffle=False, random_state=None)
         self.max_train_size = max_train_size
         self.test_size = test_size
         self.gap = gap
@@ -1103,8 +1068,7 @@ class TimeSeriesSplit(_BaseKFold):
         """
         X, y, groups = indexable(X, y, groups)
         n_samples = _num_samples(X)
-
-        n_splits = self.n_splits
+        n_splits = self.get_n_splits(X)
         n_folds = n_splits + 1
         gap = self.gap
         test_size = (
@@ -1138,7 +1102,7 @@ class TimeSeriesSplit(_BaseKFold):
                     indices[test_start : test_start + test_size],
                 )
 
-    def find_walk_forward_n_splits_value(self, x_value, max_train_size, test_size):
+    def get_n_splits(self, X=None, y=None, groups=None):
         """
         Time Series `n_splits` value calculator
         Calculates the `n_splits` variable's value so that the "walk_forward"
@@ -1162,19 +1126,19 @@ class TimeSeriesSplit(_BaseKFold):
 
         Parameters
         ----------
-        x_value : int
+        X : int
             First element of the np.arange array.
             This is the ending value to which
             the "walk forward" train/test indices go up to
 
             .. versionchanged:: 0.22
 
-        max_train_size : int
+        y : int
             Maximum size for a single training set.
 
             .. versionadded:: 0.24
 
-        test_size : int
+        groups : int
             Used to limit the size of the test set. Defaults to
             ``n_samples // (n_splits + 1)``, which is the maximum allowed value
             with ``gap=0``.
@@ -1212,30 +1176,13 @@ class TimeSeriesSplit(_BaseKFold):
         TRAIN:  [10 11 12] TEST:  [13]
         TRAIN:  [11 12 13] TEST:  [14]
         """
-        x = np.arange(x_value)
-        time_splits_storage = [
-            [] for i in range(x_value)
-        ]  # make the two array so that x_value defines its max length
-        for i in range(2, x_value, 1):
-            try:
-                cv = TimeSeriesSplit(
-                    n_splits=i, max_train_size=max_train_size, test_size=test_size
-                )
-                for train_index, test_index in cv.split(x):
-                    time_splits_storage[i].append([train_index, test_index])
-            except ValueError:
-                pass
-        n_splits_arrays_first_element_zero = []
-        for i in range(len(time_splits_storage)):
-            for j in range(len(time_splits_storage[i])):
-                if time_splits_storage[i][0][0][0] == 0:
-                    n_splits_arrays_first_element_zero.append(i)
-                    break
-
-        if len(n_splits_arrays_first_element_zero) > 0:
-            return n_splits_arrays_first_element_zero[0]
-        else:
-            return False
+        if (
+            isinstance(self.n_splits, str)
+            and self.n_splits == "walk_forward"
+            and X.shape[0]
+        ):
+            return X.shape[0] - (self.max_train_size + self.test_size) + 1
+        return self.n_splits
 
 
 class LeaveOneGroupOut(BaseCrossValidator):
