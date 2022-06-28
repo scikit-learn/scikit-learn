@@ -613,7 +613,7 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
 
         # Benchmark validated heuristic
         self._whiten_solver = self.whiten_solver
-        if self._whiten_solver == "warn":
+        if self._whiten_solver == "warn" and self._whiten:
             warnings.warn(
                 "From version 1.4 `whiten_solver='auto'` will be used by default."
                 " Manually set the value of `whiten_solver` to suppress this message.",
