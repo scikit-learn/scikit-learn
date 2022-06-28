@@ -303,7 +303,7 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         "eps": [Interval(Real, 0.0, None, closed="neither")],
         "min_samples": [Interval(Integral, 1, None, closed="left")],
         "metric": [
-            StrOptions(set(_VALID_METRICS) | set(["precomputed"])),
+            StrOptions(set(_VALID_METRICS) | {"precomputed"}),
             callable,
         ],
         "metric_params": [dict, None],
