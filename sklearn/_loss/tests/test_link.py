@@ -79,9 +79,9 @@ def test_link_inverse_identity(link, global_random_seed):
 
 
 @pytest.mark.parametrize("link", LINK_FUNCTIONS)
-def test_link_out_argument(link, global_random_seed):
+def test_link_out_argument(link):
     # Test that out argument gets assigned the result.
-    rng = np.random.RandomState(global_random_seed % 10)
+    rng = np.random.RandomState(42)
     link = link()
     n_samples, n_classes = 100, None
     if link.is_multiclass:
@@ -103,6 +103,6 @@ def test_link_out_argument(link, global_random_seed):
 
     out = np.empty_like(y_pred)
     raw_prediction_2 = link.link(y_pred, out=out)
-    assert_allclose(raw_prediction, out, rtol=1e-06)
+    assert_allclose(raw_prediction, out)
     assert_array_equal(out, raw_prediction_2)
     assert np.shares_memory(out, raw_prediction_2)
