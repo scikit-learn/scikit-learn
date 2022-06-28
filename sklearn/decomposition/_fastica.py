@@ -10,13 +10,13 @@ Independent Component Analysis, by  Hyvarinen et al.
 # License: BSD 3 clause
 
 import warnings
+from numbers import Integral, Real
 
 import numpy as np
 from scipy import linalg
+
 from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
 from ..exceptions import ConvergenceWarning
-from numbers import Integral, Real
-
 from ..utils import check_array, as_float_array, check_random_state
 from ..utils.validation import check_is_fitted
 from ..utils._param_validation import Hidden, Interval, StrOptions
@@ -336,7 +336,7 @@ def fastica(
         random_state=random_state,
         sign_flip=sign_flip,
     )
-    S = est._fit(X, compute_sources=compute_sources)
+    S = est._fit_transform(X, compute_sources=compute_sources)
 
     if est._whiten in ["unit-variance", "arbitrary-variance"]:
         K = est.whitening_
@@ -553,7 +553,7 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         self.random_state = random_state
         self.sign_flip = sign_flip
 
-    def _fit(self, X, compute_sources=False):
+    def _fit_transform(self, X, compute_sources=False):
         """Fit the model.
 
         Parameters
@@ -571,7 +571,6 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         S : ndarray of shape (n_samples, n_components) or None
             Sources matrix. `None` if `compute_sources` is `False`.
         """
-        self._validate_params()
         self._whiten = self.whiten
 
         if self._whiten == "warn":
@@ -740,7 +739,9 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
             Estimated sources obtained by transforming the data with the
             estimated unmixing matrix.
         """
-        return self._fit(X, compute_sources=True)
+        self._validate_params()
+
+        return self._fit_transform(X, compute_sources=True)
 
     def fit(self, X, y=None):
         """Fit the model to X.
@@ -759,7 +760,9 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         self : object
             Returns the instance itself.
         """
-        self._fit(X, compute_sources=False)
+        self._validate_params()
+
+        self._fit_transform(X, compute_sources=False)
         return self
 
     def transform(self, X, copy=True):
