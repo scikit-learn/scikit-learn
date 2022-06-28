@@ -924,6 +924,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         initial data in memory directly using that format.
         """
         self._validate_params()
+
         _normalize = _deprecate_normalize(
             self.normalize, default=False, estimator_name=self.__class__.__name__
         )
