@@ -63,7 +63,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         noise level directly as a parameter is mainly for convenience and
         for consistency with :class:`~sklearn.linear_model.Ridge`.
 
-    optimizer : "fmin_l_bfgs_b" or callable, default="fmin_l_bfgs_b"
+    optimizer : "fmin_l_bfgs_b", callable or None, default="fmin_l_bfgs_b"
         Can either be one of the internally supported optimizers for optimizing
         the kernel's parameters, specified by a string, or an externally
         defined optimizer passed as a callable. If a callable is passed, it
@@ -177,8 +177,8 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
     _parameter_constraints = {
         "kernel": [None, Kernel],
-        "alpha": [Real, "array-like"],
-        "optimizer": [StrOptions({"fmin_l_bfgs_b"}), None, callable],
+        "alpha": [Interval(Real, 0, None, closed="left"), np.ndarray],
+        "optimizer": [StrOptions({"fmin_l_bfgs_b"}), callable, None],
         "n_restarts_optimizer": [Interval(Integral, 0, None, closed="left")],
         "normalize_y": ["boolean"],
         "copy_X_train": ["boolean"],

@@ -641,12 +641,7 @@ def test_gpr_consistency_std_cov_non_invertible_kernel():
 @pytest.mark.parametrize(
     "params, TypeError, err_msg",
     [
-        (
-            {"kernel": RBF(), "optimizer": "unknown"},
-            ValueError,
-            "Got 'unknown' instead.",
-        ),
-        ({"alpha": np.zeros(100)}, ValueError, "alpha must be a scalar or an array"),
+        ({"alpha": np.zeros(100)}, ValueError, "alpha must be a scalar or an array with same number of entries as y"),
         (
             {
                 "kernel": WhiteKernel(noise_level_bounds=(-np.inf, np.inf)),

@@ -147,16 +147,6 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
 
     """
 
-    _parameter_constraints = {
-        "kernel": [None, Kernel],
-        "optimizer": [StrOptions({"fmin_l_bfgs_b"}), callable],
-        "n_restarts_optimizer": [Interval(Integral, 0, None, closed="left")],
-        "max_iter_predict": [Interval(Integral, 1, None, closed="left")],
-        "warm_start": ["boolean"],
-        "copy_X_train": ["boolean"],
-        "random_state": ["random_state"],
-    }
-
     def __init__(
         self,
         kernel=None,
@@ -191,8 +181,6 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         -------
         self : returns an instance of self.
         """
-        self._validate_params()
-
         if self.kernel is None:  # Use an RBF kernel as default
             self.kernel_ = C(1.0, constant_value_bounds="fixed") * RBF(
                 1.0, length_scale_bounds="fixed"
@@ -520,7 +508,7 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
         the kernel's hyperparameters are optimized during fitting. Also kernel
         cannot be a `CompoundKernel`.
 
-    optimizer : 'fmin_l_bfgs_b' or callable, default='fmin_l_bfgs_b'
+    optimizer : 'fmin_l_bfgs_b', callable or None, default='fmin_l_bfgs_b'
         Can either be one of the internally supported optimizers for optimizing
         the kernel's parameters, specified by a string, or an externally
         defined optimizer passed as a callable. If a callable is passed, it
@@ -650,9 +638,15 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
     """
 
     _parameter_constraints = {
-        **_BinaryGaussianProcessClassifierLaplace._parameter_constraints,
+        "kernel": [Kernel, None],
+        "optimizer": [StrOptions({"fmin_l_bfgs_b"}), callable, None],
+        "n_restarts_optimizer": [Interval(Integral, 0, None, closed="left")],
+        "max_iter_predict": [Interval(Integral, 1, None, closed="left")],
+        "warm_start": ["boolean"],
+        "copy_X_train": ["boolean"],
+        "random_state": ["random_state"],
         "multi_class": [StrOptions({"one_vs_rest", "one_vs_one"})],
-        "n_jobs": [None, Integral],
+        "n_jobs": [Integral, None],
     }
 
     def __init__(
