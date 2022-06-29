@@ -685,6 +685,9 @@ class StandardScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         If True, scale the data to unit variance (or equivalently,
         unit standard deviation).
 
+    ddof : int, default=0
+        Delta degrees of freedom. 1 for Bessel correction.
+
     Attributes
     ----------
     scale_ : ndarray of shape (n_features,) or None
@@ -763,10 +766,11 @@ class StandardScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     [[3. 3.]]
     """
 
-    def __init__(self, *, copy=True, with_mean=True, with_std=True):
+    def __init__(self, *, copy=True, with_mean=True, with_std=True, ddof=0):
         self.with_mean = with_mean
         self.with_std = with_std
         self.copy = copy
+        self.ddof = ddof
 
     def _reset(self):
         """Reset internal data-dependent state of the scaler, if necessary.
@@ -932,6 +936,7 @@ class StandardScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
                     self.var_,
                     self.n_samples_seen_,
                     sample_weight=sample_weight,
+                    ddof=self.ddof,
                 )
 
         # for backward-compatibility, reduce n_samples_seen_ to an integer

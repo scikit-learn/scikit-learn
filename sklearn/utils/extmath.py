@@ -907,7 +907,7 @@ def _safe_accumulator_op(op, x, *args, **kwargs):
 
 
 def _incremental_mean_and_var(
-    X, last_mean, last_variance, last_sample_count, sample_weight=None
+    X, last_mean, last_variance, last_sample_count, sample_weight=None, ddof=0
 ):
     """Calculate mean update and a Youngs and Cramer variance update.
 
@@ -937,6 +937,9 @@ def _incremental_mean_and_var(
 
     sample_weight : array-like of shape (n_samples,) or None
         Sample weights. If None, compute the unweighted mean/variance.
+
+    ddof : int, default=0
+        Delta degrees of freedom. 1 for Bessel correction.
 
     Returns
     -------
@@ -1027,7 +1030,7 @@ def _incremental_mean_and_var(
 
         zeros = last_sample_count == 0
         updated_unnormalized_variance[zeros] = new_unnormalized_variance[zeros]
-        updated_variance = updated_unnormalized_variance / updated_sample_count
+        updated_variance = updated_unnormalized_variance / (updated_sample_count - ddof)
 
     return updated_mean, updated_variance, updated_sample_count
 

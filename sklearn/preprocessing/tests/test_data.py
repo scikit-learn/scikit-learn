@@ -2718,3 +2718,23 @@ def test_kernel_centerer_feature_names_out():
     names_out = centerer.get_feature_names_out()
     samples_out2 = X_pairwise.shape[1]
     assert_array_equal(names_out, [f"kernelcenterer{i}" for i in range(samples_out2)])
+
+
+def test_scaler_ddof():
+    """Test ddof in StandardScaler"""
+
+    a = np.array([2, 5, 2, 7, 2, 3, 1, 2]).reshape(-1, 1)
+
+    scaler0 = StandardScaler()
+    scaler1 = StandardScaler(ddof=1)
+
+    a0_scaler = scaler0.fit_transform(a)
+    a1_scaler = scaler1.fit_transform(a)
+
+    a0_numpy = (a - np.mean(a)) / np.std(a, ddof=0)
+    a1_numpy = (a - np.mean(a)) / np.std(a, ddof=1)
+
+    assert np.array_equal(a0_scaler, a0_numpy)
+    assert np.array_equal(a1_scaler, a1_numpy)
+    assert not np.array_equal(a0_scaler, a1_scaler)
+    assert not np.array_equal(a0_numpy, a1_numpy)
