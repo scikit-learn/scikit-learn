@@ -15,6 +15,7 @@ from sklearn.model_selection import cross_val_score
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_allclose
 
 from sklearn.naive_bayes import GaussianNB, BernoulliNB
 from sklearn.naive_bayes import MultinomialNB, ComplementNB
@@ -928,4 +929,4 @@ def test_predict_joint_proba(Estimator):
     jll = est.predict_joint_log_proba(X2)
     log_prob_x = logsumexp(jll, axis=1)
     log_prob_x_y = jll - np.atleast_2d(log_prob_x).T
-    assert_array_almost_equal(log_prob_x_y, est.predict_log_proba(X2), 8)
+    assert_allclose(log_prob_x_y, est.predict_log_proba(X2), 8)
