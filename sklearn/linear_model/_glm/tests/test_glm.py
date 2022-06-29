@@ -1059,28 +1059,65 @@ def test_linalg_warning_with_newton_solver(global_random_seed):
     rng = np.random.RandomState(global_random_seed)
     X_orig = rng.normal(size=(10, 3))
     X_collinear = np.hstack([X_orig] * 10)  # collinear design
-    y = rng.normal(size=X_orig.shape[0])
-    y[y < 0] = 0.0
+    y = rng.poisson(
+        np.exp(X_orig @ np.ones(X_orig.shape[1])), size=X_orig.shape[0]
+    ).astype(np.float64)
+
+    # Let's consider the deviance of constant baseline on this problem:
+    baseline_pred = np.full_like(y, y.astype(np.float64).mean())
+    constant_model_deviance = mean_poisson_deviance(y, baseline_pred)
 
     # No warning raised on well-conditioned design, even without regularization.
+    tol = 1e-10
     with warnings.catch_warnings():
         warnings.simplefilter("error")
-        reg = PoissonRegressor(solver="newton-cholesky", alpha=0.0).fit(X_orig, y)
-    reference_deviance = mean_poisson_deviance(y, reg.predict(X_orig))
+        reg = PoissonRegressor(solver="newton-cholesky", alpha=0.0, tol=tol).fit(
+            X_orig, y
+        )
+    original_newton_deviance = mean_poisson_deviance(y, reg.predict(X_orig))
+
+    # We check that the model could successfully overfit information in X_orig
+    # to improve upon the constant baseline (when evaluated on the traing set).
+    assert original_newton_deviance < constant_model_deviance - 1e-3
+
+    # LBFGS is robust to collinear design because its approximation of the
+    # Hessian is Symmeric Positive Definite by construction. Let's record its
+    # solution
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        reg = PoissonRegressor(solver="lbfgs", alpha=0.0, tol=tol).fit(X_collinear, y)
+    collinear_lbfgs_deviance = mean_poisson_deviance(y, reg.predict(X_collinear))
+    print()
+    print(f"{original_newton_deviance - collinear_lbfgs_deviance=}")
+
+    # The LBFGS solution on the collinear is expected to reach a comparable
+    # solution.
+    rtol, atol = 1e-4, 1e-8
+    assert collinear_lbfgs_deviance == pytest.approx(
+        original_newton_deviance, rel=rtol, abs=atol
+    )
 
     # Fitting on collinear data without regularization should raise an
-    # informative warning:
+    # informative warning and fallback to the LBFGS solver
     msg = (
         "The inner solver of CholeskyNewtonSolver stumbled upon a"
         " singular or very ill-conditioned hessian matrix"
     )
     with pytest.warns(scipy.linalg.LinAlgWarning, match=msg):
-        PoissonRegressor(solver="newton-cholesky", alpha=0.0).fit(X_collinear, y)
+        reg = PoissonRegressor(solver="newton-cholesky", alpha=0.0, tol=tol).fit(
+            X_collinear, y
+        )
+    collinear_newton_deviance = mean_poisson_deviance(y, reg.predict(X_collinear))
+
+    assert collinear_newton_deviance == pytest.approx(
+        original_newton_deviance, rel=rtol, abs=atol
+    )
 
     # Increasing the regularization slightly should make the problem go away:
-    reg = PoissonRegressor(solver="newton-cholesky", alpha=1e-12).fit(X_collinear, y)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", scipy.linalg.LinAlgWarning)
+        PoissonRegressor(solver="newton-cholesky", alpha=1e-10).fit(X_collinear, y)
 
-    # Since we use a small penalty, the deviance of the predictions should still
-    # be almost the same.
-    this_deviance = mean_poisson_deviance(y, reg.predict(X_collinear))
-    assert this_deviance == pytest.approx(reference_deviance)
+    # While for most random seed the deviance of this model is very close to
+    # that of the unpenalized model, it is unfortunately not always the case so
+    # we do not check such an assertion here.
