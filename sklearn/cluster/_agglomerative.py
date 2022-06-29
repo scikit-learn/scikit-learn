@@ -11,7 +11,6 @@ import warnings
 from heapq import heapify, heappop, heappush, heappushpop
 from numbers import Integral, Real
 
-import joblib
 import numpy as np
 from scipy import sparse
 from scipy.sparse.csgraph import connected_components
@@ -879,10 +878,10 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
     _parameter_constraints = {
         "n_clusters": [Interval(Integral, 1, None, closed="left"), None],
         "affinity": [
-            StrOptions(set(_VALID_METRICS) | set(["precomputed"])),
+            StrOptions(set(_VALID_METRICS) | {"precomputed"}),
             callable,
         ],
-        "memory": [str, joblib.Memory, None],
+        "memory": "no_validation",  # TODO
         "connectivity": ["array-like", callable, None],
         "compute_full_tree": [StrOptions({"auto"}), "boolean"],
         "linkage": [StrOptions(set(_TREE_BUILDERS.keys()))],
@@ -1070,7 +1069,7 @@ class FeatureAgglomeration(
 
     Parameters
     ----------
-    n_clusters : int, default=2
+    n_clusters : int or None, default=2
         The number of clusters to find. It must be ``None`` if
         ``distance_threshold`` is not ``None``.
 
@@ -1203,10 +1202,10 @@ class FeatureAgglomeration(
     _parameter_constraints = {
         "n_clusters": [Interval(Integral, 1, None, closed="left"), None],
         "affinity": [
-            StrOptions(set(_VALID_METRICS) | set(["precomputed"])),
+            StrOptions(set(_VALID_METRICS) | {"precomputed"}),
             callable,
         ],
-        "memory": [str, joblib.Memory, None],
+        "memory": "no_validation",  # TODO
         "connectivity": ["array-like", callable, None],
         "compute_full_tree": [StrOptions({"auto"}), "boolean"],
         "linkage": [StrOptions(set(_TREE_BUILDERS.keys()))],
