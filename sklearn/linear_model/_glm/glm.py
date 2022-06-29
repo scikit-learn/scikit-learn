@@ -516,6 +516,9 @@ class PoissonRegressor(_GeneralizedLinearRegressor):
     array([10.676..., 21.875...])
     """
 
+    _parameter_constraints = {**_GeneralizedLinearRegressor._parameter_constraints}
+    _parameter_constraints.pop("solver")
+
     def __init__(
         self,
         *,
@@ -625,6 +628,9 @@ class GammaRegressor(_GeneralizedLinearRegressor):
     >>> clf.predict([[1, 0], [2, 8]])
     array([19.483..., 35.795...])
     """
+
+    _parameter_constraints = {**_GeneralizedLinearRegressor._parameter_constraints}
+    _parameter_constraints.pop("solver")
 
     def __init__(
         self,
@@ -771,6 +777,8 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
         "power": [Interval(Real, None, None, closed="neither")],
         "link": [StrOptions({"auto", "identity", "loss"})],
     }
+    _parameter_constraints.pop("solver")
+
 
     def __init__(
         self,
