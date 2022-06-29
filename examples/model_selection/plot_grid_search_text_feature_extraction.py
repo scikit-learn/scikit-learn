@@ -185,7 +185,7 @@ cv_results = (
     .rename(shorten_param, axis=1)
     .sort_values("mean_test_score", ascending=False)
 )
-cv_results
+cv_results.reset_index(drop=True)
 
 # %%
 # By a manual inspection of the results, one can notice that the top performing
