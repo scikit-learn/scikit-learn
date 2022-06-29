@@ -33,13 +33,7 @@ import warnings
 from scipy.special import xlogy
 
 from ._base import BaseEnsemble
-from ..base import (
-    BaseEstimator,
-    ClassifierMixin,
-    RegressorMixin,
-    is_classifier,
-    is_regressor,
-)
+from ..base import ClassifierMixin, RegressorMixin, is_classifier, is_regressor
 
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..utils import check_random_state, _safe_indexing
