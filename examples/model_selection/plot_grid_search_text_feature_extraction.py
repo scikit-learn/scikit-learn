@@ -129,13 +129,12 @@ print(
 print(f"Accuracy on test set: {test_accuracy:.3f}")
 
 # %%
-# Finally, we use a `plotly.express.parallel_coordinates
-# <https://plotly.com/python-api-reference/generated/plotly.express.parallel_coordinates.html>`_
-# to visualize the results from the
-# :class:`~sklearn.model_selection.GridSearchCV`.
+# The prefixes `vect` and `clf` are required to avoid possible ambiguities in
+# the pipeline, but are not necessary for visualizing the results. Because of
+# this, we define a function that will rename the tuned hyperparameters and
+# improve the readability.
 
 import pandas as pd
-import plotly.express as px
 
 
 def shorten_param(param_name):
@@ -145,18 +144,42 @@ def shorten_param(param_name):
 
 
 cv_results = pd.DataFrame(grid_search.cv_results_)
+cv_results = cv_results.rename(shorten_param, axis=1)
 # unigrams are mapped to index 1 and bigrams to index 2
-cv_results["param_vect__ngram_range"] = cv_results["param_vect__ngram_range"].apply(
-    lambda x: x[1]
-)
+cv_results["ngram_range"] = cv_results["ngram_range"].apply(lambda x: x[1])
 
-column_results = [f"param_{name}" for name in parameters.keys()]
-column_results += ["mean_test_score"]
+# %%
+# We can use a `plotly.express.scatter
+# <https://plotly.com/python-api-reference/generated/plotly.express.scatter.html>`_
+# to visualize the trade-off between scoring time and mean test score. Passing
+# the cursor over a given point displays the corresponding parameters.
+
+import plotly.express as px
+
+param_names = [shorten_param(name) for name in parameters.keys()]
+fig = px.scatter(
+    cv_results, x="mean_score_time", y="mean_test_score", hover_data=param_names
+)
+fig
+
+# %%
+# Notice that the cluster of models in the upper-left corner of the plot are the
+# most optimal in terms of accuracy and scoring time. For more information on
+# how to customize an automated tuning to maximize score and minimize scoring
+# time, see the example notebook
+# :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py`.
+#
+# We can also use a `plotly.express.parallel_coordinates
+# <https://plotly.com/python-api-reference/generated/plotly.express.parallel_coordinates.html>`_
+# to further visualize the mean test score as a function of the tuned
+# hyperparameters. This helps finding interactions between (more than two)
+# hyperparameters and provide an intuition on the relevance they have for
+# maximizing the performance of a pipeline.
+
+column_results = param_names + ["mean_test_score"]
 
 fig = px.parallel_coordinates(
-    cv_results[column_results]
-    .rename(shorten_param, axis=1)
-    .apply(dict.fromkeys(map(shorten_param, column_results), lambda x: x)),
+    cv_results[column_results].apply(dict.fromkeys(column_results, lambda x: x)),
     color="mean_test_score",
     color_continuous_scale=px.colors.sequential.Jet,
 )
@@ -164,14 +187,11 @@ fig
 
 # %%
 # The parallel coordinates plot displays the values of the hyperparameters on
-# different columns while the performance metric is color coded. It allows us to
-# quickly inspect the combinations of hyperparameters that maximize the
-# performance.
-#
-# It is possible to select a range of results by clicking and holding on any
-# axis of the parallel coordinate plot. You can then slide (move) the range
-# selection and cross two selections to see the intersections. You can undo a
-# selection by clicking once again on the same axis.
+# different columns while the performance metric is color coded. It is possible
+# to select a range of results by clicking and holding on any axis of the
+# parallel coordinate plot. You can then slide (move) the range selection and
+# cross two selections to see the intersections. You can undo a selection by
+# clicking once again on the same axis.
 #
 # In particular for this hyperparameter search, it is interesting to notice that
 # the top performing models (mean test score > 0.82) are reached when `min_df=1`
@@ -194,6 +214,4 @@ cv_results.reset_index(drop=True)
 # By a manual inspection of the results, one can notice that the top performing
 # models overlap within one standard deviation of their test score, showing that
 # `max_df` and `ngram_range` are indeed not meaningful parameters in this
-# particular case. For more information on how to customize an automated tuning,
-# see the example notebook
-# :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py`.
+# particular case.
