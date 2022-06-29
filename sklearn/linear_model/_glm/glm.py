@@ -23,9 +23,7 @@ from ...base import BaseEstimator, RegressorMixin
 from ...utils.optimize import _check_optimize_result
 from ...utils import check_array, deprecated
 from ...utils.validation import check_is_fitted, _check_sample_weight
-from ...utils._param_validation import Interval
-from ...utils._param_validation import StrOptions
-from ...utils._param_validation import validate_params
+from ...utils._param_validation import Interval, StrOptions
 from ...utils._openmp_helpers import _openmp_effective_n_threads
 from .._linear_loss import LinearModelLoss
 
@@ -127,12 +125,12 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
 
     _parameter_constraints = {
         "alpha": [Interval(Real, 0.0, None, closed="left")],
-        "fit_intercept": [bool],
+        "fit_intercept": ["boolean"],
         "solver": [StrOptions({"lbfgs"})],
         "max_iter": [Interval(Integral, 1, None, closed="left")],
         "tol": [Interval(Real, 0.0, None, closed="neither")],
-        "warm_start": [bool],
-        "verbose": [Interval(Integral, 0, None, closed="left")],
+        "warm_start": ["boolean"],
+        "verbose": ["verbose"],
     }
 
     def __init__(
@@ -175,12 +173,6 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         """
         self._validate_params()
 
-        if self.solver not in ["lbfgs"]:
-            raise ValueError(
-                f"{self.__class__.__name__} supports only solvers 'lbfgs'; "
-                f"got {self.solver}"
-            )
-
         X, y = self._validate_data(
             X,
             y,
@@ -191,7 +183,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         )
 
         # required by losses
-        if solver == "lbfgs":
+        if self.solver == "lbfgs":
             # lbfgs will force coef and therefore raw_prediction to be float64. The
             # base_loss needs y, X @ coef and sample_weight all of same dtype
             # (and contiguous).
@@ -251,7 +243,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
 
         # Algorithms for optimization:
         # Note again that our losses implement 1/2 * deviance.
-        if solver == "lbfgs":
+        if self.solver == "lbfgs":
             func = linear_loss.loss_gradient
             l2_reg_strength = self.alpha
             n_threads = _openmp_effective_n_threads()
@@ -634,10 +626,6 @@ class GammaRegressor(_GeneralizedLinearRegressor):
     array([19.483..., 35.795...])
     """
 
-    _parameter_constraints = {
-        **_GeneralizedLinearRegressor._parameter_constraints,
-    }
-
     def __init__(
         self,
         *,
@@ -661,12 +649,6 @@ class GammaRegressor(_GeneralizedLinearRegressor):
         return HalfGammaLoss()
 
 
-@validate_params(
-    {
-        "power": [Interval(Real, None, None, closed="neither")],
-        "link": [StrOptions({"auto", "identity", "loss"})],
-    }
-)
 class TweedieRegressor(_GeneralizedLinearRegressor):
     """Generalized Linear Model with a Tweedie distribution.
 
@@ -821,12 +803,9 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
             else:
                 # log link
                 return HalfTweedieLoss(power=self.power)
-        elif self.link == "log":
+
+        if self.link == "log":
             return HalfTweedieLoss(power=self.power)
-        elif self.link == "identity":
+
+        if self.link == "identity":
             return HalfTweedieLossIdentity(power=self.power)
-        else:
-            raise ValueError(
-                "The link must be an element of ['auto', 'identity', 'log']; "
-                f"got (link={self.link!r})"
-            )
