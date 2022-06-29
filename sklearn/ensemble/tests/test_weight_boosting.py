@@ -545,27 +545,6 @@ def test_adaboostregressor_sample_weight():
     assert score_no_outlier == pytest.approx(score_with_weight)
 
 
-@pytest.mark.parametrize(
-    "params, err_type, err_msg",
-    [
-        ({"n_estimators": -1}, ValueError, "n_estimators == -1, must be >= 1"),
-        ({"n_estimators": 0}, ValueError, "n_estimators == 0, must be >= 1"),
-        (
-            {"n_estimators": 1.5},
-            TypeError,
-            "n_estimators must be an instance of int, not float",
-        ),
-        ({"learning_rate": -1}, ValueError, "learning_rate == -1, must be > 0."),
-        ({"learning_rate": 0}, ValueError, "learning_rate == 0, must be > 0."),
-    ],
-)
-@pytest.mark.parametrize(
-    "model, X, y",
-    [
-        (AdaBoostClassifier, X, y_class),
-        (AdaBoostRegressor, X, y_regr),
-    ],
-)
 @pytest.mark.parametrize("algorithm", ["SAMME", "SAMME.R"])
 def test_adaboost_consistent_predict(algorithm):
     # check that predict_proba and predict give consistent results
