@@ -501,6 +501,7 @@ def _plain_sgd(cnp.ndarray[double, ndim=1, mode='c'] weights,
     cdef double sample_weight
     cdef double class_weight = 1.0
     cdef unsigned int count = 0
+    cdef unsigned int train_count = 0
     cdef unsigned int epoch = 0
     cdef unsigned int i = 0
     cdef int is_hinge = isinstance(loss, Hinge)
@@ -539,6 +540,7 @@ def _plain_sgd(cnp.ndarray[double, ndim=1, mode='c'] weights,
     with nogil:
         for epoch in range(max_iter):
             sumloss = 0
+            train_count = 0
             if verbose > 0:
                 with gil:
                     print("-- Epoch %d" % (epoch + 1))
@@ -552,6 +554,8 @@ def _plain_sgd(cnp.ndarray[double, ndim=1, mode='c'] weights,
                 if validation_mask_view[sample_index]:
                     # do not learn on the validation set
                     continue
+
+                train_count += 1
 
                 p = w.dot(x_data_ptr, x_ind_ptr, xnnz) + intercept
                 if learning_rate == OPTIMAL:
@@ -629,10 +633,11 @@ def _plain_sgd(cnp.ndarray[double, ndim=1, mode='c'] weights,
             # report epoch information
             if verbose > 0:
                 with gil:
+
                     print("Norm: %.2f, NNZs: %d, Bias: %.6f, T: %d, "
                           "Avg. loss: %f"
                           % (w.norm(), weights.nonzero()[0].shape[0],
-                             intercept, count, sumloss / n_samples))
+                             intercept, count, sumloss / train_count))
                     print("Total training time: %.2f seconds."
                           % (time() - t_start))
 
@@ -654,7 +659,7 @@ def _plain_sgd(cnp.ndarray[double, ndim=1, mode='c'] weights,
                     best_score = score
             # or evaluate the loss on the training set
             else:
-                if tol > -INFINITY and sumloss > best_loss - tol * n_samples:
+                if tol > -INFINITY and sumloss > best_loss - tol * train_count:
                     no_improvement_count += 1
                 else:
                     no_improvement_count = 0
