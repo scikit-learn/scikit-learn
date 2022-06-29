@@ -1001,7 +1001,7 @@ HDBSCAN can be seen as an algorithm which performs DBSCAN* clustering across all
 values of `eps`. As mentioned prior, this is equivalent to finding the connected
 components of the mutual reachability graphs for all values of `eps`. To do this
 efficiently, HDBSCAN first extracts a minimum spanning tree (MST) from the fully
--connected mutual reachability graph, then greedily cuts the edges with heighest
+-connected mutual reachability graph, then greedily cuts the edges with highest
 weight. An outline of the HDBSCAN algorithm is as follows:
 
   1. Extract the MST of :math:`G_{ms}`
