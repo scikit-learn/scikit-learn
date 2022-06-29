@@ -417,7 +417,13 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                 if expanded_d == 0:
                     break
                 assert expanded_d > 0
-                index_t = np.int64 if expanded_d > np.iinfo(np.int32).max else np.int32
+                max_indices = expanded_d - 1
+                max_indptr = total_nnz - 1
+                max_int32 = np.iinfo(np.int32).max
+                if max_indices > max_int32 or max_indptr > max_int32:
+                    index_t = np.int64
+                else:
+                    index_t = np.int32
                 expanded_data = np.ndarray(shape=total_nnz, dtype=X.data.dtype)
                 expanded_indices = np.ndarray(shape=total_nnz, dtype=index_t)
                 expanded_indptr = np.ndarray(shape=X.indptr.shape[0], dtype=index_t)

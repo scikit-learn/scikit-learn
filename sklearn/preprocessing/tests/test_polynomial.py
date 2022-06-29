@@ -909,6 +909,7 @@ def test_csr_polynomial_expansion_index_overflow():
 
     assert xinter.dtype == dtype
     assert xinter.shape == (13, 7200180001)
+    assert xinter.indptr.dtype == xinter.indices.dtype == np.int64
     assert_array_almost_equal(xinter.data, np.array([1, 2, 2, 3, 4, 12], dtype=dtype))
     assert_array_almost_equal(n_index, np.array([11, 11, 11, 12, 12, 12]))
     assert_array_almost_equal(

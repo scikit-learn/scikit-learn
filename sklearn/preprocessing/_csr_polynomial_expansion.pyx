@@ -7,9 +7,8 @@ cnp.import_array()
 
 ctypedef cnp.int8_t FLAG_T
 
-# INDEX_A/B are defined to generate a proper
-# cartesian product of typings through Cython
-# fused-type expansion.
+# INDEX_A/B are defined to generate a proper Cartesian product of types through
+# Cython fused-type expansion.
 ctypedef fused INDEX_A:
     cnp.int32_t
     cnp.int64_t

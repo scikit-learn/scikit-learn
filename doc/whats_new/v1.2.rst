@@ -223,7 +223,7 @@ Changelog
 ............................
 
 - |Enhancement| :class:`preprocessing.PolynomialFeatures` now calculates the
-  number of expanded terms a-priori whne dealing wtih sparse `csr` matrices
+  number of expanded terms a-priori when dealing with sparse `csr` matrices
   in order to optimize the choice of `dtype` for `indices` and `indptr`. It
   can now output `csr` matrices with `np.int32` `indices/indptr` components
   when there are few enough elements, and will automatically use `np.int64`
