@@ -19,7 +19,6 @@ from sklearn.neighbors import KDTree, BallTree
 from joblib import Memory
 from warnings import warn
 from sklearn.utils import check_array, gen_batches, get_chunk_n_rows
-from joblib.parallel import cpu_count
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 from sklearn.neighbors import NearestNeighbors
 from scipy.sparse import csgraph
@@ -40,7 +39,7 @@ from ._hdbscan_reachability import mutual_reachability, sparse_mutual_reachabili
 from ._hdbscan_boruvka import BoruvkaAlgorithm
 from sklearn.metrics._dist_metrics import DistanceMetric
 
-FAST_METRICS = KDTree.valid_metrics + BallTree.valid_metrics + ["cosine"]
+FAST_METRICS = KDTree.valid_metrics + BallTree.valid_metrics
 _PARAM_CONSTRAINTS = {
     "min_cluster_size": [Interval(Integral, left=2, right=None, closed="left")],
     "min_samples": [Interval(Integral, left=1, right=None, closed="left"), None],
@@ -110,9 +109,7 @@ def _hdbscan_generic(
     metric="euclidean",
     **metric_params,
 ):
-    if metric == "arccos":
-        distance_matrix = pairwise_distances(X, metric="cosine", **metric_params)
-    elif metric == "precomputed":
+    if metric == "precomputed":
         # Treating this case explicitly, instead of letting
         #   sklearn.metrics.pairwise_distances handle it,
         #   enables the usage of numpy.inf in the distance
@@ -154,23 +151,12 @@ def _hdbscan_sparse_distance_matrix(
     **metric_params,
 ):
     assert issparse(X)
-    # Check for connected component on X
-    if csgraph.connected_components(X, directed=False, return_labels=False) > 1:
-        raise ValueError(
-            "Sparse distance matrix has multiple connected "
-            "components!\nThat is, there exist groups of points "
-            "that are completely disjoint -- there are no distance "
-            "relations connecting them\n"
-            "Run hdbscan on each component."
-        )
-
-    lil_matrix = X.tolil()
 
     # Compute sparse mutual reachability graph
     # if max_dist > 0, max distance to use when the reachability is infinite
     max_dist = metric_params.get("max_dist", 0.0)
     mutual_reachability_ = sparse_mutual_reachability(
-        lil_matrix, min_points=min_samples, max_dist=max_dist, alpha=alpha
+        X.tolil(), min_points=min_samples, max_dist=max_dist, alpha=alpha
     )
     # Check connected component on mutual reachability
     # If more than one component, it means that even if the distance matrix X
@@ -258,11 +244,6 @@ def _hdbscan_boruvka(
     **metric_params,
 ):
     leaf_size = max(leaf_size, 3)
-
-    n_jobs = 1 if n_jobs == 0 else n_jobs
-    if n_jobs < 0:
-        n_jobs = max(cpu_count() + n_jobs + 1, 1)
-
     Tree = KDTree if algo == "kd_tree" else BallTree
     tree = Tree(X, metric=metric, leaf_size=leaf_size, **metric_params)
 
@@ -421,8 +402,8 @@ def hdbscan(
         `prims` approach is used.
 
         If the `X` passed during `fit` is sparse or `metric` is not a valid
-        metric for neither `KDTree` nor `BallTree` and is something other than
-        "cosine" and "arccos", then it resolves to use the `generic` algorithm.
+        metric for neither `KDTree` nor `BallTree` then it resolves to use
+        the `generic` algorithm.
 
         Available algorithms:
         - `'best'`
@@ -506,11 +487,6 @@ def hdbscan(
 
     memory = Memory(location=memory, verbose=0)
 
-    size = X.shape[0]
-    min_samples = min(size - 1, min_samples)
-    if min_samples == 0:
-        min_samples = 1
-
     metric_params = metric_params or {}
     func = None
     kwargs = dict(
@@ -554,11 +530,6 @@ def hdbscan(
             func = _hdbscan_boruvka
             kwargs.pop("alpha", None)
             kwargs["algo"] = "ball_tree"
-        else:
-            raise TypeError(
-                f"Unknown algorithm type {algorithm} specified. Please select a"
-                " supported algorithm."
-            )
     else:
         if issparse(X) or metric not in FAST_METRICS:
             # We can't do much with sparse matrices ...
@@ -650,8 +621,8 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         `prims` approach is used.
 
         If the `X` passed during `fit` is sparse or `metric` is not a valid
-        metric for neither `KDTree` nor `BallTree` and is something other than
-        "cosine" and "arccos", then it resolves to use the `generic` algorithm.
+        metric for neither `KDTree` nor `BallTree` then it resolves to use
+        the `generic` algorithm.
 
         Available algorithms:
         - `'best'`
@@ -815,9 +786,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
             self._raw_data = X
 
             self._all_finite = (
-                np.all(np.isfinite(X.tocoo().data))
-                if issparse(X)
-                else np.all(np.isfinite(X))
+                np.all(np.isfinite(X.data)) if issparse(X) else np.all(np.isfinite(X))
             )
 
             if not self._all_finite:

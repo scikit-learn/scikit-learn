@@ -224,17 +224,21 @@ def test_hdbscan_best_balltree_metric():
 
 
 def test_hdbscan_no_clusters():
-    labels = hdbscan(X, min_cluster_size=len(X) + 1)[0]
+    labels = hdbscan(X, min_cluster_size=len(X) - 1)[0]
     n_clusters_1 = len(set(labels)) - int(-1 in labels)
     assert n_clusters_1 == 0
 
-    labels = HDBSCAN(min_cluster_size=len(X) + 1).fit(X).labels_
+    labels = HDBSCAN(min_cluster_size=len(X) - 1).fit(X).labels_
     n_clusters_2 = len(set(labels)) - int(-1 in labels)
     assert n_clusters_2 == 0
 
 
 def test_hdbscan_min_cluster_size():
-    for min_cluster_size in range(2, len(X) + 1, 1):
+    """
+    Test that the smallest non-noise cluster has at least `min_cluster_size`
+    many points
+    """
+    for min_cluster_size in range(2, len(X), 1):
         labels = hdbscan(X, min_cluster_size=min_cluster_size)[0]
         true_labels = [label for label in labels if label != -1]
         if len(true_labels) != 0:
@@ -260,7 +264,7 @@ def test_hdbscan_callable_metric():
 
 def test_hdbscan_input_lists():
     X = [[1.0, 2.0], [3.0, 4.0]]
-    HDBSCAN().fit(X)
+    HDBSCAN(min_samples=1).fit(X)
 
 
 @pytest.mark.parametrize("tree", ["kdtree", "balltree"])
@@ -286,8 +290,11 @@ def test_hdbscan_boruvka_matches(tree):
 @pytest.mark.parametrize("strategy", ["prims", "boruvka"])
 @pytest.mark.parametrize("tree", ["kd", "ball"])
 def test_hdbscan_precomputed_non_generic(strategy, tree):
+    hdb = HDBSCAN(metric="precomputed", algorithm=f"{strategy}_{tree}tree")
     with pytest.raises(ValueError):
         hdbscan(X, metric="precomputed", algorithm=f"{strategy}_{tree}tree")
+    with pytest.raises(ValueError):
+        hdb.fit(X)
 
 
 def test_hdbscan_sparse():
@@ -297,6 +304,18 @@ def test_hdbscan_sparse():
     labels = HDBSCAN().fit(sparse_X).labels_
     n_clusters = len(set(labels)) - int(-1 in labels)
     assert n_clusters == 3
+
+    sparse_X_nan = sparse_X.copy()
+    sparse_X_nan[0, 0] = np.nan
+    labels = HDBSCAN().fit(sparse_X_nan).labels_
+    n_clusters = len(set(labels)) - int(-1 in labels)
+    assert n_clusters == 3
+
+    msg = "Sparse data matrices only support algorithm `generic`."
+    with pytest.raises(ValueError, match=msg):
+        HDBSCAN(metric="euclidean", algorithm="boruvka_balltree").fit(sparse_X)
+    with pytest.raises(ValueError, match=msg):
+        hdbscan(sparse_X, metric="euclidean", algorithm="boruvka_balltree")
 
 
 def test_hdbscan_caching(tmp_path):
@@ -372,3 +391,36 @@ def test_hdbscan_better_than_dbscan():
     hdb = HDBSCAN().fit(X)
     n_clusters = len(set(hdb.labels_)) - int(-1 in hdb.labels_)
     assert n_clusters == 4
+
+
+def test_hdbscan_unfit_centers_errors():
+    hdb = HDBSCAN()
+    msg = "Model has not been fit to data"
+    with pytest.raises(AttributeError, match=msg):
+        hdb.weighted_cluster_centroid(0)
+    with pytest.raises(AttributeError, match=msg):
+        hdb.weighted_cluster_medoid(0)
+
+
+def test_hdbscan_precomputed_array_like():
+    X = np.array([[1, np.inf], [np.inf, 1]])
+    hdbscan(X, metric="precomputed")
+
+
+@pytest.mark.parametrize("algo", ["boruvka_kdtree", "boruvka_balltree"])
+def test_hdbscan_min_samples_less_than_total(algo):
+    X = np.array([[1, 2], [2, 1]])
+
+    msg = "Expected min_samples"
+    with pytest.raises(ValueError, match=msg):
+        hdbscan(X, algorithm=algo, min_samples=3)
+    with pytest.raises(ValueError, match=msg):
+        HDBSCAN(algorithm=algo, min_samples=3).fit(X)
+
+
+def test_hdbscan_sparse_distances_too_few_nonzero():
+    X = sparse.csr_matrix(np.zeros((10, 10)))
+
+    msg = "There exists points with less than"
+    with pytest.raises(ValueError, match=msg):
+        HDBSCAN(metric="precomputed").fit(X)
