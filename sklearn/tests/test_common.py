@@ -447,8 +447,6 @@ def test_estimators_do_not_raise_errors_in_init_or_set_params(Estimator):
 
 PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "ARDRegression",
-    "AdaBoostClassifier",
-    "AdaBoostRegressor",
     "AdditiveChi2Sampler",
     "AffinityPropagation",
     "BaggingClassifier",
