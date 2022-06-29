@@ -308,13 +308,15 @@ def fetch_lfw_people(
         target : numpy array of shape (13233,)
             Labels associated to each face image.
             Those labels range from 0-5748 and correspond to the person IDs.
+        target_names : numpy array of shape (5749,)
+            Names of all persons in the dataset.
+            Position in array corresponds to the person ID in the target array.
         DESCR : str
             Description of the Labeled Faces in the Wild (LFW) dataset.
 
     (data, target) : tuple if ``return_X_y`` is True
 
         .. versionadded:: 0.20
-
     """
     lfw_home, data_folder_path = _check_fetch_lfw(
         data_home=data_home, funneled=funneled, download_if_missing=download_if_missing
@@ -489,6 +491,9 @@ def fetch_lfw_pairs(
         target : numpy array of shape (2200,). Shape depends on ``subset``.
             Labels associated to each pair of images.
             The two label values being different persons or the same person.
+        target_names : numpy array of shape (2,)
+            Explains the target values of the target array.
+            0 corresponds to "Different person", 1 corresponds to "same person".
         DESCR : str
             Description of the Labeled Faces in the Wild (LFW) dataset.
     """
