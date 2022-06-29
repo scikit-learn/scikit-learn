@@ -502,6 +502,9 @@ class _VerboseHelper(_Constraint):
 class HasMethod(_Constraint):
     """Constraint representing objects that expose a specific method.
 
+    It is useful for parameters following a protocol and where we don't want to impose
+    an affiliation to a specific module or class.
+
     Parameters
     ----------
     method : str
