@@ -273,14 +273,6 @@ def test_glm_regression_hstacked_X(solver, fit_intercept, glm_dataset):
         max_iter=1000,
     )
 
-    if solver == "lbfgs" and not fit_intercept:
-        # Sometimes (depending on global_random_seed) lbfgs fails with:
-        # Line search cannot locate an adequate point after MAXLS function and gradient
-        # evaluations. Previous x, f and g restored.
-        # Possible causes: 1 error in function or gradient evaluation;
-        #                  2 rounding error dominate computation.
-        pytest.xfail()
-
     model = clone(model).set_params(**params)
     X = X[:, :-1]  # remove intercept
     X = 0.5 * np.concatenate((X, X), axis=1)
@@ -294,7 +286,7 @@ def test_glm_regression_hstacked_X(solver, fit_intercept, glm_dataset):
         intercept = 0
     model.fit(X, y)
 
-    rtol = 1e-4
+    rtol = 2e-4
     assert model.intercept_ == pytest.approx(intercept, rel=rtol)
     assert_allclose(model.coef_, np.r_[coef, coef], rtol=rtol)
 
