@@ -50,6 +50,9 @@ def test_initialize_nn_output():
     r" the initialization"
 )
 def test_parameter_checking():
+    # Here we only check for invalid parameter values that are not already
+    # automatically tested in the common tests.
+
     A = np.ones((2, 2))
     name = "spam"
 
@@ -394,6 +397,11 @@ def test_non_negative_factorization_consistency(init, solver, alpha_W, alpha_H):
 
 
 def test_non_negative_factorization_checking():
+    # Note that the validity of parameter types and range of possible values
+    # for scalar numerical or str parameters is already checked in the common
+    # tests. Here we only check for problems that cannot be captured by simple
+    # declarative constraints on the valid parameter values.
+
     A = np.ones((2, 2))
     # Test parameters checking in public function
     nnmf = non_negative_factorization

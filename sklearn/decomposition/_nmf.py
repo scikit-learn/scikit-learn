@@ -1335,7 +1335,7 @@ class _BaseNMF(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
             Returns a data matrix of the original shape.
         """
         check_is_fitted(self)
-        return np.dot(W, self.components_)
+        return W @ self.components_
 
     @property
     def _n_features_out(self):
@@ -1345,7 +1345,7 @@ class _BaseNMF(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
     def _more_tags(self):
         return {
             "requires_positive_X": True,
-            "preserves_dtype": [np.float32, np.float64],
+            "preserves_dtype": [np.float64, np.float32],
         }
 
 
