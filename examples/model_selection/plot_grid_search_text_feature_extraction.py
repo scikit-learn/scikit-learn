@@ -122,9 +122,6 @@ print(f"Accuracy on test set: {accuracy:.3f}")
 
 import pandas as pd
 import plotly.express as px
-import plotly.io as pio
-
-pio.renderers.default = "sphinx_gallery"
 
 
 def shorten_param(param_name):
@@ -134,7 +131,7 @@ def shorten_param(param_name):
 
 
 cv_results = pd.DataFrame(grid_search.cv_results_)
-# monograms are mapped to index 1 and bigrams to index 2
+# unigrams are mapped to index 1 and bigrams to index 2
 cv_results["param_vect__ngram_range"] = cv_results["param_vect__ngram_range"].apply(
     lambda x: x[1]
 )
