@@ -177,8 +177,11 @@ fig
 # the top performing models (mean test score > 0.82) are reached when `min_df=1`
 # and `alpha` is close to 0.01, regardless of the values of `max_df` and
 # `ngram_range`.
+#
+# The parallel coordinates plot does not provide information on the variability
+# of the score accross the different folds of the cross-validation. For such
+# purpose we can further inspect the `cv_results` as follows:
 
-# %%
 column_results += ["std_test_score"]
 cv_results = (
     cv_results[column_results]
