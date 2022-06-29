@@ -165,9 +165,12 @@ fig
 
 # %%
 # Notice that the cluster of models in the upper-left corner of the plot are the
-# most optimal in terms of accuracy and scoring time. For more information on
-# how to customize an automated tuning to maximize score and minimize scoring
-# time, see the example notebook
+# most optimal in terms of accuracy and scoring time. In this case, using
+# bigrams increases the required scoring time without improving considerably the
+# accuracy of the pipeline.
+#
+# For more information on how to customize an automated tuning to maximize score
+# and minimize scoring time, see the example notebook
 # :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py`.
 #
 # We can also use a `plotly.express.parallel_coordinates
