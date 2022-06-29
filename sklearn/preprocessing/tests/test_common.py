@@ -40,8 +40,8 @@ def _get_valid_samples_by_column(X, col):
     [
         (MaxAbsScaler(), maxabs_scale, True, False, []),
         (MinMaxScaler(), minmax_scale, False, False, ["clip"]),
-        (StandardScaler(), scale, False, False, []),
-        (StandardScaler(with_mean=False), scale, True, False, []),
+        (StandardScaler(), scale, False, False, ["ddof"]),
+        (StandardScaler(with_mean=False), scale, True, False, ["ddof"]),
         (PowerTransformer("yeo-johnson"), power_transform, False, False, []),
         (PowerTransformer("box-cox"), power_transform, False, True, []),
         (QuantileTransformer(n_quantiles=10), quantile_transform, True, False, []),
