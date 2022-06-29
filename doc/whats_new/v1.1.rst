@@ -626,12 +626,6 @@ Changelog
 - |Efficiency| Improve runtime performance of :class:`ensemble.IsolationForest`
   by skipping repetitive input checks. :pr:`23149` by :user:`Zhehao Liu <MaxwellLZH>`.
 
-- |Feature| Added interaction constraints for
-  :class:`~sklearn.ensemble.HistGradientBoostingClassifier` and
-  :class:`~sklearn.ensemble.HistGradientBoostingRegressor` via the new
-  argument `interaction_cst`.
-  :pr:`21020` by :user:`Christian Lorentzen <lorentzenchr>`.
-
 :mod:`sklearn.feature_extraction`
 .................................
 
