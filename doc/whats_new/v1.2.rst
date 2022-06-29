@@ -110,6 +110,16 @@ Changelog
   its memory footprint and runtime.
   :pr:`22268` by :user:`MohamedBsh <Bsh>`.
 
+:mod:`sklearn.decomposition`
+............................
+
+- |API| The `n_iter` parameter of :class:`decomposition.MiniBatchSparsePCA` is
+  deprecated and replaced by the parameters `max_iter`, `tol`, and
+  `max_no_improvement` to be consistent with
+  :class:`decomposition.MiniBatchDictionaryLearning`. `n_iter` will be removed
+  in version 1.3. :pr:`23726` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+
 :mod:`sklearn.ensemble`
 .......................
 
@@ -173,7 +183,7 @@ Changelog
 ........................
 
 - |Enhancement| :class:`neighbors.KernelDensity` bandwidth parameter now accepts
-  definition using Scott's and Silvermann's estimation methods.
+  definition using Scott's and Silverman's estimation methods.
   :pr:`10468` by :user:`Ruben <icfly2>` and :pr:`22993` by
   :user:`Jovan Stojanovic <jovan-stojanovic>`.
 
