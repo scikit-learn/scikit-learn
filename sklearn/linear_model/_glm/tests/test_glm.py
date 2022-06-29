@@ -45,8 +45,8 @@ def _special_minimize(fun, grad, x, tol_NM, tol):
     res_NM = minimize(
         fun, x, method="Nelder-Mead", options={"xatol": tol_NM, "fatol": tol_NM}
     )
-    # Now refine via root finding on the gradient of the function, wich is more precise
-    # than minimizing the function itself.
+    # Now refine via root finding on the gradient of the function, which is more
+    # precise than minimizing the function itself.
     res = root(
         grad,
         res_NM.x,
@@ -116,6 +116,8 @@ def glm_dataset(global_random_seed, request):
         GLM solution with alpha=l2_reg_strength=1, i.e.
         min 1/n * sum(loss) + ||w[:-1]||_2^2.
         Last coefficient is intercept.
+    l2_reg_strength : float
+        Always equal 1.
     """
     data_type, model = request.param
     # Make larger dim more than double as big as the smaller one.
@@ -205,6 +207,7 @@ def glm_dataset(global_random_seed, request):
         coef_unpenalized,
         coef_penalized_with_intercept,
         coef_penalized_without_intercept,
+        l2_reg_strength,
     )
 
 
@@ -215,8 +218,7 @@ def test_glm_regression(solver, fit_intercept, glm_dataset):
 
     We work with a simple constructed data set with known solution.
     """
-    model, X, y, _, coef_with_intercept, coef_without_intercept = glm_dataset
-    alpha = 1.0  # because glm_dataset uses this.
+    model, X, y, _, coef_with_intercept, coef_without_intercept, alpha = glm_dataset
     params = dict(
         alpha=alpha,
         fit_intercept=fit_intercept,
@@ -258,9 +260,8 @@ def test_glm_regression_hstacked_X(solver, fit_intercept, glm_dataset):
     Fit on [X] with alpha is the same as fit on [X, X]/2 with alpha/2.
     For long X, [X, X] is still a long but singular matrix.
     """
-    model, X, y, _, coef_with_intercept, coef_without_intercept = glm_dataset
+    model, X, y, _, coef_with_intercept, coef_without_intercept, alpha = glm_dataset
     n_samples, n_features = X.shape
-    alpha = 1.0  # because glm_dataset uses this.
     params = dict(
         alpha=alpha / 2,
         fit_intercept=fit_intercept,
@@ -306,9 +307,8 @@ def test_glm_regression_vstacked_X(solver, fit_intercept, glm_dataset):
     It is the same alpha as the average loss stays the same.
     For wide X, [X', X'] is a singular matrix.
     """
-    model, X, y, _, coef_with_intercept, coef_without_intercept = glm_dataset
+    model, X, y, _, coef_with_intercept, coef_without_intercept, alpha = glm_dataset
     n_samples, n_features = X.shape
-    alpha = 1.0  # because glm_dataset uses this.
     params = dict(
         alpha=alpha,
         fit_intercept=fit_intercept,
@@ -346,7 +346,7 @@ def test_glm_regression_unpenalized(solver, fit_intercept, glm_dataset):
     n_samples < n_features:
         min ||w||_2 subject to w = argmin deviance(X, y, w)
     """
-    model, X, y, coef, _, _ = glm_dataset
+    model, X, y, coef, _, _, _ = glm_dataset
     n_samples, n_features = X.shape
     alpha = 0  # unpenalized
     params = dict(
@@ -389,7 +389,7 @@ def test_glm_regression_unpenalized(solver, fit_intercept, glm_dataset):
             # Note: Even adding a tiny penalty does not give the minimal norm solution.
             # XXX: We could have naively expected LBFGS to find the minimal norm
             # solution by adding a very small penalty. Even that fails for a reason we
-            # do not properly
+            # do not properly understand at this point.
         else:
             # When `fit_intercept=False`, LBFGS naturally converges to the minimum norm
             # solution on this problem.
@@ -409,7 +409,7 @@ def test_glm_regression_unpenalized_hstacked_X(solver, fit_intercept, glm_datase
     solution:
         min ||w||_2 subject to w = argmin deviance(X, y, w)
     """
-    model, X, y, coef, _, _ = glm_dataset
+    model, X, y, coef, _, _, _ = glm_dataset
     n_samples, n_features = X.shape
     alpha = 0  # unpenalized
     params = dict(
@@ -437,13 +437,13 @@ def test_glm_regression_unpenalized_hstacked_X(solver, fit_intercept, glm_datase
     assert np.linalg.matrix_rank(X) <= min(n_samples, n_features)
 
     with warnings.catch_warnings():
-        if fit_intercept and n_samples < n_features:
+        if fit_intercept and n_samples <= n_features:
             # XXX: Investigate if the lack of convergence in this case should be
             # considered a bug or not.
             warnings.filterwarnings("ignore", category=ConvergenceWarning)
         model.fit(X, y)
 
-    if fit_intercept and n_samples < n_features:
+    if fit_intercept and n_samples <= n_features:
         # Here we take special care.
         model_intercept = 2 * model.intercept_
         model_coef = 2 * model.coef_[:-1]  # exclude the other intercept term.
@@ -489,7 +489,7 @@ def test_glm_regression_unpenalized_vstacked_X(solver, fit_intercept, glm_datase
     solution:
         min ||w||_2 subject to w = argmin deviance(X, y, w)
     """
-    model, X, y, coef, _, _ = glm_dataset
+    model, X, y, coef, _, _, _ = glm_dataset
     n_samples, n_features = X.shape
     alpha = 0  # unpenalized
     params = dict(
