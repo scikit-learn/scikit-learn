@@ -5,6 +5,7 @@
 # License: BSD 3 clause
 
 import warnings
+from numbers import Integral, Real
 from operator import itemgetter
 
 import numpy as np
@@ -13,10 +14,11 @@ import scipy.optimize
 
 from ..base import BaseEstimator, RegressorMixin, clone
 from ..base import MultiOutputMixin
-from .kernels import RBF, ConstantKernel as C
+from .kernels import Kernel, RBF, ConstantKernel as C
 from ..preprocessing._data import _handle_zeros_in_scale
 from ..utils import check_random_state
 from ..utils.optimize import _check_optimize_result
+from ..utils._param_validation import Interval, StrOptions
 
 GPR_CHOLESKY_LOWER = True
 
@@ -61,7 +63,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         noise level directly as a parameter is mainly for convenience and
         for consistency with :class:`~sklearn.linear_model.Ridge`.
 
-    optimizer : "fmin_l_bfgs_b" or callable, default="fmin_l_bfgs_b"
+    optimizer : "fmin_l_bfgs_b", callable or None, default="fmin_l_bfgs_b"
         Can either be one of the internally supported optimizers for optimizing
         the kernel's parameters, specified by a string, or an externally
         defined optimizer passed as a callable. If a callable is passed, it
@@ -173,6 +175,16 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
     (array([653.0..., 592.1...]), array([316.6..., 316.6...]))
     """
 
+    _parameter_constraints = {
+        "kernel": [None, Kernel],
+        "alpha": [Interval(Real, 0, None, closed="left"), np.ndarray],
+        "optimizer": [StrOptions({"fmin_l_bfgs_b"}), callable, None],
+        "n_restarts_optimizer": [Interval(Integral, 0, None, closed="left")],
+        "normalize_y": ["boolean"],
+        "copy_X_train": ["boolean"],
+        "random_state": ["random_state"],
+    }
+
     def __init__(
         self,
         kernel=None,
@@ -208,6 +220,8 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         self : object
             GaussianProcessRegressor class instance.
         """
+        self._validate_params()
+
         if self.kernel is None:  # Use an RBF kernel as default
             self.kernel_ = C(1.0, constant_value_bounds="fixed") * RBF(
                 1.0, length_scale_bounds="fixed"
