@@ -1139,9 +1139,11 @@ class KMeans(_BaseKMeans):
             (n_clusters, n_features), default='k-means++'
         Method for initialization:
 
-        'k-means++' : selects initial cluster centers for k-mean
-        clustering in a smart way to speed up convergence. See section
-        Notes in k_init for more details.
+        'k-means++' : selects initial cluster centroids using sampling based on
+        an empirical probability distribution of the points' contribution to the
+        overall inertia. This technique speeds up convergence, and is
+        theoretically proven to be :math:`\\mathcal{O}(\\log k)`-optimal.
+        See the description of `n_init` for more details.
 
         'random': choose `n_clusters` observations (rows) at random from data
         for the initial centroids.
@@ -1601,9 +1603,11 @@ class MiniBatchKMeans(_BaseKMeans):
             (n_clusters, n_features), default='k-means++'
         Method for initialization:
 
-        'k-means++' : selects initial cluster centers for k-mean
-        clustering in a smart way to speed up convergence. See section
-        Notes in k_init for more details.
+        'k-means++' : selects initial cluster centroids using sampling based on
+        an empirical probability distribution of the points' contribution to the
+        overall inertia. This technique speeds up convergence, and is
+        theoretically proven to be :math:`\\mathcal{O}(\\log k)`-optimal.
+        See the description of `n_init` for more details.
 
         'random': choose `n_clusters` observations (rows) at random from data
         for the initial centroids.
@@ -1667,8 +1671,10 @@ class MiniBatchKMeans(_BaseKMeans):
 
     n_init : int, default=3
         Number of random initializations that are tried.
-        In contrast to KMeans, the algorithm is only run once, using the
-        best of the ``n_init`` initializations as measured by inertia.
+        In contrast to KMeans, the algorithm is only run once, using the best of
+        the `n_init` initializations as measured by inertia. Several runs are
+        recommended for sparse high-dimensional problems (see
+        :ref:`kmeans_sparse_high_dim`).
 
     reassignment_ratio : float, default=0.01
         Control the fraction of the maximum number of counts for a center to
