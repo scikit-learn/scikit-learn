@@ -107,7 +107,7 @@ plt.ylim(bottom=-0.05, top=1.05)
 
 # %%
 # Random labeling with varying n_clusters against ground class labels
-# with fixed number of clusters
+# with a fixed number of samples (1000).
 
 n_samples = 1000
 n_clusters_range = np.linspace(2, 100, 10).astype(int)
