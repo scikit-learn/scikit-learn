@@ -75,13 +75,16 @@ pipeline = Pipeline(
 pipeline
 
 # %%
+import numpy as np
+
 parameters = {
     "vect__max_df": (0.5, 0.75, 1.0),
     "vect__min_df": (1, 3, 5),
     # 'vect__max_features': (None, 5000, 10000, 50000),
     "vect__ngram_range": ((1, 1), (1, 2)),  # unigrams or bigrams
     # 'vect__norm': ('l1', 'l2'),
-    "clf__alpha": (0.01, 0.1),
+    "clf__alpha": np.logspace(-2.5, -1, 20),
+    # (0.01, 0.1),
 }
 
 # %%
@@ -89,10 +92,15 @@ parameters = {
 
 from pprint import pprint
 from time import time
-from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import RandomizedSearchCV
 
-grid_search = GridSearchCV(
-    estimator=pipeline, param_grid=parameters, n_jobs=2, verbose=1
+grid_search = RandomizedSearchCV(
+    estimator=pipeline,
+    param_distributions=parameters,
+    n_iter=40,
+    random_state=0,
+    n_jobs=2,
+    verbose=1,
 )
 
 print("Performing grid search...")
@@ -160,9 +168,9 @@ fig
 # selection by clicking once again on the same axis.
 #
 # In particular for this hyperparameter search, it is interesting to notice that
-# the top performing models (dark red lines with mean test score > 0.82) are
-# reached when `min_df=1` and `alpha=0.01`, regardless of the value of
-# `max_df` and the `ngram_range`.
+# the top performing models (mean test score > 0.82) are reached when `min_df=1`
+# and `alpha` is close to 0.01, regardless of the values of `max_df` and
+# `ngram_range`.
 
 # %%
 column_results += ["std_test_score"]
@@ -177,6 +185,6 @@ cv_results
 # By a manual inspection of the results, one can notice that the top performing
 # models overlap within one standard deviation of their test score, showing that
 # `max_df` and `ngram_range` are indeed not meaningful parameters in this
-# particular case. For more information on how to customize a
-# :class:`~sklearn.model_selection.GridSearchCV`, see the example notebook
+# particular case. For more information on how to customize an automated tuning,
+# see the example notebook
 # :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py`.
