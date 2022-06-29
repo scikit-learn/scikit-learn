@@ -229,7 +229,7 @@ class NeighborhoodComponentsAnalysis(
         # (n_samples, n_samples)
 
         # Initialize the transformation
-        transformation = self._initialize(X, y, init)
+        transformation = np.ravel(self._initialize(X, y, init))
 
         # Create a dictionary of parameters to be passed to the optimizer
         disp = self.verbose - 2 if self.verbose > 1 else -1

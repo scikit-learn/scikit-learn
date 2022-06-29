@@ -44,10 +44,16 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
     solver : {'highs-ds', 'highs-ipm', 'highs', 'interior-point', \
             'revised simplex'}, default='interior-point'
         Method used by :func:`scipy.optimize.linprog` to solve the linear
-        programming formulation. Note that the highs methods are recommended
-        for usage with `scipy>=1.6.0` because they are the fastest ones.
-        Solvers "highs-ds", "highs-ipm" and "highs" support
-        sparse input data and, in fact, always convert to sparse csc.
+        programming formulation.
+
+        From `scipy>=1.6.0`, it is recommended to use the highs methods because
+        they are the fastest ones. Solvers "highs-ds", "highs-ipm" and "highs"
+        support sparse input data and, in fact, always convert to sparse csc.
+
+        From `scipy>=1.11.0`, "interior-point" is not available anymore.
+
+        .. versionchanged:: 1.4
+           The default of `solver` will change to `"highs"` in version 1.4.
 
     solver_options : dict, default=None
         Additional parameters passed to :func:`scipy.optimize.linprog` as
@@ -91,7 +97,10 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
     >>> rng = np.random.RandomState(0)
     >>> y = rng.randn(n_samples)
     >>> X = rng.randn(n_samples, n_features)
-    >>> reg = QuantileRegressor(quantile=0.8).fit(X, y)
+    >>> # the two following lines are optional in practice
+    >>> from sklearn.utils.fixes import sp_version, parse_version
+    >>> solver = "highs" if sp_version >= parse_version("1.6.0") else "interior-point"
+    >>> reg = QuantileRegressor(quantile=0.8, solver=solver).fit(X, y)
     >>> np.mean(y <= reg.predict(X))
     0.8
     """
@@ -102,7 +111,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         quantile=0.5,
         alpha=1.0,
         fit_intercept=True,
-        solver="interior-point",
+        solver="warn",
         solver_options=None,
     ):
         self.quantile = quantile
@@ -166,14 +175,14 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
                 f"The argument fit_intercept must be bool, got {self.fit_intercept}"
             )
 
-        if self.solver not in (
-            "highs-ds",
-            "highs-ipm",
-            "highs",
-            "interior-point",
-            "revised simplex",
-        ):
-            raise ValueError(f"Invalid value for argument solver, got {self.solver}")
+        if self.solver == "warn":
+            warnings.warn(
+                "The default solver will change from 'interior-point' to 'highs' in "
+                "version 1.4. Set `solver='highs'` or to the desired solver to silence "
+                "this warning.",
+                FutureWarning,
+            )
+            solver = "interior-point"
         elif self.solver in (
             "highs-ds",
             "highs-ipm",
@@ -183,8 +192,23 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
                 f"Solver {self.solver} is only available "
                 f"with scipy>=1.6.0, got {sp_version}"
             )
+        else:
+            solver = self.solver
 
-        if sparse.issparse(X) and self.solver not in ["highs", "highs-ds", "highs-ipm"]:
+        if solver not in (
+            "highs-ds",
+            "highs-ipm",
+            "highs",
+            "interior-point",
+            "revised simplex",
+        ):
+            raise ValueError(f"Invalid value for argument solver, got {solver}")
+        elif solver == "interior-point" and sp_version >= parse_version("1.11.0"):
+            raise ValueError(
+                f"Solver {solver} is not anymore available in SciPy >= 1.11.0."
+            )
+
+        if sparse.issparse(X) and solver not in ["highs", "highs-ds", "highs-ipm"]:
             raise ValueError(
                 f"Solver {self.solver} does not support sparse X. "
                 "Use solver 'highs' for example."
@@ -200,7 +224,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
             )
 
         # make default solver more stable
-        if self.solver_options is None and self.solver == "interior-point":
+        if self.solver_options is None and solver == "interior-point":
             solver_options = {"lstsq": True}
         else:
             solver_options = self.solver_options
@@ -243,7 +267,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
             c[0] = 0
             c[n_params] = 0
 
-        if self.solver in ["highs", "highs-ds", "highs-ipm"]:
+        if solver in ["highs", "highs-ds", "highs-ipm"]:
             # Note that highs methods always use a sparse CSC memory layout internally,
             # even for optimization problems parametrized using dense numpy arrays.
             # Therefore, we work with CSC matrices as early as possible to limit
@@ -268,7 +292,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
             c=c,
             A_eq=A_eq,
             b_eq=b_eq,
-            method=self.solver,
+            method=solver,
             options=solver_options,
         )
         solution = result.x
