@@ -3,10 +3,14 @@
 # Authors: Mathieu Blondel <mathieu@mblondel.org>
 #          Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 # License: BSD 3 clause
+from numbers import Real
 
 import numpy as np
 
 from .base import BaseEstimator, RegressorMixin, MultiOutputMixin
+from .utils._param_validation import Interval
+from .utils._param_validation import StrOptions
+from .metrics.pairwise import PAIRWISE_KERNEL_FUNCTIONS
 from .metrics.pairwise import pairwise_kernels
 from .linear_model._ridge import _solve_cholesky_kernel
 from .utils.validation import check_is_fitted, _check_sample_weight
@@ -129,6 +133,18 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
     KernelRidge(alpha=1.0)
     """
 
+    _parameter_constraints = {
+        "alpha": [Interval(Real, 0, None, closed="left"), np.ndarray],
+        "kernel": [
+            StrOptions(set(PAIRWISE_KERNEL_FUNCTIONS.keys()) | {"precomputed"}),
+            callable,
+        ],
+        "gamma": [Interval(Real, 0, None, closed="left"), None],
+        "degree": [Interval(Real, 0, None, closed="left")],
+        "coef0": [Interval(Real, 0, None, closed="left")],
+        "kernel_params": "no_validation",
+    }
+
     def __init__(
         self,
         alpha=1,
@@ -176,6 +192,8 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
         self : object
             Returns the instance itself.
         """
+        self._validate_params()
+
         # Convert data
         X, y = self._validate_data(
             X, y, accept_sparse=("csr", "csc"), multi_output=True, y_numeric=True
