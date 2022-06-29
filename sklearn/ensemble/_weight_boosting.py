@@ -25,7 +25,7 @@ The module structure is the following:
 
 from abc import ABCMeta, abstractmethod
 
-import numbers
+from numbers import Integral, Real
 import numpy as np
 
 import warnings
@@ -66,9 +66,9 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
     """
 
     _parameter_constraints = {
-        "base_estimator": [None, BaseEstimator],
-        "n_estimators": [Interval(numbers.Integral, 1, None, closed="left")],
-        "learning_rate": [Interval(numbers.Real, 0, None, closed="neither")],
+        "base_estimator": "no_validation",  # TODO create an estimator-like constraint ?
+        "n_estimators": [Interval(Integral, 1, None, closed="left")],
+        "learning_rate": [Interval(Real, 0, None, closed="neither")],
         "random_state": ["random_state"],
     }
 
