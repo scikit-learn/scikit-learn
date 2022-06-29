@@ -779,7 +779,6 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
     }
     _parameter_constraints.pop("solver")
 
-
     def __init__(
         self,
         *,
