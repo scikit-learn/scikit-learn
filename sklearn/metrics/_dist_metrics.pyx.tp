@@ -415,9 +415,41 @@ cdef class DistanceMetric{{name_suffix}}:
         The implementation of this method in subclasses must be robust to the
         presence of explicit zeros in the CSR representation.
 
-        All the parameters are passed as to not use memoryview slicing
-        because it is currently known to slow down execution as it
-        takes the GIL. See: https://github.com/scikit-learn/scikit-learn/issues/17299
+        An alternative signature would be:
+
+            cdef DTYPE_t dist_csr(
+                self,
+                const {{INPUT_DTYPE_t}}[:] x1_data,
+                const SPARSE_INDEX_TYPE_t[:] x1_indices,
+                const {{INPUT_DTYPE_t}}[:] x2_data,
+                const SPARSE_INDEX_TYPE_t[:] x2_indices,
+            ) nogil except -1:
+
+        Where calles would use slicing on the original CSR data and indices
+        memoryview:
+
+            x1_start = X1_csr.indices_ptr[i]
+            x1_end   = X1_csr.indices_ptr[i+1]
+            x2_start = X2_csr.indices_ptr[j]
+            x2_end   = X2_csr.indices_ptr[j+1]
+
+            self.dist_csr(
+                x1_data[x1_start:x1_end],
+                x1_indices[x1_start:x1_end],
+                x2_data[x2_start:x2_end],
+                x2_indices[x2_start:x2_end],
+            )
+
+        Yet, slicing on memoryview slows down execution as it takes the GIL.
+        See: https://github.com/scikit-learn/scikit-learn/issues/17299
+
+        Hence, to avoid slicing the data and indices arrays of the sparse
+        matrices containing respectively x1 and x2 (namely x{1,2}_{data,indice})
+        are passed as well as their indice pointers (namely x{1,2}_{start,end}).
+
+        For reference about the CSR format, see section 3.4 of
+        Saad, Y. (2003), Iterative Methods for Sparse Linear Systems, SIAM.
+        https://www-users.cse.umn.edu/~saad/IterMethBook_2ndEd.pdf
         """
         return -999
 
@@ -447,9 +479,8 @@ cdef class DistanceMetric{{name_suffix}}:
         The implementation of this method in subclasses must be robust to the
         presence of explicit zeros in the CSR representation.
 
-        All the parameters are passed as to not use memoryview slicing
-        because it is currently known to slow down execution as it
-        takes the GIL. See: https://github.com/scikit-learn/scikit-learn/issues/17299
+        More information about the motives for this method signature is given
+        in the docstring of dist_csr.
         """
         return self.dist_csr(
             x1_data,
