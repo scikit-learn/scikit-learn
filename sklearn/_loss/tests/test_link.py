@@ -60,20 +60,20 @@ def test_is_in_range(interval):
 @pytest.mark.parametrize("link", LINK_FUNCTIONS)
 def test_link_inverse_identity(link, global_random_seed):
     # Test that link of inverse gives identity.
-    rng = np.random.RandomState(global_random_seed % 10)
+    rng = np.random.RandomState(global_random_seed)
     link = link()
     n_samples, n_classes = 100, None
     if link.is_multiclass:
         n_classes = 10
-        raw_prediction = rng.normal(loc=0, scale=10, size=(n_samples, n_classes))
+        raw_prediction = rng.uniform(low=-20, high=20, size=(n_samples, n_classes))
         if isinstance(link, MultinomialLogit):
             raw_prediction = link.symmetrize_raw_prediction(raw_prediction)
     else:
         # So far, the valid interval of raw_prediction is (-inf, inf) and
         # we do not need to distinguish.
-        raw_prediction = rng.normal(loc=0, scale=10, size=(n_samples))
+        raw_prediction = rng.uniform(low=-20, high=20, size=(n_samples))
 
-    assert_allclose(link.link(link.inverse(raw_prediction)), raw_prediction, rtol=1e-06)
+    assert_allclose(link.link(link.inverse(raw_prediction)), raw_prediction)
     y_pred = link.inverse(raw_prediction)
     assert_allclose(link.inverse(link.link(y_pred)), y_pred)
 
