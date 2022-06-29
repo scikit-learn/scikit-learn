@@ -960,11 +960,10 @@ HDBSCAN
 
 The :class:`HDBSCAN` algorithm can be seen as an extension of :class:`DBSCAN`
 and :class:`OPTICS`. Specifically, DBSCAN asserts that the clustering criterion
-(i.e. density requirement) is *globally homogeneous*. That is to say that if
-there are clusters of differing density then DBSCAN may struggle to succesfully
-capture them. HDBSCAN alleviates this assumption and explores all possible
-density scales by building an alternative representation of the clustering
-problem.
+(i.e. density requirement) is *globally homogeneous*. In other words, DBSCAN
+may struggle to successfully capture clusters with different densities.
+HDBSCAN alleviates this assumption and explores all possible density scales by
+building an alternative representation of the clustering problem.
 
 .. note::
 
