@@ -107,8 +107,7 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
             DOK, or LIL. COO, DOK, and LIL are converted to CSR.
 
         y : array-like of shape (n_samples,)
-            The target values (class labels in classification, real numbers in
-            regression).
+            The target values.
 
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, the sample weights are initialized to
@@ -117,8 +116,8 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         Returns
         -------
         self : object
+            Fitted estimator.
         """
-
         self._validate_params()
 
         X, y = self._validate_data(
