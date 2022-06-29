@@ -222,6 +222,9 @@ def test_glm_regression(solver, fit_intercept, glm_dataset):
     params = dict(
         alpha=alpha,
         fit_intercept=fit_intercept,
+        # While _GeneralizedLinearRegressor exposes the solver parameter, public
+        # estimators currently do not, and lbfgs is the only solver anyway.
+        # TODO: Expose solver as soon as we have a second solver to choose from.
         # solver=solver,  # only lbfgs available
         tol=1e-12,
         max_iter=1000,
