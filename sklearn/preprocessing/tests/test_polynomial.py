@@ -891,20 +891,25 @@ def test_polynomial_features_deprecated_n_input_features():
 
 
 def test_csr_polynomial_expansion_index_overflow():
-    N = 12
-    M = 120000
+    n_samples = 13
+    n_features = 120001
     dtype = np.float32
-    x = sparse.csr_matrix(
+    X = sparse.csr_matrix(
         (
             np.arange(1, 5, dtype=np.int64),
-            (np.array([N - 1, N - 1, N, N]), np.array([M - 1, M, M - 1, M])),
+            (
+                np.array([n_samples - 2, n_samples - 2, n_samples - 1, n_samples - 1]),
+                np.array(
+                    [n_features - 2, n_features - 1, n_features - 2, n_features - 1]
+                ),
+            ),
         ),
-        shape=(N + 1, M + 1),
+        shape=(n_samples, n_features),
         dtype=dtype,
         copy=False,
     )
     pf = PolynomialFeatures(interaction_only=True, include_bias=False, degree=2)
-    xinter = pf.fit_transform(x)
+    xinter = pf.fit_transform(X)
     n_index, m_index = xinter.nonzero()
 
     assert xinter.dtype == dtype
@@ -915,6 +920,18 @@ def test_csr_polynomial_expansion_index_overflow():
     assert_array_almost_equal(
         m_index, np.array([119999, 120000, 7200180000, 119999, 120000, 7200180000])
     )
+
+    X = sparse.csr_matrix(([1.0], [65535 - 1], [0, 1]))
+    pf = PolynomialFeatures(interaction_only=True, include_bias=False, degree=2)
+    xinter = pf.fit_transform(X)
+    assert xinter.dtype == X.dtype
+    assert xinter.indptr.dtype == xinter.indices.dtype == np.int32
+
+    # Should work but currently fails
+    # pf = PolynomialFeatures(interaction_only=False, include_bias=False, degree=2)
+    # xinter = pf.fit_transform(X)
+    # assert xinter.dtype == X.dtype
+    # assert xinter.indptr.dtype == xinter.indices.dtype == np.int64
 
 
 # TODO: Remove in 1.2 when get_feature_names is removed

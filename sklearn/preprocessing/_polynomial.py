@@ -166,7 +166,6 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         This should be equivalent to counting the number of terms returned by
         _combinations(...) but much faster.
         """
-
         if interaction_only:
             combinations = sum(
                 [
@@ -391,6 +390,11 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         n_samples, n_features = X.shape
 
         if sparse.isspmatrix_csr(X):
+            # We can determine a priori what the final dtype for the post-stack
+            # matrix must be, and can then use this in construction the pre-
+            # stack matrices.
+            max_int32 = np.iinfo(np.int32).max
+            index_t = np.int64 if self.n_output_features_ > max_int32 else np.int32
             if self._max_degree > 3:
                 return self.transform(X.tocsc()).tocsr()
             to_stack = []
@@ -417,13 +421,6 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                 if expanded_d == 0:
                     break
                 assert expanded_d > 0
-                max_indices = expanded_d - 1
-                max_indptr = total_nnz - 1
-                max_int32 = np.iinfo(np.int32).max
-                if max_indices > max_int32 or max_indptr > max_int32:
-                    index_t = np.int64
-                else:
-                    index_t = np.int32
                 expanded_data = np.ndarray(shape=total_nnz, dtype=X.data.dtype)
                 expanded_indices = np.ndarray(shape=total_nnz, dtype=index_t)
                 expanded_indptr = np.ndarray(shape=X.indptr.shape[0], dtype=index_t)
@@ -449,6 +446,9 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                 # edge case: deal with empty matrix
                 XP = sparse.csr_matrix((n_samples, 0), dtype=X.dtype)
             else:
+                for mat in to_stack:
+                    mat.indices = mat.indices.astype(index_t, copy=False)
+                    mat.indptr = mat.indptr.astype(index_t, copy=False)
                 XP = sparse.hstack(to_stack, format="csr", dtype=X.dtype)
         elif sparse.isspmatrix_csc(X) and self._max_degree < 4:
             return self.transform(X.tocsr()).tocsc()
