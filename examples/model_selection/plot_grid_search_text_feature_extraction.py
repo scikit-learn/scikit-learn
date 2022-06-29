@@ -88,7 +88,8 @@ parameters = {
 }
 
 # %%
-# Find the best parameters for both the feature extraction and the classifier.
+# We search for the best parameters for both the feature extraction and the
+# classifier.
 
 from pprint import pprint
 from sklearn.model_selection import RandomizedSearchCV
