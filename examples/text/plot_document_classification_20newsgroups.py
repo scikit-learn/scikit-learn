@@ -4,9 +4,13 @@ Classification of text documents using sparse features
 ======================================================
 
 This is an example showing how scikit-learn can be used to classify documents by
-topics using a bag-of-words approach. This example uses a Tf-idf-weighted
-document-term sparse matrix to encode the features and demonstrates various
-classifiers that can efficiently handle sparse matrices.
+topics using a `Bag of Words approach
+<https://en.wikipedia.org/wiki/Bag-of-words_model>`_. This example uses a
+Tf-idf-weighted document-term sparse matrix to encode the features and
+demonstrates various classifiers that can efficiently handle sparse matrices.
+
+For document analysis via an unsupervised learning approach, see the example
+script :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`.
 
 """
 
@@ -19,11 +23,12 @@ classifiers that can efficiently handle sparse matrices.
 
 
 # %%
-# Load data
-# ---------
+# Loading and vectorizing the 20 newsgroups text dataset
+# ======================================================
+#
 # We define a function to load data from :ref:`20newsgroups_dataset`, which
-# comprises around 18000 newsgroups posts on 20 topics split in two subsets: one
-# for training (or development) and the other one for testing (or for
+# comprises around 18,000 newsgroups posts on 20 topics split in two subsets:
+# one for training (or development) and the other one for testing (or for
 # performance evaluation). Note that, by default, the text samples contain some
 # message metadata such as `'headers'`, `'footers'` (signatures) and `'quotes'`
 # to other posts. The `fetch_20newsgroups` function therefore accepts a
@@ -114,10 +119,20 @@ def load_dataset(verbose=False, remove=()):
 
 
 # %%
-# Compare feature effects
-# -----------------------
-# We train a first classification model without attempting to strip the metadata
-# of the dataset.
+# Analysis of a bag-of-words document classifier
+# ==============================================
+#
+# We will now train a classifier twice, once on the text samples including
+# metadata and once after stripping the metadata. For both cases we will analyze
+# the classification errors on a test set using a confusion matrix and inspect
+# the coefficients that define the classification function of the trained
+# models.
+#
+# Model without metadata stripping
+# --------------------------------
+#
+# We start by using the custom function `load_dataset` to load the data without
+# metadata stripping.
 
 X_train, X_test, y_train, y_test, feature_names, target_names = load_dataset(
     verbose=True
@@ -247,6 +262,9 @@ for doc in data_train.data:
 # classifier to only learn from the "main content" of each text document instead
 # of relying on the leaked identity of the writers.
 #
+# Model with metadata stripping
+# -----------------------------
+#
 # The `remove` option of the 20 newsgroups dataset loader in scikit-learn allows
 # to heuristically attempt to filter out some of this unwanted metadata that
 # makes the classification problem artificially easier. Be aware that such
@@ -289,9 +307,14 @@ _ = plot_feature_effects().set_title("Average feature effects on filtered docume
 
 # %%
 # Benchmarking classifiers
-# ------------------------
+# ========================
 #
-# First we define small benchmarking utilities
+# Scikit-learn provides many different kinds of classification algorithms. In
+# this section we will train a selection of those classifiers on the same text
+# classification problem and measure both their generalization performance
+# (accuracy on the test set) and their computation performance (speed), both at
+# training time and testing time. For such purpose we define the following
+# benchmarking utilities:
 
 from sklearn.utils.extmath import density
 from sklearn import metrics
@@ -371,7 +394,8 @@ for clf, name in (
 
 # %%
 # Plot accuracy, training and test time of each classifier
-# --------------------------------------------------------
+# ========================================================
+#
 # The scatter plots show the trade-off between the test accuracy and the
 # training and testing time of each classifier.
 
