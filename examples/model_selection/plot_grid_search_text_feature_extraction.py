@@ -91,7 +91,6 @@ parameters = {
 # Find the best parameters for both the feature extraction and the classifier.
 
 from pprint import pprint
-from time import time
 from sklearn.model_selection import RandomizedSearchCV
 
 grid_search = RandomizedSearchCV(
@@ -106,21 +105,27 @@ grid_search = RandomizedSearchCV(
 print("Performing grid search...")
 print("parameters:")
 pprint(parameters)
+
+# %%
+from time import time
+
 t0 = time()
 grid_search.fit(data_train.data, data_train.target)
 print(f"done in {time() - t0:.3f}s")
-print()
+
+# %%
 print("Best parameters set:")
 best_parameters = grid_search.best_estimator_.get_params()
 for param_name in sorted(parameters.keys()):
     print(f"{param_name}: {best_parameters[param_name]}")
 
-accuracy = grid_search.score(data_test.data, data_test.target)
+# %%
+test_accuracy = grid_search.score(data_test.data, data_test.target)
 print(
     "Accuracy of the best parameters using the inner CV of "
     f"the grid search: {grid_search.best_score_:.3f}"
 )
-print(f"Accuracy on test set: {accuracy:.3f}")
+print(f"Accuracy on test set: {test_accuracy:.3f}")
 
 # %%
 # Finally, we use a `plotly.express.parallel_coordinates
