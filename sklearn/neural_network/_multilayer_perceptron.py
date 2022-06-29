@@ -1024,6 +1024,8 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
     0.8...
     """
 
+    _parameter_constraints = {**BaseMultilayerPerceptron._parameter_constraints}
+
     def __init__(
         self,
         hidden_layer_sizes=(100,),
@@ -1492,6 +1494,8 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
     >>> regr.score(X_test, y_test)
     0.4...
     """
+
+    _parameter_constraints = {**BaseMultilayerPerceptron._parameter_constraints}
 
     def __init__(
         self,
