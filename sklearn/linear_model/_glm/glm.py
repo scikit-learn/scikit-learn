@@ -775,7 +775,7 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
     _parameter_constraints = {
         **_GeneralizedLinearRegressor._parameter_constraints,
         "power": [Interval(Real, None, None, closed="neither")],
-        "link": [StrOptions({"auto", "identity", "loss"})],
+        "link": [StrOptions({"auto", "identity", "log"})],
     }
     _parameter_constraints.pop("solver")
 
