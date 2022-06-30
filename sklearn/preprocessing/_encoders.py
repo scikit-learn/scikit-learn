@@ -496,34 +496,6 @@ class OneHotEncoder(_BaseEncoder):
             for category, indices in zip(self.categories_, infrequent_indices)
         ]
 
-    def _validate_keywords(self):
-
-        if self.handle_unknown not in {"error", "ignore", "infrequent_if_exist"}:
-            msg = (
-                "handle_unknown should be one of 'error', 'ignore', "
-                f"'infrequent_if_exist' got {self.handle_unknown}."
-            )
-            raise ValueError(msg)
-        self._check_get_feature_name_combiner()  # call to force the validation
-
-        if self.max_categories is not None and self.max_categories < 1:
-            raise ValueError("max_categories must be greater than 1")
-
-        if isinstance(self.min_frequency, numbers.Integral):
-            if not self.min_frequency >= 1:
-                raise ValueError(
-                    "min_frequency must be an integer at least "
-                    "1 or a float in (0.0, 1.0); got the "
-                    f"integer {self.min_frequency}"
-                )
-        elif isinstance(self.min_frequency, numbers.Real):
-            if not (0.0 < self.min_frequency < 1.0):
-                raise ValueError(
-                    "min_frequency must be an integer at least "
-                    "1 or a float in (0.0, 1.0); got the "
-                    f"float {self.min_frequency}"
-                )
-
     def _check_infrequent_enabled(self):
         """
         This functions checks whether _infrequent_enabled is True or False.
