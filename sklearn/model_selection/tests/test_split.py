@@ -1667,6 +1667,70 @@ def test_time_series_cv():
     assert n_splits_actual == 2
 
 
+def test_time_series_walk_forward_success():
+    # Tests whether enabling the 'walk_forward' feature
+    # produces the desired output train/test indices
+    x = np.arange(15)
+    walk_forward_splits = TimeSeriesSplit(
+        n_splits="walk_forward", max_train_size=10, test_size=2
+    )
+    counter = 0
+    # This 2d array holds the expected values to be
+    # returned by the split() method with "walk_forward" mode enabled
+    expected_output = np.array(
+        [
+            [[0, 1, 2, 3, 4, 5, 6], [7, 8]],
+            [[0, 1, 2, 3, 4, 5, 6, 7, 8], [9, 10]],
+            [[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], [11, 12]],
+            [[3, 4, 5, 6, 7, 8, 9, 10, 11, 12], [13, 14]],
+        ]
+    )
+
+    for train_index, test_index in walk_forward_splits.split(x):
+        # Check that resulting train_index and test_index
+        # indicies match their corresponding values in the `expected_output` 2d array
+        assert_array_equal(expected_output[counter][0], train_index)
+        assert_array_equal(expected_output[counter][1], test_index)
+        counter += 1
+
+    expected_output_2 = np.array(
+        [
+            [[0, 1, 2, 3, 4, 5], [6]],
+            [[1, 2, 3, 4, 5, 6], [7]],
+            [[2, 3, 4, 5, 6, 7], [8]],
+            [[3, 4, 5, 6, 7, 8], [9]],
+            [[4, 5, 6, 7, 8, 9], [10]],
+            [[5, 6, 7, 8, 9, 10], [11]],
+            [[6, 7, 8, 9, 10, 11], [12]],
+            [[7, 8, 9, 10, 11, 12], [13]],
+            [[8, 9, 10, 11, 12, 13], [14]],
+        ]
+    )
+
+    x = np.arange(15)
+    counter = 0
+    walk_forward_splits_2 = TimeSeriesSplit(
+        n_splits="walk_forward", max_train_size=6, test_size=1
+    )
+    for train_index, test_index in walk_forward_splits_2.split(x):
+        # Check that resulting train_index and test_index indicies
+        # match their corresponding values in the `expected_output` 2d array
+        assert_array_equal(expected_output_2[counter][0], train_index)
+        assert_array_equal(expected_output_2[counter][1], test_index)
+        counter += 1
+
+
+def test_time_series_invalid_walk_forward_throw_error():
+    # Checks whether an error is thrown when any string value
+    # other than 'walk_forward' is passed as a value for the `n_splits` variable
+    msg = (
+        "n_splits should be an integer number or 'walk_forward' for the TimeSeriesSplit"
+        " cross-validator."
+    )
+    with pytest.raises(ValueError, match=msg):
+        TimeSeriesSplit(n_splits="walk_forwardabcdef", max_train_size=10, test_size=2)
+
+
 def _check_time_series_max_train_size(splits, check_splits, max_train_size):
     for (train, test), (check_train, check_test) in zip(splits, check_splits):
         assert_array_equal(test, check_test)
