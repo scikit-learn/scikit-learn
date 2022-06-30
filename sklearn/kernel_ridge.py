@@ -3,15 +3,13 @@
 # Authors: Mathieu Blondel <mathieu@mblondel.org>
 #          Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 # License: BSD 3 clause
-from numbers import Real
+from numbers import Integral, Real
 
 import numpy as np
 
 from .base import BaseEstimator, RegressorMixin, MultiOutputMixin
-from .utils._param_validation import Interval
-from .utils._param_validation import StrOptions
-from .metrics.pairwise import PAIRWISE_KERNEL_FUNCTIONS
-from .metrics.pairwise import pairwise_kernels
+from .utils._param_validation import Interval, StrOptions
+from .metrics.pairwise import PAIRWISE_KERNEL_FUNCTIONS, pairwise_kernels
 from .linear_model._ridge import _solve_cholesky_kernel
 from .utils.validation import check_is_fitted, _check_sample_weight
 
@@ -134,15 +132,15 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
     """
 
     _parameter_constraints = {
-        "alpha": [Interval(Real, 0, None, closed="left"), np.ndarray],
+        "alpha": [Interval(Real, 0, None, closed="left"), "array-like"],
         "kernel": [
             StrOptions(set(PAIRWISE_KERNEL_FUNCTIONS.keys()) | {"precomputed"}),
             callable,
         ],
         "gamma": [Interval(Real, 0, None, closed="left"), None],
-        "degree": [Interval(Real, 0, None, closed="left")],
+        "degree": [Interval(Integral, 0, None, closed="left")],
         "coef0": [Interval(Real, 0, None, closed="left")],
-        "kernel_params": "no_validation",
+        "kernel_params": [dict],
     }
 
     def __init__(
