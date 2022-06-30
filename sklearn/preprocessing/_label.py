@@ -743,6 +743,11 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
     array(['comedy', 'sci-fi', 'thriller'], dtype=object)
     """
 
+    _parameter_constraints = {
+        "classes": ["array-like", None],
+        "sparse_output": ["boolean"],
+    }
+
     def __init__(self, *, classes=None, sparse_output=False):
         self.classes = classes
         self.sparse_output = sparse_output
@@ -762,7 +767,9 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
+        self._validate_params()
         self._cached_dict = None
+
         if self.classes is None:
             classes = sorted(set(itertools.chain.from_iterable(y)))
         elif len(set(self.classes)) < len(self.classes):
@@ -795,10 +802,11 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
             is in `y[i]`, and 0 otherwise. Sparse matrix will be of CSR
             format.
         """
-        self._cached_dict = None
-
         if self.classes is not None:
             return self.fit(y).transform(y)
+
+        self._validate_params()
+        self._cached_dict = None
 
         # Automatically increment on new class
         class_mapping = defaultdict(int)
