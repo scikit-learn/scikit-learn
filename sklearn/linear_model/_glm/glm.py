@@ -1259,8 +1259,6 @@ class PoissonRegressor(_GeneralizedLinearRegressor):
     array([10.676..., 21.875...])
     """
 
-    _parameter_constraints = {**_GeneralizedLinearRegressor._parameter_constraints}
-
     def __init__(
         self,
         *,
@@ -1386,8 +1384,6 @@ class GammaRegressor(_GeneralizedLinearRegressor):
     >>> clf.predict([[1, 0], [2, 8]])
     array([19.483..., 35.795...])
     """
-
-    _parameter_constraints = {**_GeneralizedLinearRegressor._parameter_constraints}
 
     def __init__(
         self,
