@@ -116,12 +116,13 @@ class KNNImputer(_BaseImputer):
            [5.5, 6. , 5. ],
            [8. , 8. , 7. ]])
     """
+
     _parameter_constraints = {
         **_BaseImputer._parameter_constraints,
-        "n_neighbors": [Interval(Integral, 1, None, closed='left')],
+        "n_neighbors": [Interval(Integral, 1, None, closed="left")],
         "weights": [StrOptions({"uniform", "distance"}), callable],
         "metric": [StrOptions({"nan_euclidean"}), callable],
-        "copy": ["boolean"]     
+        "copy": ["boolean"],
     }
 
     def __init__(
