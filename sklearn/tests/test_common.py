@@ -466,7 +466,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "ExtraTreesRegressor",
     "FeatureHasher",
     "FunctionTransformer",
-    "GammaRegressor",
     "GaussianMixture",
     "GaussianRandomProjection",
     "GenericUnivariateSelect",
@@ -523,7 +522,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "OrthogonalMatchingPursuitCV",
     "OutputCodeClassifier",
     "PatchExtractor",
-    "PoissonRegressor",
     "PolynomialCountSketch",
     "PolynomialFeatures",
     "QuadraticDiscriminantAnalysis",
@@ -567,7 +565,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "TheilSenRegressor",
     "TransformedTargetRegressor",
     "TruncatedSVD",
-    "TweedieRegressor",
     "VotingClassifier",
     "VotingRegressor",
 ]
