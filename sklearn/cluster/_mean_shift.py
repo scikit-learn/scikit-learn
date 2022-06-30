@@ -20,6 +20,7 @@ from joblib import Parallel
 from numbers import Integral, Real
 
 from collections import defaultdict
+from ..utils._param_validation import Interval
 from ..utils.validation import check_is_fitted
 from ..utils.fixes import delayed
 from ..utils import check_random_state, gen_batches, check_array
