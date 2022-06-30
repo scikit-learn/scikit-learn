@@ -148,7 +148,7 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
     epsilon : float, default=1.35
         The parameter epsilon controls the number of samples that should be
         classified as outliers. The smaller the epsilon, the more robust it is
-        to outliers. Epsilon must be in the range `[1.0, inf)`.
+        to outliers. Epsilon must be in the range `[1, inf)`.
 
     max_iter : int, default=100
         Maximum number of iterations that
