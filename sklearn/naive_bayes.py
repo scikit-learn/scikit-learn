@@ -621,7 +621,7 @@ class _BaseDiscreteNB(_BaseNB):
         if np.min(alpha) < alpha_min and not _force_alpha:
             warnings.warn(
                 "alpha too small will result in numeric errors, setting alpha ="
-                f" {alpha_min:.1e}. Use set_alpha = True to keep alpha unchanged."
+                f" {alpha_min:.1e}. Use `force_alpha=True` to keep alpha unchanged."
             )
             return np.maximum(alpha, alpha_min)
         return alpha

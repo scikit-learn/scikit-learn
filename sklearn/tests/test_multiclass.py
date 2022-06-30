@@ -41,6 +41,8 @@ from sklearn.exceptions import NotFittedError
 from sklearn import datasets
 from sklearn.datasets import load_breast_cancer
 
+msg = "The default value for `force_alpha` will change"
+pytestmark = pytest.mark.filterwarnings(f"ignore:{msg}:FutureWarning")
 
 iris = datasets.load_iris()
 rng = np.random.RandomState(0)
@@ -62,12 +64,12 @@ def test_ovr_exceptions():
     with pytest.raises(ValueError, match=msg):
         X = np.array([[1, 0], [0, 1]])
         y = np.array([[1, 2], [3, 1]])
-        OneVsRestClassifier(MultinomialNB(force_alpha=True)).fit(X, y)
+        OneVsRestClassifier(MultinomialNB()).fit(X, y)
 
     with pytest.raises(ValueError, match=msg):
         X = np.array([[1, 0], [0, 1]])
         y = np.array([[1.5, 2.4], [3.1, 0.8]])
-        OneVsRestClassifier(MultinomialNB(force_alpha=True)).fit(X, y)
+        OneVsRestClassifier(MultinomialNB()).fit(X, y)
 
 
 def test_check_classification_targets():
@@ -89,7 +91,7 @@ def test_ovr_fit_predict():
     assert np.mean(iris.target == pred) == np.mean(iris.target == pred2)
 
     # A classifier which implements predict_proba.
-    ovr = OneVsRestClassifier(MultinomialNB(force_alpha=True))
+    ovr = OneVsRestClassifier(MultinomialNB())
     pred = ovr.fit(iris.data, iris.target).predict(iris.data)
     assert np.mean(iris.target == pred) > 0.65
 
@@ -97,11 +99,11 @@ def test_ovr_fit_predict():
 def test_ovr_partial_fit():
     # Test if partial_fit is working as intended
     X, y = shuffle(iris.data, iris.target, random_state=0)
-    ovr = OneVsRestClassifier(MultinomialNB(force_alpha=True))
+    ovr = OneVsRestClassifier(MultinomialNB())
     ovr.partial_fit(X[:100], y[:100], np.unique(y))
     ovr.partial_fit(X[100:], y[100:])
     pred = ovr.predict(X)
-    ovr2 = OneVsRestClassifier(MultinomialNB(force_alpha=True))
+    ovr2 = OneVsRestClassifier(MultinomialNB())
     pred2 = ovr2.fit(X, y).predict(X)
 
     assert_almost_equal(pred, pred2)
@@ -131,7 +133,7 @@ def test_ovr_partial_fit():
 
 
 def test_ovr_partial_fit_exceptions():
-    ovr = OneVsRestClassifier(MultinomialNB(force_alpha=True))
+    ovr = OneVsRestClassifier(MultinomialNB())
     X = np.abs(np.random.randn(14, 2))
     y = [1, 1, 1, 1, 2, 3, 3, 0, 0, 2, 3, 1, 2, 3]
     ovr.partial_fit(X[:7], y[:7], np.unique(y))
@@ -169,7 +171,7 @@ def test_ovr_fit_predict_sparse():
         sp.dok_matrix,
         sp.lil_matrix,
     ]:
-        base_clf = MultinomialNB(alpha=1, force_alpha=True)
+        base_clf = MultinomialNB(alpha=1)
 
         X, Y = datasets.make_multilabel_classification(
             n_samples=100,
@@ -254,7 +256,7 @@ def test_ovr_multiclass():
     classes = set("ham eggs spam".split())
 
     for base_clf in (
-        MultinomialNB(force_alpha=True),
+        MultinomialNB(),
         LinearSVC(random_state=0),
         LinearRegression(),
         Ridge(),
@@ -307,11 +309,7 @@ def test_ovr_binary():
     ):
         conduct_test(base_clf)
 
-    for base_clf in (
-        MultinomialNB(force_alpha=True),
-        SVC(probability=True),
-        LogisticRegression(),
-    ):
+    for base_clf in (MultinomialNB(), SVC(probability=True), LogisticRegression()):
         conduct_test(base_clf, test_predict_proba=True)
 
 
@@ -321,7 +319,7 @@ def test_ovr_multilabel():
     y = np.array([[0, 1, 1], [0, 1, 0], [1, 1, 1], [1, 0, 1], [1, 0, 0]])
 
     for base_clf in (
-        MultinomialNB(force_alpha=True),
+        MultinomialNB(),
         LinearSVC(random_state=0),
         LinearRegression(),
         Ridge(),
@@ -342,7 +340,7 @@ def test_ovr_fit_predict_svc():
 
 
 def test_ovr_multilabel_dataset():
-    base_clf = MultinomialNB(alpha=1, force_alpha=True)
+    base_clf = MultinomialNB(alpha=1)
     for au, prec, recall in zip((True, False), (0.51, 0.66), (0.51, 0.80)):
         X, Y = datasets.make_multilabel_classification(
             n_samples=100,
@@ -368,7 +366,7 @@ def test_ovr_multilabel_dataset():
 
 
 def test_ovr_multilabel_predict_proba():
-    base_clf = MultinomialNB(alpha=1, force_alpha=True)
+    base_clf = MultinomialNB(alpha=1)
     for au in (False, True):
         X, Y = datasets.make_multilabel_classification(
             n_samples=100,
@@ -413,7 +411,7 @@ def test_ovr_multilabel_predict_proba():
 
 
 def test_ovr_single_label_predict_proba():
-    base_clf = MultinomialNB(alpha=1, force_alpha=True)
+    base_clf = MultinomialNB(alpha=1)
     X, Y = iris.data, iris.target
     X_train, Y_train = X[:80], Y[:80]
     X_test = X[80:]
@@ -505,7 +503,7 @@ def test_ovo_fit_predict():
     assert len(ovo.estimators_) == n_classes * (n_classes - 1) / 2
 
     # A classifier which implements predict_proba.
-    ovo = OneVsOneClassifier(MultinomialNB(force_alpha=True))
+    ovo = OneVsOneClassifier(MultinomialNB())
     ovo.fit(iris.data, iris.target).predict(iris.data)
     assert len(ovo.estimators_) == n_classes * (n_classes - 1) / 2
 
@@ -513,12 +511,12 @@ def test_ovo_fit_predict():
 def test_ovo_partial_fit_predict():
     temp = datasets.load_iris()
     X, y = temp.data, temp.target
-    ovo1 = OneVsOneClassifier(MultinomialNB(force_alpha=True))
+    ovo1 = OneVsOneClassifier(MultinomialNB())
     ovo1.partial_fit(X[:100], y[:100], np.unique(y))
     ovo1.partial_fit(X[100:], y[100:])
     pred1 = ovo1.predict(X)
 
-    ovo2 = OneVsOneClassifier(MultinomialNB(force_alpha=True))
+    ovo2 = OneVsOneClassifier(MultinomialNB())
     ovo2.fit(X, y)
     pred2 = ovo2.predict(X)
     assert len(ovo1.estimators_) == n_classes * (n_classes - 1) / 2
@@ -526,29 +524,29 @@ def test_ovo_partial_fit_predict():
     assert_almost_equal(pred1, pred2)
 
     # Test when mini-batches have binary target classes
-    ovo1 = OneVsOneClassifier(MultinomialNB(force_alpha=True))
+    ovo1 = OneVsOneClassifier(MultinomialNB())
     ovo1.partial_fit(X[:60], y[:60], np.unique(y))
     ovo1.partial_fit(X[60:], y[60:])
     pred1 = ovo1.predict(X)
-    ovo2 = OneVsOneClassifier(MultinomialNB(force_alpha=True))
+    ovo2 = OneVsOneClassifier(MultinomialNB())
     pred2 = ovo2.fit(X, y).predict(X)
 
     assert_almost_equal(pred1, pred2)
     assert len(ovo1.estimators_) == len(np.unique(y))
     assert np.mean(y == pred1) > 0.65
 
-    ovo = OneVsOneClassifier(MultinomialNB(force_alpha=True))
+    ovo = OneVsOneClassifier(MultinomialNB())
     X = np.random.rand(14, 2)
     y = [1, 1, 2, 3, 3, 0, 0, 4, 4, 4, 4, 4, 2, 2]
     ovo.partial_fit(X[:7], y[:7], [0, 1, 2, 3, 4])
     ovo.partial_fit(X[7:], y[7:])
     pred = ovo.predict(X)
-    ovo2 = OneVsOneClassifier(MultinomialNB(force_alpha=True))
+    ovo2 = OneVsOneClassifier(MultinomialNB())
     pred2 = ovo2.fit(X, y).predict(X)
     assert_almost_equal(pred, pred2)
 
     # raises error when mini-batch does not have classes from all_classes
-    ovo = OneVsOneClassifier(MultinomialNB(force_alpha=True))
+    ovo = OneVsOneClassifier(MultinomialNB())
     error_y = [0, 1, 2, 3, 4, 5, 2]
     message_re = escape(
         "Mini-batch contains {0} while it must be subset of {1}".format(
@@ -701,9 +699,7 @@ def test_ecoc_fit_predict():
     assert len(ecoc.estimators_) == n_classes * 2
 
     # A classifier which implements predict_proba.
-    ecoc = OutputCodeClassifier(
-        MultinomialNB(force_alpha=True), code_size=2, random_state=0
-    )
+    ecoc = OutputCodeClassifier(MultinomialNB(), code_size=2, random_state=0)
     ecoc.fit(iris.data, iris.target).predict(iris.data)
     assert len(ecoc.estimators_) == n_classes * 2
 
