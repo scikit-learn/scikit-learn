@@ -1118,6 +1118,6 @@ def test_linalg_warning_with_newton_solver(global_random_seed):
         warnings.simplefilter("error", scipy.linalg.LinAlgWarning)
         PoissonRegressor(solver="newton-cholesky", alpha=1e-10).fit(X_collinear, y)
 
-    # While for most random seed the deviance of this model is very close to
+    # While for most random seeds the deviance of this model is very close to
     # that of the unpenalized model, it is unfortunately not always the case so
     # we do not check such an assertion here.
