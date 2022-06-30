@@ -35,24 +35,6 @@ def test_valid_n_bins():
     assert KBinsDiscretizer(n_bins=2).fit(X).n_bins_.dtype == np.dtype(int)
 
 
-def test_invalid_n_bins():
-    est = KBinsDiscretizer(n_bins=1)
-    err_msg = (
-        "KBinsDiscretizer received an invalid number of bins. Received 1, expected at"
-        " least 2."
-    )
-    with pytest.raises(ValueError, match=err_msg):
-        est.fit_transform(X)
-
-    est = KBinsDiscretizer(n_bins=1.1)
-    err_msg = (
-        "KBinsDiscretizer received an invalid n_bins type. Received float, expected"
-        " int."
-    )
-    with pytest.raises(ValueError, match=err_msg):
-        est.fit_transform(X)
-
-
 def test_invalid_n_bins_array():
     # Bad shape
     n_bins = np.full((2, 4), 2.0)
@@ -364,17 +346,6 @@ def test_kbinsdiscretizer_subsample_invalid_strategy():
 
     err_msg = '`subsample` must be used with `strategy="quantile"`.'
     with pytest.raises(ValueError, match=err_msg):
-        kbd.fit(X)
-
-
-def test_kbinsdiscretizer_subsample_invalid_type():
-    X = np.array([-2, 1.5, -4, -1]).reshape(-1, 1)
-    kbd = KBinsDiscretizer(
-        n_bins=10, encode="ordinal", strategy="quantile", subsample="full"
-    )
-
-    msg = "subsample must be an instance of int, not str."
-    with pytest.raises(TypeError, match=msg):
         kbd.fit(X)
 
 

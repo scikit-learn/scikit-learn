@@ -157,9 +157,13 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         "nbins": [Interval(numbers.Integral, 2, None, closed="left"), "array-like"],
         "encode": [StrOptions({"onehot", "onehot-dense", "ordinal"})],
         "strategy": [StrOptions({"uniform", "quantile", "kmeans"})],
-        "dtype": [numbers.Real, None],
-        "subsample": [numbers.Integral, None, Hidden(StrOptions({"warn"}))],
-        "random_state": [numbers.Integral, "random_state", None],
+        "dtype": [type, None],  # TODO: TypeOptions constraint,
+        "subsample": [
+            Interval(numbers.Integral, 1, None, closed="left"),
+            None,
+            Hidden(StrOptions({"warn"})),
+        ],
+        "random_state": ["random_state"],
     }
 
     def __init__(
@@ -240,20 +244,6 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             raise ValueError(
                 f"Invalid parameter for `strategy`: {self.strategy}. "
                 '`subsample` must be used with `strategy="quantile"`.'
-            )
-
-        valid_encode = ("onehot", "onehot-dense", "ordinal")
-        if self.encode not in valid_encode:
-            raise ValueError(
-                "Valid options for 'encode' are {}. Got encode={!r} instead.".format(
-                    valid_encode, self.encode
-                )
-            )
-        valid_strategy = ("uniform", "quantile", "kmeans")
-        if self.strategy not in valid_strategy:
-            raise ValueError(
-                "Valid options for 'strategy' are {}. "
-                "Got strategy={!r} instead.".format(valid_strategy, self.strategy)
             )
 
         n_features = X.shape[1]
