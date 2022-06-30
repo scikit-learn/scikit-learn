@@ -14,7 +14,7 @@ iniconfig==1.1.1
     # via pytest
 joblib==1.1.0
     # via -r build_tools/azure/py38_pip_openblas_32bit_requirements.txt
-numpy==1.22.4
+numpy==1.23.0
     # via
     #   -r build_tools/azure/py38_pip_openblas_32bit_requirements.txt
     #   scipy

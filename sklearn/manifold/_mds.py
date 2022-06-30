@@ -5,6 +5,8 @@ Multi-dimensional Scaling (MDS).
 # author: Nelle Varoquaux <nelle.varoquaux@gmail.com>
 # License: BSD
 
+from numbers import Integral, Real
+
 import numpy as np
 from scipy import linalg
 from joblib import Parallel, effective_n_jobs
@@ -16,6 +18,7 @@ from ..metrics import euclidean_distances
 from ..utils import check_random_state, check_array, check_symmetric
 from ..isotonic import IsotonicRegression
 from sklearn.utils.validation import _check_psd_eigenvalues
+from ..utils._param_validation import Interval, StrOptions
 from ..utils.fixes import delayed
 
 
@@ -505,6 +508,18 @@ class MDS(BaseEstimator):
     (100, 2)
     """
 
+    _parameter_constraints = {
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "metric": ["boolean"],
+        "n_init": [Interval(Integral, 1, None, closed="left")],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
+        "verbose": ["verbose"],
+        "eps": [Interval(Real, 0.0, None, closed="left")],
+        "n_jobs": [None, Integral],
+        "random_state": ["random_state"],
+        "dissimilarity": [StrOptions({"euclidean", "precomputed"})],
+    }
+
     def __init__(
         self,
         n_components=2,
@@ -556,6 +571,7 @@ class MDS(BaseEstimator):
         self : object
             Fitted estimator.
         """
+        # parameter will be validated in `fit_transform` call
         self.fit_transform(X, init=init)
         return self
 
@@ -583,6 +599,7 @@ class MDS(BaseEstimator):
         X_new : ndarray of shape (n_samples, n_components)
             X transformed in the new space.
         """
+        self._validate_params()
         X = self._validate_data(X)
         if X.shape[0] == X.shape[1] and self.dissimilarity != "precomputed":
             warnings.warn(
@@ -596,12 +613,6 @@ class MDS(BaseEstimator):
             self.dissimilarity_matrix_ = X
         elif self.dissimilarity == "euclidean":
             self.dissimilarity_matrix_ = euclidean_distances(X)
-        else:
-            raise ValueError(
-                "Dissimilarity matrix must be 'precomputed' or 'euclidean'."
-                " Got %s instead"
-                % str(self.dissimilarity)
-            )
 
         if self.solver == "smacof":
             self.embedding_, self.stress_, self.n_iter_ = smacof(
