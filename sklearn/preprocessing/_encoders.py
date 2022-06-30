@@ -325,7 +325,7 @@ class OneHotEncoder(_BaseEncoder):
         :meth:`get_feature_names_out`.
 
         `"concat_string"` concatenates encoded feature name and category separated by
-        '_'.  E.g. feature X with values 1, 6, 7 create feature names X_1, X_6, X_7.
+        '_'.  E.g. feature X with values 1, 6, 7 create feature names `X_1, X_6, X_7`.
 
     Attributes
     ----------
