@@ -381,12 +381,12 @@ class MeanShift(ClusterMixin, BaseEstimator):
     """
 
     _parameter_constraints = {
-        "bandwidth": [Real],
-        "seeds": ["array-like"],
+        "bandwidth": [Real, None],
+        "seeds": ["array-like", None],
         "bin_seeding": ["boolean"],
         "min_bin_freq": [Integral],
         "cluster_all": ["boolean"],
-        "n_jobs": [Integral],
+        "n_jobs": [Integral, None],
         "max_iter": [Integral],
     }
 
