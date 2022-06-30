@@ -22,7 +22,7 @@ from ..utils import gen_even_slices
 from ..utils.extmath import safe_sparse_dot
 from ..utils.extmath import log_logistic
 from ..utils.validation import check_is_fitted
-from ..utils._param_validation import Interval, StrOptions
+from ..utils._param_validation import Interval
 
 
 class BernoulliRBM(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
