@@ -2,6 +2,7 @@
 #          Christian Lorentzen <lorentzen.ch@gmail.com>
 # License: BSD 3 clause
 import warnings
+from numbers import Real
 
 import numpy as np
 from scipy import sparse
@@ -13,7 +14,7 @@ from ..exceptions import ConvergenceWarning
 from ..utils import _safe_indexing
 from ..utils.validation import _check_sample_weight
 from ..utils.fixes import sp_version, parse_version
-
+from ..utils._param_validation import Interval, StrOptions
 
 class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
     """Linear regression model that predicts conditional quantiles.
@@ -119,6 +120,14 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         self.fit_intercept = fit_intercept
         self.solver = solver
         self.solver_options = solver_options
+        
+        _parameter_constraints = {
+            "quantile": [Interval(Real, 0, 1, closed='both')],
+            "alpha": [Interval(Real, 0, None, closed='left')],
+            "fit_intercept": ['boolean'],
+            "solver": [StrOptions({"high-ds", "highs-ipm", "highs","interior-point","revised simplex"})],
+            "solver_options": [dict, None],
+        }
 
     def fit(self, X, y, sample_weight=None):
         """Fit the model according to the given training data.
@@ -139,6 +148,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         self : object
             Returns self.
         """
+        self._validate_params()
         X, y = self._validate_data(
             X,
             y,
@@ -165,16 +175,6 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
                 f"Penalty alpha must be a non-negative number, got {self.alpha}"
             )
 
-        if self.quantile >= 1.0 or self.quantile <= 0.0:
-            raise ValueError(
-                f"Quantile should be strictly between 0.0 and 1.0, got {self.quantile}"
-            )
-
-        if not isinstance(self.fit_intercept, bool):
-            raise ValueError(
-                f"The argument fit_intercept must be bool, got {self.fit_intercept}"
-            )
-
         if self.solver == "warn":
             warnings.warn(
                 "The default solver will change from 'interior-point' to 'highs' in "
@@ -195,15 +195,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         else:
             solver = self.solver
 
-        if solver not in (
-            "highs-ds",
-            "highs-ipm",
-            "highs",
-            "interior-point",
-            "revised simplex",
-        ):
-            raise ValueError(f"Invalid value for argument solver, got {solver}")
-        elif solver == "interior-point" and sp_version >= parse_version("1.11.0"):
+        if solver == "interior-point" and sp_version >= parse_version("1.11.0"):
             raise ValueError(
                 f"Solver {solver} is not anymore available in SciPy >= 1.11.0."
             )
