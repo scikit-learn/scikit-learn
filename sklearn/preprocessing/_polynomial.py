@@ -404,6 +404,11 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                 )
             if self._min_degree <= 1 and self._max_degree > 0:
                 to_stack.append(X)
+
+            # Covnert current stack to valid indices/indptr types
+            for mat in to_stack:
+                mat.indices = mat.indices.astype(index_t, copy=False)
+                mat.indptr = mat.indptr.astype(index_t, copy=False)
             for deg in range(max(2, self._min_degree), self._max_degree + 1):
                 # Count how many nonzero elements the expanded matrix will contain.
                 total_nnz = sum(
@@ -446,9 +451,6 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                 # edge case: deal with empty matrix
                 XP = sparse.csr_matrix((n_samples, 0), dtype=X.dtype)
             else:
-                for mat in to_stack:
-                    mat.indices = mat.indices.astype(index_t, copy=False)
-                    mat.indptr = mat.indptr.astype(index_t, copy=False)
                 XP = sparse.hstack(to_stack, format="csr", dtype=X.dtype)
         elif sparse.isspmatrix_csc(X) and self._max_degree < 4:
             return self.transform(X.tocsr()).tocsc()

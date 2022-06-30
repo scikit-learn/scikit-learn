@@ -3,6 +3,7 @@ import pytest
 from scipy import sparse
 from scipy.sparse import random as sparse_random
 from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils.fixes import sp_version, parse_version
 
 from numpy.testing import assert_allclose, assert_array_equal
 from scipy.interpolate import BSpline
@@ -927,11 +928,12 @@ def test_csr_polynomial_expansion_index_overflow():
     assert xinter.dtype == X.dtype
     assert xinter.indptr.dtype == xinter.indices.dtype == np.int32
 
-    # Should work but currently fails
-    # pf = PolynomialFeatures(interaction_only=False, include_bias=False, degree=2)
-    # xinter = pf.fit_transform(X)
-    # assert xinter.dtype == X.dtype
-    # assert xinter.indptr.dtype == xinter.indices.dtype == np.int64
+    # Depends on upstream bug fix
+    if sp_version >= parse_version("1.8.0.dev0"):
+        pf = PolynomialFeatures(interaction_only=False, include_bias=False, degree=2)
+        xinter = pf.fit_transform(X)
+        assert xinter.dtype == X.dtype
+        assert xinter.indptr.dtype == xinter.indices.dtype == np.int64
 
 
 # TODO: Remove in 1.2 when get_feature_names is removed
