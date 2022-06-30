@@ -501,7 +501,7 @@ def _plain_sgd(cnp.ndarray[double, ndim=1, mode='c'] weights,
     cdef double sample_weight
     cdef double class_weight = 1.0
     cdef unsigned int count = 0
-    cdef unsigned int train_count = 0
+    cdef unsigned int train_count = n_samples - validation_mask.sum()
     cdef unsigned int epoch = 0
     cdef unsigned int i = 0
     cdef int is_hinge = isinstance(loss, Hinge)
@@ -540,7 +540,6 @@ def _plain_sgd(cnp.ndarray[double, ndim=1, mode='c'] weights,
     with nogil:
         for epoch in range(max_iter):
             sumloss = 0
-            train_count = 0
             if verbose > 0:
                 with gil:
                     print("-- Epoch %d" % (epoch + 1))
@@ -554,8 +553,6 @@ def _plain_sgd(cnp.ndarray[double, ndim=1, mode='c'] weights,
                 if validation_mask_view[sample_index]:
                     # do not learn on the validation set
                     continue
-
-                train_count += 1
 
                 p = w.dot(x_data_ptr, x_ind_ptr, xnnz) + intercept
                 if learning_rate == OPTIMAL:
