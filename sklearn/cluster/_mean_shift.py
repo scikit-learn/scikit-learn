@@ -14,9 +14,11 @@ Seeding is performed using a binning technique for scalability.
 #          Gael Varoquaux <gael.varoquaux@normalesup.org>
 #          Martino Sorbaro <martino.sorbaro@ed.ac.uk>
 
+from ast import In
 import numpy as np
 import warnings
 from joblib import Parallel
+from numbers import Integral,Real
 
 from collections import defaultdict
 from ..utils.validation import check_is_fitted
@@ -378,6 +380,15 @@ class MeanShift(ClusterMixin, BaseEstimator):
     >>> clustering
     MeanShift(bandwidth=2)
     """
+    _parameter_constraints = {
+        "bandwidth":[Real],
+        "seeds": ["array-like"],
+        "bin_seeding": ["boolean"],
+        "min_bin_freq": [Integral],
+        "cluster_all": ["boolean"],
+        "n_jobs": [Integral],
+        "max_iter": [Integral]
+    }
 
     def __init__(
         self,
@@ -414,6 +425,7 @@ class MeanShift(ClusterMixin, BaseEstimator):
         self : object
                Fitted instance.
         """
+        self._validate_params()
         X = self._validate_data(X)
         bandwidth = self.bandwidth
         if bandwidth is None:
