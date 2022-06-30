@@ -63,6 +63,13 @@ Changelog
 :mod:`sklearn.cluster`
 ......................
 
+- |MajorFeature| Added :class:`cluster.HDBSCAN`, a modern hierarchical density-based
+  clustering algorithm. Similarly to :class:`cluster.OPTICS`, it can be seen as a
+  generalization of :class:`DBSCAN` by allowing for hierarchical instead of flat
+  clustering, however it varies in its approach from :class:`cluster.OPTICS`. This
+  algorithm is very robust to its hyperparameters and can be used on a wide
+  variety of data without much, if any, tuning.
+
 - |Enhancement| The `predict` and `fit_predict` methods of :class:`cluster.OPTICS` now
   accept sparse data type for input data. :pr:`14736` by :user:`Hunt Zhan <huntzhan>`,
   :pr:`20802` by :user:`Brandon Pokorny <Clickedbigfoot>`,
@@ -153,7 +160,7 @@ Changelog
   negative likelihood ratios derived from the confusion matrix
   of a binary classification problem. :pr:`22518` by
   :user:`Arturo Amor <ArturoAmorQ>`.
-  
+
 - |Fix| :func:`metrics.ndcg_score` will now trigger a warning when the `y_true`
   value contains a negative value. Users may still use negative values, but the
   result may not be between 0 and 1. Starting in v1.4, passing in negative
