@@ -206,15 +206,6 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
                 "Use solver 'highs' for example."
             )
 
-        if self.solver_options is not None and not isinstance(
-            self.solver_options, dict
-        ):
-            raise ValueError(
-                "Invalid value for argument solver_options, "
-                "must be None or a dictionary, got "
-                f"{self.solver_options}"
-            )
-
         # make default solver more stable
         if self.solver_options is None and solver == "interior-point":
             solver_options = {"lstsq": True}
