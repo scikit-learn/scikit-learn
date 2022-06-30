@@ -732,7 +732,10 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
     array(['comedy', 'sci-fi', 'thriller'], dtype=object)
     """
 
-    _parameter_constraints = {"classes": ["array-like"], "sparse_output": ["boolean"]}
+    _parameter_constraints = {
+        "classes": ["array-like", None],
+        "sparse_output": ["boolean"],
+    }
 
     def __init__(self, *, classes=None, sparse_output=False):
         self.classes = classes
