@@ -1127,12 +1127,21 @@ class CalibrationDisplay:
     """
 
     def __init__(
-        self, prob_true, prob_pred, y_prob, bins, *, estimator_name=None, pos_label=None
+        self,
+        prob_true,
+        prob_pred,
+        y_prob,
+        bins,
+        bins_hist,
+        *,
+        estimator_name=None,
+        pos_label=None,
     ):
         self.prob_true = prob_true
         self.prob_pred = prob_pred
         self.y_prob = y_prob
         self.bins = bins
+        self.bins_hist = bins_hist
         self.estimator_name = estimator_name
         self.pos_label = pos_label
 
@@ -1195,21 +1204,18 @@ class CalibrationDisplay:
             ax.plot([0, 1], [0, 1], "k--", label=ref_line_label, lw=1)
         self.line_ = ax.plot(self.prob_pred, self.prob_true, "o-", **line_kwargs)[0]
 
-        # Histogram bins are always uniform
-        bins_uniform = bins_from_strategy(len(self.bins) - 1, strategy="uniform")
-
+        # Plot bins if required
         if grid == "uniform":
-            bins = bins_uniform
+            bins = self.bins_hist  # Histogram bins are always uniform
         elif grid == "bins":
-            bins = self.bins
+            bins = self.bins  # Can be uniform, quantile or custom
         elif grid is None:
-            bins = []
+            bins = []  # No bin to plot
         else:
             raise ValueError(
                 "Invalid entry to 'grid' input. Must be either "
                 "'uniform', 'bins' or None."
             )
-
         for x in bins:
             ax.axvline(x, lw=0.5, ls="--", color="grey", zorder=-1)
 
@@ -1240,7 +1246,7 @@ class CalibrationDisplay:
 
         ax_hist.hist(
             self.y_prob,
-            bins=bins_uniform,
+            bins=self.bins_hist,
             label=name,
             density=density,
             histtype=histtype,
@@ -1622,6 +1628,12 @@ class CalibrationDisplay:
 
         bins = bins_from_strategy(n_bins, strategy, y_prob)
 
+        # Compute and store uniform bins for the histogram (always uniform)
+        if strategy == "uniform":
+            bins_hist = bins
+        else:
+            bins_hist = bins_from_strategy(n_bins, strategy="uniform")
+
         prob_true, prob_pred = calibration_curve(
             y_true, y_prob, n_bins=bins, pos_label=pos_label
         )
@@ -1633,6 +1645,7 @@ class CalibrationDisplay:
             prob_pred=prob_pred,
             y_prob=y_prob,
             bins=bins,
+            bins_hist=bins_hist,
             estimator_name=name,
             pos_label=pos_label,
         )
