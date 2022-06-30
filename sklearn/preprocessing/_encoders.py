@@ -1091,7 +1091,7 @@ class OneHotEncoder(_BaseEncoder):
                 "features ({}), got {}".format(len(cats), len(input_features))
             )
 
-        name_combiner = self._get_feature_name_combiner()
+        name_combiner = self._check_get_feature_name_combiner()
         feature_names = []
         for i in range(len(cats)):
             names = [name_combiner(input_features[i], t) for t in cats[i]]
