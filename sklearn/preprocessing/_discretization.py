@@ -154,7 +154,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
     """
 
     _parameter_constraints = {
-        "nbins": [Interval(numbers.Integral, 2, None, closed="left"), "array-like"],
+        "n_bins": [Interval(numbers.Integral, 2, None, closed="left"), "array-like"],
         "encode": [StrOptions({"onehot", "onehot-dense", "ordinal"})],
         "strategy": [StrOptions({"uniform", "quantile", "kmeans"})],
         "dtype": [type, None],  # TODO: TypeOptions constraint,
