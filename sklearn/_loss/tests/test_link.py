@@ -65,6 +65,9 @@ def test_link_inverse_identity(link, global_random_seed):
     n_samples, n_classes = 100, None
     if link.is_multiclass:
         n_classes = 10
+        # The values for `raw_prediction` are limited from -20 to 20 because in the
+        # class `LogitLink` the term `expit(x)` comes very close to 1 for large
+        # positive x and therefore loses precision.
         raw_prediction = rng.uniform(low=-20, high=20, size=(n_samples, n_classes))
         if isinstance(link, MultinomialLogit):
             raw_prediction = link.symmetrize_raw_prediction(raw_prediction)
