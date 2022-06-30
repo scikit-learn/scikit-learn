@@ -623,7 +623,7 @@ class _BaseDiscreteNB(_BaseNB):
                 "alpha too small will result in numeric errors, setting alpha ="
                 f" {alpha_min:.1e}. Use set_alpha = True to keep alpha unchanged."
             )
-            return alpha if _force_alpha else np.maximum(alpha, alpha_min)
+            return np.maximum(alpha, alpha_min)
         return alpha
 
     def partial_fit(self, X, y, classes=None, sample_weight=None):
