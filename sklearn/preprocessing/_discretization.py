@@ -11,6 +11,7 @@ import warnings
 from . import OneHotEncoder
 
 from ..base import BaseEstimator, TransformerMixin
+from ..utils._param_validation import Hidden, Interval, StrOptions
 from ..utils.validation import check_array
 from ..utils.validation import check_is_fitted
 from ..utils.validation import check_random_state
@@ -152,6 +153,15 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
            [ 0.5,  3.5, -1.5,  1.5]])
     """
 
+    _parameter_constraints = {
+        "nbins": [Interval(numbers.Integral, 2, None, closed="left"), "array-like"],
+        "encode": [StrOptions({"onehot", "onehot-dense", "ordinal"})],
+        "strategy": [StrOptions({"uniform", "quantile", "kmeans"})],
+        "dtype": [numbers.Real, None],
+        "subsample": [numbers.Integral, None, Hidden(StrOptions({"warn"}))],
+        "random_state": [numbers.Integral, "random_state", None],
+    }
+
     def __init__(
         self,
         n_bins=5,
@@ -187,6 +197,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         self : object
             Returns the instance itself.
         """
+        self._validate_params()
         X = self._validate_data(X, dtype="numeric")
 
         supported_dtype = (np.float64, np.float32)
