@@ -4,7 +4,6 @@
 
 from functools import partial
 import itertools
-import re
 import warnings
 
 import numpy as np
@@ -551,101 +550,6 @@ def test_sample_weights_validation():
         glm.fit(X, y, weights)
 
 
-@pytest.mark.parametrize("fit_intercept", ["not bool", 1, 0, [True]])
-def test_glm_fit_intercept_argument(fit_intercept):
-    """Test GLM for invalid fit_intercept argument."""
-    y = np.array([1, 2])
-    X = np.array([[1], [1]])
-    glm = _GeneralizedLinearRegressor(fit_intercept=fit_intercept)
-    with pytest.raises(ValueError, match="fit_intercept must be bool"):
-        glm.fit(X, y)
-
-
-@pytest.mark.parametrize("solver", ["not a solver", 1, [1]])
-def test_glm_solver_argument(solver):
-    """Test GLM for invalid solver argument."""
-    y = np.array([1, 2])
-    X = np.array([[1], [2]])
-    glm = _GeneralizedLinearRegressor(solver=solver)
-    with pytest.raises(ValueError):
-        glm.fit(X, y)
-
-
-@pytest.mark.parametrize(
-    "Estimator",
-    [_GeneralizedLinearRegressor, PoissonRegressor, GammaRegressor, TweedieRegressor],
-)
-@pytest.mark.parametrize(
-    "params, err_type, err_msg",
-    [
-        ({"max_iter": 0}, ValueError, "max_iter == 0, must be >= 1"),
-        ({"max_iter": -1}, ValueError, "max_iter == -1, must be >= 1"),
-        (
-            {"max_iter": "not a number"},
-            TypeError,
-            "max_iter must be an instance of int, not str",
-        ),
-        (
-            {"max_iter": [1]},
-            TypeError,
-            "max_iter must be an instance of int, not list",
-        ),
-        (
-            {"max_iter": 5.5},
-            TypeError,
-            "max_iter must be an instance of int, not float",
-        ),
-        ({"alpha": -1}, ValueError, "alpha == -1, must be >= 0.0"),
-        (
-            {"alpha": "1"},
-            TypeError,
-            "alpha must be an instance of float, not str",
-        ),
-        ({"tol": -1.0}, ValueError, "tol == -1.0, must be > 0."),
-        ({"tol": 0.0}, ValueError, "tol == 0.0, must be > 0.0"),
-        ({"tol": 0}, ValueError, "tol == 0, must be > 0.0"),
-        (
-            {"tol": "1"},
-            TypeError,
-            "tol must be an instance of float, not str",
-        ),
-        (
-            {"tol": [1e-3]},
-            TypeError,
-            "tol must be an instance of float, not list",
-        ),
-        ({"verbose": -1}, ValueError, "verbose == -1, must be >= 0."),
-        (
-            {"verbose": "1"},
-            TypeError,
-            "verbose must be an instance of int, not str",
-        ),
-        (
-            {"verbose": 1.0},
-            TypeError,
-            "verbose must be an instance of int, not float",
-        ),
-    ],
-)
-def test_glm_scalar_argument(Estimator, params, err_type, err_msg):
-    """Test GLM for invalid parameter arguments."""
-    y = np.array([1, 2])
-    X = np.array([[1], [2]])
-    glm = Estimator(**params)
-    with pytest.raises(err_type, match=err_msg):
-        glm.fit(X, y)
-
-
-@pytest.mark.parametrize("warm_start", ["not bool", 1, 0, [True]])
-def test_glm_warm_start_argument(warm_start):
-    """Test GLM for invalid warm_start argument."""
-    y = np.array([1, 2])
-    X = np.array([[1], [1]])
-    glm = _GeneralizedLinearRegressor(warm_start=warm_start)
-    with pytest.raises(ValueError, match="warm_start must be bool"):
-        glm.fit(X, y)
-
-
 @pytest.mark.parametrize(
     "glm",
     [
@@ -928,13 +832,6 @@ def test_tweedie_link_argument(name, link_class):
     X = np.array([[1], [2]])
     glm = TweedieRegressor(power=1, link=name).fit(X, y)
     assert isinstance(glm._base_loss.link, link_class)
-
-    glm = TweedieRegressor(power=1, link="not a link")
-    with pytest.raises(
-        ValueError,
-        match=re.escape("The link must be an element of ['auto', 'identity', 'log']"),
-    ):
-        glm.fit(X, y)
 
 
 @pytest.mark.parametrize(

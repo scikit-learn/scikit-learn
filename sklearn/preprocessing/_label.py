@@ -7,6 +7,7 @@
 # License: BSD 3 clause
 
 from collections import defaultdict
+from numbers import Integral
 import itertools
 import array
 import warnings
@@ -255,6 +256,12 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
            [0, 1, 0]])
     """
 
+    _parameter_constraints = {
+        "neg_label": [Integral],
+        "pos_label": [Integral],
+        "sparse_output": ["boolean"],
+    }
+
     def __init__(self, *, neg_label=0, pos_label=1, sparse_output=False):
 
         self.neg_label = neg_label
@@ -275,6 +282,8 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
         self : object
             Returns the instance itself.
         """
+
+        self._validate_params()
 
         if self.neg_label >= self.pos_label:
             raise ValueError(
