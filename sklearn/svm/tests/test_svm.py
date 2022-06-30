@@ -4,10 +4,10 @@ Testing for Support Vector Machine module (sklearn.svm)
 TODO: remove hard coded numerical results when possible
 """
 import warnings
-import numpy as np
-import itertools
-import pytest
 import re
+
+import numpy as np
+import pytest
 
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 from numpy.testing import assert_almost_equal
@@ -828,51 +828,29 @@ def test_sparse_fit_support_vectors_empty():
     assert not model.dual_coef_.data.size
 
 
-def test_linearsvc_parameters():
+@pytest.mark.parametrize("loss", ["hinge", "squared_hinge"])
+@pytest.mark.parametrize("penalty", ["l1", "l2"])
+@pytest.mark.parametrize("dual", [True, False])
+def test_linearsvc_parameters(loss, penalty, dual):
     # Test possible parameter combinations in LinearSVC
     # Generate list of possible parameter combinations
-    losses = ["hinge", "squared_hinge", "logistic_regression", "foo"]
-    penalties, duals = ["l1", "l2", "bar"], [True, False]
-
     X, y = make_classification(n_samples=5, n_features=5)
 
-    for loss, penalty, dual in itertools.product(losses, penalties, duals):
-        clf = svm.LinearSVC(penalty=penalty, loss=loss, dual=dual)
-        if (
-            (loss, penalty) == ("hinge", "l1")
-            or (loss, penalty, dual) == ("hinge", "l2", False)
-            or (penalty, dual) == ("l1", True)
-            or loss == "foo"
-            or penalty == "bar"
+    clf = svm.LinearSVC(penalty=penalty, loss=loss, dual=dual)
+    if (
+        (loss, penalty) == ("hinge", "l1")
+        or (loss, penalty, dual) == ("hinge", "l2", False)
+        or (penalty, dual) == ("l1", True)
+    ):
+
+        with pytest.raises(
+            ValueError,
+            match="Unsupported set of arguments.*penalty='%s.*loss='%s.*dual=%s"
+            % (penalty, loss, dual),
         ):
-
-            with pytest.raises(
-                ValueError,
-                match="Unsupported set of arguments.*penalty='%s.*loss='%s.*dual=%s"
-                % (penalty, loss, dual),
-            ):
-                clf.fit(X, y)
-        else:
             clf.fit(X, y)
-
-    # Incorrect loss value - test if explicit error message is raised
-    with pytest.raises(ValueError, match=".*loss='l3' is not supported.*"):
-        svm.LinearSVC(loss="l3").fit(X, y)
-
-
-def test_linear_svx_uppercase_loss_penality_raises_error():
-    # Check if Upper case notation raises error at _fit_liblinear
-    # which is called by fit
-
-    X, y = [[0.0], [1.0]], [0, 1]
-
-    msg = "loss='SQuared_hinge' is not supported"
-    with pytest.raises(ValueError, match=msg):
-        svm.LinearSVC(loss="SQuared_hinge").fit(X, y)
-
-    msg = "The combination of penalty='L2' and loss='squared_hinge' is not supported"
-    with pytest.raises(ValueError, match=msg):
-        svm.LinearSVC(penalty="L2").fit(X, y)
+    else:
+        clf.fit(X, y)
 
 
 def test_linearsvc():
@@ -1184,22 +1162,6 @@ def test_svr_coef_sign():
         assert_array_almost_equal(
             svr.predict(X), np.dot(X, svr.coef_.ravel()) + svr.intercept_
         )
-
-
-def test_linear_svc_intercept_scaling():
-    # Test that the right error message is thrown when intercept_scaling <= 0
-
-    for i in [-1, 0]:
-        lsvc = svm.LinearSVC(intercept_scaling=i)
-
-        msg = (
-            "Intercept scaling is %r but needs to be greater than 0."
-            " To disable fitting an intercept,"
-            " set fit_intercept=False."
-            % lsvc.intercept_scaling
-        )
-        with pytest.raises(ValueError, match=msg):
-            lsvc.fit(X, Y)
 
 
 def test_lsvc_intercept_scaling_zero():

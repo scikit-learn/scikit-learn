@@ -4,13 +4,12 @@
 
 from functools import partial
 import itertools
-import re
 import warnings
 
 import numpy as np
-import scipy
 from numpy.testing import assert_allclose
 import pytest
+import scipy
 from scipy import linalg
 from scipy.optimize import minimize, root
 
@@ -46,8 +45,8 @@ def _special_minimize(fun, grad, x, tol_NM, tol):
     res_NM = minimize(
         fun, x, method="Nelder-Mead", options={"xatol": tol_NM, "fatol": tol_NM}
     )
-    # Now refine via root finding on the gradient of the function, wich is more precise
-    # than minimizing the function itself.
+    # Now refine via root finding on the gradient of the function, which is
+    # more precise than minimizing the function itself.
     res = root(
         grad,
         res_NM.x,
@@ -117,6 +116,8 @@ def glm_dataset(global_random_seed, request):
         GLM solution with alpha=l2_reg_strength=1, i.e.
         min 1/n * sum(loss) + ||w[:-1]||_2^2.
         Last coefficient is intercept.
+    l2_reg_strength : float
+        Always equal 1.
     """
     data_type, model = request.param
     # Make larger dim more than double as big as the smaller one.
@@ -206,6 +207,7 @@ def glm_dataset(global_random_seed, request):
         coef_unpenalized,
         coef_penalized_with_intercept,
         coef_penalized_without_intercept,
+        l2_reg_strength,
     )
 
 
@@ -216,8 +218,7 @@ def test_glm_regression(solver, fit_intercept, glm_dataset):
 
     We work with a simple constructed data set with known solution.
     """
-    model, X, y, _, coef_with_intercept, coef_without_intercept = glm_dataset
-    alpha = 1.0  # because glm_dataset uses this.
+    model, X, y, _, coef_with_intercept, coef_without_intercept, alpha = glm_dataset
     params = dict(
         alpha=alpha,
         fit_intercept=fit_intercept,
@@ -266,9 +267,8 @@ def test_glm_regression_hstacked_X(solver, fit_intercept, glm_dataset):
     Fit on [X] with alpha is the same as fit on [X, X]/2 with alpha/2.
     For long X, [X, X] is still a long but singular matrix.
     """
-    model, X, y, _, coef_with_intercept, coef_without_intercept = glm_dataset
+    model, X, y, _, coef_with_intercept, coef_without_intercept, alpha = glm_dataset
     n_samples, n_features = X.shape
-    alpha = 1.0  # because glm_dataset uses this.
     params = dict(
         alpha=alpha / 2,
         fit_intercept=fit_intercept,
@@ -276,14 +276,6 @@ def test_glm_regression_hstacked_X(solver, fit_intercept, glm_dataset):
         tol=1e-12,
         max_iter=1000,
     )
-
-    if solver == "lbfgs" and not fit_intercept:
-        # Sometimes (depending on global_random_seed) lbfgs fails with:
-        # Line search cannot locate an adequate point after MAXLS function and gradient
-        # evaluations. Previous x, f and g restored.
-        # Possible causes: 1 error in function or gradient evaluation;
-        #                  2 rounding error dominate computation.
-        pytest.xfail()
 
     model = clone(model).set_params(**params)
     X = X[:, :-1]  # remove intercept
@@ -298,7 +290,7 @@ def test_glm_regression_hstacked_X(solver, fit_intercept, glm_dataset):
         intercept = 0
     model.fit(X, y)
 
-    rtol = 1e-4 if solver == "lbfgs" else 5e-9
+    rtol = 2e-4 if solver == "lbfgs" else 5e-9
     assert model.intercept_ == pytest.approx(intercept, rel=rtol)
     assert_allclose(model.coef_, np.r_[coef, coef], rtol=rtol)
 
@@ -314,9 +306,8 @@ def test_glm_regression_vstacked_X(solver, fit_intercept, glm_dataset):
     It is the same alpha as the average loss stays the same.
     For wide X, [X', X'] is a singular matrix.
     """
-    model, X, y, _, coef_with_intercept, coef_without_intercept = glm_dataset
+    model, X, y, _, coef_with_intercept, coef_without_intercept, alpha = glm_dataset
     n_samples, n_features = X.shape
-    alpha = 1.0  # because glm_dataset uses this.
     params = dict(
         alpha=alpha,
         fit_intercept=fit_intercept,
@@ -354,7 +345,7 @@ def test_glm_regression_unpenalized(solver, fit_intercept, glm_dataset):
     n_samples < n_features:
         min ||w||_2 subject to w = argmin deviance(X, y, w)
     """
-    model, X, y, coef, _, _ = glm_dataset
+    model, X, y, coef, _, _, _ = glm_dataset
     n_samples, n_features = X.shape
     alpha = 0  # unpenalized
     params = dict(
@@ -375,6 +366,7 @@ def test_glm_regression_unpenalized(solver, fit_intercept, glm_dataset):
 
     with warnings.catch_warnings():
         if n_samples < n_features:
+            # TODO: implement a fallback mechanism to LBFGS avoid bad convergence.
             warnings.filterwarnings("ignore", category=scipy.linalg.LinAlgWarning)
             warnings.filterwarnings("ignore", category=ConvergenceWarning)
         model.fit(X, y)
@@ -405,7 +397,7 @@ def test_glm_regression_unpenalized(solver, fit_intercept, glm_dataset):
             # with norm_model <= norm_solution! So we check conditionally.
             if not (norm_model > (1 + 1e-12) * norm_solution):
                 assert model.intercept_ == pytest.approx(intercept)
-                assert_allclose(model.coef_, coef, rtol=5e-5)
+                assert_allclose(model.coef_, coef, rtol=rtol)
         elif solver == "lbfgs" and fit_intercept:
             # But it is not the minimum norm solution. Otherwise the norms would be
             # equal.
@@ -415,13 +407,13 @@ def test_glm_regression_unpenalized(solver, fit_intercept, glm_dataset):
             # Note: Even adding a tiny penalty does not give the minimal norm solution.
             # XXX: We could have naively expected LBFGS to find the minimal norm
             # solution by adding a very small penalty. Even that fails for a reason we
-            # do not properly understand.
+            # do not properly understand at this point.
         else:
             # When `fit_intercept=False`, LBFGS naturally converges to the minimum norm
             # solution on this problem.
             # XXX: Do we have any theoretical guarantees why this should be the case?
-            assert model.intercept_ == pytest.approx(intercept, rel=5e-6)
-            assert_allclose(model.coef_, coef, rtol=5e-5)
+            assert model.intercept_ == pytest.approx(intercept, rel=rtol)
+            assert_allclose(model.coef_, coef, rtol=rtol)
 
 
 @pytest.mark.parametrize("solver", SOLVERS)
@@ -435,7 +427,7 @@ def test_glm_regression_unpenalized_hstacked_X(solver, fit_intercept, glm_datase
     solution:
         min ||w||_2 subject to w = argmin deviance(X, y, w)
     """
-    model, X, y, coef, _, _ = glm_dataset
+    model, X, y, coef, _, _, _ = glm_dataset
     n_samples, n_features = X.shape
     alpha = 0  # unpenalized
     params = dict(
@@ -524,7 +516,7 @@ def test_glm_regression_unpenalized_vstacked_X(solver, fit_intercept, glm_datase
     solution:
         min ||w||_2 subject to w = argmin deviance(X, y, w)
     """
-    model, X, y, coef, _, _ = glm_dataset
+    model, X, y, coef, _, _, _ = glm_dataset
     n_samples, n_features = X.shape
     alpha = 0  # unpenalized
     params = dict(
@@ -548,6 +540,8 @@ def test_glm_regression_unpenalized_vstacked_X(solver, fit_intercept, glm_datase
 
     with warnings.catch_warnings():
         if n_samples < n_features:
+            # XXX: Implement a fallback mechanism to avoid lack of convergence
+            # in this case.
             warnings.filterwarnings("ignore", category=scipy.linalg.LinAlgWarning)
             warnings.filterwarnings("ignore", category=ConvergenceWarning)
         model.fit(X, y)
@@ -602,101 +596,6 @@ def test_sample_weights_validation():
     msg = r"sample_weight.shape == \(2,\), expected \(1,\)!"
     with pytest.raises(ValueError, match=msg):
         glm.fit(X, y, weights)
-
-
-@pytest.mark.parametrize("fit_intercept", ["not bool", 1, 0, [True]])
-def test_glm_fit_intercept_argument(fit_intercept):
-    """Test GLM for invalid fit_intercept argument."""
-    y = np.array([1, 2])
-    X = np.array([[1], [1]])
-    glm = _GeneralizedLinearRegressor(fit_intercept=fit_intercept)
-    with pytest.raises(ValueError, match="fit_intercept must be bool"):
-        glm.fit(X, y)
-
-
-@pytest.mark.parametrize("solver", ["not a solver", 1, [1]])
-def test_glm_solver_argument(solver):
-    """Test GLM for invalid solver argument."""
-    y = np.array([1, 2])
-    X = np.array([[1], [2]])
-    glm = _GeneralizedLinearRegressor(solver=solver)
-    with pytest.raises(ValueError):
-        glm.fit(X, y)
-
-
-@pytest.mark.parametrize(
-    "Estimator",
-    [_GeneralizedLinearRegressor, PoissonRegressor, GammaRegressor, TweedieRegressor],
-)
-@pytest.mark.parametrize(
-    "params, err_type, err_msg",
-    [
-        ({"max_iter": 0}, ValueError, "max_iter == 0, must be >= 1"),
-        ({"max_iter": -1}, ValueError, "max_iter == -1, must be >= 1"),
-        (
-            {"max_iter": "not a number"},
-            TypeError,
-            "max_iter must be an instance of int, not str",
-        ),
-        (
-            {"max_iter": [1]},
-            TypeError,
-            "max_iter must be an instance of int, not list",
-        ),
-        (
-            {"max_iter": 5.5},
-            TypeError,
-            "max_iter must be an instance of int, not float",
-        ),
-        ({"alpha": -1}, ValueError, "alpha == -1, must be >= 0.0"),
-        (
-            {"alpha": "1"},
-            TypeError,
-            "alpha must be an instance of float, not str",
-        ),
-        ({"tol": -1.0}, ValueError, "tol == -1.0, must be > 0."),
-        ({"tol": 0.0}, ValueError, "tol == 0.0, must be > 0.0"),
-        ({"tol": 0}, ValueError, "tol == 0, must be > 0.0"),
-        (
-            {"tol": "1"},
-            TypeError,
-            "tol must be an instance of float, not str",
-        ),
-        (
-            {"tol": [1e-3]},
-            TypeError,
-            "tol must be an instance of float, not list",
-        ),
-        ({"verbose": -1}, ValueError, "verbose == -1, must be >= 0."),
-        (
-            {"verbose": "1"},
-            TypeError,
-            "verbose must be an instance of int, not str",
-        ),
-        (
-            {"verbose": 1.0},
-            TypeError,
-            "verbose must be an instance of int, not float",
-        ),
-    ],
-)
-def test_glm_scalar_argument(Estimator, params, err_type, err_msg):
-    """Test GLM for invalid parameter arguments."""
-    y = np.array([1, 2])
-    X = np.array([[1], [2]])
-    glm = Estimator(**params)
-    with pytest.raises(err_type, match=err_msg):
-        glm.fit(X, y)
-
-
-@pytest.mark.parametrize("warm_start", ["not bool", 1, 0, [True]])
-def test_glm_warm_start_argument(warm_start):
-    """Test GLM for invalid warm_start argument."""
-    y = np.array([1, 2])
-    X = np.array([[1], [1]])
-    glm = _GeneralizedLinearRegressor(warm_start=warm_start)
-    with pytest.raises(ValueError, match="warm_start must be bool"):
-        glm.fit(X, y)
 
 
 @pytest.mark.parametrize(
@@ -832,7 +731,11 @@ def test_warm_start(solver, fit_intercept, global_random_seed):
     )
     y = np.abs(y)  # Poisson requires non-negative targets.
     alpha = 1
-    params = {"solver": solver, "fit_intercept": fit_intercept, "tol": 1e-10}
+    params = {
+        "solver": solver,
+        "fit_intercept": fit_intercept,
+        "tol": 1e-10,
+    }
 
     glm1 = PoissonRegressor(warm_start=False, max_iter=1000, alpha=alpha, **params)
     glm1.fit(X, y)
@@ -982,13 +885,6 @@ def test_tweedie_link_argument(name, link_class):
     X = np.array([[1], [2]])
     glm = TweedieRegressor(power=1, link=name).fit(X, y)
     assert isinstance(glm._base_loss.link, link_class)
-
-    glm = TweedieRegressor(power=1, link="not a link")
-    with pytest.raises(
-        ValueError,
-        match=re.escape("The link must be an element of ['auto', 'identity', 'log']"),
-    ):
-        glm.fit(X, y)
 
 
 @pytest.mark.parametrize(
