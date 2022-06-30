@@ -453,7 +453,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "BaggingRegressor",
     "BayesianGaussianMixture",
     "BayesianRidge",
-    "BernoulliRBM",
     "CalibratedClassifierCV",
     "ClassifierChain",
     "CountVectorizer",
