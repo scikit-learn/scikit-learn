@@ -4047,7 +4047,6 @@ def check_param_validation(name, estimator_orig):
     param_with_bad_type = type("BadType", (), {})()
 
     fit_methods = ["fit", "partial_fit", "fit_transform", "fit_predict"]
-    methods = [method for method in fit_methods if hasattr(estimator_orig, method)]
 
     for param_name in estimator_params:
         constraints = estimator_orig._parameter_constraints[param_name]
@@ -4067,7 +4066,11 @@ def check_param_validation(name, estimator_orig):
         # First, check that the error is raised if param doesn't match any valid type.
         estimator.set_params(**{param_name: param_with_bad_type})
 
-        for method in methods:
+        for method in fit_methods:
+            if not hasattr(estimator, method):
+                # the method is not accessible with the current set of parameters
+                continue
+
             with raises(ValueError, match=match, err_msg=err_msg):
                 getattr(estimator, method)(X, y)
 
@@ -4084,6 +4087,10 @@ def check_param_validation(name, estimator_orig):
 
             estimator.set_params(**{param_name: bad_value})
 
-            for method in methods:
+            for method in fit_methods:
+                if not hasattr(estimator, method):
+                    # the method is not accessible with the current set of parameters
+                    continue
+
                 with raises(ValueError, match=match, err_msg=err_msg):
                     getattr(estimator, method)(X, y)
