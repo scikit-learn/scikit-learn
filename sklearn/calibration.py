@@ -1153,6 +1153,7 @@ class CalibrationDisplay:
         name=None,
         ref_line=True,
         grid="uniform",
+        bin_label=False,
         **kwargs,
     ):
         """Plot visualization.
@@ -1203,6 +1204,7 @@ class CalibrationDisplay:
         if ref_line and not existing_ref_line:
             ax.plot([0, 1], [0, 1], "k--", label=ref_line_label, lw=1)
         self.line_ = ax.plot(self.prob_pred, self.prob_true, "o-", **line_kwargs)[0]
+        color = self.line_.get_color()
 
         # Plot bins if required
         if grid == "uniform":
@@ -1243,15 +1245,22 @@ class CalibrationDisplay:
             # histtype = "step"
 
         ax_hist.set(xlabel="Mean predicted confidence", ylabel="Count")
-
-        ax_hist.hist(
+        hist = ax_hist.hist(
             self.y_prob,
             bins=self.bins_hist,
             label=name,
             density=density,
             histtype=histtype,
-            color=self.line_.get_color(),
+            color=color,
         )
+
+        if bin_label:
+            bar_container = hist[2]
+            labels = bar_container.datavalues / np.sum(bar_container.datavalues)
+            labels = ["{:.0f}".format(100 * v) for v in labels]
+            ax_hist.bar_label(
+                bar_container, labels=labels, label_type="edge", color=color
+            )
 
         xlabel = f"Mean predicted confidence {info_pos_label}"
         ylabel = f"Fraction of positives {info_pos_label}"
@@ -1277,6 +1286,7 @@ class CalibrationDisplay:
         ax=None,
         ax_hist=None,
         grid="uniform",
+        bin_label=False,
         **kwargs,
     ):
         """Plot calibration curve using a binary classifier and data.
@@ -1389,6 +1399,7 @@ class CalibrationDisplay:
             ax=ax,
             ax_hist=ax_hist,
             grid=grid,
+            bin_label=bin_label,
             **kwargs,
         )
 
@@ -1518,6 +1529,7 @@ class CalibrationDisplay:
                 ax=ax,
                 ax_hist=ax_hist,
                 grid="uniform" if grid and (i == 0) else None,
+                bin_label=False,
                 **kwargs[i],
             )
             ax_hist = display.ax_hist_
@@ -1538,6 +1550,7 @@ class CalibrationDisplay:
         ref_line=True,
         ax=None,
         grid="uniform",
+        bin_label=False,
         **kwargs,
     ):
         """Plot calibration curve using true labels and predicted probabilities.
@@ -1649,4 +1662,6 @@ class CalibrationDisplay:
             estimator_name=name,
             pos_label=pos_label,
         )
-        return disp.plot(ax=ax, ref_line=ref_line, grid=grid, **kwargs)
+        return disp.plot(
+            ax=ax, ref_line=ref_line, grid=grid, bin_label=bin_label, **kwargs
+        )
