@@ -67,5 +67,5 @@ def test_normalize_metric_warning():
     """
     msg = "Normalized stress is not supported"
     sim = np.array([[0, 5, 3, 4], [5, 0, 2, 2], [3, 2, 0, 1], [4, 2, 1, 0]])
-    with pytest.warns(UserWarning, match=msg):
+    with pytest.raises(ValueError, match=msg):
         mds.smacof(sim, metric=True, normalized_stress=True)

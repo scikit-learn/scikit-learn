@@ -289,12 +289,10 @@ def smacof(
     dissimilarities = check_array(dissimilarities)
     random_state = check_random_state(random_state)
     if normalized_stress and metric:
-        warnings.warn(
-            "Normalized stress is not supported for metric MDS -- unnormalized stress"
-            " will be used instead.",
-            UserWarning,
+        raise ValueError(
+            "Normalized stress is not supported for metric MDS. Either set"
+            " `normalized_stress=False` or use `metric=False`."
         )
-        normalized_stress = False
     if hasattr(init, "__array__"):
         init = np.asarray(init).copy()
         if not n_init == 1:
