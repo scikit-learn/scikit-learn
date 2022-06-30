@@ -327,6 +327,7 @@ class OneHotEncoder(_BaseEncoder):
         `"concat_string"` concatenates encoded feature name and category separated by
         '_'.  E.g. feature X with values 1, 6, 7 create feature names `X_1, X_6, X_7`.
 
+        .. versionadded:: 1.2
     Attributes
     ----------
     categories_ : list of arrays
