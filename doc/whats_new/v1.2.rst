@@ -246,6 +246,14 @@ Changelog
   :pr:`10805` by :user:`Mathias Andersen <MrMathias>` and
   :pr:`23471` by :user:`Meekail Zain <micky774>`
 
+:mod:`sklearn.model_selection`
+......................
+
+- |Enhancement| Adds `'walk_forward'` feature to :class:`model_selection.TimeSeriesSplit`.
+  This feature enables rolling window support, enabled by passing the value of `'walk_forward'`
+  for the `n_splits` variable
+  :pr:`23780` by :user:`Sean Atukorala <ShehanAT>` and :user:`Guillaume Lemaitre <glemaitre>`
+
 Code and Documentation Contributors
 -----------------------------------
 
