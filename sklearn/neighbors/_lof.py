@@ -8,7 +8,9 @@ import warnings
 from ._base import NeighborsBase
 from ._base import KNeighborsMixin
 from ..base import OutlierMixin
+from numbers import Real
 
+from ..utils._param_validation import Interval, StrOptions
 from ..utils.metaestimators import available_if
 from ..utils.validation import check_is_fitted
 from ..utils import check_array
@@ -193,6 +195,16 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
     array([ -0.9821...,  -1.0370..., -73.3697...,  -0.9821...])
     """
 
+    _parameter_constraints = {
+        **NeighborsBase._parameter_constraints,
+        "contamination": [
+            StrOptions({"auto"}),
+            Interval(Real, 0, 0.5, closed="right"),
+        ],
+        "novelty": ["boolean"],
+    }
+    _parameter_constraints.pop("radius")
+
     def __init__(
         self,
         n_neighbors=20,
@@ -272,13 +284,9 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
         self : LocalOutlierFactor
             The fitted local outlier factor detector.
         """
-        self._fit(X)
+        self._validate_params()
 
-        if self.contamination != "auto":
-            if not (0.0 < self.contamination <= 0.5):
-                raise ValueError(
-                    "contamination must be in (0, 0.5], got: %f" % self.contamination
-                )
+        self._fit(X)
 
         n_samples = self.n_samples_fit_
         if self.n_neighbors > n_samples:
