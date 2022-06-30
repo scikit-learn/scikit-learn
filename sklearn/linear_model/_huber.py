@@ -154,8 +154,8 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
         Maximum number of iterations that
         ``scipy.optimize.minimize(method="L-BFGS-B")`` should run for.
 
-    alpha : non-negative float, default=0.0001
-        Regularization parameter.
+    alpha : float, default=0.0001
+        Regularization parameter. Must be in the range `[0, inf)`.
 
     warm_start : bool, default=False
         This is useful if the stored attributes of a previously used model
