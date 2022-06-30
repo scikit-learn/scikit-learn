@@ -462,6 +462,7 @@ class OneHotEncoder(_BaseEncoder):
             None,
         ],
         "sparse": ["boolean"],
+        "feature_name_combiner": ["concat_string", callable],
     }
 
     def __init__(
