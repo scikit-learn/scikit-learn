@@ -476,7 +476,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "GraphicalLasso",
     "GraphicalLassoCV",
     "HashingVectorizer",
-    "HuberRegressor",
     "IncrementalPCA",
     "Isomap",
     "IsotonicRegression",
