@@ -10,6 +10,7 @@
 import warnings
 from inspect import signature
 from functools import partial
+import numbers
 
 from math import log
 import numpy as np
@@ -895,7 +896,7 @@ class _SigmoidCalibration(RegressorMixin, BaseEstimator):
 
 def bins_from_strategy(n_bins, strategy, y_prob=None):
     """Define the bin edges based on the strategy.
-    
+
     If `n_bins` is already an `array-like`, it is used as-is by
     converting it to a `ndarray`.
     """
@@ -1188,11 +1189,11 @@ class CalibrationDisplay:
             ax.plot([0, 1], [0, 1], "k--", label=ref_line_label, lw=1)
         self.line_ = ax.plot(self.prob_pred, self.prob_true, "o-", **line_kwargs)[0]
 
+        bins_uniform = bins_from_strategy(len(self.bins) - 1, strategy="uniform")
+
         if plot_bins:
-            for x in self.bins:
+            for x in bins_uniform:
                 ax.axvline(x, lw=0.5, ls="--", color="grey", zorder=-1)
-        else:
-            ax.grid()
 
         # We always have to show the legend for at least the reference line
         ax.legend(loc="lower right")
@@ -1212,12 +1213,12 @@ class CalibrationDisplay:
             ax_hist.spines["right"].set_visible(False)
             ax_hist.spines["top"].set_visible(False)
             ax_hist.spines["left"].set_visible(False)
-            density = True
-            histtype = "step"
+            # density = True
+            # histtype = "step"
 
         ax_hist.hist(
             self.y_prob,
-            bins=bins_from_strategy(len(self.bins), strategy="uniform"),
+            bins=bins_uniform,
             label=name,
             density=density,
             histtype=histtype,
@@ -1376,7 +1377,7 @@ class CalibrationDisplay:
         names=None,
         ref_line=True,
         ax=None,
-        plot_bins=None,
+        plot_bins=True,
         **kwargs,
     ):
         """Plot calibration curve using a binary classifier and data.
@@ -1471,7 +1472,7 @@ class CalibrationDisplay:
         displays = []
 
         if plot_bins is None:
-            plot_bins = strategy == "uniform" or ax is None
+            plot_bins = ax is None
 
         # Turn kwargs of lists into list of kwargs
         kwargs = [
@@ -1491,14 +1492,14 @@ class CalibrationDisplay:
                 ref_line=ref_line,
                 ax=ax,
                 ax_hist=ax_hist,
-                plot_bins=plot_bins,
+                plot_bins=plot_bins and (i == 0),
                 **kwargs[i],
             )
             ax_hist = display.ax_hist_
             displays.append(display)
 
-        if not plot_bins:
-            ax.grid()
+        # if not plot_bins:
+        #     ax.grid()
 
         return displays
 
@@ -1604,6 +1605,8 @@ class CalibrationDisplay:
         check_matplotlib_support(method_name)
 
         bins = bins_from_strategy(n_bins, strategy, y_prob)
+        print(bins)
+        print(len(bins))
 
         prob_true, prob_pred = calibration_curve(
             y_true, y_prob, n_bins=bins, pos_label=pos_label
