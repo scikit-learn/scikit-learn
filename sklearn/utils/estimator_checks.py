@@ -55,6 +55,8 @@ from ..model_selection import ShuffleSplit
 from ..model_selection._validation import _safe_split
 from ..metrics.pairwise import rbf_kernel, linear_kernel, pairwise_distances
 from ..utils.fixes import threadpool_info
+from ..utils.fixes import sp_version
+from ..utils.fixes import parse_version
 from ..utils.validation import check_is_fitted
 from ..utils._param_validation import make_constraint
 from ..utils._param_validation import generate_invalid_param_val
@@ -747,6 +749,11 @@ def _set_checking_parameters(estimator):
 
     if name == "OneHotEncoder":
         estimator.set_params(handle_unknown="ignore")
+
+    if name == "QuantileRegressor":
+        # Avoid warning due to Scipy deprecating interior-point solver
+        solver = "highs" if sp_version >= parse_version("1.6.0") else "interior-point"
+        estimator.set_params(solver=solver)
 
     if name in CROSS_DECOMPOSITION:
         estimator.set_params(n_components=1)
