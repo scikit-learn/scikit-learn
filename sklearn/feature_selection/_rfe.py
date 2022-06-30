@@ -550,13 +550,13 @@ class RFECV(RFE):
     cv_results_ : dict of ndarrays
         A dict with keys:
 
-        split(k)_test_score : ndarray of shape (n_features,)
+        split(k)_test_score : ndarray of shape (n_subsets_of_features,)
             The cross-validation scores across (k)th fold.
 
-        mean_test_score : ndarray of shape (n_features,)
+        mean_test_score : ndarray of shape (n_subsets_of_features,)
             Mean of scores over the folds.
 
-        std_test_score : ndarray of shape (n_features,)
+        std_test_score : ndarray of shape (n_subsets_of_features,)
             Standard deviation of scores over the folds.
 
         .. versionadded:: 1.0
