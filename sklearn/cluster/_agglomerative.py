@@ -766,10 +766,10 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
 
     metric : str or callable, default=None
         Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
-        "manhattan", "cosine", or "precomputed".
-        If linkage is "ward", only "euclidean" is accepted.
-        If "precomputed", a distance matrix (instead of a similarity matrix)
-        is needed as input for the fit method.
+        "manhattan", "cosine", or "precomputed". If set to `None` then
+        "euclidean" is used. If linkage is "ward", only "euclidean" is
+        accepted. If "precomputed", a distance matrix (instead of a similarity
+        matrix) is needed as input for the fit method.
 
         .. versionadded:: 1.2
 
@@ -989,7 +989,6 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         elif self.metric is None:
             self._metric = "euclidean"
 
-
         if not ((self.n_clusters is None) ^ (self.distance_threshold is None)):
             raise ValueError(
                 "Exactly one of n_clusters and "
@@ -1128,10 +1127,12 @@ class FeatureAgglomeration(
             `affinity` was deprecated in version 1.2 and will be renamed to
             `metric` in 1.4.
 
-    metric : str or callable, default='euclidean'
+    metric : str or callable, default=None
         Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
-        "manhattan", "cosine", or 'precomputed'.
-        If linkage is "ward", only "euclidean" is accepted.
+        "manhattan", "cosine", or "precomputed". If set to `None` then
+        "euclidean" is used. If linkage is "ward", only "euclidean" is
+        accepted. If "precomputed", a distance matrix (instead of a similarity
+        matrix) is needed as input for the fit method.
 
         .. versionadded:: 1.2
 

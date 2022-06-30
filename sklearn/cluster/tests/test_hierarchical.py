@@ -8,7 +8,6 @@ Several basic tests for hierarchical clustering procedures
 import itertools
 from tempfile import mkdtemp
 import shutil
-import warnings
 import pytest
 from functools import partial
 
@@ -249,17 +248,17 @@ def test_agglomerative_clustering():
         clustering.fit(X)
 
     # Test using another metric than euclidean works with linkage complete
-    for affinity in PAIRED_DISTANCES.keys():
+    for metric in PAIRED_DISTANCES.keys():
         # Compare our (structured) implementation to scipy
         clustering = AgglomerativeClustering(
             n_clusters=10,
             connectivity=np.ones((n_samples, n_samples)),
-            metric=affinity,
+            metric=metric,
             linkage="complete",
         )
         clustering.fit(X)
         clustering2 = AgglomerativeClustering(
-            n_clusters=10, connectivity=None, metric=affinity, linkage="complete"
+            n_clusters=10, connectivity=None, metric=metric, linkage="complete"
         )
         clustering2.fit(X)
         assert_almost_equal(
@@ -907,15 +906,6 @@ def test_precomputed_connectivity_affinity_with_2_connected_components():
 def test_deprecate_affinity():
     rng = np.random.RandomState(42)
     X = rng.randn(50, 10)
-    est = [
-        AgglomerativeClustering(),
-        AgglomerativeClustering(metric="euclidean"),
-    ]
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", FutureWarning)
-        for af in est:
-            af.fit(X)
-            af.fit_predict(X)
 
     af = AgglomerativeClustering(affinity="euclidean")
     msg = (
