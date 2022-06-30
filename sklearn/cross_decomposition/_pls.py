@@ -172,7 +172,7 @@ class _PLS(
 
     Main ref: Wegelin, a survey of Partial Least Squares (PLS) methods,
     with emphasis on the two-block case
-    https://www.stat.washington.edu/research/reports/2000/tr371.pdf
+    https://stat.uw.edu/sites/default/files/files/reports/2000/tr371.pdf
     """
 
     _parameter_constraints = {
