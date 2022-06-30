@@ -1074,6 +1074,12 @@ class CalibrationDisplay:
     y_prob : ndarray of shape (n_samples,)
         Probability estimates for the positive class, for each sample.
 
+    bins : ndarray of shape (n_bins+1,)
+        The bin edges used to build the calibration curve.
+
+    bins_hist : ndarray of shape (n_bins+1,)
+        The bin edges used to build the histogram.
+
     estimator_name : str, default=None
         Name of estimator. If None, the estimator name is not shown.
 
@@ -1199,12 +1205,43 @@ class CalibrationDisplay:
             line_kwargs["label"] = name
         line_kwargs.update(**kwargs)
 
+        # Plot calibration curve
         ref_line_label = "Perfectly calibrated"
         existing_ref_line = ref_line_label in ax.get_legend_handles_labels()[1]
         if ref_line and not existing_ref_line:
             ax.plot([0, 1], [0, 1], "k--", label=ref_line_label, lw=1)
         self.line_ = ax.plot(self.prob_pred, self.prob_true, "o-", **line_kwargs)[0]
         color = self.line_.get_color()
+
+        # Plot histogram
+        if ax_hist is None:
+            divider = make_axes_locatable(ax)
+            ax_hist = divider.append_axes("top", size="10%", pad=0.0)
+
+            ax_hist.set_xlim(ax.get_xlim())
+            ax_hist.get_xaxis().set_visible(False)
+            ax_hist.get_yaxis().set_visible(False)
+            ax_hist.spines["right"].set_visible(False)
+            ax_hist.spines["top"].set_visible(False)
+            ax_hist.spines["left"].set_visible(False)
+
+        ax_hist.set(xlabel="Mean predicted confidence", ylabel="Count")
+        hist = ax_hist.hist(
+            self.y_prob,
+            bins=self.bins_hist,
+            label=name,
+            density=False,
+            histtype="bar",
+            color=color,
+        )
+
+        if bin_label:
+            bar_container = hist[2]
+            labels = bar_container.datavalues / np.sum(bar_container.datavalues)
+            labels = ["{:.0f}".format(100 * v) for v in labels]
+            ax_hist.bar_label(
+                bar_container, labels=labels, label_type="edge", color=color
+            )
 
         # Plot bins if required
         if grid == "uniform":
@@ -1223,45 +1260,7 @@ class CalibrationDisplay:
 
         # We always have to show the legend for at least the reference line
         ax.legend(loc="lower right")
-
         ax.set_aspect("equal")
-
-        density = False
-        histtype = "bar"
-        # Plot histogram
-        if ax_hist is None:
-            divider = make_axes_locatable(ax)
-            ax_hist = divider.append_axes("top", size="10%", pad=0.0)
-
-            ax_hist.set_xlim(ax.get_xlim())
-            ax_hist.set_xticklabels([])
-            ax_hist.set_yticks([])
-            ax_hist.get_xaxis().set_visible(False)
-            ax_hist.get_yaxis().set_visible(False)
-            ax_hist.spines["right"].set_visible(False)
-            ax_hist.spines["top"].set_visible(False)
-            ax_hist.spines["left"].set_visible(False)
-            # density = True
-            # histtype = "step"
-
-        ax_hist.set(xlabel="Mean predicted confidence", ylabel="Count")
-        hist = ax_hist.hist(
-            self.y_prob,
-            bins=self.bins_hist,
-            label=name,
-            density=density,
-            histtype=histtype,
-            color=color,
-        )
-
-        if bin_label:
-            bar_container = hist[2]
-            labels = bar_container.datavalues / np.sum(bar_container.datavalues)
-            labels = ["{:.0f}".format(100 * v) for v in labels]
-            ax_hist.bar_label(
-                bar_container, labels=labels, label_type="edge", color=color
-            )
-
         xlabel = f"Mean predicted confidence {info_pos_label}"
         ylabel = f"Fraction of positives {info_pos_label}"
         ax.set(xlabel=xlabel, ylabel=ylabel)
@@ -1317,10 +1316,18 @@ class CalibrationDisplay:
         y : array-like of shape (n_samples,)
             Binary target values.
 
-        n_bins : int, default=5
-            Number of bins to discretize the [0, 1] interval into when
-            calculating the calibration curve. A bigger number requires more
-            data.
+        n_bins : int or array-like, default=5
+            Define the discretization applied to `y_prob`, ranging in [0, 1].
+
+            - if an integer is provided, the discretization depends on the
+            `strategy` parameter with n_bins as the number of bins.
+            - if an array-like is provided, the `strategy` parameter is
+            overlooked and the array is used as bin edges directly.
+
+            A bigger requested number of bins require more data. Bins with no
+            samples (i.e. without corresponding values in `y_prob`) will not be
+            returned, thus the returned arrays may have less than `n_bins`
+            values (or `len(n_bins)` if `n_bins` is an array-like).
 
         strategy : {'uniform', 'quantile'}, default='uniform'
             Strategy used to define the widths of the bins.
@@ -1345,8 +1352,22 @@ class CalibrationDisplay:
             calibrated classifier.
 
         ax : matplotlib axes, default=None
-            Axes object to plot on. If `None`, a new figure and axes is
-            created.
+            Axes object to plot on the calibration curve. If `None`, a new
+            figure and axes is created.
+
+        ax_hist : matplotlib axes, default=None
+            Axes object to plot on the histogram. If `None`, a new axis is
+            created from ax.
+
+        grid : {'uniform', 'bins', None}, default: 'uniform'
+            The bins to plot.
+
+            - `'uniform'`: Plot uniform bins.
+            - `'bins'`: Plot the bins used to build the calibration curve.
+            - None: Do not plot the bins.
+
+        bin_label : bool
+            Whether to plot the ratios on top of the histogram bars.
 
         **kwargs : dict
             Keyword arguments to be passed to :func:`matplotlib.pyplot.plot`.
@@ -1478,6 +1499,9 @@ class CalibrationDisplay:
             Axes object to plot on. If `None`, a new figure and axes is
             created.
 
+        grid : bool, default=True
+            If `True, plots the uniform bins.
+
         **kwargs : dict
             Keyword arguments to be passed to :func:`matplotlib.pyplot.plot`.
 
@@ -1549,6 +1573,7 @@ class CalibrationDisplay:
         name=None,
         ref_line=True,
         ax=None,
+        ax_hist=None,
         grid="uniform",
         bin_label=False,
         **kwargs,
@@ -1603,8 +1628,22 @@ class CalibrationDisplay:
             calibrated classifier.
 
         ax : matplotlib axes, default=None
-            Axes object to plot on. If `None`, a new figure and axes is
-            created.
+            Axes object to plot on the calibration curve. If `None`, a new
+            figure and axes is created.
+
+        ax_hist : matplotlib axes, default=None
+            Axes object to plot on the histogram. If `None`, a new axis is
+            created from ax.
+
+        grid : {'uniform', 'bins', None}, default: 'uniform'
+            The bins to plot.
+
+            - `'uniform'`: Plot uniform bins.
+            - `'bins'`: Plot the bins used to build the calibration curve.
+            - None: Do not plot the bins.
+
+        bin_label : bool
+            Whether to plot the ratios on top of the histogram bars.
 
         **kwargs : dict
             Keyword arguments to be passed to :func:`matplotlib.pyplot.plot`.
@@ -1663,5 +1702,10 @@ class CalibrationDisplay:
             pos_label=pos_label,
         )
         return disp.plot(
-            ax=ax, ref_line=ref_line, grid=grid, bin_label=bin_label, **kwargs
+            ax=ax,
+            ax_hist=ax_hist,
+            ref_line=ref_line,
+            grid=grid,
+            bin_label=bin_label,
+            **kwargs,
         )
