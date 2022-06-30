@@ -69,6 +69,7 @@ Changelog
   clustering, however it varies in its approach from :class:`cluster.OPTICS`. This
   algorithm is very robust to its hyperparameters and can be used on a wide
   variety of data without much, if any, tuning.
+  :pr:`22616` by :user:`Meekail Zain <micky774>`
 
 - |Enhancement| The `predict` and `fit_predict` methods of :class:`cluster.OPTICS` now
   accept sparse data type for input data. :pr:`14736` by :user:`Hunt Zhan <huntzhan>`,
