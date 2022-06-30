@@ -3,20 +3,10 @@
 Adjustment for chance in clustering performance evaluation
 ==========================================================
 
-The following plots demonstrate the impact of the number of clusters and number
-of samples on various clustering performance evaluation metrics.
-
-Non-adjusted measures such as the V-Measure show a dependency between the number
-of clusters and the number of samples: the mean V-Measure of random labeling
-increases significantly as the number of clusters is closer to the total number
-of samples used to compute the measure.
-
-Adjusted for chance measure, such as ARI, display some random variations centered
-around a mean score of 0.0 for any number of samples and clusters.
-
-Only adjusted measures can hence safely be used as a consensus index to evaluate
-the average stability of clustering algorithms for a given value of k on various
-overlapping sub-samples of the dataset.
+This notebook explores the impact of random labeling on the behavior of some
+clustering evaluation metrics when we vary the number of clusters in:
+ - the labeling to evaluate;
+ - the reference labeling we compare to.
 
 """
 
@@ -133,6 +123,14 @@ plt.ylim(bottom=-0.05, top=1.05)
 plt.show()
 
 # %%
+# Non-adjusted measures such as the V-Measure show a dependency between the
+# number of clusters and the number of samples: the mean V-Measure of random
+# labeling increases significantly as the number of clusters is closer to the
+# total number of samples used to compute the measure.
+#
+# Adjusted for chance measure, such as ARI, display some random variations
+# centered around a mean score of 0.0 for any number of samples and clusters.
+#
 # We can also score a random labeling with varying n_clusters against the ground
 # class labels with a fixed number of samples (1000).
 
@@ -171,3 +169,19 @@ plt.ylabel("Score value")
 plt.ylim(bottom=-0.05, top=1.05)
 plt.legend(plots, names)
 plt.show()
+
+# %%
+# We observe similar results as for the first experiment: adjusted for chance
+# metrics stay constantly near zero while other metrics tend to get larger with
+# finer-grained labelings.
+#
+# Only adjusted measures can hence safely be used as a consensus index to
+# evaluate the average stability of clustering algorithms for a given value of k
+# on various overlapping sub-samples of the dataset.
+#
+# Non-adjusted clustering evaluation metric can therefore be misleading as they
+# output large values for fine-grained labelings, one could be lead to think
+# that the labeling has captured meaningful groups while they can be totally
+# random. In particular, such non-adjusted metrics should not be used to compare
+# the results of different clustering algorithms that output a different number
+# of clusters.
