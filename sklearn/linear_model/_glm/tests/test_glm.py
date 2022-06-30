@@ -1076,7 +1076,7 @@ def test_linalg_warning_with_newton_solver(global_random_seed):
         )
     original_newton_deviance = mean_poisson_deviance(y, reg.predict(X_orig))
 
-    # We check that the model could successfully overfit information in X_orig
+    # We check that the model could successfully fit information in X_orig
     # to improve upon the constant baseline (when evaluated on the traing set).
     assert original_newton_deviance < constant_model_deviance - 1e-3
 
