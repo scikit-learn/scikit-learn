@@ -479,7 +479,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "IsotonicRegression",
     "IterativeImputer",
     "KBinsDiscretizer",
-    "KNNImputer",
     "KNeighborsTransformer",
     "KernelPCA",
     "LabelBinarizer",
