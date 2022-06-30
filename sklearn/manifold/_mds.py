@@ -69,7 +69,8 @@ def _smacof_single(
 
     normalized_stress : bool, default=False
         Whether use and return normed stress value (Stress-1) instead of raw
-        stress calculated by default. Only supported in non-metric MDS.
+        stress calculated by default. Only supported in non-metric MDS. The
+        caller must ensure that if `normalized_stress=True` then `metric=False`
 
         .. versionadded:: 1.2
 
