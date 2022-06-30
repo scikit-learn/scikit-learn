@@ -65,9 +65,8 @@ def kneighbors_graph(
         between neighbors according to the given metric.
 
     metric : str, default='minkowski'
-        The distance metric to use for the tree. The default metric is
-        minkowski, and with p=2 is equivalent to the standard Euclidean
-        metric.
+        The identifier of the distance metric to use. Default is
+        “minkowski”, and results in the standard Euclidean distance when p = 2.
         For a list of available metrics, see the documentation of
         :class:`~sklearn.metrics.DistanceMetric` and the metrics listed in
         `sklearn.metrics.pairwise.PAIRWISE_DISTANCE_FUNCTIONS`. Note that the
@@ -160,9 +159,8 @@ def radius_neighbors_graph(
         between neighbors according to the given metric.
 
     metric : str, default='minkowski'
-        The distance metric to use for the tree. The default metric is
-        minkowski, and with p=2 is equivalent to the standard Euclidean
-        metric.
+        The identifier of the distance metric to use. Default is
+        “minkowski”, and results in the standard Euclidean distance when p = 2.
         For a list of available metrics, see the documentation of
         :class:`~sklearn.metrics.DistanceMetric` and the metrics listed in
         `sklearn.metrics.pairwise.PAIRWISE_DISTANCE_FUNCTIONS`. Note that the
@@ -266,8 +264,11 @@ class KNeighborsTransformer(
         nature of the problem.
 
     metric : str or callable, default='minkowski'
-        Metric to use for distance computation. Any metric from scikit-learn
-        or scipy.spatial.distance can be used.
+        Metric to use for distance computation.
+
+        For valid string values, see the documentation of
+        :class:`~sklearn.metrics.DistanceMetric` and the metrics listed in
+        `sklearn.metrics.pairwise.PAIRWISE_DISTANCE_FUNCTIONS`.
 
         If metric is a callable function, it is called on each
         pair of instances (rows) and the resulting value recorded. The callable
@@ -276,20 +277,6 @@ class KNeighborsTransformer(
         efficient than passing the metric name as a string.
 
         Distance matrices are not supported.
-
-        Valid values for metric are:
-
-        - from scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
-          'manhattan']
-
-        - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
-          'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
-          'mahalanobis', 'minkowski', 'rogerstanimoto', 'russellrao',
-          'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean',
-          'yule']
-
-        See the documentation for scipy.spatial.distance for details on these
-        metrics.
 
     p : int, default=2
         Parameter for the Minkowski metric from
@@ -493,8 +480,11 @@ class RadiusNeighborsTransformer(
         nature of the problem.
 
     metric : str or callable, default='minkowski'
-        Metric to use for distance computation. Any metric from scikit-learn
-        or scipy.spatial.distance can be used.
+        Metric to use for distance computation.
+
+        For valid string values, see the documentation of
+        :class:`~sklearn.metrics.DistanceMetric` and the metrics listed in
+        `sklearn.metrics.pairwise.PAIRWISE_DISTANCE_FUNCTIONS`.
 
         If metric is a callable function, it is called on each
         pair of instances (rows) and the resulting value recorded. The callable
@@ -503,20 +493,6 @@ class RadiusNeighborsTransformer(
         efficient than passing the metric name as a string.
 
         Distance matrices are not supported.
-
-        Valid values for metric are:
-
-        - from scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
-          'manhattan']
-
-        - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
-          'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
-          'mahalanobis', 'minkowski', 'rogerstanimoto', 'russellrao',
-          'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean',
-          'yule']
-
-        See the documentation for scipy.spatial.distance for details on these
-        metrics.
 
     p : int, default=2
         Parameter for the Minkowski metric from

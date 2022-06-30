@@ -39,15 +39,23 @@ class NearestNeighbors(KNeighborsMixin, RadiusNeighborsMixin, NeighborsBase):
         nature of the problem.
 
     metric : str or callable, default='minkowski'
-        The distance metric to use for the tree.  The default metric is
-        minkowski, and with p=2 is equivalent to the standard Euclidean
-        metric. For a list of available metrics, see the documentation of
+        Metric to use for distance computation. Default is
+        “minkowski”, and results in the standard Euclidean distance when p = 2.
+
+        For valid string values, see the documentation of
         :class:`~sklearn.metrics.DistanceMetric` and the metrics listed in
         `sklearn.metrics.pairwise.PAIRWISE_DISTANCE_FUNCTIONS`. Note that the
         "cosine" metric uses :func:`~sklearn.metrics.pairwise.cosine_distances`.
+
         If metric is "precomputed", X is assumed to be a distance matrix and
-        must be square during fit. X may be a :term:`sparse graph`,
-        in which case only "nonzero" elements may be considered neighbors.
+        must be square during fit. X may be a :term:`sparse graph`, in which
+        case only "nonzero" elements may be considered neighbors.
+
+        If metric is a callable function, it is called on each
+        pair of instances (rows) and the resulting value recorded. The callable
+        should take two arrays as input and return one value indicating the
+        distance between them. This works for Scipy's metrics, but is less
+        efficient than passing the metric name as a string.
 
     p : int, default=2
         Parameter for the Minkowski metric from

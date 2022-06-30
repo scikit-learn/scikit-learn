@@ -30,11 +30,14 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
     Parameters
     ----------
     metric : str or callable, default="euclidean"
-        The metric to use when calculating distance between instances in a
-        feature array. If metric is a string or callable, it must be one of
-        the options allowed by
-        :func:`~sklearn.metrics.pairwise_distances` for its metric
-        parameter. The centroids for the samples corresponding to each class is
+        Metric to use for distance computation.
+
+        For valid string values, see the documentation of
+        :class:`~sklearn.metrics.DistanceMetric` and the metrics listed in
+        `sklearn.metrics.pairwise.PAIRWISE_DISTANCE_FUNCTIONS`. Note that
+        “wminkowski”, “seuclidean” and “mahalanobis” are not supported.
+
+        The centroids for the samples corresponding to each class is
         the point from which the sum of the distances (according to the metric)
         of all samples that belong to that particular class are minimized.
         If the `"manhattan"` metric is provided, this centroid is the median
