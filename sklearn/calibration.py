@@ -1137,7 +1137,7 @@ class CalibrationDisplay:
         ax_hist=None,
         name=None,
         ref_line=True,
-        plot_bins=True,
+        grid="uniform",
         **kwargs,
     ):
         """Plot visualization.
@@ -1189,11 +1189,23 @@ class CalibrationDisplay:
             ax.plot([0, 1], [0, 1], "k--", label=ref_line_label, lw=1)
         self.line_ = ax.plot(self.prob_pred, self.prob_true, "o-", **line_kwargs)[0]
 
+        # Histogram bins are always uniform
         bins_uniform = bins_from_strategy(len(self.bins) - 1, strategy="uniform")
 
-        if plot_bins:
-            for x in bins_uniform:
-                ax.axvline(x, lw=0.5, ls="--", color="grey", zorder=-1)
+        if grid == "uniform":
+            bins = bins_uniform
+        elif grid == "bins":
+            bins = self.bins
+        elif grid is None:
+            bins = []
+        else:
+            raise ValueError(
+                "Invalid entry to 'grid' input. Must be either "
+                "'uniform', 'bins' or None."
+            )
+
+        for x in bins:
+            ax.axvline(x, lw=0.5, ls="--", color="grey", zorder=-1)
 
         # We always have to show the legend for at least the reference line
         ax.legend(loc="lower right")
@@ -1248,7 +1260,7 @@ class CalibrationDisplay:
         ref_line=True,
         ax=None,
         ax_hist=None,
-        plot_bins=True,
+        grid="uniform",
         **kwargs,
     ):
         """Plot calibration curve using a binary classifier and data.
@@ -1360,7 +1372,7 @@ class CalibrationDisplay:
             ref_line=ref_line,
             ax=ax,
             ax_hist=ax_hist,
-            plot_bins=plot_bins,
+            grid=grid,
             **kwargs,
         )
 
@@ -1377,7 +1389,7 @@ class CalibrationDisplay:
         names=None,
         ref_line=True,
         ax=None,
-        plot_bins=True,
+        grid=True,
         **kwargs,
     ):
         """Plot calibration curve using a binary classifier and data.
@@ -1471,9 +1483,6 @@ class CalibrationDisplay:
         ax_hist = None
         displays = []
 
-        if plot_bins is None:
-            plot_bins = ax is None
-
         # Turn kwargs of lists into list of kwargs
         kwargs = [
             {k: v_list[i] for k, v_list in kwargs.items()}
@@ -1492,14 +1501,11 @@ class CalibrationDisplay:
                 ref_line=ref_line,
                 ax=ax,
                 ax_hist=ax_hist,
-                plot_bins=plot_bins and (i == 0),
+                grid="uniform" if grid and (i == 0) else None,
                 **kwargs[i],
             )
             ax_hist = display.ax_hist_
             displays.append(display)
-
-        # if not plot_bins:
-        #     ax.grid()
 
         return displays
 
@@ -1515,7 +1521,7 @@ class CalibrationDisplay:
         name=None,
         ref_line=True,
         ax=None,
-        plot_bins=True,
+        grid="uniform",
         **kwargs,
     ):
         """Plot calibration curve using true labels and predicted probabilities.
@@ -1605,8 +1611,6 @@ class CalibrationDisplay:
         check_matplotlib_support(method_name)
 
         bins = bins_from_strategy(n_bins, strategy, y_prob)
-        print(bins)
-        print(len(bins))
 
         prob_true, prob_pred = calibration_curve(
             y_true, y_prob, n_bins=bins, pos_label=pos_label
@@ -1622,4 +1626,4 @@ class CalibrationDisplay:
             estimator_name=name,
             pos_label=pos_label,
         )
-        return disp.plot(ax=ax, ref_line=ref_line, plot_bins=plot_bins, **kwargs)
+        return disp.plot(ax=ax, ref_line=ref_line, grid=grid, **kwargs)
