@@ -66,7 +66,8 @@ def test_MDS():
 
 def test_MDS_eigh():
     # Test eigh using example data from "An Introduction to MDS"
-    # Florian Wickelmaier, p 11
+    # Florian Wickelmaier, p 11. Validated against R implementation
+    # (cmdscale) as well.
     sim = np.array(
         [[0, 93, 82, 133], [93, 0, 52, 60], [82, 52, 0, 111], [133, 60, 111, 0]]
     )
