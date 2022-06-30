@@ -16,6 +16,7 @@ from ..utils.validation import _check_sample_weight
 from ..utils.fixes import sp_version, parse_version
 from ..utils._param_validation import Interval, StrOptions
 
+
 class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
     """Linear regression model that predicts conditional quantiles.
 
@@ -106,6 +107,24 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
     0.8
     """
 
+    _parameter_constraints = {
+        "quantile": [Interval(Real, 0, 1, closed="both")],
+        "alpha": [Interval(Real, 0, None, closed="left")],
+        "fit_intercept": ["boolean"],
+        "solver": [
+            StrOptions(
+                {
+                    "high-ds",
+                    "highs-ipm",
+                    "highs",
+                    "interior-point",
+                    "revised simplex",
+                }
+            )
+        ],
+        "solver_options": [dict, None],
+    }
+
     def __init__(
         self,
         *,
@@ -120,14 +139,6 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         self.fit_intercept = fit_intercept
         self.solver = solver
         self.solver_options = solver_options
-        
-        _parameter_constraints = {
-            "quantile": [Interval(Real, 0, 1, closed='both')],
-            "alpha": [Interval(Real, 0, None, closed='left')],
-            "fit_intercept": ['boolean'],
-            "solver": [StrOptions({"high-ds", "highs-ipm", "highs","interior-point","revised simplex"})],
-            "solver_options": [dict, None],
-        }
 
     def fit(self, X, y, sample_weight=None):
         """Fit the model according to the given training data.
@@ -205,7 +216,6 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
                 f"Solver {self.solver} does not support sparse X. "
                 "Use solver 'highs' for example."
             )
-
         # make default solver more stable
         if self.solver_options is None and solver == "interior-point":
             solver_options = {"lstsq": True}

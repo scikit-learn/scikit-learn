@@ -27,6 +27,7 @@ def X_y_data():
 def default_solver():
     return "highs" if sp_version >= parse_version("1.6.0") else "interior-point"
 
+
 @pytest.mark.parametrize("solver", ["interior-point", "revised simplex"])
 def test_incompatible_solver_for_sparse_input(X_y_data, solver):
     X, y = X_y_data
