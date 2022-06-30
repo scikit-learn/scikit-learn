@@ -795,7 +795,7 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
         """
         if self.classes is not None:
             return self.fit(y).transform(y)
-        
+
         self._validate_params()
         self._cached_dict = None
 
