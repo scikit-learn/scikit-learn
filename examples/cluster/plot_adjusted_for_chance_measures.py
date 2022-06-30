@@ -29,18 +29,14 @@ import numpy as np
 
 
 def uniform_labelings_scores(
-    score_func, n_samples, n_clusters_range, fixed_n_classes=None, n_runs=5, seed=42
+    score_func, n_samples, n_clusters_range, n_runs=5, seed=42
 ):
     random_labels = np.random.RandomState(seed).randint
     scores = np.zeros((len(n_clusters_range), n_runs))
 
-    if fixed_n_classes is not None:
-        labels_a = random_labels(low=0, high=fixed_n_classes, size=n_samples)
-
     for i, k in enumerate(n_clusters_range):
         for j in range(n_runs):
-            if fixed_n_classes is None:
-                labels_a = random_labels(low=0, high=k, size=n_samples)
+            labels_a = random_labels(low=0, high=k, size=n_samples)
             labels_b = random_labels(low=0, high=k, size=n_samples)
             scores[i, j] = score_func(labels_a, labels_b)
     return scores
@@ -138,6 +134,21 @@ n_samples = 1000
 n_clusters_range = np.linspace(2, 100, 10).astype(int)
 n_classes = 10
 
+
+def fixed_classes_uniform_labelings_scores(
+    score_func, n_samples, n_clusters_range, n_classes=10, n_runs=5, seed=42
+):
+    random_labels = np.random.RandomState(seed).randint
+    scores = np.zeros((len(n_clusters_range), n_runs))
+    labels_a = random_labels(low=0, high=n_classes, size=n_samples)
+
+    for i, k in enumerate(n_clusters_range):
+        for j in range(n_runs):
+            labels_b = random_labels(low=0, high=k, size=n_samples)
+            scores[i, j] = score_func(labels_a, labels_b)
+    return scores
+
+
 plt.figure(2)
 
 plots = []
@@ -149,8 +160,8 @@ for score_name, score_func in score_funcs:
     )
 
     t0 = time()
-    scores = uniform_labelings_scores(
-        score_func, n_samples, n_clusters_range, fixed_n_classes=n_classes
+    scores = fixed_classes_uniform_labelings_scores(
+        score_func, n_samples, n_clusters_range, n_classes=n_classes
     )
     print("done in %0.3fs" % (time() - t0))
     plots.append(
