@@ -58,20 +58,6 @@ def test_eigh_error():
         mds.eigh_scaler(sim)
 
 
-def test_MDS_error():
-    # Bad solver name
-    sim = np.ones((2, 2))
-    mdc_clf = mds.MDS(solver="bad name")
-    with pytest.raises(ValueError, match="Solver must be 'smacof' or 'eigh'"):
-        mdc_clf.fit(sim)
-
-    # eigh with metric=False
-    sim = np.ones((2, 2))
-    mdc_clf = mds.MDS(metric=False, solver="eigh")
-    with pytest.raises(ValueError, match="Using eigh requires metric=True"):
-        mdc_clf.fit(sim)
-
-
 def test_MDS():
     sim = np.array([[0, 5, 3, 4], [5, 0, 2, 2], [3, 2, 0, 1], [4, 2, 1, 0]])
     mds_clf = mds.MDS(metric=False, n_jobs=3, dissimilarity="precomputed")
@@ -110,7 +96,7 @@ def test_MDS_eigh():
 def test_nonmetric_mds_eigh_error():
     sim = np.ones((2, 2))
     mds_clf = mds.MDS(metric=False, solver="eigh")
-    msg = "Using eigh requires metric=True"
+    msg = "Using the eigh solver requires metric=True"
     with pytest.raises(ValueError, match=msg):
         mds_clf.fit(sim)
     with pytest.raises(ValueError, match=msg):

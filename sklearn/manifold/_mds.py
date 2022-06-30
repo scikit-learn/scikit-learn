@@ -518,6 +518,7 @@ class MDS(BaseEstimator):
         "n_jobs": [None, Integral],
         "random_state": ["random_state"],
         "dissimilarity": [StrOptions({"euclidean", "precomputed"})],
+        "solver": [StrOptions({"smacof", "eigh"})],
     }
 
     def __init__(
@@ -630,14 +631,9 @@ class MDS(BaseEstimator):
             )
         elif self.solver == "eigh":
             if not self.metric:
-                raise ValueError("Using eigh requires metric=True")
+                raise ValueError("Using the eigh solver requires metric=True")
             self.embedding_, self.stress_ = eigh_scaler(
                 self.dissimilarity_matrix_, n_components=self.n_components
             )
             self.n_iter_ = None
-        else:
-            raise ValueError(
-                "Solver must be 'smacof' or 'eigh'. Got %s instead" % str(self.solver)
-            )
-
         return self.embedding_
