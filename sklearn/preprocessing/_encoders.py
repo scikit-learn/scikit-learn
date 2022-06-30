@@ -485,7 +485,7 @@ class OneHotEncoder(_BaseEncoder):
                 f"'infrequent_if_exist' got {self.handle_unknown}."
             )
             raise ValueError(msg)
-        self._get_feature_name_combiner()  # call to force the validation
+        self._check_get_feature_name_combiner()  # call to force the validation
 
         if self.max_categories is not None and self.max_categories < 1:
             raise ValueError("max_categories must be greater than 1")
