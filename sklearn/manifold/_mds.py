@@ -524,6 +524,7 @@ class MDS(BaseEstimator):
     def __init__(
         self,
         n_components=2,
+        *,
         metric=True,
         n_init=4,
         max_iter=300,
