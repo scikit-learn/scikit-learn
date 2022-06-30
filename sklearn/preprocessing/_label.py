@@ -23,6 +23,7 @@ from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
 from ..utils._encode import _encode, _unique
 
+
 __all__ = [
     "label_binarize",
     "LabelBinarizer",
@@ -255,6 +256,7 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
     """
 
     def __init__(self, *, neg_label=0, pos_label=1, sparse_output=False):
+
         self.neg_label = neg_label
         self.pos_label = pos_label
         self.sparse_output = sparse_output
@@ -756,8 +758,9 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
-        self._cached_dict = None
         self._validate_params()
+        self._cached_dict = None
+
         if self.classes is None:
             classes = sorted(set(itertools.chain.from_iterable(y)))
         elif len(set(self.classes)) < len(self.classes):
@@ -790,10 +793,11 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
             is in `y[i]`, and 0 otherwise. Sparse matrix will be of CSR
             format.
         """
-        self._cached_dict = None
-
         if self.classes is not None:
             return self.fit(y).transform(y)
+        
+        self._validate_params()
+        self._cached_dict = None
 
         # Automatically increment on new class
         class_mapping = defaultdict(int)
