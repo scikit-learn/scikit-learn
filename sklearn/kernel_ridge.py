@@ -69,14 +69,14 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
         the kernel; see the documentation for sklearn.metrics.pairwise.
         Ignored by other kernels.
 
-    degree : float, default=3
+    degree : int, default=3
         Degree of the polynomial kernel. Ignored by other kernels.
 
     coef0 : float, default=1
         Zero coefficient for polynomial and sigmoid kernels.
         Ignored by other kernels.
 
-    kernel_params : mapping of str to any, default=None
+    kernel_params : dict, default=None
         Additional parameters (keyword arguments) for kernel function passed
         as callable object.
 
