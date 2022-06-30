@@ -225,7 +225,10 @@ def test_one_hot_encoder_invalid_feature_name_combiner(get_names):
     X = np.array([[1, 2]], dtype=object).T
     with pytest.raises(
         ValueError,
-        match="feature_name_combiner has to be either 'concat_string' or callable,*",
+        match=(
+            "The 'feature_name_combiner' parameter of OneHotEncoder must be a str among"
+            " {'concat_string'} or a callable.*"
+        ),
     ):
         enc.fit(X)
 
