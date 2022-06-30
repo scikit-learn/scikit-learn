@@ -500,7 +500,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "MeanShift",
     "MinCovDet",
     "MiniBatchDictionaryLearning",
-    "MissingIndicator",
     "MultiLabelBinarizer",
     "MultiOutputClassifier",
     "MultiOutputRegressor",
