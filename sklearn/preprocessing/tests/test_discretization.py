@@ -359,28 +359,21 @@ def test_kbinsdiscretizer_subsample_warn():
         kbd.fit(X)
 
 
-@pytest.mark.parametrize("subsample", [0, int(2e5)])
-def test_kbinsdiscretizer_subsample_values(subsample):
+# TODO(1.3) remove
+def test_kbinsdiscretizer_subsample_values():
     X = np.random.rand(220000, 1).reshape(-1, 1)
     kbd_default = KBinsDiscretizer(n_bins=10, encode="ordinal", strategy="quantile")
 
     kbd_with_subsampling = clone(kbd_default)
-    kbd_with_subsampling.set_params(subsample=subsample)
+    kbd_with_subsampling.set_params(subsample=int(2e5))
 
-    if subsample == 0:
-        with pytest.raises(ValueError, match="subsample == 0, must be >= 1."):
-            kbd_with_subsampling.fit(X)
-    else:
-        # TODO: Remove in 1.3
-        msg = "In version 1.3 onwards, subsample=2e5 will be used by default."
-        with pytest.warns(FutureWarning, match=msg):
-            kbd_default.fit(X)
+    msg = "In version 1.3 onwards, subsample=2e5 will be used by default."
+    with pytest.warns(FutureWarning, match=msg):
+        kbd_default.fit(X)
 
-        kbd_with_subsampling.fit(X)
-        assert not np.all(
-            kbd_default.bin_edges_[0] == kbd_with_subsampling.bin_edges_[0]
-        )
-        assert kbd_default.bin_edges_.shape == kbd_with_subsampling.bin_edges_.shape
+    kbd_with_subsampling.fit(X)
+    assert not np.all(kbd_default.bin_edges_[0] == kbd_with_subsampling.bin_edges_[0])
+    assert kbd_default.bin_edges_.shape == kbd_with_subsampling.bin_edges_.shape
 
 
 @pytest.mark.parametrize(
