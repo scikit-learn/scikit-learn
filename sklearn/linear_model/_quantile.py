@@ -121,7 +121,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
                     "revised simplex",
                 }
             ),
-            Hidden(StrOptions({"warn"}))
+            Hidden(StrOptions({"warn"})),
         ],
         "solver_options": [dict, None],
     }
