@@ -438,6 +438,7 @@ class OneHotEncoder(_BaseEncoder):
     >>> custom_fnames_enc.get_feature_names_out()
     array(['x0_str_Female', 'x0_str_Male', 'x1_int_1', 'x1_int_2', 'x1_int_3'],
           dtype=object)
+
     Infrequent categories are enabled by setting `max_categories` or `min_frequency`.
 
     >>> import numpy as np
