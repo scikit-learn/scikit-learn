@@ -381,13 +381,13 @@ class MeanShift(ClusterMixin, BaseEstimator):
     """
 
     _parameter_constraints = {
-        "bandwidth": [Real, None],
+        "bandwidth": [Interval(Real, 0, None, closed="neither"), None],
         "seeds": ["array-like", None],
         "bin_seeding": ["boolean"],
-        "min_bin_freq": [Integral],
+        "min_bin_freq": [Interval(Integral, 1, None, closed="left")],
         "cluster_all": ["boolean"],
         "n_jobs": [Integral, None],
-        "max_iter": [Integral],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
     }
 
     def __init__(
@@ -430,10 +430,6 @@ class MeanShift(ClusterMixin, BaseEstimator):
         bandwidth = self.bandwidth
         if bandwidth is None:
             bandwidth = estimate_bandwidth(X, n_jobs=self.n_jobs)
-        elif bandwidth <= 0:
-            raise ValueError(
-                "bandwidth needs to be greater than zero or None, got %f" % bandwidth
-            )
 
         seeds = self.seeds
         if seeds is None:
