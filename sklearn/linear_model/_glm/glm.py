@@ -285,9 +285,13 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                 jac=True,
                 options={
                     "maxiter": self.max_iter,
-                    "iprint": (self.verbose > 0) - 1,
+                    "maxls": 50,  # default is 20
+                    "iprint": self.verbose - 1,
                     "gtol": self.tol,
-                    "ftol": 1e3 * np.finfo(float).eps,
+                    # The constant 64 was found empirically to pass the test suite.
+                    # The point is that ftol is very small, but a bit larger than
+                    # machine precision for float64, which is the dtype used by lbfgs.
+                    "ftol": 64 * np.finfo(float).eps,
                 },
                 args=(X, y, sample_weight, l2_reg_strength, n_threads),
             )

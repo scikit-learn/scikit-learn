@@ -287,7 +287,7 @@ class NoWeightClassifier(ClassifierMixin, BaseEstimator):
             {
                 "estimators": [
                     ("lr", LogisticRegression()),
-                    ("svm", SVC(max_iter=5e4)),
+                    ("svm", SVC(max_iter=50_000)),
                 ],
                 "stack_method": "predict_proba",
             },
@@ -310,7 +310,7 @@ class NoWeightClassifier(ClassifierMixin, BaseEstimator):
             {
                 "estimators": [
                     ("lr", LogisticRegression()),
-                    ("cor", LinearSVC(max_iter=5e4)),
+                    ("cor", LinearSVC(max_iter=50_000)),
                 ],
                 "final_estimator": NoWeightClassifier(),
             },
@@ -421,7 +421,7 @@ def test_stacking_classifier_stratify_default():
     clf = StackingClassifier(
         estimators=[
             ("lr", LogisticRegression(max_iter=10_000)),
-            ("svm", LinearSVC(max_iter=1e4)),
+            ("svm", LinearSVC(max_iter=10_000)),
         ]
     )
     # since iris is not shuffled, a simple k-fold would not contain the
