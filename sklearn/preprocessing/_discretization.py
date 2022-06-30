@@ -4,7 +4,7 @@
 # License: BSD
 
 
-import numbers
+from numbers import Integral
 import numpy as np
 import warnings
 
@@ -16,7 +16,6 @@ from ..utils.validation import check_array
 from ..utils.validation import check_is_fitted
 from ..utils.validation import check_random_state
 from ..utils.validation import _check_feature_names_in
-from ..utils.validation import check_scalar
 from ..utils import _safe_indexing
 
 
@@ -154,12 +153,12 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
     """
 
     _parameter_constraints = {
-        "n_bins": [Interval(numbers.Integral, 2, None, closed="left"), "array-like"],
+        "n_bins": [Interval(Integral, 2, None, closed="left"), "array-like"],
         "encode": [StrOptions({"onehot", "onehot-dense", "ordinal"})],
         "strategy": [StrOptions({"uniform", "quantile", "kmeans"})],
         "dtype": [type, None],  # TODO: TypeOptions constraint,
         "subsample": [
-            Interval(numbers.Integral, 1, None, closed="left"),
+            Interval(Integral, 1, None, closed="left"),
             None,
             Hidden(StrOptions({"warn"})),
         ],
@@ -229,18 +228,13 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                         FutureWarning,
                     )
             else:
-                self.subsample = check_scalar(
-                    self.subsample, "subsample", numbers.Integral, min_val=1
-                )
                 rng = check_random_state(self.random_state)
                 if n_samples > self.subsample:
                     subsample_idx = rng.choice(
                         n_samples, size=self.subsample, replace=False
                     )
                     X = _safe_indexing(X, subsample_idx)
-        elif self.strategy != "quantile" and isinstance(
-            self.subsample, numbers.Integral
-        ):
+        elif self.strategy != "quantile" and isinstance(self.subsample, Integral):
             raise ValueError(
                 f"Invalid parameter for `strategy`: {self.strategy}. "
                 '`subsample` must be used with `strategy="quantile"`.'
@@ -314,21 +308,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
     def _validate_n_bins(self, n_features):
         """Returns n_bins_, the number of bins per feature."""
         orig_bins = self.n_bins
-        if isinstance(orig_bins, numbers.Number):
-            if not isinstance(orig_bins, numbers.Integral):
-                raise ValueError(
-                    "{} received an invalid n_bins type. "
-                    "Received {}, expected int.".format(
-                        KBinsDiscretizer.__name__, type(orig_bins).__name__
-                    )
-                )
-            if orig_bins < 2:
-                raise ValueError(
-                    "{} received an invalid number "
-                    "of bins. Received {}, expected at least 2.".format(
-                        KBinsDiscretizer.__name__, orig_bins
-                    )
-                )
+        if isinstance(orig_bins, Integral):
             return np.full(n_features, orig_bins, dtype=int)
 
         n_bins = check_array(orig_bins, dtype=int, copy=True, ensure_2d=False)
