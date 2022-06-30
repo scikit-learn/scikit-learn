@@ -956,11 +956,17 @@ def calibration_curve(
             `predict_proba` positive class).
 
     n_bins : int or array-like, default=5
-        Number of bins to discretize the [0, 1] interval. A bigger number
-        requires more data. A sequence of bins can also be given.
-        Bins with no samples (i.e. without
-        corresponding values in `y_prob`) will not be returned, thus the
-        returned arrays may have less than `n_bins` values.
+        Define the discretization applied to `y_prob`, ranging in [0, 1].
+
+        - if an integer is provided, the discretization depends on the
+        `strategy` parameter with n_bins as the number of bins.
+        - if an array-like is provided, the `strategy` parameter is overlooked
+        and the array is used as bin edges directly.
+
+        A bigger requested number of bins require more data. Bins with no
+        samples (i.e. without corresponding values in `y_prob`) will not be
+        returned, thus the returned arrays may have less than `n_bins` values
+        (or `len(n_bins)` if `n_bins` is an array-like).
 
     strategy : {'uniform', 'quantile'}, default='uniform'
         Strategy used to define the widths of the bins.
