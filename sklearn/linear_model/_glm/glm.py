@@ -6,7 +6,7 @@ Generalized Linear Models with Exponential Dispersion Family
 # some parts and tricks stolen from other sklearn files.
 # License: BSD 3 clause
 
-import numbers
+from numbers import Integral, Real
 
 import numpy as np
 import scipy.optimize
@@ -21,8 +21,9 @@ from ..._loss.loss import (
 )
 from ...base import BaseEstimator, RegressorMixin
 from ...utils.optimize import _check_optimize_result
-from ...utils import check_scalar, check_array, deprecated
+from ...utils import check_array, deprecated
 from ...utils.validation import check_is_fitted, _check_sample_weight
+from ...utils._param_validation import Interval, StrOptions
 from ...utils._openmp_helpers import _openmp_effective_n_threads
 from .._linear_loss import LinearModelLoss
 
@@ -122,6 +123,16 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         we have `y_pred = exp(X @ coeff + intercept)`.
     """
 
+    _parameter_constraints = {
+        "alpha": [Interval(Real, 0.0, None, closed="left")],
+        "fit_intercept": ["boolean"],
+        "solver": [StrOptions({"lbfgs"})],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
+        "tol": [Interval(Real, 0.0, None, closed="neither")],
+        "warm_start": ["boolean"],
+        "verbose": ["verbose"],
+    }
+
     def __init__(
         self,
         *,
@@ -160,48 +171,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         self : object
             Fitted model.
         """
-        check_scalar(
-            self.alpha,
-            name="alpha",
-            target_type=numbers.Real,
-            min_val=0.0,
-            include_boundaries="left",
-        )
-        if not isinstance(self.fit_intercept, bool):
-            raise ValueError(
-                "The argument fit_intercept must be bool; got {0}".format(
-                    self.fit_intercept
-                )
-            )
-        if self.solver not in ["lbfgs"]:
-            raise ValueError(
-                f"{self.__class__.__name__} supports only solvers 'lbfgs'; "
-                f"got {self.solver}"
-            )
-        solver = self.solver
-        check_scalar(
-            self.max_iter,
-            name="max_iter",
-            target_type=numbers.Integral,
-            min_val=1,
-        )
-        check_scalar(
-            self.tol,
-            name="tol",
-            target_type=numbers.Real,
-            min_val=0.0,
-            include_boundaries="neither",
-        )
-        check_scalar(
-            self.verbose,
-            name="verbose",
-            target_type=numbers.Integral,
-            min_val=0,
-        )
-        if not isinstance(self.warm_start, bool):
-            raise ValueError(
-                "The argument warm_start must be bool; got {0}".format(self.warm_start)
-            )
+        self._validate_params()
 
         X, y = self._validate_data(
             X,
@@ -213,7 +183,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         )
 
         # required by losses
-        if solver == "lbfgs":
+        if self.solver == "lbfgs":
             # lbfgs will force coef and therefore raw_prediction to be float64. The
             # base_loss needs y, X @ coef and sample_weight all of same dtype
             # (and contiguous).
@@ -273,7 +243,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
 
         # Algorithms for optimization:
         # Note again that our losses implement 1/2 * deviance.
-        if solver == "lbfgs":
+        if self.solver == "lbfgs":
             func = linear_loss.loss_gradient
             l2_reg_strength = self.alpha
             n_threads = _openmp_effective_n_threads()
@@ -550,6 +520,9 @@ class PoissonRegressor(_GeneralizedLinearRegressor):
     array([10.676..., 21.875...])
     """
 
+    _parameter_constraints = {**_GeneralizedLinearRegressor._parameter_constraints}
+    _parameter_constraints.pop("solver")
+
     def __init__(
         self,
         *,
@@ -659,6 +632,9 @@ class GammaRegressor(_GeneralizedLinearRegressor):
     >>> clf.predict([[1, 0], [2, 8]])
     array([19.483..., 35.795...])
     """
+
+    _parameter_constraints = {**_GeneralizedLinearRegressor._parameter_constraints}
+    _parameter_constraints.pop("solver")
 
     def __init__(
         self,
@@ -800,6 +776,13 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
     array([2.500..., 4.599...])
     """
 
+    _parameter_constraints = {
+        **_GeneralizedLinearRegressor._parameter_constraints,
+        "power": [Interval(Real, None, None, closed="neither")],
+        "link": [StrOptions({"auto", "identity", "log"})],
+    }
+    _parameter_constraints.pop("solver")
+
     def __init__(
         self,
         *,
@@ -831,12 +814,9 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
             else:
                 # log link
                 return HalfTweedieLoss(power=self.power)
-        elif self.link == "log":
+
+        if self.link == "log":
             return HalfTweedieLoss(power=self.power)
-        elif self.link == "identity":
+
+        if self.link == "identity":
             return HalfTweedieLossIdentity(power=self.power)
-        else:
-            raise ValueError(
-                "The link must be an element of ['auto', 'identity', 'log']; "
-                f"got (link={self.link!r})"
-            )
