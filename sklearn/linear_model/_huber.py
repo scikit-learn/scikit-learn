@@ -145,16 +145,16 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
 
     Parameters
     ----------
-    epsilon : float, greater than 1.0, default=1.35
+    epsilon : float, default=1.35
         The parameter epsilon controls the number of samples that should be
         classified as outliers. The smaller the epsilon, the more robust it is
-        to outliers.
+        to outliers. Epsilon must be in the range `[1.0, inf)`.
 
     max_iter : int, default=100
         Maximum number of iterations that
         ``scipy.optimize.minimize(method="L-BFGS-B")`` should run for.
 
-    alpha : float, default=0.0001
+    alpha : non-negative float, default=0.0001
         Regularization parameter.
 
     warm_start : bool, default=False
@@ -245,9 +245,9 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
     """
 
     _parameter_constraints = {
-        "epsilon": [Interval(Real, 1.0, None, closed="neither")],
-        "max_iter": [Interval(Integral, 1, None, closed="left")],
-        "alpha": [Real],
+        "epsilon": [Interval(Real, 1.0, None, closed="left")],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
+        "alpha": [Interval(Real, 0, None, closed="left")],
         "warm_start": ["boolean"],
         "fit_intercept": ["boolean"],
         "tol": [Interval(Real, 0.0, None, closed="left")],
