@@ -483,7 +483,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "KNNImputer",
     "KNeighborsTransformer",
     "KernelPCA",
-    "KernelRidge",
     "LabelBinarizer",
     "LabelPropagation",
     "LabelSpreading",
