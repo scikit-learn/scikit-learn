@@ -1025,13 +1025,24 @@ class TimeSeriesSplit(_BaseKFold):
     TRAIN: [0 1 2 3] TEST: [6 7]
     TRAIN: [0 1 2 3 4 5] TEST: [8 9]
     TRAIN: [0 1 2 3 4 5 6 7] TEST: [10 11]
+    >>> # Showing rolling window support with via `n_splits='walk_forward'`
+    >>> x = np.arange(15)
+    >>> cv = TimeSeriesSplit(n_splits='walk_forward', max_train_size=10, test_size=3)
+    >>> for train_index, test_index in cv.split(x):
+    ...     print("TRAIN: ", train_index, "TEST: ", test_index)
+    TRAIN:  [0 1 2 3 4 5] TEST:  [6 7 8]
+    TRAIN:  [0 1 2 3 4 5 6 7 8] TEST:  [ 9 10 11]
+    TRAIN:  [ 2  3  4  5  6  7  8  9 10 11] TEST:  [12 13 14]
 
     Notes
     -----
-    The training set has size ``i * n_samples // (n_splits + 1)
-    + n_samples % (n_splits + 1)`` in the ``i`` th split,
-    with a test set of size ``n_samples//(n_splits + 1)`` by default,
-    where ``n_samples`` is the number of samples.
+    -   The training set has size ``i * n_samples // (n_splits + 1)
+        + n_samples % (n_splits + 1)`` in the ``i`` th split,
+        with a test set of size ``n_samples//(n_splits + 1)`` by default,
+        where ``n_samples`` is the number of samples.
+    -   To use the rolling window support where the train set does not grow
+        and the `n_splits` value is automatically computed:
+        Set `n_splits='walk_forward'`.
     """
 
     def __init__(self, n_splits=5, *, max_train_size=None, test_size=None, gap=0):
