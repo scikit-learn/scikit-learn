@@ -361,7 +361,7 @@ def orthogonal_mp(
     Orthogonal matching pursuit was introduced in S. Mallat, Z. Zhang,
     Matching pursuits with time-frequency dictionaries, IEEE Transactions on
     Signal Processing, Vol. 41, No. 12. (December 1993), pp. 3397-3415.
-    (http://blanche.polytechnique.fr/~mallat/papiers/MallatPursuit93.pdf)
+    (https://www.di.ens.fr/~mallat/papiers/MallatPursuit93.pdf)
 
     This implementation is based on Rubinstein, R., Zibulevsky, M. and Elad,
     M., Efficient Implementation of the K-SVD Algorithm using Batch Orthogonal
@@ -515,7 +515,7 @@ def orthogonal_mp_gram(
     Orthogonal matching pursuit was introduced in G. Mallat, Z. Zhang,
     Matching pursuits with time-frequency dictionaries, IEEE Transactions on
     Signal Processing, Vol. 41, No. 12. (December 1993), pp. 3397-3415.
-    (http://blanche.polytechnique.fr/~mallat/papiers/MallatPursuit93.pdf)
+    (https://www.di.ens.fr/~mallat/papiers/MallatPursuit93.pdf)
 
     This implementation is based on Rubinstein, R., Zibulevsky, M. and Elad,
     M., Efficient Implementation of the K-SVD Algorithm using Batch Orthogonal
@@ -670,7 +670,7 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
     Orthogonal matching pursuit was introduced in G. Mallat, Z. Zhang,
     Matching pursuits with time-frequency dictionaries, IEEE Transactions on
     Signal Processing, Vol. 41, No. 12. (December 1993), pp. 3397-3415.
-    (http://blanche.polytechnique.fr/~mallat/papiers/MallatPursuit93.pdf)
+    (https://www.di.ens.fr/~mallat/papiers/MallatPursuit93.pdf)
 
     This implementation is based on Rubinstein, R., Zibulevsky, M. and Elad,
     M., Efficient Implementation of the K-SVD Algorithm using Batch Orthogonal

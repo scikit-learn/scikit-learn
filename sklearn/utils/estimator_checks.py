@@ -650,6 +650,8 @@ def _set_checking_parameters(estimator):
     # avoid deprecated behaviour
     params = estimator.get_params()
     name = estimator.__class__.__name__
+    if name == "TSNE":
+        estimator.set_params(perplexity=2)
     if "n_iter" in params and name != "TSNE":
         estimator.set_params(n_iter=5)
     if "max_iter" in params:
@@ -1420,6 +1422,10 @@ def check_fit2d_1sample(name, estimator_orig):
     # min_cluster_size cannot be less than the data size for OPTICS.
     if name == "OPTICS":
         estimator.set_params(min_samples=1)
+
+    # perplexity cannot be more than the number of samples for TSNE.
+    if name == "TSNE":
+        estimator.set_params(perplexity=0.5)
 
     msgs = [
         "1 sample",
@@ -2354,13 +2360,6 @@ def check_outliers_train(name, estimator_orig, readonly_memmap=True):
         if num_outliers != expected_outliers:
             decision = estimator.decision_function(X)
             check_outlier_corruption(num_outliers, expected_outliers, decision)
-
-        # raises error when contamination is a scalar and not in [0,1]
-        msg = r"contamination must be in \(0, 0.5]"
-        for contamination in [-0.5, 2.3]:
-            estimator.set_params(contamination=contamination)
-            with raises(ValueError, match=msg):
-                estimator.fit(X)
 
 
 @ignore_warnings(category=FutureWarning)
@@ -3518,13 +3517,6 @@ def check_outliers_fit_predict(name, estimator_orig):
             decision = estimator.decision_function(X)
             check_outlier_corruption(num_outliers, expected_outliers, decision)
 
-        # raises error when contamination is a scalar and not in [0,1]
-        msg = r"contamination must be in \(0, 0.5]"
-        for contamination in [-0.5, -0.001, 0.5001, 2.3]:
-            estimator.set_params(contamination=contamination)
-            with raises(ValueError, match=msg):
-                estimator.fit_predict(X)
-
 
 def check_fit_non_negative(name, estimator_orig):
     # Check that proper warning is raised for non-negative X
@@ -4055,9 +4047,14 @@ def check_param_validation(name, estimator_orig):
     param_with_bad_type = type("BadType", (), {})()
 
     fit_methods = ["fit", "partial_fit", "fit_transform", "fit_predict"]
-    methods = [method for method in fit_methods if hasattr(estimator_orig, method)]
 
     for param_name in estimator_params:
+        constraints = estimator_orig._parameter_constraints[param_name]
+
+        if constraints == "no_validation":
+            # This parameter is not validated
+            continue
+
         match = rf"The '{param_name}' parameter of {name} must be .* Got .* instead."
         err_msg = (
             f"{name} does not raise an informative error message when the "
@@ -4069,24 +4066,31 @@ def check_param_validation(name, estimator_orig):
         # First, check that the error is raised if param doesn't match any valid type.
         estimator.set_params(**{param_name: param_with_bad_type})
 
-        for method in methods:
+        for method in fit_methods:
+            if not hasattr(estimator, method):
+                # the method is not accessible with the current set of parameters
+                continue
+
             with raises(ValueError, match=match, err_msg=err_msg):
                 getattr(estimator, method)(X, y)
 
         # Then, for constraints that are more than a type constraint, check that the
         # error is raised if param does match a valid type but does not match any valid
         # value for this type.
-        constraints = estimator_orig._parameter_constraints[param_name]
         constraints = [make_constraint(constraint) for constraint in constraints]
 
         for constraint in constraints:
             try:
-                bad_value = generate_invalid_param_val(constraint)
+                bad_value = generate_invalid_param_val(constraint, constraints)
             except NotImplementedError:
                 continue
 
             estimator.set_params(**{param_name: bad_value})
 
-            for method in methods:
+            for method in fit_methods:
+                if not hasattr(estimator, method):
+                    # the method is not accessible with the current set of parameters
+                    continue
+
                 with raises(ValueError, match=match, err_msg=err_msg):
                     getattr(estimator, method)(X, y)
