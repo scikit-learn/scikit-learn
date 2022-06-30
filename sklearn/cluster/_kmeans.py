@@ -35,6 +35,7 @@ from ..utils import check_array
 from ..utils import check_random_state
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.validation import _is_arraylike_not_scalar
+from ..utils._param_validation import Hidden
 from ..utils._param_validation import Interval
 from ..utils._param_validation import StrOptions
 from ..utils._param_validation import validate_params
@@ -273,7 +274,8 @@ def _tolerance(X, tol):
         "sample_weight": ["array-like", None],
         "init": [StrOptions({"k-means++", "random"}), callable, "array-like"],
         "n_init": [
-            StrOptions({"auto", "warn"}, internal={"warn"}),
+            StrOptions({"auto"}),
+            Hidden(StrOptions({"warn"})),
             Interval(Integral, 1, None, closed="left"),
         ],
         "max_iter": [Interval(Integral, 1, None, closed="left")],
@@ -834,12 +836,13 @@ class _BaseKMeans(
         "n_clusters": [Interval(Integral, 1, None, closed="left")],
         "init": [StrOptions({"k-means++", "random"}), callable, "array-like"],
         "n_init": [
-            StrOptions({"auto", "warn"}, internal={"warn"}),
+            StrOptions({"auto"}),
+            Hidden(StrOptions({"warn"})),
             Interval(Integral, 1, None, closed="left"),
         ],
         "max_iter": [Interval(Integral, 1, None, closed="left")],
         "tol": [Interval(Real, 0, None, closed="left")],
-        "verbose": [Interval(Integral, 0, None, closed="left"), bool],
+        "verbose": ["verbose"],
         "random_state": ["random_state"],
     }
 
@@ -1185,9 +1188,11 @@ class KMeans(_BaseKMeans):
             (n_clusters, n_features), default='k-means++'
         Method for initialization:
 
-        'k-means++' : selects initial cluster centers for k-mean
-        clustering in a smart way to speed up convergence. See section
-        Notes in k_init for more details.
+        'k-means++' : selects initial cluster centroids using sampling based on
+        an empirical probability distribution of the points' contribution to the
+        overall inertia. This technique speeds up convergence, and is
+        theoretically proven to be :math:`\\mathcal{O}(\\log k)`-optimal.
+        See the description of `n_init` for more details.
 
         'random': choose `n_clusters` observations (rows) at random from data
         for the initial centroids.
@@ -1199,9 +1204,10 @@ class KMeans(_BaseKMeans):
         random state and return an initialization.
 
     n_init : 'auto' or int, default=10
-        Number of time the k-means algorithm will be run with different
-        centroid seeds. The final results will be the best output of
-        n_init consecutive runs in terms of inertia.
+        Number of times the k-means algorithm is run with different centroid
+        seeds. The final results is the best output of `n_init` consecutive runs
+        in terms of inertia. Several runs are recommended for sparse
+        high-dimensional problems (see :ref:`kmeans_sparse_high_dim`).
 
         When `n_init='auto'`, the number of runs will be 10 if using
         `init='random'`, and 1 if using `init='kmeans++'`.
@@ -1332,7 +1338,7 @@ class KMeans(_BaseKMeans):
 
     _parameter_constraints = {
         **_BaseKMeans._parameter_constraints,
-        "copy_x": [bool],
+        "copy_x": ["boolean"],
         "algorithm": [
             StrOptions({"lloyd", "elkan", "auto", "full"}, deprecated={"auto", "full"})
         ],
@@ -1660,9 +1666,11 @@ class MiniBatchKMeans(_BaseKMeans):
             (n_clusters, n_features), default='k-means++'
         Method for initialization:
 
-        'k-means++' : selects initial cluster centers for k-mean
-        clustering in a smart way to speed up convergence. See section
-        Notes in k_init for more details.
+        'k-means++' : selects initial cluster centroids using sampling based on
+        an empirical probability distribution of the points' contribution to the
+        overall inertia. This technique speeds up convergence, and is
+        theoretically proven to be :math:`\\mathcal{O}(\\log k)`-optimal.
+        See the description of `n_init` for more details.
 
         'random': choose `n_clusters` observations (rows) at random from data
         for the initial centroids.
@@ -1726,8 +1734,10 @@ class MiniBatchKMeans(_BaseKMeans):
 
     n_init : 'auto' or int, default=3
         Number of random initializations that are tried.
-        In contrast to KMeans, the algorithm is only run once, using the
-        best of the ``n_init`` initializations as measured by inertia.
+        In contrast to KMeans, the algorithm is only run once, using the best of
+        the `n_init` initializations as measured by inertia. Several runs are
+        recommended for sparse high-dimensional problems (see
+        :ref:`kmeans_sparse_high_dim`).
 
         When `n_init='auto'`, the number of runs will be 3 if using
         `init='random'`, and 1 if using `init='kmeans++'`.
@@ -1828,7 +1838,7 @@ class MiniBatchKMeans(_BaseKMeans):
     _parameter_constraints = {
         **_BaseKMeans._parameter_constraints,
         "batch_size": [Interval(Integral, 1, None, closed="left")],
-        "compute_labels": [bool],
+        "compute_labels": ["boolean"],
         "max_no_improvement": [Interval(Integral, 0, None, closed="left"), None],
         "init_size": [Interval(Integral, 1, None, closed="left"), None],
         "reassignment_ratio": [Interval(Real, 0, None, closed="left")],

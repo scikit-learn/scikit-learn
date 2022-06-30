@@ -74,6 +74,15 @@ def create_or_update_issue(body=""):
     link = f"[{args.ci_name}]({args.link_to_ci_run})"
     issue = get_issue()
 
+    max_body_length = 60_000
+    original_body_length = len(body)
+    # Avoid "body is too long (maximum is 65536 characters)" error from github REST API
+    if original_body_length > max_body_length:
+        body = (
+            f"{body[:max_body_length]}\n...\n"
+            f"Body was too long ({original_body_length} characters) and was shortened"
+        )
+
     if issue is None:
         # Create new issue
         header = f"**CI failed on {link}**"
@@ -92,11 +101,19 @@ def close_issue_if_opened():
     print("Test has no failures!")
     issue = get_issue()
     if issue is not None:
-        comment = (
-            f"## CI is no longer failing! ✅\n\n[Successful run]({args.link_to_ci_run})"
+        # Comment only if the "## CI is no longer failing" comment does not exist
+        comment_exists = any(
+            c.body.startswith("## CI is no longer failing")
+            for c in issue.get_comments()
         )
-        print(f"Commented on issue #{issue.number}")
-        issue.create_comment(body=comment)
+        if not comment_exists:
+            comment = (
+                "## CI is no longer failing! ✅\n\n[Successful"
+                f" run]({args.link_to_ci_run})"
+            )
+            print(f"Commented on issue #{issue.number}")
+            issue.create_comment(body=comment)
+
         if args.auto_close.lower() == "true":
             print(f"Closing issue #{issue.number}")
             issue.edit(state="closed")
