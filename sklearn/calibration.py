@@ -1222,11 +1222,15 @@ class CalibrationDisplay:
             ax_hist.set_xlim(ax.get_xlim())
             ax_hist.set_xticklabels([])
             ax_hist.set_yticks([])
+            ax_hist.get_xaxis().set_visible(False)
+            ax_hist.get_yaxis().set_visible(False)
             ax_hist.spines["right"].set_visible(False)
             ax_hist.spines["top"].set_visible(False)
             ax_hist.spines["left"].set_visible(False)
             # density = True
             # histtype = "step"
+
+        ax_hist.set(xlabel="Mean predicted confidence", ylabel="Count")
 
         ax_hist.hist(
             self.y_prob,
