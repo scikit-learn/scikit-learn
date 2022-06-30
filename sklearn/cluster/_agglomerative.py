@@ -764,7 +764,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
             `affinity` was deprecated in version 1.2 and will be renamed to
             `metric` in 1.4.
 
-    metric : str or callable, default='euclidean'
+    metric : str or callable, default=None
         Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
         "manhattan", "cosine", or "precomputed".
         If linkage is "ward", only "euclidean" is accepted.
@@ -989,11 +989,6 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         elif self.metric is None:
             self._metric = "euclidean"
 
-        if self.n_clusters is not None and self.n_clusters <= 0:
-            raise ValueError(
-                "n_clusters should be an integer greater than 0. %s was provided."
-                % str(self.n_clusters)
-            )
 
         if not ((self.n_clusters is None) ^ (self.distance_threshold is None)):
             raise ValueError(
@@ -1009,8 +1004,8 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
 
         if self.linkage == "ward" and self._metric != "euclidean":
             raise ValueError(
-                "%s was provided as metric. Ward can only "
-                "work with euclidean distances." % (self._metric,)
+                f"{self._metric} was provided as metric. Ward can only "
+                "work with euclidean distances."
             )
 
         tree_builder = _TREE_BUILDERS[self.linkage]
