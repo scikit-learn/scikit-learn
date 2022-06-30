@@ -234,7 +234,8 @@ def fastica(
         drawn from a normal distribution is used.
 
     whiten_solver : {"auto", "eigh", "svd"}, default="auto"
-        The solver to use for whitening.
+        The solver to use for whitening. Note that different solvers may
+        produce different solutions. See `sign_flip` for details.
 
         - "svd" is more stable numerically if the problem is degenerate, and
           often faster when `n_samples <= n_features`.
@@ -419,7 +420,8 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         drawn from a normal distribution is used.
 
     whiten_solver : {"auto", "eigh", "svd"}, default="auto"
-        The solver to use for whitening.
+        The solver to use for whitening. Note that different solvers may
+        produce different solutions. See `sign_flip` for details.
 
         - "svd" is more stable numerically if the problem is degenerate, and
           often faster when `n_samples <= n_features`.
@@ -616,7 +618,11 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         if self._whiten_solver == "warn" and self._whiten:
             warnings.warn(
                 "From version 1.4 `whiten_solver='auto'` will be used by default."
-                " Manually set the value of `whiten_solver` to suppress this message.",
+                " Manually set the value of `whiten_solver` to suppress this message."
+                " Note that `whiten_solver='auto'` may change the numerical output"
+                " of the model, but not its correctness. This can be alleviated by"
+                " setting `sign_flip=True`. See the `whiten_solver` and `sign_flip`"
+                " descriptions for details.",
                 FutureWarning,
             )
             self._whiten_solver = "svd"
