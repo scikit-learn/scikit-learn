@@ -23,7 +23,6 @@ from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
 from ..utils._encode import _encode, _unique
 
-
 __all__ = [
     "label_binarize",
     "LabelBinarizer",
@@ -256,7 +255,6 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
     """
 
     def __init__(self, *, neg_label=0, pos_label=1, sparse_output=False):
-
         self.neg_label = neg_label
         self.pos_label = pos_label
         self.sparse_output = sparse_output
@@ -734,6 +732,8 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
     array(['comedy', 'sci-fi', 'thriller'], dtype=object)
     """
 
+    _parameter_constraints = {"classes": ["array-like"], "sparse_output": ["boolean"]}
+
     def __init__(self, *, classes=None, sparse_output=False):
         self.classes = classes
         self.sparse_output = sparse_output
@@ -754,6 +754,7 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
             Fitted estimator.
         """
         self._cached_dict = None
+        self._validate_params()
         if self.classes is None:
             classes = sorted(set(itertools.chain.from_iterable(y)))
         elif len(set(self.classes)) < len(self.classes):
