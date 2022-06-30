@@ -464,7 +464,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "EmpiricalCovariance",
     "ExtraTreesClassifier",
     "ExtraTreesRegressor",
-    "FactorAnalysis",
     "FeatureHasher",
     "FunctionTransformer",
     "GammaRegressor",
