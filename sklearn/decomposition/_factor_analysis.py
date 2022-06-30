@@ -21,12 +21,14 @@ Algorithm 21.1
 
 import warnings
 from math import sqrt, log
+from numbers import Integral, Real
 import numpy as np
 from scipy import linalg
 
 
 from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
 from ..utils import check_random_state
+from ..utils._param_validation import Interval, StrOptions
 from ..utils.extmath import fast_logdet, randomized_svd, squared_norm
 from ..utils.validation import check_is_fitted
 from ..exceptions import ConvergenceWarning
@@ -72,7 +74,7 @@ class FactorAnalysis(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEst
     max_iter : int, default=1000
         Maximum number of iterations.
 
-    noise_variance_init : ndarray of shape (n_features,), default=None
+    noise_variance_init : array-like of shape (n_features,), default=None
         The initial guess of the noise variance for each feature.
         If None, it defaults to np.ones(n_features).
 
@@ -159,6 +161,18 @@ class FactorAnalysis(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEst
     (1797, 7)
     """
 
+    _parameter_constraints = {
+        "n_components": [Interval(Integral, 0, None, closed="left"), None],
+        "tol": [Interval(Real, 0.0, None, closed="left")],
+        "copy": ["boolean"],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
+        "noise_variance_init": ["array-like", None],
+        "svd_method": [StrOptions({"randomized", "lapack"})],
+        "iterated_power": [Interval(Integral, 0, None, closed="left")],
+        "rotation": [StrOptions({"varimax", "quartimax"}), None],
+        "random_state": ["random_state"],
+    }
+
     def __init__(
         self,
         n_components=None,
@@ -199,12 +213,7 @@ class FactorAnalysis(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEst
         self : object
             FactorAnalysis class instance.
         """
-
-        if self.svd_method not in ["lapack", "randomized"]:
-            raise ValueError(
-                f"SVD method {self.svd_method!r} is not supported. Possible methods "
-                "are either 'lapack' or 'randomized'."
-            )
+        self._validate_params()
 
         X = self._validate_data(X, copy=self.copy, dtype=np.float64)
 
@@ -248,7 +257,7 @@ class FactorAnalysis(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEst
                     squared_norm(s[n_components:]),
                 )
 
-        elif self.svd_method == "randomized":
+        else:  # svd_method == "randomized"
             random_state = check_random_state(self.random_state)
 
             def my_svd(X):
@@ -259,12 +268,6 @@ class FactorAnalysis(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEst
                     n_iter=self.iterated_power,
                 )
                 return s, Vt, squared_norm(X) - squared_norm(s)
-
-        else:
-            raise ValueError(
-                "SVD method %s is not supported. Please consider the documentation"
-                % self.svd_method
-            )
 
         for i in range(self.max_iter):
             # SMALL helps numerics
@@ -419,14 +422,9 @@ class FactorAnalysis(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEst
     def _rotate(self, components, n_components=None, tol=1e-6):
         "Rotate the factor analysis solution."
         # note that tol is not exposed
-        implemented = ("varimax", "quartimax")
-        method = self.rotation
-        if method in implemented:
-            return _ortho_rotation(components.T, method=method, tol=tol)[
-                : self.n_components
-            ]
-        else:
-            raise ValueError("'method' must be in %s, not %s" % (implemented, method))
+        return _ortho_rotation(components.T, method=self.rotation, tol=tol)[
+            : self.n_components
+        ]
 
     @property
     def _n_features_out(self):
