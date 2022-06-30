@@ -524,7 +524,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "PolynomialCountSketch",
     "PolynomialFeatures",
     "QuadraticDiscriminantAnalysis",
-    "QuantileRegressor",
     "RANSACRegressor",
     "RBFSampler",
     "RFE",
