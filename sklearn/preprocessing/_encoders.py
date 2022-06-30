@@ -1113,7 +1113,7 @@ class OneHotEncoder(_BaseEncoder):
             for i, _ in enumerate(self.categories_)
         ]
 
-        name_combiner = self._get_feature_name_combiner()
+        name_combiner = self._check_get_feature_name_combiner()
         feature_names = []
         for i in range(len(cats)):
             names = [name_combiner(input_features[i], t) for t in cats[i]]
@@ -1121,10 +1121,11 @@ class OneHotEncoder(_BaseEncoder):
 
         return np.array(feature_names, dtype=object)
 
-    def _get_feature_name_combiner(self):
+    def _check_get_feature_name_combiner(self):
         if self.feature_name_combiner == "concat_string":
             return lambda feature, category: feature + "_" + str(category)
         elif callable(self.feature_name_combiner):
+            assert isinstance(self.feature_name_combiner("feature", "category"), str)
             return self.feature_name_combiner
         else:
             raise ValueError(
