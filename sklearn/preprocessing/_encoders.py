@@ -331,6 +331,7 @@ class OneHotEncoder(_BaseEncoder):
         '_'.  E.g. feature X with values 1, 6, 7 create feature names `X_1, X_6, X_7`.
 
         .. versionadded:: 1.2
+
     Attributes
     ----------
     categories_ : list of arrays
@@ -375,6 +376,13 @@ class OneHotEncoder(_BaseEncoder):
         has feature names that are all strings.
 
         .. versionadded:: 1.0
+
+    feature_name_combiner : callable or None
+        Callable with signature `def callable(input_feature, category)` that returns a
+        string. This is used to create feature names to be returned by
+        :meth:`get_feature_names_out`.
+
+        .. versionadded:: 1.2
 
     See Also
     --------
