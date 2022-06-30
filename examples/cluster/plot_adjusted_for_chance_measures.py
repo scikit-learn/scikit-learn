@@ -64,7 +64,11 @@ def uniform_labelings_scores(
 #
 # - Adjusted Mutual Information (AMI), a chance-adjusted Mutual Information.
 #   Similarly to ARI, random cluster assignment has an AMI of 0.0 in
-#   expectation.
+#   expectation;
+#
+# - Normalized Mutual Information (NMI), a Mutual Information defined between 0
+#   (no mutual information) and 1 (perfect correlation). It is not adjusted for
+#   chance.
 #
 # For more information, see the :ref:`clustering_evaluation` module.
 
@@ -72,9 +76,11 @@ from sklearn import metrics
 
 score_funcs = [
     ("V-measure", metrics.v_measure_score),
+    ("Rand-Index", metrics.rand_score),
     ("ARI", metrics.adjusted_rand_score),
     ("MI", metrics.mutual_info_score),
     ("AMI", metrics.adjusted_mutual_info_score),
+    ("NMI", metrics.normalized_mutual_info_score),
 ]
 
 # %%
