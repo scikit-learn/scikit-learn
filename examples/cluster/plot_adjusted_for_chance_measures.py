@@ -11,7 +11,7 @@ of clusters and the number of samples: the mean V-Measure of random labeling
 increases significantly as the number of clusters is closer to the total number
 of samples used to compute the measure.
 
-Adjusted for chance measure such as ARI display some random variations centered
+Adjusted for chance measure, such as ARI, display some random variations centered
 around a mean score of 0.0 for any number of samples and clusters.
 
 Only adjusted measures can hence safely be used as a consensus index to evaluate
@@ -24,19 +24,18 @@ overlapping sub-samples of the dataset.
 # License: BSD 3 clause
 
 # %%
-# We first define a function that computes the score for 2 random uniform
-# cluster labelings.
+# Quantifying the score of random labeling
+# ----------------------------------------
+#
+# In this section we define a function that uses several metrics to score 2
+# uniformly-distributed random labelings.
 #
 # Both random labelings have the same number of clusters for each value possible
-# value in `n_clusters_range`. When fixed_n_classes is not None the first
+# value in `n_clusters_range`. When fixed_n_classes is not `None`, the first
 # labeling is considered a ground truth class assignment with fixed number of
 # classes.
-#
-# A second function computes de `Adjusted mutual information
-# <https://en.wikipedia.org/wiki/Adjusted_mutual_information>`_.
 
 import numpy as np
-from sklearn import metrics
 
 
 def uniform_labelings_scores(
@@ -57,19 +56,46 @@ def uniform_labelings_scores(
     return scores
 
 
-def ami_score(U, V):
-    return metrics.adjusted_mutual_info_score(U, V)
+# %%
+# Clustering algorithms are fundamentally unsupervised learning methods.
+# However, since we assigned class labels for this synthetic dataset, it is
+# possible to use evaluation metrics that leverage this "supervised" ground
+# truth information to quantify the quality of the resulting clusters. Examples
+# of such metrics are the following:
+#
+# - V-measure, the harmonic mean of completeness and homogeneity;
+#
+# - Rand-Index, which measures how frequently pairs of data points are grouped
+#   consistently according to the result of the clustering algorithm and the
+#   ground truth class assignment;
+#
+# - Adjusted Rand-Index (ARI), a chance-adjusted Rand-Index such that random
+#   cluster assignment has an ARI of 0.0 in expectation;
+#
+# - Mutual Information (MI), determines how different the joint distribution of
+#   the pair `(X,Y)` is from the product of the marginal distributions of `X`
+#   and `Y`;
+#
+# - Adjusted Mutual Information (AMI), a chance-adjusted Mutual Information.
+#   Similarly to ARI, random cluster assignment has an AMI of 0.0 in
+#   expectation.
+#
+# For more information, see the :ref:`clustering_evaluation` module.
 
+from sklearn import metrics
 
 score_funcs = [
-    metrics.adjusted_rand_score,
-    metrics.v_measure_score,
-    ami_score,
-    metrics.mutual_info_score,
+    ("V-measure", metrics.v_measure_score),
+    ("ARI", metrics.adjusted_rand_score),
+    ("MI", metrics.mutual_info_score),
+    ("AMI", metrics.adjusted_mutual_info_score),
 ]
 
 # %%
-# 2 independent random clusterings with equal cluster number
+# Plot clustering scores
+# ----------------------
+#
+# We first score 2 independent random clusterings with equal cluster number
 
 import matplotlib.pyplot as plt
 from time import time
@@ -81,10 +107,10 @@ plt.figure(1)
 
 plots = []
 names = []
-for score_func in score_funcs:
+for score_name, score_func in score_funcs:
     print(
         "Computing %s for %d values of n_clusters and n_samples=%d"
-        % (score_func.__name__, len(n_clusters_range), n_samples)
+        % (score_name, len(n_clusters_range), n_samples)
     )
 
     t0 = time()
@@ -95,7 +121,7 @@ for score_func in score_funcs:
             n_clusters_range, np.median(scores, axis=1), scores.std(axis=1), alpha=0.8
         )[0]
     )
-    names.append(score_func.__name__)
+    names.append(score_name)
 
 plt.title(
     "Clustering measures for 2 random uniform labelings\nwith equal number of clusters"
@@ -104,10 +130,11 @@ plt.xlabel("Number of clusters (Number of samples is fixed to %d)" % n_samples)
 plt.ylabel("Score value")
 plt.legend(plots, names)
 plt.ylim(bottom=-0.05, top=1.05)
+plt.show()
 
 # %%
-# Random labeling with varying n_clusters against ground class labels
-# with a fixed number of samples (1000).
+# We can also score a random labeling with varying n_clusters against the ground
+# class labels with a fixed number of samples (1000).
 
 n_samples = 1000
 n_clusters_range = np.linspace(2, 100, 10).astype(int)
@@ -117,10 +144,10 @@ plt.figure(2)
 
 plots = []
 names = []
-for score_func in score_funcs:
+for score_name, score_func in score_funcs:
     print(
         "Computing %s for %d values of n_clusters and n_samples=%d"
-        % (score_func.__name__, len(n_clusters_range), n_samples)
+        % (score_name, len(n_clusters_range), n_samples)
     )
 
     t0 = time()
@@ -133,7 +160,7 @@ for score_func in score_funcs:
             n_clusters_range, scores.mean(axis=1), scores.std(axis=1), alpha=0.8
         )[0]
     )
-    names.append(score_func.__name__)
+    names.append(score_name)
 
 plt.title(
     "Clustering measures for random uniform labeling\n"
