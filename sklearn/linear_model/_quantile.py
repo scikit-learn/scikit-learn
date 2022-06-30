@@ -14,7 +14,7 @@ from ..exceptions import ConvergenceWarning
 from ..utils import _safe_indexing
 from ..utils.validation import _check_sample_weight
 from ..utils.fixes import sp_version, parse_version
-from ..utils._param_validation import Interval, StrOptions
+from ..utils._param_validation import Hidden, Interval, StrOptions
 
 
 class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
@@ -120,7 +120,8 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
                     "interior-point",
                     "revised simplex",
                 }
-            )
+            ),
+            Hidden(StrOptions({"warn"}))
         ],
         "solver_options": [dict, None],
     }
