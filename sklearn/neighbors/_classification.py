@@ -206,13 +206,22 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
 
         return self._fit(X, y)
 
-    def _build_sparse_matrix(self, neighbor_labels, weights):
-        data = weights.ravel()
-        indices = neighbor_labels.ravel()
-        indptr = np.arange(neighbor_labels.shape[0] + 1) * self.n_neighbors
+    def _sparse_class_counts(self, neighbors_class_indices):
+        """Sparse class count encoding of neighbors classes
+        
+        Convert a dense numpy array of class integer indices for the results of
+        neighbors queries into a sparse CSR matrix with class counts.
+        
+        The sparse.csr_matrix constructor automatically sums repeated count
+        values in case a given query has several neighbors of the same class. 
+        """
+        n_queries, n_neighbors = neighbors_class_indices.shape
+        data = np.ones(shape=n_queries * n_neighbors, dtype=np.uint32)
+        indices = neighbors_class_indices.ravel()
+        indptr = np.arange(n_queries + 1) * n_neighbors
         return sparse.csr_matrix(
             (data, indices, indptr),
-            shape=(neighbor_labels.shape[0], neighbor_labels.max() + 1),
+            shape=(n_queries, neighbors_class_indices.max() + 1),
         )
 
     def predict(self, X):
@@ -250,10 +259,13 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         y_pred = np.empty((n_queries, n_outputs), dtype=classes_[0].dtype)
         for k, classes_k in enumerate(classes_):
             if weights is None:
-                _weights = np.ones(neigh_ind.shape, dtype=int)
-                mode = self._build_sparse_matrix(_y[neigh_ind, k], _weights).argmax(
-                    axis=1
-                )
+                # compute stats.mode(_y[neigh_ind, k], axis=1) more efficiently
+                # by using the argmax of a sparse (CSR) count representation.
+                # _y[neigh_ind, k] has shape (n_queries, n_neighbors) with
+                # integer values representing class indices. The sparse count
+                # representation has shape (n_queries, n_classes_k) with integer
+                # count values.
+                mode = self._sparse_class_counts(_y[neigh_ind, k]).argmax(axis=1)
             else:
                 mode, _ = weighted_mode(_y[neigh_ind, k], weights, axis=1)
 
