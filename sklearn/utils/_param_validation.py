@@ -109,7 +109,7 @@ def make_constraint(constraint):
         return _NoneConstraint()
     if isinstance(constraint, type):
         return _InstancesOf(constraint)
-    if isinstance(constraint, (Interval, StrOptions, HasMethod)):
+    if isinstance(constraint, (Interval, StrOptions, HasMethods)):
         return constraint
     if isinstance(constraint, str) and constraint == "boolean":
         return _Booleans()
@@ -499,28 +499,37 @@ class _VerboseHelper(_Constraint):
         )
 
 
-class HasMethod(_Constraint):
-    """Constraint representing objects that expose a specific method.
+class HasMethods(_Constraint):
+    """Constraint representing objects that expose specific methods.
 
     It is useful for parameters following a protocol and where we don't want to impose
     an affiliation to a specific module or class.
 
     Parameters
     ----------
-    method : str
-        The method that the object is expected to expose.
+    methods : str or list of str
+        The method(s) that the object is expected to expose.
     """
 
-    @validate_params({"method": [str]})
-    def __init__(self, method):
+    @validate_params({"methods": [str, list]})
+    def __init__(self, methods):
         super().__init__()
-        self.method = method
+        if isinstance(methods, str):
+            methods = [methods]
+        self.methods = methods
 
     def is_satisfied_by(self, val):
-        return callable(getattr(val, self.method, None))
+        return all(callable(getattr(val, method, None)) for method in self.methods)
 
     def __str__(self):
-        return f"an object implementing a {self.method!r} method"
+        if len(self.methods) == 1:
+            methods = f"{self.methods[0]!r}"
+        else:
+            methods = (
+                f"{', '.join([repr(m) for m in self.methods[:-1]])} and"
+                f" {self.methods[-1]!r}"
+            )
+        return f"an object implementing {methods}"
 
 
 class Hidden:
@@ -563,8 +572,8 @@ def generate_invalid_param_val(constraint, constraints=None):
     if isinstance(constraint, _VerboseHelper):
         return -1
 
-    if isinstance(constraint, HasMethod):
-        return type("HasNotMethod", (), {})()
+    if isinstance(constraint, HasMethods):
+        return type("HasNotMethods", (), {})()
 
     if not isinstance(constraint, Interval):
         raise NotImplementedError
@@ -717,8 +726,10 @@ def generate_valid_param(constraint):
     if isinstance(constraint, _VerboseHelper):
         return 1
 
-    if isinstance(constraint, HasMethod):
-        return type("ValidHasMethod", (), {constraint.method: lambda self: None})()
+    if isinstance(constraint, HasMethods):
+        return type(
+            "ValidHasMethods", (), {m: lambda self: None for m in constraint.methods}
+        )()
 
     if isinstance(constraint, StrOptions):
         for option in constraint.options:
