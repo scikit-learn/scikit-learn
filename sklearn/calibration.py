@@ -907,6 +907,12 @@ def bins_from_strategy(n_bins, strategy, y_prob=None):
             bins = np.percentile(y_prob, quantiles * 100)
         elif strategy == "uniform":
             bins = np.linspace(0.0, 1.0, n_bins + 1)
+        else:
+            raise ValueError(
+                "Invalid entry to 'strategy' input. Strategy "
+                "must be either 'quantile' or 'uniform'."
+            )
+
     else:  # array-like
         bins = np.asarray(n_bins)
 

@@ -719,8 +719,8 @@ def test_calibration_display_compute(pyplot, iris_data_binary, n_bins, strategy)
     assert isinstance(viz.ax_, mpl.axes.Axes)
     assert isinstance(viz.figure_, mpl.figure.Figure)
 
-    # assert viz.ax_.get_xlabel() == "Mean predicted probability (Positive class: 1)"
-    # assert viz.ax_.get_ylabel() == "Fraction of positives (Positive class: 1)"
+    assert viz.ax_.get_xlabel() == "Mean predicted confidence (Class 1)"
+    assert viz.ax_.get_ylabel() == "Fraction of positives (Class 1)"
 
     expected_legend_labels = ["LogisticRegression", "Perfectly calibrated"]
     legend_labels = viz.ax_.get_legend().get_texts()
@@ -750,8 +750,12 @@ def test_calibration_display_default_labels(pyplot, name, expected_label):
     prob_true = np.array([0, 1, 1, 0])
     prob_pred = np.array([0.2, 0.8, 0.8, 0.4])
     y_prob = np.array([])
+    bins = np.array([])
+    bins_hist = np.array([])
 
-    viz = CalibrationDisplay(prob_true, prob_pred, y_prob, estimator_name=name)
+    viz = CalibrationDisplay(
+        prob_true, prob_pred, y_prob, bins, bins_hist, estimator_name=name
+    )
     viz.plot()
 
     expected_legend_labels = [] if name is None else [name]
@@ -768,9 +772,13 @@ def test_calibration_display_label_class_plot(pyplot):
     prob_true = np.array([0, 1, 1, 0])
     prob_pred = np.array([0.2, 0.8, 0.8, 0.4])
     y_prob = np.array([])
+    bins = np.array([])
+    bins_hist = np.array([])
 
     name = "name one"
-    viz = CalibrationDisplay(prob_true, prob_pred, y_prob, estimator_name=name)
+    viz = CalibrationDisplay(
+        prob_true, prob_pred, y_prob, bins, bins_hist, estimator_name=name
+    )
     assert viz.estimator_name == name
     name = "name two"
     viz.plot(name=name)
@@ -886,12 +894,9 @@ def test_calibration_display_pos_label(
 
     assert (
         viz.ax_.get_xlabel()
-        == f"Mean predicted probability (Positive class: {expected_pos_label})"
+        == f"Mean predicted confidence (Class {expected_pos_label})"
     )
-    assert (
-        viz.ax_.get_ylabel()
-        == f"Fraction of positives (Positive class: {expected_pos_label})"
-    )
+    assert viz.ax_.get_ylabel() == f"Fraction of positives (Class {expected_pos_label})"
 
     expected_legend_labels = [lr.__class__.__name__, "Perfectly calibrated"]
     legend_labels = viz.ax_.get_legend().get_texts()
