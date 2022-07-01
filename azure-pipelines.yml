@@ -284,4 +284,5 @@ jobs:
         PYTHON_VERSION: '3.8'
         PYTHON_ARCH: '32'
         LOCK_FILE: ./build_tools/azure/py38_pip_openblas_32bit_lock.txt
-        SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '8'  # non-default seed
+        SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '50'  # non-default seed
+        SKLEARN_RUN_FLOAT32_TESTS: '1'
