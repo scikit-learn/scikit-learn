@@ -728,8 +728,8 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
     def fit(self, X, y, sample_weight=None):
         if self.base_estimator != "deprecated":
             warn(
-                "`base_estimator` was renamed to `estimator` in version 1.1 and "
-                "will be removed in 1.3.",
+                "`base_estimator` was renamed to `estimator` in version 1.2 and "
+                "will be removed in 1.4.",
                 FutureWarning,
             )
             self.estimator = self.base_estimator
@@ -1170,8 +1170,8 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
     def fit(self, X, y, sample_weight=None):
         if self.base_estimator != "deprecated":
             warn(
-                "`base_estimator` was renamed to `estimator` in version 1.1 and "
-                "will be removed in 1.3.",
+                "`base_estimator` was renamed to `estimator` in version 1.2 and "
+                "will be removed in 1.4.",
                 FutureWarning,
             )
             self.estimator = self.base_estimator
