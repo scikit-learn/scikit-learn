@@ -21,7 +21,8 @@ sections on :ref:`cross_validation` and :ref:`grid_search`.
 #
 # We will work with the `digits` dataset. The goal is to classify handwritten
 # digits images.
-# We set the problem to a binary classification one for better understanding.
+# We transform the problem into a binary classification for easier
+# understanding: the goal is to identify whether a digit is `8` or not.
 from sklearn import datasets
 
 digits = datasets.load_digits()
@@ -65,16 +66,18 @@ tuned_parameters = [
 scores = ["precision", "recall"]
 
 # %%
-# We can also define a function that will implement the strategy to use to
-# select the best candidate from the `cv_results_` returns from the
-# :class:`~sklearn.model_selection.GridSearchCV`. Once the candidate selected,
-# it will be automatically refitted by the
-# :class:`~sklearn.model_selection.GridSearchCV` instance. Here, the strategy
-# is to short list the model which are the best in terms of precision and
-# recall. From the selected models, we finally select the fastest model at
-# predicting.
-#
-# Note that these choices are completely arbitrary.
+# We can also define a function to be passed to the `refit` parameter of the
+# `GridSearchCV` instance. It will implement the custom strategy to select the
+# best candidate from the `cv_results_` attribute of the
+# :class:`~sklearn.model_selection.GridSearchCV`. Once the candidate is
+# selected, it is automatically refitted by the
+# :class:`~sklearn.model_selection.GridSearchCV` instance.
+# 
+# Here, the strategy is to short-list the model which are the best in terms of
+# precision and recall. From the selected models, we finally select the fastest
+# model at predicting. Notice that these custom choices are completely
+# arbitrary.
+
 import pandas as pd
 
 
@@ -144,8 +147,8 @@ def refit_strategy(cv_results):
     ]
     print(
         "Out of the previously selected high precision models, we find the highest\n"
-        "recall model and also keep other models without one standard deviation of\n"
-        "this model: "
+        "recall model and also keep other models farther than one standard\n"
+        "deviation from this model"
     )
     print_dataframe(high_recall_cv_results)
 
@@ -168,24 +171,29 @@ def refit_strategy(cv_results):
 # Once we defined our strategy to select the best model, we can create the
 # grid-search instance. Subsequently, we can check the best parameters found.
 from sklearn.model_selection import GridSearchCV
-from sklearn.linear_model import LogisticRegression
+from sklearn.svm import SVC
 
-clf = GridSearchCV(
-    LogisticRegression(), tuned_parameters, scoring=scores, refit=refit_strategy
+tuned_parameters = [
+    {"kernel": ["rbf"], "gamma": [1e-3, 1e-4], "C": [1, 10, 100, 1000]},
+    {"kernel": ["linear"], "C": [1, 10, 100, 1000]},
+]
+
+grid_search = GridSearchCV(
+    SVC(), tuned_parameters, scoring=scores, refit=refit_strategy
 )
 
 # %%
 # Tuning hyper-parameters
 # -----------------------
 
-clf.fit(X_train, y_train)
-print(f"\nThe best set of parameters found are:\n{clf.best_params_}")
+grid_search.fit(X_train, y_train)
+print(f"\nThe best set of parameters found are:\n{grid_search.best_params_}")
 
 # %%
 # Finally, we evaluate the fine-tuned model on the left-out evaluation set.
 from sklearn.metrics import classification_report
 
-y_pred = clf.predict(X_test)
+y_pred = grid_search.predict(X_test)
 print(
     "\nOur selected model will have the following performance on the "
     f"testing set:\n\n {classification_report(y_test, y_pred)}"
