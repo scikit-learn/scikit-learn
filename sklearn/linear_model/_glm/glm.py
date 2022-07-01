@@ -38,11 +38,11 @@ class NewtonSolver(ABC):
 
     This class implements Newton/2nd-order optimization routines for GLMs. Each Newton
     iteration aims at finding the Newton step which is done by the inner solver. With
-    hessian H, gradient g and coefficients coef, one step solves:
+    Hessian H, gradient g and coefficients coef, one step solves:
 
         H @ coef_newton = -g
 
-    For our GLM / LinearModelLoss, we have gradient g and hessian H:
+    For our GLM / LinearModelLoss, we have gradient g and Hessian H:
 
         g = X.T @ loss.gradient + l2_reg_strength * coef
         H = X.T @ diag(loss.hessian) @ X + l2_reg_strength * identity
@@ -93,7 +93,7 @@ class NewtonSolver(ABC):
         Maximum number of Newton steps allowed.
 
     n_threads : int, default=1
-        Number of OpenMP threads to use for the computation of the hessian and gradient
+        Number of OpenMP threads to use for the computation of the Hessian and gradient
         of the loss function.
 
     Attributes
@@ -180,7 +180,7 @@ class NewtonSolver(ABC):
 
     @abstractmethod
     def update_gradient_hessian(self, X, y, sample_weight):
-        """Update gradient and hessian."""
+        """Update gradient and Hessian."""
 
     @abstractmethod
     def inner_solve(self, X, y, sample_weight):
@@ -447,7 +447,7 @@ class NewtonSolver(ABC):
 
             self.use_fallback_lbfgs_solve = False  # Fallback solver.
 
-            # 1. Update hessian and gradient
+            # 1. Update Hessian and gradient
             self.update_gradient_hessian(X=X, y=y, sample_weight=sample_weight)
 
             # TODO:
@@ -507,21 +507,20 @@ class BaseCholeskyNewtonSolver(NewtonSolver):
 
     def inner_solve(self, X, y, sample_weight):
         if self.hessian_warning:
-            if self.count_bad_hessian == 0:
+            if self.count_hessian_warning == 0:
                 # We only need to throw this warning once.
                 warnings.warn(
-                    f"The inner solver of {self.__class__.__name__} detected a "
-                    " pointwise hessian with many negative values at iteration "
-                    f"#{self.iteration}. It will now try a lbfgs step."
-                    " Note that this warning is only raised once, the problem may,"
-                    " however, occur in several or all iterations. Set verbose >= 1"
-                    " to get more information.\n",
+                    f"The inner solver of {self.__class__.__name__} detected a"
+                    " pointwise Hessian with many negative values at iteration"
+                    f" #{self.iteration}. Switching from exact Newton steps to"
+                    " Quasi-Newton steps using LBFGS until convegence."
+                    " Set verbose >= 1 to get more information.\n",
                     ConvergenceWarning,
                 )
             self.count_hessian_warning += 1
             if self.verbose:
                 print(
-                    "  The inner solver detected a pointwise hessian with many "
+                    "  The inner solver detected a pointwise Hessian with many "
                     "negative values and resorts to lbfgs instead."
                 )
             self.use_fallback_lbfgs_solve = True
@@ -538,7 +537,7 @@ class BaseCholeskyNewtonSolver(NewtonSolver):
                     if self.verbose:
                         print(
                             "  The inner solver found a Newton step that is not a "
-                            "descent direction and resorts to lbfgs instead."
+                            "descent direction and resorts to LBFGS steps instead."
                         )
                     self.use_fallback_lbfgs_solve = True
                     return
@@ -547,14 +546,13 @@ class BaseCholeskyNewtonSolver(NewtonSolver):
                 # We only need to throw this warning once.
                 warnings.warn(
                     f"The inner solver of {self.__class__.__name__} stumbled upon a"
-                    " singular or very ill-conditioned hessian matrix at iteration "
-                    f"#{self.iteration}. It will now try a simple gradient step."
-                    " Note that this warning is only raised once, the problem may,"
-                    " however, occur in several or all iterations. Set verbose >= 1"
-                    " to get more information.\n"
+                    " singular or very ill-conditioned Hessian matrix at iteration"
+                    f" #{self.iteration}.  Switching from exact Newton steps to"
+                    " Quasi-Newton steps using LBFGS until convegence."
+                    " Set verbose >= 1 to get more information.\n"
                     "Your options are to use another solver or to avoid such situation"
-                    " in the first place. Possible  remedies are removing collinear"
-                    " features of X or increasing the penalization strengths.\n"
+                    " in the first place. Possible remedies are removing collinear"
+                    " features of X or increasing the penalization strength.\n"
                     "The original Linear Algebra message was:\n"
                     + str(e),
                     scipy.linalg.LinAlgWarning,
@@ -567,13 +565,13 @@ class BaseCholeskyNewtonSolver(NewtonSolver):
             #    This might be the most probable cause.
             #
             # There are many possible ways to deal with this situation. Most of them
-            # add, explicit or implicit, a matrix to the hessian to make it positive
+            # add, explicit or implicit, a matrix to the Hessian to make it positive
             # definite, confer to Chapter 3.4 of Nocedal & Wright 2nd ed.
             # Instead, we resort to a few lbfgs steps.
             if self.verbose:
                 print(
                     "  The inner solver stumbled upon an singular or ill-conditioned "
-                    "hessian matrix and resorts to lbfgs instead."
+                    "Hessian matrix and resorts to LBFGS instead."
                 )
             self.use_fallback_lbfgs_solve = True
             return

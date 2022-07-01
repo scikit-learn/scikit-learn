@@ -953,11 +953,15 @@ def test_family_deprecation(est, family):
 @pytest.mark.parametrize("newton_solver", ["newton-cholesky", "newton-qr-cholesky"])
 def test_linalg_warning_with_newton_solver(newton_solver, global_random_seed):
     rng = np.random.RandomState(global_random_seed)
+    # Use at least 20 samples to reduce the likelihood to get a degenerate
+    # dataset for any global_random_seed.
     X_orig = rng.normal(size=(20, 3))
-    X_collinear = np.hstack([X_orig] * 10)  # collinear design
     y = rng.poisson(
         np.exp(X_orig @ np.ones(X_orig.shape[1])), size=X_orig.shape[0]
     ).astype(np.float64)
+
+    # Collinear variation of the same input features.
+    X_collinear = np.hstack([X_orig] * 10)
 
     # Let's consider the deviance of constant baseline on this problem.
     baseline_pred = np.full_like(y, y.astype(np.float64).mean())
@@ -971,10 +975,10 @@ def test_linalg_warning_with_newton_solver(newton_solver, global_random_seed):
         reg = PoissonRegressor(solver=newton_solver, alpha=0.0, tol=tol).fit(X_orig, y)
     original_newton_deviance = mean_poisson_deviance(y, reg.predict(X_orig))
 
-    # On this dataset, we should have enough data points in the original data
-    # to not make it possible to get a near zero deviance (for the any of the
-    # admissible random seeds). This will make it easier to interpret meaning
-    # of rtol in the subsequent assertions:
+    # On this dataset, we should have enough data points to not make it
+    # possible to get a near zero deviance (for the any of the admissible
+    # random seeds). This will make it easier to interpret meaning of rtol in
+    # the subsequent assertions:
     assert original_newton_deviance > 0.2
 
     # We check that the model could successfully fit information in X_orig to
@@ -1000,7 +1004,7 @@ def test_linalg_warning_with_newton_solver(newton_solver, global_random_seed):
     # to the LBFGS solver.
     msg = (
         "The inner solver of .*NewtonSolver stumbled upon a"
-        " singular or very ill-conditioned hessian matrix"
+        " singular or very ill-conditioned Hessian matrix"
     )
     with pytest.warns(scipy.linalg.LinAlgWarning, match=msg):
         reg = PoissonRegressor(solver=newton_solver, alpha=0.0, tol=tol).fit(
