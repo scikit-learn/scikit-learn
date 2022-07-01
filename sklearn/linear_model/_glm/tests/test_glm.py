@@ -381,11 +381,10 @@ def test_glm_regression_unpenalized(solver, fit_intercept, glm_dataset):
     else:
         # As it is an underdetermined problem, prediction = y. The following shows that
         # we get a solution, i.e. a (non-unique) minimum of the objective function ...
-        rtol = 1e-6
+        rtol = 5e-5
         if solver == "newton-cholesky":
             rtol = 5e-4
         elif solver == "newton-qr-cholesky":
-            rtol = 5e-5
             if isinstance(model, TweedieRegressor) and model.power == 1.5:
                 pytest.xfail("newton-qr-cholesky fails on TweedieRegressor(power=1.5)")
         assert_allclose(model.predict(X), y, rtol=rtol)
