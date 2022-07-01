@@ -114,7 +114,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         "solver": [
             StrOptions(
                 {
-                    "high-ds",
+                    "highs-ds",
                     "highs-ipm",
                     "highs",
                     "interior-point",
