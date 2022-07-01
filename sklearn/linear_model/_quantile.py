@@ -108,7 +108,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
     """
 
     _parameter_constraints = {
-        "quantile": [Interval(Real, 0, 1, closed="both")],
+        "quantile": [Interval(Real, 0, 1, closed="neither")],
         "alpha": [Interval(Real, 0, None, closed="left")],
         "fit_intercept": ["boolean"],
         "solver": [
