@@ -15,7 +15,7 @@ from ..utils import is_scalar_nan
 from ..utils._mask import _get_mask
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _check_feature_names_in
-from ..utils._param_validation import Interval, StrOptions
+from ..utils._param_validation import Hidden, Interval, StrOptions
 
 
 class KNNImputer(_BaseImputer):
@@ -121,7 +121,7 @@ class KNNImputer(_BaseImputer):
         **_BaseImputer._parameter_constraints,
         "n_neighbors": [Interval(Integral, 1, None, closed="left")],
         "weights": [StrOptions({"uniform", "distance"}), callable],
-        "metric": [StrOptions({"nan_euclidean"}), callable],
+        "metric": [StrOptions(set(_NAN_METRICS)), callable, Hidden(None)],
         "copy": ["boolean"],
     }
 
@@ -211,8 +211,6 @@ class KNNImputer(_BaseImputer):
             force_all_finite = True
         else:
             force_all_finite = "allow-nan"
-            if self.metric not in _NAN_METRICS and not callable(self.metric):
-                raise ValueError("The selected metric does not support NaN values")
 
         X = self._validate_data(
             X,

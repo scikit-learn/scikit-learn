@@ -89,12 +89,6 @@ def test_knn_imputer_default_with_invalid_input(na):
         ]
     )
 
-    # Test with a metric type without NaN support
-    imputer = KNNImputer(metric="euclidean")
-    bad_metric_msg = "The selected metric does not support NaN values"
-    with pytest.raises(ValueError, match=bad_metric_msg):
-        imputer.fit(X)
-
 
 @pytest.mark.parametrize("na", [np.nan, -1])
 def test_knn_imputer_removes_all_na_features(na):
