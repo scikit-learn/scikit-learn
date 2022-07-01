@@ -461,7 +461,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "DictionaryLearning",
     "ElasticNetCV",
     "EllipticEnvelope",
-    "EmpiricalCovariance",
     "ExtraTreesClassifier",
     "ExtraTreesRegressor",
     "FeatureHasher",
