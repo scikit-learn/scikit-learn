@@ -995,8 +995,9 @@ def test_linalg_warning_with_newton_solver(newton_solver, global_random_seed):
     rtol = 1e-6
     assert collinear_lbfgs_deviance == pytest.approx(original_newton_deviance, rel=rtol)
 
-    # Fitting on collinear data without regularization should raise an
-    # informative warning and fallback to the LBFGS solver
+    # Fitting a Newton solver on the collinear version of the training data
+    # without regularization should raise an informative warning and fallback
+    # to the LBFGS solver.
     msg = (
         "The inner solver of .*NewtonSolver stumbled upon a"
         " singular or very ill-conditioned hessian matrix"
@@ -1005,6 +1006,7 @@ def test_linalg_warning_with_newton_solver(newton_solver, global_random_seed):
         reg = PoissonRegressor(solver=newton_solver, alpha=0.0, tol=tol).fit(
             X_collinear, y
         )
+    # As a result we should still automatically converge to a good solution.
     collinear_newton_deviance = mean_poisson_deviance(y, reg.predict(X_collinear))
     assert collinear_newton_deviance == pytest.approx(
         original_newton_deviance, rel=rtol
