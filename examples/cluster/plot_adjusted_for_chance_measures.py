@@ -3,10 +3,16 @@
 Adjustment for chance in clustering performance evaluation
 ==========================================================
 
-This notebook explores the impact of random labeling on the behavior of some
-clustering evaluation metrics when we vary the number of clusters in:
- - the labeling to evaluate;
- - the reference labeling we compare to.
+This notebook explores the impact of uniformly-distributed random labeling on
+the behavior of some clustering evaluation metrics. For such purpose, the
+metrics are computed at fixed number of samples and as a function of the number
+of clusters assigned by the estimator. The example is divided in two
+experiments:
+
+- a first experiment with fixed "ground truth labels" (and therefore fixed
+  number of classes) and randomly "predicted labels";
+- a second experiment with varying "ground truth labels", randomly "predicted
+  labels" and matching number of classes and assigned number of clusters.
 
 """
 
@@ -14,40 +20,14 @@ clustering evaluation metrics when we vary the number of clusters in:
 # License: BSD 3 clause
 
 # %%
-# Quantifying the score of random labeling
+# Defining the list of metrics to evaluate
 # ----------------------------------------
 #
-# In this section we define a function that uses several metrics to score 2
-# uniformly-distributed random labelings.
-#
-# Both random labelings have the same number of clusters for each value possible
-# value in `n_clusters_range`. When fixed_n_classes is not `None`, the first
-# labeling is considered a ground truth class assignment with fixed number of
-# classes.
-
-import numpy as np
-
-
-def uniform_labelings_scores(
-    score_func, n_samples, n_clusters_range, n_runs=5, seed=42
-):
-    random_labels = np.random.RandomState(seed).randint
-    scores = np.zeros((len(n_clusters_range), n_runs))
-
-    for i, k in enumerate(n_clusters_range):
-        for j in range(n_runs):
-            labels_a = random_labels(low=0, high=k, size=n_samples)
-            labels_b = random_labels(low=0, high=k, size=n_samples)
-            scores[i, j] = score_func(labels_a, labels_b)
-    return scores
-
-
-# %%
 # Clustering algorithms are fundamentally unsupervised learning methods.
-# However, since we assigned class labels for this synthetic dataset, it is
-# possible to use evaluation metrics that leverage this "supervised" ground
-# truth information to quantify the quality of the resulting clusters. Examples
-# of such metrics are the following:
+# However, since we assign class labels for the synthetic clusters in this
+# example, it is possible to use evaluation metrics that leverage this
+# "supervised" ground truth information to quantify the quality of the resulting
+# clusters. Examples of such metrics are the following:
 #
 # - V-measure, the harmonic mean of completeness and homogeneity;
 #
@@ -75,6 +55,8 @@ def uniform_labelings_scores(
 from sklearn import metrics
 
 score_funcs = [
+    ("Homogenity", metrics.homogeneity_score),
+    ("Completeness", metrics.completeness_score),
     ("V-measure", metrics.v_measure_score),
     ("Rand-Index", metrics.rand_score),
     ("ARI", metrics.adjusted_rand_score),
@@ -84,81 +66,52 @@ score_funcs = [
 ]
 
 # %%
-# Plot clustering scores
-# ----------------------
+# 1st experiment: fixed ground truth labels and randomly predicted labels
+# -----------------------------------------------------------------------
 #
-# We first score 2 independent random clusterings with equal cluster number
+# We first define a function that creates uniformly-distributed random labeling.
 
-import matplotlib.pyplot as plt
-from time import time
+import numpy as np
 
-n_samples = 100
-n_clusters_range = np.linspace(2, n_samples, 10).astype(int)
 
-plt.figure(1)
+def random_labels(n_samples, n_classes):
+    labels = np.random.randint
+    return labels(low=0, high=n_classes, size=n_samples)
 
-plots = []
-names = []
-for score_name, score_func in score_funcs:
-    print(
-        "Computing %s for %d values of n_clusters and n_samples=%d"
-        % (score_name, len(n_clusters_range), n_samples)
-    )
-
-    t0 = time()
-    scores = uniform_labelings_scores(score_func, n_samples, n_clusters_range)
-    print("done in %0.3fs" % (time() - t0))
-    plots.append(
-        plt.errorbar(
-            n_clusters_range, np.median(scores, axis=1), scores.std(axis=1), alpha=0.8
-        )[0]
-    )
-    names.append(score_name)
-
-plt.title(
-    "Clustering measures for 2 random uniform labelings\nwith equal number of clusters"
-)
-plt.xlabel("Number of clusters (Number of samples is fixed to %d)" % n_samples)
-plt.ylabel("Score value")
-plt.legend(plots, names)
-plt.ylim(bottom=-0.05, top=1.05)
-plt.show()
 
 # %%
-# Non-adjusted measures such as the V-Measure show a dependency between the
-# number of clusters and the number of samples: the mean V-Measure of random
-# labeling increases significantly as the number of clusters is closer to the
-# total number of samples used to compute the measure.
-#
-# Adjusted for chance measure, such as ARI, display some random variations
-# centered around a mean score of 0.0 for any number of samples and clusters.
-#
-# We can also score a random labeling with varying n_clusters against the ground
-# class labels with a fixed number of samples (1000).
-
-n_samples = 1000
-n_clusters_range = np.linspace(2, 100, 10).astype(int)
-n_classes = 10
+# Another function will use the `random_labels` function to create a fixed set
+# of ground truth labels (`labels_a`) distributed in `n_classes` and then score
+# several sets of randomly "predicted" labels (`labels_b`) to assez the
+# variability of a given metric. This is done by varying the `n_clusters` in the
+# range of [`min_n_clusters`, `max_n_clusters`].
 
 
 def fixed_classes_uniform_labelings_scores(
-    score_func, n_samples, n_clusters_range, n_classes=10, n_runs=5, seed=42
+    score_func, n_samples, n_clusters_range, n_classes, n_runs=5
 ):
-    random_labels = np.random.RandomState(seed).randint
     scores = np.zeros((len(n_clusters_range), n_runs))
-    labels_a = random_labels(low=0, high=n_classes, size=n_samples)
+    labels_a = random_labels(n_samples=n_samples, n_classes=n_classes)
 
     for i, k in enumerate(n_clusters_range):
         for j in range(n_runs):
-            labels_b = random_labels(low=0, high=k, size=n_samples)
+            labels_b = random_labels(n_samples=n_samples, n_classes=k)
             scores[i, j] = score_func(labels_a, labels_b)
     return scores
 
 
-plt.figure(2)
+# %%
+import matplotlib.pyplot as plt
+from time import time
 
+n_samples = 1000
+n_classes = 10
+n_clusters_range = np.linspace(2, 100, 10).astype(int)
 plots = []
 names = []
+
+plt.figure(1)
+
 for score_name, score_func in score_funcs:
     print(
         "Computing %s for %d values of n_clusters and n_samples=%d"
@@ -185,6 +138,80 @@ plt.xlabel("Number of clusters (Number of samples is fixed to %d)" % n_samples)
 plt.ylabel("Score value")
 plt.ylim(bottom=-0.05, top=1.05)
 plt.legend(plots, names)
+plt.show()
+
+# %%
+# Except for the Rand-Index, all the scoring metrics seem to show a linear
+# behaviour as a function of the number of clusters in the predicted labels.
+#
+# Non-adjusted measures such as the V-Measure show a dependency between the
+# number of clusters and the number of samples: the mean V-Measure of random
+# labeling increases significantly as the number of clusters is closer to the
+# total number of samples used to compute the measure.
+#
+# Adjusted for chance measure, such as ARI, display some random variations
+# centered around a mean score of 0.0 for any number of samples and clusters.
+#
+# 2nd experiment: varying number of classes and assigned number of clusters
+# -------------------------------------------------------------------------
+#
+# In this section we define a function that uses several metrics to score 2
+# uniformly-distributed random labelings.
+#
+# Both random labelings have the same number of clusters for each value possible
+# value in `n_clusters_range`.
+
+
+def uniform_labelings_scores(
+    score_func, n_samples, n_clusters_range, n_runs=5, seed=42
+):
+    # random_labels = np.random.RandomState(seed).randint
+    scores = np.zeros((len(n_clusters_range), n_runs))
+
+    for i, k in enumerate(n_clusters_range):
+        for j in range(n_runs):
+            labels_a = random_labels(n_samples=n_samples, n_classes=k)
+            labels_b = random_labels(n_samples=n_samples, n_classes=k)
+            scores[i, j] = score_func(labels_a, labels_b)
+    return scores
+
+
+# %%
+# Plot clustering scores
+# ----------------------
+#
+# We first score 2 independent random clusterings with equal cluster number
+
+n_samples = 100
+n_clusters_range = np.linspace(2, n_samples, 10).astype(int)
+
+plt.figure(2)
+
+plots = []
+names = []
+for score_name, score_func in score_funcs:
+    print(
+        "Computing %s for %d values of n_clusters and n_samples=%d"
+        % (score_name, len(n_clusters_range), n_samples)
+    )
+
+    t0 = time()
+    scores = uniform_labelings_scores(score_func, n_samples, n_clusters_range)
+    print("done in %0.3fs" % (time() - t0))
+    plots.append(
+        plt.errorbar(
+            n_clusters_range, np.median(scores, axis=1), scores.std(axis=1), alpha=0.8
+        )[0]
+    )
+    names.append(score_name)
+
+plt.title(
+    "Clustering measures for 2 random uniform labelings\nwith equal number of clusters"
+)
+plt.xlabel("Number of clusters (Number of samples is fixed to %d)" % n_samples)
+plt.ylabel("Score value")
+plt.legend(plots, names)
+plt.ylim(bottom=-0.05, top=1.05)
 plt.show()
 
 # %%
