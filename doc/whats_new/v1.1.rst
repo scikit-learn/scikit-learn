@@ -221,12 +221,6 @@ Changelog
   `warm_start` enabled.
   :pr:`22106` by :user:`Pieter Gijsbers <PGijsbers>`.
 
-- |Enhancement| Rename parameter `base_estimator` to `estimator` in
-  :class:`ensemble.BaseBagging`, :class:`ensemble.BaggingClassifier`,
-  :class:`ensemble.BaggingRegressor` to improve readability and consistency.
-  `base_estimator` is deprecated and will be removed in 1.3.
-  :pr:`22145` by :user:`Adrian Trujillo <trujillo9616>`.
-
 :mod:`sklearn.feature_extraction`
 .................................
 
