@@ -77,7 +77,7 @@ class _BaseImputer(TransformerMixin, BaseEstimator):
     """
 
     _parameter_constraints = {
-        "missing_values": [numbers.Real, numbers.Integral, str, np.nan, None],
+        "missing_values": [numbers.Real, numbers.Integral, str, None],
         "add_indicator": ["boolean"],
     }
 
