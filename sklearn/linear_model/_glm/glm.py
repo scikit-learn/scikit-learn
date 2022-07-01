@@ -125,7 +125,7 @@ class NewtonSolver(ABC):
     iteration : int
         Number of Newton steps, i.e. calls to inner_solve
 
-    use_lbfgs_step : bool
+    use_fallback_lbfgs_solve : bool
         An inner solver can set this to True to resort to LBFGS for one iteration.
 
     gradient_times_newton : float
@@ -191,55 +191,33 @@ class NewtonSolver(ABC):
             - gradient_times_newton
         """
 
-    def lbfgs_step(self, X, y, sample_weight):
-        """Fallback for inner solver.
+    def fallback_lbfgs_solve(self, X, y, sample_weight):
+        """Fallback solver in case of emergency.
 
-        This is like inner_solve and line_search together.
-        It uses 4 lbfgs steps such that it takes advantage of updates of the
-        quasi-hessian, but not more steps in the hope that the normal inner solver can
-        take over again.
+        If a solver detects convergence problems, it may fall back to this methods in
+        the hope to exit with success instead of raising an error.
 
-        As in line_search sets:
-            - self.coef_old
+        Sets:
             - self.coef
-            - self.loss_value_old
-            - self.loss_value
-            - self.gradient_old
-            - self.gradient
-            - self.raw_prediction
-        As in inner_solver sets:
-            - self.coef_newton
+            - self.converged
         """
-        self.coef_old = self.coef
-        self.loss_value_old = self.loss_value
-        self.gradient_old = self.gradient
-
         opt_res = scipy.optimize.minimize(
             self.linear_loss.loss_gradient,
             self.coef,
             method="L-BFGS-B",
             jac=True,
             options={
-                "maxiter": 4,
-                "maxls": 40,  # default is 20
-                "iprint": self.verbose - 2,
+                "maxiter": self.max_iter,
+                "maxls": 50,  # default is 20
+                "iprint": self.verbose - 1,
                 "gtol": self.tol,
-                "ftol": 64 * np.finfo(np.float64).eps,  # lbfgs is float64 land.
+                "ftol": 64 * np.finfo(np.float64).eps,
             },
             args=(X, y, sample_weight, self.l2_reg_strength, self.n_threads),
         )
+        self.n_iter_ = _check_optimize_result("lbfgs", opt_res)
         self.coef = opt_res.x
-        self.coef_newton = self.coef - self.coef_old
-        _, _, self.raw_prediction = self.linear_loss.weight_intercept_raw(self.coef, X)
-        self.loss_value, self.gradient = self.linear_loss.loss_gradient(
-            coef=self.coef,
-            X=X,
-            y=y,
-            sample_weight=sample_weight,
-            l2_reg_strength=self.l2_reg_strength,
-            n_threads=self.n_threads,
-            raw_prediction=self.raw_prediction,
-        )
+        self.converged = opt_res.status == 0
 
     def line_search(self, X, y, sample_weight):
         """Backtracking line search.
@@ -467,7 +445,7 @@ class NewtonSolver(ABC):
             if self.verbose:
                 print(f"Newton iter={self.iteration}")
 
-            self.use_lbfgs_step = False  # Fallback for inner_solve.
+            self.use_fallback_lbfgs_solve = False  # Fallback solver.
 
             # 1. Update hessian and gradient
             self.update_gradient_hessian(X=X, y=y, sample_weight=sample_weight)
@@ -481,15 +459,14 @@ class NewtonSolver(ABC):
             #    Calculate Newton step/direction
             #    This usually sets self.coef_newton.
             self.inner_solve(X=X, y=y, sample_weight=sample_weight)
-            if self.use_lbfgs_step:
-                self.lbfgs_step(X=X, y=y, sample_weight=sample_weight)
+            if self.use_fallback_lbfgs_solve:
+                break
 
             # 3. Backtracking line search
             #    This usually sets self.coef_old, self.coef, self.loss_value_old
             #    self.loss_value, self.gradient_old, self.gradient,
             #    self.raw_prediction.
-            if not self.use_lbfgs_step:
-                self.line_search(X=X, y=y, sample_weight=sample_weight)
+            self.line_search(X=X, y=y, sample_weight=sample_weight)
 
             # 4. Check convergence
             #    Sets self.converged.
@@ -499,11 +476,17 @@ class NewtonSolver(ABC):
             self.iteration += 1
 
         if not self.converged:
-            warnings.warn(
-                "Newton solver did not converge after"
-                f" {self.iteration - 1} iterations.",
-                ConvergenceWarning,
-            )
+            if self.use_fallback_lbfgs_solve:
+                # Note: The fallback solver circumvents check_convergence and relies on
+                # the convergence checks of lbfgs instead. Enough warnings have been
+                # raised on the way.
+                self.fallback_lbfgs_solve(X=X, y=y, sample_weight=sample_weight)
+            else:
+                warnings.warn(
+                    "Newton solver did not converge after"
+                    f" {self.iteration - 1} iterations.",
+                    ConvergenceWarning,
+                )
 
         self.iteration -= 1
         self.finalize(X=X, y=y, sample_weight=sample_weight)
@@ -539,9 +522,9 @@ class BaseCholeskyNewtonSolver(NewtonSolver):
             if self.verbose:
                 print(
                     "  The inner solver detected a pointwise hessian with many "
-                    "negative values and resorts to a few lbfgs steps."
+                    "negative values and resorts to lbfgs instead."
                 )
-            self.use_lbfgs_step = True
+            self.use_fallback_lbfgs_solve = True
             return
 
         try:
@@ -555,9 +538,9 @@ class BaseCholeskyNewtonSolver(NewtonSolver):
                     if self.verbose:
                         print(
                             "  The inner solver found a Newton step that is not a "
-                            "descent direction and resorts to a few lbfgs steps."
+                            "descent direction and resorts to lbfgs instead."
                         )
-                    self.use_lbfgs_step = True
+                    self.use_fallback_lbfgs_solve = True
                     return
         except (np.linalg.LinAlgError, scipy.linalg.LinAlgWarning) as e:
             if self.count_singular == 0:
@@ -590,9 +573,9 @@ class BaseCholeskyNewtonSolver(NewtonSolver):
             if self.verbose:
                 print(
                     "  The inner solver stumbled upon an singular or ill-conditioned "
-                    "hessian matrix and resorts to a few lbfgs steps."
+                    "hessian matrix and resorts to lbfgs instead."
                 )
-            self.use_lbfgs_step = True
+            self.use_fallback_lbfgs_solve = True
             return
 
 
@@ -688,9 +671,9 @@ class QRCholeskyNewtonSolver(BaseCholeskyNewtonSolver):
             raw_prediction=self.raw_prediction,  # this was updated in line_search
         )
 
-    def lbfgs_step(self, X, y, sample_weight):
+    def fallback_lbfgs_solve(self, X, y, sample_weight):
         # Use R' instead of X
-        super().lbfgs_step(X=self.R.T, y=y, sample_weight=sample_weight)
+        super().fallback_lbfgs_solve(X=self.R.T, y=y, sample_weight=sample_weight)
 
     def line_search(self, X, y, sample_weight):
         # Use R' instead of X
