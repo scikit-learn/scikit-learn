@@ -1,13 +1,15 @@
-import numpy as np
+from numbers import Integral, Real
 import warnings
 
-from sklearn.utils import deprecated
+import numpy as np
 
 from ._base import _fit_liblinear, BaseSVC, BaseLibSVM
 from ..base import BaseEstimator, RegressorMixin, OutlierMixin
 from ..linear_model._base import LinearClassifierMixin, SparseCoefMixin, LinearModel
+from ..utils import deprecated
 from ..utils.validation import _num_samples
 from ..utils.multiclass import check_classification_targets
+from ..utils._param_validation import Interval, StrOptions
 
 
 class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
@@ -63,7 +65,7 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         to false, no intercept will be used in calculations
         (i.e. data is expected to be already centered).
 
-    intercept_scaling : float, default=1
+    intercept_scaling : float, default=1.0
         When self.fit_intercept is True, instance vector x becomes
         ``[x, self.intercept_scaling]``,
         i.e. a "synthetic" feature with constant value equals to
@@ -189,6 +191,21 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     [1]
     """
 
+    _parameter_constraints = {
+        "penalty": [StrOptions({"l1", "l2"})],
+        "loss": [StrOptions({"hinge", "squared_hinge"})],
+        "dual": ["boolean"],
+        "tol": [Interval(Real, 0.0, None, closed="neither")],
+        "C": [Interval(Real, 0.0, None, closed="neither")],
+        "multi_class": [StrOptions({"ovr", "crammer_singer"})],
+        "fit_intercept": ["boolean"],
+        "intercept_scaling": [Interval(Real, 0, None, closed="neither")],
+        "class_weight": [None, dict, StrOptions({"balanced"})],
+        "verbose": ["verbose"],
+        "random_state": ["random_state"],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
+    }
+
     def __init__(
         self,
         penalty="l2",
@@ -242,8 +259,7 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         self : object
             An instance of the estimator.
         """
-        if self.C < 0:
-            raise ValueError("Penalty term must be positive; got (C=%r)" % self.C)
+        self._validate_params()
 
         X, y = self._validate_data(
             X,
@@ -427,6 +443,19 @@ class LinearSVR(RegressorMixin, LinearModel):
     [-2.384...]
     """
 
+    _parameter_constraints = {
+        "epsilon": [Real],
+        "tol": [Interval(Real, 0.0, None, closed="neither")],
+        "C": [Interval(Real, 0.0, None, closed="neither")],
+        "loss": [StrOptions({"epsilon_insensitive", "squared_epsilon_insensitive"})],
+        "fit_intercept": ["boolean"],
+        "intercept_scaling": [Interval(Real, 0, None, closed="neither")],
+        "dual": ["boolean"],
+        "verbose": ["verbose"],
+        "random_state": ["random_state"],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
+    }
+
     def __init__(
         self,
         *,
@@ -476,8 +505,7 @@ class LinearSVR(RegressorMixin, LinearModel):
         self : object
             An instance of the estimator.
         """
-        if self.C < 0:
-            raise ValueError("Penalty term must be positive; got (C=%r)" % self.C)
+        self._validate_params()
 
         X, y = self._validate_data(
             X,
