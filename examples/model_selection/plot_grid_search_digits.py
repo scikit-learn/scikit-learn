@@ -1,6 +1,6 @@
 """
 ============================================================
-Parameter estimation using grid search with cross-validation
+Custom refit strategy of a grid search with cross-validation
 ============================================================
 
 This examples shows how a classifier is optimized by cross-validation,
@@ -50,18 +50,8 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5, random_
 # -------------------------------
 #
 # We will select a classifier by searching the best hyper-parameters on folds
-# of the training set. To do this, we first need to define the values of
-# the hyper-parameters and the scores to compute to later select the
-# best candidate.
-
-tuned_parameters = [
-    {"solver": ["newton-cg"], "penalty": ["l2", "none"], "C": [1, 10, 100]},
-    {
-        "solver": ["saga"],
-        "penalty": ["elasticnet", "l2", "none"],
-        "C": [1, 10, 100],
-    },
-]
+# of the training set. To do this, we need to define
+# the scores to select the best candidate.
 
 scores = ["precision", "recall"]
 
@@ -72,7 +62,7 @@ scores = ["precision", "recall"]
 # :class:`~sklearn.model_selection.GridSearchCV`. Once the candidate is
 # selected, it is automatically refitted by the
 # :class:`~sklearn.model_selection.GridSearchCV` instance.
-# 
+#
 # Here, the strategy is to short-list the model which are the best in terms of
 # precision and recall. From the selected models, we finally select the fastest
 # model at predicting. Notice that these custom choices are completely
@@ -168,7 +158,8 @@ def refit_strategy(cv_results):
 
 
 # %%
-# Once we defined our strategy to select the best model, we can create the
+# Once we defined our strategy to select the best model, we define the values of
+# the hyper-parameters and create the
 # grid-search instance. Subsequently, we can check the best parameters found.
 from sklearn.model_selection import GridSearchCV
 from sklearn.svm import SVC
