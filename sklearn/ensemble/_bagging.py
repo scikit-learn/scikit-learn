@@ -603,8 +603,9 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
 
     base_estimator : object, default="deprecated"
         Use `estimator` instead.
-        .. deprecated:: 1.1
-            `base_estimator` is deprecated and will be removed in 1.3.
+
+        .. deprecated:: 1.2
+            `base_estimator` is deprecated and will be removed in 1.4.
             Use `estimator` instead.
 
     Attributes
@@ -1052,8 +1053,8 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
     base_estimator : object, default="deprecated"
         Use `estimator` instead.
 
-        .. deprecated:: 1.1
-            `base_estimator` is deprecated and will be removed in 1.3.
+        .. deprecated:: 1.2
+            `base_estimator` is deprecated and will be removed in 1.4.
             Use `estimator` instead.
 
     Attributes
