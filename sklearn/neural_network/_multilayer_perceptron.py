@@ -81,7 +81,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         "beta_1": [Interval(Real, 0, 1, closed="left")],
         "beta_2": [Interval(Real, 0, 1, closed="left")],
         "epsilon": [Interval(Real, 0, None, closed="neither")],
-        "n_iter_no_change": [Interval(Integral, 0, None, closed="neither")],
+        "n_iter_no_change": [Interval(Real, 0, None, closed="right")],
         "max_fun": [Interval(Integral, 0, None, closed="neither")],
     }
 
@@ -588,7 +588,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         else:
             if self.batch_size > n_samples:
                 warnings.warn(
-                    "Got `batch_size` larger than "
+                    "Got `batch_size` less than 1 or larger than "
                     "sample size. It is going to be clipped"
                 )
             batch_size = np.clip(self.batch_size, 1, n_samples)
@@ -1023,8 +1023,6 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
     >>> clf.score(X_test, y_test)
     0.8...
     """
-
-    _parameter_constraints = {**BaseMultilayerPerceptron._parameter_constraints}
 
     def __init__(
         self,
@@ -1494,8 +1492,6 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
     >>> regr.score(X_test, y_test)
     0.4...
     """
-
-    _parameter_constraints = {**BaseMultilayerPerceptron._parameter_constraints}
 
     def __init__(
         self,
