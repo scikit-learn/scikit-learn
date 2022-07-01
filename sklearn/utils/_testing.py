@@ -34,7 +34,7 @@ from unittest import TestCase
 
 # WindowsError only exist on Windows
 try:
-    WindowsError
+    WindowsError  # type: ignore
 except NameError:
     WindowsError = None
 
