@@ -288,7 +288,14 @@ def test_glm_regression_hstacked_X(solver, fit_intercept, glm_dataset):
     else:
         coef = coef_without_intercept
         intercept = 0
-    model.fit(X, y)
+
+    with warnings.catch_warnings():
+        # XXX: Investigate if the ConvergenceWarning that can appear in some
+        # cases should be considered a bug or not. In the mean time we don't
+        # fail when the assertions below pass irrespective of the presence of
+        # the warning.
+        warnings.simplefilter("ignore", ConvergenceWarning)
+        model.fit(X, y)
 
     rtol = 2e-4 if solver == "lbfgs" else 5e-9
     assert model.intercept_ == pytest.approx(intercept, rel=rtol)
@@ -365,10 +372,15 @@ def test_glm_regression_unpenalized(solver, fit_intercept, glm_dataset):
         intercept = 0
 
     with warnings.catch_warnings():
-        if n_samples < n_features:
-            # TODO: implement a fallback mechanism to LBFGS avoid bad convergence.
+        if solver.startswith("newton") and n_samples < n_features:
+            # The newton solvers should warn and automatically fallback to LBFGS
+            # in this case. The model should still converge.
             warnings.filterwarnings("ignore", category=scipy.linalg.LinAlgWarning)
-            warnings.filterwarnings("ignore", category=ConvergenceWarning)
+        # XXX: Investigate if the ConvergenceWarning that can appear in some
+        # cases should be considered a bug or not. In the mean time we don't
+        # fail when the assertions below pass irrespective of the presence of
+        # the warning.
+        warnings.filterwarnings("ignore", category=ConvergenceWarning)
         model.fit(X, y)
 
     # FIXME: `assert_allclose(model.coef_, coef)` should work for all cases but fails
@@ -454,13 +466,15 @@ def test_glm_regression_unpenalized_hstacked_X(solver, fit_intercept, glm_datase
     assert np.linalg.matrix_rank(X) <= min(n_samples, n_features)
 
     with warnings.catch_warnings():
-        if (
-            solver == "lbfgs" and fit_intercept and n_samples < n_features
-        ) or solver in ["newton-cholesky", "newton-qr-cholesky"]:
-            # XXX: Investigate if the lack of convergence in this case should be
-            # considered a bug or not.
+        if solver.startswith("newton"):
+            # The newton solvers should warn and automatically fallback to LBFGS
+            # in this case. The model should still converge.
             warnings.filterwarnings("ignore", category=scipy.linalg.LinAlgWarning)
-            warnings.filterwarnings("ignore", category=ConvergenceWarning)
+        # XXX: Investigate if the ConvergenceWarning that can appear in some
+        # cases should be considered a bug or not. In the mean time we don't
+        # fail when the assertions below pass irrespective of the presence of
+        # the warning.
+        warnings.filterwarnings("ignore", category=ConvergenceWarning)
         model.fit(X, y)
 
     if fit_intercept and n_samples < n_features:
@@ -538,11 +552,15 @@ def test_glm_regression_unpenalized_vstacked_X(solver, fit_intercept, glm_datase
     y = np.r_[y, y]
 
     with warnings.catch_warnings():
-        if n_samples < n_features:
-            # XXX: Implement a fallback mechanism to avoid lack of convergence
-            # in this case.
+        if solver.startswith("newton") and n_samples < n_features:
+            # The newton solvers should warn and automatically fallback to LBFGS
+            # in this case. The model should still converge.
             warnings.filterwarnings("ignore", category=scipy.linalg.LinAlgWarning)
-            warnings.filterwarnings("ignore", category=ConvergenceWarning)
+        # XXX: Investigate if the ConvergenceWarning that can appear in some
+        # cases should be considered a bug or not. In the mean time we don't
+        # fail when the assertions below pass irrespective of the presence of
+        # the warning.
+        warnings.filterwarnings("ignore", category=ConvergenceWarning)
         model.fit(X, y)
 
     if n_samples > n_features:
