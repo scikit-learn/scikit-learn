@@ -899,6 +899,35 @@ def bins_from_strategy(n_bins, strategy, y_prob=None):
 
     If `n_bins` is already an `array-like`, it is used as-is by
     converting it to a `ndarray`.
+
+    Parameters
+    ----------
+    n_bins : int or array-like
+        Define the discretization applied to `y_prob`, ranging in [0, 1].
+
+        - if an integer is provided, the discretization depends on the
+        `strategy` parameter with n_bins as the number of bins.
+        - if an array-like is provided, the `strategy` parameter is overlooked
+        and the array is used as bin edges directly.
+
+    strategy : {'uniform', 'quantile'}
+        Strategy used to define the widths of the bins.
+
+        uniform
+            The bins have identical widths.
+        quantile
+            The bins have the same number of samples and depend on `y_prob`.
+
+        Ignored if `n_bins` is an array-like containing the bin edges.
+
+    y_prob : array-like of shape (n_samples,), default=None
+        Probabilities of the positive class. Used when `strategy='quantile'`.
+
+    Returns
+    -------
+    bins : ndarray
+        The bin edges. If `n_bins` is an integer, `bins` is of shape (n_bins+1,).
+        If `n_bins` is an array-like, `bins` has same shape as `n_bins`.
     """
     if isinstance(n_bins, numbers.Real):
         if strategy == "quantile":
@@ -1175,9 +1204,13 @@ class CalibrationDisplay:
 
         Parameters
         ----------
-        ax : Matplotlib Axes, default=None
-            Axes object to plot on. If `None`, a new figure and axes is
-            created.
+        ax : matplotlib axes, default=None
+            Axes object to plot on the calibration curve. If `None`, a new
+            figure and axes is created.
+
+        ax_hist : matplotlib axes, default=None
+            Axes object to plot on the histogram. If `None`, a new axis is
+            created from ax.
 
         name : str, default=None
             Name for labeling curve. If `None`, use `estimator_name` if
@@ -1186,6 +1219,16 @@ class CalibrationDisplay:
         ref_line : bool, default=True
             If `True`, plots a reference line representing a perfectly
             calibrated classifier.
+
+        grid : {'uniform', 'bins', None}, default: 'uniform'
+            The bins to plot.
+
+            - `'uniform'`: Plot uniform bins.
+            - `'bins'`: Plot the bins used to build the calibration curve.
+            - None: Do not plot the bins.
+
+        bin_label : bool
+            If `True`, plots the ratios on top of the histogram bars.
 
         **kwargs : dict
             Keyword arguments to be passed to :func:`matplotlib.pyplot.plot`.
@@ -1373,7 +1416,7 @@ class CalibrationDisplay:
             - None: Do not plot the bins.
 
         bin_label : bool
-            Whether to plot the ratios on top of the histogram bars.
+            If `True`, plots the ratios on top of the histogram bars.
 
         **kwargs : dict
             Keyword arguments to be passed to :func:`matplotlib.pyplot.plot`.
@@ -1463,10 +1506,10 @@ class CalibrationDisplay:
 
         Parameters
         ----------
-        estimator : estimator instance
-            Fitted classifier or a fitted :class:`~sklearn.pipeline.Pipeline`
-            in which the last estimator is a classifier. The classifier must
-            have a :term:`predict_proba` method.
+        estimators : list of estimator instances
+            List of fitted classifiers or fitted
+            :class:`~sklearn.pipeline.Pipeline` in which the last estimator is
+            a classifier. Classifiers must have a :term:`predict_proba` method.
 
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Input values.
@@ -1493,9 +1536,8 @@ class CalibrationDisplay:
 
             .. versionadded:: 1.1
 
-        name : str, default=None
-            Name for labeling curve. If `None`, the name of the estimator is
-            used.
+        names : list of str, default=None
+            Names for labeling curves. If `None`, estimator names are used.
 
         ref_line : bool, default=True
             If `True`, plots a reference line representing a perfectly
@@ -1510,6 +1552,8 @@ class CalibrationDisplay:
 
         **kwargs : dict
             Keyword arguments to be passed to :func:`matplotlib.pyplot.plot`.
+            Values associated to each keyword must be a list of same length as
+            `estimators`.
 
         Returns
         -------
@@ -1649,7 +1693,7 @@ class CalibrationDisplay:
             - None: Do not plot the bins.
 
         bin_label : bool
-            Whether to plot the ratios on top of the histogram bars.
+            If `True`, plots the ratios on top of the histogram bars.
 
         **kwargs : dict
             Keyword arguments to be passed to :func:`matplotlib.pyplot.plot`.
