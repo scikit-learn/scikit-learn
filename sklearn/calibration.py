@@ -1275,22 +1275,24 @@ class CalibrationDisplay:
             ax_hist.spines["left"].set_visible(False)
 
         ax_hist.set(xlabel="Mean predicted confidence", ylabel="Count")
-        hist = ax_hist.hist(
-            self.y_prob,
-            bins=self.bins_hist,
-            label=name,
-            density=False,
-            histtype="bar",
-            color=color,
-        )
 
-        if bin_label:
-            bar_container = hist[2]
-            labels = bar_container.datavalues / np.sum(bar_container.datavalues)
-            labels = ["{:.0f}".format(100 * v) for v in labels]
-            ax_hist.bar_label(
-                bar_container, labels=labels, label_type="edge", color=color
+        if len(self.bins_hist) > 0:
+            hist = ax_hist.hist(
+                self.y_prob,
+                bins=self.bins_hist,
+                label=name,
+                density=False,
+                histtype="bar",
+                color=color,
             )
+
+            if bin_label:
+                bar_container = hist[2]
+                labels = bar_container.datavalues / np.sum(bar_container.datavalues)
+                labels = ["{:.0f}".format(100 * v) for v in labels]
+                ax_hist.bar_label(
+                    bar_container, labels=labels, label_type="edge", color=color
+                )
 
         # Plot bins if required
         if grid == "uniform":
