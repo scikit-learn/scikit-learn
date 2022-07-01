@@ -60,6 +60,10 @@ Changelog
   parameter `base_estimator` is deprecated and will be removed in 1.4.
   :pr:`22054` by :user:`Kevin Roice <kevroi>`.
 
+- |Enhancement| :class:`CalibrationDisplay` now enables plotting an histogram
+  on the predicted confidences and plotting the bin edges in the background.
+  :pr:`23748` by :user:`Alexandre Perez-Lebel <aperezlebel>`.
+
 :mod:`sklearn.cluster`
 ......................
 
@@ -153,7 +157,7 @@ Changelog
   negative likelihood ratios derived from the confusion matrix
   of a binary classification problem. :pr:`22518` by
   :user:`Arturo Amor <ArturoAmorQ>`.
-  
+
 - |Fix| :func:`metrics.ndcg_score` will now trigger a warning when the `y_true`
   value contains a negative value. Users may still use negative values, but the
   result may not be between 0 and 1. Starting in v1.4, passing in negative
