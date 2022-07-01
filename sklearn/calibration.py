@@ -906,9 +906,9 @@ def bins_from_strategy(n_bins, strategy, y_prob=None):
         Define the discretization applied to `y_prob`, ranging in [0, 1].
 
         - if an integer is provided, the discretization depends on the
-        `strategy` parameter with n_bins as the number of bins.
+            `strategy` parameter with n_bins as the number of bins.
         - if an array-like is provided, the `strategy` parameter is overlooked
-        and the array is used as bin edges directly.
+            and the array is used as bin edges directly.
 
     strategy : {'uniform', 'quantile'}
         Strategy used to define the widths of the bins.
@@ -994,9 +994,9 @@ def calibration_curve(
         Define the discretization applied to `y_prob`, ranging in [0, 1].
 
         - if an integer is provided, the discretization depends on the
-        `strategy` parameter with n_bins as the number of bins.
+            `strategy` parameter with n_bins as the number of bins.
         - if an array-like is provided, the `strategy` parameter is overlooked
-        and the array is used as bin edges directly.
+            and the array is used as bin edges directly.
 
         A bigger requested number of bins require more data. Bins with no
         samples (i.e. without corresponding values in `y_prob`) will not be
@@ -1369,9 +1369,9 @@ class CalibrationDisplay:
             Define the discretization applied to `y_prob`, ranging in [0, 1].
 
             - if an integer is provided, the discretization depends on the
-            `strategy` parameter with n_bins as the number of bins.
+                `strategy` parameter with n_bins as the number of bins.
             - if an array-like is provided, the `strategy` parameter is
-            overlooked and the array is used as bin edges directly.
+                overlooked and the array is used as bin edges directly.
 
             A bigger requested number of bins require more data. Bins with no
             samples (i.e. without corresponding values in `y_prob`) will not be
@@ -1548,7 +1548,7 @@ class CalibrationDisplay:
             created.
 
         grid : bool, default=True
-            If `True, plots the uniform bins.
+            If `True`, plots the uniform bins.
 
         **kwargs : dict
             Keyword arguments to be passed to :func:`matplotlib.pyplot.plot`.
