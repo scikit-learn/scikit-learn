@@ -5,6 +5,8 @@ Multi-dimensional Scaling (MDS).
 # author: Nelle Varoquaux <nelle.varoquaux@gmail.com>
 # License: BSD
 
+from numbers import Integral, Real
+
 import numpy as np
 from joblib import Parallel, effective_n_jobs
 
@@ -14,7 +16,7 @@ from ..base import BaseEstimator
 from ..metrics import euclidean_distances
 from ..utils import check_random_state, check_array, check_symmetric
 from ..isotonic import IsotonicRegression
-from ..utils.deprecation import deprecated
+from ..utils._param_validation import Interval, StrOptions
 from ..utils.fixes import delayed
 
 
@@ -84,7 +86,7 @@ def _smacof_single(
     sim_flat_w = sim_flat[sim_flat != 0]
     if init is None:
         # Randomly choose initial configuration
-        X = random_state.rand(n_samples * n_components)
+        X = random_state.uniform(size=n_samples * n_components)
         X = X.reshape((n_samples, n_components))
     else:
         # overrides the parameter p
@@ -114,7 +116,7 @@ def _smacof_single(
             disparities[sim_flat != 0] = disparities_flat
             disparities = disparities.reshape((n_samples, n_samples))
             disparities *= np.sqrt(
-                (n_samples * (n_samples - 1) / 2) / (disparities ** 2).sum()
+                (n_samples * (n_samples - 1) / 2) / (disparities**2).sum()
             )
 
         # Compute stress
@@ -127,7 +129,7 @@ def _smacof_single(
         B[np.arange(len(B)), np.arange(len(B))] += ratio.sum(axis=1)
         X = 1.0 / n_samples * np.dot(B, X)
 
-        dis = np.sqrt((X ** 2).sum(axis=1)).sum()
+        dis = np.sqrt((X**2).sum(axis=1)).sum()
         if verbose >= 2:
             print("it: %d, stress %s" % (it, stress))
         if old_stress is not None:
@@ -425,6 +427,18 @@ class MDS(BaseEstimator):
     (100, 2)
     """
 
+    _parameter_constraints = {
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "metric": ["boolean"],
+        "n_init": [Interval(Integral, 1, None, closed="left")],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
+        "verbose": ["verbose"],
+        "eps": [Interval(Real, 0.0, None, closed="left")],
+        "n_jobs": [None, Integral],
+        "random_state": ["random_state"],
+        "dissimilarity": [StrOptions({"euclidean", "precomputed"})],
+    }
+
     def __init__(
         self,
         n_components=2,
@@ -451,16 +465,6 @@ class MDS(BaseEstimator):
     def _more_tags(self):
         return {"pairwise": self.dissimilarity == "precomputed"}
 
-    # TODO: Remove in 1.1
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `_pairwise` was deprecated in "
-        "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def _pairwise(self):
-        return self.dissimilarity == "precomputed"
-
     def fit(self, X, y=None, init=None):
         """
         Compute the position of the points in the embedding space.
@@ -485,6 +489,7 @@ class MDS(BaseEstimator):
         self : object
             Fitted estimator.
         """
+        # parameter will be validated in `fit_transform` call
         self.fit_transform(X, init=init)
         return self
 
@@ -512,6 +517,7 @@ class MDS(BaseEstimator):
         X_new : ndarray of shape (n_samples, n_components)
             X transformed in the new space.
         """
+        self._validate_params()
         X = self._validate_data(X)
         if X.shape[0] == X.shape[1] and self.dissimilarity != "precomputed":
             warnings.warn(
@@ -525,11 +531,6 @@ class MDS(BaseEstimator):
             self.dissimilarity_matrix_ = X
         elif self.dissimilarity == "euclidean":
             self.dissimilarity_matrix_ = euclidean_distances(X)
-        else:
-            raise ValueError(
-                "Proximity must be 'precomputed' or 'euclidean'. Got %s instead"
-                % str(self.dissimilarity)
-            )
 
         self.embedding_, self.stress_, self.n_iter_ = smacof(
             self.dissimilarity_matrix_,

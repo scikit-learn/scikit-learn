@@ -29,11 +29,11 @@ def test_imports_strategies():
     bad_imports = """
     import pytest
 
-    with pytest.raises(ImportError):
+    with pytest.raises(ImportError, match='IterativeImputer is experimental'):
         from sklearn.impute import IterativeImputer
 
     import sklearn.experimental
-    with pytest.raises(ImportError):
+    with pytest.raises(ImportError, match='IterativeImputer is experimental'):
         from sklearn.impute import IterativeImputer
     """
     assert_run_python_script(textwrap.dedent(bad_imports))

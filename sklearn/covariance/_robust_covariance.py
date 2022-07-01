@@ -357,7 +357,7 @@ def fast_mcd(
     cov_computation_method=empirical_covariance,
     random_state=None,
 ):
-    """Estimates the Minimum Covariance Determinant matrix.
+    """Estimate the Minimum Covariance Determinant matrix.
 
     Read more in the :ref:`User Guide <robust_covariance>`.
 

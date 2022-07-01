@@ -4,7 +4,7 @@ import numpy as np
 
 from ..base import MetaEstimatorMixin, clone, BaseEstimator
 from ..utils.validation import check_is_fitted
-from ..utils.metaestimators import if_delegate_has_method
+from ..utils.metaestimators import available_if
 from ..utils import safe_mask
 
 __all__ = ["SelfTrainingClassifier"]
@@ -14,11 +14,13 @@ __all__ = ["SelfTrainingClassifier"]
 # License: BSD 3 clause
 
 
-def _validate_estimator(estimator):
-    """Make sure that an estimator implements the necessary methods."""
-    if not hasattr(estimator, "predict_proba"):
-        msg = "base_estimator ({}) should implement predict_proba!"
-        raise ValueError(msg.format(type(estimator).__name__))
+def _estimator_has(attr):
+    """Check if `self.base_estimator_ `or `self.base_estimator_` has `attr`."""
+    return lambda self: (
+        hasattr(self.base_estimator_, attr)
+        if hasattr(self, "base_estimator_")
+        else hasattr(self.base_estimator, attr)
+    )
 
 
 class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
@@ -116,11 +118,11 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
 
     References
     ----------
-    David Yarowsky. 1995. Unsupervised word sense disambiguation rivaling
+    :doi:`David Yarowsky. 1995. Unsupervised word sense disambiguation rivaling
     supervised methods. In Proceedings of the 33rd annual meeting on
     Association for Computational Linguistics (ACL '95). Association for
-    Computational Linguistics, Stroudsburg, PA, USA, 189-196. DOI:
-    https://doi.org/10.3115/981658.981684
+    Computational Linguistics, Stroudsburg, PA, USA, 189-196.
+    <10.3115/981658.981684>`
 
     Examples
     --------
@@ -233,11 +235,6 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
                 X[safe_mask(X, has_label)], self.transduction_[has_label]
             )
 
-            # Validate the fitted estimator since `predict_proba` can be
-            # delegated to an underlying "final" fitted estimator as
-            # generally done in meta-estimator or pipeline.
-            _validate_estimator(self.base_estimator_)
-
             # Predict on the unlabeled samples
             prob = self.base_estimator_.predict_proba(X[safe_mask(X, ~has_label)])
             pred = self.base_estimator_.classes_[np.argmax(prob, axis=1)]
@@ -284,7 +281,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         self.classes_ = self.base_estimator_.classes_
         return self
 
-    @if_delegate_has_method(delegate="base_estimator")
+    @available_if(_estimator_has("predict"))
     def predict(self, X):
         """Predict the classes of `X`.
 
@@ -307,6 +304,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         )
         return self.base_estimator_.predict(X)
 
+    @available_if(_estimator_has("predict_proba"))
     def predict_proba(self, X):
         """Predict probability for each possible outcome.
 
@@ -329,7 +327,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         )
         return self.base_estimator_.predict_proba(X)
 
-    @if_delegate_has_method(delegate="base_estimator")
+    @available_if(_estimator_has("decision_function"))
     def decision_function(self, X):
         """Call decision function of the `base_estimator`.
 
@@ -352,7 +350,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         )
         return self.base_estimator_.decision_function(X)
 
-    @if_delegate_has_method(delegate="base_estimator")
+    @available_if(_estimator_has("predict_log_proba"))
     def predict_log_proba(self, X):
         """Predict log probability for each possible outcome.
 
@@ -375,7 +373,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         )
         return self.base_estimator_.predict_log_proba(X)
 
-    @if_delegate_has_method(delegate="base_estimator")
+    @available_if(_estimator_has("score"))
     def score(self, X, y):
         """Call score on the `base_estimator`.
 

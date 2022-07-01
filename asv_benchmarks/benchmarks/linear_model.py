@@ -110,7 +110,7 @@ class RidgeBenchmark(Predictor, Estimator, Benchmark):
 
 class LinearRegressionBenchmark(Predictor, Estimator, Benchmark):
     """
-    Benchmarks for Linear Reagression.
+    Benchmarks for Linear Regression.
     """
 
     param_names = ["representation"]

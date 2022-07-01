@@ -14,6 +14,7 @@ functions to validate the model.
 import warnings
 import numbers
 import time
+from functools import partial
 from traceback import format_exc
 from contextlib import suppress
 from collections import Counter
@@ -73,8 +74,7 @@ def cross_validate(
     X : array-like of shape (n_samples, n_features)
         The data to fit. Can be for example a list, or an array.
 
-    y : array-like of shape (n_samples,) or (n_samples, n_outputs), \
-            default=None
+    y : array-like of shape (n_samples,) or (n_samples, n_outputs), default=None
         The target variable to try to predict in the case of
         supervised learning.
 
@@ -208,6 +208,16 @@ def cross_validate(
                 This is available only if ``return_estimator`` parameter
                 is set to ``True``.
 
+    See Also
+    --------
+    cross_val_score : Run cross-validation for single metric evaluation.
+
+    cross_val_predict : Get predictions from each split of cross-validation for
+        diagnostic purposes.
+
+    sklearn.metrics.make_scorer : Make a scorer from a performance metric or
+        loss function.
+
     Examples
     --------
     >>> from sklearn import datasets, linear_model
@@ -238,17 +248,6 @@ def cross_validate(
     [-3635.5... -3573.3... -6114.7...]
     >>> print(scores['train_r2'])
     [0.28009951 0.3908844  0.22784907]
-
-    See Also
-    ---------
-    cross_val_score : Run cross-validation for single metric evaluation.
-
-    cross_val_predict : Get predictions from each split of cross-validation for
-        diagnostic purposes.
-
-    sklearn.metrics.make_scorer : Make a scorer from a performance metric or
-        loss function.
-
     """
     X, y, groups = indexable(X, y, groups)
 
@@ -361,7 +360,7 @@ def _warn_or_raise_about_fit_failures(results, error_score):
         if num_failed_fits == num_fits:
             all_fits_failed_message = (
                 f"\nAll the {num_fits} fits failed.\n"
-                "It is is very likely that your model is misconfigured.\n"
+                "It is very likely that your model is misconfigured.\n"
                 "You can try to debug the error by setting error_score='raise'.\n\n"
                 f"Below are more details about the failures:\n{fit_errors_summary}"
             )
@@ -488,6 +487,17 @@ def cross_val_score(
     scores : ndarray of float of shape=(len(list(cv)),)
         Array of scores of the estimator for each run of the cross validation.
 
+    See Also
+    --------
+    cross_validate : To run cross-validation on multiple metrics and also to
+        return train scores, fit times and score times.
+
+    cross_val_predict : Get predictions from each split of cross-validation for
+        diagnostic purposes.
+
+    sklearn.metrics.make_scorer : Make a scorer from a performance metric or
+        loss function.
+
     Examples
     --------
     >>> from sklearn import datasets, linear_model
@@ -498,17 +508,6 @@ def cross_val_score(
     >>> lasso = linear_model.Lasso()
     >>> print(cross_val_score(lasso, X, y, cv=3))
     [0.3315057  0.08022103 0.03531816]
-
-    See Also
-    ---------
-    cross_validate : To run cross-validation on multiple metrics and also to
-        return train scores, fit times and score times.
-
-    cross_val_predict : Get predictions from each split of cross-validation for
-        diagnostic purposes.
-
-    sklearn.metrics.make_scorer : Make a scorer from a performance metric or
-        loss function.
     """
     # To ensure multimetric format is not supported
     scorer = check_scoring(estimator, scoring=scoring)
@@ -1679,6 +1678,11 @@ def _incremental_fit_estimator(
     partitions = zip(train_sizes, np.split(train, train_sizes)[:-1])
     if fit_params is None:
         fit_params = {}
+    if classes is None:
+        partial_fit_func = partial(estimator.partial_fit, **fit_params)
+    else:
+        partial_fit_func = partial(estimator.partial_fit, classes=classes, **fit_params)
+
     for n_train_samples, partial_train in partitions:
         train_subset = train[:n_train_samples]
         X_train, y_train = _safe_split(estimator, X, y, train_subset)
@@ -1686,11 +1690,9 @@ def _incremental_fit_estimator(
         X_test, y_test = _safe_split(estimator, X, y, test, train_subset)
         start_fit = time.time()
         if y_partial_train is None:
-            estimator.partial_fit(X_partial_train, classes=classes, **fit_params)
+            partial_fit_func(X_partial_train)
         else:
-            estimator.partial_fit(
-                X_partial_train, y_partial_train, classes=classes, **fit_params
-            )
+            partial_fit_func(X_partial_train, y_partial_train)
         fit_time = time.time() - start_fit
         fit_times.append(fit_time)
 

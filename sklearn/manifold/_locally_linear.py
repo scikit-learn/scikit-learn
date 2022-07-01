@@ -9,7 +9,12 @@ from scipy.linalg import eigh, svd, qr, solve
 from scipy.sparse import eye, csr_matrix
 from scipy.sparse.linalg import eigsh
 
-from ..base import BaseEstimator, TransformerMixin, _UnstableArchMixin
+from ..base import (
+    BaseEstimator,
+    TransformerMixin,
+    _UnstableArchMixin,
+    _ClassNamePrefixFeaturesOutMixin,
+)
 from ..utils import check_random_state, check_array
 from ..utils._arpack import _init_arpack_v0
 from ..utils.extmath import stable_cumsum
@@ -67,7 +72,7 @@ def barycenter_weights(X, Y, indices, reg=1e-3):
         else:
             R = reg
         G.flat[:: n_neighbors + 1] += R
-        w = solve(G, v, sym_pos=True)
+        w = solve(G, v, assume_a="pos")
         B[i, :] = w / np.sum(w)
     return B
 
@@ -542,7 +547,12 @@ def locally_linear_embedding(
     )
 
 
-class LocallyLinearEmbedding(TransformerMixin, _UnstableArchMixin, BaseEstimator):
+class LocallyLinearEmbedding(
+    _ClassNamePrefixFeaturesOutMixin,
+    TransformerMixin,
+    _UnstableArchMixin,
+    BaseEstimator,
+):
     """Locally Linear Embedding.
 
     Read more in the :ref:`User Guide <locally_linear_embedding>`.
@@ -728,6 +738,7 @@ class LocallyLinearEmbedding(TransformerMixin, _UnstableArchMixin, BaseEstimator
             reg=self.reg,
             n_jobs=self.n_jobs,
         )
+        self._n_features_out = self.embedding_.shape[1]
 
     def fit(self, X, y=None):
         """Compute the embedding vectors for data X.

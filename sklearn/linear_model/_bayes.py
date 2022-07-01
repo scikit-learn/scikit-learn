@@ -6,13 +6,15 @@ Various bayesian regression
 # License: BSD 3 clause
 
 from math import log
+import numbers
 import numpy as np
 from scipy import linalg
 
-from ._base import LinearModel, _rescale_data
+from ._base import LinearModel, _preprocess_data, _rescale_data
 from ..base import RegressorMixin
 from ._base import _deprecate_normalize
 from ..utils.extmath import fast_logdet
+from ..utils import check_scalar
 from scipy.linalg import pinvh
 from ..utils.validation import _check_sample_weight
 
@@ -205,6 +207,103 @@ class BayesianRidge(RegressorMixin, LinearModel):
         self.copy_X = copy_X
         self.verbose = verbose
 
+    def _check_params(self):
+        """Check validity of parameters and raise ValueError
+        or TypeError if not valid."""
+
+        check_scalar(
+            self.n_iter,
+            name="n_iter",
+            target_type=numbers.Integral,
+            min_val=1,
+        )
+
+        check_scalar(
+            self.tol,
+            name="tol",
+            target_type=numbers.Real,
+            min_val=0.0,
+            include_boundaries="neither",
+        )
+
+        check_scalar(
+            self.alpha_1,
+            name="alpha_1",
+            target_type=numbers.Real,
+            min_val=0.0,
+            include_boundaries="left",
+        )
+
+        check_scalar(
+            self.alpha_2,
+            name="alpha_2",
+            target_type=numbers.Real,
+            min_val=0.0,
+            include_boundaries="left",
+        )
+
+        check_scalar(
+            self.lambda_1,
+            name="lambda_1",
+            target_type=numbers.Real,
+            min_val=0.0,
+            include_boundaries="left",
+        )
+
+        check_scalar(
+            self.lambda_2,
+            name="lambda_2",
+            target_type=numbers.Real,
+            min_val=0.0,
+            include_boundaries="left",
+        )
+
+        if self.alpha_init is not None:
+            check_scalar(
+                self.alpha_init,
+                name="alpha_init",
+                target_type=numbers.Real,
+                include_boundaries="neither",
+            )
+
+        if self.lambda_init is not None:
+            check_scalar(
+                self.lambda_init,
+                name="lambda_init",
+                target_type=numbers.Real,
+                include_boundaries="neither",
+            )
+
+        check_scalar(
+            self.compute_score,
+            name="compute_score",
+            target_type=(np.bool_, bool),
+        )
+
+        check_scalar(
+            self.fit_intercept,
+            name="fit_intercept",
+            target_type=(np.bool_, bool),
+        )
+
+        self._normalize = _deprecate_normalize(
+            self.normalize, default=False, estimator_name=self.__class__.__name__
+        )
+
+        check_scalar(
+            self.copy_X,
+            name="copy_X",
+            target_type=(np.bool_, bool),
+        )
+
+        check_scalar(
+            self.verbose,
+            name="verbose",
+            target_type=(numbers.Integral, np.bool_, bool),
+            min_val=0,
+            max_val=1,
+        )
+
     def fit(self, X, y, sample_weight=None):
         """Fit the model.
 
@@ -226,23 +325,14 @@ class BayesianRidge(RegressorMixin, LinearModel):
         self : object
             Returns the instance itself.
         """
-        self._normalize = _deprecate_normalize(
-            self.normalize, default=False, estimator_name=self.__class__.__name__
-        )
+        self._check_params()
 
-        if self.n_iter < 1:
-            raise ValueError(
-                "n_iter should be greater than or equal to 1. Got {!r}.".format(
-                    self.n_iter
-                )
-            )
-
-        X, y = self._validate_data(X, y, dtype=np.float64, y_numeric=True)
+        X, y = self._validate_data(X, y, dtype=[np.float64, np.float32], y_numeric=True)
 
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
-        X, y, X_offset_, y_offset_, X_scale_ = self._preprocess_data(
+        X, y, X_offset_, y_offset_, X_scale_ = _preprocess_data(
             X,
             y,
             self.fit_intercept,
@@ -253,7 +343,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
 
         if sample_weight is not None:
             # Sample weight can be implemented via a simple rescaling.
-            X, y = _rescale_data(X, y, sample_weight)
+            X, y, _ = _rescale_data(X, y, sample_weight)
 
         self.X_offset_ = X_offset_
         self.X_scale_ = X_scale_
@@ -281,7 +371,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
 
         XT_y = np.dot(X.T, y)
         U, S, Vh = linalg.svd(X, full_matrices=False)
-        eigen_vals_ = S ** 2
+        eigen_vals_ = S**2
 
         # Convergence loop of the bayesian ridge regression
         for iter_ in range(self.n_iter):
@@ -300,7 +390,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
 
             # Update alpha and lambda according to (MacKay, 1992)
             gamma_ = np.sum((alpha_ * eigen_vals_) / (lambda_ + alpha_ * eigen_vals_))
-            lambda_ = (gamma_ + 2 * lambda_1) / (np.sum(coef_ ** 2) + 2 * lambda_2)
+            lambda_ = (gamma_ + 2 * lambda_1) / (np.sum(coef_**2) + 2 * lambda_2)
             alpha_ = (n_samples - gamma_ + 2 * alpha_1) / (rmse_ + 2 * alpha_2)
 
             # Check for convergence
@@ -417,7 +507,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
             n_features * log(lambda_)
             + n_samples * log(alpha_)
             - alpha_ * rmse
-            - lambda_ * np.sum(coef ** 2)
+            - lambda_ * np.sum(coef**2)
             + logdet_sigma
             - n_samples * log(2 * np.pi)
         )
@@ -618,13 +708,13 @@ class ARDRegression(RegressorMixin, LinearModel):
         )
 
         X, y = self._validate_data(
-            X, y, dtype=np.float64, y_numeric=True, ensure_min_samples=2
+            X, y, dtype=[np.float64, np.float32], y_numeric=True, ensure_min_samples=2
         )
 
         n_samples, n_features = X.shape
-        coef_ = np.zeros(n_features)
+        coef_ = np.zeros(n_features, dtype=X.dtype)
 
-        X, y, X_offset_, y_offset_, X_scale_ = self._preprocess_data(
+        X, y, X_offset_, y_offset_, X_scale_ = _preprocess_data(
             X, y, self.fit_intercept, self._normalize, self.copy_X
         )
 
@@ -645,7 +735,7 @@ class ARDRegression(RegressorMixin, LinearModel):
         # Add `eps` in the denominator to omit division by zero if `np.var(y)`
         # is zero
         alpha_ = 1.0 / (np.var(y) + eps)
-        lambda_ = np.ones(n_features)
+        lambda_ = np.ones(n_features, dtype=X.dtype)
 
         self.scores_ = list()
         coef_old_ = None
@@ -689,7 +779,7 @@ class ARDRegression(RegressorMixin, LinearModel):
                     + n_samples * log(alpha_)
                     + np.sum(np.log(lambda_))
                 )
-                s -= 0.5 * (alpha_ * rmse_ + (lambda_ * coef_ ** 2).sum())
+                s -= 0.5 * (alpha_ * rmse_ + (lambda_ * coef_**2).sum())
                 self.scores_.append(s)
 
             # Check for convergence
@@ -726,7 +816,8 @@ class ARDRegression(RegressorMixin, LinearModel):
         X_keep = X[:, keep_lambda]
         inv_lambda = 1 / lambda_[keep_lambda].reshape(1, -1)
         sigma_ = pinvh(
-            np.eye(n_samples) / alpha_ + np.dot(X_keep * inv_lambda, X_keep.T)
+            np.eye(n_samples, dtype=X.dtype) / alpha_
+            + np.dot(X_keep * inv_lambda, X_keep.T)
         )
         sigma_ = np.dot(sigma_, X_keep * inv_lambda)
         sigma_ = -np.dot(inv_lambda.reshape(-1, 1) * X_keep.T, sigma_)
@@ -739,7 +830,7 @@ class ARDRegression(RegressorMixin, LinearModel):
         # invert a matrix of shape (n_features, n_features)
         X_keep = X[:, keep_lambda]
         gram = np.dot(X_keep.T, X_keep)
-        eye = np.eye(gram.shape[0])
+        eye = np.eye(gram.shape[0], dtype=X.dtype)
         sigma_inv = lambda_[keep_lambda] * eye + alpha_ * gram
         sigma_ = pinvh(sigma_inv)
         return sigma_

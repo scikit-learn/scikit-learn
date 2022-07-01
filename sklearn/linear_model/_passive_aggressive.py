@@ -1,9 +1,11 @@
 # Authors: Rob Zinkov, Mathieu Blondel
 # License: BSD 3 clause
+from numbers import Real
 
 from ._stochastic_gradient import BaseSGDClassifier
 from ._stochastic_gradient import BaseSGDRegressor
 from ._stochastic_gradient import DEFAULT_EPSILON
+from ..utils._param_validation import Interval, StrOptions
 
 
 class PassiveAggressiveClassifier(BaseSGDClassifier):
@@ -172,6 +174,12 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     [1]
     """
 
+    _parameter_constraints = {
+        **BaseSGDClassifier._parameter_constraints,
+        "loss": [StrOptions({"hinge", "squared_hinge"})],
+        "C": [Interval(Real, 0, None, closed="right")],
+    }
+
     def __init__(
         self,
         *,
@@ -236,19 +244,23 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         self : object
             Fitted estimator.
         """
-        self._validate_params(for_partial_fit=True)
-        if self.class_weight == "balanced":
-            raise ValueError(
-                "class_weight 'balanced' is not supported for "
-                "partial_fit. For 'balanced' weights, use "
-                "`sklearn.utils.compute_class_weight` with "
-                "`class_weight='balanced'`. In place of y you "
-                "can use a large enough subset of the full "
-                "training set target to properly estimate the "
-                "class frequency distributions. Pass the "
-                "resulting weights as the class_weight "
-                "parameter."
-            )
+        if not hasattr(self, "classes_"):
+            self._validate_params()
+            self._more_validate_params(for_partial_fit=True)
+
+            if self.class_weight == "balanced":
+                raise ValueError(
+                    "class_weight 'balanced' is not supported for "
+                    "partial_fit. For 'balanced' weights, use "
+                    "`sklearn.utils.compute_class_weight` with "
+                    "`class_weight='balanced'`. In place of y you "
+                    "can use a large enough subset of the full "
+                    "training set target to properly estimate the "
+                    "class frequency distributions. Pass the "
+                    "resulting weights as the class_weight "
+                    "parameter."
+                )
+
         lr = "pa1" if self.loss == "hinge" else "pa2"
         return self._partial_fit(
             X,
@@ -287,6 +299,8 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
             Fitted estimator.
         """
         self._validate_params()
+        self._more_validate_params()
+
         lr = "pa1" if self.loss == "hinge" else "pa2"
         return self._fit(
             X,
@@ -445,6 +459,13 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     [-0.02306214]
     """
 
+    _parameter_constraints = {
+        **BaseSGDRegressor._parameter_constraints,
+        "loss": [StrOptions({"epsilon_insensitive", "squared_epsilon_insensitive"})],
+        "C": [Interval(Real, 0, None, closed="right")],
+        "epsilon": [Interval(Real, 0, None, closed="left")],
+    }
+
     def __init__(
         self,
         *,
@@ -499,7 +520,10 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
         self : object
             Fitted estimator.
         """
-        self._validate_params(for_partial_fit=True)
+        if not hasattr(self, "coef_"):
+            self._validate_params()
+            self._more_validate_params(for_partial_fit=True)
+
         lr = "pa1" if self.loss == "epsilon_insensitive" else "pa2"
         return self._partial_fit(
             X,
@@ -537,6 +561,8 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
             Fitted estimator.
         """
         self._validate_params()
+        self._more_validate_params()
+
         lr = "pa1" if self.loss == "epsilon_insensitive" else "pa2"
         return self._fit(
             X,

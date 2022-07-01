@@ -1,5 +1,3 @@
-# coding: utf-8
-
 # Author: Johannes Schönberger
 #
 # License: BSD 3 clause
@@ -45,7 +43,7 @@ def _dynamic_max_trials(n_inliers, n_samples, min_samples, probability):
     """
     inlier_ratio = n_inliers / float(n_samples)
     nom = max(_EPSILON, 1 - probability)
-    denom = max(_EPSILON, 1 - inlier_ratio ** min_samples)
+    denom = max(_EPSILON, 1 - inlier_ratio**min_samples)
     if nom == 1:
         return 0
     if denom == 1:
@@ -230,7 +228,7 @@ class RANSACRegressor(
     References
     ----------
     .. [1] https://en.wikipedia.org/wiki/RANSAC
-    .. [2] https://www.sri.com/sites/default/files/publications/ransac-publication.pdf
+    .. [2] https://www.sri.com/wp-content/uploads/2021/12/ransac-publication.pdf
     .. [3] http://www.bmva.org/bmvc/2009/Papers/Paper355/Paper355.pdf
 
     Examples
@@ -308,7 +306,7 @@ class RANSACRegressor(
             `is_data_valid` and `is_model_valid` return False for all
             `max_trials` randomly chosen sub-samples.
         """
-        # Need to validate separately here. We can't pass multi_ouput=True
+        # Need to validate separately here. We can't pass multi_output=True
         # because that would allow y to be csr. Delay expensive finiteness
         # check to the estimator's own input validation.
         check_X_params = dict(accept_sparse="csr", force_all_finite=False)

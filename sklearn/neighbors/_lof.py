@@ -8,7 +8,9 @@ import warnings
 from ._base import NeighborsBase
 from ._base import KNeighborsMixin
 from ..base import OutlierMixin
+from numbers import Real
 
+from ..utils._param_validation import Interval, StrOptions
 from ..utils.metaestimators import available_if
 from ..utils.validation import check_is_fitted
 from ..utils import check_array
@@ -113,7 +115,8 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
         detection (novelty=False). Set novelty to True if you want to use
         LocalOutlierFactor for novelty detection. In this case be aware that
         you should only use predict, decision_function and score_samples
-        on new unseen data and not on the training set.
+        on new unseen data and not on the training set; and note that the
+        results obtained this way may differ from the standard LOF results.
 
         .. versionadded:: 0.20
 
@@ -170,8 +173,8 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
     n_samples_fit_ : int
         It is the number of samples in the fitted data.
 
-    See also
-    ----------
+    See Also
+    --------
     sklearn.svm.OneClassSVM: Unsupervised Outlier Detection using
         Support Vector Machine.
 
@@ -191,6 +194,16 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
     >>> clf.negative_outlier_factor_
     array([ -0.9821...,  -1.0370..., -73.3697...,  -0.9821...])
     """
+
+    _parameter_constraints = {
+        **NeighborsBase._parameter_constraints,
+        "contamination": [
+            StrOptions({"auto"}),
+            Interval(Real, 0, 0.5, closed="right"),
+        ],
+        "novelty": ["boolean"],
+    }
+    _parameter_constraints.pop("radius")
 
     def __init__(
         self,
@@ -271,13 +284,9 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
         self : LocalOutlierFactor
             The fitted local outlier factor detector.
         """
-        self._fit(X)
+        self._validate_params()
 
-        if self.contamination != "auto":
-            if not (0.0 < self.contamination <= 0.5):
-                raise ValueError(
-                    "contamination must be in (0, 0.5], got: %f" % self.contamination
-                )
+        self._fit(X)
 
         n_samples = self.n_samples_fit_
         if self.n_neighbors > n_samples:
@@ -331,7 +340,9 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
 
         **Only available for novelty detection (when novelty is set to True).**
         This method allows to generalize prediction to *new observations* (not
-        in the training set).
+        in the training set). Note that the result of ``clf.fit(X)`` then
+        ``clf.predict(X)`` with ``novelty=True`` may differ from the result
+        obtained by ``clf.fit_predict(X)`` with ``novelty=False``.
 
         Parameters
         ----------
@@ -439,9 +450,10 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
         The argument X is supposed to contain *new data*: if X contains a
         point from training, it considers the later in its own neighborhood.
         Also, the samples in X are not considered in the neighborhood of any
-        point.
-        The score_samples on training data is available by considering the
-        the ``negative_outlier_factor_`` attribute.
+        point. Because of this, the scores obtained via ``score_samples`` may
+        differ from the standard LOF scores.
+        The standard LOF scores for the training data is available via the
+        ``negative_outlier_factor_`` attribute.
 
         Parameters
         ----------

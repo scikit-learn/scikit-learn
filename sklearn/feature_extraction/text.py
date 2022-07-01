@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Authors: Olivier Grisel <olivier.grisel@ensta.org>
 #          Mathieu Blondel <mathieu@mblondel.org>
 #          Lars Buitinck
@@ -32,8 +31,8 @@ from ._stop_words import ENGLISH_STOP_WORDS
 from ..utils.validation import check_is_fitted, check_array, FLOAT_DTYPES, check_scalar
 from ..utils.deprecation import deprecated
 from ..utils import _IS_32BIT
-from ..utils.fixes import _astype_copy_false
 from ..exceptions import NotFittedError
+from ..utils._param_validation import StrOptions
 
 
 __all__ = [
@@ -149,7 +148,7 @@ def strip_accents_unicode(s):
 
 
 def strip_accents_ascii(s):
-    """Transform accentuated unicode symbols into ascii or nothing
+    """Transform accentuated unicode symbols into ascii or nothing.
 
     Warning: this solution is only suited for languages that have a direct
     transliteration to ASCII symbols.
@@ -157,7 +156,12 @@ def strip_accents_ascii(s):
     Parameters
     ----------
     s : str
-        The string to strip
+        The string to strip.
+
+    Returns
+    -------
+    s : str
+        The stripped string.
 
     See Also
     --------
@@ -168,7 +172,7 @@ def strip_accents_ascii(s):
 
 
 def strip_tags(s):
-    """Basic regexp based HTML / XML tag stripper function
+    """Basic regexp based HTML / XML tag stripper function.
 
     For serious HTML/XML preprocessing you should rather use an external
     library such as lxml or BeautifulSoup.
@@ -176,7 +180,12 @@ def strip_tags(s):
     Parameters
     ----------
     s : str
-        The string to strip
+        The string to strip.
+
+    Returns
+    -------
+    s : str
+        The stripped string.
     """
     return re.compile(r"<([^>]+)>", flags=re.UNICODE).sub(" ", s)
 
@@ -739,7 +748,7 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         token_pattern=r"(?u)\b\w\w+\b",
         ngram_range=(1, 1),
         analyzer="word",
-        n_features=(2 ** 20),
+        n_features=(2**20),
         binary=False,
         norm="l2",
         alternate_sign=True,
@@ -1503,7 +1512,7 @@ class TfidfTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    norm : {'l1', 'l2'}, default='l2'
+    norm : {'l1', 'l2'} or None, default='l2'
         Each output row will have unit norm, either:
 
         - 'l2': Sum of squares of vector elements is 1. The cosine
@@ -1511,6 +1520,7 @@ class TfidfTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
           been applied.
         - 'l1': Sum of absolute values of vector elements is 1.
           See :func:`preprocessing.normalize`.
+        - None: No normalization.
 
     use_idf : bool, default=True
         Enable inverse-document-frequency reweighting. If False, idf(t) = 1.
@@ -1586,6 +1596,13 @@ class TfidfTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     (4, 8)
     """
 
+    _parameter_constraints = {
+        "norm": [StrOptions({"l1", "l2"}), None],
+        "use_idf": ["boolean"],
+        "smooth_idf": ["boolean"],
+        "sublinear_tf": ["boolean"],
+    }
+
     def __init__(self, *, norm="l2", use_idf=True, smooth_idf=True, sublinear_tf=False):
         self.norm = norm
         self.use_idf = use_idf
@@ -1608,6 +1625,8 @@ class TfidfTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         self : object
             Fitted transformer.
         """
+        self._validate_params()
+
         # large sparse data is not supported for 32bit platforms because
         # _document_frequency uses np.bincount which works on arrays of
         # dtype NPY_INTP which is int32 for 32bit platforms. See #20923
@@ -1621,7 +1640,7 @@ class TfidfTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         if self.use_idf:
             n_samples, n_features = X.shape
             df = _document_frequency(X)
-            df = df.astype(dtype, **_astype_copy_false(df))
+            df = df.astype(dtype, copy=False)
 
             # perform idf smoothing if required
             df += int(self.smooth_idf)
@@ -1676,7 +1695,7 @@ class TfidfTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             # *= doesn't work
             X = X * self._idf_diag
 
-        if self.norm:
+        if self.norm is not None:
             X = normalize(X, norm=self.norm, copy=False)
 
         return X
@@ -1987,7 +2006,7 @@ class TfidfVectorizer(CountVectorizer):
         if not self.use_idf:
             raise ValueError("`idf_` cannot be set when `user_idf=False`.")
         if not hasattr(self, "_tfidf"):
-            # We should support transfering `idf_` from another `TfidfTransformer`
+            # We should support transferring `idf_` from another `TfidfTransformer`
             # and therefore, we need to create the transformer instance it does not
             # exist yet.
             self._tfidf = TfidfTransformer(
