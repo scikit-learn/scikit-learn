@@ -495,7 +495,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "LocallyLinearEmbedding",
     "MLPClassifier",
     "MLPRegressor",
-    "MinCovDet",
     "MiniBatchDictionaryLearning",
     "MissingIndicator",
     "MultiOutputClassifier",

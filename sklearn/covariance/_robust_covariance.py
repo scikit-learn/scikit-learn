@@ -9,7 +9,7 @@ Here are implemented estimators that are resistant to outliers.
 # License: BSD 3 clause
 
 import warnings
-import numbers
+from numbers import Integral, Real
 import numpy as np
 from scipy import linalg
 from scipy.stats import chi2
@@ -17,6 +17,7 @@ from scipy.stats import chi2
 from . import empirical_covariance, EmpiricalCovariance
 from ..utils.extmath import fast_logdet
 from ..utils import check_random_state, check_array
+from ..utils._param_validation import Interval
 
 
 # Minimum Covariance Determinant
@@ -296,7 +297,7 @@ def select_candidates(
     """
     random_state = check_random_state(random_state)
 
-    if isinstance(n_trials, numbers.Integral):
+    if isinstance(n_trials, Integral):
         run_from_estimates = False
     elif isinstance(n_trials, tuple):
         run_from_estimates = True
@@ -698,6 +699,13 @@ class MinCovDet(EmpiricalCovariance):
     array([0.0813... , 0.0427...])
     """
 
+    _parameter_constraints = {
+        "store_precision": ["boolean"],
+        "assume_centered": ["boolean"],
+        "support_fraction": [Interval(Real, 0, 1, closed="neither"), None],
+        "random_state": ["random_state"],
+    }
+
     _nonrobust_covariance = staticmethod(empirical_covariance)
 
     def __init__(
@@ -730,6 +738,7 @@ class MinCovDet(EmpiricalCovariance):
         self : object
             Returns the instance itself.
         """
+        self._validate_params()
         X = self._validate_data(X, ensure_min_samples=2, estimator="MinCovDet")
         random_state = check_random_state(self.random_state)
         n_samples, n_features = X.shape
