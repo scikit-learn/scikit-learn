@@ -1021,8 +1021,8 @@ def test_linalg_warning_with_newton_solver(newton_solver, global_random_seed):
     # without regularization should raise an informative warning and fallback
     # to the LBFGS solver.
     msg = (
-        "The inner solver of .*NewtonSolver stumbled upon a"
-        " singular or very ill-conditioned Hessian matrix"
+        "The inner solver of .*NewtonSolver stumbled upon a singular or very "
+        "ill-conditioned Hessian matrix"
     )
     with pytest.warns(scipy.linalg.LinAlgWarning, match=msg):
         reg = PoissonRegressor(solver=newton_solver, alpha=0.0, tol=tol).fit(

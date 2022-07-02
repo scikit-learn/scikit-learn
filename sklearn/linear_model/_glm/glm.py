@@ -358,9 +358,13 @@ class NewtonSolver(ABC):
             warnings.warn(
                 f"Line search of Newton solver {self.__class__.__name__} at iteration "
                 f"#{self.iteration} did no converge after 21 line search refinement "
-                "iterations.",
+                "iterations. It will now resort to lbfgs instead.",
                 ConvergenceWarning,
             )
+            if self.verbose:
+                print("  Lines search did not converge and resorts to lbfgs instead.")
+            self.use_fallback_lbfgs_solve = True
+            return
 
         self.raw_prediction = raw
 
@@ -467,6 +471,8 @@ class NewtonSolver(ABC):
             #    self.loss_value, self.gradient_old, self.gradient,
             #    self.raw_prediction.
             self.line_search(X=X, y=y, sample_weight=sample_weight)
+            if self.use_fallback_lbfgs_solve:
+                break
 
             # 4. Check convergence
             #    Sets self.converged.
@@ -537,7 +543,7 @@ class BaseCholeskyNewtonSolver(NewtonSolver):
         except (np.linalg.LinAlgError, scipy.linalg.LinAlgWarning) as e:
             warnings.warn(
                 f"The inner solver of {self.__class__.__name__} stumbled upon a "
-                "singular or very ill-conditioned hessian matrix at iteration "
+                "singular or very ill-conditioned Hessian matrix at iteration "
                 f"#{self.iteration}. It will now resort to lbfgs instead.\n"
                 "Further options are to use another solver or to avoid such situation "
                 "in the first place. Possible remedies are removing collinearfeatures "
