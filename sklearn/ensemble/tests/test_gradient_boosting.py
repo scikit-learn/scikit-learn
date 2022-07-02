@@ -261,38 +261,44 @@ def test_wrong_type_loss_function(GradientBoosting, loss):
 
 
 @pytest.mark.parametrize("loss", ("log_loss", "exponential"))
-def test_classification_synthetic(loss):
+def test_classification_synthetic(loss, global_random_seed):
     # Test GradientBoostingClassifier on synthetic dataset used by
-    # Hastie et al. in ESLII Example 12.7.
-    X, y = datasets.make_hastie_10_2(n_samples=12000, random_state=1)
+    # Hastie et al. in ESLII - Figure 10.9
+    X, y = datasets.make_hastie_10_2(n_samples=12000, random_state=global_random_seed)
 
     X_train, X_test = X[:2000], X[2000:]
     y_train, y_test = y[:2000], y[2000:]
 
-    gbrt = GradientBoostingClassifier(
-        n_estimators=100,
-        min_samples_split=2,
-        max_depth=1,
-        loss=loss,
-        learning_rate=1.0,
-        random_state=0,
-    )
-    gbrt.fit(X_train, y_train)
-    error_rate = 1.0 - gbrt.score(X_test, y_test)
-    assert error_rate < 0.09
+    # Increasing the number of trees should decrease the test error
+    common_params = {
+        "max_depth": 1,
+        "learning_rate": 1.0,
+        "loss": loss,
+        "random_state": global_random_seed,
+    }
+    gbrt_100_stumps = GradientBoostingClassifier(n_estimators=100, **common_params)
+    gbrt_100_stumps.fit(X_train, y_train)
 
-    gbrt = GradientBoostingClassifier(
-        n_estimators=200,
-        min_samples_split=2,
-        max_depth=1,
-        loss=loss,
-        learning_rate=1.0,
-        subsample=0.5,
-        random_state=0,
-    )
-    gbrt.fit(X_train, y_train)
-    error_rate = 1.0 - gbrt.score(X_test, y_test)
-    assert error_rate < 0.08
+    gbrt_200_stumps = GradientBoostingClassifier(n_estimators=200, **common_params)
+    gbrt_200_stumps.fit(X_train, y_train)
+
+    assert gbrt_100_stumps.score(X_test, y_test) < gbrt_200_stumps.score(X_test, y_test)
+
+    # Decision stumps are better suited for this dataset with a large number of
+    # estimators.
+    common_params = {
+        "n_estimators": 200,
+        "learning_rate": 1.0,
+        "loss": loss,
+        "random_state": global_random_seed,
+    }
+    gbrt_stumps = GradientBoostingClassifier(max_depth=1, **common_params)
+    gbrt_stumps.fit(X_train, y_train)
+
+    gbrt_10_nodes = GradientBoostingClassifier(max_leaf_nodes=10, **common_params)
+    gbrt_10_nodes.fit(X_train, y_train)
+
+    assert gbrt_stumps.score(X_test, y_test) > gbrt_10_nodes.score(X_test, y_test)
 
 
 @pytest.mark.parametrize("loss", ("squared_error", "absolute_error", "huber"))
