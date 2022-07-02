@@ -747,6 +747,28 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         )
 
     def fit(self, X, y, sample_weight=None):
+        """Build a Bagging ensemble of estimators from the training set (X, y).
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            The training input samples. Sparse matrices are accepted only if
+            they are supported by the base estimator.
+
+        y : array-like of shape (n_samples,)
+            The target values (class labels in classification, real numbers in
+            regression).
+
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights. If None, then samples are equally weighted.
+            Note that this is supported only if the base estimator supports
+            sample weighting.
+
+        Returns
+        -------
+        self : object
+            Fitted estimator.
+        """
         if self.base_estimator != "deprecated":
             warn(
                 "`base_estimator` was renamed to `estimator` in version 1.2 and "
@@ -1182,6 +1204,28 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         )
 
     def fit(self, X, y, sample_weight=None):
+        """Build a Bagging ensemble of estimators from the training set (X, y).
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            The training input samples. Sparse matrices are accepted only if
+            they are supported by the base estimator.
+
+        y : array-like of shape (n_samples,)
+            The target values (class labels in classification, real numbers in
+            regression).
+
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights. If None, then samples are equally weighted.
+            Note that this is supported only if the base estimator supports
+            sample weighting.
+
+        Returns
+        -------
+        self : object
+            Fitted estimator.
+        """
         if self.base_estimator != "deprecated":
             warn(
                 "`base_estimator` was renamed to `estimator` in version 1.2 and "
