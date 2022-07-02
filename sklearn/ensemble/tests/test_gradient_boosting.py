@@ -303,7 +303,7 @@ def test_classification_synthetic(loss, global_random_seed):
 
 @pytest.mark.parametrize("loss", ("squared_error", "absolute_error", "huber"))
 @pytest.mark.parametrize("subsample", (1.0, 0.5))
-def test_regression_dataset(loss, subsample):
+def test_regression_dataset(loss, subsample, global_random_seed):
     # Check consistency on regression dataset with least squares
     # and least absolute deviation.
     ones = np.ones(len(y_reg))
@@ -318,7 +318,7 @@ def test_regression_dataset(loss, subsample):
             max_depth=4,
             subsample=subsample,
             min_samples_split=2,
-            random_state=1,
+            random_state=global_random_seed,
             learning_rate=0.5,
         )
 
@@ -328,7 +328,7 @@ def test_regression_dataset(loss, subsample):
 
         y_pred = reg.predict(X_reg)
         mse = mean_squared_error(y_reg, y_pred)
-        assert mse < 0.04
+        assert mse < 0.045
 
         if last_y_pred is not None:
             # FIXME: We temporarily bypass this test. This is due to the fact
