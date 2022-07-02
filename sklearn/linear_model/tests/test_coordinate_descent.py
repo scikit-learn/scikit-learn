@@ -26,6 +26,7 @@ from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_less
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import _convert_container
 
@@ -1651,9 +1652,14 @@ def test_enet_alpha_max_sample_weight(sparseX, fit_intercept):
     sample_weight = np.array([10, 1, 10, 1])
     if sparseX:
         X = sparse.csc_matrix(X)
+    # Test alpha_max makes coefs zero.
     reg = ElasticNetCV(n_alphas=1, cv=2, eps=1, fit_intercept=fit_intercept)
     reg.fit(X, y, sample_weight=sample_weight)
     assert_almost_equal(reg.coef_, 0)
+    # Test smaller alpha makes coefs nonzero.
+    reg = ElasticNetCV(n_alphas=2, cv=2, eps=0.99, fit_intercept=fit_intercept)
+    reg.fit(X, y, sample_weight=sample_weight)
+    assert_array_less(0, np.max(np.abs(reg.coef_)))
 
 
 @pytest.mark.parametrize("fit_intercept", [True, False])
