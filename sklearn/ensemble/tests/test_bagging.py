@@ -967,8 +967,8 @@ def test_bagging_clf_base_estimator_deprecated():
     clf = BaggingClassifier(base_estimator=DecisionTreeClassifier(), n_estimators=10)
 
     err_msg = (
-        "`base_estimator` was renamed to `estimator` in version 1.1 and "
-        "will be removed in 1.3."
+        "`base_estimator` was renamed to `estimator` in version 1.2 and "
+        "will be removed in 1.4."
     )
 
     with pytest.warns(FutureWarning, match=err_msg):
@@ -981,8 +981,8 @@ def test_bagging_regr_base_estimator_deprecated():
     regr = BaggingRegressor(base_estimator=DecisionTreeRegressor(), n_estimators=10)
 
     err_msg = (
-        "`base_estimator` was renamed to `estimator` in version 1.1 and "
-        "will be removed in 1.3."
+        "`base_estimator` was renamed to `estimator` in version 1.2 and "
+        "will be removed in 1.4."
     )
 
     with pytest.warns(FutureWarning, match=err_msg):
