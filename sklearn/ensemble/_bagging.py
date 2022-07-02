@@ -221,13 +221,19 @@ def _estimator_has(attr):
     """Check if we can delegate a method to the underlying estimator.
 
     First, we check the first fitted estimator if available, otherwise we
-    check the base estimator.
+    check the estimator property.
     """
-    return lambda self: (
-        hasattr(self.estimators_[0], attr)
-        if hasattr(self, "estimators_")
-        else hasattr(self.base_estimator, attr)
-    )
+
+    def check(self):
+        if hasattr(self, "estimators_"):
+            return hasattr(self.estimators_[0], attr)
+        # TODO(1.4): Remove when the base_estimator deprecation cycle ends
+        elif self.base_estimator != "deprecated":
+            return hasattr(self.base_estimator, attr)
+        else:
+            return hasattr(self.estimator, attr)
+
+    return check
 
 
 class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
