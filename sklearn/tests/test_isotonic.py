@@ -371,9 +371,6 @@ def test_isotonic_regression_oob_nan():
     assert sum(np.isnan(y1)) == 2
 
 
-
-
-
 def test_isotonic_regression_pickle():
     y = np.array([3, 7, 5, 9, 8, 7, 10])
     x = np.arange(len(y))
