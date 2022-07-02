@@ -21,7 +21,7 @@ from sklearn.feature_selection import SelectFromModel
 def test_base():
     # Check BaseEnsemble methods.
     ensemble = BaggingClassifier(
-        base_estimator=Perceptron(random_state=None), n_estimators=3
+        estimator=Perceptron(random_state=None), n_estimators=3
     )
 
     iris = load_iris()
@@ -44,7 +44,7 @@ def test_base():
     assert ensemble[1].random_state != ensemble[2].random_state
 
     np_int_ensemble = BaggingClassifier(
-        base_estimator=Perceptron(), n_estimators=np.int32(3)
+        estimator=Perceptron(), n_estimators=np.int32(3)
     )
     np_int_ensemble.fit(iris.data, iris.target)
 
@@ -52,7 +52,7 @@ def test_base():
 def test_base_zero_n_estimators():
     # Check that instantiating a BaseEnsemble with n_estimators<=0 raises
     # a ValueError.
-    ensemble = BaggingClassifier(base_estimator=Perceptron(), n_estimators=0)
+    ensemble = BaggingClassifier(estimator=Perceptron(), n_estimators=0)
     iris = load_iris()
     err_msg = "n_estimators must be greater than zero, got 0."
     with pytest.raises(ValueError, match=err_msg):
@@ -62,11 +62,11 @@ def test_base_zero_n_estimators():
 def test_base_not_int_n_estimators():
     # Check that instantiating a BaseEnsemble with a string as n_estimators
     # raises a ValueError demanding n_estimators to be supplied as an integer.
-    string_ensemble = BaggingClassifier(base_estimator=Perceptron(), n_estimators="3")
+    string_ensemble = BaggingClassifier(estimator=Perceptron(), n_estimators="3")
     iris = load_iris()
     with pytest.raises(ValueError, match="n_estimators must be an integer"):
         string_ensemble.fit(iris.data, iris.target)
-    float_ensemble = BaggingClassifier(base_estimator=Perceptron(), n_estimators=3.0)
+    float_ensemble = BaggingClassifier(estimator=Perceptron(), n_estimators=3.0)
     with pytest.raises(ValueError, match="n_estimators must be an integer"):
         float_ensemble.fit(iris.data, iris.target)
 
