@@ -106,7 +106,7 @@ def test_loss_grad_hess_are_the_same(
         coef, X, y, sample_weight=sample_weight, l2_reg_strength=l2_reg_strength
     )
     if not base_loss.is_multiclass:
-        g4, h4 = loss.gradient_hessian(
+        g4, h4, _ = loss.gradient_hessian(
             coef, X, y, sample_weight=sample_weight, l2_reg_strength=l2_reg_strength
         )
 
@@ -132,7 +132,7 @@ def test_loss_grad_hess_are_the_same(
         coef, X, y, sample_weight=sample_weight, l2_reg_strength=l2_reg_strength
     )
     if not base_loss.is_multiclass:
-        g4_sp, h4_sp = loss.gradient_hessian(
+        g4_sp, h4_sp, _ = loss.gradient_hessian(
             coef, X, y, sample_weight=sample_weight, l2_reg_strength=l2_reg_strength
         )
 

@@ -589,11 +589,11 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
            Stella X. Yu, Jianbo Shi
            <https://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf>`_
 
-    .. [4] `Toward the Optimal Preconditioned Eigensolver:
-           Locally Optimal Block Preconditioned Conjugate Gradient Method, 2001.
+    .. [4] :doi:`Toward the Optimal Preconditioned Eigensolver:
+           Locally Optimal Block Preconditioned Conjugate Gradient Method, 2001
            A. V. Knyazev
            SIAM Journal on Scientific Computing 23, no. 2, pp. 517-541.
-           <https://epubs.siam.org/doi/pdf/10.1137/S1064827500366124>`_
+           <10.1137/S1064827500366124>`
 
     .. [5] :doi:`Simple, direct, and efficient multi-way spectral clustering, 2019
            Anil Damle, Victor Minden, Lexing Ying

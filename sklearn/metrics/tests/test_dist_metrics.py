@@ -3,8 +3,6 @@ import pickle
 import copy
 
 import numpy as np
-from sklearn.utils._testing import assert_allclose
-
 import pytest
 
 import scipy.sparse as sp
@@ -18,7 +16,7 @@ from sklearn.metrics._dist_metrics import (
 )
 
 from sklearn.utils import check_random_state
-from sklearn.utils._testing import create_memmap_backed_data
+from sklearn.utils._testing import assert_allclose, create_memmap_backed_data
 from sklearn.utils.fixes import sp_version, parse_version
 
 
@@ -38,8 +36,8 @@ Y32 = Y64.astype("float32")
 [X_mmap, Y_mmap] = create_memmap_backed_data([X64, Y64])
 
 # make boolean arrays: ones and zeros
-X_bool = X64.round(0)
-Y_bool = Y64.round(0)
+X_bool = (X64 < 0.3).astype(np.float64)  # quite sparse
+Y_bool = (Y64 < 0.7).astype(np.float64)  # not too sparse
 
 [X_bool_mmap, Y_bool_mmap] = create_memmap_backed_data([X_bool, Y_bool])
 
@@ -83,14 +81,17 @@ def test_cdist(metric_param_grid, X, Y):
     )
     metric, param_grid = metric_param_grid
     keys = param_grid.keys()
+    X_csr, Y_csr = sp.csr_matrix(X), sp.csr_matrix(Y)
     for vals in itertools.product(*param_grid.values()):
         kwargs = dict(zip(keys, vals))
-        if metric == "mahalanobis":
-            # See: https://github.com/scipy/scipy/issues/13861
-            # Possibly caused by: https://github.com/joblib/joblib/issues/563
-            pytest.xfail(
-                "scipy#13861: cdist with 'mahalanobis' fails on joblib memmap data"
-            )
+        rtol_dict = {}
+        if metric == "mahalanobis" and X.dtype == np.float32:
+            # Computation of mahalanobis differs between
+            # the scipy and scikit-learn implementation.
+            # Hence, we increase the relative tolerance.
+            # TODO: Inspect slight numerical discrepancy
+            # with scipy
+            rtol_dict = {"rtol": 1e-6}
 
         if metric == "wminkowski":
             # wminkoski is deprecated in SciPy 1.6.0 and removed in 1.8.0
@@ -103,8 +104,24 @@ def test_cdist(metric_param_grid, X, Y):
             D_scipy_cdist = cdist(X, Y, metric, **kwargs)
 
         dm = DistanceMetricInterface.get_metric(metric, **kwargs)
+
+        # DistanceMetric.pairwise must be consistent for all
+        # combinations of formats in {sparse, dense}.
         D_sklearn = dm.pairwise(X, Y)
-        assert_allclose(D_sklearn, D_scipy_cdist)
+        assert D_sklearn.flags.c_contiguous
+        assert_allclose(D_sklearn, D_scipy_cdist, **rtol_dict)
+
+        D_sklearn = dm.pairwise(X_csr, Y_csr)
+        assert D_sklearn.flags.c_contiguous
+        assert_allclose(D_sklearn, D_scipy_cdist, **rtol_dict)
+
+        D_sklearn = dm.pairwise(X_csr, Y)
+        assert D_sklearn.flags.c_contiguous
+        assert_allclose(D_sklearn, D_scipy_cdist, **rtol_dict)
+
+        D_sklearn = dm.pairwise(X, Y_csr)
+        assert D_sklearn.flags.c_contiguous
+        assert_allclose(D_sklearn, D_scipy_cdist, **rtol_dict)
 
 
 @pytest.mark.parametrize("metric", BOOL_METRICS)
@@ -112,28 +129,56 @@ def test_cdist(metric_param_grid, X, Y):
     "X_bool, Y_bool", [(X_bool, Y_bool), (X_bool_mmap, Y_bool_mmap)]
 )
 def test_cdist_bool_metric(metric, X_bool, Y_bool):
-    D_true = cdist(X_bool, Y_bool, metric)
+    D_scipy_cdist = cdist(X_bool, Y_bool, metric)
+
     dm = DistanceMetric.get_metric(metric)
-    D12 = dm.pairwise(X_bool, Y_bool)
-    assert_allclose(D12, D_true)
+    D_sklearn = dm.pairwise(X_bool, Y_bool)
+    assert_allclose(D_sklearn, D_scipy_cdist)
+
+    # DistanceMetric.pairwise must be consistent
+    # on all combinations of format in {sparse, dense}².
+    X_bool_csr, Y_bool_csr = sp.csr_matrix(X_bool), sp.csr_matrix(Y_bool)
+
+    D_sklearn = dm.pairwise(X_bool, Y_bool)
+    assert D_sklearn.flags.c_contiguous
+    assert_allclose(D_sklearn, D_scipy_cdist)
+
+    D_sklearn = dm.pairwise(X_bool_csr, Y_bool_csr)
+    assert D_sklearn.flags.c_contiguous
+    assert_allclose(D_sklearn, D_scipy_cdist)
+
+    D_sklearn = dm.pairwise(X_bool, Y_bool_csr)
+    assert D_sklearn.flags.c_contiguous
+    assert_allclose(D_sklearn, D_scipy_cdist)
+
+    D_sklearn = dm.pairwise(X_bool_csr, Y_bool)
+    assert D_sklearn.flags.c_contiguous
+    assert_allclose(D_sklearn, D_scipy_cdist)
 
 
 # TODO: Remove filterwarnings in 1.3 when wminkowski is removed
 @pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
 @pytest.mark.parametrize("metric_param_grid", METRICS_DEFAULT_PARAMS)
-@pytest.mark.parametrize("X, Y", [(X64, Y64), (X32, Y32), (X_mmap, Y_mmap)])
-def test_pdist(metric_param_grid, X, Y):
+@pytest.mark.parametrize("X", [X64, X32, X_mmap])
+def test_pdist(metric_param_grid, X):
     DistanceMetricInterface = (
-        DistanceMetric if X.dtype == Y.dtype == np.float64 else DistanceMetric32
+        DistanceMetric if X.dtype == np.float64 else DistanceMetric32
     )
     metric, param_grid = metric_param_grid
     keys = param_grid.keys()
+    X_csr = sp.csr_matrix(X)
     for vals in itertools.product(*param_grid.values()):
         kwargs = dict(zip(keys, vals))
-        if metric == "mahalanobis":
-            # See: https://github.com/scipy/scipy/issues/13861
-            pytest.xfail("scipy#13861: pdist with 'mahalanobis' fails onmemmap data")
-        elif metric == "wminkowski":
+        rtol_dict = {}
+        if metric == "mahalanobis" and X.dtype == np.float32:
+            # Computation of mahalanobis differs between
+            # the scipy and scikit-learn implementation.
+            # Hence, we increase the relative tolerance.
+            # TODO: Inspect slight numerical discrepancy
+            # with scipy
+            rtol_dict = {"rtol": 1e-6}
+
+        if metric == "wminkowski":
             if sp_version >= parse_version("1.8.0"):
                 pytest.skip("wminkowski will be removed in SciPy 1.8.0")
 
@@ -142,23 +187,37 @@ def test_pdist(metric_param_grid, X, Y):
             if sp_version >= parse_version("1.6.0"):
                 ExceptionToAssert = DeprecationWarning
             with pytest.warns(ExceptionToAssert):
-                D_true = cdist(X, X, metric, **kwargs)
+                D_scipy_pdist = cdist(X, X, metric, **kwargs)
         else:
-            D_true = cdist(X, X, metric, **kwargs)
+            D_scipy_pdist = cdist(X, X, metric, **kwargs)
 
         dm = DistanceMetricInterface.get_metric(metric, **kwargs)
-        D12 = dm.pairwise(X)
-        assert_allclose(D12, D_true)
+        D_sklearn = dm.pairwise(X)
+        assert D_sklearn.flags.c_contiguous
+        assert_allclose(D_sklearn, D_scipy_pdist, **rtol_dict)
+
+        D_sklearn_csr = dm.pairwise(X_csr)
+        assert D_sklearn.flags.c_contiguous
+        assert_allclose(D_sklearn_csr, D_scipy_pdist, **rtol_dict)
+
+        D_sklearn_csr = dm.pairwise(X_csr, X_csr)
+        assert D_sklearn.flags.c_contiguous
+        assert_allclose(D_sklearn_csr, D_scipy_pdist, **rtol_dict)
 
 
 # TODO: Remove filterwarnings in 1.3 when wminkowski is removed
 @pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
 @pytest.mark.parametrize("metric_param_grid", METRICS_DEFAULT_PARAMS)
 def test_distance_metrics_dtype_consistency(metric_param_grid):
-    # DistanceMetric must return similar distances for
-    # both 64bit and 32bit data.
+    # DistanceMetric must return similar distances for both float32 and float64
+    # input data.
     metric, param_grid = metric_param_grid
     keys = param_grid.keys()
+
+    # Choose rtol to make sure that this test is robust to changes in the random
+    # seed in the module-level test data generation code.
+    rtol = 1e-5
+
     for vals in itertools.product(*param_grid.values()):
         kwargs = dict(zip(keys, vals))
         dm64 = DistanceMetric.get_metric(metric, **kwargs)
@@ -166,25 +225,34 @@ def test_distance_metrics_dtype_consistency(metric_param_grid):
 
         D64 = dm64.pairwise(X64)
         D32 = dm32.pairwise(X32)
-        assert_allclose(D64, D32)
+
+        # Both results are np.float64 dtype because the accumulation accross
+        # features is done in float64. However the input data and the element
+        # wise arithmetic operations are done in float32 so we can expect a
+        # small discrepancy.
+        assert D64.dtype == D32.dtype == np.float64
+
+        # assert_allclose introspects the dtype of the input arrays to decide
+        # which rtol value to use by default but in this case we know that D32
+        # is not computed with the same precision so we set rtol manually.
+        assert_allclose(D64, D32, rtol=rtol)
 
         D64 = dm64.pairwise(X64, Y64)
         D32 = dm32.pairwise(X32, Y32)
-        assert_allclose(D64, D32)
+        assert_allclose(D64, D32, rtol=rtol)
 
 
 @pytest.mark.parametrize("metric", BOOL_METRICS)
 @pytest.mark.parametrize("X_bool", [X_bool, X_bool_mmap])
 def test_pdist_bool_metrics(metric, X_bool):
-    D_true = cdist(X_bool, X_bool, metric)
+    D_scipy_pdist = cdist(X_bool, X_bool, metric)
     dm = DistanceMetric.get_metric(metric)
-    D12 = dm.pairwise(X_bool)
-    # Based on https://github.com/scipy/scipy/pull/7373
-    # When comparing two all-zero vectors, scipy>=1.2.0 jaccard metric
-    # was changed to return 0, instead of nan.
-    if metric == "jaccard" and sp_version < parse_version("1.2.0"):
-        D_true[np.isnan(D_true)] = 0
-    assert_allclose(D12, D_true)
+    D_sklearn = dm.pairwise(X_bool)
+    assert_allclose(D_sklearn, D_scipy_pdist)
+
+    X_bool_csr = sp.csr_matrix(X_bool)
+    D_sklearn = dm.pairwise(X_bool_csr)
+    assert_allclose(D_sklearn, D_scipy_pdist)
 
 
 # TODO: Remove filterwarnings in 1.3 when wminkowski is removed
@@ -224,7 +292,20 @@ def test_pickle_bool_metrics(metric, X_bool):
     assert_allclose(D1, D2)
 
 
-def test_haversine_metric():
+@pytest.mark.parametrize("X, Y", [(X64, Y64), (X32, Y32), (X_mmap, Y_mmap)])
+def test_haversine_metric(X, Y):
+    DistanceMetricInterface = (
+        DistanceMetric if X.dtype == np.float64 else DistanceMetric32
+    )
+
+    # The Haversine DistanceMetric only works on 2 features.
+    X = np.asarray(X[:, :2])
+    Y = np.asarray(Y[:, :2])
+
+    X_csr, Y_csr = sp.csr_matrix(X), sp.csr_matrix(Y)
+
+    # Haversine is not supported by scipy.special.distance.{cdist,pdist}
+    # So we reimplement it to have a reference.
     def haversine_slow(x1, x2):
         return 2 * np.arcsin(
             np.sqrt(
@@ -233,18 +314,31 @@ def test_haversine_metric():
             )
         )
 
-    X = np.random.random((10, 2))
+    D_reference = np.zeros((X_csr.shape[0], Y_csr.shape[0]))
+    for i, xi in enumerate(X):
+        for j, yj in enumerate(Y):
+            D_reference[i, j] = haversine_slow(xi, yj)
 
-    haversine = DistanceMetric.get_metric("haversine")
+    haversine = DistanceMetricInterface.get_metric("haversine")
 
-    D1 = haversine.pairwise(X)
-    D2 = np.zeros_like(D1)
-    for i, x1 in enumerate(X):
-        for j, x2 in enumerate(X):
-            D2[i, j] = haversine_slow(x1, x2)
+    D_sklearn = haversine.pairwise(X, Y)
+    assert_allclose(
+        haversine.dist_to_rdist(D_sklearn), np.sin(0.5 * D_reference) ** 2, rtol=1e-6
+    )
 
-    assert_allclose(D1, D2)
-    assert_allclose(haversine.dist_to_rdist(D1), np.sin(0.5 * D2) ** 2)
+    assert_allclose(D_sklearn, D_reference)
+
+    D_sklearn = haversine.pairwise(X_csr, Y_csr)
+    assert D_sklearn.flags.c_contiguous
+    assert_allclose(D_sklearn, D_reference)
+
+    D_sklearn = haversine.pairwise(X_csr, Y)
+    assert D_sklearn.flags.c_contiguous
+    assert_allclose(D_sklearn, D_reference)
+
+    D_sklearn = haversine.pairwise(X, Y_csr)
+    assert D_sklearn.flags.c_contiguous
+    assert_allclose(D_sklearn, D_reference)
 
 
 def test_pyfunc_metric():

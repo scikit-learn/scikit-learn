@@ -411,6 +411,9 @@ class LinearModelLoss:
 
         hessian : ndarray
             Hessian matrix.
+
+        hessian_warning : bool
+            True if pointwise hessian has more than half of its elements non-positive.
         """
         n_samples, n_features = X.shape
         n_dof = n_features + int(self.fit_intercept)
@@ -427,9 +430,11 @@ class LinearModelLoss:
             n_threads=n_threads,
         )
 
-        # For non-canonical link functions and far away from the optimum, we take
-        # care that the hessian is not negative.
-        hess_pointwise[hess_pointwise <= 0] = 0
+        # For non-canonical link functions and far away from the optimum, the pointwise
+        # hessian can be negative. We take care that 75% ot the hessian entries are
+        # positive.
+        hessian_warning = np.sum(hess_pointwise <= 0) > len(hess_pointwise) * 0.25
+        hess_pointwise = np.abs(hess_pointwise)
 
         if not self.base_loss.is_multiclass:
             # gradient
@@ -446,8 +451,14 @@ class LinearModelLoss:
                 hess = np.empty(shape=(n_dof, n_dof), dtype=weights.dtype)
             else:
                 hess = hessian_out
-            # TODO: This "sandwich product", X' diag(W) X, can be greatly improved by
-            # a dedicated Cython routine.
+
+            if hessian_warning:
+                # Exit early without computing the hessian.
+                return grad, hess, hessian_warning
+
+            # TODO: This "sandwich product", X' diag(W) X, is the main computational
+            # bottleneck for solvers. A dedicated Cython routine might improve it
+            # exploiting the symmetry (as opposed to, e.g., BLAS gemm).
             if sparse.issparse(X):
                 hess[:n_features, :n_features] = (
                     X.T
@@ -457,9 +468,8 @@ class LinearModelLoss:
                     @ X
                 ).toarray()
             else:
-                # np.einsum may use less memory but the following is by far faster.
-                # This matrix multiplication (gemm) is most often the most time
-                # consuming step for solvers.
+                # np.einsum may use less memory but the following, using BLAS matrix
+                # multiplication (gemm), is by far faster.
                 WX = hess_pointwise[:, None] * X
                 hess[:n_features, :n_features] = np.dot(X.T, WX)
             # flattened view on the array
@@ -482,7 +492,7 @@ class LinearModelLoss:
             # cross-entropy.
             raise NotImplementedError
 
-        return grad, hess
+        return grad, hess, hessian_warning
 
     def gradient_hessian_product(
         self, coef, X, y, sample_weight=None, l2_reg_strength=0.0, n_threads=1
@@ -546,6 +556,8 @@ class LinearModelLoss:
                 # Calculate the double derivative with respect to intercept.
                 # Note: In case hX is sparse, hX.sum is a matrix object.
                 hX_sum = np.squeeze(np.asarray(hX.sum(axis=0)))
+                # prevent squeezing to zero-dim array if n_features == 1
+                hX_sum = np.atleast_1d(hX_sum)
 
             # With intercept included and l2_reg_strength = 0, hessp returns
             # res = (X, 1)' @ diag(h) @ (X, 1) @ s

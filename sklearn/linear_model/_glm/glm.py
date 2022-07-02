@@ -7,8 +7,8 @@ Generalized Linear Models with Exponential Dispersion Family
 # License: BSD 3 clause
 
 from abc import ABC, abstractmethod
-import numbers
 import warnings
+from numbers import Integral, Real
 
 import numpy as np
 import scipy.linalg
@@ -26,28 +26,29 @@ from ..._loss.loss import (
 )
 from ...base import BaseEstimator, RegressorMixin
 from ...exceptions import ConvergenceWarning
-from ...utils import check_scalar, check_array, deprecated
+from ...utils import check_array, deprecated
+from ...utils.validation import check_is_fitted, _check_sample_weight
+from ...utils._param_validation import Interval, StrOptions, Hidden
 from ...utils._openmp_helpers import _openmp_effective_n_threads
 from ...utils.optimize import _check_optimize_result
-from ...utils.validation import check_is_fitted, _check_sample_weight
 from .._linear_loss import LinearModelLoss
 
 
 class NewtonSolver(ABC):
     """Newton solver for GLMs.
 
-    This class implements Newton/2nd-order optimization for GLMs. Each Newton iteration
-    aims at finding the Newton step which is done by the inner solver. With hessian H,
-    gradient g and coefficients coef, one step solves
+    This class implements Newton/2nd-order optimization routines for GLMs. Each Newton
+    iteration aims at finding the Newton step which is done by the inner solver. With
+    Hessian H, gradient g and coefficients coef, one step solves:
 
         H @ coef_newton = -g
 
-    For our GLM / LinearModelLoss, we have gradient g and hessian H:
+    For our GLM / LinearModelLoss, we have gradient g and Hessian H:
 
         g = X.T @ loss.gradient + l2_reg_strength * coef
         H = X.T @ diag(loss.hessian) @ X + l2_reg_strength * identity
 
-    Backtracking line seach updates coef = coef_old + t * coef_newton for some t in
+    Backtracking line search updates coef = coef_old + t * coef_newton for some t in
     (0, 1].
 
     This is a base class, actual implementations (child classes) may deviate from the
@@ -71,7 +72,7 @@ class NewtonSolver(ABC):
     ----------
     coef : ndarray of shape (n_dof,), (n_classes, n_dof) or (n_classes * n_dof,), \
         default=None
-        Start coefficients of a linear model.
+        Start/Initial coefficients of a linear model.
         If shape (n_classes * n_dof,), the classes of one feature are contiguous,
         i.e. one reconstructs the 2d-array via
         coef.reshape((n_classes, -1), order="F").
@@ -81,7 +82,7 @@ class NewtonSolver(ABC):
         The loss to be minimized.
 
     l2_reg_strength : float, default=0.0
-            L2 regularization strength
+        L2 regularization strength.
 
     tol : float, default=1e-4
         The optimization problem is solved when each of the following condition is
@@ -93,8 +94,44 @@ class NewtonSolver(ABC):
         Maximum number of Newton steps allowed.
 
     n_threads : int, default=1
-        Number of OpenMP threads to use for the computation of the hessian and gradient
+        Number of OpenMP threads to use for the computation of the Hessian and gradient
         of the loss function.
+
+    Attributes
+    ----------
+    coef_old : ndarray of shape coef.shape
+        Coefficient of previous iteration.
+
+    coef_newton : ndarray of shape coef.shape
+        Newton step.
+
+    gradient : ndarray of shape coef.shape
+        Gradient of the loss wrt. the coefficients.
+
+    gradient_old : ndarray of shape coef.shape
+        Gradient of previous iteration.
+
+    loss_value : float
+        Value of objective function = loss + penalty.
+
+    loss_value_old : float
+        Value of objective function of previous itertion.
+
+    raw_prediction : ndarray of shape (n_samples,) or \
+            (n_samples, n_classes)
+
+    converged : bool
+        Indicator for convergence of the solver.
+
+    iteration : int
+        Number of Newton steps, i.e. calls to inner_solve
+
+    use_fallback_lbfgs_solve : bool
+        An inner solver can set this to True to resort to LBFGS for one iteration.
+
+    gradient_times_newton : float
+        gradient @ coef_newton, set in inner_solve and used by line_search. If the
+        Newton step is a descent direction, this is negative.
     """
 
     def __init__(
@@ -144,14 +181,44 @@ class NewtonSolver(ABC):
 
     @abstractmethod
     def update_gradient_hessian(self, X, y, sample_weight):
-        """Update gradient and hessian."""
+        """Update gradient and Hessian."""
 
     @abstractmethod
     def inner_solve(self, X, y, sample_weight):
         """Compute Newton step.
 
-        Sets self.coef_newton.
+        Sets:
+            - self.coef_newton
+            - gradient_times_newton
         """
+
+    def fallback_lbfgs_solve(self, X, y, sample_weight):
+        """Fallback solver in case of emergency.
+
+        If a solver detects convergence problems, it may fall back to this methods in
+        the hope to exit with success instead of raising an error.
+
+        Sets:
+            - self.coef
+            - self.converged
+        """
+        opt_res = scipy.optimize.minimize(
+            self.linear_loss.loss_gradient,
+            self.coef,
+            method="L-BFGS-B",
+            jac=True,
+            options={
+                "maxiter": self.max_iter,
+                "maxls": 50,  # default is 20
+                "iprint": self.verbose - 1,
+                "gtol": self.tol,
+                "ftol": 64 * np.finfo(np.float64).eps,
+            },
+            args=(X, y, sample_weight, self.l2_reg_strength, self.n_threads),
+        )
+        self.n_iter_ = _check_optimize_result("lbfgs", opt_res)
+        self.coef = opt_res.x
+        self.converged = opt_res.status == 0
 
     def line_search(self, X, y, sample_weight):
         """Backtracking line search.
@@ -170,7 +237,9 @@ class NewtonSolver(ABC):
         eps = 16 * np.finfo(self.loss_value.dtype).eps
         t = 1  # step size
 
-        armijo_term = sigma * self.gradient @ self.coef_newton
+        # gradient_times_newton = self.gradient @ self.coef_newton
+        # was computed in inner_solve.
+        armijo_term = sigma * self.gradient_times_newton
         _, _, raw_prediction_newton = self.linear_loss.weight_intercept_raw(
             self.coef_newton, X
         )
@@ -233,8 +302,8 @@ class NewtonSolver(ABC):
                 check = sum_abs_grad < sum_abs_grad_old
                 if is_verbose:
                     print(
-                        "      check sum(|gradient|) <= sum(|gradient_old|): "
-                        f"{sum_abs_grad} <= {sum_abs_grad_old} {check}"
+                        "      check sum(|gradient|) < sum(|gradient_old|): "
+                        f"{sum_abs_grad} < {sum_abs_grad_old} {check}"
                     )
                 if check:
                     break
@@ -289,10 +358,14 @@ class NewtonSolver(ABC):
         else:
             warnings.warn(
                 f"Line search of Newton solver {self.__class__.__name__} at iteration "
-                "#{self.iteration} did no converge after 21 line search refinement "
-                "iterations.",
+                f"#{self.iteration} did no converge after 21 line search refinement "
+                "iterations. It will now resort to lbfgs instead.",
                 ConvergenceWarning,
             )
+            if self.verbose:
+                print("  Lines search did not converge and resorts to lbfgs instead.")
+            self.use_fallback_lbfgs_solve = True
+            return
 
         self.raw_prediction = raw
 
@@ -301,7 +374,10 @@ class NewtonSolver(ABC):
         return self.coef_newton @ self.hessian @ self.coef_newton
 
     def check_convergence(self, X, y, sample_weight):
-        """Check for convergence."""
+        """Check for convergence.
+
+        Sets self.converged.
+        """
         if self.verbose:
             print("  Check Convergence")
         # Note: Checking maximum relative change of coefficient <= tol is a bad
@@ -350,6 +426,8 @@ class NewtonSolver(ABC):
     def solve(self, X, y, sample_weight):
         """Solve the optimization problem.
 
+        This is the main routine.
+
         Order of calls:
             self.setup()
             while iteration:
@@ -358,6 +436,11 @@ class NewtonSolver(ABC):
                 self.line_search()
                 self.check_convergence()
             self.finalize()
+
+        Returns
+        -------
+        coef : ndarray of shape (n_dof,), (n_classes, n_dof) or (n_classes * n_dof,)
+            Solution of the optimization problem.
         """
         # setup usually:
         #   - initializes self.coef if needed
@@ -366,12 +449,14 @@ class NewtonSolver(ABC):
 
         self.iteration = 1
         self.converged = False
-        self.stop = False
 
         while self.iteration <= self.max_iter and not self.converged:
             if self.verbose:
                 print(f"Newton iter={self.iteration}")
-            # 1. Update hessian and gradient
+
+            self.use_fallback_lbfgs_solve = False  # Fallback solver.
+
+            # 1. Update Hessian and gradient
             self.update_gradient_hessian(X=X, y=y, sample_weight=sample_weight)
 
             # TODO:
@@ -382,9 +467,8 @@ class NewtonSolver(ABC):
             # 2. Inner solver
             #    Calculate Newton step/direction
             #    This usually sets self.coef_newton.
-            #    It may set self.stop = True, e.g. for ill-conditioned systems.
             self.inner_solve(X=X, y=y, sample_weight=sample_weight)
-            if self.stop:
+            if self.use_fallback_lbfgs_solve:
                 break
 
             # 3. Backtracking line search
@@ -392,6 +476,8 @@ class NewtonSolver(ABC):
             #    self.loss_value, self.gradient_old, self.gradient,
             #    self.raw_prediction.
             self.line_search(X=X, y=y, sample_weight=sample_weight)
+            if self.use_fallback_lbfgs_solve:
+                break
 
             # 4. Check convergence
             #    Sets self.converged.
@@ -401,11 +487,17 @@ class NewtonSolver(ABC):
             self.iteration += 1
 
         if not self.converged:
-            warnings.warn(
-                "Newton solver did not converge after"
-                f" {self.iteration - 1} iterations.",
-                ConvergenceWarning,
-            )
+            if self.use_fallback_lbfgs_solve:
+                # Note: The fallback solver circumvents check_convergence and relies on
+                # the convergence checks of lbfgs instead. Enough warnings have been
+                # raised on the way.
+                self.fallback_lbfgs_solve(X=X, y=y, sample_weight=sample_weight)
+            else:
+                warnings.warn(
+                    f"Newton solver did not converge after {self.iteration - 1} "
+                    "iterations.",
+                    ConvergenceWarning,
+                )
 
         self.iteration -= 1
         self.finalize(X=X, y=y, sample_weight=sample_weight)
@@ -421,58 +513,67 @@ class BaseCholeskyNewtonSolver(NewtonSolver):
 
     def setup(self, X, y, sample_weight):
         super().setup(X=X, y=y, sample_weight=sample_weight)
-        self.count_singular = 0
 
     def inner_solve(self, X, y, sample_weight):
+        if self.hessian_warning:
+            warnings.warn(
+                f"The inner solver of {self.__class__.__name__} detected a "
+                "pointwise hessian with many negative values at iteration "
+                f"#{self.iteration}. It will now resort to lbfgs instead.",
+                ConvergenceWarning,
+            )
+            if self.verbose:
+                print(
+                    "  The inner solver detected a pointwise Hessian with many "
+                    "negative values and resorts to lbfgs instead."
+                )
+            self.use_fallback_lbfgs_solve = True
+            return
+
         try:
             with warnings.catch_warnings():
                 warnings.simplefilter("error", scipy.linalg.LinAlgWarning)
                 self.coef_newton = scipy.linalg.solve(
                     self.hessian, -self.gradient, check_finite=False, assume_a="sym"
                 )
-            return
+                self.gradient_times_newton = self.gradient @ self.coef_newton
+                if self.gradient_times_newton > 0:
+                    if self.verbose:
+                        print(
+                            "  The inner solver found a Newton step that is not a "
+                            "descent direction and resorts to LBFGS steps instead."
+                        )
+                    self.use_fallback_lbfgs_solve = True
+                    return
         except (np.linalg.LinAlgError, scipy.linalg.LinAlgWarning) as e:
-            if self.count_singular == 0:
-                # We only need to throw this warning once.
-                warnings.warn(
-                    f"The inner solver of {self.__class__.__name__} stumbled upon a"
-                    " singular or very ill-conditioned hessian matrix at iteration "
-                    " #{self.iteration}. It will now try a simple gradient step."
-                    " Note that this warning is only raised once, the problem may, "
-                    " however, occur in several or all iterations. Set verbose >= 1"
-                    " to get more information.\n"
-                    "Your options are to use another solver or to avoid such situation"
-                    " in the first place. Possible  remedies are removing collinear"
-                    " features of X or increasing the penalization strengths.\n"
-                    "The original Linear Algebra message was:\n"
-                    + str(e),
-                    scipy.linalg.LinAlgWarning,
-                )
-            self.count_singular += 1
+            warnings.warn(
+                f"The inner solver of {self.__class__.__name__} stumbled upon a "
+                "singular or very ill-conditioned Hessian matrix at iteration "
+                f"#{self.iteration}. It will now resort to lbfgs instead.\n"
+                "Further options are to use another solver or to avoid such situation "
+                "in the first place. Possible remedies are removing collinear features"
+                "of X or increasing the penalization strengths.\n"
+                "The original Linear Algebra message was:\n"
+                + str(e),
+                scipy.linalg.LinAlgWarning,
+            )
             # Possible causes:
             # 1. hess_pointwise is negative. But this is already taken care in
-            #    LinearModelLoss such that min(hess_pointwise) >= 0.
+            #    LinearModelLoss.gradient_hessian.
             # 2. X is singular or ill-conditioned
             #    This might be the most probable cause.
             #
-            # There are many possible ways to deal with this situation (most of
-            # them adding, explicit or implicit, a matrix to the hessian to make it
-            # positive definite), confer to Chapter 3.4 of Nocedal & Wright 2nd ed.
-            # Instead, we resort to a simple gradient step, taking the diagonal part
-            # of the hessian.
+            # There are many possible ways to deal with this situation. Most of them
+            # add, explicitly or implicitly, a matrix to the hessian to make it
+            # positive definite, confer to Chapter 3.4 of Nocedal & Wright 2nd ed.
+            # Instead, we resort to lbfgs.
             if self.verbose:
                 print(
                     "  The inner solver stumbled upon an singular or ill-conditioned "
-                    "hessian matrix and resorts to a simple gradient step."
+                    "Hessian matrix and resorts to LBFGS instead."
                 )
-            # We add 1e-3 to the diagonal hessian part to make in invertible and to
-            # restrict coef_newton to at most ~1e3. The line search considerst step
-            # sizes until 1e-6 * newton_step ~1e-3 * newton_step.
-            # Deviding by self.iteration ensures (slow) convergence.
-            eps = 1e-3 / self.iteration
-            self.coef_newton = -self.gradient / (np.diag(self.hessian) + eps)
-            # We have throw this above warning an just stop.
-            # self.stop = True
+            self.use_fallback_lbfgs_solve = True
+            return
 
 
 class CholeskyNewtonSolver(BaseCholeskyNewtonSolver):
@@ -492,7 +593,7 @@ class CholeskyNewtonSolver(BaseCholeskyNewtonSolver):
         self.hessian = np.empty_like(self.coef, shape=(n_dof, n_dof))
 
     def update_gradient_hessian(self, X, y, sample_weight):
-        self.linear_loss.gradient_hessian(
+        _, _, self.hessian_warning = self.linear_loss.gradient_hessian(
             coef=self.coef,
             X=X,
             y=y,
@@ -519,12 +620,12 @@ class QRCholeskyNewtonSolver(BaseCholeskyNewtonSolver):
     This is the same as an LQ decomposition of X. We introduce the new variable t as,
     see [1]:
 
-        (coef, intercept) = (Q @ t, intercept)
+        (coef, intercept) = (Q @ z, intercept)
 
-    By using X @ coef = R' @ t and ||coef||_2 = ||t||_2, we can just replace X
-    by R', solve for t instead of coef, and finally get coef = Q @ t.
-    Note that t has less elements than coef if n_features > n_samples:
-        len(t) = k = min(n_samples, n_features) <= n_features = len(coef).
+    By using X @ coef = R' @ z and ||coef||_2 = ||z||_2, we can just replace X
+    by R', solve for z instead of coef, and finally get coef = Q @ z.
+    Note that z has less elements than coef if n_features > n_samples:
+        len(z) = k = min(n_samples, n_features) <= n_features = len(coef).
 
     [1] Hastie, T.J., & Tibshirani, R. (2003). Expression Arrays and the p n Problem.
     https://web.stanford.edu/~hastie/Papers/pgtn.pdf
@@ -534,7 +635,9 @@ class QRCholeskyNewtonSolver(BaseCholeskyNewtonSolver):
         n_samples, n_features = X.shape
         # TODO: setting pivoting=True could improve stability
         # QR of X'
-        self.Q, self.R = scipy.linalg.qr(X.T, mode="economic", pivoting=False)
+        self.Q, self.R = scipy.linalg.qr(
+            X.T, mode="economic", pivoting=False, check_finite=False
+        )
         # use k = min(n_features, n_samples) instead of n_features
         k = self.R.T.shape[1]
         n_dof = k
@@ -542,7 +645,7 @@ class QRCholeskyNewtonSolver(BaseCholeskyNewtonSolver):
             n_dof += 1
         # store original coef
         self.coef_original = self.coef
-        # set self.coef = t (coef_original = Q @ t)
+        # set self.coef = z (coef_original = Q @ z)
         self.coef = np.zeros_like(self.coef, shape=n_dof)
         if np.sum(np.abs(self.coef_original)) > 0:
             self.coef[:k] = self.Q.T @ self.coef_original[:n_features]
@@ -553,7 +656,7 @@ class QRCholeskyNewtonSolver(BaseCholeskyNewtonSolver):
 
     def update_gradient_hessian(self, X, y, sample_weight):
         # Use R' instead of X
-        self.linear_loss.gradient_hessian(
+        _, _, self.hessian_warning = self.linear_loss.gradient_hessian(
             coef=self.coef,
             X=self.R.T,
             y=y,
@@ -564,6 +667,10 @@ class QRCholeskyNewtonSolver(BaseCholeskyNewtonSolver):
             hessian_out=self.hessian,
             raw_prediction=self.raw_prediction,  # this was updated in line_search
         )
+
+    def fallback_lbfgs_solve(self, X, y, sample_weight):
+        # Use R' instead of X
+        super().fallback_lbfgs_solve(X=self.R.T, y=y, sample_weight=sample_weight)
 
     def line_search(self, X, y, sample_weight):
         # Use R' instead of X
@@ -636,7 +743,6 @@ class LSMRNewtonSolver(NewtonSolver):
             - self.gradient
             - self.sqrt_P = sqrt(l2_reg_strength) * sqrt(P)
             - self.A_norm
-            - self.gradient_step
         """
         super().setup(X=X, y=y, sample_weight=sample_weight)
         (self.g, self.h,) = self.linear_loss.base_loss.init_gradient_and_hessian(
@@ -663,9 +769,6 @@ class LSMRNewtonSolver(NewtonSolver):
         # As this all is a bit costly, we make life easier and start with 1:
         self.A_norm = 1
         self.r_norm = 1
-
-        # needed for inner_solve
-        self.gradient_step = 0
 
     def update_gradient_hessian(self, X, y, sample_weight):
         """Update gradient and hessian.
@@ -775,50 +878,40 @@ class LSMRNewtonSolver(NewtonSolver):
             conda,
             normx,
         ) = result
+        self.gradient_times_newton = self.gradient @ self.coef_newton
         # LSMR reached maxiter or did produce an excessively large newton step.
         # Note: We could detect too large steps by comparing norms(coef_newton) = normx
         # with norm(gradient). Instead of the gradient, we use the already available
         # condition number of A.
         if istop == 7 or normx > 1e2 * conda:
-            if self.gradient_step == 0:
-                # We only need to throw this warning once.
-                if istop == 7:
-                    msg = (
-                        f"The inner solver of {self.__class__.__name__} reached "
-                        "maxiter={itn} before the other stopping conditions were "
-                        "satisfied at iteration #{self.iteration}. "
-                    )
-                else:
-                    msg = (
-                        f"The inner solver of {self.__class__.__name__} produced an"
-                        " excessively large newton step at iteration"
-                        " #{self.iteration}. "
-                    )
-                warnings.warn(
-                    msg
-                    + "It will now try a "
-                    "simple gradient step. "
-                    "Note that this warning is only raised once, the problem may, "
-                    " however, occur in several or all iterations. Set verbose >= 1"
-                    " to get more information.\n"
-                    "This may be cause by an ill-conditioned or singular hessian. Your"
-                    " options are to use another solver or to avoid such situation"
-                    " in the first place. Possible  remedies are removing collinear"
-                    " features of X or increasing the penalization strengths.",
-                    ConvergenceWarning,
+            if istop == 7:
+                msg = (
+                    f"The inner solver of {self.__class__.__name__} reached "
+                    "maxiter={itn} before the other stopping conditions were "
+                    "satisfied at iteration #{self.iteration}. "
                 )
-            self.gradient_step += 1
+            else:
+                msg = (
+                    f"The inner solver of {self.__class__.__name__} produced an"
+                    " excessively large newton step at iteration"
+                    " #{self.iteration}. "
+                )
+            warnings.warn(
+                msg
+                + "It will now resort to lbfgs instead.\n"
+                "This may be caused by singular or very ill-conditioned Hessian "
+                " matrix. "
+                "Further options are to use another solver or to avoid such situation "
+                "in the first place. Possible remedies are removing collinear features"
+                "of X or increasing the penalization strengths.",
+                ConvergenceWarning,
+            )
             if self.verbose:
                 print(
-                    "  The inner solver had problems to converge and resorts to a "
-                    "simple gradient step."
+                    "  The inner solver had problems to converge and resorts to lbfgs."
                 )
-            # We add 1e-3 to the diagonal hessian part to make in invertible and to
-            # restrict coef_newton to at most ~1e3. The line search considerst step
-            # sizes until 1e-6 * newton_step ~1e-3 * newton_step.
-            # Deviding by self.iteration ensures (slow) convergence.
-            eps = 1e-3 / self.iteration
-            self.coef_newton = -self.gradient / (np.sqrt(self.A_norm) + eps)
+            self.use_fallback_lbfgs_solve = True
+            return
 
     def compute_d2(self, X):
         """Compute square of Newton decrement."""
@@ -867,19 +960,24 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         Specifies if a constant (a.k.a. bias or intercept) should be
         added to the linear predictor (X @ coef + intercept).
 
-    solver : {'lbfgs', 'newton-cholesky', 'newton-qr-cholesky'}, default='lbfgs'
+    solver : {'lbfgs', 'newton-cholesky', 'newton-qr-cholesky', 'newton-lsmr'}, \
+        default='lbfgs'
         Algorithm to use in the optimization problem:
 
         'lbfgs'
             Calls scipy's L-BFGS-B optimizer.
 
         'newton-cholesky'
-            Uses Newton-Raphson steps (equals iterated reweighted least squares) with
-            an inner cholesky based solver.
+            Uses Newton-Raphson steps (equivalent to iterated reweighted least squares)
+            with an inner cholesky based solver.
 
         'newton-qr-cholesky'
-            Same as 'newton-cholesky' but uses a qr decomposition of X.T. This solver
-            is better for n_features >> n_samples than 'newton-cholesky'.
+            Same as 'newton-cholesky' but uses a QR decomposition of X.T. This solver
+            is better for `n_features >> n_samples` than 'newton-cholesky'.
+
+        'newton-lsmr'
+            Uses Newton-Raphson steps, but formulated as iterated least squares (IRLS)
+            problem, which is solve by LSMR.
 
     max_iter : int, default=100
         The maximal number of iterations for the solver.
@@ -933,6 +1031,24 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         we have `y_pred = exp(X @ coeff + intercept)`.
     """
 
+    # We allow for NewtonSolver classes for the "solver" parameter but do not
+    # make them public in the docstrings. This facilitates testing and
+    # benchmarking.
+    _parameter_constraints = {
+        "alpha": [Interval(Real, 0.0, None, closed="left")],
+        "fit_intercept": ["boolean"],
+        "solver": [
+            StrOptions(
+                {"lbfgs", "newton-cholesky", "newton-qr-cholesky", "newton-lsmr"}
+            ),
+            Hidden(type),
+        ],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
+        "tol": [Interval(Real, 0.0, None, closed="neither")],
+        "warm_start": ["boolean"],
+        "verbose": ["verbose"],
+    }
+
     def __init__(
         self,
         *,
@@ -971,58 +1087,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         self : object
             Fitted model.
         """
-        check_scalar(
-            self.alpha,
-            name="alpha",
-            target_type=numbers.Real,
-            min_val=0.0,
-            include_boundaries="left",
-        )
-        if not isinstance(self.fit_intercept, bool):
-            raise ValueError(
-                "The argument fit_intercept must be bool; got {0}".format(
-                    self.fit_intercept
-                )
-            )
-        # We allow for NewtonSolver classes but do not make them public in the
-        # docstrings. This facilitates testing and benchmarking.
-        if self.solver not in [
-            "lbfgs",
-            "newton-cholesky",
-            "newton-qr-cholesky",
-            "newton-lsmr",
-        ] and not (
-            isinstance(self.solver, type) and issubclass(self.solver, NewtonSolver)
-        ):
-            raise ValueError(
-                f"{self.__class__.__name__} supports only solvers 'lbfgs',"
-                " 'newton-cholesky', 'newton-qr-cholesky' and 'newton-lsmr'; got"
-                f" {self.solver}"
-            )
-        solver = self.solver
-        check_scalar(
-            self.max_iter,
-            name="max_iter",
-            target_type=numbers.Integral,
-            min_val=1,
-        )
-        check_scalar(
-            self.tol,
-            name="tol",
-            target_type=numbers.Real,
-            min_val=0.0,
-            include_boundaries="neither",
-        )
-        check_scalar(
-            self.verbose,
-            name="verbose",
-            target_type=numbers.Integral,
-            min_val=0,
-        )
-        if not isinstance(self.warm_start, bool):
-            raise ValueError(
-                "The argument warm_start must be bool; got {0}".format(self.warm_start)
-            )
+        self._validate_params()
 
         X, y = self._validate_data(
             X,
@@ -1034,7 +1099,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         )
 
         # required by losses
-        if solver == "lbfgs":
+        if self.solver == "lbfgs":
             # lbfgs will force coef and therefore raw_prediction to be float64. The
             # base_loss needs y, X @ coef and sample_weight all of same dtype
             # (and contiguous).
@@ -1097,7 +1162,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
 
         # Algorithms for optimization:
         # Note again that our losses implement 1/2 * deviance.
-        if solver == "lbfgs":
+        if self.solver == "lbfgs":
             func = linear_loss.loss_gradient
 
             opt_res = scipy.optimize.minimize(
@@ -1107,22 +1172,25 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                 jac=True,
                 options={
                     "maxiter": self.max_iter,
-                    "maxls": 30,  # default is 20
-                    "iprint": (self.verbose > 0) - 1,
+                    "maxls": 50,  # default is 20
+                    "iprint": self.verbose - 1,
                     "gtol": self.tol,
-                    "ftol": 64 * np.finfo(np.float64).eps,  # lbfgs is float64 land.
+                    # The constant 64 was found empirically to pass the test suite.
+                    # The point is that ftol is very small, but a bit larger than
+                    # machine precision for float64, which is the dtype used by lbfgs.
+                    "ftol": 64 * np.finfo(float).eps,
                 },
                 args=(X, y, sample_weight, l2_reg_strength, n_threads),
             )
             self.n_iter_ = _check_optimize_result("lbfgs", opt_res)
             coef = opt_res.x
-        elif solver in ["newton-cholesky", "newton-qr-cholesky", "newton-lsmr"]:
+        elif self.solver in ["newton-cholesky", "newton-qr-cholesky", "newton-lsmr"]:
             sol_dict = {
                 "newton-cholesky": CholeskyNewtonSolver,
                 "newton-qr-cholesky": QRCholeskyNewtonSolver,
                 "newton-lsmr": LSMRNewtonSolver,
             }
-            sol = sol_dict[solver](
+            sol = sol_dict[self.solver](
                 coef=coef,
                 linear_loss=linear_loss,
                 l2_reg_strength=l2_reg_strength,
@@ -1133,8 +1201,8 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             )
             coef = sol.solve(X, y, sample_weight)
             self.n_iter_ = sol.iteration
-        elif issubclass(solver, NewtonSolver):
-            sol = solver(
+        elif issubclass(self.solver, NewtonSolver):
+            sol = self.solver(
                 coef=coef,
                 linear_loss=linear_loss,
                 l2_reg_strength=l2_reg_strength,
@@ -1143,6 +1211,9 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                 n_threads=n_threads,
             )
             coef = sol.solve(X, y, sample_weight)
+            self.n_iter_ = sol.iteration
+        else:
+            raise TypeError(f"Invalid solver={self.solver}.")
 
         if self.fit_intercept:
             self.intercept_ = coef[-1]
@@ -1274,11 +1345,16 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         return 1 - (deviance + constant) / (deviance_null + constant)
 
     def _more_tags(self):
-        # Create instance of BaseLoss if fit wasn't called yet. This is necessary as
-        # TweedieRegressor might set the used loss during fit different from
-        # self._base_loss.
-        base_loss = self._get_loss()
-        return {"requires_positive_y": not base_loss.in_y_true_range(-1.0)}
+        try:
+            # Create instance of BaseLoss if fit wasn't called yet. This is necessary as
+            # TweedieRegressor might set the used loss during fit different from
+            # self._base_loss.
+            base_loss = self._get_loss()
+            return {"requires_positive_y": not base_loss.in_y_true_range(-1.0)}
+        except (ValueError, AttributeError, TypeError):
+            # This happens when the link or power parameter of TweedieRegressor is
+            # invalid. We fallback on the default tags in that case.
+            return {}
 
     def _get_loss(self):
         """This is only necessary because of the link and power arguments of the
@@ -1332,19 +1408,24 @@ class PoissonRegressor(_GeneralizedLinearRegressor):
         Specifies if a constant (a.k.a. bias or intercept) should be
         added to the linear predictor (X @ coef + intercept).
 
-    solver : {'lbfgs', 'newton-cholesky'}, default='lbfgs'
+    solver : {'lbfgs', 'newton-cholesky', 'newton-qr-cholesky', 'newton-lsmr'}, \
+        default='lbfgs'
         Algorithm to use in the optimization problem:
 
         'lbfgs'
             Calls scipy's L-BFGS-B optimizer.
 
         'newton-cholesky'
-            Uses Newton-Raphson steps (equals iterated reweighted least squares) with
-            an inner cholesky based solver.
+            Uses Newton-Raphson steps (equivalent to iterated reweighted least squares)
+            with an inner cholesky based solver.
 
         'newton-qr-cholesky'
-            Same as 'newton-cholesky' but uses a qr decomposition of X.T. This solver
-            is better for n_features >> n_samples than 'newton-cholesky'.
+            Same as 'newton-cholesky' but uses a QR decomposition of X.T. This solver
+            is better for `n_features >> n_samples` than 'newton-cholesky'.
+
+        'newton-lsmr'
+            Uses Newton-Raphson steps, but formulated as iterated least squares (IRLS)
+            problem, which is solve by LSMR.
 
     max_iter : int, default=100
         The maximal number of iterations for the solver.
@@ -1457,19 +1538,24 @@ class GammaRegressor(_GeneralizedLinearRegressor):
         Specifies if a constant (a.k.a. bias or intercept) should be
         added to the linear predictor (X @ coef + intercept).
 
-    solver : {'lbfgs', 'newton-cholesky'}, default='lbfgs'
+    solver : {'lbfgs', 'newton-cholesky', 'newton-qr-cholesky', 'newton-lsmr'}, \
+        default='lbfgs'
         Algorithm to use in the optimization problem:
 
         'lbfgs'
             Calls scipy's L-BFGS-B optimizer.
 
         'newton-cholesky'
-            Uses Newton-Raphson steps (equals iterated reweighted least squares) with
-            an inner cholesky based solver.
+            Uses Newton-Raphson steps (equivalent to iterated reweighted least squares)
+            with an inner cholesky based solver.
 
         'newton-qr-cholesky'
-            Same as 'newton-cholesky' but uses a qr decomposition of X.T. This solver
-            is better for n_features >> n_samples than 'newton-cholesky'.
+            Same as 'newton-cholesky' but uses a QR decomposition of X.T. This solver
+            is better for `n_features >> n_samples` than 'newton-cholesky'.
+
+        'newton-lsmr'
+            Uses Newton-Raphson steps, but formulated as iterated least squares (IRLS)
+            problem, which is solve by LSMR.
 
     max_iter : int, default=100
         The maximal number of iterations for the solver.
@@ -1613,19 +1699,24 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
         - 'log' for ``power > 0``, e.g. for Poisson, Gamma and Inverse Gaussian
           distributions
 
-    solver : {'lbfgs', 'newton-cholesky'}, default='lbfgs'
+    solver : {'lbfgs', 'newton-cholesky', 'newton-qr-cholesky', 'newton-lsmr'}, \
+        default='lbfgs'
         Algorithm to use in the optimization problem:
 
         'lbfgs'
             Calls scipy's L-BFGS-B optimizer.
 
         'newton-cholesky'
-            Uses Newton-Raphson steps (equals iterated reweighted least squares) with
-            an inner cholesky based solver.
+            Uses Newton-Raphson steps (equivalent to iterated reweighted least squares)
+            with an inner cholesky based solver.
 
         'newton-qr-cholesky'
-            Same as 'newton-cholesky' but uses a qr decomposition of X.T. This solver
-            is better for n_features >> n_samples than 'newton-cholesky'.
+            Same as 'newton-cholesky' but uses a QR decomposition of X.T. This solver
+            is better for `n_features >> n_samples` than 'newton-cholesky'.
+
+        'newton-lsmr'
+            Uses Newton-Raphson steps, but formulated as iterated least squares (IRLS)
+            problem, which is solve by LSMR.
 
     max_iter : int, default=100
         The maximal number of iterations for the solver.
@@ -1692,6 +1783,12 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
     array([2.500..., 4.599...])
     """
 
+    _parameter_constraints = {
+        **_GeneralizedLinearRegressor._parameter_constraints,
+        "power": [Interval(Real, None, None, closed="neither")],
+        "link": [StrOptions({"auto", "identity", "log"})],
+    }
+
     def __init__(
         self,
         *,
@@ -1725,12 +1822,9 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
             else:
                 # log link
                 return HalfTweedieLoss(power=self.power)
-        elif self.link == "log":
+
+        if self.link == "log":
             return HalfTweedieLoss(power=self.power)
-        elif self.link == "identity":
+
+        if self.link == "identity":
             return HalfTweedieLossIdentity(power=self.power)
-        else:
-            raise ValueError(
-                "The link must be an element of ['auto', 'identity', 'log']; "
-                f"got (link={self.link!r})"
-            )
