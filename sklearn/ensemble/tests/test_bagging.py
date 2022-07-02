@@ -543,7 +543,7 @@ def test_gridsearch():
     y[y == 2] = 1
 
     # Grid search with scoring based on decision_function
-    parameters = {"n_estimators": (1, 2), "base_estimator__C": (1, 2)}
+    parameters = {"n_estimators": (1, 2), "estimator__C": (1, 2)}
 
     GridSearchCV(BaggingClassifier(SVC()), parameters, scoring="roc_auc").fit(X, y)
 
