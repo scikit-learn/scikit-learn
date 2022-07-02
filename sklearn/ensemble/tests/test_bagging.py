@@ -987,3 +987,8 @@ def test_bagging_regr_base_estimator_deprecated():
 
     with pytest.warns(FutureWarning, match=err_msg):
         regr.fit(X, y)
+
+
+def test_deprecated_base_estimator_has_decision_function():
+    clf = BaggingClassifier(base_estimator=SVC())
+    assert hasattr(clf, "decision_function")
