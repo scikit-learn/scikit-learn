@@ -13,6 +13,7 @@ import scipy.sparse as sp
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array, tosequence
 from ..utils.deprecation import deprecated
+from ..utils._param_validation import StrOptions
 
 
 def _tosequence(X):
@@ -97,6 +98,13 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
     array([[0., 0., 4.]])
     """
 
+    _parameter_constraints = {
+        "dtype": [type],  # TODO: TypeOptions constraint,
+        "separator": [str, StrOptions({"="})],
+        "sparse": ["boolean"],
+        "sort": ["boolean"],
+    }
+
     def __init__(self, *, dtype=np.float64, separator="=", sparse=True, sort=True):
         self.dtype = dtype
         self.separator = separator
@@ -154,6 +162,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         self : object
             DictVectorizer class instance.
         """
+        self._validate_params()
         feature_names = []
         vocab = {}
 
