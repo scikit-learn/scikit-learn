@@ -71,7 +71,7 @@ class NewtonSolver(ABC):
     ----------
     coef : ndarray of shape (n_dof,), (n_classes, n_dof) or (n_classes * n_dof,), \
         default=None
-        Start coefficients of a linear model.
+        Start/Initial coefficients of a linear model.
         If shape (n_classes * n_dof,), the classes of one feature are contiguous,
         i.e. one reconstructs the 2d-array via
         coef.reshape((n_classes, -1), order="F").
@@ -483,8 +483,8 @@ class NewtonSolver(ABC):
                 self.fallback_lbfgs_solve(X=X, y=y, sample_weight=sample_weight)
             else:
                 warnings.warn(
-                    "Newton solver did not converge after"
-                    f" {self.iteration - 1} iterations.",
+                    f"Newton solver did not converge after {self.iteration - 1} "
+                    "iterations.",
                     ConvergenceWarning,
                 )
 
@@ -502,22 +502,15 @@ class BaseCholeskyNewtonSolver(NewtonSolver):
 
     def setup(self, X, y, sample_weight):
         super().setup(X=X, y=y, sample_weight=sample_weight)
-        self.count_singular = 0
-        self.count_hessian_warning = 0
 
     def inner_solve(self, X, y, sample_weight):
         if self.hessian_warning:
-            if self.count_hessian_warning == 0:
-                # We only need to throw this warning once.
-                warnings.warn(
-                    f"The inner solver of {self.__class__.__name__} detected a"
-                    " pointwise Hessian with many negative values at iteration"
-                    f" #{self.iteration}. Switching from exact Newton steps to"
-                    " Quasi-Newton steps using LBFGS until convegence."
-                    " Set verbose >= 1 to get more information.\n",
-                    ConvergenceWarning,
-                )
-            self.count_hessian_warning += 1
+            warnings.warn(
+                f"The inner solver of {self.__class__.__name__} detected a "
+                "pointwise hessian with many negative values at iteration "
+                f"#{self.iteration}. It will now resort to lbfgs instead.",
+                ConvergenceWarning,
+            )
             if self.verbose:
                 print(
                     "  The inner solver detected a pointwise Hessian with many "
@@ -542,22 +535,17 @@ class BaseCholeskyNewtonSolver(NewtonSolver):
                     self.use_fallback_lbfgs_solve = True
                     return
         except (np.linalg.LinAlgError, scipy.linalg.LinAlgWarning) as e:
-            if self.count_singular == 0:
-                # We only need to throw this warning once.
-                warnings.warn(
-                    f"The inner solver of {self.__class__.__name__} stumbled upon a"
-                    " singular or very ill-conditioned Hessian matrix at iteration"
-                    f" #{self.iteration}.  Switching from exact Newton steps to"
-                    " Quasi-Newton steps using LBFGS until convegence."
-                    " Set verbose >= 1 to get more information.\n"
-                    "Your options are to use another solver or to avoid such situation"
-                    " in the first place. Possible remedies are removing collinear"
-                    " features of X or increasing the penalization strength.\n"
-                    "The original Linear Algebra message was:\n"
-                    + str(e),
-                    scipy.linalg.LinAlgWarning,
-                )
-            self.count_singular += 1
+            warnings.warn(
+                f"The inner solver of {self.__class__.__name__} stumbled upon a "
+                "singular or very ill-conditioned hessian matrix at iteration "
+                f"#{self.iteration}. It will now resort to lbfgs instead.\n"
+                "Further options are to use another solver or to avoid such situation "
+                "in the first place. Possible remedies are removing collinearfeatures "
+                "of X or increasing the penalization strengths.\n"
+                "The original Linear Algebra message was:\n"
+                + str(e),
+                scipy.linalg.LinAlgWarning,
+            )
             # Possible causes:
             # 1. hess_pointwise is negative. But this is already taken care in
             #    LinearModelLoss.gradient_hessian.
@@ -565,9 +553,9 @@ class BaseCholeskyNewtonSolver(NewtonSolver):
             #    This might be the most probable cause.
             #
             # There are many possible ways to deal with this situation. Most of them
-            # add, explicit or implicit, a matrix to the Hessian to make it positive
-            # definite, confer to Chapter 3.4 of Nocedal & Wright 2nd ed.
-            # Instead, we resort to a few lbfgs steps.
+            # add, explicitly or implicitly, a matrix to the hessian to make it
+            # positive definite, confer to Chapter 3.4 of Nocedal & Wright 2nd ed.
+            # Instead, we resort to lbfgs.
             if self.verbose:
                 print(
                     "  The inner solver stumbled upon an singular or ill-conditioned "
