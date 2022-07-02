@@ -231,7 +231,7 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
     _parameter_constraints = {
         "y_min": [Real, None],
         "y_max": [Real, None],
-        "increaseing": ["boolean", "auto"],
+        "increasing": ["boolean", "auto"],
         "out_of_bounds": [StrOptions({"nan", "clip", "raise"})],
     }
 
