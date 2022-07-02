@@ -7,7 +7,7 @@ import numpy as np
 from scipy import interpolate
 from scipy.stats import spearmanr
 from numbers import Real
-import warning
+import warnings
 import math
 
 from .base import BaseEstimator, TransformerMixin, RegressorMixin
