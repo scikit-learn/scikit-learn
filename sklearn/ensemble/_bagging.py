@@ -754,11 +754,6 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         """Check the estimator and set the base_estimator_ attribute."""
         super()._validate_estimator(default=DecisionTreeClassifier())
 
-    def set_params(self, **params):
-        self.base_estimator = self.estimator
-        super().set_params(**params)
-        return self
-
     def _set_oob_score(self, X, y):
         n_samples = y.shape[0]
         n_classes_ = self.n_classes_
@@ -1189,11 +1184,6 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
             )
             self.estimator = self.base_estimator
         return super().fit(X, y, sample_weight=sample_weight)
-
-    def set_params(self, **params):
-        self.base_estimator = self.estimator
-        super().set_params(**params)
-        return self
 
     def predict(self, X):
         """Predict regression target for X.
