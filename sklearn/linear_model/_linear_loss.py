@@ -456,8 +456,9 @@ class LinearModelLoss:
                 # Exit early without computing the hessian.
                 return grad, hess, hessian_warning
 
-            # TODO: This "sandwich product", X' diag(W) X, can be greatly improved by
-            # a dedicated Cython routine.
+            # TODO: This "sandwich product", X' diag(W) X, is the main computational
+            # bottleneck for solvers. A dedicated Cython routine might improve it
+            # exploiting the symmetry (as opposed to, e.g., BLAS gemm).
             if sparse.issparse(X):
                 hess[:n_features, :n_features] = (
                     X.T
@@ -467,9 +468,8 @@ class LinearModelLoss:
                     @ X
                 ).toarray()
             else:
-                # np.einsum may use less memory but the following is by far faster.
-                # This matrix multiplication (gemm) is most often the most time
-                # consuming step for solvers.
+                # np.einsum may use less memory but the following, using BLAS matrix
+                # multiplication (gemm), is by far faster.
                 WX = hess_pointwise[:, None] * X
                 hess[:n_features, :n_features] = np.dot(X.T, WX)
             # flattened view on the array
