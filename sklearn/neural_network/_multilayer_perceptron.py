@@ -728,6 +728,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         self : object
             Returns a trained MLP model.
         """
+
         self._validate_params()
 
         return self._fit(X, y, incremental=False)
@@ -758,6 +759,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         self : object
             Trained MLP model.
         """
+
         self._validate_params()
 
         return self._fit(X, y, incremental=True)
@@ -1178,6 +1180,9 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         self : object
             Trained MLP model.
         """
+
+        self._validate_params()
+
         if _check_partial_fit_first_call(self, classes):
             self._label_binarizer = LabelBinarizer()
             if type_of_target(y).startswith("multilabel"):
