@@ -653,17 +653,24 @@ def test_degenerate_targets():
     assert_array_equal(np.ones((1,), dtype=np.float64), clf.predict([rng.rand(2)]))
 
 
-def test_quantile_loss():
+def test_quantile_loss(global_random_seed):
     # Check if quantile loss with alpha=0.5 equals absolute_error.
     clf_quantile = GradientBoostingRegressor(
-        n_estimators=100, loss="quantile", max_depth=4, alpha=0.5, random_state=7
+        n_estimators=100,
+        loss="quantile",
+        max_depth=4,
+        alpha=0.5,
+        random_state=global_random_seed,
     )
 
     clf_quantile.fit(X_reg, y_reg)
     y_quantile = clf_quantile.predict(X_reg)
 
     clf_ae = GradientBoostingRegressor(
-        n_estimators=100, loss="absolute_error", max_depth=4, random_state=7
+        n_estimators=100,
+        loss="absolute_error",
+        max_depth=4,
+        random_state=global_random_seed,
     )
 
     clf_ae.fit(X_reg, y_reg)
