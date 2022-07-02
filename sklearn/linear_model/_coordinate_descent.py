@@ -10,6 +10,7 @@ import warnings
 import numbers
 from abc import ABC, abstractmethod
 from functools import partial
+from numbers import Integral, Real
 
 import numpy as np
 from scipy import sparse
@@ -21,6 +22,7 @@ from ._base import _preprocess_data, _deprecate_normalize
 from ..utils import check_array
 from ..utils import check_scalar
 from ..utils.validation import check_random_state
+from ..utils._param_validation import Hidden, Interval, StrOptions
 from ..model_selection import check_cv
 from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import (
@@ -839,6 +841,21 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
     [1.451...]
     """
 
+    _parameter_constraints = {
+        "alpha": [Interval(Real, 0, None, closed="left")],
+        "l1_ratio": [Interval(Real, 0, 1, closed="both")],
+        "fit_intercept": ["boolean"],
+        "normalize": [Hidden(StrOptions({"deprecated"})), "boolean"],
+        "precompute": ["boolean", "array-like"],
+        "max_iter": [Interval(Integral, 1, None, closed="left"), None],
+        "copy_X": ["boolean"],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "warm_start": ["boolean"],
+        "positive": ["boolean"],
+        "random_state": ["random_state"],
+        "selection": [StrOptions({"cyclic", "random"})],
+    }
+
     path = staticmethod(enet_path)
 
     def __init__(
@@ -906,17 +923,11 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         To avoid memory re-allocation it is advised to allocate the
         initial data in memory directly using that format.
         """
+        self._validate_params()
+
         _normalize = _deprecate_normalize(
             self.normalize, default=False, estimator_name=self.__class__.__name__
         )
-
-        check_scalar(
-            self.alpha,
-            "alpha",
-            target_type=numbers.Real,
-            min_val=0.0,
-        )
-
         if self.alpha == 0:
             warnings.warn(
                 "With alpha=0, this algorithm does not converge "
@@ -924,27 +935,6 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
                 "estimator",
                 stacklevel=2,
             )
-
-        if isinstance(self.precompute, str):
-            raise ValueError(
-                "precompute should be one of True, False or array-like. Got %r"
-                % self.precompute
-            )
-
-        check_scalar(
-            self.l1_ratio,
-            "l1_ratio",
-            target_type=numbers.Real,
-            min_val=0.0,
-            max_val=1.0,
-        )
-
-        if self.max_iter is not None:
-            check_scalar(
-                self.max_iter, "max_iter", target_type=numbers.Integral, min_val=1
-            )
-
-        check_scalar(self.tol, "tol", target_type=numbers.Real, min_val=0.0)
 
         # Remember if X is copied
         X_copied = False
@@ -1032,9 +1022,6 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
             Xy = Xy[:, np.newaxis]
 
         n_targets = y.shape[1]
-
-        if self.selection not in ["cyclic", "random"]:
-            raise ValueError("selection should be either random or cyclic.")
 
         if not self.warm_start or not hasattr(self, "coef_"):
             coef_ = np.zeros((n_targets, n_features), dtype=X.dtype, order="F")
@@ -1278,6 +1265,11 @@ class Lasso(ElasticNet):
     >>> print(clf.intercept_)
     0.15...
     """
+
+    _parameter_constraints = {
+        **ElasticNet._parameter_constraints,
+    }
+    _parameter_constraints.pop("l1_ratio")
 
     path = staticmethod(enet_path)
 
