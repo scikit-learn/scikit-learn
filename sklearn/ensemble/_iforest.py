@@ -233,7 +233,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         warm_start=False,
     ):
         super().__init__(
-            base_estimator=ExtraTreeRegressor(
+            estimator=ExtraTreeRegressor(
                 max_features=1, splitter="random", random_state=random_state
             ),
             # here above max_features has no links with self.max_features

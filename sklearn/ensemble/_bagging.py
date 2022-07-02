@@ -240,7 +240,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
     @abstractmethod
     def __init__(
         self,
-        base_estimator=None,
+        estimator=None,
         n_estimators=10,
         *,
         max_samples=1.0,
@@ -252,9 +252,10 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         n_jobs=None,
         random_state=None,
         verbose=0,
+        base_estimator="deprecated",
     ):
         super().__init__(base_estimator=base_estimator, n_estimators=n_estimators)
-
+        self.estimator = estimator
         self.max_samples = max_samples
         self.max_features = max_features
         self.bootstrap = bootstrap
@@ -264,6 +265,21 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         self.n_jobs = n_jobs
         self.random_state = random_state
         self.verbose = verbose
+
+    def _validate_estimator(self, default=None):
+        """Check the estimator and the n_estimator attribute.
+
+        Sets the base_estimator_` attributes.
+        """
+        self._validate_n_estimators()
+
+        if self.estimator is not None:
+            self.base_estimator_ = self.estimator
+        else:
+            self.base_estimator_ = default
+
+        if self.base_estimator_ is None:
+            raise ValueError("estimator cannot be None")
 
     def fit(self, X, y, sample_weight=None):
         """Build a Bagging ensemble of estimators from the training set (X, y).
@@ -710,7 +726,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
     ):
 
         super().__init__(
-            base_estimator,
+            estimator=estimator,
             n_estimators=n_estimators,
             max_samples=max_samples,
             max_features=max_features,
@@ -721,9 +737,8 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
             n_jobs=n_jobs,
             random_state=random_state,
             verbose=verbose,
+            base_estimator=base_estimator,
         )
-
-        self.estimator = estimator
 
     def fit(self, X, y, sample_weight=None):
         if self.base_estimator != "deprecated":
@@ -737,7 +752,6 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
 
     def _validate_estimator(self):
         """Check the estimator and set the base_estimator_ attribute."""
-        self.base_estimator = self.estimator
         super()._validate_estimator(default=DecisionTreeClassifier())
 
     def set_params(self, **params):
@@ -1152,7 +1166,7 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         base_estimator="deprecated",
     ):
         super().__init__(
-            base_estimator,
+            estimator=estimator,
             n_estimators=n_estimators,
             max_samples=max_samples,
             max_features=max_features,
@@ -1163,9 +1177,8 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
             n_jobs=n_jobs,
             random_state=random_state,
             verbose=verbose,
+            base_estimator=base_estimator,
         )
-
-        self.estimator = estimator
 
     def fit(self, X, y, sample_weight=None):
         if self.base_estimator != "deprecated":
@@ -1228,7 +1241,6 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
 
     def _validate_estimator(self):
         """Check the estimator and set the base_estimator_ attribute."""
-        self.base_estimator = self.estimator
         super()._validate_estimator(default=DecisionTreeRegressor())
 
     def _set_oob_score(self, X, y):
