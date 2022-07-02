@@ -1656,10 +1656,11 @@ def test_enet_alpha_max_sample_weight(sparseX, fit_intercept):
     reg = ElasticNetCV(n_alphas=1, cv=2, eps=1, fit_intercept=fit_intercept)
     reg.fit(X, y, sample_weight=sample_weight)
     assert_almost_equal(reg.coef_, 0)
+    alpha_max = reg.alpha_
     # Test smaller alpha makes coefs nonzero.
-    reg = ElasticNetCV(n_alphas=2, cv=2, eps=0.99, fit_intercept=fit_intercept)
+    reg = ElasticNet(alpha=0.99 * alpha_max, fit_intercept=fit_intercept)
     reg.fit(X, y, sample_weight=sample_weight)
-    assert_array_less(0, np.max(np.abs(reg.coef_)))
+    assert_array_less(1e-3, np.max(np.abs(reg.coef_)))
 
 
 @pytest.mark.parametrize("fit_intercept", [True, False])
