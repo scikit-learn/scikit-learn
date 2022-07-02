@@ -359,10 +359,10 @@ def test_iris(subsample, sample_weight):
     assert leaves.shape == (150, 100, 3)
 
 
-def test_regression_synthetic():
+def test_regression_synthetic(global_random_seed):
     # Test on synthetic regression datasets used in Leo Breiman,
     # `Bagging Predictors?. Machine Learning 24(2): 123-140 (1996).
-    random_state = check_random_state(1)
+    random_state = check_random_state(global_random_seed)
     regression_params = {
         "n_estimators": 100,
         "max_depth": 4,
@@ -379,7 +379,7 @@ def test_regression_synthetic():
     clf = GradientBoostingRegressor()
     clf.fit(X_train, y_train)
     mse = mean_squared_error(y_test, clf.predict(X_test))
-    assert mse < 5.0
+    assert mse < 5.5
 
     # Friedman2
     X, y = datasets.make_friedman2(n_samples=1200, random_state=random_state)
@@ -389,7 +389,7 @@ def test_regression_synthetic():
     clf = GradientBoostingRegressor(**regression_params)
     clf.fit(X_train, y_train)
     mse = mean_squared_error(y_test, clf.predict(X_test))
-    assert mse < 1700.0
+    assert mse < 2500.0
 
     # Friedman3
     X, y = datasets.make_friedman3(n_samples=1200, random_state=random_state)
@@ -399,7 +399,7 @@ def test_regression_synthetic():
     clf = GradientBoostingRegressor(**regression_params)
     clf.fit(X_train, y_train)
     mse = mean_squared_error(y_test, clf.predict(X_test))
-    assert mse < 0.015
+    assert mse < 0.025
 
 
 @pytest.mark.parametrize(
