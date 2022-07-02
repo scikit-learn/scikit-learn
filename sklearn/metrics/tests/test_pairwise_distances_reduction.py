@@ -513,11 +513,16 @@ def test_pairwise_distances_reduction_is_usable_for():
     rng = np.random.RandomState(0)
     X = rng.rand(100, 10)
     Y = rng.rand(100, 10)
+    X_csr = csr_matrix(X)
+    Y_csr = csr_matrix(Y)
     metric = "euclidean"
 
-    assert PairwiseDistancesReduction.is_usable_for(
-        X.astype(np.float64), X.astype(np.float64), metric
-    )
+    # Must be usable for all possible pair of {dense, sparse} datasets
+    assert PairwiseDistancesReduction.is_usable_for(X, Y, metric)
+    assert PairwiseDistancesReduction.is_usable_for(X_csr, Y_csr, metric)
+    assert PairwiseDistancesReduction.is_usable_for(X_csr, Y, metric)
+    assert PairwiseDistancesReduction.is_usable_for(X, Y_csr, metric)
+
     assert not PairwiseDistancesReduction.is_usable_for(
         X.astype(np.int64), Y.astype(np.int64), metric
     )
@@ -525,10 +530,6 @@ def test_pairwise_distances_reduction_is_usable_for():
     assert not PairwiseDistancesReduction.is_usable_for(X, Y, metric="pyfunc")
     assert not PairwiseDistancesReduction.is_usable_for(X.astype(np.float32), Y, metric)
     assert not PairwiseDistancesReduction.is_usable_for(X, Y.astype(np.int32), metric)
-
-    # TODO: remove once sparse matrices are supported
-    assert not PairwiseDistancesReduction.is_usable_for(csr_matrix(X), Y, metric)
-    assert not PairwiseDistancesReduction.is_usable_for(X, csr_matrix(Y), metric)
 
 
 def test_argkmin_factory_method_wrong_usages():
@@ -747,6 +748,92 @@ def test_n_threads_agnosticism(
 
     ASSERT_RESULT[(PairwiseDistancesReduction, dtype)](
         ref_dist, dist, ref_indices, indices, **check_parameters
+    )
+
+
+@pytest.mark.parametrize("n_samples", [100, 1000])
+@pytest.mark.parametrize("chunk_size", [50, 512, 1024])
+@pytest.mark.parametrize(
+    "PairwiseDistancesReduction",
+    [PairwiseDistancesArgKmin, PairwiseDistancesRadiusNeighborhood],
+)
+def test_format_agnosticism(
+    global_random_seed,
+    PairwiseDistancesReduction,
+    n_samples,
+    chunk_size,
+    n_features=100,
+    dtype=np.float64,
+):
+    # Results must not depend on the number of threads
+    rng = np.random.RandomState(global_random_seed)
+    spread = 100
+    X = rng.rand(n_samples, n_features).astype(dtype) * spread
+    Y = rng.rand(n_samples, n_features).astype(dtype) * spread
+
+    X_csr = csr_matrix(X)
+    Y_csr = csr_matrix(Y)
+
+    if PairwiseDistancesReduction is PairwiseDistancesArgKmin:
+        parameter = 10
+        check_parameters = {}
+    else:
+        # Scaling the radius slightly with the numbers of dimensions
+        radius = 10 ** np.log(n_features)
+        parameter = radius
+        check_parameters = {"radius": radius}
+
+    # XXX: use itertools.pairwise when available?
+    dist_dense_dense, indices_dense_dense = PairwiseDistancesReduction.compute(
+        X,
+        Y,
+        parameter,
+        return_distance=True,
+    )
+
+    dist_sparse_sparse, indices_sparse_sparse = PairwiseDistancesReduction.compute(
+        X_csr,
+        Y_csr,
+        parameter,
+        return_distance=True,
+    )
+
+    ASSERT_RESULT[(PairwiseDistancesReduction, dtype)](
+        dist_dense_dense,
+        dist_sparse_sparse,
+        indices_dense_dense,
+        indices_sparse_sparse,
+        **check_parameters,
+    )
+
+    dist_dense_sparse, indices_dense_sparse = PairwiseDistancesReduction.compute(
+        X,
+        Y_csr,
+        parameter,
+        return_distance=True,
+    )
+
+    ASSERT_RESULT[(PairwiseDistancesReduction, dtype)](
+        dist_dense_dense,
+        dist_dense_sparse,
+        indices_dense_dense,
+        indices_dense_sparse,
+        **check_parameters,
+    )
+
+    dist_sparse_dense, indices_sparse_dense = PairwiseDistancesReduction.compute(
+        X_csr,
+        Y,
+        parameter,
+        return_distance=True,
+    )
+
+    ASSERT_RESULT[(PairwiseDistancesReduction, dtype)](
+        dist_dense_dense,
+        dist_sparse_dense,
+        indices_dense_dense,
+        indices_sparse_dense,
+        **check_parameters,
     )
 
 

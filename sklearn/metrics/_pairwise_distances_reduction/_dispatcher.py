@@ -3,7 +3,6 @@ from abc import abstractmethod
 import numpy as np
 
 from typing import List
-from scipy.sparse import issparse
 from .._dist_metrics import BOOL_METRICS, METRIC_MAPPING
 
 from ._base import _sqeuclidean_row_norms64
@@ -82,8 +81,6 @@ class PairwiseDistancesReduction:
         dtypes_validity = X.dtype == Y.dtype == np.float64
         return (
             get_config().get("enable_cython_pairwise_dist", True)
-            and not issparse(X)
-            and not issparse(Y)
             and dtypes_validity
             and metric in cls.valid_metrics()
         )

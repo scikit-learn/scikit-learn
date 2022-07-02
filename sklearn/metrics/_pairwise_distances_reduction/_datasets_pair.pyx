@@ -2,10 +2,13 @@ import numpy as np
 cimport numpy as cnp
 
 from cython cimport final
-from scipy.sparse import issparse
+from scipy.sparse import issparse, csr_matrix
 
 from ...utils._typedefs cimport DTYPE_t, ITYPE_t
 from ...metrics._dist_metrics cimport DistanceMetric
+
+from ...utils._typedefs import DTYPE, SPARSE_INDEX_TYPE
+
 
 cnp.import_array()
 
@@ -91,14 +94,31 @@ cdef class DatasetsPair:
         distance_metric._validate_data(X)
         distance_metric._validate_data(Y)
 
-        # TODO: dispatch to other dataset pairs for sparse support once available:
-        if issparse(X) or issparse(Y):
-            raise ValueError("Only dense datasets are supported for X and Y.")
+        X_is_sparse = issparse(X)
+        Y_is_sparse = issparse(Y)
 
-        return DenseDenseDatasetsPair(X, Y, distance_metric)
+        if not X_is_sparse and not Y_is_sparse:
+            return DenseDenseDatasetsPair(X, Y, distance_metric)
 
-    def __init__(self, DistanceMetric distance_metric):
+        if X_is_sparse and Y_is_sparse:
+            return SparseSparseDatasetsPair(X, Y, distance_metric)
+
+        if X_is_sparse and not Y_is_sparse:
+            return SparseDenseDatasetsPair(X, Y, distance_metric)
+
+        return DenseSparseDatasetsPair(X, Y, distance_metric)
+
+    @classmethod
+    def unpack_csr_matrix(cls, X: csr_matrix):
+        """Ensure getting ITYPE instead of int internally used for CSR matrices."""
+        X_data = np.asarray(X.data, dtype=DTYPE)
+        X_indices = np.asarray(X.indices, dtype=SPARSE_INDEX_TYPE)
+        X_indptr = np.asarray(X.indptr, dtype=SPARSE_INDEX_TYPE)
+        return X_data, X_indices, X_indptr
+
+    def __init__(self, DistanceMetric distance_metric, ITYPE_t n_features):
         self.distance_metric = distance_metric
+        self.n_features = n_features
 
     cdef ITYPE_t n_samples_X(self) nogil:
         """Number of samples in X."""
@@ -140,12 +160,16 @@ cdef class DenseDenseDatasetsPair(DatasetsPair):
         between two row vectors of (X, Y).
     """
 
-    def __init__(self, X, Y, DistanceMetric distance_metric):
-        super().__init__(distance_metric)
+    def __init__(
+        self,
+        DTYPE_t[:, ::1] X,
+        DTYPE_t[:, ::1] Y,
+        DistanceMetric distance_metric,
+    ):
+        super().__init__(distance_metric, n_features=X.shape[1])
         # Arrays have already been checked
         self.X = X
         self.Y = Y
-        self.d = X.shape[1]
 
     @final
     cdef ITYPE_t n_samples_X(self) nogil:
@@ -157,8 +181,181 @@ cdef class DenseDenseDatasetsPair(DatasetsPair):
 
     @final
     cdef DTYPE_t surrogate_dist(self, ITYPE_t i, ITYPE_t j) nogil:
-        return self.distance_metric.rdist(&self.X[i, 0], &self.Y[j, 0], self.d)
+        return self.distance_metric.rdist(&self.X[i, 0], &self.Y[j, 0], self.n_features)
 
     @final
     cdef DTYPE_t dist(self, ITYPE_t i, ITYPE_t j) nogil:
-        return self.distance_metric.dist(&self.X[i, 0], &self.Y[j, 0], self.d)
+        return self.distance_metric.dist(&self.X[i, 0], &self.Y[j, 0], self.n_features)
+
+
+@final
+cdef class SparseSparseDatasetsPair(DatasetsPair):
+    """Compute distances between vectors of two CSR matrices.
+
+    Parameters
+    ----------
+    X: sparse matrix of shape (n_samples_X, n_features)
+        Rows represent vectors. Must be in CSR format.
+
+    Y: sparse matrix of shape (n_samples_Y, n_features)
+        Rows represent vectors. Must be in CSR format.
+
+    distance_metric: DistanceMetric
+        The distance metric responsible for computing distances
+        between two vectors of (X, Y).
+    """
+
+    def __init__(self, X, Y, DistanceMetric distance_metric):
+        super().__init__(distance_metric, n_features=X.shape[1])
+
+        self.X_data, self.X_indices, self.X_indptr = self.unpack_csr_matrix(X)
+        self.Y_data, self.Y_indices, self.Y_indptr = self.unpack_csr_matrix(Y)
+
+    @final
+    cdef ITYPE_t n_samples_X(self) nogil:
+        return self.X_indptr.shape[0] - 1
+
+    @final
+    cdef ITYPE_t n_samples_Y(self) nogil:
+        return self.Y_indptr.shape[0] -1
+
+    @final
+    cdef DTYPE_t surrogate_dist(self, ITYPE_t i, ITYPE_t j) nogil:
+        return self.distance_metric.rdist_csr(
+            x1_data=self.X_data,
+            x1_indices=self.X_indices,
+            x2_data=self.Y_data,
+            x2_indices=self.Y_indices,
+            x1_start=self.X_indptr[i],
+            x1_end=self.X_indptr[i + 1],
+            x2_start=self.Y_indptr[j],
+            x2_end=self.Y_indptr[j + 1],
+            size=self.n_features,
+        )
+
+    @final
+    cdef DTYPE_t dist(self, ITYPE_t i, ITYPE_t j) nogil:
+        return self.distance_metric.dist_csr(
+            x1_data=self.X_data,
+            x1_indices=self.X_indices,
+            x2_data=self.Y_data,
+            x2_indices=self.Y_indices,
+            x1_start=self.X_indptr[i],
+            x1_end=self.X_indptr[i + 1],
+            x2_start=self.Y_indptr[j],
+            x2_end=self.Y_indptr[j + 1],
+            size=self.n_features,
+        )
+
+
+@final
+cdef class SparseDenseDatasetsPair(DatasetsPair):
+    """Compute distances between vectors of a CSR matrix and a dense array.
+
+    Parameters
+    ----------
+    X: sparse matrix of shape (n_samples_X, n_features)
+        Rows represent vectors. Must be in CSR format.
+
+    Y: ndarray of shape (n_samples_Y, n_features)
+        Rows represent vectors. Must be C-contiguous.
+
+    distance_metric: DistanceMetric
+        The distance metric responsible for computing distances
+        between two vectors of (X, Y).
+    """
+
+    def __init__(self, X, Y, DistanceMetric distance_metric):
+        super().__init__(distance_metric, n_features=X.shape[1])
+
+        self.X_data, self.X_indices, self.X_indptr = self.unpack_csr_matrix(X)
+
+        # Y array already has been checked here
+        self.n_Y = Y.shape[0]
+        self.Y_data = np.ravel(Y)
+
+        # Since Y vectors are dense, we can use a single arrays
+        # of indices of self.n_features elements instead of
+        # a self.n_Y × self.n_features matrices.
+        # The implementations of DistanceMetric.{dist_csr,rdist_csr}
+        # support this representation.
+        self.Y_indices = np.arange(self.n_features, dtype=SPARSE_INDEX_TYPE)
+
+    @final
+    cdef ITYPE_t n_samples_X(self) nogil:
+        return self.X_indptr.shape[0] - 1
+
+    @final
+    cdef ITYPE_t n_samples_Y(self) nogil:
+        return self.n_Y
+
+    @final
+    cdef DTYPE_t surrogate_dist(self, ITYPE_t i, ITYPE_t j) nogil:
+        return self.distance_metric.rdist_csr(
+            x1_data=self.X_data,
+            x1_indices=self.X_indices,
+            x2_data=self.Y_data,
+            x2_indices=self.Y_indices,
+            x1_start=self.X_indptr[i],
+            x1_end=self.X_indptr[i + 1],
+            x2_start=j * self.n_features,
+            x2_end=(j + 1) * self.n_features,
+            size=self.n_features,
+        )
+
+    @final
+    cdef DTYPE_t dist(self, ITYPE_t i, ITYPE_t j) nogil:
+        return self.distance_metric.dist_csr(
+            x1_data=self.X_data,
+            x1_indices=self.X_indices,
+            x2_data=self.Y_data,
+            x2_indices=self.Y_indices,
+            x1_start=self.X_indptr[i],
+            x1_end=self.X_indptr[i + 1],
+            x2_start=j * self.n_features,
+            x2_end=(j + 1) * self.n_features,
+            size=self.n_features,
+        )
+
+
+@final
+cdef class DenseSparseDatasetsPair(DatasetsPair):
+    """Compute distances between vectors of a dense array and a CSR matrix.
+
+    Parameters
+    ----------
+    X: ndarray of shape (n_samples_X, n_features)
+        Rows represent vectors. Must be C-contiguous.
+
+    Y: sparse matrix of shape (n_samples_Y, n_features)
+        Rows represent vectors. Must be in CSR format.
+
+    distance_metric: DistanceMetric
+        The distance metric responsible for computing distances
+        between two vectors of (X, Y).
+    """
+
+    def __init__(self, X, Y, DistanceMetric distance_metric):
+        super().__init__(distance_metric, n_features=X.shape[1])
+        # Swapping arguments on the constructor
+        self.datasets_pair = SparseDenseDatasetsPair(Y, X, distance_metric)
+
+    @final
+    cdef ITYPE_t n_samples_X(self) nogil:
+        # Swapping interface
+        return self.datasets_pair.n_samples_Y()
+
+    @final
+    cdef ITYPE_t n_samples_Y(self) nogil:
+        # Swapping interface
+        return self.datasets_pair.n_samples_X()
+
+    @final
+    cdef DTYPE_t surrogate_dist(self, ITYPE_t i, ITYPE_t j) nogil:
+        # Swapping arguments on the same interface
+        return self.datasets_pair.surrogate_dist(j, i)
+
+    @final
+    cdef DTYPE_t dist(self, ITYPE_t i, ITYPE_t j) nogil:
+        # Swapping arguments on the same interface
+        return self.datasets_pair.dist(j, i)
