@@ -221,7 +221,7 @@ def _estimator_has(attr):
     """Check if we can delegate a method to the underlying estimator.
 
     First, we check the first fitted estimator if available, otherwise we
-    check the estimator property.
+    check the estimator attribute.
     """
 
     def check(self):
