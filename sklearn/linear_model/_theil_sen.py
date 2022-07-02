@@ -8,7 +8,7 @@ A Theil-Sen Estimator for Multiple Linear Regression Model
 
 
 import warnings
-import numbers
+from numbers import Integral, Real
 from itertools import combinations
 
 import numpy as np
@@ -20,7 +20,7 @@ from joblib import Parallel, effective_n_jobs
 from ._base import LinearModel
 from ..base import RegressorMixin
 from ..utils import check_random_state
-from ..utils.validation import check_scalar
+from ..utils._param_validation import Interval
 from ..utils.fixes import delayed
 from ..exceptions import ConvergenceWarning
 
@@ -322,6 +322,18 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
     array([-31.5871...])
     """
 
+    _parameter_constraints = {
+        "fit_intercept": ["boolean"],
+        "copy_X": ["boolean"],
+        "max_subpopulation": [Interval(Integral, 1, None, closed="left")],
+        "n_subsamples": [None, Integral],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
+        "tol": [Interval(Real, 0.0, None, closed="left")],
+        "random_state": ["random_state"],
+        "n_jobs": [None, Integral],
+        "verbose": ["boolean"],
+    }
+
     def __init__(
         self,
         *,
@@ -377,14 +389,6 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
         else:
             n_subsamples = min(n_dim, n_samples)
 
-        self._max_subpopulation = check_scalar(
-            self.max_subpopulation,
-            "max_subpopulation",
-            # target_type should be numbers.Integral but can accept float
-            # for backward compatibility reasons
-            target_type=(numbers.Real, numbers.Integral),
-            min_val=1,
-        )
         all_combinations = max(1, np.rint(binom(n_samples, n_subsamples)))
         n_subpopulation = int(min(self._max_subpopulation, all_combinations))
 
@@ -405,6 +409,7 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
         self : returns an instance of self.
             Fitted `TheilSenRegressor` estimator.
         """
+        self._validate_params()
         random_state = check_random_state(self.random_state)
         X, y = self._validate_data(X, y, y_numeric=True)
         n_samples, n_features = X.shape
