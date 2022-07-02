@@ -132,6 +132,12 @@ Changelog
 - |Efficiency| Improve runtime performance of :class:`ensemble.IsolationForest`
   by avoiding data copies. :pr:`23252` by :user:`Zhehao Liu <MaxwellLZH>`.
 
+- |Enhancement| Rename parameter `base_estimator` to `estimator` in
+   :class:`ensemble.BaseBagging`, :class:`ensemble.BaggingClassifier`,
+   :class:`ensemble.BaggingRegressor` to improve readability and for consistency.
+   `base_estimator` is deprecated and will be removed in 1.4.
+   :pr:`23819` by :user:`Adrian Trujillo <trujillo9616>` and :user:`Edoardo Abati <EdAbati>`.
+
 :mod:`sklearn.decomposition`
 ............................
 
