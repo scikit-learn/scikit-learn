@@ -465,9 +465,9 @@ def test_check_inputs_predict_stages():
         predict_stages(clf.estimators_, x_fortran, clf.learning_rate, score)
 
 
-def test_max_feature_regression():
+def test_max_feature_regression(global_random_seed):
     # Test to make sure random state is set properly.
-    X, y = datasets.make_hastie_10_2(n_samples=12000, random_state=1)
+    X, y = datasets.make_hastie_10_2(n_samples=12000, random_state=global_random_seed)
 
     X_train, X_test = X[:2000], X[2000:]
     y_train, y_test = y[:2000], y[2000:]
@@ -478,7 +478,7 @@ def test_max_feature_regression():
         max_depth=2,
         learning_rate=0.1,
         max_features=2,
-        random_state=1,
+        random_state=global_random_seed,
     )
     gbrt.fit(X_train, y_train)
     log_loss = gbrt._loss(y_test, gbrt.decision_function(X_test))
