@@ -149,7 +149,7 @@ def _alpha_grid(
             "your estimator with the appropriate `alphas=` "
             "argument."
         )
-    if Xy is not None and ((sample_weight is None) or (fit_intercept is False)):
+    if Xy is not None:
         Xyw = Xy
     else:
         X, y, X_offset, _, _ = _preprocess_data(
@@ -162,7 +162,7 @@ def _alpha_grid(
             check_input=False,
         )
         if sample_weight is not None:
-            yw = y * sample_weight / sample_weight.mean()
+            yw = y * sample_weight
         else:
             yw = y
         if sparse.issparse(X):
@@ -172,7 +172,10 @@ def _alpha_grid(
 
     if Xyw.ndim == 1:
         Xyw = Xyw[:, np.newaxis]
-    n_samples = X.shape[0]
+    if sample_weight is not None:
+        n_samples = sample_weight.sum()
+    else:
+        n_samples = X.shape[0]
     alpha_max = np.max(np.sqrt(np.sum(Xyw**2, axis=1))) / (l1_ratio * n_samples)
 
     if alpha_max <= np.finfo(float).resolution:
