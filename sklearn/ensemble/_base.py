@@ -127,24 +127,24 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         # still change. Eg., when grid-searching with the nested object syntax.
         # self.estimators_ needs to be filled by the derived classes in fit.
 
+    def _validate_n_estimators(self):
+        """Check the n_estimator attribute."""
+        if not isinstance(self.n_estimators, numbers.Integral):
+            raise ValueError(
+                f"n_estimators must be an integer, got {type(self.n_estimators)}."
+            )
+
+        if self.n_estimators <= 0:
+            raise ValueError(
+                f"n_estimators must be greater than zero, got {self.n_estimators}."
+            )
+
     def _validate_estimator(self, default=None):
         """Check the estimator and the n_estimator attribute.
 
         Sets the base_estimator_` attributes.
         """
-        if not isinstance(self.n_estimators, numbers.Integral):
-            raise ValueError(
-                "n_estimators must be an integer, got {0}.".format(
-                    type(self.n_estimators)
-                )
-            )
-
-        if self.n_estimators <= 0:
-            raise ValueError(
-                "n_estimators must be greater than zero, got {0}.".format(
-                    self.n_estimators
-                )
-            )
+        self._validate_n_estimators()
 
         if self.base_estimator is not None:
             self.base_estimator_ = self.base_estimator
