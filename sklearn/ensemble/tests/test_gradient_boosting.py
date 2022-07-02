@@ -1111,14 +1111,18 @@ def test_complete_regression():
     assert tree.children_left[tree.children_left == TREE_LEAF].shape[0] == k + 1
 
 
-def test_zero_estimator_reg():
+def test_zero_estimator_reg(global_random_seed):
     # Test if init='zero' works for regression by checking that it is better
     # than a simple baseline.
 
     baseline = DummyRegressor(strategy="mean").fit(X_reg, y_reg)
     mse_baseline = mean_squared_error(baseline.predict(X_reg), y_reg)
     est = GradientBoostingRegressor(
-        n_estimators=5, max_depth=1, random_state=1, init="zero", learning_rate=0.5
+        n_estimators=5,
+        max_depth=1,
+        random_state=global_random_seed,
+        init="zero",
+        learning_rate=0.5,
     )
     est.fit(X_reg, y_reg)
     y_pred = est.predict(X_reg)
@@ -1132,13 +1136,13 @@ def test_zero_estimator_reg():
         est.fit(X_reg, y_reg)
 
 
-def test_zero_estimator_clf():
+def test_zero_estimator_clf(global_random_seed):
     # Test if init='zero' works for classification.
     X = iris.data
     y = np.array(iris.target)
 
     est = GradientBoostingClassifier(
-        n_estimators=20, max_depth=1, random_state=1, init="zero"
+        n_estimators=20, max_depth=1, random_state=global_random_seed, init="zero"
     )
     est.fit(X, y)
 
@@ -1149,7 +1153,7 @@ def test_zero_estimator_clf():
     y[mask] = 1
     y[~mask] = 0
     est = GradientBoostingClassifier(
-        n_estimators=20, max_depth=1, random_state=1, init="zero"
+        n_estimators=20, max_depth=1, random_state=global_random_seed, init="zero"
     )
     est.fit(X, y)
     assert est.score(X, y) > 0.96
