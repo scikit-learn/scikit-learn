@@ -769,6 +769,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         self : object
             Fitted estimator.
         """
+        # TODO(1.4): Remove when base_estimator is removed
         if self.base_estimator != "deprecated":
             warn(
                 "`base_estimator` was renamed to `estimator` in version 1.2 and "
@@ -1226,6 +1227,7 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         self : object
             Fitted estimator.
         """
+        # TODO(1.4): Remove when base_estimator is removed
         if self.base_estimator != "deprecated":
             warn(
                 "`base_estimator` was renamed to `estimator` in version 1.2 and "
