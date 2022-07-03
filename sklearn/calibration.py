@@ -955,7 +955,7 @@ def calibration_curve(
     -------
     prob_true : ndarray of shape (n_bins,) or smaller
         The proportion of samples whose class is the positive class, in each
-        bin (fraction of positives).
+        bin (fraction of positives), aka conditional event probability.
 
     prob_pred : ndarray of shape (n_bins,) or smaller
         The mean predicted probability in each bin.
@@ -1057,7 +1057,7 @@ class CalibrationDisplay:
     ----------
     prob_true : ndarray of shape (n_bins,)
         The proportion of samples whose class is the positive class (fraction
-        of positives), in each bin.
+        of positives), in each bin, aka conditional event probability.
 
     prob_pred : ndarray of shape (n_bins,)
         The mean predicted probability in each bin.
