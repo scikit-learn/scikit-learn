@@ -135,7 +135,7 @@ and ``details`` attributes::
   'md5_checksum': '3c479a6885bfa0438971388283a1ce32'}
 
 
-The ``DESCR`` contains a free-text description of the data, while ``details``
+The ``DESCR`` contains full description of the dataset. while ``details``
 contains a dictionary of meta-data stored by openml, like the dataset id.
 For more details, see the `OpenML documentation
 <https://docs.openml.org/#data>`_ The ``data_id`` of the mice protein dataset
