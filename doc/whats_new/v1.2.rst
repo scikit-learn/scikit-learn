@@ -30,6 +30,12 @@ random sampling procedures.
   :pr:`10805` by :user:`Mathias Andersen <MrMathias>` and
   :pr:`23471` by :user:`Meekail Zain <micky774>`
 
+- |Enhancement| :class:`linear_model.GammaRegressor`,
+  :class:`linear_model.PoissonRegressor` and :class:`linear_model.TweedieRegressor`
+  can reach higher precision with the lbfgs solver, in particular when `tol` is set
+  to a tiny value. Moreover, `verbose` is now properly propagated to L-BFGS-B.
+  :pr:`23619` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 Changes impacting all modules
 -----------------------------
 
@@ -156,6 +162,12 @@ Changelog
   `solver="newton-cg"`, `fit_intercept=True`, and a single feature. :pr:`23608`
   by `Tom Dupre la Tour`_.
 
+- |Enhancement| :class:`linear_model.GammaRegressor`,
+  :class:`linear_model.PoissonRegressor` and :class:`linear_model.TweedieRegressor`
+  can reach higher precision with the lbfgs solver, in particular when `tol` is set
+  to a tiny value. Moreover, `verbose` is now properly propagated to L-BFGS-B.
+  :pr:`23619` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 - |API| The default value for the `solver` parameter in
   :class:`linear_model.QuantileRegressor` will change from `"interior-point"`
   to `"highs"` in version 1.4.
@@ -168,7 +180,7 @@ Changelog
   negative likelihood ratios derived from the confusion matrix
   of a binary classification problem. :pr:`22518` by
   :user:`Arturo Amor <ArturoAmorQ>`.
-  
+
 - |Fix| :func:`metrics.ndcg_score` will now trigger a warning when the `y_true`
   value contains a negative value. Users may still use negative values, but the
   result may not be between 0 and 1. Starting in v1.4, passing in negative
