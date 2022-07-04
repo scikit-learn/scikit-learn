@@ -12,6 +12,7 @@ from ._pairwise_distances import PairwiseDistances64
 from ._radius_neighborhood import PairwiseDistancesRadiusNeighborhood64
 
 from ... import get_config
+from ...utils.validation import _is_arraylike_not_scalar
 
 
 def sqeuclidean_row_norms(X, num_threads):
@@ -80,12 +81,13 @@ class PairwiseDistancesReduction:
         -------
         True if the PairwiseDistancesReduction can be used, else False.
         """
-        dtypes_validity = X.dtype == Y.dtype == np.float64
         return (
             get_config().get("enable_cython_pairwise_dist", True)
+            and _is_arraylike_not_scalar(X)
+            and _is_arraylike_not_scalar(Y)
+            and X.dtype == Y.dtype == np.float64
             and not issparse(X)
             and not issparse(Y)
-            and dtypes_validity
             and metric in cls.valid_metrics()
         )
 

@@ -1945,8 +1945,10 @@ def pairwise_distances(
             % (metric, _VALID_METRICS)
         )
 
-    if PairwiseDistances.is_usable_for(X, Y, metric=metric):
-        return PairwiseDistances.compute(X, Y, metric=metric, metric_kwargs=kwds)
+    if PairwiseDistances.is_usable_for(X, X if Y is None else Y, metric=metric):
+        return PairwiseDistances.compute(
+            X, X if Y is None else Y, metric=metric, metric_kwargs=kwds
+        )
 
     if metric == "precomputed":
         X, _ = check_pairwise_arrays(
