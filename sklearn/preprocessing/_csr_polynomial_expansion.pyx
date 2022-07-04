@@ -23,7 +23,7 @@ ctypedef fused DATA_T:
     cnp.int64_t
 
 cdef inline INDEX_B_T _deg2_column(INDEX_B_T d, INDEX_B_T i, INDEX_B_T j,
-                                 FLAG_T interaction_only) nogil:
+                                   FLAG_T interaction_only) nogil:
     """Compute the index of the column for a degree 2 expansion
 
     d is the dimensionality of the input data, i and j are the indices

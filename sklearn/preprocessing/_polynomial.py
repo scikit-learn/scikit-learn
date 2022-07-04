@@ -405,7 +405,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
             if self._min_degree <= 1 and self._max_degree > 0:
                 to_stack.append(X)
 
-            # Covnert current stack to valid indices/indptr types
+            # Convert current stack to valid indices/indptr types
             for mat in to_stack:
                 mat.indices = mat.indices.astype(index_t, copy=False)
                 mat.indptr = mat.indptr.astype(index_t, copy=False)
