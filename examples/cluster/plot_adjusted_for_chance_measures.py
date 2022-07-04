@@ -83,8 +83,7 @@ def random_labels(n_samples, n_classes):
 # Another function will use the `random_labels` function to create a fixed set
 # of ground truth labels (`labels_a`) distributed in `n_classes` and then score
 # several sets of randomly "predicted" labels (`labels_b`) to assez the
-# variability of a given metric. This is done by varying the `n_clusters` in the
-# range of [`min_n_clusters`, `max_n_clusters`].
+# variability of a given metric at a given `n_clusters`.
 
 
 def fixed_classes_uniform_labelings_scores(
@@ -93,14 +92,18 @@ def fixed_classes_uniform_labelings_scores(
     scores = np.zeros((len(n_clusters_range), n_runs))
     labels_a = random_labels(n_samples=n_samples, n_classes=n_classes)
 
-    for i, k in enumerate(n_clusters_range):
+    for i, n_clusters in enumerate(n_clusters_range):
         for j in range(n_runs):
-            labels_b = random_labels(n_samples=n_samples, n_classes=k)
+            labels_b = random_labels(n_samples=n_samples, n_classes=n_clusters)
             scores[i, j] = score_func(labels_a, labels_b)
     return scores
 
 
 # %%
+# In this first example we set the number of clases (true number of clusters) to
+# `n_classes=10`. The number of clusters varies over the values provided by
+# `n_clusters_range`.
+
 import matplotlib.pyplot as plt
 from time import time
 
@@ -141,46 +144,37 @@ plt.legend(plots, names)
 plt.show()
 
 # %%
-# Except for the Rand-Index, all the scoring metrics seem to show a linear
-# behaviour as a function of the number of clusters in the predicted labels.
+# The Rand-Index satures for `n_clusters`>`n_classes`. Other non-adjusted
+# measures such as the V-Measure show a linear dependency between the number of
+# clusters and the number of samples.
 #
-# Non-adjusted measures such as the V-Measure show a dependency between the
-# number of clusters and the number of samples: the mean V-Measure of random
-# labeling increases significantly as the number of clusters is closer to the
-# total number of samples used to compute the measure.
-#
-# Adjusted for chance measure, such as ARI, display some random variations
-# centered around a mean score of 0.0 for any number of samples and clusters.
+# Adjusted for chance measure, such as ARI and AMI, display some random
+# variations centered around a mean score of 0.0, independently of the number of
+# samples and clusters.
 #
 # 2nd experiment: varying number of classes and assigned number of clusters
 # -------------------------------------------------------------------------
 #
-# In this section we define a function that uses several metrics to score 2
-# uniformly-distributed random labelings.
-#
-# Both random labelings have the same number of clusters for each value possible
-# value in `n_clusters_range`.
+# In this section we define a similar function that uses several metrics to
+# score 2 uniformly-distributed random labelings. In this case the number of
+# classes and assigned number of clusters are matched for each possible value in
+# `n_clusters_range`.
 
 
-def uniform_labelings_scores(
-    score_func, n_samples, n_clusters_range, n_runs=5, seed=42
-):
-    # random_labels = np.random.RandomState(seed).randint
+def uniform_labelings_scores(score_func, n_samples, n_clusters_range, n_runs=5):
     scores = np.zeros((len(n_clusters_range), n_runs))
 
-    for i, k in enumerate(n_clusters_range):
+    for i, n_clusters in enumerate(n_clusters_range):
         for j in range(n_runs):
-            labels_a = random_labels(n_samples=n_samples, n_classes=k)
-            labels_b = random_labels(n_samples=n_samples, n_classes=k)
+            labels_a = random_labels(n_samples=n_samples, n_classes=n_clusters)
+            labels_b = random_labels(n_samples=n_samples, n_classes=n_clusters)
             scores[i, j] = score_func(labels_a, labels_b)
     return scores
 
 
 # %%
-# Plot clustering scores
-# ----------------------
-#
-# We first score 2 independent random clusterings with equal cluster number
+# In this case we use `n_samples=100` to show the effect of having a number of
+# clusters similar or equal to the number of samples.
 
 n_samples = 100
 n_clusters_range = np.linspace(2, n_samples, 10).astype(int)
@@ -217,7 +211,9 @@ plt.show()
 # %%
 # We observe similar results as for the first experiment: adjusted for chance
 # metrics stay constantly near zero while other metrics tend to get larger with
-# finer-grained labelings.
+# finer-grained labelings. The mean V-Measure of random labeling increases
+# significantly as the number of clusters is closer to the total number of
+# samples used to compute the measure.
 #
 # Only adjusted measures can hence safely be used as a consensus index to
 # evaluate the average stability of clustering algorithms for a given value of k
