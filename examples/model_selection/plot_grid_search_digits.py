@@ -186,7 +186,7 @@ from sklearn.metrics import classification_report
 
 y_pred = grid_search.predict(X_test)
 print(
-    "\nOur selected model will have the following performance on the "
+    "\nOur selected model has the following performance on the "
     f"testing set:\n\n {classification_report(y_test, y_pred)}"
 )
 
