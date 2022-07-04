@@ -125,7 +125,7 @@ def _wrap_output_with_container(
     # output_config.dense == "pandas"
     return _wrap_in_pandas_container(
         original_data=original_data,
-        index=original_data,
+        index=index,
         columns=getattr(estimator, "get_feature_names_out", None),
         constructor_kwargs=constructor_kwargs,
     )
