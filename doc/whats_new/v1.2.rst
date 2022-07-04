@@ -30,6 +30,12 @@ random sampling procedures.
   :pr:`10805` by :user:`Mathias Andersen <MrMathias>` and
   :pr:`23471` by :user:`Meekail Zain <micky774>`
 
+- |Enhancement| :class:`linear_model.GammaRegressor`,
+  :class:`linear_model.PoissonRegressor` and :class:`linear_model.TweedieRegressor`
+  can reach higher precision with the lbfgs solver, in particular when `tol` is set
+  to a tiny value. Moreover, `verbose` is now properly propagated to L-BFGS-B.
+  :pr:`23619` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 Changes impacting all modules
 -----------------------------
 
@@ -113,6 +119,16 @@ Changelog
   its memory footprint and runtime.
   :pr:`22268` by :user:`MohamedBsh <Bsh>`.
 
+:mod:`sklearn.decomposition`
+............................
+
+- |API| The `n_iter` parameter of :class:`decomposition.MiniBatchSparsePCA` is
+  deprecated and replaced by the parameters `max_iter`, `tol`, and
+  `max_no_improvement` to be consistent with
+  :class:`decomposition.MiniBatchDictionaryLearning`. `n_iter` will be removed
+  in version 1.3. :pr:`23726` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+
 :mod:`sklearn.ensemble`
 .......................
 
@@ -149,6 +165,17 @@ Changelog
   `solver="newton-cg"`, `fit_intercept=True`, and a single feature. :pr:`23608`
   by `Tom Dupre la Tour`_.
 
+- |Enhancement| :class:`linear_model.GammaRegressor`,
+  :class:`linear_model.PoissonRegressor` and :class:`linear_model.TweedieRegressor`
+  can reach higher precision with the lbfgs solver, in particular when `tol` is set
+  to a tiny value. Moreover, `verbose` is now properly propagated to L-BFGS-B.
+  :pr:`23619` by :user:`Christian Lorentzen <lorentzenchr>`.
+
+- |API| The default value for the `solver` parameter in
+  :class:`linear_model.QuantileRegressor` will change from `"interior-point"`
+  to `"highs"` in version 1.4.
+  :pr:`23637` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.metrics`
 ......................
 
@@ -171,7 +198,7 @@ Changelog
 ........................
 
 - |Enhancement| :class:`neighbors.KernelDensity` bandwidth parameter now accepts
-  definition using Scott's and Silvermann's estimation methods.
+  definition using Scott's and Silverman's estimation methods.
   :pr:`10468` by :user:`Ruben <icfly2>` and :pr:`22993` by
   :user:`Jovan Stojanovic <jovan-stojanovic>`.
 
@@ -208,6 +235,14 @@ Changelog
 
 :mod:`sklearn.manifold`
 .......................
+
+- |Feature| Adds option to use the normalized stress in `manifold.MDS`. This is
+  enabled by setting the new `normalize` parameter to `True`.
+  :pr:`10168` by :user:`Łukasz Borchmann <Borchmann>`,
+  :pr:`12285` by :user:`Matthias Miltenberger <mattmilten>`,
+  :pr:`13042` by :user:`Matthieu Parizy <matthieu-pa>`,
+  :pr:`18094` by :user:`Roth E Conrad <rotheconrad>` and
+  :pr:`22562` by :user:`Meekail Zain <micky774>`.
 
 - |Enhancement| Adds `eigen_tol` parameter to
   :class:`manifold.SpectralEmbedding`. Both :func:`manifold.spectral_embedding`

@@ -16,6 +16,7 @@ from sklearn.utils._param_validation import _InstancesOf
 from sklearn.utils._param_validation import _NoneConstraint
 from sklearn.utils._param_validation import _RandomStates
 from sklearn.utils._param_validation import _SparseMatrices
+from sklearn.utils._param_validation import _VerboseHelper
 from sklearn.utils._param_validation import make_constraint
 from sklearn.utils._param_validation import generate_invalid_param_val
 from sklearn.utils._param_validation import generate_valid_param
@@ -162,6 +163,7 @@ def test_instances_of_type_human_readable(type, expected_type_name):
         Interval(Real, 0, None, closed="left"),
         Interval(Real, None, None, closed="neither"),
         StrOptions({"a", "b", "c"}),
+        _VerboseHelper(),
     ],
 )
 def test_generate_invalid_param_val(constraint):
@@ -269,6 +271,11 @@ def test_generate_invalid_param_val_2_intervals(integer_interval, real_interval)
     [
         [_ArrayLikes()],
         [_InstancesOf(list)],
+        [_Callables()],
+        [_NoneConstraint()],
+        [_RandomStates()],
+        [_SparseMatrices()],
+        [_Booleans()],
         [Interval(Real, None, None, closed="both")],
         [
             Interval(Integral, 0, None, closed="left"),
@@ -294,23 +301,7 @@ def test_generate_invalid_param_val_all_valid(constraints):
         _RandomStates(),
         _SparseMatrices(),
         _Booleans(),
-    ],
-)
-def test_generate_invalid_param_val_not_error(constraint):
-    """Check that the value generated does not satisfy the constraint"""
-    with pytest.raises(NotImplementedError):
-        generate_invalid_param_val(constraint)
-
-
-@pytest.mark.parametrize(
-    "constraint",
-    [
-        _ArrayLikes(),
-        _Callables(),
-        _InstancesOf(list),
-        _NoneConstraint(),
-        _RandomStates(),
-        _SparseMatrices(),
+        _VerboseHelper(),
         StrOptions({"a", "b", "c"}),
         Interval(Integral, None, None, closed="neither"),
         Interval(Integral, 0, 10, closed="neither"),
@@ -345,6 +336,7 @@ def test_generate_valid_param(constraint):
         (int, 1),
         (Real, 0.5),
         ("boolean", False),
+        ("verbose", 1),
     ],
 )
 def test_is_satisfied_by(constraint_declaration, value):
@@ -365,6 +357,7 @@ def test_is_satisfied_by(constraint_declaration, value):
         (callable, _Callables),
         (int, _InstancesOf),
         ("boolean", _Booleans),
+        ("verbose", _VerboseHelper),
     ],
 )
 def test_make_constraint(constraint_declaration, expected_constraint_class):

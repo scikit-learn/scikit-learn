@@ -1,6 +1,7 @@
 # Authors: Manoj Kumar mks542@nyu.edu
 # License: BSD 3 clause
 
+from numbers import Integral, Real
 import numpy as np
 
 from scipy import optimize
@@ -8,6 +9,7 @@ from scipy import optimize
 from ..base import BaseEstimator, RegressorMixin
 from ._base import LinearModel
 from ..utils import axis0_safe_slice
+from ..utils._param_validation import Interval
 from ..utils.validation import _check_sample_weight
 from ..utils.extmath import safe_sparse_dot
 from ..utils.optimize import _check_optimize_result
@@ -143,17 +145,17 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
 
     Parameters
     ----------
-    epsilon : float, greater than 1.0, default=1.35
+    epsilon : float, default=1.35
         The parameter epsilon controls the number of samples that should be
         classified as outliers. The smaller the epsilon, the more robust it is
-        to outliers.
+        to outliers. Epsilon must be in the range `[1, inf)`.
 
     max_iter : int, default=100
         Maximum number of iterations that
         ``scipy.optimize.minimize(method="L-BFGS-B")`` should run for.
 
     alpha : float, default=0.0001
-        Regularization parameter.
+        Regularization parameter. Must be in the range `[0, inf)`.
 
     warm_start : bool, default=False
         This is useful if the stored attributes of a previously used model
@@ -242,6 +244,15 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
     Linear Regression coefficients: [-1.9221...  7.0226...]
     """
 
+    _parameter_constraints = {
+        "epsilon": [Interval(Real, 1.0, None, closed="left")],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
+        "alpha": [Interval(Real, 0, None, closed="left")],
+        "warm_start": ["boolean"],
+        "fit_intercept": ["boolean"],
+        "tol": [Interval(Real, 0.0, None, closed="left")],
+    }
+
     def __init__(
         self,
         *,
@@ -279,6 +290,7 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
         self : object
             Fitted `HuberRegressor` estimator.
         """
+        self._validate_params()
         X, y = self._validate_data(
             X,
             y,
@@ -289,11 +301,6 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
         )
 
         sample_weight = _check_sample_weight(sample_weight, X)
-
-        if self.epsilon < 1.0:
-            raise ValueError(
-                "epsilon should be greater than or equal to 1.0, got %f" % self.epsilon
-            )
 
         if self.warm_start and hasattr(self, "coef_"):
             parameters = np.concatenate((self.coef_, [self.intercept_, self.scale_]))
