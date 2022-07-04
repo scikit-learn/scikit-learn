@@ -8,25 +8,23 @@ from sklearn.utils import Bunch
 
 __all__ = [
     "get_output_config",
-    "make_named_container",
     "SetOutputMixin",
     "safe_set_output",
 ]
 
 
-def make_named_container(
-    output,
+def _wrap_in_pandas_container(
+    original_data,
     *,
     index=None,
     columns=None,
-    dense_container="default",
     constructor_kwargs=None,
 ):
     """Create a named container.
 
     Parameters
     ----------
-    output : ndarray, sparse matrix or pandas DataFrame
+    original_data : ndarray, sparse matrix or pandas DataFrame
         Container to name.
 
     index : array-like, default=None
@@ -36,43 +34,30 @@ def make_named_container(
         The column names or a callable that returns the column names. This is
         useful if the column names require some computation.
 
-    dense_container : {"default", "pandas"}, default="default"
-        Container used for dense data.
-
     constructor_kwargs : dict, default=None
         Keyword arguments passed to container constructor.
 
     Returns
     -------
-    output : DataFrame or ndarray
+    named_container : DataFrame or ndarray
         Container with column names or unchanged `output`.
     """
-    if dense_container not in {"default", "pandas"}:
-        raise ValueError(
-            f"dense_container must be 'default' or 'pandas' got {dense_container}"
-        )
-
-    if dense_container == "default":
-        return output
+    # Already a pandas DataFrame
+    if hasattr(original_data, "iloc"):
+        return original_data
 
     constructor_kwargs = constructor_kwargs or {}
 
-    # dense_container == "pandas"
-    if issparse(output):
+    if issparse(original_data):
         raise ValueError("Pandas output does not support sparse data")
 
     if callable(columns):
         columns = columns()
 
-    if hasattr(output, "columns"):
-        if columns is not None:
-            output.columns = columns
-        if index is not None:
-            output.index = index
-        return output
-
-    pd = check_pandas_support("make_named_container")
-    return pd.DataFrame(output, index=index, columns=columns, **constructor_kwargs)
+    pd = check_pandas_support("_wrap_in_pandas_container")
+    return pd.DataFrame(
+        original_data, index=index, columns=columns, **constructor_kwargs
+    )
 
 
 def get_output_config(estimator, method):
@@ -101,7 +86,7 @@ def get_output_config(estimator, method):
 
 
 def _wrap_output_with_container(
-    estimator, output, method, index, constructor_kwargs=None
+    estimator, original_data, method, index, constructor_kwargs=None
 ):
     """Wrap output with container based on an estimator's or global config.
 
@@ -110,8 +95,8 @@ def _wrap_output_with_container(
     estimator : estimator instance
         Estimator to get the output configuration from.
 
-    output : ndarray
-        Output to to wrap with container.
+    original_data : ndarray
+        Data to wrap with container.
 
     method : str
         Method that returned `output`.
@@ -128,12 +113,20 @@ def _wrap_output_with_container(
         Wrapped output with column names and index or `output` itself if wrapping is
         not configured.
     """
-    output_container = get_output_config(estimator, method)
-    return make_named_container(
-        output=output,
-        index=index,
+    output_config = get_output_config(estimator, method)
+    if output_config.dense not in {"default", "pandas"}:
+        raise ValueError(
+            f"output config must be 'default' or 'pandas' got {output_config.dense}"
+        )
+
+    if output_config.dense == "default":
+        return original_data
+
+    # output_config.dense == "pandas"
+    return _wrap_in_pandas_container(
+        original_data=original_data,
+        index=original_data,
         columns=getattr(estimator, "get_feature_names_out", None),
-        dense_container=output_container.dense,
         constructor_kwargs=constructor_kwargs,
     )
 
@@ -143,9 +136,9 @@ def _wrap_method_output(f, method):
 
     @wraps(f)
     def wrapped(self, X, *args, **kwargs):
-        output = f(self, X, *args, **kwargs)
+        original_data = f(self, X, *args, **kwargs)
         return _wrap_output_with_container(
-            self, output, method, getattr(X, "index", None)
+            self, original_data, method, getattr(X, "index", None)
         )
 
     return wrapped
@@ -168,6 +161,10 @@ class SetOutputMixin:
 
     def set_output(self, *, transform=None):
         """Set output container.
+
+        .. note:: Experimental API
+            The `set_output` API is experimental and subject to change without
+            deprecation.
 
         Parameters
         ----------
