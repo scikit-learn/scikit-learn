@@ -768,8 +768,8 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
         "manhattan", "cosine", or "precomputed". If set to `None` then
         "euclidean" is used. If linkage is "ward", only "euclidean" is
-        accepted. If "precomputed", a distance matrix (instead of a similarity
-        matrix) is needed as input for the fit method.
+        accepted. If "precomputed", a distance matrix is needed as input for
+        the fit method.
 
         .. versionadded:: 1.2
 
@@ -1131,8 +1131,8 @@ class FeatureAgglomeration(
         Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
         "manhattan", "cosine", or "precomputed". If set to `None` then
         "euclidean" is used. If linkage is "ward", only "euclidean" is
-        accepted. If "precomputed", a distance matrix (instead of a similarity
-        matrix) is needed as input for the fit method.
+        accepted. If "precomputed", a distance matrix is needed as input for
+        the fit method.
 
         .. versionadded:: 1.2
 
