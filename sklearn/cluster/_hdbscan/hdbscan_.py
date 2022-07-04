@@ -111,15 +111,14 @@ def _hdbscan_generic(
 ):
     if metric == "precomputed":
         # Treating this case explicitly, instead of letting
-        #   sklearn.metrics.pairwise_distances handle it,
-        #   enables the usage of numpy.inf in the distance
-        #   matrix to indicate missing distance information.
+        # sklearn.metrics.pairwise_distances handle it,
+        # enables the usage of numpy.inf in the distance
+        # matrix to indicate missing distance information.
         distance_matrix = X
     else:
         distance_matrix = pairwise_distances(X, metric=metric, **metric_params)
 
     if issparse(distance_matrix):
-        # raise TypeError('Sparse distance matrices not yet supported')
         return _hdbscan_sparse_distance_matrix(
             distance_matrix,
             min_samples,

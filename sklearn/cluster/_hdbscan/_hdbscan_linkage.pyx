@@ -239,14 +239,3 @@ cpdef np.ndarray[np.double_t, ndim=2] label(np.ndarray[np.double_t, ndim=2] L):
         U.union(aa, bb)
 
     return result_arr
-
-
-cpdef np.ndarray[np.double_t, ndim=2] single_linkage(distance_matrix):
-
-    cdef np.ndarray[np.double_t, ndim=2] hierarchy
-    cdef np.ndarray[np.double_t, ndim=2] for_labelling
-
-    hierarchy = mst_linkage_core(distance_matrix)
-    for_labelling = hierarchy[np.argsort(hierarchy.T[2]), :]
-
-    return label(for_labelling)
