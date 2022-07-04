@@ -13,7 +13,6 @@ import scipy.sparse as sp
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array, tosequence
 from ..utils.deprecation import deprecated
-from ..utils._param_validation import StrOptions
 
 
 def _tosequence(X):
@@ -100,7 +99,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
 
     _parameter_constraints = {
         "dtype": [type],  # TODO: TypeOptions constraint,
-        "separator": [str, StrOptions({"="})],
+        "separator": [str],
         "sparse": ["boolean"],
         "sort": ["boolean"],
     }
