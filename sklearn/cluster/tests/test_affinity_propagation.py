@@ -30,14 +30,14 @@ X, _ = make_blobs(
 )
 
 
-def test_affinity_propagation():
+def test_affinity_propagation(global_random_seed):
     # Affinity Propagation algorithm
     # Compute similarities
     S = -euclidean_distances(X, squared=True)
     preference = np.median(S) * 10
     # Compute Affinity Propagation
     cluster_centers_indices, labels = affinity_propagation(
-        S, preference=preference, random_state=39
+        S, preference=preference, random_state=global_random_seed
     )
 
     n_clusters_ = len(cluster_centers_indices)
@@ -45,11 +45,13 @@ def test_affinity_propagation():
     assert n_clusters == n_clusters_
 
     af = AffinityPropagation(
-        preference=preference, affinity="precomputed", random_state=28
+        preference=preference, affinity="precomputed", random_state=global_random_seed
     )
     labels_precomputed = af.fit(S).labels_
 
-    af = AffinityPropagation(preference=preference, verbose=True, random_state=37)
+    af = AffinityPropagation(
+        preference=preference, verbose=True, random_state=global_random_seed
+    )
     labels = af.fit(X).labels_
 
     assert_array_equal(labels, labels_precomputed)
@@ -62,7 +64,7 @@ def test_affinity_propagation():
 
     # Test also with no copy
     _, labels_no_copy = affinity_propagation(
-        S, preference=preference, copy=False, random_state=74
+        S, preference=preference, copy=False, random_state=global_random_seed
     )
     assert_array_equal(labels, labels_no_copy)
 
@@ -97,9 +99,9 @@ def test_affinity_propagation_params_validation(input, params, err_type, err_msg
         AffinityPropagation(**params).fit(input)
 
 
-def test_affinity_propagation_predict():
+def test_affinity_propagation_predict(global_random_seed):
     # Test AffinityPropagation.predict
-    af = AffinityPropagation(affinity="euclidean", random_state=63)
+    af = AffinityPropagation(affinity="euclidean", random_state=global_random_seed)
     labels = af.fit_predict(X)
     labels2 = af.predict(X)
     assert_array_equal(labels, labels2)
@@ -239,12 +241,14 @@ def test_affinity_propagation_random_state():
 
 
 @pytest.mark.parametrize("centers", [csr_matrix(np.zeros((1, 10))), np.zeros((1, 10))])
-def test_affinity_propagation_convergence_warning_dense_sparse(centers):
+def test_affinity_propagation_convergence_warning_dense_sparse(
+    centers, global_random_seed
+):
     """Non-regression, see #13334"""
-    rng = np.random.RandomState(42)
+    rng = np.random.RandomState(global_random_seed)
     X = rng.rand(40, 10)
     y = (4 * rng.rand(40)).astype(int)
-    ap = AffinityPropagation(random_state=46)
+    ap = AffinityPropagation(random_state=global_random_seed)
     ap.fit(X, y)
     ap.cluster_centers_ = centers
     with warnings.catch_warnings():
@@ -252,15 +256,15 @@ def test_affinity_propagation_convergence_warning_dense_sparse(centers):
         assert_array_equal(ap.predict(X), np.zeros(X.shape[0], dtype=int))
 
 
-def test_affinity_propagation_float32():
+def test_affinity_propagation_float32(global_random_seed):
     # Test to fix incorrect clusters due to dtype change
     # (non-regression test for issue #10832)
     X = np.array(
         [[1, 0, 0, 0], [0, 1, 1, 0], [0, 1, 1, 0], [0, 0, 0, 1]], dtype="float32"
     )
-    afp = AffinityPropagation(preference=1, affinity="precomputed", random_state=0).fit(
-        X
-    )
+    afp = AffinityPropagation(
+        preference=1, affinity="precomputed", random_state=global_random_seed
+    ).fit(X)
     expected = np.array([0, 1, 1, 2])
     assert_array_equal(afp.labels_, expected)
 
