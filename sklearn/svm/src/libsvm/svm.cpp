@@ -1800,20 +1800,20 @@ static void solve_quantile_svr(
 	double *alpha2 = new double[2*l];
 	double *linear_term = new double[2*l];
 	schar *y = new schar[2*l];
-        double *C = new double[2*l];
-        int i;
+	double *C = new double[2*l];
+	int i;
 
 	for(i=0;i<l;i++)
 	{
 		alpha2[i] = 0;
 		linear_term[i] = -prob->y[i];
 		y[i] = 1;
-                C[i] = prob->W[i]*param->C*param->p;
+		C[i] = prob->W[i]*param->C*param->p;
 
 		alpha2[i+l] = 0;
 		linear_term[i+l] = prob->y[i];
 		y[i+l] = -1;
-                C[i+l] = prob->W[i]*param->C*(1-param->p);
+		C[i+l] = prob->W[i]*param->C*(1-param->p);
 	}
 
 	Solver s;
@@ -1830,7 +1830,7 @@ static void solve_quantile_svr(
 
 	delete[] alpha2;
 	delete[] linear_term;
-        delete[] C;
+	delete[] C;
 	delete[] y;
 }
 
@@ -1919,7 +1919,7 @@ static decision_function svm_train_one(
  			solve_nu_svr(prob,param,alpha,&si,blas_functions);
  			break;
  		case QUANTILE_SVR:
- 		    si.upper_bound = Malloc(double,2*prob->l);
+ 			si.upper_bound = Malloc(double,2*prob->l);
  			solve_quantile_svr(prob,param,alpha,&si,blas_functions);
  			break;
 	}
