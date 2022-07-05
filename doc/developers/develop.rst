@@ -370,8 +370,8 @@ While when `deep=False`, the output will be::
     my_extra_param -> random
     subestimator -> LogisticRegression()
 
-The ``set_params`` on the other hand takes as input each of the
-arguments of ``__init__``, unpacks them into a dict of the form
+On the other hand, ``set_params`` takes the parameters of ``__init__``
+as keyword arguments, unpacks them into a dict of the form
 ``'parameter': value`` and sets the parameter of the estimator using this dict.
 Return value must be an estimator itself.
 
