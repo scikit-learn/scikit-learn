@@ -4,7 +4,6 @@ from scipy.sparse import issparse
 
 from sklearn.utils import check_pandas_support
 from sklearn._config import get_config
-from sklearn.utils import Bunch
 
 __all__ = [
     "get_output_config",
@@ -73,7 +72,7 @@ def get_output_config(estimator, method):
 
     Returns
     -------
-    config : Bunch
+    config : dict
         Dictionary with keys, "dense", that specifies the container for `method`.
     """
     est_sklearn_output_config = getattr(estimator, "_sklearn_output_config", {})
@@ -82,7 +81,7 @@ def get_output_config(estimator, method):
     else:
         container_str = get_config()[f"output_{method}"]
 
-    return Bunch(**{"dense": container_str})
+    return {"dense": container_str}
 
 
 def _wrap_output_with_container(
@@ -114,15 +113,16 @@ def _wrap_output_with_container(
         not configured.
     """
     output_config = get_output_config(estimator, method)
-    if output_config.dense not in {"default", "pandas"}:
+    dense_config = output_config["dense"]
+    if dense_config not in {"default", "pandas"}:
         raise ValueError(
-            f"output config must be 'default' or 'pandas' got {output_config.dense}"
+            f"output config must be 'default' or 'pandas' got {dense_config}"
         )
 
-    if output_config.dense == "default":
+    if dense_config == "default":
         return original_data
 
-    # output_config.dense == "pandas"
+    # dense_config == "pandas"
     return _wrap_in_pandas_container(
         original_data=original_data,
         index=index,

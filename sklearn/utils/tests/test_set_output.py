@@ -63,16 +63,16 @@ def test_safe_set_output():
     est = EstimatorWithSetOutput()
     safe_set_output(est, transform="pandas")
     config = get_output_config(est, "transform")
-    assert config.dense == "pandas"
+    assert config["dense"] == "pandas"
 
     safe_set_output(est, transform="default")
     config = get_output_config(est, "transform")
-    assert config.dense == "default"
+    assert config["dense"] == "default"
 
     # transform is None is a noop, so the config remains "default"
     safe_set_output(est, transform=None)
     config = get_output_config(est, "transform")
-    assert config.dense == "default"
+    assert config["dense"] == "default"
 
 
 def tet_safe_set_output_error():
@@ -93,18 +93,18 @@ def test_get_output_config():
     with config_context(output_transform="pandas"):
         est = EstimatorNoSetOutputWithTransform()
         config = get_output_config(est, "transform")
-        assert config.dense == "pandas"
+        assert config["dense"] == "pandas"
 
         est = EstimatorWithSetOutput()
         # If estimator has not config, use global config
         config = get_output_config(est, "transform")
-        assert config.dense == "pandas"
+        assert config["dense"] == "pandas"
 
         # If estimator has a config, use local config
         est.set_output(transform="default")
         config = get_output_config(est, "transform")
-        assert config.dense == "default"
+        assert config["dense"] == "default"
 
     est.set_output(transform="pandas")
     config = get_output_config(est, "transform")
-    assert config.dense == "pandas"
+    assert config["dense"] == "pandas"
