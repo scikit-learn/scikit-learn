@@ -162,8 +162,8 @@ cdef class DenseDenseDatasetsPair(DatasetsPair):
 
     def __init__(
         self,
-        DTYPE_t[:, ::1] X,
-        DTYPE_t[:, ::1] Y,
+        const DTYPE_t[:, ::1] X,
+        const DTYPE_t[:, ::1] Y,
         DistanceMetric distance_metric,
     ):
         super().__init__(distance_metric, n_features=X.shape[1])
