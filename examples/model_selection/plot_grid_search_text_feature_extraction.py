@@ -155,8 +155,6 @@ def shorten_param(param_name):
 
 cv_results = pd.DataFrame(random_search.cv_results_)
 cv_results = cv_results.rename(shorten_param, axis=1)
-# unigrams are mapped to index 1 and bigrams to index 2
-cv_results["ngram_range"] = cv_results["ngram_range"].apply(lambda x: x[1])
 
 # %%
 # We can use a `plotly.express.scatter
@@ -202,6 +200,8 @@ column_results = param_names + ["mean_test_score", "mean_score_time"]
 transform_funcs = dict.fromkeys(column_results, lambda x: x)
 transform_funcs["alpha"] = math.log10
 transform_funcs["norm"] = lambda x: 2 if x == "l2" else 1
+# unigrams are mapped to index 1 and bigrams to index 2
+transform_funcs["ngram_range"] = lambda x: x[1]
 
 fig = px.parallel_coordinates(
     cv_results[column_results].apply(transform_funcs),
