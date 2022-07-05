@@ -53,7 +53,7 @@ def _wrap_in_pandas_container(
     if callable(columns):
         columns = columns()
 
-    pd = check_pandas_support("_wrap_in_pandas_container")
+    pd = check_pandas_support("Setting output container to 'pandas'")
     return pd.DataFrame(
         original_data, index=index, columns=columns, **constructor_kwargs
     )
@@ -64,10 +64,10 @@ def get_output_config(estimator, method):
 
     Parameters
     ----------
-    estimator : estimator instance, default=None
+    estimator : estimator instance
         If not `None`, check the estimator for output container.
 
-    method : str
+    method : {"transform"}
         Method to get container output for.
 
     Returns
@@ -97,8 +97,8 @@ def _wrap_output_with_container(
     original_data : ndarray
         Data to wrap with container.
 
-    method : str
-        Method that returned `output`.
+    method : {"transform"}
+        Method to get container output for.
 
     index : array-like
         Index to attach to output.
