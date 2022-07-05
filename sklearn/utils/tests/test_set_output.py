@@ -39,7 +39,7 @@ class EstimatorWithoutSetOutputAndWithoutTransform:
 
 class EstimatorNoSetOutputWithTransform:
     def transform(self, X, y=None):
-        return X
+        return X  # pragma: no cover
 
 
 class EstimatorWithSetOutput(SetOutputMixin):
@@ -75,12 +75,36 @@ def test_safe_set_output():
     assert config["dense"] == "default"
 
 
-def tet_safe_set_output_error():
-    """Check transform with invalid config"""
+def test_safe_set_output_error():
+    """Check transform with invalid config."""
     X = np.asarray([[1, 0, 3], [0, 0, 1]])
 
     est = EstimatorWithSetOutput()
     safe_set_output(est, transform="bad")
+
+    msg = "output config must be 'default'"
+    with pytest.raises(ValueError, match=msg):
+        est.transform(X)
+
+
+def test_set_output_method():
+    """Check that the output is pandas."""
+    pd = pytest.importorskip("pandas")
+
+    est = EstimatorWithSetOutput()
+    est.set_output(transform="pandas")
+
+    X = np.asarray([[1, 0, 3], [0, 0, 1]])
+    X_trans = est.transform(X)
+    assert isinstance(X_trans, pd.DataFrame)
+
+
+def test_set_output_method_error():
+    """Check transform fails with invalid transform."""
+
+    est = EstimatorWithSetOutput()
+    est.set_output(transform="bad")
+    X = np.asarray([[1, 0, 3], [0, 0, 1]])
 
     msg = "output config must be 'default'"
     with pytest.raises(ValueError, match=msg):
