@@ -216,61 +216,6 @@ def asgd(klass, X, y, eta, alpha, weight_init=None, intercept_init=0.0):
     return average_weights, average_intercept
 
 
-@pytest.mark.parametrize(
-    "klass",
-    [
-        SGDClassifier,
-        SparseSGDClassifier,
-        SGDRegressor,
-        SparseSGDRegressor,
-        SGDOneClassSVM,
-        SparseSGDOneClassSVM,
-    ],
-)
-@pytest.mark.parametrize("fit_method", ["fit", "partial_fit"])
-@pytest.mark.parametrize(
-    "params, err_msg",
-    [
-        ({"alpha": -0.1}, "alpha must be >= 0"),
-        ({"penalty": "foobar", "l1_ratio": 0.85}, "Penalty foobar is not supported"),
-        ({"loss": "foobar"}, "The loss foobar is not supported"),
-        ({"l1_ratio": 1.1}, r"l1_ratio must be in \[0, 1\]"),
-        ({"learning_rate": "<unknown>"}, "learning rate <unknown> is not supported"),
-        ({"nu": -0.5}, r"nu must be in \(0, 1]"),
-        ({"nu": 2}, r"nu must be in \(0, 1]"),
-        ({"alpha": 0, "learning_rate": "optimal"}, "alpha must be > 0"),
-        ({"eta0": 0, "learning_rate": "constant"}, "eta0 must be > 0"),
-        ({"max_iter": -1}, "max_iter must be > zero"),
-        ({"shuffle": "false"}, "shuffle must be either True or False"),
-        ({"early_stopping": "false"}, "early_stopping must be either True or False"),
-        (
-            {"validation_fraction": -0.1},
-            r"validation_fraction must be in range \(0, 1\)",
-        ),
-        ({"n_iter_no_change": 0}, "n_iter_no_change must be >= 1"),
-    ],
-    # Avoid long error messages in test names:
-    # https://github.com/scikit-learn/scikit-learn/issues/21362
-    ids=lambda x: x[:10].replace("]", "") if isinstance(x, str) else x,
-)
-def test_sgd_estimator_params_validation(klass, fit_method, params, err_msg):
-    """Validate parameters in the different SGD estimators."""
-    try:
-        sgd_estimator = klass(**params)
-    except TypeError as err:
-        if "unexpected keyword argument" in str(err):
-            # skip test if the parameter is not supported by the estimator
-            return
-        raise err
-
-    with pytest.raises(ValueError, match=err_msg):
-        if is_classifier(sgd_estimator) and fit_method == "partial_fit":
-            fit_params = {"classes": np.unique(Y)}
-        else:
-            fit_params = {}
-        getattr(sgd_estimator, fit_method)(X, Y, **fit_params)
-
-
 def _test_warm_start(klass, X, Y, lr):
     # Test that explicit warm restart...
     clf = klass(alpha=0.01, eta0=0.01, shuffle=False, learning_rate=lr)
@@ -670,7 +615,7 @@ def test_partial_fit_weight_class_balanced(klass):
         r"class_weight 'balanced' is not supported for "
         r"partial_fit\. In order to use 'balanced' weights, "
         r"use compute_class_weight\('balanced', classes=classes, y=y\). "
-        r"In place of y you can us a large enough sample "
+        r"In place of y you can use a large enough sample "
         r"of the full training set target to properly "
         r"estimate the class frequency distributions\. "
         r"Pass the resulting weights as the class_weight "
@@ -1741,7 +1686,7 @@ def test_ocsvm_vs_sgdocsvm():
         fit_intercept=True,
         max_iter=max_iter,
         random_state=random_state,
-        tol=-np.inf,
+        tol=None,
     )
     pipe_sgd = make_pipeline(transform, clf_sgd)
     pipe_sgd.fit(X_train)
