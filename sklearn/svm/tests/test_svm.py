@@ -14,7 +14,7 @@ from numpy.testing import assert_almost_equal
 from numpy.testing import assert_allclose
 from scipy import sparse
 from sklearn import svm, linear_model, datasets, metrics, base
-from sklearn.svm import LinearSVC, OneClassSVM, SVR, NuSVR, LinearSVR, QuantileSVR
+from sklearn.svm import LinearSVC, OneClassSVM, SVR, NuSVR, LinearSVR
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import make_classification, make_blobs
 from sklearn.metrics import f1_score
