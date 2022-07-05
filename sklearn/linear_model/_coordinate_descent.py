@@ -1641,10 +1641,6 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
 
         model = self._get_estimator()
 
-        # new change
-        # if self.selection not in ["random", "cyclic"]:
-        #     raise ValueError("selection should be either random or cyclic.")
-
         # All LinearModelCV parameters except 'cv' are acceptable
         path_params = self.get_params()
 
@@ -1669,14 +1665,6 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         alphas = self.alphas
         n_l1_ratio = len(l1_ratios)
 
-        # new change
-        # check_scalar_alpha = partial(
-        #     check_scalar,
-        #     target_type=numbers.Real,
-        #     min_val=0.0,
-        #     include_boundaries="left",
-        # )
-
         if alphas is None:
             alphas = [
                 _alpha_grid(
@@ -1692,14 +1680,6 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
                 for l1_ratio in l1_ratios
             ]
         else:
-            # new change
-            # # Making sure alphas entries are scalars.
-            # if np.isscalar(alphas):
-            #     check_scalar_alpha(alphas, "alphas")
-            # else:
-            #     # alphas is an iterable item in this case.
-            #     for index, alpha in enumerate(alphas):
-            #         check_scalar_alpha(alpha, f"alphas[{index}]")
             # Making sure alphas is properly ordered.
             alphas = np.tile(np.sort(alphas)[::-1], (n_l1_ratio, 1))
 
