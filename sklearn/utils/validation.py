@@ -126,7 +126,7 @@ def _assert_all_finite(
                 type_err = f"infinity or a value too large for {msg_dtype!r}"
             padded_input_name = input_name + " " if input_name else ""
             msg_err = f"Input {padded_input_name}contains {type_err}."
-            if not allow_nan and estimator_name and input_name == "X" and has_nan_error:
+            if estimator_name and input_name == "X" and has_nan_error:
                 # Improve the error message on how to handle missing values in
                 # scikit-learn.
                 msg_err += (
