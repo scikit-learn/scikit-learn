@@ -136,6 +136,9 @@ Changelog
   NaN in feature importance when fitted with very small sample weight.
   :pr:`20415` by :user:`Zhehao Liu <MaxwellLZH>`.
 
+:mod:`sklearn.feature_selection`
+................................
+
 :mod:`sklearn.decomposition`
 ............................
 
@@ -185,6 +188,7 @@ Changelog
   of a binary classification problem. :pr:`22518` by
   :user:`Arturo Amor <ArturoAmorQ>`.
 
+<<<<<<< HEAD
 - |Fix| :func:`metrics.ndcg_score` will now trigger a warning when the `y_true`
   value contains a negative value. Users may still use negative values, but the
   result may not be between 0 and 1. Starting in v1.4, passing in negative
@@ -196,6 +200,8 @@ Changelog
   :pr:`23548` by :user:`Hao Chun Chang <haochunchang>`.
 
 >>>>>>> main
+=======
+>>>>>>> 07ee556382009efa212d828023bc2a139d33255c
 :mod:`sklearn.neighbors`
 ........................
 
