@@ -3,9 +3,9 @@
 Sample pipeline for text feature extraction and evaluation
 ==========================================================
 
-The dataset used in this example is the 20 newsgroups dataset which will be
-automatically downloaded, cached and reused for the document
-classification example.
+The dataset used in this example is :ref:`20newsgroups_dataset` which will be
+automatically downloaded, cached and reused for the document classification
+example.
 
 In this example we tune the hyperparameters of a particular classifier using a
 :class:`~sklearn.model_selection.RandomizedSearchCV`. For a demo on the
@@ -25,8 +25,8 @@ notebook.
 # Data loading
 # ------------
 # We load two categories from the training set. You can adjust the number of
-# categories by giving their names to the dataset loader or setting them to
-# `None` to get the 20 of them.
+# categories by adding their names to the list or setting `categories=None` in
+# the dataset loader to get the 20 of them.
 
 from sklearn.datasets import fetch_20newsgroups
 
@@ -59,7 +59,7 @@ print(f"{len(data_train.data)} documents")
 # Pipeline with hyperparameter tuning
 # -----------------------------------
 # We define a pipeline combining a text feature vectorizer with a simple
-# classifier. We also define a set of parameters to use for random search.
+# classifier.
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.naive_bayes import ComplementNB
@@ -79,9 +79,9 @@ pipeline
 # :class:`~sklearn.model_selection.GridSearchCV` instead would explore all the
 # possible combinations on the grid, which can be costly to compute, whereas the
 # parameter `n_iter` of the :class:`~sklearn.model_selection.RandomizedSearchCV`
-# chooses a different random combination for each iteration. Notice that setting
-# `n_iter` larger than the number of possible combinations in a grid would lead
-# to repeating already-explored combinations.
+# controls the number of different random combination that are evaluated. Notice
+# that setting `n_iter` larger than the number of possible combinations in a
+# grid would lead to repeating already-explored combinations.
 
 import numpy as np
 
@@ -230,3 +230,6 @@ fig
 # (i.e. `max_df` close to 1.0 or `min_df` close to 0) tend to overfit and
 # therefore require a stronger regularization to compensate. Having less
 # features require less regularization and less scoring time.
+#
+# The best accuracies are obtained when `alpha` is between :math:`10^{-6}` and
+# :math:`10^0`, regardless of the hyperparameter `norm`.
