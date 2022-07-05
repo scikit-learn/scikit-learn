@@ -2184,7 +2184,8 @@ def test_validation_mask_using_positive_sample_weight(monkeypatch):
 
 
 def test_sgd_warns_on_zero_validation_weight():
-    """Test that SGDClassifier raises warning when there are validation sample with zero weights."""
+    # Test that SGDClassifier raises warning when there are
+    # validation sample with zero weights.
     X, Y = iris.data, iris.target
     n_samples = X.shape[0]
     sample_weight = np.ones_like(Y)
