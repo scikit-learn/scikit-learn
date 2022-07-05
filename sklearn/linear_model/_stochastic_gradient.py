@@ -277,7 +277,7 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         y : ndarray of shape (n_samples, )
             Target values.
 
-        sample_mask : numpy array of shape [n_samples, ]
+        sample_mask : ndarray of shape (n_samples, )
             A boolean array indicating whether each sample should be included
             for validation set.
 
