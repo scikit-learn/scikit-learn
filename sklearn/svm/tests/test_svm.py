@@ -1517,7 +1517,7 @@ def test_n_iter_libsvm(estimator, expected_n_iter_type, dataset):
 
 
 # TODO(1.4): Remove
-@pytest.mark.parametrize("Klass", [SVR, NuSVR, OneClassSVM, QuantileSVR])
+@pytest.mark.parametrize("Klass", [SVR, NuSVR, OneClassSVM])
 def test_svm_class_weights_deprecation(Klass):
     clf = Klass()
     with warnings.catch_warnings():
