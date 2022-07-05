@@ -74,6 +74,15 @@ pipeline = Pipeline(
 pipeline
 
 # %%
+# We define a grid of hyperparameters to be explored by the
+# :class:`~sklearn.model_selection.RandomizedSearchCV`. Using a
+# :class:`~sklearn.model_selection.GridSearchCV` instead would explore all the
+# possible combinations on the grid, which can be costly to compute, whereas the
+# parameter `n_iter` of the :class:`~sklearn.model_selection.RandomizedSearchCV`
+# chooses a different random combination for each iteration. Notice that setting
+# `n_iter` larger than the number of possible combinations in a grid would lead
+# to repeating already-explored combinations.
+
 import numpy as np
 
 parameters = {
@@ -86,7 +95,11 @@ parameters = {
 
 # %%
 # We search for the best parameters for both the feature extraction and the
-# classifier.
+# classifier. In this case `n_iter=40` is not an exhaustive search of the
+# hyperparameter grid. In practice it would be interesting to increase the
+# parameter `n_iter` to get a more informative analysis. The consequent increase
+# in computing time can be handled by increasing the number of CPUs via the
+# `n_jobs` parameter.
 
 from pprint import pprint
 from sklearn.model_selection import RandomizedSearchCV
@@ -217,8 +230,3 @@ fig
 # (i.e. `max_df` close to 1.0 or `min_df` close to 0) tend to overfit and
 # therefore require a stronger regularization to compensate. Having less
 # features require less regularization and less scoring time.
-#
-# In practice it would be interesting to increase the parameter `n_iter` of the
-# :class:`~sklearn.model_selection.RandomizedSearchCV` to get a more informative
-# analysis. This requires more computing time and can be done increasing the
-# number of CPUs of the machine and via increasing the `n_jobs` parameter.
