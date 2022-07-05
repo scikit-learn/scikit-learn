@@ -9,8 +9,9 @@ import sys
 import warnings
 import numbers
 from abc import ABC, abstractmethod
-from functools import partial
 from numbers import Integral, Real
+from collections.abc import Iterable
+
 
 import numpy as np
 from scipy import sparse
@@ -20,10 +21,9 @@ from ._base import LinearModel, _pre_fit
 from ..base import RegressorMixin, MultiOutputMixin
 from ._base import _preprocess_data, _deprecate_normalize
 from ..utils import check_array
-from ..utils import check_scalar
 from ..utils.validation import check_random_state
 from ..utils._param_validation import Hidden, Interval, StrOptions
-from ..model_selection import check_cv
+from ..model_selection import check_cv, BaseCrossValidator
 from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import (
     _check_sample_weight,
@@ -1459,6 +1459,29 @@ def _path_residuals(
 class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
     """Base class for iterative model fitting along a regularization path."""
 
+    _parameter_constraints = {
+        "eps": [Interval(Real, 0, None, closed="left")],
+        "n_alphas": [Interval(Integral, 0, None, closed="left")],
+        "alphas": [np.ndarray, None],
+        "fit_intercept": [bool],
+        "normalize": "no_validation",
+        "precompute": [StrOptions({"auto"}), "array-like", bool],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "copy_X": [bool],
+        "cv": [
+            Interval(Integral, 2, None, closed="left"),
+            Iterable,
+            BaseCrossValidator,
+            None,
+        ],
+        "verbose": [bool, Interval(Integral, 0, None, closed="left")],
+        "n_jobs": [Integral, None],
+        "positive": [bool],
+        "random_state": ["random_state"],
+        "selection": [StrOptions({"cyclic", "random"})],
+    }
+
     @abstractmethod
     def __init__(
         self,
@@ -1534,6 +1557,8 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         self : object
             Returns an instance of fitted model.
         """
+
+        self._validate_params()
 
         # Do as _deprecate_normalize but without warning as it's raised
         # below during the refitting on the best alpha.
@@ -1616,8 +1641,9 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
 
         model = self._get_estimator()
 
-        if self.selection not in ["random", "cyclic"]:
-            raise ValueError("selection should be either random or cyclic.")
+        # new change
+        # if self.selection not in ["random", "cyclic"]:
+        #     raise ValueError("selection should be either random or cyclic.")
 
         # All LinearModelCV parameters except 'cv' are acceptable
         path_params = self.get_params()
@@ -1643,12 +1669,13 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         alphas = self.alphas
         n_l1_ratio = len(l1_ratios)
 
-        check_scalar_alpha = partial(
-            check_scalar,
-            target_type=numbers.Real,
-            min_val=0.0,
-            include_boundaries="left",
-        )
+        # new change
+        # check_scalar_alpha = partial(
+        #     check_scalar,
+        #     target_type=numbers.Real,
+        #     min_val=0.0,
+        #     include_boundaries="left",
+        # )
 
         if alphas is None:
             alphas = [
@@ -1665,13 +1692,14 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
                 for l1_ratio in l1_ratios
             ]
         else:
-            # Making sure alphas entries are scalars.
-            if np.isscalar(alphas):
-                check_scalar_alpha(alphas, "alphas")
-            else:
-                # alphas is an iterable item in this case.
-                for index, alpha in enumerate(alphas):
-                    check_scalar_alpha(alpha, f"alphas[{index}]")
+            # new change
+            # # Making sure alphas entries are scalars.
+            # if np.isscalar(alphas):
+            #     check_scalar_alpha(alphas, "alphas")
+            # else:
+            #     # alphas is an iterable item in this case.
+            #     for index, alpha in enumerate(alphas):
+            #         check_scalar_alpha(alpha, f"alphas[{index}]")
             # Making sure alphas is properly ordered.
             alphas = np.tile(np.sort(alphas)[::-1], (n_l1_ratio, 1))
 
