@@ -1475,7 +1475,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
             BaseCrossValidator,
             None,
         ],
-        "verbose": [bool, Interval(Integral, 0, None, closed="left")],
+        "verbose": ["verbose"],
         "n_jobs": [Integral, None],
         "positive": [bool],
         "random_state": ["random_state"],
