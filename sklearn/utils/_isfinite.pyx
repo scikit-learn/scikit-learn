@@ -39,6 +39,6 @@ cdef inline int _isfinite_disable_nan(floating* a_ptr, Py_ssize_t length) nogil:
     for i in range(length):
         if isnan(a_ptr[i]):
             return FiniteStatus.has_nan
-        if isinf(a_ptr[i]):
+        elif isinf(a_ptr[i]):
             return FiniteStatus.has_infinite
     return FiniteStatus.all_finite
