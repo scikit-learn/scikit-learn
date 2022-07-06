@@ -457,7 +457,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "CalibratedClassifierCV",
     "ClassifierChain",
     "CountVectorizer",
-    "DictVectorizer",
     "DictionaryLearning",
     "ElasticNetCV",
     "EllipticEnvelope",
