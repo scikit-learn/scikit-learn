@@ -13,7 +13,7 @@ import math
 from .base import BaseEstimator, TransformerMixin, RegressorMixin
 from .utils import check_array, check_consistent_length
 from .utils.validation import _check_sample_weight
-from .utils._param_validation import StrOptions
+from .utils._param_validation import Interval, StrOptions
 from ._isotonic import _inplace_contiguous_isotonic_regression, _make_unique
 
 
@@ -229,8 +229,8 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
     """
 
     _parameter_constraints = {
-        "y_min": [Real, None],
-        "y_max": [Real, None],
+        "y_min": [Interval(Real, None, None, closed="both"), None],
+        "y_max": [Interval(Real, None, None, closed="both"), None],
         "increasing": ["boolean", StrOptions({"auto"})],
         "out_of_bounds": [StrOptions({"nan", "clip", "raise"})],
     }
