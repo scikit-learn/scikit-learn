@@ -699,12 +699,10 @@ class MinCovDet(EmpiricalCovariance):
     array([0.0813... , 0.0427...])
     """
 
-    _parameter_constraints = {**EmpiricalCovariance._parameter_constraints}
-    _parameter_constraints.update(
-        {
-            "support_fraction": [Interval(Real, 0, 1, closed="neither"), None],
-            "random_state": ["random_state"],
-        }
+    _parameter_constraints = {
+        **EmpiricalCovariance._parameter_constraints},
+        "support_fraction": [Interval(Real, 0, 1, closed="neither"), None],
+        "random_state": ["random_state"],
     )
 
     _nonrobust_covariance = staticmethod(empirical_covariance)
