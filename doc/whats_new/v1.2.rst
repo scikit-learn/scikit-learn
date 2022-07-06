@@ -91,6 +91,10 @@ Changelog
   `eigen_tol="auto"` in version 1.3.
   :pr:`23210` by :user:`Meekail Zain <micky774>`.
 
+- |API| The `affinity` attribute is now deprecated for
+  :class:`cluster.AgglomerativeClustering` and will be renamed to `metric` in v1.4.
+  :pr:`23470` by :user:`Meekail Zain <micky774>`.
+
 :mod:`sklearn.datasets`
 .......................
 
