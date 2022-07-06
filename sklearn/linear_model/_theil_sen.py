@@ -325,7 +325,8 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
     _parameter_constraints = {
         "fit_intercept": ["boolean"],
         "copy_X": ["boolean"],
-        "max_subpopulation": [Interval(Integral, 1, None, closed="left")],
+        # target_type should be Integral but can accept Real for backward compatibility
+        "max_subpopulation": [Interval(Integral, 1, None, closed="left"), Interval(Real, 1, None, closed="left")],
         "n_subsamples": [None, Integral],
         "max_iter": [Interval(Integral, 0, None, closed="left")],
         "tol": [Interval(Real, 0.0, None, closed="left")],
