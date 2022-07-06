@@ -3,7 +3,6 @@
 from libc.math cimport isnan, isinf
 cimport cython
 from cython cimport floating
-from cython.parallel cimport prange
 
 cpdef enum FiniteStatus:
     all_finite = 0
