@@ -1462,7 +1462,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
     _parameter_constraints = {
         "eps": [Interval(Real, 0, None, closed="neither")],
         "n_alphas": [Interval(Integral, 0, None, closed="neither")],
-        "alphas": [np.ndarray, None],
+        "alphas": ["array-like", None],
         "fit_intercept": [bool],
         "normalize": "no_validation",
         "precompute": [StrOptions({"auto"}), "array-like", bool],
