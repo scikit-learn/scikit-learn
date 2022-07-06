@@ -497,7 +497,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "MLPRegressor",
     "MinCovDet",
     "MiniBatchDictionaryLearning",
-    "MissingIndicator",
     "MultiOutputClassifier",
     "MultiOutputRegressor",
     "MultiTaskElasticNet",
