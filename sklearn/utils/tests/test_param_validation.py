@@ -163,14 +163,14 @@ def test_hasmethods():
 
     class _Good:
         def a(self):
-            pass  # noqa
+            pass  # pragma: no cover
 
         def b(self):
-            pass  # noqa
+            pass  # pragma: no cover
 
     class _Bad:
         def a(self):
-            pass  # noqa
+            pass  # pragma: no cover
 
     assert constraint.is_satisfied_by(_Good())
     assert not constraint.is_satisfied_by(_Bad())
