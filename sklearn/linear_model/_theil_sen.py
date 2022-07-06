@@ -390,7 +390,7 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
             n_subsamples = min(n_dim, n_samples)
 
         all_combinations = max(1, np.rint(binom(n_samples, n_subsamples)))
-        n_subpopulation = int(min(self._max_subpopulation, all_combinations))
+        n_subpopulation = int(min(self.max_subpopulation, all_combinations))
 
         return n_subsamples, n_subpopulation
 
@@ -426,7 +426,7 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
             print("Number of subpopulations: {0}".format(self.n_subpopulation_))
 
         # Determine indices of subpopulation
-        if np.rint(binom(n_samples, n_subsamples)) <= self._max_subpopulation:
+        if np.rint(binom(n_samples, n_subsamples)) <= self.max_subpopulation:
             indices = list(combinations(range(n_samples), n_subsamples))
         else:
             indices = [
