@@ -2388,9 +2388,9 @@ def check_outlier_contamination(name, estimator_orig):
 
     contamination_constraints = estimator_orig._parameter_constraints["contamination"]
     if not any([isinstance(c, Interval) for c in contamination_constraints]):
-        assert (
-            False
-        ), "contamination constraints should contain a Real Interval constraint."
+        raise AssertionError(
+            "contamination constraints should contain a Real Interval constraint."
+        )
 
     for constraint in contamination_constraints:
         if isinstance(constraint, Interval):
