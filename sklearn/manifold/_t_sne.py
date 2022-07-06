@@ -846,10 +846,6 @@ class TSNE(BaseEstimator):
                 "with the sparse input matrix. Use "
                 'init="random" instead.'
             )
-        if self.method not in ["barnes_hut", "exact"]:
-            raise ValueError("'method' must be 'barnes_hut' or 'exact'")
-        if self.angle < 0.0 or self.angle > 1.0:
-            raise ValueError("'angle' must be between 0.0 - 1.0")
         if self.square_distances != "deprecated":
             warnings.warn(
                 "The parameter `square_distances` has not effect and will be "
@@ -860,9 +856,7 @@ class TSNE(BaseEstimator):
             # See issue #18018
             self._learning_rate = X.shape[0] / self.early_exaggeration / 4
             self._learning_rate = np.maximum(self._learning_rate, 50)
-        else:
-            if not (self._learning_rate > 0):
-                raise ValueError("'learning_rate' must be a positive number or 'auto'.")
+
         if self.method == "barnes_hut":
             X = self._validate_data(
                 X,
@@ -902,16 +896,6 @@ class TSNE(BaseEstimator):
                 "quad-tree or oct-tree."
             )
         random_state = check_random_state(self.random_state)
-
-        if self.early_exaggeration < 1.0:
-            raise ValueError(
-                "early_exaggeration must be at least 1, but is {}".format(
-                    self.early_exaggeration
-                )
-            )
-
-        if self.n_iter < 250:
-            raise ValueError("n_iter should be at least 250")
 
         n_samples = X.shape[0]
 
@@ -1031,7 +1015,7 @@ class TSNE(BaseEstimator):
                 size=(n_samples, self.n_components)
             ).astype(np.float32)
         else:
-            raise ValueError("'init' must be 'pca', 'random', or a numpy array")
+            pass
 
         # Degrees of freedom of the Student's t-distribution. The suggestion
         # degrees_of_freedom = n_components - 1 comes from
