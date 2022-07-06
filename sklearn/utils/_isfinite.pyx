@@ -17,7 +17,7 @@ def cy_isfinite(floating[::1] a, bint allow_nan=False):
     return result
 
 
-cdef inline int _isfinite(floating[::1] a, bint allow_nan) nogil:
+cdef inline FiniteStatus _isfinite(floating[::1] a, bint allow_nan) nogil:
     cdef floating* a_ptr = &a[0]
     cdef Py_ssize_t length = len(a)
     if allow_nan:
@@ -26,7 +26,7 @@ cdef inline int _isfinite(floating[::1] a, bint allow_nan) nogil:
         return _isfinite_disable_nan(a_ptr, length)
 
 
-cdef inline int _isfinite_allow_nan(floating* a_ptr, Py_ssize_t length) nogil:
+cdef inline FiniteStatus _isfinite_allow_nan(floating* a_ptr, Py_ssize_t length) nogil:
     cdef Py_ssize_t i
     for i in range(length):
         if isinf(a_ptr[i]):
@@ -34,7 +34,7 @@ cdef inline int _isfinite_allow_nan(floating* a_ptr, Py_ssize_t length) nogil:
     return FiniteStatus.all_finite
 
 
-cdef inline int _isfinite_disable_nan(floating* a_ptr, Py_ssize_t length) nogil:
+cdef inline FiniteStatus _isfinite_disable_nan(floating* a_ptr, Py_ssize_t length) nogil:
     cdef Py_ssize_t i
     for i in range(length):
         if isnan(a_ptr[i]):
