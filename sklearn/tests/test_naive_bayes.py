@@ -924,15 +924,23 @@ def test_n_features_deprecation(Estimator):
 
 # TODO(1.4): Remove
 @pytest.mark.parametrize("Estimator", DISCRETE_NAIVE_BAYES_CLASSES)
-def test_force_alpha_deprecation(Estimator):
+@pytest.mark.parametrize("alpha", [1, [0.1, 1e-11], 1e-12])
+def test_force_alpha_deprecation(Estimator, alpha):
     X = np.array([[1, 2], [3, 4]])
     y = np.array([1, 0])
+    alpha_min = 1e-10
     msg = "The default value for `force_alpha` will change to `True`"
-    with pytest.warns(FutureWarning, match=msg):
-        Estimator().fit(X, y)
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", FutureWarning)
-        Estimator(force_alpha=True).fit(X, y)
+    est = Estimator(alpha=alpha)
+    est_force = Estimator(alpha=alpha, force_alpha=True)
+    if np.min(alpha) < alpha_min:
+        with pytest.warns(FutureWarning, match=msg):
+            est.fit(X, y)
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", FutureWarning)
+            est_force.fit(X, y)
+    else:
+        est.fit(X, y)
+        est_force.fit(X, y)
 
 
 def test_check_alpha():

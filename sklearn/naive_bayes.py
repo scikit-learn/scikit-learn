@@ -595,16 +595,6 @@ class _BaseDiscreteNB(_BaseNB):
             self.class_log_prior_ = np.full(n_classes, -np.log(n_classes))
 
     def _check_alpha(self):
-        # TODO(1.4): Replace w/ deprecation of self.force_alpha
-        # See gh #22269
-        _force_alpha = self.force_alpha
-        if _force_alpha == "warn":
-            _force_alpha = False
-            warnings.warn(
-                "The default value for `force_alpha` will change to `True` in 1.4. To"
-                " suppress this warning, manually set the value of `force_alpha`.",
-                FutureWarning,
-            )
         alpha = (
             np.asarray(self.alpha) if not isinstance(self.alpha, Real) else self.alpha
         )
@@ -618,6 +608,16 @@ class _BaseDiscreteNB(_BaseNB):
             if np.min(alpha) < 0:
                 raise ValueError("All values in alpha must be greater than 0.")
         alpha_min = 1e-10
+        # TODO(1.4): Replace w/ deprecation of self.force_alpha
+        # See gh #22269
+        _force_alpha = self.force_alpha
+        if _force_alpha == "warn" and np.min(alpha) < alpha_min:
+            _force_alpha = False
+            warnings.warn(
+                "The default value for `force_alpha` will change to `True` in 1.4. To"
+                " suppress this warning, manually set the value of `force_alpha`.",
+                FutureWarning,
+            )
         if np.min(alpha) < alpha_min and not _force_alpha:
             warnings.warn(
                 "alpha too small will result in numeric errors, setting alpha ="
