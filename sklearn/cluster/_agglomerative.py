@@ -23,7 +23,7 @@ from ..metrics._dist_metrics import METRIC_MAPPING
 from ..utils import check_array
 from ..utils._fast_dict import IntFloatDict
 from ..utils.graph import _fix_connected_components
-from ..utils._param_validation import Interval, StrOptions
+from ..utils._param_validation import Hidden, Interval, StrOptions
 from ..utils.validation import check_memory
 
 # mypy error: Module 'sklearn.cluster' has no attribute '_hierarchical_fast'
@@ -760,6 +760,19 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         If "precomputed", a distance matrix (instead of a similarity matrix)
         is needed as input for the fit method.
 
+        .. deprecated:: 1.2
+            `affinity` was deprecated in version 1.2 and will be renamed to
+            `metric` in 1.4.
+
+    metric : str or callable, default=None
+        Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
+        "manhattan", "cosine", or "precomputed". If set to `None` then
+        "euclidean" is used. If linkage is "ward", only "euclidean" is
+        accepted. If "precomputed", a distance matrix is needed as input for
+        the fit method.
+
+        .. versionadded:: 1.2
+
     memory : str or object with the joblib.Memory interface, default=None
         Used to cache the output of the computation of the tree.
         By default, no caching is done. If a string is given, it is the
@@ -880,8 +893,14 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
     _parameter_constraints = {
         "n_clusters": [Interval(Integral, 1, None, closed="left"), None],
         "affinity": [
+            Hidden(StrOptions({"deprecated"})),
             StrOptions(set(_VALID_METRICS) | {"precomputed"}),
             callable,
+        ],
+        "metric": [
+            StrOptions(set(_VALID_METRICS) | {"precomputed"}),
+            callable,
+            None,
         ],
         "memory": "no_validation",  # TODO
         "connectivity": ["array-like", callable, None],
@@ -895,7 +914,8 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         self,
         n_clusters=2,
         *,
-        affinity="euclidean",
+        affinity="deprecated",  # TODO(1.4): Remove
+        metric=None,  # TODO(1.4): Set to "euclidean"
         memory=None,
         connectivity=None,
         compute_full_tree="auto",
@@ -910,6 +930,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         self.compute_full_tree = compute_full_tree
         self.linkage = linkage
         self.affinity = affinity
+        self.metric = metric
         self.compute_distances = compute_distances
 
     def fit(self, X, y=None):
@@ -920,7 +941,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         X : array-like, shape (n_samples, n_features) or \
                 (n_samples, n_samples)
             Training instances to cluster, or distances between instances if
-            ``affinity='precomputed'``.
+            ``metric='precomputed'``.
 
         y : Ignored
             Not used, present here for API consistency by convention.
@@ -950,6 +971,24 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         """
         memory = check_memory(self.memory)
 
+        self._metric = self.metric
+        # TODO(1.4): Remove
+        if self.affinity != "deprecated":
+            if self.metric is not None:
+                raise ValueError(
+                    "Both `affinity` and `metric` attributes were set. Attribute"
+                    " `affinity` was deprecated in version 1.2 and will be removed in"
+                    " 1.4. To avoid this error, only set the `metric` attribute."
+                )
+            warnings.warn(
+                "Attribute `affinity` was deprecated in version 1.2 and will be removed"
+                " in 1.4. Use `metric` instead",
+                FutureWarning,
+            )
+            self._metric = self.affinity
+        elif self.metric is None:
+            self._metric = "euclidean"
+
         if not ((self.n_clusters is None) ^ (self.distance_threshold is None)):
             raise ValueError(
                 "Exactly one of n_clusters and "
@@ -962,10 +1001,10 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
                 "compute_full_tree must be True if distance_threshold is set."
             )
 
-        if self.linkage == "ward" and self.affinity != "euclidean":
+        if self.linkage == "ward" and self._metric != "euclidean":
             raise ValueError(
-                "%s was provided as affinity. Ward can only "
-                "work with euclidean distances." % (self.affinity,)
+                f"{self._metric} was provided as metric. Ward can only "
+                "work with euclidean distances."
             )
 
         tree_builder = _TREE_BUILDERS[self.linkage]
@@ -998,7 +1037,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         kwargs = {}
         if self.linkage != "ward":
             kwargs["linkage"] = self.linkage
-            kwargs["affinity"] = self.affinity
+            kwargs["affinity"] = self._metric
 
         distance_threshold = self.distance_threshold
 
@@ -1083,6 +1122,19 @@ class FeatureAgglomeration(
         If linkage is "ward", only "euclidean" is accepted.
         If "precomputed", a distance matrix (instead of a similarity matrix)
         is needed as input for the fit method.
+
+        .. deprecated:: 1.2
+            `affinity` was deprecated in version 1.2 and will be renamed to
+            `metric` in 1.4.
+
+    metric : str or callable, default=None
+        Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
+        "manhattan", "cosine", or "precomputed". If set to `None` then
+        "euclidean" is used. If linkage is "ward", only "euclidean" is
+        accepted. If "precomputed", a distance matrix is needed as input for
+        the fit method.
+
+        .. versionadded:: 1.2
 
     memory : str or object with the joblib.Memory interface, default=None
         Used to cache the output of the computation of the tree.
@@ -1208,8 +1260,14 @@ class FeatureAgglomeration(
     _parameter_constraints = {
         "n_clusters": [Interval(Integral, 1, None, closed="left"), None],
         "affinity": [
+            Hidden(StrOptions({"deprecated"})),
             StrOptions(set(_VALID_METRICS) | {"precomputed"}),
             callable,
+        ],
+        "metric": [
+            StrOptions(set(_VALID_METRICS) | {"precomputed"}),
+            callable,
+            None,
         ],
         "memory": "no_validation",  # TODO
         "connectivity": ["array-like", callable, None],
@@ -1224,7 +1282,8 @@ class FeatureAgglomeration(
         self,
         n_clusters=2,
         *,
-        affinity="euclidean",
+        affinity="deprecated",  # TODO(1.4): Remove
+        metric=None,  # TODO(1.4): Set to "euclidean"
         memory=None,
         connectivity=None,
         compute_full_tree="auto",
@@ -1240,6 +1299,7 @@ class FeatureAgglomeration(
             compute_full_tree=compute_full_tree,
             linkage=linkage,
             affinity=affinity,
+            metric=metric,
             distance_threshold=distance_threshold,
             compute_distances=compute_distances,
         )
