@@ -1466,7 +1466,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         "fit_intercept": ["boolean"],
         "normalize": "no_validation",
         "precompute": [StrOptions({"auto"}), "array-like", "boolean"],
-        "max_iter": [Interval(Integral, 0, None, closed="left")],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
         "tol": [Interval(Real, 0, None, closed="left")],
         "copy_X": [bool],
         "cv": [
