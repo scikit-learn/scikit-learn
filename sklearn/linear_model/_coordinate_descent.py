@@ -1460,7 +1460,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
     """Base class for iterative model fitting along a regularization path."""
 
     _parameter_constraints = {
-        "eps": [Interval(Real, 0, None, closed="left")],
+        "eps": [Interval(Real, 0, None, closed="neither")],
         "n_alphas": [Interval(Integral, 0, None, closed="left")],
         "alphas": [np.ndarray, None],
         "fit_intercept": [bool],
