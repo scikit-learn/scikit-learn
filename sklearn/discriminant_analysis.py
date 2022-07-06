@@ -317,7 +317,6 @@ class LinearDiscriminantAnalysis(
         "store_covariance": ["boolean"],
         "tol": [Interval(Real, 0, None, closed="left")],
         "covariance_estimator": "no_validation",
-        "dummy": [Interval(Real, 0, None, closed="left")],
     }
 
     def __init__(

@@ -4050,10 +4050,10 @@ def check_param_validation(name, estimator_orig):
         missing_params = set(estimator_params) - set(validation_params)
         err_msg = (
             f"Mismatch between _parameter_constraints and the parameters of {name}."
-            f" Consider the unexpected parameters {unexpected_params} and expected but"
+            f"\nConsider the unexpected parameters {unexpected_params} and expected but"
             f" missing parameters {missing_params}"
         )
-        assert estimator_orig._parameter_constraints.keys() == estimator_params, err_msg
+        assert validation_params == estimator_params, err_msg
 
     # this object does not have a valid type for sure for all params
     param_with_bad_type = type("BadType", (), {})()

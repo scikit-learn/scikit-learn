@@ -51,6 +51,12 @@ def validate_parameter_constraints(parameter_constraints, params, caller_name):
         )
 
     for param_name, param_val in params.items():
+        # We allow parameters to not have a constraint so that third party estimators
+        # can inherit from sklearn estimators without having to necessarily use the
+        # validation tools.
+        if param_name not in parameter_constraints:
+            continue
+
         constraints = parameter_constraints[param_name]
 
         if constraints == "no_validation":

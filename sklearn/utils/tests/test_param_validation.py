@@ -408,6 +408,18 @@ def test_validate_params_match_error():
         func(1, 2)
 
 
+def test_validate_params_missing_params():
+    """Check that no error is raised when there are parameters without
+    constraints
+    """
+
+    @validate_params({"a": [int]})
+    def func(a, b):
+        pass
+
+    func(1, 2)
+
+
 def test_decorate_validated_function():
     """Check that validate_params functions can be decorated"""
     decorated_function = deprecated()(_func)
