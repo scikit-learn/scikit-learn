@@ -1,5 +1,6 @@
+from unittest.mock import Mock
 import numpy as np
-from numpy.testing import assert_array_almost_equal, assert_allclose, assert_array_equal
+from numpy.testing import assert_array_almost_equal, assert_allclose
 import pytest
 
 from sklearn.manifold import _mds as mds
@@ -88,16 +89,16 @@ def test_normalized_stress_default_change(metric):
 
 
 @pytest.mark.parametrize("metric", [True, False])
-def test_normalized_stress_auto(metric):
+def test_normalized_stress_auto(metric, monkeypatch):
     rng = np.random.RandomState(0)
     X = rng.randn(3, 3)
     dist = euclidean_distances(X)
 
-    est = mds.MDS(metric=metric, normalized_stress="auto", random_state=0)
-    X_trans = est.fit_transform(X)
+    est = mds.MDS(metric=metric, normalized_stress="auto", random_state=rng)
+    est.fit_transform(X)
     assert est._normalized_stress != metric
 
-    X_smacof, _ = mds.smacof(
-        dist, metric=metric, normalized_stress="auto", random_state=0
-    )
-    assert_array_equal(X_trans, X_smacof)
+    mock = Mock(side_effect=mds._smacof_single)
+    monkeypatch.setattr("sklearn.manifold._mds._smacof_single", mock)
+    mds.smacof(dist, metric=metric, normalized_stress="auto", random_state=rng)
+    mock.call_args[1]["normalized_stress"] != metric
