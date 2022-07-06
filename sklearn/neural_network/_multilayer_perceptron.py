@@ -57,7 +57,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
     """
 
     _parameter_constraints = {
-        "hidden_layer_sizes": [tuple, Interval(Integral, 1, None, closed="left")],
+        "hidden_layer_sizes": ["array-like", Interval(Integral, 1, None, closed="left")],
         "activation": [StrOptions({"identity", "logistic", "tanh", "relu"})],
         "solver": [StrOptions({"lbfgs", "sgd", "adam"})],
         "alpha": [Interval(Real, 0, None, closed="left")],
@@ -81,8 +81,10 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         "beta_1": [Interval(Real, 0, 1, closed="left")],
         "beta_2": [Interval(Real, 0, 1, closed="left")],
         "epsilon": [Interval(Real, 0, None, closed="neither")],
+        # TODO update when ScalarOptions available
+        # [Interval(Integral, 1, None, closed="left"), ScalarOptions({np.inf})]
         "n_iter_no_change": [Interval(Real, 0, None, closed="right")],
-        "max_fun": [Interval(Integral, 0, None, closed="neither")],
+        "max_fun": [Interval(Integral, 1, None, closed="left")],
     }
 
     @abstractmethod
@@ -406,7 +408,6 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         return coef_init, intercept_init
 
     def _fit(self, X, y, incremental=False):
-
         # Make sure self.hidden_layer_sizes is a list
         hidden_layer_sizes = self.hidden_layer_sizes
         if not hasattr(hidden_layer_sizes, "__iter__"):
@@ -728,7 +729,6 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         self : object
             Returns a trained MLP model.
         """
-
         self._validate_params()
 
         return self._fit(X, y, incremental=False)
@@ -742,28 +742,6 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             )
         return True
 
-    @available_if(_check_solver)
-    def partial_fit(self, X, y):
-        """Update the model with a single iteration over the given data.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            The input data.
-
-        y : ndarray of shape (n_samples,)
-            The target values.
-
-        Returns
-        -------
-        self : object
-            Trained MLP model.
-        """
-
-        self._validate_params()
-
-        return self._fit(X, y, incremental=True)
-
 
 class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
     """Multi-layer Perceptron classifier.
@@ -775,7 +753,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
 
     Parameters
     ----------
-    hidden_layer_sizes : tuple, length = n_layers - 2, default=(100,)
+    hidden_layer_sizes : array-like of shape(n_layers - 2,), default=(100,)
         The ith element represents the number of neurons in the ith
         hidden layer.
 
@@ -1180,8 +1158,8 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         self : object
             Trained MLP model.
         """
-
-        self._validate_params()
+        if not hasattr(self, "coefs_"):
+            self._validate_params()
 
         if _check_partial_fit_first_call(self, classes):
             self._label_binarizer = LabelBinarizer()
@@ -1190,9 +1168,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
             else:
                 self._label_binarizer.fit(classes)
 
-        super().partial_fit(X, y)
-
-        return self
+        return self._fit(X, y, incremental=True)
 
     def predict_log_proba(self, X):
         """Return the log of probability estimates.
@@ -1251,7 +1227,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
 
     Parameters
     ----------
-    hidden_layer_sizes : tuple, length = n_layers - 2, default=(100,)
+    hidden_layer_sizes : array-like of shape(n_layers - 2,), default=(100,)
         The ith element represents the number of neurons in the ith
         hidden layer.
 
@@ -1584,3 +1560,25 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         if y.ndim == 2 and y.shape[1] == 1:
             y = column_or_1d(y, warn=True)
         return X, y
+
+    @available_if(lambda est: est._check_solver)
+    def partial_fit(self, X, y):
+        """Update the model with a single iteration over the given data.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            The input data.
+
+        y : ndarray of shape (n_samples,)
+            The target values.
+
+        Returns
+        -------
+        self : object
+            Trained MLP model.
+        """
+        if not hasattr(self, "coefs_"):
+            self._validate_params()
+
+        return self._fit(X, y, incremental=True)
