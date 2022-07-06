@@ -1191,7 +1191,7 @@ class CategoricalNB(_BaseDiscreteNB):
 
     Parameters
     ----------
-    alpha : float or array-like of shape (n_features,), default=1.0
+    alpha : float, default=1.0
         Additive (Laplace/Lidstone) smoothing parameter
         (0 for no smoothing).
 
@@ -1290,6 +1290,7 @@ class CategoricalNB(_BaseDiscreteNB):
             Interval(Integral, 1, None, closed="left"),
         ],
     }
+    _parameter_constraints["alpha"] = [Interval(Real, 0, None, closed="left")]
 
     def __init__(
         self, *, alpha=1.0, fit_prior=True, class_prior=None, min_categories=None
