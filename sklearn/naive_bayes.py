@@ -801,7 +801,7 @@ class MultinomialNB(_BaseDiscreteNB):
         (set alpha=0 and force_alpha=True, for no smoothing).
 
     force_alpha : bool, default=False
-        If False and alpha is too close to 0, it will set alpha to
+        If False and alpha is less than 1e-10, it will set alpha to
         1e-10. If True, alpha will remain unchanged. This may cause
         numerical errors if the value of alpha is set too close to 0.
 
@@ -930,7 +930,7 @@ class ComplementNB(_BaseDiscreteNB):
         (set alpha=0 and force_alpha=True, for no smoothing).
 
     force_alpha : bool, default=False
-        If False and alpha is too close to 0, it will set alpha to
+        If False and alpha is less than 1e-10, it will set alpha to
         1e-10. If True, alpha will remain unchanged. This may cause
         numerical errors if the value of alpha is set too close to 0.
 
@@ -1088,7 +1088,7 @@ class BernoulliNB(_BaseDiscreteNB):
         (set alpha=0 and force_alpha=True, for no smoothing).
 
     force_alpha : bool, default=False
-        If False and alpha is too close to 0, it will set alpha to
+        If False and alpha is less than 1e-10, it will set alpha to
         1e-10. If True, alpha will remain unchanged. This may cause
         numerical errors if the value of alpha is set too close to 0.
 
@@ -1196,7 +1196,6 @@ class BernoulliNB(_BaseDiscreteNB):
         class_prior=None,
     ):
         super().__init__(alpha=alpha, fit_prior=fit_prior, class_prior=class_prior)
-        self.alpha = alpha
         self.force_alpha = force_alpha
         self.binarize = binarize
 
@@ -1262,7 +1261,7 @@ class CategoricalNB(_BaseDiscreteNB):
         (set alpha=0 and force_alpha=True, for no smoothing).
 
     force_alpha : bool, default=False
-        If False and alpha is too close to 0, it will set alpha to
+        If False and alpha is less than 1e-10, it will set alpha to
         1e-10. If True, alpha will remain unchanged. This may cause
         numerical errors if the value of alpha is set too close to 0.
 
