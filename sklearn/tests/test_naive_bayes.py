@@ -935,12 +935,9 @@ def test_force_alpha_deprecation(Estimator, alpha):
     if np.min(alpha) < alpha_min:
         with pytest.warns(FutureWarning, match=msg):
             est.fit(X, y)
-        with warnings.catch_warnings():
-            warnings.simplefilter("error", FutureWarning)
-            est_force.fit(X, y)
     else:
         est.fit(X, y)
-        est_force.fit(X, y)
+    est_force.fit(X, y)
 
 
 def test_check_alpha():
