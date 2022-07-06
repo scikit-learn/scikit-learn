@@ -1,4 +1,4 @@
-# Author: jakirkham, Meekail Zain, Thomas Fan
+# Author: John Kirkham, Meekail Zain, Thomas Fan
 
 from libc.math cimport isnan, isinf
 from cython cimport floating
