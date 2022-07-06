@@ -1477,7 +1477,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         ],
         "verbose": ["verbose"],
         "n_jobs": [Integral, None],
-        "positive": [bool],
+        "positive": ["boolean"],
         "random_state": ["random_state"],
         "selection": [StrOptions({"cyclic", "random"})],
     }
