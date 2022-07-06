@@ -51,7 +51,6 @@ def test_initialize_nn_output():
 )
 def test_parameter_checking():
     A = np.ones((2, 2))
-    name = "spam"
 
     with ignore_warnings(category=FutureWarning):
         # TODO remove in 1.2
