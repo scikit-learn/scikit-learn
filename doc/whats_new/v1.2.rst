@@ -44,6 +44,11 @@ Changes impacting all modules
   NumPy's SIMD optimized primitives.
   :pr:`23446` by :user:`Meekail Zain <micky774>`
 
+- |Enhancement| Finiteness checks (detection of NaN and infinite values) in all
+  estimators are now faster by utilizing a more efficient stop-on-first
+  second-pass algorithm.
+  :pr:`23197` by :user:`Meekail Zain <micky774>`
+
 Changelog
 ---------
 
