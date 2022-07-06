@@ -1464,7 +1464,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         "n_alphas": [Interval(Integral, 0, None, closed="neither")],
         "alphas": ["array-like", None],
         "fit_intercept": ["boolean"],
-        "normalize": "no_validation",
+        "normalize": [Hidden(StrOptions({"deprecated"})), "boolean"],
         "precompute": [StrOptions({"auto"}), "array-like", "boolean"],
         "max_iter": [Interval(Integral, 1, None, closed="left")],
         "tol": [Interval(Real, 0, None, closed="left")],
@@ -2209,6 +2209,11 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
     [0.398...]
     """
 
+    _parameter_constraints = {
+        **LinearModelCV._parameter_constraints,
+        "l1_ratio": [Interval(Real, 0, 1, closed="both"), "array-like"],
+    }
+
     path = staticmethod(enet_path)
 
     def __init__(
@@ -2859,6 +2864,13 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
     [0.00166409 0.00166409]
     """
 
+    _parameter_constraints = {
+        **LinearModelCV._parameter_constraints,
+        "l1_ratio": [Interval(Real, 0, 1, closed="both"), "array-like"],
+    }
+    _parameter_constraints.pop("precompute")
+    _parameter_constraints.pop("positive")
+
     path = staticmethod(enet_path)
 
     def __init__(
@@ -3094,6 +3106,12 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
     >>> reg.predict(X[:1,])
     array([[153.7971...,  94.9015...]])
     """
+
+    _parameter_constraints = {
+        **LinearModelCV._parameter_constraints,
+    }
+    _parameter_constraints.pop("precompute")
+    _parameter_constraints.pop("positive")
 
     path = staticmethod(lasso_path)
 
