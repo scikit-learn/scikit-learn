@@ -1,18 +1,5 @@
 #!/bin/bash
 
-# This script is used in CircleCI to check that PRs do not add obvious
-# flake8 violations. It relies on two things:
-#   - find common ancestor between branch and
-#     scikit-learn/scikit-learn remote
-#   - run flake8 --diff on the diff between the branch and the common
-#     ancestor
-#
-# Additional features:
-#   - the line numbers in Travis match the local branch on the PR
-#     author machine.
-#   - ./build_tools/circle/flake8_diff.sh can be run locally for quick
-#     turn-around
-
 set -e
 # pipefail is necessary to propagate exit codes
 set -o pipefail
