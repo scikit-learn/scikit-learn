@@ -1463,7 +1463,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         "eps": [Interval(Real, 0, None, closed="neither")],
         "n_alphas": [Interval(Integral, 0, None, closed="neither")],
         "alphas": ["array-like", None],
-        "fit_intercept": [bool],
+        "fit_intercept": ["boolean"],
         "normalize": "no_validation",
         "precompute": [StrOptions({"auto"}), "array-like", bool],
         "max_iter": [Interval(Integral, 0, None, closed="left")],
