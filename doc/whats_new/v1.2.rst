@@ -233,6 +233,14 @@ Changelog
 :mod:`sklearn.manifold`
 .......................
 
+- |Feature| Adds option to use the normalized stress in `manifold.MDS`. This is
+  enabled by setting the new `normalize` parameter to `True`.
+  :pr:`10168` by :user:`Łukasz Borchmann <Borchmann>`,
+  :pr:`12285` by :user:`Matthias Miltenberger <mattmilten>`,
+  :pr:`13042` by :user:`Matthieu Parizy <matthieu-pa>`,
+  :pr:`18094` by :user:`Roth E Conrad <rotheconrad>` and
+  :pr:`22562` by :user:`Meekail Zain <micky774>`.
+
 - |Enhancement| Adds `eigen_tol` parameter to
   :class:`manifold.SpectralEmbedding`. Both :func:`manifold.spectral_embedding`
   and :class:`manifold.SpectralEmbedding` now propogate `eigen_tol` to all
