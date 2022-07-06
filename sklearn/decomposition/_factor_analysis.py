@@ -47,7 +47,7 @@ class FactorAnalysis(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEst
 
     If we would restrict the model further, by assuming that the Gaussian
     noise is even isotropic (all diagonal entries are the same) we would obtain
-    :class:`PPCA`.
+    :class:`PCA`.
 
     FactorAnalysis performs a maximum likelihood estimate of the so-called
     `loading` matrix, the transformation of the latent variables to the
