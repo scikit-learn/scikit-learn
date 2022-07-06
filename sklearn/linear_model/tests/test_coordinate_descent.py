@@ -1645,11 +1645,11 @@ def test_enet_cv_grid_search(sample_weight):
 
 @pytest.mark.parametrize("sparseX", [False, True])
 @pytest.mark.parametrize("fit_intercept", [False, True])
-def test_enet_alpha_max_sample_weight(sparseX, fit_intercept):
-    X = np.array([[3, 1], [2, 5], [5, 3], [1, 4]])
+@pytest.mark.parametrize("sample_weight", [np.array([10, 1, 10, 1]), None])
+def test_enet_alpha_max_sample_weight(sparseX, fit_intercept, sample_weight):
+    X = np.array([[3.0, 1.0], [2.0, 5.0], [5.0, 3.0], [1.0, 4.0]])
     beta = np.array([1, 1])
     y = X @ beta
-    sample_weight = np.array([10, 1, 10, 1])
     if sparseX:
         X = sparse.csc_matrix(X)
     # Test alpha_max makes coefs zero.
