@@ -598,15 +598,19 @@ linkcheck_ignore = [
     # links falsely flagged as broken
     "https://www.researchgate.net/publication/"
     "233096619_A_Dendrite_Method_for_Cluster_Analysis",
-    "https://www.researchgate.net/publication/"
-    "221114584_Random_Fourier_Approximations_"
+    "https://www.researchgate.net/publication/221114584_Random_Fourier_Approximations_"
     "for_Skewed_Multiplicative_Histogram_Kernels",
+    "https://www.researchgate.net/publication/4974606_"
+    "Hedonic_housing_prices_and_the_demand_for_clean_air",
+    "https://www.researchgate.net/profile/Anh-Huy-Phan/publication/220241471_Fast_"
+    "Local_Algorithms_for_Large_Scale_Nonnegative_Matrix_and_Tensor_Factorizations",
     "https://doi.org/10.13140/RG.2.2.35280.02565",
     "https://www.microsoft.com/en-us/research/uploads/prod/2006/01/"
     "Bishop-Pattern-Recognition-and-Machine-Learning-2006.pdf",
-    "https://www.researchgate.net/publication/4974606_"
-    "Hedonic_housing_prices_and_the_demand_for_clean_air",
+    "https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/tr-99-87.pdf",
+    "https://microsoft.com/",
     "https://www.jstor.org/stable/2984099",
+    "https://stat.uw.edu/sites/default/files/files/reports/2000/tr371.pdf",
     # Broken links from testimonials
     "http://www.bestofmedia.com",
     "http://www.data-publica.com/",
