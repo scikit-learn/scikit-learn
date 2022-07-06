@@ -33,14 +33,14 @@ digits = datasets.load_digits()
 # Thus, we will get a final data array of shape `(n_images, n_pixels)`.
 n_samples = len(digits.images)
 X = digits.images.reshape((n_samples, -1))
-y = digits.target == 7
+y = digits.target == 8
 print(
     f"The number of images is {X.shape[0]} and each image contains {X.shape[1]} pixels"
 )
 
 # %%
 # As presented in the introduction, the data will be split into a training
-# and an testing sets of equal size.
+# and a testing set of equal size.
 from sklearn.model_selection import train_test_split
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5, random_state=0)
@@ -57,13 +57,13 @@ scores = ["precision", "recall"]
 
 # %%
 # We can also define a function to be passed to the `refit` parameter of the
-# `GridSearchCV` instance. It will implement the custom strategy to select the
-# best candidate from the `cv_results_` attribute of the
-# :class:`~sklearn.model_selection.GridSearchCV`. Once the candidate is
+# :class:`~sklearn.model_selection.GridSearchCV` instance. It will implement the
+# custom strategy to select the best candidate from the `cv_results_` attribute
+# of the :class:`~sklearn.model_selection.GridSearchCV`. Once the candidate is
 # selected, it is automatically refitted by the
 # :class:`~sklearn.model_selection.GridSearchCV` instance.
 #
-# Here, the strategy is to short-list the model which are the best in terms of
+# Here, the strategy is to short-list the models which are the best in terms of
 # precision and recall. From the selected models, we finally select the fastest
 # model at predicting. Notice that these custom choices are completely
 # arbitrary.
@@ -136,9 +136,8 @@ def refit_strategy(cv_results):
         high_precision_cv_results["mean_test_recall"] > best_recall_threshold
     ]
     print(
-        "Out of the previously selected high precision models, we find the highest\n"
-        "recall model and also keep other models farther than one standard\n"
-        "deviation from this model"
+        "Out of the previously selected high precision models, we keep all the\n"
+        "the models within one standard deviation of the highest recall model:"
     )
     print_dataframe(high_recall_cv_results)
 
