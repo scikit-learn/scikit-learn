@@ -180,12 +180,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
 
         # The objective is defined as 1/n * sum(pinball loss) + alpha * L1.
         # So we rescale the penalty term, which is equivalent.
-        if self.alpha >= 0:
-            alpha = np.sum(sample_weight) * self.alpha
-        else:
-            raise ValueError(
-                f"Penalty alpha must be a non-negative number, got {self.alpha}"
-            )
+        alpha = np.sum(sample_weight) * self.alpha
 
         if self.solver == "warn":
             warnings.warn(
