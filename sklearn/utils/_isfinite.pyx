@@ -1,7 +1,6 @@
 # Author: jakirkham, Meekail Zain, Thomas Fan
 
 from libc.math cimport isnan, isinf
-cimport cython
 from cython cimport floating
 
 cpdef enum FiniteStatus:
