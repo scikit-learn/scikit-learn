@@ -132,7 +132,7 @@ class BernoulliRBM(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
         "n_components": [Interval(Integral, 1, None, closed="left")],
         "learning_rate": [Interval(Real, 0, None, closed="neither")],
         "batch_size": [Interval(Integral, 1, None, closed="left")],
-        "n_iter": [Interval(Integral, 1, None, closed="left")],
+        "n_iter": [Interval(Integral, 0, None, closed="left")],
         "verbose": ["verbose"],
         "random_state": ["random_state"],
     }
