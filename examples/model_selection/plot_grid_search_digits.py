@@ -73,14 +73,18 @@ import pandas as pd
 
 def print_dataframe(filtered_cv_results):
     """Pretty print for filtered dataframe"""
-    for score in scores:
-        print(f"\nGrid scores on development set using {score}:\n")
-        for mean, std, params in zip(
-            filtered_cv_results[f"mean_test_{score}"],
-            filtered_cv_results[f"std_test_{score}"],
-            filtered_cv_results["params"],
-        ):
-            print(f"{mean:0.3f} (+/-{std * 2:0.03f}) for {params}")
+    for mean_precision, std_precision, mean_recall, std_recall, params in zip(
+        filtered_cv_results["mean_test_precision"],
+        filtered_cv_results["std_test_precision"],
+        filtered_cv_results["mean_test_recall"],
+        filtered_cv_results["std_test_recall"],
+        filtered_cv_results["params"],
+    ):
+        print(
+            f"precision: {mean_precision:0.3f} (±{std_precision:0.03f}),"
+            f" recall: {mean_recall:0.3f} (±{std_recall:0.03f}),"
+            f" for {params}"
+        )
 
 
 def refit_strategy(cv_results):
@@ -112,6 +116,9 @@ def refit_strategy(cv_results):
     high_precision_cv_results = cv_results_[
         cv_results_["mean_test_precision"] > precision_threshold
     ]
+
+    print(f"Models with a precision higher than {precision_threshold}:")
+    print_dataframe(high_precision_cv_results)
 
     high_precision_cv_results = high_precision_cv_results[
         [
