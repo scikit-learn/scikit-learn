@@ -1103,7 +1103,7 @@ def test_check_outlier_contamination():
             self.contamination = contamination
 
         def fit(self, X, y=None, sample_weight=None):
-            return self
+            return self  # pragma: no cover
 
         def predict(self, X, y=None):
             return np.ones(X.shape[0])
