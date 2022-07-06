@@ -43,14 +43,11 @@ def validate_parameter_constraints(parameter_constraints, params, caller_name):
     caller_name : str
         The name of the estimator or function or method that called this function.
     """
-    if params.keys() != parameter_constraints.keys():
+    if len(set(parameter_constraints.keys()) - set(params.keys())) != 0:
         raise ValueError(
-            f"The parameter constraints {list(parameter_constraints.keys())} do not"
-            f" match the parameters to validate {list(params.keys())}.\nConsider the"
-            " unexpected constraints"
-            f" {set(parameter_constraints.keys())-set(params.keys())} and missing"
-            " expected constraints"
-            f" {set(params.keys())-set(parameter_constraints.keys())}"
+            f"The parameter constraints {list(parameter_constraints.keys())}"
+            " contain unexpected parameters"
+            f" {set(parameter_constraints.keys())-set(params.keys())}"
         )
 
     for param_name, param_val in params.items():
