@@ -395,8 +395,8 @@ def test_validate_params():
 
 
 def test_validate_params_match_error():
-    """Check that an informative error is raised when the constraints do not match the
-    function parameters.
+    """Check that an informative error is raised when there are constraints
+    that have no matching function paramaters
     """
 
     @validate_params({"a": [int], "c": [int]})
