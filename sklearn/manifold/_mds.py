@@ -343,15 +343,12 @@ def eigh_scaler(dissimilarities, n_components=2):
 
     dissimilarities = check_symmetric(dissimilarities, raise_exception=True)
 
-    n_samples = dissimilarities.shape[0]
-
-    # Centering matrix
-    J = np.eye(*dissimilarities.shape) - (1.0 / n_samples) * (
-        np.ones(dissimilarities.shape)
-    )
-
-    # Double centered matrix
-    B = -0.5 * np.dot(J, np.dot(dissimilarities**2, J))
+    # Centering
+    B = dissimilarities**2
+    B = B.astype(np.float64)
+    B -= np.mean(B, axis=0)
+    B -= np.mean(B, axis=1, keepdims=True)
+    B *= -0.5
 
     w, V = linalg.eigh(B, check_finite=False)
 
