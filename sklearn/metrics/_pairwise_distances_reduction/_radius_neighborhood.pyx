@@ -103,8 +103,8 @@ cdef class PairwiseDistancesRadiusNeighborhood64(PairwiseDistancesReduction64):
                 sort_results=sort_results,
             )
         else:
-             # Fall back on a generic implementation that handles most scipy
-             # metrics by computing the distances between 2 vectors at a time.
+            # Fall back on a generic implementation that handles all distance
+            # metrics by computing it between 2 vectors at a time.
             pda = PairwiseDistancesRadiusNeighborhood64(
                 datasets_pair=DatasetsPair.get_for(X, Y, metric, metric_kwargs),
                 radius=radius,
