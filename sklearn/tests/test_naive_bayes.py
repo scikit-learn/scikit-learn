@@ -926,6 +926,8 @@ def test_n_features_deprecation(Estimator):
 @pytest.mark.parametrize("Estimator", DISCRETE_NAIVE_BAYES_CLASSES)
 @pytest.mark.parametrize("alpha", [1, [0.1, 1e-11], 1e-12])
 def test_force_alpha_deprecation(Estimator, alpha):
+    if Estimator is CategoricalNB and isinstance(alpha, list):
+        pytest.skip("CategoricalNB does not support array-like alpha values.")
     X = np.array([[1, 2], [3, 4]])
     y = np.array([1, 0])
     alpha_min = 1e-10
