@@ -15,13 +15,15 @@ from scipy import linalg
 from scipy.spatial.distance import pdist
 from scipy.spatial.distance import squareform
 from scipy.sparse import csr_matrix, issparse
+from numbers import Integral, Real
 from ..neighbors import NearestNeighbors
 from ..base import BaseEstimator
 from ..utils import check_random_state
 from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..utils.validation import check_non_negative
+from ..utils._param_validation import Interval, StrOptions
 from ..decomposition import PCA
-from ..metrics.pairwise import pairwise_distances
+from ..metrics.pairwise import pairwise_distances, _VALID_METRICS
 
 # mypy error: Module 'sklearn.manifold' has no attribute '_utils'
 from . import _utils  # type: ignore
@@ -745,6 +747,28 @@ class TSNE(BaseEstimator):
     (4, 2)
     """
 
+    _parameter_constraints = {
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "perplexity": [Real],
+        "early_exaggeration": [Interval(Real, 1, None, closed="left")],
+        "learning_rate": [
+            StrOptions({"auto", "warn"}),
+            Interval(Real, 0, None, closed="neither"),
+        ],
+        "n_iter": [Interval(Integral, 250, None, closed="left")],
+        "n_iter_without_progress": [Integral],
+        "min_grad_norm": [Real],
+        "metric": [StrOptions(set(_VALID_METRICS) | {"precomputed"}), callable],
+        "metric_params": [dict, None],
+        "init": [StrOptions({"pca", "random", "warn"}), np.ndarray],
+        "verbose": [Interval(Integral, 0, None, closed="left")],
+        "random_state": ["random_state"],
+        "method": [StrOptions({"barnes_hut", "exact"})],
+        "angle": [Interval(Real, 0, 1, closed="neither")],
+        "n_jobs": [None, Integral],
+        "square_distances": [bool, StrOptions({"deprecated"})],
+    }
+
     # Control the number of exploration iterations with early_exaggeration on
     _EXPLORATION_N_ITER = 250
 
@@ -1119,6 +1143,7 @@ class TSNE(BaseEstimator):
         X_new : ndarray of shape (n_samples, n_components)
             Embedding of the training data in low-dimensional space.
         """
+        self._validate_params()
         self._check_params_vs_input(X)
         embedding = self._fit(X)
         self.embedding_ = embedding
@@ -1144,6 +1169,7 @@ class TSNE(BaseEstimator):
         X_new : array of shape (n_samples, n_components)
             Embedding of the training data in low-dimensional space.
         """
+        self._validate_params()
         self.fit_transform(X)
         return self
 
