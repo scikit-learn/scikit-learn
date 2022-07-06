@@ -57,7 +57,10 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
     """
 
     _parameter_constraints = {
-        "hidden_layer_sizes": ["array-like", Interval(Integral, 1, None, closed="left")],
+        "hidden_layer_sizes": [
+            "array-like",
+            Interval(Integral, 1, None, closed="left"),
+        ],
         "activation": [StrOptions({"identity", "logistic", "tanh", "relu"})],
         "solver": [StrOptions({"lbfgs", "sgd", "adam"})],
         "alpha": [Interval(Real, 0, None, closed="left")],
