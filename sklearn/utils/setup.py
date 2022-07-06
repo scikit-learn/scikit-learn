@@ -119,7 +119,6 @@ def configuration(parent_package="", top_path=None):
     config.add_extension(
         "_isfinite",
         sources=["_isfinite.pyx"],
-        include_dirs=[numpy.get_include()],
         libraries=libraries,
     )
 
