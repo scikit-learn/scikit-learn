@@ -630,7 +630,6 @@ def _plain_sgd(cnp.ndarray[double, ndim=1, mode='c'] weights,
             # report epoch information
             if verbose > 0:
                 with gil:
-
                     print("Norm: %.2f, NNZs: %d, Bias: %.6f, T: %d, "
                           "Avg. loss: %f"
                           % (w.norm(), weights.nonzero()[0].shape[0],
