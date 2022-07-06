@@ -764,7 +764,7 @@ class TSNE(BaseEstimator):
         "verbose": [Interval(Integral, 0, None, closed="left")],
         "random_state": ["random_state"],
         "method": [StrOptions({"barnes_hut", "exact"})],
-        "angle": [Interval(Real, 0, 1, closed="neither")],
+        "angle": [Interval(Real, 0, 1, closed="both")],
         "n_jobs": [None, Integral],
         "square_distances": [bool, StrOptions({"deprecated"})],
     }
