@@ -16,6 +16,7 @@ from collections import defaultdict
 from collections.abc import Mapping
 from functools import partial
 import numbers
+from numbers import Integral, Real
 from operator import itemgetter
 import re
 import unicodedata
@@ -32,7 +33,7 @@ from ..utils.validation import check_is_fitted, check_array, FLOAT_DTYPES, check
 from ..utils.deprecation import deprecated
 from ..utils import _IS_32BIT
 from ..exceptions import NotFittedError
-from ..utils._param_validation import StrOptions
+from ..utils._param_validation import StrOptions, Interval
 
 
 __all__ = [
@@ -1095,6 +1096,32 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
      [1 0 0 1 0 0 0 0 1 1 0 1 0]
      [0 0 1 0 1 0 1 0 0 0 0 0 1]]
     """
+
+    _parameter_constraints = {
+        "input": [StrOptions({"filename", "file", "content"})],
+        "encoding": [str],
+        "decode_error": [StrOptions({"strict", "ignore", "replace"})],
+        "strip_accents": [StrOptions({"ascii", "unicode"}), None],
+        "lowercase": ["boolean"],
+        "preprocessor": [callable, None],
+        "tokenizer": [callable, None],
+        "stop_words": [StrOptions({"english"}), list, None],
+        "token_pattern": [str],
+        "ngram_range": [tuple],
+        "analyzer": [StrOptions({"word", "char", "char_wb"}), callable],
+        "max_df": [
+            Interval(Real, 0, 1, closed="both"),
+            Interval(Integral, 1, None, closed="left"),
+        ],
+        "min_df": [
+            Interval(Real, 0, 1, closed="both"),
+            Interval(Integral, 1, None, closed="left"),
+        ],
+        "max_features": [Interval(Integral, 1, None, closed="left"), None],
+        "vocabulary": [Mapping, np.iterable, None],
+        "binary": ["boolean"],
+        "dtype": [type],
+    }
 
     def __init__(
         self,
