@@ -21,7 +21,7 @@ from ..base import BaseEstimator
 from ..utils import check_random_state
 from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..utils.validation import check_non_negative
-from ..utils._param_validation import Interval, StrOptions
+from ..utils._param_validation import Interval, StrOptions, Hidden
 from ..decomposition import PCA
 from ..metrics.pairwise import pairwise_distances, _VALID_METRICS
 
@@ -30,7 +30,6 @@ from . import _utils  # type: ignore
 
 # mypy error: Module 'sklearn.manifold' has no attribute '_barnes_hut_tsne'
 from . import _barnes_hut_tsne  # type: ignore
-
 
 MACHINE_EPSILON = np.finfo(np.double).eps
 
@@ -749,24 +748,29 @@ class TSNE(BaseEstimator):
 
     _parameter_constraints = {
         "n_components": [Interval(Integral, 1, None, closed="left")],
-        "perplexity": [Real],
+        "perplexity": [Interval(Real, 1, None, closed="left")],
         "early_exaggeration": [Interval(Real, 1, None, closed="left")],
         "learning_rate": [
-            StrOptions({"auto", "warn"}),
+            StrOptions({"auto"}),
+            Hidden(StrOptions({"warn"})),
             Interval(Real, 0, None, closed="neither"),
         ],
         "n_iter": [Interval(Integral, 250, None, closed="left")],
-        "n_iter_without_progress": [Integral],
-        "min_grad_norm": [Real],
+        "n_iter_without_progress": [Interval(Integral, -1, None, closed="left")],
+        "min_grad_norm": [Interval(Real, 0, None, closed="left")],
         "metric": [StrOptions(set(_VALID_METRICS) | {"precomputed"}), callable],
         "metric_params": [dict, None],
-        "init": [StrOptions({"pca", "random", "warn"}), np.ndarray],
-        "verbose": [Interval(Integral, 0, None, closed="left")],
+        "init": [
+            StrOptions({"pca", "random"}),
+            Hidden(StrOptions({"warn"})),
+            np.ndarray,
+        ],
+        "verbose": ["verbose"],
         "random_state": ["random_state"],
         "method": [StrOptions({"barnes_hut", "exact"})],
         "angle": [Interval(Real, 0, 1, closed="both")],
         "n_jobs": [None, Integral],
-        "square_distances": [bool, StrOptions({"deprecated"})],
+        "square_distances": ["boolean", Hidden(StrOptions({"deprecated"}))],
     }
 
     # Control the number of exploration iterations with early_exaggeration on
@@ -1014,8 +1018,6 @@ class TSNE(BaseEstimator):
             X_embedded = 1e-4 * random_state.standard_normal(
                 size=(n_samples, self.n_components)
             ).astype(np.float32)
-        else:
-            pass
 
         # Degrees of freedom of the Student's t-distribution. The suggestion
         # degrees_of_freedom = n_components - 1 comes from
