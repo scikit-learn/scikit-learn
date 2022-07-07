@@ -7,8 +7,8 @@ cnp.import_array()
 
 ctypedef cnp.int8_t FLAG_T
 
-# INDEX_{A,B} are defined to generate a proper Cartesian product of types through
-# Cython fused-type expansion.
+# INDEX_{A,B}_T are defined to generate a proper Cartesian product
+# of types through Cython fused-type expansion.
 ctypedef fused INDEX_A_T:
     cnp.int32_t
     cnp.int64_t
@@ -83,10 +83,10 @@ def _csr_polynomial_expansion(cnp.ndarray[DATA_T, ndim=1] data,
         The dimensionality of the input CSR matrix.
 
     result_data : nd-array
-         The output CSR matrix's "data" attribute
+        The output CSR matrix's "data" attribute
 
     result_indices : nd-array
-         The output CSR matrix's "indices" attribute
+        The output CSR matrix's "indices" attribute
 
     result_indptr : nd-array
         The output CSR matrix's "indptr" attribute

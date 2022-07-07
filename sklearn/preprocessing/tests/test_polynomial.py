@@ -926,6 +926,8 @@ def test_csr_polynomial_expansion_index_overflow():
     assert xinter.dtype == X.dtype
     assert xinter.indptr.dtype == xinter.indices.dtype == np.int32
 
+    # Breaks when `n_output_features_ > max_int32` for scipy
+    # versions earlier than 1.8.0
     # Depends on upstream bug fix
     if sp_version >= parse_version("1.8.0.dev0"):
         pf = PolynomialFeatures(interaction_only=False, include_bias=False, degree=2)
