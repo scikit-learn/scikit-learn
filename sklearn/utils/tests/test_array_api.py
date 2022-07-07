@@ -7,8 +7,7 @@ from sklearn.utils._array_api import get_namespace
 from sklearn.utils._array_api import _NumPyApiWrapper
 from sklearn.utils._array_api import _ArrayAPIWrapper
 from sklearn.utils._array_api import _asarray_with_order
-from sklearn.utils._array_api import _convert_to_numpy
-from sklearn.utils._array_api import _convert_estimator_to_ndarray
+from sklearn.utils._array_api import _estimator_with_converted_arrays
 from sklearn._config import config_context
 
 pytestmark = pytest.mark.filterwarnings(
@@ -113,29 +112,36 @@ def test_asarray_with_order_ignored():
     assert not X_new_np.flags["F_CONTIGUOUS"]
 
 
-def test_convert_to_numpy_error():
-    """Test convert to numpy errors for unsupported namespaces."""
-    xp = pytest.importorskip("numpy.array_api")
-    xp_ = _NumPyArrayAPITestWrapper(xp)
-
-    X = xp_.asarray([1.2, 3.4])
-
-    with pytest.raises(ValueError, match="Supported namespaces are:"):
-        _convert_to_numpy(X, xp=xp_)
+class SimpleEstimator(BaseEstimator):
+    def fit(self, X, y=None):
+        self.X_ = X
+        self.n_features_ = X.shape[0]
+        return self
 
 
 @pytest.mark.parametrize("array_namespace", ["numpy.array_api", "cupy.array_api"])
 def test_convert_estimator_to_ndarray(array_namespace):
+    """Convert estimator attributes to ndarray."""
     xp = pytest.importorskip(array_namespace)
 
-    class Estimator(BaseEstimator):
-        def fit(self, X, y=None):
-            self.X_ = X
-            self.n_features_ = X.shape[0]
-            return self
+    if array_namespace == "numpy.array_api":
+        converter = lambda array: numpy.asarray(array)
+    else:  # pragma: no cover
+        converter = lambda array: array._array.get()
 
     X = xp.asarray([[1.3, 4.5]])
-    est = Estimator().fit(X)
+    est = SimpleEstimator().fit(X)
 
-    new_est = _convert_estimator_to_ndarray(est)
+    new_est = _estimator_with_converted_arrays(est, converter)
     assert isinstance(new_est.X_, numpy.ndarray)
+
+
+def test_convert_estimator_to_array_api():
+    """Convert estimator attributes to ArrayAPI arrays."""
+    xp = pytest.importorskip("numpy.array_api")
+
+    X_np = numpy.asarray([[1.3, 4.5]])
+    est = SimpleEstimator().fit(X_np)
+
+    new_est = _estimator_with_converted_arrays(est, lambda array: xp.asarray(array))
+    assert hasattr(new_est.X_, "__array_namespace__")
