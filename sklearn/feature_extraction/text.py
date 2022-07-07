@@ -1298,6 +1298,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         self : object
             Fitted vectorizer.
         """
+        self._validate_params()
         self._warn_for_unused_params()
         self.fit_transform(raw_documents)
         return self
@@ -1329,7 +1330,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
                 "Iterable over raw text documents expected, string object received."
             )
 
-        self._validate_params()
+        # self._validate_params()
         self._validate_vocabulary()
         max_df = self.max_df
         min_df = self.min_df
