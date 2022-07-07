@@ -701,10 +701,12 @@ class MinCovDet(EmpiricalCovariance):
 
     _parameter_constraints = {
         **EmpiricalCovariance._parameter_constraints,  # type: ignore
-        "support_fraction": [Interval(Real, 0, 1, closed="neither"), None],
+        "support_fraction": [
+            Interval(Real, 0, 1, closed="neither"),
+            None,  # type: ignore
+        ],
         "random_state": ["random_state"],
     }
-
     _nonrobust_covariance = staticmethod(empirical_covariance)
 
     def __init__(
