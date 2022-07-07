@@ -625,7 +625,10 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         "gamma": [Interval(numbers.Real, 1.0, None, closed="left")],
         "affinity": [str, callable, StrOptions(set(KERNEL_PARAMS.keys()))],
         "n_neighbors": [Interval(numbers.Integral, 1, None, closed="left")],
-        "eigen_tol": [Interval(numbers.Real, 0.0, None, closed="left")],
+        "eigen_tol": [
+            Interval(numbers.Real, 0.0, None, closed="left"),
+            StrOptions({"auto"}, None),
+        ],
         "assign_labels": [StrOptions({"kmeans", "discretize", "cluster_qr"})],
         "degree": [Interval(numbers.Integral, 1, None, closed="left")],
         "coef0": [Interval(numbers.Real, None, None, closed="both")],
