@@ -51,6 +51,7 @@ from sklearn.utils.estimator_checks import (
     parametrize_with_checks,
     check_dataframe_column_names_consistency,
     check_n_features_in_after_fitting,
+    check_param_validation,
     check_transformer_get_feature_names_out,
     check_transformer_get_feature_names_out_pandas,
 )
@@ -367,7 +368,7 @@ column_name_estimators = list(
 def test_pandas_column_name_consistency(estimator):
     _set_checking_parameters(estimator)
     with ignore_warnings(category=(FutureWarning)):
-        with pytest.warns(None) as record:
+        with warnings.catch_warnings(record=True) as record:
             check_dataframe_column_names_consistency(
                 estimator.__class__.__name__, estimator
             )
@@ -414,7 +415,6 @@ def test_transformers_get_feature_names_out(transformer):
 
 VALIDATE_ESTIMATOR_INIT = [
     "SGDOneClassSVM",
-    "TheilSenRegressor",
 ]
 VALIDATE_ESTIMATOR_INIT = set(VALIDATE_ESTIMATOR_INIT)
 
@@ -443,3 +443,131 @@ def test_estimators_do_not_raise_errors_in_init_or_set_params(Estimator):
 
         # Also do does not raise
         est.set_params(**new_params)
+
+
+PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
+    "ARDRegression",
+    "AdditiveChi2Sampler",
+    "AffinityPropagation",
+    "BaggingClassifier",
+    "BaggingRegressor",
+    "BayesianGaussianMixture",
+    "BayesianRidge",
+    "BernoulliRBM",
+    "CalibratedClassifierCV",
+    "ClassifierChain",
+    "CountVectorizer",
+    "DictionaryLearning",
+    "ElasticNetCV",
+    "EllipticEnvelope",
+    "EmpiricalCovariance",
+    "ExtraTreesClassifier",
+    "ExtraTreesRegressor",
+    "FeatureHasher",
+    "FunctionTransformer",
+    "GaussianMixture",
+    "GenericUnivariateSelect",
+    "GradientBoostingClassifier",
+    "GradientBoostingRegressor",
+    "GraphicalLasso",
+    "GraphicalLassoCV",
+    "HashingVectorizer",
+    "IncrementalPCA",
+    "Isomap",
+    "IsotonicRegression",
+    "IterativeImputer",
+    "KNNImputer",
+    "KNeighborsTransformer",
+    "KernelPCA",
+    "LabelPropagation",
+    "LabelSpreading",
+    "Lars",
+    "LarsCV",
+    "LassoCV",
+    "LassoLars",
+    "LassoLarsCV",
+    "LassoLarsIC",
+    "LatentDirichletAllocation",
+    "LedoitWolf",
+    "LocallyLinearEmbedding",
+    "MinCovDet",
+    "MiniBatchDictionaryLearning",
+    "MultiOutputClassifier",
+    "MultiOutputRegressor",
+    "MultiTaskElasticNet",
+    "MultiTaskElasticNetCV",
+    "MultiTaskLasso",
+    "MultiTaskLassoCV",
+    "NearestCentroid",
+    "NearestNeighbors",
+    "NeighborhoodComponentsAnalysis",
+    "NuSVC",
+    "NuSVR",
+    "Nystroem",
+    "OAS",
+    "OPTICS",
+    "OneClassSVM",
+    "OneVsOneClassifier",
+    "OneVsRestClassifier",
+    "OrthogonalMatchingPursuit",
+    "OrthogonalMatchingPursuitCV",
+    "OutputCodeClassifier",
+    "PatchExtractor",
+    "PolynomialCountSketch",
+    "PolynomialFeatures",
+    "QuadraticDiscriminantAnalysis",
+    "RANSACRegressor",
+    "RBFSampler",
+    "RFE",
+    "RFECV",
+    "RadiusNeighborsClassifier",
+    "RadiusNeighborsRegressor",
+    "RadiusNeighborsTransformer",
+    "RandomForestClassifier",
+    "RandomForestRegressor",
+    "RandomTreesEmbedding",
+    "RegressorChain",
+    "RidgeCV",
+    "RidgeClassifierCV",
+    "SVC",
+    "SVR",
+    "SelectFdr",
+    "SelectFpr",
+    "SelectFromModel",
+    "SelectFwe",
+    "SelectKBest",
+    "SelectPercentile",
+    "SelfTrainingClassifier",
+    "SequentialFeatureSelector",
+    "ShrunkCovariance",
+    "SimpleImputer",
+    "SkewedChi2Sampler",
+    "SpectralBiclustering",
+    "SpectralClustering",
+    "SpectralCoclustering",
+    "SpectralEmbedding",
+    "SplineTransformer",
+    "StackingClassifier",
+    "StackingRegressor",
+    "TSNE",
+    "TfidfVectorizer",
+    "TheilSenRegressor",
+    "TransformedTargetRegressor",
+    "TruncatedSVD",
+    "VotingClassifier",
+    "VotingRegressor",
+]
+
+
+@pytest.mark.parametrize(
+    "estimator", _tested_estimators(), ids=_get_check_estimator_ids
+)
+def test_check_param_validation(estimator):
+    name = estimator.__class__.__name__
+    if name in PARAM_VALIDATION_ESTIMATORS_TO_IGNORE:
+        pytest.skip(
+            f"Skipping check_param_validation for {name}: Does not use the "
+            "appropriate API for parameter validation yet."
+        )
+    _set_checking_parameters(estimator)
+    check_param_validation(name, estimator)

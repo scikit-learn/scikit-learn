@@ -106,42 +106,6 @@ def test_assure_warning_when_normalize(CoordinateDescentModel, normalize, n_warn
     assert len([w.message for w in rec]) == n_warnings
 
 
-@pytest.mark.parametrize(
-    "params, err_type, err_msg",
-    [
-        ({"alpha": -1}, ValueError, "alpha == -1, must be >= 0.0"),
-        ({"l1_ratio": -1}, ValueError, "l1_ratio == -1, must be >= 0.0"),
-        ({"l1_ratio": 2}, ValueError, "l1_ratio == 2, must be <= 1.0"),
-        (
-            {"l1_ratio": "1"},
-            TypeError,
-            "l1_ratio must be an instance of float, not str",
-        ),
-        ({"tol": -1.0}, ValueError, "tol == -1.0, must be >= 0."),
-        (
-            {"tol": "1"},
-            TypeError,
-            "tol must be an instance of float, not str",
-        ),
-        ({"max_iter": 0}, ValueError, "max_iter == 0, must be >= 1."),
-        (
-            {"max_iter": "1"},
-            TypeError,
-            "max_iter must be an instance of int, not str",
-        ),
-    ],
-)
-def test_param_invalid(params, err_type, err_msg):
-    # Check that correct error is raised when l1_ratio in ElasticNet
-    # is outside the correct range
-    X = np.array([[-1.0], [0.0], [1.0]])
-    y = [-1, 0, 1]  # just a straight line
-
-    enet = ElasticNet(**params)
-    with pytest.raises(err_type, match=err_msg):
-        enet.fit(X, y)
-
-
 @pytest.mark.parametrize("order", ["C", "F"])
 @pytest.mark.parametrize("input_order", ["C", "F"])
 def test_set_order_dense(order, input_order):
@@ -1016,15 +980,6 @@ def test_precompute_invalid_argument():
         with pytest.raises(ValueError, match=err_msg):
             clf.fit(X, y)
 
-    # Precompute = 'auto' is not supported for ElasticNet and Lasso
-    err_msg = ".*should be.*True.*False.*array-like.*Got 'auto'"
-    with pytest.raises(ValueError, match=err_msg):
-        ElasticNet(precompute="auto").fit(X, y)
-
-    err_msg = ".*should be.*True.*False.*array-like.*Got 'auto'"
-    with pytest.raises(ValueError, match=err_msg):
-        Lasso(precompute="auto").fit(X, y)
-
 
 def test_elasticnet_precompute_incorrect_gram():
     # check that passing an invalid precomputed Gram matrix will raise an
@@ -1061,6 +1016,29 @@ def test_elasticnet_precompute_gram_weighted_samples():
 
     clf2 = ElasticNet(alpha=0.01, precompute=False)
     clf2.fit(X, y, sample_weight=sample_weight)
+
+    assert_allclose(clf1.coef_, clf2.coef_)
+
+
+def test_elasticnet_precompute_gram():
+    # Check the dtype-aware check for a precomputed Gram matrix
+    # (see https://github.com/scikit-learn/scikit-learn/pull/22059
+    # and https://github.com/scikit-learn/scikit-learn/issues/21997).
+    # Here: (X_c.T, X_c)[2, 3] is not equal to np.dot(X_c[:, 2], X_c[:, 3])
+    # but within tolerance for np.float32
+
+    rng = np.random.RandomState(58)
+    X = rng.binomial(1, 0.25, (1000, 4)).astype(np.float32)
+    y = rng.rand(1000).astype(np.float32)
+
+    X_c = X - np.average(X, axis=0)
+    gram = np.dot(X_c.T, X_c)
+
+    clf1 = ElasticNet(alpha=0.01, precompute=gram)
+    clf1.fit(X_c, y)
+
+    clf2 = ElasticNet(alpha=0.01, precompute=False)
+    clf2.fit(X, y)
 
     assert_allclose(clf1.coef_, clf2.coef_)
 
@@ -1148,11 +1126,6 @@ def test_random_descent():
     clf_random.fit(X, new_y)
     assert_array_almost_equal(clf_cyclic.coef_, clf_random.coef_)
     assert_almost_equal(clf_cyclic.intercept_, clf_random.intercept_)
-
-    # Raise error when selection is not in cyclic or random.
-    clf_random = ElasticNet(selection="invalid")
-    with pytest.raises(ValueError):
-        clf_random.fit(X, y)
 
 
 def test_enet_path_positive():

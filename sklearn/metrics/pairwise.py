@@ -135,7 +135,6 @@ def check_pairwise_arrays(
     safe_Y : {array-like, sparse matrix} of shape (n_samples_Y, n_features)
         An array equal to Y if Y was not None, guaranteed to be a numpy array.
         If Y was None, safe_Y will be a pointer to X.
-
     """
     X, Y, dtype_float = _return_float_dtype(X, Y)
 
@@ -833,13 +832,15 @@ def haversine_distances(X, Y=None):
     Parameters
     ----------
     X : array-like of shape (n_samples_X, 2)
+        A feature array.
 
     Y : array-like of shape (n_samples_Y, 2), default=None
-        If `None`, uses `Y=X`.
+        An optional second feature array. If `None`, uses `Y=X`.
 
     Returns
     -------
     distance : ndarray of shape (n_samples_X, n_samples_Y)
+        The distance matrix.
 
     Notes
     -----
@@ -1289,9 +1290,10 @@ def laplacian_kernel(X, Y=None, gamma=None):
     Parameters
     ----------
     X : ndarray of shape (n_samples_X, n_features)
+        A feature array.
 
     Y : ndarray of shape (n_samples_Y, n_features), default=None
-        If `None`, uses `Y=X`.
+        An optional second feature array. If `None`, uses `Y=X`.
 
     gamma : float, default=None
         If None, defaults to 1.0 / n_features.
@@ -1299,6 +1301,7 @@ def laplacian_kernel(X, Y=None, gamma=None):
     Returns
     -------
     kernel_matrix : ndarray of shape (n_samples_X, n_samples_Y)
+        The kernel matrix.
     """
     X, Y = check_pairwise_arrays(X, Y)
     if gamma is None:
@@ -1403,7 +1406,7 @@ def additive_chi2_kernel(X, Y=None):
       Local features and kernels for classification of texture and object
       categories: A comprehensive study
       International Journal of Computer Vision 2007
-      https://research.microsoft.com/en-us/um/people/manik/projects/trade-off/papers/ZhangIJCV06.pdf
+      https://hal.archives-ouvertes.fr/hal-00171412/document
     """
     if issparse(X) or issparse(Y):
         raise ValueError("additive_chi2 does not support sparse matrices.")
@@ -1458,7 +1461,7 @@ def chi2_kernel(X, Y=None, gamma=1.0):
       Local features and kernels for classification of texture and object
       categories: A comprehensive study
       International Journal of Computer Vision 2007
-      https://research.microsoft.com/en-us/um/people/manik/projects/trade-off/papers/ZhangIJCV06.pdf
+      https://hal.archives-ouvertes.fr/hal-00171412/document
     """
     K = additive_chi2_kernel(X, Y)
     K *= gamma
@@ -1504,7 +1507,6 @@ def distance_metrics():
     =============== ========================================
 
     Read more in the :ref:`User Guide <metrics>`.
-
     """
     return PAIRWISE_DISTANCE_FUNCTIONS
 
@@ -1858,7 +1860,7 @@ def pairwise_distances(
     valid scipy.spatial.distance metrics), the scikit-learn implementation
     will be used, which is faster and has support for sparse matrices (except
     for 'cityblock'). For a verbose description of the metrics from
-    scikit-learn, see the __doc__ of the sklearn.pairwise.distance_metrics
+    scikit-learn, see :func:`sklearn.metrics.pairwise.distance_metrics`
     function.
 
     Read more in the :ref:`User Guide <metrics>`.
@@ -2078,8 +2080,7 @@ def pairwise_kernels(
 
     Parameters
     ----------
-    X : ndarray of shape (n_samples_X, n_samples_X) or \
-            (n_samples_X, n_features)
+    X : ndarray of shape (n_samples_X, n_samples_X) or (n_samples_X, n_features)
         Array of pairwise kernels between samples, or a feature array.
         The shape of the array should be (n_samples_X, n_samples_X) if
         metric == "precomputed" and (n_samples_X, n_features) otherwise.
@@ -2117,8 +2118,7 @@ def pairwise_kernels(
 
     Returns
     -------
-    K : ndarray of shape (n_samples_X, n_samples_X) or \
-            (n_samples_X, n_samples_Y)
+    K : ndarray of shape (n_samples_X, n_samples_X) or (n_samples_X, n_samples_Y)
         A kernel matrix K such that K_{i, j} is the kernel between the
         ith and jth vectors of the given matrix X, if Y is None.
         If Y is not None, then K_{i, j} is the kernel between the ith array
@@ -2127,7 +2127,6 @@ def pairwise_kernels(
     Notes
     -----
     If metric is 'precomputed', Y is ignored and X is returned.
-
     """
     # import GPKernel locally to prevent circular imports
     from ..gaussian_process.kernels import Kernel as GPKernel

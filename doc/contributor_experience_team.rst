@@ -15,7 +15,7 @@
     </div>
     <div>
     <a href='https://github.com/jmloyola'><img src='https://avatars.githubusercontent.com/u/2133361?v=4' class='avatar' /></a> <br />
-    <p>Juan Martín Loyola</p>
+    <p>Juan Martin Loyola</p>
     </div>
     <div>
     <a href='https://github.com/smarie'><img src='https://avatars.githubusercontent.com/u/3236794?v=4' class='avatar' /></a> <br />
@@ -36,5 +36,9 @@
     <div>
     <a href='https://github.com/albertcthomas'><img src='https://avatars.githubusercontent.com/u/15966638?v=4' class='avatar' /></a> <br />
     <p>Albert Thomas</p>
+    </div>
+    <div>
+    <a href='https://github.com/Micky774'><img src='https://avatars.githubusercontent.com/u/34613774?v=4' class='avatar' /></a> <br />
+    <p>Meekail Zain</p>
     </div>
     </div>

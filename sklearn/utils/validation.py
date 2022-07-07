@@ -31,6 +31,7 @@ from ..exceptions import NotFittedError
 from ..exceptions import DataConversionWarning
 from ..utils._array_api import get_namespace
 from ..utils._array_api import _asarray_with_order
+from ._isfinite import cy_isfinite, FiniteStatus
 
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 
@@ -96,8 +97,6 @@ def _assert_all_finite(
     X, allow_nan=False, msg_dtype=None, estimator_name=None, input_name=""
 ):
     """Like assert_all_finite, but only for ndarray."""
-    # validation is also imported in extmath
-    from .extmath import _safe_accumulator_op
 
     xp, _ = get_namespace(X)
 
@@ -106,32 +105,35 @@ def _assert_all_finite(
 
     X = xp.asarray(X)
     # First try an O(n) time, O(1) space solution for the common case that
-    # everything is finite; fall back to O(n) space np.isfinite to prevent
-    # false positives from overflow in sum method. The sum is also calculated
-    # safely to reduce dtype induced overflows.
+    # everything is finite; fall back to O(n) space `np.isinf/isnan` or custom
+    # Cython implementation to prevent false positives and provide a detailed
+    # error message.
     is_float = X.dtype.kind in "fc"
-    if is_float and (xp.isfinite(_safe_accumulator_op(xp.sum, X))):
-        pass
-    elif is_float:
-        if (
-            allow_nan
-            and xp.any(xp.isinf(X))
-            or not allow_nan
-            and not xp.all(xp.isfinite(X))
-        ):
-            if not allow_nan and xp.any(xp.isnan(X)):
+    if is_float:
+        with np.errstate(over="ignore"):
+            first_pass_isfinite = xp.isfinite(xp.sum(X))
+        if first_pass_isfinite:
+            return
+        # Cython implementation doesn't support FP16 or complex numbers
+        use_cython = (
+            xp is np and X.data.contiguous and X.dtype.type in {np.float32, np.float64}
+        )
+        if use_cython:
+            out = cy_isfinite(X.reshape(-1), allow_nan=allow_nan)
+            has_nan_error = False if allow_nan else out == FiniteStatus.has_nan
+            has_inf = out == FiniteStatus.has_infinite
+        else:
+            has_inf = xp.isinf(X).any()
+            has_nan_error = False if allow_nan else xp.isnan(X).any()
+        if has_inf or has_nan_error:
+            if has_nan_error:
                 type_err = "NaN"
             else:
                 msg_dtype = msg_dtype if msg_dtype is not None else X.dtype
                 type_err = f"infinity or a value too large for {msg_dtype!r}"
             padded_input_name = input_name + " " if input_name else ""
             msg_err = f"Input {padded_input_name}contains {type_err}."
-            if (
-                not allow_nan
-                and estimator_name
-                and input_name == "X"
-                and xp.any(xp.isnan(X))
-            ):
+            if estimator_name and input_name == "X" and has_nan_error:
                 # Improve the error message on how to handle missing values in
                 # scikit-learn.
                 msg_err += (
@@ -143,6 +145,10 @@ def _assert_all_finite(
                     " instance by using an imputer transformer in a pipeline or drop"
                     " samples with missing values. See"
                     " https://scikit-learn.org/stable/modules/impute.html"
+                    " You can find a list of all estimators that handle NaN values"
+                    " at the following page:"
+                    " https://scikit-learn.org/stable/modules/impute.html"
+                    "#estimators-that-handle-nan-values"
                 )
             raise ValueError(msg_err)
 
@@ -347,17 +353,19 @@ def check_memory(memory):
     Parameters
     ----------
     memory : None, str or object with the joblib.Memory interface
+        - If string, the location where to create the `joblib.Memory` interface.
+        - If None, no caching is done and the Memory object is completely transparent.
 
     Returns
     -------
     memory : object with the joblib.Memory interface
+        A correct joblib.Memory object.
 
     Raises
     ------
     ValueError
         If ``memory`` is not joblib.Memory-like.
     """
-
     if memory is None or isinstance(memory, str):
         memory = joblib.Memory(location=memory, verbose=0)
     elif not hasattr(memory, "cache"):
@@ -578,13 +586,25 @@ def _check_estimator_name(estimator):
 
 def _pandas_dtype_needs_early_conversion(pd_dtype):
     """Return True if pandas extension pd_dtype need to be converted early."""
+    # Check these early for pandas versions without extension dtypes
+    from pandas.api.types import (
+        is_bool_dtype,
+        is_sparse,
+        is_float_dtype,
+        is_integer_dtype,
+    )
+
+    if is_bool_dtype(pd_dtype):
+        # bool and extension booleans need early converstion because __array__
+        # converts mixed dtype dataframes into object dtypes
+        return True
+
+    if is_sparse(pd_dtype):
+        # Sparse arrays will be converted later in `check_array`
+        return False
+
     try:
-        from pandas.api.types import (
-            is_extension_array_dtype,
-            is_float_dtype,
-            is_integer_dtype,
-            is_sparse,
-        )
+        from pandas.api.types import is_extension_array_dtype
     except ImportError:
         return False
 
@@ -748,16 +768,10 @@ def check_array(
                     "It will be converted to a dense numpy array."
                 )
 
-        dtypes_orig = []
-        for dtype_iter in array.dtypes:
-            if dtype_iter.kind == "b":
-                # pandas boolean dtype __array__ interface coerces bools to objects
-                dtype_iter = np.dtype(object)
-            elif _pandas_dtype_needs_early_conversion(dtype_iter):
-                pandas_requires_conversion = True
-
-            dtypes_orig.append(dtype_iter)
-
+        dtypes_orig = list(array.dtypes)
+        pandas_requires_conversion = any(
+            _pandas_dtype_needs_early_conversion(i) for i in dtypes_orig
+        )
         if all(isinstance(dtype_iter, np.dtype) for dtype_iter in dtypes_orig):
             dtype_orig = np.result_type(*dtypes_orig)
 
@@ -780,7 +794,9 @@ def check_array(
     if pandas_requires_conversion:
         # pandas dataframe requires conversion earlier to handle extension dtypes with
         # nans
-        array = array.astype(dtype)
+        # Use the original dtype for conversion if dtype is None
+        new_dtype = dtype_orig if dtype is None else dtype
+        array = array.astype(new_dtype)
         # Since we converted here, we do not need to convert again later
         dtype = None
 
@@ -1173,8 +1189,8 @@ def check_random_state(seed):
 
     Returns
     -------
-    None
-        No returns.
+    :class:`numpy:numpy.random.RandomState`
+        The random state object based on `seed` parameter.
     """
     if seed is None or seed is np.random:
         return np.random.mtrand._rand

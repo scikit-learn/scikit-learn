@@ -13,6 +13,7 @@ import warnings
 import numpy as np
 import scipy.linalg
 from scipy import linalg
+from numbers import Real, Integral
 
 from .base import BaseEstimator, TransformerMixin, ClassifierMixin
 from .base import _ClassNamePrefixFeaturesOutMixin
@@ -23,6 +24,7 @@ from .utils.validation import check_is_fitted
 from .utils._array_api import get_namespace, _expit
 from .utils.multiclass import check_classification_targets
 from .utils.extmath import softmax
+from .utils._param_validation import StrOptions, Interval, HasMethods
 from .preprocessing import StandardScaler
 
 
@@ -71,14 +73,8 @@ def _cov(X, shrinkage=None, covariance_estimator=None):
                 s = sc.scale_[:, np.newaxis] * s * sc.scale_[np.newaxis, :]
             elif shrinkage == "empirical":
                 s = empirical_covariance(X)
-            else:
-                raise ValueError("unknown shrinkage parameter")
-        elif isinstance(shrinkage, float) or isinstance(shrinkage, int):
-            if shrinkage < 0 or shrinkage > 1:
-                raise ValueError("shrinkage parameter must be between 0 and 1")
+        elif isinstance(shrinkage, Real):
             s = shrunk_covariance(empirical_covariance(X), shrinkage)
-        else:
-            raise TypeError("shrinkage must be a float or a string")
     else:
         if shrinkage is not None and shrinkage != 0:
             raise ValueError(
@@ -322,6 +318,16 @@ class LinearDiscriminantAnalysis(
     [1]
     """
 
+    _parameter_constraints = {
+        "solver": [StrOptions({"svd", "lsqr", "eigen"})],
+        "shrinkage": [StrOptions({"auto"}), Interval(Real, 0, 1, closed="both"), None],
+        "n_components": [Interval(Integral, 1, None, closed="left"), None],
+        "priors": ["array-like", None],
+        "store_covariance": ["boolean"],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "covariance_estimator": [HasMethods("fit"), None],
+    }
+
     def __init__(
         self,
         solver="svd",
@@ -558,7 +564,10 @@ class LinearDiscriminantAnalysis(
         self : object
             Fitted estimator.
         """
+        self._validate_params()
+
         xp, _ = get_namespace(X)
+
         X, y = self._validate_data(
             X, y, ensure_min_samples=2, dtype=[xp.float64, xp.float32]
         )
@@ -599,7 +608,7 @@ class LinearDiscriminantAnalysis(
 
         if self.solver == "svd":
             if self.shrinkage is not None:
-                raise NotImplementedError("shrinkage not supported")
+                raise NotImplementedError("shrinkage not supported with 'svd' solver.")
             if self.covariance_estimator is not None:
                 raise ValueError(
                     "covariance estimator "
@@ -620,11 +629,6 @@ class LinearDiscriminantAnalysis(
                 y,
                 shrinkage=self.shrinkage,
                 covariance_estimator=self.covariance_estimator,
-            )
-        else:
-            raise ValueError(
-                "unknown solver {} (valid solvers are 'svd', "
-                "'lsqr', and 'eigen').".format(self.solver)
             )
         if self.classes_.size == 2:  # treat binary case as a special case
             coef_ = xp.asarray(self.coef_[1, :] - self.coef_[0, :], dtype=X.dtype)

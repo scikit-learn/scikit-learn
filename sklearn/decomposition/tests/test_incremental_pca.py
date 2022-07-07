@@ -1,6 +1,7 @@
 """Tests for Incremental PCA."""
 import numpy as np
 import pytest
+import warnings
 
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
@@ -147,6 +148,18 @@ def test_incremental_pca_validation():
         ),
     ):
         IncrementalPCA(n_components=n_components).partial_fit(X)
+
+
+def test_n_samples_equal_n_components():
+    # Ensures no warning is raised when n_samples==n_components
+    # Non-regression test for gh-19050
+    ipca = IncrementalPCA(n_components=5)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
+        ipca.partial_fit(np.random.randn(5, 7))
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
+        ipca.fit(np.random.randn(5, 7))
 
 
 def test_n_components_none():

@@ -168,7 +168,7 @@ classes = list(map(np.unique, (y1, y2, y3)))
 
 
 def test_multi_output_classification_partial_fit_parallelism():
-    sgd_linear_clf = SGDClassifier(loss="log", random_state=1, max_iter=5)
+    sgd_linear_clf = SGDClassifier(loss="log_loss", random_state=1, max_iter=5)
     mor = MultiOutputClassifier(sgd_linear_clf, n_jobs=4)
     mor.partial_fit(X, y, classes)
     est1 = mor.estimators_[0]
@@ -189,7 +189,7 @@ def test_hasattr_multi_output_predict_proba():
     assert not hasattr(multi_target_linear, "predict_proba")
 
     # case where predict_proba attribute exists
-    sgd_linear_clf = SGDClassifier(loss="log", random_state=1, max_iter=5)
+    sgd_linear_clf = SGDClassifier(loss="log_loss", random_state=1, max_iter=5)
     multi_target_linear = MultiOutputClassifier(sgd_linear_clf)
     multi_target_linear.fit(X, y)
     assert hasattr(multi_target_linear, "predict_proba")
@@ -197,7 +197,7 @@ def test_hasattr_multi_output_predict_proba():
 
 # check predict_proba passes
 def test_multi_output_predict_proba():
-    sgd_linear_clf = SGDClassifier(random_state=1, max_iter=5, loss="log")
+    sgd_linear_clf = SGDClassifier(random_state=1, max_iter=5, loss="log_loss")
     param = {"loss": ("hinge", "log", "modified_huber")}
 
     # inner function for custom scoring
@@ -229,7 +229,7 @@ def test_multi_output_classification_partial_fit():
     # test if multi_target initializes correctly with base estimator and fit
     # assert predictions work as expected for predict
 
-    sgd_linear_clf = SGDClassifier(loss="log", random_state=1, max_iter=5)
+    sgd_linear_clf = SGDClassifier(loss="log_loss", random_state=1, max_iter=5)
     multi_target_linear = MultiOutputClassifier(sgd_linear_clf)
 
     # train the multi_target_linear and also get the predictions.
@@ -257,7 +257,7 @@ def test_multi_output_classification_partial_fit():
 
 
 def test_multi_output_classification_partial_fit_no_first_classes_exception():
-    sgd_linear_clf = SGDClassifier(loss="log", random_state=1, max_iter=5)
+    sgd_linear_clf = SGDClassifier(loss="log_loss", random_state=1, max_iter=5)
     multi_target_linear = MultiOutputClassifier(sgd_linear_clf)
     msg = "classes must be passed on the first call to partial_fit."
     with pytest.raises(ValueError, match=msg):

@@ -25,7 +25,7 @@ Both :func:`make_blobs` and :func:`make_classification` create multiclass
 datasets by allocating each class one or more normally-distributed clusters of
 points.  :func:`make_blobs` provides greater control regarding the centers and
 standard deviations of each cluster, and is used to demonstrate clustering.
-:func:`make_classification` specialises in introducing noise by way of:
+:func:`make_classification` specializes in introducing noise by way of:
 correlated, redundant and uninformative features; multiple Gaussian clusters
 per class; and linear transformations of the feature space.
 
@@ -41,7 +41,7 @@ near-equal-size classes separated by concentric hyperspheres.
 :func:`make_circles` and :func:`make_moons` generate 2d binary classification
 datasets that are challenging to certain algorithms (e.g. centroid-based
 clustering or linear classification), including optional Gaussian noise.
-They are useful for visualisation. :func:`make_circles` produces Gaussian data
+They are useful for visualization. :func:`make_circles` produces Gaussian data
 with a spherical decision boundary for binary classification, while
 :func:`make_moons` produces two interleaving half circles.
 
