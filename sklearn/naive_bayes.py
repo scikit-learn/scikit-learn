@@ -51,8 +51,10 @@ class _BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         I.e. ``log P(c) + log P(x|c)`` for all rows x of X, as an array-like of
         shape (n_samples, n_classes).
 
-        predict, predict_proba, and predict_log_proba pass the input through
-        _check_X and handle it over to _joint_log_likelihood.
+        Public methods predict, predict_proba, predict_log_proba, and
+        predict_joint_log_proba pass the input through _check_X before handing it
+        over to _joint_log_likelihood. The term "joint log likelihood" is used
+        interchangibly with "joint log probability".
         """
 
     @abstractmethod
@@ -61,6 +63,30 @@ class _BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
 
         Only used in predict* methods.
         """
+
+    def predict_joint_log_proba(self, X):
+        """Return joint log probability estimates for the test vector X.
+
+        For each row x of X and class y, the joint log probability is given by
+        ``log P(x, y) = log P(y) + log P(x|y),``
+        where ``log P(y)`` is the class prior probability and ``log P(x|y)`` is
+        the class-conditional probability.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            The input samples.
+
+        Returns
+        -------
+        C : ndarray of shape (n_samples, n_classes)
+            Returns the joint log-probability of the samples for each class in
+            the model. The columns correspond to the classes in sorted
+            order, as they appear in the attribute :term:`classes_`.
+        """
+        check_is_fitted(self)
+        X = self._check_X(X)
+        return self._joint_log_likelihood(X)
 
     def predict(self, X):
         """
