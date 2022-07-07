@@ -17,6 +17,7 @@ from sklearn.utils._param_validation import _NoneConstraint
 from sklearn.utils._param_validation import _RandomStates
 from sklearn.utils._param_validation import _SparseMatrices
 from sklearn.utils._param_validation import _VerboseHelper
+from sklearn.utils._param_validation import HasMethods
 from sklearn.utils._param_validation import make_constraint
 from sklearn.utils._param_validation import generate_invalid_param_val
 from sklearn.utils._param_validation import generate_valid_param
@@ -156,6 +157,26 @@ def test_instances_of_type_human_readable(type, expected_type_name):
     assert str(constraint) == f"an instance of '{expected_type_name}'"
 
 
+def test_hasmethods():
+    """Check the HasMethods constraint."""
+    constraint = HasMethods(["a", "b"])
+
+    class _Good:
+        def a(self):
+            pass  # pragma: no cover
+
+        def b(self):
+            pass  # pragma: no cover
+
+    class _Bad:
+        def a(self):
+            pass  # pragma: no cover
+
+    assert constraint.is_satisfied_by(_Good())
+    assert not constraint.is_satisfied_by(_Bad())
+    assert str(constraint) == "an object implementing 'a' and 'b'"
+
+
 @pytest.mark.parametrize(
     "constraint",
     [
@@ -164,6 +185,7 @@ def test_instances_of_type_human_readable(type, expected_type_name):
         Interval(Real, None, None, closed="neither"),
         StrOptions({"a", "b", "c"}),
         _VerboseHelper(),
+        HasMethods("fit"),
     ],
 )
 def test_generate_invalid_param_val(constraint):
@@ -310,6 +332,7 @@ def test_generate_invalid_param_val_all_valid(constraints):
         Interval(Real, 0, 1, closed="neither"),
         Interval(Real, 0, None, closed="both"),
         Interval(Real, None, 0, closed="right"),
+        HasMethods("fit"),
     ],
 )
 def test_generate_valid_param(constraint):
@@ -337,6 +360,7 @@ def test_generate_valid_param(constraint):
         (Real, 0.5),
         ("boolean", False),
         ("verbose", 1),
+        (HasMethods("fit"), _Estimator(a=0)),
     ],
 )
 def test_is_satisfied_by(constraint_declaration, value):
@@ -358,6 +382,7 @@ def test_is_satisfied_by(constraint_declaration, value):
         (int, _InstancesOf),
         ("boolean", _Booleans),
         ("verbose", _VerboseHelper),
+        (HasMethods("fit"), HasMethods),
     ],
 )
 def test_make_constraint(constraint_declaration, expected_constraint_class):
