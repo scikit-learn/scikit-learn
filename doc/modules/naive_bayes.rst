@@ -305,8 +305,8 @@ combined via
 
    \log P(x,y)=\log P(x_{1},y) + \dots + \log P(x_{M},y) - (M - 1)\log P(y),
 
-where :math:`\log P(x,y)` is the joint log-likelihood of the meta-estimator,
-:math:`\log P(x_{m},y)` is that of the :math:`m` th sub-estimator,
+where :math:`\log P(x,y)` is the joint log-probability predicted by the meta-estimator,
+:math:`\log P(x_{m},y)` is that by the :math:`m` th sub-estimator,
 :math:`\log P(y)` is the class prior used by the meta-estimator, and
 :math:`M\geq1` is the total number of sub-estimators.
 
