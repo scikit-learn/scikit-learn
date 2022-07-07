@@ -7,6 +7,7 @@ from sklearn.utils._array_api import get_namespace
 from sklearn.utils._array_api import _NumPyApiWrapper
 from sklearn.utils._array_api import _ArrayAPIWrapper
 from sklearn.utils._array_api import _asarray_with_order
+from sklearn.utils._array_api import _convert_to_numpy
 from sklearn.utils._array_api import _estimator_with_converted_arrays
 from sklearn._config import config_context
 
@@ -110,6 +111,17 @@ def test_asarray_with_order_ignored():
     X_new_np = numpy.asarray(X_new)
     assert X_new_np.flags["C_CONTIGUOUS"]
     assert not X_new_np.flags["F_CONTIGUOUS"]
+
+
+def test_convert_to_numpy_error():
+    """Test convert to numpy errors for unsupported namespaces."""
+    xp = pytest.importorskip("numpy.array_api")
+    xp_ = _NumPyArrayAPITestWrapper(xp)
+
+    X = xp_.asarray([1.2, 3.4])
+
+    with pytest.raises(ValueError, match="Supported namespaces are:"):
+        _convert_to_numpy(X, xp=xp_)
 
 
 class SimpleEstimator(BaseEstimator):

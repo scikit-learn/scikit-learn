@@ -177,6 +177,22 @@ def _asarray_with_order(array, dtype=None, order=None, copy=None, xp=None):
         return xp.asarray(array, dtype=dtype, copy=copy)
 
 
+def _convert_to_numpy(array, xp):
+    """Convert X into a NumPy ndarray.
+
+    Only works on cupy.array_api and numpy.array_api and is used for testing.
+    """
+    supported_array_api = ["numpy.array_api", "cupy.array_api"]
+    if xp.__name__ not in supported_array_api:
+        support_array_api_str = ", ".join(supported_array_api)
+        raise ValueError(f"Supported namespaces are: {support_array_api_str}")
+
+    if xp.__name__ == "cupy.array_api":
+        return array._array.get()
+    else:
+        return numpy.asarray(array)
+
+
 def _estimator_with_converted_arrays(estimator, converter):
     """Create new estimator which converting all attributes that are arrays.
 
