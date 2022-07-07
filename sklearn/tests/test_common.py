@@ -459,7 +459,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "CountVectorizer",
     "DictionaryLearning",
     "ElasticNetCV",
-    "EllipticEnvelope",
     "ExtraTreesClassifier",
     "ExtraTreesRegressor",
     "FeatureHasher",
