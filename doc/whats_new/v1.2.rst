@@ -214,9 +214,10 @@ Changelog
   matrices in a variety of estimators and avoid an `EfficiencyWarning`.
   :pr:`23139` by `Tom Dupre la Tour`_.
 
-- |Enhancement| :func:`neighbors.KNeighborsClassifier.predict` is now much faster
-  by leveraging `scipy.sparse.csr_matrix` format for mode calculation via
-  `csr_matrix.argmax`. :pr:`23721` by :user:`Meekail Zain <micky774>`
+- |Enhancement| :func:`neighbors.KNeighborsClassifier.predict` is up to
+  three times faster by leveraging `scipy.sparse.csr_matrix` format
+  for mode calculation via `csr_matrix.argmax`.
+  :pr:`23721` by :user:`Meekail Zain <micky774>`
 
 :mod:`sklearn.svm`
 ..................
