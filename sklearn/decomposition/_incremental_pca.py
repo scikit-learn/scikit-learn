@@ -262,8 +262,11 @@ class IncrementalPCA(_BasePCA):
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
         first_pass = not hasattr(self, "components_")
+
+        if first_pass:
+            self._validate_params()
+
         if check_input:
             if sparse.issparse(X):
                 raise TypeError(
