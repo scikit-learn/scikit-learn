@@ -15,9 +15,9 @@ from scipy.linalg import LinAlgError, qr, svd
 from scipy.sparse import csc_matrix
 
 from ..base import BaseEstimator, ClusterMixin
-from ..utils._param_validation import StrOptions
+from ..utils._param_validation import Interval, StrOptions
 from ..utils import check_random_state, as_float_array, check_scalar
-from ..metrics.pairwise import pairwise_kernels
+from ..metrics.pairwise import pairwise_kernels, KERNEL_PARAMS
 from ..neighbors import kneighbors_graph, NearestNeighbors
 from ..manifold import spectral_embedding
 from ._kmeans import k_means
@@ -617,20 +617,20 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
     """
 
     _parameter_constraints = {
-        "n_clusters": [numbers.Integral],
+        "n_clusters": [Interval(numbers.Integral, 1, None, closed="left")],
         "eigen_solver": [StrOptions({"arpack", "lobpcg", "amg"}), None],
-        "n_components": [numbers.Integral],
+        "n_components": [Interval(numbers.Integral, 1, None, closed="left")],
         "random_state": ["random_state"],
-        "n_init": [numbers.Integral],
-        "gamma": [numbers.Real],
-        "affinity": [str, callable],  # tbd
-        "n_neighbors": [numbers.Integral],
-        "eigen_tol": [numbers.Real],
+        "n_init": [Interval(numbers.Integral, 1, None, closed="left")],
+        "gamma": [Interval(numbers.Real, 1.0, None, closed="left")],
+        "affinity": [str, callable, set(KERNEL_PARAMS.keys())],
+        "n_neighbors": [Interval(numbers.Integral, 1, None, closed="left")],
+        "eigen_tol": [Interval(numbers.Real, 0.0, None, closed="left")],
         "assign_labels": [StrOptions({"kmeans", "discretize", "cluster_qr"})],
-        "degree": [numbers.Real],
-        "coef0": [numbers.Real],
+        "degree": [Interval(numbers.Integral, 1, None, closed="left")],
+        "coef0": [Interval(numbers.Real, None, None, closed="both")],
         "kernel_params": [dict, None],
-        "n_jobs": [numbers.Integral],
+        "n_jobs": [numbers.Integral, None],
         "verbose": ["boolean"],
     }
 
