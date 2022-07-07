@@ -988,12 +988,6 @@ class KNeighborsMixin:
         elif mode == "distance":
             A_data, A_ind = self.kneighbors(X, n_neighbors, return_distance=True)
             A_data = np.ravel(A_data)
-        #
-        # else:
-        #     raise ValueError(
-        #         'Unsupported mode, must be one of "connectivity" '
-        #         'or "distance" but got "%s" instead' % mode
-        #     )
 
         n_queries = A_ind.shape[0]
         n_samples_fit = self.n_samples_fit_
