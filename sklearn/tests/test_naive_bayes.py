@@ -929,4 +929,4 @@ def test_predict_joint_proba(Estimator):
     jll = est.predict_joint_log_proba(X2)
     log_prob_x = logsumexp(jll, axis=1)
     log_prob_x_y = jll - np.atleast_2d(log_prob_x).T
-    assert_allclose(est.predict_log_proba(X2), log_prob_x_y, atol=1e-7)
+    assert_allclose(est.predict_log_proba(X2), log_prob_x_y)
