@@ -25,7 +25,7 @@ The module structure is the following:
 
 from abc import ABCMeta, abstractmethod
 
-import numbers
+from numbers import Integral, Real
 import numpy as np
 
 import warnings
@@ -37,7 +37,6 @@ from ..base import ClassifierMixin, RegressorMixin, is_classifier, is_regressor
 
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..utils import check_random_state, _safe_indexing
-from ..utils import check_scalar
 from ..utils.extmath import softmax
 from ..utils.extmath import stable_cumsum
 from ..metrics import accuracy_score, r2_score
@@ -45,6 +44,7 @@ from ..utils.validation import check_is_fitted
 from ..utils.validation import _check_sample_weight
 from ..utils.validation import has_fit_parameter
 from ..utils.validation import _num_samples
+from ..utils._param_validation import Interval, StrOptions
 
 __all__ = [
     "AdaBoostClassifier",
@@ -58,6 +58,13 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
     Warning: This class should not be used directly. Use derived classes
     instead.
     """
+
+    _parameter_constraints = {
+        "base_estimator": "no_validation",  # TODO create an estimator-like constraint ?
+        "n_estimators": [Interval(Integral, 1, None, closed="left")],
+        "learning_rate": [Interval(Real, 0, None, closed="neither")],
+        "random_state": ["random_state"],
+    }
 
     @abstractmethod
     def __init__(
@@ -100,8 +107,7 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
             DOK, or LIL. COO, DOK, and LIL are converted to CSR.
 
         y : array-like of shape (n_samples,)
-            The target values (class labels in classification, real numbers in
-            regression).
+            The target values.
 
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, the sample weights are initialized to
@@ -110,23 +116,9 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         Returns
         -------
         self : object
+            Fitted estimator.
         """
-        # Validate scalar parameters
-        check_scalar(
-            self.n_estimators,
-            "n_estimators",
-            target_type=numbers.Integral,
-            min_val=1,
-            include_boundaries="left",
-        )
-
-        check_scalar(
-            self.learning_rate,
-            "learning_rate",
-            target_type=numbers.Real,
-            min_val=0,
-            include_boundaries="neither",
-        )
+        self._validate_params()
 
         X, y = self._validate_data(
             X,
@@ -455,6 +447,11 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
     0.983...
     """
 
+    _parameter_constraints = {
+        **BaseWeightBoosting._parameter_constraints,  # type: ignore
+        "algorithm": [StrOptions({"SAMME", "SAMME.R"})],
+    }
+
     def __init__(
         self,
         base_estimator=None,
@@ -473,37 +470,6 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         )
 
         self.algorithm = algorithm
-
-    def fit(self, X, y, sample_weight=None):
-        """Build a boosted classifier from the training set (X, y).
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            The training input samples. Sparse matrix can be CSC, CSR, COO,
-            DOK, or LIL. COO, DOK, and LIL are converted to CSR.
-
-        y : array-like of shape (n_samples,)
-            The target values (class labels).
-
-        sample_weight : array-like of shape (n_samples,), default=None
-            Sample weights. If None, the sample weights are initialized to
-            ``1 / n_samples``.
-
-        Returns
-        -------
-        self : object
-            Fitted estimator.
-        """
-        # Check that algorithm is supported
-        if self.algorithm not in ("SAMME", "SAMME.R"):
-            raise ValueError(
-                "Algorithm must be 'SAMME' or 'SAMME.R'."
-                f" Got {self.algorithm!r} instead."
-            )
-
-        # Fit
-        return super().fit(X, y, sample_weight)
 
     def _validate_estimator(self):
         """Check the estimator and set the base_estimator_ attribute."""
@@ -1038,6 +1004,11 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
     0.9771...
     """
 
+    _parameter_constraints = {
+        **BaseWeightBoosting._parameter_constraints,  # type: ignore
+        "loss": [StrOptions({"linear", "square", "exponential"})],
+    }
+
     def __init__(
         self,
         base_estimator=None,
@@ -1057,37 +1028,6 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
 
         self.loss = loss
         self.random_state = random_state
-
-    def fit(self, X, y, sample_weight=None):
-        """Build a boosted regressor from the training set (X, y).
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            The training input samples. Sparse matrix can be CSC, CSR, COO,
-            DOK, or LIL. COO, DOK, and LIL are converted to CSR.
-
-        y : array-like of shape (n_samples,)
-            The target values (real numbers).
-
-        sample_weight : array-like of shape (n_samples,), default=None
-            Sample weights. If None, the sample weights are initialized to
-            1 / n_samples.
-
-        Returns
-        -------
-        self : object
-            Fitted AdaBoostRegressor estimator.
-        """
-        # Check loss
-        if self.loss not in ("linear", "square", "exponential"):
-            raise ValueError(
-                "loss must be 'linear', 'square', or 'exponential'."
-                f" Got {self.loss!r} instead."
-            )
-
-        # Fit
-        return super().fit(X, y, sample_weight)
 
     def _validate_estimator(self):
         """Check the estimator and set the base_estimator_ attribute."""

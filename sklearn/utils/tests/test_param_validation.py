@@ -16,8 +16,11 @@ from sklearn.utils._param_validation import _InstancesOf
 from sklearn.utils._param_validation import _NoneConstraint
 from sklearn.utils._param_validation import _RandomStates
 from sklearn.utils._param_validation import _SparseMatrices
+from sklearn.utils._param_validation import _VerboseHelper
+from sklearn.utils._param_validation import HasMethods
 from sklearn.utils._param_validation import make_constraint
 from sklearn.utils._param_validation import generate_invalid_param_val
+from sklearn.utils._param_validation import generate_valid_param
 from sklearn.utils._param_validation import validate_params
 
 
@@ -154,6 +157,26 @@ def test_instances_of_type_human_readable(type, expected_type_name):
     assert str(constraint) == f"an instance of '{expected_type_name}'"
 
 
+def test_hasmethods():
+    """Check the HasMethods constraint."""
+    constraint = HasMethods(["a", "b"])
+
+    class _Good:
+        def a(self):
+            pass  # pragma: no cover
+
+        def b(self):
+            pass  # pragma: no cover
+
+    class _Bad:
+        def a(self):
+            pass  # pragma: no cover
+
+    assert constraint.is_satisfied_by(_Good())
+    assert not constraint.is_satisfied_by(_Bad())
+    assert str(constraint) == "an object implementing 'a' and 'b'"
+
+
 @pytest.mark.parametrize(
     "constraint",
     [
@@ -161,6 +184,8 @@ def test_instances_of_type_human_readable(type, expected_type_name):
         Interval(Real, 0, None, closed="left"),
         Interval(Real, None, None, closed="neither"),
         StrOptions({"a", "b", "c"}),
+        _VerboseHelper(),
+        HasMethods("fit"),
     ],
 )
 def test_generate_invalid_param_val(constraint):
@@ -268,6 +293,11 @@ def test_generate_invalid_param_val_2_intervals(integer_interval, real_interval)
     [
         [_ArrayLikes()],
         [_InstancesOf(list)],
+        [_Callables()],
+        [_NoneConstraint()],
+        [_RandomStates()],
+        [_SparseMatrices()],
+        [_Booleans()],
         [Interval(Real, None, None, closed="both")],
         [
             Interval(Integral, 0, None, closed="left"),
@@ -293,12 +323,22 @@ def test_generate_invalid_param_val_all_valid(constraints):
         _RandomStates(),
         _SparseMatrices(),
         _Booleans(),
+        _VerboseHelper(),
+        StrOptions({"a", "b", "c"}),
+        Interval(Integral, None, None, closed="neither"),
+        Interval(Integral, 0, 10, closed="neither"),
+        Interval(Integral, 0, None, closed="neither"),
+        Interval(Integral, None, 0, closed="neither"),
+        Interval(Real, 0, 1, closed="neither"),
+        Interval(Real, 0, None, closed="both"),
+        Interval(Real, None, 0, closed="right"),
+        HasMethods("fit"),
     ],
 )
-def test_generate_invalid_param_val_not_error(constraint):
-    """Check that the value generated does not satisfy the constraint"""
-    with pytest.raises(NotImplementedError):
-        generate_invalid_param_val(constraint)
+def test_generate_valid_param(constraint):
+    """Check that the value generated does satisfy the constraint."""
+    value = generate_valid_param(constraint)
+    assert constraint.is_satisfied_by(value)
 
 
 @pytest.mark.parametrize(
@@ -319,6 +359,8 @@ def test_generate_invalid_param_val_not_error(constraint):
         (int, 1),
         (Real, 0.5),
         ("boolean", False),
+        ("verbose", 1),
+        (HasMethods("fit"), _Estimator(a=0)),
     ],
 )
 def test_is_satisfied_by(constraint_declaration, value):
@@ -339,6 +381,8 @@ def test_is_satisfied_by(constraint_declaration, value):
         (callable, _Callables),
         (int, _InstancesOf),
         ("boolean", _Booleans),
+        ("verbose", _VerboseHelper),
+        (HasMethods("fit"), HasMethods),
     ],
 )
 def test_make_constraint(constraint_declaration, expected_constraint_class):
@@ -470,6 +514,14 @@ def test_hidden_stroptions():
     assert "warn" not in err_msg
 
 
+def test_validate_params_set_param_constraints_attribute():
+    """Check that the validate_params decorator properly sets the parameter constraints
+    as attribute of the decorated function/method.
+    """
+    assert hasattr(_func, "_skl_parameter_constraints")
+    assert hasattr(_Class()._method, "_skl_parameter_constraints")
+
+
 def test_boolean_constraint_deprecated_int():
     """Check that validate_params raise a deprecation message but still passes validation
     when using an int for a parameter accepting a boolean.
@@ -488,3 +540,22 @@ def test_boolean_constraint_deprecated_int():
         FutureWarning, match="Passing an int for a boolean parameter is deprecated"
     ):
         f(1)
+
+
+def test_no_validation():
+    """Check that validation can be skipped for a parameter."""
+
+    @validate_params({"param1": [int, None], "param2": "no_validation"})
+    def f(param1=None, param2=None):
+        pass
+
+    # param1 is validated
+    with pytest.raises(ValueError, match="The 'param1' parameter"):
+        f(param1="wrong")
+
+    # param2 is not validated: any type is valid.
+    class SomeType:
+        pass
+
+    f(param2=SomeType)
+    f(param2=SomeType())
