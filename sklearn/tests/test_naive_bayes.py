@@ -17,6 +17,7 @@ from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_allclose
+from sklearn.utils.estimator_checks import check_param_validation
 
 from sklearn.naive_bayes import GaussianNB, BernoulliNB
 from sklearn.naive_bayes import MultinomialNB, ComplementNB
@@ -1671,3 +1672,14 @@ def test_cwnb_sk_visual_block(capsys):
     assert visual_block.names == ("mnb1", "mnb2", "gnb1")
     assert visual_block.name_details == ([0, 1], [3, 4], [5])
     assert visual_block.estimators == estimators
+
+
+def test_cwnb_check_param_validation():
+    # This test replaces test_common.py::test_check_param_validation and is
+    # needed because utils.estimator_checks._construct_instance() is unable to
+    # create an instance of ColumnwiseNB (also of some other estimators, such as
+    # ColumnTransformer and Pipeline).
+    clf = ColumnwiseNB(
+        nb_estimators=[("g1", GaussianNB(), [1]), ("g2", GaussianNB(), [0, 1])]
+    )
+    check_param_validation("ColumnwiseNB", clf)

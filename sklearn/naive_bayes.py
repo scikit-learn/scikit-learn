@@ -1667,6 +1667,13 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
 
     _required_parameters = ["nb_estimators"]
 
+    _parameter_constraints = {
+        "nb_estimators": "no_validation",
+        "priors": ["array-like", str, None],
+        "n_jobs": [Integral, None],
+        "verbose": ["verbose"],
+    }
+
     def _log_message(self, name, idx, total):
         if not self.verbose:
             return None
@@ -1888,6 +1895,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
         self : object
             Returns the instance itself.
         """
+        self._validate_params()
         self._check_feature_names(X, reset=True)
         # TODO: Consider overriding BaseEstimator._check_feature_names
         # Currently, when X has all str feature names, all features are
@@ -1963,6 +1971,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
         """
         first_call = not hasattr(self, "classes_")
         if first_call:
+            self._validate_params()
             self._check_feature_names(X, reset=True)
             self._check_n_features(X, reset=True)
             self._validate_estimators(check_partial=True)
