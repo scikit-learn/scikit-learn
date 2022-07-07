@@ -9,6 +9,7 @@ import sys
 import warnings
 import numbers
 from abc import ABC, abstractmethod
+from functools import partial
 from numbers import Integral, Real
 from collections.abc import Iterable
 
@@ -20,10 +21,10 @@ from joblib import Parallel, effective_n_jobs
 from ._base import LinearModel, _pre_fit
 from ..base import RegressorMixin, MultiOutputMixin
 from ._base import _preprocess_data, _deprecate_normalize
-from ..utils import check_array
+from ..utils import check_array, check_scalar
 from ..utils.validation import check_random_state
 from ..utils._param_validation import Hidden, Interval, StrOptions
-from ..model_selection import check_cv, BaseCrossValidator
+from ..model_selection import check_cv, BaseCrossValidator, BaseShuffleSplit
 from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import (
     _check_sample_weight,
@@ -1461,7 +1462,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
 
     _parameter_constraints = {
         "eps": [Interval(Real, 0, None, closed="neither")],
-        "n_alphas": [Interval(Integral, 0, None, closed="neither")],
+        "n_alphas": [Interval(Integral, 1, None, closed="left")],
         "alphas": ["array-like", None],
         "fit_intercept": ["boolean"],
         "normalize": [Hidden(StrOptions({"deprecated"})), "boolean"],
@@ -1473,6 +1474,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
             Interval(Integral, 2, None, closed="left"),
             Iterable,
             BaseCrossValidator,
+            BaseShuffleSplit,
             None,
         ],
         "verbose": ["verbose"],
@@ -1665,6 +1667,13 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         alphas = self.alphas
         n_l1_ratio = len(l1_ratios)
 
+        check_scalar_alpha = partial(
+            check_scalar,
+            target_type=Real,
+            min_val=0.0,
+            include_boundaries="left",
+        )
+
         if alphas is None:
             alphas = [
                 _alpha_grid(
@@ -1680,6 +1689,9 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
                 for l1_ratio in l1_ratios
             ]
         else:
+            # alphas is an iterable item in this case.
+            for index, alpha in enumerate(alphas):
+                check_scalar_alpha(alpha, f"alphas[{index}]")
             # Making sure alphas is properly ordered.
             alphas = np.tile(np.sort(alphas)[::-1], (n_l1_ratio, 1))
 
