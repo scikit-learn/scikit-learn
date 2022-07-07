@@ -23,7 +23,7 @@ from ..metrics._dist_metrics import METRIC_MAPPING
 from ..utils import check_array
 from ..utils._fast_dict import IntFloatDict
 from ..utils.graph import _fix_connected_components
-from ..utils._param_validation import Hidden, Interval, StrOptions
+from ..utils._param_validation import Hidden, Interval, StrOptions, HasMethods
 from ..utils.validation import check_memory
 
 # mypy error: Module 'sklearn.cluster' has no attribute '_hierarchical_fast'
@@ -902,7 +902,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
             callable,
             None,
         ],
-        "memory": "no_validation",  # TODO
+        "memory": [str, HasMethods("cache"), None],
         "connectivity": ["array-like", callable, None],
         "compute_full_tree": [StrOptions({"auto"}), "boolean"],
         "linkage": [StrOptions(set(_TREE_BUILDERS.keys()))],
@@ -1269,7 +1269,7 @@ class FeatureAgglomeration(
             callable,
             None,
         ],
-        "memory": "no_validation",  # TODO
+        "memory": [str, HasMethods("cache"), None],
         "connectivity": ["array-like", callable, None],
         "compute_full_tree": [StrOptions({"auto"}), "boolean"],
         "linkage": [StrOptions(set(_TREE_BUILDERS.keys()))],
