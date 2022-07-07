@@ -702,7 +702,7 @@ class MinCovDet(EmpiricalCovariance):
     _parameter_constraints = {
         **EmpiricalCovariance._parameter_constraints,  # type: ignore
         "support_fraction": [
-            Interval(Real, 0, 1, closed="neither"),
+            Interval(Real, 0, 1, closed="right"),
             None,  # type: ignore
         ],
         "random_state": ["random_state"],
