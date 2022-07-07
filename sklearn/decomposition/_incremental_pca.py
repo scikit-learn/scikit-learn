@@ -210,6 +210,7 @@ class IncrementalPCA(_BasePCA):
             Returns the instance itself.
         """
         self._validate_params()
+
         self.components_ = None
         self.n_samples_seen_ = 0
         self.mean_ = 0.0
