@@ -619,7 +619,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
     _parameter_constraints = {
         "n_clusters": [Interval(numbers.Integral, 1, None, closed="left")],
         "eigen_solver": [StrOptions({"arpack", "lobpcg", "amg"}), None],
-        "n_components": [Interval(numbers.Integral, 1, None, closed="left")],
+        "n_components": [Interval(numbers.Integral, 1, None, closed="left"), None],
         "random_state": ["random_state"],
         "n_init": [Interval(numbers.Integral, 1, None, closed="left")],
         "gamma": [Interval(numbers.Real, 1.0, None, closed="left")],
@@ -722,38 +722,6 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
                 "set ``affinity=precomputed``."
             )
 
-        check_scalar(
-            self.n_clusters,
-            "n_clusters",
-            target_type=numbers.Integral,
-            min_val=1,
-            include_boundaries="left",
-        )
-
-        check_scalar(
-            self.n_init,
-            "n_init",
-            target_type=numbers.Integral,
-            min_val=1,
-            include_boundaries="left",
-        )
-
-        check_scalar(
-            self.gamma,
-            "gamma",
-            target_type=numbers.Real,
-            min_val=1.0,
-            include_boundaries="left",
-        )
-
-        check_scalar(
-            self.n_neighbors,
-            "n_neighbors",
-            target_type=numbers.Integral,
-            min_val=1,
-            include_boundaries="left",
-        )
-
         if self.eigen_tol != "auto":
             check_scalar(
                 self.eigen_tol,
@@ -762,14 +730,6 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
                 min_val=0,
                 include_boundaries="left",
             )
-
-        check_scalar(
-            self.degree,
-            "degree",
-            target_type=numbers.Integral,
-            min_val=1,
-            include_boundaries="left",
-        )
 
         if self.affinity == "nearest_neighbors":
             connectivity = kneighbors_graph(
