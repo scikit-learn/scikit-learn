@@ -1689,7 +1689,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
                 for l1_ratio in l1_ratios
             ]
         else:
-            # alphas is an iterable item in this case.
+            # Making sure alphas entries are scalars.
             for index, alpha in enumerate(alphas):
                 check_scalar_alpha(alpha, f"alphas[{index}]")
             # Making sure alphas is properly ordered.
