@@ -627,7 +627,8 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         "n_neighbors": [Interval(numbers.Integral, 1, None, closed="left")],
         "eigen_tol": [
             Interval(numbers.Real, 0.0, None, closed="left"),
-            StrOptions({"auto"}, None),
+            StrOptions({"auto"}),
+            None,
         ],
         "assign_labels": [StrOptions({"kmeans", "discretize", "cluster_qr"})],
         "degree": [Interval(numbers.Integral, 1, None, closed="left")],
