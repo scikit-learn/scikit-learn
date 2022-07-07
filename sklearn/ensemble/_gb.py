@@ -22,12 +22,11 @@ The module structure is the following:
 
 from abc import ABCMeta
 from abc import abstractmethod
+from numbers import Integral, Real
 import warnings
 
 from ._base import BaseEnsemble
-from ..base import ClassifierMixin
-from ..base import RegressorMixin
-from ..base import BaseEstimator
+from ..base import ClassifierMixin, RegressorMixin
 from ..base import is_classifier
 from ..utils import deprecated
 
@@ -35,7 +34,6 @@ from ._gradient_boosting import predict_stages
 from ._gradient_boosting import predict_stage
 from ._gradient_boosting import _random_sample_mask
 
-import numbers
 import numpy as np
 
 from scipy.sparse import csc_matrix
@@ -48,10 +46,8 @@ from ..tree import DecisionTreeRegressor
 from ..tree._tree import DTYPE, DOUBLE
 from . import _gb_losses
 
-from ..utils import check_random_state
-from ..utils import check_array
-from ..utils import check_scalar
-from ..utils import column_or_1d
+from ..utils import check_array, check_random_state, column_or_1d
+from ..utils._param_validation import HasMethods, Interval, StrOptions
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.multiclass import check_classification_targets
 from ..exceptions import NotFittedError
@@ -138,6 +134,20 @@ class VerboseReporter:
 
 class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
     """Abstract base class for Gradient Boosting."""
+
+    _parameter_constraints = {
+        **DecisionTreeRegressor._parameter_constraints,
+        "learning_rate": [Interval(Real, 0.0, None, closed="neither")],
+        "n_estimators": [Interval(Integral, 1, None, closed="left")],
+        "criterion": [StrOptions({"friedman_mse", "squared_error", "mse"})],
+        "subsample": [Interval(Real, 0.0, 1.0, closed="right")],
+        "verbose": ["verbose"],
+        "warm_start": ["boolean"],
+        "validation_fraction": [Interval(Real, 0.0, 1.0, closed="neither")],
+        "n_iter_no_change": [Interval(Integral, 1, None, closed="left"), None],
+        "tol": [Interval(Real, 0.0, None, closed="neither")],
+    }
+    _parameter_constraints.pop("splitter")
 
     @abstractmethod
     def __init__(
@@ -264,176 +274,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         return raw_predictions
 
-    def _check_params(self):
-        """Check validity of parameters and raise ValueError if not valid."""
-
-        check_scalar(
-            self.learning_rate,
-            name="learning_rate",
-            target_type=numbers.Real,
-            min_val=0.0,
-            include_boundaries="neither",
-        )
-
-        check_scalar(
-            self.n_estimators,
-            name="n_estimators",
-            target_type=numbers.Integral,
-            min_val=1,
-            include_boundaries="left",
-        )
-
-        if (
-            self.loss not in self._SUPPORTED_LOSS
-            or self.loss not in _gb_losses.LOSS_FUNCTIONS
-        ):
-            raise ValueError(f"Loss {self.loss!r} not supported. ")
-
-        # TODO(1.2): Remove
-        if self.loss == "ls":
-            warnings.warn(
-                "The loss 'ls' was deprecated in v1.0 and "
-                "will be removed in version 1.2. Use 'squared_error'"
-                " which is equivalent.",
-                FutureWarning,
-            )
-        elif self.loss == "lad":
-            warnings.warn(
-                "The loss 'lad' was deprecated in v1.0 and "
-                "will be removed in version 1.2. Use "
-                "'absolute_error' which is equivalent.",
-                FutureWarning,
-            )
-
-        # TODO(1.3): Remove
-        if self.loss == "deviance":
-            warnings.warn(
-                "The loss parameter name 'deviance' was deprecated in v1.1 and will be "
-                "removed in version 1.3. Use the new parameter name 'log_loss' which "
-                "is equivalent.",
-                FutureWarning,
-            )
-            loss_class = (
-                _gb_losses.MultinomialDeviance
-                if len(self.classes_) > 2
-                else _gb_losses.BinomialDeviance
-            )
-        elif self.loss == "log_loss":
-            loss_class = (
-                _gb_losses.MultinomialDeviance
-                if len(self.classes_) > 2
-                else _gb_losses.BinomialDeviance
-            )
-        else:
-            loss_class = _gb_losses.LOSS_FUNCTIONS[self.loss]
-
-        if is_classifier(self):
-            self._loss = loss_class(self.n_classes_)
-        elif self.loss in ("huber", "quantile"):
-            self._loss = loss_class(self.alpha)
-        else:
-            self._loss = loss_class()
-
-        check_scalar(
-            self.subsample,
-            name="subsample",
-            target_type=numbers.Real,
-            min_val=0.0,
-            max_val=1.0,
-            include_boundaries="right",
-        )
-
-        if self.init is not None:
-            # init must be an estimator or 'zero'
-            if isinstance(self.init, BaseEstimator):
-                self._loss.check_init_estimator(self.init)
-            elif not (isinstance(self.init, str) and self.init == "zero"):
-                raise ValueError(
-                    "The init parameter must be an estimator or 'zero'. "
-                    f"Got init={self.init!r}"
-                )
-
-        check_scalar(
-            self.alpha,
-            name="alpha",
-            target_type=numbers.Real,
-            min_val=0.0,
-            max_val=1.0,
-            include_boundaries="neither",
-        )
-
-        if isinstance(self.max_features, str):
-            if self.max_features == "auto":
-                if is_classifier(self):
-                    max_features = max(1, int(np.sqrt(self.n_features_in_)))
-                else:
-                    max_features = self.n_features_in_
-            elif self.max_features == "sqrt":
-                max_features = max(1, int(np.sqrt(self.n_features_in_)))
-            elif self.max_features == "log2":
-                max_features = max(1, int(np.log2(self.n_features_in_)))
-            else:
-                raise ValueError(
-                    f"Invalid value for max_features: {self.max_features!r}. "
-                    "Allowed string values are 'auto', 'sqrt' or 'log2'."
-                )
-        elif self.max_features is None:
-            max_features = self.n_features_in_
-        elif isinstance(self.max_features, numbers.Integral):
-            check_scalar(
-                self.max_features,
-                name="max_features",
-                target_type=numbers.Integral,
-                min_val=1,
-                include_boundaries="left",
-            )
-            max_features = self.max_features
-        else:  # float
-            check_scalar(
-                self.max_features,
-                name="max_features",
-                target_type=numbers.Real,
-                min_val=0.0,
-                max_val=1.0,
-                include_boundaries="right",
-            )
-            max_features = max(1, int(self.max_features * self.n_features_in_))
-
-        self.max_features_ = max_features
-
-        check_scalar(
-            self.verbose,
-            name="verbose",
-            target_type=(numbers.Integral, np.bool_),
-            min_val=0,
-        )
-
-        check_scalar(
-            self.validation_fraction,
-            name="validation_fraction",
-            target_type=numbers.Real,
-            min_val=0.0,
-            max_val=1.0,
-            include_boundaries="neither",
-        )
-
-        if self.n_iter_no_change is not None:
-            check_scalar(
-                self.n_iter_no_change,
-                name="n_iter_no_change",
-                target_type=numbers.Integral,
-                min_val=1,
-                include_boundaries="left",
-            )
-
-        check_scalar(
-            self.tol,
-            name="tol",
-            target_type=numbers.Real,
-            min_val=0.0,
-            include_boundaries="neither",
-        )
-
     def _init_state(self):
         """Initialize model state and allocate model state data structures."""
 
@@ -528,37 +368,11 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         self : object
             Fitted estimator.
         """
-        possible_criterion = ("friedman_mse", "squared_error", "mse")
-        if self.criterion not in possible_criterion:
-            raise ValueError(
-                f"criterion={self.criterion!r} is not supported. Use "
-                "criterion='friedman_mse' or 'squared_error' instead, as"
-                " trees should use a squared error criterion in Gradient"
-                " Boosting."
-            )
-
-        if self.criterion == "mse":
-            # TODO(1.2): Remove. By then it should raise an error.
-            warnings.warn(
-                "Criterion 'mse' was deprecated in v1.0 and will be "
-                "removed in version 1.2. Use `criterion='squared_error'` "
-                "which is equivalent.",
-                FutureWarning,
-            )
-
-        # if not warmstart - clear the estimator state
-        check_scalar(
-            self.warm_start,
-            name="warm_start",
-            target_type=(numbers.Integral, np.bool_),
-        )
-        if not self.warm_start:
-            self._clear_state()
+        self._validate_params()
 
         # Check input
         # Since check_array converts both X and y to the same dtype, but the
         # trees use different types for X and y, checking them separately.
-
         X, y = self._validate_data(
             X, y, accept_sparse=["csr", "csc", "coo"], dtype=DTYPE, multi_output=True
         )
@@ -574,7 +388,82 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         else:
             y = self._validate_y(y)
 
-        self._check_params()
+        if self.criterion == "mse":
+            # TODO(1.2): Remove. By then it should raise an error.
+            warnings.warn(
+                "Criterion 'mse' was deprecated in v1.0 and will be "
+                "removed in version 1.2. Use `criterion='squared_error'` "
+                "which is equivalent.",
+                FutureWarning,
+            )
+
+        # TODO(1.2): Remove
+        if self.loss == "ls":
+            warnings.warn(
+                "The loss 'ls' was deprecated in v1.0 and "
+                "will be removed in version 1.2. Use 'squared_error'"
+                " which is equivalent.",
+                FutureWarning,
+            )
+        elif self.loss == "lad":
+            warnings.warn(
+                "The loss 'lad' was deprecated in v1.0 and "
+                "will be removed in version 1.2. Use "
+                "'absolute_error' which is equivalent.",
+                FutureWarning,
+            )
+
+        # TODO(1.3): Remove
+        if self.loss == "deviance":
+            warnings.warn(
+                "The loss parameter name 'deviance' was deprecated in v1.1 and will be "
+                "removed in version 1.3. Use the new parameter name 'log_loss' which "
+                "is equivalent.",
+                FutureWarning,
+            )
+            loss_class = (
+                _gb_losses.MultinomialDeviance
+                if len(self.classes_) > 2
+                else _gb_losses.BinomialDeviance
+            )
+        elif self.loss == "log_loss":
+            loss_class = (
+                _gb_losses.MultinomialDeviance
+                if len(self.classes_) > 2
+                else _gb_losses.BinomialDeviance
+            )
+        else:
+            loss_class = _gb_losses.LOSS_FUNCTIONS[self.loss]
+
+        if is_classifier(self):
+            self._loss = loss_class(self.n_classes_)
+        elif self.loss in ("huber", "quantile"):
+            self._loss = loss_class(self.alpha)
+        else:
+            self._loss = loss_class()
+
+        # if not warmstart - clear the estimator state
+        if not self.warm_start:
+            self._clear_state()
+
+        if isinstance(self.max_features, str):
+            if self.max_features == "auto":
+                if is_classifier(self):
+                    max_features = max(1, int(np.sqrt(self.n_features_in_)))
+                else:
+                    max_features = self.n_features_in_
+            elif self.max_features == "sqrt":
+                max_features = max(1, int(np.sqrt(self.n_features_in_)))
+            else:  # self.max_features == "log2"
+                max_features = max(1, int(np.log2(self.n_features_in_)))
+        elif self.max_features is None:
+            max_features = self.n_features_in_
+        elif isinstance(self.max_features, Integral):
+            max_features = self.max_features
+        else:  # float
+            max_features = max(1, int(self.max_features * self.n_features_in_))
+
+        self.max_features_ = max_features
 
         if self.n_iter_no_change is not None:
             stratify = y if is_classifier(self) else None
@@ -730,7 +619,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         # perform boosting iterations
         i = begin_at_stage
         for i in range(begin_at_stage, self.n_estimators):
-
             # subsampling
             if do_oob:
                 sample_mask = _random_sample_mask(n_samples, n_inbag, random_state)
@@ -1318,7 +1206,11 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
     """
 
     # TODO(1.3): remove "deviance"
-    _SUPPORTED_LOSS = ("log_loss", "deviance", "exponential")
+    _parameter_constraints = {
+        **BaseGradientBoosting._parameter_constraints,
+        "loss": [StrOptions({"log_loss", "deviance", "exponential"})],
+        "init": [StrOptions({"zero"}), None, HasMethods(["fit", "predict_proba"])],
+    }
 
     def __init__(
         self,
@@ -1881,14 +1773,16 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     """
 
     # TODO(1.2): remove "ls" and "lad"
-    _SUPPORTED_LOSS = (
-        "squared_error",
-        "ls",
-        "absolute_error",
-        "lad",
-        "huber",
-        "quantile",
-    )
+    _parameter_constraints = {
+        **BaseGradientBoosting._parameter_constraints,
+        "loss": [
+            StrOptions(
+                {"squared_error", "ls", "absolute_error", "lad", "huber", "quantile"}
+            )
+        ],
+        "init": [StrOptions({"zero"}), None, HasMethods(["fit", "predict"])],
+        "alpha": [Interval(Real, 0.0, 1.0, closed="neither")],
+    }
 
     def __init__(
         self,
