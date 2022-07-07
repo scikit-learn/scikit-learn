@@ -9,9 +9,9 @@
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
 
 import numpy as np
+from scipy import sparse
 from ..utils.extmath import weighted_mode
 from ..utils.validation import _is_arraylike, _num_samples
-from scipy import sparse
 
 import warnings
 from ._base import _check_weights, _get_weights
