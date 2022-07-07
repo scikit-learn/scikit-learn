@@ -606,7 +606,7 @@ class MinCovDet(EmpiricalCovariance):
         MCD estimate. Default is None, which implies that the minimum
         value of support_fraction will be used within the algorithm:
         `(n_sample + n_features + 1) / 2`. The parameter must be in the range
-        (0, 1).
+        (0, 1].
 
     random_state : int, RandomState instance or None, default=None
         Determines the pseudo random number generator for shuffling the data.
