@@ -1289,8 +1289,8 @@ class CategoricalNB(_BaseDiscreteNB):
             "array-like",
             Interval(Integral, 1, None, closed="left"),
         ],
+        "alpha": [Interval(Real, 0, None, closed="left")],
     }
-    _parameter_constraints["alpha"] = [Interval(Real, 0, None, closed="left")]
 
     def __init__(
         self, *, alpha=1.0, fit_prior=True, class_prior=None, min_categories=None
