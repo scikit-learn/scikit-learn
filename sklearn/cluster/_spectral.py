@@ -15,6 +15,7 @@ from scipy.linalg import LinAlgError, qr, svd
 from scipy.sparse import csc_matrix
 
 from ..base import BaseEstimator, ClusterMixin
+from ..utils._param_validation import StrOptions
 from ..utils import check_random_state, as_float_array, check_scalar
 from ..metrics.pairwise import pairwise_kernels
 from ..neighbors import kneighbors_graph, NearestNeighbors
@@ -615,6 +616,24 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         random_state=0)
     """
 
+    _parameter_constraints = {
+        "n_clusters": [numbers.Integral],
+        "eigen_solver": [StrOptions({"arpack", "lobpcg", "amg"}), None],
+        "n_components": [numbers.Integral],
+        "random_state": ["random_state"],
+        "n_init": [numbers.Integral],
+        "gamma": [numbers.Real],
+        "affinity": [str, callable],  # tbd
+        "n_neighbors": [numbers.Integral],
+        "eigen_tol": [numbers.Real],
+        "assign_labels": [StrOptions({"kmeans", "discretize", "cluster_qr"})],
+        "degree": [numbers.Real],
+        "coef0": [numbers.Real],
+        "kernel_params": [dict, None],
+        "n_jobs": [numbers.Integral],
+        "verbose": ["boolean"],
+    }
+
     def __init__(
         self,
         n_clusters=8,
@@ -672,6 +691,8 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         self : object
             A fitted instance of the estimator.
         """
+        self._validate_params()
+
         X = self._validate_data(
             X,
             accept_sparse=["csr", "csc", "coo"],
