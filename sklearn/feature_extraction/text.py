@@ -1282,23 +1282,6 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         X.sort_indices()
         return vocabulary, X
 
-    def _validate_params(self):
-        """Validation of min_df, max_df and max_features"""
-        super()._validate_params()
-
-        if self.max_features is not None:
-            check_scalar(self.max_features, "max_features", numbers.Integral, min_val=0)
-
-        if isinstance(self.min_df, numbers.Integral):
-            check_scalar(self.min_df, "min_df", numbers.Integral, min_val=0)
-        else:
-            check_scalar(self.min_df, "min_df", numbers.Real, min_val=0.0, max_val=1.0)
-
-        if isinstance(self.max_df, numbers.Integral):
-            check_scalar(self.max_df, "max_df", numbers.Integral, min_val=0)
-        else:
-            check_scalar(self.max_df, "max_df", numbers.Real, min_val=0.0, max_val=1.0)
-
     def fit(self, raw_documents, y=None):
         """Learn a vocabulary dictionary of all tokens in the raw documents.
 
