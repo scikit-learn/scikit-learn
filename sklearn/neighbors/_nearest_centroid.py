@@ -30,12 +30,14 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
     Parameters
     ----------
     metric : str or callable, default="euclidean"
-        Metric to use for distance computation.
-
-        For valid string values, see the documentation of
-        :class:`~sklearn.metrics.DistanceMetric` and the metrics listed in
-        `sklearn.metrics.pairwise.PAIRWISE_DISTANCE_FUNCTIONS`. Note that
-        “wminkowski”, “seuclidean” and “mahalanobis” are not supported.
+        Metric to use for distance computation. Default is "minkowski", which
+        results in the standard Euclidean distance when p = 2. See the
+        documentation of `scipy.spatial.distance
+        <https://docs.scipy.org/doc/scipy/reference/spatial.distance.html>`_ and
+        the metrics listed in
+        :class:`~sklearn.metrics.pairwise.distance_metrics` for valid metric
+        values. Note that "wminkowski", "seuclidean" and "mahalanobis" are not
+        supported.
 
         The centroids for the samples corresponding to each class is
         the point from which the sum of the distances (according to the metric)

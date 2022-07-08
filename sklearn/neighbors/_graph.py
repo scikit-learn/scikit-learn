@@ -65,12 +65,13 @@ def kneighbors_graph(
         between neighbors according to the given metric.
 
     metric : str, default='minkowski'
-        The identifier of the distance metric to use. Default is
-        “minkowski”, and results in the standard Euclidean distance when p = 2.
-        For a list of available metrics, see the documentation of
-        :class:`~sklearn.metrics.DistanceMetric` and the metrics listed in
-        `sklearn.metrics.pairwise.PAIRWISE_DISTANCE_FUNCTIONS`. Note that the
-        "cosine" metric uses :func:`~sklearn.metrics.pairwise.cosine_distances`.
+        Metric to use for distance computation. Default is "minkowski", which
+        results in the standard Euclidean distance when p = 2. See the
+        documentation of `scipy.spatial.distance
+        <https://docs.scipy.org/doc/scipy/reference/spatial.distance.html>`_ and
+        the metrics listed in
+        :class:`~sklearn.metrics.pairwise.distance_metrics` for valid metric
+        values.
 
     p : int, default=2
         Power parameter for the Minkowski metric. When p = 1, this is

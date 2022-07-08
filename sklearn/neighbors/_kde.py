@@ -53,10 +53,12 @@ class KernelDensity(BaseEstimator):
         The kernel to use.
 
     metric : str, default='euclidean'
-        The identifier of the distance metric to use. For a list of
-        available metrics, see the documentation of
-        :class:`~sklearn.metrics.DistanceMetric` and the metrics listed in
-        `sklearn.metrics.pairwise.PAIRWISE_DISTANCE_FUNCTIONS`.
+        Metric to use for distance computation. See the
+        documentation of `scipy.spatial.distance
+        <https://docs.scipy.org/doc/scipy/reference/spatial.distance.html>`_ and
+        the metrics listed in
+        :class:`~sklearn.metrics.pairwise.distance_metrics` for valid metric
+        values.
 
         Not all metrics are valid with all algorithms : refer to the
         documentation of :class:`BallTree` and :class:`KDTree`. Note that the
