@@ -30,9 +30,10 @@ import warnings
 
 from numbers import Integral
 from scipy.sparse import issparse
-from sklearn.utils import check_scalar, _in_unstable_openblas_configuration
-from sklearn.utils.fixes import threadpool_limits
+from ...utils import check_array, check_scalar, _in_unstable_openblas_configuration
+from ...utils.fixes import threadpool_limits
 from ...utils._typedefs import ITYPE, DTYPE
+
 
 cnp.import_array()
 
@@ -384,7 +385,12 @@ cdef class FastEuclideanPairwiseDistancesArgKmin{{name_suffix}}(PairwiseDistance
         )
 
         if metric_kwargs is not None and "Y_norm_squared" in metric_kwargs:
-            self.Y_norm_squared = metric_kwargs.pop("Y_norm_squared")
+            self.Y_norm_squared = check_array(
+                metric_kwargs.pop("Y_norm_squared"),
+                ensure_2d=False,
+                input_name="Y_norm_squared",
+                dtype=np.float64
+            )
         else:
             self.Y_norm_squared = _sqeuclidean_row_norms{{name_suffix}}(datasets_pair.Y, self.effective_n_threads)
 
