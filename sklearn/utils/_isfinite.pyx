@@ -14,7 +14,21 @@ def cy_isfinite(floating[::1] a, bint allow_nan=False):
     cdef FiniteStatus result
     with nogil:
         result = _isfinite(a, allow_nan)
-    return result
+    return _convert_FiniteStatus_c_to_py(result)
+
+
+cdef inline _convert_FiniteStatus_c_to_py(FiniteStatus fs):
+    # Manually map C enum values to Python ones.
+    # This is a workaround for an upstream Cython issue.
+    # xref: https://github.com/cython/cython/issues/2732
+    if fs == FiniteStatus.all_finite:
+        return (<object>FiniteStatus).all_finite
+    elif fs == FiniteStatus.has_nan:
+        return (<object>FiniteStatus).has_nan
+    elif fs == FiniteStatus.has_infinite:
+        return (<object>FiniteStatus).has_infinite
+    else:
+        raise ValueError(f"Unknown `FiniteStatus` value: {fs}")
 
 
 cdef inline FiniteStatus _isfinite(floating[::1] a, bint allow_nan) nogil:
