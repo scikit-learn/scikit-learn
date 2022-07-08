@@ -13,14 +13,15 @@ build feature vectors from text documents.
 
 import array
 from collections import defaultdict
-from collections.abc import Mapping
+from collections.abc import Mapping, Iterable
 from functools import partial
 import numbers
+from numbers import Integral, Real
+from ..utils._param_validation import Interval 
 from operator import itemgetter
 import re
 import unicodedata
 import warnings
-
 import numpy as np
 import scipy.sparse as sp
 
@@ -339,10 +340,10 @@ class _VectorizerMixin:
             strip_accents = strip_accents_ascii
         elif self.strip_accents == "unicode":
             strip_accents = strip_accents_unicode
-        else:
-            raise ValueError(
-                'Invalid value for "strip_accents": %s' % self.strip_accents
-            )
+        # else:
+        #     raise ValueError(
+        #         'Invalid value for "strip_accents": %s' % self.strip_accents
+        #     )
 
         return partial(_preprocess, accent_function=strip_accents, lower=self.lowercase)
 
@@ -509,7 +510,7 @@ class _VectorizerMixin:
         if len(self.vocabulary_) == 0:
             raise ValueError("Vocabulary is empty")
 
-    def _validate_params(self):
+    def _validate_ngram_range(self):
         """Check validity of ngram_range parameter"""
         min_n, max_m = self.ngram_range
         if min_n > max_m:
@@ -790,6 +791,8 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         self : object
             HashingVectorizer instance.
         """
+        self._validate_params()
+        self._validate_ngram_range()
         return self
 
     def fit(self, X, y=None):
@@ -814,9 +817,10 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
                 "Iterable over raw text documents expected, string object received."
             )
 
-        self._warn_for_unused_params()
         self._validate_params()
-
+        self._validate_ngram_range()
+        self._warn_for_unused_params()
+        
         self._get_hasher().fit(X, y=y)
         return self
 
@@ -841,6 +845,7 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
             )
 
         self._validate_params()
+        self._validate_ngram_range()
 
         analyzer = self.build_analyzer()
         X = self._get_hasher().transform(analyzer(doc) for doc in X)
@@ -1097,23 +1102,29 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
     """
 
     _parameter_constraints = {
-        "input": [str],
+        "input": [StrOptions({"filename", "file", "content"})],
         "encoding": [str],
-        "decode_error": [str],
-        "strip_accents": [str],
-        "lowercase": [bool],
-        "preprocessor": [callable],
-        "tokenizer": [callable],
-        "stop_words": [list],
+        "decode_error": [StrOptions({"strict", "ignore", "replace"})],
+        "strip_accents": [StrOptions({"ascii", "unicode"}), None],
+        "lowercase": ["boolean"],
+        "preprocessor": [callable, None],
+        "tokenizer": [callable, None],
+        "stop_words": [StrOptions({"english"}), list, None],
         "token_pattern": [str],
         "ngram_range": [tuple],
-        "analyzer": [str, callable],
-        "max_df": [float, int],
-        "min_df": [float, int],
-        "max_features": [int],
-        "vocabulary": [dict, list, tuple, set],
-        "binary": [bool],
-        "dtype": [type, str]
+        "analyzer": [StrOptions({"word", "char", "char_wb"}), callable, None],
+        "max_df": [
+            Interval(Real, 0, 1, closed="both"),
+            Interval(Integral, 1, None, closed="left"),
+        ],
+        "min_df": [
+            Interval(Real, 0, 1, closed="both"),
+            Interval(Integral, 1, None, closed="left"),
+        ],
+        "max_features": [Interval(Integral, 1, None, closed="left"), None],
+        "vocabulary": [dict, Iterable, None],
+        "binary": ["boolean"],
+        "dtype": [type]
     }
 
     def __init__(
@@ -1275,23 +1286,6 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         X.sort_indices()
         return vocabulary, X
 
-    def _validate_params(self):
-        """Validation of min_df, max_df and max_features"""
-        super()._validate_params()
-
-        if self.max_features is not None:
-            check_scalar(self.max_features, "max_features", numbers.Integral, min_val=0)
-
-        if isinstance(self.min_df, numbers.Integral):
-            check_scalar(self.min_df, "min_df", numbers.Integral, min_val=0)
-        else:
-            check_scalar(self.min_df, "min_df", numbers.Real, min_val=0.0, max_val=1.0)
-
-        if isinstance(self.max_df, numbers.Integral):
-            check_scalar(self.max_df, "max_df", numbers.Integral, min_val=0)
-        else:
-            check_scalar(self.max_df, "max_df", numbers.Real, min_val=0.0, max_val=1.0)
-
     def fit(self, raw_documents, y=None):
         """Learn a vocabulary dictionary of all tokens in the raw documents.
 
@@ -1335,12 +1329,12 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         # We intentionally don't call the transform method to make
         # fit_transform overridable without unwanted side effects in
         # TfidfVectorizer.
+        self._validate_params()
         if isinstance(raw_documents, str):
             raise ValueError(
                 "Iterable over raw text documents expected, string object received."
             )
 
-        self._validate_params()
         self._validate_vocabulary()
         max_df = self.max_df
         min_df = self.min_df
@@ -1697,6 +1691,8 @@ class TfidfTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         vectors : sparse matrix of shape (n_samples, n_features)
             Tf-idf-weighted document-term matrix.
         """
+        # self._validate_params()
+
         X = self._validate_data(
             X, accept_sparse="csr", dtype=FLOAT_DTYPES, copy=copy, reset=False
         )
@@ -1954,6 +1950,10 @@ class TfidfVectorizer(CountVectorizer):
     (4, 9)
     """
 
+    _parameter_constraints = {
+        **CountVectorizer._parameter_constraints
+    }
+
     def __init__(
         self,
         *,
@@ -2045,13 +2045,13 @@ class TfidfVectorizer(CountVectorizer):
                 )
         self._tfidf.idf_ = value
 
-    def _check_params(self):
-        if self.dtype not in FLOAT_DTYPES:
-            warnings.warn(
-                "Only {} 'dtype' should be used. {} 'dtype' will "
-                "be converted to np.float64.".format(FLOAT_DTYPES, self.dtype),
-                UserWarning,
-            )
+    # def _check_params(self):
+    #     if self.dtype not in FLOAT_DTYPES:
+    #         warnings.warn(
+    #             "Only {} 'dtype' should be used. {} 'dtype' will "
+    #             "be converted to np.float64.".format(FLOAT_DTYPES, self.dtype),
+    #             UserWarning,
+    #         )
 
     def fit(self, raw_documents, y=None):
         """Learn vocabulary and idf from training set.
@@ -2069,7 +2069,8 @@ class TfidfVectorizer(CountVectorizer):
         self : object
             Fitted vectorizer.
         """
-        self._check_params()
+        self.validate_params()
+        # self._check_params()
         self._warn_for_unused_params()
         self._tfidf = TfidfTransformer(
             norm=self.norm,
@@ -2100,7 +2101,8 @@ class TfidfVectorizer(CountVectorizer):
         X : sparse matrix of (n_samples, n_features)
             Tf-idf-weighted document-term matrix.
         """
-        self._check_params()
+        self.validate_params()
+        # self._check_params()
         self._tfidf = TfidfTransformer(
             norm=self.norm,
             use_idf=self.use_idf,
@@ -2129,6 +2131,7 @@ class TfidfVectorizer(CountVectorizer):
         X : sparse matrix of (n_samples, n_features)
             Tf-idf-weighted document-term matrix.
         """
+        # self._validate_params()
         check_is_fitted(self, msg="The TF-IDF vectorizer is not fitted")
 
         X = super().transform(raw_documents)

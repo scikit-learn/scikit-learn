@@ -456,7 +456,7 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "BernoulliRBM",
     "CalibratedClassifierCV",
     "ClassifierChain",
-    "CountVectorizer",
+    # "CountVectorizer",
     "DictVectorizer",
     "DictionaryLearning",
     "ElasticNetCV",
