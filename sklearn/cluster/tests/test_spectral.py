@@ -73,24 +73,6 @@ def test_spectral_clustering(eigen_solver, assign_labels):
         assert_array_equal(model_copy.labels_, model.labels_)
 
 
-@pytest.mark.parametrize(
-    "input, params, err_type, err_msg",
-    [
-        (
-            X,
-            {"eigen_tol": -1, "eigen_solver": "arpack"},
-            ValueError,
-            "eigen_tol == -1, must be >= 0",
-        )
-    ],
-)
-def test_spectral_params_validation(input, params, err_type, err_msg):
-    """Check the parameters validation in `SpectralClustering`."""
-    est = SpectralClustering(**params)
-    with pytest.raises(err_type, match=err_msg):
-        est.fit(input)
-
-
 @pytest.mark.parametrize("assign_labels", ("kmeans", "discretize", "cluster_qr"))
 def test_spectral_clustering_sparse(assign_labels):
     X, y = make_blobs(

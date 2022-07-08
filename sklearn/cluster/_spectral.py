@@ -624,7 +624,6 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         "n_init": [Interval(numbers.Integral, 1, None, closed="left")],
         "gamma": [Interval(numbers.Real, 1.0, None, closed="left")],
         "affinity": [
-            str,
             callable,
             StrOptions(
                 set(KERNEL_PARAMS.keys())
