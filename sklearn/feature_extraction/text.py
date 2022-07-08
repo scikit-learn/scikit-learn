@@ -1096,6 +1096,26 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
      [0 0 1 0 1 0 1 0 0 0 0 0 1]]
     """
 
+    _parameter_constraints = {
+        "input": [str],
+        "encoding": [str],
+        "decode_error": [str],
+        "strip_accents": [str],
+        "lowercase": [bool],
+        "preprocessor": [callable],
+        "tokenizer": [callable],
+        "stop_words": [list],
+        "token_pattern": [str],
+        "ngram_range": [tuple],
+        "analyzer": [str, callable],
+        "max_df": [float, int],
+        "min_df": [float, int],
+        "max_features": [int],
+        "vocabulary": [dict, list, tuple, set],
+        "binary": [bool],
+        "dtype": [type, str]
+    }
+
     def __init__(
         self,
         *,
@@ -1288,6 +1308,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         self : object
             Fitted vectorizer.
         """
+        self._validate_params()
         self._warn_for_unused_params()
         self.fit_transform(raw_documents)
         return self
