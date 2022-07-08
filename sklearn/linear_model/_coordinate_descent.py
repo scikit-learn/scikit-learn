@@ -23,8 +23,8 @@ from ..base import RegressorMixin, MultiOutputMixin
 from ._base import _preprocess_data, _deprecate_normalize
 from ..utils import check_array, check_scalar
 from ..utils.validation import check_random_state
-from ..utils._param_validation import Hidden, Interval, StrOptions
-from ..model_selection import check_cv, BaseCrossValidator, BaseShuffleSplit
+from ..utils._param_validation import Hidden, HasMethods, Interval, StrOptions
+from ..model_selection import check_cv
 from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import (
     _check_sample_weight,
@@ -1473,8 +1473,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         "cv": [
             Interval(Integral, 2, None, closed="left"),
             Iterable,
-            BaseCrossValidator,
-            BaseShuffleSplit,
+            HasMethods(["split", "get_n_splits"]),
             None,
         ],
         "verbose": ["verbose"],
