@@ -357,6 +357,8 @@ class KNeighborsTransformer(
         "mode": [StrOptions({"distance", "connectivity"})],
     }
 
+    _parameter_constraints.pop("radius")
+
     def __init__(
         self,
         *,
