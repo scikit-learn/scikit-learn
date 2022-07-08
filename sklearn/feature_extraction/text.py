@@ -17,7 +17,7 @@ from collections.abc import Mapping, Iterable
 from functools import partial
 import numbers
 from numbers import Integral, Real
-from ..utils._param_validation import Interval 
+from ..utils._param_validation import Interval
 from operator import itemgetter
 import re
 import unicodedata
@@ -29,7 +29,8 @@ from ..base import BaseEstimator, TransformerMixin, _OneToOneFeatureMixin
 from ..preprocessing import normalize
 from ._hash import FeatureHasher
 from ._stop_words import ENGLISH_STOP_WORDS
-from ..utils.validation import check_is_fitted, check_array, FLOAT_DTYPES, check_scalar
+from ..utils.validation import check_is_fitted, check_array, FLOAT_DTYPES
+# from ..utils.validation import check_scalar (flake8 says it's unused)
 from ..utils.deprecation import deprecated
 from ..utils import _IS_32BIT
 from ..exceptions import NotFittedError
@@ -820,7 +821,6 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         self._validate_params()
         self._validate_ngram_range()
         self._warn_for_unused_params()
-        
         self._get_hasher().fit(X, y=y)
         return self
 
