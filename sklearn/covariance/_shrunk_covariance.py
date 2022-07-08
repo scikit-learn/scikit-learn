@@ -535,17 +535,19 @@ def oas(X, *, assume_centered=False):
     else:
         n_samples, n_features = X.shape
 
-    emp_cov = empirical_covariance(X, assume_centered=assume_centered)
-    mu = np.trace(emp_cov) / n_features
-
+    # Resolves differences with OAS when ussing uncentered data
+    if not assume_centered:
+        X = X - X.mean(0)
+    emp_cov = empirical_covariance(X, assume_centered=True)
+    mu = np.trace(emp_cov)
     # formula from Chen et al.'s **implementation**
-    alpha = np.mean(emp_cov**2)
+    alpha = np.trace(emp_cov**2)
     num = alpha + mu**2
     den = (n_samples + 1.0) * (alpha - (mu**2) / n_features)
 
-    shrinkage = 1.0 if den == 0 else min(num / den, 1.0)
+    shrinkage = 1.0 if den == 0 else max(0, min(num / den, 1.0))
     shrunk_cov = (1.0 - shrinkage) * emp_cov
-    shrunk_cov.flat[:: n_features + 1] += shrinkage * mu
+    shrunk_cov.flat[:: n_features + 1] += shrinkage * mu / n_features
 
     return shrunk_cov, shrinkage
 
@@ -644,13 +646,13 @@ class OAS(EmpiricalCovariance):
     ...                             size=500)
     >>> oas = OAS().fit(X)
     >>> oas.covariance_
-    array([[0.7533..., 0.2763...],
-           [0.2763..., 0.3964...]])
+    array([[0.7456..., 0.2644...],
+           [0.2644..., 0.4041...]])
     >>> oas.precision_
-    array([[ 1.7833..., -1.2431... ],
-           [-1.2431...,  3.3889...]])
+    array([[ 1.7463..., -1.1428...],
+           [-1.1428...,  3.2224...]])
     >>> oas.shrinkage_
-    0.0195...
+    0.0617...
     """
 
     def fit(self, X, y=None):
