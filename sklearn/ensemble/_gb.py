@@ -954,7 +954,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         especially in regression.
 
         - If int, values must be in the range `[1, inf)`.
-        - If float, values must be in the range `(0.0, 1.0]` and `min_samples_leaf`
+        - If float, values must be in the range `(0.0, 1.0)` and `min_samples_leaf`
           will be `ceil(min_samples_leaf * n_samples)`.
 
         .. versionchanged:: 0.18
@@ -966,12 +966,14 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         equal weight when sample_weight is not provided.
         Values must be in the range `[0.0, 0.5]`.
 
-    max_depth : int, default=3
-        The maximum depth of the individual regression estimators. The maximum
+    max_depth : int or None, default=3
+        Maximum depth of the individual regression estimators. The maximum
         depth limits the number of nodes in the tree. Tune this parameter
         for best performance; the best value depends on the interaction
-        of the input variables.
-        Values must be in the range `[1, inf)`.
+        of the input variables. If None, then nodes are expanded until
+        all leaves are pure or until all leaves contain less than
+        min_samples_split samples.
+        If int, values must be in the range `[1, inf)`.
 
     min_impurity_decrease : float, default=0.0
         A node will be split if this split induces a decrease of the impurity
@@ -1533,7 +1535,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         especially in regression.
 
         - If int, values must be in the range `[1, inf)`.
-        - If float, values must be in the range `(0.0, 1.0]` and `min_samples_leaf`
+        - If float, values must be in the range `(0.0, 1.0)` and `min_samples_leaf`
           will be `ceil(min_samples_leaf * n_samples)`.
 
         .. versionchanged:: 0.18
@@ -1545,12 +1547,14 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         equal weight when sample_weight is not provided.
         Values must be in the range `[0.0, 0.5]`.
 
-    max_depth : int, default=3
+    max_depth : int or None, default=3
         Maximum depth of the individual regression estimators. The maximum
         depth limits the number of nodes in the tree. Tune this parameter
         for best performance; the best value depends on the interaction
-        of the input variables.
-        Values must be in the range `[1, inf)`.
+        of the input variables. If None, then nodes are expanded until
+        all leaves are pure or until all leaves contain less than
+        min_samples_split samples.
+        If int, values must be in the range `[1, inf)`.
 
     min_impurity_decrease : float, default=0.0
         A node will be split if this split induces a decrease of the impurity
