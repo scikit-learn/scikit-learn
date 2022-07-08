@@ -5,9 +5,10 @@ implementation_specific_values = [
     #
     #       name_suffix, INPUT_DTYPE_t, INPUT_DTYPE
     #
+    #
     # On the first hand, an empty string is used for `name_suffix`
-    # for the float64 case as to still be able to expose the original
-    # float64 implementation under the same API, namely `DistanceMetric`.
+    # for the 64bit case as to still be able to expose the original
+    # 64bit implementation under the same API, namely `DistanceMetric`.
     #
     # On the other hand, '32' bit is used for `name_suffix` for the float32
     # case to remove ambiguity and use `DistanceMetric32`, which is not
@@ -72,7 +73,7 @@ cdef inline DTYPE_t euclidean_rdist_to_dist{{name_suffix}}(const {{INPUT_DTYPE_t
 
 
 ######################################################################
-# DistanceMetric base class
+# DistanceMetric{{name_suffix}} base class
 cdef class DistanceMetric{{name_suffix}}:
     # The following attributes are required for a few of the subclasses.
     # we must define them here so that cython's limited polymorphism will work.
