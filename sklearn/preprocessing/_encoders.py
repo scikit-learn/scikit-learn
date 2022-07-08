@@ -322,13 +322,14 @@ class OneHotEncoder(_BaseEncoder):
         .. versionadded:: 1.1
             Read more in the :ref:`User Guide <one_hot_encoder_infrequent_categories>`.
 
-    feature_name_combiner : "concat_string" or callable, default="concat_string"
+    feature_name_combiner : "concat" or callable, default="concat"
         Callable with signature `def callable(input_feature, category)` that returns a
         string. This is used to create feature names to be returned by
         :meth:`get_feature_names_out`.
 
-        `"concat_string"` concatenates encoded feature name and category separated by
-        '_'.  E.g. feature X with values 1, 6, 7 create feature names `X_1, X_6, X_7`.
+        `"concat"` concatenates encoded feature name and category with
+        `feature + "_" + str(category)`.E.g. feature X with values 1, 6, 7 create
+        feature names `X_1, X_6, X_7`.
 
         .. versionadded:: 1.2
 
@@ -471,7 +472,7 @@ class OneHotEncoder(_BaseEncoder):
             None,
         ],
         "sparse": ["boolean"],
-        "feature_name_combiner": [StrOptions({"concat_string"}), callable],
+        "feature_name_combiner": [StrOptions({"concat"}), callable],
     }
 
     def __init__(
@@ -484,7 +485,7 @@ class OneHotEncoder(_BaseEncoder):
         handle_unknown="error",
         min_frequency=None,
         max_categories=None,
-        feature_name_combiner="concat_string",
+        feature_name_combiner="concat",
     ):
         self.categories = categories
         self.sparse = sparse
@@ -1104,14 +1105,14 @@ class OneHotEncoder(_BaseEncoder):
         return np.array(feature_names, dtype=object)
 
     def _check_get_feature_name_combiner(self):
-        if self.feature_name_combiner == "concat_string":
+        if self.feature_name_combiner == "concat":
             return lambda feature, category: feature + "_" + str(category)
         elif callable(self.feature_name_combiner):
             assert isinstance(self.feature_name_combiner("feature", "category"), str)
             return self.feature_name_combiner
         else:
             raise ValueError(
-                "feature_name_combiner has to be either 'concat_string' or callable,"
+                "feature_name_combiner has to be either 'concat' or callable,"
                 f" got {self.feature_name_combiner}"
             )
 

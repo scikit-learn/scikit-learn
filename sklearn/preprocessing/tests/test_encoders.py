@@ -227,7 +227,7 @@ def test_one_hot_encoder_invalid_feature_name_combiner(get_names):
         ValueError,
         match=(
             "The 'feature_name_combiner' parameter of OneHotEncoder must be a str among"
-            " {'concat_string'} or a callable.*"
+            " {'concat'} or a callable.*"
         ),
     ):
         enc.fit(X)
