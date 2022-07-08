@@ -905,13 +905,13 @@ def test_csr_polynomial_expansion_index_overflow():
         copy=False,
     )
     pf = PolynomialFeatures(interaction_only=True, include_bias=False, degree=2)
-    xinter = pf.fit_transform(X)
-    n_index, m_index = xinter.nonzero()
+    X_trans = pf.fit_transform(X)
+    n_index, m_index = X_trans.nonzero()
 
-    assert xinter.dtype == dtype
-    assert xinter.shape == (13, 7200180001)
-    assert xinter.indptr.dtype == xinter.indices.dtype == np.int64
-    assert_array_almost_equal(xinter.data, np.array([1, 2, 2, 3, 4, 12], dtype=dtype))
+    assert X_trans.dtype == dtype
+    assert X_trans.shape == (13, 7200180001)
+    assert X_trans.indptr.dtype == X_trans.indices.dtype == np.int64
+    assert_array_almost_equal(X_trans.data, np.array([1, 2, 2, 3, 4, 12], dtype=dtype))
     assert_array_almost_equal(n_index, np.array([11, 11, 11, 12, 12, 12]))
     assert_array_almost_equal(
         m_index, np.array([119999, 120000, 7200180000, 119999, 120000, 7200180000])
@@ -922,16 +922,26 @@ def test_csr_polynomial_expansion_index_overflow():
     col = [65535 - 1]  # barely small enough to stay in int32
     X = sparse.csr_matrix((data, (row, col)))
     pf = PolynomialFeatures(interaction_only=True, include_bias=False, degree=2)
-    xinter = pf.fit_transform(X)
-    assert xinter.dtype == X.dtype
-    assert xinter.indptr.dtype == xinter.indices.dtype == np.int32
+    X_trans = pf.fit_transform(X)
+    assert X_trans.dtype == X.dtype
+    assert X_trans.indptr.dtype == X_trans.indices.dtype == np.int32
 
     # Depends on upstream bug fix
     if sp_version >= parse_version("1.8.0.dev0"):
         pf = PolynomialFeatures(interaction_only=False, include_bias=False, degree=2)
-        xinter = pf.fit_transform(X)
-        assert xinter.dtype == X.dtype
-        assert xinter.indptr.dtype == xinter.indices.dtype == np.int64
+        X_trans = pf.fit_transform(X)
+        assert X_trans.dtype == X.dtype
+        assert X_trans.indptr.dtype == X_trans.indices.dtype == np.int64
+        assert X_trans.indices.max() == pf.n_output_features_ - 1
+
+        pf = PolynomialFeatures(interaction_only=False, include_bias=True, degree=2)
+        X_trans = pf.fit_transform(X)
+        assert X_trans.dtype == X.dtype
+        assert X_trans.indptr.dtype == X_trans.indices.dtype == np.int64
+        assert X_trans.indices.max() == pf.n_output_features_ - 1
+
+    else:
+        pytest.xfail("Requires scipy 1.8.0.dev0 or newer.")
 
 
 # TODO: Remove in 1.2 when get_feature_names is removed
