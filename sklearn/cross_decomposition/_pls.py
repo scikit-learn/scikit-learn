@@ -397,8 +397,10 @@ class _PLS(
                 P[:, k] = p
                 Q[:, k] = q
 
-            self._coef_ = (R @ Q.T).T * self._y_std
+            self._coef_ = ((R @ Q.T) * self._y_std).T
             self.intercept_ = self._y_mean
+            self._n_features_out = R.shape[1]
+            self.x_scores_ = Xk @ R
 
         return self
 
