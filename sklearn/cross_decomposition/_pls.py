@@ -237,8 +237,8 @@ class _PLS(
         )
         if Y.ndim == 1:
             Y = Y.reshape(-1, 1)
-        if self.algorithm in ["dayalmacgregor", "simpls"]:
-            assert Y.shape[1] == 1 and self.deflation_mode == "regression"
+        if self.algorithm in ["dayalmacgregor", "kernel"]:
+            assert self.deflation_mode == "regression"
 
         n = X.shape[0]
         p = X.shape[1]
