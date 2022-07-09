@@ -240,7 +240,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
     """
 
     _parameter_constraints = {
-        "base_estimator": [object],
+        "base_estimator": "no_validation",
         "n_estimators": [Interval(Integral, 1, None, closed="left")],
         "max_samples": [
             Interval(Integral, 1, None, closed="left"),
