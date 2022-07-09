@@ -279,9 +279,9 @@ def sparse_enet_coordinate_descent(
     floating [::1] w,
     floating alpha,
     floating beta,
-    cnp.ndarray[floating, ndim=1, mode='c'] X_data,
-    cnp.ndarray[int, ndim=1, mode='c'] X_indices,
-    cnp.ndarray[int, ndim=1, mode='c'] X_indptr,
+    floating[::1] X_data, # TODO: Make const after release of Cython 3 (#23147)
+    const int[::1] X_indices,
+    const int[::1] X_indptr,
     floating[::1] y,
     floating[::1] sample_weight,
     floating[::1] X_mean,
