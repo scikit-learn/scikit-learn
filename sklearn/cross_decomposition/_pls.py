@@ -264,7 +264,6 @@ class _PLS(
         )
 
         if self.algorithm in ["nipals", "svd"]:
-
             self.x_weights_ = np.zeros((p, n_components))  # U
             self.y_weights_ = np.zeros((q, n_components))  # V
             self._x_scores = np.zeros((n, n_components))  # Xi
@@ -672,7 +671,14 @@ class PLSRegression(_PLS):
     #     - "pls" with function oscorespls.fit(X, Y)
 
     def __init__(
-        self, n_components=2, *, scale=True, max_iter=500, tol=1e-06, copy=True, algorithm="nipals"
+        self,
+        n_components=2,
+        *,
+        scale=True,
+        max_iter=500,
+        tol=1e-06,
+        copy=True,
+        algorithm="nipals",
     ):
         super().__init__(
             n_components=n_components,
