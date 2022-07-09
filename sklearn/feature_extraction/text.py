@@ -1942,7 +1942,7 @@ class TfidfVectorizer(CountVectorizer):
     >>> print(X.shape)
     (4, 9)
     """
-    
+
     _parameter_constraints = {**CountVectorizer._parameter_constraints}
     _parameter_constraints.update(
         {
