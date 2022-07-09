@@ -237,6 +237,11 @@ class _PLS(
         )
         if Y.ndim == 1:
             Y = Y.reshape(-1, 1)
+            self.univariate = True
+        else:
+            self.univariate = False
+        if self.algorithm in ["dayalmacgregor", "simpls"]:
+            assert self.univariate and self.deflation_mode == "regression"
 
         n = X.shape[0]
         p = X.shape[1]
@@ -261,101 +266,165 @@ class _PLS(
             X, Y, self.scale
         )
 
-        self.x_weights_ = np.zeros((p, n_components))  # U
-        self.y_weights_ = np.zeros((q, n_components))  # V
-        self._x_scores = np.zeros((n, n_components))  # Xi
-        self._y_scores = np.zeros((n, n_components))  # Omega
-        self.x_loadings_ = np.zeros((p, n_components))  # Gamma
-        self.y_loadings_ = np.zeros((q, n_components))  # Delta
-        self.n_iter_ = []
+        if self.algorithm in ["nipals", "svd"]:
 
-        # This whole thing corresponds to the algorithm in section 4.1 of the
-        # review from Wegelin. See above for a notation mapping from code to
-        # paper.
-        Y_eps = np.finfo(Yk.dtype).eps
-        for k in range(n_components):
-            # Find first left and right singular vectors of the X.T.dot(Y)
-            # cross-covariance matrix.
-            if self.algorithm == "nipals":
-                # Replace columns that are all close to zero with zeros
-                Yk_mask = np.all(np.abs(Yk) < 10 * Y_eps, axis=0)
-                Yk[:, Yk_mask] = 0.0
+            self.x_weights_ = np.zeros((p, n_components))  # U
+            self.y_weights_ = np.zeros((q, n_components))  # V
+            self._x_scores = np.zeros((n, n_components))  # Xi
+            self._y_scores = np.zeros((n, n_components))  # Omega
+            self.x_loadings_ = np.zeros((p, n_components))  # Gamma
+            self.y_loadings_ = np.zeros((q, n_components))  # Delta
+            self.n_iter_ = []
 
-                try:
-                    (
-                        x_weights,
-                        y_weights,
-                        n_iter_,
-                    ) = _get_first_singular_vectors_power_method(
-                        Xk,
-                        Yk,
-                        mode=self.mode,
-                        max_iter=self.max_iter,
-                        tol=self.tol,
-                        norm_y_weights=norm_y_weights,
-                    )
-                except StopIteration as e:
-                    if str(e) != "Y residual is constant":
-                        raise
-                    warnings.warn(f"Y residual is constant at iteration {k}")
-                    break
+            # This whole thing corresponds to the algorithm in section 4.1 of the
+            # review from Wegelin. See above for a notation mapping from code to
+            # paper.
+            Y_eps = np.finfo(Yk.dtype).eps
+            for k in range(n_components):
+                # Find first left and right singular vectors of the X.T.dot(Y)
+                # cross-covariance matrix.
+                if self.algorithm == "nipals":
+                    # Replace columns that are all close to zero with zeros
+                    Yk_mask = np.all(np.abs(Yk) < 10 * Y_eps, axis=0)
+                    Yk[:, Yk_mask] = 0.0
 
-                self.n_iter_.append(n_iter_)
+                    try:
+                        (
+                            x_weights,
+                            y_weights,
+                            n_iter_,
+                        ) = _get_first_singular_vectors_power_method(
+                            Xk,
+                            Yk,
+                            mode=self.mode,
+                            max_iter=self.max_iter,
+                            tol=self.tol,
+                            norm_y_weights=norm_y_weights,
+                        )
+                    except StopIteration as e:
+                        if str(e) != "Y residual is constant":
+                            raise
+                        warnings.warn(f"Y residual is constant at iteration {k}")
+                        break
 
-            elif self.algorithm == "svd":
-                x_weights, y_weights = _get_first_singular_vectors_svd(Xk, Yk)
+                    self.n_iter_.append(n_iter_)
 
-            # inplace sign flip for consistency across solvers and archs
-            _svd_flip_1d(x_weights, y_weights)
+                elif self.algorithm == "svd":
+                    x_weights, y_weights = _get_first_singular_vectors_svd(Xk, Yk)
 
-            # compute scores, i.e. the projections of X and Y
-            x_scores = np.dot(Xk, x_weights)
-            if norm_y_weights:
-                y_ss = 1
-            else:
-                y_ss = np.dot(y_weights, y_weights)
-            y_scores = np.dot(Yk, y_weights) / y_ss
+                # inplace sign flip for consistency across solvers and archs
+                _svd_flip_1d(x_weights, y_weights)
 
-            # Deflation: subtract rank-one approx to obtain Xk+1 and Yk+1
-            x_loadings = np.dot(x_scores, Xk) / np.dot(x_scores, x_scores)
-            Xk -= np.outer(x_scores, x_loadings)
+                # compute scores, i.e. the projections of X and Y
+                x_scores = np.dot(Xk, x_weights)
+                if norm_y_weights:
+                    y_ss = 1
+                else:
+                    y_ss = np.dot(y_weights, y_weights)
+                y_scores = np.dot(Yk, y_weights) / y_ss
 
-            if self.deflation_mode == "canonical":
-                # regress Yk on y_score
-                y_loadings = np.dot(y_scores, Yk) / np.dot(y_scores, y_scores)
-                Yk -= np.outer(y_scores, y_loadings)
-            if self.deflation_mode == "regression":
-                # regress Yk on x_score
-                y_loadings = np.dot(x_scores, Yk) / np.dot(x_scores, x_scores)
-                Yk -= np.outer(x_scores, y_loadings)
+                # Deflation: subtract rank-one approx to obtain Xk+1 and Yk+1
+                x_loadings = np.dot(x_scores, Xk) / np.dot(x_scores, x_scores)
+                Xk -= np.outer(x_scores, x_loadings)
 
-            self.x_weights_[:, k] = x_weights
-            self.y_weights_[:, k] = y_weights
-            self._x_scores[:, k] = x_scores
-            self._y_scores[:, k] = y_scores
-            self.x_loadings_[:, k] = x_loadings
-            self.y_loadings_[:, k] = y_loadings
+                if self.deflation_mode == "canonical":
+                    # regress Yk on y_score
+                    y_loadings = np.dot(y_scores, Yk) / np.dot(y_scores, y_scores)
+                    Yk -= np.outer(y_scores, y_loadings)
+                if self.deflation_mode == "regression":
+                    # regress Yk on x_score
+                    y_loadings = np.dot(x_scores, Yk) / np.dot(x_scores, x_scores)
+                    Yk -= np.outer(x_scores, y_loadings)
 
-        # X was approximated as Xi . Gamma.T + X_(R+1)
-        # Xi . Gamma.T is a sum of n_components rank-1 matrices. X_(R+1) is
-        # whatever is left to fully reconstruct X, and can be 0 if X is of rank
-        # n_components.
-        # Similarly, Y was approximated as Omega . Delta.T + Y_(R+1)
+                self.x_weights_[:, k] = x_weights
+                self.y_weights_[:, k] = y_weights
+                self._x_scores[:, k] = x_scores
+                self._y_scores[:, k] = y_scores
+                self.x_loadings_[:, k] = x_loadings
+                self.y_loadings_[:, k] = y_loadings
 
-        # Compute transformation matrices (rotations_). See User Guide.
-        self.x_rotations_ = np.dot(
-            self.x_weights_,
-            pinv2(np.dot(self.x_loadings_.T, self.x_weights_), check_finite=False),
-        )
-        self.y_rotations_ = np.dot(
-            self.y_weights_,
-            pinv2(np.dot(self.y_loadings_.T, self.y_weights_), check_finite=False),
-        )
-        # TODO(1.3): change `self._coef_` to `self.coef_`
-        self._coef_ = np.dot(self.x_rotations_, self.y_loadings_.T)
-        self._coef_ = (self._coef_ * self._y_std).T
-        self.intercept_ = self._y_mean
-        self._n_features_out = self.x_rotations_.shape[1]
+            # X was approximated as Xi . Gamma.T + X_(R+1)
+            # Xi . Gamma.T is a sum of n_components rank-1 matrices. X_(R+1) is
+            # whatever is left to fully reconstruct X, and can be 0 if X is of rank
+            # n_components.
+            # Similarly, Y was approximated as Omega . Delta.T + Y_(R+1)
+
+            # Compute transformation matrices (rotations_). See User Guide.
+            self.x_rotations_ = np.dot(
+                self.x_weights_,
+                pinv2(np.dot(self.x_loadings_.T, self.x_weights_), check_finite=False),
+            )
+            self.y_rotations_ = np.dot(
+                self.y_weights_,
+                pinv2(np.dot(self.y_loadings_.T, self.y_weights_), check_finite=False),
+            )
+            # TODO(1.3): change `self._coef_` to `self.coef_`
+            self._coef_ = np.dot(self.x_rotations_, self.y_loadings_.T)
+            self._coef_ = (self._coef_ * self._y_std).T
+            self.intercept_ = self._y_mean
+            self._n_features_out = self.x_rotations_.shape[1]
+
+        elif self.algorithm == "dayalmacgregor":
+            S = Xk.T @ Yk
+
+            P = np.zeros((Xk.shape[1], self.n_components))
+            Q = np.zeros((Yk.shape[1], self.n_components))
+            R = np.zeros((Xk.shape[1], self.n_components))
+
+            for k in range(self.n_components):
+                w = S / np.sqrt(S.T @ S)
+                r = w
+                for j in range(self.n_components - 1):
+                    r = r.ravel() - (P[:, j] @ w) * R[:, j]
+                t = Xk @ r
+                tt = t.T @ t
+                p = (Xk.T @ t) / tt
+                q = (r.T @ S) / tt
+                S = S.ravel() - tt * p * q
+                R[:, k] = r
+                P[:, k] = p
+                Q[:, [k]] = q
+
+            self._coef_ = (R @ Q.T) * self._y_std
+            self.intercept = self._y_mean
+
+        elif self.algorithm == "simpls":
+            S = Xk.T @ Yk
+
+            R = np.zeros((Xk.shape[1], self.n_components))
+            T = np.zeros((Yk.shape[0], self.n_components))
+            P = np.zeros((Xk.shape[1], self.n_components))
+            Q = np.zeros((Yk.shape[1], self.n_components))
+            U = np.zeros((Xk.shape[0], self.n_components))
+            V = np.zeros((Xk.shape[1], self.n_components))
+
+            for k in range(self.n_components):
+                q = (S.T @ S)
+                r = S @ q
+                t = Xk @ r
+                t -= t.mean(axis=0)
+                norm_t = np.sqrt(t.T @ t)
+                t /= norm_t
+                r /= norm_t
+                p = Xk.T @ t
+                q = Yk.T @ t
+                u = Yk @ q
+                v = p
+                if k:
+                    v -= V @ (V.T @ p)
+                    u -= T @ (T.T @ u)
+                v /= np.sqrt(v.T @ v)
+                S -= v @ (v.T @ S)
+                R[:, [k]] = r
+                T[:, [k]] = t
+                P[:, [k]] = p
+                Q[:, [k]] = q
+                U[:, [k]] = u
+                V[:, [k]] = v
+
+            self._coef_ = (R @ Q.T) * self._y_std
+            self.intercept = self._y_mean
+
         return self
 
     def transform(self, X, Y=None, copy=True):
