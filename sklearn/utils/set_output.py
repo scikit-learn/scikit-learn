@@ -17,7 +17,6 @@ def _wrap_in_pandas_container(
     *,
     index=None,
     columns=None,
-    constructor_kwargs=None,
 ):
     """Create a named container.
 
