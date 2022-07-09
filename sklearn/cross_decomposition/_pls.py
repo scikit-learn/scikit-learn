@@ -685,7 +685,7 @@ class PLSRegression(_PLS):
     """
 
     _parameter_constraints = {**_PLS._parameter_constraints}
-    for param in ("deflation_mode", "mode", "algorithm"):
+    for param in ("deflation_mode", "mode"):
         _parameter_constraints.pop(param)
 
     # This implementation provides the same results that 3 PLS packages
