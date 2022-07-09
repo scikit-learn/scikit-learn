@@ -237,11 +237,8 @@ class _PLS(
         )
         if Y.ndim == 1:
             Y = Y.reshape(-1, 1)
-            self.univariate = True
-        else:
-            self.univariate = False
         if self.algorithm in ["dayalmacgregor", "simpls"]:
-            assert self.univariate and self.deflation_mode == "regression"
+            assert Y.shape[1] == 1 and self.deflation_mode == "regression"
 
         n = X.shape[0]
         p = X.shape[1]
