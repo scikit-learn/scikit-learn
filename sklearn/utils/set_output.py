@@ -33,9 +33,6 @@ def _wrap_in_pandas_container(
         The column names or a callable that returns the column names. This is
         useful if the column names require some computation.
 
-    constructor_kwargs : dict, default=None
-        Keyword arguments passed to container constructor.
-
     Returns
     -------
     named_container : DataFrame or ndarray
@@ -45,8 +42,6 @@ def _wrap_in_pandas_container(
     if hasattr(original_data, "iloc"):
         return original_data
 
-    constructor_kwargs = constructor_kwargs or {}
-
     if issparse(original_data):
         raise ValueError("Pandas output does not support sparse data")
 
@@ -54,9 +49,7 @@ def _wrap_in_pandas_container(
         columns = columns()
 
     pd = check_pandas_support("Setting output container to 'pandas'")
-    return pd.DataFrame(
-        original_data, index=index, columns=columns, **constructor_kwargs
-    )
+    return pd.DataFrame(original_data, index=index, columns=columns)
 
 
 def get_output_config(estimator, method):
@@ -84,9 +77,7 @@ def get_output_config(estimator, method):
     return {"dense": container_str}
 
 
-def _wrap_output_with_container(
-    estimator, original_data, method, index, constructor_kwargs=None
-):
+def _wrap_output_with_container(estimator, original_data, method, index):
     """Wrap output with container based on an estimator's or global config.
 
     Parameters
@@ -102,9 +93,6 @@ def _wrap_output_with_container(
 
     index : array-like
         Index to attach to output.
-
-    constructor_kwargs : dict, default=None
-        Keyword arguments passed to container constructor.
 
     Returns
     -------
@@ -127,7 +115,6 @@ def _wrap_output_with_container(
         original_data=original_data,
         index=index,
         columns=getattr(estimator, "get_feature_names_out", None),
-        constructor_kwargs=constructor_kwargs,
     )
 
 
