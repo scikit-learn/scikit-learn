@@ -29,11 +29,11 @@ from ..base import BaseEstimator, TransformerMixin, _OneToOneFeatureMixin
 from ..preprocessing import normalize
 from ._hash import FeatureHasher
 from ._stop_words import ENGLISH_STOP_WORDS
-from ..utils.validation import check_is_fitted, check_array, FLOAT_DTYPES, check_scalar
+from ..utils.validation import check_is_fitted, check_array, FLOAT_DTYPES
 from ..utils.deprecation import deprecated
 from ..utils import _IS_32BIT
 from ..exceptions import NotFittedError
-from ..utils._param_validation import StrOptions, Interval
+from ..utils._param_validation import StrOptions, Interval, HasMethods
 
 
 __all__ = [
@@ -510,7 +510,7 @@ class _VectorizerMixin:
         if len(self.vocabulary_) == 0:
             raise ValueError("Vocabulary is empty")
 
-    def _validate_params(self):
+    def _validate_ngram_range(self):
         """Check validity of ngram_range parameter"""
         min_n, max_m = self.ngram_range
         if min_n > max_m:
@@ -816,7 +816,7 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
             )
 
         self._warn_for_unused_params()
-        self._validate_params()
+        self._validate_ngram_range()
 
         self._get_hasher().fit(X, y=y)
         return self
@@ -841,7 +841,7 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
                 "Iterable over raw text documents expected, string object received."
             )
 
-        self._validate_params()
+        self._validate_ngram_range()
 
         analyzer = self.build_analyzer()
         X = self._get_hasher().transform(analyzer(doc) for doc in X)
@@ -1118,7 +1118,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
             Interval(Integral, 1, None, closed="left"),
         ],
         "max_features": [Interval(Integral, 1, None, closed="left"), None],
-        "vocabulary": [Mapping, np.iterable, None],
+        "vocabulary": [Mapping, HasMethods("__iter__"), None],
         "binary": ["boolean"],
         "dtype": [type],
     }
@@ -1298,8 +1298,6 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         self : object
             Fitted vectorizer.
         """
-        self._validate_params()
-        self._warn_for_unused_params()
         self.fit_transform(raw_documents)
         return self
 
@@ -1330,7 +1328,8 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
                 "Iterable over raw text documents expected, string object received."
             )
 
-        # self._validate_params()
+        self._validate_params()
+        self._warn_for_unused_params()
         self._validate_vocabulary()
         max_df = self.max_df
         min_df = self.min_df
