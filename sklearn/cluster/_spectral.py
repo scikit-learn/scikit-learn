@@ -16,7 +16,7 @@ from scipy.sparse import csc_matrix
 
 from ..base import BaseEstimator, ClusterMixin
 from ..utils._param_validation import Interval, StrOptions
-from ..utils import check_random_state, as_float_array, check_scalar
+from ..utils import check_random_state, as_float_array
 from ..metrics.pairwise import pairwise_kernels, KERNEL_PARAMS
 from ..neighbors import kneighbors_graph, NearestNeighbors
 from ..manifold import spectral_embedding
@@ -626,7 +626,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         "affinity": [
             callable,
             StrOptions(
-                set(KERNEL_PARAMS.keys())
+                set(KERNEL_PARAMS)
                 | {"nearest_neighbors", "precomputed", "precomputed_nearest_neighbors"}
             ),
         ],
@@ -638,10 +638,10 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         ],
         "assign_labels": [StrOptions({"kmeans", "discretize", "cluster_qr"})],
         "degree": [Interval(numbers.Integral, 1, None, closed="left")],
-        "coef0": [Interval(numbers.Real, None, None, closed="both")],
+        "coef0": [Interval(numbers.Real, None, None, closed="neither")],
         "kernel_params": [dict, None],
         "n_jobs": [numbers.Integral, None],
-        "verbose": ["boolean"],
+        "verbose": ["verbose"],
     }
 
     def __init__(
@@ -719,15 +719,6 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
                 "now constructs an affinity matrix from data. To use"
                 " a custom affinity matrix, "
                 "set ``affinity=precomputed``."
-            )
-
-        if self.eigen_tol != "auto":
-            check_scalar(
-                self.eigen_tol,
-                "eigen_tol",
-                target_type=numbers.Real,
-                min_val=0,
-                include_boundaries="left",
             )
 
         if self.affinity == "nearest_neighbors":
