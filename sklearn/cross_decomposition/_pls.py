@@ -180,7 +180,7 @@ class _PLS(
         "scale": ["boolean"],
         "deflation_mode": [StrOptions({"regression", "canonical"})],
         "mode": [StrOptions({"A", "B"})],
-        "algorithm": [StrOptions({"svd", "nipals", "dayalmacgregor", "simpls"})],
+        "algorithm": [StrOptions({"svd", "nipals", "dayalmacgregor", "kernel"})],
         "max_iter": [Interval(Integral, 1, None, closed="left")],
         "tol": [Interval(Real, 0, None, closed="left")],
         "copy": ["boolean"],
@@ -364,7 +364,9 @@ class _PLS(
             self.x_scores_ = self._x_scores
             self.y_scores_ = self._y_scores
 
-        elif self.algorithm == "dayalmacgregor":
+        # this implements the Modified Kernel Algorithm as described in the Appendix of
+        # Improved PLS Algorithms (Dayal-MacGregor 1997)
+        elif self.algorithm in ["dayalmacgregor", "kernel"]:
             S = Xk.T @ Yk
 
             P = np.zeros((Xk.shape[1], self.n_components))
@@ -372,7 +374,13 @@ class _PLS(
             R = np.zeros((Xk.shape[1], self.n_components))
 
             for k in range(self.n_components):
-                w = S / np.sqrt(S.T @ S)
+                if y.shape[1] == 1:
+                    w = S
+                else:
+                    eval, evec = np.linalg.eig(S.T @ S)
+                    q = evec[:, np.argmax(eval)]
+                    w = S @ q
+                w = w / np.sqrt(w.T @ w)
                 r = w
                 for j in range(self.n_components - 1):
                     r = r.ravel() - (P[:, j] @ w) * R[:, j]
@@ -380,47 +388,14 @@ class _PLS(
                 tt = t.T @ t
                 p = (Xk.T @ t) / tt
                 q = (r.T @ S) / tt
-                S = S.ravel() - tt * p * q
+                if y.shape[1] == 1:
+                    S = S.ravel() - tt * p * q
+                else:
+                    S -= tt * (p.reshape(-1, 1) @ q.reshape(-1, 1).T)
+
                 R[:, k] = r
                 P[:, k] = p
-                Q[:, [k]] = q
-
-            self._coef_ = (R @ Q.T).T * self._y_std
-            self.intercept_ = self._y_mean
-
-        elif self.algorithm == "simpls":
-            S = Xk.T @ Yk
-
-            R = np.zeros((Xk.shape[1], self.n_components))
-            T = np.zeros((Yk.shape[0], self.n_components))
-            P = np.zeros((Xk.shape[1], self.n_components))
-            Q = np.zeros((Yk.shape[1], self.n_components))
-            U = np.zeros((Xk.shape[0], self.n_components))
-            V = np.zeros((Xk.shape[1], self.n_components))
-
-            for k in range(self.n_components):
-                q = (S.T @ S)
-                r = S @ q
-                t = Xk @ r
-                t -= t.mean(axis=0)
-                norm_t = np.sqrt(t.T @ t)
-                t /= norm_t
-                r /= norm_t
-                p = Xk.T @ t
-                q = Yk.T @ t
-                u = Yk @ q
-                v = p
-                if k:
-                    v -= V @ (V.T @ p)
-                    u -= T @ (T.T @ u)
-                v /= np.sqrt(v.T @ v)
-                S -= v @ (v.T @ S)
-                R[:, [k]] = r
-                T[:, [k]] = t
-                P[:, [k]] = p
-                Q[:, [k]] = q
-                U[:, [k]] = u
-                V[:, [k]] = v
+                Q[:, k] = q
 
             self._coef_ = (R @ Q.T).T * self._y_std
             self.intercept_ = self._y_mean
