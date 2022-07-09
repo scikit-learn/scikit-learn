@@ -429,8 +429,7 @@ class NoPredictProbaNoDecisionFunction(ClassifierMixin, BaseEstimator):
         (
             KMeans(random_state=0, n_init="auto"),
             {"features": [0]},
-            "'estimator' must be a fitted regressor, "
-            "classifier or outlier_detector.",
+            "'estimator' must be a fitted regressor, classifier or outlier_detector.",
         ),
         (
             LinearRegression(),

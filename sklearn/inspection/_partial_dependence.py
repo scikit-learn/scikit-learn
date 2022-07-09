@@ -362,12 +362,13 @@ def partial_dependence(
     """
     check_is_fitted(estimator)
 
-    if not (is_classifier(estimator) or
-            is_regressor(estimator) or
-            is_outlier_detector(estimator)):
+    if not (
+        is_classifier(estimator)
+        or is_regressor(estimator)
+        or is_outlier_detector(estimator)
+    ):
         raise ValueError(
-            "'estimator' must be a fitted regressor,"
-            " classifier or outlier_detector."
+            "'estimator' must be a fitted regressor, classifier or outlier_detector."
         )
 
     if is_classifier(estimator) and isinstance(estimator.classes_[0], np.ndarray):
