@@ -360,6 +360,9 @@ class _PLS(
             self._coef_ = (self._coef_ * self._y_std).T
             self.intercept_ = self._y_mean
             self._n_features_out = self.x_rotations_.shape[1]
+            # expose the fitted attributes `x_scores_` and `y_scores_`
+            self.x_scores_ = self._x_scores
+            self.y_scores_ = self._y_scores
 
         elif self.algorithm == "dayalmacgregor":
             S = Xk.T @ Yk
@@ -724,9 +727,6 @@ class PLSRegression(_PLS):
             Fitted model.
         """
         super().fit(X, Y)
-        # expose the fitted attributes `x_scores_` and `y_scores_`
-        self.x_scores_ = self._x_scores
-        self.y_scores_ = self._y_scores
         return self
 
 
