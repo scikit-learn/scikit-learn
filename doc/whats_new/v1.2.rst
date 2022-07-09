@@ -186,7 +186,8 @@ Changelog
 .........................
 
 - |Enhancement| Enable Partial Dependence Plots (PDP) for outlier detectors.
-  :pr:`16904` by :user:`Robin Pauli <rpauli>`.
+  :pr:`16904` by :user:`Robin Pauli <rpauli>` and
+  :pr:`23396` by :user:`Madhura Jayaratne <madhuracj>`.
 
 :mod:`sklearn.metrics`
 ......................
