@@ -748,7 +748,7 @@ class TSNE(BaseEstimator):
 
     _parameter_constraints = {
         "n_components": [Interval(Integral, 1, None, closed="left")],
-        "perplexity": [Real],
+        "perplexity": [Interval(Real, 0, None, closed="neither")],
         "early_exaggeration": [Interval(Real, 1, None, closed="left")],
         "learning_rate": [
             StrOptions({"auto"}),
