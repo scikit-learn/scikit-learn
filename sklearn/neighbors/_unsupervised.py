@@ -125,6 +125,8 @@ class NearestNeighbors(KNeighborsMixin, RadiusNeighborsMixin, NeighborsBase):
     array(2)
     """
 
+    _parameter_constraints = {**NeighborsBase._parameter_constraints}
+
     def __init__(
         self,
         *,
@@ -165,4 +167,7 @@ class NearestNeighbors(KNeighborsMixin, RadiusNeighborsMixin, NeighborsBase):
         self : NearestNeighbors
             The fitted nearest neighbors estimator.
         """
+
+        self._validate_params()
+
         return self._fit(X)
