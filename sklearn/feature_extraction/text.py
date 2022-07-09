@@ -1943,6 +1943,16 @@ class TfidfVectorizer(CountVectorizer):
     (4, 9)
     """
 
+    _parameter_constraints = {**CountVectorizer._parameter_constraints}
+    _parameter_constraints.update(
+        {
+            "norm": [StrOptions({"l1", "l2"})],
+            "use_idf": ["boolean"],
+            "smooth_idf": ["boolean"],
+            "sublinear_tf": ["boolean"],
+        }
+    )
+
     def __init__(
         self,
         *,
@@ -2058,6 +2068,7 @@ class TfidfVectorizer(CountVectorizer):
         self : object
             Fitted vectorizer.
         """
+        self._validate_params()
         self._check_params()
         self._warn_for_unused_params()
         self._tfidf = TfidfTransformer(
