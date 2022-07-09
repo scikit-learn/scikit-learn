@@ -386,7 +386,7 @@ class _PLS(
                 Q[:, [k]] = q
 
             self._coef_ = (R @ Q.T).T * self._y_std
-            self.intercept = self._y_mean
+            self.intercept_ = self._y_mean
 
         elif self.algorithm == "simpls":
             S = Xk.T @ Yk
@@ -423,7 +423,7 @@ class _PLS(
                 V[:, [k]] = v
 
             self._coef_ = (R @ Q.T).T * self._y_std
-            self.intercept = self._y_mean
+            self.intercept_ = self._y_mean
 
         return self
 
