@@ -180,7 +180,7 @@ class _PLS(
         "scale": ["boolean"],
         "deflation_mode": [StrOptions({"regression", "canonical"})],
         "mode": [StrOptions({"A", "B"})],
-        "algorithm": [StrOptions({"svd", "nipals"})],
+        "algorithm": [StrOptions({"svd", "nipals", "dayalmacgregor", "simpls"})],
         "max_iter": [Interval(Integral, 1, None, closed="left")],
         "tol": [Interval(Real, 0, None, closed="left")],
         "copy": ["boolean"],
