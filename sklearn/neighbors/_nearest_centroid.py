@@ -18,7 +18,7 @@ from ..preprocessing import LabelEncoder
 from ..utils.validation import check_is_fitted
 from ..utils.sparsefuncs import csc_median_axis_0
 from ..utils.multiclass import check_classification_targets
-from ..utils._param_validation import Interval,StrOptions
+from ..utils._param_validation import Interval, StrOptions
 from sklearn.metrics.pairwise import _VALID_METRICS
 
 
@@ -99,7 +99,7 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
 
     _parameter_constraints = {
         "metric": [StrOptions(set(_VALID_METRICS)), callable],
-        "shrink_threshold": [Interval(Real,0,None,closed="neither"),None]
+        "shrink_threshold": [Interval(Real, 0, None, closed="neither"), None],
     }
 
     def __init__(self, metric="euclidean", *, shrink_threshold=None):
