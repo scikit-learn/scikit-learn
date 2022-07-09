@@ -3,11 +3,13 @@
 # Authors: Mathieu Blondel <mathieu@mblondel.org>
 #          Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 # License: BSD 3 clause
+from numbers import Integral, Real
 
 import numpy as np
 
 from .base import BaseEstimator, RegressorMixin, MultiOutputMixin
-from .metrics.pairwise import pairwise_kernels
+from .utils._param_validation import Interval, StrOptions
+from .metrics.pairwise import PAIRWISE_KERNEL_FUNCTIONS, pairwise_kernels
 from .linear_model._ridge import _solve_cholesky_kernel
 from .utils.validation import check_is_fitted, _check_sample_weight
 
@@ -67,14 +69,14 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
         the kernel; see the documentation for sklearn.metrics.pairwise.
         Ignored by other kernels.
 
-    degree : float, default=3
+    degree : int, default=3
         Degree of the polynomial kernel. Ignored by other kernels.
 
     coef0 : float, default=1
         Zero coefficient for polynomial and sigmoid kernels.
         Ignored by other kernels.
 
-    kernel_params : mapping of str to any, default=None
+    kernel_params : dict, default=None
         Additional parameters (keyword arguments) for kernel function passed
         as callable object.
 
@@ -129,6 +131,18 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
     KernelRidge(alpha=1.0)
     """
 
+    _parameter_constraints = {
+        "alpha": [Interval(Real, 0, None, closed="left"), "array-like"],
+        "kernel": [
+            StrOptions(set(PAIRWISE_KERNEL_FUNCTIONS.keys()) | {"precomputed"}),
+            callable,
+        ],
+        "gamma": [Interval(Real, 0, None, closed="left"), None],
+        "degree": [Interval(Integral, 0, None, closed="left")],
+        "coef0": [Interval(Real, 0, None, closed="left")],
+        "kernel_params": [dict, None],
+    }
+
     def __init__(
         self,
         alpha=1,
@@ -176,6 +190,8 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
         self : object
             Returns the instance itself.
         """
+        self._validate_params()
+
         # Convert data
         X, y = self._validate_data(
             X, y, accept_sparse=("csr", "csc"), multi_output=True, y_numeric=True
