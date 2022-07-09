@@ -359,9 +359,6 @@ class _PLS(
             self._coef_ = (self._coef_ * self._y_std).T
             self.intercept_ = self._y_mean
             self._n_features_out = self.x_rotations_.shape[1]
-            # expose the fitted attributes `x_scores_` and `y_scores_`
-            self.x_scores_ = self._x_scores
-            self.y_scores_ = self._y_scores
 
         # this implements the Modified Kernel Algorithm as described in the Appendix of
         # Improved PLS Algorithms (Dayal-MacGregor 1997)
@@ -399,7 +396,8 @@ class _PLS(
             self._coef_ = ((R @ Q.T) * self._y_std).T
             self.intercept_ = self._y_mean
             self._n_features_out = R.shape[1]
-            self.x_scores_ = Xk @ R
+            self._x_scores = Xk @ R
+            self._y_scores = Yk @ Q
 
         return self
 
@@ -594,6 +592,11 @@ class PLSRegression(_PLS):
         and potentially scaling. If `False`, these operations will be done
         inplace, modifying both arrays.
 
+    algorithm: str, default="nipals"
+        The algorithm used for estimating the PLS regression model. Can be
+        "nipals", "svd", "dayalmacgregor" or "kernel" (the latter two are
+        equivalent).
+
     Attributes
     ----------
     x_weights_ : ndarray of shape (n_features, n_components)
@@ -710,6 +713,9 @@ class PLSRegression(_PLS):
             Fitted model.
         """
         super().fit(X, Y)
+        # expose the fitted attributes `x_scores_` and `y_scores_`
+        self.x_scores_ = self._x_scores
+        self.y_scores_ = self._y_scores
         return self
 
 
