@@ -20,6 +20,9 @@ def _wrap_in_pandas_container(
 ):
     """Create a named container.
 
+    If `original_data` is already a DataFrame then `original_data` is returned
+    without any changes.
+
     Parameters
     ----------
     original_data : ndarray, sparse matrix or pandas DataFrame
@@ -54,6 +57,10 @@ def _wrap_in_pandas_container(
 def get_output_config(estimator, method):
     """Get output configure based on estimator and global configuration.
 
+    .. note:: Experimental API
+        The `get_output_config` API is experimental and subject to change without
+        deprecation.
+
     Parameters
     ----------
     estimator : estimator instance
@@ -65,15 +72,23 @@ def get_output_config(estimator, method):
     Returns
     -------
     config : dict
-        Dictionary with keys, "dense", that specifies the container for `method`.
+        Dictionary with keys:
+
+        - "dense": specifies the dense container for `method`. This can be
+          `"default"` or `"pandas"`.
     """
     est_sklearn_output_config = getattr(estimator, "_sklearn_output_config", {})
     if method in est_sklearn_output_config:
-        container_str = est_sklearn_output_config[method]
+        dense_config = est_sklearn_output_config[method]
     else:
-        container_str = get_config()[f"output_{method}"]
+        dense_config = get_config()[f"output_{method}"]
 
-    return {"dense": container_str}
+    if dense_config not in {"default", "pandas"}:
+        raise ValueError(
+            f"output config must be 'default' or 'pandas' got {dense_config}"
+        )
+
+    return {"dense": dense_config}
 
 
 def _wrap_output_with_container(estimator, original_data, method, index):
@@ -100,13 +115,8 @@ def _wrap_output_with_container(estimator, original_data, method, index):
         not configured.
     """
     output_config = get_output_config(estimator, method)
-    dense_config = output_config["dense"]
-    if dense_config not in {"default", "pandas"}:
-        raise ValueError(
-            f"output config must be 'default' or 'pandas' got {dense_config}"
-        )
 
-    if dense_config == "default":
+    if output_config["dense"] == "default":
         return original_data
 
     # dense_config == "pandas"
@@ -176,6 +186,10 @@ def safe_set_output(estimator, *, transform=None):
     """Safely call estimator.set_output and error if it not available.
 
     This is used by meta-estimators to set the output for child estimators.
+
+    .. note:: Experimental API
+        The `safe_set_output` API is experimental and subject to change without
+        deprecation.
 
     Parameters
     ----------
