@@ -374,7 +374,7 @@ class _PLS(
             R = np.zeros((Xk.shape[1], self.n_components))
 
             for k in range(self.n_components):
-                if y.shape[1] == 1:
+                if Y.shape[1] == 1:
                     w = S
                 else:
                     eval, evec = np.linalg.eig(S.T @ S)
@@ -388,7 +388,7 @@ class _PLS(
                 tt = t.T @ t
                 p = (Xk.T @ t) / tt
                 q = (r.T @ S) / tt
-                if y.shape[1] == 1:
+                if Y.shape[1] == 1:
                     S = S.ravel() - tt * p * q
                 else:
                     S -= tt * (p.reshape(-1, 1) @ q.reshape(-1, 1).T)
