@@ -490,7 +490,7 @@ def test_scale_and_stability(Est, X, Y):
     assert_allclose(Y_s_score, Y_score, atol=1e-4)
 
 
-def test_regression_only_for_dayal_macgregor():
+def test_deflation_mode_constraints_dayal_macgregor():
     """Check that Dayal-MacGregor is only usable when `deflation_mode='regression'`"""
     rng = np.random.RandomState(0)
     X = rng.randn(10, 5)
