@@ -140,11 +140,11 @@ def test_sanity_check_pls_regression_dayal_macgregor():
     dayal.fit(X=X, Y=Y)
     nipals.fit(X=X, Y=Y)
 
-    assert_array_almost_equal(np.abs(nipals.x_loadings_), np.abs(dayal.x_loadings_))
-    assert_array_almost_equal(np.abs(nipals.x_weights_), np.abs(dayal.x_weights_))
-    assert_array_almost_equal(np.abs(nipals.x_rotations_), np.abs(dayal.x_rotations_))
-    assert_array_almost_equal(np.abs(nipals.y_loadings_), np.abs(dayal.y_loadings_))
-    assert_array_almost_equal(nipals.predict(X), dayal.predict(X))
+    assert_array_almost_equal(np.abs(nipals.x_loadings_), np.abs(dayal.x_loadings_), 5)
+    assert_array_almost_equal(np.abs(nipals.x_weights_), np.abs(dayal.x_weights_), 5)
+    assert_array_almost_equal(np.abs(nipals.x_rotations_), np.abs(dayal.x_rotations_), 5)
+    assert_array_almost_equal(np.abs(nipals.y_loadings_), np.abs(dayal.y_loadings_), 5)
+    assert_array_almost_equal(nipals.predict(X), dayal.predict(X), 5)
 
 
 def test_sanity_check_pls_regression_constant_column_Y():
@@ -490,20 +490,6 @@ def test_scale_and_stability(Est, X, Y):
 
     assert_allclose(X_s_score, X_score, atol=1e-4)
     assert_allclose(Y_s_score, Y_score, atol=1e-4)
-
-
-def test_deflation_mode_constraints_dayal_macgregor():
-    """Check that Dayal-MacGregor is only usable when `deflation_mode='regression'`"""
-    rng = np.random.RandomState(0)
-    X = rng.randn(10, 5)
-    Y = rng.randn(10, 3)
-    est = _PLS(n_components=2, deflation_mode="canonical", algorithm="dayalmacgregor")
-    err_msg = (
-        "Algorithm 'dayalmacgregor' is only valid for PLS regression. "
-        "Got deflation mode 'canonical' instead."
-    )
-    with pytest.raises(ValueError, match=err_msg):
-        est.fit(X, Y)
 
 
 @pytest.mark.parametrize("Estimator", (PLSSVD, PLSRegression, PLSCanonical, CCA))
