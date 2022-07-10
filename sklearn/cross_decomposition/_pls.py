@@ -596,7 +596,7 @@ class PLSRegression(_PLS):
         and potentially scaling. If `False`, these operations will be done
         inplace, modifying both arrays.
 
-    algorithm: str, default='nipals'
+    algorithm : str, default='nipals'
         The algorithm used for estimating the PLS regression model. Can be
         'nipals', 'svd', 'dayalmacgregor' or 'kernel' (the latter two are
         equivalent).
