@@ -1772,18 +1772,18 @@ def test_logistic_regression_multi_class_auto(est, solver):
 
 @pytest.mark.parametrize("solver", ("lbfgs", "newton-cg", "sag", "saga"))
 def test_penalty_none(solver):
-    # - Make sure warning is raised if penalty='none' and C is set to a
+    # - Make sure warning is raised if penalty=None and C is set to a
     #   non-default value.
-    # - Make sure setting penalty='none' is equivalent to setting C=np.inf with
+    # - Make sure setting penalty=None is equivalent to setting C=np.inf with
     #   l2 penalty.
     X, y = make_classification(n_samples=1000, random_state=0)
 
-    msg = "Setting penalty='none' will ignore the C"
-    lr = LogisticRegression(penalty="none", solver=solver, C=4)
+    msg = "Setting penalty=None will ignore the C"
+    lr = LogisticRegression(penalty=None, solver=solver, C=4)
     with pytest.warns(UserWarning, match=msg):
         lr.fit(X, y)
 
-    lr_none = LogisticRegression(penalty="none", solver=solver, random_state=0)
+    lr_none = LogisticRegression(penalty=None, solver=solver, random_state=0)
     lr_l2_C_inf = LogisticRegression(
         penalty="l2", C=np.inf, solver=solver, random_state=0
     )

@@ -1121,7 +1121,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         if self.penalty is None:
             if self.C != 1.0:  # default values
                 warnings.warn(
-                    "Setting penalty='none' will ignore the C and l1_ratio parameters"
+                    "Setting penalty=None will ignore the C and l1_ratio parameters"
                 )
                 # Note that check for l1_ratio is done right above
             C_ = np.inf
