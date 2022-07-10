@@ -10,7 +10,6 @@ Logistic Regression
 #         Simon Wu <s8wu@uwaterloo.ca>
 #         Arthur Mensch <arthur.mensch@m4x.org
 
-from logging import warning
 import numbers
 from numbers import Integral, Real
 import warnings
