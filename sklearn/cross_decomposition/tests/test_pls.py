@@ -71,7 +71,7 @@ def test_sanity_check_pls_regression_nipals():
     X = d.data
     Y = d.target
 
-    pls = PLSRegression(n_components=X.shape[1], algorithm='nipals')
+    pls = PLSRegression(n_components=X.shape[1], algorithm="nipals")
     X_trans, _ = pls.fit_transform(X, Y)
 
     # FIXME: one would expect y_trans == pls.y_scores_ but this is not
@@ -135,8 +135,8 @@ def test_sanity_check_pls_regression_dayal_macgregor():
     X = d.data
     Y = d.target
 
-    dayal = PLSRegression(n_components=X.shape[1], algorithm='nipals')
-    nipals = PLSRegression(n_components=X.shape[1], algorithm='dayalmacgregor')
+    dayal = PLSRegression(n_components=X.shape[1], algorithm="nipals")
+    nipals = PLSRegression(n_components=X.shape[1], algorithm="dayalmacgregor")
 
     assert_array_almost_equal(np.abs(nipals.x_loadings_), np.abs(dayal.x_loadings_))
     assert_array_almost_equal(np.abs(nipals.x_weights_), np.abs(dayal.x_weights_))
@@ -489,14 +489,17 @@ def test_scale_and_stability(Est, X, Y):
     assert_allclose(X_s_score, X_score, atol=1e-4)
     assert_allclose(Y_s_score, Y_score, atol=1e-4)
 
+
 def test_regression_only_for_dayal_macgregor():
     """Check that Dayal-MacGregor is only usable when `deflation_mode='regression'`"""
     rng = np.random.RandomState(0)
     X = rng.randn(10, 5)
     Y = rng.randn(10, 3)
-    est = _PLS(n_components=2, deflation_mode='canonical', algorithm='dayalmacgregor')
-    err_msg = "Algorithm 'dayalmacgregor' is only valid for PLS regression. "\
-              "Got deflation mode 'canonical' instead."
+    est = _PLS(n_components=2, deflation_mode="canonical", algorithm="dayalmacgregor")
+    err_msg = (
+        "Algorithm 'dayalmacgregor' is only valid for PLS regression. "
+        "Got deflation mode 'canonical' instead."
+    )
     with pytest.raises(ValueError, match=err_msg):
         est.fit(X, Y)
 
