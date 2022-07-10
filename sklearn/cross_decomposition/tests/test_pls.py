@@ -63,15 +63,15 @@ def test_pls_canonical_basics():
     assert_array_almost_equal(Y_back, Y)
 
 
-def test_sanity_check_pls_regression():
-    # Sanity check for PLSRegression
+def test_sanity_check_pls_regression_nipals():
+    # Sanity check for PLSRegression with NIPALS algorithm
     # The results were checked against the R-packages plspm, misOmics and pls
 
     d = load_linnerud()
     X = d.data
     Y = d.target
 
-    pls = PLSRegression(n_components=X.shape[1])
+    pls = PLSRegression(n_components=X.shape[1], algorithm='nipals')
     X_trans, _ = pls.fit_transform(X, Y)
 
     # FIXME: one would expect y_trans == pls.y_scores_ but this is not
@@ -125,6 +125,23 @@ def test_sanity_check_pls_regression():
     assert_array_almost_equal(x_loadings_sign_flip, x_weights_sign_flip)
     assert_array_almost_equal(y_loadings_sign_flip, y_weights_sign_flip)
 
+def test_sanity_check_pls_regression_dayal_macgregor():
+    # Sanity check for PLSRegression with Dayal-MacGregor
+    # The results were checked against the results of the NIPALS algorithm
+    # Keep in mind Dayal-MacGregor does not compute Y weights, scores or rotations
+
+    d = load_linnerud()
+    X = d.data
+    Y = d.target
+
+    dayal = PLSRegression(n_components=X.shape[1], algorithm='nipals')
+    nipals = PLSRegression(n_components=X.shape[1], algorithm='dayalmacgregor')
+
+    assert_array_almost_equal(np.abs(nipals.x_loadings_), np.abs(dayal.x_loadings_))
+    assert_array_almost_equal(np.abs(nipals.x_weights_), np.abs(dayal.x_weights_))
+    assert_array_almost_equal(np.abs(nipals.x_rotations_), np.abs(dayal.x_rotations_))
+    assert_array_almost_equal(np.abs(nipals.y_loadings_), np.abs(dayal.y_loadings_))
+    assert_array_almost_equal(nipals.predict(X), dayal.predict(X))
 
 def test_sanity_check_pls_regression_constant_column_Y():
     # Check behavior when the first column of Y is constant
