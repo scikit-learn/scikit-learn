@@ -390,7 +390,10 @@ class _PLS(
                 w = w / np.sqrt(w.T @ w)
                 r = w
                 for j in range(self.n_components - 1):
-                    r = r.ravel() - (self.x_loadings_[:, j] @ w) * self.x_rotations_[:, j]
+                    r = (
+                        r.ravel()
+                        - (self.x_loadings_[:, j] @ w) * self.x_rotations_[:, j]
+                    )
                 t = Xk @ r
                 tt = t.T @ t
                 p = (Xk.T @ t) / tt
