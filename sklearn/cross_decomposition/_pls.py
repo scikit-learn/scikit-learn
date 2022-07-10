@@ -373,6 +373,7 @@ class _PLS(
         elif self.algorithm in ["dayalmacgregor", "kernel"]:
             S = Xk.T @ Yk
 
+            self.x_weights_ = np.zeros((Xk.shape[1], self.n_components))
             self.x_loadings_ = np.zeros((Xk.shape[1], self.n_components))
             self.y_loadings_ = np.zeros((Yk.shape[1], self.n_components))
             self.x_rotations_ = np.zeros((Xk.shape[1], self.n_components))
@@ -384,8 +385,8 @@ class _PLS(
                     # get the eigenvector corresponding to the
                     # largest eigenvalue of S
                     eval, evec = np.linalg.eig(S.T @ S)
-                    q = evec[:, np.argmax(eval)]
-                    w = S @ q
+                    levec = evec[:, np.argmax(eval)]
+                    w = S @ levec
                 w = w / np.sqrt(w.T @ w)
                 r = w
                 for j in range(self.n_components - 1):
@@ -399,6 +400,7 @@ class _PLS(
                 else:
                     S -= tt * (p.reshape(-1, 1) @ q.reshape(-1, 1).T)
 
+                self.x_weights_[:, k] = w.ravel()
                 self.x_rotations_[:, k] = r
                 self.x_loadings_[:, k] = p
                 self.y_loadings_[:, k] = q
