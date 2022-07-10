@@ -9,7 +9,6 @@ from sklearn.cross_decomposition._pls import (
     _get_first_singular_vectors_power_method,
     _get_first_singular_vectors_svd,
     _svd_flip_1d,
-    _PLS,
 )
 from sklearn.cross_decomposition import CCA, PLSSVD, PLSRegression, PLSCanonical
 from sklearn.datasets import make_regression
