@@ -168,11 +168,15 @@ class _PLS(
 ):
     """Partial Least Squares (PLS)
 
-    This class implements the generic PLS algorithm.
+    This class implements generic PLS for child classes.
 
     Main ref: Wegelin, a survey of Partial Least Squares (PLS) methods,
     with emphasis on the two-block case
     https://stat.uw.edu/sites/default/files/files/reports/2000/tr371.pdf
+
+    The primary estimation technique is NIPALS, which supports both
+    deflation use cases (regression and CCA). The Dayal-Macgregor
+    modified kernel algorithm is also implemented for regression.
     """
 
     _parameter_constraints = {
@@ -631,7 +635,9 @@ class PLSRegression(_PLS):
 
     intercept_ : ndarray of shape (n_targets,)
         The intercepts of the linear model such that `Y` is approximated as
-        `Y = X @ coef_ + intercept_`.
+        `Y = X @ coef_ + intercept_`. As implemented by this model, the
+         intercept (or gradient, for multivariate `Y`) is always set to
+         the mean of `Y`.
 
         .. versionadded:: 1.1
 
