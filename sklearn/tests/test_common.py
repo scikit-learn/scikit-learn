@@ -508,8 +508,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "OneClassSVM",
     "OneVsOneClassifier",
     "OneVsRestClassifier",
-    "OrthogonalMatchingPursuit",
-    "OrthogonalMatchingPursuitCV",
     "OutputCodeClassifier",
     "PatchExtractor",
     "PolynomialCountSketch",

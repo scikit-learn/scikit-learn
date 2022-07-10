@@ -8,6 +8,8 @@
 import warnings
 from math import sqrt
 
+from collections.abc import Iterable
+from numbers import Integral, Real
 import numpy as np
 from scipy import linalg
 from scipy.linalg.lapack import get_lapack_funcs
@@ -16,7 +18,10 @@ from joblib import Parallel
 from ._base import LinearModel, _pre_fit, _deprecate_normalize
 from ..base import RegressorMixin, MultiOutputMixin
 from ..utils import as_float_array, check_array
+from ..utils.deprecation import deprecated
 from ..utils.fixes import delayed
+from ..utils._param_validation import StrOptions, Interval
+from ..model_selection import BaseCrossValidator
 from ..model_selection import check_cv
 
 premature = (
@@ -689,6 +694,14 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
     array([-78.3854...])
     """
 
+    _parameter_constraints = {
+        "n_nonzero_coefs": [Interval(Integral, 1, None, closed="left"), None],
+        "tol": [Interval(Real, 0, None, closed="left"), None],
+        "fit_intercept": ["boolean"],
+        "normalize": ["boolean", deprecated],
+        "precompute": [StrOptions({"auto"}), "boolean"],
+    }
+
     def __init__(
         self,
         *,
@@ -720,6 +733,8 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         self : object
             Returns an instance of self.
         """
+        self._validate_params()
+
         _normalize = _deprecate_normalize(
             self.normalize, default=True, estimator_name=self.__class__.__name__
         )
@@ -986,6 +1001,21 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
     array([-78.3854...])
     """
 
+    _parameter_constraints = {
+        "copy": ["boolean"],
+        "fit_intercept": ["boolean"],
+        "normalize": ["boolean", deprecated],
+        "max_iter": [Interval(Integral, 0, None, closed="left"), None],
+        "cv": [
+            Interval(Integral, 2, None, closed="left"),
+            BaseCrossValidator,
+            Iterable,
+            None,
+        ],
+        "n_jobs": [Integral, None],
+        "verbose": ["boolean", Integral],
+    }
+
     def __init__(
         self,
         *,
@@ -1021,6 +1051,7 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         self : object
             Returns an instance of self.
         """
+        self._validate_params()
 
         _normalize = _deprecate_normalize(
             self.normalize, default=True, estimator_name=self.__class__.__name__
