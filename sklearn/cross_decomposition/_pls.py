@@ -410,6 +410,8 @@ class _PLS(
             self._n_features_out = self.x_rotations_.shape[1]
             self._x_scores = Xk @ self.x_rotations_
             self._y_scores = None
+            self.y_weights_ = None
+            self.y_rotations_ = None
 
         return self
 
@@ -617,7 +619,7 @@ class PLSRegression(_PLS):
 
     y_weights_ : ndarray of shape (n_targets, n_components)
         The right singular vectors of the cross-covariance matrices of each
-        iteration.
+        iteration. (NIPALS and SVD algorithms only).
 
     x_loadings_ : ndarray of shape (n_features, n_components)
         The loadings of `X`.
@@ -629,13 +631,14 @@ class PLSRegression(_PLS):
         The transformed training samples.
 
     y_scores_ : ndarray of shape (n_samples, n_components)
-        The transformed training targets.
+        The transformed training targets (NIPALS and SVD algorithms only).
 
     x_rotations_ : ndarray of shape (n_features, n_components)
         The projection matrix used to transform `X`.
 
     y_rotations_ : ndarray of shape (n_features, n_components)
-        The projection matrix used to transform `Y`.
+        The projection matrix used to transform `Y`. (NIPALS and SVD
+        algorithms only).
 
     coef_ : ndarray of shape (n_features, n_targets)
         The coefficients of the linear model such that `Y` is approximated as
