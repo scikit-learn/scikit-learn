@@ -11,7 +11,7 @@ from sklearn.cross_decomposition._pls import (
     _svd_flip_1d,
 )
 from sklearn.cross_decomposition import CCA
-from sklearn.cross_decomposition import PLSSVD, PLSRegression, PLSCanonical
+from sklearn.cross_decomposition import _PLS, PLSSVD, PLSRegression, PLSCanonical
 from sklearn.datasets import make_regression
 from sklearn.utils import check_random_state
 from sklearn.utils.extmath import svd_flip
@@ -125,6 +125,7 @@ def test_sanity_check_pls_regression_nipals():
     assert_array_almost_equal(x_loadings_sign_flip, x_weights_sign_flip)
     assert_array_almost_equal(y_loadings_sign_flip, y_weights_sign_flip)
 
+
 def test_sanity_check_pls_regression_dayal_macgregor():
     # Sanity check for PLSRegression with Dayal-MacGregor
     # The results were checked against the results of the NIPALS algorithm
@@ -142,6 +143,7 @@ def test_sanity_check_pls_regression_dayal_macgregor():
     assert_array_almost_equal(np.abs(nipals.x_rotations_), np.abs(dayal.x_rotations_))
     assert_array_almost_equal(np.abs(nipals.y_loadings_), np.abs(dayal.y_loadings_))
     assert_array_almost_equal(nipals.predict(X), dayal.predict(X))
+
 
 def test_sanity_check_pls_regression_constant_column_Y():
     # Check behavior when the first column of Y is constant
@@ -486,6 +488,17 @@ def test_scale_and_stability(Est, X, Y):
 
     assert_allclose(X_s_score, X_score, atol=1e-4)
     assert_allclose(Y_s_score, Y_score, atol=1e-4)
+
+def test_regression_only_for_dayal_macgregor():
+    """Check that Dayal-MacGregor is only usable when `deflation_mode='regression'`"""
+    rng = np.random.RandomState(0)
+    X = rng.randn(10, 5)
+    Y = rng.randn(10, 3)
+    est = _PLS(n_components=2, deflation_mode='canonical', algorithm='dayalmacgregor')
+    err_msg = "Algorithm 'dayalmacgregor' is only valid for PLS regression. "\
+              "Got deflation mode 'canonical' instead."
+    with pytest.raises(ValueError, match=err_msg):
+        est.fit(X, Y)
 
 
 @pytest.mark.parametrize("Estimator", (PLSSVD, PLSRegression, PLSCanonical, CCA))

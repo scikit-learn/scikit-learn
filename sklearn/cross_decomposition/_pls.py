@@ -244,8 +244,8 @@ class _PLS(
         if self.algorithm in ["dayalmacgregor", "kernel"]:
             if self.deflation_mode != "regression":
                 raise ValueError(
-                    f"{self.algorithm} is only valid for PLS regression. "
-                    f"Got deflation mode {self.deflation_mode} instead."
+                    f"Algorithm '{self.algorithm}' is only valid for PLS regression. "
+                    f"Got deflation mode '{self.deflation_mode}' instead."
                 )
 
         n = X.shape[0]
