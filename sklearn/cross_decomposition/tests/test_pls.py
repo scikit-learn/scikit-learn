@@ -141,7 +141,9 @@ def test_sanity_check_pls_regression_dayal_macgregor():
 
     assert_array_almost_equal(np.abs(nipals.x_loadings_), np.abs(dayal.x_loadings_), 5)
     assert_array_almost_equal(np.abs(nipals.x_weights_), np.abs(dayal.x_weights_), 5)
-    assert_array_almost_equal(np.abs(nipals.x_rotations_), np.abs(dayal.x_rotations_), 5)
+    assert_array_almost_equal(
+        np.abs(nipals.x_rotations_), np.abs(dayal.x_rotations_), 5
+    )
     assert_array_almost_equal(np.abs(nipals.y_loadings_), np.abs(dayal.y_loadings_), 5)
     assert_array_almost_equal(nipals.predict(X), dayal.predict(X), 5)
 
