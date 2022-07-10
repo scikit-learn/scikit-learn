@@ -636,8 +636,8 @@ class PLSRegression(_PLS):
     intercept_ : ndarray of shape (n_targets,)
         The intercepts of the linear model such that `Y` is approximated as
         `Y = X @ coef_ + intercept_`. As implemented by this model, the
-         intercept (or gradient, for multivariate `Y`) is always set to
-         the mean of `Y`.
+        intercept (or gradient, for multivariate `Y`) is always set to
+        the mean of `Y`.
 
         .. versionadded:: 1.1
 
