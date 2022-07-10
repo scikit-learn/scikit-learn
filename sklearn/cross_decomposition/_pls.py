@@ -373,9 +373,9 @@ class _PLS(
         elif self.algorithm in ["dayalmacgregor", "kernel"]:
             S = Xk.T @ Yk
 
-            P = np.zeros((Xk.shape[1], self.n_components))
-            Q = np.zeros((Yk.shape[1], self.n_components))
-            R = np.zeros((Xk.shape[1], self.n_components))
+            self.x_loadings_ = np.zeros((Xk.shape[1], self.n_components))
+            self.y_loadings_ = np.zeros((Yk.shape[1], self.n_components))
+            self.x_rotations_ = np.zeros((Xk.shape[1], self.n_components))
 
             for k in range(self.n_components):
                 if Y.shape[1] == 1:
@@ -389,7 +389,7 @@ class _PLS(
                 w = w / np.sqrt(w.T @ w)
                 r = w
                 for j in range(self.n_components - 1):
-                    r = r.ravel() - (P[:, j] @ w) * R[:, j]
+                    r = r.ravel() - (self.x_loadings_[:, j] @ w) * self.x_rotations_[:, j]
                 t = Xk @ r
                 tt = t.T @ t
                 p = (Xk.T @ t) / tt
@@ -399,15 +399,15 @@ class _PLS(
                 else:
                     S -= tt * (p.reshape(-1, 1) @ q.reshape(-1, 1).T)
 
-                R[:, k] = r
-                P[:, k] = p
-                Q[:, k] = q
+                self.x_rotations_[:, k] = r
+                self.x_loadings_[:, k] = p
+                self.y_loadings_[:, k] = q
 
-            self._coef_ = ((R @ Q.T) * self._y_std).T
+            self._coef_ = ((self.x_rotations_ @ self.y_loadings_.T) * self._y_std).T
             self.intercept_ = self._y_mean
-            self._n_features_out = R.shape[1]
-            self._x_scores = Xk @ R
-            self._y_scores = Yk @ Q
+            self._n_features_out = self.x_rotations_.shape[1]
+            self._x_scores = Xk @ self.x_rotations_
+            self._y_scores = None
 
         return self
 
