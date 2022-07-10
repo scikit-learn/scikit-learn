@@ -242,7 +242,11 @@ class _PLS(
         if Y.ndim == 1:
             Y = Y.reshape(-1, 1)
         if self.algorithm in ["dayalmacgregor", "kernel"]:
-            assert self.deflation_mode == "regression"
+            if self.deflation_mode != "regression":
+                raise ValueError(
+                    f"{self.algorithm} is only valid for PLS regression. "
+                    f"Got deflation mode {self.deflation_mode} instead."
+                )
 
         n = X.shape[0]
         p = X.shape[1]
