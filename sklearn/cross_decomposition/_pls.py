@@ -381,6 +381,8 @@ class _PLS(
                 if Y.shape[1] == 1:
                     w = S
                 else:
+                    # get the eigenvector corresponding to the
+                    # largest eigenvalue of S
                     eval, evec = np.linalg.eig(S.T @ S)
                     q = evec[:, np.argmax(eval)]
                     w = S @ q
