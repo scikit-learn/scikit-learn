@@ -242,23 +242,21 @@ class _PLS(
         if Y.ndim == 1:
             Y = Y.reshape(-1, 1)
 
-        n = X.shape[0]
-        p = X.shape[1]
-        q = Y.shape[1]
+        n_samples, n_features, n_targets = X.shape[0], X.shape[1], Y.shape[1]
 
         n_components = self.n_components
         # With PLSRegression n_components is bounded by the rank of (X.T X) see
         # Wegelin page 25. With CCA and PLSCanonical, n_components is bounded
         # by the rank of X and the rank of Y: see Wegelin page 12
-        rank_upper_bound = p if self.deflation_mode == "regression" else min(n, p, q)
+        if self.deflation_mode == "regression":
+            rank_upper_bound = n_features
+        else:
+            rank_upper_bound = min(n_samples, n_features, n_targets)
         if n_components > rank_upper_bound:
             raise ValueError(
                 f"`n_components` upper bound is {rank_upper_bound}. "
                 f"Got {n_components} instead. Reduce `n_components`."
             )
-
-        self._norm_y_weights = self.deflation_mode == "canonical"  # 1.1
-        norm_y_weights = self._norm_y_weights
 
         # Scale (in place)
         Xk, Yk, self._x_mean, self._y_mean, self._x_std, self._y_std = _center_scale_xy(
@@ -266,138 +264,10 @@ class _PLS(
         )
 
         if self.algorithm in ["nipals", "svd"]:
-            self.x_weights_ = np.zeros((p, n_components))  # U
-            self.y_weights_ = np.zeros((q, n_components))  # V
-            self._x_scores = np.zeros((n, n_components))  # Xi
-            self._y_scores = np.zeros((n, n_components))  # Omega
-            self.x_loadings_ = np.zeros((p, n_components))  # Gamma
-            self.y_loadings_ = np.zeros((q, n_components))  # Delta
-            self.n_iter_ = []
+            self._nipals_svd(Xk, Yk, n_samples, n_features, n_targets, n_components)
 
-            # This whole thing corresponds to the algorithm in section 4.1 of the
-            # review from Wegelin. See above for a notation mapping from code to
-            # paper.
-            Y_eps = np.finfo(Yk.dtype).eps
-            for k in range(n_components):
-                # Find first left and right singular vectors of the X.T.dot(Y)
-                # cross-covariance matrix.
-                if self.algorithm == "nipals":
-                    # Replace columns that are all close to zero with zeros
-                    Yk_mask = np.all(np.abs(Yk) < 10 * Y_eps, axis=0)
-                    Yk[:, Yk_mask] = 0.0
-
-                    try:
-                        (
-                            x_weights,
-                            y_weights,
-                            n_iter_,
-                        ) = _get_first_singular_vectors_power_method(
-                            Xk,
-                            Yk,
-                            mode=self.mode,
-                            max_iter=self.max_iter,
-                            tol=self.tol,
-                            norm_y_weights=norm_y_weights,
-                        )
-                    except StopIteration as e:
-                        if str(e) != "Y residual is constant":
-                            raise
-                        warnings.warn(f"Y residual is constant at iteration {k}")
-                        break
-
-                    self.n_iter_.append(n_iter_)
-
-                elif self.algorithm == "svd":
-                    x_weights, y_weights = _get_first_singular_vectors_svd(Xk, Yk)
-
-                # inplace sign flip for consistency across solvers and archs
-                _svd_flip_1d(x_weights, y_weights)
-
-                # compute scores, i.e. the projections of X and Y
-                x_scores = np.dot(Xk, x_weights)
-                if norm_y_weights:
-                    y_ss = 1
-                else:
-                    y_ss = np.dot(y_weights, y_weights)
-                y_scores = np.dot(Yk, y_weights) / y_ss
-
-                # Deflation: subtract rank-one approx to obtain Xk+1 and Yk+1
-                x_loadings = np.dot(x_scores, Xk) / np.dot(x_scores, x_scores)
-                Xk -= np.outer(x_scores, x_loadings)
-
-                if self.deflation_mode == "canonical":
-                    # regress Yk on y_score
-                    y_loadings = np.dot(y_scores, Yk) / np.dot(y_scores, y_scores)
-                    Yk -= np.outer(y_scores, y_loadings)
-                if self.deflation_mode == "regression":
-                    # regress Yk on x_score
-                    y_loadings = np.dot(x_scores, Yk) / np.dot(x_scores, x_scores)
-                    Yk -= np.outer(x_scores, y_loadings)
-
-                self.x_weights_[:, k] = x_weights
-                self.y_weights_[:, k] = y_weights
-                self._x_scores[:, k] = x_scores
-                self._y_scores[:, k] = y_scores
-                self.x_loadings_[:, k] = x_loadings
-                self.y_loadings_[:, k] = y_loadings
-
-            # X was approximated as Xi . Gamma.T + X_(R+1)
-            # Xi . Gamma.T is a sum of n_components rank-1 matrices. X_(R+1) is
-            # whatever is left to fully reconstruct X, and can be 0 if X is of rank
-            # n_components.
-            # Similarly, Y was approximated as Omega . Delta.T + Y_(R+1)
-
-            # Compute transformation matrices (rotations_). See User Guide.
-            self.x_rotations_ = np.dot(
-                self.x_weights_,
-                pinv2(np.dot(self.x_loadings_.T, self.x_weights_), check_finite=False),
-            )
-            self.y_rotations_ = np.dot(
-                self.y_weights_,
-                pinv2(np.dot(self.y_loadings_.T, self.y_weights_), check_finite=False),
-            )
-
-        # this implements the Modified Kernel Algorithm as described in the Appendix of
-        # Improved PLS Algorithms (Dayal-MacGregor 1997)
         elif self.algorithm == "dayalmacgregor":
-            S = Xk.T @ Yk
-
-            self.x_weights_ = np.zeros((Xk.shape[1], self.n_components))
-            self.x_loadings_ = np.zeros((Xk.shape[1], self.n_components))
-            self.y_loadings_ = np.zeros((Yk.shape[1], self.n_components))
-            self.x_rotations_ = np.zeros((Xk.shape[1], self.n_components))
-
-            for k in range(self.n_components):
-                if Y.shape[1] == 1:
-                    w = S
-                else:
-                    # get the eigenvector corresponding to the
-                    # largest eigenvalue of S
-                    eval, evec = np.linalg.eig(S.T @ S)
-                    levec = evec[:, np.argmax(eval)]
-                    w = S @ levec
-                w = w / np.sqrt(w.T @ w)
-                r = w
-                for j in range(self.n_components - 1):
-                    r = (
-                        r.ravel()
-                        - (self.x_loadings_[:, j] @ w) * self.x_rotations_[:, j]
-                    )
-                t = Xk @ r
-                tt = t.T @ t
-                p = (Xk.T @ t) / tt
-                q = (r.T @ S) / tt
-                # in the case of univariate Y we can simply do p * q, but what
-                # we want in general is np.outer(p, q). p[:, None] * q is faster
-                # than np.outer(p, q) and still generalizes
-                S = S - tt * p[:, None] * q
-
-                self.x_weights_[:, k] = w.ravel()
-                self.x_rotations_[:, k] = r.ravel()
-                self.x_loadings_[:, k] = p.ravel()
-                self.y_loadings_[:, k] = q
-
-            self._x_scores = Xk @ self.x_rotations_
+            self._dayal_macgregor(Xk, Yk, n_features, n_targets, n_components)
 
         # expose the fitted attributes `x_scores_` and `y_scores_`
         if self.deflation_mode == "regression":
@@ -568,6 +438,146 @@ class _PLS(
     def _more_tags(self):
         return {"poor_score": True, "requires_y": False}
 
+    def _nipals_svd(self, Xk: np.ndarray, Yk: np.ndarray, n_samples: int, n_features: int, n_targets: int, n_components: int):
+        """
+        This implements the NIPALS and SVD algorithms from section 4.1 of the
+        Wegelin review paper.
+        """
+        self._norm_y_weights = self.deflation_mode == "canonical"  # 1.1
+        norm_y_weights = self._norm_y_weights
+
+        self.x_weights_ = np.zeros((n_features, n_components))  # U
+        self.y_weights_ = np.zeros((n_targets, n_components))  # V
+        self._x_scores = np.zeros((n_samples, n_components))  # Xi
+        self._y_scores = np.zeros((n_samples, n_components))  # Omega
+        self.x_loadings_ = np.zeros((n_features, n_components))  # Gamma
+        self.y_loadings_ = np.zeros((n_targets, n_components))  # Delta
+        self.n_iter_ = []
+
+        Y_eps = np.finfo(Yk.dtype).eps
+        for k in range(n_components):
+            # Find first left and right singular vectors of the X.T.dot(Y)
+            # cross-covariance matrix.
+            if self.algorithm == "nipals":
+                # Replace columns that are all close to zero with zeros
+                Yk_mask = np.all(np.abs(Yk) < 10 * Y_eps, axis=0)
+                Yk[:, Yk_mask] = 0.0
+
+                try:
+                    (
+                        x_weights,
+                        y_weights,
+                        n_iter_,
+                    ) = _get_first_singular_vectors_power_method(
+                        Xk,
+                        Yk,
+                        mode=self.mode,
+                        max_iter=self.max_iter,
+                        tol=self.tol,
+                        norm_y_weights=norm_y_weights,
+                    )
+                except StopIteration as e:
+                    if str(e) != "Y residual is constant":
+                        raise
+                    warnings.warn(f"Y residual is constant at iteration {k}")
+                    break
+
+                self.n_iter_.append(n_iter_)
+
+            elif self.algorithm == "svd":
+                x_weights, y_weights = _get_first_singular_vectors_svd(Xk, Yk)
+
+            # inplace sign flip for consistency across solvers and archs
+            _svd_flip_1d(x_weights, y_weights)
+
+            # compute scores, i.e. the projections of X and Y
+            x_scores = np.dot(Xk, x_weights)
+            if norm_y_weights:
+                y_ss = 1
+            else:
+                y_ss = np.dot(y_weights, y_weights)
+            y_scores = np.dot(Yk, y_weights) / y_ss
+
+            # Deflation: subtract rank-one approx to obtain Xk+1 and Yk+1
+            x_loadings = np.dot(x_scores, Xk) / np.dot(x_scores, x_scores)
+            Xk -= np.outer(x_scores, x_loadings)
+
+            if self.deflation_mode == "canonical":
+                # regress Yk on y_score
+                y_loadings = np.dot(y_scores, Yk) / np.dot(y_scores, y_scores)
+                Yk -= np.outer(y_scores, y_loadings)
+            if self.deflation_mode == "regression":
+                # regress Yk on x_score
+                y_loadings = np.dot(x_scores, Yk) / np.dot(x_scores, x_scores)
+                Yk -= np.outer(x_scores, y_loadings)
+
+            self.x_weights_[:, k] = x_weights
+            self.y_weights_[:, k] = y_weights
+            self._x_scores[:, k] = x_scores
+            self._y_scores[:, k] = y_scores
+            self.x_loadings_[:, k] = x_loadings
+            self.y_loadings_[:, k] = y_loadings
+
+        # X was approximated as Xi . Gamma.T + X_(R+1)
+        # Xi . Gamma.T is a sum of n_components rank-1 matrices. X_(R+1) is
+        # whatever is left to fully reconstruct X, and can be 0 if X is of rank
+        # n_components.
+        # Similarly, Y was approximated as Omega . Delta.T + Y_(R+1)
+
+        # Compute transformation matrices (rotations_). See User Guide.
+        self.x_rotations_ = np.dot(
+            self.x_weights_,
+            pinv2(np.dot(self.x_loadings_.T, self.x_weights_), check_finite=False),
+        )
+        self.y_rotations_ = np.dot(
+            self.y_weights_,
+            pinv2(np.dot(self.y_loadings_.T, self.y_weights_), check_finite=False),
+        )
+
+    def _dayal_macgregor(self, Xk, Yk, n_features, n_targets, n_components):
+        """
+        This implements the Modified Kernel Algorithm as described
+        in the Appendix of the Dayal-MacGregor paper
+        """
+        S = Xk.T @ Yk
+
+        self.x_weights_ = np.zeros((n_features, self.n_components))
+        self.x_loadings_ = np.zeros((n_features, self.n_components))
+        self.y_loadings_ = np.zeros((n_targets, self.n_components))
+        self.x_rotations_ = np.zeros((n_features, self.n_components))
+
+        for k in range(n_components):
+            if n_targets == 1:
+                w = S
+            else:
+                # get the eigenvector corresponding to the
+                # largest eigenvalue of S
+                eval, evec = np.linalg.eig(S.T @ S)
+                levec = evec[:, np.argmax(eval)]
+                w = S @ levec
+            w = w / np.sqrt(w.T @ w)
+            r = w
+            for j in range(n_components - 1):
+                r = (
+                        r.ravel()
+                        - (self.x_loadings_[:, j] @ w) * self.x_rotations_[:, j]
+                )
+            t = Xk @ r
+            tt = t.T @ t
+            p = (Xk.T @ t) / tt
+            q = (r.T @ S) / tt
+            # in the case of univariate Y we can simply do p * q, but what
+            # we want in general is np.outer(p, q). p[:, None] * q is faster
+            # than np.outer(p, q) and still generalizes
+            S = S - tt * p[:, None] * q
+
+            self.x_weights_[:, k] = w.ravel()
+            self.x_rotations_[:, k] = r.ravel()
+            self.x_loadings_[:, k] = p.ravel()
+            self.y_loadings_[:, k] = q
+
+        self._x_scores = Xk @ self.x_rotations_
+
 
 class PLSRegression(_PLS):
     """PLS regression.
@@ -672,7 +682,8 @@ class PLSRegression(_PLS):
     .. [1] Wegelin, Jacob A. "A survey of Partial Least Squares (PLS) methods,
            with emphasis on the two-block case." (2000).
     .. [2] Dayal, Bhupinder S., and John F. MacGregor. "Improved PLS algorithms."
-           Journal of Chemometrics: A Journal of the Chemometrics Society 11.1 (1997): 73-85.
+           Journal of Chemometrics: A Journal of the Chemometrics Society
+           11.1 (1997): 73-85.
 
     Examples
     --------
