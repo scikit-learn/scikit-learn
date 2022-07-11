@@ -50,7 +50,7 @@ _LOGISTIC_SOLVER_CONVERGENCE_MSG = (
 
 def _check_solver(solver, penalty, dual):
 
-    if solver not in ["liblinear", "saga"] and penalty not in ("l2", "none"):
+    if solver not in ["liblinear", "saga"] and penalty not in ("l2", "none", None):
         raise ValueError(
             "Solver %s supports only 'l2' or 'none' penalties, got %s penalty."
             % (solver, penalty)
@@ -1110,6 +1110,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
                 "(penalty={})".format(self.penalty)
             )
 
+        # TODO(1.3): Remove
         if self.penalty == "none":
             warnings.warn(
                 "`penalty='none'`has been deprecated in 1.2 and will be removed in 1.3."
@@ -1117,7 +1118,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
                 FutureWarning,
             )
 
-        if self.penalty is None:
+        if self.penalty is None or self.penalty == "none":
             if self.C != 1.0:  # default values
                 warnings.warn(
                     "Setting penalty=None will ignore the C and l1_ratio parameters"
@@ -1127,7 +1128,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             penalty = "l2"
         else:
             C_ = self.C
-            penalty = str(self.penalty).lower()
+            penalty = self.penalty
 
         if solver == "lbfgs":
             _dtype = np.float64

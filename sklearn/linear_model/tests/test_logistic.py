@@ -1971,3 +1971,16 @@ def test_single_feature_newton_cg():
     y = np.array([1, 1, 0, 0, 1, 1, 0, 1])
     assert X.shape[1] == 1
     LogisticRegression(solver="newton-cg", fit_intercept=True).fit(X, y)
+
+
+# TODO(1.3): Remove
+def test_warning_on_penalty_string_none():
+    # Test that warning message is shown when penalty='none'
+    target = iris.target_names[iris.target]
+    lr = LogisticRegression(penalty="none")
+    warning_message = (
+        "`penalty='none'`has been deprecated in 1.2 and will be removed in 1.3."
+        " To keep the past behaviour, set `penalty=None`."
+    )
+    with pytest.warns(FutureWarning, match=warning_message):
+        lr.fit(iris.data, target)
