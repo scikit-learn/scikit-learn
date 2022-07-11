@@ -397,10 +397,14 @@ class _PLS(
                 self.x_loadings_[:, k] = p.ravel()
                 self.y_loadings_[:, k] = q
 
-        self._x_scores = Xk @ self.x_rotations_
+            self._x_scores = Xk @ self.x_rotations_
+
         # expose the fitted attributes `x_scores_` and `y_scores_`
-        # self.x_scores_ = self._x_scores
-        # self.y_scores_ = self._y_scores
+        if self.deflation_mode == "regression":
+            self.x_scores_ = self._x_scores
+            if self.algorithm in ["nipals", "svd"]:
+                # Y is only deflated for NIPALS and SVD
+                self.y_scores_ = self._y_scores
         # TODO(1.3): change `self._coef_` to `self.coef_`
         self._coef_ = ((self.x_rotations_ @ self.y_loadings_.T) * self._y_std)
         self.intercept_ = self._y_mean
