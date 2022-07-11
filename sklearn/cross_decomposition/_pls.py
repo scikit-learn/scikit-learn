@@ -184,7 +184,7 @@ class _PLS(
         "scale": ["boolean"],
         "deflation_mode": [StrOptions({"regression", "canonical"})],
         "mode": [StrOptions({"A", "B"})],
-        "algorithm": [StrOptions({"svd", "nipals", "dayalmacgregor", "kernel"})],
+        "algorithm": [StrOptions({"svd", "nipals", "dayalmacgregor"})],
         "max_iter": [Interval(Integral, 1, None, closed="left")],
         "tol": [Interval(Real, 0, None, closed="left")],
         "copy": ["boolean"],
@@ -364,7 +364,7 @@ class _PLS(
 
         # this implements the Modified Kernel Algorithm as described in the Appendix of
         # Improved PLS Algorithms (Dayal-MacGregor 1997)
-        elif self.algorithm in ["dayalmacgregor", "kernel"]:
+        elif self.algorithm in ["dayalmacgregor"]:
             S = Xk.T @ Yk
 
             self.x_weights_ = np.zeros((Xk.shape[1], self.n_components))
@@ -603,12 +603,12 @@ class PLSRegression(_PLS):
         and potentially scaling. If `False`, these operations will be done
         inplace, modifying both arrays.
 
-    algorithm : {'nipals', 'svd', 'dayalmacgregor', 'kernel'}, default='nipals'
+    algorithm : {'nipals', 'svd', 'dayalmacgregor'}, default='nipals'
         The algorithm used to estimate the first singular vectors of the
         cross-covariance matrix. 'nipals' uses the power method while 'svd'
-        will compute the whole SVD. 'dayalmacgregor' and 'kernel' are
-        equivalent, and calculate the `X` score, weight and rotation
-        matrices without deflating `Y`.
+        will compute the whole SVD. 'dayalmacgregor' (sometimes also known
+        as 'kernel') is generally faster than NIPALS and calculates the
+        `X` score, weight and rotation matrices without deflating `Y`.
 
     Attributes
     ----------
