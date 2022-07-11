@@ -411,7 +411,6 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         return coef_init, intercept_init
 
     def _fit(self, X, y, incremental=False):
-
         # Make sure self.hidden_layer_sizes is a list
         hidden_layer_sizes = self.hidden_layer_sizes
         if not hasattr(hidden_layer_sizes, "__iter__"):
@@ -593,7 +592,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         else:
             if self.batch_size > n_samples:
                 warnings.warn(
-                    "Got `batch_size` larger than "
+                    "Got `batch_size` less than 1 or larger than "
                     "sample size. It is going to be clipped"
                 )
             batch_size = np.clip(self.batch_size, 1, n_samples)
