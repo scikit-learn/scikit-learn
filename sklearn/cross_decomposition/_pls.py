@@ -727,8 +727,8 @@ class PLSRegression(_PLS):
         """
         super().fit(X, Y)
         # expose the fitted attributes `x_scores_` and `y_scores_`
-        self.x_scores_ = self._x_scores
-        self.y_scores_ = self._y_scores
+        # self.x_scores_ = self._x_scores
+        # self.y_scores_ = self._y_scores
         return self
 
 

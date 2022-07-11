@@ -128,7 +128,6 @@ def test_sanity_check_pls_regression_nipals():
 def test_sanity_check_pls_regression_dayal_macgregor():
     # Sanity check for PLSRegression with Dayal-MacGregor
     # The results were checked against the results of the NIPALS algorithm
-    # Keep in mind Dayal-MacGregor does not compute Y weights, scores or rotations
 
     d = load_linnerud()
     X = d.data
@@ -139,15 +138,15 @@ def test_sanity_check_pls_regression_dayal_macgregor():
     dayal.fit(X=X, Y=Y)
     nipals.fit(X=X, Y=Y)
 
+    # overall prediction output
+    assert_allclose(nipals.predict(X), dayal.predict(X), rtol=1e-7)
 
-
-    assert_array_almost_equal(np.abs(nipals.x_loadings_), np.abs(dayal.x_loadings_), 5)
-    assert_array_almost_equal(np.abs(nipals.x_weights_), np.abs(dayal.x_weights_), 5)
-    assert_array_almost_equal(
-        np.abs(nipals.x_rotations_), np.abs(dayal.x_rotations_), 5
-    )
-    assert_array_almost_equal(np.abs(nipals.y_loadings_), np.abs(dayal.y_loadings_), 5)
-    assert_array_almost_equal(nipals.predict(X), dayal.predict(X), 5)
+    # x loadings, x weights, x rotations, y loadings
+    # keep in mind Dayal-MacGregor does not explicitly compute y weights or rotations
+    assert_allclose(np.abs(nipals.x_loadings_), np.abs(dayal.x_loadings_), atol=1e-5)
+    assert_allclose(np.abs(nipals.x_weights_), np.abs(dayal.x_weights_), rtol=1e-3)
+    assert_allclose(np.abs(nipals.x_rotations_), np.abs(dayal.x_rotations_), rtol=1e-5)
+    assert_allclose(np.abs(nipals.y_loadings_), np.abs(dayal.y_loadings_), rtol=1e-5)
 
 
 def test_sanity_check_pls_regression_constant_column_Y():
