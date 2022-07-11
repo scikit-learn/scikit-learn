@@ -356,15 +356,10 @@ class _PLS(
                 self.y_weights_,
                 pinv2(np.dot(self.y_loadings_.T, self.y_weights_), check_finite=False),
             )
-            # TODO(1.3): change `self._coef_` to `self.coef_`
-            self._coef_ = np.dot(self.x_rotations_, self.y_loadings_.T)
-            self._coef_ = (self._coef_ * self._y_std).T
-            self.intercept_ = self._y_mean
-            self._n_features_out = self.x_rotations_.shape[1]
 
         # this implements the Modified Kernel Algorithm as described in the Appendix of
         # Improved PLS Algorithms (Dayal-MacGregor 1997)
-        elif self.algorithm in ["dayalmacgregor"]:
+        elif self.algorithm == "dayalmacgregor":
             S = Xk.T @ Yk
 
             self.x_weights_ = np.zeros((Xk.shape[1], self.n_components))
@@ -402,11 +397,14 @@ class _PLS(
                 self.x_loadings_[:, k] = p.ravel()
                 self.y_loadings_[:, k] = q
 
-            self._coef_ = ((self.x_rotations_ @ self.y_loadings_.T) * self._y_std).T
-            self.intercept_ = self._y_mean
-            self._n_features_out = self.x_rotations_.shape[1]
-            self._x_scores = Xk @ self.x_rotations_
-
+        self._x_scores = Xk @ self.x_rotations_
+        # expose the fitted attributes `x_scores_` and `y_scores_`
+        # self.x_scores_ = self._x_scores
+        # self.y_scores_ = self._y_scores
+        # TODO(1.3): change `self._coef_` to `self.coef_`
+        self._coef_ = ((self.x_rotations_ @ self.y_loadings_.T) * self._y_std).T
+        self.intercept_ = self._y_mean
+        self._n_features_out = self.x_rotations_.shape[1]
         return self
 
     def transform(self, X, Y=None, copy=True):
@@ -713,30 +711,6 @@ class PLSRegression(_PLS):
             tol=tol,
             copy=copy,
         )
-
-    def fit(self, X, Y):
-        """Fit model to data.
-
-        Parameters
-        ----------
-        X : array-like of shape (n_samples, n_features)
-            Training vectors, where `n_samples` is the number of samples and
-            `n_features` is the number of predictors.
-
-        Y : array-like of shape (n_samples,) or (n_samples, n_targets)
-            Target vectors, where `n_samples` is the number of samples and
-            `n_targets` is the number of response variables.
-
-        Returns
-        -------
-        self : object
-            Fitted model.
-        """
-        super().fit(X, Y)
-        # expose the fitted attributes `x_scores_` and `y_scores_`
-        # self.x_scores_ = self._x_scores
-        # self.y_scores_ = self._y_scores
-        return self
 
 
 class PLSCanonical(_PLS):
