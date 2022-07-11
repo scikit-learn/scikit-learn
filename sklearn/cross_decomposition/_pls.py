@@ -667,8 +667,10 @@ class PLSRegression(_PLS):
 
     References
     ----------
-    .. [1] Wegelin, Jacob A. "A survey of Partial Least Squares (PLS) methods, with emphasis on the two-block case." (2000).
-    .. [2] Dayal, Bhupinder S., and John F. MacGregor. "Improved PLS algorithms." Journal of Chemometrics: A Journal of the Chemometrics Society 11.1 (1997): 73-85.
+    .. [1] Wegelin, Jacob A. "A survey of Partial Least Squares (PLS) methods,
+           with emphasis on the two-block case." (2000).
+    .. [2] Dayal, Bhupinder S., and John F. MacGregor. "Improved PLS algorithms."
+           Journal of Chemometrics: A Journal of the Chemometrics Society 11.1 (1997): 73-85.
 
     Examples
     --------
