@@ -653,7 +653,7 @@ def test_pls_prediction(PLSEstimator, scale):
         X_trans /= X.std(axis=0, ddof=1)
 
     assert_allclose(pls.intercept_, y_mean)
-    assert_allclose(Y_pred, X_trans @ pls._coef_ + pls.intercept_)
+    assert_allclose(Y_pred, X_trans @ pls.coef_ + pls.intercept_)
 
 
 @pytest.mark.parametrize("Klass", [CCA, PLSSVD, PLSRegression, PLSCanonical])
