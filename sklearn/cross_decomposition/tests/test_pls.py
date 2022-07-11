@@ -124,8 +124,8 @@ def test_sanity_check_pls_regression_nipals():
     assert_array_almost_equal(x_loadings_sign_flip, x_weights_sign_flip)
     assert_array_almost_equal(y_loadings_sign_flip, y_weights_sign_flip)
 
-
-def test_sanity_check_pls_regression_dayal_macgregor():
+@pytest.mark.parametrize("scale", [True, False])
+def test_sanity_check_pls_regression_dayal_macgregor(scale: bool):
     # Sanity check for PLSRegression with Dayal-MacGregor
     # The results were checked against the results of the NIPALS algorithm
 
@@ -133,8 +133,8 @@ def test_sanity_check_pls_regression_dayal_macgregor():
     X = d.data
     Y = d.target
 
-    dayal = PLSRegression(n_components=X.shape[1], algorithm="dayalmacgregor")
-    nipals = PLSRegression(n_components=X.shape[1], algorithm="nipals")
+    dayal = PLSRegression(n_components=X.shape[1], scale=scale, algorithm="dayalmacgregor")
+    nipals = PLSRegression(n_components=X.shape[1], scale=scale, algorithm="nipals")
     dayal.fit(X=X, Y=Y)
     nipals.fit(X=X, Y=Y)
 
