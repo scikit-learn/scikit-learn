@@ -392,12 +392,9 @@ class _PLS(
                 tt = t.T @ t
                 p = (Xk.T @ t) / tt
                 q = (r.T @ S) / tt
-                # tt is always a scaler, p has shape (Xk.shape[1],)
-                # and q has shape (Yk.shape[1],) - in the case of
-                # univariate Y we can simply do p * q, but what
-                # we want in general is np.outer(p, q). p[:, None] * q
-                # is faster than np.outer(p, q) and allows us to use
-                # one general line for univariate and multivariate Y
+                # in the case of univariate Y we can simply do p * q, but what
+                # we want in general is np.outer(p, q). p[:, None] * q is faster
+                # than np.outer(p, q) and still generalizes
                 S = S - tt * p[:, None] * q
 
                 self.x_weights_[:, k] = w.ravel()
