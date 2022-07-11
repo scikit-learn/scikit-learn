@@ -134,10 +134,12 @@ def test_sanity_check_pls_regression_dayal_macgregor():
     X = d.data
     Y = d.target
 
-    dayal = PLSRegression(n_components=X.shape[1], algorithm="nipals")
-    nipals = PLSRegression(n_components=X.shape[1], algorithm="dayalmacgregor")
+    dayal = PLSRegression(n_components=X.shape[1], algorithm="dayalmacgregor")
+    nipals = PLSRegression(n_components=X.shape[1], algorithm="nipals")
     dayal.fit(X=X, Y=Y)
     nipals.fit(X=X, Y=Y)
+
+
 
     assert_array_almost_equal(np.abs(nipals.x_loadings_), np.abs(dayal.x_loadings_), 5)
     assert_array_almost_equal(np.abs(nipals.x_weights_), np.abs(dayal.x_weights_), 5)
