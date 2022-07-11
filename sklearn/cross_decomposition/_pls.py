@@ -406,9 +406,6 @@ class _PLS(
             self.intercept_ = self._y_mean
             self._n_features_out = self.x_rotations_.shape[1]
             self._x_scores = Xk @ self.x_rotations_
-            self._y_scores = None
-            self.y_weights_ = None
-            self.y_rotations_ = None
 
         return self
 
