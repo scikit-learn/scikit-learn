@@ -221,11 +221,11 @@ class _VectorizerMixin:
         doc: str
             A string of unicode symbols.
         """
-        if self.input == "filename":
+        if self.input_type == "filename":
             with open(doc, "rb") as fh:
                 doc = fh.read()
 
-        elif self.input == "file":
+        elif self.input_type == "file":
             doc = doc.read()
 
         if isinstance(doc, bytes):
@@ -604,7 +604,7 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
 
     Parameters
     ----------
-    input : {'filename', 'file', 'content'}, default='content'
+    input_type : {'filename', 'file', 'content'}, default='content'
         - If `'filename'`, the sequence passed as an argument to fit is
           expected to be a list of filenames that need reading to fetch
           the raw content to analyze.
@@ -737,7 +737,7 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
     def __init__(
         self,
         *,
-        input="content",
+        input_type="content",
         encoding="utf-8",
         decode_error="strict",
         strip_accents=None,
@@ -754,7 +754,7 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         alternate_sign=True,
         dtype=np.float64,
     ):
-        self.input = input
+        self.input_type = input_type
         self.encoding = encoding
         self.decode_error = decode_error
         self.strip_accents = strip_accents
@@ -904,7 +904,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
 
     Parameters
     ----------
-    input : {'filename', 'file', 'content'}, default='content'
+    input_type : {'filename', 'file', 'content'}, default='content'
         - If `'filename'`, the sequence passed as an argument to fit is
           expected to be a list of filenames that need reading to fetch
           the raw content to analyze.
@@ -1099,7 +1099,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
     def __init__(
         self,
         *,
-        input="content",
+        input_type="content",
         encoding="utf-8",
         decode_error="strict",
         strip_accents=None,
@@ -1117,7 +1117,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         binary=False,
         dtype=np.int64,
     ):
-        self.input = input
+        self.input_type = input_type
         self.encoding = encoding
         self.decode_error = decode_error
         self.strip_accents = strip_accents
@@ -1734,7 +1734,7 @@ class TfidfVectorizer(CountVectorizer):
 
     Parameters
     ----------
-    input : {'filename', 'file', 'content'}, default='content'
+    input_type : {'filename', 'file', 'content'}, default='content'
         - If `'filename'`, the sequence passed as an argument to fit is
           expected to be a list of filenames that need reading to fetch
           the raw content to analyze.
@@ -1936,7 +1936,7 @@ class TfidfVectorizer(CountVectorizer):
     def __init__(
         self,
         *,
-        input="content",
+        input_type="content",
         encoding="utf-8",
         decode_error="strict",
         strip_accents=None,
@@ -1960,7 +1960,7 @@ class TfidfVectorizer(CountVectorizer):
     ):
 
         super().__init__(
-            input=input,
+            input_type=input_type,
             encoding=encoding,
             decode_error=decode_error,
             strip_accents=strip_accents,
