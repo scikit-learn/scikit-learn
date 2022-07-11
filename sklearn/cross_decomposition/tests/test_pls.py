@@ -160,10 +160,9 @@ def test_sanity_check_pls_regression_dayal_macgregor(scale: bool):
 
 
 @pytest.mark.parametrize("scale", [True, False])
-@pytest.mark.parametrize("seed", range(1, 10))
-def test_dayalmacgregor_nipals_svd_consistency(scale: bool, seed: int):
+def test_dayalmacgregor_nipals_svd_consistency(scale: bool, global_random_seed):
     n_samples, n_features, n_targets = 20, 10, 5
-    rng = np.random.RandomState(seed)
+    rng = np.random.RandomState(global_random_seed)
     X = rng.randn(n_samples, n_features)
     Y = rng.randn(n_samples, n_targets)
     common_params = {"tol": 1e-10, "scale": scale, "n_components": X.shape[1]}
