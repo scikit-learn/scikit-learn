@@ -562,7 +562,7 @@ class _PLS(
                 # largest eigenvalue of S
                 eval, evec = np.linalg.eig(S.T @ S)
                 levec = evec[:, np.argmax(eval)]
-                w = S @ levec
+                w = S @ np.real(levec)
             w = w / np.sqrt(w.T @ w)
             r = w
             for j in range(n_components - 1):
