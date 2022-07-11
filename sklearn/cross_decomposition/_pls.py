@@ -438,7 +438,15 @@ class _PLS(
     def _more_tags(self):
         return {"poor_score": True, "requires_y": False}
 
-    def _nipals_svd(self, Xk: np.ndarray, Yk: np.ndarray, n_samples: int, n_features: int, n_targets: int, n_components: int):
+    def _nipals_svd(
+        self,
+        Xk: np.ndarray,
+        Yk: np.ndarray,
+        n_samples: int,
+        n_features: int,
+        n_targets: int,
+        n_components: int,
+    ):
         """
         This implements the NIPALS and SVD algorithms from section 4.1 of the
         Wegelin review paper.
@@ -558,10 +566,7 @@ class _PLS(
             w = w / np.sqrt(w.T @ w)
             r = w
             for j in range(n_components - 1):
-                r = (
-                        r.ravel()
-                        - (self.x_loadings_[:, j] @ w) * self.x_rotations_[:, j]
-                )
+                r = r.ravel() - (self.x_loadings_[:, j] @ w) * self.x_rotations_[:, j]
             t = Xk @ r
             tt = t.T @ t
             p = (Xk.T @ t) / tt
