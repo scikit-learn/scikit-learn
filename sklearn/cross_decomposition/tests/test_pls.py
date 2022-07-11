@@ -124,6 +124,7 @@ def test_sanity_check_pls_regression_nipals():
     assert_array_almost_equal(x_loadings_sign_flip, x_weights_sign_flip)
     assert_array_almost_equal(y_loadings_sign_flip, y_weights_sign_flip)
 
+
 @pytest.mark.parametrize("scale", [True, False])
 def test_sanity_check_pls_regression_dayal_macgregor(scale: bool):
     # Sanity check for PLSRegression with Dayal-MacGregor
@@ -144,22 +145,33 @@ def test_sanity_check_pls_regression_dayal_macgregor(scale: bool):
 
     # x loadings, x weights, x rotations, y loadings
     # keep in mind Dayal-MacGregor does not explicitly compute y weights or rotations
-    assert_allclose(np.abs(pls_nipals.x_loadings_), np.abs(pls_dayal.x_loadings_), atol=1e-5)
-    assert_allclose(np.abs(pls_nipals.x_weights_), np.abs(pls_dayal.x_weights_), rtol=1e-3)
-    assert_allclose(np.abs(pls_nipals.x_rotations_), np.abs(pls_dayal.x_rotations_), rtol=1e-5)
-    assert_allclose(np.abs(pls_nipals.y_loadings_), np.abs(pls_dayal.y_loadings_), rtol=1e-5)
+    assert_allclose(
+        np.abs(pls_nipals.x_loadings_), np.abs(pls_dayal.x_loadings_), atol=1e-5
+    )
+    assert_allclose(
+        np.abs(pls_nipals.x_weights_), np.abs(pls_dayal.x_weights_), rtol=1e-3
+    )
+    assert_allclose(
+        np.abs(pls_nipals.x_rotations_), np.abs(pls_dayal.x_rotations_), rtol=1e-5
+    )
+    assert_allclose(
+        np.abs(pls_nipals.y_loadings_), np.abs(pls_dayal.y_loadings_), rtol=1e-5
+    )
+
 
 @pytest.mark.parametrize("scale", [True, False])
-@pytest.mark.parametrize("random_seed", [3322, 49])
-def test_dayalmacgregor_nipals_svd_consistency(scale: bool, random_seed: int):
+@pytest.mark.parametrize("seed", range(1, 10))
+def test_dayalmacgregor_nipals_svd_consistency(scale: bool, seed: int):
     n_samples, n_features, n_targets = 20, 10, 5
-    rng = np.random.RandomState(random_seed)
+    rng = np.random.RandomState(seed)
     X = rng.randn(n_samples, n_features)
     Y = rng.randn(n_samples, n_targets)
     common_params = {"tol": 1e-10, "scale": scale, "n_components": X.shape[1]}
     pls_nipals = PLSRegression(algorithm="nipals", **common_params).fit(X, Y)
     pls_svd = PLSRegression(algorithm="svd", **common_params).fit(X, Y)
-    pls_dayalmacgregor = PLSRegression(algorithm="dayalmacgregor", **common_params).fit(X, Y)
+    pls_dayalmacgregor = PLSRegression(algorithm="dayalmacgregor", **common_params).fit(
+        X, Y
+    )
 
     assert_allclose(pls_nipals.predict(X), pls_svd.predict(X), rtol=1e-6)
     assert_allclose(pls_dayalmacgregor.predict(X), pls_nipals.predict(X), rtol=1e-6)
