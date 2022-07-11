@@ -22,10 +22,36 @@ import warnings
 
 from scipy.sparse import issparse
 from sklearn.utils import _in_unstable_openblas_configuration
-from sklearn.utils.fixes import threadpool_limits
+from sklearn.utils.fixes import threadpool_limits, sp_version, parse_version
 from ...utils._typedefs import ITYPE, DTYPE
 
 cnp.import_array()
+
+
+def _precompute_metric_params(X, Y, metric=None, **kwds):
+    """Precompute data-derived metric parameters if not provided."""
+    if metric == "seuclidean" and "V" not in kwds:
+        # There is a bug in scipy < 1.5 that will cause a crash if
+        # X.dtype != np.double (float64). See PR #15730
+        dtype = np.float64 if sp_version < parse_version("1.5") else None
+        if X is Y:
+            V = np.var(X, axis=0, ddof=1, dtype=dtype)
+        else:
+            raise ValueError(
+                "The 'V' parameter is required for the seuclidean metric "
+                "when Y is passed."
+            )
+        return {"V": V}
+    if metric == "mahalanobis" and "VI" not in kwds:
+        if X is Y:
+            VI = np.linalg.inv(np.cov(X.T)).T
+        else:
+            raise ValueError(
+                "The 'VI' parameter is required for the mahalanobis metric "
+                "when Y is passed."
+            )
+        return {"VI": VI}
+    return {}
 
 
 cdef class PairwiseDistances64(PairwiseDistancesReduction64):
@@ -55,7 +81,7 @@ cdef class PairwiseDistances64(PairwiseDistancesReduction64):
         No instance should directly be created outside of this class method.
         """
         if (
-            metric in ("euclidean", "sqeuclidean")
+            metric in ("euclidean", "l2", "sqeuclidean")
             and not issparse(X)
             and not issparse(Y)
         ):
@@ -72,8 +98,12 @@ cdef class PairwiseDistances64(PairwiseDistancesReduction64):
                 strategy=strategy,
             )
         else:
-             # Fall back on a generic implementation that handles most scipy
-             # metrics by computing the distances between 2 vectors at a time.
+            # Precompute data-derived distance metric parameters
+            params = _precompute_metric_params(X, Y, metric=metric, **metric_kwargs)
+            metric_kwargs.update(**params)
+
+            # Fall back on a generic implementation that handles most scipy
+            # metrics by computing the distances between 2 vectors at a time.
             pdr = PairwiseDistances64(
                 datasets_pair=DatasetsPair.get_for(X, Y, metric, metric_kwargs),
                 chunk_size=chunk_size,
@@ -112,8 +142,15 @@ cdef class PairwiseDistances64(PairwiseDistancesReduction64):
         )
 
     def _finalize_results(self):
-        self.compute_exact_distances()
-        return np.asarray(self.pairwise_distances_matrix)
+        # If Y is X, then catastrophic cancellation might
+        # have occurred for computations of term on the diagonal
+        # which must be null. We enforce nullity of those term
+        # by zeroing the diagonal.
+        distance_matrix = np.asarray(self.pairwise_distances_matrix)
+        if self.datasets_pair.X_is_Y:
+            np.fill_diagonal(distance_matrix, 0)
+
+        return distance_matrix
 
     cdef void _compute_and_reduce_distances_on_chunks(
         self,
@@ -125,27 +162,13 @@ cdef class PairwiseDistances64(PairwiseDistancesReduction64):
     ) nogil:
         cdef:
             ITYPE_t i, j
-            DTYPE_t r_dist_i_j
+            DTYPE_t dist_i_j
 
         for i in range(X_start, X_end):
             for j in range(Y_start, Y_end):
-                r_dist_i_j = self.datasets_pair.surrogate_dist(i, j)
-                self.pairwise_distances_matrix[X_start + i, Y_start + j] = r_dist_i_j
+                dist_i_j = self.datasets_pair.dist(i, j)
+                self.pairwise_distances_matrix[X_start + i, Y_start + j] = dist_i_j
 
-    cdef void compute_exact_distances(self) nogil:
-        """Convert rank-preserving distances to pairwise distances in parallel."""
-        cdef:
-            ITYPE_t i, j
-
-        for i in prange(self.n_samples_X, nogil=True, schedule='static',
-                        num_threads=self.effective_n_threads):
-            for j in range(self.n_samples_Y):
-                self.pairwise_distances_matrix[i, j] = (
-                        self.datasets_pair.distance_metric._rdist_to_dist(
-                            # Guard against eventual -0., causing nan production.
-                            max(self.pairwise_distances_matrix[i, j], 0.)
-                        )
-                )
 
 cdef class FastEuclideanPairwiseDistances64(PairwiseDistances64):
     """EuclideanDistance-specialized 64bit implementation for PairwiseDistances."""
@@ -205,7 +228,7 @@ cdef class FastEuclideanPairwiseDistances64(PairwiseDistances64):
 
         # Do not recompute norms if datasets are identical.
         self.X_norm_squared = (
-            self.Y_norm_squared if X is Y else
+            self.Y_norm_squared if self.datasets_pair.X_is_Y else
             _sqeuclidean_row_norms64(datasets_pair.X, self.effective_n_threads)
         )
         self.use_squared_distances = use_squared_distances
@@ -285,10 +308,6 @@ cdef class FastEuclideanPairwiseDistances64(PairwiseDistances64):
             X_start, X_end, Y_start, Y_end, thread_num
         )
 
-    @final
-    cdef void compute_exact_distances(self) nogil:
-        if not self.use_squared_distances:
-            PairwiseDistances64.compute_exact_distances(self)
 
     @final
     cdef void _compute_and_reduce_distances_on_chunks(
@@ -319,3 +338,12 @@ cdef class FastEuclideanPairwiseDistances64(PairwiseDistances64):
                     + dist_middle_terms[i * n_Y + j]
                     + self.Y_norm_squared[j + Y_start]
                 )
+
+    def _finalize_results(self):
+        distance_matrix = PairwiseDistances64._finalize_results(self)
+        # Squared Euclidean distances have been used for efficiency.
+        # We remap them to Euclidean distances here before finalizing
+        # results.
+        if not self.use_squared_distances:
+            return np.sqrt(distance_matrix)
+        return PairwiseDistances64._finalize_results(self)

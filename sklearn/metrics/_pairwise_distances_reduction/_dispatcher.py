@@ -85,6 +85,8 @@ class PairwiseDistancesReduction:
             get_config().get("enable_cython_pairwise_dist", True)
             and _is_arraylike_not_scalar(X)
             and _is_arraylike_not_scalar(Y)
+            and not isinstance(X, (tuple, list))
+            and not isinstance(Y, (tuple, list))
             and X.dtype == Y.dtype == np.float64
             and not issparse(X)
             and not issparse(Y)

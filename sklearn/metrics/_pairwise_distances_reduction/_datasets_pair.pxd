@@ -3,7 +3,9 @@ from ...metrics._dist_metrics cimport DistanceMetric
 
 
 cdef class DatasetsPair:
-    cdef DistanceMetric distance_metric
+    cdef:
+        DistanceMetric distance_metric
+        readonly bint X_is_Y
 
     cdef ITYPE_t n_samples_X(self) nogil
 

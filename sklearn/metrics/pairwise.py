@@ -28,9 +28,12 @@ from ..utils.extmath import row_norms, safe_sparse_dot
 from ..preprocessing import normalize
 from ..utils._mask import _get_mask
 from ..utils.fixes import delayed
-from ..utils.fixes import sp_version, parse_version
 
-from ._pairwise_distances_reduction import PairwiseDistancesArgKmin, PairwiseDistances
+from ._pairwise_distances_reduction import (
+    PairwiseDistancesArgKmin,
+    PairwiseDistances,
+    _precompute_metric_params,
+)
 from ._pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
 from ..exceptions import DataConversionWarning
 
@@ -1626,32 +1629,6 @@ def _check_chunk_size(reduced, chunk_size):
             "Expected same length as input: %d."
             % (actual_size if is_tuple else actual_size[0], chunk_size)
         )
-
-
-def _precompute_metric_params(X, Y, metric=None, **kwds):
-    """Precompute data-derived metric parameters if not provided."""
-    if metric == "seuclidean" and "V" not in kwds:
-        # There is a bug in scipy < 1.5 that will cause a crash if
-        # X.dtype != np.double (float64). See PR #15730
-        dtype = np.float64 if sp_version < parse_version("1.5") else None
-        if X is Y:
-            V = np.var(X, axis=0, ddof=1, dtype=dtype)
-        else:
-            raise ValueError(
-                "The 'V' parameter is required for the seuclidean metric "
-                "when Y is passed."
-            )
-        return {"V": V}
-    if metric == "mahalanobis" and "VI" not in kwds:
-        if X is Y:
-            VI = np.linalg.inv(np.cov(X.T)).T
-        else:
-            raise ValueError(
-                "The 'VI' parameter is required for the mahalanobis metric "
-                "when Y is passed."
-            )
-        return {"VI": VI}
-    return {}
 
 
 def pairwise_distances_chunked(

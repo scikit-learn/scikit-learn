@@ -85,7 +85,6 @@
 #    to optimally handle the Euclidean distance case using the Generalized Matrix
 #    Multiplication (see the docstring of :class:`GEMMTermComputer64` for details).
 
-
 from ._dispatcher import (
     PairwiseDistancesReduction,
     PairwiseDistances,
@@ -94,10 +93,13 @@ from ._dispatcher import (
     sqeuclidean_row_norms,
 )
 
+from ._pairwise_distances import _precompute_metric_params
+
 __all__ = [
     "PairwiseDistancesReduction",
     "PairwiseDistancesArgKmin",
     "PairwiseDistances",
     "PairwiseDistancesRadiusNeighborhood",
     "sqeuclidean_row_norms",
+    "_precompute_metric_params",
 ]

@@ -97,8 +97,9 @@ cdef class DatasetsPair:
 
         return DenseDenseDatasetsPair(X, Y, distance_metric)
 
-    def __init__(self, DistanceMetric distance_metric):
+    def __init__(self, DistanceMetric distance_metric, bint X_is_Y):
         self.distance_metric = distance_metric
+        self.X_is_Y = X_is_Y
 
     cdef ITYPE_t n_samples_X(self) nogil:
         """Number of samples in X."""
@@ -141,7 +142,7 @@ cdef class DenseDenseDatasetsPair(DatasetsPair):
     """
 
     def __init__(self, X, Y, DistanceMetric distance_metric):
-        super().__init__(distance_metric)
+        super().__init__(distance_metric, X_is_Y=X is Y)
         # Arrays have already been checked
         self.X = X
         self.Y = Y
