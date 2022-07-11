@@ -402,7 +402,7 @@ class _PLS(
         # self.x_scores_ = self._x_scores
         # self.y_scores_ = self._y_scores
         # TODO(1.3): change `self._coef_` to `self.coef_`
-        self._coef_ = ((self.x_rotations_ @ self.y_loadings_.T) * self._y_std).T
+        self._coef_ = ((self.x_rotations_ @ self.y_loadings_.T) * self._y_std)
         self.intercept_ = self._y_mean
         self._n_features_out = self.x_rotations_.shape[1]
         return self
@@ -518,7 +518,7 @@ class _PLS(
         X -= self._x_mean
         X /= self._x_std
         # TODO(1.3): change `self._coef_` to `self.coef_`
-        Ypred = X @ self._coef_.T
+        Ypred = X @ self._coef_
         return Ypred + self.intercept_
 
     def fit_transform(self, X, y=None):
