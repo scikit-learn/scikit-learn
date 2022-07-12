@@ -26,6 +26,7 @@ from sklearn.utils import shuffle
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.exceptions import NotFittedError, UndefinedMetricWarning
 from sklearn.multiclass import OneVsRestClassifier
+from sklearn.datasets import make_regression
 
 # mypy error: Module 'sklearn.svm' has no attribute '_libsvm'
 from sklearn.svm import _libsvm  # type: ignore
@@ -247,6 +248,20 @@ def test_quantilesvr():
     assert_allclose(np.linalg.norm(qvr.coef_), np.linalg.norm(svr.coef_), 1, 0.0001)
     assert_almost_equal(score1, score2, 2)
 
+@pytest.mark.parametrize("q", [0.5, 0.9, 0.05])
+@pytest.mark.parametrize(
+    "kernel, C",
+    [("linear", 10), ("poly", 100), ("rbf", 1e4), ("sigmoid", 1)]
+)
+def test_quantile_estimates_calibration(q, kernel, C):
+    # Test that model estimates percentage of points below the prediction
+    X, y = make_regression(n_samples=1000, n_features=1, random_state=0, noise=1.0)
+    quant = svm.QuantileSVR(
+        kernel=kernel,
+        quantile=q,
+        C=C,
+    ).fit(X, y)
+    assert np.mean(y < quant.predict(X)) == pytest.approx(q, abs=1e-2)
 
 def test_linearsvr():
     # check that SVR(kernel='linear') and LinearSVC() give
