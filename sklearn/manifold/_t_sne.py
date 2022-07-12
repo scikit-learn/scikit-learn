@@ -119,7 +119,7 @@ def _joint_probabilities_nn(distances, desired_perplexity, verbose):
     assert np.all(np.abs(P.data) <= 1.0)
     if verbose >= 2:
         duration = time() - t0
-        print("[t-SNE] Computed conditional probabilities in {:.3f}s".format(duration))
+        print(f"[t-SNE] Computed conditional probabilities in {duration:.3f}s")
     return P
 
 
@@ -881,9 +881,8 @@ class TSNE(BaseEstimator):
 
         if self.early_exaggeration < 1.0:
             raise ValueError(
-                "early_exaggeration must be at least 1, but is {}".format(
-                    self.early_exaggeration
-                )
+                "early_exaggeration must be at least 1, but is"
+                f" {self.early_exaggeration}"
             )
 
         if self.n_iter < 250:
@@ -896,7 +895,7 @@ class TSNE(BaseEstimator):
             # Retrieve the distance matrix, either using the precomputed one or
             # computing it.
             if self.metric == "precomputed":
-                distances = X
+                distances = X**2
             else:
                 if self.verbose:
                     print("[t-SNE] Computing pairwise distances...")
@@ -919,9 +918,6 @@ class TSNE(BaseEstimator):
                     "All distances should be positive, the metric given is not correct"
                 )
 
-            if self.metric != "euclidean":
-                distances **= 2
-
             # compute the joint probability distribution for the input space
             P = _joint_probabilities(distances, self.perplexity, self.verbose)
             assert np.all(np.isfinite(P)), "All probabilities should be finite"
@@ -938,7 +934,7 @@ class TSNE(BaseEstimator):
             n_neighbors = min(n_samples - 1, int(3.0 * self.perplexity + 1))
 
             if self.verbose:
-                print("[t-SNE] Computing {} nearest neighbors...".format(n_neighbors))
+                print(f"[t-SNE] Computing {n_neighbors} nearest neighbors...")
 
             # Find the nearest neighbors for every point
             knn = NearestNeighbors(
@@ -952,25 +948,19 @@ class TSNE(BaseEstimator):
             knn.fit(X)
             duration = time() - t0
             if self.verbose:
-                print(
-                    "[t-SNE] Indexed {} samples in {:.3f}s...".format(
-                        n_samples, duration
-                    )
-                )
+                print(f"[t-SNE] Indexed {n_samples} samples in {duration:.3f}s...")
 
             t0 = time()
             distances_nn = knn.kneighbors_graph(mode="distance")
             duration = time() - t0
             if self.verbose:
                 print(
-                    "[t-SNE] Computed neighbors for {} samples in {:.3f}s...".format(
-                        n_samples, duration
-                    )
+                    f"[t-SNE] Computed neighbors for {n_samples} samples in"
+                    f" {duration:.3f}s..."
                 )
 
             # Free the memory used by the ball_tree
             del knn
-
             # knn return the euclidean distance but we need it squared
             # to be consistent with the 'exact' method. Note that the
             # the method was derived using the euclidean method as in the
@@ -1070,8 +1060,8 @@ class TSNE(BaseEstimator):
         params, kl_divergence, it = _gradient_descent(obj_func, params, **opt_args)
         if self.verbose:
             print(
-                "[t-SNE] KL divergence after %d iterations with early exaggeration: %f"
-                % (it + 1, kl_divergence)
+                f"[t-SNE] KL divergence after {it + 1} iterations with early"
+                f" exaggeration: {float(kl_divergence)}"
             )
 
         # Learning schedule (part 2): disable early exaggeration and finish
@@ -1090,8 +1080,8 @@ class TSNE(BaseEstimator):
 
         if self.verbose:
             print(
-                "[t-SNE] KL divergence after %d iterations: %f"
-                % (it + 1, kl_divergence)
+                f"[t-SNE] KL divergence after {it + 1} iterations:"
+                f" {float(kl_divergence)}"
             )
 
         X_embedded = params.reshape(n_samples, self.n_components)
