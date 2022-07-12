@@ -190,6 +190,10 @@ Changelog
   :class:`svm.NuSVR`, :class:`svm.SVR`, :class:`svm.OneClassSVM`.
   :pr:`22898` by :user:`Meekail Zain <micky774>`.
 
+- |Feature| :class:`svm.QuantileSVR` implements quantile regression with support vector
+  machines as derived in Hwang, C., Shim, J. (2005), DOI: 10.1007/11539087_66
+  :pr:`23153` by :user:`Alexander Trettin <atrettin>`.
+
 :mod:`sklearn.tree`
 ...................
 
