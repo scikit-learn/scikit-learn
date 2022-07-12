@@ -1244,7 +1244,6 @@ class SVR(RegressorMixin, BaseLibSVM):
             C=C,
             nu=0.0,
             epsilon=epsilon,
-            quantile=0.0,
             verbose=verbose,
             shrinking=shrinking,
             probability=False,
@@ -1449,7 +1448,6 @@ class QuantileSVR(RegressorMixin, BaseLibSVM):
             C=C,
             nu=0.0,
             epsilon=0.0,
-            quantile=quantile,
             verbose=verbose,
             shrinking=shrinking,
             probability=False,
@@ -1458,6 +1456,8 @@ class QuantileSVR(RegressorMixin, BaseLibSVM):
             max_iter=max_iter,
             random_state=None,
         )
+        
+        self.quantile = quantile
 
     def _more_tags(self):
         return {
@@ -1645,7 +1645,6 @@ class NuSVR(RegressorMixin, BaseLibSVM):
             C=C,
             nu=nu,
             epsilon=0.0,
-            quantile=0.0,
             shrinking=shrinking,
             probability=False,
             cache_size=cache_size,
@@ -1838,7 +1837,6 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
             tol,
             0.0,
             nu,
-            0.0,
             0.0,
             shrinking,
             False,

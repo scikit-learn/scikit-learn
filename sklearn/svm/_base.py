@@ -85,7 +85,6 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         C,
         nu,
         epsilon,
-        quantile,
         shrinking,
         probability,
         cache_size,
@@ -108,7 +107,6 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         self.C = C
         self.nu = nu
         self.epsilon = epsilon
-        self.quantile = quantile
         self.shrinking = shrinking
         self.probability = probability
         self.cache_size = cache_size
@@ -347,7 +345,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             coef0=self.coef0,
             gamma=self._gamma,
             epsilon=self.epsilon,
-            quantile=self.quantile,
+            quantile=getattr(self, "quantile", 0.0),
             max_iter=self.max_iter,
             random_seed=random_seed,
         )
@@ -391,7 +389,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self.nu,
             self.cache_size,
             self.epsilon,
-            self.quantile,
+            getattr(self, "quantile", 0.0),
             int(self.shrinking),
             int(self.probability),
             self.max_iter,
@@ -726,7 +724,6 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
             C=C,
             nu=nu,
             epsilon=0.0,
-            quantile=0.0,
             shrinking=shrinking,
             probability=probability,
             cache_size=cache_size,
