@@ -1456,7 +1456,7 @@ class QuantileSVR(RegressorMixin, BaseLibSVM):
             max_iter=max_iter,
             random_state=None,
         )
-        
+
         self.quantile = quantile
 
     def _more_tags(self):
