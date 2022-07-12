@@ -13,11 +13,12 @@ from numpy.testing import assert_array_equal, assert_array_almost_equal
 from numpy.testing import assert_almost_equal
 from numpy.testing import assert_allclose
 from scipy import sparse
+from scipy.optimize import minimize
 from sklearn import svm, linear_model, datasets, metrics, base
 from sklearn.svm import LinearSVC, OneClassSVM, SVR, NuSVR, LinearSVR
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import make_classification, make_blobs
-from sklearn.metrics import f1_score
+from sklearn.metrics import f1_score, mean_pinball_loss
 from sklearn.metrics.pairwise import rbf_kernel
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import ignore_warnings
@@ -262,6 +263,110 @@ def test_quantile_estimates_calibration(q, kernel, C):
         C=C,
     ).fit(X, y)
     assert np.mean(y < quant.predict(X)) == pytest.approx(q, abs=1e-2)
+
+@pytest.mark.parametrize(
+    "params, err_msg",
+    [
+        ({"quantile": 2}, re.escape("quantile not in (0, 1)")),
+        ({"quantile": 1}, re.escape("quantile not in (0, 1)")),
+        ({"quantile": 0}, re.escape("quantile not in (0, 1)")),
+        ({"quantile": -1}, re.escape("quantile not in (0, 1)")),
+        ({"quantile": 0.5, "C": -1.5}, "C <= 0"),
+        ({"quantile": 0.5, "kernel": "blah"}, "'blah' is not in list"),
+    ],
+)
+def test_init_parameters_validation(params, err_msg):
+    """Test that invalid init parameters raise errors."""
+    X, y = make_regression(n_samples=10, n_features=1, random_state=0, noise=1)
+    with pytest.raises(ValueError, match=err_msg):
+        svm.QuantileSVR(**params).fit(X, y)
+
+def test_quantile_sample_weight():
+    # test that with unequal sample weights we still estimate weighted fraction
+    n = 1000
+    X, y = make_regression(n_samples=n, n_features=5, random_state=0, noise=10.0)
+    weight = np.ones(n)
+    # when we increase weight of upper observations,
+    # estimate of quantile should go up
+    weight[y > y.mean()] = 100
+    quant = svm.QuantileSVR(kernel="linear", C=10)
+    quant.fit(X, y, sample_weight=weight)
+    fraction_below = np.mean(y < quant.predict(X))
+    assert fraction_below > 0.5
+    weighted_fraction_below = np.average(y < quant.predict(X), weights=weight)
+    assert weighted_fraction_below == pytest.approx(0.5, abs=3e-2)
+
+
+@pytest.mark.parametrize("quantile", [0.3, 0.5, 0.8])
+def test_asymmetric_error(quantile):
+    """Test quantile regression for asymmetric distributed targets."""
+    n_samples = 1000
+    rng = np.random.RandomState(42)
+    X = np.concatenate(
+        (
+            np.abs(rng.randn(n_samples)[:, None]),
+            -rng.randint(2, size=(n_samples, 1)),
+        ),
+        axis=1,
+    )
+    intercept = 1.23
+    coef = np.array([0.5, -2])
+    C = 10
+    #  Take care that X @ coef + intercept > 0
+    assert np.min(X @ coef + intercept) > 0
+    # For an exponential distribution with rate lambda, e.g. exp(-lambda * x),
+    # the quantile at level q is:
+    #   quantile(q) = - log(1 - q) / lambda
+    #   scale = 1/lambda = -quantile(q) / log(1 - q)
+    y = rng.exponential(
+        scale=-(X @ coef + intercept) / np.log(1 - quantile), size=n_samples
+    )
+    model = svm.QuantileSVR(
+        quantile=quantile,
+        C=C,
+        # Coefficients are only available when using the linear kernel
+        kernel="linear",
+        tol=1e-5,
+    ).fit(X, y)
+
+    assert model.intercept_ == pytest.approx(intercept, rel=0.2)
+    # Coefficients we get out of libsvm are in a (1, n_features) array
+    assert_allclose(model.coef_.squeeze(), coef, rtol=0.6)
+    assert_allclose(np.mean(model.predict(X) > y), quantile, atol=1e-2)
+
+    # Now compare to Nelder-Mead optimization with L2 penalty
+    # alpha = 0.01
+    # model.set_params(alpha=alpha).fit(X, y)
+
+    def func(coef):
+        # The loss function being optimized by QuantileSVR is
+        #       (1/2)w^T w + C \sum_{i=1}^n q \zeta_i + (1 - q) \zeta^*_i,
+        # which is equivalent to
+        #       (1/2)w^T w + C \sum_i PB_q(y_i, \hat{y}_i) .
+        loss = n_samples * mean_pinball_loss(y, X @ coef[1:] + coef[0], alpha=quantile)
+        L2 = np.sum(np.power(coef[1:], 2)) / 2
+        # Furthermore, the regularization multiplies the loss by C, rather than the
+        # penalty term by alpha
+        return C * loss + L2
+
+    res = minimize(
+        fun=func,
+        x0=[1, 0, -1],
+        method="Nelder-Mead",
+        tol=1e-12,
+        options={"maxiter": 2000},
+    )
+
+    model_coef = np.r_[model.intercept_, model.coef_.squeeze()]
+
+    # Assert that the pinball loss with regularization is close to the result from
+    # minimization
+    assert func(model_coef) == pytest.approx(func(res.x))
+    # Assert that parameters match within tolerance
+    assert_allclose(model.intercept_, res.x[0], rtol=1e-4)
+    assert_allclose(model.coef_.squeeze(), res.x[1:], rtol=1e-4)
+    # Finally, assert that the predicted quantile is approximately correct
+    assert_allclose(np.mean(model.predict(X) > y), quantile, atol=1e-2)
 
 def test_linearsvr():
     # check that SVR(kernel='linear') and LinearSVC() give
