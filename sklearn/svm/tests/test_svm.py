@@ -249,10 +249,10 @@ def test_quantilesvr():
     assert_allclose(np.linalg.norm(qvr.coef_), np.linalg.norm(svr.coef_), 1, 0.0001)
     assert_almost_equal(score1, score2, 2)
 
+
 @pytest.mark.parametrize("q", [0.5, 0.9, 0.05])
 @pytest.mark.parametrize(
-    "kernel, C",
-    [("linear", 10), ("poly", 100), ("rbf", 1e4), ("sigmoid", 1)]
+    "kernel, C", [("linear", 10), ("poly", 100), ("rbf", 1e4), ("sigmoid", 1)]
 )
 def test_quantile_estimates_calibration(q, kernel, C):
     # Test that model estimates percentage of points below the prediction
@@ -263,6 +263,7 @@ def test_quantile_estimates_calibration(q, kernel, C):
         C=C,
     ).fit(X, y)
     assert np.mean(y < quant.predict(X)) == pytest.approx(q, abs=1e-2)
+
 
 @pytest.mark.parametrize(
     "params, err_msg",
@@ -280,6 +281,7 @@ def test_init_parameters_validation(params, err_msg):
     X, y = make_regression(n_samples=10, n_features=1, random_state=0, noise=1)
     with pytest.raises(ValueError, match=err_msg):
         svm.QuantileSVR(**params).fit(X, y)
+
 
 def test_quantile_sample_weight():
     # test that with unequal sample weights we still estimate weighted fraction
@@ -367,6 +369,7 @@ def test_asymmetric_error(quantile):
     assert_allclose(model.coef_.squeeze(), res.x[1:], rtol=1e-4)
     # Finally, assert that the predicted quantile is approximately correct
     assert_allclose(np.mean(model.predict(X) > y), quantile, atol=1e-2)
+
 
 def test_linearsvr():
     # check that SVR(kernel='linear') and LinearSVC() give
@@ -1336,8 +1339,7 @@ def test_linear_svc_intercept_scaling():
         msg = (
             "Intercept scaling is %r but needs to be greater than 0."
             " To disable fitting an intercept,"
-            " set fit_intercept=False."
-            % lsvc.intercept_scaling
+            " set fit_intercept=False." % lsvc.intercept_scaling
         )
         with pytest.raises(ValueError, match=msg):
             lsvc.fit(X, Y)
