@@ -7,6 +7,7 @@
 #          Lars Buitinck
 # License: BSD 3 clause
 
+from numbers import Integral, Real
 import time
 
 import numpy as np
@@ -18,6 +19,7 @@ from ..base import TransformerMixin
 from ..base import _ClassNamePrefixFeaturesOutMixin
 from ..utils import check_random_state
 from ..utils import gen_even_slices
+from ..utils._param_validation import Interval
 from ..utils.extmath import safe_sparse_dot
 from ..utils.extmath import log_logistic
 from ..utils.validation import check_is_fitted
@@ -125,6 +127,15 @@ class BernoulliRBM(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
     >>> model.fit(X)
     BernoulliRBM(n_components=2)
     """
+
+    _parameter_constraints = {
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "learning_rate": [Interval(Real, 0.0, 1.0, closed="right")],
+        "batch_size": [Interval(Integral, 1, None, closed="left")],
+        "n_iter": [Interval(Integral, 1, None, closed="left")],
+        "verbose": ["verbose"],
+        "random_state": ["random_state"],
+    }
 
     def __init__(
         self,
@@ -274,6 +285,7 @@ class BernoulliRBM(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
         self : BernoulliRBM
             The fitted model.
         """
+        self._validate_params()
         first_pass = not hasattr(self, "components_")
         X = self._validate_data(
             X, accept_sparse="csr", dtype=np.float64, reset=first_pass
@@ -382,6 +394,7 @@ class BernoulliRBM(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
         self : BernoulliRBM
             The fitted model.
         """
+        self._validate_params()
         X = self._validate_data(X, accept_sparse="csr", dtype=(np.float64, np.float32))
         n_samples = X.shape[0]
         rng = check_random_state(self.random_state)
