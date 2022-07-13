@@ -20,7 +20,7 @@ from ..base import RegressorMixin, MultiOutputMixin
 from ..utils import as_float_array, check_array
 from ..utils.deprecation import deprecated
 from ..utils.fixes import delayed
-from ..utils._param_validation import StrOptions, Interval
+from ..utils._param_validation import Hidden, Interval, StrOptions
 from ..model_selection import BaseCrossValidator
 from ..model_selection import check_cv
 
@@ -698,7 +698,7 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         "n_nonzero_coefs": [Interval(Integral, 1, None, closed="left"), None],
         "tol": [Interval(Real, 0, None, closed="left"), None],
         "fit_intercept": ["boolean"],
-        "normalize": ["boolean", deprecated],
+        "normalize": ["boolean", Hidden(StrOptions({"deprecated"}))],
         "precompute": [StrOptions({"auto"}), "boolean"],
     }
 
@@ -1004,7 +1004,7 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
     _parameter_constraints = {
         "copy": ["boolean"],
         "fit_intercept": ["boolean"],
-        "normalize": ["boolean", deprecated],
+        "normalize": ["boolean", Hidden(StrOptions({"deprecated"}))],
         "max_iter": [Interval(Integral, 0, None, closed="left"), None],
         "cv": [
             Interval(Integral, 2, None, closed="left"),
