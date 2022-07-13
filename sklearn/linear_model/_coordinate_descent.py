@@ -13,7 +13,6 @@ from functools import partial
 from numbers import Integral, Real
 from collections.abc import Iterable
 
-
 import numpy as np
 from scipy import sparse
 from joblib import Parallel, effective_n_jobs
