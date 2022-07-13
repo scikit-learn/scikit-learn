@@ -23,16 +23,21 @@ from ._classification import class_likelihood_ratios
 from ._classification import classification_report
 from ._classification import cohen_kappa_score
 from ._classification import confusion_matrix
+from ._classification import f1_gain_score
 from ._classification import f1_score
 from ._classification import fbeta_score
+from ._classification import fbeta_gain_score
 from ._classification import hamming_loss
 from ._classification import hinge_loss
 from ._classification import jaccard_score
 from ._classification import log_loss
 from ._classification import matthews_corrcoef
 from ._classification import precision_recall_fscore_support
+from ._classification import precision_recall_fgain_score_support
 from ._classification import precision_score
+from ._classification import precision_gain_score
 from ._classification import recall_score
+from ._classification import recall_gain_score
 from ._classification import zero_one_loss
 from ._classification import brier_score_loss
 from ._classification import multilabel_confusion_matrix
@@ -129,7 +134,9 @@ __all__ = [
     "euclidean_distances",
     "explained_variance_score",
     "f1_score",
+    "f1_gain_score",
     "fbeta_score",
+    "fbeta_gain_score",
     "fowlkes_mallows_score",
     "get_scorer",
     "hamming_loss",
@@ -170,10 +177,13 @@ __all__ = [
     "PrecisionRecallDisplay",
     "precision_recall_curve",
     "precision_recall_fscore_support",
+    "precision_recall_fgain_score_support",
     "precision_score",
+    "precision_gain_score",
     "r2_score",
     "rand_score",
     "recall_score",
+    "recall_gain_score",
     "RocCurveDisplay",
     "roc_auc_score",
     "roc_curve",
