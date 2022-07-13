@@ -906,13 +906,12 @@ class TSNE(BaseEstimator):
                 # Also, Euclidean is slower for n_jobs>1, so don't set here
                 distances = pairwise_distances(X, metric=self.metric, squared=True)
             else:
-                metric_params_ = self.metric_params or {}
-                distances = (
-                    pairwise_distances(
+                if self.metric != "precomputed":
+                    metric_params_ = self.metric_params or {}
+                    distances = pairwise_distances(
                         X, metric=self.metric, n_jobs=self.n_jobs, **metric_params_
                     )
-                    ** 2
-                )
+                distances **= 2
 
             if np.any(distances < 0):
                 raise ValueError(
