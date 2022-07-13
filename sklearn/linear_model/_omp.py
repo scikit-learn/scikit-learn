@@ -18,7 +18,6 @@ from joblib import Parallel
 from ._base import LinearModel, _pre_fit, _deprecate_normalize
 from ..base import RegressorMixin, MultiOutputMixin
 from ..utils import as_float_array, check_array
-from ..utils.deprecation import deprecated
 from ..utils.fixes import delayed
 from ..utils._param_validation import Hidden, Interval, StrOptions
 from ..model_selection import BaseCrossValidator
