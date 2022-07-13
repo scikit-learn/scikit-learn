@@ -428,7 +428,25 @@ def test_average_precision_score_tied_values():
 
 @ignore_warnings
 def test_precision_recall_fgain_score_support_errors():
-    pass
+    y_true, y_pred, _ = make_prediction(binary=True)
+
+    # Bad beta
+    with pytest.raises(ValueError):
+        precision_recall_fgain_score_support(y_true, y_pred, beta=-0.1)
+
+    # Bad pos_label
+    with pytest.raises(ValueError):
+        precision_recall_fgain_score_support(
+            y_true, y_pred, pos_label=2, average="binary"
+        )
+
+    # Bad average option 1
+    with pytest.raises(ValueError):
+        precision_recall_fgain_score_support([0, 1, 2], [1, 2, 0], average="mega")
+
+    # Bad average option 2
+    with pytest.raises(ValueError):
+        precision_recall_fgain_score_support([0, 1, 2], [1, 2, 0], average="micro")
 
 
 @ignore_warnings
