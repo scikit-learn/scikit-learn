@@ -249,8 +249,10 @@ def test_equal_similarities_and_preferences():
 
 
 def test_affinity_propagation_random_state():
-    # Significance of random_state parameter
-    # Generate sample data
+    """
+    Check that different random states lead to different initialisations
+    by looking at the center locations after two iterations.
+    """
     centers = [[1, 1], [-1, -1], [1, -1]]
     X, labels_true = make_blobs(
         n_samples=300, centers=centers, cluster_std=0.5, random_state=0
@@ -264,8 +266,8 @@ def test_affinity_propagation_random_state():
     ap = AffinityPropagation(convergence_iter=1, max_iter=2, random_state=76)
     ap.fit(X)
     centers76 = ap.cluster_centers_
-
-    assert np.mean((centers0 - centers76) ** 2) > 1
+    # check that the center didn't yet convert to the same solution
+    assert np.mean((centers0 - centers76) ** 2) > 0.5
 
 
 @pytest.mark.parametrize("centers", [csr_matrix(np.zeros((1, 10))), np.zeros((1, 10))])
