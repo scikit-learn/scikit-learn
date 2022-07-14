@@ -98,7 +98,7 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
     """
 
     _parameter_constraints = {
-        "metric": [StrOptions(set(_VALID_METRICS)), callable],
+        "metric": StrOptions({"euclidean", "manhattan"}),
         "shrink_threshold": [Interval(Real, 0, None, closed="neither"), None],
     }
 
