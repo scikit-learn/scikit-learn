@@ -269,14 +269,12 @@ def test_affinity_propagation_random_state():
 
 
 @pytest.mark.parametrize("centers", [csr_matrix(np.zeros((1, 10))), np.zeros((1, 10))])
-def test_affinity_propagation_convergence_warning_dense_sparse(
-    centers, global_random_seed
-):
+def test_affinity_propagation_convergence_warning_dense_sparse(centers):
     """Non-regression, see #13334"""
-    rng = np.random.RandomState(global_random_seed)
+    rng = np.random.RandomState(42)
     X = rng.rand(40, 10)
     y = (4 * rng.rand(40)).astype(int)
-    ap = AffinityPropagation(random_state=global_random_seed)
+    ap = AffinityPropagation(random_state=42)
     ap.fit(X, y)
     ap.cluster_centers_ = centers
     with warnings.catch_warnings():
