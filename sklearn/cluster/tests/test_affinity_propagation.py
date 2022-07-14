@@ -10,7 +10,7 @@ import warnings
 from scipy.sparse import csr_matrix
 
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_equal, assert_allclose
 
 from sklearn.cluster import AffinityPropagation
 from sklearn.cluster._affinity_propagation import _equal_similarities_and_preferences
@@ -31,11 +31,11 @@ X, _ = make_blobs(
 
 
 def test_affinity_propagation(global_random_seed):
-    # Affinity Propagation algorithm
-    # Compute similarities
+    """
+    Test consistency of the affinity propagations.
+    """
     S = -euclidean_distances(X, squared=True)
     preference = np.median(S) * 10
-    # Compute Affinity Propagation
     cluster_centers_indices, labels = affinity_propagation(
         S, preference=preference, random_state=global_random_seed
     )
@@ -44,14 +44,20 @@ def test_affinity_propagation(global_random_seed):
 
     assert n_clusters == n_clusters_
 
+
+def test_affinity_propagation_precomputed():
+    """
+    Check equality of precomputed affinity matrix to internally computed affinity
+    matrix.
+    """
+    S = -euclidean_distances(X, squared=True)
+    preference = np.median(S) * 10
     af = AffinityPropagation(
-        preference=preference, affinity="precomputed", random_state=global_random_seed
+        preference=preference, affinity="precomputed", random_state=0
     )
     labels_precomputed = af.fit(S).labels_
 
-    af = AffinityPropagation(
-        preference=preference, verbose=True, random_state=global_random_seed
-    )
+    af = AffinityPropagation(preference=preference, verbose=True, random_state=0)
     labels = af.fit(X).labels_
 
     assert_array_equal(labels, labels_precomputed)
@@ -62,9 +68,31 @@ def test_affinity_propagation(global_random_seed):
     assert np.unique(labels).size == n_clusters_
     assert n_clusters == n_clusters_
 
-    # Test also with no copy
+
+def test_affinity_propagation_no_copy():
+    """
+    Check behaviour of not copying the input data.
+    """
+    S = -euclidean_distances(X, squared=True)
+    S_original = S.copy()
+    preference = np.median(S) * 10
+    assert not np.allclose(S.diagonal(), preference)
+
+    # once copy=True S should not be modified
+    affinity_propagation(S, preference=preference, copy=True, random_state=0)
+    assert_allclose(S, S_original)
+
+    # once copy=False S will be modified inplace
+    affinity_propagation(S, preference=preference, copy=False, random_state=0)
+    assert_allclose(S.diagonal(), preference)
+
+    # test that copy=True and copy=False lead to the same result
+    S = S_original.copy()
+    af = AffinityPropagation(preference=preference, verbose=True, random_state=0)
+
+    labels = af.fit(X).labels_
     _, labels_no_copy = affinity_propagation(
-        S, preference=preference, copy=False, random_state=global_random_seed
+        S, preference=preference, copy=False, random_state=0
     )
     assert_array_equal(labels, labels_no_copy)
 
