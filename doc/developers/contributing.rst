@@ -435,15 +435,11 @@ complies with the following rules before marking a PR as ``[MRG]``. The
    `editor integration documentation <https://black.readthedocs.io/en/stable/integrations/editors.html>`_
    to configure your editor to run `black`.
 
-6. **Make sure that your PR does not add PEP8 violations**. To check the
-   code that you changed, you can run the following command (see
-   :ref:`above <upstream>` to set up the ``upstream`` remote):
+6. Run `flake8` to make sure you followed the project coding conventions.
 
    .. prompt:: bash $
 
-        git diff upstream/main -u -- "*.py" | flake8 --diff
-
-   or `make flake8-diff` which should work on Unix-like systems.
+        flake8 .
 
 7. Follow the :ref:`coding-guidelines`.
 

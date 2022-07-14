@@ -40,7 +40,7 @@ jobs:
         black --check --diff .
       displayName: Run black
     - bash: |
-        ./build_tools/circle/linting.sh
+        ./build_tools/azure/linting.sh
       displayName: Run linting
     - bash: |
         mypy sklearn/

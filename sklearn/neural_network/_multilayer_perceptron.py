@@ -6,6 +6,7 @@
 #          Jiyuan Qian
 # License: BSD 3 clause
 
+from numbers import Integral, Real
 import numpy as np
 
 from abc import ABCMeta, abstractmethod
@@ -35,6 +36,7 @@ from ..utils.multiclass import _check_partial_fit_first_call, unique_labels
 from ..utils.multiclass import type_of_target
 from ..utils.optimize import _check_optimize_result
 from ..utils.metaestimators import available_if
+from ..utils._param_validation import StrOptions, Interval
 
 
 _STOCHASTIC_SOLVERS = ["sgd", "adam"]
@@ -53,6 +55,40 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
 
     .. versionadded:: 0.18
     """
+
+    _parameter_constraints = {
+        "hidden_layer_sizes": [
+            "array-like",
+            Interval(Integral, 1, None, closed="left"),
+        ],
+        "activation": [StrOptions({"identity", "logistic", "tanh", "relu"})],
+        "solver": [StrOptions({"lbfgs", "sgd", "adam"})],
+        "alpha": [Interval(Real, 0, None, closed="left")],
+        "batch_size": [
+            StrOptions({"auto"}),
+            Interval(Integral, 1, None, closed="left"),
+        ],
+        "learning_rate": [StrOptions({"constant", "invscaling", "adaptive"})],
+        "learning_rate_init": [Interval(Real, 0, None, closed="neither")],
+        "power_t": [Interval(Real, 0, None, closed="left")],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
+        "shuffle": ["boolean"],
+        "random_state": ["random_state"],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "verbose": ["verbose"],
+        "warm_start": ["boolean"],
+        "momentum": [Interval(Real, 0, 1, closed="both")],
+        "nesterovs_momentum": ["boolean"],
+        "early_stopping": ["boolean"],
+        "validation_fraction": [Interval(Real, 0, 1, closed="left")],
+        "beta_1": [Interval(Real, 0, 1, closed="left")],
+        "beta_2": [Interval(Real, 0, 1, closed="left")],
+        "epsilon": [Interval(Real, 0, None, closed="neither")],
+        # TODO update when ScalarOptions available
+        # [Interval(Integral, 1, None, closed="left"), ScalarOptions({np.inf})]
+        "n_iter_no_change": [Interval(Real, 0, None, closed="right")],
+        "max_fun": [Interval(Integral, 1, None, closed="left")],
+    }
 
     @abstractmethod
     def __init__(
@@ -381,8 +417,6 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             hidden_layer_sizes = [hidden_layer_sizes]
         hidden_layer_sizes = list(hidden_layer_sizes)
 
-        # Validate input parameters.
-        self._validate_hyperparameters()
         if np.any(np.array(hidden_layer_sizes) <= 0):
             raise ValueError(
                 "hidden_layer_sizes must be > 0, got %s." % hidden_layer_sizes
@@ -451,67 +485,6 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             )
 
         return self
-
-    def _validate_hyperparameters(self):
-        if not isinstance(self.shuffle, bool):
-            raise ValueError(
-                "shuffle must be either True or False, got %s." % self.shuffle
-            )
-        if self.max_iter <= 0:
-            raise ValueError("max_iter must be > 0, got %s." % self.max_iter)
-        if self.max_fun <= 0:
-            raise ValueError("max_fun must be > 0, got %s." % self.max_fun)
-        if self.alpha < 0.0:
-            raise ValueError("alpha must be >= 0, got %s." % self.alpha)
-        if (
-            self.learning_rate in ["constant", "invscaling", "adaptive"]
-            and self.learning_rate_init <= 0.0
-        ):
-            raise ValueError(
-                "learning_rate_init must be > 0, got %s." % self.learning_rate
-            )
-        if self.momentum > 1 or self.momentum < 0:
-            raise ValueError("momentum must be >= 0 and <= 1, got %s" % self.momentum)
-        if not isinstance(self.nesterovs_momentum, bool):
-            raise ValueError(
-                "nesterovs_momentum must be either True or False, got %s."
-                % self.nesterovs_momentum
-            )
-        if not isinstance(self.early_stopping, bool):
-            raise ValueError(
-                "early_stopping must be either True or False, got %s."
-                % self.early_stopping
-            )
-        if self.validation_fraction < 0 or self.validation_fraction >= 1:
-            raise ValueError(
-                "validation_fraction must be >= 0 and < 1, got %s"
-                % self.validation_fraction
-            )
-        if self.beta_1 < 0 or self.beta_1 >= 1:
-            raise ValueError("beta_1 must be >= 0 and < 1, got %s" % self.beta_1)
-        if self.beta_2 < 0 or self.beta_2 >= 1:
-            raise ValueError("beta_2 must be >= 0 and < 1, got %s" % self.beta_2)
-        if self.epsilon <= 0.0:
-            raise ValueError("epsilon must be > 0, got %s." % self.epsilon)
-        if self.n_iter_no_change <= 0:
-            raise ValueError(
-                "n_iter_no_change must be > 0, got %s." % self.n_iter_no_change
-            )
-
-        # raise ValueError if not registered
-        if self.activation not in ACTIVATIONS:
-            raise ValueError(
-                "The activation '%s' is not supported. Supported activations are %s."
-                % (self.activation, list(sorted(ACTIVATIONS)))
-            )
-        if self.learning_rate not in ["constant", "invscaling", "adaptive"]:
-            raise ValueError("learning rate %s is not supported. " % self.learning_rate)
-        supported_solvers = _STOCHASTIC_SOLVERS + ["lbfgs"]
-        if self.solver not in supported_solvers:
-            raise ValueError(
-                "The solver %s is not supported.  Expected one of: %s"
-                % (self.solver, ", ".join(supported_solvers))
-            )
 
     def _fit_lbfgs(
         self, X, y, activations, deltas, coef_grads, intercept_grads, layer_units
@@ -617,7 +590,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         if self.batch_size == "auto":
             batch_size = min(200, n_samples)
         else:
-            if self.batch_size < 1 or self.batch_size > n_samples:
+            if self.batch_size > n_samples:
                 warnings.warn(
                     "Got `batch_size` less than 1 or larger than "
                     "sample size. It is going to be clipped"
@@ -759,6 +732,8 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         self : object
             Returns a trained MLP model.
         """
+        self._validate_params()
+
         return self._fit(X, y, incremental=False)
 
     def _check_solver(self):
@@ -769,25 +744,6 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
                 % self.solver
             )
         return True
-
-    @available_if(_check_solver)
-    def partial_fit(self, X, y):
-        """Update the model with a single iteration over the given data.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            The input data.
-
-        y : ndarray of shape (n_samples,)
-            The target values.
-
-        Returns
-        -------
-        self : object
-            Trained MLP model.
-        """
-        return self._fit(X, y, incremental=True)
 
 
 class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
@@ -800,7 +756,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
 
     Parameters
     ----------
-    hidden_layer_sizes : tuple, length = n_layers - 2, default=(100,)
+    hidden_layer_sizes : array-like of shape(n_layers - 2,), default=(100,)
         The ith element represents the number of neurons in the ith
         hidden layer.
 
@@ -1205,6 +1161,9 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         self : object
             Trained MLP model.
         """
+        if not hasattr(self, "coefs_"):
+            self._validate_params()
+
         if _check_partial_fit_first_call(self, classes):
             self._label_binarizer = LabelBinarizer()
             if type_of_target(y).startswith("multilabel"):
@@ -1212,9 +1171,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
             else:
                 self._label_binarizer.fit(classes)
 
-        super().partial_fit(X, y)
-
-        return self
+        return self._fit(X, y, incremental=True)
 
     def predict_log_proba(self, X):
         """Return the log of probability estimates.
@@ -1273,7 +1230,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
 
     Parameters
     ----------
-    hidden_layer_sizes : tuple, length = n_layers - 2, default=(100,)
+    hidden_layer_sizes : array-like of shape(n_layers - 2,), default=(100,)
         The ith element represents the number of neurons in the ith
         hidden layer.
 
@@ -1606,3 +1563,25 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         if y.ndim == 2 and y.shape[1] == 1:
             y = column_or_1d(y, warn=True)
         return X, y
+
+    @available_if(lambda est: est._check_solver)
+    def partial_fit(self, X, y):
+        """Update the model with a single iteration over the given data.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            The input data.
+
+        y : ndarray of shape (n_samples,)
+            The target values.
+
+        Returns
+        -------
+        self : object
+            Trained MLP model.
+        """
+        if not hasattr(self, "coefs_"):
+            self._validate_params()
+
+        return self._fit(X, y, incremental=True)
