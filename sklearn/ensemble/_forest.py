@@ -694,7 +694,7 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
     instead.
     """
 
-    _parameter_constraits = {
+    _parameter_constraints = {
         **_FOREST_PARAMS,
     }
 
@@ -959,7 +959,7 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
     instead.
     """
 
-    _parameter_constraits = {
+    _parameter_constraints = {
         **_FOREST_PARAMS,
     }
 
@@ -1397,11 +1397,11 @@ class RandomForestClassifier(ForestClassifier):
     [1]
     """
 
-    _parameter_constraits = {
-        **ForestClassifier._parameter_constraits,
+    _parameter_constraints = {
+        **ForestClassifier._parameter_constraints,
         **DecisionTreeClassifier._parameter_constraints,
     }
-    _parameter_constraits.pop("splitter")
+    _parameter_constraints.pop("splitter")
 
     def __init__(
         self,
@@ -1739,11 +1739,11 @@ class RandomForestRegressor(ForestRegressor):
     [-8.32987858]
     """
 
-    _parameter_constraits = {
-        **ForestRegressor._parameter_constraits,
+    _parameter_constraints = {
+        **ForestRegressor._parameter_constraints,
         **DecisionTreeRegressor._parameter_constraints,
     }
-    _parameter_constraits.pop("splitter")
+    _parameter_constraints.pop("splitter")
 
     def __init__(
         self,
@@ -2080,11 +2080,11 @@ class ExtraTreesClassifier(ForestClassifier):
     array([1])
     """
 
-    _parameter_constraits = {
-        **ForestClassifier._parameter_constraits,
+    _parameter_constraints = {
+        **ForestClassifier._parameter_constraints,
         **DecisionTreeClassifier._parameter_constraints,
     }
-    _parameter_constraits.pop("splitter")
+    _parameter_constraints.pop("splitter")
 
     def __init__(
         self,
@@ -2409,11 +2409,11 @@ class ExtraTreesRegressor(ForestRegressor):
     0.2727...
     """
 
-    _parameter_constraits = {
-        **ForestRegressor._parameter_constraits,
+    _parameter_constraints = {
+        **ForestRegressor._parameter_constraints,
         **DecisionTreeRegressor._parameter_constraints,
     }
-    _parameter_constraits.pop("splitter")
+    _parameter_constraints.pop("splitter")
 
     def __init__(
         self,
