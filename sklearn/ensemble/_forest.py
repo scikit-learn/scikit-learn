@@ -1399,8 +1399,8 @@ class RandomForestClassifier(ForestClassifier):
     """
 
     _parameter_constraints = {
-        **ForestClassifier._parameter_constraints,
         **DecisionTreeClassifier._parameter_constraints,
+        **ForestClassifier._parameter_constraints,
         "class_weight": [
             dict,
             list,
