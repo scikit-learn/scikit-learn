@@ -2663,13 +2663,15 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
     """
 
     _parameter_constraints = {
-        **_FOREST_PARAMS,
+        "n_estimators": [Interval(Integral, 1, None, closed="left")],
+        "n_jobs": [Integral, None],
+        "verbose": ["verbose"],
+        "warm_start": ["boolean"],
         **DecisionTreeRegressor._parameter_constraints,
         "sparse_output": ["boolean"],
     }
-    for x in ("splitter", "criterion", "max_features", "oob_score"):
+    for x in ("max_features", "ccp_alpha", "criterion", "splitter"):
         _parameter_constraints.pop(x)
-
     criterion = "squared_error"
     max_features = 1
 
@@ -2749,7 +2751,6 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
         self.fit_transform(X, y, sample_weight=sample_weight)
         return self
 
@@ -2778,6 +2779,7 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
         X_transformed : sparse matrix of shape (n_samples, n_out)
             Transformed dataset.
         """
+        self._validate_params()
         rnd = check_random_state(self.random_state)
         y = rnd.uniform(size=_num_samples(X))
         super().fit(X, y, sample_weight=sample_weight)
