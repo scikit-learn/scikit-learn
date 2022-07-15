@@ -75,7 +75,6 @@ from ..utils.validation import (
 from ..utils.validation import _num_samples
 from numbers import Integral, Real
 from ..utils._param_validation import Interval
-from ..utils._param_validation import StrOptions
 
 __all__ = [
     "RandomForestClassifier",
@@ -2083,27 +2082,9 @@ class ExtraTreesClassifier(ForestClassifier):
 
     _parameter_constraits = {
         **ForestClassifier._parameter_constraits,
-        "criterion": [StrOptions({"gini", "entropy", "log_loss"})],
-        "max_depth": [None, Interval(Integral, 1, None, closed="left")],
-        "min_samples_split": [
-            Interval(Integral, 2, None, closed="left"),
-            Interval(Real, 0.0, 1.0, closed="right"),
-        ],
-        "min_samples_leaf": [
-            Interval(Integral, 1, None, closed="left"),
-            Interval(Real, 0.0, 1.0),
-        ],
-        "min_weight_fraction_leaf": [Interval(Real, 0.0, 0.5, closed="both")],
-        "max_features": [
-            StrOptions({"sqrt", "log2"}, depricated={"auto"}),
-            Interval(Integral, 1, None, closed="left"),
-            Interval(Real, 0.0, 1.0, closed="right"),
-            None,
-        ],
-        "max_leaf_nodes": [Interval(Integral, 2, None, closed="left"), None],
-        "min_impurity_decrease": [Interval(Real, 0.0, None, closed="left")],
-        "ccp_alpha": [Interval(Real, 0.0, None, closed="left")],
+        **DecisionTreeClassifier._parameter_constraints,
     }
+    _parameter_constraits.pop("splitter")
 
     def __init__(
         self,
