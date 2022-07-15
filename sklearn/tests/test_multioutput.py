@@ -179,22 +179,6 @@ def test_multi_output_classification_partial_fit_parallelism():
         assert est1 is not est2
 
 
-# check multioutput has predict_proba
-def test_hasattr_multi_output_predict_proba():
-    # default SGDClassifier has loss='hinge'
-    # which does not expose a predict_proba method
-    sgd_linear_clf = SGDClassifier(random_state=1, max_iter=5)
-    multi_target_linear = MultiOutputClassifier(sgd_linear_clf)
-    multi_target_linear.fit(X, y)
-    assert not hasattr(multi_target_linear, "predict_proba")
-
-    # case where predict_proba attribute exists
-    sgd_linear_clf = SGDClassifier(loss="log_loss", random_state=1, max_iter=5)
-    multi_target_linear = MultiOutputClassifier(sgd_linear_clf)
-    multi_target_linear.fit(X, y)
-    assert hasattr(multi_target_linear, "predict_proba")
-
-
 # check predict_proba passes
 def test_multi_output_predict_proba():
     sgd_linear_clf = SGDClassifier(random_state=1, max_iter=5, loss="log_loss")
@@ -214,15 +198,6 @@ def test_multi_output_predict_proba():
     multi_target_linear.fit(X, y)
 
     multi_target_linear.predict_proba(X)
-
-    # SGDClassifier defaults to loss='hinge' which is not a probabilistic
-    # loss function; therefore it does not expose a predict_proba method
-    sgd_linear_clf = SGDClassifier(random_state=1, max_iter=5)
-    multi_target_linear = MultiOutputClassifier(sgd_linear_clf)
-    multi_target_linear.fit(X, y)
-    err_msg = "probability estimates are not available for loss='hinge'"
-    with pytest.raises(AttributeError, match=err_msg):
-        multi_target_linear.predict_proba(X)
 
 
 def test_multi_output_classification_partial_fit():
@@ -295,8 +270,8 @@ def test_multi_output_classification():
 
 def test_multiclass_multioutput_estimator():
     # test to check meta of meta estimators
-    svc = LinearSVC(random_state=0)
-    multi_class_svc = OneVsRestClassifier(svc)
+    lr = LogisticRegression()
+    multi_class_svc = OneVsRestClassifier(lr)
     multi_target_svc = MultiOutputClassifier(multi_class_svc)
 
     multi_target_svc.fit(X, y)
@@ -378,45 +353,6 @@ def test_multi_output_classification_sample_weights():
     assert_almost_equal(clf.predict(X_test), clf_w.predict(X_test))
 
 
-def test_multi_output_classification_partial_fit_sample_weights():
-    # weighted classifier
-    Xw = [[1, 2, 3], [4, 5, 6], [1.5, 2.5, 3.5]]
-    yw = [[3, 2], [2, 3], [3, 2]]
-    w = np.asarray([2.0, 1.0, 1.0])
-    sgd_linear_clf = SGDClassifier(random_state=1, max_iter=20)
-    clf_w = MultiOutputClassifier(sgd_linear_clf)
-    clf_w.fit(Xw, yw, w)
-
-    # unweighted, but with repeated samples
-    X = [[1, 2, 3], [1, 2, 3], [4, 5, 6], [1.5, 2.5, 3.5]]
-    y = [[3, 2], [3, 2], [2, 3], [3, 2]]
-    sgd_linear_clf = SGDClassifier(random_state=1, max_iter=20)
-    clf = MultiOutputClassifier(sgd_linear_clf)
-    clf.fit(X, y)
-    X_test = [[1.5, 2.5, 3.5]]
-    assert_array_almost_equal(clf.predict(X_test), clf_w.predict(X_test))
-
-
-def test_multi_output_exceptions():
-    # NotFittedError when fit is not done but score, predict and
-    # and predict_proba are called
-    moc = MultiOutputClassifier(LinearSVC(random_state=0))
-    with pytest.raises(NotFittedError):
-        moc.score(X, y)
-
-    # ValueError when number of outputs is different
-    # for fit and score
-    y_new = np.column_stack((y1, y2))
-    moc.fit(X, y)
-    with pytest.raises(ValueError):
-        moc.score(X, y_new)
-
-    # ValueError when y is continuous
-    msg = "Unknown label type"
-    with pytest.raises(ValueError, match=msg):
-        moc.fit(X, X[:, 1])
-
-
 @pytest.mark.parametrize("response_method", ["predict_proba", "predict"])
 def test_multi_output_not_fitted_error(response_method):
     """Check that we raise the proper error when the estimator is not fitted"""
@@ -434,17 +370,6 @@ def test_multi_output_delegate_predict_proba():
     assert hasattr(moc, "predict_proba")
     moc.fit(X, y)
     assert hasattr(moc, "predict_proba")
-
-    # A base estimator without `predict_proba` should raise an AttributeError
-    moc = MultiOutputClassifier(LinearSVC())
-    assert not hasattr(moc, "predict_proba")
-    msg = "'LinearSVC' object has no attribute 'predict_proba'"
-    with pytest.raises(AttributeError, match=msg):
-        moc.predict_proba(X)
-    moc.fit(X, y)
-    assert not hasattr(moc, "predict_proba")
-    with pytest.raises(AttributeError, match=msg):
-        moc.predict_proba(X)
 
 
 def generate_multilabel_dataset_with_correlations():

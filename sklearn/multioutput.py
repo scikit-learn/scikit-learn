@@ -13,6 +13,7 @@ extends single output estimators to multioutput estimators.
 # Author: James Ashton Nichols <james.ashton.nichols@gmail.com>
 #
 # License: BSD 3 clause
+from numbers import Integral
 
 import numpy as np
 import scipy.sparse as sp
@@ -27,6 +28,7 @@ from .utils import check_random_state
 from .utils.validation import check_is_fitted, has_fit_parameter, _check_fit_params
 from .utils.multiclass import check_classification_targets
 from .utils.fixes import delayed
+from .utils._param_validation import HasMethods
 
 __all__ = [
     "MultiOutputRegressor",
@@ -79,6 +81,8 @@ def _available_if_estimator_has(attr):
 
 
 class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
+    _parameter_constraints = {"n_jobs": [Integral, None]}
+
     @abstractmethod
     def __init__(self, estimator, *, n_jobs=None):
         self.estimator = estimator
@@ -115,6 +119,9 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
         self : object
             Returns a fitted instance.
         """
+
+        self._validate_params()
+
         first_time = not hasattr(self, "estimators_")
         y = self._validate_data(X="no_validation", y=y, multi_output=True)
 
@@ -177,6 +184,8 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
         self : object
             Returns a fitted instance.
         """
+
+        self._validate_params()
 
         if not hasattr(self.estimator, "fit"):
             raise ValueError("The base estimator should implement a fit method")
@@ -307,6 +316,11 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
     array([[176..., 35..., 57...]])
     """
 
+    _parameter_constraints = {
+        **_MultiOutputEstimator._parameter_constraints,
+        "estimator": [HasMethods(["fit", "predict"])],
+    }
+
     def __init__(self, estimator, *, n_jobs=None):
         super().__init__(estimator, n_jobs=n_jobs)
 
@@ -402,6 +416,11 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
     array([[1, 1, 1],
            [1, 0, 1]])
     """
+
+    _parameter_constraints = {
+        **_MultiOutputEstimator._parameter_constraints,
+        "estimator": [HasMethods(["fit", "score", "predict_proba"])],
+    }
 
     def __init__(self, estimator, *, n_jobs=None):
         super().__init__(estimator, n_jobs=n_jobs)

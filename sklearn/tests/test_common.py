@@ -491,8 +491,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "LocallyLinearEmbedding",
     "MinCovDet",
     "MiniBatchDictionaryLearning",
-    "MultiOutputClassifier",
-    "MultiOutputRegressor",
     "MultiTaskElasticNet",
     "MultiTaskElasticNetCV",
     "MultiTaskLasso",
