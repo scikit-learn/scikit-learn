@@ -1015,7 +1015,7 @@ def paired_euclidean_distances(X, Y):
 
 
 def paired_manhattan_distances(X, Y):
-    """Compute the L1 distances between X and Y.
+    """Compute the paired L1 distances between X and Y.
 
     Distances are calculated between (X[0], Y[0]), (X[1], Y[1]), ... .
 
@@ -1040,7 +1040,7 @@ def paired_manhattan_distances(X, Y):
     >>> from sklearn.metrics.pairwise import paired_manhattan_distances
     >>> import numpy as np
     >>> X = np.array([[1, 1, 0], [0, 1, 0], [0, 0, 1]])
-    >>> Y = np.eye(3, k=1)
+    >>> Y = np.array([[0, 1, 0], [0, 0, 1], [0, 0, 0]])
     >>> paired_manhattan_distances(X, Y)
     array([1., 2., 1.])
     """
