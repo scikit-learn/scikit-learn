@@ -73,7 +73,9 @@ from ..utils.validation import (
     _check_feature_names_in,
 )
 from ..utils.validation import _num_samples
-
+from numbers import Integral, Real
+from ..utils._param_validation import Interval
+from ..utils._param_validation import StrOptions
 
 __all__ = [
     "RandomForestClassifier",
@@ -82,6 +84,20 @@ __all__ = [
     "ExtraTreesRegressor",
     "RandomTreesEmbedding",
 ]
+
+_FOREST_PARAMS = {
+    "n_estimators": [Interval(Integral, 1, None, closed="left")],
+    "oob_score": ["boolean"],
+    "bootstrap": ["boolean"],
+    "n_jobs": [Integral, None],
+    "verbose": ["verbose"],
+    "warm_start": ["boolean"],
+    "max_samples": [
+        None,
+        Interval(Real, 0.0, 1.0, closed="right"),
+        Interval(Integral, 1, None, closed="left"),
+    ],
+}
 
 MAX_INT = np.iinfo(np.int32).max
 
@@ -325,6 +341,8 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         self : object
             Fitted estimator.
         """
+
+        self._validate_params()
         # Validate or convert input data
         if issparse(y):
             raise ValueError("sparse multilabel-indicator for y is not supported.")
@@ -392,7 +410,6 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         else:
             n_samples_bootstrap = None
 
-        # Check parameters
         self._validate_estimator()
         # TODO(1.2): Remove "mse" and "mae"
         if isinstance(self, (RandomForestRegressor, ExtraTreesRegressor)):
@@ -678,6 +695,10 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
     instead.
     """
 
+    _parameter_constraits = {
+        **_FOREST_PARAMS,
+    }
+
     @abstractmethod
     def __init__(
         self,
@@ -938,6 +959,10 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
     Warning: This class should not be used directly. Use derived classes
     instead.
     """
+
+    _parameter_constraits = {
+        **_FOREST_PARAMS,
+    }
 
     @abstractmethod
     def __init__(
@@ -1373,6 +1398,12 @@ class RandomForestClassifier(ForestClassifier):
     [1]
     """
 
+    _parameter_constraits = {
+        **ForestClassifier._parameter_constraits,
+        **DecisionTreeClassifier._parameter_constraints,
+    }
+    _parameter_constraits.pop("splitter")
+
     def __init__(
         self,
         n_estimators=100,
@@ -1453,13 +1484,16 @@ class RandomForestRegressor(ForestRegressor):
            The default value of ``n_estimators`` changed from 10 to 100
            in 0.22.
 
-    criterion : {"squared_error", "absolute_error", "poisson"}, \
+    criterion : {"squared_error", "absolute_error", "friedman_mse", "poisson"}, \
             default="squared_error"
         The function to measure the quality of a split. Supported criteria
         are "squared_error" for the mean squared error, which is equal to
-        variance reduction as feature selection criterion, "absolute_error"
-        for the mean absolute error, and "poisson" which uses reduction in
-        Poisson deviance to find splits.
+        variance reduction as feature selection criterion and minimizes the L2
+        loss using the mean of each terminal node, "friedman_mse", which uses
+        mean squared error with Friedman's improvement score for potential
+        splits, "absolute_error" for the mean absolute error, which minimizes
+        the L1 loss using the median of each terminal node, and "poisson" which
+        uses reduction in Poisson deviance to find splits.
         Training using "absolute_error" is significantly slower
         than when using "squared_error".
 
@@ -1705,6 +1739,12 @@ class RandomForestRegressor(ForestRegressor):
     >>> print(regr.predict([[0, 0, 0, 0]]))
     [-8.32987858]
     """
+
+    _parameter_constraits = {
+        **ForestRegressor._parameter_constraits,
+        **DecisionTreeRegressor._parameter_constraints,
+    }
+    _parameter_constraits.pop("splitter")
 
     def __init__(
         self,
@@ -2041,6 +2081,30 @@ class ExtraTreesClassifier(ForestClassifier):
     array([1])
     """
 
+    _parameter_constraits = {
+        **ForestClassifier._parameter_constraits,
+        "criterion": [StrOptions({"gini", "entropy", "log_loss"})],
+        "max_depth": [None, Interval(Integral, 1, None, closed="left")],
+        "min_samples_split": [
+            Interval(Integral, 2, None, closed="left"),
+            Interval(Real, 0.0, 1.0, closed="right"),
+        ],
+        "min_samples_leaf": [
+            Interval(Integral, 1, None, closed="left"),
+            Interval(Real, 0.0, 1.0),
+        ],
+        "min_weight_fraction_leaf": [Interval(Real, 0.0, 0.5, closed="both")],
+        "max_features": [
+            StrOptions({"sqrt", "log2"}, depricated={"auto"}),
+            Interval(Integral, 1, None, closed="left"),
+            Interval(Real, 0.0, 1.0, closed="right"),
+            None,
+        ],
+        "max_leaf_nodes": [Interval(Integral, 2, None, closed="left"), None],
+        "min_impurity_decrease": [Interval(Real, 0.0, None, closed="left")],
+        "ccp_alpha": [Interval(Real, 0.0, None, closed="left")],
+    }
+
     def __init__(
         self,
         n_estimators=100,
@@ -2119,11 +2183,18 @@ class ExtraTreesRegressor(ForestRegressor):
            The default value of ``n_estimators`` changed from 10 to 100
            in 0.22.
 
-    criterion : {"squared_error", "absolute_error"}, default="squared_error"
+    criterion : {"squared_error", "absolute_error", "friedman_mse", "poisson"}, \
+            default="squared_error"
         The function to measure the quality of a split. Supported criteria
         are "squared_error" for the mean squared error, which is equal to
-        variance reduction as feature selection criterion, and "absolute_error"
-        for the mean absolute error.
+        variance reduction as feature selection criterion and minimizes the L2
+        loss using the mean of each terminal node, "friedman_mse", which uses
+        mean squared error with Friedman's improvement score for potential
+        splits, "absolute_error" for the mean absolute error, which minimizes
+        the L1 loss using the median of each terminal node, and "poisson" which
+        uses reduction in Poisson deviance to find splits.
+        Training using "absolute_error" is significantly slower
+        than when using "squared_error".
 
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
@@ -2356,6 +2427,12 @@ class ExtraTreesRegressor(ForestRegressor):
     >>> reg.score(X_test, y_test)
     0.2727...
     """
+
+    _parameter_constraits = {
+        **ForestRegressor._parameter_constraits,
+        **DecisionTreeRegressor._parameter_constraints,
+    }
+    _parameter_constraits.pop("splitter")
 
     def __init__(
         self,
