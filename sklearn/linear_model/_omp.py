@@ -19,8 +19,7 @@ from ._base import LinearModel, _pre_fit, _deprecate_normalize
 from ..base import RegressorMixin, MultiOutputMixin
 from ..utils import as_float_array, check_array
 from ..utils.fixes import delayed
-from ..utils._param_validation import Hidden, Interval, StrOptions
-from ..model_selection import BaseCrossValidator
+from ..utils._param_validation import HasMethods, Hidden, Interval, StrOptions
 from ..model_selection import check_cv
 
 premature = (
@@ -1007,12 +1006,12 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         "max_iter": [Interval(Integral, 0, None, closed="left"), None],
         "cv": [
             Interval(Integral, 2, None, closed="left"),
-            BaseCrossValidator,
+            HasMethods(["split", "get_n_splits"]),
             Iterable,
             None,
         ],
         "n_jobs": [Integral, None],
-        "verbose": ["boolean", Integral],
+        "verbose": ["verbose"],
     }
 
     def __init__(
