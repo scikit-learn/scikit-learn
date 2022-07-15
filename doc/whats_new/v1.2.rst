@@ -128,7 +128,7 @@ Changelog
 - |Enhancement| :class:`decomposition.SparsePCA` and
   :class:`decomposition.MiniBatchSparsePCA` now implements an `inverse_transform`
   function.
-  :pr:`xxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`23905` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.decomposition`
 ............................
