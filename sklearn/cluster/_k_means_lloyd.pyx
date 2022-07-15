@@ -4,8 +4,6 @@
 # fused types and when the array may be read-only (for instance when it's
 # provided by the user). This is fixed in cython > 0.3.
 
-import numpy as np
-cimport numpy as np
 IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
     cimport openmp
 from cython cimport floating
@@ -21,9 +19,6 @@ from ._k_means_common import CHUNK_SIZE
 from ._k_means_common cimport _relocate_empty_clusters_dense
 from ._k_means_common cimport _relocate_empty_clusters_sparse
 from ._k_means_common cimport _average_centers, _center_shift
-
-
-np.import_array()
 
 
 def lloyd_iter_chunked_dense(

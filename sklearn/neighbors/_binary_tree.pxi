@@ -142,7 +142,7 @@
 #                                   BinaryTree tree2, ITYPE_t i_node2):
 #     """Compute the maximum distance between two nodes"""
 
-cimport numpy as np
+cimport numpy as cnp
 from libc.math cimport fabs, sqrt, exp, cos, pow, log, lgamma
 from libc.math cimport fmin, fmax
 from libc.stdlib cimport calloc, malloc, free
@@ -167,9 +167,9 @@ from ..utils._heap cimport heap_push
 from ..utils._sorting cimport simultaneous_sort as _simultaneous_sort
 
 cdef extern from "numpy/arrayobject.h":
-    void PyArray_ENABLEFLAGS(np.ndarray arr, int flags)
+    void PyArray_ENABLEFLAGS(cnp.ndarray arr, int flags)
 
-np.import_array()
+cnp.import_array()
 
 # some handy constants
 cdef DTYPE_t INF = np.inf
@@ -509,8 +509,8 @@ cdef class NeighborsHeap:
     n_nbrs : int
         the size of each heap.
     """
-    cdef np.ndarray distances_arr
-    cdef np.ndarray indices_arr
+    cdef cnp.ndarray distances_arr
+    cdef cnp.ndarray indices_arr
 
     cdef DTYPE_t[:, ::1] distances
     cdef ITYPE_t[:, ::1] indices
@@ -641,7 +641,7 @@ cdef class NodeHeap:
 
         heap[i].val < min(heap[2 * i + 1].val, heap[2 * i + 2].val)
     """
-    cdef np.ndarray data_arr
+    cdef cnp.ndarray data_arr
     cdef NodeHeapData_t[::1] data
     cdef ITYPE_t n
 
@@ -662,7 +662,7 @@ cdef class NodeHeap:
         cdef NodeHeapData_t *new_data_ptr
         cdef ITYPE_t i
         cdef ITYPE_t size = self.data.shape[0]
-        cdef np.ndarray new_data_arr = np.zeros(new_size,
+        cdef cnp.ndarray new_data_arr = np.zeros(new_size,
                                                 dtype=NodeHeapData)
         cdef NodeHeapData_t[::1] new_data = new_data_arr
 
@@ -767,11 +767,11 @@ VALID_METRIC_IDS = get_valid_metric_ids(VALID_METRICS)
 # Binary Tree class
 cdef class BinaryTree:
 
-    cdef np.ndarray data_arr
-    cdef np.ndarray sample_weight_arr
-    cdef np.ndarray idx_array_arr
-    cdef np.ndarray node_data_arr
-    cdef np.ndarray node_bounds_arr
+    cdef cnp.ndarray data_arr
+    cdef cnp.ndarray sample_weight_arr
+    cdef cnp.ndarray idx_array_arr
+    cdef cnp.ndarray node_data_arr
+    cdef cnp.ndarray node_bounds_arr
 
     cdef readonly const DTYPE_t[:, ::1] data
     cdef readonly const DTYPE_t[::1] sample_weight
@@ -1336,16 +1336,16 @@ cdef class BinaryTree:
                 distances_npy = np.zeros(Xarr.shape[0], dtype='object')
                 for i in range(Xarr.shape[0]):
                     # make a new numpy array that wraps the existing data
-                    indices_npy[i] = np.PyArray_SimpleNewFromData(1, &counts[i], np.NPY_INTP, indices[i])
+                    indices_npy[i] = cnp.PyArray_SimpleNewFromData(1, &counts[i], cnp.NPY_INTP, indices[i])
                     # make sure the data will be freed when the numpy array is garbage collected
-                    PyArray_ENABLEFLAGS(indices_npy[i], np.NPY_OWNDATA)
+                    PyArray_ENABLEFLAGS(indices_npy[i], cnp.NPY_OWNDATA)
                     # make sure the data is not freed twice
                     indices[i] = NULL
 
                     # make a new numpy array that wraps the existing data
-                    distances_npy[i] = np.PyArray_SimpleNewFromData(1, &counts[i], np.NPY_DOUBLE, distances[i])
+                    distances_npy[i] = cnp.PyArray_SimpleNewFromData(1, &counts[i], cnp.NPY_DOUBLE, distances[i])
                     # make sure the data will be freed when the numpy array is garbage collected
-                    PyArray_ENABLEFLAGS(distances_npy[i], np.NPY_OWNDATA)
+                    PyArray_ENABLEFLAGS(distances_npy[i], cnp.NPY_OWNDATA)
                     # make sure the data is not freed twice
                     distances[i] = NULL
 
@@ -1356,9 +1356,9 @@ cdef class BinaryTree:
                 indices_npy = np.zeros(Xarr.shape[0], dtype='object')
                 for i in range(Xarr.shape[0]):
                     # make a new numpy array that wraps the existing data
-                    indices_npy[i] = np.PyArray_SimpleNewFromData(1, &counts[i], np.NPY_INTP, indices[i])
+                    indices_npy[i] = cnp.PyArray_SimpleNewFromData(1, &counts[i], cnp.NPY_INTP, indices[i])
                     # make sure the data will be freed when the numpy array is garbage collected
-                    PyArray_ENABLEFLAGS(indices_npy[i], np.NPY_OWNDATA)
+                    PyArray_ENABLEFLAGS(indices_npy[i], cnp.NPY_OWNDATA)
                     # make sure the data is not freed twice
                     indices[i] = NULL
 

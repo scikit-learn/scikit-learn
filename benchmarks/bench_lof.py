@@ -44,9 +44,9 @@ for dataset_name in datasets:
         y = dataset.target
 
     if dataset_name == "shuttle":
-        dataset = fetch_openml("shuttle")
+        dataset = fetch_openml("shuttle", as_frame=False, parser="pandas")
         X = dataset.data
-        y = dataset.target
+        y = dataset.target.astype(np.int64)
         # we remove data with label 4
         # normal data are then those of class 1
         s = y != 4

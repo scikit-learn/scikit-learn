@@ -28,6 +28,7 @@ The main theoretical result behind the efficiency of random projection is the
 
 import warnings
 from abc import ABCMeta, abstractmethod
+from numbers import Integral, Real
 
 import numpy as np
 from scipy import linalg
@@ -37,6 +38,7 @@ from .base import BaseEstimator, TransformerMixin
 from .base import _ClassNamePrefixFeaturesOutMixin
 
 from .utils import check_random_state
+from .utils._param_validation import Interval, StrOptions
 from .utils.extmath import safe_sparse_dot
 from .utils.random import sample_without_replacement
 from .utils.validation import check_array, check_is_fitted
@@ -250,7 +252,7 @@ def _sparse_random_matrix(n_components, n_features, density="auto", random_state
            https://web.stanford.edu/~hastie/Papers/Ping/KDD06_rp.pdf
 
     .. [2] D. Achlioptas, 2001, "Database-friendly random projections",
-           http://www.cs.ucsc.edu/~optas/papers/jl.pdf
+           https://cgi.di.uoa.gr/~optas/papers/jl.pdf
 
     """
     _check_input_size(n_components, n_features)
@@ -298,6 +300,16 @@ class BaseRandomProjection(
     Warning: This class should not be used directly.
     Use derived classes instead.
     """
+
+    _parameter_constraints = {
+        "n_components": [
+            Interval(Integral, 1, None, closed="left"),
+            StrOptions({"auto"}),
+        ],
+        "eps": [Interval(Real, 0, None, closed="neither")],
+        "compute_inverse_components": ["boolean"],
+        "random_state": ["random_state"],
+    }
 
     @abstractmethod
     def __init__(
@@ -357,6 +369,7 @@ class BaseRandomProjection(
         self : object
             BaseRandomProjection class instance.
         """
+        self._validate_params()
         X = self._validate_data(
             X, accept_sparse=["csr", "csc"], dtype=[np.float64, np.float32]
         )
@@ -382,12 +395,7 @@ class BaseRandomProjection(
                     % (self.eps, n_samples, self.n_components_, n_features)
                 )
         else:
-            if self.n_components <= 0:
-                raise ValueError(
-                    "n_components must be greater than 0, got %s" % self.n_components
-                )
-
-            elif self.n_components > n_features:
+            if self.n_components > n_features:
                 warnings.warn(
                     "The number of components is higher than the number of"
                     " features: n_features < n_components (%s < %s)."
@@ -710,7 +718,7 @@ class SparseRandomProjection(BaseRandomProjection):
            https://web.stanford.edu/~hastie/Papers/Ping/KDD06_rp.pdf
 
     .. [2] D. Achlioptas, 2001, "Database-friendly random projections",
-           https://users.soe.ucsc.edu/~optas/papers/jl.pdf
+           https://cgi.di.uoa.gr/~optas/papers/jl.pdf
 
     Examples
     --------
@@ -726,6 +734,12 @@ class SparseRandomProjection(BaseRandomProjection):
     >>> np.mean(transformer.components_ != 0)
     0.0182...
     """
+
+    _parameter_constraints = {
+        **BaseRandomProjection._parameter_constraints,
+        "density": [Interval(Real, 0.0, 1.0, closed="right"), StrOptions({"auto"})],
+        "dense_output": ["boolean"],
+    }
 
     def __init__(
         self,

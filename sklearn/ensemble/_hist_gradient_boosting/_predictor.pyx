@@ -4,7 +4,6 @@ cimport cython
 from cython.parallel import prange
 from libc.math cimport isnan
 import numpy as np
-cimport numpy as np
 from numpy.math cimport INFINITY
 
 from .common cimport X_DTYPE_C
@@ -15,8 +14,6 @@ from .common cimport BITSET_INNER_DTYPE_C
 from .common cimport BITSET_DTYPE_C
 from .common cimport node_struct
 from ._bitset cimport in_bitset_2d_memoryview
-
-np.import_array()
 
 
 def _predict_from_raw_data(  # raw data = non-binned data

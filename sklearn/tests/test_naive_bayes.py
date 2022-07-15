@@ -5,6 +5,8 @@ import scipy.sparse
 import pytest
 import warnings
 
+from scipy.special import logsumexp
+
 from sklearn.datasets import load_digits, load_iris
 
 from sklearn.model_selection import train_test_split
@@ -13,6 +15,7 @@ from sklearn.model_selection import cross_val_score
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_allclose
 
 from sklearn.naive_bayes import GaussianNB, BernoulliNB
 from sklearn.naive_bayes import MultinomialNB, ComplementNB
@@ -779,9 +782,7 @@ def test_categoricalnb_with_min_categories(
 @pytest.mark.parametrize(
     "min_categories, error_msg",
     [
-        ("bad_arg", "'min_categories' should have integral"),
         ([[3, 2], [2, 4]], "'min_categories' should have shape"),
-        (1.0, "'min_categories' should have integral"),
     ],
 )
 def test_categoricalnb_min_categories_errors(min_categories, error_msg):
@@ -835,29 +836,6 @@ def test_alpha():
     prob = np.array([[2.0 / 3, 1.0 / 3], [0, 1]])
     assert_array_almost_equal(nb.predict_proba(X), prob)
 
-    # Test for alpha < 0
-    X = np.array([[1, 0], [1, 1]])
-    y = np.array([0, 1])
-    expected_msg = re.escape(
-        "Smoothing parameter alpha = -1.0e-01. alpha should be > 0."
-    )
-    b_nb = BernoulliNB(alpha=-0.1)
-    m_nb = MultinomialNB(alpha=-0.1)
-    c_nb = CategoricalNB(alpha=-0.1)
-    with pytest.raises(ValueError, match=expected_msg):
-        b_nb.fit(X, y)
-    with pytest.raises(ValueError, match=expected_msg):
-        m_nb.fit(X, y)
-    with pytest.raises(ValueError, match=expected_msg):
-        c_nb.fit(X, y)
-
-    b_nb = BernoulliNB(alpha=-0.1)
-    m_nb = MultinomialNB(alpha=-0.1)
-    with pytest.raises(ValueError, match=expected_msg):
-        b_nb.partial_fit(X, y, classes=[0, 1])
-    with pytest.raises(ValueError, match=expected_msg):
-        m_nb.partial_fit(X, y, classes=[0, 1])
-
 
 def test_alpha_vector():
     X = np.array([[1, 0], [1, 1]])
@@ -880,7 +858,7 @@ def test_alpha_vector():
     # Test alpha non-negative
     alpha = np.array([1.0, -0.1])
     m_nb = MultinomialNB(alpha=alpha)
-    expected_msg = "Smoothing parameter alpha = -1.0e-01. alpha should be > 0."
+    expected_msg = "All values in alpha must be greater than 0."
     with pytest.raises(ValueError, match=expected_msg):
         m_nb.fit(X, y)
 
@@ -894,9 +872,7 @@ def test_alpha_vector():
     # Test correct dimensions
     alpha = np.array([1.0, 2.0, 3.0])
     m_nb = MultinomialNB(alpha=alpha)
-    expected_msg = re.escape(
-        "alpha should be a scalar or a numpy array with shape [n_features]"
-    )
+    expected_msg = "When alpha is an array, it should contains `n_features`"
     with pytest.raises(ValueError, match=expected_msg):
         m_nb.fit(X, y)
 
@@ -945,3 +921,12 @@ def test_n_features_deprecation(Estimator):
 
     with pytest.warns(FutureWarning, match="`n_features_` was deprecated"):
         est.n_features_
+
+
+@pytest.mark.parametrize("Estimator", ALL_NAIVE_BAYES_CLASSES)
+def test_predict_joint_proba(Estimator):
+    est = Estimator().fit(X2, y2)
+    jll = est.predict_joint_log_proba(X2)
+    log_prob_x = logsumexp(jll, axis=1)
+    log_prob_x_y = jll - np.atleast_2d(log_prob_x).T
+    assert_allclose(est.predict_log_proba(X2), log_prob_x_y)
