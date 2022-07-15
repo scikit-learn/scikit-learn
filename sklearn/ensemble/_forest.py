@@ -75,6 +75,7 @@ from ..utils.validation import (
 from ..utils.validation import _num_samples
 from numbers import Integral, Real
 from ..utils._param_validation import Interval
+from ..utils._param_validation import StrOptions
 
 __all__ = [
     "RandomForestClassifier",
@@ -1400,6 +1401,12 @@ class RandomForestClassifier(ForestClassifier):
     _parameter_constraints = {
         **ForestClassifier._parameter_constraints,
         **DecisionTreeClassifier._parameter_constraints,
+        "class_weight": [
+            dict,
+            list,
+            StrOptions({"balanced, balanced_subsample"}),
+            None,
+        ],
     }
     _parameter_constraints.pop("splitter")
 
@@ -2083,6 +2090,12 @@ class ExtraTreesClassifier(ForestClassifier):
     _parameter_constraints = {
         **ForestClassifier._parameter_constraints,
         **DecisionTreeClassifier._parameter_constraints,
+        "class_weight": [
+            dict,
+            list,
+            StrOptions({"balanced, balanced_subsample"}),
+            None,
+        ],
     }
     _parameter_constraints.pop("splitter")
 
@@ -2649,6 +2662,14 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
            [0., 1., 1., 0., 1., 0., 0., 1., 1., 0.]])
     """
 
+    _parameter_constraints = {
+        **_FOREST_PARAMS,
+        **DecisionTreeRegressor._parameter_constraints,
+        "sparse_output": ["boolean"],
+    }
+    for x in ("splitter", "criterion", "max_features", "oob_score"):
+        _parameter_constraints.pop(x)
+
     criterion = "squared_error"
     max_features = 1
 
@@ -2728,6 +2749,7 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
         self : object
             Returns the instance itself.
         """
+        self._validate_params()
         self.fit_transform(X, y, sample_weight=sample_weight)
         return self
 
