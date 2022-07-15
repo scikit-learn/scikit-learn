@@ -85,20 +85,6 @@ __all__ = [
     "RandomTreesEmbedding",
 ]
 
-_FOREST_PARAMS = {
-    "n_estimators": [Interval(Integral, 1, None, closed="left")],
-    "oob_score": ["boolean"],
-    "bootstrap": ["boolean"],
-    "n_jobs": [Integral, None],
-    "verbose": ["verbose"],
-    "warm_start": ["boolean"],
-    "max_samples": [
-        None,
-        Interval(Real, 0.0, 1.0, closed="right"),
-        Interval(Integral, 1, None, closed="left"),
-    ],
-}
-
 MAX_INT = np.iinfo(np.int32).max
 
 
@@ -216,6 +202,20 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
     Warning: This class should not be used directly. Use derived classes
     instead.
     """
+
+    _parameter_constraints = {
+        "n_estimators": [Interval(Integral, 1, None, closed="left")],
+        "oob_score": ["boolean"],
+        "bootstrap": ["boolean"],
+        "n_jobs": [Integral, None],
+        "verbose": ["verbose"],
+        "warm_start": ["boolean"],
+        "max_samples": [
+            None,
+            Interval(Real, 0.0, 1.0, closed="right"),
+            Interval(Integral, 1, None, closed="left"),
+        ],
+    }
 
     @abstractmethod
     def __init__(
@@ -696,7 +696,7 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
     """
 
     _parameter_constraints = {
-        **_FOREST_PARAMS,
+        **BaseForest._parameter_constraints,
     }
 
     @abstractmethod
@@ -961,7 +961,7 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
     """
 
     _parameter_constraints = {
-        **_FOREST_PARAMS,
+        **BaseForest._parameter_constraints,
     }
 
     @abstractmethod
