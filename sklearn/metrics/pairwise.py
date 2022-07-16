@@ -1025,16 +1025,16 @@ def paired_manhattan_distances(X, Y):
     Parameters
     ----------
     X : array-like of shape (n_samples, n_features)
-        An array where each row is a sample and each column is a feature.
+        An array-like where each row is a sample and each column is a feature.
 
     Y : array-like of shape (n_samples, n_features)
-        An array where each row is a sample and each column is a feature.
+        An array-like where each row is a sample and each column is a feature.
 
     Returns
     -------
     distances : ndarray of shape (n_samples,)
-        L1 distances between the row vectors of `X` and the row vectors
-        of `Y`.
+        L1 paired distances between the row vectors of `X`
+        and the row vectors of `Y`.
 
     Examples
     --------
