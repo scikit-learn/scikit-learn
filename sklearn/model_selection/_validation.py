@@ -1180,7 +1180,7 @@ def permutation_test_score(
     scoring=None,
     fit_params=None,
 ):
-    """Evaluate the significance of a cross-validated score with permutations
+    """Evaluate the significance of a cross-validated score with permutations.
 
     Permutes targets to generate 'randomized data' and compute the empirical
     p-value against the null hypothesis that features and targets are
@@ -1217,12 +1217,6 @@ def permutation_test_score(
         also passed on to the ``split`` method of the cross-validator. The
         cross-validator uses them for grouping the samples  while splitting
         the dataset into train/test set.
-
-    scoring : str or callable, default=None
-        A single str (see :ref:`scoring_parameter`) or a callable
-        (see :ref:`scoring`) to evaluate the predictions on the test set.
-
-        If `None` the estimator's score method is used.
 
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
@@ -1261,6 +1255,12 @@ def permutation_test_score(
     verbose : int, default=0
         The verbosity level.
 
+    scoring : str or callable, default=None
+        A single str (see :ref:`scoring_parameter`) or a callable
+        (see :ref:`scoring`) to evaluate the predictions on the test set.
+
+        If `None` the estimator's score method is used.
+
     fit_params : dict, default=None
         Parameters to pass to the fit method of the estimator.
 
@@ -1292,7 +1292,6 @@ def permutation_test_score(
         Performance
         <http://www.jmlr.org/papers/volume11/ojala10a/ojala10a.pdf>`_. The
         Journal of Machine Learning Research (2010) vol. 11
-
     """
     X, y, groups = indexable(X, y, groups)
 
