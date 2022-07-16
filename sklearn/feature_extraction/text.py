@@ -1101,12 +1101,12 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         "input": [StrOptions({"filename", "file", "content"})],
         "encoding": [str],
         "decode_error": [StrOptions({"strict", "ignore", "replace"})],
-        "strip_accents": [StrOptions({"ascii", "unicode"}), None],
+        "strip_accents": [StrOptions({"ascii", "unicode"}), None, callable],
         "lowercase": ["boolean"],
         "preprocessor": [callable, None],
         "tokenizer": [callable, None],
         "stop_words": [StrOptions({"english"}), list, None],
-        "token_pattern": [str],
+        "token_pattern": [str, None],
         "ngram_range": [tuple],
         "analyzer": [StrOptions({"word", "char", "char_wb"}), callable],
         "max_df": [
@@ -1329,6 +1329,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
             )
 
         self._validate_params()
+        self._validate_ngram_range()
         self._warn_for_unused_params()
         self._validate_vocabulary()
         max_df = self.max_df
@@ -1946,7 +1947,7 @@ class TfidfVectorizer(CountVectorizer):
     _parameter_constraints = {**CountVectorizer._parameter_constraints}
     _parameter_constraints.update(
         {
-            "norm": [StrOptions({"l1", "l2"})],
+            "norm": [StrOptions({"l1", "l2"}), None],
             "use_idf": ["boolean"],
             "smooth_idf": ["boolean"],
             "sublinear_tf": ["boolean"],
