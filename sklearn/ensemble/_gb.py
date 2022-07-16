@@ -137,15 +137,17 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
     _parameter_constraints = {
         **DecisionTreeRegressor._parameter_constraints,
-        "learning_rate": [Interval(Real, 0.0, None, closed="neither")],
+        "learning_rate": [Interval(Real, 0.0, None, closed="left")],
         "n_estimators": [Interval(Integral, 1, None, closed="left")],
-        "criterion": [StrOptions({"friedman_mse", "squared_error", "mse"})],
+        "criterion": [
+            StrOptions({"friedman_mse", "squared_error", "mse"}, deprecated={"mse"})
+        ],
         "subsample": [Interval(Real, 0.0, 1.0, closed="right")],
         "verbose": ["verbose"],
         "warm_start": ["boolean"],
         "validation_fraction": [Interval(Real, 0.0, 1.0, closed="neither")],
         "n_iter_no_change": [Interval(Integral, 1, None, closed="left"), None],
-        "tol": [Interval(Real, 0.0, None, closed="neither")],
+        "tol": [Interval(Real, 0.0, None, closed="left")],
     }
     _parameter_constraints.pop("splitter")
 
@@ -373,6 +375,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         # Check input
         # Since check_array converts both X and y to the same dtype, but the
         # trees use different types for X and y, checking them separately.
+
         X, y = self._validate_data(
             X, y, accept_sparse=["csr", "csc", "coo"], dtype=DTYPE, multi_output=True
         )
@@ -619,6 +622,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         # perform boosting iterations
         i = begin_at_stage
         for i in range(begin_at_stage, self.n_estimators):
+
             # subsampling
             if do_oob:
                 sample_mask = _random_sample_mask(n_samples, n_inbag, random_state)
@@ -906,7 +910,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
     learning_rate : float, default=0.1
         Learning rate shrinks the contribution of each tree by `learning_rate`.
         There is a trade-off between learning_rate and n_estimators.
-        Values must be in the range `(0.0, inf)`.
+        Values must be in the range `[0.0, inf)`.
 
     n_estimators : int, default=100
         The number of boosting stages to perform. Gradient boosting
@@ -1068,7 +1072,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         Tolerance for the early stopping. When the loss is not improving
         by at least tol for ``n_iter_no_change`` iterations (if set to a
         number), the training stops.
-        Values must be in the range `(0.0, inf)`.
+        Values must be in the range `[0.0, inf)`.
 
         .. versionadded:: 0.20
 
@@ -1210,7 +1214,9 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
     # TODO(1.3): remove "deviance"
     _parameter_constraints = {
         **BaseGradientBoosting._parameter_constraints,
-        "loss": [StrOptions({"log_loss", "deviance", "exponential"})],
+        "loss": [
+            StrOptions({"log_loss", "deviance", "exponential"}, deprecated={"deviance"})
+        ],
         "init": [StrOptions({"zero"}), None, HasMethods(["fit", "predict_proba"])],
     }
 
@@ -1487,7 +1493,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     learning_rate : float, default=0.1
         Learning rate shrinks the contribution of each tree by `learning_rate`.
         There is a trade-off between learning_rate and n_estimators.
-        Values must be in the range `(0.0, inf)`.
+        Values must be in the range `[0.0, inf)`.
 
     n_estimators : int, default=100
         The number of boosting stages to perform. Gradient boosting
@@ -1655,7 +1661,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         Tolerance for the early stopping. When the loss is not improving
         by at least tol for ``n_iter_no_change`` iterations (if set to a
         number), the training stops.
-        Values must be in the range `(0.0, inf)`.
+        Values must be in the range `[0.0, inf)`.
 
         .. versionadded:: 0.20
 
