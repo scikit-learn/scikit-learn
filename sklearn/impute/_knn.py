@@ -1,10 +1,12 @@
 # Authors: Ashim Bhattarai <ashimb9@gmail.com>
 #          Thomas J Fan <thomasjpfan@gmail.com>
 # License: BSD 3 clause
+from numbers import Integral, Real
 
 import numpy as np
 
 from ._base import _BaseImputer
+from ..utils._param_validation import StrOptions, Interval
 from ..utils.validation import FLOAT_DTYPES
 from ..metrics import pairwise_distances_chunked
 from ..metrics.pairwise import _NAN_METRICS
@@ -115,6 +117,15 @@ class KNNImputer(_BaseImputer):
            [8. , 8. , 7. ]])
     """
 
+    _parameter_constraints = {
+        "missing_values": [Real, Integral, str, None],
+        "n_neighbors": [Interval(Integral, 1, None, closed="left")],
+        "weights": [StrOptions({"uniform", "distance"}), callable],
+        "metric": [StrOptions(set(_NAN_METRICS)), callable],
+        "copy": ["boolean"],
+        "add_indicator": ["boolean"],
+    }
+
     def __init__(
         self,
         *,
@@ -196,16 +207,13 @@ class KNNImputer(_BaseImputer):
             The fitted `KNNImputer` class instance.
         """
         # Check data integrity and calling arguments
+
+        self._validate_params()
+
         if not is_scalar_nan(self.missing_values):
             force_all_finite = True
         else:
             force_all_finite = "allow-nan"
-            if self.metric not in _NAN_METRICS and not callable(self.metric):
-                raise ValueError("The selected metric does not support NaN values")
-        if self.n_neighbors <= 0:
-            raise ValueError(
-                "Expected n_neighbors > 0. Got {}".format(self.n_neighbors)
-            )
 
         X = self._validate_data(
             X,
