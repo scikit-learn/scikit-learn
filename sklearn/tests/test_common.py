@@ -498,7 +498,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "MultiTaskLasso",
     "MultiTaskLassoCV",
     "NearestCentroid",
-    "NearestNeighbors",
     "NeighborhoodComponentsAnalysis",
     "NuSVC",
     "NuSVR",

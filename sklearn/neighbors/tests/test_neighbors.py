@@ -74,7 +74,7 @@ ALGORITHMS = ("ball_tree", "brute", "kd_tree", "auto")
 COMMON_VALID_METRICS = sorted(
     set.intersection(*map(set, neighbors.VALID_METRICS.values()))
 )  # type: ignore
-P = (1, 2, 3, 4, np.inf)
+P = (1, 2, 3, 4)
 JOBLIB_BACKENDS = list(joblib.parallel.BACKENDS.keys())
 
 # Filter deprecation warnings.
@@ -90,7 +90,7 @@ def _generate_test_params_for(metric: str, n_features: int):
     weights = rng.random_sample(n_features)
 
     if metric == "minkowski":
-        minkowski_kwargs = [dict(p=1.5), dict(p=2), dict(p=3), dict(p=np.inf)]
+        minkowski_kwargs = [dict(p=1), dict(p=2), dict(p=3)]
         if sp_version >= parse_version("1.8.0.dev0"):
             # TODO: remove the test once we no longer support scipy < 1.8.0.
             # Recent scipy versions accept weights in the Minkowski metric directly:
@@ -101,7 +101,7 @@ def _generate_test_params_for(metric: str, n_features: int):
     # TODO: remove this case for "wminkowski" once we no longer support scipy < 1.8.0.
     if metric == "wminkowski":
         weights /= weights.sum()
-        wminkowski_kwargs = [dict(p=1.5, w=weights)]
+        wminkowski_kwargs = [dict(p=1, w=weights)]
         if sp_version < parse_version("1.8.0.dev0"):
             # wminkowski was removed in scipy 1.8.0 but should work for previous
             # versions.
@@ -308,21 +308,6 @@ def test_unsupervised_inputs(global_dtype, KNeighborsMixinSubclass):
 
         assert_allclose(dist1, dist2)
         assert_array_equal(ind1, ind2)
-
-
-def test_n_neighbors_datatype():
-    # Test to check whether n_neighbors is integer
-    X = [[1, 1], [1, 1], [1, 1]]
-    expected_msg = "n_neighbors does not take .*float.* value, enter integer value"
-    msg = "Expected n_neighbors > 0. Got -3"
-
-    neighbors_ = neighbors.NearestNeighbors(n_neighbors=3.0)
-    with pytest.raises(TypeError, match=expected_msg):
-        neighbors_.fit(X)
-    with pytest.raises(ValueError, match=msg):
-        neighbors_.kneighbors(X=X, n_neighbors=-3)
-    with pytest.raises(TypeError, match=expected_msg):
-        neighbors_.kneighbors(X=X, n_neighbors=3.0)
 
 
 def test_not_fitted_error_gets_raised():
@@ -1297,7 +1282,6 @@ def test_RadiusNeighborsRegressor_multioutput_with_uniform_weight():
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
     for algorithm, weights in product(ALGORITHMS, [None, "uniform"]):
-
         rnn = neighbors.RadiusNeighborsRegressor(weights=weights, algorithm=algorithm)
         rnn.fit(X_train, y_train)
 
@@ -1801,7 +1785,6 @@ def test_k_and_radius_neighbors_train_is_not_query():
     # Test kneighbors et.al when query is not training data
 
     for algorithm in ALGORITHMS:
-
         nn = neighbors.NearestNeighbors(n_neighbors=1, algorithm=algorithm)
 
         X = [[0], [1]]
