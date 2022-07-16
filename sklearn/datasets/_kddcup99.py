@@ -132,7 +132,7 @@ def fetch_kddcup99(
         target_names: list
             The names of the target columns
 
-    (data, target) : 
+    (data, target) :
         Tuple if ``return_X_y`` is True
         data : {ndarray, dataframe} of shape (494021, 41)
             The data matrix to learn. If `as_frame=True`, `data` will be a
@@ -232,7 +232,6 @@ def fetch_kddcup99(
 
 
 def _fetch_brute_kddcup99(data_home=None, download_if_missing=True, percent10=True):
-
     """Load the kddcup99 dataset, downloading it if necessary.
 
     Parameters
