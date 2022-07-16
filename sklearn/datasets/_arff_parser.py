@@ -1,11 +1,13 @@
 """Implementation of ARFF parsers: via LIAC-ARFF and pandas."""
 import itertools
+import re
 from collections import OrderedDict
 from collections.abc import Generator
 from typing import List
 
 import numpy as np
 import scipy as sp
+
 
 from ..externals import _arff
 from ..externals._arff import ArffSparseDataType
@@ -121,7 +123,7 @@ def _liac_arff_parser(
     gzip_file : GzipFile instance
         The file compressed to be read.
 
-    output_array_type : {"numpy", "sparse", "pandas"}
+    output_arrays_type : {"numpy", "sparse", "pandas"}
         The type of the arrays that will be returned. The possibilities ara:
 
         - `"numpy"`: both `X` and `y` will be NumPy arrays;
@@ -296,7 +298,7 @@ def _liac_arff_parser(
 
 def _pandas_arff_parser(
     gzip_file,
-    output_type,
+    output_arrays_type,
     openml_columns_info,
     feature_names_to_select,
     target_names_to_select,
@@ -311,7 +313,7 @@ def _pandas_arff_parser(
     gzip_file : GzipFile instance
         The GZip compressed file with the ARFF formatted payload.
 
-    output_type : {"numpy", "sparse", "pandas"}
+    output_arrays_type : {"numpy", "sparse", "pandas"}
         The type of the arrays that will be returned. The possibilities are:
 
         - `"numpy"`: both `X` and `y` will be NumPy arrays;
@@ -368,6 +370,7 @@ def _pandas_arff_parser(
         header=None,
         na_values=["?"],  # missing values are represented by `?`
         comment="%",  # skip line starting by `%` since they are comments
+        quotechar='"',  # delimiter to use for quoted strings
         names=[name for name in openml_columns_info],
         dtype=dtypes,
     )
@@ -376,9 +379,34 @@ def _pandas_arff_parser(
     columns_to_keep = [col for col in frame.columns if col in columns_to_select]
     frame = frame[columns_to_keep]
 
+    # `pd.read_csv` automatically handles double quotes for quoting non-numeric
+    # CSV cell values. Contrary to LIAC-ARFF, `pd.read_csv` cannot be configured to
+    # consider either single quotes and double quotes as valid quoting chars at
+    # the same time since this case does not occur in regular (non-ARFF) CSV files.
+    # To mimic the behavior of LIAC-ARFF parser, we manually strip single quotes
+    # on categories as a post-processing steps if needed.
+    #
+    # Note however that we intentionally do not attempt to do this kind of manual
+    # post-processing of (non-categorical) string-typed columns because we cannot
+    # resolve the ambiguity of the case of CSV cell with nesting quoting such as
+    # `"'some string value'"` with pandas.
+    single_quote_pattern = re.compile(r"^'(?P<contents>.*)'$")
+
+    def strip_quotes_regex(s):
+        return s.group("contents")
+
+    categorical_columns = [
+        name
+        for name, dtype in frame.dtypes.items()
+        if pd.api.types.is_categorical_dtype(dtype)
+    ]
+    for col in categorical_columns:
+        frame[col].cat.categories = frame[col].cat.categories.str.replace(
+            single_quote_pattern, strip_quotes_regex, regex=True
+        )
     X, y = _post_process_frame(frame, feature_names_to_select, target_names_to_select)
 
-    if output_type == "pandas":
+    if output_arrays_type == "pandas":
         return X, y, frame, None
     else:
         X, y = X.to_numpy(), y.to_numpy()

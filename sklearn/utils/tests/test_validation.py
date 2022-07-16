@@ -358,21 +358,13 @@ def test_check_array():
 
     Xs = [X_csc, X_coo, X_dok, X_int, X_float]
     accept_sparses = [["csr", "coo"], ["coo", "dok"]]
-    for X, dtype, accept_sparse, copy in product(Xs, dtypes, accept_sparses, copys):
-        with warnings.catch_warnings(record=True) as w:
-            X_checked = check_array(
-                X, dtype=dtype, accept_sparse=accept_sparse, copy=copy
-            )
-        if (dtype is object or sp.isspmatrix_dok(X)) and len(w):
-            # XXX unreached code as of v0.22
-            message = str(w[0].message)
-            messages = [
-                "object dtype is not supported by sparse matrices",
-                "Can't check dok sparse matrix for nan or inf.",
-            ]
-            assert message in messages
-        else:
-            assert len(w) == 0
+    # scipy sparse matrices do not support the object dtype so
+    # this dtype is skipped in this loop
+    non_object_dtypes = [dt for dt in dtypes if dt is not object]
+    for X, dtype, accept_sparse, copy in product(
+        Xs, non_object_dtypes, accept_sparses, copys
+    ):
+        X_checked = check_array(X, dtype=dtype, accept_sparse=accept_sparse, copy=copy)
         if dtype is not None:
             assert X_checked.dtype == dtype
         else:
@@ -471,17 +463,17 @@ def test_check_array_pandas_dtype_casting():
     assert check_array(X_df).dtype == np.float32
     assert check_array(X_df, dtype=FLOAT_DTYPES).dtype == np.float32
 
-    X_df.iloc[:, 0] = X_df.iloc[:, 0].astype(np.float16)
+    X_df = X_df.astype({0: np.float16})
     assert_array_equal(X_df.dtypes, (np.float16, np.float32, np.float32))
     assert check_array(X_df).dtype == np.float32
     assert check_array(X_df, dtype=FLOAT_DTYPES).dtype == np.float32
 
-    X_df.iloc[:, 1] = X_df.iloc[:, 1].astype(np.int16)
+    X_df = X_df.astype({0: np.int16})
     # float16, int16, float32 casts to float32
     assert check_array(X_df).dtype == np.float32
     assert check_array(X_df, dtype=FLOAT_DTYPES).dtype == np.float32
 
-    X_df.iloc[:, 2] = X_df.iloc[:, 2].astype(np.float16)
+    X_df = X_df.astype({2: np.float16})
     # float16, int16, float16 casts to float32
     assert check_array(X_df).dtype == np.float32
     assert check_array(X_df, dtype=FLOAT_DTYPES).dtype == np.float32
@@ -809,15 +801,15 @@ def test_check_is_fitted():
         assert False, "check_is_fitted failed with ValueError"
 
     # NotFittedError is a subclass of both ValueError and AttributeError
-    try:
-        check_is_fitted(ard, msg="Random message %(name)s, %(name)s")
-    except ValueError as e:
-        assert str(e) == "Random message ARDRegression, ARDRegression"
+    msg = "Random message %(name)s, %(name)s"
+    match = "Random message ARDRegression, ARDRegression"
+    with pytest.raises(ValueError, match=match):
+        check_is_fitted(ard, msg=msg)
 
-    try:
-        check_is_fitted(svr, msg="Another message %(name)s, %(name)s")
-    except AttributeError as e:
-        assert str(e) == "Another message SVR, SVR"
+    msg = "Another message %(name)s, %(name)s"
+    match = "Another message SVR, SVR"
+    with pytest.raises(AttributeError, match=match):
+        check_is_fitted(svr, msg=msg)
 
     ard.fit(*make_blobs())
     svr.fit(*make_blobs())

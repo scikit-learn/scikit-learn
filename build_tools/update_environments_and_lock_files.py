@@ -1,7 +1,7 @@
 """Script to update CI environment files and associated lock files.
 
 To run it you need to be in the root folder of the scikit-learn repo:
-python build_tools/azure/update_environments_and_lock_files.py
+python build_tools/update_environments_and_lock_files.py
 
 Two scenarios where this script can be useful:
 - make sure that the latest versions of all the dependencies are used in the CI.
@@ -24,9 +24,8 @@ with pip.
 
 To run this script you need:
 - conda-lock. The version should match the one used in the CI in
-  build_tools/azure/install.sh
+  sklearn/_min_dependencies.py
 - pip-tools
-- jinja2
 
 """
 
@@ -36,10 +35,11 @@ import sys
 from pathlib import Path
 import shlex
 import json
+import logging
+
+import click
 
 from jinja2 import Environment
-
-import logging
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -72,9 +72,6 @@ common_dependencies = common_dependencies_without_coverage + [
 docstring_test_dependencies = ["sphinx", "numpydoc"]
 
 default_package_constraints = {
-    # XXX: pytest is temporary pinned to 6.2.5 because pytest 7 causes CI
-    # issues https://github.com/scikit-learn/scikit-learn/pull/22381
-    "pytest": "6.2.5",
     # XXX: coverage is temporary pinned to 6.2 because 6.3 is not fork-safe
     # cf. https://github.com/nedbat/coveragepy/issues/1310
     "coverage": "6.2",
@@ -88,6 +85,7 @@ def remove_from(alist, to_remove):
 conda_build_metadata_list = [
     {
         "build_name": "pylatest_conda_forge_mkl_linux-64",
+        "folder": "build_tools/azure",
         "platform": "linux-64",
         "channel": "conda-forge",
         "conda_dependencies": common_dependencies + ["ccache"],
@@ -97,6 +95,7 @@ conda_build_metadata_list = [
     },
     {
         "build_name": "pylatest_conda_forge_mkl_osx-64",
+        "folder": "build_tools/azure",
         "platform": "osx-64",
         "channel": "conda-forge",
         "conda_dependencies": common_dependencies
@@ -107,6 +106,7 @@ conda_build_metadata_list = [
     },
     {
         "build_name": "pylatest_conda_mkl_no_openmp",
+        "folder": "build_tools/azure",
         "platform": "osx-64",
         "channel": "defaults",
         "conda_dependencies": common_dependencies + ["ccache"],
@@ -116,6 +116,7 @@ conda_build_metadata_list = [
     },
     {
         "build_name": "pylatest_conda_forge_mkl_no_coverage",
+        "folder": "build_tools/azure",
         "platform": "linux-64",
         "channel": "conda-forge",
         "conda_dependencies": common_dependencies_without_coverage + ["ccache"],
@@ -125,6 +126,7 @@ conda_build_metadata_list = [
     },
     {
         "build_name": "py38_conda_defaults_openblas",
+        "folder": "build_tools/azure",
         "platform": "linux-64",
         "channel": "defaults",
         "conda_dependencies": common_dependencies + ["ccache"],
@@ -139,6 +141,7 @@ conda_build_metadata_list = [
     },
     {
         "build_name": "py38_conda_forge_openblas_ubuntu_1804",
+        "folder": "build_tools/azure",
         "platform": "linux-64",
         "channel": "conda-forge",
         "conda_dependencies": common_dependencies_without_coverage + ["ccache"],
@@ -146,6 +149,7 @@ conda_build_metadata_list = [
     },
     {
         "build_name": "pylatest_pip_openblas_pandas",
+        "folder": "build_tools/azure",
         "platform": "linux-64",
         "channel": "defaults",
         "conda_dependencies": ["python", "ccache"],
@@ -156,6 +160,7 @@ conda_build_metadata_list = [
     },
     {
         "build_name": "pylatest_pip_scipy_dev",
+        "folder": "build_tools/azure",
         "platform": "linux-64",
         "channel": "defaults",
         "conda_dependencies": ["python", "ccache"],
@@ -184,6 +189,7 @@ conda_build_metadata_list = [
     },
     {
         "build_name": "pypy3",
+        "folder": "build_tools/azure",
         "platform": "linux-64",
         "channel": "conda-forge",
         "conda_dependencies": ["pypy"]
@@ -193,12 +199,88 @@ conda_build_metadata_list = [
         + ["ccache"],
         "package_constraints": {"blas": "[build=openblas]"},
     },
+    {
+        "build_name": "py38_conda_forge_mkl",
+        "folder": "build_tools/azure",
+        "platform": "win-64",
+        "channel": "conda-forge",
+        "conda_dependencies": remove_from(common_dependencies, ["pandas", "pyamg"])
+        + ["wheel", "pip"],
+        "package_constraints": {"python": "3.8", "blas": "[build=mkl]"},
+    },
+    {
+        "build_name": "doc_min_dependencies",
+        "folder": "build_tools/github",
+        "platform": "linux-64",
+        "channel": "conda-forge",
+        "conda_dependencies": common_dependencies_without_coverage
+        + [
+            "scikit-image",
+            "seaborn",
+            "memory_profiler",
+            "compilers",
+            "sphinx",
+            "sphinx-gallery",
+            "numpydoc",
+            "sphinx-prompt",
+        ],
+        "pip_dependencies": ["sphinxext-opengraph"],
+        "package_constraints": {
+            "python": "3.8",
+            "numpy": "min",
+            "scipy": "min",
+            "matplotlib": "min",
+            "cython": "min",
+            "scikit-image": "min",
+            "sphinx": "min",
+            "pandas": "min",
+            "sphinx-gallery": "min",
+            "numpydoc": "min",
+            "sphinx-prompt": "min",
+            "sphinxext-opengraph": "min",
+        },
+    },
+    {
+        "build_name": "doc",
+        "folder": "build_tools/github",
+        "platform": "linux-64",
+        "channel": "conda-forge",
+        "conda_dependencies": common_dependencies_without_coverage
+        + [
+            "scikit-image",
+            "seaborn",
+            "memory_profiler",
+            "compilers",
+            "sphinx",
+            "sphinx-gallery",
+            "numpydoc",
+            "sphinx-prompt",
+        ],
+        "pip_dependencies": ["sphinxext-opengraph"],
+        "package_constraints": {
+            "python": "3.9",
+        },
+    },
+    {
+        "build_name": "py39_conda_forge",
+        "folder": "build_tools/circle",
+        "platform": "linux-aarch64",
+        "channel": "conda-forge",
+        "conda_dependencies": remove_from(
+            common_dependencies_without_coverage, ["pandas", "pyamg"]
+        )
+        + ["pip", "ccache"],
+        "package_constraints": {
+            "python": "3.9",
+        },
+    },
 ]
 
 
 pip_build_metadata_list = [
     {
         "build_name": "debian_atlas_32bit",
+        "folder": "build_tools/azure",
         "pip_dependencies": ["cython", "joblib", "threadpoolctl", "pytest"],
         "package_constraints": {
             "joblib": "min",
@@ -211,6 +293,7 @@ pip_build_metadata_list = [
     },
     {
         "build_name": "ubuntu_atlas",
+        "folder": "build_tools/azure",
         "pip_dependencies": [
             "cython",
             "joblib",
@@ -224,6 +307,25 @@ pip_build_metadata_list = [
         # osx-arm64 machines. This should not matter for pining versions with
         # pip-compile
         "python_version": "3.8.5",
+    },
+    {
+        "build_name": "py38_pip_openblas_32bit",
+        "folder": "build_tools/azure",
+        "pip_dependencies": [
+            "numpy",
+            "scipy",
+            "cython",
+            "joblib",
+            "threadpoolctl",
+            "pytest",
+            "pytest-xdist",
+            "pillow",
+            "wheel",
+        ],
+        # The Windows 32bit build use 3.8.10. No cross-compilation support for
+        # pip-compile, we are going to assume the pip lock file on a Linux
+        # 64bit machine gives appropriate versions
+        "python_version": "3.8.10",
     },
 ]
 
@@ -282,8 +384,8 @@ def get_conda_environment_content(build_metadata):
     template = environment.from_string(
         """
 # DO NOT EDIT: this file is generated from the specification found in the
-# following script to centralize the configuration for all Azure CI builds:
-# build_tools/azure/update_environments_and_lock_files.py
+# following script to centralize the configuration for CI builds:
+# build_tools/update_environments_and_lock_files.py
 channels:
   - {{ build_metadata['channel'] }}
 dependencies:
@@ -301,16 +403,17 @@ dependencies:
     return template.render(build_metadata=build_metadata)
 
 
-def write_conda_environment(build_metadata, folder_path):
+def write_conda_environment(build_metadata):
     content = get_conda_environment_content(build_metadata)
     build_name = build_metadata["build_name"]
+    folder_path = Path(build_metadata["folder"])
     output_path = folder_path / f"{build_name}_environment.yml"
     output_path.write_text(content)
 
 
-def write_all_conda_environments(build_metadata_list, folder_path):
+def write_all_conda_environments(build_metadata_list):
     for build_metadata in build_metadata_list:
-        write_conda_environment(build_metadata, folder_path)
+        write_conda_environment(build_metadata)
 
 
 def conda_lock(environment_path, lock_file_path, platform):
@@ -323,8 +426,9 @@ def conda_lock(environment_path, lock_file_path, platform):
     execute_command(shlex.split(command))
 
 
-def create_conda_lock_file(build_metadata, folder_path):
+def create_conda_lock_file(build_metadata):
     build_name = build_metadata["build_name"]
+    folder_path = Path(build_metadata["folder"])
     environment_path = folder_path / f"{build_name}_environment.yml"
     platform = build_metadata["platform"]
     lock_file_basename = build_name
@@ -335,18 +439,18 @@ def create_conda_lock_file(build_metadata, folder_path):
     conda_lock(environment_path, lock_file_path, platform)
 
 
-def write_all_conda_lock_files(build_metadata_list, folder_path):
+def write_all_conda_lock_files(build_metadata_list):
     for build_metadata in build_metadata_list:
         logger.info(build_metadata["build_name"])
-        create_conda_lock_file(build_metadata, folder_path)
+        create_conda_lock_file(build_metadata)
 
 
 def get_pip_requirements_content(build_metadata):
     template = environment.from_string(
         """
 # DO NOT EDIT: this file is generated from the specification found in the
-# following script to centralize the configuration for all Azure CI builds:
-# build_tools/azure/update_environments_and_lock_files.py
+# following script to centralize the configuration for CI builds:
+# build_tools/update_environments_and_lock_files.py
 {% for pip_dep in build_metadata['pip_dependencies'] %}
 {{ pip_dep | get_package_with_constraint(build_metadata, uses_pip=True) }}
 {% endfor %}""".strip()
@@ -354,17 +458,18 @@ def get_pip_requirements_content(build_metadata):
     return template.render(build_metadata=build_metadata)
 
 
-def write_pip_requirements(build_metadata, folder_path):
+def write_pip_requirements(build_metadata):
     build_name = build_metadata["build_name"]
     content = get_pip_requirements_content(build_metadata)
+    folder_path = Path(build_metadata["folder"])
     output_path = folder_path / f"{build_name}_requirements.txt"
     output_path.write_text(content)
 
 
-def write_all_pip_requirements(build_metadata_list, folder_path):
+def write_all_pip_requirements(build_metadata_list):
     for build_metadata in build_metadata_list:
         logger.info(build_metadata["build_name"])
-        write_pip_requirements(build_metadata, folder_path)
+        write_pip_requirements(build_metadata)
 
 
 def pip_compile(pip_compile_path, requirements_path, lock_file_path):
@@ -374,7 +479,7 @@ def pip_compile(pip_compile_path, requirements_path, lock_file_path):
     execute_command(shlex.split(command))
 
 
-def write_pip_lock_file(build_metadata, folder_path):
+def write_pip_lock_file(build_metadata):
     build_name = build_metadata["build_name"]
     python_version = build_metadata["python_version"]
     environment_name = f"pip-tools-python{python_version}"
@@ -382,6 +487,7 @@ def write_pip_lock_file(build_metadata, folder_path):
     # as the one used during the CI build where the lock file is used, we first
     # create a conda environment with the correct Python version and
     # pip-compile and run pip-compile in this environment
+
     command = (
         "conda create -c conda-forge -n"
         f" pip-tools-python{python_version} python={python_version} pip-tools -y"
@@ -396,24 +502,44 @@ def write_pip_lock_file(build_metadata, folder_path):
     environment_path = Path(environment_folder)
     pip_compile_path = environment_path / "bin" / "pip-compile"
 
+    folder_path = Path(build_metadata["folder"])
     requirement_path = folder_path / f"{build_name}_requirements.txt"
     lock_file_path = folder_path / f"{build_name}_lock.txt"
     pip_compile(pip_compile_path, requirement_path, lock_file_path)
 
 
-def write_all_pip_lock_files(build_metadata_list, folder_path):
+def write_all_pip_lock_files(build_metadata_list):
     for build_metadata in build_metadata_list:
-        write_pip_lock_file(build_metadata, folder_path)
+        write_pip_lock_file(build_metadata)
+
+
+@click.command()
+@click.option(
+    "--select-build",
+    default="",
+    help="Regex to restrict the builds we want to update environment and lock files",
+)
+def main(select_build):
+    filtered_conda_build_metadata_list = [
+        each
+        for each in conda_build_metadata_list
+        if re.search(select_build, each["build_name"])
+    ]
+    logger.info("Writing conda environments")
+    write_all_conda_environments(filtered_conda_build_metadata_list)
+    logger.info("Writing conda lock files")
+    write_all_conda_lock_files(filtered_conda_build_metadata_list)
+
+    filtered_pip_build_metadata_list = [
+        each
+        for each in pip_build_metadata_list
+        if re.search(select_build, each["build_name"])
+    ]
+    logger.info("Writing pip requirements")
+    write_all_pip_requirements(filtered_pip_build_metadata_list)
+    logger.info("Writing pip lock files")
+    write_all_pip_lock_files(filtered_pip_build_metadata_list)
 
 
 if __name__ == "__main__":
-    output_path = Path("build_tools/azure/")
-    logger.info("Writing conda environments")
-    write_all_conda_environments(conda_build_metadata_list, output_path)
-    logger.info("Writing conda lock files")
-    write_all_conda_lock_files(conda_build_metadata_list, output_path)
-
-    logger.info("Writing pip requirements")
-    write_all_pip_requirements(pip_build_metadata_list, output_path)
-    logger.info("Writing pip lock files")
-    write_all_pip_lock_files(pip_build_metadata_list, output_path)
+    main()
