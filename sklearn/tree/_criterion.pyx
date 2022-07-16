@@ -663,10 +663,11 @@ cdef class HellingerDistance(ClassificationCriterion):
             double count_k1_right = 0.0
             double count_k2_right = 0.0
 
-        if  sum_k1 > 0:
+        # in case any of the classes sum is 0 it means that
+        # the classes are perfectly separated and no additional split is required
+        if  sum_k1 > 0 and sum_k2 > 0:
             count_k1_left = sqrt(sum_left[0] / sum_k1)
             count_k1_right = sqrt(sum_right[0] / sum_k1)
-        if  sum_k2 > 0:
             count_k2_left = sqrt(sum_left[1] / sum_k2)
             count_k2_right = sqrt(sum_right[1] / sum_k2)
 
