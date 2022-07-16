@@ -71,7 +71,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.model_selection._validation.validation_curve",
     "sklearn.pipeline.make_union",
     "sklearn.preprocessing._data.maxabs_scale",
-    "sklearn.preprocessing._data.robust_scale",
     "sklearn.preprocessing._data.scale",
     "sklearn.preprocessing._label.label_binarize",
     "sklearn.random_projection.johnson_lindenstrauss_min_dim",
