@@ -126,18 +126,19 @@ def _huber_loss_and_gradient(w, X, y, epsilon, alpha, sample_weight=None):
 
 
 class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
-    """Linear regression model that is robust to outliers.
+    """L2-regularized linear regression model that is robust to outliers.
 
     The Huber Regressor optimizes the squared loss for the samples where
-    ``|(y - X'w) / sigma| < epsilon`` and the absolute loss for the samples
-    where ``|(y - X'w) / sigma| > epsilon``, where w and sigma are parameters
+    ``|(y - Xw - c) / sigma| < epsilon`` and the absolute loss for the samples
+    where ``|(y - Xw - c) / sigma| > epsilon``, where the model coefficients
+    ``w``, the intercept ``c`` and the scale ``sigma`` are parameters
     to be optimized. The parameter sigma makes sure that if y is scaled up
     or down by a certain factor, one does not need to rescale epsilon to
     achieve the same robustness. Note that this does not take into account
     the fact that the different features of X may be of different scales.
 
-    This makes sure that the loss function is not heavily influenced by the
-    outliers while not completely ignoring their effect.
+    The Huber loss function has the advantage of not being heavily influenced
+    by the outliers while not completely ignoring their effect.
 
     Read more in the :ref:`User Guide <huber_regression>`
 
@@ -155,7 +156,9 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
         ``scipy.optimize.minimize(method="L-BFGS-B")`` should run for.
 
     alpha : float, default=0.0001
-        Regularization parameter. Must be in the range `[0, inf)`.
+        Strength of the squared L2 regularization. Note that the penalty is
+        equal to ``alpha * ||w||^2``.
+        Must be in the range `[0, inf)`.
 
     warm_start : bool, default=False
         This is useful if the stored attributes of a previously used model
@@ -175,13 +178,13 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
     Attributes
     ----------
     coef_ : array, shape (n_features,)
-        Features got by optimizing the Huber loss.
+        Features got by optimizing the L2-regularized Huber loss.
 
     intercept_ : float
         Bias.
 
     scale_ : float
-        The value by which ``|y - X'w - c|`` is scaled down.
+        The value by which ``|y - Xw - c|`` is scaled down.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
