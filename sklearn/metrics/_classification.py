@@ -738,8 +738,7 @@ def jaccard_score(
 
     Returns
     -------
-    score : float (if average is not None) or array of floats, shape =\
-            [n_unique_labels]
+    score : float or ndarray of shape (n_unique_labels,), dtype=np.float64
         The Jaccard score.
 
     See Also
