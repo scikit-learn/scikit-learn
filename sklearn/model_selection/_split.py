@@ -961,7 +961,7 @@ class TimeSeriesSplit(_BaseKFold):
 
     Read more in the :ref:`User Guide <time_series_split>`.
 
-    .. versionadded:: 0.18
+    .. versionadded:: 1.1
 
     Parameters
     ----------
@@ -1100,6 +1100,127 @@ class TimeSeriesSplit(_BaseKFold):
                     indices[test_start : test_start + test_size],
                 )
 
+class TimeSeriesInitialSplit(_BaseKFold):
+    """Time Series cross-validator with initial period
+
+    Provides train/test indices to split time series data samples
+    that are observed at fixed time intervals, in train/test sets.
+    In each split, test indices must be higher than before, and thus shuffling
+    in cross validator is inappropriate. This is distinct from the
+    TimeSeriesSplit in that users specify the initial training period
+    which is normally larger than the test block size.
+
+    Note that unlike standard cross-validation methods, successive
+    training sets are supersets of those that come before them.
+
+    Read more in the :ref:`User Guide <time_series_initial_split>`.
+
+    .. versionadded:: 1.1
+
+    Parameters
+    ----------
+    initial : int, default=21
+        Number of splits.
+
+    max_train_size : int, default=None
+        Maximum size for a single training set.
+
+    test_size : int, default=7
+        Sets the size of the test set to be added at each iteration
+
+    gap : int, default=0
+        Number of samples to exclude from the end of each train set before
+        the test set.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.model_selection import TimeSeriesInitialSplit
+    >>> X = np.arange(0,50)
+    >>> tscv = TimeSeriesInitialSplit()
+    >>> for train_index, test_index in tscv.split(X):
+    ...     print("TRAIN:", train_index, "TEST:", test_index)
+    ...     X_train, X_test = X[train_index], X[test_index]
+    ...     y_train, y_test = y[train_index], y[test_index]
+    TRAIN: [0] TEST: [1]
+    TRAIN: [0 1] TEST: [2]
+    TRAIN: [0 1 2] TEST: [3]
+    TRAIN: [0 1 2 3] TEST: [4]
+    TRAIN: [0 1 2 3 4] TEST: [5]
+    >>> # Fix test_size to 2 with 12 samples
+    >>> X = np.random.randn(12, 2)
+    >>> y = np.random.randint(0, 2, 12)
+    >>> tscv = TimeSeriesSplit(n_splits=3, test_size=2)
+    >>> for train_index, test_index in tscv.split(X):
+    ...    print("TRAIN:", train_index, "TEST:", test_index)
+    ...    X_train, X_test = X[train_index], X[test_index]
+    ...     TRAIN: [ 0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20] TEST: [23 24 25 26 27 28 29]
+    ...     TRAIN: [ 0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23
+    ...     24 25 26 27] TEST: [30 31 32 33 34 35 36]
+    ...     TRAIN: [ 0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23
+    ...     24 25 26 27 28 29 30 31 32 33 34] TEST: [37 38 39 40 41 42 43]
+    """
+
+    def __init__(self, initial=7*3, *, test_size = 7, gap=0):
+        super().__init__(initial, shuffle=False, random_state=None)
+        self.initial = initial
+        self.test_size = test_size
+        self.gap = gap
+
+    def split(self, X, y=None, groups=None):
+        """Generate indices to split data into training and test set.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
+
+        y : array-like of shape (n_samples,)
+            Always ignored, exists for compatibility.
+
+        groups : array-like of shape (n_samples,)
+            Always ignored, exists for compatibility.
+
+        Yields
+        ------
+        train : ndarray
+            The training set indices for that split.
+
+        test : ndarray
+            The testing set indices for that split.
+        """
+        X, y, groups = indexable(X, y, groups)
+        n_samples = _num_samples(X)
+        n_splits = self.n_splits
+        initial = self.initial
+        gap = self.gap
+        test_size = self.test_size
+
+        # Make sure we have enough samples for the given split parameters
+        if initial > n_samples:
+            raise ValueError(
+                f"Cannot have number of initial_size={initial} greater"
+                f" than the number of samples={n_samples}."
+            )
+        if n_samples - initial - test_size - gap <= 0:
+            raise ValueError(
+                f"Size of initial + test_size + gap too large given sample"
+                f"={n_samples} with initial={initial} test_size={test_size} and gap={gap}."
+            )
+
+        indices = np.arange(n_samples)
+        test_starts = range(initial, n_samples, test_size)
+        for test_start in test_starts:
+            test = indices[test_start + gap: test_start + test_size + gap]
+            if len(test) < test_size:
+                # break if the test set is smaller than a complete test_size
+                break
+            else:
+                yield (
+                    indices[:test_start],
+                    indices[test_start + gap: test_start + test_size + gap],
+                )
 
 class LeaveOneGroupOut(BaseCrossValidator):
     """Leave One Group Out cross-validator
