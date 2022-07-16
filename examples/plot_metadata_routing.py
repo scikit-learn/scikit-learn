@@ -642,7 +642,7 @@ class WarningMetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
 
 
 with warnings.catch_warnings(record=True) as record:
-    WeightedMetaRegressor(estimator=LogisticRegression()).fit(
+    WarningMetaRegressor(estimator=LogisticRegression()).fit(
         X, y, sample_weight=my_weights
     )
 for w in record:

@@ -936,7 +936,8 @@ class MetadataRouter:
 
         params : list of str
             The list of parameters for which there should be a
-            ``FutureWarning`` instead of a ``ValueError``.
+            ``FutureWarning`` instead of a ``ValueError``. If ``None``, the
+            rule is applied on all parameters.
 
         raise_on : str, default="1.4"
             The version after which there should be an error. Used in the
