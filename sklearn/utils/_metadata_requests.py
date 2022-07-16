@@ -920,6 +920,10 @@ class MetadataRouter:
         ``ValueError`` if the child object has no set requests for
         ``sample_weight`` during ``fit``.
 
+        You can find more information on how to use this method in the
+        developer guide:
+        :ref:`sphx_glr_auto_examples_plot_metadata_routing.py`.
+
         Parameters
         ----------
         child : str
@@ -942,30 +946,6 @@ class MetadataRouter:
         -------
         self : MetadataRouter
             Returns `self`.
-
-        Examples
-        --------
-        >>> router = (
-        ...     MetadataRouter(owner=self.__class__.__name__).add(
-        ...         estimator=self.estimator,
-        ...         method_mapping=MethodMapping()
-        ...         .add(callee="partial_fit", caller="partial_fit")
-        ...         .add(callee="fit", caller="fit"),
-        ...     )
-        ...     # Assuming the fit method already accepts everything, therefore we don't
-        ...     # specify parameters. The value passed to ``child`` needs to be the
-        ...     # same as what's passed to ``add`` above, in this case
-        ...     # `"estimator"`.
-        ...     .warn_on(child="estimator", method="fit", params=None)
-        ...     # Assuming the partial_fit method at the time of this change (v1.2) only
-        ...     # supports sample_weight, therefore we only include this metadata.
-        ...     .warn_on(
-        ...         child="estimator",
-        ...         method="partial_fit",
-        ...         params=["sample_weight"]
-        ...     )
-        ... )
-
         """
         if child not in self._warn_on:
             self._warn_on[child] = dict()
