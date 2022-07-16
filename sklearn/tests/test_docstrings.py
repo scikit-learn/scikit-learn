@@ -98,7 +98,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.utils.multiclass.class_distribution",
     "sklearn.utils.multiclass.type_of_target",
     "sklearn.utils.multiclass.unique_labels",
-    "sklearn.utils.resample",
     "sklearn.utils.safe_mask",
     "sklearn.utils.safe_sqr",
     "sklearn.utils.shuffle",
