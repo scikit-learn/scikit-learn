@@ -621,7 +621,7 @@ except Exception as e:
 # You might want to give your users a period during which they see a
 # ``FutureWarning`` instead in order to have time to adapt to the new API. For
 # this, the :class:`~sklearn.utils.metadata_routing.MetadataRouter` provides a
-# `warn_on` method`:
+# `warn_on` method:
 
 
 class WarningMetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
