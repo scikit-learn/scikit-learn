@@ -57,7 +57,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.metrics.pairwise.cosine_similarity",
     "sklearn.metrics.pairwise.distance_metrics",
     "sklearn.metrics.pairwise.kernel_metrics",
-    "sklearn.metrics.pairwise.paired_manhattan_distances",
     "sklearn.metrics.pairwise.pairwise_distances_argmin",
     "sklearn.metrics.pairwise.pairwise_distances_argmin_min",
     "sklearn.metrics.pairwise.pairwise_distances_chunked",
