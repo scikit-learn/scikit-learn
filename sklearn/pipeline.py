@@ -1271,8 +1271,8 @@ def make_union(*transformers, n_jobs=None, verbose=False):
     Returns
     -------
     f : FeatureUnion
-        A ``FeatureUnion`` object for concatenating the results of multiple transformer
-        objects.
+        A :class:`FeatureUnion` object for concatenating the results of multiple
+        transformer objects.
 
     See Also
     --------
