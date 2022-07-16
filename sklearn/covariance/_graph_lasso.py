@@ -10,6 +10,7 @@ import operator
 import sys
 import time
 
+from collections import Iterable
 from numbers import Integral, Real
 import numpy as np
 from scipy import linalg
@@ -20,7 +21,7 @@ from . import empirical_covariance, EmpiricalCovariance, log_likelihood
 from ..exceptions import ConvergenceWarning
 from ..utils.validation import _is_arraylike_not_scalar, check_random_state
 from ..utils.fixes import delayed
-from ..utils._param_validation import Interval, StrOptions
+from ..utils._param_validation import HasMethods, Interval, StrOptions
 
 # mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
 from ..linear_model import _cd_fast as cd_fast  # type: ignore
@@ -634,7 +635,8 @@ class GraphicalLassoCV(GraphicalLasso):
         If an integer is given, it fixes the number of points on the
         grids of alpha to be used. If a list is given, it gives the
         grid to be used. See the notes in the class docstring for
-        more details. Range is (0, inf] when floats given.
+        more details. Range is [1, inf) for an integer.
+        Range is (0, inf] for an array-like of floats.
 
     n_refinements : int, default=4
         The number of times the grid is refined. Not used if explicit
@@ -810,6 +812,24 @@ class GraphicalLassoCV(GraphicalLasso):
     array([0.073, 0.04 , 0.038, 0.143])
     """
 
+    _parameter_constraints = {
+        "alphas": [Interval(Integral, 1, None, closed="left"), "array-like"],
+        "n_refinements": [Interval(Integral, 1, None, closed="left")],
+        "cv": [
+            Interval(Integral, 2, None, closed="left"),
+            HasMethods(["split", "get_n_splits"]),
+            Iterable,
+            None,
+        ],
+        "tol": [Interval(Real, 0, None, closed="right")],
+        "enet_tol": [Interval(Real, 0, None, closed="right")],
+        "max_iter": [Integral],
+        "mode": [StrOptions({"cd", "lars"})],
+        "n_jobs": [Integral, None],
+        "verbose": ["boolean"],
+        "assume_centered": ["boolean"],
+    }
+
     def __init__(
         self,
         *,
@@ -853,6 +873,7 @@ class GraphicalLassoCV(GraphicalLasso):
         self : object
             Returns the instance itself.
         """
+        self._validate_params()
         # Covariance does not make sense for a single feature
         X = self._validate_data(X, ensure_min_features=2)
         if self.assume_centered:
