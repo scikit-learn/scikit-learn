@@ -739,7 +739,8 @@ def jaccard_score(
     Returns
     -------
     score : float or ndarray of shape (n_unique_labels,), dtype=np.float64
-        The Jaccard score.
+        The Jaccard score. When `average` is not `None`, a single scalar is
+        returned.
 
     See Also
     --------
