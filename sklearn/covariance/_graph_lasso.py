@@ -10,6 +10,7 @@ import operator
 import sys
 import time
 
+from numbers import Integral, Real
 import numpy as np
 from scipy import linalg
 from joblib import Parallel
@@ -19,6 +20,7 @@ from . import empirical_covariance, EmpiricalCovariance, log_likelihood
 from ..exceptions import ConvergenceWarning
 from ..utils.validation import _is_arraylike_not_scalar, check_random_state
 from ..utils.fixes import delayed
+from ..utils._param_validation import Interval, StrOptions
 
 # mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
 from ..linear_model import _cd_fast as cd_fast  # type: ignore
@@ -271,8 +273,7 @@ def graphical_lasso(
                             check_random_state(None),
                             False,
                         )
-                    else:
-                        # Use LARS
+                    else:  # mode == "lars"
                         _, _, coefs = lars_path_gram(
                             Xy=row,
                             Gram=sub_covariance,
@@ -430,6 +431,16 @@ class GraphicalLasso(EmpiricalCovariance):
     array([0.073, 0.04 , 0.038, 0.143])
     """
 
+    _parameter_constraints = {
+        "alpha": [Interval(Real, 0, None, closed="right")],
+        "mode": [StrOptions({"cd", "lars"})],
+        "tol": [Interval(Real, 0, None, closed="right")],
+        "enet_tol": [Interval(Real, 0, None, closed="right")],
+        "max_iter": [Integral],
+        "verbose": ["boolean"],
+        "assume_centered": ["boolean"],
+    }
+
     def __init__(
         self,
         alpha=0.01,
@@ -465,6 +476,7 @@ class GraphicalLasso(EmpiricalCovariance):
         self : object
             Returns the instance itself.
         """
+        self._validate_params()
         # Covariance does not make sense for a single feature
         X = self._validate_data(X, ensure_min_features=2, ensure_min_samples=2)
 

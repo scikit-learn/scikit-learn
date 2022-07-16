@@ -469,7 +469,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "GenericUnivariateSelect",
     "GradientBoostingClassifier",
     "GradientBoostingRegressor",
-    "GraphicalLasso",
     "GraphicalLassoCV",
     "HashingVectorizer",
     "Isomap",
