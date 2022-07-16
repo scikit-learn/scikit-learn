@@ -138,8 +138,8 @@ def fetch_kddcup99(
             The data matrix to learn. If ``as_frame=True``, ``data`` will be a
             pandas ``DataFrame``.
         target : {ndarray, series} of shape (494021,)
-            The regression target for each sample. If `as_frame=True`, `target`
-            will be a pandas Series.
+            The regression target for each sample. If ``as_frame=True``, ``target``
+            will be a pandas ``Series``.
 
         .. versionadded:: 0.20
     """
