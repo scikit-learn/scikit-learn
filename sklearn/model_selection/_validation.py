@@ -1805,17 +1805,17 @@ def validation_curve(
     verbose : int, default=0
         Controls the verbosity: the higher, the more messages.
 
-    fit_params : dict, default=None
-        Parameters to pass to the fit method of the estimator.
-
-        .. versionadded:: 0.24
-
     error_score : 'raise' or numeric, default=np.nan
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised.
         If a numeric value is given, FitFailedWarning is raised.
 
         .. versionadded:: 0.20
+
+    fit_params : dict, default=None
+        Parameters to pass to the fit method of the estimator.
+
+        .. versionadded:: 0.24
 
     Returns
     -------
@@ -1828,7 +1828,6 @@ def validation_curve(
     Notes
     -----
     See :ref:`sphx_glr_auto_examples_model_selection_plot_validation_curve.py`
-
     """
     X, y, groups = indexable(X, y, groups)
 
