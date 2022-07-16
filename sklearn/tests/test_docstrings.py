@@ -69,7 +69,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.model_selection._validation.learning_curve",
     "sklearn.model_selection._validation.permutation_test_score",
     "sklearn.model_selection._validation.validation_curve",
-    "sklearn.pipeline.make_union",
     "sklearn.preprocessing._data.maxabs_scale",
     "sklearn.preprocessing._data.robust_scale",
     "sklearn.preprocessing._data.scale",
