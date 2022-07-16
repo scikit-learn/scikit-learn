@@ -10,7 +10,7 @@ import operator
 import sys
 import time
 
-from collections import Iterable
+from collections.abc import Iterable
 from numbers import Integral, Real
 import numpy as np
 from scipy import linalg
