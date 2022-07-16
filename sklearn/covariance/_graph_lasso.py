@@ -437,8 +437,8 @@ class GraphicalLasso(EmpiricalCovariance):
         "mode": [StrOptions({"cd", "lars"})],
         "tol": [Interval(Real, 0, None, closed="right")],
         "enet_tol": [Interval(Real, 0, None, closed="right")],
-        "max_iter": [Integral],
-        "verbose": ["boolean"],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
+        "verbose": ["verbose"],
         "assume_centered": ["boolean"],
     }
 
@@ -823,10 +823,10 @@ class GraphicalLassoCV(GraphicalLasso):
         ],
         "tol": [Interval(Real, 0, None, closed="right")],
         "enet_tol": [Interval(Real, 0, None, closed="right")],
-        "max_iter": [Integral],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
         "mode": [StrOptions({"cd", "lars"})],
         "n_jobs": [Integral, None],
-        "verbose": ["boolean"],
+        "verbose": ["verbose"],
         "assume_centered": ["boolean"],
     }
 
