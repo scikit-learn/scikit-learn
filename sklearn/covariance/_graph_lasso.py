@@ -336,7 +336,35 @@ def graphical_lasso(
             return covariance_, precision_
 
 
-class GraphicalLasso(EmpiricalCovariance):
+class BaseGraphicalLasso(EmpiricalCovariance):
+    _parameter_constraints = {
+        **EmpiricalCovariance._parameter_constraints,
+        "tol": [Interval(Real, 0, None, closed="right")],
+        "enet_tol": [Interval(Real, 0, None, closed="right")],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
+        "mode": [StrOptions({"cd", "lars"})],
+        "verbose": ["verbose"],
+    }
+    _parameter_constraints.pop("store_precision")
+
+    def __init__(
+        self,
+        tol=1e-4,
+        enet_tol=1e-4,
+        max_iter=100,
+        mode="cd",
+        verbose=False,
+        assume_centered=False,
+    ):
+        super().__init__(assume_centered=assume_centered)
+        self.tol = tol
+        self.enet_tol = enet_tol
+        self.max_iter = max_iter
+        self.mode = mode
+        self.verbose = verbose
+
+
+class GraphicalLasso(BaseGraphicalLasso):
     """Sparse inverse covariance estimation with an l1-penalized estimator.
 
     Read more in the :ref:`User Guide <sparse_inverse_covariance>`.
@@ -433,13 +461,8 @@ class GraphicalLasso(EmpiricalCovariance):
     """
 
     _parameter_constraints = {
+        **BaseGraphicalLasso._parameter_constraints,
         "alpha": [Interval(Real, 0, None, closed="right")],
-        "mode": [StrOptions({"cd", "lars"})],
-        "tol": [Interval(Real, 0, None, closed="right")],
-        "enet_tol": [Interval(Real, 0, None, closed="right")],
-        "max_iter": [Interval(Integral, 0, None, closed="left")],
-        "verbose": ["verbose"],
-        "assume_centered": ["boolean"],
     }
 
     def __init__(
@@ -453,13 +476,15 @@ class GraphicalLasso(EmpiricalCovariance):
         verbose=False,
         assume_centered=False,
     ):
-        super().__init__(assume_centered=assume_centered)
+        super().__init__(
+            tol=tol,
+            enet_tol=enet_tol,
+            max_iter=max_iter,
+            mode=mode,
+            verbose=verbose,
+            assume_centered=assume_centered,
+        )
         self.alpha = alpha
-        self.mode = mode
-        self.tol = tol
-        self.enet_tol = enet_tol
-        self.max_iter = max_iter
-        self.verbose = verbose
 
     def fit(self, X, y=None):
         """Fit the GraphicalLasso model to X.
@@ -619,7 +644,7 @@ def graphical_lasso_path(
     return covariances_, precisions_
 
 
-class GraphicalLassoCV(GraphicalLasso):
+class GraphicalLassoCV(BaseGraphicalLasso):
     """Sparse inverse covariance w/ cross-validated choice of the l1 penalty.
 
     See glossary entry for :term:`cross-validation estimator`.
@@ -813,6 +838,7 @@ class GraphicalLassoCV(GraphicalLasso):
     """
 
     _parameter_constraints = {
+        **BaseGraphicalLasso._parameter_constraints,
         "alphas": [Interval(Integral, 1, None, closed="left"), "array-like"],
         "n_refinements": [Interval(Integral, 1, None, closed="left")],
         "cv": [
@@ -821,13 +847,7 @@ class GraphicalLassoCV(GraphicalLasso):
             Iterable,
             None,
         ],
-        "tol": [Interval(Real, 0, None, closed="right")],
-        "enet_tol": [Interval(Real, 0, None, closed="right")],
-        "max_iter": [Interval(Integral, 0, None, closed="left")],
-        "mode": [StrOptions({"cd", "lars"})],
         "n_jobs": [Integral, None],
-        "verbose": ["verbose"],
-        "assume_centered": ["boolean"],
     }
 
     def __init__(
@@ -845,11 +865,11 @@ class GraphicalLassoCV(GraphicalLasso):
         assume_centered=False,
     ):
         super().__init__(
-            mode=mode,
             tol=tol,
-            verbose=verbose,
             enet_tol=enet_tol,
             max_iter=max_iter,
+            mode=mode,
+            verbose=verbose,
             assume_centered=assume_centered,
         )
         self.alphas = alphas
