@@ -66,7 +66,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.metrics.pairwise.polynomial_kernel",
     "sklearn.metrics.pairwise.rbf_kernel",
     "sklearn.metrics.pairwise.sigmoid_kernel",
-    "sklearn.model_selection._validation.validation_curve",
     "sklearn.pipeline.make_union",
     "sklearn.preprocessing._data.maxabs_scale",
     "sklearn.preprocessing._data.scale",
