@@ -340,10 +340,10 @@ def test_simple_metadata_routing():
     # need it, there's an error
     clf = SimpleMetaClassifier(estimator=ClassifierFitMetadata())
     err_message = (
-        "[sample_weight] are passed but is not explicitly set as requested or"
+        "[sample_weight] are passed but are not explicitly set as requested or"
         " not for ClassifierFitMetadata.fit"
     )
-    with pytest.raises(ValueError, match=(re.escape(err_message))):
+    with pytest.raises(ValueError, match=re.escape(err_message)):
         clf.fit(X, y, sample_weight=my_weights)
 
     # Explicitly saying the estimator doesn't need it, makes the error go away,
@@ -847,6 +847,18 @@ def test_metadata_routing_get_param_names():
 
 
 def test_router_deprecation_warning():
+    """This test checks the warning mechanism related to `warn_on`.
+
+    `warn_on` is there to handle backward compatibility in cases where the
+    meta-estimator is already doing some routing, and SLEP006 would break
+    existing user code. `warn_on` helps converting some of those errors to
+    warnings.
+
+    In different scenarios with a meta-estimator and a child estimator we test
+    if the warning is raised when it should, an error raised when it should,
+    and the combinations of the above cases.
+    """
+
     class MetaEstimator(BaseEstimator, MetaEstimatorMixin):
         def __init__(self, estimator):
             self.estimator = estimator
@@ -881,18 +893,21 @@ def test_router_deprecation_warning():
             return np.ones(shape=len(X))
 
     est = MetaEstimator(estimator=Estimator())
-    # the meta-estimator has est to have a warning on `fit`.
+    # the meta-estimator has set (using `warn_on`) to have a warning on `fit`.
     with pytest.warns(
         FutureWarning, match="From version 1.4 this results in the following error"
     ):
         est.fit(X, y, sample_weight=my_weights)
 
+    err_msg = (
+        "{params} are passed but are not explicitly set as requested or not for {owner}"
+    )
+    warn_msg = "From version 1.4 this results in the following error"
     # but predict should raise since there is no warn_on set for it.
     with pytest.raises(
         ValueError,
         match=re.escape(
-            "[sample_weight] are passed but is not explicitly set as requested or not"
-            " for Estimator.predict"
+            err_msg.format(params="[sample_weight]", owner="Estimator.predict")
         ),
     ):
         est.predict(X, sample_weight=my_weights)
@@ -904,13 +919,10 @@ def test_router_deprecation_warning():
     with pytest.raises(
         ValueError,
         match=re.escape(
-            "[sample_weight] are passed but is not explicitly set as requested or not"
-            " for RegressorMetadata.fit"
+            err_msg.format(params="[sample_weight]", owner="RegressorMetadata.fit")
         ),
     ):
-        with pytest.warns(
-            FutureWarning, match="From version 1.4 this results in the following error"
-        ):
+        with pytest.warns(FutureWarning, match=warn_msg):
             est.fit(X, y, sample_weight=my_weights)
 
     class WarningWeightedMetaRegressor(WeightedMetaRegressor):
@@ -940,23 +952,18 @@ def test_router_deprecation_warning():
     est = MetaEstimator(
         estimator=WarningWeightedMetaRegressor(estimator=RegressorMetadata())
     )
-    with pytest.warns(
-        FutureWarning, match="From version 1.4 this results in the following error"
-    ):
+    with pytest.warns(FutureWarning, match=warn_msg):
         est.fit(X, y, sample_weight=my_weights)
 
     # here we should raise because there is no warn_on for groups
     with pytest.raises(
         ValueError,
         match=re.escape(
-            "[sample_weight, groups] are passed but is not explicitly set as requested"
-            " or not for Estimator.fit"
+            err_msg.format(params="[sample_weight, groups]", owner="Estimator.fit")
         ),
     ):
         # the sample_weight should still warn
-        with pytest.warns(
-            FutureWarning, match="From version 1.4 this results in the following error"
-        ):
+        with pytest.warns(FutureWarning, match=warn_msg):
             WarningWeightedMetaRegressor(estimator=Estimator()).fit(
                 X, y, sample_weight=my_weights, groups=1
             )
@@ -971,8 +978,9 @@ def test_router_deprecation_warning():
     with pytest.raises(
         ValueError,
         match=re.escape(
-            "[sample_weight] are passed but is not explicitly set as requested or not"
-            " for WarningWeightedMetaRegressor.fit"
+            err_msg.format(
+                params="[sample_weight]", owner="WarningWeightedMetaRegressor.fit"
+            )
         ),
     ):
         est.fit(X, y, sample_weight=my_weights)

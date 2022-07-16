@@ -311,8 +311,8 @@ class MethodMetadataRequest:
         if unrequested:
             raise UnsetMetadataPassedError(
                 message=(
-                    f"[{', '.join([key for key in unrequested])}] are passed but is not"
-                    " explicitly set as requested or not for"
+                    f"[{', '.join([key for key in unrequested])}] are passed but are"
+                    " not explicitly set as requested or not for"
                     f" {self.owner}.{self.method}"
                 ),
                 unrequested_params=unrequested,
@@ -837,7 +837,7 @@ class MetadataRouter:
                 # there is no warn_on set for this method of this child object,
                 # we raise as usual.
                 raise
-            if not getattr(router, "_is_default_request", None):
+            if not router._is_default_request:
                 # the user has set at least one request value for this child
                 # object, but not for all of them. Therefore we raise as usual.
                 raise
@@ -851,7 +851,7 @@ class MetadataRouter:
             # if params is None, we accept and warn on everything.
             warn_params = warn_on_params["params"]
             if warn_params is None:
-                warn_params = list(e.unrequested_params.keys())
+                warn_params = warn_keys
 
             for param in warn_params:
                 if param in e.unrequested_params:
@@ -920,7 +920,8 @@ class MetadataRouter:
         Parameters
         ----------
         child : str
-            The name of the child object.
+            The name of the child object. The names come from the keyword
+            arguments passed to the ``add`` method.
 
         method : str
             The method for which there should be a ``FutureWarning``
@@ -938,6 +939,30 @@ class MetadataRouter:
         -------
         self : MetadataRouter
             Returns `self`.
+
+        Examples
+        --------
+        >>> router = (
+        ...     MetadataRouter(owner=self.__class__.__name__).add(
+        ...         estimator=self.estimator,
+        ...         method_mapping=MethodMapping()
+        ...         .add(callee="partial_fit", caller="partial_fit")
+        ...         .add(callee="fit", caller="fit"),
+        ...     )
+        ...     # Assuming the fit method already accepts everything, therefore we don't
+        ...     # specify parameters. The value passed to ``child`` needs to be the
+        ...     # same as what's passed to ``add`` above, in this case
+        ...     # `"estimator"`.
+        ...     .warn_on(child="estimator", method="fit", params=None)
+        ...     # Assuming the partial_fit method at the time of this change (v1.2) only
+        ...     # supports sample_weight, therefore we only include this metadata.
+        ...     .warn_on(
+        ...         child="estimator",
+        ...         method="partial_fit",
+        ...         params=["sample_weight"]
+        ...     )
+        ... )
+
         """
         if child not in self._warn_on:
             self._warn_on[child] = dict()
@@ -1204,6 +1229,7 @@ class _MetadataRequester:
         signatures.
         """
         requests = MetadataRequest(owner=cls.__name__)
+
         for method in METHODS:
             setattr(
                 requests,

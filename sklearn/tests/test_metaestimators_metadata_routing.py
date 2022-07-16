@@ -40,7 +40,7 @@ class ConsumingRegressor(RegressorMixin, BaseEstimator):
 
 
 class ConsumingClassifier(ClassifierMixin, BaseEstimator):
-    """A regressor consuming metadata."""
+    """A classifier consuming metadata."""
 
     def __init__(self, **kwargs):
         for param, value in kwargs.items():
@@ -102,13 +102,11 @@ def test_default_request(metaestimator):
 def test_multioutput_metadata_routing(MultiOutput, Estimator):
     # Check routing of metadata
     metaest = MultiOutput(Estimator())
-    with pytest.warns(
-        FutureWarning,
-        match=(
-            "You are passing metadata for which the request values are not explicitly"
-            " set: sample_weight, metadata."
-        ),
-    ):
+    warn_msg = (
+        "You are passing metadata for which the request values are not explicitly"
+        " set: sample_weight, metadata."
+    )
+    with pytest.warns(FutureWarning, match=(warn_msg)):
         metaest.fit(X, y_multi, sample_weight=sample_weight, metadata=metadata)
         check_recorded_metadata(
             metaest.estimators_[0],
@@ -122,6 +120,9 @@ def test_multioutput_metadata_routing(MultiOutput, Estimator):
         .set_fit_request(sample_weight=True, metadata="alias")
         .set_partial_fit_request(sample_weight=True, metadata=True)
     ).fit(X, y_multi, alias=metadata)
+    # if an estimator requests a metadata but it's not passed, no errors are
+    # raised. Therefore here we don't pass `sample_weight` to test nothing is
+    # raised.
     check_recorded_metadata(
         metaest.estimators_[0], "fit", sample_weight=None, metadata=metadata
     )
