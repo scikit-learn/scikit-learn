@@ -740,10 +740,14 @@ def jaccard_score(
     -------
     score : float (if average is not None) or array of floats, shape =\
             [n_unique_labels]
+        The Jaccard score.
 
     See Also
     --------
-    accuracy_score, f1_score, multilabel_confusion_matrix
+    accuracy_score : Function for calculating the accuracy score.
+    f1_score : Function for calculating the F1 score.
+    multilabel_confusion_matrix : Function for computing a confusion matrix\
+                                  for each class or sample.
 
     Notes
     -----
