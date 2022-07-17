@@ -7,6 +7,7 @@
 #          Multi-output support by Arnaud Joly <a.joly@ulg.ac.be>
 #
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
+from numbers import Integral
 
 import numpy as np
 from scipy import stats
@@ -14,7 +15,7 @@ from ..utils.extmath import weighted_mode
 from ..utils.validation import _is_arraylike, _num_samples
 
 import warnings
-from ._base import _check_weights, _get_weights
+from ._base import _get_weights
 from ._base import NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin
 from ..base import ClassifierMixin
 from ..utils._param_validation import StrOptions
@@ -326,7 +327,7 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
         Range of parameter space to use by default for :meth:`radius_neighbors`
         queries.
 
-    weights : {'uniform', 'distance'} or callable, default='uniform'
+    weights : {'uniform', 'distance'}, callable or None, default='uniform'
         Weight function used in prediction.  Possible values:
 
         - 'uniform' : uniform weights.  All points in each neighborhood
@@ -465,6 +466,15 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
     [[0.66666667 0.33333333]]
     """
 
+    _parameter_constraints = {
+        **NeighborsBase._parameter_constraints,
+        "weights": [StrOptions({"uniform", "distance"}), callable, None],
+        "outlier_label": [
+            Integral, str, "array-like", None
+            ],
+    }
+    _parameter_constraints.pop("n_neighbors")
+
     def __init__(
         self,
         radius=1.0,
@@ -518,8 +528,7 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
         self : RadiusNeighborsClassifier
             The fitted radius neighbors classifier.
         """
-        self.weights = _check_weights(self.weights)
-
+        self._validate_params()
         self._fit(X, y)
 
         classes_ = self.classes_
