@@ -241,24 +241,24 @@ def test_agglomerative_clustering():
     clustering = AgglomerativeClustering(
         n_clusters=10,
         connectivity=connectivity.toarray(),
-        affinity="manhattan",
+        metric="manhattan",
         linkage="ward",
     )
     with pytest.raises(ValueError):
         clustering.fit(X)
 
     # Test using another metric than euclidean works with linkage complete
-    for affinity in PAIRED_DISTANCES.keys():
+    for metric in PAIRED_DISTANCES.keys():
         # Compare our (structured) implementation to scipy
         clustering = AgglomerativeClustering(
             n_clusters=10,
             connectivity=np.ones((n_samples, n_samples)),
-            affinity=affinity,
+            metric=metric,
             linkage="complete",
         )
         clustering.fit(X)
         clustering2 = AgglomerativeClustering(
-            n_clusters=10, connectivity=None, affinity=affinity, linkage="complete"
+            n_clusters=10, connectivity=None, metric=metric, linkage="complete"
         )
         clustering2.fit(X)
         assert_almost_equal(
@@ -275,7 +275,7 @@ def test_agglomerative_clustering():
     clustering2 = AgglomerativeClustering(
         n_clusters=10,
         connectivity=connectivity,
-        affinity="precomputed",
+        metric="precomputed",
         linkage="complete",
     )
     clustering2.fit(X_dist)
@@ -289,7 +289,7 @@ def test_agglomerative_clustering_memory_mapped():
     """
     rng = np.random.RandomState(0)
     Xmm = create_memmap_backed_data(rng.randn(50, 100))
-    AgglomerativeClustering(affinity="euclidean", linkage="single").fit(Xmm)
+    AgglomerativeClustering(metric="euclidean", linkage="single").fit(Xmm)
 
 
 def test_ward_agglomeration():
@@ -860,7 +860,7 @@ def test_invalid_shape_precomputed_dist_matrix():
         ValueError,
         match=r"Distance matrix should be square, got matrix of shape \(5, 3\)",
     ):
-        AgglomerativeClustering(affinity="precomputed", linkage="complete").fit(X)
+        AgglomerativeClustering(metric="precomputed", linkage="complete").fit(X)
 
 
 def test_precomputed_connectivity_affinity_with_2_connected_components():
@@ -900,3 +900,26 @@ def test_precomputed_connectivity_affinity_with_2_connected_components():
 
     assert_array_equal(clusterer.labels_, clusterer_precomputed.labels_)
     assert_array_equal(clusterer.children_, clusterer_precomputed.children_)
+
+
+# TODO(1.4): Remove
+def test_deprecate_affinity():
+    rng = np.random.RandomState(42)
+    X = rng.randn(50, 10)
+
+    af = AgglomerativeClustering(affinity="euclidean")
+    msg = (
+        "Attribute `affinity` was deprecated in version 1.2 and will be removed in 1.4."
+        " Use `metric` instead"
+    )
+    with pytest.warns(FutureWarning, match=msg):
+        af.fit(X)
+    with pytest.warns(FutureWarning, match=msg):
+        af.fit_predict(X)
+
+    af = AgglomerativeClustering(metric="euclidean", affinity="euclidean")
+    msg = "Both `affinity` and `metric` attributes were set. Attribute"
+    with pytest.raises(ValueError, match=msg):
+        af.fit(X)
+    with pytest.raises(ValueError, match=msg):
+        af.fit_predict(X)

@@ -1279,8 +1279,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
 
 def make_union(*transformers, n_jobs=None, verbose=False):
-    """
-    Construct a FeatureUnion from the given transformers.
+    """Construct a FeatureUnion from the given transformers.
 
     This is a shorthand for the FeatureUnion constructor; it does not require,
     and does not permit, naming the transformers. Instead, they will be given
@@ -1289,6 +1288,7 @@ def make_union(*transformers, n_jobs=None, verbose=False):
     Parameters
     ----------
     *transformers : list of estimators
+        One or more estimators.
 
     n_jobs : int, default=None
         Number of jobs to run in parallel.
@@ -1297,7 +1297,7 @@ def make_union(*transformers, n_jobs=None, verbose=False):
         for more details.
 
         .. versionchanged:: v0.20
-           `n_jobs` default changed from 1 to None
+           `n_jobs` default changed from 1 to None.
 
     verbose : bool, default=False
         If True, the time elapsed while fitting each transformer will be
@@ -1306,6 +1306,8 @@ def make_union(*transformers, n_jobs=None, verbose=False):
     Returns
     -------
     f : FeatureUnion
+        A :class:`FeatureUnion` object for concatenating the results of multiple
+        transformer objects.
 
     See Also
     --------
