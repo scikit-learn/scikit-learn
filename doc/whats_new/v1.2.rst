@@ -40,7 +40,8 @@ Changes impacting all modules
 -----------------------------
 
 - |MajorFeature| The `set_output` API has been adopted by transformers
-  in :mod:`sklearn.preprocessing`. :pr:`23734` by `Thomas Fan`_.
+  in :mod:`sklearn.preprocessing` and
+  :class:`sklearn.pipeline.Pipeline` :pr:`23734` by `Thomas Fan`_.
 
 - |Enhancement| Finiteness checks (detection of NaN and infinite values) in all
   estimators are now significantly more efficient for float32 data by leveraging
