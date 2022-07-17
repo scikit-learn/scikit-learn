@@ -19,7 +19,11 @@ from joblib import Parallel
 from . import empirical_covariance, EmpiricalCovariance, log_likelihood
 
 from ..exceptions import ConvergenceWarning
-from ..utils.validation import _is_arraylike_not_scalar, check_random_state
+from ..utils.validation import (
+    _is_arraylike_not_scalar,
+    check_random_state,
+    check_scalar,
+)
 from ..utils.fixes import delayed
 from ..utils._param_validation import HasMethods, Interval, StrOptions
 
@@ -910,6 +914,15 @@ class GraphicalLassoCV(BaseGraphicalLasso):
         inner_verbose = max(0, self.verbose - 1)
 
         if _is_arraylike_not_scalar(n_alphas):
+            for alpha in self.alphas:
+                check_scalar(
+                    alpha,
+                    "alpha",
+                    Real,
+                    min_val=0,
+                    max_val=np.inf,
+                    include_boundaries="right",
+                )
             alphas = self.alphas
             n_refinements = 1
         else:

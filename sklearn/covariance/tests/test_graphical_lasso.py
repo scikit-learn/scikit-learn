@@ -181,12 +181,12 @@ def test_graphical_lasso_cv_alphas_iterable(alphas_container_type):
 @pytest.mark.parametrize(
     "alphas,err_type,err_msg",
     [
-        ([-0.02, 0.03], ValueError, "must be >0"),
-        ([0, 0.03], ValueError, "must be >0"),
+        ([-0.02, 0.03], ValueError, "must be > 0"),
+        ([0, 0.03], ValueError, "must be > 0"),
         (["not_number", 0.03], TypeError, "must be an instance of float"),
     ],
 )
-def test_graphical_lasso_cv_alphas_out_of_range(alphas, err_type, err_msg):
+def test_graphical_lasso_cv_alphas_invalid_array(alphas, err_type, err_msg):
     """Check that if an array-like containing a value
     outside of (0, inf] is passed to `alphas`, a ValueError is raised.
     Check if a string is passed, a TypeError is raised.
