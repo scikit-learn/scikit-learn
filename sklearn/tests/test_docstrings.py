@@ -30,7 +30,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.linear_model._omp.orthogonal_mp_gram",
     "sklearn.manifold._locally_linear.locally_linear_embedding",
     "sklearn.manifold._t_sne.trustworthiness",
-    "sklearn.metrics._classification.jaccard_score",
     "sklearn.metrics._plot.det_curve.plot_det_curve",
     "sklearn.metrics._plot.precision_recall_curve.plot_precision_recall_curve",
     "sklearn.metrics._ranking.coverage_error",
