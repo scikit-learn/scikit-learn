@@ -134,7 +134,6 @@ Changelog
   :class:`linear_model.LassoCV`. :pr:`23636` by :user:`Hao Chun Chang
   <haochunchang>`
 
-
 :mod:`sklearn.impute`
 .....................
 
