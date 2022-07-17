@@ -16,7 +16,7 @@ def test_config_context():
         "display": "diagram",
         "pairwise_dist_chunk_size": 256,
         "enable_cython_pairwise_dist": True,
-        "output_transform": "default",
+        "transform_output": "default",
     }
 
     # Not using as a context manager affects nothing
@@ -31,7 +31,7 @@ def test_config_context():
             "display": "diagram",
             "pairwise_dist_chunk_size": 256,
             "enable_cython_pairwise_dist": True,
-            "output_transform": "default",
+            "transform_output": "default",
         }
     assert get_config()["assume_finite"] is False
 
@@ -63,7 +63,7 @@ def test_config_context():
         "display": "diagram",
         "pairwise_dist_chunk_size": 256,
         "enable_cython_pairwise_dist": True,
-        "output_transform": "default",
+        "transform_output": "default",
     }
 
     # No positional arguments

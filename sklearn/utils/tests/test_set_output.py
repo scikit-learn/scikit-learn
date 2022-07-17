@@ -114,7 +114,7 @@ def test_set_output_method_error():
 def test_get_output_config():
     """Check get_output_config works as expected."""
 
-    with config_context(output_transform="pandas"):
+    with config_context(transform_output="pandas"):
         est = EstimatorNoSetOutputWithTransform()
         config = get_output_config(est, "transform")
         assert config["dense"] == "pandas"

@@ -13,7 +13,7 @@ _global_config = {
         os.environ.get("SKLEARN_PAIRWISE_DIST_CHUNK_SIZE", 256)
     ),
     "enable_cython_pairwise_dist": True,
-    "output_transform": "default",
+    "transform_output": "default",
 }
 _threadlocal = threading.local()
 
@@ -51,7 +51,7 @@ def set_config(
     display=None,
     pairwise_dist_chunk_size=None,
     enable_cython_pairwise_dist=None,
-    output_transform=None,
+    transform_output=None,
 ):
     """Set global scikit-learn configuration
 
@@ -111,7 +111,7 @@ def set_config(
 
         .. versionadded:: 1.1
 
-    output_transform : str, default=None
+    transform_output : str, default=None
         Configure the output container for transform.
 
         .. versionadded:: 1.2
@@ -135,8 +135,8 @@ def set_config(
         local_config["pairwise_dist_chunk_size"] = pairwise_dist_chunk_size
     if enable_cython_pairwise_dist is not None:
         local_config["enable_cython_pairwise_dist"] = enable_cython_pairwise_dist
-    if output_transform is not None:
-        local_config["output_transform"] = output_transform
+    if transform_output is not None:
+        local_config["transform_output"] = transform_output
 
 
 @contextmanager
@@ -148,7 +148,7 @@ def config_context(
     display=None,
     pairwise_dist_chunk_size=None,
     enable_cython_pairwise_dist=None,
-    output_transform=None,
+    transform_output=None,
 ):
     """Context manager for global scikit-learn configuration.
 
@@ -207,7 +207,7 @@ def config_context(
 
         .. versionadded:: 1.1
 
-    output_transform : str, default=None
+    transform_output : str, default=None
         Configure the output container for transform.
 
         .. versionadded:: 1.2
@@ -247,7 +247,7 @@ def config_context(
         display=display,
         pairwise_dist_chunk_size=pairwise_dist_chunk_size,
         enable_cython_pairwise_dist=enable_cython_pairwise_dist,
-        output_transform=output_transform,
+        transform_output=transform_output,
     )
 
     try:

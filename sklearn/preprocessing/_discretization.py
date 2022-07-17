@@ -11,11 +11,8 @@ import warnings
 from . import OneHotEncoder
 
 from ..base import BaseEstimator, TransformerMixin
-<<<<<<< HEAD
 from ..utils.set_output import SetOutputMixin
-=======
 from ..utils._param_validation import Hidden, Interval, StrOptions
->>>>>>> upstream/main
 from ..utils.validation import check_array
 from ..utils.validation import check_is_fitted
 from ..utils.validation import check_random_state
