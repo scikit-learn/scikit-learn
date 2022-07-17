@@ -989,6 +989,40 @@ def test_router_deprecation_warning():
         est.fit(X, y, sample_weight=my_weights)
 
 
+@pytest.mark.parametrize(
+    "estimator, is_default_request",
+    [
+        (LinearRegression(), True),
+        (LinearRegression().set_fit_request(sample_weight=True), False),  # type: ignore
+        (WeightedMetaRegressor(estimator=LinearRegression()), True),
+        (
+            WeightedMetaRegressor(
+                estimator=LinearRegression().set_fit_request(  # type: ignore
+                    sample_weight=True
+                )
+            ),
+            False,
+        ),
+        (
+            WeightedMetaRegressor(
+                estimator=LinearRegression()
+            ).set_fit_request(  # type: ignore
+                sample_weight=True
+            ),
+            False,
+        ),
+    ],
+)
+def test_is_default_request(estimator, is_default_request):
+    """Test the `_is_default_request` machinery.
+
+    It should be `True` only if the user hasn't changed any default values.
+
+    Applies to both `MetadataRouter` and `MetadataRequest`.
+    """
+    assert estimator.get_metadata_routing()._is_default_request == is_default_request
+
+
 def test_method_generation():
     # Test if all required request methods are generated.
 

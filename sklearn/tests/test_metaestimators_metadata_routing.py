@@ -20,10 +20,6 @@ sample_weight = np.random.rand(N)
 class ConsumingRegressor(RegressorMixin, BaseEstimator):
     """A regressor consuming metadata."""
 
-    def __init__(self, **kwargs):
-        for param, value in kwargs.items():
-            setattr(self, param, value)
-
     def partial_fit(self, X, y, sample_weight=None, metadata=None):
         record_metadata(
             self, "partial_fit", sample_weight=sample_weight, metadata=metadata
@@ -41,10 +37,6 @@ class ConsumingRegressor(RegressorMixin, BaseEstimator):
 
 class ConsumingClassifier(ClassifierMixin, BaseEstimator):
     """A classifier consuming metadata."""
-
-    def __init__(self, **kwargs):
-        for param, value in kwargs.items():
-            setattr(self, param, value)
 
     def partial_fit(self, X, y, sample_weight=None, metadata=None):
         record_metadata(
