@@ -81,7 +81,7 @@ def get_output_config(estimator, method):
     if method in est_sklearn_output_config:
         dense_config = est_sklearn_output_config[method]
     else:
-        dense_config = get_config()[f"output_{method}"]
+        dense_config = get_config()[f"{method}_output"]
 
     if dense_config not in {"default", "pandas"}:
         raise ValueError(
