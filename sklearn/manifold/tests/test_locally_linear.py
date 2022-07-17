@@ -120,12 +120,19 @@ def test_lle_init_parameters():
     X = np.random.rand(5, 3)
 
     clf = manifold.LocallyLinearEmbedding(eigen_solver="error")
-    msg = "unrecognized eigen_solver 'error'"
+    msg = (
+        r"The 'eigen_solver' parameter of LocallyLinearEmbedding must be a str"
+        r" among .*."
+        r" Got 'error' instead."
+    )
     with pytest.raises(ValueError, match=msg):
         clf.fit(X)
 
     clf = manifold.LocallyLinearEmbedding(method="error")
-    msg = "unrecognized method 'error'"
+    msg = (
+        r"The 'method' parameter of LocallyLinearEmbedding must be a str among .*. Got"
+        r" 'error' instead."
+    )
     with pytest.raises(ValueError, match=msg):
         clf.fit(X)
 
