@@ -1107,36 +1107,32 @@ def test_gradient_bh_multithread_match_sequential():
         assert_allclose(grad_multithread, grad_multithread)
 
 
-@pytest.mark.parametrize(
-    "metric, dist_func",
-    [("manhattan", manhattan_distances), ("cosine", cosine_distances)],
-)
-@pytest.mark.parametrize("method", ["barnes_hut", "exact"])
-def test_tsne_with_different_distance_metrics(dist_func, metric, method):
+def test_tsne_with_different_distance_metrics():
     """Make sure that TSNE works for different distance metrics"""
     random_state = check_random_state(0)
     n_components_original = 3
     n_components_embedding = 2
     X = random_state.randn(50, n_components_original).astype(np.float32)
-    X_transformed_tsne = TSNE(
-        metric=metric,
-        n_components=n_components_embedding,
-        random_state=0,
-        n_iter=300,
-        method=method,
-        init="random",
-        learning_rate="auto",
-    ).fit_transform(X)
-    X_transformed_tsne_precomputed = TSNE(
-        metric="precomputed",
-        n_components=n_components_embedding,
-        random_state=0,
-        n_iter=300,
-        method=method,
-        init="random",
-        learning_rate="auto",
-    ).fit_transform(dist_func(X))
-    assert_array_equal(X_transformed_tsne, X_transformed_tsne_precomputed)
+    metrics = ["manhattan", "cosine"]
+    dist_funcs = [manhattan_distances, cosine_distances]
+    for metric, dist_func in zip(metrics, dist_funcs):
+        X_transformed_tsne = TSNE(
+            metric=metric,
+            n_components=n_components_embedding,
+            random_state=0,
+            n_iter=300,
+            init="random",
+            learning_rate="auto",
+        ).fit_transform(X)
+        X_transformed_tsne_precomputed = TSNE(
+            metric="precomputed",
+            n_components=n_components_embedding,
+            random_state=0,
+            n_iter=300,
+            init="random",
+            learning_rate="auto",
+        ).fit_transform(dist_func(X))
+        assert_array_equal(X_transformed_tsne, X_transformed_tsne_precomputed)
 
 
 # TODO: Remove in 1.2
