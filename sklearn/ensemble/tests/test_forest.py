@@ -1623,58 +1623,6 @@ def test_max_samples_bootstrap(name):
         est.fit(X, y)
 
 
-@pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
-@pytest.mark.parametrize(
-    "max_samples, exc_type, exc_msg",
-    [
-        (
-            int(1e9),
-            ValueError,
-            "`max_samples` must be in range 1 to 6 but got value 1000000000",
-        ),
-        (
-            2.0,
-            ValueError,
-            r"`max_samples` must be in range \(0.0, 1.0\] but got value 2.0",
-        ),
-        (
-            0.0,
-            ValueError,
-            r"`max_samples` must be in range \(0.0, 1.0\] but got value 0.0",
-        ),
-        (
-            np.nan,
-            ValueError,
-            r"`max_samples` must be in range \(0.0, 1.0\] but got value nan",
-        ),
-        (
-            np.inf,
-            ValueError,
-            r"`max_samples` must be in range \(0.0, 1.0\] but got value inf",
-        ),
-        (
-            "str max_samples?!",
-            TypeError,
-            r"`max_samples` should be int or float, but got " r"type '\<class 'str'\>'",
-        ),
-        (
-            np.ones(2),
-            TypeError,
-            r"`max_samples` should be int or float, but got type "
-            r"'\<class 'numpy.ndarray'\>'",
-        ),
-    ],
-    # Avoid long error messages in test names:
-    # https://github.com/scikit-learn/scikit-learn/issues/21362
-    ids=lambda x: x[:10].replace("]", "") if isinstance(x, str) else x,
-)
-def test_max_samples_exceptions(name, max_samples, exc_type, exc_msg):
-    # Check invalid `max_samples` values
-    est = FOREST_CLASSIFIERS_REGRESSORS[name](bootstrap=True, max_samples=max_samples)
-    with pytest.raises(exc_type, match=exc_msg):
-        est.fit(X, y)
-
-
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
 def test_max_samples_boundary_regressors(name):
     X_train, X_test, y_train, y_test = train_test_split(

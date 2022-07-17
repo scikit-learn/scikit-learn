@@ -1404,7 +1404,7 @@ class RandomForestClassifier(ForestClassifier):
         "class_weight": [
             dict,
             list,
-            StrOptions({"balanced, balanced_subsample"}),
+            StrOptions({"balanced", "balanced_subsample"}),
             None,
         ],
     }
@@ -2093,7 +2093,7 @@ class ExtraTreesClassifier(ForestClassifier):
         "class_weight": [
             dict,
             list,
-            StrOptions({"balanced, balanced_subsample"}),
+            StrOptions({"balanced", "balanced_subsample"}),
             None,
         ],
     }
