@@ -4,23 +4,25 @@
 #         Jake Vanderplas  -- <vanderplas@astro.washington.edu>
 # License: BSD 3 clause (C) INRIA 2011
 
+from numbers import Integral, Real
+
 import numpy as np
-from scipy.linalg import eigh, svd, qr, solve
-from scipy.sparse import eye, csr_matrix
+from scipy.linalg import eigh, qr, solve, svd
+from scipy.sparse import csr_matrix, eye
 from scipy.sparse.linalg import eigsh
 
 from ..base import (
     BaseEstimator,
     TransformerMixin,
-    _UnstableArchMixin,
     _ClassNamePrefixFeaturesOutMixin,
+    _UnstableArchMixin,
 )
-from ..utils import check_random_state, check_array
-from ..utils._arpack import _init_arpack_v0
-from ..utils.extmath import stable_cumsum
-from ..utils.validation import check_is_fitted
-from ..utils.validation import FLOAT_DTYPES
 from ..neighbors import NearestNeighbors
+from ..utils import check_array, check_random_state
+from ..utils._arpack import _init_arpack_v0
+from ..utils._param_validation import Interval, StrOptions, validate_params
+from ..utils.extmath import stable_cumsum
+from ..utils.validation import FLOAT_DTYPES, check_is_fitted
 
 
 def barycenter_weights(X, Y, indices, reg=1e-3):
@@ -195,6 +197,22 @@ def null_space(
         raise ValueError("Unrecognized eigen_solver '%s'" % eigen_solver)
 
 
+@validate_params(
+    {
+        "X": ["array-like"],  # fix this
+        "n_neighbors": [Interval(Integral, 1, None, closed="left")],
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "reg": [Interval(Real, 0, None, closed="left")],
+        "eigen_solver": [StrOptions({"auto", "arpack", "dense"})],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
+        "method": [StrOptions({"standard", "hessian", "modified", "ltsa"})],
+        "hessian_tol": [Interval(Real, 0, None, closed="left")],
+        "modified_tol": [Interval(Real, 0, None, closed="left")],
+        "random_state": ["random_state"],
+        "n_jobs": [None, Integral],
+    }
+)
 def locally_linear_embedding(
     X,
     *,
@@ -685,6 +703,21 @@ class LocallyLinearEmbedding(
     (100, 2)
     """
 
+    _parameter_constraints = {
+        "n_neighbors": [Interval(Integral, 1, None, closed="left")],
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "reg": [Interval(Real, 0, None, closed="left")],
+        "eigen_solver": [StrOptions({"auto", "arpack", "dense"})],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
+        "method": [StrOptions({"standard", "hessian", "modified", "ltsa"})],
+        "hessian_tol": [Interval(Real, 0, None, closed="left")],
+        "modified_tol": [Interval(Real, 0, None, closed="left")],
+        "neighbors_algorithm": [StrOptions({"auto", "brute", "kd_tree", "ball_tree"})],
+        "random_state": ["random_state"],
+        "n_jobs": [None, Integral],
+    }
+
     def __init__(
         self,
         *,
@@ -721,6 +754,7 @@ class LocallyLinearEmbedding(
             n_jobs=self.n_jobs,
         )
 
+        self._validate_params()
         random_state = check_random_state(self.random_state)
         X = self._validate_data(X, dtype=float)
         self.nbrs_.fit(X)
