@@ -1497,16 +1497,6 @@ def test_neighbors_badargs():
         neighbors.RadiusNeighborsClassifier,
         neighbors.RadiusNeighborsRegressor,
     ):
-        est = cls(weights="blah")
-        with pytest.raises(ValueError):
-            est.fit(X, y)
-        est = cls(p=-1)
-        with pytest.raises(ValueError):
-            est.fit(X, y)
-        est = cls(algorithm="blah")
-        with pytest.raises(ValueError):
-            est.fit(X, y)
-
         nbrs = cls(algorithm="ball_tree", metric="haversine")
         with pytest.raises(ValueError):
             nbrs.predict(X)
