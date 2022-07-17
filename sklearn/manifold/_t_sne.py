@@ -15,6 +15,8 @@ from scipy import linalg
 from scipy.spatial.distance import pdist
 from scipy.spatial.distance import squareform
 from scipy.sparse import csr_matrix, issparse
+
+from .. import config_context
 from ..neighbors import NearestNeighbors
 from ..base import BaseEstimator
 from ..utils import check_random_state
@@ -959,7 +961,14 @@ class TSNE(BaseEstimator):
                 )
 
             t0 = time()
-            distances_nn = knn.kneighbors_graph(mode="distance")
+            with config_context(enable_cython_pairwise_dist=False):
+                # Distances have really tiny difference if using the
+                # PairwiseDistancesReductions on 32bit data.
+                # This causes in turn the jpint probability distributions computations.
+                # bellow to have significant differences and thus different results.
+                # For backward compatibility on results, we prefer to use the
+                # old back-end.
+                distances_nn = knn.kneighbors_graph(mode="distance")
             duration = time() - t0
             if self.verbose:
                 print(
