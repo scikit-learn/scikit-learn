@@ -135,7 +135,7 @@ Changelog
   in version 1.3. :pr:`23726` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |Fix| Make sign of `components_` deterministic in :class:`decomposition.SparsePCA`.
-  :pr:`xxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`23935` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 
 :mod:`sklearn.ensemble`
