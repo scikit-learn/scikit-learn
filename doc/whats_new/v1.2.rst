@@ -128,10 +128,11 @@ Changelog
 
 :mod:`sklearn.feature_selection`
 ................................
-- |Fix| :class:`feature_selection.SelectFromModel` defaults to selection threshold
-  1e-5 when the estimator is either :class:`linear_model.ElasticNet` or
-  :class:`linear_model.ElasticNetCV` with `l1_ratio` equals 1 or :class:`linear_model.LassoCV`.
-  :pr:`23636` by :user:`Hao Chun Chang <haochunchang>`
+- |Fix| :class:`feature_selection.SelectFromModel` defaults to selection
+  threshold 1e-5 when the estimator is either :class:`linear_model.ElasticNet`
+  or :class:`linear_model.ElasticNetCV` with `l1_ratio` equals 1 or
+  :class:`linear_model.LassoCV`. :pr:`23636` by :user:`Hao Chun Chang
+  <haochunchang>`
 
 
 :mod:`sklearn.impute`
