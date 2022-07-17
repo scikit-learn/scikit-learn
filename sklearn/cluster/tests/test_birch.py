@@ -50,16 +50,16 @@ def test_partial_fit():
     assert_array_equal(brc_partial.subcluster_labels_, brc.subcluster_labels_)
 
 
-def test_birch_predict():
+def test_birch_predict(global_random_seed):
     # Test the predict method predicts the nearest centroid.
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     X = generate_clustered_data(n_clusters=3, n_features=3, n_samples_per_cluster=10)
 
     # n_samples * n_samples_per_cluster
     shuffle_indices = np.arange(30)
     rng.shuffle(shuffle_indices)
     X_shuffle = X[shuffle_indices, :]
-    brc = Birch(n_clusters=4, threshold=1.0)
+    brc = Birch(n_clusters=4, threshold=1.1)
     brc.fit(X_shuffle)
     centroids = brc.subcluster_centers_
     assert_array_equal(brc.labels_, brc.predict(X_shuffle))
@@ -166,10 +166,10 @@ def test_threshold():
     check_threshold(brc, 5.0)
 
 
-def test_birch_n_clusters_long_int():
+def test_birch_n_clusters_long_int(global_random_seed):
     # Check that birch supports n_clusters with np.int64 dtype, for instance
     # coming from np.arange. #16484
-    X, _ = make_blobs(random_state=0)
+    X, _ = make_blobs(random_state=global_random_seed)
     n_clusters = np.int64(5)
     Birch(n_clusters=n_clusters).fit(X)
 
@@ -197,9 +197,9 @@ def test_feature_names_out():
     assert_array_equal([f"birch{i}" for i in range(n_clusters)], names_out)
 
 
-def test_transform_match_across_dtypes():
-    X, _ = make_blobs(n_samples=80, n_features=4, random_state=0)
-    brc = Birch(n_clusters=4)
+def test_transform_match_across_dtypes(global_random_seed):
+    X, _ = make_blobs(n_samples=80, n_features=4, random_state=global_random_seed)
+    brc = Birch(n_clusters=4, threshold=1.1)
     Y_64 = brc.fit_transform(X)
     Y_32 = brc.fit_transform(X.astype(np.float32))
 
