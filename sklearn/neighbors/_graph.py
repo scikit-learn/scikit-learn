@@ -9,6 +9,7 @@ from ._base import NeighborsBase
 from ._unsupervised import NearestNeighbors
 from ..base import TransformerMixin, _ClassNamePrefixFeaturesOutMixin
 from ..utils.validation import check_is_fitted
+from ..utils._param_validation import StrOptions
 
 
 def _check_params(X, metric, p, metric_params):
@@ -581,6 +582,11 @@ class RadiusNeighborsTransformer(
     >>> print(counts)
     [ 29  15 111  11  12]
     """
+    _parameter_constraints = {
+        **NeighborsBase._parameter_constraints,
+        "mode": [StrOptions({"distance", "connectivity"})],
+    }
+    _parameter_constraints.pop("n_neighbors")
 
     def __init__(
         self,
@@ -623,6 +629,7 @@ class RadiusNeighborsTransformer(
         self : RadiusNeighborsTransformer
             The fitted radius neighbors transformer.
         """
+        self._validate_params()
         self._fit(X)
         self._n_features_out = self.n_samples_fit_
         return self
