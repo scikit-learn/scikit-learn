@@ -277,15 +277,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         return raw_predictions
 
     def _check_params(self):
-        if self.criterion == "mse":
-            # TODO(1.2): Remove. By then it should raise an error.
-            warnings.warn(
-                "Criterion 'mse' was deprecated in v1.0 and will be "
-                "removed in version 1.2. Use `criterion='squared_error'` "
-                "which is equivalent.",
-                FutureWarning,
-            )
-
         # TODO(1.2): Remove
         if self.loss == "ls":
             warnings.warn(
@@ -444,7 +435,19 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         self : object
             Fitted estimator.
         """
+        if self.criterion == "mse":
+            # TODO(1.2): Remove. By then it should raise an error.
+            warnings.warn(
+                "Criterion 'mse' was deprecated in v1.0 and will be "
+                "removed in version 1.2. Use `criterion='squared_error'` "
+                "which is equivalent.",
+                FutureWarning,
+            )
+
         self._validate_params()
+
+        if not self.warm_start:
+            self._clear_state()
 
         # Check input
         # Since check_array converts both X and y to the same dtype, but the
