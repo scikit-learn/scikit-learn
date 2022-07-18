@@ -275,6 +275,14 @@ class _PLS(
             if self.algorithm in ["nipals", "svd"]:
                 # Y is only deflated for NIPALS and SVD
                 self.y_scores_ = self._y_scores
+            else:
+                # Make sure we forget about previous calls to fit with NIPALS or SVD
+                # for the public attributes that are not set by the Dayal MacGregor
+                # method.
+                if hasattr(self, "y_scores_"):
+                    del self.y_scores_
+                if hasattr(self, "y_rotations_"):
+                    del self.y_rotations_
         # TODO(1.3): change `self._coef_` to `self.coef_`
         self._coef_ = ((self.x_rotations_ @ self.y_loadings_.T) * self._y_std).T
         self.intercept_ = self._y_mean
@@ -558,11 +566,10 @@ class _PLS(
             if n_targets == 1:
                 w = S
             else:
-                # get the eigenvector corresponding to the
-                # largest eigenvalue of S
-                eval, evec = np.linalg.eig(S.T @ S)
-                levec = evec[:, np.argmax(eval)]
-                w = S @ np.real(levec)
+                # get the singular vector corresponding to the largest singular
+                # value of S (or equivalently the largest eigen value of S.T @ S).
+                _, v = np.linalg.eigh(S.T @ S)
+                w = S @ v[-1]
             w = w / np.sqrt(w.T @ w)
             r = w
             for j in range(n_components - 1):
