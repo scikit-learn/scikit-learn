@@ -33,6 +33,7 @@ from ..utils.sparsefuncs_fast import assign_rows_csr
 from ..utils.sparsefuncs import mean_variance_axis
 from ..utils import check_array
 from ..utils import check_random_state
+from ..utils.fixes import rng_integers
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.validation import _is_arraylike_not_scalar
 from ..utils._param_validation import Hidden
@@ -173,7 +174,7 @@ def _kmeans_plusplus(X, n_clusters, x_squared_norms, random_state, n_local_trial
     x_squared_norms : ndarray of shape (n_samples,)
         Squared Euclidean norm of each data point.
 
-    random_state : RandomState instance
+    random_state : int or RandomState instance, default=None
         The generator used to initialize the centers.
         See :term:`Glossary <random_state>`.
 
@@ -204,7 +205,7 @@ def _kmeans_plusplus(X, n_clusters, x_squared_norms, random_state, n_local_trial
         n_local_trials = 2 + int(np.log(n_clusters))
 
     # Pick first center randomly and track index of point
-    center_id = random_state.randint(n_samples)
+    center_id = rng_integers(random_state, n_samples)
     indices = np.full(n_clusters, -1, dtype=int)
     if sp.issparse(X):
         centers[0] = X[center_id].toarray()
@@ -992,7 +993,7 @@ class _BaseKMeans(
         n_clusters = self.n_clusters if n_centroids is None else n_centroids
 
         if init_size is not None and init_size < n_samples:
-            init_indices = random_state.randint(0, n_samples, init_size)
+            init_indices = rng_integers(random_state, 0, n_samples, init_size)
             X = X[init_indices]
             x_squared_norms = x_squared_norms[init_indices]
             n_samples = X.shape[0]
@@ -2052,7 +2053,7 @@ class MiniBatchKMeans(_BaseKMeans):
         x_squared_norms = row_norms(X, squared=True)
 
         # Validation set for the init
-        validation_indices = random_state.randint(0, n_samples, self._init_size)
+        validation_indices = rng_integers(random_state, 0, n_samples, self._init_size)
         X_valid = X[validation_indices]
         sample_weight_valid = sample_weight[validation_indices]
         x_squared_norms_valid = x_squared_norms[validation_indices]
@@ -2108,7 +2109,9 @@ class MiniBatchKMeans(_BaseKMeans):
             # Perform the iterative optimization until convergence
             for i in range(n_steps):
                 # Sample a minibatch from the full dataset
-                minibatch_indices = random_state.randint(0, n_samples, self._batch_size)
+                minibatch_indices = rng_integers(
+                    random_state, 0, n_samples, self._batch_size
+                )
 
                 # Perform the actual update step on the minibatch data
                 batch_inertia = _mini_batch_step(

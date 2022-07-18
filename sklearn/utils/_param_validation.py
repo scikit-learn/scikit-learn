@@ -428,6 +428,7 @@ class _RandomStates(_Constraint):
         self._constraints = [
             Interval(Integral, 0, 2**32 - 1, closed="both"),
             _InstancesOf(np.random.RandomState),
+            _InstancesOf(np.random.Generator),
             _NoneConstraint(),
         ]
 

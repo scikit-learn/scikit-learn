@@ -18,6 +18,7 @@ from ..utils import column_or_1d
 from ..utils import compute_class_weight
 from ..utils.metaestimators import available_if
 from ..utils.extmath import safe_sparse_dot
+from ..utils.fixes import rng_integers
 from ..utils.validation import check_is_fitted, _check_large_sparse
 from ..utils.validation import _num_samples
 from ..utils.validation import _check_sample_weight, check_consistent_length
@@ -247,7 +248,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         if self.verbose:
             print("[LibSVM]", end="")
 
-        seed = rnd.randint(np.iinfo("i").max)
+        seed = rng_integers(rnd, np.iinfo("i").max)
         fit(X, y, sample_weight, solver_type, kernel, random_seed=seed)
         # see comment on the other call to np.iinfo in this file
 
@@ -1222,11 +1223,11 @@ def _fit_liblinear(
         C,
         class_weight_,
         max_iter,
-        rnd.randint(np.iinfo("i").max),
+        rng_integers(rnd, np.iinfo("i").max),
         epsilon,
         sample_weight,
     )
-    # Regarding rnd.randint(..) in the above signature:
+    # Regarding rng_integers(...) in the above signature:
     # seed for srand in range [0..INT_MAX); due to limitations in Numpy
     # on 32-bit platforms, we can't get to the UINT_MAX limit that
     # srand supports

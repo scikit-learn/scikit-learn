@@ -39,7 +39,7 @@ from ..utils.random import sample_without_replacement
 from ..utils._tags import _safe_tags
 from ..utils.validation import indexable, check_is_fitted, _check_fit_params
 from ..utils.metaestimators import available_if
-from ..utils.fixes import delayed
+from ..utils.fixes import delayed, rng_integers
 from ..metrics._scorer import _check_multimetric_scoring
 from ..metrics import check_scoring
 
@@ -323,7 +323,7 @@ class ParameterSampler:
                     if hasattr(v, "rvs"):
                         params[k] = v.rvs(random_state=rng)
                     else:
-                        params[k] = v[rng.randint(len(v))]
+                        params[k] = v[rng_integers(rng, len(v))]
                 yield params
 
     def __len__(self):

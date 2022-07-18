@@ -16,6 +16,7 @@ from scipy import sparse
 from numpy.lib.stride_tricks import as_strided
 
 from ..utils import check_array, check_random_state
+from ..utils.fixes import rng_integers
 from ..base import BaseEstimator
 
 __all__ = [
@@ -403,8 +404,8 @@ def extract_patches_2d(image, patch_size, *, max_patches=None, random_state=None
     n_patches = _compute_n_patches(i_h, i_w, p_h, p_w, max_patches)
     if max_patches:
         rng = check_random_state(random_state)
-        i_s = rng.randint(i_h - p_h + 1, size=n_patches)
-        j_s = rng.randint(i_w - p_w + 1, size=n_patches)
+        i_s = rng_integers(rng, i_h - p_h + 1, size=n_patches)
+        j_s = rng_integers(rng, i_w - p_w + 1, size=n_patches)
         patches = extracted_patches[i_s, j_s, 0]
     else:
         patches = extracted_patches

@@ -35,11 +35,13 @@ from ..linear_model import SGDRegressor
 
 from ..base import (
     clone,
+    BiclusterMixin,
     ClusterMixin,
     is_classifier,
     is_regressor,
     is_outlier_detector,
     RegressorMixin,
+    TransformerMixin,
 )
 
 from ..metrics import accuracy_score, adjusted_rand_score, f1_score
@@ -67,6 +69,7 @@ from ._tags import (
     _safe_tags,
 )
 from .validation import has_fit_parameter, _num_samples
+from ..preprocessing import MinMaxScaler
 from ..preprocessing import StandardScaler
 from ..preprocessing import scale
 from ..datasets import (
@@ -77,6 +80,8 @@ from ..datasets import (
 )
 
 REGRESSION_DATASET = None
+CLASSIFICATION_DATASET = None
+MULTIOUTPUT_DATASET = None
 CROSS_DECOMPOSITION = ["PLSCanonical", "PLSRegression", "CCA", "PLSSVD"]
 
 
@@ -645,6 +650,32 @@ def _regression_dataset():
         X = StandardScaler().fit_transform(X)
         REGRESSION_DATASET = X, y
     return REGRESSION_DATASET
+
+
+def _classification_dataset():
+    global CLASSIFICATION_DATASET
+    if CLASSIFICATION_DATASET is None:
+        X, y = make_blobs(n_samples=200, centers=3, n_features=10, random_state=0)
+        X = MinMaxScaler().fit_transform(X)
+        CLASSIFICATION_DATASET = X, y
+    return CLASSIFICATION_DATASET
+
+
+def _multioutput_dataset():
+    global MULTIOUTPUT_DATASET
+    if MULTIOUTPUT_DATASET is None:
+        X, y = make_multilabel_classification(
+            n_samples=100,
+            n_features=2,
+            n_classes=5,
+            n_labels=3,
+            length=50,
+            allow_unlabeled=True,
+            random_state=0,
+        )
+        X = scale(X)
+        MULTIOUTPUT_DATASET = X, y
+    return MULTIOUTPUT_DATASET
 
 
 def _set_checking_parameters(estimator):
@@ -4115,3 +4146,33 @@ def check_param_validation(name, estimator_orig):
                         getattr(estimator, method)(y)
                     else:
                         getattr(estimator, method)(X, y)
+
+
+def check_random_state_type(name, estimator):
+    # TODO
+    def _fit(estimator, X, y):
+        # call fit(X) or fit(X, y) depending on required arguments
+        sig = signature(estimator.fit)
+        if 'y' not in sig.parameters:
+            return estimator.fit(X, y)
+
+        y_param = sig.parameters['y']
+        if y_param.default is y_param.empty:  # required argument
+            return estimator.fit(X, y)
+        return estimator.fit(X)
+
+    if  '3darray' in _safe_tags(estimator, 'X_types'):
+        X = np.random.random((10, 28, 28, 3))
+        y = None
+    elif _safe_tags(estimator, key="multioutput_only"):
+        X, y = _multioutput_dataset()
+    elif is_regressor(estimator):
+        X, y = _regression_dataset()
+    else:
+        X, y = _classification_dataset()
+
+    # check that none of the below raises
+    estimator = _fit(estimator, X, y)
+    for method in ('decision_function', 'predict', 'predict_proba', 'transform'):
+        if hasattr(estimator, method):
+            getattr(estimator, method)(X)

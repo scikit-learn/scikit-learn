@@ -26,6 +26,7 @@ from ._utils cimport log
 from ._utils cimport rand_int
 from ._utils cimport rand_uniform
 from ._utils cimport RAND_R_MAX
+from ..utils.fixes import rng_integers
 
 cdef double INFINITY = np.inf
 
@@ -120,7 +121,7 @@ cdef class Splitter:
             are assumed to have uniform weight.
         """
 
-        self.rand_r_state = self.random_state.randint(0, RAND_R_MAX)
+        self.rand_r_state = rng_integers(self.random_state, 0, RAND_R_MAX)
         cdef SIZE_t n_samples = X.shape[0]
 
         # Create a new array which will be used to store nonzero

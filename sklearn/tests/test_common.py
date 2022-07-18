@@ -52,6 +52,7 @@ from sklearn.utils.estimator_checks import (
     check_dataframe_column_names_consistency,
     check_n_features_in_after_fitting,
     check_param_validation,
+    check_random_state_type,
     check_transformer_get_feature_names_out,
     check_transformer_get_feature_names_out_pandas,
 )
@@ -565,3 +566,28 @@ def test_check_param_validation(estimator):
         )
     _set_checking_parameters(estimator)
     check_param_validation(name, estimator)
+
+
+@pytest.mark.parametrize(
+    "estimator", _tested_estimators(), ids=_get_check_estimator_ids
+)
+@pytest.mark.parametrize(
+    "random_state", [
+        # TODO uncomment
+        # None,
+        # 0,
+        # np.random.RandomState(42),
+        np.random.default_rng(),
+    ]
+)
+def test_check_random_state_type(estimator, random_state):
+    # TODO
+    name = estimator.__class__.__name__
+    if "random_state" not in estimator.get_params():
+        pytest.skip(
+            f"Estimator {name} does not have a random_state argument, "
+            "therefore its support for different random state types is not tested"
+        )
+    _set_checking_parameters(estimator)
+    estimator.set_params(random_state=random_state)
+    check_random_state_type(name, estimator)

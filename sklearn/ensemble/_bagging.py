@@ -23,7 +23,7 @@ from ..utils.metaestimators import available_if
 from ..utils.multiclass import check_classification_targets
 from ..utils.random import sample_without_replacement
 from ..utils.validation import has_fit_parameter, check_is_fitted, _check_sample_weight
-from ..utils.fixes import delayed
+from ..utils.fixes import delayed, rng_integers
 
 
 __all__ = ["BaggingClassifier", "BaggingRegressor"]
@@ -35,7 +35,7 @@ def _generate_indices(random_state, bootstrap, n_population, n_samples):
     """Draw randomly sampled indices."""
     # Draw sample indices
     if bootstrap:
-        indices = random_state.randint(0, n_population, n_samples)
+        indices = rng_integers(random_state, 0, n_population, n_samples)
     else:
         indices = sample_without_replacement(
             n_population, n_samples, random_state=random_state
@@ -429,9 +429,9 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         # Advance random state to state after training
         # the first n_estimators
         if self.warm_start and len(self.estimators_) > 0:
-            random_state.randint(MAX_INT, size=len(self.estimators_))
+            rng_integers(random_state, MAX_INT, size=len(self.estimators_))
 
-        seeds = random_state.randint(MAX_INT, size=n_more_estimators)
+        seeds = rng_integers(random_state, MAX_INT, size=n_more_estimators)
         self._seeds = seeds
 
         all_results = Parallel(

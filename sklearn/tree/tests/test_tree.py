@@ -59,6 +59,7 @@ from sklearn.tree._classes import CRITERIA_REG
 from sklearn import datasets
 
 from sklearn.utils import compute_sample_weight
+from sklearn.utils.fixes import rng_integers
 
 
 CLF_CRITERIONS = ("gini", "log_loss")
@@ -175,7 +176,7 @@ X_multilabel, y_multilabel = datasets.make_multilabel_classification(
 # NB: despite their names X_sparse_* are numpy arrays (and not sparse matrices)
 X_sparse_pos = random_state.uniform(size=(20, 5))
 X_sparse_pos[X_sparse_pos <= 0.8] = 0.0
-y_random = random_state.randint(0, 4, size=(20,))
+y_random = rng_integers(random_state, 0, 4, size=(20,))
 X_sparse_mix = _sparse_random_matrix(20, 10, density=0.25, random_state=0).toarray()
 
 
@@ -1257,7 +1258,7 @@ def test_arrays_persist():
 def test_only_constant_features():
     random_state = check_random_state(0)
     X = np.zeros((10, 20))
-    y = random_state.randint(0, 2, (10,))
+    y = rng_integers(random_state, 0, 2, (10,))
     for name, TreeEstimator in ALL_TREES.items():
         est = TreeEstimator(random_state=0)
         est.fit(X, y)
@@ -1510,7 +1511,7 @@ def check_explicit_sparse_zeros(tree, max_depth=3, n_features=10):
     X = X_sparse.toarray()
     X_sparse_test = csr_matrix((data, indices, indptr), shape=(n_samples, n_features))
     X_test = X_sparse_test.toarray()
-    y = random_state.randint(0, 3, size=(n_samples,))
+    y = rng_integers(random_state, 0, 3, size=(n_samples,))
 
     # Ensure that X_sparse_test owns its data, indices and indptr array
     X_sparse_test = X_sparse_test.copy()

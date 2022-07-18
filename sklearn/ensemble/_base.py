@@ -23,6 +23,7 @@ from ..tree import (
 )
 from ..utils import Bunch, _print_elapsed_time
 from ..utils import check_random_state
+from ..utils.fixes import rng_integers
 from ..utils.metaestimators import _BaseComposition
 
 
@@ -80,7 +81,7 @@ def _set_random_states(estimator, random_state=None):
     to_set = {}
     for key in sorted(estimator.get_params(deep=True)):
         if key == "random_state" or key.endswith("__random_state"):
-            to_set[key] = random_state.randint(np.iinfo(np.int32).max)
+            to_set[key] = rng_integers(random_state, np.iinfo(np.int32).max)
 
     if to_set:
         estimator.set_params(**to_set)
