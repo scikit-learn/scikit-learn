@@ -965,7 +965,7 @@ class TSNE(BaseEstimator):
                 # Distances have really tiny difference if using the
                 # PairwiseDistancesReductions on 32bit data.
                 # This causes in turn the joint probability distributions computations.
-                # bellow to have significant differences and thus different results.
+                # below to have significant differences and thus different results.
                 # For backward compatibility on results, we prefer to use the
                 # old back-end.
                 distances_nn = knn.kneighbors_graph(mode="distance")
