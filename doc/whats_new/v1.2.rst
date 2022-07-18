@@ -100,6 +100,14 @@ Changelog
   :class:`cluster.AgglomerativeClustering` and will be renamed to `metric` in v1.4.
   :pr:`23470` by :user:`Meekail Zain <micky774>`.
 
+:mod:`sklearn.cross_decomposition`
+..................................
+
+- |Enhancement| The Dayal-MacGregor kernel algorithm was implemented for
+  `PLSRegression` with the `algorithm="dayal"` initialization argument,
+  which provides an asymptotic performance improvement over the default
+  algorithm, NIPALS. :pr:`23876` by :user:`Dylan Houlihan <fractionalhare>`.
+
 :mod:`sklearn.datasets`
 .......................
 
