@@ -60,7 +60,7 @@ class KernelDensity(BaseEstimator):
         :class:`~sklearn.metrics.pairwise.distance_metrics` for valid metric
         values.
 
-        Not all metrics are valid with all algorithms : refer to the
+        Not all metrics are valid with all algorithms: refer to the
         documentation of :class:`BallTree` and :class:`KDTree`. Note that the
         normalization of the density output is correct only for the Euclidean
         distance metric.

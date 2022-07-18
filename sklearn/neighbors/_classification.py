@@ -78,10 +78,9 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         must be square during fit. X may be a :term:`sparse graph`, in which
         case only "nonzero" elements may be considered neighbors.
 
-        If metric is a callable function, it is called on each
-        pair of instances (rows) and the resulting value recorded. The callable
-        should take two arrays as input and return one value indicating the
-        distance between them. This works for Scipy's metrics, but is less
+        If metric is a callable function, it takes two arrays representing 1D
+        vectors as inputs and must return one value indicating the distance
+        between those vectors. This works for Scipy's metrics, but is less
         efficient than passing the metric name as a string.
 
     metric_params : dict, default=None
@@ -384,10 +383,9 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
         must be square during fit. X may be a :term:`sparse graph`, in which
         case only "nonzero" elements may be considered neighbors.
 
-        If metric is a callable function, it is called on each
-        pair of instances (rows) and the resulting value recorded. The callable
-        should take two arrays as input and return one value indicating the
-        distance between them. This works for Scipy's metrics, but is less
+        If metric is a callable function, it takes two arrays representing 1D
+        vectors as inputs and must return one value indicating the distance
+        between those vectors. This works for Scipy's metrics, but is less
         efficient than passing the metric name as a string.
 
     outlier_label : {manual label, 'most_frequent'}, default=None

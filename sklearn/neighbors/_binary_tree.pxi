@@ -230,7 +230,7 @@ leaf_size : positive int, default=40
     satisfy ``leaf_size <= n_points <= 2 * leaf_size``, except in
     the case that ``n_samples < leaf_size``.
 
-metric : str or DistanceMetric object, default='minkowski'
+metric : str, default='minkowski'
     Metric to use for distance computation. Default is "minkowski", which
     results in the standard Euclidean distance when p = 2.
     {binary_tree}.valid_metrics gives a list of the metrics which are valid for
