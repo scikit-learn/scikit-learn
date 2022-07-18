@@ -276,6 +276,80 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         return raw_predictions
 
+    def _check_params(self):
+        if self.criterion == "mse":
+            # TODO(1.2): Remove. By then it should raise an error.
+            warnings.warn(
+                "Criterion 'mse' was deprecated in v1.0 and will be "
+                "removed in version 1.2. Use `criterion='squared_error'` "
+                "which is equivalent.",
+                FutureWarning,
+            )
+
+        # TODO(1.2): Remove
+        if self.loss == "ls":
+            warnings.warn(
+                "The loss 'ls' was deprecated in v1.0 and "
+                "will be removed in version 1.2. Use 'squared_error'"
+                " which is equivalent.",
+                FutureWarning,
+            )
+        elif self.loss == "lad":
+            warnings.warn(
+                "The loss 'lad' was deprecated in v1.0 and "
+                "will be removed in version 1.2. Use "
+                "'absolute_error' which is equivalent.",
+                FutureWarning,
+            )
+
+        # TODO(1.3): Remove
+        if self.loss == "deviance":
+            warnings.warn(
+                "The loss parameter name 'deviance' was deprecated in v1.1 and will be "
+                "removed in version 1.3. Use the new parameter name 'log_loss' which "
+                "is equivalent.",
+                FutureWarning,
+            )
+            loss_class = (
+                _gb_losses.MultinomialDeviance
+                if len(self.classes_) > 2
+                else _gb_losses.BinomialDeviance
+            )
+        elif self.loss == "log_loss":
+            loss_class = (
+                _gb_losses.MultinomialDeviance
+                if len(self.classes_) > 2
+                else _gb_losses.BinomialDeviance
+            )
+        else:
+            loss_class = _gb_losses.LOSS_FUNCTIONS[self.loss]
+
+        if is_classifier(self):
+            self._loss = loss_class(self.n_classes_)
+        elif self.loss in ("huber", "quantile"):
+            self._loss = loss_class(self.alpha)
+        else:
+            self._loss = loss_class()
+
+        if isinstance(self.max_features, str):
+            if self.max_features == "auto":
+                if is_classifier(self):
+                    max_features = max(1, int(np.sqrt(self.n_features_in_)))
+                else:
+                    max_features = self.n_features_in_
+            elif self.max_features == "sqrt":
+                max_features = max(1, int(np.sqrt(self.n_features_in_)))
+            else:  # self.max_features == "log2"
+                max_features = max(1, int(np.log2(self.n_features_in_)))
+        elif self.max_features is None:
+            max_features = self.n_features_in_
+        elif isinstance(self.max_features, Integral):
+            max_features = self.max_features
+        else:  # float
+            max_features = max(1, int(self.max_features * self.n_features_in_))
+
+        self.max_features_ = max_features
+
     def _init_state(self):
         """Initialize model state and allocate model state data structures."""
 
@@ -391,82 +465,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         else:
             y = self._validate_y(y)
 
-        if self.criterion == "mse":
-            # TODO(1.2): Remove. By then it should raise an error.
-            warnings.warn(
-                "Criterion 'mse' was deprecated in v1.0 and will be "
-                "removed in version 1.2. Use `criterion='squared_error'` "
-                "which is equivalent.",
-                FutureWarning,
-            )
-
-        # TODO(1.2): Remove
-        if self.loss == "ls":
-            warnings.warn(
-                "The loss 'ls' was deprecated in v1.0 and "
-                "will be removed in version 1.2. Use 'squared_error'"
-                " which is equivalent.",
-                FutureWarning,
-            )
-        elif self.loss == "lad":
-            warnings.warn(
-                "The loss 'lad' was deprecated in v1.0 and "
-                "will be removed in version 1.2. Use "
-                "'absolute_error' which is equivalent.",
-                FutureWarning,
-            )
-
-        # TODO(1.3): Remove
-        if self.loss == "deviance":
-            warnings.warn(
-                "The loss parameter name 'deviance' was deprecated in v1.1 and will be "
-                "removed in version 1.3. Use the new parameter name 'log_loss' which "
-                "is equivalent.",
-                FutureWarning,
-            )
-            loss_class = (
-                _gb_losses.MultinomialDeviance
-                if len(self.classes_) > 2
-                else _gb_losses.BinomialDeviance
-            )
-        elif self.loss == "log_loss":
-            loss_class = (
-                _gb_losses.MultinomialDeviance
-                if len(self.classes_) > 2
-                else _gb_losses.BinomialDeviance
-            )
-        else:
-            loss_class = _gb_losses.LOSS_FUNCTIONS[self.loss]
-
-        if is_classifier(self):
-            self._loss = loss_class(self.n_classes_)
-        elif self.loss in ("huber", "quantile"):
-            self._loss = loss_class(self.alpha)
-        else:
-            self._loss = loss_class()
-
-        # if not warmstart - clear the estimator state
-        if not self.warm_start:
-            self._clear_state()
-
-        if isinstance(self.max_features, str):
-            if self.max_features == "auto":
-                if is_classifier(self):
-                    max_features = max(1, int(np.sqrt(self.n_features_in_)))
-                else:
-                    max_features = self.n_features_in_
-            elif self.max_features == "sqrt":
-                max_features = max(1, int(np.sqrt(self.n_features_in_)))
-            else:  # self.max_features == "log2"
-                max_features = max(1, int(np.log2(self.n_features_in_)))
-        elif self.max_features is None:
-            max_features = self.n_features_in_
-        elif isinstance(self.max_features, Integral):
-            max_features = self.max_features
-        else:  # float
-            max_features = max(1, int(self.max_features * self.n_features_in_))
-
-        self.max_features_ = max_features
+        self._check_params()
 
         if self.n_iter_no_change is not None:
             stratify = y if is_classifier(self) else None
