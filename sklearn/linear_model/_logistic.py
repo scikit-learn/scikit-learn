@@ -784,7 +784,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
 
         .. deprecated:: 1.2
            The 'none' option was deprecated in version 1.2, and will be removed
-           in 1.3.
+           in 1.4.
 
     dual : bool, default=False
         Dual or primal formulation. Dual formulation is only implemented for
