@@ -1016,7 +1016,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     """
 
     _parameter_constraints = {
-        "penalty": [StrOptions({"l1", "l2", "elasticnet"}, deprecated={"none"}), None],
+        "penalty": [StrOptions({"l1", "l2", "elasticnet", "none"}, deprecated={"none"}), None],
         "dual": ["boolean"],
         "tol": [Interval(Real, 0, None, closed="left")],
         "C": [Interval(Real, 0, None, closed="right")],
