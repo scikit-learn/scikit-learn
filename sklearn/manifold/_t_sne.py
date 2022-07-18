@@ -964,7 +964,7 @@ class TSNE(BaseEstimator):
             with config_context(enable_cython_pairwise_dist=False):
                 # Distances have really tiny difference if using the
                 # PairwiseDistancesReductions on 32bit data.
-                # This causes in turn the jpint probability distributions computations.
+                # This causes in turn the joint probability distributions computations.
                 # bellow to have significant differences and thus different results.
                 # For backward compatibility on results, we prefer to use the
                 # old back-end.
