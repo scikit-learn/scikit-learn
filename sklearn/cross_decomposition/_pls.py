@@ -568,8 +568,8 @@ class _PLS(
             else:
                 # get the singular vector corresponding to the largest singular
                 # value of S (or equivalently the largest eigen value of S.T @ S).
-                _, v = np.linalg.eigh(S.T @ S)
-                w = S @ v[-1]
+                _, _, Vt = np.linalg.svd(S)
+                w = S @ Vt[0]
             w = w / np.sqrt(w.T @ w)
             r = w
             for j in range(n_components - 1):
