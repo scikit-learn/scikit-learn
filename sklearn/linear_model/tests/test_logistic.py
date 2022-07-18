@@ -1973,7 +1973,7 @@ def test_single_feature_newton_cg():
     LogisticRegression(solver="newton-cg", fit_intercept=True).fit(X, y)
 
 
-# TODO(1.3): Remove
+# TODO(1.4): Remove
 def test_warning_on_penalty_string_none():
     # Test that warning message is shown when penalty='none'
     target = iris.target_names[iris.target]
