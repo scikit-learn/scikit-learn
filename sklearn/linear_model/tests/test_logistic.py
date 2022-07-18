@@ -1979,7 +1979,7 @@ def test_warning_on_penalty_string_none():
     target = iris.target_names[iris.target]
     lr = LogisticRegression(penalty="none")
     warning_message = (
-        "`penalty='none'`has been deprecated in 1.2 and will be removed in 1.3."
+        "`penalty='none'`has been deprecated in 1.2 and will be removed in 1.4."
         " To keep the past behaviour, set `penalty=None`."
     )
     with pytest.warns(FutureWarning, match=warning_message):
