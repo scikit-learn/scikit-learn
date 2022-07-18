@@ -784,7 +784,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
 
         .. deprecated:: 1.2
            The 'none' option was deprecated in version 1.2, and will be removed
-           in 1.3.
+           in 1.4.
 
     dual : bool, default=False
         Dual or primal formulation. Dual formulation is only implemented for
@@ -1016,7 +1016,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     """
 
     _parameter_constraints = {
-        "penalty": [StrOptions({"l1", "l2", "elasticnet", "none"}), None],
+        "penalty": [StrOptions({"l1", "l2", "elasticnet"}, deprecated={"none"}), None],
         "dual": ["boolean"],
         "tol": [Interval(Real, 0, None, closed="left")],
         "C": [Interval(Real, 0, None, closed="right")],
@@ -1110,10 +1110,10 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
                 "(penalty={})".format(self.penalty)
             )
 
-        # TODO(1.3): Remove
+        # TODO(1.4): Remove
         if self.penalty == "none":
             warnings.warn(
-                "`penalty='none'`has been deprecated in 1.2 and will be removed in 1.3."
+                "`penalty='none'`has been deprecated in 1.2 and will be removed in 1.4."
                 " To keep the past behaviour, set `penalty=None`.",
                 FutureWarning,
             )
