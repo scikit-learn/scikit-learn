@@ -126,7 +126,7 @@ def test_sanity_check_pls_regression_nipals():
 
 
 @pytest.mark.parametrize("scale", [True, False])
-def test_sanity_check_pls_regression_dayal_macgregor(scale: bool):
+def test_sanity_check_pls_regression_dayal_macgregor(scale):
     # Sanity check for PLSRegression with Dayal-MacGregor
     # The results were checked against the results of the NIPALS algorithm
     # Loads the same data used to validate NIPALS against the R NIPALS implementations
@@ -160,7 +160,7 @@ def test_sanity_check_pls_regression_dayal_macgregor(scale: bool):
 
 
 @pytest.mark.parametrize("scale", [True, False])
-def test_dayalmacgregor_nipals_svd_consistency(scale: bool, global_random_seed):
+def test_dayalmacgregor_nipals_svd_consistency(scale, global_random_seed):
     n_samples, n_features, n_targets = 20, 10, 5
     rng = np.random.RandomState(global_random_seed)
     X = rng.randn(n_samples, n_features)
@@ -670,3 +670,5 @@ def test_pls_feature_names_out(Klass):
         dtype=object,
     )
     assert_array_equal(names_out, expected_names_out)
+
+
