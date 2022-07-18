@@ -502,7 +502,11 @@ class MDS(BaseEstimator):
         "n_jobs": [None, Integral],
         "random_state": ["random_state"],
         "dissimilarity": [StrOptions({"euclidean", "precomputed"})],
-        "normalized_stress": ["boolean", StrOptions({"auto"}), Hidden(StrOptions({"warn"}))],
+        "normalized_stress": [
+            "boolean",
+            StrOptions({"auto"}),
+            Hidden(StrOptions({"warn"})),
+        ],
     }
 
     def __init__(
