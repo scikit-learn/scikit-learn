@@ -84,7 +84,8 @@ cdef class PairwiseDistancesArgKmin64(PairwiseDistancesReduction64):
 
             # The extra `Y_norm_squared` argument for the back-end is only
             # supported for the FastEuclidean variant.
-            metric_kwargs.pop("Y_norm_squared", None)
+            if metric_kwargs is not None:
+                metric_kwargs.pop("Y_norm_squared", None)
 
             pda = PairwiseDistancesArgKmin64(
                 datasets_pair=DatasetsPair.get_for(X, Y, metric, metric_kwargs),
