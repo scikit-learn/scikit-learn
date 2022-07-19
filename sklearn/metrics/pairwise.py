@@ -1466,7 +1466,7 @@ def chi2_kernel(X, Y=None, gamma=1.0):
     Returns
     -------
     kernel_matrix : ndarray of shape (n_samples_X, n_samples_Y)
-        Returns the exponential chi-squared kernel X and Y.
+        The kernel matrix.
 
     See Also
     --------
