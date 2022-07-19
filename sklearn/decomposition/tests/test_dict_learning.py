@@ -721,7 +721,7 @@ def test_minibatch_dict_learning_n_iter_deprecated():
     # check the deprecation warning of n_iter
     # FIXME: remove in 1.3
     depr_msg = (
-        "'n_iter' is deprecated in version 1.1 and will be removed in version 1.3"
+        "'n_iter' is deprecated in version 1.1 and will be removed in version 1.4"
     )
     est = MiniBatchDictionaryLearning(
         n_components=2, batch_size=4, n_iter=5, random_state=0
@@ -1072,3 +1072,14 @@ def test_get_feature_names_out(estimator):
         feature_names_out,
         [f"{estimator_name}{i}" for i in range(n_components)],
     )
+
+
+# TODO(1.4) remove
+def test_minibatch_dictionary_learning_warns_and_ignore_n_iter():
+    """Check that we always raise a warning when `n_iter` is set even if it is
+    ignored if `max_iter` is set.
+    """
+    warn_msg = "'n_iter' is deprecated in version 1.1"
+    with pytest.warns(FutureWarning, match=warn_msg):
+        model = MiniBatchDictionaryLearning(batch_size=256, n_iter=2, max_iter=2).fit(X)
+    assert model.n_iter_ == 2

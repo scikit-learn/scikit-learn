@@ -207,7 +207,7 @@ class BisectingKMeans(_BaseKMeans):
     _parameter_constraints = {
         **_BaseKMeans._parameter_constraints,
         "init": [StrOptions({"k-means++", "random"}), callable],
-        "copy_x": [bool],
+        "copy_x": ["boolean"],
         "algorithm": [StrOptions({"lloyd", "elkan"})],
         "bisecting_strategy": [StrOptions({"biggest_inertia", "largest_cluster"})],
     }
