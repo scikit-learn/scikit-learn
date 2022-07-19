@@ -653,13 +653,14 @@ def pairwise_distances_argmin_min(
         Y[argmin[i], :] is the row in Y that is closest to X[i, :].
 
     distances : ndarray
-        distances[i] is the distance between the i-th row in X and the
+        Distances[i] is the distance between the i-th row in X and the
         argmin[i]-th row in Y.
 
     See Also
     --------
-    sklearn.metrics.pairwise_distances
-    sklearn.metrics.pairwise_distances_argmin
+    pairwise_distances : Distances between pairs of elements of X and Y.
+    pairwise_distances_argmin : Minimum distances between one point and a
+                                set of points.
     """
     X, Y = check_pairwise_arrays(X, Y)
 
