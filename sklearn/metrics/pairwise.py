@@ -210,7 +210,6 @@ def check_paired_arrays(X, Y):
     safe_Y : {array-like, sparse matrix} of shape (n_samples_Y, n_features)
         An array equal to Y if Y was not None, guaranteed to be a numpy array.
         If Y was None, safe_Y will be a pointer to X.
-
     """
     X, Y = check_pairwise_arrays(X, Y)
     if X.shape != Y.shape:
