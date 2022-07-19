@@ -4,6 +4,7 @@ from libc.stdlib cimport free, malloc
 from libc.float cimport DBL_MAX
 from cython cimport final
 from cython.parallel cimport parallel, prange
+from scipy import sparse
 
 from ._base cimport (
     PairwiseDistancesReduction64,
@@ -81,6 +82,11 @@ cdef class PairwiseDistancesArgKmin64(PairwiseDistancesReduction64):
         else:
             # Fall back on a generic implementation that handles all distance
             # metrics by computing it between 2 vectors at a time.
+
+            # The extra `Y_norm_squared` argument for the back-end is only
+            # supported for the FastEuclidean variant.
+            metric_kwargs.pop("Y_norm_squared", None)
+
             pda = PairwiseDistancesArgKmin64(
                 datasets_pair=DatasetsPair.get_for(X, Y, metric, metric_kwargs),
                 k=k,

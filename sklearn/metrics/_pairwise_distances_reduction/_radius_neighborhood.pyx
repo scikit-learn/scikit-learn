@@ -105,11 +105,15 @@ cdef class PairwiseDistancesRadiusNeighborhood64(PairwiseDistancesReduction64):
         else:
             # Fall back on a generic implementation that handles all distance
             # metrics by computing it between 2 vectors at a time.
+
+            # The extra `Y_norm_squared` argument for the back-end is only
+            # supported for the FastEuclidean variant.
+            metric_kwargs.pop("Y_norm_squared", None)
+
             pda = PairwiseDistancesRadiusNeighborhood64(
                 datasets_pair=DatasetsPair.get_for(X, Y, metric, metric_kwargs),
                 radius=radius,
                 chunk_size=chunk_size,
-                metric_kwargs=metric_kwargs,
                 strategy=strategy,
                 sort_results=sort_results,
             )
@@ -132,7 +136,6 @@ cdef class PairwiseDistancesRadiusNeighborhood64(PairwiseDistancesReduction64):
         chunk_size=None,
         strategy=None,
         sort_results=False,
-        metric_kwargs=None,
     ):
         super().__init__(
             datasets_pair=datasets_pair,
@@ -355,7 +358,6 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood64(PairwiseDistancesR
             chunk_size=chunk_size,
             strategy=strategy,
             sort_results=sort_results,
-            metric_kwargs=metric_kwargs,
         )
         # X and Y are checked by the DatasetsPair implemented as a DenseDenseDatasetsPair
         cdef:

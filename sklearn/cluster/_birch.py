@@ -694,13 +694,7 @@ class Birch(
 
     def _predict(self, X):
         """Predict data using the ``centroids_`` of subclusters."""
-
-        # The extra `Y_norm_squared` argument for the back-end
-        # is only supported for the dense-dense case.
-        if not sparse.issparse(X) and not sparse.issparse(self.subcluster_centers_):
-            kwargs = {"Y_norm_squared": self._subcluster_norms}
-        else:
-            kwargs = {}
+        kwargs = {"Y_norm_squared": self._subcluster_norms}
 
         with config_context(assume_finite=True):
             argmin = pairwise_distances_argmin(
