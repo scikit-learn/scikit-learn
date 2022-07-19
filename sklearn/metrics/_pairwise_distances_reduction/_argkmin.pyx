@@ -4,7 +4,6 @@ from libc.stdlib cimport free, malloc
 from libc.float cimport DBL_MAX
 from cython cimport final
 from cython.parallel cimport parallel, prange
-from scipy import sparse
 
 from ._base cimport (
     PairwiseDistancesReduction64,
