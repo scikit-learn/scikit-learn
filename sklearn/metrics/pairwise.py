@@ -1458,7 +1458,7 @@ def chi2_kernel(X, Y=None, gamma=1.0):
         A feature array.
 
     Y : ndarray of shape (n_samples_Y, n_features), default=None
-        Input array/matrix Y.
+        An optional second feature array. If `None`, uses `Y=X`.
 
     gamma : float, default=1
         Scaling parameter of the chi2 kernel.
