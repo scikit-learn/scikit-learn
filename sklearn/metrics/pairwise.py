@@ -767,8 +767,8 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
     See Also
     --------
     pairwise_distances : Distances between every pair of samples of X and Y.
-    pairwise_distances_argmin_min : Minimum distances between one point and a
-                                    set of points.
+    pairwise_distances_argmin_min : Same as `pairwise_distances_argmin` but also
+        returns the distances.
     """
     if metric_kwargs is None:
         metric_kwargs = {}
