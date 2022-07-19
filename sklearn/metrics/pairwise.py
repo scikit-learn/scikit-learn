@@ -653,8 +653,8 @@ def pairwise_distances_argmin_min(
         Y[argmin[i], :] is the row in Y that is closest to X[i, :].
 
     distances : ndarray
-        Distances[i] is the distance between the i-th row in X and the
-        argmin[i]-th row in Y.
+        The array of minimum distances. `distances[i]` is the distance between
+        the i-th row in X and the argmin[i]-th row in Y.
 
     See Also
     --------
