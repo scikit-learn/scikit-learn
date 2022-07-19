@@ -200,6 +200,12 @@ Changelog
 - |Fix| Fixed error message of :class:`metrics.coverage_error` for 1D array input.
   :pr:`23548` by :user:`Hao Chun Chang <haochunchang>`.
 
+:mod:`sklearn.naive_bayes`
+..........................
+
+- |Feature| Add methods `predict_joint_log_proba` to all naive Bayes classifiers.
+  :pr:`23683` by :user:`Andrey Melnik <avm19>`.
+
 :mod:`sklearn.neighbors`
 ........................
 
@@ -263,7 +269,7 @@ Changelog
   :pr:`10805` by :user:`Mathias Andersen <MrMathias>` and
   :pr:`23471` by :user:`Meekail Zain <micky774>`
 
-- |Fix| Added an `"auto"` option to the `normalized_stress` argument in
+- |API| Added an `"auto"` option to the `normalized_stress` argument in
   :class:`manifold.MDS` and :func:`manifold.smacof`. Note that
   `normalized_stress` is only valid for non-metric MDS, therefore the `"auto"`
   option enables `normalized_stress` when `metric=False` and disables it when
