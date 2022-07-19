@@ -429,10 +429,10 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred, *, beta=1.0):
     Parameters
     ----------
     labels_true : int array, shape = [n_samples]
-        ground truth class labels to be used as a reference
+        Ground truth class labels to be used as a reference.
 
     labels_pred : array-like of shape (n_samples,)
-        cluster labels to evaluate
+        Gluster labels to evaluate.
 
     beta : float, default=1.0
         Ratio of weight attributed to ``homogeneity`` vs ``completeness``.
@@ -443,13 +443,13 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred, *, beta=1.0):
     Returns
     -------
     homogeneity : float
-       score between 0.0 and 1.0. 1.0 stands for perfectly homogeneous labeling
+        Score between 0.0 and 1.0. 1.0 stands for perfectly homogeneous labeling.
 
     completeness : float
-       score between 0.0 and 1.0. 1.0 stands for perfectly complete labeling
+        Score between 0.0 and 1.0. 1.0 stands for perfectly complete labeling.
 
     v_measure : float
-        harmonic mean of the first two
+        Harmonic mean of the first two.
 
     See Also
     --------
