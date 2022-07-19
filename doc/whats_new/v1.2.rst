@@ -125,6 +125,11 @@ Changelog
   its memory footprint and runtime.
   :pr:`22268` by :user:`MohamedBsh <Bsh>`.
 
+- |Enhancement| :class:`decomposition.SparsePCA` and
+  :class:`decomposition.MiniBatchSparsePCA` now implements an `inverse_transform`
+  function.
+  :pr:`23905` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.decomposition`
 ............................
 
