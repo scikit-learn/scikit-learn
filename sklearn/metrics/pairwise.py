@@ -658,9 +658,9 @@ def pairwise_distances_argmin_min(
 
     See Also
     --------
-    pairwise_distances : Distances between pairs of elements of X and Y.
-    pairwise_distances_argmin : Minimum distances between one point and a
-                                set of points.
+    pairwise_distances : Distances between every pair of samples of X and Y.
+    pairwise_distances_argmin : Same as `pairwise_distances_argmin_min` but only
+        returns the argmins.
     """
     X, Y = check_pairwise_arrays(X, Y)
 
