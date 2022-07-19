@@ -1438,7 +1438,7 @@ def additive_chi2_kernel(X, Y=None):
 
 
 def chi2_kernel(X, Y=None, gamma=1.0):
-    """Computes the exponential chi-squared kernel X and Y.
+    """Compute the exponential chi-squared kernel X and Y.
 
     The chi-squared kernel is computed between each pair of rows in X and Y.  X
     and Y have to be non-negative. This kernel is most commonly applied to
@@ -1455,15 +1455,18 @@ def chi2_kernel(X, Y=None, gamma=1.0):
     Parameters
     ----------
     X : array-like of shape (n_samples_X, n_features)
+        Input array/matrix X.
 
     Y : ndarray of shape (n_samples_Y, n_features), default=None
+        Input array/matrix Y.
 
-    gamma : float, default=1.
+    gamma : float, default=1
         Scaling parameter of the chi2 kernel.
 
     Returns
     -------
     kernel_matrix : ndarray of shape (n_samples_X, n_samples_Y)
+        Returns the exponential chi-squared kernel X and Y.
 
     See Also
     --------
