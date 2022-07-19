@@ -1528,6 +1528,11 @@ def distance_metrics():
     =============== ========================================
 
     Read more in the :ref:`User Guide <metrics>`.
+
+    Returns
+    -------
+    distance_metrics : dict
+        Returns valid metrics for pairwise_distances.
     """
     return PAIRWISE_DISTANCE_FUNCTIONS
 
