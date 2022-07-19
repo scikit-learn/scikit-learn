@@ -1360,6 +1360,7 @@ def cosine_similarity(X, Y=None, dense_output=True):
     Returns
     -------
     kernel matrix : ndarray of shape (n_samples_X, n_samples_Y)
+        Returns the cosine similarity between samples in X and Y.
     """
     # to avoid recursive import
 
