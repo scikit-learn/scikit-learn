@@ -269,7 +269,7 @@ Changelog
   :pr:`10805` by :user:`Mathias Andersen <MrMathias>` and
   :pr:`23471` by :user:`Meekail Zain <micky774>`
 
-- |Fix| Added an `"auto"` option to the `normalized_stress` argument in
+- |API| Added an `"auto"` option to the `normalized_stress` argument in
   :class:`manifold.MDS` and :func:`manifold.smacof`. Note that
   `normalized_stress` is only valid for non-metric MDS, therefore the `"auto"`
   option enables `normalized_stress` when `metric=False` and disables it when
