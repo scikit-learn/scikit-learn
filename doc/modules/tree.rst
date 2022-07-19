@@ -690,18 +690,18 @@ tree parameters. Specific parameters, such as ``max_features`` and
 ``feature_combinations`` are different or special to OTs. 
 
   * As specified earlier, ``max_features`` is not constrained to ``n_features``
-  as it is in DTs. Setting ``max_features`` higher requires more computation time because
-  the algorithm needs to sample more candidate splits at every node. However, it also possibly
-  lets the user to sample more informative splits, thereby improving the model fit. This
-  presents a tradeoff between runtime resources and improvements to the model. In practice,
-  we found that sampling more splits, say up to ``max_features=n_features**2``, is desirable
-  if one is willing to spend the computational resources. 
+    as it is in DTs. Setting ``max_features`` higher requires more computation time because
+    the algorithm needs to sample more candidate splits at every node. However, it also possibly
+    lets the user to sample more informative splits, thereby improving the model fit. This
+    presents a tradeoff between runtime resources and improvements to the model. In practice,
+    we found that sampling more splits, say up to ``max_features=n_features**2``, is desirable
+    if one is willing to spend the computational resources. 
 
   * ``feature_combinations`` is the :math:`\lambda` term presented in the complexity
-  analysis, which specifies how sparse our combination of features is. If
-  ``feature_combinations=n_features``, then OT is the ``Forest-RC`` version. However,
-  in practice, ``feature_combinations`` can be set much lower, therefore improving runtime
-  and storage complexity.
+    analysis, which specifies how sparse our combination of features is. If
+    ``feature_combinations=n_features``, then OT is the ``Forest-RC`` version. However,
+    in practice, ``feature_combinations`` can be set much lower, therefore improving runtime
+    and storage complexity.
 
 Finally, when asking the question of when to use OTs vs DTs, scikit-learn recommends
 always trying both model using some type of cross-validation procedure and hyperparameter
@@ -745,11 +745,11 @@ Limitations compared to decision trees
 --------------------------------------
 
   * There currently does not exist support for pruning OTs, such as with the minimal
-  cost-complexity pruning algorithm.
+    cost-complexity pruning algorithm.
   
   * Moreover, OTs do not have built-in support for missing data, so the recommendation
-  by scikit-learn is for users to first impute, or drop their missing data if they
-  would like to use OTs.
+    by scikit-learn is for users to first impute, or drop their missing data if they
+    would like to use OTs.
 
   * Currently, OTs also does not support sparse inputs for data matrices and labels.
 
