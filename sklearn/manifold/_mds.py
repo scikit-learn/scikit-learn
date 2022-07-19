@@ -600,20 +600,6 @@ class MDS(BaseEstimator):
         elif self.dissimilarity == "euclidean":
             self.dissimilarity_matrix_ = euclidean_distances(X)
 
-        # TODO(1.4): Remove
-        self._normalized_stress = self.normalized_stress
-        if self._normalized_stress == "warn":
-            warnings.warn(
-                "The default value of `normalized_stress` will change to `'auto'` in"
-                " version 1.4. To suppress this warning, manually set the value of"
-                " `normalized_stress`.",
-                FutureWarning,
-            )
-            self._normalized_stress = False
-
-        if self._normalized_stress == "auto":
-            self._normalized_stress = not self.metric
-
         self.embedding_, self.stress_, self.n_iter_ = smacof(
             self.dissimilarity_matrix_,
             metric=self.metric,
@@ -626,7 +612,7 @@ class MDS(BaseEstimator):
             eps=self.eps,
             random_state=self.random_state,
             return_n_iter=True,
-            normalized_stress=self._normalized_stress,
+            normalized_stress=self.normalized_stress,
         )
 
         return self.embedding_
