@@ -47,7 +47,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.metrics.cluster._supervised.pair_confusion_matrix",
     "sklearn.metrics.cluster._supervised.rand_score",
     "sklearn.metrics.cluster._supervised.v_measure_score",
-    "sklearn.metrics.pairwise.kernel_metrics",
     "sklearn.metrics.pairwise.pairwise_distances_argmin_min",
     "sklearn.metrics.pairwise.pairwise_distances_chunked",
     "sklearn.metrics.pairwise.polynomial_kernel",
