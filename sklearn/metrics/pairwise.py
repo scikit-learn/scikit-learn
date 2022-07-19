@@ -1379,8 +1379,7 @@ def cosine_similarity(X, Y=None, dense_output=True):
 
 
 def additive_chi2_kernel(X, Y=None):
-    """Computes the additive chi-squared kernel between observations in X and
-    Y.
+    """Compute the additive chi-squared kernel between observations in X and Y.
 
     The chi-squared kernel is computed between each pair of rows in X and Y.  X
     and Y have to be non-negative. This kernel is most commonly applied to
@@ -1394,22 +1393,18 @@ def additive_chi2_kernel(X, Y=None):
 
     Read more in the :ref:`User Guide <chi2_kernel>`.
 
-    Notes
-    -----
-    As the negative of a distance, this kernel is only conditionally positive
-    definite.
-
-
     Parameters
     ----------
     X : array-like of shape (n_samples_X, n_features)
+        A feature array.
 
     Y : ndarray of shape (n_samples_Y, n_features), default=None
-        If `None`, uses `Y=X`.
+        An optional second feature array. If `None`, uses `Y=X`.
 
     Returns
     -------
     kernel_matrix : ndarray of shape (n_samples_X, n_samples_Y)
+        The kernel matrix.
 
     See Also
     --------
@@ -1417,6 +1412,11 @@ def additive_chi2_kernel(X, Y=None):
         preferable.
     sklearn.kernel_approximation.AdditiveChi2Sampler : A Fourier approximation
         to this kernel.
+
+    Notes
+    -----
+    As the negative of a distance, this kernel is only conditionally positive
+    definite.
 
     References
     ----------
