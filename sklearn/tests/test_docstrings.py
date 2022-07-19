@@ -59,7 +59,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.metrics.pairwise.pairwise_distances_argmin_min",
     "sklearn.metrics.pairwise.pairwise_distances_chunked",
     "sklearn.metrics.pairwise.polynomial_kernel",
-    "sklearn.metrics.pairwise.rbf_kernel",
     "sklearn.metrics.pairwise.sigmoid_kernel",
     "sklearn.preprocessing._data.maxabs_scale",
     "sklearn.preprocessing._data.scale",
