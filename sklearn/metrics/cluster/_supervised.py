@@ -453,9 +453,9 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred, *, beta=1.0):
 
     See Also
     --------
-    homogeneity_score
-    completeness_score
-    v_measure_score
+    homogeneity_score : Homogeneity metric of cluster labeling.
+    completeness_score : Completeness metric of cluster labeling.
+    v_measure_score : V-Measure (NMI with arithmetic mean option).
     """
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
 
