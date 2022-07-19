@@ -1812,7 +1812,7 @@ class GroupShuffleSplit(ShuffleSplit):
     --------
     ShuffleSplit : Shuffles samples to create independent test/train sets.
 
-    LeavePGroupsOut : Test set leaves all possible subsets of ``p`` groups out.
+    LeavePGroupsOut : Train set leaves out all possible subsets of ``p`` groups.
     """
 
     def __init__(

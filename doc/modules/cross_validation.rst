@@ -641,7 +641,7 @@ Imagine you have three subjects, each with an associated number from 1 to 3::
 
 Each subject is in a different testing fold, and the same subject is never in
 both testing and training. Notice that the folds do not have exactly the same
-size due to the imbalance in the data. If balanced classes is desired,
+size due to the imbalance in the data. If balanced classes are desired,
 :class:`StratifiedGroupKFold` may be a better option.
 
 Here is a visualization of the cross-validation behavior.
@@ -718,8 +718,8 @@ group information can be used to encode arbitrary domain specific pre-defined
 cross-validation folds.
 
 Each training set is thus constituted by all the samples except the ones
-related to a specific group. This is basically the same as :class:`GroupKFold`
-with ``k=1``.
+related to a specific group. This is basically the same as
+:class:`LeavePGroupsOut` with ``n_groups=1``.
 
 For example, in the cases of multiple experiments, :class:`LeaveOneGroupOut`
 can be used to create a cross-validation based on the different experiments:
