@@ -2112,6 +2112,11 @@ class ObliqueDecisionTreeClassifier(DecisionTreeClassifier):
             0.93...,  0.93...,  1.     ,  0.93...,  1.      ])
     """
 
+    _parameter_constraints = {
+        **DecisionTreeClassifier._parameter_constraints,
+        "feature_combinations": Interval(Real, 1., None, closed="left"),
+    }
+
     def __init__(
         self,
         *,

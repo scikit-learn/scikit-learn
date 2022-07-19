@@ -53,7 +53,7 @@ for clf, clf_label in zip(clfs, clf_labels):
         y = iris.target
 
         # Train
-        clf = DecisionTreeClassifier().fit(X, y)
+        clf.fit(X, y)
 
         # Plot the decision boundary
         ax = plt.subplot(2, 3, pairidx + 1)
