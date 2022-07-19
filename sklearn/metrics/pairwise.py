@@ -1455,7 +1455,7 @@ def chi2_kernel(X, Y=None, gamma=1.0):
     Parameters
     ----------
     X : array-like of shape (n_samples_X, n_features)
-        Input array/matrix X.
+        A feature array.
 
     Y : ndarray of shape (n_samples_Y, n_features), default=None
         Input array/matrix Y.
