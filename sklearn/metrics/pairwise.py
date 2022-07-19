@@ -765,8 +765,9 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
 
     See Also
     --------
-    sklearn.metrics.pairwise_distances
-    sklearn.metrics.pairwise_distances_argmin_min
+    pairwise_distances : Distances between every pair of samples of X and Y.
+    pairwise_distances_argmin_min : Same as `pairwise_distances_argmin` but also
+        returns the distances.
     """
     if metric_kwargs is None:
         metric_kwargs = {}
@@ -1360,6 +1361,7 @@ def cosine_similarity(X, Y=None, dense_output=True):
     Returns
     -------
     kernel matrix : ndarray of shape (n_samples_X, n_samples_Y)
+        Returns the cosine similarity between samples in X and Y.
     """
     # to avoid recursive import
 
@@ -1438,7 +1440,7 @@ def additive_chi2_kernel(X, Y=None):
 
 
 def chi2_kernel(X, Y=None, gamma=1.0):
-    """Computes the exponential chi-squared kernel X and Y.
+    """Compute the exponential chi-squared kernel between X and Y.
 
     The chi-squared kernel is computed between each pair of rows in X and Y.  X
     and Y have to be non-negative. This kernel is most commonly applied to
@@ -1455,15 +1457,18 @@ def chi2_kernel(X, Y=None, gamma=1.0):
     Parameters
     ----------
     X : array-like of shape (n_samples_X, n_features)
+        A feature array.
 
     Y : ndarray of shape (n_samples_Y, n_features), default=None
+        An optional second feature array. If `None`, uses `Y=X`.
 
-    gamma : float, default=1.
+    gamma : float, default=1
         Scaling parameter of the chi2 kernel.
 
     Returns
     -------
     kernel_matrix : ndarray of shape (n_samples_X, n_samples_Y)
+        The kernel matrix.
 
     See Also
     --------
