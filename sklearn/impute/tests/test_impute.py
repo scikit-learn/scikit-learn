@@ -1114,18 +1114,6 @@ def test_iterative_imputer_dont_set_random_state(rs_imputer, rs_estimator):
             "have missing values in transform but have no missing values in fit",
         ),
         (
-            np.array([[-1, 1], [1, 2]]),
-            np.array([[-1, 1], [1, 2]]),
-            {"features": "random", "sparse": "auto"},
-            "'features' has to be either 'missing-only' or 'all'",
-        ),
-        (
-            np.array([[-1, 1], [1, 2]]),
-            np.array([[-1, 1], [1, 2]]),
-            {"features": "all", "sparse": "random"},
-            "'sparse' has to be a boolean or 'auto'",
-        ),
-        (
             np.array([["a", "b"], ["c", "a"]], dtype=str),
             np.array([["a", "b"], ["c", "a"]], dtype=str),
             {},
