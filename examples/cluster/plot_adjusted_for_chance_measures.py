@@ -35,20 +35,24 @@ experiments:
 #   consistently according to the result of the clustering algorithm and the
 #   ground truth class assignment;
 #
-# - Adjusted Rand-Index (ARI), a chance-adjusted Rand-Index such that random
+# - Adjusted Rand-Index (ARI), a chance-adjusted Rand-Index such that a random
 #   cluster assignment has an ARI of 0.0 in expectation;
 #
-# - Mutual Information (MI), determines how different the joint distribution of
-#   the pair `(X,Y)` is from the product of the marginal distributions of `X`
-#   and `Y`;
+# - Mutual Information (MI) is an information theoretic measure that quantifies how
+#   dependent are the two labelings. Note that the maximum value of MI for perfect
+#   labelings depends on the number of clusters and samples.
 #
 # - Adjusted Mutual Information (AMI), a chance-adjusted Mutual Information.
 #   Similarly to ARI, random cluster assignment has an AMI of 0.0 in
 #   expectation;
 #
 # - Normalized Mutual Information (NMI), a Mutual Information defined between 0
-#   (no mutual information) and 1 (perfect correlation). It is not adjusted for
-#   chance.
+#   (no mutual information) in the limit of large number of data points and 1
+#   (perfectly matching label assignments, up to a permutation of the labels).
+#   It is not adjusted for chance: then the number of clustered data points is
+#   not large enough, the expected values of MI or NMI for random labelings can
+#   be significantly non-zero.
+#   labeling 
 #
 # For more information, see the :ref:`clustering_evaluation` module.
 
@@ -66,8 +70,8 @@ score_funcs = [
 ]
 
 # %%
-# 1st experiment: fixed ground truth labels and randomly predicted labels
-# -----------------------------------------------------------------------
+# First experiment: fixed ground truth labels and growing number of clusters
+# --------------------------------------------------------------------------
 #
 # We first define a function that creates uniformly-distributed random labeling.
 
@@ -135,7 +139,7 @@ for score_name, score_func in score_funcs:
 
 plt.title(
     "Clustering measures for random uniform labeling\n"
-    "against reference assignment with %d classes" % n_classes
+    f"against reference assignment with {n_classes} classes"
 )
 plt.xlabel("Number of clusters (Number of samples is fixed to %d)" % n_samples)
 plt.ylabel("Score value")
@@ -152,8 +156,8 @@ plt.show()
 # variations centered around a mean score of 0.0, independently of the number of
 # samples and clusters.
 #
-# 2nd experiment: varying number of classes and assigned number of clusters
-# -------------------------------------------------------------------------
+# Second experiment: varying number of classes and clusters
+# ---------------------------------------------------------
 #
 # In this section we define a similar function that uses several metrics to
 # score 2 uniformly-distributed random labelings. In this case the number of
