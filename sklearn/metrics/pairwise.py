@@ -1238,7 +1238,7 @@ def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
         An optional second feature array. If `None`, uses `Y=X`.
 
     gamma : float, default=None
-        Slope. If None, defaults to 1.0 / n_features.
+        If None, defaults to 1.0 / n_features.
 
     coef0 : float, default=1
         Itercept.
