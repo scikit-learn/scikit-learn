@@ -44,6 +44,11 @@ Changes impacting all modules
   NumPy's SIMD optimized primitives.
   :pr:`23446` by :user:`Meekail Zain <micky774>`
 
+- |Enhancement| Finiteness checks (detection of NaN and infinite values) in all
+  estimators are now faster by utilizing a more efficient stop-on-first
+  second-pass algorithm.
+  :pr:`23197` by :user:`Meekail Zain <micky774>`
+
 - |Enhancement| Support for combinations of dense and sparse datasets pairs
   for all distance metrics has been added on the following estimators:
 
@@ -116,6 +121,10 @@ Changelog
   and begins deprecation to change the default from `eigen_tol=0` to
   `eigen_tol="auto"` in version 1.3.
   :pr:`23210` by :user:`Meekail Zain <micky774>`.
+
+- |API| The `affinity` attribute is now deprecated for
+  :class:`cluster.AgglomerativeClustering` and will be renamed to `metric` in v1.4.
+  :pr:`23470` by :user:`Meekail Zain <micky774>`.
 
 :mod:`sklearn.datasets`
 .......................
@@ -216,6 +225,12 @@ Changelog
 
 - |Fix| Fixed error message of :class:`metrics.coverage_error` for 1D array input.
   :pr:`23548` by :user:`Hao Chun Chang <haochunchang>`.
+
+:mod:`sklearn.naive_bayes`
+..........................
+
+- |Feature| Add methods `predict_joint_log_proba` to all naive Bayes classifiers.
+  :pr:`23683` by :user:`Andrey Melnik <avm19>`.
 
 :mod:`sklearn.neighbors`
 ........................

@@ -23,7 +23,7 @@ from .utils.multiclass import unique_labels
 from .utils.validation import check_is_fitted
 from .utils.multiclass import check_classification_targets
 from .utils.extmath import softmax
-from .utils._param_validation import StrOptions, Interval
+from .utils._param_validation import StrOptions, Interval, HasMethods
 from .preprocessing import StandardScaler
 
 
@@ -316,7 +316,7 @@ class LinearDiscriminantAnalysis(
         "priors": ["array-like", None],
         "store_covariance": ["boolean"],
         "tol": [Interval(Real, 0, None, closed="left")],
-        "covariance_estimator": "no_validation",
+        "covariance_estimator": [HasMethods("fit"), None],
     }
 
     def __init__(
