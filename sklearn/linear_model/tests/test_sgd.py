@@ -2158,39 +2158,12 @@ def test_validation_mask_correctly_subsets(monkeypatch):
     assert y_val.shape[0] == int(n_samples * validation_fraction)
 
 
-def test_validation_mask_using_positive_sample_weight(monkeypatch):
-    """Test validation data chosen from samples with positive sample_weight"""
+def test_sgd_error_on_zero_validation_weight():
+    # Test that SGDClassifier raises error when all the validation samples
+    # have zero sample_weight
     X, Y = iris.data, iris.target
     n_samples = X.shape[0]
-    sample_weight = np.ones_like(Y)
-    # set the first half of sample_weight to 0
-    sample_weight[: n_samples // 2] = 0
-    validation_fraction = 0.3
-
-    clf = linear_model.SGDClassifier(
-        early_stopping=True,
-        tol=1e-3,
-        max_iter=1000,
-        validation_fraction=validation_fraction,
-        random_state=0,
-    )
-
-    mock = Mock(side_effect=_stochastic_gradient._ValidationScoreCallback)
-    monkeypatch.setattr(_stochastic_gradient, "_ValidationScoreCallback", mock)
-    clf.fit(X, Y, sample_weight=sample_weight)
-
-    val_sample_weight = mock.call_args[0][3]
-    assert min(val_sample_weight) > 0
-
-
-def test_sgd_warns_on_zero_validation_weight():
-    # Test that SGDClassifier raises warning when there are
-    # validation sample with zero weights.
-    X, Y = iris.data, iris.target
-    n_samples = X.shape[0]
-    sample_weight = np.ones_like(Y)
-    # set the first half of sample_weight to 0
-    sample_weight[: n_samples // 2] = 0
+    sample_weight = np.zeros_like(Y)
     validation_fraction = 0.4
 
     clf = linear_model.SGDClassifier(
@@ -2201,6 +2174,9 @@ def test_sgd_warns_on_zero_validation_weight():
         random_state=0,
     )
 
-    warning_message = "samples with zero sample weight in the validation set"
-    with pytest.warns(UserWarning, match=warning_message):
+    error_message = (
+        "The sample weights for validation set are all zero, consider using a"
+        " different random state."
+    )
+    with pytest.raises(ValueError, match=error_message):
         clf.fit(X, Y, sample_weight=sample_weight)

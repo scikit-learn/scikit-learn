@@ -288,19 +288,12 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         cv = splitter_type(
             test_size=self.validation_fraction, random_state=self.random_state
         )
+        idx_train, idx_val = next(cv.split(np.zeros(shape=(y.shape[0], 1)), y))
 
-        idx_non_zero = np.arange(n_samples)[sample_mask]
-        idx_train_, idx_val_ = next(cv.split(np.zeros(shape=(y.shape[0], 1)), y))
-
-        # make sure the sample weights for validation set is non-zero
-        idx_train = np.intersect1d(idx_non_zero, idx_train_)
-        idx_val = np.intersect1d(idx_non_zero, idx_val_)
-
-        cnt_zero_weight_val = len(idx_val_) - len(idx_val)
-        if cnt_zero_weight_val > 0:
-            warnings.warn(
-                f"There are {cnt_zero_weight_val} samples with zero sample weight in"
-                " the validation set, consider using a different random state."
+        if not np.any(sample_mask[idx_val]):
+            raise ValueError(
+                "The sample weights for validation set are all zero, consider using a"
+                " different random state."
             )
 
         if idx_train.shape[0] == 0 or idx_val.shape[0] == 0:
