@@ -1402,7 +1402,7 @@ def additive_chi2_kernel(X, Y=None):
     Returns
     -------
     kernel_matrix : ndarray of shape (n_samples_X, n_samples_Y)
-        Returns the additive chi-squared kernel between observations in X and Y.
+        The kernel matrix.
 
     See Also
     --------
