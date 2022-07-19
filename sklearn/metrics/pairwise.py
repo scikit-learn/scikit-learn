@@ -2055,6 +2055,11 @@ def kernel_metrics():
       ===============   ========================================
 
     Read more in the :ref:`User Guide <metrics>`.
+
+    Returns
+    -------
+    kernal_metrics : dict
+        Returns valid metrics for pairwise_kernels.
     """
     return PAIRWISE_KERNEL_FUNCTIONS
 
