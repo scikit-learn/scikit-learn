@@ -183,7 +183,7 @@ Changelog
   :pr:`23637` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |API| String option `"none"` is deprecated for `penalty` argument
-  in :class:`linearmodel.LogisticRegression`, and will be removed in version 1.4
+  in :class:`linear_model.LogisticRegression`, and will be removed in version 1.4.
   :pr:`23877` by :user:`Zhehao Liu <MaxwellLZH>`.
 
 :mod:`sklearn.metrics`
