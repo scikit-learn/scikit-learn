@@ -2162,7 +2162,6 @@ def test_sgd_error_on_zero_validation_weight():
     # Test that SGDClassifier raises error when all the validation samples
     # have zero sample_weight
     X, Y = iris.data, iris.target
-    n_samples = X.shape[0]
     sample_weight = np.zeros_like(Y)
     validation_fraction = 0.4
 
