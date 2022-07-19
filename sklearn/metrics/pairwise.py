@@ -972,10 +972,11 @@ def cosine_distances(X, Y=None):
     Returns
     -------
     distance matrix : ndarray of shape (n_samples_X, n_samples_Y)
+        Returns the cosine distance between samples in X and Y.
 
     See Also
     --------
-    cosine_similarity
+    cosine_similarity : Compute cosine similarity between samples in X and Y.
     scipy.spatial.distance.cosine : Dense matrices only.
     """
     # 1.0 - cosine_similarity(X, Y) without copy
