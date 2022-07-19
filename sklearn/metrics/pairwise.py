@@ -210,7 +210,6 @@ def check_paired_arrays(X, Y):
     safe_Y : {array-like, sparse matrix} of shape (n_samples_Y, n_features)
         An array equal to Y if Y was not None, guaranteed to be a numpy array.
         If Y was None, safe_Y will be a pointer to X.
-
     """
     X, Y = check_pairwise_arrays(X, Y)
     if X.shape != Y.shape:
@@ -766,8 +765,9 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
 
     See Also
     --------
-    sklearn.metrics.pairwise_distances
-    sklearn.metrics.pairwise_distances_argmin_min
+    pairwise_distances : Distances between every pair of samples of X and Y.
+    pairwise_distances_argmin_min : Same as `pairwise_distances_argmin` but also
+        returns the distances.
     """
     if metric_kwargs is None:
         metric_kwargs = {}
@@ -972,10 +972,11 @@ def cosine_distances(X, Y=None):
     Returns
     -------
     distance matrix : ndarray of shape (n_samples_X, n_samples_Y)
+        Returns the cosine distance between samples in X and Y.
 
     See Also
     --------
-    cosine_similarity
+    cosine_similarity : Compute cosine similarity between samples in X and Y.
     scipy.spatial.distance.cosine : Dense matrices only.
     """
     # 1.0 - cosine_similarity(X, Y) without copy
@@ -1360,6 +1361,7 @@ def cosine_similarity(X, Y=None, dense_output=True):
     Returns
     -------
     kernel matrix : ndarray of shape (n_samples_X, n_samples_Y)
+        Returns the cosine similarity between samples in X and Y.
     """
     # to avoid recursive import
 
