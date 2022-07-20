@@ -1206,7 +1206,7 @@ def polynomial_kernel(X, Y=None, degree=3, gamma=None, coef0=1):
         Kernel degree.
 
     gamma : float, default=None
-        Slope. If None, defaults to 1.0 / n_features.
+        Coefficient of the vector inner product. If None, defaults to 1.0 / n_features.
 
     coef0 : float, default=1
         Intercept.
