@@ -199,7 +199,9 @@ def assert_1d_reg_monotonic(clf, monotonic_sign, min_x, max_x, n_steps):
 @pytest.mark.parametrize("monotonic_sign", (-1, 1))
 @pytest.mark.parametrize("splitter", ("best", "random"))
 @pytest.mark.parametrize("depth_first", (True, False))
-def test_1d_tree_nodes_values(monotonic_sign, splitter, depth_first, global_random_seed):
+def test_1d_tree_nodes_values(
+    monotonic_sign, splitter, depth_first, global_random_seed
+):
     # Adaptation from test_nodes_values in test_montonic_constraints.py
     # Build a single tree with only one feature, and make sure the nodes
     # values respect the monotonic constraints.
@@ -284,7 +286,9 @@ def assert_nd_reg_tree_children_monotonic_bounded(tree_, monotonic_cst):
 @pytest.mark.parametrize("monotonic_sign", (-1, 1))
 @pytest.mark.parametrize("splitter", ("best", "random"))
 @pytest.mark.parametrize("depth_first", (True, False))
-def test_nd_tree_nodes_values(monotonic_sign, splitter, depth_first, global_random_seed):
+def test_nd_tree_nodes_values(
+    monotonic_sign, splitter, depth_first, global_random_seed
+):
     # Build tree with several features, and make sure the nodes
     # values respect the monotonic constraints.
 
