@@ -99,7 +99,6 @@ class BaseSuccessiveHalving(BaseSearchCV):
         self.aggressive_elimination = aggressive_elimination
 
     def _check_input_parameters(self, X, y, groups):
-
         if self.scoring is not None and not (
             isinstance(self.scoring, str) or callable(self.scoring)
         ):
@@ -318,7 +317,6 @@ class BaseSuccessiveHalving(BaseSearchCV):
         self.n_candidates_ = []
 
         for itr in range(n_iterations):
-
             power = itr  # default
             if self.aggressive_elimination:
                 # this will set n_resources to the initial value (i.e. the

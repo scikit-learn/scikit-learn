@@ -304,7 +304,6 @@ def test_friedman_mse_in_graphviz():
 
 
 def test_precision():
-
     rng_reg = RandomState(2)
     rng_clf = RandomState(8)
     for X, y, clf in zip(
@@ -317,7 +316,6 @@ def test_precision():
             DecisionTreeClassifier(max_depth=1, random_state=0),
         ),
     ):
-
         clf.fit(X, y)
         for precision in (4, 3):
             dot_data = export_graphviz(
@@ -505,7 +503,6 @@ def test_plot_tree_gini(pyplot):
 
 
 def test_not_fitted_tree(pyplot):
-
     # Testing if not fitted tree throws the correct error
     clf = DecisionTreeRegressor()
     with pytest.raises(NotFittedError):

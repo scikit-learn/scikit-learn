@@ -2074,7 +2074,6 @@ class MiniBatchNMF(_BaseNMF):
         random_state=None,
         verbose=0,
     ):
-
         super().__init__(
             n_components=n_components,
             init=init,
@@ -2376,7 +2375,6 @@ class MiniBatchNMF(_BaseNMF):
         n_steps = self.max_iter * n_steps_per_iter
 
         for i, batch in zip(range(n_steps), batches):
-
             batch_cost = self._minibatch_step(X[batch], W[batch], H, update_H)
 
             if update_H and self._minibatch_convergence(

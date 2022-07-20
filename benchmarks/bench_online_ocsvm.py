@@ -65,7 +65,6 @@ results_libsvm = np.empty((len(datasets), n_axis + 5))
 results_online = np.empty((len(datasets), n_axis + 5))
 
 for dat, dataset_name in enumerate(datasets):
-
     print(dataset_name)
 
     # Loading datasets
@@ -133,7 +132,6 @@ for dat, dataset_name in enumerate(datasets):
     gamma = 1 / n_features  # OCSVM default parameter
 
     for random_state in random_states:
-
         print("random state: %s" % random_state)
 
         X, y = shuffle(X, y, random_state=random_state)

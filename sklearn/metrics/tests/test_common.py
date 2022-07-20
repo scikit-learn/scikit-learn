@@ -550,7 +550,6 @@ def _require_positive_targets(y1, y2):
 
 
 def test_symmetry_consistency():
-
     # We shouldn't forget any metrics
     assert (
         SYMMETRIC_METRICS

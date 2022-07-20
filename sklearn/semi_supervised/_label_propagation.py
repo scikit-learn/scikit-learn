@@ -116,7 +116,6 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         tol=1e-3,
         n_jobs=None,
     ):
-
         self.max_iter = max_iter
         self.tol = tol
 
@@ -584,7 +583,6 @@ class LabelSpreading(BaseLabelPropagation):
         tol=1e-3,
         n_jobs=None,
     ):
-
         # this one has different base parameters
         super().__init__(
             kernel=kernel,

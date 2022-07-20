@@ -8,7 +8,6 @@ from sklearn.cluster import KMeans, MiniBatchKMeans
 
 
 def compute_bench(samples_range, features_range):
-
     it = 0
     results = defaultdict(lambda: [])
     chunk = 100

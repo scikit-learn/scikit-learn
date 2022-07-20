@@ -613,7 +613,6 @@ def test_dtype_preprocess_data(global_random_seed):
 
     for fit_intercept in [True, False]:
         for normalize in [True, False]:
-
             Xt_32, yt_32, X_mean_32, y_mean_32, X_scale_32 = _preprocess_data(
                 X_32,
                 y_32,

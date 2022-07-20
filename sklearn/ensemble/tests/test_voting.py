@@ -576,7 +576,6 @@ def test_none_estimator_with_weights(X, y, voter):
     ids=["VotingRegressor", "VotingClassifier"],
 )
 def test_n_features_in(est):
-
     X = [[1, 2], [3, 4], [5, 6]]
     y = [0, 1, 2]
 
@@ -605,7 +604,6 @@ def test_n_features_in(est):
     ],
 )
 def test_voting_verbose(estimator, capsys):
-
     X = np.array([[-1.1, -1.5], [-1.2, -1.4], [-3.4, -2.2], [1.1, 1.2]])
     y = np.array([1, 1, 2, 2])
 

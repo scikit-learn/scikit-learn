@@ -494,7 +494,6 @@ def _load_arff_response(
 
     gzip_file = _open_openml_url(url, data_home, n_retries=n_retries, delay=delay)
     with closing(gzip_file):
-
         X, y, frame, categories = load_arff_from_gzip_file(
             gzip_file,
             parser=parser,

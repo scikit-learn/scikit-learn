@@ -318,7 +318,6 @@ def test__check_reg_targets():
     ]
 
     for (type1, y1, n_out1), (type2, y2, n_out2) in product(EXAMPLES, repeat=2):
-
         if type1 == type2 and n_out1 == n_out2:
             y_type, y_check1, y_check2, multioutput = _check_reg_targets(y1, y2, None)
             assert type1 == y_type

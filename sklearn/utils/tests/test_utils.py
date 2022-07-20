@@ -723,7 +723,6 @@ def dummy_func():
 
 
 def test_deprecation_joblib_api(tmpdir):
-
     # Only parallel_backend and register_parallel_backend are not deprecated in
     # sklearn.utils
     from sklearn.utils import parallel_backend, register_parallel_backend

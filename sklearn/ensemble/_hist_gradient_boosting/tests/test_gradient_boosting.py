@@ -75,7 +75,6 @@ def test_invalid_classification_loss():
 def test_early_stopping_regression(
     scoring, validation_fraction, early_stopping, n_iter_no_change, tol
 ):
-
     max_iter = 200
 
     X, y = make_regression(n_samples=50, random_state=0)
@@ -123,7 +122,6 @@ def test_early_stopping_regression(
 def test_early_stopping_classification(
     data, scoring, validation_fraction, early_stopping, n_iter_no_change, tol
 ):
-
     max_iter = 50
 
     X, y = data
@@ -183,7 +181,6 @@ def test_early_stopping_default(GradientBoosting, X, y):
     ],
 )
 def test_should_stop(scores, n_iter_no_change, tol, stopping):
-
     gbdt = HistGradientBoostingClassifier(n_iter_no_change=n_iter_no_change, tol=tol)
     assert gbdt._should_stop(scores) == stopping
 
@@ -841,7 +838,6 @@ def test_custom_loss(Est, loss, X, y):
     ],
 )
 def test_staged_predict(HistGradientBoosting, X, y):
-
     # Test whether staged predictor eventually gives
     # the same prediction.
     X_train, X_test, y_train, y_test = train_test_split(
@@ -865,7 +861,6 @@ def test_staged_predict(HistGradientBoosting, X, y):
         else ["predict", "predict_proba", "decision_function"]
     )
     for method_name in method_names:
-
         staged_method = getattr(gb, "staged_" + method_name)
         staged_predictions = list(staged_method(X_test))
         assert len(staged_predictions) == gb.n_iter_

@@ -375,7 +375,6 @@ class BayesianRidge(RegressorMixin, LinearModel):
 
         # Convergence loop of the bayesian ridge regression
         for iter_ in range(self.n_iter):
-
             # update posterior mean coef_ based on alpha_ and lambda_ and
             # compute corresponding rmse
             coef_, rmse_ = self._update_coef_(
@@ -655,6 +654,7 @@ class ARDRegression(RegressorMixin, LinearModel):
     >>> clf.predict([[1, 1]])
     array([1.])
     """
+
     _parameter_constraints = {
         "n_iter": [int],
         "tol": [float],
@@ -668,9 +668,8 @@ class ARDRegression(RegressorMixin, LinearModel):
         "normalize": [Hidden(StrOptions({"deprecated"})), "boolean"],
         "copy_X": ["boolean"],
         "verbose": ["boolean"],
-
-
     }
+
     def __init__(
         self,
         *,

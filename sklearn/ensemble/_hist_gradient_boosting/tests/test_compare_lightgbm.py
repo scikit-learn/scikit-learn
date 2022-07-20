@@ -151,7 +151,6 @@ def test_same_predictions_classification(
     np.testing.assert_almost_equal(acc_lightgbm, acc_sklearn)
 
     if max_leaf_nodes < 10 and n_samples >= 1000:
-
         pred_lightgbm = est_lightgbm.predict(X_test)
         pred_sklearn = est_sklearn.predict(X_test)
         assert np.mean(pred_sklearn == pred_lightgbm) > 0.89
@@ -234,7 +233,6 @@ def test_same_predictions_multiclass_classification(
     np.testing.assert_allclose(acc_lightgbm, acc_sklearn, rtol=0, atol=5e-2)
 
     if max_leaf_nodes < 10 and n_samples >= 1000:
-
         pred_lightgbm = est_lightgbm.predict(X_test)
         pred_sklearn = est_sklearn.predict(X_test)
         assert np.mean(pred_sklearn == pred_lightgbm) > 0.89

@@ -70,7 +70,6 @@ nested_scores = np.zeros(NUM_TRIALS)
 
 # Loop for each trial
 for i in range(NUM_TRIALS):
-
     # Choose cross-validation techniques for the inner and outer loops,
     # independently of the dataset.
     # E.g "GroupKFold", "LeaveOneOut", "LeaveOneGroupOut", etc.

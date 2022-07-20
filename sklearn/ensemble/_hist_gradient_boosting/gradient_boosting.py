@@ -539,7 +539,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         )
 
         for iteration in range(begin_at_stage, self.max_iter):
-
             if self.verbose:
                 iteration_start_time = time()
                 print(

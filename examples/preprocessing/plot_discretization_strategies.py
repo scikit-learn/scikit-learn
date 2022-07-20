@@ -58,7 +58,6 @@ X_list = [
 figure = plt.figure(figsize=(14, 9))
 i = 1
 for ds_cnt, X in enumerate(X_list):
-
     ax = plt.subplot(len(X_list), len(strategies) + 1, i)
     ax.scatter(X[:, 0], X[:, 1], edgecolors="k")
     if ds_cnt == 0:

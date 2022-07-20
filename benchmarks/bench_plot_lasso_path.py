@@ -15,7 +15,6 @@ from sklearn.datasets import make_regression
 
 
 def compute_bench(samples_range, features_range):
-
     it = 0
 
     results = defaultdict(lambda: [])

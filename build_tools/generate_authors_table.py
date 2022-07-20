@@ -172,7 +172,6 @@ def generate_list(contributors):
 
 
 if __name__ == "__main__":
-
     (
         core_devs,
         emeritus,

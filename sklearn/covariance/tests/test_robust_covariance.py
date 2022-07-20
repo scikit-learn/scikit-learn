@@ -58,7 +58,6 @@ def test_mcd_class_on_invalid_input():
 def launch_mcd_on_dataset(
     n_samples, n_features, n_outliers, tol_loc, tol_cov, tol_support
 ):
-
     rand_gen = np.random.RandomState(0)
     data = rand_gen.randn(n_samples, n_features)
     # add some outliers

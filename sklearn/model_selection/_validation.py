@@ -547,7 +547,6 @@ def _fit_and_score(
     candidate_progress=None,
     error_score=np.nan,
 ):
-
     """Fit estimator and compute scores for a given dataset split.
 
     Parameters

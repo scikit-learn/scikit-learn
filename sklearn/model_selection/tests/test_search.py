@@ -149,7 +149,6 @@ def test_validate_parameter_input(klass, input, error_type, error_message):
 
 
 def test_parameter_grid():
-
     # Test basic properties of ParameterGrid.
     params1 = {"foo": [1, 2, 3]}
     grid1 = ParameterGrid(params1)
