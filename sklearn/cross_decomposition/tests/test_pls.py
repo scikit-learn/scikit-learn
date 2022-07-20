@@ -670,3 +670,22 @@ def test_pls_feature_names_out(Klass):
         dtype=object,
     )
     assert_array_equal(names_out, expected_names_out)
+
+
+@pytest.mark.parametrize("scale", [True, False])
+@pytest.mark.parametrize("algorithm", ["nipals", "svd"])
+def test_dayal_macgregor_attributes(scale, algorithm):
+    n_samples, n_features, n_targets = 20, 10, 5
+    X = np.random.randn(n_samples, n_features)
+    Y = np.random.randn(n_samples, n_targets)
+    common_params = {"n_components": 3, "scale": scale}
+    model = PLSRegression(algorithm=algorithm, **common_params).fit(X, Y)
+    # NIPALS and SVD should have y_scores, y_rotations matrices
+    assert hasattr(model, "y_scores_")
+    assert hasattr(model, "y_rotations_")
+    model.set_params(algorithm="dayalmacgregor").fit(X, Y)
+    model.set_params(algorithm="dayalmacgregor").fit(X, Y)
+    # Dayal-MacGregor should not have y_scores, y_rotations matrices
+    # even if we reset a previously instantiated class
+    assert not hasattr(model, "y_scores_")
+    assert not hasattr(model, "y_rotations_")
