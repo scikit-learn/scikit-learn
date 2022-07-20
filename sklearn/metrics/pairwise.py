@@ -1209,7 +1209,7 @@ def polynomial_kernel(X, Y=None, degree=3, gamma=None, coef0=1):
         Coefficient of the vector inner product. If None, defaults to 1.0 / n_features.
 
     coef0 : float, default=1
-        Intercept.
+        Constant offset added to scaled inner product.
 
     Returns
     -------
