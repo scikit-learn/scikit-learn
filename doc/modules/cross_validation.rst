@@ -651,7 +651,7 @@ Here is a visualization of the cross-validation behavior.
    :align: center
    :scale: 75%
 
-Similar to k-fold, the test sets from this splitter will form a complete
+Similar to k-fold, the test sets from :class:`GroupKFold` will form a complete
 partition of all the data. Unlike k-fold, :class:`GroupKFold` is not randomized
 at all, whereas :class:`KFold` is randomized when ``shuffle=True``.
 
