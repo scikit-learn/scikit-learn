@@ -39,7 +39,7 @@ dependent_packages = {
     "pytest-cov": ("2.9.0", "tests"),
     "flake8": ("3.8.2", "tests"),
     "black": ("22.3.0", "tests"),
-    "mypy": ("0.770", "tests"),
+    "mypy": ("0.961", "tests"),
     "pyamg": ("4.0.0", "tests"),
     "sphinx": ("4.0.1", "docs"),
     "sphinx-gallery": ("0.7.0", "docs"),

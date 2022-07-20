@@ -6,11 +6,13 @@
 #          Multi-output support by Arnaud Joly <a.joly@ulg.ac.be>
 #
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
+import itertools
 from functools import partial
 
 import warnings
 from abc import ABCMeta, abstractmethod
 import numbers
+from numbers import Integral
 
 import numpy as np
 from scipy.sparse import csr_matrix, issparse
@@ -34,6 +36,7 @@ from ..utils import (
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
 from ..utils.validation import check_non_negative
+from ..utils._param_validation import Interval, StrOptions
 from ..utils.fixes import delayed, sp_version
 from ..utils.fixes import parse_version
 from ..exceptions import DataConversionWarning, EfficiencyWarning
@@ -386,6 +389,17 @@ def _radius_neighbors_from_graph(graph, radius, return_distance):
 class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
     """Base class for nearest neighbors estimators."""
 
+    _parameter_constraints = {
+        "n_neighbors": [Interval(Integral, 1, None, closed="left"), None],
+        "radius": [Interval(Integral, 1, None, closed="left"), None],
+        "algorithm": [StrOptions({"auto", "ball_tree", "kd_tree", "brute"})],
+        "leaf_size": [Interval(Integral, 1, None, closed="left")],
+        "p": [Interval(Integral, 1, None, closed="left")],
+        "metric": [StrOptions(set(itertools.chain(*VALID_METRICS.values()))), callable],
+        "metric_params": [dict, None],
+        "n_jobs": [Integral, None],
+    }
+
     @abstractmethod
     def __init__(
         self,
@@ -649,9 +663,6 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             )
         elif self._fit_method == "brute":
             self._tree = None
-        else:
-            raise ValueError("algorithm = '%s' not recognized" % self.algorithm)
-
         if self.n_neighbors is not None:
             if self.n_neighbors <= 0:
                 raise ValueError("Expected n_neighbors > 0. Got %d" % self.n_neighbors)
