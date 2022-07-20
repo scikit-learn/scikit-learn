@@ -1187,8 +1187,10 @@ def linear_kernel(X, Y=None, dense_output=True):
 
 
 def polynomial_kernel(X, Y=None, degree=3, gamma=None, coef0=1):
-    """Compute the polynomial kernel between X and Y.
-        K(X, Y) = (gamma <X, Y> + coef0)^degree
+    """
+    Compute the polynomial kernel between X and Y.
+
+    :math:`K(X, Y) = (gamma <X, Y> + coef0)^degree`
 
     Read more in the :ref:`User Guide <polynomial_kernel>`.
 
