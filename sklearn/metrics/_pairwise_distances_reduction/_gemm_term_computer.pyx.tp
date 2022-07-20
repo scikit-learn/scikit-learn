@@ -5,8 +5,8 @@ implementation_specific_values = [
     #
     #       name_suffix, need_upcast, INPUT_DTYPE_t, INPUT_DTYPE
     #
-    # We also use 64bit types as defined in `sklearn.utils._typedefs`
-    # to maintain consistency.
+    # We also use the float64 dtype and C-type names as defined in
+    # `sklearn.utils._typedefs` to maintain consistency.
     #
     ('64', False, 'DTYPE_t', 'DTYPE'),
     ('32', True, 'cnp.float32_t', 'np.float32')

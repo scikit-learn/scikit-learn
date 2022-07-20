@@ -5,8 +5,8 @@ implementation_specific_values = [
     #
     #       name_suffix, INPUT_DTYPE_t, INPUT_DTYPE
     #
-    # We also use 64bit types as defined in `sklearn.utils._typedefs`
-    # to maintain consistency.
+    # We also use the float64 dtype and C-type names as defined in
+    # `sklearn.utils._typedefs` to maintain consistency.
     #
     ('64', 'DTYPE_t', 'DTYPE'),
     ('32', 'cnp.float32_t', 'np.float32')
@@ -20,6 +20,7 @@ from sklearn import get_config
 from cython cimport final
 from cython.operator cimport dereference as deref
 from cython.parallel cimport parallel, prange
+from libc.stdlib cimport free, malloc
 
 from ...utils._cython_blas cimport _dot
 from ...utils._openmp_helpers cimport _openmp_thread_num
@@ -27,7 +28,6 @@ from ...utils._typedefs cimport ITYPE_t, DTYPE_t
 
 from numbers import Integral
 from sklearn.utils import check_scalar
-from libc.stdlib cimport free, malloc
 from ...utils._openmp_helpers import _openmp_effective_n_threads
 from ...utils._typedefs import ITYPE, DTYPE
 
