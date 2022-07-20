@@ -2166,11 +2166,7 @@ def test_sgd_error_on_zero_validation_weight():
     validation_fraction = 0.4
 
     clf = linear_model.SGDClassifier(
-        early_stopping=True,
-        tol=1e-3,
-        max_iter=1000,
-        validation_fraction=validation_fraction,
-        random_state=0,
+        early_stopping=True, validation_fraction=validation_fraction, random_state=0
     )
 
     error_message = (
