@@ -17,6 +17,7 @@ experiments:
 """
 
 # Author: Olivier Grisel <olivier.grisel@ensta.org>
+#         Arturo Amor <david-arturo.amor-quiroz@inria.fr>
 # License: BSD 3 clause
 
 # %%
