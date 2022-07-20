@@ -367,7 +367,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 )
             # Applying element-wise logical conjunction
             # for monotonic constraints' support.
-            monotonic_cst = np.asarray(self.monotonic_cst, dtype=np.int32)
+            monotonic_cst = np.asarray(self.monotonic_cst)
             unsatisfied_constraints_conditions = (
                 (monotonic_cst != -1) * (monotonic_cst != 0) * (monotonic_cst != 1)
             )
@@ -375,6 +375,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 raise ValueError(
                     "monotonic_cst must be None or an array-like of -1, 0 or 1."
                 )
+            monotonic_cst = np.asarray(self.monotonic_cst, dtype=np.int32)
             if is_classifier(self):
                 if self.n_classes_[0] > 2:
                     raise ValueError(
