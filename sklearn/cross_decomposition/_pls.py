@@ -559,8 +559,8 @@ class _PLS(
 
         self.x_weights_ = np.zeros((n_features, self.n_components))
         self.x_loadings_ = np.zeros((n_features, self.n_components))
-        self.y_loadings_ = np.zeros((n_targets, self.n_components))
         self.x_rotations_ = np.zeros((n_features, self.n_components))
+        self.y_loadings_ = np.zeros((n_targets, self.n_components))
 
         for k in range(n_components):
             if n_targets == 1:
