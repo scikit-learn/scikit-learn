@@ -226,7 +226,7 @@ fig
 # In particular for this hyperparameter search, it is interesting to notice that
 # the top performing models do not seem to depend on the regularization `norm`,
 # but they do depend on a trade-off between `max_df`, `min_df` and the
-# regularization strenght `alpha`. The reason is that including noisy features
+# regularization strength `alpha`. The reason is that including noisy features
 # (i.e. `max_df` close to 1.0 or `min_df` close to 0) tend to overfit and
 # therefore require a stronger regularization to compensate. Having less
 # features require less regularization and less scoring time.
