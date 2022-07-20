@@ -123,11 +123,9 @@ for score_name, score_func in score_funcs:
         % (score_name, len(n_clusters_range), n_samples)
     )
 
-    t0 = time()
     scores = fixed_classes_uniform_labelings_scores(
         score_func, n_samples, n_clusters_range, n_classes=n_classes
     )
-    print("done in %0.3fs" % (time() - t0))
     plots.append(
         plt.errorbar(
             n_clusters_range, scores.mean(axis=1), scores.std(axis=1), alpha=0.8
@@ -191,9 +189,7 @@ for score_name, score_func in score_funcs:
         % (score_name, len(n_clusters_range), n_samples)
     )
 
-    t0 = time()
     scores = uniform_labelings_scores(score_func, n_samples, n_clusters_range)
-    print("done in %0.3fs" % (time() - t0))
     plots.append(
         plt.errorbar(
             n_clusters_range, np.median(scores, axis=1), scores.std(axis=1), alpha=0.8
