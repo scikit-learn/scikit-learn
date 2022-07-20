@@ -110,7 +110,8 @@ cdef class DatasetsPair:
 
     @classmethod
     def unpack_csr_matrix(cls, X: csr_matrix):
-        """Ensure getting ITYPE instead of int internally used for CSR matrices."""
+        """Ensure that the CSR matrix is indexed with SPARSE_INDEX_TYPE."""
+        # TODO: leave X.data unchanged once float32 is supported.
         X_data = np.asarray(X.data, dtype=DTYPE)
         X_indices = np.asarray(X.indices, dtype=SPARSE_INDEX_TYPE)
         X_indptr = np.asarray(X.indptr, dtype=SPARSE_INDEX_TYPE)
@@ -294,7 +295,6 @@ cdef class SparseDenseDatasetsPair(DatasetsPair):
         # Y array already has been checked here
         self.n_Y = Y.shape[0]
         self.Y_data = np.ravel(Y)
-
         self.Y_indices = np.arange(self.n_features, dtype=SPARSE_INDEX_TYPE)
 
     @final
