@@ -4,6 +4,8 @@
 # License: BSD 3 clause
 
 import warnings
+from numbers import Integral, Real
+
 import numpy as np
 import scipy.sparse as sp
 
@@ -11,6 +13,7 @@ from .base import BaseEstimator, ClassifierMixin, RegressorMixin
 from .base import MultiOutputMixin
 from .utils import check_random_state
 from .utils import deprecated
+from .utils._param_validation import StrOptions, Interval
 from .utils.validation import _num_samples
 from .utils.validation import check_array
 from .utils.validation import check_consistent_length
@@ -134,6 +137,14 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
     0.75
     """
 
+    _parameter_constraints = {
+        "strategy": [
+            StrOptions({"most_frequent", "prior", "stratified", "uniform", "constant"})
+        ],
+        "random_state": ["random_state"],
+        "constant": [Integral, str, "array-like", None],
+    }
+
     def __init__(self, *, strategy="prior", random_state=None, constant=None):
         self.strategy = strategy
         self.random_state = random_state
@@ -158,19 +169,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        allowed_strategies = (
-            "most_frequent",
-            "stratified",
-            "uniform",
-            "constant",
-            "prior",
-        )
-
-        if self.strategy not in allowed_strategies:
-            raise ValueError(
-                "Unknown strategy type: %s, expected one of %s."
-                % (self.strategy, allowed_strategies)
-            )
+        self._validate_params()
 
         self._strategy = self.strategy
 
@@ -527,6 +526,16 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
     0.0
     """
 
+    _parameter_constraints = {
+        "strategy": [StrOptions({"mean", "median", "quantile", "constant"})],
+        "quantile": [Interval(Real, 0.0, 1.0, closed="both"), None],
+        "constant": [
+            Interval(Real, None, None, closed="neither"),
+            "array-like",
+            None,
+        ],
+    }
+
     def __init__(self, *, strategy="mean", constant=None, quantile=None):
         self.strategy = strategy
         self.constant = constant
@@ -551,12 +560,7 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
-        allowed_strategies = ("mean", "median", "quantile", "constant")
-        if self.strategy not in allowed_strategies:
-            raise ValueError(
-                "Unknown strategy type: %s, expected one of %s."
-                % (self.strategy, allowed_strategies)
-            )
+        self._validate_params()
 
         y = check_array(y, ensure_2d=False, input_name="y")
         if len(y) == 0:
@@ -584,12 +588,11 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                 ]
 
         elif self.strategy == "quantile":
-            if self.quantile is None or not np.isscalar(self.quantile):
+            if self.quantile is None:
                 raise ValueError(
-                    "Quantile must be a scalar in the range [0.0, 1.0], but got %s."
-                    % self.quantile
+                    "When using `strategy='quantile', you have to specify the desired "
+                    "quantile in the range [0, 1]."
                 )
-
             percentile = self.quantile * 100.0
             if sample_weight is None:
                 self.constant_ = np.percentile(y, axis=0, q=percentile)

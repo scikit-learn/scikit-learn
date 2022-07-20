@@ -1223,7 +1223,7 @@ def d2_tweedie_score(y_true, y_pred, *, sample_weight=None, power=0):
     ----------
     .. [1] Eq. (3.11) of Hastie, Trevor J., Robert Tibshirani and Martin J.
            Wainwright. "Statistical Learning with Sparsity: The Lasso and
-           Generalizations." (2015). https://trevorhastie.github.io
+           Generalizations." (2015). https://hastie.su.domains/StatLearnSparsity/
 
     Examples
     --------
@@ -1326,7 +1326,7 @@ def d2_pinball_score(
            <http://dx.doi.org/10.1080/01621459.1999.10473882>`_
     .. [2] Eq. (3.11) of Hastie, Trevor J., Robert Tibshirani and Martin J.
            Wainwright. "Statistical Learning with Sparsity: The Lasso and
-           Generalizations." (2015). https://trevorhastie.github.io
+           Generalizations." (2015). https://hastie.su.domains/StatLearnSparsity/
 
     Examples
     --------
@@ -1464,7 +1464,7 @@ def d2_absolute_error_score(
     ----------
     .. [1] Eq. (3.11) of Hastie, Trevor J., Robert Tibshirani and Martin J.
            Wainwright. "Statistical Learning with Sparsity: The Lasso and
-           Generalizations." (2015). https://trevorhastie.github.io
+           Generalizations." (2015). https://hastie.su.domains/StatLearnSparsity/
 
     Examples
     --------
