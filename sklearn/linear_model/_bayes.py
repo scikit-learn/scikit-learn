@@ -17,7 +17,7 @@ from ..utils.extmath import fast_logdet
 from ..utils import check_scalar
 from scipy.linalg import pinvh
 from ..utils.validation import _check_sample_weight
-
+from ..utils._param_validation import StrOptions, Hidden
 
 ###############################################################################
 # BayesianRidge regression
@@ -655,7 +655,22 @@ class ARDRegression(RegressorMixin, LinearModel):
     >>> clf.predict([[1, 1]])
     array([1.])
     """
+    _parameter_constrains = {
+        "n_iter": ["int"],
+        "tol": ["float"],
+        "alpha_1": ["float"],
+        "alpha_2": ["float"],
+        "lambda_1": ["float"],
+        "lambda_2": ["float"],
+        "compute_score": ["boolean"],
+        "threshold_lambda": ["float"],
+        "fit_intercept": ["boolean"],
+        "normalize": [Hidden(StrOptions({"deprecated"})), "boolean"],
+        "copy_X": ["boolean"],
+        "verbose": ["boolean"],
 
+
+    }
     def __init__(
         self,
         *,
