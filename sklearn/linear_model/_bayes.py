@@ -655,7 +655,7 @@ class ARDRegression(RegressorMixin, LinearModel):
     >>> clf.predict([[1, 1]])
     array([1.])
     """
-    _parameter_constrains = {
+    _parameter_constraints = {
         "n_iter": ["int"],
         "tol": ["float"],
         "alpha_1": ["float"],
