@@ -40,18 +40,18 @@ experiments:
 #
 # - Mutual Information (MI) is an information theoretic measure that quantifies how
 #   dependent are the two labelings. Note that the maximum value of MI for perfect
-#   labelings depends on the number of clusters and samples.
-#
-# - Adjusted Mutual Information (AMI), a chance-adjusted Mutual Information.
-#   Similarly to ARI, random cluster assignment has an AMI of 0.0 in
-#   expectation;
+#   labelings depends on the number of clusters and samples;
 #
 # - Normalized Mutual Information (NMI), a Mutual Information defined between 0
 #   (no mutual information) in the limit of large number of data points and 1
 #   (perfectly matching label assignments, up to a permutation of the labels).
 #   It is not adjusted for chance: then the number of clustered data points is
 #   not large enough, the expected values of MI or NMI for random labelings can
-#   be significantly non-zero.
+#   be significantly non-zero;
+#
+# - Adjusted Mutual Information (AMI), a chance-adjusted Mutual Information.
+#   Similarly to ARI, random cluster assignment has an AMI of 0.0 in
+#   expectation.
 #
 # For more information, see the :ref:`clustering_evaluation` module.
 
