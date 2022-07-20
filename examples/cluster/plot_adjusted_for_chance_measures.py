@@ -31,11 +31,11 @@ experiments:
 #
 # - V-measure, the harmonic mean of completeness and homogeneity;
 #
-# - Rand-Index, which measures how frequently pairs of data points are grouped
+# - Rand index, which measures how frequently pairs of data points are grouped
 #   consistently according to the result of the clustering algorithm and the
 #   ground truth class assignment;
 #
-# - Adjusted Rand-Index (ARI), a chance-adjusted Rand-Index such that a random
+# - Adjusted Rand index (ARI), a chance-adjusted Rand index such that a random
 #   cluster assignment has an ARI of 0.0 in expectation;
 #
 # - Mutual Information (MI) is an information theoretic measure that quantifies how
@@ -52,7 +52,6 @@ experiments:
 #   It is not adjusted for chance: then the number of clustered data points is
 #   not large enough, the expected values of MI or NMI for random labelings can
 #   be significantly non-zero.
-#   labeling 
 #
 # For more information, see the :ref:`clustering_evaluation` module.
 
@@ -62,7 +61,7 @@ score_funcs = [
     ("Homogenity", metrics.homogeneity_score),
     ("Completeness", metrics.completeness_score),
     ("V-measure", metrics.v_measure_score),
-    ("Rand-Index", metrics.rand_score),
+    ("Rand index", metrics.rand_score),
     ("ARI", metrics.adjusted_rand_score),
     ("MI", metrics.mutual_info_score),
     ("AMI", metrics.adjusted_mutual_info_score),
@@ -109,7 +108,6 @@ def fixed_classes_uniform_labelings_scores(
 # `n_clusters_range`.
 
 import matplotlib.pyplot as plt
-from time import time
 
 n_samples = 1000
 n_classes = 10
@@ -148,7 +146,7 @@ plt.legend(plots, names)
 plt.show()
 
 # %%
-# The Rand-Index satures for `n_clusters`>`n_classes`. Other non-adjusted
+# The Rand index saturates for `n_clusters`>`n_classes`. Other non-adjusted
 # measures such as the V-Measure show a linear dependency between the number of
 # clusters and the number of samples.
 #
