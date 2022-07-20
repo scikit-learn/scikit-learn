@@ -59,7 +59,6 @@ from sklearn.tree._classes import CRITERIA_REG
 from sklearn import datasets
 
 from sklearn.utils import compute_sample_weight
-from sklearn.utils.fixes import rng_integers
 
 
 CLF_CRITERIONS = ("gini", "log_loss")
@@ -176,7 +175,7 @@ X_multilabel, y_multilabel = datasets.make_multilabel_classification(
 # NB: despite their names X_sparse_* are numpy arrays (and not sparse matrices)
 X_sparse_pos = random_state.uniform(size=(20, 5))
 X_sparse_pos[X_sparse_pos <= 0.8] = 0.0
-y_random = rng_integers(random_state, 0, 4, size=(20,))
+y_random = random_state.randint(0, 4, size=(20,))
 X_sparse_mix = _sparse_random_matrix(20, 10, density=0.25, random_state=0).toarray()
 
 

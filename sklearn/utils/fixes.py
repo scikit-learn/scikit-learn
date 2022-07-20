@@ -18,15 +18,9 @@ import numpy as np
 import scipy
 import scipy.stats
 import threadpoolctl
+from numpy.random import Generator
 from .._config import config_context, get_config
 from ..externals._packaging.version import parse as parse_version
-
-# below copied verbatim from scipy._lib._util.py to be used in rng_integers
-try:
-    from numpy.random import Generator as Generator
-except ImportError:
-    class Generator():  # type: ignore[no-redef]
-        pass
 
 
 np_version = parse_version(np.__version__)

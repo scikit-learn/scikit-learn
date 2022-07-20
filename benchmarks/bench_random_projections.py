@@ -21,7 +21,6 @@ from sklearn.random_projection import (
     GaussianRandomProjection,
     johnson_lindenstrauss_min_dim,
 )
-from sklearn.utils.fixes import rng_integers
 
 
 def type_auto_or_float(val):
@@ -74,8 +73,8 @@ def make_sparse_random_data(n_samples, n_features, n_nonzeros, random_state=None
         (
             rng.randn(n_nonzeros),
             (
-                rng_integers(rng, n_samples, size=n_nonzeros),
-                rng_integers(rng, n_features, size=n_nonzeros),
+                rng.randint(n_samples, size=n_nonzeros),
+                rng.randint(n_features, size=n_nonzeros),
             ),
         ),
         shape=(n_samples, n_features),
