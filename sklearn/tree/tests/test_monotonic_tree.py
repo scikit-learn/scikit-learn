@@ -8,9 +8,8 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn.tree.tests.test_tree import REG_TREES, CLF_TREES
 
 
-@pytest.mark.parametrize("seed", range(4))
 @pytest.mark.parametrize("depth_first", (True, False))
-def test_montonic_constraints_classifications(seed, depth_first):
+def test_montonic_constraints_classifications(depth_first, global_random_seed):
     n_samples = 1000
     n_samples_train = 900
     X, y = make_classification(
@@ -47,7 +46,7 @@ def test_montonic_constraints_classifications(seed, depth_first):
                 max_leaf_nodes=n_samples_train,
             )
         if hasattr(est, "random_state"):
-            est.set_params(**{"random_state": seed})
+            est.set_params(**{"random_state": global_random_seed})
         if hasattr(est, "n_estimators"):
             est.set_params(**{"n_estimators": 5})
         est.fit(X_train, y_train)
@@ -64,9 +63,8 @@ def test_montonic_constraints_classifications(seed, depth_first):
         assert np.all(y_decr <= y)
 
 
-@pytest.mark.parametrize("seed", range(4))
 @pytest.mark.parametrize("depth_first", (True, False))
-def test_montonic_constraints_regressions(seed, depth_first):
+def test_montonic_constraints_regressions(depth_first, global_random_seed):
     n_samples = 1000
     n_samples_train = 900
     # Build a classification task using 3 informative features
@@ -98,7 +96,7 @@ def test_montonic_constraints_regressions(seed, depth_first):
                 max_leaf_nodes=n_samples_train,
             )
         if hasattr(est, "random_state"):
-            est.set_params(random_state=seed)
+            est.set_params(random_state=global_random_seed)
         if hasattr(est, "n_estimators"):
             est.set_params(**{"n_estimators": 5})
         est.fit(X_train, y_train)
@@ -201,8 +199,7 @@ def assert_1d_reg_monotonic(clf, monotonic_sign, min_x, max_x, n_steps):
 @pytest.mark.parametrize("monotonic_sign", (-1, 1))
 @pytest.mark.parametrize("splitter", ("best", "random"))
 @pytest.mark.parametrize("depth_first", (True, False))
-@pytest.mark.parametrize("seed", range(4))
-def test_1d_tree_nodes_values(monotonic_sign, splitter, depth_first, seed):
+def test_1d_tree_nodes_values(monotonic_sign, splitter, depth_first, global_random_seed):
     # Adaptation from test_nodes_values in test_montonic_constraints.py
     # Build a single tree with only one feature, and make sure the nodes
     # values respect the monotonic constraints.
@@ -218,7 +215,7 @@ def test_1d_tree_nodes_values(monotonic_sign, splitter, depth_first, seed):
     #
     # c <= d <= root <= e <= f
 
-    rng = np.random.RandomState(seed)
+    rng = np.random.RandomState(global_random_seed)
     n_samples = 1000
     n_features = 1
     X = rng.rand(n_samples, n_features)
@@ -227,7 +224,7 @@ def test_1d_tree_nodes_values(monotonic_sign, splitter, depth_first, seed):
     if depth_first:
         # No max_leaf_nodes, default depth first tree builder
         clf = DecisionTreeRegressor(
-            splitter=splitter, monotonic_cst=[monotonic_sign], random_state=seed
+            splitter=splitter, monotonic_cst=[monotonic_sign], random_state=global_random_seed
         )
     else:
         # max_leaf_nodes triggers best first tree builder
@@ -235,7 +232,7 @@ def test_1d_tree_nodes_values(monotonic_sign, splitter, depth_first, seed):
             splitter=splitter,
             monotonic_cst=[monotonic_sign],
             max_leaf_nodes=n_samples,
-            random_state=seed,
+            random_state=global_random_seed,
         )
     clf.fit(X, y)
 
@@ -285,8 +282,7 @@ def assert_nd_reg_tree_children_monotonic_bounded(tree_, monotonic_cst):
 @pytest.mark.parametrize("monotonic_sign", (-1, 1))
 @pytest.mark.parametrize("splitter", ("best", "random"))
 @pytest.mark.parametrize("depth_first", (True, False))
-@pytest.mark.parametrize("seed", range(4))
-def test_nd_tree_nodes_values(monotonic_sign, splitter, depth_first, seed):
+def test_nd_tree_nodes_values(monotonic_sign, splitter, depth_first, global_random_seed):
     # Build tree with several features, and make sure the nodes
     # values respect the monotonic constraints.
 
@@ -307,7 +303,7 @@ def test_nd_tree_nodes_values(monotonic_sign, splitter, depth_first, seed):
     # For iii) we check that each node value is within the proper lower and
     # upper bounds.
 
-    rng = np.random.RandomState(seed)
+    rng = np.random.RandomState(global_random_seed)
     n_samples = 10000
     n_features = 2
     monotonic_cst = [monotonic_sign, 0]
@@ -317,7 +313,7 @@ def test_nd_tree_nodes_values(monotonic_sign, splitter, depth_first, seed):
     if depth_first:
         # No max_leaf_nodes, default depth first tree builder
         clf = DecisionTreeRegressor(
-            splitter=splitter, monotonic_cst=monotonic_cst, random_state=seed
+            splitter=splitter, monotonic_cst=monotonic_cst, random_state=global_random_seed
         )
     else:
         # max_leaf_nodes triggers best first tree builder
@@ -325,7 +321,7 @@ def test_nd_tree_nodes_values(monotonic_sign, splitter, depth_first, seed):
             splitter=splitter,
             monotonic_cst=monotonic_cst,
             max_leaf_nodes=n_samples,
-            random_state=seed,
+            random_state=global_random_seed,
         )
     clf.fit(X, y)
     assert_nd_reg_tree_children_monotonic_bounded(clf.tree_, monotonic_cst)
