@@ -141,7 +141,7 @@ Once trained, you can plot the tree with the :func:`plot_tree` function::
     >>> tree.plot_tree(clf)
     [...]
 
-.. figure:: ../auto_examples/tree/images/sphx_glr_plot_iris_dtc_003.png
+.. figure:: ../auto_examples/tree/images/sphx_glr_plot_iris_dtc_002.png
    :target: ../auto_examples/tree/plot_iris_dtc.html
    :scale: 75
    :align: center
@@ -646,7 +646,7 @@ as follows:
     >>> clf = tree.ObliqueDecisionTreeClassifier()
     >>> clf = clf.fit(X, y)
 
-.. figure:: ../auto_examples/tree/images/sphx_glr_plot_iris_dtc_002.png
+.. figure:: ../auto_examples/tree/images/sphx_glr_plot_iris_dtc_003.png
    :target: ../auto_examples/tree/plot_iris_dtc.html
    :scale: 75
    :align: center

@@ -212,8 +212,8 @@ In practice the variance reduction is often significant hence yielding an overal
 In contrast to the original publication [B2001]_, the scikit-learn
 implementation allows the user to control the number of features to combine in computing
 candidate splits. This is done via the ``feature_combinations`` parameter. For
-more information and intuition on oblique decision trees, see
-:ref:`oblique decision trees <oblique_trees>`.
+more information and intuition, see
+:ref:`documentation on oblique decision trees <oblique_trees>`.
 
 
 .. _random_forest_parameters:
