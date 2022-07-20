@@ -28,34 +28,6 @@ def default_solver():
     return "highs" if sp_version >= parse_version("1.6.0") else "interior-point"
 
 
-@pytest.mark.parametrize(
-    "params, err_msg",
-    [
-        ({"quantile": 2}, "Quantile should be strictly between 0.0 and 1.0"),
-        ({"quantile": 1}, "Quantile should be strictly between 0.0 and 1.0"),
-        ({"quantile": 0}, "Quantile should be strictly between 0.0 and 1.0"),
-        ({"quantile": -1}, "Quantile should be strictly between 0.0 and 1.0"),
-        ({"alpha": -1.5}, "Penalty alpha must be a non-negative number"),
-        ({"fit_intercept": "blah"}, "The argument fit_intercept must be bool"),
-        ({"fit_intercept": 0}, "The argument fit_intercept must be bool"),
-        ({"solver": "blah"}, "Invalid value for argument solver"),
-        (
-            {"solver_options": "blah"},
-            "Invalid value for argument solver_options",
-        ),
-    ],
-)
-@pytest.mark.filterwarnings(
-    # FIXME (1.4): remove once we changed the default solver to "highs"
-    "ignore:The default solver will change from 'interior-point'"
-)
-def test_init_parameters_validation(X_y_data, params, err_msg):
-    """Test that invalid init parameters raise errors."""
-    X, y = X_y_data
-    with pytest.raises(ValueError, match=err_msg):
-        QuantileRegressor(**params).fit(X, y)
-
-
 @pytest.mark.parametrize("solver", ["interior-point", "revised simplex"])
 def test_incompatible_solver_for_sparse_input(X_y_data, solver):
     X, y = X_y_data

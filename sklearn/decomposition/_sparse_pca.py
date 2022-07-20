@@ -8,7 +8,7 @@ import numpy as np
 
 from ..utils import check_random_state
 from ..utils._param_validation import Hidden, Interval, StrOptions
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_array, check_is_fitted
 from ..linear_model import ridge_regression
 from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
 from ._dict_learning import dict_learning, MiniBatchDictionaryLearning
@@ -114,6 +114,29 @@ class _BaseSparsePCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEst
         )
 
         return U
+
+    def inverse_transform(self, X):
+        """Transform data from the latent space to the original space.
+
+        This inversion is an approximation due to the loss of information
+        induced by the forward decomposition.
+
+        .. versionadded:: 1.2
+
+        Parameters
+        ----------
+        X : ndarray of shape (n_samples, n_components)
+            Data in the latent space.
+
+        Returns
+        -------
+        X_original : ndarray of shape (n_samples, n_features)
+            Reconstructed data in the original space.
+        """
+        check_is_fitted(self)
+        X = check_array(X)
+
+        return (X @ self.components_) + self.mean_
 
     @property
     def _n_features_out(self):
