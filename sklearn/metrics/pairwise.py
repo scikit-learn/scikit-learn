@@ -1200,7 +1200,8 @@ def polynomial_kernel(X, Y=None, degree=3, gamma=None, coef0=1):
         A feature array.
 
     Y : ndarray of shape (n_samples_Y, n_features), default=None
-        An optional second feature array. If `None`, uses `Y=X`.
+        An array where each row is a sample and each column is a feature.
+        If `None`, uses `Y=X`.
 
     degree : int, default=3
         Kernel degree.
