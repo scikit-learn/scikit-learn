@@ -150,7 +150,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         "criterion": [StrOptions({"threshold", "k_best"})],
         "k_best": [Interval(Integral, 1, None, closed="left")],
         "max_iter": [Interval(Integral, 0, None, closed="left"), None],
-        "verbose": ["boolean"],
+        "verbose": ["verbose"],
     }
 
     def __init__(
