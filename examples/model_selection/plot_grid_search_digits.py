@@ -85,6 +85,7 @@ def print_dataframe(filtered_cv_results):
             f" recall: {mean_recall:0.3f} (±{std_recall:0.03f}),"
             f" for {params}"
         )
+    print()
 
 
 def refit_strategy(cv_results):
