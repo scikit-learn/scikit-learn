@@ -326,16 +326,13 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
         "fit_intercept": ["boolean"],
         "copy_X": ["boolean"],
         # target_type should be Integral but can accept Real for backward compatibility
-        "max_subpopulation": [
-            Interval(Integral, 1, None, closed="left"),
-            Interval(Real, 1, None, closed="left"),
-        ],
+        "max_subpopulation": [Interval(Real, 1, None, closed="left")],
         "n_subsamples": [None, Integral],
         "max_iter": [Interval(Integral, 0, None, closed="left")],
         "tol": [Interval(Real, 0.0, None, closed="left")],
         "random_state": ["random_state"],
         "n_jobs": [None, Integral],
-        "verbose": ["boolean"],
+        "verbose": ["verbose"],
     }
 
     def __init__(
