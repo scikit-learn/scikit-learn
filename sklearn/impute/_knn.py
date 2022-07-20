@@ -2,6 +2,7 @@
 #          Thomas J Fan <thomasjpfan@gmail.com>
 # License: BSD 3 clause
 
+from numbers import Integral
 import numpy as np
 
 from ._base import _BaseImputer
@@ -14,6 +15,7 @@ from ..utils import is_scalar_nan
 from ..utils._mask import _get_mask
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _check_feature_names_in
+from ..utils._param_validation import Hidden, Interval, StrOptions
 
 
 class KNNImputer(_BaseImputer):
@@ -115,6 +117,14 @@ class KNNImputer(_BaseImputer):
            [8. , 8. , 7. ]])
     """
 
+    _parameter_constraints = {
+        **_BaseImputer._parameter_constraints,  # type: ignore
+        "n_neighbors": [Interval(Integral, 1, None, closed="left")],
+        "weights": [StrOptions({"uniform", "distance"}), callable, Hidden(None)],
+        "metric": [StrOptions(set(_NAN_METRICS)), callable],
+        "copy": ["boolean"],
+    }
+
     def __init__(
         self,
         *,
@@ -195,17 +205,12 @@ class KNNImputer(_BaseImputer):
         self : object
             The fitted `KNNImputer` class instance.
         """
+        self._validate_params()
         # Check data integrity and calling arguments
         if not is_scalar_nan(self.missing_values):
             force_all_finite = True
         else:
             force_all_finite = "allow-nan"
-            if self.metric not in _NAN_METRICS and not callable(self.metric):
-                raise ValueError("The selected metric does not support NaN values")
-        if self.n_neighbors <= 0:
-            raise ValueError(
-                "Expected n_neighbors > 0. Got {}".format(self.n_neighbors)
-            )
 
         X = self._validate_data(
             X,
