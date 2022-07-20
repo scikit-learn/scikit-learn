@@ -1691,6 +1691,11 @@ def robust_scale(
     X_tr : {ndarray, sparse matrix} of shape (n_samples, n_features)
         The transformed data.
 
+    See Also
+    --------
+    RobustScaler : Performs centering and scaling using the Transformer API
+        (e.g. as part of a preprocessing :class:`~sklearn.pipeline.Pipeline`).
+
     Notes
     -----
     This implementation will refuse to center scipy.sparse matrices
@@ -1719,11 +1724,6 @@ def robust_scale(
         :class:`~sklearn.preprocessing.RobustScaler` within a
         :ref:`Pipeline <pipeline>` in order to prevent most risks of data
         leaking: `pipe = make_pipeline(RobustScaler(), LogisticRegression())`.
-
-    See Also
-    --------
-    RobustScaler : Performs centering and scaling using the Transformer API
-        (e.g. as part of a preprocessing :class:`~sklearn.pipeline.Pipeline`).
     """
     X = check_array(
         X,

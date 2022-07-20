@@ -77,6 +77,11 @@ class _BaseImputer(TransformerMixin, BaseEstimator):
     It adds automatically support for `add_indicator`.
     """
 
+    _parameter_constraints = {
+        "missing_values": [numbers.Real, numbers.Integral, str, None],
+        "add_indicator": ["boolean"],
+    }
+
     def __init__(self, *, missing_values=np.nan, add_indicator=False):
         self.missing_values = missing_values
         self.add_indicator = add_indicator
