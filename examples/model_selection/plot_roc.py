@@ -3,8 +3,8 @@
 Receiver Operating Characteristic (ROC)
 =======================================
 
-Example of Receiver Operating Characteristic (ROC) metric to evaluate
-classifier output quality.
+Example of Receiver Operating Characteristic (ROC) metric to evaluate classifier
+output quality.
 
 ROC curves typically feature true positive rate on the Y axis, and false
 positive rate on the X axis. This means that the top left corner of the plot is
@@ -15,16 +15,14 @@ curve (AUC) is usually better.
 The "steepness" of ROC curves is also important, since it is ideal to maximize
 the true positive rate while minimizing the false positive rate.
 
-ROC curves are typically used in binary classification to study the output of
-a classifier. In order to extend ROC curve and ROC area to multi-label
-classification, it is necessary to binarize the output. One ROC
-curve can be drawn per label, but one can also draw a ROC curve by considering
-each element of the label indicator matrix as a binary prediction
-(micro-averaging).
+ROC curves are typically used in binary classification to study the output of a
+classifier. In order to extend ROC curve and ROC area to multi-label
+classification, it is necessary to binarize the output. One ROC curve can be
+drawn per label, but one can also draw a ROC curve by considering each element
+of the label indicator matrix as a binary prediction (micro-averaging).
 
-Another evaluation measure for multi-label classification is
-macro-averaging, which gives equal weight to the classification of each
-label.
+Another evaluation measure for multi-label classification is macro-averaging,
+which gives equal weight to the classification of each label.
 
 .. note::
 
@@ -33,37 +31,42 @@ label.
 
 """
 
-import numpy as np
-import matplotlib.pyplot as plt
-from itertools import cycle
+# %%
+# Load and prepare data
+# ---------------------
+#
+# We import the :ref:`iris_dataset` which contains 3 classes, each one
+# corresponding to a type of iris plant. One class is linearly separable from
+# the other 2; the latter are NOT linearly separable from each other.
+#
+# Here we binarize the output and add noisy features to make the problem harder.
 
-from sklearn import svm, datasets
-from sklearn.metrics import roc_curve, auc
+import numpy as np
+from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import label_binarize
-from sklearn.multiclass import OneVsRestClassifier
-from sklearn.metrics import roc_auc_score
 
-# Import some data to play with
-iris = datasets.load_iris()
-X = iris.data
-y = iris.target
+(X, y) = load_iris(return_X_y=True)
 
-# Binarize the output
 y = label_binarize(y, classes=[0, 1, 2])
 n_classes = y.shape[1]
 
-# Add noisy features to make the problem harder
 random_state = np.random.RandomState(0)
 n_samples, n_features = X.shape
 X = np.c_[X, random_state.randn(n_samples, 200 * n_features)]
 
-# shuffle and split training and test sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5, random_state=0)
 
+# %%
 # Learn to predict each class against the other
+# ---------------------------------------------
+
+from sklearn.svm import SVC
+from sklearn.metrics import roc_curve, auc
+from sklearn.multiclass import OneVsRestClassifier
+
 classifier = OneVsRestClassifier(
-    svm.SVC(kernel="linear", probability=True, random_state=random_state)
+    SVC(kernel="linear", probability=True, random_state=random_state)
 )
 y_score = classifier.fit(X_train, y_train).decision_function(X_test)
 
@@ -82,6 +85,10 @@ roc_auc["micro"] = auc(fpr["micro"], tpr["micro"])
 
 # %%
 # Plot of a ROC curve for a specific class
+# ----------------------------------------
+
+import matplotlib.pyplot as plt
+
 plt.figure()
 lw = 2
 plt.plot(
@@ -96,14 +103,42 @@ plt.xlim([0.0, 1.0])
 plt.ylim([0.0, 1.05])
 plt.xlabel("False Positive Rate")
 plt.ylabel("True Positive Rate")
-plt.title("Receiver operating characteristic example")
+plt.title("Receiver operating characteristic for class label 2")
 plt.legend(loc="lower right")
 plt.show()
 
+# %%
+from sklearn.metrics import RocCurveDisplay
+
+RocCurveDisplay.from_predictions(
+    y_test.ravel(), y_score.ravel(), name="One-vs-Rest SVC", color="darkorange"
+)
+plt.plot([0, 1], [0, 1], color="navy", lw=lw, linestyle="--")
+plt.title("Receiver operating characteristic with micro-average")
+plt.show()
+
+# %%
+# Add a single point at max_fpr by linear interpolation and McClish correction:
+# standardize result to be 0.5 if non-discriminant and 1 if maximal
+
+from sklearn.metrics import roc_auc_score
+
+y_prob = classifier.predict_proba(X_test)
+
+micro_roc_auc_ovr = roc_auc_score(y_test, y_prob, multi_class="ovr", average="micro")
+weighted_roc_auc_ovr = roc_auc_score(
+    y_test, y_prob, multi_class="ovr", average="weighted"
+)
+
+print(
+    "One-vs-Rest ROC AUC scores:\n{:.6f} (micro),\n{:.6f} "
+    "(weighted by prevalence)".format(micro_roc_auc_ovr, weighted_roc_auc_ovr)
+)
 
 # %%
 # Plot ROC curves for the multiclass problem
 # ..........................................
+#
 # Compute macro-average ROC curve and ROC area
 
 # First aggregate all false positive rates
@@ -121,7 +156,12 @@ fpr["macro"] = all_fpr
 tpr["macro"] = mean_tpr
 roc_auc["macro"] = auc(fpr["macro"], tpr["macro"])
 
+# %%
 # Plot all ROC curves
+# -------------------
+
+from itertools import cycle
+
 plt.figure()
 plt.plot(
     fpr["micro"],
@@ -160,15 +200,16 @@ plt.title("Some extension of Receiver operating characteristic to multiclass")
 plt.legend(loc="lower right")
 plt.show()
 
-
 # %%
 # Area under ROC for the multiclass problem
 # .........................................
+#
 # The :func:`sklearn.metrics.roc_auc_score` function can be used for
 # multi-class classification. The multi-class One-vs-One scheme compares every
 # unique pairwise combination of classes. In this section, we calculate the AUC
 # using the OvR and OvO schemes. We report a macro average, and a
 # prevalence-weighted average.
+
 y_prob = classifier.predict_proba(X_test)
 
 macro_roc_auc_ovo = roc_auc_score(y_test, y_prob, multi_class="ovo", average="macro")
