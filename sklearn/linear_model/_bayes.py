@@ -656,14 +656,14 @@ class ARDRegression(RegressorMixin, LinearModel):
     array([1.])
     """
     _parameter_constraints = {
-        "n_iter": ["int"],
-        "tol": ["float"],
-        "alpha_1": ["float"],
-        "alpha_2": ["float"],
-        "lambda_1": ["float"],
-        "lambda_2": ["float"],
+        "n_iter": [int],
+        "tol": [float],
+        "alpha_1": [float],
+        "alpha_2": [float],
+        "lambda_1": [float],
+        "lambda_2": [float],
         "compute_score": ["boolean"],
-        "threshold_lambda": ["float"],
+        "threshold_lambda": [float],
         "fit_intercept": ["boolean"],
         "normalize": [Hidden(StrOptions({"deprecated"})), "boolean"],
         "copy_X": ["boolean"],
