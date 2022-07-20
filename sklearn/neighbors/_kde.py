@@ -53,12 +53,17 @@ class KernelDensity(BaseEstimator):
         The kernel to use.
 
     metric : str, default='euclidean'
-        The distance metric to use.  Note that not all metrics are
-        valid with all algorithms.  Refer to the documentation of
-        :class:`BallTree` and :class:`KDTree` for a description of
-        available algorithms.  Note that the normalization of the density
-        output is correct only for the Euclidean distance metric. Default
-        is 'euclidean'.
+        Metric to use for distance computation. See the
+        documentation of `scipy.spatial.distance
+        <https://docs.scipy.org/doc/scipy/reference/spatial.distance.html>`_ and
+        the metrics listed in
+        :class:`~sklearn.metrics.pairwise.distance_metrics` for valid metric
+        values.
+
+        Not all metrics are valid with all algorithms: refer to the
+        documentation of :class:`BallTree` and :class:`KDTree`. Note that the
+        normalization of the density output is correct only for the Euclidean
+        distance metric.
 
     atol : float, default=0
         The desired absolute tolerance of the result.  A larger tolerance will
