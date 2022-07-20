@@ -828,36 +828,29 @@ def test_sparse_fit_support_vectors_empty():
     assert not model.dual_coef_.data.size
 
 
-def test_linearsvc_parameters():
+@pytest.mark.parametrize("loss", ["hinge", "squared_hinge"])
+@pytest.mark.parametrize("penalty", ["l1", "l2"])
+@pytest.mark.parametrize("dual", [True, False])
+def test_linearsvc_parameters(loss, penalty, dual):
     # Test possible parameter combinations in LinearSVC
     # Generate list of possible parameter combinations
-    losses = ["hinge", "squared_hinge", "logistic_regression", "foo"]
-    penalties, duals = ["l1", "l2", "bar"], [True, False]
+    X, y = make_classification(n_samples=5, n_features=5, random_state=0)
 
-    X, y = make_classification(n_samples=5, n_features=5)
+    clf = svm.LinearSVC(penalty=penalty, loss=loss, dual=dual, random_state=0)
+    if (
+        (loss, penalty) == ("hinge", "l1")
+        or (loss, penalty, dual) == ("hinge", "l2", False)
+        or (penalty, dual) == ("l1", True)
+    ):
 
-    for loss, penalty, dual in itertools.product(losses, penalties, duals):
-        clf = svm.LinearSVC(penalty=penalty, loss=loss, dual=dual)
-        if (
-            (loss, penalty) == ("hinge", "l1")
-            or (loss, penalty, dual) == ("hinge", "l2", False)
-            or (penalty, dual) == ("l1", True)
-            or loss == "foo"
-            or penalty == "bar"
+        with pytest.raises(
+            ValueError,
+            match="Unsupported set of arguments.*penalty='%s.*loss='%s.*dual=%s"
+            % (penalty, loss, dual),
         ):
-
-            with pytest.raises(
-                ValueError,
-                match="Unsupported set of arguments.*penalty='%s.*loss='%s.*dual=%s"
-                % (penalty, loss, dual),
-            ):
-                clf.fit(X, y)
-        else:
             clf.fit(X, y)
-
-    # Incorrect loss value - test if explicit error message is raised
-    with pytest.raises(ValueError, match=".*loss='l3' is not supported.*"):
-        svm.LinearSVC(loss="l3").fit(X, y)
+    else:
+        clf.fit(X, y)
 
 
 def test_linear_svx_uppercase_loss_penality_raises_error():
