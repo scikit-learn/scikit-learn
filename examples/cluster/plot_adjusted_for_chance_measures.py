@@ -118,10 +118,6 @@ names = []
 plt.figure(1)
 
 for score_name, score_func in score_funcs:
-    print(
-        "Computing %s for %d values of n_clusters and n_samples=%d"
-        % (score_name, len(n_clusters_range), n_samples)
-    )
 
     scores = fixed_classes_uniform_labelings_scores(
         score_func, n_samples, n_clusters_range, n_classes=n_classes
@@ -184,10 +180,6 @@ plt.figure(2)
 plots = []
 names = []
 for score_name, score_func in score_funcs:
-    print(
-        "Computing %s for %d values of n_clusters and n_samples=%d"
-        % (score_name, len(n_clusters_range), n_samples)
-    )
 
     scores = uniform_labelings_scores(score_func, n_samples, n_clusters_range)
     plots.append(
