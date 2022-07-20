@@ -1246,7 +1246,7 @@ def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
     Returns
     -------
     Gram matrix : ndarray of shape (n_samples_X, n_samples_Y)
-        Sigmoid kernel between two vectors.
+        Sigmoid kernel between two arrays.
     """
     X, Y = check_pairwise_arrays(X, Y)
     if gamma is None:
