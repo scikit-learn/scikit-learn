@@ -337,7 +337,7 @@ def test_isotonic_sample_weight_centered():
     expected_y_cir = [1, 4.7, 8.4, 12.1, 15.96, 19.98, 24]
     cir = IsotonicRegression(centered=True)
     received_y_cir = cir.fit_transform(x, y, sample_weight=sample_weight)
-    print(expected_y_cir, received_y_cir)
+
     assert_allclose(expected_y_cir, received_y_cir)
 
 
@@ -349,7 +349,7 @@ def test_isotonic_sample_weight_centered_reversed():
     expected_y_cir = [4.4, 4.4, 4.4, 12.05714286, 19.71428571, 27.37142857, 28.22222222]
     cir = IsotonicRegression(centered=True)
     received_y_cir = cir.fit_transform(x, y, sample_weight=sample_weight)
-    print(expected_y_cir, received_y_cir)
+
     assert_allclose(expected_y_cir, received_y_cir)
 
 

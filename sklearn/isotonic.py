@@ -221,9 +221,9 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
     Correctness of Kruskal's algorithms for monotone regression with ties
     de Leeuw, Psychometrica, 1977
 
-    Centered Isotonic Regression: Point and Interval Estimation for
-    Dose–Response Studies, Statistics in Biopharmaceutical Research, Vol. 9,
-    Issue 3, 2017, pp 258-267
+    .. [4] :arxiv:`Assaf P. Oron, Nancy Flournoy. "Centered Isotonic
+           Regression: Point and Interval Estimation for
+           Dose–Response Studies" <1701.05964>`
 
     Examples
     --------
