@@ -394,7 +394,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         "radius": [Interval(Real, 0, None, closed="both"), None],
         "algorithm": [StrOptions({"auto", "ball_tree", "kd_tree", "brute"})],
         "leaf_size": [Interval(Integral, 1, None, closed="left")],
-        "p": [Interval(Integral, 1, None, closed="left")],
+        "p": [Interval(Real, 1, None, closed="both")],
         "metric": [StrOptions(set(itertools.chain(*VALID_METRICS.values()))), callable],
         "metric_params": [dict, None],
         "n_jobs": [Integral, None],
