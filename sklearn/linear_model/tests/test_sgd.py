@@ -2160,7 +2160,7 @@ def test_validation_mask_correctly_subsets(monkeypatch):
 
 def test_sgd_error_on_zero_validation_weight():
     # Test that SGDClassifier raises error when all the validation samples
-    # have zero sample_weight
+    # have zero sample_weight. Non-regression test for #17229.
     X, Y = iris.data, iris.target
     sample_weight = np.zeros_like(Y)
     validation_fraction = 0.4
