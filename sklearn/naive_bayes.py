@@ -1036,9 +1036,9 @@ class ComplementNB(_BaseDiscreteNB):
     ):
         super().__init__(
             alpha=alpha,
+            force_alpha=force_alpha,
             fit_prior=fit_prior,
             class_prior=class_prior,
-            force_alpha=force_alpha,
         )
         self.norm = norm
 
@@ -1376,9 +1376,9 @@ class CategoricalNB(_BaseDiscreteNB):
     ):
         super().__init__(
             alpha=alpha,
+            force_alpha=force_alpha,
             fit_prior=fit_prior,
             class_prior=class_prior,
-            force_alpha=force_alpha,
         )
         self.min_categories = min_categories
 
