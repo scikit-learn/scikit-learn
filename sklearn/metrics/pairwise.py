@@ -1275,7 +1275,7 @@ def rbf_kernel(X, Y=None, gamma=None):
         An optional second feature array. If `None`, uses `Y=X`.
 
     gamma : float, default=None
-        Slope. If None, defaults to 1.0 / n_features.
+        If None, defaults to 1.0 / n_features.
 
     Returns
     -------
