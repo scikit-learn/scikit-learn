@@ -21,8 +21,12 @@ We will model the complexity influence on three different estimators:
     - :class:`~sklearn.svm.NuSVR` (for regression data) which implements
       Nu support vector regression;
 
-    - :class:`~sklearn.ensemble.GradientBoostingRegressor` (for regression
-      data) which builds an additive model in a forward stage-wise fashion.
+    - :class:`~sklearn.ensemble.GradientBoostingRegressor` builds an additive
+      model in a forward stage-wise fashion. Notice that
+      :class:`~sklearn.ensemble.HistGradientBoostingRegressor` is much faster
+      than :class:`~sklearn.ensemble.GradientBoostingRegressor` starting with
+      intermediate datasets (`n_samples >= 10_000`), which is not the case for
+      this example.
 
 
 We make the model complexity vary through the choice of relevant model
@@ -42,13 +46,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from sklearn import datasets
-from sklearn.utils import shuffle
+from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
 from sklearn.svm import NuSVR
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import hamming_loss
-
 
 # Initialize random generator
 np.random.seed(0)
@@ -72,12 +75,14 @@ def generate_data(case):
     """Generate regression/classification data."""
     if case == "regression":
         X, y = datasets.load_diabetes(return_X_y=True)
+        train_size = 0.8
     elif case == "classification":
         X, y = datasets.fetch_20newsgroups_vectorized(subset="all", return_X_y=True)
-    X, y = shuffle(X, y)
-    offset = int(X.shape[0] * 0.8)
-    X_train, y_train = X[:offset], y[:offset]
-    X_test, y_test = X[offset:], y[offset:]
+        train_size = 0.4  # to make the example run faster
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, train_size=train_size, random_state=0
+    )
 
     data = {"X_train": X_train, "X_test": X_test, "y_train": y_train, "y_test": y_test}
     return data
@@ -164,7 +169,8 @@ configurations = [
             "alpha": 0.001,
             "loss": "modified_huber",
             "fit_intercept": True,
-            "tol": 1e-3,
+            "tol": 1e-1,
+            "n_iter_no_change": 2,
         },
         "changing_param": "l1_ratio",
         "changing_param_values": [0.25, 0.5, 0.75, 0.9],
@@ -174,33 +180,37 @@ configurations = [
         "prediction_performance_label": "Hamming Loss (Misclassification Ratio)",
         "postfit_hook": lambda x: x.sparsify(),
         "data": classification_data,
-        "n_samples": 30,
+        "n_samples": 5,
     },
     {
         "estimator": NuSVR,
-        "tuned_params": {"C": 1e3, "gamma": 2 ** -15},
+        "tuned_params": {"C": 1e3, "gamma": 2**-15},
         "changing_param": "nu",
-        "changing_param_values": [0.1, 0.25, 0.5, 0.75, 0.9],
+        "changing_param_values": [0.05, 0.1, 0.2, 0.35, 0.5],
         "complexity_label": "n_support_vectors",
         "complexity_computer": lambda x: len(x.support_vectors_),
         "data": regression_data,
         "postfit_hook": lambda x: x,
         "prediction_performance_computer": mean_squared_error,
         "prediction_performance_label": "MSE",
-        "n_samples": 30,
+        "n_samples": 15,
     },
     {
         "estimator": GradientBoostingRegressor,
-        "tuned_params": {"loss": "squared_error"},
+        "tuned_params": {
+            "loss": "squared_error",
+            "learning_rate": 0.05,
+            "max_depth": 2,
+        },
         "changing_param": "n_estimators",
-        "changing_param_values": [10, 50, 100, 200, 500],
+        "changing_param_values": [10, 25, 50, 75, 100],
         "complexity_label": "n_trees",
         "complexity_computer": lambda x: x.n_estimators,
         "data": regression_data,
         "postfit_hook": lambda x: x,
         "prediction_performance_computer": mean_squared_error,
         "prediction_performance_label": "MSE",
-        "n_samples": 30,
+        "n_samples": 15,
     },
 ]
 
@@ -255,7 +265,9 @@ def plot_influence(conf, mse_values, prediction_times, complexities):
     ax2.yaxis.label.set_color(line2.get_color())
     ax2.tick_params(axis="y", colors=line2.get_color())
 
-    plt.legend((line1, line2), ("prediction error", "latency"), loc="upper right")
+    plt.legend(
+        (line1, line2), ("prediction error", "prediction latency"), loc="upper right"
+    )
 
     plt.title(
         "Influence of varying '%s' on %s"
@@ -267,7 +279,6 @@ for conf in configurations:
     prediction_performances, prediction_times, complexities = benchmark_influence(conf)
     plot_influence(conf, prediction_performances, prediction_times, complexities)
 plt.show()
-
 
 ##############################################################################
 # Conclusion

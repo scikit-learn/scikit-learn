@@ -2,6 +2,7 @@
 #          Thomas J Fan <thomasjpfan@gmail.com>
 # License: BSD 3 clause
 
+from numbers import Integral
 import numpy as np
 
 from ._base import _BaseImputer
@@ -14,6 +15,7 @@ from ..utils import is_scalar_nan
 from ..utils._mask import _get_mask
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _check_feature_names_in
+from ..utils._param_validation import Hidden, Interval, StrOptions
 
 
 class KNNImputer(_BaseImputer):
@@ -115,6 +117,14 @@ class KNNImputer(_BaseImputer):
            [8. , 8. , 7. ]])
     """
 
+    _parameter_constraints = {
+        **_BaseImputer._parameter_constraints,  # type: ignore
+        "n_neighbors": [Interval(Integral, 1, None, closed="left")],
+        "weights": [StrOptions({"uniform", "distance"}), callable, Hidden(None)],
+        "metric": [StrOptions(set(_NAN_METRICS)), callable],
+        "copy": ["boolean"],
+    }
+
     def __init__(
         self,
         *,
@@ -160,7 +170,7 @@ class KNNImputer(_BaseImputer):
             :, :n_neighbors
         ]
 
-        # Get weight matrix from from distance matrix
+        # Get weight matrix from distance matrix
         donors_dist = dist_pot_donors[
             np.arange(donors_idx.shape[0])[:, None], donors_idx
         ]
@@ -195,17 +205,12 @@ class KNNImputer(_BaseImputer):
         self : object
             The fitted `KNNImputer` class instance.
         """
+        self._validate_params()
         # Check data integrity and calling arguments
         if not is_scalar_nan(self.missing_values):
             force_all_finite = True
         else:
             force_all_finite = "allow-nan"
-            if self.metric not in _NAN_METRICS and not callable(self.metric):
-                raise ValueError("The selected metric does not support NaN values")
-        if self.n_neighbors <= 0:
-            raise ValueError(
-                "Expected n_neighbors > 0. Got {}".format(self.n_neighbors)
-            )
 
         X = self._validate_data(
             X,
@@ -350,10 +355,11 @@ class KNNImputer(_BaseImputer):
             Input features.
 
             - If `input_features` is `None`, then `feature_names_in_` is
-                used as feature names in. If `feature_names_in_` is not defined,
-                then names are generated: `[x0, x1, ..., x(n_features_in_)]`.
+              used as feature names in. If `feature_names_in_` is not defined,
+              then the following input feature names are generated:
+              `["x0", "x1", ..., "x(n_features_in_ - 1)"]`.
             - If `input_features` is an array-like, then `input_features` must
-                match `feature_names_in_` if `feature_names_in_` is defined.
+              match `feature_names_in_` if `feature_names_in_` is defined.
 
         Returns
         -------

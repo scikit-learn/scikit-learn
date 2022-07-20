@@ -1,9 +1,16 @@
+import warnings
+
 import pytest
 import numpy as np
 from scipy import sparse
+from sklearn.utils import _safe_indexing
 
 from sklearn.preprocessing import FunctionTransformer
-from sklearn.utils._testing import assert_array_equal, assert_allclose_dense_sparse
+from sklearn.utils._testing import (
+    assert_array_equal,
+    assert_allclose_dense_sparse,
+    _convert_container,
+)
 
 
 def _make_func(args_store, kwargs_store, func=lambda X, *a, **k: X):
@@ -147,9 +154,10 @@ def test_check_inverse():
             check_inverse=True,
             validate=True,
         )
-        with pytest.warns(None) as record:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", UserWarning)
             Xt = trans.fit_transform(X)
-        assert len(record) == 0
+
         assert_allclose_dense_sparse(X, trans.inverse_transform(Xt))
 
     # check that we don't check inverse when one of the func or inverse is not
@@ -157,15 +165,15 @@ def test_check_inverse():
     trans = FunctionTransformer(
         func=np.expm1, inverse_func=None, check_inverse=True, validate=True
     )
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
         trans.fit(X_dense)
-    assert len(record) == 0
     trans = FunctionTransformer(
         func=None, inverse_func=np.expm1, check_inverse=True, validate=True
     )
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
         trans.fit(X_dense)
-    assert len(record) == 0
 
 
 def test_function_transformer_frame():
@@ -174,6 +182,190 @@ def test_function_transformer_frame():
     transformer = FunctionTransformer()
     X_df_trans = transformer.fit_transform(X_df)
     assert hasattr(X_df_trans, "loc")
+
+
+@pytest.mark.parametrize("X_type", ["array", "series"])
+def test_function_transformer_raise_error_with_mixed_dtype(X_type):
+    """Check that `FunctionTransformer.check_inverse` raises error on mixed dtype."""
+    mapping = {"one": 1, "two": 2, "three": 3, 5: "five", 6: "six"}
+    inverse_mapping = {value: key for key, value in mapping.items()}
+    dtype = "object"
+
+    data = ["one", "two", "three", "one", "one", 5, 6]
+    data = _convert_container(data, X_type, columns_name=["value"], dtype=dtype)
+
+    def func(X):
+        return np.array(
+            [mapping[_safe_indexing(X, i)] for i in range(X.size)], dtype=object
+        )
+
+    def inverse_func(X):
+        return _convert_container(
+            [inverse_mapping[x] for x in X],
+            X_type,
+            columns_name=["value"],
+            dtype=dtype,
+        )
+
+    transformer = FunctionTransformer(
+        func=func, inverse_func=inverse_func, validate=False, check_inverse=True
+    )
+
+    msg = "'check_inverse' is only supported when all the elements in `X` is numerical."
+    with pytest.raises(ValueError, match=msg):
+        transformer.fit(data)
+
+
+@pytest.mark.parametrize(
+    "X, feature_names_out, input_features, expected",
+    [
+        (
+            # NumPy inputs, default behavior: generate names
+            np.random.rand(100, 3),
+            "one-to-one",
+            None,
+            ("x0", "x1", "x2"),
+        ),
+        (
+            # Pandas input, default behavior: use input feature names
+            {"a": np.random.rand(100), "b": np.random.rand(100)},
+            "one-to-one",
+            None,
+            ("a", "b"),
+        ),
+        (
+            # NumPy input, feature_names_out=callable
+            np.random.rand(100, 3),
+            lambda transformer, input_features: ("a", "b"),
+            None,
+            ("a", "b"),
+        ),
+        (
+            # Pandas input, feature_names_out=callable
+            {"a": np.random.rand(100), "b": np.random.rand(100)},
+            lambda transformer, input_features: ("c", "d", "e"),
+            None,
+            ("c", "d", "e"),
+        ),
+        (
+            # NumPy input, feature_names_out=callable – default input_features
+            np.random.rand(100, 3),
+            lambda transformer, input_features: tuple(input_features) + ("a",),
+            None,
+            ("x0", "x1", "x2", "a"),
+        ),
+        (
+            # Pandas input, feature_names_out=callable – default input_features
+            {"a": np.random.rand(100), "b": np.random.rand(100)},
+            lambda transformer, input_features: tuple(input_features) + ("c",),
+            None,
+            ("a", "b", "c"),
+        ),
+        (
+            # NumPy input, input_features=list of names
+            np.random.rand(100, 3),
+            "one-to-one",
+            ("a", "b", "c"),
+            ("a", "b", "c"),
+        ),
+        (
+            # Pandas input, input_features=list of names
+            {"a": np.random.rand(100), "b": np.random.rand(100)},
+            "one-to-one",
+            ("a", "b"),  # must match feature_names_in_
+            ("a", "b"),
+        ),
+        (
+            # NumPy input, feature_names_out=callable, input_features=list
+            np.random.rand(100, 3),
+            lambda transformer, input_features: tuple(input_features) + ("d",),
+            ("a", "b", "c"),
+            ("a", "b", "c", "d"),
+        ),
+        (
+            # Pandas input, feature_names_out=callable, input_features=list
+            {"a": np.random.rand(100), "b": np.random.rand(100)},
+            lambda transformer, input_features: tuple(input_features) + ("c",),
+            ("a", "b"),  # must match feature_names_in_
+            ("a", "b", "c"),
+        ),
+    ],
+)
+def test_function_transformer_get_feature_names_out(
+    X, feature_names_out, input_features, expected
+):
+    if isinstance(X, dict):
+        pd = pytest.importorskip("pandas")
+        X = pd.DataFrame(X)
+
+    transformer = FunctionTransformer(
+        feature_names_out=feature_names_out, validate=True
+    )
+    transformer.fit_transform(X)
+    names = transformer.get_feature_names_out(input_features)
+    assert isinstance(names, np.ndarray)
+    assert names.dtype == object
+    assert_array_equal(names, expected)
+
+
+def test_function_transformer_get_feature_names_out_without_validation():
+    transformer = FunctionTransformer(feature_names_out="one-to-one", validate=False)
+    X = np.random.rand(100, 2)
+    transformer.fit_transform(X)
+
+    msg = "When 'feature_names_out' is 'one-to-one', either"
+    with pytest.raises(ValueError, match=msg):
+        transformer.get_feature_names_out()
+
+    names = transformer.get_feature_names_out(("a", "b"))
+    assert isinstance(names, np.ndarray)
+    assert names.dtype == object
+    assert_array_equal(names, ("a", "b"))
+
+
+@pytest.mark.parametrize("feature_names_out", ["x0", ["x0"], ("x0",)])
+def test_function_transformer_feature_names_out_string(feature_names_out):
+    transformer = FunctionTransformer(feature_names_out=feature_names_out)
+    X = np.random.rand(100, 2)
+    transformer.fit_transform(X)
+
+    msg = """must either be "one-to-one" or a callable"""
+    with pytest.raises(ValueError, match=msg):
+        transformer.get_feature_names_out()
+
+
+def test_function_transformer_feature_names_out_is_None():
+    transformer = FunctionTransformer()
+    X = np.random.rand(100, 2)
+    transformer.fit_transform(X)
+
+    msg = "This 'FunctionTransformer' has no attribute 'get_feature_names_out'"
+    with pytest.raises(AttributeError, match=msg):
+        transformer.get_feature_names_out()
+
+
+def test_function_transformer_feature_names_out_uses_estimator():
+    def add_n_random_features(X, n):
+        return np.concatenate([X, np.random.rand(len(X), n)], axis=1)
+
+    def feature_names_out(transformer, input_features):
+        n = transformer.kw_args["n"]
+        return list(input_features) + [f"rnd{i}" for i in range(n)]
+
+    transformer = FunctionTransformer(
+        func=add_n_random_features,
+        feature_names_out=feature_names_out,
+        kw_args=dict(n=3),
+        validate=True,
+    )
+    pd = pytest.importorskip("pandas")
+    df = pd.DataFrame({"a": np.random.rand(100), "b": np.random.rand(100)})
+    transformer.fit_transform(df)
+    names = transformer.get_feature_names_out()
+
+    assert isinstance(names, np.ndarray)
+    assert names.dtype == object
+    assert_array_equal(names, ("a", "b", "rnd0", "rnd1", "rnd2"))
 
 
 def test_function_transformer_validate_inverse():

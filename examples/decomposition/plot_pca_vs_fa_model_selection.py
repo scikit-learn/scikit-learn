@@ -16,7 +16,8 @@ One can observe that with homoscedastic noise both FA and PCA succeed
 in recovering the size of the low rank subspace. The likelihood with PCA
 is higher than FA in this case. However PCA fails and overestimates
 the rank when heteroscedastic noise is present. Under appropriate
-circumstances the low rank models are more likely than shrinkage models.
+circumstances (choice of the number of components), the held-out
+data is more likely for low rank models than for shrinkage models.
 
 The automatic estimation from
 Automatic Choice of Dimensionality for PCA. NIPS 2000: 598-604
@@ -28,19 +29,15 @@ by Thomas P. Minka is also compared.
 #          Denis A. Engemann
 # License: BSD 3 clause
 
+# %%
+# Create the data
+# ---------------
+
 import numpy as np
-import matplotlib.pyplot as plt
+
 from scipy import linalg
 
-from sklearn.decomposition import PCA, FactorAnalysis
-from sklearn.covariance import ShrunkCovariance, LedoitWolf
-from sklearn.model_selection import cross_val_score
-from sklearn.model_selection import GridSearchCV
-
-# #############################################################################
-# Create the data
-
-n_samples, n_features, rank = 1000, 50, 10
+n_samples, n_features, rank = 500, 25, 5
 sigma = 1.0
 rng = np.random.RandomState(42)
 U, _, _ = linalg.svd(rng.randn(n_features, n_features))
@@ -53,8 +50,16 @@ X_homo = X + sigma * rng.randn(n_samples, n_features)
 sigmas = sigma * rng.rand(n_features) + sigma / 2.0
 X_hetero = X + rng.randn(n_samples, n_features) * sigmas
 
-# #############################################################################
+# %%
 # Fit the models
+# --------------
+
+import matplotlib.pyplot as plt
+
+from sklearn.decomposition import PCA, FactorAnalysis
+from sklearn.covariance import ShrunkCovariance, LedoitWolf
+from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import GridSearchCV
 
 n_components = np.arange(0, n_features, 5)  # options for n_components
 

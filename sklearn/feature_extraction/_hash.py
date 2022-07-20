@@ -6,19 +6,8 @@ import numbers
 import numpy as np
 import scipy.sparse as sp
 
-from ..utils import IS_PYPY
 from ..base import BaseEstimator, TransformerMixin
-
-if not IS_PYPY:
-    from ._hashing_fast import transform as _hashing_transform
-else:
-
-    def _hashing_transform(*args, **kwargs):
-        raise NotImplementedError(
-            "FeatureHasher is not compatible with PyPy (see "
-            "https://github.com/scikit-learn/scikit-learn/issues/11540 "
-            "for the status updates)."
-        )
+from ._hashing_fast import transform as _hashing_transform
 
 
 def _iteritems(d):
@@ -94,14 +83,12 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
 
     def __init__(
         self,
-        n_features=(2 ** 20),
+        n_features=(2**20),
         *,
         input_type="dict",
         dtype=np.float64,
         alternate_sign=True,
     ):
-        self._validate_params(n_features, input_type)
-
         self.dtype = dtype
         self.input_type = input_type
         self.n_features = n_features
@@ -164,6 +151,7 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
         X : sparse matrix of shape (n_samples, n_features)
             Feature matrix, for use with estimators or further transformers.
         """
+        self._validate_params(self.n_features, self.input_type)
         raw_X = iter(raw_X)
         if self.input_type == "dict":
             raw_X = (_iteritems(d) for d in raw_X)

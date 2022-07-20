@@ -21,14 +21,18 @@ except ImportError:  # scipy < 1.4
 
 from .base import BaseEstimator
 from .base import TransformerMixin
+from .base import _ClassNamePrefixFeaturesOutMixin
 from .utils import check_random_state
 from .utils.extmath import safe_sparse_dot
 from .utils.validation import check_is_fitted
+from .utils.validation import _check_feature_names_in
 from .metrics.pairwise import pairwise_kernels, KERNEL_PARAMS
 from .utils.validation import check_non_negative
 
 
-class PolynomialCountSketch(BaseEstimator, TransformerMixin):
+class PolynomialCountSketch(
+    _ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
+):
     """Polynomial kernel approximation via Tensor Sketch.
 
     Implements Tensor Sketch, which approximates the feature map
@@ -158,6 +162,7 @@ class PolynomialCountSketch(BaseEstimator, TransformerMixin):
         )
 
         self.bitHash_ = random_state.choice(a=[-1, 1], size=(self.degree, n_features))
+        self._n_features_out = self.n_components
         return self
 
     def transform(self, X):
@@ -224,7 +229,7 @@ class PolynomialCountSketch(BaseEstimator, TransformerMixin):
         return data_sketch
 
 
-class RBFSampler(TransformerMixin, BaseEstimator):
+class RBFSampler(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     """Approximate a RBF kernel feature map using random Fourier features.
 
     It implements a variant of Random Kitchen Sinks.[1]
@@ -337,6 +342,7 @@ class RBFSampler(TransformerMixin, BaseEstimator):
         )
 
         self.random_offset_ = random_state.uniform(0, 2 * np.pi, size=self.n_components)
+        self._n_features_out = self.n_components
         return self
 
     def transform(self, X):
@@ -363,7 +369,9 @@ class RBFSampler(TransformerMixin, BaseEstimator):
         return projection
 
 
-class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
+class SkewedChi2Sampler(
+    _ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
+):
     """Approximate feature map for "skewed chi-squared" kernel.
 
     Read more in the :ref:`User Guide <skewed_chi_kernel_approx>`.
@@ -469,6 +477,7 @@ class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
         # transform by inverse CDF of sech
         self.random_weights_ = 1.0 / np.pi * np.log(np.tan(np.pi / 2.0 * uniform))
         self.random_offset_ = random_state.uniform(0, 2 * np.pi, size=self.n_components)
+        self._n_features_out = self.n_components
         return self
 
     def transform(self, X):
@@ -510,7 +519,7 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
 
     Since the kernel that is to be approximated is additive, the components of
     the input vectors can be treated separately.  Each entry in the original
-    space is transformed into 2*sample_steps+1 features, where sample_steps is
+    space is transformed into 2*sample_steps-1 features, where sample_steps is
     a parameter of the method. Typical values of sample_steps include 1, 2 and
     3.
 
@@ -635,7 +644,7 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
         Returns
         -------
         X_new : {ndarray, sparse matrix}, \
-               shape = (n_samples, n_features * (2*sample_steps + 1))
+               shape = (n_samples, n_features * (2*sample_steps - 1))
             Whether the return value is an array or sparse matrix depends on
             the type of the input X.
         """
@@ -655,6 +664,33 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
 
         transf = self._transform_sparse if sparse else self._transform_dense
         return transf(X)
+
+    def get_feature_names_out(self, input_features=None):
+        """Get output feature names for transformation.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Only used to validate feature names with the names seen in :meth:`fit`.
+
+        Returns
+        -------
+        feature_names_out : ndarray of str objects
+            Transformed feature names.
+        """
+        input_features = _check_feature_names_in(
+            self, input_features, generate_names=True
+        )
+        est_name = self.__class__.__name__.lower()
+
+        names_list = [f"{est_name}_{name}_sqrt" for name in input_features]
+
+        for j in range(1, self.sample_steps):
+            cos_names = [f"{est_name}_{name}_cos{j}" for name in input_features]
+            sin_names = [f"{est_name}_{name}_sin{j}" for name in input_features]
+            names_list.extend(cos_names + sin_names)
+
+        return np.asarray(names_list, dtype=object)
 
     def _transform_dense(self, X):
         non_zero = X != 0.0
@@ -715,7 +751,7 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
         return {"stateless": True, "requires_positive_X": True}
 
 
-class Nystroem(TransformerMixin, BaseEstimator):
+class Nystroem(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     """Approximate a kernel map using a subset of the training data.
 
     Constructs an approximate feature map for an arbitrary kernel
@@ -909,6 +945,7 @@ class Nystroem(TransformerMixin, BaseEstimator):
         self.normalization_ = np.dot(U / np.sqrt(S), V)
         self.components_ = basis
         self.component_indices_ = basis_inds
+        self._n_features_out = n_components
         return self
 
     def transform(self, X):

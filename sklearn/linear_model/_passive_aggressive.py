@@ -1,9 +1,11 @@
 # Authors: Rob Zinkov, Mathieu Blondel
 # License: BSD 3 clause
+from numbers import Real
 
 from ._stochastic_gradient import BaseSGDClassifier
 from ._stochastic_gradient import BaseSGDRegressor
 from ._stochastic_gradient import DEFAULT_EPSILON
+from ..utils._param_validation import Interval, StrOptions
 
 
 class PassiveAggressiveClassifier(BaseSGDClassifier):
@@ -172,6 +174,12 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     [1]
     """
 
+    _parameter_constraints = {
+        **BaseSGDClassifier._parameter_constraints,
+        "loss": [StrOptions({"hinge", "squared_hinge"})],
+        "C": [Interval(Real, 0, None, closed="right")],
+    }
+
     def __init__(
         self,
         *,
@@ -236,19 +244,23 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         self : object
             Fitted estimator.
         """
-        self._validate_params(for_partial_fit=True)
-        if self.class_weight == "balanced":
-            raise ValueError(
-                "class_weight 'balanced' is not supported for "
-                "partial_fit. For 'balanced' weights, use "
-                "`sklearn.utils.compute_class_weight` with "
-                "`class_weight='balanced'`. In place of y you "
-                "can use a large enough subset of the full "
-                "training set target to properly estimate the "
-                "class frequency distributions. Pass the "
-                "resulting weights as the class_weight "
-                "parameter."
-            )
+        if not hasattr(self, "classes_"):
+            self._validate_params()
+            self._more_validate_params(for_partial_fit=True)
+
+            if self.class_weight == "balanced":
+                raise ValueError(
+                    "class_weight 'balanced' is not supported for "
+                    "partial_fit. For 'balanced' weights, use "
+                    "`sklearn.utils.compute_class_weight` with "
+                    "`class_weight='balanced'`. In place of y you "
+                    "can use a large enough subset of the full "
+                    "training set target to properly estimate the "
+                    "class frequency distributions. Pass the "
+                    "resulting weights as the class_weight "
+                    "parameter."
+                )
+
         lr = "pa1" if self.loss == "hinge" else "pa2"
         return self._partial_fit(
             X,
@@ -287,6 +299,8 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
             Fitted estimator.
         """
         self._validate_params()
+        self._more_validate_params()
+
         lr = "pa1" if self.loss == "hinge" else "pa2"
         return self._fit(
             X,
@@ -301,7 +315,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
 
 
 class PassiveAggressiveRegressor(BaseSGDRegressor):
-    """Passive Aggressive Regressor
+    """Passive Aggressive Regressor.
 
     Read more in the :ref:`User Guide <passive_aggressive>`.
 
@@ -352,7 +366,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     shuffle : bool, default=True
         Whether or not the training data should be shuffled after each epoch.
 
-    verbose : integer, default=0
+    verbose : int, default=0
         The verbosity level.
 
     loss : str, default="epsilon_insensitive"
@@ -416,6 +430,17 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
         Number of weight updates performed during training.
         Same as ``(n_iter_ * n_samples)``.
 
+    See Also
+    --------
+    SGDRegressor : Linear model fitted by minimizing a regularized
+        empirical loss with SGD.
+
+    References
+    ----------
+    Online Passive-Aggressive Algorithms
+    <http://jmlr.csail.mit.edu/papers/volume7/crammer06a/crammer06a.pdf>
+    K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR (2006).
+
     Examples
     --------
     >>> from sklearn.linear_model import PassiveAggressiveRegressor
@@ -432,19 +457,14 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     [-0.02306214]
     >>> print(regr.predict([[0, 0, 0, 0]]))
     [-0.02306214]
-
-    See Also
-    --------
-    SGDRegressor : Linear model fitted by minimizing a regularized
-        empirical loss with SGD.
-
-    References
-    ----------
-    Online Passive-Aggressive Algorithms
-    <http://jmlr.csail.mit.edu/papers/volume7/crammer06a/crammer06a.pdf>
-    K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR (2006).
-
     """
+
+    _parameter_constraints = {
+        **BaseSGDRegressor._parameter_constraints,
+        "loss": [StrOptions({"epsilon_insensitive", "squared_epsilon_insensitive"})],
+        "C": [Interval(Real, 0, None, closed="right")],
+        "epsilon": [Interval(Real, 0, None, closed="left")],
+    }
 
     def __init__(
         self,
@@ -500,7 +520,10 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
         self : object
             Fitted estimator.
         """
-        self._validate_params(for_partial_fit=True)
+        if not hasattr(self, "coef_"):
+            self._validate_params()
+            self._more_validate_params(for_partial_fit=True)
+
         lr = "pa1" if self.loss == "epsilon_insensitive" else "pa2"
         return self._partial_fit(
             X,
@@ -538,6 +561,8 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
             Fitted estimator.
         """
         self._validate_params()
+        self._more_validate_params()
+
         lr = "pa1" if self.loss == "epsilon_insensitive" else "pa2"
         return self._fit(
             X,

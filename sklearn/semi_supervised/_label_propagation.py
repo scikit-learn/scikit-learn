@@ -476,7 +476,7 @@ class LabelPropagation(BaseLabelPropagation):
 
 
 class LabelSpreading(BaseLabelPropagation):
-    """LabelSpreading model for semi-supervised learning
+    """LabelSpreading model for semi-supervised learning.
 
     This model is similar to the basic Label Propagation algorithm,
     but uses affinity matrix based on the normalized graph Laplacian
@@ -546,6 +546,16 @@ class LabelSpreading(BaseLabelPropagation):
     n_iter_ : int
         Number of iterations run.
 
+    See Also
+    --------
+    LabelPropagation : Unregularized graph based semi-supervised learning.
+
+    References
+    ----------
+    Dengyong Zhou, Olivier Bousquet, Thomas Navin Lal, Jason Weston,
+    Bernhard Schoelkopf. Learning with local and global consistency (2004)
+    http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.115.3219
+
     Examples
     --------
     >>> import numpy as np
@@ -559,16 +569,6 @@ class LabelSpreading(BaseLabelPropagation):
     >>> labels[random_unlabeled_points] = -1
     >>> label_prop_model.fit(iris.data, labels)
     LabelSpreading(...)
-
-    References
-    ----------
-    Dengyong Zhou, Olivier Bousquet, Thomas Navin Lal, Jason Weston,
-    Bernhard Schoelkopf. Learning with local and global consistency (2004)
-    http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.115.3219
-
-    See Also
-    --------
-    LabelPropagation : Unregularized graph based semi-supervised learning.
     """
 
     _variant = "spreading"

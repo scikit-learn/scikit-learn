@@ -29,6 +29,15 @@ class FastClassifier(DummyClassifier):
     These parameter don't affect the predictions and are useful for fast
     grid searching."""
 
+    # update the constraints such that we accept all parameters from a to z
+    _parameter_constraints = {
+        **DummyClassifier._parameter_constraints,
+        **{
+            chr(key): "no_validation"  # type: ignore
+            for key in range(ord("a"), ord("z") + 1)
+        },
+    }
+
     def __init__(
         self, strategy="stratified", random_state=None, constant=None, **kwargs
     ):
@@ -665,7 +674,7 @@ def test_groups_support(Est):
     ]
     error_msg = "The 'groups' parameter should not be None."
     for cv in group_cvs:
-        gs = Est(clf, grid, cv=cv)
+        gs = Est(clf, grid, cv=cv, random_state=0)
         with pytest.raises(ValueError, match=error_msg):
             gs.fit(X, y)
         gs.fit(X, y, groups=groups)

@@ -51,7 +51,7 @@ from sklearn.pipeline import make_pipeline
 
 
 # %%
-# We start by defining a function that we intent to approximate and prepare
+# We start by defining a function that we intend to approximate and prepare
 # plotting it.
 
 

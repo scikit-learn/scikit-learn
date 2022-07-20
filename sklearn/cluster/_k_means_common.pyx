@@ -1,7 +1,3 @@
-# cython: profile=True, boundscheck=False, wraparound=False, cdivision=True
-# Profiling is enabled by default as the overhead does not seem to be
-# measurable on this specific use case.
-
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #         Olivier Grisel <olivier.grisel@ensta.org>
 #         Lars Buitinck
@@ -13,15 +9,11 @@
 # provided by the user). This is fixed in cython > 0.3.
 
 import numpy as np
-cimport numpy as np
 from cython cimport floating
 from cython.parallel cimport prange
 from libc.math cimport sqrt
 
 from ..utils.extmath import row_norms
-
-
-np.import_array()
 
 
 # Number of samples per data chunk defined as a global constant.
@@ -101,10 +93,14 @@ cpdef floating _inertia_dense(
         floating[::1] sample_weight,  # IN READ-ONLY
         floating[:, ::1] centers,     # IN
         int[::1] labels,              # IN
-        int n_threads):
+        int n_threads,
+        int single_label=-1,
+):
     """Compute inertia for dense input data
 
     Sum of squared distance between each sample and its assigned center.
+
+    If single_label is >= 0, the inertia is computed only for that label.
     """
     cdef:
         int n_samples = X.shape[0]
@@ -117,9 +113,10 @@ cpdef floating _inertia_dense(
     for i in prange(n_samples, nogil=True, num_threads=n_threads,
                     schedule='static'):
         j = labels[i]
-        sq_dist = _euclidean_dense_dense(&X[i, 0], &centers[j, 0],
-                                         n_features, True)
-        inertia += sq_dist * sample_weight[i]
+        if single_label < 0 or single_label == j:
+            sq_dist = _euclidean_dense_dense(&X[i, 0], &centers[j, 0],
+                                             n_features, True)
+            inertia += sq_dist * sample_weight[i]
 
     return inertia
 
@@ -129,10 +126,14 @@ cpdef floating _inertia_sparse(
         floating[::1] sample_weight,  # IN
         floating[:, ::1] centers,     # IN
         int[::1] labels,              # IN
-        int n_threads):
+        int n_threads,
+        int single_label=-1,
+):
     """Compute inertia for sparse input data
 
     Sum of squared distance between each sample and its assigned center.
+
+    If single_label is >= 0, the inertia is computed only for that label.
     """
     cdef:
         floating[::1] X_data = X.data
@@ -151,11 +152,12 @@ cpdef floating _inertia_sparse(
     for i in prange(n_samples, nogil=True, num_threads=n_threads,
                     schedule='static'):
         j = labels[i]
-        sq_dist = _euclidean_sparse_dense(
-            X_data[X_indptr[i]: X_indptr[i + 1]],
-            X_indices[X_indptr[i]: X_indptr[i + 1]],
-            centers[j], centers_squared_norms[j], True)
-        inertia += sq_dist * sample_weight[i]
+        if single_label < 0 or single_label == j:
+            sq_dist = _euclidean_sparse_dense(
+                X_data[X_indptr[i]: X_indptr[i + 1]],
+                X_indices[X_indptr[i]: X_indptr[i + 1]],
+                centers[j], centers_squared_norms[j], True)
+            inertia += sq_dist * sample_weight[i]
 
     return inertia
 

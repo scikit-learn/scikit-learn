@@ -28,7 +28,6 @@ from ..utils import _approximate_mode
 from ..utils.validation import _num_samples, column_or_1d
 from ..utils.validation import check_array
 from ..utils.multiclass import type_of_target
-from ..base import _pprint
 
 __all__ = [
     "BaseCrossValidator",
@@ -469,6 +468,10 @@ class GroupKFold(_BaseKFold):
         .. versionchanged:: 0.22
             ``n_splits`` default value changed from 3 to 5.
 
+    Notes
+    -----
+    Groups appear in an arbitrary order throughout the folds.
+
     Examples
     --------
     >>> import numpy as np
@@ -508,7 +511,7 @@ class GroupKFold(_BaseKFold):
     def _iter_test_indices(self, X, y, groups):
         if groups is None:
             raise ValueError("The 'groups' parameter should not be None.")
-        groups = check_array(groups, ensure_2d=False, dtype=None)
+        groups = check_array(groups, input_name="groups", ensure_2d=False, dtype=None)
 
         unique_groups, groups = np.unique(groups, return_inverse=True)
         n_groups = len(unique_groups)
@@ -744,7 +747,7 @@ class StratifiedKFold(_BaseKFold):
         split. You can make the results identical by setting `random_state`
         to an integer.
         """
-        y = check_array(y, ensure_2d=False, dtype=None)
+        y = check_array(y, input_name="y", ensure_2d=False, dtype=None)
         return super().split(X, y, groups)
 
 
@@ -1110,6 +1113,12 @@ class LeaveOneGroupOut(BaseCrossValidator):
 
     Read more in the :ref:`User Guide <leave_one_group_out>`.
 
+    Notes
+    -----
+    Splits are ordered according to the index of the group left out. The first
+    split has training set consting of the group whose index in `groups` is
+    lowest, and so on.
+
     Examples
     --------
     >>> import numpy as np
@@ -1137,14 +1146,15 @@ class LeaveOneGroupOut(BaseCrossValidator):
     [[1 2]
      [3 4]] [[5 6]
      [7 8]] [1 2] [1 2]
-
     """
 
     def _iter_test_masks(self, X, y, groups):
         if groups is None:
             raise ValueError("The 'groups' parameter should not be None.")
         # We make a copy of groups to avoid side-effects during iteration
-        groups = check_array(groups, copy=True, ensure_2d=False, dtype=None)
+        groups = check_array(
+            groups, input_name="groups", copy=True, ensure_2d=False, dtype=None
+        )
         unique_groups = np.unique(groups)
         if len(unique_groups) <= 1:
             raise ValueError(
@@ -1178,7 +1188,7 @@ class LeaveOneGroupOut(BaseCrossValidator):
         """
         if groups is None:
             raise ValueError("The 'groups' parameter should not be None.")
-        groups = check_array(groups, ensure_2d=False, dtype=None)
+        groups = check_array(groups, input_name="groups", ensure_2d=False, dtype=None)
         return len(np.unique(groups))
 
     def split(self, X, y=None, groups=None):
@@ -1270,7 +1280,9 @@ class LeavePGroupsOut(BaseCrossValidator):
     def _iter_test_masks(self, X, y, groups):
         if groups is None:
             raise ValueError("The 'groups' parameter should not be None.")
-        groups = check_array(groups, copy=True, ensure_2d=False, dtype=None)
+        groups = check_array(
+            groups, input_name="groups", copy=True, ensure_2d=False, dtype=None
+        )
         unique_groups = np.unique(groups)
         if self.n_groups >= len(unique_groups):
             raise ValueError(
@@ -1310,7 +1322,7 @@ class LeavePGroupsOut(BaseCrossValidator):
         """
         if groups is None:
             raise ValueError("The 'groups' parameter should not be None.")
-        groups = check_array(groups, ensure_2d=False, dtype=None)
+        groups = check_array(groups, input_name="groups", ensure_2d=False, dtype=None)
         return int(comb(len(np.unique(groups)), self.n_groups, exact=True))
 
     def split(self, X, y=None, groups=None):
@@ -1802,7 +1814,7 @@ class GroupShuffleSplit(ShuffleSplit):
     def _iter_indices(self, X, y, groups):
         if groups is None:
             raise ValueError("The 'groups' parameter should not be None.")
-        groups = check_array(groups, ensure_2d=False, dtype=None)
+        groups = check_array(groups, input_name="groups", ensure_2d=False, dtype=None)
         classes, group_indices = np.unique(groups, return_inverse=True)
         for group_train, group_test in super()._iter_indices(X=classes):
             # these are the indices of classes in the partition
@@ -1919,7 +1931,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
     def _iter_indices(self, X, y, groups=None):
         n_samples = _num_samples(X)
-        y = check_array(y, ensure_2d=False, dtype=None)
+        y = check_array(y, input_name="y", ensure_2d=False, dtype=None)
         n_train, n_test = _validate_shuffle_split(
             n_samples,
             self.test_size,
@@ -2019,7 +2031,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         split. You can make the results identical by setting `random_state`
         to an integer.
         """
-        y = check_array(y, ensure_2d=False, dtype=None)
+        y = check_array(y, input_name="y", ensure_2d=False, dtype=None)
         return super().split(X, y, groups)
 
 
@@ -2260,7 +2272,7 @@ class _CVIterableWrapper(BaseCrossValidator):
 
 
 def check_cv(cv=5, y=None, *, classifier=False):
-    """Input checker utility for building a cross-validator
+    """Input checker utility for building a cross-validator.
 
     Parameters
     ----------
@@ -2270,7 +2282,7 @@ def check_cv(cv=5, y=None, *, classifier=False):
         - None, to use the default 5-fold cross validation,
         - integer, to specify the number of folds.
         - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - An iterable that generates (train, test) splits as arrays of indices.
 
         For integer/None inputs, if classifier is True and ``y`` is either
         binary or multiclass, :class:`StratifiedKFold` is used. In all other
@@ -2300,7 +2312,7 @@ def check_cv(cv=5, y=None, *, classifier=False):
         if (
             classifier
             and (y is not None)
-            and (type_of_target(y) in ("binary", "multiclass"))
+            and (type_of_target(y, input_name="y") in ("binary", "multiclass"))
         ):
             return StratifiedKFold(cv)
         else:
@@ -2326,7 +2338,7 @@ def train_test_split(
     shuffle=True,
     stratify=None,
 ):
-    """Split arrays or matrices into random train and test subsets
+    """Split arrays or matrices into random train and test subsets.
 
     Quick utility that wraps input validation and
     ``next(ShuffleSplit().split(X, y))`` and application to input data
@@ -2358,7 +2370,6 @@ def train_test_split(
         Controls the shuffling applied to the data before applying the split.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
-
 
     shuffle : bool, default=True
         Whether or not to shuffle the data before splitting. If shuffle=False
@@ -2410,7 +2421,6 @@ def train_test_split(
 
     >>> train_test_split(y, shuffle=False)
     [[0, 1, 2], [3, 4]]
-
     """
     n_arrays = len(arrays)
     if n_arrays == 0:
@@ -2453,6 +2463,56 @@ def train_test_split(
 # (Needed for external libraries that may use nose.)
 # Use setattr to avoid mypy errors when monkeypatching.
 setattr(train_test_split, "__test__", False)
+
+
+def _pprint(params, offset=0, printer=repr):
+    """Pretty print the dictionary 'params'
+
+    Parameters
+    ----------
+    params : dict
+        The dictionary to pretty print
+
+    offset : int, default=0
+        The offset in characters to add at the begin of each line.
+
+    printer : callable, default=repr
+        The function to convert entries to strings, typically
+        the builtin str or repr
+
+    """
+    # Do a multi-line justified repr:
+    options = np.get_printoptions()
+    np.set_printoptions(precision=5, threshold=64, edgeitems=2)
+    params_list = list()
+    this_line_length = offset
+    line_sep = ",\n" + (1 + offset // 2) * " "
+    for i, (k, v) in enumerate(sorted(params.items())):
+        if type(v) is float:
+            # use str for representing floating point numbers
+            # this way we get consistent representation across
+            # architectures and versions.
+            this_repr = "%s=%s" % (k, str(v))
+        else:
+            # use repr of the rest
+            this_repr = "%s=%s" % (k, printer(v))
+        if len(this_repr) > 500:
+            this_repr = this_repr[:300] + "..." + this_repr[-100:]
+        if i > 0:
+            if this_line_length + len(this_repr) >= 75 or "\n" in this_repr:
+                params_list.append(line_sep)
+                this_line_length = len(line_sep)
+            else:
+                params_list.append(", ")
+                this_line_length += 2
+        params_list.append(this_repr)
+        this_line_length += len(this_repr)
+
+    np.set_printoptions(**options)
+    lines = "".join(params_list)
+    # Strip trailing space to avoid nightmare in doctests
+    lines = "\n".join(l.rstrip(" ") for l in lines.split("\n"))
+    return lines
 
 
 def _build_repr(self):

@@ -5,6 +5,8 @@ import numbers
 
 import numpy as np
 
+import warnings
+
 from ._base import SelectorMixin
 from ..base import BaseEstimator, MetaEstimatorMixin, clone
 from ..utils._tags import _safe_tags
@@ -31,11 +33,31 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
     estimator : estimator instance
         An unfitted estimator.
 
-    n_features_to_select : int or float, default=None
-        The number of features to select. If `None`, half of the features are
-        selected. If integer, the parameter is the absolute number of features
-        to select. If float between 0 and 1, it is the fraction of features to
-        select.
+    n_features_to_select : "auto", int or float, default='warn'
+        If `"auto"`, the behaviour depends on the `tol` parameter:
+
+        - if `tol` is not `None`, then features are selected until the score
+          improvement does not exceed `tol`.
+        - otherwise, half of the features are selected.
+
+        If integer, the parameter is the absolute number of features to select.
+        If float between 0 and 1, it is the fraction of features to select.
+
+        .. versionadded:: 1.1
+           The option `"auto"` was added in version 1.1.
+
+        .. deprecated:: 1.1
+           The default changed from `None` to `"warn"` in 1.1 and will become
+           `"auto"` in 1.3. `None` and `'warn'` will be removed in 1.3.
+           To keep the same behaviour as `None`, set
+           `n_features_to_select="auto" and `tol=None`.
+
+    tol : float, default=None
+        If the score is not incremented by at least `tol` between two
+        consecutive feature additions or removals, stop adding or removing.
+        `tol` is enabled only when `n_features_to_select` is `"auto"`.
+
+        .. versionadded:: 1.1
 
     direction : {'forward', 'backward'}, default='forward'
         Whether to perform forward selection or backward selection.
@@ -126,7 +148,8 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         self,
         estimator,
         *,
-        n_features_to_select=None,
+        n_features_to_select="warn",
+        tol=None,
         direction="forward",
         scoring=None,
         cv=5,
@@ -135,6 +158,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
 
         self.estimator = estimator
         self.n_features_to_select = n_features_to_select
+        self.tol = tol
         self.direction = direction
         self.scoring = scoring
         self.cv = cv
@@ -158,6 +182,20 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         self : object
             Returns the instance itself.
         """
+        # FIXME: to be removed in 1.3
+        if self.n_features_to_select in ("warn", None):
+            # for backwards compatibility
+            warnings.warn(
+                "Leaving `n_features_to_select` to "
+                "None is deprecated in 1.0 and will become 'auto' "
+                "in 1.3. To keep the same behaviour as with None "
+                "(i.e. select half of the features) and avoid "
+                "this warning, you should manually set "
+                "`n_features_to_select='auto'` and set tol=None "
+                "when creating an instance.",
+                FutureWarning,
+            )
+
         tags = self._get_tags()
         X = self._validate_data(
             X,
@@ -167,16 +205,26 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         )
         n_features = X.shape[1]
 
+        # FIXME: to be fixed in 1.3
         error_msg = (
-            "n_features_to_select must be either None, an "
-            "integer in [1, n_features - 1] "
+            "n_features_to_select must be either 'auto', 'warn', "
+            "None, an integer in [1, n_features - 1] "
             "representing the absolute "
             "number of features, or a float in (0, 1] "
             "representing a percentage of features to "
             f"select. Got {self.n_features_to_select}"
         )
-        if self.n_features_to_select is None:
+        if self.n_features_to_select in ("warn", None):
+            if self.tol is not None:
+                raise ValueError("tol is only enabled if `n_features_to_select='auto'`")
             self.n_features_to_select_ = n_features // 2
+        elif self.n_features_to_select == "auto":
+            if self.tol is not None:
+                # With auto feature selection, `n_features_to_select_` will be updated
+                # to `support_.sum()` after features are selected.
+                self.n_features_to_select_ = n_features - 1
+            else:
+                self.n_features_to_select_ = n_features // 2
         elif isinstance(self.n_features_to_select, numbers.Integral):
             if not 0 < self.n_features_to_select < n_features:
                 raise ValueError(error_msg)
@@ -202,25 +250,36 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         current_mask = np.zeros(shape=n_features, dtype=bool)
         n_iterations = (
             self.n_features_to_select_
-            if self.direction == "forward"
+            if self.n_features_to_select == "auto" or self.direction == "forward"
             else n_features - self.n_features_to_select_
         )
+
+        old_score = -np.inf
+        is_auto_select = self.tol is not None and self.n_features_to_select == "auto"
         for _ in range(n_iterations):
-            new_feature_idx = self._get_best_new_feature(
+            new_feature_idx, new_score = self._get_best_new_feature_score(
                 cloned_estimator, X, y, current_mask
             )
+            if is_auto_select and ((new_score - old_score) < self.tol):
+                break
+
+            old_score = new_score
             current_mask[new_feature_idx] = True
 
         if self.direction == "backward":
             current_mask = ~current_mask
+
         self.support_ = current_mask
+        self.n_features_to_select_ = self.support_.sum()
 
         return self
 
-    def _get_best_new_feature(self, estimator, X, y, current_mask):
-        # Return the best new feature to add to the current_mask, i.e. return
-        # the best new feature to add (resp. remove) when doing forward
-        # selection (resp. backward selection)
+    def _get_best_new_feature_score(self, estimator, X, y, current_mask):
+        # Return the best new feature and its score to add to the current_mask,
+        # i.e. return the best new feature and its score to add (resp. remove)
+        # when doing forward selection (resp. backward selection).
+        # Feature will be added if the current score and past score are greater
+        # than tol when n_feature is auto,
         candidate_feature_indices = np.flatnonzero(~current_mask)
         scores = {}
         for feature_idx in candidate_feature_indices:
@@ -237,7 +296,8 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
                 scoring=self.scoring,
                 n_jobs=self.n_jobs,
             ).mean()
-        return max(scores, key=lambda feature_idx: scores[feature_idx])
+        new_feature_idx = max(scores, key=lambda feature_idx: scores[feature_idx])
+        return new_feature_idx, scores[new_feature_idx]
 
     def _get_support_mask(self):
         check_is_fitted(self)
@@ -246,5 +306,4 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
     def _more_tags(self):
         return {
             "allow_nan": _safe_tags(self.estimator, key="allow_nan"),
-            "requires_y": True,
         }

@@ -1,7 +1,3 @@
-# cython: cdivision=True
-# cython: boundscheck=False
-# cython: wraparound=False
-# cython: language_level=3
 """This module contains routines for building histograms."""
 
 # Author: Nicolas Hug
@@ -10,14 +6,12 @@ cimport cython
 from cython.parallel import prange
 
 import numpy as np
-cimport numpy as np
 
 from .common import HISTOGRAM_DTYPE
 from .common cimport hist_struct
 from .common cimport X_BINNED_DTYPE_C
 from .common cimport G_H_DTYPE_C
 
-np.import_array()
 
 # Notes:
 # - IN views are read-only, OUT views are write-only

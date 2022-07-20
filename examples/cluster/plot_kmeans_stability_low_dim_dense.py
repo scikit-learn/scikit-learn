@@ -49,7 +49,7 @@ n_init_range = np.array([1, 5, 10, 15, 20])
 n_samples_per_center = 100
 grid_size = 3
 scale = 0.1
-n_clusters = grid_size ** 2
+n_clusters = grid_size**2
 
 
 def make_data(random_state, n_samples_per_center, grid_size, scale):

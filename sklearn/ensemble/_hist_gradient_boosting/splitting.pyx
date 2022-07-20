@@ -1,8 +1,3 @@
-# cython: cdivision=True
-# cython: boundscheck=False
-# cython: wraparound=False
-# cython: language_level=3
-
 """This module contains routines and data structures to:
 
 - Find the best possible split of a node. For a given node, a split is
@@ -15,7 +10,6 @@
 cimport cython
 from cython.parallel import prange
 import numpy as np
-cimport numpy as np
 from libc.stdlib cimport malloc, free, qsort
 from libc.string cimport memcpy
 from numpy.math cimport INFINITY
@@ -30,8 +24,6 @@ from .common cimport MonotonicConstraint
 from ._bitset cimport init_bitset
 from ._bitset cimport set_bitset
 from ._bitset cimport in_bitset
-
-np.import_array()
 
 
 cdef struct split_info_struct:
@@ -340,7 +332,7 @@ cdef class Splitter:
 
             # map indices from sample_indices to left/right_indices_buffer
             for thread_idx in prange(n_threads, schedule='static',
-                                     chunksize=1):
+                                     chunksize=1, num_threads=n_threads):
                 left_count = 0
                 right_count = 0
 
@@ -382,7 +374,7 @@ cdef class Splitter:
             # sample_indices. This also updates self.partition since
             # sample_indices is a view.
             for thread_idx in prange(n_threads, schedule='static',
-                                     chunksize=1):
+                                     chunksize=1, num_threads=n_threads):
                 memcpy(
                     &sample_indices[left_offset[thread_idx]],
                     &left_indices_buffer[offset_in_buffers[thread_idx]],
@@ -791,7 +783,6 @@ cdef class Splitter:
                 split_info.sum_gradient_right, split_info.sum_hessian_right,
                 lower_bound, upper_bound, self.l2_regularization)
 
-    @cython.initializedcheck(False)
     cdef void _find_best_bin_to_split_category(
             self,
             unsigned int feature_idx,
@@ -1036,8 +1027,8 @@ cdef inline Y_DTYPE_C _split_gain(
     the node a leaf of the tree.
 
     See Equation 7 of:
-    XGBoost: A Scalable Tree Boosting System, T. Chen, C. Guestrin, 2016
-    https://arxiv.org/abs/1603.02754
+    :arxiv:`T. Chen, C. Guestrin, (2016) XGBoost: A Scalable Tree Boosting System,
+    <1603.02754>.`
     """
     cdef:
         Y_DTYPE_C gain
@@ -1075,8 +1066,8 @@ cdef inline Y_DTYPE_C _loss_from_value(
     """Return loss of a node from its (bounded) value
 
     See Equation 6 of:
-    XGBoost: A Scalable Tree Boosting System, T. Chen, C. Guestrin, 2016
-    https://arxiv.org/abs/1603.02754
+    :arxiv:`T. Chen, C. Guestrin, (2016) XGBoost: A Scalable Tree Boosting System,
+    <1603.02754>.`
     """
     return sum_gradient * value
 
@@ -1115,8 +1106,8 @@ cpdef inline Y_DTYPE_C compute_node_value(
     monotonic constraints. Shrinkage is ignored.
 
     See Equation 5 of:
-    XGBoost: A Scalable Tree Boosting System, T. Chen, C. Guestrin, 2016
-    https://arxiv.org/abs/1603.02754
+    :arxiv:`T. Chen, C. Guestrin, (2016) XGBoost: A Scalable Tree Boosting System,
+    <1603.02754>.`
     """
 
     cdef:

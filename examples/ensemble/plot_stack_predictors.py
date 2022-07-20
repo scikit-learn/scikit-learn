@@ -20,10 +20,6 @@ stacking strategy. Stacking slightly improves the overall performance.
 #          Maria Telenczuk    <https://github.com/maikia>
 # License: BSD 3 clause
 
-from sklearn import set_config
-
-set_config(display="diagram")
-
 # %%
 # Download the dataset
 ##############################################################################
@@ -49,7 +45,7 @@ from sklearn.utils import shuffle
 
 
 def load_ames_housing():
-    df = fetch_openml(name="house_prices", as_frame=True)
+    df = fetch_openml(name="house_prices", as_frame=True, parser="pandas")
     X = df.data
     y = df.target
 
@@ -121,7 +117,9 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import OrdinalEncoder
 
 cat_tree_processor = OrdinalEncoder(
-    handle_unknown="use_encoded_value", unknown_value=-1
+    handle_unknown="use_encoded_value",
+    unknown_value=-1,
+    encoded_missing_value=-2,
 )
 num_tree_processor = SimpleImputer(strategy="mean", add_indicator=True)
 
@@ -249,11 +247,11 @@ for ax, (name, est) in zip(
 ):
     start_time = time.time()
     score = cross_validate(
-        est, X, y, scoring=["r2", "neg_mean_absolute_error"], n_jobs=-1, verbose=0
+        est, X, y, scoring=["r2", "neg_mean_absolute_error"], n_jobs=2, verbose=0
     )
     elapsed_time = time.time() - start_time
 
-    y_pred = cross_val_predict(est, X, y, n_jobs=-1, verbose=0)
+    y_pred = cross_val_predict(est, X, y, n_jobs=2, verbose=0)
 
     plot_regression_results(
         ax,

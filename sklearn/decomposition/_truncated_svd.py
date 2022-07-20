@@ -6,22 +6,22 @@
 #         Michael Becker <mike@beckerfuffle.com>
 # License: 3-clause BSD.
 
+from numbers import Integral
 import numpy as np
 import scipy.sparse as sp
 from scipy.sparse.linalg import svds
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
 from ..utils import check_array, check_random_state
 from ..utils._arpack import _init_arpack_v0
 from ..utils.extmath import randomized_svd, safe_sparse_dot, svd_flip
 from ..utils.sparsefuncs import mean_variance_axis
-from ..utils.validation import check_is_fitted
-
+from ..utils.validation import check_is_fitted, check_scalar
 
 __all__ = ["TruncatedSVD"]
 
 
-class TruncatedSVD(TransformerMixin, BaseEstimator):
+class TruncatedSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     """Dimensionality reduction using truncated SVD (aka LSA).
 
     This transformer performs linear dimensionality reduction by means of
@@ -44,7 +44,8 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
     ----------
     n_components : int, default=2
         Desired dimensionality of output data.
-        Must be strictly less than the number of features.
+        If algorithm='arpack', must be strictly less than the number of features.
+        If algorithm='randomized', must be less than or equal to the number of features.
         The default value is useful for visualisation. For LSA, a value of
         100 is recommended.
 
@@ -58,6 +59,20 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
         default is larger than the default in
         :func:`~sklearn.utils.extmath.randomized_svd` to handle sparse
         matrices that may have large slowly decaying spectrum.
+
+    n_oversamples : int, default=10
+        Number of oversamples for randomized SVD solver. Not used by ARPACK.
+        See :func:`~sklearn.utils.extmath.randomized_svd` for a complete
+        description.
+
+        .. versionadded:: 1.1
+
+    power_iteration_normalizer : {‘auto’, ‘QR’, ‘LU’, ‘none’}, default=’auto’
+        Power iteration normalizer for randomized SVD solver.
+        Not used by ARPACK. See :func:`~sklearn.utils.extmath.randomized_svd`
+        for more details.
+
+        .. versionadded:: 1.1
 
     random_state : int, RandomState instance or None, default=None
         Used during randomized svd. Pass an int for reproducible results across
@@ -80,7 +95,7 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
     explained_variance_ratio_ : ndarray of shape (n_components,)
         Percentage of variance explained by each of the selected components.
 
-    singular_values_ : ndarray od shape (n_components,)
+    singular_values_ : ndarray of shape (n_components,)
         The singular values corresponding to each of the selected components.
         The singular values are equal to the 2-norms of the ``n_components``
         variables in the lower-dimensional space.
@@ -115,9 +130,9 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
 
     References
     ----------
-    Finding structure with randomness: Stochastic algorithms for constructing
-    approximate matrix decompositions
-    Halko, et al., 2009 (arXiv:909) https://arxiv.org/pdf/0909.4061.pdf
+    :arxiv:`Halko, et al. (2009). "Finding structure with randomness:
+    Stochastic algorithms for constructing approximate matrix decompositions"
+    <0909.4061>`
 
     Examples
     --------
@@ -145,12 +160,16 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
         *,
         algorithm="randomized",
         n_iter=5,
+        n_oversamples=10,
+        power_iteration_normalizer="auto",
         random_state=None,
         tol=0.0,
     ):
         self.algorithm = algorithm
         self.n_components = n_components
         self.n_iter = n_iter
+        self.n_oversamples = n_oversamples
+        self.power_iteration_normalizer = power_iteration_normalizer
         self.random_state = random_state
         self.tol = tol
 
@@ -189,6 +208,13 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
         X_new : ndarray of shape (n_samples, n_components)
             Reduced version of X. This will always be a dense array.
         """
+        check_scalar(
+            self.n_oversamples,
+            "n_oversamples",
+            min_val=1,
+            target_type=Integral,
+        )
+
         X = self._validate_data(X, accept_sparse=["csr", "csc"], ensure_min_features=2)
         random_state = check_random_state(self.random_state)
 
@@ -203,12 +229,20 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
         elif self.algorithm == "randomized":
             k = self.n_components
             n_features = X.shape[1]
-            if k >= n_features:
-                raise ValueError(
-                    "n_components must be < n_features; got %d >= %d" % (k, n_features)
-                )
+            check_scalar(
+                k,
+                "n_components",
+                target_type=Integral,
+                min_val=1,
+                max_val=n_features,
+            )
             U, Sigma, VT = randomized_svd(
-                X, self.n_components, n_iter=self.n_iter, random_state=random_state
+                X,
+                self.n_components,
+                n_iter=self.n_iter,
+                n_oversamples=self.n_oversamples,
+                power_iteration_normalizer=self.power_iteration_normalizer,
+                random_state=random_state,
             )
         else:
             raise ValueError("unknown algorithm %r" % self.algorithm)
@@ -273,3 +307,8 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
 
     def _more_tags(self):
         return {"preserves_dtype": [np.float64, np.float32]}
+
+    @property
+    def _n_features_out(self):
+        """Number of transformed output features."""
+        return self.components_.shape[0]

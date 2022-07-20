@@ -1,6 +1,7 @@
 """Testing for K-means"""
 import re
 import sys
+import warnings
 
 import numpy as np
 from scipy import sparse as sp
@@ -9,7 +10,6 @@ import pytest
 
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_allclose
-from sklearn.utils.fixes import _astype_copy_false
 from sklearn.utils.fixes import threadpool_limits
 from sklearn.base import clone
 from sklearn.exceptions import ConvergenceWarning
@@ -32,6 +32,12 @@ from sklearn.cluster._k_means_common import _is_same_clustering
 from sklearn.datasets import make_blobs
 from io import StringIO
 
+# TODO(1.4): Remove
+msg = (
+    r"The default value of `n_init` will change from \d* to 'auto' in 1.4. Set the"
+    r" value of `n_init` explicitly to suppress the warning:FutureWarning"
+)
+pytestmark = pytest.mark.filterwarnings("ignore:" + msg)
 
 # non centered, sparse centers to check the
 centers = np.array(
@@ -52,7 +58,7 @@ X_csr = sp.csr_matrix(X)
 @pytest.mark.parametrize(
     "array_constr", [np.array, sp.csr_matrix], ids=["dense", "sparse"]
 )
-@pytest.mark.parametrize("algo", ["full", "elkan"])
+@pytest.mark.parametrize("algo", ["lloyd", "elkan"])
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 def test_kmeans_results(array_constr, algo, dtype):
     # Checks that KMeans works as intended on toy dataset by comparing with
@@ -78,7 +84,7 @@ def test_kmeans_results(array_constr, algo, dtype):
 @pytest.mark.parametrize(
     "array_constr", [np.array, sp.csr_matrix], ids=["dense", "sparse"]
 )
-@pytest.mark.parametrize("algo", ["full", "elkan"])
+@pytest.mark.parametrize("algo", ["lloyd", "elkan"])
 def test_kmeans_relocated_clusters(array_constr, algo):
     # check that empty clusters are relocated as expected
     X = array_constr([[0, 0], [0.5, 0], [0.5, 1], [1, 1]])
@@ -149,9 +155,9 @@ def test_relocate_empty_clusters(array_constr):
     "array_constr", [np.array, sp.csr_matrix], ids=["dense", "sparse"]
 )
 @pytest.mark.parametrize("tol", [1e-2, 1e-8, 1e-100, 0])
-def test_kmeans_elkan_results(distribution, array_constr, tol):
+def test_kmeans_elkan_results(distribution, array_constr, tol, global_random_seed):
     # Check that results are identical between lloyd and elkan algorithms
-    rnd = np.random.RandomState(0)
+    rnd = np.random.RandomState(global_random_seed)
     if distribution == "normal":
         X = rnd.normal(size=(5000, 10))
     else:
@@ -159,20 +165,20 @@ def test_kmeans_elkan_results(distribution, array_constr, tol):
     X[X < 0] = 0
     X = array_constr(X)
 
-    km_full = KMeans(algorithm="full", n_clusters=5, random_state=0, n_init=1, tol=tol)
+    km_lloyd = KMeans(n_clusters=5, random_state=0, n_init=1, tol=tol)
     km_elkan = KMeans(
         algorithm="elkan", n_clusters=5, random_state=0, n_init=1, tol=tol
     )
 
-    km_full.fit(X)
+    km_lloyd.fit(X)
     km_elkan.fit(X)
-    assert_allclose(km_elkan.cluster_centers_, km_full.cluster_centers_)
-    assert_array_equal(km_elkan.labels_, km_full.labels_)
-    assert km_elkan.n_iter_ == km_full.n_iter_
-    assert km_elkan.inertia_ == pytest.approx(km_full.inertia_, rel=1e-6)
+    assert_allclose(km_elkan.cluster_centers_, km_lloyd.cluster_centers_)
+    assert_array_equal(km_elkan.labels_, km_lloyd.labels_)
+    assert km_elkan.n_iter_ == km_lloyd.n_iter_
+    assert km_elkan.inertia_ == pytest.approx(km_lloyd.inertia_, rel=1e-6)
 
 
-@pytest.mark.parametrize("algorithm", ["full", "elkan"])
+@pytest.mark.parametrize("algorithm", ["lloyd", "elkan"])
 def test_kmeans_convergence(algorithm):
     # Check that KMeans stops when convergence is reached when tol=0. (#16075)
     rnd = np.random.RandomState(0)
@@ -191,6 +197,21 @@ def test_kmeans_convergence(algorithm):
     assert km.n_iter_ < max_iter
 
 
+@pytest.mark.parametrize("algorithm", ["auto", "full"])
+def test_algorithm_auto_full_deprecation_warning(algorithm):
+    X = np.random.rand(100, 2)
+    kmeans = KMeans(algorithm=algorithm)
+    with pytest.warns(
+        FutureWarning,
+        match=(
+            f"algorithm='{algorithm}' is deprecated, it will "
+            "be removed in 1.3. Using 'lloyd' instead."
+        ),
+    ):
+        kmeans.fit(X)
+        assert kmeans._algorithm == "lloyd"
+
+
 def test_minibatch_update_consistency():
     # Check that dense and sparse minibatch update give the same results
     rng = np.random.RandomState(42)
@@ -204,7 +225,7 @@ def test_minibatch_update_consistency():
     weight_sums = np.zeros(centers_old.shape[0], dtype=X.dtype)
     weight_sums_csr = np.zeros(centers_old.shape[0], dtype=X.dtype)
 
-    x_squared_norms = (X ** 2).sum(axis=1)
+    x_squared_norms = (X**2).sum(axis=1)
     x_squared_norms_csr = row_norms(X_csr, squared=True)
 
     sample_weight = np.ones(X.shape[0], dtype=X.dtype)
@@ -326,36 +347,6 @@ def test_fortran_aligned_data(Estimator):
     assert_array_equal(km_c.labels_, km_f.labels_)
 
 
-@pytest.mark.parametrize("algo", ["full", "elkan"])
-@pytest.mark.parametrize("dtype", [np.float32, np.float64])
-@pytest.mark.parametrize("constructor", [np.asarray, sp.csr_matrix])
-@pytest.mark.parametrize(
-    "seed, max_iter, tol",
-    [
-        (0, 2, 1e-7),  # strict non-convergence
-        (1, 2, 1e-1),  # loose non-convergence
-        (3, 300, 1e-7),  # strict convergence
-        (4, 300, 1e-1),  # loose convergence
-    ],
-)
-def test_k_means_fit_predict(algo, dtype, constructor, seed, max_iter, tol):
-    # check that fit.predict gives same result as fit_predict
-    rng = np.random.RandomState(seed)
-
-    X = make_blobs(n_samples=1000, n_features=10, centers=10, random_state=rng)[
-        0
-    ].astype(dtype, copy=False)
-    X = constructor(X)
-
-    kmeans = KMeans(
-        algorithm=algo, n_clusters=10, random_state=seed, tol=tol, max_iter=max_iter
-    )
-
-    labels_1 = kmeans.fit(X).predict(X)
-    labels_2 = kmeans.fit_predict(X)
-    assert_array_equal(labels_1, labels_2)
-
-
 def test_minibatch_kmeans_verbose():
     # Check verbose mode of MiniBatchKMeans for better coverage.
     km = MiniBatchKMeans(n_clusters=n_clusters, random_state=42, verbose=1)
@@ -367,7 +358,7 @@ def test_minibatch_kmeans_verbose():
         sys.stdout = old_stdout
 
 
-@pytest.mark.parametrize("algorithm", ["full", "elkan"])
+@pytest.mark.parametrize("algorithm", ["lloyd", "elkan"])
 @pytest.mark.parametrize("tol", [1e-2, 0])
 def test_kmeans_verbose(algorithm, tol, capsys):
     # Check verbose mode of KMeans for better coverage.
@@ -607,19 +598,28 @@ def test_score_max_iter(Estimator):
 @pytest.mark.parametrize(
     "array_constr", [np.array, sp.csr_matrix], ids=["dense", "sparse"]
 )
-@pytest.mark.parametrize("dtype", [np.float32, np.float64])
-@pytest.mark.parametrize("init", ["random", "k-means++"])
 @pytest.mark.parametrize(
     "Estimator, algorithm",
-    [(KMeans, "full"), (KMeans, "elkan"), (MiniBatchKMeans, None)],
+    [(KMeans, "lloyd"), (KMeans, "elkan"), (MiniBatchKMeans, None)],
 )
-def test_predict(Estimator, algorithm, init, dtype, array_constr):
+@pytest.mark.parametrize("max_iter", [2, 100])
+def test_kmeans_predict(
+    Estimator, algorithm, array_constr, max_iter, global_dtype, global_random_seed
+):
     # Check the predict method and the equivalence between fit.predict and
     # fit_predict.
-    X, _ = make_blobs(n_samples=500, n_features=10, centers=10, random_state=0)
-    X = array_constr(X)
+    X, _ = make_blobs(
+        n_samples=200, n_features=10, centers=10, random_state=global_random_seed
+    )
+    X = array_constr(X, dtype=global_dtype)
 
-    km = Estimator(n_clusters=10, init=init, n_init=10, random_state=0)
+    km = Estimator(
+        n_clusters=10,
+        init="random",
+        n_init=10,
+        max_iter=max_iter,
+        random_state=global_random_seed,
+    )
     if algorithm is not None:
         km.set_params(algorithm=algorithm)
     km.fit(X)
@@ -768,7 +768,7 @@ def test_float_precision(Estimator, data):
     labels = {}
 
     for dtype in [np.float64, np.float32]:
-        X = data.astype(dtype, **_astype_copy_false(data))
+        X = data.astype(dtype, copy=False)
         km.fit(X)
 
         inertia[dtype] = km.inertia_
@@ -928,20 +928,6 @@ def test_result_equal_in_diff_n_threads(Estimator):
     assert_array_equal(result_1, result_2)
 
 
-@pytest.mark.parametrize("attr", ["counts_", "init_size_", "random_state_"])
-def test_minibatch_kmeans_deprecated_attributes(attr):
-    # check that we raise a deprecation warning when accessing `init_size_`
-    # FIXME: remove in 1.1
-    depr_msg = (
-        f"The attribute `{attr}` is deprecated in 0.24 and will be removed in 1.1"
-    )
-    km = MiniBatchKMeans(n_clusters=2, n_init=1, init="random", random_state=0)
-    km.fit(X)
-
-    with pytest.warns(FutureWarning, match=depr_msg):
-        getattr(km, attr)
-
-
 def test_warning_elkan_1_cluster():
     # Check warning messages specific to KMeans
     with pytest.warns(
@@ -954,7 +940,7 @@ def test_warning_elkan_1_cluster():
 @pytest.mark.parametrize(
     "array_constr", [np.array, sp.csr_matrix], ids=["dense", "sparse"]
 )
-@pytest.mark.parametrize("algo", ["full", "elkan"])
+@pytest.mark.parametrize("algo", ["lloyd", "elkan"])
 def test_k_means_1_iteration(array_constr, algo):
     # check the results after a single iteration (E-step M-step E-step) by
     # comparing against a pure python implementation.
@@ -993,7 +979,7 @@ def test_euclidean_distance(dtype, squared):
     )
     a_dense = a_sparse.toarray().reshape(-1)
     b = rng.randn(100).astype(dtype, copy=False)
-    b_squared_norm = (b ** 2).sum()
+    b_squared_norm = (b**2).sum()
 
     expected = ((a_dense - b) ** 2).sum()
     expected = expected if squared else np.sqrt(expected)
@@ -1032,6 +1018,52 @@ def test_inertia(dtype):
     assert_allclose(inertia_dense, expected, rtol=1e-6)
     assert_allclose(inertia_sparse, expected, rtol=1e-6)
 
+    # Check the single_label parameter.
+    label = 1
+    mask = labels == label
+    distances = ((X_dense[mask] - centers[label]) ** 2).sum(axis=1)
+    expected = np.sum(distances * sample_weight[mask])
+
+    inertia_dense = _inertia_dense(
+        X_dense, sample_weight, centers, labels, n_threads=1, single_label=label
+    )
+    inertia_sparse = _inertia_sparse(
+        X_sparse, sample_weight, centers, labels, n_threads=1, single_label=label
+    )
+
+    assert_allclose(inertia_dense, inertia_sparse, rtol=1e-6)
+    assert_allclose(inertia_dense, expected, rtol=1e-6)
+    assert_allclose(inertia_sparse, expected, rtol=1e-6)
+
+
+# TODO(1.4): Remove
+@pytest.mark.parametrize("Klass, default_n_init", [(KMeans, 10), (MiniBatchKMeans, 3)])
+def test_change_n_init_future_warning(Klass, default_n_init):
+    est = Klass(n_init=1)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", FutureWarning)
+        est.fit(X)
+
+    default_n_init = 10 if Klass.__name__ == "KMeans" else 3
+    msg = (
+        f"The default value of `n_init` will change from {default_n_init} to 'auto'"
+        " in 1.4"
+    )
+    est = Klass()
+    with pytest.warns(FutureWarning, match=msg):
+        est.fit(X)
+
+
+@pytest.mark.parametrize("Klass, default_n_init", [(KMeans, 10), (MiniBatchKMeans, 3)])
+def test_n_init_auto(Klass, default_n_init):
+    est = Klass(n_init="auto", init="k-means++")
+    est.fit(X)
+    assert est._n_init == 1
+
+    est = Klass(n_init="auto", init="random")
+    est.fit(X)
+    assert est._n_init == 10 if Klass.__name__ == "KMeans" else 3
+
 
 @pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
 def test_sample_weight_unchanged(Estimator):
@@ -1047,8 +1079,6 @@ def test_sample_weight_unchanged(Estimator):
 @pytest.mark.parametrize(
     "param, match",
     [
-        ({"n_init": 0}, r"n_init should be > 0"),
-        ({"max_iter": 0}, r"max_iter should be > 0"),
         ({"n_clusters": n_samples + 1}, r"n_samples.* should be >= n_clusters"),
         (
             {"init": X[:2]},
@@ -1070,11 +1100,6 @@ def test_sample_weight_unchanged(Estimator):
             r"The shape of the initial centers .* does not match "
             r"the number of features of the data",
         ),
-        (
-            {"init": "wrong"},
-            r"init should be either 'k-means\+\+', 'random', "
-            r"a ndarray or a callable",
-        ),
     ],
 )
 def test_wrong_params(Estimator, param, match):
@@ -1088,39 +1113,7 @@ def test_wrong_params(Estimator, param, match):
 
 @pytest.mark.parametrize(
     "param, match",
-    [({"algorithm": "wrong"}, r"Algorithm must be 'auto', 'full' or 'elkan'")],
-)
-def test_kmeans_wrong_params(param, match):
-    # Check that error are raised with clear error message when wrong values
-    # are passed for the KMeans specific parameters
-    with pytest.raises(ValueError, match=match):
-        KMeans(**param).fit(X)
-
-
-@pytest.mark.parametrize(
-    "param, match",
     [
-        ({"max_no_improvement": -1}, r"max_no_improvement should be >= 0"),
-        ({"batch_size": -1}, r"batch_size should be > 0"),
-        ({"init_size": -1}, r"init_size should be > 0"),
-        ({"reassignment_ratio": -1}, r"reassignment_ratio should be >= 0"),
-    ],
-)
-def test_minibatch_kmeans_wrong_params(param, match):
-    # Check that error are raised with clear error message when wrong values
-    # are passed for the MiniBatchKMeans specific parameters
-    with pytest.raises(ValueError, match=match):
-        MiniBatchKMeans(**param).fit(X)
-
-
-@pytest.mark.parametrize(
-    "param, match",
-    [
-        (
-            {"n_local_trials": 0},
-            r"n_local_trials is set to 0 but should be an "
-            r"integer value greater than zero",
-        ),
         (
             {"x_squared_norms": X[:2]},
             r"The length of x_squared_norms .* should "
@@ -1181,7 +1174,7 @@ def test_is_same_clustering():
     labels1 = np.array([1, 0, 0, 1, 2, 0, 2, 1], dtype=np.int32)
     assert _is_same_clustering(labels1, labels1, 3)
 
-    # these other labels represent the same clustering since we can retrive the first
+    # these other labels represent the same clustering since we can retrieve the first
     # labels by simply renaming the labels: 0 -> 1, 1 -> 2, 2 -> 0.
     labels2 = np.array([0, 2, 2, 0, 1, 2, 1, 0], dtype=np.int32)
     assert _is_same_clustering(labels1, labels2, 3)
@@ -1190,3 +1183,33 @@ def test_is_same_clustering():
     # mapped to a same value
     labels3 = np.array([1, 0, 0, 2, 2, 0, 2, 1], dtype=np.int32)
     assert not _is_same_clustering(labels1, labels3, 3)
+
+
+@pytest.mark.parametrize(
+    "kwargs", ({"init": np.str_("k-means++")}, {"init": [[0, 0], [1, 1]], "n_init": 1})
+)
+def test_kmeans_with_array_like_or_np_scalar_init(kwargs):
+    """Check that init works with numpy scalar strings.
+
+    Non-regression test for #21964.
+    """
+    X = np.asarray([[0, 0], [0.5, 0], [0.5, 1], [1, 1]], dtype=np.float64)
+
+    clustering = KMeans(n_clusters=2, **kwargs)
+    # Does not raise
+    clustering.fit(X)
+
+
+@pytest.mark.parametrize(
+    "Klass, method",
+    [(KMeans, "fit"), (MiniBatchKMeans, "fit"), (MiniBatchKMeans, "partial_fit")],
+)
+def test_feature_names_out(Klass, method):
+    """Check `feature_names_out` for `KMeans` and `MiniBatchKMeans`."""
+    class_name = Klass.__name__.lower()
+    kmeans = Klass()
+    getattr(kmeans, method)(X)
+    n_clusters = kmeans.cluster_centers_.shape[0]
+
+    names_out = kmeans.get_feature_names_out()
+    assert_array_equal([f"{class_name}{i}" for i in range(n_clusters)], names_out)
