@@ -134,7 +134,7 @@ plt.title(
     "Clustering measures for random uniform labeling\n"
     f"against reference assignment with {n_classes} classes"
 )
-plt.xlabel("Number of clusters (Number of samples is fixed to %d)" % n_samples)
+plt.xlabel(f"Number of clusters (Number of samples is fixed to {n_samples})")
 plt.ylabel("Score value")
 plt.ylim(bottom=-0.05, top=1.05)
 plt.legend(plots, names)
@@ -193,7 +193,7 @@ for score_name, score_func in score_funcs:
 plt.title(
     "Clustering measures for 2 random uniform labelings\nwith equal number of clusters"
 )
-plt.xlabel("Number of clusters (Number of samples is fixed to %d)" % n_samples)
+plt.xlabel(f"Number of clusters (Number of samples is fixed to {n_samples})")
 plt.ylabel("Score value")
 plt.legend(plots, names)
 plt.ylim(bottom=-0.05, top=1.05)
