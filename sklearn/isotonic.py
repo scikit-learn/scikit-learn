@@ -167,8 +167,9 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
 
     centered : bool, default=False
         The fitted function `f_` is interpolated using the 'Centered Isotonic
-        Regression' method of [4]_ which gives strictly monotonic interpolations as opposed to
-        the non-strict interpolation with the regular isotonic regression method.
+        Regression' method of [4]_ which gives strictly monotonic
+        interpolations as opposed to the non-strict interpolation with the
+        regular isotonic regression method.
 
     Attributes
     ----------
@@ -191,7 +192,8 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         .. versionadded:: 0.24
 
     f_ : function
-        The interpolating function that covers the input domain ``X``. For `centerd=False`, this is stepwise constant.
+        The interpolating function that covers the input domain ``X``. For
+        `centerd=False`, this is stepwise constant.
 
     increasing_ : bool
         Inferred value for ``increasing``.
