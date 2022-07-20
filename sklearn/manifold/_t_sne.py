@@ -15,7 +15,6 @@ from scipy import linalg
 from scipy.spatial.distance import pdist
 from scipy.spatial.distance import squareform
 from scipy.sparse import csr_matrix, issparse
-
 from ..neighbors import NearestNeighbors
 from ..base import BaseEstimator
 from ..utils import check_random_state
