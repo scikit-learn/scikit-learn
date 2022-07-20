@@ -263,6 +263,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 k=k,
                 perform_line_search=perform_line_search,
             )
+
             # add tree to ensemble
             self.estimators_[i, k] = tree
 

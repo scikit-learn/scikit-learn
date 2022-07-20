@@ -120,7 +120,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         "max_leaf_nodes": [Interval(Integral, 2, None, closed="left"), None],
         "min_impurity_decrease": [Interval(Real, 0.0, None, closed="left")],
         "ccp_alpha": [Interval(Real, 0.0, None, closed="left")],
-        "monotonic_cst": ["array-like", None]
+        "monotonic_cst": ["array-like", None],
     }
 
     @abstractmethod
@@ -141,7 +141,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         ccp_alpha=0.0,
         monotonic_cst=None,
     ):
-
         self.criterion = criterion
         self.splitter = splitter
         self.max_depth = max_depth
@@ -368,7 +367,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 )
             # Applying element-wise logical conjunction
             # for monotonic constraints' support.
-            monotonic_cst = np.asarray(self.monotonic_cst)
+            monotonic_cst = np.asarray(self.monotonic_cst, dtype=np.int32)
             unsatisfied_constraints_conditions = (
                 (monotonic_cst != -1) * (monotonic_cst != 0) * (monotonic_cst != 1)
             )
@@ -383,9 +382,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                         "classification"
                     )
                 # Imposing the constraint on the probability of the positive class
-                monotonic_cst = -np.asarray(self.monotonic_cst, dtype=np.int32)
-            else:
-                monotonic_cst = np.asarray(self.monotonic_cst, dtype=np.int32)
+                monotonic_cst *= -1
 
         if monotonic_cst.shape[0] != X.shape[1]:
             raise ValueError(
@@ -1658,7 +1655,6 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         ccp_alpha=0.0,
         monotonic_cst=None,
     ):
-
         super().__init__(
             criterion=criterion,
             splitter=splitter,

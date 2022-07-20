@@ -225,6 +225,7 @@ cdef class Splitter:
 
         return self.criterion.node_impurity()
 
+
 cdef class BaseDenseSplitter(Splitter):
     cdef const DTYPE_t[:, :] X
 

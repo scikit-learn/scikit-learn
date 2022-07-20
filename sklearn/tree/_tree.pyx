@@ -209,7 +209,6 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
         with nogil:
             # push root node onto stack
-
             builder_stack.push({
                 "start": 0,
                 "end": n_node_samples,
@@ -336,7 +335,6 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
 
 # Best first builder ----------------------------------------------------------
-
 cdef struct FrontierRecord:
     # Record of information of a Node, the frontier for a split. Those records are
     # maintained in a heap to access the Node with the best improvement in impurity,
@@ -409,7 +407,6 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
 
         # Recursive partition (without actual recursion)
         splitter.init(X, y, sample_weight_ptr)
-
 
         cdef vector[FrontierRecord] frontier
         cdef FrontierRecord record

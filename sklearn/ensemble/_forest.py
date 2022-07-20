@@ -1403,7 +1403,6 @@ class RandomForestClassifier(ForestClassifier):
         max_samples=None,
         monotonic_cst=None,
     ):
-
         super().__init__(
             base_estimator=DecisionTreeClassifier(),
             n_estimators=n_estimators,
