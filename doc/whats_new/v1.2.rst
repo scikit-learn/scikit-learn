@@ -36,6 +36,11 @@ random sampling procedures.
   to a tiny value. Moreover, `verbose` is now properly propagated to L-BFGS-B.
   :pr:`23619` by :user:`Christian Lorentzen <lorentzenchr>`.
 
+- |Fix| :class:`covariance.OAS` and :func:`covariance.oas` now use the correct
+  formula for calculating the shrinkage parameter, and hence may produce
+  different results when run on the same data.
+  :pr:`23867` by :user:`Meekail Zain <micky774>`
+
 Changes impacting all modules
 -----------------------------
 
@@ -281,6 +286,14 @@ Changelog
   `perplexity>=n_samples` to ensure mathematical correctness of the algorithm.
   :pr:`10805` by :user:`Mathias Andersen <MrMathias>` and
   :pr:`23471` by :user:`Meekail Zain <micky774>`
+
+:mod:`sklearn.covariance`
+.........................
+
+- |Fix| :class:`covariance.OAS` and :func:`covariance.oas` now use the correct
+  formula for calculating the shrinkage parameter, and hence may produce
+  different results when run on the same data.
+  :pr:`23867` by :user:`Meekail Zain <micky774>`
 
 Code and Documentation Contributors
 -----------------------------------
