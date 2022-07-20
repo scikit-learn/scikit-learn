@@ -2010,7 +2010,7 @@ def test_searchcv_raise_warning_with_non_finite_score(
             return 1
 
     grid = SearchCV(
-        DecisionTreeClassifier(),
+        DecisionTreeClassifier(use_lower_index_on_ties=False),
         scoring=FailingScorer(),
         cv=3,
         return_train_score=return_train_score,
