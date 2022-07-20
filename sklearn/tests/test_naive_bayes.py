@@ -5,6 +5,8 @@ import scipy.sparse
 import pytest
 import warnings
 
+from scipy.special import logsumexp
+
 from sklearn.datasets import load_digits, load_iris
 
 from sklearn.model_selection import train_test_split
@@ -13,6 +15,7 @@ from sklearn.model_selection import cross_val_score
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_allclose
 
 from sklearn.naive_bayes import GaussianNB, BernoulliNB
 from sklearn.naive_bayes import MultinomialNB, ComplementNB
@@ -977,3 +980,12 @@ def test_check_alpha():
     b.n_features_in_ = alphas.shape[0]
     with pytest.warns(UserWarning, match=msg):
         assert_array_equal(b._check_alpha(), np.array([_ALPHA_MIN, 1.0]))
+
+
+@pytest.mark.parametrize("Estimator", ALL_NAIVE_BAYES_CLASSES)
+def test_predict_joint_proba(Estimator):
+    est = Estimator().fit(X2, y2)
+    jll = est.predict_joint_log_proba(X2)
+    log_prob_x = logsumexp(jll, axis=1)
+    log_prob_x_y = jll - np.atleast_2d(log_prob_x).T
+    assert_allclose(est.predict_log_proba(X2), log_prob_x_y)
