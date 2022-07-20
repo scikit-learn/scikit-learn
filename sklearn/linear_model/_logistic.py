@@ -50,6 +50,7 @@ _LOGISTIC_SOLVER_CONVERGENCE_MSG = (
 
 def _check_solver(solver, penalty, dual):
 
+    # TODO(1.4): Remove "none" option
     if solver not in ["liblinear", "saga"] and penalty not in ("l2", "none", None):
         raise ValueError(
             "Solver %s supports only 'l2' or 'none' penalties, got %s penalty."
