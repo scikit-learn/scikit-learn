@@ -652,13 +652,14 @@ def pairwise_distances_argmin_min(
         Y[argmin[i], :] is the row in Y that is closest to X[i, :].
 
     distances : ndarray
-        distances[i] is the distance between the i-th row in X and the
-        argmin[i]-th row in Y.
+        The array of minimum distances. `distances[i]` is the distance between
+        the i-th row in X and the argmin[i]-th row in Y.
 
     See Also
     --------
-    sklearn.metrics.pairwise_distances
-    sklearn.metrics.pairwise_distances_argmin
+    pairwise_distances : Distances between every pair of samples of X and Y.
+    pairwise_distances_argmin : Same as `pairwise_distances_argmin_min` but only
+        returns the argmins.
     """
     X, Y = check_pairwise_arrays(X, Y)
 
@@ -1379,8 +1380,7 @@ def cosine_similarity(X, Y=None, dense_output=True):
 
 
 def additive_chi2_kernel(X, Y=None):
-    """Computes the additive chi-squared kernel between observations in X and
-    Y.
+    """Compute the additive chi-squared kernel between observations in X and Y.
 
     The chi-squared kernel is computed between each pair of rows in X and Y.  X
     and Y have to be non-negative. This kernel is most commonly applied to
@@ -1394,22 +1394,18 @@ def additive_chi2_kernel(X, Y=None):
 
     Read more in the :ref:`User Guide <chi2_kernel>`.
 
-    Notes
-    -----
-    As the negative of a distance, this kernel is only conditionally positive
-    definite.
-
-
     Parameters
     ----------
     X : array-like of shape (n_samples_X, n_features)
+        A feature array.
 
     Y : ndarray of shape (n_samples_Y, n_features), default=None
-        If `None`, uses `Y=X`.
+        An optional second feature array. If `None`, uses `Y=X`.
 
     Returns
     -------
     kernel_matrix : ndarray of shape (n_samples_X, n_samples_Y)
+        The kernel matrix.
 
     See Also
     --------
@@ -1417,6 +1413,11 @@ def additive_chi2_kernel(X, Y=None):
         preferable.
     sklearn.kernel_approximation.AdditiveChi2Sampler : A Fourier approximation
         to this kernel.
+
+    Notes
+    -----
+    As the negative of a distance, this kernel is only conditionally positive
+    definite.
 
     References
     ----------
@@ -1440,7 +1441,7 @@ def additive_chi2_kernel(X, Y=None):
 
 
 def chi2_kernel(X, Y=None, gamma=1.0):
-    """Computes the exponential chi-squared kernel X and Y.
+    """Compute the exponential chi-squared kernel between X and Y.
 
     The chi-squared kernel is computed between each pair of rows in X and Y.  X
     and Y have to be non-negative. This kernel is most commonly applied to
@@ -1457,15 +1458,18 @@ def chi2_kernel(X, Y=None, gamma=1.0):
     Parameters
     ----------
     X : array-like of shape (n_samples_X, n_features)
+        A feature array.
 
     Y : ndarray of shape (n_samples_Y, n_features), default=None
+        An optional second feature array. If `None`, uses `Y=X`.
 
-    gamma : float, default=1.
+    gamma : float, default=1
         Scaling parameter of the chi2 kernel.
 
     Returns
     -------
     kernel_matrix : ndarray of shape (n_samples_X, n_samples_Y)
+        The kernel matrix.
 
     See Also
     --------
@@ -1525,6 +1529,11 @@ def distance_metrics():
     =============== ========================================
 
     Read more in the :ref:`User Guide <metrics>`.
+
+    Returns
+    -------
+    distance_metrics : dict
+        Returns valid metrics for pairwise_distances.
     """
     return PAIRWISE_DISTANCE_FUNCTIONS
 
@@ -2057,6 +2066,11 @@ def kernel_metrics():
       ===============   ========================================
 
     Read more in the :ref:`User Guide <metrics>`.
+
+    Returns
+    -------
+    kernal_metrics : dict
+        Returns valid metrics for pairwise_kernels.
     """
     return PAIRWISE_KERNEL_FUNCTIONS
 
