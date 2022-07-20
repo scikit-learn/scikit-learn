@@ -19,14 +19,15 @@ import scipy.sparse as sp
 from joblib import Parallel
 
 from abc import ABCMeta, abstractmethod
-from .base import BaseEstimator, clone, MetaEstimatorMixin
-from .base import RegressorMixin, ClassifierMixin, is_classifier
-from .model_selection import cross_val_predict
-from .utils.metaestimators import available_if
-from .utils import check_random_state
-from .utils.validation import check_is_fitted, has_fit_parameter, _check_fit_params
-from .utils.multiclass import check_classification_targets
-from .utils.fixes import delayed
+from ..base import BaseEstimator, clone, MetaEstimatorMixin
+from ..base import RegressorMixin, ClassifierMixin, is_classifier
+from ..model_selection import cross_val_predict
+from ..utils.metaestimators import available_if
+from ..utils import check_random_state
+from ..utils.validation import check_is_fitted, has_fit_parameter, _check_fit_params
+from ..utils.multiclass import check_classification_targets
+from ..utils.fixes import delayed
+from ..utils._tags import _safe_tags
 
 __all__ = [
     "MultiOutputRegressor",
@@ -238,7 +239,8 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
         return np.asarray(y).T
 
     def _more_tags(self):
-        return {"multioutput_only": True}
+        allow_nan = _safe_tags(self.estimator, 'allow_nan')
+        return {"multioutput_only": True, "allow_nan": allow_nan}
 
 
 class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
@@ -554,7 +556,9 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         self : object
             Returns a fitted instance.
         """
-        X, Y = self._validate_data(X, Y, multi_output=True, accept_sparse=True)
+        allow_nan = self._get_tags()['allow_nan']
+        force_all_finite = 'allow-nan' if allow_nan else True
+        X, Y = self._validate_data(X, Y, multi_output=True, accept_sparse=True, force_all_finite=force_all_finite)
 
         random_state = check_random_state(self.random_state)
         self.order_ = self.order
@@ -618,7 +622,9 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
             The predicted values.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, accept_sparse=True, reset=False)
+        allow_nan = self._get_tags()['allow_nan']
+        force_all_finite = 'allow-nan' if allow_nan else True
+        X = self._validate_data(X, accept_sparse=True, reset=False, force_all_finite=force_all_finite)
         Y_pred_chain = np.zeros((X.shape[0], len(self.estimators_)))
         for chain_idx, estimator in enumerate(self.estimators_):
             previous_predictions = Y_pred_chain[:, :chain_idx]
@@ -636,6 +642,10 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         Y_pred = Y_pred_chain[:, inv_order]
 
         return Y_pred
+
+    def _more_tags(self):
+        allow_nan = _safe_tags(self.base_estimator, 'allow_nan')
+        return {"allow_nan": allow_nan}
 
 
 class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
