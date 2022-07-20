@@ -642,7 +642,7 @@ class TSNE(BaseEstimator):
         initializations might result in different local minima of the cost
         function. See :term:`Glossary <random_state>`.
 
-    method : str, default='barnes_hut'
+    method : {'barnes_hut', 'exact'}, default='barnes_hut'
         By default the gradient calculation algorithm uses Barnes-Hut
         approximation running in O(NlogN) time. method='exact'
         will run on the slower, but exact, algorithm in O(N^2) time. The
