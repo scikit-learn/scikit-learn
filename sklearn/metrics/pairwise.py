@@ -1197,7 +1197,7 @@ def polynomial_kernel(X, Y=None, degree=3, gamma=None, coef0=1):
     Parameters
     ----------
     X : ndarray of shape (n_samples_X, n_features)
-        A feature array.
+        An array where each row is a sample and each column is a feature.
 
     Y : ndarray of shape (n_samples_Y, n_features), default=None
         An array where each row is a sample and each column is a feature.
