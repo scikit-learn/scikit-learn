@@ -252,25 +252,38 @@ def assert_nd_reg_tree_children_monotonic_bounded(tree_, monotonic_cst):
         assert tree_.value[i] <= upper_bound[i]
         assert tree_.value[i] >= lower_bound[i]
         if feature < 0:
-            # leaf: nothing to do
+            # Leaf: nothing to do
             continue
         else:
             i_left = tree_.children_left[i]
             i_right = tree_.children_right[i]
             if monotonic_cst[feature] == 0:
-                # unconstrained feature: propagate bounds down the tree
+                # Feature without monotonicity constraint: propagate bounds
+                # down the tree to both children.
+                # Otherwise with 2 features and a POS constraint on feature 0
+                # the following tree can be accepted, although it does not
+                # respect the positive monotonicity constraint:
+                #
+                #                      X[0] <= 0
+                #                      value = 100
+                #                     /            \
+                #          X[0] <= -1                X[1] <= 0
+                #          value = 50                value = 150
+                #        /            \             /            \
+                #    leaf           leaf           leaf          leaf
+                #    value = 25     value = 75     value = 50    value = 250
+
                 upper_bound[i_left] = upper_bound[i]
                 lower_bound[i_left] = lower_bound[i]
                 upper_bound[i_right] = upper_bound[i]
                 lower_bound[i_right] = lower_bound[i]
             else:
-                # constrained feature
-                # check montonicity
+                # Feature with constraint: check monotonicity
                 assert (
                     monotonic_cst[feature] * tree_.value[i_left]
                     <= monotonic_cst[feature] * tree_.value[i_right]
                 )
-                # update and propagate bounds down the tree
+                # Update and propagate bounds down the tree to both children.
                 if monotonic_cst[feature] == 1:
                     upper_bound[i_left] = tree_.value[i]
                     lower_bound[i_left] = lower_bound[i]
