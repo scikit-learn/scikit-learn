@@ -224,7 +224,9 @@ def test_1d_tree_nodes_values(monotonic_sign, splitter, depth_first, global_rand
     if depth_first:
         # No max_leaf_nodes, default depth first tree builder
         clf = DecisionTreeRegressor(
-            splitter=splitter, monotonic_cst=[monotonic_sign], random_state=global_random_seed
+            splitter=splitter,
+            monotonic_cst=[monotonic_sign],
+            random_state=global_random_seed,
         )
     else:
         # max_leaf_nodes triggers best first tree builder
@@ -313,7 +315,9 @@ def test_nd_tree_nodes_values(monotonic_sign, splitter, depth_first, global_rand
     if depth_first:
         # No max_leaf_nodes, default depth first tree builder
         clf = DecisionTreeRegressor(
-            splitter=splitter, monotonic_cst=monotonic_cst, random_state=global_random_seed
+            splitter=splitter,
+            monotonic_cst=monotonic_cst,
+            random_state=global_random_seed,
         )
     else:
         # max_leaf_nodes triggers best first tree builder
