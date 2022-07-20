@@ -47,6 +47,9 @@ clfs = [
 ]
 
 for clf, clf_label in zip(clfs, clf_labels):
+    fig, axes = plt.subplots(2, 3)
+    axes = axes.flatten()
+
     for pairidx, pair in enumerate([[0, 1], [0, 2], [0, 3], [1, 2], [1, 3], [2, 3]]):
         # We only take the two corresponding features
         X = iris.data[:, pair]
@@ -56,7 +59,7 @@ for clf, clf_label in zip(clfs, clf_labels):
         clf.fit(X, y)
 
         # Plot the decision boundary
-        ax = plt.subplot(2, 3, pairidx + 1)
+        ax = axes[pairidx]
         plt.tight_layout(h_pad=0.5, w_pad=0.5, pad=2.5)
         DecisionBoundaryDisplay.from_estimator(
             clf,
@@ -71,7 +74,7 @@ for clf, clf_label in zip(clfs, clf_labels):
         # Plot the training points
         for i, color in zip(range(n_classes), plot_colors):
             idx = np.where(y == i)
-            plt.scatter(
+            ax.scatter(
                 X[idx, 0],
                 X[idx, 1],
                 c=color,
@@ -81,11 +84,12 @@ for clf, clf_label in zip(clfs, clf_labels):
                 s=15,
             )
 
-    plt.suptitle(
+    fig.suptitle(
         f"Decision surface of {clf_label} decision trees trained on pairs of features"
     )
     plt.legend(loc="lower right", borderpad=0, handletextpad=0)
     _ = plt.axis("tight")
+    plt.show()
 
 # %%
 # Display the structure of a single decision tree trained on all the features
