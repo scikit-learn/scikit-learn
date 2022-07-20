@@ -315,7 +315,10 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         # Handle the left and right bounds on X
         self.X_min_, self.X_max_ = np.min(X), np.max(X)
 
-        if trim_duplicates and not self.centered:
+        if self.centered:
+            X, y = self._build_cir_points(X, y, sample_weight)
+            return X, y
+        if trim_duplicates:
             # Remove unnecessary points for faster prediction
             keep_data = np.ones((len(y),), dtype=bool)
             # Aside from the 1st and last point, remove points whose y values
@@ -324,11 +327,6 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
                 np.not_equal(y[1:-1], y[:-2]), np.not_equal(y[1:-1], y[2:])
             )
             return X[keep_data], y[keep_data]
-        elif trim_duplicates and self.centered:
-            # Removed unnecessary points according to the Centered Isotoinc
-            # Regression (CIR) method.
-            X, y = self._build_cir_points(X, y, sample_weight)
-            return X, y
         else:
             # The ability to turn off trim_duplicates is only used to it make
             # easier to unit test that removing duplicates in y does not have
@@ -341,30 +339,31 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         Generate the points X_, y_ for the output function when Centered
         Isotonic Regression (CIR) is chosen, based on non-trimmed points X, y.
         """
-        X_ = y_ = np.array([])
+        X_ = []
+        y_ = []
 
         for y_step in np.unique(y):
             idx = np.where(y == y_step)[0]
 
             # y values of 0 and 1 are special cases in CIR
             if y_step in [0, 1] and len(idx) > 1:
-                X_ = np.append(X_, [X[min(idx)], X[max(idx)]])
-                y_ = np.append(y_, [y_step, y_step])
+                X_.extend([X[min(idx)], X[max(idx)]])
+                y_.extend([y_step, y_step])
             else:
                 X_mean = (X[idx] * sample_weight[idx]).sum() / sample_weight[idx].sum()
-                X_ = np.append(X_, X_mean)
-                y_ = np.append(y_, y_step)
+                X_.append(X_mean)
+                y_.append(y_step)
 
         # Ensure that the original domain is maintained
-        if np.min(X_) > self.X_min_:
-            X_ = np.insert(X_, 0, self.X_min_)
-            y_ = np.insert(y_, 0, y[0])
+        if min(X_) > self.X_min_:
+            X_.insert(0, self.X_min_)
+            y_.insert(0, y[0])
 
-        if np.max(X_) < self.X_max_:
-            X_ = np.append(X_, self.X_max_)
-            y_ = np.append(y_, y[-1])
+        if max(X_) < self.X_max_:
+            X_.append(self.X_max_)
+            y_.append(y[-1])
 
-        return X_, y_
+        return np.array(X_), np.array(y_)
 
     def fit(self, X, y, sample_weight=None):
         """Fit the model using X, y as training data.
