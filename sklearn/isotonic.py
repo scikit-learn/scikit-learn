@@ -189,7 +189,7 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         .. versionadded:: 0.24
 
     f_ : function
-        The interpolating function that covers the input domain ``X``.
+        The interpolating function that covers the input domain ``X``. For `centerd=False`, this is stepwise constant.
 
     increasing_ : bool
         Inferred value for ``increasing``.
