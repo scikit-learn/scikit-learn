@@ -718,6 +718,9 @@ class ARDRegression(RegressorMixin, LinearModel):
         self : object
             Fitted estimator.
         """
+
+        self._validate_params()
+
         self._normalize = _deprecate_normalize(
             self.normalize, default=False, estimator_name=self.__class__.__name__
         )
