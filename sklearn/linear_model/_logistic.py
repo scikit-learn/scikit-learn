@@ -1017,6 +1017,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     """
 
     _parameter_constraints = {
+        # TODO(1.4): Remove "none" option
         "penalty": [
             StrOptions({"l1", "l2", "elasticnet", "none"}, deprecated={"none"}),
             None,
