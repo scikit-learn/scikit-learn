@@ -38,9 +38,9 @@ experiments:
 # - Adjusted Rand index (ARI), a chance-adjusted Rand index such that a random
 #   cluster assignment has an ARI of 0.0 in expectation;
 #
-# - Mutual Information (MI) is an information theoretic measure that quantifies how
-#   dependent are the two labelings. Note that the maximum value of MI for perfect
-#   labelings depends on the number of clusters and samples;
+# - Mutual Information (MI) is an information theoretic measure that quantifies
+#   how dependent are the two labelings. Note that the maximum value of MI for
+#   perfect labelings depends on the number of clusters and samples;
 #
 # - Normalized Mutual Information (NMI), a Mutual Information defined between 0
 #   (no mutual information) in the limit of large number of data points and 1
@@ -203,9 +203,11 @@ plt.show()
 # metrics stay constantly near zero while other metrics tend to get larger with
 # finer-grained labelings. The mean V-Measure of random labeling increases
 # significantly as the number of clusters is closer to the total number of
-# samples used to compute the measure.
+# samples used to compute the measure. Furthermore, raw mutual information is
+# unbounded from above and its scale depends on the dimensions of the clustering
+# problem and cardinality of the ground truth classes.
 #
-# Only adjusted measures can hence safely be used as a consensus index to
+# Only adjusted measures can hence be safely used as a consensus index to
 # evaluate the average stability of clustering algorithms for a given value of k
 # on various overlapping sub-samples of the dataset.
 #
