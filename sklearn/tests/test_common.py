@@ -449,8 +449,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "ARDRegression",
     "AdditiveChi2Sampler",
     "AffinityPropagation",
-    "BaggingClassifier",
-    "BaggingRegressor",
     "BayesianGaussianMixture",
     "BayesianRidge",
     "CalibratedClassifierCV",
