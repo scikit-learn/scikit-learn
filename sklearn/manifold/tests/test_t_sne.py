@@ -1116,11 +1116,20 @@ def test_tsne_with_different_distance_metrics(metric, dist_func, method):
     """Make sure that TSNE works for different distance metrics"""
 
     if method == "barnes_hut" and metric == "manhattan":
+        # The distances computed by `manhattan_distances` differ slightly from those
+        # computed internally by NearestNeighbors via the PairwiseDistancesReduction
+        # Cython code-based. This in turns causes T-SNE to converge to a different
+        # solution but this should not impact the qualitative results as both
+        # methods.
+        # NOTE: it's probably not valid from a mathematical point of view to use the
+        # Manhattan distance for T-SNE...
+        # TODO: re-enable this test if/when `manhattan_distances` is refactored to
+        # reuse the same underlying Cython code NearestNeighbors.
         # For reference, see:
         # https://github.com/scikit-learn/scikit-learn/pull/23865/files#r925721573
         pytest.xfail(
-            "Results are qualitatively different for method == 'barnes_hut' and metric"
-            " == 'manhattan', but qualitatively identical."
+            "Distance computations are different for method == 'barnes_hut' and metric"
+            " == 'manhattan', but this is expected."
         )
 
     random_state = check_random_state(0)
