@@ -8,6 +8,7 @@ from ._base import KNeighborsMixin, RadiusNeighborsMixin
 from ._base import NeighborsBase
 from ._unsupervised import NearestNeighbors
 from ..base import TransformerMixin, _ClassNamePrefixFeaturesOutMixin
+from ..utils._param_validation import StrOptions
 from ..utils.validation import check_is_fitted
 
 
@@ -341,6 +342,13 @@ class KNeighborsTransformer(
     (178, 178)
     """
 
+    _parameter_constraints = {
+        **NeighborsBase._parameter_constraints,
+        "mode": [StrOptions({"distance", "connectivity"})],
+    }
+
+    _parameter_constraints.pop("radius")
+
     def __init__(
         self,
         *,
@@ -381,6 +389,7 @@ class KNeighborsTransformer(
         self : KNeighborsTransformer
             The fitted k-nearest neighbors transformer.
         """
+        self._validate_params()
         self._fit(X)
         self._n_features_out = self.n_samples_fit_
         return self

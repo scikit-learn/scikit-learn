@@ -12,7 +12,6 @@ import sklearn
 numpydoc_validation = pytest.importorskip("numpydoc.validate")
 
 FUNCTION_DOCSTRING_IGNORE_LIST = [
-    "sklearn.datasets._kddcup99.fetch_kddcup99",
     "sklearn.datasets._lfw.fetch_lfw_people",
     "sklearn.datasets._samples_generator.make_gaussian_quantiles",
     "sklearn.datasets._samples_generator.make_spd_matrix",
@@ -48,9 +47,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.metrics.cluster._supervised.rand_score",
     "sklearn.metrics.cluster._supervised.v_measure_score",
     "sklearn.metrics.pairwise.pairwise_distances_chunked",
-    "sklearn.metrics.pairwise.polynomial_kernel",
-    "sklearn.metrics.pairwise.rbf_kernel",
-    "sklearn.metrics.pairwise.sigmoid_kernel",
     "sklearn.preprocessing._data.maxabs_scale",
     "sklearn.preprocessing._data.scale",
     "sklearn.preprocessing._label.label_binarize",

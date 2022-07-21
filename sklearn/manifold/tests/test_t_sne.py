@@ -386,24 +386,6 @@ def test_trustworthiness_not_euclidean_metric():
 
 
 @pytest.mark.filterwarnings("ignore:The default learning rate in TSNE")
-@pytest.mark.filterwarnings("ignore:The default initialization in TSNE")
-def test_early_exaggeration_too_small():
-    # Early exaggeration factor must be >= 1.
-    tsne = TSNE(early_exaggeration=0.99, perplexity=1)
-    with pytest.raises(ValueError, match="early_exaggeration .*"):
-        tsne.fit_transform(np.array([[0.0], [0.0]]))
-
-
-@pytest.mark.filterwarnings("ignore:The default learning rate in TSNE")
-@pytest.mark.filterwarnings("ignore:The default initialization in TSNE")
-def test_too_few_iterations():
-    # Number of gradient descent iterations must be at least 200.
-    tsne = TSNE(n_iter=199, perplexity=1)
-    with pytest.raises(ValueError, match="n_iter .*"):
-        tsne.fit_transform(np.array([[0.0], [0.0]]))
-
-
-@pytest.mark.filterwarnings("ignore:The default learning rate in TSNE")
 @pytest.mark.parametrize(
     "method, retype",
     [
@@ -490,15 +472,6 @@ def test_non_positive_computed_distances():
         tsne.fit_transform(X)
 
 
-@pytest.mark.filterwarnings("ignore:The default learning rate in TSNE")
-def test_init_not_available():
-    # 'init' must be 'pca', 'random', or numpy array.
-    tsne = TSNE(init="not available", perplexity=1)
-    m = "'init' must be 'pca', 'random', or a numpy array"
-    with pytest.raises(ValueError, match=m):
-        tsne.fit_transform(np.array([[0.0], [1.0]]))
-
-
 def test_init_ndarray():
     # Initialize TSNE with ndarray and test fit
     tsne = TSNE(init=np.zeros((100, 2)), learning_rate="auto")
@@ -515,38 +488,6 @@ def test_init_ndarray_precomputed():
         learning_rate=50.0,
     )
     tsne.fit(np.zeros((100, 100)))
-
-
-@pytest.mark.filterwarnings("ignore:The default learning rate in TSNE")
-@pytest.mark.filterwarnings("ignore:The default initialization in TSNE")
-def test_distance_not_available():
-    # 'metric' must be valid.
-    tsne = TSNE(metric="not available", method="exact", perplexity=1)
-    with pytest.raises(ValueError, match="Unknown metric not available.*"):
-        tsne.fit_transform(np.array([[0.0], [1.0]]))
-
-    tsne = TSNE(metric="not available", method="barnes_hut", perplexity=1)
-    with pytest.raises(ValueError, match="Metric 'not available' not valid.*"):
-        tsne.fit_transform(np.array([[0.0], [1.0]]))
-
-
-@pytest.mark.filterwarnings("ignore:The default learning rate in TSNE")
-@pytest.mark.filterwarnings("ignore:The default initialization in TSNE")
-def test_method_not_available():
-    # 'nethod' must be 'barnes_hut' or 'exact'
-    tsne = TSNE(method="not available", perplexity=1)
-    with pytest.raises(ValueError, match="'method' must be 'barnes_hut' or "):
-        tsne.fit_transform(np.array([[0.0], [1.0]]))
-
-
-@pytest.mark.filterwarnings("ignore:The default learning rate in TSNE")
-@pytest.mark.filterwarnings("ignore:The default initialization in TSNE")
-def test_angle_out_of_range_checks():
-    # check the angle parameter range
-    for angle in [-1, -1e-6, 1 + 1e-6, 2]:
-        tsne = TSNE(angle=angle, perplexity=1)
-        with pytest.raises(ValueError, match="'angle' must be between 0.0 - 1.0"):
-            tsne.fit_transform(np.array([[0.0], [1.0]]))
 
 
 @pytest.mark.filterwarnings("ignore:The default learning rate in TSNE")
@@ -1176,15 +1117,6 @@ def test_tsne_learning_rate_futurewarning(learning_rate):
         with warnings.catch_warnings():
             warnings.simplefilter("error", FutureWarning)
             tsne.fit_transform(X)
-
-
-@pytest.mark.filterwarnings("ignore:The default initialization in TSNE")
-def test_tsne_negative_learning_rate():
-    """Make sure that negative learning rate results in a ValueError"""
-    random_state = check_random_state(0)
-    X = random_state.randn(5, 2)
-    with pytest.raises(ValueError, match="'learning_rate' must be.*"):
-        TSNE(learning_rate=-50.0, perplexity=4).fit_transform(X)
 
 
 @pytest.mark.parametrize("method", ["exact", "barnes_hut"])

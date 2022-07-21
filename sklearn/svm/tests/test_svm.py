@@ -834,9 +834,9 @@ def test_sparse_fit_support_vectors_empty():
 def test_linearsvc_parameters(loss, penalty, dual):
     # Test possible parameter combinations in LinearSVC
     # Generate list of possible parameter combinations
-    X, y = make_classification(n_samples=5, n_features=5)
+    X, y = make_classification(n_samples=5, n_features=5, random_state=0)
 
-    clf = svm.LinearSVC(penalty=penalty, loss=loss, dual=dual)
+    clf = svm.LinearSVC(penalty=penalty, loss=loss, dual=dual, random_state=0)
     if (
         (loss, penalty) == ("hinge", "l1")
         or (loss, penalty, dual) == ("hinge", "l2", False)
