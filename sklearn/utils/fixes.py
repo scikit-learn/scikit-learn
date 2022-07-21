@@ -166,7 +166,7 @@ def threadpool_info():
 threadpool_info.__doc__ = threadpoolctl.threadpool_info.__doc__
 
 
-def rng_integers(gen, low, high=None, size=None, dtype='int64', endpoint=False):
+def rng_integers(gen, low, high=None, size=None, dtype="int64", endpoint=False):
     """Return random integers from a numpy RandomState or Generator
 
     This function provides a compatibility layer that can deal with both
