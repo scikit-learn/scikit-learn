@@ -1260,8 +1260,7 @@ def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
 
 
 def rbf_kernel(X, Y=None, gamma=None):
-    """
-    Compute the rbf (gaussian) kernel between X and Y::
+    """Compute the rbf (gaussian) kernel between X and Y.
 
         K(x, y) = exp(-gamma ||x-y||^2)
 
@@ -1272,9 +1271,10 @@ def rbf_kernel(X, Y=None, gamma=None):
     Parameters
     ----------
     X : ndarray of shape (n_samples_X, n_features)
+        A feature array.
 
     Y : ndarray of shape (n_samples_Y, n_features), default=None
-        If `None`, uses `Y=X`.
+        An optional second feature array. If `None`, uses `Y=X`.
 
     gamma : float, default=None
         If None, defaults to 1.0 / n_features.
@@ -1282,6 +1282,7 @@ def rbf_kernel(X, Y=None, gamma=None):
     Returns
     -------
     kernel_matrix : ndarray of shape (n_samples_X, n_samples_Y)
+        The RBF kernel.
     """
     X, Y = check_pairwise_arrays(X, Y)
     if gamma is None:
