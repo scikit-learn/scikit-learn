@@ -132,14 +132,11 @@ def fetch_kddcup99(
         target_names: list
             The names of the target columns
 
-    (data, target) :
-        Tuple if ``return_X_y`` is True
-        data : {ndarray, dataframe} of shape (494021, 41)
-            The data matrix to learn. If ``as_frame=True``, ``data`` will be a
-            pandas ``DataFrame``.
-        target : {ndarray, series} of shape (494021,)
-            The regression target for each sample. If ``as_frame=True``, ``target``
-            will be a pandas ``Series``.
+    (data, target) : tuple if ``return_X_y`` is True
+        A tuple of two ndarray. The first containing a 2D array of
+        shape (n_samples, n_features) with each row representing one
+        sample and each column representing the features. The second
+        ndarray of shape (n_samples,) containing the target samples.
 
         .. versionadded:: 0.20
     """
