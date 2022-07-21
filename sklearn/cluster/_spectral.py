@@ -6,7 +6,7 @@
 #         Andrew Knyazev <Andrew.Knyazev@ucdenver.edu>
 # License: BSD 3 clause
 
-import numbers
+from numbers import Integral, Real
 import warnings
 
 import numpy as np
@@ -427,8 +427,9 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         but may also lead to instabilities. If None, then ``'arpack'`` is
         used. See [4]_ for more details regarding `'lobpcg'`.
 
-    n_components : int, default=n_clusters
-        Number of eigenvectors to use for the spectral embedding.
+    n_components : int, default=None
+        Number of eigenvectors to use for the spectral embedding. If None,
+        defaults to `n_clusters`.
 
     random_state : int, RandomState instance, default=None
         A pseudo random number generator used for the initialization
@@ -617,12 +618,12 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
     """
 
     _parameter_constraints = {
-        "n_clusters": [Interval(numbers.Integral, 1, None, closed="left")],
+        "n_clusters": [Interval(Integral, 1, None, closed="left")],
         "eigen_solver": [StrOptions({"arpack", "lobpcg", "amg"}), None],
-        "n_components": [Interval(numbers.Integral, 1, None, closed="left"), None],
+        "n_components": [Interval(Integral, 1, None, closed="left"), None],
         "random_state": ["random_state"],
-        "n_init": [Interval(numbers.Integral, 1, None, closed="left")],
-        "gamma": [Interval(numbers.Real, 1.0, None, closed="left")],
+        "n_init": [Interval(Integral, 1, None, closed="left")],
+        "gamma": [Interval(Real, 0, None, closed="neither")],
         "affinity": [
             callable,
             StrOptions(
@@ -630,16 +631,16 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
                 | {"nearest_neighbors", "precomputed", "precomputed_nearest_neighbors"}
             ),
         ],
-        "n_neighbors": [Interval(numbers.Integral, 1, None, closed="left")],
+        "n_neighbors": [Interval(Integral, 1, None, closed="left")],
         "eigen_tol": [
-            Interval(numbers.Real, 0.0, None, closed="left"),
+            Interval(Real, 0.0, None, closed="left"),
             StrOptions({"auto"}),
         ],
         "assign_labels": [StrOptions({"kmeans", "discretize", "cluster_qr"})],
-        "degree": [Interval(numbers.Integral, 1, None, closed="left")],
-        "coef0": [Interval(numbers.Real, None, None, closed="neither")],
+        "degree": [Interval(Integral, 1, None, closed="left")],
+        "coef0": [Interval(Real, None, None, closed="neither")],
         "kernel_params": [dict, None],
-        "n_jobs": [numbers.Integral, None],
+        "n_jobs": [Integral, None],
         "verbose": ["verbose"],
     }
 
