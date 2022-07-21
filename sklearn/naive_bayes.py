@@ -624,6 +624,7 @@ class _BaseDiscreteNB(_BaseNB):
         alpha = (
             np.asarray(self.alpha) if not isinstance(self.alpha, Real) else self.alpha
         )
+        alpha_min = np.min(alpha)
         if isinstance(alpha, np.ndarray):
             if not alpha.shape[0] == self.n_features_in_:
                 raise ValueError(
@@ -631,25 +632,26 @@ class _BaseDiscreteNB(_BaseNB):
                     f"Got {alpha.shape[0]} elements instead of {self.n_features_in_}."
                 )
             # check that all alpha are positive
-            if np.min(alpha) < 0:
+            if alpha_min < 0:
                 raise ValueError("All values in alpha must be greater than 0.")
-        alpha_min = 1e-10
+        alpha_lower_bound = 1e-10
         # TODO(1.4): Replace w/ deprecation of self.force_alpha
         # See gh #22269
         _force_alpha = self.force_alpha
-        if _force_alpha == "warn" and np.min(alpha) < alpha_min:
+        if _force_alpha == "warn" and alpha_min < alpha_lower_bound:
             _force_alpha = False
             warnings.warn(
                 "The default value for `force_alpha` will change to `True` in 1.4. To"
                 " suppress this warning, manually set the value of `force_alpha`.",
                 FutureWarning,
             )
-        if np.min(alpha) < alpha_min and not _force_alpha:
+        if alpha_min < alpha_lower_bound and not _force_alpha:
             warnings.warn(
                 "alpha too small will result in numeric errors, setting alpha ="
-                f" {alpha_min:.1e}. Use `force_alpha=True` to keep alpha unchanged."
+                f" {alpha_lower_bound:.1e}. Use `force_alpha=True` to keep alpha"
+                " unchanged."
             )
-            return np.maximum(alpha, alpha_min)
+            return np.maximum(alpha, alpha_lower_bound)
         return alpha
 
     def partial_fit(self, X, y, classes=None, sample_weight=None):
@@ -912,8 +914,12 @@ class MultinomialNB(_BaseDiscreteNB):
     def __init__(
         self, *, alpha=1.0, force_alpha="warn", fit_prior=True, class_prior=None
     ):
-        super().__init__(alpha=alpha, fit_prior=fit_prior, class_prior=class_prior)
-        self.force_alpha = force_alpha
+        super().__init__(
+            alpha=alpha,
+            fit_prior=fit_prior,
+            class_prior=class_prior,
+            force_alpha=force_alpha,
+        )
 
     def _more_tags(self):
         return {"requires_positive_X": True}
@@ -1221,8 +1227,12 @@ class BernoulliNB(_BaseDiscreteNB):
         fit_prior=True,
         class_prior=None,
     ):
-        super().__init__(alpha=alpha, fit_prior=fit_prior, class_prior=class_prior)
-        self.force_alpha = force_alpha
+        super().__init__(
+            alpha=alpha,
+            fit_prior=fit_prior,
+            class_prior=class_prior,
+            force_alpha=force_alpha,
+        )
         self.binarize = binarize
 
     def _check_X(self, X):
