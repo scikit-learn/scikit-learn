@@ -1134,31 +1134,18 @@ class TimeSeriesInitialSplit(_BaseKFold):
 
     Examples
     --------
-    >>> import numpy as np
-    >>> from sklearn.model_selection import TimeSeriesInitialSplit
-    >>> X = np.arange(0,50)
-    >>> tscv = TimeSeriesInitialSplit()
-    >>> for train_index, test_index in tscv.split(X):
-    ...     print("TRAIN:", train_index, "TEST:", test_index)
-    ...     X_train, X_test = X[train_index], X[test_index]
-    ...     y_train, y_test = y[train_index], y[test_index]
-    TRAIN: [0] TEST: [1]
-    TRAIN: [0 1] TEST: [2]
-    TRAIN: [0 1 2] TEST: [3]
-    TRAIN: [0 1 2 3] TEST: [4]
-    TRAIN: [0 1 2 3 4] TEST: [5]
-    >>> # Fix test_size to 2 with 12 samples
-    >>> X = np.random.randn(12, 2)
-    >>> y = np.random.randint(0, 2, 12)
-    >>> tscv = TimeSeriesSplit(n_splits=3, test_size=2)
-    >>> for train_index, test_index in tscv.split(X):
-    ...    print("TRAIN:", train_index, "TEST:", test_index)
-    ...    X_train, X_test = X[train_index], X[test_index]
-    ...     TRAIN: [ 0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20] TEST: [23 24 25 26 27 28 29]
-    ...     TRAIN: [ 0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23
-    ...     24 25 26 27] TEST: [30 31 32 33 34 35 36]
-    ...     TRAIN: [ 0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23
-    ...     24 25 26 27 28 29 30 31 32 33 34] TEST: [37 38 39 40 41 42 43]
+    import numpy as np
+    from sklearn.model_selection import TimeSeriesInitialSplit
+    X = np.arange(0,50)
+    tscv = TimeSeriesInitialSplit()
+    for train_index, test_index in tscv.split(X):
+        print("TRAIN:", train_index, "TEST:", test_index)
+        X_train, X_test = X[train_index], X[test_index]
+
+    > TRAIN: [ 0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20] TEST: [21 22 23 24 25 26 27]
+    > TRAIN: [ 0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27] TEST: [28 29 30 31 32 33 34]
+    > TRAIN: [ 0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34] TEST: [35 36 37 38 39 40 41]
+    > TRAIN: [ 0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41] TEST: [42 43 44 45 46 47 48]
     """
 
     def __init__(self, initial=7*3, *, test_size = 7, gap=0):
