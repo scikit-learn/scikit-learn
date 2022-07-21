@@ -4161,7 +4161,7 @@ def check_random_state_type(name, estimator):
             return estimator.fit(X, y)
         return estimator.fit(X)
 
-    if  "3darray" in _safe_tags(estimator, "X_types"):
+    if "3darray" in _safe_tags(estimator, "X_types"):
         X = np.random.random((10, 28, 28, 3))
         y = None
     elif _safe_tags(estimator, key="multioutput_only"):
