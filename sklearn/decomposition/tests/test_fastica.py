@@ -483,7 +483,9 @@ def test_fastica_simple_different_solvers(add_noise, global_random_seed):
         assert ica.components_.shape == (2, 2)
         assert sources.shape == (1000, 2)
 
-    assert_allclose(outs["eigh"], outs["svd"])
+    # compared numbers are not all on the same magnitude. Using a small atol to
+    # make the test less brittle
+    assert_allclose(outs["eigh"], outs["svd"], atol=1e-12)
 
 
 def test_fastica_eigh_low_rank_warning(global_random_seed):

@@ -354,7 +354,6 @@ def test_lasso_cv_positive_constraint():
 @pytest.mark.parametrize(
     "alphas, err_type, err_msg",
     [
-        (-2, ValueError, r"alphas == -2, must be >= 0.0."),
         ((1, -1, -100), ValueError, r"alphas\[1\] == -1, must be >= 0.0."),
         (
             (-0.1, -1.0, -10.0),
@@ -971,14 +970,6 @@ def test_sparse_input_dtype_enet_and_lassocv():
     clf1.fit(sparse.csr_matrix(X, dtype=np.float32), y)
     assert_almost_equal(clf.alpha_, clf1.alpha_, decimal=6)
     assert_almost_equal(clf.coef_, clf1.coef_, decimal=6)
-
-
-def test_precompute_invalid_argument():
-    X, y, _, _ = build_dataset()
-    for clf in [ElasticNetCV(precompute="invalid"), LassoCV(precompute="invalid")]:
-        err_msg = ".*should be.*True.*False.*auto.* array-like.*Got 'invalid'"
-        with pytest.raises(ValueError, match=err_msg):
-            clf.fit(X, y)
 
 
 def test_elasticnet_precompute_incorrect_gram():
