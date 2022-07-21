@@ -926,7 +926,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         'strict', meaning that a UnicodeDecodeError will be raised. Other
         values are 'ignore' and 'replace'.
 
-    strip_accents : {'ascii', 'unicode'}, default=None
+    strip_accents : {'ascii', 'unicode'} or callable, default=None
         Remove accents and perform other character normalization
         during the preprocessing step.
         'ascii' is a fast method that only works on characters that have
@@ -963,7 +963,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         in the range [0.7, 1.0) to automatically detect and filter stop
         words based on intra corpus document frequency of terms.
 
-    token_pattern : str, default=r"(?u)\\b\\w\\w+\\b"
+    token_pattern : str or None, default=r"(?u)\\b\\w\\w+\\b"
         Regular expression denoting what constitutes a "token", only used
         if ``analyzer == 'word'``. The default regexp select tokens of 2
         or more alphanumeric characters (punctuation is completely ignored
@@ -1030,7 +1030,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         probabilistic models that model binary events rather than integer
         counts.
 
-    dtype : type, default=np.int64
+    dtype : dtype, default=np.int64
         Type of the matrix returned by fit_transform() or transform().
 
     Attributes
@@ -1120,7 +1120,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         "max_features": [Interval(Integral, 1, None, closed="left"), None],
         "vocabulary": [Mapping, HasMethods("__iter__"), None],
         "binary": ["boolean"],
-        "dtype": [type],
+        "dtype": "no_validation",  # delegate to numpy
     }
 
     def __init__(
@@ -1871,7 +1871,7 @@ class TfidfVectorizer(CountVectorizer):
     dtype : dtype, default=float64
         Type of the matrix returned by fit_transform() or transform().
 
-    norm : {'l1', 'l2'}, default='l2'
+    norm : {'l1', 'l2'} or None, default='l2'
         Each output row will have unit norm, either:
 
         - 'l2': Sum of squares of vector elements is 1. The cosine
@@ -1879,6 +1879,7 @@ class TfidfVectorizer(CountVectorizer):
           been applied.
         - 'l1': Sum of absolute values of vector elements is 1.
           See :func:`preprocessing.normalize`.
+        - None: No normalization.
 
     use_idf : bool, default=True
         Enable inverse-document-frequency reweighting. If False, idf(t) = 1.
