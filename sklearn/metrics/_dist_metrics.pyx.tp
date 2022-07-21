@@ -396,9 +396,9 @@ cdef class DistanceMetric{{name_suffix}}:
     cdef DTYPE_t dist_csr(
         self,
         const {{INPUT_DTYPE_t}}[:] x1_data,
-        const SPARSE_INDEX_TYPE_t[:] x1_indices,
+        const SPARSE_INDEX_TYPE_t* x1_indices,
         const {{INPUT_DTYPE_t}}[:] x2_data,
-        const SPARSE_INDEX_TYPE_t[:] x2_indices,
+        const SPARSE_INDEX_TYPE_t* x2_indices,
         const SPARSE_INDEX_TYPE_t x1_start,
         const SPARSE_INDEX_TYPE_t x1_end,
         const SPARSE_INDEX_TYPE_t x2_start,
@@ -412,17 +412,21 @@ cdef class DistanceMetric{{name_suffix}}:
 
         Notes
         -----
-        The implementation of this method in subclasses must be robust to the
+        0. The implementation of this method in subclasses must be robust to the
         presence of explicit zeros in the CSR representation.
 
-        An alternative signature would be:
+        1. The `indices` are passed using pointers to be able to support an
+        alternative representation of the CSR data structure for supporting
+        fused sparse-dense datasets pairs. See the
+
+        2. An alternative signature would be:
 
             cdef DTYPE_t dist_csr(
                 self,
                 const {{INPUT_DTYPE_t}}[:] x1_data,
-                const SPARSE_INDEX_TYPE_t[:] x1_indices,
+                const SPARSE_INDEX_TYPE_t* x1_indices,
                 const {{INPUT_DTYPE_t}}[:] x2_data,
-                const SPARSE_INDEX_TYPE_t[:] x2_indices,
+                const SPARSE_INDEX_TYPE_t* x2_indices,
             ) nogil except -1:
 
         Where calles would use slicing on the original CSR data and indices
@@ -435,19 +439,19 @@ cdef class DistanceMetric{{name_suffix}}:
 
             self.dist_csr(
                 x1_data[x1_start:x1_end],
-                x1_indices[x1_start:x1_end],
+                &x1_indices[x1_start],
                 x2_data[x2_start:x2_end],
-                x2_indices[x2_start:x2_end],
+                &x2_indices[x2_start],
             )
 
         Yet, slicing on memoryview slows down execution as it takes the GIL.
         See: https://github.com/scikit-learn/scikit-learn/issues/17299
 
         Hence, to avoid slicing the data and indices arrays of the sparse
-        matrices containing respectively x1 and x2 (namely x{1,2}_{data,indice})
-        are passed as well as their indice pointers (namely x{1,2}_{start,end}).
+        matrices containing respectively x1 and x2 (namely x{1,2}_{data,indices})
+        are passed as well as their indices pointers (namely x{1,2}_{start,end}).
 
-        For reference about the CSR format, see section 3.4 of
+        3. For reference about the CSR format, see section 3.4 of
         Saad, Y. (2003), Iterative Methods for Sparse Linear Systems, SIAM.
         https://www-users.cse.umn.edu/~saad/IterMethBook_2ndEd.pdf
         """
@@ -456,9 +460,9 @@ cdef class DistanceMetric{{name_suffix}}:
     cdef DTYPE_t rdist_csr(
         self,
         const {{INPUT_DTYPE_t}}[:] x1_data,
-        const SPARSE_INDEX_TYPE_t[:] x1_indices,
+        const SPARSE_INDEX_TYPE_t* x1_indices,
         const {{INPUT_DTYPE_t}}[:] x2_data,
-        const SPARSE_INDEX_TYPE_t[:] x2_indices,
+        const SPARSE_INDEX_TYPE_t* x2_indices,
         const SPARSE_INDEX_TYPE_t x1_start,
         const SPARSE_INDEX_TYPE_t x1_end,
         const SPARSE_INDEX_TYPE_t x2_start,
@@ -497,7 +501,7 @@ cdef class DistanceMetric{{name_suffix}}:
     cdef int pdist_csr(
         self,
         const {{INPUT_DTYPE_t}}[:] x1_data,
-        const SPARSE_INDEX_TYPE_t[:] x1_indices,
+        const SPARSE_INDEX_TYPE_t* x1_indices,
         const SPARSE_INDEX_TYPE_t[:] x1_indptr,
         const ITYPE_t size,
         DTYPE_t[:, ::1] D,
@@ -534,10 +538,10 @@ cdef class DistanceMetric{{name_suffix}}:
     cdef int cdist_csr(
         self,
         const {{INPUT_DTYPE_t}}[:] x1_data,
-        const SPARSE_INDEX_TYPE_t[:] x1_indices,
+        const SPARSE_INDEX_TYPE_t* x1_indices,
         const SPARSE_INDEX_TYPE_t[:] x1_indptr,
         const {{INPUT_DTYPE_t}}[:] x2_data,
-        const SPARSE_INDEX_TYPE_t[:] x2_indices,
+        const SPARSE_INDEX_TYPE_t* x2_indices,
         const SPARSE_INDEX_TYPE_t[:] x2_indptr,
         const ITYPE_t size,
         DTYPE_t[:, ::1] D,
@@ -635,18 +639,30 @@ cdef class DistanceMetric{{name_suffix}}:
             self.cdist(Xarr, Yarr, Darr)
         return Darr
 
-    def _pairwise_sparse_sparse(self, X, Y):
+    def _pairwise_sparse_sparse(self, X: csr_matrix , Y: csr_matrix):
+        cdef:
+            ITYPE_t n_X, size
+            const {{INPUT_DTYPE_t}}[:] X_data
+            const SPARSE_INDEX_TYPE_t[:] X_indices
+            const SPARSE_INDEX_TYPE_t[:] X_indptr
+
+            ITYPE_t n_Y
+            const {{INPUT_DTYPE_t}}[:] Y_data
+            const SPARSE_INDEX_TYPE_t[:] Y_indices
+            const SPARSE_INDEX_TYPE_t[:] Y_indptr
+
+            DTYPE_t[:, ::1] Darr
+
         X_csr = X.tocsr()
         n_X, size = X_csr.shape
         X_data = np.asarray(X_csr.data, dtype={{INPUT_DTYPE}})
         X_indices = np.asarray(X_csr.indices, dtype=SPARSE_INDEX_TYPE)
         X_indptr = np.asarray(X_csr.indptr, dtype=SPARSE_INDEX_TYPE)
-
         if X is Y:
             Darr = np.empty((n_X, n_X), dtype=DTYPE, order='C')
             self.pdist_csr(
                 x1_data=X_data,
-                x1_indices=X_indices,
+                x1_indices=&X_indices[0],
                 x1_indptr=X_indptr,
                 size=size,
                 D=Darr,
@@ -661,77 +677,81 @@ cdef class DistanceMetric{{name_suffix}}:
             Darr = np.empty((n_X, n_Y), dtype=DTYPE, order='C')
             self.cdist_csr(
                 x1_data=X_data,
-                x1_indices=X_indices,
+                x1_indices=&X_indices[0],
                 x1_indptr=X_indptr,
                 x2_data=Y_data,
-                x2_indices=Y_indices,
+                x2_indices=&Y_indices[0],
                 x2_indptr=Y_indptr,
                 size=size,
                 D=Darr,
             )
         return Darr
 
-    def _pairwise_sparse_dense(self, X, Y):
-        n_X, size = X.shape
-        X_data = np.asarray(X.data, dtype={{INPUT_DTYPE}})
-        X_indices = np.asarray(X.indices, dtype=SPARSE_INDEX_TYPE)
-        X_indptr = np.asarray(X.indptr, dtype=SPARSE_INDEX_TYPE)
+    def _pairwise_sparse_dense(self,
+        X: csr_matrix,
+        const {{INPUT_DTYPE_t}}[:, ::1] Y,
+    ):
+        cdef:
+            ITYPE_t n_X = X.shape[0]
+            ITYPE_t size = X.shape[1]
+            const {{INPUT_DTYPE_t}}[:] X_data = np.asarray(X.data, dtype={{INPUT_DTYPE}})
+            const SPARSE_INDEX_TYPE_t[:] X_indices = np.asarray(X.indices, dtype=SPARSE_INDEX_TYPE)
+            const SPARSE_INDEX_TYPE_t[:] X_indptr = np.asarray(X.indptr, dtype=SPARSE_INDEX_TYPE)
 
-        # To avoid introducing redundant implementations for the CSR × dense array
-        # case, we wrap the dense array into a fake CSR datastructure and leverage
-        # the existing code for the CSR × CSR case.
-        # The true CSR representation of a dense array would require allocating
-        # a Y_indices matrix of shape (n_samples, n_features) with repeated
-        # contiguous integers from 0 to n_features - 1 on each row which would
-        # be very wasteful from a memory point of view. Instead we only allocate
-        # a single row and adapt the CSR × CSR routines to use a modulo operation
-        # when accessing Y_indices in order to achieve the same result without having
-        # to materialize the indices repetition explicitly.
+            # To understand the CSR format used here, see the comment in
+            # `SparseDenseDatasetsPair.__init__`.
+            ITYPE_t n_Y = Y.shape[0]
+            const {{INPUT_DTYPE_t}}[:] Y_data = Y.reshape(-1)
+            const SPARSE_INDEX_TYPE_t[:] Y_indices = np.arange(size, dtype=SPARSE_INDEX_TYPE)
+            const SPARSE_INDEX_TYPE_t[:] Y_indptr = np.arange(
+                start=0, stop=size * (n_X + 1), step=size, dtype=SPARSE_INDEX_TYPE
+            )
 
-        n_Y, _ = Y.shape
-        Y_data = Y.reshape(-1)
-        Y_indices = np.arange(size, dtype=SPARSE_INDEX_TYPE)
-        Y_indptr = np.arange(
-            start=0, stop=size * (n_Y + 1), step=size, dtype=SPARSE_INDEX_TYPE
-        )
+            DTYPE_t[:, ::1] Darr = np.empty((n_X, n_Y), dtype=DTYPE, order='C')
 
-        Darr = np.empty((n_X, n_Y), dtype=DTYPE, order='C')
         self.cdist_csr(
             x1_data=X_data,
-            x1_indices=X_indices,
+            x1_indices=&X_indices[0],
             x1_indptr=X_indptr,
             x2_data=Y_data,
-            x2_indices=Y_indices,
+            x2_indices=&Y_indices[0],
             x2_indptr=Y_indptr,
             size=size,
             D=Darr,
         )
         return Darr
 
-    def _pairwise_dense_sparse(self, X, Y):
-        # Same remark as in _pairwise_sparse_dense. We could
-        # have implemented this method using _pairwise_dense_sparse,
-        # but this would have come with an extra copy to ensure
-        # c-contiguity of the result.
-        n_Y, size = Y.shape
-        Y_data = np.asarray(Y.data, dtype={{INPUT_DTYPE}})
-        Y_indices = np.asarray(Y.indices, dtype=SPARSE_INDEX_TYPE)
-        Y_indptr = np.asarray(Y.indptr, dtype=SPARSE_INDEX_TYPE)
+    def _pairwise_dense_sparse(self,
+        const {{INPUT_DTYPE_t}}[:, ::1] X,
+        Y: csr_matrix,
+    ):
+        # We could have implemented this method using _pairwise_dense_sparse by
+        # swapping argument and by transposing the results, but this would
+        # have come with an extra copy to ensure C-contiguity of the result.
+        cdef:
+            ITYPE_t n_X = X.shape[0]
+            ITYPE_t size = X.shape[1]
 
-        n_X, _ = X.shape
-        X_data = X.reshape(-1)
-        X_indices = np.arange(size, dtype=SPARSE_INDEX_TYPE)
-        X_indptr = np.arange(
-            start=0, stop=size * (n_X + 1), step=size, dtype=SPARSE_INDEX_TYPE
-        )
+            # To understand the CSR format used here, see the comment in
+            # `SparseDenseDatasetsPair.__init__`
+            const {{INPUT_DTYPE_t}}[:] X_data = X.reshape(-1)
+            const SPARSE_INDEX_TYPE_t[:] X_indices = np.arange(size, dtype=SPARSE_INDEX_TYPE)
+            const SPARSE_INDEX_TYPE_t[:] X_indptr = np.arange(
+                start=0, stop=size * (n_X + 1), step=size, dtype=SPARSE_INDEX_TYPE
+            )
+            ITYPE_t n_Y = Y.shape[0]
+            const {{INPUT_DTYPE_t}}[:] Y_data = np.asarray(Y.data, dtype={{INPUT_DTYPE}})
+            const SPARSE_INDEX_TYPE_t[:] Y_indices = np.asarray(Y.indices, dtype=SPARSE_INDEX_TYPE)
+            const SPARSE_INDEX_TYPE_t[:] Y_indptr = np.asarray(Y.indptr, dtype=SPARSE_INDEX_TYPE)
 
-        Darr = np.empty((n_X, n_Y), dtype=DTYPE, order='C')
+            DTYPE_t[:, ::1] Darr = np.empty((n_X, n_Y), dtype=DTYPE, order='C')
+
         self.cdist_csr(
             x1_data=X_data,
-            x1_indices=X_indices,
+            x1_indices=&X_indices[0],
             x1_indptr=X_indptr,
             x2_data=Y_data,
-            x2_indices=Y_indices,
+            x2_indices=&Y_indices[0],
             x2_indptr=Y_indptr,
             size=size,
             D=Darr,
@@ -818,9 +838,9 @@ cdef class EuclideanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     cdef inline DTYPE_t rdist_csr(
         self,
         const {{INPUT_DTYPE_t}}[:] x1_data,
-        const SPARSE_INDEX_TYPE_t[:] x1_indices,
+        const SPARSE_INDEX_TYPE_t* x1_indices,
         const {{INPUT_DTYPE_t}}[:] x2_data,
-        const SPARSE_INDEX_TYPE_t[:] x2_indices,
+        const SPARSE_INDEX_TYPE_t* x2_indices,
         const SPARSE_INDEX_TYPE_t x1_start,
         const SPARSE_INDEX_TYPE_t x1_end,
         const SPARSE_INDEX_TYPE_t x2_start,
@@ -832,18 +852,13 @@ cdef class EuclideanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             cnp.npy_intp ix1, ix2
             cnp.npy_intp i1 = x1_start
             cnp.npy_intp i2 = x2_start
-            cnp.npy_intp len_x1_indices = x1_indices.shape[0]
-            cnp.npy_intp len_x2_indices = x2_indices.shape[0]
 
             DTYPE_t d = 0.0
             DTYPE_t unsquared = 0
 
         while i1 < x1_end and i2 < x2_end:
-            # Use the modulo-trick to implement support for CSR × dense array
-            # with the CSR × CSR routine. See _pairwise_sparse_dense for more
-            # details.
-            ix1 = x1_indices[i1 % len_x1_indices]
-            ix2 = x2_indices[i2 % len_x2_indices]
+            ix1 = x1_indices[i1]
+            ix2 = x2_indices[i2]
 
             if ix1 == ix2:
                 unsquared = x1_data[i1] - x2_data[i2]
@@ -875,9 +890,9 @@ cdef class EuclideanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     cdef inline DTYPE_t dist_csr(
         self,
         const {{INPUT_DTYPE_t}}[:] x1_data,
-        const SPARSE_INDEX_TYPE_t[:] x1_indices,
+        const SPARSE_INDEX_TYPE_t* x1_indices,
         const {{INPUT_DTYPE_t}}[:] x2_data,
-        const SPARSE_INDEX_TYPE_t[:] x2_indices,
+        const SPARSE_INDEX_TYPE_t* x2_indices,
         const SPARSE_INDEX_TYPE_t x1_start,
         const SPARSE_INDEX_TYPE_t x1_end,
         const SPARSE_INDEX_TYPE_t x2_start,
@@ -951,9 +966,9 @@ cdef class SEuclideanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     cdef inline DTYPE_t rdist_csr(
         self,
         const {{INPUT_DTYPE_t}}[:] x1_data,
-        const SPARSE_INDEX_TYPE_t[:] x1_indices,
+        const SPARSE_INDEX_TYPE_t* x1_indices,
         const {{INPUT_DTYPE_t}}[:] x2_data,
-        const SPARSE_INDEX_TYPE_t[:] x2_indices,
+        const SPARSE_INDEX_TYPE_t* x2_indices,
         const SPARSE_INDEX_TYPE_t x1_start,
         const SPARSE_INDEX_TYPE_t x1_end,
         const SPARSE_INDEX_TYPE_t x2_start,
@@ -965,18 +980,13 @@ cdef class SEuclideanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             cnp.npy_intp ix1, ix2
             cnp.npy_intp i1 = x1_start
             cnp.npy_intp i2 = x2_start
-            cnp.npy_intp len_x1_indices = x1_indices.shape[0]
-            cnp.npy_intp len_x2_indices = x2_indices.shape[0]
 
             DTYPE_t d = 0.0
             DTYPE_t unsquared = 0
 
         while i1 < x1_end and i2 < x2_end:
-            # Use the modulo-trick to implement support for CSR × dense array
-            # with the CSR × CSR routine. See _pairwise_sparse_dense for more
-            # details.
-            ix1 = x1_indices[i1 % len_x1_indices]
-            ix2 = x2_indices[i2 % len_x2_indices]
+            ix1 = x1_indices[i1]
+            ix2 = x2_indices[i2]
 
             if ix1 == ix2:
                 unsquared = x1_data[i1] - x2_data[i2]
@@ -994,13 +1004,13 @@ cdef class SEuclideanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
         if i1 == x1_end:
             while i2 < x2_end:
-                ix2 = x2_indices[i2 % len_x2_indices]
+                ix2 = x2_indices[i2]
                 unsquared = x2_data[i2]
                 d = d + (unsquared * unsquared) / self.vec[ix2]
                 i2 = i2 + 1
         else:
             while i1 < x1_end:
-                ix1 = x1_indices[i1 % len_x1_indices]
+                ix1 = x1_indices[i1]
                 unsquared = x1_data[i1]
                 d = d + (unsquared * unsquared) / self.vec[ix1]
                 i1 = i1 + 1
@@ -1009,9 +1019,9 @@ cdef class SEuclideanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     cdef inline DTYPE_t dist_csr(
         self,
         const {{INPUT_DTYPE_t}}[:] x1_data,
-        const SPARSE_INDEX_TYPE_t[:] x1_indices,
+        const SPARSE_INDEX_TYPE_t* x1_indices,
         const {{INPUT_DTYPE_t}}[:] x2_data,
-        const SPARSE_INDEX_TYPE_t[:] x2_indices,
+        const SPARSE_INDEX_TYPE_t* x2_indices,
         const SPARSE_INDEX_TYPE_t x1_start,
         const SPARSE_INDEX_TYPE_t x1_end,
         const SPARSE_INDEX_TYPE_t x2_start,
@@ -1058,9 +1068,9 @@ cdef class ManhattanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     cdef inline DTYPE_t dist_csr(
         self,
         const {{INPUT_DTYPE_t}}[:] x1_data,
-        const SPARSE_INDEX_TYPE_t[:] x1_indices,
+        const SPARSE_INDEX_TYPE_t* x1_indices,
         const {{INPUT_DTYPE_t}}[:] x2_data,
-        const SPARSE_INDEX_TYPE_t[:] x2_indices,
+        const SPARSE_INDEX_TYPE_t* x2_indices,
         const SPARSE_INDEX_TYPE_t x1_start,
         const SPARSE_INDEX_TYPE_t x1_end,
         const SPARSE_INDEX_TYPE_t x2_start,
@@ -1072,17 +1082,12 @@ cdef class ManhattanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             cnp.npy_intp ix1, ix2
             cnp.npy_intp i1 = x1_start
             cnp.npy_intp i2 = x2_start
-            cnp.npy_intp len_x1_indices = x1_indices.shape[0]
-            cnp.npy_intp len_x2_indices = x2_indices.shape[0]
 
             DTYPE_t d = 0.0
 
         while i1 < x1_end and i2 < x2_end:
-            # Use the modulo-trick to implement support for CSR × dense array
-            # with the CSR × CSR routine. See _pairwise_sparse_dense for more
-            # details.
-            ix1 = x1_indices[i1 % len_x1_indices]
-            ix2 = x2_indices[i2 % len_x2_indices]
+            ix1 = x1_indices[i1]
+            ix2 = x2_indices[i2]
 
             if ix1 == ix2:
                 d = d + fabs(x1_data[i1] - x2_data[i2])
@@ -1147,9 +1152,9 @@ cdef class ChebyshevDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     cdef inline DTYPE_t dist_csr(
         self,
         const {{INPUT_DTYPE_t}}[:] x1_data,
-        const SPARSE_INDEX_TYPE_t[:] x1_indices,
+        const SPARSE_INDEX_TYPE_t* x1_indices,
         const {{INPUT_DTYPE_t}}[:] x2_data,
-        const SPARSE_INDEX_TYPE_t[:] x2_indices,
+        const SPARSE_INDEX_TYPE_t* x2_indices,
         const SPARSE_INDEX_TYPE_t x1_start,
         const SPARSE_INDEX_TYPE_t x1_end,
         const SPARSE_INDEX_TYPE_t x2_start,
@@ -1161,17 +1166,12 @@ cdef class ChebyshevDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             cnp.npy_intp ix1, ix2
             cnp.npy_intp i1 = x1_start
             cnp.npy_intp i2 = x2_start
-            cnp.npy_intp len_x1_indices = x1_indices.shape[0]
-            cnp.npy_intp len_x2_indices = x2_indices.shape[0]
 
             DTYPE_t d = 0.0
 
         while i1 < x1_end and i2 < x2_end:
-            # Use the modulo-trick to implement support for CSR × dense array
-            # with the CSR × CSR routine. See _pairwise_sparse_dense for more
-            # details.
-            ix1 = x1_indices[i1 % len_x1_indices]
-            ix2 = x2_indices[i2 % len_x2_indices]
+            ix1 = x1_indices[i1]
+            ix2 = x2_indices[i2]
 
             if ix1 == ix2:
                 d = fmax(d, fabs(x1_data[i1] - x2_data[i2]))
@@ -1289,9 +1289,9 @@ cdef class MinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     cdef inline DTYPE_t rdist_csr(
         self,
         const {{INPUT_DTYPE_t}}[:] x1_data,
-        const SPARSE_INDEX_TYPE_t[:] x1_indices,
+        const SPARSE_INDEX_TYPE_t* x1_indices,
         const {{INPUT_DTYPE_t}}[:] x2_data,
-        const SPARSE_INDEX_TYPE_t[:] x2_indices,
+        const SPARSE_INDEX_TYPE_t* x2_indices,
         const SPARSE_INDEX_TYPE_t x1_start,
         const SPARSE_INDEX_TYPE_t x1_end,
         const SPARSE_INDEX_TYPE_t x2_start,
@@ -1303,19 +1303,14 @@ cdef class MinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             cnp.npy_intp ix1, ix2
             cnp.npy_intp i1 = x1_start
             cnp.npy_intp i2 = x2_start
-            cnp.npy_intp len_x1_indices = x1_indices.shape[0]
-            cnp.npy_intp len_x2_indices = x2_indices.shape[0]
 
             DTYPE_t d = 0.0
             bint has_w = self.size > 0
 
         if has_w:
             while i1 < x1_end and i2 < x2_end:
-                # Use the modulo-trick to implement support for CSR × dense array
-                # with the CSR × CSR routine. See _pairwise_sparse_dense for more
-                # details.
-                ix1 = x1_indices[i1 % len_x1_indices]
-                ix2 = x2_indices[i2 % len_x2_indices]
+                ix1 = x1_indices[i1]
+                ix2 = x2_indices[i2]
 
                 if ix1 == ix2:
                     d = d + (self.vec[ix1] * pow(fabs(
@@ -1332,23 +1327,20 @@ cdef class MinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
             if i1 == x1_end:
                 while i2 < x2_end:
-                    ix2 = x2_indices[i2 % len_x2_indices]
+                    ix2 = x2_indices[i2]
                     d = d + (self.vec[ix2] * pow(fabs(x2_data[i2]), self.p))
                     i2 = i2 + 1
             else:
                 while i1 < x1_end:
-                    ix1 = x1_indices[i1 % len_x1_indices]
+                    ix1 = x1_indices[i1]
                     d = d + (self.vec[ix1] * pow(fabs(x1_data[i1]), self.p))
                     i1 = i1 + 1
 
             return d
         else:
             while i1 < x1_end and i2 < x2_end:
-                # Use the modulo-trick to implement support for CSR × dense array
-                # with the CSR × CSR routine. See _pairwise_sparse_dense for more
-                # details.
-                ix1 = x1_indices[i1 % len_x1_indices]
-                ix2 = x2_indices[i2 % len_x2_indices]
+                ix1 = x1_indices[i1]
+                ix2 = x2_indices[i2]
 
                 if ix1 == ix2:
                     d = d + (pow(fabs(
@@ -1377,9 +1369,9 @@ cdef class MinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     cdef inline DTYPE_t dist_csr(
         self,
         const {{INPUT_DTYPE_t}}[:] x1_data,
-        const SPARSE_INDEX_TYPE_t[:] x1_indices,
+        const SPARSE_INDEX_TYPE_t* x1_indices,
         const {{INPUT_DTYPE_t}}[:] x2_data,
-        const SPARSE_INDEX_TYPE_t[:] x2_indices,
+        const SPARSE_INDEX_TYPE_t* x2_indices,
         const SPARSE_INDEX_TYPE_t x1_start,
         const SPARSE_INDEX_TYPE_t x1_end,
         const SPARSE_INDEX_TYPE_t x2_start,
@@ -1481,9 +1473,9 @@ cdef class WMinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     cdef inline DTYPE_t rdist_csr(
         self,
         const {{INPUT_DTYPE_t}}[:] x1_data,
-        const SPARSE_INDEX_TYPE_t[:] x1_indices,
+        const SPARSE_INDEX_TYPE_t* x1_indices,
         const {{INPUT_DTYPE_t}}[:] x2_data,
-        const SPARSE_INDEX_TYPE_t[:] x2_indices,
+        const SPARSE_INDEX_TYPE_t* x2_indices,
         const SPARSE_INDEX_TYPE_t x1_start,
         const SPARSE_INDEX_TYPE_t x1_end,
         const SPARSE_INDEX_TYPE_t x2_start,
@@ -1495,17 +1487,12 @@ cdef class WMinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             cnp.npy_intp ix1, ix2
             cnp.npy_intp i1 = x1_start
             cnp.npy_intp i2 = x2_start
-            cnp.npy_intp len_x1_indices = x1_indices.shape[0]
-            cnp.npy_intp len_x2_indices = x2_indices.shape[0]
 
             DTYPE_t d = 0.0
 
         while i1 < x1_end and i2 < x2_end:
-            # Use the modulo-trick to implement support for CSR × dense array
-            # with the CSR × CSR routine. See _pairwise_sparse_dense for more
-            # details.
-            ix1 = x1_indices[i1 % len_x1_indices]
-            ix2 = x2_indices[i2 % len_x2_indices]
+            ix1 = x1_indices[i1]
+            ix2 = x2_indices[i2]
 
             if ix1 == ix2:
                 d = d + pow(self.vec[ix1] * fabs(
@@ -1522,12 +1509,12 @@ cdef class WMinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
         if i1 == x1_end:
             while i2 < x2_end:
-                ix2 = x2_indices[i2 % len_x2_indices]
+                ix2 = x2_indices[i2]
                 d = d + pow(self.vec[ix2] * fabs(x2_data[i2]), self.p)
                 i2 = i2 + 1
         else:
             while i1 < x1_end:
-                ix1 = x1_indices[i1 % len_x1_indices]
+                ix1 = x1_indices[i1]
                 d = d + pow(self.vec[ix1] * fabs(x1_data[i1]), self.p)
                 i1 = i1 + 1
 
@@ -1536,9 +1523,9 @@ cdef class WMinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     cdef inline DTYPE_t dist_csr(
         self,
         const {{INPUT_DTYPE_t}}[:] x1_data,
-        const SPARSE_INDEX_TYPE_t[:] x1_indices,
+        const SPARSE_INDEX_TYPE_t* x1_indices,
         const {{INPUT_DTYPE_t}}[:] x2_data,
-        const SPARSE_INDEX_TYPE_t[:] x2_indices,
+        const SPARSE_INDEX_TYPE_t* x2_indices,
         const SPARSE_INDEX_TYPE_t x1_start,
         const SPARSE_INDEX_TYPE_t x1_end,
         const SPARSE_INDEX_TYPE_t x2_start,
@@ -1641,9 +1628,9 @@ cdef class MahalanobisDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     cdef inline DTYPE_t rdist_csr(
         self,
         const {{INPUT_DTYPE_t}}[:] x1_data,
-        const SPARSE_INDEX_TYPE_t[:] x1_indices,
+        const SPARSE_INDEX_TYPE_t* x1_indices,
         const {{INPUT_DTYPE_t}}[:] x2_data,
-        const SPARSE_INDEX_TYPE_t[:] x2_indices,
+        const SPARSE_INDEX_TYPE_t* x2_indices,
         const SPARSE_INDEX_TYPE_t x1_start,
         const SPARSE_INDEX_TYPE_t x1_end,
         const SPARSE_INDEX_TYPE_t x2_start,
@@ -1655,17 +1642,12 @@ cdef class MahalanobisDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             cnp.npy_intp ix1, ix2
             cnp.npy_intp i1 = x1_start
             cnp.npy_intp i2 = x2_start
-            cnp.npy_intp len_x1_indices = x1_indices.shape[0]
-            cnp.npy_intp len_x2_indices = x2_indices.shape[0]
 
             DTYPE_t tmp, d = 0.0
 
         while i1 < x1_end and i2 < x2_end:
-            # Use the modulo-trick to implement support for CSR × dense array
-            # with the CSR × CSR routine. See _pairwise_sparse_dense for more
-            # details.
-            ix1 = x1_indices[i1 % len_x1_indices]
-            ix2 = x2_indices[i2 % len_x2_indices]
+            ix1 = x1_indices[i1]
+            ix2 = x2_indices[i2]
 
             if ix1 == ix2:
                 self.vec[ix1] = x1_data[i1] - x2_data[i2]
@@ -1680,12 +1662,12 @@ cdef class MahalanobisDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
         if i1 == x1_end:
             while i2 < x2_end:
-                ix2 = x2_indices[i2 % len_x2_indices]
+                ix2 = x2_indices[i2]
                 self.vec[ix2] = - x2_data[i2]
                 i2 = i2 + 1
         else:
             while i1 < x1_end:
-                ix1 = x1_indices[i1 % len_x1_indices]
+                ix1 = x1_indices[i1]
                 self.vec[ix1] = x1_data[i1]
                 i1 = i1 + 1
 
@@ -1700,9 +1682,9 @@ cdef class MahalanobisDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     cdef inline DTYPE_t dist_csr(
         self,
         const {{INPUT_DTYPE_t}}[:] x1_data,
-        const SPARSE_INDEX_TYPE_t[:] x1_indices,
+        const SPARSE_INDEX_TYPE_t* x1_indices,
         const {{INPUT_DTYPE_t}}[:] x2_data,
-        const SPARSE_INDEX_TYPE_t[:] x2_indices,
+        const SPARSE_INDEX_TYPE_t* x2_indices,
         const SPARSE_INDEX_TYPE_t x1_start,
         const SPARSE_INDEX_TYPE_t x1_end,
         const SPARSE_INDEX_TYPE_t x2_start,
@@ -1751,9 +1733,9 @@ cdef class HammingDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     cdef inline DTYPE_t dist_csr(
         self,
         const {{INPUT_DTYPE_t}}[:] x1_data,
-        const SPARSE_INDEX_TYPE_t[:] x1_indices,
+        const SPARSE_INDEX_TYPE_t* x1_indices,
         const {{INPUT_DTYPE_t}}[:] x2_data,
-        const SPARSE_INDEX_TYPE_t[:] x2_indices,
+        const SPARSE_INDEX_TYPE_t* x2_indices,
         const SPARSE_INDEX_TYPE_t x1_start,
         const SPARSE_INDEX_TYPE_t x1_end,
         const SPARSE_INDEX_TYPE_t x2_start,
@@ -1765,17 +1747,12 @@ cdef class HammingDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             cnp.npy_intp ix1, ix2
             cnp.npy_intp i1 = x1_start
             cnp.npy_intp i2 = x2_start
-            cnp.npy_intp len_x1_indices = x1_indices.shape[0]
-            cnp.npy_intp len_x2_indices = x2_indices.shape[0]
 
             DTYPE_t d = 0.0
 
         while i1 < x1_end and i2 < x2_end:
-            # Use the modulo-trick to implement support for CSR × dense array
-            # with the CSR × CSR routine. See _pairwise_sparse_dense for more
-            # details.
-            ix1 = x1_indices[i1 % len_x1_indices]
-            ix2 = x2_indices[i2 % len_x2_indices]
+            ix1 = x1_indices[i1]
+            ix2 = x2_indices[i2]
 
             if ix1 == ix2:
                 d += (x1_data[i1] != x2_data[i2])
@@ -1831,9 +1808,9 @@ cdef class CanberraDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     cdef inline DTYPE_t dist_csr(
         self,
         const {{INPUT_DTYPE_t}}[:] x1_data,
-        const SPARSE_INDEX_TYPE_t[:] x1_indices,
+        const SPARSE_INDEX_TYPE_t* x1_indices,
         const {{INPUT_DTYPE_t}}[:] x2_data,
-        const SPARSE_INDEX_TYPE_t[:] x2_indices,
+        const SPARSE_INDEX_TYPE_t* x2_indices,
         const SPARSE_INDEX_TYPE_t x1_start,
         const SPARSE_INDEX_TYPE_t x1_end,
         const SPARSE_INDEX_TYPE_t x2_start,
@@ -1845,17 +1822,12 @@ cdef class CanberraDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             cnp.npy_intp ix1, ix2
             cnp.npy_intp i1 = x1_start
             cnp.npy_intp i2 = x2_start
-            cnp.npy_intp len_x1_indices = x1_indices.shape[0]
-            cnp.npy_intp len_x2_indices = x2_indices.shape[0]
 
             DTYPE_t d = 0.0
 
         while i1 < x1_end and i2 < x2_end:
-            # Use the modulo-trick to implement support for CSR × dense array
-            # with the CSR × CSR routine. See _pairwise_sparse_dense for more
-            # details.
-            ix1 = x1_indices[i1 % len_x1_indices]
-            ix2 = x2_indices[i2 % len_x2_indices]
+            ix1 = x1_indices[i1]
+            ix2 = x2_indices[i2]
 
             if ix1 == ix2:
                 d += (
@@ -1913,9 +1885,9 @@ cdef class BrayCurtisDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     cdef inline DTYPE_t dist_csr(
         self,
         const {{INPUT_DTYPE_t}}[:] x1_data,
-        const SPARSE_INDEX_TYPE_t[:] x1_indices,
+        const SPARSE_INDEX_TYPE_t* x1_indices,
         const {{INPUT_DTYPE_t}}[:] x2_data,
-        const SPARSE_INDEX_TYPE_t[:] x2_indices,
+        const SPARSE_INDEX_TYPE_t* x2_indices,
         const SPARSE_INDEX_TYPE_t x1_start,
         const SPARSE_INDEX_TYPE_t x1_end,
         const SPARSE_INDEX_TYPE_t x2_start,
@@ -1927,18 +1899,13 @@ cdef class BrayCurtisDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             cnp.npy_intp ix1, ix2
             cnp.npy_intp i1 = x1_start
             cnp.npy_intp i2 = x2_start
-            cnp.npy_intp len_x1_indices = x1_indices.shape[0]
-            cnp.npy_intp len_x2_indices = x2_indices.shape[0]
 
             DTYPE_t num = 0.0
             DTYPE_t denom = 0.0
 
         while i1 < x1_end and i2 < x2_end:
-            # Use the modulo-trick to implement support for CSR × dense array
-            # with the CSR × CSR routine. See _pairwise_sparse_dense for more
-            # details.
-            ix1 = x1_indices[i1 % len_x1_indices]
-            ix2 = x2_indices[i2 % len_x2_indices]
+            ix1 = x1_indices[i1]
+            ix2 = x2_indices[i2]
 
             if ix1 == ix2:
                 num += fabs(x1_data[i1] - x2_data[i2])
@@ -2002,9 +1969,9 @@ cdef class JaccardDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     cdef inline DTYPE_t dist_csr(
         self,
         const {{INPUT_DTYPE_t}}[:] x1_data,
-        const SPARSE_INDEX_TYPE_t[:] x1_indices,
+        const SPARSE_INDEX_TYPE_t* x1_indices,
         const {{INPUT_DTYPE_t}}[:] x2_data,
-        const SPARSE_INDEX_TYPE_t[:] x2_indices,
+        const SPARSE_INDEX_TYPE_t* x2_indices,
         const SPARSE_INDEX_TYPE_t x1_start,
         const SPARSE_INDEX_TYPE_t x1_end,
         const SPARSE_INDEX_TYPE_t x2_start,
@@ -2016,17 +1983,12 @@ cdef class JaccardDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             cnp.npy_intp ix1, ix2
             cnp.npy_intp i1 = x1_start
             cnp.npy_intp i2 = x2_start
-            cnp.npy_intp len_x1_indices = x1_indices.shape[0]
-            cnp.npy_intp len_x2_indices = x2_indices.shape[0]
 
             ITYPE_t tf1, tf2, n_tt = 0, nnz = 0
 
         while i1 < x1_end and i2 < x2_end:
-            # Use the modulo-trick to implement support for CSR × dense array
-            # with the CSR × CSR routine. See _pairwise_sparse_dense for more
-            # details.
-            ix1 = x1_indices[i1 % len_x1_indices]
-            ix2 = x2_indices[i2 % len_x2_indices]
+            ix1 = x1_indices[i1]
+            ix2 = x2_indices[i2]
 
             tf1 = x1_data[i1] != 0
             tf2 = x2_data[i2] != 0
@@ -2090,9 +2052,9 @@ cdef class MatchingDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     cdef inline DTYPE_t dist_csr(
         self,
         const {{INPUT_DTYPE_t}}[:] x1_data,
-        const SPARSE_INDEX_TYPE_t[:] x1_indices,
+        const SPARSE_INDEX_TYPE_t* x1_indices,
         const {{INPUT_DTYPE_t}}[:] x2_data,
-        const SPARSE_INDEX_TYPE_t[:] x2_indices,
+        const SPARSE_INDEX_TYPE_t* x2_indices,
         const SPARSE_INDEX_TYPE_t x1_start,
         const SPARSE_INDEX_TYPE_t x1_end,
         const SPARSE_INDEX_TYPE_t x2_start,
@@ -2104,17 +2066,12 @@ cdef class MatchingDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             cnp.npy_intp ix1, ix2
             cnp.npy_intp i1 = x1_start
             cnp.npy_intp i2 = x2_start
-            cnp.npy_intp len_x1_indices = x1_indices.shape[0]
-            cnp.npy_intp len_x2_indices = x2_indices.shape[0]
 
             ITYPE_t tf1, tf2, n_neq = 0
 
         while i1 < x1_end and i2 < x2_end:
-            # Use the modulo-trick to implement support for CSR × dense array
-            # with the CSR × CSR routine. See _pairwise_sparse_dense for more
-            # details.
-            ix1 = x1_indices[i1 % len_x1_indices]
-            ix2 = x2_indices[i2 % len_x2_indices]
+            ix1 = x1_indices[i1]
+            ix2 = x2_indices[i2]
 
             if ix1 == ix2:
                 tf1 = x1_data[i1] != 0
@@ -2171,9 +2128,9 @@ cdef class DiceDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     cdef inline DTYPE_t dist_csr(
         self,
         const {{INPUT_DTYPE_t}}[:] x1_data,
-        const SPARSE_INDEX_TYPE_t[:] x1_indices,
+        const SPARSE_INDEX_TYPE_t* x1_indices,
         const {{INPUT_DTYPE_t}}[:] x2_data,
-        const SPARSE_INDEX_TYPE_t[:] x2_indices,
+        const SPARSE_INDEX_TYPE_t* x2_indices,
         const SPARSE_INDEX_TYPE_t x1_start,
         const SPARSE_INDEX_TYPE_t x1_end,
         const SPARSE_INDEX_TYPE_t x2_start,
@@ -2185,17 +2142,12 @@ cdef class DiceDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             cnp.npy_intp ix1, ix2
             cnp.npy_intp i1 = x1_start
             cnp.npy_intp i2 = x2_start
-            cnp.npy_intp len_x1_indices = x1_indices.shape[0]
-            cnp.npy_intp len_x2_indices = x2_indices.shape[0]
 
             ITYPE_t tf1, tf2, n_tt = 0, n_neq = 0
 
         while i1 < x1_end and i2 < x2_end:
-            # Use the modulo-trick to implement support for CSR × dense array
-            # with the CSR × CSR routine. See _pairwise_sparse_dense for more
-            # details.
-            ix1 = x1_indices[i1 % len_x1_indices]
-            ix2 = x2_indices[i2 % len_x2_indices]
+            ix1 = x1_indices[i1]
+            ix2 = x2_indices[i2]
 
             tf1 = x1_data[i1] != 0
             tf2 = x2_data[i2] != 0
@@ -2257,9 +2209,9 @@ cdef class KulsinskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     cdef inline DTYPE_t dist_csr(
         self,
         const {{INPUT_DTYPE_t}}[:] x1_data,
-        const SPARSE_INDEX_TYPE_t[:] x1_indices,
+        const SPARSE_INDEX_TYPE_t* x1_indices,
         const {{INPUT_DTYPE_t}}[:] x2_data,
-        const SPARSE_INDEX_TYPE_t[:] x2_indices,
+        const SPARSE_INDEX_TYPE_t* x2_indices,
         const SPARSE_INDEX_TYPE_t x1_start,
         const SPARSE_INDEX_TYPE_t x1_end,
         const SPARSE_INDEX_TYPE_t x2_start,
@@ -2271,17 +2223,12 @@ cdef class KulsinskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             cnp.npy_intp ix1, ix2
             cnp.npy_intp i1 = x1_start
             cnp.npy_intp i2 = x2_start
-            cnp.npy_intp len_x1_indices = x1_indices.shape[0]
-            cnp.npy_intp len_x2_indices = x2_indices.shape[0]
 
             ITYPE_t tf1, tf2, n_tt = 0, n_neq = 0
 
         while i1 < x1_end and i2 < x2_end:
-            # Use the modulo-trick to implement support for CSR × dense array
-            # with the CSR × CSR routine. See _pairwise_sparse_dense for more
-            # details.
-            ix1 = x1_indices[i1 % len_x1_indices]
-            ix2 = x2_indices[i2 % len_x2_indices]
+            ix1 = x1_indices[i1]
+            ix2 = x2_indices[i2]
 
             tf1 = x1_data[i1] != 0
             tf2 = x2_data[i2] != 0
@@ -2340,9 +2287,9 @@ cdef class RogersTanimotoDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     cdef inline DTYPE_t dist_csr(
         self,
         const {{INPUT_DTYPE_t}}[:] x1_data,
-        const SPARSE_INDEX_TYPE_t[:] x1_indices,
+        const SPARSE_INDEX_TYPE_t* x1_indices,
         const {{INPUT_DTYPE_t}}[:] x2_data,
-        const SPARSE_INDEX_TYPE_t[:] x2_indices,
+        const SPARSE_INDEX_TYPE_t* x2_indices,
         const SPARSE_INDEX_TYPE_t x1_start,
         const SPARSE_INDEX_TYPE_t x1_end,
         const SPARSE_INDEX_TYPE_t x2_start,
@@ -2354,17 +2301,12 @@ cdef class RogersTanimotoDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             cnp.npy_intp ix1, ix2
             cnp.npy_intp i1 = x1_start
             cnp.npy_intp i2 = x2_start
-            cnp.npy_intp len_x1_indices = x1_indices.shape[0]
-            cnp.npy_intp len_x2_indices = x2_indices.shape[0]
 
             ITYPE_t tf1, tf2, n_neq = 0
 
         while i1 < x1_end and i2 < x2_end:
-            # Use the modulo-trick to implement support for CSR × dense array
-            # with the CSR × CSR routine. See _pairwise_sparse_dense for more
-            # details.
-            ix1 = x1_indices[i1 % len_x1_indices]
-            ix2 = x2_indices[i2 % len_x2_indices]
+            ix1 = x1_indices[i1]
+            ix2 = x2_indices[i2]
 
             tf1 = x1_data[i1] != 0
             tf2 = x2_data[i2] != 0
@@ -2422,9 +2364,9 @@ cdef class RussellRaoDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     cdef inline DTYPE_t dist_csr(
         self,
         const {{INPUT_DTYPE_t}}[:] x1_data,
-        const SPARSE_INDEX_TYPE_t[:] x1_indices,
+        const SPARSE_INDEX_TYPE_t* x1_indices,
         const {{INPUT_DTYPE_t}}[:] x2_data,
-        const SPARSE_INDEX_TYPE_t[:] x2_indices,
+        const SPARSE_INDEX_TYPE_t* x2_indices,
         const SPARSE_INDEX_TYPE_t x1_start,
         const SPARSE_INDEX_TYPE_t x1_end,
         const SPARSE_INDEX_TYPE_t x2_start,
@@ -2436,17 +2378,12 @@ cdef class RussellRaoDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             cnp.npy_intp ix1, ix2
             cnp.npy_intp i1 = x1_start
             cnp.npy_intp i2 = x2_start
-            cnp.npy_intp len_x1_indices = x1_indices.shape[0]
-            cnp.npy_intp len_x2_indices = x2_indices.shape[0]
 
             ITYPE_t tf1, tf2, n_tt = 0
 
         while i1 < x1_end and i2 < x2_end:
-            # Use the modulo-trick to implement support for CSR × dense array
-            # with the CSR × CSR routine. See _pairwise_sparse_dense for more
-            # details.
-            ix1 = x1_indices[i1 % len_x1_indices]
-            ix2 = x2_indices[i2 % len_x2_indices]
+            ix1 = x1_indices[i1]
+            ix2 = x2_indices[i2]
 
             tf1 = x1_data[i1] != 0
             tf2 = x2_data[i2] != 0
@@ -2497,9 +2434,9 @@ cdef class SokalMichenerDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     cdef inline DTYPE_t dist_csr(
         self,
         const {{INPUT_DTYPE_t}}[:] x1_data,
-        const SPARSE_INDEX_TYPE_t[:] x1_indices,
+        const SPARSE_INDEX_TYPE_t* x1_indices,
         const {{INPUT_DTYPE_t}}[:] x2_data,
-        const SPARSE_INDEX_TYPE_t[:] x2_indices,
+        const SPARSE_INDEX_TYPE_t* x2_indices,
         const SPARSE_INDEX_TYPE_t x1_start,
         const SPARSE_INDEX_TYPE_t x1_end,
         const SPARSE_INDEX_TYPE_t x2_start,
@@ -2511,17 +2448,12 @@ cdef class SokalMichenerDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             cnp.npy_intp ix1, ix2
             cnp.npy_intp i1 = x1_start
             cnp.npy_intp i2 = x2_start
-            cnp.npy_intp len_x1_indices = x1_indices.shape[0]
-            cnp.npy_intp len_x2_indices = x2_indices.shape[0]
 
             ITYPE_t tf1, tf2, n_neq = 0
 
         while i1 < x1_end and i2 < x2_end:
-            # Use the modulo-trick to implement support for CSR × dense array
-            # with the CSR × CSR routine. See _pairwise_sparse_dense for more
-            # details.
-            ix1 = x1_indices[i1 % len_x1_indices]
-            ix2 = x2_indices[i2 % len_x2_indices]
+            ix1 = x1_indices[i1]
+            ix2 = x2_indices[i2]
 
             tf1 = x1_data[i1] != 0
             tf2 = x2_data[i2] != 0
@@ -2580,9 +2512,9 @@ cdef class SokalSneathDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     cdef inline DTYPE_t dist_csr(
         self,
         const {{INPUT_DTYPE_t}}[:] x1_data,
-        const SPARSE_INDEX_TYPE_t[:] x1_indices,
+        const SPARSE_INDEX_TYPE_t* x1_indices,
         const {{INPUT_DTYPE_t}}[:] x2_data,
-        const SPARSE_INDEX_TYPE_t[:] x2_indices,
+        const SPARSE_INDEX_TYPE_t* x2_indices,
         const SPARSE_INDEX_TYPE_t x1_start,
         const SPARSE_INDEX_TYPE_t x1_end,
         const SPARSE_INDEX_TYPE_t x2_start,
@@ -2594,17 +2526,12 @@ cdef class SokalSneathDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             cnp.npy_intp ix1, ix2
             cnp.npy_intp i1 = x1_start
             cnp.npy_intp i2 = x2_start
-            cnp.npy_intp len_x1_indices = x1_indices.shape[0]
-            cnp.npy_intp len_x2_indices = x2_indices.shape[0]
 
             ITYPE_t tf1, tf2, n_tt = 0, n_neq = 0
 
         while i1 < x1_end and i2 < x2_end:
-            # Use the modulo-trick to implement support for CSR × dense array
-            # with the CSR × CSR routine. See _pairwise_sparse_dense for more
-            # details.
-            ix1 = x1_indices[i1 % len_x1_indices]
-            ix2 = x2_indices[i2 % len_x2_indices]
+            ix1 = x1_indices[i1]
+            ix2 = x2_indices[i2]
 
             tf1 = x1_data[i1] != 0
             tf2 = x2_data[i2] != 0
@@ -2689,9 +2616,9 @@ cdef class HaversineDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     cdef inline DTYPE_t dist_csr(
          self,
          const {{INPUT_DTYPE_t}}[:] x1_data,
-         const SPARSE_INDEX_TYPE_t[:] x1_indices,
+         const SPARSE_INDEX_TYPE_t* x1_indices,
          const {{INPUT_DTYPE_t}}[:] x2_data,
-         const SPARSE_INDEX_TYPE_t[:] x2_indices,
+         const SPARSE_INDEX_TYPE_t* x2_indices,
          const SPARSE_INDEX_TYPE_t x1_start,
          const SPARSE_INDEX_TYPE_t x1_end,
          const SPARSE_INDEX_TYPE_t x2_start,
@@ -2713,9 +2640,9 @@ cdef class HaversineDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     cdef inline DTYPE_t rdist_csr(
         self,
         const {{INPUT_DTYPE_t}}[:] x1_data,
-        const SPARSE_INDEX_TYPE_t[:] x1_indices,
+        const SPARSE_INDEX_TYPE_t* x1_indices,
         const {{INPUT_DTYPE_t}}[:] x2_data,
-        const SPARSE_INDEX_TYPE_t[:] x2_indices,
+        const SPARSE_INDEX_TYPE_t* x2_indices,
         const SPARSE_INDEX_TYPE_t x1_start,
         const SPARSE_INDEX_TYPE_t x1_end,
         const SPARSE_INDEX_TYPE_t x2_start,
@@ -2727,8 +2654,6 @@ cdef class HaversineDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             cnp.npy_intp ix1, ix2
             cnp.npy_intp i1 = x1_start
             cnp.npy_intp i2 = x2_start
-            cnp.npy_intp len_x1_indices = x1_indices.shape[0]
-            cnp.npy_intp len_x2_indices = x2_indices.shape[0]
 
             DTYPE_t x1_0 = 0
             DTYPE_t x1_1 = 0
@@ -2738,11 +2663,8 @@ cdef class HaversineDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             DTYPE_t sin_1
 
         while i1 < x1_end and i2 < x2_end:
-            # Use the modulo-trick to implement support for CSR × dense array
-            # with the CSR × CSR routine. See _pairwise_sparse_dense for more
-            # details.
-            ix1 = x1_indices[i1 % len_x1_indices]
-            ix2 = x2_indices[i2 % len_x2_indices]
+            ix1 = x1_indices[i1]
+            ix2 = x2_indices[i2]
 
             # Find the components in the 2D vectors to work with
             x1_component = ix1 if (x1_start == 0) else ix1 % x1_start
@@ -2763,7 +2685,7 @@ cdef class HaversineDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
         if i1 == x1_end:
             while i2 < x2_end:
-                ix2 = x2_indices[i2 % len_x2_indices]
+                ix2 = x2_indices[i2]
                 x2_component = ix2 if (x2_start == 0) else ix2 % x2_start
                 if x2_component == 0:
                     x2_0 = x2_data[i2]
@@ -2772,7 +2694,7 @@ cdef class HaversineDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
                 i2 = i2 + 1
         else:
             while i1 < x1_end:
-                ix1 = x1_indices[i1 % len_x1_indices]
+                ix1 = x1_indices[i1]
                 x1_component = ix1 if (x1_start == 0) else ix1 % x1_start
                 if x1_component == 0:
                     x1_0 = x1_data[i1]
