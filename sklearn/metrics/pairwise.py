@@ -1225,8 +1225,7 @@ def polynomial_kernel(X, Y=None, degree=3, gamma=None, coef0=1):
 
 
 def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
-    """
-    Compute the sigmoid kernel between X and Y::
+    """Compute the sigmoid kernel between X and Y.
 
         K(X, Y) = tanh(gamma <X, Y> + coef0)
 
@@ -1235,18 +1234,21 @@ def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
     Parameters
     ----------
     X : ndarray of shape (n_samples_X, n_features)
+        A feature array.
 
     Y : ndarray of shape (n_samples_Y, n_features), default=None
-        If `None`, uses `Y=X`.
+        An optional second feature array. If `None`, uses `Y=X`.
 
     gamma : float, default=None
-        If None, defaults to 1.0 / n_features.
+        Coefficient of the vector inner product. If None, defaults to 1.0 / n_features.
 
     coef0 : float, default=1
+        Constant offset added to scaled inner product.
 
     Returns
     -------
     Gram matrix : ndarray of shape (n_samples_X, n_samples_Y)
+        Sigmoid kernel between two arrays.
     """
     X, Y = check_pairwise_arrays(X, Y)
     if gamma is None:
