@@ -526,7 +526,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "SimpleImputer",
     "SkewedChi2Sampler",
     "SpectralBiclustering",
-    "SpectralClustering",
     "SpectralCoclustering",
     "SpectralEmbedding",
     "SplineTransformer",
