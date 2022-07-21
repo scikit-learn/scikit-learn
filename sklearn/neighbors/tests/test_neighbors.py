@@ -1494,7 +1494,9 @@ def test_neighbors_badargs():
         est.fit(X)
 
     for cls in (
+        neighbors.KNeighborsClassifier,
         neighbors.RadiusNeighborsClassifier,
+        neighbors.KNeighborsRegressor,
         neighbors.RadiusNeighborsRegressor,
     ):
         est = cls(weights="blah")
