@@ -225,8 +225,7 @@ def rng_integers(gen, low, high=None, size=None, dtype='int64',
 
     """
     if isinstance(gen, Generator):
-        return gen.integers(low, high=high, size=size, dtype=dtype,
-                            endpoint=endpoint)
+        return gen.integers(low, high=high, size=size, dtype=dtype, endpoint=endpoint)
     else:
         if gen is None:
             # default is RandomState singleton used by np.random.

@@ -572,13 +572,14 @@ def test_check_param_validation(estimator):
     "estimator", _tested_estimators(), ids=_get_check_estimator_ids
 )
 @pytest.mark.parametrize(
-    "random_state", [
+    "random_state",
+    [
         # TODO uncomment
         # None,
         # 0,
         # np.random.RandomState(42),
         np.random.default_rng(),
-    ]
+    ],
 )
 def test_check_random_state_type(estimator, random_state):
     # TODO

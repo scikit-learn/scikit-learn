@@ -4153,15 +4153,15 @@ def check_random_state_type(name, estimator):
     def _fit(estimator, X, y):
         # call fit(X) or fit(X, y) depending on required arguments
         sig = signature(estimator.fit)
-        if 'y' not in sig.parameters:
+        if "y" not in sig.parameters:
             return estimator.fit(X, y)
 
-        y_param = sig.parameters['y']
+        y_param = sig.parameters["y"]
         if y_param.default is y_param.empty:  # required argument
             return estimator.fit(X, y)
         return estimator.fit(X)
 
-    if  '3darray' in _safe_tags(estimator, 'X_types'):
+    if  "3darray" in _safe_tags(estimator, "X_types"):
         X = np.random.random((10, 28, 28, 3))
         y = None
     elif _safe_tags(estimator, key="multioutput_only"):
@@ -4173,6 +4173,6 @@ def check_random_state_type(name, estimator):
 
     # check that none of the below raises
     estimator = _fit(estimator, X, y)
-    for method in ('decision_function', 'predict', 'predict_proba', 'transform'):
+    for method in ("decision_function", "predict", "predict_proba", "transform"):
         if hasattr(estimator, method):
             getattr(estimator, method)(X)

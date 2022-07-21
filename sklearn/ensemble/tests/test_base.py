@@ -39,8 +39,8 @@ def test_base():
 
     assert isinstance(ensemble[0], Perceptron)
     assert ensemble[0].random_state is None
-    assert isinstance(ensemble[1].random_state, int)
-    assert isinstance(ensemble[2].random_state, int)
+    assert isinstance(ensemble[1].random_state, (int, np.int_))
+    assert isinstance(ensemble[2].random_state, (int, np.int_))
     assert ensemble[1].random_state != ensemble[2].random_state
 
     np_int_ensemble = BaggingClassifier(
@@ -79,11 +79,11 @@ def test_set_random_states():
     assert clf1.random_state is None
     # check random_state is None still sets
     _set_random_states(clf1, None)
-    assert isinstance(clf1.random_state, int)
+    assert isinstance(clf1.random_state, (int, np.int_))
 
     # check random_state fixes results in consistent initialisation
     _set_random_states(clf1, 3)
-    assert isinstance(clf1.random_state, int)
+    assert isinstance(clf1.random_state, (int, np.int_))
     clf2 = Perceptron(random_state=None)
     _set_random_states(clf2, 3)
     assert clf1.random_state == clf2.random_state
@@ -98,8 +98,8 @@ def test_set_random_states():
 
     est1 = Pipeline(make_steps())
     _set_random_states(est1, 3)
-    assert isinstance(est1.steps[0][1].estimator.random_state, int)
-    assert isinstance(est1.steps[1][1].random_state, int)
+    assert isinstance(est1.steps[0][1].estimator.random_state, (int, np.int_))
+    assert isinstance(est1.steps[1][1].random_state, (int, np.int_))
     assert (
         est1.get_params()["sel__estimator__random_state"]
         != est1.get_params()["clf__random_state"]
