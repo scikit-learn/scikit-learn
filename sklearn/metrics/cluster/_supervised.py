@@ -693,11 +693,15 @@ def v_measure_score(labels_true, labels_pred, *, beta=1.0):
 
       >>> print("%.6f" % v_measure_score([0, 0, 1, 2], [0, 0, 1, 1]))
       0.8...
+      >>> print("%.6f" % v_measure_score([0, 1, 2, 3], [0, 0, 1, 1]))
+      0.66...
 
     Labelings that have pure clusters with members coming from the same
     classes are homogeneous but un-necessary splits harm completeness
     and thus penalize V-measure as well::
 
+      >>> print("%.6f" % v_measure_score([0, 0, 1, 1], [0, 0, 1, 2]))
+      0.8...
       >>> print("%.6f" % v_measure_score([0, 0, 1, 1], [0, 1, 2, 3]))
       0.66...
 
