@@ -244,11 +244,11 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         "n_estimators": [Interval(Integral, 1, None, closed="left")],
         "max_samples": [
             Interval(Integral, 1, None, closed="left"),
-            Interval(Real, 0, None, closed="neither"),
+            Interval(Real, 0, 1, closed="right"),
         ],
         "max_features": [
             Interval(Integral, 1, None, closed="left"),
-            Interval(Real, 0, None, closed="neither"),
+            Interval(Real, 0, 1, closed="right"),
         ],
         "bootstrap": ["boolean"],
         "bootstrap_features": ["boolean"],
@@ -392,8 +392,8 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         elif not isinstance(max_samples, numbers.Integral):
             max_samples = int(max_samples * X.shape[0])
 
-        if not (0 < max_samples <= X.shape[0]):
-            raise ValueError("max_samples must be in (0, n_samples]")
+        if max_samples > X.shape[0]:
+            raise ValueError("max_samples must be <= n_samples")
 
         # Store validated integer row sampling value
         self._max_samples = max_samples
@@ -402,10 +402,10 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         if isinstance(self.max_features, numbers.Integral):
             max_features = self.max_features
         elif isinstance(self.max_features, float):
-            max_features = self.max_features * self.n_features_in_
+            max_features = int(self.max_features * self.n_features_in_)
 
-        if not (0 < max_features <= self.n_features_in_):
-            raise ValueError("max_features must be in (0, n_features]")
+        if max_features > self.n_features_in_:
+            raise ValueError("max_features must be <= n_features")
 
         max_features = max(1, int(max_features))
 
