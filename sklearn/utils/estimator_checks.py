@@ -35,13 +35,11 @@ from ..linear_model import SGDRegressor
 
 from ..base import (
     clone,
-    BiclusterMixin,
     ClusterMixin,
     is_classifier,
     is_regressor,
     is_outlier_detector,
     RegressorMixin,
-    TransformerMixin,
 )
 
 from ..metrics import accuracy_score, adjusted_rand_score, f1_score
