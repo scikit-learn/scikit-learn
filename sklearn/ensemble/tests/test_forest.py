@@ -78,12 +78,12 @@ imbl_minority_class_ratio = 0.05
 X_large_imbl, y_large_imbl = datasets.make_classification(
     n_samples=500,
     n_features=10,
-    n_informative=5,
+    n_informative=3,
     n_redundant=0,
     n_repeated=0,
-    weights=[1 - imbl_minority_class_ratio],
+    weights=[imbl_minority_class_ratio],
     shuffle=False,
-    random_state=0,
+    random_state=42,
 )
 
 # also load the iris dataset
@@ -349,7 +349,7 @@ def check_importances(name, criterion, tolerance, X, y):
     # The forest estimator can detect that only the first 3 features of the
     # dataset are informative:
     print(importances)
-    n_important = np.sum(importances > 0.106)
+    n_important = np.sum(importances > 0.1)
     assert importances.shape[0] == 10
     assert n_important == 3
     assert np.all(importances[:3] > 0.1)
