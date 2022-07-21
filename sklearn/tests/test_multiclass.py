@@ -720,11 +720,6 @@ def test_ecoc_float_y():
     with pytest.raises(ValueError, match=msg):
         ovo.fit(X, y)
 
-    ovo = OutputCodeClassifier(LinearSVC(), code_size=-1)
-    msg = "code_size should be greater than 0, got -1"
-    with pytest.raises(ValueError, match=msg):
-        ovo.fit(X, y)
-
 
 def test_ecoc_delegate_sparse_base_estimator():
     # Non-regression test for
