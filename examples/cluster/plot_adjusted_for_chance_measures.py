@@ -141,7 +141,7 @@ plt.legend(plots, names)
 plt.show()
 
 # %%
-# The Rand index saturates for `n_clusters`>`n_classes`. Other non-adjusted
+# The Rand index saturates for `n_clusters` > `n_classes`. Other non-adjusted
 # measures such as the V-Measure show a linear dependency between the number of
 # clusters and the number of samples.
 #
@@ -202,11 +202,12 @@ plt.show()
 # %%
 # We observe similar results as for the first experiment: adjusted for chance
 # metrics stay constantly near zero while other metrics tend to get larger with
-# finer-grained labelings. The mean V-Measure of random labeling increases
-# significantly as the number of clusters is closer to the total number of
-# samples used to compute the measure. Furthermore, raw mutual information is
-# unbounded from above and its scale depends on the dimensions of the clustering
-# problem and cardinality of the ground truth classes.
+# finer-grained labelings. The mean V-measure, completeness and homogenity
+# scores of random labeling increase significantly as the number of clusters is
+# closer to the total number of samples used to compute the measure.
+# Furthermore, raw Mutual Information is unbounded from above and its scale
+# depends on the dimensions of the clustering problem and the cardinality of the
+# ground truth classes.
 #
 # Only adjusted measures can hence be safely used as a consensus index to
 # evaluate the average stability of clustering algorithms for a given value of k
