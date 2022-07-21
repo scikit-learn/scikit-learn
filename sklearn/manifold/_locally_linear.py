@@ -7,25 +7,23 @@
 from numbers import Integral, Real
 
 import numpy as np
-from scipy.linalg import eigh, qr, solve, svd
-from scipy.sparse import csr_matrix, eye
+from scipy.linalg import eigh, svd, qr, solve
+from scipy.sparse import eye, csr_matrix
 from scipy.sparse.linalg import eigsh
 
 from ..base import (
     BaseEstimator,
     TransformerMixin,
-    _ClassNamePrefixFeaturesOutMixin,
     _UnstableArchMixin,
+    _ClassNamePrefixFeaturesOutMixin,
 )
-from ..neighbors import NearestNeighbors
-from ..utils import check_array, check_random_state
+from ..utils import check_random_state, check_array
 from ..utils._arpack import _init_arpack_v0
-from ..utils._param_validation import (
-    Interval,
-    StrOptions,
-)
+from ..utils._param_validation import Interval, StrOptions
 from ..utils.extmath import stable_cumsum
-from ..utils.validation import FLOAT_DTYPES, check_is_fitted
+from ..utils.validation import check_is_fitted
+from ..utils.validation import FLOAT_DTYPES
+from ..neighbors import NearestNeighbors
 
 
 def barycenter_weights(X, Y, indices, reg=1e-3):
@@ -741,7 +739,6 @@ class LocallyLinearEmbedding(
             n_jobs=self.n_jobs,
         )
 
-        self._validate_params()
         random_state = check_random_state(self.random_state)
         X = self._validate_data(X, dtype=float)
         self.nbrs_.fit(X)
@@ -777,6 +774,7 @@ class LocallyLinearEmbedding(
         self : object
             Fitted `LocallyLinearEmbedding` class instance.
         """
+        self._validate_params()
         self._fit_transform(X)
         return self
 
@@ -796,6 +794,7 @@ class LocallyLinearEmbedding(
         X_new : array-like, shape (n_samples, n_components)
             Returns the instance itself.
         """
+        self._validate_params()
         self._fit_transform(X)
         return self.embedding_
 
