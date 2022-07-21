@@ -1860,6 +1860,7 @@ class MiniBatchKMeans(_BaseKMeans):
         n_init="warn",
         reassignment_ratio=0.01,
     ):
+
         super().__init__(
             n_clusters=n_clusters,
             init=init,

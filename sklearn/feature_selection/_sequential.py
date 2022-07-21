@@ -155,6 +155,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         cv=5,
         n_jobs=None,
     ):
+
         self.estimator = estimator
         self.n_features_to_select = n_features_to_select
         self.tol = tol

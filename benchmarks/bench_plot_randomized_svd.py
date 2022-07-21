@@ -342,6 +342,7 @@ def scalable_frobenius_norm_discrepancy(X, U, s, V):
 
 
 def bench_a(X, dataset_name, power_iter, n_oversamples, n_comps):
+
     all_time = defaultdict(list)
     if enable_spectral_norm:
         all_spectral = defaultdict(list)
@@ -397,6 +398,7 @@ def bench_a(X, dataset_name, power_iter, n_oversamples, n_comps):
 
 
 def bench_b(power_list):
+
     n_samples, n_features = 1000, 10000
     data_params = {
         "n_samples": n_samples,

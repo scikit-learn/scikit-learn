@@ -879,6 +879,7 @@ class Nystroem(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
         random_state=None,
         n_jobs=None,
     ):
+
         self.kernel = kernel
         self.gamma = gamma
         self.coef0 = coef0

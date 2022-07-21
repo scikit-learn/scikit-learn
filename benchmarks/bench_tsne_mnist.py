@@ -160,6 +160,7 @@ $ cd ..
         methods.append(("lvdmaaten/bhtsne", bhtsne))
 
     if args.profile:
+
         try:
             from memory_profiler import profile
         except ImportError as e:

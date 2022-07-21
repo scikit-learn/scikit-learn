@@ -700,6 +700,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         random_state=None,
         verbose=0,
     ):
+
         super().__init__(
             base_estimator,
             n_estimators=n_estimators,

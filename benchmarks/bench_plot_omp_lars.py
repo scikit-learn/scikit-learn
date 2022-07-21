@@ -14,6 +14,7 @@ from sklearn.datasets import make_sparse_coded_signal
 
 
 def compute_bench(samples_range, features_range):
+
     it = 0
 
     results = dict()

@@ -443,6 +443,7 @@ class _VectorizerMixin:
             )
 
         elif self.analyzer == "char_wb":
+
             return partial(
                 _analyze,
                 ngrams=self._char_wb_ngrams,
@@ -519,6 +520,7 @@ class _VectorizerMixin:
             )
 
     def _warn_for_unused_params(self):
+
         if self.tokenizer is not None and self.token_pattern is not None:
             warnings.warn(
                 "The parameter 'token_pattern' will not be used"
@@ -1956,6 +1958,7 @@ class TfidfVectorizer(CountVectorizer):
         smooth_idf=True,
         sublinear_tf=False,
     ):
+
         super().__init__(
             input=input,
             encoding=encoding,

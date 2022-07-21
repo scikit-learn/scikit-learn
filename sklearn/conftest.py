@@ -123,6 +123,7 @@ def pytest_collection_modifyitems(config, items):
             item.name.endswith("GradientBoostingClassifier")
             and platform.machine() == "aarch64"
         ):
+
             marker = pytest.mark.xfail(
                 reason=(
                     "know failure. See "

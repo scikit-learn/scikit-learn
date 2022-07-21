@@ -13,6 +13,7 @@ from sklearn.datasets import make_low_rank_matrix
 
 
 def compute_bench(samples_range, features_range, n_iter=3, rank=50):
+
     it = 0
 
     results = defaultdict(lambda: [])

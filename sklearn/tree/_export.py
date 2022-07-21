@@ -399,6 +399,7 @@ class _DOTTreeExporter(_BaseTreeExporter):
         precision=3,
         fontname="helvetica",
     ):
+
         super().__init__(
             max_depth=max_depth,
             feature_names=feature_names,
@@ -507,6 +508,7 @@ class _DOTTreeExporter(_BaseTreeExporter):
 
         # Add node with description
         if self.max_depth is None or depth <= self.max_depth:
+
             # Collect ranks for 'leaf' option in plot_options
             if left_child == _tree.TREE_LEAF:
                 self.ranks["leaves"].append(str(node_id))
@@ -583,6 +585,7 @@ class _MPLTreeExporter(_BaseTreeExporter):
         precision=3,
         fontsize=None,
     ):
+
         super().__init__(
             max_depth=max_depth,
             feature_names=feature_names,

@@ -527,6 +527,7 @@ def linkage_tree(
             and not callable(affinity)
             and affinity in METRIC_MAPPING
         ):
+
             # We need the fast cythonized metric from neighbors
             dist_metric = DistanceMetric.get_metric(affinity)
 

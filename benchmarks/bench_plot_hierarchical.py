@@ -8,6 +8,7 @@ from sklearn.cluster import AgglomerativeClustering
 
 
 def compute_bench(samples_range, features_range):
+
     it = 0
     results = defaultdict(lambda: [])
 

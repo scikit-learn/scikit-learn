@@ -102,6 +102,7 @@ def test_spectral_biclustering():
     for mat in (S, csr_matrix(S)):
         for param_name, param_values in non_default_params.items():
             for param_value in param_values:
+
                 model = SpectralBiclustering(
                     n_clusters=3,
                     n_init=3,
@@ -271,6 +272,7 @@ def test_spectralbiclustering_parameter_validation(params, type_err, err_msg):
 
 @pytest.mark.parametrize("est", (SpectralBiclustering(), SpectralCoclustering()))
 def test_n_features_in_(est):
+
     X, _, _ = make_biclusters((3, 3), 3, random_state=0)
 
     assert not hasattr(est, "n_features_in_")
