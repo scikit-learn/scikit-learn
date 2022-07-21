@@ -167,7 +167,7 @@ threadpool_info.__doc__ = threadpoolctl.threadpool_info.__doc__
 
 
 def rng_integers(gen, low, high=None, size=None, dtype="int64", endpoint=False):
-    """Return random integers from a numpy RandomState or Generator
+    """Return random integers from a numpy RandomState or Generator.
 
     This function provides a compatibility layer that can deal with both
     ``np.random.RandomState`` and ``np.random.Generator``. This is necessary
@@ -206,6 +206,11 @@ def rng_integers(gen, low, high=None, size=None, dtype="int64", endpoint=False):
         samples are drawn. Default is None, in which case a single value is
         returned.
 
+    size : int or tuple of ints, optional
+        Output shape. If the given shape is, e.g., (m, n, k), then m * n * k
+        samples are drawn. Default is None, in which case a single value is
+        returned.
+
     dtype : {str, dtype}, optional
         Desired dtype of the result. All dtypes are determined by their name,
         i.e., 'int64', 'int', etc, so byteorder is not available and a specific
@@ -219,9 +224,8 @@ def rng_integers(gen, low, high=None, size=None, dtype="int64", endpoint=False):
     Returns
     -------
     out: int or ndarray of ints
-        size-shaped array of random integers from the appropriate distribution,
+        Size-shaped array of random integers from the appropriate distribution,
         or a single such random int if size not provided.
-
     """
     if isinstance(gen, Generator):
         return gen.integers(low, high=high, size=size, dtype=dtype, endpoint=endpoint)
