@@ -348,7 +348,6 @@ def check_importances(name, criterion, tolerance, X, y):
 
     # The forest estimator can detect that only the first 3 features of the
     # dataset are informative:
-    print(importances)
     n_important = np.sum(importances > 0.1)
     assert importances.shape[0] == 10
     assert n_important == 3
