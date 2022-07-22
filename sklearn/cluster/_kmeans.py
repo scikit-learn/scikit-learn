@@ -1756,11 +1756,11 @@ class MiniBatchKMeans(_BaseKMeans):
         a value may cause convergence issues, especially with a small batch
         size.
 
-        When there are too few points in the dataset, some centers may be 
+        When there are too few points in the dataset, some centers may be
         duplicated, which means that a proper clustering in terms of the number
-        of requesting clusters and the number of returned clusters will not 
-        always match. To solve this set `reassignment_ratio=0`, so that 
-        reassignments to avoid too small of clusters when there are too few 
+        of requesting clusters and the number of returned clusters will not
+        always match. To solve this set `reassignment_ratio=0`, so that
+        reassignments to avoid too small of clusters when there are too few
         data points is possible.
 
     Attributes
