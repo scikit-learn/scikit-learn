@@ -951,9 +951,6 @@ Changelog
   class methods and will be removed in 1.2.
   :pr:`18543` by `Guillaume Lemaitre`_.
 
-:mod:`sklearn.multioutput`
-.................................
-
 - |API| :class:`metrics.PrecisionRecallDisplay` exposes two class methods
   :func:`~metrics.PrecisionRecallDisplay.from_estimator` and
   :func:`~metrics.PrecisionRecallDisplay.from_predictions` allowing to create
