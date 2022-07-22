@@ -26,7 +26,7 @@ from .model_selection import cross_val_predict
 from .utils.metaestimators import available_if
 from .utils import check_random_state
 from .utils.validation import check_is_fitted, has_fit_parameter, _check_fit_params
-from .utils.multiclass import check_classification_targets
+from .utils.multiclass import check_classification_targets, type_of_target
 from .utils.fixes import delayed
 from .utils._param_validation import HasMethods
 
@@ -567,6 +567,13 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
             Returns a fitted instance.
         """
         X, Y = self._validate_data(X, Y, multi_output=True, accept_sparse=True)
+        if is_classifier(self):
+            target_type = type_of_target(Y)
+            if target_type != "multilabel-indicator":
+                raise ValueError(
+                    f"{self.__class__.__name__} only supports a target of type "
+                    f" 'multilabel-indicator'. Got {target_type!r} instead."
+                )
 
         random_state = check_random_state(self.random_state)
         self.order_ = self.order
@@ -848,11 +855,11 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         return Y_decision
 
     def _more_tags(self):
-        return {"_skip_test": True, "multioutput_only": True}
+        return {"_skip_test": True, "multioutput_only": True, "multilabel": True}
 
 
 class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
-    """A multi-label model that arranges regressions into a chain.
+    """A multi-output model that arranges regressions into a chain.
 
     Each model makes a prediction in the order specified by the chain using
     all of the available features provided to the model plus the predictions
@@ -869,7 +876,7 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
 
     order : array-like of shape (n_outputs,) or 'random', default=None
         If `None`, the order will be determined by the order of columns in
-        the label matrix Y.::
+        the matrix Y.::
 
             order = [0, 1, 2, ..., Y.shape[1] - 1]
 

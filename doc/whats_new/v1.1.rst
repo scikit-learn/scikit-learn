@@ -1041,6 +1041,13 @@ Changelog
 - |Enhancement| Adds :term:`get_feature_names_out` to
   :class:`neural_network.BernoulliRBM`. :pr:`22248` by `Thomas Fan`_.
 
+:mod:`sklearn.multioutput`
+..........................
+
+- |Fix| raise an error if the type of target is different from `"multilabel-indicator"`
+  in :class:`multioutput.ClassifierChain`.
+  :pr:`21839` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.pipeline`
 .......................
 
