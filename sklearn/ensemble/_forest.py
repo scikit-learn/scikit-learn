@@ -41,7 +41,6 @@ Single and multi-output problems are both handled.
 
 
 from numbers import Integral, Real
-import numbers
 from warnings import catch_warnings, simplefilter, warn
 import threading
 
@@ -112,13 +111,13 @@ def _get_n_samples_bootstrap(n_samples, max_samples):
     if max_samples is None:
         return n_samples
 
-    if isinstance(max_samples, numbers.Integral):
+    if isinstance(max_samples, Integral):
         if max_samples > n_samples:
             msg = "`max_samples` must be <= n_samples={} but got value {}"
             raise ValueError(msg.format(n_samples, max_samples))
         return max_samples
 
-    if isinstance(max_samples, numbers.Real):
+    if isinstance(max_samples, Real):
         return round(n_samples * max_samples)
 
 
