@@ -460,8 +460,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "FunctionTransformer",
     "GaussianMixture",
     "GenericUnivariateSelect",
-    "GradientBoostingClassifier",
-    "GradientBoostingRegressor",
     "HashingVectorizer",
     "Isomap",
     "IterativeImputer",
