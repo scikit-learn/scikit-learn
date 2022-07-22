@@ -75,7 +75,7 @@ class Pipeline(_BaseComposition):
     ----------
     steps : list of tuple
         List of (name, transform) tuples (implementing `fit`/`transform`) that
-        are chained in sequence order. The last transform must be an
+        are chained in sequential order. The last transform must be an
         estimator.
 
     memory : str or object with the joblib.Memory interface, default=None
