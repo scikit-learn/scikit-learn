@@ -145,7 +145,9 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
     _estimator_type = "classifier"
 
     _parameter_constraints = {
-        "base_estimator": [HasMethods(["fit", "predict_proba"])],
+        # We don't require `predic_proba` here to allow passing a meta-estimator
+        # that only exposes `predict_proba` after fitting.
+        "base_estimator": [HasMethods(["fit"])],
         "threshold": [Interval(Real, 0.0, 1.0, closed="left")],
         "criterion": [StrOptions({"threshold", "k_best"})],
         "k_best": [Interval(Integral, 1, None, closed="left")],

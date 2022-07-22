@@ -300,3 +300,26 @@ def test_base_estimator_meta_estimator():
     clf = SelfTrainingClassifier(base_estimator=base_estimator)
     clf.fit(X_train, y_train_missing_labels)
     clf.predict_proba(X_test)
+
+    base_estimator = StackingClassifier(
+        estimators=[
+            ("svc_1", SVC(probability=False)),
+            ("svc_2", SVC(probability=False)),
+        ],
+        final_estimator=SVC(probability=False),
+        cv=2,
+    )
+
+    assert not hasattr(base_estimator, "predict_proba")
+    clf = SelfTrainingClassifier(base_estimator=base_estimator)
+    with pytest.raises(AttributeError):
+        clf.fit(X_train, y_train_missing_labels)
+
+
+def test_missing_predict_proba():
+    # Check that an error is thrown if predict_proba is not implemented
+    base_estimator = SVC(probability=False, gamma="scale")
+    self_training = SelfTrainingClassifier(base_estimator)
+
+    with pytest.raises(AttributeError, match="predict_proba is not available"):
+        self_training.fit(X_train, y_train_missing_labels)
