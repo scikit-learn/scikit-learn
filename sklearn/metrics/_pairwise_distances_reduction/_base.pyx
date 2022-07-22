@@ -116,11 +116,10 @@ cdef class PairwiseDistancesReduction64:
         by parallelizing computation on the outer loop on chunks of X
         and reduce them.
 
-        This strategy dispatches chunks of Y uniformly on threads.
-        Each thread processes all the chunks of X in turn. This strategy is
-        a sequence of embarrassingly parallel subtasks (the inner loop on Y
-        chunks) with intermediate datastructures synchronisation at each
-        iteration of the sequential outer loop on X chunks.
+        This strategy dispatches chunks of X uniformly on threads.
+        Each thread processes all the chunks of Y in turn. This strategy is
+        a sequence of embarrassingly parallel tasks (the outer loop on X
+        chunks) with no intermediate datastructures synchronisation at all.
 
         Private datastructures are modified internally by threads.
 
@@ -185,11 +184,10 @@ cdef class PairwiseDistancesReduction64:
         by parallelizing computation on the inner loop on chunks of Y
         and reduce them.
 
-        This strategy dispatches chunks of Y uniformly on threads.
-        Each thread processes all the chunks of X in turn. This strategy is
-        a sequence of embarrassingly parallel subtasks (the inner loop on Y
-        chunks) with intermediate datastructures synchronisation at each
-        iteration of the sequential outer loop on X chunks.
+        This strategy is a sequence of embarrassingly parallel subtasks:
+        dispatches chunks of Y uniformly on threads for each chunk of X at a time.
+        It comes with intermediate yet lock-free and parallelized datastructures
+        synchronisation at each iteration of the sequential outer loop on X chunks.
 
         Private datastructures are modified internally by threads.
 
@@ -237,9 +235,6 @@ cdef class PairwiseDistancesReduction64:
                         thread_num,
                     )
                 # end: prange
-
-                # Note: we don't need a _parallel_on_Y_finalize similarly.
-                # This can be introduced if needed.
 
             # end: with nogil, parallel
 
@@ -295,7 +290,7 @@ cdef class PairwiseDistancesReduction64:
         ITYPE_t X_start,
         ITYPE_t X_end,
     ) nogil:
-        """Initialise datastructures used in a thread given its number."""
+        """Initialize datastructures used in a thread given its number."""
         return
 
     cdef void _parallel_on_X_pre_compute_and_reduce_distances_on_chunks(
@@ -306,7 +301,7 @@ cdef class PairwiseDistancesReduction64:
         ITYPE_t Y_end,
         ITYPE_t thread_num,
     ) nogil:
-        """Initialise datastructures just before the _compute_and_reduce_distances_on_chunks.
+        """Initialize datastructures just before the _compute_and_reduce_distances_on_chunks.
 
         This is eventually used to upcast X[X_start:X_end] to 64bit.
         """
@@ -340,7 +335,7 @@ cdef class PairwiseDistancesReduction64:
         ITYPE_t X_start,
         ITYPE_t X_end,
     ) nogil:
-        """Initialise datastructures used in a thread given its number."""
+        """Initialize datastructures used in a thread given its number."""
         return
 
     cdef void _parallel_on_Y_pre_compute_and_reduce_distances_on_chunks(
@@ -351,7 +346,7 @@ cdef class PairwiseDistancesReduction64:
         ITYPE_t Y_end,
         ITYPE_t thread_num,
     ) nogil:
-        """Initialise datastructures just before the _compute_and_reduce_distances_on_chunks.
+        """Initialize datastructures just before the _compute_and_reduce_distances_on_chunks.
 
         This is eventually used to upcast Y[Y_start:Y_end] to 64bit.
         """
