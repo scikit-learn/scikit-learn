@@ -25,8 +25,12 @@ from .model_selection import cross_val_predict
 from .utils import check_random_state, _print_elapsed_time
 from .utils.metaestimators import available_if
 from .utils.multiclass import check_classification_targets
-from .utils.validation import (check_is_fitted, has_fit_parameter,
-                               _check_fit_params, _deprecate_positional_args)
+from .utils.validation import (
+    check_is_fitted,
+    has_fit_parameter,
+    _check_fit_params,
+    _deprecate_positional_args,
+)
 from .utils.fixes import delayed
 
 __all__ = [
@@ -528,8 +532,9 @@ def _available_if_base_estimator_has(attr):
 
 class _BaseChain(BaseEstimator, metaclass=ABCMeta):
     @_deprecate_positional_args
-    def __init__(self, base_estimator, *, order=None, cv=None,
-                 random_state=None, verbose=False):
+    def __init__(
+        self, base_estimator, *, order=None, cv=None, random_state=None, verbose=False
+    ):
         self.base_estimator = base_estimator
         self.order = order
         self.cv = cv
@@ -540,7 +545,6 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         if not self.verbose:
             return None
         return f"({estimator_idx} of {n_estimators}) {processing_msg}"
-
 
     @abstractmethod
     def fit(self, X, Y, **fit_params):
@@ -603,15 +607,11 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
             message = self._log_message(
                 estimator_idx=chain_idx + 1,
                 n_estimators=len(self.estimators_),
-                processing_msg=f"Adding feature {self.order_[chain_idx]}"
+                processing_msg=f"Adding feature {self.order_[chain_idx]}",
             )
             y = Y[:, self.order_[chain_idx]]
             with _print_elapsed_time("Chain", message):
-                estimator.fit(
-                    X_aug[:, :(X.shape[1] + chain_idx)],
-                    y,
-                    **fit_params
-                )
+                estimator.fit(X_aug[:, : (X.shape[1] + chain_idx)], y, **fit_params)
             if self.cv is not None and chain_idx < len(self.estimators_) - 1:
                 col_idx = X.shape[1] + chain_idx
                 cv_result = cross_val_predict(

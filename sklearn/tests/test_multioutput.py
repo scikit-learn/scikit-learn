@@ -709,29 +709,26 @@ def test_classifier_chain_tuple_invalid_order():
 
 @pytest.mark.parametrize(
     "classifier",
-    [ClassifierChain(
-        DecisionTreeClassifier(),
-        order=[0, 1, 2],
-        random_state=0,
-        verbose=True),
-     ClassifierChain(
-        RandomForestClassifier(),
-        order=[0, 1, 2],
-        random_state=0,
-        verbose=True)]
+    [
+        ClassifierChain(
+            DecisionTreeClassifier(), order=[0, 1, 2], random_state=0, verbose=True
+        ),
+        ClassifierChain(
+            RandomForestClassifier(), order=[0, 1, 2], random_state=0, verbose=True
+        ),
+    ],
 )
 def test_classifier_chain_verbose(classifier, capsys):
     X, y = make_multilabel_classification(
-        n_samples=100,
-        n_features=5,
-        n_classes=3,
-        n_labels=3,
-        random_state=0)
+        n_samples=100, n_features=5, n_classes=3, n_labels=3, random_state=0
+    )
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
-    pattern = (r'\[Chain\].*\(1 of 3\) Adding feature 0, total=.*\n'
-               r'\[Chain\].*\(2 of 3\) Adding feature 1, total=.*\n'
-               r'\[Chain\].*\(3 of 3\) Adding feature 2, total=.*\n$')
+    pattern = (
+        r"\[Chain\].*\(1 of 3\) Adding feature 0, total=.*\n"
+        r"\[Chain\].*\(2 of 3\) Adding feature 1, total=.*\n"
+        r"\[Chain\].*\(3 of 3\) Adding feature 2, total=.*\n$"
+    )
 
     classifier.fit(X_train, y_train)
     assert re.match(pattern, capsys.readouterr()[0])
@@ -739,24 +736,22 @@ def test_classifier_chain_verbose(classifier, capsys):
 
 @pytest.mark.parametrize(
     "regressor",
-    [RegressorChain(
-        LinearRegression(),
-        order=[1, 0, 2],
-        random_state=0,
-        verbose=True),
-     RegressorChain(
-        Ridge(),
-        order=[1, 0, 2],
-        random_state=0,
-        verbose=True)]
+    [
+        RegressorChain(
+            LinearRegression(), order=[1, 0, 2], random_state=0, verbose=True
+        ),
+        RegressorChain(Ridge(), order=[1, 0, 2], random_state=0, verbose=True),
+    ],
 )
 def test_regressor_chain_verbose(regressor, capsys):
     X, y = make_regression(n_samples=125, n_targets=3, random_state=0)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
-    pattern = (r'\[Chain\].*\(1 of 3\) Adding feature 1, total=.*\n'
-               r'\[Chain\].*\(2 of 3\) Adding feature 0, total=.*\n'
-               r'\[Chain\].*\(3 of 3\) Adding feature 2, total=.*\n$')
+    pattern = (
+        r"\[Chain\].*\(1 of 3\) Adding feature 1, total=.*\n"
+        r"\[Chain\].*\(2 of 3\) Adding feature 0, total=.*\n"
+        r"\[Chain\].*\(3 of 3\) Adding feature 2, total=.*\n$"
+    )
 
     regressor.fit(X_train, y_train)
     assert re.match(pattern, capsys.readouterr()[0])
