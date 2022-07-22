@@ -74,8 +74,7 @@ pre_python_environment_install() {
 python_environment_install_and_activate() {
     if [[ "$DISTRIB" == "conda"* ]]; then
         conda update -n base conda -y
-        # pin conda-lock to latest released version (needs manual update from time to time)
-        conda install -c conda-forge conda-lock==1.0.5 -y
+        conda install -c conda-forge "$(get_dep conda-lock min)" -y
         conda-lock install --name $VIRTUALENV $LOCK_FILE
         source activate $VIRTUALENV
 

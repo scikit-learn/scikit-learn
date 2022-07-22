@@ -73,7 +73,7 @@ SPARSE_OR_DENSE = SPARSE_TYPES + (np.asarray,)
 ALGORITHMS = ("ball_tree", "brute", "kd_tree", "auto")
 COMMON_VALID_METRICS = sorted(
     set.intersection(*map(set, neighbors.VALID_METRICS.values()))
-)
+)  # type: ignore
 P = (1, 2, 3, 4, np.inf)
 JOBLIB_BACKENDS = list(joblib.parallel.BACKENDS.keys())
 
@@ -1494,9 +1494,7 @@ def test_neighbors_badargs():
         est.fit(X)
 
     for cls in (
-        neighbors.KNeighborsClassifier,
         neighbors.RadiusNeighborsClassifier,
-        neighbors.KNeighborsRegressor,
         neighbors.RadiusNeighborsRegressor,
     ):
         est = cls(weights="blah")
@@ -1529,12 +1527,6 @@ def test_neighbors_badargs():
         nbrs.fit(X, y)
         with pytest.raises(ValueError):
             nbrs.predict([[]])
-        if issubclass(cls, neighbors.KNeighborsClassifier) or issubclass(
-            cls, neighbors.KNeighborsRegressor
-        ):
-            nbrs = cls(n_neighbors=-1)
-            with pytest.raises(ValueError):
-                nbrs.fit(X, y)
 
     nbrs = neighbors.NearestNeighbors().fit(X)
 
@@ -2152,7 +2144,12 @@ def test_neighbors_distance_metric_deprecation():
     "metric", sorted(set(neighbors.VALID_METRICS["brute"]) - set(["precomputed"]))
 )
 def test_radius_neighbors_brute_backend(
-    metric, n_samples=2000, n_features=30, n_query_pts=100, n_neighbors=5
+    metric,
+    n_samples=2000,
+    n_features=30,
+    n_query_pts=100,
+    n_neighbors=5,
+    radius=1.0,
 ):
     # Both backends for the 'brute' algorithm of radius_neighbors
     # must give identical results.
@@ -2179,6 +2176,7 @@ def test_radius_neighbors_brute_backend(
 
         neigh = neighbors.NearestNeighbors(
             n_neighbors=n_neighbors,
+            radius=radius,
             algorithm="brute",
             metric=metric,
             p=p,
@@ -2199,7 +2197,11 @@ def test_radius_neighbors_brute_backend(
                 )
 
         assert_radius_neighborhood_results_equality(
-            legacy_brute_dst, pdr_brute_dst, legacy_brute_idx, pdr_brute_idx
+            legacy_brute_dst,
+            pdr_brute_dst,
+            legacy_brute_idx,
+            pdr_brute_idx,
+            radius=radius,
         )
 
 

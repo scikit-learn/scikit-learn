@@ -8,6 +8,7 @@ import itertools
 import numbers
 import numpy as np
 from abc import ABCMeta, abstractmethod
+from numbers import Integral, Real
 from warnings import warn
 from functools import partial
 
@@ -22,6 +23,7 @@ from ..utils import indices_to_mask
 from ..utils.metaestimators import available_if
 from ..utils.multiclass import check_classification_targets
 from ..utils.random import sample_without_replacement
+from ..utils._param_validation import Interval
 from ..utils.validation import has_fit_parameter, check_is_fitted, _check_sample_weight
 from ..utils.fixes import delayed
 
@@ -237,6 +239,26 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
     instead.
     """
 
+    _parameter_constraints = {
+        "base_estimator": "no_validation",
+        "n_estimators": [Interval(Integral, 1, None, closed="left")],
+        "max_samples": [
+            Interval(Integral, 1, None, closed="left"),
+            Interval(Real, 0, 1, closed="right"),
+        ],
+        "max_features": [
+            Interval(Integral, 1, None, closed="left"),
+            Interval(Real, 0, 1, closed="right"),
+        ],
+        "bootstrap": ["boolean"],
+        "bootstrap_features": ["boolean"],
+        "oob_score": ["boolean"],
+        "warm_start": ["boolean"],
+        "n_jobs": [None, Integral],
+        "random_state": ["random_state"],
+        "verbose": ["verbose"],
+    }
+
     @abstractmethod
     def __init__(
         self,
@@ -288,6 +310,9 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         self : object
             Fitted estimator.
         """
+
+        self._validate_params()
+
         # Convert data (X is required to be 2d and indexable)
         X, y = self._validate_data(
             X,
@@ -367,8 +392,8 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         elif not isinstance(max_samples, numbers.Integral):
             max_samples = int(max_samples * X.shape[0])
 
-        if not (0 < max_samples <= X.shape[0]):
-            raise ValueError("max_samples must be in (0, n_samples]")
+        if max_samples > X.shape[0]:
+            raise ValueError("max_samples must be <= n_samples")
 
         # Store validated integer row sampling value
         self._max_samples = max_samples
@@ -377,12 +402,10 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         if isinstance(self.max_features, numbers.Integral):
             max_features = self.max_features
         elif isinstance(self.max_features, float):
-            max_features = self.max_features * self.n_features_in_
-        else:
-            raise ValueError("max_features must be int or float")
+            max_features = int(self.max_features * self.n_features_in_)
 
-        if not (0 < max_features <= self.n_features_in_):
-            raise ValueError("max_features must be in (0, n_features]")
+        if max_features > self.n_features_in_:
+            raise ValueError("max_features must be <= n_features")
 
         max_features = max(1, int(max_features))
 
@@ -471,8 +494,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
     def _validate_y(self, y):
         if len(y.shape) == 1 or y.shape[1] == 1:
             return column_or_1d(y, warn=True)
-        else:
-            return y
+        return y
 
     def _get_estimators_indices(self):
         # Get drawn indices along both sample and feature axes
@@ -821,9 +843,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         )
 
         # Parallel loop
-        n_jobs, n_estimators, starts = _partition_estimators(
-            self.n_estimators, self.n_jobs
-        )
+        n_jobs, _, starts = _partition_estimators(self.n_estimators, self.n_jobs)
 
         all_proba = Parallel(
             n_jobs=n_jobs, verbose=self.verbose, **self._parallel_args()
@@ -873,9 +893,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
             )
 
             # Parallel loop
-            n_jobs, n_estimators, starts = _partition_estimators(
-                self.n_estimators, self.n_jobs
-            )
+            n_jobs, _, starts = _partition_estimators(self.n_estimators, self.n_jobs)
 
             all_log_proba = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
                 delayed(_parallel_predict_log_proba)(
@@ -895,10 +913,10 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
 
             log_proba -= np.log(self.n_estimators)
 
-            return log_proba
-
         else:
-            return np.log(self.predict_proba(X))
+            log_proba = np.log(self.predict_proba(X))
+
+        return log_proba
 
     @available_if(_estimator_has("decision_function"))
     def decision_function(self, X):
@@ -930,9 +948,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         )
 
         # Parallel loop
-        n_jobs, n_estimators, starts = _partition_estimators(
-            self.n_estimators, self.n_jobs
-        )
+        n_jobs, _, starts = _partition_estimators(self.n_estimators, self.n_jobs)
 
         all_decisions = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
             delayed(_parallel_decision_function)(
@@ -1166,9 +1182,7 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         )
 
         # Parallel loop
-        n_jobs, n_estimators, starts = _partition_estimators(
-            self.n_estimators, self.n_jobs
-        )
+        n_jobs, _, starts = _partition_estimators(self.n_estimators, self.n_jobs)
 
         all_y_hat = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
             delayed(_parallel_predict_regression)(
