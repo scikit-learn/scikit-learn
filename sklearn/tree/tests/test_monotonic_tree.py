@@ -323,7 +323,7 @@ def test_nd_tree_nodes_values(
     # upper bounds.
 
     rng = np.random.RandomState(global_random_seed)
-    n_samples = 10000
+    n_samples = 1000
     n_features = 2
     monotonic_cst = [monotonic_sign, 0]
     X = rng.rand(n_samples, n_features)
