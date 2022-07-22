@@ -623,15 +623,6 @@ Changelog
   :class:`ensemble.ExtraTreesClassifier`.
   :pr:`20803` by :user:`Brian Sun <bsun94>`.
 
-- |Feature| :class:`ensemble.RandomForestClassifier`,
-  :class:`ensemble.RandomForestRegressor`,
-  :class:`ensemble.ExtraTreesClassifier`,
-  :class:`ensemble.ExtraTreesRegressor`,
-  :class:`ensemble.GradientBoostingClassifier` and
-  :class:`ensemble.GradientBoostingRegressor` now support monotonic
-  constraints, useful when features are supposed to have a positive/negative
-  effect on the target. :pr:`13649` by :user:`Samuel Ronsin <samronsin>` and
-  :user:`Patrick O'Reilly <pat-oreilly>`.
 - |Efficiency| Improve runtime performance of :class:`ensemble.IsolationForest`
   by skipping repetitive input checks. :pr:`23149` by :user:`Zhehao Liu <MaxwellLZH>`.
 
@@ -1232,12 +1223,6 @@ Changelog
 - |API| :func:`utils.metaestimators.if_delegate_has_method` is deprecated and will be
   removed in version 1.3. Use :func:`utils.metaestimators.available_if` instead.
   :pr:`22830` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
-
-- |Feature| :class:`tree.DecisionTreeClassifier` and
-  :class:`tree.DecisionTreeRegressor` now support monotonic
-  constraints, useful when features are supposed to have a positive/negative
-  effect on the target. :pr:`13649` by :user:`Samuel Ronsin <samronsin>` and
-  :user:`Patrick O'Reilly <pat-oreilly>`.
 
 Code and Documentation Contributors
 -----------------------------------
