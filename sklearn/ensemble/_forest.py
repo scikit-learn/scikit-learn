@@ -40,6 +40,7 @@ Single and multi-output problems are both handled.
 # License: BSD 3 clause
 
 
+from numbers import Integral, Real
 import numbers
 from warnings import catch_warnings, simplefilter, warn
 import threading
@@ -56,6 +57,7 @@ from ..base import ClassifierMixin, MultiOutputMixin, RegressorMixin, Transforme
 from ..metrics import accuracy_score, r2_score
 from ..preprocessing import OneHotEncoder
 from ..tree import (
+    BaseDecisionTree,
     DecisionTreeClassifier,
     DecisionTreeRegressor,
     ExtraTreeClassifier,
@@ -73,9 +75,8 @@ from ..utils.validation import (
     _check_feature_names_in,
 )
 from ..utils.validation import _num_samples
-from numbers import Integral, Real
-from ..utils._param_validation import Interval
-from ..utils._param_validation import StrOptions
+from ..utils._param_validation import Interval, StrOptions
+
 
 __all__ = [
     "RandomForestClassifier",
@@ -112,19 +113,13 @@ def _get_n_samples_bootstrap(n_samples, max_samples):
         return n_samples
 
     if isinstance(max_samples, numbers.Integral):
-        if not (1 <= max_samples <= n_samples):
-            msg = "`max_samples` must be in range 1 to {} but got value {}"
+        if max_samples > n_samples:
+            msg = "`max_samples` must be <= n_samples={} but got value {}"
             raise ValueError(msg.format(n_samples, max_samples))
         return max_samples
 
     if isinstance(max_samples, numbers.Real):
-        if not (0 < max_samples <= 1):
-            msg = "`max_samples` must be in range (0.0, 1.0] but got value {}"
-            raise ValueError(msg.format(max_samples))
         return round(n_samples * max_samples)
-
-    msg = "`max_samples` should be int or float, but got type '{}'"
-    raise TypeError(msg.format(type(max_samples)))
 
 
 def _generate_sample_indices(random_state, n_samples, n_samples_bootstrap):
@@ -205,9 +200,10 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
     _parameter_constraints = {
         "n_estimators": [Interval(Integral, 1, None, closed="left")],
-        "oob_score": ["boolean"],
         "bootstrap": ["boolean"],
+        "oob_score": ["boolean"],
         "n_jobs": [Integral, None],
+        "random_state": ["random_state"],
         "verbose": ["verbose"],
         "warm_start": ["boolean"],
         "max_samples": [
@@ -341,8 +337,8 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         self : object
             Fitted estimator.
         """
-
         self._validate_params()
+
         # Validate or convert input data
         if issparse(y):
             raise ValueError("sparse multilabel-indicator for y is not supported.")
@@ -695,10 +691,6 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
     instead.
     """
 
-    _parameter_constraints = {
-        **BaseForest._parameter_constraints,
-    }
-
     @abstractmethod
     def __init__(
         self,
@@ -959,10 +951,6 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
     Warning: This class should not be used directly. Use derived classes
     instead.
     """
-
-    _parameter_constraints = {
-        **BaseForest._parameter_constraints,
-    }
 
     @abstractmethod
     def __init__(
@@ -1399,12 +1387,12 @@ class RandomForestClassifier(ForestClassifier):
     """
 
     _parameter_constraints = {
-        **DecisionTreeClassifier._parameter_constraints,
         **ForestClassifier._parameter_constraints,
+        **DecisionTreeClassifier._parameter_constraints,
         "class_weight": [
+            StrOptions({"balanced_subsample", "balanced"}),
             dict,
             list,
-            StrOptions({"balanced", "balanced_subsample"}),
             None,
         ],
     }
@@ -2091,9 +2079,9 @@ class ExtraTreesClassifier(ForestClassifier):
         **ForestClassifier._parameter_constraints,
         **DecisionTreeClassifier._parameter_constraints,
         "class_weight": [
+            StrOptions({"balanced_subsample", "balanced"}),
             dict,
             list,
-            StrOptions({"balanced", "balanced_subsample"}),
             None,
         ],
     }
@@ -2667,11 +2655,12 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
         "n_jobs": [Integral, None],
         "verbose": ["verbose"],
         "warm_start": ["boolean"],
-        **DecisionTreeRegressor._parameter_constraints,
+        **BaseDecisionTree._parameter_constraints,
         "sparse_output": ["boolean"],
     }
-    for x in ("max_features", "ccp_alpha", "criterion", "splitter"):
-        _parameter_constraints.pop(x)
+    for param in ("max_features", "ccp_alpha", "splitter"):
+        _parameter_constraints.pop(param)
+
     criterion = "squared_error"
     max_features = 1
 
@@ -2751,6 +2740,7 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
         self : object
             Returns the instance itself.
         """
+        # Parameters are validated in fit_transform
         self.fit_transform(X, y, sample_weight=sample_weight)
         return self
 
@@ -2780,6 +2770,7 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
             Transformed dataset.
         """
         self._validate_params()
+
         rnd = check_random_state(self.random_state)
         y = rnd.uniform(size=_num_samples(X))
         super().fit(X, y, sample_weight=sample_weight)

@@ -1003,14 +1003,6 @@ def check_min_samples_split(name):
     X, y = hastie_X, hastie_y
     ForestEstimator = FOREST_ESTIMATORS[name]
 
-    # test boundary value
-    with pytest.raises(ValueError):
-        ForestEstimator(min_samples_split=-1).fit(X, y)
-    with pytest.raises(ValueError):
-        ForestEstimator(min_samples_split=0).fit(X, y)
-    with pytest.raises(ValueError):
-        ForestEstimator(min_samples_split=1.1).fit(X, y)
-
     est = ForestEstimator(min_samples_split=10, n_estimators=1, random_state=0)
     est.fit(X, y)
     node_idx = est.estimators_[0].tree_.children_left != -1
@@ -1036,12 +1028,6 @@ def check_min_samples_leaf(name):
 
     # Test if leaves contain more than leaf_count training examples
     ForestEstimator = FOREST_ESTIMATORS[name]
-
-    # test boundary value
-    with pytest.raises(ValueError):
-        ForestEstimator(min_samples_leaf=-1).fit(X, y)
-    with pytest.raises(ValueError):
-        ForestEstimator(min_samples_leaf=0).fit(X, y)
 
     est = ForestEstimator(min_samples_leaf=5, n_estimators=1, random_state=0)
     est.fit(X, y)
@@ -1292,13 +1278,6 @@ def check_class_weight_errors(name):
     ForestClassifier = FOREST_CLASSIFIERS[name]
     _y = np.vstack((y, np.array(y) * 2)).T
 
-    # Invalid preset string
-    clf = ForestClassifier(class_weight="the larch", random_state=0)
-    with pytest.raises(ValueError):
-        clf.fit(X, y)
-    with pytest.raises(ValueError):
-        clf.fit(X, _y)
-
     # Warning warm_start with preset
     clf = ForestClassifier(class_weight="balanced", warm_start=True, random_state=0)
     clf.fit(X, y)
@@ -1307,11 +1286,6 @@ def check_class_weight_errors(name):
         "Warm-start fitting without increasing n_estimators does not fit new trees."
     )
     with pytest.warns(UserWarning, match=warn_msg):
-        clf.fit(X, _y)
-
-    # Not a list or preset for multi-output
-    clf = ForestClassifier(class_weight=1, random_state=0)
-    with pytest.raises(ValueError):
         clf.fit(X, _y)
 
     # Incorrect length list for multi-output
@@ -1620,6 +1594,15 @@ def test_max_samples_bootstrap(name):
         r"`max_sample=None`."
     )
     with pytest.raises(ValueError, match=err_msg):
+        est.fit(X, y)
+
+
+@pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
+def test_large_max_samples_exception(name):
+    # Check invalid `max_samples`
+    est = FOREST_CLASSIFIERS_REGRESSORS[name](bootstrap=True, max_samples=int(1e9))
+    match = "`max_samples` must be <= n_samples=6 but got value 1000000000"
+    with pytest.raises(ValueError, match=match):
         est.fit(X, y)
 
 
