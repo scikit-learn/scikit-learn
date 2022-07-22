@@ -282,7 +282,7 @@ def test_k_best_selects_best():
 
 def test_base_estimator_meta_estimator():
     # Check that a meta-estimator relying on an estimator implementing
-    # `predict_proba` will work even if it does expose this method before being
+    # `predict_proba` will work even if it does not expose this method before being
     # fitted.
     # Non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/19119
