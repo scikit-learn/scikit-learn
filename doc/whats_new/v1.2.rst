@@ -219,7 +219,8 @@ Changelog
 - |API| Added boolean `verbose` flag to classes:
   :class:`multioutput.ClassifierChain` and :class:`multioutput.RegressorChain`.
   :pr:`23977` by :user:`Eric Fiegel <efiegel>`,
-  :user:`Chiara Marmo <cmarmo>`, and
+  :user:`Chiara Marmo <cmarmo>`,
+  :user:`Lucy Liu <lucyleeow>`, and
   :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.naive_bayes`
