@@ -13,30 +13,28 @@ This module contains:
 #
 # License: BSD 3 clause
 
+import numbers
 from abc import abstractmethod
 
-import numbers
 import numpy as np
-
 from joblib import Parallel
 
+from ._base import _BaseHeterogeneousEnsemble
+from ._base import _fit_single_estimator
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..base import TransformerMixin
 from ..base import clone
-from ._base import _fit_single_estimator
-from ._base import _BaseHeterogeneousEnsemble
+from ..exceptions import NotFittedError
 from ..preprocessing import LabelEncoder
 from ..utils import Bunch
 from ..utils import check_scalar
-from ..utils.metaestimators import available_if
-from ..utils.validation import check_is_fitted
-from ..utils.validation import _check_feature_names_in
-from ..utils.multiclass import check_classification_targets
-from ..utils.validation import column_or_1d
-from ..exceptions import NotFittedError
 from ..utils._estimator_html_repr import _VisualBlock
 from ..utils.fixes import delayed
+from ..utils.metaestimators import available_if
+from ..utils.multiclass import check_classification_targets
+from ..utils.validation import _check_feature_names_in
+from ..utils.validation import check_is_fitted
 
 
 class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
@@ -584,7 +582,8 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
             Training vectors, where `n_samples` is the number of samples and
             `n_features` is the number of features.
 
-        y : array-like of shape (n_samples,)
+        y : Array-like of shape (n_samples, n_features) for multi-output
+            or (n_samples,) for single output
             Target values.
 
         sample_weight : array-like of shape (n_samples,), default=None
@@ -597,7 +596,6 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         self : object
             Fitted estimator.
         """
-        y = column_or_1d(y, warn=True)
         return super().fit(X, y, sample_weight)
 
     def predict(self, X):
@@ -613,11 +611,18 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
 
         Returns
         -------
-        y : ndarray of shape (n_samples,)
+        y : ndarray of shape (n_samples, n_features) for multi-output
+            or (n_samples,) for single output
             The predicted values.
         """
         check_is_fitted(self)
-        return np.average(self._predict(X), axis=1, weights=self._weights_not_none)
+        pred = self._predict(X)
+        avg_pred = np.average(self._predict(X), axis=-1, weights=self._weights_not_none)
+
+        if len(pred.shape) > 0:
+            avg_pred = avg_pred.T
+
+        return avg_pred
 
     def transform(self, X):
         """Return predictions for X for each estimator.
@@ -645,7 +650,7 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
 
         Returns
         -------
-        feature_names_out : ndarray of str objects
+        feature_names_out : Ndarray of str objects
             Transformed feature names.
         """
         _check_feature_names_in(self, input_features, generate_names=False)
@@ -654,3 +659,6 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
             [f"{class_name}_{name}" for name, est in self.estimators if est != "drop"],
             dtype=object,
         )
+
+    def _more_tags(self):
+        return {"multioutput": True}

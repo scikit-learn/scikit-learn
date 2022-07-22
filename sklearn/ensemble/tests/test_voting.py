@@ -18,9 +18,10 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn.model_selection import GridSearchCV
 from sklearn import datasets
 from sklearn.model_selection import cross_val_score, train_test_split
-from sklearn.datasets import make_multilabel_classification
+from sklearn.datasets import make_multilabel_classification, make_regression
 from sklearn.svm import SVC
 from sklearn.multiclass import OneVsRestClassifier
+
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.base import BaseEstimator, ClassifierMixin, clone
 from sklearn.dummy import DummyRegressor
@@ -289,6 +290,18 @@ def test_multilabel():
 
     try:
         eclf.fit(X, y)
+    except NotImplementedError:
+        return
+
+
+def test_multiregression():
+    """Check if error is raised for multiple output regression."""
+    X, y = make_regression(n_targets=2, random_state=123)
+    rf = RandomForestRegressor()
+    ereg = VotingRegressor(estimators=[("rf", rf)])
+
+    try:
+        ereg.fit(X, y)
     except NotImplementedError:
         return
 
