@@ -67,7 +67,7 @@ class TruncatedSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
 
         .. versionadded:: 1.1
 
-    power_iteration_normalizer : {‘auto’, ‘QR’, ‘LU’, ‘none’}, default=’auto’
+    power_iteration_normalizer : {'auto', 'QR', 'LU', 'none'}, default='auto'
         Power iteration normalizer for randomized SVD solver.
         Not used by ARPACK. See :func:`~sklearn.utils.extmath.randomized_svd`
         for more details.
