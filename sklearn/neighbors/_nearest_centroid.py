@@ -33,9 +33,8 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
     Parameters
     ----------
     metric : str or callable, default="euclidean"
-        Metric to use for distance computation. Default is "minkowski", which
-        results in the standard Euclidean distance when p = 2. See the
-        documentation of `scipy.spatial.distance
+        Metric to use for distance computation. See the documentation of
+        `scipy.spatial.distance
         <https://docs.scipy.org/doc/scipy/reference/spatial.distance.html>`_ and
         the metrics listed in
         :class:`~sklearn.metrics.pairwise.distance_metrics` for valid metric
@@ -103,7 +102,7 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
     """
 
     _parameter_constraints = {
-        "metric": [StrOptions({"euclidean", "manhattan"})],
+        "metric": [StrOptions(set(_VALID_METRICS) - {"mahalanobis", "seuclidean", "wminkowski"}), callable],
         "shrink_threshold": [Interval(Real, 0, None, closed="neither"), None],
     }
 
