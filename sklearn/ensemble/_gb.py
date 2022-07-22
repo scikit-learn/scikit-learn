@@ -1789,7 +1789,8 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         **BaseGradientBoosting._parameter_constraints,
         "loss": [
             StrOptions(
-                {"squared_error", "ls", "absolute_error", "lad", "huber", "quantile"}
+                {"squared_error", "ls", "absolute_error", "lad", "huber", "quantile"},
+                deprecated={"ls", "lad"},
             )
         ],
         "init": [StrOptions({"zero"}), None, HasMethods(["fit", "predict"])],
