@@ -13,6 +13,7 @@ extends single output estimators to multioutput estimators.
 # Author: James Ashton Nichols <james.ashton.nichols@gmail.com>
 #
 # License: BSD 3 clause
+from numbers import Integral
 
 import numpy as np
 import scipy.sparse as sp
@@ -27,6 +28,7 @@ from .utils import check_random_state
 from .utils.validation import check_is_fitted, has_fit_parameter, _check_fit_params
 from .utils.multiclass import check_classification_targets
 from .utils.fixes import delayed
+from .utils._param_validation import HasMethods
 
 __all__ = [
     "MultiOutputRegressor",
@@ -79,6 +81,12 @@ def _available_if_estimator_has(attr):
 
 
 class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
+
+    _parameter_constraints = {
+        "estimator": [HasMethods(["fit", "predict"])],
+        "n_jobs": [Integral, None],
+    }
+
     @abstractmethod
     def __init__(self, estimator, *, n_jobs=None):
         self.estimator = estimator
@@ -116,6 +124,10 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
             Returns a fitted instance.
         """
         first_time = not hasattr(self, "estimators_")
+
+        if first_time:
+            self._validate_params()
+
         y = self._validate_data(X="no_validation", y=y, multi_output=True)
 
         if y.ndim == 1:
@@ -128,8 +140,6 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
             self.estimator, "sample_weight"
         ):
             raise ValueError("Underlying estimator does not support sample weights.")
-
-        first_time = not hasattr(self, "estimators_")
 
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
             delayed(_partial_fit_estimator)(
@@ -177,6 +187,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
         self : object
             Returns a fitted instance.
         """
+        self._validate_params()
 
         if not hasattr(self.estimator, "fit"):
             raise ValueError("The base estimator should implement a fit method")
@@ -345,8 +356,9 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
     Parameters
     ----------
     estimator : estimator object
-        An estimator object implementing :term:`fit`, :term:`score` and
-        :term:`predict_proba`.
+        An estimator object implementing :term:`fit` and :term:`predict`.
+        A :term:`predict_proba` method will be exposed only if `estimator` implements
+        it.
 
     n_jobs : int or None, optional (default=None)
         The number of jobs to run in parallel.
