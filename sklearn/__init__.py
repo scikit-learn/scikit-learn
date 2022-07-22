@@ -39,7 +39,7 @@ logger = logging.getLogger(__name__)
 # Dev branch marker is: 'X.Y.dev' or 'X.Y.devN' where N is an integer.
 # 'X.Y.dev0' is the canonical version of 'X.Y.dev'
 #
-__version__ = '1.0.dev0'
+__version__ = "1.2.dev0"
 
 
 # On OSX, we can get a runtime error due to multiple OpenMP libraries loaded
@@ -66,7 +66,7 @@ except NameError:
     __SKLEARN_SETUP__ = False
 
 if __SKLEARN_SETUP__:
-    sys.stderr.write('Partial import of sklearn during the build process.\n')
+    sys.stderr.write("Partial import of sklearn during the build process.\n")
     # We are not importing the rest of scikit-learn during the build
     # process, as it may not be compiled yet
 else:
@@ -82,19 +82,51 @@ else:
     from .base import clone
     from .utils._show_versions import show_versions
 
-    __all__ = ['calibration', 'cluster', 'covariance', 'cross_decomposition',
-               'datasets', 'decomposition', 'dummy', 'ensemble', 'exceptions',
-               'experimental', 'externals', 'feature_extraction',
-               'feature_selection', 'gaussian_process', 'inspection',
-               'isotonic', 'kernel_approximation', 'kernel_ridge',
-               'linear_model', 'manifold', 'metrics', 'mixture',
-               'model_selection', 'multiclass', 'multioutput',
-               'naive_bayes', 'neighbors', 'neural_network', 'pipeline',
-               'preprocessing', 'random_projection', 'semi_supervised',
-               'svm', 'tree', 'discriminant_analysis', 'impute', 'compose',
-               # Non-modules:
-               'clone', 'get_config', 'set_config', 'config_context',
-               'show_versions']
+    __all__ = [
+        "calibration",
+        "cluster",
+        "covariance",
+        "cross_decomposition",
+        "datasets",
+        "decomposition",
+        "dummy",
+        "ensemble",
+        "exceptions",
+        "experimental",
+        "externals",
+        "feature_extraction",
+        "feature_selection",
+        "gaussian_process",
+        "inspection",
+        "isotonic",
+        "kernel_approximation",
+        "kernel_ridge",
+        "linear_model",
+        "manifold",
+        "metrics",
+        "mixture",
+        "model_selection",
+        "multiclass",
+        "multioutput",
+        "naive_bayes",
+        "neighbors",
+        "neural_network",
+        "pipeline",
+        "preprocessing",
+        "random_projection",
+        "semi_supervised",
+        "svm",
+        "tree",
+        "discriminant_analysis",
+        "impute",
+        "compose",
+        # Non-modules:
+        "clone",
+        "get_config",
+        "set_config",
+        "config_context",
+        "show_versions",
+    ]
 
 
 def setup_module(module):
@@ -103,7 +135,7 @@ def setup_module(module):
     import numpy as np
 
     # Check if a random seed exists in the environment, if not create one.
-    _random_seed = os.environ.get('SKLEARN_SEED', None)
+    _random_seed = os.environ.get("SKLEARN_SEED", None)
     if _random_seed is None:
         _random_seed = np.random.uniform() * np.iinfo(np.int32).max
     _random_seed = int(_random_seed)

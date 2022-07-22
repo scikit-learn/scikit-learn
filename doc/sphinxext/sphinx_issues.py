@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """A Sphinx extension for linking to your project's issue tracker.
 
 Copyright 2014 Steven Loria
@@ -120,8 +119,9 @@ class IssueRole(object):
                 )
             else:
                 raise ValueError(
-                    "Neither {} nor issues_github_path "
-                    "is set".format(self.uri_config_option)
+                    "Neither {} nor issues_github_path is set".format(
+                        self.uri_config_option
+                    )
                 )
             issue_text = self.format_text(issue_no)
             link = nodes.reference(text=issue_text, refuri=ref, **options)

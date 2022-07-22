@@ -20,7 +20,6 @@ sy-kit learn. sci stands for science!
 Why scikit?
 ------------
 There are multiple scikits, which are scientific toolboxes built around SciPy.
-You can find a list at `<https://scikits.appspot.com/scikits>`_.
 Apart from scikit-learn, another popular one is `scikit-image <https://scikit-image.org/>`_.
 
 How can I contribute to scikit-learn?
@@ -165,7 +164,7 @@ scikit-learn has to offer. If we started doing arbitrary structured
 learning, we'd need to redesign the whole package and the project
 would likely collapse under its own weight.
 
-There are two project with API similar to scikit-learn that
+There are two projects with API similar to scikit-learn that
 do structured prediction:
 
 * `pystruct <https://pystruct.github.io/>`_ handles general structured
@@ -191,10 +190,13 @@ careful choice of algorithms.
 Do you support PyPy?
 --------------------
 
-In case you didn't know, `PyPy <https://pypy.org/>`_ is an alternative
-Python implementation with a built-in just-in-time compiler. Experimental
-support for PyPy3-v5.10+ has been added, which requires Numpy 1.14.0+,
-and scipy 1.1.0+.
+scikit-learn is regularly tested and maintained to work with
+`PyPy <https://pypy.org/>`_ (an alternative Python implementation with
+a built-in just-in-time compiler).
+
+Note however that this support is still considered experimental and specific
+components might behave slightly differently. Please refer to the test
+suite of a the specific module of interest for more details.
 
 How do I deal with string data (or trees, graphs...)?
 -----------------------------------------------------
@@ -396,3 +398,44 @@ and not at test time, for resampling and similar uses,
 like at `imbalanced-learn`.
 In general, these use cases can be solved
 with a custom meta estimator rather than a Pipeline
+
+Why are there so many different estimators for linear models?
+-------------------------------------------------------------
+Usually, there is one classifier and one regressor per model type, e.g.
+:class:`~ensemble.GradientBoostingClassifier` and
+:class:`~ensemble.GradientBoostingRegressor`. Both have similar options and
+both have the parameter `loss`, which is especially useful in the regression
+case as it enables the estimation of conditional mean as well as conditional
+quantiles.
+
+For linear models, there are many estimator classes which are very close to
+each other. Let us have a look at
+
+- :class:`~linear_model.LinearRegression`, no penalty
+- :class:`~linear_model.Ridge`, L2 penalty
+- :class:`~linear_model.Lasso`, L1 penalty (sparse models)
+- :class:`~linear_model.ElasticNet`, L1 + L2 penalty (less sparse models)
+- :class:`~linear_model.SGDRegressor` with `loss='squared_loss'`
+
+**Maintainer perspective:**
+They all do in principle the same and are different only by the penalty they
+impose. This, however, has a large impact on the way the underlying
+optimization problem is solved. In the end, this amounts to usage of different
+methods and tricks from linear algebra. A special case is `SGDRegressor` which
+comprises all 4 previous models and is different by the optimization procedure.
+A further side effect is that the different estimators favor different data
+layouts (`X` c-contiguous or f-contiguous, sparse csr or csc). This complexity
+of the seemingly simple linear models is the reason for having different
+estimator classes for different penalties.
+
+**User perspective:**
+First, the current design is inspired by the scientific literature where linear
+regression models with different regularization/penalty were given different
+names, e.g. *ridge regression*. Having different model classes with according
+names makes it easier for users to find those regression models.
+Secondly, if all the 5 above mentioned linear models were unified into a single
+class, there would be parameters with a lot of options like the ``solver``
+parameter. On top of that, there would be a lot of exclusive interactions
+between different parameters. For example, the possible options of the
+parameters ``solver``, ``precompute`` and ``selection`` would depend on the
+chosen values of the penalty parameters ``alpha`` and ``l1_ratio``.
