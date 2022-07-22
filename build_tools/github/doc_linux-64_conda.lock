@@ -194,12 +194,7 @@ https://conda.anaconda.org/conda-forge/linux-64/markupsafe-2.1.1-py39hb9d737c_1.
 https://conda.anaconda.org/conda-forge/linux-64/numpy-1.23.1-py39hba7629e_0.tar.bz2#ee8dff1fb28e0e2c458e845aae9d915a
 https://conda.anaconda.org/conda-forge/noarch/packaging-21.3-pyhd8ed1ab_0.tar.bz2#71f1ab2de48613876becddd496371c85
 https://conda.anaconda.org/conda-forge/noarch/partd-1.2.0-pyhd8ed1ab_0.tar.bz2#0c32f563d7f22e3a34c95cad8cc95651
-<<<<<<< HEAD
-https://conda.anaconda.org/conda-forge/linux-64/pillow-9.1.1-py39hae2aec6_1.tar.bz2#9039c6b86ddb65d7e8bf464337ae9053
-https://conda.anaconda.org/conda-forge/noarch/plotly-5.9.0-pyhd8ed1ab_0.tar.bz2#00a668931d448ce0ce42d1b02005d636
-=======
 https://conda.anaconda.org/conda-forge/linux-64/pillow-9.2.0-py39hae2aec6_0.tar.bz2#ea9760ab3700e63809de6ae71a11664b
->>>>>>> c1d6d7850410cc219efe489aeb9ba9c9d5402bda
 https://conda.anaconda.org/conda-forge/linux-64/pluggy-1.0.0-py39hf3d152e_3.tar.bz2#c375c89340e563053f3656c7f134d265
 https://conda.anaconda.org/conda-forge/linux-64/psutil-5.9.1-py39hb9d737c_0.tar.bz2#5852c69cad74811dc3c95f9ab6a184ef
 https://conda.anaconda.org/conda-forge/linux-64/pulseaudio-14.0-h7f54b18_8.tar.bz2#f9dbcfbb942ec9a3c0249cb71da5c7d1

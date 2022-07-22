@@ -119,12 +119,7 @@ https://conda.anaconda.org/conda-forge/linux-64/markupsafe-1.1.1-py38h0a891b7_4.
 https://conda.anaconda.org/conda-forge/linux-64/numpy-1.17.3-py38h95a1406_0.tar.bz2#bc0cbf611fe2f86eab29b98e51404f5e
 https://conda.anaconda.org/conda-forge/noarch/packaging-21.3-pyhd8ed1ab_0.tar.bz2#71f1ab2de48613876becddd496371c85
 https://conda.anaconda.org/conda-forge/noarch/partd-1.2.0-pyhd8ed1ab_0.tar.bz2#0c32f563d7f22e3a34c95cad8cc95651
-<<<<<<< HEAD
-https://conda.anaconda.org/conda-forge/linux-64/pillow-9.1.1-py38h0ee0e06_1.tar.bz2#cd653a4a951ca80adb96ff6cd3b36883
-https://conda.anaconda.org/conda-forge/noarch/plotly-5.9.0-pyhd8ed1ab_0.tar.bz2#00a668931d448ce0ce42d1b02005d636
-=======
 https://conda.anaconda.org/conda-forge/linux-64/pillow-9.2.0-py38h0ee0e06_0.tar.bz2#7ef61f9084bda76b2f7a668ec5d1499a
->>>>>>> c1d6d7850410cc219efe489aeb9ba9c9d5402bda
 https://conda.anaconda.org/conda-forge/linux-64/pluggy-1.0.0-py38h578d9bd_3.tar.bz2#6ce4ce3d4490a56eb33b52c179609193
 https://conda.anaconda.org/conda-forge/linux-64/psutil-5.9.1-py38h0a891b7_0.tar.bz2#e3908bd184030e7f4a3d837959ebf6d7
 https://conda.anaconda.org/conda-forge/linux-64/pysocks-1.7.1-py38h578d9bd_5.tar.bz2#11113c7e50bb81f30762fe8325f305e1
