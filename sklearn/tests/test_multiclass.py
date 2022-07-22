@@ -41,6 +41,9 @@ from sklearn.exceptions import NotFittedError
 from sklearn import datasets
 from sklearn.datasets import load_breast_cancer
 
+msg = "The default value for `force_alpha` will change"
+pytestmark = pytest.mark.filterwarnings(f"ignore:{msg}:FutureWarning")
+
 iris = datasets.load_iris()
 rng = np.random.RandomState(0)
 perm = rng.permutation(iris.target.size)
