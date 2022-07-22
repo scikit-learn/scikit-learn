@@ -474,8 +474,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "LatentDirichletAllocation",
     "LedoitWolf",
     "MiniBatchDictionaryLearning",
-    "MultiOutputClassifier",
-    "MultiOutputRegressor",
     "MultiTaskElasticNet",
     "MultiTaskLasso",
     "NearestCentroid",
