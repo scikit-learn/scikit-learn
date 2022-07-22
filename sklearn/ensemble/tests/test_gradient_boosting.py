@@ -18,8 +18,7 @@ from sklearn.datasets import make_classification, make_regression
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.ensemble._gradient_boosting import predict_stages
-from sklearn.preprocessing import OneHotEncoder, scale
-from sklearn.svm import LinearSVC
+from sklearn.preprocessing import scale
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
 from sklearn.utils import check_random_state, tosequence
@@ -75,121 +74,6 @@ def test_classification_toy(loss):
 
     leaves = clf.apply(X)
     assert leaves.shape == (6, 10, 1)
-
-
-@pytest.mark.parametrize(
-    "params, err_type, err_msg",
-    [
-        ({"learning_rate": 0}, ValueError, "learning_rate == 0, must be > 0.0"),
-        (
-            {"learning_rate": "foo"},
-            TypeError,
-            "learning_rate must be an instance of float",
-        ),
-        ({"n_estimators": 0}, ValueError, "n_estimators == 0, must be >= 1"),
-        (
-            {"n_estimators": 1.5},
-            TypeError,
-            "n_estimators must be an instance of int,",
-        ),
-        ({"loss": "foobar"}, ValueError, "Loss 'foobar' not supported"),
-        ({"subsample": 0.0}, ValueError, "subsample == 0.0, must be > 0.0"),
-        ({"subsample": 1.1}, ValueError, "subsample == 1.1, must be <= 1.0"),
-        (
-            {"subsample": "foo"},
-            TypeError,
-            "subsample must be an instance of float",
-        ),
-        ({"init": {}}, ValueError, "The init parameter must be an estimator or 'zero'"),
-        ({"max_features": 0}, ValueError, "max_features == 0, must be >= 1"),
-        ({"max_features": 0.0}, ValueError, "max_features == 0.0, must be > 0.0"),
-        ({"max_features": 1.1}, ValueError, "max_features == 1.1, must be <= 1.0"),
-        ({"max_features": "foobar"}, ValueError, "Invalid value for max_features."),
-        ({"verbose": -1}, ValueError, "verbose == -1, must be >= 0"),
-        (
-            {"verbose": "foo"},
-            TypeError,
-            "verbose must be an instance of",
-        ),
-        ({"warm_start": "foo"}, TypeError, "warm_start must be an instance of"),
-        (
-            {"validation_fraction": 0.0},
-            ValueError,
-            "validation_fraction == 0.0, must be > 0.0",
-        ),
-        (
-            {"validation_fraction": 1.0},
-            ValueError,
-            "validation_fraction == 1.0, must be < 1.0",
-        ),
-        (
-            {"validation_fraction": "foo"},
-            TypeError,
-            "validation_fraction must be an instance of float",
-        ),
-        ({"n_iter_no_change": 0}, ValueError, "n_iter_no_change == 0, must be >= 1"),
-        (
-            {"n_iter_no_change": 1.5},
-            TypeError,
-            "n_iter_no_change must be an instance of int,",
-        ),
-        ({"tol": 0.0}, ValueError, "tol == 0.0, must be > 0.0"),
-        (
-            {"tol": "foo"},
-            TypeError,
-            "tol must be an instance of float,",
-        ),
-    ],
-    # Avoid long error messages in test names:
-    # https://github.com/scikit-learn/scikit-learn/issues/21362
-    ids=lambda x: x[:10].replace("]", "") if isinstance(x, str) else x,
-)
-@pytest.mark.parametrize(
-    "GradientBoosting, X, y",
-    [
-        (GradientBoostingRegressor, X_reg, y_reg),
-        (GradientBoostingClassifier, iris.data, iris.target),
-    ],
-)
-def test_gbdt_parameter_checks(GradientBoosting, X, y, params, err_type, err_msg):
-    # Check input parameter validation for GradientBoosting
-    est = GradientBoosting(**params)
-    with pytest.raises(err_type, match=err_msg):
-        est.fit(X, y)
-
-
-@pytest.mark.parametrize(
-    "params, err_msg",
-    [
-        ({"loss": "huber", "alpha": 0.0}, "alpha == 0.0, must be > 0.0"),
-        ({"loss": "quantile", "alpha": 0.0}, "alpha == 0.0, must be > 0.0"),
-        ({"loss": "huber", "alpha": 1.2}, "alpha == 1.2, must be < 1.0"),
-        ({"loss": "quantile", "alpha": 1.2}, "alpha == 1.2, must be < 1.0"),
-    ],
-)
-def test_gbdt_loss_alpha_error(params, err_msg):
-    # check that an error is raised when alpha is not proper for quantile and
-    # huber loss
-    with pytest.raises(ValueError, match=err_msg):
-        GradientBoostingRegressor(**params).fit(X_reg, y_reg)
-
-
-@pytest.mark.parametrize(
-    "GradientBoosting, loss",
-    [
-        (GradientBoostingClassifier, "ls"),
-        (GradientBoostingClassifier, "absolute_error"),
-        (GradientBoostingClassifier, "quantile"),
-        (GradientBoostingClassifier, "huber"),
-        (GradientBoostingRegressor, "log_loss"),
-        (GradientBoostingRegressor, "exponential"),
-    ],
-)
-def test_wrong_type_loss_function(GradientBoosting, loss):
-    # check that we raise an error when not using the right type of loss
-    # function
-    with pytest.raises(ValueError):
-        GradientBoosting(loss=loss).fit(X, y)
 
 
 @pytest.mark.parametrize("loss", ("log_loss", "exponential"))
@@ -1044,12 +928,6 @@ def test_zero_estimator_reg():
     mse_gbdt = mean_squared_error(y_reg, y_pred)
     assert mse_gbdt < mse_baseline
 
-    est = GradientBoostingRegressor(
-        n_estimators=20, max_depth=1, random_state=1, init="foobar"
-    )
-    with pytest.raises(ValueError):
-        est.fit(X_reg, y_reg)
-
 
 def test_zero_estimator_clf():
     # Test if init='zero' works for classification.
@@ -1072,12 +950,6 @@ def test_zero_estimator_clf():
     )
     est.fit(X, y)
     assert est.score(X, y) > 0.96
-
-    est = GradientBoostingClassifier(
-        n_estimators=20, max_depth=1, random_state=1, init="foobar"
-    )
-    with pytest.raises(ValueError):
-        est.fit(X, y)
 
 
 @pytest.mark.parametrize("GBEstimator", GRADIENT_BOOSTING_ESTIMATORS)
@@ -1366,25 +1238,6 @@ def test_gradient_boosting_with_init_pipeline():
         init = NuSVR(gamma="auto", nu=1.5)
         gb = GradientBoostingRegressor(init=init)
         gb.fit(X, y, sample_weight=np.ones(X.shape[0]))
-
-
-@pytest.mark.parametrize(
-    "estimator, missing_method",
-    [
-        (GradientBoostingClassifier(init=LinearSVC()), "predict_proba"),
-        (GradientBoostingRegressor(init=OneHotEncoder()), "predict"),
-    ],
-)
-def test_gradient_boosting_init_wrong_methods(estimator, missing_method):
-    # Make sure error is raised if init estimators don't have the required
-    # methods (fit, predict, predict_proba)
-
-    message = (
-        "The init parameter must be a valid estimator and support both fit and "
-        + missing_method
-    )
-    with pytest.raises(ValueError, match=message):
-        estimator.fit(X, y)
 
 
 def test_early_stopping_n_classes():

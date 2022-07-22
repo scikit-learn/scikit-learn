@@ -420,17 +420,29 @@ def test_validate_params():
 
 
 def test_validate_params_match_error():
-    """Check that an informative error is raised when the constraints do not match the
-    function parameters.
+    """Check that an informative error is raised when there are constraints
+    that have no matching function paramaters
     """
 
     @validate_params({"a": [int], "c": [int]})
     def func(a, b):
         pass
 
-    match = r"The parameter constraints .* do not match the parameters to validate"
+    match = r"The parameter constraints .* contain unexpected parameters {'c'}"
     with pytest.raises(ValueError, match=match):
         func(1, 2)
+
+
+def test_validate_params_missing_params():
+    """Check that no error is raised when there are parameters without
+    constraints
+    """
+
+    @validate_params({"a": [int]})
+    def func(a, b):
+        pass
+
+    func(1, 2)
 
 
 def test_decorate_validated_function():

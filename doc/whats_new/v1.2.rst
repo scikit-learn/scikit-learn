@@ -125,6 +125,11 @@ Changelog
   its memory footprint and runtime.
   :pr:`22268` by :user:`MohamedBsh <Bsh>`.
 
+- |Enhancement| :class:`decomposition.SparsePCA` and
+  :class:`decomposition.MiniBatchSparsePCA` now implements an `inverse_transform`
+  function.
+  :pr:`23905` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.decomposition`
 ............................
 
@@ -154,6 +159,14 @@ Changelog
   default solver, and hence may not be backwards compatible.
   :pr:`11860` by :user:`Pierre Ablin <pierreablin>`,
   :pr:`22527` by :user:`Meekail Zain <micky774>` and `Thomas Fan`_.
+
+:mod:`sklearn.feature_selection`
+................................
+- |Fix| :class:`feature_selection.SelectFromModel` defaults to selection
+  threshold 1e-5 when the estimator is either :class:`linear_model.ElasticNet`
+  or :class:`linear_model.ElasticNetCV` with `l1_ratio` equals 1 or
+  :class:`linear_model.LassoCV`. :pr:`23636` by :user:`Hao Chun Chang
+  <haochunchang>`
 
 :mod:`sklearn.impute`
 .....................
@@ -268,6 +281,18 @@ Changelog
   `perplexity>=n_samples` to ensure mathematical correctness of the algorithm.
   :pr:`10805` by :user:`Mathias Andersen <MrMathias>` and
   :pr:`23471` by :user:`Meekail Zain <micky774>`
+
+:mod:`sklearn.naive_bayes`
+..........................
+
+- |Enhancement| A new parameter `force_alpha` was added to
+  :class:`naive_bayes.BernoulliNB`, :class:`naive_bayes.ComplementNB`,
+  :class:`naive_bayes.CategoricalNB`, and :class:`naive_bayes.MultinomialNB`,
+  allowing user to set parameter alpha to a very small number, greater or equal
+  0, which was earlier automatically changed to `1e-10` instead.
+  :pr:`16747` by :user:`arka204`,
+  :pr:`18805` by :user:`hongshaoyang`,
+  :pr:`22269` by :user:`Meekail Zain <micky774>`.
 
 Code and Documentation Contributors
 -----------------------------------

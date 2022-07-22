@@ -43,13 +43,20 @@ def validate_parameter_constraints(parameter_constraints, params, caller_name):
     caller_name : str
         The name of the estimator or function or method that called this function.
     """
-    if params.keys() != parameter_constraints.keys():
+    if len(set(parameter_constraints) - set(params)) != 0:
         raise ValueError(
-            f"The parameter constraints {list(parameter_constraints.keys())} do not "
-            f"match the parameters to validate {list(params.keys())}."
+            f"The parameter constraints {list(parameter_constraints)}"
+            " contain unexpected parameters"
+            f" {set(parameter_constraints) - set(params)}"
         )
 
     for param_name, param_val in params.items():
+        # We allow parameters to not have a constraint so that third party estimators
+        # can inherit from sklearn estimators without having to necessarily use the
+        # validation tools.
+        if param_name not in parameter_constraints:
+            continue
+
         constraints = parameter_constraints[param_name]
 
         if constraints == "no_validation":
