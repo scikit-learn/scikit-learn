@@ -35,7 +35,7 @@ standard deviation.
 For instance, many elements used in the objective function of
 a learning algorithm (such as the RBF kernel of Support Vector
 Machines or the l1 and l2 regularizers of linear models) may assume that
-all features are centered around zero and/or have variance in the same
+all features are centered around zero or have variance in the same
 order. If a feature has a variance that is orders of magnitude larger
 than others, it might dominate the objective function and make the
 estimator unable to learn from other features correctly as expected.
