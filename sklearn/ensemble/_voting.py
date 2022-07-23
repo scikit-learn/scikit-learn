@@ -15,7 +15,7 @@ This module contains:
 
 from abc import abstractmethod
 
-import numbers
+from numbers import Integral, Real
 import numpy as np
 
 from joblib import Parallel
@@ -32,6 +32,7 @@ from ..utils import check_scalar
 from ..utils.metaestimators import available_if
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _check_feature_names_in
+from ..utils._param_validation import Interval, StrOptions
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import column_or_1d
 from ..exceptions import NotFittedError
@@ -45,6 +46,12 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
     Warning: This class should not be used directly. Use derived classes
     instead.
     """
+
+    """WORK ON THE PARAMETER CONSTRAINTS
+    _parameter_constraints = {
+        "splitter": [StrOptions({"best", "random"})],
+        }
+        """
 
     def _log_message(self, name, idx, total):
         if not self.verbose:
@@ -64,9 +71,12 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
 
     @abstractmethod
     def fit(self, X, y, sample_weight=None):
+        self._validate_params() """HERE IT IS"""
+
         """Get common fit operations."""
         names, clfs = self._validate_estimators()
 
+        """TAKE OUT CHECK_SCALAR"""
         check_scalar(
             self.verbose,
             name="verbose",
@@ -333,6 +343,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
                 "Multilabel and multi-output classification is not supported."
             )
 
+        """REMOVE CHECK_SCALAR"""
         check_scalar(
             self.flatten_transform,
             name="flatten_transform",
@@ -568,6 +579,8 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
     >>> len(er.estimators_)
     2
     """
+
+    """ADD PARAMETER CONSTRAINTS HERE TOO???"""
 
     def __init__(self, estimators, *, weights=None, n_jobs=None, verbose=False):
         super().__init__(estimators=estimators)
