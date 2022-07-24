@@ -9,6 +9,7 @@ from math import log
 import numbers
 import numpy as np
 from scipy import linalg
+from numbers import Integral, Real
 
 from ._base import LinearModel, _preprocess_data, _rescale_data
 from ..base import RegressorMixin
@@ -18,7 +19,7 @@ from ..utils import check_scalar
 from scipy.linalg import pinvh
 from ..utils.validation import _check_sample_weight
 from ..utils._param_validation import StrOptions, Hidden
-
+from ..utils._param_validation import Interval
 ###############################################################################
 # BayesianRidge regression
 
@@ -657,14 +658,14 @@ class ARDRegression(RegressorMixin, LinearModel):
     """
 
     _parameter_constraints = {
-        "n_iter": [int],
-        "tol": [float],
-        "alpha_1": [float],
-        "alpha_2": [float],
-        "lambda_1": [float],
-        "lambda_2": [float],
+        "n_iter": [Interval(Integral, 1, None, closed="left")],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "alpha_1": [Interval(Real, 0, None, closed="left")],
+        "alpha_2": [Interval(Real, 0, None, closed="left")],
+        "lambda_1": [Interval(Real, 0, None, closed="left")],
+        "lambda_2": [Interval(Real, 0, None, closed="left")],
         "compute_score": ["boolean"],
-        "threshold_lambda": [float],
+        "threshold_lambda": [Interval(Real, 0, None, closed="left")],
         "fit_intercept": ["boolean"],
         "normalize": [Hidden(StrOptions({"deprecated"})), "boolean"],
         "copy_X": ["boolean"],
