@@ -689,7 +689,7 @@ def v_measure_score(labels_true, labels_pred, *, beta=1.0):
       1.0
 
     Labelings that assign all classes members to the same clusters
-    are complete be not homogeneous, hence penalized::
+    are complete but not homogeneous, hence penalized::
 
       >>> print("%.6f" % v_measure_score([0, 0, 1, 2], [0, 0, 1, 1]))
       0.8...
@@ -697,7 +697,7 @@ def v_measure_score(labels_true, labels_pred, *, beta=1.0):
       0.66...
 
     Labelings that have pure clusters with members coming from the same
-    classes are homogeneous but un-necessary splits harms completeness
+    classes are homogeneous but un-necessary splits harm completeness
     and thus penalize V-measure as well::
 
       >>> print("%.6f" % v_measure_score([0, 0, 1, 1], [0, 0, 1, 2]))

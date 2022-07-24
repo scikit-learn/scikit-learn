@@ -75,8 +75,8 @@ class Pipeline(_BaseComposition):
     ----------
     steps : list of tuple
         List of (name, transform) tuples (implementing `fit`/`transform`) that
-        are chained, in the order in which they are chained, with the last
-        object an estimator.
+        are chained in sequential order. The last transform must be an
+        estimator.
 
     memory : str or object with the joblib.Memory interface, default=None
         Used to cache the fitted transformers of the pipeline. By default,
