@@ -6,7 +6,7 @@
 #         Michael Becker <mike@beckerfuffle.com>
 # License: 3-clause BSD.
 
-from numbers import Integral
+from numbers import Integral, Real
 import numpy as np
 import scipy.sparse as sp
 from scipy.sparse.linalg import svds
@@ -17,6 +17,7 @@ from ..utils._arpack import _init_arpack_v0
 from ..utils.extmath import randomized_svd, safe_sparse_dot, svd_flip
 from ..utils.sparsefuncs import mean_variance_axis
 from ..utils.validation import check_is_fitted, check_scalar
+from ..utils._param_validation import Interval, StrOptions
 
 __all__ = ["TruncatedSVD"]
 
@@ -154,6 +155,16 @@ class TruncatedSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
     [35.2410...  4.5981...   4.5420...  4.4486...  4.3288...]
     """
 
+    _parameter_constraints = {
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "algorithm": [StrOptions({"arpack", "randomized"})],
+        "n_iter": [Interval(Integral, 1, None, closed="left")],
+        "n_oversamples": [Interval(Integral, 1, None, closed="left")],
+        "power_iteration_normalizer": [StrOptions({"auto", "OR", "LU", "none"})],
+        "random_state": ["random_state"],
+        "tol": [Interval(Real, 0, None, closed="left")],
+    }
+
     def __init__(
         self,
         n_components=2,
@@ -189,6 +200,7 @@ class TruncatedSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
         self : object
             Returns the transformer object.
         """
+        self._validate_params()
         self.fit_transform(X)
         return self
 
@@ -208,13 +220,7 @@ class TruncatedSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
         X_new : ndarray of shape (n_samples, n_components)
             Reduced version of X. This will always be a dense array.
         """
-        check_scalar(
-            self.n_oversamples,
-            "n_oversamples",
-            min_val=1,
-            target_type=Integral,
-        )
-
+        self._validate_params()
         X = self._validate_data(X, accept_sparse=["csr", "csc"], ensure_min_features=2)
         random_state = check_random_state(self.random_state)
 
@@ -244,8 +250,6 @@ class TruncatedSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
                 power_iteration_normalizer=self.power_iteration_normalizer,
                 random_state=random_state,
             )
-        else:
-            raise ValueError("unknown algorithm %r" % self.algorithm)
 
         self.components_ = VT
 
