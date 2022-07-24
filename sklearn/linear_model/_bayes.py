@@ -20,6 +20,7 @@ from scipy.linalg import pinvh
 from ..utils.validation import _check_sample_weight
 from ..utils._param_validation import StrOptions, Hidden
 from ..utils._param_validation import Interval
+
 ###############################################################################
 # BayesianRidge regression
 
