@@ -75,26 +75,10 @@ def test_affinity_propagation_affinity_shape():
         affinity_propagation(S[:, :-1])
 
 
-@pytest.mark.parametrize(
-    "input, params, err_type, err_msg",
-    [
-        (X, {"damping": 0}, ValueError, "damping == 0, must be >= 0.5"),
-        (X, {"damping": 2}, ValueError, "damping == 2, must be < 1"),
-        (X, {"max_iter": 0}, ValueError, "max_iter == 0, must be >= 1."),
-        (X, {"convergence_iter": 0}, ValueError, "convergence_iter == 0, must be >= 1"),
-        (X, {"affinity": "unknown"}, ValueError, "Affinity must be"),
-        (
-            csr_matrix((3, 3)),
-            {"affinity": "precomputed"},
-            TypeError,
-            "A sparse matrix was passed, but dense data is required",
-        ),
-    ],
-)
-def test_affinity_propagation_params_validation(input, params, err_type, err_msg):
-    """Check the parameters validation in `AffinityPropagation`."""
-    with pytest.raises(err_type, match=err_msg):
-        AffinityPropagation(**params).fit(input)
+def test_affinity_propagation_precomputed_with_sparse_input():
+    err_msg = "A sparse matrix was passed, but dense data is required"
+    with pytest.raises(TypeError, match=err_msg):
+        AffinityPropagation(affinity="precomputed").fit(csr_matrix((3, 3)))
 
 
 def test_affinity_propagation_predict():
