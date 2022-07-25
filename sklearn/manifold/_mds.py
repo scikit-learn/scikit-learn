@@ -362,6 +362,7 @@ class MDS(BaseEstimator):
 
     metric : bool, default=True
         If ``True``, perform metric MDS; otherwise, perform nonmetric MDS.
+        When ``False``, dissimilarities with 0 are considered as missing values.
 
     n_init : int, default=4
         Number of times the SMACOF algorithm will be run with different
