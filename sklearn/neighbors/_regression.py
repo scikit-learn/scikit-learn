@@ -14,7 +14,7 @@ import warnings
 
 import numpy as np
 
-from ._base import _get_weights, _check_weights
+from ._base import _get_weights
 from ._base import NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin
 from ..base import RegressorMixin
 from ..utils._param_validation import StrOptions
@@ -276,7 +276,7 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin, RegressorMixin, NeighborsBa
         Range of parameter space to use by default for :meth:`radius_neighbors`
         queries.
 
-    weights : {'uniform', 'distance'} or callable, default='uniform'
+    weights : {'uniform', 'distance'}, callable or None, default='uniform'
         Weight function used in prediction.  Possible values:
 
         - 'uniform' : uniform weights.  All points in each neighborhood
@@ -393,6 +393,12 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin, RegressorMixin, NeighborsBa
     [0.5]
     """
 
+    _parameter_constraints = {
+        **NeighborsBase._parameter_constraints,
+        "weights": [StrOptions({"uniform", "distance"}), callable, None],
+    }
+    _parameter_constraints.pop("n_neighbors")
+
     def __init__(
         self,
         radius=1.0,
@@ -434,8 +440,7 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin, RegressorMixin, NeighborsBa
         self : RadiusNeighborsRegressor
             The fitted radius neighbors regressor.
         """
-        self.weights = _check_weights(self.weights)
-
+        self._validate_params()
         return self._fit(X, y)
 
     def predict(self, X):
