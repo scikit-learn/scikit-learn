@@ -402,7 +402,9 @@ def test_get_feature_names_out_dataframe_with_string_data(feature_names_out, exp
     X = pd.DataFrame({"pet": ["dog", "cat"], "color": ["red", "green"]})
 
     transformer = FunctionTransformer(feature_names_out=feature_names_out)
-    transformer.fit_transform(X)
+    X_trans = transformer.fit_transform(X)
+    assert isinstance(X_trans, pd.DataFrame)
+
     names = transformer.get_feature_names_out()
     assert isinstance(names, np.ndarray)
     assert names.dtype == object
