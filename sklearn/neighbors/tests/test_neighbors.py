@@ -90,7 +90,7 @@ def _generate_test_params_for(metric: str, n_features: int):
     weights = rng.random_sample(n_features)
 
     if metric == "minkowski":
-        minkowski_kwargs = [dict(p=1), dict(p=2), dict(p=3), dict(p=np.inf)]
+        minkowski_kwargs = [dict(p=1.5), dict(p=2), dict(p=3), dict(p=np.inf)]
         if sp_version >= parse_version("1.8.0.dev0"):
             # TODO: remove the test once we no longer support scipy < 1.8.0.
             # Recent scipy versions accept weights in the Minkowski metric directly:
