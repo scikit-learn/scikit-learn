@@ -291,15 +291,16 @@ def test_function_transformer_raise_error_with_mixed_dtype(X_type):
         ),
     ],
 )
+@pytest.mark.parametrize("validate", [True, False])
 def test_function_transformer_get_feature_names_out(
-    X, feature_names_out, input_features, expected
+    X, feature_names_out, input_features, expected, validate
 ):
     if isinstance(X, dict):
         pd = pytest.importorskip("pandas")
         X = pd.DataFrame(X)
 
     transformer = FunctionTransformer(
-        feature_names_out=feature_names_out, validate=True
+        feature_names_out=feature_names_out, validate=validate
     )
     transformer.fit_transform(X)
     names = transformer.get_feature_names_out(input_features)
@@ -312,10 +313,6 @@ def test_function_transformer_get_feature_names_out_without_validation():
     transformer = FunctionTransformer(feature_names_out="one-to-one", validate=False)
     X = np.random.rand(100, 2)
     transformer.fit_transform(X)
-
-    msg = "When 'feature_names_out' is 'one-to-one', either"
-    with pytest.raises(ValueError, match=msg):
-        transformer.get_feature_names_out()
 
     names = transformer.get_feature_names_out(("a", "b"))
     assert isinstance(names, np.ndarray)
@@ -390,3 +387,23 @@ def test_function_transformer_validate_inverse():
 
     trans.inverse_transform(X_trans)
     assert trans.n_features_in_ == X.shape[1]
+
+
+@pytest.mark.parametrize(
+    "feature_names_out, expected",
+    [
+        ("one-to-one", ["pet", "color"]),
+        [lambda est, names: [f"{n}_out" for n in names], ["pet_out", "color_out"]],
+    ],
+)
+def test_get_feature_names_out_dataframe_with_string_data(feature_names_out, expected):
+    """Check that get_feature_names_out works with DataFrames with string data."""
+    pd = pytest.importorskip("pandas")
+    X = pd.DataFrame({"pet": ["dog", "cat"], "color": ["red", "green"]})
+
+    transformer = FunctionTransformer(feature_names_out=feature_names_out)
+    transformer.fit_transform(X)
+    names = transformer.get_feature_names_out()
+    assert isinstance(names, np.ndarray)
+    assert names.dtype == object
+    assert_array_equal(names, expected)

@@ -195,6 +195,13 @@ Changelog
   to `"highs"` in version 1.4.
   :pr:`23637` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+:mod:`sklearn.preprocessing`
+............................
+
+- |Enhancement| :class:`preprocessing.FunctionTransformer` will always try to set
+  `n_features_in_` and `feature_names_in_` regardless of the `validate` parameter.
+  :pr:`xxxxx` by `Thomas Fan`_.
+
 :mod:`sklearn.metrics`
 ......................
 
