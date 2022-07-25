@@ -711,6 +711,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         See :term:`Glossary <random_state>`.
 
     verbose : bool, default=False
+        If True, chain progress is output as each model is completed.
 
     Attributes
     ----------
@@ -914,6 +915,7 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
         See :term:`Glossary <random_state>`.
 
     verbose : bool, default=False
+        If True, chain progress is output as each model is completed.
 
     Attributes
     ----------
