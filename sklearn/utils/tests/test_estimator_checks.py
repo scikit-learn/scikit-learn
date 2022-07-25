@@ -1132,6 +1132,7 @@ def test_check_outlier_contamination():
         Interval(Integral, 0, 1, closed="right"),  # not an integral interval
         Interval(Real, -1, 1, closed="right"),  # lower bound is negative
         Interval(Real, 0, 2, closed="right"),  # upper bound is greater than 1
+        Interval(Real, 0, 0.5, closed="left"),  # lower bound include 0
     ]
 
     err_msg = r"contamination constraint should be an interval in \(0, 0.5\]"
