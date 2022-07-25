@@ -12,7 +12,7 @@ from functools import partial
 import warnings
 from abc import ABCMeta, abstractmethod
 import numbers
-from numbers import Integral
+from numbers import Integral, Real
 
 import numpy as np
 from scipy.sparse import csr_matrix, issparse
@@ -391,10 +391,10 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
     _parameter_constraints = {
         "n_neighbors": [Interval(Integral, 1, None, closed="left"), None],
-        "radius": [Interval(Integral, 1, None, closed="left"), None],
+        "radius": [Interval(Real, 0, None, closed="both"), None],
         "algorithm": [StrOptions({"auto", "ball_tree", "kd_tree", "brute"})],
         "leaf_size": [Interval(Integral, 1, None, closed="left")],
-        "p": [Interval(Integral, 1, None, closed="left")],
+        "p": [Interval(Real, 1, None, closed="both"), None],
         "metric": [StrOptions(set(itertools.chain(*VALID_METRICS.values()))), callable],
         "metric_params": [dict, None],
         "n_jobs": [Integral, None],
