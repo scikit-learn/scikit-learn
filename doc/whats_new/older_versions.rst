@@ -1134,7 +1134,7 @@ Changelog
   example_gaussian_process_plot_gp_probabilistic_classification_after_regression.py
   for a taste of what can be done.
 
-- It is now possible to use liblinear’s Multi-class SVC (option
+- It is now possible to use liblinear's Multi-class SVC (option
   multi_class in :class:`~svm.LinearSVC`)
 
 - New features and performance improvements of text feature

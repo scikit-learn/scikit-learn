@@ -4,7 +4,7 @@
 #
 #    pip-compile --output-file=build_tools/azure/debian_atlas_32bit_lock.txt build_tools/azure/debian_atlas_32bit_requirements.txt
 #
-atomicwrites==1.4.0
+atomicwrites==1.4.1
     # via pytest
 attrs==21.4.0
     # via pytest
@@ -30,5 +30,5 @@ threadpoolctl==2.2.0
     # via -r build_tools/azure/debian_atlas_32bit_requirements.txt
 wcwidth==0.2.5
     # via pytest
-zipp==3.8.0
+zipp==3.8.1
     # via importlib-metadata
