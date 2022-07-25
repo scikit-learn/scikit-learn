@@ -40,7 +40,7 @@ Single and multi-output problems are both handled.
 # License: BSD 3 clause
 
 
-import numbers
+from numbers import Integral, Real
 from warnings import catch_warnings, simplefilter, warn
 import threading
 
@@ -56,6 +56,7 @@ from ..base import ClassifierMixin, MultiOutputMixin, RegressorMixin, Transforme
 from ..metrics import accuracy_score, r2_score
 from ..preprocessing import OneHotEncoder
 from ..tree import (
+    BaseDecisionTree,
     DecisionTreeClassifier,
     DecisionTreeRegressor,
     ExtraTreeClassifier,
@@ -73,6 +74,7 @@ from ..utils.validation import (
     _check_feature_names_in,
 )
 from ..utils.validation import _num_samples
+from ..utils._param_validation import Interval, StrOptions
 
 
 __all__ = [
@@ -109,20 +111,14 @@ def _get_n_samples_bootstrap(n_samples, max_samples):
     if max_samples is None:
         return n_samples
 
-    if isinstance(max_samples, numbers.Integral):
-        if not (1 <= max_samples <= n_samples):
-            msg = "`max_samples` must be in range 1 to {} but got value {}"
+    if isinstance(max_samples, Integral):
+        if max_samples > n_samples:
+            msg = "`max_samples` must be <= n_samples={} but got value {}"
             raise ValueError(msg.format(n_samples, max_samples))
         return max_samples
 
-    if isinstance(max_samples, numbers.Real):
-        if not (0 < max_samples <= 1):
-            msg = "`max_samples` must be in range (0.0, 1.0] but got value {}"
-            raise ValueError(msg.format(max_samples))
+    if isinstance(max_samples, Real):
         return round(n_samples * max_samples)
-
-    msg = "`max_samples` should be int or float, but got type '{}'"
-    raise TypeError(msg.format(type(max_samples)))
 
 
 def _generate_sample_indices(random_state, n_samples, n_samples_bootstrap):
@@ -200,6 +196,21 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
     Warning: This class should not be used directly. Use derived classes
     instead.
     """
+
+    _parameter_constraints = {
+        "n_estimators": [Interval(Integral, 1, None, closed="left")],
+        "bootstrap": ["boolean"],
+        "oob_score": ["boolean"],
+        "n_jobs": [Integral, None],
+        "random_state": ["random_state"],
+        "verbose": ["verbose"],
+        "warm_start": ["boolean"],
+        "max_samples": [
+            None,
+            Interval(Real, 0.0, 1.0, closed="right"),
+            Interval(Integral, 1, None, closed="left"),
+        ],
+    }
 
     @abstractmethod
     def __init__(
@@ -325,6 +336,8 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         self : object
             Fitted estimator.
         """
+        self._validate_params()
+
         # Validate or convert input data
         if issparse(y):
             raise ValueError("sparse multilabel-indicator for y is not supported.")
@@ -392,7 +405,6 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         else:
             n_samples_bootstrap = None
 
-        # Check parameters
         self._validate_estimator()
         # TODO(1.2): Remove "mse" and "mae"
         if isinstance(self, (RandomForestRegressor, ExtraTreesRegressor)):
@@ -1373,6 +1385,18 @@ class RandomForestClassifier(ForestClassifier):
     [1]
     """
 
+    _parameter_constraints = {
+        **ForestClassifier._parameter_constraints,
+        **DecisionTreeClassifier._parameter_constraints,
+        "class_weight": [
+            StrOptions({"balanced_subsample", "balanced"}),
+            dict,
+            list,
+            None,
+        ],
+    }
+    _parameter_constraints.pop("splitter")
+
     def __init__(
         self,
         n_estimators=100,
@@ -1453,13 +1477,16 @@ class RandomForestRegressor(ForestRegressor):
            The default value of ``n_estimators`` changed from 10 to 100
            in 0.22.
 
-    criterion : {"squared_error", "absolute_error", "poisson"}, \
+    criterion : {"squared_error", "absolute_error", "friedman_mse", "poisson"}, \
             default="squared_error"
         The function to measure the quality of a split. Supported criteria
         are "squared_error" for the mean squared error, which is equal to
-        variance reduction as feature selection criterion, "absolute_error"
-        for the mean absolute error, and "poisson" which uses reduction in
-        Poisson deviance to find splits.
+        variance reduction as feature selection criterion and minimizes the L2
+        loss using the mean of each terminal node, "friedman_mse", which uses
+        mean squared error with Friedman's improvement score for potential
+        splits, "absolute_error" for the mean absolute error, which minimizes
+        the L1 loss using the median of each terminal node, and "poisson" which
+        uses reduction in Poisson deviance to find splits.
         Training using "absolute_error" is significantly slower
         than when using "squared_error".
 
@@ -1705,6 +1732,12 @@ class RandomForestRegressor(ForestRegressor):
     >>> print(regr.predict([[0, 0, 0, 0]]))
     [-8.32987858]
     """
+
+    _parameter_constraints = {
+        **ForestRegressor._parameter_constraints,
+        **DecisionTreeRegressor._parameter_constraints,
+    }
+    _parameter_constraints.pop("splitter")
 
     def __init__(
         self,
@@ -2041,6 +2074,18 @@ class ExtraTreesClassifier(ForestClassifier):
     array([1])
     """
 
+    _parameter_constraints = {
+        **ForestClassifier._parameter_constraints,
+        **DecisionTreeClassifier._parameter_constraints,
+        "class_weight": [
+            StrOptions({"balanced_subsample", "balanced"}),
+            dict,
+            list,
+            None,
+        ],
+    }
+    _parameter_constraints.pop("splitter")
+
     def __init__(
         self,
         n_estimators=100,
@@ -2119,11 +2164,18 @@ class ExtraTreesRegressor(ForestRegressor):
            The default value of ``n_estimators`` changed from 10 to 100
            in 0.22.
 
-    criterion : {"squared_error", "absolute_error"}, default="squared_error"
+    criterion : {"squared_error", "absolute_error", "friedman_mse", "poisson"}, \
+            default="squared_error"
         The function to measure the quality of a split. Supported criteria
         are "squared_error" for the mean squared error, which is equal to
-        variance reduction as feature selection criterion, and "absolute_error"
-        for the mean absolute error.
+        variance reduction as feature selection criterion and minimizes the L2
+        loss using the mean of each terminal node, "friedman_mse", which uses
+        mean squared error with Friedman's improvement score for potential
+        splits, "absolute_error" for the mean absolute error, which minimizes
+        the L1 loss using the median of each terminal node, and "poisson" which
+        uses reduction in Poisson deviance to find splits.
+        Training using "absolute_error" is significantly slower
+        than when using "squared_error".
 
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
@@ -2356,6 +2408,12 @@ class ExtraTreesRegressor(ForestRegressor):
     >>> reg.score(X_test, y_test)
     0.2727...
     """
+
+    _parameter_constraints = {
+        **ForestRegressor._parameter_constraints,
+        **DecisionTreeRegressor._parameter_constraints,
+    }
+    _parameter_constraints.pop("splitter")
 
     def __init__(
         self,
@@ -2591,6 +2649,17 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
            [0., 1., 1., 0., 1., 0., 0., 1., 1., 0.]])
     """
 
+    _parameter_constraints = {
+        "n_estimators": [Interval(Integral, 1, None, closed="left")],
+        "n_jobs": [Integral, None],
+        "verbose": ["verbose"],
+        "warm_start": ["boolean"],
+        **BaseDecisionTree._parameter_constraints,
+        "sparse_output": ["boolean"],
+    }
+    for param in ("max_features", "ccp_alpha", "splitter"):
+        _parameter_constraints.pop(param)
+
     criterion = "squared_error"
     max_features = 1
 
@@ -2670,6 +2739,7 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
         self : object
             Returns the instance itself.
         """
+        # Parameters are validated in fit_transform
         self.fit_transform(X, y, sample_weight=sample_weight)
         return self
 
@@ -2698,6 +2768,8 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
         X_transformed : sparse matrix of shape (n_samples, n_out)
             Transformed dataset.
         """
+        self._validate_params()
+
         rnd = check_random_state(self.random_state)
         y = rnd.uniform(size=_num_samples(X))
         super().fit(X, y, sample_weight=sample_weight)
