@@ -371,36 +371,6 @@ def test_isotonic_regression_oob_nan():
     assert sum(np.isnan(y1)) == 2
 
 
-def test_isotonic_regression_oob_bad():
-    # Set y and x
-    y = np.array([3, 7, 5, 9, 8, 7, 10])
-    x = np.arange(len(y))
-
-    # Create model and fit
-    ir = IsotonicRegression(increasing="auto", out_of_bounds="xyz")
-
-    # Make sure that we throw an error for bad out_of_bounds value
-    msg = "The argument ``out_of_bounds`` must be in 'nan', 'clip', 'raise'; got xyz"
-    with pytest.raises(ValueError, match=msg):
-        ir.fit(x, y)
-
-
-def test_isotonic_regression_oob_bad_after():
-    # Set y and x
-    y = np.array([3, 7, 5, 9, 8, 7, 10])
-    x = np.arange(len(y))
-
-    # Create model and fit
-    ir = IsotonicRegression(increasing="auto", out_of_bounds="raise")
-
-    # Make sure that we throw an error for bad out_of_bounds value in transform
-    ir.fit(x, y)
-    ir.out_of_bounds = "xyz"
-    msg = "The argument ``out_of_bounds`` must be in 'nan', 'clip', 'raise'; got xyz"
-    with pytest.raises(ValueError, match=msg):
-        ir.transform(x)
-
-
 def test_isotonic_regression_pickle():
     y = np.array([3, 7, 5, 9, 8, 7, 10])
     x = np.arange(len(y))
