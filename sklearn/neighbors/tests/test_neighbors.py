@@ -1489,8 +1489,9 @@ def test_neighbors_badargs():
     X3 = rng.random_sample((10, 3))
     y = np.ones(10)
 
+    msg = "unrecognized algorithm: 'blah'"
     est = neighbors.NearestNeighbors(algorithm="blah")
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=msg):
         est.fit(X)
 
     for cls in (
@@ -1499,20 +1500,12 @@ def test_neighbors_badargs():
         neighbors.KNeighborsRegressor,
         neighbors.RadiusNeighborsRegressor,
     ):
-        est = cls(weights="blah")
-        with pytest.raises(ValueError):
-            est.fit(X, y)
-        est = cls(p=-1)
-        with pytest.raises(ValueError):
-            est.fit(X, y)
-        est = cls(algorithm="blah")
-        with pytest.raises(ValueError):
-            est.fit(X, y)
-
         nbrs = cls(algorithm="ball_tree", metric="haversine")
-        with pytest.raises(ValueError):
+        msg = "instance is not fitted yet"
+        with pytest.raises(ValueError, match=msg):
             nbrs.predict(X)
-        with pytest.raises(ValueError):
+        msg = "Metric 'haversine' not valid for sparse input."
+        with pytest.raises(ValueError, match=msg):
             ignore_warnings(nbrs.fit(Xsparse, y))
 
         nbrs = cls(metric="haversine", algorithm="brute")
@@ -1522,19 +1515,28 @@ def test_neighbors_badargs():
             nbrs.predict(X3)
 
         nbrs = cls()
-        with pytest.raises(ValueError):
+        msg = re.escape("Found array with 0 sample(s)")
+        with pytest.raises(ValueError, match=msg):
             nbrs.fit(np.ones((0, 2)), np.ones(0))
-        with pytest.raises(ValueError):
+
+        msg = "Found array with dim 3"
+        with pytest.raises(ValueError, match=msg):
             nbrs.fit(X[:, :, None], y)
         nbrs.fit(X, y)
-        with pytest.raises(ValueError):
+
+        msg = re.escape("Found array with 0 feature(s)")
+        with pytest.raises(ValueError, match=msg):
             nbrs.predict([[]])
 
     nbrs = neighbors.NearestNeighbors().fit(X)
 
-    with pytest.raises(ValueError):
+    msg = (
+        'Unsupported mode, must be one of "connectivity", or "distance" but got "blah"'
+        " instead"
+    )
+    with pytest.raises(ValueError, match=msg):
         nbrs.kneighbors_graph(X, mode="blah")
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=msg):
         nbrs.radius_neighbors_graph(X, mode="blah")
 
 

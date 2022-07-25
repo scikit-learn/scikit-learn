@@ -991,7 +991,7 @@ class KNeighborsMixin:
 
         else:
             raise ValueError(
-                'Unsupported mode, must be one of "connectivity" '
+                'Unsupported mode, must be one of "connectivity", '
                 'or "distance" but got "%s" instead' % mode
             )
 
@@ -1344,7 +1344,7 @@ class RadiusNeighborsMixin:
         else:
             raise ValueError(
                 'Unsupported mode, must be one of "connectivity", '
-                'or "distance" but got %s instead' % mode
+                'or "distance" but got "%s" instead' % mode
             )
 
         n_queries = A_ind.shape[0]
