@@ -101,7 +101,7 @@ def _generate_test_params_for(metric: str, n_features: int):
     # TODO: remove this case for "wminkowski" once we no longer support scipy < 1.8.0.
     if metric == "wminkowski":
         weights /= weights.sum()
-        wminkowski_kwargs = [dict(p=1, w=weights)]
+        wminkowski_kwargs = [dict(p=1.5, w=weights)]
         if sp_version < parse_version("1.8.0.dev0"):
             # wminkowski was removed in scipy 1.8.0 but should work for previous
             # versions.
