@@ -929,7 +929,6 @@ def test_pairwise_distances_radius_neighbors(
         neigh_indices_ref.append(ind)
         neigh_distances_ref.append(dist)
 
-
     neigh_distances, neigh_indices = PairwiseDistancesRadiusNeighborhood.compute(
         X,
         Y,
