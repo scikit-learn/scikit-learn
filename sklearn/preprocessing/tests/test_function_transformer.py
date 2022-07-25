@@ -6,6 +6,7 @@ from scipy import sparse
 from sklearn.utils import _safe_indexing
 
 from sklearn.preprocessing import FunctionTransformer
+from sklearn.pipeline import make_pipeline
 from sklearn.utils._testing import (
     assert_array_equal,
     assert_allclose_dense_sparse,
@@ -396,12 +397,18 @@ def test_function_transformer_validate_inverse():
         [lambda est, names: [f"{n}_out" for n in names], ["pet_out", "color_out"]],
     ],
 )
-def test_get_feature_names_out_dataframe_with_string_data(feature_names_out, expected):
+@pytest.mark.parametrize("in_pipeline", [True, False])
+def test_get_feature_names_out_dataframe_with_string_data(
+    feature_names_out, expected, in_pipeline
+):
     """Check that get_feature_names_out works with DataFrames with string data."""
     pd = pytest.importorskip("pandas")
     X = pd.DataFrame({"pet": ["dog", "cat"], "color": ["red", "green"]})
 
     transformer = FunctionTransformer(feature_names_out=feature_names_out)
+    if in_pipeline:
+        transformer = make_pipeline(transformer)
+
     X_trans = transformer.fit_transform(X)
     assert isinstance(X_trans, pd.DataFrame)
 
