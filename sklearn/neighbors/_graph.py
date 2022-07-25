@@ -10,7 +10,6 @@ from ._unsupervised import NearestNeighbors
 from ..base import TransformerMixin, _ClassNamePrefixFeaturesOutMixin
 from ..utils._param_validation import StrOptions
 from ..utils.validation import check_is_fitted
-from ..utils._param_validation import StrOptions
 
 
 def _check_params(X, metric, p, metric_params):

@@ -485,9 +485,7 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
     _parameter_constraints = {
         **NeighborsBase._parameter_constraints,
         "weights": [StrOptions({"uniform", "distance"}), callable, None],
-        "outlier_label": [
-            Integral, str, "array-like", None
-            ],
+        "outlier_label": [Integral, str, "array-like", None],
     }
     _parameter_constraints.pop("n_neighbors")
 
