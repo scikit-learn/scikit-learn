@@ -2398,7 +2398,8 @@ def check_outlier_contamination(name, estimator_orig):
                 constraint.type == Real
                 and constraint.left >= 0.0
                 and constraint.right <= 0.5
-                and constraint.closed in {"right", "neither"}
+                and constraint.left > 0
+                or constraint.closed in {"right", "neither"}
             ), "contamination constraint should be an interval in (0, 0.5]"
 
 
