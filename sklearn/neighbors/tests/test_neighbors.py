@@ -1474,10 +1474,6 @@ def test_neighbors_badargs():
     X3 = rng.random_sample((10, 3))
     y = np.ones(10)
 
-    est = neighbors.NearestNeighbors(algorithm="blah")
-    with pytest.raises(ValueError):
-        est.fit(X)
-
     for cls in (
         neighbors.RadiusNeighborsClassifier,
         neighbors.RadiusNeighborsRegressor,
