@@ -391,10 +391,10 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
     _parameter_constraints = {
         "n_neighbors": [Interval(Integral, 1, None, closed="left"), None],
-        "radius": [Interval(Real, 0., None, closed="neither"), None],
+        "radius": [Interval(Real, 0, None, closed="both"), None],
         "algorithm": [StrOptions({"auto", "ball_tree", "kd_tree", "brute"})],
         "leaf_size": [Interval(Integral, 1, None, closed="left")],
-        "p": [Interval(Integral, 1, None, closed="left")],
+        "p": [Interval(Real, 1, None, closed="both"), None],
         "metric": [StrOptions(set(itertools.chain(*VALID_METRICS.values()))), callable],
         "metric_params": [dict, None],
         "n_jobs": [Integral, None],
@@ -991,8 +991,8 @@ class KNeighborsMixin:
 
         else:
             raise ValueError(
-                'Unsupported mode, must be one of "connectivity" '
-                'or "distance" but got "%s" instead' % mode
+                'Unsupported mode, must be one of "connectivity", '
+                f'or "distance" but got "{mode}" instead'
             )
 
         n_queries = A_ind.shape[0]
@@ -1344,7 +1344,7 @@ class RadiusNeighborsMixin:
         else:
             raise ValueError(
                 'Unsupported mode, must be one of "connectivity", '
-                'or "distance" but got %s instead' % mode
+                f'or "distance" but got "{mode}" instead'
             )
 
         n_queries = A_ind.shape[0]

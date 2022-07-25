@@ -71,11 +71,7 @@ common_dependencies = common_dependencies_without_coverage + [
 
 docstring_test_dependencies = ["sphinx", "numpydoc"]
 
-default_package_constraints = {
-    # XXX: coverage is temporary pinned to 6.2 because 6.3 is not fork-safe
-    # cf. https://github.com/nedbat/coveragepy/issues/1310
-    "coverage": "6.2",
-}
+default_package_constraints = {}
 
 
 def remove_from(alist, to_remove):
@@ -112,6 +108,11 @@ conda_build_metadata_list = [
         "conda_dependencies": common_dependencies + ["ccache"],
         "package_constraints": {
             "blas": "[build=mkl]",
+            # XXX: coverage is temporary pinned to 6.2 because 6.3 is not
+            # fork-safe and 6.4 is not available yet (July 2022) in conda
+            # defaults channel. For more details, see:
+            # https://github.com/nedbat/coveragepy/issues/1310
+            "coverage": "6.2",
         },
     },
     {
@@ -137,6 +138,11 @@ conda_build_metadata_list = [
             "scipy": "min",
             "matplotlib": "min",
             "threadpoolctl": "2.2.0",
+            # XXX: coverage is temporary pinned to 6.2 because 6.3 is not
+            # fork-safe and 6.4 is not available yet (July 2022) in conda
+            # defaults channel. For more details, see:
+            # https://github.com/nedbat/coveragepy/issues/1310
+            "coverage": "6.2",
         },
     },
     {
