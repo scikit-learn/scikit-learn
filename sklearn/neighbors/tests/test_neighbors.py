@@ -1467,27 +1467,6 @@ def test_radius_neighbors_graph_sparse(n_neighbors, mode, seed=36):
     )
 
 
-# TODO: Remove when RaidusNeighbors* use the parameter validation mechanism
-@pytest.mark.parametrize(
-    "Estimator",
-    [neighbors.RadiusNeighborsRegressor, neighbors.RadiusNeighborsClassifier],
-)
-@pytest.mark.parametrize(
-    "params, err_type, err_msg",
-    [
-        ({"weights": "blah"}, ValueError, "weights not recognized: should be"),
-        ({"algorithm": "blah"}, ValueError, "unrecognized algorithm"),
-        ({"p": -1}, ValueError, "p must be greater or equal to one"),
-    ],
-)
-def test_radius_neighbors_validate_params(Estimator, params, err_type, err_msg):
-    """Parameter validation for RadiusNeighbors*."""
-    X = rng.random_sample((10, 2))
-    y = np.ones(10)
-    with pytest.raises(err_type, match=err_msg):
-        Estimator(**params).fit(X, y)
-
-
 @pytest.mark.parametrize(
     "Estimator",
     [

@@ -86,26 +86,17 @@ VALID_METRICS_SPARSE = dict(
 )
 
 
-def _check_weights(weights):
-    """Check to make sure weights are valid"""
-    if weights not in (None, "uniform", "distance") and not callable(weights):
-        raise ValueError(
-            "weights not recognized: should be 'uniform', "
-            "'distance', or a callable function"
-        )
-
-    return weights
-
-
 def _get_weights(dist, weights):
     """Get the weights from an array of distances and a parameter ``weights``.
+
+    Assume weights have already been validated.
 
     Parameters
     ----------
     dist : ndarray
         The input distances.
 
-    weights : {'uniform', 'distance' or a callable}
+    weights : {'uniform', 'distance'}, callable or None
         The kind of weighting used.
 
     Returns
@@ -115,7 +106,8 @@ def _get_weights(dist, weights):
     """
     if weights in (None, "uniform"):
         return None
-    elif weights == "distance":
+
+    if weights == "distance":
         # if user attempts to classify a point that was zero distance from one
         # or more training points, those training points are weighted as 1.0
         # and the other points as 0.0
@@ -135,13 +127,9 @@ def _get_weights(dist, weights):
             inf_row = np.any(inf_mask, axis=1)
             dist[inf_row] = inf_mask[inf_row]
         return dist
-    elif callable(weights):
+
+    if callable(weights):
         return weights(dist)
-    else:
-        raise ValueError(
-            "weights not recognized: should be 'uniform', "
-            "'distance', or a callable function"
-        )
 
 
 def _is_sorted_by_data(graph):
@@ -423,9 +411,6 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         self.n_jobs = n_jobs
 
     def _check_algorithm_metric(self):
-        if self.algorithm not in ["auto", "brute", "kd_tree", "ball_tree"]:
-            raise ValueError("unrecognized algorithm: '%s'" % self.algorithm)
-
         if self.algorithm == "auto":
             if self.metric == "precomputed":
                 alg_check = "brute"
@@ -526,11 +511,8 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         if self.metric == "minkowski":
             p = self.effective_metric_params_.pop("p", 2)
             w = self.effective_metric_params_.pop("w", None)
-            if p < 1:
-                raise ValueError(
-                    "p must be greater or equal to one for minkowski metric"
-                )
-            elif p == 1 and w is None:
+
+            if p == 1 and w is None:
                 self.effective_metric_ = "manhattan"
             elif p == 2 and w is None:
                 self.effective_metric_ = "euclidean"
@@ -663,14 +645,6 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             )
         elif self._fit_method == "brute":
             self._tree = None
-        if self.n_neighbors is not None:
-            if self.n_neighbors <= 0:
-                raise ValueError("Expected n_neighbors > 0. Got %d" % self.n_neighbors)
-            elif not isinstance(self.n_neighbors, numbers.Integral):
-                raise TypeError(
-                    "n_neighbors does not take %s value, enter integer value"
-                    % type(self.n_neighbors)
-                )
 
         return self
 

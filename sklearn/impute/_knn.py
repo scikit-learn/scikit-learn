@@ -10,7 +10,6 @@ from ..utils.validation import FLOAT_DTYPES
 from ..metrics import pairwise_distances_chunked
 from ..metrics.pairwise import _NAN_METRICS
 from ..neighbors._base import _get_weights
-from ..neighbors._base import _check_weights
 from ..utils import is_scalar_nan
 from ..utils._mask import _get_mask
 from ..utils.validation import check_is_fitted
@@ -220,7 +219,6 @@ class KNNImputer(_BaseImputer):
             copy=self.copy,
         )
 
-        _check_weights(self.weights)
         self._fit_X = X
         self._mask_fit_X = _get_mask(self._fit_X, self.missing_values)
         self._valid_mask = ~np.all(self._mask_fit_X, axis=0)
