@@ -119,7 +119,7 @@ cdef class PairwiseDistancesReduction64:
         This strategy dispatches chunks of X uniformly on threads.
         Each thread processes all the chunks of Y in turn. This strategy is
         a sequence of embarrassingly parallel tasks (the outer loop on X
-        chunks) with no intermediate datastructures synchronisation at all.
+        chunks) with no intermediate data structures synchronization at all.
 
         Private datastructures are modified internally by threads.
 
@@ -186,8 +186,8 @@ cdef class PairwiseDistancesReduction64:
 
         This strategy is a sequence of embarrassingly parallel subtasks:
         it dispatches chunks of Y uniformly on threads for each chunk of X at a time.
-        It comes with intermediate yet lock-free and parallelized datastructures
-        synchronisation at each iteration of the sequential outer loop on X chunks.
+        It comes with lock-free and parallelized intermediate data structures that
+        synchronize at each iteration of the sequential outer loop on X chunks.
 
         Private datastructures are modified internally by threads.
 
