@@ -729,8 +729,8 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
             - If int, then consider `max_features` features at each split.
             - If float, then `max_features` is a fraction and
-              `int(max_features * n_features)` features are considered at each
-              split.
+              `max(1, int(max_features * n_features_in_))` features are considered at
+              each split.
             - If "auto", then `max_features=sqrt(n_features)`.
             - If "sqrt", then `max_features=sqrt(n_features)`.
             - If "log2", then `max_features=log2(n_features)`.
@@ -1140,7 +1140,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
         - If int, then consider `max_features` features at each split.
         - If float, then `max_features` is a fraction and
-          `int(max_features * n_features)` features are considered at each
+          `max(1, int(max_features * n_features_in_))` features are considered at each
           split.
         - If "auto", then `max_features=n_features`.
         - If "sqrt", then `max_features=sqrt(n_features)`.
@@ -1450,8 +1450,8 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
 
             - If int, then consider `max_features` features at each split.
             - If float, then `max_features` is a fraction and
-              `int(max_features * n_features)` features are considered at each
-              split.
+              `max(1, int(max_features * n_features_in_))` features are considered at
+              each split.
             - If "auto", then `max_features=sqrt(n_features)`.
             - If "sqrt", then `max_features=sqrt(n_features)`.
             - If "log2", then `max_features=log2(n_features)`.
@@ -1730,7 +1730,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
         - If int, then consider `max_features` features at each split.
         - If float, then `max_features` is a fraction and
-          `int(max_features * n_features)` features are considered at each
+          `max(1, int(max_features * n_features_in_))` features are considered at each
           split.
         - If "auto", then `max_features=n_features`.
         - If "sqrt", then `max_features=sqrt(n_features)`.
