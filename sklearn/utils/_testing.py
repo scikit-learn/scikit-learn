@@ -60,6 +60,7 @@ from sklearn.utils.validation import (
     check_is_fitted,
     check_X_y,
 )
+from sklearn.utils.fixes import threadpool_info
 
 
 __all__ = [
@@ -602,6 +603,38 @@ class TempMemmap:
         _delete_folder(self.temp_folder)
 
 
+def _create_memmap_backed_array(array, filename, mmap_mode):
+    # https://numpy.org/doc/stable/reference/generated/numpy.memmap.html
+    fp = np.memmap(filename, dtype=array.dtype, mode="w+", shape=array.shape)
+    fp[:] = array[:]  # write array to memmap array
+    fp.flush()
+    memmap_backed_array = np.memmap(
+        filename, dtype=array.dtype, mode=mmap_mode, shape=array.shape
+    )
+    return memmap_backed_array
+
+
+def _create_aligned_memmap_backed_arrays(data, mmap_mode, folder):
+    if isinstance(data, np.ndarray):
+        filename = op.join(folder, "data.dat")
+        return _create_memmap_backed_array(data, filename, mmap_mode)
+
+    if isinstance(data, Iterable) and all(
+        isinstance(each, np.ndarray) for each in data
+    ):
+        return [
+            _create_memmap_backed_array(
+                array, op.join(folder, f"data{index}.dat"), mmap_mode
+            )
+            for index, array in enumerate(data)
+        ]
+
+    raise ValueError(
+        "When creating aligned memmap-backed arrays, input must be a single array or a"
+        " iterable of arrays"
+    )
+
+
 def create_memmap_backed_data(data, mmap_mode="r", return_folder=False, aligned=False):
     """
     Parameters
@@ -616,18 +649,23 @@ def create_memmap_backed_data(data, mmap_mode="r", return_folder=False, aligned=
     """
     temp_folder = tempfile.mkdtemp(prefix="sklearn_testing_")
     atexit.register(functools.partial(_delete_folder, temp_folder, warn=True))
+    # OpenBLAS is known to segfault with unaligned data on the Prescott
+    # architecture so force aligned=True on Prescott. For more details, see:
+    # https://github.com/scipy/scipy/issues/14886
+    has_prescott_openblas = any(
+        True
+        for info in threadpool_info()
+        if info["internal_api"] == "openblas"
+        # Prudently assume Prescott might be the architecture if it is unknown.
+        and info.get("architecture", "prescott").lower() == "prescott"
+    )
+    if has_prescott_openblas:
+        aligned = True
+
     if aligned:
-        if isinstance(data, np.ndarray) and data.flags.aligned:
-            # https://numpy.org/doc/stable/reference/generated/numpy.memmap.html
-            filename = op.join(temp_folder, "data.dat")
-            fp = np.memmap(filename, dtype=data.dtype, mode="w+", shape=data.shape)
-            fp[:] = data[:]  # write data to memmap array
-            fp.flush()
-            memmap_backed_data = np.memmap(
-                filename, dtype=data.dtype, mode=mmap_mode, shape=data.shape
-            )
-        else:
-            raise ValueError("If aligned=True, input must be a single numpy array.")
+        memmap_backed_data = _create_aligned_memmap_backed_arrays(
+            data, mmap_mode, temp_folder
+        )
     else:
         filename = op.join(temp_folder, "data.pkl")
         joblib.dump(data, filename)

@@ -54,7 +54,6 @@ from ..model_selection import train_test_split
 from ..model_selection import ShuffleSplit
 from ..model_selection._validation import _safe_split
 from ..metrics.pairwise import rbf_kernel, linear_kernel, pairwise_distances
-from ..utils.fixes import threadpool_info
 from ..utils.fixes import sp_version
 from ..utils.fixes import parse_version
 from ..utils.validation import check_is_fitted
@@ -2120,22 +2119,6 @@ def check_classifiers_one_label(name, classifier_orig):
         assert_array_equal(classifier.predict(X_test), y, err_msg=error_string_predict)
 
 
-def _create_memmap_backed_data(numpy_arrays):
-    # OpenBLAS is known to segfault with unaligned data on the Prescott architecture
-    # See: https://github.com/scipy/scipy/issues/14886
-    has_prescott_openblas = any(
-        True
-        for info in threadpool_info()
-        if info["internal_api"] == "openblas"
-        # Prudently assume Prescott might be the architecture if it is unknown.
-        and info.get("architecture", "prescott").lower() == "prescott"
-    )
-    return [
-        create_memmap_backed_data(array, aligned=has_prescott_openblas)
-        for array in numpy_arrays
-    ]
-
-
 @ignore_warnings  # Warnings are raised by decision function
 def check_classifiers_train(
     name, classifier_orig, readonly_memmap=False, X_dtype="float64"
@@ -2153,7 +2136,7 @@ def check_classifiers_train(
         X_b -= X_b.min()
 
     if readonly_memmap:
-        X_m, y_m, X_b, y_b = _create_memmap_backed_data([X_m, y_m, X_b, y_b])
+        X_m, y_m, X_b, y_b = create_memmap_backed_data([X_m, y_m, X_b, y_b])
 
     problems = [(X_b, y_b)]
     tags = _safe_tags(classifier_orig)
@@ -2814,7 +2797,7 @@ def check_regressors_train(
         y_ = y
 
     if readonly_memmap:
-        X, y, y_ = _create_memmap_backed_data([X, y, y_])
+        X, y, y_ = create_memmap_backed_data([X, y, y_])
 
     if not hasattr(regressor, "alphas") and hasattr(regressor, "alpha"):
         # linear regressors need to set alpha, but not generalized CV ones
