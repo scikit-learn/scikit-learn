@@ -346,7 +346,6 @@ class KNeighborsTransformer(
         **NeighborsBase._parameter_constraints,
         "mode": [StrOptions({"distance", "connectivity"})],
     }
-
     _parameter_constraints.pop("radius")
 
     def __init__(
@@ -570,6 +569,7 @@ class RadiusNeighborsTransformer(
     >>> print(counts)
     [ 29  15 111  11  12]
     """
+
     _parameter_constraints = {
         **NeighborsBase._parameter_constraints,
         "mode": [StrOptions({"distance", "connectivity"})],

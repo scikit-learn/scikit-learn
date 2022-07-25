@@ -86,26 +86,17 @@ VALID_METRICS_SPARSE = dict(
 )
 
 
-def _check_weights(weights):
-    """Check to make sure weights are valid"""
-    if weights not in (None, "uniform", "distance") and not callable(weights):
-        raise ValueError(
-            "weights not recognized: should be 'uniform', "
-            "'distance', or a callable function"
-        )
-
-    return weights
-
-
 def _get_weights(dist, weights):
     """Get the weights from an array of distances and a parameter ``weights``.
+
+    Assume weights have already been validated.
 
     Parameters
     ----------
     dist : ndarray
         The input distances.
 
-    weights : {'uniform', 'distance' or a callable}
+    weights : {'uniform', 'distance'}, callable or None
         The kind of weighting used.
 
     Returns
@@ -115,7 +106,8 @@ def _get_weights(dist, weights):
     """
     if weights in (None, "uniform"):
         return None
-    elif weights == "distance":
+
+    if weights == "distance":
         # if user attempts to classify a point that was zero distance from one
         # or more training points, those training points are weighted as 1.0
         # and the other points as 0.0
@@ -135,13 +127,9 @@ def _get_weights(dist, weights):
             inf_row = np.any(inf_mask, axis=1)
             dist[inf_row] = inf_mask[inf_row]
         return dist
-    elif callable(weights):
+
+    if callable(weights):
         return weights(dist)
-    else:
-        raise ValueError(
-            "weights not recognized: should be 'uniform', "
-            "'distance', or a callable function"
-        )
 
 
 def _is_sorted_by_data(graph):
