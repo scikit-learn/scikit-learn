@@ -6,7 +6,7 @@
 #         Andrew Knyazev <Andrew.Knyazev@ucdenver.edu>
 # License: BSD 3 clause
 
-import numbers
+from numbers import Integral, Real
 import warnings
 
 import numpy as np
@@ -15,8 +15,9 @@ from scipy.linalg import LinAlgError, qr, svd
 from scipy.sparse import csc_matrix
 
 from ..base import BaseEstimator, ClusterMixin
-from ..utils import check_random_state, as_float_array, check_scalar
-from ..metrics.pairwise import pairwise_kernels
+from ..utils._param_validation import Interval, StrOptions
+from ..utils import check_random_state, as_float_array
+from ..metrics.pairwise import pairwise_kernels, KERNEL_PARAMS
 from ..neighbors import kneighbors_graph, NearestNeighbors
 from ..manifold import spectral_embedding
 from ._kmeans import k_means
@@ -198,7 +199,7 @@ def spectral_clustering(
     eigen_solver=None,
     random_state=None,
     n_init=10,
-    eigen_tol=0.0,
+    eigen_tol="auto",
     assign_labels="kmeans",
     verbose=False,
 ):
@@ -259,9 +260,23 @@ def spectral_clustering(
         consecutive runs in terms of inertia. Only used if
         ``assign_labels='kmeans'``.
 
-    eigen_tol : float, default=0.0
-        Stopping criterion for eigendecomposition of the Laplacian matrix
-        when using arpack eigen_solver.
+    eigen_tol : float, default="auto"
+        Stopping criterion for eigendecomposition of the Laplacian matrix.
+        If `eigen_tol="auto"` then the passed tolerance will depend on the
+        `eigen_solver`:
+
+        - If `eigen_solver="arpack"`, then `eigen_tol=0.0`;
+        - If `eigen_solver="lobpcg"` or `eigen_solver="amg"`, then
+          `eigen_tol=None` which configures the underlying `lobpcg` solver to
+          automatically resolve the value according to their heuristics. See,
+          :func:`scipy.sparse.linalg.lobpcg` for details.
+
+        Note that when using `eigen_solver="lobpcg"` or `eigen_solver="amg"`
+        values of `tol<1e-5` may lead to convergence issues and should be
+        avoided.
+
+        .. versionadded:: 1.2
+           Added 'auto' option.
 
     assign_labels : {'kmeans', 'discretize', 'cluster_qr'}, default='kmeans'
         The strategy to use to assign labels in the embedding
@@ -412,8 +427,9 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         but may also lead to instabilities. If None, then ``'arpack'`` is
         used. See [4]_ for more details regarding `'lobpcg'`.
 
-    n_components : int, default=n_clusters
-        Number of eigenvectors to use for the spectral embedding.
+    n_components : int, default=None
+        Number of eigenvectors to use for the spectral embedding. If None,
+        defaults to `n_clusters`.
 
     random_state : int, RandomState instance, default=None
         A pseudo random number generator used for the initialization
@@ -461,9 +477,23 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         Number of neighbors to use when constructing the affinity matrix using
         the nearest neighbors method. Ignored for ``affinity='rbf'``.
 
-    eigen_tol : float, default=0.0
-        Stopping criterion for eigendecomposition of the Laplacian matrix
-        when ``eigen_solver='arpack'``.
+    eigen_tol : float, default="auto"
+        Stopping criterion for eigendecomposition of the Laplacian matrix.
+        If `eigen_tol="auto"` then the passed tolerance will depend on the
+        `eigen_solver`:
+
+        - If `eigen_solver="arpack"`, then `eigen_tol=0.0`;
+        - If `eigen_solver="lobpcg"` or `eigen_solver="amg"`, then
+          `eigen_tol=None` which configures the underlying `lobpcg` solver to
+          automatically resolve the value according to their heuristics. See,
+          :func:`scipy.sparse.linalg.lobpcg` for details.
+
+        Note that when using `eigen_solver="lobpcg"` or `eigen_solver="amg"`
+        values of `tol<1e-5` may lead to convergence issues and should be
+        avoided.
+
+        .. versionadded:: 1.2
+           Added 'auto' option.
 
     assign_labels : {'kmeans', 'discretize', 'cluster_qr'}, default='kmeans'
         The strategy for assigning labels in the embedding space. There are two
@@ -561,11 +591,11 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
            Stella X. Yu, Jianbo Shi
            <https://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf>`_
 
-    .. [4] `Toward the Optimal Preconditioned Eigensolver:
-           Locally Optimal Block Preconditioned Conjugate Gradient Method, 2001.
+    .. [4] :doi:`Toward the Optimal Preconditioned Eigensolver:
+           Locally Optimal Block Preconditioned Conjugate Gradient Method, 2001
            A. V. Knyazev
            SIAM Journal on Scientific Computing 23, no. 2, pp. 517-541.
-           <https://epubs.siam.org/doi/pdf/10.1137/S1064827500366124>`_
+           <10.1137/S1064827500366124>`
 
     .. [5] :doi:`Simple, direct, and efficient multi-way spectral clustering, 2019
            Anil Damle, Victor Minden, Lexing Ying
@@ -587,6 +617,33 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         random_state=0)
     """
 
+    _parameter_constraints = {
+        "n_clusters": [Interval(Integral, 1, None, closed="left")],
+        "eigen_solver": [StrOptions({"arpack", "lobpcg", "amg"}), None],
+        "n_components": [Interval(Integral, 1, None, closed="left"), None],
+        "random_state": ["random_state"],
+        "n_init": [Interval(Integral, 1, None, closed="left")],
+        "gamma": [Interval(Real, 0, None, closed="neither")],
+        "affinity": [
+            callable,
+            StrOptions(
+                set(KERNEL_PARAMS)
+                | {"nearest_neighbors", "precomputed", "precomputed_nearest_neighbors"}
+            ),
+        ],
+        "n_neighbors": [Interval(Integral, 1, None, closed="left")],
+        "eigen_tol": [
+            Interval(Real, 0.0, None, closed="left"),
+            StrOptions({"auto"}),
+        ],
+        "assign_labels": [StrOptions({"kmeans", "discretize", "cluster_qr"})],
+        "degree": [Interval(Integral, 1, None, closed="left")],
+        "coef0": [Interval(Real, None, None, closed="neither")],
+        "kernel_params": [dict, None],
+        "n_jobs": [Integral, None],
+        "verbose": ["verbose"],
+    }
+
     def __init__(
         self,
         n_clusters=8,
@@ -598,7 +655,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         gamma=1.0,
         affinity="rbf",
         n_neighbors=10,
-        eigen_tol=0.0,
+        eigen_tol="auto",
         assign_labels="kmeans",
         degree=3,
         coef0=1,
@@ -644,6 +701,8 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         self : object
             A fitted instance of the estimator.
         """
+        self._validate_params()
+
         X = self._validate_data(
             X,
             accept_sparse=["csr", "csc", "coo"],
@@ -661,55 +720,6 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
                 " a custom affinity matrix, "
                 "set ``affinity=precomputed``."
             )
-
-        check_scalar(
-            self.n_clusters,
-            "n_clusters",
-            target_type=numbers.Integral,
-            min_val=1,
-            include_boundaries="left",
-        )
-
-        check_scalar(
-            self.n_init,
-            "n_init",
-            target_type=numbers.Integral,
-            min_val=1,
-            include_boundaries="left",
-        )
-
-        check_scalar(
-            self.gamma,
-            "gamma",
-            target_type=numbers.Real,
-            min_val=1.0,
-            include_boundaries="left",
-        )
-
-        check_scalar(
-            self.n_neighbors,
-            "n_neighbors",
-            target_type=numbers.Integral,
-            min_val=1,
-            include_boundaries="left",
-        )
-
-        if self.eigen_solver == "arpack":
-            check_scalar(
-                self.eigen_tol,
-                "eigen_tol",
-                target_type=numbers.Real,
-                min_val=0,
-                include_boundaries="left",
-            )
-
-        check_scalar(
-            self.degree,
-            "degree",
-            target_type=numbers.Integral,
-            min_val=1,
-            include_boundaries="left",
-        )
 
         if self.affinity == "nearest_neighbors":
             connectivity = kneighbors_graph(

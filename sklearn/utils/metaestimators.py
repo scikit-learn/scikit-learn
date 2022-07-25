@@ -3,7 +3,9 @@
 #         Andreas Mueller
 # License: BSD
 from typing import List, Any
+from types import MethodType
 import warnings
+from functools import wraps
 
 from abc import ABCMeta, abstractmethod
 from operator import attrgetter
@@ -124,21 +126,17 @@ class _AvailableIfDescriptor:
             # this is to allow access to the docstrings.
             if not self.check(obj):
                 raise attr_err
+            out = MethodType(self.fn, obj)
 
-            # lambda, but not partial, allows help() to work with update_wrapper
-            out = lambda *args, **kwargs: self.fn(obj, *args, **kwargs)  # noqa
         else:
-
-            def fn(*args, **kwargs):
+            # This makes it possible to use the decorated method as an unbound method,
+            # for instance when monkeypatching.
+            @wraps(self.fn)
+            def out(*args, **kwargs):
                 if not self.check(args[0]):
                     raise attr_err
                 return self.fn(*args, **kwargs)
 
-            # This makes it possible to use the decorated method as an unbound method,
-            # for instance when monkeypatching.
-            out = lambda *args, **kwargs: fn(*args, **kwargs)  # noqa
-        # update the docstring of the returned function
-        update_wrapper(out, self.fn)
         return out
 
 
@@ -202,7 +200,7 @@ class _IffHasAttrDescriptor(_AvailableIfDescriptor):
     def _check(self, obj):
         warnings.warn(
             "if_delegate_has_method was deprecated in version 1.1 and will be "
-            "removed in version 1.3. Use if_available instead.",
+            "removed in version 1.3. Use available_if instead.",
             FutureWarning,
         )
 

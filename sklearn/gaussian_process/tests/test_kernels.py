@@ -97,9 +97,7 @@ def test_kernel_gradient(kernel):
         kernel
         for kernel in kernels
         # skip non-basic kernels
-        if not (
-            isinstance(kernel, KernelOperator) or isinstance(kernel, Exponentiation)
-        )
+        if not (isinstance(kernel, (KernelOperator, Exponentiation)))
     ],
 )
 def test_kernel_theta(kernel):

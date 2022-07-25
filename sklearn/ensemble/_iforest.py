@@ -6,14 +6,17 @@ import numbers
 import numpy as np
 from scipy.sparse import issparse
 from warnings import warn
+from numbers import Integral, Real
 
 from ..tree import ExtraTreeRegressor
+from ..tree._tree import DTYPE as tree_dtype
 from ..utils import (
     check_random_state,
     check_array,
     gen_batches,
     get_chunk_n_rows,
 )
+from ..utils._param_validation import Interval, StrOptions
 from ..utils.validation import check_is_fitted, _num_samples
 from ..base import OutlierMixin
 
@@ -78,7 +81,10 @@ class IsolationForest(OutlierMixin, BaseBagging):
         The number of features to draw from X to train each base estimator.
 
             - If int, then draw `max_features` features.
-            - If float, then draw `max_features * X.shape[1]` features.
+            - If float, then draw `max(1, int(max_features * n_features_in_))` features.
+
+        Note: using a float number less than 1.0 or integer less than number of
+        features will enable feature subsampling and leads to a longerr runtime.
 
     bootstrap : bool, default=False
         If True, individual trees are fit on random subsets of the training
@@ -191,6 +197,28 @@ class IsolationForest(OutlierMixin, BaseBagging):
     array([ 1,  1, -1])
     """
 
+    _parameter_constraints = {
+        "n_estimators": [Interval(Integral, 1, None, closed="left")],
+        "max_samples": [
+            StrOptions({"auto"}),
+            Interval(Integral, 1, None, closed="left"),
+            Interval(Real, 0, 1, closed="right"),
+        ],
+        "contamination": [
+            StrOptions({"auto"}),
+            Interval(Real, 0, 0.5, closed="right"),
+        ],
+        "max_features": [
+            Integral,
+            Interval(Real, 0, 1, closed="right"),
+        ],
+        "bootstrap": ["boolean"],
+        "n_jobs": [Integral, None],
+        "random_state": ["random_state"],
+        "verbose": ["verbose"],
+        "warm_start": ["boolean"],
+    }
+
     def __init__(
         self,
         *,
@@ -254,7 +282,8 @@ class IsolationForest(OutlierMixin, BaseBagging):
         self : object
             Fitted estimator.
         """
-        X = self._validate_data(X, accept_sparse=["csc"])
+        self._validate_params()
+        X = self._validate_data(X, accept_sparse=["csc"], dtype=tree_dtype)
         if issparse(X):
             # Pre-sort indices to avoid that each individual tree of the
             # ensemble sorts the indices.
@@ -266,22 +295,8 @@ class IsolationForest(OutlierMixin, BaseBagging):
         # ensure that max_sample is in [1, n_samples]:
         n_samples = X.shape[0]
 
-        if self.contamination != "auto":
-            if not (0.0 < self.contamination <= 0.5):
-                raise ValueError(
-                    "contamination must be in (0, 0.5], got: %f" % self.contamination
-                )
-
-        if isinstance(self.max_samples, str):
-            if self.max_samples == "auto":
-                max_samples = min(256, n_samples)
-            else:
-                raise ValueError(
-                    "max_samples (%s) is not supported."
-                    'Valid choices are: "auto", int or'
-                    "float"
-                    % self.max_samples
-                )
+        if isinstance(self.max_samples, str) and self.max_samples == "auto":
+            max_samples = min(256, n_samples)
 
         elif isinstance(self.max_samples, numbers.Integral):
             if self.max_samples > n_samples:
@@ -294,17 +309,18 @@ class IsolationForest(OutlierMixin, BaseBagging):
                 max_samples = n_samples
             else:
                 max_samples = self.max_samples
-        else:  # float
-            if not 0.0 < self.max_samples <= 1.0:
-                raise ValueError(
-                    "max_samples must be in (0, 1], got %r" % self.max_samples
-                )
+        else:  # max_samples is float
             max_samples = int(self.max_samples * X.shape[0])
 
         self.max_samples_ = max_samples
         max_depth = int(np.ceil(np.log2(max(max_samples, 2))))
         super()._fit(
-            X, y, max_samples, max_depth=max_depth, sample_weight=sample_weight
+            X,
+            y,
+            max_samples,
+            max_depth=max_depth,
+            sample_weight=sample_weight,
+            check_input=False,
         )
 
         if self.contamination == "auto":

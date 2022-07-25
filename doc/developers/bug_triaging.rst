@@ -64,6 +64,10 @@ can do the following important tasks:
   or needs help (this is typically very important in the context
   of sprints, where the risk is to create many unfinished PRs)
 
+- If a stalled PR is taken over by a newer PR, then label the stalled PR as
+  "Superseded", leave a comment on the stalled PR linking to the new PR, and
+  likely close the stalled PR.
+
 - Triage issues:
 
   - **close usage questions** and politely point the reporter to use
@@ -97,7 +101,7 @@ The following workflow [1]_ is a good way to approach issue triaging:
 
 #. Thank the reporter for opening an issue
 
-   The issue tracker is many people’s first interaction with the
+   The issue tracker is many people's first interaction with the
    scikit-learn project itself, beyond just using the library. As such,
    we want it to be a welcoming, pleasant experience.
 
@@ -152,4 +156,4 @@ The following workflow [1]_ is a good way to approach issue triaging:
 #. Remove the "Needs Triage" label from the issue if the label exists.
 
 .. [1] Adapted from the pandas project `maintainers guide
-       <https://dev.pandas.io/docs/development/maintaining.html>`_
+       <https://pandas.pydata.org/docs/development/maintaining.html>`_
