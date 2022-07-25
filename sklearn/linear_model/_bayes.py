@@ -7,9 +7,9 @@ Various bayesian regression
 
 from math import log
 import numbers
+from numbers import Integral, Real
 import numpy as np
 from scipy import linalg
-from numbers import Integral, Real
 
 from ._base import LinearModel, _preprocess_data, _rescale_data
 from ..base import RegressorMixin
@@ -670,7 +670,7 @@ class ARDRegression(RegressorMixin, LinearModel):
         "fit_intercept": ["boolean"],
         "normalize": [Hidden(StrOptions({"deprecated"})), "boolean"],
         "copy_X": ["boolean"],
-        "verbose": ["boolean"],
+        "verbose": ["verbose"],
     }
 
     def __init__(
