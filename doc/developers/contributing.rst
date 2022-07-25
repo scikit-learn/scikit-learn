@@ -435,15 +435,11 @@ complies with the following rules before marking a PR as ``[MRG]``. The
    `editor integration documentation <https://black.readthedocs.io/en/stable/integrations/editors.html>`_
    to configure your editor to run `black`.
 
-6. **Make sure that your PR does not add PEP8 violations**. To check the
-   code that you changed, you can run the following command (see
-   :ref:`above <upstream>` to set up the ``upstream`` remote):
+6. Run `flake8` to make sure you followed the project coding conventions.
 
    .. prompt:: bash $
 
-        git diff upstream/main -u -- "*.py" | flake8 --diff
-
-   or `make flake8-diff` which should work on Unix-like systems.
+        flake8 .
 
 7. Follow the :ref:`coding-guidelines`.
 
@@ -1307,7 +1303,7 @@ contributor to keep involved in the project. [1]_
 - Every PR, good or bad, is an act of generosity. Opening with a positive
   comment will help the author feel rewarded, and your subsequent remarks may
   be heard more clearly. You may feel good also.
-- Begin if possible with the large issues, so the author knows they’ve been
+- Begin if possible with the large issues, so the author knows they've been
   understood. Resist the temptation to immediately go line by line, or to open
   with small pervasive issues.
 - Do not let perfect be the enemy of the good. If you find yourself making
