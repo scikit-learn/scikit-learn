@@ -200,7 +200,7 @@ Changelog
 
 - |Enhancement| :class:`preprocessing.FunctionTransformer` will always try to set
   `n_features_in_` and `feature_names_in_` regardless of the `validate` parameter.
-  :pr:`xxxxx` by `Thomas Fan`_.
+  :pr:`23993` by `Thomas Fan`_.
 
 :mod:`sklearn.metrics`
 ......................
