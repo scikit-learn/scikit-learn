@@ -169,7 +169,7 @@ def test_multioutput_regression():
         for i in range(y_true.shape[1])
     ]
     # in the last case, the denominator vanishes and hence we get nan,
-    # but since the the numerator vanishes as well the expected score is 1.0
+    # but since the numerator vanishes as well the expected score is 1.0
     raw_expected_score = np.where(np.isnan(raw_expected_score), 1, raw_expected_score)
     assert_array_almost_equal(score, raw_expected_score)
 
@@ -613,3 +613,15 @@ def test_dummy_quantile_parameter_tuning():
         ).fit(X, y)
 
         assert grid_search.best_params_["quantile"] == pytest.approx(alpha)
+
+
+def test_pinball_loss_relation_with_mae():
+    # Test that mean_pinball loss with alpha=0.5 if half of mean absolute error
+    rng = np.random.RandomState(714)
+    n = 100
+    y_true = rng.normal(size=n)
+    y_pred = y_true.copy() + rng.uniform(n)
+    assert (
+        mean_absolute_error(y_true, y_pred)
+        == mean_pinball_loss(y_true, y_pred, alpha=0.5) * 2
+    )

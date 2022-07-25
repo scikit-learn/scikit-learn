@@ -311,6 +311,7 @@ Some of these are restricted to the binary classification case:
 
    precision_recall_curve
    roc_curve
+   class_likelihood_ratios
    det_curve
 
 
@@ -693,10 +694,6 @@ and inferred labels::
     for an example of classification report usage for
     hand-written digits.
 
-  * See :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
-    for an example of classification report usage for text
-    documents.
-
   * See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py`
     for an example of classification report usage for
     grid search with nested cross-validation.
@@ -813,10 +810,6 @@ precision-recall curve as follows.
 
 .. topic:: Examples:
 
-  * See :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
-    for an example of :func:`f1_score` usage to classify  text
-    documents.
-
   * See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py`
     for an example of :func:`precision_score` and :func:`recall_score` usage
     to estimate parameters using grid search with nested cross-validation.
@@ -876,6 +869,8 @@ In this context, we can define the notions of precision, recall and F-measure:
 
    F_\beta = (1 + \beta^2) \frac{\text{precision} \times \text{recall}}{\beta^2 \text{precision} + \text{recall}}.
 
+Sometimes recall is also called ''sensitivity''.
+
 Here are some small examples in binary classification::
 
   >>> from sklearn import metrics
@@ -904,11 +899,11 @@ Here are some small examples in binary classification::
   >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
   >>> precision, recall, threshold = precision_recall_curve(y_true, y_scores)
   >>> precision
-  array([0.66..., 0.5       , 1.        , 1.        ])
+  array([0.5       , 0.66..., 0.5       , 1.        , 1.        ])
   >>> recall
-  array([1. , 0.5, 0.5, 0. ])
+  array([1. , 1. , 0.5, 0.5, 0. ])
   >>> threshold
-  array([0.35, 0.4 , 0.8 ])
+  array([0.1 , 0.35, 0.4 , 0.8 ])
   >>> average_precision_score(y_true, y_scores)
   0.83...
 
@@ -1756,6 +1751,133 @@ the same does a lower Brier score loss always mean better calibration"
     and probability estimation." <https://drops.dagstuhl.de/opus/volltexte/2008/1382/>`_
     Dagstuhl Seminar Proceedings. Schloss Dagstuhl-Leibniz-Zentrum fr Informatik (2008).
 
+.. _class_likelihood_ratios:
+
+Class likelihood ratios
+-----------------------
+
+The :func:`class_likelihood_ratios` function computes the `positive and negative
+likelihood ratios
+<https://en.wikipedia.org/wiki/Likelihood_ratios_in_diagnostic_testing>`_
+:math:`LR_\pm` for binary classes, which can be interpreted as the ratio of
+post-test to pre-test odds as explained below. As a consequence, this metric is
+invariant w.r.t. the class prevalence (the number of samples in the positive
+class divided by the total number of samples) and **can be extrapolated between
+populations regardless of any possible class imbalance.**
+
+The :math:`LR_\pm` metrics are therefore very useful in settings where the data
+available to learn and evaluate a classifier is a study population with nearly
+balanced classes, such as a case-control study, while the target application,
+i.e. the general population, has very low prevalence.
+
+The positive likelihood ratio :math:`LR_+` is the probability of a classifier to
+correctly predict that a sample belongs to the positive class divided by the
+probability of predicting the positive class for a sample belonging to the
+negative class:
+
+.. math::
+
+   LR_+ = \frac{\text{PR}(P+|T+)}{\text{PR}(P+|T-)}.
+
+The notation here refers to predicted (:math:`P`) or true (:math:`T`) label and
+the sign :math:`+` and :math:`-` refer to the positive and negative class,
+respectively, e.g. :math:`P+` stands for "predicted positive".
+
+Analogously, the negative likelihood ratio :math:`LR_-` is the probability of a
+sample of the positive class being classified as belonging to the negative class
+divided by the probability of a sample of the negative class being correctly
+classified:
+
+.. math::
+
+   LR_- = \frac{\text{PR}(P-|T+)}{\text{PR}(P-|T-)}.
+
+For classifiers above chance :math:`LR_+` above 1 **higher is better**, while
+:math:`LR_-` ranges from 0 to 1 and **lower is better**.
+Values of :math:`LR_\pm\approx 1` correspond to chance level.
+
+Notice that probabilities differ from counts, for instance
+:math:`\operatorname{PR}(P+|T+)` is not equal to the number of true positive
+counts ``tp`` (see `the wikipedia page
+<https://en.wikipedia.org/wiki/Likelihood_ratios_in_diagnostic_testing>`_ for
+the actual formulas).
+
+**Interpretation across varying prevalence:**
+
+Both class likelihood ratios are interpretable in terms of an odds ratio
+(pre-test and post-tests):
+
+.. math::
+
+   \text{post-test odds} = \text{Likelihood ratio} \times \text{pre-test odds}.
+
+Odds are in general related to probabilities via
+
+.. math::
+
+   \text{odds} = \frac{\text{probability}}{1 - \text{probability}},
+
+or equivalently
+
+.. math::
+
+   \text{probability} = \frac{\text{odds}}{1 + \text{odds}}.
+
+On a given population, the pre-test probability is given by the prevalence. By
+converting odds to probabilities, the likelihood ratios can be translated into a
+probability of truly belonging to either class before and after a classifier
+prediction:
+
+.. math::
+
+   \text{post-test odds} = \text{Likelihood ratio} \times
+   \frac{\text{pre-test probability}}{1 - \text{pre-test probability}},
+
+.. math::
+
+   \text{post-test probability} = \frac{\text{post-test odds}}{1 + \text{post-test odds}}.
+
+**Mathematical divergences:**
+
+The positive likelihood ratio is undefined when :math:`fp = 0`, which can be
+interpreted as the classifier perfectly identifying positive cases. If :math:`fp
+= 0` and additionally :math:`tp = 0`, this leads to a zero/zero division. This
+happens, for instance, when using a `DummyClassifier` that always predicts the
+negative class and therefore the interpretation as a perfect classifier is lost.
+
+The negative likelihood ratio is undefined when :math:`tn = 0`. Such divergence
+is invalid, as :math:`LR_- > 1` would indicate an increase in the odds of a
+sample belonging to the positive class after being classified as negative, as if
+the act of classifying caused the positive condition. This includes the case of
+a `DummyClassifier` that always predicts the positive class (i.e. when
+:math:`tn=fn=0`).
+
+Both class likelihood ratios are undefined when :math:`tp=fn=0`, which means
+that no samples of the positive class were present in the testing set. This can
+also happen when cross-validating highly imbalanced data.
+
+In all the previous cases the :func:`class_likelihood_ratios` function raises by
+default an appropriate warning message and returns `nan` to avoid pollution when
+averaging over cross-validation folds.
+
+For a worked-out demonstration of the :func:`class_likelihood_ratios` function,
+see the example below.
+
+.. topic:: Examples:
+
+  * :ref:`sphx_glr_auto_examples_model_selection_plot_likelihood_ratios.py`
+
+.. topic:: References:
+
+  * `Wikipedia entry for Likelihood ratios in diagnostic testing
+    <https://en.wikipedia.org/wiki/Likelihood_ratios_in_diagnostic_testing>`_
+
+  * Brenner, H., & Gefeller, O. (1997).
+    Variation of sensitivity, specificity, likelihood ratios and predictive
+    values with disease prevalence.
+    Statistics in medicine, 16(9), 981-991.
+
+
 .. _multilabel_ranking_metrics:
 
 Multilabel ranking metrics
@@ -1976,13 +2098,13 @@ to handle the multioutput case: :func:`mean_squared_error`,
 and :func:`d2_absolute_error_score`.
 
 
-These functions have an ``multioutput`` keyword argument which specifies the
+These functions have a ``multioutput`` keyword argument which specifies the
 way the scores or losses for each individual target should be averaged. The
 default is ``'uniform_average'``, which specifies a uniformly weighted mean
 over outputs. If an ``ndarray`` of shape ``(n_outputs,)`` is passed, then its
 entries are interpreted as weights and an according weighted average is
-returned. If ``multioutput`` is ``'raw_values'`` is specified, then all
-unaltered individual scores or losses will be returned in an array of shape
+returned. If ``multioutput`` is ``'raw_values'``, then all unaltered
+individual scores or losses will be returned in an array of shape
 ``(n_outputs,)``.
 
 
@@ -1991,7 +2113,7 @@ value ``'variance_weighted'`` for the ``multioutput`` parameter. This option
 leads to a weighting of each individual score by the variance of the
 corresponding target variable. This setting quantifies the globally captured
 unscaled variance. If the target variables are of different scale, then this
-score puts more importance on well explaining the higher variance variables.
+score puts more importance on explaining the higher variance variables.
 ``multioutput='variance_weighted'`` is the default value for :func:`r2_score`
 for backward compatibility. This will be changed to ``uniform_average`` in the
 future.
@@ -2003,14 +2125,14 @@ R² score, the coefficient of determination
 
 The :func:`r2_score` function computes the `coefficient of
 determination <https://en.wikipedia.org/wiki/Coefficient_of_determination>`_,
-usually denoted as R².
+usually denoted as :math:`R^2`.
 
 It represents the proportion of variance (of y) that has been explained by the
 independent variables in the model. It provides an indication of goodness of
 fit and therefore a measure of how well unseen samples are likely to be
 predicted by the model, through the proportion of explained variance.
 
-As such variance is dataset dependent, R² may not be meaningfully comparable
+As such variance is dataset dependent, :math:`R^2` may not be meaningfully comparable
 across different datasets. Best possible score is 1.0 and it can be negative
 (because the model can be arbitrarily worse). A constant model that always
 predicts the expected (average) value of y, disregarding the input features,
@@ -2021,7 +2143,7 @@ the :ref:`explained_variance_score` are identical.
 
 If :math:`\hat{y}_i` is the predicted value of the :math:`i`-th sample
 and :math:`y_i` is the corresponding true value for total :math:`n` samples,
-the estimated R² is defined as:
+the estimated :math:`R^2` is defined as:
 
 .. math::
 
@@ -2029,7 +2151,7 @@ the estimated R² is defined as:
 
 where :math:`\bar{y} = \frac{1}{n} \sum_{i=1}^{n} y_i` and :math:`\sum_{i=1}^{n} (y_i - \hat{y}_i)^2 = \sum_{i=1}^{n} \epsilon_i^2`.
 
-Note that :func:`r2_score` calculates unadjusted R² without correcting for
+Note that :func:`r2_score` calculates unadjusted :math:`R^2` without correcting for
 bias in sample variance of y.
 
 In the particular case where the true target is constant, the :math:`R^2` score is
@@ -2425,14 +2547,16 @@ Pinball loss
 ------------
 
 The :func:`mean_pinball_loss` function is used to evaluate the predictive
-performance of quantile regression models. The `pinball loss
-<https://en.wikipedia.org/wiki/Quantile_regression#Computation>`_ is equivalent
-to :func:`mean_absolute_error` when the quantile parameter ``alpha`` is set to
-0.5.
+performance of `quantile regression
+<https://en.wikipedia.org/wiki/Quantile_regression>`_ models.
 
 .. math::
 
   \text{pinball}(y, \hat{y}) = \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}}-1}  \alpha \max(y_i - \hat{y}_i, 0) + (1 - \alpha) \max(\hat{y}_i - y_i, 0)
+
+The value of pinball loss is equivalent to half of :func:`mean_absolute_error` when the quantile
+parameter ``alpha`` is set to 0.5.
+
 
 Here is a small example of usage of the :func:`mean_pinball_loss` function::
 

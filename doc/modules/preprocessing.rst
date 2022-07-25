@@ -34,8 +34,8 @@ standard deviation.
 
 For instance, many elements used in the objective function of
 a learning algorithm (such as the RBF kernel of Support Vector
-Machines or the l1 and l2 regularizers of linear models) assume that
-all features are centered around zero and have variance in the same
+Machines or the l1 and l2 regularizers of linear models) may assume that
+all features are centered around zero or have variance in the same
 order. If a feature has a variance that is orders of magnitude larger
 than others, it might dominate the objective function and make the
 estimator unable to learn from other features correctly as expected.
@@ -1129,6 +1129,7 @@ a transformer that applies a log transformation in a pipeline, do::
     >>> from sklearn.preprocessing import FunctionTransformer
     >>> transformer = FunctionTransformer(np.log1p, validate=True)
     >>> X = np.array([[0, 1], [2, 3]])
+    >>> # Since FunctionTransformer is no-op during fit, we can call transform directly
     >>> transformer.transform(X)
     array([[0.        , 0.69314718],
            [1.09861229, 1.38629436]])

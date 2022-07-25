@@ -79,7 +79,7 @@ def plot_gallery(title, images, n_col=n_col, n_row=n_row, cmap=plt.cm.gray):
 
 
 # %%
-# Let’s take a look at our data. Gray color indicates negative values,
+# Let's take a look at our data. Gray color indicates negative values,
 # white indicates positive values.
 
 plot_gallery("Faces from dataset", faces_centered[:n_components])

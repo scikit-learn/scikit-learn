@@ -34,6 +34,7 @@ case.
 # License: BSD 3 clause
 
 import array
+from numbers import Integral, Real
 import numpy as np
 import warnings
 import scipy.sparse as sp
@@ -45,6 +46,7 @@ from .base import MetaEstimatorMixin, is_regressor
 from .preprocessing import LabelBinarizer
 from .metrics.pairwise import euclidean_distances
 from .utils import check_random_state
+from .utils._param_validation import HasMethods, Interval
 from .utils._tags import _safe_tags
 from .utils.validation import _num_samples
 from .utils.validation import check_is_fitted
@@ -109,16 +111,6 @@ def _threshold_for_binary_predict(estimator):
     else:
         # predict_proba threshold
         return 0.5
-
-
-def _check_estimator(estimator):
-    """Make sure that an estimator implements the necessary methods."""
-    if not hasattr(estimator, "decision_function") and not hasattr(
-        estimator, "predict_proba"
-    ):
-        raise ValueError(
-            "The base estimator should implement decision_function or predict_proba!"
-        )
 
 
 class _ConstantPredictor(BaseEstimator):
@@ -935,6 +927,16 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     array([1])
     """
 
+    _parameter_constraints = {
+        "estimator": [
+            HasMethods(["fit", "decision_function"]),
+            HasMethods(["fit", "predict_proba"]),
+        ],
+        "code_size": [Interval(Real, 0.0, None, closed="neither")],
+        "random_state": ["random_state"],
+        "n_jobs": [Integral, None],
+    }
+
     def __init__(self, estimator, *, code_size=1.5, random_state=None, n_jobs=None):
         self.estimator = estimator
         self.code_size = code_size
@@ -957,14 +959,9 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         self : object
             Returns a fitted instance of self.
         """
+        self._validate_params()
         y = self._validate_data(X="no_validation", y=y)
 
-        if self.code_size <= 0:
-            raise ValueError(
-                "code_size should be greater than 0, got {0}".format(self.code_size)
-            )
-
-        _check_estimator(self.estimator)
         random_state = check_random_state(self.random_state)
         check_classification_targets(y)
 

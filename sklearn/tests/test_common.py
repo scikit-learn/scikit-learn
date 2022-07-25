@@ -51,6 +51,7 @@ from sklearn.utils.estimator_checks import (
     parametrize_with_checks,
     check_dataframe_column_names_consistency,
     check_n_features_in_after_fitting,
+    check_param_validation,
     check_transformer_get_feature_names_out,
     check_transformer_get_feature_names_out_pandas,
 )
@@ -442,3 +443,101 @@ def test_estimators_do_not_raise_errors_in_init_or_set_params(Estimator):
 
         # Also do does not raise
         est.set_params(**new_params)
+
+
+PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
+    "ARDRegression",
+    "AdditiveChi2Sampler",
+    "AffinityPropagation",
+    "BayesianGaussianMixture",
+    "BayesianRidge",
+    "CalibratedClassifierCV",
+    "ClassifierChain",
+    "DictionaryLearning",
+    "ExtraTreesClassifier",
+    "ExtraTreesRegressor",
+    "FeatureHasher",
+    "FunctionTransformer",
+    "GaussianMixture",
+    "GenericUnivariateSelect",
+    "HashingVectorizer",
+    "Isomap",
+    "IterativeImputer",
+    "KernelPCA",
+    "LabelPropagation",
+    "LabelSpreading",
+    "Lars",
+    "LarsCV",
+    "LassoLars",
+    "LassoLarsCV",
+    "LassoLarsIC",
+    "LatentDirichletAllocation",
+    "LedoitWolf",
+    "MiniBatchDictionaryLearning",
+    "MultiTaskElasticNet",
+    "MultiTaskLasso",
+    "NearestCentroid",
+    "NearestNeighbors",
+    "NeighborhoodComponentsAnalysis",
+    "NuSVC",
+    "NuSVR",
+    "Nystroem",
+    "OAS",
+    "OPTICS",
+    "OneClassSVM",
+    "OneVsOneClassifier",
+    "OneVsRestClassifier",
+    "PatchExtractor",
+    "PolynomialCountSketch",
+    "PolynomialFeatures",
+    "QuadraticDiscriminantAnalysis",
+    "RANSACRegressor",
+    "RBFSampler",
+    "RFE",
+    "RFECV",
+    "RadiusNeighborsClassifier",
+    "RadiusNeighborsRegressor",
+    "RadiusNeighborsTransformer",
+    "RandomForestClassifier",
+    "RandomForestRegressor",
+    "RandomTreesEmbedding",
+    "RegressorChain",
+    "RidgeCV",
+    "RidgeClassifierCV",
+    "SVC",
+    "SVR",
+    "SelectFdr",
+    "SelectFpr",
+    "SelectFromModel",
+    "SelectFwe",
+    "SelectKBest",
+    "SelectPercentile",
+    "SequentialFeatureSelector",
+    "ShrunkCovariance",
+    "SimpleImputer",
+    "SkewedChi2Sampler",
+    "SpectralBiclustering",
+    "SpectralCoclustering",
+    "SpectralEmbedding",
+    "SplineTransformer",
+    "StackingClassifier",
+    "StackingRegressor",
+    "TransformedTargetRegressor",
+    "TruncatedSVD",
+    "VotingClassifier",
+    "VotingRegressor",
+]
+
+
+@pytest.mark.parametrize(
+    "estimator", _tested_estimators(), ids=_get_check_estimator_ids
+)
+def test_check_param_validation(estimator):
+    name = estimator.__class__.__name__
+    if name in PARAM_VALIDATION_ESTIMATORS_TO_IGNORE:
+        pytest.skip(
+            f"Skipping check_param_validation for {name}: Does not use the "
+            "appropriate API for parameter validation yet."
+        )
+    _set_checking_parameters(estimator)
+    check_param_validation(name, estimator)

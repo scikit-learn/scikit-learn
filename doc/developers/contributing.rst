@@ -435,15 +435,11 @@ complies with the following rules before marking a PR as ``[MRG]``. The
    `editor integration documentation <https://black.readthedocs.io/en/stable/integrations/editors.html>`_
    to configure your editor to run `black`.
 
-6. **Make sure that your PR does not add PEP8 violations**. To check the
-   code that you changed, you can run the following command (see
-   :ref:`above <upstream>` to set up the ``upstream`` remote):
+6. Run `flake8` to make sure you followed the project coding conventions.
 
    .. prompt:: bash $
 
-        git diff upstream/main -u -- "*.py" | flake8 --diff
-
-   or `make flake8-diff` which should work on unix-like system.
+        flake8 .
 
 7. Follow the :ref:`coding-guidelines`.
 
@@ -528,7 +524,7 @@ profiling and Cython optimizations.
 
    For two very well documented and more detailed guides on development
    workflow, please pay a visit to the `Scipy Development Workflow
-   <https://docs.scipy.org/doc/scipy/reference/dev/contributor/development_workflow.html>`_ -
+   <http://scipy.github.io/devdocs/dev/dev_quickstart.html>`_ -
    and the `Astropy Workflow for Developers
    <https://astropy.readthedocs.io/en/latest/development/workflow/development_workflow.html>`_
    sections.
@@ -552,6 +548,7 @@ message, the following actions are taken.
     [cd build gh]          CD is run only for GitHub Actions
     [lint skip]            Azure pipeline skips linting
     [scipy-dev]            Build & test with our dependencies (numpy, scipy, etc ...) development builds
+    [nogil]                Build & test with the nogil experimental branches of CPython, Cython, NumPy, SciPy...
     [icc-build]            Build & test with the Intel C compiler (ICC)
     [pypy]                 Build & test with PyPy
     [doc skip]             Docs are not built
@@ -923,7 +920,7 @@ Monitoring performance
 ======================
 
 *This section is heavily inspired from the* `pandas documentation
-<https://pandas.pydata.org/docs/development/contributing.html#running-the-performance-test-suite>`_.
+<https://pandas.pydata.org/docs/development/contributing_codebase.html#running-the-performance-test-suite>`_.
 
 When proposing changes to the existing code base, it's important to make sure
 that they don't introduce performance regressions. Scikit-learn uses
@@ -1208,9 +1205,17 @@ When the change is in a class, we validate and raise warning in ``fit``::
 
 Similar to deprecations, the warning message should always give both the
 version in which the change happened and the version in which the old behavior
-will be removed. The docstring needs to be updated accordingly. We need a test
-which ensures that the warning is raised in relevant cases but not in other
-cases. The warning should be caught in all other tests
+will be removed.
+
+The parameter description in the docstring needs to be updated accordingly by adding
+a `versionchanged` directive with the old and new default value, pointing to the
+version when the change will be effective::
+
+    .. versionchanged:: 0.22
+       The default value for `n_clusters` will change from 5 to 10 in version 0.22.
+
+Finally, we need a test which ensures that the warning is raised in relevant cases but
+not in other cases. The warning should be caught in all other tests
 (using e.g., ``@pytest.mark.filterwarnings``), and there should be no warning
 in the examples.
 
@@ -1298,7 +1303,7 @@ contributor to keep involved in the project. [1]_
 - Every PR, good or bad, is an act of generosity. Opening with a positive
   comment will help the author feel rewarded, and your subsequent remarks may
   be heard more clearly. You may feel good also.
-- Begin if possible with the large issues, so the author knows they’ve been
+- Begin if possible with the large issues, so the author knows they've been
   understood. Resist the temptation to immediately go line by line, or to open
   with small pervasive issues.
 - Do not let perfect be the enemy of the good. If you find yourself making
