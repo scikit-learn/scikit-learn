@@ -161,11 +161,11 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
     [0.5]
     """
 
-    _parameter_constraints = {**NeighborsBase._parameter_constraints}
+    _parameter_constraints = {
+        **NeighborsBase._parameter_constraints,
+        "weights": [StrOptions({"uniform", "distance"}), callable, None],
+    }
     _parameter_constraints.pop("radius")
-    _parameter_constraints.update(
-        {"weights": [StrOptions({"uniform", "distance"}), callable, None]}
-    )
 
     def __init__(
         self,
