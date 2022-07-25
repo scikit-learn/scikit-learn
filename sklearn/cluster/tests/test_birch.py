@@ -255,10 +255,9 @@ def test_f_ordered_array():
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/23988
     """
-    from sklearn.datasets import load_iris
-    from sklearn.cluster import Birch
+    X, _ = make_blobs(n_samples=80, n_features=4, random_state=0)
+    X = np.asfortranarray(X)
 
-    X, y = load_iris(return_X_y=True, as_frame=True)
     birch = Birch(n_clusters=3)
 
     # Must not err.
