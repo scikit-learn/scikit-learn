@@ -505,8 +505,8 @@ class GroupKFold(_BaseKFold):
     LeaveOneGroupOut : For splitting the data according to explicit
         domain-specific stratification of the dataset.
 
-    StratifiedKFold : Takes group information into account to avoid building
-        folds with imbalanced class distributions (for binary or multiclass
+    StratifiedKFold : Takes class information into account to avoid building
+        folds with imbalanced class proportions (for binary or multiclass
         classification tasks).
     """
 
