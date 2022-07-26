@@ -1,3 +1,4 @@
+from numbers import Integral, Real
 import warnings
 import numbers
 from abc import ABCMeta, abstractmethod
@@ -22,6 +23,7 @@ from ..utils.validation import check_is_fitted, _check_large_sparse
 from ..utils.validation import _num_samples
 from ..utils.validation import _check_sample_weight, check_consistent_length
 from ..utils.multiclass import check_classification_targets
+from ..utils._param_validation import Interval, StrOptions
 from ..exceptions import ConvergenceWarning
 from ..exceptions import NotFittedError
 
@@ -69,6 +71,30 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
     Parameter documentation is in the derived `SVC` class.
     """
 
+    _parameter_constraints = {
+        "kernel": [
+            StrOptions({"linear", "poly", "rbf", "sigmoid", "precomputed"}),
+            callable,
+        ],
+        "degree": [Interval(Integral, 0, None, closed="left")],
+        "gamma": [
+            StrOptions({"scale", "auto"}),
+            Interval(Real, 0.0, None, closed="neither"),
+        ],
+        "coef0": [Real],
+        "tol": [Interval(Real, 0.0, None, closed="neither")],
+        "C": [Interval(Real, 0.0, None, closed="neither")],
+        "nu": [Interval(Real, 0.0, 1.0, closed="neither")],
+        "epsilon": [Interval(Real, 0.0, None, closed="left")],
+        "shrinking": [bool],
+        "probability": [bool],
+        "cache_size": [Interval(Real, 0, None, closed="left")],
+        "class_weight": [StrOptions({"balanced"}), dict, None],
+        "verbose": [bool],
+        "max_iter": [Interval(Integral, -1, None, closed="left")],
+        "random_state": ["random_state"],
+    }
+
     # The order of these must match the integer values in LibSVM.
     # XXX These are actually the same in the dense case. Need to factor
     # this out.
@@ -115,6 +141,16 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         self.max_iter = max_iter
         self.random_state = random_state
 
+    @classmethod
+    def _filter_validation_params(cls, params_to_filter):
+        # used by subclasses if they don't use all params from here
+        return {
+            param: constraint
+            for param, constraint
+            in cls._parameter_constraints.items()
+            if param not in params_to_filter
+        }
+
     def _more_tags(self):
         # Used by cross_val_score.
         return {"pairwise": self.kernel == "precomputed"}
@@ -152,6 +188,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         If X is a dense array, then the other methods will not support sparse
         matrices as input.
         """
+        self._validate_params()
 
         rnd = check_random_state(self.random_state)
 
@@ -690,6 +727,14 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
 class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
     """ABC for LibSVM-based classifiers."""
+
+    _parameter_constraints = {
+        **BaseLibSVM._filter_validation_params(["epsilon", "nu"]),
+        **{
+            "decision_function_shape": [StrOptions({"ovr", "ovo"})],
+            "break_ties": [bool],
+        }
+    }
 
     @abstractmethod
     def __init__(
