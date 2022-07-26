@@ -666,6 +666,10 @@ class RFECV(RFE):
 
             .. versionadded:: 0.20
 
+        **fit_params : dict
+            Additional parameters passed to the `fit` method of the underlying
+            estimator.
+
         Returns
         -------
         self : object
