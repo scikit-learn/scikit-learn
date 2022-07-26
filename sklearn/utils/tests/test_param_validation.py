@@ -586,4 +586,4 @@ def test_missing_values_pd_na():
     pd = pytest.importorskip("pandas")
 
     missing_values_constraint = _MissingValuesHelper()
-    print(missing_values_constraint.is_satisfied_by(pd.NA))
+    assert missing_values_constraint.is_satisfied_by(pd.NA)
