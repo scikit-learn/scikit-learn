@@ -455,6 +455,7 @@ def test_decision_function_shape(SVM):
     dec = clf.decision_function(X_train)
     assert dec.shape == (len(X_train), 10)
 
+
 def test_svr_predict():
     # Test SVR's decision_function
     # Sanity check, test that predict implemented in python
@@ -739,6 +740,7 @@ def test_svc_nonfinite_params():
     msg = "The dual coefficients or intercepts are not finite"
     with pytest.raises(ValueError, match=msg):
         clf.fit(X, y)
+
 
 def test_unicode_kernel():
     # Test that a unicode kernel name does not cause a TypeError
