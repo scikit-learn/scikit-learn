@@ -339,3 +339,38 @@ def test_equivalence_components_pca_spca():
     ).fit(X)
 
     assert_allclose(pca.components_, spca.components_)
+
+
+def test_sparse_pca_inverse_transform():
+    """Check that `inverse_transform` in `SparsePCA` and `PCA` are similar."""
+    rng = np.random.RandomState(0)
+    n_samples, n_features = 10, 5
+    X = rng.randn(n_samples, n_features)
+
+    n_components = 2
+    spca = SparsePCA(
+        n_components=n_components, alpha=1e-12, ridge_alpha=1e-12, random_state=0
+    )
+    pca = PCA(n_components=n_components, random_state=0)
+    X_trans_spca = spca.fit_transform(X)
+    X_trans_pca = pca.fit_transform(X)
+    assert_allclose(
+        spca.inverse_transform(X_trans_spca), pca.inverse_transform(X_trans_pca)
+    )
+
+
+@pytest.mark.parametrize("SPCA", [SparsePCA, MiniBatchSparsePCA])
+def test_transform_inverse_transform_round_trip(SPCA):
+    """Check the `transform` and `inverse_transform` round trip with no loss of
+    information.
+    """
+    rng = np.random.RandomState(0)
+    n_samples, n_features = 10, 5
+    X = rng.randn(n_samples, n_features)
+
+    n_components = n_features
+    spca = SPCA(
+        n_components=n_components, alpha=1e-12, ridge_alpha=1e-12, random_state=0
+    )
+    X_trans_spca = spca.fit_transform(X)
+    assert_allclose(spca.inverse_transform(X_trans_spca), X)
