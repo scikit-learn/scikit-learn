@@ -255,7 +255,7 @@ class _NanConstraint(_Constraint):
     """Constraint representing the indicator `np.nan`."""
 
     def is_satisfied_by(self, val):
-        return np.isnan(val)
+        return isinstance(val, Real) and np.isnan(val)
 
     def __str__(self):
         return "numpy.nan"
@@ -268,7 +268,7 @@ class _NAConstraint(_Constraint):
         # This should only be called if pandas is available
         import pandas as pd
 
-        return pd.isna(val)
+        return isinstance(val, type(pd.NA)) and pd.isna(val)
 
     def __str__(self):
         return "pandas.NA"

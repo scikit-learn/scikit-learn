@@ -579,3 +579,11 @@ def test_no_validation():
 
     f(param2=SomeType)
     f(param2=SomeType())
+
+
+def test_missing_values_pd_na():
+    """Add a specific test for checking support for `pandas.NA`."""
+    pd = pytest.importorskip("pandas")
+
+    missing_values_constraint = _MissingValuesHelper()
+    print(missing_values_constraint.is_satisfied_by(pd.NA))
