@@ -641,8 +641,8 @@ Imagine you have three subjects, each with an associated number from 1 to 3::
 
 Each subject is in a different testing fold, and the same subject is never in
 both testing and training. Notice that the folds do not have exactly the same
-size due to the imbalance in the data. If balanced classes are desired,
-:class:`StratifiedGroupKFold` may be a better option.
+size due to the imbalance in the data. If class proportions must be balanced
+across folds, :class:`StratifiedGroupKFold` is a better option.
 
 Here is a visualization of the cross-validation behavior.
 
@@ -651,9 +651,9 @@ Here is a visualization of the cross-validation behavior.
    :align: center
    :scale: 75%
 
-Similar to k-fold, the test sets from :class:`GroupKFold` will form a complete
-partition of all the data. Unlike k-fold, :class:`GroupKFold` is not randomized
-at all, whereas :class:`KFold` is randomized when ``shuffle=True``.
+Similar to :class:`KFold`, the test sets from :class:`GroupKFold` will form a
+complete partition of all the data. Unlike k-fold, :class:`GroupKFold` is not
+randomized at all, whereas :class:`KFold` is randomized when ``shuffle=True``.
 
 .. _stratified_group_k_fold:
 

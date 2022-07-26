@@ -422,7 +422,7 @@ class KFold(_BaseKFold):
 
     See Also
     --------
-    StratifiedKFold : Takes group information into account to avoid building
+    StratifiedKFold : Takes class information into account to avoid building
         folds with imbalanced class distributions (for binary or multiclass
         classification tasks).
 
