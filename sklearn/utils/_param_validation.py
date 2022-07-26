@@ -1,5 +1,6 @@
 from abc import ABC
 from abc import abstractmethod
+from collections.abc import Iterable
 import functools
 from inspect import signature
 from numbers import Integral
@@ -122,6 +123,8 @@ def make_constraint(constraint):
         return _Booleans()
     if isinstance(constraint, str) and constraint == "verbose":
         return _VerboseHelper()
+    if isinstance(constraint, str) and constraint == "cv_object":
+        return _CVObjects()
     if isinstance(constraint, Hidden):
         constraint = make_constraint(constraint.constraint)
         constraint.hidden = True
@@ -537,6 +540,47 @@ class HasMethods(_Constraint):
                 f" {self.methods[-1]!r}"
             )
         return f"an object implementing {methods}"
+
+
+class _IterablesNotString(_Constraint):
+    """Constraint representing iterables that are not strings."""
+
+    def is_satisfied_by(self, val):
+        return isinstance(val, Iterable) and not isinstance(val, str)
+
+    def __str__(self):
+        return "an iterable"
+
+
+class _CVObjects(_Constraint):
+    """Constraint representing cv objects.
+    
+    Convenient class for
+    [
+        Interval(Integral, 2, None, closed="left"),
+        HasMethods(["split", "get_n_splits"]),
+        _IterablesNotString(),
+        None,
+    ]
+    """
+
+    def __init__(self):
+        super().__init__()
+        self._constraints = [
+            Interval(Integral, 2, None, closed="left"),
+            HasMethods(["split", "get_n_splits"]),
+            _IterablesNotString(),
+            _NoneConstraint(),
+        ]
+
+    def is_satisfied_by(self, val):
+        return any(c.is_satisfied_by(val) for c in self._constraints)
+
+    def __str__(self):
+        return (
+            f"{', '.join([str(c) for c in self._constraints[:-1]])} or"
+            f" {self._constraints[-1]}"
+        )
 
 
 class Hidden:
