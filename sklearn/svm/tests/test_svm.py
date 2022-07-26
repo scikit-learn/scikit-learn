@@ -455,8 +455,14 @@ def test_decision_function_shape(SVM):
     dec = clf.decision_function(X_train)
     assert dec.shape == (len(X_train), 10)
 
-    with pytest.raises(ValueError, match="must be either 'ovr' or 'ovo'"):
-        SVM(decision_function_shape="bad").fit(X_train, y_train)
+    test_value = "bad"
+    err_msg = (
+        f"The 'decision_function_shape' parameter of {SVM.__name__} must be a"
+        " str among {'ovo', 'ovr'}."
+        f" Got '{test_value}' instead."
+    )
+    with pytest.raises(ValueError, match=re.escape(err_msg)):
+        SVM(decision_function_shape=test_value).fit(X_train, y_train)
 
 
 def test_svr_predict():
@@ -756,45 +762,24 @@ def test_svc_nonfinite_params():
     ],
 )
 @pytest.mark.parametrize(
-    "gamma, err_msg",
+    "gamma",
     [
-        (
-            "auto_deprecated",
-            "When 'gamma' is a string, it should be either 'scale' or 'auto'",
-        ),
-        (
-            -1,
-            "gamma value must be > 0; -1 is invalid. Use"
-            " a positive number or use 'auto' to set gamma to a"
-            " value of 1 / n_features.",
-        ),
-        (
-            0.0,
-            "gamma value must be > 0; 0.0 is invalid. Use"
-            " a positive number or use 'auto' to set gamma to a"
-            " value of 1 / n_features.",
-        ),
-        (
-            np.array([1.0, 4.0]),
-            "The gamma value should be set to 'scale',"
-            f" 'auto' or a positive float value. {np.array([1.0, 4.0])!r}"
-            " is not a valid option",
-        ),
-        (
-            [],
-            "The gamma value should be set to 'scale', 'auto' or a positive"
-            f" float value. {[]} is not a valid option",
-        ),
-        (
-            {},
-            "The gamma value should be set to 'scale', 'auto' or a positive"
-            " float value. {} is not a valid option",
-        ),
+        "auto_deprecated",
+        -1,
+        0.0,
+        np.array([1.0, 4.0]),
+        [],
+        {},
     ],
 )
-def test_svm_gamma_error(Estimator, data, gamma, err_msg):
+def test_svm_gamma_error(Estimator, data, gamma):
     X, y = data
     est = Estimator(gamma=gamma)
+    err_msg = (
+        f"The 'gamma' parameter of {Estimator.__name__} must be a"
+        " str among {'auto', 'scale'} or a float in the range (0.0, inf)."
+        f" Got {gamma!r} instead."
+    )
     with pytest.raises(ValueError, match=(re.escape(err_msg))):
         est.fit(X, y)
 
