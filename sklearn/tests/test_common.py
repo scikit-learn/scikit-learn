@@ -769,7 +769,6 @@ _estimators_excluded_from_check_random_state = {
 }
 
 
-
 @pytest.mark.parametrize(
     "estimator", _tested_estimators(), ids=_get_check_estimator_ids
 )
@@ -787,9 +786,8 @@ def test_check_random_state_type(estimator, random_state):
     # TODO
     name = estimator.__class__.__name__
     if name in _estimators_excluded_from_check_random_state:
-        pytest.skip(
-            f"Estimator {name} does not support random Generators yet"
-        )
+        pytest.skip(f"Estimator {name} does not support random Generators yet")
+
     if "random_state" not in estimator.get_params():
         pytest.skip(
             f"Estimator {name} does not have a random_state argument, "
