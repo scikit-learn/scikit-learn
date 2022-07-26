@@ -22,6 +22,7 @@ from subprocess import TimeoutExpired
 import re
 import contextlib
 from collections.abc import Iterable
+from collections.abc import Sequence
 
 import scipy as sp
 from functools import wraps
@@ -619,7 +620,7 @@ def _create_aligned_memmap_backed_arrays(data, mmap_mode, folder):
         filename = op.join(folder, "data.dat")
         return _create_memmap_backed_array(data, filename, mmap_mode)
 
-    if isinstance(data, Iterable) and all(
+    if isinstance(data, Sequence) and all(
         isinstance(each, np.ndarray) for each in data
     ):
         return [
@@ -631,7 +632,7 @@ def _create_aligned_memmap_backed_arrays(data, mmap_mode, folder):
 
     raise ValueError(
         "When creating aligned memmap-backed arrays, input must be a single array or a"
-        " iterable of arrays"
+        " sequence of arrays"
     )
 
 
