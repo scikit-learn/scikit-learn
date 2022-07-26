@@ -626,6 +626,12 @@ def generate_invalid_param_val(constraint, constraints=None):
     if isinstance(constraint, HasMethods):
         return type("HasNotMethods", (), {})()
 
+    if isinstance(constraint, _IterablesNotString):
+        return "a string"
+
+    if isinstance(constraint, _CVObjects):
+        return "not a cv object"
+
     if not isinstance(constraint, Interval):
         raise NotImplementedError
 
@@ -781,6 +787,12 @@ def generate_valid_param(constraint):
         return type(
             "ValidHasMethods", (), {m: lambda self: None for m in constraint.methods}
         )()
+
+    if isinstance(constraint, _IterablesNotString):
+        return [1, 2, 3]
+
+    if isinstance(constraint, _CVObjects):
+        return 5
 
     if isinstance(constraint, StrOptions):
         for option in constraint.options:
