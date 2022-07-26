@@ -3,8 +3,11 @@
 # License: 3-clause BSD
 
 import numpy as np
+
 cimport numpy as np
+
 import cython
+
 
 cdef np.double_t INFTY = np.inf
 

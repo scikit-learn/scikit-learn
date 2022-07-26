@@ -3,21 +3,20 @@ Tests for HDBSCAN clustering algorithm
 Based on the DBSCAN test code
 """
 import numpy as np
-from scipy.spatial import distance
-from scipy import sparse
-from scipy import stats
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.cluster import HDBSCAN, hdbscan
-from sklearn.metrics import fowlkes_mallows_score
-from sklearn.datasets import make_blobs
-from sklearn.utils import shuffle
-from sklearn.preprocessing import StandardScaler
-from scipy.stats import mode
-from sklearn.metrics.pairwise import _VALID_METRICS
-from sklearn.neighbors import KDTree, BallTree
 import pytest
+from scipy import sparse, stats
+from scipy.spatial import distance
+from scipy.stats import mode
 
 from sklearn import datasets
+from sklearn.cluster import HDBSCAN, hdbscan
+from sklearn.datasets import make_blobs
+from sklearn.metrics import fowlkes_mallows_score
+from sklearn.metrics.pairwise import _VALID_METRICS
+from sklearn.neighbors import BallTree, KDTree
+from sklearn.preprocessing import StandardScaler
+from sklearn.utils import shuffle
+from sklearn.utils._testing import assert_array_almost_equal
 
 n_clusters = 3
 # X = generate_clustered_data(n_clusters=n_clusters, n_samples_per_cluster=50)

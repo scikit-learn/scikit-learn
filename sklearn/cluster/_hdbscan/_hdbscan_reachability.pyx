@@ -3,12 +3,15 @@
 # License: 3-clause BSD
 
 import numpy as np
+
 cimport numpy as np
 
-from scipy.spatial.distance import pdist, squareform
-from scipy.sparse import lil_matrix as sparse_matrix
-from sklearn.neighbors import KDTree, BallTree
 import gc
+
+from scipy.sparse import lil_matrix as sparse_matrix
+from scipy.spatial.distance import pdist, squareform
+
+from sklearn.neighbors import BallTree, KDTree
 
 
 def mutual_reachability(distance_matrix, min_points=5, alpha=1.0):

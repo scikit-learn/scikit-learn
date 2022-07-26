@@ -8,36 +8,30 @@ HDBSCAN: Hierarchical Density-Based Spatial Clustering
 #
 # License: BSD 3 clause
 
-from numbers import Real, Integral
-import numpy as np
+from numbers import Integral, Real
 from pathlib import Path
+from warnings import warn
+
+import numpy as np
+from joblib import Memory
+from scipy.sparse import csgraph, issparse
 
 from sklearn.base import BaseEstimator, ClusterMixin
 from sklearn.metrics import pairwise_distances
-from scipy.sparse import issparse
-from sklearn.neighbors import KDTree, BallTree
-from joblib import Memory
-from warnings import warn
+from sklearn.metrics._dist_metrics import DistanceMetric
+from sklearn.neighbors import BallTree, KDTree, NearestNeighbors
 from sklearn.utils import check_array, gen_batches, get_chunk_n_rows
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
-from sklearn.neighbors import NearestNeighbors
-from scipy.sparse import csgraph
 
-from ._hdbscan_linkage import (
-    mst_linkage_core,
-    mst_linkage_core_vector,
-    label,
-)
+from ._hdbscan_boruvka import BoruvkaAlgorithm
+from ._hdbscan_linkage import label, mst_linkage_core, mst_linkage_core_vector
+from ._hdbscan_reachability import mutual_reachability, sparse_mutual_reachability
 from ._hdbscan_tree import (
-    condense_tree,
     compute_stability,
+    condense_tree,
     get_clusters,
     labelling_at_cut,
 )
-from ._hdbscan_reachability import mutual_reachability, sparse_mutual_reachability
-
-from ._hdbscan_boruvka import BoruvkaAlgorithm
-from sklearn.metrics._dist_metrics import DistanceMetric
 
 FAST_METRICS = KDTree.valid_metrics + BallTree.valid_metrics
 _PARAM_CONSTRAINTS = {

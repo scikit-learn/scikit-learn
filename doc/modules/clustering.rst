@@ -1052,7 +1052,7 @@ simplify the hyperparameter space.
    Based on Hierarchical Density Estimates. In: Pei, J., Tseng, V.S., Cao, L.,
    Motoda, H., Xu, G. (eds) Advances in Knowledge Discovery and Data Mining.
    PAKDD 2013. Lecture Notes in Computer Science(), vol 7819. Springer, Berlin,
-   Heidelberg. https://doi.org/10.1007/978-3-642-37456-2_14
+   Heidelberg. :doi:`Accelerated Hierarchical Density Based Clustering <10.1109/ICDMW.2017.12>`
 
 .. _optics:
 

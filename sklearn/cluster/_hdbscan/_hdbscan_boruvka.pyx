@@ -51,16 +51,17 @@
 # is a simpler version of the structure.
 
 import numpy as np
-cimport numpy as np
 
+cimport numpy as np
 from libc.float cimport DBL_MAX
 from libc.math cimport fabs, pow
 
-from sklearn.neighbors import KDTree, BallTree
+from sklearn.neighbors import BallTree, KDTree
 
 from sklearn.metrics._dist_metrics cimport DistanceMetric
 
 from joblib import Parallel, delayed
+
 
 cdef np.double_t INF = np.inf
 
