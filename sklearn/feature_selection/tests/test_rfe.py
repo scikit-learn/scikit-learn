@@ -136,6 +136,21 @@ def test_RFE_fit_score_params():
     RFE(estimator=TestEstimator()).fit(X, y, prop="foo").score(X, y, prop="foo")
 
 
+def test_RFECV_fit_params():
+    """Test that RFECV passes fit_params to underlying estimator."""
+
+    class MockClassifierWithFitParam(MockClassifier):
+        def fit(self, X, y, prop=None):
+            if prop is None:
+                raise ValueError("fit: prop cannot be None")
+            return super().fit(X, y)
+
+    X, y = load_iris(return_X_y=True)
+    with pytest.raises(ValueError, match="fit: prop cannot be None"):
+        RFECV(estimator=MockClassifierWithFitParam()).fit(X, y)
+    RFECV(estimator=MockClassifierWithFitParam()).fit(X, y, prop="foo")
+
+
 @pytest.mark.parametrize("n_features_to_select", [-1, 2.1])
 def test_rfe_invalid_n_features_errors(n_features_to_select):
     clf = SVC(kernel="linear")
