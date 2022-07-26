@@ -554,7 +554,7 @@ class _IterablesNotString(_Constraint):
 
 class _CVObjects(_Constraint):
     """Constraint representing cv objects.
-    
+
     Convenient class for
     [
         Interval(Integral, 2, None, closed="left"),
