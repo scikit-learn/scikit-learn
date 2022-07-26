@@ -587,14 +587,15 @@ class SVC(BaseSVC):
 
     degree : int, default=3
         Degree of the polynomial kernel function ('poly').
-        Ignored by all other kernels.
+        Must be non-negative. Ignored by all other kernels.
 
     gamma : {'scale', 'auto'} or float, default='scale'
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
 
         - if ``gamma='scale'`` (default) is passed then it uses
           1 / (n_features * X.var()) as value of gamma,
-        - if 'auto', uses 1 / n_features.
+        - if 'auto', uses 1 / n_features
+        - if float, must be non-negative.
 
         .. versionchanged:: 0.22
            The default value of ``gamma`` changed from 'auto' to 'scale'.
@@ -850,14 +851,15 @@ class NuSVC(BaseSVC):
 
     degree : int, default=3
         Degree of the polynomial kernel function ('poly').
-        Ignored by all other kernels.
+        Must be non-negative. Ignored by all other kernels.
 
     gamma : {'scale', 'auto'} or float, default='scale'
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
 
         - if ``gamma='scale'`` (default) is passed then it uses
           1 / (n_features * X.var()) as value of gamma,
-        - if 'auto', uses 1 / n_features.
+        - if 'auto', uses 1 / n_features
+        - if float, must be non-negative.
 
         .. versionchanged:: 0.22
            The default value of ``gamma`` changed from 'auto' to 'scale'.
@@ -1119,14 +1121,15 @@ class SVR(RegressorMixin, BaseLibSVM):
 
     degree : int, default=3
         Degree of the polynomial kernel function ('poly').
-        Ignored by all other kernels.
+        Must be non-negative. Ignored by all other kernels.
 
     gamma : {'scale', 'auto'} or float, default='scale'
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
 
         - if ``gamma='scale'`` (default) is passed then it uses
           1 / (n_features * X.var()) as value of gamma,
-        - if 'auto', uses 1 / n_features.
+        - if 'auto', uses 1 / n_features
+        - if float, must be non-negative.
 
         .. versionchanged:: 0.22
            The default value of ``gamma`` changed from 'auto' to 'scale'.
@@ -1147,7 +1150,7 @@ class SVR(RegressorMixin, BaseLibSVM):
          Epsilon in the epsilon-SVR model. It specifies the epsilon-tube
          within which no penalty is associated in the training loss function
          with points predicted within a distance epsilon from the actual
-         value.
+         value. Must be non-negative.
 
     shrinking : bool, default=True
         Whether to use the shrinking heuristic.
@@ -1328,7 +1331,7 @@ class NuSVR(RegressorMixin, BaseLibSVM):
         default 0.5 will be taken.
 
     C : float, default=1.0
-        Penalty parameter C of the error term.
+        Penalty parameter C of the error term. Must be non-negative.
 
     kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'} or callable,  \
         default='rbf'
@@ -1338,14 +1341,15 @@ class NuSVR(RegressorMixin, BaseLibSVM):
 
     degree : int, default=3
         Degree of the polynomial kernel function ('poly').
-        Ignored by all other kernels.
+        Must be non-negative. Ignored by all other kernels.
 
     gamma : {'scale', 'auto'} or float, default='scale'
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
 
         - if ``gamma='scale'`` (default) is passed then it uses
           1 / (n_features * X.var()) as value of gamma,
-        - if 'auto', uses 1 / n_features.
+        - if 'auto', uses 1 / n_features
+        - if float, must be non-negative.
 
         .. versionchanged:: 0.22
            The default value of ``gamma`` changed from 'auto' to 'scale'.
@@ -1536,14 +1540,15 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
 
     degree : int, default=3
         Degree of the polynomial kernel function ('poly').
-        Ignored by all other kernels.
+        Must be non-negative. Ignored by all other kernels.
 
     gamma : {'scale', 'auto'} or float, default='scale'
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
 
         - if ``gamma='scale'`` (default) is passed then it uses
           1 / (n_features * X.var()) as value of gamma,
-        - if 'auto', uses 1 / n_features.
+        - if 'auto', uses 1 / n_features
+        - if float, must be non-negative.
 
         .. versionchanged:: 0.22
            The default value of ``gamma`` changed from 'auto' to 'scale'.
