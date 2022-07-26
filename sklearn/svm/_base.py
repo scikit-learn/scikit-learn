@@ -81,16 +81,16 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             StrOptions({"scale", "auto"}),
             Interval(Real, 0.0, None, closed="neither"),
         ],
-        "coef0": [Real],
+        "coef0": [Interval(Real, None, None, closed="neither")],
         "tol": [Interval(Real, 0.0, None, closed="neither")],
         "C": [Interval(Real, 0.0, None, closed="neither")],
         "nu": [Interval(Real, 0.0, 1.0, closed="right")],
         "epsilon": [Interval(Real, 0.0, None, closed="left")],
-        "shrinking": [bool],
-        "probability": [bool],
+        "shrinking": ["boolean"],
+        "probability": ["boolean"],
         "cache_size": [Interval(Real, 0, None, closed="left")],
         "class_weight": [StrOptions({"balanced"}), dict, None],
-        "verbose": [bool],
+        "verbose": ["boolean"],
         "max_iter": [Interval(Integral, -1, None, closed="left")],
         "random_state": ["random_state"],
     }
@@ -140,15 +140,6 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         self.verbose = verbose
         self.max_iter = max_iter
         self.random_state = random_state
-
-    @classmethod
-    def _filter_validation_params(cls, params_to_filter):
-        # used by subclasses if they don't use all params from here
-        return {
-            param: constraint
-            for param, constraint in cls._parameter_constraints.items()
-            if param not in params_to_filter
-        }
 
     def _more_tags(self):
         # Used by cross_val_score.
@@ -703,12 +694,12 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
     """ABC for LibSVM-based classifiers."""
 
     _parameter_constraints = {
-        **BaseLibSVM._filter_validation_params(["epsilon", "nu"]),
-        **{
-            "decision_function_shape": [StrOptions({"ovr", "ovo"})],
-            "break_ties": [bool],
-        },
+        **BaseLibSVM._parameter_constraints,
+        "decision_function_shape": [StrOptions({"ovr", "ovo"})],
+        "break_ties": ["boolean"],
     }
+    for unused_param in ["epsilon", "nu"]:
+        _parameter_constraints.pop(unused_param)
 
     @abstractmethod
     def __init__(

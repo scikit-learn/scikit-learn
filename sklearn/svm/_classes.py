@@ -1040,9 +1040,10 @@ class NuSVC(BaseSVC):
     _impl = "nu_svc"
 
     _parameter_constraints = {
-        **BaseSVC._filter_validation_params(["C"]),
+        **BaseSVC._parameter_constraints,
         "nu": [Interval(Real, 0.0, 1.0, closed="neither")],
     }
+    _parameter_constraints.pop("C")
 
     def __init__(
         self,
@@ -1255,9 +1256,9 @@ class SVR(RegressorMixin, BaseLibSVM):
 
     _impl = "epsilon_svr"
 
-    _parameter_constraints = BaseLibSVM._filter_validation_params(
-        ["class_weight", "nu", "probability", "random_state"]
-    )
+    _parameter_constraints = {**BaseLibSVM._parameter_constraints}
+    for unused_param in ["class_weight", "nu", "probability", "random_state"]:
+        _parameter_constraints.pop(unused_param)
 
     def __init__(
         self,
@@ -1464,9 +1465,9 @@ class NuSVR(RegressorMixin, BaseLibSVM):
 
     _impl = "nu_svr"
 
-    _parameter_constraints = BaseLibSVM._filter_validation_params(
-        ["class_weight", "epsilon", "probability", "random_state"]
-    )
+    _parameter_constraints = {**BaseLibSVM._parameter_constraints}
+    for unused_param in ["class_weight", "epsilon", "probability", "random_state"]:
+        _parameter_constraints.pop(unused_param)
 
     def __init__(
         self,
@@ -1663,9 +1664,9 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
 
     _impl = "one_class"
 
-    _parameter_constraints = BaseLibSVM._filter_validation_params(
-        ["C", "class_weight", "epsilon", "probability", "random_state"]
-    )
+    _parameter_constraints = {**BaseLibSVM._parameter_constraints}
+    for unused_param in ["C", "class_weight", "epsilon", "probability", "random_state"]:
+        _parameter_constraints.pop(unused_param)
 
     def __init__(
         self,
