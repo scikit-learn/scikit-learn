@@ -197,13 +197,6 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             raise TypeError("Sparse precomputed kernels are not supported.")
         self._sparse = sparse and not callable(self.kernel)
 
-        if hasattr(self, "decision_function_shape"):
-            if self.decision_function_shape not in ("ovr", "ovo"):
-                raise ValueError(
-                    "decision_function_shape must be either 'ovr' or 'ovo', "
-                    f"got {self.decision_function_shape}."
-                )
-
         if callable(self.kernel):
             check_consistent_length(X, y)
         else:
@@ -259,26 +252,8 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
                 self._gamma = 1.0 / (X.shape[1] * X_var) if X_var != 0 else 1.0
             elif self.gamma == "auto":
                 self._gamma = 1.0 / X.shape[1]
-            else:
-                raise ValueError(
-                    "When 'gamma' is a string, it should be either 'scale' or "
-                    f"'auto'. Got '{self.gamma!r}' instead."
-                )
         elif isinstance(self.gamma, numbers.Real):
-            if self.gamma <= 0:
-                msg = (
-                    f"gamma value must be > 0; {self.gamma!r} is invalid. Use"
-                    " a positive number or use 'auto' to set gamma to a"
-                    " value of 1 / n_features."
-                )
-                raise ValueError(msg)
             self._gamma = self.gamma
-        else:
-            msg = (
-                "The gamma value should be set to 'scale', 'auto' or a"
-                f" positive float value. {self.gamma!r} is not a valid option"
-            )
-            raise ValueError(msg)
 
         fit = self._sparse_fit if self._sparse else self._dense_fit
         if self.verbose:
