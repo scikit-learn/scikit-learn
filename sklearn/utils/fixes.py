@@ -10,7 +10,6 @@ at which the fix is no longer needed.
 #
 # License: BSD 3 clause
 
-from collections import namedtuple
 from functools import update_wrapper
 import functools
 
@@ -34,66 +33,6 @@ else:
     # once support for sp_version < parse_version('1.4') is dropped
     # mypy error: Name 'lobpcg' already defined (possibly by an import)
     from ..externals._lobpcg import lobpcg  # type: ignore  # noqa
-
-try:
-    from scipy.optimize._linesearch import line_search_wolfe2, line_search_wolfe1
-except ImportError:  # SciPy < 1.8
-    from scipy.optimize.linesearch import line_search_wolfe2, line_search_wolfe1  # type: ignore  # noqa
-
-if sp_version >= parse_version("1.9"):
-    from scipy.stats import mode
-else:
-
-    def mode(a, axis=0, nan_policy="propagate"):
-        """Return an array of the modal (most common) value in the passed array.
-
-        If there is more than one such value, only the smallest is returned.
-        The bin-count for the modal bins is also returned.
-
-        Parameters
-        ----------
-        a : array_like
-            N-dimensional array of which to find mode(s).
-        axis : int or None, optional
-            Axis along which to operate. Default is 0. If None, compute over
-            the whole array `a`.
-        nan_policy : {'propagate', 'raise', 'omit'}, optional
-            Defines how to handle when input contains nan.
-            The following options are available (default is 'propagate'):
-            * 'propagate': returns nan
-            * 'raise': throws an error
-            * 'omit': performs the calculations ignoring nan values
-
-        Returns
-        -------
-        mode : ndarray
-            Array of modal values.
-        count : ndarray
-            Array of counts for each mode.
-
-        Examples
-        --------
-        >>> import numpy as np
-        >>> a = np.array([[6, 8, 3, 0],
-        ...               [3, 2, 1, 7],
-        ...               [8, 1, 8, 4],
-        ...               [5, 3, 0, 5],
-        ...               [4, 7, 5, 9]])
-        >>> from sklearn.utils.fixes import mode
-        >>> mode(a)
-        ModeResult(mode=array([3, 1, 0, 0]), count=array([1, 1, 1, 1]))
-
-        To get mode of whole array, specify ``axis=None``:
-        >>> mode(a, axis=None)
-        ModeResult(mode=3, count=3)
-        """
-        from scipy.stats import mode
-
-        ModeResult = namedtuple("ModeResult", ("mode", "count"))
-
-        m, c = mode(a, axis=axis, nan_policy=nan_policy)
-        m, c = m.squeeze(axis=axis), c.squeeze(axis=axis)
-        return ModeResult(m[()], c[()])
 
 
 def _object_dtype_isnan(X):

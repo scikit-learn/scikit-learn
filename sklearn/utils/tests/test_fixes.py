@@ -13,7 +13,6 @@ from sklearn.utils._testing import assert_array_equal
 
 from sklearn.utils.fixes import _object_dtype_isnan
 from sklearn.utils.fixes import loguniform
-from sklearn.utils.fixes import mode
 
 
 @pytest.mark.parametrize("dtype, val", ([object, 1], [object, "a"], [float, 1]))
@@ -47,15 +46,3 @@ def test_loguniform(low, high, base):
     assert loguniform(base**low, base**high).rvs(random_state=0) == loguniform(
         base**low, base**high
     ).rvs(random_state=0)
-
-
-def test_mode():
-    """Check that `mode` returns the expected type of data and array dimensions."""
-    a = np.array([[6, 8, 3, 0], [3, 2, 1, 7], [8, 1, 8, 4], [5, 3, 0, 5], [4, 7, 5, 9]])
-    mode_result = mode(a)
-    assert_array_equal(mode_result.mode, np.array([3, 1, 0, 0]))
-    assert_array_equal(mode_result.count, np.array([1, 1, 1, 1]))
-
-    mode_result = mode(a, axis=None)
-    assert mode_result.mode == 3
-    assert mode_result.count == 3
