@@ -4,7 +4,6 @@
 # Modified by Thierry Guillemot <thierry.guillemot.work@gmail.com>
 # License: BSD 3 clause
 
-import numbers
 import warnings
 from abc import ABCMeta, abstractmethod
 from time import time
@@ -18,7 +17,7 @@ from ..cluster import kmeans_plusplus
 from ..base import BaseEstimator
 from ..base import DensityMixin
 from ..exceptions import ConvergenceWarning
-from ..utils import check_random_state, check_scalar
+from ..utils import check_random_state
 from ..utils.validation import check_is_fitted
 from ..utils._param_validation import (
     Interval,

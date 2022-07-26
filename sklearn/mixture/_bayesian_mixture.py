@@ -6,6 +6,7 @@
 import math
 import numpy as np
 from scipy.special import betaln, digamma, gammaln
+from numbers import Integral, Real
 
 from ._base import BaseMixture, _check_shape
 from ._gaussian_mixture import _check_precision_matrix
@@ -15,7 +16,10 @@ from ._gaussian_mixture import _compute_precision_cholesky
 from ._gaussian_mixture import _estimate_gaussian_parameters
 from ._gaussian_mixture import _estimate_log_gaussian_prob
 from ..utils import check_array
-
+from ..utils._param_validation import (
+    Interval,
+    StrOptions,
+)
 
 def _log_dirichlet_norm(dirichlet_concentration):
     """Compute the log of the Dirichlet distribution normalization term.
@@ -342,6 +346,14 @@ class BayesianGaussianMixture(BaseMixture):
     >>> bgm.predict([[0, 0], [9, 3]])
     array([0, 1])
     """
+    _parameter_constraints = {
+        **BaseMixture._parameter_constraints,
+        "covariance_type": [StrOptions({"spherical", "tied", "diag", "full"})],
+        "weight_concentration_prior_type": [StrOptions({"dirichlet_process",
+                                                        "dirichlet_distribution"})],
+        "weight_concentration_prior": [None, Interval(Real, 0.0, None, closed="right")],
+        "mean_precision_prior": [None, Interval(Real, 0.0, None, closed="both")],
+    }
 
     def __init__(
         self,
@@ -392,25 +404,6 @@ class BayesianGaussianMixture(BaseMixture):
         ----------
         X : array-like of shape (n_samples, n_features)
         """
-        if self.covariance_type not in ["spherical", "tied", "diag", "full"]:
-            raise ValueError(
-                "Invalid value for 'covariance_type': %s "
-                "'covariance_type' should be in "
-                "['spherical', 'tied', 'diag', 'full']"
-                % self.covariance_type
-            )
-
-        if self.weight_concentration_prior_type not in [
-            "dirichlet_process",
-            "dirichlet_distribution",
-        ]:
-            raise ValueError(
-                "Invalid value for 'weight_concentration_prior_type': %s "
-                "'weight_concentration_prior_type' should be in "
-                "['dirichlet_process', 'dirichlet_distribution']"
-                % self.weight_concentration_prior_type
-            )
-
         self._check_weights_parameters()
         self._check_means_parameters(X)
         self._check_precision_parameters(X)
