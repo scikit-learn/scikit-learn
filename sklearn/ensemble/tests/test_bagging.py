@@ -597,7 +597,7 @@ def test_bagging_with_pipeline():
         make_pipeline(SelectKBest(k=1), DecisionTreeClassifier()), max_features=2
     )
     estimator.fit(iris.data, iris.target)
-    assert isinstance(estimator[0].steps[-1][1].random_state, (int, np.int_))
+    assert isinstance(estimator[0].steps[-1][1].random_state, int)
 
 
 class DummyZeroEstimator(BaseEstimator):
