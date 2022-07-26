@@ -582,10 +582,21 @@ def test_no_validation():
     f(param2=SomeType())
 
 
-def test_missing_values_pd_na():
+def test_na_constraint_with_pd_na():
     """Add a specific test for checking support for `pandas.NA`."""
     pd = pytest.importorskip("pandas")
 
     na_constraint = _NAConstraint()
     assert na_constraint.is_satisfied_by(pd.NA)
     assert not na_constraint.is_satisfied_by(np.array([1, 2, 3]))
+
+
+def test_missing_values_str():
+    """Check the `MissingValues` `str()` string."""
+    missing_values = _MissingValues()
+
+    assert (
+        str(missing_values)
+        == "an instance of 'int', an instance of 'float', an instance of 'str', None,"
+        " numpy.nan or pandas.NA"
+    )
