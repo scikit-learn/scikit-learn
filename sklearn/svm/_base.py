@@ -694,7 +694,7 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
     """ABC for LibSVM-based classifiers."""
 
     _parameter_constraints = {
-        **BaseLibSVM._parameter_constraints,
+        **BaseLibSVM._parameter_constraints,  # type: ignore
         "decision_function_shape": [StrOptions({"ovr", "ovo"})],
         "break_ties": ["boolean"],
     }
