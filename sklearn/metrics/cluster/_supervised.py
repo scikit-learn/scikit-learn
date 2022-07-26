@@ -390,7 +390,7 @@ def adjusted_rand_score(labels_true, labels_pred):
 
     .. [wk] https://en.wikipedia.org/wiki/Rand_index#Adjusted_Rand_index
 
-    .. [Chacón22] J. E. Chacón and A. I. Rastrojo, Minimum adjusted Rand index
+    .. [Chacon22] J. E. Chacón and A. I. Rastrojo, Minimum adjusted Rand index
       for two clusterings of a given size, 2022
       https://link.springer.com/content/pdf/10.1007/s11634-022-00491-w.pdf
 
