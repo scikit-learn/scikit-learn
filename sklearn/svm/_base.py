@@ -146,8 +146,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         # used by subclasses if they don't use all params from here
         return {
             param: constraint
-            for param, constraint
-            in cls._parameter_constraints.items()
+            for param, constraint in cls._parameter_constraints.items()
             if param not in params_to_filter
         }
 
@@ -708,7 +707,7 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
         **{
             "decision_function_shape": [StrOptions({"ovr", "ovo"})],
             "break_ties": [bool],
-        }
+        },
     }
 
     @abstractmethod
