@@ -8,6 +8,7 @@ import numbers
 import warnings
 from abc import ABCMeta, abstractmethod
 from time import time
+from numbers import Integral, Real
 
 import numpy as np
 from scipy.special import logsumexp
@@ -19,7 +20,10 @@ from ..base import DensityMixin
 from ..exceptions import ConvergenceWarning
 from ..utils import check_random_state, check_scalar
 from ..utils.validation import check_is_fitted
-
+from ..utils._param_validation import (
+    Interval,
+    StrOptions,
+)
 
 def _check_shape(param, param_shape, name):
     """Validate the shape of the input parameter 'param'.
@@ -46,6 +50,14 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
     This abstract class specifies an interface for all mixture classes and
     provides basic common methods for mixture models.
     """
+    _parameter_constraints = {
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "tol": [Interval(Real, 0.0, None, closed="left")],
+        "n_init": [Interval(Integral, 1, None, closed="left")],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
+        "reg_covar": [Interval(Real, 0.0, None, closed="left")],
+        "init_params": [
+            StrOptions({"kmeans", "random", "random_from_data", "k-means++"})]}
 
     def __init__(
         self,
@@ -227,6 +239,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         labels : array, shape (n_samples,)
             Component labels.
         """
+        self._validate_params()
         X = self._validate_data(X, dtype=[np.float64, np.float32], ensure_min_samples=2)
         if X.shape[0] < self.n_components:
             raise ValueError(
