@@ -234,7 +234,10 @@ class TruncatedSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
 
         elif self.algorithm == "randomized":
             if self.n_components > X.shape[1]:
-                raise ValueError(f"n_components({self.n_components}) must be <= n_features({X.shape[1]}).")
+                raise ValueError(
+                    f"n_components({self.n_components}) must be <="
+                    f" n_features({X.shape[1]})."
+                )
             U, Sigma, VT = randomized_svd(
                 X,
                 self.n_components,
