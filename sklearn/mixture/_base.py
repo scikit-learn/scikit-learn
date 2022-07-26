@@ -24,6 +24,7 @@ from ..utils._param_validation import (
     StrOptions,
 )
 
+
 def _check_shape(param, param_shape, name):
     """Validate the shape of the input parameter 'param'.
 
@@ -56,7 +57,12 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         "max_iter": [Interval(Integral, 0, None, closed="left")],
         "reg_covar": [Interval(Real, 0.0, None, closed="left")],
         "init_params": [
-            StrOptions({"kmeans", "random", "random_from_data", "k-means++"})]}
+            StrOptions({"kmeans", "random", "random_from_data", "k-means++"})],
+        "verbose_interval": [None, Interval(Integral, 1, None, closed="left")],
+        "verbose": ["verbose"],
+        "warm_start": ["boolean"],
+        "random_state": ["random_state"]
+        }
 
     def __init__(
         self,
@@ -187,6 +193,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         self : object
             The fitted mixture.
         """
+        self._validate_params()
         self.fit_predict(X, y)
         return self
 
@@ -217,7 +224,6 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         labels : array, shape (n_samples,)
             Component labels.
         """
-        self._validate_params()
         X = self._validate_data(X, dtype=[np.float64, np.float32], ensure_min_samples=2)
         if X.shape[0] < self.n_components:
             raise ValueError(

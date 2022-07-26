@@ -353,6 +353,9 @@ class BayesianGaussianMixture(BaseMixture):
                                                         "dirichlet_distribution"})],
         "weight_concentration_prior": [None, Interval(Real, 0.0, None, closed="right")],
         "mean_precision_prior": [None, Interval(Real, 0.0, None, closed="both")],
+        "mean_prior": [None, "array-like"],
+        "degrees_of_freedom_prior": [None, Interval(Real, 0.0, None, closed="right")],
+        "covariance_prior": [None, "array-like", Interval(Real, 0.0, None, closed="right")]
     }
 
     def __init__(
