@@ -12,6 +12,7 @@ from scipy import sparse as sp
 from scipy import stats
 
 from ..base import BaseEstimator, TransformerMixin
+from ..utils._param_validation import StrOptions
 from ..utils.sparsefuncs import _get_median
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
@@ -73,6 +74,11 @@ class _BaseImputer(TransformerMixin, BaseEstimator):
 
     It adds automatically support for `add_indicator`.
     """
+
+    _parameter_constraints = {
+        "missing_values": [numbers.Real, numbers.Integral, str, None],
+        "add_indicator": ["boolean"],
+    }
 
     def __init__(self, *, missing_values=np.nan, add_indicator=False):
         self.missing_values = missing_values
@@ -749,6 +755,13 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
            [False, False]])
     """
 
+    _parameter_constraints = {
+        "missing_values": [numbers.Real, numbers.Integral, str, None],
+        "features": [StrOptions({"missing-only", "all"})],
+        "sparse": ["boolean", StrOptions({"auto"})],
+        "error_on_new": ["boolean"],
+    }
+
     def __init__(
         self,
         *,
@@ -883,22 +896,6 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
 
         self._n_features = X.shape[1]
 
-        if self.features not in ("missing-only", "all"):
-            raise ValueError(
-                "'features' has to be either 'missing-only' or "
-                "'all'. Got {} instead.".format(self.features)
-            )
-
-        if not (
-            (isinstance(self.sparse, str) and self.sparse == "auto")
-            or isinstance(self.sparse, bool)
-        ):
-            raise ValueError(
-                "'sparse' has to be a boolean or 'auto'. Got {!r} instead.".format(
-                    self.sparse
-                )
-            )
-
         missing_features_info = self._get_missing_features_info(X)
         self.features_ = missing_features_info[1]
 
@@ -921,6 +918,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
+        self._validate_params()
         self._fit(X, y)
 
         return self
@@ -984,6 +982,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             The missing indicator for input data. The data type of `Xt`
             will be boolean.
         """
+        self._validate_params()
         imputer_mask = self._fit(X, y)
 
         if self.features_.size < self._n_features:
