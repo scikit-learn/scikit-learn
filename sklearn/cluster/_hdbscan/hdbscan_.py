@@ -564,7 +564,6 @@ def hdbscan(
     )
 
 
-# Inherits from sklearn
 class HDBSCAN(ClusterMixin, BaseEstimator):
     """Perform HDBSCAN clustering from vector array or distance matrix.
 

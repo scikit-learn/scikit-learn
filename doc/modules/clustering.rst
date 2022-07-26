@@ -959,16 +959,17 @@ HDBSCAN
 =======
 
 The :class:`HDBSCAN` algorithm can be seen as an extension of :class:`DBSCAN`
-and :class:`OPTICS`. Specifically, DBSCAN asserts that the clustering criterion
-(i.e. density requirement) is *globally homogeneous*. In other words, DBSCAN
-may struggle to successfully capture clusters with different densities.
-HDBSCAN alleviates this assumption and explores all possible density scales by
-building an alternative representation of the clustering problem.
+and :class:`OPTICS`. Specifically, :class:`DBSCAN` asserts that the clustering
+criterion (i.e. density requirement) is *globally homogeneous*.
+In other words, :class:`DBSCAN` may struggle to successfully capture clusters
+with different densities.
+:class:`HDBSCAN` alleviates this assumption and explores all possible density
+scales by building an alternative representation of the clustering problem.
 
 .. note::
 
-  This implementation is adapted from the work done in
-  https://github.com/scikit-learn-contrib/hdbscan
+  This implementation is adapted from the original implementation of HDBSCAN,
+  `scikit-learn-contrib/hdbscan <https://github.com/scikit-learn-contrib/hdbscan>`_.
 
 Mutual Reachability Graph
 -------------------------
