@@ -607,7 +607,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
             message = self._log_message(
                 estimator_idx=chain_idx + 1,
                 n_estimators=len(self.estimators_),
-                processing_msg=f"Adding feature {self.order_[chain_idx]}",
+                processing_msg=f"Processing order {self.order_[chain_idx]}",
             )
             y = Y[:, self.order_[chain_idx]]
             with _print_elapsed_time("Chain", message):

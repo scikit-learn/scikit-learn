@@ -714,9 +714,9 @@ def test_classifier_chain_verbose(capsys):
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
     pattern = (
-        r"\[Chain\].*\(1 of 3\) Adding feature 0, total=.*\n"
-        r"\[Chain\].*\(2 of 3\) Adding feature 1, total=.*\n"
-        r"\[Chain\].*\(3 of 3\) Adding feature 2, total=.*\n$"
+        r"\[Chain\].*\(1 of 3\) Processing order 0, total=.*\n"
+        r"\[Chain\].*\(2 of 3\) Processing order 1, total=.*\n"
+        r"\[Chain\].*\(3 of 3\) Processing order 2, total=.*\n$"
     )
 
     classifier = ClassifierChain(
@@ -734,9 +734,9 @@ def test_regressor_chain_verbose(capsys):
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
     pattern = (
-        r"\[Chain\].*\(1 of 3\) Adding feature 1, total=.*\n"
-        r"\[Chain\].*\(2 of 3\) Adding feature 0, total=.*\n"
-        r"\[Chain\].*\(3 of 3\) Adding feature 2, total=.*\n$"
+        r"\[Chain\].*\(1 of 3\) Processing order 1, total=.*\n"
+        r"\[Chain\].*\(2 of 3\) Processing order 0, total=.*\n"
+        r"\[Chain\].*\(3 of 3\) Processing order 2, total=.*\n$"
     )
     regressor = RegressorChain(
         LinearRegression(),
