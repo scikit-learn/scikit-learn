@@ -1,6 +1,7 @@
 from abc import ABC
 from abc import abstractmethod
 import functools
+import math
 from inspect import signature
 from numbers import Integral
 from numbers import Real
@@ -255,13 +256,13 @@ class _NanConstraint(_Constraint):
     """Constraint representing the indicator `np.nan`."""
 
     def is_satisfied_by(self, val):
-        return isinstance(val, Real) and np.isnan(val)
+        return isinstance(val, Real) and math.isnan(val)
 
     def __str__(self):
         return "numpy.nan"
 
 
-class _NAConstraint(_Constraint):
+class _PandasNAConstraint(_Constraint):
     """Constraint representing the indicator `pd.NA`."""
 
     def is_satisfied_by(self, val):
@@ -537,7 +538,7 @@ class _MissingValues(_Constraint):
     """Helper constraint for the `missing_values` parameters.
 
     Convenience for
-    [Integral, Real, str, _NoneConstraint, _NanConstraint, _NAConstraint]
+    [Integral, Real, str, _NoneConstraint, _NanConstraint, _PandasNAConstraint]
     """
 
     def __init__(self):
@@ -548,7 +549,7 @@ class _MissingValues(_Constraint):
             _InstancesOf(str),
             _NoneConstraint(),
             _NanConstraint(),
-            _NAConstraint(),
+            _PandasNAConstraint(),
         ]
 
     def is_satisfied_by(self, val):
