@@ -13,7 +13,8 @@ from sklearn.utils._param_validation import _ArrayLikes
 from sklearn.utils._param_validation import _Booleans
 from sklearn.utils._param_validation import _Callables
 from sklearn.utils._param_validation import _InstancesOf
-from sklearn.utils._param_validation import _MissingValuesHelper
+from sklearn.utils._param_validation import _MissingValues
+from sklearn.utils._param_validation import _NAConstraint
 from sklearn.utils._param_validation import _NoneConstraint
 from sklearn.utils._param_validation import _RandomStates
 from sklearn.utils._param_validation import _SparseMatrices
@@ -185,7 +186,7 @@ def test_hasmethods():
         Interval(Real, 0, None, closed="left"),
         Interval(Real, None, None, closed="neither"),
         StrOptions({"a", "b", "c"}),
-        _MissingValuesHelper(),
+        _MissingValues(),
         _VerboseHelper(),
         HasMethods("fit"),
     ],
@@ -326,7 +327,7 @@ def test_generate_invalid_param_val_all_valid(constraints):
         _SparseMatrices(),
         _Booleans(),
         _VerboseHelper(),
-        _MissingValuesHelper(),
+        _MissingValues(),
         StrOptions({"a", "b", "c"}),
         Interval(Integral, None, None, closed="neither"),
         Interval(Integral, 0, 10, closed="neither"),
@@ -389,7 +390,7 @@ def test_is_satisfied_by(constraint_declaration, value):
         (int, _InstancesOf),
         ("boolean", _Booleans),
         ("verbose", _VerboseHelper),
-        ("missing_values", _MissingValuesHelper),
+        ("missing_values", _MissingValues),
         (HasMethods("fit"), HasMethods),
     ],
 )
@@ -585,5 +586,6 @@ def test_missing_values_pd_na():
     """Add a specific test for checking support for `pandas.NA`."""
     pd = pytest.importorskip("pandas")
 
-    missing_values_constraint = _MissingValuesHelper()
-    assert missing_values_constraint.is_satisfied_by(pd.NA)
+    na_constraint = _NAConstraint()
+    assert na_constraint.is_satisfied_by(pd.NA)
+    assert not na_constraint.is_satisfied_by(np.array([1, 2, 3]))

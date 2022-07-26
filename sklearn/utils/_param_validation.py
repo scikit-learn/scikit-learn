@@ -123,7 +123,7 @@ def make_constraint(constraint):
     if isinstance(constraint, str) and constraint == "verbose":
         return _VerboseHelper()
     if isinstance(constraint, str) and constraint == "missing_values":
-        return _MissingValuesHelper()
+        return _MissingValues()
     if isinstance(constraint, Hidden):
         constraint = make_constraint(constraint.constraint)
         constraint.hidden = True
@@ -531,7 +531,7 @@ class _VerboseHelper(_Constraint):
         )
 
 
-class _MissingValuesHelper(_Constraint):
+class _MissingValues(_Constraint):
     """Helper constraint for the `missing_values` parameters.
 
     Convenience for
@@ -637,8 +637,8 @@ def generate_invalid_param_val(constraint, constraints=None):
     if isinstance(constraint, StrOptions):
         return f"not {' or '.join(constraint.options)}"
 
-    if isinstance(constraint, _MissingValuesHelper):
-        return complex()
+    if isinstance(constraint, _MissingValues):
+        return np.array([1, 2, 3])
 
     if isinstance(constraint, _VerboseHelper):
         return -1
@@ -797,7 +797,7 @@ def generate_valid_param(constraint):
     if isinstance(constraint, _VerboseHelper):
         return 1
 
-    if isinstance(constraint, _MissingValuesHelper):
+    if isinstance(constraint, _MissingValues):
         return np.nan
 
     if isinstance(constraint, HasMethods):
