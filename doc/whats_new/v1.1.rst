@@ -13,7 +13,7 @@ Changelog
 ---------
 
 - |Fix| An default HTML representation is shown for meta-estimators having invalid
-  parameters. :pr:`xxxxx` by `Thomas Fan`_.
+  parameters. :pr:`24015` by `Thomas Fan`_.
 
 :mod:`sklearn.cluster`
 ......................
