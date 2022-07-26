@@ -309,3 +309,14 @@ def test_show_arrow_pipeline():
         'class="sk-toggleable__label sk-toggleable__label-arrow">Pipeline'
         in html_output
     )
+
+
+def test_invalid_parameters_in_stacking():
+    """Invalidate stacking configuration uses default repr.
+
+    Non-regression test for #24009.
+    """
+    stacker = StackingClassifier(estimators=[])
+
+    html_output = estimator_html_repr(stacker)
+    assert html.escape(str(stacker)) in html_output
