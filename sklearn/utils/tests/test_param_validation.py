@@ -369,7 +369,7 @@ def test_generate_valid_param(constraint):
         ("missing_values", None),
         ("missing_values", float("nan")),
         ("missing_values", np.nan),
-        ("missing_values", "prefit"),
+        ("missing_values", "missing"),
         (HasMethods("fit"), _Estimator(a=0)),
     ],
 )
