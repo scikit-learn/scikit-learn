@@ -836,9 +836,8 @@ Class APIs and Estimator Types
 
     density estimator
          An :term:`unsupervised` estimation of input probability density
-         function. Most commonly used techniques are:
+         function. Commonly used techniques are:
 
-        * :ref:`histogram`- visually represents data as defined bins
         * :ref:`kernel_density` - uses a kernel function, controlled by the
           bandwidth parameter to represent density
         * :ref:`Gaussian mixture <mixture>` - uses mixture of Gaussian models
