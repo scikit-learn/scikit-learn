@@ -24,7 +24,6 @@ from .base import TransformerMixin
 from .base import _ClassNamePrefixFeaturesOutMixin
 from .utils import check_random_state
 from .utils.extmath import safe_sparse_dot
-from .utils.fixes import rng_integers
 from .utils.validation import check_is_fitted
 from .utils.validation import _check_feature_names_in
 from .metrics.pairwise import pairwise_kernels, KERNEL_PARAMS
@@ -158,8 +157,8 @@ class PolynomialCountSketch(
         if self.coef0 != 0:
             n_features += 1
 
-        self.indexHash_ = rng_integers(
-            random_state, 0, high=self.n_components, size=(self.degree, n_features)
+        self.indexHash_ = random_state.randint(
+            0, high=self.n_components, size=(self.degree, n_features)
         )
 
         self.bitHash_ = random_state.choice(a=[-1, 1], size=(self.degree, n_features))

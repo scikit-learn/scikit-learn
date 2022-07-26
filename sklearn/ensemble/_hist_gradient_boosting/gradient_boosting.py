@@ -27,7 +27,6 @@ from ...utils.validation import (
 )
 from ...utils._param_validation import Interval, StrOptions
 from ...utils._openmp_helpers import _openmp_effective_n_threads
-from ...utils.fixes import rng_integers
 from ...utils.multiclass import check_classification_targets
 from ...metrics import check_scoring
 from ...model_selection import train_test_split
@@ -295,7 +294,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         # the first time fit was called (e.g. for subsampling or for the
         # train/val split).
         if not (self.warm_start and self._is_fitted()):
-            self._random_seed = rng_integers(rng, np.iinfo(np.uint32).max, dtype="u8")
+            self._random_seed = rng.randint(np.iinfo(np.uint32).max, dtype="u8")
 
         self._validate_parameters()
 

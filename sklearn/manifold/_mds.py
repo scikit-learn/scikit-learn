@@ -17,7 +17,7 @@ from ..metrics import euclidean_distances
 from ..utils import check_random_state, check_array, check_symmetric
 from ..isotonic import IsotonicRegression
 from ..utils._param_validation import Interval, StrOptions
-from ..utils.fixes import delayed, rng_integers
+from ..utils.fixes import delayed
 
 
 def _smacof_single(
@@ -323,7 +323,7 @@ def smacof(
                 best_pos = pos.copy()
                 best_iter = n_iter_
     else:
-        seeds = rng_integers(random_state, np.iinfo(np.int32).max, size=n_init)
+        seeds = random_state.randint(np.iinfo(np.int32).max, size=n_init)
         results = Parallel(n_jobs=n_jobs, verbose=max(verbose - 1, 0))(
             delayed(_smacof_single)(
                 dissimilarities,

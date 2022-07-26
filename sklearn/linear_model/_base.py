@@ -40,7 +40,7 @@ from ..utils.sparsefuncs import mean_variance_axis, inplace_column_scale
 from ..utils._seq_dataset import ArrayDataset32, CSRDataset32
 from ..utils._seq_dataset import ArrayDataset64, CSRDataset64
 from ..utils.validation import check_is_fitted, _check_sample_weight
-from ..utils.fixes import delayed, rng_integers
+from ..utils.fixes import delayed
 
 # TODO: bayesian_ridge_regression and bayesian_regression_ard
 # should be squashed into its respective objects.
@@ -193,7 +193,7 @@ def make_dataset(X, y, sample_weight, random_state=None):
 
     rng = check_random_state(random_state)
     # seed should never be 0 in SequentialDataset64
-    seed = rng_integers(rng, 1, np.iinfo(np.int32).max)
+    seed = rng.randint(1, np.iinfo(np.int32).max)
 
     if X.dtype == np.float32:
         CSRData = CSRDataset32

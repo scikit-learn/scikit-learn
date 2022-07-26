@@ -11,7 +11,6 @@ from ..utils import Bunch, _safe_indexing
 from ..utils import check_random_state
 from ..utils import check_array
 from ..utils.fixes import delayed
-from ..utils.fixes import rng_integers
 
 
 def _weights_scorer(scorer, estimator, X, y, sample_weight):
@@ -240,7 +239,7 @@ def permutation_importance(
     # the fact that variables are shared or not depending on the active
     # joblib backend (sequential, thread-based or process-based).
     random_state = check_random_state(random_state)
-    random_seed = rng_integers(random_state, np.iinfo(np.int32).max + 1)
+    random_seed = random_state.randint(np.iinfo(np.int32).max + 1)
 
     if not isinstance(max_samples, numbers.Integral):
         max_samples = int(max_samples * X.shape[0])

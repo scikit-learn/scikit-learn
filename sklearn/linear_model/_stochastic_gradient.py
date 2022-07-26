@@ -26,7 +26,7 @@ from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils._param_validation import Interval
 from ..utils._param_validation import StrOptions
 from ..utils._param_validation import Hidden
-from ..utils.fixes import delayed, rng_integers
+from ..utils.fixes import delayed
 from ..exceptions import ConvergenceWarning
 from ..model_selection import StratifiedShuffleSplit, ShuffleSplit
 
@@ -438,7 +438,7 @@ def fit_binary(
 
     # numpy mtrand expects a C long which is a signed 32 bit integer under
     # Windows
-    seed = rng_integers(random_state, MAX_INT)
+    seed = random_state.randint(MAX_INT)
 
     tol = est.tol if est.tol is not None else -np.inf
 
@@ -762,7 +762,7 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         # sharing the estimator random state between threads which could lead
         # to non-deterministic behavior
         random_state = check_random_state(self.random_state)
-        seeds = rng_integers(random_state, MAX_INT, size=len(self.classes_))
+        seeds = random_state.randint(MAX_INT, size=len(self.classes_))
         result = Parallel(
             n_jobs=self.n_jobs, verbose=self.verbose, require="sharedmem"
         )(
@@ -1664,7 +1664,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         random_state = check_random_state(self.random_state)
         # numpy mtrand expects a C long which is a signed 32 bit integer under
         # Windows
-        seed = rng_integers(random_state, 0, MAX_INT)
+        seed = random_state.randint(0, MAX_INT)
 
         dataset, intercept_decay = make_dataset(
             X, y, sample_weight, random_state=random_state
@@ -2241,7 +2241,7 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         random_state = check_random_state(self.random_state)
         # numpy mtrand expects a C long which is a signed 32 bit integer under
         # Windows
-        seed = rng_integers(random_state, 0, np.iinfo(np.int32).max)
+        seed = random_state.randint(0, np.iinfo(np.int32).max)
 
         tol = self.tol if self.tol is not None else -np.inf
 

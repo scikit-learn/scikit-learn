@@ -65,7 +65,7 @@ from ..tree._tree import DTYPE, DOUBLE
 from ..utils import check_random_state, compute_sample_weight, deprecated
 from ..exceptions import DataConversionWarning
 from ._base import BaseEnsemble, _partition_estimators
-from ..utils.fixes import delayed, rng_integers
+from ..utils.fixes import delayed
 from ..utils.multiclass import check_classification_targets, type_of_target
 from ..utils.validation import (
     check_is_fitted,
@@ -460,7 +460,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             if self.warm_start and len(self.estimators_) > 0:
                 # We draw from the random state to get the random state we
                 # would have got if we hadn't used a warm_start.
-                rng_integers(random_state, MAX_INT, size=len(self.estimators_))
+                random_state.randint(MAX_INT, size=len(self.estimators_))
 
             trees = [
                 self._make_estimator(append=False, random_state=random_state)

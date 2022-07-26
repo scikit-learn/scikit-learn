@@ -25,7 +25,6 @@ from ._base import load_descr
 from ..utils import Bunch
 from ..utils import check_random_state
 from ..utils import shuffle as shuffle_method
-from ..utils.fixes import rng_integers
 
 
 # The original data can be found at:
@@ -160,7 +159,7 @@ def fetch_kddcup99(
         n_samples_abnormal = abnormal_samples.shape[0]
         # selected abnormal samples:
         random_state = check_random_state(random_state)
-        r = rng_integers(random_state, 0, n_samples_abnormal, 3377)
+        r = random_state.randint(0, n_samples_abnormal, 3377)
         abnormal_samples = abnormal_samples[r]
         abnormal_targets = abnormal_targets[r]
 

@@ -18,7 +18,6 @@ import scipy.sparse as sp
 from ..preprocessing import MultiLabelBinarizer
 from ..utils import check_array, check_random_state
 from ..utils import shuffle as util_shuffle
-from ..utils.fixes import rng_integers
 from ..utils.random import sample_without_replacement
 
 
@@ -27,7 +26,7 @@ def _generate_hypercube(samples, dimensions, rng):
     if dimensions > 30:
         return np.hstack(
             [
-                rng_integers(rng, 2, size=(samples, dimensions - 30)),
+                rng.randint(2, size=(samples, dimensions - 30)),
                 _generate_hypercube(samples, 30, rng),
             ]
         )

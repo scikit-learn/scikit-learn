@@ -16,7 +16,6 @@ from scipy.sparse import csc_matrix
 
 from ..base import BaseEstimator, ClusterMixin
 from ..utils import check_random_state, as_float_array, check_scalar
-from ..utils.fixes import rng_integers
 from ..metrics.pairwise import pairwise_kernels
 from ..neighbors import kneighbors_graph, NearestNeighbors
 from ..manifold import spectral_embedding
@@ -143,7 +142,7 @@ def discretize(
         # Initialize first column of rotation matrix with a row of the
         # eigenvectors
         rotation = np.zeros((n_components, n_components))
-        rotation[:, 0] = vectors[rng_integers(random_state, n_samples), :].T
+        rotation[:, 0] = vectors[random_state.randint(n_samples), :].T
 
         # To initialize the rest of the rotation matrix, find the rows
         # of the eigenvectors that are as orthogonal to each other as

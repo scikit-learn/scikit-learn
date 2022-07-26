@@ -19,7 +19,6 @@ from sklearn.utils._testing import assert_allclose_dense_sparse
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils.fixes import rng_integers
 from sklearn.exceptions import DataDimensionalityWarning
 
 all_sparse_random_matrix: List[Any] = [_sparse_random_matrix]
@@ -39,8 +38,8 @@ def make_sparse_random_data(n_samples, n_features, n_nonzeros, random_state=0):
         (
             rng.randn(n_nonzeros),
             (
-                rng_integers(rng, n_samples, size=n_nonzeros),
-                rng_integers(rng, n_features, size=n_nonzeros),
+                rng.randint(n_samples, size=n_nonzeros),
+                rng.randint(n_features, size=n_nonzeros),
             ),
         ),
         shape=(n_samples, n_features),

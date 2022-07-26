@@ -26,7 +26,7 @@ from .class_weight import compute_class_weight, compute_sample_weight
 from . import _joblib
 from ..exceptions import DataConversionWarning
 from .deprecation import deprecated
-from .fixes import parse_version, rng_integers, threadpool_info
+from .fixes import parse_version, threadpool_info
 from ._estimator_html_repr import estimator_html_repr
 from .validation import (
     as_float_array,
@@ -538,7 +538,7 @@ def resample(*arrays, replace=True, n_samples=None, random_state=None, stratify=
 
     if stratify is None:
         if replace:
-            indices = rng_integers(random_state, 0, n_samples, size=(max_n_samples,))
+            indices = random_state.randint(0, n_samples, size=(max_n_samples,))
         else:
             indices = np.arange(n_samples)
             random_state.shuffle(indices)
