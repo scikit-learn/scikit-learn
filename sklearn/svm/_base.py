@@ -84,7 +84,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         "coef0": [Real],
         "tol": [Interval(Real, 0.0, None, closed="neither")],
         "C": [Interval(Real, 0.0, None, closed="neither")],
-        "nu": [Interval(Real, 0.0, 1.0, closed="neither")],
+        "nu": [Interval(Real, 0.0, 1.0, closed="right")],
         "epsilon": [Interval(Real, 0.0, None, closed="left")],
         "shrinking": [bool],
         "probability": [bool],
