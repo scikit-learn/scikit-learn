@@ -282,7 +282,7 @@ class StrOptions(_Constraint):
 
     def __str__(self):
         options_str = (
-            f"{', '.join([self._mark_if_deprecated(o) for o in self.options])}"
+            f"{', '.join([self._mark_if_deprecated(o) for o in sorted(self.options)])}"
         )
         return f"a str among {{{options_str}}}"
 
