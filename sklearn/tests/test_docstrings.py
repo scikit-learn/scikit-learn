@@ -47,7 +47,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.metrics.pairwise.pairwise_distances_chunked",
     "sklearn.preprocessing._data.maxabs_scale",
     "sklearn.preprocessing._data.scale",
-    "sklearn.preprocessing._label.label_binarize",
     "sklearn.svm._bounds.l1_min_c",
     "sklearn.tree._export.plot_tree",
     "sklearn.utils.axis0_safe_slice",
