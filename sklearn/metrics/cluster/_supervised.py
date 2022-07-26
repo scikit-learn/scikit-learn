@@ -392,7 +392,7 @@ def adjusted_rand_score(labels_true, labels_pred):
 
     .. [Chacón22] J. E. Chacón and A. I. Rastrojo, Minimum adjusted Rand index
       for two clusterings of a given size, 2022
-      https://link.springer.com/article/10.1007/s11634-022-00491-w
+      https://arxiv.org/pdf/2002.03677.pdf
 
 
     See Also
