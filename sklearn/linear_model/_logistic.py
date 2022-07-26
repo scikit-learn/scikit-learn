@@ -17,9 +17,7 @@ import warnings
 import numpy as np
 from scipy import optimize
 from joblib import Parallel, effective_n_jobs
-from collections.abc import Iterable
 
-from sklearn.model_selection import BaseCrossValidator
 from sklearn.metrics import get_scorer_names
 
 from ._base import LinearClassifierMixin, SparseCoefMixin, BaseEstimator
@@ -1605,12 +1603,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
     _parameter_constraints.update(
         {
             "Cs": [Interval(Integral, 1, None, closed="left"), "array-like"],
-            "cv": [
-                Interval(Integral, 2, None, closed="left"),
-                Iterable,
-                BaseCrossValidator,
-                None,
-            ],
+            "cv": ["cv_object"],
             "scoring": [StrOptions(set(get_scorer_names())), callable, None],
             "l1_ratios": ["array-like", None],
             "refit": ["boolean"],

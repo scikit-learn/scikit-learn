@@ -346,7 +346,6 @@ class KNeighborsTransformer(
         **NeighborsBase._parameter_constraints,
         "mode": [StrOptions({"distance", "connectivity"})],
     }
-
     _parameter_constraints.pop("radius")
 
     def __init__(
@@ -571,6 +570,12 @@ class RadiusNeighborsTransformer(
     [ 29  15 111  11  12]
     """
 
+    _parameter_constraints = {
+        **NeighborsBase._parameter_constraints,
+        "mode": [StrOptions({"distance", "connectivity"})],
+    }
+    _parameter_constraints.pop("n_neighbors")
+
     def __init__(
         self,
         *,
@@ -612,6 +617,7 @@ class RadiusNeighborsTransformer(
         self : RadiusNeighborsTransformer
             The fitted radius neighbors transformer.
         """
+        self._validate_params()
         self._fit(X)
         self._n_features_out = self.n_samples_fit_
         return self
