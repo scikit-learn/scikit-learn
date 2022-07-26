@@ -460,7 +460,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "HashingVectorizer",
     "Isomap",
     "IterativeImputer",
-    "KernelPCA",
     "LabelPropagation",
     "LabelSpreading",
     "Lars",

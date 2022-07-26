@@ -6,6 +6,7 @@
 
 import numpy as np
 import numbers
+from numbers import Integral, Real
 from scipy import linalg
 from scipy.sparse.linalg import eigsh
 
@@ -16,6 +17,7 @@ from ..utils.validation import (
     _check_psd_eigenvalues,
     check_scalar,
 )
+from ..utils._param_validation import Interval, StrOptions
 from ..utils.deprecation import deprecated
 from ..exceptions import NotFittedError
 from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
@@ -239,6 +241,39 @@ class KernelPCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
     (1797, 7)
     """
 
+    _parameter_constraints = {
+        "n_components": [
+            Interval(Integral, 0, None, closed="left"),
+            None,
+        ],
+        "kernel": [
+            StrOptions({"linear", "poly", "rbf", "sigmoid", "cosine", "precomputed"})
+        ],
+        "gamma": [
+            Interval(Real, 0, None, closed="left"),
+            None,
+        ],
+        "degree": [Interval(Integral, 0, None, closed="left")],
+        "coef0": [Interval(Real, 0, None, closed="left")],
+        "kernel_params": [dict, None],
+        "alpha": [Interval(Real, 0, None, closed="left")],
+        "fit_inverse_transform": ["boolean"],
+        "eigen_solver": [StrOptions({"auto", "dense", "arpack", "randomized"})],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "max_iter": [
+            Interval(Real, 0, None, closed="left"),
+            None,
+        ],
+        "iterated_power": [
+            Interval(Real, 0, None, closed="left"),
+            StrOptions({"auto"}),
+        ],
+        "remove_zero_eig": ["boolean"],
+        "random_state": ["random_state"],
+        "copy_X": ["boolean"],
+        "n_jobs": [None, Integral],
+    }
+
     def __init__(
         self,
         n_components=None,
@@ -418,6 +453,7 @@ class KernelPCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
         """
         if self.fit_inverse_transform and self.kernel == "precomputed":
             raise ValueError("Cannot fit_inverse_transform with a precomputed kernel.")
+        self._validate_params()
         X = self._validate_data(X, accept_sparse="csr", copy=self.copy_X)
         self._centerer = KernelCenterer()
         K = self._get_kernel(X)
@@ -453,6 +489,7 @@ class KernelPCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
         X_new : ndarray of shape (n_samples, n_components)
             Returns the instance itself.
         """
+        self._validate_params()
         self.fit(X, **params)
 
         # no need to use the kernel to transform X, use shortcut expression
