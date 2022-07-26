@@ -48,7 +48,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.preprocessing._data.maxabs_scale",
     "sklearn.preprocessing._data.scale",
     "sklearn.preprocessing._label.label_binarize",
-    "sklearn.random_projection.johnson_lindenstrauss_min_dim",
     "sklearn.svm._bounds.l1_min_c",
     "sklearn.tree._export.plot_tree",
     "sklearn.utils.axis0_safe_slice",
