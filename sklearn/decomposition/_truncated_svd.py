@@ -16,7 +16,7 @@ from ..utils import check_array, check_random_state
 from ..utils._arpack import _init_arpack_v0
 from ..utils.extmath import randomized_svd, safe_sparse_dot, svd_flip
 from ..utils.sparsefuncs import mean_variance_axis
-from ..utils.validation import check_is_fitted, check_scalar
+from ..utils.validation import check_is_fitted
 from ..utils._param_validation import Interval, StrOptions
 
 __all__ = ["TruncatedSVD"]
@@ -158,7 +158,7 @@ class TruncatedSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
     _parameter_constraints = {
         "n_components": [Interval(Integral, 1, None, closed="left")],
         "algorithm": [StrOptions({"arpack", "randomized"})],
-        "n_iter": [Interval(Integral, 1, None, closed="left")],
+        "n_iter": [Interval(Integral, 0, None, closed="left")],
         "n_oversamples": [Interval(Integral, 1, None, closed="left")],
         "power_iteration_normalizer": [StrOptions({"auto", "OR", "LU", "none"})],
         "random_state": ["random_state"],
@@ -200,7 +200,7 @@ class TruncatedSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
         self : object
             Returns the transformer object.
         """
-        self._validate_params()
+        # param validation is done in fit_transform
         self.fit_transform(X)
         return self
 
@@ -233,15 +233,8 @@ class TruncatedSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
             U, VT = svd_flip(U[:, ::-1], VT[::-1])
 
         elif self.algorithm == "randomized":
-            k = self.n_components
-            n_features = X.shape[1]
-            check_scalar(
-                k,
-                "n_components",
-                target_type=Integral,
-                min_val=1,
-                max_val=n_features,
-            )
+            if self.n_components > X.shape[1]:
+                raise ValueError(f"n_components({self.n_components}) must be <= n_features({X.shape[1]}).")
             U, Sigma, VT = randomized_svd(
                 X,
                 self.n_components,
