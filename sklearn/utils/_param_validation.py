@@ -122,6 +122,8 @@ def make_constraint(constraint):
         return _Booleans()
     if isinstance(constraint, str) and constraint == "verbose":
         return _VerboseHelper()
+    if isinstance(constraint, str) and constraint == "missing_values":
+        return _MissingValuesHelper()
     if isinstance(constraint, Hidden):
         constraint = make_constraint(constraint.constraint)
         constraint.hidden = True
@@ -247,6 +249,29 @@ class _NoneConstraint(_Constraint):
 
     def __str__(self):
         return "None"
+
+
+class _NanConstraint(_Constraint):
+    """Constraint representing the indicator `np.nan`."""
+
+    def is_satisfied_by(self, val):
+        return np.isnan(val)
+
+    def __str__(self):
+        return "numpy.nan"
+
+
+class _NAConstraint(_Constraint):
+    """Constraint representing the indicator `pd.NA`."""
+
+    def is_satisfied_by(self, val):
+        # This should only be called if pandas is available
+        import pandas as pd
+
+        return pd.isna(val)
+
+    def __str__(self):
+        return "pandas.NA"
 
 
 class StrOptions(_Constraint):
@@ -506,6 +531,42 @@ class _VerboseHelper(_Constraint):
         )
 
 
+class _MissingValuesHelper(_Constraint):
+    """Helper constraint for the `missing_values` parameters.
+
+    Convenience for
+    [Integral, Real, str, np.nan, None, pd.NA]
+
+    Note that `pd.NA` is only included if `pandas` is available at runtime.
+    """
+
+    def __init__(self):
+        super().__init__()
+        self._constraints = [
+            _InstancesOf(Integral),
+            _InstancesOf(Real),
+            _InstancesOf(str),
+            _NoneConstraint(),
+            _NanConstraint(),
+        ]
+        try:
+            import pandas as pd  # noqa
+
+            self._constraints.append(_NAConstraint())
+        except ImportError:
+            # pandas is not available at runtime and `pd.NA` is not supported.
+            pass
+
+    def is_satisfied_by(self, val):
+        return any(c.is_satisfied_by(val) for c in self._constraints)
+
+    def __str__(self):
+        return (
+            f"{', '.join([str(c) for c in self._constraints[:-1]])} or"
+            f" {self._constraints[-1]}"
+        )
+
+
 class HasMethods(_Constraint):
     """Constraint representing objects that expose specific methods.
 
@@ -575,6 +636,9 @@ def generate_invalid_param_val(constraint, constraints=None):
     """
     if isinstance(constraint, StrOptions):
         return f"not {' or '.join(constraint.options)}"
+
+    if isinstance(constraint, _MissingValuesHelper):
+        return complex()
 
     if isinstance(constraint, _VerboseHelper):
         return -1
@@ -732,6 +796,9 @@ def generate_valid_param(constraint):
 
     if isinstance(constraint, _VerboseHelper):
         return 1
+
+    if isinstance(constraint, _MissingValuesHelper):
+        return np.nan
 
     if isinstance(constraint, HasMethods):
         return type(
