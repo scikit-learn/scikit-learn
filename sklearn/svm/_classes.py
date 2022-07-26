@@ -1037,6 +1037,11 @@ class NuSVC(BaseSVC):
 
     _impl = "nu_svc"
 
+    _parameter_constraints = {
+        **BaseSVC._filter_validation_params(["C"]),
+        "nu": [Interval(Real, 0.0, 1.0, closed="neither")],
+    }
+
     def __init__(
         self,
         *,
@@ -1247,6 +1252,10 @@ class SVR(RegressorMixin, BaseLibSVM):
 
     _impl = "epsilon_svr"
 
+    _parameter_constraints = BaseLibSVM._filter_validation_params(
+        ["class_weight", "nu", "probability", "random_state"]
+    )
+
     def __init__(
         self,
         *,
@@ -1451,6 +1460,10 @@ class NuSVR(RegressorMixin, BaseLibSVM):
 
     _impl = "nu_svr"
 
+    _parameter_constraints = BaseLibSVM._filter_validation_params(
+        ["class_weight", "epsilon", "probability", "random_state"]
+    )
+
     def __init__(
         self,
         *,
@@ -1644,6 +1657,10 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
     """
 
     _impl = "one_class"
+
+    _parameter_constraints = BaseLibSVM._filter_validation_params(
+        ["C", "class_weight", "epsilon", "probability", "random_state"]
+    )
 
     def __init__(
         self,
