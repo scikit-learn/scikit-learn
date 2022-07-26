@@ -265,10 +265,12 @@ class _NAConstraint(_Constraint):
     """Constraint representing the indicator `pd.NA`."""
 
     def is_satisfied_by(self, val):
-        # This should only be called if pandas is available
-        import pandas as pd
+        try:
+            import pandas as pd
 
-        return isinstance(val, type(pd.NA)) and pd.isna(val)
+            return isinstance(val, type(pd.NA)) and pd.isna(val)
+        except ImportError:
+            return False
 
     def __str__(self):
         return "pandas.NA"
@@ -535,9 +537,7 @@ class _MissingValues(_Constraint):
     """Helper constraint for the `missing_values` parameters.
 
     Convenience for
-    [Integral, Real, str, np.nan, None, pd.NA]
-
-    Note that `pd.NA` is only included if `pandas` is available at runtime.
+    [Integral, Real, str, _NoneConstraint, _NanConstraint, _NAConstraint]
     """
 
     def __init__(self):
@@ -548,14 +548,8 @@ class _MissingValues(_Constraint):
             _InstancesOf(str),
             _NoneConstraint(),
             _NanConstraint(),
+            _NAConstraint(),
         ]
-        try:
-            import pandas as pd  # noqa
-
-            self._constraints.append(_NAConstraint())
-        except ImportError:
-            # pandas is not available at runtime and `pd.NA` is not supported.
-            pass
 
     def is_satisfied_by(self, val):
         return any(c.is_satisfied_by(val) for c in self._constraints)
