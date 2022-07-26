@@ -711,7 +711,7 @@ def test_create_memmap_backed_data(monkeypatch, aligned):
         ValueError,
         match=(
             "When creating aligned memmap-backed arrays, input must be a single array"
-            " or a iterable of arrays"
+            " or a sequence of arrays"
         ),
     ):
         create_memmap_backed_data([input_array, "not-an-array"], aligned=True)
