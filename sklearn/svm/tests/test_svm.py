@@ -455,16 +455,6 @@ def test_decision_function_shape(SVM):
     dec = clf.decision_function(X_train)
     assert dec.shape == (len(X_train), 10)
 
-    test_value = "bad"
-    err_msg = (
-        f"The 'decision_function_shape' parameter of {SVM.__name__} must be a"
-        " str among {'ovo', 'ovr'}."
-        f" Got '{test_value}' instead."
-    )
-    with pytest.raises(ValueError, match=re.escape(err_msg)):
-        SVM(decision_function_shape=test_value).fit(X_train, y_train)
-
-
 def test_svr_predict():
     # Test SVR's decision_function
     # Sanity check, test that predict implemented in python
@@ -749,40 +739,6 @@ def test_svc_nonfinite_params():
     msg = "The dual coefficients or intercepts are not finite"
     with pytest.raises(ValueError, match=msg):
         clf.fit(X, y)
-
-
-@pytest.mark.parametrize(
-    "Estimator, data",
-    [
-        (svm.SVC, datasets.load_iris(return_X_y=True)),
-        (svm.NuSVC, datasets.load_iris(return_X_y=True)),
-        (svm.SVR, datasets.load_diabetes(return_X_y=True)),
-        (svm.NuSVR, datasets.load_diabetes(return_X_y=True)),
-        (svm.OneClassSVM, datasets.load_iris(return_X_y=True)),
-    ],
-)
-@pytest.mark.parametrize(
-    "gamma",
-    [
-        "auto_deprecated",
-        -1,
-        0.0,
-        np.array([1.0, 4.0]),
-        [],
-        {},
-    ],
-)
-def test_svm_gamma_error(Estimator, data, gamma):
-    X, y = data
-    est = Estimator(gamma=gamma)
-    err_msg = (
-        f"The 'gamma' parameter of {Estimator.__name__} must be a"
-        " str among {'auto', 'scale'} or a float in the range (0.0, inf)."
-        f" Got {gamma!r} instead."
-    )
-    with pytest.raises(ValueError, match=(re.escape(err_msg))):
-        est.fit(X, y)
-
 
 def test_unicode_kernel():
     # Test that a unicode kernel name does not cause a TypeError
