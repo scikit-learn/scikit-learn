@@ -1,6 +1,6 @@
 import warnings
-import numbers
 from abc import ABCMeta, abstractmethod
+from numbers import Integral, Real
 
 import numpy as np
 import scipy.sparse as sp
@@ -22,6 +22,7 @@ from ..utils.validation import check_is_fitted, _check_large_sparse
 from ..utils.validation import _num_samples
 from ..utils.validation import _check_sample_weight, check_consistent_length
 from ..utils.multiclass import check_classification_targets
+from ..utils._param_validation import Interval, StrOptions
 from ..exceptions import ConvergenceWarning
 from ..exceptions import NotFittedError
 
@@ -68,6 +69,30 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
     Parameter documentation is in the derived `SVC` class.
     """
+
+    _parameter_constraints = {
+        "kernel": [
+            StrOptions({"linear", "poly", "rbf", "sigmoid", "precomputed"}),
+            callable,
+        ],
+        "degree": [Interval(Integral, 0, None, closed="left")],
+        "gamma": [
+            StrOptions({"scale", "auto"}),
+            Interval(Real, 0.0, None, closed="neither"),
+        ],
+        "coef0": [Interval(Real, None, None, closed="neither")],
+        "tol": [Interval(Real, 0.0, None, closed="neither")],
+        "C": [Interval(Real, 0.0, None, closed="neither")],
+        "nu": [Interval(Real, 0.0, 1.0, closed="right")],
+        "epsilon": [Interval(Real, 0.0, None, closed="left")],
+        "shrinking": ["boolean"],
+        "probability": ["boolean"],
+        "cache_size": [Interval(Real, 0, None, closed="neither")],
+        "class_weight": [StrOptions({"balanced"}), dict, None],
+        "verbose": ["verbose"],
+        "max_iter": [Interval(Integral, -1, None, closed="left")],
+        "random_state": ["random_state"],
+    }
 
     # The order of these must match the integer values in LibSVM.
     # XXX These are actually the same in the dense case. Need to factor
@@ -152,6 +177,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         If X is a dense array, then the other methods will not support sparse
         matrices as input.
         """
+        self._validate_params()
 
         rnd = check_random_state(self.random_state)
 
@@ -159,13 +185,6 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         if sparse and self.kernel == "precomputed":
             raise TypeError("Sparse precomputed kernels are not supported.")
         self._sparse = sparse and not callable(self.kernel)
-
-        if hasattr(self, "decision_function_shape"):
-            if self.decision_function_shape not in ("ovr", "ovo"):
-                raise ValueError(
-                    "decision_function_shape must be either 'ovr' or 'ovo', "
-                    f"got {self.decision_function_shape}."
-                )
 
         if callable(self.kernel):
             check_consistent_length(X, y)
@@ -222,26 +241,8 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
                 self._gamma = 1.0 / (X.shape[1] * X_var) if X_var != 0 else 1.0
             elif self.gamma == "auto":
                 self._gamma = 1.0 / X.shape[1]
-            else:
-                raise ValueError(
-                    "When 'gamma' is a string, it should be either 'scale' or "
-                    f"'auto'. Got '{self.gamma!r}' instead."
-                )
-        elif isinstance(self.gamma, numbers.Real):
-            if self.gamma <= 0:
-                msg = (
-                    f"gamma value must be > 0; {self.gamma!r} is invalid. Use"
-                    " a positive number or use 'auto' to set gamma to a"
-                    " value of 1 / n_features."
-                )
-                raise ValueError(msg)
+        elif isinstance(self.gamma, Real):
             self._gamma = self.gamma
-        else:
-            msg = (
-                "The gamma value should be set to 'scale', 'auto' or a"
-                f" positive float value. {self.gamma!r} is not a valid option"
-            )
-            raise ValueError(msg)
 
         fit = self._sparse_fit if self._sparse else self._dense_fit
         if self.verbose:
@@ -690,6 +691,14 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
 class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
     """ABC for LibSVM-based classifiers."""
+
+    _parameter_constraints = {
+        **BaseLibSVM._parameter_constraints,  # type: ignore
+        "decision_function_shape": [StrOptions({"ovr", "ovo"})],
+        "break_ties": ["boolean"],
+    }
+    for unused_param in ["epsilon", "nu"]:
+        _parameter_constraints.pop(unused_param)
 
     @abstractmethod
     def __init__(
