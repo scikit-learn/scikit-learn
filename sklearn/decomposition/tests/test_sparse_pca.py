@@ -315,13 +315,13 @@ def test_spca_early_stopping(global_random_seed):
     assert model_early_stopped.n_iter_ < model_not_early_stopped.n_iter_
 
 
-def test_equivalence_components_pca_spca():
+def test_equivalence_components_pca_spca(global_random_seed):
     """Check the equivalence of the components found by PCA and SparsePCA.
 
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/23932
     """
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     X = rng.randn(50, 4)
 
     n_components = 2
