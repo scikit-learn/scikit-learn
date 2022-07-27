@@ -5,6 +5,7 @@ from scipy.sparse import csr_matrix
 import pytest
 
 from sklearn.base import BaseEstimator
+from sklearn.model_selection import LeaveOneOut
 from sklearn.utils import deprecated
 from sklearn.utils._param_validation import Hidden
 from sklearn.utils._param_validation import Interval
@@ -12,9 +13,11 @@ from sklearn.utils._param_validation import StrOptions
 from sklearn.utils._param_validation import _ArrayLikes
 from sklearn.utils._param_validation import _Booleans
 from sklearn.utils._param_validation import _Callables
+from sklearn.utils._param_validation import _CVObjects
 from sklearn.utils._param_validation import _InstancesOf
 from sklearn.utils._param_validation import _MissingValues
 from sklearn.utils._param_validation import _PandasNAConstraint
+from sklearn.utils._param_validation import _IterablesNotString
 from sklearn.utils._param_validation import _NoneConstraint
 from sklearn.utils._param_validation import _RandomStates
 from sklearn.utils._param_validation import _SparseMatrices
@@ -189,6 +192,8 @@ def test_hasmethods():
         _MissingValues(),
         _VerboseHelper(),
         HasMethods("fit"),
+        _IterablesNotString(),
+        _CVObjects(),
     ],
 )
 def test_generate_invalid_param_val(constraint):
@@ -337,6 +342,8 @@ def test_generate_invalid_param_val_all_valid(constraints):
         Interval(Real, 0, None, closed="both"),
         Interval(Real, None, 0, closed="right"),
         HasMethods("fit"),
+        _IterablesNotString(),
+        _CVObjects(),
     ],
 )
 def test_generate_valid_param(constraint):
@@ -371,6 +378,7 @@ def test_generate_valid_param(constraint):
         ("missing_values", np.nan),
         ("missing_values", "missing"),
         (HasMethods("fit"), _Estimator(a=0)),
+        ("cv_object", 5),
     ],
 )
 def test_is_satisfied_by(constraint_declaration, value):
@@ -394,6 +402,7 @@ def test_is_satisfied_by(constraint_declaration, value):
         ("verbose", _VerboseHelper),
         ("missing_values", _MissingValues),
         (HasMethods("fit"), HasMethods),
+        ("cv_object", _CVObjects),
     ],
 )
 def test_make_constraint(constraint_declaration, expected_constraint_class):
@@ -591,3 +600,22 @@ def test_pandas_na_constraint_with_pd_na():
     na_constraint = _PandasNAConstraint()
     assert na_constraint.is_satisfied_by(pd.NA)
     assert not na_constraint.is_satisfied_by(np.array([1, 2, 3]))
+
+
+def test_iterable_not_string():
+    """Check that a string does not satisfy the _IterableNotString constraint."""
+    constraint = _IterablesNotString()
+    assert constraint.is_satisfied_by([1, 2, 3])
+    assert constraint.is_satisfied_by(range(10))
+    assert not constraint.is_satisfied_by("some string")
+
+
+def test_cv_objects():
+    """Check that the _CVObjects constraint accepts all current ways
+    to pass cv objects."""
+    constraint = _CVObjects()
+    assert constraint.is_satisfied_by(5)
+    assert constraint.is_satisfied_by(LeaveOneOut())
+    assert constraint.is_satisfied_by([([1, 2], [3, 4]), ([3, 4], [1, 2])])
+    assert constraint.is_satisfied_by(None)
+    assert not constraint.is_satisfied_by("not a CV object")
