@@ -191,7 +191,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     array([[0. , 1. , 0.5, 0.5],
            [0.5, 0.5, 0. , 1. ]])
 
-    :class:`ColumnTransformer` can be configured with a transformer that require
+    :class:`ColumnTransformer` can be configured with a transformer that requires
     a 1d array by setting the column to a scalar string:
 
     >>> from sklearn.feature_extraction import FeatureHasher
