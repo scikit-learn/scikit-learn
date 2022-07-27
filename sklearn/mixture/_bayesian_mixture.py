@@ -347,17 +347,22 @@ class BayesianGaussianMixture(BaseMixture):
     >>> bgm.predict([[0, 0], [9, 3]])
     array([0, 1])
     """
+
     _parameter_constraints = {
         **BaseMixture._parameter_constraints,
         "covariance_type": [StrOptions({"spherical", "tied", "diag", "full"})],
-        "weight_concentration_prior_type": [StrOptions({"dirichlet_process",
-                                                        "dirichlet_distribution"})],
+        "weight_concentration_prior_type": [
+            StrOptions({"dirichlet_process", "dirichlet_distribution"})
+        ],
         "weight_concentration_prior": [None, Interval(Real, 0.0, None, closed="right")],
         "mean_precision_prior": [None, Interval(Real, 0.0, None, closed="both")],
         "mean_prior": [None, "array-like"],
         "degrees_of_freedom_prior": [None, Interval(Real, 0.0, None, closed="right")],
-        "covariance_prior": [None,
-                             "array-like", Interval(Real, 0.0, None, closed="right")]
+        "covariance_prior": [
+            None,
+            "array-like",
+            Interval(Real, 0.0, None, closed="right"),
+        ],
     }
 
     def __init__(

@@ -50,6 +50,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
     This abstract class specifies an interface for all mixture classes and
     provides basic common methods for mixture models.
     """
+
     _parameter_constraints = {
         "n_components": [Interval(Integral, 1, None, closed="left")],
         "tol": [Interval(Real, 0.0, None, closed="left")],
@@ -57,12 +58,13 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         "max_iter": [Interval(Integral, 0, None, closed="left")],
         "reg_covar": [Interval(Real, 0.0, None, closed="left")],
         "init_params": [
-            StrOptions({"kmeans", "random", "random_from_data", "k-means++"})],
+            StrOptions({"kmeans", "random", "random_from_data", "k-means++"})
+        ],
         "verbose_interval": [None, Interval(Integral, 1, None, closed="left")],
         "verbose": ["verbose"],
         "warm_start": ["boolean"],
-        "random_state": ["random_state"]
-        }
+        "random_state": ["random_state"],
+    }
 
     def __init__(
         self,
