@@ -1,7 +1,6 @@
-from numbers import Integral, Real
 import warnings
-import numbers
 from abc import ABCMeta, abstractmethod
+from numbers import Integral, Real
 
 import numpy as np
 import scipy.sparse as sp
@@ -155,7 +154,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             Training vectors, where `n_samples` is the number of samples
             and `n_features` is the number of features.
             For kernel="precomputed", the expected shape of X is
-            (n_samples, n_samples).
+            (qn_samples, n_samples).
 
         y : array-like of shape (n_samples,)
             Target values (class labels in classification, real numbers in
@@ -242,7 +241,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
                 self._gamma = 1.0 / (X.shape[1] * X_var) if X_var != 0 else 1.0
             elif self.gamma == "auto":
                 self._gamma = 1.0 / X.shape[1]
-        elif isinstance(self.gamma, numbers.Real):
+        elif isinstance(self.gamma, Real):
             self._gamma = self.gamma
 
         fit = self._sparse_fit if self._sparse else self._dense_fit

@@ -1041,7 +1041,7 @@ class NuSVC(BaseSVC):
 
     _parameter_constraints = {
         **BaseSVC._parameter_constraints,  # type: ignore
-        "nu": [Interval(Real, 0.0, 1.0, closed="neither")],
+        "nu": [Interval(Real, 0.0, 1.0, closed="right")],
     }
     _parameter_constraints.pop("C")
 
