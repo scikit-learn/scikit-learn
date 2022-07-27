@@ -34,7 +34,7 @@ from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
 from ..utils.validation import column_or_1d
 from ..utils.fixes import delayed
-from ..utils._param_validation import StrOptions
+from ..utils._param_validation import HasMethods, StrOptions
 from ..utils.validation import _check_feature_names_in
 
 
@@ -55,9 +55,9 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
     """Base class for stacking method."""
 
     _parameter_constraints = {
-        "estimators": "no_validation",
-        "final_estimator": "no_validation",
-        "cv": "no_validation",
+        "estimators": [list],
+        "final_estimator": [None, HasMethods("fit")],
+        "cv": ["cv_object", StrOptions({"prefit"})],
         "n_jobs": [None, Integral],
         "passthrough": ["boolean"],
         "verbose": ["verbose"],

@@ -280,7 +280,6 @@ class NoWeightClassifier(ClassifierMixin, BaseEstimator):
 @pytest.mark.parametrize(
     "y, params, type_err, msg_err",
     [
-        (y_iris, {"estimators": None}, ValueError, "Invalid 'estimators' attribute,"),
         (y_iris, {"estimators": []}, ValueError, "Invalid 'estimators' attribute,"),
         (
             y_iris,
@@ -328,12 +327,6 @@ def test_stacking_classifier_error(y, params, type_err, msg_err):
 @pytest.mark.parametrize(
     "y, params, type_err, msg_err",
     [
-        (
-            y_diabetes,
-            {"estimators": None},
-            ValueError,
-            "Invalid 'estimators' attribute,",
-        ),
         (y_diabetes, {"estimators": []}, ValueError, "Invalid 'estimators' attribute,"),
         (
             y_diabetes,
