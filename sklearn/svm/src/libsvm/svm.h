@@ -40,7 +40,7 @@ struct svm_csr_problem
 };
 
 
-enum { C_SVC, NU_SVC, ONE_CLASS, EPSILON_SVR, NU_SVR };	/* svm_type */
+enum { C_SVC, NU_SVC, ONE_CLASS, EPSILON_SVR, NU_SVR, QUANTILE_SVR };	/* svm_type */
 enum { LINEAR, POLY, RBF, SIGMOID, PRECOMPUTED }; /* kernel_type */
 
 struct svm_parameter
@@ -54,12 +54,12 @@ struct svm_parameter
 	/* these are for training only */
 	double cache_size; /* in MB */
 	double eps;	/* stopping criteria */
-	double C;	/* for C_SVC, EPSILON_SVR and NU_SVR */
+	double C;	/* for C_SVC, EPSILON_SVR, NU_SVR and QUANTILE_SVR */
 	int nr_weight;		/* for C_SVC */
 	int *weight_label;	/* for C_SVC */
 	double* weight;		/* for C_SVC */
 	double nu;	/* for NU_SVC, ONE_CLASS, and NU_SVR */
-	double p;	/* for EPSILON_SVR */
+	double p;	/* for EPSILON_SVR and QUANTILE_SVR */
 	int shrinking;	/* use the shrinking heuristics */
 	int probability; /* do probability estimates */
 	int max_iter; /* ceiling on Solver runtime */

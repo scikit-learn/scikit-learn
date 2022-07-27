@@ -26,7 +26,7 @@ from ..exceptions import ConvergenceWarning
 from ..exceptions import NotFittedError
 
 
-LIBSVM_IMPL = ["c_svc", "nu_svc", "one_class", "epsilon_svr", "nu_svr"]
+LIBSVM_IMPL = ["c_svc", "nu_svc", "one_class", "epsilon_svr", "nu_svr", "quantile_svr"]
 
 
 def _one_vs_one_coef(dual_coef, n_support, support_vectors):
@@ -345,6 +345,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             coef0=self.coef0,
             gamma=self._gamma,
             epsilon=self.epsilon,
+            quantile=getattr(self, "quantile", 0.0),
             max_iter=self.max_iter,
             random_seed=random_seed,
         )
@@ -388,6 +389,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self.nu,
             self.cache_size,
             self.epsilon,
+            getattr(self, "quantile", 0.0),
             int(self.shrinking),
             int(self.probability),
             self.max_iter,

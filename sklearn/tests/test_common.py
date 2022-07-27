@@ -494,6 +494,7 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "RidgeClassifierCV",
     "SVC",
     "SVR",
+    "QuantileSVR",
     "SelectFdr",
     "SelectFpr",
     "SelectFromModel",

@@ -55,7 +55,7 @@ def fit(
     cnp.ndarray[cnp.float64_t, ndim=1, mode='c'] Y,
     int svm_type=0, kernel='rbf', int degree=3,
     double gamma=0.1, double coef0=0., double tol=1e-3,
-    double C=1., double nu=0.5, double epsilon=0.1,
+    double C=1., double nu=0.5, double epsilon=0.1, double quantile=0.5,
     cnp.ndarray[cnp.float64_t, ndim=1, mode='c']
         class_weight=np.empty(0),
     cnp.ndarray[cnp.float64_t, ndim=1, mode='c']
@@ -74,8 +74,8 @@ def fit(
     Y : array, dtype=float64 of shape (n_samples,)
         target vector
 
-    svm_type : {0, 1, 2, 3, 4}, default=0
-        Type of SVM: C_SVC, NuSVC, OneClassSVM, EpsilonSVR or NuSVR
+    svm_type : {0, 1, 2, 3, 4, 5}, default=0
+        Type of SVM: C_SVC, NuSVC, OneClassSVM, EpsilonSVR, NuSVR or QuantileSVR,
         respectively.
 
     kernel : {'linear', 'rbf', 'poly', 'sigmoid', 'precomputed'}, default="rbf"
@@ -105,6 +105,9 @@ def fit(
 
     epsilon : double, default=0.1
         Epsilon parameter in the epsilon-insensitive loss function.
+
+    quantile : double, default=0.5
+        Quantile to be fit in QuantileSVR.
 
     class_weight : array, dtype=float64, shape (n_classes,), \
             default=np.empty(0)
@@ -180,9 +183,15 @@ def fit(
         raise MemoryError("Seems we've run out of memory")
     cdef cnp.ndarray[cnp.int32_t, ndim=1, mode='c'] \
         class_weight_label = np.arange(class_weight.shape[0], dtype=np.int32)
+
+    if svm_type == 5:
+        p = quantile
+    else:
+        p = epsilon
+
     set_parameter(
         &param, svm_type, kernel_index, degree, gamma, coef0, nu, cache_size,
-        C, tol, epsilon, shrinking, probability, <int> class_weight.shape[0],
+        C, tol, p, shrinking, probability, <int> class_weight.shape[0],
         class_weight_label.data, class_weight.data, max_iter, random_seed)
 
     error_msg = svm_check_parameter(&problem, &param)
@@ -320,8 +329,8 @@ def predict(cnp.ndarray[cnp.float64_t, ndim=2, mode='c'] X,
     probA, probB : array of shape (n_class*(n_class-1)/2,)
         Probability estimates.
 
-    svm_type : {0, 1, 2, 3, 4}, default=0
-        Type of SVM: C_SVC, NuSVC, OneClassSVM, EpsilonSVR or NuSVR
+    svm_type : {0, 1, 2, 3, 4, 5}, default=0
+        Type of SVM: C_SVC, NuSVC, OneClassSVM, EpsilonSVR, NuSVR or QuantileSVR,
         respectively.
 
     kernel : {'linear', 'rbf', 'poly', 'sigmoid', 'precomputed'}, default="rbf"
@@ -424,8 +433,8 @@ def predict_proba(
     probA, probB : array of shape (n_class*(n_class-1)/2,)
         Probability estimates.
 
-    svm_type : {0, 1, 2, 3, 4}, default=0
-        Type of SVM: C_SVC, NuSVC, OneClassSVM, EpsilonSVR or NuSVR
+    svm_type : {0, 1, 2, 3, 4, 5}, default=0
+        Type of SVM: C_SVC, NuSVC, OneClassSVM, EpsilonSVR, NuSVR or QuantileSVR,
         respectively.
 
     kernel : {'linear', 'rbf', 'poly', 'sigmoid', 'precomputed'}, default="rbf"
@@ -522,9 +531,9 @@ def decision_function(
     probA, probB : array, shape=[n_class*(n_class-1)/2]
         Probability estimates.
 
-    svm_type : {0, 1, 2, 3, 4}, optional
-        Type of SVM: C_SVC, NuSVC, OneClassSVM, EpsilonSVR or NuSVR
-        respectively. 0 by default.
+    svm_type : {0, 1, 2, 3, 4, 5}, default=0
+        Type of SVM: C_SVC, NuSVC, OneClassSVM, EpsilonSVR, NuSVR or QuantileSVR,
+        respectively.
 
     kernel : {'linear', 'rbf', 'poly', 'sigmoid', 'precomputed'}, optional
         Kernel to use in the model: linear, polynomial, RBF, sigmoid
@@ -589,7 +598,7 @@ def cross_validation(
     cnp.ndarray[cnp.float64_t, ndim=1, mode='c'] Y,
     int n_fold, svm_type=0, kernel='rbf', int degree=3,
     double gamma=0.1, double coef0=0., double tol=1e-3,
-    double C=1., double nu=0.5, double epsilon=0.1,
+    double C=1., double nu=0.5, double epsilon=0.1, double quantile=0.5,
     cnp.ndarray[cnp.float64_t, ndim=1, mode='c']
         class_weight=np.empty(0),
     cnp.ndarray[cnp.float64_t, ndim=1, mode='c']
@@ -611,8 +620,8 @@ def cross_validation(
     n_fold : int32
         Number of folds for cross validation.
 
-    svm_type : {0, 1, 2, 3, 4}, default=0
-        Type of SVM: C_SVC, NuSVC, OneClassSVM, EpsilonSVR or NuSVR
+    svm_type : {0, 1, 2, 3, 4, 5}, default=0
+        Type of SVM: C_SVC, NuSVC, OneClassSVM, EpsilonSVR, NuSVR or QuantileSVR,
         respectively.
 
     kernel : {'linear', 'rbf', 'poly', 'sigmoid', 'precomputed'}, default='rbf'
@@ -642,6 +651,9 @@ def cross_validation(
 
     epsilon : double, default=0.1
         Epsilon parameter in the epsilon-insensitive loss function.
+
+    quantile : double, default=0.5
+        Quantile to be fit in QuantileSVR.
 
     class_weight : array, dtype=float64, shape (n_classes,), \
             default=np.empty(0)

@@ -90,6 +90,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
     Lasso : The Lasso is a linear model that estimates sparse coefficients
         with l1 regularization.
     HuberRegressor : Linear regression model that is robust to outliers.
+    :class:`~sklearn.svm.QuantileSVR` : Quantile regression via Support Vector Machine.
 
     Examples
     --------

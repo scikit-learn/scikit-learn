@@ -24,7 +24,7 @@ cdef extern from "svm.h":
         int *weight_label	# for C_SVC
         double* weight		# for C_SVC
         double nu	# for NU_SVC, ONE_CLASS, and NU_SVR
-        double p	# for EPSILON_SVR
+        double p	# for EPSILON_SVR and QUANTILE_SVR
         int shrinking	# use the shrinking heuristics
         int probability # do probability estimates
         int max_iter  # ceiling on Solver runtime

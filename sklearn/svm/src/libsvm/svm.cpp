@@ -1792,6 +1792,48 @@ static void solve_epsilon_svr(
 	delete[] y;
 }
 
+static void solve_quantile_svr(
+	const PREFIX(problem) *prob, const svm_parameter *param,
+	double *alpha, Solver::SolutionInfo* si, BlasFunctions *blas_functions)
+{
+	int l = prob->l;
+	double *alpha2 = new double[2*l];
+	double *linear_term = new double[2*l];
+	schar *y = new schar[2*l];
+	double *C = new double[2*l];
+	int i;
+
+	for(i=0;i<l;i++)
+	{
+		alpha2[i] = 0;
+		linear_term[i] = -prob->y[i];
+		y[i] = 1;
+		C[i] = prob->W[i]*param->C*param->p;
+
+		alpha2[i+l] = 0;
+		linear_term[i+l] = prob->y[i];
+		y[i+l] = -1;
+		C[i+l] = prob->W[i]*param->C*(1-param->p);
+	}
+
+	Solver s;
+	s.Solve(2*l, SVR_Q(*prob,*param,blas_functions), linear_term, y,
+		alpha2, C, param->eps, si, param->shrinking, param->max_iter);
+
+	double sum_alpha = 0;
+	for(i=0;i<l;i++)
+	{
+		alpha[i] = alpha2[i] - alpha2[i+l];
+		sum_alpha += fabs(alpha[i]);
+	}
+
+
+	delete[] alpha2;
+	delete[] linear_term;
+	delete[] C;
+	delete[] y;
+}
+
 static void solve_nu_svr(
 	const PREFIX(problem) *prob, const svm_parameter *param,
 	double *alpha, Solver::SolutionInfo* si, BlasFunctions *blas_functions)
@@ -1875,6 +1917,10 @@ static decision_function svm_train_one(
  		case NU_SVR:
 			si.upper_bound = Malloc(double,2*prob->l); 
  			solve_nu_svr(prob,param,alpha,&si,blas_functions);
+ 			break;
+ 		case QUANTILE_SVR:
+ 			si.upper_bound = Malloc(double,2*prob->l);
+ 			solve_quantile_svr(prob,param,alpha,&si,blas_functions);
  			break;
 	}
 
@@ -2377,7 +2423,8 @@ PREFIX(model) *PREFIX(train)(const PREFIX(problem) *prob, const svm_parameter *p
 
 	if(param->svm_type == ONE_CLASS ||
 	   param->svm_type == EPSILON_SVR ||
-	   param->svm_type == NU_SVR)
+	   param->svm_type == NU_SVR ||
+	   param->svm_type == QUANTILE_SVR)
 	{
 		// regression or one-class-svm
 		model->nr_class = 2;
@@ -2388,7 +2435,8 @@ PREFIX(model) *PREFIX(train)(const PREFIX(problem) *prob, const svm_parameter *p
 
 		if(param->probability && 
 		   (param->svm_type == EPSILON_SVR ||
-		    param->svm_type == NU_SVR))
+		    param->svm_type == NU_SVR ||
+		    param->svm_type == QUANTILE_SVR))
 		{
 			model->probA = Malloc(double,1);
 			model->probA[0] = NAMESPACE::svm_svr_probability(prob,param,blas_functions);
@@ -2805,7 +2853,7 @@ void PREFIX(get_labels)(const PREFIX(model) *model, int* label)
 
 double PREFIX(get_svr_probability)(const PREFIX(model) *model)
 {
-	if ((model->param.svm_type == EPSILON_SVR || model->param.svm_type == NU_SVR) &&
+	if ((model->param.svm_type == EPSILON_SVR || model->param.svm_type == NU_SVR || model->param.svm_type == QUANTILE_SVR) &&
 	    model->probA!=NULL)
 		return model->probA[0];
 	else
@@ -2820,7 +2868,8 @@ double PREFIX(predict_values)(const PREFIX(model) *model, const PREFIX(node) *x,
 	int i;
 	if(model->param.svm_type == ONE_CLASS ||
 	   model->param.svm_type == EPSILON_SVR ||
-	   model->param.svm_type == NU_SVR)
+	   model->param.svm_type == NU_SVR ||
+	   model->param.svm_type == QUANTILE_SVR)
 	{
 		double *sv_coef = model->sv_coef[0];
 		double sum = 0;
@@ -2906,7 +2955,8 @@ double PREFIX(predict)(const PREFIX(model) *model, const PREFIX(node) *x, BlasFu
 	double *dec_values;
 	if(model->param.svm_type == ONE_CLASS ||
 	   model->param.svm_type == EPSILON_SVR ||
-	   model->param.svm_type == NU_SVR)
+	   model->param.svm_type == NU_SVR ||
+	   model->param.svm_type == QUANTILE_SVR)
 		dec_values = Malloc(double, 1);
 	else 
 		dec_values = Malloc(double, nr_class*(nr_class-1)/2);
@@ -3024,7 +3074,8 @@ const char *PREFIX(check_parameter)(const PREFIX(problem) *prob, const svm_param
 	   svm_type != NU_SVC &&
 	   svm_type != ONE_CLASS &&
 	   svm_type != EPSILON_SVR &&
-	   svm_type != NU_SVR)
+	   svm_type != NU_SVR &&
+	   svm_type != QUANTILE_SVR)
 		return "unknown svm type";
 	
 	// kernel_type, degree
@@ -3053,7 +3104,8 @@ const char *PREFIX(check_parameter)(const PREFIX(problem) *prob, const svm_param
 
 	if(svm_type == C_SVC ||
 	   svm_type == EPSILON_SVR ||
-	   svm_type == NU_SVR)
+	   svm_type == NU_SVR ||
+	   svm_type == QUANTILE_SVR)
 		if(param->C <= 0)
 			return "C <= 0";
 
@@ -3066,6 +3118,10 @@ const char *PREFIX(check_parameter)(const PREFIX(problem) *prob, const svm_param
 	if(svm_type == EPSILON_SVR)
 		if(param->p < 0)
 			return "p < 0";
+
+	if(svm_type == QUANTILE_SVR)
+		if((param->p >= 1) || (param->p <= 0))
+			return "quantile not in (0, 1)";
 
 	if(param->shrinking != 0 &&
 	   param->shrinking != 1)
@@ -3137,7 +3193,8 @@ const char *PREFIX(check_parameter)(const PREFIX(problem) *prob, const svm_param
 	if(svm_type == C_SVC ||
 	   svm_type == EPSILON_SVR ||
 	   svm_type == NU_SVR ||
-	   svm_type == ONE_CLASS)
+	   svm_type == ONE_CLASS ||
+	   svm_type == QUANTILE_SVR)
 	{
 		PREFIX(problem) newprob;
 		// filter samples with negative and null weights 
