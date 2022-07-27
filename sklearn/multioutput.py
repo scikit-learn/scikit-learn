@@ -531,7 +531,6 @@ def _available_if_base_estimator_has(attr):
 
 
 class _BaseChain(BaseEstimator, metaclass=ABCMeta):
-    @_deprecate_positional_args
     def __init__(
         self, base_estimator, *, order=None, cv=None, random_state=None, verbose=False
     ):
