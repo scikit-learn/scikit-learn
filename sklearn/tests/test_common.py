@@ -464,7 +464,6 @@ def test_estimators_do_not_raise_errors_in_init_or_set_params(Estimator):
 
 
 PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
-    "ARDRegression",
     "AdditiveChi2Sampler",
     "AffinityPropagation",
     "BayesianGaussianMixture",
@@ -472,8 +471,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "CalibratedClassifierCV",
     "ClassifierChain",
     "DictionaryLearning",
-    "ExtraTreesClassifier",
-    "ExtraTreesRegressor",
     "FeatureHasher",
     "FunctionTransformer",
     "GaussianMixture",
@@ -495,7 +492,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "MultiTaskElasticNet",
     "MultiTaskLasso",
     "NearestCentroid",
-    "NearestNeighbors",
     "NeighborhoodComponentsAnalysis",
     "NuSVC",
     "NuSVR",
@@ -513,12 +509,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "RBFSampler",
     "RFE",
     "RFECV",
-    "RadiusNeighborsClassifier",
-    "RadiusNeighborsRegressor",
-    "RadiusNeighborsTransformer",
-    "RandomForestClassifier",
-    "RandomForestRegressor",
-    "RandomTreesEmbedding",
     "RegressorChain",
     "RidgeCV",
     "RidgeClassifierCV",
