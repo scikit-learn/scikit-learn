@@ -465,7 +465,6 @@ def test_estimators_do_not_raise_errors_in_init_or_set_params(Estimator):
 
 PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "AdditiveChi2Sampler",
-    "AffinityPropagation",
     "BayesianGaussianMixture",
     "BayesianRidge",
     "CalibratedClassifierCV",
@@ -491,7 +490,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "MiniBatchDictionaryLearning",
     "MultiTaskElasticNet",
     "MultiTaskLasso",
-    "NearestCentroid",
     "NeighborhoodComponentsAnalysis",
     "NuSVC",
     "NuSVR",
@@ -531,7 +529,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "StackingClassifier",
     "StackingRegressor",
     "TransformedTargetRegressor",
-    "TruncatedSVD",
     "VotingClassifier",
     "VotingRegressor",
 ]
