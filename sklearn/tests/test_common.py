@@ -504,8 +504,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "SpectralEmbedding",
     "SplineTransformer",
     "TransformedTargetRegressor",
-    "VotingClassifier",
-    "VotingRegressor",
 ]
 
 
