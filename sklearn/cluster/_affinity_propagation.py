@@ -410,7 +410,11 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
         "max_iter": [Interval(Integral, 1, None, closed="left")],
         "convergence_iter": [Interval(Integral, 1, None, closed="left")],
         "copy": ["boolean"],
-        "preference": ["array-like", Interval(Real, None, None, closed="neither"), None],
+        "preference": [
+            "array-like",
+            Interval(Real, None, None, closed="neither"),
+            None,
+        ],
         "affinity": [StrOptions({"euclidean", "precomputed"})],
         "verbose": ["verbose"],
         "random_state": ["random_state"],
