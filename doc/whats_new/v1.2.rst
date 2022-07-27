@@ -234,6 +234,10 @@ Changelog
   matrices in a variety of estimators and avoid an `EfficiencyWarning`.
   :pr:`23139` by `Tom Dupre la Tour`_.
 
+- |Fix| :class:`NearestCentroid` now raises an informative error message at fit-time
+  instead of failing with a low-level error message at predict-time.
+  :pr:`23874` by :user:`Juan Gomez <2357juan>`.
+
 :mod:`sklearn.svm`
 ..................
 
