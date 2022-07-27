@@ -52,6 +52,11 @@ diabetes.data, diabetes.target = shuffle(
 )
 
 
+def weighted(est):
+    """Request sample_weight on the given est.fit"""
+    return est.set_fit_request(sample_weight=True)
+
+
 def test_samme_proba():
     # Test the `_samme_proba` helper function.
 
@@ -205,7 +210,7 @@ def test_staged_predict(algorithm):
 def test_gridsearch():
     # Check that base trees can be grid-searched.
     # AdaBoost classification
-    boost = AdaBoostClassifier(base_estimator=DecisionTreeClassifier())
+    boost = AdaBoostClassifier(base_estimator=weighted(DecisionTreeClassifier()))
     parameters = {
         "n_estimators": (1, 2),
         "base_estimator__max_depth": (1, 2),
@@ -215,7 +220,10 @@ def test_gridsearch():
     clf.fit(iris.data, iris.target)
 
     # AdaBoost regression
-    boost = AdaBoostRegressor(base_estimator=DecisionTreeRegressor(), random_state=0)
+    boost = AdaBoostRegressor(
+        base_estimator=DecisionTreeRegressor(),
+        random_state=0,
+    )
     parameters = {"n_estimators": (1, 2), "base_estimator__max_depth": (1, 2)}
     clf = GridSearchCV(boost, parameters)
     clf.fit(diabetes.data, diabetes.target)
@@ -285,10 +293,10 @@ def test_base_estimator():
 
     # XXX doesn't work with y_class because RF doesn't support classes_
     # Shouldn't AdaBoost run a LabelBinarizer?
-    clf = AdaBoostClassifier(RandomForestClassifier())
+    clf = AdaBoostClassifier(weighted(RandomForestClassifier()))
     clf.fit(X, y_regr)
 
-    clf = AdaBoostClassifier(SVC(), algorithm="SAMME")
+    clf = AdaBoostClassifier(weighted(SVC()), algorithm="SAMME")
     clf.fit(X, y_class)
 
     from sklearn.ensemble import RandomForestRegressor
@@ -302,7 +310,7 @@ def test_base_estimator():
     # Check that an empty discrete ensemble fails in fit, not predict.
     X_fail = [[1, 1], [1, 1], [1, 1], [1, 1]]
     y_fail = ["foo", "bar", 1, 2]
-    clf = AdaBoostClassifier(SVC(), algorithm="SAMME")
+    clf = AdaBoostClassifier(weighted(SVC()), algorithm="SAMME")
     with pytest.raises(ValueError, match="worse than random"):
         clf.fit(X_fail, y_fail)
 
@@ -340,14 +348,14 @@ def test_sparse_classification():
 
         # Trained on sparse format
         sparse_classifier = AdaBoostClassifier(
-            base_estimator=CustomSVC(probability=True),
+            base_estimator=weighted(CustomSVC(probability=True)),
             random_state=1,
             algorithm="SAMME",
         ).fit(X_train_sparse, y_train)
 
         # Trained on dense format
         dense_classifier = AdaBoostClassifier(
-            base_estimator=CustomSVC(probability=True),
+            base_estimator=weighted(CustomSVC(probability=True)),
             random_state=1,
             algorithm="SAMME",
         ).fit(X_train, y_train)
@@ -485,7 +493,7 @@ def test_multidimensional_X():
     yc = rng.choice([0, 1], 50)
     yr = rng.randn(50)
 
-    boost = AdaBoostClassifier(DummyClassifier(strategy="most_frequent"))
+    boost = AdaBoostClassifier(weighted(DummyClassifier(strategy="most_frequent")))
     boost.fit(X, yc)
     boost.predict(X)
     boost.predict_proba(X)

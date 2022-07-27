@@ -34,6 +34,7 @@ from scipy.special import xlogy
 
 from ._base import BaseEnsemble
 from ..base import ClassifierMixin, RegressorMixin, is_classifier, is_regressor
+from ..utils.metadata_routing import MetadataRouter, MethodMapping, process_routing
 
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..utils import check_random_state, _safe_indexing
@@ -76,7 +77,6 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         learning_rate=1.0,
         random_state=None,
     ):
-
         super().__init__(
             base_estimator=base_estimator,
             n_estimators=n_estimators,
@@ -97,7 +97,7 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
             reset=False,
         )
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, **fit_params):
         """Build a boosted classifier/regressor from the training set (X, y).
 
         Parameters
@@ -112,6 +112,16 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, the sample weights are initialized to
             1 / n_samples.
+
+            These weights are passed to the ``base_estimator``'s ``fit`` in
+            ``AdaBoostClassifier`` and but only used internally in
+            ``AdaBoostRegressor`` and never passed to the ``base_estimator``
+            instances.
+
+        **fit_params : dict of string -> object
+            Parameters passed to the ``estimator.fit`` method of each step.
+
+            .. versionadded:: 1.2
 
         Returns
         -------
@@ -138,6 +148,28 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         # Check parameters
         self._validate_estimator()
 
+        if is_regressor(self):
+            routed_params = process_routing(
+                obj=self, method="fit", other_params=fit_params
+            )
+        else:
+            # this will fail in AdaBoostClassifier if base_estimator has not
+            # requested `sample_weight`. we accept this as a requirement since
+            # it's a requirement for AdaBoost for the weak estimator to always
+            # accept `sample_weight`.
+            routed_params = process_routing(
+                obj=self,
+                method="fit",
+                other_params=fit_params,
+                sample_weight=sample_weight,
+            )
+
+        # we then remove sample_weight from the routed parameters since we will
+        # pass it explicitly to the fit method of the base_estimator. It was
+        # included above only to have `process_routing` to do the validation.
+        if "sample_weight" in routed_params.base_estimator.fit:
+            del routed_params.base_estimator.fit["sample_weight"]
+
         # Clear any previous fit results
         self.estimators_ = []
         self.estimator_weights_ = np.zeros(self.n_estimators, dtype=np.float64)
@@ -150,7 +182,12 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         for iboost in range(self.n_estimators):
             # Boosting step
             sample_weight, estimator_weight, estimator_error = self._boost(
-                iboost, X, y, sample_weight, random_state
+                iboost,
+                X,
+                y,
+                sample_weight,
+                random_state,
+                fit_params=routed_params.base_estimator.fit,
             )
 
             # Early termination
@@ -185,7 +222,7 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         return self
 
     @abstractmethod
-    def _boost(self, iboost, X, y, sample_weight, random_state):
+    def _boost(self, iboost, X, y, sample_weight, random_state, fit_params):
         """Implement a single boost.
 
         Warning: This method needs to be overridden by subclasses.
@@ -207,6 +244,9 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         random_state : RandomState
             The current random number generator
+
+        fit_params : dict
+            The extra parameters to be passed to ``base_estimator``'s ``fit``.
 
         Returns
         -------
@@ -341,6 +381,10 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         the base estimator is :class:`~sklearn.tree.DecisionTreeClassifier`
         initialized with `max_depth=1`.
 
+        Note that the ``base_estimator`` instance should request
+        ``sample_weight`` on its ``fit`` method. Find more information in the
+        :ref:`User Guide <metadata_routing>`.
+
     n_estimators : int, default=50
         The maximum number of estimators at which boosting is terminated.
         In case of perfect fit, the learning procedure is stopped early.
@@ -461,7 +505,6 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         algorithm="SAMME.R",
         random_state=None,
     ):
-
         super().__init__(
             base_estimator=base_estimator,
             n_estimators=n_estimators,
@@ -471,9 +514,17 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
 
         self.algorithm = algorithm
 
+    def _get_estimator(self):
+        """Return a default estimator if user has not specified one."""
+        if self.base_estimator is None:
+            return DecisionTreeClassifier(max_depth=1).set_fit_request(
+                sample_weight=True
+            )
+        return self.base_estimator
+
     def _validate_estimator(self):
         """Check the estimator and set the base_estimator_ attribute."""
-        super()._validate_estimator(default=DecisionTreeClassifier(max_depth=1))
+        super()._validate_estimator(default=self._get_estimator())
 
         #  SAMME-R requires predict_proba-enabled base estimators
         if self.algorithm == "SAMME.R":
@@ -491,7 +542,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
                 % self.base_estimator_.__class__.__name__
             )
 
-    def _boost(self, iboost, X, y, sample_weight, random_state):
+    def _boost(self, iboost, X, y, sample_weight, random_state, *, fit_params):
         """Implement a single boost.
 
         Perform a single boost according to the real multi-class SAMME.R
@@ -516,10 +567,14 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
             The RandomState instance used if the base estimator accepts a
             `random_state` attribute.
 
+        fit_params : dict
+            The extra parameters to be passed to ``base_estimator``'s ``fit``.
+
+
         Returns
         -------
         sample_weight : array-like of shape (n_samples,) or None
-            The reweighted sample weights.
+            The reweighed sample weights.
             If None then boosting has terminated early.
 
         estimator_weight : float
@@ -531,16 +586,39 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
             If None then boosting has terminated early.
         """
         if self.algorithm == "SAMME.R":
-            return self._boost_real(iboost, X, y, sample_weight, random_state)
+            return self._boost_real(
+                iboost,
+                X,
+                y,
+                sample_weight,
+                random_state,
+                fit_params=fit_params,
+            )
 
         else:  # elif self.algorithm == "SAMME":
-            return self._boost_discrete(iboost, X, y, sample_weight, random_state)
+            return self._boost_discrete(
+                iboost,
+                X,
+                y,
+                sample_weight,
+                random_state,
+                fit_params=fit_params,
+            )
 
-    def _boost_real(self, iboost, X, y, sample_weight, random_state):
+    def _boost_real(
+        self,
+        iboost,
+        X,
+        y,
+        sample_weight,
+        random_state,
+        *,
+        fit_params,
+    ):
         """Implement a single boost using the SAMME.R real algorithm."""
         estimator = self._make_estimator(random_state=random_state)
 
-        estimator.fit(X, y, sample_weight=sample_weight)
+        estimator.fit(X, y, sample_weight=sample_weight, **fit_params)
 
         y_predict_proba = estimator.predict_proba(X)
 
@@ -595,11 +673,11 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
 
         return sample_weight, 1.0, estimator_error
 
-    def _boost_discrete(self, iboost, X, y, sample_weight, random_state):
+    def _boost_discrete(self, iboost, X, y, sample_weight, random_state, *, fit_params):
         """Implement a single boost using the SAMME discrete algorithm."""
         estimator = self._make_estimator(random_state=random_state)
 
-        estimator.fit(X, y, sample_weight=sample_weight)
+        estimator.fit(X, y, sample_weight=sample_weight, **fit_params)
 
         y_predict = estimator.predict(X)
 
@@ -895,6 +973,32 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         """
         return np.log(self.predict_proba(X))
 
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
+        # here we don't add self using `add_self` which would result in this
+        # class to be a consumer, since its `fit` explicitly accepts
+        # `sample_weight`, but `AdaBoost` is only a router.
+        router = (
+            MetadataRouter(owner=self.__class__.__name__).add(
+                base_estimator=self._get_estimator(),
+                method_mapping=MethodMapping().add(callee="fit", caller="fit"),
+            )
+            # the deprecation warning is only for `sample_weight`, the other
+            # parameters are added in this PR, hence no warning needed.
+            .warn_on(child="base_estimator", method="fit", params=["sample_weight"])
+        )
+        return router
+
 
 class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
     """An AdaBoost regressor.
@@ -1018,7 +1122,6 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         loss="linear",
         random_state=None,
     ):
-
         super().__init__(
             base_estimator=base_estimator,
             n_estimators=n_estimators,
@@ -1029,11 +1132,17 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         self.loss = loss
         self.random_state = random_state
 
+    def _get_estimator(self):
+        """Return a default estimator if user has not specified one."""
+        if self.base_estimator is None:
+            return DecisionTreeRegressor(max_depth=3)
+        return self.base_estimator
+
     def _validate_estimator(self):
         """Check the estimator and set the base_estimator_ attribute."""
-        super()._validate_estimator(default=DecisionTreeRegressor(max_depth=3))
+        super()._validate_estimator(default=self._get_estimator())
 
-    def _boost(self, iboost, X, y, sample_weight, random_state):
+    def _boost(self, iboost, X, y, sample_weight, random_state, fit_params):
         """Implement a single boost for regression
 
         Perform a single boost according to the AdaBoost.R2 algorithm and
@@ -1060,6 +1169,9 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
             Controls also the bootstrap of the weights used to train the weak
             learner.
             replacement.
+
+        fit_params : dict
+            The extra parameters to be passed to ``base_estimator``'s ``fit``.
 
         Returns
         -------
@@ -1089,7 +1201,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         # for all samples in the training set
         X_ = _safe_indexing(X, bootstrap_idx)
         y_ = _safe_indexing(y, bootstrap_idx)
-        estimator.fit(X_, y_)
+        estimator.fit(X_, y_, **fit_params)
         y_predict = estimator.predict(X)
 
         error_vect = np.abs(y_predict - y)
@@ -1195,3 +1307,27 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
 
         for i, _ in enumerate(self.estimators_, 1):
             yield self._get_median_predict(X, limit=i)
+
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
+        router = (
+            MetadataRouter(owner=self.__class__.__name__)
+            # self is added because AdaBoostRegressor is a consumer of
+            # sample_weight and doesn't forward it to the base estimators
+            # instances.
+            .add_self(self).add(
+                base_estimator=self._get_estimator(),
+                method_mapping=MethodMapping().add(callee="fit", caller="fit"),
+            )
+        )
+        return router
