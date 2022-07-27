@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-set -x
 set -e
 
 # Decide what kind of documentation build to run, and run it.
@@ -16,6 +15,22 @@ set -e
 #
 # If the inspection of the current commit fails for any reason, the default
 # behavior is to quick build the documentation.
+
+if [ -n "$GITHUB_ACTION" ]
+then
+    # Map the variables for the new documentation builder to the old one
+    CIRCLE_SHA1=$(git log -1 --pretty=format:%H)
+
+    CIRCLE_JOB=$GITHUB_JOB
+
+    if [ "$GITHUB_EVENT_NAME" == "pull_request" ]
+    then
+        CIRCLE_BRANCH=$GITHUB_HEAD_REF
+        CI_PULL_REQUEST=true
+    else
+        CIRCLE_BRANCH=$GITHUB_REF_NAME
+    fi
+fi
 
 get_build_type() {
     if [ -z "$CIRCLE_SHA1" ]
@@ -138,55 +153,35 @@ sudo -E apt-get -yq update --allow-releaseinfo-change
 sudo -E apt-get -yq --no-install-suggests --no-install-recommends \
     install dvipng gsfonts ccache zip optipng
 
-# deactivate circleci virtualenv and setup a miniconda env instead
+# deactivate circleci virtualenv and setup a conda env instead
 if [[ `type -t deactivate` ]]; then
   deactivate
 fi
 
-MINICONDA_PATH=$HOME/miniconda
-# Install dependencies with miniconda
-wget https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-Linux-x86_64.sh \
-    -O miniconda.sh
-chmod +x miniconda.sh && ./miniconda.sh -b -p $MINICONDA_PATH
-export PATH="/usr/lib/ccache:$MINICONDA_PATH/bin:$PATH"
+MAMBAFORGE_PATH=$HOME/mambaforge
+# Install dependencies with mamba
+wget -q https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-Linux-x86_64.sh \
+    -O mambaforge.sh
+chmod +x mambaforge.sh && ./mambaforge.sh -b -p $MAMBAFORGE_PATH
+export PATH="/usr/lib/ccache:$MAMBAFORGE_PATH/bin:$PATH"
 
 ccache -M 512M
 export CCACHE_COMPRESS=1
 
-# Old packages coming from the 'free' conda channel have been removed but we
-# are using them for our min-dependencies doc generation. See
-# https://www.anaconda.com/why-we-removed-the-free-channel-in-conda-4-7/ for
-# more details.
-if [[ "$CIRCLE_JOB" == "doc-min-dependencies" ]]; then
-    conda config --set restore_free_channel true
-fi
+# pin conda-lock to latest released version (needs manual update from time to time)
+mamba install conda-lock==1.0.5 -y
+conda-lock install --log-level WARNING --name $CONDA_ENV_NAME $LOCK_FILE
+source activate $CONDA_ENV_NAME
 
-# imports get_dep
-source build_tools/shared.sh
-
-# packaging won't be needed once setuptools starts shipping packaging>=17.0
-mamba create -n $CONDA_ENV_NAME --yes --quiet \
-    python="${PYTHON_VERSION:-*}" \
-    "$(get_dep numpy $NUMPY_VERSION)" \
-    "$(get_dep scipy $SCIPY_VERSION)" \
-    "$(get_dep cython $CYTHON_VERSION)" \
-    "$(get_dep matplotlib $MATPLOTLIB_VERSION)" \
-    "$(get_dep sphinx $SPHINX_VERSION)" \
-    "$(get_dep pandas $PANDAS_VERSION)" \
-    joblib memory_profiler packaging seaborn pillow pytest coverage \
-    compilers
-
-source activate testenv
-pip install "$(get_dep scikit-image $SCIKIT_IMAGE_VERSION)"
-pip install "$(get_dep sphinx-gallery $SPHINX_GALLERY_VERSION)"
-pip install "$(get_dep numpydoc $NUMPYDOC_VERSION)"
-pip install "$(get_dep sphinx-prompt $SPHINX_PROMPT_VERSION)"
-pip install "$(get_dep sphinxext-opengraph $SPHINXEXT_OPENGRAPH_VERSION)"
+mamba list
 
 # Set parallelism to 3 to overlap IO bound tasks with CPU bound tasks on CI
 # workers with 2 cores when building the compiled extensions of scikit-learn.
 export SKLEARN_BUILD_PARALLEL=3
-python setup.py develop
+pip install -e . --no-build-isolation
+
+echo "ccache build summary:"
+ccache -s
 
 export OMP_NUM_THREADS=1
 

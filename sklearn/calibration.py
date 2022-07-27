@@ -72,16 +72,18 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
     for model fitting and calibration are disjoint.
 
     The calibration is based on the :term:`decision_function` method of the
-    `base_estimator` if it exists, else on :term:`predict_proba`.
+    `estimator` if it exists, else on :term:`predict_proba`.
 
     Read more in the :ref:`User Guide <calibration>`.
 
     Parameters
     ----------
-    base_estimator : estimator instance, default=None
+    estimator : estimator instance, default=None
         The classifier whose output need to be calibrated to provide more
         accurate `predict_proba` outputs. The default classifier is
         a :class:`~sklearn.svm.LinearSVC`.
+
+        .. versionadded:: 1.2
 
     method : {'sigmoid', 'isotonic'}, default='sigmoid'
         The method to use for calibration. Can be 'sigmoid' which
@@ -108,7 +110,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         Refer to the :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        If "prefit" is passed, it is assumed that `base_estimator` has been
+        If "prefit" is passed, it is assumed that `estimator` has been
         fitted already and all data is used for calibration.
 
         .. versionchanged:: 0.22
@@ -130,7 +132,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         Determines how the calibrator is fitted when `cv` is not `'prefit'`.
         Ignored if `cv='prefit'`.
 
-        If `True`, the `base_estimator` is fitted using training data, and
+        If `True`, the `estimator` is fitted using training data, and
         calibrated using testing data, for each `cv` fold. The final estimator
         is an ensemble of `n_cv` fitted classifier and calibrator pairs, where
         `n_cv` is the number of cross-validation folds. The output is the
@@ -139,11 +141,18 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         If `False`, `cv` is used to compute unbiased predictions, via
         :func:`~sklearn.model_selection.cross_val_predict`, which are then
         used for calibration. At prediction time, the classifier used is the
-        `base_estimator` trained on all the data.
+        `estimator` trained on all the data.
         Note that this method is also internally implemented  in
         :mod:`sklearn.svm` estimators with the `probabilities=True` parameter.
 
         .. versionadded:: 0.24
+
+    base_estimator : estimator instance
+        This parameter is deprecated. Use `estimator` instead.
+
+        .. deprecated:: 1.2
+           The parameter `base_estimator` is deprecated in 1.2 and will be
+           removed in 1.4. Use `estimator` instead.
 
     Attributes
     ----------
@@ -152,13 +161,13 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
 
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if the
-        underlying base_estimator exposes such an attribute when fit.
+        underlying estimator exposes such an attribute when fit.
 
         .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Only defined if the
-        underlying base_estimator exposes such an attribute when fit.
+        underlying estimator exposes such an attribute when fit.
 
         .. versionadded:: 1.0
 
@@ -166,12 +175,12 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             or `ensemble=False`)
         The list of classifier and calibrator pairs.
 
-        - When `cv="prefit"`, the fitted `base_estimator` and fitted
+        - When `cv="prefit"`, the fitted `estimator` and fitted
           calibrator.
         - When `cv` is not "prefit" and `ensemble=True`, `n_cv` fitted
-          `base_estimator` and calibrator pairs. `n_cv` is the number of
+          `estimator` and calibrator pairs. `n_cv` is the number of
           cross-validation folds.
-        - When `cv` is not "prefit" and `ensemble=False`, the `base_estimator`,
+        - When `cv` is not "prefit" and `ensemble=False`, the `estimator`,
           fitted on all the data, and fitted calibrator.
 
         .. versionchanged:: 0.24
@@ -204,9 +213,9 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
     >>> X, y = make_classification(n_samples=100, n_features=2,
     ...                            n_redundant=0, random_state=42)
     >>> base_clf = GaussianNB()
-    >>> calibrated_clf = CalibratedClassifierCV(base_estimator=base_clf, cv=3)
+    >>> calibrated_clf = CalibratedClassifierCV(base_clf, cv=3)
     >>> calibrated_clf.fit(X, y)
-    CalibratedClassifierCV(base_estimator=GaussianNB(), cv=3)
+    CalibratedClassifierCV(...)
     >>> len(calibrated_clf.calibrated_classifiers_)
     3
     >>> calibrated_clf.predict_proba(X)[:5, :]
@@ -224,12 +233,9 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
     >>> base_clf = GaussianNB()
     >>> base_clf.fit(X_train, y_train)
     GaussianNB()
-    >>> calibrated_clf = CalibratedClassifierCV(
-    ...     base_estimator=base_clf,
-    ...     cv="prefit"
-    ... )
+    >>> calibrated_clf = CalibratedClassifierCV(base_clf, cv="prefit")
     >>> calibrated_clf.fit(X_calib, y_calib)
-    CalibratedClassifierCV(base_estimator=GaussianNB(), cv='prefit')
+    CalibratedClassifierCV(...)
     >>> len(calibrated_clf.calibrated_classifiers_)
     1
     >>> calibrated_clf.predict_proba([[-0.5, 0.5]])
@@ -238,18 +244,20 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
 
     def __init__(
         self,
-        base_estimator=None,
+        estimator=None,
         *,
         method="sigmoid",
         cv=None,
         n_jobs=None,
         ensemble=True,
+        base_estimator="deprecated",
     ):
-        self.base_estimator = base_estimator
+        self.estimator = estimator
         self.method = method
         self.cv = cv
         self.n_jobs = n_jobs
         self.ensemble = ensemble
+        self.base_estimator = base_estimator
 
     def fit(self, X, y, sample_weight=None, **fit_params):
         """Fit the calibrated model.
@@ -282,25 +290,39 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         for sample_aligned_params in fit_params.values():
             check_consistent_length(y, sample_aligned_params)
 
-        if self.base_estimator is None:
+        # TODO(1.4): Remove when base_estimator is removed
+        if self.base_estimator != "deprecated":
+            if self.estimator is not None:
+                raise ValueError(
+                    "Both `base_estimator` and `estimator` are set. Only set "
+                    "`estimator` since `base_estimator` is deprecated."
+                )
+            warnings.warn(
+                "`base_estimator` was renamed to `estimator` in version 1.2 and "
+                "will be removed in 1.4.",
+                FutureWarning,
+            )
+            estimator = self.base_estimator
+        else:
+            estimator = self.estimator
+
+        if estimator is None:
             # we want all classifiers that don't expose a random_state
             # to be deterministic (and we don't want to expose this one).
-            base_estimator = LinearSVC(random_state=0)
-        else:
-            base_estimator = self.base_estimator
+            estimator = LinearSVC(random_state=0)
 
         self.calibrated_classifiers_ = []
         if self.cv == "prefit":
-            # `classes_` should be consistent with that of base_estimator
-            check_is_fitted(self.base_estimator, attributes=["classes_"])
-            self.classes_ = self.base_estimator.classes_
+            # `classes_` should be consistent with that of estimator
+            check_is_fitted(self.estimator, attributes=["classes_"])
+            self.classes_ = self.estimator.classes_
 
-            pred_method, method_name = _get_prediction_method(base_estimator)
+            pred_method, method_name = _get_prediction_method(estimator)
             n_classes = len(self.classes_)
             predictions = _compute_predictions(pred_method, method_name, X, n_classes)
 
             calibrated_classifier = _fit_calibrator(
-                base_estimator,
+                estimator,
                 predictions,
                 y,
                 self.classes_,
@@ -315,10 +337,10 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             n_classes = len(self.classes_)
 
             # sample_weight checks
-            fit_parameters = signature(base_estimator.fit).parameters
+            fit_parameters = signature(estimator.fit).parameters
             supports_sw = "sample_weight" in fit_parameters
             if sample_weight is not None and not supports_sw:
-                estimator_name = type(base_estimator).__name__
+                estimator_name = type(estimator).__name__
                 warnings.warn(
                     f"Since {estimator_name} does not appear to accept sample_weight, "
                     "sample weights will only be used for the calibration itself. This "
@@ -351,7 +373,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                 parallel = Parallel(n_jobs=self.n_jobs)
                 self.calibrated_classifiers_ = parallel(
                     delayed(_fit_classifier_calibrator_pair)(
-                        clone(base_estimator),
+                        clone(estimator),
                         X,
                         y,
                         train=train,
@@ -365,7 +387,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                     for train, test in cv.split(X, y)
                 )
             else:
-                this_estimator = clone(base_estimator)
+                this_estimator = clone(estimator)
                 _, method_name = _get_prediction_method(this_estimator)
                 fit_params = (
                     {"sample_weight": sample_weight}
@@ -402,7 +424,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                 )
                 self.calibrated_classifiers_.append(calibrated_classifier)
 
-        first_clf = self.calibrated_classifiers_[0].base_estimator
+        first_clf = self.calibrated_classifiers_[0].estimator
         if hasattr(first_clf, "n_features_in_"):
             self.n_features_in_ = first_clf.n_features_in_
         if hasattr(first_clf, "feature_names_in_"):
@@ -418,7 +440,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            The samples, as accepted by `base_estimator.predict_proba`.
+            The samples, as accepted by `estimator.predict_proba`.
 
         Returns
         -------
@@ -446,7 +468,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            The samples, as accepted by `base_estimator.predict`.
+            The samples, as accepted by `estimator.predict`.
 
         Returns
         -------
@@ -570,7 +592,7 @@ def _get_prediction_method(clf):
         return method, "predict_proba"
     else:
         raise RuntimeError(
-            "'base_estimator' has no 'decision_function' or 'predict_proba' method."
+            "'estimator' has no 'decision_function' or 'predict_proba' method."
         )
 
 
@@ -669,7 +691,7 @@ class _CalibratedClassifier:
 
     Parameters
     ----------
-    base_estimator : estimator instance
+    estimator : estimator instance
         Fitted classifier.
 
     calibrators : list of fitted estimator instances
@@ -687,8 +709,8 @@ class _CalibratedClassifier:
         non-parametric approach based on isotonic regression.
     """
 
-    def __init__(self, base_estimator, calibrators, *, classes, method="sigmoid"):
-        self.base_estimator = base_estimator
+    def __init__(self, estimator, calibrators, *, classes, method="sigmoid"):
+        self.estimator = estimator
         self.calibrators = calibrators
         self.classes = classes
         self.method = method
@@ -710,11 +732,11 @@ class _CalibratedClassifier:
             The predicted probabilities. Can be exact zeros.
         """
         n_classes = len(self.classes)
-        pred_method, method_name = _get_prediction_method(self.base_estimator)
+        pred_method, method_name = _get_prediction_method(self.estimator)
         predictions = _compute_predictions(pred_method, method_name, X, n_classes)
 
         label_encoder = LabelEncoder().fit(self.classes)
-        pos_class_indices = label_encoder.transform(self.base_estimator.classes_)
+        pos_class_indices = label_encoder.transform(self.estimator.classes_)
 
         proba = np.zeros((_num_samples(X), n_classes))
         for class_idx, this_pred, calibrator in zip(
