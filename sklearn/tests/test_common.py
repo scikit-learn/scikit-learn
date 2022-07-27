@@ -503,8 +503,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "SpectralCoclustering",
     "SpectralEmbedding",
     "SplineTransformer",
-    "StackingClassifier",
-    "StackingRegressor",
     "TransformedTargetRegressor",
     "VotingClassifier",
     "VotingRegressor",
