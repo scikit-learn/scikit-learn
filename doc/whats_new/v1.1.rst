@@ -12,6 +12,10 @@ Version 1.1.2
 Changelog
 ---------
 
+- |Fix| Add support for F-contiguous arrays for estimators and functions whose back-end
+  have been changed in 1.1.
+  :pr:`23990` by :user:`Julien Jerphanion <jjerphan>`.
+
 :mod:`sklearn.cluster`
 ......................
 
