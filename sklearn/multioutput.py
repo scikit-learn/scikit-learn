@@ -865,7 +865,7 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
     Parameters
     ----------
     base_estimator : estimator
-        The base estimator from which the classifier chain is built.
+        The base estimator from which the regressor chain is built.
 
     order : array-like of shape (n_outputs,) or 'random', default=None
         If `None`, the order will be determined by the order of columns in

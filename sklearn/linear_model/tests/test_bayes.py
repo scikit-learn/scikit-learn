@@ -285,12 +285,11 @@ def test_toy_ard_object():
     assert_array_almost_equal(clf.predict(test), [1, 3, 4], 2)
 
 
-@pytest.mark.parametrize("seed", range(100))
 @pytest.mark.parametrize("n_samples, n_features", ((10, 100), (100, 10)))
-def test_ard_accuracy_on_easy_problem(seed, n_samples, n_features):
+def test_ard_accuracy_on_easy_problem(global_random_seed, n_samples, n_features):
     # Check that ARD converges with reasonable accuracy on an easy problem
     # (Github issue #14055)
-    X = np.random.RandomState(seed=seed).normal(size=(250, 3))
+    X = np.random.RandomState(global_random_seed).normal(size=(250, 3))
     y = X[:, 1]
 
     regressor = ARDRegression()
@@ -332,13 +331,12 @@ def test_return_std():
         assert_array_almost_equal(y_std2, noise_mult, decimal=decimal)
 
 
-@pytest.mark.parametrize("seed", range(10))
-def test_update_sigma(seed):
+def test_update_sigma(global_random_seed):
     # make sure the two update_sigma() helpers are equivalent. The woodbury
     # formula is used when n_samples < n_features, and the other one is used
     # otherwise.
 
-    rng = np.random.RandomState(seed)
+    rng = np.random.RandomState(global_random_seed)
 
     # set n_samples == n_features to avoid instability issues when inverting
     # the matrices. Using the woodbury formula would be unstable when
