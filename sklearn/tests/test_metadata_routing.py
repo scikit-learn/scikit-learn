@@ -849,6 +849,19 @@ def test_metadata_routing_get_param_names():
     ) == router._get_param_names(method="fit", return_alias=False, ignore_self=True)
 
 
+def test_warn_on_invalid_child():
+    """Test that we error if the child is not known."""
+    with pytest.raises(ValueError, match="Unknown child"):
+        MetadataRouter(owner="test").add(
+            estimator=LinearRegression(), method_mapping="one-to-one"
+        ).warn_on(
+            child="invalid",
+            method="fit",
+            params=None,
+            raise_on="1.4",
+        )
+
+
 def test_router_deprecation_warning():
     """This test checks the warning mechanism related to `warn_on`.
 
