@@ -948,6 +948,9 @@ class MetadataRouter:
         self : MetadataRouter
             Returns `self`.
         """
+        if child not in self._route_mappings:
+            raise ValueError(f"Unknown child object: {child}")
+
         if child not in self._warn_on:
             self._warn_on[child] = dict()
         self._warn_on[child][method] = {"params": params, "raise_on": raise_on}
