@@ -59,13 +59,6 @@ def test_uniform_weights():
         mode, score = stats.mode(x, axis)
         mode2, score2 = weighted_mode(x, weights, axis=axis)
 
-        if axis is not None:
-            # TODO: `weighted_mode` should be modified to output the same array
-            # dimension than `scipy.stats.mode` for scipy >= 1.9
-            # See https://github.com/scipy/scipy/issues/16418
-            mode = np.expand_dims(mode, axis=axis)
-            score = np.expand_dims(score, axis=axis)
-
         assert_array_equal(mode, mode2)
         assert_array_equal(score, score2)
 

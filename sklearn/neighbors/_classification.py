@@ -11,7 +11,6 @@ from numbers import Integral
 
 import numpy as np
 from scipy import stats
-
 from ..utils.extmath import weighted_mode
 from ..utils.validation import _is_arraylike, _num_samples
 
