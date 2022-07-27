@@ -6,7 +6,7 @@
 import math
 import numpy as np
 from scipy.special import betaln, digamma, gammaln
-from numbers import Integral, Real
+from numbers import Real
 
 from ._base import BaseMixture, _check_shape
 from ._gaussian_mixture import _check_precision_matrix
@@ -20,6 +20,7 @@ from ..utils._param_validation import (
     Interval,
     StrOptions,
 )
+
 
 def _log_dirichlet_norm(dirichlet_concentration):
     """Compute the log of the Dirichlet distribution normalization term.
@@ -355,7 +356,8 @@ class BayesianGaussianMixture(BaseMixture):
         "mean_precision_prior": [None, Interval(Real, 0.0, None, closed="both")],
         "mean_prior": [None, "array-like"],
         "degrees_of_freedom_prior": [None, Interval(Real, 0.0, None, closed="right")],
-        "covariance_prior": [None, "array-like", Interval(Real, 0.0, None, closed="right")]
+        "covariance_prior": [None,
+                             "array-like", Interval(Real, 0.0, None, closed="right")]
     }
 
     def __init__(

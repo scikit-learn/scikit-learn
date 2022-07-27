@@ -224,6 +224,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         labels : array, shape (n_samples,)
             Component labels.
         """
+        self._validate_params()
         X = self._validate_data(X, dtype=[np.float64, np.float32], ensure_min_samples=2)
         if X.shape[0] < self.n_components:
             raise ValueError(
