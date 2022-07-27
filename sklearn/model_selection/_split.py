@@ -421,7 +421,7 @@ class KFold(_BaseKFold):
 
     See Also
     --------
-    StratifiedKFold : Takes group information into account to avoid building
+    StratifiedKFold : Takes class information into account to avoid building
         folds with imbalanced class distributions (for binary or multiclass
         classification tasks).
 
@@ -503,6 +503,10 @@ class GroupKFold(_BaseKFold):
     --------
     LeaveOneGroupOut : For splitting the data according to explicit
         domain-specific stratification of the dataset.
+
+    StratifiedKFold : Takes class information into account to avoid building
+        folds with imbalanced class proportions (for binary or multiclass
+        classification tasks).
     """
 
     def __init__(self, n_splits=5):
@@ -1146,6 +1150,10 @@ class LeaveOneGroupOut(BaseCrossValidator):
     [[1 2]
      [3 4]] [[5 6]
      [7 8]] [1 2] [1 2]
+
+    See also
+    --------
+    GroupKFold: K-fold iterator variant with non-overlapping groups.
     """
 
     def _iter_test_masks(self, X, y, groups):
@@ -1798,6 +1806,12 @@ class GroupShuffleSplit(ShuffleSplit):
     ...     print("TRAIN:", train_idx, "TEST:", test_idx)
     TRAIN: [2 3 4 5 6 7] TEST: [0 1]
     TRAIN: [0 1 5 6 7] TEST: [2 3 4]
+
+    See Also
+    --------
+    ShuffleSplit : Shuffles samples to create independent test/train sets.
+
+    LeavePGroupsOut : Train set leaves out all possible subsets of `p` groups.
     """
 
     def __init__(
