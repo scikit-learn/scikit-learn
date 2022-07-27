@@ -516,7 +516,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
             Cluster labels.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, reset=False, accept_sparse="csr")
+        X = self._validate_data(X, reset=False, accept_sparse="csr", order="C")
         if not hasattr(self, "cluster_centers_"):
             raise ValueError(
                 "Predict method is not supported when affinity='precomputed'."

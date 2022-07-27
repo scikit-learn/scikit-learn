@@ -69,6 +69,7 @@ def check_pairwise_arrays(
     accept_sparse="csr",
     force_all_finite=True,
     copy=False,
+    order=None,
 ):
     """Set X and Y appropriately and checks inputs.
 
@@ -127,6 +128,15 @@ def check_pairwise_arrays(
 
         .. versionadded:: 0.22
 
+    order : {'F', 'C'} or None, default=None
+        Whether the arrays will be forced to be fortran or c-style.
+        When order is None (default), then if copy=False, nothing is ensured
+        about the memory layout of the output array; otherwise (copy=True)
+        the memory layout of the returned array is kept as close as possible
+        to the original array.
+
+        ..versionadded:: 1.1.2
+
     Returns
     -------
     safe_X : {array-like, sparse matrix} of shape (n_samples_X, n_features)
@@ -150,6 +160,7 @@ def check_pairwise_arrays(
             copy=copy,
             force_all_finite=force_all_finite,
             estimator=estimator,
+            order=order,
         )
     else:
         X = check_array(
@@ -159,6 +170,7 @@ def check_pairwise_arrays(
             copy=copy,
             force_all_finite=force_all_finite,
             estimator=estimator,
+            order=order,
         )
         Y = check_array(
             Y,
@@ -167,6 +179,7 @@ def check_pairwise_arrays(
             copy=copy,
             force_all_finite=force_all_finite,
             estimator=estimator,
+            order=order,
         )
 
     if precomputed:
@@ -661,7 +674,7 @@ def pairwise_distances_argmin_min(
     pairwise_distances_argmin : Same as `pairwise_distances_argmin_min` but only
         returns the argmins.
     """
-    X, Y = check_pairwise_arrays(X, Y)
+    X, Y = check_pairwise_arrays(X, Y, order="C")
 
     if axis == 0:
         X, Y = Y, X
@@ -773,7 +786,7 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
     if metric_kwargs is None:
         metric_kwargs = {}
 
-    X, Y = check_pairwise_arrays(X, Y)
+    X, Y = check_pairwise_arrays(X, Y, order="C")
 
     if axis == 0:
         X, Y = Y, X

@@ -518,6 +518,6 @@ class MeanShift(ClusterMixin, BaseEstimator):
             Index of the cluster each sample belongs to.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, reset=False)
+        X = self._validate_data(X, reset=False, order="C")
         with config_context(assume_finite=True):
             return pairwise_distances_argmin(X, self.cluster_centers_)
