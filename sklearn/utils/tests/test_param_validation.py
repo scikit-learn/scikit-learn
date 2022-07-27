@@ -15,6 +15,8 @@ from sklearn.utils._param_validation import _Booleans
 from sklearn.utils._param_validation import _Callables
 from sklearn.utils._param_validation import _CVObjects
 from sklearn.utils._param_validation import _InstancesOf
+from sklearn.utils._param_validation import _MissingValues
+from sklearn.utils._param_validation import _PandasNAConstraint
 from sklearn.utils._param_validation import _IterablesNotString
 from sklearn.utils._param_validation import _NoneConstraint
 from sklearn.utils._param_validation import _RandomStates
@@ -187,6 +189,7 @@ def test_hasmethods():
         Interval(Real, 0, None, closed="left"),
         Interval(Real, None, None, closed="neither"),
         StrOptions({"a", "b", "c"}),
+        _MissingValues(),
         _VerboseHelper(),
         HasMethods("fit"),
         _IterablesNotString(),
@@ -329,6 +332,7 @@ def test_generate_invalid_param_val_all_valid(constraints):
         _SparseMatrices(),
         _Booleans(),
         _VerboseHelper(),
+        _MissingValues(),
         StrOptions({"a", "b", "c"}),
         Interval(Integral, None, None, closed="neither"),
         Interval(Integral, 0, 10, closed="neither"),
@@ -367,6 +371,12 @@ def test_generate_valid_param(constraint):
         (Real, 0.5),
         ("boolean", False),
         ("verbose", 1),
+        ("missing_values", -1),
+        ("missing_values", -1.0),
+        ("missing_values", None),
+        ("missing_values", float("nan")),
+        ("missing_values", np.nan),
+        ("missing_values", "missing"),
         (HasMethods("fit"), _Estimator(a=0)),
         ("cv_object", 5),
     ],
@@ -390,6 +400,7 @@ def test_is_satisfied_by(constraint_declaration, value):
         (int, _InstancesOf),
         ("boolean", _Booleans),
         ("verbose", _VerboseHelper),
+        ("missing_values", _MissingValues),
         (HasMethods("fit"), HasMethods),
         ("cv_object", _CVObjects),
     ],
@@ -580,6 +591,15 @@ def test_no_validation():
 
     f(param2=SomeType)
     f(param2=SomeType())
+
+
+def test_pandas_na_constraint_with_pd_na():
+    """Add a specific test for checking support for `pandas.NA`."""
+    pd = pytest.importorskip("pandas")
+
+    na_constraint = _PandasNAConstraint()
+    assert na_constraint.is_satisfied_by(pd.NA)
+    assert not na_constraint.is_satisfied_by(np.array([1, 2, 3]))
 
 
 def test_iterable_not_string():
