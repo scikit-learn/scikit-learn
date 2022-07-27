@@ -36,6 +36,10 @@ random sampling procedures.
   to a tiny value. Moreover, `verbose` is now properly propagated to L-BFGS-B.
   :pr:`23619` by :user:`Christian Lorentzen <lorentzenchr>`.
 
+- |Fix| The `components_` signs in :class:`decomposition.FastICA` might differ.
+  It is now consistent and deterministic with all SVD solvers.
+  :pr:`22527` by :user:`Meekail Zain <micky774>` and `Thomas Fan`_.
+
 Changes impacting all modules
 -----------------------------
 
@@ -153,10 +157,7 @@ Changelog
   how whitening is performed through the new `whiten_solver` parameter, which
   supports `svd` and `eigh`. `whiten_solver` defaults to `svd` although `eigh`
   may be faster and more memory efficient in cases where
-  `num_features > num_samples`. An additional `sign_flip` parameter is added.
-  When `sign_flip=True`, then the output of both solvers will be reconciled
-  during `fit` so that their outputs match. This may change the output of the
-  default solver, and hence may not be backwards compatible.
+  `num_features > num_samples`.
   :pr:`11860` by :user:`Pierre Ablin <pierreablin>`,
   :pr:`22527` by :user:`Meekail Zain <micky774>` and `Thomas Fan`_.
 
