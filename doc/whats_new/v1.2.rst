@@ -36,6 +36,9 @@ random sampling procedures.
   to a tiny value. Moreover, `verbose` is now properly propagated to L-BFGS-B.
   :pr:`23619` by :user:`Christian Lorentzen <lorentzenchr>`.
 
+- |Fix| Make sign of `components_` deterministic in :class:`decomposition.SparsePCA`.
+  :pr:`23935` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 - |Fix| The `components_` signs in :class:`decomposition.FastICA` might differ.
   It is now consistent and deterministic with all SVD solvers.
   :pr:`22527` by :user:`Meekail Zain <micky774>` and `Thomas Fan`_.
@@ -134,15 +137,14 @@ Changelog
   function.
   :pr:`23905` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-:mod:`sklearn.decomposition`
-............................
-
 - |API| The `n_iter` parameter of :class:`decomposition.MiniBatchSparsePCA` is
   deprecated and replaced by the parameters `max_iter`, `tol`, and
   `max_no_improvement` to be consistent with
   :class:`decomposition.MiniBatchDictionaryLearning`. `n_iter` will be removed
   in version 1.3. :pr:`23726` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Fix| Make sign of `components_` deterministic in :class:`decomposition.SparsePCA`.
+  :pr:`23935` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.ensemble`
 .......................
