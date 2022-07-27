@@ -154,7 +154,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             Training vectors, where `n_samples` is the number of samples
             and `n_features` is the number of features.
             For kernel="precomputed", the expected shape of X is
-            (qn_samples, n_samples).
+            (n_samples, n_samples).
 
         y : array-like of shape (n_samples,)
             Target values (class labels in classification, real numbers in
