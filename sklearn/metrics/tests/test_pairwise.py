@@ -534,8 +534,7 @@ def test_pairwise_distances_argmin_min(dtype):
 
     assert_array_equal(argmin_0, argmin_1)
 
-    # F-contiguous arrays must be supported and must return identical
-    # C-contiguous results.
+    # F-contiguous arrays must be supported and must return identical results.
     argmin_C_contiguous = pairwise_distances_argmin(X, Y)
     argmin_F_contiguous = pairwise_distances_argmin(
         np.asfortranarray(X), np.asfortranarray(Y)
