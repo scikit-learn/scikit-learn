@@ -310,21 +310,6 @@ def test_unsupervised_inputs(global_dtype, KNeighborsMixinSubclass):
         assert_array_equal(ind1, ind2)
 
 
-def test_n_neighbors_datatype():
-    # Test to check whether n_neighbors is integer
-    X = [[1, 1], [1, 1], [1, 1]]
-    expected_msg = "n_neighbors does not take .*float.* value, enter integer value"
-    msg = "Expected n_neighbors > 0. Got -3"
-
-    neighbors_ = neighbors.NearestNeighbors(n_neighbors=3.0)
-    with pytest.raises(TypeError, match=expected_msg):
-        neighbors_.fit(X)
-    with pytest.raises(ValueError, match=msg):
-        neighbors_.kneighbors(X=X, n_neighbors=-3)
-    with pytest.raises(TypeError, match=expected_msg):
-        neighbors_.kneighbors(X=X, n_neighbors=3.0)
-
-
 def test_not_fitted_error_gets_raised():
     X = [[1]]
     neighbors_ = neighbors.NearestNeighbors()
@@ -1482,27 +1467,6 @@ def test_radius_neighbors_graph_sparse(n_neighbors, mode, seed=36):
     )
 
 
-# TODO: Remove when RaidusNeighbors* use the parameter validation mechanism
-@pytest.mark.parametrize(
-    "Estimator",
-    [neighbors.RadiusNeighborsRegressor, neighbors.RadiusNeighborsClassifier],
-)
-@pytest.mark.parametrize(
-    "params, err_type, err_msg",
-    [
-        ({"weights": "blah"}, ValueError, "weights not recognized: should be"),
-        ({"algorithm": "blah"}, ValueError, "unrecognized algorithm"),
-        ({"p": -1}, ValueError, "p must be greater or equal to one"),
-    ],
-)
-def test_radius_neighbors_validate_params(Estimator, params, err_type, err_msg):
-    """Parameter validation for RadiusNeighbors*."""
-    X = rng.random_sample((10, 2))
-    y = np.ones(10)
-    with pytest.raises(err_type, match=err_msg):
-        Estimator(**params).fit(X, y)
-
-
 @pytest.mark.parametrize(
     "Estimator",
     [
@@ -1549,16 +1513,10 @@ def test_neighbors_validate_parameters(Estimator):
         nbrs.predict([[]])
 
 
-# TODO: remove when NearestNeighbors (and its method) uses parameter validation
-# mechanism
+# TODO: remove when NearestNeighbors methods uses parameter validation mechanism
 def test_nearest_neighbors_validate_params():
     """Validate parameter of NearestNeighbors."""
     X = rng.random_sample((10, 2))
-
-    msg = "unrecognized algorithm: 'blah'"
-    est = neighbors.NearestNeighbors(algorithm="blah")
-    with pytest.raises(ValueError, match=msg):
-        est.fit(X)
 
     nbrs = neighbors.NearestNeighbors().fit(X)
     msg = (
