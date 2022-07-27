@@ -1,5 +1,6 @@
 from abc import ABC
 from abc import abstractmethod
+from collections.abc import Iterable
 import functools
 from inspect import signature
 from numbers import Integral
@@ -43,13 +44,20 @@ def validate_parameter_constraints(parameter_constraints, params, caller_name):
     caller_name : str
         The name of the estimator or function or method that called this function.
     """
-    if params.keys() != parameter_constraints.keys():
+    if len(set(parameter_constraints) - set(params)) != 0:
         raise ValueError(
-            f"The parameter constraints {list(parameter_constraints.keys())} do not "
-            f"match the parameters to validate {list(params.keys())}."
+            f"The parameter constraints {list(parameter_constraints)}"
+            " contain unexpected parameters"
+            f" {set(parameter_constraints) - set(params)}"
         )
 
     for param_name, param_val in params.items():
+        # We allow parameters to not have a constraint so that third party estimators
+        # can inherit from sklearn estimators without having to necessarily use the
+        # validation tools.
+        if param_name not in parameter_constraints:
+            continue
+
         constraints = parameter_constraints[param_name]
 
         if constraints == "no_validation":
@@ -115,6 +123,8 @@ def make_constraint(constraint):
         return _Booleans()
     if isinstance(constraint, str) and constraint == "verbose":
         return _VerboseHelper()
+    if isinstance(constraint, str) and constraint == "cv_object":
+        return _CVObjects()
     if isinstance(constraint, Hidden):
         constraint = make_constraint(constraint.constraint)
         constraint.hidden = True
@@ -532,6 +542,47 @@ class HasMethods(_Constraint):
         return f"an object implementing {methods}"
 
 
+class _IterablesNotString(_Constraint):
+    """Constraint representing iterables that are not strings."""
+
+    def is_satisfied_by(self, val):
+        return isinstance(val, Iterable) and not isinstance(val, str)
+
+    def __str__(self):
+        return "an iterable"
+
+
+class _CVObjects(_Constraint):
+    """Constraint representing cv objects.
+
+    Convenient class for
+    [
+        Interval(Integral, 2, None, closed="left"),
+        HasMethods(["split", "get_n_splits"]),
+        _IterablesNotString(),
+        None,
+    ]
+    """
+
+    def __init__(self):
+        super().__init__()
+        self._constraints = [
+            Interval(Integral, 2, None, closed="left"),
+            HasMethods(["split", "get_n_splits"]),
+            _IterablesNotString(),
+            _NoneConstraint(),
+        ]
+
+    def is_satisfied_by(self, val):
+        return any(c.is_satisfied_by(val) for c in self._constraints)
+
+    def __str__(self):
+        return (
+            f"{', '.join([str(c) for c in self._constraints[:-1]])} or"
+            f" {self._constraints[-1]}"
+        )
+
+
 class Hidden:
     """Class encapsulating a constraint not meant to be exposed to the user.
 
@@ -574,6 +625,12 @@ def generate_invalid_param_val(constraint, constraints=None):
 
     if isinstance(constraint, HasMethods):
         return type("HasNotMethods", (), {})()
+
+    if isinstance(constraint, _IterablesNotString):
+        return "a string"
+
+    if isinstance(constraint, _CVObjects):
+        return "not a cv object"
 
     if not isinstance(constraint, Interval):
         raise NotImplementedError
@@ -730,6 +787,12 @@ def generate_valid_param(constraint):
         return type(
             "ValidHasMethods", (), {m: lambda self: None for m in constraint.methods}
         )()
+
+    if isinstance(constraint, _IterablesNotString):
+        return [1, 2, 3]
+
+    if isinstance(constraint, _CVObjects):
+        return 5
 
     if isinstance(constraint, StrOptions):
         for option in constraint.options:

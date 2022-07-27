@@ -96,6 +96,15 @@ def johnson_lindenstrauss_min_dim(n_samples, *, eps=0.1):
         The minimal number of components to guarantee with good probability
         an eps-embedding with n_samples.
 
+    References
+    ----------
+
+    .. [1] https://en.wikipedia.org/wiki/Johnson%E2%80%93Lindenstrauss_lemma
+
+    .. [2] Sanjoy Dasgupta and Anupam Gupta, 1999,
+           "An elementary proof of the Johnson-Lindenstrauss Lemma."
+           http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.45.3654
+
     Examples
     --------
     >>> from sklearn.random_projection import johnson_lindenstrauss_min_dim
@@ -107,16 +116,6 @@ def johnson_lindenstrauss_min_dim(n_samples, *, eps=0.1):
 
     >>> johnson_lindenstrauss_min_dim([1e4, 1e5, 1e6], eps=0.1)
     array([ 7894,  9868, 11841])
-
-    References
-    ----------
-
-    .. [1] https://en.wikipedia.org/wiki/Johnson%E2%80%93Lindenstrauss_lemma
-
-    .. [2] Sanjoy Dasgupta and Anupam Gupta, 1999,
-           "An elementary proof of the Johnson-Lindenstrauss Lemma."
-           http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.45.3654
-
     """
     eps = np.asarray(eps)
     n_samples = np.asarray(n_samples)
