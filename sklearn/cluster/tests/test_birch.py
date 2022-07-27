@@ -248,17 +248,3 @@ def test_both_subclusters_updated():
 
     # no error
     Birch(branching_factor=5, threshold=1e-5, n_clusters=None).fit(X)
-
-
-def test_f_ordered_array():
-    """
-    Non-regression test for:
-    https://github.com/scikit-learn/scikit-learn/issues/23988
-    """
-    X, _ = make_blobs(n_samples=80, n_features=4, random_state=0)
-    X = np.asfortranarray(X)
-
-    birch = Birch(n_clusters=3)
-
-    # Must not err.
-    birch.fit_predict(X)
