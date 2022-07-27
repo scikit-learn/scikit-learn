@@ -310,21 +310,6 @@ def test_unsupervised_inputs(global_dtype, KNeighborsMixinSubclass):
         assert_array_equal(ind1, ind2)
 
 
-def test_n_neighbors_datatype():
-    # Test to check whether n_neighbors is integer
-    X = [[1, 1], [1, 1], [1, 1]]
-    expected_msg = "n_neighbors does not take .*float.* value, enter integer value"
-    msg = "Expected n_neighbors > 0. Got -3"
-
-    neighbors_ = neighbors.NearestNeighbors(n_neighbors=3.0)
-    with pytest.raises(TypeError, match=expected_msg):
-        neighbors_.fit(X)
-    with pytest.raises(ValueError, match=msg):
-        neighbors_.kneighbors(X=X, n_neighbors=-3)
-    with pytest.raises(TypeError, match=expected_msg):
-        neighbors_.kneighbors(X=X, n_neighbors=3.0)
-
-
 def test_not_fitted_error_gets_raised():
     X = [[1]]
     neighbors_ = neighbors.NearestNeighbors()
@@ -1482,57 +1467,65 @@ def test_radius_neighbors_graph_sparse(n_neighbors, mode, seed=36):
     )
 
 
-def test_neighbors_badargs():
-    # Test bad argument values: these should all raise ValueErrors
+@pytest.mark.parametrize(
+    "Estimator",
+    [
+        neighbors.KNeighborsClassifier,
+        neighbors.RadiusNeighborsClassifier,
+        neighbors.KNeighborsRegressor,
+        neighbors.RadiusNeighborsRegressor,
+    ],
+)
+def test_neighbors_validate_parameters(Estimator):
+    """Additional parameter validation for *Neighbors* estimators not covered by common
+    validation."""
     X = rng.random_sample((10, 2))
     Xsparse = csr_matrix(X)
     X3 = rng.random_sample((10, 3))
     y = np.ones(10)
 
-    est = neighbors.NearestNeighbors(algorithm="blah")
-    with pytest.raises(ValueError):
-        est.fit(X)
+    nbrs = Estimator(algorithm="ball_tree", metric="haversine")
+    msg = "instance is not fitted yet"
+    with pytest.raises(ValueError, match=msg):
+        nbrs.predict(X)
+    msg = "Metric 'haversine' not valid for sparse input."
+    with pytest.raises(ValueError, match=msg):
+        ignore_warnings(nbrs.fit(Xsparse, y))
 
-    for cls in (
-        neighbors.RadiusNeighborsClassifier,
-        neighbors.RadiusNeighborsRegressor,
-    ):
-        est = cls(weights="blah")
-        with pytest.raises(ValueError):
-            est.fit(X, y)
-        est = cls(p=-1)
-        with pytest.raises(ValueError):
-            est.fit(X, y)
-        est = cls(algorithm="blah")
-        with pytest.raises(ValueError):
-            est.fit(X, y)
+    nbrs = Estimator(metric="haversine", algorithm="brute")
+    nbrs.fit(X3, y)
+    msg = "Haversine distance only valid in 2 dimensions"
+    with pytest.raises(ValueError, match=msg):
+        nbrs.predict(X3)
 
-        nbrs = cls(algorithm="ball_tree", metric="haversine")
-        with pytest.raises(ValueError):
-            nbrs.predict(X)
-        with pytest.raises(ValueError):
-            ignore_warnings(nbrs.fit(Xsparse, y))
+    nbrs = Estimator()
+    msg = re.escape("Found array with 0 sample(s)")
+    with pytest.raises(ValueError, match=msg):
+        nbrs.fit(np.ones((0, 2)), np.ones(0))
 
-        nbrs = cls(metric="haversine", algorithm="brute")
-        nbrs.fit(X3, y)
-        msg = "Haversine distance only valid in 2 dimensions"
-        with pytest.raises(ValueError, match=msg):
-            nbrs.predict(X3)
+    msg = "Found array with dim 3"
+    with pytest.raises(ValueError, match=msg):
+        nbrs.fit(X[:, :, None], y)
+    nbrs.fit(X, y)
 
-        nbrs = cls()
-        with pytest.raises(ValueError):
-            nbrs.fit(np.ones((0, 2)), np.ones(0))
-        with pytest.raises(ValueError):
-            nbrs.fit(X[:, :, None], y)
-        nbrs.fit(X, y)
-        with pytest.raises(ValueError):
-            nbrs.predict([[]])
+    msg = re.escape("Found array with 0 feature(s)")
+    with pytest.raises(ValueError, match=msg):
+        nbrs.predict([[]])
+
+
+# TODO: remove when NearestNeighbors methods uses parameter validation mechanism
+def test_nearest_neighbors_validate_params():
+    """Validate parameter of NearestNeighbors."""
+    X = rng.random_sample((10, 2))
 
     nbrs = neighbors.NearestNeighbors().fit(X)
-
-    with pytest.raises(ValueError):
+    msg = (
+        'Unsupported mode, must be one of "connectivity", or "distance" but got "blah"'
+        " instead"
+    )
+    with pytest.raises(ValueError, match=msg):
         nbrs.kneighbors_graph(X, mode="blah")
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=msg):
         nbrs.radius_neighbors_graph(X, mode="blah")
 
 

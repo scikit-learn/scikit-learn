@@ -315,6 +315,32 @@ def test_spca_early_stopping(global_random_seed):
     assert model_early_stopped.n_iter_ < model_not_early_stopped.n_iter_
 
 
+def test_equivalence_components_pca_spca(global_random_seed):
+    """Check the equivalence of the components found by PCA and SparsePCA.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/23932
+    """
+    rng = np.random.RandomState(global_random_seed)
+    X = rng.randn(50, 4)
+
+    n_components = 2
+    pca = PCA(
+        n_components=n_components,
+        svd_solver="randomized",
+        random_state=0,
+    ).fit(X)
+    spca = SparsePCA(
+        n_components=n_components,
+        method="lars",
+        ridge_alpha=0,
+        alpha=0,
+        random_state=0,
+    ).fit(X)
+
+    assert_allclose(pca.components_, spca.components_)
+
+
 def test_sparse_pca_inverse_transform():
     """Check that `inverse_transform` in `SparsePCA` and `PCA` are similar."""
     rng = np.random.RandomState(0)
