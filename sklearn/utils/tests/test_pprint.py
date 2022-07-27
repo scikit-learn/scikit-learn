@@ -8,7 +8,7 @@ from sklearn.linear_model import LogisticRegressionCV
 from sklearn.pipeline import make_pipeline
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.feature_selection import SelectKBest, chi2
-from sklearn import set_config, config_context
+from sklearn import config_context
 
 
 # Ignore flake8 (lots of line too long issues)
@@ -16,11 +16,24 @@ from sklearn import set_config, config_context
 
 # Constructors excerpted to test pprinting
 class LogisticRegression(BaseEstimator):
-    def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,
-                 fit_intercept=True, intercept_scaling=1, class_weight=None,
-                 random_state=None, solver='warn', max_iter=100,
-                 multi_class='warn', verbose=0, warm_start=False, n_jobs=None,
-                 l1_ratio=None):
+    def __init__(
+        self,
+        penalty="l2",
+        dual=False,
+        tol=1e-4,
+        C=1.0,
+        fit_intercept=True,
+        intercept_scaling=1,
+        class_weight=None,
+        random_state=None,
+        solver="warn",
+        max_iter=100,
+        multi_class="warn",
+        verbose=0,
+        warm_start=False,
+        n_jobs=None,
+        l1_ratio=None,
+    ):
         self.penalty = penalty
         self.dual = dual
         self.tol = tol
@@ -52,8 +65,7 @@ class StandardScaler(TransformerMixin, BaseEstimator):
 
 
 class RFE(BaseEstimator):
-    def __init__(self, estimator, n_features_to_select=None, step=1,
-                 verbose=0):
+    def __init__(self, estimator, n_features_to_select=None, step=1, verbose=0):
         self.estimator = estimator
         self.n_features_to_select = n_features_to_select
         self.step = step
@@ -61,10 +73,20 @@ class RFE(BaseEstimator):
 
 
 class GridSearchCV(BaseEstimator):
-    def __init__(self, estimator, param_grid, scoring=None,
-                 n_jobs=None, iid='warn', refit=True, cv='warn', verbose=0,
-                 pre_dispatch='2*n_jobs', error_score='raise-deprecating',
-                 return_train_score=False):
+    def __init__(
+        self,
+        estimator,
+        param_grid,
+        scoring=None,
+        n_jobs=None,
+        iid="warn",
+        refit=True,
+        cv="warn",
+        verbose=0,
+        pre_dispatch="2*n_jobs",
+        error_score="raise-deprecating",
+        return_train_score=False,
+    ):
         self.estimator = estimator
         self.param_grid = param_grid
         self.scoring = scoring
@@ -79,13 +101,26 @@ class GridSearchCV(BaseEstimator):
 
 
 class CountVectorizer(BaseEstimator):
-    def __init__(self, input='content', encoding='utf-8',
-                 decode_error='strict', strip_accents=None,
-                 lowercase=True, preprocessor=None, tokenizer=None,
-                 stop_words=None, token_pattern=r"(?u)\b\w\w+\b",
-                 ngram_range=(1, 1), analyzer='word',
-                 max_df=1.0, min_df=1, max_features=None,
-                 vocabulary=None, binary=False, dtype=np.int64):
+    def __init__(
+        self,
+        input="content",
+        encoding="utf-8",
+        decode_error="strict",
+        strip_accents=None,
+        lowercase=True,
+        preprocessor=None,
+        tokenizer=None,
+        stop_words=None,
+        token_pattern=r"(?u)\b\w\w+\b",
+        ngram_range=(1, 1),
+        analyzer="word",
+        max_df=1.0,
+        min_df=1,
+        max_features=None,
+        vocabulary=None,
+        binary=False,
+        dtype=np.int64,
+    ):
         self.input = input
         self.encoding = encoding
         self.decode_error = decode_error
@@ -112,11 +147,23 @@ class Pipeline(BaseEstimator):
 
 
 class SVC(BaseEstimator):
-    def __init__(self, C=1.0, kernel='rbf', degree=3, gamma='auto_deprecated',
-                 coef0=0.0, shrinking=True, probability=False,
-                 tol=1e-3, cache_size=200, class_weight=None,
-                 verbose=False, max_iter=-1, decision_function_shape='ovr',
-                 random_state=None):
+    def __init__(
+        self,
+        C=1.0,
+        kernel="rbf",
+        degree=3,
+        gamma="auto_deprecated",
+        coef0=0.0,
+        shrinking=True,
+        probability=False,
+        tol=1e-3,
+        cache_size=200,
+        class_weight=None,
+        verbose=False,
+        max_iter=-1,
+        decision_function_shape="ovr",
+        random_state=None,
+    ):
         self.kernel = kernel
         self.degree = degree
         self.gamma = gamma
@@ -134,9 +181,16 @@ class SVC(BaseEstimator):
 
 
 class PCA(BaseEstimator):
-    def __init__(self, n_components=None, copy=True, whiten=False,
-                 svd_solver='auto', tol=0.0, iterated_power='auto',
-                 random_state=None):
+    def __init__(
+        self,
+        n_components=None,
+        copy=True,
+        whiten=False,
+        svd_solver="auto",
+        tol=0.0,
+        iterated_power="auto",
+        random_state=None,
+    ):
         self.n_components = n_components
         self.copy = copy
         self.whiten = whiten
@@ -147,10 +201,20 @@ class PCA(BaseEstimator):
 
 
 class NMF(BaseEstimator):
-    def __init__(self, n_components=None, init=None, solver='cd',
-                 beta_loss='frobenius', tol=1e-4, max_iter=200,
-                 random_state=None, alpha=0., l1_ratio=0., verbose=0,
-                 shuffle=False):
+    def __init__(
+        self,
+        n_components=None,
+        init=None,
+        solver="cd",
+        beta_loss="frobenius",
+        tol=1e-4,
+        max_iter=200,
+        random_state=None,
+        alpha=0.0,
+        l1_ratio=0.0,
+        verbose=0,
+        shuffle=False,
+    ):
         self.n_components = n_components
         self.init = init
         self.solver = solver
@@ -165,8 +229,14 @@ class NMF(BaseEstimator):
 
 
 class SimpleImputer(BaseEstimator):
-    def __init__(self, missing_values=np.nan, strategy="mean",
-                 fill_value=None, verbose=0, copy=True):
+    def __init__(
+        self,
+        missing_values=np.nan,
+        strategy="mean",
+        fill_value=None,
+        verbose=0,
+        copy=True,
+    ):
         self.missing_values = missing_values
         self.strategy = strategy
         self.fill_value = fill_value
@@ -195,8 +265,9 @@ def test_changed_only():
     assert lr.__repr__() == expected
 
     # Check with a repr that doesn't fit on a single line
-    lr = LogisticRegression(C=99, class_weight=.4, fit_intercept=False,
-                            tol=1234, verbose=True)
+    lr = LogisticRegression(
+        C=99, class_weight=0.4, fit_intercept=False, tol=1234, verbose=True
+    )
     expected = """
 LogisticRegression(C=99, class_weight=0.4, fit_intercept=False, tol=1234,
                    verbose=True)"""
@@ -208,7 +279,7 @@ LogisticRegression(C=99, class_weight=0.4, fit_intercept=False, tol=1234,
     assert imputer.__repr__() == expected
 
     # Defaults to np.NaN, trying with float('NaN')
-    imputer = SimpleImputer(missing_values=float('NaN'))
+    imputer = SimpleImputer(missing_values=float("NaN"))
     expected = """SimpleImputer()"""
     assert imputer.__repr__() == expected
 
@@ -276,9 +347,10 @@ RFE(estimator=RFE(estimator=RFE(estimator=RFE(estimator=RFE(estimator=RFE(estima
 
 def test_gridsearch(print_changed_only_false):
     # render a gridsearch
-    param_grid = [{'kernel': ['rbf'], 'gamma': [1e-3, 1e-4],
-                   'C': [1, 10, 100, 1000]},
-                  {'kernel': ['linear'], 'C': [1, 10, 100, 1000]}]
+    param_grid = [
+        {"kernel": ["rbf"], "gamma": [1e-3, 1e-4], "C": [1, 10, 100, 1000]},
+        {"kernel": ["linear"], "C": [1, 10, 100, 1000]},
+    ]
     gs = GridSearchCV(SVC(), param_grid, cv=5)
 
     expected = """
@@ -303,23 +375,20 @@ def test_gridsearch_pipeline(print_changed_only_false):
     # render a pipeline inside a gridsearch
     pp = _EstimatorPrettyPrinter(compact=True, indent=1, indent_at_name=True)
 
-    pipeline = Pipeline([
-        ('reduce_dim', PCA()),
-        ('classify', SVC())
-    ])
+    pipeline = Pipeline([("reduce_dim", PCA()), ("classify", SVC())])
     N_FEATURES_OPTIONS = [2, 4, 8]
     C_OPTIONS = [1, 10, 100, 1000]
     param_grid = [
         {
-            'reduce_dim': [PCA(iterated_power=7), NMF()],
-            'reduce_dim__n_components': N_FEATURES_OPTIONS,
-            'classify__C': C_OPTIONS
+            "reduce_dim": [PCA(iterated_power=7), NMF()],
+            "reduce_dim__n_components": N_FEATURES_OPTIONS,
+            "classify__C": C_OPTIONS,
         },
         {
-            'reduce_dim': [SelectKBest(chi2)],
-            'reduce_dim__k': N_FEATURES_OPTIONS,
-            'classify__C': C_OPTIONS
-        }
+            "reduce_dim": [SelectKBest(chi2)],
+            "reduce_dim__k": N_FEATURES_OPTIONS,
+            "classify__C": C_OPTIONS,
+        },
     ]
     gspipline = GridSearchCV(pipeline, cv=3, n_jobs=1, param_grid=param_grid)
     expected = """
@@ -364,8 +433,7 @@ GridSearchCV(cv=3, error_score='raise-deprecating',
     expected = expected[1:]  # remove first \n
     repr_ = pp.pformat(gspipline)
     # Remove address of '<function chi2 at 0x.....>' for reproducibility
-    repr_ = re.sub('function chi2 at 0x.*>',
-                   'function chi2 at some_address>', repr_)
+    repr_ = re.sub("function chi2 at 0x.*>", "function chi2 at some_address>", repr_)
     assert repr_ == expected
 
 
@@ -373,8 +441,10 @@ def test_n_max_elements_to_show(print_changed_only_false):
 
     n_max_elements_to_show = 30
     pp = _EstimatorPrettyPrinter(
-        compact=True, indent=1, indent_at_name=True,
-        n_max_elements_to_show=n_max_elements_to_show
+        compact=True,
+        indent=1,
+        indent_at_name=True,
+        n_max_elements_to_show=n_max_elements_to_show,
     )
 
     # No ellipsis
@@ -418,7 +488,7 @@ CountVectorizer(analyzer='word', binary=False, decode_error='strict',
     assert pp.pformat(vectorizer) == expected
 
     # Also test with lists
-    param_grid = {'C': list(range(n_max_elements_to_show))}
+    param_grid = {"C": list(range(n_max_elements_to_show))}
     gs = GridSearchCV(SVC(), param_grid)
     expected = """
 GridSearchCV(cv='warn', error_score='raise-deprecating',
@@ -438,7 +508,7 @@ GridSearchCV(cv='warn', error_score='raise-deprecating',
     assert pp.pformat(gs) == expected
 
     # Now with ellipsis
-    param_grid = {'C': list(range(n_max_elements_to_show + 1))}
+    param_grid = {"C": list(range(n_max_elements_to_show + 1))}
     gs = GridSearchCV(SVC(), param_grid)
     expected = """
 GridSearchCV(cv='warn', error_score='raise-deprecating',
@@ -489,10 +559,10 @@ Lo...
 
     # test with N_CHAR_MAX == number of non-blank characters: In this case we
     # don't want ellipsis
-    full_repr = lr.__repr__(N_CHAR_MAX=float('inf'))
-    n_nonblank = len(''.join(full_repr.split()))
+    full_repr = lr.__repr__(N_CHAR_MAX=float("inf"))
+    n_nonblank = len("".join(full_repr.split()))
     assert lr.__repr__(N_CHAR_MAX=n_nonblank) == full_repr
-    assert '...' not in full_repr
+    assert "..." not in full_repr
 
     # test with N_CHAR_MAX == number of non-blank characters - 10: the left and
     # right side of the ellispsis are on different lines. In this case we
@@ -549,7 +619,7 @@ def test_kwargs_in_init():
     class WithKWargs(BaseEstimator):
         # Estimator with a kwargs argument. These need to hack around
         # set_params and get_params. Here we mimic what LightGBM does.
-        def __init__(self, a='willchange', b='unchanged', **kwargs):
+        def __init__(self, a="willchange", b="unchanged", **kwargs):
             self.a = a
             self.b = b
             self._other_params = {}
@@ -566,7 +636,7 @@ def test_kwargs_in_init():
                 self._other_params[key] = value
             return self
 
-    est = WithKWargs(a='something', c='abcd', d=None)
+    est = WithKWargs(a="something", c="abcd", d=None)
 
     expected = "WithKWargs(a='something', c='abcd', d=None)"
     assert expected == est.__repr__()
@@ -574,3 +644,37 @@ def test_kwargs_in_init():
     with config_context(print_changed_only=False):
         expected = "WithKWargs(a='something', b='unchanged', c='abcd', d=None)"
         assert expected == est.__repr__()
+
+
+def test_complexity_print_changed_only():
+    # Make sure `__repr__` is called the same amount of times
+    # whether `print_changed_only` is True or False
+    # Non-regression test for
+    # https://github.com/scikit-learn/scikit-learn/issues/18490
+
+    class DummyEstimator(TransformerMixin, BaseEstimator):
+        nb_times_repr_called = 0
+
+        def __init__(self, estimator=None):
+            self.estimator = estimator
+
+        def __repr__(self):
+            DummyEstimator.nb_times_repr_called += 1
+            return super().__repr__()
+
+        def transform(self, X, copy=None):  # pragma: no cover
+            return X
+
+    estimator = DummyEstimator(
+        make_pipeline(DummyEstimator(DummyEstimator()), DummyEstimator(), "passthrough")
+    )
+    with config_context(print_changed_only=False):
+        repr(estimator)
+        nb_repr_print_changed_only_false = DummyEstimator.nb_times_repr_called
+
+    DummyEstimator.nb_times_repr_called = 0
+    with config_context(print_changed_only=True):
+        repr(estimator)
+        nb_repr_print_changed_only_true = DummyEstimator.nb_times_repr_called
+
+    assert nb_repr_print_changed_only_false == nb_repr_print_changed_only_true

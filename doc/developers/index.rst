@@ -14,10 +14,12 @@ Developer's Guide
 .. toctree::
 
    contributing
+   minimal_reproducer
    develop
    tips
    utilities
    performance
    advanced_installation
+   bug_triaging
    maintainer
    plotting

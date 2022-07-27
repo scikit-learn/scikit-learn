@@ -52,7 +52,7 @@ The main theoretical result behind the efficiency of random projection is the
   and can even be taken to be an orthogonal projection.
 
 Knowing only the number of samples, the
-:func:`sklearn.random_projection.johnson_lindenstrauss_min_dim` estimates
+:func:`johnson_lindenstrauss_min_dim` estimates
 conservatively the minimal size of the random subspace to guarantee a
 bounded distortion introduced by the random projection::
 
@@ -90,7 +90,7 @@ bounded distortion introduced by the random projection::
 
 Gaussian random projection
 ==========================
-The :class:`sklearn.random_projection.GaussianRandomProjection` reduces the
+The :class:`GaussianRandomProjection` reduces the
 dimensionality by projecting the original input space on a randomly generated
 matrix where components are drawn from the following distribution
 :math:`N(0, \frac{1}{n_{components}})`.
@@ -111,7 +111,7 @@ projection transformer::
 
 Sparse random projection
 ========================
-The :class:`sklearn.random_projection.SparseRandomProjection` reduces the
+The :class:`SparseRandomProjection` reduces the
 dimensionality by projecting the original input space using a sparse
 random matrix.
 
@@ -152,7 +152,7 @@ projection transformer::
 
  * D. Achlioptas. 2003.
    `Database-friendly random projections: Johnson-Lindenstrauss  with binary
-   coins <http://www.cs.ucsc.edu/~optas/papers/jl.pdf>`_.
+   coins <https://www.sciencedirect.com/science/article/pii/S0022000003000254>`_.
    Journal of Computer and System Sciences 66 (2003) 671–687
 
  * Ping Li, Trevor J. Hastie, and Kenneth W. Church. 2006.
@@ -160,3 +160,42 @@ projection transformer::
    In Proceedings of the 12th ACM SIGKDD international conference on
    Knowledge discovery and data mining (KDD '06). ACM, New York, NY, USA,
    287-296.
+
+
+.. _random_projection_inverse_transform:
+
+Inverse Transform
+=================
+The random projection transformers have ``compute_inverse_components`` parameter. When
+set to True, after creating the random ``components_`` matrix during fitting,
+the transformer computes the pseudo-inverse of this matrix and stores it as
+``inverse_components_``. The ``inverse_components_`` matrix has shape
+:math:`n_{features} \times n_{components}`, and it is always a dense matrix,
+regardless of whether the components matrix is sparse or dense. So depending on
+the number of features and components, it may use a lot of memory.
+
+When the ``inverse_transform`` method is called, it computes the product of the
+input ``X`` and the transpose of the inverse components. If the inverse components have
+been computed during fit, they are reused at each call to ``inverse_transform``.
+Otherwise they are recomputed each time, which can be costly. The result is always
+dense, even if ``X`` is sparse.
+
+Here a small code example which illustrates how to use the inverse transform
+feature::
+
+  >>> import numpy as np
+  >>> from sklearn.random_projection import SparseRandomProjection
+  >>> X = np.random.rand(100, 10000)
+  >>> transformer = SparseRandomProjection(
+  ...   compute_inverse_components=True
+  ... )
+  ...
+  >>> X_new = transformer.fit_transform(X)
+  >>> X_new.shape
+  (100, 3947)
+  >>> X_new_inversed = transformer.inverse_transform(X_new)
+  >>> X_new_inversed.shape
+  (100, 10000)
+  >>> X_new_again = transformer.transform(X_new_inversed)
+  >>> np.allclose(X_new, X_new_again)
+  True

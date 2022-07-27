@@ -9,5 +9,11 @@ from ._hash import FeatureHasher
 from .image import img_to_graph, grid_to_graph
 from . import text
 
-__all__ = ['DictVectorizer', 'image', 'img_to_graph', 'grid_to_graph', 'text',
-           'FeatureHasher']
+__all__ = [
+    "DictVectorizer",
+    "image",
+    "img_to_graph",
+    "grid_to_graph",
+    "text",
+    "FeatureHasher",
+]
