@@ -761,7 +761,8 @@ class StratifiedGroupKFold(_BaseKFold):
     Each group will appear exactly once in the test set across all folds (the
     number of distinct groups has to be at least equal to the number of folds).
 
-    The difference between GroupKFold and StratifiedGroupKFold is that
+    The difference between :class:`~sklearn.model_selection.GroupKFold`
+    and :class:`~sklearn.model_selection.StratifiedGroupKFold` is that
     the former attempts to create balanced folds such that the number of
     distinct groups is approximately the same in each fold, whereas
     StratifiedGroupKFold attempts to create folds which preserve the
