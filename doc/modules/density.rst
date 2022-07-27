@@ -18,8 +18,6 @@ an unsupervised clustering scheme.
 Density estimation is a very simple concept, and most people are already
 familiar with one common density estimation technique: the histogram.
 
-.. _histogram:
-
 Density Estimation: Histograms
 ==============================
 A histogram is a simple visualization of data where bins are defined, and the
