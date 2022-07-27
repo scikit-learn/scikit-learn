@@ -538,14 +538,15 @@ class _MissingValues(_Constraint):
     """Helper constraint for the `missing_values` parameters.
 
     Convenience for
-    [Integral, Real, str, _NoneConstraint, _NanConstraint, _PandasNAConstraint]
+    [Integral, Real, str, None, _NanConstraint, _PandasNAConstraint]
     """
 
     def __init__(self):
         super().__init__()
         self._constraints = [
             _InstancesOf(Integral),
-            _InstancesOf(Real),
+            # we use an interval of Real to ignore np.nan that has is own constraint
+            Interval(Real, None, None, closed="both"),
             _InstancesOf(str),
             _NoneConstraint(),
             _NanConstraint(),
