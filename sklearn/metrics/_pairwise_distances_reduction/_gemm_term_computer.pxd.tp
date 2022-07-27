@@ -3,7 +3,7 @@
 implementation_specific_values = [
     # Values are the following ones:
     #
-    #       name_suffix, need_upcast, INPUT_DTYPE_t, INPUT_DTYPE
+    #       name_suffix, upcast_to_float64, INPUT_DTYPE_t, INPUT_DTYPE
     #
     # We also use the float64 dtype and C-type names as defined in
     # `sklearn.utils._typedefs` to maintain consistency.
@@ -18,7 +18,7 @@ cimport numpy as cnp
 from ...utils._typedefs cimport DTYPE_t, ITYPE_t
 from libcpp.vector cimport vector
 
-{{for name_suffix, need_upcast, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
+{{for name_suffix, upcast_to_float64, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
 
 cdef class GEMMTermComputer{{name_suffix}}:
     cdef:
@@ -34,7 +34,7 @@ cdef class GEMMTermComputer{{name_suffix}}:
         # Buffers for the `-2 * X_c @ Y_c.T` term computed via GEMM
         vector[vector[DTYPE_t]] dist_middle_terms_chunks
 
-{{if need_upcast}}
+{{if upcast_to_float64}}
         # Buffers for upcasting chunks of X and Y from 32bit to 64bit
         vector[vector[DTYPE_t]] X_c_upcast
         vector[vector[DTYPE_t]] Y_c_upcast

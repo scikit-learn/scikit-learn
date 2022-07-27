@@ -3,7 +3,7 @@
 implementation_specific_values = [
     # Values are the following ones:
     #
-    #       name_suffix, need_upcast, INPUT_DTYPE_t, INPUT_DTYPE
+    #       name_suffix, upcast_to_float64, INPUT_DTYPE_t, INPUT_DTYPE
     #
     # We also use the float64 dtype and C-type names as defined in
     # `sklearn.utils._typedefs` to maintain consistency.
@@ -29,7 +29,7 @@ from ...utils._cython_blas cimport (
   _gemm,
 )
 
-{{for name_suffix, need_upcast, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
+{{for name_suffix, upcast_to_float64, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
 
 cdef class GEMMTermComputer{{name_suffix}}:
     """Component for `FastEuclidean*` variant wrapping the logic for the call to GEMM.
@@ -65,7 +65,7 @@ cdef class GEMMTermComputer{{name_suffix}}:
 
         self.dist_middle_terms_chunks = vector[vector[DTYPE_t]](self.effective_n_threads)
 
-{{if need_upcast}}
+{{if upcast_to_float64}}
         # We populate the buffer for upcasting chunks of X and Y from 32bit to 64bit.
         self.X_c_upcast = vector[vector[DTYPE_t]](self.effective_n_threads)
         self.Y_c_upcast = vector[vector[DTYPE_t]](self.effective_n_threads)
@@ -85,7 +85,7 @@ cdef class GEMMTermComputer{{name_suffix}}:
         ITYPE_t Y_end,
         ITYPE_t thread_num,
     ) nogil:
-{{if need_upcast}}
+{{if upcast_to_float64}}
         cdef:
             ITYPE_t i, j
             ITYPE_t n_chunk_samples = Y_end - Y_start
@@ -108,7 +108,7 @@ cdef class GEMMTermComputer{{name_suffix}}:
         ITYPE_t X_start,
         ITYPE_t X_end,
     ) nogil:
-{{if need_upcast}}
+{{if upcast_to_float64}}
         cdef:
             ITYPE_t i, j
             ITYPE_t n_chunk_samples = X_end - X_start
@@ -133,7 +133,7 @@ cdef class GEMMTermComputer{{name_suffix}}:
         ITYPE_t X_start,
         ITYPE_t X_end,
     ) nogil:
-{{if need_upcast}}
+{{if upcast_to_float64}}
         cdef:
             ITYPE_t i, j
             ITYPE_t n_chunk_samples = X_end - X_start
@@ -154,7 +154,7 @@ cdef class GEMMTermComputer{{name_suffix}}:
         ITYPE_t Y_end,
         ITYPE_t thread_num
     ) nogil:
-{{if need_upcast}}
+{{if upcast_to_float64}}
         cdef:
             ITYPE_t i, j
             ITYPE_t n_chunk_samples = Y_end - Y_start
@@ -194,7 +194,7 @@ cdef class GEMMTermComputer{{name_suffix}}:
             ITYPE_t n = Y_c.shape[0]
             ITYPE_t K = X_c.shape[1]
             DTYPE_t alpha = - 2.
-{{if need_upcast}}
+{{if upcast_to_float64}}
             DTYPE_t * A = self.X_c_upcast[thread_num].data()
             DTYPE_t * B = self.Y_c_upcast[thread_num].data()
 {{else}}
