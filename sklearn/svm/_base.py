@@ -87,9 +87,9 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         "epsilon": [Interval(Real, 0.0, None, closed="left")],
         "shrinking": ["boolean"],
         "probability": ["boolean"],
-        "cache_size": [Interval(Real, 0, None, closed="left")],
+        "cache_size": [Interval(Real, 0, None, closed="neither")],
         "class_weight": [StrOptions({"balanced"}), dict, None],
-        "verbose": ["boolean"],
+        "verbose": ["verbose"],
         "max_iter": [Interval(Integral, -1, None, closed="left")],
         "random_state": ["random_state"],
     }

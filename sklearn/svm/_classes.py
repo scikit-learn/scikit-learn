@@ -1332,7 +1332,7 @@ class NuSVR(RegressorMixin, BaseLibSVM):
         default 0.5 will be taken.
 
     C : float, default=1.0
-        Penalty parameter C of the error term. Must be non-negative.
+        Penalty parameter C of the error term.
 
     kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'} or callable,  \
         default='rbf'
