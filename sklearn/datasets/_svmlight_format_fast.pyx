@@ -151,9 +151,10 @@ def get_dense_row_string(
         x_vals[x_nz_used] = <double_or_longlong> val
         x_nz_used += 1
 
-    reprs = []
-    for i in range(x_nz_used):
-        reprs.append(value_pattern % (x_inds[i] + one_based, x_vals[i]))
+    reprs = [
+        value_pattern % (x_inds[i] + one_based, x_vals[i])
+        for i in range(x_nz_used)
+    ]
 
     return " ".join(reprs)
 
