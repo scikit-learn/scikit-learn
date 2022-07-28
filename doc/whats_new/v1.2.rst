@@ -220,6 +220,16 @@ Changelog
 - |Fix| Fixed error message of :class:`metrics.coverage_error` for 1D array input.
   :pr:`23548` by :user:`Hao Chun Chang <haochunchang>`.
 
+:mod:`sklearn.multioutput`
+..........................
+
+- |Feature| Added boolean `verbose` flag to classes:
+  :class:`multioutput.ClassifierChain` and :class:`multioutput.RegressorChain`.
+  :pr:`23977` by :user:`Eric Fiegel <efiegel>`,
+  :user:`Chiara Marmo <cmarmo>`,
+  :user:`Lucy Liu <lucyleeow>`, and
+  :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.naive_bayes`
 ..........................
 
