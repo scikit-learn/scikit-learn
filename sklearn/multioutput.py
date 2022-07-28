@@ -29,7 +29,6 @@ from .utils.validation import (
     check_is_fitted,
     has_fit_parameter,
     _check_fit_params,
-    _deprecate_positional_args,
 )
 from .utils.fixes import delayed
 
