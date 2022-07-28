@@ -1759,9 +1759,8 @@ class MiniBatchKMeans(_BaseKMeans):
         When there are too few points in the dataset, some centers may be
         duplicated, which means that a proper clustering in terms of the number
         of requesting clusters and the number of returned clusters will not
-        always match. To solve this set `reassignment_ratio=0`, so that
-        reassignments to avoid too small of clusters when there are too few
-        data points is possible.
+        always match. One solution is to set `reassignment_ratio=0`, which
+        prevents reassignments of clusters that are too small.
 
     Attributes
     ----------
