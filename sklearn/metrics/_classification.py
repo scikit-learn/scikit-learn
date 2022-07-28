@@ -3120,6 +3120,7 @@ def f1_gain_score(
     average="binary",
     sample_weight=None,
     zero_division="warn",
+    class_distribution=None,
 ):
     """Compute the F1 score, also known as balanced F-score or F-measure.
 
@@ -3195,6 +3196,10 @@ def f1_gain_score(
         predictions and labels are negative. If set to "warn", this acts as 0,
         but warnings are also raised.
 
+    class_distribution : Optional list, default=None
+        The proportion that each class makes up in the dataset. If not
+        provided then it's estimated from y_true.
+
     Returns
     -------
     f1_score : float or array of float, shape = [n_unique_labels]
@@ -3255,6 +3260,7 @@ def f1_gain_score(
         average=average,
         sample_weight=sample_weight,
         zero_division=zero_division,
+        class_distribution=class_distribution,
     )
 
 
@@ -3268,6 +3274,7 @@ def fbeta_gain_score(
     average="binary",
     sample_weight=None,
     zero_division="warn",
+    class_distribution=None,
 ):
     """Compute the F-beta score.
 
@@ -3343,6 +3350,10 @@ def fbeta_gain_score(
         predictions and labels are negative. If set to "warn", this acts as 0,
         but warnings are also raised.
 
+    class_distribution : Optional list, default=None
+        The proportion that each class makes up in the dataset. If not
+        provided then it's estimated from y_true.
+
     Returns
     -------
     fbeta_score : float (if average is not None) or array of float, shape =\
@@ -3397,6 +3408,7 @@ def fbeta_gain_score(
         warn_for=("f-score",),
         sample_weight=sample_weight,
         zero_division=zero_division,
+        class_distribution=class_distribution,
     )
     return f
 
@@ -3598,6 +3610,7 @@ def precision_gain_score(
     average="binary",
     sample_weight=None,
     zero_division="warn",
+    class_distribution=None,
 ):
     """Compute the precision.
 
@@ -3668,6 +3681,10 @@ def precision_gain_score(
         Sets the value to return when there is a zero division. If set to
         "warn", this acts as 0, but warnings are also raised.
 
+    class_distribution : Optional list, default=None
+        The proportion that each class makes up in the dataset. If not
+        provided then it's estimated from y_true.
+
     Returns
     -------
     precision : float (if average is not None) or array of float of shape \
@@ -3727,6 +3744,7 @@ def precision_gain_score(
         warn_for=("precision",),
         sample_weight=sample_weight,
         zero_division=zero_division,
+        class_distribution=class_distribution,
     )
     return p
 
@@ -3740,6 +3758,7 @@ def recall_gain_score(
     average="binary",
     sample_weight=None,
     zero_division="warn",
+    class_distribution=None,
 ):
     """Compute the recall.
 
@@ -3810,6 +3829,10 @@ def recall_gain_score(
         Sets the value to return when there is a zero division. If set to
         "warn", this acts as 0, but warnings are also raised.
 
+    class_distribution : Optional list, default=None
+        The proportion that each class makes up in the dataset. If not
+        provided then it's estimated from y_true.
+
     Returns
     -------
     recall : float (if average is not None) or array of float of shape \
@@ -3871,10 +3894,11 @@ def recall_gain_score(
         warn_for=("recall",),
         sample_weight=sample_weight,
         zero_division=zero_division,
+        class_distribution=class_distribution,
     )
     return r
 
 
 def prg_gain_transform(x, *, pi):
-    """pi = proportion positives"""
+    """Transfrom from PG space into PRG space. pi = proportion positives"""
     return (x - pi) / ((1 - pi) * x)
