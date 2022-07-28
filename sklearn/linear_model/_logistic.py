@@ -48,7 +48,8 @@ _LOGISTIC_SOLVER_CONVERGENCE_MSG = (
 
 def _check_solver(solver, penalty, dual):
 
-    if solver not in ["liblinear", "saga"] and penalty not in ("l2", "none"):
+    # TODO(1.4): Remove "none" option
+    if solver not in ["liblinear", "saga"] and penalty not in ("l2", "none", None):
         raise ValueError(
             "Solver %s supports only 'l2' or 'none' penalties, got %s penalty."
             % (solver, penalty)
@@ -764,10 +765,10 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
 
     Parameters
     ----------
-    penalty : {'l1', 'l2', 'elasticnet', 'none'}, default='l2'
+    penalty : {'l1', 'l2', 'elasticnet', None}, default='l2'
         Specify the norm of the penalty:
 
-        - `'none'`: no penalty is added;
+        - `None`: no penalty is added;
         - `'l2'`: add a L2 penalty term and it is the default choice;
         - `'l1'`: add a L1 penalty term;
         - `'elasticnet'`: both L1 and L2 penalty terms are added.
@@ -779,6 +780,10 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
 
         .. versionadded:: 0.19
            l1 penalty with SAGA solver (allowing 'multinomial' + L1)
+
+        .. deprecated:: 1.2
+           The 'none' option was deprecated in version 1.2, and will be removed
+           in 1.4. Use `None` instead.
 
     dual : bool, default=False
         Dual or primal formulation. Dual formulation is only implemented for
@@ -844,11 +849,11 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
            The choice of the algorithm depends on the penalty chosen:
            Supported penalties by solver:
 
-           - 'newton-cg'   -   ['l2', 'none']
-           - 'lbfgs'       -   ['l2', 'none']
+           - 'newton-cg'   -   ['l2', None]
+           - 'lbfgs'       -   ['l2', None]
            - 'liblinear'   -   ['l1', 'l2']
-           - 'sag'         -   ['l2', 'none']
-           - 'saga'        -   ['elasticnet', 'l1', 'l2', 'none']
+           - 'sag'         -   ['l2', None]
+           - 'saga'        -   ['elasticnet', 'l1', 'l2', None]
 
         .. note::
            'sag' and 'saga' fast convergence is only guaranteed on
@@ -1010,7 +1015,11 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     """
 
     _parameter_constraints = {
-        "penalty": [StrOptions({"l1", "l2", "elasticnet", "none"})],
+        # TODO(1.4): Remove "none" option
+        "penalty": [
+            StrOptions({"l1", "l2", "elasticnet", "none"}, deprecated={"none"}),
+            None,
+        ],
         "dual": ["boolean"],
         "tol": [Interval(Real, 0, None, closed="left")],
         "C": [Interval(Real, 0, None, closed="right")],
@@ -1104,10 +1113,18 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
                 "(penalty={})".format(self.penalty)
             )
 
+        # TODO(1.4): Remove "none" option
         if self.penalty == "none":
+            warnings.warn(
+                "`penalty='none'`has been deprecated in 1.2 and will be removed in 1.4."
+                " To keep the past behaviour, set `penalty=None`.",
+                FutureWarning,
+            )
+
+        if self.penalty is None or self.penalty == "none":
             if self.C != 1.0:  # default values
                 warnings.warn(
-                    "Setting penalty='none' will ignore the C and l1_ratio parameters"
+                    "Setting penalty=None will ignore the C and l1_ratio parameters"
                 )
                 # Note that check for l1_ratio is done right above
             C_ = np.inf
