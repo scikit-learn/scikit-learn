@@ -30,7 +30,10 @@ X, _ = make_blobs(n_samples=n_samples, centers=2, random_state=random_state)
 n_clusters_list = [2, 3, 4, 5]
 
 # Algorithms to compare
-clustering_algorithms = {"Bisecting K-Means": BisectingKMeans, "K-Means": KMeans}
+clustering_algorithms = {
+    "Bisecting K-Means": BisectingKMeans,
+    "K-Means": KMeans,
+}
 
 # Make subplots for each variant
 fig, axs = plt.subplots(

@@ -740,7 +740,11 @@ def test_gridsearch_nd():
     def check_y(x):
         return x.shape[1:] == (7, 11)
 
-    clf = CheckingClassifier(check_X=check_X, check_y=check_y, methods_to_check=["fit"])
+    clf = CheckingClassifier(
+        check_X=check_X,
+        check_y=check_y,
+        methods_to_check=["fit"],
+    )
     grid_search = GridSearchCV(clf, {"foo_param": [1, 2, 3]})
     grid_search.fit(X_4d, y_3d).score(X, y)
     assert hasattr(grid_search, "cv_results_")
@@ -752,7 +756,8 @@ def test_X_as_list():
     y = np.array([0] * 5 + [1] * 5)
 
     clf = CheckingClassifier(
-        check_X=lambda x: isinstance(x, list), methods_to_check=["fit"]
+        check_X=lambda x: isinstance(x, list),
+        methods_to_check=["fit"],
     )
     cv = KFold(n_splits=3)
     grid_search = GridSearchCV(clf, {"foo_param": [1, 2, 3]}, cv=cv)
@@ -766,7 +771,8 @@ def test_y_as_list():
     y = np.array([0] * 5 + [1] * 5)
 
     clf = CheckingClassifier(
-        check_y=lambda x: isinstance(x, list), methods_to_check=["fit"]
+        check_y=lambda x: isinstance(x, list),
+        methods_to_check=["fit"],
     )
     cv = KFold(n_splits=3)
     grid_search = GridSearchCV(clf, {"foo_param": [1, 2, 3]}, cv=cv)
@@ -909,8 +915,19 @@ def test_grid_search_cv_results():
     n_splits = 3
     n_grid_points = 6
     params = [
-        dict(kernel=["rbf"], C=[1, 10], gamma=[0.1, 1]),
-        dict(kernel=["poly"], degree=[1, 2]),
+        dict(
+            kernel=[
+                "rbf",
+            ],
+            C=[1, 10],
+            gamma=[0.1, 1],
+        ),
+        dict(
+            kernel=[
+                "poly",
+            ],
+            degree=[1, 2],
+        ),
     ]
 
     param_keys = ("param_C", "param_degree", "param_gamma", "param_kernel")
@@ -1103,8 +1120,19 @@ def test_grid_search_cv_results_multimetric():
 
     n_splits = 3
     params = [
-        dict(kernel=["rbf"], C=[1, 10], gamma=[0.1, 1]),
-        dict(kernel=["poly"], degree=[1, 2]),
+        dict(
+            kernel=[
+                "rbf",
+            ],
+            C=[1, 10],
+            gamma=[0.1, 1],
+        ),
+        dict(
+            kernel=[
+                "poly",
+            ],
+            degree=[1, 2],
+        ),
     ]
 
     grid_searches = []
@@ -1328,7 +1356,11 @@ def test_search_cv_results_none_param():
     cv = KFold()
 
     for est in estimators:
-        grid_search = GridSearchCV(est, est_parameters, cv=cv).fit(X, y)
+        grid_search = GridSearchCV(
+            est,
+            est_parameters,
+            cv=cv,
+        ).fit(X, y)
         assert_array_equal(grid_search.cv_results_["param_random_state"], [0, None])
 
 
@@ -1336,7 +1368,20 @@ def test_search_cv_results_none_param():
 def test_search_cv_timing():
     svc = LinearSVC(random_state=0)
 
-    X = [[1], [2], [3], [4]]
+    X = [
+        [
+            1,
+        ],
+        [
+            2,
+        ],
+        [
+            3,
+        ],
+        [
+            4,
+        ],
+    ]
     y = [0, 1, 1, 0]
 
     gs = GridSearchCV(svc, {"C": [0, 1]}, cv=2, error_score=0)
@@ -1590,7 +1635,9 @@ def test_grid_search_classifier_all_fits_fail():
     clf = FailingClassifier()
 
     gs = GridSearchCV(
-        clf, [{"parameter": [FailingClassifier.FAILING_PARAMETER] * 3}], error_score=0.0
+        clf,
+        [{"parameter": [FailingClassifier.FAILING_PARAMETER] * 3}],
+        error_score=0.0,
     )
 
     warning_message = re.compile(
@@ -1667,7 +1714,9 @@ def test_parameters_sampler_replacement():
 def test_stochastic_gradient_loss_param():
     # Make sure the predict_proba works when loss is specified
     # as one of the parameters in the param_grid.
-    param_grid = {"loss": ["log_loss"]}
+    param_grid = {
+        "loss": ["log_loss"],
+    }
     X = np.arange(24).reshape(6, -1)
     y = [0, 0, 0, 1, 1, 1]
     clf = GridSearchCV(
@@ -1683,7 +1732,9 @@ def test_stochastic_gradient_loss_param():
 
     # Make sure `predict_proba` is not available when setting loss=['hinge']
     # in param_grid
-    param_grid = {"loss": ["hinge"]}
+    param_grid = {
+        "loss": ["hinge"],
+    }
     clf = GridSearchCV(
         estimator=SGDClassifier(loss="hinge"), param_grid=param_grid, cv=3
     )
@@ -2316,7 +2367,10 @@ def test_search_cv_using_minimal_compatible_estimator(SearchCV, Predictor):
         [("transformer", MinimalTransformer()), ("predictor", Predictor())]
     )
 
-    params = {"transformer__param": [1, 10], "predictor__parama": [1, 10]}
+    params = {
+        "transformer__param": [1, 10],
+        "predictor__parama": [1, 10],
+    }
     search = SearchCV(model, params, error_score="raise")
     search.fit(X, y)
 

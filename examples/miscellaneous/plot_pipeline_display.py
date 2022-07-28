@@ -24,7 +24,10 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
 from sklearn import set_config
 
-steps = [("preprocessing", StandardScaler()), ("classifier", LogisticRegression())]
+steps = [
+    ("preprocessing", StandardScaler()),
+    ("classifier", LogisticRegression()),
+]
 pipe = Pipeline(steps)
 
 # %%

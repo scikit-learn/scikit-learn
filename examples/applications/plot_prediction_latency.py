@@ -144,7 +144,9 @@ def boxplot_runtimes(runtimes, pred_type, configuration):
     """
 
     fig, ax1 = plt.subplots(figsize=(10, 6))
-    bp = plt.boxplot(runtimes)
+    bp = plt.boxplot(
+        runtimes,
+    )
 
     cls_infos = [
         "%s\n(%d %s)"
@@ -233,7 +235,11 @@ def plot_n_features_influence(percentiles, percentile):
     for i, cls_name in enumerate(percentiles.keys()):
         x = np.array(sorted([n for n in percentiles[cls_name].keys()]))
         y = np.array([percentiles[cls_name][n] for n in x])
-        plt.plot(x, y, color=colors[i])
+        plt.plot(
+            x,
+            y,
+            color=colors[i],
+        )
     ax1.yaxis.grid(True, linestyle="-", which="major", color="lightgrey", alpha=0.5)
     ax1.set_axisbelow(True)
     ax1.set_title("Evolution of Prediction Time with #Features")

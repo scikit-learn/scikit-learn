@@ -16,7 +16,12 @@ from scipy.sparse import (
     issparse,
 )
 
-from sklearn import config_context, datasets, metrics, neighbors
+from sklearn import (
+    config_context,
+    datasets,
+    metrics,
+    neighbors,
+)
 from sklearn.base import clone
 from sklearn.exceptions import DataConversionWarning
 from sklearn.exceptions import EfficiencyWarning
@@ -28,7 +33,10 @@ from sklearn.metrics.tests.test_pairwise_distances_reduction import (
 )
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import train_test_split
-from sklearn.neighbors import VALID_METRICS_SPARSE, KNeighborsRegressor
+from sklearn.neighbors import (
+    VALID_METRICS_SPARSE,
+    KNeighborsRegressor,
+)
 from sklearn.neighbors._base import (
     _is_sorted_by_data,
     _check_precomputed,
@@ -36,7 +44,10 @@ from sklearn.neighbors._base import (
     KNeighborsMixin,
 )
 from sklearn.pipeline import make_pipeline
-from sklearn.utils._testing import assert_allclose, assert_array_equal
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_array_equal,
+)
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.validation import check_random_state
 from sklearn.utils.fixes import sp_version, parse_version
@@ -120,7 +131,7 @@ def _weight_func(dist):
     # can be looped
     with np.errstate(divide="ignore"):
         retval = 1.0 / dist
-    return retval ** 2
+    return retval**2
 
 
 WEIGHTS = ["uniform", "distance", _weight_func]
@@ -128,7 +139,10 @@ WEIGHTS = ["uniform", "distance", _weight_func]
 
 @pytest.mark.parametrize(
     "n_samples, n_features, n_query_pts, n_neighbors",
-    [(100, 100, 10, 100), (1000, 5, 100, 1)],
+    [
+        (100, 100, 10, 100),
+        (1000, 5, 100, 1),
+    ],
 )
 @pytest.mark.parametrize("query_is_train", [False, True])
 @pytest.mark.parametrize("metric", COMMON_VALID_METRICS)
@@ -202,7 +216,11 @@ def test_unsupervised_kneighbors(
 
 
 @pytest.mark.parametrize(
-    "n_samples, n_features, n_query_pts", [(100, 100, 10), (1000, 5, 100)]
+    "n_samples, n_features, n_query_pts",
+    [
+        (100, 100, 10),
+        (1000, 5, 100),
+    ],
 )
 @pytest.mark.parametrize("metric", COMMON_VALID_METRICS)
 @pytest.mark.parametrize("n_neighbors, radius", [(1, 100), (50, 500), (100, 1000)])
@@ -309,7 +327,9 @@ def check_precomputed(make_train_test, estimators):
     X = rng.random_sample((10, 4))
     Y = rng.random_sample((3, 4))
     DXX, DYX = make_train_test(X, Y)
-    for method in ["kneighbors"]:
+    for method in [
+        "kneighbors",
+    ]:
         # TODO: also test radius_neighbors, but requires different assertion
 
         # As a feature matrix (n_samples by n_features)
@@ -382,7 +402,10 @@ def test_precomputed_sparse_knn(fmt):
 
     # We do not test RadiusNeighborsClassifier and RadiusNeighborsRegressor
     # since the precomputed neighbors graph is built with k neighbors only.
-    estimators = [neighbors.KNeighborsClassifier, neighbors.KNeighborsRegressor]
+    estimators = [
+        neighbors.KNeighborsClassifier,
+        neighbors.KNeighborsRegressor,
+    ]
     check_precomputed(make_train_test, estimators)
 
 
@@ -607,7 +630,7 @@ def test_kneighbors_classifier(
     # Test k-neighbors classification
     rng = np.random.RandomState(random_state)
     X = 2 * rng.rand(n_samples, n_features).astype(global_dtype, copy=False) - 1
-    y = ((X ** 2).sum(axis=1) < 0.5).astype(int)
+    y = ((X**2).sum(axis=1) < 0.5).astype(int)
     y_str = y.astype(str)
 
     knn = neighbors.KNeighborsClassifier(
@@ -634,7 +657,7 @@ def test_kneighbors_classifier_float_labels(
     # Test k-neighbors classification
     rng = np.random.RandomState(random_state)
     X = 2 * rng.rand(n_samples, n_features).astype(global_dtype, copy=False) - 1
-    y = ((X ** 2).sum(axis=1) < 0.5).astype(int)
+    y = ((X**2).sum(axis=1) < 0.5).astype(int)
 
     knn = neighbors.KNeighborsClassifier(n_neighbors=n_neighbors)
     knn.fit(X, y.astype(float))
@@ -690,7 +713,7 @@ def test_radius_neighbors_classifier(
     # Test radius-based classification
     rng = np.random.RandomState(random_state)
     X = 2 * rng.rand(n_samples, n_features).astype(global_dtype, copy=False) - 1
-    y = ((X ** 2).sum(axis=1) < radius).astype(int)
+    y = ((X**2).sum(axis=1) < radius).astype(int)
     y_str = y.astype(str)
 
     neigh = neighbors.RadiusNeighborsClassifier(
@@ -707,7 +730,10 @@ def test_radius_neighbors_classifier(
 
 # TODO: Remove in v1.2
 def test_radius_neighbors_classifier_kwargs_is_deprecated():
-    extra_kwargs = {"unused_param": "", "extra_param": None}
+    extra_kwargs = {
+        "unused_param": "",
+        "extra_param": None,
+    }
     msg = (
         "Passing additional keyword parameters has no effect and is deprecated "
         "in 1.0. An error will be raised from 1.2 and beyond. The ignored "
@@ -738,7 +764,10 @@ def test_radius_neighbors_classifier_when_no_neighbors(
 
     rnc = neighbors.RadiusNeighborsClassifier
     clf = rnc(
-        radius=radius, weights=weights, algorithm=algorithm, outlier_label=outlier_label
+        radius=radius,
+        weights=weights,
+        algorithm=algorithm,
+        outlier_label=outlier_label,
     )
     clf.fit(X, y)
     assert_array_equal(np.array([1, 2]), clf.predict(z1))
@@ -1071,7 +1100,7 @@ def test_kneighbors_classifier_sparse(
     rng = np.random.RandomState(random_state)
     X = 2 * rng.rand(n_samples, n_features) - 1
     X *= X > 0.2
-    y = ((X ** 2).sum(axis=1) < 0.5).astype(int)
+    y = ((X**2).sum(axis=1) < 0.5).astype(int)
 
     for sparsemat in SPARSE_TYPES:
         knn = neighbors.KNeighborsClassifier(n_neighbors=n_neighbors, algorithm="auto")
@@ -1133,7 +1162,7 @@ def test_kneighbors_regressor(
     # Test k-neighbors regression
     rng = np.random.RandomState(random_state)
     X = 2 * rng.rand(n_samples, n_features) - 1
-    y = np.sqrt((X ** 2).sum(1))
+    y = np.sqrt((X**2).sum(1))
     y /= y.max()
 
     y_target = y[:n_test_pts]
@@ -1182,7 +1211,7 @@ def test_kneighbors_regressor_multioutput(
     # Test k-neighbors in multi-output regression
     rng = np.random.RandomState(random_state)
     X = 2 * rng.rand(n_samples, n_features) - 1
-    y = np.sqrt((X ** 2).sum(1))
+    y = np.sqrt((X**2).sum(1))
     y /= y.max()
     y = np.vstack([y, y]).T
 
@@ -1207,7 +1236,7 @@ def test_radius_neighbors_regressor(
     # Test radius-based neighbors regression
     rng = np.random.RandomState(random_state)
     X = 2 * rng.rand(n_samples, n_features) - 1
-    y = np.sqrt((X ** 2).sum(1))
+    y = np.sqrt((X**2).sum(1))
     y /= y.max()
 
     y_target = y[:n_test_pts]
@@ -1274,7 +1303,7 @@ def test_RadiusNeighborsRegressor_multioutput(
     # Test k-neighbors in multi-output regression with various weight
     rng = np.random.RandomState(random_state)
     X = 2 * rng.rand(n_samples, n_features) - 1
-    y = np.sqrt((X ** 2).sum(1))
+    y = np.sqrt((X**2).sum(1))
     y /= y.max()
     y = np.vstack([y, y]).T
 
@@ -1299,7 +1328,7 @@ def test_kneighbors_regressor_sparse(
     # Like the above, but with various types of sparse matrices
     rng = np.random.RandomState(random_state)
     X = 2 * rng.rand(n_samples, n_features) - 1
-    y = ((X ** 2).sum(axis=1) < 0.25).astype(int)
+    y = ((X**2).sum(axis=1) < 0.25).astype(int)
 
     for sparsemat in SPARSE_TYPES:
         knn = neighbors.KNeighborsRegressor(n_neighbors=n_neighbors, algorithm="auto")
@@ -1636,7 +1665,7 @@ def test_kneighbors_brute_backend(
 
 def test_callable_metric():
     def custom_metric(x1, x2):
-        return np.sqrt(np.sum(x1 ** 2 + x2 ** 2))
+        return np.sqrt(np.sum(x1**2 + x2**2))
 
     X = np.random.RandomState(42).rand(20, 2)
     nbrs1 = neighbors.NearestNeighbors(
@@ -2108,7 +2137,12 @@ def test_neighbors_distance_metric_deprecation():
     "metric", sorted(set(neighbors.VALID_METRICS["brute"]) - set(["precomputed"]))
 )
 def test_radius_neighbors_brute_backend(
-    metric, n_samples=2000, n_features=30, n_query_pts=100, n_neighbors=5, radius=1.0
+    metric,
+    n_samples=2000,
+    n_features=30,
+    n_query_pts=100,
+    n_neighbors=5,
+    radius=1.0,
 ):
     # Both backends for the 'brute' algorithm of radius_neighbors
     # must give identical results.

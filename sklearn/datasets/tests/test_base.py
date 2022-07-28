@@ -21,7 +21,10 @@ from sklearn.datasets import load_iris
 from sklearn.datasets import load_breast_cancer
 from sklearn.datasets import load_boston
 from sklearn.datasets import load_wine
-from sklearn.datasets._base import load_csv_data, load_gzip_compressed_csv_data
+from sklearn.datasets._base import (
+    load_csv_data,
+    load_gzip_compressed_csv_data,
+)
 from sklearn.preprocessing import scale
 from sklearn.utils import Bunch
 from sklearn.utils._testing import SkipTest
@@ -187,7 +190,8 @@ def test_load_gzip_compressed_csv_data_with_descr():
 
     expected_data = load_gzip_compressed_csv_data(data_file_name=data_file_name)
     actual_data, descr = load_gzip_compressed_csv_data(
-        data_file_name=data_file_name, descr_file_name=descr_file_name
+        data_file_name=data_file_name,
+        descr_file_name=descr_file_name,
     )
 
     np.testing.assert_array_equal(actual_data, expected_data)
@@ -237,7 +241,7 @@ def test_load_diabetes_raw():
     diabetes_default = load_diabetes()
 
     np.testing.assert_allclose(
-        scale(diabetes_raw.data) / (442 ** 0.5), diabetes_default.data, atol=1e-04
+        scale(diabetes_raw.data) / (442**0.5), diabetes_default.data, atol=1e-04
     )
 
 

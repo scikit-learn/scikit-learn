@@ -198,7 +198,10 @@ fig, axs = plt.subplots(nrows=3, ncols=2, figsize=(15, 12))
 
 for ax, (n, weight) in zip(axs.ravel(), enumerate(weights)):
 
-    X, y = make_classification(**common_params, weights=[weight, 1 - weight])
+    X, y = make_classification(
+        **common_params,
+        weights=[weight, 1 - weight],
+    )
     prevalence = y.mean()
     populations["prevalence"].append(prevalence)
     populations["X"].append(X)
@@ -211,7 +214,11 @@ for ax, (n, weight) in zip(axs.ravel(), enumerate(weights)):
 
     # plot fixed decision boundary of base model with varying prevalence
     disp = DecisionBoundaryDisplay.from_estimator(
-        estimator, X_plot, response_method="predict", alpha=0.5, ax=ax
+        estimator,
+        X_plot,
+        response_method="predict",
+        alpha=0.5,
+        ax=ax,
     )
     scatter = disp.ax_.scatter(X_plot[:, 0], X_plot[:, 1], c=y_plot, edgecolor="k")
     disp.ax_.set_title(f"prevalence = {y_plot.mean():.2f}")
@@ -282,7 +289,11 @@ ax1.fill_between(
     color="r",
     alpha=0.3,
 )
-ax1.set(title="Positive likelihood ratio", ylabel="LR+", ylim=[0, 5])
+ax1.set(
+    title="Positive likelihood ratio",
+    ylabel="LR+",
+    ylim=[0, 5],
+)
 ax1.legend(loc="lower right")
 
 ax2 = results["negative_likelihood_ratio"]["mean"].plot(
@@ -304,7 +315,11 @@ ax2.fill_between(
     color="b",
     alpha=0.3,
 )
-ax2.set(title="Negative likelihood ratio", ylabel="LR-", ylim=[0, 0.5])
+ax2.set(
+    title="Negative likelihood ratio",
+    ylabel="LR-",
+    ylim=[0, 0.5],
+)
 ax2.legend(loc="lower right")
 
 plt.show()

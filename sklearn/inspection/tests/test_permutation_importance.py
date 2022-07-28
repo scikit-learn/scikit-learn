@@ -16,7 +16,11 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.impute import SimpleImputer
 from sklearn.inspection import permutation_importance
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import get_scorer, mean_squared_error, r2_score
+from sklearn.metrics import (
+    get_scorer,
+    mean_squared_error,
+    r2_score,
+)
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import KBinsDiscretizer
 from sklearn.preprocessing import OneHotEncoder
@@ -243,7 +247,7 @@ def test_permutation_importance_linear_regresssion():
     lr = LinearRegression().fit(X, y)
 
     # this relationship can be computed in closed form
-    expected_importances = 2 * lr.coef_ ** 2
+    expected_importances = 2 * lr.coef_**2
     results = permutation_importance(
         lr, X, y, n_repeats=50, scoring="neg_mean_squared_error"
     )
@@ -433,7 +437,7 @@ def test_permutation_importance_sample_weight():
     # the two features importance should equal to 2 on expectation (when using
     # mean absolutes error as the loss function).
     w = np.hstack(
-        [np.repeat(10.0 ** 10, n_half_samples), np.repeat(1.0, n_half_samples)]
+        [np.repeat(10.0**10, n_half_samples), np.repeat(1.0, n_half_samples)]
     )
     lr.fit(x, y, w)
     pi = permutation_importance(

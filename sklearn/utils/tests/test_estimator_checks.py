@@ -810,7 +810,8 @@ def test_check_classifiers_multilabel_output_format_predict_proba():
     )
     with raises(ValueError, match=err_msg):
         check_classifiers_multilabel_output_format_predict_proba(
-            clf.__class__.__name__, clf
+            clf.__class__.__name__,
+            clf,
         )
     # 2. for list output
     # 2.1. inconsistent length
@@ -822,7 +823,8 @@ def test_check_classifiers_multilabel_output_format_predict_proba():
     )
     with raises(AssertionError, match=err_msg):
         check_classifiers_multilabel_output_format_predict_proba(
-            clf.__class__.__name__, clf
+            clf.__class__.__name__,
+            clf,
         )
     # 2.2. array of inconsistent shape
     response_output = [np.ones_like(y_test) for _ in range(n_outputs)]
@@ -834,7 +836,8 @@ def test_check_classifiers_multilabel_output_format_predict_proba():
     )
     with raises(AssertionError, match=err_msg):
         check_classifiers_multilabel_output_format_predict_proba(
-            clf.__class__.__name__, clf
+            clf.__class__.__name__,
+            clf,
         )
     # 2.3. array of inconsistent dtype
     response_output = [
@@ -847,7 +850,8 @@ def test_check_classifiers_multilabel_output_format_predict_proba():
     )
     with raises(AssertionError, match=err_msg):
         check_classifiers_multilabel_output_format_predict_proba(
-            clf.__class__.__name__, clf
+            clf.__class__.__name__,
+            clf,
         )
     # 2.4. array does not contain probability (each row should sum to 1)
     response_output = [
@@ -861,7 +865,8 @@ def test_check_classifiers_multilabel_output_format_predict_proba():
     )
     with raises(AssertionError, match=err_msg):
         check_classifiers_multilabel_output_format_predict_proba(
-            clf.__class__.__name__, clf
+            clf.__class__.__name__,
+            clf,
         )
     # 3 for array output
     # 3.1. array of inconsistent shape
@@ -873,7 +878,8 @@ def test_check_classifiers_multilabel_output_format_predict_proba():
     )
     with raises(AssertionError, match=err_msg):
         check_classifiers_multilabel_output_format_predict_proba(
-            clf.__class__.__name__, clf
+            clf.__class__.__name__,
+            clf,
         )
     # 3.2. array of inconsistent dtype
     response_output = np.zeros_like(y_test, dtype=np.int64)
@@ -884,7 +890,8 @@ def test_check_classifiers_multilabel_output_format_predict_proba():
     )
     with raises(AssertionError, match=err_msg):
         check_classifiers_multilabel_output_format_predict_proba(
-            clf.__class__.__name__, clf
+            clf.__class__.__name__,
+            clf,
         )
     # 4. array does not contain probabilities
     clf = MultiLabelClassifierPredictProba(response_output=y_test * 2.0)
@@ -895,7 +902,8 @@ def test_check_classifiers_multilabel_output_format_predict_proba():
     )
     with raises(AssertionError, match=err_msg):
         check_classifiers_multilabel_output_format_predict_proba(
-            clf.__class__.__name__, clf
+            clf.__class__.__name__,
+            clf,
         )
 
 
@@ -924,7 +932,8 @@ def test_check_classifiers_multilabel_output_format_decision_function():
     )
     with raises(AssertionError, match=err_msg):
         check_classifiers_multilabel_output_format_decision_function(
-            clf.__class__.__name__, clf
+            clf.__class__.__name__,
+            clf,
         )
     # 2. inconsistent shape
     clf = MultiLabelClassifierDecisionFunction(response_output=y_test[:, :-1])
@@ -935,7 +944,8 @@ def test_check_classifiers_multilabel_output_format_decision_function():
     )
     with raises(AssertionError, match=err_msg):
         check_classifiers_multilabel_output_format_decision_function(
-            clf.__class__.__name__, clf
+            clf.__class__.__name__,
+            clf,
         )
     # 3. inconsistent dtype
     clf = MultiLabelClassifierDecisionFunction(response_output=y_test)
@@ -945,7 +955,8 @@ def test_check_classifiers_multilabel_output_format_decision_function():
     )
     with raises(AssertionError, match=err_msg):
         check_classifiers_multilabel_output_format_decision_function(
-            clf.__class__.__name__, clf
+            clf.__class__.__name__,
+            clf,
         )
 
 

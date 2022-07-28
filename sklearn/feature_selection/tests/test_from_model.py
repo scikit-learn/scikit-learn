@@ -74,7 +74,11 @@ def test_input_estimator_unchanged():
     "max_features, err_type, err_msg",
     [
         (-1, ValueError, "max_features =="),
-        (data.shape[1] + 1, ValueError, "max_features =="),
+        (
+            data.shape[1] + 1,
+            ValueError,
+            "max_features ==",
+        ),
         (
             lambda X: 1.5,
             TypeError,
@@ -85,7 +89,11 @@ def test_input_estimator_unchanged():
             TypeError,
             "'max_features' must be either an int or a callable",
         ),
-        ("all", TypeError, "'max_features' must be either an int or a callable"),
+        (
+            "all",
+            TypeError,
+            "'max_features' must be either an int or a callable",
+        ),
     ],
 )
 def test_max_features_error(max_features, err_type, err_msg):
@@ -627,7 +635,11 @@ def test_estimator_does_not_support_feature_names():
 )
 def test_partial_fit_validate_max_features(error, err_msg, max_features):
     """Test that partial_fit from SelectFromModel validates `max_features`."""
-    X, y = datasets.make_classification(n_samples=100, n_features=4, random_state=0)
+    X, y = datasets.make_classification(
+        n_samples=100,
+        n_features=4,
+        random_state=0,
+    )
 
     with pytest.raises(error, match=err_msg):
         SelectFromModel(

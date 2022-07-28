@@ -229,7 +229,10 @@ class RocCurveDisplay:
         name = estimator.__class__.__name__ if name is None else name
 
         y_pred, pos_label = _get_response(
-            X, estimator, response_method=response_method, pos_label=pos_label
+            X,
+            estimator,
+            response_method=response_method,
+            pos_label=pos_label,
         )
 
         return cls.from_predictions(

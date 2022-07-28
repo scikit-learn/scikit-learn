@@ -186,7 +186,11 @@ plot_gallery("Dictionary learning", batch_dict_estimator.components_[:n_componen
 
 # %%
 kmeans_estimator = cluster.MiniBatchKMeans(
-    n_clusters=n_components, tol=1e-3, batch_size=20, max_iter=50, random_state=rng
+    n_clusters=n_components,
+    tol=1e-3,
+    batch_size=20,
+    max_iter=50,
+    random_state=rng,
 )
 kmeans_estimator.fit(faces_centered)
 plot_gallery(

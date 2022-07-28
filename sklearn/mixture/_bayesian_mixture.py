@@ -396,7 +396,8 @@ class BayesianGaussianMixture(BaseMixture):
             raise ValueError(
                 "Invalid value for 'covariance_type': %s "
                 "'covariance_type' should be in "
-                "['spherical', 'tied', 'diag', 'full']" % self.covariance_type
+                "['spherical', 'tied', 'diag', 'full']"
+                % self.covariance_type
             )
 
         if self.weight_concentration_prior_type not in [
@@ -444,7 +445,8 @@ class BayesianGaussianMixture(BaseMixture):
         else:
             raise ValueError(
                 "The parameter 'mean_precision_prior' should be "
-                "greater than 0., but got %.3f." % self.mean_precision_prior
+                "greater than 0., but got %.3f."
+                % self.mean_precision_prior
             )
 
         if self.mean_prior is None:
@@ -518,7 +520,8 @@ class BayesianGaussianMixture(BaseMixture):
         else:
             raise ValueError(
                 "The parameter 'spherical covariance_prior' "
-                "should be greater than 0., but got %.3f." % self.covariance_prior
+                "should be greater than 0., but got %.3f."
+                % self.covariance_prior
             )
 
     def _initialize(self, X, resp):
@@ -897,4 +900,4 @@ class BayesianGaussianMixture(BaseMixture):
                 self.precisions_cholesky_, self.precisions_cholesky_.T
             )
         else:
-            self.precisions_ = self.precisions_cholesky_ ** 2
+            self.precisions_ = self.precisions_cholesky_**2

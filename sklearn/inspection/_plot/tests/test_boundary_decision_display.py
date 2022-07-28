@@ -205,7 +205,10 @@ def test_decision_boundary_display(pyplot, fitted_clf, response_method, plot_met
             "MyClassifier has none of the following attributes: decision_function, "
             "predict_proba, predict",
         ),
-        ("bad_method", "MyClassifier has none of the following attributes: bad_method"),
+        (
+            "bad_method",
+            "MyClassifier has none of the following attributes: bad_method",
+        ),
     ],
 )
 def test_error_bad_response(pyplot, response_method, msg):
@@ -232,7 +235,11 @@ def test_multilabel_classifier_error(pyplot, response_method):
 
     msg = "Multi-label and multi-output multi-class classifiers are not supported"
     with pytest.raises(ValueError, match=msg):
-        DecisionBoundaryDisplay.from_estimator(tree, X, response_method=response_method)
+        DecisionBoundaryDisplay.from_estimator(
+            tree,
+            X,
+            response_method=response_method,
+        )
 
 
 @pytest.mark.parametrize("response_method", ["auto", "predict", "predict_proba"])
@@ -244,7 +251,11 @@ def test_multi_output_multi_class_classifier_error(pyplot, response_method):
 
     msg = "Multi-label and multi-output multi-class classifiers are not supported"
     with pytest.raises(ValueError, match=msg):
-        DecisionBoundaryDisplay.from_estimator(tree, X, response_method=response_method)
+        DecisionBoundaryDisplay.from_estimator(
+            tree,
+            X,
+            response_method=response_method,
+        )
 
 
 def test_multioutput_regressor_error(pyplot):
@@ -310,7 +321,10 @@ def test_string_target(pyplot):
 
     # Does not raise
     DecisionBoundaryDisplay.from_estimator(
-        log_reg, X, grid_resolution=5, response_method="predict"
+        log_reg,
+        X,
+        grid_resolution=5,
+        response_method="predict",
     )
 
 

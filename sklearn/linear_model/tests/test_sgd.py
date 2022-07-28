@@ -2023,7 +2023,10 @@ def test_multi_core_gridsearch_and_early_stopping():
     # This is a non-regression test for a bad interaction between
     # early stopping internal attribute and process-based multi-core
     # parallelism.
-    param_grid = {"alpha": np.logspace(-4, 4, 9), "n_iter_no_change": [5, 10, 50]}
+    param_grid = {
+        "alpha": np.logspace(-4, 4, 9),
+        "n_iter_no_change": [5, 10, 50],
+    }
 
     clf = SGDClassifier(tol=1e-2, max_iter=1000, early_stopping=True, random_state=0)
     search = RandomizedSearchCV(clf, param_grid, n_iter=5, n_jobs=2, random_state=0)

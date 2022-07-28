@@ -149,7 +149,7 @@ def plot_dloss(clfs):
 
 def get_max_squared_sum(X):
     """Get the maximum row-wise sum of squares"""
-    return np.sum(X ** 2, axis=1).max()
+    return np.sum(X**2, axis=1).max()
 
 
 rcv1 = fetch_rcv1()

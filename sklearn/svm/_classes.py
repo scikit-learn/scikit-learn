@@ -308,7 +308,7 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             "_xfail_checks": {
                 "check_sample_weights_invariance": (
                     "zero sample_weight is not equivalent to removing samples"
-                )
+                ),
             }
         }
 
@@ -547,7 +547,7 @@ class LinearSVR(RegressorMixin, LinearModel):
             "_xfail_checks": {
                 "check_sample_weights_invariance": (
                     "zero sample_weight is not equivalent to removing samples"
-                )
+                ),
             }
         }
 
@@ -821,7 +821,7 @@ class SVC(BaseSVC):
             "_xfail_checks": {
                 "check_sample_weights_invariance": (
                     "zero sample_weight is not equivalent to removing samples"
-                )
+                ),
             }
         }
 
@@ -1308,7 +1308,7 @@ class SVR(RegressorMixin, BaseLibSVM):
             "_xfail_checks": {
                 "check_sample_weights_invariance": (
                     "zero sample_weight is not equivalent to removing samples"
-                )
+                ),
             }
         }
 
@@ -1517,7 +1517,7 @@ class NuSVR(RegressorMixin, BaseLibSVM):
             "_xfail_checks": {
                 "check_sample_weights_invariance": (
                     "zero sample_weight is not equivalent to removing samples"
-                )
+                ),
             }
         }
 
@@ -1814,6 +1814,6 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
             "_xfail_checks": {
                 "check_sample_weights_invariance": (
                     "zero sample_weight is not equivalent to removing samples"
-                )
+                ),
             }
         }

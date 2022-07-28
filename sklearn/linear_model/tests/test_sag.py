@@ -935,7 +935,8 @@ def test_multinomial_loss():
     )
     # compute loss and gradient like in multinomial LogisticRegression
     loss = LinearModelLoss(
-        base_loss=HalfMultinomialLoss(n_classes=n_classes), fit_intercept=True
+        base_loss=HalfMultinomialLoss(n_classes=n_classes),
+        fit_intercept=True,
     )
     weights_intercept = np.vstack((weights, intercept)).T
     loss_2, grad_2 = loss.loss_gradient(
@@ -968,7 +969,8 @@ def test_multinomial_loss_ground_truth():
     grad_1 = np.dot(X.T, diff)
 
     loss = LinearModelLoss(
-        base_loss=HalfMultinomialLoss(n_classes=n_classes), fit_intercept=True
+        base_loss=HalfMultinomialLoss(n_classes=n_classes),
+        fit_intercept=True,
     )
     weights_intercept = np.vstack((weights, intercept)).T
     loss_2, grad_2 = loss.loss_gradient(

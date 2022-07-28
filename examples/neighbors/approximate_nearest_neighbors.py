@@ -89,9 +89,12 @@ class NMSlibTransformer(TransformerMixin, BaseEstimator):
 
         # see more metric in the manual
         # https://github.com/nmslib/nmslib/tree/master/manual
-        space = {"euclidean": "l2", "cosine": "cosinesimil", "l1": "l1", "l2": "l2"}[
-            self.metric
-        ]
+        space = {
+            "euclidean": "l2",
+            "cosine": "cosinesimil",
+            "l1": "l1",
+            "l2": "l2",
+        }[self.metric]
 
         self.nmslib_ = nmslib.init(method=self.method, space=space)
         self.nmslib_.addDataPointBatch(X)

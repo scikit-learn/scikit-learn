@@ -27,7 +27,10 @@ from .. import __version__
 from ..utils import check_array, IS_PYPY
 
 if not IS_PYPY:
-    from ._svmlight_format_fast import _load_svmlight_file, _dump_svmlight_file
+    from ._svmlight_format_fast import (
+        _load_svmlight_file,
+        _dump_svmlight_file,
+    )
 else:
 
     def _load_svmlight_file(*args, **kwargs):
@@ -380,11 +383,27 @@ def _dump_svmlight(X, y, f, multilabel, one_based, comment, query_id):
     y_is_sp = sp.issparse(y)
     if not multilabel and not y_is_sp:
         y = y[:, np.newaxis]
-    _dump_svmlight_file(X, y, f, multilabel, one_based, query_id, X_is_sp, y_is_sp)
+    _dump_svmlight_file(
+        X,
+        y,
+        f,
+        multilabel,
+        one_based,
+        query_id,
+        X_is_sp,
+        y_is_sp,
+    )
 
 
 def dump_svmlight_file(
-    X, y, f, *, zero_based=True, comment=None, query_id=None, multilabel=False
+    X,
+    y,
+    f,
+    *,
+    zero_based=True,
+    comment=None,
+    query_id=None,
+    multilabel=False,
 ):
     """Dump the dataset in svmlight / libsvm file format.
 

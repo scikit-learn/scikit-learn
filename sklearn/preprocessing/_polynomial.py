@@ -21,7 +21,10 @@ from ..utils.stats import _weighted_percentile
 from ._csr_polynomial_expansion import _csr_polynomial_expansion
 
 
-__all__ = ["PolynomialFeatures", "SplineTransformer"]
+__all__ = [
+    "PolynomialFeatures",
+    "SplineTransformer",
+]
 
 
 class PolynomialFeatures(TransformerMixin, BaseEstimator):
@@ -679,7 +682,11 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             x_max = np.amax(X[mask], axis=0)
 
             knots = np.linspace(
-                start=x_min, stop=x_max, num=n_knots, endpoint=True, dtype=np.float64
+                start=x_min,
+                stop=x_max,
+                num=n_knots,
+                endpoint=True,
+                dtype=np.float64,
             )
 
         return knots
@@ -761,7 +768,11 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             Fitted transformer.
         """
         X = self._validate_data(
-            X, reset=True, accept_sparse=False, ensure_min_samples=2, ensure_2d=True
+            X,
+            reset=True,
+            accept_sparse=False,
+            ensure_min_samples=2,
+            ensure_2d=True,
         )
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
@@ -773,7 +784,10 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                 f"degree must be a non-negative integer, got {self.degree}."
             )
 
-        if isinstance(self.knots, str) and self.knots in ["uniform", "quantile"]:
+        if isinstance(self.knots, str) and self.knots in [
+            "uniform",
+            "quantile",
+        ]:
             if not (isinstance(self.n_knots, numbers.Integral) and self.n_knots >= 2):
                 raise ValueError(
                     f"n_knots must be a positive integer >= 2, got: {self.n_knots}"
@@ -971,7 +985,8 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                 mask = X[:, i] > xmax
                 if np.any(mask):
                     XBS[
-                        mask, ((i + 1) * n_splines - degree) : ((i + 1) * n_splines)
+                        mask,
+                        ((i + 1) * n_splines - degree) : ((i + 1) * n_splines),
                     ] = f_max[-degree:]
 
             elif self.extrapolation == "linear":

@@ -51,7 +51,12 @@ def test_det_curve_display(
     else:
         disp = DetCurveDisplay.from_predictions(y, y_pred, **common_kwargs)
 
-    fpr, fnr, _ = det_curve(y, y_pred, sample_weight=sample_weight, pos_label=pos_label)
+    fpr, fnr, _ = det_curve(
+        y,
+        y_pred,
+        sample_weight=sample_weight,
+        pos_label=pos_label,
+    )
 
     assert_allclose(disp.fpr, fpr)
     assert_allclose(disp.fnr, fnr)
@@ -76,9 +81,16 @@ def test_det_curve_display(
 
 @pytest.mark.parametrize(
     "constructor_name, expected_clf_name",
-    [("from_estimator", "LogisticRegression"), ("from_predictions", "Classifier")],
+    [
+        ("from_estimator", "LogisticRegression"),
+        ("from_predictions", "Classifier"),
+    ],
 )
-def test_det_curve_display_default_name(pyplot, constructor_name, expected_clf_name):
+def test_det_curve_display_default_name(
+    pyplot,
+    constructor_name,
+    expected_clf_name,
+):
     # Check the default name display in the figure when `name` is not provided
     X, y = load_iris(return_X_y=True)
     # Binarize the data with only the two first classes

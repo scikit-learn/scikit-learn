@@ -22,8 +22,16 @@ from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutM
 from ..exceptions import ConvergenceWarning
 from ..utils import check_random_state, check_array, gen_batches
 from ..utils.extmath import randomized_svd, safe_sparse_dot, squared_norm
-from ..utils.validation import check_is_fitted, check_non_negative
-from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
+from ..utils.validation import (
+    check_is_fitted,
+    check_non_negative,
+)
+from ..utils._param_validation import (
+    Hidden,
+    Interval,
+    StrOptions,
+    validate_params,
+)
 
 
 EPSILON = np.finfo(np.float32).eps
@@ -160,10 +168,10 @@ def _beta_divergence(X, W, H, beta, square_root=False):
                 sum_WH_beta += np.sum(np.dot(W, H[:, i]) ** beta)
 
         else:
-            sum_WH_beta = np.sum(WH ** beta)
+            sum_WH_beta = np.sum(WH**beta)
 
         sum_X_WH = np.dot(X_data, WH_data ** (beta - 1))
-        res = (X_data ** beta).sum() - beta * sum_X_WH
+        res = (X_data**beta).sum() - beta * sum_X_WH
         res += sum_WH_beta * (beta - 1)
         res /= beta * (beta - 1)
 
@@ -1804,7 +1812,8 @@ class NMF(_BaseNMF):
         if n_iter == self.max_iter and self.tol > 0:
             warnings.warn(
                 "Maximum number of iterations %d reached. Increase "
-                "it to improve convergence." % self.max_iter,
+                "it to improve convergence."
+                % self.max_iter,
                 ConvergenceWarning,
             )
 
@@ -2172,8 +2181,8 @@ class MiniBatchNMF(_BaseNMF):
             _beta_divergence(X, W, H, self._beta_loss)
             + l1_reg_W * W.sum()
             + l1_reg_H * H.sum()
-            + l2_reg_W * (W ** 2).sum()
-            + l2_reg_H * (H ** 2).sum()
+            + l2_reg_W * (W**2).sum()
+            + l2_reg_H * (H**2).sum()
         ) / batch_size
 
         # update H (only at fit or fit_transform)

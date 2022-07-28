@@ -15,7 +15,11 @@ from scipy.sparse.csgraph import connected_components
 from scipy.sparse.csgraph import laplacian as csgraph_laplacian
 
 from ..base import BaseEstimator
-from ..utils import check_array, check_random_state, check_symmetric
+from ..utils import (
+    check_array,
+    check_random_state,
+    check_symmetric,
+)
 from ..utils._arpack import _init_arpack_v0
 from ..utils.extmath import _deterministic_vector_sign_flip
 from ..utils.fixes import lobpcg
@@ -659,7 +663,8 @@ class SpectralEmbedding(BaseEstimator):
                 raise ValueError(
                     "%s is not a valid affinity. Expected "
                     "'precomputed', 'rbf', 'nearest_neighbors' "
-                    "or a callable." % self.affinity
+                    "or a callable."
+                    % self.affinity
                 )
         elif not callable(self.affinity):
             raise ValueError(

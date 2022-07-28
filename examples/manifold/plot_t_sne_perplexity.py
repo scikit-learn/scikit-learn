@@ -109,7 +109,12 @@ for i, perplexity in enumerate(perplexities):
 # Another example using a 2D uniform grid
 x = np.linspace(0, 1, int(np.sqrt(n_samples)))
 xx, yy = np.meshgrid(x, x)
-X = np.hstack([xx.ravel().reshape(-1, 1), yy.ravel().reshape(-1, 1)])
+X = np.hstack(
+    [
+        xx.ravel().reshape(-1, 1),
+        yy.ravel().reshape(-1, 1),
+    ]
+)
 color = xx.ravel()
 ax = subplots[2][0]
 ax.scatter(X[:, 0], X[:, 1], c=color)

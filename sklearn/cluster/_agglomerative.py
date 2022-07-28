@@ -302,7 +302,12 @@ def ward_tree(X, *, connectivity=None, n_clusters=None, return_distance=False):
         # We keep only the upper triangular for the moments
         # Generator expressions are faster than arrays on the following
         row = [i for i in row if i < ind]
-        coord_row.extend(len(row) * [ind])
+        coord_row.extend(
+            len(row)
+            * [
+                ind,
+            ]
+        )
         coord_col.extend(row)
 
     coord_row = np.array(coord_row, dtype=np.intp, order="C")
@@ -892,7 +897,11 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
             StrOptions(set(_VALID_METRICS) | {"precomputed"}),
             callable,
         ],
-        "metric": [StrOptions(set(_VALID_METRICS) | {"precomputed"}), callable, None],
+        "metric": [
+            StrOptions(set(_VALID_METRICS) | {"precomputed"}),
+            callable,
+            None,
+        ],
         "memory": [str, HasMethods("cache"), None],
         "connectivity": ["array-like", callable, None],
         "compute_full_tree": [StrOptions({"auto"}), "boolean"],
@@ -1255,7 +1264,11 @@ class FeatureAgglomeration(
             StrOptions(set(_VALID_METRICS) | {"precomputed"}),
             callable,
         ],
-        "metric": [StrOptions(set(_VALID_METRICS) | {"precomputed"}), callable, None],
+        "metric": [
+            StrOptions(set(_VALID_METRICS) | {"precomputed"}),
+            callable,
+            None,
+        ],
         "memory": [str, HasMethods("cache"), None],
         "connectivity": ["array-like", callable, None],
         "compute_full_tree": [StrOptions({"auto"}), "boolean"],

@@ -295,7 +295,7 @@ class _BaseKFold(BaseCrossValidator, metaclass=ABCMeta):
             raise ValueError(
                 "Setting a random_state has no effect since shuffle is "
                 "False. You should leave "
-                "random_state to its default (None), or set shuffle=True."
+                "random_state to its default (None), or set shuffle=True.",
             )
 
         self.n_splits = n_splits

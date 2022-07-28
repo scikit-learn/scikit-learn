@@ -525,7 +525,9 @@ def load_wine(*, return_X_y=False, as_frame=False):
     ]
 
     frame = None
-    target_columns = ["target"]
+    target_columns = [
+        "target",
+    ]
     if as_frame:
         frame, data, target = _convert_data_dataframe(
             "load_wine", data, target, feature_names, target_columns
@@ -644,7 +646,9 @@ def load_iris(*, return_X_y=False, as_frame=False):
     ]
 
     frame = None
-    target_columns = ["target"]
+    target_columns = [
+        "target",
+    ]
     if as_frame:
         frame, data, target = _convert_data_dataframe(
             "load_iris", data, target, feature_names, target_columns
@@ -791,7 +795,9 @@ def load_breast_cancer(*, return_X_y=False, as_frame=False):
     )
 
     frame = None
-    target_columns = ["target"]
+    target_columns = [
+        "target",
+    ]
     if as_frame:
         frame, data, target = _convert_data_dataframe(
             "load_breast_cancer", data, target, feature_names, target_columns
@@ -923,7 +929,9 @@ def load_digits(*, n_class=10, return_X_y=False, as_frame=False):
     ]
 
     frame = None
-    target_columns = ["target"]
+    target_columns = [
+        "target",
+    ]
     if as_frame:
         frame, flat_data, target = _convert_data_dataframe(
             "load_digits", flat_data, target, feature_names, target_columns
@@ -1031,7 +1039,9 @@ def load_diabetes(*, return_X_y=False, as_frame=False, scaled=True):
     feature_names = ["age", "sex", "bmi", "bp", "s1", "s2", "s3", "s4", "s5", "s6"]
 
     frame = None
-    target_columns = ["target"]
+    target_columns = [
+        "target",
+    ]
     if as_frame:
         frame, data, target = _convert_data_dataframe(
             "load_diabetes", data, target, feature_names, target_columns

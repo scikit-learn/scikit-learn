@@ -39,11 +39,17 @@ def check_clusterings(labels_true, labels_pred):
         The predicted labels.
     """
     labels_true = check_array(
-        labels_true, ensure_2d=False, ensure_min_samples=0, dtype=None
+        labels_true,
+        ensure_2d=False,
+        ensure_min_samples=0,
+        dtype=None,
     )
 
     labels_pred = check_array(
-        labels_pred, ensure_2d=False, ensure_min_samples=0, dtype=None
+        labels_pred,
+        ensure_2d=False,
+        ensure_min_samples=0,
+        dtype=None,
     )
 
     type_label = type_of_target(labels_true)
@@ -221,12 +227,12 @@ def pair_confusion_matrix(labels_true, labels_pred):
     )
     n_c = np.ravel(contingency.sum(axis=1))
     n_k = np.ravel(contingency.sum(axis=0))
-    sum_squares = (contingency.data ** 2).sum()
+    sum_squares = (contingency.data**2).sum()
     C = np.empty((2, 2), dtype=np.int64)
     C[1, 1] = sum_squares - n_samples
     C[0, 1] = contingency.dot(n_k).sum() - sum_squares
     C[1, 0] = contingency.transpose().dot(n_c).sum() - sum_squares
-    C[0, 0] = n_samples ** 2 - C[0, 1] - C[1, 0] - sum_squares
+    C[0, 0] = n_samples**2 - C[0, 1] - C[1, 0] - sum_squares
     return C
 
 

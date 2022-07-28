@@ -28,7 +28,11 @@ from ..metrics._pairwise_distances_reduction import (
     PairwiseDistancesArgKmin,
     PairwiseDistancesRadiusNeighborhood,
 )
-from ..utils import check_array, gen_even_slices, _to_object_array
+from ..utils import (
+    check_array,
+    gen_even_slices,
+    _to_object_array,
+)
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
 from ..utils.validation import check_non_negative
@@ -423,7 +427,8 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 raise ValueError(
                     "kd_tree does not support callable metric '%s'"
                     "Function call overhead will result"
-                    "in very poor performance." % self.metric
+                    "in very poor performance."
+                    % self.metric
                 )
         elif self.metric not in VALID_METRICS[alg_check]:
             raise ValueError(
@@ -842,7 +847,8 @@ class KNeighborsMixin:
             if issparse(X):
                 raise ValueError(
                     "%s does not work with sparse matrices. Densify the data, "
-                    "or set algorithm='brute'" % self._fit_method
+                    "or set algorithm='brute'"
+                    % self._fit_method
                 )
             chunked_results = Parallel(n_jobs, prefer="threads")(
                 delayed(_tree_query_parallel_helper)(
@@ -1193,7 +1199,8 @@ class RadiusNeighborsMixin:
             if issparse(X):
                 raise ValueError(
                     "%s does not work with sparse matrices. Densify the data, "
-                    "or set algorithm='brute'" % self._fit_method
+                    "or set algorithm='brute'"
+                    % self._fit_method
                 )
 
             n_jobs = effective_n_jobs(self.n_jobs)

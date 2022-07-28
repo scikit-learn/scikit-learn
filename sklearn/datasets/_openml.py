@@ -281,7 +281,11 @@ def _get_data_info_by_name(
         url = _SEARCH_NAME.format(name) + "/status/active/"
         error_msg = "No active dataset {} found.".format(name)
         json_data = _get_json_content_from_openml_api(
-            url, error_msg, data_home=data_home, n_retries=n_retries, delay=delay
+            url,
+            error_msg,
+            data_home=data_home,
+            n_retries=n_retries,
+            delay=delay,
         )
         res = json_data["data"]["dataset"]
         if len(res) > 1:
@@ -311,46 +315,71 @@ def _get_data_info_by_name(
         url += "/status/deactivated"
         error_msg = "Dataset {} with version {} not found.".format(name, version)
         json_data = _get_json_content_from_openml_api(
-            url, error_msg, data_home=data_home, n_retries=n_retries, delay=delay
+            url,
+            error_msg,
+            data_home=data_home,
+            n_retries=n_retries,
+            delay=delay,
         )
 
     return json_data["data"]["dataset"][0]
 
 
 def _get_data_description_by_id(
-    data_id: int, data_home: Optional[str], n_retries: int = 3, delay: float = 1.0
+    data_id: int,
+    data_home: Optional[str],
+    n_retries: int = 3,
+    delay: float = 1.0,
 ) -> Dict[str, Any]:
     # OpenML API function: https://www.openml.org/api_docs#!/data/get_data_id
     url = _DATA_INFO.format(data_id)
     error_message = "Dataset with data_id {} not found.".format(data_id)
     json_data = _get_json_content_from_openml_api(
-        url, error_message, data_home=data_home, n_retries=n_retries, delay=delay
+        url,
+        error_message,
+        data_home=data_home,
+        n_retries=n_retries,
+        delay=delay,
     )
     return json_data["data_set_description"]
 
 
 def _get_data_features(
-    data_id: int, data_home: Optional[str], n_retries: int = 3, delay: float = 1.0
+    data_id: int,
+    data_home: Optional[str],
+    n_retries: int = 3,
+    delay: float = 1.0,
 ) -> OpenmlFeaturesType:
     # OpenML function:
     # https://www.openml.org/api_docs#!/data/get_data_features_id
     url = _DATA_FEATURES.format(data_id)
     error_message = "Dataset with data_id {} not found.".format(data_id)
     json_data = _get_json_content_from_openml_api(
-        url, error_message, data_home=data_home, n_retries=n_retries, delay=delay
+        url,
+        error_message,
+        data_home=data_home,
+        n_retries=n_retries,
+        delay=delay,
     )
     return json_data["data_features"]["feature"]
 
 
 def _get_data_qualities(
-    data_id: int, data_home: Optional[str], n_retries: int = 3, delay: float = 1.0
+    data_id: int,
+    data_home: Optional[str],
+    n_retries: int = 3,
+    delay: float = 1.0,
 ) -> OpenmlQualitiesType:
     # OpenML API function:
     # https://www.openml.org/api_docs#!/data/get_data_qualities_id
     url = _DATA_QUALITIES.format(data_id)
     error_message = "Dataset with data_id {} not found.".format(data_id)
     json_data = _get_json_content_from_openml_api(
-        url, error_message, data_home=data_home, n_retries=n_retries, delay=delay
+        url,
+        error_message,
+        data_home=data_home,
+        n_retries=n_retries,
+        delay=delay,
     )
     # the qualities might not be available, but we still try to process
     # the data

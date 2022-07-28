@@ -35,7 +35,7 @@ expected_y = f(X).ravel()
 # The lognormal distribution is non-symmetric and long tailed: observing large
 # outliers is likely but it is impossible to observe small outliers.
 sigma = 0.5 + X.ravel() / 10
-noise = rng.lognormal(sigma=sigma) - np.exp(sigma ** 2 / 2)
+noise = rng.lognormal(sigma=sigma) - np.exp(sigma**2 / 2)
 y = expected_y + noise
 
 # %%
@@ -285,7 +285,8 @@ neg_mean_pinball_loss_95p_scorer = make_scorer(
     greater_is_better=False,  # maximize the negative loss
 )
 search_95p = clone(search_05p).set_params(
-    estimator__alpha=alpha, scoring=neg_mean_pinball_loss_95p_scorer
+    estimator__alpha=alpha,
+    scoring=neg_mean_pinball_loss_95p_scorer,
 )
 search_95p.fit(X_train, y_train)
 pprint(search_95p.best_params_)

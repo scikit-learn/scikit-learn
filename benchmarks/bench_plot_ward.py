@@ -33,7 +33,13 @@ ratio = scikits_time / scipy_time
 plt.figure("scikit-learn Ward's method benchmark results")
 plt.imshow(np.log(ratio), aspect="auto", origin="lower")
 plt.colorbar()
-plt.contour(ratio, levels=[1], colors="k")
+plt.contour(
+    ratio,
+    levels=[
+        1,
+    ],
+    colors="k",
+)
 plt.yticks(range(len(n_features)), n_features.astype(int))
 plt.ylabel("N features")
 plt.xticks(range(len(n_samples)), n_samples.astype(int))

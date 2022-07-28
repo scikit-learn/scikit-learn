@@ -236,7 +236,12 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         else:
             dtype, ensure_2d = None, False
         X, y = self._validate_data(
-            X, y, multi_output=True, y_numeric=True, ensure_2d=ensure_2d, dtype=dtype
+            X,
+            y,
+            multi_output=True,
+            y_numeric=True,
+            ensure_2d=ensure_2d,
+            dtype=dtype,
         )
 
         # Normalize target value
@@ -327,7 +332,9 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             raise
         # Alg 2.1, page 19, line 3 -> alpha = L^T \ (L \ y)
         self.alpha_ = cho_solve(
-            (self.L_, GPR_CHOLESKY_LOWER), self.y_train_, check_finite=False
+            (self.L_, GPR_CHOLESKY_LOWER),
+            self.y_train_,
+            check_finite=False,
         )
         return self
 
@@ -416,7 +423,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                 y_cov = self.kernel_(X) - V.T @ V
 
                 # undo normalisation
-                y_cov = np.outer(y_cov, self._y_train_std ** 2).reshape(
+                y_cov = np.outer(y_cov, self._y_train_std**2).reshape(
                     *y_cov.shape, -1
                 )
                 # if y_cov has shape (n_samples, n_samples, 1), reshape to
@@ -443,7 +450,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                     y_var[y_var_negative] = 0.0
 
                 # undo normalisation
-                y_var = np.outer(y_var, self._y_train_std ** 2).reshape(
+                y_var = np.outer(y_var, self._y_train_std**2).reshape(
                     *y_var.shape, -1
                 )
 
@@ -614,7 +621,11 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
     def _constrained_optimization(self, obj_func, initial_theta, bounds):
         if self.optimizer == "fmin_l_bfgs_b":
             opt_res = scipy.optimize.minimize(
-                obj_func, initial_theta, method="L-BFGS-B", jac=True, bounds=bounds
+                obj_func,
+                initial_theta,
+                method="L-BFGS-B",
+                jac=True,
+                bounds=bounds,
             )
             _check_optimize_result("lbfgs", opt_res)
             theta_opt, func_min = opt_res.x, opt_res.fun

@@ -75,7 +75,10 @@ def test_classification():
     # doing the full cartesian product to keep the test durations low.
     for params, base_estimator in zip(grid, cycle(estimators)):
         BaggingClassifier(
-            base_estimator=base_estimator, random_state=rng, n_estimators=2, **params
+            base_estimator=base_estimator,
+            random_state=rng,
+            n_estimators=2,
+            **params,
         ).fit(X_train, y_train).predict(X_test)
 
 
@@ -820,11 +823,25 @@ def replace(X):
 def test_bagging_regressor_with_missing_inputs():
     # Check that BaggingRegressor can accept X with missing/infinite data
     X = np.array(
-        [[1, 3, 5], [2, None, 6], [2, np.nan, 6], [2, np.inf, 6], [2, np.NINF, 6]]
+        [
+            [1, 3, 5],
+            [2, None, 6],
+            [2, np.nan, 6],
+            [2, np.inf, 6],
+            [2, np.NINF, 6],
+        ]
     )
     y_values = [
         np.array([2, 3, 3, 3, 3]),
-        np.array([[2, 1, 9], [3, 6, 8], [3, 6, 8], [3, 6, 8], [3, 6, 8]]),
+        np.array(
+            [
+                [2, 1, 9],
+                [3, 6, 8],
+                [3, 6, 8],
+                [3, 6, 8],
+                [3, 6, 8],
+            ]
+        ),
     ]
     for y in y_values:
         regressor = DecisionTreeRegressor()
@@ -847,7 +864,13 @@ def test_bagging_regressor_with_missing_inputs():
 def test_bagging_classifier_with_missing_inputs():
     # Check that BaggingClassifier can accept X with missing/infinite data
     X = np.array(
-        [[1, 3, 5], [2, None, 6], [2, np.nan, 6], [2, np.inf, 6], [2, np.NINF, 6]]
+        [
+            [1, 3, 5],
+            [2, None, 6],
+            [2, np.nan, 6],
+            [2, np.inf, 6],
+            [2, np.NINF, 6],
+        ]
     )
     y = np.array([3, 6, 6, 6, 6])
     classifier = DecisionTreeClassifier()

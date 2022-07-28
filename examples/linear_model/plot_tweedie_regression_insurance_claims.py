@@ -142,7 +142,14 @@ def plot_obs_pred(
 
 
 def score_estimator(
-    estimator, X_train, X_test, df_train, df_test, target, weights, tweedie_powers=None
+    estimator,
+    X_train,
+    X_test,
+    df_train,
+    df_test,
+    target,
+    weights,
+    tweedie_powers=None,
 ):
     """Evaluate an estimator on train and test sets with different metrics"""
 
@@ -276,7 +283,13 @@ glm_freq = PoissonRegressor(alpha=1e-3, max_iter=400)
 glm_freq.fit(X_train, df_train["Frequency"], sample_weight=df_train["Exposure"])
 
 scores = score_estimator(
-    glm_freq, X_train, X_test, df_train, df_test, target="Frequency", weights="Exposure"
+    glm_freq,
+    X_train,
+    X_test,
+    df_train,
+    df_test,
+    target="Frequency",
+    weights="Exposure",
 )
 print("Evaluation of PoissonRegressor on target Frequency")
 print(scores)
@@ -518,7 +531,10 @@ with pd.option_context("display.expand_frame_repr", False):
 # behavior depends on the amount of regularization).
 
 res = []
-for subset_label, X, df in [("train", X_train, df_train), ("test", X_test, df_test)]:
+for subset_label, X, df in [
+    ("train", X_train, df_train),
+    ("test", X_test, df_test),
+]:
     exposure = df["Exposure"].values
     res.append(
         {

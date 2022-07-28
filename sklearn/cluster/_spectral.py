@@ -131,7 +131,7 @@ def discretize(
     # Normalize the rows of the eigenvectors.  Samples should lie on the unit
     # hypersphere centered at the origin.  This transforms the samples in the
     # embedding space to the space of partition matrices.
-    vectors = vectors / np.sqrt((vectors ** 2).sum(axis=1))[:, np.newaxis]
+    vectors = vectors / np.sqrt((vectors**2).sum(axis=1))[:, np.newaxis]
 
     svd_restarts = 0
     has_converged = False
@@ -356,7 +356,7 @@ def spectral_clustering(
             "spectral_clustering does not support passing in affinity as an "
             "np.matrix. Please convert to a numpy array with np.asarray. For "
             "more information see: "
-            "https://numpy.org/doc/stable/reference/generated/numpy.matrix.html"  # noqa
+            "https://numpy.org/doc/stable/reference/generated/numpy.matrix.html",  # noqa
         )
 
     random_state = check_random_state(random_state)
@@ -632,7 +632,10 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
             ),
         ],
         "n_neighbors": [Interval(Integral, 1, None, closed="left")],
-        "eigen_tol": [Interval(Real, 0.0, None, closed="left"), StrOptions({"auto"})],
+        "eigen_tol": [
+            Interval(Real, 0.0, None, closed="left"),
+            StrOptions({"auto"}),
+        ],
         "assign_labels": [StrOptions({"kmeans", "discretize", "cluster_qr"})],
         "degree": [Interval(Integral, 1, None, closed="left")],
         "coef0": [Interval(Real, None, None, closed="neither")],

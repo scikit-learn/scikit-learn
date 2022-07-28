@@ -214,7 +214,10 @@ class BayesianRidge(RegressorMixin, LinearModel):
         or TypeError if not valid."""
 
         check_scalar(
-            self.n_iter, name="n_iter", target_type=numbers.Integral, min_val=1
+            self.n_iter,
+            name="n_iter",
+            target_type=numbers.Integral,
+            min_val=1,
         )
 
         check_scalar(
@@ -274,18 +277,26 @@ class BayesianRidge(RegressorMixin, LinearModel):
             )
 
         check_scalar(
-            self.compute_score, name="compute_score", target_type=(np.bool_, bool)
+            self.compute_score,
+            name="compute_score",
+            target_type=(np.bool_, bool),
         )
 
         check_scalar(
-            self.fit_intercept, name="fit_intercept", target_type=(np.bool_, bool)
+            self.fit_intercept,
+            name="fit_intercept",
+            target_type=(np.bool_, bool),
         )
 
         self._normalize = _deprecate_normalize(
             self.normalize, default=False, estimator_name=self.__class__.__name__
         )
 
-        check_scalar(self.copy_X, name="copy_X", target_type=(np.bool_, bool))
+        check_scalar(
+            self.copy_X,
+            name="copy_X",
+            target_type=(np.bool_, bool),
+        )
 
         check_scalar(
             self.verbose,
@@ -362,7 +373,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
 
         XT_y = np.dot(X.T, y)
         U, S, Vh = linalg.svd(X, full_matrices=False)
-        eigen_vals_ = S ** 2
+        eigen_vals_ = S**2
 
         # Convergence loop of the bayesian ridge regression
         for iter_ in range(self.n_iter):
@@ -381,7 +392,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
 
             # Update alpha and lambda according to (MacKay, 1992)
             gamma_ = np.sum((alpha_ * eigen_vals_) / (lambda_ + alpha_ * eigen_vals_))
-            lambda_ = (gamma_ + 2 * lambda_1) / (np.sum(coef_ ** 2) + 2 * lambda_2)
+            lambda_ = (gamma_ + 2 * lambda_1) / (np.sum(coef_**2) + 2 * lambda_2)
             alpha_ = (n_samples - gamma_ + 2 * alpha_1) / (rmse_ + 2 * alpha_2)
 
             # Check for convergence
@@ -498,7 +509,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
             n_features * log(lambda_)
             + n_samples * log(alpha_)
             - alpha_ * rmse
-            - lambda_ * np.sum(coef ** 2)
+            - lambda_ * np.sum(coef**2)
             + logdet_sigma
             - n_samples * log(2 * np.pi)
         )
@@ -788,7 +799,7 @@ class ARDRegression(RegressorMixin, LinearModel):
                     + n_samples * log(alpha_)
                     + np.sum(np.log(lambda_))
                 )
-                s -= 0.5 * (alpha_ * rmse_ + (lambda_ * coef_ ** 2).sum())
+                s -= 0.5 * (alpha_ * rmse_ + (lambda_ * coef_**2).sum())
                 self.scores_.append(s)
 
             # Check for convergence

@@ -1789,7 +1789,11 @@ def test_nested_cv():
     X, y = make_classification(n_samples=15, n_classes=2, random_state=0)
     groups = rng.randint(0, 5, 15)
 
-    cvs = [LeaveOneGroupOut(), StratifiedKFold(n_splits=2), GroupKFold(n_splits=3)]
+    cvs = [
+        LeaveOneGroupOut(),
+        StratifiedKFold(n_splits=2),
+        GroupKFold(n_splits=3),
+    ]
 
     for inner_cv, outer_cv in combinations_with_replacement(cvs, 2):
         gs = GridSearchCV(

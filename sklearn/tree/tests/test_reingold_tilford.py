@@ -7,7 +7,12 @@ simple_tree = Tree("", 0, Tree("", 1), Tree("", 2))
 bigger_tree = Tree(
     "",
     0,
-    Tree("", 1, Tree("", 3), Tree("", 4, Tree("", 7), Tree("", 8))),
+    Tree(
+        "",
+        1,
+        Tree("", 3),
+        Tree("", 4, Tree("", 7), Tree("", 8)),
+    ),
     Tree("", 2, Tree("", 5), Tree("", 6)),
 )
 

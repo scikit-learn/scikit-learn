@@ -297,7 +297,10 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         """
         check_is_fitted(self)
         X = self._validate_data(
-            X, accept_sparse=True, force_all_finite=False, reset=False
+            X,
+            accept_sparse=True,
+            force_all_finite=False,
+            reset=False,
         )
         return self.base_estimator_.predict(X)
 
@@ -317,7 +320,10 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         """
         check_is_fitted(self)
         X = self._validate_data(
-            X, accept_sparse=True, force_all_finite=False, reset=False
+            X,
+            accept_sparse=True,
+            force_all_finite=False,
+            reset=False,
         )
         return self.base_estimator_.predict_proba(X)
 
@@ -337,7 +343,10 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         """
         check_is_fitted(self)
         X = self._validate_data(
-            X, accept_sparse=True, force_all_finite=False, reset=False
+            X,
+            accept_sparse=True,
+            force_all_finite=False,
+            reset=False,
         )
         return self.base_estimator_.decision_function(X)
 
@@ -357,7 +366,10 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         """
         check_is_fitted(self)
         X = self._validate_data(
-            X, accept_sparse=True, force_all_finite=False, reset=False
+            X,
+            accept_sparse=True,
+            force_all_finite=False,
+            reset=False,
         )
         return self.base_estimator_.predict_log_proba(X)
 
@@ -380,6 +392,9 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         """
         check_is_fitted(self)
         X = self._validate_data(
-            X, accept_sparse=True, force_all_finite=False, reset=False
+            X,
+            accept_sparse=True,
+            force_all_finite=False,
+            reset=False,
         )
         return self.base_estimator_.score(X, y)

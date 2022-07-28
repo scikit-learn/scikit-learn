@@ -183,7 +183,9 @@ def fetch_california_housing(
     y = target
 
     frame = None
-    target_names = ["MedHouseVal"]
+    target_names = [
+        "MedHouseVal",
+    ]
     if as_frame:
         frame, X, y = _convert_data_dataframe(
             "fetch_california_housing", data, target, feature_names, target_names

@@ -349,7 +349,10 @@ def test_oneclass_score_samples():
 # TODO: Remove in v1.2
 def test_oneclass_fit_params_is_deprecated():
     clf = svm.OneClassSVM()
-    params = {"unused_param": "", "extra_param": None}
+    params = {
+        "unused_param": "",
+        "extra_param": None,
+    }
     msg = (
         "Passing additional keyword parameters has no effect and is deprecated "
         "in 1.0. An error will be raised from 1.2 and beyond. The ignored "
@@ -669,7 +672,10 @@ def test_auto_weight():
         # check that score is better when class='balanced' is set.
         y_pred = clf.fit(X[unbalanced], y[unbalanced]).predict(X)
         clf.set_params(class_weight="balanced")
-        y_pred_balanced = clf.fit(X[unbalanced], y[unbalanced]).predict(X)
+        y_pred_balanced = clf.fit(
+            X[unbalanced],
+            y[unbalanced],
+        ).predict(X)
         assert metrics.f1_score(y, y_pred, average="macro") <= metrics.f1_score(
             y, y_pred_balanced, average="macro"
         )
@@ -1204,12 +1210,18 @@ def test_svc_ovr_tie_breaking(SVCClass):
     common_params = dict(
         kernel="rbf", gamma=1e6, random_state=42, decision_function_shape="ovr"
     )
-    svm = SVCClass(break_ties=False, **common_params).fit(X, y)
+    svm = SVCClass(
+        break_ties=False,
+        **common_params,
+    ).fit(X, y)
     pred = svm.predict(np.c_[xx.ravel(), yy.ravel()])
     dv = svm.decision_function(np.c_[xx.ravel(), yy.ravel()])
     assert not np.all(pred == np.argmax(dv, axis=1))
 
-    svm = SVCClass(break_ties=True, **common_params).fit(X, y)
+    svm = SVCClass(
+        break_ties=True,
+        **common_params,
+    ).fit(X, y)
     pred = svm.predict(np.c_[xx.ravel(), yy.ravel()])
     dv = svm.decision_function(np.c_[xx.ravel(), yy.ravel()])
     assert np.all(pred == np.argmax(dv, axis=1))

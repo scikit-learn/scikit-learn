@@ -977,7 +977,10 @@ def string_labeled_classification_problem():
     X = X[:, :2]
     y = np.array(["cancer" if c == 1 else "not cancer" for c in y], dtype=object)
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, stratify=y, random_state=0
+        X,
+        y,
+        stratify=y,
+        random_state=0,
     )
     classifier = LogisticRegression().fit(X_train, y_train)
     y_pred = classifier.predict(X_test)
@@ -1017,7 +1020,8 @@ def test_average_precision_pos_label(string_labeled_classification_problem):
     # create a scorer which would require to pass a `pos_label`
     # check that it fails if `pos_label` is not provided
     average_precision_scorer = make_scorer(
-        average_precision_score, needs_threshold=True
+        average_precision_score,
+        needs_threshold=True,
     )
     err_msg = "pos_label=1 is not a valid label. It should be one of "
     with pytest.raises(ValueError, match=err_msg):
@@ -1066,7 +1070,11 @@ def test_brier_score_loss_pos_label(string_labeled_classification_problem):
     )
     assert brier_pos_cancer == pytest.approx(brier_pos_not_cancer)
 
-    brier_scorer = make_scorer(brier_score_loss, needs_proba=True, pos_label=pos_label)
+    brier_scorer = make_scorer(
+        brier_score_loss,
+        needs_proba=True,
+        pos_label=pos_label,
+    )
     assert brier_scorer(clf, X_test, y_test) == pytest.approx(brier_pos_cancer)
 
 
@@ -1141,6 +1149,9 @@ def test_scorer_no_op_multiclass_select_proba():
     assert_array_equal(np.unique(y_test), lr.classes_[:-1])
 
     scorer = make_scorer(
-        roc_auc_score, needs_proba=True, multi_class="ovo", labels=lr.classes_
+        roc_auc_score,
+        needs_proba=True,
+        multi_class="ovo",
+        labels=lr.classes_,
     )
     scorer(lr, X_test, y_test)

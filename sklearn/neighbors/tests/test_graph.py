@@ -95,6 +95,7 @@ def test_graph_feature_names_out(Klass):
 
     class_name_lower = Klass.__name__.lower()
     expected_names_out = np.array(
-        [f"{class_name_lower}{i}" for i in range(est.n_samples_fit_)], dtype=object
+        [f"{class_name_lower}{i}" for i in range(est.n_samples_fit_)],
+        dtype=object,
     )
     assert_array_equal(names_out, expected_names_out)

@@ -75,7 +75,10 @@ y = df["count"] / df["count"].max()
 # %%
 fig, ax = plt.subplots(figsize=(12, 4))
 y.hist(bins=30, ax=ax)
-_ = ax.set(xlabel="Fraction of rented fleet demand", ylabel="Number of hours")
+_ = ax.set(
+    xlabel="Fraction of rented fleet demand",
+    ylabel="Number of hours",
+)
 
 # %%
 # The input feature data frame is a time annotated hourly log of variables
@@ -129,7 +132,12 @@ X["season"].value_counts()
 
 from sklearn.model_selection import TimeSeriesSplit
 
-ts_cv = TimeSeriesSplit(n_splits=5, gap=48, max_train_size=10000, test_size=1000)
+ts_cv = TimeSeriesSplit(
+    n_splits=5,
+    gap=48,
+    max_train_size=10000,
+    test_size=1000,
+)
 
 # %%
 # Let us manually inspect the various splits to check that the
@@ -180,7 +188,12 @@ from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.model_selection import cross_validate
 
 
-categorical_columns = ["weather", "season", "holiday", "workingday"]
+categorical_columns = [
+    "weather",
+    "season",
+    "holiday",
+    "workingday",
+]
 categories = [
     ["clear", "misty", "rain"],
     ["spring", "summer", "fall", "winter"],
@@ -192,10 +205,14 @@ ordinal_encoder = OrdinalEncoder(categories=categories)
 
 gbrt_pipeline = make_pipeline(
     ColumnTransformer(
-        transformers=[("categorical", ordinal_encoder, categorical_columns)],
+        transformers=[
+            ("categorical", ordinal_encoder, categorical_columns),
+        ],
         remainder="passthrough",
     ),
-    HistGradientBoostingRegressor(categorical_features=range(4)),
+    HistGradientBoostingRegressor(
+        categorical_features=range(4),
+    ),
 )
 
 # %%
@@ -250,7 +267,9 @@ one_hot_encoder = OneHotEncoder(handle_unknown="ignore", sparse=False)
 alphas = np.logspace(-6, 6, 25)
 naive_linear_pipeline = make_pipeline(
     ColumnTransformer(
-        transformers=[("categorical", one_hot_encoder, categorical_columns)],
+        transformers=[
+            ("categorical", one_hot_encoder, categorical_columns),
+        ],
         remainder=MinMaxScaler(),
     ),
     RidgeCV(alphas=alphas),
@@ -348,7 +367,10 @@ def cos_transformer(period):
 # data with a bit of extrapolation beyond hour=23:
 import pandas as pd
 
-hour_df = pd.DataFrame(np.arange(26).reshape(-1, 1), columns=["hour"])
+hour_df = pd.DataFrame(
+    np.arange(26).reshape(-1, 1),
+    columns=["hour"],
+)
 hour_df["hour_sin"] = sin_transformer(24).fit_transform(hour_df)["hour"]
 hour_df["hour_cos"] = cos_transformer(24).fit_transform(hour_df)["hour"]
 hour_df.plot(x="hour")
@@ -363,7 +385,10 @@ _ = plt.title("Trigonometric encoding for the 'hour' feature")
 # sine/cosine representation.
 fig, ax = plt.subplots(figsize=(7, 5))
 sp = ax.scatter(hour_df["hour_sin"], hour_df["hour_cos"], c=hour_df["hour"])
-ax.set(xlabel="sin(hour)", ylabel="cos(hour)")
+ax.set(
+    xlabel="sin(hour)",
+    ylabel="cos(hour)",
+)
 _ = fig.colorbar(sp)
 
 # %%
@@ -382,7 +407,8 @@ cyclic_cossin_transformer = ColumnTransformer(
     remainder=MinMaxScaler(),
 )
 cyclic_cossin_linear_pipeline = make_pipeline(
-    cyclic_cossin_transformer, RidgeCV(alphas=alphas)
+    cyclic_cossin_transformer,
+    RidgeCV(alphas=alphas),
 )
 evaluate(cyclic_cossin_linear_pipeline, X, y, cv=ts_cv)
 
@@ -421,10 +447,14 @@ def periodic_spline_transformer(period, n_splines=None, degree=3):
 #
 # Again, let us visualize the effect of this feature expansion on some
 # synthetic hour data with a bit of extrapolation beyond hour=23:
-hour_df = pd.DataFrame(np.linspace(0, 26, 1000).reshape(-1, 1), columns=["hour"])
+hour_df = pd.DataFrame(
+    np.linspace(0, 26, 1000).reshape(-1, 1),
+    columns=["hour"],
+)
 splines = periodic_spline_transformer(24, n_splines=12).fit_transform(hour_df)
 splines_df = pd.DataFrame(
-    splines, columns=[f"spline_{i}" for i in range(splines.shape[1])]
+    splines,
+    columns=[f"spline_{i}" for i in range(splines.shape[1])],
 )
 pd.concat([hour_df, splines_df], axis="columns").plot(x="hour", cmap=plt.cm.tab20b)
 _ = plt.title("Periodic spline-based encoding for the 'hour' feature")
@@ -450,7 +480,8 @@ cyclic_spline_transformer = ColumnTransformer(
     remainder=MinMaxScaler(),
 )
 cyclic_spline_linear_pipeline = make_pipeline(
-    cyclic_spline_transformer, RidgeCV(alphas=alphas)
+    cyclic_spline_transformer,
+    RidgeCV(alphas=alphas),
 )
 evaluate(cyclic_spline_linear_pipeline, X, y, cv=ts_cv)
 
@@ -504,7 +535,11 @@ ax.plot(
     "x-",
     label="Spline-based time features",
 )
-ax.plot(one_hot_linear_predictions[last_hours], "x-", label="One-hot time features")
+ax.plot(
+    one_hot_linear_predictions[last_hours],
+    "x-",
+    label="One-hot time features",
+)
 _ = ax.legend()
 
 # %%
@@ -695,8 +730,16 @@ ax.plot(
     label="Actual demand",
     color="black",
 )
-ax.plot(gbrt_predictions[last_hours], "x-", label="Gradient Boosted Trees")
-ax.plot(one_hot_poly_predictions[last_hours], "x-", label="One-hot + polynomial kernel")
+ax.plot(
+    gbrt_predictions[last_hours],
+    "x-",
+    label="Gradient Boosted Trees",
+)
+ax.plot(
+    one_hot_poly_predictions[last_hours],
+    "x-",
+    label="One-hot + polynomial kernel",
+)
 ax.plot(
     cyclic_spline_poly_predictions[last_hours],
     "x-",
@@ -742,7 +785,12 @@ labels = [
 for ax, pred, label in zip(axes, predictions, labels):
     ax.scatter(y.iloc[test_0].values, pred, alpha=0.3, label=label)
     ax.plot([0, 1], [0, 1], "--", label="Perfect model")
-    ax.set(xlim=(0, 1), ylim=(0, 1), xlabel="True demand", ylabel="Predicted demand")
+    ax.set(
+        xlim=(0, 1),
+        ylim=(0, 1),
+        xlabel="True demand",
+        ylabel="Predicted demand",
+    )
     ax.legend()
 
 plt.show()

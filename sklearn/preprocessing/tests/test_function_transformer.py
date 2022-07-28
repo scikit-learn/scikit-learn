@@ -47,7 +47,9 @@ def test_delegate_to_func():
     # reset the argument stores.
     args_store[:] = []
     kwargs_store.clear()
-    transformed = FunctionTransformer(_make_func(args_store, kwargs_store)).transform(X)
+    transformed = FunctionTransformer(
+        _make_func(args_store, kwargs_store),
+    ).transform(X)
 
     assert_array_equal(
         transformed, X, err_msg="transform should have returned X unchanged"
@@ -67,7 +69,10 @@ def test_np_log():
     X = np.arange(10).reshape((5, 2))
 
     # Test that the numpy.log example still works.
-    assert_array_equal(FunctionTransformer(np.log1p).transform(X), np.log1p(X))
+    assert_array_equal(
+        FunctionTransformer(np.log1p).transform(X),
+        np.log1p(X),
+    )
 
 
 def test_kw_arg():
@@ -106,10 +111,13 @@ def test_inverse_transform():
 
     # Test that inverse_transform works correctly
     F = FunctionTransformer(
-        func=np.sqrt, inverse_func=np.around, inv_kw_args=dict(decimals=3)
+        func=np.sqrt,
+        inverse_func=np.around,
+        inv_kw_args=dict(decimals=3),
     )
     assert_array_equal(
-        F.inverse_transform(F.transform(X)), np.around(np.sqrt(X), decimals=3)
+        F.inverse_transform(F.transform(X)),
+        np.around(np.sqrt(X), decimals=3),
     )
 
 
@@ -193,7 +201,10 @@ def test_function_transformer_raise_error_with_mixed_dtype(X_type):
 
     def inverse_func(X):
         return _convert_container(
-            [inverse_mapping[x] for x in X], X_type, columns_name=["value"], dtype=dtype
+            [inverse_mapping[x] for x in X],
+            X_type,
+            columns_name=["value"],
+            dtype=dtype,
         )
 
     transformer = FunctionTransformer(
@@ -370,7 +381,9 @@ def test_function_transformer_validate_inverse():
 
     X = np.array([[1, 2], [3, 4], [3, 4]])
     trans = FunctionTransformer(
-        func=add_constant_feature, inverse_func=inverse_add_constant, validate=True
+        func=add_constant_feature,
+        inverse_func=inverse_add_constant,
+        validate=True,
     )
     X_trans = trans.fit_transform(X)
     assert trans.n_features_in_ == X.shape[1]

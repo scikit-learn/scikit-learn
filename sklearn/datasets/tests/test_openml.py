@@ -233,7 +233,12 @@ def test_fetch_openml_as_frame_true(
     pd = pytest.importorskip("pandas")
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response=gzip_response)
-    bunch = fetch_openml(as_frame=True, cache=False, parser=parser, **dataset_params)
+    bunch = fetch_openml(
+        as_frame=True,
+        cache=False,
+        parser=parser,
+        **dataset_params,
+    )
 
     assert int(bunch.details["id"]) == data_id
     assert isinstance(bunch, Bunch)
@@ -281,7 +286,13 @@ def test_fetch_openml_as_frame_true(
 )
 @pytest.mark.parametrize("parser", ["liac-arff", "pandas"])
 def test_fetch_openml_as_frame_false(
-    monkeypatch, data_id, dataset_params, n_samples, n_features, n_targets, parser
+    monkeypatch,
+    data_id,
+    dataset_params,
+    n_samples,
+    n_features,
+    n_targets,
+    parser,
 ):
     """Check the behaviour of `fetch_openml` with `as_frame=False`.
 
@@ -290,7 +301,12 @@ def test_fetch_openml_as_frame_false(
     pytest.importorskip("pandas")
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response=True)
-    bunch = fetch_openml(as_frame=False, cache=False, parser=parser, **dataset_params)
+    bunch = fetch_openml(
+        as_frame=False,
+        cache=False,
+        parser=parser,
+        **dataset_params,
+    )
     assert int(bunch.details["id"]) == data_id
     assert isinstance(bunch, Bunch)
 
@@ -318,10 +334,16 @@ def test_fetch_openml_consistency_parser(monkeypatch, data_id):
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response=True)
     bunch_liac = fetch_openml(
-        data_id=data_id, as_frame=True, cache=False, parser="liac-arff"
+        data_id=data_id,
+        as_frame=True,
+        cache=False,
+        parser="liac-arff",
     )
     bunch_pandas = fetch_openml(
-        data_id=data_id, as_frame=True, cache=False, parser="pandas"
+        data_id=data_id,
+        as_frame=True,
+        cache=False,
+        parser="pandas",
     )
 
     # The data frames for the input features should match up to some numerical
@@ -382,11 +404,17 @@ def test_fetch_openml_equivalence_array_dataframe(monkeypatch, parser):
     data_id = 61
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response=True)
     bunch_as_frame_true = fetch_openml(
-        data_id=data_id, as_frame=True, cache=False, parser=parser
+        data_id=data_id,
+        as_frame=True,
+        cache=False,
+        parser=parser,
     )
 
     bunch_as_frame_false = fetch_openml(
-        data_id=data_id, as_frame=False, cache=False, parser=parser
+        data_id=data_id,
+        as_frame=False,
+        cache=False,
+        parser=parser,
     )
 
     assert_allclose(bunch_as_frame_false.data, bunch_as_frame_true.data)
@@ -415,7 +443,12 @@ def test_fetch_openml_iris_pandas(monkeypatch, parser):
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
 
-    bunch = fetch_openml(data_id=data_id, as_frame=True, cache=False, parser=parser)
+    bunch = fetch_openml(
+        data_id=data_id,
+        as_frame=True,
+        cache=False,
+        parser=parser,
+    )
     data = bunch.data
     target = bunch.target
     frame = bunch.frame
@@ -458,7 +491,10 @@ def test_fetch_openml_forcing_targets(monkeypatch, parser, target_column):
         parser=parser,
     )
     bunch_default = fetch_openml(
-        data_id=data_id, as_frame=True, cache=False, parser=parser
+        data_id=data_id,
+        as_frame=True,
+        cache=False,
+        parser=parser,
     )
 
     pd.testing.assert_frame_equal(bunch_forcing_target.frame, bunch_default.frame)
@@ -483,10 +519,18 @@ def test_fetch_openml_equivalence_frame_return_X_y(monkeypatch, data_id, parser)
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response=True)
     bunch = fetch_openml(
-        data_id=data_id, as_frame=True, cache=False, return_X_y=False, parser=parser
+        data_id=data_id,
+        as_frame=True,
+        cache=False,
+        return_X_y=False,
+        parser=parser,
     )
     X, y = fetch_openml(
-        data_id=data_id, as_frame=True, cache=False, return_X_y=True, parser=parser
+        data_id=data_id,
+        as_frame=True,
+        cache=False,
+        return_X_y=True,
+        parser=parser,
     )
 
     pd.testing.assert_frame_equal(bunch.data, X)
@@ -507,10 +551,18 @@ def test_fetch_openml_equivalence_array_return_X_y(monkeypatch, data_id, parser)
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response=True)
     bunch = fetch_openml(
-        data_id=data_id, as_frame=False, cache=False, return_X_y=False, parser=parser
+        data_id=data_id,
+        as_frame=False,
+        cache=False,
+        return_X_y=False,
+        parser=parser,
     )
     X, y = fetch_openml(
-        data_id=data_id, as_frame=False, cache=False, return_X_y=True, parser=parser
+        data_id=data_id,
+        as_frame=False,
+        cache=False,
+        return_X_y=True,
+        parser=parser,
     )
 
     assert_array_equal(bunch.data, X)
@@ -530,10 +582,16 @@ def test_fetch_openml_difference_parsers(monkeypatch):
     # liac-arff parser while this is not the case with pandas parser.
     as_frame = False
     bunch_liac_arff = fetch_openml(
-        data_id=data_id, as_frame=as_frame, cache=False, parser="liac-arff"
+        data_id=data_id,
+        as_frame=as_frame,
+        cache=False,
+        parser="liac-arff",
     )
     bunch_pandas = fetch_openml(
-        data_id=data_id, as_frame=as_frame, cache=False, parser="pandas"
+        data_id=data_id,
+        as_frame=as_frame,
+        cache=False,
+        parser="pandas",
     )
 
     assert bunch_liac_arff.data.dtype.kind == "f"
@@ -887,7 +945,12 @@ def test_fetch_openml_types_inference(
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response=gzip_response)
 
-    bunch = fetch_openml(data_id=data_id, as_frame=True, cache=False, parser=parser)
+    bunch = fetch_openml(
+        data_id=data_id,
+        as_frame=True,
+        cache=False,
+        parser=parser,
+    )
     frame = bunch.frame
 
     n_categories = len(
@@ -996,7 +1059,11 @@ def test_fetch_openml_sparse_arff_error(monkeypatch, params, err_msg):
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
     with pytest.raises(ValueError, match=err_msg):
-        fetch_openml(data_id=data_id, cache=False, **params)
+        fetch_openml(
+            data_id=data_id,
+            cache=False,
+            **params,
+        )
 
 
 # Known failure of PyPy for OpenML. See the following issue:
@@ -1035,7 +1102,10 @@ def test_convert_arff_data_dataframe_warning_low_memory_pandas(monkeypatch):
     with pytest.warns(UserWarning, match=msg):
         with config_context(working_memory=1e-6):
             fetch_openml(
-                data_id=data_id, as_frame=True, cache=False, parser="liac-arff"
+                data_id=data_id,
+                as_frame=True,
+                cache=False,
+                parser="liac-arff",
             )
 
 
@@ -1054,7 +1124,12 @@ def test_fetch_openml_iris_warn_multiple_version(monkeypatch, gzip_response):
         "returning version 1."
     )
     with pytest.warns(UserWarning, match=msg):
-        fetch_openml(name=data_name, as_frame=False, cache=False, parser="liac-arff")
+        fetch_openml(
+            name=data_name,
+            as_frame=False,
+            cache=False,
+            parser="liac-arff",
+        )
 
 
 @pytest.mark.parametrize("gzip_response", [True, False])
@@ -1086,7 +1161,12 @@ def test_missing_values_pandas(monkeypatch, gzip_response, parser):
 
     data_id = 42585
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response=gzip_response)
-    penguins = fetch_openml(data_id=data_id, cache=False, as_frame=True, parser=parser)
+    penguins = fetch_openml(
+        data_id=data_id,
+        cache=False,
+        as_frame=True,
+        parser=parser,
+    )
 
     cat_dtype = penguins.data.dtypes["sex"]
     # there are nans in the categorical
@@ -1097,7 +1177,10 @@ def test_missing_values_pandas(monkeypatch, gzip_response, parser):
 @pytest.mark.parametrize("gzip_response", [True, False])
 @pytest.mark.parametrize(
     "dataset_params",
-    [{"data_id": 40675}, {"data_id": None, "name": "glass2", "version": 1}],
+    [
+        {"data_id": 40675},
+        {"data_id": None, "name": "glass2", "version": 1},
+    ],
 )
 def test_fetch_openml_inactive(monkeypatch, gzip_response, dataset_params):
     """Check that we raise a warning when the dataset is inactive."""
@@ -1352,7 +1435,8 @@ def test_fetch_openml_cache(monkeypatch, gzip_response, tmpdir):
         raise ValueError(
             "This mechanism intends to test correct cache"
             "handling. As such, urlopen should never be "
-            "accessed. URL: %s" % request.get_full_url()
+            "accessed. URL: %s"
+            % request.get_full_url()
         )
 
     data_id = 61
@@ -1386,7 +1470,12 @@ def test_fetch_openml_cache(monkeypatch, gzip_response, tmpdir):
 @fails_if_pypy
 @pytest.mark.parametrize(
     "as_frame, parser",
-    [(True, "liac-arff"), (False, "liac-arff"), (True, "pandas"), (False, "pandas")],
+    [
+        (True, "liac-arff"),
+        (False, "liac-arff"),
+        (True, "pandas"),
+        (False, "pandas"),
+    ],
 )
 def test_fetch_openml_verify_checksum(monkeypatch, as_frame, cache, tmpdir, parser):
     """Check that the checksum is working as expected."""

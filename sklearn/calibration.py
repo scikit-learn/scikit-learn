@@ -28,7 +28,11 @@ from .base import (
     is_classifier,
 )
 from .preprocessing import label_binarize, LabelEncoder
-from .utils import column_or_1d, indexable, check_matplotlib_support
+from .utils import (
+    column_or_1d,
+    indexable,
+    check_matplotlib_support,
+)
 
 from .utils.multiclass import check_classification_targets
 from .utils.fixes import delayed
@@ -318,7 +322,12 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             predictions = _compute_predictions(pred_method, method_name, X, n_classes)
 
             calibrated_classifier = _fit_calibrator(
-                estimator, predictions, y, self.classes_, self.method, sample_weight
+                estimator,
+                predictions,
+                y,
+                self.classes_,
+                self.method,
+                sample_weight,
             )
             self.calibrated_classifiers_.append(calibrated_classifier)
         else:
@@ -476,7 +485,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                     "Due to the cross-validation and sample ordering, removing a sample"
                     " is not strictly equal to putting is weight to zero. Specific unit"
                     " tests are added for CalibratedClassifierCV specifically."
-                )
+                ),
             }
         }
 

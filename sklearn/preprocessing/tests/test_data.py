@@ -218,7 +218,11 @@ def test_standard_scaler_dtype(add_sample_weight, sparse_constructor):
 
 
 @pytest.mark.parametrize(
-    "scaler", [StandardScaler(with_mean=False), RobustScaler(with_centering=False)]
+    "scaler",
+    [
+        StandardScaler(with_mean=False),
+        RobustScaler(with_centering=False),
+    ],
 )
 @pytest.mark.parametrize(
     "sparse_constructor", [np.asarray, sparse.csc_matrix, sparse.csr_matrix]
@@ -278,7 +282,7 @@ def test_standard_scaler_near_constant_features(
     # is considered constant and not scaled.
 
     scale_min, scale_max = -30, 19
-    scales = np.array([10 ** i for i in range(scale_min, scale_max + 1)], dtype=dtype)
+    scales = np.array([10**i for i in range(scale_min, scale_max + 1)], dtype=dtype)
 
     n_features = scales.shape[0]
     X = np.empty((n_samples, n_features), dtype=dtype)
@@ -295,8 +299,8 @@ def test_standard_scaler_near_constant_features(
 
     # if var < bound = N.eps.var + N².eps².mean², the feature is considered
     # constant and the scale_ attribute is set to 1.
-    bounds = n_samples * eps * scales ** 2 + n_samples ** 2 * eps ** 2 * average ** 2
-    within_bounds = scales ** 2 <= bounds
+    bounds = n_samples * eps * scales**2 + n_samples**2 * eps**2 * average**2
+    within_bounds = scales**2 <= bounds
 
     # Check that scale_min is small enough to have some scales below the
     # bound and therefore detected as constant:
@@ -317,7 +321,7 @@ def test_standard_scaler_near_constant_features(
     # The other features are scaled and scale_ is equal to sqrt(var_) assuming
     # that scales are large enough for average + scale and average - scale to
     # be distinct in X (depending on X's dtype).
-    common_mask = np.logical_and(scales ** 2 > bounds, representable_diff)
+    common_mask = np.logical_and(scales**2 > bounds, representable_diff)
     assert_allclose(scaler.scale_[common_mask], np.sqrt(scaler.var_)[common_mask])
 
 
@@ -1345,8 +1349,18 @@ def test_quantile_transform_dense_toy():
     X_expected = np.tile(np.linspace(0, 1, num=5), (3, 1)).T
     assert_almost_equal(np.sort(X_trans, axis=0), X_expected)
 
-    X_test = np.array([[-1, 1, 0], [101, 11, 10]])
-    X_expected = np.array([[0, 0, 0], [1, 1, 1]])
+    X_test = np.array(
+        [
+            [-1, 1, 0],
+            [101, 11, 10],
+        ]
+    )
+    X_expected = np.array(
+        [
+            [0, 0, 0],
+            [1, 1, 1],
+        ]
+    )
     assert_array_almost_equal(transformer.transform(X_test), X_expected)
 
     X_trans_inv = transformer.inverse_transform(X_trans)
@@ -1526,7 +1540,13 @@ def test_quantile_transformer_sorted_quantiles(array_type):
 
 
 def test_robust_scaler_invalid_range():
-    for range_ in [(-1, 90), (-2, -3), (10, 101), (100.5, 101), (90, 50)]:
+    for range_ in [
+        (-1, 90),
+        (-2, -3),
+        (10, 101),
+        (100.5, 101),
+        (90, 50),
+    ]:
         scaler = RobustScaler(quantile_range=range_)
 
         with pytest.raises(ValueError, match=r"Invalid quantile range: \("):
@@ -1988,7 +2008,7 @@ def test_normalize():
                 if norm == "l1":
                     row_sums = np.abs(X_norm).sum(axis=1)
                 else:
-                    X_norm_squared = X_norm ** 2
+                    X_norm_squared = X_norm**2
                     row_sums = X_norm_squared.sum(axis=1)
 
                 assert_array_almost_equal(row_sums, ones)
@@ -2120,7 +2140,10 @@ def test_kernelcenterer_non_linear_kernel():
     def phi(X):
         """Our mapping function phi."""
         return np.vstack(
-            [np.clip(X, a_min=0, a_max=None), -np.clip(X, a_min=None, a_max=0)]
+            [
+                np.clip(X, a_min=0, a_max=None),
+                -np.clip(X, a_min=None, a_max=0),
+            ]
         )
 
     phi_X = phi(X)

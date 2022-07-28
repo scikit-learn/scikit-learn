@@ -104,7 +104,10 @@ def test_spectral_biclustering():
             for param_value in param_values:
 
                 model = SpectralBiclustering(
-                    n_clusters=3, n_init=3, init="k-means++", random_state=0
+                    n_clusters=3,
+                    n_init=3,
+                    init="k-means++",
+                    random_state=0,
                 )
                 model.set_params(**dict([(param_name, param_value)]))
 
@@ -209,7 +212,11 @@ def test_perfect_checkerboard():
     [
         ({"n_init": 0}, ValueError, "n_init == 0, must be >= 1."),
         ({"n_init": 1.5}, TypeError, "n_init must be an instance of"),
-        ({"n_clusters": "abc"}, TypeError, "n_clusters must be an instance of"),
+        (
+            {"n_clusters": "abc"},
+            TypeError,
+            "n_clusters must be an instance of",
+        ),
         ({"svd_method": "unknown"}, ValueError, "Unknown SVD method: 'unknown'"),
     ],
 )

@@ -143,7 +143,10 @@ def test_plot_roc_curve_pos_label(pyplot, response_method):
     X = X[:, :2]
     y = np.array(["cancer" if c == 1 else "not cancer" for c in y], dtype=object)
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, stratify=y, random_state=0
+        X,
+        y,
+        stratify=y,
+        random_state=0,
     )
 
     classifier = LogisticRegression()
@@ -162,7 +165,12 @@ def test_plot_roc_curve_pos_label(pyplot, response_method):
     assert disp.roc_auc == pytest.approx(roc_auc_limit)
     assert np.trapz(disp.tpr, disp.fpr) == pytest.approx(roc_auc_limit)
 
-    disp = plot_roc_curve(classifier, X_test, y_test, response_method=response_method)
+    disp = plot_roc_curve(
+        classifier,
+        X_test,
+        y_test,
+        response_method=response_method,
+    )
 
     assert disp.roc_auc == pytest.approx(roc_auc_limit)
     assert np.trapz(disp.tpr, disp.fpr) == pytest.approx(roc_auc_limit)

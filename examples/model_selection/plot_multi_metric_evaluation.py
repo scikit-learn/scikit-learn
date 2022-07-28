@@ -97,7 +97,10 @@ for scorer, color in zip(sorted(scoring), ["g", "k"]):
 
     # Plot a dotted vertical line at the best score for that scorer marked by x
     ax.plot(
-        [X_axis[best_index]] * 2,
+        [
+            X_axis[best_index],
+        ]
+        * 2,
         [0, best_score],
         linestyle="-.",
         color=color,

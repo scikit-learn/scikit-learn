@@ -98,13 +98,29 @@ def test_pandas_arff_parser_strip_single_quotes(parser_func):
     )
 
     columns_info = {
-        "cat_single_quote": {"data_type": "nominal", "name": "cat_single_quote"},
-        "str_single_quote": {"data_type": "string", "name": "str_single_quote"},
-        "str_nested_quote": {"data_type": "string", "name": "str_nested_quote"},
-        "class": {"data_type": "numeric", "name": "class"},
+        "cat_single_quote": {
+            "data_type": "nominal",
+            "name": "cat_single_quote",
+        },
+        "str_single_quote": {
+            "data_type": "string",
+            "name": "str_single_quote",
+        },
+        "str_nested_quote": {
+            "data_type": "string",
+            "name": "str_nested_quote",
+        },
+        "class": {
+            "data_type": "numeric",
+            "name": "class",
+        },
     }
 
-    feature_names = ["cat_single_quote", "str_single_quote", "str_nested_quote"]
+    feature_names = [
+        "cat_single_quote",
+        "str_single_quote",
+        "str_nested_quote",
+    ]
     target_names = ["class"]
 
     # We don't strip single quotes for string columns with the pandas parser.
@@ -153,13 +169,29 @@ def test_pandas_arff_parser_strip_double_quotes(parser_func):
     )
 
     columns_info = {
-        "cat_double_quote": {"data_type": "nominal", "name": "cat_double_quote"},
-        "str_double_quote": {"data_type": "string", "name": "str_double_quote"},
-        "str_nested_quote": {"data_type": "string", "name": "str_nested_quote"},
-        "class": {"data_type": "numeric", "name": "class"},
+        "cat_double_quote": {
+            "data_type": "nominal",
+            "name": "cat_double_quote",
+        },
+        "str_double_quote": {
+            "data_type": "string",
+            "name": "str_double_quote",
+        },
+        "str_nested_quote": {
+            "data_type": "string",
+            "name": "str_nested_quote",
+        },
+        "class": {
+            "data_type": "numeric",
+            "name": "class",
+        },
     }
 
-    feature_names = ["cat_double_quote", "str_double_quote", "str_nested_quote"]
+    feature_names = [
+        "cat_double_quote",
+        "str_double_quote",
+        "str_nested_quote",
+    ]
     target_names = ["class"]
 
     expected_values = {
@@ -208,13 +240,29 @@ def test_pandas_arff_parser_strip_no_quotes(parser_func):
     )
 
     columns_info = {
-        "cat_without_quote": {"data_type": "nominal", "name": "cat_without_quote"},
-        "str_without_quote": {"data_type": "string", "name": "str_without_quote"},
-        "str_internal_quote": {"data_type": "string", "name": "str_internal_quote"},
-        "class": {"data_type": "numeric", "name": "class"},
+        "cat_without_quote": {
+            "data_type": "nominal",
+            "name": "cat_without_quote",
+        },
+        "str_without_quote": {
+            "data_type": "string",
+            "name": "str_without_quote",
+        },
+        "str_internal_quote": {
+            "data_type": "string",
+            "name": "str_internal_quote",
+        },
+        "class": {
+            "data_type": "numeric",
+            "name": "class",
+        },
     }
 
-    feature_names = ["cat_without_quote", "str_without_quote", "str_internal_quote"]
+    feature_names = [
+        "cat_without_quote",
+        "str_without_quote",
+        "str_internal_quote",
+    ]
     target_names = ["class"]
 
     expected_values = {

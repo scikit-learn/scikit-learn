@@ -160,7 +160,8 @@ def test_cluster_hierarchy_(global_dtype):
 
 
 @pytest.mark.parametrize(
-    "metric, is_sparse", [["minkowski", False], ["euclidean", True]]
+    "metric, is_sparse",
+    [["minkowski", False], ["euclidean", True]],
 )
 def test_correct_number_of_clusters(metric, is_sparse):
     # in 'auto' mode
@@ -355,7 +356,8 @@ def test_min_cluster_size(min_cluster_size, global_dtype):
         assert min(cluster_sizes) >= min_cluster_size
     # check behaviour is the same when min_cluster_size is a fraction
     clust_frac = OPTICS(
-        min_samples=9, min_cluster_size=min_cluster_size / redX.shape[0]
+        min_samples=9,
+        min_cluster_size=min_cluster_size / redX.shape[0],
     )
     clust_frac.fit(redX)
     assert_array_equal(clust.labels_, clust_frac.labels_)

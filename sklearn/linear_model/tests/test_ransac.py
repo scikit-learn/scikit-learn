@@ -89,7 +89,11 @@ def test_ransac_max_trials():
     estimator = LinearRegression()
 
     ransac_estimator = RANSACRegressor(
-        estimator, min_samples=2, residual_threshold=5, max_trials=0, random_state=0
+        estimator,
+        min_samples=2,
+        residual_threshold=5,
+        max_trials=0,
+        random_state=0,
     )
     with pytest.raises(ValueError):
         ransac_estimator.fit(X, y)
@@ -108,7 +112,11 @@ def test_ransac_max_trials():
 def test_ransac_stop_n_inliers():
     estimator = LinearRegression()
     ransac_estimator = RANSACRegressor(
-        estimator, min_samples=2, residual_threshold=5, stop_n_inliers=2, random_state=0
+        estimator,
+        min_samples=2,
+        residual_threshold=5,
+        stop_n_inliers=2,
+        random_state=0,
     )
     ransac_estimator.fit(X, y)
 
@@ -118,7 +126,11 @@ def test_ransac_stop_n_inliers():
 def test_ransac_stop_score():
     estimator = LinearRegression()
     ransac_estimator = RANSACRegressor(
-        estimator, min_samples=2, residual_threshold=5, stop_score=0, random_state=0
+        estimator,
+        min_samples=2,
+        residual_threshold=5,
+        stop_score=0,
+        random_state=0,
     )
     ransac_estimator.fit(X, y)
 
@@ -326,7 +338,10 @@ def test_ransac_min_n_samples():
         estimator, min_samples=2, residual_threshold=5, random_state=0
     )
     ransac_estimator2 = RANSACRegressor(
-        estimator, min_samples=2.0 / X.shape[0], residual_threshold=5, random_state=0
+        estimator,
+        min_samples=2.0 / X.shape[0],
+        residual_threshold=5,
+        random_state=0,
     )
     ransac_estimator3 = RANSACRegressor(
         estimator, min_samples=-1, residual_threshold=5, random_state=0
@@ -412,10 +427,18 @@ def test_ransac_residual_loss():
         estimator, min_samples=2, residual_threshold=5, random_state=0
     )
     ransac_estimator1 = RANSACRegressor(
-        estimator, min_samples=2, residual_threshold=5, random_state=0, loss=loss_multi1
+        estimator,
+        min_samples=2,
+        residual_threshold=5,
+        random_state=0,
+        loss=loss_multi1,
     )
     ransac_estimator2 = RANSACRegressor(
-        estimator, min_samples=2, residual_threshold=5, random_state=0, loss=loss_multi2
+        estimator,
+        min_samples=2,
+        residual_threshold=5,
+        random_state=0,
+        loss=loss_multi2,
     )
 
     # multi-dimensional
@@ -596,7 +619,10 @@ def test_perfect_horizontal_line():
 # TODO: Remove in v1.2
 @pytest.mark.parametrize(
     "old_loss, new_loss",
-    [("absolute_loss", "squared_error"), ("squared_loss", "absolute_error")],
+    [
+        ("absolute_loss", "squared_error"),
+        ("squared_loss", "absolute_error"),
+    ],
 )
 def test_loss_deprecated(old_loss, new_loss):
     est1 = RANSACRegressor(loss=old_loss, random_state=0)

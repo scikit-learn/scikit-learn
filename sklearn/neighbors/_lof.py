@@ -186,7 +186,10 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
 
     _parameter_constraints = {
         **NeighborsBase._parameter_constraints,
-        "contamination": [StrOptions({"auto"}), Interval(Real, 0, 0.5, closed="right")],
+        "contamination": [
+            StrOptions({"auto"}),
+            Interval(Real, 0, 0.5, closed="right"),
+        ],
         "novelty": ["boolean"],
     }
     _parameter_constraints.pop("radius")

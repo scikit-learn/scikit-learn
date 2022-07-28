@@ -1059,7 +1059,11 @@ def mean_tweedie_deviance(y_true, y_pred, *, sample_weight=None, power=0):
         sample_weight = column_or_1d(sample_weight)
         sample_weight = sample_weight[:, np.newaxis]
 
-    p = check_scalar(power, name="power", target_type=numbers.Real)
+    p = check_scalar(
+        power,
+        name="power",
+        target_type=numbers.Real,
+    )
 
     message = f"Mean Tweedie deviance error with power={p} can only be used on "
     if p < 0:

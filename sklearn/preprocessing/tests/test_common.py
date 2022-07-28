@@ -152,7 +152,10 @@ def test_missing_value_handling(
         (StandardScaler(), scale),
         (StandardScaler(with_mean=False), scale),
         (PowerTransformer("yeo-johnson"), power_transform),
-        (PowerTransformer("box-cox"), power_transform),
+        (
+            PowerTransformer("box-cox"),
+            power_transform,
+        ),
         (QuantileTransformer(n_quantiles=3), quantile_transform),
         (RobustScaler(), robust_scale),
         (RobustScaler(with_centering=False), robust_scale),

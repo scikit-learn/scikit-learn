@@ -156,7 +156,8 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
             raise ValueError(
                 "%s is not a valid kernel. Only rbf and knn"
                 " or an explicit function "
-                " are supported at this time." % self.kernel
+                " are supported at this time."
+                % self.kernel
             )
 
     @abstractmethod

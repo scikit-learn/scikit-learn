@@ -20,7 +20,10 @@ from .base import clone, TransformerMixin
 from .preprocessing import FunctionTransformer
 from .utils._estimator_html_repr import _VisualBlock
 from .utils.metaestimators import available_if
-from .utils import Bunch, _print_elapsed_time
+from .utils import (
+    Bunch,
+    _print_elapsed_time,
+)
 from .utils.deprecation import deprecated
 from .utils._tags import _safe_tags
 from .utils.validation import check_memory

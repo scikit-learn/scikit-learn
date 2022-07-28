@@ -272,7 +272,10 @@ class PrecisionRecallDisplay:
         if not is_classifier(estimator):
             raise ValueError(f"{method_name} only supports classifiers")
         y_pred, pos_label = _get_response(
-            X, estimator, response_method, pos_label=pos_label
+            X,
+            estimator,
+            response_method,
+            pos_label=pos_label,
         )
 
         name = name if name is not None else estimator.__class__.__name__

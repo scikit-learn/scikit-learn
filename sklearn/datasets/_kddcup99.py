@@ -368,7 +368,10 @@ def _fetch_brute_kddcup99(data_home=None, download_if_missing=True, percent10=Tr
         raise IOError("Data not found and `download_if_missing` is False")
 
     return Bunch(
-        data=X, target=y, feature_names=feature_names, target_names=[target_names]
+        data=X,
+        target=y,
+        feature_names=feature_names,
+        target_names=[target_names],
     )
 
 

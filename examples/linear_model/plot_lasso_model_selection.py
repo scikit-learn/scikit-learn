@@ -72,7 +72,10 @@ fit_time = time.time() - start_time
 # %%
 # We store the AIC metric for each value of alpha used during `fit`.
 results = pd.DataFrame(
-    {"alphas": lasso_lars_ic[-1].alphas_, "AIC criterion": lasso_lars_ic[-1].criterion_}
+    {
+        "alphas": lasso_lars_ic[-1].alphas_,
+        "AIC criterion": lasso_lars_ic[-1].criterion_,
+    }
 ).set_index("alphas")
 alpha_aic = lasso_lars_ic[-1].alpha_
 

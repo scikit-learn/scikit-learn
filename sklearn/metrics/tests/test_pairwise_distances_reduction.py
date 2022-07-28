@@ -76,7 +76,9 @@ def _get_metric_params_list(metric: str, n_features: int, seed: int = 1):
 
 def assert_argkmin_results_equality(ref_dist, dist, ref_indices, indices, rtol=1e-7):
     assert_array_equal(
-        ref_indices, indices, err_msg="Query vectors have different neighbors' indices"
+        ref_indices,
+        indices,
+        err_msg="Query vectors have different neighbors' indices",
     )
     assert_allclose(
         ref_dist,
@@ -110,7 +112,11 @@ def test_relative_rounding():
 
 
 def assert_argkmin_results_quasi_equality(
-    ref_dist, dist, ref_indices, indices, rtol=1e-4
+    ref_dist,
+    dist,
+    ref_indices,
+    indices,
+    rtol=1e-4,
 ):
     """Assert that argkmin results are valid up to:
       - relative tolerance on computed distance values
@@ -153,7 +159,8 @@ def assert_argkmin_results_quasi_equality(
 
         for neighbor_rank in range(n_neighbors):
             rounded_dist = relative_rounding(
-                ref_dist_row[neighbor_rank], n_significant_digits=n_significant_digits
+                ref_dist_row[neighbor_rank],
+                n_significant_digits=n_significant_digits,
             )
             reference_neighbors_groups[rounded_dist].add(ref_indices_row[neighbor_rank])
             effective_neighbors_groups[rounded_dist].add(indices_row[neighbor_rank])
@@ -191,7 +198,12 @@ def assert_radius_neighborhood_results_equality(
 
 
 def assert_radius_neighborhood_results_quasi_equality(
-    ref_dist, dist, ref_indices, indices, radius, rtol=1e-4
+    ref_dist,
+    dist,
+    ref_indices,
+    indices,
+    radius,
+    rtol=1e-4,
 ):
     """Assert that radius neighborhood results are valid up to:
       - relative tolerance on computed distance values
@@ -258,7 +270,8 @@ def assert_radius_neighborhood_results_quasi_equality(
 
         for neighbor_rank in range(min_length):
             rounded_dist = relative_rounding(
-                ref_dist_row[neighbor_rank], n_significant_digits=n_significant_digits
+                ref_dist_row[neighbor_rank],
+                n_significant_digits=n_significant_digits,
             )
             reference_neighbors_groups[rounded_dist].add(ref_indices_row[neighbor_rank])
             effective_neighbors_groups[rounded_dist].add(indices_row[neighbor_rank])
@@ -310,8 +323,18 @@ def test_assert_argkmin_results_quasi_equality():
     _6_1m = 6.1 - eps
     _6_1p = 6.1 + eps
 
-    ref_dist = np.array([[1.2, 2.5, _6_1m, 6.1, _6_1p], [_1m, _1m, 1, _1p, _1p]])
-    ref_indices = np.array([[1, 2, 3, 4, 5], [6, 7, 8, 9, 10]])
+    ref_dist = np.array(
+        [
+            [1.2, 2.5, _6_1m, 6.1, _6_1p],
+            [_1m, _1m, 1, _1p, _1p],
+        ]
+    )
+    ref_indices = np.array(
+        [
+            [1, 2, 3, 4, 5],
+            [6, 7, 8, 9, 10],
+        ]
+    )
 
     # Sanity check: compare the reference results to themselves.
     assert_argkmin_results_quasi_equality(
@@ -384,13 +407,24 @@ def test_assert_radius_neighborhood_results_quasi_equality():
     _6_1m = 6.1 - eps
     _6_1p = 6.1 + eps
 
-    ref_dist = [np.array([1.2, 2.5, _6_1m, 6.1, _6_1p]), np.array([_1m, 1, _1p, _1p])]
+    ref_dist = [
+        np.array([1.2, 2.5, _6_1m, 6.1, _6_1p]),
+        np.array([_1m, 1, _1p, _1p]),
+    ]
 
-    ref_indices = [np.array([1, 2, 3, 4, 5]), np.array([6, 7, 8, 9])]
+    ref_indices = [
+        np.array([1, 2, 3, 4, 5]),
+        np.array([6, 7, 8, 9]),
+    ]
 
     # Sanity check: compare the reference results to themselves.
     assert_radius_neighborhood_results_quasi_equality(
-        ref_dist, ref_dist, ref_indices, ref_indices, radius=6.1, rtol=rtol
+        ref_dist,
+        ref_dist,
+        ref_indices,
+        ref_indices,
+        radius=6.1,
+        rtol=rtol,
     )
 
     # Apply valid permutation on indices
@@ -563,7 +597,10 @@ def test_radius_neighborhood_factory_method_wrong_usages():
         "Only 64bit float datasets are supported at this time, "
         "got: X.dtype=float32 and Y.dtype=float64"
     )
-    with pytest.raises(ValueError, match=msg):
+    with pytest.raises(
+        ValueError,
+        match=msg,
+    ):
         PairwiseDistancesRadiusNeighborhood.compute(
             X=X.astype(np.float32), Y=Y, radius=radius, metric=metric
         )
@@ -572,7 +609,10 @@ def test_radius_neighborhood_factory_method_wrong_usages():
         "Only 64bit float datasets are supported at this time, "
         "got: X.dtype=float64 and Y.dtype=int32"
     )
-    with pytest.raises(ValueError, match=msg):
+    with pytest.raises(
+        ValueError,
+        match=msg,
+    ):
         PairwiseDistancesRadiusNeighborhood.compute(
             X=X, Y=Y.astype(np.int32), radius=radius, metric=metric
         )
@@ -640,11 +680,20 @@ def test_chunk_size_agnosticism(
         check_parameters = {"radius": radius}
 
     ref_dist, ref_indices = PairwiseDistancesReduction.compute(
-        X, Y, parameter, metric="manhattan", return_distance=True
+        X,
+        Y,
+        parameter,
+        metric="manhattan",
+        return_distance=True,
     )
 
     dist, indices = PairwiseDistancesReduction.compute(
-        X, Y, parameter, chunk_size=chunk_size, metric="manhattan", return_distance=True
+        X,
+        Y,
+        parameter,
+        chunk_size=chunk_size,
+        metric="manhattan",
+        return_distance=True,
     )
 
     ASSERT_RESULT[(PairwiseDistancesReduction, dtype)](
@@ -682,7 +731,10 @@ def test_n_threads_agnosticism(
         check_parameters = {"radius": radius}
 
     ref_dist, ref_indices = PairwiseDistancesReduction.compute(
-        X, Y, parameter, return_distance=True
+        X,
+        Y,
+        parameter,
+        return_distance=True,
     )
 
     with threadpoolctl.threadpool_limits(limits=1, user_api="openmp"):
@@ -824,7 +876,10 @@ def test_pairwise_distances_argkmin(
     )
 
     ASSERT_RESULT[(PairwiseDistancesArgKmin, dtype)](
-        argkmin_distances, argkmin_distances_ref, argkmin_indices, argkmin_indices_ref
+        argkmin_distances,
+        argkmin_distances_ref,
+        argkmin_indices,
+        argkmin_indices_ref,
     )
 
 
@@ -898,7 +953,11 @@ def test_pairwise_distances_radius_neighbors(
 )
 @pytest.mark.parametrize("metric", ["manhattan", "euclidean"])
 def test_memmap_backed_data(
-    metric, PairwiseDistancesReduction, n_samples=512, n_features=100, dtype=np.float64
+    metric,
+    PairwiseDistancesReduction,
+    n_samples=512,
+    n_features=100,
+    dtype=np.float64,
 ):
     # Results must not depend on the datasets writability
     rng = np.random.RandomState(0)
@@ -919,11 +978,19 @@ def test_memmap_backed_data(
         check_parameters = {"radius": radius}
 
     ref_dist, ref_indices = PairwiseDistancesReduction.compute(
-        X, Y, parameter, metric=metric, return_distance=True
+        X,
+        Y,
+        parameter,
+        metric=metric,
+        return_distance=True,
     )
 
     dist_mm, indices_mm = PairwiseDistancesReduction.compute(
-        X_mm, Y_mm, parameter, metric=metric, return_distance=True
+        X_mm,
+        Y_mm,
+        parameter,
+        metric=metric,
+        return_distance=True,
     )
 
     ASSERT_RESULT[(PairwiseDistancesReduction, dtype)](
@@ -935,7 +1002,11 @@ def test_memmap_backed_data(
 @pytest.mark.parametrize("n_features", [5, 10, 100])
 @pytest.mark.parametrize("num_threads", [1, 2, 8])
 def test_sqeuclidean_row_norms(
-    global_random_seed, n_samples, n_features, num_threads, dtype=np.float64
+    global_random_seed,
+    n_samples,
+    n_features,
+    num_threads,
+    dtype=np.float64,
 ):
     rng = np.random.RandomState(global_random_seed)
     spread = 100

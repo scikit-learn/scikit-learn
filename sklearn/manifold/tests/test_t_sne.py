@@ -37,10 +37,15 @@ from sklearn.metrics.pairwise import cosine_distances
 
 x = np.linspace(0, 1, 10)
 xx, yy = np.meshgrid(x, x)
-X_2d_grid = np.hstack([xx.ravel().reshape(-1, 1), yy.ravel().reshape(-1, 1)])
+X_2d_grid = np.hstack(
+    [
+        xx.ravel().reshape(-1, 1),
+        yy.ravel().reshape(-1, 1),
+    ]
+)
 
 pytestmark = pytest.mark.filterwarnings(
-    "ignore:The PCA initialization in TSNE will change to have the standard deviation"
+    "ignore:The PCA initialization in TSNE will change to have the standard deviation",
 )
 
 
@@ -383,7 +388,11 @@ def test_trustworthiness_not_euclidean_metric():
 @pytest.mark.filterwarnings("ignore:The default learning rate in TSNE")
 @pytest.mark.parametrize(
     "method, retype",
-    [("exact", np.asarray), ("barnes_hut", np.asarray), ("barnes_hut", sp.csr_matrix)],
+    [
+        ("exact", np.asarray),
+        ("barnes_hut", np.asarray),
+        ("barnes_hut", sp.csr_matrix),
+    ],
 )
 @pytest.mark.parametrize(
     "D, message_regex",
@@ -473,7 +482,11 @@ def test_init_ndarray():
 def test_init_ndarray_precomputed():
     # Initialize TSNE with ndarray and metric 'precomputed'
     # Make sure no FutureWarning is thrown from _fit
-    tsne = TSNE(init=np.zeros((100, 2)), metric="precomputed", learning_rate=50.0)
+    tsne = TSNE(
+        init=np.zeros((100, 2)),
+        metric="precomputed",
+        learning_rate=50.0,
+    )
     tsne.fit(np.zeros((100, 100)))
 
 

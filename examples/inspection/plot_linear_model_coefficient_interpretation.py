@@ -206,7 +206,9 @@ _ = plt.ylim([0, 27])
 feature_names = model[:-1].get_feature_names_out()
 
 coefs = pd.DataFrame(
-    model[-1].regressor_.coef_, columns=["Coefficients"], index=feature_names
+    model[-1].regressor_.coef_,
+    columns=["Coefficients"],
+    index=feature_names,
 )
 
 coefs
@@ -309,7 +311,14 @@ from sklearn.model_selection import cross_validate
 from sklearn.model_selection import RepeatedKFold
 
 cv = RepeatedKFold(n_splits=5, n_repeats=5, random_state=0)
-cv_model = cross_validate(model, X, y, cv=cv, return_estimator=True, n_jobs=2)
+cv_model = cross_validate(
+    model,
+    X,
+    y,
+    cv=cv,
+    return_estimator=True,
+    n_jobs=2,
+)
 
 coefs = pd.DataFrame(
     [
@@ -361,7 +370,12 @@ _ = plt.title("Co-variations of coefficients for AGE and EXPERIENCE across folds
 column_to_drop = ["AGE"]
 
 cv_model = cross_validate(
-    model, X.drop(columns=column_to_drop), y, cv=cv, return_estimator=True, n_jobs=2
+    model,
+    X.drop(columns=column_to_drop),
+    y,
+    cv=cv,
+    return_estimator=True,
+    n_jobs=2,
 )
 
 coefs = pd.DataFrame(
@@ -448,7 +462,9 @@ _ = plt.ylim([0, 27])
 # was performed during the preprocessing step.
 
 coefs = pd.DataFrame(
-    model[-1].regressor_.coef_, columns=["Coefficients importance"], index=feature_names
+    model[-1].regressor_.coef_,
+    columns=["Coefficients importance"],
+    index=feature_names,
 )
 coefs.plot.barh(figsize=(9, 7))
 plt.title("Ridge model, small regularization, normalized variables")
@@ -462,7 +478,14 @@ plt.subplots_adjust(left=0.3)
 # of the feature values since this scaling was already
 # done in the preprocessing step of the pipeline.
 
-cv_model = cross_validate(model, X, y, cv=cv, return_estimator=True, n_jobs=2)
+cv_model = cross_validate(
+    model,
+    X,
+    y,
+    cv=cv,
+    return_estimator=True,
+    n_jobs=2,
+)
 coefs = pd.DataFrame(
     [est[-1].regressor_.coef_ for est in cv_model["estimator"]], columns=feature_names
 )
@@ -496,7 +519,9 @@ alphas = np.logspace(-10, 10, 21)  # alpha values to be chosen from by cross-val
 model = make_pipeline(
     preprocessor,
     TransformedTargetRegressor(
-        regressor=RidgeCV(alphas=alphas), func=np.log10, inverse_func=sp.special.exp10
+        regressor=RidgeCV(alphas=alphas),
+        func=np.log10,
+        inverse_func=sp.special.exp10,
     ),
 )
 model.fit(X_train, y_train)
@@ -534,7 +559,9 @@ _ = plt.ylim([0, 27])
 # the one of the non-regularized model.
 
 coefs = pd.DataFrame(
-    model[-1].regressor_.coef_, columns=["Coefficients importance"], index=feature_names
+    model[-1].regressor_.coef_,
+    columns=["Coefficients importance"],
+    index=feature_names,
 )
 coefs.plot.barh(figsize=(9, 7))
 plt.title("Ridge model, with regularization, normalized variables")
@@ -557,7 +584,14 @@ plt.subplots_adjust(left=0.3)
 # perturbations, in a cross-validation. This plot can be compared with
 # the :ref:`previous one<covariation>`.
 
-cv_model = cross_validate(model, X, y, cv=cv, return_estimator=True, n_jobs=2)
+cv_model = cross_validate(
+    model,
+    X,
+    y,
+    cv=cv,
+    return_estimator=True,
+    n_jobs=2,
+)
 coefs = pd.DataFrame(
     [est[-1].regressor_.coef_ for est in cv_model["estimator"]], columns=feature_names
 )
@@ -630,7 +664,9 @@ _ = plt.ylim([0, 27])
 # For our dataset, again the model is not very predictive.
 
 coefs = pd.DataFrame(
-    model[-1].regressor_.coef_, columns=["Coefficients importance"], index=feature_names
+    model[-1].regressor_.coef_,
+    columns=["Coefficients importance"],
+    index=feature_names,
 )
 coefs.plot(kind="barh", figsize=(9, 7))
 plt.title("Lasso model, optimum regularization, normalized variables")
@@ -649,7 +685,14 @@ plt.subplots_adjust(left=0.3)
 # caution.
 #
 # Indeed, we can check the variability of the coefficients across folds.
-cv_model = cross_validate(model, X, y, cv=cv, return_estimator=True, n_jobs=2)
+cv_model = cross_validate(
+    model,
+    X,
+    y,
+    cv=cv,
+    return_estimator=True,
+    n_jobs=2,
+)
 coefs = pd.DataFrame(
     [est[-1].regressor_.coef_ for est in cv_model["estimator"]], columns=feature_names
 )

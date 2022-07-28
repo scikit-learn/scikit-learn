@@ -232,9 +232,13 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
                 if intercept_init.shape != (1,) and intercept_init.shape != ():
                     raise ValueError("Provided intercept_init does not match dataset.")
                 if one_class:
-                    self.offset_ = intercept_init.reshape(1)
+                    self.offset_ = intercept_init.reshape(
+                        1,
+                    )
                 else:
-                    self.intercept_ = intercept_init.reshape(1)
+                    self.intercept_ = intercept_init.reshape(
+                        1,
+                    )
             else:
                 if one_class:
                     self.offset_ = np.zeros(1, dtype=np.float64, order="C")
@@ -499,7 +503,12 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
 
     _parameter_constraints = {
         **BaseSGD._parameter_constraints,
-        "loss": [StrOptions(set(loss_functions), deprecated={"squared_loss", "log"})],
+        "loss": [
+            StrOptions(
+                set(loss_functions),
+                deprecated={"squared_loss", "log"},
+            )
+        ],
         "early_stopping": ["boolean"],
         "validation_fraction": [Interval(Real, 0, 1, closed="neither")],
         "n_iter_no_change": [Interval(Integral, 1, None, closed="left")],
@@ -1318,7 +1327,8 @@ class SGDClassifier(BaseSGDClassifier):
             raise NotImplementedError(
                 "predict_(log_)proba only supported when"
                 " loss='log_loss' or loss='modified_huber' "
-                "(%r given)" % self.loss
+                "(%r given)"
+                % self.loss
             )
 
     @available_if(_check_proba)
@@ -1351,7 +1361,7 @@ class SGDClassifier(BaseSGDClassifier):
             "_xfail_checks": {
                 "check_sample_weights_invariance": (
                     "zero sample_weight is not equivalent to removing samples"
-                )
+                ),
             }
         }
 
@@ -1369,7 +1379,12 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
 
     _parameter_constraints = {
         **BaseSGD._parameter_constraints,
-        "loss": [StrOptions(set(loss_functions), deprecated={"squared_loss"})],
+        "loss": [
+            StrOptions(
+                set(loss_functions),
+                deprecated={"squared_loss"},
+            )
+        ],
         "early_stopping": ["boolean"],
         "validation_fraction": [Interval(Real, 0, 1, closed="neither")],
         "n_iter_no_change": [Interval(Integral, 1, None, closed="left")],
@@ -2002,7 +2017,7 @@ class SGDRegressor(BaseSGDRegressor):
             "_xfail_checks": {
                 "check_sample_weights_invariance": (
                     "zero sample_weight is not equivalent to removing samples"
-                )
+                ),
             }
         }
 

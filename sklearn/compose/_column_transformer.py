@@ -387,7 +387,8 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         if self.remainder not in ("drop", "passthrough") and not is_transformer:
             raise ValueError(
                 "The remainder keyword needs to be one of 'drop', "
-                "'passthrough', or estimator. '%s' was passed instead" % self.remainder
+                "'passthrough', or estimator. '%s' was passed instead"
+                % self.remainder
             )
 
         self._n_features = X.shape[1]
@@ -534,7 +535,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 "verbose_feature_names_out=True to add prefixes to feature names"
             )
 
-        return np.concatenate([name for _, name in transformer_with_feature_names_out])
+        return np.concatenate(
+            [name for _, name in transformer_with_feature_names_out],
+        )
 
     def _update_fitted_transformers(self, transformers):
         # transformers are fitted; excludes 'drop' cases

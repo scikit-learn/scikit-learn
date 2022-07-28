@@ -82,7 +82,12 @@ def test_knn_imputer_default_with_invalid_input(na):
     with pytest.raises(ValueError, match=msg):
         imputer.fit(X)
 
-    X = np.array([[0, 0], [np.nan, 2]])
+    X = np.array(
+        [
+            [0, 0],
+            [np.nan, 2],
+        ]
+    )
 
 
 @pytest.mark.parametrize("na", [np.nan, -1])
@@ -110,15 +115,30 @@ def test_knn_imputer_removes_all_na_features(na):
 def test_knn_imputer_zero_nan_imputes_the_same(na):
     # Test with an imputable matrix and compare with different missing_values
     X_zero = np.array(
-        [[1, 0, 1, 1, 1.0], [2, 2, 2, 2, 2], [3, 3, 3, 3, 0], [6, 6, 0, 6, 6]]
+        [
+            [1, 0, 1, 1, 1.0],
+            [2, 2, 2, 2, 2],
+            [3, 3, 3, 3, 0],
+            [6, 6, 0, 6, 6],
+        ]
     )
 
     X_nan = np.array(
-        [[1, na, 1, 1, 1.0], [2, 2, 2, 2, 2], [3, 3, 3, 3, na], [6, 6, na, 6, 6]]
+        [
+            [1, na, 1, 1, 1.0],
+            [2, 2, 2, 2, 2],
+            [3, 3, 3, 3, na],
+            [6, 6, na, 6, 6],
+        ]
     )
 
     X_imputed = np.array(
-        [[1, 2.5, 1, 1, 1.0], [2, 2, 2, 2, 2], [3, 3, 3, 3, 1.5], [6, 6, 2.5, 6, 6]]
+        [
+            [1, 2.5, 1, 1, 1.0],
+            [2, 2, 2, 2, 2],
+            [3, 3, 3, 3, 1.5],
+            [6, 6, 2.5, 6, 6],
+        ]
     )
 
     imputer_zero = KNNImputer(missing_values=0, n_neighbors=2, weights="uniform")
@@ -291,14 +311,28 @@ def test_knn_imputer_weight_distance(na):
     assert_allclose(imputer.fit_transform(X), X_imputed_distance2)
 
     # Test with weights = "distance" and n_neighbors=2
-    X = np.array([[na, 0, 0], [2, 1, 2], [3, 2, 3], [4, 5, 5]])
+    X = np.array(
+        [
+            [na, 0, 0],
+            [2, 1, 2],
+            [3, 2, 3],
+            [4, 5, 5],
+        ]
+    )
 
     # neighbors are rows 1, 2, the nan_euclidean_distances are:
     dist_0_1 = np.sqrt((3 / 2) * ((1 - 0) ** 2 + (2 - 0) ** 2))
     dist_0_2 = np.sqrt((3 / 2) * ((2 - 0) ** 2 + (3 - 0) ** 2))
     imputed_value = np.average([2, 3], weights=[1 / dist_0_1, 1 / dist_0_2])
 
-    X_imputed = np.array([[imputed_value, 0, 0], [2, 1, 2], [3, 2, 3], [4, 5, 5]])
+    X_imputed = np.array(
+        [
+            [imputed_value, 0, 0],
+            [2, 1, 2],
+            [3, 2, 3],
+            [4, 5, 5],
+        ]
+    )
 
     imputer = KNNImputer(n_neighbors=2, weights="distance", missing_values=na)
     assert_allclose(imputer.fit_transform(X), X_imputed)

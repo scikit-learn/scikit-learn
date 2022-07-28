@@ -100,7 +100,7 @@ y = co2_data["co2"].to_numpy()
 # specific length-scale and the amplitude are free hyperparameters.
 from sklearn.gaussian_process.kernels import RBF
 
-long_term_trend_kernel = 50.0 ** 2 * RBF(length_scale=50.0)
+long_term_trend_kernel = 50.0**2 * RBF(length_scale=50.0)
 
 # %%
 # The seasonal variation is explained by the periodic exponential sine squared
@@ -113,7 +113,7 @@ long_term_trend_kernel = 50.0 ** 2 * RBF(length_scale=50.0)
 from sklearn.gaussian_process.kernels import ExpSineSquared
 
 seasonal_kernel = (
-    2.0 ** 2
+    2.0**2
     * RBF(length_scale=100.0)
     * ExpSineSquared(length_scale=1.0, periodicity=1.0, periodicity_bounds="fixed")
 )
@@ -126,7 +126,7 @@ seasonal_kernel = (
 # better accommodate the different irregularities.
 from sklearn.gaussian_process.kernels import RationalQuadratic
 
-irregularities_kernel = 0.5 ** 2 * RationalQuadratic(length_scale=1.0, alpha=1.0)
+irregularities_kernel = 0.5**2 * RationalQuadratic(length_scale=1.0, alpha=1.0)
 
 # %%
 # Finally, the noise in the dataset can be accounted with a kernel consisting
@@ -136,8 +136,8 @@ irregularities_kernel = 0.5 ** 2 * RationalQuadratic(length_scale=1.0, alpha=1.0
 # further free parameters.
 from sklearn.gaussian_process.kernels import WhiteKernel
 
-noise_kernel = 0.1 ** 2 * RBF(length_scale=0.1) + WhiteKernel(
-    noise_level=0.1 ** 2, noise_level_bounds=(1e-5, 1e5)
+noise_kernel = 0.1**2 * RBF(length_scale=0.1) + WhiteKernel(
+    noise_level=0.1**2, noise_level_bounds=(1e-5, 1e5)
 )
 
 # %%

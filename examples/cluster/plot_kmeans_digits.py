@@ -94,7 +94,10 @@ def bench_k_means(kmeans, name, data, labels):
     # The silhouette score requires the full dataset
     results += [
         metrics.silhouette_score(
-            data, estimator[-1].labels_, metric="euclidean", sample_size=300
+            data,
+            estimator[-1].labels_,
+            metric="euclidean",
+            sample_size=300,
         )
     ]
 

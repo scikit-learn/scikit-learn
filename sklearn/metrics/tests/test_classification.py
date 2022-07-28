@@ -256,7 +256,7 @@ def test_precision_recall_f1_score_binary():
 
         assert_almost_equal(
             my_assert(fbeta_score, y_true, y_pred, beta=2, **kwargs),
-            (1 + 2 ** 2) * ps * rs / (2 ** 2 * ps + rs),
+            (1 + 2**2) * ps * rs / (2**2 * ps + rs),
             2,
         )
 
@@ -658,10 +658,13 @@ def test_likelihood_ratios_warnings(params, warn_msg):
     "params, err_msg",
     [
         (
-            {"y_true": np.array([0, 1, 0, 1, 0]), "y_pred": np.array([1, 1, 0, 0, 2])},
+            {
+                "y_true": np.array([0, 1, 0, 1, 0]),
+                "y_pred": np.array([1, 1, 0, 0, 2]),
+            },
             "class_likelihood_ratios only supports binary classification "
             "problems, got targets of type: multiclass",
-        )
+        ),
     ],
 )
 def test_likelihood_ratios_errors(params, err_msg):
@@ -2056,7 +2059,8 @@ def test_recall_warnings(zero_division):
         )
         if zero_division == "warn":
             assert (
-                str(record.pop().message) == "Recall is ill-defined and "
+                str(record.pop().message)
+                == "Recall is ill-defined and "
                 "being set to 0.0 due to no true samples."
                 " Use `zero_division` parameter to control"
                 " this behavior."
@@ -2067,7 +2071,8 @@ def test_recall_warnings(zero_division):
         recall_score([0, 0], [0, 0])
         if zero_division == "warn":
             assert (
-                str(record.pop().message) == "Recall is ill-defined and "
+                str(record.pop().message)
+                == "Recall is ill-defined and "
                 "being set to 0.0 due to no true samples."
                 " Use `zero_division` parameter to control"
                 " this behavior."
@@ -2086,7 +2091,8 @@ def test_precision_warnings(zero_division):
         )
         if zero_division == "warn":
             assert (
-                str(record.pop().message) == "Precision is ill-defined and "
+                str(record.pop().message)
+                == "Precision is ill-defined and "
                 "being set to 0.0 due to no predicted samples."
                 " Use `zero_division` parameter to control"
                 " this behavior."
@@ -2097,7 +2103,8 @@ def test_precision_warnings(zero_division):
         precision_score([0, 0], [0, 0])
         if zero_division == "warn":
             assert (
-                str(record.pop().message) == "Precision is ill-defined and "
+                str(record.pop().message)
+                == "Precision is ill-defined and "
                 "being set to 0.0 due to no predicted samples."
                 " Use `zero_division` parameter to control"
                 " this behavior."
@@ -2142,7 +2149,8 @@ def test_fscore_warnings(zero_division):
             )
             if zero_division == "warn":
                 assert (
-                    str(record.pop().message) == "F-score is ill-defined and "
+                    str(record.pop().message)
+                    == "F-score is ill-defined and "
                     "being set to 0.0 due to no true nor predicted "
                     "samples. Use `zero_division` parameter to "
                     "control this behavior."

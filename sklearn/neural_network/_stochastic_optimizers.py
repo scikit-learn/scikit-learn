@@ -273,13 +273,13 @@ class AdamOptimizer(BaseOptimizer):
             for m, grad in zip(self.ms, grads)
         ]
         self.vs = [
-            self.beta_2 * v + (1 - self.beta_2) * (grad ** 2)
+            self.beta_2 * v + (1 - self.beta_2) * (grad**2)
             for v, grad in zip(self.vs, grads)
         ]
         self.learning_rate = (
             self.learning_rate_init
-            * np.sqrt(1 - self.beta_2 ** self.t)
-            / (1 - self.beta_1 ** self.t)
+            * np.sqrt(1 - self.beta_2**self.t)
+            / (1 - self.beta_1**self.t)
         )
         updates = [
             -self.learning_rate * m / (np.sqrt(v) + self.epsilon)

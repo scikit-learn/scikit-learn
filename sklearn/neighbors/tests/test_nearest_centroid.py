@@ -84,7 +84,9 @@ def test_pickle():
     assert type(obj2) == obj.__class__
     score2 = obj2.score(iris.data, iris.target)
     assert_array_equal(
-        score, score2, "Failed to generate same score after pickling (classification)."
+        score,
+        score2,
+        "Failed to generate same score after pickling (classification).",
     )
 
 

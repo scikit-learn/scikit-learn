@@ -113,7 +113,13 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         "fit_intercept": ["boolean"],
         "solver": [
             StrOptions(
-                {"highs-ds", "highs-ipm", "highs", "interior-point", "revised simplex"}
+                {
+                    "highs-ds",
+                    "highs-ipm",
+                    "highs",
+                    "interior-point",
+                    "revised simplex",
+                }
             ),
             Hidden(StrOptions({"warn"})),
         ],
@@ -272,7 +278,11 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         b_eq = y
 
         result = linprog(
-            c=c, A_eq=A_eq, b_eq=b_eq, method=solver, options=solver_options
+            c=c,
+            A_eq=A_eq,
+            b_eq=b_eq,
+            method=solver,
+            options=solver_options,
         )
         solution = result.x
         if not result.success:

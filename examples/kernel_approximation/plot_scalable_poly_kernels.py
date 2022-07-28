@@ -126,7 +126,8 @@ for n_components in N_COMPONENTS:
     for _ in range(n_runs):
 
         pipeline = make_pipeline(
-            PolynomialCountSketch(n_components=n_components, degree=4), LinearSVC()
+            PolynomialCountSketch(n_components=n_components, degree=4),
+            LinearSVC(),
         )
 
         start = time.time()
@@ -180,24 +181,36 @@ import matplotlib.pyplot as plt
 
 fig, ax = plt.subplots(figsize=(7, 7))
 ax.scatter(
-    [results["LSVM"]["time"]],
-    [results["LSVM"]["score"]],
+    [
+        results["LSVM"]["time"],
+    ],
+    [
+        results["LSVM"]["score"],
+    ],
     label="Linear SVM",
     c="green",
     marker="^",
 )
 
 ax.scatter(
-    [results["LSVM + PS(250)"]["time"]],
-    [results["LSVM + PS(250)"]["score"]],
+    [
+        results["LSVM + PS(250)"]["time"],
+    ],
+    [
+        results["LSVM + PS(250)"]["score"],
+    ],
     label="Linear SVM + PolynomialCountSketch",
     c="blue",
 )
 
 for n_components in N_COMPONENTS:
     ax.scatter(
-        [results[f"LSVM + PS({n_components})"]["time"]],
-        [results[f"LSVM + PS({n_components})"]["score"]],
+        [
+            results[f"LSVM + PS({n_components})"]["time"],
+        ],
+        [
+            results[f"LSVM + PS({n_components})"]["score"],
+        ],
         c="blue",
     )
     ax.annotate(
@@ -211,8 +224,12 @@ for n_components in N_COMPONENTS:
     )
 
 ax.scatter(
-    [results["KSVM"]["time"]],
-    [results["KSVM"]["score"]],
+    [
+        results["KSVM"]["time"],
+    ],
+    [
+        results["KSVM"]["score"],
+    ],
     label="Kernel SVM",
     c="red",
     marker="x",

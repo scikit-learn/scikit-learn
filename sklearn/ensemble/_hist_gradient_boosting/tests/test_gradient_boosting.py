@@ -217,7 +217,10 @@ def test_asymmetric_error(quantile):
     rng = np.random.RandomState(42)
     # take care that X @ coef + intercept > 0
     X = np.concatenate(
-        (np.abs(rng.randn(n_samples)[:, None]), -rng.randint(2, size=(n_samples, 1))),
+        (
+            np.abs(rng.randn(n_samples)[:, None]),
+            -rng.randint(2, size=(n_samples, 1)),
+        ),
         axis=1,
     )
     intercept = 1.23

@@ -155,7 +155,12 @@ def test_bin_mapper_small_random_data(n_samples, max_bins):
 
 
 @pytest.mark.parametrize(
-    "max_bins, n_distinct, multiplier", [(5, 5, 1), (5, 5, 3), (255, 12, 42)]
+    "max_bins, n_distinct, multiplier",
+    [
+        (5, 5, 1),
+        (5, 5, 3),
+        (255, 12, 42),
+    ],
 )
 def test_bin_mapper_identity_repeated_values(max_bins, n_distinct, multiplier):
     data = np.array(list(range(n_distinct)) * multiplier).reshape(-1, 1)
@@ -191,7 +196,12 @@ def test_bin_mapper_repeated_values_invariance(n_distinct):
 
 
 @pytest.mark.parametrize(
-    "max_bins, scale, offset", [(3, 2, -1), (42, 1, 0), (255, 0.3, 42)]
+    "max_bins, scale, offset",
+    [
+        (3, 2, -1),
+        (42, 1, 0),
+        (255, 0.3, 42),
+    ],
 )
 def test_bin_mapper_identity_small(max_bins, scale, offset):
     data = np.arange(max_bins).reshape(-1, 1) * scale + offset
@@ -203,7 +213,15 @@ def test_bin_mapper_identity_small(max_bins, scale, offset):
 
 @pytest.mark.parametrize(
     "max_bins_small, max_bins_large",
-    [(2, 2), (3, 3), (4, 4), (42, 42), (255, 255), (5, 17), (42, 255)],
+    [
+        (2, 2),
+        (3, 3),
+        (4, 4),
+        (42, 42),
+        (255, 255),
+        (5, 17),
+        (42, 255),
+    ],
 )
 def test_bin_mapper_idempotence(max_bins_small, max_bins_large):
     assert max_bins_large >= max_bins_small
@@ -406,16 +424,16 @@ def test_make_known_categories_bitsets():
     # first categorical feature: [2, 4, 10, 240]
     f_idx = 1
     mapped_f_idx = f_idx_map[f_idx]
-    expected_cat_bitset[mapped_f_idx, 0] = 2 ** 2 + 2 ** 4 + 2 ** 10
+    expected_cat_bitset[mapped_f_idx, 0] = 2**2 + 2**4 + 2**10
     # 240 = 32**7 + 16, therefore the 16th bit of the 7th array is 1.
-    expected_cat_bitset[mapped_f_idx, 7] = 2 ** 16
+    expected_cat_bitset[mapped_f_idx, 7] = 2**16
 
     # second categorical feature [30, 70, 180]
     f_idx = 2
     mapped_f_idx = f_idx_map[f_idx]
-    expected_cat_bitset[mapped_f_idx, 0] = 2 ** 30
-    expected_cat_bitset[mapped_f_idx, 2] = 2 ** 6
-    expected_cat_bitset[mapped_f_idx, 5] = 2 ** 20
+    expected_cat_bitset[mapped_f_idx, 0] = 2**30
+    expected_cat_bitset[mapped_f_idx, 2] = 2**6
+    expected_cat_bitset[mapped_f_idx, 5] = 2**20
 
     assert_allclose(expected_cat_bitset, known_cat_bitsets)
 

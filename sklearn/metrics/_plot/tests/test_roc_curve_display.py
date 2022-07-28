@@ -38,7 +38,10 @@ def data_binary(data):
 @pytest.mark.parametrize("with_strings", [True, False])
 @pytest.mark.parametrize(
     "constructor_name, default_name",
-    [("from_estimator", "LogisticRegression"), ("from_predictions", "Classifier")],
+    [
+        ("from_estimator", "LogisticRegression"),
+        ("from_predictions", "Classifier"),
+    ],
 )
 def test_roc_curve_display_plotting(
     pyplot,
@@ -190,7 +193,10 @@ def test_plot_roc_curve_pos_label(pyplot, response_method, constructor_name):
     X = X[:, :2]
     y = np.array(["cancer" if c == 1 else "not cancer" for c in y], dtype=object)
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, stratify=y, random_state=0
+        X,
+        y,
+        stratify=y,
+        random_state=0,
     )
 
     classifier = LogisticRegression()
@@ -216,7 +222,9 @@ def test_plot_roc_curve_pos_label(pyplot, response_method, constructor_name):
         )
     else:
         display = RocCurveDisplay.from_predictions(
-            y_test, y_pred_cancer, pos_label="cancer"
+            y_test,
+            y_pred_cancer,
+            pos_label="cancer",
         )
 
     roc_auc_limit = 0.95679
@@ -234,7 +242,9 @@ def test_plot_roc_curve_pos_label(pyplot, response_method, constructor_name):
         )
     else:
         display = RocCurveDisplay.from_predictions(
-            y_test, y_pred_not_cancer, pos_label="not cancer"
+            y_test,
+            y_pred_not_cancer,
+            pos_label="not cancer",
         )
 
     assert display.roc_auc == pytest.approx(roc_auc_limit)

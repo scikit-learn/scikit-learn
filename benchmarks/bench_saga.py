@@ -119,7 +119,7 @@ def fit_single(
                 # Lightning predict_proba is not implemented for n_classes > 2
                 y_pred = _predict_proba(lr, X)
             score = log_loss(y, y_pred, normalize=False) / n_samples
-            score += 0.5 * alpha * np.sum(lr.coef_ ** 2) + beta * np.sum(
+            score += 0.5 * alpha * np.sum(lr.coef_**2) + beta * np.sum(
                 np.abs(lr.coef_)
             )
             scores.append(score)
@@ -151,7 +151,10 @@ def exp(
     n_jobs=1,
     skip_slow=False,
 ):
-    dtypes_mapping = {"float64": np.float64, "float32": np.float32}
+    dtypes_mapping = {
+        "float64": np.float64,
+        "float32": np.float32,
+    }
 
     if dataset == "rcv1":
         rcv1 = fetch_rcv1()

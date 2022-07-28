@@ -60,7 +60,10 @@ import matplotlib.pyplot as plt
 
 plt.plot(data, target, label="True signal", linewidth=2)
 plt.scatter(
-    training_data, training_noisy_target, color="black", label="Noisy measurements"
+    training_data,
+    training_noisy_target,
+    color="black",
+    label="Noisy measurements",
 )
 plt.legend()
 plt.xlabel("data")
@@ -83,7 +86,10 @@ ridge = Ridge().fit(training_data, training_noisy_target)
 
 plt.plot(data, target, label="True signal", linewidth=2)
 plt.scatter(
-    training_data, training_noisy_target, color="black", label="Noisy measurements"
+    training_data,
+    training_noisy_target,
+    color="black",
+    label="Noisy measurements",
 )
 plt.plot(data, ridge.predict(data), label="Ridge regression")
 plt.legend()
@@ -133,7 +139,10 @@ print(
 # %%
 plt.plot(data, target, label="True signal", linewidth=2, linestyle="dashed")
 plt.scatter(
-    training_data, training_noisy_target, color="black", label="Noisy measurements"
+    training_data,
+    training_noisy_target,
+    color="black",
+    label="Noisy measurements",
 )
 plt.plot(
     data,
@@ -176,7 +185,10 @@ param_distributions = {
     "kernel__periodicity": loguniform(1e0, 1e1),
 }
 kernel_ridge_tuned = RandomizedSearchCV(
-    kernel_ridge, param_distributions=param_distributions, n_iter=500, random_state=0
+    kernel_ridge,
+    param_distributions=param_distributions,
+    n_iter=500,
+    random_state=0,
 )
 start_time = time.time()
 kernel_ridge_tuned.fit(training_data, training_noisy_target)
@@ -199,9 +211,18 @@ print(f"Time for KernelRidge predict: {time.time() - start_time:.3f} seconds")
 # %%
 plt.plot(data, target, label="True signal", linewidth=2, linestyle="dashed")
 plt.scatter(
-    training_data, training_noisy_target, color="black", label="Noisy measurements"
+    training_data,
+    training_noisy_target,
+    color="black",
+    label="Noisy measurements",
 )
-plt.plot(data, predictions_kr, label="Kernel ridge", linewidth=2, linestyle="dashdot")
+plt.plot(
+    data,
+    predictions_kr,
+    label="Kernel ridge",
+    linewidth=2,
+    linestyle="dashdot",
+)
 plt.legend(loc="lower right")
 plt.xlabel("data")
 plt.ylabel("target")
@@ -251,7 +272,8 @@ gaussian_process.kernel_
 # our model.
 start_time = time.time()
 mean_predictions_gpr, std_predictions_gpr = gaussian_process.predict(
-    data, return_std=True
+    data,
+    return_std=True,
 )
 print(
     f"Time for GaussianProcessRegressor predict: {time.time() - start_time:.3f} seconds"
@@ -260,10 +282,19 @@ print(
 # %%
 plt.plot(data, target, label="True signal", linewidth=2, linestyle="dashed")
 plt.scatter(
-    training_data, training_noisy_target, color="black", label="Noisy measurements"
+    training_data,
+    training_noisy_target,
+    color="black",
+    label="Noisy measurements",
 )
 # Plot the predictions of the kernel ridge
-plt.plot(data, predictions_kr, label="Kernel ridge", linewidth=2, linestyle="dashdot")
+plt.plot(
+    data,
+    predictions_kr,
+    label="Kernel ridge",
+    linewidth=2,
+    linestyle="dashdot",
+)
 # Plot the predictions of the gaussian process regressor
 plt.plot(
     data,
@@ -316,16 +347,26 @@ kernel = 1.0 * ExpSineSquared(1.0, 5.0, periodicity_bounds=(1e-2, 1e1)) * RBF(
 gaussian_process = GaussianProcessRegressor(kernel=kernel)
 gaussian_process.fit(training_data, training_noisy_target)
 mean_predictions_gpr, std_predictions_gpr = gaussian_process.predict(
-    data, return_std=True
+    data,
+    return_std=True,
 )
 
 # %%
 plt.plot(data, target, label="True signal", linewidth=2, linestyle="dashed")
 plt.scatter(
-    training_data, training_noisy_target, color="black", label="Noisy measurements"
+    training_data,
+    training_noisy_target,
+    color="black",
+    label="Noisy measurements",
 )
 # Plot the predictions of the kernel ridge
-plt.plot(data, predictions_kr, label="Kernel ridge", linewidth=2, linestyle="dashdot")
+plt.plot(
+    data,
+    predictions_kr,
+    label="Kernel ridge",
+    linewidth=2,
+    linestyle="dashdot",
+)
 # Plot the predictions of the gaussian process regressor
 plt.plot(
     data,

@@ -587,14 +587,18 @@ def test_stacking_prefit(Stacker, Estimator, stack_method, final_estimator, X, y
     [
         (
             StackingClassifier(
-                estimators=[("lr", LogisticRegression()), ("svm", SVC())], cv="prefit"
+                estimators=[("lr", LogisticRegression()), ("svm", SVC())],
+                cv="prefit",
             ),
             X_iris,
             y_iris,
         ),
         (
             StackingRegressor(
-                estimators=[("lr", LinearRegression()), ("svm", LinearSVR())],
+                estimators=[
+                    ("lr", LinearRegression()),
+                    ("svm", LinearSVR()),
+                ],
                 cv="prefit",
             ),
             X_diabetes,
@@ -675,7 +679,10 @@ def test_stacking_without_n_features_in(make_dataset, Stacking, Estimator):
             iris.feature_names,
             X_iris[:100],
             y_iris[:100],  # keep only classes 0 and 1
-            ["stackingclassifier_lr", "stackingclassifier_svm"],
+            [
+                "stackingclassifier_lr",
+                "stackingclassifier_svm",
+            ],
         ),
         (
             StackingRegressor(
@@ -687,7 +694,10 @@ def test_stacking_without_n_features_in(make_dataset, Stacking, Estimator):
             diabetes.feature_names,
             X_diabetes,
             y_diabetes,
-            ["stackingregressor_lr", "stackingregressor_svm"],
+            [
+                "stackingregressor_lr",
+                "stackingregressor_svm",
+            ],
         ),
     ],
     ids=[

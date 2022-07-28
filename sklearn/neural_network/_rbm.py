@@ -301,9 +301,13 @@ class BernoulliRBM(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
             )
             self._n_features_out = self.components_.shape[0]
         if not hasattr(self, "intercept_hidden_"):
-            self.intercept_hidden_ = np.zeros(self.n_components)
+            self.intercept_hidden_ = np.zeros(
+                self.n_components,
+            )
         if not hasattr(self, "intercept_visible_"):
-            self.intercept_visible_ = np.zeros(X.shape[1])
+            self.intercept_visible_ = np.zeros(
+                X.shape[1],
+            )
         if not hasattr(self, "h_samples_"):
             self.h_samples_ = np.zeros((self.batch_size, self.n_components))
 
