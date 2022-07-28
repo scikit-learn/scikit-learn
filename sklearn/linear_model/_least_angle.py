@@ -1307,6 +1307,20 @@ class LassoLars(Lars):
     >>> print(reg.coef_)
     [ 0.         -0.955...]
     """
+    _parameter_constraints = {
+        "alpha": [Interval(Real, 0, None, closed="left")],
+        "fit_intercept": ["boolean"],
+        "verbose": ["verbose"],
+        "normalize": ["boolean", Hidden(StrOptions({"deprecated"}))],
+        "precompute": ["boolean", StrOptions({"auto"}), "array-like"],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
+        "eps": [Interval(Real, 0, None, closed="left")],
+        "copy_X": ["boolean"],
+        "fit_path": ["boolean"],
+        "positive": ["boolean"],
+        "jitter": [Interval(Real, 0, None, closed="left"), None],
+        "random_state": ["random_state"]
+    }
 
     method = "lasso"
 
@@ -1961,6 +1975,20 @@ class LassoLarsCV(LarsCV):
     >>> reg.predict(X[:1,])
     array([-78.4831...])
     """
+    
+    _parameter_constraints = {
+        "fit_intercept": ["boolean"],
+        "verbose": ["verbose"],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
+        "normalize": ["boolean", Hidden(StrOptions({"deprecated"}))],
+        "precompute": ["boolean", StrOptions({"auto"}), "array-like"],
+        "cv": ["cv_object"],
+        "max_n_alphas": [Interval(Integral, 0, None, closed="left")],
+        "n_jobs": [Integral, None],
+        "eps": [Interval(Real, 0, None, closed="left")],
+        "copy_X": ["boolean"],
+        "positive": ["boolean"]
+    }
 
     method = "lasso"
 
@@ -2160,6 +2188,19 @@ class LassoLarsIC(LassoLars):
     [ 0.  -1.11...]
     """
 
+    _parameter_constraints = {
+        "criterion": [StrOptions({"aic", "bic"})],
+        "fit_intercept": ["boolean"],
+        "verbose": ["verbose"],
+        "normalize": ["boolean", Hidden(StrOptions({"deprecated"}))],
+        "precompute": ["boolean", StrOptions({"auto"}), "array-like"],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
+        "eps": [Interval(Real, 0, None, closed="left")],
+        "copy_X": ["boolean"],
+        "positive": ["boolean"],
+        "noise_variance": [Interval(Real, 0, None, closed="left"), None]
+    }
+
     def __init__(
         self,
         criterion="aic",
@@ -2210,6 +2251,8 @@ class LassoLarsIC(LassoLars):
         self : object
             Returns an instance of self.
         """
+        self._validate_params()
+
         _normalize = _deprecate_normalize(
             self.normalize, default=True, estimator_name=self.__class__.__name__
         )
