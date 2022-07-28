@@ -25,9 +25,16 @@ the lower the better.
 
 import warnings
 import numpy as np
-
 from scipy.sparse import coo_matrix
 from scipy.sparse import csr_matrix
+
+# from _base import _check_pos_label_consistency
+# from sklearn.preprocessing import LabelEncoder
+# from sklearn.utils import assert_all_finite,check_array,check_consistent_length,column_or_1d
+# from sklearn.utils.multiclass import unique_labels,type_of_target
+# from sklearn.utils.validation import _num_samples
+# from sklearn.utils.sparsefuncs import count_nonzero
+# from sklearn.exceptions import  UndefinedMetricWarning
 
 from ..preprocessing import LabelBinarizer
 from ..preprocessing import LabelEncoder
@@ -43,6 +50,8 @@ from ..exceptions import UndefinedMetricWarning
 
 from ._base import _check_pos_label_consistency
 
+from scipy import stats as st
+from enum import Enum
 
 def _check_zero_division(zero_division):
     if isinstance(zero_division, str) and zero_division == "warn":
@@ -921,7 +930,6 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
     else:
         return cov_ytyp / np.sqrt(cov_ytyt * cov_ypyp)
 
-from enum import Enum
 class AVERAG_TYPE(Enum):
     MATTHEW_GEN = 2
     F1_GEN = 3
@@ -938,12 +946,12 @@ def generalized_matthew(y_true, y_pred,ave_type=AVERAG_TYPE.MATTHEW_GEN.value,sa
     y_pred = lb.transform(y_pred)
 
     C = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
-    # A utitliy function which normalizes the confusion and perfroms the relevant average
+    dimension_size = C.shape[0]
+
+     # A utitliy function which normalizes the confusion and perfroms the relevant average
     def norm_confusion_mat(conf_mat, average, dimension_size):
-        # m1 = conf_mat / np.sum(conf_mat, axis=1)
-        # m2 = conf_mat / np.sum(conf_mat, axis=0)
-        m1 = C / C.sum(conf_mat, axis=1)
-        m2 = C / C.sum(conf_mat, axis=0)
+        m1 = C / C.sum( axis=1)
+        m2 = C / C.sum( axis=0)
 
         return [[average([m1[i, j], m2[j][i]])
                  for i in range(dimension_size)] for j in range(dimension_size)]
@@ -954,12 +962,11 @@ def generalized_matthew(y_true, y_pred,ave_type=AVERAG_TYPE.MATTHEW_GEN.value,sa
         l_mat = len(h_conf_mat)
         return st.mstats.hmean([h_conf_mat[i][i] for i in range(l_mat)])
 
-    dimension_size =len(labels)
+    dimension_size =3
     # c=confusion_matrix(y_true=y_true,y_pred=y_pred ,labels=labels)
-    if ave_type == AVERAG_TYPE.MATTHEW_GEN.value:
-        av_func =st.mstats.gmean
-        scalar_op =np.linalg.det
-    elif ave_type ==AVERAG_TYPE.F1_GEN.value:
+    av_func =st.mstats.gmean
+    scalar_op =np.linalg.det
+    if ave_type ==AVERAG_TYPE.F1_GEN.value:
         av_func = st.mstats.hmean
         scalar_op =gen_f1_scalar_op
 
