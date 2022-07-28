@@ -43,7 +43,7 @@ def _dynamic_max_trials(n_inliers, n_samples, min_samples, probability):
     """
     inlier_ratio = n_inliers / float(n_samples)
     nom = max(_EPSILON, 1 - probability)
-    denom = max(_EPSILON, 1 - inlier_ratio**min_samples)
+    denom = max(_EPSILON, 1 - inlier_ratio ** min_samples)
     if nom == 1:
         return 0
     if denom == 1:
@@ -400,8 +400,7 @@ class RANSACRegressor(
         else:
             raise ValueError(
                 "loss should be 'absolute_error', 'squared_error' or a "
-                "callable. Got %s. "
-                % self.loss
+                "callable. Got %s. " % self.loss
             )
 
         random_state = check_random_state(self.random_state)
@@ -588,10 +587,7 @@ class RANSACRegressor(
         """
         check_is_fitted(self)
         X = self._validate_data(
-            X,
-            force_all_finite=False,
-            accept_sparse=True,
-            reset=False,
+            X, force_all_finite=False, accept_sparse=True, reset=False
         )
         return self.estimator_.predict(X)
 
@@ -615,10 +611,7 @@ class RANSACRegressor(
         """
         check_is_fitted(self)
         X = self._validate_data(
-            X,
-            force_all_finite=False,
-            accept_sparse=True,
-            reset=False,
+            X, force_all_finite=False, accept_sparse=True, reset=False
         )
         return self.estimator_.score(X, y)
 
@@ -627,6 +620,6 @@ class RANSACRegressor(
             "_xfail_checks": {
                 "check_sample_weights_invariance": (
                     "zero sample_weight is not equivalent to removing samples"
-                ),
+                )
             }
         }

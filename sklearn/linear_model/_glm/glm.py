@@ -201,8 +201,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         self._base_loss = self._get_loss()
 
         linear_loss = LinearModelLoss(
-            base_loss=self._base_loss,
-            fit_intercept=self.fit_intercept,
+            base_loss=self._base_loss, fit_intercept=self.fit_intercept
         )
 
         if not linear_loss.base_loss.in_y_true_range(y):

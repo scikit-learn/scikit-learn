@@ -250,9 +250,7 @@ display.plot(ax=ax, name="Micro-average precision-recall", color="gold")
 
 for i, color in zip(range(n_classes), colors):
     display = PrecisionRecallDisplay(
-        recall=recall[i],
-        precision=precision[i],
-        average_precision=average_precision[i],
+        recall=recall[i], precision=precision[i], average_precision=average_precision[i]
     )
     display.plot(ax=ax, name=f"Precision-recall for class {i}", color=color)
 

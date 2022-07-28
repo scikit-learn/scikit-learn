@@ -41,11 +41,7 @@ pytestmark = pytest.mark.filterwarnings("ignore:" + msg)
 
 # non centered, sparse centers to check the
 centers = np.array(
-    [
-        [0.0, 5.0, 0.0, 0.0, 0.0],
-        [1.0, 1.0, 4.0, 0.0, 0.0],
-        [1.0, 0.0, 0.0, 5.0, 1.0],
-    ]
+    [[0.0, 5.0, 0.0, 0.0, 0.0], [1.0, 1.0, 4.0, 0.0, 0.0], [1.0, 0.0, 0.0, 5.0, 1.0]]
 )
 n_samples = 100
 n_clusters, n_features = centers.shape
@@ -225,7 +221,7 @@ def test_minibatch_update_consistency():
     weight_sums = np.zeros(centers_old.shape[0], dtype=X.dtype)
     weight_sums_csr = np.zeros(centers_old.shape[0], dtype=X.dtype)
 
-    x_squared_norms = (X**2).sum(axis=1)
+    x_squared_norms = (X ** 2).sum(axis=1)
     x_squared_norms_csr = row_norms(X_csr, squared=True)
 
     sample_weight = np.ones(X.shape[0], dtype=X.dtype)
@@ -979,7 +975,7 @@ def test_euclidean_distance(dtype, squared):
     )
     a_dense = a_sparse.toarray().reshape(-1)
     b = rng.randn(100).astype(dtype, copy=False)
-    b_squared_norm = (b**2).sum()
+    b_squared_norm = (b ** 2).sum()
 
     expected = ((a_dense - b) ** 2).sum()
     expected = expected if squared else np.sqrt(expected)
@@ -1118,7 +1114,7 @@ def test_wrong_params(Estimator, param, match):
             {"x_squared_norms": X[:2]},
             r"The length of x_squared_norms .* should "
             r"be equal to the length of n_samples",
-        ),
+        )
     ],
 )
 def test_kmeans_plusplus_wrong_params(param, match):

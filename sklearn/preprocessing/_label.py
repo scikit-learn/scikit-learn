@@ -25,12 +25,7 @@ from ..utils.multiclass import type_of_target
 from ..utils._encode import _encode, _unique
 
 
-__all__ = [
-    "label_binarize",
-    "LabelBinarizer",
-    "LabelEncoder",
-    "MultiLabelBinarizer",
-]
+__all__ = ["label_binarize", "LabelBinarizer", "LabelEncoder", "MultiLabelBinarizer"]
 
 
 class LabelEncoder(TransformerMixin, BaseEstimator):

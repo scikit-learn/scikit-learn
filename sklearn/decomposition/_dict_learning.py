@@ -1091,7 +1091,7 @@ def dict_learning_online(
         if ii < batch_size - 1:
             theta = float((ii + 1) * batch_size)
         else:
-            theta = float(batch_size**2 + ii + 1 - batch_size)
+            theta = float(batch_size ** 2 + ii + 1 - batch_size)
         beta = (theta + 1 - batch_size) / (theta + 1)
 
         A *= beta
@@ -1424,10 +1424,7 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
         return super()._transform(X, self.dictionary)
 
     def _more_tags(self):
-        return {
-            "requires_fit": False,
-            "preserves_dtype": [np.float64, np.float32],
-        }
+        return {"requires_fit": False, "preserves_dtype": [np.float64, np.float32]}
 
     @property
     def n_components_(self):
@@ -1723,9 +1720,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         return self.components_.shape[0]
 
     def _more_tags(self):
-        return {
-            "preserves_dtype": [np.float64, np.float32],
-        }
+        return {"preserves_dtype": [np.float64, np.float32]}
 
 
 class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
@@ -2104,7 +2099,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         if step < batch_size - 1:
             theta = (step + 1) * batch_size
         else:
-            theta = batch_size**2 + step + 1 - batch_size
+            theta = batch_size ** 2 + step + 1 - batch_size
         beta = (theta + 1 - batch_size) / (theta + 1)
 
         A, B = self._inner_stats
@@ -2412,6 +2407,4 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         return self.components_.shape[0]
 
     def _more_tags(self):
-        return {
-            "preserves_dtype": [np.float64, np.float32],
-        }
+        return {"preserves_dtype": [np.float64, np.float32]}

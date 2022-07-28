@@ -10,12 +10,7 @@ from numbers import Integral, Real
 
 from ..tree import ExtraTreeRegressor
 from ..tree._tree import DTYPE as tree_dtype
-from ..utils import (
-    check_random_state,
-    check_array,
-    gen_batches,
-    get_chunk_n_rows,
-)
+from ..utils import check_random_state, check_array, gen_batches, get_chunk_n_rows
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.validation import check_is_fitted, _num_samples
 from ..base import OutlierMixin
@@ -204,14 +199,8 @@ class IsolationForest(OutlierMixin, BaseBagging):
             Interval(Integral, 1, None, closed="left"),
             Interval(Real, 0, 1, closed="right"),
         ],
-        "contamination": [
-            StrOptions({"auto"}),
-            Interval(Real, 0, 0.5, closed="right"),
-        ],
-        "max_features": [
-            Integral,
-            Interval(Real, 0, 1, closed="right"),
-        ],
+        "contamination": [StrOptions({"auto"}), Interval(Real, 0, 0.5, closed="right")],
+        "max_features": [Integral, Interval(Real, 0, 1, closed="right")],
         "bootstrap": ["boolean"],
         "n_jobs": [Integral, None],
         "random_state": ["random_state"],
@@ -500,7 +489,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
             "_xfail_checks": {
                 "check_sample_weights_invariance": (
                     "zero sample_weight is not equivalent to removing samples"
-                ),
+                )
             }
         }
 

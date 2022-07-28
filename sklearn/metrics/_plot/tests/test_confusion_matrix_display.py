@@ -1,7 +1,4 @@
-from numpy.testing import (
-    assert_allclose,
-    assert_array_equal,
-)
+from numpy.testing import assert_allclose, assert_array_equal
 import numpy as np
 import pytest
 
@@ -96,11 +93,7 @@ def test_confusion_matrix_display_custom_labels(
     display_labels = ["b", "d", "a", "e", "f"] if with_display_labels else None
 
     cm = confusion_matrix(y, y_pred, labels=labels)
-    common_kwargs = {
-        "ax": ax,
-        "display_labels": display_labels,
-        "labels": labels,
-    }
+    common_kwargs = {"ax": ax, "display_labels": display_labels, "labels": labels}
     if constructor_name == "from_estimator":
         disp = ConfusionMatrixDisplay.from_estimator(classifier, X, y, **common_kwargs)
     else:
@@ -128,10 +121,7 @@ def test_confusion_matrix_display_custom_labels(
 @pytest.mark.parametrize("normalize", ["true", "pred", "all", None])
 @pytest.mark.parametrize("include_values", [True, False])
 def test_confusion_matrix_display_plotting(
-    pyplot,
-    constructor_name,
-    normalize,
-    include_values,
+    pyplot, constructor_name, normalize, include_values
 ):
     """Check the overall plotting rendering."""
     n_classes = 5
@@ -297,8 +287,7 @@ def test_confusion_matrix_contrast(pyplot):
         LogisticRegression(),
         make_pipeline(StandardScaler(), LogisticRegression()),
         make_pipeline(
-            make_column_transformer((StandardScaler(), [0, 1])),
-            LogisticRegression(),
+            make_column_transformer((StandardScaler(), [0, 1])), LogisticRegression()
         ),
     ],
     ids=["clf", "pipeline-clf", "pipeline-column_transformer-clf"],

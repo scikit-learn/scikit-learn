@@ -32,7 +32,7 @@ FETCH_PYTEST_MARKERS = {
     "as_frame": {
         "fetch_openml": pytest.mark.xfail(
             reason="fetch_opeml requires a dataset name or id"
-        ),
+        )
     },
 }
 

@@ -171,10 +171,7 @@ class DetCurveDisplay:
         name = estimator.__class__.__name__ if name is None else name
 
         y_pred, pos_label = _get_response(
-            X,
-            estimator,
-            response_method,
-            pos_label=pos_label,
+            X, estimator, response_method, pos_label=pos_label
         )
 
         return cls.from_predictions(
@@ -266,20 +263,14 @@ class DetCurveDisplay:
         """
         check_matplotlib_support(f"{cls.__name__}.from_predictions")
         fpr, fnr, _ = det_curve(
-            y_true,
-            y_pred,
-            pos_label=pos_label,
-            sample_weight=sample_weight,
+            y_true, y_pred, pos_label=pos_label, sample_weight=sample_weight
         )
 
         pos_label = _check_pos_label_consistency(pos_label, y_true)
         name = "Classifier" if name is None else name
 
         viz = DetCurveDisplay(
-            fpr=fpr,
-            fnr=fnr,
-            estimator_name=name,
-            pos_label=pos_label,
+            fpr=fpr, fnr=fnr, estimator_name=name, pos_label=pos_label
         )
 
         return viz.plot(ax=ax, name=name, **kwargs)
@@ -317,9 +308,7 @@ class DetCurveDisplay:
             _, ax = plt.subplots()
 
         (self.line_,) = ax.plot(
-            sp.stats.norm.ppf(self.fpr),
-            sp.stats.norm.ppf(self.fnr),
-            **line_kwargs,
+            sp.stats.norm.ppf(self.fpr), sp.stats.norm.ppf(self.fnr), **line_kwargs
         )
         info_pos_label = (
             f" (Positive label: {self.pos_label})" if self.pos_label is not None else ""
@@ -458,12 +447,7 @@ def plot_det_curve(
         X, estimator, response_method, pos_label=pos_label
     )
 
-    fpr, fnr, _ = det_curve(
-        y,
-        y_pred,
-        pos_label=pos_label,
-        sample_weight=sample_weight,
-    )
+    fpr, fnr, _ = det_curve(y, y_pred, pos_label=pos_label, sample_weight=sample_weight)
 
     name = estimator.__class__.__name__ if name is None else name
 

@@ -261,11 +261,9 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             return the index of the leaf x ends up in.
         """
         X = self._validate_X_predict(X)
-        results = Parallel(
-            n_jobs=self.n_jobs,
-            verbose=self.verbose,
-            prefer="threads",
-        )(delayed(tree.apply)(X, check_input=False) for tree in self.estimators_)
+        results = Parallel(n_jobs=self.n_jobs, verbose=self.verbose, prefer="threads")(
+            delayed(tree.apply)(X, check_input=False) for tree in self.estimators_
+        )
 
         return np.array(results).T
 
@@ -295,9 +293,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         """
         X = self._validate_X_predict(X)
         indicators = Parallel(
-            n_jobs=self.n_jobs,
-            verbose=self.verbose,
-            prefer="threads",
+            n_jobs=self.n_jobs, verbose=self.verbose, prefer="threads"
         )(
             delayed(tree.decision_path)(X, check_input=False)
             for tree in self.estimators_
@@ -486,9 +482,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             # parallel_backend contexts set at a higher level,
             # since correctness does not rely on using threads.
             trees = Parallel(
-                n_jobs=self.n_jobs,
-                verbose=self.verbose,
-                prefer="threads",
+                n_jobs=self.n_jobs, verbose=self.verbose, prefer="threads"
             )(
                 delayed(_parallel_build_trees)(
                     t,
@@ -578,15 +572,10 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         oob_pred = np.zeros(shape=oob_pred_shape, dtype=np.float64)
         n_oob_pred = np.zeros((n_samples, n_outputs), dtype=np.int64)
 
-        n_samples_bootstrap = _get_n_samples_bootstrap(
-            n_samples,
-            self.max_samples,
-        )
+        n_samples_bootstrap = _get_n_samples_bootstrap(n_samples, self.max_samples)
         for estimator in self.estimators_:
             unsampled_indices = _generate_unsampled_indices(
-                estimator.random_state,
-                n_samples,
-                n_samples_bootstrap,
+                estimator.random_state, n_samples, n_samples_bootstrap
             )
 
             y_pred = self._get_oob_predictions(estimator, X[unsampled_indices, :])
@@ -794,8 +783,7 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
                     raise ValueError(
                         "Valid presets for class_weight include "
                         '"balanced" and "balanced_subsample".'
-                        'Given "%s".'
-                        % self.class_weight
+                        'Given "%s".' % self.class_weight
                     )
                 if self.warm_start:
                     warn(

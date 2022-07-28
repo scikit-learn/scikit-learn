@@ -1054,11 +1054,7 @@ class PartialDependenceDisplay:
         """
         rng = check_random_state(self.random_state)
         # subsample ice
-        ice_lines_idx = rng.choice(
-            preds.shape[0],
-            n_ice_to_plot,
-            replace=False,
-        )
+        ice_lines_idx = rng.choice(preds.shape[0], n_ice_to_plot, replace=False)
         ice_lines_subsampled = preds[ice_lines_idx, :]
         # plot the subsampled ice
         for ice_idx, ice in enumerate(ice_lines_subsampled):
@@ -1070,12 +1066,7 @@ class PartialDependenceDisplay:
             )[0]
 
     def _plot_average_dependence(
-        self,
-        avg_preds,
-        feature_values,
-        ax,
-        pd_line_idx,
-        line_kw,
+        self, avg_preds, feature_values, ax, pd_line_idx, line_kw
     ):
         """Plot the average partial dependence.
 
@@ -1097,11 +1088,7 @@ class PartialDependenceDisplay:
             Whether or not to center the average PD to start at the origin.
         """
         line_idx = np.unravel_index(pd_line_idx, self.lines_.shape)
-        self.lines_[line_idx] = ax.plot(
-            feature_values,
-            avg_preds,
-            **line_kw,
-        )[0]
+        self.lines_[line_idx] = ax.plot(feature_values, avg_preds, **line_kw)[0]
 
     def _plot_one_way_partial_dependence(
         self,
@@ -1187,11 +1174,7 @@ class PartialDependenceDisplay:
         # create the decile line for the vertical axis
         vlines_idx = np.unravel_index(pd_plot_idx, self.deciles_vlines_.shape)
         self.deciles_vlines_[vlines_idx] = ax.vlines(
-            self.deciles[feature_idx[0]],
-            0,
-            0.05,
-            transform=trans,
-            color="k",
+            self.deciles[feature_idx[0]], 0, 0.05, transform=trans, color="k"
         )
         # reset ylim which was overwritten by vlines
         ax.set_ylim(pdp_lim[1])
@@ -1249,13 +1232,7 @@ class PartialDependenceDisplay:
         CS = ax.contour(XX, YY, Z, levels=Z_level, linewidths=0.5, colors="k")
         contour_idx = np.unravel_index(pd_plot_idx, self.contours_.shape)
         self.contours_[contour_idx] = ax.contourf(
-            XX,
-            YY,
-            Z,
-            levels=Z_level,
-            vmax=Z_level[-1],
-            vmin=Z_level[0],
-            **contour_kw,
+            XX, YY, Z, levels=Z_level, vmax=Z_level[-1], vmin=Z_level[0], **contour_kw
         )
         ax.clabel(CS, fmt="%2.2f", colors="k", fontsize=10, inline=True)
 
@@ -1264,20 +1241,12 @@ class PartialDependenceDisplay:
         xlim, ylim = ax.get_xlim(), ax.get_ylim()
         vlines_idx = np.unravel_index(pd_plot_idx, self.deciles_vlines_.shape)
         self.deciles_vlines_[vlines_idx] = ax.vlines(
-            self.deciles[feature_idx[0]],
-            0,
-            0.05,
-            transform=trans,
-            color="k",
+            self.deciles[feature_idx[0]], 0, 0.05, transform=trans, color="k"
         )
         # create the decile line for the horizontal axis
         hlines_idx = np.unravel_index(pd_plot_idx, self.deciles_hlines_.shape)
         self.deciles_hlines_[hlines_idx] = ax.hlines(
-            self.deciles[feature_idx[1]],
-            0,
-            0.05,
-            transform=trans,
-            color="k",
+            self.deciles[feature_idx[1]], 0, 0.05, transform=trans, color="k"
         )
         # reset xlim and ylim since they are overwritten by hlines and vlines
         ax.set_xlim(xlim)
@@ -1560,10 +1529,7 @@ class PartialDependenceDisplay:
                         "linewidth": 0.5,
                         "color": "tab:blue",
                     }
-                    default_pd_lines_kws = {
-                        "color": "tab:orange",
-                        "linestyle": "--",
-                    }
+                    default_pd_lines_kws = {"color": "tab:orange", "linestyle": "--"}
                 else:
                     default_ice_lines_kws = {}
                     default_pd_lines_kws = {}

@@ -144,10 +144,7 @@ for clf, cs, X, y in clf_sets:
         grid.fit(X, y)
         scores = grid.cv_results_["mean_test_score"]
 
-        scales = [
-            (1, "No scaling"),
-            ((n_samples * train_size), "1/n_samples"),
-        ]
+        scales = [(1, "No scaling"), ((n_samples * train_size), "1/n_samples")]
 
         for ax, (scaler, name) in zip(axes, scales):
             ax.set_xlabel("C")

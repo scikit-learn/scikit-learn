@@ -95,11 +95,7 @@ def configuration(parent_package="", top_path=None):
         libraries=libraries,
     )
 
-    config.add_extension(
-        "_heap",
-        sources=["_heap.pyx"],
-        libraries=libraries,
-    )
+    config.add_extension("_heap", sources=["_heap.pyx"], libraries=libraries)
 
     config.add_extension(
         "_sorting",
@@ -116,11 +112,7 @@ def configuration(parent_package="", top_path=None):
         libraries=libraries,
         language="c++",
     )
-    config.add_extension(
-        "_isfinite",
-        sources=["_isfinite.pyx"],
-        libraries=libraries,
-    )
+    config.add_extension("_isfinite", sources=["_isfinite.pyx"], libraries=libraries)
 
     config.add_subpackage("tests")
 

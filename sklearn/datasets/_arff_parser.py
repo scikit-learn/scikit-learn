@@ -11,11 +11,7 @@ import scipy as sp
 
 from ..externals import _arff
 from ..externals._arff import ArffSparseDataType
-from ..utils import (
-    _chunk_generator,
-    check_pandas_support,
-    get_chunk_n_rows,
-)
+from ..utils import _chunk_generator, check_pandas_support, get_chunk_n_rows
 
 
 def _split_sparse_columns(
@@ -239,9 +235,7 @@ def _liac_arff_parser(
             else:
                 count = shape[0] * shape[1]
             data = np.fromiter(
-                itertools.chain.from_iterable(arff_data),
-                dtype="float64",
-                count=count,
+                itertools.chain.from_iterable(arff_data), dtype="float64", count=count
             )
             data = data.reshape(*shape)
             X = data[:, feature_indices_to_select]

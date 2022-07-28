@@ -912,12 +912,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             Fitted estimator.
         """
 
-        super().fit(
-            X,
-            y,
-            sample_weight=sample_weight,
-            check_input=check_input,
-        )
+        super().fit(X, y, sample_weight=sample_weight, check_input=check_input)
         return self
 
     def predict_proba(self, X, check_input=True):
@@ -1303,12 +1298,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
             Fitted estimator.
         """
 
-        super().fit(
-            X,
-            y,
-            sample_weight=sample_weight,
-            check_input=check_input,
-        )
+        super().fit(X, y, sample_weight=sample_weight, check_input=check_input)
         return self
 
     def _compute_partial_dependence_recursion(self, grid, target_features):

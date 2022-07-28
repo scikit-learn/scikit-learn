@@ -137,13 +137,7 @@ def test_nmf_fit_nn_output(Estimator, solver, init, alpha_W, alpha_H):
 def test_nmf_fit_close(Estimator, solver):
     rng = np.random.mtrand.RandomState(42)
     # Test that the fit is not too far away
-    pnmf = Estimator(
-        5,
-        init="nndsvdar",
-        random_state=0,
-        max_iter=600,
-        **solver,
-    )
+    pnmf = Estimator(5, init="nndsvdar", random_state=0, max_iter=600, **solver)
     X = np.abs(rng.randn(6, 5))
     assert pnmf.fit(X).reconstruction_err_ < 0.1
 
@@ -202,13 +196,7 @@ def test_nmf_transform(solver):
     # Test that NMF.transform returns close values
     rng = np.random.mtrand.RandomState(42)
     A = np.abs(rng.randn(6, 5))
-    m = NMF(
-        solver=solver,
-        n_components=3,
-        init="random",
-        random_state=0,
-        tol=1e-6,
-    )
+    m = NMF(solver=solver, n_components=3, init="random", random_state=0, tol=1e-6)
     ft = m.fit_transform(A)
     t = m.transform(A)
     assert_allclose(ft, t, atol=1e-1)
@@ -219,12 +207,7 @@ def test_minibatch_nmf_transform():
     # Only guaranteed with fresh restarts
     rng = np.random.mtrand.RandomState(42)
     A = np.abs(rng.randn(6, 5))
-    m = MiniBatchNMF(
-        n_components=3,
-        random_state=0,
-        tol=1e-3,
-        fresh_restarts=True,
-    )
+    m = MiniBatchNMF(n_components=3, random_state=0, tol=1e-3, fresh_restarts=True)
     ft = m.fit_transform(A)
     t = m.transform(A)
     assert_allclose(ft, t)
@@ -255,13 +238,7 @@ def test_nmf_inverse_transform(solver):
     # Test that NMF.inverse_transform returns close values
     random_state = np.random.RandomState(0)
     A = np.abs(random_state.randn(6, 4))
-    m = NMF(
-        solver=solver,
-        n_components=4,
-        init="random",
-        random_state=0,
-        max_iter=1000,
-    )
+    m = NMF(solver=solver, n_components=4, init="random", random_state=0, max_iter=1000)
     ft = m.fit_transform(A)
     A_new = m.inverse_transform(ft)
     assert_array_almost_equal(A, A_new, decimal=2)
@@ -273,10 +250,7 @@ def test_mbnmf_inverse_transform():
     rng = np.random.RandomState(0)
     A = np.abs(rng.randn(6, 4))
     nmf = MiniBatchNMF(
-        random_state=rng,
-        max_iter=500,
-        init="nndsvdar",
-        fresh_restarts=True,
+        random_state=rng, max_iter=500, init="nndsvdar", fresh_restarts=True
     )
     ft = nmf.fit_transform(A)
     A_new = nmf.inverse_transform(ft)
@@ -437,8 +411,8 @@ def _beta_divergence_dense(X, W, H, beta):
         div = X_nonzero / WH_Xnonzero
         res = np.sum(div) - X.size - np.sum(np.log(div))
     else:
-        res = (X_nonzero**beta).sum()
-        res += (beta - 1) * (WH**beta).sum()
+        res = (X_nonzero ** beta).sum()
+        res += (beta - 1) * (WH ** beta).sum()
         res -= beta * (X_nonzero * (WH_Xnonzero ** (beta - 1))).sum()
         res /= beta * (beta - 1)
 
@@ -743,8 +717,8 @@ def test_nmf_decreasing(solver):
                 nmf._beta_divergence(X, W, H, beta_loss)
                 + alpha * l1_ratio * n_features * W.sum()
                 + alpha * l1_ratio * n_samples * H.sum()
-                + alpha * (1 - l1_ratio) * n_features * (W**2).sum()
-                + alpha * (1 - l1_ratio) * n_samples * (H**2).sum()
+                + alpha * (1 - l1_ratio) * n_features * (W ** 2).sum()
+                + alpha * (1 - l1_ratio) * n_samples * (H ** 2).sum()
             )
             if previous_loss is not None:
                 assert previous_loss > loss
@@ -830,13 +804,7 @@ def test_nmf_minibatchnmf_equivalence(beta_loss):
     rng = np.random.mtrand.RandomState(42)
     X = np.abs(rng.randn(48, 5))
 
-    nmf = NMF(
-        n_components=5,
-        beta_loss=beta_loss,
-        solver="mu",
-        random_state=0,
-        tol=0,
-    )
+    nmf = NMF(n_components=5, beta_loss=beta_loss, solver="mu", random_state=0, tol=0)
     mbnmf = MiniBatchNMF(
         n_components=5,
         beta_loss=beta_loss,

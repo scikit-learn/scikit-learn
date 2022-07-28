@@ -272,8 +272,7 @@ def test_duck_typing_nested_estimator():
     param_distributions = {"alpha": [1, 2]}
 
     kernel_ridge_tuned = RandomizedSearchCV(
-        kernel_ridge,
-        param_distributions=param_distributions,
+        kernel_ridge, param_distributions=param_distributions
     )
     html_output = estimator_html_repr(kernel_ridge_tuned)
     assert "estimator: KernelRidge</label>" in html_output

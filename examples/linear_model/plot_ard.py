@@ -38,12 +38,7 @@ non-linear relationship between `X` and `y`.
 from sklearn.datasets import make_regression
 
 X, y, true_weights = make_regression(
-    n_samples=100,
-    n_features=100,
-    n_informative=10,
-    noise=8,
-    coef=True,
-    random_state=42,
+    n_samples=100, n_features=100, n_informative=10, noise=8, coef=True, random_state=42
 )
 
 # %%
@@ -159,14 +154,10 @@ y_plot = np.concatenate((y - noise, y_plot))
 # parameters.
 
 ard_poly = make_pipeline(
-    PolynomialFeatures(degree=10, include_bias=False),
-    StandardScaler(),
-    ARDRegression(),
+    PolynomialFeatures(degree=10, include_bias=False), StandardScaler(), ARDRegression()
 ).fit(X, y)
 brr_poly = make_pipeline(
-    PolynomialFeatures(degree=10, include_bias=False),
-    StandardScaler(),
-    BayesianRidge(),
+    PolynomialFeatures(degree=10, include_bias=False), StandardScaler(), BayesianRidge()
 ).fit(X, y)
 
 y_ard, y_ard_std = ard_poly.predict(X_plot, return_std=True)
@@ -183,18 +174,10 @@ ax.plot(X_plot, y_plot, color="black", label="Ground Truth")
 ax.plot(X_plot, y_brr, color="red", label="BayesianRidge with polynomial features")
 ax.plot(X_plot, y_ard, color="navy", label="ARD with polynomial features")
 ax.fill_between(
-    X_plot.ravel(),
-    y_ard - y_ard_std,
-    y_ard + y_ard_std,
-    color="navy",
-    alpha=0.3,
+    X_plot.ravel(), y_ard - y_ard_std, y_ard + y_ard_std, color="navy", alpha=0.3
 )
 ax.fill_between(
-    X_plot.ravel(),
-    y_brr - y_brr_std,
-    y_brr + y_brr_std,
-    color="red",
-    alpha=0.3,
+    X_plot.ravel(), y_brr - y_brr_std, y_brr + y_brr_std, color="red", alpha=0.3
 )
 ax.legend()
 _ = ax.set_title("Polynomial fit of a non-linear feature")

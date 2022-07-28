@@ -15,9 +15,7 @@ import numpy as np
 from . import __version__
 from ._config import get_config
 from .utils import _IS_32BIT
-from .utils._tags import (
-    _DEFAULT_TAGS,
-)
+from .utils._tags import _DEFAULT_TAGS
 from .utils.validation import check_X_y
 from .utils.validation import check_array
 from .utils.validation import _check_y

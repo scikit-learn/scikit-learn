@@ -359,9 +359,7 @@ def confusion_matrix(
         dtype = np.float64
 
     cm = coo_matrix(
-        (sample_weight, (y_true, y_pred)),
-        shape=(n_labels, n_labels),
-        dtype=dtype,
+        (sample_weight, (y_true, y_pred)), shape=(n_labels, n_labels), dtype=dtype
     ).toarray()
 
     with np.errstate(all="ignore"):
@@ -549,8 +547,7 @@ def multilabel_confusion_matrix(
                 raise ValueError(
                     "All labels must be in [0, n labels) for "
                     "multilabel targets. "
-                    "Got %d < 0"
-                    % np.min(labels)
+                    "Got %d < 0" % np.min(labels)
                 )
 
         if n_labels is not None:
@@ -914,8 +911,8 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
     n_correct = np.trace(C, dtype=np.float64)
     n_samples = p_sum.sum()
     cov_ytyp = n_correct * n_samples - np.dot(t_sum, p_sum)
-    cov_ypyp = n_samples**2 - np.dot(p_sum, p_sum)
-    cov_ytyt = n_samples**2 - np.dot(t_sum, t_sum)
+    cov_ypyp = n_samples ** 2 - np.dot(p_sum, p_sum)
+    cov_ytyt = n_samples ** 2 - np.dot(t_sum, t_sum)
 
     if cov_ypyp * cov_ytyt == 0:
         return 0.0
@@ -1581,7 +1578,7 @@ def precision_recall_fscore_support(
         true_sum = np.array([true_sum.sum()])
 
     # Finally, we have all our sufficient statistics. Divide! #
-    beta2 = beta**2
+    beta2 = beta ** 2
 
     # Divide, and on zero-division, set scores and/or warn according to
     # zero_division:
@@ -1645,12 +1642,7 @@ def precision_recall_fscore_support(
 
 
 def class_likelihood_ratios(
-    y_true,
-    y_pred,
-    *,
-    labels=None,
-    sample_weight=None,
-    raise_warning=True,
+    y_true, y_pred, *, labels=None, sample_weight=None, raise_warning=True
 ):
     """Compute binary classification positive and negative likelihood ratios.
 
@@ -1759,12 +1751,7 @@ def class_likelihood_ratios(
             f"problems, got targets of type: {y_type}"
         )
 
-    cm = confusion_matrix(
-        y_true,
-        y_pred,
-        sample_weight=sample_weight,
-        labels=labels,
-    )
+    cm = confusion_matrix(y_true, y_pred, sample_weight=sample_weight, labels=labels)
 
     # Case when `y_test` contains a single class and `y_test == y_pred`.
     # This may happen when cross-validating imbalanced data and should

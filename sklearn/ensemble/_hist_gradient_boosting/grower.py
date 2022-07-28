@@ -204,11 +204,7 @@ class TreeGrower:
         n_threads=None,
     ):
 
-        self._validate_parameters(
-            X_binned,
-            min_gain_to_split,
-            min_hessian_to_split,
-        )
+        self._validate_parameters(X_binned, min_gain_to_split, min_hessian_to_split)
         n_threads = _openmp_effective_n_threads(n_threads)
 
         if n_bins_non_missing is None:
@@ -302,12 +298,7 @@ class TreeGrower:
         self._intilialize_root(gradients, hessians, hessians_are_constant)
         self.n_nodes = 1
 
-    def _validate_parameters(
-        self,
-        X_binned,
-        min_gain_to_split,
-        min_hessian_to_split,
-    ):
+    def _validate_parameters(self, X_binned, min_gain_to_split, min_hessian_to_split):
         """Validate parameters passed to __init__.
 
         Also validate parameters passed to splitter.
@@ -528,10 +519,8 @@ class TreeGrower:
             smallest_child.histograms = self.histogram_builder.compute_histograms_brute(
                 smallest_child.sample_indices
             )
-            largest_child.histograms = (
-                self.histogram_builder.compute_histograms_subtraction(
-                    node.histograms, smallest_child.histograms
-                )
+            largest_child.histograms = self.histogram_builder.compute_histograms_subtraction(
+                node.histograms, smallest_child.histograms
             )
             self.total_compute_hist_time += time() - tic
 

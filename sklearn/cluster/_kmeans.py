@@ -566,7 +566,7 @@ def _kmeans_single_elkan(
             break
         else:
             # No strict convergence, check for tol based convergence.
-            center_shift_tot = (center_shift**2).sum()
+            center_shift_tot = (center_shift ** 2).sum()
             if center_shift_tot <= tol:
                 if verbose:
                     print(
@@ -709,7 +709,7 @@ def _kmeans_single_lloyd(
                 break
             else:
                 # No strict convergence, check for tol based convergence.
-                center_shift_tot = (center_shift**2).sum()
+                center_shift_tot = (center_shift ** 2).sum()
                 if center_shift_tot <= tol:
                     if verbose:
                         print(
@@ -847,15 +847,7 @@ class _BaseKMeans(
     }
 
     def __init__(
-        self,
-        n_clusters,
-        *,
-        init,
-        n_init,
-        max_iter,
-        tol,
-        verbose,
-        random_state,
+        self, n_clusters, *, init, n_init, max_iter, tol, verbose, random_state
     ):
         self.n_clusters = n_clusters
         self.init = init
@@ -1167,8 +1159,8 @@ class _BaseKMeans(
             "_xfail_checks": {
                 "check_sample_weights_invariance": (
                     "zero sample_weight is not equivalent to removing samples"
-                ),
-            },
+                )
+            }
         }
 
 
@@ -1756,6 +1748,7 @@ class MiniBatchKMeans(_BaseKMeans):
         a value may cause convergence issues, especially with a small batch
         size.
 
+
     Attributes
     ----------
 
@@ -1801,6 +1794,12 @@ class MiniBatchKMeans(_BaseKMeans):
     Notes
     -----
     See https://www.eecs.tufts.edu/~dsculley/papers/fastkmeans.pdf
+
+    When there are too few points in the dataset, some centers may be
+    duplicated, which means that a proper clustering in terms of the number
+    of requesting clusters and the number of returned clusters will not
+    always match. One solution is to set `reassignment_ratio=0`, which
+    prevents reassignments of clusters that are too small.
 
     Examples
     --------

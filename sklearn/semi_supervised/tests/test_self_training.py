@@ -164,8 +164,7 @@ def test_prefitted_throws_error():
     knn.fit(X_train, y_train)
     st = SelfTrainingClassifier(knn)
     with pytest.raises(
-        NotFittedError,
-        match="This SelfTrainingClassifier instance is not fitted yet",
+        NotFittedError, match="This SelfTrainingClassifier instance is not fitted yet"
     ):
         st.predict(X_train)
 
@@ -288,10 +287,7 @@ def test_base_estimator_meta_estimator():
     # https://github.com/scikit-learn/scikit-learn/issues/19119
 
     base_estimator = StackingClassifier(
-        estimators=[
-            ("svc_1", SVC(probability=True)),
-            ("svc_2", SVC(probability=True)),
-        ],
+        estimators=[("svc_1", SVC(probability=True)), ("svc_2", SVC(probability=True))],
         final_estimator=SVC(probability=True),
         cv=2,
     )

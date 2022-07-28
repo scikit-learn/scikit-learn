@@ -189,8 +189,7 @@ def _construct_compose_pipeline_instance(Estimator):
 def _construct_sparse_coder(Estimator):
     # XXX: hard-coded assumption that n_features=3
     dictionary = np.array(
-        [[0, 1, 0], [-1, -1, 2], [1, 1, 1], [0, 1, 1], [0, 2, 1]],
-        dtype=np.float64,
+        [[0, 1, 0], [-1, -1, 2], [1, 1, 1], [0, 1, 1], [0, 2, 1]], dtype=np.float64
     )
     return Estimator(dictionary=dictionary)
 
@@ -210,11 +209,7 @@ def test_fit_docstring_attributes(name, Estimator):
         "GridSearchCV",
     ):
         est = _construct_searchcv_instance(Estimator)
-    elif Estimator.__name__ in (
-        "ColumnTransformer",
-        "Pipeline",
-        "FeatureUnion",
-    ):
+    elif Estimator.__name__ in ("ColumnTransformer", "Pipeline", "FeatureUnion"):
         est = _construct_compose_pipeline_instance(Estimator)
     elif Estimator.__name__ == "SparseCoder":
         est = _construct_sparse_coder(Estimator)
@@ -228,10 +223,7 @@ def test_fit_docstring_attributes(name, Estimator):
     elif Estimator.__name__ == "CCA" or Estimator.__name__.startswith("PLS"):
         # default = 2 is invalid for single target
         est.set_params(n_components=1)
-    elif Estimator.__name__ in (
-        "GaussianRandomProjection",
-        "SparseRandomProjection",
-    ):
+    elif Estimator.__name__ in ("GaussianRandomProjection", "SparseRandomProjection"):
         # default="auto" raises an error with the shape of `X`
         est.set_params(n_components=2)
 
@@ -301,11 +293,7 @@ def test_fit_docstring_attributes(name, Estimator):
         y = None
     else:
         X, y = make_classification(
-            n_samples=20,
-            n_features=3,
-            n_redundant=0,
-            n_classes=2,
-            random_state=2,
+            n_samples=20, n_features=3, n_redundant=0, n_classes=2, random_state=2
         )
 
         y = _enforce_estimator_tags_y(est, y)

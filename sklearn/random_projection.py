@@ -129,7 +129,7 @@ def johnson_lindenstrauss_min_dim(n_samples, *, eps=0.1):
             % n_samples
         )
 
-    denominator = (eps**2 / 2) - (eps**3 / 3)
+    denominator = (eps ** 2 / 2) - (eps ** 3 / 3)
     return (4 * np.log(n_samples) / denominator).astype(np.int64)
 
 
@@ -453,9 +453,7 @@ class BaseRandomProjection(
         return X @ inverse_components.T
 
     def _more_tags(self):
-        return {
-            "preserves_dtype": [np.float64, np.float32],
-        }
+        return {"preserves_dtype": [np.float64, np.float32]}
 
 
 class GaussianRandomProjection(BaseRandomProjection):

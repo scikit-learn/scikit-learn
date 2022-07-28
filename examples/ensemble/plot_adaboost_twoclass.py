@@ -56,13 +56,7 @@ plt.figure(figsize=(10, 5))
 # Plot the decision boundaries
 ax = plt.subplot(121)
 disp = DecisionBoundaryDisplay.from_estimator(
-    bdt,
-    X,
-    cmap=plt.cm.Paired,
-    response_method="predict",
-    ax=ax,
-    xlabel="x",
-    ylabel="y",
+    bdt, X, cmap=plt.cm.Paired, response_method="predict", ax=ax, xlabel="x", ylabel="y"
 )
 x_min, x_max = disp.xx0.min(), disp.xx0.max()
 y_min, y_max = disp.xx1.min(), disp.xx1.max()

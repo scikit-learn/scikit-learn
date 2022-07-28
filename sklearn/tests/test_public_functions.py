@@ -8,9 +8,7 @@ from sklearn.utils._param_validation import generate_valid_param
 from sklearn.utils._param_validation import make_constraint
 
 
-PARAM_VALIDATION_FUNCTION_LIST = [
-    "sklearn.cluster.kmeans_plusplus",
-]
+PARAM_VALIDATION_FUNCTION_LIST = ["sklearn.cluster.kmeans_plusplus"]
 
 
 @pytest.mark.parametrize("func_module", PARAM_VALIDATION_FUNCTION_LIST)

@@ -304,6 +304,4 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         return self.support_
 
     def _more_tags(self):
-        return {
-            "allow_nan": _safe_tags(self.estimator, key="allow_nan"),
-        }
+        return {"allow_nan": _safe_tags(self.estimator, key="allow_nan")}

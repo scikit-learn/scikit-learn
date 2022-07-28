@@ -39,7 +39,7 @@ def test_gs():
     W, _, _ = np.linalg.svd(rng.randn(10, 10))
     w = rng.randn(10)
     _gs_decorrelation(w, W, 10)
-    assert (w**2).sum() < 1.0e-10
+    assert (w ** 2).sum() < 1.0e-10
     w = rng.randn(10)
     u = _gs_decorrelation(w, W, 5)
     tmp = np.dot(u, W.T)
@@ -99,7 +99,7 @@ def test_fastica_simple(add_noise, global_random_seed, global_dtype):
 
     # function as fun arg
     def g_test(x):
-        return x**3, (3 * x**2).mean(axis=-1)
+        return x ** 3, (3 * x ** 2).mean(axis=-1)
 
     algos = ["parallel", "deflation"]
     nls = ["logcosh", "exp", "cube", g_test]

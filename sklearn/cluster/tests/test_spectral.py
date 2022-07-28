@@ -193,10 +193,7 @@ def test_cluster_qr_permutation_invariance():
     n_samples, n_components = 100, 5
     data = random_state.randn(n_samples, n_components)
     perm = random_state.permutation(n_samples)
-    assert np.array_equal(
-        cluster_qr(data)[perm],
-        cluster_qr(data[perm]),
-    )
+    assert np.array_equal(cluster_qr(data)[perm], cluster_qr(data[perm]))
 
 
 @pytest.mark.parametrize("n_samples", [50, 100, 150, 500])
@@ -242,8 +239,8 @@ def test_spectral_clustering_with_arpack_amg_solvers():
     center1, center2 = (14, 12), (20, 25)
     radius1, radius2 = 8, 7
 
-    circle1 = (x - center1[0]) ** 2 + (y - center1[1]) ** 2 < radius1**2
-    circle2 = (x - center2[0]) ** 2 + (y - center2[1]) ** 2 < radius2**2
+    circle1 = (x - center1[0]) ** 2 + (y - center1[1]) ** 2 < radius1 ** 2
+    circle2 = (x - center2[0]) ** 2 + (y - center2[1]) ** 2 < radius2 ** 2
 
     circles = circle1 | circle2
     mask = circles.copy()

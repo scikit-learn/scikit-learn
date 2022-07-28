@@ -40,11 +40,7 @@ from sklearn.linear_model import LogisticRegression
 ###############################################################################
 # Utilities for testing
 
-CURVE_FUNCS = [
-    det_curve,
-    precision_recall_curve,
-    roc_curve,
-]
+CURVE_FUNCS = [det_curve, precision_recall_curve, roc_curve]
 
 
 def make_prediction(dataset=None, binary=False):
@@ -1209,14 +1205,10 @@ def test_det_curve_pos_label():
     y_pred_pos_cancer = 1 - y_pred_pos_not_cancer
 
     fpr_pos_cancer, fnr_pos_cancer, th_pos_cancer = det_curve(
-        y_true,
-        y_pred_pos_cancer,
-        pos_label="cancer",
+        y_true, y_pred_pos_cancer, pos_label="cancer"
     )
     fpr_pos_not_cancer, fnr_pos_not_cancer, th_pos_not_cancer = det_curve(
-        y_true,
-        y_pred_pos_not_cancer,
-        pos_label="not cancer",
+        y_true, y_pred_pos_not_cancer, pos_label="not cancer"
     )
 
     # check that the first threshold will change depending which label we
@@ -1823,11 +1815,7 @@ def test_partial_roc_auc_score():
 
 @pytest.mark.parametrize(
     "y_true, k, true_score",
-    [
-        ([0, 1, 2, 3], 1, 0.25),
-        ([0, 1, 2, 3], 2, 0.5),
-        ([0, 1, 2, 3], 3, 0.75),
-    ],
+    [([0, 1, 2, 3], 1, 0.25), ([0, 1, 2, 3], 2, 0.5), ([0, 1, 2, 3], 3, 0.75)],
 )
 def test_top_k_accuracy_score(y_true, k, true_score):
     y_score = np.array(
@@ -1915,32 +1903,15 @@ def test_top_k_accuracy_score_increasing():
 
 @pytest.mark.parametrize(
     "y_true, k, true_score",
-    [
-        ([0, 1, 2, 3], 1, 0.25),
-        ([0, 1, 2, 3], 2, 0.5),
-        ([0, 1, 2, 3], 3, 1),
-    ],
+    [([0, 1, 2, 3], 1, 0.25), ([0, 1, 2, 3], 2, 0.5), ([0, 1, 2, 3], 3, 1)],
 )
 def test_top_k_accuracy_score_ties(y_true, k, true_score):
     # Make sure highest indices labels are chosen first in case of ties
-    y_score = np.array(
-        [
-            [5, 5, 7, 0],
-            [1, 5, 5, 5],
-            [0, 0, 3, 3],
-            [1, 1, 1, 1],
-        ]
-    )
+    y_score = np.array([[5, 5, 7, 0], [1, 5, 5, 5], [0, 0, 3, 3], [1, 1, 1, 1]])
     assert top_k_accuracy_score(y_true, y_score, k=k) == pytest.approx(true_score)
 
 
-@pytest.mark.parametrize(
-    "y_true, k",
-    [
-        ([0, 1, 2, 3], 4),
-        ([0, 1, 2, 3], 5),
-    ],
-)
+@pytest.mark.parametrize("y_true, k", [([0, 1, 2, 3], 4), ([0, 1, 2, 3], 5)])
 def test_top_k_accuracy_score_warning(y_true, k):
     y_score = np.array(
         [
@@ -1964,69 +1935,39 @@ def test_top_k_accuracy_score_warning(y_true, k):
     [
         (
             [0, 0.57, 1, 2],
-            [
-                [0.2, 0.1, 0.7],
-                [0.4, 0.3, 0.3],
-                [0.3, 0.4, 0.3],
-                [0.4, 0.5, 0.1],
-            ],
+            [[0.2, 0.1, 0.7], [0.4, 0.3, 0.3], [0.3, 0.4, 0.3], [0.4, 0.5, 0.1]],
             None,
             "y type must be 'binary' or 'multiclass', got 'continuous'",
         ),
         (
             [0, 1, 2, 3],
-            [
-                [0.2, 0.1, 0.7],
-                [0.4, 0.3, 0.3],
-                [0.3, 0.4, 0.3],
-                [0.4, 0.5, 0.1],
-            ],
+            [[0.2, 0.1, 0.7], [0.4, 0.3, 0.3], [0.3, 0.4, 0.3], [0.4, 0.5, 0.1]],
             None,
             r"Number of classes in 'y_true' \(4\) not equal to the number of "
             r"classes in 'y_score' \(3\).",
         ),
         (
             ["c", "c", "a", "b"],
-            [
-                [0.2, 0.1, 0.7],
-                [0.4, 0.3, 0.3],
-                [0.3, 0.4, 0.3],
-                [0.4, 0.5, 0.1],
-            ],
+            [[0.2, 0.1, 0.7], [0.4, 0.3, 0.3], [0.3, 0.4, 0.3], [0.4, 0.5, 0.1]],
             ["a", "b", "c", "c"],
             "Parameter 'labels' must be unique.",
         ),
         (
             ["c", "c", "a", "b"],
-            [
-                [0.2, 0.1, 0.7],
-                [0.4, 0.3, 0.3],
-                [0.3, 0.4, 0.3],
-                [0.4, 0.5, 0.1],
-            ],
+            [[0.2, 0.1, 0.7], [0.4, 0.3, 0.3], [0.3, 0.4, 0.3], [0.4, 0.5, 0.1]],
             ["a", "c", "b"],
             "Parameter 'labels' must be ordered.",
         ),
         (
             [0, 0, 1, 2],
-            [
-                [0.2, 0.1, 0.7],
-                [0.4, 0.3, 0.3],
-                [0.3, 0.4, 0.3],
-                [0.4, 0.5, 0.1],
-            ],
+            [[0.2, 0.1, 0.7], [0.4, 0.3, 0.3], [0.3, 0.4, 0.3], [0.4, 0.5, 0.1]],
             [0, 1, 2, 3],
             r"Number of given labels \(4\) not equal to the number of classes in "
             r"'y_score' \(3\).",
         ),
         (
             [0, 0, 1, 2],
-            [
-                [0.2, 0.1, 0.7],
-                [0.4, 0.3, 0.3],
-                [0.3, 0.4, 0.3],
-                [0.4, 0.5, 0.1],
-            ],
+            [[0.2, 0.1, 0.7], [0.4, 0.3, 0.3], [0.3, 0.4, 0.3], [0.4, 0.5, 0.1]],
             [0, 1, 3],
             "'y_true' contains labels not in parameter 'labels'.",
         ),

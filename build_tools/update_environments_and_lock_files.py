@@ -85,9 +85,7 @@ conda_build_metadata_list = [
         "platform": "linux-64",
         "channel": "conda-forge",
         "conda_dependencies": common_dependencies + ["ccache"],
-        "package_constraints": {
-            "blas": "[build=mkl]",
-        },
+        "package_constraints": {"blas": "[build=mkl]"},
     },
     {
         "build_name": "pylatest_conda_forge_mkl_osx-64",
@@ -96,9 +94,7 @@ conda_build_metadata_list = [
         "channel": "conda-forge",
         "conda_dependencies": common_dependencies
         + ["ccache", "compilers", "llvm-openmp"],
-        "package_constraints": {
-            "blas": "[build=mkl]",
-        },
+        "package_constraints": {"blas": "[build=mkl]"},
     },
     {
         "build_name": "pylatest_conda_mkl_no_openmp",
@@ -121,9 +117,7 @@ conda_build_metadata_list = [
         "platform": "linux-64",
         "channel": "conda-forge",
         "conda_dependencies": common_dependencies_without_coverage + ["ccache"],
-        "package_constraints": {
-            "blas": "[build=mkl]",
-        },
+        "package_constraints": {"blas": "[build=mkl]"},
     },
     {
         "build_name": "py38_conda_defaults_openblas",
@@ -263,9 +257,7 @@ conda_build_metadata_list = [
             "sphinx-prompt",
         ],
         "pip_dependencies": ["sphinxext-opengraph"],
-        "package_constraints": {
-            "python": "3.9",
-        },
+        "package_constraints": {"python": "3.9"},
     },
     {
         "build_name": "py39_conda_forge",
@@ -276,9 +268,7 @@ conda_build_metadata_list = [
             common_dependencies_without_coverage, ["pandas", "pyamg"]
         )
         + ["pip", "ccache"],
-        "package_constraints": {
-            "python": "3.9",
-        },
+        "package_constraints": {"python": "3.9"},
     },
 ]
 

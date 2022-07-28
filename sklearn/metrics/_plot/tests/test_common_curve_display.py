@@ -9,11 +9,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.tree import DecisionTreeClassifier
 
-from sklearn.metrics import (
-    DetCurveDisplay,
-    PrecisionRecallDisplay,
-    RocCurveDisplay,
-)
+from sklearn.metrics import DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay
 
 
 @pytest.fixture(scope="module")
@@ -69,11 +65,7 @@ def test_display_curve_error_non_binary(pyplot, data, Display):
     "Display", [DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay]
 )
 def test_display_curve_error_no_response(
-    pyplot,
-    data_binary,
-    response_method,
-    msg,
-    Display,
+    pyplot, data_binary, response_method, msg, Display
 ):
     """Check that a proper error is raised when the response method requested
     is not defined for the given trained classifier."""
@@ -95,10 +87,7 @@ def test_display_curve_error_no_response(
 )
 @pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
 def test_display_curve_estimator_name_multiple_calls(
-    pyplot,
-    data_binary,
-    Display,
-    constructor_name,
+    pyplot, data_binary, Display, constructor_name
 ):
     """Check that passing `name` when calling `plot` will overwrite the original name
     in the legend."""

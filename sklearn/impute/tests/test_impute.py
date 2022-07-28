@@ -321,23 +321,9 @@ def test_imputation_const_mostf_error_invalid_types(strategy, dtype):
 
 def test_imputation_most_frequent():
     # Test imputation using the most-frequent strategy.
-    X = np.array(
-        [
-            [-1, -1, 0, 5],
-            [-1, 2, -1, 3],
-            [-1, 1, 3, -1],
-            [-1, 2, 3, 7],
-        ]
-    )
+    X = np.array([[-1, -1, 0, 5], [-1, 2, -1, 3], [-1, 1, 3, -1], [-1, 2, 3, 7]])
 
-    X_true = np.array(
-        [
-            [2, 0, 5],
-            [2, 3, 3],
-            [1, 3, 3],
-            [2, 3, 7],
-        ]
-    )
+    X_true = np.array([[2, 0, 5], [2, 3, 3], [1, 3, 3], [2, 3, 7]])
 
     # scipy.stats.mode, used in SimpleImputer, doesn't return the first most
     # frequent as promised in the doc but the lowest most frequent. When this
@@ -360,12 +346,7 @@ def test_imputation_most_frequent_objects(marker):
     )
 
     X_true = np.array(
-        [
-            ["c", "a", "f"],
-            ["c", "d", "d"],
-            ["b", "d", "d"],
-            ["c", "d", "h"],
-        ],
+        [["c", "a", "f"], ["c", "d", "d"], ["b", "d", "d"], ["c", "d", "h"]],
         dtype=object,
     )
 

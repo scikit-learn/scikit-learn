@@ -15,11 +15,7 @@ from itertools import chain
 
 import scipy.optimize
 
-from ..base import (
-    BaseEstimator,
-    ClassifierMixin,
-    RegressorMixin,
-)
+from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 from ..base import is_classifier
 from ._base import ACTIVATIONS, DERIVATIVES, LOSS_FUNCTIONS
 from ._stochastic_optimizers import SGDOptimizer, AdamOptimizer
@@ -740,8 +736,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         if self.solver not in _STOCHASTIC_SOLVERS:
             raise AttributeError(
                 "partial_fit is only available for stochastic"
-                " optimizers. %s is not stochastic."
-                % self.solver
+                " optimizers. %s is not stochastic." % self.solver
             )
         return True
 

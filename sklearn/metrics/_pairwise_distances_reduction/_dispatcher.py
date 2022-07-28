@@ -90,12 +90,7 @@ class PairwiseDistancesReduction:
 
     @classmethod
     @abstractmethod
-    def compute(
-        cls,
-        X,
-        Y,
-        **kwargs,
-    ):
+    def compute(cls, X, Y, **kwargs):
         """Compute the reduction.
 
         Parameters

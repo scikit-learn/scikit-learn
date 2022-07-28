@@ -88,10 +88,7 @@ print("done in %0.3fs" % (time() - t0))
 
 print("Fitting the classifier to the training set")
 t0 = time()
-param_grid = {
-    "C": loguniform(1e3, 1e5),
-    "gamma": loguniform(1e-4, 1e-1),
-}
+param_grid = {"C": loguniform(1e3, 1e5), "gamma": loguniform(1e-4, 1e-1)}
 clf = RandomizedSearchCV(
     SVC(kernel="rbf", class_weight="balanced"), param_grid, n_iter=10
 )

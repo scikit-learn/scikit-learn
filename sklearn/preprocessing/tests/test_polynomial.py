@@ -40,18 +40,9 @@ def test_polynomial_and_spline_array_order(est):
         ({"n_knots": "string"}, "n_knots must be a positive integer >= 2."),
         ({"knots": 1}, "Expected 2D array, got scalar array instead:"),
         ({"knots": [1, 2]}, "Expected 2D array, got 1D array instead:"),
-        (
-            {"knots": [[1]]},
-            r"Number of knots, knots.shape\[0\], must be >= 2.",
-        ),
-        (
-            {"knots": [[1, 5], [2, 6]]},
-            r"knots.shape\[1\] == n_features is violated.",
-        ),
-        (
-            {"knots": [[1], [1], [2]]},
-            "knots must be sorted without duplicates.",
-        ),
+        ({"knots": [[1]]}, r"Number of knots, knots.shape\[0\], must be >= 2."),
+        ({"knots": [[1, 5], [2, 6]]}, r"knots.shape\[1\] == n_features is violated."),
+        ({"knots": [[1], [1], [2]]}, "knots must be sorted without duplicates."),
         ({"knots": [[2], [1]]}, "knots must be sorted without duplicates."),
         (
             {"extrapolation": None},
@@ -193,10 +184,7 @@ def test_spline_transformer_linear_regression(bias, intercept):
             (
                 "spline",
                 SplineTransformer(
-                    n_knots=15,
-                    degree=3,
-                    include_bias=bias,
-                    extrapolation="constant",
+                    n_knots=15, degree=3, include_bias=bias, extrapolation="constant"
                 ),
             ),
             ("ols", LinearRegression(fit_intercept=intercept)),
@@ -276,10 +264,7 @@ def test_spline_transformer_periodic_linear_regression(bias, intercept):
             (
                 "spline",
                 SplineTransformer(
-                    n_knots=20,
-                    degree=3,
-                    include_bias=bias,
-                    extrapolation="periodic",
+                    n_knots=20, degree=3, include_bias=bias, extrapolation="periodic"
                 ),
             ),
             ("ols", LinearRegression(fit_intercept=intercept)),
@@ -407,10 +392,7 @@ def test_spline_transformer_extrapolation(bias, intercept, degree):
             [
                 "spline",
                 SplineTransformer(
-                    n_knots=4,
-                    degree=degree,
-                    include_bias=bias,
-                    extrapolation="linear",
+                    n_knots=4, degree=degree, include_bias=bias, extrapolation="linear"
                 ),
             ],
             ["ols", LinearRegression(fit_intercept=intercept)],
@@ -485,7 +467,7 @@ def test_polynomial_features_input_validation(params, err_msg):
 @pytest.fixture()
 def single_feature_degree3():
     X = np.arange(6)[:, np.newaxis]
-    P = np.hstack([np.ones_like(X), X, X**2, X**3])
+    P = np.hstack([np.ones_like(X), X, X ** 2, X ** 3])
     return X, P
 
 
@@ -502,17 +484,9 @@ def single_feature_degree3():
         ((2, 3), False, True, []),
     ],
 )
-@pytest.mark.parametrize(
-    "sparse_X",
-    [False, sparse.csr_matrix, sparse.csc_matrix],
-)
+@pytest.mark.parametrize("sparse_X", [False, sparse.csr_matrix, sparse.csc_matrix])
 def test_polynomial_features_one_feature(
-    single_feature_degree3,
-    degree,
-    include_bias,
-    interaction_only,
-    indices,
-    sparse_X,
+    single_feature_degree3, degree, include_bias, interaction_only, indices, sparse_X
 ):
     """Test PolynomialFeatures on single feature up to degree 3."""
     X, P = single_feature_degree3
@@ -536,16 +510,16 @@ def two_features_degree3():
     x2 = X[:, 1:]
     P = np.hstack(
         [
-            x1**0 * x2**0,  # 0
-            x1**1 * x2**0,  # 1
-            x1**0 * x2**1,  # 2
-            x1**2 * x2**0,  # 3
-            x1**1 * x2**1,  # 4
-            x1**0 * x2**2,  # 5
-            x1**3 * x2**0,  # 6
-            x1**2 * x2**1,  # 7
-            x1**1 * x2**2,  # 8
-            x1**0 * x2**3,  # 9
+            x1 ** 0 * x2 ** 0,  # 0
+            x1 ** 1 * x2 ** 0,  # 1
+            x1 ** 0 * x2 ** 1,  # 2
+            x1 ** 2 * x2 ** 0,  # 3
+            x1 ** 1 * x2 ** 1,  # 4
+            x1 ** 0 * x2 ** 2,  # 5
+            x1 ** 3 * x2 ** 0,  # 6
+            x1 ** 2 * x2 ** 1,  # 7
+            x1 ** 1 * x2 ** 2,  # 8
+            x1 ** 0 * x2 ** 3,  # 9
         ]
     )
     return X, P
@@ -576,17 +550,9 @@ def two_features_degree3():
         ((3, 3), False, True, []),  # would need 3 input features
     ],
 )
-@pytest.mark.parametrize(
-    "sparse_X",
-    [False, sparse.csr_matrix, sparse.csc_matrix],
-)
+@pytest.mark.parametrize("sparse_X", [False, sparse.csr_matrix, sparse.csc_matrix])
 def test_polynomial_features_two_features(
-    two_features_degree3,
-    degree,
-    include_bias,
-    interaction_only,
-    indices,
-    sparse_X,
+    two_features_degree3, degree, include_bias, interaction_only, indices, sparse_X
 ):
     """Test PolynomialFeatures on 2 features up to degree 3."""
     X, P = two_features_degree3
@@ -745,20 +711,14 @@ def test_polynomial_features_csr_X(deg, include_bias, interaction_only, dtype):
 @pytest.mark.parametrize("interaction_only", [True, False])
 @pytest.mark.parametrize("include_bias", [True, False])
 def test_num_combinations(
-    n_features,
-    min_degree,
-    max_degree,
-    interaction_only,
-    include_bias,
+    n_features, min_degree, max_degree, interaction_only, include_bias
 ):
     """
     Test that n_output_features_ is calculated correctly.
     """
     x = sparse.csr_matrix(([1], ([0], [n_features - 1])))
     est = PolynomialFeatures(
-        degree=max_degree,
-        interaction_only=interaction_only,
-        include_bias=include_bias,
+        degree=max_degree, interaction_only=interaction_only, include_bias=include_bias
     )
     est.fit(x)
     num_combos = est.n_output_features_

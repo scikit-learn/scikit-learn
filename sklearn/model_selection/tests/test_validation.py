@@ -392,10 +392,7 @@ def test_cross_validate_nested_estimator():
     # https://github.com/scikit-learn/scikit-learn/pull/17745
     (X, y) = load_iris(return_X_y=True)
     pipeline = Pipeline(
-        [
-            ("imputer", SimpleImputer()),
-            ("classifier", MockClassifier()),
-        ]
+        [("imputer", SimpleImputer()), ("classifier", MockClassifier())]
     )
 
     results = cross_validate(pipeline, X, y, return_estimator=True)

@@ -382,12 +382,7 @@ def test_discretenb_provide_prior_with_partial_fit(DiscreteNaiveBayes):
 @pytest.mark.parametrize("DiscreteNaiveBayes", DISCRETE_NAIVE_BAYES_CLASSES)
 def test_discretenb_sample_weight_multiclass(DiscreteNaiveBayes):
     # check shape consistency for number of samples at fit time
-    X = [
-        [0, 0, 1],
-        [0, 1, 1],
-        [0, 1, 1],
-        [1, 0, 0],
-    ]
+    X = [[0, 0, 1], [0, 1, 1], [0, 1, 1], [1, 0, 0]]
     y = [0, 0, 1, 2]
     sample_weight = np.array([1, 1, 2, 2], dtype=np.float64)
     sample_weight /= sample_weight.sum()
@@ -406,9 +401,7 @@ def test_discretenb_sample_weight_multiclass(DiscreteNaiveBayes):
 @pytest.mark.parametrize("use_partial_fit", [False, True])
 @pytest.mark.parametrize("train_on_single_class_y", [False, True])
 def test_discretenb_degenerate_one_class_case(
-    DiscreteNaiveBayes,
-    use_partial_fit,
-    train_on_single_class_y,
+    DiscreteNaiveBayes, use_partial_fit, train_on_single_class_y
 ):
     # Most array attributes of a discrete naive Bayes classifier should have a
     # first-axis length equal to the number of classes. Exceptions include:
@@ -783,9 +776,7 @@ def test_categoricalnb_with_min_categories(
 
 @pytest.mark.parametrize(
     "min_categories, error_msg",
-    [
-        ([[3, 2], [2, 4]], "'min_categories' should have shape"),
-    ],
+    [([[3, 2], [2, 4]], "'min_categories' should have shape")],
 )
 def test_categoricalnb_min_categories_errors(min_categories, error_msg):
 

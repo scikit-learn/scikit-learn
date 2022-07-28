@@ -39,10 +39,7 @@ from sklearn.pipeline import make_pipeline
 
 from sklearn.utils import IS_PYPY
 from sklearn.utils._tags import _DEFAULT_TAGS, _safe_tags
-from sklearn.utils._testing import (
-    SkipTest,
-    set_random_state,
-)
+from sklearn.utils._testing import SkipTest, set_random_state
 from sklearn.utils.estimator_checks import (
     _construct_instance,
     _set_checking_parameters,
@@ -250,16 +247,8 @@ def test_class_support_removed():
 
 def _generate_search_cv_instances():
     for SearchCV, (Estimator, param_grid) in product(
-        [
-            GridSearchCV,
-            HalvingGridSearchCV,
-            RandomizedSearchCV,
-            HalvingGridSearchCV,
-        ],
-        [
-            (Ridge, {"alpha": [0.1, 1.0]}),
-            (LogisticRegression, {"C": [0.1, 1.0]}),
-        ],
+        [GridSearchCV, HalvingGridSearchCV, RandomizedSearchCV, HalvingGridSearchCV],
+        [(Ridge, {"alpha": [0.1, 1.0]}), (LogisticRegression, {"C": [0.1, 1.0]})],
     ):
         init_params = signature(SearchCV).parameters
         extra_params = (
@@ -270,12 +259,7 @@ def _generate_search_cv_instances():
         yield search_cv
 
     for SearchCV, (Estimator, param_grid) in product(
-        [
-            GridSearchCV,
-            HalvingGridSearchCV,
-            RandomizedSearchCV,
-            HalvingRandomSearchCV,
-        ],
+        [GridSearchCV, HalvingGridSearchCV, RandomizedSearchCV, HalvingRandomSearchCV],
         [
             (Ridge, {"ridge__alpha": [0.1, 1.0]}),
             (LogisticRegression, {"logisticregression__C": [0.1, 1.0]}),
@@ -298,12 +282,7 @@ def test_search_cv(estimator, check, request):
     # We have a separate test because those meta-estimators can accept a
     # wide range of base estimators (classifiers, regressors, pipelines)
     with ignore_warnings(
-        category=(
-            FutureWarning,
-            ConvergenceWarning,
-            UserWarning,
-            FitFailedWarning,
-        )
+        category=(FutureWarning, ConvergenceWarning, UserWarning, FitFailedWarning)
     ):
         check(estimator)
 
@@ -378,10 +357,7 @@ def test_pandas_column_name_consistency(estimator):
 
 # TODO: As more modules support get_feature_names_out they should be removed
 # from this list to be tested
-GET_FEATURES_OUT_MODULES_TO_IGNORE = [
-    "ensemble",
-    "kernel_approximation",
-]
+GET_FEATURES_OUT_MODULES_TO_IGNORE = ["ensemble", "kernel_approximation"]
 
 
 def _include_in_get_feature_names_out_check(transformer):
@@ -413,9 +389,7 @@ def test_transformers_get_feature_names_out(transformer):
         )
 
 
-VALIDATE_ESTIMATOR_INIT = [
-    "SGDOneClassSVM",
-]
+VALIDATE_ESTIMATOR_INIT = ["SGDOneClassSVM"]
 VALIDATE_ESTIMATOR_INIT = set(VALIDATE_ESTIMATOR_INIT)
 
 

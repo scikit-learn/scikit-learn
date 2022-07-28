@@ -56,10 +56,7 @@ redirects_filename = redirects_url.rsplit("/", 1)[1]
 page_links_url = "http://downloads.dbpedia.org/3.5.1/en/page_links_en.nt.bz2"
 page_links_filename = page_links_url.rsplit("/", 1)[1]
 
-resources = [
-    (redirects_url, redirects_filename),
-    (page_links_url, page_links_filename),
-]
+resources = [(redirects_url, redirects_filename), (page_links_url, page_links_filename)]
 
 for url, filename in resources:
     if not os.path.exists(filename):

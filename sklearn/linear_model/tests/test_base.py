@@ -469,11 +469,7 @@ def test_preprocess_data_weighted(is_sparse, global_random_seed):
 
     # normalize is False
     Xt, yt, X_mean, y_mean, X_scale = _preprocess_data(
-        X,
-        y,
-        fit_intercept=True,
-        normalize=False,
-        sample_weight=sample_weight,
+        X, y, fit_intercept=True, normalize=False, sample_weight=sample_weight
     )
     assert_array_almost_equal(X_mean, expected_X_mean)
     assert_array_almost_equal(y_mean, expected_y_mean)
@@ -486,11 +482,7 @@ def test_preprocess_data_weighted(is_sparse, global_random_seed):
 
     # normalize is True
     Xt, yt, X_mean, y_mean, X_scale = _preprocess_data(
-        X,
-        y,
-        fit_intercept=True,
-        normalize=True,
-        sample_weight=sample_weight,
+        X, y, fit_intercept=True, normalize=True, sample_weight=sample_weight
     )
 
     assert_array_almost_equal(X_mean, expected_X_mean)
@@ -525,8 +517,7 @@ def test_preprocess_data_weighted(is_sparse, global_random_seed):
         scaler = StandardScaler(with_mean=True).fit(X, sample_weight=sample_weight)
         assert_array_almost_equal(scaler.mean_, X_mean)
         assert_array_almost_equal(
-            scaler.transform(X) / np.sqrt(sample_weight.sum()),
-            Xt,
+            scaler.transform(X) / np.sqrt(sample_weight.sum()), Xt
         )
     assert_array_almost_equal(yt, y - expected_y_mean)
 
@@ -615,31 +606,19 @@ def test_dtype_preprocess_data(global_random_seed):
         for normalize in [True, False]:
 
             Xt_32, yt_32, X_mean_32, y_mean_32, X_scale_32 = _preprocess_data(
-                X_32,
-                y_32,
-                fit_intercept=fit_intercept,
-                normalize=normalize,
+                X_32, y_32, fit_intercept=fit_intercept, normalize=normalize
             )
 
             Xt_64, yt_64, X_mean_64, y_mean_64, X_scale_64 = _preprocess_data(
-                X_64,
-                y_64,
-                fit_intercept=fit_intercept,
-                normalize=normalize,
+                X_64, y_64, fit_intercept=fit_intercept, normalize=normalize
             )
 
             Xt_3264, yt_3264, X_mean_3264, y_mean_3264, X_scale_3264 = _preprocess_data(
-                X_32,
-                y_64,
-                fit_intercept=fit_intercept,
-                normalize=normalize,
+                X_32, y_64, fit_intercept=fit_intercept, normalize=normalize
             )
 
             Xt_6432, yt_6432, X_mean_6432, y_mean_6432, X_scale_6432 = _preprocess_data(
-                X_64,
-                y_32,
-                fit_intercept=fit_intercept,
-                normalize=normalize,
+                X_64, y_32, fit_intercept=fit_intercept, normalize=normalize
             )
 
             assert Xt_32.dtype == np.float32

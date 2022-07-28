@@ -11,10 +11,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.neighbors import NearestNeighbors
 from sklearn.datasets import make_classification
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.utils._testing import (
-    assert_allclose,
-    assert_array_equal,
-)
+from sklearn.utils._testing import assert_allclose, assert_array_equal
 
 ESTIMATORS = [
     (label_propagation.LabelPropagation, {"kernel": "rbf"}),

@@ -145,9 +145,7 @@ class _BaseSparsePCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEst
         return self.components_.shape[0]
 
     def _more_tags(self):
-        return {
-            "preserves_dtype": [np.float64, np.float32],
-        }
+        return {"preserves_dtype": [np.float64, np.float32]}
 
 
 class SparsePCA(_BaseSparsePCA):

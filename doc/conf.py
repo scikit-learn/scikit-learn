@@ -288,7 +288,7 @@ latex_documents = [
         "scikit-learn user guide",
         "scikit-learn developers",
         "manual",
-    ),
+    )
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -640,5 +640,5 @@ if github_token is None:
     linkcheck_request_headers = {}
 else:
     linkcheck_request_headers = {
-        "https://github.com/": {"Authorization": f"token {github_token}"},
+        "https://github.com/": {"Authorization": f"token {github_token}"}
     }

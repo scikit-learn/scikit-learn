@@ -120,10 +120,7 @@ def test_n_features_to_select_stopping_criterion(direction):
 
     added_candidates = list(set(range(X.shape[1])) - set(sfs.get_support(indices=True)))
     added_X = np.hstack(
-        [
-            selected_X,
-            (X[:, rng.choice(added_candidates)])[:, np.newaxis],
-        ]
+        [selected_X, (X[:, rng.choice(added_candidates)])[:, np.newaxis]]
     )
 
     removed_candidate = rng.choice(list(range(sfs.n_features_to_select_)))
@@ -148,13 +145,7 @@ def test_n_features_to_select_stopping_criterion(direction):
 @pytest.mark.filterwarnings("ignore:Leaving `n_features_to_select` to ")
 @pytest.mark.parametrize("direction", ("forward", "backward"))
 @pytest.mark.parametrize(
-    "n_features_to_select, expected",
-    (
-        (0.1, 1),
-        (1.0, 10),
-        (0.5, 5),
-        (None, 5),
-    ),
+    "n_features_to_select, expected", ((0.1, 1), (1.0, 10), (0.5, 5), (None, 5))
 )
 def test_n_features_to_select_float(direction, n_features_to_select, expected):
     # Test passing a float as n_features_to_select
@@ -274,8 +265,7 @@ def test_unsupervised_model_fit(n_features_to_select):
 
     X, y = make_blobs(n_features=4)
     sfs = SequentialFeatureSelector(
-        KMeans(n_init=1),
-        n_features_to_select=n_features_to_select,
+        KMeans(n_init=1), n_features_to_select=n_features_to_select
     )
     sfs.fit(X)
     assert sfs.transform(X).shape[1] == n_features_to_select
@@ -286,10 +276,7 @@ def test_no_y_validation_model_fit(y):
     # Make sure that other non-conventional y labels are not accepted
 
     X, clusters = make_blobs(n_features=6)
-    sfs = SequentialFeatureSelector(
-        KMeans(),
-        n_features_to_select=3,
-    )
+    sfs = SequentialFeatureSelector(KMeans(), n_features_to_select=3)
 
     with pytest.raises((TypeError, ValueError)):
         sfs.fit(X, y)

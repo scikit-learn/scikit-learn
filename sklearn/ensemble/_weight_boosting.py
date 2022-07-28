@@ -46,10 +46,7 @@ from ..utils.validation import has_fit_parameter
 from ..utils.validation import _num_samples
 from ..utils._param_validation import Interval, StrOptions
 
-__all__ = [
-    "AdaBoostClassifier",
-    "AdaBoostRegressor",
-]
+__all__ = ["AdaBoostClassifier", "AdaBoostRegressor"]
 
 
 class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):

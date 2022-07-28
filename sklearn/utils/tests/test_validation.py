@@ -183,12 +183,7 @@ def test_check_array_force_all_finite_valid(value, force_all_finite, retype):
         (np.nan, "", True, "Input contains NaN"),
         (np.nan, "X", True, "Input X contains NaN"),
         (np.nan, "y", True, "Input y contains NaN"),
-        (
-            np.nan,
-            "",
-            "allow-inf",
-            'force_all_finite should be a bool or "allow-nan"',
-        ),
+        (np.nan, "", "allow-inf", 'force_all_finite should be a bool or "allow-nan"'),
         (np.nan, "", 1, "Input contains NaN"),
     ],
 )
@@ -230,10 +225,7 @@ def test_check_array_links_to_imputer_doc_only_for_X(input_name, retype):
 
     with pytest.raises(ValueError, match=f"Input {input_name} contains NaN") as ctx:
         check_array(
-            data,
-            estimator=estimator,
-            input_name=input_name,
-            accept_sparse=True,
+            data, estimator=estimator, input_name=input_name, accept_sparse=True
         )
 
     if input_name == "X":
@@ -265,14 +257,8 @@ def test_check_array_force_all_finite_object():
 @pytest.mark.parametrize(
     "X, err_msg",
     [
-        (
-            np.array([[1, np.nan]]),
-            "Input contains NaN.",
-        ),
-        (
-            np.array([[1, np.nan]]),
-            "Input contains NaN.",
-        ),
+        (np.array([[1, np.nan]]), "Input contains NaN."),
+        (np.array([[1, np.nan]]), "Input contains NaN."),
         (
             np.array([[1, np.inf]]),
             "Input contains infinity or a value too large for.*int",
@@ -965,8 +951,7 @@ def test_check_dataframe_with_only_bool():
 
     # common dtype is int for bool + int
     df = pd.DataFrame(
-        {"bool": [True, False, True], "int": [1, 2, 3]},
-        columns=["bool", "int"],
+        {"bool": [True, False, True], "int": [1, 2, 3]}, columns=["bool", "int"]
     )
     array = check_array(df, dtype="numeric")
     assert array.dtype == np.int64
@@ -1686,10 +1671,7 @@ def test_get_feature_names_numpy():
 # TODO: Convert to a error in 1.2
 @pytest.mark.parametrize(
     "names, dtypes",
-    [
-        (["a", 1], "['int', 'str']"),
-        (["pizza", ["a", "b"]], "['list', 'str']"),
-    ],
+    [(["a", 1], "['int', 'str']"), (["pizza", ["a", "b"]], "['list', 'str']")],
     ids=["int-str", "list-str"],
 )
 def test_get_feature_names_invalid_dtypes_warns(names, dtypes):

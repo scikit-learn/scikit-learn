@@ -65,10 +65,7 @@ from sklearn.pipeline import Pipeline
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
 # Load some categories from the training set
-categories = [
-    "alt.atheism",
-    "talk.religion.misc",
-]
+categories = ["alt.atheism", "talk.religion.misc"]
 
 # Uncomment the following to do the analysis on all the categories
 # categories = None

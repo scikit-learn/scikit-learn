@@ -135,11 +135,7 @@ def assert_children_values_bounded(grower, monotonic_cst):
 @pytest.mark.parametrize("seed", range(3))
 @pytest.mark.parametrize(
     "monotonic_cst",
-    (
-        MonotonicConstraint.NO_CST,
-        MonotonicConstraint.POS,
-        MonotonicConstraint.NEG,
-    ),
+    (MonotonicConstraint.NO_CST, MonotonicConstraint.POS, MonotonicConstraint.NEG),
 )
 def test_nodes_values(monotonic_cst, seed):
     # Build a single tree with only one feature, and make sure the nodes

@@ -61,10 +61,7 @@ from ..utils._param_validation import make_constraint
 from ..utils._param_validation import generate_invalid_param_val
 
 from . import shuffle
-from ._tags import (
-    _DEFAULT_TAGS,
-    _safe_tags,
-)
+from ._tags import _DEFAULT_TAGS, _safe_tags
 from .validation import has_fit_parameter, _num_samples
 from ..preprocessing import StandardScaler
 from ..preprocessing import scale
@@ -1259,8 +1256,7 @@ def check_dont_overwrite_parameters(name, estimator_orig):
         " the fit method."
         " Estimators are only allowed to add private attributes"
         " either started with _ or ended"
-        " with _ but %s added"
-        % ", ".join(attrs_added_by_fit)
+        " with _ but %s added" % ", ".join(attrs_added_by_fit)
     )
 
     # check that fit doesn't change any public attribute
@@ -1275,8 +1271,7 @@ def check_dont_overwrite_parameters(name, estimator_orig):
         " the fit method. Estimators are only allowed"
         " to change attributes started"
         " or ended with _, but"
-        " %s changed"
-        % ", ".join(attrs_changed_by_fit)
+        " %s changed" % ", ".join(attrs_changed_by_fit)
     )
 
 
@@ -1736,10 +1731,7 @@ def check_transformer_preserve_dtypes(name, transformer_orig):
     # check that dtype are preserved meaning if input X is of some dtype
     # X_transformed should be from the same dtype.
     X, y = make_blobs(
-        n_samples=30,
-        centers=[[0, 0, 0], [1, 1, 1]],
-        random_state=0,
-        cluster_std=0.1,
+        n_samples=30, centers=[[0, 0, 0], [1, 1, 1]], random_state=0, cluster_std=0.1
     )
     X = StandardScaler().fit_transform(X)
     X -= X.min()
@@ -1820,18 +1812,14 @@ def check_estimators_nan_inf(name, estimator_orig):
             # predict
             if hasattr(estimator, "predict"):
                 with raises(
-                    ValueError,
-                    match=["inf", "NaN"],
-                    err_msg=error_string_predict,
+                    ValueError, match=["inf", "NaN"], err_msg=error_string_predict
                 ):
                     estimator.predict(X_train)
 
             # transform
             if hasattr(estimator, "transform"):
                 with raises(
-                    ValueError,
-                    match=["inf", "NaN"],
-                    err_msg=error_string_transform,
+                    ValueError, match=["inf", "NaN"], err_msg=error_string_transform
                 ):
                     estimator.transform(X_train)
 
@@ -2190,10 +2178,7 @@ def check_classifiers_train(
 
         if not tags["no_validation"]:
             if tags["pairwise"]:
-                with raises(
-                    ValueError,
-                    err_msg=msg_pairwise.format(name, "predict"),
-                ):
+                with raises(ValueError, err_msg=msg_pairwise.format(name, "predict")):
                     classifier.predict(X.reshape(-1, 1))
             else:
                 with raises(ValueError, err_msg=msg.format(name, "predict")):
@@ -2223,8 +2208,7 @@ def check_classifiers_train(
                             classifier.decision_function(X.reshape(-1, 1))
                     else:
                         with raises(
-                            ValueError,
-                            err_msg=msg.format(name, "decision_function"),
+                            ValueError, err_msg=msg.format(name, "decision_function")
                         ):
                             classifier.decision_function(X.T)
             except NotImplementedError:
@@ -2241,15 +2225,11 @@ def check_classifiers_train(
                 # raises error on malformed input for predict_proba
                 if tags["pairwise"]:
                     with raises(
-                        ValueError,
-                        err_msg=msg_pairwise.format(name, "predict_proba"),
+                        ValueError, err_msg=msg_pairwise.format(name, "predict_proba")
                     ):
                         classifier.predict_proba(X.reshape(-1, 1))
                 else:
-                    with raises(
-                        ValueError,
-                        err_msg=msg.format(name, "predict_proba"),
-                    ):
+                    with raises(ValueError, err_msg=msg.format(name, "predict_proba")):
                         classifier.predict_proba(X.T)
             if hasattr(classifier, "predict_log_proba"):
                 # predict_log_proba is a transformation of predict_proba
@@ -2637,8 +2617,7 @@ def check_supervised_y_2d(name, estimator_orig):
         assert len(w) > 0, msg
         assert (
             "DataConversionWarning('A column-vector y"
-            " was passed when a 1d array was expected"
-            in msg
+            " was passed when a 1d array was expected" in msg
         )
     assert_allclose(y_pred.ravel(), y_pred_2d.ravel())
 
@@ -3190,11 +3169,9 @@ def check_parameters_default_constructible(name, Estimator):
         init_params = init_params[len(getattr(estimator, "_required_parameters", [])) :]
 
         for init_param in init_params:
-            assert (
-                init_param.default != init_param.empty
-            ), "parameter %s for %s has no default value" % (
-                init_param.name,
-                type(estimator).__name__,
+            assert init_param.default != init_param.empty, (
+                "parameter %s for %s has no default value"
+                % (init_param.name, type(estimator).__name__)
             )
             allowed_types = {
                 str,
@@ -3396,10 +3373,8 @@ def check_set_params(name, estimator_orig):
                     "validation until fit.".format(e_type, param_name, name)
                 )
 
-                change_warning_msg = (
-                    "Estimator's parameters changed after set_params raised {}".format(
-                        e_type
-                    )
+                change_warning_msg = "Estimator's parameters changed after set_params raised {}".format(
+                    e_type
                 )
                 params_before_exception = curr_params
                 curr_params = estimator.get_params(deep=False)
@@ -3879,9 +3854,7 @@ def check_dataframe_column_names_consistency(name, estimator_orig):
             # TODO In 1.2, this will be an error.
             with warnings.catch_warnings():
                 warnings.filterwarnings(
-                    "error",
-                    category=FutureWarning,
-                    module="sklearn",
+                    "error", category=FutureWarning, module="sklearn"
                 )
                 with raises(
                     FutureWarning, match=expected_msg, err_msg=f"{name} did not raise"

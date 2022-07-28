@@ -3,10 +3,7 @@ import pytest
 from scipy.sparse import csr_matrix
 
 from sklearn.utils import check_random_state
-from sklearn.utils._testing import (
-    assert_array_equal,
-    assert_allclose,
-)
+from sklearn.utils._testing import assert_array_equal, assert_allclose
 from sklearn.feature_selection._mutual_info import _compute_mi
 from sklearn.feature_selection import mutual_info_regression, mutual_info_classif
 
@@ -37,8 +34,8 @@ def test_compute_mi_cc(global_dtype):
     corr = 0.5
     cov = np.array(
         [
-            [sigma_1**2, corr * sigma_1 * sigma_2],
-            [corr * sigma_1 * sigma_2, sigma_2**2],
+            [sigma_1 ** 2, corr * sigma_1 * sigma_2],
+            [corr * sigma_1 * sigma_2, sigma_2 ** 2],
         ]
     )
 

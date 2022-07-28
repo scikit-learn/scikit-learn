@@ -215,10 +215,7 @@ def test_plot_precision_recall_pos_label(pyplot, response_method):
     X = X[:, :2]
     y = np.array(["cancer" if c == 1 else "not cancer" for c in y], dtype=object)
     X_train, X_test, y_train, y_test = train_test_split(
-        X,
-        y,
-        stratify=y,
-        random_state=0,
+        X, y, stratify=y, random_state=0
     )
 
     classifier = LogisticRegression()
@@ -238,10 +235,7 @@ def test_plot_precision_recall_pos_label(pyplot, response_method):
 
     # otherwise we should obtain the statistics of the "not cancer" class
     disp = plot_precision_recall_curve(
-        classifier,
-        X_test,
-        y_test,
-        response_method=response_method,
+        classifier, X_test, y_test, response_method=response_method
     )
     avg_prec_limit = 0.95
     assert disp.average_precision > avg_prec_limit

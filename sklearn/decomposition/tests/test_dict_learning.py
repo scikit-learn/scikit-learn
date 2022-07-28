@@ -68,9 +68,9 @@ def test_max_iter():
         """Discrete sub-sampled Ricker (Mexican hat) wavelet"""
         x = np.linspace(0, resolution - 1, resolution)
         x = (
-            (2 / (np.sqrt(3 * width) * np.pi**0.25))
-            * (1 - (x - center) ** 2 / width**2)
-            * np.exp(-((x - center) ** 2) / (2 * width**2))
+            (2 / (np.sqrt(3 * width) * np.pi ** 0.25))
+            * (1 - (x - center) ** 2 / width ** 2)
+            * np.exp(-((x - center) ** 2) / (2 * width ** 2))
         )
         return x
 
@@ -80,7 +80,7 @@ def test_max_iter():
         D = np.empty((n_components, resolution))
         for i, center in enumerate(centers):
             D[i] = ricker_function(resolution, center, width)
-        D /= np.sqrt(np.sum(D**2, axis=1))[:, np.newaxis]
+        D /= np.sqrt(np.sum(D ** 2, axis=1))[:, np.newaxis]
         return D
 
     transform_algorithm = "lasso_cd"
@@ -128,14 +128,7 @@ def test_dict_learning_lars_positive_parameter():
         dict_learning(X, n_components, alpha=alpha, positive_code=True)
 
 
-@pytest.mark.parametrize(
-    "transform_algorithm",
-    [
-        "lasso_lars",
-        "lasso_cd",
-        "threshold",
-    ],
-)
+@pytest.mark.parametrize("transform_algorithm", ["lasso_lars", "lasso_cd", "threshold"])
 @pytest.mark.parametrize("positive_code", [False, True])
 @pytest.mark.parametrize("positive_dict", [False, True])
 def test_dict_learning_positivity(transform_algorithm, positive_code, positive_dict):
@@ -316,14 +309,7 @@ def test_dict_learning_online_lars_positive_parameter():
         dict_learning_online(X, batch_size=4, max_iter=10, positive_code=True)
 
 
-@pytest.mark.parametrize(
-    "transform_algorithm",
-    [
-        "lasso_lars",
-        "lasso_cd",
-        "threshold",
-    ],
-)
+@pytest.mark.parametrize("transform_algorithm", ["lasso_lars", "lasso_cd", "threshold"])
 @pytest.mark.parametrize("positive_code", [False, True])
 @pytest.mark.parametrize("positive_dict", [False, True])
 def test_minibatch_dictionary_learning_positivity(
@@ -497,7 +483,7 @@ def test_dict_learning_online_partial_fit():
     n_components = 12
     rng = np.random.RandomState(0)
     V = rng.randn(n_components, n_features)  # random init
-    V /= np.sum(V**2, axis=1)[:, np.newaxis]
+    V /= np.sum(V ** 2, axis=1)[:, np.newaxis]
     dict1 = MiniBatchDictionaryLearning(
         n_components,
         max_iter=10,
@@ -527,7 +513,7 @@ def test_sparse_encode_shapes():
     n_components = 12
     rng = np.random.RandomState(0)
     V = rng.randn(n_components, n_features)  # random init
-    V /= np.sum(V**2, axis=1)[:, np.newaxis]
+    V /= np.sum(V ** 2, axis=1)[:, np.newaxis]
     for algo in ("lasso_lars", "lasso_cd", "lars", "omp", "threshold"):
         code = sparse_encode(X, V, algorithm=algo)
         assert code.shape == (n_samples, n_components)
@@ -539,7 +525,7 @@ def test_sparse_encode_positivity(algo, positive):
     n_components = 12
     rng = np.random.RandomState(0)
     V = rng.randn(n_components, n_features)  # random init
-    V /= np.sum(V**2, axis=1)[:, np.newaxis]
+    V /= np.sum(V ** 2, axis=1)[:, np.newaxis]
     code = sparse_encode(X, V, algorithm=algo, positive=positive)
     if positive:
         assert (code >= 0).all()
@@ -552,7 +538,7 @@ def test_sparse_encode_unavailable_positivity(algo):
     n_components = 12
     rng = np.random.RandomState(0)
     V = rng.randn(n_components, n_features)  # random init
-    V /= np.sum(V**2, axis=1)[:, np.newaxis]
+    V /= np.sum(V ** 2, axis=1)[:, np.newaxis]
     err_msg = "Positive constraint not supported for '{}' coding method."
     err_msg = err_msg.format(algo)
     with pytest.raises(ValueError, match=err_msg):
@@ -563,7 +549,7 @@ def test_sparse_encode_input():
     n_components = 100
     rng = np.random.RandomState(0)
     V = rng.randn(n_components, n_features)  # random init
-    V /= np.sum(V**2, axis=1)[:, np.newaxis]
+    V /= np.sum(V ** 2, axis=1)[:, np.newaxis]
     Xf = check_array(X, order="F")
     for algo in ("lasso_lars", "lasso_cd", "lars", "omp", "threshold"):
         a = sparse_encode(X, V, algorithm=algo)
@@ -575,7 +561,7 @@ def test_sparse_encode_error():
     n_components = 12
     rng = np.random.RandomState(0)
     V = rng.randn(n_components, n_features)  # random init
-    V /= np.sum(V**2, axis=1)[:, np.newaxis]
+    V /= np.sum(V ** 2, axis=1)[:, np.newaxis]
     code = sparse_encode(X, V, alpha=0.001)
     assert not np.all(code == 0)
     assert np.sqrt(np.sum((np.dot(code, V) - X) ** 2)) < 0.1
@@ -601,7 +587,7 @@ def test_sparse_coder_estimator():
     n_components = 12
     rng = np.random.RandomState(0)
     V = rng.randn(n_components, n_features)  # random init
-    V /= np.sum(V**2, axis=1)[:, np.newaxis]
+    V /= np.sum(V ** 2, axis=1)[:, np.newaxis]
     coder = SparseCoder(
         dictionary=V, transform_algorithm="lasso_lars", transform_alpha=0.001
     ).transform(X)
@@ -613,7 +599,7 @@ def test_sparse_coder_estimator_clone():
     n_components = 12
     rng = np.random.RandomState(0)
     V = rng.randn(n_components, n_features)  # random init
-    V /= np.sum(V**2, axis=1)[:, np.newaxis]
+    V /= np.sum(V ** 2, axis=1)[:, np.newaxis]
     coder = SparseCoder(
         dictionary=V, transform_algorithm="lasso_lars", transform_alpha=0.001
     )
@@ -873,10 +859,7 @@ def test_sparse_coder_dtype_match(data_type, transform_algorithm):
     ),
 )
 def test_dictionary_learning_dtype_match(
-    data_type,
-    expected_type,
-    fit_algorithm,
-    transform_algorithm,
+    data_type, expected_type, fit_algorithm, transform_algorithm
 ):
     # Verify preserving dtype for fit and transform in dictionary learning class
     dict_learner = DictionaryLearning(
@@ -904,10 +887,7 @@ def test_dictionary_learning_dtype_match(
     ),
 )
 def test_minibatch_dictionary_learning_dtype_match(
-    data_type,
-    expected_type,
-    fit_algorithm,
-    transform_algorithm,
+    data_type, expected_type, fit_algorithm, transform_algorithm
 ):
     # Verify preserving dtype for fit and transform in minibatch dictionary learning
     dict_learner = MiniBatchDictionaryLearning(
@@ -982,7 +962,7 @@ def test_dict_learning_numerical_consistency(method):
     # instead of comparing directly U and V.
     assert_allclose(np.matmul(U_64, V_64), np.matmul(U_32, V_32), rtol=rtol)
     assert_allclose(np.sum(np.abs(U_64)), np.sum(np.abs(U_32)), rtol=rtol)
-    assert_allclose(np.sum(V_64**2), np.sum(V_32**2), rtol=rtol)
+    assert_allclose(np.sum(V_64 ** 2), np.sum(V_32 ** 2), rtol=rtol)
     # verify an obtained solution is not degenerate
     assert np.mean(U_64 != 0.0) > 0.05
     assert np.count_nonzero(U_64 != 0.0) == np.count_nonzero(U_32 != 0.0)
@@ -1046,7 +1026,7 @@ def test_dict_learning_online_numerical_consistency(method):
     # instead of comparing directly U and V.
     assert_allclose(np.matmul(U_64, V_64), np.matmul(U_32, V_32), rtol=rtol)
     assert_allclose(np.sum(np.abs(U_64)), np.sum(np.abs(U_32)), rtol=rtol)
-    assert_allclose(np.sum(V_64**2), np.sum(V_32**2), rtol=rtol)
+    assert_allclose(np.sum(V_64 ** 2), np.sum(V_32 ** 2), rtol=rtol)
     # verify an obtained solution is not degenerate
     assert np.mean(U_64 != 0.0) > 0.05
     assert np.count_nonzero(U_64 != 0.0) == np.count_nonzero(U_32 != 0.0)
@@ -1069,8 +1049,7 @@ def test_get_feature_names_out(estimator):
     feature_names_out = estimator.get_feature_names_out()
     estimator_name = estimator.__class__.__name__.lower()
     assert_array_equal(
-        feature_names_out,
-        [f"{estimator_name}{i}" for i in range(n_components)],
+        feature_names_out, [f"{estimator_name}{i}" for i in range(n_components)]
     )
 
 

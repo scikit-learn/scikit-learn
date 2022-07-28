@@ -38,10 +38,7 @@ X, y = make_classification(
 
 train_samples = 100  # Samples used for training the models
 X_train, X_test, y_train, y_test = train_test_split(
-    X,
-    y,
-    shuffle=False,
-    test_size=100_000 - train_samples,
+    X, y, shuffle=False, test_size=100_000 - train_samples
 )
 
 # %%

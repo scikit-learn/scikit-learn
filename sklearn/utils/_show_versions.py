@@ -58,9 +58,7 @@ def _get_deps_info():
         "threadpoolctl",
     ]
 
-    deps_info = {
-        "sklearn": __version__,
-    }
+    deps_info = {"sklearn": __version__}
 
     if sys.version_info < (3, 8):
         # Backwards compatibility with Python < 3.8, primarily for PyPy.

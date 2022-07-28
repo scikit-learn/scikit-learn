@@ -102,11 +102,7 @@ def test_quantile_equals_huber_for_low_epsilon(fit_intercept, default_solver):
 def test_quantile_estimates_calibration(q, default_solver):
     # Test that model estimates percentage of points below the prediction
     X, y = make_regression(n_samples=1000, n_features=20, random_state=0, noise=1.0)
-    quant = QuantileRegressor(
-        quantile=q,
-        alpha=0,
-        solver=default_solver,
-    ).fit(X, y)
+    quant = QuantileRegressor(quantile=q, alpha=0, solver=default_solver).fit(X, y)
     assert np.mean(y < quant.predict(X)) == approx(q, abs=1e-2)
 
 
@@ -136,10 +132,7 @@ def test_asymmetric_error(quantile, default_solver):
     n_samples = 1000
     rng = np.random.RandomState(42)
     X = np.concatenate(
-        (
-            np.abs(rng.randn(n_samples)[:, None]),
-            -rng.randint(2, size=(n_samples, 1)),
-        ),
+        (np.abs(rng.randn(n_samples)[:, None]), -rng.randint(2, size=(n_samples, 1))),
         axis=1,
     )
     intercept = 1.23
@@ -153,11 +146,9 @@ def test_asymmetric_error(quantile, default_solver):
     y = rng.exponential(
         scale=-(X @ coef + intercept) / np.log(1 - quantile), size=n_samples
     )
-    model = QuantileRegressor(
-        quantile=quantile,
-        alpha=0,
-        solver=default_solver,
-    ).fit(X, y)
+    model = QuantileRegressor(quantile=quantile, alpha=0, solver=default_solver).fit(
+        X, y
+    )
     # This test can be made to pass with any solver but in the interest
     # of sparing continuous integration resources, the test is performed
     # with the fastest solver only.

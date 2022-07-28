@@ -1444,18 +1444,10 @@ def test_ohe_missing_value_support_pandas_categorical(pd_nan_type, handle_unknow
     pd_missing_value = pd.NA if pd_nan_type == "pd.NA" else np.nan
 
     df = pd.DataFrame(
-        {
-            "col1": pd.Series(["c", "a", pd_missing_value, "b", "a"], dtype="category"),
-        }
+        {"col1": pd.Series(["c", "a", pd_missing_value, "b", "a"], dtype="category")}
     )
     expected_df_trans = np.array(
-        [
-            [0, 0, 1, 0],
-            [1, 0, 0, 0],
-            [0, 0, 0, 1],
-            [0, 1, 0, 0],
-            [1, 0, 0, 0],
-        ]
+        [[0, 0, 1, 0], [1, 0, 0, 0], [0, 0, 0, 1], [0, 1, 0, 0], [1, 0, 0, 0]]
     )
 
     ohe = OneHotEncoder(sparse=False, handle_unknown=handle_unknown)
@@ -1476,13 +1468,7 @@ def test_ohe_drop_first_handle_unknown_ignore_warns(handle_unknown):
     ohe = OneHotEncoder(drop="first", sparse=False, handle_unknown=handle_unknown)
     X_trans = ohe.fit_transform(X)
 
-    X_expected = np.array(
-        [
-            [0, 0, 0],
-            [1, 0, 1],
-            [1, 1, 0],
-        ]
-    )
+    X_expected = np.array([[0, 0, 0], [1, 0, 1], [1, 1, 0]])
     assert_allclose(X_trans, X_expected)
 
     # Both categories are unknown
@@ -1511,13 +1497,7 @@ def test_ohe_drop_if_binary_handle_unknown_ignore_warns(handle_unknown):
     ohe = OneHotEncoder(drop="if_binary", sparse=False, handle_unknown=handle_unknown)
     X_trans = ohe.fit_transform(X)
 
-    X_expected = np.array(
-        [
-            [0, 1, 0, 0],
-            [1, 0, 0, 1],
-            [1, 0, 1, 0],
-        ]
-    )
+    X_expected = np.array([[0, 1, 0, 0], [1, 0, 0, 1], [1, 0, 1, 0]])
     assert_allclose(X_trans, X_expected)
 
     # Both categories are unknown
@@ -1609,9 +1589,7 @@ def test_ordinal_encoder_missing_value_support_pandas_categorical(
     pd_missing_value = pd.NA if pd_nan_type == "pd.NA" else np.nan
 
     df = pd.DataFrame(
-        {
-            "col1": pd.Series(["c", "a", pd_missing_value, "b", "a"], dtype="category"),
-        }
+        {"col1": pd.Series(["c", "a", pd_missing_value, "b", "a"], dtype="category")}
     )
 
     oe = OrdinalEncoder(encoded_missing_value=encoded_missing_value).fit(df)

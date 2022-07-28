@@ -161,10 +161,7 @@ datasets_name = [
     "cardiotocography",
 ]
 
-models_name = [
-    "LOF",
-    "IForest",
-]
+models_name = ["LOF", "IForest"]
 
 # plotting parameters
 cols = 2

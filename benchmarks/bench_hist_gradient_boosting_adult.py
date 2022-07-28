@@ -61,8 +61,7 @@ preprocessing = make_column_transformer(
     verbose_feature_names_out=False,
 )
 X = pd.DataFrame(
-    preprocessing.fit_transform(X),
-    columns=preprocessing.get_feature_names_out(),
+    preprocessing.fit_transform(X), columns=preprocessing.get_feature_names_out()
 )
 
 n_classes = len(np.unique(y))

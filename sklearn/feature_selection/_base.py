@@ -12,11 +12,7 @@ from scipy.sparse import issparse, csc_matrix
 
 from ..base import TransformerMixin
 from ..cross_decomposition._pls import _PLS
-from ..utils import (
-    check_array,
-    safe_mask,
-    safe_sqr,
-)
+from ..utils import check_array, safe_mask, safe_sqr
 from ..utils._tags import _safe_tags
 from ..utils.validation import _check_feature_names_in
 

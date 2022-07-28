@@ -297,9 +297,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
             # Get importance and rank them
             importances = _get_feature_importances(
-                estimator,
-                self.importance_getter,
-                transform_func="square",
+                estimator, self.importance_getter, transform_func="square"
             )
             ranks = np.argsort(importances)
 

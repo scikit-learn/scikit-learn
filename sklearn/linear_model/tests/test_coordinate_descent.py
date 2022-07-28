@@ -13,11 +13,7 @@ from sklearn.base import is_classifier
 from sklearn.base import clone
 from sklearn.datasets import load_diabetes
 from sklearn.datasets import make_regression
-from sklearn.model_selection import (
-    GridSearchCV,
-    LeaveOneGroupOut,
-    train_test_split,
-)
+from sklearn.model_selection import GridSearchCV, LeaveOneGroupOut, train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
@@ -265,10 +261,10 @@ def test_lasso_dual_gap():
     clf = Lasso(alpha=alpha, fit_intercept=False).fit(X, y)
     w = clf.coef_
     R = y - X @ w
-    primal = 0.5 * np.mean(R**2) + clf.alpha * np.sum(np.abs(w))
+    primal = 0.5 * np.mean(R ** 2) + clf.alpha * np.sum(np.abs(w))
     # dual pt: R / n_samples, dual constraint: norm(X.T @ theta, inf) <= alpha
     R /= np.max(np.abs(X.T @ R) / (n_samples * alpha))
-    dual = 0.5 * (np.mean(y**2) - np.mean((y - R) ** 2))
+    dual = 0.5 * (np.mean(y ** 2) - np.mean((y - R) ** 2))
     assert_allclose(clf.dual_gap_, primal - dual)
 
 
@@ -355,11 +351,7 @@ def test_lasso_cv_positive_constraint():
     "alphas, err_type, err_msg",
     [
         ((1, -1, -100), ValueError, r"alphas\[1\] == -1, must be >= 0.0."),
-        (
-            (-0.1, -1.0, -10.0),
-            ValueError,
-            r"alphas\[0\] == -0.1, must be >= 0.0.",
-        ),
+        ((-0.1, -1.0, -10.0), ValueError, r"alphas\[0\] == -0.1, must be >= 0.0."),
         (
             (1, 1.0, "1"),
             TypeError,
@@ -1408,12 +1400,7 @@ def test_sparse_input_convergence_warning():
 
 
 @pytest.mark.parametrize(
-    "precompute, inner_precompute",
-    [
-        (True, True),
-        ("auto", False),
-        (False, False),
-    ],
+    "precompute, inner_precompute", [(True, True), ("auto", False), (False, False)]
 )
 def test_lassoCV_does_not_set_precompute(monkeypatch, precompute, inner_precompute):
     X, y, _, _ = build_dataset()
@@ -1718,10 +1705,7 @@ def test_enet_ridge_consistency(normalize, ridge_alpha):
     )
     sw = rng.uniform(low=0.01, high=10, size=X.shape[0])
     alpha = 1.0
-    common_params = dict(
-        normalize=normalize,
-        tol=1e-12,
-    )
+    common_params = dict(normalize=normalize, tol=1e-12)
     ridge = Ridge(alpha=alpha, **common_params).fit(X, y, sample_weight=sw)
     if normalize:
         alpha_enet = alpha / n_samples
@@ -1735,11 +1719,7 @@ def test_enet_ridge_consistency(normalize, ridge_alpha):
 
 
 @pytest.mark.parametrize(
-    "estimator",
-    [
-        Lasso(alpha=1.0),
-        ElasticNet(alpha=1.0, l1_ratio=0.1),
-    ],
+    "estimator", [Lasso(alpha=1.0), ElasticNet(alpha=1.0, l1_ratio=0.1)]
 )
 @filterwarnings_normalize
 def test_sample_weight_invariance(estimator):

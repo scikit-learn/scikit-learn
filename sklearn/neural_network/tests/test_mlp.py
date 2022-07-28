@@ -13,11 +13,7 @@ import re
 import numpy as np
 import joblib
 
-from numpy.testing import (
-    assert_almost_equal,
-    assert_array_equal,
-    assert_allclose,
-)
+from numpy.testing import assert_almost_equal, assert_array_equal, assert_allclose
 
 from sklearn.datasets import load_digits, load_iris
 from sklearn.datasets import make_regression, make_multilabel_classification
@@ -719,8 +715,7 @@ def test_warm_start():
         message = (
             "warm_start can only be used where `y` has the same "
             "classes as in the previous call to fit."
-            " Previously got [0 1 2], `y` has %s"
-            % np.unique(y_i)
+            " Previously got [0 1 2], `y` has %s" % np.unique(y_i)
         )
         with pytest.raises(ValueError, match=re.escape(message)):
             clf.fit(X, y_i)

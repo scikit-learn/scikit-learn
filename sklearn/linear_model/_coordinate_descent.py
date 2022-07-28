@@ -179,7 +179,7 @@ def _alpha_grid(
         if normalize:
             Xy /= X_scale[:, np.newaxis]
 
-    alpha_max = np.sqrt(np.sum(Xy**2, axis=1)).max() / (n_samples * l1_ratio)
+    alpha_max = np.sqrt(np.sum(Xy ** 2, axis=1)).max() / (n_samples * l1_ratio)
 
     if alpha_max <= np.finfo(float).resolution:
         alphas = np.empty(n_alphas)
@@ -1268,9 +1268,7 @@ class Lasso(ElasticNet):
     0.15...
     """
 
-    _parameter_constraints = {
-        **ElasticNet._parameter_constraints,
-    }
+    _parameter_constraints = {**ElasticNet._parameter_constraints}
     _parameter_constraints.pop("l1_ratio")
 
     path = staticmethod(enet_path)
@@ -1451,9 +1449,9 @@ def _path_residuals(
     residues = X_test_coefs - y_test[:, :, np.newaxis]
     residues += intercepts
     if sample_weight is None:
-        this_mse = (residues**2).mean(axis=0)
+        this_mse = (residues ** 2).mean(axis=0)
     else:
-        this_mse = np.average(residues**2, weights=sw_test, axis=0)
+        this_mse = np.average(residues ** 2, weights=sw_test, axis=0)
 
     return this_mse.mean(axis=0)
 
@@ -1653,9 +1651,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
             # For the first path, we need to set l1_ratio
             path_params["l1_ratio"] = l1_ratios[0]
         else:
-            l1_ratios = [
-                1,
-            ]
+            l1_ratios = [1]
         path_params.pop("cv", None)
         path_params.pop("n_jobs", None)
 
@@ -1663,10 +1659,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         n_l1_ratio = len(l1_ratios)
 
         check_scalar_alpha = partial(
-            check_scalar,
-            target_type=Real,
-            min_val=0.0,
-            include_boundaries="left",
+            check_scalar, target_type=Real, min_val=0.0, include_boundaries="left"
         )
 
         if alphas is None:
@@ -1729,9 +1722,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
             for train, test in folds
         )
         mse_paths = Parallel(
-            n_jobs=self.n_jobs,
-            verbose=self.verbose,
-            prefer="threads",
+            n_jobs=self.n_jobs, verbose=self.verbose, prefer="threads"
         )(jobs)
         mse_paths = np.reshape(mse_paths, (n_l1_ratio, len(folds), -1))
         # The mean is computed over folds.
@@ -1790,7 +1781,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
             "_xfail_checks": {
                 "check_sample_weights_invariance": (
                     "zero sample_weight is not equivalent to removing samples"
-                ),
+                )
             }
         }
 
@@ -3114,9 +3105,7 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
     array([[153.7971...,  94.9015...]])
     """
 
-    _parameter_constraints = {
-        **LinearModelCV._parameter_constraints,
-    }
+    _parameter_constraints = {**LinearModelCV._parameter_constraints}
     _parameter_constraints.pop("precompute")
     _parameter_constraints.pop("positive")
 

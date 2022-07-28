@@ -325,17 +325,9 @@ def test_equivalence_components_pca_spca(global_random_seed):
     X = rng.randn(50, 4)
 
     n_components = 2
-    pca = PCA(
-        n_components=n_components,
-        svd_solver="randomized",
-        random_state=0,
-    ).fit(X)
+    pca = PCA(n_components=n_components, svd_solver="randomized", random_state=0).fit(X)
     spca = SparsePCA(
-        n_components=n_components,
-        method="lars",
-        ridge_alpha=0,
-        alpha=0,
-        random_state=0,
+        n_components=n_components, method="lars", ridge_alpha=0, alpha=0, random_state=0
     ).fit(X)
 
     assert_allclose(pca.components_, spca.components_)

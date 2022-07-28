@@ -37,7 +37,10 @@ else:
 try:
     from scipy.optimize._linesearch import line_search_wolfe2, line_search_wolfe1
 except ImportError:  # SciPy < 1.8
-    from scipy.optimize.linesearch import line_search_wolfe2, line_search_wolfe1  # type: ignore  # noqa
+    from scipy.optimize.linesearch import (
+        line_search_wolfe2,
+        line_search_wolfe1,
+    )  # type: ignore  # noqa
 
 
 def _object_dtype_isnan(X):

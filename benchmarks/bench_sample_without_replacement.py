@@ -16,7 +16,7 @@ from sklearn.utils.random import sample_without_replacement
 
 
 def compute_time(t_start, delta):
-    mu_second = 0.0 + 10**6  # number of microseconds in a second
+    mu_second = 0.0 + 10 ** 6  # number of microseconds in a second
 
     return delta.seconds + delta.microseconds / mu_second
 
@@ -190,13 +190,7 @@ if __name__ == "__main__":
     print("Script arguments")
     print("===========================")
     arguments = vars(opts)
-    print(
-        "%s \t | %s "
-        % (
-            "Arguments".ljust(16),
-            "Value".center(12),
-        )
-    )
+    print("%s \t | %s " % ("Arguments".ljust(16), "Value".center(12)))
     print(25 * "-" + ("|" + "-" * 14) * 1)
     for key, value in arguments.items():
         print("%s \t | %s " % (str(key).ljust(16), str(value).strip().center(12)))

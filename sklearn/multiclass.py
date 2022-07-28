@@ -60,11 +60,7 @@ from .utils.fixes import delayed
 
 from joblib import Parallel
 
-__all__ = [
-    "OneVsRestClassifier",
-    "OneVsOneClassifier",
-    "OutputCodeClassifier",
-]
+__all__ = ["OneVsRestClassifier", "OneVsOneClassifier", "OutputCodeClassifier"]
 
 
 def _fit_binary(estimator, X, y, classes=None):
@@ -725,11 +721,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
             )
 
         X, y = self._validate_data(
-            X,
-            y,
-            accept_sparse=["csr", "csc"],
-            force_all_finite=False,
-            reset=first_call,
+            X, y, accept_sparse=["csr", "csc"], force_all_finite=False, reset=first_call
         )
         check_classification_targets(y)
         combinations = itertools.combinations(range(self.n_classes_), 2)
@@ -794,10 +786,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         """
         check_is_fitted(self)
         X = self._validate_data(
-            X,
-            accept_sparse=True,
-            force_all_finite=False,
-            reset=False,
+            X, accept_sparse=True, force_all_finite=False, reset=False
         )
 
         indices = self.pairwise_indices_

@@ -465,10 +465,7 @@ class MinMaxScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
         first_pass = not hasattr(self, "n_samples_seen_")
         X = self._validate_data(
-            X,
-            reset=first_pass,
-            dtype=FLOAT_DTYPES,
-            force_all_finite="allow-nan",
+            X, reset=first_pass, dtype=FLOAT_DTYPES, force_all_finite="allow-nan"
         )
 
         data_min = np.nanmin(X, axis=0)
@@ -1515,10 +1512,7 @@ class RobustScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         # at fit, convert sparse matrices to csc for optimized computation of
         # the quantiles
         X = self._validate_data(
-            X,
-            accept_sparse="csc",
-            dtype=FLOAT_DTYPES,
-            force_all_finite="allow-nan",
+            X, accept_sparse="csc", dtype=FLOAT_DTYPES, force_all_finite="allow-nan"
         )
 
         q_min, q_max = self.quantile_range
@@ -2107,10 +2101,7 @@ class Binarizer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
            [0., 1., 0.]])
     """
 
-    _parameter_constraints = {
-        "threshold": [Real],
-        "copy": ["boolean"],
-    }
+    _parameter_constraints = {"threshold": [Real], "copy": ["boolean"]}
 
     def __init__(self, *, threshold=0.0, copy=True):
         self.threshold = threshold

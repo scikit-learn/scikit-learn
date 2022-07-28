@@ -325,10 +325,7 @@ def test_confusion_matrix_standard_format(pyplot):
 
 @pytest.mark.parametrize(
     "display_labels, expected_labels",
-    [
-        (None, ["0", "1"]),
-        (["cat", "dog"], ["cat", "dog"]),
-    ],
+    [(None, ["0", "1"]), (["cat", "dog"], ["cat", "dog"])],
 )
 def test_default_labels(pyplot, display_labels, expected_labels):
     cm = np.array([[10, 0], [12, 120]])

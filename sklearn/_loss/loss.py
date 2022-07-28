@@ -29,13 +29,7 @@ from ._loss import (
     CyHalfBinomialLoss,
     CyHalfMultinomialLoss,
 )
-from .link import (
-    Interval,
-    IdentityLink,
-    LogLink,
-    LogitLink,
-    MultinomialLogit,
-)
+from .link import Interval, IdentityLink, LogLink, LogitLink, MultinomialLogit
 from ..utils import check_scalar
 from ..utils._readonly_array_wrapper import ReadonlyArrayWrapper
 from ..utils.stats import _weighted_percentile
@@ -150,12 +144,7 @@ class BaseLoss:
         return self.interval_y_pred.includes(y)
 
     def loss(
-        self,
-        y_true,
-        raw_prediction,
-        sample_weight=None,
-        loss_out=None,
-        n_threads=1,
+        self, y_true, raw_prediction, sample_weight=None, loss_out=None, n_threads=1
     ):
         """Compute the pointwise loss value for each input.
 
@@ -264,12 +253,7 @@ class BaseLoss:
         )
 
     def gradient(
-        self,
-        y_true,
-        raw_prediction,
-        sample_weight=None,
-        gradient_out=None,
-        n_threads=1,
+        self, y_true, raw_prediction, sample_weight=None, gradient_out=None, n_threads=1
     ):
         """Compute gradient of loss w.r.t raw_prediction for each input.
 
@@ -616,8 +600,7 @@ class PinballLoss(BaseLoss):
             include_boundaries="neither",
         )
         super().__init__(
-            closs=CyPinballLoss(quantile=float(quantile)),
-            link=IdentityLink(),
+            closs=CyPinballLoss(quantile=float(quantile)), link=IdentityLink()
         )
         self.approx_hessian = True
         self.constant_hessian = sample_weight is None
@@ -731,10 +714,7 @@ class HalfTweedieLoss(BaseLoss):
     """
 
     def __init__(self, sample_weight=None, power=1.5):
-        super().__init__(
-            closs=CyHalfTweedieLoss(power=float(power)),
-            link=LogLink(),
-        )
+        super().__init__(closs=CyHalfTweedieLoss(power=float(power)), link=LogLink())
         if self.closs.power <= 0:
             self.interval_y_true = Interval(-np.inf, np.inf, False, False)
         elif self.closs.power < 2:
@@ -793,8 +773,7 @@ class HalfTweedieLossIdentity(BaseLoss):
 
     def __init__(self, sample_weight=None, power=1.5):
         super().__init__(
-            closs=CyHalfTweedieLossIdentity(power=float(power)),
-            link=IdentityLink(),
+            closs=CyHalfTweedieLossIdentity(power=float(power)), link=IdentityLink()
         )
         if self.closs.power <= 0:
             self.interval_y_true = Interval(-np.inf, np.inf, False, False)
@@ -837,11 +816,7 @@ class HalfBinomialLoss(BaseLoss):
     """
 
     def __init__(self, sample_weight=None):
-        super().__init__(
-            closs=CyHalfBinomialLoss(),
-            link=LogitLink(),
-            n_classes=2,
-        )
+        super().__init__(closs=CyHalfBinomialLoss(), link=LogitLink(), n_classes=2)
         self.interval_y_true = Interval(0, 1, True, True)
 
     def constant_to_optimal_zero(self, y_true, sample_weight=None):
@@ -912,9 +887,7 @@ class HalfMultinomialLoss(BaseLoss):
 
     def __init__(self, sample_weight=None, n_classes=3):
         super().__init__(
-            closs=CyHalfMultinomialLoss(),
-            link=MultinomialLogit(),
-            n_classes=n_classes,
+            closs=CyHalfMultinomialLoss(), link=MultinomialLogit(), n_classes=n_classes
         )
         self.interval_y_true = Interval(0, np.inf, True, False)
         self.interval_y_pred = Interval(0, 1, False, False)

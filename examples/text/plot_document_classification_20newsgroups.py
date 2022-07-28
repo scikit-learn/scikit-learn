@@ -40,12 +40,7 @@ from sklearn.datasets import fetch_20newsgroups
 from sklearn.feature_extraction.text import TfidfVectorizer
 from time import time
 
-categories = [
-    "alt.atheism",
-    "talk.religion.misc",
-    "comp.graphics",
-    "sci.space",
-]
+categories = ["alt.atheism", "talk.religion.misc", "comp.graphics", "sci.space"]
 
 
 def size_mb(docs):
@@ -272,14 +267,9 @@ for doc in data_train.data:
 #
 # Let us try to leverage this option to train a text classifier that does not
 # rely too much on this kind of metadata to make its decisions:
-(
-    X_train,
-    X_test,
-    y_train,
-    y_test,
-    feature_names,
-    target_names,
-) = load_dataset(remove=("headers", "footers", "quotes"))
+(X_train, X_test, y_train, y_test, feature_names, target_names) = load_dataset(
+    remove=("headers", "footers", "quotes")
+)
 
 clf = RidgeClassifier(tol=1e-2, solver="sparse_cg")
 clf.fit(X_train, y_train)

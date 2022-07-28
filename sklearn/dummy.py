@@ -529,11 +529,7 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
     _parameter_constraints = {
         "strategy": [StrOptions({"mean", "median", "quantile", "constant"})],
         "quantile": [Interval(Real, 0.0, 1.0, closed="both"), None],
-        "constant": [
-            Interval(Real, None, None, closed="neither"),
-            "array-like",
-            None,
-        ],
+        "constant": [Interval(Real, None, None, closed="neither"), "array-like", None],
     }
 
     def __init__(self, *, strategy="mean", constant=None, quantile=None):

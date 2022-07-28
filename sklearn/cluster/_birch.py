@@ -229,9 +229,7 @@ class _CFNode:
             # subcluster to accommodate the new child.
             else:
                 new_subcluster1, new_subcluster2 = _split_node(
-                    closest_subcluster.child_,
-                    threshold,
-                    branching_factor,
+                    closest_subcluster.child_, threshold, branching_factor
                 )
                 self.update_split_subclusters(
                     closest_subcluster, new_subcluster1, new_subcluster2
@@ -338,7 +336,7 @@ class _CFSubcluster:
         #   r^2 = sum_i ||x_i||^2 / n - ||c||^2
         sq_radius = new_ss / new_n - new_sq_norm
 
-        if sq_radius <= threshold**2:
+        if sq_radius <= threshold ** 2:
             (
                 self.n_samples_,
                 self.linear_sum_,

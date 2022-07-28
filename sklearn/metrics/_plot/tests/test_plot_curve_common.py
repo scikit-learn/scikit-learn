@@ -13,9 +13,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import plot_det_curve
 from sklearn.metrics import plot_roc_curve
 
-pytestmark = pytest.mark.filterwarnings(
-    "ignore:Function plot_roc_curve is deprecated",
-)
+pytestmark = pytest.mark.filterwarnings("ignore:Function plot_roc_curve is deprecated")
 
 
 @pytest.fixture(scope="module")
@@ -68,11 +66,7 @@ def test_plot_curve_error_non_binary(pyplot, data, plot_func):
 )
 @pytest.mark.parametrize("plot_func", [plot_det_curve, plot_roc_curve])
 def test_plot_curve_error_no_response(
-    pyplot,
-    data_binary,
-    response_method,
-    msg,
-    plot_func,
+    pyplot, data_binary, response_method, msg, plot_func
 ):
     X, y = data_binary
 

@@ -93,7 +93,7 @@ def test_regression_metrics(n_samples=50):
     n = n_samples
     assert_almost_equal(
         mean_tweedie_deviance(y_true, y_pred, power=-1),
-        5 / 12 * n * (n**2 + 2 * n + 1),
+        5 / 12 * n * (n ** 2 + 2 * n + 1),
     )
     assert_almost_equal(
         mean_tweedie_deviance(y_true, y_pred, power=1), (n + 1) * (1 - np.log(2))
@@ -335,10 +335,8 @@ def test__check_reg_targets():
 
 def test__check_reg_targets_exception():
     invalid_multioutput = "this_value_is_not_valid"
-    expected_message = (
-        "Allowed 'multioutput' string values are.+You provided multioutput={!r}".format(
-            invalid_multioutput
-        )
+    expected_message = "Allowed 'multioutput' string values are.+You provided multioutput={!r}".format(
+        invalid_multioutput
     )
     with pytest.raises(ValueError, match=expected_message):
         _check_reg_targets([1, 2, 3], [[1], [2], [3]], invalid_multioutput)
@@ -601,9 +599,7 @@ def test_dummy_quantile_parameter_tuning():
     all_quantiles = [0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95]
     for alpha in all_quantiles:
         neg_mean_pinball_loss = make_scorer(
-            mean_pinball_loss,
-            alpha=alpha,
-            greater_is_better=False,
+            mean_pinball_loss, alpha=alpha, greater_is_better=False
         )
         regressor = DummyRegressor(strategy="quantile", quantile=0.25)
         grid_search = GridSearchCV(

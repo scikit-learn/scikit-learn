@@ -1186,8 +1186,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             raise ValueError(
                 "This solver needs samples of at least 2 classes"
                 " in the data, but the data contains only one"
-                " class: %r"
-                % classes_[0]
+                " class: %r" % classes_[0]
             )
 
         if len(self.classes_) == 2:
@@ -1708,8 +1707,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             ):
                 raise ValueError(
                     "l1_ratios must be a list of numbers between "
-                    "0 and 1; got (l1_ratios=%r)"
-                    % self.l1_ratios
+                    "0 and 1; got (l1_ratios=%r)" % self.l1_ratios
                 )
             l1_ratios_ = self.l1_ratios
         else:
@@ -1763,8 +1761,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             raise ValueError(
                 "This solver needs samples of at least 2 classes"
                 " in the data, but the data contains only one"
-                " class: %r"
-                % classes[0]
+                " class: %r" % classes[0]
             )
 
         if n_classes == 2:
@@ -2031,6 +2028,6 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             "_xfail_checks": {
                 "check_sample_weights_invariance": (
                     "zero sample_weight is not equivalent to removing samples"
-                ),
+                )
             }
         }

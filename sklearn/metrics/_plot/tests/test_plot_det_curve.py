@@ -44,24 +44,13 @@ def test_plot_det_curve(
     lr = LogisticRegression()
     lr.fit(X, y)
 
-    viz = plot_det_curve(
-        lr,
-        X,
-        y,
-        alpha=0.8,
-        sample_weight=sample_weight,
-    )
+    viz = plot_det_curve(lr, X, y, alpha=0.8, sample_weight=sample_weight)
 
     y_pred = getattr(lr, response_method)(X)
     if y_pred.ndim == 2:
         y_pred = y_pred[:, 1]
 
-    fpr, fnr, _ = det_curve(
-        y,
-        y_pred,
-        sample_weight=sample_weight,
-        pos_label=pos_label,
-    )
+    fpr, fnr, _ = det_curve(y, y_pred, sample_weight=sample_weight, pos_label=pos_label)
 
     assert_allclose(viz.fpr, fpr)
     assert_allclose(viz.fnr, fnr)

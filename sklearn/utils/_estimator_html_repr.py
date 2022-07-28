@@ -415,11 +415,7 @@ def estimator_html_repr(estimator):
             '<div class="sk-container" hidden>'
         )
         _write_estimator_html(
-            out,
-            estimator,
-            estimator.__class__.__name__,
-            estimator_str,
-            first_call=True,
+            out, estimator, estimator.__class__.__name__, estimator_str, first_call=True
         )
         out.write("</div></div>")
 

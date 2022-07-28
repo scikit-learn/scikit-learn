@@ -122,9 +122,7 @@ def test_meanshift_all_orphans():
     ms = MeanShift(bandwidth=0.1, seeds=[[-9, -9], [-10, -10]])
     msg = "No point was within bandwidth=0.1"
     with pytest.raises(ValueError, match=msg):
-        ms.fit(
-            X,
-        )
+        ms.fit(X)
 
 
 def test_unfitted():

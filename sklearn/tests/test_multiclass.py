@@ -12,10 +12,7 @@ from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multiclass import OneVsOneClassifier
 from sklearn.multiclass import OutputCodeClassifier
 from sklearn.utils.multiclass import check_classification_targets, type_of_target
-from sklearn.utils import (
-    check_array,
-    shuffle,
-)
+from sklearn.utils import check_array, shuffle
 
 from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
@@ -732,8 +729,7 @@ def test_ecoc_delegate_sparse_base_estimator():
 
     # create an estimator that does not support sparse input
     base_estimator = CheckingClassifier(
-        check_X=check_array,
-        check_X_params={"ensure_2d": True, "accept_sparse": False},
+        check_X=check_array, check_X_params={"ensure_2d": True, "accept_sparse": False}
     )
     ecoc = OutputCodeClassifier(base_estimator, random_state=0)
 

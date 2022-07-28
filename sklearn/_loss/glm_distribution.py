@@ -277,10 +277,8 @@ class TweedieDistribution(ExponentialDispersionModel):
         p = self.power
 
         if check_input:
-            message = (
-                "Mean Tweedie deviance error with power={} can only be used on ".format(
-                    p
-                )
+            message = "Mean Tweedie deviance error with power={} can only be used on ".format(
+                p
             )
             if p < 0:
                 # 'Extreme stable', y any real number, y_pred > 0
