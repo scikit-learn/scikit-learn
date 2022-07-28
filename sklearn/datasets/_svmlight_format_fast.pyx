@@ -170,9 +170,10 @@ def get_sparse_row_string(
         Py_ssize_t row_start = X_indptr[row]
         Py_ssize_t row_end = X_indptr[row+1]
 
-    reprs = []
-    for i in range(row_start, row_end):
-        reprs.append(value_pattern % (X_indices[i] + one_based, X_data[i]))
+    reprs = [
+        value_pattern % (X_indices[i] + one_based, X_data[i])
+        for i in range(row_start, row_end)
+    ]
 
     return " ".join(reprs)
 
