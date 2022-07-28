@@ -1,0 +1,23 @@
+How to reach out
+===============
+
+This Discord server is intended for communication between the scikit-learn maintainers and community contributors during Office Hours and Sprints. If you have questions, this is our general workflow:
+
+- **GitHub Discussions**
+(usage questions such as methodological):
+https://github.com/scikit-learn/scikit-learn/discussions
+- **StackOverflow**
+(programming questions):
+with tag ‘scikit-learn’
+- **GitHub Issue Tracker**
+(bug reports):
+https://github.com/scikit-learn/scikit-learn/issues
+Please do not ask usage questions on the issue tracker.
+- **Discord server**
+(current pull requests):
+Please post any specific PR-related questions on your PR, and you can share a link to your PR on this server during office hours.
+Reference on asking questions:
+http://matthewrocklin.com/blog/2019/02/28/slack-github
+
+**Calendar** for Office Hours:
+https://blog.scikit-learn.org/calendar/

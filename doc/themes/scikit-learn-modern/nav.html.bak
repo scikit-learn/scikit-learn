@@ -28,7 +28,6 @@
   ('Related packages', pathto('related_projects'), ''),
   ('Roadmap', pathto('roadmap'), ''),
   ('About us', pathto('about'), ''),
-  ('How to reach out', pathto('reach_out'), ''),
   ('GitHub', 'https://github.com/scikit-learn/scikit-learn', ''),
   ('Other Versions and Download', 'https://scikit-learn.org/dev/versions.html', '')]
 -%}
