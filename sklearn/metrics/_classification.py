@@ -28,27 +28,27 @@ import numpy as np
 from scipy.sparse import coo_matrix
 from scipy.sparse import csr_matrix
 
-# from _base import _check_pos_label_consistency
-# from sklearn.preprocessing import LabelEncoder
-# from sklearn.utils import assert_all_finite,check_array,check_consistent_length,column_or_1d
-# from sklearn.utils.multiclass import unique_labels,type_of_target
-# from sklearn.utils.validation import _num_samples
-# from sklearn.utils.sparsefuncs import count_nonzero
-# from sklearn.exceptions import  UndefinedMetricWarning
+from _base import _check_pos_label_consistency
+from sklearn.preprocessing import LabelEncoder
+from sklearn.utils import assert_all_finite,check_array,check_consistent_length,column_or_1d
+from sklearn.utils.multiclass import unique_labels,type_of_target
+from sklearn.utils.validation import _num_samples
+from sklearn.utils.sparsefuncs import count_nonzero
+from sklearn.exceptions import  UndefinedMetricWarning
 
-from ..preprocessing import LabelBinarizer
-from ..preprocessing import LabelEncoder
-from ..utils import assert_all_finite
-from ..utils import check_array
-from ..utils import check_consistent_length
-from ..utils import column_or_1d
-from ..utils.multiclass import unique_labels
-from ..utils.multiclass import type_of_target
-from ..utils.validation import _num_samples
-from ..utils.sparsefuncs import count_nonzero
-from ..exceptions import UndefinedMetricWarning
-
-from ._base import _check_pos_label_consistency
+# from ..preprocessing import LabelBinarizer
+# from ..preprocessing import LabelEncoder
+# from ..utils import assert_all_finite
+# from ..utils import check_array
+# from ..utils import check_consistent_length
+# from ..utils import column_or_1d
+# from ..utils.multiclass import unique_labels
+# from ..utils.multiclass import type_of_target
+# from ..utils.validation import _num_samples
+# from ..utils.sparsefuncs import count_nonzero
+# from ..exceptions import UndefinedMetricWarning
+#
+# from ._base import _check_pos_label_consistency
 
 from scipy import stats as st
 from enum import Enum
@@ -935,43 +935,64 @@ class AVERAG_TYPE(Enum):
     F1_GEN = 3
 
 def generalized_matthew(y_true, y_pred,ave_type=AVERAG_TYPE.MATTHEW_GEN.value,sample_weight=None):
-    y_type, y_true, y_pred = _check_targets(y_true, y_pred)
-    check_consistent_length(y_true, y_pred, sample_weight)
-    if y_type not in {"binary", "multiclass"}:
-        raise ValueError("%s is not supported" % y_type)
+     """"Examples
+       y_true = [0] * 13 + [1] * 21 + [2] * 20
+       y_pred = [0] * 5 + [1] * 6 + [2] * 2 + [0] * 2 + [1] * 8 + [2] * 11 + [0] * 8 + [1] * 2 + [2] * 10
+       print("gen   F1 ",
+                   generalized_matthew(y_true, y_pred,ave_type=3))
+       print("gen     ",
+           generalized_matthew(y_true, y_pred))
 
-    lb = LabelEncoder()
-    lb.fit(np.hstack([y_true, y_pred]))
-    y_true = lb.transform(y_true)
-    y_pred = lb.transform(y_pred)
+       y_true= [0]*5+[1]*8+[2]*2+[3]*13
+       print("gen   ",
+          generalized_matthew(y_true, y_true ))
+       print("gen f1 ",
+          generalized_matthew(y_true, y_true, ave_type=3))
 
-    C = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
-    dimension_size = C.shape[0]
+       Results
+       gen  F1  0.41308089500860584
+       gen     0.03132735561190867
+       gen   1.0
+       gen  F1  1.0
+     """
 
-     # A utitliy function which normalizes the confusion and perfroms the relevant average
-    def norm_confusion_mat(conf_mat, average, dimension_size):
-        m1 = C / C.sum( axis=1)
-        m2 = C / C.sum( axis=0)
 
-        return [[average([m1[i, j], m2[j][i]])
-                 for i in range(dimension_size)] for j in range(dimension_size)]
+     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
+     check_consistent_length(y_true, y_pred, sample_weight)
+     if y_type not in {"binary", "multiclass"}:
+         raise ValueError("%s is not supported" % y_type)
 
-    # A utitliy function that perfroms the generaized score of F1 . it calculates the hamonic average
-    # over the trace of the normalized confusion matrix
-    def gen_f1_scalar_op(h_conf_mat):
-        l_mat = len(h_conf_mat)
-        return st.mstats.hmean([h_conf_mat[i][i] for i in range(l_mat)])
+     lb = LabelEncoder()
+     lb.fit(np.hstack([y_true, y_pred]))
+     y_true = lb.transform(y_true)
+     y_pred = lb.transform(y_pred)
 
-    dimension_size =3
-    # c=confusion_matrix(y_true=y_true,y_pred=y_pred ,labels=labels)
-    av_func =st.mstats.gmean
-    scalar_op =np.linalg.det
-    if ave_type ==AVERAG_TYPE.F1_GEN.value:
-        av_func = st.mstats.hmean
-        scalar_op =gen_f1_scalar_op
+     C = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
+     dimension_size = C.shape[0]
 
-    G_mat= norm_confusion_mat(C, av_func, dimension_size)
-    return scalar_op(G_mat)
+      # A utitliy function which normalizes the confusion and perfroms the relevant average
+     def norm_confusion_mat(conf_mat, average, dimension_size):
+         m1 = C / C.sum( axis=1)
+         m2 = C / C.sum( axis=0)
+
+         return [[average([m1[i, j], m2[j][i]])
+                  for i in range(dimension_size)] for j in range(dimension_size)]
+
+     # A utitliy function that perfroms the generaized score of F1 . it calculates the hamonic average
+     # over the trace of the normalized confusion matrix
+     def gen_f1_scalar_op(h_conf_mat):
+         l_mat = len(h_conf_mat)
+         return st.mstats.hmean([h_conf_mat[i][i] for i in range(l_mat)])
+
+     # c=confusion_matrix(y_true=y_true,y_pred=y_pred ,labels=labels)
+     av_func =st.mstats.gmean
+     scalar_op =np.linalg.det
+     if ave_type ==AVERAG_TYPE.F1_GEN.value:
+         av_func = st.mstats.hmean
+         scalar_op =gen_f1_scalar_op
+
+     G_mat= norm_confusion_mat(C, av_func, dimension_size)
+     return scalar_op(G_mat)
 
 # def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
 #     """Compute the Matthews correlation coefficient (MCC).
