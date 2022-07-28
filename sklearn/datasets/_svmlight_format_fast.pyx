@@ -150,7 +150,12 @@ def get_dense_row_string(
         x_inds[x_nz_used] = k
         x_vals[x_nz_used] = <double_or_longlong> val
         x_nz_used += 1
-    return " ".join(value_pattern % (j+one_based, val) for i, (j, val) in enumerate(zip(x_inds, x_vals)) if i < x_nz_used)
+
+    reprs = []
+    for i in range(x_nz_used):
+        reprs.append(value_pattern % (x_inds[i] + one_based, x_vals[i]))
+
+    return " ".join(reprs)
 
 def get_sparse_row_string(
     int_or_float[:] X_data,
@@ -164,7 +169,11 @@ def get_sparse_row_string(
         Py_ssize_t row_start = X_indptr[row]
         Py_ssize_t row_end = X_indptr[row+1]
 
-    return " ".join(value_pattern % (X_indices[i]+one_based, X_data[i]) for i in range(row_start, row_end))
+    reprs = []
+    for i in range(row_start, row_end):
+        reprs.append(value_pattern % (X_indices[i] + one_based, X_data[i]))
+
+    return " ".join(reprs)
 
 def _dump_svmlight_file(
     X,
