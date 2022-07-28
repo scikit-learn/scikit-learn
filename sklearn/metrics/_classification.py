@@ -3122,19 +3122,18 @@ def f1_gain_score(
     zero_division="warn",
     class_distribution=None,
 ):
-    """Compute the F1 score, also known as balanced F-score or F-measure.
+    """Compute the F1 Gain score, also known as balanced F-Gain score or
+    F-Gain measure.
 
-    The F1 score can be interpreted as a harmonic mean of the precision and
-    recall, where an F1 score reaches its best value at 1 and worst score at 0.
-    The relative contribution of precision and recall to the F1 score are
-    equal. The formula for the F1 score is::
+    The F1 Gain score can be interpreted as a arithmetic mean of the precision
+    gain and recall gain, where an F1 Gain score reaches its best value at 1 and
+    worst score at -Inf. The relative contribution of precision and recall to
+    the F1 score are equal. The formula for the F1 score is::
 
-        F1 = 2 * (precision * recall) / (precision + recall)
+        F1_Gain = (precision_gain + recall_gain) / 2
 
-    In the multi-class and multi-label case, this is the average of
-    the F1 score of each class with weighting depending on the ``average``
-    parameter.
-
+    In the multi-class and multi-label case, this is the average of the F1 Gain
+    score of each class with weighting depending on the ``average`` parameter.
     Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
 
     Parameters
@@ -3202,15 +3201,15 @@ def f1_gain_score(
 
     Returns
     -------
-    f1_score : float or array of float, shape = [n_unique_labels]
-        F1 score of the positive class in binary classification or weighted
-        average of the F1 scores of each class for the multiclass task.
+    f1_gain_score : float or array of float, shape = [n_unique_labels]
+        F1 Gain score of the positive class in binary classification or weighted
+        average of the F1 Gain scores of each class for the multiclass task.
 
     See Also
     --------
-    fbeta_score : Compute the F-beta score.
-    precision_recall_fscore_support : Compute the precision, recall, F-score,
-        and support.
+    fbeta_gain_score : Compute the F-Gain beta score.
+    precision_recall_fgain_score_support : Compute the precision gain, recall
+        gain, F-Gain score, and support.
     jaccard_score : Compute the Jaccard similarity coefficient score.
     multilabel_confusion_matrix : Compute a confusion matrix for each class or
         sample.
@@ -3225,7 +3224,10 @@ def f1_gain_score(
 
     References
     ----------
-    .. [1] `Wikipedia entry for the F1-score
+    .. [1] `Precision-Recall-Gain Curves: PR Analysis Done Right (2015) by
+            Peter A. Flach and Meelis Kull
+           <https://papers.nips.cc/paper/2015/file/33e8075e9970de0cfea955afd4644bb2-Paper.pdf>`_.
+    .. [2] `Wikipedia entry for the F1-score
            <https://en.wikipedia.org/wiki/F1_score>`_.
 
     Examples
@@ -3276,12 +3278,13 @@ def fbeta_gain_score(
     zero_division="warn",
     class_distribution=None,
 ):
-    """Compute the F-beta score.
+    """Compute the F-Gain beta score.
 
-    The F-beta score is the weighted harmonic mean of precision and recall,
-    reaching its optimal value at 1 and its worst value at 0.
+    The F-Gain beta score is the weighted arthimetic mean of precision gain
+    and recall gain, reaching its optimal value at 1 and its worst value at
+    -Inf.
 
-    The `beta` parameter determines the weight of recall in the combined
+    The `beta` parameter determines the weight of recall gain in the combined
     score. ``beta < 1`` lends more weight to precision, while ``beta > 1``
     favors recall (``beta -> 0`` considers only precision, ``beta -> +inf``
     only recall).
@@ -3356,15 +3359,15 @@ def fbeta_gain_score(
 
     Returns
     -------
-    fbeta_score : float (if average is not None) or array of float, shape =\
+    fgain_beta_score : float (if average is not None) or array of float, shape =\
         [n_unique_labels]
-        F-beta score of the positive class in binary classification or weighted
-        average of the F-beta score of each class for the multiclass task.
+        F-Gain beta score of the positive class in binary classification or weighted
+        average of the F-Gain beta score of each class for the multiclass task.
 
     See Also
     --------
-    precision_recall_fscore_support : Compute the precision, recall, F-score,
-        and support.
+    precision_recall_fgain_score_support : Compute the precision gain, recall
+        gain, F-Gain score, and support.
     multilabel_confusion_matrix : Compute a confusion matrix for each class or
         sample.
 
@@ -3377,10 +3380,13 @@ def fbeta_gain_score(
 
     References
     ----------
-    .. [1] R. Baeza-Yates and B. Ribeiro-Neto (2011).
+    .. [1] `Precision-Recall-Gain Curves: PR Analysis Done Right (2015) by
+            Peter A. Flach and Meelis Kull
+           <https://papers.nips.cc/paper/2015/file/33e8075e9970de0cfea955afd4644bb2-Paper.pdf>`_.
+    .. [2] R. Baeza-Yates and B. Ribeiro-Neto (2011).
            Modern Information Retrieval. Addison Wesley, pp. 327-328.
 
-    .. [2] `Wikipedia entry for the F1-score
+    .. [3] `Wikipedia entry for the F1-score
            <https://en.wikipedia.org/wiki/F1_score>`_.
 
     Examples
@@ -3426,29 +3432,41 @@ def precision_recall_fgain_score_support(
     sample_weight=None,
     zero_division="warn",
 ):
-    """Compute precision, recall, F-measure and support for each class.
+    """Compute precision gain, recall gain, F-Gain measure and support for each
+    class.
 
-    The precision is the ratio ``tp / (tp + fp)`` where ``tp`` is the number of
-    true positives and ``fp`` the number of false positives. The precision is
-    intuitively the ability of the classifier not to label a negative sample as
-    positive.
+    All three measures are derrived by applying the following transform to their
+    respective vanilla metric values.
 
-    The recall is the ratio ``tp / (tp + fn)`` where ``tp`` is the number of
-    true positives and ``fn`` the number of false negatives. The recall is
-    intuitively the ability of the classifier to find all the positive samples.
+        f(x) = (x - pi) / ((1 - pi) * x)
 
-    The F-beta score can be interpreted as a weighted harmonic mean of
-    the precision and recall, where an F-beta score reaches its best
-    value at 1 and worst score at 0.
+            pi = proportion of positives
 
-    The F-beta score weights recall more than precision by a factor of
-    ``beta``. ``beta == 1.0`` means recall and precision are equally important.
+    The vanilla metrics prior to transformation are defined as follows:
+
+        The precision is the ratio ``tp / (tp + fp)`` where ``tp`` is the number
+        of true positives and ``fp`` the number of false positives. The
+        precision is intuitively the ability of the classifier not to label a
+        negative sample as positive.
+
+        The recall is the ratio ``tp / (tp + fn)`` where ``tp`` is the number of
+        true positives and ``fn`` the number of false negatives. The recall is
+        intuitively the ability of the classifier to find all the positive
+        samples.
+
+        The F-beta score can be interpreted as a weighted harmonic mean of the
+        precision and recall, where an F-beta score reaches its best value at 1
+        and worst score at 0.
+
+        The F-beta score weights recall more than precision by a factor of
+        ``beta``. ``beta == 1.0`` means recall and precision are equally
+        important.
 
     The support is the number of occurrences of each class in ``y_true``.
 
-    If ``pos_label is None`` and in binary classification, this function
-    returns the average precision, recall and F-measure if ``average``
-    is one of ``'micro'``, ``'macro'``, ``'weighted'`` or ``'samples'``.
+    If ``pos_label is None`` and in binary classification, this function returns
+    the average precision gain, recall gain and F-gain measure if ``average`` is
+    one of ``'micro'``, ``'macro'``, ``'weighted'`` or ``'samples'``.
 
     Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
 
@@ -3523,17 +3541,17 @@ def precision_recall_fgain_score_support(
 
     Returns
     -------
-    precision : float (if average is not None) or array of float, shape =\
+    precision_gain : float (if average is not None) or array of float, shape =\
         [n_unique_labels]
-        Precision score.
+        Precision Gain score.
 
-    recall : float (if average is not None) or array of float, shape =\
+    recall_gain : float (if average is not None) or array of float, shape =\
         [n_unique_labels]
-        Recall score.
+        Recall Gain score.
 
-    fbeta_score : float (if average is not None) or array of float, shape =\
+    f_gain_beta_score : float (if average is not None) or array of float, shape =\
         [n_unique_labels]
-        F-beta score.
+        F-beta Gain score.
 
     support : None (if average is not None) or array of int, shape =\
         [n_unique_labels]
@@ -3549,14 +3567,17 @@ def precision_recall_fgain_score_support(
 
     References
     ----------
-    .. [1] `Wikipedia entry for the Precision and recall
+    .. [1] `Precision-Recall-Gain Curves: PR Analysis Done Right (2015) by Peter
+            A. Flach and Meelis Kull
+           <https://papers.nips.cc/paper/2015/file/33e8075e9970de0cfea955afd4644bb2-Paper.pdf>`_.
+    .. [2] `Wikipedia entry for the Precision and recall
            <https://en.wikipedia.org/wiki/Precision_and_recall>`_.
 
-    .. [2] `Wikipedia entry for the F1-score
+    .. [3] `Wikipedia entry for the F1-score
            <https://en.wikipedia.org/wiki/F1_score>`_.
 
-    .. [3] `Discriminative Methods for Multi-labeled Classification Advances
-           in Knowledge Discovery and Data Mining (2004), pp. 22-30 by Shantanu
+    .. [4] `Discriminative Methods for Multi-labeled Classification Advances in
+           Knowledge Discovery and Data Mining (2004), pp. 22-30 by Shantanu
            Godbole, Sunita Sarawagi
            <http://www.godbole.net/shantanu/pubs/multilabelsvm-pakdd04.pdf>`_.
 
@@ -3612,14 +3633,20 @@ def precision_gain_score(
     zero_division="warn",
     class_distribution=None,
 ):
-    """Compute the precision.
+    """Compute the precision Gain.
+
+    The metric is derrived by applying the following transform to precision:
+
+        f(x) = (x - pi) / ((1 - pi) * x)
+
+            pi = proportion of positives
 
     The precision is the ratio ``tp / (tp + fp)`` where ``tp`` is the number of
     true positives and ``fp`` the number of false positives. The precision is
     intuitively the ability of the classifier not to label as positive a sample
     that is negative.
 
-    The best value is 1 and the worst value is 0.
+    The best value is 1 and the worst value is -Inf.
 
     Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
 
@@ -3687,16 +3714,16 @@ def precision_gain_score(
 
     Returns
     -------
-    precision : float (if average is not None) or array of float of shape \
+    precision_gain : float (if average is not None) or array of float of shape \
                 (n_unique_labels,)
         Precision of the positive class in binary classification or weighted
         average of the precision of each class for the multiclass task.
 
     See Also
     --------
-    precision_recall_fscore_support : Compute precision, recall, F-measure and
+    precision_recall_fgain_score_support : Compute precision, recall, F-measure and
         support for each class.
-    recall_score :  Compute the ratio ``tp / (tp + fn)`` where ``tp`` is the
+    recall_gain_score :  Compute the ratio ``tp / (tp + fn)`` where ``tp`` is the
         number of true positives and ``fn`` the number of false negatives.
     PrecisionRecallDisplay.from_estimator : Plot precision-recall curve given
         an estimator and some data.
@@ -3710,6 +3737,12 @@ def precision_gain_score(
     When ``true positive + false positive == 0``, precision returns 0 and
     raises ``UndefinedMetricWarning``. This behavior can be
     modified with ``zero_division``.
+
+    References
+    ----------
+    .. [1] `Precision-Recall-Gain Curves: PR Analysis Done Right (2015) by Peter
+            A. Flach and Meelis Kull
+           <https://papers.nips.cc/paper/2015/file/33e8075e9970de0cfea955afd4644bb2-Paper.pdf>`_.
 
     Examples
     --------
@@ -3760,13 +3793,19 @@ def recall_gain_score(
     zero_division="warn",
     class_distribution=None,
 ):
-    """Compute the recall.
+    """Compute the recall Gain.
+
+    The metric is derrived by applying the following transform to precision:
+
+        f(x) = (x - pi) / ((1 - pi) * x)
+
+            pi = proportion of positives
 
     The recall is the ratio ``tp / (tp + fn)`` where ``tp`` is the number of
     true positives and ``fn`` the number of false negatives. The recall is
     intuitively the ability of the classifier to find all the positive samples.
 
-    The best value is 1 and the worst value is 0.
+    The best value is 1 and the worst value is -Inf.
 
     Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
 
@@ -3842,9 +3881,9 @@ def recall_gain_score(
 
     See Also
     --------
-    precision_recall_fscore_support : Compute precision, recall, F-measure and
+    precision_recall_fgain_score_support : Compute precision, recall, F-measure and
         support for each class.
-    precision_score : Compute the ratio ``tp / (tp + fp)`` where ``tp`` is the
+    precision_gain_score : Compute the ratio ``tp / (tp + fp)`` where ``tp`` is the
         number of true positives and ``fp`` the number of false positives.
     balanced_accuracy_score : Compute balanced accuracy to deal with imbalanced
         datasets.
@@ -3860,6 +3899,12 @@ def recall_gain_score(
     When ``true positive + false negative == 0``, recall returns 0 and raises
     ``UndefinedMetricWarning``. This behavior can be modified with
     ``zero_division``.
+
+    References
+    ----------
+    .. [1] `Precision-Recall-Gain Curves: PR Analysis Done Right (2015) by Peter
+            A. Flach and Meelis Kull
+           <https://papers.nips.cc/paper/2015/file/33e8075e9970de0cfea955afd4644bb2-Paper.pdf>`_.
 
     Examples
     --------
@@ -3900,5 +3945,26 @@ def recall_gain_score(
 
 
 def prg_gain_transform(x, *, pi):
-    """Transfrom from PG space into PRG space. pi = proportion positives"""
+    """Transfrom from Precision Recall space into Precision Recall Gain space.
+
+    Parameters
+    ----------
+    x : scaler or 1d array-like
+        The metric, either precision, recall or F-score to be transformed into
+        PRG space.
+    pi : scaler
+        The proportion of datapoints belonging to the positive class in the
+        dataset.
+
+    Returns
+    -------
+    x' : scaler or 1d array-like
+        The transformed metric in PRG space.
+
+    References
+    ----------
+    .. [1] `Precision-Recall-Gain Curves: PR Analysis Done Right (2015) by Peter
+            A. Flach and Meelis Kull
+           <https://papers.nips.cc/paper/2015/file/33e8075e9970de0cfea955afd4644bb2-Paper.pdf>`_.
+    """
     return (x - pi) / ((1 - pi) * x)
