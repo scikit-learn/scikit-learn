@@ -723,6 +723,8 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
     verbose : bool, default=False
         If True, chain progress is output as each model is completed.
 
+        .. versionadded:: 1.2
+
     Attributes
     ----------
     classes_ : list
@@ -926,6 +928,8 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
 
     verbose : bool, default=False
         If True, chain progress is output as each model is completed.
+
+        .. versionadded:: 1.2
 
     Attributes
     ----------

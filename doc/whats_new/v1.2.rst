@@ -223,7 +223,7 @@ Changelog
 :mod:`sklearn.multioutput`
 ..........................
 
-- |API| Added boolean `verbose` flag to classes:
+- |Feature| Added boolean `verbose` flag to classes:
   :class:`multioutput.ClassifierChain` and :class:`multioutput.RegressorChain`.
   :pr:`23977` by :user:`Eric Fiegel <efiegel>`,
   :user:`Chiara Marmo <cmarmo>`,
