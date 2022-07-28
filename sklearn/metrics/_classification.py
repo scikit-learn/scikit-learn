@@ -3162,7 +3162,7 @@ def f1_gain_score(
         setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
         scores for that label only.
 
-    average : {'micro', 'macro', 'samples', 'weighted', 'binary'} or None, \
+    average : {'macro', 'weighted', 'binary'} or None, \
             default='binary'
         This parameter is required for multiclass/multilabel targets.
         If ``None``, the scores for each class are returned. Otherwise, this
@@ -3171,9 +3171,6 @@ def f1_gain_score(
         ``'binary'``:
             Only report results for the class specified by ``pos_label``.
             This is applicable only if targets (``y_{true,pred}``) are binary.
-        ``'micro'``:
-            Calculate metrics globally by counting the total true positives,
-            false negatives and false positives.
         ``'macro'``:
             Calculate metrics for each label, and find their unweighted
             mean.  This does not take label imbalance into account.
@@ -3182,10 +3179,6 @@ def f1_gain_score(
             by support (the number of true instances for each label). This
             alters 'macro' to account for label imbalance; it can result in an
             F-score that is not between precision and recall.
-        ``'samples'``:
-            Calculate metrics for each instance, and find their average (only
-            meaningful for multilabel classification where this differs from
-            :func:`accuracy_score`).
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
@@ -3232,26 +3225,24 @@ def f1_gain_score(
 
     Examples
     --------
-    >>> from sklearn.metrics import f1_score
-    >>> y_true = [0, 1, 2, 0, 1, 2]
-    >>> y_pred = [0, 2, 1, 0, 0, 1]
-    >>> f1_score(y_true, y_pred, average='macro')
-    0.26...
-    >>> f1_score(y_true, y_pred, average='micro')
-    0.33...
-    >>> f1_score(y_true, y_pred, average='weighted')
-    0.26...
-    >>> f1_score(y_true, y_pred, average=None)
-    array([0.8, 0. , 0. ])
+    >>> from sklearn.metrics import f1_gain_score
+    >>> y_true = [0, 1, 2, 0, 1, 2, 2]
+    >>> y_pred = [0, 2, 1, 0, 1, 1, 2]
+    >>> f1_gain_score(y_true, y_pred, average='macro')
+    0.42...
+    >>> f1_gain_score(y_true, y_pred, average='weighted')
+    0.34...
+    >>> f1_gain_score(y_true, y_pred, average=None)
+    array([1.0, 0.4 , -0.125])
     >>> y_true = [0, 0, 0, 0, 0, 0]
     >>> y_pred = [0, 0, 0, 0, 0, 0]
-    >>> f1_score(y_true, y_pred, zero_division=1)
-    1.0...
+    >>> f1_gain_score(y_true, y_pred, zero_division=1)
+    1.0
     >>> # multilabel classification
     >>> y_true = [[0, 0, 0], [1, 1, 1], [0, 1, 1]]
     >>> y_pred = [[0, 0, 0], [1, 1, 1], [1, 1, 0]]
-    >>> f1_score(y_true, y_pred, average=None)
-    array([0.66666667, 1.        , 0.66666667])
+    >>> f1_gain_score(y_true, y_pred, average=None)
+    array([0.75, 1. , 0.])
     """
     return fbeta_gain_score(
         y_true,
@@ -3320,7 +3311,7 @@ def fbeta_gain_score(
         setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
         scores for that label only.
 
-    average : {'micro', 'macro', 'samples', 'weighted', 'binary'} or None, \
+    average : {'macro', 'weighted', 'binary'} or None, \
             default='binary'
         This parameter is required for multiclass/multilabel targets.
         If ``None``, the scores for each class are returned. Otherwise, this
@@ -3329,9 +3320,6 @@ def fbeta_gain_score(
         ``'binary'``:
             Only report results for the class specified by ``pos_label``.
             This is applicable only if targets (``y_{true,pred}``) are binary.
-        ``'micro'``:
-            Calculate metrics globally by counting the total true positives,
-            false negatives and false positives.
         ``'macro'``:
             Calculate metrics for each label, and find their unweighted
             mean.  This does not take label imbalance into account.
@@ -3340,10 +3328,6 @@ def fbeta_gain_score(
             by support (the number of true instances for each label). This
             alters 'macro' to account for label imbalance; it can result in an
             F-score that is not between precision and recall.
-        ``'samples'``:
-            Calculate metrics for each instance, and find their average (only
-            meaningful for multilabel classification where this differs from
-            :func:`accuracy_score`).
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
@@ -3391,17 +3375,15 @@ def fbeta_gain_score(
 
     Examples
     --------
-    >>> from sklearn.metrics import fbeta_score
-    >>> y_true = [0, 1, 2, 0, 1, 2]
-    >>> y_pred = [0, 2, 1, 0, 0, 1]
-    >>> fbeta_score(y_true, y_pred, average='macro', beta=0.5)
-    0.23...
-    >>> fbeta_score(y_true, y_pred, average='micro', beta=0.5)
-    0.33...
-    >>> fbeta_score(y_true, y_pred, average='weighted', beta=0.5)
-    0.23...
-    >>> fbeta_score(y_true, y_pred, average=None, beta=0.5)
-    array([0.71..., 0.        , 0.        ])
+    >>> from sklearn.metrics import fbeta_gain_score
+    >>> y_true = [0, 1, 2, 0, 1, 2, 2]
+    >>> y_pred = [0, 2, 1, 0, 1, 1, 2]
+    >>> fbeta_gain_score(y_true, y_pred, average='macro', beta=0.5)
+    0.45...
+    >>> fbeta_gain_score(y_true, y_pred, average='weighted', beta=0.5)
+    0.40...
+    >>> fbeta_gain_score(y_true, y_pred, average=None, beta=0.5)
+    array([1., 0.28 , 0.1])
     """
 
     _, _, f, _ = precision_recall_fgain_score_support(
@@ -3496,7 +3478,7 @@ def precision_recall_fgain_score_support(
         setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
         scores for that label only.
 
-    average : {'binary', 'micro', 'macro', 'samples', 'weighted'}, \
+    average : {'binary', 'macro', 'weighted'}, \
             default=None
         If ``None``, the scores for each class are returned. Otherwise, this
         determines the type of averaging performed on the data:
@@ -3504,9 +3486,6 @@ def precision_recall_fgain_score_support(
         ``'binary'``:
             Only report results for the class specified by ``pos_label``.
             This is applicable only if targets (``y_{true,pred}``) are binary.
-        ``'micro'``:
-            Calculate metrics globally by counting the total true positives,
-            false negatives and false positives.
         ``'macro'``:
             Calculate metrics for each label, and find their unweighted
             mean.  This does not take label imbalance into account.
@@ -3515,10 +3494,6 @@ def precision_recall_fgain_score_support(
             by support (the number of true instances for each label). This
             alters 'macro' to account for label imbalance; it can result in an
             F-score that is not between precision and recall.
-        ``'samples'``:
-            Calculate metrics for each instance, and find their average (only
-            meaningful for multilabel classification where this differs from
-            :func:`accuracy_score`).
 
     warn_for : tuple or set, for internal use
         This determines which warnings will be made in the case that this
@@ -3584,26 +3559,27 @@ def precision_recall_fgain_score_support(
     Examples
     --------
     >>> import numpy as np
-    >>> from sklearn.metrics import precision_recall_fscore_support
-    >>> y_true = np.array(['cat', 'dog', 'pig', 'cat', 'dog', 'pig'])
-    >>> y_pred = np.array(['cat', 'pig', 'dog', 'cat', 'cat', 'dog'])
-    >>> precision_recall_fscore_support(y_true, y_pred, average='macro')
-    (0.22..., 0.33..., 0.26..., None)
-    >>> precision_recall_fscore_support(y_true, y_pred, average='micro')
-    (0.33..., 0.33..., 0.33..., None)
-    >>> precision_recall_fscore_support(y_true, y_pred, average='weighted')
-    (0.22..., 0.33..., 0.26..., None)
+    >>> from sklearn.metrics import precision_recall_fgain_score_support
+    >>> y_true = np.array(['cat', 'dog', 'pig', 'dog', 'cat', 'pig', 'pig'])
+    >>> y_pred = np.array(['cat', 'pig', 'dog', 'dog', 'cat', 'dog', 'pig'])
+    >>> precision_recall_fgain_score_support(y_true, y_pred, average='macro')
+    (0.48..., 0.36..., 0.42..., None)
+    >>> precision_recall_fgain_score_support(y_true, y_pred, average='weighted')
+    (0.45..., 0.24..., 0.34..., None)
 
     It is possible to compute per-label precisions, recalls, F1-scores and
     supports instead of averaging:
 
-    >>> precision_recall_fscore_support(y_true, y_pred, average=None,
+    >>> precision_recall_fgain_score_support(y_true, y_pred, average=None,
     ... labels=['pig', 'dog', 'cat'])
-    (array([0.        , 0.        , 0.66...]),
-     array([0., 0., 1.]), array([0. , 0. , 0.8]),
-     array([2, 2, 2]))
+    (
+        array([0.25, 0.2, 1.]),
+        array([-0.5., 0.6, 1.]),
+        array([-0.125. , 0.4 , 1.]),
+        array([3, 2, 2])
+    )
     """
-    average_options = (None, "binary", "macro", "weighted", "samples")
+    average_options = (None, "binary", "macro", "weighted")
     if average not in average_options:
         raise ValueError("average has to be one of " + str(average_options))
 
@@ -3676,7 +3652,7 @@ def precision_gain_score(
         setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
         scores for that label only.
 
-    average : {'micro', 'macro', 'samples', 'weighted', 'binary'} or None, \
+    average : {'macro', 'weighted', 'binary'} or None, \
             default='binary'
         This parameter is required for multiclass/multilabel targets.
         If ``None``, the scores for each class are returned. Otherwise, this
@@ -3685,9 +3661,6 @@ def precision_gain_score(
         ``'binary'``:
             Only report results for the class specified by ``pos_label``.
             This is applicable only if targets (``y_{true,pred}``) are binary.
-        ``'micro'``:
-            Calculate metrics globally by counting the total true positives,
-            false negatives and false positives.
         ``'macro'``:
             Calculate metrics for each label, and find their unweighted
             mean.  This does not take label imbalance into account.
@@ -3696,10 +3669,6 @@ def precision_gain_score(
             by support (the number of true instances for each label). This
             alters 'macro' to account for label imbalance; it can result in an
             F-score that is not between precision and recall.
-        ``'samples'``:
-            Calculate metrics for each instance, and find their average (only
-            meaningful for multilabel classification where this differs from
-            :func:`accuracy_score`).
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
@@ -3751,8 +3720,6 @@ def precision_gain_score(
     >>> y_pred = [0, 2, 1, 0, 0, 1]
     >>> precision_score(y_true, y_pred, average='macro')
     0.22...
-    >>> precision_score(y_true, y_pred, average='micro')
-    0.33...
     >>> precision_score(y_true, y_pred, average='weighted')
     0.22...
     >>> precision_score(y_true, y_pred, average=None)
@@ -3835,7 +3802,7 @@ def recall_gain_score(
         setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
         scores for that label only.
 
-    average : {'micro', 'macro', 'samples', 'weighted', 'binary'} or None, \
+    average : {'macro', 'weighted', 'binary'} or None, \
             default='binary'
         This parameter is required for multiclass/multilabel targets.
         If ``None``, the scores for each class are returned. Otherwise, this
@@ -3844,9 +3811,6 @@ def recall_gain_score(
         ``'binary'``:
             Only report results for the class specified by ``pos_label``.
             This is applicable only if targets (``y_{true,pred}``) are binary.
-        ``'micro'``:
-            Calculate metrics globally by counting the total true positives,
-            false negatives and false positives.
         ``'macro'``:
             Calculate metrics for each label, and find their unweighted
             mean.  This does not take label imbalance into account.
@@ -3856,10 +3820,6 @@ def recall_gain_score(
             alters 'macro' to account for label imbalance; it can result in an
             F-score that is not between precision and recall. Weighted recall
             is equal to accuracy.
-        ``'samples'``:
-            Calculate metrics for each instance, and find their average (only
-            meaningful for multilabel classification where this differs from
-            :func:`accuracy_score`).
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
@@ -3912,8 +3872,6 @@ def recall_gain_score(
     >>> y_true = [0, 1, 2, 0, 1, 2]
     >>> y_pred = [0, 2, 1, 0, 0, 1]
     >>> recall_score(y_true, y_pred, average='macro')
-    0.33...
-    >>> recall_score(y_true, y_pred, average='micro')
     0.33...
     >>> recall_score(y_true, y_pred, average='weighted')
     0.33...
