@@ -834,7 +834,6 @@ def jaccard_score(
         weights = None
     return np.average(jaccard, weights=weights)
 
-
 def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
     """Compute the Matthews correlation coefficient (MCC).
 
@@ -921,6 +920,92 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
         return 0.0
     else:
         return cov_ytyp / np.sqrt(cov_ytyt * cov_ypyp)
+
+from enum import Enum
+class AVERAG_TYPE(Enum):
+    MATTHEW_GEN = 2
+    F1_GEN = 3
+
+def generalized_matthew(y_true, y_pred,ave_type=AVERAG_TYPE.MATTHEW_GEN.value,sample_weight=None):
+    y_type, y_true, y_pred = _check_targets(y_true, y_pred)
+    check_consistent_length(y_true, y_pred, sample_weight)
+    if y_type not in {"binary", "multiclass"}:
+        raise ValueError("%s is not supported" % y_type)
+
+    lb = LabelEncoder()
+    lb.fit(np.hstack([y_true, y_pred]))
+    y_true = lb.transform(y_true)
+    y_pred = lb.transform(y_pred)
+
+    C = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
+    # A utitliy function which normalizes the confusion and perfroms the relevant average
+    def norm_confusion_mat(conf_mat, average, dimension_size):
+        # m1 = conf_mat / np.sum(conf_mat, axis=1)
+        # m2 = conf_mat / np.sum(conf_mat, axis=0)
+        m1 = C / C.sum(conf_mat, axis=1)
+        m2 = C / C.sum(conf_mat, axis=0)
+
+        return [[average([m1[i, j], m2[j][i]])
+                 for i in range(dimension_size)] for j in range(dimension_size)]
+
+    # A utitliy function that perfroms the generaized score of F1 . it calculates the hamonic average
+    # over the trace of the normalized confusion matrix
+    def gen_f1_scalar_op(h_conf_mat):
+        l_mat = len(h_conf_mat)
+        return st.mstats.hmean([h_conf_mat[i][i] for i in range(l_mat)])
+
+    dimension_size =len(labels)
+    # c=confusion_matrix(y_true=y_true,y_pred=y_pred ,labels=labels)
+    if ave_type == AVERAG_TYPE.MATTHEW_GEN.value:
+        av_func =st.mstats.gmean
+        scalar_op =np.linalg.det
+    elif ave_type ==AVERAG_TYPE.F1_GEN.value:
+        av_func = st.mstats.hmean
+        scalar_op =gen_f1_scalar_op
+
+    G_mat= norm_confusion_mat(C, av_func, dimension_size)
+    return scalar_op(G_mat)
+
+# def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
+#     """Compute the Matthews correlation coefficient (MCC).
+#
+#     The Matthews correlation coefficient is used in machine learning as a
+#     measure of the quality of binary and multiclass classifications. It takes
+#     into account true and false positives and negatives and is generally
+#     regarded as a balanced measure which can be used even if the classes are of
+#     very different sizes. The MCC is in essence a correlation coefficient value
+#     between -1 and +1. A coefficient of +1 represents a perfect prediction, 0
+#     an average random prediction and -1 an inverse prediction.  The statistic
+#     is also known as the phi coefficient. [source: Wikipedia]
+#
+#     Binary and multiclass labels are supported.  Only in the binary case does
+#     this relate to information about true and false positives and negatives.
+#     See references below.
+#
+#     Read more in the :ref:`User Guide <matthews_corrcoef>`.
+#
+#     Parameters
+#     ----------
+#     y_true : array, shape = [n_samples]
+#         Ground truth (correct) target values.
+#
+#     y_pred : array, shape = [n_samples]
+#         Estimated targets as returned by a classifier.
+#
+#     sample_weight : array-like of shape (n_samples,), default=None
+#         Sample weights.
+#
+#         .. versionadded:: 0.18
+#
+#     Returns
+#     -------
+#     mcc : float
+#         The Matthews correlation coefficient (+1 represents a perfect
+#         prediction, 0 an average random prediction and -1 and inverse
+#         prediction).
+#
+
+
 
 
 def zero_one_loss(y_true, y_pred, *, normalize=True, sample_weight=None):
