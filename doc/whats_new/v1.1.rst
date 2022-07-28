@@ -12,6 +12,13 @@ Version 1.1.2
 Changelog
 ---------
 
+:mod:`sklearn.base`
+......................
+
+- |Fix| The `get_params` method of the :class:`BaseEstimator` class now supports
+  estimators with `type`-type params that have the `get_params` method.
+  :pr`24017` by :user:`Henry Sorsky <hsorsky>`.
+
 :mod:`sklearn.cluster`
 ......................
 
