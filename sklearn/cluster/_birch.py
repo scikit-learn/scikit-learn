@@ -554,7 +554,6 @@ class Birch(
             copy=self.copy,
             reset=first_call,
             dtype=[np.float64, np.float32],
-            order="C",
         )
         threshold = self.threshold
         branching_factor = self.branching_factor
@@ -690,7 +689,7 @@ class Birch(
             Labelled data.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, accept_sparse="csr", reset=False, order="C")
+        X = self._validate_data(X, accept_sparse="csr", reset=False)
         return self._predict(X)
 
     def _predict(self, X):
