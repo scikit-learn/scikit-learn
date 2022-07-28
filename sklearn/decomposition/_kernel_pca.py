@@ -5,7 +5,6 @@
 # License: BSD 3 clause
 
 import numpy as np
-import numbers
 from numbers import Integral, Real
 from scipy import linalg
 from scipy.sparse.linalg import eigsh
@@ -15,7 +14,6 @@ from ..utils.extmath import svd_flip, _randomized_eigsh
 from ..utils.validation import (
     check_is_fitted,
     _check_psd_eigenvalues,
-    check_scalar,
 )
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.deprecation import deprecated
