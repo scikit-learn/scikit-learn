@@ -1583,7 +1583,7 @@ def _precision_recall_fscore_support(
     sample_weight=None,
     zero_division="warn",
     return_in_gain_space=False,
-    proportion_positives=None,
+    class_distribution=None,
 ):
     """Compute precision, recall, F-measure and support for each class.
 
@@ -1677,7 +1677,7 @@ def _precision_recall_fscore_support(
         If set to "warn", this acts as 0, but warnings are also raised.
 
     return_in_gain_space : TODO
-    proportion_positives=None : TODO
+    class_distribution=None : TODO
 
     Returns
     -------
@@ -1744,6 +1744,7 @@ def _precision_recall_fscore_support(
     if beta < 0:
         raise ValueError("beta should be >=0 in the F-beta score")
     labels = _check_set_wise_labels(y_true, y_pred, average, labels, pos_label)
+    _check_valid_class_distribution(class_distribution, y_true)
 
     # Calculate tp_sum, pred_sum, true_sum ###
     samplewise = average == "samples"
@@ -1801,8 +1802,8 @@ def _precision_recall_fscore_support(
         ) in enumerate(zip(precision, recall, f_score, true_sum, MCM)):
             pi = (
                 (true_sum_i / cm_i.sum())
-                if proportion_positives is None
-                else proportion_positives[class_index]
+                if class_distribution is None
+                else class_distribution[class_index]
             )
             precision[class_index] = prg_gain_transform(precision_i, pi=pi)
             recall[class_index] = prg_gain_transform(recall_i, pi=pi)
@@ -3081,6 +3082,18 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
     return np.average((y_true - y_prob) ** 2, weights=sample_weight)
 
 
+def _check_valid_class_distribution(class_distribution, y_true):
+    if class_distribution:
+        num_classes = len(set(y_true))
+        if len(class_distribution) != num_classes:
+            raise ValueError(
+                "Class distribution must have the same length as the number of classes"
+                f" - {num_classes}."
+            )
+        if sum(class_distribution) != 1:
+            raise ValueError("Class distribution values do not sum to 1.")
+
+
 def f1_gain_score(
     y_true,
     y_pred,
@@ -3375,7 +3388,7 @@ def precision_recall_fgain_score_support(
     y_true,
     y_pred,
     *,
-    proportion_positives=None,
+    class_distribution=None,
     beta=1.0,
     labels=None,
     pos_label=1,
@@ -3400,7 +3413,7 @@ def precision_recall_fgain_score_support(
         sample_weight=sample_weight,
         zero_division=zero_division,
         return_in_gain_space=True,
-        proportion_positives=proportion_positives,
+        class_distribution=class_distribution,
     )
 
 

@@ -448,6 +448,18 @@ def test_precision_recall_fgain_score_support_errors():
     with pytest.raises(ValueError):
         precision_recall_fgain_score_support([0, 1, 2], [1, 2, 0], average="micro")
 
+    # Bad class_distribution dimension
+    with pytest.raises(ValueError):
+        precision_recall_fgain_score_support(
+            [0, 1, 2], [1, 2, 0], class_distribution=[3]
+        )
+
+    # Bad class_distribution values
+    with pytest.raises(ValueError):
+        precision_recall_fgain_score_support(
+            [0, 1, 2], [1, 2, 0], class_distribution=[0.4, 0.6, 0.1]
+        )
+
 
 @ignore_warnings
 def test_precision_recall_fscore_support_errors():
