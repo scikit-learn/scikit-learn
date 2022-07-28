@@ -40,6 +40,8 @@ def _smacof_single(
 
     metric : bool, default=True
         Compute metric or nonmetric SMACOF algorithm.
+        When ``False`` (i.e. non-metric MDS), dissimilarities with 0 are considered as
+        missing values.
 
     n_components : int, default=2
         Number of dimensions in which to immerse the dissimilarities. If an
@@ -208,6 +210,8 @@ def smacof(
 
     metric : bool, default=True
         Compute metric or nonmetric SMACOF algorithm.
+        When ``False`` (i.e. non-metric MDS), dissimilarities with 0 are considered as
+        missing values.
 
     n_components : int, default=2
         Number of dimensions in which to immerse the dissimilarities. If an
