@@ -33,13 +33,22 @@ X, y = iris.data[:, 1:3], iris.target
 X_r, y_r = datasets.load_diabetes(return_X_y=True)
 
 
-def test_voting_classifier_estimator_init():
-    ensemble = VotingClassifier(
-        estimators=[("lr", LogisticRegression())], weights=[1, 2]
-    )
-    with pytest.raises(
-        ValueError, match="Number of `estimators` and weights must be equal"
-    ):
+@pytest.mark.parametrize(
+    "params, err_msg",
+    [
+        (
+            {"estimators": []},
+            "Invalid 'estimators' attribute, 'estimators' should be a non-empty list",
+        ),
+        (
+            {"estimators": [("lr", LogisticRegression())], "weights": [1, 2]},
+            "Number of `estimators` and weights must be equal",
+        ),
+    ],
+)
+def test_voting_classifier_estimator_init(params, err_msg):
+    ensemble = VotingClassifier(**params)
+    with pytest.raises(ValueError, match=err_msg):
         ensemble.fit(X, y)
 
 

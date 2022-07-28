@@ -14,8 +14,8 @@ This module contains:
 # License: BSD 3 clause
 
 from abc import abstractmethod
-
 from numbers import Integral
+
 import numpy as np
 
 from joblib import Parallel
@@ -45,6 +45,13 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
     Warning: This class should not be used directly. Use derived classes
     instead.
     """
+
+    _parameter_constraints = {
+        "estimators": [list],
+        "weights": ["array-like", None],
+        "n_jobs": [None, Integral],
+        "verbose": ["verbose"],
+    }
 
     def _log_message(self, name, idx, total):
         if not self.verbose:
@@ -280,12 +287,9 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
     """
 
     _parameter_constraints = {
-        "estimators": [list],
+        **_BaseVoting._parameter_constraints,
         "voting": [StrOptions({"hard", "soft"})],
-        "weights": ["array-like", None],
-        "n_jobs": [None, Integral],
         "flatten_transform": ["boolean"],
-        "verbose": ["verbose"],
     }
 
     def __init__(
@@ -560,13 +564,6 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
     >>> len(er.estimators_)
     2
     """
-
-    _parameter_constraints = {
-        "estimators": [list],
-        "weights": ["array-like", None],
-        "n_jobs": [None, Integral],
-        "verbose": ["verbose"],
-    }
 
     def __init__(self, estimators, *, weights=None, n_jobs=None, verbose=False):
         super().__init__(estimators=estimators)
