@@ -264,7 +264,7 @@ class KernelPCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
             None,
         ],
         "iterated_power": [
-            Interval(Real, 0, None, closed="left"),
+            Interval(Integral, 0, None, closed="left"),
             StrOptions({"auto"}),
         ],
         "remove_zero_eig": ["boolean"],
