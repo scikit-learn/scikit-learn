@@ -1744,7 +1744,9 @@ def _precision_recall_fscore_support(
     if beta < 0:
         raise ValueError("beta should be >=0 in the F-beta score")
     labels = _check_set_wise_labels(y_true, y_pred, average, labels, pos_label)
-    _check_valid_class_distribution(class_distribution, y_true)
+    class_distribution = _check_valid_class_distribution(
+        class_distribution, y_true, y_pred, average, pos_label
+    )
 
     # Calculate tp_sum, pred_sum, true_sum ###
     samplewise = average == "samples"
@@ -3082,9 +3084,12 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
     return np.average((y_true - y_prob) ** 2, weights=sample_weight)
 
 
-def _check_valid_class_distribution(class_distribution, y_true):
+def _check_valid_class_distribution(
+    class_distribution, y_true, y_pred, average, pos_label
+):
     if class_distribution:
-        num_classes = len(set(y_true))
+        classes = unique_labels(y_true, y_pred).tolist()
+        num_classes = len(classes)
         if len(class_distribution) != num_classes:
             raise ValueError(
                 "Class distribution must have the same length as the number of classes"
@@ -3092,6 +3097,11 @@ def _check_valid_class_distribution(class_distribution, y_true):
             )
         if sum(class_distribution) != 1:
             raise ValueError("Class distribution values do not sum to 1.")
+
+        if average == "binary":
+            class_distribution = [class_distribution[classes.index(pos_label)]]
+
+    return class_distribution
 
 
 def f1_gain_score(

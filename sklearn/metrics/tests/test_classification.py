@@ -232,6 +232,66 @@ def test_multilabel_accuracy_score_subset_accuracy():
     assert accuracy_score(y2, np.zeros(y1.shape)) == 0
 
 
+def test_precision_recall_f1_gain_score_averages():
+    # Test Precision Recall and F1 Score for binary classification task
+    y_true, y_pred, _ = make_prediction(binary=True)
+
+    # binary average
+    p, r, f, s = precision_recall_fgain_score_support(y_true, y_pred, average="binary")
+    assert_array_almost_equal(p, 0.82, 2)
+    assert_array_almost_equal(r, 0.53, 2)
+    assert_array_almost_equal(f, 0.68, 2)
+
+    # macro average
+    p, r, f, s = precision_recall_fgain_score_support(y_true, y_pred, average="macro")
+    assert_array_almost_equal(p, 0.73, 2)
+    assert_array_almost_equal(r, 0.70, 2)
+    assert_array_almost_equal(f, 0.72, 2)
+
+    # Test Precision Recall and F1 Score for multi classification task
+    y_true, y_pred, _ = make_prediction(binary=False)
+
+    # weighted average
+    p, r, f, s = precision_recall_fgain_score_support(
+        y_true, y_pred, average="weighted"
+    )
+    assert_array_almost_equal(p, 0.25, 2)
+    assert_array_almost_equal(r, -1.77, 2)
+    assert_array_almost_equal(f, -0.76, 2)
+
+
+def test_precision_recall_f1_gain_score_class_dist():
+    # Test Precision Recall and F1 Score for binary classification task
+    y_true, y_pred, _ = make_prediction(binary=True)
+
+    # binary average
+    p, r, f, s = precision_recall_fgain_score_support(
+        y_true, y_pred, average="binary", class_distribution=[0.4, 0.6]
+    )
+    assert_array_almost_equal(p, 0.74, 2)
+    assert_array_almost_equal(r, 0.29, 2)
+    assert_array_almost_equal(f, 0.51, 2)
+
+    # macro average
+    p, r, f, s = precision_recall_fgain_score_support(
+        y_true, y_pred, average="macro", class_distribution=[0.4, 0.6]
+    )
+    assert_array_almost_equal(p, 0.75, 2)
+    assert_array_almost_equal(r, 0.60, 2)
+    assert_array_almost_equal(f, 0.67, 2)
+
+    # Test Precision Recall and F1 Score for multi classification task
+    y_true, y_pred, _ = make_prediction(binary=False)
+
+    # weighted average
+    p, r, f, s = precision_recall_fgain_score_support(
+        y_true, y_pred, average="weighted", class_distribution=[0.4, 0.2, 0.4]
+    )
+    assert_array_almost_equal(p, 0.50, 2)
+    assert_array_almost_equal(r, -0.04, 2)
+    assert_array_almost_equal(f, 0.23, 2)
+
+
 def test_precision_recall_f1_gain_score_binary():
     # Test Precision Recall and F1 Score for binary classification task
     y_true, y_pred, _ = make_prediction(binary=True)
