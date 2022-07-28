@@ -1982,7 +1982,7 @@ class LassoLarsCV(LarsCV):
         "verbose": ["verbose"],
         "max_iter": [Interval(Integral, 0, None, closed="left")],
         "normalize": ["boolean", Hidden(StrOptions({"deprecated"}))],
-        "precompute": ["boolean", StrOptions({"auto"}), "array-like"],
+        "precompute": ["boolean", StrOptions({"auto"})],
         "cv": ["cv_object"],
         "max_n_alphas": [Interval(Integral, 0, None, closed="left")],
         "n_jobs": [Integral, None],
