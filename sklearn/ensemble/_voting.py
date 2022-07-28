@@ -287,7 +287,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
     """
 
     _parameter_constraints = {
-        **_BaseVoting._parameter_constraints,
+        **_BaseVoting._parameter_constraints,  # type: ignore
         "voting": [StrOptions({"hard", "soft"})],
         "flatten_transform": ["boolean"],
     }
