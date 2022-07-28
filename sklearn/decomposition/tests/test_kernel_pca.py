@@ -21,70 +21,64 @@ from sklearn.metrics.pairwise import rbf_kernel
 from sklearn.utils.validation import _check_psd_eigenvalues
 
 
-# def test_kernel_pca():
-#     """Nominal test for all solvers and all known kernels + a custom one
+def test_kernel_pca():
+    """Nominal test for all solvers and all known kernels + a custom one
 
-#     It tests
-#      - that fit_transform is equivalent to fit+transform
-#      - that the shapes of transforms and inverse transforms are correct
-#     """
-#     rng = np.random.RandomState(0)
-#     X_fit = rng.random_sample((5, 4))
-#     X_pred = rng.random_sample((2, 4))
+    It tests
+     - that fit_transform is equivalent to fit+transform
+     - that the shapes of transforms and inverse transforms are correct
+    """
+    rng = np.random.RandomState(0)
+    X_fit = rng.random_sample((5, 4))
+    X_pred = rng.random_sample((2, 4))
 
-#     def histogram(x, y, **kwargs):
-#         # Histogram kernel implemented as a callable.
-#         assert kwargs == {}  # no kernel_params that we didn't ask for
-#         return np.minimum(x, y).sum()
+    def histogram(x, y, **kwargs):
+        # Histogram kernel implemented as a callable.
+        assert kwargs == {}  # no kernel_params that we didn't ask for
+        return np.minimum(x, y).sum()
 
-#     for eigen_solver in ("auto", "dense", "arpack", "randomized"):
-#         for kernel in ("linear", "rbf", "poly", histogram):
-#             # histogram kernel produces singular matrix inside linalg.solve
-#             # XXX use a least-squares approximation?
-#             inv = not callable(kernel)
+    for eigen_solver in ("auto", "dense", "arpack", "randomized"):
+        for kernel in ("linear", "rbf", "poly", histogram):
+            # histogram kernel produces singular matrix inside linalg.solve
+            # XXX use a least-squares approximation?
+            inv = not callable(kernel)
 
-#             # transform fit data
-#             kpca = KernelPCA(
-#                 4, kernel=kernel, eigen_solver=eigen_solver, fit_inverse_transform=inv
-#             )
-#             X_fit_transformed = kpca.fit_transform(X_fit)
-#             X_fit_transformed2 = kpca.fit(X_fit).transform(X_fit)
-#             assert_array_almost_equal(
-#                 np.abs(X_fit_transformed), np.abs(X_fit_transformed2)
-#             )
+            # transform fit data
+            kpca = KernelPCA(
+                4, kernel=kernel, eigen_solver=eigen_solver, fit_inverse_transform=inv
+            )
+            X_fit_transformed = kpca.fit_transform(X_fit)
+            X_fit_transformed2 = kpca.fit(X_fit).transform(X_fit)
+            assert_array_almost_equal(
+                np.abs(X_fit_transformed), np.abs(X_fit_transformed2)
+            )
 
-#             # non-regression test: previously, gamma would be 0 by default,
-#             # forcing all eigenvalues to 0 under the poly kernel
-#             assert X_fit_transformed.size != 0
+            # non-regression test: previously, gamma would be 0 by default,
+            # forcing all eigenvalues to 0 under the poly kernel
+            assert X_fit_transformed.size != 0
 
-#             # transform new data
-#             X_pred_transformed = kpca.transform(X_pred)
-#             assert X_pred_transformed.shape[1] == X_fit_transformed.shape[1]
+            # transform new data
+            X_pred_transformed = kpca.transform(X_pred)
+            assert X_pred_transformed.shape[1] == X_fit_transformed.shape[1]
 
-#             # inverse transform
-#             if inv:
-#                 X_pred2 = kpca.inverse_transform(X_pred_transformed)
-#                 assert X_pred2.shape == X_pred.shape
-
-
-# def test_kernel_pca_invalid_solver():
-#     """Check that kPCA raises an error if the solver parameter is invalid"""
-#     with pytest.raises(ValueError):
-#         KernelPCA(eigen_solver="unknown").fit(np.random.randn(10, 10))
+            # inverse transform
+            if inv:
+                X_pred2 = kpca.inverse_transform(X_pred_transformed)
+                assert X_pred2.shape == X_pred.shape
 
 
-# def test_kernel_pca_invalid_parameters():
-#     """Check that kPCA raises an error if the parameters are invalid
+def test_kernel_pca_invalid_parameters():
+    """Check that kPCA raises an error if the parameters are invalid
 
-#     Tests fitting inverse transform with a precomputed kernel raises a
-#     ValueError.
-#     """
-#     estimator = KernelPCA(
-#         n_components=10, fit_inverse_transform=True, kernel="precomputed"
-#     )
-#     err_ms = "Cannot fit_inverse_transform with a precomputed kernel"
-#     with pytest.raises(ValueError, match=err_ms):
-#         estimator.fit(np.random.randn(10, 10))
+    Tests fitting inverse transform with a precomputed kernel raises a
+    ValueError.
+    """
+    estimator = KernelPCA(
+        n_components=10, fit_inverse_transform=True, kernel="precomputed"
+    )
+    err_ms = "Cannot fit_inverse_transform with a precomputed kernel"
+    with pytest.raises(ValueError, match=err_ms):
+        estimator.fit(np.random.randn(10, 10))
 
 
 def test_kernel_pca_consistent_transform():
@@ -204,16 +198,6 @@ def test_kernel_pca_n_components():
             assert shape == (2, c)
 
 
-# @pytest.mark.parametrize("n_components", [-1, 0])
-# def test_kernal_pca_too_few_components(n_components):
-#     rng = np.random.RandomState(0)
-#     X_fit = rng.random_sample((5, 4))
-#     kpca = KernelPCA(n_components=n_components)
-#     msg = "n_components.* must be >= 1"
-#     with pytest.raises(ValueError, match=msg):
-#         kpca.fit(X_fit)
-
-
 def test_remove_zero_eig():
     """Check that the ``remove_zero_eig`` parameter works correctly.
 
@@ -324,18 +308,6 @@ def test_kernel_pca_precomputed_non_symmetric(solver):
     # comparison between the non-centered and centered versions
     assert_array_equal(kpca.eigenvectors_, kpca_c.eigenvectors_)
     assert_array_equal(kpca.eigenvalues_, kpca_c.eigenvalues_)
-
-
-def test_kernel_pca_invalid_kernel():
-    """Tests that using an invalid kernel name raises a ValueError
-
-    An invalid kernel name should raise a ValueError at fit time.
-    """
-    rng = np.random.RandomState(0)
-    X_fit = rng.random_sample((2, 4))
-    kpca = KernelPCA(kernel="tototiti")
-    with pytest.raises(ValueError):
-        kpca.fit(X_fit)
 
 
 def test_gridsearch_pipeline():

@@ -44,8 +44,8 @@ class KernelPCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
     n_components : int, default=None
         Number of components. If None, all non-zero components are kept.
 
-    kernel : {'linear', 'poly', \
-            'rbf', 'sigmoid', 'cosine', 'precomputed'}, default='linear'
+    kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'cosine', 'precomputed'} \
+            or callable, default='linear'
         Kernel used for PCA.
 
     gamma : float, default=None
@@ -243,25 +243,26 @@ class KernelPCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
 
     _parameter_constraints = {
         "n_components": [
-            Interval(Integral, 0, None, closed="left"),
+            Interval(Integral, 1, None, closed="left"),
             None,
         ],
         "kernel": [
-            StrOptions({"linear", "poly", "rbf", "sigmoid", "cosine", "precomputed"})
+            StrOptions({"linear", "poly", "rbf", "sigmoid", "cosine", "precomputed"}),
+            callable,
         ],
         "gamma": [
             Interval(Real, 0, None, closed="left"),
             None,
         ],
         "degree": [Interval(Integral, 0, None, closed="left")],
-        "coef0": [Interval(Real, 0, None, closed="left")],
+        "coef0": [Interval(Real, None, None, closed="neither")],
         "kernel_params": [dict, None],
         "alpha": [Interval(Real, 0, None, closed="left")],
         "fit_inverse_transform": ["boolean"],
         "eigen_solver": [StrOptions({"auto", "dense", "arpack", "randomized"})],
         "tol": [Interval(Real, 0, None, closed="left")],
         "max_iter": [
-            Interval(Real, 0, None, closed="left"),
+            Interval(Integral, 1, None, closed="left"),
             None,
         ],
         "iterated_power": [
@@ -348,7 +349,6 @@ class KernelPCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
         if self.n_components is None:
             n_components = K.shape[0]  # use all dimensions
         else:
-            check_scalar(self.n_components, "n_components", numbers.Integral, min_val=1)
             n_components = min(K.shape[0], self.n_components)
 
         # compute eigenvectors
@@ -378,8 +378,6 @@ class KernelPCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
                 random_state=self.random_state,
                 selection="module",
             )
-        else:
-            raise ValueError("Unsupported value for `eigen_solver`: %r" % eigen_solver)
 
         # make sure that the eigenvalues are ok and fix numerical issues
         self.eigenvalues_ = _check_psd_eigenvalues(
@@ -451,9 +449,10 @@ class KernelPCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
         self : object
             Returns the instance itself.
         """
+        self._validate_params()
+
         if self.fit_inverse_transform and self.kernel == "precomputed":
             raise ValueError("Cannot fit_inverse_transform with a precomputed kernel.")
-        self._validate_params()
         X = self._validate_data(X, accept_sparse="csr", copy=self.copy_X)
         self._centerer = KernelCenterer()
         K = self._get_kernel(X)
@@ -489,7 +488,6 @@ class KernelPCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
         X_new : ndarray of shape (n_samples, n_components)
             Returns the instance itself.
         """
-        self._validate_params()
         self.fit(X, **params)
 
         # no need to use the kernel to transform X, use shortcut expression
