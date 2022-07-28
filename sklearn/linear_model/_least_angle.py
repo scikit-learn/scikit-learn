@@ -973,7 +973,7 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         "verbose": ["verbose"],
         "normalize": ["boolean", Hidden(StrOptions({"deprecated"}))],
         "precompute": ["boolean", StrOptions({"auto"}), "array-like"],
-        "n_nonzero_coefs": [Interval(Integral, 0, None, closed="left")],
+        "n_nonzero_coefs": [Interval(Integral, 1, None, closed="left")],
         "eps": [Interval(Real, 0, None, closed="left")],
         "copy_X": ["boolean"],
         "fit_path": ["boolean"],
