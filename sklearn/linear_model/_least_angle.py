@@ -1307,6 +1307,7 @@ class LassoLars(Lars):
     >>> print(reg.coef_)
     [ 0.         -0.955...]
     """
+
     _parameter_constraints = {
         "alpha": [Interval(Real, 0, None, closed="left")],
         "fit_intercept": ["boolean"],
@@ -1319,7 +1320,7 @@ class LassoLars(Lars):
         "fit_path": ["boolean"],
         "positive": ["boolean"],
         "jitter": [Interval(Real, 0, None, closed="left"), None],
-        "random_state": ["random_state"]
+        "random_state": ["random_state"],
     }
 
     method = "lasso"
@@ -1975,7 +1976,7 @@ class LassoLarsCV(LarsCV):
     >>> reg.predict(X[:1,])
     array([-78.4831...])
     """
-    
+
     _parameter_constraints = {
         "fit_intercept": ["boolean"],
         "verbose": ["verbose"],
@@ -1987,7 +1988,7 @@ class LassoLarsCV(LarsCV):
         "n_jobs": [Integral, None],
         "eps": [Interval(Real, 0, None, closed="left")],
         "copy_X": ["boolean"],
-        "positive": ["boolean"]
+        "positive": ["boolean"],
     }
 
     method = "lasso"
@@ -2198,7 +2199,7 @@ class LassoLarsIC(LassoLars):
         "eps": [Interval(Real, 0, None, closed="left")],
         "copy_X": ["boolean"],
         "positive": ["boolean"],
-        "noise_variance": [Interval(Real, 0, None, closed="left"), None]
+        "noise_variance": [Interval(Real, 0, None, closed="left"), None],
     }
 
     def __init__(
