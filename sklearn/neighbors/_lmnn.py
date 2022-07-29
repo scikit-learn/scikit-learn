@@ -25,7 +25,6 @@ from ..utils.extmath import _euclidean_distances_without_checks
 from ..utils.random import check_random_state
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted, check_array, check_X_y, check_scalar
-from ..utils.validation import _deprecate_positional_args
 
 
 class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
@@ -217,7 +216,6 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
     0.97...
     """
 
-    @_deprecate_positional_args
     def __init__(
         self,
         n_neighbors=3,
@@ -225,7 +223,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         *,
         init="pca",
         warm_start=False,
-        max_impostors=500000,
+        max_impostors=500_000,
         neighbors_params=None,
         push_loss_weight=0.5,
         impostor_store="auto",
@@ -235,7 +233,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         store_opt_result=False,
         verbose=0,
         random_state=None,
-        n_jobs=1,
+        n_jobs=None,
     ):
 
         # Parameters
@@ -260,10 +258,10 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             The training samples.
 
-        y : array-like, shape (n_samples,)
+        y : array-like of shape (n_samples,)
             The corresponding training labels.
 
         Returns
@@ -350,12 +348,12 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Data samples.
 
         Returns
         -------
-        X_transformed : array, shape (n_samples, n_components)
+        X_transformed : ndarray of shape (n_samples, n_components)
             The data samples transformed.
 
         Raises
@@ -367,8 +365,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         -----
         A simple dot product is necessary and sufficient to transform the
         inputs into the learned subspace. Orthogonality of the components is
-        only enforced upon initialization if PCA is used (``init='pca'``).
-
+        only enforced upon initialization if PCA is used (`init="pca"`).
         """
 
         check_is_fitted(self, ["components_"])
@@ -381,29 +378,29 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             The training samples.
 
-        y : array-like, shape (n_samples,)
+        y : array-like of shape (n_samples,)
             The corresponding training labels.
 
         Returns
         -------
-        X : array, shape (n_samples, n_features)
+        X : array of shape (n_samples, n_features)
             The validated training samples.
 
-        y : array, shape (n_samples,)
+        y : array of shape (n_samples,)
             The validated training labels, encoded to be integers in the
             range [0, n_classes).
 
-        classes_inverse_non_singleton : array, shape (n_classes_non_singleton,)
+        classes_inverse_non_singleton : ndarray of shape (n_classes_non_singleton,)
             The non-singleton classes, encoded as integers in [0, n_classes).
 
-        init : string or numpy array of shape (n_features_a, n_features)
+        init : str or ndarray of shape (n_features_a, n_features)
             The validated initialization of the linear transformation.
 
         Raises
-        -------
+        ------
         TypeError
             If a parameter is not an instance of the desired type.
 
@@ -569,21 +566,20 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         return X, y, classes_inverse_non_singleton, init
 
     def _initialize(self, X, init):
-        """
+        """Initialize the transformation matrix.
 
         Parameters
         ----------
-        X : array, shape (n_samples, n_features)
+        X : ndarray of shape (n_samples, n_features)
             The training samples.
 
-        init : string or numpy array of shape (n_features_a, n_features)
+        init : str or ndarray of shape (n_features_a, n_features)
             The initialization of the linear transformation.
 
         Returns
         -------
-        transformation : array, shape (n_components, n_features)
+        transformation : ndarray of shape (n_components, n_features)
             The initialized linear transformation.
-
         """
 
         transformation = init
@@ -628,19 +624,19 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : array, shape (n_samples, n_features)
+        X : ndarray of shape (n_samples, n_features)
             The training samples.
 
-        y : array, shape (n_samples,)
+        y : ndarray of shape (n_samples,)
             The corresponding training labels indices.
 
-        classes : array, shape (n_classes,), optional (default=None)
-            The non-singleton classes, encoded as integers in [0, n_classes).
-            If None (default), they will be inferred from ``y``.
+        classes : ndarray of shape (n_classes,), default=None
+            The non-singleton classes, encoded as integers in `[0, n_classes)`.
+            If None (default), they will be inferred from `y`.
 
         Returns
         -------
-        target_neighbors : array, shape (n_samples, n_neighbors)
+        target_neighbors : ndarray of shape (n_samples, n_neighbors)
             An array of neighbors indices for each of the samples.
         """
 
@@ -674,17 +670,17 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : array, shape (n_samples, n_features)
+        X : ndarray of shape (n_samples, n_features)
             The training samples.
 
-        target_neighbors : array, shape (n_samples, n_neighbors)
+        target_neighbors : ndarray of shape (n_samples, n_neighbors)
             The k nearest neighbors of each of the samples from the same class.
 
         Returns
         -------
-        grad_target_neighbors : array, shape (n_features, n_features)
+        grad_target_neighbors : ndarray of shape (n_features, n_features)
             An array with the sum of all outer products of
-            (sample, target_neighbor) pairs.
+            `(sample, target_neighbor)` pairs.
         """
 
         start_time = time.time()
@@ -718,7 +714,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        transformation : array, shape(n_components * n_features,)
+        transformation : ndarray of shape(n_components * n_features,)
             The solution computed by the optimizer in this iteration.
         """
         if self.callback is not None:
@@ -733,22 +729,22 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        transformation : array, shape (n_components * n_features,)
+        transformation : ndarray of shape (n_components * n_features,)
             The current (flattened) linear transformation.
 
-        X : array, shape (n_samples, n_features)
+        X : ndarray of shape (n_samples, n_features)
             The training samples.
 
-        y : array, shape (n_samples,)
+        y : ndarray of shape (n_samples,)
             The corresponding training labels.
 
-        classes : array, shape (n_classes,)
-            The non-singleton classes, encoded as integers in [0, n_classes).
+        classes : ndarray of shape (n_classes,)
+            The non-singleton classes, encoded as integers in `[0, n_classes)`.
 
-        target_neighbors : array, shape (n_samples, n_neighbors)
+        target_neighbors : ndarray of shape (n_samples, n_neighbors)
             The target neighbors of each of the training samples.
 
-        grad_static : array, shape (n_features, n_features)
+        grad_static : ndarray of shape (n_features, n_features)
             The (weighted) gradient component caused by target neighbors,
             that stays fixed throughout the algorithm.
 
@@ -760,7 +756,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         loss : float
             The loss based on the given transformation.
 
-        grad : array, shape (n_components * n_features,)
+        grad : ndarray of shape (n_components * n_features,)
             The new (flattened) gradient of the loss.
         """
 
@@ -840,22 +836,22 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X_transformed : array, shape (n_samples, n_components)
+        X_transformed : ndarray of shape (n_samples, n_components)
             An array of transformed samples.
 
-        y : array, shape (n_samples,)
+        y : ndarray of shape (n_samples,)
             The corresponding (possibly encoded) class labels.
 
-        classes : array, shape (n_classes,)
-            The non-singleton classes, encoded as integers in [0, n_classes).
+        classes : ndarray of shape (n_classes,)
+            The non-singleton classes, encoded as integers in `[0, n_classes)`.
 
-        margin_radii : array, shape (n_samples,)
+        margin_radii : ndarray of shape (n_samples,)
             Squared distances of samples to their farthest target neighbors
             plus margin.
 
-        use_sparse : bool, optional (default=True)
+        use_sparse : bool, default=True
             Whether to use a sparse matrix or lists to store the
-            (sample, impostor) pairs.
+            `(sample, impostor)` pairs.
 
         Returns
         -------
@@ -979,26 +975,26 @@ def _select_target_neighbors(X, y, n_neighbors, classes=None, **nn_kwargs):
 
     Parameters
     ----------
-    X : array, shape (n_samples, n_features)
+    X : ndarray of shape (n_samples, n_features)
         The training samples.
 
-    y : array, shape (n_samples,)
+    y : ndarray of shape (n_samples,)
         The corresponding (encoded) training labels.
 
     n_neighbors : int
-        The number of target neighbors to select for each sample in X.
+        The number of target neighbors to select for each sample in `X`.
 
-    classes : array, shape (n_classes,), optional (default=None)
-        The non-singleton classes, encoded as integers in [0, n_classes).
-        If None (default), they will be inferred from ``y``.
+    classes : ndarray of shape (n_classes,), default=None
+        The non-singleton classes, encoded as integers in `[0, n_classes)`.
+        If None (default), they will be inferred from `y`.
 
-    **nn_kwargs : keyword arguments
-        Parameters to be passed to a :class:`neighbors.NearestNeighbors`
-        instance except from ``n_neighbors``.
+    **nn_kwargs : dict
+        Parameters to be passed to a :class:`~sklearn.neighbors.NearestNeighbors`
+        instance except from `n_neighbors`.
 
     Returns
     -------
-    target_neighbors : array, shape (n_samples, n_neighbors)
+    target_neighbors : ndarray of shape (n_samples, n_neighbors)
         The indices of the target neighbors of each training sample.
     """
     target_neighbors = np.zeros((X.shape[0], n_neighbors), dtype=np.intp)
@@ -1022,30 +1018,30 @@ def _find_impostors_chunked(X_in, X_out, radii_in, radii_out, return_distance=Fa
 
     Parameters
     ----------
-    X_in : array, shape (n_samples_a, n_components)
+    X_in : ndarray of shape (n_samples_a, n_components)
         Transformed data samples that belong to class A.
 
-    X_out : array, shape (n_samples_b, n_components)
+    X_out : ndarray of shape (n_samples_b, n_components)
         Transformed data samples that belong to classes different from A.
 
-    radii_in : array, shape (n_samples_a,)
-        Squared distances of the samples in ``X_in`` to their margins.
+    radii_in : ndarray of shape (n_samples_a,)
+        Squared distances of the samples in `X_in` to their margins.
 
-    radii_out : array, shape (n_samples_b,)
-        Squared distances of the samples in ``X_out`` to their margins.
+    radii_out : ndarray of shape (n_samples_b,)
+        Squared distances of the samples in `X_out` to their margins.
 
     return_distance : bool, optional (default=False)
         Whether to return the squared distances to the impostors.
 
     Returns
     -------
-    imp_indices : array, shape (n_impostors,)
+    imp_indices : ndarray of shape (n_impostors,)
         Unraveled indices referring to a matrix of shape
         (n_samples_b, n_samples_a). Index pair (i, j) is returned (unraveled)
         if either sample i is an impostor to sample j or sample j is an
         impostor to sample i.
 
-    imp_distances : array, shape (n_impostors,), optional
+    imp_distances : ndarray of shape (n_impostors,), optional
         imp_distances[i] is the squared distance between samples imp_row[i] and
         imp_col[i], where
         imp_row, imp_col = np.unravel_index(imp_indices, (n_samples_b,
@@ -1090,17 +1086,17 @@ def _find_impostors_chunked(X_in, X_out, radii_in, radii_out, return_distance=Fa
 
 
 def _compute_push_loss(X, target_neighbors, inflated_dist_tn, impostors_graph):
-    """
+    """Compute the loss.
 
     Parameters
     ----------
-    X : array, shape (n_samples, n_features)
+    X : ndarray of shape (n_samples, n_features)
         The training input samples.
 
-    target_neighbors : array, shape (n_samples, n_neighbors)
+    target_neighbors : ndarray of shape (n_samples, n_neighbors)
         Indices of target neighbors of each sample in X.
 
-    inflated_dist_tn : array, shape (n_samples, n_neighbors)
+    inflated_dist_tn : ndarray of shape (n_samples, n_neighbors)
         Squared distances of each sample to their target neighbors plus margin.
 
     impostors_graph : coo_matrix, shape (n_samples, n_samples)
@@ -1114,12 +1110,11 @@ def _compute_push_loss(X, target_neighbors, inflated_dist_tn, impostors_graph):
     loss : float
         The push loss caused by the given target neighbors and impostors.
 
-    grad : array, shape (n_features, n_features)
+    grad : ndarray of shape (n_features, n_features)
         The gradient of the push loss.
 
     n_active_triplets : int
         The number of active triplet constraints.
-
     """
 
     n_samples, n_neighbors = inflated_dist_tn.shape
@@ -1168,13 +1163,13 @@ def _paired_distances_chunked(X, ind_a, ind_b, squared=True):
 
     Parameters
     ----------
-    X : array, shape (n_samples, n_features)
+    X : ndarray of shape (n_samples, n_features)
         An array of data samples.
 
-    ind_a : array, shape (n_indices,)
+    ind_a : ndarray of shape (n_indices,)
         An array of indices referring to samples in X.
 
-    ind_b : array, shape (n_indices,)
+    ind_b : ndarray of shape (n_indices,)
         Another array of indices referring to samples in X.
 
     squared : bool (default=True)
@@ -1182,7 +1177,7 @@ def _paired_distances_chunked(X, ind_a, ind_b, squared=True):
 
     Returns
     -------
-    distances : array, shape (n_indices,)
+    distances : ndarray of shape (n_indices,)
         An array of pairwise, optionally squared, distances.
     """
 
@@ -1202,15 +1197,15 @@ def _sum_weighted_outer_differences(X, weights):
 
     Parameters
     ----------
-    X : array, shape (n_samples, n_features)
+    X : ndarray of shape (n_samples, n_features)
         An array of data samples.
 
-    weights : csr_matrix, shape (n_samples, n_samples)
-        A sparse weights matrix.
+    weights : sparse matrix, shape (n_samples, n_samples)
+        A sparse weights matrix in CSR format.
 
     Returns
     -------
-    sum_weighted_outer_diffs : array, shape (n_features, n_features)
+    sum_weighted_outer_diffs : ndarray of shape (n_features, n_features)
         The sum of all outer weighted differences.
     """
 
