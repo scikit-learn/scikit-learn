@@ -5,12 +5,11 @@ Large Margin Nearest Neighbor Classification
 # Author: John Chiotellis <johnyc.code@gmail.com>
 # License: BSD 3 clause
 
-from __future__ import print_function
-from warnings import warn
-
 import sys
 import time
-import numbers
+from numbers import Integral, Real
+from warnings import warn
+
 import numpy as np
 from scipy.optimize import minimize
 from scipy.sparse import csr_matrix, csc_matrix, coo_matrix
@@ -20,11 +19,15 @@ from ..neighbors import NearestNeighbors
 from ..decomposition import PCA
 from ..exceptions import ConvergenceWarning
 from ..utils import gen_batches, get_chunk_n_rows
-from ..utils.extmath import row_norms, safe_sparse_dot
-from ..utils.extmath import _euclidean_distances_without_checks
-from ..utils.random import check_random_state
+from ..utils.extmath import (
+    _euclidean_distances_without_checks,
+    row_norms,
+    safe_sparse_dot,
+)
 from ..utils.multiclass import check_classification_targets
-from ..utils.validation import check_is_fitted, check_array, check_X_y, check_scalar
+from ..utils._param_validation import Interval, StrOptions
+from ..utils.random import check_random_state
+from ..utils.validation import check_is_fitted, check_array, check_X_y
 
 
 class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
@@ -48,7 +51,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         Preferred dimensionality of the transformed samples.
         If `None` it is inferred from `init`.
 
-    init : {"pca", "identity"} or ndarray of shape (n_features_a, n_features), \
+    init : {"pca", "identity"} or array-like of shape (n_features_a, n_features), \
                 default="pca"
         Initialization of the linear transformation. The possible options are:
 
@@ -216,6 +219,24 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
     0.97...
     """
 
+    _parameter_constraints = {
+        "n_neighbors": [Interval(Integral, left=1, right=None, closed="left")],
+        "n_components": [Interval(Integral, left=1, right=None, closed="left"), None],
+        "init": [StrOptions({"pca", "identity"}), "array-like"],
+        "warm_start": ["boolean"],
+        "max_impostors": [Integral],
+        "neighbors_params": [dict, None],
+        "push_loss_weight": [Interval(Real, left=0, right=1, closed="right")],
+        "impostor_store": [StrOptions({"list", "sparse", "auto"})],
+        "max_iter": [Interval(Integral, left=1, right=None, closed="left")],
+        "tol": [Interval(Real, left=0, right=None, closed="left")],
+        "callback": [callable, None],
+        "store_opt_result": ["boolean"],
+        "verbose": ["verbose"],
+        "random_state": ["random_state"],
+        "n_jobs": [Integral, None],
+    }
+
     def __init__(
         self,
         n_neighbors=3,
@@ -270,8 +291,10 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
             returns a trained LargeMarginNearestNeighbor model.
         """
 
+        self._validate_params()
+
         # Check that the inputs are consistent with the parameters
-        X, y, classes, initial_transformation = self._validate_params(X, y)
+        X, y, classes, initial_transformation = self._validate_params_inner(X, y)
 
         # Initialize the random generator
         self.random_state_ = check_random_state(self.random_state)
@@ -373,7 +396,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         return np.dot(X, self.components_.T)
 
-    def _validate_params(self, X, y):
+    def _validate_params_inner(self, X, y):
         """Validate parameters as soon as :meth:`fit` is called.
 
         Parameters
@@ -423,10 +446,9 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         singleton_classes = np.where(mask_singleton_class)[0]
         if len(singleton_classes):
             warn(
-                "There are {} singleton classes that will be ignored during "
-                "training. A copy of the inputs `X` and `y` will be made.".format(
-                    len(singleton_classes)
-                )
+                f"There are {len(singleton_classes)} singleton classes that will be "
+                "ignored during training. A copy of the inputs `X` and `y` will be "
+                "made."
             )
             mask_singleton_sample = np.asarray([yi in singleton_classes for yi in y])
             X = X[~mask_singleton_sample].copy()
@@ -437,90 +459,47 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         if n_classes_non_singleton < 2:
             raise ValueError(
                 "LargeMarginNearestNeighbor needs at least 2 "
-                "non-singleton classes, got {}.".format(n_classes_non_singleton)
+                f"non-singleton classes, got {n_classes_non_singleton}."
             )
 
         classes_inverse_non_singleton = classes_inverse[~mask_singleton_class]
 
         # Check the preferred dimensionality of the transformed samples
-        if self.n_components is not None:
-            check_scalar(self.n_components, "n_components", numbers.Integral, min_val=1)
-
-            if self.n_components > X.shape[1]:
-                raise ValueError(
-                    "The preferred output dimensionality "
-                    "`n_components` ({}) cannot be greater "
-                    "than the given data dimensionality ({})!".format(
-                        self.n_components, X.shape[1]
-                    )
-                )
+        if self.n_components is not None and self.n_components > X.shape[1]:
+            raise ValueError(
+                "The preferred output dimensionality "
+                f"`n_components` ({self.n_components}) cannot be greater "
+                f"than the given data dimensionality ({X.shape[1]})!"
+            )
 
         # If warm_start is enabled, check that the inputs are consistent
-        check_scalar(self.warm_start, "warm_start", bool)
         if self.warm_start and hasattr(self, "components_"):
             if self.components_.shape[1] != X.shape[1]:
                 raise ValueError(
-                    "The new inputs dimensionality ({}) does not "
+                    f"The new inputs dimensionality ({X.shape[1]}) does not "
                     "match the input dimensionality of the "
-                    "previously learned transformation ({}).".format(
-                        X.shape[1], self.components_.shape[1]
-                    )
+                    f"previously learned transformation ({self.components_.shape[1]})."
                 )
-
-        check_scalar(
-            self.n_neighbors,
-            "n_neighbors",
-            numbers.Integral,
-            min_val=1,
-            max_val=X.shape[0] - 1,
-        )
-        check_scalar(self.max_iter, "max_iter", numbers.Integral, min_val=1)
-        check_scalar(self.tol, "tol", numbers.Real, min_val=0.0)
-        check_scalar(
-            self.push_loss_weight,
-            "push_loss_weight",
-            numbers.Real,
-            min_val=0.0,
-            max_val=1.0,
-        )
-        if self.push_loss_weight == 0:
-            raise ValueError("`push_loss_weight` cannot be zero.")
-
-        check_scalar(self.max_impostors, "max_impostors", numbers.Integral, min_val=1)
-        check_scalar(self.impostor_store, "impostor_store", str)
-        check_scalar(self.n_jobs, "n_jobs", numbers.Integral)
-        check_scalar(self.verbose, "verbose", numbers.Integral, min_val=0)
-
-        if self.impostor_store not in ["auto", "sparse", "list"]:
-            raise ValueError("`impostor_store` must be 'auto', 'sparse' or 'list'.")
-
-        if self.callback is not None:
-            if not callable(self.callback):
-                raise ValueError("`callback` is not callable.")
 
         # Check how the linear transformation should be initialized
         init = self.init
-        if isinstance(init, np.ndarray):
+        if not isinstance(init, str):
             init = check_array(init)
 
             # Assert that init.shape[1] = X.shape[1]
             if init.shape[1] != X.shape[1]:
                 raise ValueError(
-                    "The input dimensionality ({}) of the given "
+                    f"The input dimensionality ({init.shape[1]}) of the given "
                     "linear transformation `init` must match the "
-                    "dimensionality of the given inputs `X` ({}).".format(
-                        init.shape[1], X.shape[1]
-                    )
+                    f"dimensionality of the given inputs `X` ({X.shape[1]})."
                 )
 
             # Assert that init.shape[0] <= init.shape[1]
             if init.shape[0] > init.shape[1]:
                 raise ValueError(
-                    "The output dimensionality ({}) of the given "
+                    f"The output dimensionality ({init.shape[0]}) of the given "
                     "linear transformation `init` cannot be "
-                    "greater than its input dimensionality ({}).".format(
-                        init.shape[0], init.shape[1]
-                    )
+                    f"greater than its input dimensionality ({init.shape[1]})."
                 )
 
             if self.n_components is not None:
@@ -528,36 +507,25 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
                 if self.n_components != init.shape[0]:
                     raise ValueError(
                         "The preferred output dimensionality "
-                        "`n_components` ({}) does not match "
+                        f"`n_components` ({self.n_components}) does not match "
                         "the output dimensionality of the given "
-                        "linear transformation `init` ({})!".format(
-                            self.n_components, init.shape[0]
-                        )
+                        f"linear transformation `init` ({init.shape[0]})!"
                     )
-        elif init in ["pca", "identity"]:
-            pass
-        else:
-            raise ValueError(
-                "`init` must be 'pca', 'identity', or a numpy "
-                "array of shape (n_components, n_features)."
-            )
 
         # Check the preferred number of neighbors
         min_non_singleton_size = class_sizes[~mask_singleton_class].min()
         if self.n_neighbors >= min_non_singleton_size:
             warn(
-                "`n_neighbors` (={}) is not less than the number of "
+                f"`n_neighbors` (={self.n_neighbors}) is not less than the number of "
                 "samples in the smallest non-singleton class (={}). "
-                "`n_neighbors_` will be set to {} for estimation.".format(
-                    self.n_neighbors, min_non_singleton_size, min_non_singleton_size - 1
-                )
+                "`n_neighbors_` will be set to "
+                f"{min_non_singleton_size, min_non_singleton_size - 1} for estimation."
             )
 
         self.n_neighbors_ = min(self.n_neighbors, min_non_singleton_size - 1)
 
         neighbors_params = self.neighbors_params
         if neighbors_params is not None:
-            check_scalar(neighbors_params, "neighbors_params", dict)
             neighbors_params.setdefault("n_jobs", self.n_jobs)
             # Attempt to instantiate a NearestNeighbors instance here to
             # raise any errors before actually fitting
