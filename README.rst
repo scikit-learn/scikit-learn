@@ -208,4 +208,8 @@ If you use scikit-learn in a scientific publication, we would appreciate citatio
 Conference Paper 
 https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3694350
 
+Latest Paper to Read
+https://scikit-learn.org/stable/
+https://scikit-learn.org/stable/tutorial/basic/tutorial.html
+
 
