@@ -9,6 +9,7 @@ from sklearn.model_selection import LeaveOneOut
 from sklearn.utils import deprecated
 from sklearn.utils._param_validation import Hidden
 from sklearn.utils._param_validation import Interval
+from sklearn.utils._param_validation import Options
 from sklearn.utils._param_validation import StrOptions
 from sklearn.utils._param_validation import _ArrayLikes
 from sklearn.utils._param_validation import _Booleans
@@ -145,6 +146,16 @@ def test_stroptions():
     assert not options.is_satisfied_by("d")
 
     assert "'c' (deprecated)" in str(options)
+
+
+def test_options():
+    """Sanity check for the Options constraint"""
+    options = Options(Real, {-0.5, 0.5, np.inf}, deprecated={-0.5})
+    assert options.is_satisfied_by(-0.5)
+    assert options.is_satisfied_by(np.inf)
+    assert not options.is_satisfied_by(1.23)
+
+    assert "-0.5 (deprecated)" in str(options)
 
 
 @pytest.mark.parametrize(
@@ -334,6 +345,7 @@ def test_generate_invalid_param_val_all_valid(constraints):
         _VerboseHelper(),
         _MissingValues(),
         StrOptions({"a", "b", "c"}),
+        Options(Integral, {1, 2, 3}),
         Interval(Integral, None, None, closed="neither"),
         Interval(Integral, 0, 10, closed="neither"),
         Interval(Integral, 0, None, closed="neither"),
@@ -358,6 +370,7 @@ def test_generate_valid_param(constraint):
         (Interval(Real, 0, 1, closed="both"), 0.42),
         (Interval(Integral, 0, None, closed="neither"), 42),
         (StrOptions({"a", "b", "c"}), "b"),
+        (Options(type, {np.float32, np.float64}), np.float64),
         (callable, lambda x: x + 1),
         (None, None),
         ("array-like", [[1, 2], [3, 4]]),
@@ -392,6 +405,7 @@ def test_is_satisfied_by(constraint_declaration, value):
     [
         (Interval(Real, 0, 1, closed="both"), Interval),
         (StrOptions({"option1", "option2"}), StrOptions),
+        (Options(Real, {0.42, 1.23}), Options),
         ("array-like", _ArrayLikes),
         ("sparse matrix", _SparseMatrices),
         ("random_state", _RandomStates),
