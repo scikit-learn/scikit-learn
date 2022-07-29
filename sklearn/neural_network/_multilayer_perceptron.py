@@ -86,7 +86,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         "epsilon": [Interval(Real, 0, None, closed="neither")],
         "n_iter_no_change": [
             Interval(Integral, 1, None, closed="left"),
-            Options(Real, {np.inf})
+            Options(Real, {np.inf}),
         ],
         "max_fun": [Interval(Integral, 1, None, closed="left")],
     }
