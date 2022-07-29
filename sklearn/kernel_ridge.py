@@ -139,7 +139,7 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
         ],
         "gamma": [Interval(Real, 0, None, closed="left"), None],
         "degree": [Interval(Integral, 0, None, closed="left")],
-        "coef0": [Interval(Real, 0, None, closed="left")],
+        "coef0": [Interval(Real, None, None, closed="neither")],
         "kernel_params": [dict, None],
     }
 
