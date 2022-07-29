@@ -179,12 +179,12 @@ class BayesianRidge(RegressorMixin, LinearModel):
     _parameter_constraints = {
         "n_iter": [Interval(Integral, 1, None, closed="left")],
         "tol": [Interval(Real, 0, None, closed="left")],
-        "alpha_1": [Interval(Real, 0, None, closed="left")],
-        "alpha_2": [Interval(Real, 0, None, closed="left")],
-        "lambda_1": [Interval(Real, 0, None, closed="left")],
-        "lambda_2": [Interval(Real, 0, None, closed="left")],
-        "alpha_init": [Hidden(None), Interval(Real, 0, None, closed="left")],
-        "lambda_init": [Hidden(None), Interval(Real, 0, None, closed="left")],
+        "alpha_1": [Interval(Real, 1.0e-6, None, closed="left")],
+        "alpha_2": [Interval(Real, 1.0e-6, None, closed="left")],
+        "lambda_1": [Interval(Real, 1.0e-6, None, closed="left")],
+        "lambda_2": [Interval(Real, 1.0e-6, None, closed="left")],
+        "alpha_init": [Hidden(None), Interval(Real, 1.0e-6, None, closed="left")],
+        "lambda_init": [Hidden(None), Interval(Real, 1.0e-6, None, closed="left")],
         "compute_score": ["boolean"],
         "fit_intercept": ["boolean"],
         "normalize": [Hidden(StrOptions({"deprecated"})), "boolean"],
@@ -222,7 +222,6 @@ class BayesianRidge(RegressorMixin, LinearModel):
         self.normalize = normalize
         self.copy_X = copy_X
         self.verbose = verbose
-        self._validate_params()
 
     def fit(self, X, y, sample_weight=None):
         """Fit the model.
@@ -245,6 +244,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
         self : object
             Returns the instance itself.
         """
+        self._validate_params()
 
         self._normalize = _deprecate_normalize(
             self.normalize, default=False, estimator_name=self.__class__.__name__
