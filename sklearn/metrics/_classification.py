@@ -1,3 +1,4 @@
+
 """Metrics to assess performance on classification task given class prediction.
 
 Functions named as ``*_score`` return a scalar value to maximize: the higher
@@ -29,7 +30,7 @@ from scipy.sparse import coo_matrix
 from scipy.sparse import csr_matrix
 
 from _base import _check_pos_label_consistency
-from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import LabelEncoder, LabelBinarizer
 from sklearn.utils import assert_all_finite,check_array,check_consistent_length,column_or_1d
 from sklearn.utils.multiclass import unique_labels,type_of_target
 from sklearn.utils.validation import _num_samples
@@ -51,7 +52,7 @@ from sklearn.exceptions import  UndefinedMetricWarning
 # from ._base import _check_pos_label_consistency
 
 from scipy import stats as st
-from enum import Enum
+
 
 def _check_zero_division(zero_division):
     if isinstance(zero_division, str) and zero_division == "warn":
@@ -930,18 +931,15 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
     else:
         return cov_ytyp / np.sqrt(cov_ytyt * cov_ypyp)
 
-class AVERAG_TYPE(Enum):
-    MATTHEW_GEN = 2
-    F1_GEN = 3
 
-def generalized_matthew(y_true, y_pred,ave_type=AVERAG_TYPE.MATTHEW_GEN.value,sample_weight=None):
-     """"Examples
+def generalized_matthew(y_true, y_pred,ave_type="matthew",sample_weight=None):
+    """Examples
        y_true = [0] * 13 + [1] * 21 + [2] * 20
        y_pred = [0] * 5 + [1] * 6 + [2] * 2 + [0] * 2 + [1] * 8 + [2] * 11 + [0] * 8 + [1] * 2 + [2] * 10
        print("gen   F1 ",
                    generalized_matthew(y_true, y_pred,ave_type=3))
        print("gen     ",
-           generalized_matthew(y_true, y_pred))
+       .    generalized_matthew(y_true, y_pred))
 
        y_true= [0]*5+[1]*8+[2]*2+[3]*13
        print("gen   ",
@@ -954,87 +952,32 @@ def generalized_matthew(y_true, y_pred,ave_type=AVERAG_TYPE.MATTHEW_GEN.value,sa
        gen     0.03132735561190867
        gen   1.0
        gen  F1  1.0
-     """
+    """
 
+    y_type, y_true, y_pred = _check_targets(y_true, y_pred)
+    check_consistent_length(y_true, y_pred, sample_weight)
+    if y_type not in {"binary", "multiclass"}:
+        raise ValueError("%s is not supported" % y_type)
 
-     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
-     check_consistent_length(y_true, y_pred, sample_weight)
-     if y_type not in {"binary", "multiclass"}:
-         raise ValueError("%s is not supported" % y_type)
+    lb = LabelEncoder()
+    lb.fit(np.hstack([y_true, y_pred]))
+    y_true = lb.transform(y_true)
+    y_pred = lb.transform(y_pred)
 
-     lb = LabelEncoder()
-     lb.fit(np.hstack([y_true, y_pred]))
-     y_true = lb.transform(y_true)
-     y_pred = lb.transform(y_pred)
+    cc = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
+    dimension_size = cc.shape[0]
+    m1 = cc / cc.sum(axis=1)
+    m2 = cc / cc.sum(axis=0)
 
-     C = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
-     dimension_size = C.shape[0]
-
-      # A utitliy function which normalizes the confusion and perfroms the relevant average
-     def norm_confusion_mat(conf_mat, average, dimension_size):
-         m1 = C / C.sum( axis=1)
-         m2 = C / C.sum( axis=0)
-
-         return [[average([m1[i, j], m2[j][i]])
-                  for i in range(dimension_size)] for j in range(dimension_size)]
-
-     # A utitliy function that perfroms the generaized score of F1 . it calculates the hamonic average
-     # over the trace of the normalized confusion matrix
-     def gen_f1_scalar_op(h_conf_mat):
-         l_mat = len(h_conf_mat)
-         return st.mstats.hmean([h_conf_mat[i][i] for i in range(l_mat)])
-
-     # c=confusion_matrix(y_true=y_true,y_pred=y_pred ,labels=labels)
-     av_func =st.mstats.gmean
-     scalar_op =np.linalg.det
-     if ave_type ==AVERAG_TYPE.F1_GEN.value:
-         av_func = st.mstats.hmean
-         scalar_op =gen_f1_scalar_op
-
-     G_mat= norm_confusion_mat(C, av_func, dimension_size)
-     return scalar_op(G_mat)
-
-# def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
-#     """Compute the Matthews correlation coefficient (MCC).
-#
-#     The Matthews correlation coefficient is used in machine learning as a
-#     measure of the quality of binary and multiclass classifications. It takes
-#     into account true and false positives and negatives and is generally
-#     regarded as a balanced measure which can be used even if the classes are of
-#     very different sizes. The MCC is in essence a correlation coefficient value
-#     between -1 and +1. A coefficient of +1 represents a perfect prediction, 0
-#     an average random prediction and -1 an inverse prediction.  The statistic
-#     is also known as the phi coefficient. [source: Wikipedia]
-#
-#     Binary and multiclass labels are supported.  Only in the binary case does
-#     this relate to information about true and false positives and negatives.
-#     See references below.
-#
-#     Read more in the :ref:`User Guide <matthews_corrcoef>`.
-#
-#     Parameters
-#     ----------
-#     y_true : array, shape = [n_samples]
-#         Ground truth (correct) target values.
-#
-#     y_pred : array, shape = [n_samples]
-#         Estimated targets as returned by a classifier.
-#
-#     sample_weight : array-like of shape (n_samples,), default=None
-#         Sample weights.
-#
-#         .. versionadded:: 0.18
-#
-#     Returns
-#     -------
-#     mcc : float
-#         The Matthews correlation coefficient (+1 represents a perfect
-#         prediction, 0 an average random prediction and -1 and inverse
-#         prediction).
-#
-
-
-
+    if ave_type == "f1":
+        g_mat = [[st.mstats.hmean([m1[i, j], m2[j][i]])
+            for i in range(dimension_size)] for j in range(dimension_size)]
+        return st.mstats.hmean([g_mat[i][i] for i in range(dimension_size)])
+    elif ave_type == "matthew":
+        g_mat = [[st.mstats.gmean([m1[i, j], m2[j][i]])
+            for i in range(dimension_size)] for j in range(dimension_size)]
+        return np.linalg.det(g_mat)
+    return 0.0
 
 def zero_one_loss(y_true, y_pred, *, normalize=True, sample_weight=None):
     """Zero-one classification loss.
