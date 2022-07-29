@@ -97,9 +97,9 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
 
     threshold : str or float, default=None
         The threshold value to use for feature selection. Features whose
-        importance is greater or equal are kept while the others are
-        discarded. If "median" (resp. "mean"), then the ``threshold`` value is
-        the median (resp. the mean) of the feature importances. A scaling
+        absolute importance value is greater or equal are kept while the others
+        are discarded. If "median" (resp. "mean"), then the ``threshold`` value
+        is the median (resp. the mean) of the feature importances. A scaling
         factor (e.g., "1.25*mean") may also be used. If None and if the
         estimator has a parameter penalty set to l1, either explicitly
         or implicitly (e.g, Lasso), the threshold used is 1e-5.
