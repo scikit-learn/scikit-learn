@@ -142,6 +142,7 @@ class ConfusionMatrixDisplay:
         default_im_kw = dict(interpolation="nearest", cmap=cmap)
         im_kw = im_kw or {}
         im_kw = {**default_im_kw, **im_kw}
+        text_kw = text_kw or {}
 
         self.im_ = ax.imshow(cm, **im_kw)
         self.text_ = None
