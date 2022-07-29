@@ -374,7 +374,7 @@ def adjusted_rand_score(labels_true, labels_pred):
       0.0
 
     ARI may take a negative value for especially discordant labelings that
-    underperform compared to the expected value of random labels::
+    are a worse choice than the expected value of random labels::
 
       >>> adjusted_rand_score([0, 0, 1, 1], [0, 1, 0, 1])
       -0.5
