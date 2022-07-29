@@ -222,6 +222,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
         self.normalize = normalize
         self.copy_X = copy_X
         self.verbose = verbose
+        self._validate_params()
 
     def fit(self, X, y, sample_weight=None):
         """Fit the model.
@@ -244,7 +245,6 @@ class BayesianRidge(RegressorMixin, LinearModel):
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
 
         self._normalize = _deprecate_normalize(
             self.normalize, default=False, estimator_name=self.__class__.__name__
