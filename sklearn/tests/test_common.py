@@ -447,7 +447,6 @@ def test_estimators_do_not_raise_errors_in_init_or_set_params(Estimator):
 
 PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "AdditiveChi2Sampler",
-    "AffinityPropagation",
     "BayesianGaussianMixture",
     "BayesianRidge",
     "CalibratedClassifierCV",
@@ -460,7 +459,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "HashingVectorizer",
     "Isomap",
     "IterativeImputer",
-    "KernelPCA",
     "LabelPropagation",
     "LabelSpreading",
     "Lars",
@@ -473,14 +471,10 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "MiniBatchDictionaryLearning",
     "MultiTaskElasticNet",
     "MultiTaskLasso",
-    "NearestCentroid",
     "NeighborhoodComponentsAnalysis",
-    "NuSVC",
-    "NuSVR",
     "Nystroem",
     "OAS",
     "OPTICS",
-    "OneClassSVM",
     "OneVsOneClassifier",
     "OneVsRestClassifier",
     "PatchExtractor",
@@ -494,8 +488,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "RegressorChain",
     "RidgeCV",
     "RidgeClassifierCV",
-    "SVC",
-    "SVR",
     "SelectFdr",
     "SelectFpr",
     "SelectFromModel",
@@ -510,11 +502,7 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "SpectralCoclustering",
     "SpectralEmbedding",
     "SplineTransformer",
-    "StackingClassifier",
-    "StackingRegressor",
     "TransformedTargetRegressor",
-    "VotingClassifier",
-    "VotingRegressor",
 ]
 
 

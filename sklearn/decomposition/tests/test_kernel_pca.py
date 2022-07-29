@@ -67,12 +67,6 @@ def test_kernel_pca():
                 assert X_pred2.shape == X_pred.shape
 
 
-def test_kernel_pca_invalid_solver():
-    """Check that kPCA raises an error if the solver parameter is invalid"""
-    with pytest.raises(ValueError):
-        KernelPCA(eigen_solver="unknown").fit(np.random.randn(10, 10))
-
-
 def test_kernel_pca_invalid_parameters():
     """Check that kPCA raises an error if the parameters are invalid
 
@@ -204,16 +198,6 @@ def test_kernel_pca_n_components():
             assert shape == (2, c)
 
 
-@pytest.mark.parametrize("n_components", [-1, 0])
-def test_kernal_pca_too_few_components(n_components):
-    rng = np.random.RandomState(0)
-    X_fit = rng.random_sample((5, 4))
-    kpca = KernelPCA(n_components=n_components)
-    msg = "n_components.* must be >= 1"
-    with pytest.raises(ValueError, match=msg):
-        kpca.fit(X_fit)
-
-
 def test_remove_zero_eig():
     """Check that the ``remove_zero_eig`` parameter works correctly.
 
@@ -324,18 +308,6 @@ def test_kernel_pca_precomputed_non_symmetric(solver):
     # comparison between the non-centered and centered versions
     assert_array_equal(kpca.eigenvectors_, kpca_c.eigenvectors_)
     assert_array_equal(kpca.eigenvalues_, kpca_c.eigenvalues_)
-
-
-def test_kernel_pca_invalid_kernel():
-    """Tests that using an invalid kernel name raises a ValueError
-
-    An invalid kernel name should raise a ValueError at fit time.
-    """
-    rng = np.random.RandomState(0)
-    X_fit = rng.random_sample((2, 4))
-    kpca = KernelPCA(kernel="tototiti")
-    with pytest.raises(ValueError):
-        kpca.fit(X_fit)
 
 
 def test_gridsearch_pipeline():
