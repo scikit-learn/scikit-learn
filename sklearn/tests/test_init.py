@@ -1,12 +1,13 @@
 # Basic unittests to test functioning of module's top-level
 
 
-__author__ = 'Yaroslav Halchenko'
-__license__ = 'BSD'
+__author__ = "Yaroslav Halchenko"
+__license__ = "BSD"
 
 
 try:
     from sklearn import *  # noqa
+
     _top_import_error = None
 except Exception as e:
     _top_import_error = e

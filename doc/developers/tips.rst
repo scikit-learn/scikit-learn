@@ -79,7 +79,7 @@ When a unit test fails, the following tricks can make debugging easier:
   2. The argument ``pytest --pdb`` drops into the Python debugger on failure. To
      instead drop into the rich IPython debugger ``ipdb``, you may set up a
      shell alias to:
-    
+
 .. prompt:: bash $
 
     pytest --pdbcls=IPython.terminal.debugger:TerminalPdb --capture no
@@ -190,7 +190,7 @@ PR-NEW: Fix #
 PR-NEW or Issue: Maintenance cost
     ::
 
-        Every feature we include has a [maintenance cost](http://scikit-learn.org/dev/faq.html#why-are-you-so-selective-on-what-algorithms-you-include-in-scikit-learn). Our maintainers are mostly volunteers. For a new feature to be included, we need evidence that it is often useful and, ideally, [well-established](http://scikit-learn.org/dev/faq.html#what-are-the-inclusion-criteria-for-new-algorithms) in the literature or in practice. That doesn't stop you implementing it for yourself and publishing it in a separate repository, or even [scikit-learn-contrib](https://scikit-learn-contrib.github.io).
+        Every feature we include has a [maintenance cost](http://scikit-learn.org/dev/faq.html#why-are-you-so-selective-on-what-algorithms-you-include-in-scikit-learn). Our maintainers are mostly volunteers. For a new feature to be included, we need evidence that it is often useful and, ideally, [well-established](http://scikit-learn.org/dev/faq.html#what-are-the-inclusion-criteria-for-new-algorithms) in the literature or in practice. Also, we expect PR authors to take part in the maintenance for the code they submit, at least initially. That doesn't stop you implementing it for yourself and publishing it in a separate repository, or even [scikit-learn-contrib](https://scikit-learn-contrib.github.io).
 
 PR-WIP: What's needed before merge?
     ::
@@ -200,7 +200,7 @@ PR-WIP: What's needed before merge?
 PR-WIP: Regression test needed
     ::
 
-        Please add a [non-regression test](https://en.wikipedia.org/wiki/Non-regression_testing) that would fail at master but pass in this PR.
+        Please add a [non-regression test](https://en.wikipedia.org/wiki/Non-regression_testing) that would fail at main but pass in this PR.
 
 PR-WIP: PEP8
     ::
@@ -229,7 +229,7 @@ Debugging memory errors in Cython with valgrind
 
 While python/numpy's built-in memory management is relatively robust, it can
 lead to performance penalties for some routines. For this reason, much of
-the high-performance code in scikit-learn in written in cython. This
+the high-performance code in scikit-learn is written in cython. This
 performance gain comes with a tradeoff, however: it is very easy for memory
 bugs to crop up in cython code, especially in situations where that code
 relies heavily on pointer arithmetic.

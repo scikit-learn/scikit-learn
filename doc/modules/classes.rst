@@ -104,6 +104,7 @@ Classes
    cluster.DBSCAN
    cluster.FeatureAgglomeration
    cluster.KMeans
+   cluster.BisectingKMeans
    cluster.MiniBatchKMeans
    cluster.MeanShift
    cluster.OPTICS
@@ -319,6 +320,7 @@ Samples generator
    decomposition.MiniBatchDictionaryLearning
    decomposition.MiniBatchSparsePCA
    decomposition.NMF
+   decomposition.MiniBatchNMF
    decomposition.PCA
    decomposition.SparsePCA
    decomposition.SparseCoder
@@ -560,6 +562,7 @@ From text
    feature_selection.chi2
    feature_selection.f_classif
    feature_selection.f_regression
+   feature_selection.r_regression
    feature_selection.mutual_info_classif
    feature_selection.mutual_info_regression
 
@@ -656,6 +659,7 @@ Plotting
    :toctree: generated/
    :template: class.rst
 
+   inspection.DecisionBoundaryDisplay
    inspection.PartialDependenceDisplay
 
 .. autosummary::
@@ -762,6 +766,7 @@ Linear classifiers
    linear_model.RidgeClassifier
    linear_model.RidgeClassifierCV
    linear_model.SGDClassifier
+   linear_model.SGDOneClassSVM
 
 Classical linear regressors
 ---------------------------
@@ -837,6 +842,7 @@ Any estimator using the Huber loss would also be robust to outliers, e.g.
    :template: class.rst
 
    linear_model.HuberRegressor
+   linear_model.QuantileRegressor
    linear_model.RANSACRegressor
    linear_model.TheilSenRegressor
 
@@ -930,6 +936,7 @@ details.
 
    metrics.check_scoring
    metrics.get_scorer
+   metrics.get_scorer_names
    metrics.make_scorer
 
 Classification metrics
@@ -947,6 +954,7 @@ details.
    metrics.average_precision_score
    metrics.balanced_accuracy_score
    metrics.brier_score_loss
+   metrics.class_likelihood_ratios
    metrics.classification_report
    metrics.cohen_kappa_score
    metrics.confusion_matrix
@@ -991,6 +999,10 @@ details.
    metrics.mean_poisson_deviance
    metrics.mean_gamma_deviance
    metrics.mean_tweedie_deviance
+   metrics.d2_tweedie_score
+   metrics.mean_pinball_loss
+   metrics.d2_pinball_score
+   metrics.d2_absolute_error_score
 
 Multilabel ranking metrics
 --------------------------
@@ -1053,6 +1065,16 @@ further details.
 
    metrics.consensus_score
 
+Distance metrics
+----------------
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   metrics.DistanceMetric
 
 Pairwise metrics
 ----------------
@@ -1119,7 +1141,7 @@ See the :ref:`visualizations` section of the user guide for further details.
    metrics.DetCurveDisplay
    metrics.PrecisionRecallDisplay
    metrics.RocCurveDisplay
-
+   calibration.CalibrationDisplay
 
 .. _mixture_ref:
 
@@ -1175,6 +1197,7 @@ Splitter Classes
    model_selection.ShuffleSplit
    model_selection.StratifiedKFold
    model_selection.StratifiedShuffleSplit
+   model_selection.StratifiedGroupKFold
    model_selection.TimeSeriesSplit
 
 Splitter Functions
@@ -1311,7 +1334,6 @@ Model validation
    :template: class.rst
 
    neighbors.BallTree
-   neighbors.DistanceMetric
    neighbors.KDTree
    neighbors.KernelDensity
    neighbors.KNeighborsClassifier
@@ -1332,6 +1354,7 @@ Model validation
 
    neighbors.kneighbors_graph
    neighbors.radius_neighbors_graph
+   neighbors.sort_graph_by_row_values
 
 .. _neural_network_ref:
 
@@ -1415,6 +1438,7 @@ details.
    preprocessing.PowerTransformer
    preprocessing.QuantileTransformer
    preprocessing.RobustScaler
+   preprocessing.SplineTransformer
    preprocessing.StandardScaler
 
 .. autosummary::
@@ -1571,12 +1595,17 @@ Plotting
 
 .. autosummary::
    :toctree: generated/
+   :template: class.rst
+
+   utils.Bunch
+
+.. autosummary::
+   :toctree: generated/
    :template: function.rst
 
    utils.arrayfuncs.min_pos
    utils.as_float_array
    utils.assert_all_finite
-   utils.Bunch
    utils.check_X_y
    utils.check_array
    utils.check_scalar
@@ -1594,11 +1623,11 @@ Plotting
    utils.extmath.fast_logdet
    utils.extmath.density
    utils.extmath.weighted_mode
+   utils.gen_batches
    utils.gen_even_slices
    utils.graph.single_source_shortest_path_length
-   utils.graph_shortest_path.graph_shortest_path
    utils.indexable
-   utils.metaestimators.if_delegate_has_method
+   utils.metaestimators.available_if
    utils.multiclass.type_of_target
    utils.multiclass.is_multilabel
    utils.multiclass.unique_labels
@@ -1638,5 +1667,11 @@ Utilities from joblib:
 Recently deprecated
 ===================
 
-To be removed in 1.0 (renaming of 0.25)
----------------------------------------
+To be removed in 1.3
+--------------------
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   utils.metaestimators.if_delegate_has_method

@@ -23,7 +23,26 @@ Manifold learning
 .. figure:: ../auto_examples/manifold/images/sphx_glr_plot_compare_methods_001.png
    :target: ../auto_examples/manifold/plot_compare_methods.html
    :align: center
-   :scale: 60
+   :scale: 70%
+
+.. |manifold_img3| image:: ../auto_examples/manifold/images/sphx_glr_plot_compare_methods_003.png
+  :target: ../auto_examples/manifold/plot_compare_methods.html
+  :scale: 60%
+
+.. |manifold_img4| image:: ../auto_examples/manifold/images/sphx_glr_plot_compare_methods_004.png
+    :target: ../auto_examples/manifold/plot_compare_methods.html
+    :scale: 60%
+
+.. |manifold_img5| image:: ../auto_examples/manifold/images/sphx_glr_plot_compare_methods_005.png
+    :target: ../auto_examples/manifold/plot_compare_methods.html
+    :scale: 60%
+
+.. |manifold_img6| image:: ../auto_examples/manifold/images/sphx_glr_plot_compare_methods_006.png
+    :target: ../auto_examples/manifold/plot_compare_methods.html
+    :scale: 60%
+
+.. centered:: |manifold_img3| |manifold_img4| |manifold_img5| |manifold_img6|
+
 
 Manifold learning is an approach to non-linear dimensionality reduction.
 Algorithms for this task are based on the idea that the dimensionality of
@@ -387,9 +406,9 @@ The overall complexity of standard LTSA is
 
 .. topic:: References:
 
-   * `"Principal manifolds and nonlinear dimensionality reduction via
+   * :arxiv:`"Principal manifolds and nonlinear dimensionality reduction via
      tangent space alignment"
-     <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.4.3693>`_
+     <cs/0212008>`
      Zhang, Z. & Zha, H. Journal of Shanghai Univ. 8:406 (2004)
 
 .. _multidimensional_scaling:
@@ -408,7 +427,7 @@ distances in a geometric spaces. The data can be ratings of similarity between
 objects, interaction frequencies of molecules, or trade indices between
 countries.
 
-There exists two types of MDS algorithm: metric and non metric. In the
+There exists two types of MDS algorithm: metric and non metric. In
 scikit-learn, the class :class:`MDS` implements both. In Metric MDS, the input
 similarity matrix arises from a metric (and thus respects the triangular
 inequality), the distances between output two points are then set to be as
@@ -443,14 +462,28 @@ Nonmetric MDS
 -------------
 
 Non metric :class:`MDS` focuses on the ordination of the data. If
-:math:`S_{ij} < S_{jk}`, then the embedding should enforce :math:`d_{ij} <
-d_{jk}`. A simple algorithm to enforce that is to use a monotonic regression
-of :math:`d_{ij}` on :math:`S_{ij}`, yielding disparities :math:`\hat{d}_{ij}`
-in the same order as :math:`S_{ij}`.
+:math:`S_{ij} > S_{jk}`, then the embedding should enforce :math:`d_{ij} <
+d_{jk}`. For this reason, we discuss it in terms of dissimilarities
+(:math:`\delta_{ij}`) instead of similarities (:math:`S_{ij}`). Note that
+dissimilarities can easily be obtained from similarities through a simple
+transform, e.g. :math:`\delta_{ij}=c_1-c_2 S_{ij}` for some real constants
+:math:`c_1, c_2`. A simple algorithm to enforce proper ordination is to use a
+monotonic regression of :math:`d_{ij}` on :math:`\delta_{ij}`, yielding
+disparities :math:`\hat{d}_{ij}` in the same order as :math:`\delta_{ij}`.
 
 A trivial solution to this problem is to set all the points on the origin. In
-order to avoid that, the disparities :math:`\hat{d}_{ij}` are normalized.
+order to avoid that, the disparities :math:`\hat{d}_{ij}` are normalized. Note
+that since we only care about relative ordering, our objective should be
+invariant to simple translation and scaling, however the stress used in metric
+MDS is sensitive to scaling. To address this, non-metric MDS may use a
+normalized stress, known as Stress-1 defined as
 
+.. math::
+    \sqrt{\frac{\sum_{i < j} (d_{ij} - \hat{d}_{ij})^2}{\sum_{i < j} d_{ij}^2}}.
+
+The use of normalized Stress-1 can be enabled by setting `normalized_stress=True`,
+however it is only compatible with the non-metric MDS problem and will be ignored
+in the metric case.
 
 .. figure:: ../auto_examples/manifold/images/sphx_glr_plot_mds_001.png
    :target: ../auto_examples/manifold/plot_mds.html
@@ -465,11 +498,11 @@ order to avoid that, the disparities :math:`\hat{d}_{ij}` are normalized.
     Borg, I.; Groenen P. Springer Series in Statistics (1997)
 
   * `"Nonmetric multidimensional scaling: a numerical method"
-    <https://link.springer.com/article/10.1007%2FBF02289694>`_
+    <http://cda.psych.uiuc.edu/psychometrika_highly_cited_articles/kruskal_1964b.pdf>`_
     Kruskal, J. Psychometrika, 29 (1964)
 
   * `"Multidimensional scaling by optimizing goodness of fit to a nonmetric hypothesis"
-    <https://link.springer.com/article/10.1007%2FBF02289565>`_
+    <http://cda.psych.uiuc.edu/psychometrika_highly_cited_articles/kruskal_1964a.pdf>`_
     Kruskal, J. Psychometrika, 29, (1964)
 
 .. _t_sne:
@@ -555,7 +588,10 @@ between natural clusters in the data. If the factor is too high, the KL
 divergence could increase during this phase. Usually it does not have to be
 tuned. A critical parameter is the learning rate. If it is too low gradient
 descent will get stuck in a bad local minimum. If it is too high the KL
-divergence will increase during optimization. More tips can be found in
+divergence will increase during optimization. A heuristic suggested in
+Belkina et al. (2019) is to set the learning rate to the sample size
+divided by the early exaggeration factor. We implement this heuristic
+as `learning_rate='auto'` argument. More tips can be found in
 Laurens van der Maaten's FAQ (see references). The last parameter, angle,
 is a tradeoff between performance and accuracy. Larger angles imply that we
 can approximate larger regions by a single point, leading to better speed
@@ -599,7 +635,7 @@ be well separated by non linear methods that focus on the local structure (e.g.
 an SVM with a Gaussian RBF kernel). However, failing to visualize well
 separated homogeneously labeled groups with t-SNE in 2D does not necessarily
 imply that the data cannot be correctly classified by a supervised model. It
-might be the case that 2 dimensions are not low enough to accurately represents
+might be the case that 2 dimensions are not high enough to accurately represent
 the internal structure of the data.
 
 
@@ -614,9 +650,15 @@ the internal structure of the data.
     <https://lvdmaaten.github.io/tsne/>`_
     van der Maaten, L.J.P.
 
-  * `"Accelerating t-SNE using Tree-Based Algorithms."
+  * `"Accelerating t-SNE using Tree-Based Algorithms"
     <https://lvdmaaten.github.io/publications/papers/JMLR_2014.pdf>`_
-    L.J.P. van der Maaten.  Journal of Machine Learning Research 15(Oct):3221-3245, 2014.
+    van der Maaten, L.J.P.; Journal of Machine Learning Research 15(Oct):3221-3245, 2014.
+
+  * `"Automated optimized parameters for T-distributed stochastic neighbor
+    embedding improve visualization and analysis of large datasets"
+    <https://www.nature.com/articles/s41467-019-13055-y>`_
+    Belkina, A.C., Ciccolella, C.O., Anno, R., Halpert, R., Spidlen, J.,
+    Snyder-Cappione, J.E., Nature Communications 10, 5415 (2019).
 
 Tips on practical use
 =====================

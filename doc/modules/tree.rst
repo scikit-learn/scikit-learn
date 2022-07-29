@@ -23,19 +23,19 @@ the tree, the more complex the decision rules and the fitter the model.
 
 Some advantages of decision trees are:
 
-    - Simple to understand and to interpret. Trees can be visualised.
+    - Simple to understand and to interpret. Trees can be visualized.
 
     - Requires little data preparation. Other techniques often require data
-      normalisation, dummy variables need to be created and blank values to
+      normalization, dummy variables need to be created and blank values to
       be removed. Note however that this module does not support missing
       values.
 
     - The cost of using the tree (i.e., predicting data) is logarithmic in the
       number of data points used to train the tree.
 
-    - Able to handle both numerical and categorical data. However scikit-learn
+    - Able to handle both numerical and categorical data. However, the scikit-learn
       implementation does not support categorical variables for now. Other
-      techniques are usually specialised in analysing datasets that have only one type
+      techniques are usually specialized in analyzing datasets that have only one type
       of variable. See :ref:`algorithms <tree_algorithms>` for more
       information.
 
@@ -56,7 +56,7 @@ Some advantages of decision trees are:
 The disadvantages of decision trees include:
 
     - Decision-tree learners can create over-complex trees that do not
-      generalise the data well. This is called overfitting. Mechanisms
+      generalize the data well. This is called overfitting. Mechanisms
       such as pruning, setting the minimum number of samples required
       at a leaf node or setting the maximum depth of the tree are
       necessary to avoid this problem.
@@ -130,14 +130,16 @@ Using the Iris dataset, we can construct a tree as follows::
 
     >>> from sklearn.datasets import load_iris
     >>> from sklearn import tree
-    >>> X, y = load_iris(return_X_y=True)
+    >>> iris = load_iris()
+    >>> X, y = iris.data, iris.target
     >>> clf = tree.DecisionTreeClassifier()
     >>> clf = clf.fit(X, y)
 
 Once trained, you can plot the tree with the :func:`plot_tree` function::
 
 
-    >>> tree.plot_tree(clf) # doctest: +SKIP
+    >>> tree.plot_tree(clf)
+    [...]
 
 .. figure:: ../auto_examples/tree/images/sphx_glr_plot_iris_dtc_002.png
    :target: ../auto_examples/tree/plot_iris_dtc.html
@@ -322,7 +324,8 @@ In general, the run time cost to construct a balanced binary tree is
 to generate balanced trees, they will not always be balanced.  Assuming that the
 subtrees remain approximately balanced, the cost at each node consists of
 searching through :math:`O(n_{features})` to find the feature that offers the
-largest reduction in entropy.  This has a cost of
+largest reduction in the impurity criterion, e.g. log loss (which is equivalent to an
+information gain). This has a cost of
 :math:`O(n_{features}n_{samples}\log(n_{samples}))` at each node, leading to a
 total cost over the entire trees (by summing the cost at each node) of
 :math:`O(n_{features}n_{samples}^{2}\log(n_{samples}))`.
@@ -343,7 +346,7 @@ Tips on practical use
     in gaining more insights about how the decision tree makes predictions, which is
     important for understanding the important features in the data.
 
-  * Visualise your tree as you are training by using the ``export``
+  * Visualize your tree as you are training by using the ``export``
     function.  Use ``max_depth=3`` as an initial tree depth to get a feel for
     how the tree is fitting to your data, and then increase the depth.
 
@@ -405,14 +408,14 @@ The algorithm creates a multiway tree, finding for each node (i.e. in
 a greedy manner) the categorical feature that will yield the largest
 information gain for categorical targets. Trees are grown to their
 maximum size and then a pruning step is usually applied to improve the
-ability of the tree to generalise to unseen data.
+ability of the tree to generalize to unseen data.
 
 C4.5 is the successor to ID3 and removed the restriction that features
 must be categorical by dynamically defining a discrete attribute (based
 on numerical variables) that partitions the continuous attribute value
 into a discrete set of intervals. C4.5 converts the trained trees
 (i.e. the output of the ID3 algorithm) into sets of if-then rules.
-These accuracy of each rule is then evaluated to determine the order
+The accuracy of each rule is then evaluated to determine the order
 in which they should be applied. Pruning is done by removing a rule's
 precondition if the accuracy of the rule improves without it.
 
@@ -420,16 +423,15 @@ C5.0 is Quinlan's latest version release under a proprietary license.
 It uses less memory and builds smaller rulesets than C4.5 while being
 more accurate.
 
-CART_ (Classification and Regression Trees) is very similar to C4.5, but
+CART (Classification and Regression Trees) is very similar to C4.5, but
 it differs in that it supports numerical target variables (regression) and
 does not compute rule sets. CART constructs binary trees using the feature
 and threshold that yield the largest information gain at each node.
 
-scikit-learn uses an optimised version of the CART algorithm; however, scikit-learn
-implementation does not support categorical variables for now.
+scikit-learn uses an optimized version of the CART algorithm; however, the
+scikit-learn implementation does not support categorical variables for now.
 
 .. _ID3: https://en.wikipedia.org/wiki/ID3_algorithm
-.. _CART: https://en.wikipedia.org/wiki/Predictive_analytics#Classification_and_regression_trees_.28CART.29
 
 
 .. _tree_mathematical_formulation:
@@ -442,14 +444,14 @@ Given training vectors :math:`x_i \in R^n`, i=1,..., l and a label vector
 such that the samples with the same labels or similar target values are grouped
 together.
 
-Let the data at node :math:`m` be represented by :math:`Q_m` with :math:`N_m`
+Let the data at node :math:`m` be represented by :math:`Q_m` with :math:`n_m`
 samples. For each candidate split :math:`\theta = (j, t_m)` consisting of a
 feature :math:`j` and threshold :math:`t_m`, partition the data into
 :math:`Q_m^{left}(\theta)` and :math:`Q_m^{right}(\theta)` subsets
 
 .. math::
 
-    Q_m^{left}(\theta) = \{(x, y) | x_j <= t_m\}
+    Q_m^{left}(\theta) = \{(x, y) | x_j \leq t_m\}
 
     Q_m^{right}(\theta) = Q_m \setminus Q_m^{left}(\theta)
 
@@ -459,8 +461,8 @@ the task being solved (classification or regression)
 
 .. math::
 
-   G(Q_m, \theta) = \frac{N_m^{left}}{N_m} H(Q_m^{left}(\theta))
-   + \frac{N_m^{right}}{N_m} H(Q_m^{right}(\theta))
+   G(Q_m, \theta) = \frac{n_m^{left}}{n_m} H(Q_m^{left}(\theta))
+   + \frac{n_m^{right}}{n_m} H(Q_m^{right}(\theta))
 
 Select the parameters that minimises the impurity
 
@@ -470,7 +472,7 @@ Select the parameters that minimises the impurity
 
 Recurse for subsets :math:`Q_m^{left}(\theta^*)` and
 :math:`Q_m^{right}(\theta^*)` until the maximum allowable depth is reached,
-:math:`N_m < \min_{samples}` or :math:`N_m = 1`.
+:math:`n_m < \min_{samples}` or :math:`n_m = 1`.
 
 Classification criteria
 -----------------------
@@ -480,7 +482,7 @@ for node :math:`m`, let
 
 .. math::
 
-    p_{mk} = 1/ N_m \sum_{y \in Q_m} I(y = k)
+    p_{mk} = \frac{1}{n_m} \sum_{y \in Q_m} I(y = k)
 
 be the proportion of class k observations in node :math:`m`. If :math:`m` is a
 terminal node, `predict_proba` for this region is set to :math:`p_{mk}`.
@@ -492,17 +494,42 @@ Gini:
 
     H(Q_m) = \sum_k p_{mk} (1 - p_{mk})
 
-Entropy:
+Log Loss or Entropy:
 
 .. math::
 
     H(Q_m) = - \sum_k p_{mk} \log(p_{mk})
 
-Misclassification:
 
-.. math::
+.. note::
 
-    H(Q_m) = 1 - \max(p_{mk})
+  The entropy criterion computes the Shannon entropy of the possible classes. It
+  takes the class frequencies of the training data points that reached a given
+  leaf :math:`m` as their probability. Using the **Shannon entropy as tree node
+  splitting criterion is equivalent to minimizing the log loss** (also known as
+  cross-entropy and multinomial deviance) between the true labels :math:`y_i`
+  and the probalistic predictions :math:`T_k(x_i)` of the tree model :math:`T` for class :math:`k`.
+
+  To see this, first recall that the log loss of a tree model :math:`T`
+  computed on a dataset :math:`D` is defined as follows:
+
+  .. math::
+
+      \mathrm{LL}(D, T) = -\frac{1}{n} \sum_{(x_i, y_i) \in D} \sum_k I(y_i = k) \log(T_k(x_i))
+
+  where :math:`D` is a training dataset of :math:`n` pairs :math:`(x_i, y_i)`.
+
+  In a classification tree, the predicted class probabilities within leaf nodes
+  are constant, that is: for all :math:`(x_i, y_i) \in Q_m`, one has:
+  :math:`T_k(x_i) = p_{mk}` for each class :math:`k`.
+
+  This property makes it possible to rewrite :math:`\mathrm{LL}(D, T)` as the
+  sum of the Shannon entropies computed for each leaf of :math:`T` weighted by
+  the number of training data points that reached each leaf:
+
+  .. math::
+
+      \mathrm{LL}(D, T) = \sum_{m \in T} \frac{n_m}{n} H(Q_m)
 
 Regression criteria
 -------------------
@@ -519,15 +546,15 @@ Mean Squared Error:
 
 .. math::
 
-    \bar{y}_m = \frac{1}{N_m} \sum_{y \in Q_m} y
+    \bar{y}_m = \frac{1}{n_m} \sum_{y \in Q_m} y
 
-    H(Q_m) = \frac{1}{N_m} \sum_{y \in Q_m} (y - \bar{y}_m)^2
+    H(Q_m) = \frac{1}{n_m} \sum_{y \in Q_m} (y - \bar{y}_m)^2
 
 Half Poisson deviance:
 
 .. math::
 
-    H(Q_m) = \frac{1}{N_m} \sum_{y \in Q_m} (y \log\frac{y}{\bar{y}_m}
+    H(Q_m) = \frac{1}{n_m} \sum_{y \in Q_m} (y \log\frac{y}{\bar{y}_m}
     - y + \bar{y}_m)
 
 Setting `criterion="poisson"` might be a good choice if your target is a count
@@ -541,7 +568,7 @@ Mean Absolute Error:
 
     median(y)_m = \underset{y \in Q_m}{\mathrm{median}}(y)
 
-    H(Q_m) = \frac{1}{N_m} \sum_{y \in Q_m} |y - median(y)_m|
+    H(Q_m) = \frac{1}{n_m} \sum_{y \in Q_m} |y - median(y)_m|
 
 Note that it fits much slower than the MSE criterion.
 
