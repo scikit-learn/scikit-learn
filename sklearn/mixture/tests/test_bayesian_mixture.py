@@ -2,7 +2,6 @@
 #         Thierry Guillemot <thierry.guillemot.work@gmail.com>
 # License: BSD 3 clause
 import copy
-import re
 
 import numpy as np
 from scipy.special import gammaln
