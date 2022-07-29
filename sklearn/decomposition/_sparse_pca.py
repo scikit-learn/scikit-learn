@@ -7,6 +7,7 @@ from numbers import Integral, Real
 import numpy as np
 
 from ..utils import check_random_state
+from ..utils.extmath import svd_flip
 from ..utils._param_validation import Hidden, Interval, StrOptions
 from ..utils.validation import check_array, check_is_fitted
 from ..linear_model import ridge_regression
@@ -303,7 +304,7 @@ class SparsePCA(_BaseSparsePCA):
 
         code_init = self.V_init.T if self.V_init is not None else None
         dict_init = self.U_init.T if self.U_init is not None else None
-        Vt, _, E, self.n_iter_ = dict_learning(
+        code, dictionary, E, self.n_iter_ = dict_learning(
             X.T,
             n_components,
             alpha=self.alpha,
@@ -317,7 +318,9 @@ class SparsePCA(_BaseSparsePCA):
             dict_init=dict_init,
             return_n_iter=True,
         )
-        self.components_ = Vt.T
+        # flip eigenvectors' sign to enforce deterministic output
+        code, dictionary = svd_flip(code, dictionary, u_based_decision=False)
+        self.components_ = code.T
         components_norm = np.linalg.norm(self.components_, axis=1)[:, np.newaxis]
         components_norm[components_norm == 0] = 1
         self.components_ /= components_norm
