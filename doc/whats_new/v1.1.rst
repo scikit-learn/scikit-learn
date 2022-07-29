@@ -15,6 +15,13 @@ Changelog
 - |Fix| A default HTML representation is shown for meta-estimators with invalid
   parameters. :pr:`24015` by `Thomas Fan`_.
 
+:mod:`sklearn.base`
+......................
+
+- |Fix| The `get_params` method of the :class:`BaseEstimator` class now supports
+  estimators with `type`-type params that have the `get_params` method.
+  :pr:`24017` by :user:`Henry Sorsky <hsorsky>`.
+
 :mod:`sklearn.cluster`
 ......................
 
