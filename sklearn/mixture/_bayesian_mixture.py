@@ -138,7 +138,6 @@ class BayesianGaussianMixture(BaseMixture):
     weight_concentration_prior_type : {'dirichlet_process', 'dirichlet_distribution'}, \
             default='dirichlet_process'
         String describing the type of the weight concentration prior.
-        Must be one of::
 
     weight_concentration_prior : float or None, default=None
         The dirichlet concentration of each component on the weight
