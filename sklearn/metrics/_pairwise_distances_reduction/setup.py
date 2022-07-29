@@ -16,6 +16,7 @@ def configuration(parent_package="", top_path=None):
         "_base.pyx",
         "_argkmin.pyx",
         "_radius_neighborhood.pyx",
+        "_argkminlabels.pyx",
     ]
 
     for source_file in cython_sources:
