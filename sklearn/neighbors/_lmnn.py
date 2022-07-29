@@ -1,4 +1,3 @@
-# coding: utf-8
 """
 Large Margin Nearest Neighbor Classification
 """
@@ -25,13 +24,12 @@ from ..utils.extmath import row_norms, safe_sparse_dot
 from ..utils.extmath import _euclidean_distances_without_checks
 from ..utils.random import check_random_state
 from ..utils.multiclass import check_classification_targets
-from ..utils.validation import (check_is_fitted, check_array, check_X_y,
-                                check_scalar)
+from ..utils.validation import check_is_fitted, check_array, check_X_y, check_scalar
 from ..utils.validation import _deprecate_positional_args
 
 
 class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
-    """Distance metric learning for large margin classification.
+    r"""Distance metric learning for large margin classification.
 
     Large Margin Nearest Neighbor (LMNN) is a machine learning algorithm for
     metric learning. It learns a linear transformation in a supervised fashion
@@ -40,128 +38,118 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
     Read more in the :ref:`User Guide <lmnn>`.
 
+    .. versionadded:: 1.2
+
     Parameters
     ----------
-    n_neighbors : int, optional (default=3)
+    n_neighbors : int, default=3
         Number of samples to use as target neighbors for each sample.
 
-    n_components : int, optional (default=None)
+    n_components : int, default=None
         Preferred dimensionality of the transformed samples.
-        If None it is inferred from ``init``.
+        If `None` it is inferred from `init`.
 
-    init : string or numpy array, optional (default='pca')
-        Initialization of the linear transformation. Possible options are
-        'pca', 'identity' or a numpy array of shape (n_features_a,
-        n_features). Faster convergence can be achieved with 'pca'.
+    init : {"pca", "identity"} or ndarray of shape (n_features_a, n_features), \
+                default="pca"
+        Initialization of the linear transformation. The possible options are:
 
-        'pca'
-            ``n_components`` many principal components of the inputs passed
-            to :meth:`fit` will be used to initialize the transformation. If
-            ``n_components`` is None all components are kept:
-            ``n_components = min(n_samples, n_features)``
+        * "pca": `n_components` many principal components of the inputs passed
+          to :meth:`fit` will be used to initialize the transformation. If
+          `n_components` is `None` all components are kept and thus
+          `n_components = min(n_samples, n_features)`.
+        * "identity: if `n_components` is strictly smaller than the
+          dimensionality of the inputs passed to :meth:`fit`, the identity
+          matrix will be truncated to the first `n_components` rows.
+        * ndarray: `n_features` must match the dimensionality of the inputs
+          passed to :meth:`fit` and `n_features_a` must be less than or equal to
+          that. If `n_components` is not `None`, `n_features_a` must match it.
 
-        'identity'
-            If ``n_components`` is strictly smaller than the
-            dimensionality of the inputs passed to :meth:`fit`, the identity
-            matrix will be truncated to the first ``n_components`` rows.
-
-        numpy array
-            n_features must match the dimensionality of the inputs passed to
-            :meth:`fit` and n_features_a must be less than or equal to that.
-            If ``n_components`` is not None, n_features_a must match it.
-
-    warm_start : bool, optional, (default=False)
-        If True and :meth:`fit` has been called before, the solution of the
+    warm_start : bool, default=False
+        If `True` and :meth:`fit` has been called before, the solution of the
         previous call to :meth:`fit` is used as the initial linear
-        transformation (``n_components`` and ``init`` will be ignored).
+        transformation (`n_components` and `init` will be ignored).
 
-    max_impostors : int, optional (default=500000)
+    max_impostors : int, default=500_000
         Maximum number of impostors to consider per iteration. Impostors are
         samples that are too close to a sample with a different label,
         thereby violating their margin. In the worst case this will allow
-        ``max_impostors * n_neighbors`` constraints to be active.
+        `max_impostors * n_neighbors` constraints to be active.
 
-    neighbors_params : dict, optional (default=None)
-        Parameters to pass to a :class:`neighbors.NearestNeighbors` instance -
-        apart from ``n_neighbors`` - that will be used to select the target
-        neighbors.
+    neighbors_params : dict, default=None
+        Parameters to pass to a :class:`~sklearn.neighbors.NearestNeighbors`
+        instance - apart from `n_neighbors` - that will be used to select the
+        target neighbors.
 
-    push_loss_weight : float, optional (default=0.5)
-        A float in (0, 1], weighting the push loss. This is parameter ``μ``
-        in the journal paper (See references below). In practice, the objective
-        function will be normalized so that the push loss has weight 1 and
-        hence the pull loss has weight ``(1 - μ)/μ``.
+    push_loss_weight : float, default=0.5
+        A float in (0, 1], weighting the push loss. This is parameter
+        :math:`\mu` in [1]_. In practice, the objective function will be
+        normalized so that the push loss has weight 1 and hence the pull loss
+        has weight `(1 - mu) / mu`.
 
-    impostor_store : str ['auto'|'list'|'sparse'], optional
-        'list'
-            Three lists will be used to store the indices of reference
-            samples, the indices of their impostors and the squared
-            distances between each (sample, impostor) pair.
+    impostor_store : {"list", "sparse", "auto"}, default="auto"
+        * "list": Three lists will be used to store the indices of reference
+          samples, the indices of their impostors and the squared
+          distances between each (sample, impostor) pair.
+        * "sparse": A sparse indicator matrix will be used to store the
+          (sample, impostor) pairs. The squared distances to the impostors will
+          be computed twice (once to determine the impostors and once to be
+          stored), but this option tends to be faster than 'list' as the size
+          of the data set increases.
+        * "auto": Will attempt to decide the most appropriate choice of data
+          structure based on the values passed to :meth:`fit`.
 
-        'sparse'
-            A sparse indicator matrix will be used to store the (sample,
-            impostor) pairs. The squared distances to the impostors will be
-            computed twice (once to determine the impostors and once to be
-            stored), but this option tends to be faster than 'list' as the
-            size of the data set increases.
-
-        'auto'
-            Will attempt to decide the most appropriate choice of data
-            structure based on the values passed to :meth:`fit`.
-
-    max_iter : int, optional (default=50)
+    max_iter : int, default=50
         Maximum number of iterations in the optimization.
 
-    tol : float, optional (default=1e-5)
+    tol : float, default=1e-5
         Convergence tolerance for the optimization.
 
-    callback : callable, optional (default=None)
+    callback : callable, default=None
         If not None, this function is called after every iteration of the
         optimizer, taking as arguments the current solution (flattened
         transformation matrix) and the number of iterations. This might be
         useful in case one wants to examine or store the transformation
         found after each iteration.
 
-    store_opt_result : bool, optional (default=False)
+    store_opt_result : bool, default=False
         If True, the :class:`scipy.optimize.OptimizeResult` object returned by
-        :meth:`minimize` of `scipy.optimize` will be stored as attribute
-        ``opt_result_``.
+        :meth:`minimize` of :mod:`scipy.optimize` will be stored as attribute
+        `opt_result_`.
 
-    verbose : int, optional (default=0)
+    verbose : int, default=0
         If 0, no progress messages will be printed.
         If 1, progress messages will be printed to stdout.
-        If > 1, progress messages will be printed and the ``disp`` parameter
-        of :func:`scipy.optimize.minimize` will be set to ``verbose - 2``.
+        If > 1, progress messages will be printed and the `disp` parameter
+        of :func:`scipy.optimize.minimize` will be set to `verbose - 2`.
 
-    random_state : int or numpy.RandomState or None, optional (default=None)
-        A pseudo random number generator object or a seed for it if int.
-        Randomness arises from subsampling the impostors if they exceed
-        ``max_impostors`` and from initializing the linear transformation
-        if PCA is used as initialization method (``init='pca'``).
+    random_state : int, RandomState instance or None, default=None
+        Pseudo-random number generator to the sub-sampling of the impostors if
+        they exceed `max_impostors` and to control the initialization of the
+        linear transformation if `init="pca"`.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
-    n_jobs : int, optional (default=1)
-        The number of parallel jobs to run for neighbors search.
-        If ``-1``, then the number of jobs is set to the number of CPU cores.
-        Doesn't affect :meth:`fit` method.
+    n_jobs : int, default=None
+        The number of jobs to use for the neighbors search.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details. Doesn't affect :meth:`fit` method.
 
     Attributes
     ----------
-    components_ : array, shape (n_components, n_features)
+    components_ : ndarray of shape (n_components, n_features)
         The linear transformation learned during fitting.
 
     n_neighbors_ : int
-        The provided ``n_neighbors`` is decreased if it is greater than or
-        equal to  min(number of elements in each class).
+        The provided `n_neighbors` is decreased if it is greater than or
+        equal to minimum of the number of elements in each class.
 
     n_iter_ : int
         Counts the number of iterations performed by the optimizer.
 
-    random_state_ : numpy.RandomState
-        Pseudo random number generator object used during initialization.
-
-    opt_result_ : scipy.optimize.OptimizeResult (optional)
+    opt_result_ : scipy.optimize.OptimizeResult
         A dictionary of information representing the optimization result.
-        This is stored only if ``store_opt_result`` is True. It contains the
+        This is stored only if `store_opt_result=True`. It contains the
         following attributes:
 
         x : ndarray
@@ -182,6 +170,28 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         nit : int
             Number of iterations performed by the optimizer.
 
+    Notes
+    -----
+
+    .. warning::
+
+        Exact floating-point reproducibility is generally not guaranteed
+        (unless special care is taken with library and compiler options). As
+        a consequence, the transformations computed in 2 identical runs of
+        LargeMarginNearestNeighbor can differ from each other. This can
+        happen even before the optimizer is called if initialization with
+        PCA is used (init='pca').
+
+    References
+    ----------
+    .. [1] `Weinberger, Kilian Q., and Lawrence K. Saul.
+           "Distance Metric Learning for Large Margin Nearest Neighbor Classification."
+           Journal of Machine Learning Research, Vol. 10, Feb. 2009, pp. 207-244.
+           <http://jmlr.csail.mit.edu/papers/volume10/weinberger09a/weinberger09a.pdf>`_
+
+    .. [2] `Wikipedia entry on Large Margin Nearest Neighbor
+           <https://en.wikipedia.org/wiki/Large_margin_nearest_neighbor>`_
+
     Examples
     --------
     >>> from sklearn.neighbors import LargeMarginNearestNeighbor
@@ -199,41 +209,34 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
     >>> knn.fit(X_train, y_train)
     KNeighborsClassifier(...)
     >>> print(knn.score(X_test, y_test))
-    0.933333...
+    0.93...
     >>> # Now fit on the data transformed by the learned transformation
     >>> knn.fit(lmnn.transform(X_train), y_train)
     KNeighborsClassifier(...)
     >>> print(knn.score(lmnn.transform(X_test), y_test))
-    0.971428...
-
-    .. warning::
-
-        Exact floating-point reproducibility is generally not guaranteed
-        (unless special care is taken with library and compiler options). As
-        a consequence, the transformations computed in 2 identical runs of
-        LargeMarginNearestNeighbor can differ from each other. This can
-        happen even before the optimizer is called if initialization with
-        PCA is used (init='pca').
-
-    References
-    ----------
-    .. [1] Weinberger, Kilian Q., and Lawrence K. Saul.
-           "Distance Metric Learning for Large Margin Nearest Neighbor
-           Classification."
-           Journal of Machine Learning Research, Vol. 10, Feb. 2009,
-           pp. 207-244.
-           http://jmlr.csail.mit.edu/papers/volume10/weinberger09a/weinberger09a.pdf
-
-    .. [2] Wikipedia entry on Large Margin Nearest Neighbor
-           https://en.wikipedia.org/wiki/Large_margin_nearest_neighbor
-
+    0.97...
     """
+
     @_deprecate_positional_args
-    def __init__(self, n_neighbors=3, n_components=None, *, init='pca',
-                 warm_start=False, max_impostors=500000, neighbors_params=None,
-                 push_loss_weight=0.5, impostor_store='auto', max_iter=50,
-                 tol=1e-5, callback=None, store_opt_result=False, verbose=0,
-                 random_state=None, n_jobs=1):
+    def __init__(
+        self,
+        n_neighbors=3,
+        n_components=None,
+        *,
+        init="pca",
+        warm_start=False,
+        max_impostors=500000,
+        neighbors_params=None,
+        push_loss_weight=0.5,
+        impostor_store="auto",
+        max_iter=50,
+        tol=1e-5,
+        callback=None,
+        store_opt_result=False,
+        verbose=0,
+        random_state=None,
+        n_jobs=1,
+    ):
 
         # Parameters
         self.n_neighbors = n_neighbors
@@ -288,13 +291,13 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         grad_static = self._compute_grad_static(X, target_neighbors)
 
         # Compute the pull loss coefficient
-        pull_loss_weight = (1. - self.push_loss_weight) / self.push_loss_weight
+        pull_loss_weight = (1.0 - self.push_loss_weight) / self.push_loss_weight
         grad_static *= pull_loss_weight
 
         # Decide how to store the impostors
-        if self.impostor_store == 'sparse':
+        if self.impostor_store == "sparse":
             use_sparse = True
-        elif self.impostor_store == 'list':
+        elif self.impostor_store == "list":
             use_sparse = False
         else:
             # 'auto': Use a heuristic based on the data set size
@@ -302,16 +305,16 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         # Create a dictionary of parameters to be passed to the optimizer
         disp = self.verbose - 2 if self.verbose > 1 else -1
-        optimizer_params = {'method': 'L-BFGS-B',
-                            'fun': self._loss_grad_lbfgs,
-                            'jac': True,
-                            'args': (X, y, classes, target_neighbors,
-                                     grad_static, use_sparse),
-                            'x0': transformation,
-                            'tol': self.tol,
-                            'options': dict(maxiter=self.max_iter, disp=disp),
-                            'callback': self._callback
-                            }
+        optimizer_params = {
+            "method": "L-BFGS-B",
+            "fun": self._loss_grad_lbfgs,
+            "jac": True,
+            "args": (X, y, classes, target_neighbors, grad_static, use_sparse),
+            "x0": transformation,
+            "tol": self.tol,
+            "options": dict(maxiter=self.max_iter, disp=disp),
+            "callback": self._callback,
+        }
 
         # Call the optimizer
         self.n_iter_ = 0
@@ -327,11 +330,14 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
             # Warn the user if the algorithm did not converge
             if not opt_result.success:
-                warn('[{}] LMNN did not converge: {}'.format(
-                    cls_name, opt_result.message),
-                     ConvergenceWarning)
+                warn(
+                    "[{}] LMNN did not converge: {}".format(
+                        cls_name, opt_result.message
+                    ),
+                    ConvergenceWarning,
+                )
 
-            print('[{}] Training took {:8.2f}s.'.format(cls_name, t_train))
+            print("[{}] Training took {:8.2f}s.".format(cls_name, t_train))
 
         # Optionally store information returned by the optimizer
         if self.store_opt_result:
@@ -365,7 +371,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         """
 
-        check_is_fitted(self, ['components_'])
+        check_is_fitted(self, ["components_"])
         X = check_array(X)
 
         return np.dot(X, self.components_.T)
@@ -419,66 +425,81 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         mask_singleton_class = class_sizes == 1
         singleton_classes = np.where(mask_singleton_class)[0]
         if len(singleton_classes):
-            warn('There are {} singleton classes that will be ignored during '
-                 'training. A copy of the inputs `X` and `y` will be made.'
-                 .format(len(singleton_classes)))
-            mask_singleton_sample = np.asarray([yi in singleton_classes for
-                                                yi in y])
+            warn(
+                "There are {} singleton classes that will be ignored during "
+                "training. A copy of the inputs `X` and `y` will be made.".format(
+                    len(singleton_classes)
+                )
+            )
+            mask_singleton_sample = np.asarray([yi in singleton_classes for yi in y])
             X = X[~mask_singleton_sample].copy()
             y = y[~mask_singleton_sample].copy()
 
         # Check that there are at least 2 non-singleton classes
         n_classes_non_singleton = len(classes) - len(singleton_classes)
         if n_classes_non_singleton < 2:
-            raise ValueError('LargeMarginNearestNeighbor needs at least 2 '
-                             'non-singleton classes, got {}.'
-                             .format(n_classes_non_singleton))
+            raise ValueError(
+                "LargeMarginNearestNeighbor needs at least 2 "
+                "non-singleton classes, got {}.".format(n_classes_non_singleton)
+            )
 
         classes_inverse_non_singleton = classes_inverse[~mask_singleton_class]
 
         # Check the preferred dimensionality of the transformed samples
         if self.n_components is not None:
-            check_scalar(self.n_components, 'n_components', numbers.Integral,
-                         min_val=1)
+            check_scalar(self.n_components, "n_components", numbers.Integral, min_val=1)
 
             if self.n_components > X.shape[1]:
-                raise ValueError('The preferred output dimensionality '
-                                 '`n_components` ({}) cannot be greater '
-                                 'than the given data dimensionality ({})!'
-                                 .format(self.n_components, X.shape[1]))
+                raise ValueError(
+                    "The preferred output dimensionality "
+                    "`n_components` ({}) cannot be greater "
+                    "than the given data dimensionality ({})!".format(
+                        self.n_components, X.shape[1]
+                    )
+                )
 
         # If warm_start is enabled, check that the inputs are consistent
-        check_scalar(self.warm_start, 'warm_start', bool)
-        if self.warm_start and hasattr(self, 'components_'):
+        check_scalar(self.warm_start, "warm_start", bool)
+        if self.warm_start and hasattr(self, "components_"):
             if self.components_.shape[1] != X.shape[1]:
-                raise ValueError('The new inputs dimensionality ({}) does not '
-                                 'match the input dimensionality of the '
-                                 'previously learned transformation ({}).'
-                                 .format(X.shape[1],
-                                         self.components_.shape[1]))
+                raise ValueError(
+                    "The new inputs dimensionality ({}) does not "
+                    "match the input dimensionality of the "
+                    "previously learned transformation ({}).".format(
+                        X.shape[1], self.components_.shape[1]
+                    )
+                )
 
-        check_scalar(self.n_neighbors, 'n_neighbors', numbers.Integral,
-                     min_val=1, max_val=X.shape[0] - 1)
-        check_scalar(self.max_iter, 'max_iter', numbers.Integral, min_val=1)
-        check_scalar(self.tol, 'tol', numbers.Real, min_val=0.)
-        check_scalar(self.push_loss_weight, 'push_loss_weight', numbers.Real,
-                     min_val=0., max_val=1.)
+        check_scalar(
+            self.n_neighbors,
+            "n_neighbors",
+            numbers.Integral,
+            min_val=1,
+            max_val=X.shape[0] - 1,
+        )
+        check_scalar(self.max_iter, "max_iter", numbers.Integral, min_val=1)
+        check_scalar(self.tol, "tol", numbers.Real, min_val=0.0)
+        check_scalar(
+            self.push_loss_weight,
+            "push_loss_weight",
+            numbers.Real,
+            min_val=0.0,
+            max_val=1.0,
+        )
         if self.push_loss_weight == 0:
-            raise ValueError('`push_loss_weight` cannot be zero.')
+            raise ValueError("`push_loss_weight` cannot be zero.")
 
-        check_scalar(self.max_impostors, 'max_impostors', numbers.Integral,
-                     min_val=1)
-        check_scalar(self.impostor_store, 'impostor_store', str)
-        check_scalar(self.n_jobs, 'n_jobs', numbers.Integral)
-        check_scalar(self.verbose, 'verbose', numbers.Integral, min_val=0)
+        check_scalar(self.max_impostors, "max_impostors", numbers.Integral, min_val=1)
+        check_scalar(self.impostor_store, "impostor_store", str)
+        check_scalar(self.n_jobs, "n_jobs", numbers.Integral)
+        check_scalar(self.verbose, "verbose", numbers.Integral, min_val=0)
 
-        if self.impostor_store not in ['auto', 'sparse', 'list']:
-            raise ValueError("`impostor_store` must be 'auto', 'sparse' or "
-                             "'list'.")
+        if self.impostor_store not in ["auto", "sparse", "list"]:
+            raise ValueError("`impostor_store` must be 'auto', 'sparse' or 'list'.")
 
         if self.callback is not None:
             if not callable(self.callback):
-                raise ValueError('`callback` is not callable.')
+                raise ValueError("`callback` is not callable.")
 
         # Check how the linear transformation should be initialized
         init = self.init
@@ -487,48 +508,60 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
             # Assert that init.shape[1] = X.shape[1]
             if init.shape[1] != X.shape[1]:
-                raise ValueError('The input dimensionality ({}) of the given '
-                                 'linear transformation `init` must match the '
-                                 'dimensionality of the given inputs `X` ({}).'
-                                 .format(init.shape[1], X.shape[1]))
+                raise ValueError(
+                    "The input dimensionality ({}) of the given "
+                    "linear transformation `init` must match the "
+                    "dimensionality of the given inputs `X` ({}).".format(
+                        init.shape[1], X.shape[1]
+                    )
+                )
 
             # Assert that init.shape[0] <= init.shape[1]
             if init.shape[0] > init.shape[1]:
-                raise ValueError('The output dimensionality ({}) of the given '
-                                 'linear transformation `init` cannot be '
-                                 'greater than its input dimensionality ({}).'
-                                 .format(init.shape[0], init.shape[1]))
+                raise ValueError(
+                    "The output dimensionality ({}) of the given "
+                    "linear transformation `init` cannot be "
+                    "greater than its input dimensionality ({}).".format(
+                        init.shape[0], init.shape[1]
+                    )
+                )
 
             if self.n_components is not None:
                 # Assert that self.n_components = init.shape[0]
                 if self.n_components != init.shape[0]:
-                    raise ValueError('The preferred output dimensionality '
-                                     '`n_components` ({}) does not match '
-                                     'the output dimensionality of the given '
-                                     'linear transformation `init` ({})!'
-                                     .format(self.n_components,
-                                             init.shape[0]))
-        elif init in ['pca', 'identity']:
+                    raise ValueError(
+                        "The preferred output dimensionality "
+                        "`n_components` ({}) does not match "
+                        "the output dimensionality of the given "
+                        "linear transformation `init` ({})!".format(
+                            self.n_components, init.shape[0]
+                        )
+                    )
+        elif init in ["pca", "identity"]:
             pass
         else:
-            raise ValueError("`init` must be 'pca', 'identity', or a numpy "
-                             "array of shape (n_components, n_features).")
+            raise ValueError(
+                "`init` must be 'pca', 'identity', or a numpy "
+                "array of shape (n_components, n_features)."
+            )
 
         # Check the preferred number of neighbors
         min_non_singleton_size = class_sizes[~mask_singleton_class].min()
         if self.n_neighbors >= min_non_singleton_size:
-            warn('`n_neighbors` (={}) is not less than the number of '
-                 'samples in the smallest non-singleton class (={}). '
-                 '`n_neighbors_` will be set to {} for estimation.'
-                 .format(self.n_neighbors, min_non_singleton_size,
-                         min_non_singleton_size - 1))
+            warn(
+                "`n_neighbors` (={}) is not less than the number of "
+                "samples in the smallest non-singleton class (={}). "
+                "`n_neighbors_` will be set to {} for estimation.".format(
+                    self.n_neighbors, min_non_singleton_size, min_non_singleton_size - 1
+                )
+            )
 
         self.n_neighbors_ = min(self.n_neighbors, min_non_singleton_size - 1)
 
         neighbors_params = self.neighbors_params
         if neighbors_params is not None:
-            check_scalar(neighbors_params, 'neighbors_params', dict)
-            neighbors_params.setdefault('n_jobs', self.n_jobs)
+            check_scalar(neighbors_params, "neighbors_params", dict)
+            neighbors_params.setdefault("n_jobs", self.n_jobs)
             # Attempt to instantiate a NearestNeighbors instance here to
             # raise any errors before actually fitting
             NearestNeighbors(n_neighbors=self.n_neighbors_, **neighbors_params)
@@ -554,30 +587,35 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         """
 
         transformation = init
-        if self.warm_start and hasattr(self, 'components_'):
+        if self.warm_start and hasattr(self, "components_"):
             transformation = self.components_
 
         elif isinstance(init, np.ndarray):
             pass
 
-        elif init == 'pca':
-            pca = PCA(n_components=self.n_components,
-                      random_state=self.random_state_)
+        elif init == "pca":
+            pca = PCA(n_components=self.n_components, random_state=self.random_state_)
             t_pca = time.time()
             if self.verbose:
-                print('[{}] Finding principal components...'.format(
-                    self.__class__.__name__))
+                print(
+                    "[{}] Finding principal components...".format(
+                        self.__class__.__name__
+                    )
+                )
                 sys.stdout.flush()
 
             pca.fit(X)
             if self.verbose:
                 t_pca = time.time() - t_pca
-                print('[{}] Found principal components in {:5.2f}s.'.format(
-                    self.__class__.__name__, t_pca))
+                print(
+                    "[{}] Found principal components in {:5.2f}s.".format(
+                        self.__class__.__name__, t_pca
+                    )
+                )
 
             transformation = pca.components_
 
-        elif init == 'identity':
+        elif init == "identity":
             if self.n_components is None:
                 transformation = np.eye(X.shape[1])
             else:
@@ -608,21 +646,26 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         t_start = time.time()
         if self.verbose:
-            print('[{}] Finding the target neighbors...'.format(
-                self.__class__.__name__))
+            print(
+                "[{}] Finding the target neighbors...".format(self.__class__.__name__)
+            )
             sys.stdout.flush()
 
         neighbors_params = self.neighbors_params
         if neighbors_params is None:
             neighbors_params = {}
 
-        neighbors_params.setdefault('n_jobs', self.n_jobs)
+        neighbors_params.setdefault("n_jobs", self.n_jobs)
         target_neighbors = _select_target_neighbors(
-            X, y, self.n_neighbors_, classes=classes, **neighbors_params)
+            X, y, self.n_neighbors_, classes=classes, **neighbors_params
+        )
 
         if self.verbose:
-            print('[{}] Found the target neighbors in {:5.2f}s.'.format(
-                self.__class__.__name__, time.time() - t_start))
+            print(
+                "[{}] Found the target neighbors in {:5.2f}s.".format(
+                    self.__class__.__name__, time.time() - t_start
+                )
+            )
 
         return target_neighbors
 
@@ -646,20 +689,27 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         start_time = time.time()
         if self.verbose:
-            print('[{}] Computing static part of the gradient...'.format(
-                self.__class__.__name__))
+            print(
+                "[{}] Computing static part of the gradient...".format(
+                    self.__class__.__name__
+                )
+            )
 
         n_samples, n_neighbors = target_neighbors.shape
         row = np.repeat(range(n_samples), n_neighbors)
         col = target_neighbors.ravel()
-        tn_graph = csr_matrix((np.ones(target_neighbors.size), (row, col)),
-                              shape=(n_samples, n_samples))
+        tn_graph = csr_matrix(
+            (np.ones(target_neighbors.size), (row, col)), shape=(n_samples, n_samples)
+        )
         grad_target_neighbors = _sum_weighted_outer_differences(X, tn_graph)
 
         if self.verbose:
             duration = time.time() - start_time
-            print('[{}] Computed static part of the gradient in {:5.2f}s.'
-                  .format(self.__class__.__name__, duration))
+            print(
+                "[{}] Computed static part of the gradient in {:5.2f}s.".format(
+                    self.__class__.__name__, duration
+                )
+            )
 
         return grad_target_neighbors
 
@@ -676,8 +726,9 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         self.n_iter_ += 1
 
-    def _loss_grad_lbfgs(self, transformation, X, y, classes, target_neighbors,
-                         grad_static, use_sparse):
+    def _loss_grad_lbfgs(
+        self, transformation, X, y, classes, target_neighbors, grad_static, use_sparse
+    ):
         """Compute the loss and the loss gradient w.r.t. ``transformation``.
 
         Parameters
@@ -720,14 +771,18 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         if self.n_iter_ == 0:
             self.n_iter_ += 1
             if self.verbose:
-                header_fields = ['Iteration', 'Objective Value',
-                                 '#Active Triplets', 'Time(s)']
-                header_fmt = '{:>10} {:>20} {:>20} {:>10}'
+                header_fields = [
+                    "Iteration",
+                    "Objective Value",
+                    "#Active Triplets",
+                    "Time(s)",
+                ]
+                header_fmt = "{:>10} {:>20} {:>20} {:>10}"
                 header = header_fmt.format(*header_fields)
                 cls_name = self.__class__.__name__
-                print('[{}]'.format(cls_name))
-                print('[{}] {}'.format(cls_name, header))
-                print('[{}] {}'.format(cls_name, '-' * len(header)))
+                print("[{}]".format(cls_name))
+                print("[{}] {}".format(cls_name, header))
+                print("[{}] {}".format(cls_name, "-" * len(header)))
 
         t_funcall = time.time()
 
@@ -739,19 +794,22 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         dist_tn = np.zeros((n_samples, n_neighbors))
         for k in range(n_neighbors):
             ind_tn = target_neighbors[:, k]
-            dist_tn[:, k] = row_norms(X_transformed - X_transformed[ind_tn],
-                                      squared=True)
+            dist_tn[:, k] = row_norms(
+                X_transformed - X_transformed[ind_tn], squared=True
+            )
 
         # Add the margin to all squared distances to target neighbors
         dist_tn += 1
 
         # Find the impostors and compute squared distances to them
         impostors_graph = self._find_impostors(
-            X_transformed, y, classes, dist_tn[:, -1], use_sparse)
+            X_transformed, y, classes, dist_tn[:, -1], use_sparse
+        )
 
         # Compute the push loss and its gradient
-        loss, grad_new, n_active_triplets = \
-            _compute_push_loss(X, target_neighbors, dist_tn, impostors_graph)
+        loss, grad_new, n_active_triplets = _compute_push_loss(
+            X, target_neighbors, dist_tn, impostors_graph
+        )
 
         # Compute the total gradient
         grad = np.dot(transformation, grad_static + grad_new)
@@ -763,15 +821,21 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         if self.verbose:
             t_funcall = time.time() - t_funcall
-            values_fmt = '[{}] {:>10} {:>20.6e} {:>20,} {:>10.2f}'
-            print(values_fmt.format(self.__class__.__name__, self.n_iter_,
-                                    loss, n_active_triplets, t_funcall))
+            values_fmt = "[{}] {:>10} {:>20.6e} {:>20,} {:>10.2f}"
+            print(
+                values_fmt.format(
+                    self.__class__.__name__,
+                    self.n_iter_,
+                    loss,
+                    n_active_triplets,
+                    t_funcall,
+                )
+            )
             sys.stdout.flush()
 
         return loss, grad.ravel()
 
-    def _find_impostors(self, X_transformed, y, classes, margin_radii,
-                        use_sparse=True):
+    def _find_impostors(self, X_transformed, y, classes, margin_radii, use_sparse=True):
         """Compute the (sample, impostor) pairs exactly.
 
         Parameters
@@ -813,23 +877,29 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
                 # Split impostors computation into chunks that fit in memory
                 imp_ind = _find_impostors_chunked(
-                    X_transformed[ind_in], X_transformed[ind_out],
-                    margin_radii[ind_in], margin_radii[ind_out])
+                    X_transformed[ind_in],
+                    X_transformed[ind_out],
+                    margin_radii[ind_in],
+                    margin_radii[ind_out],
+                )
 
                 if len(imp_ind):
                     # Subsample impostors if they are too many
                     if len(imp_ind) > self.max_impostors:
                         imp_ind = self.random_state_.choice(
-                            imp_ind, self.max_impostors, replace=False)
+                            imp_ind, self.max_impostors, replace=False
+                        )
 
                     dims = (len(ind_out), len(ind_in))
                     ii, jj = np.unravel_index(imp_ind, dims)
                     # Convert indices to refer to the original data matrix
                     imp_row = ind_out[ii]
                     imp_col = ind_in[jj]
-                    new_imp = csr_matrix((np.ones(len(imp_row), dtype=np.int8),
-                                          (imp_row, imp_col)), dtype=np.int8,
-                                         shape=(n_samples, n_samples))
+                    new_imp = csr_matrix(
+                        (np.ones(len(imp_row), dtype=np.int8), (imp_row, imp_col)),
+                        dtype=np.int8,
+                        shape=(n_samples, n_samples),
+                    )
                     impostors_sp = impostors_sp + new_imp
 
             impostors_sp = impostors_sp.tocoo(copy=False)
@@ -840,12 +910,12 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
             n_impostors = len(imp_row)
             if n_impostors > self.max_impostors:
                 ind_sampled = self.random_state_.choice(
-                    n_impostors, self.max_impostors, replace=False)
+                    n_impostors, self.max_impostors, replace=False
+                )
                 imp_row = imp_row[ind_sampled]
                 imp_col = imp_col[ind_sampled]
 
-            imp_dist = _paired_distances_chunked(X_transformed, imp_row,
-                                                 imp_col)
+            imp_dist = _paired_distances_chunked(X_transformed, imp_row, imp_col)
         else:
             # Initialize lists for impostors storage
             imp_row, imp_col, imp_dist = [], [], []
@@ -855,15 +925,19 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
                 # Split impostors computation into chunks that fit in memory
                 imp_ind, dist_batch = _find_impostors_chunked(
-                    X_transformed[ind_in], X_transformed[ind_out],
-                    margin_radii[ind_in], margin_radii[ind_out],
-                    return_distance=True)
+                    X_transformed[ind_in],
+                    X_transformed[ind_out],
+                    margin_radii[ind_in],
+                    margin_radii[ind_out],
+                    return_distance=True,
+                )
 
                 if len(imp_ind):
                     # Subsample impostors if they are too many
                     if len(imp_ind) > self.max_impostors:
                         ind_sampled = self.random_state_.choice(
-                            len(imp_ind), self.max_impostors, replace=False)
+                            len(imp_ind), self.max_impostors, replace=False
+                        )
                         imp_ind = imp_ind[ind_sampled]
                         dist_batch = dist_batch[ind_sampled]
 
@@ -882,13 +956,15 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
             n_impostors = len(imp_row)
             if n_impostors > self.max_impostors:
                 ind_sampled = self.random_state_.choice(
-                    n_impostors, self.max_impostors, replace=False)
+                    n_impostors, self.max_impostors, replace=False
+                )
                 imp_row = imp_row[ind_sampled]
                 imp_col = imp_col[ind_sampled]
                 imp_dist = imp_dist[ind_sampled]
 
-        impostors_graph = coo_matrix((imp_dist, (imp_row, imp_col)),
-                                     shape=(n_samples, n_samples))
+        impostors_graph = coo_matrix(
+            (imp_dist, (imp_row, imp_col)), shape=(n_samples, n_samples)
+        )
 
         return impostors_graph
 
@@ -941,8 +1017,7 @@ def _select_target_neighbors(X, y, n_neighbors, classes=None, **nn_kwargs):
     return target_neighbors
 
 
-def _find_impostors_chunked(X_in, X_out, radii_in, radii_out,
-                            return_distance=False):
+def _find_impostors_chunked(X_in, X_out, radii_in, radii_out, return_distance=False):
     """Find (sample, impostor) pairs in chunks to avoid large memory usage.
 
     Parameters
@@ -988,9 +1063,8 @@ def _find_impostors_chunked(X_in, X_out, radii_in, radii_out,
         # add an extra ~8% time of computation due to input validation on
         # every chunk and another ~8% due to clipping of negative values.
         distances_chunk = _euclidean_distances_without_checks(
-            X_out[sl], X_in, squared=True,
-            Y_norm_squared=X_in_norm_squared,
-            clip=False)
+            X_out[sl], X_in, squared=True, Y_norm_squared=X_in_norm_squared, clip=False
+        )
 
         ind_out = np.where((distances_chunk < radii_in[None, :]).ravel())[0]
         ind_in = np.where((distances_chunk < radii_out[sl, None]).ravel())[0]
@@ -1088,6 +1162,7 @@ def _compute_push_loss(X, target_neighbors, inflated_dist_tn, impostors_graph):
 # Some helper functions #
 #########################
 
+
 def _paired_distances_chunked(X, ind_a, ind_b, squared=True):
     """Equivalent to row_norms(X[ind_a] - X[ind_b], squared=squared).
 
@@ -1141,8 +1216,7 @@ def _sum_weighted_outer_differences(X, weights):
 
     weights_sym = weights + weights.T
     diagonal = weights_sym.sum(1).getA()
-    laplacian_dot_X = diagonal * X - safe_sparse_dot(weights_sym, X,
-                                                     dense_output=True)
+    laplacian_dot_X = diagonal * X - safe_sparse_dot(weights_sym, X, dense_output=True)
     sum_weighted_outer_diffs = np.dot(X.T, laplacian_dot_X)
 
     return sum_weighted_outer_diffs
