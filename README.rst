@@ -58,6 +58,8 @@ It is currently maintained by a team of volunteers.
 
 Website: https://scikit-learn.org
 
+
+
 Installation
 ------------
 
@@ -202,3 +204,8 @@ Citation
 ~~~~~~~~
 
 If you use scikit-learn in a scientific publication, we would appreciate citations: https://scikit-learn.org/stable/about.html#citing-scikit-learn
+
+Conference Paper 
+https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3694350
+
+
