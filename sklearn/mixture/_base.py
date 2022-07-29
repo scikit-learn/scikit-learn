@@ -87,17 +87,6 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         self.verbose = verbose
         self.verbose_interval = verbose_interval
 
-    # TODO remove when all child classes use _validate_parames
-    def _check_initial_parameters(self, X):
-        """Check values of the basic parameters.
-
-        Parameters
-        ----------
-        X : array-like of shape (n_samples, n_features)
-        """
-        # Check all the parameters values of the derived class
-        self._check_parameters(X)
-
     @abstractmethod
     def _check_parameters(self, X):
         """Check initial parameters of the derived class.

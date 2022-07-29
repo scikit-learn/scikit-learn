@@ -275,7 +275,7 @@ def test_compare_covar_type():
             random_state=0,
             tol=1e-7,
         )
-        bgmm._check_initial_parameters(X)
+        bgmm._check_parameters(X)
         bgmm._initialize_parameters(X, np.random.RandomState(0))
         full_covariances = (
             bgmm.covariances_ * bgmm.degrees_of_freedom_[:, np.newaxis, np.newaxis]
@@ -290,7 +290,7 @@ def test_compare_covar_type():
             random_state=0,
             tol=1e-7,
         )
-        bgmm._check_initial_parameters(X)
+        bgmm._check_parameters(X)
         bgmm._initialize_parameters(X, np.random.RandomState(0))
 
         tied_covariance = bgmm.covariances_ * bgmm.degrees_of_freedom_
@@ -305,7 +305,7 @@ def test_compare_covar_type():
             random_state=0,
             tol=1e-7,
         )
-        bgmm._check_initial_parameters(X)
+        bgmm._check_parameters(X)
         bgmm._initialize_parameters(X, np.random.RandomState(0))
 
         diag_covariances = bgmm.covariances_ * bgmm.degrees_of_freedom_[:, np.newaxis]
@@ -322,7 +322,7 @@ def test_compare_covar_type():
             random_state=0,
             tol=1e-7,
         )
-        bgmm._check_initial_parameters(X)
+        bgmm._check_parameters(X)
         bgmm._initialize_parameters(X, np.random.RandomState(0))
 
         spherical_covariances = bgmm.covariances_ * bgmm.degrees_of_freedom_
