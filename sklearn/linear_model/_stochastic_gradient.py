@@ -1178,7 +1178,7 @@ class SGDClassifier(BaseSGDClassifier):
     """
 
     _parameter_constraints = {
-        **BaseSGDClassifier._parameter_constraints,
+        **BaseSGDClassifier._parameter_constraints,  # type: ignore
         "penalty": [StrOptions({"l2", "l1", "elasticnet"}), None],
         "alpha": [Interval(Real, 0, None, closed="left")],
         "l1_ratio": [Interval(Real, 0, 1, closed="both")],
@@ -1954,7 +1954,7 @@ class SGDRegressor(BaseSGDRegressor):
     """
 
     _parameter_constraints = {
-        **BaseSGDRegressor._parameter_constraints,
+        **BaseSGDRegressor._parameter_constraints,  # type: ignore
         "penalty": [StrOptions({"l2", "l1", "elasticnet"}), None],
         "alpha": [Interval(Real, 0, None, closed="left")],
         "l1_ratio": [Interval(Real, 0, 1, closed="both")],
