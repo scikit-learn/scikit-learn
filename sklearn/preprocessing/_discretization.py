@@ -203,17 +203,10 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         self._validate_params()
         X = self._validate_data(X, dtype="numeric")
 
-        supported_dtype = (np.float64, np.float32)
-        if self.dtype in supported_dtype:
+        if self.dtype in (np.float64, np.float32):
             output_dtype = self.dtype
-        elif self.dtype is None:
+        else:  # self.dtype is None
             output_dtype = X.dtype
-        else:
-            raise ValueError(
-                "Valid options for 'dtype' are "
-                f"{supported_dtype + (None,)}. Got dtype={self.dtype} "
-                " instead."
-            )
 
         n_samples, n_features = X.shape
 

@@ -275,29 +275,23 @@ def test_percentile_numeric_stability():
 
 
 @pytest.mark.parametrize("in_dtype", [np.float16, np.float32, np.float64])
-@pytest.mark.parametrize("out_dtype", [None, np.float16, np.float32, np.float64])
+@pytest.mark.parametrize("out_dtype", [None, np.float32, np.float64])
 @pytest.mark.parametrize("encode", ["ordinal", "onehot", "onehot-dense"])
 def test_consistent_dtype(in_dtype, out_dtype, encode):
     X_input = np.array(X, dtype=in_dtype)
     kbd = KBinsDiscretizer(n_bins=3, encode=encode, dtype=out_dtype)
+    kbd.fit(X_input)
 
-    # a error is raised if a wrong dtype is define for the model
-    if out_dtype not in [None, np.float32, np.float64]:
-        with pytest.raises(ValueError, match="Valid options for 'dtype' are"):
-            kbd.fit(X_input)
+    # test output dtype
+    if out_dtype is not None:
+        expected_dtype = out_dtype
+    elif out_dtype is None and X_input.dtype == np.float16:
+        # wrong numeric input dtype are cast in np.float64
+        expected_dtype = np.float64
     else:
-        kbd.fit(X_input)
-
-        # test output dtype
-        if out_dtype is not None:
-            expected_dtype = out_dtype
-        elif out_dtype is None and X_input.dtype == np.float16:
-            # wrong numeric input dtype are cast in np.float64
-            expected_dtype = np.float64
-        else:
-            expected_dtype = X_input.dtype
-        Xt = kbd.transform(X_input)
-        assert Xt.dtype == expected_dtype
+        expected_dtype = X_input.dtype
+    Xt = kbd.transform(X_input)
+    assert Xt.dtype == expected_dtype
 
 
 @pytest.mark.parametrize("input_dtype", [np.float16, np.float32, np.float64])
