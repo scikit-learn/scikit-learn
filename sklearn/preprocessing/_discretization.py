@@ -71,7 +71,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         .. deprecated:: 1.1
            In version 1.3 and onwards, `subsample=2e5` will be the default.
 
-    random_state : int, RandomState instance or None, default=None
+    random_state : int, RandomState/Generator instance or None, default=None
         Determines random number generation for subsampling.
         Pass an int for reproducible results across multiple function calls.
         See the `subsample` parameter for more details.
@@ -162,7 +162,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             None,
             Hidden(StrOptions({"warn"})),
         ],
-        "random_state": ["random_state"],
+        "random_state": ["random_state", np.random.Generator],
     }
 
     def __init__(
@@ -227,13 +227,12 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                         "subsample=None to disable subsampling explicitly.",
                         FutureWarning,
                     )
-            else:
+            elif n_samples > self.subsample:
                 rng = check_random_state(self.random_state)
-                if n_samples > self.subsample:
-                    subsample_idx = rng.choice(
-                        n_samples, size=self.subsample, replace=False
-                    )
-                    X = _safe_indexing(X, subsample_idx)
+                subsample_idx = rng.choice(
+                    n_samples, size=self.subsample, replace=False
+                )
+                X = _safe_indexing(X, subsample_idx)
         elif self.strategy != "quantile" and isinstance(self.subsample, Integral):
             raise ValueError(
                 f"Invalid parameter for `strategy`: {self.strategy}. "

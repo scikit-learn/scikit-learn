@@ -630,7 +630,6 @@ _estimators_excluded_from_check_random_state = {
     "Isomap",
     "IsotonicRegression",
     "IterativeImputer",
-    "KBinsDiscretizer",
     "KMeans",
     "KNNImputer",
     "KNeighborsClassifier",
@@ -775,10 +774,9 @@ _estimators_excluded_from_check_random_state = {
 @pytest.mark.parametrize(
     "random_state",
     [
-        # TODO uncomment
-        # None,
-        # 0,
-        # np.random.RandomState(42),
+        None,
+        0,
+        np.random.RandomState(42),
         np.random.default_rng(),
     ],
 )
