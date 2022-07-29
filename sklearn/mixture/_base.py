@@ -19,10 +19,7 @@ from ..base import DensityMixin
 from ..exceptions import ConvergenceWarning
 from ..utils import check_random_state
 from ..utils.validation import check_is_fitted
-from ..utils._param_validation import (
-    Interval,
-    StrOptions,
-)
+from ..utils._param_validation import Interval, StrOptions
 
 
 def _check_shape(param, param_shape, name):
@@ -54,16 +51,16 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
     _parameter_constraints = {
         "n_components": [Interval(Integral, 1, None, closed="left")],
         "tol": [Interval(Real, 0.0, None, closed="left")],
-        "n_init": [Interval(Integral, 1, None, closed="left")],
-        "max_iter": [Interval(Integral, 0, None, closed="left")],
         "reg_covar": [Interval(Real, 0.0, None, closed="left")],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
+        "n_init": [Interval(Integral, 1, None, closed="left")],
         "init_params": [
             StrOptions({"kmeans", "random", "random_from_data", "k-means++"})
         ],
-        "verbose_interval": [None, Interval(Integral, 1, None, closed="left")],
-        "verbose": ["verbose"],
-        "warm_start": ["boolean"],
         "random_state": ["random_state"],
+        "warm_start": ["boolean"],
+        "verbose": ["verbose"],
+        "verbose_interval": [Interval(Integral, 1, None, closed="left")],
     }
 
     def __init__(
@@ -90,6 +87,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         self.verbose = verbose
         self.verbose_interval = verbose_interval
 
+    # TODO remove when all child classes use _validate_parames
     def _check_initial_parameters(self, X):
         """Check values of the basic parameters.
 
@@ -195,6 +193,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         self : object
             The fitted mixture.
         """
+        # parameters are validated in fit_predict
         self.fit_predict(X, y)
         return self
 
@@ -226,6 +225,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             Component labels.
         """
         self._validate_params()
+
         X = self._validate_data(X, dtype=[np.float64, np.float32], ensure_min_samples=2)
         if X.shape[0] < self.n_components:
             raise ValueError(
@@ -233,7 +233,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
                 f"but got n_components = {self.n_components}, "
                 f"n_samples = {X.shape[0]}"
             )
-        self._check_initial_parameters(X)
+        self._check_parameters(X)
 
         # if we enable warm_start, we will have a unique initialisation
         do_init = not (self.warm_start and hasattr(self, "converged_"))
