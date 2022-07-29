@@ -81,7 +81,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         The number of features to draw from X to train each base estimator.
 
             - If int, then draw `max_features` features.
-            - If float, then draw `max_features * X.shape[1]` features.
+            - If float, then draw `max(1, int(max_features * n_features_in_))` features.
 
         Note: using a float number less than 1.0 or integer less than number of
         features will enable feature subsampling and leads to a longerr runtime.

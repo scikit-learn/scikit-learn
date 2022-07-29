@@ -12,6 +12,9 @@ Version 1.1.2
 Changelog
 ---------
 
+- |Fix| A default HTML representation is shown for meta-estimators with invalid
+  parameters. :pr:`24015` by `Thomas Fan`_.
+
 :mod:`sklearn.cluster`
 ......................
 
