@@ -30,6 +30,7 @@ from ._classification import hinge_loss
 from ._classification import jaccard_score
 from ._classification import log_loss
 from ._classification import matthews_corrcoef
+from ._classification import generalized_matthew
 from ._classification import precision_recall_fscore_support
 from ._classification import precision_score
 from ._classification import recall_score
@@ -131,6 +132,7 @@ __all__ = [
     "f1_score",
     "fbeta_score",
     "fowlkes_mallows_score",
+    "generalized_matthew",
     "get_scorer",
     "hamming_loss",
     "hinge_loss",
