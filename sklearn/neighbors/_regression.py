@@ -472,17 +472,18 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin, RegressorMixin, NeighborsBa
         n_neigh = np.asarray([len(ind) for ind in neigh_ind])
 
         neigh_dst = np.concatenate(neigh_ind, axis=0)
-        neigh_src = np.repeat(np.arange(n_samples), repeats=n_neigh) 
-    
+        neigh_src = np.repeat(np.arange(n_samples), repeats=n_neigh)
+
         if weights is None:
             weights = np.ones(len(neigh_src), dtype=bool)
         else:
             weights = np.concatenate(weights, axis=0)
-        
+
         weights = csr_matrix(
-            (weights, (neigh_src, neigh_dst)), shape=(n_samples, len(_y)),
+            (weights, (neigh_src, neigh_dst)),
+            shape=(n_samples, len(_y)),
         )
-        
+
         # normalization factor so weights sum = 1
         norm_factor = weights.sum(axis=1)
         y_pred = weights @ _y

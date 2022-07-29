@@ -43,8 +43,13 @@ class RadiusNeighborsRegressorBenchmark(Predictor, Estimator, Benchmark):
     """
     Benchmarks for RadiusNeighborsRegressor
     """
+
     param_names = ["algorithm", "dimension", "n_jobs"]
-    params = (["brute", "kd_tree", "ball_tree"], ["very-low", "low", "high"], Benchmark.n_jobs_vals)
+    params = (
+        ["brute", "kd_tree", "ball_tree"],
+        ["very-low", "low", "high"],
+        Benchmark.n_jobs_vals,
+    )
     dim_to_number = {"very-low": 3, "low": 20, "high": 200}
 
     def setup_cache(self):
@@ -62,7 +67,9 @@ class RadiusNeighborsRegressorBenchmark(Predictor, Estimator, Benchmark):
     def make_estimator(self, params):
         algorithm, dimension, n_jobs = params
 
-        estimator = RadiusNeighborsRegressor(algorithm=algorithm, n_jobs=n_jobs, radius=0.05)
+        estimator = RadiusNeighborsRegressor(
+            algorithm=algorithm, n_jobs=n_jobs, radius=0.05
+        )
 
         return estimator
 
