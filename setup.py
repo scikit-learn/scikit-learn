@@ -56,6 +56,37 @@ from sklearn.externals._packaging.version import parse as parse_version  # noqa
 
 VERSION = sklearn.__version__
 
+# See: https://numpy.org/doc/stable/reference/c-api/deprecations.html
+DEFINE_MACRO_NUMPY_C_API = (
+    "NPY_NO_DEPRECATED_API",
+    "NPY_1_7_API_VERSION",
+)
+
+# TODO: remove call to NumPy C API (version 1.4) in those extensions
+USE_OLD_NUMPY_C_API = (
+    "sklearn.decomposition._online_lda_fast",
+    "sklearn.manifold._utils",
+    "sklearn.ensemble._gradient_boosting",
+    "sklearn.preprocessing._csr_polynomial_expansion",
+    "sklearn.cluster._dbscan_inner",
+    "sklearn.cluster._hierarchical_fast",
+    "sklearn.neighbors._quad_tree",
+    "sklearn.tree._criterion",
+    "sklearn.utils.murmurhash",
+    "sklearn.neighbors._kd_tree",
+    "sklearn.neighbors._ball_tree",
+    "sklearn.utils.arrayfuncs",
+    "sklearn.utils._seq_dataset",
+    "sklearn.svm._liblinear",
+    "sklearn.tree._tree",
+    "sklearn.svm._libsvm_sparse",
+    "sklearn.svm._libsvm",
+    "sklearn.metrics._dist_metrics",
+    "sklearn.utils.sparsefuncs_fast",
+    "sklearn.linear_model._cd_fast",
+    "sklearn.linear_model._sgd_fast",
+    "sklearn.linear_model._sag_fast",
+)
 
 # For some commands, use setuptools
 SETUPTOOLS_COMMANDS = {
@@ -142,6 +173,15 @@ try:
 
         def build_extensions(self):
             from sklearn._build_utils.openmp_helpers import get_openmp_flag
+
+            for ext in self.extensions:
+                if ext.name not in USE_OLD_NUMPY_C_API:
+                    print(
+                        f"Use newest NumPy C API (version 1.7) for extension {ext.name}"
+                    )
+                    ext.define_macros.append(DEFINE_MACRO_NUMPY_C_API)
+                else:
+                    print(f"Use old NumPy C API (version 1.4) for extension {ext.name}")
 
             if sklearn._OPENMP_SUPPORTED:
                 openmp_flag = get_openmp_flag(self.compiler)
