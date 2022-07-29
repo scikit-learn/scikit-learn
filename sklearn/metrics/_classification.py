@@ -964,10 +964,10 @@ def generalized_matthew(y_true, y_pred,ave_type="matthew",sample_weight=None):
     y_true = lb.transform(y_true)
     y_pred = lb.transform(y_pred)
 
-    cc = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
-    dimension_size = cc.shape[0]
-    m1 = cc / cc.sum(axis=1)
-    m2 = cc / cc.sum(axis=0)
+    conf_m = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
+    dimension_size = conf_m.shape[0]
+    m1 = conf_m / conf_m.sum(axis=1)
+    m2 = conf_m / conf_m.sum(axis=0)
 
     if ave_type == "f1":
         g_mat = [[st.mstats.hmean([m1[i, j], m2[j][i]])
