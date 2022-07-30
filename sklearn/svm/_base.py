@@ -78,7 +78,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         "degree": [Interval(Integral, 0, None, closed="left")],
         "gamma": [
             StrOptions({"scale", "auto"}),
-            Interval(Real, 0.0, None, closed="neither"),
+            Interval(Real, 0.0, None, closed="left"),
         ],
         "coef0": [Interval(Real, None, None, closed="neither")],
         "tol": [Interval(Real, 0.0, None, closed="neither")],

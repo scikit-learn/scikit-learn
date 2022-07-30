@@ -623,7 +623,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         "n_components": [Interval(Integral, 1, None, closed="left"), None],
         "random_state": ["random_state"],
         "n_init": [Interval(Integral, 1, None, closed="left")],
-        "gamma": [Interval(Real, 0, None, closed="neither")],
+        "gamma": [Interval(Real, 0, None, closed="left")],
         "affinity": [
             callable,
             StrOptions(
@@ -637,7 +637,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
             StrOptions({"auto"}),
         ],
         "assign_labels": [StrOptions({"kmeans", "discretize", "cluster_qr"})],
-        "degree": [Interval(Integral, 1, None, closed="left")],
+        "degree": [Interval(Integral, 0, None, closed="left")],
         "coef0": [Interval(Real, None, None, closed="neither")],
         "kernel_params": [dict, None],
         "n_jobs": [Integral, None],
