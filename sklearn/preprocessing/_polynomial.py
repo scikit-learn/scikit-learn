@@ -3,6 +3,7 @@ This file contains preprocessing tools based on polynomials.
 """
 import collections
 import numbers
+from numbers import Integral, Real
 from itertools import chain, combinations
 from itertools import combinations_with_replacement as combinations_w_r
 
@@ -15,6 +16,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
 from ..utils.deprecation import deprecated
 from ..utils.validation import check_is_fitted, FLOAT_DTYPES, _check_sample_weight
+from ..utils._param_validation import Interval, StrOptions, Hidden
 from ..utils.validation import _check_feature_names_in
 from ..utils.stats import _weighted_percentile
 
@@ -627,6 +629,17 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
            [0.  , 0.  , 0.5 , 0.5 ]])
     """
 
+    _parameter_constraints = {
+        "n_knots": [Interval(Integral, 2, None, closed="left")],
+        "degree": [Interval(Integral, 0, None, closed="left")],
+        "knots": [StrOptions({"uniform", "quantile"}), "array-like"],
+        "extrapolation": [
+            StrOptions({"error", "constant", "linear", "continue", "periodic"})
+        ],
+        "include_bias": ["boolean"],
+        "order": [StrOptions({"C", "F"})],
+    }
+
     def __init__(
         self,
         n_knots=5,
@@ -767,6 +780,8 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         self : object
             Fitted transformer.
         """
+        self._validate_params()
+
         X = self._validate_data(
             X,
             reset=True,
@@ -936,7 +951,6 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             spl = self.bsplines_[i]
 
             if self.extrapolation in ("continue", "error", "periodic"):
-
                 if self.extrapolation == "periodic":
                     # With periodic extrapolation we map x to the segment
                     # [spl.t[k], spl.t[n]].
