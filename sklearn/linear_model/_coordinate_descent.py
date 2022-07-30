@@ -11,7 +11,6 @@ import numbers
 from abc import ABC, abstractmethod
 from functools import partial
 from numbers import Integral, Real
-from collections.abc import Iterable
 
 import numpy as np
 from scipy import sparse
@@ -22,7 +21,7 @@ from ..base import RegressorMixin, MultiOutputMixin
 from ._base import _preprocess_data, _deprecate_normalize
 from ..utils import check_array, check_scalar
 from ..utils.validation import check_random_state
-from ..utils._param_validation import Hidden, HasMethods, Interval, StrOptions
+from ..utils._param_validation import Hidden, Interval, StrOptions
 from ..model_selection import check_cv
 from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import (
@@ -1472,12 +1471,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         "max_iter": [Interval(Integral, 1, None, closed="left")],
         "tol": [Interval(Real, 0, None, closed="left")],
         "copy_X": ["boolean"],
-        "cv": [
-            Interval(Integral, 2, None, closed="left"),
-            Iterable,
-            HasMethods(["split", "get_n_splits"]),
-            None,
-        ],
+        "cv": ["cv_object"],
         "verbose": ["verbose"],
         "n_jobs": [Integral, None],
         "positive": ["boolean"],

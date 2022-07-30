@@ -1021,7 +1021,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
 
         - If int, values must be in the range `[1, inf)`.
         - If float, values must be in the range `(0.0, 1.0]` and the features
-          considered at each split will be `int(max_features * n_features)`.
+          considered at each split will be `max(1, int(max_features * n_features_in_))`.
         - If 'auto', then `max_features=sqrt(n_features)`.
         - If 'sqrt', then `max_features=sqrt(n_features)`.
         - If 'log2', then `max_features=log2(n_features)`.
@@ -1605,7 +1605,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
 
         - If int, values must be in the range `[1, inf)`.
         - If float, values must be in the range `(0.0, 1.0]` and the features
-          considered at each split will be `int(max_features * n_features)`.
+          considered at each split will be `max(1, int(max_features * n_features_in_))`.
         - If "auto", then `max_features=n_features`.
         - If "sqrt", then `max_features=sqrt(n_features)`.
         - If "log2", then `max_features=log2(n_features)`.
