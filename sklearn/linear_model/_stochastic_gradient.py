@@ -964,11 +964,11 @@ class SGDClassifier(BaseSGDClassifier):
             The loss 'log' was deprecated in v1.1 and will be removed
             in version 1.3. Use `loss='log_loss'` which is equivalent.
 
-    penalty : {'l2', 'l1', 'elasticnet'}, default='l2'
+    penalty : {'l2', 'l1', 'elasticnet', None}, default='l2'
         The penalty (aka regularization term) to be used. Defaults to 'l2'
         which is the standard regularizer for linear SVM models. 'l1' and
         'elasticnet' might bring sparsity to the model (feature selection)
-        not achievable with 'l2'.
+        not achievable with 'l2'. No penalty is added when set to `None`.
 
     alpha : float, default=0.0001
         Constant that multiplies the regularization term. The higher the
@@ -1773,11 +1773,11 @@ class SGDRegressor(BaseSGDRegressor):
             The loss 'squared_loss' was deprecated in v1.0 and will be removed
             in version 1.2. Use `loss='squared_error'` which is equivalent.
 
-    penalty : {'l2', 'l1', 'elasticnet'}, default='l2'
+    penalty : {'l2', 'l1', 'elasticnet', None}, default='l2'
         The penalty (aka regularization term) to be used. Defaults to 'l2'
         which is the standard regularizer for linear SVM models. 'l1' and
         'elasticnet' might bring sparsity to the model (feature selection)
-        not achievable with 'l2'.
+        not achievable with 'l2'. No penalty is added when set to `None`.
 
     alpha : float, default=0.0001
         Constant that multiplies the regularization term. The higher the
