@@ -452,7 +452,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "DictionaryLearning",
     "FeatureHasher",
     "FunctionTransformer",
-    "GaussianMixture",
     "GenericUnivariateSelect",
     "HashingVectorizer",
     "Isomap",
