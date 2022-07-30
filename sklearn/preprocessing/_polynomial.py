@@ -3,7 +3,7 @@ This file contains preprocessing tools based on polynomials.
 """
 import collections
 import numbers
-from numbers import Integral, Real
+from numbers import Integral
 from itertools import chain, combinations
 from itertools import combinations_with_replacement as combinations_w_r
 
