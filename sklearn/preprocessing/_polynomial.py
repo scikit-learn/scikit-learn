@@ -16,7 +16,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
 from ..utils.deprecation import deprecated
 from ..utils.validation import check_is_fitted, FLOAT_DTYPES, _check_sample_weight
-from ..utils._param_validation import Interval, StrOptions, Hidden
+from ..utils._param_validation import Interval, StrOptions
 from ..utils.validation import _check_feature_names_in
 from ..utils.stats import _weighted_percentile
 
