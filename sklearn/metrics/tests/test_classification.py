@@ -37,6 +37,7 @@ from sklearn.metrics import hinge_loss
 from sklearn.metrics import jaccard_score
 from sklearn.metrics import log_loss
 from sklearn.metrics import matthews_corrcoef
+from sklearn.metrics import generalized_matthew
 from sklearn.metrics import precision_recall_fscore_support
 from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
@@ -734,6 +735,10 @@ def test_matthews_corrcoef_nan():
     assert matthews_corrcoef([0], [1]) == 0.0
     assert matthews_corrcoef([0, 0], [0, 1]) == 0.0
 
+def test_gen_matthews_corrcoef_nan():
+    assert generalized_matthew([0], [1]) == 0.0
+    assert generalized_matthew([0, 0], [0, 1]) == 0.0
+
 
 def test_matthews_corrcoef_against_numpy_corrcoef():
     rng = np.random.RandomState(0)
@@ -744,6 +749,26 @@ def test_matthews_corrcoef_against_numpy_corrcoef():
         matthews_corrcoef(y_true, y_pred), np.corrcoef(y_true, y_pred)[0, 1], 10
     )
 
+def test_general_matt():
+    y_true = [0]*13+[1]*21+[2]*20
+    y_pred = [0] * 5 + [1] * 6 + [2] * 2 + [0] * 2 + [1] * 8 + [2] * 11 + [0] * 8 + [1] * 2 + [2] * 10
+    f1_correl = generalized_matthew(y_true, y_pred,ave_type="f1")
+    assert_array_almost_equal(f1_correl, 0.413, decimal=3)
+    mcc_score = generalized_matthew(y_true, y_pred)
+    assert_array_almost_equal(mcc_score, 0.031, decimal=3)
+    y_true = [0] * 5 + [1] * 8 + [2] * 2 + [3] * 13
+    f1_unit = generalized_matthew(y_true, y_true, ave_type="f1")
+    assert_array_almost_equal(f1_unit, 1.0, decimal=1)
+    mc_unit = generalized_matthew(y_true, y_true)
+    assert_array_almost_equal(mc_unit, 1.0, decimal=1)
+
+def test_general_mat_against_numpy_corrcoef():
+    rng = np.random.RandomState(0)
+    y_true = rng.randint(0, 2, size=20)
+    y_pred = rng.randint(0, 2, size=20)
+    assert_almost_equal(
+        generalized_matthew(y_true, y_pred), np.corrcoef(y_true, y_pred)[0, 1], 10
+    )
 
 def test_matthews_corrcoef_against_jurman():
     # Check that the multiclass matthews_corrcoef agrees with the definition
@@ -874,6 +899,51 @@ def test_matthews_corrcoef_multiclass():
         matthews_corrcoef(y_true, y_pred, sample_weight=sample_weight), 0.0
     )
 
+def test_general_matthews_corrcoef_multiclass():
+    rng = np.random.RandomState(0)
+    ord_a = ord("a")
+    n_classes = 4
+    y_true = [chr(ord_a + i) for i in rng.randint(0, n_classes, size=20)]
+
+    # corrcoef of same vectors must be 1
+    assert_almost_equal(generalized_matthew(y_true, y_true), 1.0)
+
+    # with multiclass > 2 it is not possible to achieve -1
+    y_true = [0, 0, 1, 1, 2, 2]
+    y_pred_bad = [2, 2, 0, 0, 1, 1]
+    assert_almost_equal(generalized_matthew(y_true, y_pred_bad), 0.0)
+
+    # Maximizing false positives and negatives minimizes the MCC
+    # The minimum will be different for depending on the input
+    y_true = [0, 0, 1, 1, 2, 2]
+    y_pred_min = [1, 1, 0, 0, 0, 0]
+    assert_almost_equal(generalized_matthew(y_true, y_pred_min), 0.0)
+
+    # Zero variance will result in an mcc of zero
+    y_true = [0, 1, 2]
+    y_pred = [3, 3, 3]
+    assert_almost_equal(generalized_matthew(y_true, y_pred), 0.0)
+
+    # Also for ground truth with zero variance
+    y_true = [3, 3, 3]
+    y_pred = [0, 1, 2]
+    assert_almost_equal(generalized_matthew(y_true, y_pred), 0.0)
+
+    # These two vectors have 0 correlation and hence mcc should be 0
+    y_1 = [0, 1, 2, 0, 1, 2, 0, 1, 2]
+    y_2 = [1, 1, 1, 2, 2, 2, 0, 0, 0]
+    assert_almost_equal(generalized_matthew(y_1, y_2), 0.0)
+
+    # We can test that binary assumptions hold using the multiclass computation
+    # by masking the weight of samples not in the first two classes
+
+    # Masking the last label should let us get an MCC of -1
+    y_true = [0, 0, 1, 1, 2]
+    y_pred = [1, 1, 0, 0, 2]
+    sample_weight = [1, 1, 1, 1, 0]
+    assert_almost_equal(
+        generalized_matthew(y_true, y_pred, sample_weight=sample_weight), 0.0
+    )
 
 @pytest.mark.parametrize("n_points", [100, 10000])
 def test_matthews_corrcoef_overflow(n_points):
