@@ -28,13 +28,6 @@ import warnings
 import numpy as np
 from scipy.sparse import coo_matrix
 from scipy.sparse import csr_matrix
-# from _base import _check_pos_label_consistency
-# from sklearn.preprocessing import LabelEncoder, LabelBinarizer
-# from sklearn.utils import assert_all_finite,check_array,check_consistent_length,column_or_1d
-# from sklearn.utils.multiclass import unique_labels,type_of_target
-# from sklearn.utils.validation import _num_samples
-# from sklearn.utils.sparsefuncs import count_nonzero
-# from sklearn.exceptions import  UndefinedMetricWarning
 
 from ..preprocessing import LabelBinarizer
 from ..preprocessing import LabelEncoder
@@ -965,6 +958,10 @@ def generalized_matthew(y_true, y_pred,ave_type="matthew",sample_weight=None):
 
     conf_m = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
     dimension_size = conf_m.shape[0]
+    total_col = conf_m.sum(axis=1)
+    total_row = conf_m.sum(axis=0)
+    if min(min(total_row),min(total_col)) <= 0:
+        return 0.0
     m1 = conf_m / conf_m.sum(axis=1)
     m2 = conf_m / conf_m.sum(axis=0)
 
