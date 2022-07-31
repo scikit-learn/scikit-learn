@@ -414,6 +414,10 @@ class PCA(_BasePCA):
         y : Ignored
             Ignored.
 
+        sample_weight : float or ndarray of shape (n_samples,), default=None
+            Individual weights for each sample. If given a float, every sample
+            will have the same weight.
+
         Returns
         -------
         self : object
@@ -435,6 +439,10 @@ class PCA(_BasePCA):
 
         y : Ignored
             Ignored.
+
+        sample_weight : float or ndarray of shape (n_samples,), default=None
+            Individual weights for each sample. If given a float, every sample
+            will have the same weight.
 
         Returns
         -------
@@ -477,10 +485,7 @@ class PCA(_BasePCA):
 
         if sample_weight is not None:
             sample_weight = _check_sample_weight(
-                sample_weight,
-                X,
-                copy=self.copy,
-                only_non_negative=True
+                sample_weight, X, copy=self.copy, only_non_negative=True
             )
             sample_weight /= sample_weight.sum()
 
@@ -510,10 +515,7 @@ class PCA(_BasePCA):
             return self._fit_full(X, n_components, sample_weight=sample_weight)
         elif self._fit_svd_solver in ["arpack", "randomized"]:
             return self._fit_truncated(
-                X,
-                n_components,
-                self._fit_svd_solver,
-                sample_weight=sample_weight
+                X, n_components, self._fit_svd_solver, sample_weight=sample_weight
             )
 
     def _fit_full(self, X, n_components, sample_weight=None):
