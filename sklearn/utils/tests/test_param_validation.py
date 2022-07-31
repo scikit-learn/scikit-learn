@@ -555,8 +555,8 @@ def test_validate_params_set_param_constraints_attribute():
 
 
 def test_boolean_constraint_deprecated_int():
-    """Check that validate_params raise a deprecation message but still passes validation
-    when using an int for a parameter accepting a boolean.
+    """Check that validate_params raise a deprecation message but still passes
+    validation when using an int for a parameter accepting a boolean.
     """
 
     @validate_params({"param": ["boolean"]})
