@@ -177,7 +177,6 @@ cdef class PairwiseDistancesArgKmin64(PairwiseDistancesReduction64):
         self.heaps_r_distances_chunks[thread_num] = &self.argkmin_distances[X_start, 0]
         self.heaps_indices_chunks[thread_num] = &self.argkmin_indices[X_start, 0]
 
-    @final
     cdef void _parallel_on_X_prange_iter_finalize(
         self,
         ITYPE_t thread_num,

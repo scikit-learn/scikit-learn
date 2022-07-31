@@ -8,6 +8,7 @@ from .._dist_metrics import BOOL_METRICS, METRIC_MAPPING
 
 from ._base import _sqeuclidean_row_norms64
 from ._argkmin import PairwiseDistancesArgKmin64
+from ._argkminlabels import PairwiseDistancesArgKminLabels64
 from ._radius_neighborhood import PairwiseDistancesRadiusNeighborhood64
 
 from ... import get_config
@@ -382,4 +383,158 @@ class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
         raise ValueError(
             "Only 64bit float datasets are supported at this time, "
             f"got: X.dtype={X.dtype} and Y.dtype={Y.dtype}."
+        )
+
+
+class PairwiseDistancesArgKminLabels(PairwiseDistancesReduction):
+    """Compute the argkmin of row vectors of X on the ones of Y with labels.
+
+    For each row vector of X, computes the indices of k first the rows
+    vectors of Y with the smallest distances. Computes weighted mode of labels.
+
+    PairwiseDistancesArgKminLabels is typically used to perform
+    bruteforce k-nearest neighbors queries when the weighted mode of the labels
+    for the k-nearest neighbors are required, such as in `predict` methods.
+
+    This class is not meant to be instanciated, one should only use
+    its :meth:`compute` classmethod which handles allocation and
+    deallocation consistently.
+    """
+
+    @classmethod
+    def compute(
+        cls,
+        X,
+        Y,
+        k,
+        weights,
+        labels,
+        metric="euclidean",
+        chunk_size=None,
+        metric_kwargs=None,
+        strategy=None,
+        return_distance=False,
+    ):
+        """Compute the argkmin reduction.
+
+        Parameters
+        ----------
+        X : ndarray or CSR matrix of shape (n_samples_X, n_features)
+            Input data.
+
+        Y : ndarray or CSR matrix of shape (n_samples_Y, n_features)
+            Input data.
+
+        k : int
+            The k for the argkmin reduction.
+
+        weights : ndarray
+            The weights applied over the `labels` of `Y` when computing the
+            weighted mode of the labels.
+
+        labels : ndarray
+            The labels of `Y`.
+
+        metric : str, default='euclidean'
+            The distance metric to use for argkmin.
+            For a list of available metrics, see the documentation of
+            :class:`~sklearn.metrics.DistanceMetric`.
+
+        chunk_size : int, default=None,
+            The number of vectors per chunk. If None (default) looks-up in
+            scikit-learn configuration for `pairwise_dist_chunk_size`,
+            and use 256 if it is not set.
+
+        metric_kwargs : dict, default=None
+            Keyword arguments to pass to specified metric function.
+
+        strategy : str, {'auto', 'parallel_on_X', 'parallel_on_Y'}, default=None
+            The chunking strategy defining which dataset parallelization are made on.
+
+            For both strategies the computations happens with two nested loops,
+            respectively on chunks of X and chunks of Y.
+            Strategies differs on which loop (outer or inner) is made to run
+            in parallel with the Cython `prange` construct:
+
+              - 'parallel_on_X' dispatches chunks of X uniformly on threads.
+                Each thread then iterates on all the chunks of Y. This strategy is
+                embarrassingly parallel and comes with no datastructures
+                synchronisation.
+
+              - 'parallel_on_Y' dispatches chunks of Y uniformly on threads.
+                Each thread processes all the chunks of X in turn. This strategy is
+                a sequence of embarrassingly parallel subtasks (the inner loop on Y
+                chunks) with intermediate datastructures synchronisation at each
+                iteration of the sequential outer loop on X chunks.
+
+              - 'auto' relies on a simple heuristic to choose between
+                'parallel_on_X' and 'parallel_on_Y': when `X.shape[0]` is large enough,
+                'parallel_on_X' is usually the most efficient strategy.
+                When `X.shape[0]` is small but `Y.shape[0]` is large, 'parallel_on_Y'
+                brings more opportunity for parallelism and is therefore more efficient
+                despite the synchronization step at each iteration of the outer loop
+                on chunks of `X`.
+
+              - None (default) looks-up in scikit-learn configuration for
+                `pairwise_dist_parallel_strategy`, and use 'auto' if it is not set.
+
+        return_distance : boolean, default=False
+            Return distances between each X vector and its
+            argkmin if set to True.
+
+        Returns
+        -------
+        If return_distance=False:
+          - argkmin_indices : ndarray of shape (n_samples_X, k)
+            Indices of the argkmin for each vector in X.
+          - argkmin_labels : ndarray of shape (n_samples_X,)
+            The labels computed through the weighted mode of each sample's
+            k-nearest neighbors.
+
+        If return_distance=True:
+          - argkmin_distances : ndarray of shape (n_samples_X, k)
+            Distances to the argkmin for each vector in X.
+          - argkmin_indices : ndarray of shape (n_samples_X, k)
+            Indices of the argkmin for each vector in X.
+          - argkmin_labels : ndarray of shape (n_samples_X,)
+            The labels computed through the weighted mode of each sample's
+            k-nearest neighbors.
+
+        Notes
+        -----
+        This classmethod is responsible for introspecting the arguments
+        values to dispatch to the most appropriate implementation of
+        :class:`PairwiseDistancesArgKmin`.
+
+        This allows decoupling the API entirely from the implementation details
+        whilst maintaining RAII: all temporarily allocated datastructures necessary
+        for the concrete implementation are therefore freed when this classmethod
+        returns.
+        """
+        # Note (jjerphan): Some design thoughts for future extensions.
+        # This factory comes to handle specialisations for the given arguments.
+        # For future work, this might can be an entrypoint to specialise operations
+        # for various backend and/or hardware and/or datatypes, and/or fused
+        # {sparse, dense}-datasetspair etc.
+        if not (X.dtype == Y.dtype == np.float64):
+            raise ValueError(
+                "Only 64bit float datasets are supported at this time, "
+                f"got: X.dtype={X.dtype} and Y.dtype={Y.dtype}."
+            )
+        if weights not in {"uniform", "distance"}:
+            raise ValueError(
+                "Only the 'uniform' or 'distance' weights options are supported"
+                f" at this time. Got: {weights=}."
+            )
+        return PairwiseDistancesArgKminLabels64.compute(
+            X=X,
+            Y=Y,
+            k=k,
+            weights=weights,
+            labels=labels,
+            metric=metric,
+            chunk_size=chunk_size,
+            metric_kwargs=metric_kwargs,
+            strategy=strategy,
+            return_distance=return_distance,
         )

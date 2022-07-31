@@ -89,6 +89,7 @@
 from ._dispatcher import (
     PairwiseDistancesReduction,
     PairwiseDistancesArgKmin,
+    PairwiseDistancesArgKminLabels,
     PairwiseDistancesRadiusNeighborhood,
     sqeuclidean_row_norms,
 )
@@ -96,6 +97,7 @@ from ._dispatcher import (
 __all__ = [
     "PairwiseDistancesReduction",
     "PairwiseDistancesArgKmin",
+    "PairwiseDistancesArgKminLabels",
     "PairwiseDistancesRadiusNeighborhood",
     "sqeuclidean_row_norms",
 ]
