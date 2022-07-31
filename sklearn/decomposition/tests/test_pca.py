@@ -38,6 +38,56 @@ def test_pca(svd_solver, n_components):
     precision = pca.get_precision()
     assert_allclose(np.dot(cov, precision), np.eye(X.shape[1]), atol=1e-12)
 
+@pytest.mark.parametrize("svd_solver", PCA_SOLVERS)
+@pytest.mark.parametrize("n_components", range(1, iris.data.shape[1]))
+def test_weighted_pca(svd_solver, n_components):
+    rng = np.random.RandomState(0)
+    X = iris.data
+
+    n_samples, n_features = X.shape
+
+    # Repeats (or weightings) of the rows of X
+    W = rng.randint(1, 10, size=n_samples)
+
+    # Row i of X is repeated W[i] times
+    R = np.repeat(X, W, axis=0)
+
+    # Perform PCA on full (repeated) data
+    pca_full = PCA(n_components=n_components, svd_solver=svd_solver)
+
+    X_full = pca_full.fit_transform(R)
+    assert X_full.shape[1] == n_components
+
+    # Perform PCA on reduced data with weights
+    pca_red = PCA(n_components=n_components, svd_solver=svd_solver)
+
+    pca_red.fit(X, sample_weight=W)
+
+    # Ensure signs match for comparison
+    for c, (i, j) in enumerate(zip(
+        np.sign(pca_full.components_[:, 0]),
+        np.sign(pca_red.components_[:, 0]))
+    ):
+      if i != j:
+         pca_red.components_[c] *= -1
+
+    # Transform and expand repeats
+    X_red = np.repeat(pca_red.transform(X), W, axis=0)
+
+    # Assert that two approach yield same transformation
+    assert_allclose(X_full, X_red)
+
+    # Check that inverse transform also works
+    assert_allclose(
+        pca_full.inverse_transform(X_full),
+        pca_red.inverse_transform(X_red),
+    )
+
+    # Test get_covariance and get_precision
+    cov = pca_red.get_covariance()
+    precision = pca_red.get_precision()
+    assert_allclose(np.dot(cov, precision), np.eye(X.shape[1]), atol=1e-12)
+
 
 def test_no_empty_slice_warning():
     # test if we avoid numpy warnings for computing over empty arrays

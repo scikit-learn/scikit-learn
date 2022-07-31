@@ -24,7 +24,7 @@ from ..utils import check_random_state
 from ..utils._arpack import _init_arpack_v0
 from ..utils.extmath import fast_logdet, randomized_svd, svd_flip
 from ..utils.extmath import stable_cumsum
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils._param_validation import Interval, StrOptions
 
 
@@ -402,7 +402,7 @@ class PCA(_BasePCA):
         self.power_iteration_normalizer = power_iteration_normalizer
         self.random_state = random_state
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_weight=None):
         """Fit the model with X.
 
         Parameters
@@ -421,10 +421,10 @@ class PCA(_BasePCA):
         """
         self._validate_params()
 
-        self._fit(X)
+        self._fit(X, sample_weight=sample_weight)
         return self
 
-    def fit_transform(self, X, y=None):
+    def fit_transform(self, X, y=None, sample_weight=None):
         """Fit the model with X and apply the dimensionality reduction on X.
 
         Parameters
@@ -448,7 +448,7 @@ class PCA(_BasePCA):
         """
         self._validate_params()
 
-        U, S, Vt = self._fit(X)
+        U, S, Vt = self._fit(X, sample_weight=sample_weight)
         U = U[:, : self.n_components_]
 
         if self.whiten:
@@ -460,7 +460,7 @@ class PCA(_BasePCA):
 
         return U
 
-    def _fit(self, X):
+    def _fit(self, X, sample_weight=None):
         """Dispatch to the right submethod depending on the chosen solver."""
 
         # Raise an error for sparse input.
@@ -474,6 +474,15 @@ class PCA(_BasePCA):
         X = self._validate_data(
             X, dtype=[np.float64, np.float32], ensure_2d=True, copy=self.copy
         )
+
+        if sample_weight is not None:
+            sample_weight = _check_sample_weight(
+                sample_weight,
+                X,
+                copy=self.copy,
+                only_non_negative=True
+            )
+            sample_weight /= sample_weight.sum()
 
         # Handle n_components==None
         if self.n_components is None:
@@ -498,11 +507,16 @@ class PCA(_BasePCA):
 
         # Call different fits for either full or truncated SVD
         if self._fit_svd_solver == "full":
-            return self._fit_full(X, n_components)
+            return self._fit_full(X, n_components, sample_weight=sample_weight)
         elif self._fit_svd_solver in ["arpack", "randomized"]:
-            return self._fit_truncated(X, n_components, self._fit_svd_solver)
+            return self._fit_truncated(
+                X,
+                n_components,
+                self._fit_svd_solver,
+                sample_weight=sample_weight
+            )
 
-    def _fit_full(self, X, n_components):
+    def _fit_full(self, X, n_components, sample_weight=None):
         """Fit the model by computing full SVD on X."""
         n_samples, n_features = X.shape
 
@@ -518,9 +532,16 @@ class PCA(_BasePCA):
                 "svd_solver='full'" % (n_components, min(n_samples, n_features))
             )
 
-        # Center data
-        self.mean_ = np.mean(X, axis=0)
-        X -= self.mean_
+        if sample_weight is None:
+            # Center data
+            self.mean_ = np.mean(X, axis=0)
+            X -= self.mean_
+        else:
+            # Center with weighted average and weight
+            W = sample_weight.reshape(-1, 1)
+            self.mean_ = W.T @ X
+            X -= self.mean_
+            X *= np.sqrt(W)
 
         U, S, Vt = linalg.svd(X, full_matrices=False)
         # flip eigenvectors' sign to enforce deterministic output
@@ -561,7 +582,7 @@ class PCA(_BasePCA):
 
         return U, S, Vt
 
-    def _fit_truncated(self, X, n_components, svd_solver):
+    def _fit_truncated(self, X, n_components, svd_solver, sample_weight=None):
         """Fit the model by computing truncated SVD (by ARPACK or randomized)
         on X.
         """
@@ -589,9 +610,16 @@ class PCA(_BasePCA):
 
         random_state = check_random_state(self.random_state)
 
-        # Center data
-        self.mean_ = np.mean(X, axis=0)
-        X -= self.mean_
+        if sample_weight is None:
+            # Center data
+            self.mean_ = np.mean(X, axis=0)
+            X -= self.mean_
+        else:
+            # Center with weighted average and weight
+            W = sample_weight.reshape(-1, 1)
+            self.mean_ = W.T @ X
+            X -= self.mean_
+            X *= np.sqrt(W)
 
         if svd_solver == "arpack":
             v0 = _init_arpack_v0(min(X.shape), random_state)
