@@ -1,4 +1,3 @@
-
 """Metrics to assess performance on classification task given class prediction.
 
 Functions named as ``*_score`` return a scalar value to maximize: the higher
@@ -26,6 +25,7 @@ the lower the better.
 
 import warnings
 import numpy as np
+
 from scipy.sparse import coo_matrix
 from scipy.sparse import csr_matrix
 
@@ -44,7 +44,6 @@ from ..exceptions import UndefinedMetricWarning
 from ._base import _check_pos_label_consistency
 
 from scipy import stats as st
-
 
 def _check_zero_division(zero_division):
     if isinstance(zero_division, str) and zero_division == "warn":
@@ -925,7 +924,64 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
 
 
 def generalized_matthew(y_true, y_pred,ave_type="matthew",sample_weight=None):
-    """Examples
+    """Compute the generalized Matthews coefficient.
+
+    The gneneralized Matthews coefficieint is (as one may expected) a gnerlization of MCC for higher
+    dimensions : namely multiclass problems. While in binary problems, errors have a natural defionions:
+    False Postiove and Flase negative , this is not the status in multiclass problems. Morover these probelms can
+    suffer from  imbalance data issues.
+    For more theoretical details one can read check in the references below
+
+    Parameters
+    ----------
+    y_true : array, shape = [n_samples]
+        Ground truth (correct) target values.
+
+    y_pred : array, shape = [n_samples]
+        Estimated targets as returned by a classifier.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights.
+
+        .. versionadded:: 0.18
+
+    ave_type : string that fan be either matthew (as the defalut) or "f1" I mainly detects whether we use
+        harmoninc mean (f1) or geometric with determinant (Matthew)
+    Returns
+    -------
+    generalized_score : float
+        The genelaized Matthew score (+1 represents a perfect
+        prediction, 0 an average random prediction and -1 and inverse
+        prediction).
+
+    References
+    ----------
+    .. [1] :Jafar Tanha et al. “Boosting methods for multi-class imbalanced
+    data classification: an experimental review”. In: Journal of Big Data
+    7.1 (2020), pp. 1–47
+
+    .. [2] `Davide Chicco and Giuseppe Jurman. “The advantages of the Matthews
+    correlation coefficient (MCC) over F1 score and accuracy in binary
+    classification evaluation”. In: BMC genomics 21.1 (2020), pp. 1–13.
+    15
+
+    .. [3] `Cathy O’neil. Weapons of math destruction: How big data increases
+    inequality and threatens democracy. Broadway Books, 2016.
+
+    .. [4] `Nir Sharon and Uri Itai. “Approximation schemes for functions of
+    positive-definite matrix values”. In: IMA Journal of Numerical Anal-
+    ysis 33.4 (2013), pp. 1436–1468.
+
+    .. [5] Brian W Matthews. “Comparison of the predicted and observed sec-
+    ondary structure of T4 phage lysozyme”. In: Biochimica et Biophys-
+    ica Acta (BBA)-Protein Structure 405.2 (1975), pp. 442–451.
+
+    .. [6] Alan C Acock and Gordon R Stavig. “A measure of association for
+    nonparametric statistics”. In: Social Forces 57.4 (1979), pp. 1381–
+    1386
+
+
+    Examples
        y_true = [0] * 13 + [1] * 21 + [2] * 20
        y_pred = [0] * 5 + [1] * 6 + [2] * 2 + [0] * 2 + [1] * 8 + [2] * 11 + [0] * 8 + [1] * 2 + [2] * 10
        print("gen   F1 ",
