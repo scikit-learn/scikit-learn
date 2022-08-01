@@ -264,8 +264,8 @@ def make_classification(
 
     # Randomly replace labels
     if flip_y >= 0.0:
-        flip_mask = generator.rand(n_samples) < flip_y
-        y[flip_mask] = generator.randint(n_classes, size=flip_mask.sum())
+        flip_mask = generator.uniform(size=n_samples) < flip_y
+        y[flip_mask] = generator.permutation(y[flip_mask])
 
     # Randomly shift and scale
     if shift is None:
