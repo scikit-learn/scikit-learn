@@ -3462,7 +3462,12 @@ def check_decision_proba_consistency(name, estimator_orig):
         # inversions in case of machine level differences.
         a = estimator.predict_proba(X_test)[:, 1].round(decimals=10)
         b = estimator.decision_function(X_test).round(decimals=10)
-        assert_array_equal(rankdata(a), rankdata(b))
+
+        prob_rank = rankdata(a)
+        # calculate the average decision score groupby the rank of predicted probability
+        avg_decision_score = [np.mean(b[prob_rank == i]) for i in np.unique(prob_rank)]
+        # check if the average decision score is strictly increasing, details see issue #24025
+        assert all(x < y for x, y in zip(avg_decision_score, avg_decision_score[1:]))
 
 
 def check_outliers_fit_predict(name, estimator_orig):
