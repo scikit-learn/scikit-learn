@@ -1101,6 +1101,10 @@ class GridSearchCV(BaseSearchCV):
         See ``scoring`` parameter to know more about multiple metric
         evaluation.
 
+        See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py`
+        to see how to design a custom selection strategy using a callable
+        via `refit`.
+
         .. versionchanged:: 0.20
             Support for callable added.
 

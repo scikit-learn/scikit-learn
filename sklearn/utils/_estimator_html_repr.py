@@ -1,5 +1,4 @@
 from contextlib import closing
-from contextlib import suppress
 from io import StringIO
 from string import Template
 import html
@@ -103,8 +102,16 @@ def _write_label_html(
 
 def _get_visual_block(estimator):
     """Generate information about how to display an estimator."""
-    with suppress(AttributeError):
-        return estimator._sk_visual_block_()
+    if hasattr(estimator, "_sk_visual_block_"):
+        try:
+            return estimator._sk_visual_block_()
+        except Exception:
+            return _VisualBlock(
+                "single",
+                estimator,
+                names=estimator.__class__.__name__,
+                name_details=str(estimator),
+            )
 
     if isinstance(estimator, str):
         return _VisualBlock(

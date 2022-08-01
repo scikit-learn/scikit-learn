@@ -34,35 +34,48 @@ def test_function_param_validation(func_module):
     required_params = [
         p.name for p in func_sig.parameters.values() if p.default is p.empty
     ]
-    required_params = {
-        p: generate_valid_param(make_constraint(parameter_constraints[p][0]))
-        for p in required_params
-    }
+    valid_required_params = {}
+    for param_name in required_params:
+        if parameter_constraints[param_name] == "no_validation":
+            valid_required_params[param_name] = 1
+        else:
+            valid_required_params[param_name] = generate_valid_param(
+                make_constraint(parameter_constraints[param_name][0])
+            )
 
     # check that there is a constraint for each parameter
     if func_params:
+        validation_params = parameter_constraints.keys()
+        unexpected_params = set(validation_params) - set(func_params)
+        missing_params = set(func_params) - set(validation_params)
         err_msg = (
-            "Mismatch between the parameter constraints defined in the "
-            f"validate_params decorator and the parameters of {func_name}."
+            "Mismatch between _parameter_constraints and the parameters of"
+            f" {func_name}.\nConsider the unexpected parameters {unexpected_params} and"
+            f" expected but missing parameters {missing_params}\n"
         )
-        assert list(parameter_constraints.keys()) == func_params, err_msg
+        assert set(validation_params) == set(func_params), err_msg
 
     # this object does not have a valid type for sure for all params
     param_with_bad_type = type("BadType", (), {})()
 
     for param_name in func_params:
+        constraints = parameter_constraints[param_name]
+
+        if constraints == "no_validation":
+            # This parameter is not validated
+            continue
+
         match = (
             rf"The '{param_name}' parameter of {func_name} must be .* Got .* instead."
         )
 
         # First, check that the error is raised if param doesn't match any valid type.
         with pytest.raises(ValueError, match=match):
-            func(**{**required_params, param_name: param_with_bad_type})
+            func(**{**valid_required_params, param_name: param_with_bad_type})
 
         # Then, for constraints that are more than a type constraint, check that the
         # error is raised if param does match a valid type but does not match any valid
         # value for this type.
-        constraints = parameter_constraints[param_name]
         constraints = [make_constraint(constraint) for constraint in constraints]
 
         for constraint in constraints:
@@ -72,4 +85,4 @@ def test_function_param_validation(func_module):
                 continue
 
             with pytest.raises(ValueError, match=match):
-                func(**{**required_params, param_name: bad_value})
+                func(**{**valid_required_params, param_name: bad_value})

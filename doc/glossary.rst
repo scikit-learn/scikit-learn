@@ -694,7 +694,7 @@ General Concepts
         decision-making process outlined in :ref:`governance`.
         For all votes, a proposal must have been made public and discussed before the
         vote. Such a proposal must be a consolidated document, in the form of a
-        ‘Scikit-Learn Enhancement Proposal’ (SLEP), rather than a long discussion on an
+        "Scikit-Learn Enhancement Proposal" (SLEP), rather than a long discussion on an
         issue. A SLEP must be submitted as a pull-request to
         `enhancement proposals <https://scikit-learn-enhancement-proposals.readthedocs.io>`_ using the
         `SLEP template <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep_template.html>`_.
@@ -835,7 +835,13 @@ Class APIs and Estimator Types
         * :term:`predict` if :term:`inductive`
 
     density estimator
-        TODO
+        An :term:`unsupervised` estimation of input probability density
+        function. Commonly used techniques are:
+
+        * :ref:`kernel_density` - uses a kernel function, controlled by the
+          bandwidth parameter to represent density;
+        * :ref:`Gaussian mixture <mixture>` - uses mixture of Gaussian models
+          to represent density.
 
     estimator
     estimators
@@ -1385,7 +1391,11 @@ Methods
         often the likelihood of the data under the model.
 
     ``score_samples``
-        TODO
+        A method that returns a score for each given sample. The exact
+        definition of *score* varies from one class to another. In the case of
+        density estimation, it can be the log density model on the data, and in
+        the case of outlier detection, it can be the opposite of the outlier
+        factor of the data.
 
         If the estimator was not already :term:`fitted`, calling this method
         should raise a :class:`exceptions.NotFittedError`.

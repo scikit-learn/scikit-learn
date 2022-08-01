@@ -29,6 +29,15 @@ class FastClassifier(DummyClassifier):
     These parameter don't affect the predictions and are useful for fast
     grid searching."""
 
+    # update the constraints such that we accept all parameters from a to z
+    _parameter_constraints = {
+        **DummyClassifier._parameter_constraints,
+        **{
+            chr(key): "no_validation"  # type: ignore
+            for key in range(ord("a"), ord("z") + 1)
+        },
+    }
+
     def __init__(
         self, strategy="stratified", random_state=None, constant=None, **kwargs
     ):
