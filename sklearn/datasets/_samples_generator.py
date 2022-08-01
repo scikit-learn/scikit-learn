@@ -126,7 +126,7 @@ def make_classification(
 
     permute_y : bool, default=False
         If True and `flip_y > 0`, then labels are permuted instead of assigned
-        randomly, which perverse ``n_classes`` in `y`.
+        randomly, which perverse `n_classes` in y.
 
         .. versionadded: 1.2
 
