@@ -412,3 +412,9 @@ def test_kbinsdiscrtizer_get_feature_names_out(encode, expected_names):
     assert Xt.shape[1] == output_names.shape[0]
 
     assert_array_equal(output_names, expected_names)
+
+
+def test_with_subsample_and_random_generator():
+    # check that subsampling works with numpy's random Generator
+    random_state = np.random.default_rng()
+    KBinsDiscretizer(n_bins=2, subsample=3, random_state=random_state).fit_transform(X)
