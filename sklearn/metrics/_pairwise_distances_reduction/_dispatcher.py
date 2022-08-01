@@ -92,12 +92,19 @@ class PairwiseDistancesReduction:
         -------
         True if the PairwiseDistancesReduction can be used, else False.
         """
-        dtypes_validity = X.dtype == Y.dtype and X.dtype in (np.float64, np.float32)
+        dtypes_validity = X.dtype == Y.dtype == np.float64
+        c_contiguity = (
+            hasattr(X, "flags")
+            and X.flags.c_contiguous
+            and hasattr(Y, "flags")
+            and Y.flags.c_contiguous
+        )
         return (
             get_config().get("enable_cython_pairwise_dist", True)
             and not issparse(X)
             and not issparse(Y)
             and dtypes_validity
+            and c_contiguity
             and metric in cls.valid_metrics()
         )
 

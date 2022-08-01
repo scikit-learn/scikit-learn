@@ -71,6 +71,7 @@ plt.plot(
     linewidth=2,
     label="Linear Discriminant Analysis with Ledoit Wolf",
     color="navy",
+    linestyle="dashed",
 )
 plt.plot(
     features_samples_ratio,
@@ -78,6 +79,7 @@ plt.plot(
     linewidth=2,
     label="Linear Discriminant Analysis",
     color="gold",
+    linestyle="solid",
 )
 plt.plot(
     features_samples_ratio,
@@ -85,6 +87,7 @@ plt.plot(
     linewidth=2,
     label="Linear Discriminant Analysis with OAS",
     color="red",
+    linestyle="dotted",
 )
 
 plt.xlabel("n_features / n_samples")
