@@ -82,10 +82,7 @@ if sp_version < parse_version("1.8.0.dev0"):
 VALID_METRICS_SPARSE = dict(
     ball_tree=[],
     kd_tree=[],
-    brute=(
-        PAIRWISE_DISTANCE_FUNCTIONS.keys()
-        - {"haversine", *_NAN_METRICS}
-    ),
+    brute=(PAIRWISE_DISTANCE_FUNCTIONS.keys() - {"haversine", *_NAN_METRICS}),
 )
 
 
