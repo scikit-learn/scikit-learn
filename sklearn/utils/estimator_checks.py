@@ -3466,7 +3466,7 @@ def check_decision_proba_consistency(name, estimator_orig):
         prob_rank = rankdata(a)
         # calculate the average decision score groupby the rank of predicted probability
         avg_decision_score = [np.mean(b[prob_rank == i]) for i in np.unique(prob_rank)]
-        # check if the average decision score is strictly increasing, details see issue #24025
+        # check if the average decision score is strictly increasing
         assert all(x < y for x, y in zip(avg_decision_score, avg_decision_score[1:]))
 
 
