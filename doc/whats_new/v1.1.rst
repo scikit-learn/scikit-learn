@@ -15,6 +15,10 @@ Changelog
 - |Fix| A default HTML representation is shown for meta-estimators with invalid
   parameters. :pr:`24015` by `Thomas Fan`_.
 
+- |Fix| Add support for F-contiguous arrays for estimators and functions whose back-end
+  have been changed in 1.1.
+  :pr:`23990` by :user:`Julien Jerphanion <jjerphan>`.
+
 :mod:`sklearn.base`
 ......................
 
