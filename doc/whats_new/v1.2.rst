@@ -255,9 +255,10 @@ Changelog
   :pr:`23874` by :user:`Juan Gomez <2357juan>`.
 
 :mod:`sklearn.pipeline`
-........................
-- |Enhancement| :func:`pipeline.FeatureUnion.get_feature_names_out` can now
-  be used when one of the transformers in the :class:`FeatureUnion` is
+.......................
+
+- |Enhancement| :meth:`pipeline.FeatureUnion.get_feature_names_out` can now
+  be used when one of the transformers in the :class:`pipeline.FeatureUnion` is
   `"passthrough"`. :pr:`24058` by :user:`Diederik Perdok <diederikwp>`
 
 
