@@ -5,6 +5,7 @@ from scipy.sparse import csr_matrix
 import pytest
 
 from sklearn.base import BaseEstimator
+from sklearn.model_selection import LeaveOneOut
 from sklearn.utils import deprecated
 from sklearn.utils._param_validation import Hidden
 from sklearn.utils._param_validation import Interval
@@ -12,11 +13,16 @@ from sklearn.utils._param_validation import StrOptions
 from sklearn.utils._param_validation import _ArrayLikes
 from sklearn.utils._param_validation import _Booleans
 from sklearn.utils._param_validation import _Callables
+from sklearn.utils._param_validation import _CVObjects
 from sklearn.utils._param_validation import _InstancesOf
+from sklearn.utils._param_validation import _MissingValues
+from sklearn.utils._param_validation import _PandasNAConstraint
+from sklearn.utils._param_validation import _IterablesNotString
 from sklearn.utils._param_validation import _NoneConstraint
 from sklearn.utils._param_validation import _RandomStates
 from sklearn.utils._param_validation import _SparseMatrices
 from sklearn.utils._param_validation import _VerboseHelper
+from sklearn.utils._param_validation import HasMethods
 from sklearn.utils._param_validation import make_constraint
 from sklearn.utils._param_validation import generate_invalid_param_val
 from sklearn.utils._param_validation import generate_valid_param
@@ -156,6 +162,26 @@ def test_instances_of_type_human_readable(type, expected_type_name):
     assert str(constraint) == f"an instance of '{expected_type_name}'"
 
 
+def test_hasmethods():
+    """Check the HasMethods constraint."""
+    constraint = HasMethods(["a", "b"])
+
+    class _Good:
+        def a(self):
+            pass  # pragma: no cover
+
+        def b(self):
+            pass  # pragma: no cover
+
+    class _Bad:
+        def a(self):
+            pass  # pragma: no cover
+
+    assert constraint.is_satisfied_by(_Good())
+    assert not constraint.is_satisfied_by(_Bad())
+    assert str(constraint) == "an object implementing 'a' and 'b'"
+
+
 @pytest.mark.parametrize(
     "constraint",
     [
@@ -163,7 +189,11 @@ def test_instances_of_type_human_readable(type, expected_type_name):
         Interval(Real, 0, None, closed="left"),
         Interval(Real, None, None, closed="neither"),
         StrOptions({"a", "b", "c"}),
+        _MissingValues(),
         _VerboseHelper(),
+        HasMethods("fit"),
+        _IterablesNotString(),
+        _CVObjects(),
     ],
 )
 def test_generate_invalid_param_val(constraint):
@@ -302,6 +332,7 @@ def test_generate_invalid_param_val_all_valid(constraints):
         _SparseMatrices(),
         _Booleans(),
         _VerboseHelper(),
+        _MissingValues(),
         StrOptions({"a", "b", "c"}),
         Interval(Integral, None, None, closed="neither"),
         Interval(Integral, 0, 10, closed="neither"),
@@ -310,6 +341,9 @@ def test_generate_invalid_param_val_all_valid(constraints):
         Interval(Real, 0, 1, closed="neither"),
         Interval(Real, 0, None, closed="both"),
         Interval(Real, None, 0, closed="right"),
+        HasMethods("fit"),
+        _IterablesNotString(),
+        _CVObjects(),
     ],
 )
 def test_generate_valid_param(constraint):
@@ -337,6 +371,14 @@ def test_generate_valid_param(constraint):
         (Real, 0.5),
         ("boolean", False),
         ("verbose", 1),
+        ("missing_values", -1),
+        ("missing_values", -1.0),
+        ("missing_values", None),
+        ("missing_values", float("nan")),
+        ("missing_values", np.nan),
+        ("missing_values", "missing"),
+        (HasMethods("fit"), _Estimator(a=0)),
+        ("cv_object", 5),
     ],
 )
 def test_is_satisfied_by(constraint_declaration, value):
@@ -358,6 +400,9 @@ def test_is_satisfied_by(constraint_declaration, value):
         (int, _InstancesOf),
         ("boolean", _Booleans),
         ("verbose", _VerboseHelper),
+        ("missing_values", _MissingValues),
+        (HasMethods("fit"), HasMethods),
+        ("cv_object", _CVObjects),
     ],
 )
 def test_make_constraint(constraint_declaration, expected_constraint_class):
@@ -395,17 +440,29 @@ def test_validate_params():
 
 
 def test_validate_params_match_error():
-    """Check that an informative error is raised when the constraints do not match the
-    function parameters.
+    """Check that an informative error is raised when there are constraints
+    that have no matching function paramaters
     """
 
     @validate_params({"a": [int], "c": [int]})
     def func(a, b):
         pass
 
-    match = r"The parameter constraints .* do not match the parameters to validate"
+    match = r"The parameter constraints .* contain unexpected parameters {'c'}"
     with pytest.raises(ValueError, match=match):
         func(1, 2)
+
+
+def test_validate_params_missing_params():
+    """Check that no error is raised when there are parameters without
+    constraints
+    """
+
+    @validate_params({"a": [int]})
+    def func(a, b):
+        pass
+
+    func(1, 2)
 
 
 def test_decorate_validated_function():
@@ -498,8 +555,8 @@ def test_validate_params_set_param_constraints_attribute():
 
 
 def test_boolean_constraint_deprecated_int():
-    """Check that validate_params raise a deprecation message but still passes validation
-    when using an int for a parameter accepting a boolean.
+    """Check that validate_params raise a deprecation message but still passes
+    validation when using an int for a parameter accepting a boolean.
     """
 
     @validate_params({"param": ["boolean"]})
@@ -534,3 +591,31 @@ def test_no_validation():
 
     f(param2=SomeType)
     f(param2=SomeType())
+
+
+def test_pandas_na_constraint_with_pd_na():
+    """Add a specific test for checking support for `pandas.NA`."""
+    pd = pytest.importorskip("pandas")
+
+    na_constraint = _PandasNAConstraint()
+    assert na_constraint.is_satisfied_by(pd.NA)
+    assert not na_constraint.is_satisfied_by(np.array([1, 2, 3]))
+
+
+def test_iterable_not_string():
+    """Check that a string does not satisfy the _IterableNotString constraint."""
+    constraint = _IterablesNotString()
+    assert constraint.is_satisfied_by([1, 2, 3])
+    assert constraint.is_satisfied_by(range(10))
+    assert not constraint.is_satisfied_by("some string")
+
+
+def test_cv_objects():
+    """Check that the _CVObjects constraint accepts all current ways
+    to pass cv objects."""
+    constraint = _CVObjects()
+    assert constraint.is_satisfied_by(5)
+    assert constraint.is_satisfied_by(LeaveOneOut())
+    assert constraint.is_satisfied_by([([1, 2], [3, 4]), ([3, 4], [1, 2])])
+    assert constraint.is_satisfied_by(None)
+    assert not constraint.is_satisfied_by("not a CV object")
