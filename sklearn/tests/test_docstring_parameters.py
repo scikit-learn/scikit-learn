@@ -268,6 +268,14 @@ def test_fit_docstring_attributes(name, Estimator):
         est.set_params(n_init="auto")
 
     # TODO(1.4): TO BE REMOVED for 1.4 (avoid FutureWarning)
+    if Estimator.__name__ in (
+        "MultinomialNB",
+        "ComplementNB",
+        "BernoulliNB",
+        "CategoricalNB",
+    ):
+        est.set_params(force_alpha=True)
+
     if Estimator.__name__ == "QuantileRegressor":
         solver = "highs" if sp_version >= parse_version("1.6.0") else "interior-point"
         est.set_params(solver=solver)

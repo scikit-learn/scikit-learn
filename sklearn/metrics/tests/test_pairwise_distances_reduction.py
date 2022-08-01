@@ -407,18 +407,15 @@ def test_assert_radius_neighborhood_results_quasi_equality():
     _6_1m = 6.1 - eps
     _6_1p = 6.1 + eps
 
-    ref_dist = np.array(
-        [
-            np.array([1.2, 2.5, _6_1m, 6.1, _6_1p]),
-            np.array([_1m, 1, _1p, _1p]),
-        ]
-    )
-    ref_indices = np.array(
-        [
-            np.array([1, 2, 3, 4, 5]),
-            np.array([6, 7, 8, 9]),
-        ]
-    )
+    ref_dist = [
+        np.array([1.2, 2.5, _6_1m, 6.1, _6_1p]),
+        np.array([_1m, 1, _1p, _1p]),
+    ]
+
+    ref_indices = [
+        np.array([1, 2, 3, 4, 5]),
+        np.array([6, 7, 8, 9]),
+    ]
 
     # Sanity check: compare the reference results to themselves.
     assert_radius_neighborhood_results_quasi_equality(
@@ -931,9 +928,6 @@ def test_pairwise_distances_radius_neighbors(
 
         neigh_indices_ref.append(ind)
         neigh_distances_ref.append(dist)
-
-    neigh_indices_ref = np.array(neigh_indices_ref)
-    neigh_distances_ref = np.array(neigh_distances_ref)
 
     neigh_distances, neigh_indices = PairwiseDistancesRadiusNeighborhood.compute(
         X,
