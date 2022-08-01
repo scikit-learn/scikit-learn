@@ -18,6 +18,24 @@ from functools import partial
 import pytest
 import numpy as np
 
+from sklearn.cluster import (
+    AffinityPropagation,
+    Birch,
+    MeanShift,
+    OPTICS,
+    SpectralClustering,
+)
+from sklearn.datasets import make_blobs
+from sklearn.manifold import Isomap, TSNE, LocallyLinearEmbedding
+from sklearn.neighbors import (
+    LocalOutlierFactor,
+    KNeighborsClassifier,
+    KNeighborsRegressor,
+    RadiusNeighborsClassifier,
+    RadiusNeighborsRegressor,
+)
+from sklearn.semi_supervised import LabelPropagation, LabelSpreading
+
 from sklearn.utils import all_estimators
 from sklearn.utils._testing import ignore_warnings
 from sklearn.exceptions import ConvergenceWarning
