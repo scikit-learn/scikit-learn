@@ -1,100 +1,145 @@
 """
-===================================================
-Feature selection using SelectFromModel and LassoCV
-===================================================
+============================================
+Model-based and sequential feature selection
+============================================
 
-Use SelectFromModel meta-transformer along with Lasso to select the best
-couple of features from the diabetes dataset.
+This example illustrates and compares two approaches for feature selection:
+:class:`~sklearn.feature_selection.SelectFromModel` which is based on feature
+importance, and
+:class:`~sklearn.feature_selection.SequentialFeatureSelection` which relies
+on a greedy approach.
 
-Since the L1 norm promotes sparsity of features we might be interested in
-selecting only a subset of the most interesting features from the dataset. This
-example shows how to select two the most interesting features from the diabetes
-dataset.
-
-Diabetes dataset consists of 10 variables (features) collected from 442
-diabetes patients. This example shows how to use SelectFromModel and LassoCv to
-find the best two features predicting disease progression after one year from
-the baseline.
+We use the Diabetes dataset, which consists of 10 features collected from 442
+diabetes patients.
 
 Authors: `Manoj Kumar <mks542@nyu.edu>`_,
-`Maria Telenczuk <https://github.com/maikia>`_
+`Maria Telenczuk <https://github.com/maikia>`_, Nicolas Hug.
 
 License: BSD 3 clause
+
 """
 
-print(__doc__)
-
-import matplotlib.pyplot as plt
-import numpy as np
-
-from sklearn.datasets import load_diabetes
-from sklearn.feature_selection import SelectFromModel
-from sklearn.linear_model import LassoCV
-
-##############################################################################
-# Load the data
-# ---------------------------------------------------------
+# %%
+# Loading the data
+# ----------------
 #
-# First, let's load the diabetes dataset which is available from within
-# sklearn. Then, we will look what features are collected for the diabates
-# patients:
+# We first load the diabetes dataset which is available from within
+# scikit-learn, and print its description:
+from sklearn.datasets import load_diabetes
 
 diabetes = load_diabetes()
+X, y = diabetes.data, diabetes.target
+print(diabetes.DESCR)
 
-X = diabetes.data
-y = diabetes.target
-
-feature_names = diabetes.feature_names
-print(feature_names)
-
-##############################################################################
-# Find importance of the features
-# ---------------------------------------------------------
+# %%
+# Feature importance from coefficients
+# ------------------------------------
 #
-# To decide on the importance of the features we are going to use LassoCV
-# estimator. The features with the highest absolute `coef_` value are
-# considered the most important
+# To get an idea of the importance of the features, we are going to use the
+# :class:`~sklearn.linear_model.RidgeCV` estimator. The features with the
+# highest absolute `coef_` value are considered the most important.
+# We can observe the coefficients directly without needing to scale them (or
+# scale the data) because from the description above, we know that the features
+# were already standardized.
+# For a more complete example on the interpretations of the coefficients of
+# linear models, you may refer to
+# :ref:`sphx_glr_auto_examples_inspection_plot_linear_model_coefficient_interpretation.py`.
+import matplotlib.pyplot as plt
+import numpy as np
+from sklearn.linear_model import RidgeCV
 
-clf = LassoCV().fit(X, y)
-importance = np.abs(clf.coef_)
-print(importance)
-
-##############################################################################
-# Select from the model features with the higest score
-# ---------------------------------------------------------
-#
-# Now we want to select the two features which are the most important.
-# SelectFromModel() allows for setting the threshold. Only the features with
-# the `coef_` higher than the threshold will remain. Here, we want to set the
-# threshold slightly above the third highest `coef_` calculated by LassoCV()
-# from our data.
-
-idx_third = importance.argsort()[-3]
-threshold = importance[idx_third] + 0.01
-
-idx_features = (-importance).argsort()[:2]
-name_features = np.array(feature_names)[idx_features]
-print('Selected features: {}'.format(name_features))
-
-sfm = SelectFromModel(clf, threshold=threshold)
-sfm.fit(X, y)
-X_transform = sfm.transform(X)
-
-n_features = sfm.transform(X).shape[1]
-
-##############################################################################
-# Plot the two most important features
-# ---------------------------------------------------------
-#
-# Finally we will plot the selected two features from the data.
-
-plt.title(
-    "Features from diabets using SelectFromModel with "
-    "threshold %0.3f." % sfm.threshold)
-feature1 = X_transform[:, 0]
-feature2 = X_transform[:, 1]
-plt.plot(feature1, feature2, 'r.')
-plt.xlabel("First feature: {}".format(name_features[0]))
-plt.ylabel("Second feature: {}".format(name_features[1]))
-plt.ylim([np.min(feature2), np.max(feature2)])
+ridge = RidgeCV(alphas=np.logspace(-6, 6, num=5)).fit(X, y)
+importance = np.abs(ridge.coef_)
+feature_names = np.array(diabetes.feature_names)
+plt.bar(height=importance, x=feature_names)
+plt.title("Feature importances via coefficients")
 plt.show()
+
+# %%
+# Selecting features based on importance
+# --------------------------------------
+#
+# Now we want to select the two features which are the most important according
+# to the coefficients. The :class:`~sklearn.feature_selection.SelectFromModel`
+# is meant just for that. :class:`~sklearn.feature_selection.SelectFromModel`
+# accepts a `threshold` parameter and will select the features whose importance
+# (defined by the coefficients) are above this threshold.
+#
+# Since we want to select only 2 features, we will set this threshold slightly
+# above the coefficient of third most important feature.
+from sklearn.feature_selection import SelectFromModel
+from time import time
+
+threshold = np.sort(importance)[-3] + 0.01
+
+tic = time()
+sfm = SelectFromModel(ridge, threshold=threshold).fit(X, y)
+toc = time()
+print(f"Features selected by SelectFromModel: {feature_names[sfm.get_support()]}")
+print(f"Done in {toc - tic:.3f}s")
+
+# %%
+# Selecting features with Sequential Feature Selection
+# ----------------------------------------------------
+#
+# Another way of selecting features is to use
+# :class:`~sklearn.feature_selection.SequentialFeatureSelector`
+# (SFS). SFS is a greedy procedure where, at each iteration, we choose the best
+# new feature to add to our selected features based a cross-validation score.
+# That is, we start with 0 features and choose the best single feature with the
+# highest score. The procedure is repeated until we reach the desired number of
+# selected features.
+#
+# We can also go in the reverse direction (backward SFS), *i.e.* start with all
+# the features and greedily choose features to remove one by one. We illustrate
+# both approaches here.
+
+from sklearn.feature_selection import SequentialFeatureSelector
+
+tic_fwd = time()
+sfs_forward = SequentialFeatureSelector(
+    ridge, n_features_to_select=2, direction="forward"
+).fit(X, y)
+toc_fwd = time()
+
+tic_bwd = time()
+sfs_backward = SequentialFeatureSelector(
+    ridge, n_features_to_select=2, direction="backward"
+).fit(X, y)
+toc_bwd = time()
+
+print(
+    "Features selected by forward sequential selection: "
+    f"{feature_names[sfs_forward.get_support()]}"
+)
+print(f"Done in {toc_fwd - tic_fwd:.3f}s")
+print(
+    "Features selected by backward sequential selection: "
+    f"{feature_names[sfs_backward.get_support()]}"
+)
+print(f"Done in {toc_bwd - tic_bwd:.3f}s")
+
+# %%
+# Discussion
+# ----------
+#
+# Interestingly, forward and backward selection have selected the same set of
+# features. In general, this isn't the case and the two methods would lead to
+# different results.
+#
+# We also note that the features selected by SFS differ from those selected by
+# feature importance: SFS selects `bmi` instead of `s1`. This does sound
+# reasonable though, since `bmi` corresponds to the third most important
+# feature according to the coefficients. It is quite remarkable considering
+# that SFS makes no use of the coefficients at all.
+#
+# To finish with, we should note that
+# :class:`~sklearn.feature_selection.SelectFromModel` is significantly faster
+# than SFS. Indeed, :class:`~sklearn.feature_selection.SelectFromModel` only
+# needs to fit a model once, while SFS needs to cross-validate many different
+# models for each of the iterations. SFS however works with any model, while
+# :class:`~sklearn.feature_selection.SelectFromModel` requires the underlying
+# estimator to expose a `coef_` attribute or a `feature_importances_`
+# attribute. The forward SFS is faster than the backward SFS because it only
+# needs to perform `n_features_to_select = 2` iterations, while the backward
+# SFS needs to perform `n_features - n_features_to_select = 8` iterations.

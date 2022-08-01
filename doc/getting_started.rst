@@ -9,8 +9,8 @@ etc.). Please refer to our :ref:`installation instructions
 
 ``Scikit-learn`` is an open source machine learning library that supports
 supervised and unsupervised learning. It also provides various tools for
-model fitting, data preprocessing, model selection and evaluation, and many
-other utilities.
+model fitting, data preprocessing, model selection, model evaluation,
+and many other utilities.
 
 Fitting and predicting: estimator basics
 ----------------------------------------
@@ -69,6 +69,7 @@ newly transformed sample matrix ``X``::
   >>> from sklearn.preprocessing import StandardScaler
   >>> X = [[0, 15],
   ...      [1, -10]]
+  >>> # scale data according to computed scaling values
   >>> StandardScaler().fit(X).transform(X)
   array([[-1.,  1.],
          [ 1., -1.]])
@@ -101,7 +102,7 @@ the test data::
   >>> # create a pipeline object
   >>> pipe = make_pipeline(
   ...     StandardScaler(),
-  ...     LogisticRegression(random_state=0)
+  ...     LogisticRegression()
   ... )
   ...
   >>> # load the iris dataset and split it into train and test sets
@@ -111,7 +112,7 @@ the test data::
   >>> # fit the whole pipeline
   >>> pipe.fit(X_train, y_train)
   Pipeline(steps=[('standardscaler', StandardScaler()),
-                  ('logisticregression', LogisticRegression(random_state=0))])
+                  ('logisticregression', LogisticRegression())])
   >>> # we can now use it like any other estimator
   >>> accuracy_score(pipe.predict(X_test), y_test)
   0.97...
