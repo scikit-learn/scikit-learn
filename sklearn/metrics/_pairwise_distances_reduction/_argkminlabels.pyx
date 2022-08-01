@@ -92,9 +92,6 @@ cdef class PairwiseDistancesArgKminLabels64(PairwiseDistancesArgKmin64):
             k=k,
         )
 
-        #TODO: Remove after adding implementation
-        self.execute_in_parallel_on_Y = False
-
         if weights == "uniform":
             self.weight_type = Weight.uniform
         elif weights == "distance":

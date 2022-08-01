@@ -213,7 +213,6 @@ class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
             Return distances between each X vector and its
             argkmin if set to True.
 
-
         Returns
         -------
         If return_distance=False:
@@ -420,20 +419,21 @@ class PairwiseDistancesArgKminLabels(PairwiseDistancesReduction):
 
         Parameters
         ----------
-        X : {ndarray, sparse matrix} of shape (n_samples_X, n_features)
-            Input data.
+        X : ndarray of shape (n_samples_X, n_features)
+            The input array to be labelled.
 
-        Y : {ndarray, sparse matrix} of shape (n_samples_Y, n_features)
-            Input data.
+        Y : ndarray of shape (n_samples_Y, n_features)
+            The input array whose labels are provided through the `labels`
+            parameter.
 
         metric : str, default='euclidean'
-            The distance metric to use.
-            For a list of available metrics, see the documentation of
-            :class:`~sklearn.metrics.DistanceMetric`.
+            The distance metric to use. For a list of available metrics, see
+            the documentation of :class:`~sklearn.metrics.DistanceMetric`.
+            Currently does not support `'precomputed'`.
 
         additional_params : dict, default=None
             A dictionary containing a 'labels' key, whose corresponding value
-            is an ndarray containing the labels.
+            is an `ndarray` containing the labels of `Y`.
 
         Returns
         -------
@@ -465,26 +465,27 @@ class PairwiseDistancesArgKminLabels(PairwiseDistancesReduction):
 
         Parameters
         ----------
-        X : ndarray or CSR matrix of shape (n_samples_X, n_features)
-            Input data.
+        X : ndarray of shape (n_samples_X, n_features)
+            The input array to be labelled.
 
-        Y : ndarray or CSR matrix of shape (n_samples_Y, n_features)
-            Input data.
+        Y : ndarray of shape (n_samples_Y, n_features)
+            The input array whose labels are provided through the `labels`
+            parameter.
 
         k : int
-            The k for the argkmin reduction.
+            The number of nearest neighbors to consider.
 
         weights : ndarray
             The weights applied over the `labels` of `Y` when computing the
             weighted mode of the labels.
 
         labels : ndarray
-            The labels of `Y`.
+            The labels of `Y` to be used in labeling `X`.
 
         metric : str, default='euclidean'
-            The distance metric to use for argkmin.
-            For a list of available metrics, see the documentation of
-            :class:`~sklearn.metrics.DistanceMetric`.
+            The distance metric to use. For a list of available metrics, see
+            the documentation of :class:`~sklearn.metrics.DistanceMetric`.
+            Currently does not support `'precomputed'`.
 
         chunk_size : int, default=None,
             The number of vectors per chunk. If None (default) looks-up in
