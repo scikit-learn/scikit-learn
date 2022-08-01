@@ -527,6 +527,9 @@ def test_pairwise_distances_reduction_is_usable_for():
     assert not PairwiseDistancesReduction.is_usable_for(csr_matrix(X), Y, metric)
     assert not PairwiseDistancesReduction.is_usable_for(X, csr_matrix(Y), metric)
 
+    # F-ordered arrays are not supported
+    assert not PairwiseDistancesReduction.is_usable_for(np.asfortranarray(X), Y, metric)
+
 
 def test_argkmin_factory_method_wrong_usages():
     rng = np.random.RandomState(1)
