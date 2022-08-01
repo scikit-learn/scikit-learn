@@ -87,6 +87,10 @@ class PairwiseDistancesReduction:
             and _is_arraylike_not_scalar(Y)
             and not isinstance(X, (tuple, list))
             and not isinstance(Y, (tuple, list))
+            and hasattr(X, "flags")
+            and X.flags.c_contiguous
+            and hasattr(Y, "flags")
+            and Y.flags.c_contiguous
             and X.dtype == Y.dtype == np.float64
             and not issparse(X)
             and not issparse(Y)
