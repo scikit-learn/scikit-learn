@@ -59,7 +59,7 @@ class PairwiseDistancesReduction:
         return sorted(set(METRIC_MAPPING.keys()) - excluded)
 
     @classmethod
-    def is_usable_for(cls, X, Y, metric) -> bool:
+    def is_usable_for(cls, X, Y, metric, additional_params=None) -> bool:
         """Return True if the PairwiseDistancesReduction can be used for the
         given parameters.
 
@@ -75,6 +75,10 @@ class PairwiseDistancesReduction:
             The distance metric to use.
             For a list of available metrics, see the documentation of
             :class:`~sklearn.metrics.DistanceMetric`.
+
+        additional_params : dict, default=None
+            A dictionary containing any additional parameters. This exists for
+            use in subclasses that may require additional information.
 
         Returns
         -------
@@ -208,6 +212,7 @@ class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
         return_distance : boolean, default=False
             Return distances between each X vector and its
             argkmin if set to True.
+
 
         Returns
         -------
@@ -407,6 +412,40 @@ class PairwiseDistancesArgKminLabels(PairwiseDistancesReduction):
     its :meth:`compute` classmethod which handles allocation and
     deallocation consistently.
     """
+
+    @classmethod
+    def is_usable_for(cls, X, Y, metric, additional_params=None) -> bool:
+        """Return True if the PairwiseDistancesReduction can be used for the
+        given parameters.
+
+        Parameters
+        ----------
+        X : {ndarray, sparse matrix} of shape (n_samples_X, n_features)
+            Input data.
+
+        Y : {ndarray, sparse matrix} of shape (n_samples_Y, n_features)
+            Input data.
+
+        metric : str, default='euclidean'
+            The distance metric to use.
+            For a list of available metrics, see the documentation of
+            :class:`~sklearn.metrics.DistanceMetric`.
+
+        additional_params : dict, default=None
+            A dictionary containing a 'labels' key, whose corresponding value
+            is an ndarray containing the labels.
+
+        Returns
+        -------
+        True if the PairwiseDistancesReduction can be used, else False.
+        """
+        return (
+            PairwiseDistancesArgKmin.is_usable_for(X, Y, metric)
+            and additional_params["labels"].ndim == 1  # TODO: support
+            and not issparse(X)
+            and not issparse(Y)
+            and metric != "precomputed"  # TODO: support
+        )
 
     @classmethod
     def compute(

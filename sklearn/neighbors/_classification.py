@@ -19,6 +19,7 @@ from ._base import _get_weights
 from ._base import NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin
 from ..base import ClassifierMixin
 from ..utils._param_validation import StrOptions
+from sklearn.metrics._pairwise_distances_reduction import PairwiseDistancesArgKminLabels
 
 
 class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
@@ -229,6 +230,22 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
             Class labels for each data sample.
         """
         if self.weights == "uniform":
+            if (
+                self.algorithm == "brute"
+                and PairwiseDistancesArgKminLabels.is_usable_for(
+                    X, self._fit_X, self.metric, {"labels": self._y}
+                )
+            ):
+                label_ind = PairwiseDistancesArgKminLabels.compute(
+                    X,
+                    self._fit_X,
+                    k=self.n_neighbors,
+                    weights=self.weights,
+                    labels=self._y,
+                    metric=self.metric,
+                    metric_kwargs=self.metric_params,
+                )[-1]
+                return self.classes_[label_ind]
             # In that case, we do not need the distances to perform
             # the weighting so we do not compute them.
             neigh_ind = self.kneighbors(X, return_distance=False)

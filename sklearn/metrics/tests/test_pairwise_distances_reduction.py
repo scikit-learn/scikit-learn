@@ -11,11 +11,10 @@ from scipy.spatial.distance import cdist
 from sklearn.metrics._pairwise_distances_reduction import (
     PairwiseDistancesReduction,
     PairwiseDistancesArgKmin,
-    PairwiseDistancesArgKminLabels,
     PairwiseDistancesRadiusNeighborhood,
     sqeuclidean_row_norms,
 )
-from sklearn.neighbors import KNeighborsClassifier
+
 from sklearn.metrics import euclidean_distances
 from sklearn.utils.fixes import sp_version, parse_version
 from sklearn.utils._testing import (
@@ -1024,18 +1023,3 @@ def test_sqeuclidean_row_norms(
     with pytest.raises(ValueError):
         X = np.asfortranarray(X)
         sqeuclidean_row_norms(X, num_threads=num_threads)
-
-
-@pytest.mark.parametrize("weights", ("uniform", "distance"))
-@pytest.mark.parametrize("k", (1, 3, 5, 10))
-def test_label_reduction(weights, k):
-    rng = np.random.RandomState(0)
-    X = rng.randn(10, 10)
-    Y = rng.randn(10, 10)
-    y = rng.randint(2, size=(10,))
-    _, PDR_out = PairwiseDistancesArgKminLabels.compute(
-        X, Y, k=k, weights=weights, labels=y
-    )
-    neigh = KNeighborsClassifier(n_neighbors=k, weights=weights)
-    neigh.fit(Y, y)
-    assert_array_equal(neigh.predict(X), PDR_out)

@@ -1,12 +1,14 @@
 from cython cimport floating, integral
+from cython.parallel cimport parallel, prange
 from libcpp.map cimport map as cmap
+from libc.stdlib cimport free
 
 cimport numpy as cnp
 
 cnp.import_array()
 
 from ._argkmin cimport PairwiseDistancesArgKmin64
-from ._datasets_pair cimport DatasetsPair
+from ._datasets_pair cimport DatasetsPair, DenseDenseDatasetsPair
 from ...utils._typedefs cimport ITYPE_t, DTYPE_t
 from ...utils._typedefs import ITYPE, DTYPE
 from ...utils._sorting cimport simultaneous_sort
@@ -100,9 +102,14 @@ cdef class PairwiseDistancesArgKminLabels64(PairwiseDistancesArgKmin64):
         else:
             self.weight_type = Weight.other
         self.labels = labels
-        self.argkmin_labels = np.full(self.n_samples_X, -1, dtype=ITYPE)
         self.unique_labels = np.unique(labels)
+
+        # Heap to be returned
+        self.argkmin_labels = np.full(self.n_samples_X, -1, dtype=ITYPE)
+
+        # Map from set of unique labels to their indices in `label_counts`
         self.labels_to_index = {label:idx for idx, label in enumerate(self.unique_labels)}
+        # Buffer used in building a histogram for one-pass weighted mode
         self.label_counts = np.zeros((self.n_samples_X,  len(self.unique_labels)), dtype=DTYPE)
 
     def _finalize_results(self, bint return_distance=False):
@@ -125,8 +132,8 @@ cdef class PairwiseDistancesArgKminLabels64(PairwiseDistancesArgKmin64):
         ITYPE_t X_end,
     ) nogil:
         cdef:
-            ITYPE_t idx, jdx, label_index, sample_index
-            DTYPE_t max_weight = 0
+            ITYPE_t idx, jdx, y_idx, label_index, sample_index
+            DTYPE_t max_weight
             ITYPE_t label, max_label
             DTYPE_t val, weight
         # Sorting the main heaps portion associated to `X[X_start:X_end]`
@@ -139,7 +146,8 @@ cdef class PairwiseDistancesArgKminLabels64(PairwiseDistancesArgKmin64):
             )
             # One-pass top-one weighted mode
             sample_index = thread_num * self.X_n_samples_chunk + idx
-            for jdx in range(self.k):
+            max_weight = -1
+            for jdx in range(self.k): # Iterate through k-nearest neighbors
                 if self.weight_type == Weight.uniform:
                     weight = 1.
                 elif self.weight_type == Weight.distance:
@@ -150,7 +158,49 @@ cdef class PairwiseDistancesArgKminLabels64(PairwiseDistancesArgKmin64):
                 label_index = self.labels_to_index[label]
                 self.label_counts[sample_index][label_index] += weight
                 val = self.label_counts[sample_index][label_index]
-                if max_weight < val:
+                if max_weight < val or (max_weight == val and label < max_label):
                     max_label = label
                     max_weight = val
-            self.argkmin_labels[thread_num*self.X_n_samples_chunk + idx] = label
+            self.argkmin_labels[thread_num*self.X_n_samples_chunk + idx] = max_label
+
+    cdef void _parallel_on_Y_finalize(
+        self,
+    ) nogil:
+        cdef:
+            ITYPE_t idx, jdx, y_idx, label_index, sample_index, thread_num
+            DTYPE_t max_weight
+            ITYPE_t label, max_label
+            DTYPE_t val, weight
+
+        with nogil, parallel(num_threads=self.chunks_n_threads):
+            # Deallocating temporary datastructures
+            for thread_num in prange(self.chunks_n_threads, schedule='static'):
+                free(self.heaps_r_distances_chunks[thread_num])
+                free(self.heaps_indices_chunks[thread_num])
+
+            # Sorting the main in ascending order w.r.t the distances.
+            # This is done in parallel sample-wise (no need for locks).
+            for idx in prange(self.n_samples_X, schedule='static'):
+                simultaneous_sort(
+                    &self.argkmin_distances[idx, 0],
+                    &self.argkmin_indices[idx, 0],
+                    self.k,
+                )
+                # One-pass top-one weighted mode
+                max_weight = -1
+                for jdx in range(self.k):
+                    if self.weight_type == Weight.uniform:
+                        weight = 1.
+                    elif self.weight_type == Weight.distance:
+                        weight = 1. / self.argkmin_distances[idx][jdx]
+
+                    y_idx = self.argkmin_indices[idx][jdx]
+                    label = self.labels[y_idx]
+                    label_index = self.labels_to_index[label]
+                    self.label_counts[idx][label_index] += weight
+                    val = self.label_counts[idx][label_index]
+                    if max_weight < val or (max_weight == val and label < max_label):
+                        max_label = label
+                        max_weight = val
+                self.argkmin_labels[idx] = max_label
+        return
