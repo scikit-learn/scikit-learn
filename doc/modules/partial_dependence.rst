@@ -74,7 +74,7 @@ You can access the newly created figure and Axes objects using ``plt.gcf()``
 and ``plt.gca()``.
 
 If you wish to plot partial dependence of categorical features, you need to specify
-which features to considered as such using the parameter `categorical_features`. This
+which features to be considered as such using the parameter `categorical_features`. This
 parameters takes a list of indices or names of the categorical features or a boolean
 mask. The graphical representation of partial dependence for categorical features is
 a bar plot or a 2D heatmap.
@@ -140,7 +140,7 @@ When interactions are present the ICE plot will provide many more insights.
 For example, we see that the ICE for the temperature feature gives us some
 additional information: Some of the ICE lines are flat while some others
 shows a decrease of the dependence for temperature above 35 degrees Celsius.
-We observe a similar pattern for the humidity feature: some of the ICEs
+We observe a similar pattern for the humidity feature: some of the ICE
 lines show a sharp decrease when the humidity is above 80%.
 
 The :mod:`sklearn.inspection` module's :meth:`PartialDependenceDisplay.from_estimator`

@@ -19,7 +19,7 @@ Only one feature of interest is supported for ICE plots.
 This example shows how to obtain partial dependence and ICE plots from a
 :class:`~sklearn.neural_network.MLPRegressor` and a
 :class:`~sklearn.ensemble.HistGradientBoostingRegressor` trained on the
-bike sharing dataset. The example is inspired from [1]_.
+bike sharing dataset. The example is inspired by [1]_.
 
 .. [1] `Molnar, Christoph. "Interpretable machine learning.
        A Guide for Making Black Box Models Explainable",
@@ -133,18 +133,18 @@ for ax, (idx, df) in zip(axs, average_bike_rentals.groupby("year")):
 # %%
 # The first striking difference between the train and test set is that the number of
 # bike rentals is higher in the test set. For this reason, it will not be surprising to
-# get a machine learning model that will be underestimate the number of bike rentals. We
+# get a machine learning model that will underestimate the number of bike rentals. We
 # also observe that the number of bike rentals is lower during the spring season. In
-# addition, we see that during the working day, there is a specific pattern around 6-7
+# addition, we see that during working days, there is a specific pattern around 6-7
 # am and 5-6 pm with some peaks of bike rentals. We can keep in mind these different
-# intuitions and use them to understand the partial dependence plot.
+# insights and use them to understand the partial dependence plot.
 #
 # Preprocessor for machine-learning models
 # ----------------------------------------
 #
-# Since we will use later two different models, a
+# Since we later use two different models, a
 # :class:`~sklearn.neural_network.MLPRegressor` and a
-# :class:`~sklearn.ensemble.HistGradientBoostingRegressor`, we will create two different
+# :class:`~sklearn.ensemble.HistGradientBoostingRegressor`, we create two different
 # preprocessors, specific for each model.
 #
 # Preprocessor for the neural network model
@@ -169,7 +169,7 @@ mlp_preprocessor
 # Preprocessor for the gradient boosting model
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
-# For the gradient boosting model, we will let as-is the numerical features and only
+# For the gradient boosting model, we let the numerical features as-is and only
 # end-encode the categorical features using a
 # :class:`~sklearn.preprocessing.OrdinalEncoder`.
 from sklearn.preprocessing import OrdinalEncoder
