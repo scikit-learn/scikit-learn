@@ -835,7 +835,13 @@ Class APIs and Estimator Types
         * :term:`predict` if :term:`inductive`
 
     density estimator
-        TODO
+        An :term:`unsupervised` estimation of input probability density
+        function. Commonly used techniques are:
+
+        * :ref:`kernel_density` - uses a kernel function, controlled by the
+          bandwidth parameter to represent density;
+        * :ref:`Gaussian mixture <mixture>` - uses mixture of Gaussian models
+          to represent density.
 
     estimator
     estimators

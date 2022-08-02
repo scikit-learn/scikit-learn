@@ -33,50 +33,12 @@ X, y = iris.data[:, 1:3], iris.target
 X_r, y_r = datasets.load_diabetes(return_X_y=True)
 
 
-def test_invalid_type_for_flatten_transform():
-    # Test that invalid input raises the proper exception
-    ensemble = VotingClassifier(
-        estimators=[("lr", LogisticRegression())], flatten_transform="foo"
-    )
-    err_msg = "flatten_transform must be an instance of"
-    with pytest.raises(TypeError, match=err_msg):
-        ensemble.fit(X, y)
-
-
-@pytest.mark.parametrize(
-    "X, y, voter, learner",
-    [
-        (X, y, VotingClassifier, {"estimators": [("lr", LogisticRegression())]}),
-        (X_r, y_r, VotingRegressor, {"estimators": [("lr", LinearRegression())]}),
-    ],
-)
-@pytest.mark.parametrize(
-    "params, err_type, err_msg",
-    [
-        ({"verbose": -1}, ValueError, "verbose == -1, must be >= 0"),
-        ({"verbose": "foo"}, TypeError, "verbose must be an instance of"),
-    ],
-)
-def test_voting_estimators_param_validation(
-    X, y, voter, learner, params, err_type, err_msg
-):
-    # Test that invalid input raises the proper exception
-    params.update(learner)
-    ensemble = voter(**params)
-    with pytest.raises(err_type, match=err_msg):
-        ensemble.fit(X, y)
-
-
 @pytest.mark.parametrize(
     "params, err_msg",
     [
         (
             {"estimators": []},
-            "Invalid 'estimators' attribute, 'estimators' should be a list of",
-        ),
-        (
-            {"estimators": [("lr", LogisticRegression())], "voting": "error"},
-            r"Voting must be 'soft' or 'hard'; got \(voting='error'\)",
+            "Invalid 'estimators' attribute, 'estimators' should be a non-empty list",
         ),
         (
             {"estimators": [("lr", LogisticRegression())], "weights": [1, 2]},

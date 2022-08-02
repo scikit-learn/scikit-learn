@@ -229,7 +229,7 @@ def test_str():
 
 
 def test_get_params():
-    test = T(K(), K())
+    test = T(K(), K)
 
     assert "a__d" in test.get_params(deep=True)
     assert "a__d" not in test.get_params(deep=False)
