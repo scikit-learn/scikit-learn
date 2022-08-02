@@ -84,8 +84,9 @@ class LearningCurveDisplay:
         *,
         negate=True,
         score_name="Score",
+        score_type="test",
         log_scale=False,
-        std_display_style="errorbar",
+        std_display_style=None,
         line_kw=None,
         fill_between_kw=None,
         errorbar_kw=None,
@@ -107,26 +108,29 @@ class LearningCurveDisplay:
         score_name : str, default="Score"
             The name of the score used to decorate the y-axis of the plot.
 
+        score_type : {"test", "train", "both"}, default="test"
+            The type of score to plot. Can be one of `"test"`, `"train"`, or
+            `"both"`.
+
         log_scale : bool, default=False
             Whether or not to use a logarithmic scale for the x-axis.
 
-        std_display_style : {"errorbar", "fill_between"}, default="errorbar"
+        std_display_style : {"errorbar", "fill_between"}, default=None
             The style used to display the score standard deviation around the
-            mean score.
+            mean score. If None, no standard deviation representation is
+            displayed.
 
         line_kw : dict, default=None
             Additional keyword arguments passed to the `plt.plot` used to draw
-            the mean score. Ignored when `std_display_style != "fill_between"`.
+            the mean score.
 
         fill_between_kw : dict, default=None
             Additional keyword arguments passed to the `plt.fill_between` used
-            to draw the score standard deviation. Ignored when
-            `std_display_style != "fill_between"`.
+            to draw the score standard deviation.
 
         errorbar_kw : dict, default=None
             Additional keyword arguments passed to the `plt.errorbar` used to
-            draw mean score and standard deviation score. Ignored when
-            `std_display_style != "errorbar"`.
+            draw mean score and standard deviation score.
 
         Returns
         -------
@@ -147,64 +151,74 @@ class LearningCurveDisplay:
             train_scores, test_scores = self.train_scores, self.test_scores
             label = "Score"
 
+        if std_display_style not in ("errorbar", "fill_between", None):
+            raise ValueError(
+                f"Unknown std_display_style: {std_display_style}. Should be one of"
+                " 'errorbar', 'fill_between', or None."
+            )
+
+        if score_type not in ("test", "train", "both"):
+            raise ValueError(
+                f"Unknown score_type: {score_type}. Should be one of 'test', "
+                "'train', or 'both'."
+            )
+
+        if score_type == "train":
+            scores = {f"Training {label}": train_scores}
+        elif score_type == "test":
+            scores = {f"Test {label}": test_scores}
+        else:  # score_type == "both"
+            scores = {f"Training {label}": train_scores, f"Test {label}": test_scores}
+
+        if std_display_style in ("fill_between", None):
+            # plot the mean score
+            if line_kw is None:
+                line_kw = {}
+
+            self.lines_ = []
+            for line_label, score in scores.items():
+                self.lines_.append(
+                    *ax.plot(
+                        self.train_sizes,
+                        score.mean(axis=1),
+                        label=line_label,
+                        **line_kw,
+                    )
+                )
+            self.errorbar_ = None
+            self.fill_between_ = None  # overwritten below by fill_between
+
         if std_display_style == "errorbar":
             if errorbar_kw is None:
                 errorbar_kw = {}
-            errorbar_train = ax.errorbar(
-                x=self.train_sizes,
-                y=train_scores.mean(axis=1),
-                yerr=train_scores.std(axis=1),
-                label=f"Training {label}",
-                **errorbar_kw,
-            )
-            errorbar_test = ax.errorbar(
-                x=self.train_sizes,
-                y=test_scores.mean(axis=1),
-                yerr=test_scores.std(axis=1),
-                label=f"Testing {label}",
-                **errorbar_kw,
-            )
-            self.errorbar_ = [errorbar_train, errorbar_test]
+
+            for line_label, score in scores.items():
+                self.errobar_.append(
+                    ax.errorbar(
+                        self.train_sizes,
+                        score.mean(axis=1),
+                        score.std(axis=1),
+                        label=line_label,
+                        **errorbar_kw,
+                    )
+                )
             self.line_, self.fill_between_ = None, None
         elif std_display_style == "fill_between":
-            if line_kw is None:
-                line_kw = {}
             if fill_between_kw is None:
                 fill_between_kw = {}
             default_fill_between_kw = {"alpha": 0.5}
             fill_between_kw = {**default_fill_between_kw, **fill_between_kw}
-            line_train = ax.plot(
-                self.train_sizes,
-                train_scores.mean(axis=1),
-                label=f"Training {label}",
-                **line_kw,
-            )
-            fill_between_train = ax.fill_between(
-                x=self.train_sizes,
-                y1=train_scores.mean(axis=1) - train_scores.std(axis=1),
-                y2=train_scores.mean(axis=1) + train_scores.std(axis=1),
-                **fill_between_kw,
-            )
-            line_test = ax.plot(
-                self.train_sizes,
-                test_scores.mean(axis=1),
-                label=f"Testing {label}",
-                **line_kw,
-            )
-            fill_between_test = ax.fill_between(
-                x=self.train_sizes,
-                y1=test_scores.mean(axis=1) - test_scores.std(axis=1),
-                y2=test_scores.mean(axis=1) + test_scores.std(axis=1),
-                **fill_between_kw,
-            )
-            self.line_ = line_train + line_test
-            self.fill_between_ = [fill_between_train, fill_between_test]
-            self.errorbar_ = None
-        else:
-            raise ValueError(
-                f"Unknown std_display_style: {std_display_style}. Should be one of"
-                " 'errorbar' or 'fill_between'"
-            )
+
+            for line_label, score in scores.items():
+                self.fill_between_.append(
+                    ax.fill_between(
+                        self.train_sizes,
+                        score.mean(axis=1) - score.std(axis=1),
+                        score.mean(axis=1) + score.std(axis=1),
+                        label=line_label,
+                        **fill_between_kw,
+                    )
+                )
 
         score_name = self.score_name if score_name is None else score_name
 
@@ -240,8 +254,9 @@ class LearningCurveDisplay:
         ax=None,
         negate=False,
         score_name=None,
+        score_type="test",
         log_scale=False,
-        std_display_style="errorbar",
+        std_display_style=None,
         line_kw=None,
         fill_between_kw=None,
         errorbar_kw=None,
@@ -352,26 +367,29 @@ class LearningCurveDisplay:
         score_name : str, default="Score"
             The name of the score used to decorate the y-axis of the plot.
 
+        score_type : {"test", "train", "both"}, default="test"
+            The type of score to plot. Can be one of `"test"`, `"train"`, or
+            `"both"`.
+
         log_scale : bool, default=False
             Whether or not to use a logarithmic scale for the x-axis.
 
-        std_display_style : {"errorbar", "fill_between"}, default="errorbar"
+        std_display_style : {"errorbar", "fill_between"}, default=None
             The style used to display the score standard deviation around the
-            mean score.
+            mean score. If `None, no representation of the standard deviation
+            is displayed.
 
         line_kw : dict, default=None
             Additional keyword arguments passed to the `plt.plot` used to draw
-            the mean score. Ignored when `std_display_style != "fill_between"`.
+            the mean score.
 
         fill_between_kw : dict, default=None
             Additional keyword arguments passed to the `plt.fill_between` used
-            to draw the score standard deviation. Ignored when
-            `std_display_style != "fill_between"`.
+            to draw the score standard deviation.
 
         errorbar_kw : dict, default=None
             Additional keyword arguments passed to the `plt.errorbar` used to
-            draw mean score and standard deviation score. Ignored when
-            `std_display_style != "errorbar"`.
+            draw mean score and standard deviation score.
 
         Returns
         -------
@@ -422,6 +440,7 @@ class LearningCurveDisplay:
         return viz.plot(
             ax=ax,
             negate=negate,
+            score_type=score_type,
             log_scale=log_scale,
             std_display_style=std_display_style,
             line_kw=line_kw,
