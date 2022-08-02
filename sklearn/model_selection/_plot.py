@@ -28,9 +28,9 @@ class LearningCurveDisplay:
     test_scores : ndarray of shape (n_ticks, n_cv_folds)
         Scores on test set.
 
-    score_name : str, default=None
-        The name of the score used in `learning_curve`. If `None`, the string
-        `"Score"` is used.
+    score_name : str, default="Score"
+        The name of the score used in `learning_curve`. It will be used to
+        decorate the y-axis.
 
     Attributes
     ----------
@@ -59,17 +59,20 @@ class LearningCurveDisplay:
     --------
     >>> import matplotlib.pyplot as plt
     >>> from sklearn.datasets import load_iris
-    >>> from sklearn.model_selection import LearningCurveDisplay
+    >>> from sklearn.model_selection import LearningCurveDisplay, learning_curve
     >>> from sklearn.tree import DecisionTreeClassifier
     >>> X, y = load_iris(return_X_y=True)
     >>> tree = DecisionTreeClassifier(random_state=0)
-    >>> display = LearningCurveDisplay.from_estimator(tree, X, y)
+    >>> train_sizes, train_scores, test_scores = learning_curve(
+    ...     tree, X, y)
+    >>> display = LearningCurveDisplay(train_sizes=train_sizes,
+    ...     train_scores=train_scores, test_scores=test_scores)
     >>> display.plot()
     <...>
     >>> plt.show()
     """
 
-    def __init__(self, *, train_sizes, train_scores, test_scores, score_name=None):
+    def __init__(self, *, train_sizes, train_scores, test_scores, score_name="Score"):
         self.train_sizes = train_sizes
         self.train_scores = train_scores
         self.test_scores = test_scores
@@ -79,14 +82,57 @@ class LearningCurveDisplay:
         self,
         ax=None,
         *,
-        is_score=True,
-        score_name=None,
+        negate=True,
+        score_name="Score",
         log_scale=False,
         std_display_style="errorbar",
         line_kw=None,
         fill_between_kw=None,
         errorbar_kw=None,
     ):
+        """Plot visualization.
+
+        Parameters
+        ----------
+        ax : matplotlib Axes, default=None
+            Axes object to plot on. If `None`, a new figure and axes is
+            created.
+
+        negate : bool, default=False
+            Whether or not to negate the scores obtained through
+            :func:`~sklearn.model_selection.learning_curve`. This is
+            particularly useful when using the error denoted by `neg_*` in
+            `scikit-learn`.
+
+        score_name : str, default="Score"
+            The name of the score used to decorate the y-axis of the plot.
+
+        log_scale : bool, default=False
+            Whether or not to use a logarithmic scale for the x-axis.
+
+        std_display_style : {"errorbar", "fill_between"}, default="errorbar"
+            The style used to display the score standard deviation around the
+            mean score.
+
+        line_kw : dict, default=None
+            Additional keyword arguments passed to the `plt.plot` used to draw
+            the mean score. Ignored when `std_display_style != "fill_between"`.
+
+        fill_between_kw : dict, default=None
+            Additional keyword arguments passed to the `plt.fill_between` used
+            to draw the score standard deviation. Ignored when
+            `std_display_style != "fill_between"`.
+
+        errorbar_kw : dict, default=None
+            Additional keyword arguments passed to the `plt.errorbar` used to
+            draw mean score and standard deviation score. Ignored when
+            `std_display_style != "errorbar"`.
+
+        Returns
+        -------
+        display : :class:`~sklearn.model_selection.LearningCurveDisplay`
+            Object that stores computed values.
+        """
         check_matplotlib_support(f"{self.__class__.__name__}.plot")
 
         import matplotlib.pyplot as plt
@@ -94,12 +140,12 @@ class LearningCurveDisplay:
         if ax is None:
             _, ax = plt.subplots()
 
-        if is_score:
-            train_scores, test_scores = self.train_scores, self.test_scores
-            label = "Score"
-        else:
+        if negate:
             train_scores, test_scores = -self.train_scores, -self.test_scores
             label = "Error"
+        else:
+            train_scores, test_scores = self.train_scores, self.test_scores
+            label = "Score"
 
         if std_display_style == "errorbar":
             if errorbar_kw is None:
@@ -192,7 +238,7 @@ class LearningCurveDisplay:
         error_score=np.nan,
         fit_params=None,
         ax=None,
-        is_score=True,
+        negate=False,
         score_name=None,
         log_scale=False,
         std_display_style="errorbar",
@@ -200,6 +246,150 @@ class LearningCurveDisplay:
         fill_between_kw=None,
         errorbar_kw=None,
     ):
+        """Create a learning curve display from an estimator.
+
+        Parameters
+        ----------
+        estimator : object type that implements the "fit" and "predict" methods
+            An object of that type which is cloned for each validation.
+
+        X : array-like of shape (n_samples, n_features)
+            Training vector, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
+
+        y : array-like of shape (n_samples,) or (n_samples, n_outputs)
+            Target relative to X for classification or regression;
+            None for unsupervised learning.
+
+        groups : array-like of  shape (n_samples,), default=None
+            Group labels for the samples used while splitting the dataset into
+            train/test set. Only used in conjunction with a "Group" :term:`cv`
+            instance (e.g., :class:`GroupKFold`).
+
+        train_sizes : array-like of shape (n_ticks,), \
+                default=np.linspace(0.1, 1.0, 5)
+            Relative or absolute numbers of training examples that will be used
+            to generate the learning curve. If the dtype is float, it is
+            regarded as a fraction of the maximum size of the training set
+            (that is determined by the selected validation method), i.e. it has
+            to be within (0, 1]. Otherwise it is interpreted as absolute sizes
+            of the training sets. Note that for classification the number of
+            samples usually have to be big enough to contain at least one
+            sample from each class.
+
+        cv : int, cross-validation generator or an iterable, default=None
+            Determines the cross-validation splitting strategy.
+            Possible inputs for cv are:
+
+            - None, to use the default 5-fold cross validation,
+            - int, to specify the number of folds in a `(Stratified)KFold`,
+            - :term:`CV splitter`,
+            - An iterable yielding (train, test) splits as arrays of indices.
+
+            For int/None inputs, if the estimator is a classifier and ``y`` is
+            either binary or multiclass, :class:`StratifiedKFold` is used. In
+            all other cases, :class:`KFold` is used. These splitters are
+            instantiated with `shuffle=False` so the splits will be the same
+            across calls.
+
+            Refer :ref:`User Guide <cross_validation>` for the various
+            cross-validation strategies that can be used here.
+
+        scoring : str or callable, default=None
+            A str (see model evaluation documentation) or
+            a scorer callable object / function with signature
+            ``scorer(estimator, X, y)``.
+
+        exploit_incremental_learning : bool, default=False
+            If the estimator supports incremental learning, this will be
+            used to speed up fitting for different training set sizes.
+
+        n_jobs : int, default=None
+            Number of jobs to run in parallel. Training the estimator and
+            computing the score are parallelized over the different training
+            and test sets. ``None`` means 1 unless in a
+            :obj:`joblib.parallel_backend` context. ``-1`` means using all
+            processors. See :term:`Glossary <n_jobs>` for more details.
+
+        pre_dispatch : int or str, default='all'
+            Number of predispatched jobs for parallel execution (default is
+            all). The option can reduce the allocated memory. The str can
+            be an expression like '2*n_jobs'.
+
+        verbose : int, default=0
+            Controls the verbosity: the higher, the more messages.
+
+        shuffle : bool, default=False
+            Whether to shuffle training data before taking prefixes of it
+            based on``train_sizes``.
+
+        random_state : int, RandomState instance or None, default=None
+            Used when ``shuffle`` is True. Pass an int for reproducible
+            output across multiple function calls.
+            See :term:`Glossary <random_state>`.
+
+        error_score : 'raise' or numeric, default=np.nan
+            Value to assign to the score if an error occurs in estimator
+            fitting. If set to 'raise', the error is raised. If a numeric value
+            is given, FitFailedWarning is raised.
+
+        return_times : bool, default=False
+            Whether to return the fit and score times.
+
+        fit_params : dict, default=None
+            Parameters to pass to the fit method of the estimator.
+
+        ax : matplotlib Axes, default=None
+            Axes object to plot on. If `None`, a new figure and axes is
+            created.
+
+        negate : bool, default=False
+            Whether or not to negate the scores obtained through
+            :func:`~sklearn.model_selection.learning_curve`. This is
+            particularly useful when using the error denoted by `neg_*` in
+            `scikit-learn`.
+
+        score_name : str, default="Score"
+            The name of the score used to decorate the y-axis of the plot.
+
+        log_scale : bool, default=False
+            Whether or not to use a logarithmic scale for the x-axis.
+
+        std_display_style : {"errorbar", "fill_between"}, default="errorbar"
+            The style used to display the score standard deviation around the
+            mean score.
+
+        line_kw : dict, default=None
+            Additional keyword arguments passed to the `plt.plot` used to draw
+            the mean score. Ignored when `std_display_style != "fill_between"`.
+
+        fill_between_kw : dict, default=None
+            Additional keyword arguments passed to the `plt.fill_between` used
+            to draw the score standard deviation. Ignored when
+            `std_display_style != "fill_between"`.
+
+        errorbar_kw : dict, default=None
+            Additional keyword arguments passed to the `plt.errorbar` used to
+            draw mean score and standard deviation score. Ignored when
+            `std_display_style != "errorbar"`.
+
+        Returns
+        -------
+        display : :class:`~sklearn.model_selection.LearningCurveDisplay`
+            Object that stores computed values.
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+        >>> from sklearn.datasets import load_iris
+        >>> from sklearn.model_selection import LearningCurveDisplay
+        >>> from sklearn.tree import DecisionTreeClassifier
+        >>> X, y = load_iris(return_X_y=True)
+        >>> tree = DecisionTreeClassifier(random_state=0)
+        >>> LearningCurveDisplay.from_estimator(tree, X, y)
+        <...>
+        >>> plt.show()
+        """
         check_matplotlib_support(f"{cls.__name__}.from_estimator")
 
         score_name = "Score" if score_name is None else score_name
@@ -231,7 +421,7 @@ class LearningCurveDisplay:
         )
         return viz.plot(
             ax=ax,
-            is_score=is_score,
+            negate=negate,
             log_scale=log_scale,
             std_display_style=std_display_style,
             line_kw=line_kw,
