@@ -236,7 +236,7 @@ Changelog
 - |Feature| Added the class :class:`model_selection.LearningCurveDisplay`
   that allows to make easy plotting of learning curves obtained by the function
   :func:`model_selection.learning_curve`.
-  :pr:`xxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`24084` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.naive_bayes`
 ..........................
