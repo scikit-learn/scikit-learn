@@ -101,3 +101,4 @@ Display Objects
    metrics.DetCurveDisplay
    metrics.PrecisionRecallDisplay
    metrics.RocCurveDisplay
+   model_selection.LearningCurveDisplay

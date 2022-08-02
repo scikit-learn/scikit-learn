@@ -5,7 +5,71 @@ from ..utils import check_matplotlib_support
 
 
 class LearningCurveDisplay:
-    def __init__(self, *, train_sizes, train_scores, test_scores, score_name):
+    """Learning Curve visualization.
+
+    It is recommended to use
+    :meth:`~sklearn.model_selection.LearningCurveDisplay.from_estimator` to
+    create a :class:`~sklearn.model_selection.LearningCurveDisplay` instance.
+    All parameters are stored as attributes.
+
+    Read more in the :ref:`User Guide <visualizations>`.
+
+    .. versionadded:: 1.2
+
+    Parameters
+    ----------
+    train_sizes : ndarray of shape (n_unique_ticks,)
+        Numbers of training examples that has been used to generate the
+        learning curve.
+
+    train_scores : ndarray of shape (n_ticks, n_cv_folds)
+        Scores on training sets.
+
+    test_scores : ndarray of shape (n_ticks, n_cv_folds)
+        Scores on test set.
+
+    score_name : str, default=None
+        The name of the score used in `learning_curve`. If `None`, the string
+        `"Score"` is used.
+
+    Attributes
+    ----------
+    ax_ : matplotlib Axes
+        Axes with the learning curve.
+
+    figure_ : matplotlib Figure
+        Figure containing the learning curve.
+
+    errorbar_ : list of matplotlib Artist or None
+        When the `std_display_style` is `"errorbar"`, this is a list of
+        `matplotlib.container.ErrorbarContainer` objects. If another style is
+        used, `errorbar_` is `None`.
+
+    line_ : list of matplotlib Artist or None
+        When the `std_display_style` is `"fill_between"`, this is a list of
+        `matplotlib.lines.Line2D` objects corresponding to the mean train and
+        test scores. If another style is used, `line_` is `None`.
+
+    fill_between_ : list of matplotlib Artist or None
+        When the `std_display_style` is `"fill_between"`, this is a list of
+        `matplotlib.collections.PolyCollection` objects. If another style is
+        used, `fill_between_` is `None`.
+
+    Examples
+    --------
+    >>> import matplotlib.pyplot as plt
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.model_selection import LearningCurveDisplay
+    >>> from sklearn.tree import DecisionTreeClassifier
+    >>> X, y = load_iris(return_X_y=True)
+    >>> tree = DecisionTreeClassifier(random_state=0)
+    >>> display = LearningCurveDisplay.from_estimator(tree, X, y)
+    >>> display.plot()
+    <...>
+    >>> plt.show()
+    """
+
+    def __init__(self, *, train_sizes, train_scores, test_scores, score_name=None):
         self.train_sizes = train_sizes
         self.train_scores = train_scores
         self.test_scores = test_scores
