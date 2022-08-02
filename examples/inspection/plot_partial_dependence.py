@@ -241,7 +241,7 @@ from sklearn.inspection import PartialDependenceDisplay
 
 common_params = {
     "subsample": 50,
-    "n_jobs": -1,
+    "n_jobs": 2,
     "grid_resolution": 20,
     "random_state": 0,
 }
@@ -466,7 +466,8 @@ ax.view_init(elev=22, azim=122)
 clb = plt.colorbar(surf)
 clb.ax.set_title("Partial dependence")
 plt.suptitle(
-    "PD of number of bike rentals on\nthe temperature and humidity using",
+    "Partial dependence of number of bike rentals on\nthe temperature and humidity "
+    "gradient boosting decision tree model",
     fontsize=16,
 )
 plt.subplots_adjust(top=0.9)

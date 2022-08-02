@@ -511,7 +511,7 @@ def _plot_partial_dependence(
         if categorical_features.dtype.kind == "b":
             if categorical_features.size != n_features:
                 raise ValueError(
-                    "When `categorical_features` is a boolearn array-like, "
+                    "When `categorical_features` is a boolean array-like, "
                     "the array should be of shape (n_features,). Got "
                     f"{categorical_features.size} elements while `X` contains "
                     f"{n_features} features."
