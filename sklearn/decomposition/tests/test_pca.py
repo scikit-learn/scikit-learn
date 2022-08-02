@@ -71,7 +71,6 @@ def test_weighted_pca(svd_solver, n_components, whiten):
     ):
         if i != j:
             pca_red.components_[c] *= -1
-            print("flip sign")
 
     # Transform and expand repeats
     X_red = np.repeat(pca_red.transform(X), W, axis=0)
