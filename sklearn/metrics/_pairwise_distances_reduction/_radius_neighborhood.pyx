@@ -8,10 +8,7 @@ from cython cimport final
 from cython.operator cimport dereference as deref
 from cython.parallel cimport parallel, prange
 
-from ._base cimport (
-    PairwiseDistancesReduction64,
-    _sqeuclidean_row_norms64
-)
+from ._base cimport Core64, _sqeuclidean_row_norms64
 
 from ._datasets_pair cimport (
     DatasetsPair,
@@ -55,8 +52,11 @@ cdef cnp.ndarray[object, ndim=1] coerce_vectors_to_nd_arrays(
 #####################
 
 
-cdef class PairwiseDistancesRadiusNeighborhood64(PairwiseDistancesReduction64):
-    """64bit implementation of PairwiseDistancesRadiusNeighborhood."""
+cdef class RadiusNeighbors64(Core64):
+    """
+    64bit implementation of the pairwise-distance reduction Core64 for the
+    `RadiusNeighbors` reduction.
+    """
 
     @classmethod
     def compute(
@@ -75,7 +75,7 @@ cdef class PairwiseDistancesRadiusNeighborhood64(PairwiseDistancesReduction64):
 
         This classmethod is responsible for introspecting the arguments
         values to dispatch to the most appropriate implementation of
-        :class:`PairwiseDistancesRadiusNeighborhood64`.
+        :class:`RadiusNeighbors64`.
 
         This allows decoupling the API entirely from the implementation details
         whilst maintaining RAII: all temporarily allocated datastructures necessary
@@ -94,7 +94,7 @@ cdef class PairwiseDistancesRadiusNeighborhood64(PairwiseDistancesReduction64):
             # at time to leverage a call to the BLAS GEMM routine as explained
             # in more details in GEMMTermComputer docstring.
             use_squared_distances = metric == "sqeuclidean"
-            pda = FastEuclideanPairwiseDistancesRadiusNeighborhood64(
+            pda = EuclideanRadiusNeighbors64(
                 X=X, Y=Y, radius=radius,
                 use_squared_distances=use_squared_distances,
                 chunk_size=chunk_size,
@@ -105,7 +105,7 @@ cdef class PairwiseDistancesRadiusNeighborhood64(PairwiseDistancesReduction64):
         else:
              # Fall back on a generic implementation that handles most scipy
              # metrics by computing the distances between 2 vectors at a time.
-            pda = PairwiseDistancesRadiusNeighborhood64(
+            pda = RadiusNeighbors64(
                 datasets_pair=DatasetsPair.get_for(X, Y, metric, metric_kwargs),
                 radius=radius,
                 chunk_size=chunk_size,
@@ -161,7 +161,7 @@ cdef class PairwiseDistancesRadiusNeighborhood64(PairwiseDistancesReduction64):
         )
 
         # Temporary datastructures which will be coerced to numpy arrays on before
-        # PairwiseDistancesRadiusNeighborhood.compute "return" and will be then freed.
+        # RadiusNeighbors.compute "return" and will be then freed.
         self.neigh_distances = make_shared[vector[vector[DTYPE_t]]](self.n_samples_X)
         self.neigh_indices = make_shared[vector[vector[ITYPE_t]]](self.n_samples_X)
 
@@ -317,12 +317,12 @@ cdef class PairwiseDistancesRadiusNeighborhood64(PairwiseDistancesReduction64):
                 )
 
 
-cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood64(PairwiseDistancesRadiusNeighborhood64):
-    """EuclideanDistance-specialized 64bit implementation for PairwiseDistancesRadiusNeighborhood."""
+cdef class EuclideanRadiusNeighbors64(RadiusNeighbors64):
+    """EuclideanDistance-specialized implementation for RadiusNeighbors64."""
 
     @classmethod
     def is_usable_for(cls, X, Y, metric) -> bool:
-        return (PairwiseDistancesRadiusNeighborhood64.is_usable_for(X, Y, metric)
+        return (RadiusNeighbors64.is_usable_for(X, Y, metric)
                 and not _in_unstable_openblas_configuration())
 
     def __init__(
@@ -343,7 +343,7 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood64(PairwiseDistancesR
         ):
             warnings.warn(
                 f"Some metric_kwargs have been passed ({metric_kwargs}) but aren't "
-                f"usable for this case (FastEuclideanPairwiseDistancesRadiusNeighborhood) and will be ignored.",
+                f"usable for this case (EuclideanRadiusNeighbors64) and will be ignored.",
                 UserWarning,
                 stacklevel=3,
             )
@@ -394,7 +394,7 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood64(PairwiseDistancesR
         self,
         ITYPE_t thread_num,
     ) nogil:
-        PairwiseDistancesRadiusNeighborhood64._parallel_on_X_parallel_init(self, thread_num)
+        RadiusNeighbors64._parallel_on_X_parallel_init(self, thread_num)
         self.gemm_term_computer._parallel_on_X_parallel_init(thread_num)
 
     @final
@@ -404,7 +404,7 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood64(PairwiseDistancesR
         ITYPE_t X_start,
         ITYPE_t X_end,
     ) nogil:
-        PairwiseDistancesRadiusNeighborhood64._parallel_on_X_init_chunk(self, thread_num, X_start, X_end)
+        RadiusNeighbors64._parallel_on_X_init_chunk(self, thread_num, X_start, X_end)
         self.gemm_term_computer._parallel_on_X_init_chunk(thread_num, X_start, X_end)
 
     @final
@@ -416,7 +416,7 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood64(PairwiseDistancesR
         ITYPE_t Y_end,
         ITYPE_t thread_num,
     ) nogil:
-        PairwiseDistancesRadiusNeighborhood64._parallel_on_X_pre_compute_and_reduce_distances_on_chunks(
+        RadiusNeighbors64._parallel_on_X_pre_compute_and_reduce_distances_on_chunks(
             self,
             X_start, X_end,
             Y_start, Y_end,
@@ -431,7 +431,7 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood64(PairwiseDistancesR
         self,
     ) nogil:
         cdef ITYPE_t thread_num
-        PairwiseDistancesRadiusNeighborhood64._parallel_on_Y_init(self)
+        RadiusNeighbors64._parallel_on_Y_init(self)
         self.gemm_term_computer._parallel_on_Y_init()
 
     @final
@@ -441,7 +441,7 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood64(PairwiseDistancesR
         ITYPE_t X_start,
         ITYPE_t X_end,
     ) nogil:
-        PairwiseDistancesRadiusNeighborhood64._parallel_on_Y_parallel_init(self, thread_num, X_start, X_end)
+        RadiusNeighbors64._parallel_on_Y_parallel_init(self, thread_num, X_start, X_end)
         self.gemm_term_computer._parallel_on_Y_parallel_init(thread_num, X_start, X_end)
 
     @final
@@ -453,7 +453,7 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood64(PairwiseDistancesR
         ITYPE_t Y_end,
         ITYPE_t thread_num,
     ) nogil:
-        PairwiseDistancesRadiusNeighborhood64._parallel_on_Y_pre_compute_and_reduce_distances_on_chunks(
+        RadiusNeighbors64._parallel_on_Y_pre_compute_and_reduce_distances_on_chunks(
             self,
             X_start, X_end,
             Y_start, Y_end,
@@ -466,7 +466,7 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood64(PairwiseDistancesR
     @final
     cdef void compute_exact_distances(self) nogil:
         if not self.use_squared_distances:
-            PairwiseDistancesRadiusNeighborhood64.compute_exact_distances(self)
+            RadiusNeighbors64.compute_exact_distances(self)
 
     @final
     cdef void _compute_and_reduce_distances_on_chunks(

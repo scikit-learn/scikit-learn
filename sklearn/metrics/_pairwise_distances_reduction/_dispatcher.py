@@ -7,8 +7,8 @@ from scipy.sparse import issparse
 from .._dist_metrics import BOOL_METRICS, METRIC_MAPPING
 
 from ._base import _sqeuclidean_row_norms64
-from ._argkmin import PairwiseDistancesArgKmin64
-from ._radius_neighborhood import PairwiseDistancesRadiusNeighborhood64
+from ._argkmin import ArgKmin64
+from ._radius_neighborhood import RadiusNeighbors64
 
 from ... import get_config
 
@@ -36,10 +36,10 @@ def sqeuclidean_row_norms(X, num_threads):
     )
 
 
-class PairwiseDistancesReduction:
+class Dispatcher:
     """Abstract base dispatcher for pairwise distance computation & reduction.
 
-    Each dispatcher extending the base :class:`PairwiseDistancesReduction`
+    Each dispatcher extending the base :class:`Dispatcher`
     dispatcher must implement the :meth:`compute` classmethod.
     """
 
@@ -59,7 +59,7 @@ class PairwiseDistancesReduction:
 
     @classmethod
     def is_usable_for(cls, X, Y, metric) -> bool:
-        """Return True if the PairwiseDistancesReduction can be used for the
+        """Return True if the Dispatcher can be used for the
         given parameters.
 
         Parameters
@@ -77,7 +77,7 @@ class PairwiseDistancesReduction:
 
         Returns
         -------
-        True if the PairwiseDistancesReduction can be used, else False.
+        True if the Dispatcher can be used, else False.
         """
         dtypes_validity = X.dtype == Y.dtype == np.float64
         c_contiguity = (
@@ -122,13 +122,13 @@ class PairwiseDistancesReduction:
         """
 
 
-class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
+class ArgKminDispatcher(Dispatcher):
     """Compute the argkmin of row vectors of X on the ones of Y.
 
     For each row vector of X, computes the indices of k first the rows
     vectors of Y with the smallest distances.
 
-    PairwiseDistancesArgKmin is typically used to perform
+    ArgKminDispatcher is typically used to perform
     bruteforce k-nearest neighbors queries.
 
     This class is not meant to be instanciated, one should only use
@@ -224,7 +224,7 @@ class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
         -----
         This classmethod is responsible for introspecting the arguments
         values to dispatch to the most appropriate implementation of
-        :class:`PairwiseDistancesArgKmin`.
+        :class:`ArgKmin64`.
 
         This allows decoupling the API entirely from the implementation details
         whilst maintaining RAII: all temporarily allocated datastructures necessary
@@ -237,7 +237,7 @@ class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
         # for various backend and/or hardware and/or datatypes, and/or fused
         # {sparse, dense}-datasetspair etc.
         if X.dtype == Y.dtype == np.float64:
-            return PairwiseDistancesArgKmin64.compute(
+            return ArgKmin64.compute(
                 X=X,
                 Y=Y,
                 k=k,
@@ -253,7 +253,7 @@ class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
         )
 
 
-class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
+class RadiusNeighborsDispatcher(Dispatcher):
     """Compute radius-based neighbors for two sets of vectors.
 
     For each row-vector X[i] of the queries X, find all the indices j of
@@ -361,7 +361,7 @@ class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
         -----
         This public classmethod is responsible for introspecting the arguments
         values to dispatch to the private dtype-specialized implementation of
-        :class:`PairwiseDistancesRadiusNeighborhood`.
+        :class:`RadiusNeighbors64`.
 
         All temporarily allocated datastructures necessary for the concrete
         implementation are therefore freed when this classmethod returns.
@@ -375,7 +375,7 @@ class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
         # for various backend and/or hardware and/or datatypes, and/or fused
         # {sparse, dense}-datasetspair etc.
         if X.dtype == Y.dtype == np.float64:
-            return PairwiseDistancesRadiusNeighborhood64.compute(
+            return RadiusNeighbors64.compute(
                 X=X,
                 Y=Y,
                 radius=radius,

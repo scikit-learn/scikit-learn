@@ -44,8 +44,8 @@ cpdef DTYPE_t[::1] _sqeuclidean_row_norms64(
     return squared_row_norms
 
 
-cdef class PairwiseDistancesReduction64:
-    """Base 64bit implementation of PairwiseDistancesReduction."""
+cdef class Core64:
+    """Base 64bit implementation core of the pairwise-distances reduction backend."""
 
     def __init__(
         self,
@@ -263,7 +263,7 @@ cdef class PairwiseDistancesReduction64:
     ) nogil:
         """Compute the pairwise distances on two chunks of X and Y and reduce them.
 
-        This is THE core computational method of PairwiseDistanceReductions64.
+        This is THE core computational method of Core64.
         This must be implemented in subclasses agnostically from the parallelization
         strategies.
         """

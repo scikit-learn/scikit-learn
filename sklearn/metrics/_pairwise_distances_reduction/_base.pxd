@@ -13,8 +13,8 @@ cpdef DTYPE_t[::1] _sqeuclidean_row_norms64(
     ITYPE_t num_threads,
 )
 
-cdef class PairwiseDistancesReduction64:
-    """Base 64bit implementation of PairwiseDistancesReduction."""
+cdef class Core64:
+    """Base 64bit implementation core of the pairwise-distances reduction backend."""
 
     cdef:
         readonly DatasetsPair datasets_pair

@@ -1,16 +1,17 @@
 cimport numpy as cnp
 
-from ._base cimport (
-    PairwiseDistancesReduction64,
-)
+from ._base cimport Core64
 from ._gemm_term_computer cimport GEMMTermComputer64
 
 from ...utils._typedefs cimport ITYPE_t, DTYPE_t
 
 cnp.import_array()
 
-cdef class PairwiseDistancesArgKmin64(PairwiseDistancesReduction64):
-    """64bit implementation of PairwiseDistancesArgKmin."""
+cdef class ArgKmin64(Core64):
+    """
+    64bit implementation of the pairwise-distance reduction Core64 for the
+    `ArgKmin` reduction.
+    """
 
     cdef:
         ITYPE_t k
@@ -23,8 +24,8 @@ cdef class PairwiseDistancesArgKmin64(PairwiseDistancesReduction64):
         ITYPE_t ** heaps_indices_chunks
 
 
-cdef class FastEuclideanPairwiseDistancesArgKmin64(PairwiseDistancesArgKmin64):
-    """EuclideanDistance-specialized 64bit implementation for PairwiseDistancesArgKmin."""
+cdef class EuclideanArgKmin64(ArgKmin64):
+    """EuclideanDistance-specialized implementation for ArgKmin64."""
     cdef:
         GEMMTermComputer64 gemm_term_computer
         const DTYPE_t[::1] X_norm_squared

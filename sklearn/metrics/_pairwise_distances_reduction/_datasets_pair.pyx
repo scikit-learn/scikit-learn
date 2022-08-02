@@ -18,11 +18,10 @@ cdef class DatasetsPair:
 
     The handling of parallelization over chunks to compute the distances
     and aggregation for several rows at a time is done in dedicated
-    subclasses of PairwiseDistancesReduction that in-turn rely on
-    subclasses of DatasetsPair for each pair of rows in the data. The goal
-    is to make it possible to decouple the generic parallelization and
-    aggregation logic from metric-specific computation as much as
-    possible.
+    subclasses of Dispatcher that in-turn rely on subclasses of DatasetsPair
+    for each pair of rows in the data. The goal is to make it possible to
+    decouple the generic parallelization and aggregation logic from metric-
+    specific computation as much as possible.
 
     X and Y can be stored as C-contiguous np.ndarrays or CSR matrices
     in subclasses.

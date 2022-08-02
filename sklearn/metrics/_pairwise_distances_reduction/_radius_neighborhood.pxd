@@ -4,9 +4,7 @@ from libcpp.memory cimport shared_ptr
 from libcpp.vector cimport vector
 from cython cimport final
 
-from ._base cimport (
-    PairwiseDistancesReduction64,
-)
+from ._base cimport Core64
 from ._gemm_term_computer cimport GEMMTermComputer64
 
 from ...utils._typedefs cimport ITYPE_t, DTYPE_t
@@ -32,8 +30,11 @@ cdef cnp.ndarray[object, ndim=1] coerce_vectors_to_nd_arrays(
 
 #####################
 
-cdef class PairwiseDistancesRadiusNeighborhood64(PairwiseDistancesReduction64):
-    """64bit implementation of PairwiseDistancesRadiusNeighborhood ."""
+cdef class RadiusNeighbors64(Core64):
+    """
+    64bit implementation of the pairwise-distance reduction Core64 for the
+    `RadiusNeighbors` reduction.
+    """
 
     cdef:
         DTYPE_t radius
@@ -79,8 +80,8 @@ cdef class PairwiseDistancesRadiusNeighborhood64(PairwiseDistancesReduction64):
     ) nogil
 
 
-cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood64(PairwiseDistancesRadiusNeighborhood64):
-    """EuclideanDistance-specialized 64bit implementation for PairwiseDistancesRadiusNeighborhood."""
+cdef class EuclideanRadiusNeighbors64(RadiusNeighbors64):
+    """EuclideanDistance-specialized implementation for RadiusNeighbors64."""
     cdef:
         GEMMTermComputer64 gemm_term_computer
         const DTYPE_t[::1] X_norm_squared

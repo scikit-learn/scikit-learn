@@ -5,10 +5,7 @@ from libc.float cimport DBL_MAX
 from cython cimport final
 from cython.parallel cimport parallel, prange
 
-from ._base cimport (
-    PairwiseDistancesReduction64,
-    _sqeuclidean_row_norms64,
-)
+from ._base cimport Core64, _sqeuclidean_row_norms64
 
 from ._datasets_pair cimport (
     DatasetsPair,
@@ -33,8 +30,8 @@ from ...utils._typedefs import ITYPE, DTYPE
 cnp.import_array()
 
 
-cdef class PairwiseDistancesArgKmin64(PairwiseDistancesReduction64):
-    """64bit implementation of PairwiseDistancesArgKmin."""
+cdef class ArgKmin64(Core64):
+    """64bit implementation of the pairwise-distance reduction Core64."""
 
     @classmethod
     def compute(
@@ -52,7 +49,7 @@ cdef class PairwiseDistancesArgKmin64(PairwiseDistancesReduction64):
 
         This classmethod is responsible for introspecting the arguments
         values to dispatch to the most appropriate implementation of
-        :class:`PairwiseDistancesArgKmin64`.
+        :class:`ArgKmin64`.
 
         This allows decoupling the API entirely from the implementation details
         whilst maintaining RAII: all temporarily allocated datastructures necessary
@@ -71,7 +68,7 @@ cdef class PairwiseDistancesArgKmin64(PairwiseDistancesReduction64):
             # at time to leverage a call to the BLAS GEMM routine as explained
             # in more details in the docstring.
             use_squared_distances = metric == "sqeuclidean"
-            pda = FastEuclideanPairwiseDistancesArgKmin64(
+            pda = EuclideanArgKmin64(
                 X=X, Y=Y, k=k,
                 use_squared_distances=use_squared_distances,
                 chunk_size=chunk_size,
@@ -81,7 +78,7 @@ cdef class PairwiseDistancesArgKmin64(PairwiseDistancesReduction64):
         else:
              # Fall back on a generic implementation that handles most scipy
              # metrics by computing the distances between 2 vectors at a time.
-            pda = PairwiseDistancesArgKmin64(
+            pda = ArgKmin64(
                 datasets_pair=DatasetsPair.get_for(X, Y, metric, metric_kwargs),
                 k=k,
                 chunk_size=chunk_size,
@@ -128,7 +125,7 @@ cdef class PairwiseDistancesArgKmin64(PairwiseDistancesReduction64):
             sizeof(ITYPE_t *) * self.chunks_n_threads
         )
 
-        # Main heaps which will be returned as results by `PairwiseDistancesArgKmin64.compute`.
+        # Main heaps which will be returned as results by `ArgKmin64.compute`.
         self.argkmin_indices = np.full((self.n_samples_X, self.k), 0, dtype=ITYPE)
         self.argkmin_distances = np.full((self.n_samples_X, self.k), DBL_MAX, dtype=DTYPE)
 
@@ -302,18 +299,18 @@ cdef class PairwiseDistancesArgKmin64(PairwiseDistancesReduction64):
 
             # Values are returned identically to the way `KNeighborsMixin.kneighbors`
             # returns values. This is counter-intuitive but this allows not using
-            # complex adaptations where `PairwiseDistancesArgKmin64.compute` is called.
+            # complex adaptations where `ArgKmin64.compute` is called.
             return np.asarray(self.argkmin_distances), np.asarray(self.argkmin_indices)
 
         return np.asarray(self.argkmin_indices)
 
 
-cdef class FastEuclideanPairwiseDistancesArgKmin64(PairwiseDistancesArgKmin64):
-    """EuclideanDistance-specialized 64bit implementation for PairwiseDistancesArgKmin."""
+cdef class EuclideanArgKmin64(ArgKmin64):
+    """EuclideanDistance-specialized implementation for ArgKmin64."""
 
     @classmethod
     def is_usable_for(cls, X, Y, metric) -> bool:
-        return (PairwiseDistancesArgKmin64.is_usable_for(X, Y, metric) and
+        return (ArgKmin64.is_usable_for(X, Y, metric) and
                 not _in_unstable_openblas_configuration())
 
     def __init__(
@@ -333,7 +330,7 @@ cdef class FastEuclideanPairwiseDistancesArgKmin64(PairwiseDistancesArgKmin64):
         ):
             warnings.warn(
                 f"Some metric_kwargs have been passed ({metric_kwargs}) but aren't "
-                f"usable for this case (FastEuclideanPairwiseDistancesArgKmin) and will be ignored.",
+                f"usable for this case (EuclideanArgKmin64) and will be ignored.",
                 UserWarning,
                 stacklevel=3,
             )
@@ -377,14 +374,14 @@ cdef class FastEuclideanPairwiseDistancesArgKmin64(PairwiseDistancesArgKmin64):
     @final
     cdef void compute_exact_distances(self) nogil:
         if not self.use_squared_distances:
-            PairwiseDistancesArgKmin64.compute_exact_distances(self)
+            ArgKmin64.compute_exact_distances(self)
 
     @final
     cdef void _parallel_on_X_parallel_init(
         self,
         ITYPE_t thread_num,
     ) nogil:
-        PairwiseDistancesArgKmin64._parallel_on_X_parallel_init(self, thread_num)
+        ArgKmin64._parallel_on_X_parallel_init(self, thread_num)
         self.gemm_term_computer._parallel_on_X_parallel_init(thread_num)
 
 
@@ -395,7 +392,7 @@ cdef class FastEuclideanPairwiseDistancesArgKmin64(PairwiseDistancesArgKmin64):
         ITYPE_t X_start,
         ITYPE_t X_end,
     ) nogil:
-        PairwiseDistancesArgKmin64._parallel_on_X_init_chunk(self, thread_num, X_start, X_end)
+        ArgKmin64._parallel_on_X_init_chunk(self, thread_num, X_start, X_end)
         self.gemm_term_computer._parallel_on_X_init_chunk(thread_num, X_start, X_end)
 
 
@@ -408,7 +405,7 @@ cdef class FastEuclideanPairwiseDistancesArgKmin64(PairwiseDistancesArgKmin64):
         ITYPE_t Y_end,
         ITYPE_t thread_num,
     ) nogil:
-        PairwiseDistancesArgKmin64._parallel_on_X_pre_compute_and_reduce_distances_on_chunks(
+        ArgKmin64._parallel_on_X_pre_compute_and_reduce_distances_on_chunks(
             self,
             X_start, X_end,
             Y_start, Y_end,
@@ -424,7 +421,7 @@ cdef class FastEuclideanPairwiseDistancesArgKmin64(PairwiseDistancesArgKmin64):
         self,
     ) nogil:
         cdef ITYPE_t thread_num
-        PairwiseDistancesArgKmin64._parallel_on_Y_init(self)
+        ArgKmin64._parallel_on_Y_init(self)
         self.gemm_term_computer._parallel_on_Y_init()
 
 
@@ -435,7 +432,7 @@ cdef class FastEuclideanPairwiseDistancesArgKmin64(PairwiseDistancesArgKmin64):
         ITYPE_t X_start,
         ITYPE_t X_end,
     ) nogil:
-        PairwiseDistancesArgKmin64._parallel_on_Y_parallel_init(self, thread_num, X_start, X_end)
+        ArgKmin64._parallel_on_Y_parallel_init(self, thread_num, X_start, X_end)
         self.gemm_term_computer._parallel_on_Y_parallel_init(thread_num, X_start, X_end)
 
 
@@ -448,7 +445,7 @@ cdef class FastEuclideanPairwiseDistancesArgKmin64(PairwiseDistancesArgKmin64):
         ITYPE_t Y_end,
         ITYPE_t thread_num,
     ) nogil:
-        PairwiseDistancesArgKmin64._parallel_on_Y_pre_compute_and_reduce_distances_on_chunks(
+        ArgKmin64._parallel_on_Y_pre_compute_and_reduce_distances_on_chunks(
             self,
             X_start, X_end,
             Y_start, Y_end,
