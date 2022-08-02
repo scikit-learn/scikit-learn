@@ -102,16 +102,6 @@ def _assess_dimension(spectrum, rank, n_samples):
     return ll
 
 
-def _sample_count(sample_weight, n_samples):
-    """Determines the number of samples explicitly provided or via sample_weight"""
-    if sample_weight is None:
-        return n_samples
-    # Assume when sample_weight.sum() > n_samples that sample_weight contains count;
-    # otherwise assume that the sums is not meaningful (e.g. it sums to 1) and set
-    # (arbitrarily) the count of unweighted samples to n_samples
-    return max(sample_weight.sum(), n_samples)
-
-
 def _infer_dimension(spectrum, n_samples):
     """Infers the dimension of a dataset with a given spectrum.
 
@@ -122,6 +112,16 @@ def _infer_dimension(spectrum, n_samples):
     for rank in range(1, spectrum.shape[0]):
         ll[rank] = _assess_dimension(spectrum, rank, n_samples)
     return ll.argmax()
+
+
+def _sample_count(sample_weight, n_samples):
+    """Determines the number of samples explicitly provided or via sample_weight."""
+    if sample_weight is None:
+        return n_samples
+    # Assume when sample_weight.sum() > n_samples that sample_weight contains count;
+    # otherwise assume that the sums is not meaningful (e.g. it sums to 1) and set
+    # (arbitrarily) the count of unweighted samples to n_samples
+    return max(sample_weight.sum(), n_samples)
 
 
 class PCA(_BasePCA):
@@ -500,17 +500,18 @@ class PCA(_BasePCA):
         else:
             sample_weight = _check_sample_weight(sample_weight, X, copy=self.copy)
 
+            # Sample weights are normalized to sum to 1 before SVD so we have:
             # U * S * Vt = (1/n * W)^1/2 * X = sqrt(1/n) * W^(1/2) * X
             # Non-whitened:
-            # sqrt(n) * W^(-1/2) * U * S * Vt = X
-            # sqrt(n) * W^(-1/2) * U * S = X * V
-            # = sqrt(n) * W^(-1/2) * U * S
+            # X = sqrt(n) * W^(-1/2) * U * S * Vt
+            # X * V = sqrt(n) * W^(-1/2) * U * S
             #
-            # Whitened: N.B. transform uses explained variance w/ Bessel's correction
-            # While SVD is done using "weighted average" so we need to scale up then
-            # apply Bessel's correction on singular values. That is we want:
+            # Whitened:
+            # N.B. that self.transform uses explained_variance_ w/ bessel's correction
+            # While SVD is done using "weighted average" so we need to scale then
+            # apply bessel's correction on singular values: n/(n-1). That is we want:
             # X * [(n / (n-1) * S^2)^(-1/2)] * V
-            # Multiplying both sides by P^(-1/2) with P = (n / (n-1) * S^2)
+            # Multiply both sides of non-whitened eq. by P^(-1/2) with P=(n/(n-1)*S^2)
             # X * P^(-1/2) * V = sqrt(n)*W^(-1/2) * U * S*[(n/(n-1)*S^2)^(-1/2)]
             # = sqrt(n) * sqrt(n-1) / sqrt(n) * W^(-1/2) * U * S * S^-1
             # = sqrt(n - 1) * W^(-1/2) * U
@@ -738,7 +739,7 @@ class PCA(_BasePCA):
         return {"preserves_dtype": [np.float64, np.float32]}
 
     def _weight_and_center(self, X, sample_weight=None):
-        """Center X and apply sample weights if applicable"""
+        """Center X and apply sample weights if applicable."""
         if sample_weight is None:
             # Center data
             self.mean_ = np.mean(X, axis=0)
