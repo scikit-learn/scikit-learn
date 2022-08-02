@@ -73,7 +73,7 @@ Changelog
 - |Fix|: Fixed a bug in :class:`linear_model.LogisticRegression`: the
   sample_weight object is not modified anymore. :pr:`19182` by
   :user:`Yosuke KOBAYASHI <m7142yosuke>`.
-  
+
 :mod:`sklearn.metrics`
 ......................
 
@@ -370,13 +370,13 @@ Changelog
   unless data is sparse.
   :pr:`17396` by :user:`Jiaxiang <fujiaxiang>`.
 
-- |Enhancement| :func:`datasets.fetch_covtype` now now supports the optional
+- |Enhancement| :func:`datasets.fetch_covtype` now supports the optional
   argument `as_frame`; when it is set to True, the returned Bunch object's
   `data` and `frame` members are pandas DataFrames, and the `target` member is
   a pandas Series.
   :pr:`17491` by :user:`Alex Liang <tianchuliang>`.
 
-- |Enhancement| :func:`datasets.fetch_kddcup99` now now supports the optional
+- |Enhancement| :func:`datasets.fetch_kddcup99` now supports the optional
   argument `as_frame`; when it is set to True, the returned Bunch object's
   `data` and `frame` members are pandas DataFrames, and the `target` member is
   a pandas Series.
@@ -713,7 +713,7 @@ Changelog
   :user:`Joseph Willard <josephwillard>`
 
 - |Fix| bug in :func:`metrics.hinge_loss` where error occurs when
-  ``y_true`` is missing some labels that are provided explictly in the
+  ``y_true`` is missing some labels that are provided explicitly in the
   ``labels`` parameter.
   :pr:`17935` by :user:`Cary Goltermann <Ultramann>`.
 

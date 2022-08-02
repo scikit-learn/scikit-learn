@@ -6,15 +6,17 @@ import numbers
 import numpy as np
 from scipy.sparse import issparse
 from warnings import warn
+from numbers import Integral, Real
 
 from ..tree import ExtraTreeRegressor
+from ..tree._tree import DTYPE as tree_dtype
 from ..utils import (
     check_random_state,
     check_array,
     gen_batches,
     get_chunk_n_rows,
 )
-from ..utils.fixes import _joblib_parallel_args
+from ..utils._param_validation import Interval, StrOptions
 from ..utils.validation import check_is_fitted, _num_samples
 from ..base import OutlierMixin
 
@@ -79,7 +81,10 @@ class IsolationForest(OutlierMixin, BaseBagging):
         The number of features to draw from X to train each base estimator.
 
             - If int, then draw `max_features` features.
-            - If float, then draw `max_features * X.shape[1]` features.
+            - If float, then draw `max(1, int(max_features * n_features_in_))` features.
+
+        Note: using a float number less than 1.0 or integer less than number of
+        features will enable feature subsampling and leads to a longerr runtime.
 
     bootstrap : bool, default=False
         If True, individual trees are fit on random subsets of the training
@@ -147,6 +152,27 @@ class IsolationForest(OutlierMixin, BaseBagging):
             Attribute `n_features_` was deprecated in version 1.0 and will be
             removed in 1.2. Use `n_features_in_` instead.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    sklearn.covariance.EllipticEnvelope : An object for detecting outliers in a
+        Gaussian distributed dataset.
+    sklearn.svm.OneClassSVM : Unsupervised Outlier Detection.
+        Estimate the support of a high-dimensional distribution.
+        The implementation is based on libsvm.
+    sklearn.neighbors.LocalOutlierFactor : Unsupervised Outlier Detection
+        using Local Outlier Factor (LOF).
+
     Notes
     -----
     The implementation is based on an ensemble of ExtraTreeRegressor. The
@@ -162,16 +188,6 @@ class IsolationForest(OutlierMixin, BaseBagging):
            anomaly detection." ACM Transactions on Knowledge Discovery from
            Data (TKDD) 6.1 (2012): 3.
 
-    See Also
-    ----------
-    sklearn.covariance.EllipticEnvelope : An object for detecting outliers in a
-        Gaussian distributed dataset.
-    sklearn.svm.OneClassSVM : Unsupervised Outlier Detection.
-        Estimate the support of a high-dimensional distribution.
-        The implementation is based on libsvm.
-    sklearn.neighbors.LocalOutlierFactor : Unsupervised Outlier Detection
-        using Local Outlier Factor (LOF).
-
     Examples
     --------
     >>> from sklearn.ensemble import IsolationForest
@@ -180,21 +196,46 @@ class IsolationForest(OutlierMixin, BaseBagging):
     >>> clf.predict([[0.1], [0], [90]])
     array([ 1,  1, -1])
     """
-    def __init__(self, *,
-                 n_estimators=100,
-                 max_samples="auto",
-                 contamination="auto",
-                 max_features=1.,
-                 bootstrap=False,
-                 n_jobs=None,
-                 random_state=None,
-                 verbose=0,
-                 warm_start=False):
+
+    _parameter_constraints = {
+        "n_estimators": [Interval(Integral, 1, None, closed="left")],
+        "max_samples": [
+            StrOptions({"auto"}),
+            Interval(Integral, 1, None, closed="left"),
+            Interval(Real, 0, 1, closed="right"),
+        ],
+        "contamination": [
+            StrOptions({"auto"}),
+            Interval(Real, 0, 0.5, closed="right"),
+        ],
+        "max_features": [
+            Integral,
+            Interval(Real, 0, 1, closed="right"),
+        ],
+        "bootstrap": ["boolean"],
+        "n_jobs": [Integral, None],
+        "random_state": ["random_state"],
+        "verbose": ["verbose"],
+        "warm_start": ["boolean"],
+    }
+
+    def __init__(
+        self,
+        *,
+        n_estimators=100,
+        max_samples="auto",
+        contamination="auto",
+        max_features=1.0,
+        bootstrap=False,
+        n_jobs=None,
+        random_state=None,
+        verbose=0,
+        warm_start=False,
+    ):
         super().__init__(
             base_estimator=ExtraTreeRegressor(
-                max_features=1,
-                splitter='random',
-                random_state=random_state),
+                max_features=1, splitter="random", random_state=random_state
+            ),
             # here above max_features has no links with self.max_features
             bootstrap=bootstrap,
             bootstrap_features=False,
@@ -204,7 +245,8 @@ class IsolationForest(OutlierMixin, BaseBagging):
             warm_start=warm_start,
             n_jobs=n_jobs,
             random_state=random_state,
-            verbose=verbose)
+            verbose=verbose,
+        )
 
         self.contamination = contamination
 
@@ -216,7 +258,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         # a thread-based backend rather than a process-based backend so as
         # to avoid suffering from communication overhead and extra memory
         # copies.
-        return _joblib_parallel_args(prefer='threads')
+        return {"prefer": "threads"}
 
     def fit(self, X, y=None, sample_weight=None):
         """
@@ -240,7 +282,8 @@ class IsolationForest(OutlierMixin, BaseBagging):
         self : object
             Fitted estimator.
         """
-        X = self._validate_data(X, accept_sparse=['csc'])
+        self._validate_params()
+        X = self._validate_data(X, accept_sparse=["csc"], dtype=tree_dtype)
         if issparse(X):
             # Pre-sort indices to avoid that each individual tree of the
             # ensemble sorts the indices.
@@ -252,39 +295,33 @@ class IsolationForest(OutlierMixin, BaseBagging):
         # ensure that max_sample is in [1, n_samples]:
         n_samples = X.shape[0]
 
-        if self.contamination != 'auto':
-            if not(0. < self.contamination <= .5):
-                raise ValueError("contamination must be in (0, 0.5], "
-                                 "got: %f" % self.contamination)
-
-        if isinstance(self.max_samples, str):
-            if self.max_samples == 'auto':
-                max_samples = min(256, n_samples)
-            else:
-                raise ValueError('max_samples (%s) is not supported.'
-                                 'Valid choices are: "auto", int or'
-                                 'float' % self.max_samples)
+        if isinstance(self.max_samples, str) and self.max_samples == "auto":
+            max_samples = min(256, n_samples)
 
         elif isinstance(self.max_samples, numbers.Integral):
             if self.max_samples > n_samples:
-                warn("max_samples (%s) is greater than the "
-                     "total number of samples (%s). max_samples "
-                     "will be set to n_samples for estimation."
-                     % (self.max_samples, n_samples))
+                warn(
+                    "max_samples (%s) is greater than the "
+                    "total number of samples (%s). max_samples "
+                    "will be set to n_samples for estimation."
+                    % (self.max_samples, n_samples)
+                )
                 max_samples = n_samples
             else:
                 max_samples = self.max_samples
-        else:  # float
-            if not 0. < self.max_samples <= 1.:
-                raise ValueError("max_samples must be in (0, 1], got %r"
-                                 % self.max_samples)
+        else:  # max_samples is float
             max_samples = int(self.max_samples * X.shape[0])
 
         self.max_samples_ = max_samples
         max_depth = int(np.ceil(np.log2(max(max_samples, 2))))
-        super()._fit(X, y, max_samples,
-                     max_depth=max_depth,
-                     sample_weight=sample_weight)
+        super()._fit(
+            X,
+            y,
+            max_samples,
+            max_depth=max_depth,
+            sample_weight=sample_weight,
+            check_input=False,
+        )
 
         if self.contamination == "auto":
             # 0.5 plays a special role as described in the original paper.
@@ -293,8 +330,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
             return self
 
         # else, define offset_ wrt contamination parameter
-        self.offset_ = np.percentile(self.score_samples(X),
-                                     100. * self.contamination)
+        self.offset_ = np.percentile(self.score_samples(X), 100.0 * self.contamination)
 
         return self
 
@@ -316,9 +352,9 @@ class IsolationForest(OutlierMixin, BaseBagging):
             be considered as an inlier according to the fitted model.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, accept_sparse='csr', reset=False)
-        is_inlier = np.ones(X.shape[0], dtype=int)
-        is_inlier[self.decision_function(X) < 0] = -1
+        decision_func = self.decision_function(X)
+        is_inlier = np.ones_like(decision_func, dtype=int)
+        is_inlier[decision_func < 0] = -1
         return is_inlier
 
     def decision_function(self, X):
@@ -382,7 +418,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         check_is_fitted(self)
 
         # Check data
-        X = self._validate_data(X, accept_sparse='csr', reset=False)
+        X = self._validate_data(X, accept_sparse="csr", reset=False)
 
         # Take the opposite of the scores as bigger is better (here less
         # abnormal)
@@ -408,8 +444,9 @@ class IsolationForest(OutlierMixin, BaseBagging):
         #    the data needed to compute the scores -- the returned scores
         #    themselves are 1D.
 
-        chunk_n_rows = get_chunk_n_rows(row_bytes=16 * self._max_features,
-                                        max_n_rows=n_samples)
+        chunk_n_rows = get_chunk_n_rows(
+            row_bytes=16 * self._max_features, max_n_rows=n_samples
+        )
         slices = gen_batches(n_samples, chunk_n_rows)
 
         scores = np.zeros(n_samples, order="f")
@@ -448,22 +485,22 @@ class IsolationForest(OutlierMixin, BaseBagging):
                 + _average_path_length(n_samples_leaf)
                 - 1.0
             )
-        denominator = (
-            len(self.estimators_) * _average_path_length([self.max_samples_])
-        )
+        denominator = len(self.estimators_) * _average_path_length([self.max_samples_])
         scores = 2 ** (
             # For a single training sample, denominator and depth are 0.
             # Therefore, we set the score manually to 1.
-            -np.divide(depths, denominator, out=np.ones_like(depths),
-                       where=denominator != 0)
+            -np.divide(
+                depths, denominator, out=np.ones_like(depths), where=denominator != 0
+            )
         )
         return scores
 
     def _more_tags(self):
         return {
-            '_xfail_checks': {
-                'check_sample_weights_invariance':
-                'zero sample_weight is not equivalent to removing samples',
+            "_xfail_checks": {
+                "check_sample_weights_invariance": (
+                    "zero sample_weight is not equivalent to removing samples"
+                ),
             }
         }
 
@@ -494,8 +531,8 @@ def _average_path_length(n_samples_leaf):
     mask_2 = n_samples_leaf == 2
     not_mask = ~np.logical_or(mask_1, mask_2)
 
-    average_path_length[mask_1] = 0.
-    average_path_length[mask_2] = 1.
+    average_path_length[mask_1] = 0.0
+    average_path_length[mask_2] = 1.0
     average_path_length[not_mask] = (
         2.0 * (np.log(n_samples_leaf[not_mask] - 1.0) + np.euler_gamma)
         - 2.0 * (n_samples_leaf[not_mask] - 1.0) / n_samples_leaf[not_mask]

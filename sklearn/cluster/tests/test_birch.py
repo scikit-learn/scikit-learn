@@ -17,6 +17,7 @@ from sklearn.metrics import pairwise_distances_argmin, v_measure_score
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_allclose
 
 
 def test_n_samples_leaves_roots():
@@ -25,8 +26,9 @@ def test_n_samples_leaves_roots():
     brc = Birch()
     brc.fit(X)
     n_samples_root = sum([sc.n_samples_ for sc in brc.root_.subclusters_])
-    n_samples_leaves = sum([sc.n_samples_ for leaf in brc._get_leaves()
-                            for sc in leaf.subclusters_])
+    n_samples_leaves = sum(
+        [sc.n_samples_ for leaf in brc._get_leaves() for sc in leaf.subclusters_]
+    )
     assert n_samples_leaves == X.shape[0]
     assert n_samples_root == X.shape[0]
 
@@ -39,8 +41,7 @@ def test_partial_fit():
     brc_partial = Birch(n_clusters=None)
     brc_partial.partial_fit(X[:50])
     brc_partial.partial_fit(X[50:])
-    assert_array_almost_equal(brc_partial.subcluster_centers_,
-                              brc.subcluster_centers_)
+    assert_array_almost_equal(brc_partial.subcluster_centers_, brc.subcluster_centers_)
 
     # Test that same global labels are obtained after calling partial_fit
     # with None
@@ -52,14 +53,13 @@ def test_partial_fit():
 def test_birch_predict():
     # Test the predict method predicts the nearest centroid.
     rng = np.random.RandomState(0)
-    X = generate_clustered_data(n_clusters=3, n_features=3,
-                                n_samples_per_cluster=10)
+    X = generate_clustered_data(n_clusters=3, n_features=3, n_samples_per_cluster=10)
 
     # n_samples * n_samples_per_cluster
     shuffle_indices = np.arange(30)
     rng.shuffle(shuffle_indices)
     X_shuffle = X[shuffle_indices, :]
-    brc = Birch(n_clusters=4, threshold=1.)
+    brc = Birch(n_clusters=4, threshold=1.0)
     brc.fit(X_shuffle)
     centroids = brc.subcluster_centers_
     assert_array_equal(brc.labels_, brc.predict(X_shuffle))
@@ -83,14 +83,15 @@ def test_n_clusters():
     assert_array_equal(brc1.subcluster_labels_, brc2.subcluster_labels_)
     assert_array_equal(brc1.labels_, brc2.labels_)
 
-    # Test that the wrong global clustering step raises an Error.
+    # Test that n_clusters being a non-cluster estimator raises an Error.
     clf = ElasticNet()
     brc3 = Birch(n_clusters=clf)
-    with pytest.raises(ValueError):
+    msg = r"The 'n_clusters' parameter of Birch must be .* Got .* instead."
+    with pytest.raises(ValueError, match=msg):
         brc3.fit(X)
 
     # Test that a small number of clusters raises a warning.
-    brc4 = Birch(threshold=10000.)
+    brc4 = Birch(threshold=10000.0)
     with pytest.warns(ConvergenceWarning):
         brc4.fit(X)
 
@@ -106,8 +107,7 @@ def test_sparse_X():
     brc_sparse.fit(csr)
 
     assert_array_equal(brc.labels_, brc_sparse.labels_)
-    assert_array_almost_equal(brc.subcluster_centers_,
-                              brc_sparse.subcluster_centers_)
+    assert_array_almost_equal(brc.subcluster_centers_, brc_sparse.subcluster_centers_)
 
 
 def test_partial_fit_second_call_error_checks():
@@ -136,19 +136,12 @@ def test_branching_factor():
     branching_factor = 9
 
     # Purposefully set a low threshold to maximize the subclusters.
-    brc = Birch(n_clusters=None, branching_factor=branching_factor,
-                threshold=0.01)
+    brc = Birch(n_clusters=None, branching_factor=branching_factor, threshold=0.01)
     brc.fit(X)
     check_branching_factor(brc.root_, branching_factor)
-    brc = Birch(n_clusters=3, branching_factor=branching_factor,
-                threshold=0.01)
+    brc = Birch(n_clusters=3, branching_factor=branching_factor, threshold=0.01)
     brc.fit(X)
     check_branching_factor(brc.root_, branching_factor)
-
-    # Raises error when branching_factor is set to one.
-    brc = Birch(n_clusters=None, branching_factor=1, threshold=0.01)
-    with pytest.raises(ValueError):
-        brc.fit(X)
 
 
 def check_threshold(birch_instance, threshold):
@@ -170,7 +163,7 @@ def test_threshold():
 
     brc = Birch(threshold=5.0, n_clusters=None)
     brc.fit(X)
-    check_threshold(brc, 5.)
+    check_threshold(brc, 5.0)
 
 
 def test_birch_n_clusters_long_int():
@@ -185,9 +178,73 @@ def test_birch_n_clusters_long_int():
 @pytest.mark.parametrize("attribute", ["fit_", "partial_fit_"])
 def test_birch_fit_attributes_deprecated(attribute):
     """Test that fit_ and partial_fit_ attributes are deprecated."""
-    msg = f"{attribute} is deprecated in 1.0 and will be removed in 1.2"
+    msg = f"`{attribute}` is deprecated in 1.0 and will be removed in 1.2"
     X, y = make_blobs(n_samples=10)
     brc = Birch().fit(X, y)
 
     with pytest.warns(FutureWarning, match=msg):
         getattr(brc, attribute)
+
+
+def test_feature_names_out():
+    """Check `get_feature_names_out` for `Birch`."""
+    X, _ = make_blobs(n_samples=80, n_features=4, random_state=0)
+    brc = Birch(n_clusters=4)
+    brc.fit(X)
+    n_clusters = brc.subcluster_centers_.shape[0]
+
+    names_out = brc.get_feature_names_out()
+    assert_array_equal([f"birch{i}" for i in range(n_clusters)], names_out)
+
+
+def test_transform_match_across_dtypes():
+    X, _ = make_blobs(n_samples=80, n_features=4, random_state=0)
+    brc = Birch(n_clusters=4)
+    Y_64 = brc.fit_transform(X)
+    Y_32 = brc.fit_transform(X.astype(np.float32))
+
+    assert_allclose(Y_64, Y_32, atol=1e-6)
+
+
+def test_subcluster_dtype(global_dtype):
+    X = make_blobs(n_samples=80, n_features=4, random_state=0)[0].astype(
+        global_dtype, copy=False
+    )
+    brc = Birch(n_clusters=4)
+    assert brc.fit(X).subcluster_centers_.dtype == global_dtype
+
+
+def test_both_subclusters_updated():
+    """Check that both subclusters are updated when a node a split, even when there are
+    duplicated data points. Non-regression test for #23269.
+    """
+
+    X = np.array(
+        [
+            [-2.6192791, -1.5053215],
+            [-2.9993038, -1.6863596],
+            [-2.3724914, -1.3438171],
+            [-2.336792, -1.3417323],
+            [-2.4089134, -1.3290224],
+            [-2.3724914, -1.3438171],
+            [-3.364009, -1.8846745],
+            [-2.3724914, -1.3438171],
+            [-2.617677, -1.5003285],
+            [-2.2960556, -1.3260119],
+            [-2.3724914, -1.3438171],
+            [-2.5459878, -1.4533926],
+            [-2.25979, -1.3003055],
+            [-2.4089134, -1.3290224],
+            [-2.3724914, -1.3438171],
+            [-2.4089134, -1.3290224],
+            [-2.5459878, -1.4533926],
+            [-2.3724914, -1.3438171],
+            [-2.9720619, -1.7058647],
+            [-2.336792, -1.3417323],
+            [-2.3724914, -1.3438171],
+        ],
+        dtype=np.float32,
+    )
+
+    # no error
+    Birch(branching_factor=5, threshold=1e-5, n_clusters=None).fit(X)

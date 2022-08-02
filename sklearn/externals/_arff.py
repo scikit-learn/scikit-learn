@@ -32,7 +32,7 @@ Python. It was created in the Connectionist Artificial Intelligence Laboratory
 
 ARFF (Attribute-Relation File Format) is an file format specially created for
 describe datasets which are commonly used for machine learning experiments and
-softwares. This file format was created to be used in Weka, the best
+software. This file format was created to be used in Weka, the best
 representative software for machine learning automated experiments.
 
 An ARFF file can be divided into two sections: header and data. The Header
@@ -148,9 +148,8 @@ __author_email__ = ('renato.ppontes@gmail.com, '
 __version__ = '2.4.0'
 
 import re
-import sys
 import csv
-import typing
+from typing import TYPE_CHECKING
 from typing import Optional, List, Dict, Any, Iterator, Union, Tuple
 
 # CONSTANTS ===================================================================
@@ -173,7 +172,7 @@ ArffDenseDataType = Iterator[List]
 ArffSparseDataType = Tuple[List, ...]
 
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
     # typing_extensions is available when mypy is installed
     from typing_extensions import TypedDict
 
@@ -297,7 +296,7 @@ def _parse_values(s):
         try:
             return {int(k): _unquote(v)
                     for k, v in _RE_SPARSE_KEY_VALUES.findall(s)}
-        except ValueError as exc:
+        except ValueError:
             # an ARFF syntax error in sparse data
             for match in _RE_SPARSE_KEY_VALUES.finditer(s):
                 if not match.group(1):

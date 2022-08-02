@@ -47,32 +47,52 @@ feature, code or documentation improvement).
 
    .. prompt:: bash $
 
-        git clone git://github.com/scikit-learn/scikit-learn.git  # add --depth 1 if your connection is slow
-        cd scikit-learn
+     git clone git://github.com/scikit-learn/scikit-learn.git  # add --depth 1 if your connection is slow
+     cd scikit-learn
 
    If you plan on submitting a pull-request, you should clone from your fork
    instead.
+
+#. Install a recent version of Python (3.9 is recommended at the time of writing)
+   for instance using Miniforge3_. Miniforge provides a conda-based distribution
+   of Python and the most popular scientific libraries.
+
+   If you installed Python with conda, we recommend to create a dedicated
+   `conda environment`_ with all the build dependencies of scikit-learn
+   (namely NumPy_, SciPy_, and Cython_):
+
+   .. prompt:: bash $
+
+     conda create -n sklearn-env -c conda-forge python=3.9 numpy scipy cython
+     conda activate sklearn-env
+
+#. **Alternative to conda:** If you run Linux or similar, you can instead use
+   your system's Python provided it is recent enough (3.8 or higher
+   at the time of writing). In this case, we recommend to create a dedicated
+   virtualenv_ and install the scikit-learn build dependencies with pip:
+
+   .. prompt:: bash $
+
+     python3 -m venv sklearn-env
+     source sklearn-env/bin/activate
+     pip install wheel numpy scipy cython
 
 #. Install a compiler with OpenMP_ support for your platform. See instructions
    for :ref:`compiler_windows`, :ref:`compiler_macos`, :ref:`compiler_linux`
    and :ref:`compiler_freebsd`.
 
-#. Optional (but recommended): create and activate a dedicated virtualenv_
-   or `conda environment`_.
-
-#. Install Cython_ and build the project with pip in :ref:`editable_mode`:
+#. Build the project with pip in :ref:`editable_mode`:
 
    .. prompt:: bash $
 
-        pip install cython
-        pip install --verbose --no-build-isolation --editable .
+     pip install --verbose --no-build-isolation --editable .
 
 #. Check that the installed scikit-learn has a version number ending with
    `.dev0`:
 
    .. prompt:: bash $
 
-    python -c "import sklearn; sklearn.show_versions()"
+     python -c "import sklearn; sklearn.show_versions()"
 
 #. Please refer to the :ref:`developers_guide` and :ref:`pytest_tips` to run
    the tests on the module of your choice.
@@ -94,19 +114,11 @@ Runtime dependencies
 Scikit-learn requires the following dependencies both at build time and at
 runtime:
 
-- Python (>= 3.6),
+- Python (>= 3.8),
 - NumPy (>= |NumpyMinVersion|),
 - SciPy (>= |ScipyMinVersion|),
 - Joblib (>= |JoblibMinVersion|),
 - threadpoolctl (>= |ThreadpoolctlMinVersion|).
-
-Those dependencies are **automatically installed by pip** if they were missing
-when building scikit-learn from source.
-
-.. note::
-
-   For running on PyPy, PyPy3-v5.10+, Numpy 1.14.0+, and scipy 1.1.0+
-   are required. For PyPy, only installation instructions with pip apply.
 
 Build dependencies
 ~~~~~~~~~~~~~~~~~~
@@ -133,8 +145,8 @@ Building Scikit-learn also requires:
    (before cythonization) will force the build to fail if OpenMP is not
    supported.
 
-Since version 0.21, scikit-learn automatically detects and use the linear
-algebrea library used by SciPy **at runtime**. Scikit-learn has therefore no
+Since version 0.21, scikit-learn automatically detects and uses the linear
+algebra library used by SciPy **at runtime**. Scikit-learn has therefore no
 build dependency on BLAS/LAPACK implementations such as OpenBlas, Atlas, Blis
 or MKL.
 
@@ -165,11 +177,11 @@ each time you update the sources. Therefore it is recommended that you install
 in with the ``pip install --no-build-isolation --editable .`` command, which
 allows you to edit the code in-place. This builds the extension in place and
 creates a link to the development directory (see `the pip docs
-<https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs>`_).
+<https://pip.pypa.io/en/stable/topics/local-project-installs/#editable-installs>`_).
 
-This is fundamentally similar to using the command ``python setup.py develop``
-(see `the setuptool docs
-<https://setuptools.readthedocs.io/en/latest/setuptools.html#development-mode>`_).
+As the doc aboves explains, this is fundamentally similar to using the command
+``python setup.py develop``. (see `the setuptool docs
+<https://setuptools.pypa.io/en/latest/userguide/development_mode.html>`_).
 It is however preferred to use pip.
 
 On Unix-like systems, you can equivalently type ``make in`` from the top-level
@@ -188,14 +200,14 @@ to build scikit-learn Cython extensions for each supported platform.
 Windows
 -------
 
-First, install `Build Tools for Visual Studio 2019
-<https://visualstudio.microsoft.com/downloads/>`_.
+First, download the `Build Tools for Visual Studio 2019 installer
+<https://aka.ms/vs/17/release/vs_buildtools.exe>`_.
 
-.. warning::
+Run the downloaded `vs_buildtools.exe` file, during the installation you will
+need to make sure you select "Desktop development with C++", similarly to this
+screenshot:
 
-    You DO NOT need to install Visual Studio 2019. You only need the "Build
-    Tools for Visual Studio 2019", under "All downloads" -> "Tools for Visual
-    Studio 2019".
+.. image:: ../images/visual-studio-build-tools-selection.png
 
 Secondly, find out if you are running 64-bit or 32-bit Python. The building
 command depends on the architecture of the Python interpreter. You can check
@@ -283,6 +295,12 @@ forge using the following command:
     conda list
 
 which should include ``compilers`` and ``llvm-openmp``.
+
+.. note::
+
+   If you installed these packages after creating and activating a new conda
+   environment, you will need to first deactivate and then reactivate the
+   environment for these changes to take effect.
 
 The compilers meta-package will automatically set custom environment
 variables:
@@ -376,7 +394,7 @@ isolation from the Python packages installed via the system packager. When
 using an isolated environment, ``pip3`` should be replaced by ``pip`` in the
 above commands.
 
-When precompiled wheels of the runtime dependencies are not avalaible for your
+When precompiled wheels of the runtime dependencies are not available for your
 architecture (e.g. ARM), you can install the system versions:
 
 .. prompt:: bash $
@@ -436,9 +454,12 @@ the base system and these steps will not be necessary.
 
 .. _OpenMP: https://en.wikipedia.org/wiki/OpenMP
 .. _Cython: https://cython.org
+.. _NumPy: https://numpy.org
+.. _SciPy: https://www.scipy.org
 .. _Homebrew: https://brew.sh
 .. _virtualenv: https://docs.python.org/3/tutorial/venv.html
 .. _conda environment: https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html
+.. _Miniforge3: https://github.com/conda-forge/miniforge#miniforge3
 
 Alternative compilers
 =====================

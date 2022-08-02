@@ -76,6 +76,7 @@ struct svm_model
 	int l;			/* total #SV */
 	struct svm_node *SV;		/* SVs (SV[l]) */
 	double **sv_coef;	/* coefficients for SVs in decision functions (sv_coef[k-1][l]) */
+	int *n_iter;		/* number of iterations run by the optimization routine to fit the model */
 
 	int *sv_ind;            /* index of support vectors */
 
@@ -101,6 +102,7 @@ struct svm_csr_model
 	int l;			/* total #SV */
 	struct svm_csr_node **SV;		/* SVs (SV[l]) */
 	double **sv_coef;	/* coefficients for SVs in decision functions (sv_coef[k-1][l]) */
+	int *n_iter;		/* number of iterations run by the optimization routine to fit the model */
 
         int *sv_ind;            /* index of support vectors */
 
