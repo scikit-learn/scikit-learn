@@ -5,6 +5,7 @@ import numpy as np
 import pytest
 from scipy import sparse as sp
 from numpy.testing import assert_array_equal
+import warnings
 
 from sklearn.neighbors import NearestCentroid
 from sklearn import datasets
@@ -53,6 +54,8 @@ def test_classification_toy():
     assert_array_equal(clf.predict(T_csr.tolil()), true_result)
 
 
+# TODO: Remove filterwarnings in 1.4 when support for some metrics is removed
+@pytest.mark.filterwarnings("ignore:Support for metrics:FutureWarning:sklearn")
 def test_iris():
     # Check consistency on dataset iris.
     for metric in ("euclidean", "cosine"):
@@ -61,6 +64,8 @@ def test_iris():
         assert score > 0.9, "Failed with score = " + str(score)
 
 
+# TODO: Remove filterwarnings in 1.4 when support for some metrics is removed
+@pytest.mark.filterwarnings("ignore:Support for metrics:FutureWarning:sklearn")
 def test_iris_shrinkage():
     # Check consistency on dataset iris, when using shrinkage.
     for metric in ("euclidean", "cosine"):
@@ -140,6 +145,22 @@ def test_manhattan_metric():
     clf.fit(X_csr, y)
     assert_array_equal(clf.centroids_, dense_centroid)
     assert_array_equal(dense_centroid, [[-1, -1], [1, 1]])
+
+
+def test_deprecated_metrics():
+    # Make sure no warning is raised when using euclidean or manhattan metric
+    # Make sure a warning is raised for all other valid metrics
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        for metric in {"manhattan", "euclidean"}:
+            clf = NearestCentroid(metric=metric)
+            clf.fit(X, y)
+
+    for metric in NearestCentroid._valid_metrics - {"manhattan", "euclidean"}:
+        with pytest.warns(FutureWarning):
+            clf = NearestCentroid(metric=metric)
+            clf.fit(X, y)
 
 
 def test_features_zero_var():
