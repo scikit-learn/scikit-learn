@@ -34,9 +34,9 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
     ----------
     metric : str, default="euclidean"
         Metric to use for distance computation, either "euclidean" (default)
-        of "manhattan".
+        or "manhattan".
 
-        .. deprecated:: 0.13
+        .. deprecated:: 1.2
             Support for metrics other than `euclidean` and `manhattan` and for
             callables was deprecated in version 1.2 and will be removed in
             version 1.4.
