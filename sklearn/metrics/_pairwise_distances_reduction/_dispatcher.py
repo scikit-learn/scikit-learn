@@ -92,7 +92,7 @@ class PairwiseDistancesReduction:
         -------
         True if the PairwiseDistancesReduction can be used, else False.
         """
-        dtypes_validity = X.dtype == Y.dtype == np.float64
+        dtypes_validity = X.dtype == Y.dtype and X.dtype in (np.float32, np.float64)
         c_contiguity = (
             hasattr(X, "flags")
             and X.flags.c_contiguous
