@@ -507,8 +507,11 @@ def _plot_partial_dependence(
             (False,) if len(fxs) == 1 else (False, False) for fxs in features
         ]
     else:
-        categorical_features = np.asarray(categorical_features)
+        # we need to create a boolean indicator of which feature are categorical from
+        # the categorical_features list.
+        categorical_features = np.array(categorical_features, copy=False)
         if categorical_features.dtype.kind == "b":
+            # categorical features provided as a list of boolean
             if categorical_features.size != n_features:
                 raise ValueError(
                     "When `categorical_features` is a boolean array-like, "
@@ -520,6 +523,7 @@ def _plot_partial_dependence(
                 tuple(categorical_features[fx] for fx in fxs) for fxs in features
             ]
         elif categorical_features.dtype.kind in ("i", "O", "U"):
+            # categorical features provided as a list of indices or feature names
             categorical_features_idx = [
                 _get_feature_index(cat, feature_names=feature_names)
                 for cat in categorical_features
@@ -531,7 +535,7 @@ def _plot_partial_dependence(
         else:
             raise ValueError(
                 "Expected `categorical_features` to be an array-like of boolean,"
-                f" interger, or string. Got {categorical_features.dtype} instead."
+                f" integer, or string. Got {categorical_features.dtype} instead."
             )
 
         for cats in is_categorical:
