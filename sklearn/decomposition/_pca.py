@@ -744,7 +744,7 @@ class PCA(_BasePCA):
             # Center data
             self.mean_ = np.mean(X, axis=0)
             X -= self.mean_
-            return X, 1 / (X.shape[0] - 1)
+            return X, np.float64(1.0) / (X.shape[0] - 1)
         # Weighted instance; Center with weighted average and weight
         weight_sum = _sample_count(sample_weight, X.shape[0])
         sample_weight /= sample_weight.sum()
