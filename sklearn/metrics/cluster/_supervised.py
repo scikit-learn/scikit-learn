@@ -159,7 +159,7 @@ def contingency_matrix(
 
 
 def pair_confusion_matrix(labels_true, labels_pred):
-    """Pair confusion matrix arising from two clusterings.
+    """Pair confusion matrix arising from two clusterings. [1]
 
     The pair confusion matrix :math:`C` computes a 2 by 2 similarity matrix
     between two clusterings by considering all pairs of samples and counting
