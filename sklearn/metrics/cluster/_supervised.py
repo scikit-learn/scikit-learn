@@ -194,9 +194,9 @@ def pair_confusion_matrix(labels_true, labels_pred):
 
     References
     ----------
-    .. L. Hubert and P. Arabie, Comparing Partitions, Journal of
-      Classification 1985
-      https://link.springer.com/article/10.1007%2FBF01908075
+    .. :doi:`Hubert, L., Arabie, P. "Comparing partitions."
+       Journal of Classification 2, 193–218 (1985).
+       <10.1007/BF01908075>`.
 
     Examples
     --------
