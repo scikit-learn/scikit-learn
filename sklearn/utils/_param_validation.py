@@ -1,6 +1,8 @@
 from abc import ABC
 from abc import abstractmethod
+from collections.abc import Iterable
 import functools
+import math
 from inspect import signature
 from numbers import Integral
 from numbers import Real
@@ -19,9 +21,12 @@ def validate_parameter_constraints(parameter_constraints, params, caller_name):
 
     Parameters
     ----------
-    parameter_constraints : dict
-        A dictionary `param_name: list of constraints`. A parameter is valid if it
-        satisfies one of the constraints from the list. Constraints can be:
+    parameter_constraints : dict or {"no_validation"}
+        If "no_validation", validation is skipped for this parameter.
+
+        If a dict, it must be a dictionary `param_name: list of constraints`.
+        A parameter is valid if it satisfies one of the constraints from the list.
+        Constraints can be:
         - an Interval object, representing a continuous or discrete range of numbers
         - the string "array-like"
         - the string "sparse matrix"
@@ -31,6 +36,7 @@ def validate_parameter_constraints(parameter_constraints, params, caller_name):
         - any type, meaning that any instance of this type is valid
         - a StrOptions object, representing a set of strings
         - the string "boolean"
+        - the string "verbose"
 
     params : dict
         A dictionary `param_name: param_value`. The parameters to validate against the
@@ -39,14 +45,25 @@ def validate_parameter_constraints(parameter_constraints, params, caller_name):
     caller_name : str
         The name of the estimator or function or method that called this function.
     """
-    if params.keys() != parameter_constraints.keys():
+    if len(set(parameter_constraints) - set(params)) != 0:
         raise ValueError(
-            f"The parameter constraints {list(parameter_constraints.keys())} do not "
-            f"match the parameters to validate {list(params.keys())}."
+            f"The parameter constraints {list(parameter_constraints)}"
+            " contain unexpected parameters"
+            f" {set(parameter_constraints) - set(params)}"
         )
 
     for param_name, param_val in params.items():
+        # We allow parameters to not have a constraint so that third party estimators
+        # can inherit from sklearn estimators without having to necessarily use the
+        # validation tools.
+        if param_name not in parameter_constraints:
+            continue
+
         constraints = parameter_constraints[param_name]
+
+        if constraints == "no_validation":
+            continue
+
         constraints = [make_constraint(constraint) for constraint in constraints]
 
         for constraint in constraints:
@@ -101,10 +118,16 @@ def make_constraint(constraint):
         return _NoneConstraint()
     if isinstance(constraint, type):
         return _InstancesOf(constraint)
-    if isinstance(constraint, (Interval, StrOptions)):
+    if isinstance(constraint, (Interval, StrOptions, HasMethods)):
         return constraint
     if isinstance(constraint, str) and constraint == "boolean":
         return _Booleans()
+    if isinstance(constraint, str) and constraint == "verbose":
+        return _VerboseHelper()
+    if isinstance(constraint, str) and constraint == "missing_values":
+        return _MissingValues()
+    if isinstance(constraint, str) and constraint == "cv_object":
+        return _CVObjects()
     if isinstance(constraint, Hidden):
         constraint = make_constraint(constraint.constraint)
         constraint.hidden = True
@@ -230,6 +253,31 @@ class _NoneConstraint(_Constraint):
 
     def __str__(self):
         return "None"
+
+
+class _NanConstraint(_Constraint):
+    """Constraint representing the indicator `np.nan`."""
+
+    def is_satisfied_by(self, val):
+        return isinstance(val, Real) and math.isnan(val)
+
+    def __str__(self):
+        return "numpy.nan"
+
+
+class _PandasNAConstraint(_Constraint):
+    """Constraint representing the indicator `pd.NA`."""
+
+    def is_satisfied_by(self, val):
+        try:
+            import pandas as pd
+
+            return isinstance(val, type(pd.NA)) and pd.isna(val)
+        except ImportError:
+            return False
+
+    def __str__(self):
+        return "pandas.NA"
 
 
 class StrOptions(_Constraint):
@@ -464,6 +512,141 @@ class _Booleans(_Constraint):
         )
 
 
+class _VerboseHelper(_Constraint):
+    """Helper constraint for the verbose parameter.
+
+    Convenience class for
+    [Interval(Integral, 0, None, closed="left"), bool, numpy.bool_]
+    """
+
+    def __init__(self):
+        super().__init__()
+        self._constraints = [
+            Interval(Integral, 0, None, closed="left"),
+            _InstancesOf(bool),
+            _InstancesOf(np.bool_),
+        ]
+
+    def is_satisfied_by(self, val):
+        return any(c.is_satisfied_by(val) for c in self._constraints)
+
+    def __str__(self):
+        return (
+            f"{', '.join([str(c) for c in self._constraints[:-1]])} or"
+            f" {self._constraints[-1]}"
+        )
+
+
+class _MissingValues(_Constraint):
+    """Helper constraint for the `missing_values` parameters.
+
+    Convenience for
+    [
+        Integral,
+        Interval(Real, None, None, closed="both"),
+        str,
+        None,
+        _NanConstraint(),
+        _PandasNAConstraint(),
+    ]
+    """
+
+    def __init__(self):
+        super().__init__()
+        self._constraints = [
+            _InstancesOf(Integral),
+            # we use an interval of Real to ignore np.nan that has its own constraint
+            Interval(Real, None, None, closed="both"),
+            _InstancesOf(str),
+            _NoneConstraint(),
+            _NanConstraint(),
+            _PandasNAConstraint(),
+        ]
+
+    def is_satisfied_by(self, val):
+        return any(c.is_satisfied_by(val) for c in self._constraints)
+
+    def __str__(self):
+        return (
+            f"{', '.join([str(c) for c in self._constraints[:-1]])} or"
+            f" {self._constraints[-1]}"
+        )
+
+
+class HasMethods(_Constraint):
+    """Constraint representing objects that expose specific methods.
+
+    It is useful for parameters following a protocol and where we don't want to impose
+    an affiliation to a specific module or class.
+
+    Parameters
+    ----------
+    methods : str or list of str
+        The method(s) that the object is expected to expose.
+    """
+
+    @validate_params({"methods": [str, list]})
+    def __init__(self, methods):
+        super().__init__()
+        if isinstance(methods, str):
+            methods = [methods]
+        self.methods = methods
+
+    def is_satisfied_by(self, val):
+        return all(callable(getattr(val, method, None)) for method in self.methods)
+
+    def __str__(self):
+        if len(self.methods) == 1:
+            methods = f"{self.methods[0]!r}"
+        else:
+            methods = (
+                f"{', '.join([repr(m) for m in self.methods[:-1]])} and"
+                f" {self.methods[-1]!r}"
+            )
+        return f"an object implementing {methods}"
+
+
+class _IterablesNotString(_Constraint):
+    """Constraint representing iterables that are not strings."""
+
+    def is_satisfied_by(self, val):
+        return isinstance(val, Iterable) and not isinstance(val, str)
+
+    def __str__(self):
+        return "an iterable"
+
+
+class _CVObjects(_Constraint):
+    """Constraint representing cv objects.
+
+    Convenient class for
+    [
+        Interval(Integral, 2, None, closed="left"),
+        HasMethods(["split", "get_n_splits"]),
+        _IterablesNotString(),
+        None,
+    ]
+    """
+
+    def __init__(self):
+        super().__init__()
+        self._constraints = [
+            Interval(Integral, 2, None, closed="left"),
+            HasMethods(["split", "get_n_splits"]),
+            _IterablesNotString(),
+            _NoneConstraint(),
+        ]
+
+    def is_satisfied_by(self, val):
+        return any(c.is_satisfied_by(val) for c in self._constraints)
+
+    def __str__(self):
+        return (
+            f"{', '.join([str(c) for c in self._constraints[:-1]])} or"
+            f" {self._constraints[-1]}"
+        )
+
+
 class Hidden:
     """Class encapsulating a constraint not meant to be exposed to the user.
 
@@ -500,6 +683,21 @@ def generate_invalid_param_val(constraint, constraints=None):
     """
     if isinstance(constraint, StrOptions):
         return f"not {' or '.join(constraint.options)}"
+
+    if isinstance(constraint, _MissingValues):
+        return np.array([1, 2, 3])
+
+    if isinstance(constraint, _VerboseHelper):
+        return -1
+
+    if isinstance(constraint, HasMethods):
+        return type("HasNotMethods", (), {})()
+
+    if isinstance(constraint, _IterablesNotString):
+        return "a string"
+
+    if isinstance(constraint, _CVObjects):
+        return "not a cv object"
 
     if not isinstance(constraint, Interval):
         raise NotImplementedError
@@ -630,20 +828,47 @@ def generate_valid_param(constraint):
     """
     if isinstance(constraint, _ArrayLikes):
         return np.array([1, 2, 3])
-    elif isinstance(constraint, _SparseMatrices):
+
+    if isinstance(constraint, _SparseMatrices):
         return csr_matrix([[0, 1], [1, 0]])
-    elif isinstance(constraint, _RandomStates):
+
+    if isinstance(constraint, _RandomStates):
         return np.random.RandomState(42)
-    elif isinstance(constraint, _Callables):
+
+    if isinstance(constraint, _Callables):
         return lambda x: x
-    elif isinstance(constraint, _NoneConstraint):
+
+    if isinstance(constraint, _NoneConstraint):
         return None
-    elif isinstance(constraint, _InstancesOf):
+
+    if isinstance(constraint, _InstancesOf):
         return constraint.type()
+
+    if isinstance(constraint, _Booleans):
+        return True
+
+    if isinstance(constraint, _VerboseHelper):
+        return 1
+
+    if isinstance(constraint, _MissingValues):
+        return np.nan
+
+    if isinstance(constraint, HasMethods):
+        return type(
+            "ValidHasMethods", (), {m: lambda self: None for m in constraint.methods}
+        )()
+
+    if isinstance(constraint, _IterablesNotString):
+        return [1, 2, 3]
+
+    if isinstance(constraint, _CVObjects):
+        return 5
+
     if isinstance(constraint, StrOptions):
         for option in constraint.options:
             return option
-    elif isinstance(constraint, Interval):
+
+    if isinstance(constraint, Interval):
         interval = constraint
         if interval.left is None and interval.right is None:
             return 0
@@ -656,3 +881,5 @@ def generate_valid_param(constraint):
                 return (interval.left + interval.right) / 2
             else:
                 return interval.left + 1
+
+    raise ValueError(f"Unknown constraint type: {constraint}")

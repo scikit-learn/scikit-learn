@@ -290,7 +290,7 @@ Optimized BLAS / LAPACK implementations include:
  - MKL
  - Apple Accelerate and vecLib frameworks (OSX only)
 
-More information can be found on the `Scipy install page <https://docs.scipy.org/doc/numpy/user/install.html>`_
+More information can be found on the `NumPy install page <https://numpy.org/install/>`_
 and in this
 `blog post <http://danielnouri.org/notes/2012/12/19/libblas-and-liblapack-issues-and-speed,-with-scipy-and-ubuntu/>`_
 from Daniel Nouri which has some nice step by step install instructions for
