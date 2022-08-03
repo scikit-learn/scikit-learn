@@ -2802,7 +2802,7 @@ cdef class ArccosDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
         ITYPE_t size,
     ) nogil except -1:
         cdef DTYPE_t d = 0, norm1 = 0, norm2 = 0
-        cdef np.intp_t j
+        cdef cnp.intp_t j
         for j in range(size):
             d += x1[j] * x2[j]
             norm1 += x1[j] * x1[j]
