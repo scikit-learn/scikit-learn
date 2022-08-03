@@ -278,7 +278,7 @@ def rand_score(labels_true, labels_pred):
     .. `Wikipedia: Simple Matching Coefficient
         <https://en.wikipedia.org/wiki/Simple_matching_coefficient>`_
 
-    .. https://en.wikipedia.org/wiki/Rand_index
+    .. `Wikipedia: Rand Index <https://en.wikipedia.org/wiki/Rand_index>`_
 
     Examples
     --------
