@@ -172,6 +172,10 @@ def _parallel_build_trees(
         indices = _generate_sample_indices(
             tree.random_state, n_samples, n_samples_bootstrap
         )
+
+        if len(indices) == 0:
+            raise ValueError("insufficient samples for the given max_samples value.")
+
         sample_counts = np.bincount(indices, minlength=n_samples)
         curr_sample_weight *= sample_counts
 
