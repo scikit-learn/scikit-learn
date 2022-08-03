@@ -768,14 +768,14 @@ def mutual_info_score(labels_true, labels_pred, *, contingency=None):
        Mutual information, a non-negative value, measured in nats using the
        natural logarithm.
 
-    Notes
-    -----
-    The logarithm used is the natural logarithm (base-e).
-
     See Also
     --------
     adjusted_mutual_info_score : Adjusted against chance Mutual Information.
     normalized_mutual_info_score : Normalized Mutual Information.
+
+    Notes
+    -----
+    The logarithm used is the natural logarithm (base-e).
     """
     if contingency is None:
         labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
