@@ -196,7 +196,7 @@ def pair_confusion_matrix(labels_true, labels_pred):
     ----------
     .. [1] :doi:`Hubert, L., Arabie, P. "Comparing partitions."
            Journal of Classification 2, 193–218 (1985).
-           <10.1007/BF01908075>`.
+           <10.1007/BF01908075>`
 
     Examples
     --------
