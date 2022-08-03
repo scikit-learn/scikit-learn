@@ -188,9 +188,15 @@ def pair_confusion_matrix(labels_true, labels_pred):
 
     See Also
     --------
-    rand_score: Rand Score
-    adjusted_rand_score: Adjusted Rand Score
-    adjusted_mutual_info_score: Adjusted Mutual Information
+    rand_score: Rand Score.
+    adjusted_rand_score: Adjusted Rand Score.
+    adjusted_mutual_info_score: Adjusted Mutual Information.
+
+    References
+    ----------
+    .. L. Hubert and P. Arabie, Comparing Partitions, Journal of
+      Classification 1985
+      https://link.springer.com/article/10.1007%2FBF01908075
 
     Examples
     --------
@@ -211,12 +217,6 @@ def pair_confusion_matrix(labels_true, labels_pred):
              [0, 2]]...
 
     Note that the matrix is not symmetric.
-
-    References
-    ----------
-    .. L. Hubert and P. Arabie, Comparing Partitions, Journal of
-      Classification 1985
-      https://link.springer.com/article/10.1007%2FBF01908075
     """
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
     n_samples = np.int64(labels_true.shape[0])
