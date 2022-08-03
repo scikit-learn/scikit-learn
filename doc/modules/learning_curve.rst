@@ -148,3 +148,17 @@ average scores on the validation sets)::
   array([[1. ,  0.93...,  1. ,  1. ,  0.96...],
          [1. ,  0.96...,  1. ,  1. ,  0.96...],
          [1. ,  0.96...,  1. ,  1. ,  0.96...]])
+
+If you intend to plot the learning curves only, the class
+:class:`~sklearn.model_selection.LearningCurveDisplay` will be easier to use.
+You can use the method
+:meth:`~sklearn.model_selection.LearningCurveDisplay.from_estimator` similarly
+to :func:`learning_curve` to generate and plot the learning curve:
+
+.. plot::
+   :context:
+   :align: center
+
+      from sklearn.model_selection import LearningCurveDisplay
+      LearningCurveDisplay.from_estimator(
+         VVC(kernel="linear"), X, y, train_sizes=[50, 80, 110], cv=5)
