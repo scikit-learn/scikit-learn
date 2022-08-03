@@ -28,9 +28,10 @@ class LearningCurveDisplay:
     test_scores : ndarray of shape (n_ticks, n_cv_folds)
         Scores on test set.
 
-    score_name : str, default="Score"
+    score_name : str, default=None
         The name of the score used in `learning_curve`. It will be used to
-        decorate the y-axis.
+        decorate the y-axis. If `None`, the generic name `"Score"` will be
+        used.
 
     Attributes
     ----------
@@ -72,7 +73,7 @@ class LearningCurveDisplay:
     >>> plt.show()
     """
 
-    def __init__(self, *, train_sizes, train_scores, test_scores, score_name="Score"):
+    def __init__(self, *, train_sizes, train_scores, test_scores, score_name=None):
         self.train_sizes = train_sizes
         self.train_scores = train_scores
         self.test_scores = test_scores
@@ -83,7 +84,7 @@ class LearningCurveDisplay:
         ax=None,
         *,
         negate=True,
-        score_name="Score",
+        score_name=None,
         score_type="test",
         log_scale=False,
         std_display_style=None,
@@ -105,8 +106,9 @@ class LearningCurveDisplay:
             particularly useful when using the error denoted by `neg_*` in
             `scikit-learn`.
 
-        score_name : str, default="Score"
-            The name of the score used to decorate the y-axis of the plot.
+        score_name : str, default=None
+            The name of the score used to decorate the y-axis of the plot. If
+            `None`, the generic name "Score" will be used.
 
         score_type : {"test", "train", "both"}, default="test"
             The type of score to plot. Can be one of `"test"`, `"train"`, or
@@ -192,6 +194,7 @@ class LearningCurveDisplay:
             if errorbar_kw is None:
                 errorbar_kw = {}
 
+            self.errorbar_ = []
             for line_label, score in scores.items():
                 self.errobar_.append(
                     ax.errorbar(
@@ -209,6 +212,7 @@ class LearningCurveDisplay:
             default_fill_between_kw = {"alpha": 0.5}
             fill_between_kw = {**default_fill_between_kw, **fill_between_kw}
 
+            self.fill_between_ = []
             for line_label, score in scores.items():
                 self.fill_between_.append(
                     ax.fill_between(
@@ -364,8 +368,9 @@ class LearningCurveDisplay:
             particularly useful when using the error denoted by `neg_*` in
             `scikit-learn`.
 
-        score_name : str, default="Score"
+        score_name : str, default=None
             The name of the score used to decorate the y-axis of the plot.
+            If `None`, the generic `"Score"` name will be used.
 
         score_type : {"test", "train", "both"}, default="test"
             The type of score to plot. Can be one of `"test"`, `"train"`, or

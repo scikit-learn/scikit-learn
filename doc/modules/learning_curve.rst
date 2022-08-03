@@ -94,8 +94,8 @@ The function :func:`validation_curve` can help in this case::
 If the training score and the validation score are both low, the estimator will
 be underfitting. If the training score is high and the validation score is low,
 the estimator is overfitting and otherwise it is working very well. A low
-training score and a high validation score is usually not possible. Underfitting, 
-overfitting, and a working model are shown in the in the plot below where we vary 
+training score and a high validation score is usually not possible. Underfitting,
+overfitting, and a working model are shown in the in the plot below where we vary
 the parameter :math:`\gamma` of an SVM on the digits dataset.
 
 .. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_validation_curve_001.png
@@ -112,7 +112,7 @@ Learning curve
 A learning curve shows the validation and training score of an estimator
 for varying numbers of training samples. It is a tool to find out how much
 we benefit from adding more training data and whether the estimator suffers
-more from a variance error or a bias error. Consider the following example
+more from a variance error or a bias error. Coensider th following example
 where we plot the learning curve of a naive Bayes classifier and an SVM.
 
 For the naive Bayes, both the validation score and the training score
@@ -148,4 +148,3 @@ average scores on the validation sets)::
   array([[1. ,  0.93...,  1. ,  1. ,  0.96...],
          [1. ,  0.96...,  1. ,  1. ,  0.96...],
          [1. ,  0.96...,  1. ,  1. ,  0.96...]])
-
