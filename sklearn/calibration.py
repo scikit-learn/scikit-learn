@@ -7,6 +7,7 @@
 #
 # License: BSD 3 clause
 
+from numbers import Integral
 import warnings
 from inspect import signature
 from functools import partial
@@ -18,6 +19,8 @@ from joblib import Parallel
 from scipy.special import expit
 from scipy.special import xlogy
 from scipy.optimize import fmin_bfgs
+
+from .utils._param_validation import StrOptions
 
 from .base import (
     BaseEstimator,
@@ -242,6 +245,15 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
     array([[0.936..., 0.063...]])
     """
 
+    _parameter_constraints = {
+        'estimator': 'no_validation',
+        'method': [StrOptions({'isotonic', 'sigmoid'}), None],
+        'cv': ["cv_object"],
+        "n_jobs": [Integral, None],
+        'ensemble': ['boolean'],
+        'base_estimator': "no_validation",
+    }
+
     def __init__(
         self,
         estimator=None,
@@ -282,6 +294,8 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         self : object
             Returns an instance of self.
         """
+        self._validate_params()
+
         check_classification_targets(y)
         X, y = indexable(X, y)
         if sample_weight is not None:
