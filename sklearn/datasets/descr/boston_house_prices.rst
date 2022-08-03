@@ -1,15 +1,13 @@
-Boston House Prices dataset
-===========================
+.. _boston_dataset:
 
-Notes
-------
-Data Set Characteristics:  
+Boston house prices dataset
+---------------------------
+
+**Data Set Characteristics:**  
 
     :Number of Instances: 506 
 
-    :Number of Attributes: 13 numeric/categorical predictive
-    
-    :Median Value (attribute 14) is usually the target
+    :Number of Attributes: 13 numeric/categorical predictive. Median Value (attribute 14) is usually the target.
 
     :Attribute Information (in order):
         - CRIM     per capita crime rate by town
@@ -23,7 +21,7 @@ Data Set Characteristics:
         - RAD      index of accessibility to radial highways
         - TAX      full-value property-tax rate per $10,000
         - PTRATIO  pupil-teacher ratio by town
-        - B        1000(Bk - 0.63)^2 where Bk is the proportion of blacks by town
+        - B        1000(Bk - 0.63)^2 where Bk is the proportion of black people by town
         - LSTAT    % lower status of the population
         - MEDV     Median value of owner-occupied homes in $1000's
 
@@ -32,7 +30,7 @@ Data Set Characteristics:
     :Creator: Harrison, D. and Rubinfeld, D.L.
 
 This is a copy of UCI ML housing dataset.
-http://archive.ics.uci.edu/ml/datasets/Housing
+https://archive.ics.uci.edu/ml/machine-learning-databases/housing/
 
 
 This dataset was taken from the StatLib library which is maintained at Carnegie Mellon University.
@@ -46,8 +44,7 @@ pages 244-261 of the latter.
 The Boston house-price data has been used in many machine learning papers that address regression
 problems.   
      
-**References**
+.. topic:: References
 
    - Belsley, Kuh & Welsch, 'Regression diagnostics: Identifying Influential Data and Sources of Collinearity', Wiley, 1980. 244-261.
    - Quinlan,R. (1993). Combining Instance-Based and Model-Based Learning. In Proceedings on the Tenth International Conference of Machine Learning, 236-243, University of Massachusetts, Amherst. Morgan Kaufmann.
-   - many more! (see http://archive.ics.uci.edu/ml/datasets/Housing)

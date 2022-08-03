@@ -76,8 +76,7 @@ to retrieve only the two best features as follows:
   >>> from sklearn.datasets import load_iris
   >>> from sklearn.feature_selection import SelectKBest
   >>> from sklearn.feature_selection import chi2
-  >>> iris = load_iris()
-  >>> X, y = iris.data, iris.target
+  >>> X, y = load_iris(return_X_y=True)
   >>> X.shape
   (150, 4)
   >>> X_new = SelectKBest(chi2, k=2).fit_transform(X, y)
@@ -120,13 +119,14 @@ Recursive feature elimination
 =============================
 
 Given an external estimator that assigns weights to features (e.g., the
-coefficients of a linear model), recursive feature elimination (:class:`RFE`)
+coefficients of a linear model), the goal of recursive feature elimination (:class:`RFE`)
 is to select features by recursively considering smaller and smaller sets of
-features.  First, the estimator is trained on the initial set of features and
-weights are assigned to each one of them. Then, features whose absolute weights
-are the smallest are pruned from the current set features. That procedure is
-recursively repeated on the pruned set until the desired number of features to
-select is eventually reached.
+features. First, the estimator is trained on the initial set of features and
+the importance of each feature is obtained either through any specific attribute
+(such as ``coef_``, ``feature_importances_``) or callable. Then, the least important
+features are pruned from current set of features. That procedure is recursively
+repeated on the pruned set until the desired number of features to select is
+eventually reached.
 
 :class:`RFECV` performs RFE in a cross-validation loop to find the optimal
 number of features.
@@ -145,22 +145,22 @@ number of features.
 Feature selection using SelectFromModel
 =======================================
 
-:class:`SelectFromModel` is a meta-transformer that can be used along with any
-estimator that has a ``coef_`` or ``feature_importances_`` attribute after fitting.
-The features are considered unimportant and removed, if the corresponding
-``coef_`` or ``feature_importances_`` values are below the provided
+:class:`SelectFromModel` is a meta-transformer that can be used alongside any
+estimator that assigns importance to each feature through a specific attribute (such as
+``coef_``, ``feature_importances_``) or via an `importance_getter` callable after fitting.
+The features are considered unimportant and removed if the corresponding
+importance of the feature values are below the provided
 ``threshold`` parameter. Apart from specifying the threshold numerically,
 there are built-in heuristics for finding a threshold using a string argument.
 Available heuristics are "mean", "median" and float multiples of these like
-"0.1*mean".
+"0.1*mean". In combination with the `threshold` criteria, one can use the
+`max_features` parameter to set a limit on the number of features to select.
 
 For examples on how it is to be used refer to the sections below.
 
 .. topic:: Examples
 
-    * :ref:`sphx_glr_auto_examples_feature_selection_plot_select_from_model_boston.py`: Selecting the two
-      most important features from the Boston dataset without knowing the
-      threshold beforehand.
+    * :ref:`sphx_glr_auto_examples_feature_selection_plot_select_from_model_diabetes.py`
 
 .. _l1_feature_selection:
 
@@ -172,17 +172,16 @@ L1-based feature selection
 :ref:`Linear models <linear_model>` penalized with the L1 norm have
 sparse solutions: many of their estimated coefficients are zero. When the goal
 is to reduce the dimensionality of the data to use with another classifier,
-they can be used along with :class:`feature_selection.SelectFromModel`
+they can be used along with :class:`~feature_selection.SelectFromModel`
 to select the non-zero coefficients. In particular, sparse estimators useful
-for this purpose are the :class:`linear_model.Lasso` for regression, and
-of :class:`linear_model.LogisticRegression` and :class:`svm.LinearSVC`
+for this purpose are the :class:`~linear_model.Lasso` for regression, and
+of :class:`~linear_model.LogisticRegression` and :class:`~svm.LinearSVC`
 for classification::
 
   >>> from sklearn.svm import LinearSVC
   >>> from sklearn.datasets import load_iris
   >>> from sklearn.feature_selection import SelectFromModel
-  >>> iris = load_iris()
-  >>> X, y = iris.data, iris.target
+  >>> X, y = load_iris(return_X_y=True)
   >>> X.shape
   (150, 4)
   >>> lsvc = LinearSVC(C=0.01, penalty="l1", dual=False).fit(X, y)
@@ -197,9 +196,7 @@ alpha parameter, the fewer features selected.
 
 .. topic:: Examples:
 
-    * :ref:`sphx_glr_auto_examples_text_document_classification_20newsgroups.py`: Comparison
-      of different algorithms for document classification including L1-based
-      feature selection.
+    * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_dense_vs_sparse_data.py`.
 
 .. _compressive_sensing:
 
@@ -225,87 +222,25 @@ alpha parameter, the fewer features selected.
 
    **Reference** Richard G. Baraniuk "Compressive Sensing", IEEE Signal
    Processing Magazine [120] July 2007
-   http://dsp.rice.edu/sites/dsp.rice.edu/files/cs/baraniukCSlecture07.pdf
+   http://users.isr.ist.utl.pt/~aguiar/CS_notes.pdf
 
-.. _randomized_l1:
-
-Randomized sparse models
--------------------------
-
-.. currentmodule:: sklearn.linear_model
-
-In terms of feature selection, there are some well-known limitations of
-L1-penalized models for regression and classification. For example, it is
-known that the Lasso will tend to select an individual variable out of a group
-of highly correlated features. Furthermore, even when the correlation between
-features is not too high, the conditions under which L1-penalized methods
-consistently select "good" features can be restrictive in general.
-
-To mitigate this problem, it is possible to use randomization techniques such
-as those presented in [B2009]_ and [M2010]_. The latter technique, known as
-stability selection, is implemented in the module :mod:`sklearn.linear_model`.
-In the stability selection method, a subsample of the data is fit to a
-L1-penalized model where the penalty of a random subset of coefficients has
-been scaled. Specifically, given a subsample of the data
-:math:`(x_i, y_i), i \in I`, where :math:`I \subset \{1, 2, \ldots, n\}` is a
-random subset of the data of size :math:`n_I`, the following modified Lasso
-fit is obtained:
-
-.. math::   \hat{w_I} = \mathrm{arg}\min_{w} \frac{1}{2n_I} \sum_{i \in I} (y_i - x_i^T w)^2 + \alpha \sum_{j=1}^p \frac{ \vert w_j \vert}{s_j},
-
-where :math:`s_j \in \{s, 1\}` are independent trials of a fair Bernoulli
-random variable, and :math:`0<s<1` is the scaling factor. By repeating this
-procedure across different random subsamples and Bernoulli trials, one can
-count the fraction of times the randomized procedure selected each feature,
-and used these fractions as scores for feature selection.
-
-:class:`RandomizedLasso` implements this strategy for regression
-settings, using the Lasso, while :class:`RandomizedLogisticRegression` uses the
-logistic regression and is suitable for classification tasks. To get a full
-path of stability scores you can use :func:`lasso_stability_path`.
-
-.. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_sparse_recovery_003.png
-   :target: ../auto_examples/linear_model/plot_sparse_recovery.html
-   :align: center
-   :scale: 60
-
-Note that for randomized sparse models to be more powerful than standard
-F statistics at detecting non-zero features, the ground truth model
-should be sparse, in other words, there should be only a small fraction
-of features non zero.
-
-.. topic:: Examples:
-
-   * :ref:`sphx_glr_auto_examples_linear_model_plot_sparse_recovery.py`: An example
-     comparing different feature selection approaches and discussing in
-     which situation each approach is to be favored.
-
-.. topic:: References:
-
-  .. [B2009] F. Bach, "Model-Consistent Sparse Estimation through the
-        Bootstrap." https://hal.inria.fr/hal-00354771/
-
-  .. [M2010] N. Meinshausen, P. Buhlmann, "Stability selection",
-       Journal of the Royal Statistical Society, 72 (2010)
-       http://arxiv.org/pdf/0809.2932.pdf
 
 Tree-based feature selection
 ----------------------------
 
 Tree-based estimators (see the :mod:`sklearn.tree` module and forest
 of trees in the :mod:`sklearn.ensemble` module) can be used to compute
-feature importances, which in turn can be used to discard irrelevant
-features (when coupled with the :class:`sklearn.feature_selection.SelectFromModel`
+impurity-based feature importances, which in turn can be used to discard irrelevant
+features (when coupled with the :class:`~feature_selection.SelectFromModel`
 meta-transformer)::
 
   >>> from sklearn.ensemble import ExtraTreesClassifier
   >>> from sklearn.datasets import load_iris
   >>> from sklearn.feature_selection import SelectFromModel
-  >>> iris = load_iris()
-  >>> X, y = iris.data, iris.target
+  >>> X, y = load_iris(return_X_y=True)
   >>> X.shape
   (150, 4)
-  >>> clf = ExtraTreesClassifier()
+  >>> clf = ExtraTreesClassifier(n_estimators=50)
   >>> clf = clf.fit(X, y)
   >>> clf.feature_importances_  # doctest: +SKIP
   array([ 0.04...,  0.05...,  0.4...,  0.4...])
@@ -323,12 +258,61 @@ meta-transformer)::
     * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_importances_faces.py`: example
       on face recognition data.
 
+.. _sequential_feature_selection:
+
+Sequential Feature Selection
+============================
+
+Sequential Feature Selection [sfs]_ (SFS) is available in the
+:class:`~sklearn.feature_selection.SequentialFeatureSelector` transformer.
+SFS can be either forward or backward:
+
+Forward-SFS is a greedy procedure that iteratively finds the best new feature
+to add to the set of selected features. Concretely, we initially start with
+zero features and find the one feature that maximizes a cross-validated score
+when an estimator is trained on this single feature. Once that first feature
+is selected, we repeat the procedure by adding a new feature to the set of
+selected features. The procedure stops when the desired number of selected
+features is reached, as determined by the `n_features_to_select` parameter.
+
+Backward-SFS follows the same idea but works in the opposite direction:
+instead of starting with no features and greedily adding features, we start
+with *all* the features and greedily *remove* features from the set. The
+`direction` parameter controls whether forward or backward SFS is used.
+
+In general, forward and backward selection do not yield equivalent results.
+Also, one may be much faster than the other depending on the requested number
+of selected features: if we have 10 features and ask for 7 selected features,
+forward selection would need to perform 7 iterations while backward selection
+would only need to perform 3.
+
+SFS differs from :class:`~sklearn.feature_selection.RFE` and
+:class:`~sklearn.feature_selection.SelectFromModel` in that it does not
+require the underlying model to expose a `coef_` or `feature_importances_`
+attribute. It may however be slower considering that more models need to be
+evaluated, compared to the other approaches. For example in backward
+selection, the iteration going from `m` features to `m - 1` features using k-fold
+cross-validation requires fitting `m * k` models, while
+:class:`~sklearn.feature_selection.RFE` would require only a single fit, and
+:class:`~sklearn.feature_selection.SelectFromModel` always just does a single
+fit and requires no iterations.
+
+.. topic:: Examples
+
+    * :ref:`sphx_glr_auto_examples_feature_selection_plot_select_from_model_diabetes.py`
+
+.. topic:: References:
+
+   .. [sfs] Ferri et al, `Comparative study of techniques for
+      large-scale feature selection
+      <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.24.4369&rep=rep1&type=pdf>`_.
+
 Feature selection as part of a pipeline
 =======================================
 
 Feature selection is usually used as a pre-processing step before doing
 the actual learning. The recommended way to do this in scikit-learn is
-to use a :class:`sklearn.pipeline.Pipeline`::
+to use a :class:`~pipeline.Pipeline`::
 
   clf = Pipeline([
     ('feature_selection', SelectFromModel(LinearSVC(penalty="l1"))),
@@ -336,11 +320,11 @@ to use a :class:`sklearn.pipeline.Pipeline`::
   ])
   clf.fit(X, y)
 
-In this snippet we make use of a :class:`sklearn.svm.LinearSVC`
-coupled with :class:`sklearn.feature_selection.SelectFromModel`
+In this snippet we make use of a :class:`~svm.LinearSVC`
+coupled with :class:`~feature_selection.SelectFromModel`
 to evaluate feature importances and select the most relevant features.
-Then, a :class:`sklearn.ensemble.RandomForestClassifier` is trained on the
+Then, a :class:`~ensemble.RandomForestClassifier` is trained on the
 transformed output, i.e. using only relevant features. You can perform
 similar operations with the other feature selection methods and also
 classifiers that provide a way to evaluate feature importances of course.
-See the :class:`sklearn.pipeline.Pipeline` examples for more details.
+See the :class:`~pipeline.Pipeline` examples for more details.

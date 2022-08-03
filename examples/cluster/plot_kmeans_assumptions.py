@@ -8,8 +8,8 @@ unintuitive and possibly unexpected clusters. In the first three plots, the
 input data does not conform to some implicit assumption that k-means makes and
 undesirable clusters are produced as a result. In the last plot, k-means
 returns intuitive clusters despite unevenly sized blobs.
+
 """
-print(__doc__)
 
 # Author: Phil Roth <mr.phil.roth@gmail.com>
 # License: BSD 3 clause
@@ -34,7 +34,7 @@ plt.scatter(X[:, 0], X[:, 1], c=y_pred)
 plt.title("Incorrect Number of Blobs")
 
 # Anisotropicly distributed data
-transformation = [[ 0.60834549, -0.63667341], [-0.40887718, 0.85253229]]
+transformation = [[0.60834549, -0.63667341], [-0.40887718, 0.85253229]]
 X_aniso = np.dot(X, transformation)
 y_pred = KMeans(n_clusters=3, random_state=random_state).fit_predict(X_aniso)
 
@@ -43,9 +43,9 @@ plt.scatter(X_aniso[:, 0], X_aniso[:, 1], c=y_pred)
 plt.title("Anisotropicly Distributed Blobs")
 
 # Different variance
-X_varied, y_varied = make_blobs(n_samples=n_samples,
-                                cluster_std=[1.0, 2.5, 0.5],
-                                random_state=random_state)
+X_varied, y_varied = make_blobs(
+    n_samples=n_samples, cluster_std=[1.0, 2.5, 0.5], random_state=random_state
+)
 y_pred = KMeans(n_clusters=3, random_state=random_state).fit_predict(X_varied)
 
 plt.subplot(223)

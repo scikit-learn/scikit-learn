@@ -1,0 +1,80 @@
+
+parameters:
+  name: ''
+  vmImage: ''
+  matrix: []
+  dependsOn: []
+  condition: ne(variables['Build.Reason'], 'Schedule')
+
+jobs:
+- job: ${{ parameters.name }}
+  dependsOn: ${{ parameters.dependsOn }}
+  condition: ${{ parameters.condition }}
+  pool:
+    vmImage: ${{ parameters.vmImage }}
+  variables:
+    VIRTUALENV: 'testvenv'
+    JUNITXML: 'test-data.xml'
+    SKLEARN_SKIP_NETWORK_TESTS: '1'
+    PYTEST_XDIST_VERSION: 'latest'
+    TEST_DIR: '$(Agent.WorkFolder)/tmp_folder'
+    SHOW_SHORT_SUMMARY: 'false'
+    CPU_COUNT: '2'
+  strategy:
+    matrix:
+      ${{ insert }}: ${{ parameters.matrix }}
+
+  steps:
+    - bash: python build_tools/azure/get_selected_tests.py
+      displayName: Check selected tests for all random seeds
+      condition: eq(variables['Build.Reason'], 'PullRequest')
+    - bash: echo "##vso[task.prependpath]$CONDA/Scripts"
+      displayName: Add conda to PATH
+      condition: startsWith(variables['DISTRIB'], 'conda')
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '$(PYTHON_VERSION)'
+        addToPath: true
+        architecture: 'x86'
+      displayName: Use 32 bit System Python
+      condition: eq(variables['PYTHON_ARCH'], '32')
+    - bash: ./build_tools/azure/install_win.sh
+      displayName: 'Install'
+    - bash: ./build_tools/azure/test_script.sh
+      displayName: 'Test Library'
+    - bash: ./build_tools/azure/upload_codecov.sh
+      condition: and(succeeded(), eq(variables['COVERAGE'], 'true'),
+                     eq(variables['SELECTED_TESTS'], ''))
+      displayName: 'Upload To Codecov'
+      env:
+        CODECOV_TOKEN: $(CODECOV_TOKEN)
+    - task: PublishTestResults@2
+      inputs:
+        testResultsFiles: '$(TEST_DIR)/$(JUNITXML)'
+        testRunTitle: ${{ format('{0}-$(Agent.JobName)', parameters.name) }}
+      displayName: 'Publish Test Results'
+      condition: succeededOrFailed()
+    - bash: |
+        set -ex
+        if [[ $(BOT_GITHUB_TOKEN) == "" ]]; then
+          echo "GitHub Token is not set. Issue tracker will not be updated."
+          exit
+        fi
+
+        LINK_TO_RUN="https://dev.azure.com/$BUILD_REPOSITORY_NAME/_build/results?buildId=$BUILD_BUILDID&view=logs&j=$SYSTEM_JOBID"
+        CI_NAME="$SYSTEM_JOBIDENTIFIER"
+        ISSUE_REPO="$BUILD_REPOSITORY_NAME"
+
+        $(pyTools.pythonLocation)/bin/pip install defusedxml PyGithub
+        $(pyTools.pythonLocation)/bin/python maint_tools/update_tracking_issue.py \
+          $(BOT_GITHUB_TOKEN) \
+          $CI_NAME \
+          $ISSUE_REPO \
+          $LINK_TO_RUN \
+          --junit-file $JUNIT_FILE \
+          --auto-close false
+      displayName: 'Update issue tracker'
+      env:
+        JUNIT_FILE: $(TEST_DIR)/$(JUNITXML)
+      condition: and(succeededOrFailed(), eq(variables['CREATE_ISSUE_ON_TRACKER'], 'true'),
+                     eq(variables['Build.Reason'], 'Schedule'))

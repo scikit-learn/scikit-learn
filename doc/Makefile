@@ -7,12 +7,25 @@ SPHINXBUILD  ?= sphinx-build
 PAPER         =
 BUILDDIR      = _build
 
+# Disable multiple jobs on OSX
+ifeq ($(shell uname), Darwin)
+	SPHINX_NUMJOBS = 1
+else
+	SPHINX_NUMJOBS = auto
+endif
+
+ifneq ($(EXAMPLES_PATTERN),)
+    EXAMPLES_PATTERN_OPTS := -D sphinx_gallery_conf.filename_pattern="$(EXAMPLES_PATTERN)"
+endif
+
 # Internal variables.
 PAPEROPT_a4     = -D latex_paper_size=a4
 PAPEROPT_letter = -D latex_paper_size=letter
-ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
+ALLSPHINXOPTS   = -T -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS)\
+    -j$(SPHINX_NUMJOBS) $(EXAMPLES_PATTERN_OPTS) .
 
-.PHONY: help clean html dirhtml pickle json latex latexpdf changes linkcheck doctest optipng
+
+.PHONY: help clean html dirhtml ziphtml pickle json latex latexpdf changes linkcheck doctest optipng
 
 all: html-noplot
 
@@ -20,6 +33,7 @@ help:
 	@echo "Please use \`make <target>' where <target> is one of"
 	@echo "  html      to make standalone HTML files"
 	@echo "  dirhtml   to make HTML files named index.html in directories"
+	@echo "  ziphtml   to make a ZIP of the HTML"
 	@echo "  pickle    to make pickle files"
 	@echo "  json      to make JSON files"
 	@echo "  latex     to make LaTeX files, you can set PAPER=a4 or PAPER=letter"
@@ -32,7 +46,7 @@ clean:
 	-rm -rf $(BUILDDIR)/*
 	-rm -rf auto_examples/
 	-rm -rf generated/*
-	-rm -rf modules/generated/*
+	-rm -rf modules/generated/
 
 html:
 	# These two lines make the build a bit more lengthy, and the
@@ -52,6 +66,19 @@ dirhtml:
 	$(SPHINXBUILD) -b dirhtml $(ALLSPHINXOPTS) $(BUILDDIR)/dirhtml
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/dirhtml."
+
+ziphtml:
+	@if [ ! -d "$(BUILDDIR)/html/stable/" ]; then \
+		make html; \
+	fi
+	# Optimize the images to reduce the size of the ZIP
+	optipng $(BUILDDIR)/html/stable/_images/*.png
+	# Exclude the output directory to avoid infinity recursion
+	cd $(BUILDDIR)/html/stable; \
+	zip -q -x _downloads \
+	       -r _downloads/scikit-learn-docs.zip .
+	@echo
+	@echo "Build finished. The ZIP of the HTML is in $(BUILDDIR)/html/stable/_downloads."
 
 pickle:
 	$(SPHINXBUILD) -b pickle $(ALLSPHINXOPTS) $(BUILDDIR)/pickle
@@ -93,7 +120,7 @@ doctest:
 	      "results in $(BUILDDIR)/doctest/output.txt."
 
 download-data:
-	python -c "from sklearn.datasets.lfw import check_fetch_lfw; check_fetch_lfw()"
+	python -c "from sklearn.datasets._lfw import _check_fetch_lfw; _check_fetch_lfw()"
 
 # Optimize PNG files. Needs OptiPNG. Change the -P argument to the number of
 # cores you have available, so -P 64 if you have a real computer ;)
@@ -101,5 +128,4 @@ optipng:
 	find _build auto_examples */generated -name '*.png' -print0 \
 	  | xargs -0 -n 1 -P 4 optipng -o10
 
-dist: html latexpdf
-	cp _build/latex/user_guide.pdf _build/html/stable/_downloads/scikit-learn-docs.pdf
+dist: html ziphtml

@@ -1,0 +1,99 @@
+version: 2.1
+
+# Parameters required to trigger the execution
+# of the "doc-min-dependencies" and "doc" jobs
+parameters:
+  GITHUB_RUN_URL:
+    type: string
+    default: "none"
+
+jobs:
+  doc-min-dependencies:
+    docker:
+      - image: cimg/python:3.8.12
+    environment:
+      - GITHUB_ARTIFACT_URL: << pipeline.parameters.GITHUB_RUN_URL >>/doc-min-dependencies.zip
+    steps:
+      - checkout
+      - run: bash build_tools/circle/download_documentation.sh
+      - store_artifacts:
+          path: doc/_build/html/stable
+          destination: doc
+
+  doc:
+    docker:
+      - image: cimg/python:3.8.12
+    environment:
+      - GITHUB_ARTIFACT_URL: << pipeline.parameters.GITHUB_RUN_URL >>/doc.zip
+    steps:
+      - checkout
+      - run: bash build_tools/circle/download_documentation.sh
+      - store_artifacts:
+          path: doc/_build/html/stable
+          destination: doc
+      # Persists the generated documentation, so that it
+      # can be attached and deployed in the "deploy" job
+      - persist_to_workspace:
+          root: doc/_build/html
+          paths: .
+
+  linux-arm64:
+    machine:
+      image: ubuntu-2004:202101-01
+    resource_class: arm.medium
+    environment:
+      - OMP_NUM_THREADS: 2
+      - OPENBLAS_NUM_THREADS: 2
+      - CONDA_ENV_NAME: testenv
+      - LOCK_FILE: build_tools/circle/py39_conda_forge_linux-aarch64_conda.lock
+    steps:
+      - checkout
+      - run: ./build_tools/circle/checkout_merge_commit.sh
+      - restore_cache:
+          key: linux-arm64-{{ .Branch }}
+      - run: ./build_tools/circle/build_test_arm.sh
+      - save_cache:
+          key: linux-arm64-{{ .Branch }}
+          paths:
+            - ~/.cache/ccache
+            - ~/.cache/pip
+            - ~/scikit_learn_data
+  deploy:
+    docker:
+      - image: cimg/python:3.8.12
+    steps:
+      - checkout
+      - run: ./build_tools/circle/checkout_merge_commit.sh
+      # Attach documentation generated in the 'doc' step so that it can be
+      # deployed.
+      - attach_workspace:
+          at: doc/_build/html
+      - run: ls -ltrh doc/_build/html/stable
+      - deploy:
+          command: |
+            if [[ "${CIRCLE_BRANCH}" =~ ^main$|^[0-9]+\.[0-9]+\.X$ ]]; then
+              bash build_tools/circle/push_doc.sh doc/_build/html/stable
+            fi
+
+workflows:
+  version: 2
+
+  build-doc-and-deploy:
+    when:
+      not:
+        equal: [ "none", << pipeline.parameters.GITHUB_RUN_URL >> ]
+    # The jobs should run only when triggered by the workflow
+    jobs:
+      - doc-min-dependencies
+      - doc
+      - deploy:
+          requires:
+            - doc
+
+  linux-arm64:
+    when:
+      equal: [ "none", << pipeline.parameters.GITHUB_RUN_URL >> ]
+    # Prevent double execution of this job: on push
+    # by default and when triggered by the workflow
+    jobs:
+      - linux-arm64
