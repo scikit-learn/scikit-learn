@@ -871,8 +871,8 @@ syntax:
 
       To refer to itself use :ref:`my-section`.
 
-  Note do not modify sphinx labels as this would break existing cross references
-  and external links pointing to specific sections in the scikit-learn
+  Note do not modify sphinx reference labels as this would break existing cross
+  references and external links pointing to specific sections in the scikit-learn
   documentation.
 
 * Glossary - linking to a term in the :ref:`glossary`:
