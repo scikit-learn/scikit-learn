@@ -242,11 +242,11 @@ def rand_score(labels_true, labels_pred):
     The Rand Index computes a similarity measure between two clusterings
     by considering all pairs of samples and counting pairs that are
     assigned in the same or different clusters in the predicted and
-    true clusterings.
+    true clusterings [1]_ [2]_.
 
     The raw RI score is:
 
-        RI = (number of agreeing pairs) / (number of pairs)
+        RI = (number of agreeing pairs) / (number of pairs) [3]_
 
     Read more in the :ref:`User Guide <rand_score>`.
 
@@ -271,14 +271,14 @@ def rand_score(labels_true, labels_pred):
 
     References
     ----------
-    .. :doi:`Hubert, L., Arabie, P. "Comparing partitions."
+    .. [1] :doi:`Hubert, L., Arabie, P. "Comparing partitions."
        Journal of Classification 2, 193–218 (1985).
        <10.1007/BF01908075>`.
 
-    .. `Wikipedia: Simple Matching Coefficient
+    .. [2] `Wikipedia: Simple Matching Coefficient
         <https://en.wikipedia.org/wiki/Simple_matching_coefficient>`_
 
-    .. `Wikipedia: Rand Index <https://en.wikipedia.org/wiki/Rand_index>`_
+    .. [3] `Wikipedia: Rand Index <https://en.wikipedia.org/wiki/Rand_index>`_
 
     Examples
     --------
