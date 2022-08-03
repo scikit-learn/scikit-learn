@@ -275,7 +275,8 @@ def rand_score(labels_true, labels_pred):
        Journal of Classification 2, 193–218 (1985).
        <10.1007/BF01908075>`.
 
-    .. https://en.wikipedia.org/wiki/Simple_matching_coefficient
+    .. `Wikipedia: Simple Matching Coefficient
+        <https://en.wikipedia.org/wiki/Simple_matching_coefficient>`_
 
     .. https://en.wikipedia.org/wiki/Rand_index
 
