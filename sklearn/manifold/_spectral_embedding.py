@@ -11,6 +11,7 @@ import numpy as np
 from scipy import sparse
 from scipy.linalg import eigh
 from scipy.sparse.linalg import eigsh
+from numbers import Integral, Real
 from scipy.sparse.csgraph import connected_components
 from scipy.sparse.csgraph import laplacian as csgraph_laplacian
 
@@ -22,6 +23,7 @@ from ..utils import (
 )
 from ..utils._arpack import _init_arpack_v0
 from ..utils.extmath import _deterministic_vector_sign_flip
+from ..utils._param_validation import Interval, StrOptions
 from ..utils.fixes import lobpcg
 from ..metrics.pairwise import rbf_kernel
 from ..neighbors import kneighbors_graph, NearestNeighbors
@@ -542,6 +544,27 @@ class SpectralEmbedding(BaseEstimator):
     (100, 2)
     """
 
+    _parameter_constraints = {
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "affinity": [
+            StrOptions(
+                {
+                    "nearest_neighbors",
+                    "rbf",
+                    "precomputed",
+                    "precomputed_nearest_neighbors",
+                },
+            ),
+            callable,
+        ],
+        "gamma": [Interval(Real, 0, None, closed="left"), None],
+        "random_state": ["random_state", None],
+        "eigen_solver": [StrOptions({"arpack", "lobpcg", "amg"}), None],
+        "eigen_tol": [Interval(Real, 0, None, closed="left"), StrOptions({"auto"})],
+        "n_neighbors": [Interval(Integral, 1, None, closed="left"), None],
+        "n_jobs": [None, Integral],
+    }
+
     def __init__(
         self,
         n_components=2,
@@ -649,6 +672,7 @@ class SpectralEmbedding(BaseEstimator):
         self : object
             Returns the instance itself.
         """
+        self._validate_params()
 
         X = self._validate_data(X, accept_sparse="csr", ensure_min_samples=2)
 

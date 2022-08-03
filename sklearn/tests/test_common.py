@@ -516,7 +516,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "SkewedChi2Sampler",
     "SpectralBiclustering",
     "SpectralCoclustering",
-    "SpectralEmbedding",
     "TransformedTargetRegressor",
 ]
 
