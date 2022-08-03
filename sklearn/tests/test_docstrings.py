@@ -43,7 +43,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.metrics.cluster._supervised.normalized_mutual_info_score",
     "sklearn.metrics.cluster._supervised.pair_confusion_matrix",
     "sklearn.metrics.cluster._supervised.rand_score",
-    "sklearn.metrics.cluster._supervised.v_measure_score",
     "sklearn.metrics.pairwise.pairwise_distances_chunked",
     "sklearn.preprocessing._data.maxabs_scale",
     "sklearn.preprocessing._data.scale",
