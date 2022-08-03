@@ -856,43 +856,54 @@ Cross-referencing
 -----------------
 
 It is often useful to cross-reference to other pages in the scikit-learn
-documentation. This should be done with reStructuredText Cross-referencing
+documentation. This should be done with reStructuredText cross-referencing
 syntax:
 
-* Section - to link to a section (any arbitrary place place starting with a
-  header), use reference labels. For example to reference the following section:
+* Section - to link to an arbitrary section in the documentation, use reference
+  labels (see
+  `Sphinx docs <https://www.sphinx-doc.org/en/master/usage/restructuredtext/roles.html#ref-role>`_).
+  For example:
 
-.. code-block:: rst
+  .. code-block:: rst
 
-    .. _my-section:
+      .. _my-section:
 
-    My section
-    ----------
+      My section
+      ----------
 
-    This is the text of the section.
+      This is the text of the section.
 
-    To refer to itself use :ref:`my-section`.
+      To refer to itself use :ref:`my-section`.
 
 * Glossary - linking to a term in the :ref:`glossary`:
 
-.. code-block:: rst
+  .. code-block:: rst
 
-    :term:<term_in_glossary>
+      :term:`<term_in_glossary>`
 
-* Function - linking to documentation of a function, you may need the full
+* Function - to link to the documentation of a function, use the full
   import path to the function:
 
-.. code-block:: rst
+  .. code-block:: rst
 
-    :func:~sklearn.preprocessing.StandardScaler
+      :func:`~sklearn.model_selection.cross_val_score`
 
-  Alternatively, if there is a 
+  However, if there is a 'currentmodule' directive above you in the document,
+  you will only need to use the path to the function succeeding the current
+  module specified. For example:
 
-* Class - linking to documentation of a class:
+  .. code-block:: rst
 
-.. code-block:: rst
+      .. currentmodule:: sklearn.model_selection
 
-    :class:<NameOfClass>
+      :func:`cross_val_score`
+
+* Class - to link to documentation of a class, use the full import path to the
+  class, unless there is a 'currentmodule' directive above (see above):
+
+  .. code-block:: rst
+
+      :class:`~sklearn.preprocessing.StandardScaler`
 
 .. _generated_doc_CI:
 
