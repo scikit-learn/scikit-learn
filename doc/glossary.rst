@@ -1184,7 +1184,7 @@ Methods
               multiclass multioutput. List is of length `n_labels`.
 
             - Single 2d array of shape (`n_samples`, `n_labels`), with each
-              'columns' in the array corresponding to the individual binary
+              'column' in the array corresponding to the individual binary
               classification decisions. This is ambiguously identical to the
               multiclass classification format, though its semantics differ: it
               should be interpreted, like in the binary case, by thresholding at
