@@ -159,7 +159,7 @@ def contingency_matrix(
 
 
 def pair_confusion_matrix(labels_true, labels_pred):
-    """Pair confusion matrix arising from two clusterings.
+    """Pair confusion matrix arising from two clusterings [1]_.
 
     The pair confusion matrix :math:`C` computes a 2 by 2 similarity matrix
     between two clusterings by considering all pairs of samples and counting
@@ -188,9 +188,15 @@ def pair_confusion_matrix(labels_true, labels_pred):
 
     See Also
     --------
-    rand_score: Rand Score
-    adjusted_rand_score: Adjusted Rand Score
-    adjusted_mutual_info_score: Adjusted Mutual Information
+    rand_score: Rand Score.
+    adjusted_rand_score: Adjusted Rand Score.
+    adjusted_mutual_info_score: Adjusted Mutual Information.
+
+    References
+    ----------
+    .. [1] :doi:`Hubert, L., Arabie, P. "Comparing partitions."
+           Journal of Classification 2, 193–218 (1985).
+           <10.1007/BF01908075>`
 
     Examples
     --------
@@ -211,12 +217,6 @@ def pair_confusion_matrix(labels_true, labels_pred):
              [0, 2]]...
 
     Note that the matrix is not symmetric.
-
-    References
-    ----------
-    .. L. Hubert and P. Arabie, Comparing Partitions, Journal of
-      Classification 1985
-      https://link.springer.com/article/10.1007%2FBF01908075
     """
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
     n_samples = np.int64(labels_true.shape[0])
