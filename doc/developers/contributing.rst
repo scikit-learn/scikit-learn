@@ -871,9 +871,9 @@ syntax:
 
       To refer to itself use :ref:`my-section`.
 
-  Note do not modify sphinx reference labels as this would break existing cross
-  references and external links pointing to specific sections in the scikit-learn
-  documentation.
+  You should not modify existing sphinx reference labels as this would break
+  existing cross references and external links pointing to specific sections in
+  the scikit-learn documentation.
 
 * Glossary - linking to a term in the :ref:`glossary`:
 
@@ -899,7 +899,8 @@ syntax:
       :func:`cross_val_score`
 
 * Class - to link to documentation of a class, use the full import path to the
-  class, unless there is a 'currentmodule' directive above (see above):
+  class, unless there is a 'currentmodule' directive in the document above
+  (see above):
 
   .. code-block:: rst
 
