@@ -196,7 +196,7 @@ class LearningCurveDisplay:
 
             self.errorbar_ = []
             for line_label, score in scores.items():
-                self.errobar_.append(
+                self.errorbar_.append(
                     ax.errorbar(
                         self.train_sizes,
                         score.mean(axis=1),
