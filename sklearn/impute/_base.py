@@ -259,7 +259,7 @@ class SimpleImputer(_BaseImputer):
     _parameter_constraints = {
         **_BaseImputer._parameter_constraints,  # type: ignore
         "strategy": [StrOptions({"mean", "median", "most_frequent", "constant"})],
-        "fill_value": [numbers.Real, numbers.Integral, str, None],
+        "fill_value": ["missing_values"],
         "verbose": ["verbose", Hidden(StrOptions({"deprecated"}))],
         "copy": ["boolean"],
     }
