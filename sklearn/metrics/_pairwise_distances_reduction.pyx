@@ -245,9 +245,16 @@ cdef class PairwiseDistancesReduction:
         True if the PairwiseDistancesReduction can be used, else False.
         """
         # TODO: support sparse arrays and 32 bits
+        c_contiguity = (
+            hasattr(X, "flags")
+            and X.flags.c_contiguous
+            and hasattr(Y, "flags")
+            and Y.flags.c_contiguous
+        )
         return (get_config().get("enable_cython_pairwise_dist", True) and
                 not issparse(X) and X.dtype == np.float64 and
                 not issparse(Y) and Y.dtype == np.float64 and
+                c_contiguity and
                 metric in cls.valid_metrics())
 
     def __init__(
