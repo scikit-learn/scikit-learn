@@ -99,13 +99,14 @@ def _assert_all_finite(
     if _get_config()["assume_finite"]:
         return
     X = np.asanyarray(X)
-    is_float = X.dtype.kind in "fc"
 
     # for object dtype data, we only check for NaNs (GH-13254)
     if X.dtype == np.dtype("object") and not allow_nan:
         if _object_dtype_isnan(X).any():
             raise ValueError("Input contains NaN")
-    if not is_float:
+
+    # We need only consider float arrays, hence can early return for all else.
+    if X.dtype.kind not in "fc":
         return
 
     # First try an O(n) time, O(1) space solution for the common case that
