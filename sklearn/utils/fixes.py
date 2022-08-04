@@ -174,4 +174,4 @@ def _mode(a, axis=0, keepdims=None):
     if keepdims is None or keepdims:
         return results
     else:
-        return results[0][0], results[1][0]
+        return results[0], results[1]
