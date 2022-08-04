@@ -1,6 +1,8 @@
 from abc import ABC
 from abc import abstractmethod
+from collections.abc import Iterable
 import functools
+import math
 from inspect import signature
 from numbers import Integral
 from numbers import Real
@@ -122,6 +124,10 @@ def make_constraint(constraint):
         return _Booleans()
     if isinstance(constraint, str) and constraint == "verbose":
         return _VerboseHelper()
+    if isinstance(constraint, str) and constraint == "missing_values":
+        return _MissingValues()
+    if isinstance(constraint, str) and constraint == "cv_object":
+        return _CVObjects()
     if isinstance(constraint, Hidden):
         constraint = make_constraint(constraint.constraint)
         constraint.hidden = True
@@ -247,6 +253,31 @@ class _NoneConstraint(_Constraint):
 
     def __str__(self):
         return "None"
+
+
+class _NanConstraint(_Constraint):
+    """Constraint representing the indicator `np.nan`."""
+
+    def is_satisfied_by(self, val):
+        return isinstance(val, Real) and math.isnan(val)
+
+    def __str__(self):
+        return "numpy.nan"
+
+
+class _PandasNAConstraint(_Constraint):
+    """Constraint representing the indicator `pd.NA`."""
+
+    def is_satisfied_by(self, val):
+        try:
+            import pandas as pd
+
+            return isinstance(val, type(pd.NA)) and pd.isna(val)
+        except ImportError:
+            return False
+
+    def __str__(self):
+        return "pandas.NA"
 
 
 class StrOptions(_Constraint):
@@ -506,6 +537,42 @@ class _VerboseHelper(_Constraint):
         )
 
 
+class _MissingValues(_Constraint):
+    """Helper constraint for the `missing_values` parameters.
+
+    Convenience for
+    [
+        Integral,
+        Interval(Real, None, None, closed="both"),
+        str,
+        None,
+        _NanConstraint(),
+        _PandasNAConstraint(),
+    ]
+    """
+
+    def __init__(self):
+        super().__init__()
+        self._constraints = [
+            _InstancesOf(Integral),
+            # we use an interval of Real to ignore np.nan that has its own constraint
+            Interval(Real, None, None, closed="both"),
+            _InstancesOf(str),
+            _NoneConstraint(),
+            _NanConstraint(),
+            _PandasNAConstraint(),
+        ]
+
+    def is_satisfied_by(self, val):
+        return any(c.is_satisfied_by(val) for c in self._constraints)
+
+    def __str__(self):
+        return (
+            f"{', '.join([str(c) for c in self._constraints[:-1]])} or"
+            f" {self._constraints[-1]}"
+        )
+
+
 class HasMethods(_Constraint):
     """Constraint representing objects that expose specific methods.
 
@@ -537,6 +604,47 @@ class HasMethods(_Constraint):
                 f" {self.methods[-1]!r}"
             )
         return f"an object implementing {methods}"
+
+
+class _IterablesNotString(_Constraint):
+    """Constraint representing iterables that are not strings."""
+
+    def is_satisfied_by(self, val):
+        return isinstance(val, Iterable) and not isinstance(val, str)
+
+    def __str__(self):
+        return "an iterable"
+
+
+class _CVObjects(_Constraint):
+    """Constraint representing cv objects.
+
+    Convenient class for
+    [
+        Interval(Integral, 2, None, closed="left"),
+        HasMethods(["split", "get_n_splits"]),
+        _IterablesNotString(),
+        None,
+    ]
+    """
+
+    def __init__(self):
+        super().__init__()
+        self._constraints = [
+            Interval(Integral, 2, None, closed="left"),
+            HasMethods(["split", "get_n_splits"]),
+            _IterablesNotString(),
+            _NoneConstraint(),
+        ]
+
+    def is_satisfied_by(self, val):
+        return any(c.is_satisfied_by(val) for c in self._constraints)
+
+    def __str__(self):
+        return (
+            f"{', '.join([str(c) for c in self._constraints[:-1]])} or"
+            f" {self._constraints[-1]}"
+        )
 
 
 class Hidden:
@@ -576,11 +684,20 @@ def generate_invalid_param_val(constraint, constraints=None):
     if isinstance(constraint, StrOptions):
         return f"not {' or '.join(constraint.options)}"
 
+    if isinstance(constraint, _MissingValues):
+        return np.array([1, 2, 3])
+
     if isinstance(constraint, _VerboseHelper):
         return -1
 
     if isinstance(constraint, HasMethods):
         return type("HasNotMethods", (), {})()
+
+    if isinstance(constraint, _IterablesNotString):
+        return "a string"
+
+    if isinstance(constraint, _CVObjects):
+        return "not a cv object"
 
     if not isinstance(constraint, Interval):
         raise NotImplementedError
@@ -733,10 +850,19 @@ def generate_valid_param(constraint):
     if isinstance(constraint, _VerboseHelper):
         return 1
 
+    if isinstance(constraint, _MissingValues):
+        return np.nan
+
     if isinstance(constraint, HasMethods):
         return type(
             "ValidHasMethods", (), {m: lambda self: None for m in constraint.methods}
         )()
+
+    if isinstance(constraint, _IterablesNotString):
+        return [1, 2, 3]
+
+    if isinstance(constraint, _CVObjects):
+        return 5
 
     if isinstance(constraint, StrOptions):
         for option in constraint.options:
