@@ -2,6 +2,7 @@
 
 import numpy as np
 import pytest
+import re
 
 from scipy.sparse import csc_matrix
 from scipy.sparse import csr_matrix
@@ -147,7 +148,7 @@ def test_diabetes(loss):
     reg = AdaBoostRegressor(loss=loss, random_state=0)
     reg.fit(diabetes.data, diabetes.target)
     score = reg.score(diabetes.data, diabetes.target)
-    assert score > 0.6
+    assert score > 0.55
 
     # Check we used multiple estimators
     assert len(reg.estimators_) > 1
@@ -270,11 +271,12 @@ def test_importances():
         assert (importances[:3, np.newaxis] >= importances[3:]).all()
 
 
-def test_error():
-    # Test that it gives proper exception on deficient input.
-
-    with pytest.raises(ValueError):
-        AdaBoostClassifier().fit(X, y_class, sample_weight=np.asarray([-1]))
+def test_adaboost_classifier_sample_weight_error():
+    # Test that it gives proper exception on incorrect sample weight.
+    clf = AdaBoostClassifier()
+    msg = re.escape("sample_weight.shape == (1,), expected (6,)")
+    with pytest.raises(ValueError, match=msg):
+        clf.fit(X, y_class, sample_weight=np.asarray([-1]))
 
 
 def test_base_estimator():
@@ -541,32 +543,6 @@ def test_adaboostregressor_sample_weight():
     assert score_with_outlier < score_no_outlier
     assert score_with_outlier < score_with_weight
     assert score_no_outlier == pytest.approx(score_with_weight)
-
-
-@pytest.mark.parametrize(
-    "params, err_type, err_msg",
-    [
-        ({"n_estimators": -1}, ValueError, "n_estimators == -1, must be >= 1"),
-        ({"n_estimators": 0}, ValueError, "n_estimators == 0, must be >= 1"),
-        (
-            {"n_estimators": 1.5},
-            TypeError,
-            "n_estimators must be an instance of <class 'numbers.Integral'>,"
-            " not <class 'float'>",
-        ),
-        ({"learning_rate": -1}, ValueError, "learning_rate == -1, must be > 0."),
-        ({"learning_rate": 0}, ValueError, "learning_rate == 0, must be > 0."),
-        (
-            {"algorithm": "unknown"},
-            ValueError,
-            "Algorithm must be 'SAMME' or 'SAMME.R'.",
-        ),
-    ],
-)
-def test_adaboost_classifier_params_validation(params, err_type, err_msg):
-    """Check the parameters validation in `AdaBoostClassifier`."""
-    with pytest.raises(err_type, match=err_msg):
-        AdaBoostClassifier(**params).fit(X, y_class)
 
 
 @pytest.mark.parametrize("algorithm", ["SAMME", "SAMME.R"])

@@ -8,7 +8,6 @@ from functools import partial
 from importlib import resources
 
 import pytest
-
 import numpy as np
 from sklearn.datasets import get_data_home
 from sklearn.datasets import clear_data_home
@@ -26,13 +25,10 @@ from sklearn.datasets._base import (
     load_csv_data,
     load_gzip_compressed_csv_data,
 )
+from sklearn.preprocessing import scale
 from sklearn.utils import Bunch
 from sklearn.utils._testing import SkipTest
 from sklearn.datasets.tests.test_common import check_as_frame
-
-from sklearn.externals._pilutil import pillow_installed
-
-from sklearn.utils import IS_PYPY
 
 
 def _remove_dir(path):
@@ -94,8 +90,6 @@ def test_default_empty_load_files(load_files_root):
 
 
 def test_default_load_files(test_category_dir_1, test_category_dir_2, load_files_root):
-    if IS_PYPY:
-        pytest.xfail("[PyPy] fails due to string containing NUL characters")
     res = load_files(load_files_root)
     assert len(res.filenames) == 1
     assert len(res.target_names) == 2
@@ -106,8 +100,6 @@ def test_default_load_files(test_category_dir_1, test_category_dir_2, load_files
 def test_load_files_w_categories_desc_and_encoding(
     test_category_dir_1, test_category_dir_2, load_files_root
 ):
-    if IS_PYPY:
-        pytest.xfail("[PyPy] fails due to string containing NUL characters")
     category = os.path.abspath(test_category_dir_1).split("/").pop()
     res = load_files(
         load_files_root, description="test", categories=category, encoding="utf-8"
@@ -126,6 +118,21 @@ def test_load_files_wo_load_content(
     assert len(res.target_names) == 2
     assert res.DESCR is None
     assert res.get("data") is None
+
+
+@pytest.mark.parametrize("allowed_extensions", ([".txt"], [".txt", ".json"]))
+def test_load_files_allowed_extensions(tmp_path, allowed_extensions):
+    """Check the behaviour of `allowed_extension` in `load_files`."""
+    d = tmp_path / "sub"
+    d.mkdir()
+    files = ("file1.txt", "file2.json", "file3.json", "file4.md")
+    paths = [d / f for f in files]
+    for p in paths:
+        p.write_bytes(b"hello")
+    res = load_files(tmp_path, allowed_extensions=allowed_extensions)
+    assert set([str(p) for p in paths if p.suffix in allowed_extensions]) == set(
+        res.filenames
+    )
 
 
 @pytest.mark.parametrize(
@@ -167,7 +174,7 @@ def test_load_csv_data_with_descr():
 @pytest.mark.parametrize(
     "filename, kwargs, expected_shape",
     [
-        ("diabetes_data.csv.gz", {}, [442, 10]),
+        ("diabetes_data_raw.csv.gz", {}, [442, 10]),
         ("diabetes_target.csv.gz", {}, [442]),
         ("digits.csv.gz", {"delimiter": ","}, [1797, 65]),
     ],
@@ -217,11 +224,25 @@ def test_load_sample_image():
 
 
 def test_load_missing_sample_image_error():
-    if pillow_installed:
-        with pytest.raises(AttributeError):
-            load_sample_image("blop.jpg")
-    else:
-        warnings.warn("Could not load sample images, PIL is not available.")
+    pytest.importorskip("PIL")
+    with pytest.raises(AttributeError):
+        load_sample_image("blop.jpg")
+
+
+def test_load_diabetes_raw():
+    """Test to check that we load a scaled version by default but that we can
+    get an unscaled version when setting `scaled=False`."""
+    diabetes_raw = load_diabetes(scaled=False)
+    assert diabetes_raw.data.shape == (442, 10)
+    assert diabetes_raw.target.size, 442
+    assert len(diabetes_raw.feature_names) == 10
+    assert diabetes_raw.DESCR
+
+    diabetes_default = load_diabetes()
+
+    np.testing.assert_allclose(
+        scale(diabetes_raw.data) / (442**0.5), diabetes_default.data, atol=1e-04
+    )
 
 
 @pytest.mark.filterwarnings("ignore:Function load_boston is deprecated")

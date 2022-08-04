@@ -1,7 +1,8 @@
 import numpy as np
 
 from ..base import BaseEstimator, ClassifierMixin
-from .validation import _num_samples, check_array, check_is_fitted
+from .validation import _check_sample_weight, _num_samples, check_array
+from .validation import check_is_fitted
 
 
 class ArraySlicingWrapper:
@@ -82,6 +83,9 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         A `foo` param. When `foo > 1`, the output of :meth:`score` will be 1
         otherwise it is 0.
 
+    expected_sample_weight : bool, default=False
+        Whether to check if a valid `sample_weight` was passed to `fit`.
+
     expected_fit_params : list of str, default=None
         A list of the expected parameters given when calling `fit`.
 
@@ -124,6 +128,7 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         check_X_params=None,
         methods_to_check="all",
         foo_param=0,
+        expected_sample_weight=None,
         expected_fit_params=None,
     ):
         self.check_y = check_y
@@ -132,6 +137,7 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         self.check_X_params = check_X_params
         self.methods_to_check = methods_to_check
         self.foo_param = foo_param
+        self.expected_sample_weight = expected_sample_weight
         self.expected_fit_params = expected_fit_params
 
     def _check_X_y(self, X, y=None, should_be_fitted=True):
@@ -169,7 +175,7 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
                 y = checked_y
         return X, y
 
-    def fit(self, X, y, **fit_params):
+    def fit(self, X, y, sample_weight=None, **fit_params):
         """Fit classifier.
 
         Parameters
@@ -182,6 +188,9 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
                 default=None
             Target relative to X for classification or regression;
             None for unsupervised learning.
+
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights. If None, then samples are equally weighted.
 
         **fit_params : dict of string -> object
             Parameters passed to the ``fit`` method of the estimator
@@ -207,6 +216,10 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
                         f"Fit parameter {key} has length {_num_samples(value)}"
                         f"; expected {_num_samples(X)}."
                     )
+        if self.expected_sample_weight:
+            if sample_weight is None:
+                raise AssertionError("Expected sample_weight to be passed")
+            _check_sample_weight(sample_weight, X)
 
         return self
 

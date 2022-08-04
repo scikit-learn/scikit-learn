@@ -4,6 +4,10 @@ Distribution functions used in GLM
 
 # Author: Christian Lorentzen <lorentzen.ch@googlemail.com>
 # License: BSD 3 clause
+#
+# TODO(1.3): remove file
+#       This is only used for backward compatibility in _GeneralizedLinearRegressor
+#       for the deprecated family attribute.
 
 from abc import ABCMeta, abstractmethod
 from collections import namedtuple

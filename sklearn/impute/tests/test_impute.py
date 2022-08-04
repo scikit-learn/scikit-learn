@@ -1,4 +1,5 @@
 import pytest
+import warnings
 
 import numpy as np
 from scipy import sparse
@@ -979,9 +980,9 @@ def test_iterative_imputer_catch_warning():
         X[sample_idx, feat] = np.nan
 
     imputer = IterativeImputer(n_nearest_features=5, sample_posterior=True)
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
         X_fill = imputer.fit_transform(X, y)
-    assert not [w.message for w in record.list]
     assert not np.any(np.isnan(X_fill))
 
 
@@ -1111,18 +1112,6 @@ def test_iterative_imputer_dont_set_random_state(rs_imputer, rs_estimator):
             np.array([[-1, 1], [1, -1]]),
             {"features": "missing-only", "sparse": "auto"},
             "have missing values in transform but have no missing values in fit",
-        ),
-        (
-            np.array([[-1, 1], [1, 2]]),
-            np.array([[-1, 1], [1, 2]]),
-            {"features": "random", "sparse": "auto"},
-            "'features' has to be either 'missing-only' or 'all'",
-        ),
-        (
-            np.array([[-1, 1], [1, 2]]),
-            np.array([[-1, 1], [1, 2]]),
-            {"features": "all", "sparse": "random"},
-            "'sparse' has to be a boolean or 'auto'",
         ),
         (
             np.array([["a", "b"], ["c", "a"]], dtype=str),
@@ -1541,7 +1530,7 @@ def test_most_frequent(expected, array, dtype, extra_value, n_repeat):
 
 
 def test_simple_impute_pd_na():
-    pd = pytest.importorskip("pandas", minversion="1.0")
+    pd = pytest.importorskip("pandas")
 
     # Impute pandas array of string types.
     df = pd.DataFrame({"feature": pd.Series(["abc", None, "de"], dtype="string")})
@@ -1617,3 +1606,29 @@ def test_missing_indicator_feature_names_out():
     feature_names = indicator.get_feature_names_out()
     expected_names = ["missingindicator_a", "missingindicator_b", "missingindicator_d"]
     assert_array_equal(expected_names, feature_names)
+
+
+def test_imputer_lists_fit_transform():
+    """Check transform uses object dtype when fitted on an object dtype.
+
+    Non-regression test for #19572.
+    """
+
+    X = [["a", "b"], ["c", "b"], ["a", "a"]]
+    imp_frequent = SimpleImputer(strategy="most_frequent").fit(X)
+    X_trans = imp_frequent.transform([[np.nan, np.nan]])
+    assert X_trans.dtype == object
+    assert_array_equal(X_trans, [["a", "b"]])
+
+
+@pytest.mark.parametrize("dtype_test", [np.float32, np.float64])
+def test_imputer_transform_preserves_numeric_dtype(dtype_test):
+    """Check transform preserves numeric dtype independent of fit dtype."""
+    X = np.asarray(
+        [[1.2, 3.4, np.nan], [np.nan, 1.2, 1.3], [4.2, 2, 1]], dtype=np.float64
+    )
+    imp = SimpleImputer().fit(X)
+
+    X_test = np.asarray([[np.nan, np.nan, np.nan]], dtype=dtype_test)
+    X_trans = imp.transform(X_test)
+    assert X_trans.dtype == dtype_test

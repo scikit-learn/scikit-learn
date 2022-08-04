@@ -208,30 +208,65 @@ def test_perfect_checkerboard():
 
 
 @pytest.mark.parametrize(
-    "args",
+    "params, type_err, err_msg",
     [
-        {"n_clusters": (3, 3, 3)},
-        {"n_clusters": "abc"},
-        {"n_clusters": (3, "abc")},
-        {"method": "unknown"},
-        {"n_components": 0},
-        {"n_best": 0},
-        {"svd_method": "unknown"},
-        {"n_components": 3, "n_best": 4},
+        ({"n_init": 0}, ValueError, "n_init == 0, must be >= 1."),
+        ({"n_init": 1.5}, TypeError, "n_init must be an instance of"),
+        (
+            {"n_clusters": "abc"},
+            TypeError,
+            "n_clusters must be an instance of",
+        ),
+        ({"svd_method": "unknown"}, ValueError, "Unknown SVD method: 'unknown'"),
     ],
 )
-def test_errors(args):
+def test_spectralcoclustering_parameter_validation(params, type_err, err_msg):
+    """Check parameters validation in `SpectralBiClustering`"""
     data = np.arange(25).reshape((5, 5))
-
-    model = SpectralBiclustering(**args)
-    with pytest.raises(ValueError):
+    model = SpectralCoclustering(**params)
+    with pytest.raises(type_err, match=err_msg):
         model.fit(data)
 
 
-def test_wrong_shape():
-    model = SpectralBiclustering()
-    data = np.arange(27).reshape((3, 3, 3))
-    with pytest.raises(ValueError):
+@pytest.mark.parametrize(
+    "params, type_err, err_msg",
+    [
+        ({"n_init": 0}, ValueError, "n_init == 0, must be >= 1."),
+        ({"n_init": 1.5}, TypeError, "n_init must be an instance of"),
+        (
+            {"n_clusters": (3, 3, 3)},
+            ValueError,
+            r"Incorrect parameter n_clusters has value: \(3, 3, 3\)",
+        ),
+        (
+            {"n_clusters": "abc"},
+            ValueError,
+            "Incorrect parameter n_clusters has value: abc",
+        ),
+        (
+            {"n_clusters": (3, "abc")},
+            ValueError,
+            r"Incorrect parameter n_clusters has value: \(3, 'abc'\)",
+        ),
+        (
+            {"n_clusters": ("abc", 3)},
+            ValueError,
+            r"Incorrect parameter n_clusters has value: \('abc', 3\)",
+        ),
+        ({"method": "unknown"}, ValueError, "Unknown method: 'unknown'"),
+        ({"n_components": 0}, ValueError, "n_components == 0, must be >= 1."),
+        ({"n_components": 1.5}, TypeError, "n_components must be an instance of"),
+        ({"n_components": 3, "n_best": 4}, ValueError, "n_best == 4, must be <= 3."),
+        ({"n_best": 0}, ValueError, "n_best == 0, must be >= 1."),
+        ({"n_best": 1.5}, TypeError, "n_best must be an instance of"),
+        ({"svd_method": "unknown"}, ValueError, "Unknown SVD method: 'unknown'"),
+    ],
+)
+def test_spectralbiclustering_parameter_validation(params, type_err, err_msg):
+    """Check parameters validation in `SpectralBiClustering`"""
+    data = np.arange(25).reshape((5, 5))
+    model = SpectralBiclustering(**params)
+    with pytest.raises(type_err, match=err_msg):
         model.fit(data)
 
 

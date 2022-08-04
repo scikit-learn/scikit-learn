@@ -141,7 +141,8 @@ When you submit an issue to `Github
 follow these guidelines! This will make it a lot easier to provide you with good
 feedback:
 
-- The ideal bug report contains a **short reproducible code snippet**, this way
+- The ideal bug report contains a :ref:`short reproducible code snippet
+  <minimal_reproducer>`, this way
   anyone can try to reproduce the bug easily (see `this
   <https://stackoverflow.com/help/mcve>`_ for more details). If your snippet is
   longer than around 50 lines, please link to a `gist
@@ -158,17 +159,6 @@ feedback:
 
     >>> import sklearn
     >>> sklearn.show_versions()  # doctest: +SKIP
-
-  .. note::
-
-    This utility function is only available in scikit-learn v0.20+.
-    For previous versions, one has to explicitly run::
-
-     import platform; print(platform.platform())
-     import sys; print("Python", sys.version)
-     import numpy; print("NumPy", numpy.__version__)
-     import scipy; print("SciPy", scipy.__version__)
-     import sklearn; print("Scikit-Learn", sklearn.__version__)
 
 - Please ensure all **code snippets and error messages are formatted in
   appropriate code blocks**.  See `Creating and highlighting code blocks
@@ -194,7 +184,7 @@ Contributing code
   One easy way to find an issue to work on is by applying the "help wanted"
   label in your search. This lists all the issues that have been unclaimed
   so far. In order to claim an issue for yourself, please comment exactly
-  ``take`` on it for the CI to automatically assign the issue to you.
+  ``/take`` on it for the CI to automatically assign the issue to you.
 
 Video resources
 ---------------
@@ -264,7 +254,7 @@ how to set up your git repository:
 
    .. prompt:: bash $
 
-        pip install pytest pytest-cov flake8 mypy black==21.6b0
+        pip install pytest pytest-cov flake8 mypy numpydoc black==22.3.0
 
 .. _upstream:
 
@@ -391,9 +381,9 @@ In order to ease the reviewing process, we recommend that your contribution
 complies with the following rules before marking a PR as ``[MRG]``. The
 **bolded** ones are especially important:
 
-1. **Give your pull request a helpful title** that summarises what your
+1. **Give your pull request a helpful title** that summarizes what your
    contribution does. This title will often become the commit message once
-   merged so it should summarise your contribution for posterity. In some
+   merged so it should summarize your contribution for posterity. In some
    cases "Fix <ISSUE TITLE>" is enough. "Fix #<ISSUE NUMBER>" is never a
    good title.
 
@@ -401,10 +391,10 @@ complies with the following rules before marking a PR as ``[MRG]``. The
    with `pytest`, but it is usually not recommended since it takes a long
    time. It is often enough to only run the test related to your changes:
    for example, if you changed something in
-   `sklearn/linear_model/logistic.py`, running the following commands will
+   `sklearn/linear_model/_logistic.py`, running the following commands will
    usually be enough:
 
-   - `pytest sklearn/linear_model/logistic.py` to make sure the doctest
+   - `pytest sklearn/linear_model/_logistic.py` to make sure the doctest
      examples are correct
    - `pytest sklearn/linear_model/tests/test_logistic.py` to run the tests
      specific to the file
@@ -445,15 +435,11 @@ complies with the following rules before marking a PR as ``[MRG]``. The
    `editor integration documentation <https://black.readthedocs.io/en/stable/integrations/editors.html>`_
    to configure your editor to run `black`.
 
-6. **Make sure that your PR does not add PEP8 violations**. To check the
-   code that you changed, you can run the following command (see
-   :ref:`above <upstream>` to set up the ``upstream`` remote):
+6. Run `flake8` to make sure you followed the project coding conventions.
 
    .. prompt:: bash $
 
-        git diff upstream/main -u -- "*.py" | flake8 --diff
-
-   or `make flake8-diff` which should work on unix-like system.
+        flake8 .
 
 7. Follow the :ref:`coding-guidelines`.
 
@@ -538,7 +524,7 @@ profiling and Cython optimizations.
 
    For two very well documented and more detailed guides on development
    workflow, please pay a visit to the `Scipy Development Workflow
-   <https://docs.scipy.org/doc/scipy/reference/dev/contributor/development_workflow.html>`_ -
+   <http://scipy.github.io/devdocs/dev/dev_quickstart.html>`_ -
    and the `Astropy Workflow for Developers
    <https://astropy.readthedocs.io/en/latest/development/workflow/development_workflow.html>`_
    sections.
@@ -562,6 +548,7 @@ message, the following actions are taken.
     [cd build gh]          CD is run only for GitHub Actions
     [lint skip]            Azure pipeline skips linting
     [scipy-dev]            Build & test with our dependencies (numpy, scipy, etc ...) development builds
+    [nogil]                Build & test with the nogil experimental branches of CPython, Cython, NumPy, SciPy...
     [icc-build]            Build & test with the Intel C compiler (ICC)
     [pypy]                 Build & test with PyPy
     [doc skip]             Docs are not built
@@ -848,6 +835,10 @@ Finally, follow the formatting rules below to make it consistently good:
 
 * For unwritten formatting rules, try to follow existing good works:
 
+    * When bibliographic references are available with `arxiv <https://arxiv.org/>`_
+      or `Digital Object Identifier <https://www.doi.org/>`_ identification numbers,
+      use the sphinx directives `:arxiv:` or `:doi:`. For example, see references in
+      :ref:`Spectral Clustering Graphs <spectral_clustering_graph>`.
     * For "References" in docstrings, see the Silhouette Coefficient
       (:func:`sklearn.metrics.silhouette_score`).
 
@@ -863,12 +854,15 @@ Finally, follow the formatting rules below to make it consistently good:
 
 .. _generated_doc_CI:
 
-Generated documentation on CircleCI
------------------------------------
+Generated documentation on GitHub Actions
+-----------------------------------------
 
-When you change the documentation in a pull request, CircleCI automatically
-builds it. To view the documentation generated by CircleCI, simply go at the
-bottom of your PR page and look for the "ci/circleci: doc artifact" link.
+When you change the documentation in a pull request, GitHub Actions automatically
+builds it. To view the documentation generated by GitHub Actions, simply go at the
+bottom of your PR page and look for the "Check the rendered docs here!" link:
+
+.. image:: ../images/generated-doc-ci.png
+   :align: center
 
 .. _testing_coverage:
 
@@ -929,13 +923,14 @@ Monitoring performance
 ======================
 
 *This section is heavily inspired from the* `pandas documentation
-<https://pandas.pydata.org/docs/development/contributing.html#running-the-performance-test-suite>`_.
+<https://pandas.pydata.org/docs/development/contributing_codebase.html#running-the-performance-test-suite>`_.
 
 When proposing changes to the existing code base, it's important to make sure
 that they don't introduce performance regressions. Scikit-learn uses
 `asv benchmarks <https://github.com/airspeed-velocity/asv>`_ to monitor the
-performance of a selection of common estimators and functions. The benchmark
-suite can be found in the `scikit-learn/asv_benchmarks` directory.
+performance of a selection of common estimators and functions. You can view
+these benchmarks on the `scikit-learn benchmark page <https://scikit-learn.org/scikit-learn-benchmarks>`_.
+The corresponding benchmark suite can be found in the `scikit-learn/asv_benchmarks` directory.
 
 To use all features of asv, you will need either `conda` or `virtualenv`. For
 more details please check the `asv installation webpage
@@ -1184,9 +1179,10 @@ Change the default value of a parameter
 
 If the default value of a parameter needs to be changed, please replace the
 default value with a specific value (e.g., ``warn``) and raise
-``FutureWarning`` when users are using the default value. In the following
-example, we change the default value of ``n_clusters`` from 5 to 10
-(current version is 0.20)::
+``FutureWarning`` when users are using the default value. The following
+example assumes that the current version is 0.20 and that we change the
+default value of ``n_clusters`` from 5 (old default for 0.20) to 10
+(new default for 0.22)::
 
     import warnings
 
@@ -1212,9 +1208,17 @@ When the change is in a class, we validate and raise warning in ``fit``::
 
 Similar to deprecations, the warning message should always give both the
 version in which the change happened and the version in which the old behavior
-will be removed. The docstring needs to be updated accordingly. We need a test
-which ensures that the warning is raised in relevant cases but not in other
-cases. The warning should be caught in all other tests
+will be removed.
+
+The parameter description in the docstring needs to be updated accordingly by adding
+a `versionchanged` directive with the old and new default value, pointing to the
+version when the change will be effective::
+
+    .. versionchanged:: 0.22
+       The default value for `n_clusters` will change from 5 to 10 in version 0.22.
+
+Finally, we need a test which ensures that the warning is raised in relevant cases but
+not in other cases. The warning should be caught in all other tests
 (using e.g., ``@pytest.mark.filterwarnings``), and there should be no warning
 in the examples.
 
@@ -1302,7 +1306,7 @@ contributor to keep involved in the project. [1]_
 - Every PR, good or bad, is an act of generosity. Opening with a positive
   comment will help the author feel rewarded, and your subsequent remarks may
   be heard more clearly. You may feel good also.
-- Begin if possible with the large issues, so the author knows they’ve been
+- Begin if possible with the large issues, so the author knows they've been
   understood. Resist the temptation to immediately go line by line, or to open
   with small pervasive issues.
 - Do not let perfect be the enemy of the good. If you find yourself making
