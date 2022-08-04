@@ -226,7 +226,7 @@ def _get_feature_importances(
         importances = getter(estimator)
 
     elif callable(getter):
-        if len(signature(getter).parameters) == 3 and X is not None and y is not None:
+        if len(signature(getter).parameters) == 3:
             importances = getter(estimator, X, y)
         else:
             importances = getter(estimator)
