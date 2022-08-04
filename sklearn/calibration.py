@@ -656,7 +656,7 @@ def _fit_calibrator(clf, predictions, y, classes, method, sample_weight=None):
     classes : ndarray, shape (n_classes,)
         All the prediction classes.
 
-    method : {'sigmoid', 'isotonic'}
+    method : str ('sigmoid' or 'isotonic') or custom scikit-learn regressor
         The method to use for calibration.
 
     sample_weight : ndarray, shape (n_samples,), default=None
@@ -675,10 +675,19 @@ def _fit_calibrator(clf, predictions, y, classes, method, sample_weight=None):
             calibrator = IsotonicRegression(out_of_bounds="clip")
         elif method == "sigmoid":
             calibrator = _SigmoidCalibration()
+        elif hasattr(method, "fit") and hasattr(method, "predict_proba"):
+            calibrator = _CustomCalibration(method=method)
         else:
+            if isinstance(method, str):
+                raise ValueError(
+                    "If 'method' is a string, it should be one of: 'sigmoid' "
+                    " or 'isotonic'. Got {method}."
+                )
             raise ValueError(
-                f"'method' should be one of: 'sigmoid' or 'isotonic'. Got {method}."
+                "'method' should either be a string or have 'fit' and "
+                "'predict_proba' methods."
             )
+
         calibrator.fit(this_pred, Y[:, class_idx], sample_weight)
         calibrators.append(calibrator)
 
@@ -695,18 +704,19 @@ class _CalibratedClassifier:
         Fitted classifier.
 
     calibrators : list of fitted estimator instances
-        List of fitted calibrators (either 'IsotonicRegression' or
-        '_SigmoidCalibration'). The number of calibrators equals the number of
-        classes. However, if there are 2 classes, the list contains only one
-        fitted calibrator.
+        List of fitted calibrators (either 'IsotonicRegression',
+        '_SigmoidCalibration' or '_CustomCalibration'). The number of
+        calibrators equals the number of classes. However, if there are 2
+        classes, the list contains only one fitted calibrator.
 
     classes : array-like of shape (n_classes,)
         All the prediction classes.
 
-    method : {'sigmoid', 'isotonic'}, default='sigmoid'
+    method : str ('sigmoid' or 'isotonic') or custom classifier, default='sigmoid'
         The method to use for calibration. Can be 'sigmoid' which
-        corresponds to Platt's method or 'isotonic' which is a
-        non-parametric approach based on isotonic regression.
+        corresponds to Platt's method, 'isotonic' which is a
+        non-parametric approach based on isotonic regression, or a custom
+        classifier implementing the 'fit' and 'predict_proba' methods.
     """
 
     def __init__(self, estimator, calibrators, *, classes, method="sigmoid"):
@@ -890,6 +900,71 @@ class _SigmoidCalibration(RegressorMixin, BaseEstimator):
         """
         T = column_or_1d(T)
         return expit(-(self.a_ * T + self.b_))
+
+
+class _CustomCalibration(RegressorMixin, BaseEstimator):
+    """Calibration using a custom classifier.
+
+    Parameters:
+    -----------
+    method : object with 'fit' and 'predict_proba' methods
+        The classifier to use for the calibration.
+    """
+
+    def __init__(self, method):
+        self.method = clone(method)
+
+    def fit(self, X, y, sample_weight=None):
+        """Fit the model using X, y as training data.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples,) or (n_samples, 1)
+            Training data.
+
+        y : array-like of shape (n_samples,)
+            Training target.
+
+        sample_weight : array-like of shape (n_samples,), default=None
+            Weights. If set to None, all weights will be set to 1 (equal
+            weights).
+
+        Returns
+        -------
+        self : object
+            Returns an instance of self.
+        """
+        X = X.reshape(-1, 1)
+        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+
+        # Discard samples with null weights
+        mask = sample_weight > 0
+        X, y, sample_weight = X[mask], y[mask], sample_weight[mask]
+
+        self.method.fit(X, y, sample_weight)
+        return self
+
+    def predict(self, T):
+        """Predict calibrated probabilities using the 'predict_proba' method
+        of the classifier.
+
+        Parameters
+        ----------
+        T : array-like of shape (n_samples,) or (n_samples, 1)
+            Data to transform.
+
+        Returns
+        -------
+        y_pred : ndarray of shape (n_samples,)
+            Transformed data.
+        """
+        T = T.reshape(-1, 1)
+        probas = self.method.predict_proba(T)
+
+        # If binary classification, only return proba of the positive class
+        if probas.shape[1] == 2:
+            return probas[:, 1]
+        return probas
 
 
 def calibration_curve(
