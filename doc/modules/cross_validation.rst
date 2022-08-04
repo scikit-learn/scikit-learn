@@ -624,6 +624,9 @@ model is flexible enough to learn from highly person specific features it
 could fail to generalize to new subjects. :class:`GroupKFold` makes it possible
 to detect this kind of overfitting situations.
 
+:class:`GroupKFold` is the same as :class:`LeaveOneGroupOut` in the case where
+`n_splits` is equal to the number of groups.
+
 Imagine you have three subjects, each with an associated number from 1 to 3::
 
   >>> from sklearn.model_selection import GroupKFold
