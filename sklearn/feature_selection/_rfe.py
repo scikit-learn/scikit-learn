@@ -6,26 +6,21 @@
 
 """Recursive feature elimination for feature ranking"""
 
-import numpy as np
 import numbers
+
+import numpy as np
 from joblib import Parallel, effective_n_jobs
 
-
-from ..utils.metaestimators import available_if
-from ..utils.metaestimators import _safe_split
-from ..utils._tags import _safe_tags
-from ..utils.validation import check_is_fitted
-from ..utils.fixes import delayed
-from ..utils.deprecation import deprecated
-from ..base import BaseEstimator
-from ..base import MetaEstimatorMixin
-from ..base import clone
-from ..base import is_classifier
+from ..base import BaseEstimator, MetaEstimatorMixin, clone, is_classifier
+from ..metrics import check_scoring
 from ..model_selection import check_cv
 from ..model_selection._validation import _score
-from ..metrics import check_scoring
-from ._base import SelectorMixin
-from ._base import _get_feature_importances
+from ..utils._tags import _safe_tags
+from ..utils.deprecation import deprecated
+from ..utils.fixes import delayed
+from ..utils.metaestimators import _safe_split, available_if
+from ..utils.validation import check_is_fitted
+from ._base import SelectorMixin, _get_feature_importances
 
 
 def _rfe_single_fit(rfe, estimator, X, y, train, test, scorer):
@@ -294,14 +289,15 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             if self.verbose > 0:
                 print("Fitting estimator with %d features." % np.sum(support_))
 
-            estimator.fit(X[:, features], y, **fit_params)
+            X_remaining_features = X[:, features]
+            estimator.fit(X_remaining_features, y, **fit_params)
 
             # Get importance and rank them
             importances = _get_feature_importances(
                 estimator,
                 self.importance_getter,
                 transform_func="square",
-                X=X[:, features],
+                X=X_remaining_features,
                 y=y,
             )
             ranks = np.argsort(importances)
