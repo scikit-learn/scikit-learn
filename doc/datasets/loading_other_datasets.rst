@@ -303,7 +303,7 @@ refer to:
   `Imageio <https://imageio.readthedocs.io/en/stable/reference/core_v3.html>`_
   for loading images and videos into numpy arrays
 * `scipy.io.wavfile.read
-  <https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.io.wavfile.read.html>`_
+  <https://docs.scipy.org/doc/scipy/reference/generated/scipy.io.wavfile.read.html>`_
   for reading WAV files into a numpy array
 
 Categorical (or nominal) features stored as strings (common in pandas DataFrames)
