@@ -150,7 +150,7 @@ def is_multilabel(y):
             warnings.simplefilter("error", np.VisibleDeprecationWarning)
             try:
                 y = np.asarray(y)
-            except np.VisibleDeprecationWarning:
+            except (np.VisibleDeprecationWarning, ValueError):
                 # dtype=object should be provided explicitly for ragged arrays,
                 # see NEP 34
                 y = np.array(y, dtype=object)
@@ -292,7 +292,7 @@ def type_of_target(y, input_name=""):
         warnings.simplefilter("error", np.VisibleDeprecationWarning)
         try:
             y = np.asarray(y)
-        except np.VisibleDeprecationWarning:
+        except (np.VisibleDeprecationWarning, ValueError):
             # dtype=object should be provided explicitly for ragged arrays,
             # see NEP 34
             y = np.asarray(y, dtype=object)
