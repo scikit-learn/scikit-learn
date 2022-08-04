@@ -65,6 +65,13 @@ Changelog
   now conducts validation for `max_features` and `feature_names_in` parameters.
   :pr:`23299` by :user:`Long Bao <lorentzbao>`.
 
+:mod:`sklearn.tree`
+...................
+
+- |Fix| Fixed invalid memory access bug during fit in
+  :class:`tree.DecisionTreeRegressor` and :class:`tree.DecisionTreeClassifier`.
+  :pr:`23273` by `Thomas Fan`_.
+
 Code and Documentation Contributors
 -----------------------------------
 
