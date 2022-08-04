@@ -13,6 +13,7 @@ import warnings
 import numpy as np
 import scipy.sparse as sp
 from scipy.linalg import svd
+from numbers import Integral, Real
 
 try:
     from scipy.fft import fft, ifft
@@ -444,6 +445,12 @@ class SkewedChi2Sampler(
     1.0
     """
 
+    _parameter_constraints = {
+        "skewedness": [Real],
+        "n_components": [Integral],
+        "random_state": ["random_state"],
+    }
+
     def __init__(self, *, skewedness=1.0, n_components=100, random_state=None):
         self.skewedness = skewedness
         self.n_components = n_components
@@ -469,7 +476,7 @@ class SkewedChi2Sampler(
         self : object
             Returns the instance itself.
         """
-
+        self._validate_params()
         X = self._validate_data(X)
         random_state = check_random_state(self.random_state)
         n_features = X.shape[1]
