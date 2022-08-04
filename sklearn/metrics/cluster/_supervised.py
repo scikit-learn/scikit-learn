@@ -242,11 +242,11 @@ def rand_score(labels_true, labels_pred):
     The Rand Index computes a similarity measure between two clusterings
     by considering all pairs of samples and counting pairs that are
     assigned in the same or different clusters in the predicted and
-    true clusterings [1]_ [2]_.
+    true clusterings [3]_.
 
     The raw RI score is:
 
-        RI = (number of agreeing pairs) / (number of pairs) [3]_
+        RI = (number of agreeing pairs) / (number of pairs)
 
     Read more in the :ref:`User Guide <rand_score>`.
 
