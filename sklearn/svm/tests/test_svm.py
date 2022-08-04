@@ -4,7 +4,6 @@ Testing for Support Vector Machine module (sklearn.svm)
 TODO: remove hard coded numerical results when possible
 """
 import numpy as np
-import itertools
 import pytest
 import re
 
@@ -1391,7 +1390,7 @@ def test_linearsvm_liblinear_sample_weight(SVM, params):
             assert_allclose(X_est_no_weight, X_est_with_weight)
 
 
-@pytest.mark.parametrize("Klass", (OneClassSVM, SVR, NuSVR))
+@pytest.mark.parametrize("Klass", (svm.OneClassSVM, svm.SVR, svm.NuSVR))
 def test_n_support(Klass):
     # Make n_support is correct for oneclass and SVR (used to be
     # non-initialized)
