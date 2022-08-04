@@ -77,8 +77,6 @@ Changelog
   :class:`CalibratedClassifierCV` to improve readability and consistency. The
   parameter `base_estimator` is deprecated and will be removed in 1.4.
   :pr:`22054` by :user:`Kevin Roice <kevroi>`.
-- |Fix| Make :class:`CalibratedClassifierCV` use `_validate_params`.
-  :pr:`24101` by :user:`Olle Lukowski <Olle-Lukowski>`.
 
 :mod:`sklearn.cluster`
 ......................
