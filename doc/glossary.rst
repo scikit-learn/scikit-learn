@@ -1177,7 +1177,7 @@ Methods
             predicted class.  Columns are ordered according to
             :term:`classes_`.
         multilabel classification
-            Scikit-learn is inconsistent in its representation of multilabel
+            Scikit-learn is inconsistent in its representation of :term:`multilabel`
             decision functions. It may be represented one of two ways:
 
             - List of 2d arrays, each array of shape: (`n_samples`, 2), like in
