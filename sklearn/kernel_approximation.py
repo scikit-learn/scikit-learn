@@ -24,6 +24,7 @@ from .base import BaseEstimator
 from .base import TransformerMixin
 from .base import _ClassNamePrefixFeaturesOutMixin
 from .utils import check_random_state
+from .utils._param_validation import Interval
 from .utils.extmath import safe_sparse_dot
 from .utils.validation import check_is_fitted
 from .utils.validation import _check_feature_names_in
@@ -446,8 +447,8 @@ class SkewedChi2Sampler(
     """
 
     _parameter_constraints = {
-        "skewedness": [Real],
-        "n_components": [Integral],
+        "skewedness": [Interval(Real, None, None, closed="neither")],
+        "n_components": [Interval(Integral, 0, None, closed="left")],
         "random_state": ["random_state"],
     }
 
