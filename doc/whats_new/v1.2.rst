@@ -229,8 +229,6 @@ Changelog
   :user:`Chiara Marmo <cmarmo>`,
   :user:`Lucy Liu <lucyleeow>`, and
   :user:`Guillaume Lemaitre <glemaitre>`.
-- |Fix| Make :class:`ClassifierChain` use `_validate_params`.
-  :pr:`24112` by :user:`Olle Lukowski <Olle-Lukowski>`.
 
 :mod:`sklearn.naive_bayes`
 ..........................
