@@ -19,6 +19,7 @@ import numpy as np
 import scipy.sparse as sp
 from joblib import Parallel
 
+from numpy.random import RandomState
 from abc import ABCMeta, abstractmethod
 from .base import BaseEstimator, clone, MetaEstimatorMixin
 from .base import RegressorMixin, ClassifierMixin, is_classifier
@@ -32,7 +33,7 @@ from .utils.validation import (
     _check_fit_params,
 )
 from .utils.fixes import delayed
-from .utils._param_validation import HasMethods
+from .utils._param_validation import HasMethods, StrOptions
 
 __all__ = [
     "MultiOutputRegressor",
@@ -85,7 +86,6 @@ def _available_if_estimator_has(attr):
 
 
 class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
-
     _parameter_constraints = {
         "estimator": [HasMethods(["fit", "predict"])],
         "n_jobs": [Integral, None],
@@ -784,6 +784,14 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
            [0.0321..., 0.9935..., 0.0625...]])
     """
 
+    _parameter_constraints = {
+        "base_estimator": "no_validation",
+        "order": ["array-like", StrOptions({"random"}), None],
+        "cv": ["cv_object", StrOptions({"prefit"}), None],
+        "random_state": [Integral, RandomState, None],
+        "verbose": ["boolean"],
+    }
+
     def fit(self, X, Y):
         """Fit the model to data matrix X and targets Y.
 
@@ -800,6 +808,9 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         self : object
             Class instance.
         """
+
+        self._validate_params()
+
         super().fit(X, Y)
         self.classes_ = [
             estimator.classes_ for chain_idx, estimator in enumerate(self.estimators_)
