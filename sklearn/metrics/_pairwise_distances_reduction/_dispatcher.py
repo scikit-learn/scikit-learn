@@ -413,7 +413,7 @@ class PairwiseDistancesArgKminLabels(PairwiseDistancesReduction):
     """
 
     @classmethod
-    def is_usable_for(cls, X, Y, metric, additional_params=None) -> bool:
+    def is_usable_for(cls, X, Y, metric, validation_params=None) -> bool:
         """Return True if the PairwiseDistancesReduction can be used for the
         given parameters.
 
@@ -431,8 +431,11 @@ class PairwiseDistancesArgKminLabels(PairwiseDistancesReduction):
             the documentation of :class:`~sklearn.metrics.DistanceMetric`.
             Currently does not support `'precomputed'`.
 
-        additional_params : dict, default=None
-            A dictionary containing a 'labels' key, whose corresponding value
+        validation_params : dict, default=None
+            A dictionary containing additional information necessary for proper
+            validation. The necessary keys are:
+
+            - 'labels' : ndarray, whose corresponding value
             is an `ndarray` containing the labels of `Y`.
 
         Returns
@@ -441,7 +444,8 @@ class PairwiseDistancesArgKminLabels(PairwiseDistancesReduction):
         """
         return (
             PairwiseDistancesArgKmin.is_usable_for(X, Y, metric)
-            and additional_params["labels"].ndim == 1  # TODO: support
+            and hasattr(validation_params["labels"], "ndim")
+            and validation_params["labels"].ndim == 1  # TODO: support
             and not issparse(X)
             and not issparse(Y)
             and metric != "precomputed"  # TODO: support

@@ -17,19 +17,23 @@ import numpy as np
 from sklearn.utils.fixes import threadpool_limits
 
 
-cpdef enum Weight:
+cpdef enum WeightingStrategy:
     uniform = 0
     distance = 1
     other = 2
 
 cdef class PairwiseDistancesArgKminLabels64(PairwiseDistancesArgKmin64):
     """
-    64bit implementation of PairwiseDistancesArgKmin that also keeps of labels.
+    64bit implementation of PairwiseDistancesArgKminLabel.
     """
-    cdef ITYPE_t[:] argkmin_labels, labels, unique_labels
-    cdef DTYPE_t[:,:] label_counts
-    cdef cmap[ITYPE_t, ITYPE_t] labels_to_index
-    cdef Weight weight_type
+    cdef:
+        ITYPE_t[:] argkmin_labels,
+        const ITYPE_t[:] labels,
+        ITYPE_t[:] unique_labels
+
+        DTYPE_t[:,:] label_weights
+        cmap[ITYPE_t, ITYPE_t] labels_to_index
+        WeightingStrategy weight_type
 
     @classmethod
     def compute(
@@ -79,11 +83,11 @@ cdef class PairwiseDistancesArgKminLabels64(PairwiseDistancesArgKmin64):
     def __init__(
         self,
         DatasetsPair datasets_pair,
+        const ITYPE_t[:] labels,
         chunk_size=None,
         strategy=None,
         ITYPE_t k=1,
         weights=None,
-        cnp.ndarray[ndim=1, dtype=ITYPE_t] labels=None,
     ):
         super().__init__(
             datasets_pair=datasets_pair,
@@ -93,21 +97,21 @@ cdef class PairwiseDistancesArgKminLabels64(PairwiseDistancesArgKmin64):
         )
 
         if weights == "uniform":
-            self.weight_type = Weight.uniform
+            self.weight_type = WeightingStrategy.uniform
         elif weights == "distance":
-            self.weight_type = Weight.distance
+            self.weight_type = WeightingStrategy.distance
         else:
-            self.weight_type = Weight.other
+            self.weight_type = WeightingStrategy.other
         self.labels = labels
         self.unique_labels = np.unique(labels)
 
         # Heap to be returned
         self.argkmin_labels = np.full(self.n_samples_X, -1, dtype=ITYPE)
 
-        # Map from set of unique labels to their indices in `label_counts`
+        # Map from set of unique labels to their indices in `label_weights`
         self.labels_to_index = {label:idx for idx, label in enumerate(self.unique_labels)}
         # Buffer used in building a histogram for one-pass weighted mode
-        self.label_counts = np.zeros((self.n_samples_X,  len(self.unique_labels)), dtype=DTYPE)
+        self.label_weights = np.zeros((self.n_samples_X,  len(self.unique_labels)), dtype=DTYPE)
 
     def _finalize_results(self, bint return_distance=False):
         if return_distance:
@@ -130,9 +134,9 @@ cdef class PairwiseDistancesArgKminLabels64(PairwiseDistancesArgKmin64):
     ) nogil:
         cdef:
             ITYPE_t idx, jdx, y_idx, label_index, sample_index
-            DTYPE_t max_weight
+            DTYPE_t max_label_weight
             ITYPE_t label, max_label
-            DTYPE_t val, weight
+            DTYPE_t total_weight, label_weight
         # Sorting the main heaps portion associated to `X[X_start:X_end]`
         # in ascending order w.r.t the distances.
         for idx in range(X_end - X_start):
@@ -142,32 +146,38 @@ cdef class PairwiseDistancesArgKminLabels64(PairwiseDistancesArgKmin64):
                 self.k
             )
             # One-pass top-one weighted mode
-            sample_index = thread_num * self.X_n_samples_chunk + idx
-            max_weight = -1
-            for jdx in range(self.k): # Iterate through k-nearest neighbors
-                if self.weight_type == Weight.uniform:
-                    weight = 1.
-                elif self.weight_type == Weight.distance:
-                    weight = 1. / self.heaps_r_distances_chunks[thread_num][idx*self.k+jdx]
+            # Compute the absolute index in [0, n_samples_X)
+            sample_index = X_start + idx
+            max_label_weight = -1
+            # Iterate through the sample k-nearest neighbours
+            for jdx in range(self.k):
+                if self.weight_type == WeightingStrategy.uniform:
+                    label_weight = 1.
+                elif self.weight_type == WeightingStrategy.distance:
+                    label_weight = 1. / self.heaps_r_distances_chunks[thread_num][idx*self.k+jdx]
 
+                # Absolute indice of the jdx-th Nearest Neighbors
+                # in range [0, n_samples_Y)
                 y_idx = self.heaps_indices_chunks[thread_num][idx*self.k+jdx]
                 label = self.labels[y_idx]
                 label_index = self.labels_to_index[label]
-                self.label_counts[sample_index][label_index] += weight
-                val = self.label_counts[sample_index][label_index]
-                if max_weight < val or (max_weight == val and label < max_label):
+                self.label_weights[sample_index][label_index] += label_weight
+                total_weight = self.label_weights[sample_index][label_index]
+                if max_label_weight < total_weight or (max_label_weight == total_weight and label < max_label):
                     max_label = label
-                    max_weight = val
+                    max_label_weight = total_weight
             self.argkmin_labels[thread_num*self.X_n_samples_chunk + idx] = max_label
+        return
 
     cdef void _parallel_on_Y_finalize(
         self,
     ) nogil:
         cdef:
-            ITYPE_t idx, jdx, y_idx, label_index, sample_index, thread_num
-            DTYPE_t max_weight
+            ITYPE_t sample_index, jdx, y_idx, label_index, thread_num
+            DTYPE_t max_label_weight,
             ITYPE_t label, max_label
-            DTYPE_t val, weight
+            DTYPE_t label_weight, total_weight
+
 
         with nogil, parallel(num_threads=self.chunks_n_threads):
             # Deallocating temporary datastructures
@@ -177,27 +187,29 @@ cdef class PairwiseDistancesArgKminLabels64(PairwiseDistancesArgKmin64):
 
             # Sorting the main in ascending order w.r.t the distances.
             # This is done in parallel sample-wise (no need for locks).
-            for idx in prange(self.n_samples_X, schedule='static'):
+            for sample_index in prange(self.n_samples_X, schedule='static'):
                 simultaneous_sort(
-                    &self.argkmin_distances[idx, 0],
-                    &self.argkmin_indices[idx, 0],
+                    &self.argkmin_distances[sample_index, 0],
+                    &self.argkmin_indices[sample_index, 0],
                     self.k,
                 )
                 # One-pass top-one weighted mode
-                max_weight = -1
+                max_label_weight = -1
                 for jdx in range(self.k):
-                    if self.weight_type == Weight.uniform:
-                        weight = 1.
-                    elif self.weight_type == Weight.distance:
-                        weight = 1. / self.argkmin_distances[idx][jdx]
+                    if self.weight_type == WeightingStrategy.uniform:
+                        label_weight = 1.
+                    elif self.weight_type == WeightingStrategy.distance:
+                        label_weight = 1. / self.argkmin_distances[sample_index][jdx]
 
-                    y_idx = self.argkmin_indices[idx][jdx]
+                    # Absolute indice of the jdx-th Nearest Neighbors
+                    # in range [0, n_samples_Y)
+                    y_idx = self.argkmin_indices[sample_index][jdx]
                     label = self.labels[y_idx]
                     label_index = self.labels_to_index[label]
-                    self.label_counts[idx][label_index] += weight
-                    val = self.label_counts[idx][label_index]
-                    if max_weight < val or (max_weight == val and label < max_label):
+                    self.label_weights[sample_index][label_index] += label_weight
+                    total_weight = self.label_weights[sample_index][label_index]
+                    if max_label_weight < total_weight or (max_label_weight == total_weight and label < max_label):
                         max_label = label
-                        max_weight = val
-                self.argkmin_labels[idx] = max_label
+                        max_label_weight = total_weight
+                self.argkmin_labels[sample_index] = max_label
         return

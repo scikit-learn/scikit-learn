@@ -233,10 +233,10 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
             if (
                 self.algorithm == "brute"
                 and PairwiseDistancesArgKminLabels.is_usable_for(
-                    X, self._fit_X, self.metric, {"labels": self._y}
+                    X, self._fit_X, self.metric, validation_params={"labels": self._y}
                 )
             ):
-                label_ind = PairwiseDistancesArgKminLabels.compute(
+                _, label_ind = PairwiseDistancesArgKminLabels.compute(
                     X,
                     self._fit_X,
                     k=self.n_neighbors,
@@ -244,7 +244,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
                     labels=self._y,
                     metric=self.metric,
                     metric_kwargs=self.metric_params,
-                )[-1]
+                )
                 return self.classes_[label_ind]
             # In that case, we do not need the distances to perform
             # the weighting so we do not compute them.
