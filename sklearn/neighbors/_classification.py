@@ -249,7 +249,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         y_pred = np.empty((n_queries, n_outputs), dtype=classes_[0].dtype)
         for k, classes_k in enumerate(classes_):
             if weights is None:
-                mode, _ = _mode(_y[neigh_ind, k], axis=1, keepdims=False)
+                mode, _ = _mode(_y[neigh_ind, k], axis=1)
             else:
                 mode, _ = weighted_mode(_y[neigh_ind, k], weights, axis=1)
 
