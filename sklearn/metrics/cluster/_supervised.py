@@ -642,16 +642,15 @@ def v_measure_score(labels_true, labels_pred, *, beta=1.0):
     measure the agreement of two independent label assignments strategies
     on the same dataset when the real ground truth is not known.
 
-
     Read more in the :ref:`User Guide <homogeneity_completeness>`.
 
     Parameters
     ----------
     labels_true : int array, shape = [n_samples]
-        ground truth class labels to be used as a reference
+        Ground truth class labels to be used as a reference.
 
     labels_pred : array-like of shape (n_samples,)
-        cluster labels to evaluate
+        Cluster labels to evaluate.
 
     beta : float, default=1.0
         Ratio of weight attributed to ``homogeneity`` vs ``completeness``.
@@ -662,7 +661,13 @@ def v_measure_score(labels_true, labels_pred, *, beta=1.0):
     Returns
     -------
     v_measure : float
-       score between 0.0 and 1.0. 1.0 stands for perfectly complete labeling
+       Score between 0.0 and 1.0. 1.0 stands for perfectly complete labeling.
+
+    See Also
+    --------
+    homogeneity_score : Homogeneity metric of cluster labeling.
+    completeness_score : Completeness metric of cluster labeling.
+    normalized_mutual_info_score : Normalized Mutual Information.
 
     References
     ----------
@@ -671,15 +676,8 @@ def v_measure_score(labels_true, labels_pred, *, beta=1.0):
        conditional entropy-based external cluster evaluation measure
        <https://aclweb.org/anthology/D/D07/D07-1043.pdf>`_
 
-    See Also
-    --------
-    homogeneity_score
-    completeness_score
-    normalized_mutual_info_score
-
     Examples
     --------
-
     Perfect labelings are both homogeneous and complete, hence have score 1.0::
 
       >>> from sklearn.metrics.cluster import v_measure_score
