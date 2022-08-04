@@ -69,14 +69,15 @@ def test_spectral_coclustering(global_random_seed):
         "init": ["k-means++"],
         "n_init": [10],
     }
-    random_state = global_random_seed
-    S, rows, cols = make_biclusters((30, 30), 3, noise=0.1, random_state=random_state)
+    S, rows, cols = make_biclusters(
+        (30, 30), 3, noise=0.1, random_state=global_random_seed
+    )
     S -= S.min()  # needs to be nonnegative before making it sparse
     S = np.where(S < 1, 0, S)  # threshold some values
     for mat in (S, csr_matrix(S)):
         for kwargs in ParameterGrid(param_grid):
             model = SpectralCoclustering(
-                n_clusters=3, random_state=random_state, **kwargs
+                n_clusters=3, random_state=global_random_seed, **kwargs
             )
             model.fit(mat)
 
@@ -194,18 +195,25 @@ def test_project_and_cluster(global_random_seed):
 
 def test_perfect_checkerboard(global_random_seed):
     # XXX Previously failed on build bot (not reproducible)
-    random_state = global_random_seed
-    model = SpectralBiclustering(3, svd_method="arpack", random_state=random_state)
+    model = SpectralBiclustering(
+        3, svd_method="arpack", random_state=global_random_seed
+    )
 
-    S, rows, cols = make_checkerboard((30, 30), 3, noise=0, random_state=random_state)
+    S, rows, cols = make_checkerboard(
+        (30, 30), 3, noise=0, random_state=global_random_seed
+    )
     model.fit(S)
     assert consensus_score(model.biclusters_, (rows, cols)) == 1
 
-    S, rows, cols = make_checkerboard((40, 30), 3, noise=0, random_state=random_state)
+    S, rows, cols = make_checkerboard(
+        (40, 30), 3, noise=0, random_state=global_random_seed
+    )
     model.fit(S)
     assert consensus_score(model.biclusters_, (rows, cols)) == 1
 
-    S, rows, cols = make_checkerboard((30, 40), 3, noise=0, random_state=random_state)
+    S, rows, cols = make_checkerboard(
+        (30, 40), 3, noise=0, random_state=global_random_seed
+    )
     model.fit(S)
     assert consensus_score(model.biclusters_, (rows, cols)) == 1
 
