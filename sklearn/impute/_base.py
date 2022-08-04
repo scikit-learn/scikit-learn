@@ -256,8 +256,8 @@ class SimpleImputer(_BaseImputer):
      [10.   3.5  9. ]]
     """
 
-    _parameter_constraints: dict[str, object] = {
-        **_BaseImputer._parameter_constraints,
+    _parameter_constraints = {
+        **_BaseImputer._parameter_constraints,  # type: ignore
         "strategy": [StrOptions({"mean", "median", "most_frequent", "constant"})],
         "fill_value": [numbers.Real, numbers.Integral, str, None],
         "verbose": ["verbose", Hidden(StrOptions({"deprecated"}))],
