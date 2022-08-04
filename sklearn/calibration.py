@@ -246,12 +246,12 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
     """
 
     _parameter_constraints = {
-        'estimator': [BaseEstimator, None],
-        'method': [StrOptions({'isotonic', 'sigmoid'}), None],
-        'cv': ["cv_object", StrOptions({'prefit'}), None],
+        "estimator": [BaseEstimator, None],
+        "method": [StrOptions({"isotonic", "sigmoid"}), None],
+        "cv": ["cv_object", StrOptions({"prefit"}), None],
         "n_jobs": [Integral, None],
-        'ensemble': ['boolean'],
-        'base_estimator': "no_validation",
+        "ensemble": ["boolean"],
+        "base_estimator": "no_validation",
     }
 
     def __init__(
