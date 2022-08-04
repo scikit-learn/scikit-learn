@@ -254,13 +254,6 @@ Changelog
   instead of failing with a low-level error message at predict-time.
   :pr:`23874` by :user:`Juan Gomez <2357juan>`.
 
-:mod:`sklearn.preprocessing`
-............................
-
-- |Fix| :meth:`preprocessing.OrdinalEncoder.inverse_transform` correctly handles
-  use cases where `unknown_value` or `encoded_missing_value` is `nan`. :pr:`24087`
-  by `Thomas Fan`_.
-
 :mod:`sklearn.svm`
 ..................
 
