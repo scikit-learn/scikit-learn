@@ -265,7 +265,7 @@ def test_input_error():
     for monotonic_cst in ([1, 3], [1, -3]):
         gbdt = HistGradientBoostingRegressor(monotonic_cst=monotonic_cst)
         with pytest.raises(
-            ValueError, match="must be None or an array-like of -1, 0 or 1"
+            ValueError, match="monotonic_cst must be None or of values -1, 0 or 1."
         ):
             gbdt.fit(X, y)
 
@@ -275,6 +275,15 @@ def test_input_error():
         match="monotonic constraints are not supported for multiclass classification",
     ):
         gbdt.fit(X, y)
+
+    y = [0, 1, 1]
+    gbdt = HistGradientBoostingClassifier(monotonic_cst={"A": 0, "B": 1})
+    with pytest.raises(
+        ValueError,
+        match="X should have column names to specify monotonic constraints as dict",
+    ):
+        gbdt.fit(X, y)
+    # Need to add pandas dependency to test constraints with column names
 
 
 def test_bounded_value_min_gain_to_split():

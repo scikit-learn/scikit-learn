@@ -163,7 +163,8 @@ class TreeGrower:
         If it's a bool, the same value is used for all features.
     is_categorical : ndarray of bool of shape (n_features,), default=None
         Indicates categorical features.
-    monotonic_cst : array-like of shape (n_features,), dtype=int, default=None
+    monotonic_cst : array-like of shape (n_features,) or dict, dtype=int, \
+            default=None
         Indicates the monotonic constraint to enforce on each feature. -1, 1
         and 0 respectively correspond to a positive constraint, negative
         constraint and no constraint. Read more in the :ref:`User Guide
@@ -182,6 +183,9 @@ class TreeGrower:
         to determine the effective number of threads use, which takes cgroups CPU
         quotes into account. See the docstring of `_openmp_effective_n_threads`
         for details.
+    column_names: list, default=None
+        Contains column names of X if X is of DataFrame type when passed to fit
+        function.
     """
 
     def __init__(
@@ -202,6 +206,7 @@ class TreeGrower:
         min_hessian_to_split=1e-3,
         shrinkage=1.0,
         n_threads=None,
+        column_names=None,
     ):
 
         self._validate_parameters(
@@ -234,6 +239,10 @@ class TreeGrower:
             )
         else:
             self.with_monotonic_cst = True
+            # If monotonicity constraint is a dict
+            if isinstance(monotonic_cst, dict):
+                monotonic_cst = self._monotonic_cst_dict(column_names, monotonic_cst)
+
             monotonic_cst = np.asarray(monotonic_cst, dtype=np.int8)
 
             if monotonic_cst.shape[0] != X_binned.shape[1]:
@@ -244,9 +253,7 @@ class TreeGrower:
                     )
                 )
             if np.any(monotonic_cst < -1) or np.any(monotonic_cst > 1):
-                raise ValueError(
-                    "monotonic_cst must be None or an array-like of -1, 0 or 1."
-                )
+                raise ValueError("monotonic_cst must be None or of values -1, 0 or 1.")
 
         if is_categorical is None:
             is_categorical = np.zeros(shape=X_binned.shape[1], dtype=np.uint8)
@@ -327,6 +334,21 @@ class TreeGrower:
             raise ValueError(
                 "min_hessian_to_split={} must be positive.".format(min_hessian_to_split)
             )
+
+    def _monotonic_cst_dict(self, column_names, monotonic_cst):
+        """Converts monotonic constraints passed as dict to list"""
+        if column_names is None:
+            raise ValueError(
+                "X should have column names to specify monotonic constraints as dict"
+            )
+
+        monotone_cst_list = list()
+        for column in column_names:
+            if column in monotonic_cst:
+                monotone_cst_list.append(monotonic_cst[column])
+            else:
+                monotone_cst_list.append(MonotonicConstraint.NO_CST)
+        return monotone_cst_list
 
     def grow(self):
         """Grow the tree, from root to leaves."""

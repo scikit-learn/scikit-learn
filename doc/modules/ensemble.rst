@@ -1156,6 +1156,9 @@ respectively::
   ... # positive, negative, and no constraint on the 3 features
   >>> gbdt = HistGradientBoostingRegressor(monotonic_cst=[1, -1, 0])
 
+  ... # constraints using feature names
+  >>> gbdt = HistGradientBoostingRegressor(monotonic_cst={"feature_1":1, "feature_2":-1, "feature_3":0})  
+
 In a binary classification context, imposing a monotonic constraint means
 that the feature is supposed to have a positive / negative effect on the
 probability to belong to the positive class. Monotonic constraints are not
