@@ -234,8 +234,6 @@ def _get_feature_importances(
     else:
         raise ValueError("`importance_getter` has to be a string or `callable`")
 
-    importances = getter(estimator)
-
     if transform_func is None:
         return importances
     elif transform_func == "norm":
