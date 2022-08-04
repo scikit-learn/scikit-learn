@@ -52,7 +52,9 @@ def _most_frequent(array, extra_value, n_repeat):
                 if count == most_frequent_count
             )
         else:
-            most_frequent_value, most_frequent_count = _mode(array)
+            mode = _mode(array)
+            most_frequent_value = mode[0][0]
+            most_frequent_count = mode[1][0]
     else:
         most_frequent_value = 0
         most_frequent_count = 0
