@@ -22,6 +22,33 @@ cpdef enum WeightingStrategy:
     distance = 1
     other = 2
 
+cdef inline ITYPE_t weighted_histogram_mode(ITYPE_t sample_index, ITYPE_t k,
+                                    ITYPE_t* indices, const ITYPE_t[:] labels,
+                                    cmap[ITYPE_t, ITYPE_t] labels_to_index,
+                                    DTYPE_t* label_weights, DTYPE_t* distances,
+                                    WeightingStrategy weight_type) nogil:
+    cdef:
+        ITYPE_t y_idx, label, label_index, max_label
+        DTYPE_t max_label_weight = -1
+        DTYPE_t total_weight
+        DTYPE_t label_weight = 1
+
+    # Iterate through the sample k-nearest neighbours
+    for jdx in range(k):
+        # Absolute indice of the jdx-th Nearest Neighbors
+        # in range [0, n_samples_Y)
+        if weight_type == WeightingStrategy.distance:
+            label_weight = 1 / distances[jdx]
+        y_idx = indices[jdx]
+        label = labels[y_idx]
+        label_index = labels_to_index[label]
+        label_weights[label_index] += label_weight
+        total_weight = label_weights[label_index]
+        if max_label_weight < total_weight or (max_label_weight == total_weight and label < max_label):
+            max_label = label
+            max_label_weight = total_weight
+    return max_label
+
 cdef class PairwiseDistancesArgKminLabels64(PairwiseDistancesArgKmin64):
     """
     64bit implementation of PairwiseDistancesArgKminLabel.
@@ -149,24 +176,16 @@ cdef class PairwiseDistancesArgKminLabels64(PairwiseDistancesArgKmin64):
             # Compute the absolute index in [0, n_samples_X)
             sample_index = X_start + idx
             max_label_weight = -1
-            # Iterate through the sample k-nearest neighbours
-            for jdx in range(self.k):
-                if self.weight_type == WeightingStrategy.uniform:
-                    label_weight = 1.
-                elif self.weight_type == WeightingStrategy.distance:
-                    label_weight = 1. / self.heaps_r_distances_chunks[thread_num][idx*self.k+jdx]
-
-                # Absolute indice of the jdx-th Nearest Neighbors
-                # in range [0, n_samples_Y)
-                y_idx = self.heaps_indices_chunks[thread_num][idx*self.k+jdx]
-                label = self.labels[y_idx]
-                label_index = self.labels_to_index[label]
-                self.label_weights[sample_index][label_index] += label_weight
-                total_weight = self.label_weights[sample_index][label_index]
-                if max_label_weight < total_weight or (max_label_weight == total_weight and label < max_label):
-                    max_label = label
-                    max_label_weight = total_weight
-            self.argkmin_labels[thread_num*self.X_n_samples_chunk + idx] = max_label
+            # Hack to template out computation instructions of `label_weight`
+            # by dispatching on *_weighting_type to exploit Cython fused types.
+            self.argkmin_labels[sample_index] = \
+            weighted_histogram_mode(sample_index, self.k,
+                                    &self.heaps_indices_chunks[thread_num][0], self.labels,
+                                    self.labels_to_index,
+                                    &self.label_weights[sample_index][0],
+                                    &self.heaps_r_distances_chunks[thread_num][0],
+                                    self.weight_type,
+                                    )
         return
 
     cdef void _parallel_on_Y_finalize(
@@ -193,23 +212,12 @@ cdef class PairwiseDistancesArgKminLabels64(PairwiseDistancesArgKmin64):
                     &self.argkmin_indices[sample_index, 0],
                     self.k,
                 )
-                # One-pass top-one weighted mode
-                max_label_weight = -1
-                for jdx in range(self.k):
-                    if self.weight_type == WeightingStrategy.uniform:
-                        label_weight = 1.
-                    elif self.weight_type == WeightingStrategy.distance:
-                        label_weight = 1. / self.argkmin_distances[sample_index][jdx]
-
-                    # Absolute indice of the jdx-th Nearest Neighbors
-                    # in range [0, n_samples_Y)
-                    y_idx = self.argkmin_indices[sample_index][jdx]
-                    label = self.labels[y_idx]
-                    label_index = self.labels_to_index[label]
-                    self.label_weights[sample_index][label_index] += label_weight
-                    total_weight = self.label_weights[sample_index][label_index]
-                    if max_label_weight < total_weight or (max_label_weight == total_weight and label < max_label):
-                        max_label = label
-                        max_label_weight = total_weight
-                self.argkmin_labels[sample_index] = max_label
+                self.argkmin_labels[sample_index] = \
+                weighted_histogram_mode(sample_index, self.k,
+                                        &self.argkmin_indices[sample_index][0], self.labels,
+                                        self.labels_to_index,
+                                        &self.label_weights[sample_index][0],
+                                        &self.argkmin_distances[sample_index][0],
+                                        self.weight_type,
+                                        )
         return
