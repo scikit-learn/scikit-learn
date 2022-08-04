@@ -478,6 +478,17 @@ class PCA(_BasePCA):
 
         return U
 
+    def match_sign(self, pca):
+        """Ensures that the calling object's component signs match those
+        of the provided object to resolve sign indeterminacy.
+        """
+        for c, (i, j) in enumerate(
+            zip(np.sign(self.components_[:, 0]), np.sign(pca.components_[:, 0]))
+        ):
+            if i != j:
+                self.components_[c] *= -1
+        return self
+
     def _fit(self, X, sample_weight=None):
         """Dispatch to the right submethod depending on the chosen solver."""
 

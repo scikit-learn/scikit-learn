@@ -66,11 +66,7 @@ def test_weighted_pca(svd_solver, n_components, whiten):
     pca_red.fit(X, sample_weight=W)
 
     # Ensure signs match for comparison
-    for c, (i, j) in enumerate(
-        zip(np.sign(pca_full.components_[:, 0]), np.sign(pca_red.components_[:, 0]))
-    ):
-        if i != j:
-            pca_red.components_[c] *= -1
+    pca_red.match_sign(pca_full)
 
     # Transform and expand repeats
     X_red = np.repeat(pca_red.transform(X), W, axis=0)
@@ -116,11 +112,7 @@ def test_fit_transform_weighted(svd_solver, n_components, whiten):
     pca_full.fit(R)
 
     # Ensure signs match for comparison
-    for c, (i, j) in enumerate(
-        zip(np.sign(pca_full.components_[:, 0]), np.sign(pca_red.components_[:, 0]))
-    ):
-        if i != j:
-            pca_full.components_[c] *= -1
+    pca_full.match_sign(pca_red)
 
     X_full = pca_full.transform(R)
 
