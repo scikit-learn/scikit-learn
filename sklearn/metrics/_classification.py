@@ -3233,7 +3233,7 @@ def f1_gain_score(
     >>> f1_gain_score(y_true, y_pred, average='weighted')
     0.34...
     >>> f1_gain_score(y_true, y_pred, average=None)
-    array([1.0, 0.4 , -0.125])
+    array([ 1.   ,  0.4  , -0.125])
     >>> y_true = [0, 0, 0, 0, 0, 0]
     >>> y_pred = [0, 0, 0, 0, 0, 0]
     >>> f1_gain_score(y_true, y_pred, zero_division=1)
@@ -3242,7 +3242,7 @@ def f1_gain_score(
     >>> y_true = [[0, 0, 0], [1, 1, 1], [0, 1, 1]]
     >>> y_pred = [[0, 0, 0], [1, 1, 1], [1, 1, 0]]
     >>> f1_gain_score(y_true, y_pred, average=None)
-    array([0.75, 1. , 0.])
+    array([0.75, 1.  , 0.  ])
     """
     return fbeta_gain_score(
         y_true,
@@ -3383,7 +3383,7 @@ def fbeta_gain_score(
     >>> fbeta_gain_score(y_true, y_pred, average='weighted', beta=0.5)
     0.40...
     >>> fbeta_gain_score(y_true, y_pred, average=None, beta=0.5)
-    array([1., 0.28 , 0.1])
+    array([1.  , 0.28, 0.1 ])
     """
 
     _, _, f, _ = precision_recall_fgain_score_support(
@@ -3572,12 +3572,10 @@ def precision_recall_fgain_score_support(
 
     >>> precision_recall_fgain_score_support(y_true, y_pred, average=None,
     ... labels=['pig', 'dog', 'cat'])
-    (
-        array([0.25, 0.2, 1.]),
-        array([-0.5., 0.6, 1.]),
-        array([-0.125. , 0.4 , 1.]),
-        array([3, 2, 2])
-    )
+    (array([0.25, 0.2 , 1.  ]),
+     array([-0.5,  0.6,  1. ]),
+     array([-0.125,  0.4  ,  1.   ]),
+     array([3, 2, 2]))
     """
     average_options = (None, "binary", "macro", "weighted")
     if average not in average_options:
