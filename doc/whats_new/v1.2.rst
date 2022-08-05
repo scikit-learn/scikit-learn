@@ -25,11 +25,6 @@ random sampling procedures.
   or `'lobpcg'` solvers. This change improves numerical stability of the
   solver, but may result in a different model.
 
-- |Fix| :class:`manifold.TSNE` now throws a `ValueError` when fit with
-  `perplexity>=n_samples` to ensure mathematical correctness of the algorithm.
-  :pr:`10805` by :user:`Mathias Andersen <MrMathias>` and
-  :pr:`23471` by :user:`Meekail Zain <micky774>`
-
 - |Enhancement| :class:`linear_model.GammaRegressor`,
   :class:`linear_model.PoissonRegressor` and :class:`linear_model.TweedieRegressor`
   can reach higher precision with the lbfgs solver, in particular when `tol` is set
@@ -163,29 +158,8 @@ Changelog
   :pr:`11860` by :user:`Pierre Ablin <pierreablin>`,
   :pr:`22527` by :user:`Meekail Zain <micky774>` and `Thomas Fan`_.
 
-:mod:`sklearn.feature_selection`
-................................
-- |Fix| :class:`feature_selection.SelectFromModel` defaults to selection
-  threshold 1e-5 when the estimator is either :class:`linear_model.ElasticNet`
-  or :class:`linear_model.ElasticNetCV` with `l1_ratio` equals 1 or
-  :class:`linear_model.LassoCV`. :pr:`23636` by :user:`Hao Chun Chang
-  <haochunchang>`
-
-:mod:`sklearn.impute`
-.....................
-
-- |Fix| :class:`impute.SimpleImputer` uses the dtype seen in `fit` for
-  `transform` when the dtype is object. :pr:`22063` by `Thomas Fan`_.
-
 :mod:`sklearn.linear_model`
 ...........................
-
-- |Fix| Use dtype-aware tolerances for the validation of gram matrices (passed by users
-  or precomputed). :pr:`22059` by :user:`Malte S. Kurz <MalteKurz>`.
-
-- |Fix| Fixed an error in :class:`linear_model.LogisticRegression` with
-  `solver="newton-cg"`, `fit_intercept=True`, and a single feature. :pr:`23608`
-  by `Tom Dupre la Tour`_.
 
 - |Enhancement| :class:`linear_model.GammaRegressor`,
   :class:`linear_model.PoissonRegressor` and :class:`linear_model.TweedieRegressor`
@@ -216,9 +190,6 @@ Changelog
   values for `y_true` will raise an error.
   :pr:`22710` by :user:`Conroy Trinh <trinhcon>` and
   :pr:`23461` by :user:`Meekail Zain <micky774>`.
-
-- |Fix| Fixed error message of :class:`metrics.coverage_error` for 1D array input.
-  :pr:`23548` by :user:`Hao Chun Chang <haochunchang>`.
 
 :mod:`sklearn.multioutput`
 ..........................
@@ -267,10 +238,6 @@ Changelog
 - |Enhancement| :func:`tree.plot_tree`, :func:`tree.export_graphviz` now uses
   a lower case `x[i]` to represent feature `i`. :pr:`23480` by `Thomas Fan`_.
 
-- |Fix| Fixed invalid memory access bug during fit in
-  :class:`tree.DecisionTreeRegressor` and :class:`tree.DecisionTreeClassifier`.
-  :pr:`23273` by `Thomas Fan`_.
-
 :mod:`sklearn.utils`
 ....................
 
@@ -297,11 +264,6 @@ Changelog
   and begins deprecation to change the default from `eigen_tol=0` to
   `eigen_tol="auto"` in version 1.3.
   :pr:`23210` by :user:`Meekail Zain <micky774>`.
-
-- |Fix| :class:`manifold.TSNE` now throws a `ValueError` when fit with
-  `perplexity>=n_samples` to ensure mathematical correctness of the algorithm.
-  :pr:`10805` by :user:`Mathias Andersen <MrMathias>` and
-  :pr:`23471` by :user:`Meekail Zain <micky774>`
 
 :mod:`sklearn.naive_bayes`
 ..........................
