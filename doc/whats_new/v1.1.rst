@@ -19,6 +19,9 @@ Changelog
   have been changed in 1.1.
   :pr:`23990` by :user:`Julien Jerphanion <jjerphan>`.
 
+- |Fix| Wheels are now available for MacOS 10.9 and greater. :pr:`23833` by
+  `Thomas Fan`_.
+
 :mod:`sklearn.base`
 ......................
 
@@ -32,6 +35,13 @@ Changelog
 - |Fix| Fixed a bug in :class:`cluster.Birch` that could trigger an error when splitting
   a node if there are duplicates in the dataset.
   :pr:`23395` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+:mod:`sklearn.preprocessing`
+............................
+
+- |Fix| :meth:`preprocessing.OrdinalEncoder.inverse_transform` correctly handles
+  use cases where `unknown_value` or `encoded_missing_value` is `nan`. :pr:`24087`
+  by `Thomas Fan`_.
 
 .. _changes_1_1_1:
 
