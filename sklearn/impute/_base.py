@@ -78,7 +78,7 @@ class _BaseImputer(TransformerMixin, BaseEstimator):
     """
 
     _parameter_constraints = {
-        "missing_values": [numbers.Real, numbers.Integral, str, None],
+        "missing_values": ["missing_values"],
         "add_indicator": ["boolean"],
     }
 
@@ -257,10 +257,10 @@ class SimpleImputer(_BaseImputer):
     """
 
     _parameter_constraints = {
-        **_BaseImputer._parameter_constraints,  # type: ignore
+        **_BaseImputer._parameter_constraints,
         "strategy": [StrOptions({"mean", "median", "most_frequent", "constant"})],
         "fill_value": ["missing_values"],
-        "verbose": ["verbose", Hidden(StrOptions({"deprecated"}))],
+        "verbose": ["verbose", Hidden(StrOptions({"deprecated"}))],  # type: ignore
         "copy": ["boolean"],
     }
 

@@ -117,10 +117,14 @@ class KNNImputer(_BaseImputer):
     """
 
     _parameter_constraints = {
-        **_BaseImputer._parameter_constraints,  # type: ignore
+        **_BaseImputer._parameter_constraints,
         "n_neighbors": [Interval(Integral, 1, None, closed="left")],
-        "weights": [StrOptions({"uniform", "distance"}), callable, Hidden(None)],
-        "metric": [StrOptions(set(_NAN_METRICS)), callable],
+        "weights": [
+            StrOptions({"uniform", "distance"}),
+            callable,  # type: ignore
+            Hidden(None),  # type: ignore
+        ],
+        "metric": [StrOptions(set(_NAN_METRICS)), callable],  # type: ignore
         "copy": ["boolean"],
     }
 
