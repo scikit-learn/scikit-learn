@@ -236,16 +236,16 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
                     X, self._fit_X, self.metric, validation_params={"labels": self._y}
                 )
             ):
-                _, label_ind = PairwiseDistancesArgKminLabels.compute(
-                    X,
-                    self._fit_X,
-                    k=self.n_neighbors,
-                    weights=self.weights,
-                    labels=self._y,
-                    metric=self.metric,
-                    metric_kwargs=self.metric_params,
-                )
-                return self.classes_[label_ind]
+                probabilities = self.predict_proba(X)
+                if self.outputs_2d_:
+                    return np.stack(
+                        [
+                            self.classes_[idx][np.argmax(probas, axis=1)]
+                            for idx, probas in enumerate(probabilities)
+                        ],
+                        axis=1,
+                    )
+                return self.classes_[np.argmax(probabilities, axis=1)]
             # In that case, we do not need the distances to perform
             # the weighting so we do not compute them.
             neigh_ind = self.kneighbors(X, return_distance=False)
@@ -295,6 +295,38 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
             by lexicographic order.
         """
         if self.weights == "uniform":
+            if (
+                self.algorithm == "brute"
+                and PairwiseDistancesArgKminLabels.is_usable_for(
+                    X, self._fit_X, self.metric
+                )
+            ):
+                if self.outputs_2d_:
+                    probabilities = []
+                    for k in range(self._y.shape[1]):
+                        probabilities.append(
+                            PairwiseDistancesArgKminLabels.compute(
+                                X,
+                                self._fit_X,
+                                k=self.n_neighbors,
+                                weights=self.weights,
+                                labels=self._y[:, k],
+                                metric=self.metric,
+                                metric_kwargs=self.metric_params,
+                            )
+                        )
+                else:
+                    probabilities = PairwiseDistancesArgKminLabels.compute(
+                        X,
+                        self._fit_X,
+                        k=self.n_neighbors,
+                        weights=self.weights,
+                        labels=self._y,
+                        metric=self.metric,
+                        metric_kwargs=self.metric_params,
+                    )
+                return probabilities
+
             # In that case, we do not need the distances to perform
             # the weighting so we do not compute them.
             neigh_ind = self.kneighbors(X, return_distance=False)

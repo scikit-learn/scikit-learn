@@ -59,7 +59,7 @@ class PairwiseDistancesReduction:
         return sorted(set(METRIC_MAPPING.keys()) - excluded)
 
     @classmethod
-    def is_usable_for(cls, X, Y, metric, additional_params=None) -> bool:
+    def is_usable_for(cls, X, Y, metric, validation_params=None) -> bool:
         """Return True if the PairwiseDistancesReduction can be used for the
         given parameters.
 
@@ -76,7 +76,7 @@ class PairwiseDistancesReduction:
             For a list of available metrics, see the documentation of
             :class:`~sklearn.metrics.DistanceMetric`.
 
-        additional_params : dict, default=None
+        validation_params : dict, default=None
             A dictionary containing any additional parameters. This exists for
             use in subclasses that may require additional information.
 
@@ -432,11 +432,8 @@ class PairwiseDistancesArgKminLabels(PairwiseDistancesReduction):
             Currently does not support `'precomputed'`.
 
         validation_params : dict, default=None
-            A dictionary containing additional information necessary for proper
-            validation. The necessary keys are:
-
-            - 'labels' : ndarray, whose corresponding value
-            is an `ndarray` containing the labels of `Y`.
+            A dictionary containing any additional parameters. This exists for
+            use in subclasses that may require additional information.
 
         Returns
         -------
@@ -444,8 +441,6 @@ class PairwiseDistancesArgKminLabels(PairwiseDistancesReduction):
         """
         return (
             PairwiseDistancesArgKmin.is_usable_for(X, Y, metric)
-            and hasattr(validation_params["labels"], "ndim")
-            and validation_params["labels"].ndim == 1  # TODO: support
             and not issparse(X)
             and not issparse(Y)
             and metric != "precomputed"  # TODO: support
@@ -463,7 +458,6 @@ class PairwiseDistancesArgKminLabels(PairwiseDistancesReduction):
         chunk_size=None,
         metric_kwargs=None,
         strategy=None,
-        return_distance=False,
     ):
         """Compute the argkmin reduction.
 
@@ -529,27 +523,10 @@ class PairwiseDistancesArgKminLabels(PairwiseDistancesReduction):
               - None (default) looks-up in scikit-learn configuration for
                 `pairwise_dist_parallel_strategy`, and use 'auto' if it is not set.
 
-        return_distance : boolean, default=False
-            Return distances between each X vector and its
-            argkmin if set to True.
-
         Returns
         -------
-        If return_distance=False:
-          - argkmin_indices : ndarray of shape (n_samples_X, k)
-            Indices of the argkmin for each vector in X.
-          - argkmin_labels : ndarray of shape (n_samples_X,)
-            The labels computed through the weighted mode of each sample's
-            k-nearest neighbors.
-
-        If return_distance=True:
-          - argkmin_distances : ndarray of shape (n_samples_X, k)
-            Distances to the argkmin for each vector in X.
-          - argkmin_indices : ndarray of shape (n_samples_X, k)
-            Indices of the argkmin for each vector in X.
-          - argkmin_labels : ndarray of shape (n_samples_X,)
-            The labels computed through the weighted mode of each sample's
-            k-nearest neighbors.
+        probabilities : ndarray of shape (n_samples_X, n_classes)
+            An array containing the class probabilities for each sample.
 
         Notes
         -----
@@ -587,5 +564,4 @@ class PairwiseDistancesArgKminLabels(PairwiseDistancesReduction):
             chunk_size=chunk_size,
             metric_kwargs=metric_kwargs,
             strategy=strategy,
-            return_distance=return_distance,
         )

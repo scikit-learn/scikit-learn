@@ -74,7 +74,6 @@ cdef class PairwiseDistancesArgKminLabels64(PairwiseDistancesArgKmin64):
         chunk_size=None,
         dict metric_kwargs=None,
         str strategy=None,
-        bint return_distance=False,
     ):
         """Compute the argkmin reduction.
 
@@ -105,7 +104,7 @@ cdef class PairwiseDistancesArgKminLabels64(PairwiseDistancesArgKmin64):
             else:
                 pda._parallel_on_X()
 
-        return pda._finalize_results(return_distance)
+        return pda._finalize_results()
 
     def __init__(
         self,
@@ -140,18 +139,10 @@ cdef class PairwiseDistancesArgKminLabels64(PairwiseDistancesArgKmin64):
         # Buffer used in building a histogram for one-pass weighted mode
         self.label_weights = np.zeros((self.n_samples_X,  len(self.unique_labels)), dtype=DTYPE)
 
-    def _finalize_results(self, bint return_distance=False):
-        if return_distance:
-            # We need to recompute distances because we relied on
-            # surrogate distances for the reduction.
-            self.compute_exact_distances()
-
-            # Values are returned identically to the way `KNeighborsMixin.kneighbors`
-            # returns values. This is counter-intuitive but this allows not using
-            # complex adaptations where `PairwiseDistancesArgKmin64.compute` is called.
-            return np.asarray(self.argkmin_distances), np.asarray(self.argkmin_indices), np.asarray(self.argkmin_labels)
-
-        return np.asarray(self.argkmin_indices), np.asarray(self.argkmin_labels)
+    def _finalize_results(self):
+        probabilities = np.asarray(self.label_weights)
+        probabilities /= probabilities.sum(axis=1, keepdims=True)
+        return probabilities
 
     cdef void _parallel_on_X_prange_iter_finalize(
         self,
