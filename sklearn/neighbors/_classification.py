@@ -9,7 +9,7 @@
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
 
 import numpy as np
-from scipy import stats
+from ..utils.fixes import _mode
 from ..utils.extmath import weighted_mode
 from ..utils.validation import _is_arraylike, _num_samples
 
@@ -241,7 +241,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         y_pred = np.empty((n_queries, n_outputs), dtype=classes_[0].dtype)
         for k, classes_k in enumerate(classes_):
             if weights is None:
-                mode, _ = stats.mode(_y[neigh_ind, k], axis=1)
+                mode, _ = _mode(_y[neigh_ind, k], axis=1)
             else:
                 mode, _ = weighted_mode(_y[neigh_ind, k], weights, axis=1)
 
