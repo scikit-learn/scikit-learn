@@ -22,43 +22,16 @@ cpdef enum WeightingStrategy:
     distance = 1
     other = 2
 
-cdef inline ITYPE_t weighted_histogram_mode(ITYPE_t sample_index, ITYPE_t k,
-                                    ITYPE_t* indices, const ITYPE_t[:] labels,
-                                    cmap[ITYPE_t, ITYPE_t] labels_to_index,
-                                    DTYPE_t* label_weights, DTYPE_t* distances,
-                                    WeightingStrategy weight_type) nogil:
-    cdef:
-        ITYPE_t y_idx, label, label_index, max_label
-        DTYPE_t max_label_weight = -1
-        DTYPE_t total_weight
-        DTYPE_t label_weight = 1
-
-    # Iterate through the sample k-nearest neighbours
-    for jdx in range(k):
-        # Absolute indice of the jdx-th Nearest Neighbors
-        # in range [0, n_samples_Y)
-        if weight_type == WeightingStrategy.distance:
-            label_weight = 1 / distances[jdx]
-        y_idx = indices[jdx]
-        label = labels[y_idx]
-        label_index = labels_to_index[label]
-        label_weights[label_index] += label_weight
-        total_weight = label_weights[label_index]
-        if max_label_weight < total_weight or (max_label_weight == total_weight and label < max_label):
-            max_label = label
-            max_label_weight = total_weight
-    return max_label
 
 cdef class PairwiseDistancesArgKminLabels64(PairwiseDistancesArgKmin64):
     """
     64bit implementation of PairwiseDistancesArgKminLabel.
     """
     cdef:
-        ITYPE_t[:] argkmin_labels,
         const ITYPE_t[:] labels,
         ITYPE_t[:] unique_labels
 
-        DTYPE_t[:,:] label_weights
+        DTYPE_t[:, :] label_weights
         cmap[ITYPE_t, ITYPE_t] labels_to_index
         WeightingStrategy weight_type
 
@@ -131,9 +104,6 @@ cdef class PairwiseDistancesArgKminLabels64(PairwiseDistancesArgKmin64):
         self.labels = labels
         self.unique_labels = np.unique(labels)
 
-        # Heap to be returned
-        self.argkmin_labels = np.full(self.n_samples_X, -1, dtype=ITYPE)
-
         # Map from set of unique labels to their indices in `label_weights`
         self.labels_to_index = {label:idx for idx, label in enumerate(self.unique_labels)}
         # Buffer used in building a histogram for one-pass weighted mode
@@ -144,6 +114,33 @@ cdef class PairwiseDistancesArgKminLabels64(PairwiseDistancesArgKmin64):
         probabilities /= probabilities.sum(axis=1, keepdims=True)
         return probabilities
 
+    cdef inline ITYPE_t weighted_histogram_mode(
+            self,
+            ITYPE_t sample_index,
+            ITYPE_t* indices,
+            DTYPE_t* distances,) nogil:
+        cdef:
+            ITYPE_t y_idx, label, label_index, max_label, multi_output_index
+            DTYPE_t max_label_weight = -1
+            DTYPE_t total_weight
+            DTYPE_t label_weight = 1
+
+        # Iterate through the sample k-nearest neighbours
+        for jdx in range(self.k):
+            # Absolute indice of the jdx-th Nearest Neighbors
+            # in range [0, n_samples_Y)
+            if self.weight_type == WeightingStrategy.distance:
+                label_weight = 1 / distances[jdx]
+            y_idx = indices[jdx]
+            label = self.labels[y_idx]
+            label_index = self.labels_to_index[label]
+            self.label_weights[sample_index][label_index] += label_weight
+            total_weight = self.label_weights[sample_index][label_index]
+            if max_label_weight < total_weight or (max_label_weight == total_weight and label < max_label):
+                max_label = label
+                max_label_weight = total_weight
+        return max_label
+
     cdef void _parallel_on_X_prange_iter_finalize(
         self,
         ITYPE_t thread_num,
@@ -151,10 +148,7 @@ cdef class PairwiseDistancesArgKminLabels64(PairwiseDistancesArgKmin64):
         ITYPE_t X_end,
     ) nogil:
         cdef:
-            ITYPE_t idx, jdx, y_idx, label_index, sample_index
-            DTYPE_t max_label_weight
-            ITYPE_t label, max_label
-            DTYPE_t total_weight, label_weight
+            ITYPE_t idx, sample_index
         # Sorting the main heaps portion associated to `X[X_start:X_end]`
         # in ascending order w.r.t the distances.
         for idx in range(X_end - X_start):
@@ -167,27 +161,18 @@ cdef class PairwiseDistancesArgKminLabels64(PairwiseDistancesArgKmin64):
             # Compute the absolute index in [0, n_samples_X)
             sample_index = X_start + idx
             max_label_weight = -1
-            # Hack to template out computation instructions of `label_weight`
-            # by dispatching on *_weighting_type to exploit Cython fused types.
-            self.argkmin_labels[sample_index] = \
-            weighted_histogram_mode(sample_index, self.k,
-                                    &self.heaps_indices_chunks[thread_num][0], self.labels,
-                                    self.labels_to_index,
-                                    &self.label_weights[sample_index][0],
-                                    &self.heaps_r_distances_chunks[thread_num][0],
-                                    self.weight_type,
-                                    )
+            self.weighted_histogram_mode(
+                sample_index,
+                &self.heaps_indices_chunks[thread_num][0],
+                &self.heaps_r_distances_chunks[thread_num][0],
+            )
         return
 
     cdef void _parallel_on_Y_finalize(
         self,
     ) nogil:
         cdef:
-            ITYPE_t sample_index, jdx, y_idx, label_index, thread_num
-            DTYPE_t max_label_weight,
-            ITYPE_t label, max_label
-            DTYPE_t label_weight, total_weight
-
+            ITYPE_t sample_index, thread_num
 
         with nogil, parallel(num_threads=self.chunks_n_threads):
             # Deallocating temporary datastructures
@@ -203,12 +188,9 @@ cdef class PairwiseDistancesArgKminLabels64(PairwiseDistancesArgKmin64):
                     &self.argkmin_indices[sample_index, 0],
                     self.k,
                 )
-                self.argkmin_labels[sample_index] = \
-                weighted_histogram_mode(sample_index, self.k,
-                                        &self.argkmin_indices[sample_index][0], self.labels,
-                                        self.labels_to_index,
-                                        &self.label_weights[sample_index][0],
-                                        &self.argkmin_distances[sample_index][0],
-                                        self.weight_type,
-                                        )
+                self.weighted_histogram_mode(
+                    sample_index,
+                    &self.argkmin_indices[sample_index][0],
+                    &self.argkmin_distances[sample_index][0],
+                )
         return
