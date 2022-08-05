@@ -715,10 +715,10 @@ class GaussianMixture(BaseMixture):
         weights, means, covariances = _estimate_gaussian_parameters(
             X, resp, self.reg_covar, self.covariance_type
         )
-        weights /= n_samples
 
         self.weights_ = weights if self.weights_init is None else self.weights_init
         self.means_ = means if self.means_init is None else self.means_init
+        self.weights_ /= self.weights_.sum()
 
         if self.precisions_init is None:
             self.covariances_ = covariances
