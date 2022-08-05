@@ -37,6 +37,9 @@ def validate_parameter_constraints(parameter_constraints, params, caller_name):
         - a StrOptions object, representing a set of strings
         - the string "boolean"
         - the string "verbose"
+        - the string "cv_object"
+        - the string "missing_values"
+        - a HasMethods object, representing method(s) an object must have
 
     params : dict
         A dictionary `param_name: param_value`. The parameters to validate against the
