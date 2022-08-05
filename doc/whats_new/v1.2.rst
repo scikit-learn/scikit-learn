@@ -213,7 +213,7 @@ Changelog
   :func:`metrics.recall_gain_score`
   The functions compute the gain variants of the traditional precision, recall
   and f-score metrics as described in
-  :ref:`https://papers.nips.cc/paper/2015/file/33e8075e9970de0cfea955afd4644bb2-Paper.pdf`.
+  `PR Analysis Done Right <https://papers.nips.cc/paper/2015/file/33e8075e9970de0cfea955afd4644bb2-Paper.pdf>`_.
   :pr:`24121` by :user:`Bradley Fowler <bradleyfowler123>`.
 
 - |Feature| :func:`metrics.class_likelihood_ratios` is added to compute the positive and
