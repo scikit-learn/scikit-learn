@@ -70,7 +70,7 @@ class PairwiseDistancesReductionsBenchmark(Benchmark):
         PairwiseDistancesRadiusNeighborhood.compute(
             X=self.X_test,
             Y=self.X_train,
-            radius=10 * np.log(n_features),
+            radius=self.radius,
             metric=self.metric,
             return_distance=True,
             strategy=self.strategy,
