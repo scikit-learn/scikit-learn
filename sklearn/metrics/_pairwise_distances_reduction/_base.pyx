@@ -97,10 +97,7 @@ cdef class PairwiseDistancesReduction64:
         if strategy == 'auto':
             # This is a simple heuristic whose constant for the
             # comparison has been chosen based on experiments.
-            if (
-                4 * self.chunk_size * self.effective_n_threads < self.n_samples_X or
-                self.n_samples_Y < self.n_samples_X
-            ):
+            if self.n_samples_Y < self.n_samples_X:
                 strategy = 'parallel_on_X'
             else:
                 strategy = 'parallel_on_Y'
