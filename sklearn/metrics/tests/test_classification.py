@@ -381,6 +381,41 @@ def test_precision_recall_f_binary_single_class():
 
 
 @ignore_warnings
+def test_precision_recall_f_gain_binary_single_class():
+    # Test precision, recall and F-scores behave with a single positive or
+    # negative class. Such a case may occur with non-stratified cross-validation
+    assert 1.0 == precision_gain_score([1, 1], [1, 1])
+    assert 1.0 == recall_gain_score([1, 1], [1, 1])
+    assert 1.0 == f1_gain_score([1, 1], [1, 1])
+    assert 1.0 == fbeta_gain_score([1, 1], [1, 1], beta=0)
+    assert 1.0 == f1_gain_score([2, 2], [2, 2], pos_label=2)
+
+    # test case when no positive class present in true or predicted labels
+    assert np.isnan(precision_gain_score([2, 2], [2, 2]))
+    assert np.isnan(precision_gain_score([-1, -1], [-1, -1]))
+    assert np.isnan(recall_gain_score([-1, -1], [-1, -1]))
+    assert np.isnan(f1_gain_score([-1, -1], [-1, -1]))
+    assert np.isnan(fbeta_gain_score([-1, -1], [-1, -1], beta=float("inf")))
+    assert np.isnan(fbeta_gain_score([-1, -1], [-1, -1], beta=1e5))
+
+    # test case when true labels all positive
+    assert precision_gain_score([1, 1], [1, 0]) == 1
+    assert precision_gain_score([1, 1], [0, 1]) == 1
+    assert recall_gain_score([1, 1], [1, 0]) == -np.inf
+    assert recall_gain_score([1, 1], [0, 1]) == -np.inf
+    assert f1_gain_score([1, 1], [1, 0]) == -np.inf
+    assert f1_gain_score([1, 1], [0, 1]) == -np.inf
+
+    # test case when predicted labels all positive
+    assert precision_gain_score([1, 0], [1, 1]) == 0
+    assert precision_gain_score([0, 1], [1, 1]) == 0
+    assert recall_gain_score([1, 0], [1, 1]) == 1
+    assert recall_gain_score([0, 1], [1, 1]) == 1
+    assert_array_almost_equal(f1_gain_score([1, 0], [1, 1]), 0.5)
+    assert_array_almost_equal(f1_gain_score([0, 1], [1, 1]), 0.5)
+
+
+@ignore_warnings
 def test_precision_recall_f_extra_labels():
     # Test handling of explicit additional (not in input) labels to PRF
     y_true = [1, 3, 3, 2]

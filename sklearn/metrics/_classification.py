@@ -3925,4 +3925,6 @@ def prg_gain_transform(x, *, pi):
             A. Flach and Meelis Kull
            <https://papers.nips.cc/paper/2015/file/33e8075e9970de0cfea955afd4644bb2-Paper.pdf>`_.
     """
+    if x == pi == 1:
+        return 1
     return (x - pi) / ((1 - pi) * x)
