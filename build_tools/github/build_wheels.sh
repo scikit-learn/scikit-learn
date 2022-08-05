@@ -18,9 +18,7 @@ if [[ "$RUNNER_OS" == "macOS" ]]; then
         export MACOSX_DEPLOYMENT_TARGET=12.0
         OPENMP_URL="https://anaconda.org/conda-forge/llvm-openmp/11.1.0/download/osx-arm64/llvm-openmp-11.1.0-hf3c4609_1.tar.bz2"
     else
-        # Currently, the oldest supported macos version is: High Sierra / 10.13.
-        # Note that Darwin_17 == High Sierra / 10.13.
-        export MACOSX_DEPLOYMENT_TARGET=10.13
+        export MACOSX_DEPLOYMENT_TARGET=10.9
         OPENMP_URL="https://anaconda.org/conda-forge/llvm-openmp/11.1.0/download/osx-64/llvm-openmp-11.1.0-hda6cdc1_1.tar.bz2"
     fi
 
