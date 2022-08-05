@@ -478,7 +478,7 @@ class PCA(_BasePCA):
 
         return U
 
-    def match_sign(self, pca):
+    def _match_sign(self, pca):
         """Ensures that the calling object's component signs match those
         of the provided object to resolve sign indeterminacy.
         """

@@ -1086,7 +1086,7 @@ def check_sample_weights_invariance(name, estimator_orig, kind="ones"):
 
     # Handle sign-indeterminacy for PCA
     if isinstance(estimator1, PCA) and isinstance(estimator2, PCA):
-        estimator2.match_sign(estimator1)
+        estimator2._match_sign(estimator1)
 
     for method in ["predict", "predict_proba", "decision_function", "transform"]:
         if hasattr(estimator_orig, method):
