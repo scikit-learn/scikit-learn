@@ -19,6 +19,9 @@ Changelog
   have been changed in 1.1.
   :pr:`23990` by :user:`Julien Jerphanion <jjerphan>`.
 
+- |Fix| Wheels are now available for MacOS 10.9 and greater. :pr:`23833` by
+  `Thomas Fan`_.
+
 :mod:`sklearn.base`
 ......................
 
