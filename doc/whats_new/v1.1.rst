@@ -36,6 +36,13 @@ Changelog
   a node if there are duplicates in the dataset.
   :pr:`23395` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+:mod:`sklearn.preprocessing`
+............................
+
+- |Fix| :meth:`preprocessing.OrdinalEncoder.inverse_transform` correctly handles
+  use cases where `unknown_value` or `encoded_missing_value` is `nan`. :pr:`24087`
+  by `Thomas Fan`_.
+
 .. _changes_1_1_1:
 
 Version 1.1.1
