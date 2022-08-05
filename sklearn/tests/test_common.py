@@ -506,7 +506,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "RidgeClassifierCV",
     "SelectFdr",
     "SelectFpr",
-    "SelectFromModel",
     "SelectFwe",
     "SelectKBest",
     "SelectPercentile",

@@ -70,40 +70,13 @@ def test_input_estimator_unchanged():
     assert transformer.estimator is est
 
 
-@pytest.mark.parametrize(
-    "max_features, err_type, err_msg",
-    [
-        (-1, ValueError, "max_features =="),
-        (
-            data.shape[1] + 1,
-            ValueError,
-            "max_features ==",
-        ),
-        (
-            lambda X: 1.5,
-            TypeError,
-            "max_features(X) must be an instance of int, not float.",
-        ),
-        (
-            "gobbledigook",
-            TypeError,
-            "'max_features' must be either an int or a callable",
-        ),
-        (
-            "all",
-            TypeError,
-            "'max_features' must be either an int or a callable",
-        ),
-    ],
-)
-def test_max_features_error(max_features, err_type, err_msg):
-    err_msg = re.escape(err_msg)
+def test_max_features_error():
     clf = RandomForestClassifier(n_estimators=5, random_state=0)
 
     transformer = SelectFromModel(
-        estimator=clf, max_features=max_features, threshold=-np.inf
+        estimator=clf, max_features=data.shape[1] + 1, threshold=-np.inf
     )
-    with pytest.raises(err_type, match=err_msg):
+    with pytest.raises(ValueError, match=re.escape("max_features ==")):
         transformer.fit(data, y)
 
 
@@ -629,7 +602,6 @@ def test_estimator_does_not_support_feature_names():
     "error, err_msg, max_features",
     (
         [ValueError, "max_features == 10, must be <= 4", 10],
-        [TypeError, "'max_features' must be either an int or a callable", "a"],
         [ValueError, r"max_features\(X\) == 5, must be <= 4", lambda x: x.shape[1] + 1],
     ),
 )

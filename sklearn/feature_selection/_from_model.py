@@ -4,13 +4,14 @@
 from copy import deepcopy
 
 import numpy as np
-import numbers
+from numbers import Integral, Real
 
 from ._base import SelectorMixin
 from ._base import _get_feature_importances
 from ..base import BaseEstimator, clone, MetaEstimatorMixin
 from ..utils._tags import _safe_tags
 from ..utils.validation import check_is_fitted, check_scalar, _num_features
+from ..utils._param_validation import Interval, Options
 
 from ..exceptions import NotFittedError
 from ..utils.metaestimators import available_if
@@ -229,6 +230,19 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
     2
     """
 
+    _parameter_constraints = {
+        "estimator": [BaseEstimator],
+        "threshold": [Interval(Real, None, None, closed="both"), str, None],
+        "prefit": ["boolean"],
+        "norm_order": [
+            Interval(Integral, None, 0, closed="neither"),
+            Interval(Integral, 0, None, closed="neither"),
+            Options(Real, {np.inf, -np.inf}),
+        ],
+        "max_features": [Interval(Integral, 1, None, closed="left"), callable, None],
+        "importance_getter": [str, callable],
+    }
+
     def __init__(
         self,
         estimator,
@@ -266,9 +280,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
                 "When `prefit=True` and `max_features` is a callable, call `fit` "
                 "before calling `transform`."
             )
-        elif max_features is not None and not isinstance(
-            max_features, numbers.Integral
-        ):
+        elif max_features is not None and not isinstance(max_features, Integral):
             raise ValueError(
                 f"`max_features` must be an integer. Got `max_features={max_features}` "
                 "instead."
@@ -294,11 +306,11 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         if self.max_features is not None:
             n_features = _num_features(X)
 
-            if isinstance(self.max_features, numbers.Integral):
+            if isinstance(self.max_features, Integral):
                 check_scalar(
                     self.max_features,
                     "max_features",
-                    numbers.Integral,
+                    Integral,
                     min_val=0,
                     max_val=n_features,
                 )
@@ -308,7 +320,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
                 check_scalar(
                     max_features,
                     "max_features(X)",
-                    numbers.Integral,
+                    Integral,
                     min_val=0,
                     max_val=n_features,
                 )
@@ -339,6 +351,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
+        self._validate_params()
         self._check_max_features(X)
 
         if self.prefit:
@@ -393,6 +406,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
+        self._validate_params()
         self._check_max_features(X)
 
         if self.prefit:
