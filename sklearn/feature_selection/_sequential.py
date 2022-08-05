@@ -1,7 +1,7 @@
 """
 Sequential feature selection
 """
-import numbers
+from numbers import Integral, Real
 
 import numpy as np
 
@@ -9,6 +9,7 @@ import warnings
 
 from ._base import SelectorMixin
 from ..base import BaseEstimator, MetaEstimatorMixin, clone
+from ..utils._param_validation import HasMethods, Interval, StrOptions
 from ..utils._tags import _safe_tags
 from ..utils.validation import check_is_fitted
 from ..model_selection import cross_val_score
@@ -144,6 +145,20 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
     (150, 3)
     """
 
+    _parameter_constraints = {
+        "estimator": [HasMethods(["fit"])],
+        "n_features_to_select": [
+            StrOptions({"auto", "warn"}),
+            Interval(Real, 0, 1, closed="right"),
+            Interval(Integral, 0, None, closed="neither"),
+        ],
+        "tol": [None, Interval(Real, 0, None, closed="neither")],
+        "direction": [StrOptions({"forward", "backward"})],
+        "scoring": [None, str, callable, list, dict, tuple],
+        "cv": ["cv_object"],
+        "n_jobs": [None, Integral],
+    }
+
     def __init__(
         self,
         estimator,
@@ -182,6 +197,8 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         self : object
             Returns the instance itself.
         """
+        self._validate_params()
+
         # FIXME: to be removed in 1.3
         if self.n_features_to_select in ("warn", None):
             # for backwards compatibility
@@ -225,16 +242,12 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
                 self.n_features_to_select_ = n_features - 1
             else:
                 self.n_features_to_select_ = n_features // 2
-        elif isinstance(self.n_features_to_select, numbers.Integral):
+        elif isinstance(self.n_features_to_select, Integral):
             if not 0 < self.n_features_to_select < n_features:
                 raise ValueError(error_msg)
             self.n_features_to_select_ = self.n_features_to_select
-        elif isinstance(self.n_features_to_select, numbers.Real):
-            if not 0 < self.n_features_to_select <= 1:
-                raise ValueError(error_msg)
+        elif isinstance(self.n_features_to_select, Real):
             self.n_features_to_select_ = int(n_features * self.n_features_to_select)
-        else:
-            raise ValueError(error_msg)
 
         if self.direction not in ("forward", "backward"):
             raise ValueError(
