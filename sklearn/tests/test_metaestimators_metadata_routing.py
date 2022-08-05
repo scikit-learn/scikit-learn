@@ -43,6 +43,7 @@ class ConsumingRegressor(RegressorMixin, BaseEstimator):
         as None.
 
     """
+
     def __init__(self, registry=None):
         self.registry = registry
 
@@ -82,6 +83,7 @@ class ConsumingClassifier(ClassifierMixin, BaseEstimator):
         as None.
 
     """
+
     def __init__(self, registry=None):
         self.registry = registry
 
