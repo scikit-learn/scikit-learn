@@ -254,12 +254,6 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         elif isinstance(self.n_features_to_select, Real):
             self.n_features_to_select_ = int(n_features * self.n_features_to_select)
 
-        if self.direction not in ("forward", "backward"):
-            raise ValueError(
-                "direction must be either 'forward' or 'backward'. "
-                f"Got {self.direction}."
-            )
-
         cloned_estimator = clone(self.estimator)
 
         # the current mask corresponds to the set of features:
