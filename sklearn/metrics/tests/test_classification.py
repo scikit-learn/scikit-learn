@@ -2564,7 +2564,7 @@ def test_log_loss_pandas_input():
     y_pr = np.array([[0.2, 0.7], [0.6, 0.5], [0.4, 0.1], [0.7, 0.2]])
     types = [(MockDataFrame, MockDataFrame)]
     try:
-        from pandas import DataFrame, Series
+        from pandas import Series, DataFrame
 
         types.append((Series, DataFrame))
     except ImportError:

@@ -24,8 +24,6 @@ the lower the better.
 
 
 import warnings
-from typing import Optional
-
 import numpy as np
 
 from scipy.sparse import coo_matrix
@@ -147,7 +145,7 @@ def _weighted_sum(sample_score, sample_weight, normalize=False):
         return sample_score.sum()
 
 
-def _nan_average(scores: np.ndarray, weights: Optional[np.ndarray]):
+def _nan_average(scores, weights):
     """
     Wrapper for np.average, with np.nan values being ignored from the average
     This is similar to np.nanmean, but allowing to pass weights as in np.average
@@ -1567,19 +1565,19 @@ def precision_recall_fscore_support(
 
     Returns
     -------
-    precision : float (if `average` is not None) or array of float, shape =\
+    precision : float (if average is not None) or array of float, shape =\
         [n_unique_labels]
         Precision score.
 
-    recall : float (if `average` is not None) or array of float, shape =\
+    recall : float (if average is not None) or array of float, shape =\
         [n_unique_labels]
         Recall score.
 
-    fbeta_score : float (if `average` is not None) or array of float, shape =\
+    fbeta_score : float (if average is not None) or array of float, shape =\
         [n_unique_labels]
         F-beta score.
 
-    support : None (if `average` is not None) or array of int, shape =\
+    support : None (if average is not None) or array of int, shape =\
         [n_unique_labels]
         The number of occurrences of each label in ``y_true``.
 
@@ -1651,7 +1649,7 @@ def precision_recall_fscore_support(
         pred_sum = np.array([pred_sum.sum()])
         true_sum = np.array([true_sum.sum()])
 
-    # Finally, we have all our sufficient statistics. Divide!
+    # Finally, we have all our sufficient statistics. Divide! #
     beta2 = beta**2
 
     # Divide, and on zero-division, set scores and/or warn according to
@@ -1664,7 +1662,7 @@ def precision_recall_fscore_support(
     )
 
     # warn for f-score only if zero_division is warn, it is in warn_for
-    # and BOTH precision and recall are ill-defined
+    # and BOTH prec and rec are ill-defined
     if zero_division == "warn" and ("f-score",) == warn_for:
         if (pred_sum[true_sum == 0] == 0).any():
             _warn_prf(average, "true nor predicted", "F-score is", len(true_sum))
