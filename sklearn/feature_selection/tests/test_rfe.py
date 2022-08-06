@@ -136,17 +136,6 @@ def test_RFE_fit_score_params():
     RFE(estimator=TestEstimator()).fit(X, y, prop="foo").score(X, y, prop="foo")
 
 
-@pytest.mark.parametrize("n_features_to_select", [-1, 2.1])
-def test_rfe_invalid_n_features_errors(n_features_to_select):
-    clf = SVC(kernel="linear")
-
-    iris = load_iris()
-    rfe = RFE(estimator=clf, n_features_to_select=n_features_to_select, step=0.1)
-    msg = f"n_features_to_select must be .+ Got {n_features_to_select}"
-    with pytest.raises(ValueError, match=msg):
-        rfe.fit(iris.data, iris.target)
-
-
 def test_rfe_percent_n_features():
     # test that the results are the same
     generator = check_random_state(0)

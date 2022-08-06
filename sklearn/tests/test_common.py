@@ -499,8 +499,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "QuadraticDiscriminantAnalysis",
     "RANSACRegressor",
     "RBFSampler",
-    "RFE",
-    "RFECV",
     "RegressorChain",
     "RidgeCV",
     "RidgeClassifierCV",
