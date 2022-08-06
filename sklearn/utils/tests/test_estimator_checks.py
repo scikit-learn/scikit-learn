@@ -399,15 +399,15 @@ class EstimatorMissingDefaultTags(BaseEstimator):
         return tags
 
 
-class RequiresPositiveYRegressor(LinearRegression):
+class RequiresPositiveRegressor(LinearRegression):
     def fit(self, X, y):
         X, y = self._validate_data(X, y, multi_output=True)
-        if (y <= 0).any():
-            raise ValueError("negative y values not supported!")
+        if ((X <= 0).any() or (y <= 0).any()):
+            raise ValueError("negative values not supported!")
         return super().fit(X, y)
 
     def _more_tags(self):
-        return {"requires_positive_y": True}
+        return {"requires_positive_X": True, "requires_positive_y": True}
 
 
 class PoorScoreLogisticRegression(LogisticRegression):

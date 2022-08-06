@@ -2788,6 +2788,7 @@ def check_regressors_train(
     X = _pairwise_estimator_convert_X(X, regressor_orig)
     y = scale(y)  # X is already scaled
     regressor = clone(regressor_orig)
+    X = _enforce_estimator_tags_x(regressor, X)
     y = _enforce_estimator_tags_y(regressor, y)
     if name in CROSS_DECOMPOSITION:
         rnd = np.random.RandomState(0)
