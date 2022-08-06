@@ -12,11 +12,11 @@ dependencies:
   - joblib
   - threadpoolctl
   - matplotlib
-  - pytest=6.2.5
+  - pytest
   - pytest-xdist
   - pillow
   - codecov
   - pytest-cov
-  - coverage=6.2
+  - coverage
   - wheel
   - pip
