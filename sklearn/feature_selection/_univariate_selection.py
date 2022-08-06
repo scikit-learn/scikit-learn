@@ -8,6 +8,7 @@
 import numpy as np
 import warnings
 
+from numbers import Integral, Real
 from scipy import special, stats
 from scipy.sparse import issparse
 
@@ -16,6 +17,7 @@ from ..preprocessing import LabelBinarizer
 from ..utils import as_float_array, check_array, check_X_y, safe_sqr, safe_mask
 from ..utils.extmath import safe_sparse_dot, row_norms
 from ..utils.validation import check_is_fitted
+from ..utils._param_validation import Interval, StrOptions
 from ._base import SelectorMixin
 
 
@@ -438,6 +440,8 @@ class _BaseFilter(SelectorMixin, BaseEstimator):
         (scores, pvalues) or a single array with scores.
     """
 
+    _parameter_constraints = {"score_func": [callable]}
+
     def __init__(self, score_func):
         self.score_func = score_func
 
@@ -462,12 +466,6 @@ class _BaseFilter(SelectorMixin, BaseEstimator):
             X, y, accept_sparse=["csr", "csc"], multi_output=True
         )
 
-        if not callable(self.score_func):
-            raise TypeError(
-                "The score function should be a callable, %s (%s) was passed."
-                % (self.score_func, type(self.score_func))
-            )
-
         self._check_params(X, y)
         score_func_ret = self.score_func(X, y)
         if isinstance(score_func_ret, (list, tuple)):
@@ -482,7 +480,7 @@ class _BaseFilter(SelectorMixin, BaseEstimator):
         return self
 
     def _check_params(self, X, y):
-        pass
+        self._validate_params()
 
     def _more_tags(self):
         return {"requires_y": True}
@@ -559,15 +557,14 @@ class SelectPercentile(_BaseFilter):
     (1797, 7)
     """
 
+    _parameter_constraints = {
+        **_BaseFilter._parameter_constraints,  # type: ignore
+        "percentile": [Interval(Real, 0, 100, closed="both")],
+    }
+
     def __init__(self, score_func=f_classif, *, percentile=10):
         super().__init__(score_func=score_func)
         self.percentile = percentile
-
-    def _check_params(self, X, y):
-        if not 0 <= self.percentile <= 100:
-            raise ValueError(
-                "percentile should be >=0, <=100; got %r" % self.percentile
-            )
 
     def _get_support_mask(self):
         check_is_fitted(self)
@@ -659,11 +656,17 @@ class SelectKBest(_BaseFilter):
     (1797, 20)
     """
 
+    _parameter_constraints = {
+        **_BaseFilter._parameter_constraints,  # type: ignore
+        "k": [StrOptions({"all"}), Interval(Integral, -1, None, closed="neither")],
+    }
+
     def __init__(self, score_func=f_classif, *, k=10):
         super().__init__(score_func=score_func)
         self.k = k
 
     def _check_params(self, X, y):
+        super()._check_params(X, y)
         if not (self.k == "all" or 0 <= self.k <= X.shape[1]):
             raise ValueError(
                 "k should be >=0, <= n_features = %d; got %r. "
@@ -752,6 +755,11 @@ class SelectFpr(_BaseFilter):
     (569, 16)
     """
 
+    _parameter_constraints = {
+        **_BaseFilter._parameter_constraints,  # type: ignore
+        "alpha": [Interval(Real, 0, 1, closed="both")],
+    }
+
     def __init__(self, score_func=f_classif, *, alpha=5e-2):
         super().__init__(score_func=score_func)
         self.alpha = alpha
@@ -831,6 +839,11 @@ class SelectFdr(_BaseFilter):
     (569, 16)
     """
 
+    _parameter_constraints = {
+        **_BaseFilter._parameter_constraints,  # type: ignore
+        "alpha": [Interval(Real, 0, 1, closed="both")],
+    }
+
     def __init__(self, score_func=f_classif, *, alpha=5e-2):
         super().__init__(score_func=score_func)
         self.alpha = alpha
@@ -907,6 +920,11 @@ class SelectFwe(_BaseFilter):
     >>> X_new.shape
     (569, 15)
     """
+
+    _parameter_constraints = {
+        **_BaseFilter._parameter_constraints,  # type: ignore
+        "alpha": [Interval(Real, 0, 1, closed="both")],
+    }
 
     def __init__(self, score_func=f_classif, *, alpha=5e-2):
         super().__init__(score_func=score_func)
@@ -996,6 +1014,12 @@ class GenericUnivariateSelect(_BaseFilter):
         "fwe": SelectFwe,
     }
 
+    _parameter_constraints = {
+        **_BaseFilter._parameter_constraints,  # type: ignore
+        "mode": [StrOptions(set(_selection_modes.keys()))],
+        "param": [Interval(Real, None, None, closed="neither")],
+    }
+
     def __init__(self, score_func=f_classif, *, mode="percentile", param=1e-5):
         super().__init__(score_func=score_func)
         self.mode = mode
@@ -1016,12 +1040,7 @@ class GenericUnivariateSelect(_BaseFilter):
         return {"preserves_dtype": [np.float64, np.float32]}
 
     def _check_params(self, X, y):
-        if self.mode not in self._selection_modes:
-            raise ValueError(
-                "The mode passed should be one of %s, %r, (type %s) was passed."
-                % (self._selection_modes.keys(), self.mode, type(self.mode))
-            )
-
+        super()._check_params(X, y)
         self._make_selector()._check_params(X, y)
 
     def _get_support_mask(self):

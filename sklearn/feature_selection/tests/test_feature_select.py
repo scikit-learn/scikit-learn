@@ -561,10 +561,6 @@ def test_invalid_percentile():
     )
 
     with pytest.raises(ValueError):
-        SelectPercentile(percentile=-1).fit(X, y)
-    with pytest.raises(ValueError):
-        SelectPercentile(percentile=101).fit(X, y)
-    with pytest.raises(ValueError):
         GenericUnivariateSelect(mode="percentile", param=-1).fit(X, y)
     with pytest.raises(ValueError):
         GenericUnivariateSelect(mode="percentile", param=101).fit(X, y)
@@ -829,28 +825,10 @@ def test_nans():
         assert_array_equal(select.get_support(indices=True), np.array([1, 2]))
 
 
-def test_score_func_error():
-    X = [[0, 1, 0], [0, -1, -1], [0, 0.5, 0.5]]
-    y = [1, 0, 1]
-
-    for SelectFeatures in [
-        SelectKBest,
-        SelectPercentile,
-        SelectFwe,
-        SelectFdr,
-        SelectFpr,
-        GenericUnivariateSelect,
-    ]:
-        with pytest.raises(TypeError):
-            SelectFeatures(score_func=10).fit(X, y)
-
-
 def test_invalid_k():
     X = [[0, 1, 0], [0, -1, -1], [0, 0.5, 0.5]]
     y = [1, 0, 1]
 
-    with pytest.raises(ValueError):
-        SelectKBest(k=-1).fit(X, y)
     with pytest.raises(ValueError):
         SelectKBest(k=4).fit(X, y)
     with pytest.raises(ValueError):
