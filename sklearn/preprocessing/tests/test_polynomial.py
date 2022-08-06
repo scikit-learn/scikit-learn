@@ -90,9 +90,7 @@ def test_spline_transformer_input_validation(params, err_msg):
 
 
 def test_spline_transformer_manual_knot_input():
-    """
-    Test that array-like knot positions in SplineTransformer are accepted.
-    """
+    """Test that array-like knot positions in SplineTransformer are accepted."""
     X = np.arange(20).reshape(10, 2)
     knots = [[0.5, 1], [1.5, 2], [5, 10]]
     st1 = SplineTransformer(degree=3, knots=knots, n_knots=None).fit(X)
@@ -160,8 +158,7 @@ def test_spline_transformer_feature_names(get_names):
 def test_spline_transformer_unity_decomposition(degree, n_knots, knots, extrapolation):
     """Test that B-splines are indeed a decomposition of unity.
 
-    Splines basis functions must sum up to 1 per row, if we stay in between
-    boundaries.
+    Splines basis functions must sum up to 1 per row, if we stay in between boundaries.
     """
     X = np.linspace(0, 1, 100)[:, None]
     # make the boundaries 0 and 1 part of X_train, for sure.
@@ -229,8 +226,7 @@ def test_spline_transformer_linear_regression(bias, intercept):
 def test_spline_transformer_get_base_knot_positions(
     knots, n_knots, sample_weight, expected_knots
 ):
-    # Check the behaviour to find the positions of the knots with and without
-    # `sample_weight`
+    """Check the behaviour to find knot positions with and without sample_weight."""
     X = np.array([[0, 2], [0, 2], [2, 2], [3, 3], [4, 6], [5, 8], [6, 14]])
     base_knots = SplineTransformer._get_base_knot_positions(
         X=X, knots=knots, n_knots=n_knots, sample_weight=sample_weight
@@ -313,9 +309,7 @@ def test_spline_transformer_periodic_spline_backport():
 
 
 def test_spline_transformer_periodic_splines_periodicity():
-    """
-    Test if shifted knots result in the same transformation up to permutation.
-    """
+    """Test if shifted knots result in the same transformation up to permutation."""
     X = np.linspace(0, 10, 101)[:, None]
 
     transformer_1 = SplineTransformer(
@@ -448,6 +442,56 @@ def test_spline_transformer_kbindiscretizer():
     # Though they should be exactly equal, we test approximately with high
     # accuracy.
     assert_allclose(splines, kbins, rtol=1e-13)
+
+
+@pytest.mark.parametrize("degree", range(1, 3))
+@pytest.mark.parametrize("knots", ["uniform", "quantile"])
+@pytest.mark.parametrize(
+    "extrapolation", ["error", "constant", "linear", "continue", "periodic"]
+)
+@pytest.mark.parametrize("include_bias", [False, True])
+def test_spline_transformer_sparse_output(
+    degree, knots, extrapolation, include_bias, global_random_seed
+):
+    rng = np.random.RandomState(global_random_seed)
+    X = rng.randn(200).reshape(40, 5)
+
+    splt_dense = SplineTransformer(
+        degree=degree,
+        knots=knots,
+        extrapolation=extrapolation,
+        include_bias=include_bias,
+        sparse=False,
+    )
+    splt_sparse = SplineTransformer(
+        degree=degree,
+        knots=knots,
+        extrapolation=extrapolation,
+        include_bias=include_bias,
+        sparse=True,
+    )
+
+    splt_dense.fit(X)
+    splt_sparse.fit(X)
+
+    assert sparse.isspmatrix_csr(splt_sparse.transform(X))
+    assert_allclose(splt_dense.transform(X), splt_sparse.transform(X).toarray())
+
+    # extrapolation regime
+    X_min = np.amin(X, axis=0)
+    X_max = np.amin(X, axis=0)
+    X_extra = np.r_[
+        np.linspace(X_min - 5, X_min, 10), np.linspace(X_max, X_max + 5, 10)
+    ]
+    if extrapolation == "error":
+        with pytest.raises(ValueError):
+            splt_dense.transform(X_extra)
+        with pytest.raises(ValueError):
+            splt_sparse.transform(X_extra)
+    else:
+        assert_allclose(
+            splt_dense.transform(X_extra), splt_sparse.transform(X_extra).toarray()
+        )
 
 
 @pytest.mark.parametrize("n_knots", [5, 10])
