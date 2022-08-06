@@ -572,9 +572,9 @@ def test_check_estimator():
     check_estimator(TaggedBinaryClassifier())
 
     # Check regressor with requires_positive_y estimator tag
-    msg = "negative y values not supported!"
+    msg = "negative values not supported!"
     with raises(ValueError, match=msg):
-        check_estimator(RequiresPositiveYRegressor())
+        check_estimator(RequiresPositiveRegressor())
 
     # Does not raise error on classifier with poor_score tag
     check_estimator(PoorScoreLogisticRegression())
