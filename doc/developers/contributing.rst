@@ -879,7 +879,7 @@ syntax:
 
   .. code-block:: rst
 
-      :term:`<term_in_glossary>`
+      :term:`cross_validation`
 
 * Function - to link to the documentation of a function, use the full
   import path to the function:
