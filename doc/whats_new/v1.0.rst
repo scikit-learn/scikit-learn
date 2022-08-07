@@ -348,13 +348,6 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
-- |API| The option for using the squared error via ``loss`` and
-  ``criterion`` parameters was made more consistent. The preferred way is by
-  setting the value to `"squared_error"`. Old option names are still valid,
-  produce the same models, but are deprecated and will be removed in version
-  1.2.
-  :pr:`19310` by :user:`Christian Lorentzen <lorentzenchr>`.
-
   - For :class:`ensemble.ExtraTreesRegressor`, `criterion="mse"` is deprecated,
     use `"squared_error"` instead which is now the default.
 
@@ -1011,6 +1004,8 @@ Changelog
   Use ``var_`` instead.
   :pr:`18842` by :user:`Hong Shao Yang <hongshaoyang>`.
 
+<<<<<<< HEAD
+=======
 :mod:`sklearn.neighbors`
 ........................
 
@@ -1212,6 +1207,7 @@ Changelog
 - |API| Fixed several bugs in :func:`utils.graph.graph_shortest_path`, which is
   now deprecated. Use `scipy.sparse.csgraph.shortest_path` instead. :pr:`20531`
   by `Tom Dupre la Tour`_.
+>>>>>>> origin/main
 
 Code and Documentation Contributors
 -----------------------------------

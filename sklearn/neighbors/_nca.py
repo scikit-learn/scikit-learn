@@ -3,7 +3,7 @@ Neighborhood Component Analysis
 """
 
 # Authors: William de Vazelhes <wdevazelhes@gmail.com>
-#          John Chiotellis <ioannis.chiotellis@in.tum.de>
+#          John Chiotellis <johnyc.code@gmail.com>
 # License: BSD 3 clause
 
 from warnings import warn

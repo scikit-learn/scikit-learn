@@ -1085,4 +1085,5 @@ when data can be fetched sequentially.
       H. F. Kaiser, 1958
 
 See also :ref:`nca_dim_reduction` for dimensionality reduction with
-Neighborhood Components Analysis.
+Neighborhood Components Analysis or :ref:`lmnn_dim_reduction` for
+dimensionality reduction with Large Margin Nearest Neighbor.

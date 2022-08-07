@@ -225,6 +225,11 @@ Changelog
   instead of failing with a low-level error message at predict-time.
   :pr:`23874` by :user:`Juan Gomez <2357juan>`.
 
+- |MajorFeature| A metric learning algorithm:
+  :class:`neighbors.LargeMarginNearestNeighbor`, which implements the
+  Large Margin Nearest Neighbor algorithm described in Weinberger et al.
+  (2006). :pr:`8602` by :user:`John Chiotellis <johny-c>`.
+
 :mod:`sklearn.svm`
 ..................
 
