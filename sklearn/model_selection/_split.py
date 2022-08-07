@@ -486,13 +486,13 @@ class GroupKFold(_BaseKFold):
     GroupKFold(n_splits=2)
     >>> for train_index, test_index in group_kfold.split(X, y, groups):
     ...     train_group, test_group = groups[train_index], groups[test_index]
-    ...     print("TRAIN:\tIndex:", train_index, ", Group:", train_group)
-    ...     print("TEST:\tIndex:", test_index, ", Group:", test_group)
+    ...     print(f"TRAIN:\tIndex: {train_index}, Group: {train_group}")
+    ...     print(f"TEST:\tIndex: {test_index}, Group: {test_group}")
     ...
-    TRAIN:  Index: [2 3] , Group: [2 2]
-    TEST:   Index: [0 1 4 5] , Group: [0 0 3 3]
-    TRAIN:  Index: [0 1 4 5] , Group: [0 0 3 3]
-    TEST:   Index: [2 3] , Group: [2 2]
+    TRAIN:  Index: [2 3], Group: [2 2]
+    TEST:   Index: [0 1 4 5], Group: [0 0 3 3]
+    TRAIN:  Index: [0 1 4 5], Group: [0 0 3 3]
+    TEST:   Index: [2 3], Group: [2 2]
 
     See Also
     --------
