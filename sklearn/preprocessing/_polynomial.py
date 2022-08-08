@@ -985,16 +985,19 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                 f_min, f_max = spl(xmin), spl(xmax)
                 mask = (xmin <= X[:, i]) & (X[:, i] <= xmax)
                 if use_sparse:
+                    mask_inv = ~mask
                     x = X[:, i].copy()
-                    x[~mask] = spl.t[self.degree]  # some more or less arbitrary value
+                    # Set some arbitrary value outside boundary that will be reassigned
+                    # later.
+                    x[mask_inv] = spl.t[self.degree]
                     sparse_output = BSpline.design_matrix(x, spl.t, spl.k)
                     # Note: Without concerting to lil_matrix we would get:
                     # scipy.sparse._base.SparseEfficiencyWarning: Changing the sparsity
                     # structure of a csr_matrix is expensive. lil_matrix is more
                     # efficient.
-                    if np.sum(~mask) > 0:
+                    if np.any(mask_inv):
                         sparse_output = sparse_output.tolil()
-                        sparse_output[~mask, :] = 0
+                        sparse_output[mask_inv, :] = 0
                 else:
                     XBS[mask, (i * n_splines) : ((i + 1) * n_splines)] = spl(X[mask, i])
 
