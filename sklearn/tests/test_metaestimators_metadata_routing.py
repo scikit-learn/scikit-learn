@@ -30,15 +30,18 @@ class _Registry(list):
     def __deepcopy__(self, memo):
         return self
 
+    def __copy__(self, memo):
+        return self
+
 
 class ConsumingRegressor(RegressorMixin, BaseEstimator):
     """A regressor consuming metadata.
 
     Parameters
     ----------
-    registry : list or None, default=None
-        If a list, that estimator will append itself to the list in order to
-        have a reference to the estimator later on. Since that reference is not
+    registry : list, default=None
+        If a list, the estimator will append itself to the list in order to have
+        a reference to the estimator later on. Since that reference is not
         required in all tests, registration can be skipped by leaving this value
         as None.
 
@@ -76,9 +79,9 @@ class ConsumingClassifier(ClassifierMixin, BaseEstimator):
 
     Parameters
     ----------
-    registry : list or None, default=None
-        If a list, that estimator will append itself to the list in order to
-        have a reference to the estimator later on. Since that reference is not
+    registry : list, default=None
+        If a list, the estimator will append itself to the list in order to have
+        a reference to the estimator later on. Since that reference is not
         required in all tests, registration can be skipped by leaving this value
         as None.
 
@@ -181,11 +184,16 @@ The keys are as follows:
 
 """
 
+# ids used for pytest fixture
+METAESTIMATOR_IDS = [
+    str(row["metaestimator"].__class__.__name__) for row in METAESTIMATORS
+]
+
 
 @pytest.mark.parametrize(
     "metaestimator",
     METAESTIMATORS,
-    ids=[str(row["metaestimator"].__class__.__name__) for row in METAESTIMATORS],
+    ids=METAESTIMATOR_IDS,
 )
 def test_default_request(metaestimator):
     # Check that by default request is empty and the right type
@@ -200,11 +208,11 @@ def test_default_request(metaestimator):
 @pytest.mark.parametrize(
     "metaestimator",
     METAESTIMATORS,
-    ids=[str(row["metaestimator"].__class__.__name__) for row in METAESTIMATORS],
+    ids=METAESTIMATOR_IDS,
 )
 def test_warning_for_indicated_methods(metaestimator):
     # Check that the indicated methods give a warning
-    # TODO: After deprecation period, always error
+    # TODO: Always error for 1.4
     cls = metaestimator["metaestimator"]
     registry = _Registry()
     estimator = metaestimator["estimator"](registry=registry)
@@ -231,18 +239,24 @@ def test_warning_for_indicated_methods(metaestimator):
             method(X, y, sample_weight=sample_weight, metadata=metadata)
 
         if metaestimator.get("preserves_metadata", True):
-            check_recorded_metadata(
-                registry[-1],
-                method_name,
-                sample_weight=sample_weight,
-                metadata=metadata,
-            )
+            # sanity check that registry is not empty, or else the test passes trivially
+            assert registry
+            for estimator in registry:
+                check_recorded_metadata(
+                    estimator,
+                    method_name,
+                    sample_weight=sample_weight,
+                    metadata=metadata,
+                )
+        # clear the registry since the check could be different for the next
+        # method being tested
+        registry.clear()
 
 
 @pytest.mark.parametrize(
     "metaestimator",
     METAESTIMATORS,
-    ids=[str(row["metaestimator"].__class__.__name__) for row in METAESTIMATORS],
+    ids=METAESTIMATOR_IDS,
 )
 def test_error_for_other_methods(metaestimator):
     # This test complements test_warning_for_indicated_methods but checks for
@@ -273,7 +287,7 @@ def test_error_for_other_methods(metaestimator):
 @pytest.mark.parametrize(
     "metaestimator",
     METAESTIMATORS,
-    ids=[str(row["metaestimator"].__class__.__name__) for row in METAESTIMATORS],
+    ids=METAESTIMATOR_IDS,
 )
 def test_setting_request_removes_warning_or_error(metaestimator):
     # When the metadata is explicitly requested, there should be no warning and
@@ -294,7 +308,11 @@ def test_setting_request_removes_warning_or_error(metaestimator):
         set_request(estimator, method_name)
         instance = cls(**{estimator_name: estimator})
         # lines below to ensure that there are no warnings
-        with warnings.catch_warnings():
-            warnings.simplefilter("error")
+        with warnings.catch_warnings(record=True) as rec:
             method = getattr(instance, method_name)
             method(X, y, sample_weight=sample_weight, metadata=metadata)
+            # Check that there was no FutureWarning about metadata. The exact
+            # error message is not checked on purpose, because if the message is
+            # changed without amending this test, the test would pass trivially.
+            future_warnings = [w for w in rec if isinstance(w, FutureWarning)]
+            assert not any("metadata" in w.message for w in future_warnings)
