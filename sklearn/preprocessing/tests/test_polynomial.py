@@ -13,6 +13,7 @@ from sklearn.preprocessing import (
     PolynomialFeatures,
     SplineTransformer,
 )
+from sklearn.utils.fixes import parse_version, sp_version
 
 
 @pytest.mark.parametrize("est", (PolynomialFeatures, SplineTransformer))
@@ -444,6 +445,10 @@ def test_spline_transformer_kbindiscretizer():
     assert_allclose(splines, kbins, rtol=1e-13)
 
 
+@pytest.mark.skipif(
+    sp_version < parse_version("1.8.0"),
+    reason="The `sparse` option is available from the 1.8.0 scipy version",
+)
 @pytest.mark.parametrize("degree", range(1, 3))
 @pytest.mark.parametrize("knots", ["uniform", "quantile"])
 @pytest.mark.parametrize(
@@ -492,6 +497,17 @@ def test_spline_transformer_sparse_output(
         assert_allclose(
             splt_dense.transform(X_extra), splt_sparse.transform(X_extra).toarray()
         )
+
+
+@pytest.mark.skipif(
+    sp_version >= parse_version("1.8.0"),
+    reason="Option sparse is available as of scipy 1.8.0",
+)
+def test_spline_transformer_sparse_output_raise_error_for_old_scipy(X_y_data, solver):
+    """Test that SplineTransformer with sparse=True raises for scipy<1.8.0."""
+    X = [[1], [2]]
+    with pytest.raises(ValueError, match="scipy>=1.8.0"):
+        SplineTransformer(sparse=True).fit(X)
 
 
 @pytest.mark.parametrize("n_knots", [5, 10])
