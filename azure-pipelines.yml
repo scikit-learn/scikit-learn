@@ -1,0 +1,287 @@
+# Adapted from https://github.com/pandas-dev/pandas/blob/master/azure-pipelines.yml
+schedules:
+- cron: "30 2 * * *"
+  displayName: Run nightly build
+  branches:
+    include:
+    - main
+  always: true
+
+jobs:
+- job: git_commit
+  displayName: Get Git Commit
+  pool:
+    vmImage: ubuntu-20.04
+  steps:
+    - bash: python build_tools/azure/get_commit_message.py
+      name: commit
+      displayName: Get source version message
+
+- job: linting
+  dependsOn: [git_commit]
+  condition: |
+    and(
+      succeeded(),
+      not(contains(dependencies['git_commit']['outputs']['commit.message'], '[lint skip]')),
+      not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]'))
+    )
+  displayName: Linting
+  pool:
+    vmImage: ubuntu-20.04
+  steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.9'
+    - bash: |
+        # Include pytest compatibility with mypy
+        pip install pytest flake8 mypy==0.961 black==22.3.0
+      displayName: Install linters
+    - bash: |
+        black --check --diff .
+      displayName: Run black
+    - bash: |
+        ./build_tools/azure/linting.sh
+      displayName: Run linting
+    - bash: |
+        mypy sklearn/
+      displayName: Run mypy
+
+- template: build_tools/azure/posix.yml
+  parameters:
+    name: Linux_Nightly
+    vmImage: ubuntu-20.04
+    dependsOn: [git_commit, linting]
+    condition: |
+      and(
+        succeeded(),
+        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]')),
+        or(eq(variables['Build.Reason'], 'Schedule'),
+           contains(dependencies['git_commit']['outputs']['commit.message'], '[scipy-dev]'
+          )
+        )
+      )
+    matrix:
+      pylatest_pip_scipy_dev:
+        DISTRIB: 'conda-pip-scipy-dev'
+        LOCK_FILE: './build_tools/azure/pylatest_pip_scipy_dev_linux-64_conda.lock'
+        CHECK_WARNINGS: 'true'
+        CHECK_PYTEST_SOFT_DEPENDENCY: 'true'
+        TEST_DOCSTRINGS: 'true'
+        # Tests that require large downloads over the networks are skipped in CI.
+        # Here we make sure, that they are still run on a regular basis.
+        SKLEARN_SKIP_NETWORK_TESTS: '0'
+
+- template: build_tools/azure/posix.yml
+  # Experimental CPython branch without the Global Interpreter Lock:
+  # https://github.com/colesbury/nogil/
+  #
+  # The nogil build relies on a dedicated PyPI-style index to install patched
+  # versions of NumPy, SciPy and Cython maintained by @colesbury and that
+  # include specifc fixes to make them run correctly without relying on the GIL.
+  #
+  # The goal of this CI entry is to make sure that we do not introduce any
+  # dependency on the GIL in scikit-learn itself. An auxiliary goal is to early
+  # detect any regression in the patched build dependencies to report them
+  # upstream. The long-term goal is to be able to stop having to maintain
+  # multiprocessing based workaround / hacks in joblib / loky to make multi-CPU
+  # computing in scikit-learn efficient by default using regular threads.
+  #
+  # If this experimental entry becomes too unstable, feel free to disable it.
+  parameters:
+    name: Linux_nogil
+    vmImage: ubuntu-20.04
+    dependsOn: [git_commit, linting]
+    condition: |
+      and(
+        succeeded(),
+        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]')),
+        or(eq(variables['Build.Reason'], 'Schedule'),
+           contains(dependencies['git_commit']['outputs']['commit.message'], '[nogil]'
+          )
+        )
+      )
+    matrix:
+      pylatest_pip_nogil:
+        DISTRIB: 'pip-nogil'
+        LOCK_FILE: './build_tools/azure/python_nogil_lock.txt'
+        COVERAGE: 'false'
+
+# Check compilation with intel C++ compiler (ICC)
+- template: build_tools/azure/posix.yml
+  parameters:
+    name: Linux_Nightly_ICC
+    vmImage: ubuntu-20.04
+    dependsOn: [git_commit, linting]
+    condition: |
+      and(
+        succeeded(),
+        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]')),
+        or(eq(variables['Build.Reason'], 'Schedule'),
+           contains(dependencies['git_commit']['outputs']['commit.message'], '[icc-build]')
+        )
+      )
+    matrix:
+      pylatest_conda_forge_mkl:
+        DISTRIB: 'conda'
+        LOCK_FILE: 'build_tools/azure/pylatest_conda_forge_mkl_no_coverage_linux-64_conda.lock'
+        COVERAGE: 'false'
+        BUILD_WITH_ICC: 'true'
+
+- template: build_tools/azure/posix-docker.yml
+  parameters:
+    name: Linux_Nightly_PyPy
+    vmImage: ubuntu-20.04
+    dependsOn: [linting, git_commit]
+    condition: |
+      and(
+        succeeded(),
+        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]')),
+        or(
+          eq(variables['Build.Reason'], 'Schedule'),
+          contains(dependencies['git_commit']['outputs']['commit.message'], '[pypy]')
+        )
+      )
+    matrix:
+      pypy3:
+        DOCKER_CONTAINER: 'condaforge/miniforge3:4.10.3-5'
+        DISTRIB: 'conda-pypy3'
+        LOCK_FILE: './build_tools/azure/pypy3_linux-64_conda.lock'
+
+# Will run all the time regardless of linting outcome.
+- template: build_tools/azure/posix.yml
+  parameters:
+    name: Linux_Runs
+    vmImage: ubuntu-20.04
+    dependsOn: [git_commit]
+    condition: |
+      and(
+        succeeded(),
+        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]'))
+      )
+    matrix:
+      pylatest_conda_forge_mkl:
+        DISTRIB: 'conda'
+        LOCK_FILE: './build_tools/azure/pylatest_conda_forge_mkl_linux-64_conda.lock'
+        COVERAGE: 'true'
+        SHOW_SHORT_SUMMARY: 'true'
+        SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '42'  # default global random seed
+
+# Check compilation with Ubuntu bionic 18.04 LTS and scipy from conda-forge
+- template: build_tools/azure/posix.yml
+  parameters:
+    name: Ubuntu_Bionic
+    vmImage: ubuntu-18.04
+    dependsOn: [git_commit, linting]
+    condition: |
+      and(
+        succeeded(),
+        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]'))
+      )
+    matrix:
+      py38_conda_forge_openblas_ubuntu_1804:
+        DISTRIB: 'conda'
+        LOCK_FILE: './build_tools/azure/py38_conda_forge_openblas_ubuntu_1804_linux-64_conda.lock'
+        COVERAGE: 'false'
+        BUILD_WITH_ICC: 'false'
+        SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '0'  # non-default seed
+
+- template: build_tools/azure/posix.yml
+  parameters:
+    name: Linux
+    vmImage: ubuntu-20.04
+    dependsOn: [linting, git_commit]
+    condition: |
+      and(
+        succeeded(),
+        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]'))
+      )
+    matrix:
+      # Linux environment to test that scikit-learn can be built against
+      # versions of numpy, scipy with ATLAS that comes with Ubuntu Focal 20.04
+      # i.e. numpy 1.17.4 and scipy 1.3.3
+      ubuntu_atlas:
+        DISTRIB: 'ubuntu'
+        LOCK_FILE: './build_tools/azure/ubuntu_atlas_lock.txt'
+        COVERAGE: 'false'
+        SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '1'  # non-default seed
+      # Linux + Python 3.8 build with OpenBLAS
+      py38_conda_defaults_openblas:
+        DISTRIB: 'conda'
+        LOCK_FILE: './build_tools/azure/py38_conda_defaults_openblas_linux-64_conda.lock'
+        SKLEARN_ENABLE_DEBUG_CYTHON_DIRECTIVES: '1'
+        SKLEARN_RUN_FLOAT32_TESTS: '1'
+        SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '2'  # non-default seed
+      # Linux environment to test the latest available dependencies.
+      # It runs tests requiring lightgbm, pandas and PyAMG.
+      pylatest_pip_openblas_pandas:
+        DISTRIB: 'conda-pip-latest'
+        LOCK_FILE: './build_tools/azure/pylatest_pip_openblas_pandas_linux-64_conda.lock'
+        CHECK_PYTEST_SOFT_DEPENDENCY: 'true'
+        TEST_DOCSTRINGS: 'true'
+        CHECK_WARNINGS: 'true'
+        SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '3'  # non-default seed
+
+- template: build_tools/azure/posix-docker.yml
+  parameters:
+    name: Linux_Docker
+    vmImage: ubuntu-20.04
+    dependsOn: [linting, git_commit]
+    condition: |
+      and(
+        succeeded(),
+        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]'))
+      )
+    matrix:
+      debian_atlas_32bit:
+        DOCKER_CONTAINER: 'i386/debian:11.2'
+        DISTRIB: 'debian-32'
+        LOCK_FILE: './build_tools/azure/debian_atlas_32bit_lock.txt'
+        # disable pytest xdist due to unknown bug with 32-bit container
+        PYTEST_XDIST_VERSION: 'none'
+        SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '4'  # non-default seed
+
+- template: build_tools/azure/posix.yml
+  parameters:
+    name: macOS
+    vmImage: macOS-10.15
+    dependsOn: [linting, git_commit]
+    condition: |
+      and(
+        succeeded(),
+        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]'))
+      )
+    matrix:
+      pylatest_conda_forge_mkl:
+        DISTRIB: 'conda'
+        LOCK_FILE: './build_tools/azure/pylatest_conda_forge_mkl_osx-64_conda.lock'
+        SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '5'  # non-default seed
+      pylatest_conda_mkl_no_openmp:
+        DISTRIB: 'conda'
+        LOCK_FILE: './build_tools/azure/pylatest_conda_mkl_no_openmp_osx-64_conda.lock'
+        SKLEARN_TEST_NO_OPENMP: 'true'
+        SKLEARN_SKIP_OPENMP_TEST: 'true'
+        SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '6'  # non-default seed
+
+- template: build_tools/azure/windows.yml
+  parameters:
+    name: Windows
+    vmImage: windows-latest
+    dependsOn: [linting, git_commit]
+    condition: |
+      and(
+        succeeded(),
+        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]'))
+      )
+    matrix:
+      py38_conda_forge_mkl:
+        DISTRIB: 'conda'
+        LOCK_FILE: ./build_tools/azure/py38_conda_forge_mkl_win-64_conda.lock
+        CHECK_WARNINGS: 'true'
+        COVERAGE: 'true'
+        SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '7'  # non-default seed
+      py38_pip_openblas_32bit:
+        DISTRIB: 'pip-windows'
+        PYTHON_VERSION: '3.8'
+        PYTHON_ARCH: '32'
+        LOCK_FILE: ./build_tools/azure/py38_pip_openblas_32bit_lock.txt
+        SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '8'  # non-default seed
