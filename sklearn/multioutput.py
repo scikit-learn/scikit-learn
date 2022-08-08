@@ -6,6 +6,8 @@ a base estimator to be provided in their constructor. The meta-estimator
 extends single output estimators to multioutput estimators.
 """
 
+from abc import ABCMeta, abstractmethod
+
 # Author: Tim Head <betatim@gmail.com>
 # Author: Hugo Bowne-Anderson <hugobowne@gmail.com>
 # Author: Chris Rivera <chris.richard.rivera@gmail.com>
@@ -19,23 +21,22 @@ import numpy as np
 import scipy.sparse as sp
 from joblib import Parallel
 
-from abc import ABCMeta, abstractmethod
-from .base import BaseEstimator, clone, MetaEstimatorMixin
-from .base import RegressorMixin, ClassifierMixin, is_classifier
-from .model_selection import cross_val_predict
-from .utils import check_random_state, _print_elapsed_time
-from .utils.metaestimators import available_if
-from .utils import check_random_state
-from .utils.validation import check_is_fitted
-from .utils.multiclass import check_classification_targets
-from .utils.validation import (
-    check_is_fitted,
-    has_fit_parameter,
-    _check_fit_params,
+from .base import (
+    BaseEstimator,
+    ClassifierMixin,
+    MetaEstimatorMixin,
+    RegressorMixin,
+    clone,
+    is_classifier,
 )
-from .utils.fixes import delayed
+from .model_selection import cross_val_predict
+from .utils import _print_elapsed_time, check_random_state
 from .utils._param_validation import HasMethods
+from .utils.fixes import delayed
 from .utils.metadata_routing import MetadataRouter, MethodMapping, process_routing
+from .utils.metaestimators import available_if
+from .utils.multiclass import check_classification_targets
+from .utils.validation import check_is_fitted
 
 __all__ = [
     "MultiOutputRegressor",
@@ -83,7 +84,6 @@ def _available_if_estimator_has(attr):
 
 
 class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
-
     _parameter_constraints = {
         "estimator": [HasMethods(["fit", "predict"])],
         "n_jobs": [Integral, None],
