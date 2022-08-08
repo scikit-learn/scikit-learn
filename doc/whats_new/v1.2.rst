@@ -150,7 +150,8 @@ Changelog
 - |Enhancement| multilabel-indicator target is supported by
   :class:`ensemble.StackingClassifier`.
   :pr:`20424` by :user:`Nicolas Peretti <nicoperetti>`,
-  :user:`Nestor Navarro <nestornav>`, :user:`Nati Tomattis <natitomattis>`.
+  :user:`Nestor Navarro <nestornav>`, :user:`Nati Tomattis <natitomattis>`,
+  :pr:`24146` by :user:`Vincent Maladiere <Vincent-Maladiere>`.
 
 :mod:`sklearn.decomposition`
 ............................
