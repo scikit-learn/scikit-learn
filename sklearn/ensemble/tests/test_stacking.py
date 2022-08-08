@@ -681,13 +681,16 @@ def test_stacking_classifier_multilabel(stack_method, passthrough):
     y_proba = clf.predict_proba(X_test)
     assert y_proba.shape == y_test.shape
 
-    X_transform = clf.transform(X_test)
+    X_trans = clf.transform(X_test)
     assert (
-        X_transform.shape[1]
+        X_trans.shape[1]
         == len(estimators) * y_test.shape[1] + passthrough * X_test.shape[1]
     )
 
     assert len(clf.classes_) == y_test.shape[1]
+
+    if passthrough:
+        assert_allclose(X_test, X_trans[:, -X_test.shape[1] :])
 
 
 @pytest.mark.parametrize(
