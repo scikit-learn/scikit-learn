@@ -398,16 +398,25 @@ class EstimatorMissingDefaultTags(BaseEstimator):
         del tags["allow_nan"]
         return tags
 
-
-class RequiresPositiveRegressor(LinearRegression):
+class RequiresPositiveXRegressor(LinearRegression):
     def fit(self, X, y):
         X, y = self._validate_data(X, y, multi_output=True)
-        if (X <= 0).any() or (y <= 0).any():
-            raise ValueError("negative values not supported!")
+        if (X <= 0).any():
+            raise ValueError("negative X values not supported!")
         return super().fit(X, y)
 
     def _more_tags(self):
-        return {"requires_positive_X": True, "requires_positive_y": True}
+        return {"requires_positive_X": True}
+
+class RequiresPositiveYRegressor(LinearRegression):
+    def fit(self, X, y):
+        X, y = self._validate_data(X, y, multi_output=True)
+        if (y <= 0).any():
+            raise ValueError("negative y values not supported!")
+        return super().fit(X, y)
+
+    def _more_tags(self):
+        return {"requires_positive_y": True}
 
 
 class PoorScoreLogisticRegression(LogisticRegression):
@@ -571,10 +580,15 @@ def test_check_estimator():
     # doesn't error on binary_only tagged estimator
     check_estimator(TaggedBinaryClassifier())
 
-    # Check regressor with requires_positive_y estimator tag
-    msg = "negative values not supported!"
+    # Check regressor with requires_positive_X estimator tag
+    msg = "negative X values not supported!"
     with raises(ValueError, match=msg):
-        check_estimator(RequiresPositiveRegressor())
+        check_estimator(RequiresPositiveXRegressor())
+
+    # Check regressor with requires_positive_y estimator tag
+    msg = "negative y values not supported!"
+    with raises(ValueError, match=msg):
+        check_estimator(RequiresPositiveYRegressor())
 
     # Does not raise error on classifier with poor_score tag
     check_estimator(PoorScoreLogisticRegression())
