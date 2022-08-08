@@ -237,7 +237,7 @@ def _get_feature_importances(
                 "parameter is deprecated and will be removed in version 1.4. "
                 "To resolve this warning add the optional parameters `X=None, y=None` "
                 "to the definition of your custom `importance_getter`.",
-                category=FutureWarning
+                category=FutureWarning,
             )
     else:
         raise ValueError("`importance_getter` has to be a string or `callable`")
