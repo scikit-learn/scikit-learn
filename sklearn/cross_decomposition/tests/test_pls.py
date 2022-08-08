@@ -1,4 +1,5 @@
 import pytest
+import warnings
 import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_equal, assert_allclose
 
@@ -15,7 +16,6 @@ from sklearn.datasets import make_regression
 from sklearn.utils import check_random_state
 from sklearn.utils.extmath import svd_flip
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.utils._testing import ignore_warnings
 
 
 def assert_matrix_orthogonal(M):
@@ -72,7 +72,12 @@ def test_sanity_check_pls_regression():
     Y = d.target
 
     pls = PLSRegression(n_components=X.shape[1])
-    pls.fit(X, Y)
+    X_trans, _ = pls.fit_transform(X, Y)
+
+    # FIXME: one would expect y_trans == pls.y_scores_ but this is not
+    # the case.
+    # xref: https://github.com/scikit-learn/scikit-learn/issues/22420
+    assert_allclose(X_trans, pls.x_scores_)
 
     expected_x_weights = np.array(
         [
@@ -347,7 +352,6 @@ def test_convergence_fail():
         pls_nipals.fit(X, Y)
 
 
-@pytest.mark.filterwarnings("ignore:.*`scores_` was deprecated")  # 1.1
 @pytest.mark.parametrize("Est", (PLSSVD, PLSRegression, PLSCanonical))
 def test_attibutes_shapes(Est):
     # Make sure attributes are of the correct shape depending on n_components
@@ -360,13 +364,12 @@ def test_attibutes_shapes(Est):
     assert all(
         attr.shape[1] == n_components for attr in (pls.x_weights_, pls.y_weights_)
     )
-    # TODO: remove in 1.1
-    with ignore_warnings(category=FutureWarning):
-        assert all(
-            attr.shape[1] == n_components for attr in (pls.x_scores_, pls.y_scores_)
-        )
 
 
+# TODO(1.3): remove the warning filter
+@pytest.mark.filterwarnings(
+    "ignore:The attribute `coef_` will be transposed in version 1.3"
+)
 @pytest.mark.parametrize("Est", (PLSRegression, PLSCanonical, CCA))
 def test_univariate_equivalence(Est):
     # Ensure 2D Y with 1 column is equivalent to 1D Y
@@ -468,71 +471,16 @@ def test_scale_and_stability(Est, X, Y):
     assert_allclose(Y_s_score, Y_score, atol=1e-4)
 
 
-@pytest.mark.parametrize("Est", (PLSSVD, PLSCanonical, CCA))
-@pytest.mark.parametrize("n_components", (0, 4))
-def test_n_components_bounds(Est, n_components):
-    # n_components should be in [1, min(n_samples, n_features, n_targets)]
-    # TODO: catch error instead of warning in 1.1
+@pytest.mark.parametrize("Estimator", (PLSSVD, PLSRegression, PLSCanonical, CCA))
+def test_n_components_upper_bounds(Estimator):
+    """Check the validation of `n_components` upper bounds for `PLS` regressors."""
     rng = np.random.RandomState(0)
     X = rng.randn(10, 5)
     Y = rng.randn(10, 3)
-    est = Est(n_components=n_components)
-    with pytest.warns(FutureWarning, match="n_components=3 will be used instead"):
+    est = Estimator(n_components=10)
+    err_msg = "`n_components` upper bound is .*. Got 10 instead. Reduce `n_components`."
+    with pytest.raises(ValueError, match=err_msg):
         est.fit(X, Y)
-        # make sure upper bound of rank is used as a fallback
-        assert est.transform(X).shape[1] == 3
-
-
-@pytest.mark.parametrize("n_components", (0, 6))
-def test_n_components_bounds_pls_regression(n_components):
-    # For PLSRegression, the upper bound for n_components is n_features
-    # TODO: catch error instead of warning in 1.1
-    rng = np.random.RandomState(0)
-    X = rng.randn(10, 5)
-    Y = rng.randn(10, 3)
-    est = PLSRegression(n_components=n_components)
-    with pytest.warns(FutureWarning, match="n_components=5 will be used instead"):
-        est.fit(X, Y)
-        # make sure upper bound of rank is used as a fallback
-        assert est.transform(X).shape[1] == 5
-
-
-@pytest.mark.parametrize("Est", (PLSSVD, CCA, PLSCanonical))
-def test_scores_deprecations(Est):
-    # Make sure x_scores_ and y_scores_ are deprecated.
-    # It's not deprecated for PLSRegression because y_score_ is different from
-    # transform(Y_train)
-    # TODO: remove attributes and test in 1.1
-    rng = np.random.RandomState(0)
-    X = rng.randn(10, 5)
-    Y = rng.randn(10, 3)
-    est = Est().fit(X, Y)
-    with pytest.warns(FutureWarning, match="`x_scores_` was deprecated"):
-        assert_allclose(est.x_scores_, est.transform(X))
-    with pytest.warns(FutureWarning, match="`y_scores_` was deprecated"):
-        assert_allclose(est.y_scores_, est.transform(X, Y)[1])
-
-
-@pytest.mark.parametrize("Est", (PLSRegression, PLSCanonical, CCA))
-def test_norm_y_weights_deprecation(Est):
-    rng = np.random.RandomState(0)
-    X = rng.randn(10, 5)
-    Y = rng.randn(10, 3)
-    est = Est().fit(X, Y)
-    with pytest.warns(FutureWarning, match="`norm_y_weights` was deprecated"):
-        est.norm_y_weights
-
-
-# TODO: Remove test in 1.1
-@pytest.mark.parametrize("Estimator", (PLSRegression, PLSCanonical, CCA, PLSSVD))
-@pytest.mark.parametrize("attribute", ("x_mean_", "y_mean_", "x_std_", "y_std_"))
-def test_mean_and_std_deprecation(Estimator, attribute):
-    rng = np.random.RandomState(0)
-    X = rng.randn(10, 5)
-    Y = rng.randn(10, 3)
-    estimator = Estimator().fit(X, Y)
-    with pytest.warns(FutureWarning, match=f"`{attribute}` was deprecated"):
-        getattr(estimator, attribute)
 
 
 @pytest.mark.parametrize("n_samples, n_features", [(100, 10), (100, 200)])
@@ -584,11 +532,10 @@ def test_loadings_converges():
 
     cca = CCA(n_components=10, max_iter=500)
 
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", ConvergenceWarning)
+
         cca.fit(X, y)
-    # ConvergenceWarning should not be raised
-    if len(record) > 0:
-        pytest.fail(f"Unexpected warning: {str(record[0].message)}")
 
     # Loadings converges to reasonable values
     assert np.all(np.abs(cca.x_loadings_) < 1)
@@ -607,6 +554,56 @@ def test_pls_constant_y():
         pls.fit(x, y)
 
     assert_allclose(pls.x_rotations_, 0)
+
+
+@pytest.mark.parametrize("PLSEstimator", [PLSRegression, PLSCanonical, CCA])
+def test_pls_coef_shape(PLSEstimator):
+    """Check the shape of `coef_` attribute.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/12410
+    """
+    d = load_linnerud()
+    X = d.data
+    Y = d.target
+
+    pls = PLSEstimator(copy=True).fit(X, Y)
+
+    # TODO(1.3): remove the warning check
+    warning_msg = "The attribute `coef_` will be transposed in version 1.3"
+    with pytest.warns(FutureWarning, match=warning_msg):
+        assert pls.coef_.shape == (X.shape[1], Y.shape[1])
+
+    # Next accesses do not warn
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", FutureWarning)
+        pls.coef_
+
+    # TODO(1.3): rename `_coef_` to `coef_`
+    assert pls._coef_.shape == (Y.shape[1], X.shape[1])
+
+
+# TODO (1.3): remove the filterwarnings and adapt the dot product between `X_trans` and
+# `pls.coef_`
+@pytest.mark.filterwarnings("ignore:The attribute `coef_` will be transposed")
+@pytest.mark.parametrize("scale", [True, False])
+@pytest.mark.parametrize("PLSEstimator", [PLSRegression, PLSCanonical, CCA])
+def test_pls_prediction(PLSEstimator, scale):
+    """Check the behaviour of the prediction function."""
+    d = load_linnerud()
+    X = d.data
+    Y = d.target
+
+    pls = PLSEstimator(copy=True, scale=scale).fit(X, Y)
+    Y_pred = pls.predict(X, copy=True)
+
+    y_mean = Y.mean(axis=0)
+    X_trans = X - X.mean(axis=0)
+    if scale:
+        X_trans /= X.std(axis=0, ddof=1)
+
+    assert_allclose(pls.intercept_, y_mean)
+    assert_allclose(Y_pred, X_trans @ pls.coef_ + pls.intercept_)
 
 
 @pytest.mark.parametrize("Klass", [CCA, PLSSVD, PLSRegression, PLSCanonical])

@@ -5,6 +5,7 @@
 
 import pytest
 import numpy as np
+from numpy.testing import assert_array_equal
 import scipy.sparse as sparse
 
 from sklearn.base import BaseEstimator
@@ -31,6 +32,7 @@ from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.neural_network import MLPClassifier
 from sklearn.preprocessing import scale
 
 from sklearn.ensemble import StackingClassifier
@@ -45,8 +47,14 @@ from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_allclose_dense_sparse
 from sklearn.utils._testing import ignore_warnings
 
-X_diabetes, y_diabetes = load_diabetes(return_X_y=True)
-X_iris, y_iris = load_iris(return_X_y=True)
+from sklearn.exceptions import NotFittedError
+
+from unittest.mock import Mock
+
+diabetes = load_diabetes()
+X_diabetes, y_diabetes = diabetes.data, diabetes.target
+iris = load_iris()
+X_iris, y_iris = iris.data, iris.target
 X_multilabel_r, y_multilabel_r = make_multilabel_classification(
     n_classes=3, random_state=42
 )
@@ -278,14 +286,13 @@ class NoWeightClassifier(ClassifierMixin, BaseEstimator):
 @pytest.mark.parametrize(
     "y, params, type_err, msg_err",
     [
-        (y_iris, {"estimators": None}, ValueError, "Invalid 'estimators' attribute,"),
         (y_iris, {"estimators": []}, ValueError, "Invalid 'estimators' attribute,"),
         (
             y_iris,
             {
                 "estimators": [
                     ("lr", LogisticRegression()),
-                    ("svm", SVC(max_iter=5e4)),
+                    ("svm", SVC(max_iter=50_000)),
                 ],
                 "stack_method": "predict_proba",
             },
@@ -308,7 +315,7 @@ class NoWeightClassifier(ClassifierMixin, BaseEstimator):
             {
                 "estimators": [
                     ("lr", LogisticRegression()),
-                    ("cor", LinearSVC(max_iter=5e4)),
+                    ("cor", LinearSVC(max_iter=50_000)),
                 ],
                 "final_estimator": NoWeightClassifier(),
             },
@@ -326,12 +333,6 @@ def test_stacking_classifier_error(y, params, type_err, msg_err):
 @pytest.mark.parametrize(
     "y, params, type_err, msg_err",
     [
-        (
-            y_diabetes,
-            {"estimators": None},
-            ValueError,
-            "Invalid 'estimators' attribute,",
-        ),
         (y_diabetes, {"estimators": []}, ValueError, "Invalid 'estimators' attribute,"),
         (
             y_diabetes,
@@ -406,8 +407,8 @@ def test_stacking_classifier_stratify_default():
     # check that we stratify the classes for the default CV
     clf = StackingClassifier(
         estimators=[
-            ("lr", LogisticRegression(max_iter=1e4)),
-            ("svm", LinearSVC(max_iter=1e4)),
+            ("lr", LogisticRegression(max_iter=10_000)),
+            ("svm", LinearSVC(max_iter=10_000)),
         ]
     )
     # since iris is not shuffled, a simple k-fold would not contain the
@@ -536,6 +537,89 @@ def test_stacking_cv_influence(stacker, X, y):
 
 
 @pytest.mark.parametrize(
+    "Stacker, Estimator, stack_method, final_estimator, X, y",
+    [
+        (
+            StackingClassifier,
+            DummyClassifier,
+            "predict_proba",
+            LogisticRegression(random_state=42),
+            X_iris,
+            y_iris,
+        ),
+        (
+            StackingRegressor,
+            DummyRegressor,
+            "predict",
+            LinearRegression(),
+            X_diabetes,
+            y_diabetes,
+        ),
+    ],
+)
+def test_stacking_prefit(Stacker, Estimator, stack_method, final_estimator, X, y):
+    """Check the behaviour of stacking when `cv='prefit'`"""
+    X_train1, X_train2, y_train1, y_train2 = train_test_split(
+        X, y, random_state=42, test_size=0.5
+    )
+    estimators = [
+        ("d0", Estimator().fit(X_train1, y_train1)),
+        ("d1", Estimator().fit(X_train1, y_train1)),
+    ]
+
+    # mock out fit and stack_method to be asserted later
+    for _, estimator in estimators:
+        estimator.fit = Mock()
+        stack_func = getattr(estimator, stack_method)
+        setattr(estimator, stack_method, Mock(side_effect=stack_func))
+
+    stacker = Stacker(
+        estimators=estimators, cv="prefit", final_estimator=final_estimator
+    )
+    stacker.fit(X_train2, y_train2)
+
+    assert stacker.estimators_ == [estimator for _, estimator in estimators]
+    # fit was not called again
+    assert all(estimator.fit.call_count == 0 for estimator in stacker.estimators_)
+
+    # stack method is called with the proper inputs
+    for estimator in stacker.estimators_:
+        stack_func_mock = getattr(estimator, stack_method)
+        stack_func_mock.assert_called_with(X_train2)
+
+
+@pytest.mark.parametrize(
+    "stacker, X, y",
+    [
+        (
+            StackingClassifier(
+                estimators=[("lr", LogisticRegression()), ("svm", SVC())],
+                cv="prefit",
+            ),
+            X_iris,
+            y_iris,
+        ),
+        (
+            StackingRegressor(
+                estimators=[
+                    ("lr", LinearRegression()),
+                    ("svm", LinearSVR()),
+                ],
+                cv="prefit",
+            ),
+            X_diabetes,
+            y_diabetes,
+        ),
+    ],
+)
+def test_stacking_prefit_error(stacker, X, y):
+    # check that NotFittedError is raised
+    # if base estimators are not fitted when cv="prefit"
+    with pytest.raises(NotFittedError):
+        stacker.fit(X, y)
+
+
+@pytest.mark.parametrize(
     "make_dataset, Stacking, Estimator",
     [
         (make_classification, StackingClassifier, LogisticRegression),
@@ -568,7 +652,7 @@ def test_stacking_without_n_features_in(make_dataset, Stacking, Estimator):
         stacker.n_features_in_
 
 
-@pytest.mark.parametrize("stack_method", ["auto", "predict"])
+@pytest.mark.parametrize("stack_method", ["auto", "predict", "predict_proba"])
 @pytest.mark.parametrize("passthrough", [False, True])
 def test_stacking_classifier_multilabel(stack_method, passthrough):
     X_train, X_test, y_train, y_test = train_test_split(
@@ -576,6 +660,7 @@ def test_stacking_classifier_multilabel(stack_method, passthrough):
     )
 
     estimators = [
+        ("mlp", MLPClassifier()),
         ("knnc", KNeighborsClassifier()),
         ("dcs", DummyClassifier(strategy="stratified", random_state=42)),
         ("dcu", DummyClassifier(strategy="uniform", random_state=42)),
@@ -589,35 +674,93 @@ def test_stacking_classifier_multilabel(stack_method, passthrough):
         stack_method=stack_method,
     )
     clf.fit(X_train, y_train)
-    clf.predict(X_test)
-    clf.predict_proba(X_test)
-    sc = clf.score(X_test, y_test)
-    # (passthrough & stack_method == "predict") => (sc == 0.44)
-    assert not passthrough or stack_method != "predict" or sc == pytest.approx(0.44)
 
-    # (passthrough & stack_method != "predict") => (sc == 0.6)
-    assert not passthrough or stack_method == "predict" or sc == pytest.approx(0.6)
+    y_pred = clf.predict(X_test)
+    assert y_pred.shape == y_test.shape
 
-    # (not passthrough & stack_method == "predict") => (sc == 0.2)
-    assert passthrough or stack_method != "predict" or sc == pytest.approx(0.2)
+    y_proba = clf.predict_proba(X_test)
+    assert y_proba.shape == y_test.shape
 
-    # (not passthrough & stack_method != "predict") => (sc == 0.4)
-    assert passthrough or stack_method == "predict" or sc == pytest.approx(0.4)
+    X_transform = clf.transform(X_test)
+    assert (
+        X_transform.shape[1]
+        == len(estimators) * y_test.shape[1] + passthrough * X_test.shape[1]
+    )
 
-    X_trans = clf.transform(X_test)
-    expected_column = X_trans.shape[1]
+    assert len(clf.classes_) == y_test.shape[1]
 
-    # (passthrough & stack_method == "predict") => (columns == 29)
-    assert not passthrough or stack_method != "predict" or expected_column == 29
 
-    # (passthrough & stack_method != "predict") => (sc == 38)
-    assert not passthrough or stack_method == "predict" or expected_column == 38
+@pytest.mark.parametrize(
+    "stacker, feature_names, X, y, expected_names",
+    [
+        (
+            StackingClassifier(
+                estimators=[
+                    ("lr", LogisticRegression(random_state=0)),
+                    ("svm", LinearSVC(random_state=0)),
+                ]
+            ),
+            iris.feature_names,
+            X_iris,
+            y_iris,
+            [
+                "stackingclassifier_lr0",
+                "stackingclassifier_lr1",
+                "stackingclassifier_lr2",
+                "stackingclassifier_svm0",
+                "stackingclassifier_svm1",
+                "stackingclassifier_svm2",
+            ],
+        ),
+        (
+            StackingClassifier(
+                estimators=[
+                    ("lr", LogisticRegression(random_state=0)),
+                    ("other", "drop"),
+                    ("svm", LinearSVC(random_state=0)),
+                ]
+            ),
+            iris.feature_names,
+            X_iris[:100],
+            y_iris[:100],  # keep only classes 0 and 1
+            [
+                "stackingclassifier_lr",
+                "stackingclassifier_svm",
+            ],
+        ),
+        (
+            StackingRegressor(
+                estimators=[
+                    ("lr", LinearRegression()),
+                    ("svm", LinearSVR(random_state=0)),
+                ]
+            ),
+            diabetes.feature_names,
+            X_diabetes,
+            y_diabetes,
+            [
+                "stackingregressor_lr",
+                "stackingregressor_svm",
+            ],
+        ),
+    ],
+    ids=[
+        "StackingClassifier_multiclass",
+        "StackingClassifier_binary",
+        "StackingRegressor",
+    ],
+)
+@pytest.mark.parametrize("passthrough", [True, False])
+def test_get_feature_names_out(
+    stacker, feature_names, X, y, expected_names, passthrough
+):
+    """Check get_feature_names_out works for stacking."""
 
-    # (not passthrough & stack_method == "predict") => (sc == 9)
-    assert passthrough or stack_method != "predict" or expected_column == 9
-
-    # (not passthrough & stack_method != "predict") => (sc == 18)
-    assert passthrough or stack_method == "predict" or expected_column == 18
+    stacker.set_params(passthrough=passthrough)
+    stacker.fit(scale(X), y)
 
     if passthrough:
-        assert_allclose(X_test, X_trans[:, -20:])
+        expected_names = np.concatenate((expected_names, feature_names))
+
+    names_out = stacker.get_feature_names_out(feature_names)
+    assert_array_equal(names_out, expected_names)

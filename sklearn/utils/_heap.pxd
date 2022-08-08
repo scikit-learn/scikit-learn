@@ -4,11 +4,6 @@ from cython cimport floating
 
 from ._typedefs cimport ITYPE_t
 
-cdef int simultaneous_sort(
-    floating* dist,
-    ITYPE_t* idx,
-    ITYPE_t size
-) nogil
 
 cdef int heap_push(
     floating* values,

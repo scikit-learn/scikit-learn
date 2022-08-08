@@ -37,7 +37,7 @@ _ = ax.text2D(0.8, 0.05, s="n_samples=1500", transform=ax.transAxes)
 # Computing the LLE and t-SNE embeddings, we find that LLE seems to unroll the
 # Swiss Roll pretty effectively. t-SNE on the other hand, is able
 # to preserve the general structure of the data, but, poorly represents the
-# continous nature of our original data. Instead, it seems to unnecessarily
+# continuous nature of our original data. Instead, it seems to unnecessarily
 # clump sections of points together.
 
 sr_lle, sr_err = manifold.locally_linear_embedding(
