@@ -226,11 +226,19 @@ def _get_feature_importances(
         importances = getter(estimator)
 
     elif callable(getter):
+        # TODO(1.4): Replace the if-else below with
+        # importances = getter(estimator, X, y)
         if len(signature(getter).parameters) == 3:
             importances = getter(estimator, X, y)
         else:
             importances = getter(estimator)
-
+            warnings.warn(
+                "The signature of the parameter `importance_getter` with a single "
+                "parameter is deprecated and will be removed in version 1.4. "
+                "To resolve this warning add the optional parameters `X=None, y=None` "
+                "to the definition of your custom `importance_getter`.",
+                category=FutureWarning
+            )
     else:
         raise ValueError("`importance_getter` has to be a string or `callable`")
 
