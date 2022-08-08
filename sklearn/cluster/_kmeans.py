@@ -1802,6 +1802,12 @@ class MiniBatchKMeans(_BaseKMeans):
     -----
     See https://www.eecs.tufts.edu/~dsculley/papers/fastkmeans.pdf
 
+    When there are too few points in the dataset, some centers may be
+    duplicated, which means that a proper clustering in terms of the number
+    of requesting clusters and the number of returned clusters will not
+    always match. One solution is to set `reassignment_ratio=0`, which
+    prevents reassignments of clusters that are too small.
+
     Examples
     --------
     >>> from sklearn.cluster import MiniBatchKMeans

@@ -167,6 +167,11 @@ class EmpiricalCovariance(BaseEstimator):
     array([0.0622..., 0.0193...])
     """
 
+    _parameter_constraints = {
+        "store_precision": ["boolean"],
+        "assume_centered": ["boolean"],
+    }
+
     def __init__(self, *, store_precision=True, assume_centered=False):
         self.store_precision = store_precision
         self.assume_centered = assume_centered
@@ -223,6 +228,7 @@ class EmpiricalCovariance(BaseEstimator):
         self : object
             Returns the instance itself.
         """
+        self._validate_params()
         X = self._validate_data(X)
         if self.assume_centered:
             self.location_ = np.zeros(X.shape[1])

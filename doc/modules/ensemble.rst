@@ -681,7 +681,7 @@ approximated as follows:
 .. note::
 
   Briefly, a first-order Taylor approximation says that
-  :math:`l(z) \approx l(a) + (z - a) \frac{\partial l(a)}{\partial a}`.
+  :math:`l(z) \approx l(a) + (z - a) \frac{\partial l}{\partial z}(a)`.
   Here, :math:`z` corresponds to :math:`F_{m - 1}(x_i) + h_m(x_i)`, and
   :math:`a` corresponds to :math:`F_{m-1}(x_i)`
 
