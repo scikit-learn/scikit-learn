@@ -225,6 +225,11 @@ Changelog
   instead of failing with a low-level error message at predict-time.
   :pr:`23874` by :user:`Juan Gomez <2357juan>`.
 
+- |Fix| Set `n_jobs=None` by default (instead of `1`) for
+  :class:`neighbors.KNeighborsTransformer` and
+  :class:`neighbors.RadiusNeighborsTransformer`.
+  :pr:`24075` by :user:`Valentin Laurent <Valentin-Laurent>`.
+
 :mod:`sklearn.svm`
 ..................
 
