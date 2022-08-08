@@ -561,6 +561,7 @@ class WeightedMetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
         params = process_routing(self, "fit", fit_params, sample_weight=sample_weight)
         check_metadata(self, sample_weight=sample_weight)
         self.estimator_ = clone(self.estimator).fit(X, y, **params.estimator.fit)
+        return self
 
     def get_metadata_routing(self):
         router = (

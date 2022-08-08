@@ -220,10 +220,7 @@ def test_gridsearch():
     clf.fit(iris.data, iris.target)
 
     # AdaBoost regression
-    boost = AdaBoostRegressor(
-        base_estimator=DecisionTreeRegressor(),
-        random_state=0,
-    )
+    boost = AdaBoostRegressor(base_estimator=DecisionTreeRegressor(), random_state=0)
     parameters = {"n_estimators": (1, 2), "base_estimator__max_depth": (1, 2)}
     clf = GridSearchCV(boost, parameters)
     clf.fit(diabetes.data, diabetes.target)
