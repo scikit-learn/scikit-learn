@@ -277,6 +277,13 @@ Changelog
   :pr:`18805` by :user:`hongshaoyang`,
   :pr:`22269` by :user:`Meekail Zain <micky774>`.
 
+:mod:`sklearn.preprocessing`
+............................
+
+- |Enhancement| A new parameter `sparse` was added to :class:`SplineTransformer`. If set
+  to `True`, the spline transformer returns a sparse csc matrix.
+  :pr:`24145` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 Code and Documentation Contributors
 -----------------------------------
 
