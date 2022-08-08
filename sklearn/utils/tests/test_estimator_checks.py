@@ -398,6 +398,7 @@ class EstimatorMissingDefaultTags(BaseEstimator):
         del tags["allow_nan"]
         return tags
 
+
 class RequiresPositiveXRegressor(LinearRegression):
     def fit(self, X, y):
         X, y = self._validate_data(X, y, multi_output=True)
@@ -407,6 +408,7 @@ class RequiresPositiveXRegressor(LinearRegression):
 
     def _more_tags(self):
         return {"requires_positive_X": True}
+
 
 class RequiresPositiveYRegressor(LinearRegression):
     def fit(self, X, y):
