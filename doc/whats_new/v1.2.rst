@@ -280,8 +280,9 @@ Changelog
 :mod:`sklearn.preprocessing`
 ............................
 
-- |Enhancement| A new parameter `sparse` was added to :class:`SplineTransformer`. If set
-  to `True`, the spline transformer returns a sparse csc matrix.
+- |Enhancement| A new parameter `sparse` was added to :class:`SplineTransformer`,
+  available with scipy version at least 1.8. If set to `True`, the spline transformer
+  returns a sparse csc matrix.
   :pr:`24145` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 Code and Documentation Contributors
