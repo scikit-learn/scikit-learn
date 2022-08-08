@@ -745,7 +745,6 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
         check_classification_targets(y)
         cls, y = np.unique(y_, return_inverse=True)
         self.class_weight_ = compute_class_weight(self.class_weight, classes=cls, y=y_)
-        # find the number of class after trimming
         if len(cls) < 2:
             raise ValueError(
                 "The number of classes has to be greater than one; got %d class"
