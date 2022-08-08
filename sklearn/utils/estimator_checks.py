@@ -2126,11 +2126,14 @@ def check_classifiers_one_label_sample_weights(name, classifier_orig):
     # check that classifiers accepting sample_weight fit or
     # throws an ValueError with explicit message if
     # the problem is reduce to one class.
-    error_fit = ("{name} failed when fitted on one label after sample_weight "
-                 "trimming. Error message is not explicit, it should have "
-                 "'class'.").format(name=name)
-    error_predict = ("{name} prediction results should only output the "
-                     "remaining class.").format(name=name)
+    error_fit = (
+        "{name} failed when fitted on one label after sample_weight "
+        "trimming. Error message is not explicit, it should have "
+        "'class'."
+    ).format(name=name)
+    error_predict = (
+        "{name} prediction results should only output the remaining class."
+    ).format(name=name)
     classifier = clone(classifier_orig)
     rnd = np.random.RandomState(0)
     # X should be square for test on SVC with precomputed kernel.
@@ -2152,12 +2155,12 @@ def check_classifiers_one_label_sample_weights(name, classifier_orig):
             if not re.search(r"\bsample_weight\b", repr(e)):
                 raise e
             return
-        except Exception as exc:
+        except Exception:
             raise
         # predict
         try:
             prediction = classifier.predict(X_test)
-        except Exception as exc:
+        except Exception:
             raise
         assert_array_equal(prediction, np.ones(10), err_msg=error_predict)
 

@@ -5,6 +5,7 @@
 import unittest
 import sys
 import warnings
+from io import StringIO
 
 import numpy as np
 import scipy.sparse as sp
@@ -314,10 +315,9 @@ class NotInvariantSampleOrder(BaseEstimator):
 class OneClassErrorClassifier(BaseBadClassifier):
     def fit(self, X, y):
         # Convert data
-        X, y = check_X_y(X, y,
-                         accept_sparse=("csr", "csc"),
-                         multi_output=True,
-                         y_numeric=True)
+        X, y = check_X_y(
+            X, y, accept_sparse=("csr", "csc"), multi_output=True, y_numeric=True
+        )
         cls, y = np.unique(y, return_inverse=True)
         # find the number of class after trimming
         if cls.shape[0] < 2:
@@ -331,10 +331,9 @@ class OneClassErrorClassifier(BaseBadClassifier):
 class OneClassSampleErrorClassifier(BaseBadClassifier):
     def fit(self, X, y, sample_weight=None):
         # Convert data
-        X, y = check_X_y(X, y,
-                         accept_sparse=("csr", "csc"),
-                         multi_output=True,
-                         y_numeric=True)
+        X, y = check_X_y(
+            X, y, accept_sparse=("csr", "csc"), multi_output=True, y_numeric=True
+        )
 
         cls, y = np.unique(y, return_inverse=True)
         nb_cls = cls.shape[0]
@@ -357,16 +356,14 @@ class OneClassSampleErrorClassifier(BaseBadClassifier):
 
 
 class OneClassSampleErrorClassifierPredict(BaseBadClassifier):
-
     def __init__(self, flag=False):
         self.flag = flag
 
     def fit(self, X, y, sample_weight=None):
         # Convert data
-        X, y = check_X_y(X, y,
-                         accept_sparse=("csr", "csc"),
-                         multi_output=True,
-                         y_numeric=True)
+        X, y = check_X_y(
+            X, y, accept_sparse=("csr", "csc"), multi_output=True, y_numeric=True
+        )
 
         cls, y = np.unique(y, return_inverse=True)
         nb_cls = cls.shape[0]
@@ -399,11 +396,11 @@ def assert_raises_with_message_in_print(estimator, msg):
     sys.stdout = string_buffer
     try:
         check_estimator(estimator)
-    except Exception as e:
+    except Exception:
         pass
     finally:
         sys.stdout = old_stdout
-    assert_true(msg in string_buffer.getvalue())
+    assert msg in string_buffer.getvalue()
 
 
 class LargeSparseNotSupportedClassifier(BaseEstimator):
