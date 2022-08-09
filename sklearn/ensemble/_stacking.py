@@ -114,12 +114,13 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
                     and self._type_of_target == "multilabel-indicator"
                     and isinstance(preds, list)
                 ):
-                    # `preds` is here a list of n_targets 2D ndarrays of 2 columns.
-                    # The two columns contains the probabilities of the negative
-                    # and positive classes respectively.
-                    # For binary classification, we only work with probabilities
-                    # of the positive class (the second column), hence we drop
-                    # the first column.
+                    # `preds` is here a list of n_targets 2D ndarrays of 
+                    # `n_classes` columns. The k-th column contains the
+                    # probabilities of the samples belonging the k-th class.
+                    #
+                    # Since those probabilities must sum to one for each sample,
+                    # we can work with probabilities of `n_classes - 1` classes.
+                    # Hence we drop the first column.
                     for pred in preds:
                         X_meta.append(pred[:, 1:])
                 elif (
