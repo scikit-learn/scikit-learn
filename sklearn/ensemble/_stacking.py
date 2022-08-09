@@ -5,6 +5,7 @@
 
 from abc import ABCMeta, abstractmethod
 from copy import deepcopy
+from numbers import Integral
 
 import numpy as np
 from joblib import Parallel
@@ -28,16 +29,39 @@ from ..model_selection import check_cv
 from ..preprocessing import LabelEncoder
 
 from ..utils import Bunch
-from ..utils.metaestimators import if_delegate_has_method
+from ..utils.metaestimators import available_if
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
 from ..utils.validation import column_or_1d
 from ..utils.fixes import delayed
+from ..utils._param_validation import HasMethods, StrOptions
 from ..utils.validation import _check_feature_names_in
+
+
+def _estimator_has(attr):
+    """Check if we can delegate a method to the underlying estimator.
+
+    First, we check the first fitted final estimator if available, otherwise we
+    check the unfitted final estimator.
+    """
+    return lambda self: (
+        hasattr(self.final_estimator_, attr)
+        if hasattr(self, "final_estimator_")
+        else hasattr(self.final_estimator, attr)
+    )
 
 
 class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCMeta):
     """Base class for stacking method."""
+
+    _parameter_constraints = {
+        "estimators": [list],
+        "final_estimator": [None, HasMethods("fit")],
+        "cv": ["cv_object", StrOptions({"prefit"})],
+        "n_jobs": [None, Integral],
+        "passthrough": ["boolean"],
+        "verbose": ["verbose"],
+    }
 
     @abstractmethod
     def __init__(
@@ -148,6 +172,9 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
         -------
         self : object
         """
+
+        self._validate_params()
+
         # all_estimators contains all estimators, the one to be fitted and the
         # 'drop' string.
         names, all_estimators = self._validate_estimators()
@@ -304,7 +331,7 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
 
         return np.asarray(meta_names, dtype=object)
 
-    @if_delegate_has_method(delegate="final_estimator_")
+    @available_if(_estimator_has("predict"))
     def predict(self, X, **predict_params):
         """Predict target for X.
 
@@ -505,6 +532,13 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
     0.9...
     """
 
+    _parameter_constraints = {
+        **_BaseStacking._parameter_constraints,  # type: ignore
+        "stack_method": [
+            StrOptions({"auto", "predict_proba", "decision_function", "predict"})
+        ],
+    }
+
     def __init__(
         self,
         estimators,
@@ -562,7 +596,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         self.classes_ = self._le.classes_
         return super().fit(X, self._le.transform(y), sample_weight)
 
-    @if_delegate_has_method(delegate="final_estimator_")
+    @available_if(_estimator_has("predict"))
     def predict(self, X, **predict_params):
         """Predict target for X.
 
@@ -586,7 +620,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         y_pred = super().predict(X, **predict_params)
         return self._le.inverse_transform(y_pred)
 
-    @if_delegate_has_method(delegate="final_estimator_")
+    @available_if(_estimator_has("predict_proba"))
     def predict_proba(self, X):
         """Predict class probabilities for `X` using the final estimator.
 
@@ -605,7 +639,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         check_is_fitted(self)
         return self.final_estimator_.predict_proba(self.transform(X))
 
-    @if_delegate_has_method(delegate="final_estimator_")
+    @available_if(_estimator_has("decision_function"))
     def decision_function(self, X):
         """Decision function for samples in `X` using the final estimator.
 

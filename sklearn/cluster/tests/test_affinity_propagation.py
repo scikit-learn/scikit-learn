@@ -5,9 +5,11 @@ Testing for Clustering methods
 
 import numpy as np
 import pytest
+import warnings
+
 from scipy.sparse import csr_matrix
 
-from sklearn.exceptions import ConvergenceWarning
+from sklearn.exceptions import ConvergenceWarning, NotFittedError
 from sklearn.utils._testing import assert_array_equal
 
 from sklearn.cluster import AffinityPropagation
@@ -73,26 +75,10 @@ def test_affinity_propagation_affinity_shape():
         affinity_propagation(S[:, :-1])
 
 
-@pytest.mark.parametrize(
-    "input, params, err_type, err_msg",
-    [
-        (X, {"damping": 0}, ValueError, "damping == 0, must be >= 0.5"),
-        (X, {"damping": 2}, ValueError, "damping == 2, must be < 1"),
-        (X, {"max_iter": 0}, ValueError, "max_iter == 0, must be >= 1."),
-        (X, {"convergence_iter": 0}, ValueError, "convergence_iter == 0, must be >= 1"),
-        (X, {"affinity": "unknown"}, ValueError, "Affinity must be"),
-        (
-            csr_matrix((3, 3)),
-            {"affinity": "precomputed"},
-            TypeError,
-            "A sparse matrix was passed, but dense data is required",
-        ),
-    ],
-)
-def test_affinity_propagation_params_validation(input, params, err_type, err_msg):
-    """Check the parameters validation in `AffinityPropagation`."""
-    with pytest.raises(err_type, match=err_msg):
-        AffinityPropagation(**params).fit(input)
+def test_affinity_propagation_precomputed_with_sparse_input():
+    err_msg = "A sparse matrix was passed, but dense data is required"
+    with pytest.raises(TypeError, match=err_msg):
+        AffinityPropagation(affinity="precomputed").fit(csr_matrix((3, 3)))
 
 
 def test_affinity_propagation_predict():
@@ -107,14 +93,14 @@ def test_affinity_propagation_predict_error():
     # Test exception in AffinityPropagation.predict
     # Not fitted.
     af = AffinityPropagation(affinity="euclidean")
-    with pytest.raises(ValueError):
+    with pytest.raises(NotFittedError):
         af.predict(X)
 
     # Predict not supported when affinity="precomputed".
     S = np.dot(X, X.T)
     af = AffinityPropagation(affinity="precomputed", random_state=57)
     af.fit(S)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="expecting 60 features as input"):
         af.predict(X)
 
 
@@ -154,11 +140,11 @@ def test_affinity_propagation_equal_mutual_similarities():
     assert_array_equal([0, 0], labels)
 
     # setting different preferences
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
         cluster_center_indices, labels = affinity_propagation(
             S, preference=[-20, -10], random_state=37
         )
-    assert not [w.message for w in record]
 
     # expect one cluster, with highest-preference sample as exemplar
     assert_array_equal([1], cluster_center_indices)
@@ -245,9 +231,9 @@ def test_affinity_propagation_convergence_warning_dense_sparse(centers):
     ap = AffinityPropagation(random_state=46)
     ap.fit(X, y)
     ap.cluster_centers_ = centers
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", ConvergenceWarning)
         assert_array_equal(ap.predict(X), np.zeros(X.shape[0], dtype=int))
-    assert not [w.message for w in record]
 
 
 def test_affinity_propagation_float32():

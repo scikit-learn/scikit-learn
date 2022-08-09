@@ -12,6 +12,7 @@
 # License: BSD 3 clause
 
 from abc import ABC, abstractmethod
+from numbers import Integral, Real
 import warnings
 
 import numpy as np
@@ -34,6 +35,10 @@ from ..utils import check_array
 from ..utils import check_random_state
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.validation import _is_arraylike_not_scalar
+from ..utils._param_validation import Hidden
+from ..utils._param_validation import Interval
+from ..utils._param_validation import StrOptions
+from ..utils._param_validation import validate_params
 from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..utils._readonly_array_wrapper import ReadonlyArrayWrapper
 from ..exceptions import ConvergenceWarning
@@ -55,6 +60,15 @@ from ._k_means_elkan import elkan_iter_chunked_sparse
 # Initialization heuristic
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "n_clusters": [Interval(Integral, 1, None, closed="left")],
+        "x_squared_norms": ["array-like", None],
+        "random_state": ["random_state"],
+        "n_local_trials": [Interval(Integral, 1, None, closed="left"), None],
+    }
+)
 def kmeans_plusplus(
     X, n_clusters, *, x_squared_norms=None, random_state=None, n_local_trials=None
 ):
@@ -114,7 +128,6 @@ def kmeans_plusplus(
     >>> indices
     array([4, 2])
     """
-
     # Check data
     check_array(X, accept_sparse="csr", dtype=[np.float64, np.float32])
 
@@ -133,12 +146,6 @@ def kmeans_plusplus(
         raise ValueError(
             f"The length of x_squared_norms {x_squared_norms.shape[0]} should "
             f"be equal to the length of n_samples {X.shape[0]}."
-        )
-
-    if n_local_trials is not None and n_local_trials < 1:
-        raise ValueError(
-            f"n_local_trials is set to {n_local_trials} but should be an "
-            "integer value greater than zero."
         )
 
     random_state = check_random_state(random_state)
@@ -260,13 +267,35 @@ def _tolerance(X, tol):
     return np.mean(variances) * tol
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "n_clusters": [Interval(Integral, 1, None, closed="left")],
+        "sample_weight": ["array-like", None],
+        "init": [StrOptions({"k-means++", "random"}), callable, "array-like"],
+        "n_init": [
+            StrOptions({"auto"}),
+            Hidden(StrOptions({"warn"})),
+            Interval(Integral, 1, None, closed="left"),
+        ],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
+        "verbose": [Interval(Integral, 0, None, closed="left"), bool],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "random_state": ["random_state"],
+        "copy_x": [bool],
+        "algorithm": [
+            StrOptions({"lloyd", "elkan", "auto", "full"}, deprecated={"auto", "full"})
+        ],
+        "return_n_iter": [bool],
+    }
+)
 def k_means(
     X,
     n_clusters,
     *,
     sample_weight=None,
     init="k-means++",
-    n_init=10,
+    n_init="warn",
     max_iter=300,
     verbose=False,
     tol=1e-4,
@@ -308,10 +337,19 @@ def k_means(
         - If a callable is passed, it should take arguments `X`, `n_clusters` and a
           random state and return an initialization.
 
-    n_init : int, default=10
+    n_init : 'auto' or int, default=10
         Number of time the k-means algorithm will be run with different
         centroid seeds. The final results will be the best output of
-        `n_init` consecutive runs in terms of inertia.
+        n_init consecutive runs in terms of inertia.
+
+        When `n_init='auto'`, the number of runs will be 10 if using
+        `init='random'`, and 1 if using `init='kmeans++'`.
+
+        .. versionadded:: 1.2
+           Added 'auto' option for `n_init`.
+
+        .. versionchanged:: 1.4
+           Default value for `n_init` will change from 10 to `'auto'` in version 1.4.
 
     max_iter : int, default=300
         Maximum number of iterations of the k-means algorithm to run.
@@ -479,7 +517,15 @@ def _kmeans_single_elkan(
         elkan_iter = elkan_iter_chunked_dense
         _inertia = _inertia_dense
 
-    init_bounds(X, centers, center_half_distances, labels, upper_bounds, lower_bounds)
+    init_bounds(
+        X,
+        centers,
+        center_half_distances,
+        labels,
+        upper_bounds,
+        lower_bounds,
+        n_threads=n_threads,
+    )
 
     strict_convergence = False
 
@@ -634,7 +680,7 @@ def _kmeans_single_lloyd(
     strict_convergence = False
 
     # Threadpoolctl context to limit the number of threads in second level of
-    # nested parallelism (i.e. BLAS) to avoid oversubsciption.
+    # nested parallelism (i.e. BLAS) to avoid oversubscription.
     with threadpool_limits(limits=1, user_api="blas"):
         for i in range(max_iter):
             lloyd_iter(
@@ -694,7 +740,9 @@ def _kmeans_single_lloyd(
     return labels, inertia, centers, i + 1
 
 
-def _labels_inertia(X, sample_weight, x_squared_norms, centers, n_threads=1):
+def _labels_inertia(
+    X, sample_weight, x_squared_norms, centers, n_threads=1, return_inertia=True
+):
     """E step of the K-means EM algorithm.
 
     Compute the labels and the inertia of the given samples and centers.
@@ -720,6 +768,9 @@ def _labels_inertia(X, sample_weight, x_squared_norms, centers, n_threads=1):
         sample-wise on the main cython loop which assigns each sample to its
         closest center.
 
+    return_inertia : bool, default=True
+        Whether to compute and return the inertia.
+
     Returns
     -------
     labels : ndarray of shape (n_samples,)
@@ -727,6 +778,7 @@ def _labels_inertia(X, sample_weight, x_squared_norms, centers, n_threads=1):
 
     inertia : float
         Sum of squared distances of samples to their closest cluster center.
+        Inertia is only returned if return_inertia is True.
     """
     n_samples = X.shape[0]
     n_clusters = centers.shape[0]
@@ -756,27 +808,43 @@ def _labels_inertia(X, sample_weight, x_squared_norms, centers, n_threads=1):
         update_centers=False,
     )
 
-    inertia = _inertia(X, sample_weight, centers, labels, n_threads)
+    if return_inertia:
+        inertia = _inertia(X, sample_weight, centers, labels, n_threads)
+        return labels, inertia
 
-    return labels, inertia
+    return labels
 
 
 def _labels_inertia_threadpool_limit(
-    X, sample_weight, x_squared_norms, centers, n_threads=1
+    X, sample_weight, x_squared_norms, centers, n_threads=1, return_inertia=True
 ):
     """Same as _labels_inertia but in a threadpool_limits context."""
     with threadpool_limits(limits=1, user_api="blas"):
-        labels, inertia = _labels_inertia(
-            X, sample_weight, x_squared_norms, centers, n_threads
+        result = _labels_inertia(
+            X, sample_weight, x_squared_norms, centers, n_threads, return_inertia
         )
 
-    return labels, inertia
+    return result
 
 
 class _BaseKMeans(
     _ClassNamePrefixFeaturesOutMixin, TransformerMixin, ClusterMixin, BaseEstimator, ABC
 ):
     """Base class for KMeans and MiniBatchKMeans"""
+
+    _parameter_constraints = {
+        "n_clusters": [Interval(Integral, 1, None, closed="left")],
+        "init": [StrOptions({"k-means++", "random"}), callable, "array-like"],
+        "n_init": [
+            StrOptions({"auto"}),
+            Hidden(StrOptions({"warn"})),
+            Interval(Integral, 1, None, closed="left"),
+        ],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "verbose": ["verbose"],
+        "random_state": ["random_state"],
+    }
 
     def __init__(
         self,
@@ -797,16 +865,7 @@ class _BaseKMeans(
         self.verbose = verbose
         self.random_state = random_state
 
-    def _check_params(self, X):
-        # n_init
-        if self.n_init <= 0:
-            raise ValueError(f"n_init should be > 0, got {self.n_init} instead.")
-        self._n_init = self.n_init
-
-        # max_iter
-        if self.max_iter <= 0:
-            raise ValueError(f"max_iter should be > 0, got {self.max_iter} instead.")
-
+    def _check_params_vs_input(self, X, default_n_init=None):
         # n_clusters
         if X.shape[0] < self.n_clusters:
             raise ValueError(
@@ -816,16 +875,22 @@ class _BaseKMeans(
         # tol
         self._tol = _tolerance(X, self.tol)
 
-        # init
-        if not (
-            _is_arraylike_not_scalar(self.init)
-            or callable(self.init)
-            or (isinstance(self.init, str) and self.init in ["k-means++", "random"])
-        ):
-            raise ValueError(
-                "init should be either 'k-means++', 'random', an array-like or a "
-                f"callable, got '{self.init}' instead."
+        # n-init
+        # TODO(1.4): Remove
+        self._n_init = self.n_init
+        if self._n_init == "warn":
+            warnings.warn(
+                "The default value of `n_init` will change from "
+                f"{default_n_init} to 'auto' in 1.4. Set the value of `n_init`"
+                " explicitly to suppress the warning",
+                FutureWarning,
             )
+            self._n_init = default_n_init
+        if self._n_init == "auto":
+            if self.init == "k-means++":
+                self._n_init = 1
+            else:
+                self._n_init = default_n_init
 
         if _is_arraylike_not_scalar(self.init) and self._n_init != 1:
             warnings.warn(
@@ -888,7 +953,9 @@ class _BaseKMeans(
         )
         return X
 
-    def _init_centroids(self, X, x_squared_norms, init, random_state, init_size=None):
+    def _init_centroids(
+        self, X, x_squared_norms, init, random_state, init_size=None, n_centroids=None
+    ):
         """Compute the initial centroids.
 
         Parameters
@@ -912,12 +979,17 @@ class _BaseKMeans(
             Number of samples to randomly sample for speeding up the
             initialization (sometimes at the expense of accuracy).
 
+        n_centroids : int, default=None
+            Number of centroids to initialize.
+            If left to 'None' the number of centroids will be equal to
+            number of clusters to form (self.n_clusters)
+
         Returns
         -------
         centers : ndarray of shape (n_clusters, n_features)
         """
         n_samples = X.shape[0]
-        n_clusters = self.n_clusters
+        n_clusters = self.n_clusters if n_centroids is None else n_centroids
 
         if init_size is not None and init_size < n_samples:
             init_indices = random_state.randint(0, n_samples, init_size)
@@ -1116,9 +1188,11 @@ class KMeans(_BaseKMeans):
             (n_clusters, n_features), default='k-means++'
         Method for initialization:
 
-        'k-means++' : selects initial cluster centers for k-mean
-        clustering in a smart way to speed up convergence. See section
-        Notes in k_init for more details.
+        'k-means++' : selects initial cluster centroids using sampling based on
+        an empirical probability distribution of the points' contribution to the
+        overall inertia. This technique speeds up convergence, and is
+        theoretically proven to be :math:`\\mathcal{O}(\\log k)`-optimal.
+        See the description of `n_init` for more details.
 
         'random': choose `n_clusters` observations (rows) at random from data
         for the initial centroids.
@@ -1129,10 +1203,20 @@ class KMeans(_BaseKMeans):
         If a callable is passed, it should take arguments X, n_clusters and a
         random state and return an initialization.
 
-    n_init : int, default=10
-        Number of time the k-means algorithm will be run with different
-        centroid seeds. The final results will be the best output of
-        n_init consecutive runs in terms of inertia.
+    n_init : 'auto' or int, default=10
+        Number of times the k-means algorithm is run with different centroid
+        seeds. The final results is the best output of `n_init` consecutive runs
+        in terms of inertia. Several runs are recommended for sparse
+        high-dimensional problems (see :ref:`kmeans_sparse_high_dim`).
+
+        When `n_init='auto'`, the number of runs will be 10 if using
+        `init='random'`, and 1 if using `init='kmeans++'`.
+
+        .. versionadded:: 1.2
+           Added 'auto' option for `n_init`.
+
+        .. versionchanged:: 1.4
+           Default value for `n_init` will change from 10 to `'auto'` in version 1.4.
 
     max_iter : int, default=300
         Maximum number of iterations of the k-means algorithm for a
@@ -1242,7 +1326,7 @@ class KMeans(_BaseKMeans):
     >>> import numpy as np
     >>> X = np.array([[1, 2], [1, 4], [1, 0],
     ...               [10, 2], [10, 4], [10, 0]])
-    >>> kmeans = KMeans(n_clusters=2, random_state=0).fit(X)
+    >>> kmeans = KMeans(n_clusters=2, random_state=0, n_init="auto").fit(X)
     >>> kmeans.labels_
     array([1, 1, 1, 0, 0, 0], dtype=int32)
     >>> kmeans.predict([[0, 0], [12, 3]])
@@ -1252,12 +1336,20 @@ class KMeans(_BaseKMeans):
            [ 1.,  2.]])
     """
 
+    _parameter_constraints = {
+        **_BaseKMeans._parameter_constraints,
+        "copy_x": ["boolean"],
+        "algorithm": [
+            StrOptions({"lloyd", "elkan", "auto", "full"}, deprecated={"auto", "full"})
+        ],
+    }
+
     def __init__(
         self,
         n_clusters=8,
         *,
         init="k-means++",
-        n_init=10,
+        n_init="warn",
         max_iter=300,
         tol=1e-4,
         verbose=0,
@@ -1278,15 +1370,8 @@ class KMeans(_BaseKMeans):
         self.copy_x = copy_x
         self.algorithm = algorithm
 
-    def _check_params(self, X):
-        super()._check_params(X)
-
-        # algorithm
-        if self.algorithm not in ("lloyd", "elkan", "auto", "full"):
-            raise ValueError(
-                "Algorithm must be either 'lloyd' or 'elkan', "
-                f"got {self.algorithm} instead."
-            )
+    def _check_params_vs_input(self, X):
+        super()._check_params_vs_input(X, default_n_init=10)
 
         self._algorithm = self.algorithm
         if self._algorithm in ("auto", "full"):
@@ -1339,6 +1424,8 @@ class KMeans(_BaseKMeans):
         self : object
             Fitted estimator.
         """
+        self._validate_params()
+
         X = self._validate_data(
             X,
             accept_sparse="csr",
@@ -1348,7 +1435,8 @@ class KMeans(_BaseKMeans):
             accept_large_sparse=False,
         )
 
-        self._check_params(X)
+        self._check_params_vs_input(X)
+
         random_state = check_random_state(self.random_state)
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
         self._n_threads = _openmp_effective_n_threads()
@@ -1578,9 +1666,11 @@ class MiniBatchKMeans(_BaseKMeans):
             (n_clusters, n_features), default='k-means++'
         Method for initialization:
 
-        'k-means++' : selects initial cluster centers for k-mean
-        clustering in a smart way to speed up convergence. See section
-        Notes in k_init for more details.
+        'k-means++' : selects initial cluster centroids using sampling based on
+        an empirical probability distribution of the points' contribution to the
+        overall inertia. This technique speeds up convergence, and is
+        theoretically proven to be :math:`\\mathcal{O}(\\log k)`-optimal.
+        See the description of `n_init` for more details.
 
         'random': choose `n_clusters` observations (rows) at random from data
         for the initial centroids.
@@ -1642,10 +1732,21 @@ class MiniBatchKMeans(_BaseKMeans):
         If `None`, the heuristic is `init_size = 3 * batch_size` if
         `3 * batch_size < n_clusters`, else `init_size = 3 * n_clusters`.
 
-    n_init : int, default=3
+    n_init : 'auto' or int, default=3
         Number of random initializations that are tried.
-        In contrast to KMeans, the algorithm is only run once, using the
-        best of the ``n_init`` initializations as measured by inertia.
+        In contrast to KMeans, the algorithm is only run once, using the best of
+        the `n_init` initializations as measured by inertia. Several runs are
+        recommended for sparse high-dimensional problems (see
+        :ref:`kmeans_sparse_high_dim`).
+
+        When `n_init='auto'`, the number of runs will be 3 if using
+        `init='random'`, and 1 if using `init='kmeans++'`.
+
+        .. versionadded:: 1.2
+           Added 'auto' option for `n_init`.
+
+        .. versionchanged:: 1.4
+           Default value for `n_init` will change from 3 to `'auto'` in version 1.4.
 
     reassignment_ratio : float, default=0.01
         Control the fraction of the maximum number of counts for a center to
@@ -1701,6 +1802,12 @@ class MiniBatchKMeans(_BaseKMeans):
     -----
     See https://www.eecs.tufts.edu/~dsculley/papers/fastkmeans.pdf
 
+    When there are too few points in the dataset, some centers may be
+    duplicated, which means that a proper clustering in terms of the number
+    of requesting clusters and the number of returned clusters will not
+    always match. One solution is to set `reassignment_ratio=0`, which
+    prevents reassignments of clusters that are too small.
+
     Examples
     --------
     >>> from sklearn.cluster import MiniBatchKMeans
@@ -1712,7 +1819,8 @@ class MiniBatchKMeans(_BaseKMeans):
     >>> # manually fit on batches
     >>> kmeans = MiniBatchKMeans(n_clusters=2,
     ...                          random_state=0,
-    ...                          batch_size=6)
+    ...                          batch_size=6,
+    ...                          n_init="auto")
     >>> kmeans = kmeans.partial_fit(X[0:6,:])
     >>> kmeans = kmeans.partial_fit(X[6:12,:])
     >>> kmeans.cluster_centers_
@@ -1724,13 +1832,23 @@ class MiniBatchKMeans(_BaseKMeans):
     >>> kmeans = MiniBatchKMeans(n_clusters=2,
     ...                          random_state=0,
     ...                          batch_size=6,
-    ...                          max_iter=10).fit(X)
+    ...                          max_iter=10,
+    ...                          n_init="auto").fit(X)
     >>> kmeans.cluster_centers_
-    array([[1.19..., 1.22...],
-           [4.03..., 2.46...]])
+    array([[3.97727273, 2.43181818],
+           [1.125     , 1.6       ]])
     >>> kmeans.predict([[0, 0], [4, 4]])
-    array([0, 1], dtype=int32)
+    array([1, 0], dtype=int32)
     """
+
+    _parameter_constraints = {
+        **_BaseKMeans._parameter_constraints,
+        "batch_size": [Interval(Integral, 1, None, closed="left")],
+        "compute_labels": ["boolean"],
+        "max_no_improvement": [Interval(Integral, 0, None, closed="left"), None],
+        "init_size": [Interval(Integral, 1, None, closed="left"), None],
+        "reassignment_ratio": [Interval(Real, 0, None, closed="left")],
+    }
 
     def __init__(
         self,
@@ -1745,7 +1863,7 @@ class MiniBatchKMeans(_BaseKMeans):
         tol=0.0,
         max_no_improvement=10,
         init_size=None,
-        n_init=3,
+        n_init="warn",
         reassignment_ratio=0.01,
     ):
 
@@ -1765,26 +1883,12 @@ class MiniBatchKMeans(_BaseKMeans):
         self.init_size = init_size
         self.reassignment_ratio = reassignment_ratio
 
-    def _check_params(self, X):
-        super()._check_params(X)
+    def _check_params_vs_input(self, X):
+        super()._check_params_vs_input(X, default_n_init=3)
 
-        # max_no_improvement
-        if self.max_no_improvement is not None and self.max_no_improvement < 0:
-            raise ValueError(
-                "max_no_improvement should be >= 0, got "
-                f"{self.max_no_improvement} instead."
-            )
-
-        # batch_size
-        if self.batch_size <= 0:
-            raise ValueError(
-                f"batch_size should be > 0, got {self.batch_size} instead."
-            )
         self._batch_size = min(self.batch_size, X.shape[0])
 
         # init_size
-        if self.init_size is not None and self.init_size <= 0:
-            raise ValueError(f"init_size should be > 0, got {self.init_size} instead.")
         self._init_size = self.init_size
         if self._init_size is None:
             self._init_size = 3 * self._batch_size
@@ -1926,6 +2030,8 @@ class MiniBatchKMeans(_BaseKMeans):
         self : object
             Fitted estimator.
         """
+        self._validate_params()
+
         X = self._validate_data(
             X,
             accept_sparse="csr",
@@ -1934,7 +2040,7 @@ class MiniBatchKMeans(_BaseKMeans):
             accept_large_sparse=False,
         )
 
-        self._check_params(X)
+        self._check_params_vs_input(X)
         random_state = check_random_state(self.random_state)
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
         self._n_threads = _openmp_effective_n_threads()
@@ -2083,6 +2189,9 @@ class MiniBatchKMeans(_BaseKMeans):
         """
         has_centers = hasattr(self, "cluster_centers_")
 
+        if not has_centers:
+            self._validate_params()
+
         X = self._validate_data(
             X,
             accept_sparse="csr",
@@ -2103,7 +2212,7 @@ class MiniBatchKMeans(_BaseKMeans):
 
         if not has_centers:
             # this instance has not been fitted yet (fit or partial_fit)
-            self._check_params(X)
+            self._check_params_vs_input(X)
             self._n_threads = _openmp_effective_n_threads()
 
             # Validate init array

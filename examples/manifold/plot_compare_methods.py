@@ -32,6 +32,9 @@ from numpy.random import RandomState
 import matplotlib.pyplot as plt
 from matplotlib import ticker
 
+# unused but required import for doing 3d projections with matplotlib < 3.2
+import mpl_toolkits.mplot3d  # noqa: F401
+
 from sklearn import manifold, datasets
 
 rng = RandomState(0)
@@ -110,8 +113,8 @@ params = {
     "random_state": rng,
 }
 
-lle_standart = manifold.LocallyLinearEmbedding(method="standard", **params)
-S_standart = lle_standart.fit_transform(S_points)
+lle_standard = manifold.LocallyLinearEmbedding(method="standard", **params)
+S_standard = lle_standard.fit_transform(S_points)
 
 lle_ltsa = manifold.LocallyLinearEmbedding(method="ltsa", **params)
 S_ltsa = lle_ltsa.fit_transform(S_points)
@@ -129,7 +132,7 @@ fig, axs = plt.subplots(
 fig.suptitle("Locally Linear Embeddings", size=16)
 
 lle_methods = [
-    ("Standart locally linear embedding", S_standart),
+    ("Standard locally linear embedding", S_standard),
     ("Local tangent space alignment", S_ltsa),
     ("Hessian eigenmap", S_hessian),
     ("Modified locally linear embedding", S_mod),

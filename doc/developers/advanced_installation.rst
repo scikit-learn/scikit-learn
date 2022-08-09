@@ -145,8 +145,8 @@ Building Scikit-learn also requires:
    (before cythonization) will force the build to fail if OpenMP is not
    supported.
 
-Since version 0.21, scikit-learn automatically detects and use the linear
-algebrea library used by SciPy **at runtime**. Scikit-learn has therefore no
+Since version 0.21, scikit-learn automatically detects and uses the linear
+algebra library used by SciPy **at runtime**. Scikit-learn has therefore no
 build dependency on BLAS/LAPACK implementations such as OpenBlas, Atlas, Blis
 or MKL.
 
@@ -177,11 +177,11 @@ each time you update the sources. Therefore it is recommended that you install
 in with the ``pip install --no-build-isolation --editable .`` command, which
 allows you to edit the code in-place. This builds the extension in place and
 creates a link to the development directory (see `the pip docs
-<https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs>`_).
+<https://pip.pypa.io/en/stable/topics/local-project-installs/#editable-installs>`_).
 
-This is fundamentally similar to using the command ``python setup.py develop``
-(see `the setuptool docs
-<https://setuptools.readthedocs.io/en/latest/setuptools.html#development-mode>`_).
+As the doc aboves explains, this is fundamentally similar to using the command
+``python setup.py develop``. (see `the setuptool docs
+<https://setuptools.pypa.io/en/latest/userguide/development_mode.html>`_).
 It is however preferred to use pip.
 
 On Unix-like systems, you can equivalently type ``make in`` from the top-level
@@ -295,6 +295,12 @@ forge using the following command:
     conda list
 
 which should include ``compilers`` and ``llvm-openmp``.
+
+.. note::
+
+   If you installed these packages after creating and activating a new conda
+   environment, you will need to first deactivate and then reactivate the
+   environment for these changes to take effect.
 
 The compilers meta-package will automatically set custom environment
 variables:

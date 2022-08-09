@@ -7,7 +7,6 @@ different columns.
 #         Joris Van den Bossche
 # License: BSD
 from itertools import chain
-from typing import Iterable
 from collections import Counter
 
 import numpy as np
@@ -191,6 +190,23 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     >>> ct.fit_transform(X)
     array([[0. , 1. , 0.5, 0.5],
            [0.5, 0.5, 0. , 1. ]])
+
+    :class:`ColumnTransformer` can be configured with a transformer that requires
+    a 1d array by setting the column to a string:
+
+    >>> from sklearn.feature_extraction import FeatureHasher
+    >>> from sklearn.preprocessing import MinMaxScaler
+    >>> import pandas as pd   # doctest: +SKIP
+    >>> X = pd.DataFrame({
+    ...     "documents": ["First item", "second one here", "Is this the last?"],
+    ...     "width": [3, 4, 5],
+    ... })  # doctest: +SKIP
+    >>> # "documents" is a string which configures ColumnTransformer to
+    >>> # pass the documents column as a 1d array to the FeatureHasher
+    >>> ct = ColumnTransformer(
+    ...     [("text_preprocess", FeatureHasher(input_type="string"), "documents"),
+    ...      ("num_preprocess", MinMaxScaler(), ["width"])])
+    >>> X_trans = ct.fit_transform(X)  # doctest: +SKIP
     """
 
     _required_parameters = ["transformers"]
@@ -436,16 +452,12 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
         Used in conjunction with self._iter(fitted=True) in get_feature_names_out.
         """
+        column_indices = self._transformer_to_input_indices[name]
+        names = feature_names_in[column_indices]
         if trans == "drop" or _is_empty_column_selection(column):
             return
         elif trans == "passthrough":
-            if (not isinstance(column, slice)) and all(
-                isinstance(col, str) for col in column
-            ):
-                # selection was already strings
-                return column
-            else:
-                return feature_names_in[column]
+            return names
 
         # An actual transformer
         if not hasattr(trans, "get_feature_names_out"):
@@ -453,11 +465,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 f"Transformer {name} (type {type(trans).__name__}) does "
                 "not provide get_feature_names_out."
             )
-        if isinstance(column, Iterable) and not all(
-            isinstance(col, str) for col in column
-        ):
-            column = _safe_indexing(feature_names_in, column)
-        return trans.get_feature_names_out(column)
+        return trans.get_feature_names_out(names)
 
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.

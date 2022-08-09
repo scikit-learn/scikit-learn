@@ -280,14 +280,13 @@ class NoWeightClassifier(ClassifierMixin, BaseEstimator):
 @pytest.mark.parametrize(
     "y, params, type_err, msg_err",
     [
-        (y_iris, {"estimators": None}, ValueError, "Invalid 'estimators' attribute,"),
         (y_iris, {"estimators": []}, ValueError, "Invalid 'estimators' attribute,"),
         (
             y_iris,
             {
                 "estimators": [
                     ("lr", LogisticRegression()),
-                    ("svm", SVC(max_iter=5e4)),
+                    ("svm", SVC(max_iter=50_000)),
                 ],
                 "stack_method": "predict_proba",
             },
@@ -310,7 +309,7 @@ class NoWeightClassifier(ClassifierMixin, BaseEstimator):
             {
                 "estimators": [
                     ("lr", LogisticRegression()),
-                    ("cor", LinearSVC(max_iter=5e4)),
+                    ("cor", LinearSVC(max_iter=50_000)),
                 ],
                 "final_estimator": NoWeightClassifier(),
             },
@@ -328,12 +327,6 @@ def test_stacking_classifier_error(y, params, type_err, msg_err):
 @pytest.mark.parametrize(
     "y, params, type_err, msg_err",
     [
-        (
-            y_diabetes,
-            {"estimators": None},
-            ValueError,
-            "Invalid 'estimators' attribute,",
-        ),
         (y_diabetes, {"estimators": []}, ValueError, "Invalid 'estimators' attribute,"),
         (
             y_diabetes,
@@ -408,8 +401,8 @@ def test_stacking_classifier_stratify_default():
     # check that we stratify the classes for the default CV
     clf = StackingClassifier(
         estimators=[
-            ("lr", LogisticRegression(max_iter=1e4)),
-            ("svm", LinearSVC(max_iter=1e4)),
+            ("lr", LogisticRegression(max_iter=10_000)),
+            ("svm", LinearSVC(max_iter=10_000)),
         ]
     )
     # since iris is not shuffled, a simple k-fold would not contain the

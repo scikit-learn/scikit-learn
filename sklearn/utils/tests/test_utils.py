@@ -472,9 +472,14 @@ def test_safe_indexing_pandas_no_settingwithcopy_warning():
 
     X = pd.DataFrame({"a": [1, 2, 3], "b": [3, 4, 5]})
     subset = _safe_indexing(X, [0, 1], axis=0)
-    with pytest.warns(None) as record:
+    if hasattr(pd.errors, "SettingWithCopyWarning"):
+        SettingWithCopyWarning = pd.errors.SettingWithCopyWarning
+    else:
+        # backward compatibility for pandas < 1.5
+        SettingWithCopyWarning = pd.core.common.SettingWithCopyWarning
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", SettingWithCopyWarning)
         subset.iloc[0, 0] = 10
-    assert not [w.message for w in record]
     # The original dataframe is unaffected by the assignment on the subset:
     assert X.iloc[0, 0] == 1
 
@@ -557,27 +562,20 @@ def test_gen_even_slices():
 
 
 @pytest.mark.parametrize(
-    ("row_bytes", "max_n_rows", "working_memory", "expected", "warn_msg"),
+    ("row_bytes", "max_n_rows", "working_memory", "expected"),
     [
-        (1024, None, 1, 1024, None),
-        (1024, None, 0.99999999, 1023, None),
-        (1023, None, 1, 1025, None),
-        (1025, None, 1, 1023, None),
-        (1024, None, 2, 2048, None),
-        (1024, 7, 1, 7, None),
-        (1024 * 1024, None, 1, 1, None),
-        (
-            1024 * 1024 + 1,
-            None,
-            1,
-            1,
-            "Could not adhere to working_memory config. Currently 1MiB, 2MiB required.",
-        ),
+        (1024, None, 1, 1024),
+        (1024, None, 0.99999999, 1023),
+        (1023, None, 1, 1025),
+        (1025, None, 1, 1023),
+        (1024, None, 2, 2048),
+        (1024, 7, 1, 7),
+        (1024 * 1024, None, 1, 1),
     ],
 )
-def test_get_chunk_n_rows(row_bytes, max_n_rows, working_memory, expected, warn_msg):
-    warning = None if warn_msg is None else UserWarning
-    with pytest.warns(warning, match=warn_msg) as w:
+def test_get_chunk_n_rows(row_bytes, max_n_rows, working_memory, expected):
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
         actual = get_chunk_n_rows(
             row_bytes=row_bytes,
             max_n_rows=max_n_rows,
@@ -586,15 +584,39 @@ def test_get_chunk_n_rows(row_bytes, max_n_rows, working_memory, expected, warn_
 
     assert actual == expected
     assert type(actual) is type(expected)
-    if warn_msg is None:
-        assert len(w) == 0
     with config_context(working_memory=working_memory):
-        with pytest.warns(warning, match=warn_msg) as w:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", UserWarning)
             actual = get_chunk_n_rows(row_bytes=row_bytes, max_n_rows=max_n_rows)
         assert actual == expected
         assert type(actual) is type(expected)
-        if warn_msg is None:
-            assert len(w) == 0
+
+
+def test_get_chunk_n_rows_warns():
+    """Check that warning is raised when working_memory is too low."""
+    row_bytes = 1024 * 1024 + 1
+    max_n_rows = None
+    working_memory = 1
+    expected = 1
+
+    warn_msg = (
+        "Could not adhere to working_memory config. Currently 1MiB, 2MiB required."
+    )
+    with pytest.warns(UserWarning, match=warn_msg):
+        actual = get_chunk_n_rows(
+            row_bytes=row_bytes,
+            max_n_rows=max_n_rows,
+            working_memory=working_memory,
+        )
+
+    assert actual == expected
+    assert type(actual) is type(expected)
+
+    with config_context(working_memory=working_memory):
+        with pytest.warns(UserWarning, match=warn_msg):
+            actual = get_chunk_n_rows(row_bytes=row_bytes, max_n_rows=max_n_rows)
+        assert actual == expected
+        assert type(actual) is type(expected)
 
 
 @pytest.mark.parametrize(

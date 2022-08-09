@@ -28,6 +28,7 @@ from sklearn.utils._testing import (
     _delete_folder,
     _convert_container,
     raises,
+    assert_allclose,
 )
 
 from sklearn.tree import DecisionTreeClassifier
@@ -516,6 +517,7 @@ class MockMetaEstimatorDeprecatedDelegation:
         """Incorrect docstring but should not be tested"""
 
 
+@pytest.mark.filterwarnings("ignore:if_delegate_has_method was deprecated")
 @pytest.mark.parametrize(
     "mock_meta",
     [
@@ -700,21 +702,24 @@ def test_create_memmap_backed_data(monkeypatch, aligned):
     assert registration_counter.nb_calls == 3
 
     input_list = [input_array, input_array + 1, input_array + 2]
-    if aligned:
-        with pytest.raises(
-            ValueError, match="If aligned=True, input must be a single numpy array."
-        ):
-            create_memmap_backed_data(input_list, aligned=True)
-    else:
-        mmap_data_list = create_memmap_backed_data(input_list, aligned=False)
-        for input_array, data in zip(input_list, mmap_data_list):
-            check_memmap(input_array, data)
-        assert registration_counter.nb_calls == 4
+    mmap_data_list = create_memmap_backed_data(input_list, aligned=aligned)
+    for input_array, data in zip(input_list, mmap_data_list):
+        check_memmap(input_array, data)
+    assert registration_counter.nb_calls == 4
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "When creating aligned memmap-backed arrays, input must be a single array"
+            " or a sequence of arrays"
+        ),
+    ):
+        create_memmap_backed_data([input_array, "not-an-array"], aligned=True)
 
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64, np.int32, np.int64])
 def test_memmap_on_contiguous_data(dtype):
-    """Test memory mapped array on contigous memoryview."""
+    """Test memory mapped array on contiguous memoryview."""
     x = np.arange(10).astype(dtype)
     assert x.flags["C_CONTIGUOUS"]
     assert x.flags["ALIGNED"]
@@ -854,3 +859,21 @@ def test_raises():
     with pytest.raises(AssertionError):
         with raises((TypeError, ValueError)):
             pass
+
+
+def test_float32_aware_assert_allclose():
+    # The relative tolerance for float32 inputs is 1e-4
+    assert_allclose(np.array([1.0 + 2e-5], dtype=np.float32), 1.0)
+    with pytest.raises(AssertionError):
+        assert_allclose(np.array([1.0 + 2e-4], dtype=np.float32), 1.0)
+
+    # The relative tolerance for other inputs is left to 1e-7 as in
+    # the original numpy version.
+    assert_allclose(np.array([1.0 + 2e-8], dtype=np.float64), 1.0)
+    with pytest.raises(AssertionError):
+        assert_allclose(np.array([1.0 + 2e-7], dtype=np.float64), 1.0)
+
+    # atol is left to 0.0 by default, even for float32
+    with pytest.raises(AssertionError):
+        assert_allclose(np.array([1e-5], dtype=np.float32), 0.0)
+    assert_allclose(np.array([1e-5], dtype=np.float32), 0.0, atol=2e-5)
