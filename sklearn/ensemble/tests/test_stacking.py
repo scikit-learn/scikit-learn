@@ -55,7 +55,7 @@ diabetes = load_diabetes()
 X_diabetes, y_diabetes = diabetes.data, diabetes.target
 iris = load_iris()
 X_iris, y_iris = iris.data, iris.target
-X_multilabel_r, y_multilabel_r = make_multilabel_classification(
+X_multilabel, y_multilabel = make_multilabel_classification(
     n_classes=3, random_state=42
 )
 X_binary, y_binary = make_classification(n_classes=2, random_state=42)
@@ -657,7 +657,7 @@ def test_stacking_without_n_features_in(make_dataset, Stacking, Estimator):
 @pytest.mark.parametrize("passthrough", [False, True])
 @pytest.mark.parametrize(
     "X, y, is_multilabel",
-    [(X_multilabel_r, y_multilabel_r, True), (X_binary, y_binary, False)],
+    [(X_multilabel, y_multilabel, True), (X_binary, y_binary, False)],
     ids=["multilabel", "binary"],
 )
 def test_stacking_classifier_multilabel(stack_method, passthrough, X, y, is_multilabel):
