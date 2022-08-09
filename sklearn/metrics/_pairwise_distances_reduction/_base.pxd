@@ -3,14 +3,13 @@ cimport numpy as cnp
 from cython cimport final
 
 from ._datasets_pair cimport DatasetsPair
-from ...utils._typedefs cimport ITYPE_t, DTYPE_t
 
 cnp.import_array()
 
 
-cpdef DTYPE_t[::1] _sqeuclidean_row_norms64(
-    const DTYPE_t[:, ::1] X,
-    ITYPE_t num_threads,
+cpdef cnp.float64_t[::1] _sqeuclidean_row_norms64(
+    const cnp.float64_t[:, ::1] X,
+    cnp.intp_t num_threads,
 )
 
 cdef class PairwiseDistancesReduction64:
@@ -32,13 +31,13 @@ cdef class PairwiseDistancesReduction64:
         #
         #                 chunks_n_threads <= effective_n_threads
         #
-        ITYPE_t effective_n_threads
-        ITYPE_t chunks_n_threads
+        cnp.intp_t effective_n_threads
+        cnp.intp_t chunks_n_threads
 
-        ITYPE_t n_samples_chunk, chunk_size
+        cnp.intp_t n_samples_chunk, chunk_size
 
-        ITYPE_t n_samples_X, X_n_samples_chunk, X_n_chunks, X_n_samples_last_chunk
-        ITYPE_t n_samples_Y, Y_n_samples_chunk, Y_n_chunks, Y_n_samples_last_chunk
+        cnp.intp_t n_samples_X, X_n_samples_chunk, X_n_chunks, X_n_samples_last_chunk
+        cnp.intp_t n_samples_Y, Y_n_samples_chunk, Y_n_chunks, Y_n_samples_last_chunk
 
         bint execute_in_parallel_on_Y
 
@@ -52,11 +51,11 @@ cdef class PairwiseDistancesReduction64:
 
     cdef void _compute_and_reduce_distances_on_chunks(
         self,
-        ITYPE_t X_start,
-        ITYPE_t X_end,
-        ITYPE_t Y_start,
-        ITYPE_t Y_end,
-        ITYPE_t thread_num,
+        cnp.intp_t X_start,
+        cnp.intp_t X_end,
+        cnp.intp_t Y_start,
+        cnp.intp_t Y_end,
+        cnp.intp_t thread_num,
     ) nogil
 
 
@@ -66,35 +65,35 @@ cdef class PairwiseDistancesReduction64:
 
     cdef void _parallel_on_X_parallel_init(
         self,
-        ITYPE_t thread_num,
+        cnp.intp_t thread_num,
     ) nogil
 
     cdef void _parallel_on_X_init_chunk(
         self,
-        ITYPE_t thread_num,
-        ITYPE_t X_start,
-        ITYPE_t X_end,
+        cnp.intp_t thread_num,
+        cnp.intp_t X_start,
+        cnp.intp_t X_end,
     ) nogil
 
     cdef void _parallel_on_X_pre_compute_and_reduce_distances_on_chunks(
         self,
-        ITYPE_t X_start,
-        ITYPE_t X_end,
-        ITYPE_t Y_start,
-        ITYPE_t Y_end,
-        ITYPE_t thread_num,
+        cnp.intp_t X_start,
+        cnp.intp_t X_end,
+        cnp.intp_t Y_start,
+        cnp.intp_t Y_end,
+        cnp.intp_t thread_num,
     ) nogil
 
     cdef void _parallel_on_X_prange_iter_finalize(
         self,
-        ITYPE_t thread_num,
-        ITYPE_t X_start,
-        ITYPE_t X_end,
+        cnp.intp_t thread_num,
+        cnp.intp_t X_start,
+        cnp.intp_t X_end,
     ) nogil
 
     cdef void _parallel_on_X_parallel_finalize(
         self,
-        ITYPE_t thread_num
+        cnp.intp_t thread_num
     ) nogil
 
     cdef void _parallel_on_Y_init(
@@ -103,24 +102,24 @@ cdef class PairwiseDistancesReduction64:
 
     cdef void _parallel_on_Y_parallel_init(
         self,
-        ITYPE_t thread_num,
-        ITYPE_t X_start,
-        ITYPE_t X_end,
+        cnp.intp_t thread_num,
+        cnp.intp_t X_start,
+        cnp.intp_t X_end,
     ) nogil
 
     cdef void _parallel_on_Y_pre_compute_and_reduce_distances_on_chunks(
         self,
-        ITYPE_t X_start,
-        ITYPE_t X_end,
-        ITYPE_t Y_start,
-        ITYPE_t Y_end,
-        ITYPE_t thread_num,
+        cnp.intp_t X_start,
+        cnp.intp_t X_end,
+        cnp.intp_t Y_start,
+        cnp.intp_t Y_end,
+        cnp.intp_t thread_num,
     ) nogil
 
     cdef void _parallel_on_Y_synchronize(
         self,
-        ITYPE_t X_start,
-        ITYPE_t X_end,
+        cnp.intp_t X_start,
+        cnp.intp_t X_end,
     ) nogil
 
     cdef void _parallel_on_Y_finalize(

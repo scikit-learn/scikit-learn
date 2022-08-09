@@ -9,7 +9,6 @@ from libcpp.vector cimport vector
 
 cimport numpy as cnp
 import numpy as np
-from ..utils._typedefs cimport INT32TYPE_t, INT64TYPE_t
 from ..utils.murmurhash cimport murmurhash3_bytes_s32
 from ..utils._vector_sentinel cimport vector_to_nd_array
 
@@ -27,11 +26,11 @@ def transform(raw_X, Py_ssize_t n_features, dtype,
         For constructing a scipy.sparse.csr_matrix.
 
     """
-    cdef INT32TYPE_t h
+    cdef cnp.int32_t h
     cdef double value
 
-    cdef vector[INT32TYPE_t] indices
-    cdef vector[INT64TYPE_t] indptr
+    cdef vector[cnp.int32_t] indices
+    cdef vector[cnp.int64_t] indptr
     indptr.push_back(0)
 
     # Since Python array does not understand Numpy dtypes, we grow the indices

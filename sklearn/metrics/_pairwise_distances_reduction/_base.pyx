@@ -8,20 +8,18 @@ from cython.parallel cimport parallel, prange
 from ._datasets_pair cimport DatasetsPair
 from ...utils._cython_blas cimport _dot
 from ...utils._openmp_helpers cimport _openmp_thread_num
-from ...utils._typedefs cimport ITYPE_t, DTYPE_t
 
 from numbers import Integral
 from sklearn.utils import check_scalar
 from ...utils._openmp_helpers import _openmp_effective_n_threads
-from ...utils._typedefs import ITYPE, DTYPE
 
 cnp.import_array()
 
 #####################
 
-cpdef DTYPE_t[::1] _sqeuclidean_row_norms64(
-    const DTYPE_t[:, ::1] X,
-    ITYPE_t num_threads,
+cpdef cnp.float64_t[::1] _sqeuclidean_row_norms64(
+    const cnp.float64_t[:, ::1] X,
+    cnp.intp_t num_threads,
 ):
     """Compute the squared euclidean norm of the rows of X in parallel.
 
@@ -32,11 +30,11 @@ cpdef DTYPE_t[::1] _sqeuclidean_row_norms64(
         # exposed via scipy.linalg.cython_blas aren't reflecting the arguments'
         # const qualifier.
         # See: https://github.com/scipy/scipy/issues/14262
-        DTYPE_t * X_ptr = <DTYPE_t *> &X[0, 0]
-        ITYPE_t idx = 0
-        ITYPE_t n = X.shape[0]
-        ITYPE_t d = X.shape[1]
-        DTYPE_t[::1] squared_row_norms = np.empty(n, dtype=DTYPE)
+        cnp.float64_t * X_ptr = <cnp.float64_t *> &X[0, 0]
+        cnp.intp_t idx = 0
+        cnp.intp_t n = X.shape[0]
+        cnp.intp_t d = X.shape[1]
+        cnp.float64_t[::1] squared_row_norms = np.empty(n, dtype=np.float64)
 
     for idx in prange(n, schedule='static', nogil=True, num_threads=num_threads):
         squared_row_norms[idx] = _dot(d, X_ptr + idx * d, 1, X_ptr + idx * d, 1)
@@ -54,7 +52,7 @@ cdef class PairwiseDistancesReduction64:
         strategy=None,
      ):
         cdef:
-            ITYPE_t n_samples_chunk, X_n_full_chunks, Y_n_full_chunks
+            cnp.intp_t n_samples_chunk, X_n_full_chunks, Y_n_full_chunks
 
         if chunk_size is None:
             chunk_size = get_config().get("pairwise_dist_chunk_size", 256)
@@ -128,8 +126,8 @@ cdef class PairwiseDistancesReduction64:
         interact with those datastructures at various stages.
         """
         cdef:
-            ITYPE_t Y_start, Y_end, X_start, X_end, X_chunk_idx, Y_chunk_idx
-            ITYPE_t thread_num
+            cnp.intp_t Y_start, Y_end, X_start, X_end, X_chunk_idx, Y_chunk_idx
+            cnp.intp_t thread_num
 
         with nogil, parallel(num_threads=self.chunks_n_threads):
             thread_num = _openmp_thread_num()
@@ -197,8 +195,8 @@ cdef class PairwiseDistancesReduction64:
         interact with those datastructures at various stages.
         """
         cdef:
-            ITYPE_t Y_start, Y_end, X_start, X_end, X_chunk_idx, Y_chunk_idx
-            ITYPE_t thread_num
+            cnp.intp_t Y_start, Y_end, X_start, X_end, X_chunk_idx, Y_chunk_idx
+            cnp.intp_t thread_num
 
         # Allocating datastructures shared by all threads
         self._parallel_on_Y_init()
@@ -255,11 +253,11 @@ cdef class PairwiseDistancesReduction64:
 
     cdef void _compute_and_reduce_distances_on_chunks(
         self,
-        ITYPE_t X_start,
-        ITYPE_t X_end,
-        ITYPE_t Y_start,
-        ITYPE_t Y_end,
-        ITYPE_t thread_num,
+        cnp.intp_t X_start,
+        cnp.intp_t X_end,
+        cnp.intp_t Y_start,
+        cnp.intp_t Y_end,
+        cnp.intp_t thread_num,
     ) nogil:
         """Compute the pairwise distances on two chunks of X and Y and reduce them.
 
@@ -284,27 +282,27 @@ cdef class PairwiseDistancesReduction64:
 
     cdef void _parallel_on_X_parallel_init(
         self,
-        ITYPE_t thread_num,
+        cnp.intp_t thread_num,
     ) nogil:
         """Allocate datastructures used in a thread given its number."""
         return
 
     cdef void _parallel_on_X_init_chunk(
         self,
-        ITYPE_t thread_num,
-        ITYPE_t X_start,
-        ITYPE_t X_end,
+        cnp.intp_t thread_num,
+        cnp.intp_t X_start,
+        cnp.intp_t X_end,
     ) nogil:
         """Initialise datastructures used in a thread given its number."""
         return
 
     cdef void _parallel_on_X_pre_compute_and_reduce_distances_on_chunks(
         self,
-        ITYPE_t X_start,
-        ITYPE_t X_end,
-        ITYPE_t Y_start,
-        ITYPE_t Y_end,
-        ITYPE_t thread_num,
+        cnp.intp_t X_start,
+        cnp.intp_t X_end,
+        cnp.intp_t Y_start,
+        cnp.intp_t Y_end,
+        cnp.intp_t thread_num,
     ) nogil:
         """Initialise datastructures just before the _compute_and_reduce_distances_on_chunks.
 
@@ -314,16 +312,16 @@ cdef class PairwiseDistancesReduction64:
 
     cdef void _parallel_on_X_prange_iter_finalize(
         self,
-        ITYPE_t thread_num,
-        ITYPE_t X_start,
-        ITYPE_t X_end,
+        cnp.intp_t thread_num,
+        cnp.intp_t X_start,
+        cnp.intp_t X_end,
     ) nogil:
         """Interact with datastructures after a reduction on chunks."""
         return
 
     cdef void _parallel_on_X_parallel_finalize(
         self,
-        ITYPE_t thread_num
+        cnp.intp_t thread_num
     ) nogil:
         """Interact with datastructures after executing all the reductions."""
         return
@@ -336,20 +334,20 @@ cdef class PairwiseDistancesReduction64:
 
     cdef void _parallel_on_Y_parallel_init(
         self,
-        ITYPE_t thread_num,
-        ITYPE_t X_start,
-        ITYPE_t X_end,
+        cnp.intp_t thread_num,
+        cnp.intp_t X_start,
+        cnp.intp_t X_end,
     ) nogil:
         """Initialise datastructures used in a thread given its number."""
         return
 
     cdef void _parallel_on_Y_pre_compute_and_reduce_distances_on_chunks(
         self,
-        ITYPE_t X_start,
-        ITYPE_t X_end,
-        ITYPE_t Y_start,
-        ITYPE_t Y_end,
-        ITYPE_t thread_num,
+        cnp.intp_t X_start,
+        cnp.intp_t X_end,
+        cnp.intp_t Y_start,
+        cnp.intp_t Y_end,
+        cnp.intp_t thread_num,
     ) nogil:
         """Initialise datastructures just before the _compute_and_reduce_distances_on_chunks.
 
@@ -359,8 +357,8 @@ cdef class PairwiseDistancesReduction64:
 
     cdef void _parallel_on_Y_synchronize(
         self,
-        ITYPE_t X_start,
-        ITYPE_t X_end,
+        cnp.intp_t X_start,
+        cnp.intp_t X_end,
     ) nogil:
         """Update thread datastructures before leaving a parallel region."""
         return

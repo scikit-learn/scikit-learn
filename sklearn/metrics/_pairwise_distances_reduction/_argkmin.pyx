@@ -19,7 +19,6 @@ from ._gemm_term_computer cimport GEMMTermComputer64
 
 from ...utils._heap cimport heap_push
 from ...utils._sorting cimport simultaneous_sort
-from ...utils._typedefs cimport ITYPE_t, DTYPE_t
 
 import numpy as np
 import warnings
@@ -28,7 +27,6 @@ from numbers import Integral
 from scipy.sparse import issparse
 from sklearn.utils import check_scalar, _in_unstable_openblas_configuration
 from sklearn.utils.fixes import threadpool_limits
-from ...utils._typedefs import ITYPE, DTYPE
 
 cnp.import_array()
 
@@ -41,7 +39,7 @@ cdef class PairwiseDistancesArgKmin64(PairwiseDistancesReduction64):
         cls,
         X,
         Y,
-        ITYPE_t k,
+        cnp.intp_t k,
         str metric="euclidean",
         chunk_size=None,
         dict metric_kwargs=None,
@@ -103,7 +101,7 @@ cdef class PairwiseDistancesArgKmin64(PairwiseDistancesReduction64):
         DatasetsPair datasets_pair,
         chunk_size=None,
         strategy=None,
-        ITYPE_t k=1,
+        cnp.intp_t k=1,
     ):
         super().__init__(
             datasets_pair=datasets_pair,
@@ -121,16 +119,16 @@ cdef class PairwiseDistancesArgKmin64(PairwiseDistancesReduction64):
         #   - when parallelizing on Y, the pointers of those heaps are referencing
         #   small heaps which are thread-wise-allocated and whose content will be
         #   merged with the main heaps'.
-        self.heaps_r_distances_chunks = <DTYPE_t **> malloc(
-            sizeof(DTYPE_t *) * self.chunks_n_threads
+        self.heaps_r_distances_chunks = <cnp.float64_t **> malloc(
+            sizeof(cnp.float64_t *) * self.chunks_n_threads
         )
-        self.heaps_indices_chunks = <ITYPE_t **> malloc(
-            sizeof(ITYPE_t *) * self.chunks_n_threads
+        self.heaps_indices_chunks = <cnp.intp_t **> malloc(
+            sizeof(cnp.intp_t *) * self.chunks_n_threads
         )
 
         # Main heaps which will be returned as results by `PairwiseDistancesArgKmin64.compute`.
-        self.argkmin_indices = np.full((self.n_samples_X, self.k), 0, dtype=ITYPE)
-        self.argkmin_distances = np.full((self.n_samples_X, self.k), DBL_MAX, dtype=DTYPE)
+        self.argkmin_indices = np.full((self.n_samples_X, self.k), 0, dtype=np.intp)
+        self.argkmin_distances = np.full((self.n_samples_X, self.k), DBL_MAX, dtype=np.float64)
 
     def __dealloc__(self):
         if self.heaps_indices_chunks is not NULL:
@@ -141,18 +139,18 @@ cdef class PairwiseDistancesArgKmin64(PairwiseDistancesReduction64):
 
     cdef void _compute_and_reduce_distances_on_chunks(
         self,
-        ITYPE_t X_start,
-        ITYPE_t X_end,
-        ITYPE_t Y_start,
-        ITYPE_t Y_end,
-        ITYPE_t thread_num,
+        cnp.intp_t X_start,
+        cnp.intp_t X_end,
+        cnp.intp_t Y_start,
+        cnp.intp_t Y_end,
+        cnp.intp_t thread_num,
     ) nogil:
         cdef:
-            ITYPE_t i, j
-            ITYPE_t n_samples_X = X_end - X_start
-            ITYPE_t n_samples_Y = Y_end - Y_start
-            DTYPE_t *heaps_r_distances = self.heaps_r_distances_chunks[thread_num]
-            ITYPE_t *heaps_indices = self.heaps_indices_chunks[thread_num]
+            cnp.intp_t i, j
+            cnp.intp_t n_samples_X = X_end - X_start
+            cnp.intp_t n_samples_Y = Y_end - Y_start
+            cnp.float64_t *heaps_r_distances = self.heaps_r_distances_chunks[thread_num]
+            cnp.intp_t *heaps_indices = self.heaps_indices_chunks[thread_num]
 
         # Pushing the distances and their associated indices on a heap
         # which by construction will keep track of the argkmin.
@@ -168,9 +166,9 @@ cdef class PairwiseDistancesArgKmin64(PairwiseDistancesReduction64):
 
     cdef void _parallel_on_X_init_chunk(
         self,
-        ITYPE_t thread_num,
-        ITYPE_t X_start,
-        ITYPE_t X_end,
+        cnp.intp_t thread_num,
+        cnp.intp_t X_start,
+        cnp.intp_t X_end,
     ) nogil:
         # As this strategy is embarrassingly parallel, we can set each
         # thread's heaps pointer to the proper position on the main heaps.
@@ -180,12 +178,12 @@ cdef class PairwiseDistancesArgKmin64(PairwiseDistancesReduction64):
     @final
     cdef void _parallel_on_X_prange_iter_finalize(
         self,
-        ITYPE_t thread_num,
-        ITYPE_t X_start,
-        ITYPE_t X_end,
+        cnp.intp_t thread_num,
+        cnp.intp_t X_start,
+        cnp.intp_t X_end,
     ) nogil:
         cdef:
-            ITYPE_t idx, jdx
+            cnp.intp_t idx, jdx
 
         # Sorting the main heaps portion associated to `X[X_start:X_end]`
         # in ascending order w.r.t the distances.
@@ -201,8 +199,8 @@ cdef class PairwiseDistancesArgKmin64(PairwiseDistancesReduction64):
     ) nogil:
         cdef:
             # Maximum number of scalar elements (the last chunks can be smaller)
-            ITYPE_t heaps_size = self.X_n_samples_chunk * self.k
-            ITYPE_t thread_num
+            cnp.intp_t heaps_size = self.X_n_samples_chunk * self.k
+            cnp.intp_t thread_num
 
         # The allocation is done in parallel for data locality purposes: this way
         # the heaps used in each threads are allocated in pages which are closer
@@ -214,18 +212,18 @@ cdef class PairwiseDistancesArgKmin64(PairwiseDistancesReduction64):
             # As chunks of X are shared across threads, so must their
             # heaps. To solve this, each thread has its own heaps
             # which are then synchronised back in the main ones.
-            self.heaps_r_distances_chunks[thread_num] = <DTYPE_t *> malloc(
-                heaps_size * sizeof(DTYPE_t)
+            self.heaps_r_distances_chunks[thread_num] = <cnp.float64_t *> malloc(
+                heaps_size * sizeof(cnp.float64_t)
             )
-            self.heaps_indices_chunks[thread_num] = <ITYPE_t *> malloc(
-                heaps_size * sizeof(ITYPE_t)
+            self.heaps_indices_chunks[thread_num] = <cnp.intp_t *> malloc(
+                heaps_size * sizeof(cnp.intp_t)
             )
 
     cdef void _parallel_on_Y_parallel_init(
         self,
-        ITYPE_t thread_num,
-        ITYPE_t X_start,
-        ITYPE_t X_end,
+        cnp.intp_t thread_num,
+        cnp.intp_t X_start,
+        cnp.intp_t X_end,
     ) nogil:
         # Initialising heaps (memset can't be used here)
         for idx in range(self.X_n_samples_chunk * self.k):
@@ -235,11 +233,11 @@ cdef class PairwiseDistancesArgKmin64(PairwiseDistancesReduction64):
     @final
     cdef void _parallel_on_Y_synchronize(
         self,
-        ITYPE_t X_start,
-        ITYPE_t X_end,
+        cnp.intp_t X_start,
+        cnp.intp_t X_end,
     ) nogil:
         cdef:
-            ITYPE_t idx, jdx, thread_num
+            cnp.intp_t idx, jdx, thread_num
         with nogil, parallel(num_threads=self.effective_n_threads):
             # Synchronising the thread heaps with the main heaps.
             # This is done in parallel sample-wise (no need for locks).
@@ -263,7 +261,7 @@ cdef class PairwiseDistancesArgKmin64(PairwiseDistancesReduction64):
         self,
     ) nogil:
         cdef:
-            ITYPE_t idx, thread_num
+            cnp.intp_t idx, thread_num
 
         with nogil, parallel(num_threads=self.chunks_n_threads):
             # Deallocating temporary datastructures
@@ -283,9 +281,9 @@ cdef class PairwiseDistancesArgKmin64(PairwiseDistancesReduction64):
 
     cdef void compute_exact_distances(self) nogil:
         cdef:
-            ITYPE_t i, j
-            ITYPE_t[:, ::1] Y_indices = self.argkmin_indices
-            DTYPE_t[:, ::1] distances = self.argkmin_distances
+            cnp.intp_t i, j
+            cnp.intp_t[:, ::1] Y_indices = self.argkmin_indices
+            cnp.float64_t[:, ::1] distances = self.argkmin_distances
         for i in prange(self.n_samples_X, schedule='static', nogil=True,
                         num_threads=self.effective_n_threads):
             for j in range(self.k):
@@ -320,7 +318,7 @@ cdef class FastEuclideanPairwiseDistancesArgKmin64(PairwiseDistancesArgKmin64):
         self,
         X,
         Y,
-        ITYPE_t k,
+        cnp.intp_t k,
         bint use_squared_distances=False,
         chunk_size=None,
         strategy=None,
@@ -350,7 +348,7 @@ cdef class FastEuclideanPairwiseDistancesArgKmin64(PairwiseDistancesArgKmin64):
             DenseDenseDatasetsPair datasets_pair = (
             <DenseDenseDatasetsPair> self.datasets_pair
         )
-            ITYPE_t dist_middle_terms_chunks_size = self.Y_n_samples_chunk * self.X_n_samples_chunk
+            cnp.intp_t dist_middle_terms_chunks_size = self.Y_n_samples_chunk * self.X_n_samples_chunk
 
         self.gemm_term_computer = GEMMTermComputer64(
             datasets_pair.X,
@@ -382,7 +380,7 @@ cdef class FastEuclideanPairwiseDistancesArgKmin64(PairwiseDistancesArgKmin64):
     @final
     cdef void _parallel_on_X_parallel_init(
         self,
-        ITYPE_t thread_num,
+        cnp.intp_t thread_num,
     ) nogil:
         PairwiseDistancesArgKmin64._parallel_on_X_parallel_init(self, thread_num)
         self.gemm_term_computer._parallel_on_X_parallel_init(thread_num)
@@ -391,9 +389,9 @@ cdef class FastEuclideanPairwiseDistancesArgKmin64(PairwiseDistancesArgKmin64):
     @final
     cdef void _parallel_on_X_init_chunk(
         self,
-        ITYPE_t thread_num,
-        ITYPE_t X_start,
-        ITYPE_t X_end,
+        cnp.intp_t thread_num,
+        cnp.intp_t X_start,
+        cnp.intp_t X_end,
     ) nogil:
         PairwiseDistancesArgKmin64._parallel_on_X_init_chunk(self, thread_num, X_start, X_end)
         self.gemm_term_computer._parallel_on_X_init_chunk(thread_num, X_start, X_end)
@@ -402,11 +400,11 @@ cdef class FastEuclideanPairwiseDistancesArgKmin64(PairwiseDistancesArgKmin64):
     @final
     cdef void _parallel_on_X_pre_compute_and_reduce_distances_on_chunks(
         self,
-        ITYPE_t X_start,
-        ITYPE_t X_end,
-        ITYPE_t Y_start,
-        ITYPE_t Y_end,
-        ITYPE_t thread_num,
+        cnp.intp_t X_start,
+        cnp.intp_t X_end,
+        cnp.intp_t Y_start,
+        cnp.intp_t Y_end,
+        cnp.intp_t thread_num,
     ) nogil:
         PairwiseDistancesArgKmin64._parallel_on_X_pre_compute_and_reduce_distances_on_chunks(
             self,
@@ -423,7 +421,7 @@ cdef class FastEuclideanPairwiseDistancesArgKmin64(PairwiseDistancesArgKmin64):
     cdef void _parallel_on_Y_init(
         self,
     ) nogil:
-        cdef ITYPE_t thread_num
+        cdef cnp.intp_t thread_num
         PairwiseDistancesArgKmin64._parallel_on_Y_init(self)
         self.gemm_term_computer._parallel_on_Y_init()
 
@@ -431,9 +429,9 @@ cdef class FastEuclideanPairwiseDistancesArgKmin64(PairwiseDistancesArgKmin64):
     @final
     cdef void _parallel_on_Y_parallel_init(
         self,
-        ITYPE_t thread_num,
-        ITYPE_t X_start,
-        ITYPE_t X_end,
+        cnp.intp_t thread_num,
+        cnp.intp_t X_start,
+        cnp.intp_t X_end,
     ) nogil:
         PairwiseDistancesArgKmin64._parallel_on_Y_parallel_init(self, thread_num, X_start, X_end)
         self.gemm_term_computer._parallel_on_Y_parallel_init(thread_num, X_start, X_end)
@@ -442,11 +440,11 @@ cdef class FastEuclideanPairwiseDistancesArgKmin64(PairwiseDistancesArgKmin64):
     @final
     cdef void _parallel_on_Y_pre_compute_and_reduce_distances_on_chunks(
         self,
-        ITYPE_t X_start,
-        ITYPE_t X_end,
-        ITYPE_t Y_start,
-        ITYPE_t Y_end,
-        ITYPE_t thread_num,
+        cnp.intp_t X_start,
+        cnp.intp_t X_end,
+        cnp.intp_t Y_start,
+        cnp.intp_t Y_end,
+        cnp.intp_t thread_num,
     ) nogil:
         PairwiseDistancesArgKmin64._parallel_on_Y_pre_compute_and_reduce_distances_on_chunks(
             self,
@@ -462,22 +460,22 @@ cdef class FastEuclideanPairwiseDistancesArgKmin64(PairwiseDistancesArgKmin64):
     @final
     cdef void _compute_and_reduce_distances_on_chunks(
         self,
-        ITYPE_t X_start,
-        ITYPE_t X_end,
-        ITYPE_t Y_start,
-        ITYPE_t Y_end,
-        ITYPE_t thread_num,
+        cnp.intp_t X_start,
+        cnp.intp_t X_end,
+        cnp.intp_t Y_start,
+        cnp.intp_t Y_end,
+        cnp.intp_t thread_num,
     ) nogil:
         cdef:
-            ITYPE_t i, j
-            DTYPE_t squared_dist_i_j
-            ITYPE_t n_X = X_end - X_start
-            ITYPE_t n_Y = Y_end - Y_start
-            DTYPE_t * dist_middle_terms = self.gemm_term_computer._compute_distances_on_chunks(
+            cnp.intp_t i, j
+            cnp.float64_t squared_dist_i_j
+            cnp.intp_t n_X = X_end - X_start
+            cnp.intp_t n_Y = Y_end - Y_start
+            cnp.float64_t * dist_middle_terms = self.gemm_term_computer._compute_distances_on_chunks(
                 X_start, X_end, Y_start, Y_end, thread_num
             )
-            DTYPE_t * heaps_r_distances = self.heaps_r_distances_chunks[thread_num]
-            ITYPE_t * heaps_indices = self.heaps_indices_chunks[thread_num]
+            cnp.float64_t * heaps_r_distances = self.heaps_r_distances_chunks[thread_num]
+            cnp.intp_t * heaps_indices = self.heaps_indices_chunks[thread_num]
 
 
         # Pushing the distance and their associated indices on heaps

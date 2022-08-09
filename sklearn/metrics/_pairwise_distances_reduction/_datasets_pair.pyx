@@ -4,7 +4,6 @@ cimport numpy as cnp
 from cython cimport final
 from scipy.sparse import issparse
 
-from ...utils._typedefs cimport DTYPE_t, ITYPE_t
 from ...metrics._dist_metrics cimport DistanceMetric
 
 cnp.import_array()
@@ -100,24 +99,24 @@ cdef class DatasetsPair:
     def __init__(self, DistanceMetric distance_metric):
         self.distance_metric = distance_metric
 
-    cdef ITYPE_t n_samples_X(self) nogil:
+    cdef cnp.intp_t n_samples_X(self) nogil:
         """Number of samples in X."""
         # This is a abstract method.
         # This _must_ always be overwritten in subclasses.
         # TODO: add "with gil: raise" here when supporting Cython 3.0
         return -999
 
-    cdef ITYPE_t n_samples_Y(self) nogil:
+    cdef cnp.intp_t n_samples_Y(self) nogil:
         """Number of samples in Y."""
         # This is a abstract method.
         # This _must_ always be overwritten in subclasses.
         # TODO: add "with gil: raise" here when supporting Cython 3.0
         return -999
 
-    cdef DTYPE_t surrogate_dist(self, ITYPE_t i, ITYPE_t j) nogil:
+    cdef cnp.float64_t surrogate_dist(self, cnp.intp_t i, cnp.intp_t j) nogil:
         return self.dist(i, j)
 
-    cdef DTYPE_t dist(self, ITYPE_t i, ITYPE_t j) nogil:
+    cdef cnp.float64_t dist(self, cnp.intp_t i, cnp.intp_t j) nogil:
         # This is a abstract method.
         # This _must_ always be overwritten in subclasses.
         # TODO: add "with gil: raise" here when supporting Cython 3.0
@@ -148,17 +147,17 @@ cdef class DenseDenseDatasetsPair(DatasetsPair):
         self.d = X.shape[1]
 
     @final
-    cdef ITYPE_t n_samples_X(self) nogil:
+    cdef cnp.intp_t n_samples_X(self) nogil:
         return self.X.shape[0]
 
     @final
-    cdef ITYPE_t n_samples_Y(self) nogil:
+    cdef cnp.intp_t n_samples_Y(self) nogil:
         return self.Y.shape[0]
 
     @final
-    cdef DTYPE_t surrogate_dist(self, ITYPE_t i, ITYPE_t j) nogil:
+    cdef cnp.float64_t surrogate_dist(self, cnp.intp_t i, cnp.intp_t j) nogil:
         return self.distance_metric.rdist(&self.X[i, 0], &self.Y[j, 0], self.d)
 
     @final
-    cdef DTYPE_t dist(self, ITYPE_t i, ITYPE_t j) nogil:
+    cdef cnp.float64_t dist(self, cnp.intp_t i, cnp.intp_t j) nogil:
         return self.distance_metric.dist(&self.X[i, 0], &self.Y[j, 0], self.d)

@@ -21,7 +21,6 @@ from ._datasets_pair cimport (
 from ._gemm_term_computer cimport GEMMTermComputer64
 
 from ...utils._sorting cimport simultaneous_sort
-from ...utils._typedefs cimport ITYPE_t, DTYPE_t
 from ...utils._vector_sentinel cimport vector_to_nd_array
 
 from numbers import Real
@@ -40,11 +39,11 @@ cdef extern from "<algorithm>" namespace "std" nogil:
 ######################
 
 cdef cnp.ndarray[object, ndim=1] coerce_vectors_to_nd_arrays(
-    shared_ptr[vector_vector_DITYPE_t] vecs
+    shared_ptr[vector_vector_INTP_FLOAT64_t] vecs
 ):
     """Coerce a std::vector of std::vector to a ndarray of ndarray."""
     cdef:
-        ITYPE_t n = deref(vecs).size()
+        cnp.intp_t n = deref(vecs).size()
         cnp.ndarray[object, ndim=1] nd_arrays_of_nd_arrays = np.empty(n, dtype=np.ndarray)
 
     for i in range(n):
@@ -63,7 +62,7 @@ cdef class PairwiseDistancesRadiusNeighborhood64(PairwiseDistancesReduction64):
         cls,
         X,
         Y,
-        DTYPE_t radius,
+        cnp.float64_t radius,
         str metric="euclidean",
         chunk_size=None,
         dict metric_kwargs=None,
@@ -128,7 +127,7 @@ cdef class PairwiseDistancesRadiusNeighborhood64(PairwiseDistancesReduction64):
     def __init__(
         self,
         DatasetsPair datasets_pair,
-        DTYPE_t radius,
+        cnp.float64_t radius,
         chunk_size=None,
         strategy=None,
         sort_results=False,
@@ -153,29 +152,29 @@ cdef class PairwiseDistancesRadiusNeighborhood64(PairwiseDistancesReduction64):
         #   - when parallelizing on Y, the pointers of those heaps are referencing
         #   std::vectors of std::vectors which are thread-wise-allocated and whose
         #   content will be merged into self.neigh_distances and self.neigh_indices.
-        self.neigh_distances_chunks = vector[shared_ptr[vector[vector[DTYPE_t]]]](
+        self.neigh_distances_chunks = vector[shared_ptr[vector[vector[cnp.float64_t]]]](
             self.chunks_n_threads
         )
-        self.neigh_indices_chunks = vector[shared_ptr[vector[vector[ITYPE_t]]]](
+        self.neigh_indices_chunks = vector[shared_ptr[vector[vector[cnp.intp_t]]]](
             self.chunks_n_threads
         )
 
         # Temporary datastructures which will be coerced to numpy arrays on before
         # PairwiseDistancesRadiusNeighborhood.compute "return" and will be then freed.
-        self.neigh_distances = make_shared[vector[vector[DTYPE_t]]](self.n_samples_X)
-        self.neigh_indices = make_shared[vector[vector[ITYPE_t]]](self.n_samples_X)
+        self.neigh_distances = make_shared[vector[vector[cnp.float64_t]]](self.n_samples_X)
+        self.neigh_indices = make_shared[vector[vector[cnp.intp_t]]](self.n_samples_X)
 
     cdef void _compute_and_reduce_distances_on_chunks(
         self,
-        ITYPE_t X_start,
-        ITYPE_t X_end,
-        ITYPE_t Y_start,
-        ITYPE_t Y_end,
-        ITYPE_t thread_num,
+        cnp.intp_t X_start,
+        cnp.intp_t X_end,
+        cnp.intp_t Y_start,
+        cnp.intp_t Y_end,
+        cnp.intp_t thread_num,
     ) nogil:
         cdef:
-            ITYPE_t i, j
-            DTYPE_t r_dist_i_j
+            cnp.intp_t i, j
+            cnp.float64_t r_dist_i_j
 
         for i in range(X_start, X_end):
             for j in range(Y_start, Y_end):
@@ -198,9 +197,9 @@ cdef class PairwiseDistancesRadiusNeighborhood64(PairwiseDistancesReduction64):
 
     cdef void _parallel_on_X_init_chunk(
         self,
-        ITYPE_t thread_num,
-        ITYPE_t X_start,
-        ITYPE_t X_end,
+        cnp.intp_t thread_num,
+        cnp.intp_t X_start,
+        cnp.intp_t X_end,
     ) nogil:
 
         # As this strategy is embarrassingly parallel, we can set the
@@ -211,12 +210,12 @@ cdef class PairwiseDistancesRadiusNeighborhood64(PairwiseDistancesReduction64):
     @final
     cdef void _parallel_on_X_prange_iter_finalize(
         self,
-        ITYPE_t thread_num,
-        ITYPE_t X_start,
-        ITYPE_t X_end,
+        cnp.intp_t thread_num,
+        cnp.intp_t X_start,
+        cnp.intp_t X_end,
     ) nogil:
         cdef:
-            ITYPE_t idx, jdx
+            cnp.intp_t idx, jdx
 
         # Sorting neighbors for each query vector of X
         if self.sort_results:
@@ -231,24 +230,24 @@ cdef class PairwiseDistancesRadiusNeighborhood64(PairwiseDistancesReduction64):
         self,
     ) nogil:
         cdef:
-            ITYPE_t thread_num
+            cnp.intp_t thread_num
         # As chunks of X are shared across threads, so must datastructures to avoid race
         # conditions: each thread has its own vectors of n_samples_X vectors which are
         # then merged back in the main n_samples_X vectors.
         for thread_num in range(self.chunks_n_threads):
-            self.neigh_distances_chunks[thread_num] = make_shared[vector[vector[DTYPE_t]]](self.n_samples_X)
-            self.neigh_indices_chunks[thread_num] = make_shared[vector[vector[ITYPE_t]]](self.n_samples_X)
+            self.neigh_distances_chunks[thread_num] = make_shared[vector[vector[cnp.float64_t]]](self.n_samples_X)
+            self.neigh_indices_chunks[thread_num] = make_shared[vector[vector[cnp.intp_t]]](self.n_samples_X)
 
     @final
     cdef void _merge_vectors(
         self,
-        ITYPE_t idx,
-        ITYPE_t num_threads,
+        cnp.intp_t idx,
+        cnp.intp_t num_threads,
     ) nogil:
         cdef:
-            ITYPE_t thread_num
-            ITYPE_t idx_n_elements = 0
-            ITYPE_t last_element_idx = deref(self.neigh_indices)[idx].size()
+            cnp.intp_t thread_num
+            cnp.intp_t idx_n_elements = 0
+            cnp.intp_t last_element_idx = deref(self.neigh_indices)[idx].size()
 
         # Resizing buffers only once for the given number of elements.
         for thread_num in range(num_threads):
@@ -277,7 +276,7 @@ cdef class PairwiseDistancesRadiusNeighborhood64(PairwiseDistancesReduction64):
         self,
     ) nogil:
         cdef:
-            ITYPE_t idx, jdx, thread_num, idx_n_element, idx_current
+            cnp.intp_t idx, jdx, thread_num, idx_n_element, idx_current
 
         with nogil, parallel(num_threads=self.effective_n_threads):
             # Merge vectors used in threads into the main ones.
@@ -304,7 +303,7 @@ cdef class PairwiseDistancesRadiusNeighborhood64(PairwiseDistancesReduction64):
     cdef void compute_exact_distances(self) nogil:
         """Convert rank-preserving distances to pairwise distances in parallel."""
         cdef:
-            ITYPE_t i, j
+            cnp.intp_t i, j
 
         for i in prange(self.n_samples_X, nogil=True, schedule='static',
                         num_threads=self.effective_n_threads):
@@ -329,7 +328,7 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood64(PairwiseDistancesR
         self,
         X,
         Y,
-        DTYPE_t radius,
+        cnp.float64_t radius,
         bint use_squared_distances=False,
         chunk_size=None,
         strategy=None,
@@ -360,7 +359,7 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood64(PairwiseDistancesR
         # X and Y are checked by the DatasetsPair implemented as a DenseDenseDatasetsPair
         cdef:
             DenseDenseDatasetsPair datasets_pair = <DenseDenseDatasetsPair> self.datasets_pair
-            ITYPE_t dist_middle_terms_chunks_size = self.Y_n_samples_chunk * self.X_n_samples_chunk
+            cnp.intp_t dist_middle_terms_chunks_size = self.Y_n_samples_chunk * self.X_n_samples_chunk
 
         self.gemm_term_computer = GEMMTermComputer64(
             datasets_pair.X,
@@ -392,7 +391,7 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood64(PairwiseDistancesR
     @final
     cdef void _parallel_on_X_parallel_init(
         self,
-        ITYPE_t thread_num,
+        cnp.intp_t thread_num,
     ) nogil:
         PairwiseDistancesRadiusNeighborhood64._parallel_on_X_parallel_init(self, thread_num)
         self.gemm_term_computer._parallel_on_X_parallel_init(thread_num)
@@ -400,9 +399,9 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood64(PairwiseDistancesR
     @final
     cdef void _parallel_on_X_init_chunk(
         self,
-        ITYPE_t thread_num,
-        ITYPE_t X_start,
-        ITYPE_t X_end,
+        cnp.intp_t thread_num,
+        cnp.intp_t X_start,
+        cnp.intp_t X_end,
     ) nogil:
         PairwiseDistancesRadiusNeighborhood64._parallel_on_X_init_chunk(self, thread_num, X_start, X_end)
         self.gemm_term_computer._parallel_on_X_init_chunk(thread_num, X_start, X_end)
@@ -410,11 +409,11 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood64(PairwiseDistancesR
     @final
     cdef void _parallel_on_X_pre_compute_and_reduce_distances_on_chunks(
         self,
-        ITYPE_t X_start,
-        ITYPE_t X_end,
-        ITYPE_t Y_start,
-        ITYPE_t Y_end,
-        ITYPE_t thread_num,
+        cnp.intp_t X_start,
+        cnp.intp_t X_end,
+        cnp.intp_t Y_start,
+        cnp.intp_t Y_end,
+        cnp.intp_t thread_num,
     ) nogil:
         PairwiseDistancesRadiusNeighborhood64._parallel_on_X_pre_compute_and_reduce_distances_on_chunks(
             self,
@@ -430,16 +429,16 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood64(PairwiseDistancesR
     cdef void _parallel_on_Y_init(
         self,
     ) nogil:
-        cdef ITYPE_t thread_num
+        cdef cnp.intp_t thread_num
         PairwiseDistancesRadiusNeighborhood64._parallel_on_Y_init(self)
         self.gemm_term_computer._parallel_on_Y_init()
 
     @final
     cdef void _parallel_on_Y_parallel_init(
         self,
-        ITYPE_t thread_num,
-        ITYPE_t X_start,
-        ITYPE_t X_end,
+        cnp.intp_t thread_num,
+        cnp.intp_t X_start,
+        cnp.intp_t X_end,
     ) nogil:
         PairwiseDistancesRadiusNeighborhood64._parallel_on_Y_parallel_init(self, thread_num, X_start, X_end)
         self.gemm_term_computer._parallel_on_Y_parallel_init(thread_num, X_start, X_end)
@@ -447,11 +446,11 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood64(PairwiseDistancesR
     @final
     cdef void _parallel_on_Y_pre_compute_and_reduce_distances_on_chunks(
         self,
-        ITYPE_t X_start,
-        ITYPE_t X_end,
-        ITYPE_t Y_start,
-        ITYPE_t Y_end,
-        ITYPE_t thread_num,
+        cnp.intp_t X_start,
+        cnp.intp_t X_end,
+        cnp.intp_t Y_start,
+        cnp.intp_t Y_end,
+        cnp.intp_t thread_num,
     ) nogil:
         PairwiseDistancesRadiusNeighborhood64._parallel_on_Y_pre_compute_and_reduce_distances_on_chunks(
             self,
@@ -471,18 +470,18 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood64(PairwiseDistancesR
     @final
     cdef void _compute_and_reduce_distances_on_chunks(
         self,
-        ITYPE_t X_start,
-        ITYPE_t X_end,
-        ITYPE_t Y_start,
-        ITYPE_t Y_end,
-        ITYPE_t thread_num,
+        cnp.intp_t X_start,
+        cnp.intp_t X_end,
+        cnp.intp_t Y_start,
+        cnp.intp_t Y_end,
+        cnp.intp_t thread_num,
     ) nogil:
         cdef:
-            ITYPE_t i, j
-            DTYPE_t squared_dist_i_j
-            ITYPE_t n_X = X_end - X_start
-            ITYPE_t n_Y = Y_end - Y_start
-            DTYPE_t *dist_middle_terms = self.gemm_term_computer._compute_distances_on_chunks(
+            cnp.intp_t i, j
+            cnp.float64_t squared_dist_i_j
+            cnp.intp_t n_X = X_end - X_start
+            cnp.intp_t n_Y = Y_end - Y_start
+            cnp.float64_t *dist_middle_terms = self.gemm_term_computer._compute_distances_on_chunks(
                 X_start, X_end, Y_start, Y_end, thread_num
             )
 
