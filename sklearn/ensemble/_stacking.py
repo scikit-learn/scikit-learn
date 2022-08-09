@@ -104,7 +104,8 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
         """
         X_meta = []
         for est_idx, preds in enumerate(predictions):
-            # case where the the estimator returned a 1D array
+            # Some estimator return a 1D array for predictions
+            # which must be 2-dimensional arrays.
             if hasattr(preds, "ndim") and preds.ndim == 1:
                 X_meta.append(preds.reshape(-1, 1))
             else:
@@ -113,10 +114,12 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
                     and self._type_of_target == "multilabel-indicator"
                     and isinstance(preds, list)
                 ):
-                    # preds is a list of n_targets composed of ndarray of 2 columns
-                    # Remove the first column when using probabilities in
-                    # binary classification because both features are perfectly
-                    # collinear.
+                    # `preds` is here a list of n_targets 2D ndarrays of 2 columns.
+                    # The two columns contains the probabilities of the negative
+                    # and positive classes respectively.
+                    # For binary classification, we only work with probabilities
+                    # of the positive class (the second column), hence we drop
+                    # the first column.
                     for pred in preds:
                         X_meta.append(pred[:, 1:])
                 elif (

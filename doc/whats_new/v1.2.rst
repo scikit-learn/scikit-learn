@@ -147,8 +147,8 @@ Changelog
 - |Efficiency| Improve runtime performance of :class:`ensemble.IsolationForest`
   by avoiding data copies. :pr:`23252` by :user:`Zhehao Liu <MaxwellLZH>`.
 
-- |Enhancement| multilabel-indicator target is supported by
-  :class:`ensemble.StackingClassifier`.
+- |Enhancement| :class:`ensemble.StackingClassifier` now supports
+  multilabel-indicator target
   :pr:`20424` by :user:`Nicolas Peretti <nicoperetti>`,
   :user:`Nestor Navarro <nestornav>`, :user:`Nati Tomattis <natitomattis>`,
   :pr:`24146` by :user:`Vincent Maladiere <Vincent-Maladiere>`.
