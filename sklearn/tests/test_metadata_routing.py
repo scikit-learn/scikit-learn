@@ -73,14 +73,16 @@ def assert_request_equal(request, dictionary):
 def record_metadata(obj, method, **kwargs):
     """Utility function to store passed metadata to a method."""
     if not hasattr(obj, "_records"):
-        setattr(obj, "_records", dict())
+        obj._records = {}
     obj._records[method] = kwargs
 
 
 def check_recorded_metadata(obj, method, **kwargs):
     """Check whether the expected metadata is passed to the object's method."""
     records = getattr(obj, "_records", dict()).get(method, dict())
-    assert set(kwargs.keys()) == set(records.keys())
+    # only check keys whose value was explicitly passed
+    expected_keys = {key for key, val in records.items() if val is not None}
+    assert set(kwargs.keys()) == expected_keys
     for key, value in kwargs.items():
         assert records[key] is value
 
