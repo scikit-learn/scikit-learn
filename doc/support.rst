@@ -5,17 +5,16 @@ Support
 There are several ways to get in touch with the developers.
 
 
-.. _mailing_lists:
+.. _announcements_and_notification:
 
-Mailing List
-============
+Announcements and notification
+===============================
 
 - The main mailing list is `scikit-learn
   <https://mail.python.org/mailman/listinfo/scikit-learn>`_.
 
-- There is also a commit list `scikit-learn-commits
-  <https://lists.sourceforge.net/lists/listinfo/scikit-learn-commits>`_,
-  where updates to the main repository and test failures get notified.
+- Commit notifications are sent via the twitter account `sklearn_commits
+  <https://twitter.com/sklearn_commits>`_.
 
 
 .. _how_to_reach_out:
