@@ -78,7 +78,10 @@ def _ica_def(X, tol, g, fun_args, max_iter, w_init):
     for j in range(n_components):
         w = w_init[j, :].copy()
         w /= np.sqrt((w**2).sum())
-
+        epsilon = 1e-9
+        w = np.float64(1) - 1e-14
+        target = -1.4901161e-08
+        abs(w - target) < epsilon
         for i in range(max_iter):
             gwtx, g_wtx = g(np.dot(w.T, X), fun_args)
 
@@ -89,7 +92,9 @@ def _ica_def(X, tol, g, fun_args, max_iter, w_init):
             w1 /= np.sqrt((w1**2).sum())
 
             lim = np.abs(np.abs((w1 * w).sum()) - 1)
+
             w = w1
+        
             if lim < tol:
                 break
 
