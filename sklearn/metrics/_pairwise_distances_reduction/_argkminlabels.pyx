@@ -29,8 +29,6 @@ cdef class PairwiseDistancesArgKminLabels64(PairwiseDistancesArgKmin64):
     """
     cdef:
         const ITYPE_t[:] labels,
-        ITYPE_t[:] unique_labels
-
         DTYPE_t[:, :] label_weights
         cmap[ITYPE_t, ITYPE_t] labels_to_index
         WeightingStrategy weight_type
@@ -102,7 +100,8 @@ cdef class PairwiseDistancesArgKminLabels64(PairwiseDistancesArgKmin64):
         else:
             self.weight_type = WeightingStrategy.other
         self.labels = labels
-        self.unique_labels = np.unique(labels)
+
+        unique_labels = np.unique(labels)
 
         # Map from set of unique labels to their indices in `label_weights`
         self.labels_to_index = {label:idx for idx, label in enumerate(self.unique_labels)}
@@ -120,9 +119,7 @@ cdef class PairwiseDistancesArgKminLabels64(PairwiseDistancesArgKmin64):
             ITYPE_t* indices,
             DTYPE_t* distances,) nogil:
         cdef:
-            ITYPE_t y_idx, label, label_index, max_label, multi_output_index
-            DTYPE_t max_label_weight = -1
-            DTYPE_t total_weight
+            ITYPE_t y_idx, label, label_index, multi_output_index
             DTYPE_t label_weight = 1
 
         # Iterate through the sample k-nearest neighbours
@@ -135,11 +132,7 @@ cdef class PairwiseDistancesArgKminLabels64(PairwiseDistancesArgKmin64):
             label = self.labels[y_idx]
             label_index = self.labels_to_index[label]
             self.label_weights[sample_index][label_index] += label_weight
-            total_weight = self.label_weights[sample_index][label_index]
-            if max_label_weight < total_weight or (max_label_weight == total_weight and label < max_label):
-                max_label = label
-                max_label_weight = total_weight
-        return max_label
+        return
 
     cdef void _parallel_on_X_prange_iter_finalize(
         self,
