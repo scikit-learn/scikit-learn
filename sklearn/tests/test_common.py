@@ -444,7 +444,14 @@ def test_estimators_do_not_raise_errors_in_init_or_set_params(Estimator):
         # Also do does not raise
         est.set_params(**new_params)
 
-
+_parameter_constraints = {
+        **_BaseKMeans._parameter_constraints,
+        "copy_x": [bool],
+        "algorithm": [
+            StrOptions({"lloyd", "elkan", "auto", "full"}, deprecated={"auto", "full"})
+        ],
+    }
+    
 PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "ARDRegression",
     "AdaBoostClassifier",
