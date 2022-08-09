@@ -608,17 +608,17 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         self._type_of_target = type_of_target(y)
         self.classes_ = []
         if self._type_of_target != "multilabel-indicator":
-            self._le = LabelEncoder().fit(y)
-            self.classes_ = self._le.classes_
-            y = self._le.transform(y)
+            self._label_encoder = LabelEncoder().fit(y)
+            self.classes_ = self._label_encoder.classes_
+            y = self._label_encoder.transform(y)
         else:
-            self._les = []
+            self._label_encoders = []
             for k in range(y.shape[1]):
                 y_k = y[:, k]
-                _le = LabelEncoder().fit(y_k)
-                self._les.append(_le)
-                y[:, k] = _le.transform(y_k)
-                self.classes_.append(_le.classes_)
+                _label_encoder = LabelEncoder().fit(y_k)
+                self._label_encoders.append(_label_encoder)
+                y[:, k] = _label_encoder.transform(y_k)
+                self.classes_.append(_label_encoder.classes_)
         return super().fit(X, y, sample_weight)
 
     @available_if(_estimator_has("predict"))
@@ -644,10 +644,10 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         """
         y_pred = super().predict(X, **predict_params)
         if self._type_of_target != "multilabel-indicator":
-            y_pred = self._le.inverse_transform(y_pred)
+            y_pred = self._label_encoder.inverse_transform(y_pred)
         else:
-            for k, _le in enumerate(self._les):
-                y_pred[:, k] = _le.inverse_transform(y_pred[:, k])
+            for k, _label_encoder in enumerate(self._label_encoders):
+                y_pred[:, k] = _label_encoder.inverse_transform(y_pred[:, k])
         return y_pred
 
     @available_if(_estimator_has("predict_proba"))
