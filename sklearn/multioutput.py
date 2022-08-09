@@ -6,8 +6,6 @@ a base estimator to be provided in their constructor. The meta-estimator
 extends single output estimators to multioutput estimators.
 """
 
-from abc import ABCMeta, abstractmethod
-
 # Author: Tim Head <betatim@gmail.com>
 # Author: Hugo Bowne-Anderson <hugobowne@gmail.com>
 # Author: Chris Rivera <chris.richard.rivera@gmail.com>
@@ -15,6 +13,9 @@ from abc import ABCMeta, abstractmethod
 # Author: James Ashton Nichols <james.ashton.nichols@gmail.com>
 #
 # License: BSD 3 clause
+
+
+from abc import ABCMeta, abstractmethod
 from numbers import Integral
 
 import numpy as np
