@@ -624,9 +624,6 @@ model is flexible enough to learn from highly person specific features it
 could fail to generalize to new subjects. :class:`GroupKFold` makes it possible
 to detect this kind of overfitting situations.
 
-:class:`GroupKFold` is the same as :class:`LeaveOneGroupOut` in the case where
-`n_splits` is equal to the number of groups.
-
 Imagine you have three subjects, each with an associated number from 1 to 3::
 
   >>> from sklearn.model_selection import GroupKFold
@@ -722,8 +719,9 @@ group information can be used to encode arbitrary domain specific pre-defined
 cross-validation folds.
 
 Each training set is thus constituted by all the samples except the ones
-related to a specific group. This is basically the same as
-:class:`LeavePGroupsOut` with ``n_groups=1``.
+related to a specific group. This is the same as :class:`LeavePGroupsOut` with
+``n_groups=1`` and the same as :class:`GroupKFold` in the case where
+`n_splits` is equal to the number of groups
 
 For example, in the cases of multiple experiments, :class:`LeaveOneGroupOut`
 can be used to create a cross-validation based on the different experiments:
