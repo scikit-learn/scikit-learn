@@ -242,9 +242,9 @@ def rand_score(labels_true, labels_pred):
     The Rand Index computes a similarity measure between two clusterings
     by considering all pairs of samples and counting pairs that are
     assigned in the same or different clusters in the predicted and
-    true clusterings.
+    true clusterings [1]_ [2]_.
 
-    The raw RI score is:
+    The raw RI score [3]_ is:
 
         RI = (number of agreeing pairs) / (number of pairs)
 
@@ -266,8 +266,19 @@ def rand_score(labels_true, labels_pred):
 
     See Also
     --------
-    adjusted_rand_score: Adjusted Rand Score
-    adjusted_mutual_info_score: Adjusted Mutual Information
+    adjusted_rand_score: Adjusted Rand Score.
+    adjusted_mutual_info_score: Adjusted Mutual Information.
+
+    References
+    ----------
+    .. [1] :doi:`Hubert, L., Arabie, P. "Comparing partitions."
+       Journal of Classification 2, 193–218 (1985).
+       <10.1007/BF01908075>`.
+
+    .. [2] `Wikipedia: Simple Matching Coefficient
+        <https://en.wikipedia.org/wiki/Simple_matching_coefficient>`_
+
+    .. [3] `Wikipedia: Rand Index <https://en.wikipedia.org/wiki/Rand_index>`_
 
     Examples
     --------
@@ -282,16 +293,6 @@ def rand_score(labels_true, labels_pred):
 
       >>> rand_score([0, 0, 1, 2], [0, 0, 1, 1])
       0.83...
-
-    References
-    ----------
-    .. L. Hubert and P. Arabie, Comparing Partitions, Journal of
-      Classification 1985
-      https://link.springer.com/article/10.1007%2FBF01908075
-
-    .. https://en.wikipedia.org/wiki/Simple_matching_coefficient
-
-    .. https://en.wikipedia.org/wiki/Rand_index
     """
     contingency = pair_confusion_matrix(labels_true, labels_pred)
     numerator = contingency.diagonal().sum()

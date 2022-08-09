@@ -39,7 +39,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.metrics.cluster._supervised.adjusted_rand_score",
     "sklearn.metrics.cluster._supervised.entropy",
     "sklearn.metrics.cluster._supervised.fowlkes_mallows_score",
-    "sklearn.metrics.cluster._supervised.rand_score",
     "sklearn.metrics.pairwise.pairwise_distances_chunked",
     "sklearn.preprocessing._data.maxabs_scale",
     "sklearn.preprocessing._data.scale",
