@@ -114,7 +114,7 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
                     and self._type_of_target == "multilabel-indicator"
                     and isinstance(preds, list)
                 ):
-                    # `preds` is here a list of n_targets 2D ndarrays of 
+                    # `preds` is here a list of n_targets 2D ndarrays of
                     # `n_classes` columns. The k-th column contains the
                     # probabilities of the samples belonging the k-th class.
                     #
