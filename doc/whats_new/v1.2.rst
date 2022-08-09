@@ -199,6 +199,11 @@ Changelog
   When not used for averages, the value returned is `np.nan`.
   :pr:`23183` by :user:`Marc Torrellas Socastro <marctorsoc>`.
 
+- |Fix| Fixed :func:`classification_report` so that empty input will return `np.nan`
+  for average="weighted avg". Before, "macro avg" would return f1-score=np.nan and
+  "weighted avg" 0.0, which was inconsistent.
+  :pr:`23183` by :user:`Marc Torrellas Socastro <marctorsoc>`.
+
 :mod:`sklearn.multioutput`
 ..........................
 

@@ -1007,8 +1007,6 @@ Changelog
   in the multiclass case when ``multiclass='ovr'`` which will return the score
   per class. :pr:`19158` by :user:`Nicki Skafte <SkafteNicki>`.
 
-:mod:`sklearn.manifold`
-.......................
 - |Enhancement| Adds `im_kw` parameter to
   :meth:`metrics.ConfusionMatrixDisplay.from_estimator`
   :meth:`metrics.ConfusionMatrixDisplay.from_predictions`, and
