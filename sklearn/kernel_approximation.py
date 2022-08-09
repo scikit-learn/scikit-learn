@@ -7,7 +7,7 @@ approximate kernel feature maps based on Fourier transforms and Count Sketches.
 #         Daniel Lopez-Sanchez (TensorSketch) <lope@usal.es>
 
 # License: BSD 3 clause
-
+from numbers import Integral, Real
 import warnings
 
 import numpy as np
@@ -25,6 +25,8 @@ from .base import _ClassNamePrefixFeaturesOutMixin
 from .utils import check_random_state
 from .utils.extmath import safe_sparse_dot
 from .utils.validation import check_is_fitted
+from .utils._param_validation import Interval
+from .utils._param_validation import validate_params
 from .utils.validation import _check_feature_names_in
 from .metrics.pairwise import pairwise_kernels, KERNEL_PARAMS
 from .utils.validation import check_non_negative
@@ -590,6 +592,11 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
     0.9499...
     """
 
+    _parameter_constraints = {
+        "sample_steps": [Interval(Integral, 1, None, closed="left")],
+        "sample_interval": [Interval(Real, 0, None, closed="left"), None],
+    }
+
     def __init__(self, *, sample_steps=2, sample_interval=None):
         self.sample_steps = sample_steps
         self.sample_interval = sample_interval
@@ -612,6 +619,8 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
         self : object
             Returns the transformer.
         """
+        self._validate_params()
+
         X = self._validate_data(X, accept_sparse="csr")
         check_non_negative(X, "X in AdditiveChi2Sampler.fit")
 
