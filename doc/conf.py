@@ -262,6 +262,8 @@ html_context["redirects"] = redirects
 for old_link in redirects:
     html_additional_pages[old_link] = "redirects.html"
 
+# Not showing the search summary makes the search page load faster.
+html_show_search_summary = False
 
 # -- Options for LaTeX output ------------------------------------------------
 latex_elements = {
