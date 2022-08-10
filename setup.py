@@ -32,20 +32,8 @@ except ImportError:
 builtins.__SKLEARN_SETUP__ = True
 
 
-DISTNAME = "scikit-learn"
-DESCRIPTION = "A set of python modules for machine learning and data mining"
-with open("README.rst") as f:
-    LONG_DESCRIPTION = f.read()
-MAINTAINER = "Andreas Mueller"
-MAINTAINER_EMAIL = "amueller@ais.uni-bonn.de"
 URL = "http://scikit-learn.org"
 DOWNLOAD_URL = "https://pypi.org/project/scikit-learn/#files"
-LICENSE = "new BSD"
-PROJECT_URLS = {
-    "Bug Tracker": "https://github.com/scikit-learn/scikit-learn/issues",
-    "Documentation": "https://scikit-learn.org/stable/documentation.html",
-    "Source Code": "https://github.com/scikit-learn/scikit-learn",
-}
 
 # We can actually import a restricted version of sklearn that
 # does not need the compiled code
@@ -76,10 +64,6 @@ if SETUPTOOLS_COMMANDS.intersection(sys.argv):
     extra_setuptools_args = dict(
         zip_safe=False,  # the package can run out of an .egg file
         include_package_data=True,
-        extras_require={
-            key: min_deps.tag_to_packages[key]
-            for key in ["examples", "docs", "tests", "benchmark"]
-        },
     )
 else:
     extra_setuptools_args = dict()
@@ -230,7 +214,6 @@ def check_package_status(package, min_version):
 
 
 def setup_package():
-
     # TODO: Require Python 3.8 for PyPy when PyPy3.8 is ready
     # https://github.com/conda-forge/conda-forge-pinning-feedstock/issues/2089
     if platform.python_implementation() == "PyPy":
@@ -241,39 +224,11 @@ def setup_package():
         required_python_version = (3, 8)
 
     metadata = dict(
-        name=DISTNAME,
-        maintainer=MAINTAINER,
-        maintainer_email=MAINTAINER_EMAIL,
-        description=DESCRIPTION,
-        license=LICENSE,
         url=URL,
         download_url=DOWNLOAD_URL,
-        project_urls=PROJECT_URLS,
         version=VERSION,
-        long_description=LONG_DESCRIPTION,
-        classifiers=[
-            "Intended Audience :: Science/Research",
-            "Intended Audience :: Developers",
-            "License :: OSI Approved :: BSD License",
-            "Programming Language :: C",
-            "Programming Language :: Python",
-            "Topic :: Software Development",
-            "Topic :: Scientific/Engineering",
-            "Development Status :: 5 - Production/Stable",
-            "Operating System :: Microsoft :: Windows",
-            "Operating System :: POSIX",
-            "Operating System :: Unix",
-            "Operating System :: MacOS",
-            "Programming Language :: Python :: 3",
-            "Programming Language :: Python :: 3.8",
-            "Programming Language :: Python :: 3.9",
-            "Programming Language :: Python :: 3.10",
-            "Programming Language :: Python :: Implementation :: CPython",
-            "Programming Language :: Python :: Implementation :: PyPy",
-        ],
         cmdclass=cmdclass,
         python_requires=python_requires,
-        install_requires=min_deps.tag_to_packages["install"],
         package_data={"": ["*.pxd"]},
         **extra_setuptools_args,
     )

@@ -1,4 +1,4 @@
-"""Tests for the minimum dependencies in the README.rst file."""
+"""Tests for the minimum dependencies in the README.rst file and pyproject.toml."""
 
 
 import os
@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 import sklearn
-from sklearn._min_dependencies import dependent_packages
+from sklearn._min_dependencies import dependent_packages, tag_to_packages
 from sklearn.utils.fixes import parse_version
 
 
@@ -50,3 +50,25 @@ def test_min_dependencies_readme():
                 min_version = parse_version(dependent_packages[package][0])
 
                 assert version == min_version, f"{package} has a mismatched version"
+
+
+def test_min_dependencies_pyproject_toml():
+    """Verify that pyproject.toml is consistent with _min_dependencies."""
+    root_path = Path(sklearn.__path__[0]).parents[0]
+    pyproject_toml = root_path / "pyproject.toml"
+
+    if not pyproject_toml.exists():
+        # Skip the test if the pyproject.toml file is not available.
+        # For instance, when installing scikit-learn from wheels
+        pytest.skip("The pyproject.toml does not exist")
+
+    toml_content = pyproject_toml.read_text()
+
+    for tag, constraints in tag_to_packages.items():
+        if tag == "maintenance":
+            # maintenance does not need to be in pyproject.toml
+            continue
+        for constraint in constraints:
+            assert (
+                constraint in toml_content
+            ), f"{constraint} should be in pyproject.toml"

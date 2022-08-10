@@ -29,7 +29,7 @@ dependent_packages = {
     "scipy": (SCIPY_MIN_VERSION, "build, install"),
     "joblib": (JOBLIB_MIN_VERSION, "install"),
     "threadpoolctl": (THREADPOOLCTL_MIN_VERSION, "install"),
-    "cython": (CYTHON_MIN_VERSION, "build"),
+    "Cython": (CYTHON_MIN_VERSION, "build"),
     "matplotlib": ("3.1.2", "benchmark, docs, examples, tests"),
     "scikit-image": ("0.16.2", "docs, examples, tests"),
     "pandas": ("1.0.5", "benchmark, docs, examples, tests"),
