@@ -519,7 +519,7 @@ def test_rfe_cv_groups(global_random_seed):
 @pytest.mark.parametrize(
     "importance_getter", [attrgetter("regressor_.coef_"), "regressor_.coef_"]
 )
-@pytest.mark.parametrize("selector, expected_n_features", [(RFE, 5), (RFECV, 2)])
+@pytest.mark.parametrize("selector, expected_n_features", [(RFE, 5), (RFECV, 5)])
 def test_rfe_wrapped_estimator(
     importance_getter, selector, expected_n_features, global_random_seed
 ):
