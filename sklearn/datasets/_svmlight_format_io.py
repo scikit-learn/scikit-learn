@@ -230,7 +230,7 @@ def load_svmlight_files(
     offset=0,
     length=-1,
 ):
-    """Load dataset from multiple files in SVMlight format
+    """Load dataset from multiple files in SVMlight format.
 
     This function is equivalent to mapping load_svmlight_file over a list of
     files, except that the results are concatenated into a single, flat list
@@ -268,7 +268,7 @@ def load_svmlight_files(
 
     multilabel : bool, default=False
         Samples may have several labels each (see
-        https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multilabel.html)
+        https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multilabel.html).
 
     zero_based : bool or "auto", default="auto"
         Whether column indices in f are zero-based (True) or one-based
@@ -296,12 +296,15 @@ def load_svmlight_files(
 
     Returns
     -------
-    [X1, y1, ..., Xn, yn]
-    where each (Xi, yi) pair is the result from load_svmlight_file(files[i]).
+    [X1, y1, ..., Xn, yn] or [X1, y1, q1, ..., Xn, yn, qn]: list of arrays
+        Each (Xi, yi) pair is the result from load_svmlight_file(files[i]).
+        If query_id is set to True, this will return instead (Xi, yi, qi)
+        triplets.
 
-    If query_id is set to True, this will return instead [X1, y1, q1,
-    ..., Xn, yn, qn] where (Xi, yi, qi) is the result from
-    load_svmlight_file(files[i])
+    See Also
+    --------
+    load_svmlight_file: Similar function for loading a single file in this
+        format.
 
     Notes
     -----
@@ -309,10 +312,6 @@ def load_svmlight_files(
     matrix X_test, it is essential that X_train and X_test have the same
     number of features (X_train.shape[1] == X_test.shape[1]). This may not
     be the case if you load the files individually with load_svmlight_file.
-
-    See Also
-    --------
-    load_svmlight_file
     """
     if (offset != 0 or length > 0) and zero_based == "auto":
         # disable heuristic search to avoid getting inconsistent results on
