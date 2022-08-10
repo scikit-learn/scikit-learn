@@ -90,11 +90,17 @@ def assert_argkmin_results_equality(ref_dist, dist, ref_indices, indices, rtol=1
 
 def relative_rounding(scalar, n_significant_digits):
     """Round a scalar to a number of significant digits relatively to its value."""
+    if scalar == 0:
+        return 0.0
     magnitude = int(floor(log10(abs(scalar)))) + 1
     return round(scalar, n_significant_digits - magnitude)
 
 
 def test_relative_rounding():
+
+    assert relative_rounding(0, 1) == 0.0
+    assert relative_rounding(0, 10) == 0.0
+    assert relative_rounding(0, 123456) == 0.0
 
     assert relative_rounding(123456789, 0) == 0
     assert relative_rounding(123456789, 2) == 120000000
@@ -513,6 +519,9 @@ def test_pairwise_distances_reduction_is_usable_for():
     metric = "euclidean"
 
     assert Dispatcher.is_usable_for(X.astype(np.float64), X.astype(np.float64), metric)
+
+    assert Dispatcher.is_usable_for(X.astype(np.float32), X.astype(np.float32), metric)
+
     assert not Dispatcher.is_usable_for(X.astype(np.int64), Y.astype(np.int64), metric)
 
     assert not Dispatcher.is_usable_for(X, Y, metric="pyfunc")
@@ -535,14 +544,14 @@ def test_argkmin_factory_method_wrong_usages():
     metric = "euclidean"
 
     msg = (
-        "Only 64bit float datasets are supported at this time, "
+        "Only float64 or float32 datasets pairs are supported at this time, "
         "got: X.dtype=float32 and Y.dtype=float64"
     )
     with pytest.raises(ValueError, match=msg):
         ArgKminDispatcher.compute(X=X.astype(np.float32), Y=Y, k=k, metric=metric)
 
     msg = (
-        "Only 64bit float datasets are supported at this time, "
+        "Only float64 or float32 datasets pairs are supported at this time, "
         "got: X.dtype=float64 and Y.dtype=int32"
     )
     with pytest.raises(ValueError, match=msg):
@@ -587,7 +596,7 @@ def test_radius_neighborhood_factory_method_wrong_usages():
     metric = "euclidean"
 
     msg = (
-        "Only 64bit float datasets are supported at this time, "
+        "Only float64 or float32 datasets pairs are supported at this time, "
         "got: X.dtype=float32 and Y.dtype=float64"
     )
     with pytest.raises(
@@ -599,7 +608,7 @@ def test_radius_neighborhood_factory_method_wrong_usages():
         )
 
     msg = (
-        "Only 64bit float datasets are supported at this time, "
+        "Only float64 or float32 datasets pairs are supported at this time, "
         "got: X.dtype=float64 and Y.dtype=int32"
     )
     with pytest.raises(
@@ -649,13 +658,14 @@ def test_radius_neighborhood_factory_method_wrong_usages():
     "Dispatcher",
     [ArgKminDispatcher, RadiusNeighborsDispatcher],
 )
+@pytest.mark.parametrize("dtype", [np.float64, np.float32])
 def test_chunk_size_agnosticism(
     global_random_seed,
     Dispatcher,
     n_samples,
     chunk_size,
+    dtype,
     n_features=100,
-    dtype=np.float64,
 ):
     # Results must not depend on the chunk size
     rng = np.random.RandomState(global_random_seed)
@@ -666,11 +676,13 @@ def test_chunk_size_agnosticism(
     if Dispatcher is ArgKminDispatcher:
         parameter = 10
         check_parameters = {}
+        compute_parameters = {}
     else:
         # Scaling the radius slightly with the numbers of dimensions
         radius = 10 ** np.log(n_features)
         parameter = radius
         check_parameters = {"radius": radius}
+        compute_parameters = {"sort_results": True}
 
     ref_dist, ref_indices = Dispatcher.compute(
         X,
@@ -678,6 +690,7 @@ def test_chunk_size_agnosticism(
         parameter,
         metric="manhattan",
         return_distance=True,
+        **compute_parameters,
     )
 
     dist, indices = Dispatcher.compute(
@@ -687,6 +700,7 @@ def test_chunk_size_agnosticism(
         chunk_size=chunk_size,
         metric="manhattan",
         return_distance=True,
+        **compute_parameters,
     )
 
     ASSERT_RESULT[(Dispatcher, dtype)](
@@ -700,13 +714,14 @@ def test_chunk_size_agnosticism(
     "Dispatcher",
     [ArgKminDispatcher, RadiusNeighborsDispatcher],
 )
+@pytest.mark.parametrize("dtype", [np.float64, np.float32])
 def test_n_threads_agnosticism(
     global_random_seed,
     Dispatcher,
     n_samples,
     chunk_size,
+    dtype,
     n_features=100,
-    dtype=np.float64,
 ):
     # Results must not depend on the number of threads
     rng = np.random.RandomState(global_random_seed)
@@ -717,21 +732,30 @@ def test_n_threads_agnosticism(
     if Dispatcher is ArgKminDispatcher:
         parameter = 10
         check_parameters = {}
+        compute_parameters = {}
     else:
         # Scaling the radius slightly with the numbers of dimensions
         radius = 10 ** np.log(n_features)
         parameter = radius
         check_parameters = {"radius": radius}
+        compute_parameters = {"sort_results": True}
 
     ref_dist, ref_indices = Dispatcher.compute(
         X,
         Y,
         parameter,
         return_distance=True,
+        **compute_parameters,
     )
 
     with threadpoolctl.threadpool_limits(limits=1, user_api="openmp"):
-        dist, indices = Dispatcher.compute(X, Y, parameter, return_distance=True)
+        dist, indices = Dispatcher.compute(
+            X,
+            Y,
+            parameter,
+            return_distance=True,
+            **compute_parameters,
+        )
 
     ASSERT_RESULT[(Dispatcher, dtype)](
         ref_dist, dist, ref_indices, indices, **check_parameters
@@ -746,13 +770,14 @@ def test_n_threads_agnosticism(
     "Dispatcher",
     [ArgKminDispatcher, RadiusNeighborsDispatcher],
 )
+@pytest.mark.parametrize("dtype", [np.float64, np.float32])
 def test_strategies_consistency(
     global_random_seed,
     Dispatcher,
     metric,
     n_samples,
+    dtype,
     n_features=10,
-    dtype=np.float64,
 ):
 
     rng = np.random.RandomState(global_random_seed)
@@ -768,11 +793,13 @@ def test_strategies_consistency(
     if Dispatcher is ArgKminDispatcher:
         parameter = 10
         check_parameters = {}
+        compute_parameters = {}
     else:
         # Scaling the radius slightly with the numbers of dimensions
         radius = 10 ** np.log(n_features)
         parameter = radius
         check_parameters = {"radius": radius}
+        compute_parameters = {"sort_results": True}
 
     dist_par_X, indices_par_X = Dispatcher.compute(
         X,
@@ -787,6 +814,7 @@ def test_strategies_consistency(
         chunk_size=n_samples // 4,
         strategy="parallel_on_X",
         return_distance=True,
+        **compute_parameters,
     )
 
     dist_par_Y, indices_par_Y = Dispatcher.compute(
@@ -802,6 +830,7 @@ def test_strategies_consistency(
         chunk_size=n_samples // 4,
         strategy="parallel_on_Y",
         return_distance=True,
+        **compute_parameters,
     )
 
     ASSERT_RESULT[(Dispatcher, dtype)](
@@ -817,16 +846,25 @@ def test_strategies_consistency(
 @pytest.mark.parametrize("translation", [0, 1e6])
 @pytest.mark.parametrize("metric", CDIST_PAIRWISE_DISTANCES_REDUCTION_COMMON_METRICS)
 @pytest.mark.parametrize("strategy", ("parallel_on_X", "parallel_on_Y"))
+@pytest.mark.parametrize("dtype", [np.float64, np.float32])
 def test_pairwise_distances_argkmin(
     global_random_seed,
     n_features,
     translation,
     metric,
     strategy,
+    dtype,
     n_samples=100,
     k=10,
-    dtype=np.float64,
 ):
+    # TODO: can we easily fix this discrepancy?
+    edge_cases = [
+        (np.float32, "chebyshev", 1000000.0),
+        (np.float32, "chebyshev", 1000000.0),
+    ]
+    if (dtype, metric, translation) in edge_cases:
+        pytest.xfail("Numerical differences lead to small differences in results.")
+
     rng = np.random.RandomState(global_random_seed)
     spread = 1000
     X = translation + rng.rand(n_samples, n_features).astype(dtype) * spread
@@ -880,14 +918,15 @@ def test_pairwise_distances_argkmin(
 @pytest.mark.parametrize("translation", [0, 1e6])
 @pytest.mark.parametrize("metric", CDIST_PAIRWISE_DISTANCES_REDUCTION_COMMON_METRICS)
 @pytest.mark.parametrize("strategy", ("parallel_on_X", "parallel_on_Y"))
+@pytest.mark.parametrize("dtype", [np.float64, np.float32])
 def test_pairwise_distances_radius_neighbors(
     global_random_seed,
     n_features,
     translation,
     metric,
     strategy,
+    dtype,
     n_samples=100,
-    dtype=np.float64,
 ):
     rng = np.random.RandomState(global_random_seed)
     spread = 1000
@@ -943,12 +982,13 @@ def test_pairwise_distances_radius_neighbors(
     [ArgKminDispatcher, RadiusNeighborsDispatcher],
 )
 @pytest.mark.parametrize("metric", ["manhattan", "euclidean"])
+@pytest.mark.parametrize("dtype", [np.float64, np.float32])
 def test_memmap_backed_data(
     metric,
     Dispatcher,
+    dtype,
     n_samples=512,
     n_features=100,
-    dtype=np.float64,
 ):
     # Results must not depend on the datasets writability
     rng = np.random.RandomState(0)
@@ -962,11 +1002,13 @@ def test_memmap_backed_data(
     if Dispatcher is ArgKminDispatcher:
         parameter = 10
         check_parameters = {}
+        compute_parameters = {}
     else:
         # Scaling the radius slightly with the numbers of dimensions
         radius = 10 ** np.log(n_features)
         parameter = radius
         check_parameters = {"radius": radius}
+        compute_parameters = {"sort_results": True}
 
     ref_dist, ref_indices = Dispatcher.compute(
         X,
@@ -974,6 +1016,7 @@ def test_memmap_backed_data(
         parameter,
         metric=metric,
         return_distance=True,
+        **compute_parameters,
     )
 
     dist_mm, indices_mm = Dispatcher.compute(
@@ -982,6 +1025,7 @@ def test_memmap_backed_data(
         parameter,
         metric=metric,
         return_distance=True,
+        **compute_parameters,
     )
 
     ASSERT_RESULT[(Dispatcher, dtype)](
@@ -992,12 +1036,13 @@ def test_memmap_backed_data(
 @pytest.mark.parametrize("n_samples", [100, 1000])
 @pytest.mark.parametrize("n_features", [5, 10, 100])
 @pytest.mark.parametrize("num_threads", [1, 2, 8])
+@pytest.mark.parametrize("dtype", [np.float64, np.float32])
 def test_sqeuclidean_row_norms(
     global_random_seed,
     n_samples,
     n_features,
     num_threads,
-    dtype=np.float64,
+    dtype,
 ):
     rng = np.random.RandomState(global_random_seed)
     spread = 100
