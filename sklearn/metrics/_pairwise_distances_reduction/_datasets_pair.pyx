@@ -309,7 +309,7 @@ cdef class SparseDenseDatasetsPair(DatasetsPair):
     cdef DTYPE_t surrogate_dist(self, ITYPE_t i, ITYPE_t j) nogil:
         cdef:
             ITYPE_t x2_start = j * self.n_features
-            ITYPE_t x2_end = (j + 1) * self.n_features
+            ITYPE_t x2_end = x2_start + self.n_features
 
         return self.distance_metric.rdist_csr(
             x1_data=self.X_data,
@@ -317,7 +317,8 @@ cdef class SparseDenseDatasetsPair(DatasetsPair):
             x2_data=self.Y_data,
             # To use the same indices array, we shift the array address to map
             # accesses in [x2_start, x2_end) to
-            # accesses in [0, x2_end - x2_start) == [0, n_features).
+            # accesses in [x2_start - x2_start, x2_end - x2_start), that is
+            # accesses in [0, n_features).
             x2_indices=&self.Y_indices[0] - x2_start,
             x1_start=self.X_indptr[i],
             x1_end=self.X_indptr[i + 1],
@@ -330,15 +331,16 @@ cdef class SparseDenseDatasetsPair(DatasetsPair):
     cdef DTYPE_t dist(self, ITYPE_t i, ITYPE_t j) nogil:
         cdef:
             ITYPE_t x2_start = j * self.n_features
-            ITYPE_t x2_end = (j + 1) * self.n_features
+            ITYPE_t x2_end = x2_start + self.n_features
 
         return self.distance_metric.dist_csr(
             x1_data=self.X_data,
             x1_indices=&self.X_indices[0],
             x2_data=self.Y_data,
-            # To use the same `indices` array, we shift the array address to map
+            # To use the same indices array, we shift the array address to map
             # accesses in [x2_start, x2_end) to
-            # accesses in [0, x2_end - x2_start) == [0, n_features).
+            # accesses in [x2_start - x2_start, x2_end - x2_start), that is
+            # accesses in [0, n_features).
             x2_indices=&self.Y_indices[0] - x2_start,
             x1_start=self.X_indptr[i],
             x1_end=self.X_indptr[i + 1],

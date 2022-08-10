@@ -417,7 +417,9 @@ cdef class DistanceMetric{{name_suffix}}:
 
         1. The `indices` are passed using pointers to be able to support an
         alternative representation of the CSR data structure for supporting
-        fused sparse-dense datasets pairs. See the
+        fused sparse-dense datasets pairs.
+
+        See the explanations in `SparseDenseDatasetsPair.__init__`.
 
         2. An alternative signature would be:
 
@@ -429,8 +431,8 @@ cdef class DistanceMetric{{name_suffix}}:
                 const SPARSE_INDEX_TYPE_t* x2_indices,
             ) nogil except -1:
 
-        Where calles would use slicing on the original CSR data and indices
-        memoryview:
+        Where callees would use slicing on the original CSR data and indices
+        memoryviews:
 
             x1_start = X1_csr.indices_ptr[i]
             x1_end   = X1_csr.indices_ptr[i+1]
@@ -641,7 +643,7 @@ cdef class DistanceMetric{{name_suffix}}:
 
     def _pairwise_sparse_sparse(self, X: csr_matrix , Y: csr_matrix):
         cdef:
-            ITYPE_t n_X, size
+            ITYPE_t n_X, n_features
             const {{INPUT_DTYPE_t}}[:] X_data
             const SPARSE_INDEX_TYPE_t[:] X_indices
             const SPARSE_INDEX_TYPE_t[:] X_indptr
@@ -654,7 +656,7 @@ cdef class DistanceMetric{{name_suffix}}:
             DTYPE_t[:, ::1] Darr
 
         X_csr = X.tocsr()
-        n_X, size = X_csr.shape
+        n_X, n_features = X_csr.shape
         X_data = np.asarray(X_csr.data, dtype={{INPUT_DTYPE}})
         X_indices = np.asarray(X_csr.indices, dtype=SPARSE_INDEX_TYPE)
         X_indptr = np.asarray(X_csr.indptr, dtype=SPARSE_INDEX_TYPE)
@@ -664,7 +666,7 @@ cdef class DistanceMetric{{name_suffix}}:
                 x1_data=X_data,
                 x1_indices=&X_indices[0],
                 x1_indptr=X_indptr,
-                size=size,
+                size=n_features,
                 D=Darr,
             )
         else:
@@ -682,7 +684,7 @@ cdef class DistanceMetric{{name_suffix}}:
                 x2_data=Y_data,
                 x2_indices=&Y_indices[0],
                 x2_indptr=Y_indptr,
-                size=size,
+                size=n_features,
                 D=Darr,
             )
         return Darr
@@ -693,7 +695,7 @@ cdef class DistanceMetric{{name_suffix}}:
     ):
         cdef:
             ITYPE_t n_X = X.shape[0]
-            ITYPE_t size = X.shape[1]
+            ITYPE_t n_features = X.shape[1]
             const {{INPUT_DTYPE_t}}[:] X_data = np.asarray(X.data, dtype={{INPUT_DTYPE}})
             const SPARSE_INDEX_TYPE_t[:] X_indices = np.asarray(X.indices, dtype=SPARSE_INDEX_TYPE)
             const SPARSE_INDEX_TYPE_t[:] X_indptr = np.asarray(X.indptr, dtype=SPARSE_INDEX_TYPE)
@@ -702,9 +704,9 @@ cdef class DistanceMetric{{name_suffix}}:
             # `SparseDenseDatasetsPair.__init__`.
             ITYPE_t n_Y = Y.shape[0]
             const {{INPUT_DTYPE_t}}[:] Y_data = Y.reshape(-1)
-            const SPARSE_INDEX_TYPE_t[:] Y_indices = np.arange(size, dtype=SPARSE_INDEX_TYPE)
+            const SPARSE_INDEX_TYPE_t[:] Y_indices = np.arange(n_features, dtype=SPARSE_INDEX_TYPE)
             const SPARSE_INDEX_TYPE_t[:] Y_indptr = np.arange(
-                start=0, stop=size * (n_X + 1), step=size, dtype=SPARSE_INDEX_TYPE
+                start=0, stop=n_features * (n_X + 1), step=n_features, dtype=SPARSE_INDEX_TYPE
             )
 
             DTYPE_t[:, ::1] Darr = np.empty((n_X, n_Y), dtype=DTYPE, order='C')
@@ -716,7 +718,7 @@ cdef class DistanceMetric{{name_suffix}}:
             x2_data=Y_data,
             x2_indices=&Y_indices[0],
             x2_indptr=Y_indptr,
-            size=size,
+            size=n_features,
             D=Darr,
         )
         return Darr
@@ -730,14 +732,14 @@ cdef class DistanceMetric{{name_suffix}}:
         # have come with an extra copy to ensure C-contiguity of the result.
         cdef:
             ITYPE_t n_X = X.shape[0]
-            ITYPE_t size = X.shape[1]
+            ITYPE_t n_features = X.shape[1]
 
             # To understand the CSR format used here, see the comment in
             # `SparseDenseDatasetsPair.__init__`
             const {{INPUT_DTYPE_t}}[:] X_data = X.reshape(-1)
-            const SPARSE_INDEX_TYPE_t[:] X_indices = np.arange(size, dtype=SPARSE_INDEX_TYPE)
+            const SPARSE_INDEX_TYPE_t[:] X_indices = np.arange(n_features, dtype=SPARSE_INDEX_TYPE)
             const SPARSE_INDEX_TYPE_t[:] X_indptr = np.arange(
-                start=0, stop=size * (n_X + 1), step=size, dtype=SPARSE_INDEX_TYPE
+                start=0, stop=n_features * (n_X + 1), step=n_features, dtype=SPARSE_INDEX_TYPE
             )
             ITYPE_t n_Y = Y.shape[0]
             const {{INPUT_DTYPE_t}}[:] Y_data = np.asarray(Y.data, dtype={{INPUT_DTYPE}})
@@ -753,7 +755,7 @@ cdef class DistanceMetric{{name_suffix}}:
             x2_data=Y_data,
             x2_indices=&Y_indices[0],
             x2_indptr=Y_indptr,
-            size=size,
+            size=n_features,
             D=Darr,
         )
         return Darr
