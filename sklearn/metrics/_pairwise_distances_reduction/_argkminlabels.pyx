@@ -1,6 +1,6 @@
 from cython cimport floating, integral
 from cython.parallel cimport parallel, prange
-from libcpp.map cimport map as cmap
+from libcpp.map cimport map as cmap, pair
 from libc.stdlib cimport free
 
 cimport numpy as cnp
@@ -21,12 +21,6 @@ cpdef enum WeightingStrategy:
     uniform = 0
     distance = 1
     other = 2
-
-cdef extern from *:
-    cdef cppclass pair "std::pair" [T, U]:
-        pair(T&, U&) except +
-    cdef cppclass map "std::map" [T, U]:
-        void insert(pair[T, U]&) except +
 
 cdef class PairwiseDistancesArgKminLabels64(PairwiseDistancesArgKmin64):
     """
@@ -106,7 +100,7 @@ cdef class PairwiseDistancesArgKminLabels64(PairwiseDistancesArgKmin64):
             self.weight_type = WeightingStrategy.other
         self.labels = labels
 
-        cdef ITYPE_t[:]unique_labels = np.unique(labels)
+        cdef ITYPE_t[:] unique_labels = np.unique(labels)
 
         cdef ITYPE_t idx, label
         # Map from set of unique labels to their indices in `label_weights`
