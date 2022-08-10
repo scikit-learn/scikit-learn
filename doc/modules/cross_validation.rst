@@ -713,8 +713,8 @@ Here is a visualization of cross-validation behavior for uneven groups:
 Leave One Group Out
 ^^^^^^^^^^^^^^^^^^^
 
-:class:`LeaveOneGroupOut` is a cross-validation scheme which holds out
-samples according to groups. Arbitrary domain specific group information is
+:class:`LeaveOneGroupOut` is a cross-validation scheme where each split holds
+out samples belonging to one specific group. Group information is
 provided via an array of integers that encode the group of each sample.
 
 Each training set is thus constituted by all the samples except the ones
