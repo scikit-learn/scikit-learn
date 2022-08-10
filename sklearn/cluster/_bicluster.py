@@ -6,6 +6,7 @@ from abc import ABCMeta, abstractmethod
 
 import numpy as np
 import numbers
+from numbers import Integral
 
 from scipy.linalg import norm
 from scipy.sparse import dia_matrix, issparse
@@ -19,6 +20,7 @@ from ..utils import check_scalar
 from ..utils.extmath import make_nonnegative, randomized_svd, safe_sparse_dot
 
 from ..utils.validation import assert_all_finite
+from ..utils._param_validation import Interval, StrOptions
 
 
 __all__ = ["SpectralCoclustering", "SpectralBiclustering"]
@@ -484,6 +486,19 @@ class SpectralBiclustering(BaseSpectral):
     SpectralBiclustering(n_clusters=2, random_state=0)
     """
 
+    _parameter_constraints = {
+        "n_clusters": [Interval(Integral, 1, None, closed="left"), tuple],
+        "method": [StrOptions({"bistochastic", "scale", "log"})],
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "n_best": [Interval(Integral, 1, None, closed="left")],
+        "svd_method": [StrOptions({"randomized", "arpack"})],
+        "n_svd_vecs": [Interval(Integral, 0, None, closed="left")],
+        "mini_batch": ["boolean"],
+        "init": [StrOptions({"k-means++", "random"}), np.ndarray],
+        "n_init": [Interval(Integral, 1, None, closed="left")],
+        "random_state": ["random_state"],
+    } 
+
     def __init__(
         self,
         n_clusters=3,
@@ -560,6 +575,7 @@ class SpectralBiclustering(BaseSpectral):
         )
 
     def _fit(self, X):
+        self._validate_params()
         n_sv = self.n_components
         if self.method == "bistochastic":
             normalized_data = _bistochastic_normalize(X)
