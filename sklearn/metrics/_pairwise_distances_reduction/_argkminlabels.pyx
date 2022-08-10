@@ -8,7 +8,7 @@ cimport numpy as cnp
 cnp.import_array()
 
 from ._argkmin cimport PairwiseDistancesArgKmin64
-from ._datasets_pair cimport DatasetsPair, DenseDenseDatasetsPair
+from ._datasets_pair cimport DatasetsPair64
 from ...utils._typedefs cimport ITYPE_t, DTYPE_t
 from ...utils._typedefs import ITYPE, DTYPE
 from ...utils._sorting cimport simultaneous_sort
@@ -22,6 +22,11 @@ cpdef enum WeightingStrategy:
     distance = 1
     other = 2
 
+cdef extern from *:
+    cdef cppclass pair "std::pair" [T, U]:
+        pair(T&, U&) except +
+    cdef cppclass map "std::map" [T, U]:
+        void insert(pair[T, U]&) except +
 
 cdef class PairwiseDistancesArgKminLabels64(PairwiseDistancesArgKmin64):
     """
@@ -60,7 +65,7 @@ cdef class PairwiseDistancesArgKminLabels64(PairwiseDistancesArgKmin64):
         No instance should directly be created outside of this class method.
         """
         pda = PairwiseDistancesArgKminLabels64(
-            datasets_pair=DatasetsPair.get_for(X, Y, metric, metric_kwargs),
+            datasets_pair=DatasetsPair64.get_for(X, Y, metric, metric_kwargs),
             k=k,
             chunk_size=chunk_size,
             strategy=strategy,
@@ -79,7 +84,7 @@ cdef class PairwiseDistancesArgKminLabels64(PairwiseDistancesArgKmin64):
 
     def __init__(
         self,
-        DatasetsPair datasets_pair,
+        DatasetsPair64 datasets_pair,
         const ITYPE_t[:] labels,
         chunk_size=None,
         strategy=None,
@@ -101,12 +106,15 @@ cdef class PairwiseDistancesArgKminLabels64(PairwiseDistancesArgKmin64):
             self.weight_type = WeightingStrategy.other
         self.labels = labels
 
-        unique_labels = np.unique(labels)
+        cdef ITYPE_t[:]unique_labels = np.unique(labels)
 
+        cdef ITYPE_t idx, label
         # Map from set of unique labels to their indices in `label_weights`
-        self.labels_to_index = {label:idx for idx, label in enumerate(self.unique_labels)}
+        for idx, label in enumerate(unique_labels):
+            self.labels_to_index.insert(pair[ITYPE_t, ITYPE_t](label, idx))
+
         # Buffer used in building a histogram for one-pass weighted mode
-        self.label_weights = np.zeros((self.n_samples_X,  len(self.unique_labels)), dtype=DTYPE)
+        self.label_weights = np.zeros((self.n_samples_X,  len(unique_labels)), dtype=DTYPE)
 
     def _finalize_results(self):
         probabilities = np.asarray(self.label_weights)
