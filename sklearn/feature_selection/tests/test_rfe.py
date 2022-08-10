@@ -515,6 +515,7 @@ def test_rfe_cv_groups():
 @pytest.mark.parametrize(
     "importance_getter",
     [
+        lambda estimator: estimator.regressor_.coef_,
         "regressor_.coef_",
         lambda estimator, X, y: estimator.regressor_.coef_,
     ],
@@ -535,8 +536,7 @@ def test_rfe_wrapped_estimator(importance_getter, selector, expected_n_features)
     assert sel.support_.sum() == expected_n_features
 
 
-@pytest.mark.parametrize("selector, expected_n_features", [(RFE, 2), (RFECV, 4)])
-def test_rfe_importance_getter_with_train_instances(selector, expected_n_features):
+def test_importance_getter_with_train_instances():
     clf = LogisticRegression()
 
     data, y = load_iris(return_X_y=True)
@@ -544,43 +544,14 @@ def test_rfe_importance_getter_with_train_instances(selector, expected_n_feature
     def custom_importance_getter(estimator, X, y):
         return estimator.coef_ + np.sum(X, axis=0)
 
-    sfm = selector(
+    sfm = RFE(
         clf,
+        n_features_to_select=2,
         importance_getter=custom_importance_getter,
     )
 
     sfm.fit(data, y)
-    assert sfm.transform(data).shape[1] == expected_n_features
-
-
-@pytest.mark.parametrize(
-    "importance_getter",
-    [
-        lambda estimator: estimator.coef_,
-    ],
-)
-@pytest.mark.parametrize("selector, expected_n_features", [(RFE, 2), (RFECV, 4)])
-def test_rfe_deprecation_warning(importance_getter, selector, expected_n_features):
-    # TODO(1.4): remove this test
-    clf = LogisticRegression()
-
-    data, y = load_iris(return_X_y=True)
-
-    sel = selector(
-        clf,
-        importance_getter=importance_getter,
-    )
-
-    msg = (
-        "The signature of the parameter `importance_getter` with a single "
-        "parameter is deprecated and will be removed in version 1.4. "
-        "To resolve this warning add the optional parameters `X=None, y=None` "
-        "to the definition of your custom `importance_getter`."
-    )
-    with pytest.warns(FutureWarning, match=msg):
-        sel.fit(data, y)
-
-    assert sel.transform(data).shape[1] == expected_n_features
+    assert sfm.transform(data).shape[1] == 2
 
 
 @pytest.mark.parametrize(
