@@ -1,3 +1,18 @@
+{{py:
+
+implementation_specific_values = [
+    # Values are the following ones:
+    #
+    #       name_suffix, INPUT_DTYPE_t, INPUT_DTYPE
+    #
+    # We also use the float64 dtype and C-type names as defined in
+    # `sklearn.utils._typedefs` to maintain consistency.
+    #
+    ('64', 'DTYPE_t', 'DTYPE'),
+    ('32', 'cnp.float32_t', 'np.float32')
+]
+
+}}
 cimport numpy as cnp
 import numpy as np
 import warnings
@@ -8,26 +23,14 @@ from cython cimport final
 from cython.operator cimport dereference as deref
 from cython.parallel cimport parallel, prange
 
-from ._base cimport (
-    PairwiseDistancesReduction64,
-    _sqeuclidean_row_norms64
-)
-
-from ._datasets_pair cimport (
-    DatasetsPair,
-    DenseDenseDatasetsPair,
-)
-
-from ._gemm_term_computer cimport GEMMTermComputer64
-
 from ...utils._sorting cimport simultaneous_sort
 from ...utils._typedefs cimport ITYPE_t, DTYPE_t
 from ...utils._vector_sentinel cimport vector_to_nd_array
 
 from numbers import Real
 from scipy.sparse import issparse
-from sklearn.utils import check_scalar, _in_unstable_openblas_configuration
-from sklearn.utils.fixes import threadpool_limits
+from ...utils import check_array, check_scalar, _in_unstable_openblas_configuration
+from ...utils.fixes import threadpool_limits
 
 cnp.import_array()
 
@@ -53,10 +56,23 @@ cdef cnp.ndarray[object, ndim=1] coerce_vectors_to_nd_arrays(
     return nd_arrays_of_nd_arrays
 
 #####################
+{{for name_suffix, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
+
+from ._base cimport (
+    PairwiseDistancesReduction{{name_suffix}},
+    _sqeuclidean_row_norms{{name_suffix}}
+)
+
+from ._datasets_pair cimport (
+    DatasetsPair{{name_suffix}},
+    DenseDenseDatasetsPair{{name_suffix}},
+)
+
+from ._gemm_term_computer cimport GEMMTermComputer{{name_suffix}}
 
 
-cdef class PairwiseDistancesRadiusNeighborhood64(PairwiseDistancesReduction64):
-    """64bit implementation of PairwiseDistancesRadiusNeighborhood."""
+cdef class PairwiseDistancesRadiusNeighborhood{{name_suffix}}(PairwiseDistancesReduction{{name_suffix}}):
+    """{{name_suffix}}bit implementation of PairwiseDistancesRadiusNeighborhood."""
 
     @classmethod
     def compute(
@@ -75,7 +91,7 @@ cdef class PairwiseDistancesRadiusNeighborhood64(PairwiseDistancesReduction64):
 
         This classmethod is responsible for introspecting the arguments
         values to dispatch to the most appropriate implementation of
-        :class:`PairwiseDistancesRadiusNeighborhood64`.
+        :class:`PairwiseDistancesRadiusNeighborhood{{name_suffix}}`.
 
         This allows decoupling the API entirely from the implementation details
         whilst maintaining RAII: all temporarily allocated datastructures necessary
@@ -94,7 +110,7 @@ cdef class PairwiseDistancesRadiusNeighborhood64(PairwiseDistancesReduction64):
             # at time to leverage a call to the BLAS GEMM routine as explained
             # in more details in GEMMTermComputer docstring.
             use_squared_distances = metric == "sqeuclidean"
-            pda = FastEuclideanPairwiseDistancesRadiusNeighborhood64(
+            pda = FastEuclideanPairwiseDistancesRadiusNeighborhood{{name_suffix}}(
                 X=X, Y=Y, radius=radius,
                 use_squared_distances=use_squared_distances,
                 chunk_size=chunk_size,
@@ -105,8 +121,8 @@ cdef class PairwiseDistancesRadiusNeighborhood64(PairwiseDistancesReduction64):
         else:
              # Fall back on a generic implementation that handles most scipy
              # metrics by computing the distances between 2 vectors at a time.
-            pda = PairwiseDistancesRadiusNeighborhood64(
-                datasets_pair=DatasetsPair.get_for(X, Y, metric, metric_kwargs),
+            pda = PairwiseDistancesRadiusNeighborhood{{name_suffix}}(
+                datasets_pair=DatasetsPair{{name_suffix}}.get_for(X, Y, metric, metric_kwargs),
                 radius=radius,
                 chunk_size=chunk_size,
                 metric_kwargs=metric_kwargs,
@@ -127,7 +143,7 @@ cdef class PairwiseDistancesRadiusNeighborhood64(PairwiseDistancesReduction64):
 
     def __init__(
         self,
-        DatasetsPair datasets_pair,
+        DatasetsPair{{name_suffix}} datasets_pair,
         DTYPE_t radius,
         chunk_size=None,
         strategy=None,
@@ -317,12 +333,12 @@ cdef class PairwiseDistancesRadiusNeighborhood64(PairwiseDistancesReduction64):
                 )
 
 
-cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood64(PairwiseDistancesRadiusNeighborhood64):
-    """EuclideanDistance-specialized 64bit implementation for PairwiseDistancesRadiusNeighborhood."""
+cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood{{name_suffix}}(PairwiseDistancesRadiusNeighborhood{{name_suffix}}):
+    """EuclideanDistance-specialized {{name_suffix}}bit implementation for PairwiseDistancesRadiusNeighborhood."""
 
     @classmethod
     def is_usable_for(cls, X, Y, metric) -> bool:
-        return (PairwiseDistancesRadiusNeighborhood64.is_usable_for(X, Y, metric)
+        return (PairwiseDistancesRadiusNeighborhood{{name_suffix}}.is_usable_for(X, Y, metric)
                 and not _in_unstable_openblas_configuration())
 
     def __init__(
@@ -350,19 +366,22 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood64(PairwiseDistancesR
 
         super().__init__(
             # The datasets pair here is used for exact distances computations
-            datasets_pair=DatasetsPair.get_for(X, Y, metric="euclidean"),
+            datasets_pair=DatasetsPair{{name_suffix}}.get_for(X, Y, metric="euclidean"),
             radius=radius,
             chunk_size=chunk_size,
             strategy=strategy,
             sort_results=sort_results,
             metric_kwargs=metric_kwargs,
         )
-        # X and Y are checked by the DatasetsPair implemented as a DenseDenseDatasetsPair
+        # X and Y are checked by the DatasetsPair{{name_suffix}} implemented
+        # as a DenseDenseDatasetsPair{{name_suffix}}
         cdef:
-            DenseDenseDatasetsPair datasets_pair = <DenseDenseDatasetsPair> self.datasets_pair
+            DenseDenseDatasetsPair{{name_suffix}} datasets_pair = (
+                <DenseDenseDatasetsPair{{name_suffix}}> self.datasets_pair
+            )
             ITYPE_t dist_middle_terms_chunks_size = self.Y_n_samples_chunk * self.X_n_samples_chunk
 
-        self.gemm_term_computer = GEMMTermComputer64(
+        self.gemm_term_computer = GEMMTermComputer{{name_suffix}}(
             datasets_pair.X,
             datasets_pair.Y,
             self.effective_n_threads,
@@ -373,14 +392,19 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood64(PairwiseDistancesR
         )
 
         if metric_kwargs is not None and "Y_norm_squared" in metric_kwargs:
-            self.Y_norm_squared = metric_kwargs.pop("Y_norm_squared")
+            self.Y_norm_squared = check_array(
+                metric_kwargs.pop("Y_norm_squared"),
+                ensure_2d=False,
+                input_name="Y_norm_squared",
+                dtype=np.float64
+            )
         else:
-            self.Y_norm_squared = _sqeuclidean_row_norms64(datasets_pair.Y, self.effective_n_threads)
+            self.Y_norm_squared = _sqeuclidean_row_norms{{name_suffix}}(datasets_pair.Y, self.effective_n_threads)
 
         # Do not recompute norms if datasets are identical.
         self.X_norm_squared = (
             self.Y_norm_squared if X is Y else
-            _sqeuclidean_row_norms64(datasets_pair.X, self.effective_n_threads)
+            _sqeuclidean_row_norms{{name_suffix}}(datasets_pair.X, self.effective_n_threads)
         )
         self.use_squared_distances = use_squared_distances
 
@@ -394,7 +418,7 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood64(PairwiseDistancesR
         self,
         ITYPE_t thread_num,
     ) nogil:
-        PairwiseDistancesRadiusNeighborhood64._parallel_on_X_parallel_init(self, thread_num)
+        PairwiseDistancesRadiusNeighborhood{{name_suffix}}._parallel_on_X_parallel_init(self, thread_num)
         self.gemm_term_computer._parallel_on_X_parallel_init(thread_num)
 
     @final
@@ -404,7 +428,7 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood64(PairwiseDistancesR
         ITYPE_t X_start,
         ITYPE_t X_end,
     ) nogil:
-        PairwiseDistancesRadiusNeighborhood64._parallel_on_X_init_chunk(self, thread_num, X_start, X_end)
+        PairwiseDistancesRadiusNeighborhood{{name_suffix}}._parallel_on_X_init_chunk(self, thread_num, X_start, X_end)
         self.gemm_term_computer._parallel_on_X_init_chunk(thread_num, X_start, X_end)
 
     @final
@@ -416,7 +440,7 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood64(PairwiseDistancesR
         ITYPE_t Y_end,
         ITYPE_t thread_num,
     ) nogil:
-        PairwiseDistancesRadiusNeighborhood64._parallel_on_X_pre_compute_and_reduce_distances_on_chunks(
+        PairwiseDistancesRadiusNeighborhood{{name_suffix}}._parallel_on_X_pre_compute_and_reduce_distances_on_chunks(
             self,
             X_start, X_end,
             Y_start, Y_end,
@@ -431,7 +455,7 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood64(PairwiseDistancesR
         self,
     ) nogil:
         cdef ITYPE_t thread_num
-        PairwiseDistancesRadiusNeighborhood64._parallel_on_Y_init(self)
+        PairwiseDistancesRadiusNeighborhood{{name_suffix}}._parallel_on_Y_init(self)
         self.gemm_term_computer._parallel_on_Y_init()
 
     @final
@@ -441,7 +465,7 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood64(PairwiseDistancesR
         ITYPE_t X_start,
         ITYPE_t X_end,
     ) nogil:
-        PairwiseDistancesRadiusNeighborhood64._parallel_on_Y_parallel_init(self, thread_num, X_start, X_end)
+        PairwiseDistancesRadiusNeighborhood{{name_suffix}}._parallel_on_Y_parallel_init(self, thread_num, X_start, X_end)
         self.gemm_term_computer._parallel_on_Y_parallel_init(thread_num, X_start, X_end)
 
     @final
@@ -453,7 +477,7 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood64(PairwiseDistancesR
         ITYPE_t Y_end,
         ITYPE_t thread_num,
     ) nogil:
-        PairwiseDistancesRadiusNeighborhood64._parallel_on_Y_pre_compute_and_reduce_distances_on_chunks(
+        PairwiseDistancesRadiusNeighborhood{{name_suffix}}._parallel_on_Y_pre_compute_and_reduce_distances_on_chunks(
             self,
             X_start, X_end,
             Y_start, Y_end,
@@ -466,7 +490,7 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood64(PairwiseDistancesR
     @final
     cdef void compute_exact_distances(self) nogil:
         if not self.use_squared_distances:
-            PairwiseDistancesRadiusNeighborhood64.compute_exact_distances(self)
+            PairwiseDistancesRadiusNeighborhood{{name_suffix}}.compute_exact_distances(self)
 
     @final
     cdef void _compute_and_reduce_distances_on_chunks(
@@ -501,3 +525,5 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood64(PairwiseDistancesR
                 if squared_dist_i_j <= self.r_radius:
                     deref(self.neigh_distances_chunks[thread_num])[i + X_start].push_back(squared_dist_i_j)
                     deref(self.neigh_indices_chunks[thread_num])[i + X_start].push_back(j + Y_start)
+
+{{endfor}}
