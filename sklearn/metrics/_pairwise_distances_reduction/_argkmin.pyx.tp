@@ -21,16 +21,6 @@ from libc.float cimport DBL_MAX
 from cython cimport final
 from cython.parallel cimport parallel, prange
 
-<<<<<<< HEAD:sklearn/metrics/_pairwise_distances_reduction/_argkmin.pyx
-from ._base cimport Core64, _sqeuclidean_row_norms64
-
-from ._datasets_pair cimport (
-    DatasetsPair,
-    DenseDenseDatasetsPair,
-)
-
-from ._gemm_term_computer cimport GEMMTermComputer64
-
 from ...utils._heap cimport heap_push
 from ...utils._sorting cimport simultaneous_sort
 from ...utils._typedefs cimport ITYPE_t, DTYPE_t

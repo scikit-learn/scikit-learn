@@ -59,7 +59,7 @@ cdef cnp.ndarray[object, ndim=1] coerce_vectors_to_nd_arrays(
 {{for name_suffix, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
 
 from ._base cimport (
-    PairwiseDistancesReduction{{name_suffix}},
+    ComputationTemplate{{name_suffix}},
     _sqeuclidean_row_norms{{name_suffix}}
 )
 

@@ -4,11 +4,11 @@ from ...utils._typedefs cimport ITYPE_t, DTYPE_t
 
 cnp.import_array()
 
-from ._base cimport PairwiseDistancesReduction64
+from ._base cimport ComputationTemplate64
 from ._gemm_term_computer cimport GEMMTermComputer64
 
-cdef class PairwiseDistancesArgKmin64(PairwiseDistancesReduction64):
-    """64bit implementation of PairwiseDistancesArgKmin."""
+cdef class ArgKmin64(ComputationTemplate64):
+    """64bit implementation of ComputationTemplate64 for the `ArgKmin` reduction."""
 
     cdef:
         ITYPE_t k
@@ -21,8 +21,8 @@ cdef class PairwiseDistancesArgKmin64(PairwiseDistancesReduction64):
         ITYPE_t ** heaps_indices_chunks
 
 
-cdef class FastEuclideanPairwiseDistancesArgKmin64(PairwiseDistancesArgKmin64):
-    """EuclideanDistance-specialized 64bit implementation for PairwiseDistancesArgKmin."""
+cdef class EuclideanArgKmin64(ArgKmin64):
+    """EuclideanDistance-specialized 64bit implementation of ArgKmin64."""
     cdef:
         GEMMTermComputer64 gemm_term_computer
         const DTYPE_t[::1] X_norm_squared
@@ -30,11 +30,11 @@ cdef class FastEuclideanPairwiseDistancesArgKmin64(PairwiseDistancesArgKmin64):
 
         bint use_squared_distances
 
-from ._base cimport PairwiseDistancesReduction32
+from ._base cimport ComputationTemplate32
 from ._gemm_term_computer cimport GEMMTermComputer32
 
-cdef class PairwiseDistancesArgKmin32(PairwiseDistancesReduction32):
-    """32bit implementation of PairwiseDistancesArgKmin."""
+cdef class ArgKmin32(ComputationTemplate32):
+    """32bit implementation of ComputationTemplate32 for the `ArgKmin` reduction."""
 
     cdef:
         ITYPE_t k
@@ -47,8 +47,8 @@ cdef class PairwiseDistancesArgKmin32(PairwiseDistancesReduction32):
         ITYPE_t ** heaps_indices_chunks
 
 
-cdef class FastEuclideanPairwiseDistancesArgKmin32(PairwiseDistancesArgKmin32):
-    """EuclideanDistance-specialized 32bit implementation for PairwiseDistancesArgKmin."""
+cdef class EuclideanArgKmin32(ArgKmin32):
+    """EuclideanDistance-specialized 32bit implementation of ArgKmin32."""
     cdef:
         GEMMTermComputer32 gemm_term_computer
         const DTYPE_t[::1] X_norm_squared
