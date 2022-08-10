@@ -234,7 +234,6 @@ def test_warning_for_indicated_methods(metaestimator):
     registry = _Registry()
     estimator = metaestimator["estimator"](registry=registry)
     estimator_name = metaestimator["estimator_name"]
-    instance = cls(**{estimator_name: estimator})
     X = metaestimator["X"]
     y = metaestimator["y"]
     routing_methods = metaestimator["routing_methods"]
@@ -254,6 +253,10 @@ def test_warning_for_indicated_methods(metaestimator):
                 f" following error: [{key}] are passed but are not explicitly set as"
                 f" requested or not for {estimator.__class__.__name__}.{method_name}"
             )
+
+            instance = cls(**{estimator_name: estimator})
+            if "fit" not in method_name:  # instance needs to be fitted first
+                instance.fit(X, y)
             with pytest.warns(FutureWarning, match=re.escape(warn_msg)):
                 method = getattr(instance, method_name)
                 method(X, y, **kwargs)
@@ -280,7 +283,6 @@ def test_error_for_other_methods(metaestimator):
     cls = metaestimator["metaestimator"]
     estimator = metaestimator["estimator"]()
     estimator_name = metaestimator["estimator_name"]
-    instance = cls(**{estimator_name: estimator})
     X = metaestimator["X"]
     y = metaestimator["y"]
     routing_methods = metaestimator["routing_methods"]
@@ -299,6 +301,10 @@ def test_error_for_other_methods(metaestimator):
                 f"[{key}] are passed but are not explicitly set as requested or not for"
                 f" {estimator.__class__.__name__}.{method_name}"
             )
+
+            instance = cls(**{estimator_name: estimator})
+            if "fit" not in method_name:  # instance needs to be fitted first
+                instance.fit(X, y)
             with pytest.raises(UnsetMetadataPassedError, match=re.escape(msg)):
                 method = getattr(instance, method_name)
                 method(X, y, **kwargs)
