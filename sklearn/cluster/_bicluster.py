@@ -487,7 +487,7 @@ class SpectralBiclustering(BaseSpectral):
     """
 
     _parameter_constraints = {
-        "n_clusters": [Interval(Integral, 1, None, closed="left"), tuple],
+        "n_clusters": [Interval(Integral, 0, None, closed="left"), tuple],
         "method": [StrOptions({"bistochastic", "scale", "log"})],
         "n_components": [Interval(Integral, 1, None, closed="left")],
         "n_best": [Interval(Integral, 1, None, closed="left")],
@@ -522,13 +522,6 @@ class SpectralBiclustering(BaseSpectral):
 
     def _check_parameters(self, n_samples):
         super()._check_parameters(n_samples)
-        legal_methods = ("bistochastic", "scale", "log")
-        if self.method not in legal_methods:
-            raise ValueError(
-                "Unknown method: '{0}'. method must be one of {1}.".format(
-                    self.method, legal_methods
-                )
-            )
         try:
             check_scalar(
                 self.n_clusters,
@@ -563,16 +556,17 @@ class SpectralBiclustering(BaseSpectral):
                     " And the values are should be in the"
                     " range: (1, n_samples)"
                 ) from e
-        check_scalar(
-            self.n_components, "n_components", target_type=numbers.Integral, min_val=1
-        )
-        check_scalar(
-            self.n_best,
-            "n_best",
-            target_type=numbers.Integral,
-            min_val=1,
-            max_val=self.n_components,
-        )
+#remove existing validation pending final review 
+        # check_scalar(
+        #     self.n_components, "n_components", target_type=numbers.Integral, min_val=1
+        # )
+        # check_scalar(
+        #     self.n_best,
+        #     "n_best",
+        #     target_type=numbers.Integral,
+        #     min_val=1,
+        #     max_val=self.n_components,
+        # )
 
     def _fit(self, X):
         self._validate_params()
