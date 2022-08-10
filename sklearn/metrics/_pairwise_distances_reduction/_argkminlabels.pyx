@@ -113,11 +113,12 @@ cdef class PairwiseDistancesArgKminLabels64(PairwiseDistancesArgKmin64):
         probabilities /= probabilities.sum(axis=1, keepdims=True)
         return probabilities
 
-    cdef inline ITYPE_t weighted_histogram_mode(
-            self,
-            ITYPE_t sample_index,
-            ITYPE_t* indices,
-            DTYPE_t* distances,) nogil:
+    cdef inline void weighted_histogram_mode(
+        self,
+        ITYPE_t sample_index,
+        ITYPE_t* indices,
+        DTYPE_t* distances,
+   ) nogil:
         cdef:
             ITYPE_t y_idx, label, label_index, multi_output_index
             DTYPE_t label_weight = 1
