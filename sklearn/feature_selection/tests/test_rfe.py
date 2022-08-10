@@ -536,7 +536,7 @@ def test_rfe_wrapped_estimator(importance_getter, selector, expected_n_features)
     assert sel.support_.sum() == expected_n_features
 
 
-def test_importance_getter_with_train_instances():
+def test_rfe_importance_getter_with_train_instances():
     clf = LogisticRegression()
 
     data, y = load_iris(return_X_y=True)
