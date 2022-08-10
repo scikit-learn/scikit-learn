@@ -159,7 +159,7 @@ def contingency_matrix(
 
 
 def pair_confusion_matrix(labels_true, labels_pred):
-    """Pair confusion matrix arising from two clusterings.
+    """Pair confusion matrix arising from two clusterings [1]_.
 
     The pair confusion matrix :math:`C` computes a 2 by 2 similarity matrix
     between two clusterings by considering all pairs of samples and counting
@@ -188,9 +188,15 @@ def pair_confusion_matrix(labels_true, labels_pred):
 
     See Also
     --------
-    rand_score: Rand Score
-    adjusted_rand_score: Adjusted Rand Score
-    adjusted_mutual_info_score: Adjusted Mutual Information
+    rand_score: Rand Score.
+    adjusted_rand_score: Adjusted Rand Score.
+    adjusted_mutual_info_score: Adjusted Mutual Information.
+
+    References
+    ----------
+    .. [1] :doi:`Hubert, L., Arabie, P. "Comparing partitions."
+           Journal of Classification 2, 193–218 (1985).
+           <10.1007/BF01908075>`
 
     Examples
     --------
@@ -211,12 +217,6 @@ def pair_confusion_matrix(labels_true, labels_pred):
              [0, 2]]...
 
     Note that the matrix is not symmetric.
-
-    References
-    ----------
-    .. L. Hubert and P. Arabie, Comparing Partitions, Journal of
-      Classification 1985
-      https://link.springer.com/article/10.1007%2FBF01908075
     """
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
     n_samples = np.int64(labels_true.shape[0])
@@ -242,9 +242,9 @@ def rand_score(labels_true, labels_pred):
     The Rand Index computes a similarity measure between two clusterings
     by considering all pairs of samples and counting pairs that are
     assigned in the same or different clusters in the predicted and
-    true clusterings.
+    true clusterings [1]_ [2]_.
 
-    The raw RI score is:
+    The raw RI score [3]_ is:
 
         RI = (number of agreeing pairs) / (number of pairs)
 
@@ -266,8 +266,19 @@ def rand_score(labels_true, labels_pred):
 
     See Also
     --------
-    adjusted_rand_score: Adjusted Rand Score
-    adjusted_mutual_info_score: Adjusted Mutual Information
+    adjusted_rand_score: Adjusted Rand Score.
+    adjusted_mutual_info_score: Adjusted Mutual Information.
+
+    References
+    ----------
+    .. [1] :doi:`Hubert, L., Arabie, P. "Comparing partitions."
+       Journal of Classification 2, 193–218 (1985).
+       <10.1007/BF01908075>`.
+
+    .. [2] `Wikipedia: Simple Matching Coefficient
+        <https://en.wikipedia.org/wiki/Simple_matching_coefficient>`_
+
+    .. [3] `Wikipedia: Rand Index <https://en.wikipedia.org/wiki/Rand_index>`_
 
     Examples
     --------
@@ -282,16 +293,6 @@ def rand_score(labels_true, labels_pred):
 
       >>> rand_score([0, 0, 1, 2], [0, 0, 1, 1])
       0.83...
-
-    References
-    ----------
-    .. L. Hubert and P. Arabie, Comparing Partitions, Journal of
-      Classification 1985
-      https://link.springer.com/article/10.1007%2FBF01908075
-
-    .. https://en.wikipedia.org/wiki/Simple_matching_coefficient
-
-    .. https://en.wikipedia.org/wiki/Rand_index
     """
     contingency = pair_confusion_matrix(labels_true, labels_pred)
     numerator = contingency.diagonal().sum()
@@ -642,16 +643,15 @@ def v_measure_score(labels_true, labels_pred, *, beta=1.0):
     measure the agreement of two independent label assignments strategies
     on the same dataset when the real ground truth is not known.
 
-
     Read more in the :ref:`User Guide <homogeneity_completeness>`.
 
     Parameters
     ----------
     labels_true : int array, shape = [n_samples]
-        ground truth class labels to be used as a reference
+        Ground truth class labels to be used as a reference.
 
     labels_pred : array-like of shape (n_samples,)
-        cluster labels to evaluate
+        Cluster labels to evaluate.
 
     beta : float, default=1.0
         Ratio of weight attributed to ``homogeneity`` vs ``completeness``.
@@ -662,7 +662,13 @@ def v_measure_score(labels_true, labels_pred, *, beta=1.0):
     Returns
     -------
     v_measure : float
-       score between 0.0 and 1.0. 1.0 stands for perfectly complete labeling
+       Score between 0.0 and 1.0. 1.0 stands for perfectly complete labeling.
+
+    See Also
+    --------
+    homogeneity_score : Homogeneity metric of cluster labeling.
+    completeness_score : Completeness metric of cluster labeling.
+    normalized_mutual_info_score : Normalized Mutual Information.
 
     References
     ----------
@@ -671,15 +677,8 @@ def v_measure_score(labels_true, labels_pred, *, beta=1.0):
        conditional entropy-based external cluster evaluation measure
        <https://aclweb.org/anthology/D/D07/D07-1043.pdf>`_
 
-    See Also
-    --------
-    homogeneity_score
-    completeness_score
-    normalized_mutual_info_score
-
     Examples
     --------
-
     Perfect labelings are both homogeneous and complete, hence have score 1.0::
 
       >>> from sklearn.metrics.cluster import v_measure_score
@@ -689,7 +688,7 @@ def v_measure_score(labels_true, labels_pred, *, beta=1.0):
       1.0
 
     Labelings that assign all classes members to the same clusters
-    are complete be not homogeneous, hence penalized::
+    are complete but not homogeneous, hence penalized::
 
       >>> print("%.6f" % v_measure_score([0, 0, 1, 2], [0, 0, 1, 1]))
       0.8...
@@ -697,7 +696,7 @@ def v_measure_score(labels_true, labels_pred, *, beta=1.0):
       0.66...
 
     Labelings that have pure clusters with members coming from the same
-    classes are homogeneous but un-necessary splits harms completeness
+    classes are homogeneous but un-necessary splits harm completeness
     and thus penalize V-measure as well::
 
       >>> print("%.6f" % v_measure_score([0, 0, 1, 1], [0, 0, 1, 2]))
@@ -768,14 +767,14 @@ def mutual_info_score(labels_true, labels_pred, *, contingency=None):
        Mutual information, a non-negative value, measured in nats using the
        natural logarithm.
 
-    Notes
-    -----
-    The logarithm used is the natural logarithm (base-e).
-
     See Also
     --------
     adjusted_mutual_info_score : Adjusted against chance Mutual Information.
     normalized_mutual_info_score : Normalized Mutual Information.
+
+    Notes
+    -----
+    The logarithm used is the natural logarithm (base-e).
     """
     if contingency is None:
         labels_true, labels_pred = check_clusterings(labels_true, labels_pred)

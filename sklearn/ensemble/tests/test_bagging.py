@@ -437,35 +437,9 @@ def test_single_estimator():
 
 
 def test_error():
-    # Test that it gives proper exception on deficient input.
+    # Test support of decision_function
     X, y = iris.data, iris.target
     base = DecisionTreeClassifier()
-
-    # Test max_samples
-    with pytest.raises(ValueError):
-        BaggingClassifier(base, max_samples=-1).fit(X, y)
-    with pytest.raises(ValueError):
-        BaggingClassifier(base, max_samples=0.0).fit(X, y)
-    with pytest.raises(ValueError):
-        BaggingClassifier(base, max_samples=2.0).fit(X, y)
-    with pytest.raises(ValueError):
-        BaggingClassifier(base, max_samples=1000).fit(X, y)
-    with pytest.raises(ValueError):
-        BaggingClassifier(base, max_samples="foobar").fit(X, y)
-
-    # Test max_features
-    with pytest.raises(ValueError):
-        BaggingClassifier(base, max_features=-1).fit(X, y)
-    with pytest.raises(ValueError):
-        BaggingClassifier(base, max_features=0.0).fit(X, y)
-    with pytest.raises(ValueError):
-        BaggingClassifier(base, max_features=2.0).fit(X, y)
-    with pytest.raises(ValueError):
-        BaggingClassifier(base, max_features=5).fit(X, y)
-    with pytest.raises(ValueError):
-        BaggingClassifier(base, max_features="foobar").fit(X, y)
-
-    # Test support of decision_function
     assert not hasattr(BaggingClassifier(base).fit(X, y), "decision_function")
 
 
