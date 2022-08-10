@@ -1,5 +1,6 @@
 import re
 import warnings
+from functools import partial
 
 import numpy as np
 import pytest
@@ -20,6 +21,9 @@ y = np.random.randint(0, 2, size=N)
 y_multi = np.random.randint(0, 2, size=(N, 3))
 metadata = np.random.randint(0, 10, size=N)
 sample_weight = np.random.rand(N)
+
+
+record_metadata_not_none = partial(record_metadata, record_none=False)
 
 
 class _Registry(list):
@@ -54,7 +58,7 @@ class ConsumingRegressor(RegressorMixin, BaseEstimator):
         if self.registry is not None:
             self.registry.append(self)
 
-        record_metadata(
+        record_metadata_not_none(
             self, "partial_fit", sample_weight=sample_weight, metadata=metadata
         )
         return self
@@ -63,14 +67,18 @@ class ConsumingRegressor(RegressorMixin, BaseEstimator):
         if self.registry is not None:
             self.registry.append(self)
 
-        record_metadata(self, "fit", sample_weight=sample_weight, metadata=metadata)
+        record_metadata_not_none(
+            self, "fit", sample_weight=sample_weight, metadata=metadata
+        )
         return self
 
     def predict(self, X, sample_weight=None, metadata=None):
         if self.registry is not None:
             self.registry.append(self)
 
-        record_metadata(self, "predict", sample_weight=sample_weight, metadata=metadata)
+        record_metadata_not_none(
+            self, "predict", sample_weight=sample_weight, metadata=metadata
+        )
         return np.zeros(shape=(len(X),))
 
 
@@ -94,7 +102,7 @@ class ConsumingClassifier(ClassifierMixin, BaseEstimator):
         if self.registry is not None:
             self.registry.append(self)
 
-        record_metadata(
+        record_metadata_not_none(
             self, "partial_fit", sample_weight=sample_weight, metadata=metadata
         )
         self.classes_ = [0, 1]
@@ -104,7 +112,9 @@ class ConsumingClassifier(ClassifierMixin, BaseEstimator):
         if self.registry is not None:
             self.registry.append(self)
 
-        record_metadata(self, "fit", sample_weight=sample_weight, metadata=metadata)
+        record_metadata_not_none(
+            self, "fit", sample_weight=sample_weight, metadata=metadata
+        )
         self.classes_ = [0, 1]
         return self
 
@@ -112,14 +122,16 @@ class ConsumingClassifier(ClassifierMixin, BaseEstimator):
         if self.registry is not None:
             self.registry.append(self)
 
-        record_metadata(self, "predict", sample_weight=sample_weight, metadata=metadata)
+        record_metadata_not_none(
+            self, "predict", sample_weight=sample_weight, metadata=metadata
+        )
         return np.zeros(shape=(len(X),))
 
     def predict_proba(self, X, sample_weight=None, metadata=None):
         if self.registry is not None:
             self.registry.append(self)
 
-        record_metadata(
+        record_metadata_not_none(
             self, "predict_proba", sample_weight=sample_weight, metadata=metadata
         )
         return np.asarray([[0.0, 1.0]] * len(X))
@@ -128,7 +140,7 @@ class ConsumingClassifier(ClassifierMixin, BaseEstimator):
         if self.registry is not None:
             self.registry.append(self)
 
-        record_metadata(
+        record_metadata_not_none(
             self, "predict_log_proba", sample_weight=sample_weight, metadata=metadata
         )
         return np.zeros(shape=(len(X), 2))

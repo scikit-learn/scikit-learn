@@ -70,19 +70,25 @@ def assert_request_equal(request, dictionary):
         assert not len(getattr(request, method).requests)
 
 
-def record_metadata(obj, method, **kwargs):
-    """Utility function to store passed metadata to a method."""
+def record_metadata(obj, method, record_none=True, **kwargs):
+    """Utility function to store passed metadata to a method.
+
+    If record_none is False, kwargs whose values are None are skipped. This is
+    so that checks on keyword arguments whose default was not changed are
+    skipped.
+
+    """
     if not hasattr(obj, "_records"):
         obj._records = {}
+    if not record_none:
+        kwargs = {key: val for key, val in kwargs.items() if val is not None}
     obj._records[method] = kwargs
 
 
 def check_recorded_metadata(obj, method, **kwargs):
     """Check whether the expected metadata is passed to the object's method."""
     records = getattr(obj, "_records", dict()).get(method, dict())
-    # only check keys whose value was explicitly passed
-    expected_keys = {key for key, val in records.items() if val is not None}
-    assert set(kwargs.keys()) == expected_keys
+    assert set(kwargs.keys()) == set(records.keys())
     for key, value in kwargs.items():
         assert records[key] is value
 
