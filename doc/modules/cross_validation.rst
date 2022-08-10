@@ -720,8 +720,8 @@ cross-validation folds.
 
 Each training set is thus constituted by all the samples except the ones
 related to a specific group. This is the same as :class:`LeavePGroupsOut` with
-``n_groups=1`` and the same as :class:`GroupKFold` in the case where
-`n_splits` is equal to the number of groups
+`n_groups=1` and the same as :class:`GroupKFold` with `n_splits` equal to the
+number of groups
 
 For example, in the cases of multiple experiments, :class:`LeaveOneGroupOut`
 can be used to create a cross-validation based on the different experiments:
