@@ -951,6 +951,8 @@ def calibration_curve(
             Use isotonic regression to select bins automatically. This corresponds to
             the CORP approach of [2]_. `n_bins` is ignored.
 
+            .. versionadded:: 1.2
+
     Returns
     -------
     prob_true : ndarray of shape (n_bins,) or smaller
