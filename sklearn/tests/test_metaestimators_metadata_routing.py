@@ -154,7 +154,10 @@ METAESTIMATORS = [
         "X": X,
         "y": y_multi,
         "routing_methods": ["fit", "partial_fit"],
-        "warns_on": {"fit": ["sample_weight"]},
+        "warns_on": {
+            "fit": ["sample_weight", "metadata"],
+            "partial_fit": ["sample_weight"],
+        },
     },
     {
         "metaestimator": MultiOutputClassifier,
@@ -163,7 +166,10 @@ METAESTIMATORS = [
         "X": X,
         "y": y_multi,
         "routing_methods": ["fit", "partial_fit"],
-        "warns_on": {"fit": ["sample_weight"]},
+        "warns_on": {
+            "fit": ["sample_weight", "metadata"],
+            "partial_fit": ["sample_weight"],
+        },
     },
     {
         "metaestimator": CalibratedClassifierCV,
@@ -186,9 +192,10 @@ The keys are as follows:
 - X: X-data to fit and predict
 - y: y-data to fit
 - routing_methods: list of all methods to check for routing
-- warns_on: A dict containing all methods as keys that are supposed to result in
-  a warning if routing is not requested. It is implied that all routing methods
-  not listed here should result in an error.
+- warns_on: A dict containing all methods as keys, and arguments as values,
+  whose combination is supposed to result in a warning if routing is not
+  requested. It is implied that all routing methods and arguments not listed
+  here should result in an error.
 - preserves_metadata: Whether the metaestimator passes the metadata to the
   sub-estimator without modification or not. If it does, we check that the
   values are identical. If it doesn', no check is performed. TODO Maybe
@@ -280,18 +287,21 @@ def test_error_for_other_methods(metaestimator):
     warns_on = metaestimator["warns_on"]
 
     for method_name in routing_methods:
-        if method_name in warns_on:
-            # this method is expected to warn, not raise
-            continue
+        warn_args = warns_on.get(method_name, [])
+        for key in ["sample_weight", "metadata"]:
+            if key in warn_args:
+                # this method is expected to warn for this argument, not raise
+                continue
 
-        msg = (
-            "[sample_weight, metadata] are passed but are not explicitly set as "
-            "requested or not for "
-            f"{estimator.__class__.__name__}.{method_name}"
-        )
-        with pytest.raises(UnsetMetadataPassedError, match=re.escape(msg)):
-            method = getattr(instance, method_name)
-            method(X, y, sample_weight=sample_weight, metadata=metadata)
+            val = {"sample_weight": sample_weight, "metadata": metadata}[key]
+            kwargs = {key: val}
+            msg = (
+                f"[{key}] are passed but are not explicitly set as requested or not for"
+                f" {estimator.__class__.__name__}.{method_name}"
+            )
+            with pytest.raises(UnsetMetadataPassedError, match=re.escape(msg)):
+                method = getattr(instance, method_name)
+                method(X, y, **kwargs)
 
 
 @pytest.mark.parametrize(
