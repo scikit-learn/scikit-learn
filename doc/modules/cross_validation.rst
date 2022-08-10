@@ -714,9 +714,8 @@ Leave One Group Out
 ^^^^^^^^^^^^^^^^^^^
 
 :class:`LeaveOneGroupOut` is a cross-validation scheme which holds out
-the samples according to a third-party provided array of integer groups. This
-group information can be used to encode arbitrary domain specific pre-defined
-cross-validation folds.
+samples according to groups. Arbitrary domain specific group information is
+provided via an array of integers that encode the group of each sample.
 
 Each training set is thus constituted by all the samples except the ones
 related to a specific group. This is basically the same as
