@@ -8,14 +8,13 @@ implementation_specific_values = [
     # We also use the float64 dtype and C-type names as defined in
     # `sklearn.utils._typedefs` to maintain consistency.
     #
-    ('64', 'DistanceMetric', 'DTYPE_t', 'DTYPE'),
+    ('64', 'DistanceMetric', 'cnp.float64_t', 'np.float64'),
     ('32', 'DistanceMetric32', 'cnp.float32_t', 'np.float32')
 ]
 
 }}
 cimport numpy as cnp
 
-from ...utils._typedefs cimport DTYPE_t, ITYPE_t
 from ...metrics._dist_metrics cimport DistanceMetric, DistanceMetric32
 
 {{for name_suffix, DistanceMetric, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
@@ -24,18 +23,18 @@ from ...metrics._dist_metrics cimport DistanceMetric, DistanceMetric32
 cdef class DatasetsPair{{name_suffix}}:
     cdef {{DistanceMetric}} distance_metric
 
-    cdef ITYPE_t n_samples_X(self) nogil
+    cdef cnp.intp_t n_samples_X(self) nogil
 
-    cdef ITYPE_t n_samples_Y(self) nogil
+    cdef cnp.intp_t n_samples_Y(self) nogil
 
-    cdef DTYPE_t dist(self, ITYPE_t i, ITYPE_t j) nogil
+    cdef cnp.float64_t dist(self, cnp.intp_t i, cnp.intp_t j) nogil
 
-    cdef DTYPE_t surrogate_dist(self, ITYPE_t i, ITYPE_t j) nogil
+    cdef cnp.float64_t surrogate_dist(self, cnp.intp_t i, cnp.intp_t j) nogil
 
 
 cdef class DenseDenseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
     cdef:
         const {{INPUT_DTYPE_t}}[:, ::1] X
         const {{INPUT_DTYPE_t}}[:, ::1] Y
-        ITYPE_t d
+        cnp.intp_t d
 {{endfor}}

@@ -8,7 +8,7 @@ implementation_specific_values = [
     # We also use the float64 dtype and C-type names as defined in
     # `sklearn.utils._typedefs` to maintain consistency.
     #
-    ('64', 'DTYPE_t', 'DTYPE'),
+    ('64', 'cnp.float64_t', 'np.float64'),
     ('32', 'cnp.float32_t', 'np.float32')
 ]
 
@@ -60,9 +60,9 @@ cpdef cnp.float64_t[::1] _sqeuclidean_row_norms64(
     return squared_row_norms
 
 
-cpdef DTYPE_t[::1] _sqeuclidean_row_norms32(
+cpdef cnp.float64_t[::1] _sqeuclidean_row_norms32(
     const cnp.float32_t[:, ::1] X,
-    ITYPE_t num_threads,
+    cnp.intp_t num_threads,
 ):
     """Compute the squared euclidean norm of the rows of X in parallel.
 
@@ -74,15 +74,15 @@ cpdef DTYPE_t[::1] _sqeuclidean_row_norms32(
         # const qualifier.
         # See: https://github.com/scipy/scipy/issues/14262
         cnp.float32_t * X_ptr = <cnp.float32_t *> &X[0, 0]
-        ITYPE_t i = 0, j = 0
-        ITYPE_t thread_num
-        ITYPE_t n = X.shape[0]
-        ITYPE_t d = X.shape[1]
-        DTYPE_t[::1] squared_row_norms = np.empty(n, dtype=DTYPE)
+        cnp.intp_t i = 0, j = 0
+        cnp.intp_t thread_num
+        cnp.intp_t n = X.shape[0]
+        cnp.intp_t d = X.shape[1]
+        cnp.float64_t[::1] squared_row_norms = np.empty(n, dtype=np.float64)
 
         # To upcast the i-th row of X from 32bit to 64bit
-        vector[vector[DTYPE_t]] X_i_upcast = vector[vector[DTYPE_t]](
-            num_threads, vector[DTYPE_t](d)
+        vector[vector[cnp.float64_t]] X_i_upcast = vector[vector[cnp.float64_t]](
+            num_threads, vector[cnp.float64_t](d)
         )
 
     with nogil, parallel(num_threads=num_threads):
@@ -90,7 +90,7 @@ cpdef DTYPE_t[::1] _sqeuclidean_row_norms32(
         for i in prange(n, schedule='static'):
             # Upcasting the i-th row of X from 32bit to 64bit
             for j in range(d):
-                X_i_upcast[thread_num][j] = <DTYPE_t> deref(X_ptr + i * d + j)
+                X_i_upcast[thread_num][j] = <cnp.float64_t> deref(X_ptr + i * d + j)
 
             squared_row_norms[i] = _dot(
                 d, X_i_upcast[thread_num].data(), 1,

@@ -8,7 +8,7 @@ implementation_specific_values = [
     # We also use the float64 dtype and C-type names as defined in
     # `sklearn.utils._typedefs` to maintain consistency.
     #
-    ('64', 'DTYPE_t', 'DTYPE'),
+    ('64', 'cnp.float64_t', 'np.float64'),
     ('32', 'cnp.float32_t', 'np.float32')
 ]
 
