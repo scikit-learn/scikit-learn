@@ -215,6 +215,11 @@ Changelog
 :mod:`sklearn.metrics`
 ......................
 
+- |Feature| :func:`metrics.ConfusionMatrixDisplay.from_estimator`,
+  :func:`metrics.ConfusionMatrixDisplay.from_predictions`, and
+  :meth:`metrics.ConfusionMatrixDisplay.plot` accepts a `text_kw` parameter which is passed to
+  matplotlib's `text` function. :pr:`24051` by `Thomas Fan`_.
+
 - |Feature| :func:`metrics.class_likelihood_ratios` is added to compute the positive and
   negative likelihood ratios derived from the confusion matrix
   of a binary classification problem. :pr:`22518` by
