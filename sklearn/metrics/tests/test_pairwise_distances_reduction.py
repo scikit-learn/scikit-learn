@@ -784,13 +784,14 @@ def test_n_threads_agnosticism(
     "PairwiseDistancesReduction",
     [PairwiseDistancesArgKmin, PairwiseDistancesRadiusNeighborhood],
 )
+@pytest.mark.parametrize("dtype", [np.float64, np.float32])
 def test_format_agnosticism(
     global_random_seed,
     PairwiseDistancesReduction,
     n_samples,
     chunk_size,
     n_features=100,
-    dtype=np.float64,
+    dtype,
 ):
     # Results must not depend on the number of threads
     rng = np.random.RandomState(global_random_seed)
