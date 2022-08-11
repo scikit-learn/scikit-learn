@@ -338,7 +338,6 @@ class SpectralCoclustering(BaseSpectral):
         )
 
     def _check_parameters(self, n_samples):
-        super()._check_parameters(n_samples)
         check_scalar(
             self.n_clusters,
             "n_clusters",
@@ -520,7 +519,6 @@ class SpectralBiclustering(BaseSpectral):
         self.n_best = n_best
 
     def _check_parameters(self, n_samples):
-        super()._check_parameters(n_samples)
         try:
             check_scalar(
                 self.n_clusters,
