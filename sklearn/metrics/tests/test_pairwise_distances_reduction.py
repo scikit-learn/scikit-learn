@@ -790,8 +790,8 @@ def test_format_agnosticism(
     PairwiseDistancesReduction,
     n_samples,
     chunk_size,
-    n_features=100,
     dtype,
+    n_features=100,
 ):
     # Results must not depend on the number of threads
     rng = np.random.RandomState(global_random_seed)
