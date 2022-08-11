@@ -230,9 +230,9 @@ cdef class SparseSparseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
     @final
     cdef DTYPE_t surrogate_dist(self, ITYPE_t i, ITYPE_t j) nogil:
         return self.distance_metric.rdist_csr(
-            x1_data=self.X_data,
+            x1_data=&self.X_data[0],
             x1_indices=&self.X_indices[0],
-            x2_data=self.Y_data,
+            x2_data=&self.Y_data[0],
             x2_indices=&self.Y_indices[0],
             x1_start=self.X_indptr[i],
             x1_end=self.X_indptr[i + 1],
@@ -244,9 +244,9 @@ cdef class SparseSparseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
     @final
     cdef DTYPE_t dist(self, ITYPE_t i, ITYPE_t j) nogil:
         return self.distance_metric.dist_csr(
-            x1_data=self.X_data,
+            x1_data=&self.X_data[0],
             x1_indices=&self.X_indices[0],
-            x2_data=self.Y_data,
+            x2_data=&self.Y_data[0],
             x2_indices=&self.Y_indices[0],
             x1_start=self.X_indptr[i],
             x1_end=self.X_indptr[i + 1],
@@ -314,45 +314,34 @@ cdef class SparseDenseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
 
     @final
     cdef DTYPE_t surrogate_dist(self, ITYPE_t i, ITYPE_t j) nogil:
-        cdef:
-            ITYPE_t x2_start = j * self.n_features
-            ITYPE_t x2_end = x2_start + self.n_features
-
         return self.distance_metric.rdist_csr(
-            x1_data=self.X_data,
+            x1_data=&self.X_data[0],
             x1_indices=&self.X_indices[0],
-            x2_data=self.Y_data,
-            # To use the same indices array, we shift the array address to map
-            # accesses in [x2_start, x2_end) to
-            # accesses in [x2_start - x2_start, x2_end - x2_start), that is
-            # accesses in [0, n_features).
-            x2_indices=&self.Y_indices[0] - x2_start,
+            # Push the data pointer forward such that x2_start=0 is alined with the
+            # j-th row
+            x2_data=&self.Y_data[0] + j * self.n_features,
+            x2_indices=&self.Y_indices[0],
             x1_start=self.X_indptr[i],
             x1_end=self.X_indptr[i + 1],
-            x2_start=x2_start,
-            x2_end=x2_end,
+            x2_start=0,
+            x2_end=self.n_features,
             size=self.n_features,
         )
 
     @final
     cdef DTYPE_t dist(self, ITYPE_t i, ITYPE_t j) nogil:
-        cdef:
-            ITYPE_t x2_start = j * self.n_features
-            ITYPE_t x2_end = x2_start + self.n_features
 
         return self.distance_metric.dist_csr(
-            x1_data=self.X_data,
+            x1_data=&self.X_data[0],
             x1_indices=&self.X_indices[0],
-            x2_data=self.Y_data,
-            # To use the same indices array, we shift the array address to map
-            # accesses in [x2_start, x2_end) to
-            # accesses in [x2_start - x2_start, x2_end - x2_start), that is
-            # accesses in [0, n_features).
-            x2_indices=&self.Y_indices[0] - x2_start,
+            # Push the data pointer forward such that x2_start=0 is alined with the
+            # j-th row
+            x2_data=&self.Y_data[0] + j * self.n_features,
+            x2_indices=&self.Y_indices[0],
             x1_start=self.X_indptr[i],
             x1_end=self.X_indptr[i + 1],
-            x2_start=x2_start,
-            x2_end=x2_end,
+            x2_start=0,
+            x2_end=self.n_features,
             size=self.n_features,
         )
 
