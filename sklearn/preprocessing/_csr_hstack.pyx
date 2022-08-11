@@ -29,16 +29,17 @@ ctypedef fused IND_2_t:
     cnp.int32_t
     cnp.int64_t
 
+# TODO Add const keyword to input arrays in Cython 3.X
 cpdef void _csr_hstack(
-    Py_ssize_t n_blocks,        # Number of matrices to stack
-    Py_ssize_t n_rows,          # Number of rows (same across all matrices)
-    cnp.int32_t[:] n_cols,       # Number of columns (one per matrix)
-    IND_1_t[:] indptr_cat,      # Input concatenated array of indptrs
-    IND_1_t[:] indices_cat,     # Input concatenated array of indices
-    DATA_t[:] data_cat,         # Input concatenated array of data
-    IND_2_t[:] indptr,          # Output array to write indptr information into
-    IND_2_t[:] indices,         # Output array to write index information into
-    DATA_t[:] data,             # Output array to write data information into
+    const Py_ssize_t n_blocks,      # Number of matrices to stack
+    const Py_ssize_t n_rows,        # Number of rows (same across all matrices)
+    const cnp.int32_t[:] n_cols,    # Number of columns (one per matrix)
+    IND_1_t[:] indptr_cat,          # Input concatenated array of indptrs
+    IND_1_t[:] indices_cat,         # Input concatenated array of indices
+    DATA_t[:] data_cat,             # Input concatenated array of data
+    IND_2_t[:] indptr,              # Output array to write indptr into
+    IND_2_t[:] indices,             # Output array to write indices into
+    DATA_t[:] data,                 # Output array to write data into
     ) nogil:
 
     cdef:
@@ -73,17 +74,28 @@ cpdef void _csr_hstack(
         # Now we populate the full output matrix
         indptr[0] = 0
         row_sum = 0
+
+        # We iterate across rows for convenience
         for idx in range(n_rows):
+            # For each row, in each matrix we find the valid indices to iterate
             for jdx in range(n_blocks):
                 row_start = indptr_bound[jdx][idx]
                 row_end = indptr_bound[jdx][idx+1]
+
+                # We account for the offset due to horizontal concatenation
                 offset = col_offset[jdx]
+
+                # We iterate over the valid indices, updating the indices and
+                # data
                 for kdx in range(row_start, row_end):
                     indices[row_sum + kdx] = indices_bound[jdx][kdx] + offset
                     data[row_sum + kdx] = data_bound[jdx][kdx]
                 row_sum += row_end - row_start
+
+            # Cumulative row index (indptr)
             indptr[idx + 1] = row_sum
 
+        # Free the memory allocated earlier
         free(col_offset)
         free(indptr_bound)
         free(indices_bound)
