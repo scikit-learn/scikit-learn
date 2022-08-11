@@ -715,7 +715,7 @@ Leave One Group Out
 
 :class:`LeaveOneGroupOut` is a cross-validation scheme where each split holds
 out samples belonging to one specific group. Group information is
-provided via an array of integers that encode the group of each sample.
+provided via an array that encodes the group of each sample.
 
 Each training set is thus constituted by all the samples except the ones
 related to a specific group. This is basically the same as

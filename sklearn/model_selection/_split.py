@@ -1111,8 +1111,8 @@ class LeaveOneGroupOut(BaseCrossValidator):
 
     Provides train/test indices to split data such that each training set is
     comprised of all samples except ones belonging to one specific group.
-    Arbitrary domain specific group information is provided via an array of
-    integers that encode the group of each sample.
+    Arbitrary domain specific group information is provided an array integers
+    that encodes the group of each sample.
 
     For instance the groups could be the year of collection of the samples
     and thus allow for cross-validation against time-based splits.
