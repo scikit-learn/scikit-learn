@@ -12,11 +12,7 @@ import sklearn
 numpydoc_validation = pytest.importorskip("numpydoc.validate")
 
 FUNCTION_DOCSTRING_IGNORE_LIST = [
-    "sklearn.datasets._lfw.fetch_lfw_people",
-    "sklearn.datasets._samples_generator.make_gaussian_quantiles",
-    "sklearn.datasets._species_distributions.fetch_species_distributions",
     "sklearn.datasets._svmlight_format_io.load_svmlight_file",
-    "sklearn.datasets._svmlight_format_io.load_svmlight_files",
     "sklearn.decomposition._dict_learning.dict_learning",
     "sklearn.decomposition._dict_learning.dict_learning_online",
     "sklearn.decomposition._nmf.non_negative_factorization",
@@ -40,16 +36,9 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.metrics.cluster._supervised.adjusted_rand_score",
     "sklearn.metrics.cluster._supervised.entropy",
     "sklearn.metrics.cluster._supervised.fowlkes_mallows_score",
-    "sklearn.metrics.cluster._supervised.mutual_info_score",
-    "sklearn.metrics.cluster._supervised.normalized_mutual_info_score",
-    "sklearn.metrics.cluster._supervised.pair_confusion_matrix",
-    "sklearn.metrics.cluster._supervised.rand_score",
-    "sklearn.metrics.cluster._supervised.v_measure_score",
     "sklearn.metrics.pairwise.pairwise_distances_chunked",
     "sklearn.preprocessing._data.maxabs_scale",
     "sklearn.preprocessing._data.scale",
-    "sklearn.preprocessing._label.label_binarize",
-    "sklearn.random_projection.johnson_lindenstrauss_min_dim",
     "sklearn.svm._bounds.l1_min_c",
     "sklearn.tree._export.plot_tree",
     "sklearn.utils.axis0_safe_slice",
