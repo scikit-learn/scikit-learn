@@ -14,7 +14,14 @@ from sklearn import datasets
 from sklearn.cross_decomposition import CCA, PLSCanonical, PLSRegression
 from sklearn.datasets import make_friedman1
 from sklearn.exceptions import NotFittedError
-from sklearn.linear_model import LogisticRegression, SGDClassifier, Lasso
+from sklearn.linear_model import (
+    LogisticRegression,
+    SGDClassifier,
+    Lasso,
+    LassoCV,
+    ElasticNet,
+    ElasticNetCV,
+)
 from sklearn.svm import LinearSVC
 from sklearn.feature_selection import SelectFromModel
 from sklearn.ensemble import RandomForestClassifier, HistGradientBoostingClassifier
@@ -318,7 +325,16 @@ def test_sample_weight():
     assert np.all(weighted_mask == reweighted_mask)
 
 
-def test_coef_default_threshold():
+@pytest.mark.parametrize(
+    "estimator",
+    [
+        Lasso(alpha=0.1, random_state=42),
+        LassoCV(random_state=42),
+        ElasticNet(l1_ratio=1, random_state=42),
+        ElasticNetCV(l1_ratio=[1], random_state=42),
+    ],
+)
+def test_coef_default_threshold(estimator):
     X, y = datasets.make_classification(
         n_samples=100,
         n_features=10,
@@ -330,7 +346,7 @@ def test_coef_default_threshold():
     )
 
     # For the Lasso and related models, the threshold defaults to 1e-5
-    transformer = SelectFromModel(estimator=Lasso(alpha=0.1, random_state=42))
+    transformer = SelectFromModel(estimator=estimator)
     transformer.fit(X, y)
     X_new = transformer.transform(X)
     mask = np.abs(transformer.estimator_.coef_) > 1e-5
