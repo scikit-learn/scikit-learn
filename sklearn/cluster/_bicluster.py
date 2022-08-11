@@ -90,12 +90,12 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
     _parameter_constraints = {
         "n_clusters": [Interval(Integral, 0, None, closed="left"), tuple],
         "svd_method": [StrOptions({"randomized", "arpack"})],
-        "n_svd_vecs": [Interval(Integral, 0, None, closed="left"),None],
+        "n_svd_vecs": [Interval(Integral, 0, None, closed="left"), None],
         "mini_batch": ["boolean"],
         "init": [StrOptions({"k-means++", "random"}), np.ndarray],
         "n_init": [Interval(Integral, 1, None, closed="left")],
         "random_state": ["random_state"],
-    } 
+    }
 
     @abstractmethod
     def __init__(
@@ -318,9 +318,7 @@ class SpectralCoclustering(BaseSpectral):
     SpectralCoclustering(n_clusters=2, random_state=0)
     """
 
-    _parameter_constraints = {
-        **BaseSpectral._parameter_constraints,
-    } 
+    _parameter_constraints = {**BaseSpectral._parameter_constraints}
 
     def __init__(
         self,
@@ -495,7 +493,7 @@ class SpectralBiclustering(BaseSpectral):
         "method": [StrOptions({"bistochastic", "scale", "log"})],
         "n_components": [Interval(Integral, 1, None, closed="left")],
         "n_best": [Interval(Integral, 1, None, closed="left")],
-    } 
+    }
 
     def __init__(
         self,
