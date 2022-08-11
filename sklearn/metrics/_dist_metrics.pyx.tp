@@ -395,10 +395,10 @@ cdef class DistanceMetric{{name_suffix}}:
 
     cdef DTYPE_t dist_csr(
         self,
-        const {{INPUT_DTYPE_t}}[:] x1_data,
-        const SPARSE_INDEX_TYPE_t* x1_indices,
-        const {{INPUT_DTYPE_t}}[:] x2_data,
-        const SPARSE_INDEX_TYPE_t* x2_indices,
+        const {{INPUT_DTYPE_t}}* x1_data,
+        const SPARSE_INDEX_TYPE_t[:] x1_indices,
+        const {{INPUT_DTYPE_t}}* x2_data,
+        const SPARSE_INDEX_TYPE_t[:] x2_indices,
         const SPARSE_INDEX_TYPE_t x1_start,
         const SPARSE_INDEX_TYPE_t x1_end,
         const SPARSE_INDEX_TYPE_t x2_start,
@@ -425,10 +425,10 @@ cdef class DistanceMetric{{name_suffix}}:
 
             cdef DTYPE_t dist_csr(
                 self,
-                const {{INPUT_DTYPE_t}}[:] x1_data,
-                const SPARSE_INDEX_TYPE_t* x1_indices,
-                const {{INPUT_DTYPE_t}}[:] x2_data,
-                const SPARSE_INDEX_TYPE_t* x2_indices,
+                const {{INPUT_DTYPE_t}}* x1_data,
+                const SPARSE_INDEX_TYPE_t[:] x1_indices,
+                const {{INPUT_DTYPE_t}}* x2_data,
+                const SPARSE_INDEX_TYPE_t[:] x2_indices,
             ) nogil except -1:
 
         Where callees would use slicing on the original CSR data and indices
@@ -461,10 +461,10 @@ cdef class DistanceMetric{{name_suffix}}:
 
     cdef DTYPE_t rdist_csr(
         self,
-        const {{INPUT_DTYPE_t}}[:] x1_data,
-        const SPARSE_INDEX_TYPE_t* x1_indices,
-        const {{INPUT_DTYPE_t}}[:] x2_data,
-        const SPARSE_INDEX_TYPE_t* x2_indices,
+        const {{INPUT_DTYPE_t}}* x1_data,
+        const SPARSE_INDEX_TYPE_t[:] x1_indices,
+        const {{INPUT_DTYPE_t}}* x2_data,
+        const SPARSE_INDEX_TYPE_t[:] x2_indices,
         const SPARSE_INDEX_TYPE_t x1_start,
         const SPARSE_INDEX_TYPE_t x1_end,
         const SPARSE_INDEX_TYPE_t x2_start,
@@ -502,8 +502,8 @@ cdef class DistanceMetric{{name_suffix}}:
 
     cdef int pdist_csr(
         self,
-        const {{INPUT_DTYPE_t}}[:] x1_data,
-        const SPARSE_INDEX_TYPE_t* x1_indices,
+        const {{INPUT_DTYPE_t}}* x1_data,
+        const SPARSE_INDEX_TYPE_t[:] x1_indices,
         const SPARSE_INDEX_TYPE_t[:] x1_indptr,
         const ITYPE_t size,
         DTYPE_t[:, ::1] D,
@@ -539,11 +539,11 @@ cdef class DistanceMetric{{name_suffix}}:
 
     cdef int cdist_csr(
         self,
-        const {{INPUT_DTYPE_t}}[:] x1_data,
-        const SPARSE_INDEX_TYPE_t* x1_indices,
+        const {{INPUT_DTYPE_t}}* x1_data,
+        const SPARSE_INDEX_TYPE_t[:] x1_indices,
         const SPARSE_INDEX_TYPE_t[:] x1_indptr,
-        const {{INPUT_DTYPE_t}}[:] x2_data,
-        const SPARSE_INDEX_TYPE_t* x2_indices,
+        const {{INPUT_DTYPE_t}}* x2_data,
+        const SPARSE_INDEX_TYPE_t[:] x2_indices,
         const SPARSE_INDEX_TYPE_t[:] x2_indptr,
         const ITYPE_t size,
         DTYPE_t[:, ::1] D,
@@ -663,8 +663,8 @@ cdef class DistanceMetric{{name_suffix}}:
         if X is Y:
             Darr = np.empty((n_X, n_X), dtype=DTYPE, order='C')
             self.pdist_csr(
-                x1_data=X_data,
-                x1_indices=&X_indices[0],
+                x1_data=&X_data[0],
+                x1_indices=X_indices,
                 x1_indptr=X_indptr,
                 size=n_features,
                 D=Darr,
@@ -678,11 +678,11 @@ cdef class DistanceMetric{{name_suffix}}:
 
             Darr = np.empty((n_X, n_Y), dtype=DTYPE, order='C')
             self.cdist_csr(
-                x1_data=X_data,
-                x1_indices=&X_indices[0],
+                x1_data=&X_data[0],
+                x1_indices=X_indices,
                 x1_indptr=X_indptr,
-                x2_data=Y_data,
-                x2_indices=&Y_indices[0],
+                x2_data=&Y_data[0],
+                x2_indices=Y_indices,
                 x2_indptr=Y_indptr,
                 size=n_features,
                 D=Darr,
@@ -712,11 +712,11 @@ cdef class DistanceMetric{{name_suffix}}:
             DTYPE_t[:, ::1] Darr = np.empty((n_X, n_Y), dtype=DTYPE, order='C')
 
         self.cdist_csr(
-            x1_data=X_data,
-            x1_indices=&X_indices[0],
+            x1_data=&X_data[0],
+            x1_indices=X_indices,
             x1_indptr=X_indptr,
-            x2_data=Y_data,
-            x2_indices=&Y_indices[0],
+            x2_data=&Y_data[0],
+            x2_indices=Y_indices,
             x2_indptr=Y_indptr,
             size=n_features,
             D=Darr,
@@ -749,11 +749,11 @@ cdef class DistanceMetric{{name_suffix}}:
             DTYPE_t[:, ::1] Darr = np.empty((n_X, n_Y), dtype=DTYPE, order='C')
 
         self.cdist_csr(
-            x1_data=X_data,
-            x1_indices=&X_indices[0],
+            x1_data=&X_data[0],
+            x1_indices=X_indices,
             x1_indptr=X_indptr,
-            x2_data=Y_data,
-            x2_indices=&Y_indices[0],
+            x2_data=&Y_data[0],
+            x2_indices=Y_indices,
             x2_indptr=Y_indptr,
             size=n_features,
             D=Darr,
@@ -839,10 +839,10 @@ cdef class EuclideanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
     cdef inline DTYPE_t rdist_csr(
         self,
-        const {{INPUT_DTYPE_t}}[:] x1_data,
-        const SPARSE_INDEX_TYPE_t* x1_indices,
-        const {{INPUT_DTYPE_t}}[:] x2_data,
-        const SPARSE_INDEX_TYPE_t* x2_indices,
+        const {{INPUT_DTYPE_t}}* x1_data,
+        const SPARSE_INDEX_TYPE_t[:] x1_indices,
+        const {{INPUT_DTYPE_t}}* x2_data,
+        const SPARSE_INDEX_TYPE_t[:] x2_indices,
         const SPARSE_INDEX_TYPE_t x1_start,
         const SPARSE_INDEX_TYPE_t x1_end,
         const SPARSE_INDEX_TYPE_t x2_start,
@@ -891,10 +891,10 @@ cdef class EuclideanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
     cdef inline DTYPE_t dist_csr(
         self,
-        const {{INPUT_DTYPE_t}}[:] x1_data,
-        const SPARSE_INDEX_TYPE_t* x1_indices,
-        const {{INPUT_DTYPE_t}}[:] x2_data,
-        const SPARSE_INDEX_TYPE_t* x2_indices,
+        const {{INPUT_DTYPE_t}}* x1_data,
+        const SPARSE_INDEX_TYPE_t[:] x1_indices,
+        const {{INPUT_DTYPE_t}}* x2_data,
+        const SPARSE_INDEX_TYPE_t[:] x2_indices,
         const SPARSE_INDEX_TYPE_t x1_start,
         const SPARSE_INDEX_TYPE_t x1_end,
         const SPARSE_INDEX_TYPE_t x2_start,
@@ -967,10 +967,10 @@ cdef class SEuclideanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
     cdef inline DTYPE_t rdist_csr(
         self,
-        const {{INPUT_DTYPE_t}}[:] x1_data,
-        const SPARSE_INDEX_TYPE_t* x1_indices,
-        const {{INPUT_DTYPE_t}}[:] x2_data,
-        const SPARSE_INDEX_TYPE_t* x2_indices,
+        const {{INPUT_DTYPE_t}}* x1_data,
+        const SPARSE_INDEX_TYPE_t[:] x1_indices,
+        const {{INPUT_DTYPE_t}}* x2_data,
+        const SPARSE_INDEX_TYPE_t[:] x2_indices,
         const SPARSE_INDEX_TYPE_t x1_start,
         const SPARSE_INDEX_TYPE_t x1_end,
         const SPARSE_INDEX_TYPE_t x2_start,
@@ -1020,10 +1020,10 @@ cdef class SEuclideanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
     cdef inline DTYPE_t dist_csr(
         self,
-        const {{INPUT_DTYPE_t}}[:] x1_data,
-        const SPARSE_INDEX_TYPE_t* x1_indices,
-        const {{INPUT_DTYPE_t}}[:] x2_data,
-        const SPARSE_INDEX_TYPE_t* x2_indices,
+        const {{INPUT_DTYPE_t}}* x1_data,
+        const SPARSE_INDEX_TYPE_t[:] x1_indices,
+        const {{INPUT_DTYPE_t}}* x2_data,
+        const SPARSE_INDEX_TYPE_t[:] x2_indices,
         const SPARSE_INDEX_TYPE_t x1_start,
         const SPARSE_INDEX_TYPE_t x1_end,
         const SPARSE_INDEX_TYPE_t x2_start,
@@ -1069,10 +1069,10 @@ cdef class ManhattanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
     cdef inline DTYPE_t dist_csr(
         self,
-        const {{INPUT_DTYPE_t}}[:] x1_data,
-        const SPARSE_INDEX_TYPE_t* x1_indices,
-        const {{INPUT_DTYPE_t}}[:] x2_data,
-        const SPARSE_INDEX_TYPE_t* x2_indices,
+        const {{INPUT_DTYPE_t}}* x1_data,
+        const SPARSE_INDEX_TYPE_t[:] x1_indices,
+        const {{INPUT_DTYPE_t}}* x2_data,
+        const SPARSE_INDEX_TYPE_t[:] x2_indices,
         const SPARSE_INDEX_TYPE_t x1_start,
         const SPARSE_INDEX_TYPE_t x1_end,
         const SPARSE_INDEX_TYPE_t x2_start,
@@ -1153,10 +1153,10 @@ cdef class ChebyshevDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
     cdef inline DTYPE_t dist_csr(
         self,
-        const {{INPUT_DTYPE_t}}[:] x1_data,
-        const SPARSE_INDEX_TYPE_t* x1_indices,
-        const {{INPUT_DTYPE_t}}[:] x2_data,
-        const SPARSE_INDEX_TYPE_t* x2_indices,
+        const {{INPUT_DTYPE_t}}* x1_data,
+        const SPARSE_INDEX_TYPE_t[:] x1_indices,
+        const {{INPUT_DTYPE_t}}* x2_data,
+        const SPARSE_INDEX_TYPE_t[:] x2_indices,
         const SPARSE_INDEX_TYPE_t x1_start,
         const SPARSE_INDEX_TYPE_t x1_end,
         const SPARSE_INDEX_TYPE_t x2_start,
@@ -1290,10 +1290,10 @@ cdef class MinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
     cdef inline DTYPE_t rdist_csr(
         self,
-        const {{INPUT_DTYPE_t}}[:] x1_data,
-        const SPARSE_INDEX_TYPE_t* x1_indices,
-        const {{INPUT_DTYPE_t}}[:] x2_data,
-        const SPARSE_INDEX_TYPE_t* x2_indices,
+        const {{INPUT_DTYPE_t}}* x1_data,
+        const SPARSE_INDEX_TYPE_t[:] x1_indices,
+        const {{INPUT_DTYPE_t}}* x2_data,
+        const SPARSE_INDEX_TYPE_t[:] x2_indices,
         const SPARSE_INDEX_TYPE_t x1_start,
         const SPARSE_INDEX_TYPE_t x1_end,
         const SPARSE_INDEX_TYPE_t x2_start,
@@ -1370,10 +1370,10 @@ cdef class MinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
     cdef inline DTYPE_t dist_csr(
         self,
-        const {{INPUT_DTYPE_t}}[:] x1_data,
-        const SPARSE_INDEX_TYPE_t* x1_indices,
-        const {{INPUT_DTYPE_t}}[:] x2_data,
-        const SPARSE_INDEX_TYPE_t* x2_indices,
+        const {{INPUT_DTYPE_t}}* x1_data,
+        const SPARSE_INDEX_TYPE_t[:] x1_indices,
+        const {{INPUT_DTYPE_t}}* x2_data,
+        const SPARSE_INDEX_TYPE_t[:] x2_indices,
         const SPARSE_INDEX_TYPE_t x1_start,
         const SPARSE_INDEX_TYPE_t x1_end,
         const SPARSE_INDEX_TYPE_t x2_start,
@@ -1474,10 +1474,10 @@ cdef class WMinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
     cdef inline DTYPE_t rdist_csr(
         self,
-        const {{INPUT_DTYPE_t}}[:] x1_data,
-        const SPARSE_INDEX_TYPE_t* x1_indices,
-        const {{INPUT_DTYPE_t}}[:] x2_data,
-        const SPARSE_INDEX_TYPE_t* x2_indices,
+        const {{INPUT_DTYPE_t}}* x1_data,
+        const SPARSE_INDEX_TYPE_t[:] x1_indices,
+        const {{INPUT_DTYPE_t}}* x2_data,
+        const SPARSE_INDEX_TYPE_t[:] x2_indices,
         const SPARSE_INDEX_TYPE_t x1_start,
         const SPARSE_INDEX_TYPE_t x1_end,
         const SPARSE_INDEX_TYPE_t x2_start,
@@ -1524,10 +1524,10 @@ cdef class WMinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
     cdef inline DTYPE_t dist_csr(
         self,
-        const {{INPUT_DTYPE_t}}[:] x1_data,
-        const SPARSE_INDEX_TYPE_t* x1_indices,
-        const {{INPUT_DTYPE_t}}[:] x2_data,
-        const SPARSE_INDEX_TYPE_t* x2_indices,
+        const {{INPUT_DTYPE_t}}* x1_data,
+        const SPARSE_INDEX_TYPE_t[:] x1_indices,
+        const {{INPUT_DTYPE_t}}* x2_data,
+        const SPARSE_INDEX_TYPE_t[:] x2_indices,
         const SPARSE_INDEX_TYPE_t x1_start,
         const SPARSE_INDEX_TYPE_t x1_end,
         const SPARSE_INDEX_TYPE_t x2_start,
@@ -1629,10 +1629,10 @@ cdef class MahalanobisDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
     cdef inline DTYPE_t rdist_csr(
         self,
-        const {{INPUT_DTYPE_t}}[:] x1_data,
-        const SPARSE_INDEX_TYPE_t* x1_indices,
-        const {{INPUT_DTYPE_t}}[:] x2_data,
-        const SPARSE_INDEX_TYPE_t* x2_indices,
+        const {{INPUT_DTYPE_t}}* x1_data,
+        const SPARSE_INDEX_TYPE_t[:] x1_indices,
+        const {{INPUT_DTYPE_t}}* x2_data,
+        const SPARSE_INDEX_TYPE_t[:] x2_indices,
         const SPARSE_INDEX_TYPE_t x1_start,
         const SPARSE_INDEX_TYPE_t x1_end,
         const SPARSE_INDEX_TYPE_t x2_start,
@@ -1683,10 +1683,10 @@ cdef class MahalanobisDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
     cdef inline DTYPE_t dist_csr(
         self,
-        const {{INPUT_DTYPE_t}}[:] x1_data,
-        const SPARSE_INDEX_TYPE_t* x1_indices,
-        const {{INPUT_DTYPE_t}}[:] x2_data,
-        const SPARSE_INDEX_TYPE_t* x2_indices,
+        const {{INPUT_DTYPE_t}}* x1_data,
+        const SPARSE_INDEX_TYPE_t[:] x1_indices,
+        const {{INPUT_DTYPE_t}}* x2_data,
+        const SPARSE_INDEX_TYPE_t[:] x2_indices,
         const SPARSE_INDEX_TYPE_t x1_start,
         const SPARSE_INDEX_TYPE_t x1_end,
         const SPARSE_INDEX_TYPE_t x2_start,
@@ -1734,10 +1734,10 @@ cdef class HammingDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
     cdef inline DTYPE_t dist_csr(
         self,
-        const {{INPUT_DTYPE_t}}[:] x1_data,
-        const SPARSE_INDEX_TYPE_t* x1_indices,
-        const {{INPUT_DTYPE_t}}[:] x2_data,
-        const SPARSE_INDEX_TYPE_t* x2_indices,
+        const {{INPUT_DTYPE_t}}* x1_data,
+        const SPARSE_INDEX_TYPE_t[:] x1_indices,
+        const {{INPUT_DTYPE_t}}* x2_data,
+        const SPARSE_INDEX_TYPE_t[:] x2_indices,
         const SPARSE_INDEX_TYPE_t x1_start,
         const SPARSE_INDEX_TYPE_t x1_end,
         const SPARSE_INDEX_TYPE_t x2_start,
@@ -1809,10 +1809,10 @@ cdef class CanberraDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
     cdef inline DTYPE_t dist_csr(
         self,
-        const {{INPUT_DTYPE_t}}[:] x1_data,
-        const SPARSE_INDEX_TYPE_t* x1_indices,
-        const {{INPUT_DTYPE_t}}[:] x2_data,
-        const SPARSE_INDEX_TYPE_t* x2_indices,
+        const {{INPUT_DTYPE_t}}* x1_data,
+        const SPARSE_INDEX_TYPE_t[:] x1_indices,
+        const {{INPUT_DTYPE_t}}* x2_data,
+        const SPARSE_INDEX_TYPE_t[:] x2_indices,
         const SPARSE_INDEX_TYPE_t x1_start,
         const SPARSE_INDEX_TYPE_t x1_end,
         const SPARSE_INDEX_TYPE_t x2_start,
@@ -1886,10 +1886,10 @@ cdef class BrayCurtisDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
     cdef inline DTYPE_t dist_csr(
         self,
-        const {{INPUT_DTYPE_t}}[:] x1_data,
-        const SPARSE_INDEX_TYPE_t* x1_indices,
-        const {{INPUT_DTYPE_t}}[:] x2_data,
-        const SPARSE_INDEX_TYPE_t* x2_indices,
+        const {{INPUT_DTYPE_t}}* x1_data,
+        const SPARSE_INDEX_TYPE_t[:] x1_indices,
+        const {{INPUT_DTYPE_t}}* x2_data,
+        const SPARSE_INDEX_TYPE_t[:] x2_indices,
         const SPARSE_INDEX_TYPE_t x1_start,
         const SPARSE_INDEX_TYPE_t x1_end,
         const SPARSE_INDEX_TYPE_t x2_start,
@@ -1970,10 +1970,10 @@ cdef class JaccardDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
     cdef inline DTYPE_t dist_csr(
         self,
-        const {{INPUT_DTYPE_t}}[:] x1_data,
-        const SPARSE_INDEX_TYPE_t* x1_indices,
-        const {{INPUT_DTYPE_t}}[:] x2_data,
-        const SPARSE_INDEX_TYPE_t* x2_indices,
+        const {{INPUT_DTYPE_t}}* x1_data,
+        const SPARSE_INDEX_TYPE_t[:] x1_indices,
+        const {{INPUT_DTYPE_t}}* x2_data,
+        const SPARSE_INDEX_TYPE_t[:] x2_indices,
         const SPARSE_INDEX_TYPE_t x1_start,
         const SPARSE_INDEX_TYPE_t x1_end,
         const SPARSE_INDEX_TYPE_t x2_start,
@@ -2053,10 +2053,10 @@ cdef class MatchingDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
     cdef inline DTYPE_t dist_csr(
         self,
-        const {{INPUT_DTYPE_t}}[:] x1_data,
-        const SPARSE_INDEX_TYPE_t* x1_indices,
-        const {{INPUT_DTYPE_t}}[:] x2_data,
-        const SPARSE_INDEX_TYPE_t* x2_indices,
+        const {{INPUT_DTYPE_t}}* x1_data,
+        const SPARSE_INDEX_TYPE_t[:] x1_indices,
+        const {{INPUT_DTYPE_t}}* x2_data,
+        const SPARSE_INDEX_TYPE_t[:] x2_indices,
         const SPARSE_INDEX_TYPE_t x1_start,
         const SPARSE_INDEX_TYPE_t x1_end,
         const SPARSE_INDEX_TYPE_t x2_start,
@@ -2129,10 +2129,10 @@ cdef class DiceDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
     cdef inline DTYPE_t dist_csr(
         self,
-        const {{INPUT_DTYPE_t}}[:] x1_data,
-        const SPARSE_INDEX_TYPE_t* x1_indices,
-        const {{INPUT_DTYPE_t}}[:] x2_data,
-        const SPARSE_INDEX_TYPE_t* x2_indices,
+        const {{INPUT_DTYPE_t}}* x1_data,
+        const SPARSE_INDEX_TYPE_t[:] x1_indices,
+        const {{INPUT_DTYPE_t}}* x2_data,
+        const SPARSE_INDEX_TYPE_t[:] x2_indices,
         const SPARSE_INDEX_TYPE_t x1_start,
         const SPARSE_INDEX_TYPE_t x1_end,
         const SPARSE_INDEX_TYPE_t x2_start,
@@ -2210,10 +2210,10 @@ cdef class KulsinskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
     cdef inline DTYPE_t dist_csr(
         self,
-        const {{INPUT_DTYPE_t}}[:] x1_data,
-        const SPARSE_INDEX_TYPE_t* x1_indices,
-        const {{INPUT_DTYPE_t}}[:] x2_data,
-        const SPARSE_INDEX_TYPE_t* x2_indices,
+        const {{INPUT_DTYPE_t}}* x1_data,
+        const SPARSE_INDEX_TYPE_t[:] x1_indices,
+        const {{INPUT_DTYPE_t}}* x2_data,
+        const SPARSE_INDEX_TYPE_t[:] x2_indices,
         const SPARSE_INDEX_TYPE_t x1_start,
         const SPARSE_INDEX_TYPE_t x1_end,
         const SPARSE_INDEX_TYPE_t x2_start,
@@ -2288,10 +2288,10 @@ cdef class RogersTanimotoDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
     cdef inline DTYPE_t dist_csr(
         self,
-        const {{INPUT_DTYPE_t}}[:] x1_data,
-        const SPARSE_INDEX_TYPE_t* x1_indices,
-        const {{INPUT_DTYPE_t}}[:] x2_data,
-        const SPARSE_INDEX_TYPE_t* x2_indices,
+        const {{INPUT_DTYPE_t}}* x1_data,
+        const SPARSE_INDEX_TYPE_t[:] x1_indices,
+        const {{INPUT_DTYPE_t}}* x2_data,
+        const SPARSE_INDEX_TYPE_t[:] x2_indices,
         const SPARSE_INDEX_TYPE_t x1_start,
         const SPARSE_INDEX_TYPE_t x1_end,
         const SPARSE_INDEX_TYPE_t x2_start,
@@ -2365,10 +2365,10 @@ cdef class RussellRaoDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
     cdef inline DTYPE_t dist_csr(
         self,
-        const {{INPUT_DTYPE_t}}[:] x1_data,
-        const SPARSE_INDEX_TYPE_t* x1_indices,
-        const {{INPUT_DTYPE_t}}[:] x2_data,
-        const SPARSE_INDEX_TYPE_t* x2_indices,
+        const {{INPUT_DTYPE_t}}* x1_data,
+        const SPARSE_INDEX_TYPE_t[:] x1_indices,
+        const {{INPUT_DTYPE_t}}* x2_data,
+        const SPARSE_INDEX_TYPE_t[:] x2_indices,
         const SPARSE_INDEX_TYPE_t x1_start,
         const SPARSE_INDEX_TYPE_t x1_end,
         const SPARSE_INDEX_TYPE_t x2_start,
@@ -2435,10 +2435,10 @@ cdef class SokalMichenerDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
     cdef inline DTYPE_t dist_csr(
         self,
-        const {{INPUT_DTYPE_t}}[:] x1_data,
-        const SPARSE_INDEX_TYPE_t* x1_indices,
-        const {{INPUT_DTYPE_t}}[:] x2_data,
-        const SPARSE_INDEX_TYPE_t* x2_indices,
+        const {{INPUT_DTYPE_t}}* x1_data,
+        const SPARSE_INDEX_TYPE_t[:] x1_indices,
+        const {{INPUT_DTYPE_t}}* x2_data,
+        const SPARSE_INDEX_TYPE_t[:] x2_indices,
         const SPARSE_INDEX_TYPE_t x1_start,
         const SPARSE_INDEX_TYPE_t x1_end,
         const SPARSE_INDEX_TYPE_t x2_start,
@@ -2513,10 +2513,10 @@ cdef class SokalSneathDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
     cdef inline DTYPE_t dist_csr(
         self,
-        const {{INPUT_DTYPE_t}}[:] x1_data,
-        const SPARSE_INDEX_TYPE_t* x1_indices,
-        const {{INPUT_DTYPE_t}}[:] x2_data,
-        const SPARSE_INDEX_TYPE_t* x2_indices,
+        const {{INPUT_DTYPE_t}}* x1_data,
+        const SPARSE_INDEX_TYPE_t[:] x1_indices,
+        const {{INPUT_DTYPE_t}}* x2_data,
+        const SPARSE_INDEX_TYPE_t[:] x2_indices,
         const SPARSE_INDEX_TYPE_t x1_start,
         const SPARSE_INDEX_TYPE_t x1_end,
         const SPARSE_INDEX_TYPE_t x2_start,
@@ -2617,10 +2617,10 @@ cdef class HaversineDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
     cdef inline DTYPE_t dist_csr(
          self,
-         const {{INPUT_DTYPE_t}}[:] x1_data,
-         const SPARSE_INDEX_TYPE_t* x1_indices,
-         const {{INPUT_DTYPE_t}}[:] x2_data,
-         const SPARSE_INDEX_TYPE_t* x2_indices,
+         const {{INPUT_DTYPE_t}}* x1_data,
+         const SPARSE_INDEX_TYPE_t[:] x1_indices,
+         const {{INPUT_DTYPE_t}}* x2_data,
+         const SPARSE_INDEX_TYPE_t[:] x2_indices,
          const SPARSE_INDEX_TYPE_t x1_start,
          const SPARSE_INDEX_TYPE_t x1_end,
          const SPARSE_INDEX_TYPE_t x2_start,
@@ -2641,10 +2641,10 @@ cdef class HaversineDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
     cdef inline DTYPE_t rdist_csr(
         self,
-        const {{INPUT_DTYPE_t}}[:] x1_data,
-        const SPARSE_INDEX_TYPE_t* x1_indices,
-        const {{INPUT_DTYPE_t}}[:] x2_data,
-        const SPARSE_INDEX_TYPE_t* x2_indices,
+        const {{INPUT_DTYPE_t}}* x1_data,
+        const SPARSE_INDEX_TYPE_t[:] x1_indices,
+        const {{INPUT_DTYPE_t}}* x2_data,
+        const SPARSE_INDEX_TYPE_t[:] x2_indices,
         const SPARSE_INDEX_TYPE_t x1_start,
         const SPARSE_INDEX_TYPE_t x1_end,
         const SPARSE_INDEX_TYPE_t x2_start,
