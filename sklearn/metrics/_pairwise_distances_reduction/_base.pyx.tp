@@ -158,7 +158,18 @@ cdef class PairwiseDistancesReduction{{name_suffix}}:
         if strategy == 'auto':
             # This is a simple heuristic whose constant for the
             # comparison has been chosen based on experiments.
-            if 4 * self.chunk_size * self.effective_n_threads < self.n_samples_X:
+            # parallel_on_X has less synchronization overhead than
+            # parallel_on_Y and should therefore be used whenever
+            # n_samples_X is large enough to not starve any of the
+            # available hardware threads.
+            if self.n_samples_Y < self.n_samples_X:
+                # No point to even consider parallelizing on Y in this case. This
+                # is in particular important to do this on machines with a large
+                # number of hardware threads.
+                strategy = 'parallel_on_X'
+            elif 4 * self.chunk_size * self.effective_n_threads < self.n_samples_X:
+                # If Y is larger than X, but X is still large enough to allow for
+                # parallelism, we might still want to favor parallelizing on X. 
                 strategy = 'parallel_on_X'
             else:
                 strategy = 'parallel_on_Y'
