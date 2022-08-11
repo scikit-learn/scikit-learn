@@ -19,12 +19,86 @@ from ..utils.validation import _check_feature_names_in
 from ..utils.stats import _weighted_percentile
 
 from ._csr_polynomial_expansion import _csr_polynomial_expansion
-
+from ._csr_hstack import _csr_hstack as cython_csr_hstack
 
 __all__ = [
     "PolynomialFeatures",
     "SplineTransformer",
 ]
+
+
+def _csr_hstack(columns, dtype=np.float64):
+    """
+    Parameters
+    ----------
+    columns : list
+        List of `CSR` matrices to horizontally (column-wise) stack. All
+        matrices must have the same number of rows.
+
+    dtype : dtype, default=np.float64
+        The type of feature values. The output of the stackin operation is cast
+        to this type.
+
+    Returns
+    -------
+    X : CSR matrix of shape (`n_rows`, `n_features_out_`)
+        A CSR sparse matrix that is the result of horizontally (column-wise)
+        stacking the matrices contained in `columns`.
+    """
+    n_blocks = len(columns)
+    if n_blocks == 0:
+        raise ValueError("No matrices were provided to stack")
+    if n_blocks == 1:
+        return columns[0]
+    other_axis_dims = set(mat.shape[0] for mat in columns)
+    if len(other_axis_dims) > 1:
+        raise ValueError(f"Mismatching dimensions along axis {0}: {other_axis_dims}")
+    (constant_dim,) = other_axis_dims
+
+    # Do the stacking
+    indptr_list = [mat.indptr for mat in columns]
+    data_cat = np.concatenate([mat.data for mat in columns])
+
+    # Need to check if any indices/indptr, would be too large
+    # post-concatenation for np.int32. We must sum the dimensions
+    # along the axis we use to stack since even empty matrices will
+    # contribute to a large post-stack index value.
+    max_output_index = 0
+    max_indptr = 0
+    for mat in columns[:-1]:
+        max_output_index += mat.shape[1]
+        max_indptr = max(max_indptr, mat.indptr.max())
+    if columns[-1].indices.size > 0:
+        max_output_index += int(columns[-1].indices.max())
+        max_indptr = max(max_indptr, columns[-1].indptr.max())
+    max_int32 = np.iinfo(np.int32).max
+    needs_64bit = max(max_output_index, max_indptr) > max_int32
+    idx_dtype = np.int64 if needs_64bit else np.int32
+
+    stack_dim_cat = np.array([mat.shape[0] for mat in columns], dtype=idx_dtype)
+    if data_cat.size > 0:
+        indptr_cat = np.concatenate(indptr_list).astype(idx_dtype)
+        indices_cat = np.concatenate([mat.indices for mat in columns]).astype(idx_dtype)
+        indptr = np.empty(constant_dim + 1, dtype=idx_dtype)
+        indices = np.empty_like(indices_cat)
+        data = np.empty_like(data_cat)
+        cython_csr_hstack(
+            n_blocks,
+            constant_dim,
+            stack_dim_cat,
+            indptr_cat,
+            indices_cat,
+            data_cat,
+            indptr,
+            indices,
+            data,
+        )
+    else:
+        indptr = np.zeros(constant_dim + 1, dtype=idx_dtype)
+        indices = np.empty(0, dtype=idx_dtype)
+        data = np.empty(0, dtype=data_cat.dtype)
+    sum_dim = stack_dim_cat.sum()
+    return sparse.csr_matrix((data, indices, indptr), shape=(constant_dim, sum_dim))
 
 
 def _calc_expanded_dimensionality(d, interaction_only, degree):
@@ -472,7 +546,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                 else:
                     bias = sparse.csc_matrix(np.ones((X.shape[0], 1)))
                     columns.append(bias)
-            XP = sparse.hstack(columns, dtype=X.dtype).tocsc()
+            XP = _csr_hstack(columns, dtype=X.dtype).tocsc()
         else:
             # Do as if _min_degree = 0 and cut down array after the
             # computation, i.e. use _n_out_full instead of n_output_features_.
