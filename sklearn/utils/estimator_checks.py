@@ -757,6 +757,11 @@ def _set_checking_parameters(estimator):
     if name in CROSS_DECOMPOSITION:
         estimator.set_params(n_components=1)
 
+    # Default "auto" parameter can lead to different ordering of eigenvalues on
+    # windows: #24105
+    if name == "SpectralEmbedding":
+        estimator.set_params(eigen_tol=1e-5)
+
 
 class _NotAnArray:
     """An object that is convertible to an array.
