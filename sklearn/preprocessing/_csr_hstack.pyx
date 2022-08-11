@@ -18,14 +18,14 @@ ctypedef fused DATA_t:
 # Input IND type. In the Python layer this will be set to smallest type
 # necessary to maintain integrity, determined by the maximum value across
 # all input blocks.
-ctypedef fused IND_1_t:
+ctypedef fused IND_IN_t:
     cnp.int32_t
     cnp.int64_t
 
 # Output IND type. In the Python layer this will be set to smallest type
 # necessary to maintain integrity, determined by the maximum post-concatenation
 # index/indptr value.
-ctypedef fused IND_2_t:
+ctypedef fused IND_OUT_t:
     cnp.int32_t
     cnp.int64_t
 
@@ -34,28 +34,28 @@ cpdef void _csr_hstack(
     const Py_ssize_t n_blocks,      # Number of matrices to stack
     const Py_ssize_t n_rows,        # Number of rows (same across all matrices)
     const cnp.int32_t[:] n_cols,    # Number of columns (one per matrix)
-    IND_1_t[:] indptr_cat,          # Input concatenated array of indptrs
-    IND_1_t[:] indices_cat,         # Input concatenated array of indices
+    IND_IN_t[:] indptr_cat,         # Input concatenated array of indptrs
+    IND_IN_t[:] indices_cat,        # Input concatenated array of indices
     DATA_t[:] data_cat,             # Input concatenated array of data
-    IND_2_t[:] indptr,              # Output array to write indptr into
-    IND_2_t[:] indices,             # Output array to write indices into
+    IND_OUT_t[:] indptr,            # Output array to write indptr into
+    IND_OUT_t[:] indices,           # Output array to write indices into
     DATA_t[:] data,                 # Output array to write data into
     ) nogil:
 
     cdef:
         Py_ssize_t offset, row_start, row_end, row_sum, idx, jdx, kdx
-        IND_1_t* col_offset
-        IND_1_t** indptr_bound
-        IND_1_t** indices_bound
+        IND_IN_t* col_offset
+        IND_IN_t** indptr_bound
+        IND_IN_t** indices_bound
         DATA_t** data_bound
 
     # The bounds will store the locations/indices of the flat concatenated
     # arrays that correspond to each block. Need to dynamically allocate their
     # memory.
     with nogil:
-        col_offset = <IND_1_t*> malloc(n_blocks * sizeof(IND_1_t))
-        indptr_bound = <IND_1_t**> malloc(n_blocks * sizeof(IND_1_t*))
-        indices_bound = <IND_1_t**> malloc(n_blocks * sizeof(IND_1_t*))
+        col_offset = <IND_IN_t*> malloc(n_blocks * sizeof(IND_IN_t))
+        indptr_bound = <IND_IN_t**> malloc(n_blocks * sizeof(IND_IN_t*))
+        indices_bound = <IND_IN_t**> malloc(n_blocks * sizeof(IND_IN_t*))
         data_bound = <DATA_t**> malloc(n_blocks * sizeof(DATA_t*))
 
         # We set the initial pointers/values here and update iteratively
