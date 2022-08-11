@@ -1185,7 +1185,7 @@ Methods
 
             - Single 2d array of shape (`n_samples`, `n_labels`), with each
               'column' in the array corresponding to the individual binary
-              classification decisions. This is ambiguously identical to the
+              classification decisions. This is identical to the
               multiclass classification format, though its semantics differ: it
               should be interpreted, like in the binary case, by thresholding at
               0.
