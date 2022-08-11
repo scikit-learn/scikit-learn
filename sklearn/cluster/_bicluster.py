@@ -87,6 +87,16 @@ def _log_normalize(X):
 class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
     """Base class for spectral biclustering."""
 
+    _parameter_constraints = {
+        "n_clusters": [Interval(Integral, 0, None, closed="left"), tuple],
+        "svd_method": [StrOptions({"randomized", "arpack"})],
+        "n_svd_vecs": [Interval(Integral, 0, None, closed="left"),None],
+        "mini_batch": ["boolean"],
+        "init": [StrOptions({"k-means++", "random"}), np.ndarray],
+        "n_init": [Interval(Integral, 1, None, closed="left")],
+        "random_state": ["random_state"],
+    } 
+
     @abstractmethod
     def __init__(
         self,
@@ -106,16 +116,6 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
         self.n_init = n_init
         self.random_state = random_state
 
-    def _check_parameters(self, n_samples):
-        legal_svd_methods = ("randomized", "arpack")
-        if self.svd_method not in legal_svd_methods:
-            raise ValueError(
-                "Unknown SVD method: '{0}'. svd_method must be one of {1}.".format(
-                    self.svd_method, legal_svd_methods
-                )
-            )
-        check_scalar(self.n_init, "n_init", target_type=numbers.Integral, min_val=1)
-
     def fit(self, X, y=None):
         """Create a biclustering for X.
 
@@ -132,8 +132,8 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
         self : object
             SpectralBiclustering instance.
         """
+        self._validate_params()
         X = self._validate_data(X, accept_sparse="csr", dtype=np.float64)
-        self._check_parameters(X.shape[0])
         self._fit(X)
         return self
 
@@ -487,16 +487,10 @@ class SpectralBiclustering(BaseSpectral):
     """
 
     _parameter_constraints = {
-        "n_clusters": [Interval(Integral, 0, None, closed="left"), tuple],
+        **BaseSpectral._parameter_constraints,
         "method": [StrOptions({"bistochastic", "scale", "log"})],
         "n_components": [Interval(Integral, 1, None, closed="left")],
         "n_best": [Interval(Integral, 1, None, closed="left")],
-        "svd_method": [StrOptions({"randomized", "arpack"})],
-        "n_svd_vecs": [Interval(Integral, 0, None, closed="left")],
-        "mini_batch": ["boolean"],
-        "init": [StrOptions({"k-means++", "random"}), np.ndarray],
-        "n_init": [Interval(Integral, 1, None, closed="left")],
-        "random_state": ["random_state"],
     } 
 
     def __init__(
@@ -556,17 +550,13 @@ class SpectralBiclustering(BaseSpectral):
                     " And the values are should be in the"
                     " range: (1, n_samples)"
                 ) from e
-#remove existing validation pending final review 
-        # check_scalar(
-        #     self.n_components, "n_components", target_type=numbers.Integral, min_val=1
-        # )
-        # check_scalar(
-        #     self.n_best,
-        #     "n_best",
-        #     target_type=numbers.Integral,
-        #     min_val=1,
-        #     max_val=self.n_components,
-        # )
+        check_scalar(
+            self.n_best,
+            "n_best",
+            target_type=numbers.Integral,
+            min_val=1,
+            max_val=self.n_components,
+        )
 
     def _fit(self, X):
         self._validate_params()
