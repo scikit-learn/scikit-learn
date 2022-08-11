@@ -60,7 +60,7 @@ def _test_shape_indices(model):
         assert len(j_ind) == n
 
 
-def test_spectral_coclustering():
+def test_spectral_coclustering(global_random_seed):
     # Test Dhillon's Spectral CoClustering on a simple problem.
     param_grid = {
         "svd_method": ["randomized", "arpack"],
@@ -69,14 +69,15 @@ def test_spectral_coclustering():
         "init": ["k-means++"],
         "n_init": [10],
     }
-    random_state = 0
-    S, rows, cols = make_biclusters((30, 30), 3, noise=0.5, random_state=random_state)
+    S, rows, cols = make_biclusters(
+        (30, 30), 3, noise=0.1, random_state=global_random_seed
+    )
     S -= S.min()  # needs to be nonnegative before making it sparse
     S = np.where(S < 1, 0, S)  # threshold some values
     for mat in (S, csr_matrix(S)):
         for kwargs in ParameterGrid(param_grid):
             model = SpectralCoclustering(
-                n_clusters=3, random_state=random_state, **kwargs
+                n_clusters=3, random_state=global_random_seed, **kwargs
             )
             model.fit(mat)
 
@@ -88,9 +89,11 @@ def test_spectral_coclustering():
             _test_shape_indices(model)
 
 
-def test_spectral_biclustering():
+def test_spectral_biclustering(global_random_seed):
     # Test Kluger methods on a checkerboard dataset.
-    S, rows, cols = make_checkerboard((30, 30), 3, noise=0.5, random_state=0)
+    S, rows, cols = make_checkerboard(
+        (30, 30), 3, noise=0.5, random_state=global_random_seed
+    )
 
     non_default_params = {
         "method": ["scale", "log"],
@@ -107,7 +110,7 @@ def test_spectral_biclustering():
                     n_clusters=3,
                     n_init=3,
                     init="k-means++",
-                    random_state=0,
+                    random_state=global_random_seed,
                 )
                 model.set_params(**dict([(param_name, param_value)]))
 
@@ -145,8 +148,8 @@ def _do_bistochastic_test(scaled):
     assert_almost_equal(scaled.sum(axis=0).mean(), scaled.sum(axis=1).mean(), decimal=1)
 
 
-def test_scale_normalize():
-    generator = np.random.RandomState(0)
+def test_scale_normalize(global_random_seed):
+    generator = np.random.RandomState(global_random_seed)
     X = generator.rand(100, 100)
     for mat in (X, csr_matrix(X)):
         scaled, _, _ = _scale_normalize(mat)
@@ -155,8 +158,8 @@ def test_scale_normalize():
             assert issparse(scaled)
 
 
-def test_bistochastic_normalize():
-    generator = np.random.RandomState(0)
+def test_bistochastic_normalize(global_random_seed):
+    generator = np.random.RandomState(global_random_seed)
     X = generator.rand(100, 100)
     for mat in (X, csr_matrix(X)):
         scaled = _bistochastic_normalize(mat)
@@ -165,24 +168,24 @@ def test_bistochastic_normalize():
             assert issparse(scaled)
 
 
-def test_log_normalize():
+def test_log_normalize(global_random_seed):
     # adding any constant to a log-scaled matrix should make it
     # bistochastic
-    generator = np.random.RandomState(0)
+    generator = np.random.RandomState(global_random_seed)
     mat = generator.rand(100, 100)
     scaled = _log_normalize(mat) + 1
     _do_bistochastic_test(scaled)
 
 
-def test_fit_best_piecewise():
-    model = SpectralBiclustering(random_state=0)
+def test_fit_best_piecewise(global_random_seed):
+    model = SpectralBiclustering(random_state=global_random_seed)
     vectors = np.array([[0, 0, 0, 1, 1, 1], [2, 2, 2, 3, 3, 3], [0, 1, 2, 3, 4, 5]])
     best = model._fit_best_piecewise(vectors, n_best=2, n_clusters=2)
     assert_array_equal(best, vectors[:2])
 
 
-def test_project_and_cluster():
-    model = SpectralBiclustering(random_state=0)
+def test_project_and_cluster(global_random_seed):
+    model = SpectralBiclustering(random_state=global_random_seed)
     data = np.array([[1, 1, 1], [1, 1, 1], [3, 6, 3], [3, 6, 3]])
     vectors = np.array([[1, 0], [0, 1], [0, 0]])
     for mat in (data, csr_matrix(data)):
@@ -190,19 +193,27 @@ def test_project_and_cluster():
         assert_almost_equal(v_measure_score(labels, [0, 0, 1, 1]), 1.0)
 
 
-def test_perfect_checkerboard():
+def test_perfect_checkerboard(global_random_seed):
     # XXX Previously failed on build bot (not reproducible)
-    model = SpectralBiclustering(3, svd_method="arpack", random_state=0)
+    model = SpectralBiclustering(
+        3, svd_method="arpack", random_state=global_random_seed
+    )
 
-    S, rows, cols = make_checkerboard((30, 30), 3, noise=0, random_state=0)
+    S, rows, cols = make_checkerboard(
+        (30, 30), 3, noise=0, random_state=global_random_seed
+    )
     model.fit(S)
     assert consensus_score(model.biclusters_, (rows, cols)) == 1
 
-    S, rows, cols = make_checkerboard((40, 30), 3, noise=0, random_state=0)
+    S, rows, cols = make_checkerboard(
+        (40, 30), 3, noise=0, random_state=global_random_seed
+    )
     model.fit(S)
     assert consensus_score(model.biclusters_, (rows, cols)) == 1
 
-    S, rows, cols = make_checkerboard((30, 40), 3, noise=0, random_state=0)
+    S, rows, cols = make_checkerboard(
+        (30, 40), 3, noise=0, random_state=global_random_seed
+    )
     model.fit(S)
     assert consensus_score(model.biclusters_, (rows, cols)) == 1
 

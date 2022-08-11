@@ -54,7 +54,6 @@ def test_parameter_checking():
     # automatically tested in the common tests.
 
     A = np.ones((2, 2))
-    name = "spam"
 
     msg = "Invalid beta_loss parameter: solver 'cd' does not handle beta_loss = 1.0"
     with pytest.raises(ValueError, match=msg):

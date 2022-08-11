@@ -6,6 +6,7 @@
 import math
 import numpy as np
 from scipy.special import betaln, digamma, gammaln
+from numbers import Real
 
 from ._base import BaseMixture, _check_shape
 from ._gaussian_mixture import _check_precision_matrix
@@ -15,6 +16,7 @@ from ._gaussian_mixture import _compute_precision_cholesky
 from ._gaussian_mixture import _estimate_gaussian_parameters
 from ._gaussian_mixture import _estimate_log_gaussian_prob
 from ..utils import check_array
+from ..utils._param_validation import Interval, StrOptions
 
 
 def _log_dirichlet_norm(dirichlet_concentration):
@@ -133,12 +135,9 @@ class BayesianGaussianMixture(BaseMixture):
             `init_params` now accepts 'random_from_data' and 'k-means++' as
             initialization methods.
 
-    weight_concentration_prior_type : str, default='dirichlet_process'
+    weight_concentration_prior_type : {'dirichlet_process', 'dirichlet_distribution'}, \
+            default='dirichlet_process'
         String describing the type of the weight concentration prior.
-        Must be one of::
-
-            'dirichlet_process' (using the Stick-breaking representation),
-            'dirichlet_distribution' (can favor more uniform weights).
 
     weight_concentration_prior : float or None, default=None
         The dirichlet concentration of each component on the weight
@@ -343,6 +342,26 @@ class BayesianGaussianMixture(BaseMixture):
     array([0, 1])
     """
 
+    _parameter_constraints = {
+        **BaseMixture._parameter_constraints,
+        "covariance_type": [StrOptions({"spherical", "tied", "diag", "full"})],
+        "weight_concentration_prior_type": [
+            StrOptions({"dirichlet_process", "dirichlet_distribution"})
+        ],
+        "weight_concentration_prior": [
+            None,
+            Interval(Real, 0.0, None, closed="neither"),
+        ],
+        "mean_precision_prior": [None, Interval(Real, 0.0, None, closed="neither")],
+        "mean_prior": [None, "array-like"],
+        "degrees_of_freedom_prior": [None, Interval(Real, 0.0, None, closed="neither")],
+        "covariance_prior": [
+            None,
+            "array-like",
+            Interval(Real, 0.0, None, closed="neither"),
+        ],
+    }
+
     def __init__(
         self,
         *,
@@ -392,25 +411,6 @@ class BayesianGaussianMixture(BaseMixture):
         ----------
         X : array-like of shape (n_samples, n_features)
         """
-        if self.covariance_type not in ["spherical", "tied", "diag", "full"]:
-            raise ValueError(
-                "Invalid value for 'covariance_type': %s "
-                "'covariance_type' should be in "
-                "['spherical', 'tied', 'diag', 'full']"
-                % self.covariance_type
-            )
-
-        if self.weight_concentration_prior_type not in [
-            "dirichlet_process",
-            "dirichlet_distribution",
-        ]:
-            raise ValueError(
-                "Invalid value for 'weight_concentration_prior_type': %s "
-                "'weight_concentration_prior_type' should be in "
-                "['dirichlet_process', 'dirichlet_distribution']"
-                % self.weight_concentration_prior_type
-            )
-
         self._check_weights_parameters()
         self._check_means_parameters(X)
         self._check_precision_parameters(X)
@@ -420,14 +420,8 @@ class BayesianGaussianMixture(BaseMixture):
         """Check the parameter of the Dirichlet distribution."""
         if self.weight_concentration_prior is None:
             self.weight_concentration_prior_ = 1.0 / self.n_components
-        elif self.weight_concentration_prior > 0.0:
-            self.weight_concentration_prior_ = self.weight_concentration_prior
         else:
-            raise ValueError(
-                "The parameter 'weight_concentration_prior' "
-                "should be greater than 0., but got %.3f."
-                % self.weight_concentration_prior
-            )
+            self.weight_concentration_prior_ = self.weight_concentration_prior
 
     def _check_means_parameters(self, X):
         """Check the parameters of the Gaussian distribution.
@@ -440,14 +434,8 @@ class BayesianGaussianMixture(BaseMixture):
 
         if self.mean_precision_prior is None:
             self.mean_precision_prior_ = 1.0
-        elif self.mean_precision_prior > 0.0:
-            self.mean_precision_prior_ = self.mean_precision_prior
         else:
-            raise ValueError(
-                "The parameter 'mean_precision_prior' should be "
-                "greater than 0., but got %.3f."
-                % self.mean_precision_prior
-            )
+            self.mean_precision_prior_ = self.mean_precision_prior
 
         if self.mean_prior is None:
             self.mean_prior_ = X.mean(axis=0)
@@ -515,14 +503,8 @@ class BayesianGaussianMixture(BaseMixture):
             )
             _check_precision_positivity(self.covariance_prior_, self.covariance_type)
         # spherical case
-        elif self.covariance_prior > 0.0:
-            self.covariance_prior_ = self.covariance_prior
         else:
-            raise ValueError(
-                "The parameter 'spherical covariance_prior' "
-                "should be greater than 0., but got %.3f."
-                % self.covariance_prior
-            )
+            self.covariance_prior_ = self.covariance_prior
 
     def _initialize(self, X, resp):
         """Initialization of the mixture parameters.

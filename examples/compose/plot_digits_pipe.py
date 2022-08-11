@@ -37,7 +37,7 @@ logistic = LogisticRegression(max_iter=10000, tol=0.1)
 pipe = Pipeline(steps=[("scaler", scaler), ("pca", pca), ("logistic", logistic)])
 
 X_digits, y_digits = datasets.load_digits(return_X_y=True)
-# Parameters of pipelines can be set using ‘__’ separated parameter names:
+# Parameters of pipelines can be set using '__' separated parameter names:
 param_grid = {
     "pca__n_components": [5, 15, 30, 45, 60],
     "logistic__C": np.logspace(-4, 4, 4),
