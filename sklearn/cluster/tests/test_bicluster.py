@@ -207,19 +207,6 @@ def test_perfect_checkerboard():
     assert consensus_score(model.biclusters_, (rows, cols)) == 1
 
 
-@pytest.mark.parametrize(
-    "params, type_err, err_msg",
-    [
-        ({"n_init": 0}, ValueError, "n_init == 0, must be >= 1."),
-        ({"n_init": 1.5}, TypeError, "n_init must be an instance of"),
-        (
-            {"n_clusters": "abc"},
-            TypeError,
-            "n_clusters must be an instance of",
-        ),
-        ({"svd_method": "unknown"}, ValueError, "Unknown SVD method: 'unknown'"),
-    ],
-)
 def test_spectralcoclustering_parameter_validation(params, type_err, err_msg):
     """Check parameters validation in `SpectralBiClustering`"""
     data = np.arange(25).reshape((5, 5))
@@ -231,18 +218,6 @@ def test_spectralcoclustering_parameter_validation(params, type_err, err_msg):
 @pytest.mark.parametrize(
     "params, type_err, err_msg",
     [
-        ({"n_init": 0}, ValueError, "n_init == 0, must be >= 1."),
-        ({"n_init": 1.5}, TypeError, "n_init must be an instance of"),
-        (
-            {"n_clusters": (3, 3, 3)},
-            ValueError,
-            r"Incorrect parameter n_clusters has value: \(3, 3, 3\)",
-        ),
-        (
-            {"n_clusters": "abc"},
-            ValueError,
-            "Incorrect parameter n_clusters has value: abc",
-        ),
         (
             {"n_clusters": (3, "abc")},
             ValueError,
@@ -253,13 +228,7 @@ def test_spectralcoclustering_parameter_validation(params, type_err, err_msg):
             ValueError,
             r"Incorrect parameter n_clusters has value: \('abc', 3\)",
         ),
-        ({"method": "unknown"}, ValueError, "Unknown method: 'unknown'"),
-        ({"n_components": 0}, ValueError, "n_components == 0, must be >= 1."),
-        ({"n_components": 1.5}, TypeError, "n_components must be an instance of"),
         ({"n_components": 3, "n_best": 4}, ValueError, "n_best == 4, must be <= 3."),
-        ({"n_best": 0}, ValueError, "n_best == 0, must be >= 1."),
-        ({"n_best": 1.5}, TypeError, "n_best must be an instance of"),
-        ({"svd_method": "unknown"}, ValueError, "Unknown SVD method: 'unknown'"),
     ],
 )
 def test_spectralbiclustering_parameter_validation(params, type_err, err_msg):
