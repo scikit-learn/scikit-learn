@@ -101,9 +101,9 @@ cdef class DistanceMetric{{name_suffix}}:
 
     cdef DTYPE_t dist_csr(
         self,
-        const {{INPUT_DTYPE_t}}[:] x1_data,
+        const {{INPUT_DTYPE_t}}* x1_data,
         const SPARSE_INDEX_TYPE_t[:] x1_indices,
-        const {{INPUT_DTYPE_t}}[:] x2_data,
+        const {{INPUT_DTYPE_t}}* x2_data,
         const SPARSE_INDEX_TYPE_t[:] x2_indices,
         const SPARSE_INDEX_TYPE_t x1_start,
         const SPARSE_INDEX_TYPE_t x1_end,
@@ -114,9 +114,9 @@ cdef class DistanceMetric{{name_suffix}}:
 
     cdef DTYPE_t rdist_csr(
         self,
-        const {{INPUT_DTYPE_t}}[:] x1_data,
+        const {{INPUT_DTYPE_t}}* x1_data,
         const SPARSE_INDEX_TYPE_t[:] x1_indices,
-        const {{INPUT_DTYPE_t}}[:] x2_data,
+        const {{INPUT_DTYPE_t}}* x2_data,
         const SPARSE_INDEX_TYPE_t[:] x2_indices,
         const SPARSE_INDEX_TYPE_t x1_start,
         const SPARSE_INDEX_TYPE_t x1_end,
@@ -140,7 +140,7 @@ cdef class DistanceMetric{{name_suffix}}:
 
     cdef int pdist_csr(
         self,
-        const {{INPUT_DTYPE_t}}[:] x1_data,
+        const {{INPUT_DTYPE_t}}* x1_data,
         const SPARSE_INDEX_TYPE_t[:] x1_indices,
         const SPARSE_INDEX_TYPE_t[:] x1_indptr,
         const ITYPE_t size,
@@ -149,10 +149,10 @@ cdef class DistanceMetric{{name_suffix}}:
 
     cdef int cdist_csr(
         self,
-        const {{INPUT_DTYPE_t}}[:] x1_data,
+        const {{INPUT_DTYPE_t}}* x1_data,
         const SPARSE_INDEX_TYPE_t[:] x1_indices,
         const SPARSE_INDEX_TYPE_t[:] x1_indptr,
-        const {{INPUT_DTYPE_t}}[:] x2_data,
+        const {{INPUT_DTYPE_t}}* x2_data,
         const SPARSE_INDEX_TYPE_t[:] x2_indices,
         const SPARSE_INDEX_TYPE_t[:] x2_indptr,
         const ITYPE_t size,

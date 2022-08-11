@@ -230,9 +230,9 @@ cdef class SparseSparseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
     @final
     cdef DTYPE_t surrogate_dist(self, ITYPE_t i, ITYPE_t j) nogil:
         return self.distance_metric.rdist_csr(
-            x1_data=self.X_data,
+            x1_data=&self.X_data[0],
             x1_indices=self.X_indices,
-            x2_data=self.Y_data,
+            x2_data=&self.Y_data[0],
             x2_indices=self.Y_indices,
             x1_start=self.X_indptr[i],
             x1_end=self.X_indptr[i + 1],
@@ -244,9 +244,9 @@ cdef class SparseSparseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
     @final
     cdef DTYPE_t dist(self, ITYPE_t i, ITYPE_t j) nogil:
         return self.distance_metric.dist_csr(
-            x1_data=self.X_data,
+            x1_data=&self.X_data[0],
             x1_indices=self.X_indices,
-            x2_data=self.Y_data,
+            x2_data=&self.Y_data[0],
             x2_indices=self.Y_indices,
             x1_start=self.X_indptr[i],
             x1_end=self.X_indptr[i + 1],
@@ -278,15 +278,30 @@ cdef class SparseDenseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
 
         self.X_data, self.X_indices, self.X_indptr = self.unpack_csr_matrix(X)
 
+        # We support the sparse-dense case by using the sparse-sparse case to avoid
+        # introducing a new complex set of interfaces.
+        #
+        # To do so, we use an alternative CSR datastructure is used where:
+        #  - the `data` array is the original dense array, `Y`
+        #  - the `indices` array is a single row of n_features elements:
+        #
+        #                      [0, 1, ..., n_features-1]
+        #
+        #  - the `indptr` array is a single row of n_X + 1 elements:
+        #
+        #         [0, n_features, 2 * n_features, ..., n_features * n_X]
+        #
+        # If we were to use the natural CSR representation for the dense array,
+        # the indices would have required allocating an array of
+        # n_samples × n_features elements with repeated contiguous integers from
+        # 0 to n_features - 1, and this would have been very wasteful from a memory
+        # point of view. This alternative representation just uses the necessary
+        # amount of information needed and only necessitates shifting
+        # the address of `indices` before calling the CSR × CSR routines.
+
         # Y array already has been checked here
         self.n_Y = Y.shape[0]
         self.Y_data = np.ravel(Y)
-
-        # Since Y vectors are dense, we can use a single array
-        # of indices of self.n_features elements instead of
-        # a self.n_Y × self.n_features matrix.
-        # The implementations of DistanceMetric.{dist_csr,rdist_csr}
-        # support this representation.
         self.Y_indices = np.arange(self.n_features, dtype=SPARSE_INDEX_TYPE)
 
     @final
@@ -300,28 +315,33 @@ cdef class SparseDenseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
     @final
     cdef DTYPE_t surrogate_dist(self, ITYPE_t i, ITYPE_t j) nogil:
         return self.distance_metric.rdist_csr(
-            x1_data=self.X_data,
+            x1_data=&self.X_data[0],
             x1_indices=self.X_indices,
-            x2_data=self.Y_data,
+            # Increment the data pointer such that x2_start=0 is aligned with the
+            # j-th row
+            x2_data=&self.Y_data[0] + j * self.n_features,
             x2_indices=self.Y_indices,
             x1_start=self.X_indptr[i],
             x1_end=self.X_indptr[i + 1],
-            x2_start=j * self.n_features,
-            x2_end=(j + 1) * self.n_features,
+            x2_start=0,
+            x2_end=self.n_features,
             size=self.n_features,
         )
 
     @final
     cdef DTYPE_t dist(self, ITYPE_t i, ITYPE_t j) nogil:
+
         return self.distance_metric.dist_csr(
-            x1_data=self.X_data,
+            x1_data=&self.X_data[0],
             x1_indices=self.X_indices,
-            x2_data=self.Y_data,
+            # Increment the data pointer such that x2_start=0 is aligned with the
+            # j-th row
+            x2_data=&self.Y_data[0] + j * self.n_features,
             x2_indices=self.Y_indices,
             x1_start=self.X_indptr[i],
             x1_end=self.X_indptr[i + 1],
-            x2_start=j * self.n_features,
-            x2_end=(j + 1) * self.n_features,
+            x2_start=0,
+            x2_end=self.n_features,
             size=self.n_features,
         )
 
