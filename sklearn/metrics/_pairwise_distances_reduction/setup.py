@@ -23,6 +23,7 @@ def configuration(parent_package="", top_path=None):
         "sklearn/metrics/_pairwise_distances_reduction/_argkmin.pxd.tp",
         "sklearn/metrics/_pairwise_distances_reduction/_radius_neighborhood.pyx.tp",
         "sklearn/metrics/_pairwise_distances_reduction/_radius_neighborhood.pxd.tp",
+        "sklearn/metrics/_pairwise_distances_reduction/_argkminlabels.pyx.tp",
     ]
 
     gen_from_templates(templates)

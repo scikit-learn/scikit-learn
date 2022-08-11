@@ -14,7 +14,10 @@ from ._argkmin import (
     PairwiseDistancesArgKmin64,
     PairwiseDistancesArgKmin32,
 )
-from ._argkminlabels import PairwiseDistancesArgKminLabels64
+from ._argkminlabels import (
+    PairwiseDistancesArgKminLabels64,
+    PairwiseDistancesArgKminLabels32,
+)
 from ._radius_neighborhood import (
     PairwiseDistancesRadiusNeighborhood64,
     PairwiseDistancesRadiusNeighborhood32,
@@ -584,24 +587,38 @@ class PairwiseDistancesArgKminLabels(PairwiseDistancesReduction):
         # For future work, this might can be an entrypoint to specialise operations
         # for various backend and/or hardware and/or datatypes, and/or fused
         # {sparse, dense}-datasetspair etc.
-        if not (X.dtype == Y.dtype == np.float64):
-            raise ValueError(
-                "Only 64bit float datasets are supported at this time, "
-                f"got: X.dtype={X.dtype} and Y.dtype={Y.dtype}."
-            )
         if weights not in {"uniform", "distance"}:
             raise ValueError(
                 "Only the 'uniform' or 'distance' weights options are supported"
                 f" at this time. Got: {weights=}."
             )
-        return PairwiseDistancesArgKminLabels64.compute(
-            X=X,
-            Y=Y,
-            k=k,
-            weights=weights,
-            labels=labels,
-            metric=metric,
-            chunk_size=chunk_size,
-            metric_kwargs=metric_kwargs,
-            strategy=strategy,
+        if X.dtype == Y.dtype == np.float64:
+            return PairwiseDistancesArgKminLabels64.compute(
+                X=X,
+                Y=Y,
+                k=k,
+                weights=weights,
+                labels=labels,
+                metric=metric,
+                chunk_size=chunk_size,
+                metric_kwargs=metric_kwargs,
+                strategy=strategy,
+            )
+
+        if X.dtype == Y.dtype == np.float32:
+            return PairwiseDistancesArgKminLabels32.compute(
+                X=X,
+                Y=Y,
+                k=k,
+                weights=weights,
+                labels=labels,
+                metric=metric,
+                chunk_size=chunk_size,
+                metric_kwargs=metric_kwargs,
+                strategy=strategy,
+            )
+
+        raise ValueError(
+            "Only float64 or float32 datasets pairs are supported at this time, "
+            f"got: X.dtype={X.dtype} and Y.dtype={Y.dtype}."
         )
