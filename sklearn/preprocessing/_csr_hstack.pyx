@@ -1,5 +1,5 @@
 # distutils: language=c++
-# Based on `scipy.sparse.sparsetools.csr.h`
+# Based on `scipy.sparse.sparsetools.csr.h` under the BSD license.
 
 cimport cython
 from libc.stdlib cimport malloc, free
