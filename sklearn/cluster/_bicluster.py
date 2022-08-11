@@ -318,6 +318,10 @@ class SpectralCoclustering(BaseSpectral):
     SpectralCoclustering(n_clusters=2, random_state=0)
     """
 
+    _parameter_constraints = {
+        **BaseSpectral._parameter_constraints,
+    } 
+
     def __init__(
         self,
         n_clusters=3,
@@ -344,6 +348,7 @@ class SpectralCoclustering(BaseSpectral):
         )
 
     def _fit(self, X):
+        self._validate_params()
         normalized_data, row_diag, col_diag = _scale_normalize(X)
         n_sv = 1 + int(np.ceil(np.log2(self.n_clusters)))
         u, v = self._svd(normalized_data, n_sv, n_discard=1)
