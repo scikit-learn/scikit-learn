@@ -106,7 +106,7 @@ def _assert_all_finite(
     X = xp.asarray(X)
 
     # for object dtype data, we only check for NaNs (GH-13254)
-    if X.dtype == xp.dtype("object") and not allow_nan:
+    if X.dtype == np.dtype("object") and not allow_nan:
         if _object_dtype_isnan(X).any():
             raise ValueError("Input contains NaN")
 
@@ -119,7 +119,7 @@ def _assert_all_finite(
     # Cython implementation to prevent false positives and provide a detailed
     # error message.
     with np.errstate(over="ignore"):
-        first_pass_isfinite = xp.isfinite(np.sum(X))
+        first_pass_isfinite = xp.isfinite(xp.sum(X))
     if first_pass_isfinite:
         return
     # Cython implementation doesn't support FP16 or complex numbers
