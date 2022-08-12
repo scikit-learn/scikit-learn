@@ -33,7 +33,7 @@ which gives equal weight to the classification of each label.
 
 # %%
 # Load and prepare data
-# ---------------------
+# =====================
 #
 # We import the :ref:`iris_dataset` which contains 3 classes, each one
 # corresponding to a type of iris plant. One class is linearly separable from
@@ -59,7 +59,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5, random_
 
 # %%
 # Learn to predict each class against the other
-# ---------------------------------------------
+# =============================================
 
 from sklearn.svm import SVC
 from sklearn.metrics import roc_curve, auc
@@ -70,7 +70,63 @@ classifier = OneVsRestClassifier(
 )
 y_score = classifier.fit(X_train, y_train).decision_function(X_test)
 
-# Compute ROC curve and ROC area for each class
+
+# %%
+# Plot ROC curves
+# ===============
+#
+# For a specific class
+# --------------------
+
+import matplotlib.pyplot as plt
+from sklearn.metrics import RocCurveDisplay
+
+class_id = 2
+
+RocCurveDisplay.from_predictions(
+    y_test[:, class_id],
+    y_score[:, class_id],
+    name=f"ROC curve for {load_iris()['target_names'][class_id]}",
+    color="darkorange",
+)
+plt.plot([0, 1], [0, 1], color="navy", lw=2, linestyle="--")
+plt.title(f"Receiver operating characteristic for class label {class_id}")
+plt.show()
+
+# %%
+# ROC curve showing the "micro-average" of the 3 classes
+# ------------------------------------------------------
+
+RocCurveDisplay.from_predictions(
+    y_test.ravel(), y_score.ravel(), name="One-vs-Rest SVC", color="darkorange"
+)
+plt.plot([0, 1], [0, 1], color="navy", lw=2, linestyle="--")
+plt.title("Receiver operating characteristic with micro-average")
+plt.show()
+
+# %%
+# If we are not interested in the plot but only on the ROC-AUC itself, we can
+# reproduce the values of the plot using `roc_auc_score`. By default, the
+# computation of this score adds a single point at the maximal false positive
+# rate by using linear interpolation and [McClish
+# correction](https://pubmed.ncbi.nlm.nih.gov/2668680/).
+
+from sklearn.metrics import roc_auc_score
+
+y_prob = classifier.predict_proba(X_test)
+
+micro_roc_auc_ovr = roc_auc_score(y_test, y_prob, average="micro")
+weighted_roc_auc_ovr = roc_auc_score(
+    y_test, y_prob, multi_class="ovr", average="weighted"
+)
+
+print(
+    "One-vs-Rest ROC AUC scores:\n{:.6f} (micro),\n{:.6f} "
+    "(weighted by prevalence)".format(micro_roc_auc_ovr, weighted_roc_auc_ovr)
+)
+
+# %%
+# This is equivalent to computing the ROC curve and ROC area for each class
 fpr = dict()
 tpr = dict()
 roc_auc = dict()
@@ -81,59 +137,6 @@ for i in range(n_classes):
 # Compute micro-average ROC curve and ROC area
 fpr["micro"], tpr["micro"], _ = roc_curve(y_test.ravel(), y_score.ravel())
 roc_auc["micro"] = auc(fpr["micro"], tpr["micro"])
-
-
-# %%
-# Plot of a ROC curve for a specific class
-# ----------------------------------------
-
-import matplotlib.pyplot as plt
-
-plt.figure()
-lw = 2
-plt.plot(
-    fpr[2],
-    tpr[2],
-    color="darkorange",
-    lw=lw,
-    label="ROC curve (area = %0.2f)" % roc_auc[2],
-)
-plt.plot([0, 1], [0, 1], color="navy", lw=lw, linestyle="--")
-plt.xlim([0.0, 1.0])
-plt.ylim([0.0, 1.05])
-plt.xlabel("False Positive Rate")
-plt.ylabel("True Positive Rate")
-plt.title("Receiver operating characteristic for class label 2")
-plt.legend(loc="lower right")
-plt.show()
-
-# %%
-from sklearn.metrics import RocCurveDisplay
-
-RocCurveDisplay.from_predictions(
-    y_test.ravel(), y_score.ravel(), name="One-vs-Rest SVC", color="darkorange"
-)
-plt.plot([0, 1], [0, 1], color="navy", lw=lw, linestyle="--")
-plt.title("Receiver operating characteristic with micro-average")
-plt.show()
-
-# %%
-# Add a single point at max_fpr by linear interpolation and McClish correction:
-# standardize result to be 0.5 if non-discriminant and 1 if maximal
-
-from sklearn.metrics import roc_auc_score
-
-y_prob = classifier.predict_proba(X_test)
-
-micro_roc_auc_ovr = roc_auc_score(y_test, y_prob, multi_class="ovr", average="micro")
-weighted_roc_auc_ovr = roc_auc_score(
-    y_test, y_prob, multi_class="ovr", average="weighted"
-)
-
-print(
-    "One-vs-Rest ROC AUC scores:\n{:.6f} (micro),\n{:.6f} "
-    "(weighted by prevalence)".format(micro_roc_auc_ovr, weighted_roc_auc_ovr)
-)
 
 # %%
 # Plot ROC curves for the multiclass problem
@@ -187,11 +190,11 @@ for i, color in zip(range(n_classes), colors):
         fpr[i],
         tpr[i],
         color=color,
-        lw=lw,
+        lw=2,
         label="ROC curve of class {0} (area = {1:0.2f})".format(i, roc_auc[i]),
     )
 
-plt.plot([0, 1], [0, 1], "k--", lw=lw)
+plt.plot([0, 1], [0, 1], "k--", lw=2)
 plt.xlim([0.0, 1.0])
 plt.ylim([0.0, 1.05])
 plt.xlabel("False Positive Rate")
