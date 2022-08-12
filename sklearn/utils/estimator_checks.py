@@ -3272,7 +3272,7 @@ def _enforce_estimator_tags_x(estimator, X):
     # Estimators with a `requires_positive_X` tag only accept
     # strictly positive data
     if _safe_tags(estimator, key="requires_positive_X"):
-        X -= X.min()
+        X += 1 + abs(X.min())
     if "categorical" in _safe_tags(estimator, key="X_types"):
         X = (X - X.min()).astype(np.int32)
     return X
