@@ -17,7 +17,7 @@ from ..base import is_classifier, is_regressor
 from ..exceptions import NotFittedError
 from ..utils._estimator_html_repr import _VisualBlock
 
-from ._base import _fit_single_estimator
+from ._base import _fit_single_estimator, _update_estimator_class_label
 from ._base import _BaseHeterogeneousEnsemble
 
 from ..linear_model import LogisticRegression
@@ -86,6 +86,14 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
     def _clone_final_estimator(self, default):
         if self.final_estimator is not None:
             self.final_estimator_ = clone(self.final_estimator)
+
+            # correctly handle class weight in final estimator
+            label_mapping = {
+                c: i for i, c in enumerate(getattr(self, "classes_", dict()))
+            }
+            self.final_estimator_ = _update_estimator_class_label(
+                self.final_estimator_, label_mapping
+            )
         else:
             self.final_estimator_ = clone(default)
 

@@ -107,7 +107,9 @@ def _parallel_build_estimators(
             )
 
         random_state = seeds[i]
-        estimator = ensemble._make_estimator(append=False, random_state=random_state)
+        estimator = ensemble._make_estimator(
+            append=False, random_state=random_state, encode_class_weight=True
+        )
 
         if has_check_input:
             estimator_fit = partial(estimator.fit, check_input=check_input)

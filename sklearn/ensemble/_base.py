@@ -5,7 +5,7 @@
 
 from abc import ABCMeta, abstractmethod
 import numbers
-from typing import List
+from typing import List, Mapping
 
 import numpy as np
 
@@ -45,6 +45,21 @@ def _fit_single_estimator(
     else:
         with _print_elapsed_time(message_clsname, message):
             estimator.fit(X, y)
+    return estimator
+
+
+def _update_estimator_class_label(estimator, label_mapping):
+    """Update the keys for parameter `class_weight` recursively within an estimator"""
+    already_clone = False
+
+    for k, v in estimator.get_params(deep=True).items():
+        if not k.endswith("class_weight") or not isinstance(v, Mapping):
+            continue
+
+        if not already_clone:
+            estimator, already_clone = clone(estimator), True
+        updated_class_weight = {label_mapping.get(i, i): w for i, w in v.items()}
+        estimator.set_params(**{k: updated_class_weight})
     return estimator
 
 
@@ -154,7 +169,9 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         if self.base_estimator_ is None:
             raise ValueError("base_estimator cannot be None")
 
-    def _make_estimator(self, append=True, random_state=None):
+    def _make_estimator(
+        self, append=True, random_state=None, encode_class_weight=False
+    ):
         """Make and configure a copy of the `base_estimator_` attribute.
 
         Warning: This method should be used to properly instantiate new
@@ -162,6 +179,13 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         """
         estimator = clone(self.base_estimator_)
         estimator.set_params(**{p: getattr(self, p) for p in self.estimator_params})
+
+        if encode_class_weight:
+            # correctly handle class weight in sub-estimators
+            label_mapping = {
+                c: i for i, c in enumerate(getattr(self, "classes_", dict()))
+            }
+            estimator = _update_estimator_class_label(estimator, label_mapping)
 
         # TODO: Remove in v1.2
         # criterion "mse" and "mae" would cause warnings in every call to
@@ -272,13 +296,23 @@ class _BaseHeterogeneousEnsemble(
 
         is_estimator_type = is_classifier if is_classifier(self) else is_regressor
 
-        for est in estimators:
-            if est != "drop" and not is_estimator_type(est):
+        # mapping from original labels to encoded ones
+        # which is stored as `classes_` attribute in subclasses
+        label_mapping = {c: i for i, c in enumerate(getattr(self, "classes_", dict()))}
+
+        estimators = list(estimators)
+        for i, est in enumerate(estimators):
+            if est == "drop":
+                continue
+
+            if not is_estimator_type(est):
                 raise ValueError(
                     "The estimator {} should be a {}.".format(
                         est.__class__.__name__, is_estimator_type.__name__[3:]
                     )
                 )
+
+            estimators[i] = _update_estimator_class_label(est, label_mapping)
 
         return names, estimators
 
