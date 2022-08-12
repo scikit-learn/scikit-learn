@@ -109,6 +109,7 @@ def fixed_classes_uniform_labelings_scores(
 # `n_clusters_range`.
 
 import matplotlib.pyplot as plt
+import matplotlib.style as style
 
 n_samples = 1000
 n_classes = 10
@@ -116,16 +117,22 @@ n_clusters_range = np.linspace(2, 100, 10).astype(int)
 plots = []
 names = []
 
+style.use("seaborn-colorblind")
 plt.figure(1)
 
-for score_name, score_func in score_funcs:
+for marker, (score_name, score_func) in zip("x^vd*s,.", score_funcs):
 
     scores = fixed_classes_uniform_labelings_scores(
         score_func, n_samples, n_clusters_range, n_classes=n_classes
     )
     plots.append(
         plt.errorbar(
-            n_clusters_range, scores.mean(axis=1), scores.std(axis=1), alpha=0.8
+            n_clusters_range,
+            scores.mean(axis=1),
+            scores.std(axis=1),
+            alpha=0.8,
+            linewidth=1,
+            marker=marker,
         )[0]
     )
     names.append(score_name)
@@ -180,12 +187,18 @@ plt.figure(2)
 
 plots = []
 names = []
-for score_name, score_func in score_funcs:
+
+for marker, (score_name, score_func) in zip("x^vd*s,.", score_funcs):
 
     scores = uniform_labelings_scores(score_func, n_samples, n_clusters_range)
     plots.append(
         plt.errorbar(
-            n_clusters_range, np.median(scores, axis=1), scores.std(axis=1), alpha=0.8
+            n_clusters_range,
+            np.median(scores, axis=1),
+            scores.std(axis=1),
+            alpha=0.8,
+            linewidth=2,
+            marker=marker,
         )[0]
     )
     names.append(score_name)
