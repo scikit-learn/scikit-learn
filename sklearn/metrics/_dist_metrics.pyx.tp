@@ -42,17 +42,12 @@ cdef extern from "arrayobject.h":
                                      int typenum, void* data)
 
 
-# ddot from CBLAS (cf sklearn/linear_model/cd_fast.pyx:102-117)
-cdef extern from "cblas.h":
-    double ddot "cblas_ddot"(int N, double *X, int incX, double *Y, int incY
-                             ) nogil
-
-
 from libc.math cimport fabs, sqrt, exp, pow, cos, sin, asin, acos, M_PI
 
 from scipy.sparse import csr_matrix, issparse
 from ..utils._typedefs cimport DTYPE_t, ITYPE_t, DTYPECODE
 from ..utils._typedefs import DTYPE, ITYPE
+from ..utils._cython_blas cimport _dot
 from ..utils._readonly_array_wrapper import ReadonlyArrayWrapper
 from ..utils import check_array
 
@@ -2807,9 +2802,9 @@ cdef class ArccosDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
         const {{INPUT_DTYPE_t}}* x2,
         ITYPE_t size
     ) nogil except -1:
-        cdef DTYPE_t d = ddot(size, x1, 1, x2, 1)
-        cdef DTYPE_t norm1 = ddot(size, x1, 1, x1, 1)
-        cdef DTYPE_t norm2 = ddot(size, x2, 1, x2, 1)
+        cdef DTYPE_t d = _dot(size, x1, 1, x2, 1)
+        cdef DTYPE_t norm1 = _dot(size, x1, 1, x1, 1)
+        cdef DTYPE_t norm2 = _dot(size, x2, 1, x2, 1)
         return d / sqrt(norm1 * norm2)
 
     cdef inline {{INPUT_DTYPE_t}} rdist(
