@@ -1,13 +1,12 @@
 from time import time
 from collections import namedtuple
-import warnings
 
 from scipy import stats
 import numpy as np
 
 from ..base import clone
-from ..exceptions import ConvergenceWarning
 from ..preprocessing import normalize
+from ..model_selection import cross_validate
 from ..utils import check_array, check_random_state, _safe_indexing, is_scalar_nan
 from ..utils.validation import FLOAT_DTYPES, check_is_fitted
 from ..utils.validation import _check_feature_names_in
@@ -241,7 +240,8 @@ class IterativeImputer(_BaseImputer):
         missing_values=np.nan,
         sample_posterior=False,
         max_iter=10,
-        tol=1e-3,
+        max_overfit_round_tolerance=5,
+        n_splits=3,
         n_nearest_features=None,
         initial_strategy="mean",
         imputation_order="ascending",
@@ -257,7 +257,8 @@ class IterativeImputer(_BaseImputer):
         self.estimator = estimator
         self.sample_posterior = sample_posterior
         self.max_iter = max_iter
-        self.tol = tol
+        self.max_overfit_round_tolerance = max_overfit_round_tolerance
+        self.n_splits = n_splits
         self.n_nearest_features = n_nearest_features
         self.initial_strategy = initial_strategy
         self.imputation_order = imputation_order
@@ -323,21 +324,34 @@ class IterativeImputer(_BaseImputer):
 
         if estimator is None:
             estimator = clone(self._estimator)
-
+        control_score = 0.0
         missing_row_mask = mask_missing_values[:, feat_idx]
         if fit_mode:
             X_train = _safe_indexing(X_filled[:, neighbor_feat_idx], ~missing_row_mask)
             y_train = _safe_indexing(X_filled[:, feat_idx], ~missing_row_mask)
-            estimator.fit(X_train, y_train)
+            data = cross_validate(
+                estimator,
+                X_train,
+                y_train,
+                cv=self.n_splits,
+                scoring="neg_mean_absolute_percentage_error",
+                return_train_score=False,
+                return_estimator=True,
+            )
+
+            control_score = -1.0 * np.mean(data["test_score"])
+            estimator = data["estimator"]
 
         # if no missing values, don't predict
         if np.sum(missing_row_mask) == 0:
-            return X_filled, estimator
+            return X_filled, estimator, control_score
 
         # get posterior samples if there is at least one missing value
         X_test = _safe_indexing(X_filled[:, neighbor_feat_idx], missing_row_mask)
         if self.sample_posterior:
-            mus, sigmas = estimator.predict(X_test, return_std=True)
+            mus, sigmas = np.mean(
+                [est.predict(X_test, return_std=True) for est in estimator], axis=0
+            )
             imputed_values = np.zeros(mus.shape, dtype=X_filled.dtype)
             # two types of problems: (1) non-positive sigmas
             # (2) mus outside legal range of min_value and max_value
@@ -360,14 +374,14 @@ class IterativeImputer(_BaseImputer):
                 random_state=self.random_state_
             )
         else:
-            imputed_values = estimator.predict(X_test)
+            imputed_values = np.mean([est.predict(X_test) for est in estimator], axis=0)
             imputed_values = np.clip(
                 imputed_values, self._min_value[feat_idx], self._max_value[feat_idx]
             )
 
         # update the feature
         X_filled[missing_row_mask, feat_idx] = imputed_values
-        return X_filled, estimator
+        return X_filled, estimator, control_score
 
     def _get_neighbor_feat_idx(self, n_features, feat_idx, abs_corr_mat):
         """Get a list of other features to predict `feat_idx`.
@@ -613,9 +627,10 @@ class IterativeImputer(_BaseImputer):
                 )
             )
 
-        if self.tol < 0:
+        if self.max_overfit_round_tolerance < 0:
             raise ValueError(
-                "'tol' should be a non-negative float. Got {} instead.".format(self.tol)
+                "'max_overfit_round_tolerance' should be an integer smaller than"
+                " max_iter. Got {} instead.".format(self.max_overfit_round_tolerance)
             )
 
         if self.estimator is None:
@@ -664,10 +679,12 @@ class IterativeImputer(_BaseImputer):
         if self.verbose > 0:
             print("[IterativeImputer] Completing matrix with shape %s" % (X.shape,))
         start_t = time()
-        if not self.sample_posterior:
-            Xt_previous = Xt.copy()
-            normalized_tol = self.tol * np.max(np.abs(X[~mask_missing_values]))
+        scores = {}
+        overfit_counter = 0
+        min_round_error = np.inf
         for self.n_iter_ in range(1, self.max_iter + 1):
+            scores[self.n_iter_] = 0
+            current_sequence = []
             if self.imputation_order == "random":
                 ordered_idx = self._get_ordered_idx(mask_missing_values)
 
@@ -675,7 +692,7 @@ class IterativeImputer(_BaseImputer):
                 neighbor_feat_idx = self._get_neighbor_feat_idx(
                     n_features, feat_idx, abs_corr_mat
                 )
-                Xt, estimator = self._impute_one_feature(
+                Xt, estimator, score = self._impute_one_feature(
                     Xt,
                     mask_missing_values,
                     feat_idx,
@@ -683,37 +700,50 @@ class IterativeImputer(_BaseImputer):
                     estimator=None,
                     fit_mode=True,
                 )
+                scores[self.n_iter_] += score
                 estimator_triplet = _ImputerTriplet(
                     feat_idx, neighbor_feat_idx, estimator
                 )
-                self.imputation_sequence_.append(estimator_triplet)
+                current_sequence.append(estimator_triplet)
+            latest_score = scores.get(self.n_iter_, 0.0)
 
-            if self.verbose > 1:
-                print(
-                    "[IterativeImputer] Ending imputation round "
-                    "%d/%d, elapsed time %0.2f"
-                    % (self.n_iter_, self.max_iter, time() - start_t)
-                )
+            if overfit_counter < self.max_overfit_round_tolerance:
+                if latest_score < min_round_error:
+                    min_round_error = latest_score
+                    self.imputation_sequence_.extend(current_sequence)
+                    overfit_counter = 0
+                else:
+                    overfit_counter += 1
 
-            if not self.sample_posterior:
-                inf_norm = np.linalg.norm(Xt - Xt_previous, ord=np.inf, axis=None)
-                if self.verbose > 0:
+                if self.verbose > 1:
                     print(
-                        "[IterativeImputer] Change: {}, scaled tolerance: {} ".format(
-                            inf_norm, normalized_tol
-                        )
+                        "[IterativeImputer] Ending imputation round "
+                        "%d/%d, elapsed time %0.2f"
+                        % (self.n_iter_, self.max_iter, time() - start_t)
                     )
-                if inf_norm < normalized_tol:
+
+                if not self.sample_posterior:
+
                     if self.verbose > 0:
-                        print("[IterativeImputer] Early stopping criterion reached.")
-                    break
-                Xt_previous = Xt.copy()
+                        prev_score = scores.get(self.n_iter_ - 1, 0.0)
+                        print(
+                            "[IterativeImputer] Change: {}, current_error: {} ".format(
+                                latest_score - prev_score, latest_score
+                            )
+                        )
+
+            else:
+                if self.verbose > 0:
+                    print("[IterativeImputer] Max overfitted rounds reached.")
+                break
         else:
             if not self.sample_posterior:
-                warnings.warn(
-                    "[IterativeImputer] Early stopping criterion not reached.",
-                    ConvergenceWarning,
-                )
+                if self.verbose > 0:
+                    print(
+                        "[IterativeImputer] Imputed for Max rounds no overfitting"
+                        " criteria."
+                    )
+
         Xt[~mask_missing_values] = X[~mask_missing_values]
         return super()._concatenate_indicator(Xt, X_indicator)
 
@@ -748,7 +778,7 @@ class IterativeImputer(_BaseImputer):
             print("[IterativeImputer] Completing matrix with shape %s" % (X.shape,))
         start_t = time()
         for it, estimator_triplet in enumerate(self.imputation_sequence_):
-            Xt, _ = self._impute_one_feature(
+            Xt, _, _ = self._impute_one_feature(
                 Xt,
                 mask_missing_values,
                 estimator_triplet.feat_idx,
