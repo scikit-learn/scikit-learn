@@ -7,7 +7,20 @@
 Version 1.1.2
 =============
 
-**In Development**
+**August 2022**
+
+Changed models
+--------------
+
+The following estimators and functions, when fit with the same data and
+parameters, may produce different models from the previous version. This often
+occurs due to changes in the modelling logic (bug fixes or enhancements), or in
+random sampling procedures.
+
+- |Fix| :class:`manifold.TSNE` now throws a `ValueError` when fit with
+  `perplexity>=n_samples` to ensure mathematical correctness of the algorithm.
+  :pr:`10805` by :user:`Mathias Andersen <MrMathias>` and
+  :pr:`23471` by :user:`Meekail Zain <micky774>`.
 
 Changelog
 ---------
@@ -19,8 +32,11 @@ Changelog
   have been changed in 1.1.
   :pr:`23990` by :user:`Julien Jerphanion <jjerphan>`.
 
+- |Fix| Wheels are now available for MacOS 10.9 and greater. :pr:`23833` by
+  `Thomas Fan`_.
+
 :mod:`sklearn.base`
-......................
+...................
 
 - |Fix| The `get_params` method of the :class:`BaseEstimator` class now supports
   estimators with `type`-type params that have the `get_params` method.
@@ -32,6 +48,59 @@ Changelog
 - |Fix| Fixed a bug in :class:`cluster.Birch` that could trigger an error when splitting
   a node if there are duplicates in the dataset.
   :pr:`23395` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+:mod:`sklearn.feature_selection`
+................................
+
+- |Fix| :class:`feature_selection.SelectFromModel` defaults to selection
+  threshold 1e-5 when the estimator is either :class:`linear_model.ElasticNet`
+  or :class:`linear_model.ElasticNetCV` with `l1_ratio` equals 1 or
+  :class:`linear_model.LassoCV`.
+  :pr:`23636` by :user:`Hao Chun Chang <haochunchang>`.
+
+:mod:`sklearn.impute`
+.....................
+
+- |Fix| :class:`impute.SimpleImputer` uses the dtype seen in `fit` for
+  `transform` when the dtype is object. :pr:`22063` by `Thomas Fan`_.
+
+:mod:`sklearn.linear_model`
+...........................
+
+- |Fix| Use dtype-aware tolerances for the validation of gram matrices (passed by users
+  or precomputed). :pr:`22059` by :user:`Malte S. Kurz <MalteKurz>`.
+
+- |Fix| Fixed an error in :class:`linear_model.LogisticRegression` with
+  `solver="newton-cg"`, `fit_intercept=True`, and a single feature. :pr:`23608`
+  by `Tom Dupre la Tour`_.
+
+:mod:`sklearn.manifold`
+.......................
+
+- |Fix| :class:`manifold.TSNE` now throws a `ValueError` when fit with
+  `perplexity>=n_samples` to ensure mathematical correctness of the algorithm.
+  :pr:`10805` by :user:`Mathias Andersen <MrMathias>` and
+  :pr:`23471` by :user:`Meekail Zain <micky774>`.
+
+:mod:`sklearn.metrics`
+......................
+
+- |Fix| Fixed error message of :class:`metrics.coverage_error` for 1D array input.
+  :pr:`23548` by :user:`Hao Chun Chang <haochunchang>`.
+
+:mod:`sklearn.preprocessing`
+............................
+
+- |Fix| :meth:`preprocessing.OrdinalEncoder.inverse_transform` correctly handles
+  use cases where `unknown_value` or `encoded_missing_value` is `nan`. :pr:`24087`
+  by `Thomas Fan`_.
+
+:mod:`sklearn.tree`
+...................
+
+- |Fix| Fixed invalid memory access bug during fit in
+  :class:`tree.DecisionTreeRegressor` and :class:`tree.DecisionTreeClassifier`.
+  :pr:`23273` by `Thomas Fan`_.
 
 .. _changes_1_1_1:
 
@@ -227,7 +296,11 @@ Changelog
 
   For instance :class:`sklearn.neighbors.NearestNeighbors.kneighbors` and
   :class:`sklearn.neighbors.NearestNeighbors.radius_neighbors`
-  can respectively be up to ×20 and ×5 faster than previously.
+  can respectively be up to ×20 and ×5 faster than previously on a laptop.
+
+  Moreover, implementations of those two algorithms are now suitable
+  for machine with many cores, making them usable for datasets consisting
+  of millions of samples.
 
   :pr:`21987`, :pr:`22064`, :pr:`22065`, :pr:`22288` and :pr:`22320`
   by :user:`Julien Jerphanion <jjerphan>`.

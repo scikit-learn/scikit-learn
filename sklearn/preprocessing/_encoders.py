@@ -1371,19 +1371,23 @@ class OrdinalEncoder(_OneToOneFeatureMixin, _BaseEncoder):
         found_unknown = {}
 
         for i in range(n_features):
-            labels = X[:, i].astype("int64", copy=False)
+            labels = X[:, i]
 
             # replace values of X[:, i] that were nan with actual indices
             if i in self._missing_indices:
-                X_i_mask = _get_mask(X[:, i], self.encoded_missing_value)
+                X_i_mask = _get_mask(labels, self.encoded_missing_value)
                 labels[X_i_mask] = self._missing_indices[i]
 
             if self.handle_unknown == "use_encoded_value":
-                unknown_labels = labels == self.unknown_value
-                X_tr[:, i] = self.categories_[i][np.where(unknown_labels, 0, labels)]
+                unknown_labels = _get_mask(labels, self.unknown_value)
+
+                known_labels = ~unknown_labels
+                X_tr[known_labels, i] = self.categories_[i][
+                    labels[known_labels].astype("int64", copy=False)
+                ]
                 found_unknown[i] = unknown_labels
             else:
-                X_tr[:, i] = self.categories_[i][labels]
+                X_tr[:, i] = self.categories_[i][labels.astype("int64", copy=False)]
 
         # insert None values for unknown values
         if found_unknown:

@@ -278,7 +278,7 @@ def fetch_lfw_people(
     slice_ : tuple of slice, default=(slice(70, 195), slice(78, 172))
         Provide a custom 2D slice (height, width) to extract the
         'interesting' part of the jpeg files and avoid use statistical
-        correlation from the background
+        correlation from the background.
 
     download_if_missing : bool, default=True
         If False, raise a IOError if the data is not locally available
@@ -315,6 +315,10 @@ def fetch_lfw_people(
             Description of the Labeled Faces in the Wild (LFW) dataset.
 
     (data, target) : tuple if ``return_X_y`` is True
+        A tuple of two ndarray. The first containing a 2D array of
+        shape (n_samples, n_features) with each row representing one
+        sample and each column representing the features. The second
+        ndarray of shape (n_samples,) containing the target samples.
 
         .. versionadded:: 0.20
     """

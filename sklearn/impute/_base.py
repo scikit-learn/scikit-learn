@@ -9,10 +9,10 @@ from collections import Counter
 import numpy as np
 import numpy.ma as ma
 from scipy import sparse as sp
-from scipy import stats
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils._param_validation import StrOptions
+from ..utils.fixes import _mode
 from ..utils.sparsefuncs import _get_median
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
@@ -52,7 +52,7 @@ def _most_frequent(array, extra_value, n_repeat):
                 if count == most_frequent_count
             )
         else:
-            mode = stats.mode(array)
+            mode = _mode(array)
             most_frequent_value = mode[0][0]
             most_frequent_count = mode[1][0]
     else:
