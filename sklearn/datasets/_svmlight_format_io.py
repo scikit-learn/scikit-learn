@@ -53,7 +53,7 @@ def load_svmlight_file(
     offset=0,
     length=-1,
 ):
-    """Load datasets in the svmlight / libsvm format into sparse CSR matrix
+    """Load datasets in the svmlight / libsvm format into sparse CSR matrix.
 
     This format is a text-based format, with one sample per line. It does
     not store zero valued features hence is suitable for sparse dataset.
@@ -106,7 +106,7 @@ def load_svmlight_file(
 
     multilabel : bool, default=False
         Samples may have several labels each (see
-        https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multilabel.html)
+        https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multilabel.html).
 
     zero_based : bool or "auto", default="auto"
         Whether column indices in f are zero-based (True) or one-based
@@ -135,12 +135,14 @@ def load_svmlight_file(
     Returns
     -------
     X : scipy.sparse matrix of shape (n_samples, n_features)
+        The data matrix.
 
-    y : ndarray of shape (n_samples,), or, in the multilabel a list of
-        tuples of length n_samples.
+    y : ndarray of shape (n_samples,), or a list of tuples of length n_samples
+        The target. It is a list of tuples when ``multilabel=True``, else a
+        ndarray.
 
     query_id : array of shape (n_samples,)
-       query_id for each sample. Only returned when query_id is set to
+       The query_id for each sample. Only returned when query_id is set to
        True.
 
     See Also
