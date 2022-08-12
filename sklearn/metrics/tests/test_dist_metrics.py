@@ -358,7 +358,7 @@ def test_arccos_metric():
         for j, x2 in enumerate(a):
             c[i, j] = arccos_slow(x1, x2)
 
-    assert_array_almost_equal(b, c)
+    assert_allclose(b, c)
 
 
 def test_pyfunc_metric():

@@ -2803,19 +2803,19 @@ cdef class HaversineDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 cdef class ArccosDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     cdef inline {{INPUT_DTYPE_t}} cosine_similarity(
         self,
-        {{INPUT_DTYPE_t}}* x1,
-        {{INPUT_DTYPE_t}}* x2,
+        const {{INPUT_DTYPE_t}}* x1,
+        const {{INPUT_DTYPE_t}}* x2,
         ITYPE_t size
     ) nogil except -1:
-        cdef {{INPUT_DTYPE_t}} d = ddot(size, x1, 1, x2, 1)
-        cdef {{INPUT_DTYPE_t}} norm1 = ddot(size, x1, 1, x1, 1)
-        cdef {{INPUT_DTYPE_t}} norm2 = ddot(size, x2, 1, x2, 1)
+        cdef DTYPE_t d = ddot(size, x1, 1, x2, 1)
+        cdef DTYPE_t norm1 = ddot(size, x1, 1, x1, 1)
+        cdef DTYPE_t norm2 = ddot(size, x2, 1, x2, 1)
         return d / sqrt(norm1 * norm2)
 
     cdef inline {{INPUT_DTYPE_t}} rdist(
         self,
-        {{INPUT_DTYPE_t}}* x1,
-        {{INPUT_DTYPE_t}}* x2,
+        const {{INPUT_DTYPE_t}}* x1,
+        const {{INPUT_DTYPE_t}}* x2,
         ITYPE_t size
     ) nogil except -1:
         # The non-metric, but rank-preserving, cosine distance.
@@ -2823,21 +2823,21 @@ cdef class ArccosDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
     cdef inline {{INPUT_DTYPE_t}} dist(
         self,
-        {{INPUT_DTYPE_t}}* x1,
-        {{INPUT_DTYPE_t}}* x2,
+        const {{INPUT_DTYPE_t}}* x1,
+        const {{INPUT_DTYPE_t}}* x2,
         ITYPE_t size
     ) nogil except -1:
         return acos(self.cosine_similarity(x1, x2, size)) / M_PI
 
-    cdef inline {{INPUT_DTYPE_t}} _rdist_to_dist(
+    cdef inline DTYPE_t _rdist_to_dist(
         self,
-        {{INPUT_DTYPE_t}} rdist
+        DTYPE_t rdist
     ) nogil except -1:
         return acos(1 - rdist) / M_PI
 
-    cdef inline {{INPUT_DTYPE_t}} _dist_to_rdist(
+    cdef inline DTYPE_t _dist_to_rdist(
         self,
-        {{INPUT_DTYPE_t}} dist
+        DTYPE_t dist
     ) nogil except -1:
         return 1 - cos(M_PI * dist)
 
