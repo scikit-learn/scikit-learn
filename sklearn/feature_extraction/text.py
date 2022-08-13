@@ -15,7 +15,6 @@ import array
 from collections import defaultdict
 from collections.abc import Mapping
 from functools import partial
-import numbers
 from numbers import Integral, Real
 from operator import itemgetter
 import re
@@ -626,7 +625,7 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         'strict', meaning that a UnicodeDecodeError will be raised. Other
         values are 'ignore' and 'replace'.
 
-    strip_accents : {'ascii', 'unicode'}, default=None
+    strip_accents : {'ascii', 'unicode'} or callable, default=None
         Remove accents and perform other character normalization
         during the preprocessing step.
         'ascii' is a fast method that only works on characters that have
@@ -735,6 +734,25 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
     (4, 16)
     """
 
+    _parameter_constraints = {
+        "input": [StrOptions({"filename", "file", "content"})],
+        "encoding": [str],
+        "decode_error": [StrOptions({"strict", "ignore", "replace"})],
+        "strip_accents": [StrOptions({"ascii", "unicode"}), None, callable],
+        "lowercase": ["boolean"],
+        "preprocessor": [callable, None],
+        "tokenizer": [callable, None],
+        "stop_words": [StrOptions({"english"}), list, None],
+        "token_pattern": [str, None],
+        "ngram_range": [tuple],
+        "analyzer": [StrOptions({"word", "char", "char_wb"}), callable],
+        "n_features": [Interval(Integral, 1, None, closed="left")],
+        "binary": ["boolean"],
+        "norm": [StrOptions({"l1", "l2"}), None],
+        "alternate_sign": ["boolean"],
+        "dtype": "no_validation",  # delegate to numpy
+    }
+
     def __init__(
         self,
         *,
@@ -791,6 +809,7 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         self : object
             HashingVectorizer instance.
         """
+        self._validate_params()
         return self
 
     def fit(self, X, y=None):
@@ -815,6 +834,7 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
                 "Iterable over raw text documents expected, string object received."
             )
 
+        self._validate_params()
         self._warn_for_unused_params()
         self._validate_ngram_range()
 
@@ -841,6 +861,7 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
                 "Iterable over raw text documents expected, string object received."
             )
 
+        self._validate_params()
         self._validate_ngram_range()
 
         analyzer = self.build_analyzer()
@@ -930,7 +951,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         Remove accents and perform other character normalization
         during the preprocessing step.
         'ascii' is a fast method that only works on characters that have
-        an direct ASCII mapping.
+        a direct ASCII mapping.
         'unicode' is a slightly slower method that works on any characters.
         None (default) does nothing.
 
@@ -1354,12 +1375,8 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
 
         if not self.fixed_vocabulary_:
             n_doc = X.shape[0]
-            max_doc_count = (
-                max_df if isinstance(max_df, numbers.Integral) else max_df * n_doc
-            )
-            min_doc_count = (
-                min_df if isinstance(min_df, numbers.Integral) else min_df * n_doc
-            )
+            max_doc_count = max_df if isinstance(max_df, Integral) else max_df * n_doc
+            min_doc_count = min_df if isinstance(min_df, Integral) else min_df * n_doc
             if max_doc_count < min_doc_count:
                 raise ValueError("max_df corresponds to < documents than min_df")
             if max_features is not None:
@@ -1766,11 +1783,11 @@ class TfidfVectorizer(CountVectorizer):
         'strict', meaning that a UnicodeDecodeError will be raised. Other
         values are 'ignore' and 'replace'.
 
-    strip_accents : {'ascii', 'unicode'}, default=None
+    strip_accents : {'ascii', 'unicode'} or callable, default=None
         Remove accents and perform other character normalization
         during the preprocessing step.
         'ascii' is a fast method that only works on characters that have
-        an direct ASCII mapping.
+        a direct ASCII mapping.
         'unicode' is a slightly slower method that works on any characters.
         None (default) does nothing.
 
