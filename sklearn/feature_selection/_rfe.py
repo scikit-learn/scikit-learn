@@ -109,6 +109,10 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
+        .. versionchanged:: 1.2
+           Added support for custom importance getter with estimator, training input
+           samples `X` and the target labels `y`.
+
     Attributes
     ----------
     classes_ : ndarray of shape (n_classes,)
@@ -529,6 +533,10 @@ class RFECV(RFE):
         should return importance for each feature.
 
         .. versionadded:: 0.24
+
+        .. versionchanged:: 1.2
+           Added support for custom importance getter with estimator, training input
+           samples `X` and the target labels `y`.
 
     Attributes
     ----------
