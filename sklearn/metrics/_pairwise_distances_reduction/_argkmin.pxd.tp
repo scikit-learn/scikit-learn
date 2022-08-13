@@ -1,0 +1,50 @@
+{{py:
+
+implementation_specific_values = [
+    # Values are the following ones:
+    #
+    #       name_suffix, INPUT_DTYPE_t, INPUT_DTYPE
+    #
+    # We also use the float64 dtype and C-type names as defined in
+    # `sklearn.utils._typedefs` to maintain consistency.
+    #
+    ('64', 'cnp.float64_t', 'np.float64'),
+    ('32', 'cnp.float32_t', 'np.float32')
+]
+
+}}
+
+cimport numpy as cnp
+from ...utils._typedefs cimport ITYPE_t, DTYPE_t
+
+cnp.import_array()
+
+{{for name_suffix, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
+
+from ._base cimport PairwiseDistancesReduction{{name_suffix}}
+from ._gemm_term_computer cimport GEMMTermComputer{{name_suffix}}
+
+cdef class PairwiseDistancesArgKmin{{name_suffix}}(PairwiseDistancesReduction{{name_suffix}}):
+    """{{name_suffix}}bit implementation of PairwiseDistancesArgKmin."""
+
+    cdef:
+        ITYPE_t k
+
+        ITYPE_t[:, ::1] argkmin_indices
+        DTYPE_t[:, ::1] argkmin_distances
+
+        # Used as array of pointers to private datastructures used in threads.
+        DTYPE_t ** heaps_r_distances_chunks
+        ITYPE_t ** heaps_indices_chunks
+
+
+cdef class FastEuclideanPairwiseDistancesArgKmin{{name_suffix}}(PairwiseDistancesArgKmin{{name_suffix}}):
+    """EuclideanDistance-specialized {{name_suffix}}bit implementation for PairwiseDistancesArgKmin."""
+    cdef:
+        GEMMTermComputer{{name_suffix}} gemm_term_computer
+        const DTYPE_t[::1] X_norm_squared
+        const DTYPE_t[::1] Y_norm_squared
+
+        bint use_squared_distances
+
+{{endfor}}
