@@ -137,15 +137,10 @@ def construct_grids(batch):
     return (xgrid, ygrid)
 
 
-<<<<<<< HEAD
 def fetch_species_distributions(
     *, data_home=None, download_if_missing=True, n_retries=3, delay=1
 ):
     """Loader for species distribution dataset from Phillips et. al. (2006)
-=======
-def fetch_species_distributions(*, data_home=None, download_if_missing=True):
-    """Loader for species distribution dataset from Phillips et. al. (2006).
->>>>>>> main
 
     Read more in the :ref:`User Guide <datasets>`.
 
