@@ -1,23 +1,40 @@
+{{py:
+
+implementation_specific_values = [
+    # Values are the following ones:
+    #
+    #       name_suffix, INPUT_DTYPE_t, INPUT_DTYPE
+    #
+    # We also use the float64 dtype and C-type names as defined in
+    # `sklearn.utils._typedefs` to maintain consistency.
+    #
+    ('64', 'DTYPE_t', 'DTYPE'),
+    ('32', 'cnp.float32_t', 'np.float32')
+]
+
+}}
 cimport numpy as cnp
 
 from cython cimport final
 
-from ._datasets_pair cimport DatasetsPair
 from ...utils._typedefs cimport ITYPE_t, DTYPE_t
 
 cnp.import_array()
 
+{{for name_suffix, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
 
-cpdef DTYPE_t[::1] _sqeuclidean_row_norms64(
-    const DTYPE_t[:, ::1] X,
+from ._datasets_pair cimport DatasetsPair{{name_suffix}}
+
+cpdef DTYPE_t[::1] _sqeuclidean_row_norms{{name_suffix}}(
+    const {{INPUT_DTYPE_t}}[:, ::1] X,
     ITYPE_t num_threads,
 )
 
-cdef class PairwiseDistancesReduction64:
-    """Base 64bit implementation of PairwiseDistancesReduction."""
+cdef class PairwiseDistancesReduction{{name_suffix}}:
+    """Base {{name_suffix}}bit implementation of PairwiseDistancesReduction."""
 
     cdef:
-        readonly DatasetsPair datasets_pair
+        readonly DatasetsPair{{name_suffix}} datasets_pair
 
         # The number of threads that can be used is stored in effective_n_threads.
         #
@@ -126,3 +143,4 @@ cdef class PairwiseDistancesReduction64:
     cdef void _parallel_on_Y_finalize(
         self,
     ) nogil
+{{endfor}}

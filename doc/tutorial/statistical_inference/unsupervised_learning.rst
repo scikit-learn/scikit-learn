@@ -156,7 +156,7 @@ also referred to as connected components) when clustering an image.
     >>> from skimage.transform import rescale
     >>> rescaled_coins = rescale(
     ...     gaussian_filter(coins(), sigma=2),
-    ...     0.2, mode='reflect', anti_aliasing=False, multichannel=False
+    ...     0.2, mode='reflect', anti_aliasing=False
     ... )
     >>> X = np.reshape(rescaled_coins, (-1, 1))
 

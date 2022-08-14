@@ -137,10 +137,15 @@ def construct_grids(batch):
     return (xgrid, ygrid)
 
 
+<<<<<<< HEAD
 def fetch_species_distributions(
     *, data_home=None, download_if_missing=True, n_retries=3, delay=1
 ):
     """Loader for species distribution dataset from Phillips et. al. (2006)
+=======
+def fetch_species_distributions(*, data_home=None, download_if_missing=True):
+    """Loader for species distribution dataset from Phillips et. al. (2006).
+>>>>>>> main
 
     Read more in the :ref:`User Guide <datasets>`.
 
@@ -185,14 +190,6 @@ def fetch_species_distributions(
         grid_size : float
             The spacing between points of the grid, in degrees
 
-    References
-    ----------
-
-    * `"Maximum entropy modeling of species geographic distributions"
-      <http://rob.schapire.net/papers/ecolmod.pdf>`_
-      S. J. Phillips, R. P. Anderson, R. E. Schapire - Ecological Modelling,
-      190:231-259, 2006.
-
     Notes
     -----
 
@@ -213,6 +210,14 @@ def fetch_species_distributions(
     - For an example of using this dataset with scikit-learn, see
       :ref:`examples/applications/plot_species_distribution_modeling.py
       <sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py>`.
+
+    References
+    ----------
+
+    * `"Maximum entropy modeling of species geographic distributions"
+      <http://rob.schapire.net/papers/ecolmod.pdf>`_
+      S. J. Phillips, R. P. Anderson, R. E. Schapire - Ecological Modelling,
+      190:231-259, 2006.
     """
     data_home = get_data_home(data_home)
     if not exists(data_home):
