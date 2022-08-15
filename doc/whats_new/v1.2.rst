@@ -183,6 +183,13 @@ Changelog
 - |Efficiency| Improve runtime performance of :class:`ensemble.IsolationForest`
   by avoiding data copies. :pr:`23252` by :user:`Zhehao Liu <MaxwellLZH>`.
 
+- |Fix| Fixed the issue where :class:`ensemble.AdaBoostClassifier` outputs
+  NaN in feature importance when fitted with very small sample weight.
+  :pr:`20415` by :user:`Zhehao Liu <MaxwellLZH>`.
+
+:mod:`sklearn.feature_selection`
+................................
+
 :mod:`sklearn.decomposition`
 ............................
 
