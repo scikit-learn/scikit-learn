@@ -20,6 +20,10 @@ from scipy import linalg
 from scipy import sparse
 from scipy import optimize
 from scipy.sparse import linalg as sp_linalg
+from collections.abc import Iterable
+
+from sklearn.model_selection import BaseCrossValidator
+from sklearn.metrics import get_scorer_names
 
 from ._base import LinearClassifierMixin, LinearModel
 from ._base import _deprecate_normalize, _preprocess_data, _rescale_data
@@ -2106,6 +2110,26 @@ class _RidgeGCV(LinearModel):
 
 
 class _BaseRidgeCV(LinearModel):
+    _parameter_constraints = {
+        "alpha": [np.ndarray, (0.1, 1.0, 10.0)],
+        "fit_intercept": ["boolean"],
+        "normalize": [Hidden(StrOptions({"deprecated"})), "boolean"],
+        "scoring": [StrOptions(set(get_scorer_names())), callable, None],
+        "cv": [
+            Interval(Integral, 2, None, closed="left"),
+            Iterable,
+            BaseCrossValidator,
+            None,
+        ],
+        "gcv_mode": [
+            StrOptions(
+                {"auto", "svd", "eigen"}
+            )
+        ],
+        "store_cv_values": ["boolean"],
+        "alpha_per_target": ["boolean"],
+    }
+
     def __init__(
         self,
         alphas=(0.1, 1.0, 10.0),
@@ -2157,6 +2181,8 @@ class _BaseRidgeCV(LinearModel):
         the validation score.
         """
         cv = self.cv
+
+        self._validate_params()
 
         check_scalar_alpha = partial(
             check_scalar,
@@ -2501,6 +2527,23 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
     0.9630...
     """
 
+
+    _parameter_constraints = {
+        "alpha": [np.ndarray, (0.1, 1.0, 10.0)],
+        "fit_intercept": ["boolean"],
+        "normalize": [Hidden(StrOptions({"deprecated"})), "boolean"],
+        "scoring": [StrOptions(set(get_scorer_names())), callable, None],
+        "cv": [
+            Interval(Integral, 2, None, closed="left"),
+            Iterable,
+            BaseCrossValidator,
+            None,
+        ],
+        "class_weight": [dict, StrOptions({"balanced"}), None],
+        "store_cv_values": ["boolean"],
+    }
+
+
     def __init__(
         self,
         alphas=(0.1, 1.0, 10.0),
@@ -2544,6 +2587,8 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
         self : object
             Fitted estimator.
         """
+        self._validate_params()
+
         # `RidgeClassifier` does not accept "sag" or "saga" solver and thus support
         # csr, csc, and coo sparse matrices. By using solver="eigen" we force to accept
         # all sparse format.

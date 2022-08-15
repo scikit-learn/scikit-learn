@@ -502,8 +502,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "RFE",
     "RFECV",
     "RegressorChain",
-    "RidgeCV",
-    "RidgeClassifierCV",
     "SelectFdr",
     "SelectFpr",
     "SelectFromModel",

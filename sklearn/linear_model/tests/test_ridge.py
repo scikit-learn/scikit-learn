@@ -1504,35 +1504,6 @@ def test_ridgecv_int_alphas():
     ridge = RidgeCV(alphas=(1, 10, 100))
     ridge.fit(X, y)
 
-
-@pytest.mark.parametrize("Estimator", [RidgeCV, RidgeClassifierCV])
-@pytest.mark.parametrize(
-    "params, err_type, err_msg",
-    [
-        ({"alphas": (1, -1, -100)}, ValueError, r"alphas\[1\] == -1, must be > 0.0"),
-        (
-            {"alphas": (-0.1, -1.0, -10.0)},
-            ValueError,
-            r"alphas\[0\] == -0.1, must be > 0.0",
-        ),
-        (
-            {"alphas": (1, 1.0, "1")},
-            TypeError,
-            r"alphas\[2\] must be an instance of float, not str",
-        ),
-    ],
-)
-def test_ridgecv_alphas_validation(Estimator, params, err_type, err_msg):
-    """Check the `alphas` validation in RidgeCV and RidgeClassifierCV."""
-
-    n_samples, n_features = 5, 5
-    X = rng.randn(n_samples, n_features)
-    y = rng.randint(0, 2, n_samples)
-
-    with pytest.raises(err_type, match=err_msg):
-        Estimator(**params).fit(X, y)
-
-
 @pytest.mark.parametrize("Estimator", [RidgeCV, RidgeClassifierCV])
 def test_ridgecv_alphas_scalar(Estimator):
     """Check the case when `alphas` is a scalar.
