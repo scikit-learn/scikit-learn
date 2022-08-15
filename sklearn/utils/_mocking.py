@@ -325,7 +325,7 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
 # Deactivate key validation for CheckingClassifier because we want to be able to
 # call fit with arbitrary fit_params and record them. Without this change, we
 # would get an error because those arbitrary params are not expected.
-CheckingClassifier.set_fit_request = RequestMethod(  # noqa
+CheckingClassifier.set_fit_request = RequestMethod(  # type: ignore
     name="fit", keys=[], validate_keys=False
 )
 
