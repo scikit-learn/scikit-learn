@@ -1,4 +1,4 @@
-"""Utilities to evaluate the clustering performance of models.
+﻿"""Utilities to evaluate the clustering performance of models.
 
 Functions named as *_score return a scalar value to maximize: the higher the
 better.
@@ -335,10 +335,10 @@ def adjusted_rand_score(labels_true, labels_pred):
     Parameters
     ----------
     labels_true : int array, shape = [n_samples]
-        Ground truth class labels to be used as a reference
+        Ground truth class labels to be used as a reference.
 
     labels_pred : array-like of shape (n_samples,)
-        Cluster labels to evaluate
+        Cluster labels to evaluate.
 
     Returns
     -------
