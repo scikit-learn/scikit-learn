@@ -19,7 +19,7 @@ from sklearn.utils.extmath import softmax
 from sklearn.exceptions import NotFittedError
 from sklearn.datasets import make_classification, make_blobs, load_iris
 from sklearn.preprocessing import LabelEncoder
-from sklearn.model_selection import KFold, cross_val_predict
+from sklearn.model_selection import GroupKFold, KFold, cross_val_predict
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.ensemble import (
     RandomForestClassifier,
@@ -1063,3 +1063,20 @@ def test_calibrated_classifier_deprecation_base_estimator(data):
     warn_msg = "`base_estimator` was renamed to `estimator`"
     with pytest.warns(FutureWarning, match=warn_msg):
         calibrated_classifier.fit(*data)
+
+
+def test_calibration_groupkfold(data):
+    # Check that groups are routed to the splitter
+    X, y = data
+    split_groups = np.array([0, 1] * (len(y) // 2))
+
+    class MyGroupKFold(GroupKFold):
+        """Custom Splitter that checks that the values of groups are correct"""
+        def split(self, X, y=None, groups=None):
+            assert (groups == split_groups).all()
+            return super().split(X, y=y, groups=groups)
+
+    cv = MyGroupKFold(n_splits=2)
+    calib_clf = CalibratedClassifierCV(cv=cv)
+    # check that fitting does not raise an error
+    calib_clf.fit(X, y, groups=split_groups)

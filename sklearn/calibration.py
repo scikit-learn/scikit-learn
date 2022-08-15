@@ -381,7 +381,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                         sample_weight=sample_weight,
                         fit_params=routed_params.estimator.fit,
                     )
-                    for train, test in cv.split(X, y)
+                    for train, test in cv.split(X, y, **routed_params.splitter.split)
                 )
             else:
                 this_estimator = clone(estimator)
@@ -485,6 +485,10 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             .add(
                 estimator=self._get_estimator(),
                 method_mapping=MethodMapping().add(callee="fit", caller="fit"),
+            )
+            .add(
+                splitter=self.cv,
+                method_mapping=MethodMapping().add(callee="split", caller="fit")
             )
             # the fit method already accepts everything, therefore we don't
             # specify parameters. The value passed to ``child`` needs to be the
