@@ -1072,6 +1072,7 @@ def test_calibration_groupkfold(data):
 
     class MyGroupKFold(GroupKFold):
         """Custom Splitter that checks that the values of groups are correct"""
+
         def split(self, X, y=None, groups=None):
             assert (groups == split_groups).all()
             return super().split(X, y=y, groups=groups)

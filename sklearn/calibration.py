@@ -488,7 +488,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             )
             .add(
                 splitter=self.cv,
-                method_mapping=MethodMapping().add(callee="split", caller="fit")
+                method_mapping=MethodMapping().add(callee="split", caller="fit"),
             )
             # the fit method already accepts everything, therefore we don't
             # specify parameters. The value passed to ``child`` needs to be the
