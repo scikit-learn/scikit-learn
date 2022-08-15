@@ -685,27 +685,51 @@ def test_stacking_classifier_multilabel(stack_method, passthrough, X, y, is_mult
     assert y_pred.shape == y_test.shape
 
     y_proba = clf.predict_proba(X_test)
-    if is_multilabel:
-        assert y_proba.shape == y_test.shape
-    else:
-        assert y_proba.shape == (y_test.shape[0], 2)
 
     X_trans = clf.transform(X_test)
     expected_n_features = len(estimators)
-    if is_multilabel:
-        expected_n_features *= y_test.shape[1]
-    if passthrough:
-        expected_n_features += X_test.shape[1]
-    assert X_trans.shape[1] == expected_n_features
 
     if is_multilabel:
+        assert y_proba.shape == y_test.shape
         assert len(clf.classes_) == y_test.shape[1]
+        expected_n_features *= y_test.shape[1]
+
     else:
+        assert y_proba.shape == (y_test.shape[0], 2)
         assert len(clf.classes_) == 2
 
     if passthrough:
         X_test_last_cols = X_trans[:, -X_test.shape[1] :]
         assert_array_equal(X_test, X_test_last_cols)
+        expected_n_features += X_test.shape[1]
+
+    assert X_trans.shape[1] == expected_n_features
+
+    if is_multilabel:
+        if stack_method == "predict":
+            preds = [[[1, 0, 0], [0, 0, 1]], [[1, 1, 0], [0, 0, 0]]]
+            expected_concat_preds = np.array(
+                [
+                    [1, 0, 0, 1, 1, 0],
+                    [0, 0, 1, 0, 0, 0],
+                ]
+            )
+        else:
+            preds = [
+                [[[0.5, 0.5], [0.3, 0.7]], [[0.4, 0.6], [0.3, 0.7]]],
+                [[[0.9, 0.1], [0.2, 0.8]], [[1.0, 0.0], [0.5, 0.5]]],
+            ]
+            expected_concat_preds = np.array(
+                [
+                    [0.5, 0.6, 0.1, 0.0],
+                    [0.7, 0.7, 0.8, 0.5],
+                ]
+            )
+        X_test = X_test[: len(preds), :]
+        if passthrough:
+            expected_concat_preds = np.hstack([expected_concat_preds, X_test])
+        concat_preds = clf._concatenate_predictions(X_test, preds)
+        assert_array_equal(expected_concat_preds, concat_preds)
 
 
 @pytest.mark.parametrize(

@@ -122,6 +122,8 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
                     # we can work with probabilities of `n_classes - 1` classes.
                     # Hence we drop the first column.
                     for pred in preds:
+                        if isinstance(pred, list):
+                            pred = np.array(pred)
                         X_meta.append(pred[:, 1:])
                 elif (
                     self.stack_method_[est_idx] == "predict_proba"
@@ -134,7 +136,7 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
                 else:
                     X_meta.append(preds)
 
-        self._n_feature_outs = [pred.shape[1] for pred in X_meta]
+        self._n_feature_outs = [np.array(pred).shape[1] for pred in X_meta]
         if self.passthrough:
             X_meta.append(X)
             if sparse.issparse(X):
