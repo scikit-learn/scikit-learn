@@ -23,10 +23,14 @@ from abc import ABCMeta, abstractmethod
 from .base import BaseEstimator, clone, MetaEstimatorMixin
 from .base import RegressorMixin, ClassifierMixin, is_classifier
 from .model_selection import cross_val_predict
+from .utils import check_random_state, _print_elapsed_time
 from .utils.metaestimators import available_if
-from .utils import check_random_state
-from .utils.validation import check_is_fitted, has_fit_parameter, _check_fit_params
 from .utils.multiclass import check_classification_targets
+from .utils.validation import (
+    check_is_fitted,
+    has_fit_parameter,
+    _check_fit_params,
+)
 from .utils.fixes import delayed
 from .utils._param_validation import HasMethods
 
@@ -538,11 +542,19 @@ def _available_if_base_estimator_has(attr):
 
 
 class _BaseChain(BaseEstimator, metaclass=ABCMeta):
-    def __init__(self, base_estimator, *, order=None, cv=None, random_state=None):
+    def __init__(
+        self, base_estimator, *, order=None, cv=None, random_state=None, verbose=False
+    ):
         self.base_estimator = base_estimator
         self.order = order
         self.cv = cv
         self.random_state = random_state
+        self.verbose = verbose
+
+    def _log_message(self, *, estimator_idx, n_estimators, processing_msg):
+        if not self.verbose:
+            return None
+        return f"({estimator_idx} of {n_estimators}) {processing_msg}"
 
     @abstractmethod
     def fit(self, X, Y, **fit_params):
@@ -602,8 +614,14 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         del Y_pred_chain
 
         for chain_idx, estimator in enumerate(self.estimators_):
+            message = self._log_message(
+                estimator_idx=chain_idx + 1,
+                n_estimators=len(self.estimators_),
+                processing_msg=f"Processing order {self.order_[chain_idx]}",
+            )
             y = Y[:, self.order_[chain_idx]]
-            estimator.fit(X_aug[:, : (X.shape[1] + chain_idx)], y, **fit_params)
+            with _print_elapsed_time("Chain", message):
+                estimator.fit(X_aug[:, : (X.shape[1] + chain_idx)], y, **fit_params)
             if self.cv is not None and chain_idx < len(self.estimators_) - 1:
                 col_idx = X.shape[1] + chain_idx
                 cv_result = cross_val_predict(
@@ -701,6 +719,11 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         exposes a `random_state`.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
+
+    verbose : bool, default=False
+        If True, chain progress is output as each model is completed.
+
+        .. versionadded:: 1.2
 
     Attributes
     ----------
@@ -902,6 +925,11 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
         exposes a `random_state`.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
+
+    verbose : bool, default=False
+        If True, chain progress is output as each model is completed.
+
+        .. versionadded:: 1.2
 
     Attributes
     ----------
