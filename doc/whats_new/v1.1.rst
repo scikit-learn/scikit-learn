@@ -296,7 +296,11 @@ Changelog
 
   For instance :class:`sklearn.neighbors.NearestNeighbors.kneighbors` and
   :class:`sklearn.neighbors.NearestNeighbors.radius_neighbors`
-  can respectively be up to ×20 and ×5 faster than previously.
+  can respectively be up to ×20 and ×5 faster than previously on a laptop.
+
+  Moreover, implementations of those two algorithms are now suitable
+  for machine with many cores, making them usable for datasets consisting
+  of millions of samples.
 
   :pr:`21987`, :pr:`22064`, :pr:`22065`, :pr:`22288` and :pr:`22320`
   by :user:`Julien Jerphanion <jjerphan>`.
