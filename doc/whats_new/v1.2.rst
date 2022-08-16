@@ -239,6 +239,13 @@ Changelog
   :pr:`22710` by :user:`Conroy Trinh <trinhcon>` and
   :pr:`23461` by :user:`Meekail Zain <micky774>`.
 
+:mod:`sklearn.model_selection`
+..............................
+
+- |Fix| For all `SearchCV` classes and scipy >= 1.10, rank corresponding to a
+  nan score is correctly set to the maximum possible rank, rather than
+  `np.iinfo(np.int32).min`. :pr:`24141` by :user:`Loïc Estève <lesteve>`.
+
 :mod:`sklearn.multioutput`
 ..........................
 
