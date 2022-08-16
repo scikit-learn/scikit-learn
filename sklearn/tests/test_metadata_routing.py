@@ -39,7 +39,7 @@ def assert_request_is_empty(metadata_request, exclude=None):
     """Check if a metadata request dict is empty.
 
     One can exclude a method or a list of methods from the check using the
-    ``exclude`` perameter.
+    ``exclude`` parameter.
     """
     if isinstance(metadata_request, MetadataRouter):
         for _, route_mapping in metadata_request:
