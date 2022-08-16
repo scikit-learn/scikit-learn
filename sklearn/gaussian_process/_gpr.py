@@ -204,7 +204,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         self.copy_X_train = copy_X_train
         self.random_state = random_state
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_variance=None):
         """Fit Gaussian process regression model.
 
         Parameters
@@ -214,6 +214,10 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
         y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target values.
+            
+        sample_variance: float or ndarray of shape (n_samples,), default=None
+        Same with alpha, value added to the diagonal of the kernel matrix during fitting. 
+        If sample_variance is specified, alpha will be reset to it.
 
         Returns
         -------
@@ -257,15 +261,26 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             self._y_train_mean = np.zeros(shape=shape_y_stats)
             self._y_train_std = np.ones(shape=shape_y_stats)
 
-        if np.iterable(self.alpha) and self.alpha.shape[0] != y.shape[0]:
-            if self.alpha.shape[0] == 1:
-                self.alpha = self.alpha[0]
-            else:
-                raise ValueError(
-                    "alpha must be a scalar or an array with same number of "
-                    f"entries as y. ({self.alpha.shape[0]} != {y.shape[0]})"
-                )
-
+        if sample_variance is None:
+            if np.iterable(self.alpha) and self.alpha.shape[0] != y.shape[0]:
+                if self.alpha.shape[0] == 1:
+                    self.alpha = self.alpha[0]
+                else:
+                    raise ValueError(
+                        "alpha must be a scalar or an array with same number of "
+                        f"entries as y. ({self.alpha.shape[0]} != {y.shape[0]})"
+                    )
+        else:
+            if np.iterable(sample_variance) and sample_variance.shape[0] != y.shape[0]:
+                if sample_variance.shape[0] == 1:
+                    sample_variance = sample_variance[0]
+                else:
+                    raise ValueError(
+                        "sample_variance must be a scalar or an array with same number of "
+                        f"entries as y. ({sample_variance.shape[0]} != {y.shape[0]})"
+                    )
+            self.alpha = sample_variance
+        
         self.X_train_ = np.copy(X) if self.copy_X_train else X
         self.y_train_ = np.copy(y) if self.copy_X_train else y
 
