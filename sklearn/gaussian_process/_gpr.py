@@ -214,9 +214,9 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
         y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target values.
-            
+
         sample_variance: float or ndarray of shape (n_samples,), default=None
-        Same with alpha, value added to the diagonal of the kernel matrix during fitting. 
+        Same with alpha, value added to the diagonal of the kernel matrix during fitting.
         If sample_variance is specified, alpha will be reset to it.
 
         Returns
@@ -276,11 +276,12 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                     sample_variance = sample_variance[0]
                 else:
                     raise ValueError(
-                        "sample_variance must be a scalar or an array with same number of "
-                        f"entries as y. ({sample_variance.shape[0]} != {y.shape[0]})"
+                        "sample_variance must be a scalar or an array with same number"
+                        f" of entries as y. ({sample_variance.shape[0]} !="
+                        f" {y.shape[0]})"
                     )
             self.alpha = sample_variance
-        
+
         self.X_train_ = np.copy(X) if self.copy_X_train else X
         self.y_train_ = np.copy(y) if self.copy_X_train else y
 
