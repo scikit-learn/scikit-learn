@@ -377,7 +377,7 @@ def test_isotonic_sample_weight_strict_reversed():
         25.95238095,
         19.71428571,
         10.35714286,
-        1.
+        1.0
     ]
     cir = IsotonicRegression(increasing=False, strict=True)
     received_y_cir = cir.fit_transform(x, y, sample_weight=sample_weight)
