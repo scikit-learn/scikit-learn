@@ -215,7 +215,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target values.
 
-        sample_variance: float or ndarray of shape (n_samples,), default=None
+        sample_variance : float or ndarray of shape (n_samples,), default=None
         Same with alpha, value added to the diagonal of the kernel matrix during
         fitting. If sample_variance is specified, alpha will be reset to it.
 
