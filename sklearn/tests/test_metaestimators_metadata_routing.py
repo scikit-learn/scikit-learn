@@ -23,7 +23,7 @@ metadata = np.random.randint(0, 10, size=N)
 sample_weight = np.random.rand(N)
 
 
-record_metadata_not_none = partial(record_metadata, record_none=False)
+record_metadata_not_default = partial(record_metadata, record_default=False)
 
 
 class _Registry(list):
@@ -54,29 +54,29 @@ class ConsumingRegressor(RegressorMixin, BaseEstimator):
     def __init__(self, registry=None):
         self.registry = registry
 
-    def partial_fit(self, X, y, sample_weight=None, metadata=None):
+    def partial_fit(self, X, y, sample_weight="default", metadata="default"):
         if self.registry is not None:
             self.registry.append(self)
 
-        record_metadata_not_none(
+        record_metadata_not_default(
             self, "partial_fit", sample_weight=sample_weight, metadata=metadata
         )
         return self
 
-    def fit(self, X, y, sample_weight=None, metadata=None):
+    def fit(self, X, y, sample_weight="default", metadata="default"):
         if self.registry is not None:
             self.registry.append(self)
 
-        record_metadata_not_none(
+        record_metadata_not_default(
             self, "fit", sample_weight=sample_weight, metadata=metadata
         )
         return self
 
-    def predict(self, X, sample_weight=None, metadata=None):
+    def predict(self, X, sample_weight="default", metadata="default"):
         if self.registry is not None:
             self.registry.append(self)
 
-        record_metadata_not_none(
+        record_metadata_not_default(
             self, "predict", sample_weight=sample_weight, metadata=metadata
         )
         return np.zeros(shape=(len(X),))
@@ -98,49 +98,49 @@ class ConsumingClassifier(ClassifierMixin, BaseEstimator):
     def __init__(self, registry=None):
         self.registry = registry
 
-    def partial_fit(self, X, y, sample_weight=None, metadata=None):
+    def partial_fit(self, X, y, sample_weight="default", metadata="default"):
         if self.registry is not None:
             self.registry.append(self)
 
-        record_metadata_not_none(
+        record_metadata_not_default(
             self, "partial_fit", sample_weight=sample_weight, metadata=metadata
         )
         self.classes_ = [0, 1]
         return self
 
-    def fit(self, X, y, sample_weight=None, metadata=None):
+    def fit(self, X, y, sample_weight="default", metadata="default"):
         if self.registry is not None:
             self.registry.append(self)
 
-        record_metadata_not_none(
+        record_metadata_not_default(
             self, "fit", sample_weight=sample_weight, metadata=metadata
         )
         self.classes_ = [0, 1]
         return self
 
-    def predict(self, X, sample_weight=None, metadata=None):
+    def predict(self, X, sample_weight="default", metadata="default"):
         if self.registry is not None:
             self.registry.append(self)
 
-        record_metadata_not_none(
+        record_metadata_not_default(
             self, "predict", sample_weight=sample_weight, metadata=metadata
         )
         return np.zeros(shape=(len(X),))
 
-    def predict_proba(self, X, sample_weight=None, metadata=None):
+    def predict_proba(self, X, sample_weight="default", metadata="default"):
         if self.registry is not None:
             self.registry.append(self)
 
-        record_metadata_not_none(
+        record_metadata_not_default(
             self, "predict_proba", sample_weight=sample_weight, metadata=metadata
         )
         return np.asarray([[0.0, 1.0]] * len(X))
 
-    def predict_log_proba(self, X, sample_weight=None, metadata=None):
+    def predict_log_proba(self, X, sample_weight="default", metadata="default"):
         if self.registry is not None:
             self.registry.append(self)
 
-        record_metadata_not_none(
+        record_metadata_not_default(
             self, "predict_log_proba", sample_weight=sample_weight, metadata=metadata
         )
         return np.zeros(shape=(len(X), 2))

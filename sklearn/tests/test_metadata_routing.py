@@ -70,18 +70,22 @@ def assert_request_equal(request, dictionary):
         assert not len(getattr(request, method).requests)
 
 
-def record_metadata(obj, method, record_none=True, **kwargs):
+def record_metadata(obj, method, record_default=True, **kwargs):
     """Utility function to store passed metadata to a method.
 
-    If record_none is False, kwargs whose values are None are skipped. This is
-    so that checks on keyword arguments whose default was not changed are
-    skipped.
+    If record_default is False, kwargs whose values are "default" are skipped.
+    This is so that checks on keyword arguments whose default was not changed
+    are skipped.
 
     """
     if not hasattr(obj, "_records"):
         obj._records = {}
-    if not record_none:
-        kwargs = {key: val for key, val in kwargs.items() if val is not None}
+    if not record_default:
+        kwargs = {
+            key: val
+            for key, val in kwargs.items()
+            if not isinstance(val, str) or (val != "default")
+        }
     obj._records[method] = kwargs
 
 
