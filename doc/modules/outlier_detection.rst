@@ -74,20 +74,22 @@ not available.
   When ``novelty`` is set to ``True`` be aware that you must only use
   ``predict``, ``decision_function`` and ``score_samples`` on new unseen data
   and not on the training samples as this would lead to wrong results.
+  I.e., the result of ``predict`` will not be the same as ``fit_predict``.
   The scores of abnormality of the training samples are always accessible
   through the ``negative_outlier_factor_`` attribute.
 
 The behavior of :class:`neighbors.LocalOutlierFactor` is summarized in the
 following table.
 
-===================== ================================ =====================
-Method                Outlier detection                Novelty detection
-===================== ================================ =====================
-``fit_predict``       OK                               Not available
-``predict``           Not available                    Use only on new data
-``decision_function`` Not available                    Use only on new data
-``score_samples``     Use ``negative_outlier_factor_`` Use only on new data
-===================== ================================ =====================
+============================ ================================ =====================
+Method                       Outlier detection                Novelty detection
+============================ ================================ =====================
+``fit_predict``              OK                               Not available
+``predict``                  Not available                    Use only on new data
+``decision_function``        Not available                    Use only on new data
+``score_samples``            Use ``negative_outlier_factor_`` Use only on new data
+``negative_outlier_factor_`` OK                               OK
+============================ ================================ =====================
 
 
 Overview of outlier detection methods
@@ -129,6 +131,12 @@ sections hereunder.
     :class:`neighbors.LocalOutlierFactor` and
     :class:`covariance.EllipticEnvelope`.
 
+  * See :ref:`sphx_glr_auto_examples_miscellaneous_plot_outlier_detection_bench.py`
+    for an example showing how to evaluate outlier detection estimators,
+    the :class:`neighbors.LocalOutlierFactor` and the
+    :class:`ensemble.IsolationForest`, using ROC curves from
+    :class:`metrics.RocCurveDisplay`.
+
 Novelty Detection
 =================
 
@@ -162,7 +170,7 @@ but regular, observation outside the frontier.
 .. topic:: References:
 
     * `Estimating the support of a high-dimensional distribution
-      <http://www.recognition.mccme.ru/pub/papers/SVM/sch99estimating.pdf>`_
+      <https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/tr-99-87.pdf>`_
       Schölkopf, Bernhard, et al. Neural computation 13.7 (2001): 1443-1471.
 
 .. topic:: Examples:
@@ -308,6 +316,7 @@ allows you to add more trees to an already fitted model::
     * Liu, Fei Tony, Ting, Kai Ming and Zhou, Zhi-Hua. "Isolation forest."
       Data Mining, 2008. ICDM'08. Eighth IEEE International Conference on.
 
+.. _local_outlier_factor:
 
 Local Outlier Factor
 --------------------
@@ -323,7 +332,7 @@ lower density than their neighbors.
 
 In practice the local density is obtained from the k-nearest neighbors.
 The LOF score of an observation is equal to the ratio of the
-average local density of his k-nearest neighbors, and its own local density:
+average local density of its k-nearest neighbors, and its own local density:
 a normal instance is expected to have a local density similar to that of its
 neighbors, while abnormal data are expected to have much smaller local density.
 
@@ -350,7 +359,8 @@ method. The scores of abnormality of the training samples are accessible
 through the ``negative_outlier_factor_`` attribute.
 Note that ``predict``, ``decision_function`` and ``score_samples`` can be used
 on new unseen data when LOF is applied for novelty detection, i.e. when the
-``novelty`` parameter is set to ``True``. See :ref:`novelty_with_lof`.
+``novelty`` parameter is set to ``True``, but the result of ``predict`` may
+differ from that of ``fit_predict``. See :ref:`novelty_with_lof`.
 
 
 This strategy is illustrated below.
@@ -388,13 +398,14 @@ set to ``True`` before fitting the estimator::
   lof = LocalOutlierFactor(novelty=True)
   lof.fit(X_train)
 
-Note that ``fit_predict`` is not available in this case.
+Note that ``fit_predict`` is not available in this case to avoid inconsistencies.
 
 .. warning:: **Novelty detection with Local Outlier Factor`**
 
   When ``novelty`` is set to ``True`` be aware that you must only use
   ``predict``, ``decision_function`` and ``score_samples`` on new unseen data
   and not on the training samples as this would lead to wrong results.
+  I.e., the result of ``predict`` will not be the same as ``fit_predict``.
   The scores of abnormality of the training samples are always accessible
   through the ``negative_outlier_factor_`` attribute.
 

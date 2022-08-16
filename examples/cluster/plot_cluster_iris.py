@@ -23,8 +23,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # Though the following import is not directly being used, it is required
-# for 3D projection to work
-from mpl_toolkits.mplot3d import Axes3D
+# for 3D projection to work with matplotlib < 3.2
+import mpl_toolkits.mplot3d  # noqa: F401
 
 from sklearn.cluster import KMeans
 from sklearn import datasets
@@ -45,7 +45,8 @@ fignum = 1
 titles = ["8 clusters", "3 clusters", "3 clusters, bad initialization"]
 for name, est in estimators:
     fig = plt.figure(fignum, figsize=(4, 3))
-    ax = Axes3D(fig, rect=[0, 0, 0.95, 1], elev=48, azim=134)
+    ax = fig.add_subplot(111, projection="3d", elev=48, azim=134)
+    ax.set_position([0, 0, 0.95, 1])
     est.fit(X)
     labels = est.labels_
 
@@ -63,7 +64,8 @@ for name, est in estimators:
 
 # Plot the ground truth
 fig = plt.figure(fignum, figsize=(4, 3))
-ax = Axes3D(fig, rect=[0, 0, 0.95, 1], elev=48, azim=134)
+ax = fig.add_subplot(111, projection="3d", elev=48, azim=134)
+ax.set_position([0, 0, 0.95, 1])
 
 for name, label in [("Setosa", 0), ("Versicolour", 1), ("Virginica", 2)]:
     ax.text3D(

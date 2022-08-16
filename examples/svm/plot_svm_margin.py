@@ -47,9 +47,9 @@ for name, penalty in (("unreg", 1), ("reg", 0.05)):
     # support vectors (margin away from hyperplane in direction
     # perpendicular to hyperplane). This is sqrt(1+a^2) away vertically in
     # 2-d.
-    margin = 1 / np.sqrt(np.sum(clf.coef_ ** 2))
-    yy_down = yy - np.sqrt(1 + a ** 2) * margin
-    yy_up = yy + np.sqrt(1 + a ** 2) * margin
+    margin = 1 / np.sqrt(np.sum(clf.coef_**2))
+    yy_down = yy - np.sqrt(1 + a**2) * margin
+    yy_up = yy + np.sqrt(1 + a**2) * margin
 
     # plot the line, the points, and the nearest vectors to the plane
     plt.figure(fignum, figsize=(4, 3))

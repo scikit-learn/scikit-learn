@@ -5,11 +5,11 @@
 # pool at each step.
 
 import numpy as np
-cimport numpy as np
+cimport numpy as cnp
 cimport cython
 from cython cimport floating
 
-np.import_array()
+cnp.import_array()
 
 
 def _inplace_contiguous_isotonic_regression(floating[::1] y, floating[::1] w):
@@ -63,9 +63,9 @@ def _inplace_contiguous_isotonic_regression(floating[::1] y, floating[::1] w):
             i = k
 
 
-def _make_unique(np.ndarray[dtype=floating] X,
-                 np.ndarray[dtype=floating] y,
-                 np.ndarray[dtype=floating] sample_weights):
+def _make_unique(cnp.ndarray[dtype=floating] X,
+                 cnp.ndarray[dtype=floating] y,
+                 cnp.ndarray[dtype=floating] sample_weights):
     """Average targets for duplicate X, drop duplicates.
 
     Aggregates duplicate X values into a single X value where
@@ -76,10 +76,10 @@ def _make_unique(np.ndarray[dtype=floating] X,
     """
     unique_values = len(np.unique(X))
 
-    cdef np.ndarray[dtype=floating] y_out = np.empty(unique_values,
+    cdef cnp.ndarray[dtype=floating] y_out = np.empty(unique_values,
                                                      dtype=X.dtype)
-    cdef np.ndarray[dtype=floating] x_out = np.empty_like(y_out)
-    cdef np.ndarray[dtype=floating] weights_out = np.empty_like(y_out)
+    cdef cnp.ndarray[dtype=floating] x_out = np.empty_like(y_out)
+    cdef cnp.ndarray[dtype=floating] weights_out = np.empty_like(y_out)
 
     cdef floating current_x = X[0]
     cdef floating current_y = 0
