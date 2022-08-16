@@ -112,15 +112,12 @@ cdef class PairwiseDistancesReduction64:
 
     @final
     cdef void _parallel_on_X(self) nogil:
-        """Compute the pairwise distances of each row vector of X on Y
-        by parallelizing computation on the outer loop on chunks of X
-        and reduce them.
+        """Perform computation and reduction in parallel on chunks of X.
 
-        This strategy dispatches tasks statically on threads.
-        Each task processes exactly only one chunk of X,
-        computing and reducing distances matrices between
-        vectors of this chunk and vectors of all chunks of Y,
-        one chunk of Y at a time.
+        This strategy dispatches tasks statically on threads. Each task
+        processes exactly only one chunk of X, computing and reducing
+        distances matrices between vectors of this chunk and vectors of all
+        chunks of Y, one chunk of Y at a time.
 
         This strategy is embarrassingly parallel with no intermediate data
         structures synchronization at all.
@@ -184,20 +181,17 @@ cdef class PairwiseDistancesReduction64:
 
     @final
     cdef void _parallel_on_Y(self) nogil:
-        """Compute the pairwise distances of each row vector of X on Y
-        by parallelizing computation on the inner loop on chunks of Y
-        and reduce them.
+        """Perform computation and reduction in parallel on chunks of Y.
 
         This strategy is a sequence of embarrassingly parallel subtasks:
-        chunks of X are iterated over sequentially, and 
-        for each chunk of X, tasks are dispatched statically 
-        on threads.
-        Each task processes one and only one chunk of Y,
-        computing and reducing distances matrices between
-        vectors of the chunk of X and vectors of the Y.
+        chunks of X are iterated over sequentially, and for each chunk of X,
+        tasks are dispatched statically on threads. Each task processes one
+        and only one chunk of Y, computing and reducing distances matrices
+        between vectors of the chunk of X and vectors of the Y.
 
-        It comes with lock-free and parallelized intermediate data structures that
-        synchronize at each iteration of the sequential outer loop on X chunks.
+        It comes with lock-free and parallelized intermediate data structures
+        that synchronize at each iteration of the sequential outer loop on X
+        chunks.
 
         Private datastructures are modified internally by threads.
 
