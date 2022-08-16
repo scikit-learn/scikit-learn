@@ -183,7 +183,7 @@ class BisectingKMeans(_BaseKMeans):
 
     Notes
     -----
-    It might be inefficient when n_cluster is less than 3, due to unnecassary
+    It might be inefficient when n_cluster is less than 3, due to unnecessary
     calculations for that case.
 
     Examples

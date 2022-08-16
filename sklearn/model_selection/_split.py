@@ -441,7 +441,7 @@ class KFold(_BaseKFold):
 
     See Also
     --------
-    StratifiedKFold : Takes group information into account to avoid building
+    StratifiedKFold : Takes class information into account to avoid building
         folds with imbalanced class distributions (for binary or multiclass
         classification tasks).
 
@@ -472,8 +472,8 @@ class KFold(_BaseKFold):
 class GroupKFold(GroupsComsumerMixin, _BaseKFold):
     """K-fold iterator variant with non-overlapping groups.
 
-    The same group will not appear in two different folds (the number of
-    distinct groups has to be at least equal to the number of folds).
+    Each group will appear exactly once in the test set across all folds (the
+    number of distinct groups has to be at least equal to the number of folds).
 
     The folds are approximately balanced in the sense that the number of
     distinct groups is approximately the same in each fold.
@@ -523,6 +523,10 @@ class GroupKFold(GroupsComsumerMixin, _BaseKFold):
     --------
     LeaveOneGroupOut : For splitting the data according to explicit
         domain-specific stratification of the dataset.
+
+    StratifiedKFold : Takes class information into account to avoid building
+        folds with imbalanced class proportions (for binary or multiclass
+        classification tasks).
     """
 
     def __init__(self, n_splits=5):
@@ -778,10 +782,11 @@ class StratifiedGroupKFold(GroupsComsumerMixin, _BaseKFold):
     return stratified folds with non-overlapping groups. The folds are made by
     preserving the percentage of samples for each class.
 
-    The same group will not appear in two different folds (the number of
-    distinct groups has to be at least equal to the number of folds).
+    Each group will appear exactly once in the test set across all folds (the
+    number of distinct groups has to be at least equal to the number of folds).
 
-    The difference between GroupKFold and StratifiedGroupKFold is that
+    The difference between :class:`~sklearn.model_selection.GroupKFold`
+    and :class:`~sklearn.model_selection.StratifiedGroupKFold` is that
     the former attempts to create balanced folds such that the number of
     distinct groups is approximately the same in each fold, whereas
     StratifiedGroupKFold attempts to create folds which preserve the
@@ -1166,6 +1171,10 @@ class LeaveOneGroupOut(GroupsComsumerMixin, BaseCrossValidator):
     [[1 2]
      [3 4]] [[5 6]
      [7 8]] [1 2] [1 2]
+
+    See also
+    --------
+    GroupKFold: K-fold iterator variant with non-overlapping groups.
     """
 
     def _iter_test_masks(self, X, y, groups):
@@ -1830,6 +1839,12 @@ class GroupShuffleSplit(GroupsComsumerMixin, ShuffleSplit):
     ...     print("TRAIN:", train_idx, "TEST:", test_idx)
     TRAIN: [2 3 4 5 6 7] TEST: [0 1]
     TRAIN: [0 1 5 6 7] TEST: [2 3 4]
+
+    See Also
+    --------
+    ShuffleSplit : Shuffles samples to create independent test/train sets.
+
+    LeavePGroupsOut : Train set leaves out all possible subsets of `p` groups.
     """
 
     def __init__(
