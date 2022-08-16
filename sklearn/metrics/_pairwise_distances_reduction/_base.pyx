@@ -122,8 +122,8 @@ cdef class PairwiseDistancesReduction64:
         vectors of this chunk and vectors of all chunks of Y,
         one chunk of Y at a time.
 
-        This strategy is a sequence of embarrassingly parallel tasks
-        with no intermediate data structures synchronization at all.
+        This strategy is embarrassingly parallel with no intermediate data
+        structures synchronization at all.
 
         Private datastructures are modified internally by threads.
 
