@@ -1190,28 +1190,33 @@ def linear_kernel(X, Y=None, dense_output=True):
 
 def polynomial_kernel(X, Y=None, degree=3, gamma=None, coef0=1):
     """
-    Compute the polynomial kernel between X and Y::
+    Compute the polynomial kernel between X and Y.
 
-        K(X, Y) = (gamma <X, Y> + coef0)^degree
+    :math:`K(X, Y) = (gamma <X, Y> + coef0)^degree`
 
     Read more in the :ref:`User Guide <polynomial_kernel>`.
 
     Parameters
     ----------
     X : ndarray of shape (n_samples_X, n_features)
+        A feature array.
 
     Y : ndarray of shape (n_samples_Y, n_features), default=None
+        An optional second feature array. If `None`, uses `Y=X`.
 
     degree : int, default=3
+        Kernel degree.
 
     gamma : float, default=None
-        If None, defaults to 1.0 / n_features.
+        Coefficient of the vector inner product. If None, defaults to 1.0 / n_features.
 
     coef0 : float, default=1
+        Constant offset added to scaled inner product.
 
     Returns
     -------
     Gram matrix : ndarray of shape (n_samples_X, n_samples_Y)
+        The polynomial kernel.
     """
     X, Y = check_pairwise_arrays(X, Y)
     if gamma is None:
@@ -1225,8 +1230,7 @@ def polynomial_kernel(X, Y=None, degree=3, gamma=None, coef0=1):
 
 
 def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
-    """
-    Compute the sigmoid kernel between X and Y::
+    """Compute the sigmoid kernel between X and Y.
 
         K(X, Y) = tanh(gamma <X, Y> + coef0)
 
@@ -1235,18 +1239,21 @@ def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
     Parameters
     ----------
     X : ndarray of shape (n_samples_X, n_features)
+        A feature array.
 
     Y : ndarray of shape (n_samples_Y, n_features), default=None
-        If `None`, uses `Y=X`.
+        An optional second feature array. If `None`, uses `Y=X`.
 
     gamma : float, default=None
-        If None, defaults to 1.0 / n_features.
+        Coefficient of the vector inner product. If None, defaults to 1.0 / n_features.
 
     coef0 : float, default=1
+        Constant offset added to scaled inner product.
 
     Returns
     -------
     Gram matrix : ndarray of shape (n_samples_X, n_samples_Y)
+        Sigmoid kernel between two arrays.
     """
     X, Y = check_pairwise_arrays(X, Y)
     if gamma is None:
@@ -1260,8 +1267,7 @@ def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
 
 
 def rbf_kernel(X, Y=None, gamma=None):
-    """
-    Compute the rbf (gaussian) kernel between X and Y::
+    """Compute the rbf (gaussian) kernel between X and Y.
 
         K(x, y) = exp(-gamma ||x-y||^2)
 
@@ -1272,9 +1278,10 @@ def rbf_kernel(X, Y=None, gamma=None):
     Parameters
     ----------
     X : ndarray of shape (n_samples_X, n_features)
+        A feature array.
 
     Y : ndarray of shape (n_samples_Y, n_features), default=None
-        If `None`, uses `Y=X`.
+        An optional second feature array. If `None`, uses `Y=X`.
 
     gamma : float, default=None
         If None, defaults to 1.0 / n_features.
@@ -1282,6 +1289,7 @@ def rbf_kernel(X, Y=None, gamma=None):
     Returns
     -------
     kernel_matrix : ndarray of shape (n_samples_X, n_samples_Y)
+        The RBF kernel.
     """
     X, Y = check_pairwise_arrays(X, Y)
     if gamma is None:
