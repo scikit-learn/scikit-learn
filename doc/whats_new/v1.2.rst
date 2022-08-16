@@ -177,7 +177,7 @@ Changelog
 :mod:`sklearn.isotonic`
 .......................
 
-- |Feature| Adds the parameter `centered` to
+- |Feature| Adds the parameter `strict` to
   :class:`isotonic.IsotonicRegression` to use 'Centered Isotonic Regression'
   for building the interpolation function.
   :pr:`21454` by :user:`Mathijs <mathijs02>`.

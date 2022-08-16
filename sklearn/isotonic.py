@@ -165,7 +165,7 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
           the nearest train interval endpoint.
         - 'raise', a `ValueError` is raised.
 
-    centered : bool, default=False
+    strict : bool, default=False
         The fitted function `f_` is interpolated using the 'Centered Isotonic
         Regression' method of [4]_ which gives strictly monotonic
         interpolations as opposed to the non-strict interpolation with the
@@ -244,7 +244,7 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         "y_max": [Interval(Real, None, None, closed="both"), None],
         "increasing": ["boolean", StrOptions({"auto"})],
         "out_of_bounds": [StrOptions({"nan", "clip", "raise"})],
-        "centered": ["boolean"],
+        "strict": ["boolean"],
     }
 
     def __init__(
@@ -254,13 +254,13 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         y_max=None,
         increasing=True,
         out_of_bounds="nan",
-        centered=False,
+        strict=False,
     ):
         self.y_min = y_min
         self.y_max = y_max
         self.increasing = increasing
         self.out_of_bounds = out_of_bounds
-        self.centered = centered
+        self.strict = strict
 
     def _check_input_data_shape(self, X):
         if not (X.ndim == 1 or (X.ndim == 2 and X.shape[1] == 1)):
@@ -315,7 +315,7 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         # Handle the left and right bounds on X
         self.X_min_, self.X_max_ = np.min(X), np.max(X)
 
-        if self.centered:
+        if self.strict:
             X, y = self._build_cir_points(X, y, sample_weight)
             return X, y
         if trim_duplicates:
