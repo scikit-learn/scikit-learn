@@ -1251,7 +1251,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         and specifies that a single branch of a tree will either only split
         on features 0 and 1 or only split on features 2, 3 and 4.
 
-        .. versionadded:: 1.1
+        .. versionadded:: 1.2
 
     warm_start : bool, default=False
         When set to ``True``, reuse the solution of the previous call to fit
@@ -1608,7 +1608,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         and specifies that a single branch of a tree will either only split
         on features 0 and 1 or only split on features 2, 3 and 4.
 
-        .. versionadded:: 1.1
+        .. versionadded:: 1.2
 
     warm_start : bool, default=False
         When set to ``True``, reuse the solution of the previous call to fit
