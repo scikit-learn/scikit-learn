@@ -1169,6 +1169,30 @@ supported for multiclass context.
 
   * :ref:`sphx_glr_auto_examples_ensemble_plot_monotonic_constraints.py`
 
+.. _interaction_cst_hgbt:
+
+Interaction constraints
+-----------------------
+
+A priori, the histogram gradient boosting trees are allowed to use any feature
+to split a node into child nodes. This creates so called interactions between
+features. Sometimes, one wants to restrict the possible interactions. This can
+be done by the parameter ``interaction_cst``, where one can specify the
+indices of features that are allowed to interact
+For instance, with 3 features in total, ``interaction_cst=[{0}, {1}, {2}]``
+forbids all interactions.
+The constraints ``[{0, 1}, {1, 2}]`` specifies two groups of possibly
+interacting features. The first and second features may interact, as well as
+the second and third features. But note that the first and third are forbidden
+to interact. The following depicts a tree and the the possible
+splits of the tree::
+
+      1      <- Both constraint groups could be applied from now on
+     / \
+    1   2    <- Left split still fulfills both constraint groups.
+   / \ / \      Right split at feature 2 has only group {1, 2} from now on.
+
+
 Low-level parallelism
 ---------------------
 
