@@ -7,10 +7,10 @@ Neighborhood Component Analysis
 # License: BSD 3 clause
 
 from warnings import warn
+from numbers import Integral, Real
 import numpy as np
 import sys
 import time
-import numbers
 from scipy.optimize import minimize
 from ..utils.extmath import softmax
 from ..metrics import pairwise_distances
@@ -19,7 +19,8 @@ from ..preprocessing import LabelEncoder
 from ..decomposition import PCA
 from ..utils.multiclass import check_classification_targets
 from ..utils.random import check_random_state
-from ..utils.validation import check_is_fitted, check_array, check_scalar
+from ..utils.validation import check_is_fitted, check_array
+from ..utils._param_validation import Interval, StrOptions
 from ..exceptions import ConvergenceWarning
 
 
@@ -175,6 +176,23 @@ class NeighborhoodComponentsAnalysis(
     >>> print(knn.score(nca.transform(X_test), y_test))
     0.961904...
     """
+
+    _parameter_constraints = {
+        "n_components": [
+            Interval(Integral, 1, None, closed="left"),
+            None,
+        ],
+        "init": [
+            StrOptions({"auto", "pca", "lda", "identity", "random"}),
+            "array-like",
+        ],
+        "warm_start": ["boolean"],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "callback": [callable, None],
+        "verbose": [Interval(Integral, 0, None, closed="left")],
+        "random_state": ["random_state"],
+    }
 
     def __init__(
         self,
@@ -334,8 +352,6 @@ class NeighborhoodComponentsAnalysis(
 
         # Check the preferred dimensionality of the projected space
         if self.n_components is not None:
-            check_scalar(self.n_components, "n_components", numbers.Integral, min_val=1)
-
             if self.n_components > X.shape[1]:
                 raise ValueError(
                     "The preferred dimensionality of the "
@@ -345,7 +361,6 @@ class NeighborhoodComponentsAnalysis(
                 )
 
         # If warm_start is enabled, check that the inputs are consistent
-        check_scalar(self.warm_start, "warm_start", bool)
         if self.warm_start and hasattr(self, "components_"):
             if self.components_.shape[1] != X.shape[1]:
                 raise ValueError(
@@ -355,14 +370,6 @@ class NeighborhoodComponentsAnalysis(
                         X.shape[1], self.components_.shape[1]
                     )
                 )
-
-        check_scalar(self.max_iter, "max_iter", numbers.Integral, min_val=1)
-        check_scalar(self.tol, "tol", numbers.Real, min_val=0.0)
-        check_scalar(self.verbose, "verbose", numbers.Integral, min_val=0)
-
-        if self.callback is not None:
-            if not callable(self.callback):
-                raise ValueError("`callback` is not callable.")
 
         # Check how the linear transformation should be initialized
         init = self.init
