@@ -386,24 +386,6 @@ def test_trustworthiness_not_euclidean_metric():
 
 
 @pytest.mark.filterwarnings("ignore:The default learning rate in TSNE")
-@pytest.mark.filterwarnings("ignore:The default initialization in TSNE")
-def test_early_exaggeration_too_small():
-    # Early exaggeration factor must be >= 1.
-    tsne = TSNE(early_exaggeration=0.99, perplexity=1)
-    with pytest.raises(ValueError, match="early_exaggeration .*"):
-        tsne.fit_transform(np.array([[0.0], [0.0]]))
-
-
-@pytest.mark.filterwarnings("ignore:The default learning rate in TSNE")
-@pytest.mark.filterwarnings("ignore:The default initialization in TSNE")
-def test_too_few_iterations():
-    # Number of gradient descent iterations must be at least 200.
-    tsne = TSNE(n_iter=199, perplexity=1)
-    with pytest.raises(ValueError, match="n_iter .*"):
-        tsne.fit_transform(np.array([[0.0], [0.0]]))
-
-
-@pytest.mark.filterwarnings("ignore:The default learning rate in TSNE")
 @pytest.mark.parametrize(
     "method, retype",
     [
@@ -490,15 +472,6 @@ def test_non_positive_computed_distances():
         tsne.fit_transform(X)
 
 
-@pytest.mark.filterwarnings("ignore:The default learning rate in TSNE")
-def test_init_not_available():
-    # 'init' must be 'pca', 'random', or numpy array.
-    tsne = TSNE(init="not available", perplexity=1)
-    m = "'init' must be 'pca', 'random', or a numpy array"
-    with pytest.raises(ValueError, match=m):
-        tsne.fit_transform(np.array([[0.0], [1.0]]))
-
-
 def test_init_ndarray():
     # Initialize TSNE with ndarray and test fit
     tsne = TSNE(init=np.zeros((100, 2)), learning_rate="auto")
@@ -515,38 +488,6 @@ def test_init_ndarray_precomputed():
         learning_rate=50.0,
     )
     tsne.fit(np.zeros((100, 100)))
-
-
-@pytest.mark.filterwarnings("ignore:The default learning rate in TSNE")
-@pytest.mark.filterwarnings("ignore:The default initialization in TSNE")
-def test_distance_not_available():
-    # 'metric' must be valid.
-    tsne = TSNE(metric="not available", method="exact", perplexity=1)
-    with pytest.raises(ValueError, match="Unknown metric not available.*"):
-        tsne.fit_transform(np.array([[0.0], [1.0]]))
-
-    tsne = TSNE(metric="not available", method="barnes_hut", perplexity=1)
-    with pytest.raises(ValueError, match="Metric 'not available' not valid.*"):
-        tsne.fit_transform(np.array([[0.0], [1.0]]))
-
-
-@pytest.mark.filterwarnings("ignore:The default learning rate in TSNE")
-@pytest.mark.filterwarnings("ignore:The default initialization in TSNE")
-def test_method_not_available():
-    # 'nethod' must be 'barnes_hut' or 'exact'
-    tsne = TSNE(method="not available", perplexity=1)
-    with pytest.raises(ValueError, match="'method' must be 'barnes_hut' or "):
-        tsne.fit_transform(np.array([[0.0], [1.0]]))
-
-
-@pytest.mark.filterwarnings("ignore:The default learning rate in TSNE")
-@pytest.mark.filterwarnings("ignore:The default initialization in TSNE")
-def test_angle_out_of_range_checks():
-    # check the angle parameter range
-    for angle in [-1, -1e-6, 1 + 1e-6, 2]:
-        tsne = TSNE(angle=angle, perplexity=1)
-        with pytest.raises(ValueError, match="'angle' must be between 0.0 - 1.0"):
-            tsne.fit_transform(np.array([[0.0], [1.0]]))
 
 
 @pytest.mark.filterwarnings("ignore:The default learning rate in TSNE")
@@ -1107,32 +1048,54 @@ def test_gradient_bh_multithread_match_sequential():
         assert_allclose(grad_multithread, grad_multithread)
 
 
-def test_tsne_with_different_distance_metrics():
+@pytest.mark.parametrize(
+    "metric, dist_func",
+    [("manhattan", manhattan_distances), ("cosine", cosine_distances)],
+)
+@pytest.mark.parametrize("method", ["barnes_hut", "exact"])
+def test_tsne_with_different_distance_metrics(metric, dist_func, method):
     """Make sure that TSNE works for different distance metrics"""
+
+    if method == "barnes_hut" and metric == "manhattan":
+        # The distances computed by `manhattan_distances` differ slightly from those
+        # computed internally by NearestNeighbors via the PairwiseDistancesReduction
+        # Cython code-based. This in turns causes T-SNE to converge to a different
+        # solution but this should not impact the qualitative results as both
+        # methods.
+        # NOTE: it's probably not valid from a mathematical point of view to use the
+        # Manhattan distance for T-SNE...
+        # TODO: re-enable this test if/when `manhattan_distances` is refactored to
+        # reuse the same underlying Cython code NearestNeighbors.
+        # For reference, see:
+        # https://github.com/scikit-learn/scikit-learn/pull/23865/files#r925721573
+        pytest.xfail(
+            "Distance computations are different for method == 'barnes_hut' and metric"
+            " == 'manhattan', but this is expected."
+        )
+
     random_state = check_random_state(0)
     n_components_original = 3
     n_components_embedding = 2
     X = random_state.randn(50, n_components_original).astype(np.float32)
-    metrics = ["manhattan", "cosine"]
-    dist_funcs = [manhattan_distances, cosine_distances]
-    for metric, dist_func in zip(metrics, dist_funcs):
-        X_transformed_tsne = TSNE(
-            metric=metric,
-            n_components=n_components_embedding,
-            random_state=0,
-            n_iter=300,
-            init="random",
-            learning_rate="auto",
-        ).fit_transform(X)
-        X_transformed_tsne_precomputed = TSNE(
-            metric="precomputed",
-            n_components=n_components_embedding,
-            random_state=0,
-            n_iter=300,
-            init="random",
-            learning_rate="auto",
-        ).fit_transform(dist_func(X))
-        assert_array_equal(X_transformed_tsne, X_transformed_tsne_precomputed)
+    X_transformed_tsne = TSNE(
+        metric=metric,
+        method=method,
+        n_components=n_components_embedding,
+        random_state=0,
+        n_iter=300,
+        init="random",
+        learning_rate="auto",
+    ).fit_transform(X)
+    X_transformed_tsne_precomputed = TSNE(
+        metric="precomputed",
+        method=method,
+        n_components=n_components_embedding,
+        random_state=0,
+        n_iter=300,
+        init="random",
+        learning_rate="auto",
+    ).fit_transform(dist_func(X))
+    assert_array_equal(X_transformed_tsne, X_transformed_tsne_precomputed)
 
 
 # TODO: Remove in 1.2
@@ -1176,15 +1139,6 @@ def test_tsne_learning_rate_futurewarning(learning_rate):
         with warnings.catch_warnings():
             warnings.simplefilter("error", FutureWarning)
             tsne.fit_transform(X)
-
-
-@pytest.mark.filterwarnings("ignore:The default initialization in TSNE")
-def test_tsne_negative_learning_rate():
-    """Make sure that negative learning rate results in a ValueError"""
-    random_state = check_random_state(0)
-    X = random_state.randn(5, 2)
-    with pytest.raises(ValueError, match="'learning_rate' must be.*"):
-        TSNE(learning_rate=-50.0, perplexity=4).fit_transform(X)
 
 
 @pytest.mark.parametrize("method", ["exact", "barnes_hut"])
