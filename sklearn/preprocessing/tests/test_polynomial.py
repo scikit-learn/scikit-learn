@@ -3,7 +3,6 @@ import pytest
 from scipy import sparse
 from scipy.sparse import random as sparse_random
 from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils.fixes import sp_version, parse_version
 
 from numpy.testing import assert_allclose, assert_array_equal
 from scipy.interpolate import BSpline
@@ -926,24 +925,17 @@ def test_csr_polynomial_expansion_index_overflow():
     assert X_trans.dtype == X.dtype
     assert X_trans.indptr.dtype == X_trans.indices.dtype == np.int32
 
-    # Breaks when `n_output_features_ > max_int32` for scipy
-    # versions earlier than 1.8.0
-    # Depends on upstream bug fix
-    if sp_version >= parse_version("1.8.0.dev0"):
-        pf = PolynomialFeatures(interaction_only=False, include_bias=False, degree=2)
-        X_trans = pf.fit_transform(X)
-        assert X_trans.dtype == X.dtype
-        assert X_trans.indptr.dtype == X_trans.indices.dtype == np.int64
-        assert X_trans.indices.max() == pf.n_output_features_ - 1
+    pf = PolynomialFeatures(interaction_only=False, include_bias=False, degree=2)
+    X_trans = pf.fit_transform(X)
+    assert X_trans.dtype == X.dtype
+    assert X_trans.indptr.dtype == X_trans.indices.dtype == np.int64
+    assert X_trans.indices.max() == pf.n_output_features_ - 1
 
-        pf = PolynomialFeatures(interaction_only=False, include_bias=True, degree=2)
-        X_trans = pf.fit_transform(X)
-        assert X_trans.dtype == X.dtype
-        assert X_trans.indptr.dtype == X_trans.indices.dtype == np.int64
-        assert X_trans.indices.max() == pf.n_output_features_ - 1
-
-    else:
-        pytest.xfail("Requires scipy 1.8.0.dev0 or newer.")
+    pf = PolynomialFeatures(interaction_only=False, include_bias=True, degree=2)
+    X_trans = pf.fit_transform(X)
+    assert X_trans.dtype == X.dtype
+    assert X_trans.indptr.dtype == X_trans.indices.dtype == np.int64
+    assert X_trans.indices.max() == pf.n_output_features_ - 1
 
 
 # TODO: Remove in 1.2 when get_feature_names is removed

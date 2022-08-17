@@ -3,13 +3,15 @@
 
 cimport cython
 from libc.stdlib cimport malloc, free
+from libcpp.vector cimport vector
 
 cimport numpy as cnp
 cnp.import_array()
 
 # Fused type for data
 ctypedef fused DATA_t:
-    cython.numeric
+    cython.integral
+    cython.floating
 
 # Fused types for indices and indptr.
 # Need uniquely named fused types to generate full cross-product for all four
@@ -29,11 +31,15 @@ ctypedef fused IND_OUT_t:
     cnp.int32_t
     cnp.int64_t
 
+# Typedefs for templating
+ctypedef IND_IN_t* IND_IN_p
+ctypedef DATA_t* DATA_p
+
 # TODO Add const keyword to input arrays in Cython 3.X
 cpdef void _csr_hstack(
     const Py_ssize_t n_blocks,      # Number of matrices to stack
     const Py_ssize_t n_rows,        # Number of rows (same across all matrices)
-    const cnp.int32_t[:] n_cols,    # Number of columns (one per matrix)
+    const cnp.int64_t[:] n_cols,    # Number of columns (one per matrix)
     IND_IN_t[:] indptr_cat,         # Input concatenated array of indptrs
     IND_IN_t[:] indices_cat,        # Input concatenated array of indices
     DATA_t[:] data_cat,             # Input concatenated array of data
@@ -44,19 +50,15 @@ cpdef void _csr_hstack(
 
     cdef:
         Py_ssize_t offset, row_start, row_end, row_sum, idx, jdx, kdx
-        IND_IN_t* col_offset
-        IND_IN_t** indptr_bound
-        IND_IN_t** indices_bound
-        DATA_t** data_bound
+        vector[IND_IN_t] col_offset = vector[IND_IN_t](n_blocks)
+        vector[IND_IN_p] indptr_bound = vector[IND_IN_p](n_blocks)
+        vector[IND_IN_p] indices_bound = vector[IND_IN_p](n_blocks)
+        vector[DATA_p] data_bound = vector[DATA_p](n_blocks)
 
     # The bounds will store the locations/indices of the flat concatenated
     # arrays that correspond to each block. Need to dynamically allocate their
     # memory.
     with nogil:
-        col_offset = <IND_IN_t*> malloc(n_blocks * sizeof(IND_IN_t))
-        indptr_bound = <IND_IN_t**> malloc(n_blocks * sizeof(IND_IN_t*))
-        indices_bound = <IND_IN_t**> malloc(n_blocks * sizeof(IND_IN_t*))
-        data_bound = <DATA_t**> malloc(n_blocks * sizeof(DATA_t*))
 
         # We set the initial pointers/values here and update iteratively
         col_offset[0] = 0
@@ -94,10 +96,4 @@ cpdef void _csr_hstack(
 
             # Cumulative row index (indptr)
             indptr[idx + 1] = row_sum
-
-        # Free the memory allocated earlier
-        free(col_offset)
-        free(indptr_bound)
-        free(indices_bound)
-        free(data_bound)
         return

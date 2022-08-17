@@ -36,8 +36,8 @@ def _csr_hstack(columns, dtype=np.float64):
         matrices must have the same number of rows.
 
     dtype : dtype, default=np.float64
-        The type of feature values. The output of the stackin operation is cast
-        to this type.
+        The type of feature values. The output of the stacking operation is
+        cast to this type if this type is wider (i.e. `float32`-->`float64`).
 
     Returns
     -------
@@ -72,10 +72,10 @@ def _csr_hstack(columns, dtype=np.float64):
         max_output_index += int(columns[-1].indices.max())
         max_indptr = max(max_indptr, columns[-1].indptr.max())
     max_int32 = np.iinfo(np.int32).max
-    needs_64bit = max(max_output_index, max_indptr) > max_int32
+    needs_64bit = dtype is np.float64 or max(max_output_index, max_indptr) > max_int32
     idx_dtype = np.int64 if needs_64bit else np.int32
 
-    stack_dim_cat = np.array([mat.shape[0] for mat in columns], dtype=idx_dtype)
+    stack_dim_cat = np.array([mat.shape[0] for mat in columns], dtype=np.int64)
     if data_cat.size > 0:
         indptr_cat = np.concatenate(indptr_list).astype(idx_dtype)
         indices_cat = np.concatenate([mat.indices for mat in columns]).astype(idx_dtype)
