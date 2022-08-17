@@ -1068,16 +1068,8 @@ def test_calibrated_classifier_deprecation_base_estimator(data):
 def test_calibration_groupkfold(data):
     # Check that groups are routed to the splitter
     X, y = data
-    split_groups = np.array([0, 1] * (len(y) // 2))
-
-    class MyGroupKFold(GroupKFold):
-        """Custom Splitter that checks that the values of groups are correct"""
-
-        def split(self, X, y=None, groups=None):
-            assert (groups == split_groups).all()
-            return super().split(X, y=y, groups=groups)
-
-    cv = MyGroupKFold(n_splits=2)
+    groups = np.array([0, 1] * (len(y) // 2))  # assumes len(y) is even
+    cv = GroupKFold(n_splits=2)
     calib_clf = CalibratedClassifierCV(cv=cv)
     # check that fitting does not raise an error
-    calib_clf.fit(X, y, groups=split_groups)
+    calib_clf.fit(X, y, groups=groups)
