@@ -191,16 +191,16 @@ class TreeGrower:
     finalized_leaves : list of TreeNode
     splittable_nodes : list of TreeNode
     missing_values_bin_idx : int
-        equals n_bins - 1
+        Equals n_bins - 1
     n_categorical_splits : int
     n_features : int
     n_nodes : int
     total_find_split_time : float
-        time spent finding the best splits
+        Time spent finding the best splits
     total_compute_hist_time : float
-        time spent computing histograms
+        Time spent computing histograms
     total_apply_split_time : float
-        time spent splitting nodes
+        Time spent splitting nodes
     with_monotonic_cst : bool
         Whether there are monotonic constraints that apply. False iff monotonic_cst is
         None.

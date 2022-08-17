@@ -138,7 +138,7 @@ cdef class Splitter:
         Indicates categorical features.
     monotonic_cst : ndarray of shape (n_features,), dtype=int
         Indicates the monotonic constraint to enforce on each feature. -1, 1
-        and 0 respectively correspond to a positive constraint, negative
+        and 0 respectively correspond to a negative constraint, positive
         constraint and no constraint.
     l2_regularization : float
         The L2 regularization parameter.
