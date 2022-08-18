@@ -922,7 +922,7 @@ def test_csr_polynomial_expansion_index_overflow():
     n_features = 65535  # barely small enough to stay in int32
     col = [n_features - 1]
     first_degree_idx = n_features - 1
-    second_degree_idx = n_features * (n_features + 1) / 2 + first_degree_idx
+    second_degree_idx = int(n_features * (n_features + 1) / 2 + first_degree_idx)
 
     X = sparse.csr_matrix((data, (row, col)))
     pf = PolynomialFeatures(interaction_only=True, include_bias=False, degree=2)
