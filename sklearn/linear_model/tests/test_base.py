@@ -14,7 +14,6 @@ from scipy import linalg
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_allclose
-from sklearn.utils import check_random_state
 
 from sklearn.linear_model import LinearRegression
 from sklearn.linear_model._base import _deprecate_normalize
@@ -27,7 +26,6 @@ from sklearn.datasets import load_iris
 from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import add_dummy_feature
 
-rng = np.random.RandomState(0)
 rtol = 1e-6
 
 
@@ -57,8 +55,10 @@ def test_linear_regression():
 
 @pytest.mark.parametrize("array_constr", [np.array, sparse.csr_matrix])
 @pytest.mark.parametrize("fit_intercept", [True, False])
-def test_linear_regression_sample_weights(array_constr, fit_intercept):
-    rng = np.random.RandomState(0)
+def test_linear_regression_sample_weights(
+    array_constr, fit_intercept, global_random_seed
+):
+    rng = np.random.RandomState(global_random_seed)
 
     # It would not work with under-determined systems
     n_samples, n_features = 6, 5
@@ -75,7 +75,6 @@ def test_linear_regression_sample_weights(array_constr, fit_intercept):
     inter1 = reg.intercept_
 
     assert reg.coef_.shape == (X.shape[1],)  # sanity checks
-    assert reg.score(X, y) > 0.5
 
     # Closed form of the weighted least square
     # theta = (X^T W X)^(-1) @ X^T W y
@@ -105,25 +104,22 @@ def test_raises_value_error_if_positive_and_sparse():
         reg.fit(X, y)
 
 
-def test_raises_value_error_if_sample_weights_greater_than_1d():
+@pytest.mark.parametrize("n_samples, n_features", [(2, 3), (3, 2)])
+def test_raises_value_error_if_sample_weights_greater_than_1d(n_samples, n_features):
     # Sample weights must be either scalar or 1D
+    rng = np.random.RandomState(0)
+    X = rng.randn(n_samples, n_features)
+    y = rng.randn(n_samples)
+    sample_weights_OK = rng.randn(n_samples) ** 2 + 1
+    sample_weights_OK_1 = 1.0
+    sample_weights_OK_2 = 2.0
 
-    n_sampless = [2, 3]
-    n_featuress = [3, 2]
+    reg = LinearRegression()
 
-    for n_samples, n_features in zip(n_sampless, n_featuress):
-        X = rng.randn(n_samples, n_features)
-        y = rng.randn(n_samples)
-        sample_weights_OK = rng.randn(n_samples) ** 2 + 1
-        sample_weights_OK_1 = 1.0
-        sample_weights_OK_2 = 2.0
-
-        reg = LinearRegression()
-
-        # make sure the "OK" sample weights actually work
-        reg.fit(X, y, sample_weights_OK)
-        reg.fit(X, y, sample_weights_OK_1)
-        reg.fit(X, y, sample_weights_OK_2)
+    # make sure the "OK" sample weights actually work
+    reg.fit(X, y, sample_weights_OK)
+    reg.fit(X, y, sample_weights_OK_1)
+    reg.fit(X, y, sample_weights_OK_2)
 
 
 def test_fit_intercept():
@@ -195,20 +191,19 @@ def test_deprecate_normalize(normalize, default):
     assert _normalize == output
 
 
-def test_linear_regression_sparse(random_state=0):
+def test_linear_regression_sparse(global_random_seed):
     # Test that linear regression also works with sparse data
-    random_state = check_random_state(random_state)
-    for i in range(10):
-        n = 100
-        X = sparse.eye(n, n)
-        beta = random_state.rand(n)
-        y = X * beta[:, np.newaxis]
+    rng = np.random.RandomState(global_random_seed)
+    n = 100
+    X = sparse.eye(n, n)
+    beta = rng.rand(n)
+    y = X @ beta
 
-        ols = LinearRegression()
-        ols.fit(X, y.ravel())
-        assert_array_almost_equal(beta, ols.coef_ + ols.intercept_)
+    ols = LinearRegression()
+    ols.fit(X, y.ravel())
+    assert_array_almost_equal(beta, ols.coef_ + ols.intercept_)
 
-        assert_array_almost_equal(ols.predict(X) - y.ravel(), 0)
+    assert_array_almost_equal(ols.predict(X) - y.ravel(), 0)
 
 
 # FIXME: 'normalize' to be removed in 1.2 in LinearRegression
@@ -217,7 +212,7 @@ def test_linear_regression_sparse(random_state=0):
 @pytest.mark.parametrize("fit_intercept", [True, False])
 def test_linear_regression_sparse_equal_dense(normalize, fit_intercept):
     # Test that linear regression agrees between sparse and dense
-    rng = check_random_state(0)
+    rng = np.random.RandomState(0)
     n_samples = 200
     n_features = 2
     X = rng.randn(n_samples, n_features)
@@ -233,9 +228,10 @@ def test_linear_regression_sparse_equal_dense(normalize, fit_intercept):
     assert_allclose(clf_dense.coef_, clf_sparse.coef_)
 
 
-def test_linear_regression_multiple_outcome(random_state=0):
+def test_linear_regression_multiple_outcome():
     # Test multiple-outcome linear regressions
-    X, y = make_regression(random_state=random_state)
+    rng = np.random.RandomState(0)
+    X, y = make_regression(random_state=rng)
 
     Y = np.vstack((y, y)).T
     n_features = X.shape[1]
@@ -249,10 +245,10 @@ def test_linear_regression_multiple_outcome(random_state=0):
     assert_array_almost_equal(np.vstack((y_pred, y_pred)).T, Y_pred, decimal=3)
 
 
-def test_linear_regression_sparse_multiple_outcome(random_state=0):
+def test_linear_regression_sparse_multiple_outcome(global_random_seed):
     # Test multiple-outcome linear regressions with sparse data
-    random_state = check_random_state(random_state)
-    X, y = make_sparse_uncorrelated(random_state=random_state)
+    rng = np.random.RandomState(global_random_seed)
+    X, y = make_sparse_uncorrelated(random_state=rng)
     X = sparse.coo_matrix(X)
     Y = np.vstack((y, y)).T
     n_features = X.shape[1]
@@ -289,10 +285,10 @@ def test_linear_regression_positive():
     assert_allclose(reg.predict(X), [0])
 
 
-def test_linear_regression_positive_multiple_outcome(random_state=0):
+def test_linear_regression_positive_multiple_outcome(global_random_seed):
     # Test multiple-outcome nonnegative linear regressions
-    random_state = check_random_state(random_state)
-    X, y = make_sparse_uncorrelated(random_state=random_state)
+    rng = np.random.RandomState(global_random_seed)
+    X, y = make_sparse_uncorrelated(random_state=rng)
     Y = np.vstack((y, y)).T
     n_features = X.shape[1]
 
@@ -306,9 +302,10 @@ def test_linear_regression_positive_multiple_outcome(random_state=0):
     assert_allclose(np.vstack((y_pred, y_pred)).T, Y_pred)
 
 
-def test_linear_regression_positive_vs_nonpositive():
+def test_linear_regression_positive_vs_nonpositive(global_random_seed):
     # Test differences with LinearRegression when positive=False.
-    X, y = make_sparse_uncorrelated(random_state=0)
+    rng = np.random.RandomState(global_random_seed)
+    X, y = make_sparse_uncorrelated(random_state=rng)
 
     reg = LinearRegression(positive=True)
     reg.fit(X, y)
@@ -318,9 +315,10 @@ def test_linear_regression_positive_vs_nonpositive():
     assert np.mean((reg.coef_ - regn.coef_) ** 2) > 1e-3
 
 
-def test_linear_regression_positive_vs_nonpositive_when_positive():
+def test_linear_regression_positive_vs_nonpositive_when_positive(global_random_seed):
     # Test LinearRegression fitted coefficients
     # when the problem is positive.
+    rng = np.random.RandomState(global_random_seed)
     n_samples = 200
     n_features = 4
     X = rng.rand(n_samples, n_features)
@@ -362,7 +360,8 @@ def test_linear_regression_pd_sparse_dataframe_warning():
         reg.fit(df.iloc[:, 0:2], df.iloc[:, 3])
 
 
-def test_preprocess_data():
+def test_preprocess_data(global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
     n_samples = 200
     n_features = 2
     X = rng.rand(n_samples, n_features)
@@ -399,7 +398,8 @@ def test_preprocess_data():
     assert_array_almost_equal(yt, y - expected_y_mean)
 
 
-def test_preprocess_data_multioutput():
+def test_preprocess_data_multioutput(global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
     n_samples = 200
     n_features = 3
     n_outputs = 2
@@ -427,7 +427,8 @@ def test_preprocess_data_multioutput():
 
 
 @pytest.mark.parametrize("is_sparse", [False, True])
-def test_preprocess_data_weighted(is_sparse):
+def test_preprocess_data_weighted(is_sparse, global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
     n_samples = 200
     n_features = 4
     # Generate random data with 50% of zero values to make sure
@@ -530,11 +531,11 @@ def test_preprocess_data_weighted(is_sparse):
     assert_array_almost_equal(yt, y - expected_y_mean)
 
 
-def test_sparse_preprocess_data_offsets():
+def test_sparse_preprocess_data_offsets(global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
     n_samples = 200
     n_features = 2
-    # random_state not supported yet in sparse.rand
-    X = sparse.rand(n_samples, n_features, density=0.5)  # , random_state=rng
+    X = sparse.rand(n_samples, n_features, density=0.5, random_state=rng)
     X = X.tolil()
     y = rng.rand(n_samples)
     XA = X.toarray()
@@ -598,7 +599,8 @@ def test_preprocess_copy_data_no_checks(is_sparse, to_copy):
         assert np.may_share_memory(X_, X)
 
 
-def test_dtype_preprocess_data():
+def test_dtype_preprocess_data(global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
     n_samples = 200
     n_features = 2
     X = rng.rand(n_samples, n_features)
@@ -677,7 +679,8 @@ def test_dtype_preprocess_data():
 
 
 @pytest.mark.parametrize("n_targets", [None, 2])
-def test_rescale_data_dense(n_targets):
+def test_rescale_data_dense(n_targets, global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
     n_samples = 200
     n_features = 2
 

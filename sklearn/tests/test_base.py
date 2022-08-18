@@ -229,7 +229,7 @@ def test_str():
 
 
 def test_get_params():
-    test = T(K(), K())
+    test = T(K(), K)
 
     assert "a__d" in test.get_params(deep=True)
     assert "a__d" not in test.get_params(deep=False)
@@ -653,9 +653,9 @@ def test_feature_names_in():
         "Feature names only support names that are all strings. "
         "Got feature names with dtypes: ['int', 'str']"
     )
-    with pytest.warns(FutureWarning, match=msg) as record:
+    with pytest.warns(FutureWarning, match=msg):
         trans.fit(df_mixed)
 
     # transform on feature names that are mixed also warns:
-    with pytest.warns(FutureWarning, match=msg) as record:
+    with pytest.warns(FutureWarning, match=msg):
         trans.transform(df_mixed)

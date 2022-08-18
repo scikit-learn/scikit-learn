@@ -182,6 +182,28 @@ class TreeGrower:
         to determine the effective number of threads use, which takes cgroups CPU
         quotes into account. See the docstring of `_openmp_effective_n_threads`
         for details.
+
+    Attributes
+    ----------
+    histogram_builder : HistogramBuilder
+    splitter : Splitter
+    root : TreeNode
+    finalized_leaves : list of TreeNode
+    splittable_nodes : list of TreeNode
+    missing_values_bin_idx : int
+        Equals n_bins - 1
+    n_categorical_splits : int
+    n_features : int
+    n_nodes : int
+    total_find_split_time : float
+        Time spent finding the best splits
+    total_compute_hist_time : float
+        Time spent computing histograms
+    total_apply_split_time : float
+        Time spent splitting nodes
+    with_monotonic_cst : bool
+        Whether there are monotonic constraints that apply. False iff monotonic_cst is
+        None.
     """
 
     def __init__(
@@ -206,11 +228,7 @@ class TreeGrower:
 
         self._validate_parameters(
             X_binned,
-            max_leaf_nodes,
-            max_depth,
-            min_samples_leaf,
             min_gain_to_split,
-            l2_regularization,
             min_hessian_to_split,
         )
         n_threads = _openmp_effective_n_threads(n_threads)
@@ -309,11 +327,7 @@ class TreeGrower:
     def _validate_parameters(
         self,
         X_binned,
-        max_leaf_nodes,
-        max_depth,
-        min_samples_leaf,
         min_gain_to_split,
-        l2_regularization,
         min_hessian_to_split,
     ):
         """Validate parameters passed to __init__.
@@ -327,27 +341,9 @@ class TreeGrower:
                 "X_binned should be passed as Fortran contiguous "
                 "array for maximum efficiency."
             )
-        if max_leaf_nodes is not None and max_leaf_nodes <= 1:
-            raise ValueError(
-                "max_leaf_nodes={} should not be smaller than 2".format(max_leaf_nodes)
-            )
-        if max_depth is not None and max_depth < 1:
-            raise ValueError(
-                "max_depth={} should not be smaller than 1".format(max_depth)
-            )
-        if min_samples_leaf < 1:
-            raise ValueError(
-                "min_samples_leaf={} should not be smaller than 1".format(
-                    min_samples_leaf
-                )
-            )
         if min_gain_to_split < 0:
             raise ValueError(
                 "min_gain_to_split={} must be positive.".format(min_gain_to_split)
-            )
-        if l2_regularization < 0:
-            raise ValueError(
-                "l2_regularization={} must be positive.".format(l2_regularization)
             )
         if min_hessian_to_split < 0:
             raise ValueError(
