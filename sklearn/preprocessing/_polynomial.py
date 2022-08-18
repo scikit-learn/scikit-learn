@@ -75,7 +75,7 @@ def _csr_hstack(columns, dtype=np.float64):
     needs_64bit = dtype is np.float64 or max(max_output_index, max_indptr) > max_int32
     idx_dtype = np.int64 if needs_64bit else np.int32
 
-    stack_dim_cat = np.array([mat.shape[0] for mat in columns], dtype=np.int64)
+    stack_dim_cat = np.array([mat.shape[1] for mat in columns], dtype=np.int64)
     if data_cat.size > 0:
         indptr_cat = np.concatenate(indptr_list).astype(idx_dtype)
         indices_cat = np.concatenate([mat.indices for mat in columns]).astype(idx_dtype)
@@ -474,7 +474,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
             to_stack = []
             if self.include_bias:
                 to_stack.append(
-                    sparse.csc_matrix(np.ones(shape=(n_samples, 1), dtype=X.dtype))
+                    sparse.csr_matrix(np.ones(shape=(n_samples, 1), dtype=X.dtype))
                 )
             if self._min_degree <= 1 and self._max_degree > 0:
                 to_stack.append(X)
@@ -525,7 +525,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
             else:
                 # Breaks when `n_output_features_ > max_int32` for scipy
                 # versions earlier than 1.8.0
-                XP = sparse.hstack(to_stack, format="csr", dtype=X.dtype)
+                XP = _csr_hstack(to_stack, dtype=X.dtype)
         elif sparse.isspmatrix_csc(X) and self._max_degree < 4:
             return self.transform(X.tocsr()).tocsc()
         elif sparse.isspmatrix(X):
@@ -546,7 +546,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                 else:
                     bias = sparse.csc_matrix(np.ones((X.shape[0], 1)))
                     columns.append(bias)
-            XP = _csr_hstack(columns, dtype=X.dtype).tocsc()
+            XP = sparse.hstack(columns, dtype=X.dtype).tocsc()
         else:
             # Do as if _min_degree = 0 and cut down array after the
             # computation, i.e. use _n_out_full instead of n_output_features_.
