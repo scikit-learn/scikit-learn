@@ -919,24 +919,37 @@ def test_csr_polynomial_expansion_index_overflow():
 
     data = [1.0]
     row = [0]
-    col = [65535 - 1]  # barely small enough to stay in int32
+    n_features = 65535  # barely small enough to stay in int32
+    col = [n_features - 1]
+    first_degree_idx = n_features - 1
+    second_degree_idx = n_features * (n_features + 1) / 2 + first_degree_idx
+
     X = sparse.csr_matrix((data, (row, col)))
     pf = PolynomialFeatures(interaction_only=True, include_bias=False, degree=2)
     X_trans = pf.fit_transform(X)
     assert X_trans.dtype == X.dtype
     assert X_trans.indptr.dtype == X_trans.indices.dtype == np.int32
+    assert X_trans.nnz == 1
+    assert X_trans[0, first_degree_idx] == pytest.approx(1.0)
 
     pf = PolynomialFeatures(interaction_only=False, include_bias=False, degree=2)
     X_trans = pf.fit_transform(X)
     assert X_trans.dtype == X.dtype
     assert X_trans.indptr.dtype == X_trans.indices.dtype == np.int64
     assert X_trans.indices.max() == pf.n_output_features_ - 1
+    assert X_trans.nnz == 2
+    assert X_trans[0, first_degree_idx] == pytest.approx(1.0)
+    assert X_trans[0, second_degree_idx] == pytest.approx(1.0)
 
     pf = PolynomialFeatures(interaction_only=False, include_bias=True, degree=2)
     X_trans = pf.fit_transform(X)
     assert X_trans.dtype == X.dtype
     assert X_trans.indptr.dtype == X_trans.indices.dtype == np.int64
     assert X_trans.indices.max() == pf.n_output_features_ - 1
+    assert X_trans.nnz == 3
+    assert X_trans[0, 0] == pytest.approx(1.0)
+    assert X_trans[0, first_degree_idx + 1] == pytest.approx(1.0)
+    assert X_trans[0, second_degree_idx + 1] == pytest.approx(1.0)
 
 
 # TODO: Remove in 1.2 when get_feature_names is removed
