@@ -2111,3 +2111,33 @@ def test_column_transformer_set_output(verbose_feature_names_out, remainder):
     feature_names_out = ct.get_feature_names_out()
     assert_array_equal(X_trans.columns, feature_names_out)
     assert_array_equal(X_trans.index, df_test.index)
+
+
+def test_column_transform_set_output_mixed():
+    pd = pytest.importorskip("pandas")
+    df = pd.DataFrame(
+        {
+            "pet": pd.Series(["dog", "cat", "snake"], dtype="category"),
+            "color": pd.Series(["green", "blue", "red"], dtype="object"),
+            "age": [1.4, 2.1, 4.4],
+            "height": [20, 40, 10],
+            "distance": pd.Series([20, pd.NA, 100], dtype="Int32"),
+        }
+    )
+    # OneHotEncoder Out
+    ct = ColumnTransformer(
+        [
+            ("color_encode", OneHotEncoder(sparse=False, dtype="int32"), ["color"]),
+            ("age", StandardScaler(), ["age"]),
+        ],
+        # remainder="passthrough",
+        verbose_feature_names_out=False,
+    ).set_output(transform="pandas")
+    X_trans = ct.fit_transform(df)
+
+    assert isinstance(X_trans, pd.DataFrame)
+    assert_array_equal(X_trans.columns, ct.get_feature_names_out())
+
+    # assert X_trans["distance"].dtype == "Int32"
+    # assert X_trans["height"].dtype == "int64"
+    # assert pd.api.types.is_categorical_dtype(X_trans["pet"])
