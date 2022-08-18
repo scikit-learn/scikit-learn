@@ -9,21 +9,25 @@ ctypedef cnp.int8_t FLAG_T
 
 # INDEX_{A,B}_T are defined to generate a proper Cartesian product
 # of types through Cython fused-type expansion.
-ctypedef fused INDEX_A_T:
+ctypedef fused INDEX_A_t:
     cnp.int32_t
     cnp.int64_t
-ctypedef fused INDEX_B_T:
+ctypedef fused INDEX_B_t:
     cnp.int32_t
     cnp.int64_t
 
-ctypedef fused DATA_T:
+ctypedef fused DATA_t:
     cnp.float32_t
     cnp.float64_t
     cnp.int32_t
     cnp.int64_t
 
-cdef inline INDEX_B_T _deg2_column(INDEX_B_T d, INDEX_B_T i, INDEX_B_T j,
-                                   FLAG_T interaction_only) nogil:
+cdef inline INDEX_B_t _deg2_column(
+    INDEX_B_t d,
+    INDEX_B_t i,
+    INDEX_B_t j,
+    FLAG_T interaction_only
+) nogil:
     """Compute the index of the column for a degree 2 expansion
 
     d is the dimensionality of the input data, i and j are the indices
@@ -35,8 +39,13 @@ cdef inline INDEX_B_T _deg2_column(INDEX_B_T d, INDEX_B_T i, INDEX_B_T j,
         return d * i - (i**2 + i) / 2 + j
 
 
-cdef inline INDEX_B_T _deg3_column(INDEX_B_T d, INDEX_B_T i, INDEX_B_T j, INDEX_B_T k,
-                                 FLAG_T interaction_only) nogil:
+cdef inline INDEX_B_t _deg3_column(
+    INDEX_B_t d,
+    INDEX_B_t i,
+    INDEX_B_t j,
+    INDEX_B_t k,
+    FLAG_T interaction_only
+    ) nogil:
     """Compute the index of the column for a degree 3 expansion
 
     d is the dimensionality of the input data, i, j and k are the indices
@@ -52,15 +61,17 @@ cdef inline INDEX_B_T _deg3_column(INDEX_B_T d, INDEX_B_T i, INDEX_B_T j, INDEX_
                 + d * j + k)
 
 
-def _csr_polynomial_expansion(cnp.ndarray[DATA_T, ndim=1] data,
-                              cnp.ndarray[INDEX_A_T, ndim=1] indices,
-                              cnp.ndarray[INDEX_A_T, ndim=1] indptr,
-                              INDEX_A_T d,
-                              cnp.ndarray[DATA_T, ndim=1] result_data,
-                              cnp.ndarray[INDEX_B_T, ndim=1] result_indices,
-                              cnp.ndarray[INDEX_B_T, ndim=1] result_indptr,
-                              FLAG_T interaction_only,
-                              FLAG_T degree):
+def _csr_polynomial_expansion(
+    cnp.ndarray[DATA_t, ndim=1] data,           # TODO: Make const in Cython 3
+    cnp.ndarray[INDEX_A_t, ndim=1] indices,     # TODO: Make const in Cython 3
+    cnp.ndarray[INDEX_A_t, ndim=1] indptr,      # TODO: Make const in Cython 3
+    INDEX_A_t d,
+    cnp.ndarray[DATA_t, ndim=1] result_data,
+    cnp.ndarray[INDEX_B_t, ndim=1] result_indices,
+    cnp.ndarray[INDEX_B_t, ndim=1] result_indptr,
+    FLAG_T interaction_only,
+    FLAG_T degree
+):
     """
     Perform a second-degree polynomial or interaction expansion on a scipy
     compressed sparse row (CSR) matrix. The method used only takes products of
@@ -104,9 +115,9 @@ def _csr_polynomial_expansion(cnp.ndarray[DATA_T, ndim=1] data,
     """
 
     # Make the arrays that will form the CSR matrix of the expansion.
-    cdef INDEX_A_T row_i, row_starts, row_ends, i, j, k, i_ptr, j_ptr, k_ptr
+    cdef INDEX_A_t row_i, row_starts, row_ends, i, j, k, i_ptr, j_ptr, k_ptr
 
-    cdef INDEX_B_T expanded_index=0, num_cols_in_row, col
+    cdef INDEX_B_t expanded_index=0, num_cols_in_row, col
 
     with nogil:
         result_indptr[0] = indptr[0]
@@ -119,7 +130,7 @@ def _csr_polynomial_expansion(cnp.ndarray[DATA_T, ndim=1] data,
                 for j_ptr in range(i_ptr + interaction_only, row_ends):
                     j = indices[j_ptr]
                     if degree == 2:
-                        col = _deg2_column[INDEX_B_T](d, i, j, interaction_only)
+                        col = _deg2_column[INDEX_B_t](d, i, j, interaction_only)
                         result_indices[expanded_index] = col
                         result_data[expanded_index] = (
                             data[i_ptr] * data[j_ptr])
@@ -130,7 +141,7 @@ def _csr_polynomial_expansion(cnp.ndarray[DATA_T, ndim=1] data,
                         for k_ptr in range(j_ptr + interaction_only,
                                             row_ends):
                             k = indices[k_ptr]
-                            col = _deg3_column[INDEX_B_T](d, i, j, k, interaction_only)
+                            col = _deg3_column[INDEX_B_t](d, i, j, k, interaction_only)
                             result_indices[expanded_index] = col
                             result_data[expanded_index] = (
                                 data[i_ptr] * data[j_ptr] * data[k_ptr])
