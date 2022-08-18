@@ -30,7 +30,9 @@ if [[ "$BUILD_REASON" == "Schedule" ]]; then
 fi
 
 commit_message=$(git log --format=%B -n 1)
-if [[ "$commit_message" =~ \[float32 test\]  ]]; then
+echo $commit_message
+if [[ "$commit_message" =~ \[float32\ test\] ]]; then
+    echo yes
     export SKLEARN_RUN_FLOAT32_TESTS=1
 fi
 
