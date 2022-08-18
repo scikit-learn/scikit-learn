@@ -39,7 +39,7 @@ def assert_request_is_empty(metadata_request, exclude=None):
     """Check if a metadata request dict is empty.
 
     One can exclude a method or a list of methods from the check using the
-    ``exclude`` perameter.
+    ``exclude`` parameter.
     """
     if isinstance(metadata_request, MetadataRouter):
         for _, route_mapping in metadata_request:
@@ -70,10 +70,22 @@ def assert_request_equal(request, dictionary):
         assert not len(getattr(request, method).requests)
 
 
-def record_metadata(obj, method, **kwargs):
-    """Utility function to store passed metadata to a method."""
+def record_metadata(obj, method, record_default=True, **kwargs):
+    """Utility function to store passed metadata to a method.
+
+    If record_default is False, kwargs whose values are "default" are skipped.
+    This is so that checks on keyword arguments whose default was not changed
+    are skipped.
+
+    """
     if not hasattr(obj, "_records"):
-        setattr(obj, "_records", dict())
+        obj._records = {}
+    if not record_default:
+        kwargs = {
+            key: val
+            for key, val in kwargs.items()
+            if not isinstance(val, str) or (val != "default")
+        }
     obj._records[method] = kwargs
 
 

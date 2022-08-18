@@ -1051,6 +1051,10 @@ class RequestMethod:
         function, e.g. ``["sample_weight"]`` if the corresponding method
         accepts it as a metadata.
 
+    validate_keys : bool, default=True
+        Whether to check if the requested parameters fit the actual parameters
+        of the method.
+
     Notes
     -----
     This class is a descriptor [1]_ and uses PEP-362 to set the signature of
@@ -1063,9 +1067,10 @@ class RequestMethod:
     .. [2] https://www.python.org/dev/peps/pep-0362/
     """
 
-    def __init__(self, name, keys):
+    def __init__(self, name, keys, validate_keys=True):
         self.name = name
         self.keys = keys
+        self.validate_keys = validate_keys
 
     def __get__(self, instance, owner):
         # we would want to have a method which accepts only the expected args
@@ -1075,7 +1080,7 @@ class RequestMethod:
             This docstring is overwritten below.
             See REQUESTER_DOC for expected functionality
             """
-            if set(kw) - set(self.keys):
+            if self.validate_keys and (set(kw) - set(self.keys)):
                 raise TypeError(
                     f"Unexpected args: {set(kw) - set(self.keys)}. Accepted arguments"
                     f" are: {set(self.keys)}"
