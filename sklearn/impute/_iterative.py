@@ -183,7 +183,10 @@ class IterativeImputer(_BaseImputer):
 
     See Also
     --------
-    SimpleImputer : Univariate imputation of missing values.
+    SimpleImputer : Univariate imputer for completing missing values
+        with simple strategies.
+    KNNImputer : Multivariate imputer that estimates missing features using
+        nearest samples.
 
     Notes
     -----
@@ -193,6 +196,16 @@ class IterativeImputer(_BaseImputer):
 
     Features which contain all missing values at :meth:`fit` are discarded upon
     :meth:`transform`.
+
+    Using defaults, the imputer scales in :math:`\\mathcal{O}(knp^3\\min(n,p))`
+    where :math:`k` = `max_iter`, :math:`n` the number of samples and
+    :math:`p` the number of features. It thus becomes prohibitively costly when
+    the number of features increases. Setting
+    `n_nearest_features << n_features`, `skip_complete=True` or increasing `tol`
+    can help to reduce its computational cost.
+
+    Depending on the nature of missing values, simple imputers can be
+    preferable in a prediction context.
 
     References
     ----------
