@@ -231,10 +231,10 @@ class NeighborhoodComponentsAnalysis(
         self : object
             Fitted estimator.
         """
-
+        self._validate_params()
         # Verify inputs X and y and NCA parameters, and transform a copy if
         # needed
-        X, y, init = self._validate_params(X, y)
+        X, y, init = self._validate_data_with_params(X, y)
 
         # Initialize the random generator
         self.random_state_ = check_random_state(self.random_state)
@@ -312,8 +312,8 @@ class NeighborhoodComponentsAnalysis(
 
         return np.dot(X, self.components_.T)
 
-    def _validate_params(self, X, y):
-        """Validate parameters as soon as :meth:`fit` is called.
+    def _validate_data_with_params(self, X, y):
+        """Validate data and parameters when :meth:`fit` is called.
 
         Parameters
         ----------
@@ -337,11 +337,8 @@ class NeighborhoodComponentsAnalysis(
 
         Raises
         -------
-        TypeError
-            If a parameter is not an instance of the desired type.
-
         ValueError
-            If a parameter's value violates its legal value range or if the
+            If a parameter does not match with the data provided or if the
             combination of two or more given parameters is incompatible.
         """
 
@@ -407,13 +404,6 @@ class NeighborhoodComponentsAnalysis(
                         "the given linear transformation "
                         "`init` ({})!".format(self.n_components, init.shape[0])
                     )
-        elif init in ["auto", "pca", "lda", "identity", "random"]:
-            pass
-        else:
-            raise ValueError(
-                "`init` must be 'auto', 'pca', 'lda', 'identity', 'random' "
-                "or a numpy array of shape (n_components, n_features)."
-            )
 
         return X, y, init
 
