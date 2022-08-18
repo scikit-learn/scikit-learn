@@ -59,10 +59,12 @@ def _csr_hstack(columns, dtype=np.float64):
     indptr_list = [mat.indptr for mat in columns]
     data_cat = np.concatenate([mat.data for mat in columns])
 
-    # Need to check if any indices/indptr, would be too large
-    # post-concatenation for np.int32. We must sum the dimensions
-    # along the axis we use to stack since even empty matrices will
-    # contribute to a large post-stack index value.
+    # Need to check if any indices/indptr, would be too large post-
+    # concatenation for np.int32. We must sum the dimensions along the axis we
+    # use to stack since even empty matrices will contribute to a large post-
+    # stack index value. At this point the matrices contained in `columns` may
+    # be a mix of {32,64}bit integers, but this covers the case that each are
+    # only 32bit while their concatenation would need to be 64bit.
     max_output_index = 0
     max_indptr = 0
     for mat in columns[:-1]:
@@ -464,13 +466,9 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         )
 
         n_samples, n_features = X.shape
+        max_int32 = np.iinfo(np.int32).max
 
         if sparse.isspmatrix_csr(X):
-            # We can determine a priori what the final dtype for the post-stack
-            # matrix must be, and can then use this in construction the pre-
-            # stack matrices.
-            max_int32 = np.iinfo(np.int32).max
-            index_dtype = np.int64 if self.n_output_features_ > max_int32 else np.int32
             if self._max_degree > 3:
                 return self.transform(X.tocsc()).tocsr()
             to_stack = []
@@ -498,8 +496,17 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                 if expanded_d == 0:
                     break
                 assert expanded_d > 0
-                if total_nnz > max_int32:
-                    index_dtype = np.int64
+
+                # This only checks whether each block needs 64bit integers upon
+                # expansion. We prefer to keep 32bit integers where we can,
+                # since currently CSR construction downcasts when possible, so
+                # we'd prefer to avoid an unnecessary cast. The dtype may still
+                # change in the concatenation process if needed.
+                max_indices = expanded_d - 1
+                max_indptr = total_nnz - 1
+                needs_int64 = max(max_indices, max_indptr) > max_int32
+                index_dtype = np.int64 if needs_int64 else np.int32
+
                 expanded_data = np.ndarray(shape=total_nnz, dtype=X.data.dtype)
                 expanded_indices = np.ndarray(shape=total_nnz, dtype=index_dtype)
                 expanded_indptr = np.ndarray(shape=X.indptr.shape[0], dtype=index_dtype)
