@@ -29,10 +29,15 @@ if [[ "$BUILD_REASON" == "Schedule" ]]; then
     export SKLEARN_RUN_FLOAT32_TESTS=1
 fi
 
-commit_message=$(git log --format=%B -n 1)
-echo $commit_message
-if [[ "$commit_message" =~ \[float32\ test\] ]]; then
-    echo yes
+# debug
+echo full env
+env
+
+echo env matching build
+env | grep -i build
+
+if [[ "$BUILD_SOURCEVERSIONMESSAGE" =~ \[float32\ test\] ]]; then
+    echo "Running float32 tests"
     export SKLEARN_RUN_FLOAT32_TESTS=1
 fi
 
