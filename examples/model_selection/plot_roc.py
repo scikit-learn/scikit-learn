@@ -189,8 +189,9 @@ for i in range(n_classes):
 
 fpr_grid = np.linspace(0.0, 1.0, 1000)
 
-# Interpolate all ROC curves at this points
+# Interpolate all ROC curves at these points
 mean_tpr = np.zeros_like(fpr_grid)
+
 for i in range(n_classes):
     mean_tpr += np.interp(fpr_grid, fpr[i], tpr[i])
 
