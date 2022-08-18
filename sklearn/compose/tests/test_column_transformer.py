@@ -13,7 +13,7 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_allclose_dense_sparse
 from sklearn.utils._testing import assert_almost_equal
 
-from sklearn.base import BaseEstimator
+from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.compose import (
     ColumnTransformer,
     make_column_transformer,
@@ -25,7 +25,7 @@ from sklearn.preprocessing import StandardScaler, Normalizer, OneHotEncoder
 from sklearn.feature_extraction import DictVectorizer
 
 
-class Trans(BaseEstimator):
+class Trans(TransformerMixin, BaseEstimator):
     def fit(self, X, y=None):
         return self
 
@@ -902,7 +902,6 @@ def test_column_transformer_get_feature_names_dataframe():
 
 
 def test_column_transformer_special_strings():
-
     # one 'drop' -> ignore
     X_array = np.array([[0.0, 1.0, 2.0], [2.0, 4.0, 6.0]]).T
     ct = ColumnTransformer([("trans1", Trans(), [0]), ("trans2", "drop", [1])])
@@ -2087,3 +2086,28 @@ def test_verbose_feature_names_out_false_errors(
     )
     with pytest.raises(ValueError, match=msg):
         ct.get_feature_names_out()
+
+
+@pytest.mark.parametrize("verbose_feature_names_out", [True, False])
+@pytest.mark.parametrize("remainder", ["drop", "passthrough"])
+def test_column_transformer_set_output(verbose_feature_names_out, remainder):
+    """Check column transformer behavior with set_output."""
+    pd = pytest.importorskip("pandas")
+    df = pd.DataFrame([[1, 2, 3, 4]], columns=["a", "b", "c", "d"], index=[10])
+    ct = ColumnTransformer(
+        [("first", TransWithNames(), ["a", "c"]), ("second", TransWithNames(), ["d"])],
+        remainder=remainder,
+        verbose_feature_names_out=verbose_feature_names_out,
+    )
+    X_trans = ct.fit_transform(df)
+    assert isinstance(X_trans, np.ndarray)
+
+    ct.set_output(transform="pandas")
+
+    df_test = pd.DataFrame([[1, 2, 3, 4]], columns=df.columns, index=[20])
+    X_trans = ct.transform(df_test)
+    assert isinstance(X_trans, pd.DataFrame)
+
+    feature_names_out = ct.get_feature_names_out()
+    assert_array_equal(X_trans.columns, feature_names_out)
+    assert_array_equal(X_trans.index, df_test.index)

@@ -444,7 +444,6 @@ class _VectorizerMixin:
             )
 
         elif self.analyzer == "char_wb":
-
             return partial(
                 _analyze,
                 ngrams=self._char_wb_ngrams,
@@ -521,7 +520,6 @@ class _VectorizerMixin:
             )
 
     def _warn_for_unused_params(self):
-
         if self.tokenizer is not None and self.token_pattern is not None:
             warnings.warn(
                 "The parameter 'token_pattern' will not be used"
@@ -564,7 +562,9 @@ class _VectorizerMixin:
                 )
 
 
-class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
+class HashingVectorizer(
+    TransformerMixin, _VectorizerMixin, BaseEstimator, auto_wrap_output=False
+):
     r"""Convert a collection of text documents to a matrix of token occurrences.
 
     It turns a collection of text documents into a scipy.sparse matrix holding
@@ -1478,7 +1478,9 @@ def _make_int_array():
     return array.array(str("i"))
 
 
-class TfidfTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
+class TfidfTransformer(
+    _OneToOneFeatureMixin, TransformerMixin, BaseEstimator, auto_wrap_output=False
+):
     """Transform a count matrix to a normalized tf or tf-idf representation.
 
     Tf means term-frequency while tf-idf means term-frequency times inverse
@@ -1980,7 +1982,6 @@ class TfidfVectorizer(CountVectorizer):
         smooth_idf=True,
         sublinear_tf=False,
     ):
-
         super().__init__(
             input=input,
             encoding=encoding,

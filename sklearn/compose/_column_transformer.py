@@ -20,6 +20,8 @@ from ..preprocessing import FunctionTransformer
 from ..utils import Bunch
 from ..utils import _safe_indexing
 from ..utils import _get_column_indices
+from ..utils.set_output import get_output_config
+from ..utils import check_pandas_support
 from ..utils.deprecation import deprecated
 from ..utils.metaestimators import _BaseComposition
 from ..utils.validation import check_array, check_is_fitted, _check_feature_names_in
@@ -803,6 +805,10 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             return sparse.hstack(converted_Xs).tocsr()
         else:
             Xs = [f.toarray() if sparse.issparse(f) else f for f in Xs]
+            config = get_output_config(self, "transform")
+            if config["dense"] == "pandas" and all(hasattr(X, "iloc") for X in Xs):
+                pd = check_pandas_support("transform")
+                return pd.concat(Xs, axis=1)
             return np.hstack(Xs)
 
     def _sk_visual_block_(self):

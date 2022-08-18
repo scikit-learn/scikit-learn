@@ -580,24 +580,6 @@ def test_f_contiguous_array_estimator(Estimator):
         est.predict(X)
 
 
-SET_OUTPUT_MODULES_TO_SKIP = {
-    "cluster",
-    "compose",
-    "cross_decomposition",
-    "decomposition",
-    "discriminant_analysis",
-    "ensemble",
-    "feature_extraction",
-    "feature_selection",
-    "impute",
-    "isotonic",
-    "kernel_approximation",
-    "manifold",
-    "neighbors",
-    "neural_network",
-    "random_projection",
-}
-
 SET_OUTPUT_ESTIMATORS = list(
     chain(
         _tested_estimators("transformer"),
@@ -611,12 +593,9 @@ SET_OUTPUT_ESTIMATORS = list(
 )
 def test_set_output(estimator):
     name = estimator.__class__.__name__
-    if (
-        not hasattr(estimator, "set_output")
-        and estimator.__module__.split(".")[1] in SET_OUTPUT_MODULES_TO_SKIP
-    ):
+    if not hasattr(estimator, "set_output"):
         pytest.skip(
-            f"Skipping check_set_output for {name}: Does not support set_output API yet"
+            f"Skipping check_set_output for {name}: Does not support set_output API"
         )
     _set_checking_parameters(estimator)
     check_set_output(estimator.__class__.__name__, estimator)
@@ -627,10 +606,7 @@ def test_set_output(estimator):
 )
 def test_set_output_pandas(estimator):
     name = estimator.__class__.__name__
-    if (
-        not hasattr(estimator, "set_output")
-        and estimator.__module__.split(".")[1] in SET_OUTPUT_MODULES_TO_SKIP
-    ):
+    if not hasattr(estimator, "set_output"):
         pytest.skip(
             f"Skipping check_set_output_pandas for {name}: Does not support set_output"
             " API yet"

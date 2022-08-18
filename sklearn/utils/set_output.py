@@ -90,6 +90,7 @@ def _wrap_in_pandas_container(
     # Already a pandas DataFrame
     if hasattr(original_data, "iloc"):
         original_data.columns = columns
+        original_data.index = index
         return original_data
 
     pd = check_pandas_support("Setting output container to 'pandas'")

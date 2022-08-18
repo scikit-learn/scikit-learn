@@ -28,7 +28,8 @@ from .utils.deprecation import deprecated
 from .utils._tags import _safe_tags
 from .utils.validation import check_memory
 from .utils.validation import check_is_fitted
-from .utils.set_output import safe_set_output
+from .utils import check_pandas_support
+from .utils.set_output import safe_set_output, get_output_config
 from .utils.fixes import delayed
 from .exceptions import NotFittedError
 
@@ -1000,6 +1001,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         self : estimator instance
             Estimator instance.
         """
+        super().set_output(transform=transform)
         for _, step, _ in self._iter():
             safe_set_output(step, transform=transform)
         return self
@@ -1247,6 +1249,11 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         return self._hstack(Xs)
 
     def _hstack(self, Xs):
+        config = get_output_config(self, "transform")
+        if config["dense"] == "pandas" and all(hasattr(X, "iloc") for X in Xs):
+            pd = check_pandas_support("transform")
+            return pd.concat(Xs, axis=1)
+
         if any(sparse.issparse(f) for f in Xs):
             Xs = sparse.hstack(Xs).tocsr()
         else:

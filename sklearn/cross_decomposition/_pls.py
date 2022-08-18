@@ -516,7 +516,7 @@ class _PLS(
         return {"poor_score": True, "requires_y": False}
 
 
-class PLSRegression(_PLS):
+class PLSRegression(_PLS, auto_wrap_output=False):
     """PLS regression.
 
     PLSRegression is also known as PLS2 or PLS1, depending on the number of
@@ -664,7 +664,7 @@ class PLSRegression(_PLS):
         return self
 
 
-class PLSCanonical(_PLS):
+class PLSCanonical(_PLS, auto_wrap_output=False):
     """Partial Least Squares transformer and regressor.
 
     Read more in the :ref:`User Guide <cross_decomposition>`.
@@ -794,7 +794,7 @@ class PLSCanonical(_PLS):
         )
 
 
-class CCA(_PLS):
+class CCA(_PLS, auto_wrap_output=False):
     """Canonical Correlation Analysis, also known as "Mode B" PLS.
 
     Read more in the :ref:`User Guide <cross_decomposition>`.
@@ -901,7 +901,12 @@ class CCA(_PLS):
         )
 
 
-class PLSSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
+class PLSSVD(
+    _ClassNamePrefixFeaturesOutMixin,
+    TransformerMixin,
+    BaseEstimator,
+    auto_wrap_output=False,
+):
     """Partial Least Square SVD.
 
     This transformer simply performs a SVD on the cross-covariance matrix
