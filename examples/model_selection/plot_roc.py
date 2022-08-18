@@ -107,12 +107,17 @@ RocCurveDisplay.from_predictions(
     color="darkorange",
 )
 plt.plot([0, 1], [0, 1], "k--", label="ROC curve for chance level")
-plt.title(f"One-vs-Rest ROC for class label {class_id}")
+plt.xlim([0.0, 1.0])
+plt.ylim([0.0, 1.05])
+plt.xlabel("False Positive Rate")
+plt.ylabel("True Positive Rate")
+plt.title("One-vs-Rest Receiver operating characteristic example")
+plt.legend()
 plt.show()
 
 # %%
-# ROC curve showing the "micro-average" of the 3 classes
-# ------------------------------------------------------
+# ROC curve using the OvR micro-average
+# -------------------------------------
 #
 # The micro-average aggregates the contributions from all the classes (using
 # `.ravel`) to compute the average metric. In a multi-class classification
@@ -126,7 +131,12 @@ RocCurveDisplay.from_predictions(
     color="darkorange",
 )
 plt.plot([0, 1], [0, 1], "k--", label="ROC curve for chance level")
+plt.xlim([0.0, 1.0])
+plt.ylim([0.0, 1.05])
+plt.xlabel("False Positive Rate")
+plt.ylabel("True Positive Rate")
 plt.title("Receiver operating characteristic (micro-averaged)")
+plt.legend()
 plt.show()
 
 # %%
@@ -166,8 +176,8 @@ print(f"Micro-averaged One-vs-Rest ROC AUC score:\n{roc_auc['micro']:.2f}")
 # at the maximal false positive rate by using linear interpolation and `McClish
 # correction <https://pubmed.ncbi.nlm.nih.gov/2668680/>`_.
 #
-# ROC curve showing the "macro-average" of the 3 classes
-# ------------------------------------------------------
+# ROC curve using the OvR macro-average
+# -------------------------------------
 #
 # Obtaining the macro-average requires computing the metric independently for
 # each class and then taking the average over them, hence treating all classes
@@ -211,7 +221,7 @@ fig, ax = plt.subplots()
 plt.plot(
     fpr["micro"],
     tpr["micro"],
-    label=f"micro-average ROC curve (area = {roc_auc['micro']:.2f})",
+    label=f"micro-average ROC curve (AUC = {roc_auc['micro']:.2f})",
     color="deeppink",
     linestyle=":",
     linewidth=4,
@@ -220,7 +230,7 @@ plt.plot(
 plt.plot(
     fpr["macro"],
     tpr["macro"],
-    label=f"macro-average ROC curve (area = {roc_auc['macro']:.2f})",
+    label=f"macro-average ROC curve (AUC = {roc_auc['macro']:.2f})",
     color="navy",
     linestyle=":",
     linewidth=4,
@@ -258,71 +268,129 @@ plt.show()
 # for the 3 posible combinations in the :ref:`iris_dataset`: "setosa" vs
 # "versicolor", "versicolor" vs "virginica" and  "virginica" vs "setosa". Notice
 # that micro-averaging is not defined for the OvO scheme.
+#
+# ROC curve using the OvO macro-average
+# -------------------------------------
+#
+# In the OvO scheme, the first step is to identify all possible unique
+# combinations of pairs. The computation of scores is done by treating one of
+# the elements in a given pair as the positive class and the other element as
+# the negative class, then re-computing the score by inversing the roles and
+# taking the mean of both scores.
 
-pair_list = [[0, 1], [1, 2], [0, 2]]
-ovo_fpr = dict()
-ovo_tpr = dict()
-ovo_roc_auc = dict()
+from itertools import combinations
 
-fig, ax = plt.subplots()
+pair_list = combinations(np.unique(y), 2)
+print(list(pair_list))
 
-for i, (idx_1, idx_2) in enumerate(pair_list):
-    mask_train = np.isin(y_train, [idx_1, idx_2])
-    mask_test = np.isin(y_test, [idx_1, idx_2])
+# %%
+pair_scores = []
+mean_tpr = dict()
 
-    y_score_ovo = classifier.fit(
-        X_train[mask_train], y_train[mask_train]
-    ).predict_proba(X_test[mask_test])
+for ix, (idx_a, idx_b) in enumerate(combinations(np.unique(y), 2)):
 
-    ovo_fpr[i], ovo_tpr[i], _ = roc_curve(
-        y_test[mask_test], y_score_ovo[:, 1], pos_label=idx_2
+    a_mask = y_test == idx_a
+    b_mask = y_test == idx_b
+    ab_mask = np.logical_or(a_mask, b_mask)
+
+    a_true = a_mask[ab_mask]
+    b_true = b_mask[ab_mask]
+
+    fpr_a, tpr_a, _ = roc_curve(a_true, y_score[ab_mask, idx_a])
+    fpr_b, tpr_b, _ = roc_curve(b_true, y_score[ab_mask, idx_b])
+
+    mean_tpr[ix] = np.zeros_like(fpr_grid)
+    mean_tpr[ix] += np.interp(fpr_grid, fpr_a, tpr_a)
+    mean_tpr[ix] += np.interp(fpr_grid, fpr_b, tpr_b)
+    mean_tpr[ix] /= 2
+    mean_score = auc(fpr_grid, mean_tpr[ix])
+    pair_scores.append(mean_score)
+
+    fig, ax = plt.subplots()
+    plt.plot(
+        fpr_grid,
+        mean_tpr[ix],
+        label=(
+            f"Mean {target_names[idx_a]} vs {target_names[idx_b]} ROC curve (AUC ="
+            f" {mean_score :.2f})"
+        ),
+        linestyle=":",
+        linewidth=4,
     )
-    ovo_roc_auc[i] = auc(fpr[i], tpr[i])
-
     RocCurveDisplay.from_predictions(
-        y_test[mask_test],
-        y_score_ovo[:, 1],
-        pos_label=idx_2,
-        name=f"ROC curve for {target_names[idx_1]} vs {target_names[idx_2]}",
+        a_true,
+        y_score[ab_mask, idx_a],
         ax=ax,
+        name=f"ROC curve for {target_names[idx_a]} as positive class",
+    )
+    RocCurveDisplay.from_predictions(
+        b_true,
+        y_score[ab_mask, idx_b],
+        ax=ax,
+        name=f"ROC curve for {target_names[idx_b]} as positive class",
+    )
+    plt.plot([0, 1], [0, 1], "k--", label="ROC curve for chance level")
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel("False Positive Rate")
+    plt.ylabel("True Positive Rate")
+    plt.title(f"{target_names[idx_a]} vs {target_names[idx_b]} ROC curves")
+    plt.legend()
+    plt.show()
+
+print(f"Macro-averaged One-vs-One ROC AUC score:\n{np.average(pair_scores):.2f}")
+
+# %%
+# One can also assert that the macro-average we computed "by hand" is equivalent
+# to the implemented `average="macro"` option of the
+# :class:`~sklearn.metrics.roc_auc_score` function.
+
+macro_roc_auc_ovo = roc_auc_score(y_test, y_score, multi_class="ovo", average="macro")
+
+print(f"One-vs-One ROC AUC scores:\n{macro_roc_auc_ovo:.2f}")
+
+# %%
+# Plot all OvO ROC curves together
+# --------------------------------
+
+ovo_tpr = np.zeros_like(fpr_grid)
+for ix, (idx_a, idx_b) in enumerate(combinations(np.unique(y), 2)):
+    ovo_tpr += mean_tpr[ix]
+    plt.plot(
+        fpr_grid,
+        mean_tpr[ix],
+        label=(
+            f"Mean {target_names[idx_a]} vs {target_names[idx_b]} ROC curve (AUC ="
+            f" {pair_scores[ix]:.2f})"
+        ),
     )
 
-# compute macro-average by hand
-mean_tpr = np.zeros_like(fpr_grid)
-for i in range(n_classes):
-    mean_tpr += np.interp(fpr_grid, ovo_fpr[i], ovo_tpr[i])
-mean_tpr /= n_classes
-ovo_fpr["macro"] = fpr_grid
-ovo_tpr["macro"] = mean_tpr
-ovo_roc_auc["macro"] = auc(ovo_fpr["macro"], ovo_tpr["macro"])
+ovo_tpr /= sum(1 for pair in enumerate(combinations(np.unique(y), 2)))
 
 plt.plot(
-    ovo_fpr["macro"],
-    ovo_tpr["macro"],
-    label=f"One-vs-One macro-average ROC curve (area = {ovo_roc_auc['macro']:.2f})",
-    color="navy",
+    fpr_grid,
+    ovo_tpr,
+    label=f"One-vs-One macro-average ROC curve (AUC = {macro_roc_auc_ovo:.2f})",
     linestyle=":",
     linewidth=4,
 )
+plt.plot([0, 1], [0, 1], "k--", label="ROC curve for chance level")
+plt.xlim([0.0, 1.0])
+plt.ylim([0.0, 1.05])
+plt.xlabel("False Positive Rate")
+plt.ylabel("True Positive Rate")
+plt.legend()
 plt.show()
 
 # %%
 # We confirm that the clases "versicolor" and "virginica" are not well
-# identified by a linear classifier. One can also assert that the macro-average
-# we computed "by hand" is equivalent to the implemented `average="macro"`
-# option of the :class:`~sklearn.metrics.roc_auc_score` function.
-
-macro_roc_auc_ovo = roc_auc_score(y_test, y_score, multi_class="ovo", average="macro")
-
-print(f"One-vs-One ROC AUC scores:\n{macro_roc_auc_ovo:.5f}")
-
-# %%
-# Notice that the "virginica"-vs-the-rest ROC-AUC score (0.77) is between the
-# OvO ROC-AUC scores for "versicolor" vs "virginica" (0.65) and "setosa" vs
-# "virginica" (0.93). Indeed, the OvO strategy is more informative to understand
-# the overlap between classes, at the expense of computational cost.
+# identified by a linear classifier. Notice that the "virginica"-vs-the-rest
+# ROC-AUC score (0.77) is between the OvO ROC-AUC scores for "versicolor" vs
+# "virginica" (0.64) and "setosa" vs "virginica" (0.90). Indeed, the OvO
+# strategy gives additional information on the overlap between classes, at the
+# expense of computational cost.
 #
 # The OvO strategy is recomended if the user is mainly interested in correctly
-# identifying a given class or subset of classes, whereas evaluating the global
-# performance of a classifier can be correctly resumed by a given averaging
-# strategy.
+# identifying a particular class or subset of classes, whereas evaluating the
+# global performance of a classifier can be correctly resumed by a given
+# averaging strategy.
