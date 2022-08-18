@@ -244,6 +244,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         This should be equivalent to counting the number of terms returned by
         _combinations(...) but much faster.
         """
+
         if interaction_only:
             combinations = sum(
                 [
