@@ -38,8 +38,9 @@ cpdef _csr_hstack(
     ):
 
     cdef:
-        Py_ssize_t offset, row_start, row_end, row_sum, idx, jdx, kdx
-        IND_t tmp
+        Py_ssize_t offset, row_start, row_end, row_sum
+        Py_ssize_t idx, jdx, kdx, cat_index
+
         vector[Py_ssize_t] col_offset = vector[Py_ssize_t](n_blocks)
         vector[Py_ssize_t] indptr_bound = vector[Py_ssize_t](n_blocks)
         vector[Py_ssize_t] indices_bound = vector[Py_ssize_t](n_blocks)
@@ -76,9 +77,9 @@ cpdef _csr_hstack(
                 # We iterate over the valid indices, updating the indices and
                 # data
                 for kdx in range(row_end - row_start):
-                    tmp = indices_bound[jdx] + row_start + kdx
-                    indices[row_sum + kdx] = indices_cat[tmp] + offset
-                    data[row_sum + kdx] = data_cat[tmp]
+                    cat_index = indices_bound[jdx] + row_start + kdx
+                    indices[row_sum + kdx] = indices_cat[cat_index] + offset
+                    data[row_sum + kdx] = data_cat[cat_index]
                 row_sum += row_end - row_start
 
             # Cumulative row index (indptr)
