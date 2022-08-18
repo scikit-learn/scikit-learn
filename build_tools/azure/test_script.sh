@@ -29,6 +29,11 @@ if [[ "$BUILD_REASON" == "Schedule" ]]; then
     export SKLEARN_RUN_FLOAT32_TESTS=1
 fi
 
+commit_message=$(git log --format=%B -n 1)
+if [[ "$commit_message" =~ \[float32 test\]  ]]; then
+    export SKLEARN_RUN_FLOAT32_TESTS=1
+fi
+
 mkdir -p $TEST_DIR
 cp setup.cfg $TEST_DIR
 cd $TEST_DIR
