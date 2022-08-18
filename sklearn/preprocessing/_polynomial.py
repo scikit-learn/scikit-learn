@@ -72,7 +72,7 @@ def _csr_hstack(columns, dtype=np.float64):
         max_output_index += int(columns[-1].indices.max())
         max_indptr = max(max_indptr, columns[-1].indptr.max())
     max_int32 = np.iinfo(np.int32).max
-    needs_64bit = dtype is np.float64 or max(max_output_index, max_indptr) > max_int32
+    needs_64bit = max(max_output_index, max_indptr) > max_int32
     idx_dtype = np.int64 if needs_64bit else np.int32
 
     stack_dim_cat = np.array([mat.shape[1] for mat in columns], dtype=np.int64)
@@ -98,7 +98,9 @@ def _csr_hstack(columns, dtype=np.float64):
         indices = np.empty(0, dtype=idx_dtype)
         data = np.empty(0, dtype=data_cat.dtype)
     sum_dim = stack_dim_cat.sum()
-    return sparse.csr_matrix((data, indices, indptr), shape=(constant_dim, sum_dim))
+    return sparse.csr_matrix(
+        (data.astype(dtype), indices, indptr), shape=(constant_dim, sum_dim)
+    )
 
 
 def _calc_expanded_dimensionality(d, interaction_only, degree):

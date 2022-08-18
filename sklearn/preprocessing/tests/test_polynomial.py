@@ -13,6 +13,7 @@ from sklearn.preprocessing import (
     PolynomialFeatures,
     SplineTransformer,
 )
+from sklearn.preprocessing._polynomial import _csr_hstack
 
 
 @pytest.mark.parametrize("est", (PolynomialFeatures, SplineTransformer))
@@ -976,3 +977,23 @@ def test_polynomial_features_behaviour_on_zero_degree():
         if sparse.issparse(output):
             output = output.toarray()
         assert_array_equal(output, np.ones((X.shape[0], 1)))
+
+
+def test_csr_hstack():
+    n_rows = 10
+    msg = "No matrices were provided to stack"
+    with pytest.raises(ValueError, match=msg):
+        _csr_hstack([])
+
+    X1 = sparse_random(n_rows, 2, format="csr")
+    X2 = sparse_random(n_rows + 1, 2, format="csr")
+    msg = "Mismatching dimensions along axis*"
+    with pytest.raises(ValueError, match=msg):
+        _csr_hstack([X1, X2])
+
+    X1 = sparse_random(n_rows, 2, density=0, format="csr")
+    X2 = sparse_random(n_rows, 2, density=0, format="csr")
+    X_stacked = _csr_hstack([X1, X2])
+    assert X_stacked.data.size == 0
+    assert X_stacked.indices.size == 0
+    assert_array_almost_equal(X_stacked.indptr, np.zeros(n_rows + 1))
