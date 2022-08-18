@@ -1,15 +1,56 @@
 from functools import wraps
+from functools import update_wrapper
+from types import MethodType
 
 from scipy.sparse import issparse
 
-from sklearn.utils import check_pandas_support
-from sklearn._config import get_config
+from ..utils import check_pandas_support
+from .._config import get_config
+
 
 __all__ = [
     "get_output_config",
     "SetOutputMixin",
     "safe_set_output",
 ]
+
+
+# This is the same as utils.metaestiamtors.avaliable_if. To avoid the circular
+# dependency between utils.metaestiamtors and base we redefine it here
+class _AvailableIfDescriptor:
+    def __init__(self, fn, check, attribute_name):
+        self.fn = fn
+        self.check = check
+        self.attribute_name = attribute_name
+
+        # update the docstring of the descriptor
+        update_wrapper(self, fn)
+
+    def __get__(self, obj, owner=None):
+        attr_err = AttributeError(
+            f"This {repr(owner.__name__)} has no attribute {repr(self.attribute_name)}"
+        )
+        if obj is not None:
+            # delegate only on instances, not the classes.
+            # this is to allow access to the docstrings.
+            if not self.check(obj):
+                raise attr_err
+            out = MethodType(self.fn, obj)
+
+        else:
+            # This makes it possible to use the decorated method as an unbound method,
+            # for instance when monkeypatching.
+            @wraps(self.fn)
+            def out(*args, **kwargs):
+                if not self.check(args[0]):
+                    raise attr_err
+                return self.fn(*args, **kwargs)
+
+        return out
+
+
+def _available_if(check):
+    return lambda fn: _AvailableIfDescriptor(fn, check, attribute_name=fn.__name__)
 
 
 def _wrap_in_pandas_container(
@@ -40,15 +81,16 @@ def _wrap_in_pandas_container(
     named_container : DataFrame or ndarray
         Container with column names or unchanged `output`.
     """
-    # Already a pandas DataFrame
-    if hasattr(original_data, "iloc"):
-        return original_data
-
     if issparse(original_data):
         raise ValueError("Pandas output does not support sparse data")
 
     if callable(columns):
         columns = columns()
+
+    # Already a pandas DataFrame
+    if hasattr(original_data, "iloc"):
+        original_data.columns = columns
+        return original_data
 
     pd = check_pandas_support("Setting output container to 'pandas'")
     return pd.DataFrame(original_data, index=index, columns=columns)
@@ -140,6 +182,13 @@ def _wrap_method_output(f, method):
     return wrapped
 
 
+def _auto_wrap_is_configured(self):
+    auto_wrap_output = getattr(self, "_sklearn_auto_wrap_output", False)
+    if not callable(auto_wrap_output):
+        return auto_wrap_output
+    return auto_wrap_output()
+
+
 class SetOutputMixin:
     """Mixin that dynamically wraps methods to return container based on config.
 
@@ -147,14 +196,22 @@ class SetOutputMixin:
     it based on `set_output` of the global configuration.
     """
 
-    def __init_subclass__(cls, **kwargs):
+    def __init_subclass__(cls, auto_wrap_output=True, **kwargs):
         # Dynamically wraps `transform` and `fit_transform` and configure it's
         # output based on `set_output`.
+        if not (isinstance(auto_wrap_output, bool) or callable(auto_wrap_output)):
+            raise ValueError("auto_wrap_output should be a bool or a callable")
+
+        cls._sklearn_auto_wrap_output = auto_wrap_output
+        if not auto_wrap_output:
+            return
+
         if hasattr(cls, "transform"):
             cls.transform = _wrap_method_output(cls.transform, "transform")
         if hasattr(cls, "fit_transform"):
             cls.fit_transform = _wrap_method_output(cls.fit_transform, "transform")
 
+    @_available_if(_auto_wrap_is_configured)
     def set_output(self, *, transform=None):
         """Set output container.
 

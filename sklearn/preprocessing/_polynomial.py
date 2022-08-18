@@ -13,7 +13,6 @@ from scipy.special import comb
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
-from ..utils.set_output import SetOutputMixin
 from ..utils.deprecation import deprecated
 from ..utils.validation import check_is_fitted, FLOAT_DTYPES, _check_sample_weight
 from ..utils.validation import _check_feature_names_in
@@ -28,7 +27,7 @@ __all__ = [
 ]
 
 
-class PolynomialFeatures(SetOutputMixin, TransformerMixin, BaseEstimator):
+class PolynomialFeatures(TransformerMixin, BaseEstimator):
     """Generate polynomial and interaction features.
 
     Generate a new feature matrix consisting of all polynomial combinations
@@ -514,7 +513,7 @@ class PolynomialFeatures(SetOutputMixin, TransformerMixin, BaseEstimator):
 
 # TODO:
 # - sparse support (either scipy or own cython solution)?
-class SplineTransformer(SetOutputMixin, TransformerMixin, BaseEstimator):
+class SplineTransformer(TransformerMixin, BaseEstimator):
     """Generate univariate B-spline bases for features.
 
     Generate a new feature matrix consisting of
@@ -937,7 +936,6 @@ class SplineTransformer(SetOutputMixin, TransformerMixin, BaseEstimator):
             spl = self.bsplines_[i]
 
             if self.extrapolation in ("continue", "error", "periodic"):
-
                 if self.extrapolation == "periodic":
                     # With periodic extrapolation we map x to the segment
                     # [spl.t[k], spl.t[n]].

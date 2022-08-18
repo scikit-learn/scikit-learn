@@ -1,7 +1,7 @@
 import pytest
 
 import numpy as np
-from scipy.sparse import csr_matrix
+from scipy.sparse import csr_matrix, issparse
 from numpy.testing import assert_array_equal
 
 from sklearn._config import config_context
@@ -22,6 +22,15 @@ def test__wrap_in_pandas_container_dense():
     assert isinstance(dense_named, pd.DataFrame)
     assert_array_equal(dense_named.columns, columns)
     assert_array_equal(dense_named.index, index)
+
+
+def test__wrap_in_pandas_container_dense_update_columns():
+    pd = pytest.importorskip("pandas")
+    X_df = pd.DataFrame([[1, 0, 3], [0, 0, 1]], columns=["a", "b", "c"])
+    new_columns = np.asarray(["f0", "f1", "f2"], dtype=object)
+
+    new_df = _wrap_in_pandas_container(X_df, columns=new_columns)
+    assert_array_equal(new_df.columns, new_columns)
 
 
 def test__wrap_in_pandas_container_error_validation():
@@ -132,3 +141,66 @@ def test_get_output_config():
     est.set_output(transform="pandas")
     config = get_output_config(est, "transform")
     assert config["dense"] == "pandas"
+
+
+class EstimatorWithSetOutputNoAutoWrap(SetOutputMixin, auto_wrap_output=False):
+    def transform(self, X, y=None):
+        return X
+
+
+def test_get_output_auto_wrap_false():
+    """Check that auto_wrap_output=False does not wrap."""
+    est = EstimatorWithSetOutputNoAutoWrap()
+    assert not hasattr(est, "set_output")
+
+    X = np.asarray([[1, 0, 3], [0, 0, 1]])
+    assert X is est.transform(X)
+
+
+def _auto_wrap_is_configured(self):
+    """Disable set_output for sparse output"""
+    return not self.sparse_output
+
+
+class EstimatorWithSetOutputConfigurable(
+    SetOutputMixin, auto_wrap_output=_auto_wrap_is_configured
+):
+    def __init__(self, sparse_output=False):
+        self.sparse_output = sparse_output
+
+    def transform(self, X, y=None):
+        if self.sparse_output:
+            return csr_matrix(X)
+        return X
+
+
+def test_get_output_auto_wrap_callable_pandas():
+    """Check that auto_wrap_output can be configured with a callable."""
+    pd = pytest.importorskip("pandas")
+
+    est = EstimatorWithSetOutputConfigurable(sparse_output=False)
+    assert hasattr(est, "set_output")
+    est.set_output(transform="pandas")
+
+    X = np.asarray([[1, 0, 3], [0, 0, 1]])
+    X_trans = est.transform(X)
+    assert isinstance(X_trans, pd.DataFrame)
+
+
+def test_get_output_auto_wrap_callable_sparse_output():
+    """Check that set_output is not configured when sparse_output=True."""
+    est = EstimatorWithSetOutputConfigurable(sparse_output=True)
+
+    X = np.asarray([[1, 0, 3], [0, 0, 1]])
+    X_trans = est.transform(X)
+    assert issparse(X_trans)
+
+    assert not hasattr(est, "set_output")
+
+
+def test_auto_wrap_output_errors_with_incorrect_input():
+    msg = "auto_wrap_output should be a bool or a callable"
+    with pytest.raises(ValueError, match=msg):
+
+        class BadEstimator(SetOutputMixin, auto_wrap_output="bad_parameter"):
+            pass

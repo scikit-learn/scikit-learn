@@ -14,7 +14,6 @@ from ..utils import check_array, is_scalar_nan
 from ..utils.deprecation import deprecated
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _check_feature_names_in
-from ..utils.set_output import SetOutputMixin
 from ..utils._param_validation import Interval
 from ..utils._param_validation import StrOptions
 from ..utils._mask import _get_mask
@@ -25,7 +24,7 @@ from ..utils._encode import _encode, _check_unknown, _unique, _get_counts
 __all__ = ["OneHotEncoder", "OrdinalEncoder"]
 
 
-class _BaseEncoder(SetOutputMixin, TransformerMixin, BaseEstimator):
+class _BaseEncoder(TransformerMixin, BaseEstimator):
     """
     Base class for encoders that includes the code to categorize and
     transform the input features.
