@@ -4,16 +4,18 @@ from functools import partial
 
 import numpy as np
 import pytest
-from sklearn.base import RegressorMixin, ClassifierMixin, BaseEstimator
+
+from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
 from sklearn.calibration import CalibratedClassifierCV
+from sklearn.ensemble import AdaBoostClassifier, AdaBoostRegressor
 from sklearn.exceptions import UnsetMetadataPassedError
-from sklearn.multioutput import MultiOutputRegressor, MultiOutputClassifier
-from sklearn.utils.metadata_routing import MetadataRouter
+from sklearn.multioutput import MultiOutputClassifier, MultiOutputRegressor
 from sklearn.tests.test_metadata_routing import (
-    record_metadata,
-    check_recorded_metadata,
     assert_request_is_empty,
+    check_recorded_metadata,
+    record_metadata,
 )
+from sklearn.utils.metadata_routing import MetadataRouter
 
 N, M = 100, 4
 X = np.random.rand(N, M)
@@ -105,7 +107,7 @@ class ConsumingClassifier(ClassifierMixin, BaseEstimator):
         record_metadata_not_default(
             self, "partial_fit", sample_weight=sample_weight, metadata=metadata
         )
-        self.classes_ = [0, 1]
+        self.classes_ = np.array([0, 1])
         return self
 
     def fit(self, X, y, sample_weight="default", metadata="default"):
@@ -115,7 +117,7 @@ class ConsumingClassifier(ClassifierMixin, BaseEstimator):
         record_metadata_not_default(
             self, "fit", sample_weight=sample_weight, metadata=metadata
         )
-        self.classes_ = [0, 1]
+        self.classes_ = np.array([0, 1])
         return self
 
     def predict(self, X, sample_weight="default", metadata="default"):
@@ -181,12 +183,34 @@ METAESTIMATORS = [
         "warns_on": {"fit": ["sample_weight", "metadata"]},
         "preserves_metadata": False,
     },
+    {
+        "metaestimator": AdaBoostClassifier,
+        "estimator_name": "base_estimator",
+        "estimator": ConsumingClassifier,
+        "X": X,
+        "y": y,
+        "routing_methods": ["fit"],
+        "warns_on": {"fit": ["sample_weight"]},
+        "init_params": {"n_estimators": 5},
+        "preserves_metadata": False,
+    },
+    {
+        "metaestimator": AdaBoostRegressor,
+        "estimator_name": "base_estimator",
+        "estimator": ConsumingRegressor,
+        "X": X,
+        "y": y,
+        "routing_methods": ["fit"],
+        "warns_on": {},
+        "init_params": {"n_estimators": 5},
+        "preserves_metadata": False,
+    },
 ]
 """List containing all metaestimators to be tested and their settings
 
 The keys are as follows:
 
-- metaestimator: The metaestmator to be tested
+- metaestimator: The metaestimator to be tested
 - estimator_name: The name of the argument for the sub-estimator
 - estimator: The sub-estimator
 - X: X-data to fit and predict
@@ -198,9 +222,10 @@ The keys are as follows:
   here should result in an error.
 - preserves_metadata: Whether the metaestimator passes the metadata to the
   sub-estimator without modification or not. If it does, we check that the
-  values are identical. If it doesn', no check is performed. TODO Maybe
+  values are identical. If it doesn't, no check is performed. TODO Maybe
   something smarter could be done if the data is modified.
-
+- init_param: A dict containing the parameters to be passed to the
+  metaestimator's init.
 """
 
 # ids used for pytest fixture
@@ -215,9 +240,11 @@ METAESTIMATOR_IDS = [str(row["metaestimator"].__name__) for row in METAESTIMATOR
 def test_default_request(metaestimator):
     # Check that by default request is empty and the right type
     cls = metaestimator["metaestimator"]
-    estimator = metaestimator["estimator"]()
     estimator_name = metaestimator["estimator_name"]
-    instance = cls(**{estimator_name: estimator})
+    estimator = metaestimator["estimator"]()
+    cls_init_params = metaestimator.get("init_params", {})
+    cls_init_params.update({estimator_name: estimator})
+    instance = cls(**cls_init_params)
     assert_request_is_empty(instance.get_metadata_routing())
     assert isinstance(instance.get_metadata_routing(), MetadataRouter)
 
@@ -230,10 +257,12 @@ def test_default_request(metaestimator):
 def test_warning_for_indicated_methods(metaestimator):
     # Check that the indicated methods give a warning
     # TODO: Always error for 1.4
-    cls = metaestimator["metaestimator"]
     registry = _Registry()
-    estimator = metaestimator["estimator"](registry=registry)
+    cls = metaestimator["metaestimator"]
     estimator_name = metaestimator["estimator_name"]
+    estimator = metaestimator["estimator"](registry=registry)
+    cls_init_params = metaestimator.get("init_params", {})
+    cls_init_params.update({estimator_name: estimator})
     X = metaestimator["X"]
     y = metaestimator["y"]
     routing_methods = metaestimator["routing_methods"]
@@ -254,7 +283,7 @@ def test_warning_for_indicated_methods(metaestimator):
                 f" requested or not for {estimator.__class__.__name__}.{method_name}"
             )
 
-            instance = cls(**{estimator_name: estimator})
+            instance = cls(**cls_init_params)
             if "fit" not in method_name:  # instance needs to be fitted first
                 instance.fit(X, y)
             with pytest.warns(FutureWarning, match=re.escape(warn_msg)):
@@ -281,8 +310,10 @@ def test_error_for_other_methods(metaestimator):
     # This test complements test_warning_for_indicated_methods but checks for
     # UnsetMetadataPassedError instead of FutureWarning
     cls = metaestimator["metaestimator"]
-    estimator = metaestimator["estimator"]()
     estimator_name = metaestimator["estimator_name"]
+    estimator = metaestimator["estimator"]()
+    cls_init_params = metaestimator.get("init_params", {})
+    cls_init_params.update({estimator_name: estimator})
     X = metaestimator["X"]
     y = metaestimator["y"]
     routing_methods = metaestimator["routing_methods"]
@@ -302,9 +333,10 @@ def test_error_for_other_methods(metaestimator):
                 f" {estimator.__class__.__name__}.{method_name}"
             )
 
-            instance = cls(**{estimator_name: estimator})
+            instance = cls(**cls_init_params)
             if "fit" not in method_name:  # instance needs to be fitted first
                 instance.fit(X, y)
+            print(key)
             with pytest.raises(UnsetMetadataPassedError, match=re.escape(msg)):
                 method = getattr(instance, method_name)
                 method(X, y, **kwargs)
@@ -331,8 +363,10 @@ def test_setting_request_removes_warning_or_error(metaestimator):
 
     for method_name in routing_methods:
         estimator = metaestimator["estimator"]()
+        cls_init_params = metaestimator.get("init_params", {})
+        cls_init_params.update({estimator_name: estimator})
         set_request(estimator, method_name)
-        instance = cls(**{estimator_name: estimator})
+        instance = cls(**cls_init_params)
         # lines below to ensure that there are no warnings
         with warnings.catch_warnings(record=True) as rec:
             method = getattr(instance, method_name)
