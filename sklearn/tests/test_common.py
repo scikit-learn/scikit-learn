@@ -598,7 +598,8 @@ def test_set_output(estimator):
             f"Skipping check_set_output for {name}: Does not support set_output API"
         )
     _set_checking_parameters(estimator)
-    check_set_output(estimator.__class__.__name__, estimator)
+    with ignore_warnings(category=(FutureWarning)):
+        check_set_output(estimator.__class__.__name__, estimator)
 
 
 @pytest.mark.parametrize(
@@ -612,4 +613,5 @@ def test_set_output_pandas(estimator):
             " API yet"
         )
     _set_checking_parameters(estimator)
-    check_set_output_pandas(estimator.__class__.__name__, estimator)
+    with ignore_warnings(category=(FutureWarning)):
+        check_set_output_pandas(estimator.__class__.__name__, estimator)
