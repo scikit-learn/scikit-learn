@@ -2113,7 +2113,10 @@ def test_column_transformer_set_output(verbose_feature_names_out, remainder):
     assert_array_equal(X_trans.index, df_test.index)
 
 
-def test_column_transform_set_output_mixed():
+@pytest.mark.parametrize("remainder", ["drop", "passthrough"])
+@pytest.mark.parametrize("fit_transform", [True, False])
+def test_column_transform_set_output_mixed(remainder, fit_transform):
+    """Check ColumnTransformer outputs mixed types correctly."""
     pd = pytest.importorskip("pandas")
     df = pd.DataFrame(
         {
@@ -2124,20 +2127,67 @@ def test_column_transform_set_output_mixed():
             "distance": pd.Series([20, pd.NA, 100], dtype="Int32"),
         }
     )
-    # OneHotEncoder Out
     ct = ColumnTransformer(
         [
-            ("color_encode", OneHotEncoder(sparse=False, dtype="int32"), ["color"]),
+            ("color_encode", OneHotEncoder(sparse=False, dtype="int8"), ["color"]),
             ("age", StandardScaler(), ["age"]),
         ],
-        # remainder="passthrough",
+        remainder=remainder,
         verbose_feature_names_out=False,
     ).set_output(transform="pandas")
-    X_trans = ct.fit_transform(df)
+    if fit_transform:
+        X_trans = ct.fit_transform(df)
+    else:
+        X_trans = ct.fit(df).transform(df)
 
     assert isinstance(X_trans, pd.DataFrame)
     assert_array_equal(X_trans.columns, ct.get_feature_names_out())
 
-    # assert X_trans["distance"].dtype == "Int32"
-    # assert X_trans["height"].dtype == "int64"
-    # assert pd.api.types.is_categorical_dtype(X_trans["pet"])
+    expected_dtypes = {
+        "color_blue": "int8",
+        "color_green": "int8",
+        "color_red": "int8",
+        "age": "float64",
+        "pet": "category",
+        "height": "int64",
+        "distance": "Int32",
+    }
+    for col, dtype in X_trans.dtypes.items():
+        assert dtype == expected_dtypes[col]
+
+
+@pytest.mark.parametrize("remainder", ["drop", "passthrough"])
+def test_column_transform_set_output_after_fitting(remainder):
+    pd = pytest.importorskip("pandas")
+    df = pd.DataFrame(
+        {
+            "pet": pd.Series(["dog", "cat", "snake"], dtype="category"),
+            "age": [1.4, 2.1, 4.4],
+            "height": [20, 40, 10],
+        }
+    )
+    ct = ColumnTransformer(
+        [
+            ("color_encode", OneHotEncoder(sparse=False, dtype="int16"), ["pet"]),
+            ("age", StandardScaler(), ["age"]),
+        ],
+        remainder=remainder,
+        verbose_feature_names_out=False,
+    )
+
+    # fit without calling set_output
+    X_trans = ct.fit_transform(df)
+    assert isinstance(X_trans, np.ndarray)
+    assert X_trans.dtype == "float64"
+
+    ct.set_output(transform="pandas")
+    X_trans_df = ct.transform(df)
+    expected_dtypes = {
+        "pet_cat": "int16",
+        "pet_dog": "int16",
+        "pet_snake": "int16",
+        "height": "int64",
+        "age": "float64",
+    }
+    for col, dtype in X_trans_df.dtypes.items():
+        assert dtype == expected_dtypes[col]

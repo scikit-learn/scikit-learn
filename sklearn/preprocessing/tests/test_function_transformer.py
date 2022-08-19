@@ -313,10 +313,6 @@ def test_function_transformer_get_feature_names_out_without_validation():
     X = np.random.rand(100, 2)
     transformer.fit_transform(X)
 
-    msg = "When 'feature_names_out' is 'one-to-one', either"
-    with pytest.raises(ValueError, match=msg):
-        transformer.get_feature_names_out()
-
     names = transformer.get_feature_names_out(("a", "b"))
     assert isinstance(names, np.ndarray)
     assert names.dtype == object

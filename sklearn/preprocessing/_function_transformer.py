@@ -150,6 +150,12 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
     def _check_input(self, X, *, reset):
         if self.validate:
             return self._validate_data(X, accept_sparse=self.accept_sparse, reset=reset)
+        elif reset:
+            # Set feature_names_in_ and n_features_in_ even if validate=False
+            # We run this only when reset==True to store the attributes but not
+            # validate them, because validate=False
+            self._check_n_features(X, reset=reset)
+            self._check_feature_names(X, reset=reset)
         return X
 
     def _check_inverse_transform(self, X):
