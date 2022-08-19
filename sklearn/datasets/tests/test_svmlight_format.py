@@ -4,7 +4,6 @@ from io import BytesIO
 import numpy as np
 import scipy.sparse as sp
 import os
-import pathlib
 import shutil
 from importlib import resources
 from tempfile import NamedTemporaryFile
