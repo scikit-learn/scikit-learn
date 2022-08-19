@@ -242,9 +242,9 @@ def rand_score(labels_true, labels_pred):
     The Rand Index computes a similarity measure between two clusterings
     by considering all pairs of samples and counting pairs that are
     assigned in the same or different clusters in the predicted and
-    true clusterings.
+    true clusterings [1]_ [2]_.
 
-    The raw RI score is:
+    The raw RI score [3]_ is:
 
         RI = (number of agreeing pairs) / (number of pairs)
 
@@ -266,8 +266,19 @@ def rand_score(labels_true, labels_pred):
 
     See Also
     --------
-    adjusted_rand_score: Adjusted Rand Score
-    adjusted_mutual_info_score: Adjusted Mutual Information
+    adjusted_rand_score: Adjusted Rand Score.
+    adjusted_mutual_info_score: Adjusted Mutual Information.
+
+    References
+    ----------
+    .. [1] :doi:`Hubert, L., Arabie, P. "Comparing partitions."
+       Journal of Classification 2, 193–218 (1985).
+       <10.1007/BF01908075>`.
+
+    .. [2] `Wikipedia: Simple Matching Coefficient
+        <https://en.wikipedia.org/wiki/Simple_matching_coefficient>`_
+
+    .. [3] `Wikipedia: Rand Index <https://en.wikipedia.org/wiki/Rand_index>`_
 
     Examples
     --------
@@ -282,16 +293,6 @@ def rand_score(labels_true, labels_pred):
 
       >>> rand_score([0, 0, 1, 2], [0, 0, 1, 1])
       0.83...
-
-    References
-    ----------
-    .. L. Hubert and P. Arabie, Comparing Partitions, Journal of
-      Classification 1985
-      https://link.springer.com/article/10.1007%2FBF01908075
-
-    .. https://en.wikipedia.org/wiki/Simple_matching_coefficient
-
-    .. https://en.wikipedia.org/wiki/Rand_index
     """
     contingency = pair_confusion_matrix(labels_true, labels_pred)
     numerator = contingency.diagonal().sum()
@@ -322,7 +323,8 @@ def adjusted_rand_score(labels_true, labels_pred):
     The adjusted Rand index is thus ensured to have a value close to
     0.0 for random labeling independently of the number of clusters and
     samples and exactly 1.0 when the clusterings are identical (up to
-    a permutation).
+    a permutation). The adjusted Rand index is bounded below by -0.5 for
+    especially discordant clusterings.
 
     ARI is a symmetric measure::
 
@@ -341,7 +343,7 @@ def adjusted_rand_score(labels_true, labels_pred):
     Returns
     -------
     ARI : float
-       Similarity score between -1.0 and 1.0. Random labelings have an ARI
+       Similarity score between -0.5 and 1.0. Random labelings have an ARI
        close to 0.0. 1.0 stands for perfect match.
 
     Examples
@@ -372,6 +374,12 @@ def adjusted_rand_score(labels_true, labels_pred):
       >>> adjusted_rand_score([0, 0, 0, 0], [0, 1, 2, 3])
       0.0
 
+    ARI may take a negative value for especially discordant labelings that
+    are a worse choice than the expected value of random labels::
+
+      >>> adjusted_rand_score([0, 0, 1, 1], [0, 1, 0, 1])
+      -0.5
+
     References
     ----------
     .. [Hubert1985] L. Hubert and P. Arabie, Comparing Partitions,
@@ -382,6 +390,10 @@ def adjusted_rand_score(labels_true, labels_pred):
       adjusted Rand index, Psychological Methods 2004
 
     .. [wk] https://en.wikipedia.org/wiki/Rand_index#Adjusted_Rand_index
+
+    .. [Chacon] :doi:`Minimum adjusted Rand index for two clusterings of a given size,
+      2022, J. E. Chacón and A. I. Rastrojo <10.1007/s11634-022-00491-w>`
+
 
     See Also
     --------

@@ -136,6 +136,10 @@ cdef class Splitter:
         feature.
     is_categorical : ndarray of bool of shape (n_features,)
         Indicates categorical features.
+    monotonic_cst : ndarray of shape (n_features,), dtype=int
+        Indicates the monotonic constraint to enforce on each feature. -1, 1
+        and 0 respectively correspond to a negative constraint, positive
+        constraint and no constraint.
     l2_regularization : float
         The L2 regularization parameter.
     min_hessian_to_split : float, default=1e-3
@@ -149,6 +153,8 @@ cdef class Splitter:
         be ignored.
     hessians_are_constant: bool, default is False
         Whether hessians are constant.
+    n_threads : int, default=1
+        Number of OpenMP threads to use.
     """
     cdef public:
         const X_BINNED_DTYPE_C [::1, :] X_binned
