@@ -92,8 +92,9 @@ def test_load_svmlight_file_fd():
 
 def test_load_svmlight_pathlib():
     # test loading from file descriptor
-    X1, y1 = load_svmlight_file(datafile)
-    X2, y2 = load_svmlight_file(pathlib.Path(datafile))
+    with resources.path(TEST_DATA_MODULE, datafile) as data_path:
+        X1, y1 = load_svmlight_file(str(data_path))
+        X2, y2 = load_svmlight_file(data_path)
 
     assert_array_almost_equal(X1.data, X2.data)
     assert_array_almost_equal(y1, y2)
