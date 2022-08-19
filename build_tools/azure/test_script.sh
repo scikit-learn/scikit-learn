@@ -29,15 +29,12 @@ if [[ "$BUILD_REASON" == "Schedule" ]]; then
     export SKLEARN_RUN_FLOAT32_TESTS=1
 fi
 
-# debug
-echo full env
-env
+COMMIT_MESSAGE=$(python build_tools/azure/get_commit_message.py --only-show-message)
+# temp debug
+echo commit message: $COMMIT_MESSAGE
 
-echo env matching build
-env | grep -i build
-
-if [[ "$BUILD_SOURCEVERSIONMESSAGE" =~ \[float32\ test\] ]]; then
-    echo "Running float32 tests"
+if [[ "$COMMIT_MESSAGE" =~ \[float32\] ]]; then
+    echo "float32 tests will be run due to commit message"
     export SKLEARN_RUN_FLOAT32_TESTS=1
 fi
 
