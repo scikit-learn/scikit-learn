@@ -185,9 +185,7 @@ def _gen_open(f):
     elif isinstance(f, os.PathLike):
         f = os.fspath(f)
     elif not isinstance(f, str):
-        raise TypeError(
-            "expected {str, int, path-like, file-like}, got %s" % type(f)
-        )
+        raise TypeError("expected {str, int, path-like, file-like}, got %s" % type(f))
 
     _, ext = os.path.splitext(f)
     if ext == ".gz":
