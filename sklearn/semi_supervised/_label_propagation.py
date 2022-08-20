@@ -56,6 +56,7 @@ Non-Parametric Function Induction in Semi-Supervised Learning. AISTAT 2005
 #          Utkarsh Upadhyay <mail@musicallyut.in>
 # License: BSD
 from abc import ABCMeta, abstractmethod
+from numbers import Integral, Real
 
 import warnings
 import numpy as np
@@ -68,6 +69,7 @@ from ..neighbors import NearestNeighbors
 from ..utils.extmath import safe_sparse_dot
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
+from ..utils._param_validation import Interval, StrOptions
 from ..exceptions import ConvergenceWarning
 
 
@@ -104,6 +106,16 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
          ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
          for more details.
     """
+
+    _parameter_constraints = {
+        "kernel": [StrOptions({"knn", "rbf"}), callable],
+        "gamma": [Interval(Real, 0, None, closed="left")],
+        "n_neighbors": [Interval(Integral, 0, None, closed="neither")],
+        "alpha": [None, Interval(Real, 0, 1, closed="neither")],
+        "max_iter": [Interval(Integral, 0, None, closed="neither")],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "n_jobs": [None, Interval(Integral, -1, None, closed="left")],
+    }
 
     def __init__(
         self,
@@ -246,6 +258,7 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         self : object
             Returns the instance itself.
         """
+        self._validate_params()
         X, y = self._validate_data(X, y)
         self.X_ = X
         check_classification_targets(y)
@@ -262,13 +275,6 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         n_samples, n_classes = len(y), len(classes)
 
         alpha = self.alpha
-        if self._variant == "spreading" and (
-            alpha is None or alpha <= 0.0 or alpha >= 1.0
-        ):
-            raise ValueError(
-                "alpha=%s is invalid: it must be inside the open interval (0, 1)"
-                % alpha
-            )
         y = np.asarray(y)
         unlabeled = y == -1
 
@@ -416,6 +422,11 @@ class LabelPropagation(BaseLabelPropagation):
     """
 
     _variant = "propagation"
+
+    _parameter_constraints = {
+        **BaseLabelPropagation._parameter_constraints
+    }  # type: ignore
+    _parameter_constraints.pop("alpha")
 
     def __init__(
         self,
@@ -572,6 +583,11 @@ class LabelSpreading(BaseLabelPropagation):
     """
 
     _variant = "spreading"
+
+    _parameter_constraints = {
+        **BaseLabelPropagation._parameter_constraints
+    }  # type: ignore
+    _parameter_constraints["alpha"] = [Interval(Real, 0, 1, closed="neither")]
 
     def __init__(
         self,

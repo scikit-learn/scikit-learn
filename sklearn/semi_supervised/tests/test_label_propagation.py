@@ -122,15 +122,6 @@ def test_label_propagation_closed_form(global_dtype):
     assert_allclose(expected, clf.label_distributions_, atol=1e-4)
 
 
-@pytest.mark.parametrize("alpha", [-0.1, 0, 1, 1.1, None])
-def test_valid_alpha(global_dtype, alpha):
-    n_classes = 2
-    X, y = make_classification(n_classes=n_classes, n_samples=200, random_state=0)
-    X = X.astype(global_dtype)
-    with pytest.raises(ValueError):
-        label_propagation.LabelSpreading(alpha=alpha).fit(X, y)
-
-
 def test_convergence_speed():
     # This is a non-regression test for #5774
     X = np.array([[1.0, 0.0], [0.0, 1.0], [1.0, 2.5]])
