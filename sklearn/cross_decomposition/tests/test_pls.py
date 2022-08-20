@@ -620,3 +620,16 @@ def test_pls_feature_names_out(Klass):
         dtype=object,
     )
     assert_array_equal(names_out, expected_names_out)
+
+
+@pytest.mark.parametrize("Klass", [CCA, PLSSVD, PLSRegression, PLSCanonical])
+def test_pls_set_output(Klass):
+    """Check `set_output` in cross_decomposition module."""
+    pd = pytest.importorskip("pandas")
+    X, Y = load_linnerud(return_X_y=True, as_frame=True)
+
+    est = Klass().set_output(transform="pandas").fit(X, Y)
+    X_trans, y_trans = est.transform(X, Y)
+    assert isinstance(y_trans, np.ndarray)
+    assert isinstance(X_trans, pd.DataFrame)
+    assert_array_equal(X_trans.columns, est.get_feature_names_out())

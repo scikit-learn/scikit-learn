@@ -4119,8 +4119,13 @@ def check_set_output(name, transformer_orig):
     set_random_state(transformer)
 
     X_trans_no_setting = transformer.fit_transform(X, y)
+    if name in CROSS_DECOMPOSITION:
+        X_trans_no_setting = X_trans_no_setting[0]
+
     transformer.set_output(transform="default")
     X_trans_default = transformer.fit_transform(X, y)
+    if name in CROSS_DECOMPOSITION:
+        X_trans_default = X_trans_default[0]
 
     # Default and no setting returne the same transform
     assert_allclose_dense_sparse(X_trans_no_setting, X_trans_default)
@@ -4152,6 +4157,8 @@ def check_set_output_pandas(name, transformer_orig):
     df = pd.DataFrame(X, columns=feature_names_in)
 
     X_trans_no_setting = transformer.fit_transform(df, y)
+    if name in CROSS_DECOMPOSITION:
+        X_trans_no_setting = X_trans_no_setting[0]
     transformer.set_output(transform="pandas")
 
     try:
@@ -4160,6 +4167,8 @@ def check_set_output_pandas(name, transformer_orig):
         # transformer does not support sparse data
         assert str(e) == "Pandas output does not support sparse data", e
         return
+    if name in CROSS_DECOMPOSITION:
+        X_trans_pandas = X_trans_pandas[0]
 
     # Return is a pandas DataFrame
     assert hasattr(X_trans_pandas, "iloc")

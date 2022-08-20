@@ -178,6 +178,13 @@ def _wrap_method_output(f, method):
     @wraps(f)
     def wrapped(self, X, *args, **kwargs):
         data_to_wrap = f(self, X, *args, **kwargs)
+        # only wrap the first entry for cross decomposition
+        if isinstance(data_to_wrap, tuple):
+            return (
+                _wrap_data_with_container(self, method, data_to_wrap[0], X),
+                *data_to_wrap[1:],
+            )
+
         return _wrap_data_with_container(self, method, data_to_wrap, X)
 
     return wrapped
