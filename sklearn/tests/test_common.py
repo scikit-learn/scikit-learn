@@ -474,7 +474,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "GenericUnivariateSelect",
     "HashingVectorizer",
     "Isomap",
-    "IterativeImputer",
     "LabelPropagation",
     "LabelSpreading",
     "Lars",
