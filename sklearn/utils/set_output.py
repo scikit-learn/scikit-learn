@@ -15,8 +15,8 @@ __all__ = [
 ]
 
 
-# This is the same as utils.metaestiamtors.avaliable_if. To avoid the circular
-# dependency between utils.metaestiamtors and base we redefine it here
+# This is the same as utils.metaestimators.avaliable_if. To avoid the circular
+# dependency between utils.metaestimators and base we redefine it here
 class _AvailableIfDescriptor:
     def __init__(self, fn, check, attribute_name):
         self.fn = fn
@@ -136,7 +136,7 @@ def get_output_config(estimator, method):
     return {"dense": dense_config}
 
 
-def _wrap_output_with_container(estimator, original_data, method, index):
+def _wrap_output_with_container(estimator, method, original_data, original_input):
     """Wrap output with container based on an estimator's or global config.
 
     Parameters
@@ -144,11 +144,14 @@ def _wrap_output_with_container(estimator, original_data, method, index):
     estimator : estimator instance
         Estimator to get the output configuration from.
 
+    method : {"transform"}
+        Method to get container output for.
+
     original_data : ndarray
         Data to wrap with container.
 
-    method : {"transform"}
-        Method to get container output for.
+    original_input : {ndarray, dataframe}
+        Original input of function.
 
     index : array-like
         Index to attach to output.
@@ -167,7 +170,7 @@ def _wrap_output_with_container(estimator, original_data, method, index):
     # dense_config == "pandas"
     return _wrap_in_pandas_container(
         original_data=original_data,
-        index=index,
+        index=getattr(original_input, "index", None),
         columns=getattr(estimator, "get_feature_names_out", None),
     )
 
@@ -178,9 +181,7 @@ def _wrap_method_output(f, method):
     @wraps(f)
     def wrapped(self, X, *args, **kwargs):
         original_data = f(self, X, *args, **kwargs)
-        return _wrap_output_with_container(
-            self, original_data, method, getattr(X, "index", None)
-        )
+        return _wrap_output_with_container(self, method, original_data, X)
 
     return wrapped
 
