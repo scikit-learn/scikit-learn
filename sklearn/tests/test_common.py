@@ -498,7 +498,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "PolynomialFeatures",
     "QuadraticDiscriminantAnalysis",
     "RANSACRegressor",
-    "RBFSampler",
     "RFE",
     "RFECV",
     "RegressorChain",

@@ -8,6 +8,7 @@ approximate kernel feature maps based on Fourier transforms and Count Sketches.
 
 # License: BSD 3 clause
 
+from numbers import Integral, Real
 import warnings
 
 import numpy as np
@@ -28,6 +29,7 @@ from .utils.validation import check_is_fitted
 from .utils.validation import _check_feature_names_in
 from .metrics.pairwise import pairwise_kernels, KERNEL_PARAMS
 from .utils.validation import check_non_negative
+from .utils._param_validation import Interval
 
 
 class PolynomialCountSketch(
@@ -307,6 +309,12 @@ class RBFSampler(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimat
     1.0
     """
 
+    _parameter_constraints = {
+        "gamma": [Interval(Real, 0, None, closed="neither")],
+        "n_components": [Interval(Integral, 0, None, closed="neither")],
+        "random_state": ["random_state", None],
+    }
+
     def __init__(self, *, gamma=1.0, n_components=100, random_state=None):
         self.gamma = gamma
         self.n_components = n_components
@@ -332,6 +340,7 @@ class RBFSampler(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimat
         self : object
             Returns the instance itself.
         """
+        self._validate_params()
 
         X = self._validate_data(X, accept_sparse="csr")
         random_state = check_random_state(self.random_state)
