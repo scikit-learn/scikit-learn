@@ -269,13 +269,12 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             Estimator instance.
         """
         super().set_output(transform=transform)
-        transformers = chain(
-            (trans for _, trans, _ in self.transformers),
-            (trans for _, trans, _ in getattr(self, "transformers_", [])),
-        )
-
         transformers = (
-            trans for trans in transformers if trans not in {"passthrough", "drop"}
+            trans
+            for _, trans, _ in chain(
+                self.transformers, getattr(self, "transformers_", [])
+            )
+            if trans not in {"passthrough", "drop"}
         )
         for trans in transformers:
             safe_set_output(trans, transform=transform)
