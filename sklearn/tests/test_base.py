@@ -667,8 +667,8 @@ def test_clone_keeps_output_config():
     """Check that clone keeps the set_output config."""
 
     ss = StandardScaler().set_output(transform="pandas")
-    config = get_output_config(ss, "transform")
+    config = get_output_config("transform", ss)
 
     ss_clone = clone(ss)
-    config_clone = get_output_config(ss_clone, "transform")
+    config_clone = get_output_config("transform", ss_clone)
     assert config == config_clone

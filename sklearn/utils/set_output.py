@@ -96,7 +96,7 @@ def _wrap_in_pandas_container(
     return pd.DataFrame(data_to_wrap, index=index, columns=columns)
 
 
-def get_output_config(estimator, method):
+def get_output_config(method, estimator=None):
     """Get output configure based on estimator and global configuration.
 
     .. note:: Experimental API
@@ -105,11 +105,12 @@ def get_output_config(estimator, method):
 
     Parameters
     ----------
-    estimator : estimator instance
-        If not `None`, check the estimator for output container.
-
     method : {"transform"}
         Method to get container output for.
+
+    estimator : estimator instance or None
+        Estimator to get the output configuration from. If `None`, check global
+        configuration is used.
 
     Returns
     -------
@@ -133,14 +134,11 @@ def get_output_config(estimator, method):
     return {"dense": dense_config}
 
 
-def _wrap_data_with_container(estimator, method, data_to_wrap, original_input):
+def _wrap_data_with_container(method, data_to_wrap, original_input, estimator):
     """Wrap output with container based on an estimator's or global config.
 
     Parameters
     ----------
-    estimator : estimator instance
-        Estimator to get the output configuration from.
-
     method : {"transform"}
         Method to get container output for.
 
@@ -153,13 +151,16 @@ def _wrap_data_with_container(estimator, method, data_to_wrap, original_input):
     index : array-like
         Index to attach to output.
 
+    estimator : estimator instance
+        Estimator to get the output configuration from.
+
     Returns
     -------
     wrapped_output : ndarray or DataFrame
         Wrapped output with column names and index or `output` itself if wrapping is
         not configured.
     """
-    output_config = get_output_config(estimator, method)
+    output_config = get_output_config(method, estimator)
 
     if output_config["dense"] == "default":
         return data_to_wrap
@@ -178,14 +179,14 @@ def _wrap_method_output(f, method):
     @wraps(f)
     def wrapped(self, X, *args, **kwargs):
         data_to_wrap = f(self, X, *args, **kwargs)
-        # only wrap the first entry for cross decomposition
+        # only wrap the first output for cross decomposition
         if isinstance(data_to_wrap, tuple):
             return (
-                _wrap_data_with_container(self, method, data_to_wrap[0], X),
+                _wrap_data_with_container(method, data_to_wrap[0], X, self),
                 *data_to_wrap[1:],
             )
 
-        return _wrap_data_with_container(self, method, data_to_wrap, X)
+        return _wrap_data_with_container(method, data_to_wrap, X, self)
 
     return wrapped
 

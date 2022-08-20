@@ -350,7 +350,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 transformers = chain(transformers, [self._remainder])
         get_weight = (self.transformer_weights or {}).get
 
-        output_config = get_output_config(self, "transform")
+        output_config = get_output_config("transform", self)
         for name, trans, columns in transformers:
             if replace_strings:
                 # replace 'passthrough' with identity transformer and
@@ -847,7 +847,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             return sparse.hstack(converted_Xs).tocsr()
         else:
             Xs = [f.toarray() if sparse.issparse(f) else f for f in Xs]
-            config = get_output_config(self, "transform")
+            config = get_output_config("transform", self)
             if config["dense"] == "pandas" and all(hasattr(X, "iloc") for X in Xs):
                 pd = check_pandas_support("transform")
                 return pd.concat(Xs, axis=1)

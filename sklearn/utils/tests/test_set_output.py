@@ -4,7 +4,7 @@ import numpy as np
 from scipy.sparse import csr_matrix
 from numpy.testing import assert_array_equal
 
-from sklearn._config import config_context
+from sklearn._config import config_context, get_config
 from sklearn.utils.set_output import _wrap_in_pandas_container
 from sklearn.utils.set_output import safe_set_output
 from sklearn.utils.set_output import SetOutputMixin
@@ -77,16 +77,16 @@ def test_safe_set_output():
 
     est = EstimatorWithSetOutput().fit(np.asarray([[1, 2, 3]]))
     safe_set_output(est, transform="pandas")
-    config = get_output_config(est, "transform")
+    config = get_output_config("transform", est)
     assert config["dense"] == "pandas"
 
     safe_set_output(est, transform="default")
-    config = get_output_config(est, "transform")
+    config = get_output_config("transform", est)
     assert config["dense"] == "default"
 
     # transform is None is a noop, so the config remains "default"
     safe_set_output(est, transform=None)
-    config = get_output_config(est, "transform")
+    config = get_output_config("transform", est)
     assert config["dense"] == "default"
 
 
@@ -140,23 +140,32 @@ def test_set_output_method_error():
 def test_get_output_config():
     """Check get_output_config works as expected."""
 
+    # Without a configuration set, the global config is used
+    global_config = get_config()["transform_output"]
+    config = get_output_config("transform")
+    assert config["dense"] == global_config
+
     with config_context(transform_output="pandas"):
+        # with estimator=None, the global config is used
+        config = get_output_config("transform")
+        assert config["dense"] == "pandas"
+
         est = EstimatorNoSetOutputWithTransform()
-        config = get_output_config(est, "transform")
+        config = get_output_config("transform", est)
         assert config["dense"] == "pandas"
 
         est = EstimatorWithSetOutput()
         # If estimator has not config, use global config
-        config = get_output_config(est, "transform")
+        config = get_output_config("transform", est)
         assert config["dense"] == "pandas"
 
         # If estimator has a config, use local config
         est.set_output(transform="default")
-        config = get_output_config(est, "transform")
+        config = get_output_config("transform", est)
         assert config["dense"] == "default"
 
     est.set_output(transform="pandas")
-    config = get_output_config(est, "transform")
+    config = get_output_config("transform", est)
     assert config["dense"] == "pandas"
 
 

@@ -1249,7 +1249,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         return self._hstack(Xs)
 
     def _hstack(self, Xs):
-        config = get_output_config(self, "transform")
+        config = get_output_config("transform", self)
         if config["dense"] == "pandas" and all(hasattr(X, "iloc") for X in Xs):
             pd = check_pandas_support("transform")
             return pd.concat(Xs, axis=1)
