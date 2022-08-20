@@ -236,6 +236,36 @@ cdef class BaseDenseSplitter(Splitter):
 
 cdef class BestSplitter(BaseDenseSplitter):
     """Splitter for finding the best split."""
+
+    cdef SIZE_t[:, :] _X_ranks
+    cdef char[::1] column_mask
+
+    cdef int init(self,
+                  object X,
+                  const DOUBLE_t[:, ::1] y,
+                  DOUBLE_t* sample_weight) except -1:
+        """Initialize the splitter
+
+        Returns -1 in case of failure to allocate memory (and raise MemoryError)
+        or 0 otherwise.
+        """
+
+        #cdef SIZE_t i, j
+
+        # for i in range(self.n_samples):
+        #     for j in range(self.n_samples):
+        #         self._X_ranks[]
+
+        # Call parent init
+        Splitter.init(self, X, y, sample_weight)
+
+        self.X = X
+        self._X_ranks = np.argsort(self.X, axis=0)
+        self.column_mask = np.zeros(self.n_samples, dtype=np.int8)
+
+        return 0
+        
+
     def __reduce__(self):
         return (BestSplitter, (self.criterion,
                                self.max_features,
@@ -260,6 +290,7 @@ cdef class BestSplitter(BaseDenseSplitter):
         cdef SIZE_t n_features = self.n_features
 
         cdef DTYPE_t[::1] Xf = self.feature_values
+        cdef char[::1] column_mask = self.column_mask
         cdef SIZE_t max_features = self.max_features
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf
         cdef double min_weight_leaf = self.min_weight_leaf
@@ -340,8 +371,15 @@ cdef class BestSplitter(BaseDenseSplitter):
             # effectively.
             for i in range(start, end):
                 Xf[i] = self.X[samples[i], current.feature]
+                column_mask[self._X_ranks[samples[i], current.feature]] = 1
 
-            sort(&Xf[start], &samples[start], end - start)
+            p = 0
+            for i in range(self.n_samples):
+                if column_mask[i] == 1:
+                    column_mask[i] = 0
+                    samples[p] = self._X_ranks[i, current.feature]
+                    p = p + 1
+
 
             if Xf[end - 1] <= Xf[start] + FEATURE_THRESHOLD:
                 features[f_j], features[n_total_constants] = features[n_total_constants], features[f_j]
