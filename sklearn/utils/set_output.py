@@ -54,19 +54,16 @@ def _available_if(check):
 
 
 def _wrap_in_pandas_container(
-    original_data,
+    data_to_wrap,
     *,
     index=None,
     columns=None,
 ):
     """Create a named container.
 
-    If `original_data` is already a DataFrame then `original_data` is returned
-    without any changes.
-
     Parameters
     ----------
-    original_data : ndarray, sparse matrix or pandas DataFrame
+    data_to_wrap : ndarray, sparse matrix or pandas DataFrame
         Container to name.
 
     index : array-like, default=None
@@ -81,22 +78,22 @@ def _wrap_in_pandas_container(
     named_container : DataFrame or ndarray
         Container with column names or unchanged `output`.
     """
-    if issparse(original_data):
+    if issparse(data_to_wrap):
         raise ValueError("Pandas output does not support sparse data")
 
     if callable(columns):
         columns = columns()
 
     # Already a pandas DataFrame
-    if hasattr(original_data, "iloc"):
+    if hasattr(data_to_wrap, "iloc"):
         if columns is not None:
-            original_data.columns = columns
+            data_to_wrap.columns = columns
         if index is not None:
-            original_data.index = index
-        return original_data
+            data_to_wrap.index = index
+        return data_to_wrap
 
     pd = check_pandas_support("Setting output container to 'pandas'")
-    return pd.DataFrame(original_data, index=index, columns=columns)
+    return pd.DataFrame(data_to_wrap, index=index, columns=columns)
 
 
 def get_output_config(estimator, method):
@@ -136,7 +133,7 @@ def get_output_config(estimator, method):
     return {"dense": dense_config}
 
 
-def _wrap_output_with_container(estimator, method, original_data, original_input):
+def _wrap_data_with_container(estimator, method, data_to_wrap, original_input):
     """Wrap output with container based on an estimator's or global config.
 
     Parameters
@@ -147,7 +144,7 @@ def _wrap_output_with_container(estimator, method, original_data, original_input
     method : {"transform"}
         Method to get container output for.
 
-    original_data : ndarray
+    data_to_wrap : ndarray
         Data to wrap with container.
 
     original_input : {ndarray, dataframe}
@@ -165,11 +162,11 @@ def _wrap_output_with_container(estimator, method, original_data, original_input
     output_config = get_output_config(estimator, method)
 
     if output_config["dense"] == "default":
-        return original_data
+        return data_to_wrap
 
     # dense_config == "pandas"
     return _wrap_in_pandas_container(
-        original_data=original_data,
+        data_to_wrap=data_to_wrap,
         index=getattr(original_input, "index", None),
         columns=getattr(estimator, "get_feature_names_out", None),
     )
@@ -180,8 +177,8 @@ def _wrap_method_output(f, method):
 
     @wraps(f)
     def wrapped(self, X, *args, **kwargs):
-        original_data = f(self, X, *args, **kwargs)
-        return _wrap_output_with_container(self, method, original_data, X)
+        data_to_wrap = f(self, X, *args, **kwargs)
+        return _wrap_data_with_container(self, method, data_to_wrap, X)
 
     return wrapped
 
