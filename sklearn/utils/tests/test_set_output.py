@@ -52,24 +52,30 @@ class EstimatorNoSetOutputWithTransform:
 
 
 class EstimatorWithSetOutput(SetOutputMixin):
+    def fit(self, X, y=None):
+        self.n_features_in_ = X.shape[1]
+        return self
+
     def transform(self, X, y=None):
         return X
+
+    def get_feature_names_out(self, input_features=None):
+        return np.asarray([f"X{i}" for i in range(self.n_features_in_)], dtype=object)
 
 
 def test_safe_set_output():
     """Check safe_set_output works as expected."""
 
-    # Estimator without transform will not raise when setting set_output for
-    # transform.
+    # Estimator without transform will not raise when setting set_output for transform.
     est = EstimatorWithoutSetOutputAndWithoutTransform()
     safe_set_output(est, transform="pandas")
 
-    # Estimator with transform without set_output would raise
+    # Estimator with transform but without set_output will raise
     est = EstimatorNoSetOutputWithTransform()
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Unable to configure output"):
         safe_set_output(est, transform="pandas")
 
-    est = EstimatorWithSetOutput()
+    est = EstimatorWithSetOutput().fit(np.asarray([[1, 2, 3]]))
     safe_set_output(est, transform="pandas")
     config = get_output_config(est, "transform")
     assert config["dense"] == "pandas"
@@ -82,6 +88,17 @@ def test_safe_set_output():
     safe_set_output(est, transform=None)
     config = get_output_config(est, "transform")
     assert config["dense"] == "default"
+
+
+class EstimatorNoSetOutputWithTransformNoFeatureNamesOut(SetOutputMixin):
+    def transform(self, X, y=None):
+        return X  # pragma: no cover
+
+
+def test_set_output_mixin():
+    """Estimator without get_feature_names_out does not define `set_output`."""
+    est = EstimatorNoSetOutputWithTransformNoFeatureNamesOut()
+    assert not hasattr(est, "set_output")
 
 
 def test_safe_set_output_error():
@@ -100,10 +117,10 @@ def test_set_output_method():
     """Check that the output is pandas."""
     pd = pytest.importorskip("pandas")
 
-    est = EstimatorWithSetOutput()
+    X = np.asarray([[1, 0, 3], [0, 0, 1]])
+    est = EstimatorWithSetOutput().fit(X)
     est.set_output(transform="pandas")
 
-    X = np.asarray([[1, 0, 3], [0, 0, 1]])
     X_trans = est.transform(X)
     assert isinstance(X_trans, pd.DataFrame)
 
@@ -111,9 +128,9 @@ def test_set_output_method():
 def test_set_output_method_error():
     """Check transform fails with invalid transform."""
 
-    est = EstimatorWithSetOutput()
-    est.set_output(transform="bad")
     X = np.asarray([[1, 0, 3], [0, 0, 1]])
+    est = EstimatorWithSetOutput().fit(X)
+    est.set_output(transform="bad")
 
     msg = "output config must be 'default'"
     with pytest.raises(ValueError, match=msg):

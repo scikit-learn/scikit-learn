@@ -191,10 +191,9 @@ def _wrap_method_output(f, method):
 
 
 def _auto_wrap_is_configured(self):
-    auto_wrap_output = getattr(self, "_sklearn_auto_wrap_output", False)
-    if not callable(auto_wrap_output):
-        return auto_wrap_output
-    return auto_wrap_output()
+    return hasattr(self, "get_feature_names_out") and getattr(
+        self, "_sklearn_auto_wrap_output", False
+    )
 
 
 class SetOutputMixin:
@@ -202,6 +201,9 @@ class SetOutputMixin:
 
     Currently `SetOutputMixin` wraps `transform` and `fit_transform` and configures
     it based on `set_output` of the global configuration.
+
+    `set_output` is only defined if `get_feature_names_out` is defined and
+    `auto_wrap_output` is True.
     """
 
     def __init_subclass__(cls, auto_wrap_output=True, **kwargs):
