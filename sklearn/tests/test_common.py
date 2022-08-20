@@ -496,7 +496,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "PatchExtractor",
     "PolynomialCountSketch",
     "PolynomialFeatures",
-    "QuadraticDiscriminantAnalysis",
     "RANSACRegressor",
     "RBFSampler",
     "RFE",
