@@ -493,7 +493,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "OPTICS",
     "OneVsOneClassifier",
     "OneVsRestClassifier",
-    "PatchExtractor",
     "PolynomialCountSketch",
     "PolynomialFeatures",
     "QuadraticDiscriminantAnalysis",
