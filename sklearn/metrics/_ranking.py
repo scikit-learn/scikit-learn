@@ -1078,13 +1078,13 @@ def label_ranking_average_precision_score(y_true, y_score, *, sample_weight=None
         raise ValueError("y_true and y_score have different shape")
 
     # Handle badly formatted array and the degenerate case with one label
-    if not issparse(y_true):
-        y_type = type_of_target(y_true, input_name="y_true")
-        if y_type != "multilabel-indicator" and not (
-            y_type == "binary" and y_true.ndim == 2
-        ):
-            raise ValueError("{0} format is not supported".format(y_type))
+    y_type = type_of_target(y_true, input_name="y_true")
+    if y_type != "multilabel-indicator" and not (
+        y_type == "binary" and y_true.ndim == 2
+    ):
+        raise ValueError("{0} format is not supported".format(y_type))
 
+    if not issparse(y_true):
         y_true = csr_matrix(y_true)
 
     y_score = -y_score
