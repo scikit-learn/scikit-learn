@@ -494,7 +494,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "OneVsOneClassifier",
     "OneVsRestClassifier",
     "PatchExtractor",
-    "PolynomialCountSketch",
     "PolynomialFeatures",
     "QuadraticDiscriminantAnalysis",
     "RANSACRegressor",

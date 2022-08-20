@@ -8,6 +8,7 @@ approximate kernel feature maps based on Fourier transforms and Count Sketches.
 
 # License: BSD 3 clause
 
+from numbers import Integral, Real
 import warnings
 
 import numpy as np
@@ -23,6 +24,7 @@ from .base import BaseEstimator
 from .base import TransformerMixin
 from .base import _ClassNamePrefixFeaturesOutMixin
 from .utils import check_random_state
+from .utils._param_validation import Interval
 from .utils.extmath import safe_sparse_dot
 from .utils.validation import check_is_fitted
 from .utils.validation import _check_feature_names_in
@@ -117,6 +119,14 @@ class PolynomialCountSketch(
     1.0
     """
 
+    _parameter_constraints = {
+        "gamma": [Interval(Real, 0, None, closed="left")],
+        "degree": [Interval(Integral, 1, None, closed="left")],
+        "coef0": [Interval(Real, None, None, closed="neither")],
+        "n_components": [Interval(Integral, 0, None, closed="left")],
+        "random_state": ["random_state"],
+    }
+
     def __init__(
         self, *, gamma=1.0, degree=2, coef0=0, n_components=100, random_state=None
     ):
@@ -147,8 +157,7 @@ class PolynomialCountSketch(
         self : object
             Returns the instance itself.
         """
-        if not self.degree >= 1:
-            raise ValueError(f"degree={self.degree} should be >=1.")
+        self._validate_params()
 
         X = self._validate_data(X, accept_sparse="csc")
         random_state = check_random_state(self.random_state)
