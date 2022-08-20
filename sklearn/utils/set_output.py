@@ -207,7 +207,7 @@ class SetOutputMixin:
     def __init_subclass__(cls, auto_wrap_output=True, **kwargs):
         # Dynamically wraps `transform` and `fit_transform` and configure it's
         # output based on `set_output`.
-        if not (isinstance(auto_wrap_output, bool) or callable(auto_wrap_output)):
+        if not isinstance(auto_wrap_output, bool):
             raise ValueError("auto_wrap_output should be a bool or a callable")
 
         cls._sklearn_auto_wrap_output = auto_wrap_output
