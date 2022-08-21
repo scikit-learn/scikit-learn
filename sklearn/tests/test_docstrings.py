@@ -17,7 +17,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.decomposition._nmf.non_negative_factorization",
     "sklearn.externals._packaging.version.parse",
     "sklearn.feature_extraction.text.strip_accents_unicode",
-    "sklearn.inspection._partial_dependence.partial_dependence",
     "sklearn.inspection._plot.partial_dependence.plot_partial_dependence",
     "sklearn.linear_model._least_angle.lars_path_gram",
     "sklearn.linear_model._omp.orthogonal_mp_gram",
@@ -71,10 +70,8 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.utils.sparsefuncs.count_nonzero",
     "sklearn.utils.sparsefuncs.csc_median_axis_0",
     "sklearn.utils.sparsefuncs.incr_mean_variance_axis",
-    "sklearn.utils.sparsefuncs.inplace_swap_row",
     "sklearn.utils.sparsefuncs.inplace_swap_row_csc",
     "sklearn.utils.sparsefuncs.inplace_swap_row_csr",
-    "sklearn.utils.sparsefuncs.mean_variance_axis",
     "sklearn.utils.validation.check_is_fitted",
 ]
 FUNCTION_DOCSTRING_IGNORE_LIST = set(FUNCTION_DOCSTRING_IGNORE_LIST)
