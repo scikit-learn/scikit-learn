@@ -361,7 +361,7 @@ def inplace_swap_row_csr(X, m, n):
 
 def inplace_swap_row(X, m, n):
     """
-    Swaps two rows of a CSC/CSR matrix in-place.
+    Swap two rows of a CSC/CSR matrix in-place.
 
     Parameters
     ----------
