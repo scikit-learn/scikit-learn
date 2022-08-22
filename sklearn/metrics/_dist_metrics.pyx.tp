@@ -415,9 +415,9 @@ cdef class DistanceMetric{{name_suffix}}:
         0. The implementation of this method in subclasses must be robust to the
         presence of explicit zeros in the CSR representation.
 
-        1. The `indices` are passed using pointers to be able to support an
+        1. The `data` arrays are passed using pointers to be able to support an
         alternative representation of the CSR data structure for supporting
-        fused sparse-dense datasets pairs.
+        fused sparse-dense datasets pairs with minimum overhead.
 
         See the explanations in `SparseDenseDatasetsPair.__init__`.
 
@@ -440,10 +440,10 @@ cdef class DistanceMetric{{name_suffix}}:
             x2_end   = X2_csr.indices_ptr[j+1]
 
             self.dist_csr(
-                x1_data[x1_start:x1_end],
-                &x1_indices[x1_start],
-                x2_data[x2_start:x2_end],
-                &x2_indices[x2_start],
+                &x1_data[x1_start],
+                x1_indices[x1_start:x1_end],
+                &x2_data[x2_start],
+                x2_indices[x2_start:x2_end],
             )
 
         Yet, slicing on memoryview slows down execution as it takes the GIL.
