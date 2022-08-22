@@ -95,8 +95,8 @@ def test_load_svmlight_pathlib():
         X1, y1 = load_svmlight_file(str(data_path))
         X2, y2 = load_svmlight_file(data_path)
 
-    assert_array_almost_equal(X1.data, X2.data)
-    assert_array_almost_equal(y1, y2)
+    assert_allclose(X1.data, X2.data)
+    assert_allclose(y1, y2)
 
 
 def test_load_svmlight_file_multilabel():
