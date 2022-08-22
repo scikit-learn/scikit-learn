@@ -114,7 +114,7 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         "alpha": [None, Interval(Real, 0, 1, closed="neither")],
         "max_iter": [Interval(Integral, 0, None, closed="neither")],
         "tol": [Interval(Real, 0, None, closed="left")],
-        "n_jobs": [None, Interval(Integral, -1, None, closed="left")],
+        "n_jobs": [None, Integral],
     }
 
     def __init__(
