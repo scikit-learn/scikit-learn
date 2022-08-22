@@ -91,3 +91,23 @@ cdef int simultaneous_sort(
                               indices + pivot_idx + 1,
                               size - pivot_idx - 1)
     return 0
+
+def radix_sort(xs, long r=8):
+    ''' 
+    Modifyied from https://searchcode.com/codesearch/view/29200571/
+
+    Efficient Radix Sort -- See http://www.koders.com/python/fidF772268CB8176B16FFA7B81B012D0253E894DBEB.aspx?s=merge+sort '''
+    cdef long k = 2**r
+    cdef long i, x, j
+    cdef long mask = int('1'*r, 2)
+    cdef long J = len(xs)
+    for i in range(0, 32/r):
+        counter = [0]*k
+        for j in range(0,J):
+            counter[(xs[j]>>(i*r))&mask] += 1
+        for j in range(1, k):
+            counter[j] = counter[j-1] + counter[j]
+        for x in reversed(xs[:]):
+            xs[counter[(x>>(i*r))&mask]-1] = x
+            counter[(x>>(i*r))&mask] -= 1
+    return xs

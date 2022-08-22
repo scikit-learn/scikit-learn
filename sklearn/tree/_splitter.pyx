@@ -237,7 +237,8 @@ cdef class BaseDenseSplitter(Splitter):
 cdef class BestSplitter(BaseDenseSplitter):
     """Splitter for finding the best split."""
 
-    cdef SIZE_t[:, :] _X_ranks
+    cdef const SIZE_t[:, :] _X_rank
+    cdef const SIZE_t[:, :] _X_order
     cdef char[::1] column_mask
 
     cdef int init(self,
@@ -260,7 +261,8 @@ cdef class BestSplitter(BaseDenseSplitter):
         Splitter.init(self, X, y, sample_weight)
 
         self.X = X
-        self._X_ranks = np.argsort(self.X, axis=0)
+        self._X_order = cnp.argsort(X, axis=0)
+        self._X_rank = cnp.argsort(self._X_order, axis=0)
         self.column_mask = np.zeros(self.n_samples, dtype=np.int8)
 
         return 0
@@ -307,6 +309,7 @@ cdef class BestSplitter(BaseDenseSplitter):
         cdef SIZE_t feature_offset
         cdef SIZE_t i
         cdef SIZE_t j
+        cdef SIZE_t k
 
         cdef SIZE_t n_visited_features = 0
         # Number of features discovered to be constant during the split search
@@ -370,15 +373,22 @@ cdef class BestSplitter(BaseDenseSplitter):
             # sorting the array in a manner which utilizes the cache more
             # effectively.
             for i in range(start, end):
-                Xf[i] = self.X[samples[i], current.feature]
-                column_mask[self._X_ranks[samples[i], current.feature]] = 1
+                column_mask[self._X_rank[samples[i], current.feature]] = 1
 
-            p = 0
+            k = start
             for i in range(self.n_samples):
                 if column_mask[i] == 1:
                     column_mask[i] = 0
-                    samples[p] = self._X_ranks[i, current.feature]
-                    p = p + 1
+                    samples[k] = self._X_order[i, current.feature]
+                    k = k + 1
+
+                    if k == end:
+                        break
+
+            for i in range(start, end):
+                Xf[i] = self.X[samples[i], current.feature]
+            
+            # sort(&Xf[start], &samples[start], end - start)
 
 
             if Xf[end - 1] <= Xf[start] + FEATURE_THRESHOLD:
