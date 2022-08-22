@@ -164,13 +164,6 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
                 return self.kernel(X, X)
             else:
                 return self.kernel(X, y)
-        else:
-            raise ValueError(
-                "%s is not a valid kernel. Only rbf and knn"
-                " or an explicit function "
-                " are supported at this time."
-                % self.kernel
-            )
 
     @abstractmethod
     def _build_graph(self):
