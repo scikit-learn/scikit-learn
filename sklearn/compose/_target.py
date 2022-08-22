@@ -129,7 +129,7 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
     """
 
     _parameter_constraints = {
-        "regressor": [HasMethods("fit"), None],
+        "regressor": [HasMethods(["fit", "predict"]), None],
         "transformer": [HasMethods("transform"), None],
         "func": [callable, None],
         "inverse_func": [callable, None],
