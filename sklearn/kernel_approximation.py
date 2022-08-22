@@ -123,7 +123,7 @@ class PolynomialCountSketch(
         "gamma": [Interval(Real, 0, None, closed="left")],
         "degree": [Interval(Integral, 1, None, closed="left")],
         "coef0": [Interval(Real, None, None, closed="neither")],
-        "n_components": [Interval(Integral, 0, None, closed="left")],
+        "n_components": [Interval(Integral, 1, None, closed="left")],
         "random_state": ["random_state"],
     }
 
