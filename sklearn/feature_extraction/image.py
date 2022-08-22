@@ -510,7 +510,7 @@ class PatchExtractor(BaseEstimator):
             Interval(Real, 0, 1, closed="neither"),
             Interval(Integral, 0, None, closed="neither"),
         ],
-        "random_state": [None, "random_state"],
+        "random_state": ["random_state"],
     }
 
     def __init__(self, *, patch_size=None, max_patches=None, random_state=None):
