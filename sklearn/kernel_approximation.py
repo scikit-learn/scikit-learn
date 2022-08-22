@@ -312,7 +312,7 @@ class RBFSampler(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimat
     _parameter_constraints = {
         "gamma": [Interval(Real, 0, None, closed="neither")],
         "n_components": [Interval(Integral, 0, None, closed="neither")],
-        "random_state": ["random_state", None],
+        "random_state": ["random_state"],
     }
 
     def __init__(self, *, gamma=1.0, n_components=100, random_state=None):
