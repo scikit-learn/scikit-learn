@@ -734,7 +734,7 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
 
     Parameters
     ----------
-    priors : ndarray of shape (n_classes,), default=None
+    priors : array-like of shape (n_classes,), default=None
         Class priors. By default, the class proportions are inferred from the
         training data.
 
@@ -829,7 +829,7 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
     def __init__(
         self, *, priors=None, reg_param=0.0, store_covariance=False, tol=1.0e-4
     ):
-        self.priors = np.asarray(priors) if priors is not None else None
+        self.priors = priors
         self.reg_param = reg_param
         self.store_covariance = store_covariance
         self.tol = tol
@@ -872,7 +872,7 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         if self.priors is None:
             self.priors_ = np.bincount(y) / float(n_samples)
         else:
-            self.priors_ = self.priors
+            self.priors_ = np.array(self.priors, copy=False)
 
         cov = None
         store_covariance = self.store_covariance

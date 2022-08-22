@@ -552,6 +552,19 @@ def test_qda_priors():
     assert n_pos2 > n_pos
 
 
+@pytest.mark.parametrize("priors", [[0.5, 0.5], np.array([0.5, 0.5])])
+def test_qda_prior_type(priors):
+    clf = QuadraticDiscriminantAnalysis(priors=(0.5, 0.5))
+    y_pred = clf.fit(X6, y6).predict(X6)
+    n_pos = np.sum(y_pred == 2)
+
+    clf = QuadraticDiscriminantAnalysis(priors=priors)
+    y_pred = clf.fit(X6, y6).predict(X6)
+    n_pos2 = np.sum(y_pred == 2)
+
+    assert n_pos == n_pos2
+
+
 def test_qda_store_covariance():
     # The default is to not set the covariances_ attribute
     clf = QuadraticDiscriminantAnalysis().fit(X6, y6)
