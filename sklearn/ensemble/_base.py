@@ -133,7 +133,7 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         Sets the base_estimator_` attributes.
         """
         if not isinstance(self.n_estimators, numbers.Integral):
-            raise ValueError(
+            raise TypeError(
                 "n_estimators must be an integer, got {0}.".format(
                     type(self.n_estimators)
                 )
