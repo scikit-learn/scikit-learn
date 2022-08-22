@@ -709,7 +709,7 @@ cdef class DistanceMetric{{name_suffix}}:
                 np.arange(n_features, dtype=SPARSE_INDEX_TYPE), reps=n_Y,
             )
             const SPARSE_INDEX_TYPE_t[:] Y_indptr = np.arange(
-                start=0, stop=n_features * (n_X + 1), step=n_features, dtype=SPARSE_INDEX_TYPE
+                start=0, stop=n_features * (n_Y + 1), step=n_features, dtype=SPARSE_INDEX_TYPE
             )
 
             DTYPE_t[:, ::1] Darr = np.empty((n_X, n_Y), dtype=DTYPE, order='C')
