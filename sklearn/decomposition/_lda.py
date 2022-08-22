@@ -328,7 +328,7 @@ class LatentDirichletAllocation(
         "topic_word_prior": [None, Interval(Real, 0, 1, closed="both")],
         "learning_method": [StrOptions({"batch", "online"})],
         "learning_decay": [Interval(Real, 0, 1, closed="both")],
-        "learning_offset": [Interval(Real, 0, None, closed="left")],
+        "learning_offset": [Interval(Real, 1.0, None, closed="left")],
         "max_iter": [Interval(Integral, 0, None, closed="left")],
         "batch_size": [Interval(Integral, 0, None, closed="neither")],
         "evaluate_every": [Interval(Integral, None, None, closed="neither")],
@@ -336,7 +336,7 @@ class LatentDirichletAllocation(
         "perp_tol": [Interval(Real, 0, None, closed="left")],
         "mean_change_tol": [Interval(Real, 0, None, closed="left")],
         "max_doc_update_iter": [Interval(Integral, 0, None, closed="left")],
-        "n_jobs": [None, Interval(Integral, -1, None, closed="left")],
+        "n_jobs": [None, Integral],
         "verbose": ["verbose"],
         "random_state": ["random_state"],
     }
