@@ -240,7 +240,7 @@ class IterativeImputer(_BaseImputer):
         **_BaseImputer._parameter_constraints,
         "estimator": [None, HasMethods(["predict"])],
         "sample_posterior": ["boolean"],
-        "max_iter": [Interval(Integral, -1, None, closed="neither")],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
         "tol": [Interval(Real, 0, None, closed="both")],
         "n_nearest_features": [None, Interval(Integral, 0, None, closed="neither")],
         "initial_strategy": [
@@ -465,13 +465,6 @@ class IterativeImputer(_BaseImputer):
         elif self.imputation_order == "random":
             ordered_idx = missing_values_idx
             self.random_state_.shuffle(ordered_idx)
-        else:
-            raise ValueError(
-                "Got an invalid imputation order: '{0}'. It must "
-                "be one of the following: 'roman', 'arabic', "
-                "'ascending', 'descending', or "
-                "'random'.".format(self.imputation_order)
-            )
         return ordered_idx
 
     def _get_abs_corr_mat(self, X_filled, tolerance=1e-6):
