@@ -468,6 +468,7 @@ def test_spline_transformer_n_features_out(n_knots, include_bias, degree):
         ({"degree": (-1, 2)}, r"degree=\(min_degree, max_degree\) must"),
         ({"degree": (0, 1.5)}, r"degree=\(min_degree, max_degree\) must"),
         ({"degree": (3, 2)}, r"degree=\(min_degree, max_degree\) must"),
+        ({"degree": (1, 2, 3)}, r"int or tuple \(min_degree, max_degree\)"),
     ],
 )
 def test_polynomial_features_input_validation(params, err_msg):
