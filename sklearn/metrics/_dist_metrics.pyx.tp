@@ -702,28 +702,37 @@ cdef class DistanceMetric{{name_suffix}}:
 
             ITYPE_t n_Y = Y.shape[0]
             const {{INPUT_DTYPE_t}}[:] Y_data = np.reshape(Y, -1)
-
-            # Potentially costly to store, but allows using `cdist_csr`
-            # without logic duplication.
-            const SPARSE_INDEX_TYPE_t[:] Y_indices = np.tile(
-                np.arange(n_features, dtype=SPARSE_INDEX_TYPE), reps=n_Y,
-            )
-            const SPARSE_INDEX_TYPE_t[:] Y_indptr = np.arange(
-                start=0, stop=n_features * (n_Y + 1), step=n_features, dtype=SPARSE_INDEX_TYPE
+            const SPARSE_INDEX_TYPE_t[:] Y_indices = (
+                np.arange(n_features, dtype=SPARSE_INDEX_TYPE)
             )
 
             DTYPE_t[:, ::1] Darr = np.empty((n_X, n_Y), dtype=DTYPE, order='C')
 
-        self.cdist_csr(
-            x1_data=&X_data[0],
-            x1_indices=X_indices,
-            x1_indptr=X_indptr,
-            x2_data=&Y_data[0],
-            x2_indices=Y_indices,
-            x2_indptr=Y_indptr,
-            size=n_features,
-            D=Darr,
-        )
+            ITYPE_t i1, i2
+            ITYPE_t x1_start, x1_end
+            {{INPUT_DTYPE_t}} * x2_data
+
+        with nogil:
+            # Use the exact same adaptation for CSR than in SparseDenseDatasetsPair
+            # for supporting the dense-sparse case with minimal overhead.
+            for i1 in range(n_X):
+                x1_start = X_indptr[i1]
+                x1_end = X_indptr[i1 + 1]
+                for i2 in range(n_Y):
+                    x2_data = &Y_data[0] + i2 * n_features
+
+                    Darr[i1, i2] = self.dist_csr(
+                        x1_data=&X_data[0],
+                        x1_indices=X_indices,
+                        x2_data=x2_data,
+                        x2_indices=Y_indices,
+                        x1_start=x1_start,
+                        x1_end=x1_end,
+                        x2_start=0,
+                        x2_end=n_features,
+                        size=n_features,
+                    )
+
         return np.asarray(Darr)
 
     def _pairwise_dense_sparse(self,
@@ -738,15 +747,10 @@ cdef class DistanceMetric{{name_suffix}}:
             ITYPE_t n_features = X.shape[1]
 
             const {{INPUT_DTYPE_t}}[:] X_data = np.reshape(X, -1)
+            const SPARSE_INDEX_TYPE_t[:] X_indices = np.arange(
+                n_features, dtype=SPARSE_INDEX_TYPE,
+            )
 
-            # Potentially costly to store, but allows using `cdist_csr`
-            # without logic duplication.
-            const SPARSE_INDEX_TYPE_t[:] X_indices = np.tile(
-                np.arange(n_features, dtype=SPARSE_INDEX_TYPE), reps=n_X,
-            )
-            const SPARSE_INDEX_TYPE_t[:] X_indptr = np.arange(
-                start=0, stop=n_features * (n_X + 1), step=n_features, dtype=SPARSE_INDEX_TYPE
-            )
             ITYPE_t n_Y = Y.shape[0]
             const {{INPUT_DTYPE_t}}[:] Y_data = np.asarray(Y.data, dtype={{INPUT_DTYPE}})
             const SPARSE_INDEX_TYPE_t[:] Y_indices = np.asarray(Y.indices, dtype=SPARSE_INDEX_TYPE)
@@ -754,16 +758,32 @@ cdef class DistanceMetric{{name_suffix}}:
 
             DTYPE_t[:, ::1] Darr = np.empty((n_X, n_Y), dtype=DTYPE, order='C')
 
-        self.cdist_csr(
-            x1_data=&X_data[0],
-            x1_indices=X_indices,
-            x1_indptr=X_indptr,
-            x2_data=&Y_data[0],
-            x2_indices=Y_indices,
-            x2_indptr=Y_indptr,
-            size=n_features,
-            D=Darr,
-        )
+            ITYPE_t i1, i2
+            {{INPUT_DTYPE_t}} * x1_data
+
+            ITYPE_t x2_start, x2_end
+
+        with nogil:
+            # Use the exact same adaptation for CSR than in SparseDenseDatasetsPair
+            # for supporting the dense-sparse case with minimal overhead.
+            for i1 in range(n_X):
+                x1_data = &X_data[0] + i1 * n_features
+                for i2 in range(n_Y):
+                    x2_start = Y_indptr[i2]
+                    x2_end = Y_indptr[i2 + 1]
+
+                    Darr[i1, i2] = self.dist_csr(
+                        x1_data=x1_data,
+                        x1_indices=X_indices,
+                        x2_data=&Y_data[0],
+                        x2_indices=Y_indices,
+                        x1_start=0,
+                        x1_end=n_features,
+                        x2_start=x2_start,
+                        x2_end=x2_end,
+                        size=n_features,
+                    )
+
         return np.asarray(Darr)
 
 
