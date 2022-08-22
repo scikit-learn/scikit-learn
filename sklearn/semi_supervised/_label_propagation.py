@@ -274,7 +274,6 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
 
         n_samples, n_classes = len(y), len(classes)
 
-        alpha = self.alpha
         y = np.asarray(y)
         unlabeled = y == -1
 
@@ -289,7 +288,7 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
             y_static[unlabeled] = 0
         else:
             # LabelSpreading
-            y_static *= 1 - alpha
+            y_static *= 1 - self.alpha
 
         l_previous = np.zeros((self.X_.shape[0], n_classes))
 
@@ -316,7 +315,7 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
             else:
                 # clamp
                 self.label_distributions_ = (
-                    np.multiply(alpha, self.label_distributions_) + y_static
+                    np.multiply(self.alpha, self.label_distributions_) + y_static
                 )
         else:
             warnings.warn(
