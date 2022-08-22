@@ -608,9 +608,9 @@ class TreeGrower:
 
         Returns
         -------
-        allowed_features : None or ndarray, dtype=uint32
+        allowed_features : ndarray, dtype=uint32
             Indices of features allowed to split for children.
-        interaction_cst_indices : None or list of ints
+        interaction_cst_indices : list of ints
             Indices of the interaction sets that have to be applied on splits of
             child nodes. The fewer sets the stronger the constraint as fewer sets
             contain fewer features.
