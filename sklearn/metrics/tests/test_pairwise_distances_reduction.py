@@ -805,11 +805,13 @@ def test_format_agnosticism(
     if PairwiseDistancesReduction is PairwiseDistancesArgKmin:
         parameter = 10
         check_parameters = {}
+        compute_parameters = {}
     else:
         # Scaling the radius slightly with the numbers of dimensions
         radius = 10 ** np.log(n_features)
         parameter = radius
         check_parameters = {"radius": radius}
+        compute_parameters = {"sort_results": True}
 
     # XXX: use itertools.pairwise when available?
     dist_dense_dense, indices_dense_dense = PairwiseDistancesReduction.compute(
@@ -817,6 +819,7 @@ def test_format_agnosticism(
         Y,
         parameter,
         return_distance=True,
+        **compute_parameters,
     )
 
     dist_sparse_sparse, indices_sparse_sparse = PairwiseDistancesReduction.compute(
@@ -824,6 +827,7 @@ def test_format_agnosticism(
         Y_csr,
         parameter,
         return_distance=True,
+        **compute_parameters,
     )
 
     ASSERT_RESULT[(PairwiseDistancesReduction, dtype)](
@@ -839,6 +843,7 @@ def test_format_agnosticism(
         Y_csr,
         parameter,
         return_distance=True,
+        **compute_parameters,
     )
 
     ASSERT_RESULT[(PairwiseDistancesReduction, dtype)](
@@ -854,6 +859,7 @@ def test_format_agnosticism(
         Y,
         parameter,
         return_distance=True,
+        **compute_parameters,
     )
 
     ASSERT_RESULT[(PairwiseDistancesReduction, dtype)](
