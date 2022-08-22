@@ -243,7 +243,7 @@ class _BaseTreeExporter:
         # compute the color as alpha against white
         color = [int(round(alpha * c + (1 - alpha) * 255, 0)) for c in color]
         # Return html color code in #RRGGBB format
-        return "#%2x%2x%2x" % tuple(color)
+        return "#%02x%02x%02x" % tuple(color)
 
     def get_fill_color(self, tree, node_id):
         # Fetch appropriate color for node
