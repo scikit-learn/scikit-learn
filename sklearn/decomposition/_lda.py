@@ -338,7 +338,7 @@ class LatentDirichletAllocation(
         "max_doc_update_iter": [Interval(Integral, 0, None, closed="left")],
         "n_jobs": [None, Interval(Integral, -1, None, closed="left")],
         "verbose": ["verbose"],
-        "random_state": [None, "random_state"],
+        "random_state": ["random_state"],
     }
 
     def __init__(
