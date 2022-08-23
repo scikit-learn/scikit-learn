@@ -57,6 +57,7 @@ from .utils.multiclass import (
 )
 from .utils.metaestimators import _safe_split, available_if
 from .utils.fixes import delayed
+from .utils._param_validation import StrOptions
 
 from joblib import Parallel
 
@@ -281,6 +282,13 @@ class OneVsRestClassifier(
     >>> clf.predict([[-19, -20], [9, 9], [-5, 5]])
     array([2, 0, 1])
     """
+
+    _parameter_constraints = {
+        
+        "estimator": [bool],
+        "n_jobs": [Interval(Integral, 1, None, closed="left"), None],
+        "verbose": [Interval(Integral, 1, None, closed="left"), None]
+    }
 
     def __init__(self, estimator, *, n_jobs=None, verbose=0):
         self.estimator = estimator
