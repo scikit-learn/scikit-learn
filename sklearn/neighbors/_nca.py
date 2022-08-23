@@ -458,7 +458,7 @@ class NeighborhoodComponentsAnalysis(
                     sys.stdout.flush()
                 pca.fit(X)
                 transformation = pca.components_
-            elif init == "lda":
+            else:  # init == "lda":
                 from ..discriminant_analysis import LinearDiscriminantAnalysis
 
                 lda = LinearDiscriminantAnalysis(n_components=n_components)
