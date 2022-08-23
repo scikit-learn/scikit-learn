@@ -166,11 +166,11 @@ jobs:
         SHOW_SHORT_SUMMARY: 'true'
         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '42'  # default global random seed
 
-# Check compilation with Ubuntu bionic 18.04 LTS and scipy from conda-forge
+# Check compilation with Ubuntu 22.04 LTS (Jammy Jellyfish) and scipy from conda-forge
 - template: build_tools/azure/posix.yml
   parameters:
-    name: Ubuntu_Bionic
-    vmImage: ubuntu-18.04
+    name: Ubuntu_Jammy_Jellyfish
+    vmImage: ubuntu-22.04
     dependsOn: [git_commit, linting]
     condition: |
       and(
@@ -178,9 +178,9 @@ jobs:
         not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]'))
       )
     matrix:
-      py38_conda_forge_openblas_ubuntu_1804:
+      py38_conda_forge_openblas_ubuntu_2204:
         DISTRIB: 'conda'
-        LOCK_FILE: './build_tools/azure/py38_conda_forge_openblas_ubuntu_1804_linux-64_conda.lock'
+        LOCK_FILE: './build_tools/azure/py38_conda_forge_openblas_ubuntu_2204_linux-64_conda.lock'
         COVERAGE: 'false'
         BUILD_WITH_ICC: 'false'
         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '0'  # non-default seed
