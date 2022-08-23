@@ -38,6 +38,10 @@ random sampling procedures.
   It is now consistent and deterministic with all SVD solvers.
   :pr:`22527` by :user:`Meekail Zain <micky774>` and `Thomas Fan`_.
 
+- |Fix| :class:`feature_extraction.image.PatchExtractor` required to be fitted
+  before calling :meth:`~feature_extraction.image.PatchExtractor.transform`.
+  :pr:`24230` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 Changes impacting all modules
 -----------------------------
 
@@ -202,7 +206,7 @@ Changelog
   scikit-learn transformer API. It is now required to call `fit` before
   `transform`. The parameter `patch_size_` is now exposed once the transformer
   is fitted.
-  :pr:`xxxxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`24230` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.feature_selection`
 ................................

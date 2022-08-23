@@ -8,6 +8,7 @@ from scipy import ndimage
 from scipy.sparse.csgraph import connected_components
 import pytest
 
+from sklearn.exceptions import NotFittedError
 from sklearn.feature_extraction.image import (
     img_to_graph,
     grid_to_graph,
@@ -247,7 +248,7 @@ def test_patch_extractor_max_patches():
     extr = PatchExtractor(
         patch_size=(p_h, p_w), max_patches=max_patches, random_state=0
     )
-    patches = extr.transform(faces)
+    patches = extr.fit_transform(faces)
     assert patches.shape == (expected_n_patches, p_h, p_w)
 
     max_patches = 0.5
@@ -257,14 +258,14 @@ def test_patch_extractor_max_patches():
     extr = PatchExtractor(
         patch_size=(p_h, p_w), max_patches=max_patches, random_state=0
     )
-    patches = extr.transform(faces)
+    patches = extr.fit_transform(faces)
     assert patches.shape == (expected_n_patches, p_h, p_w)
 
 
 def test_patch_extractor_max_patches_default():
     faces = face_collection
     extr = PatchExtractor(max_patches=100, random_state=0)
-    patches = extr.transform(faces)
+    patches = extr.fit_transform(faces)
     assert patches.shape == (len(faces) * 100, 19, 25)
 
 
@@ -274,7 +275,7 @@ def test_patch_extractor_all_patches():
     p_h, p_w = 8, 8
     expected_n_patches = len(faces) * (i_h - p_h + 1) * (i_w - p_w + 1)
     extr = PatchExtractor(patch_size=(p_h, p_w), random_state=0)
-    patches = extr.transform(faces)
+    patches = extr.fit_transform(faces)
     assert patches.shape == (expected_n_patches, p_h, p_w)
 
 
@@ -284,7 +285,7 @@ def test_patch_extractor_color():
     p_h, p_w = 8, 8
     expected_n_patches = len(faces) * (i_h - p_h + 1) * (i_w - p_w + 1)
     extr = PatchExtractor(patch_size=(p_h, p_w), random_state=0)
-    patches = extr.transform(faces)
+    patches = extr.fit_transform(faces)
     assert patches.shape == (expected_n_patches, p_h, p_w, 3)
 
 
@@ -353,3 +354,18 @@ def test_width_patch():
         extract_patches_2d(x, (4, 1))
     with pytest.raises(ValueError):
         extract_patches_2d(x, (1, 4))
+
+
+def test_patch_extractor_wrong_input():
+    """Check that the patch_size is valid or if an error is raised."""
+    faces = _make_images(orange_face)
+    err_msg = "patch_size must be a tuple of two integers"
+    with pytest.raises(ValueError, match=err_msg):
+        PatchExtractor(patch_size=(8, 8, 8)).fit(faces)
+
+
+def test_patch_extractor_not_fitted():
+    """Check that we raise a NotFittedError if fit is not called before transform."""
+    faces = _make_images(orange_face)
+    with pytest.raises(NotFittedError):
+        PatchExtractor(patch_size=(8, 8)).transform(faces)

@@ -537,6 +537,13 @@ class PatchExtractor(TransformerMixin, BaseEstimator):
         self : object
             Returns the instance itself.
         """
+        X = self._validate_data(
+            X=X,
+            ensure_2d=False,
+            allow_nd=True,
+            ensure_min_samples=0,
+            ensure_min_features=0,
+        )
         img_height, img_width = X.shape[1:3]
         if self.patch_size is None:
             self.patch_size_ = img_height // 10, img_width // 10
@@ -569,6 +576,14 @@ class PatchExtractor(TransformerMixin, BaseEstimator):
             number of patches that can be extracted.
         """
         check_is_fitted(self, attributes=["patch_size_"])
+        X = self._validate_data(
+            X=X,
+            ensure_2d=False,
+            allow_nd=True,
+            ensure_min_samples=0,
+            ensure_min_features=0,
+            reset=False,
+        )
         random_state = check_random_state(self.random_state)
         n_imgs, img_height, img_width = X.shape[:3]
         X = np.reshape(X, (n_imgs, img_height, img_width, -1))
