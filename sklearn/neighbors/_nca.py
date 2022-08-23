@@ -400,9 +400,17 @@ class NeighborhoodComponentsAnalysis(
                         "the given linear transformation "
                         "`init` ({})!".format(self.n_components, init.shape[0])
                     )
-        elif init in ["auto", "pca", "lda", "identity", "random"]:
-            pass
-        else:
+        elif init == "auto":
+            n_samples, n_features = X.shape
+            n_components = self.n_components or n_features
+            n_classes = len(np.unique(y))
+            if n_components <= min(n_features, n_classes - 1):
+                init = "lda"
+            elif n_components < min(n_features, n_samples):
+                init = "pca"
+            else:
+                init = "identity"
+        elif init not in {"pca", "lda", "identity", "random"}:
             raise ValueError(
                 "`init` must be 'auto', 'pca', 'lda', 'identity', 'random' "
                 "or a numpy array of shape (n_components, n_features)."
@@ -434,47 +442,33 @@ class NeighborhoodComponentsAnalysis(
         transformation = init
         if self.warm_start and hasattr(self, "components_"):
             transformation = self.components_
-        elif isinstance(init, np.ndarray):
-            pass
-        else:
-            n_samples, n_features = X.shape
-            n_components = self.n_components or n_features
-            if init == "auto":
-                n_classes = len(np.unique(y))
-                if n_components <= min(n_features, n_classes - 1):
-                    init = "lda"
-                elif n_components < min(n_features, n_samples):
-                    init = "pca"
-                else:
-                    init = "identity"
+        elif isinstance(init, str):
+            n_components = self.n_components or X.shape[1]
+            init_time = time.time()
             if init == "identity":
                 transformation = np.eye(n_components, X.shape[1])
             elif init == "random":
                 transformation = self.random_state_.standard_normal(
                     size=(n_components, X.shape[1])
                 )
-            elif init in {"pca", "lda"}:
-                init_time = time.time()
-                if init == "pca":
-                    pca = PCA(
-                        n_components=n_components, random_state=self.random_state_
-                    )
-                    if self.verbose:
-                        print("Finding principal components... ", end="")
-                        sys.stdout.flush()
-                    pca.fit(X)
-                    transformation = pca.components_
-                elif init == "lda":
-                    from ..discriminant_analysis import LinearDiscriminantAnalysis
-
-                    lda = LinearDiscriminantAnalysis(n_components=n_components)
-                    if self.verbose:
-                        print("Finding most discriminative components... ", end="")
-                        sys.stdout.flush()
-                    lda.fit(X, y)
-                    transformation = lda.scalings_.T[:n_components]
+            elif init == "pca":
+                pca = PCA(n_components=n_components, random_state=self.random_state_)
                 if self.verbose:
-                    print("done in {:5.2f}s".format(time.time() - init_time))
+                    print("Finding principal components... ", end="")
+                    sys.stdout.flush()
+                pca.fit(X)
+                transformation = pca.components_
+            elif init == "lda":
+                from ..discriminant_analysis import LinearDiscriminantAnalysis
+
+                lda = LinearDiscriminantAnalysis(n_components=n_components)
+                if self.verbose:
+                    print("Finding most discriminative components... ", end="")
+                    sys.stdout.flush()
+                lda.fit(X, y)
+                transformation = lda.scalings_.T[:n_components]
+            if self.verbose:
+                print("done in {:5.2f}s".format(time.time() - init_time))
         return transformation
 
     def _callback(self, transformation):
