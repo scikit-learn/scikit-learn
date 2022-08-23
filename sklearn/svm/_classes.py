@@ -1095,7 +1095,7 @@ class NuSVC(BaseSVC):
                     "zero sample_weight is not equivalent to removing samples"
                 ),
                 "check_classifiers_one_label_sample_weights": (
-                "specified nu is infeasible for the fit."
+                    "specified nu is infeasible for the fit."
                 ),
             }
         }

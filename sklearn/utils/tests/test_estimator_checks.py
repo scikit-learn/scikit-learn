@@ -619,7 +619,7 @@ def test_check_estimator():
     # check for predictions for classifiers reducing to
     # less than two classes via sample weights
     name = OneClassSampleErrorClassifierPredict.__name__
-    msg = (f"{name} prediction results should only output the remaining class.")
+    msg = f"{name} prediction results should only output the remaining class."
     with raises(AssertionError, match=msg):
         check_estimator(OneClassSampleErrorClassifierPredict())
 
