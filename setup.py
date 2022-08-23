@@ -62,7 +62,7 @@ DEFINE_MACRO_NUMPY_C_API = (
     "NPY_1_7_API_VERSION",
 )
 
-# XXX: add new extension to this list when their
+# XXX: add new extension to this list when they
 # are not using the old NumPy C API (version 1.4)
 USE_NEWEST_NUMPY_C_API = (
     "sklearn.__check_build._check_build",
