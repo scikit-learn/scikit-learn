@@ -65,7 +65,9 @@ DEFINE_MACRO_NUMPY_C_API = (
 # XXX: add new extensions to this list when they
 # are not using the old NumPy C API (i.e. version 1.4)
 # TODO: when Cython>=3.0 is used, make sure all Cython extensions
-# use the newest NumPy C API (i.e. version 1.7) and remove this list.
+# use the newest NumPy C API by `#defining` `NPY_NO_DEPRECATED_API` to be
+# `NPY_1_7_API_VERSION`, and remove this list.
+# See: https://github.com/cython/cython/blob/1777f13461f971d064bd1644b02d92b350e6e7d1/docs/src/userguide/migrating_to_cy30.rst#numpy-c-api # noqa
 USE_NEWEST_NUMPY_C_API = (
     "sklearn.__check_build._check_build",
     "sklearn._loss._loss",
