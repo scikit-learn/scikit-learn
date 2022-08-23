@@ -1033,10 +1033,11 @@ on overlapping areas::
 
 The :class:`PatchExtractor` class works in the same way as
 :func:`extract_patches_2d`, only it supports multiple images as input. It is
-implemented as an estimator, so it can be used in pipelines. See::
+implemented as a scikit-learn transformer, so it can be used in pipelines.
+See::
 
     >>> five_images = np.arange(5 * 4 * 4 * 3).reshape(5, 4, 4, 3)
-    >>> patches = image.PatchExtractor(patch_size=(2, 2)).transform(five_images)
+    >>> patches = image.PatchExtractor(patch_size=(2, 2)).fit_transform(five_images)
     >>> patches.shape
     (45, 2, 2, 3)
 
