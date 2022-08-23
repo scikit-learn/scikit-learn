@@ -441,17 +441,19 @@ class NeighborhoodComponentsAnalysis(
 
         transformation = init
         if self.warm_start and hasattr(self, "components_"):
-            transformation = self.components_
-        elif isinstance(init, str):
-            n_components = self.n_components or X.shape[1]
+            return self.components_
+        if isinstance(init, np.ndarray):
+            return init
+
+        n_components = self.n_components or X.shape[1]
+        init_time = time.time()
+        if init == "identity":
+            return np.eye(n_components, X.shape[1])
+        elif init == "random":
+            return self.random_state_.standard_normal(size=(n_components, X.shape[1]))
+        else:
             init_time = time.time()
-            if init == "identity":
-                transformation = np.eye(n_components, X.shape[1])
-            elif init == "random":
-                transformation = self.random_state_.standard_normal(
-                    size=(n_components, X.shape[1])
-                )
-            elif init == "pca":
+            if init == "pca":
                 pca = PCA(n_components=n_components, random_state=self.random_state_)
                 if self.verbose:
                     print("Finding principal components... ", end="")
@@ -469,7 +471,8 @@ class NeighborhoodComponentsAnalysis(
                 transformation = lda.scalings_.T[:n_components]
             if self.verbose:
                 print("done in {:5.2f}s".format(time.time() - init_time))
-        return transformation
+
+            return transformation
 
     def _callback(self, transformation):
         """Called after each iteration of the optimizer.
