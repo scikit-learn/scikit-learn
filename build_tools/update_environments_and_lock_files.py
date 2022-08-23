@@ -146,7 +146,7 @@ conda_build_metadata_list = [
         },
     },
     {
-        "build_name": "py38_conda_forge_openblas_ubuntu_1804",
+        "build_name": "py38_conda_forge_openblas_ubuntu_2204",
         "folder": "build_tools/azure",
         "platform": "linux-64",
         "channel": "conda-forge",
