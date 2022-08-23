@@ -15,8 +15,9 @@ import numpy as np
 from scipy import sparse
 from numpy.lib.stride_tricks import as_strided
 
+from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array, check_random_state
-from ..base import BaseEstimator
+from ..utils.validation import check_is_fitted
 
 __all__ = [
     "PatchExtractor",
@@ -460,7 +461,7 @@ def reconstruct_from_patches_2d(patches, image_size):
     return img
 
 
-class PatchExtractor(BaseEstimator):
+class PatchExtractor(TransformerMixin, BaseEstimator):
     """Extracts patches from a collection of images.
 
     Read more in the :ref:`User Guide <image_feature_extraction>`.
@@ -483,6 +484,14 @@ class PatchExtractor(BaseEstimator):
         deterministic.
         See :term:`Glossary <random_state>`.
 
+    Attributes
+    ----------
+    patch_size_ : tuple of int (patch_height, patch_width)
+        The dimensions of one patch.
+
+        .. versionadded:: 1.2
+           `patch_size_` was added in version 1.2.
+
     See Also
     --------
     reconstruct_from_patches_2d : Reconstruct image from all of its patches.
@@ -493,12 +502,11 @@ class PatchExtractor(BaseEstimator):
     >>> from sklearn.feature_extraction import image
     >>> # Use the array data from the second image in this dataset:
     >>> X = load_sample_images().images[1]
-    >>> print('Image shape: {}'.format(X.shape))
+    >>> print(f"Image shape: {X.shape}")
     Image shape: (427, 640, 3)
     >>> pe = image.PatchExtractor(patch_size=(2, 2))
-    >>> pe_fit = pe.fit(X)
-    >>> pe_trans = pe.transform(X)
-    >>> print('Patches shape: {}'.format(pe_trans.shape))
+    >>> pe_trans = pe.fit_transform(X)
+    >>> print(f"Patches shape: {pe_trans.shape}")
     Patches shape: (545706, 2, 2)
     """
 
@@ -515,8 +523,11 @@ class PatchExtractor(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
-            Training data.
+        X : ndarray of shape (n_samples, image_height, image_width) or \
+                (n_samples, image_height, image_width, n_channels)
+            Array of images from which to extract patches. For color images,
+            the last dimension specifies the channel: a RGB image would have
+            `n_channels=3`.
 
         y : Ignored
             Not used, present for API consistency by convention.
@@ -526,6 +537,16 @@ class PatchExtractor(BaseEstimator):
         self : object
             Returns the instance itself.
         """
+        img_height, img_width = X.shape[1:3]
+        if self.patch_size is None:
+            self.patch_size_ = img_height // 10, img_width // 10
+        else:
+            if len(self.patch_size) != 2:
+                raise ValueError(
+                    f"patch_size must be a tuple of two integers. Got {self.patch_size}"
+                    " instead."
+                )
+            self.patch_size_ = self.patch_size
         return self
 
     def transform(self, X):
@@ -534,7 +555,7 @@ class PatchExtractor(BaseEstimator):
         Parameters
         ----------
         X : ndarray of shape (n_samples, image_height, image_width) or \
-            (n_samples, image_height, image_width, n_channels)
+                (n_samples, image_height, image_width, n_channels)
             Array of images from which to extract patches. For color images,
             the last dimension specifies the channel: a RGB image would have
             `n_channels=3`.
@@ -542,24 +563,23 @@ class PatchExtractor(BaseEstimator):
         Returns
         -------
         patches : array of shape (n_patches, patch_height, patch_width) or \
-             (n_patches, patch_height, patch_width, n_channels)
-             The collection of patches extracted from the images, where
-             `n_patches` is either `n_samples * max_patches` or the total
-             number of patches that can be extracted.
+                (n_patches, patch_height, patch_width, n_channels)
+            The collection of patches extracted from the images, where
+            `n_patches` is either `n_samples * max_patches` or the total
+            number of patches that can be extracted.
         """
-        self.random_state = check_random_state(self.random_state)
-        n_images, i_h, i_w = X.shape[:3]
-        X = np.reshape(X, (n_images, i_h, i_w, -1))
+        check_is_fitted(self, attributes=["patch_size_"])
+        random_state = check_random_state(self.random_state)
+        n_imgs, img_height, img_width = X.shape[:3]
+        X = np.reshape(X, (n_imgs, img_height, img_width, -1))
         n_channels = X.shape[-1]
-        if self.patch_size is None:
-            patch_size = i_h // 10, i_w // 10
-        else:
-            patch_size = self.patch_size
 
         # compute the dimensions of the patches array
-        p_h, p_w = patch_size
-        n_patches = _compute_n_patches(i_h, i_w, p_h, p_w, self.max_patches)
-        patches_shape = (n_images * n_patches,) + patch_size
+        patch_height, patch_width = self.patch_size_
+        n_patches = _compute_n_patches(
+            img_height, img_width, patch_height, patch_width, self.max_patches
+        )
+        patches_shape = (n_imgs * n_patches,) + self.patch_size_
         if n_channels > 1:
             patches_shape += (n_channels,)
 
@@ -568,9 +588,9 @@ class PatchExtractor(BaseEstimator):
         for ii, image in enumerate(X):
             patches[ii * n_patches : (ii + 1) * n_patches] = extract_patches_2d(
                 image,
-                patch_size,
+                self.patch_size_,
                 max_patches=self.max_patches,
-                random_state=self.random_state,
+                random_state=random_state,
             )
         return patches
 

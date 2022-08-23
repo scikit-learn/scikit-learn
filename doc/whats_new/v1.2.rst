@@ -195,6 +195,15 @@ Changelog
   NaN in feature importance when fitted with very small sample weight.
   :pr:`20415` by :user:`Zhehao Liu <MaxwellLZH>`.
 
+:mod:`sklearn.feature_extraction`
+.................................
+
+- |Fix| Make :class:`feature_extraction.image.PatchExtractor` now follow the
+  scikit-learn transformer API. It is now required to call `fit` before
+  `transform`. The parameter `patch_size_` is now exposed once the transformer
+  is fitted.
+  :pr:`xxxxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.feature_selection`
 ................................
 
