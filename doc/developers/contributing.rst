@@ -551,6 +551,7 @@ message, the following actions are taken.
     [nogil]                Build & test with the nogil experimental branches of CPython, Cython, NumPy, SciPy...
     [icc-build]            Build & test with the Intel C compiler (ICC)
     [pypy]                 Build & test with PyPy
+    [float32]              Run float32 tests by setting `SKLEARN_RUN_FLOAT32_TESTS=1`. See :ref:`environment_variable` for more details
     [doc skip]             Docs are not built
     [doc quick]            Docs built, but excludes example gallery plots
     [doc build]            Docs built including example gallery plots (very long)
