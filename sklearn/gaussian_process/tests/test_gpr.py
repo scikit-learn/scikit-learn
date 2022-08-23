@@ -672,6 +672,7 @@ def test_gpr_consistency_std_cov_non_invertible_kernel():
                 "kernel": WhiteKernel(noise_level_bounds=(-np.inf, np.inf)),
                 "n_restarts_optimizer": 2,
             },
+            {"sample_variance": None},
             ValueError,
             "requires that all bounds are finite",
         ),
