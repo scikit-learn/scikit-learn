@@ -584,6 +584,12 @@ class PatchExtractor(TransformerMixin, BaseEstimator):
             ensure_min_features=0,
             reset=False,
         )
+        return self._transform(X)
+
+    def _transform(self, X):
+        """Private transform method shared between fit_transform and transform.
+        No data validation is performed.
+        """
         random_state = check_random_state(self.random_state)
         n_imgs, img_height, img_width = X.shape[:3]
         X = np.reshape(X, (n_imgs, img_height, img_width, -1))
@@ -608,6 +614,33 @@ class PatchExtractor(TransformerMixin, BaseEstimator):
                 random_state=random_state,
             )
         return patches
+
+    def fit_transform(self, X, y=None):
+        """Fit and transform the image samples in `X` into a matrix of patch data.
+
+        .. versionadded:: 1.2
+           `fit_transform` was added in version 1.2.
+
+        Parameters
+        ----------
+        X : ndarray of shape (n_samples, image_height, image_width) or \
+                (n_samples, image_height, image_width, n_channels)
+            Array of images from which to extract patches. For color images,
+            the last dimension specifies the channel: a RGB image would have
+            `n_channels=3`.
+
+        y : Ignored
+            Not used, present for API consistency by convention.
+
+        Returns
+        -------
+        patches : array of shape (n_patches, patch_height, patch_width) or \
+                (n_patches, patch_height, patch_width, n_channels)
+            The collection of patches extracted from the images, where
+            `n_patches` is either `n_samples * max_patches` or the total
+            number of patches that can be extracted.
+        """
+        return self.fit(X, y)._transform(X)
 
     def _more_tags(self):
         return {"X_types": ["3darray"]}
