@@ -18,22 +18,6 @@ cdef inline void dual_swap(
     iarr[b] = itmp
 
 
-cdef inline void int_dual_swap(
-    ITYPE_t* darr,
-    ITYPE_t* iarr,
-    ITYPE_t a,
-    ITYPE_t b,
-) nogil:
-    """Swap the values at index a and b of both darr and iarr"""
-    cdef ITYPE_t dtmp = darr[a]
-    darr[a] = darr[b]
-    darr[b] = dtmp
-
-    cdef ITYPE_t itmp = iarr[a]
-    iarr[a] = iarr[b]
-    iarr[b] = itmp
-
-
 cdef int simultaneous_sort(
     floating* values,
     ITYPE_t* indices,
@@ -51,7 +35,7 @@ cdef int simultaneous_sort(
 
     Notes
     -----
-    Arrays are manipulated via a pointer to there first element and their size
+    Arrays are manipulated via a pointer to their first element and their size
     as to ease the processing of dynamically allocated buffers.
     """
     # TODO: In order to support discrete distance metrics, we need to have a
@@ -119,49 +103,85 @@ cdef int simultaneous_radix_sort(
     ITYPE_t* index_copies,
 ) nogil:
     ''' 
-    Modifyied from https://searchcode.com/codesearch/view/29200571/
+    Perform a radix sort on the values array as to sort them ascendingly.
+    This simultaneously performs the swaps on both the values and the indices
+    arrays.
+
+    The numpy equivalent is:
+
+        def simultaneous_sort(values, indices):
+             i = np.argsort(values)
+             return values[i], indices[i]
+    
+    The algorithm consists of repeatedly applying Counting Sort to smaller sets
+    of bits of the values. For example, when sorting 32-bit integers, all
+    values are first sorted with respect to their 8 left-most bits, then are
+    resorted with respect to their 9-16 bits, then bits 17-24 and finally 25-32.
+
+    Auxiliary arrays value_copies and index_copies are passed as arguments to
+    avoid repeatedly allocating memory in multiple subsequent sorts.
+
+    Notes
+    -----
+    Arrays are manipulated via a pointer to their first element and their size
+    as to ease the processing of dynamically allocated buffers.
+
+    Modified from https://pt.wikipedia.org/wiki/Radix_sort#C%C3%B3digo_em_C
+    (in portuguese).
     '''
-    cdef ITYPE_t block_size = 8  # of bits to use at each iteration
-    cdef ITYPE_t n_blocks = sizeof(ITYPE_t)  # of iterations, sizeof()*8 / n_bits
+    cdef ITYPE_t block_size = 8   # Number of bits to use at each iteration
     cdef ITYPE_t n_buckets = 256  # 1 << n_bits
-    cdef ITYPE_t mask = 255  # n_buckets - 1
-    cdef ITYPE_t i = 0, j, key
+    cdef ITYPE_t mask = 255       # n_buckets - 1
+    cdef ITYPE_t i, j, key
     cdef ITYPE_t max_value
     cdef ITYPE_t[256] counter
 
-    # value_copies = <ITYPE_t*> malloc(n_blocks*size)
-    # index_copies = <ITYPE_t*> malloc(n_blocks*size)
+    # One extra pass to get the maximum value and enable early stopping
+    max_value = values[0]
+    for j in range(1, size):
+        if values[j] > max_value:
+            max_value = values[j]
 
-    # max_value = values[0]
-    # for j in range(1, size):
-    #     if values[j] > max_value:
-    #         max_value = values[j]
+    # The following is used multiple times bellow to get the ith set of bits
+    # from value:
+    #
+    #     (value >> (i*block_size)) & mask
+    #
+    # i thus will indicate the bit partition we currently using to sort.
+    # For instance, the number 5834326 will be partitioned as:
+    #
+    #    (0000000)(00101100)(10000011)(001010110)
+    #       i=3      i=2        i=1      i=0
 
-    max_value = size - 1
-
+    i = 0
     while (max_value >> (i*block_size)) & mask:
+        # Initialize buckets for counting digits (values in sets of bits).
         for j in range(n_buckets):
             counter[j] = 0
     
+        # Count ocurrences of each bit combination in the current (ith) bit
+        # ppartition.
         for j in range(size):
             counter[(values[j] >> (i*block_size)) & mask] += 1
 
+        # Compute cumulative sum of counts, since they will indicate the
+        # number's position in the sorted array.
         for j in range(1, n_buckets):
             counter[j] += counter[j-1]
 
+        # Build sorted arrays with respect to the ith bit partition, storing
+        # them in value_copies and index_copies
         for j in range(size-1, -1, -1):
             key = (values[j] >> (i*block_size)) & mask
             counter[key] -= 1
             value_copies[counter[key]] = values[j]
             index_copies[counter[key]] = indices[j]
 
+        # Copy sorted arrays back to values and indices.
         for j in range(size):
             values[j] = value_copies[j]
             indices[j] = index_copies[j]
-            #int_dual_swap(values, indices, counter[key], j)
 
         i += 1
 
-    #  free(value_copies)
-    #  free(index_copies)
     return 0
