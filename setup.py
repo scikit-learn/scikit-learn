@@ -62,30 +62,51 @@ DEFINE_MACRO_NUMPY_C_API = (
     "NPY_1_7_API_VERSION",
 )
 
-# TODO: remove call to NumPy C API (version 1.4) in those extensions
-USE_OLD_NUMPY_C_API = (
-    "sklearn.decomposition._online_lda_fast",
-    "sklearn.manifold._utils",
-    "sklearn.ensemble._gradient_boosting",
-    "sklearn.preprocessing._csr_polynomial_expansion",
-    "sklearn.cluster._dbscan_inner",
-    "sklearn.cluster._hierarchical_fast",
-    "sklearn.neighbors._quad_tree",
-    "sklearn.tree._criterion",
-    "sklearn.utils.murmurhash",
-    "sklearn.neighbors._kd_tree",
-    "sklearn.neighbors._ball_tree",
-    "sklearn.utils.arrayfuncs",
-    "sklearn.utils._seq_dataset",
-    "sklearn.svm._liblinear",
-    "sklearn.tree._tree",
-    "sklearn.svm._libsvm_sparse",
-    "sklearn.svm._libsvm",
-    "sklearn.metrics._dist_metrics",
-    "sklearn.utils.sparsefuncs_fast",
-    "sklearn.linear_model._cd_fast",
-    "sklearn.linear_model._sgd_fast",
-    "sklearn.linear_model._sag_fast",
+# XXX: add new extension to this list when their
+# are not using the old NumPy C API (version 1.4)
+USE_NEWEST_NUMPY_C_API = (
+    "sklearn.__check_build._check_build",
+    "sklearn._loss._loss",
+    "sklearn.cluster._k_means_common",
+    "sklearn.cluster._k_means_lloyd",
+    "sklearn.cluster._k_means_elkan",
+    "sklearn.cluster._k_means_minibatch",
+    "sklearn.datasets._svmlight_format_fast",
+    "sklearn.decomposition._cdnmf_fast",
+    "sklearn.ensemble._hist_gradient_boosting._gradient_boosting",
+    "sklearn.ensemble._hist_gradient_boosting.histogram",
+    "sklearn.ensemble._hist_gradient_boosting.splitting",
+    "sklearn.ensemble._hist_gradient_boosting._binning",
+    "sklearn.ensemble._hist_gradient_boosting._predictor",
+    "sklearn.ensemble._hist_gradient_boosting._bitset",
+    "sklearn.ensemble._hist_gradient_boosting.common",
+    "sklearn.ensemble._hist_gradient_boosting.utils",
+    "sklearn.feature_extraction._hashing_fast",
+    "sklearn.manifold._barnes_hut_tsne",
+    "sklearn.metrics.cluster._expected_mutual_info_fast",
+    "sklearn.metrics._pairwise_distances_reduction._datasets_pair",
+    "sklearn.metrics._pairwise_distances_reduction._gemm_term_computer",
+    "sklearn.metrics._pairwise_distances_reduction._base",
+    "sklearn.metrics._pairwise_distances_reduction._argkmin",
+    "sklearn.metrics._pairwise_distances_reduction._radius_neighborhood",
+    "sklearn.metrics._pairwise_fast",
+    "sklearn.neighbors._partition_nodes",
+    "sklearn.tree._splitter",
+    "sklearn.tree._utils",
+    "sklearn.utils._cython_blas",
+    "sklearn.utils._fast_dict",
+    "sklearn.utils._openmp_helpers",
+    "sklearn.utils._weight_vector",
+    "sklearn.utils._random",
+    "sklearn.utils._logistic_sigmoid",
+    "sklearn.utils._readonly_array_wrapper",
+    "sklearn.utils._typedefs",
+    "sklearn.utils._heap",
+    "sklearn.utils._sorting",
+    "sklearn.utils._vector_sentinel",
+    "sklearn.utils._isfinite",
+    "sklearn.svm._newrand",
+    "sklearn._isotonic",
 )
 
 # For some commands, use setuptools
@@ -175,7 +196,7 @@ try:
             from sklearn._build_utils.openmp_helpers import get_openmp_flag
 
             for ext in self.extensions:
-                if ext.name not in USE_OLD_NUMPY_C_API:
+                if ext.name in USE_NEWEST_NUMPY_C_API:
                     print(
                         f"Use newest NumPy C API (version 1.7) for extension {ext.name}"
                     )
