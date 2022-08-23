@@ -1,5 +1,4 @@
 from cython cimport floating
-from libc.stdlib cimport malloc, free
 
 
 cdef inline void dual_swap(
