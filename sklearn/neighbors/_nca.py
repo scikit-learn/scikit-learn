@@ -438,8 +438,6 @@ class NeighborhoodComponentsAnalysis(
             The initialized linear transformation.
 
         """
-
-        transformation = init
         if self.warm_start and hasattr(self, "components_"):
             return self.components_
         if isinstance(init, np.ndarray):
