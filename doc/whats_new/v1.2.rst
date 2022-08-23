@@ -332,7 +332,7 @@ Changelog
   :pr:`20617` by :user:`Srinath Kailasa <skailasa>`
 
 :mod:`sklearn.gaussian_process`
-....................
+...............................
 
 - |Feature| Add sample variance support (by new `sample_variance` parameter)
   for `fit` method in :class: `GaussianProcessRegressor`.
