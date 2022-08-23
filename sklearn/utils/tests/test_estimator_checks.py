@@ -608,9 +608,11 @@ def test_check_estimator():
 
     # check for classifiers reducing to less than two classes via sample weights
     name = OneClassSampleErrorClassifier.__name__
-    msg = (f"{name} failed when fitted on one label after sample_weight "
-           "trimming. Error message is not explicit, it should have "
-           "'class'.")
+    msg = (
+        f"{name} failed when fitted on one label after sample_weight "
+        "trimming. Error message is not explicit, it should have "
+        "'class'."
+    )
     with raises(AssertionError, match=msg):
         check_estimator(OneClassSampleErrorClassifier())
 
