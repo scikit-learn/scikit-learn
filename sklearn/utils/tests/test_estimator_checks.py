@@ -616,6 +616,13 @@ def test_check_estimator():
     with raises(AssertionError, match=msg):
         check_estimator(OneClassSampleErrorClassifier())
 
+    # check for predictions for classifiers reducing to
+    # less than two classes via sample weights
+    name = OneClassSampleErrorClassifierPredict.__name__
+    msg = (f"{name} prediction results should only output the remaining class.")
+    with raises(AssertionError, match=msg):
+        check_estimator(OneClassSampleErrorClassifierPredict())
+
     # Large indices test on bad estimator
     msg = (
         "Estimator LargeSparseNotSupportedClassifier doesn't seem to "

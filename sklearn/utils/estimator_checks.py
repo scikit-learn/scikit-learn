@@ -32,6 +32,7 @@ from ..linear_model import LogisticRegression
 from ..linear_model import RANSACRegressor
 from ..linear_model import Ridge
 from ..linear_model import SGDRegressor
+from ..svm import NuSVC
 
 from ..base import (
     clone,
@@ -2126,6 +2127,7 @@ def check_classifiers_one_label(name, classifier_orig):
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
+@parametrize_with_checks([NuSVC()])
 def check_classifiers_one_label_sample_weights(name, classifier_orig):
     # check that classifiers accepting sample_weight fit or
     # throws an ValueError with explicit message if
@@ -2157,7 +2159,7 @@ def check_classifiers_one_label_sample_weights(name, classifier_orig):
         with raises(TypeError, match=r"\bsample_weight\b", may_pass=True) as cm:
             classifier.fit(X_train, y, sample_weight=sample_weight)
             if cm.raised_and_matched:
-                # ValueError was raised with proper error message
+                # TypeError was raised with proper error message
                 return
 
     # Test that predict won't raise an unexpected exception
