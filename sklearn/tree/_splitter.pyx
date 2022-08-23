@@ -16,7 +16,6 @@ from ._criterion cimport Criterion
 from libc.stdlib cimport free
 from libc.stdlib cimport qsort
 from libc.string cimport memcpy
-from libc.string cimport memset
 
 import numpy as np
 
@@ -26,6 +25,7 @@ from ._utils cimport log
 from ._utils cimport rand_int
 from ._utils cimport rand_uniform
 from ._utils cimport RAND_R_MAX
+from ..utils._sorting cimport simultaneous_radix_sort
 
 cdef double INFINITY = np.inf
 
@@ -237,9 +237,11 @@ cdef class BaseDenseSplitter(Splitter):
 cdef class BestSplitter(BaseDenseSplitter):
     """Splitter for finding the best split."""
 
-    cdef const SIZE_t[:, :] _X_rank
+    cdef const SIZE_t[:, :] _X_ranks
     cdef const SIZE_t[:, :] _X_order
-    cdef char[::1] column_mask
+    cdef SIZE_t[::1] feature_ranks
+    cdef SIZE_t[::1] _value_copies
+    cdef SIZE_t[::1] _index_copies
 
     cdef int init(self,
                   object X,
@@ -261,9 +263,11 @@ cdef class BestSplitter(BaseDenseSplitter):
         Splitter.init(self, X, y, sample_weight)
 
         self.X = X
-        self._X_order = cnp.argsort(X, axis=0)
-        self._X_rank = cnp.argsort(self._X_order, axis=0)
-        self.column_mask = np.zeros(self.n_samples, dtype=np.int8)
+        self._X_order = np.argsort(X, axis=0)
+        self._X_ranks = np.argsort(self._X_order, axis=0)
+        self.feature_ranks = np.empty(self.n_samples, dtype=np.intp)
+        self._value_copies = np.empty(self.n_samples, dtype=np.intp)
+        self._index_copies = np.empty(self.n_samples, dtype=np.intp)
 
         return 0
         
@@ -292,7 +296,12 @@ cdef class BestSplitter(BaseDenseSplitter):
         cdef SIZE_t n_features = self.n_features
 
         cdef DTYPE_t[::1] Xf = self.feature_values
-        cdef char[::1] column_mask = self.column_mask
+        cdef SIZE_t[::1] Xf_ranks = self.feature_ranks
+
+        # TODO: remove
+        cdef SIZE_t[::1] value_copies = self._value_copies
+        cdef SIZE_t[::1] index_copies = self._index_copies
+
         cdef SIZE_t max_features = self.max_features
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf
         cdef double min_weight_leaf = self.min_weight_leaf
@@ -373,24 +382,14 @@ cdef class BestSplitter(BaseDenseSplitter):
             # sorting the array in a manner which utilizes the cache more
             # effectively.
             for i in range(start, end):
-                column_mask[self._X_rank[samples[i], current.feature]] = 1
+                Xf_ranks[i] = self._X_ranks[samples[i], current.feature]
 
-            k = start
-            for i in range(self.n_samples):
-                if column_mask[i] == 1:
-                    column_mask[i] = 0
-                    samples[k] = self._X_order[i, current.feature]
-                    k = k + 1
-
-                    if k == end:
-                        break
+            integer_sort(&Xf_ranks[start], &samples[start], end - start,
+                         &value_copies[0], &index_copies[0])
 
             for i in range(start, end):
                 Xf[i] = self.X[samples[i], current.feature]
             
-            # sort(&Xf[start], &samples[start], end - start)
-
-
             if Xf[end - 1] <= Xf[start] + FEATURE_THRESHOLD:
                 features[f_j], features[n_total_constants] = features[n_total_constants], features[f_j]
 
@@ -492,6 +491,18 @@ cdef inline void sort(DTYPE_t* Xf, SIZE_t* samples, SIZE_t n) nogil:
       return
     cdef int maxd = 2 * <int>log(n)
     introsort(Xf, samples, n, maxd)
+
+
+# Sort n-element arrays pointed to by Xf_ranks and samples, simultaneously,
+# by the values in Xf_rank. Algorithm: Radix Sort.
+cdef inline void integer_sort(
+    SIZE_t* Xf_ranks, SIZE_t* samples,
+    SIZE_t n,
+    SIZE_t* value_copies, SIZE_t* index_copies,
+) nogil:
+    if n == 0:
+      return
+    simultaneous_radix_sort(Xf_ranks, samples, n, value_copies, index_copies)
 
 
 cdef inline void swap(DTYPE_t* Xf, SIZE_t* samples,

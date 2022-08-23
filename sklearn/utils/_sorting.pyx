@@ -1,13 +1,31 @@
 from cython cimport floating
+from libc.stdlib cimport malloc, free
+
 
 cdef inline void dual_swap(
     floating* darr,
-    ITYPE_t *iarr,
+    ITYPE_t* iarr,
     ITYPE_t a,
     ITYPE_t b,
 ) nogil:
     """Swap the values at index a and b of both darr and iarr"""
     cdef floating dtmp = darr[a]
+    darr[a] = darr[b]
+    darr[b] = dtmp
+
+    cdef ITYPE_t itmp = iarr[a]
+    iarr[a] = iarr[b]
+    iarr[b] = itmp
+
+
+cdef inline void int_dual_swap(
+    ITYPE_t* darr,
+    ITYPE_t* iarr,
+    ITYPE_t a,
+    ITYPE_t b,
+) nogil:
+    """Swap the values at index a and b of both darr and iarr"""
+    cdef ITYPE_t dtmp = darr[a]
     darr[a] = darr[b]
     darr[b] = dtmp
 
@@ -92,22 +110,58 @@ cdef int simultaneous_sort(
                               size - pivot_idx - 1)
     return 0
 
-def radix_sort(xs, long r=8):
+
+cdef int simultaneous_radix_sort(
+    ITYPE_t* values,
+    ITYPE_t* indices,
+    ITYPE_t size,
+    ITYPE_t* value_copies,
+    ITYPE_t* index_copies,
+) nogil:
     ''' 
     Modifyied from https://searchcode.com/codesearch/view/29200571/
+    '''
+    cdef ITYPE_t block_size = 8  # of bits to use at each iteration
+    cdef ITYPE_t n_blocks = sizeof(ITYPE_t)  # of iterations, sizeof()*8 / n_bits
+    cdef ITYPE_t n_buckets = 256  # 1 << n_bits
+    cdef ITYPE_t mask = 255  # n_buckets - 1
+    cdef ITYPE_t i = 0, j, key
+    cdef ITYPE_t max_value
+    cdef ITYPE_t[256] counter
 
-    Efficient Radix Sort -- See http://www.koders.com/python/fidF772268CB8176B16FFA7B81B012D0253E894DBEB.aspx?s=merge+sort '''
-    cdef long k = 2**r
-    cdef long i, x, j
-    cdef long mask = int('1'*r, 2)
-    cdef long J = len(xs)
-    for i in range(0, 32/r):
-        counter = [0]*k
-        for j in range(0,J):
-            counter[(xs[j]>>(i*r))&mask] += 1
-        for j in range(1, k):
-            counter[j] = counter[j-1] + counter[j]
-        for x in reversed(xs[:]):
-            xs[counter[(x>>(i*r))&mask]-1] = x
-            counter[(x>>(i*r))&mask] -= 1
-    return xs
+    # value_copies = <ITYPE_t*> malloc(n_blocks*size)
+    # index_copies = <ITYPE_t*> malloc(n_blocks*size)
+
+    # max_value = values[0]
+    # for j in range(1, size):
+    #     if values[j] > max_value:
+    #         max_value = values[j]
+
+    max_value = size - 1
+
+    while (max_value >> (i*block_size)) & mask:
+        for j in range(n_buckets):
+            counter[j] = 0
+    
+        for j in range(size):
+            counter[(values[j] >> (i*block_size)) & mask] += 1
+
+        for j in range(1, n_buckets):
+            counter[j] += counter[j-1]
+
+        for j in range(size-1, -1, -1):
+            key = (values[j] >> (i*block_size)) & mask
+            counter[key] -= 1
+            value_copies[counter[key]] = values[j]
+            index_copies[counter[key]] = indices[j]
+
+        for j in range(size):
+            values[j] = value_copies[j]
+            indices[j] = index_copies[j]
+            #int_dual_swap(values, indices, counter[key], j)
+
+        i += 1
+
+    #  free(value_copies)
+    #  free(index_copies)
+    return 0
