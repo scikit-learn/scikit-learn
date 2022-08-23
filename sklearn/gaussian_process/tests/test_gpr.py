@@ -420,8 +420,21 @@ def test_custom_optimizer(kernel):
             " estimator.",
         ),
         (
+            np.array([0.0]),
+            None,
+            "The kernel, %s, is not returning a positive definite matrix. Try gradually"
+            " increasing the 'alpha' parameter of your GaussianProcessRegressor"
+            " estimator.",
+        ),
+        (
             1e-2,
             0,
+            "The kernel, %s, is not returning a positive definite matrix. Try gradually"
+            " increasing the 'sample_variance' parameter when you invoke 'fit'.",
+        ),
+        (
+            1e-2,
+            np.array([0.0]),
             "The kernel, %s, is not returning a positive definite matrix. Try gradually"
             " increasing the 'sample_variance' parameter when you invoke 'fit'.",
         ),
