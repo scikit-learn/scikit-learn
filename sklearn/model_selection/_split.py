@@ -1615,8 +1615,8 @@ class RepeatedStratifiedGroupKFold(_RepeatedSplits):
     >>> for train_idxs, test_idxs in rsgkf.split(X, y, groups):
     ...     # print the group assignment for the train/test indices
     ...     print("TRAIN:", groups[train_idxs], "TEST:", groups[test_idxs])
-    ...     X_train, X_test = X[train_index], X[test_index]
-    ...     y_train, y_test = y[train_index], y[test_index]
+    ...     X_train, X_test = X[train_idxs], X[test_idxs]
+    ...     y_train, y_test = y[train_idxs], y[test_idxs]
     TRAIN: [2 2 2 4 4 5 5] TEST: [1 1 3]
     TRAIN: [1 1 3 4 4 5 5] TEST: [2 2 2]
     TRAIN: [1 1 2 2 2 3] TEST: [4 4 5 5]
