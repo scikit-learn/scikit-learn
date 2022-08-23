@@ -5,7 +5,6 @@
 import unittest
 import sys
 import warnings
-from io import StringIO
 
 import numpy as np
 import scipy.sparse as sp
@@ -614,22 +613,6 @@ def test_check_estimator():
            "'class'.")
     with raises(AssertionError, match=msg):
         check_estimator(OneClassSampleErrorClassifier())
-
-#def assert_raises_with_message_in_print(estimator, msg):
-    # the check for sparse input handling prints to the stdout,
-    # instead of raising an error, so as not to remove the original traceback.
-    # that means we need to jump through some hoops to catch it.
-#    old_stdout = sys.stdout
-#    string_buffer = StringIO()
-#    sys.stdout = string_buffer
-#    with raises(ValueError,
-#                match=r"\bclass(es)?\b",
-#                may_pass=True,
-#                err_msg=msg) as cm:
-#        check_estimator(estimator)
-#        if cm.raised_and_matched:
-#            # ValueError was raised with proper error message
-#            return
 
     # Large indices test on bad estimator
     msg = (
