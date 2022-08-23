@@ -409,19 +409,32 @@ def test_custom_optimizer(kernel):
     )
 
 
-def test_gpr_correct_error_message():
+@pytest.mark.parametrize(
+    "alpha, sample_variance, err_msg",
+    [
+        (
+            0.0,
+            None,
+            "The kernel, %s, is not returning a positive definite matrix. Try gradually"
+            " increasing the 'alpha' parameter of your GaussianProcessRegressor"
+            " estimator.",
+        ),
+        (
+            1e-2,
+            0,
+            "The kernel, %s, is not returning a positive definite matrix. Try gradually"
+            " increasing the 'sample_variance' parameter when you invoke 'fit'.",
+        ),
+    ],
+)
+def test_gpr_correct_error_message(alpha, sample_variance, err_msg):
     X = np.arange(12).reshape(6, -1)
     y = np.ones(6)
     kernel = DotProduct()
-    gpr = GaussianProcessRegressor(kernel=kernel, alpha=0.0)
-    message = (
-        "The kernel, %s, is not returning a "
-        "positive definite matrix. Try gradually increasing "
-        "the 'alpha' parameter of your "
-        "GaussianProcessRegressor estimator." % kernel
-    )
+    gpr = GaussianProcessRegressor(kernel=kernel, alpha=alpha)
+    message = err_msg % kernel
     with pytest.raises(np.linalg.LinAlgError, match=re.escape(message)):
-        gpr.fit(X, y)
+        gpr.fit(X, y, sample_variance=sample_variance)
 
 
 @pytest.mark.parametrize("kernel", kernels)
@@ -639,12 +652,20 @@ def test_gpr_consistency_std_cov_non_invertible_kernel():
 
 
 @pytest.mark.parametrize(
-    "params, TypeError, err_msg",
+    "gpr_params, fit_params, TypeError, err_msg",
     [
         (
             {"alpha": np.zeros(100)},
+            {"sample_variance": None},
             ValueError,
             "alpha must be a scalar or an array with same number of entries as y",
+        ),
+        (
+            {"alpha": np.zeros(100)},
+            {"sample_variance": np.zeros(100)},
+            ValueError,
+            "sample_variance must be a scalar or an array with same number of entries"
+            " as y",
         ),
         (
             {
@@ -656,11 +677,11 @@ def test_gpr_consistency_std_cov_non_invertible_kernel():
         ),
     ],
 )
-def test_gpr_fit_error(params, TypeError, err_msg):
+def test_gpr_fit_error(gpr_params, fit_params, TypeError, err_msg):
     """Check that expected error are raised during fit."""
-    gpr = GaussianProcessRegressor(**params)
+    gpr = GaussianProcessRegressor(**gpr_params)
     with pytest.raises(TypeError, match=err_msg):
-        gpr.fit(X, y)
+        gpr.fit(X, y, **fit_params)
 
 
 def test_gpr_lml_error():
