@@ -312,22 +312,6 @@ class NotInvariantSampleOrder(BaseEstimator):
         return X[:, 0]
 
 
-class OneClassErrorClassifier(BaseBadClassifier):
-    def fit(self, X, y):
-        # Convert data
-        X, y = check_X_y(
-            X, y, accept_sparse=("csr", "csc"), multi_output=True, y_numeric=True
-        )
-        cls, y = np.unique(y, return_inverse=True)
-        # find the number of class after trimming
-        if cls.shape[0] < 2:
-            raise ValueError("Nonsensical Error")
-
-    def predict(self, X):
-        X = check_array(X)
-        return np.ones(X.shape[0])
-
-
 class OneClassSampleErrorClassifier(BaseBadClassifier):
     def fit(self, X, y, sample_weight=None):
         # Convert data
@@ -343,7 +327,7 @@ class OneClassSampleErrorClassifier(BaseBadClassifier):
         # find the number of class after trimming
         if sample_weight is not None:
             nb_cls = cls.shape[0]
-            if len(sample_weight) > 0:
+            if isinstance(sample_weight, np.ndarray) and len(sample_weight) > 0:
                 nb_cls = np.count_nonzero(np.bincount(y, sample_weight))
             if nb_cls < 2:
                 raise ValueError("Nonsensical Error")
@@ -373,7 +357,7 @@ class OneClassSampleErrorClassifierPredict(BaseBadClassifier):
         # find the number of class after trimming
         if sample_weight is not None:
             nb_cls = cls.shape[0]
-            if len(sample_weight) > 0:
+            if isinstance(sample_weight, np.ndarray) and len(sample_weight) > 0:
                 nb_cls = np.count_nonzero(np.bincount(y, sample_weight))
             if nb_cls < 2:
                 self.flag = True
@@ -385,22 +369,6 @@ class OneClassSampleErrorClassifierPredict(BaseBadClassifier):
         if self.flag:
             return np.zeros(X.shape[0])
         return np.ones(X.shape[0])
-
-
-def assert_raises_with_message_in_print(estimator, msg):
-    # the check for sparse input handling prints to the stdout,
-    # instead of raising an error, so as not to remove the original traceback.
-    # that means we need to jump through some hoops to catch it.
-    old_stdout = sys.stdout
-    string_buffer = StringIO()
-    sys.stdout = string_buffer
-    try:
-        check_estimator(estimator)
-    except Exception:
-        pass
-    finally:
-        sys.stdout = old_stdout
-    assert msg in string_buffer.getvalue()
 
 
 class LargeSparseNotSupportedClassifier(BaseEstimator):
@@ -638,6 +606,30 @@ def test_check_estimator():
     msg = "Estimator %s doesn't seem to fail gracefully on sparse data" % name
     with raises(AssertionError, match=msg):
         check_estimator(NoSparseClassifier())
+
+    # check for classifiers reducing to less than two classes via sample weights
+    name = OneClassSampleErrorClassifier.__name__
+    msg = (f"{name} failed when fitted on one label after sample_weight "
+           "trimming. Error message is not explicit, it should have "
+           "'class'.")
+    with raises(AssertionError, match=msg):
+        check_estimator(OneClassSampleErrorClassifier())
+
+#def assert_raises_with_message_in_print(estimator, msg):
+    # the check for sparse input handling prints to the stdout,
+    # instead of raising an error, so as not to remove the original traceback.
+    # that means we need to jump through some hoops to catch it.
+#    old_stdout = sys.stdout
+#    string_buffer = StringIO()
+#    sys.stdout = string_buffer
+#    with raises(ValueError,
+#                match=r"\bclass(es)?\b",
+#                may_pass=True,
+#                err_msg=msg) as cm:
+#        check_estimator(estimator)
+#        if cm.raised_and_matched:
+#            # ValueError was raised with proper error message
+#            return
 
     # Large indices test on bad estimator
     msg = (

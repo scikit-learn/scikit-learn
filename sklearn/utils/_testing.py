@@ -88,10 +88,6 @@ assert_raises_regex = _dummy.assertRaisesRegex
 # the old name for now
 assert_raises_regexp = assert_raises_regex
 
-assert_regex_matches = _dummy.assertRegexpMatches
-# same as the previous assertRegexpMatches is deprecated in Python 3.4
-assert_regexp_matches = assert_regex_matches
-
 
 # TODO: Remove in 1.2
 @deprecated(  # type: ignore
