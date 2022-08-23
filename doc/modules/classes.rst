@@ -1194,6 +1194,7 @@ Splitter Classes
    model_selection.PredefinedSplit
    model_selection.RepeatedKFold
    model_selection.RepeatedStratifiedKFold
+   model_selection.RepeatedStratifiedGroupKFold
    model_selection.ShuffleSplit
    model_selection.StratifiedKFold
    model_selection.StratifiedShuffleSplit
