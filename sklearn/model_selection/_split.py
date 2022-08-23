@@ -1610,13 +1610,13 @@ class RepeatedStratifiedGroupKFold(_RepeatedSplits):
     >>> from sklearn.model_selection import RepeatedStratifiedGroupKFold
     >>> X = np.random.randn(10, 1)
     >>> y = np.array([0, 0, 0, 0, 0, 1, 1, 1, 1, 1])
+    >>> groups = np.array([1, 1, 2, 2, 2, 3, 4, 4, 5, 5])
     >>> rsgkf = RepeatedStratifiedGroupKFold(n_splits=3, n_repeats=2, random_state=42)
     >>> for train_idxs, test_idxs in rsgkf.split(X, y, groups):
     ...     # print the group assignment for the train/test indices
     ...     print("TRAIN:", groups[train_idxs], "TEST:", groups[test_idxs])
     ...     X_train, X_test = X[train_index], X[test_index]
     ...     y_train, y_test = y[train_index], y[test_index]
-    ...
     TRAIN: [2 2 2 4 4 5 5] TEST: [1 1 3]
     TRAIN: [1 1 3 4 4 5 5] TEST: [2 2 2]
     TRAIN: [1 1 2 2 2 3] TEST: [4 4 5 5]
