@@ -264,6 +264,7 @@ Changelog
 
 - |Enhancement| added :class:`model_selection.RepeatedStratifiedGroupKFold`, that repeats the
   :class:`model_selection.StratifiedGroupKFold` n times.
+  :pr:`24227` by :user:`Kevin Arvai <arvkevi>`.
 
 :mod:`sklearn.multioutput`
 ..........................
