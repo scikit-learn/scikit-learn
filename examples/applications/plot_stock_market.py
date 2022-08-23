@@ -19,7 +19,8 @@ that are linked tend to fluctuate in relation to each other during a day.
 #
 # The data is from 2003 - 2008. This is reasonably calm: (not too long ago so
 # that we get high-tech firms, and before the 2008 crash). This kind of
-# historical data can be obtained from APIs like the `data.nasdaq.com <https://data.nasdaq.com/>`_ and
+# historical data can be obtained from APIs like the
+# `data.nasdaq.com <https://data.nasdaq.com/>`_ and
 # `alphavantage.co <https://www.alphavantage.co/>`_.
 
 import sys
