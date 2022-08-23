@@ -714,7 +714,17 @@ cdef class DistanceMetric{{name_suffix}}:
 
         with nogil:
             # Use the exact same adaptation for CSR than in SparseDenseDatasetsPair
-            # for supporting the dense-sparse case with minimal overhead.
+            # for supporting the sparse-dense case with minimal overhead.
+            # Note: at this point this method is only a convenience method
+            # used in the tests via the DistanceMetric.pairwise method.
+            # Therefore there is no need to attempt parallelization of those
+            # nested for-loops.
+            # Efficient parallel computation of pairwise distances can be
+            # achieved via the PairwiseDistances class instead. The latter
+            # internally calls into vector-wise distance computation from
+            # the DistanceMetric subclass while benefiting from the generic
+            # Cython/OpenMP parallelization template for the generic pairwise
+            # distance + reduction computational pattern.
             for i1 in range(n_X):
                 x1_start = X_indptr[i1]
                 x1_end = X_indptr[i1 + 1]
@@ -766,6 +776,16 @@ cdef class DistanceMetric{{name_suffix}}:
         with nogil:
             # Use the exact same adaptation for CSR than in SparseDenseDatasetsPair
             # for supporting the dense-sparse case with minimal overhead.
+            # Note: at this point this method is only a convenience method
+            # used in the tests via the DistanceMetric.pairwise method.
+            # Therefore there is no need to attempt parallelization of those
+            # nested for-loops.
+            # Efficient parallel computation of pairwise distances can be
+            # achieved via the PairwiseDistances class instead. The latter
+            # internally calls into vector-wise distance computation from
+            # the DistanceMetric subclass while benefiting from the generic
+            # Cython/OpenMP parallelization template for the generic pairwise
+            # distance + reduction computational pattern.
             for i1 in range(n_X):
                 x1_data = &X_data[0] + i1 * n_features
                 for i2 in range(n_Y):
