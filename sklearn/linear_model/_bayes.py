@@ -178,6 +178,22 @@ class BayesianRidge(RegressorMixin, LinearModel):
     array([1.])
     """
 
+    _parameter_constraints = {
+        'n_iter': [Interval(Integral, 1,None)],
+        'tol': [Interval(Real, 0.0, None)],
+        'alpha_1': [Interval(Real, 0.0, None, closed='left')],
+        'alpha_2': [Interval(Real, 0.0, None, closed='left')],
+        'lambda_1': [Interval(Real, 0.0, None, closed='left')],
+        'lambda_2': [Interval(Real, 0.0, None, closed='left')],
+        'alpha_init': [Interval(Real, None, None)],
+        'lambda_init': [Interval(Real, None, None)],
+        'compute_score': ['boolean'],
+        'fit_intercept': ['boolean'],
+        'normalize': ['boolean'],
+        'copy_X': ['boolean'],
+        'verbose': ['verbose']
+    }
+
     def __init__(
         self,
         *,
@@ -209,103 +225,6 @@ class BayesianRidge(RegressorMixin, LinearModel):
         self.copy_X = copy_X
         self.verbose = verbose
 
-    def _check_params(self):
-        """Check validity of parameters and raise ValueError
-        or TypeError if not valid."""
-
-        check_scalar(
-            self.n_iter,
-            name="n_iter",
-            target_type=numbers.Integral,
-            min_val=1,
-        )
-
-        check_scalar(
-            self.tol,
-            name="tol",
-            target_type=numbers.Real,
-            min_val=0.0,
-            include_boundaries="neither",
-        )
-
-        check_scalar(
-            self.alpha_1,
-            name="alpha_1",
-            target_type=numbers.Real,
-            min_val=0.0,
-            include_boundaries="left",
-        )
-
-        check_scalar(
-            self.alpha_2,
-            name="alpha_2",
-            target_type=numbers.Real,
-            min_val=0.0,
-            include_boundaries="left",
-        )
-
-        check_scalar(
-            self.lambda_1,
-            name="lambda_1",
-            target_type=numbers.Real,
-            min_val=0.0,
-            include_boundaries="left",
-        )
-
-        check_scalar(
-            self.lambda_2,
-            name="lambda_2",
-            target_type=numbers.Real,
-            min_val=0.0,
-            include_boundaries="left",
-        )
-
-        if self.alpha_init is not None:
-            check_scalar(
-                self.alpha_init,
-                name="alpha_init",
-                target_type=numbers.Real,
-                include_boundaries="neither",
-            )
-
-        if self.lambda_init is not None:
-            check_scalar(
-                self.lambda_init,
-                name="lambda_init",
-                target_type=numbers.Real,
-                include_boundaries="neither",
-            )
-
-        check_scalar(
-            self.compute_score,
-            name="compute_score",
-            target_type=(np.bool_, bool),
-        )
-
-        check_scalar(
-            self.fit_intercept,
-            name="fit_intercept",
-            target_type=(np.bool_, bool),
-        )
-
-        self._normalize = _deprecate_normalize(
-            self.normalize, default=False, estimator_name=self.__class__.__name__
-        )
-
-        check_scalar(
-            self.copy_X,
-            name="copy_X",
-            target_type=(np.bool_, bool),
-        )
-
-        check_scalar(
-            self.verbose,
-            name="verbose",
-            target_type=(numbers.Integral, np.bool_, bool),
-            min_val=0,
-            max_val=1,
-        )
-
     def fit(self, X, y, sample_weight=None):
         """Fit the model.
 
@@ -327,7 +246,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
         self : object
             Returns the instance itself.
         """
-        self._check_params()
+        self._validate_params()
 
         X, y = self._validate_data(X, y, dtype=[np.float64, np.float32], y_numeric=True)
 
