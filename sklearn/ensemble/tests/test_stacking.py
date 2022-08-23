@@ -655,14 +655,12 @@ def test_stacking_without_n_features_in(make_dataset, Stacking, Estimator):
 
 @pytest.mark.parametrize("stack_method", ["auto", "predict", "predict_proba"])
 @pytest.mark.parametrize("passthrough", [False, True])
-@pytest.mark.parametrize(
-    "X, y, is_multilabel",
-    [(X_multilabel, y_multilabel, True), (X_binary, y_binary, False)],
-    ids=["multilabel", "binary"],
-)
-def test_stacking_classifier_multilabel(stack_method, passthrough, X, y, is_multilabel):
+def test_stacking_classifier_multilabel(stack_method, passthrough):
+    """Check the behaviour of the `_concatenate_prediction` utils
+    when `y` is multilabel.
+    """
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, stratify=y, random_state=42
+        X_multilabel, y_multilabel, stratify=y_multilabel, random_state=42
     )
 
     estimators = [
@@ -679,7 +677,9 @@ def test_stacking_classifier_multilabel(stack_method, passthrough, X, y, is_mult
         passthrough=passthrough,
         stack_method=stack_method,
     )
+    y_train_before_fit = y_train.copy()
     clf.fit(X_train, y_train)
+    assert_array_equal(y_train_before_fit, y_train)
 
     y_pred = clf.predict(X_test)
     assert y_pred.shape == y_test.shape
@@ -689,14 +689,9 @@ def test_stacking_classifier_multilabel(stack_method, passthrough, X, y, is_mult
     X_trans = clf.transform(X_test)
     expected_n_features = len(estimators)
 
-    if is_multilabel:
-        assert y_proba.shape == y_test.shape
-        assert len(clf.classes_) == y_test.shape[1]
-        expected_n_features *= y_test.shape[1]
-
-    else:
-        assert y_proba.shape == (y_test.shape[0], 2)
-        assert len(clf.classes_) == 2
+    assert y_proba.shape == y_test.shape
+    assert len(clf.classes_) == y_test.shape[1]
+    expected_n_features *= y_test.shape[1]
 
     if passthrough:
         X_test_last_cols = X_trans[:, -X_test.shape[1] :]
@@ -705,31 +700,50 @@ def test_stacking_classifier_multilabel(stack_method, passthrough, X, y, is_mult
 
     assert X_trans.shape[1] == expected_n_features
 
-    if is_multilabel:
-        if stack_method == "predict":
-            preds = [[[1, 0, 0], [0, 0, 1]], [[1, 1, 0], [0, 0, 0]]]
-            expected_concat_preds = np.array(
-                [
-                    [1, 0, 0, 1, 1, 0],
-                    [0, 0, 1, 0, 0, 0],
-                ]
-            )
-        else:
-            preds = [
-                [[[0.5, 0.5], [0.3, 0.7]], [[0.4, 0.6], [0.3, 0.7]]],
-                [[[0.9, 0.1], [0.2, 0.8]], [[1.0, 0.0], [0.5, 0.5]]],
-            ]
-            expected_concat_preds = np.array(
-                [
-                    [0.5, 0.6, 0.1, 0.0],
-                    [0.7, 0.7, 0.8, 0.5],
-                ]
-            )
-        X_test = X_test[: len(preds), :]
-        if passthrough:
-            expected_concat_preds = np.hstack([expected_concat_preds, X_test])
-        concat_preds = clf._concatenate_predictions(X_test, preds)
-        assert_array_equal(expected_concat_preds, concat_preds)
+
+@pytest.mark.parametrize("stack_method", ["auto", "predict", "predict_proba"])
+@pytest.mark.parametrize("passthrough", [False, True])
+def test_stacking_classifier_binary(stack_method, passthrough):
+    """Check the behaviour of the `_concatenate_prediction` utils when `y` is binary"""
+    X_train, X_test, y_train, y_test = train_test_split(
+        X_binary, y_binary, stratify=y_binary, random_state=42
+    )
+
+    estimators = [
+        ("mlp", MLPClassifier()),
+        ("knnc", RandomForestClassifier()),
+        ("dcs", DummyClassifier(strategy="stratified", random_state=42)),
+        ("dcu", DummyClassifier(strategy="uniform", random_state=42)),
+    ]
+    final_estimator = KNeighborsClassifier()
+
+    clf = StackingClassifier(
+        estimators=estimators,
+        final_estimator=final_estimator,
+        passthrough=passthrough,
+        stack_method=stack_method,
+    )
+    y_train_before_fit = y_train.copy()
+    clf.fit(X_train, y_train)
+    assert_array_equal(y_train_before_fit, y_train)
+
+    y_pred = clf.predict(X_test)
+    assert y_pred.shape == y_test.shape
+
+    y_proba = clf.predict_proba(X_test)
+
+    X_trans = clf.transform(X_test)
+    expected_n_features = len(estimators)
+
+    assert y_proba.shape == (y_test.shape[0], 2)
+    assert len(clf.classes_) == 2
+
+    if passthrough:
+        X_test_last_cols = X_trans[:, -X_test.shape[1] :]
+        assert_array_equal(X_test, X_test_last_cols)
+        expected_n_features += X_test.shape[1]
+
+    assert X_trans.shape[1] == expected_n_features
 
 
 @pytest.mark.parametrize(

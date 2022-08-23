@@ -185,10 +185,10 @@ Changelog
 
 - |Enhancement| :class:`ensemble.StackingClassifier` now supports
   multilabel-indicator target
-  :pr:`20424` by :user:`Nicolas Peretti <nicoperetti>`,
+  :pr:`24146` by :user:`Nicolas Peretti <nicoperetti>`,
   :user:`Nestor Navarro <nestornav>`, :user:`Nati Tomattis <natitomattis>`,
-  :pr:`24146` by :user:`Vincent Maladiere <Vincent-Maladiere>`.
-  
+  and :user:`Vincent Maladiere <Vincent-Maladiere>`.
+
 - |Fix| Fixed the issue where :class:`ensemble.AdaBoostClassifier` outputs
   NaN in feature importance when fitted with very small sample weight.
   :pr:`20415` by :user:`Zhehao Liu <MaxwellLZH>`.
