@@ -2160,7 +2160,9 @@ def check_classifiers_one_label_sample_weights(name, classifier_orig):
                 classifier.predict(X_test), np.ones(10), err_msg=error_predict
             )
     else:
-        with raises(TypeError, match=r"\bsample_weight\b", may_pass=True) as cm:
+        with raises(
+            [ValueError, TypeError], match=r"\bsample_weight\b", may_pass=True
+        ) as cm:
             classifier.fit(X_train, y, sample_weight=sample_weight)
             if cm.raised_and_matched:
                 # TypeError was raised with proper error message
