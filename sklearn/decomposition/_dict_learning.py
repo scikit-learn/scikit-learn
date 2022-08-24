@@ -17,6 +17,7 @@ from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutM
 from ..utils import check_array, check_random_state, gen_even_slices, gen_batches
 from ..utils import deprecated
 from ..utils._param_validation import Interval
+from numbers import Integral, Real
 from ..utils.extmath import randomized_svd, row_norms, svd_flip
 from ..utils.validation import check_is_fitted
 from ..utils.validation import check_scalar
