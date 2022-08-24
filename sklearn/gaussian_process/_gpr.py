@@ -128,6 +128,9 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         The kernel used for prediction. The structure of the kernel is the
         same as the one passed as parameter but with optimized hyperparameters.
 
+    sample_variance_ : float or ndarray of shape (n_samples,), default=None
+        Value added to the diagonal of the kernel matrix during fitting.
+
     L_ : array-like of shape (n_samples, n_samples)
         Lower-triangular Cholesky decomposition of the kernel in ``X_train_``.
 
@@ -217,7 +220,6 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
         sample_variance : float or ndarray of shape (n_samples,), default=None
             Value added to the diagonal of the kernel matrix during fitting.
-            If sample_variance is specified, `alpha` will be reset to it.
 
         Returns
         -------
