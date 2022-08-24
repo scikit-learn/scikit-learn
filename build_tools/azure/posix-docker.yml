@@ -59,12 +59,14 @@ jobs:
     # the JUNITXML file
     - script: >
         docker container run --rm
-        --volume $TEST_DIR:$TEST_DIR
+        --volume $TEST_DIR:/temp_dir
         --volume $PWD:/io
-        --volume $CCACHE_DIR:$CCACHE_DIR
+        --volume $CCACHE_DIR:/ccache
         -w /io
         --detach
         --name skcontainer
+        -e TEST_DIR=/temp_dir
+        -e CCACHE_DIR=/ccache
         -e DISTRIB
         -e LOCK_FILE
         -e TEST_DIR
