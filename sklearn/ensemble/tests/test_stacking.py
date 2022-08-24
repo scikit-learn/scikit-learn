@@ -26,6 +26,7 @@ from sklearn.dummy import DummyClassifier
 from sklearn.dummy import DummyRegressor
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import RidgeClassifier
 from sklearn.svm import LinearSVC
 from sklearn.svm import LinearSVR
 from sklearn.svm import SVC
@@ -653,7 +654,9 @@ def test_stacking_without_n_features_in(make_dataset, Stacking, Estimator):
         stacker.n_features_in_
 
 
-@pytest.mark.parametrize("stack_method", ["auto", "predict", "predict_proba"])
+@pytest.mark.parametrize(
+    "stack_method", ["auto", "predict", "predict_proba", "decision_function"]
+)
 @pytest.mark.parametrize("passthrough", [False, True])
 def test_stacking_classifier_multilabel(stack_method, passthrough):
     """Check the behaviour of the `_concatenate_prediction` utils
@@ -663,12 +666,19 @@ def test_stacking_classifier_multilabel(stack_method, passthrough):
         X_multilabel, y_multilabel, stratify=y_multilabel, random_state=42
     )
 
-    estimators = [
-        ("mlp", MLPClassifier()),
-        ("knnc", RandomForestClassifier()),
-        ("dcs", DummyClassifier(strategy="stratified", random_state=42)),
-        ("dcu", DummyClassifier(strategy="uniform", random_state=42)),
-    ]
+    if stack_method == "decision_function":
+        estimators = [
+            ("ridge_1", RidgeClassifier()),
+            ("ridge_2", RidgeClassifier()),
+        ]
+    else:
+        estimators = [
+            ("mlp", MLPClassifier()),
+            ("knnc", RandomForestClassifier()),
+            ("dcs", DummyClassifier(strategy="stratified", random_state=42)),
+            ("dcu", DummyClassifier(strategy="uniform", random_state=42)),
+        ]
+
     final_estimator = KNeighborsClassifier()
 
     clf = StackingClassifier(
@@ -701,7 +711,9 @@ def test_stacking_classifier_multilabel(stack_method, passthrough):
     assert X_trans.shape[1] == expected_n_features
 
 
-@pytest.mark.parametrize("stack_method", ["auto", "predict", "predict_proba"])
+@pytest.mark.parametrize(
+    "stack_method", ["auto", "predict", "predict_proba", "decision_function"]
+)
 @pytest.mark.parametrize("passthrough", [False, True])
 def test_stacking_classifier_binary(stack_method, passthrough):
     """Check the behaviour of the `_concatenate_prediction` utils when `y` is binary"""
@@ -709,12 +721,19 @@ def test_stacking_classifier_binary(stack_method, passthrough):
         X_binary, y_binary, stratify=y_binary, random_state=42
     )
 
-    estimators = [
-        ("mlp", MLPClassifier()),
-        ("knnc", RandomForestClassifier()),
-        ("dcs", DummyClassifier(strategy="stratified", random_state=42)),
-        ("dcu", DummyClassifier(strategy="uniform", random_state=42)),
-    ]
+    if stack_method == "decision_function":
+        estimators = [
+            ("ridge_1", RidgeClassifier()),
+            ("ridge_2", RidgeClassifier()),
+        ]
+    else:
+        estimators = [
+            ("mlp", MLPClassifier()),
+            ("knnc", RandomForestClassifier()),
+            ("dcs", DummyClassifier(strategy="stratified", random_state=42)),
+            ("dcu", DummyClassifier(strategy="uniform", random_state=42)),
+        ]
+
     final_estimator = KNeighborsClassifier()
 
     clf = StackingClassifier(
