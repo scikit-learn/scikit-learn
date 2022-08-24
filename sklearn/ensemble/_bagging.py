@@ -309,7 +309,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
             Note that this is supported only if the base estimator supports
             sample weighting.
 
-        fit_params : : dict, default=None
+        fit_params : dict, default=None
             Parameters to pass to the `fit` method of the underlying estimator.
 
         Returns
