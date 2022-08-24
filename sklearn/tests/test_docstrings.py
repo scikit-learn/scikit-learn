@@ -16,7 +16,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.decomposition._dict_learning.dict_learning_online",
     "sklearn.decomposition._nmf.non_negative_factorization",
     "sklearn.externals._packaging.version.parse",
-    "sklearn.feature_extraction.text.strip_accents_unicode",
     "sklearn.inspection._plot.partial_dependence.plot_partial_dependence",
     "sklearn.linear_model._least_angle.lars_path_gram",
     "sklearn.linear_model._omp.orthogonal_mp_gram",
