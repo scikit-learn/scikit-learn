@@ -141,7 +141,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
 
     t_ : int
         Number of weight updates performed during training.
-        Same as ``(n_iter_ * n_samples)``.
+        Same as ``(n_iter_ * n_samples + 1)``.
 
     loss_function_ : callable
         Loss function used by the algorithm.
@@ -428,7 +428,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
 
     t_ : int
         Number of weight updates performed during training.
-        Same as ``(n_iter_ * n_samples)``.
+        Same as ``(n_iter_ * n_samples + 1)``.
 
     See Also
     --------
