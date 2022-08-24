@@ -47,7 +47,6 @@ You may highlight or reference your work with scikit-learn by using one of the l
 
 <br>
 
-scikit-learn-logo.svg
 
 ### Logo Integrity Standards
 
