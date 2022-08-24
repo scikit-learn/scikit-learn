@@ -2138,7 +2138,6 @@ def check_classifiers_one_label_sample_weights(name, classifier_orig):
         "'class'."
     )
     error_predict = f"{name} prediction results should only output the remaining class."
-    classifier = clone(classifier_orig)
     rnd = np.random.RandomState(0)
     # X should be square for test on SVC with precomputed kernel.
     X_train = rnd.uniform(size=(10, 10))
@@ -2146,6 +2145,7 @@ def check_classifiers_one_label_sample_weights(name, classifier_orig):
     y = np.arange(10) % 2
     # keep only one class
     sample_weight = y
+    classifier = clone(classifier_orig)
     # Test that fit won't raise an unexpected exception
     if has_fit_parameter(classifier, "sample_weight"):
         with raises(
@@ -2155,15 +2155,16 @@ def check_classifiers_one_label_sample_weights(name, classifier_orig):
             if cm.raised_and_matched:
                 # ValueError was raised with proper error message
                 return
+            # Test that predict won't raise an unexpected exception
+            assert_array_equal(
+                classifier.predict(X_test), np.ones(10), err_msg=error_predict
+            )
     else:
         with raises(TypeError, match=r"\bsample_weight\b", may_pass=True) as cm:
             classifier.fit(X_train, y, sample_weight=sample_weight)
             if cm.raised_and_matched:
                 # TypeError was raised with proper error message
                 return
-
-    # Test that predict won't raise an unexpected exception
-    assert_array_equal(classifier.predict(X_test), np.ones(10), err_msg=error_predict)
 
 
 @ignore_warnings  # Warnings are raised by decision function
