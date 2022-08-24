@@ -510,7 +510,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "SelectFwe",
     "SelectKBest",
     "SelectPercentile",
-    "ShrunkCovariance",
     "SimpleImputer",
     "SkewedChi2Sampler",
     "SpectralBiclustering",
