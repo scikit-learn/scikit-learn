@@ -972,7 +972,7 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         "fit_intercept": ["boolean"],
         "verbose": ["verbose"],
         "normalize": ["boolean", Hidden(StrOptions({"deprecated"}))],
-        "precompute": ["boolean", StrOptions({"auto"}), "array-like", Hidden(None)],
+        "precompute": ["boolean", StrOptions({"auto"}), np.ndarray, Hidden(None)],
         "n_nonzero_coefs": [Interval(Integral, 1, None, closed="left")],
         "eps": [Interval(Real, 0, None, closed="left")],
         "copy_X": ["boolean"],
@@ -1309,19 +1309,12 @@ class LassoLars(Lars):
     """
 
     _parameter_constraints = {
+        **Lars._parameter_constraints,
         "alpha": [Interval(Real, 0, None, closed="left")],
-        "fit_intercept": ["boolean"],
-        "verbose": ["verbose"],
-        "normalize": ["boolean", Hidden(StrOptions({"deprecated"}))],
-        "precompute": ["boolean", StrOptions({"auto"}), "array-like"],
         "max_iter": [Interval(Integral, 0, None, closed="left")],
-        "eps": [Interval(Real, 0, None, closed="left")],
-        "copy_X": ["boolean"],
-        "fit_path": ["boolean"],
         "positive": ["boolean"],
-        "jitter": [Interval(Real, 0, None, closed="left"), None],
-        "random_state": ["random_state"],
     }
+    _parameter_constraints.pop('n_nonzero_coefs')
 
     method = "lasso"
 
@@ -1651,17 +1644,15 @@ class LarsCV(Lars):
     """
 
     _parameter_constraints = {
-        "fit_intercept": ["boolean"],
-        "verbose": ["verbose"],
+        **Lars._parameter_constraints,
         "max_iter": [Interval(Integral, 0, None, closed="left")],
-        "normalize": ["boolean", Hidden(StrOptions({"deprecated"}))],
-        "precompute": ["boolean", StrOptions({"auto"}), "array-like", Hidden(None)],
         "cv": ["cv_object"],
         "max_n_alphas": [Interval(Integral, 0, None, closed="left")],
         "n_jobs": [Integral, None],
-        "eps": [Interval(Real, 0, None, closed="left")],
-        "copy_X": ["boolean"],
     }
+
+    for parameter in ["n_nonzero_coefs", "jitter", "fit_path", "random_state"]:
+        _parameter_constraints.pop(parameter)
 
     method = "lar"
 
@@ -1978,16 +1969,7 @@ class LassoLarsCV(LarsCV):
     """
 
     _parameter_constraints = {
-        "fit_intercept": ["boolean"],
-        "verbose": ["verbose"],
-        "max_iter": [Interval(Integral, 0, None, closed="left")],
-        "normalize": ["boolean", Hidden(StrOptions({"deprecated"}))],
-        "precompute": ["boolean", StrOptions({"auto"})],
-        "cv": ["cv_object"],
-        "max_n_alphas": [Interval(Integral, 0, None, closed="left")],
-        "n_jobs": [Integral, None],
-        "eps": [Interval(Real, 0, None, closed="left")],
-        "copy_X": ["boolean"],
+        **LarsCV._parameter_constraints,
         "positive": ["boolean"],
     }
 
@@ -2190,17 +2172,13 @@ class LassoLarsIC(LassoLars):
     """
 
     _parameter_constraints = {
+        **LassoLars._parameter_constraints,
         "criterion": [StrOptions({"aic", "bic"})],
-        "fit_intercept": ["boolean"],
-        "verbose": ["verbose"],
-        "normalize": ["boolean", Hidden(StrOptions({"deprecated"}))],
-        "precompute": ["boolean", StrOptions({"auto"}), "array-like", Hidden(None)],
-        "max_iter": [Interval(Integral, 0, None, closed="left")],
-        "eps": [Interval(Real, 0, None, closed="left")],
-        "copy_X": ["boolean"],
-        "positive": ["boolean"],
         "noise_variance": [Interval(Real, 0, None, closed="left"), None],
     }
+
+    for parameter in ["jitter", "fit_path", "alpha", "random_state"]:
+        _parameter_constraints.pop(parameter)
 
     def __init__(
         self,
