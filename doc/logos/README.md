@@ -54,7 +54,7 @@ scikit-learn-logo.svg
 - __Minimum Size:__ For consistent legibility, please do not display the scikit-learn logo at less than 50px wide.
 - __Scale:__ Ensure any logos used are scaled proportionally. Stretched, compressed, or otherwise distorted versions of the logo should not be displayed.
 
-- __Clear Space:__ To ensure the mark is clearly visible in all uses, surround it with a sufficient amount of clear space that is free of type, graphics, and other elements that might cause visual clutter. Do not overlap the logo with text, images, or other elements. <br> <center><img src="brand_guidelines/scikitlearn_logo_clearspace.png" width="250px"></center>
+- __Clear Space:__ To ensure the mark is clearly visible in all uses, surround it with a sufficient amount of clear space that is free of type, graphics, and other elements that might cause visual clutter. Do not overlap the logo with text, images, or other elements. <br> <center><img src="brand_guidelines/scikitlearn_logo_clearspace_updated.png" width="250px"></center>
 
 - __Colors:__ Only use logos in the approved color palette defined above. Do not recolor the logo. 
 - __Typeface:__ Do not change the typeface used in the logo. 
