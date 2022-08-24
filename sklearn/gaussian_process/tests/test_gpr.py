@@ -675,6 +675,12 @@ def test_gpr_consistency_std_cov_non_invertible_kernel():
         ),
         (
             {"alpha": np.zeros(100)},
+            {},
+            ValueError,
+            "alpha must be a scalar or an array with same number of entries as y",
+        ),
+        (
+            {"alpha": np.zeros(100)},
             {"sample_variance": np.zeros(100)},
             ValueError,
             "sample_variance must be a scalar or an array with same number of entries"
