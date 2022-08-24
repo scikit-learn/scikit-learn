@@ -794,20 +794,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
 
         _, n_features = X.shape
 
-        if not (isinstance(self.degree, numbers.Integral) and self.degree >= 0):
-            raise ValueError(
-                f"degree must be a non-negative integer, got {self.degree}."
-            )
-
-        if isinstance(self.knots, str) and self.knots in [
-            "uniform",
-            "quantile",
-        ]:
-            if not (isinstance(self.n_knots, numbers.Integral) and self.n_knots >= 2):
-                raise ValueError(
-                    f"n_knots must be a positive integer >= 2, got: {self.n_knots}"
-                )
-
+        if isinstance(self.knots, str):
             base_knots = self._get_base_knot_positions(
                 X, n_knots=self.n_knots, knots=self.knots, sample_weight=sample_weight
             )
@@ -819,21 +806,6 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                 raise ValueError("knots.shape[1] == n_features is violated.")
             elif not np.all(np.diff(base_knots, axis=0) > 0):
                 raise ValueError("knots must be sorted without duplicates.")
-
-        if self.extrapolation not in (
-            "error",
-            "constant",
-            "linear",
-            "continue",
-            "periodic",
-        ):
-            raise ValueError(
-                "extrapolation must be one of 'error', "
-                "'constant', 'linear', 'continue' or 'periodic'."
-            )
-
-        if not isinstance(self.include_bias, (bool, np.bool_)):
-            raise ValueError("include_bias must be bool.")
 
         # number of knots for base interval
         n_knots = base_knots.shape[0]
