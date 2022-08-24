@@ -599,6 +599,19 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
     def __init__(self, *, sample_steps=2, sample_interval=None):
         self.sample_steps = sample_steps
         self.sample_interval = sample_interval
+        self._map_sample_steps_to_sample_interval()
+
+    def _map_sample_steps_to_sample_interval(self):
+        if self.sample_interval is None:
+            # See reference, figure 2 c)
+            if self.sample_steps == 1:
+                self.sample_interval_ = 0.8
+            elif self.sample_steps == 2:
+                self.sample_interval_ = 0.5
+            elif self.sample_steps == 3:
+                self.sample_interval_ = 0.4
+        else:
+            self.sample_interval_ = self.sample_interval
 
     def fit(self, X, y=None):
         """Set the parameters.
@@ -621,22 +634,6 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
         self._validate_params()
         X = self._validate_data(X, accept_sparse="csr")
         check_non_negative(X, "X in AdditiveChi2Sampler.fit")
-
-        if self.sample_interval is None:
-            # See reference, figure 2 c)
-            if self.sample_steps == 1:
-                self.sample_interval_ = 0.8
-            elif self.sample_steps == 2:
-                self.sample_interval_ = 0.5
-            elif self.sample_steps == 3:
-                self.sample_interval_ = 0.4
-            else:
-                raise ValueError(
-                    "If sample_steps is not in [1, 2, 3],"
-                    " you need to provide sample_interval"
-                )
-        else:
-            self.sample_interval_ = self.sample_interval
         return self
 
     def transform(self, X):

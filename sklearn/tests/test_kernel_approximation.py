@@ -1,5 +1,3 @@
-import re
-
 import numpy as np
 from scipy.sparse import csr_matrix
 import pytest
@@ -123,14 +121,6 @@ def test_additive_chi2_sampler():
     with pytest.raises(ValueError, match=msg):
         transform.transform(Y_neg)
 
-    # test error on invalid sample_steps
-    transform = AdditiveChi2Sampler(sample_steps=4)
-    msg = re.escape(
-        "If sample_steps is not in [1, 2, 3], you need to provide sample_interval"
-    )
-    with pytest.raises(ValueError, match=msg):
-        transform.fit(X)
-
     # test that the sample interval is set correctly
     sample_steps_available = [1, 2, 3]
     for sample_steps in sample_steps_available:
@@ -145,7 +135,7 @@ def test_additive_chi2_sampler():
 
     # test that the sample_interval is set correctly
     sample_interval = 0.3
-    transform = AdditiveChi2Sampler(sample_steps=4, sample_interval=sample_interval)
+    transform = AdditiveChi2Sampler(sample_steps=3, sample_interval=sample_interval)
     assert transform.sample_interval == sample_interval
     transform.fit(X)
     assert transform.sample_interval_ == sample_interval
