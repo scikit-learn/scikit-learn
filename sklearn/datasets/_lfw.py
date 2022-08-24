@@ -300,12 +300,12 @@ def fetch_lfw_people(
     n_retries : int, default=3
         Number of retries when HTTP errors are encountered.
 
-        .. versionadded:: 1.1
+        .. versionadded:: 1.2
 
     delay : int, default=1
         Number of seconds between retries.
 
-        .. versionadded:: 1.1
+        .. versionadded:: 1.2
 
     Returns
     -------
@@ -501,12 +501,12 @@ def fetch_lfw_pairs(
     n_retries : int, default=3
         Number of retries when HTTP errors are encountered.
 
-        .. versionadded:: 1.1
+        .. versionadded:: 1.2
 
     delay : int, default=1
         Number of seconds between retries.
 
-        .. versionadded:: 1.1
+        .. versionadded:: 1.2
 
     Returns
     -------
