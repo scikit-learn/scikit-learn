@@ -872,7 +872,7 @@ def test_pairwise_distances_argkmin(
     # TODO: can we easily fix this discrepancy?
     edge_cases = [
         (np.float32, "chebyshev", 1000000.0),
-        (np.float32, "chebyshev", 1000000.0),
+        (np.float32, "cityblock", 1000000.0),
     ]
     if (dtype, metric, translation) in edge_cases:
         pytest.xfail("Numerical differences lead to small differences in results.")
