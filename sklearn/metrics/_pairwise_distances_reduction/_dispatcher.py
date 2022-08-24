@@ -49,10 +49,10 @@ def sqeuclidean_row_norms(X, num_threads):
     )
 
 
-class Dispatcher:
+class BaseDistanceReductionDispatcher:
     """Abstract base dispatcher for pairwise distance computation & reduction.
 
-    Each dispatcher extending the base :class:`Dispatcher`
+    Each dispatcher extending the base :class:`BaseDistanceReductionDispatcher`
     dispatcher must implement the :meth:`compute` classmethod.
     """
 
@@ -72,7 +72,7 @@ class Dispatcher:
 
     @classmethod
     def is_usable_for(cls, X, Y, metric) -> bool:
-        """Return True if the Dispatcher can be used for the
+        """Return True if the dispatcher can be used for the
         given parameters.
 
         Parameters
@@ -90,7 +90,7 @@ class Dispatcher:
 
         Returns
         -------
-        True if the Dispatcher can be used, else False.
+        True if the dispatcher can be used, else False.
         """
         dtypes_validity = X.dtype == Y.dtype and X.dtype in (np.float32, np.float64)
         c_contiguity = (
@@ -135,13 +135,13 @@ class Dispatcher:
         """
 
 
-class ArgKminDispatcher(Dispatcher):
+class ArgKmin(BaseDistanceReductionDispatcher):
     """Compute the argkmin of row vectors of X on the ones of Y.
 
     For each row vector of X, computes the indices of k first the rows
     vectors of Y with the smallest distances.
 
-    ArgKminDispatcher is typically used to perform
+    ArgKmin is typically used to perform
     bruteforce k-nearest neighbors queries.
 
     This class is not meant to be instanciated, one should only use
@@ -279,7 +279,7 @@ class ArgKminDispatcher(Dispatcher):
         )
 
 
-class RadiusNeighborsDispatcher(Dispatcher):
+class RadiusNeighbors(BaseDistanceReductionDispatcher):
     """Compute radius-based neighbors for two sets of vectors.
 
     For each row-vector X[i] of the queries X, find all the indices j of

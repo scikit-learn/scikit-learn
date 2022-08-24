@@ -21,11 +21,11 @@ cnp.import_array()
 
 {{for name_suffix, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
 
-from ._base cimport ComputationTemplate{{name_suffix}}
+from ._base cimport BaseDistanceReducer{{name_suffix}}
 from ._gemm_term_computer cimport GEMMTermComputer{{name_suffix}}
 
-cdef class ArgKmin{{name_suffix}}(ComputationTemplate{{name_suffix}}):
-    """{{name_suffix}}bit implementation of ComputationTemplate{{name_suffix}} for the `ArgKmin` reduction."""
+cdef class ArgKmin{{name_suffix}}(BaseDistanceReducer{{name_suffix}}):
+    """{{name_suffix}}bit implementation of BaseDistanceReducer{{name_suffix}} for the `ArgKmin` reduction."""
 
     cdef:
         ITYPE_t k

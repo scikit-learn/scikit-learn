@@ -32,7 +32,7 @@
 #
 #    Dispatchers are meant to be used in the Python code. Under the hood, a
 #    dispatcher must only define the logic to choose at runtime to the correct
-#    dtype-specialized :class:`Dispatcher` implementation based
+#    dtype-specialized :class:`BaseDistanceReductionDispatcher` implementation based
 #    on the dtype of X and of Y.
 #
 #
@@ -46,18 +46,18 @@
 #
 #
 #                               (base dispatcher)
-#                                   Dispatcher
+#                         BaseDistanceReductionDispatcher
 #                                       ∆
 #                                       |
 #                                       |
 #               +-----------------------+----------------------+
 #               |                                              |
 #          (dispatcher)                                   (dispatcher)
-#       ArgKminDispatcher                        RadiusNeighborhoodDispatcher
+#       ArgKmin                                          RadiusNeighbors
 #               |                                              |
 #               |                                              |
 #               |                (64bit implem.)               |
-#               |           ComputationTemplate{32,64}         |
+#               |           BaseDistanceReducer{32,64}         |
 #               |                       ∆                      |
 #               |                       |                      |
 #               |                       |                      |
@@ -65,16 +65,16 @@
 #               |     |                                   |    |
 #               |     |                                   |    |
 #               x     |                                   |    x
-#            ArgKmin{32,64}                      RadiusNeighborhood{32,64}
+#            ArgKmin{32,64}                        RadiusNeighbors{32,64}
 #               |     ∆                                   ∆    |
 #               |     |                                   |    |
 #      ========================= Specializations =================================
 #               |     |                                   |    |
 #               |     |                                   |    |
 #               x     |                                   |    x
-#        EuclideanArgKmin{32,64}                EuclideanRadiusNeighborhood{32,64}
+#        EuclideanArgKmin{32,64}               EuclideanRadiusNeighbors{32,64}
 #
-#    For instance :class:`ArgKminDispatcher`, dispatches to both :class:`ArgKmin64`
+#    For instance :class:`ArgKmin`, dispatches to both :class:`ArgKmin64`
 #    and :class:`ArgKmin32` if X and Y are both dense NumPy arrays with a `float64`
 #    or `float32` dtype respectively.
 #
@@ -87,15 +87,15 @@
 
 
 from ._dispatcher import (
-    Dispatcher,
-    ArgKminDispatcher,
-    RadiusNeighborsDispatcher,
+    BaseDistanceReductionDispatcher,
+    ArgKmin,
+    RadiusNeighbors,
     sqeuclidean_row_norms,
 )
 
 __all__ = [
-    "Dispatcher",
-    "ArgKminDispatcher",
-    "RadiusNeighborsDispatcher",
+    "BaseDistanceReductionDispatcher",
+    "ArgKmin",
+    "RadiusNeighbors",
     "sqeuclidean_row_norms",
 ]

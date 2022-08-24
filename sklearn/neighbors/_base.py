@@ -25,8 +25,8 @@ from ..base import is_classifier
 from ..metrics import pairwise_distances_chunked
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..metrics._pairwise_distances_reduction import (
-    ArgKminDispatcher,
-    RadiusNeighborsDispatcher,
+    ArgKmin,
+    RadiusNeighbors,
 )
 from ..utils import (
     check_array,
@@ -794,12 +794,12 @@ class KNeighborsMixin:
         chunked_results = None
         use_pairwise_distances_reductions = (
             self._fit_method == "brute"
-            and ArgKminDispatcher.is_usable_for(
+            and ArgKmin.is_usable_for(
                 X if X is not None else self._fit_X, self._fit_X, self.effective_metric_
             )
         )
         if use_pairwise_distances_reductions:
-            results = ArgKminDispatcher.compute(
+            results = ArgKmin.compute(
                 X=X,
                 Y=self._fit_X,
                 k=n_neighbors,
@@ -817,7 +817,7 @@ class KNeighborsMixin:
             )
 
         elif self._fit_method == "brute":
-            # TODO: should no longer be needed once ArgKminDispatcher
+            # TODO: should no longer be needed once ArgKmin
             # is extended to accept sparse and/or float32 inputs.
 
             reduce_func = partial(
@@ -1127,13 +1127,13 @@ class RadiusNeighborsMixin:
 
         use_pairwise_distances_reductions = (
             self._fit_method == "brute"
-            and RadiusNeighborsDispatcher.is_usable_for(
+            and RadiusNeighbors.is_usable_for(
                 X if X is not None else self._fit_X, self._fit_X, self.effective_metric_
             )
         )
 
         if use_pairwise_distances_reductions:
-            results = RadiusNeighborsDispatcher.compute(
+            results = RadiusNeighbors.compute(
                 X=X,
                 Y=self._fit_X,
                 radius=radius,
