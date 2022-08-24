@@ -4,6 +4,7 @@ Testing for the bagging ensemble module (sklearn.ensemble.bagging).
 
 # Author: Gilles Louppe
 # License: BSD 3 clause
+import re
 from itertools import product
 
 import numpy as np
@@ -27,6 +28,8 @@ from sklearn.feature_selection import SelectKBest
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_diabetes, load_iris, make_hastie_10_2
 from sklearn.utils import check_random_state
+from sklearn.utils._mocking import CheckingClassifier
+from sklearn.utils._testing import _convert_container
 from sklearn.preprocessing import FunctionTransformer, scale
 from itertools import cycle
 
@@ -47,6 +50,10 @@ diabetes = load_diabetes()
 perm = rng.permutation(diabetes.target.size)
 diabetes.data = diabetes.data[perm]
 diabetes.target = diabetes.target[perm]
+
+
+def _weighted(estimator):
+    return estimator.set_fit_request(sample_weight=True)
 
 
 def test_classification():
@@ -105,14 +112,15 @@ def test_classification():
         ["predict", "predict_proba", "predict_log_proba", "decision_function"],
     ),
 )
-def test_sparse_classification(sparse_format, params, method):
+@pytest.mark.parametrize("use_sample_weight", [False, True])
+def test_sparse_classification(sparse_format, params, method, use_sample_weight):
     # Check classification for various parameter settings on sparse input.
 
     class CustomSVC(SVC):
         """SVC variant that records the nature of the training set"""
 
-        def fit(self, X, y):
-            super().fit(X, y)
+        def fit(self, X, y, sample_weight=None):
+            super().fit(X, y, sample_weight=sample_weight)
             self.data_type_ = type(X)
             return self
 
@@ -123,20 +131,32 @@ def test_sparse_classification(sparse_format, params, method):
 
     X_train_sparse = sparse_format(X_train)
     X_test_sparse = sparse_format(X_test)
+    base_estimator = CustomSVC(kernel="linear", decision_function_shape="ovr")
+    if use_sample_weight:
+        base_estimator = _weighted(base_estimator)
     # Trained on sparse format
     sparse_classifier = BaggingClassifier(
-        base_estimator=CustomSVC(kernel="linear", decision_function_shape="ovr"),
+        base_estimator=base_estimator,
         random_state=1,
         **params,
-    ).fit(X_train_sparse, y_train)
+    )
+    if use_sample_weight:
+        sample_weight = rng.rand(len(y_train))
+        sparse_classifier.fit(X_train_sparse, y_train, sample_weight=sample_weight)
+    else:
+        sparse_classifier.fit(X_train_sparse, y_train)
     sparse_results = getattr(sparse_classifier, method)(X_test_sparse)
 
     # Trained on dense format
     dense_classifier = BaggingClassifier(
-        base_estimator=CustomSVC(kernel="linear", decision_function_shape="ovr"),
+        base_estimator=base_estimator,
         random_state=1,
         **params,
-    ).fit(X_train, y_train)
+    )
+    if use_sample_weight:
+        dense_classifier.fit(X_train, y_train, sample_weight=sample_weight)
+    else:
+        dense_classifier.fit(X_train, y_train)
     dense_results = getattr(dense_classifier, method)(X_test)
     assert_array_almost_equal(sparse_results, dense_results)
 
@@ -583,17 +603,51 @@ class DummyZeroEstimator(BaseEstimator):
         return self.classes_[np.zeros(X.shape[0], dtype=int)]
 
 
-def test_bagging_sample_weight_unsupported_but_passed():
-    estimator = BaggingClassifier(DummyZeroEstimator())
+@pytest.mark.parametrize("estimator_cls", [BaggingClassifier, BaggingRegressor])
+def test_bagging_sample_weight_unsupported_but_passed(estimator_cls):
+    estimator = estimator_cls(DummyZeroEstimator())
     rng = check_random_state(0)
 
     estimator.fit(iris.data, iris.target).predict(iris.data)
-    with pytest.raises(ValueError):
+    msg = (
+        "fit got unexpected argument(s) {'sample_weight'}, which are not requested "
+        "metadata in any object."
+    )
+    with pytest.raises(TypeError, match=re.escape(msg)):
         estimator.fit(
             iris.data,
             iris.target,
             sample_weight=rng.randint(10, size=(iris.data.shape[0])),
         )
+
+
+@pytest.mark.parametrize("estimator_cls", [BaggingClassifier, BaggingRegressor])
+@pytest.mark.parametrize("fit_params_type", ["list", "array"])
+@pytest.mark.parametrize("use_sample_weight", [True, False])
+def test_bagging_with_arbitrary_fit_params(
+    estimator_cls, fit_params_type, use_sample_weight
+):
+    """Tests that sample_weight and other fit_params are passed to the
+    underlying base estimator."""
+    # Using iris even for regression, which is fine for the purpose of this test
+    X, y = iris.data, iris.target
+    sample_weight = np.ones(len(y))
+    other_fit_param = 2 * sample_weight
+    fit_params = {
+        "other_fit_param": _convert_container(other_fit_param, fit_params_type),
+    }
+    if use_sample_weight:
+        fit_params["sample_weight"] = _convert_container(sample_weight, fit_params_type)
+
+    # Hypothetically, we would need a regressor for BaggingRegressor, but
+    # CheckingRegressor does not exist. Using CheckingClassifier here does the
+    # job for the purpose of the test, so we take that.
+    base_estimator = CheckingClassifier(
+        expected_sample_weight=True,
+        expected_fit_params=["other_fit_param"],
+    ).set_fit_request(sample_weight=use_sample_weight, other_fit_param=True)
+    estimator = estimator_cls(base_estimator=base_estimator)
+    estimator.fit(X, y, **fit_params)
 
 
 def test_warm_start(random_state=42):

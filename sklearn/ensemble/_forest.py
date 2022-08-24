@@ -405,7 +405,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         else:
             n_samples_bootstrap = None
 
-        self._validate_estimator()
+        self.base_estimator_ = self._validate_estimator()
         # TODO(1.2): Remove "mse" and "mae"
         if isinstance(self, (RandomForestRegressor, ExtraTreesRegressor)):
             if self.criterion == "mse":

@@ -24,6 +24,7 @@ from ..utils.metaestimators import available_if
 from ..utils.multiclass import check_classification_targets
 from ..utils.random import sample_without_replacement
 from ..utils._param_validation import Interval
+from ..utils.metadata_routing import MetadataRouter, MethodMapping, process_routing
 from ..utils.validation import has_fit_parameter, check_is_fitted, _check_sample_weight
 from ..utils.fixes import delayed
 
@@ -75,11 +76,11 @@ def _parallel_build_estimators(
     ensemble,
     X,
     y,
-    sample_weight,
     seeds,
     total_n_estimators,
     verbose,
     check_input,
+    fit_params,
 ):
     """Private function used to build a batch of estimators within a job."""
     # Retrieve settings
@@ -88,12 +89,8 @@ def _parallel_build_estimators(
     max_samples = ensemble._max_samples
     bootstrap = ensemble.bootstrap
     bootstrap_features = ensemble.bootstrap_features
-    support_sample_weight = has_fit_parameter(ensemble.base_estimator_, "sample_weight")
     has_check_input = has_fit_parameter(ensemble.base_estimator_, "check_input")
     requires_feature_indexing = bootstrap_features or max_features != n_features
-
-    if not support_sample_weight and sample_weight is not None:
-        raise ValueError("The base estimator doesn't support sample weight")
 
     # Build estimators
     estimators = []
@@ -126,7 +123,11 @@ def _parallel_build_estimators(
         )
 
         # Draw samples, using sample weights, and then fit
+        support_sample_weight = has_fit_parameter(
+            ensemble.base_estimator_, "sample_weight"
+        )
         if support_sample_weight:
+            sample_weight = fit_params.get("sample_weight")
             if sample_weight is None:
                 curr_sample_weight = np.ones((n_samples,))
             else:
@@ -139,8 +140,11 @@ def _parallel_build_estimators(
                 not_indices_mask = ~indices_to_mask(indices, n_samples)
                 curr_sample_weight[not_indices_mask] = 0
 
+            fit_params = {
+                key: val for key, val in fit_params.items() if key != "sample_weight"
+            }
             X_ = X[:, features] if requires_feature_indexing else X
-            estimator_fit(X_, y, sample_weight=curr_sample_weight)
+            estimator_fit(X_, y, sample_weight=curr_sample_weight, **fit_params)
         else:
             X_ = X[indices][:, features] if requires_feature_indexing else X[indices]
             estimator_fit(X_, y[indices])
@@ -287,7 +291,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         self.random_state = random_state
         self.verbose = verbose
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, **fit_params):
         """Build a Bagging ensemble of estimators from the training set (X, y).
 
         Parameters
@@ -322,10 +326,16 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
             force_all_finite=False,
             multi_output=True,
         )
-        return self._fit(X, y, self.max_samples, sample_weight=sample_weight)
+        return self._fit(
+            X, y, self.max_samples, sample_weight=sample_weight, **fit_params
+        )
 
     def _parallel_args(self):
         return {}
+
+    def _get_estimator(self):
+        # should be overridden by child classes
+        return None
 
     def _fit(
         self,
@@ -335,6 +345,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         max_depth=None,
         sample_weight=None,
         check_input=True,
+        **fit_params,
     ):
         """Build a Bagging ensemble of estimators from the training
            set (X, y).
@@ -364,6 +375,11 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         check_input : bool, default=True
             Override value used when fitting base estimator. Only supported
             if the base estimator has a check_input parameter for fit function.
+            If the metaestimator already checks the input, set this value to
+            False to prevent redundant input checking (#23149).
+
+        fit_params : dict, default=None
+            Parameters to pass to the `fit` method of the underlying estimator.
 
         Returns
         -------
@@ -381,7 +397,14 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         y = self._validate_y(y)
 
         # Check parameters
-        self._validate_estimator()
+        self.base_estimator_ = self._validate_estimator(self._get_estimator())
+
+        routed_params = process_routing(
+            obj=self,
+            method="fit",
+            sample_weight=sample_weight,
+            other_params=fit_params,
+        )
 
         if max_depth is not None:
             self.base_estimator_.max_depth = max_depth
@@ -465,11 +488,11 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
                 self,
                 X,
                 y,
-                sample_weight,
-                seeds[starts[i] : starts[i + 1]],
-                total_n_estimators,
+                seeds=seeds[starts[i] : starts[i + 1]],
+                total_n_estimators=total_n_estimators,
                 verbose=self.verbose,
                 check_input=check_input,
+                fit_params=routed_params.base_estimator.fit,
             )
             for i in range(n_jobs)
         )
@@ -537,6 +560,33 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
     @property
     def n_features_(self):
         return self.n_features_in_
+
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
+        base_estimator = self._validate_estimator(self._get_estimator())
+        router = (
+            MetadataRouter(owner=self.__class__.__name__)
+            # no add_self(self) because the bagging metaestimator does not use
+            # fit_params
+            .add(
+                base_estimator=base_estimator,
+                method_mapping=MethodMapping().add(callee="fit", caller="fit"),
+            )
+            # warn on sample_weight because that was already supported, the rest
+            # raises
+            .warn_on(child="base_estimator", method="fit", params=["sample_weight"])
+        )
+        return router
 
 
 class BaggingClassifier(ClassifierMixin, BaseBagging):
@@ -738,9 +788,10 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
             verbose=verbose,
         )
 
-    def _validate_estimator(self):
-        """Check the estimator and set the base_estimator_ attribute."""
-        super()._validate_estimator(default=DecisionTreeClassifier())
+    def _get_estimator(self):
+        if self.base_estimator is None:
+            return DecisionTreeClassifier()
+        return self.base_estimator
 
     def _set_oob_score(self, X, y):
         n_samples = y.shape[0]
@@ -1198,9 +1249,10 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
 
         return y_hat
 
-    def _validate_estimator(self):
-        """Check the estimator and set the base_estimator_ attribute."""
-        super()._validate_estimator(default=DecisionTreeRegressor())
+    def _get_estimator(self):
+        if self.base_estimator is None:
+            return DecisionTreeRegressor()
+        return self.base_estimator
 
     def _set_oob_score(self, X, y):
         n_samples = y.shape[0]

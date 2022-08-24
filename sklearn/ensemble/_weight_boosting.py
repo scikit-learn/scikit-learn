@@ -136,7 +136,7 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         sample_weight /= sample_weight.sum()
 
         # Check parameters
-        self._validate_estimator()
+        self.base_estimator_ = self._validate_estimator()
 
         # Clear any previous fit results
         self.estimators_ = []
@@ -473,11 +473,13 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
 
     def _validate_estimator(self):
         """Check the estimator and set the base_estimator_ attribute."""
-        super()._validate_estimator(default=DecisionTreeClassifier(max_depth=1))
+        base_estimator = super()._validate_estimator(
+            default=DecisionTreeClassifier(max_depth=1)
+        )
 
         #  SAMME-R requires predict_proba-enabled base estimators
         if self.algorithm == "SAMME.R":
-            if not hasattr(self.base_estimator_, "predict_proba"):
+            if not hasattr(base_estimator, "predict_proba"):
                 raise TypeError(
                     "AdaBoostClassifier with algorithm='SAMME.R' requires "
                     "that the weak learner supports the calculation of class "
@@ -485,11 +487,11 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
                     "Please change the base estimator or set "
                     "algorithm='SAMME' instead."
                 )
-        if not has_fit_parameter(self.base_estimator_, "sample_weight"):
+        if not has_fit_parameter(base_estimator, "sample_weight"):
             raise ValueError(
-                "%s doesn't support sample_weight."
-                % self.base_estimator_.__class__.__name__
+                "%s doesn't support sample_weight." % base_estimator.__class__.__name__
             )
+        return base_estimator
 
     def _boost(self, iboost, X, y, sample_weight, random_state):
         """Implement a single boost.
@@ -1031,7 +1033,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
 
     def _validate_estimator(self):
         """Check the estimator and set the base_estimator_ attribute."""
-        super()._validate_estimator(default=DecisionTreeRegressor(max_depth=3))
+        return super()._validate_estimator(default=DecisionTreeRegressor(max_depth=3))
 
     def _boost(self, iboost, X, y, sample_weight, random_state):
         """Implement a single boost for regression

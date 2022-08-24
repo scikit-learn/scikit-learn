@@ -130,7 +130,7 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
     def _validate_estimator(self, default=None):
         """Check the estimator and the n_estimator attribute.
 
-        Sets the base_estimator_` attributes.
+        Returns the base estimator instance.
         """
         if not isinstance(self.n_estimators, numbers.Integral):
             raise ValueError(
@@ -147,12 +147,14 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             )
 
         if self.base_estimator is not None:
-            self.base_estimator_ = self.base_estimator
+            base_estimator = self.base_estimator
         else:
-            self.base_estimator_ = default
+            base_estimator = default
 
-        if self.base_estimator_ is None:
+        if base_estimator is None:
             raise ValueError("base_estimator cannot be None")
+
+        return base_estimator
 
     def _make_estimator(self, append=True, random_state=None):
         """Make and configure a copy of the `base_estimator_` attribute.

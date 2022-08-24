@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 from sklearn.base import RegressorMixin, ClassifierMixin, BaseEstimator
 from sklearn.calibration import CalibratedClassifierCV
+from sklearn.ensemble import BaggingClassifier, BaggingRegressor
 from sklearn.exceptions import UnsetMetadataPassedError
 from sklearn.multioutput import MultiOutputRegressor, MultiOutputClassifier
 from sklearn.utils.metadata_routing import MetadataRouter
@@ -179,7 +180,31 @@ METAESTIMATORS = [
         "y": y,
         "routing_methods": ["fit"],
         "warns_on": {"fit": ["sample_weight", "metadata"]},
-        "preserves_metadata": False,
+        "preserves_metadata": False,  # applies CV splits
+    },
+    {
+        "metaestimator": BaggingRegressor,
+        "estimator_name": "base_estimator",
+        "estimator": ConsumingRegressor,
+        "X": X,
+        "y": y,
+        "routing_methods": ["fit"],
+        "warns_on": {
+            "fit": ["sample_weight"],
+        },
+        "preserves_metadata": False,  # applies sub-sampling
+    },
+    {
+        "metaestimator": BaggingClassifier,
+        "estimator_name": "base_estimator",
+        "estimator": ConsumingClassifier,
+        "X": X,
+        "y": y,
+        "routing_methods": ["fit"],
+        "warns_on": {
+            "fit": ["sample_weight"],
+        },
+        "preserves_metadata": False,  # applies sub-sampling
     },
 ]
 """List containing all metaestimators to be tested and their settings
