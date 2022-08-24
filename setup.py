@@ -63,7 +63,7 @@ DEFINE_MACRO_NUMPY_C_API = (
 )
 
 # XXX: add new extensions to this list when they
-# are not using the old NumPy C API (i.e. version 1.4)
+# are not using the old NumPy C API (i.e. version 1.7)
 # TODO: when Cython>=3.0 is used, make sure all Cython extensions
 # use the newest NumPy C API by `#defining` `NPY_NO_DEPRECATED_API` to be
 # `NPY_1_7_API_VERSION`, and remove this list.
@@ -202,11 +202,11 @@ try:
             for ext in self.extensions:
                 if ext.name in USE_NEWEST_NUMPY_C_API:
                     print(
-                        f"Use newest NumPy C API (version 1.7) for extension {ext.name}"
+                        f"Use newest NumPy C API for extension {ext.name}"
                     )
                     ext.define_macros.append(DEFINE_MACRO_NUMPY_C_API)
                 else:
-                    print(f"Use old NumPy C API (version 1.4) for extension {ext.name}")
+                    print(f"Use old NumPy C API (version 1.7) for extension {ext.name}")
 
             if sklearn._OPENMP_SUPPORTED:
                 openmp_flag = get_openmp_flag(self.compiler)
