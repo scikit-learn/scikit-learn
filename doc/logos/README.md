@@ -1,6 +1,6 @@
 # scikit-learn Brand Guidelines
 
-This section contains information around scikit-learn's brand standards and the use of scikit-learn assets. The purpose of the following guidelines are to ensure the scikit-learn logo remains consistent and recognizable across all uses and communications. These guidelines also provide a common language for referring to the logos and their components.
+This section contains information around scikit-learn's brand standards and the use of scikit-learn assets. The purpose of these guidelines are to ensure the scikit-learn logo remains consistent and recognizable across all uses and communications. These guidelines also provide a common language for referring to the logos and their components.
 
 
 File types:
@@ -9,6 +9,12 @@ File types:
 - `SVG` Scalable Vector Graphics (SVG) are an XML-based markup language for describing two-dimensional based vector graphics. They can be created and edited with any text editor or with drawing software.
 
 ---
+<br>
+
+
+## Brand Name
+The official name of the package is __scikit-learn__. Do not abbreviate or otherwise alter the name. Always spell ‘scikit’ with a lowercase ‘s’.
+
 <br>
 
 ## Color Palette
@@ -22,51 +28,35 @@ File types:
 <br>
 
 
-## scikit-learn Font
+## Typography
+The following typeface is used in the logo:
 - "scikit": Helvetica Neue
 - "learn": Script MT
 <br>
 
 
 ## Logos
+You may highlight or reference your work with scikit-learn by using one of the logos provided below. Any use must abide by the Logo Integrity Standards defined below.
 
-### Logo 1
-- File type: PNG
-- File size: 49 KB (1280 x 689 px)
-- File name: [1280px-scikit-learn-logo.png](https://github.com/scikit-learn/scikit-learn/blob/main/doc/logos/1280px-scikit-learn-logo.png)
-
-<img src="1280px-scikit-learn-logo.png" width="250px">
-
-<br>
-
-### Logo 2
-- File type: ICO
-- File size: 2 KB (32 x 32 px)
-- File name: [favicon.ico](https://github.com/scikit-learn/scikit-learn/blob/main/doc/logos/favicon.ico)
-
-<img src="favicon.ico" width="100px">
+| | |
+| - | - |
+|  <img src="1280px-scikit-learn-logo.png" height="100px"> | __Logo 1__ <br> File type: PNG <br> File size: 49 KB (1280 x 689 px) <br> File name: [1280px-scikit-learn-logo.png](https://github.com/scikit-learn/scikit-learn/blob/main/doc/logos/1280px-scikit-learn-logo.png) | 
+|  <img src="favicon.ico" height="100px"> | __Logo 2__ <br> File type: ICO <br> File size:  2 KB (32 x 32 px) <br> File name: [favicon.ico](https://github.com/scikit-learn/scikit-learn/blob/main/doc/logos/favicon.ico) |
+|  <img src="scikit-learn-logo-without-subtitle.svg" height="100px"> | __Logo 3__ <br> File type: SVG <br> File size: 5 KB <br> File name: [scikit-learn-logo-without-subtitle.svg](https://github.com/scikit-learn/scikit-learn/blob/main/doc/logos/scikit-learn-logo-without-subtitle.svg) | 
 
 <br>
 
-### Logo 3
-- File type: SVG
-- File size: 5 KB
-- File name: [scikit-learn-logo-without-subtitle.svg](https://github.com/scikit-learn/scikit-learn/blob/main/doc/logos/scikit-learn-logo-without-subtitle.svg)
+### Logo Integrity Standards
 
-<img src="scikit-learn-logo-without-subtitle.svg" width="250px">
+- __Minimum Size:__ For consistent legibility, please do not display the scikit-learn logo at less than 50px wide.
+- __Scale:__ Ensure any logos used are scaled proportionally. Stretched, compressed, or otherwise distorted versions of the logo should not be displayed.
 
+- __Clear Space:__ To ensure the mark is clearly visible in all uses, surround it with a sufficient amount of clear space that is free of type, graphics, and other elements that might cause visual clutter. Do not overlap the logo with text, images, or other elements. The minimum clear space required for the logo is .25X, where X is the height of the logo. <br> <center><img src="brand_guidelines/scikitlearn_logo_clearspace.png" width="250px"></center>
 
-### Logo Integrity
+- __Colors:__ Only use logos in the approved color palette defined above. Do not recolor the logo. 
+- __Typeface:__ Do not change the typeface used in the logo. 
+- __No Modification:__ Do not attempt recreate or otherwise modify the scikit-learn logo.
 
-#### Minimum Size
-For consistent legibility, please do not display the scikit-learn logo at less than 50px wide.
-
-#### Clear Space
-To ensure the mark is clearly visible in all uses, surround it with a sufficient amount of clear space that is free of type, graphics, and other elements that might cause visual clutter. Do not overlap the logo with text, images, or other elements. The minimum clear space required for the logo is .25X, where X is the height of the logo.
-![#29ABE2 Cyan](brand_colors/colorswatch_29ABE2_cyan.png)
-
-#### Scale
-Ensure any logos used are scaled proportionally. Distorted logos should not be displayed.
 
 
 ---
