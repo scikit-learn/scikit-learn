@@ -59,14 +59,12 @@ experiments:
 from sklearn import metrics
 
 score_funcs = [
-    ("Homogenity", metrics.homogeneity_score),
-    ("Completeness", metrics.completeness_score),
     ("V-measure", metrics.v_measure_score),
     ("Rand index", metrics.rand_score),
     ("ARI", metrics.adjusted_rand_score),
     ("MI", metrics.mutual_info_score),
-    ("AMI", metrics.adjusted_mutual_info_score),
     ("NMI", metrics.normalized_mutual_info_score),
+    ("AMI", metrics.adjusted_mutual_info_score),
 ]
 
 # %%
@@ -120,7 +118,7 @@ names = []
 style.use("seaborn-colorblind")
 plt.figure(1)
 
-for marker, (score_name, score_func) in zip("x^vd*s,.", score_funcs):
+for marker, (score_name, score_func) in zip("d^vx.,", score_funcs):
 
     scores = fixed_classes_uniform_labelings_scores(
         score_func, n_samples, n_clusters_range, n_classes=n_classes
@@ -188,7 +186,7 @@ plt.figure(2)
 plots = []
 names = []
 
-for marker, (score_name, score_func) in zip("x^vd*s,.", score_funcs):
+for marker, (score_name, score_func) in zip("d^vx.,", score_funcs):
 
     scores = uniform_labelings_scores(score_func, n_samples, n_clusters_range)
     plots.append(
@@ -215,12 +213,11 @@ plt.show()
 # %%
 # We observe similar results as for the first experiment: adjusted for chance
 # metrics stay constantly near zero while other metrics tend to get larger with
-# finer-grained labelings. The mean V-measure, completeness and homogenity
-# scores of random labeling increase significantly as the number of clusters is
-# closer to the total number of samples used to compute the measure.
-# Furthermore, raw Mutual Information is unbounded from above and its scale
-# depends on the dimensions of the clustering problem and the cardinality of the
-# ground truth classes.
+# finer-grained labelings. The mean V-measure of random labeling increases
+# significantly as the number of clusters is closer to the total number of
+# samples used to compute the measure. Furthermore, raw Mutual Information is
+# unbounded from above and its scale depends on the dimensions of the clustering
+# problem and the cardinality of the ground truth classes.
 #
 # Only adjusted measures can hence be safely used as a consensus index to
 # evaluate the average stability of clustering algorithms for a given value of k
