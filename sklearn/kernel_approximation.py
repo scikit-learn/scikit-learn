@@ -592,7 +592,7 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
     """
 
     _parameter_constraints = {
-        "sample_steps": [Interval(int, left=1, right=3, closed="both")],
+        "sample_steps": [Interval(int, left=1, right=None, closed="left")],
         "sample_interval": [None, Interval(float, 0, None, closed="left")],
     }
 
@@ -610,6 +610,11 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
                 self.sample_interval_ = 0.5
             elif self.sample_steps == 3:
                 self.sample_interval_ = 0.4
+            else:
+                raise ValueError(
+                    "If sample_steps is not in [1, 2, 3],"
+                    " you need to provide sample_interval"
+                )
         else:
             self.sample_interval_ = self.sample_interval
 
