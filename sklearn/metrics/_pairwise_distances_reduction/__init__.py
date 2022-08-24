@@ -53,7 +53,7 @@
 #               +-----------------------+----------------------+
 #               |                                              |
 #          (dispatcher)                                   (dispatcher)
-#       ArgKmin                                          RadiusNeighbors
+#            ArgKmin                                     RadiusNeighbors
 #               |                                              |
 #               |                                              |
 #               |                (64bit implem.)               |
@@ -68,7 +68,7 @@
 #            ArgKmin{32,64}                        RadiusNeighbors{32,64}
 #               |     ∆                                   ∆    |
 #               |     |                                   |    |
-#      ========================= Specializations =================================
+#        ======================= Specializations =============================
 #               |     |                                   |    |
 #               |     |                                   |    |
 #               x     |                                   |    x
