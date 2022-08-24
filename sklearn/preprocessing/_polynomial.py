@@ -629,17 +629,6 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
            [0.  , 0.  , 0.5 , 0.5 ]])
     """
 
-    _parameter_constraints = {
-        "n_knots": [Interval(Integral, 2, None, closed="left")],
-        "degree": [Interval(Integral, 0, None, closed="left")],
-        "knots": [StrOptions({"uniform", "quantile"}), "array-like"],
-        "extrapolation": [
-            StrOptions({"error", "constant", "linear", "continue", "periodic"})
-        ],
-        "include_bias": ["boolean"],
-        "order": [StrOptions({"C", "F"})],
-    }
-
     def __init__(
         self,
         n_knots=5,
@@ -780,8 +769,6 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         self : object
             Fitted transformer.
         """
-        self._validate_params()
-
         X = self._validate_data(
             X,
             reset=True,
