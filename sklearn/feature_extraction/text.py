@@ -143,9 +143,6 @@ def strip_accents_unicode(s):
     strip_accents_ascii : Remove accentuated char for any unicode symbol that
         has a direct ASCII equivalent.
     """
-    """_summary_
-
-    """
     try:
         # If `s` is ASCII-compatible, then it does not contain any accented
         # characters and we can avoid an expensive list comprehension
