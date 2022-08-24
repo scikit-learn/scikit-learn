@@ -261,6 +261,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             self._y_train_mean = np.zeros(shape=shape_y_stats)
             self._y_train_std = np.ones(shape=shape_y_stats)
 
+        self.sample_variance_ = sample_variance
         if sample_variance is None:
             if np.iterable(self.alpha) and self.alpha.shape[0] != y.shape[0]:
                 if self.alpha.shape[0] == 1:
@@ -274,13 +275,13 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             if np.iterable(sample_variance) and sample_variance.shape[0] != y.shape[0]:
                 if sample_variance.shape[0] == 1:
                     sample_variance = sample_variance[0]
+                    self.sample_variance_ = sample_variance
                 else:
                     raise ValueError(
                         "sample_variance must be a scalar or an array with same number"
                         f" of entries as y. ({sample_variance.shape[0]} !="
                         f" {y.shape[0]})"
                     )
-            self.alpha = sample_variance
 
         self.X_train_ = np.copy(X) if self.copy_X_train else X
         self.y_train_ = np.copy(y) if self.copy_X_train else y
@@ -336,7 +337,10 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         # of actual query points
         # Alg. 2.1, page 19, line 2 -> L = cholesky(K + sigma^2 I)
         K = self.kernel_(self.X_train_)
-        K[np.diag_indices_from(K)] += self.alpha
+        if sample_variance is None:
+            K[np.diag_indices_from(K)] += self.alpha
+        else:
+            K[np.diag_indices_from(K)] += sample_variance
         try:
             self.L_ = cholesky(K, lower=GPR_CHOLESKY_LOWER, check_finite=False)
         except np.linalg.LinAlgError as exc:
@@ -572,7 +576,10 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             K = kernel(self.X_train_)
 
         # Alg. 2.1, page 19, line 2 -> L = cholesky(K + sigma^2 I)
-        K[np.diag_indices_from(K)] += self.alpha
+        if self.sample_variance_ is None:
+            K[np.diag_indices_from(K)] += self.alpha
+        else:
+            K[np.diag_indices_from(K)] += self.sample_variance_
         try:
             L = cholesky(K, lower=GPR_CHOLESKY_LOWER, check_finite=False)
         except np.linalg.LinAlgError:
