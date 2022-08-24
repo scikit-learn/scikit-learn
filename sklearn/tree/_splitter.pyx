@@ -237,7 +237,7 @@ cdef class BaseDenseSplitter(Splitter):
 cdef class BestSplitter(BaseDenseSplitter):
     """Splitter for finding the best split."""
 
-    cdef const SIZE_t[:, :] _X_ranks
+    cdef SIZE_t[:, ::1] _X_ranks
     cdef SIZE_t[::1] feature_ranks
 
     # Auxiliary arrays for sorting.
@@ -253,23 +253,42 @@ cdef class BestSplitter(BaseDenseSplitter):
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
         or 0 otherwise.
         """
+        cdef SIZE_t i, j
+        cdef DTYPE_t[::1] Xf
+        cdef SIZE_t[::1] argsorted
 
         # Call parent init
         Splitter.init(self, X, y, sample_weight)
 
         self.X = X
-
-        # TODO: accept X_ranks as parameter to avoid redundantly obtaining them
-        #       in ensembles and cross-validation.
-        # Since multiple sorting steps will be required in recursive X parti-
-        # tioning, its effective to calculate rank values for each feature
-        # and utilize integer sorting algorithms in subsequent runs.
-        self._X_ranks = np.argsort(np.argsort(X, axis=0), axis=0)
         self.feature_ranks = np.empty(self.n_samples, dtype=np.intp)
 
         # Radix sort requires auxiliary arrays, that we allocate here only once.
         self._rank_copies = np.empty(self.n_samples, dtype=np.intp)
         self._sample_copies = np.empty(self.n_samples, dtype=np.intp)
+
+        self._X_ranks = np.empty((self.n_samples, self.n_features),
+                                 dtype=np.intp)
+
+        Xf = self.feature_values
+        argsorted = self.feature_ranks
+
+        # Populate _X_ranks, determining ranks for each feature.
+        # Since multiple sorting steps will be required in recursive X parti-
+        # tioning, its effective to calculate rank values for each feature
+        # and utilize integer sorting algorithms in subsequent runs.
+        # TODO: accept X_ranks as parameter to avoid redundantly obtaining them
+        #       in ensembles and cross-validation.
+        with nogil:
+            for j in range(self.n_features):
+                for i in range(self.n_samples):
+                    argsorted[i] = i
+                    Xf[i] = self.X[i, j]
+
+                sort(&Xf[0], &argsorted[0], self.n_samples)
+
+                for i in range(self.n_samples):
+                    self._X_ranks[argsorted[i], j] = i
 
         return 0
         
