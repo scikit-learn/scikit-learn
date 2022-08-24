@@ -3,7 +3,6 @@ This file contains preprocessing tools based on polynomials.
 """
 import collections
 import numbers
-from numbers import Integral
 from itertools import chain, combinations
 from itertools import combinations_with_replacement as combinations_w_r
 
@@ -16,7 +15,6 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
 from ..utils.deprecation import deprecated
 from ..utils.validation import check_is_fitted, FLOAT_DTYPES, _check_sample_weight
-from ..utils._param_validation import Interval, StrOptions
 from ..utils.validation import _check_feature_names_in
 from ..utils.stats import _weighted_percentile
 
