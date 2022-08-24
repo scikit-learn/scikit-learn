@@ -178,7 +178,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
 
     _parameter_constraints = {
         "n_iter": [Interval(Integral, 1, None, closed="left")],
-        "tol": [Interval(Real, 0, None, closed="left")],
+        "tol": [Interval(Real, 0, None, closed="neither")],
         "alpha_1": [Interval(Real, 0, None, closed="left")],
         "alpha_2": [Interval(Real, 0, None, closed="left")],
         "lambda_1": [Interval(Real, 0, None, closed="left")],
