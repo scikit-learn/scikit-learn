@@ -1314,7 +1314,7 @@ class LassoLars(Lars):
         "max_iter": [Interval(Integral, 0, None, closed="left")],
         "positive": ["boolean"],
     }
-    _parameter_constraints.pop('n_nonzero_coefs')
+    _parameter_constraints.pop("n_nonzero_coefs")
 
     method = "lasso"
 
