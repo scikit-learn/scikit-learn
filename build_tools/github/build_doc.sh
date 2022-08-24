@@ -40,6 +40,7 @@ get_build_type() {
         return
     fi
     commit_msg=$(git log --format=%B -n 1 $CIRCLE_SHA1)
+    echo commit_msg: $commit_msg
     if [ -z "$commit_msg" ]
     then
         echo QUICK BUILD: failed to inspect commit $CIRCLE_SHA1
