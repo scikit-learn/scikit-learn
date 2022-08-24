@@ -20,6 +20,7 @@ if [ -n "$GITHUB_ACTION" ]
 then
     # Map the variables for the new documentation builder to the old one
     CIRCLE_SHA1=$(git log -1 --pretty=format:%H)
+    echo CIRCLE_SHA1: $CIRCLE_SHA1
 
     CIRCLE_JOB=$GITHUB_JOB
 
