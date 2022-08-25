@@ -512,8 +512,6 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         return self.n_features_in_
 
 
-# TODO:
-# - sparse support (either scipy or own cython solution)?
 class SplineTransformer(TransformerMixin, BaseEstimator):
     """Generate univariate B-spline bases for features.
 
@@ -576,8 +574,8 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         Order of output array in the dense case. `'F'` order is faster to compute, but
         may slow down subsequent estimators.
 
-    sparse : bool, default=False
-        Will return sparse matrix if set True else will return an array. This option
+    sparse_output : bool, default=False
+        Will return sparse csr matrix if set True else will return an array. This option
         is only available with `scipy>=1.8`.
 
         .. versionadded:: 1.2
@@ -643,7 +641,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         extrapolation="constant",
         include_bias=True,
         order="C",
-        sparse=False,
+        sparse_output=False,
     ):
         self.n_knots = n_knots
         self.degree = degree
@@ -651,7 +649,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         self.extrapolation = extrapolation
         self.include_bias = include_bias
         self.order = order
-        self.sparse = sparse
+        self.sparse_output = sparse_output
 
     @staticmethod
     def _get_base_knot_positions(X, n_knots=10, knots="uniform", sample_weight=None):
@@ -829,9 +827,9 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         if not isinstance(self.include_bias, (bool, np.bool_)):
             raise ValueError("include_bias must be bool.")
 
-        if self.sparse and sp_version < parse_version("1.8.0"):
+        if self.sparse_output and sp_version < parse_version("1.8.0"):
             raise ValueError(
-                "Option sparse=True is only available with scipy>=1.8.0, "
+                "Option sparse_output=True is only available with scipy>=1.8.0, "
                 f"got {sp_version}."
             )
 
@@ -938,12 +936,12 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         n_splines = self.bsplines_[0].c.shape[1]
         degree = self.degree
 
-        # With sparse=True, we call BSpline.design_matrix which uses extrapolate=False
-        # under the hood.
+        # With sparse_output=True, we call BSpline.design_matrix which uses
+        # extrapolate=False under the hood.
         # TODO: With scipy v1.10, use new extrapolate argument in design_matrix(..).
         # Note: self.bsplines_[0].extrapolate is True for extrapolation in
         # ["periodic", "continue"]
-        use_sparse = self.sparse and not self.bsplines_[0].extrapolate
+        use_sparse = self.sparse_output and not self.bsplines_[0].extrapolate
 
         # Note that scipy BSpline returns float64 arrays and converts input
         # x=X[:, i] to c-contiguous float64.
@@ -976,7 +974,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                     x = X[:, i]
 
                 if use_sparse:
-                    sparse_output = BSpline.design_matrix(x, spl.t, spl.k)
+                    XBS_sparse = BSpline.design_matrix(x, spl.t, spl.k)
                 else:
                     XBS[:, (i * n_splines) : ((i + 1) * n_splines)] = spl(x)
             else:  # extrapolation in ("constant", "linear")
@@ -990,14 +988,14 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                     # Set some arbitrary value outside boundary that will be reassigned
                     # later.
                     x[mask_inv] = spl.t[self.degree]
-                    sparse_output = BSpline.design_matrix(x, spl.t, spl.k)
+                    XBS_sparse = BSpline.design_matrix(x, spl.t, spl.k)
                     # Note: Without concerting to lil_matrix we would get:
                     # scipy.sparse._base.SparseEfficiencyWarning: Changing the sparsity
                     # structure of a csr_matrix is expensive. lil_matrix is more
                     # efficient.
                     if np.any(mask_inv):
-                        sparse_output = sparse_output.tolil()
-                        sparse_output[mask_inv, :] = 0
+                        XBS_sparse = XBS_sparse.tolil()
+                        XBS_sparse[mask_inv, :] = 0
                 else:
                     XBS[mask, (i * n_splines) : ((i + 1) * n_splines)] = spl(X[mask, i])
 
@@ -1006,7 +1004,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             if self.extrapolation == "error":
                 # BSpline with extrapolate=False does not raise an error, but
                 # output np.nan.
-                if (use_sparse and np.any(np.isnan(sparse_output.data))) or (
+                if (use_sparse and np.any(np.isnan(XBS_sparse.data))) or (
                     not use_sparse
                     and np.any(
                         np.isnan(XBS[:, (i * n_splines) : ((i + 1) * n_splines)])
@@ -1025,9 +1023,9 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                 if np.any(mask):
                     if use_sparse:
                         # Note: See comment about SparseEfficiencyWarning above.
-                        if not sparse.isspmatrix_lil(sparse_output):
-                            sparse_output = sparse_output.tolil()
-                        sparse_output[mask, :degree] = f_min[:degree]
+                        if not sparse.isspmatrix_lil(XBS_sparse):
+                            XBS_sparse = XBS_sparse.tolil()
+                        XBS_sparse[mask, :degree] = f_min[:degree]
 
                     else:
                         XBS[mask, (i * n_splines) : (i * n_splines + degree)] = f_min[
@@ -1038,9 +1036,9 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                 if np.any(mask):
                     if use_sparse:
                         # Note: See comment about SparseEfficiencyWarning above.
-                        if not sparse.isspmatrix_lil(sparse_output):
-                            sparse_output = sparse_output.tolil()
-                        sparse_output[mask, -degree:] = f_max[-degree:]
+                        if not sparse.isspmatrix_lil(XBS_sparse):
+                            XBS_sparse = XBS_sparse.tolil()
+                        XBS_sparse[mask, -degree:] = f_max[-degree:]
                     else:
                         XBS[
                             mask,
@@ -1067,9 +1065,9 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                         linear_extr = f_min[j] + (X[mask, i] - xmin) * fp_min[j]
                         if use_sparse:
                             # Note: See comment about SparseEfficiencyWarning above.
-                            if not sparse.isspmatrix_lil(sparse_output):
-                                sparse_output = sparse_output.tolil()
-                            sparse_output[mask, j] = linear_extr
+                            if not sparse.isspmatrix_lil(XBS_sparse):
+                                XBS_sparse = XBS_sparse.tolil()
+                            XBS_sparse[mask, j] = linear_extr
                         else:
                             XBS[mask, i * n_splines + j] = linear_extr
 
@@ -1079,20 +1077,20 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                         linear_extr = f_max[k] + (X[mask, i] - xmax) * fp_max[k]
                         if use_sparse:
                             # Note: See comment about SparseEfficiencyWarning above.
-                            if not sparse.isspmatrix_lil(sparse_output):
-                                sparse_output = sparse_output.tolil()
-                            sparse_output[mask, k : k + 1] = linear_extr[:, None]
+                            if not sparse.isspmatrix_lil(XBS_sparse):
+                                XBS_sparse = XBS_sparse.tolil()
+                            XBS_sparse[mask, k : k + 1] = linear_extr[:, None]
                         else:
                             XBS[mask, i * n_splines + k] = linear_extr
 
             if use_sparse:
-                if not sparse.isspmatrix_csr(sparse_output):
-                    sparse_output = sparse_output.tocsr()
-                output_list.append(sparse_output)
+                if not sparse.isspmatrix_csr(XBS_sparse):
+                    XBS_sparse = XBS_sparse.tocsr()
+                output_list.append(XBS_sparse)
 
         if use_sparse:
             XBS = sparse.hstack(output_list)
-        elif self.sparse:
+        elif self.sparse_output:
             # TODO: Remove with scipy 1.10. See comment above.
             XBS = sparse.csr_matrix(XBS)
 

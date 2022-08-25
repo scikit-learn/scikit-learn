@@ -447,7 +447,7 @@ def test_spline_transformer_kbindiscretizer():
 
 @pytest.mark.skipif(
     sp_version < parse_version("1.8.0"),
-    reason="The `sparse` option is available from the 1.8.0 scipy version",
+    reason="The option `sparse_output` is available as of scipy 1.8.0",
 )
 @pytest.mark.parametrize("degree", range(1, 3))
 @pytest.mark.parametrize("knots", ["uniform", "quantile"])
@@ -466,14 +466,14 @@ def test_spline_transformer_sparse_output(
         knots=knots,
         extrapolation=extrapolation,
         include_bias=include_bias,
-        sparse=False,
+        sparse_output=False,
     )
     splt_sparse = SplineTransformer(
         degree=degree,
         knots=knots,
         extrapolation=extrapolation,
         include_bias=include_bias,
-        sparse=True,
+        sparse_output=True,
     )
 
     splt_dense.fit(X)
@@ -501,13 +501,13 @@ def test_spline_transformer_sparse_output(
 
 @pytest.mark.skipif(
     sp_version >= parse_version("1.8.0"),
-    reason="Option sparse is available as of scipy 1.8.0",
+    reason="The option `sparse_output` is available as of scipy 1.8.0",
 )
 def test_spline_transformer_sparse_output_raise_error_for_old_scipy(X_y_data, solver):
     """Test that SplineTransformer with sparse=True raises for scipy<1.8.0."""
     X = [[1], [2]]
     with pytest.raises(ValueError, match="scipy>=1.8.0"):
-        SplineTransformer(sparse=True).fit(X)
+        SplineTransformer(sparse_output=True).fit(X)
 
 
 @pytest.mark.parametrize("n_knots", [5, 10])
