@@ -722,7 +722,7 @@ cdef class DistanceMetric{{name_suffix}}:
             # for supporting the sparse-dense case with minimal overhead.
             # Note: at this point this method is only a convenience method
             # used in the tests via the DistanceMetric.pairwise method.
-            # Therefore there is no need to attempt parallelization of those
+            # Therefore, there is no need to attempt parallelization of those
             # nested for-loops.
             # Efficient parallel computation of pairwise distances can be
             # achieved via the PairwiseDistances class instead. The latter
