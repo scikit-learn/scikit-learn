@@ -122,7 +122,7 @@ def _analyze(
 
 
 def strip_accents_unicode(s):
-    """Transform accentuated unicode symbols into their simple counterpart
+    """Transform accentuated unicode symbols into their simple counterpart.
 
     Warning: the python-level loop and join operations make this
     implementation 20 times slower than the strip_accents_ascii basic
@@ -130,8 +130,13 @@ def strip_accents_unicode(s):
 
     Parameters
     ----------
-    s : string
-        The string to strip
+    s : str
+        The string to strip.
+
+    Returns
+    -------
+    s : str
+        The stripped string.
 
     See Also
     --------
