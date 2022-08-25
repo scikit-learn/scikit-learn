@@ -1186,7 +1186,7 @@ interacting features. The first and second features may interact, as well as
 the second and third features. But note that the first and third are forbidden
 to interact. The following depicts a tree and the possible splits of the tree:
 
-.. code-block:: text
+.. code-block:: none
 
       1      <- Both constraint groups could be applied from now on
      / \
