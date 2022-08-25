@@ -561,8 +561,6 @@ def test_invalid_percentile():
     )
 
     with pytest.raises(ValueError):
-        GenericUnivariateSelect(mode="percentile", param=-1).fit(X, y)
-    with pytest.raises(ValueError):
         GenericUnivariateSelect(mode="percentile", param=101).fit(X, y)
 
 
@@ -831,8 +829,6 @@ def test_invalid_k():
 
     with pytest.raises(ValueError):
         SelectKBest(k=4).fit(X, y)
-    with pytest.raises(ValueError):
-        GenericUnivariateSelect(mode="k_best", param=-1).fit(X, y)
     with pytest.raises(ValueError):
         GenericUnivariateSelect(mode="k_best", param=4).fit(X, y)
 
