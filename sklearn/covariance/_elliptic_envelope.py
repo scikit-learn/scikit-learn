@@ -3,7 +3,9 @@
 # License: BSD 3 clause
 
 import numpy as np
+from numbers import Real
 from . import MinCovDet
+from ..utils._param_validation import Interval
 from ..utils.validation import check_is_fitted
 from ..metrics import accuracy_score
 from ..base import OutlierMixin
@@ -138,6 +140,11 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
     array([0.0813... , 0.0427...])
     """
 
+    _parameter_constraints = {
+        **MinCovDet._parameter_constraints,  # type: ignore
+        "contamination": [Interval(Real, 0, 0.5, closed="right")],
+    }
+
     def __init__(
         self,
         *,
@@ -171,12 +178,7 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
         self : object
             Returns the instance itself.
         """
-        if self.contamination != "auto":
-            if not (0.0 < self.contamination <= 0.5):
-                raise ValueError(
-                    "contamination must be in (0, 0.5], got: %f" % self.contamination
-                )
-
+        # `_validate_params` is called in `MinCovDet`
         super().fit(X)
         self.offset_ = np.percentile(-self.dist_, 100.0 * self.contamination)
         return self

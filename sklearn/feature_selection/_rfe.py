@@ -333,7 +333,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
     @available_if(_estimator_has("predict"))
     def predict(self, X):
-        """Reduce X to the selected features and then predict using the underlying estimator.
+        """Reduce X to the selected features and predict using the estimator.
 
         Parameters
         ----------
@@ -350,7 +350,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
     @available_if(_estimator_has("score"))
     def score(self, X, y, **fit_params):
-        """Reduce X to the selected features and return the score of the underlying estimator.
+        """Reduce X to the selected features and return the score of the estimator.
 
         Parameters
         ----------
@@ -448,7 +448,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
 
 class RFECV(RFE):
-    """Recursive feature elimination with cross-validation to select the number of features.
+    """Recursive feature elimination with cross-validation to select features.
 
     See glossary entry for :term:`cross-validation estimator`.
 
@@ -550,13 +550,13 @@ class RFECV(RFE):
     cv_results_ : dict of ndarrays
         A dict with keys:
 
-        split(k)_test_score : ndarray of shape (n_features,)
+        split(k)_test_score : ndarray of shape (n_subsets_of_features,)
             The cross-validation scores across (k)th fold.
 
-        mean_test_score : ndarray of shape (n_features,)
+        mean_test_score : ndarray of shape (n_subsets_of_features,)
             Mean of scores over the folds.
 
-        std_test_score : ndarray of shape (n_features,)
+        std_test_score : ndarray of shape (n_subsets_of_features,)
             Standard deviation of scores over the folds.
 
         .. versionadded:: 1.0

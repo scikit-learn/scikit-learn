@@ -1299,10 +1299,8 @@ def test_big_input():
     # Test if the warning for too large inputs is appropriate.
     X = np.repeat(10**40.0, 4).astype(np.float64).reshape(-1, 1)
     clf = DecisionTreeClassifier()
-    try:
+    with pytest.raises(ValueError, match="float32"):
         clf.fit(X, [0, 1, 0, 1])
-    except ValueError as e:
-        assert "float32" in str(e)
 
 
 def test_realloc():

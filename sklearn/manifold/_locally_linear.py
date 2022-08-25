@@ -4,6 +4,8 @@
 #         Jake Vanderplas  -- <vanderplas@astro.washington.edu>
 # License: BSD 3 clause (C) INRIA 2011
 
+from numbers import Integral, Real
+
 import numpy as np
 from scipy.linalg import eigh, svd, qr, solve
 from scipy.sparse import eye, csr_matrix
@@ -17,6 +19,7 @@ from ..base import (
 )
 from ..utils import check_random_state, check_array
 from ..utils._arpack import _init_arpack_v0
+from ..utils._param_validation import Interval, StrOptions
 from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
@@ -685,6 +688,21 @@ class LocallyLinearEmbedding(
     (100, 2)
     """
 
+    _parameter_constraints = {
+        "n_neighbors": [Interval(Integral, 1, None, closed="left")],
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "reg": [Interval(Real, 0, None, closed="left")],
+        "eigen_solver": [StrOptions({"auto", "arpack", "dense"})],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
+        "method": [StrOptions({"standard", "hessian", "modified", "ltsa"})],
+        "hessian_tol": [Interval(Real, 0, None, closed="left")],
+        "modified_tol": [Interval(Real, 0, None, closed="left")],
+        "neighbors_algorithm": [StrOptions({"auto", "brute", "kd_tree", "ball_tree"})],
+        "random_state": ["random_state"],
+        "n_jobs": [None, Integral],
+    }
+
     def __init__(
         self,
         *,
@@ -756,6 +774,7 @@ class LocallyLinearEmbedding(
         self : object
             Fitted `LocallyLinearEmbedding` class instance.
         """
+        self._validate_params()
         self._fit_transform(X)
         return self
 
@@ -775,6 +794,7 @@ class LocallyLinearEmbedding(
         X_new : array-like, shape (n_samples, n_components)
             Returns the instance itself.
         """
+        self._validate_params()
         self._fit_transform(X)
         return self.embedding_
 

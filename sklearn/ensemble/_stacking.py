@@ -5,6 +5,7 @@
 
 from abc import ABCMeta, abstractmethod
 from copy import deepcopy
+from numbers import Integral
 
 import numpy as np
 from joblib import Parallel
@@ -31,9 +32,9 @@ from ..utils import Bunch
 from ..utils.metaestimators import available_if
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
-from ..utils.validation import check_scalar
 from ..utils.validation import column_or_1d
 from ..utils.fixes import delayed
+from ..utils._param_validation import HasMethods, StrOptions
 from ..utils.validation import _check_feature_names_in
 
 
@@ -52,6 +53,15 @@ def _estimator_has(attr):
 
 class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCMeta):
     """Base class for stacking method."""
+
+    _parameter_constraints = {
+        "estimators": [list],
+        "final_estimator": [None, HasMethods("fit")],
+        "cv": ["cv_object", StrOptions({"prefit"})],
+        "n_jobs": [None, Integral],
+        "passthrough": ["boolean"],
+        "verbose": ["verbose"],
+    }
 
     @abstractmethod
     def __init__(
@@ -162,13 +172,9 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
         -------
         self : object
         """
-        # Check params.
-        check_scalar(
-            self.passthrough,
-            name="passthrough",
-            target_type=(np.bool_, bool),
-            include_boundaries="neither",
-        )
+
+        self._validate_params()
+
         # all_estimators contains all estimators, the one to be fitted and the
         # 'drop' string.
         names, all_estimators = self._validate_estimators()
@@ -525,6 +531,13 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
     >>> clf.fit(X_train, y_train).score(X_test, y_test)
     0.9...
     """
+
+    _parameter_constraints = {
+        **_BaseStacking._parameter_constraints,  # type: ignore
+        "stack_method": [
+            StrOptions({"auto", "predict_proba", "decision_function", "predict"})
+        ],
+    }
 
     def __init__(
         self,

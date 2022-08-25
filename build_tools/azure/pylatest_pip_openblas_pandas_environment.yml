@@ -21,7 +21,7 @@ dependencies:
     - pillow
     - codecov
     - pytest-cov
-    - coverage==6.2
+    - coverage
     - sphinx
     - numpydoc
     - lightgbm

@@ -4,6 +4,7 @@
 #
 # License: BSD 3 clause
 
+from numbers import Integral
 from operator import itemgetter
 
 import numpy as np
@@ -12,10 +13,11 @@ import scipy.optimize
 from scipy.special import erf, expit
 
 from ..base import BaseEstimator, ClassifierMixin, clone
-from .kernels import RBF, CompoundKernel, ConstantKernel as C
+from .kernels import Kernel, RBF, CompoundKernel, ConstantKernel as C
 from ..utils.validation import check_is_fitted
 from ..utils import check_random_state
 from ..utils.optimize import _check_optimize_result
+from ..utils._param_validation import Interval, StrOptions
 from ..preprocessing import LabelEncoder
 from ..multiclass import OneVsRestClassifier, OneVsOneClassifier
 
@@ -506,7 +508,7 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
         the kernel's hyperparameters are optimized during fitting. Also kernel
         cannot be a `CompoundKernel`.
 
-    optimizer : 'fmin_l_bfgs_b' or callable, default='fmin_l_bfgs_b'
+    optimizer : 'fmin_l_bfgs_b', callable or None, default='fmin_l_bfgs_b'
         Can either be one of the internally supported optimizers for optimizing
         the kernel's parameters, specified by a string, or an externally
         defined optimizer passed as a callable. If a callable is passed, it
@@ -635,6 +637,18 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
            [0.79064206, 0.06525643, 0.14410151]])
     """
 
+    _parameter_constraints = {
+        "kernel": [Kernel, None],
+        "optimizer": [StrOptions({"fmin_l_bfgs_b"}), callable, None],
+        "n_restarts_optimizer": [Interval(Integral, 0, None, closed="left")],
+        "max_iter_predict": [Interval(Integral, 1, None, closed="left")],
+        "warm_start": ["boolean"],
+        "copy_X_train": ["boolean"],
+        "random_state": ["random_state"],
+        "multi_class": [StrOptions({"one_vs_rest", "one_vs_one"})],
+        "n_jobs": [Integral, None],
+    }
+
     def __init__(
         self,
         kernel=None,
@@ -674,6 +688,8 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
         self : object
             Returns an instance of self.
         """
+        self._validate_params()
+
         if isinstance(self.kernel, CompoundKernel):
             raise ValueError("kernel cannot be a CompoundKernel")
 

@@ -6,12 +6,14 @@
 import numpy as np
 from scipy import interpolate
 from scipy.stats import spearmanr
+from numbers import Real
 import warnings
 import math
 
 from .base import BaseEstimator, TransformerMixin, RegressorMixin
 from .utils import check_array, check_consistent_length
 from .utils.validation import _check_sample_weight
+from .utils._param_validation import Interval, StrOptions
 from ._isotonic import _inplace_contiguous_isotonic_regression, _make_unique
 
 
@@ -226,6 +228,13 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
     array([1.8628..., 3.7256...])
     """
 
+    _parameter_constraints = {
+        "y_min": [Interval(Real, None, None, closed="both"), None],
+        "y_max": [Interval(Real, None, None, closed="both"), None],
+        "increasing": ["boolean", StrOptions({"auto"})],
+        "out_of_bounds": [StrOptions({"nan", "clip", "raise"})],
+    }
+
     def __init__(self, *, y_min=None, y_max=None, increasing=True, out_of_bounds="nan"):
         self.y_min = y_min
         self.y_max = y_max
@@ -242,13 +251,6 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
 
     def _build_f(self, X, y):
         """Build the f_ interp1d function."""
-
-        # Handle the out_of_bounds argument by setting bounds_error
-        if self.out_of_bounds not in ["raise", "nan", "clip"]:
-            raise ValueError(
-                "The argument ``out_of_bounds`` must be in "
-                "'nan', 'clip', 'raise'; got {0}".format(self.out_of_bounds)
-            )
 
         bounds_error = self.out_of_bounds == "raise"
         if len(y) == 1:
@@ -336,6 +338,7 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         X is stored for future use, as :meth:`transform` needs X to interpolate
         new input data.
         """
+        self._validate_params()
         check_params = dict(accept_sparse=False, ensure_2d=False)
         X = check_array(
             X, input_name="X", dtype=[np.float64, np.float32], **check_params
@@ -383,13 +386,6 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
 
         self._check_input_data_shape(T)
         T = T.reshape(-1)  # use 1d view
-
-        # Handle the out_of_bounds argument by clipping if needed
-        if self.out_of_bounds not in ["raise", "nan", "clip"]:
-            raise ValueError(
-                "The argument ``out_of_bounds`` must be in "
-                "'nan', 'clip', 'raise'; got {0}".format(self.out_of_bounds)
-            )
 
         if self.out_of_bounds == "clip":
             T = np.clip(T, self.X_min_, self.X_max_)

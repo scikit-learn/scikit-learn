@@ -9,9 +9,10 @@ from collections import Counter
 import numpy as np
 import numpy.ma as ma
 from scipy import sparse as sp
-from scipy import stats
 
 from ..base import BaseEstimator, TransformerMixin
+from ..utils._param_validation import StrOptions
+from ..utils.fixes import _mode
 from ..utils.sparsefuncs import _get_median
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
@@ -51,7 +52,7 @@ def _most_frequent(array, extra_value, n_repeat):
                 if count == most_frequent_count
             )
         else:
-            mode = stats.mode(array)
+            mode = _mode(array)
             most_frequent_value = mode[0][0]
             most_frequent_count = mode[1][0]
     else:
@@ -75,6 +76,11 @@ class _BaseImputer(TransformerMixin, BaseEstimator):
 
     It adds automatically support for `add_indicator`.
     """
+
+    _parameter_constraints = {
+        "missing_values": [numbers.Real, numbers.Integral, str, None],
+        "add_indicator": ["boolean"],
+    }
 
     def __init__(self, *, missing_values=np.nan, add_indicator=False):
         self.missing_values = missing_values
@@ -130,7 +136,10 @@ class _BaseImputer(TransformerMixin, BaseEstimator):
 
 
 class SimpleImputer(_BaseImputer):
-    """Imputation transformer for completing missing values.
+    """Univariate imputer for completing missing values with simple strategies.
+
+    Replace missing values using a descriptive statistic (e.g. mean, median, or
+    most frequent) along each column, or using a constant value.
 
     Read more in the :ref:`User Guide <impute>`.
 
@@ -218,12 +227,20 @@ class SimpleImputer(_BaseImputer):
 
     See Also
     --------
-    IterativeImputer : Multivariate imputation of missing values.
+    IterativeImputer : Multivariate imputer that estimates values to impute for
+        each feature with missing values from all the others.
+    KNNImputer : Multivariate imputer that estimates missing features using
+        nearest samples.
 
     Notes
     -----
     Columns which only contained missing values at :meth:`fit` are discarded
     upon :meth:`transform` if strategy is not `"constant"`.
+
+    In a prediction context, simple imputation usually performs poorly when
+    associated with a weak learner. However, with a powerful learner, it can
+    lead to as good or better performance than complex imputation such as
+    :class:`~sklearn.impute.IterativeImputer` or :class:`~sklearn.impute.KNNImputer`.
 
     Examples
     --------
@@ -751,6 +768,13 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
            [False, False]])
     """
 
+    _parameter_constraints = {
+        "missing_values": [numbers.Real, numbers.Integral, str, None],
+        "features": [StrOptions({"missing-only", "all"})],
+        "sparse": ["boolean", StrOptions({"auto"})],
+        "error_on_new": ["boolean"],
+    }
+
     def __init__(
         self,
         *,
@@ -885,22 +909,6 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
 
         self._n_features = X.shape[1]
 
-        if self.features not in ("missing-only", "all"):
-            raise ValueError(
-                "'features' has to be either 'missing-only' or "
-                "'all'. Got {} instead.".format(self.features)
-            )
-
-        if not (
-            (isinstance(self.sparse, str) and self.sparse == "auto")
-            or isinstance(self.sparse, bool)
-        ):
-            raise ValueError(
-                "'sparse' has to be a boolean or 'auto'. Got {!r} instead.".format(
-                    self.sparse
-                )
-            )
-
         missing_features_info = self._get_missing_features_info(X)
         self.features_ = missing_features_info[1]
 
@@ -923,6 +931,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
+        self._validate_params()
         self._fit(X, y)
 
         return self
@@ -986,6 +995,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             The missing indicator for input data. The data type of `Xt`
             will be boolean.
         """
+        self._validate_params()
         imputer_mask = self._fit(X, y)
 
         if self.features_.size < self._n_features:

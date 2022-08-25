@@ -7,6 +7,7 @@ Various bayesian regression
 
 from math import log
 import numbers
+from numbers import Integral, Real
 import numpy as np
 from scipy import linalg
 
@@ -17,7 +18,8 @@ from ..utils.extmath import fast_logdet
 from ..utils import check_scalar
 from scipy.linalg import pinvh
 from ..utils.validation import _check_sample_weight
-
+from ..utils._param_validation import StrOptions, Hidden
+from ..utils._param_validation import Interval
 
 ###############################################################################
 # BayesianRidge regression
@@ -656,6 +658,21 @@ class ARDRegression(RegressorMixin, LinearModel):
     array([1.])
     """
 
+    _parameter_constraints = {
+        "n_iter": [Interval(Integral, 1, None, closed="left")],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "alpha_1": [Interval(Real, 0, None, closed="left")],
+        "alpha_2": [Interval(Real, 0, None, closed="left")],
+        "lambda_1": [Interval(Real, 0, None, closed="left")],
+        "lambda_2": [Interval(Real, 0, None, closed="left")],
+        "compute_score": ["boolean"],
+        "threshold_lambda": [Interval(Real, 0, None, closed="left")],
+        "fit_intercept": ["boolean"],
+        "normalize": [Hidden(StrOptions({"deprecated"})), "boolean"],
+        "copy_X": ["boolean"],
+        "verbose": ["verbose"],
+    }
+
     def __init__(
         self,
         *,
@@ -703,6 +720,9 @@ class ARDRegression(RegressorMixin, LinearModel):
         self : object
             Fitted estimator.
         """
+
+        self._validate_params()
+
         self._normalize = _deprecate_normalize(
             self.normalize, default=False, estimator_name=self.__class__.__name__
         )

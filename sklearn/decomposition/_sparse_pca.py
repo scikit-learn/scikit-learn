@@ -7,8 +7,9 @@ from numbers import Integral, Real
 import numpy as np
 
 from ..utils import check_random_state
+from ..utils.extmath import svd_flip
 from ..utils._param_validation import Hidden, Interval, StrOptions
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_array, check_is_fitted
 from ..linear_model import ridge_regression
 from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
 from ._dict_learning import dict_learning, MiniBatchDictionaryLearning
@@ -114,6 +115,29 @@ class _BaseSparsePCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEst
         )
 
         return U
+
+    def inverse_transform(self, X):
+        """Transform data from the latent space to the original space.
+
+        This inversion is an approximation due to the loss of information
+        induced by the forward decomposition.
+
+        .. versionadded:: 1.2
+
+        Parameters
+        ----------
+        X : ndarray of shape (n_samples, n_components)
+            Data in the latent space.
+
+        Returns
+        -------
+        X_original : ndarray of shape (n_samples, n_features)
+            Reconstructed data in the original space.
+        """
+        check_is_fitted(self)
+        X = check_array(X)
+
+        return (X @ self.components_) + self.mean_
 
     @property
     def _n_features_out(self):
@@ -280,7 +304,7 @@ class SparsePCA(_BaseSparsePCA):
 
         code_init = self.V_init.T if self.V_init is not None else None
         dict_init = self.U_init.T if self.U_init is not None else None
-        Vt, _, E, self.n_iter_ = dict_learning(
+        code, dictionary, E, self.n_iter_ = dict_learning(
             X.T,
             n_components,
             alpha=self.alpha,
@@ -294,7 +318,9 @@ class SparsePCA(_BaseSparsePCA):
             dict_init=dict_init,
             return_n_iter=True,
         )
-        self.components_ = Vt.T
+        # flip eigenvectors' sign to enforce deterministic output
+        code, dictionary = svd_flip(code, dictionary, u_based_decision=False)
+        self.components_ = code.T
         components_norm = np.linalg.norm(self.components_, axis=1)[:, np.newaxis]
         components_norm[components_norm == 0] = 1
         self.components_ /= components_norm

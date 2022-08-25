@@ -54,7 +54,8 @@ from ..model_selection import train_test_split
 from ..model_selection import ShuffleSplit
 from ..model_selection._validation import _safe_split
 from ..metrics.pairwise import rbf_kernel, linear_kernel, pairwise_distances
-from ..utils.fixes import threadpool_info
+from ..utils.fixes import sp_version
+from ..utils.fixes import parse_version
 from ..utils.validation import check_is_fitted
 from ..utils._param_validation import make_constraint
 from ..utils._param_validation import generate_invalid_param_val
@@ -748,8 +749,18 @@ def _set_checking_parameters(estimator):
     if name == "OneHotEncoder":
         estimator.set_params(handle_unknown="ignore")
 
+    if name == "QuantileRegressor":
+        # Avoid warning due to Scipy deprecating interior-point solver
+        solver = "highs" if sp_version >= parse_version("1.6.0") else "interior-point"
+        estimator.set_params(solver=solver)
+
     if name in CROSS_DECOMPOSITION:
         estimator.set_params(n_components=1)
+
+    # Default "auto" parameter can lead to different ordering of eigenvalues on
+    # windows: #24105
+    if name == "SpectralEmbedding":
+        estimator.set_params(eigen_tol=1e-5)
 
 
 class _NotAnArray:
@@ -2113,22 +2124,6 @@ def check_classifiers_one_label(name, classifier_orig):
         assert_array_equal(classifier.predict(X_test), y, err_msg=error_string_predict)
 
 
-def _create_memmap_backed_data(numpy_arrays):
-    # OpenBLAS is known to segfault with unaligned data on the Prescott architecture
-    # See: https://github.com/scipy/scipy/issues/14886
-    has_prescott_openblas = any(
-        True
-        for info in threadpool_info()
-        if info["internal_api"] == "openblas"
-        # Prudently assume Prescott might be the architecture if it is unknown.
-        and info.get("architecture", "prescott").lower() == "prescott"
-    )
-    return [
-        create_memmap_backed_data(array, aligned=has_prescott_openblas)
-        for array in numpy_arrays
-    ]
-
-
 @ignore_warnings  # Warnings are raised by decision function
 def check_classifiers_train(
     name, classifier_orig, readonly_memmap=False, X_dtype="float64"
@@ -2146,7 +2141,7 @@ def check_classifiers_train(
         X_b -= X_b.min()
 
     if readonly_memmap:
-        X_m, y_m, X_b, y_b = _create_memmap_backed_data([X_m, y_m, X_b, y_b])
+        X_m, y_m, X_b, y_b = create_memmap_backed_data([X_m, y_m, X_b, y_b])
 
     problems = [(X_b, y_b)]
     tags = _safe_tags(classifier_orig)
@@ -2807,7 +2802,7 @@ def check_regressors_train(
         y_ = y
 
     if readonly_memmap:
-        X, y, y_ = _create_memmap_backed_data([X, y, y_])
+        X, y, y_ = create_memmap_backed_data([X, y, y_])
 
     if not hasattr(regressor, "alphas") and hasattr(regressor, "alpha"):
         # linear regressors need to set alpha, but not generalized CV ones
@@ -4038,16 +4033,20 @@ def check_param_validation(name, estimator_orig):
 
     # check that there is a constraint for each parameter
     if estimator_params:
+        validation_params = estimator_orig._parameter_constraints.keys()
+        unexpected_params = set(validation_params) - set(estimator_params)
+        missing_params = set(estimator_params) - set(validation_params)
         err_msg = (
             f"Mismatch between _parameter_constraints and the parameters of {name}."
+            f"\nConsider the unexpected parameters {unexpected_params} and expected but"
+            f" missing parameters {missing_params}"
         )
-        assert estimator_orig._parameter_constraints.keys() == estimator_params, err_msg
+        assert validation_params == estimator_params, err_msg
 
     # this object does not have a valid type for sure for all params
     param_with_bad_type = type("BadType", (), {})()
 
     fit_methods = ["fit", "partial_fit", "fit_transform", "fit_predict"]
-    methods = [method for method in fit_methods if hasattr(estimator_orig, method)]
 
     for param_name in estimator_params:
         constraints = estimator_orig._parameter_constraints[param_name]
@@ -4067,9 +4066,20 @@ def check_param_validation(name, estimator_orig):
         # First, check that the error is raised if param doesn't match any valid type.
         estimator.set_params(**{param_name: param_with_bad_type})
 
-        for method in methods:
+        for method in fit_methods:
+            if not hasattr(estimator, method):
+                # the method is not accessible with the current set of parameters
+                continue
+
             with raises(ValueError, match=match, err_msg=err_msg):
-                getattr(estimator, method)(X, y)
+                if any(
+                    X_type.endswith("labels")
+                    for X_type in _safe_tags(estimator, key="X_types")
+                ):
+                    # The estimator is a label transformer and take only `y`
+                    getattr(estimator, method)(y)
+                else:
+                    getattr(estimator, method)(X, y)
 
         # Then, for constraints that are more than a type constraint, check that the
         # error is raised if param does match a valid type but does not match any valid
@@ -4084,6 +4094,17 @@ def check_param_validation(name, estimator_orig):
 
             estimator.set_params(**{param_name: bad_value})
 
-            for method in methods:
+            for method in fit_methods:
+                if not hasattr(estimator, method):
+                    # the method is not accessible with the current set of parameters
+                    continue
+
                 with raises(ValueError, match=match, err_msg=err_msg):
-                    getattr(estimator, method)(X, y)
+                    if any(
+                        X_type.endswith("labels")
+                        for X_type in _safe_tags(estimator, key="X_types")
+                    ):
+                        # The estimator is a label transformer and take only `y`
+                        getattr(estimator, method)(y)
+                    else:
+                        getattr(estimator, method)(X, y)

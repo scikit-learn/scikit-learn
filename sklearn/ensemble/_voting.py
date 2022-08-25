@@ -14,8 +14,8 @@ This module contains:
 # License: BSD 3 clause
 
 from abc import abstractmethod
+from numbers import Integral
 
-import numbers
 import numpy as np
 
 from joblib import Parallel
@@ -28,12 +28,12 @@ from ._base import _fit_single_estimator
 from ._base import _BaseHeterogeneousEnsemble
 from ..preprocessing import LabelEncoder
 from ..utils import Bunch
-from ..utils import check_scalar
 from ..utils.metaestimators import available_if
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _check_feature_names_in
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import column_or_1d
+from ..utils._param_validation import StrOptions
 from ..exceptions import NotFittedError
 from ..utils._estimator_html_repr import _VisualBlock
 from ..utils.fixes import delayed
@@ -45,6 +45,13 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
     Warning: This class should not be used directly. Use derived classes
     instead.
     """
+
+    _parameter_constraints = {
+        "estimators": [list],
+        "weights": ["array-like", None],
+        "n_jobs": [None, Integral],
+        "verbose": ["verbose"],
+    }
 
     def _log_message(self, name, idx, total):
         if not self.verbose:
@@ -66,13 +73,6 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
     def fit(self, X, y, sample_weight=None):
         """Get common fit operations."""
         names, clfs = self._validate_estimators()
-
-        check_scalar(
-            self.verbose,
-            name="verbose",
-            target_type=(numbers.Integral, np.bool_),
-            min_val=0,
-        )
 
         if self.weights is not None and len(self.weights) != len(self.estimators):
             raise ValueError(
@@ -286,6 +286,12 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
     (6, 6)
     """
 
+    _parameter_constraints = {
+        **_BaseVoting._parameter_constraints,  # type: ignore
+        "voting": [StrOptions({"hard", "soft"})],
+        "flatten_transform": ["boolean"],
+    }
+
     def __init__(
         self,
         estimators,
@@ -327,21 +333,11 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         self : object
             Returns the instance itself.
         """
+        self._validate_params()
         check_classification_targets(y)
         if isinstance(y, np.ndarray) and len(y.shape) > 1 and y.shape[1] > 1:
             raise NotImplementedError(
                 "Multilabel and multi-output classification is not supported."
-            )
-
-        check_scalar(
-            self.flatten_transform,
-            name="flatten_transform",
-            target_type=(numbers.Integral, np.bool_),
-        )
-
-        if self.voting not in ("soft", "hard"):
-            raise ValueError(
-                f"Voting must be 'soft' or 'hard'; got (voting={self.voting!r})"
             )
 
         self.le_ = LabelEncoder().fit(y)
@@ -597,6 +593,7 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         self : object
             Fitted estimator.
         """
+        self._validate_params()
         y = column_or_1d(y, warn=True)
         return super().fit(X, y, sample_weight)
 

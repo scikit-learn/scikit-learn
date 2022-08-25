@@ -4,10 +4,10 @@
 # Modified by Thierry Guillemot <thierry.guillemot.work@gmail.com>
 # License: BSD 3 clause
 
-import numbers
 import warnings
 from abc import ABCMeta, abstractmethod
 from time import time
+from numbers import Integral, Real
 
 import numpy as np
 from scipy.special import logsumexp
@@ -17,8 +17,9 @@ from ..cluster import kmeans_plusplus
 from ..base import BaseEstimator
 from ..base import DensityMixin
 from ..exceptions import ConvergenceWarning
-from ..utils import check_random_state, check_scalar
+from ..utils import check_random_state
 from ..utils.validation import check_is_fitted
+from ..utils._param_validation import Interval, StrOptions
 
 
 def _check_shape(param, param_shape, name):
@@ -47,6 +48,21 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
     provides basic common methods for mixture models.
     """
 
+    _parameter_constraints = {
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "tol": [Interval(Real, 0.0, None, closed="left")],
+        "reg_covar": [Interval(Real, 0.0, None, closed="left")],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
+        "n_init": [Interval(Integral, 1, None, closed="left")],
+        "init_params": [
+            StrOptions({"kmeans", "random", "random_from_data", "k-means++"})
+        ],
+        "random_state": ["random_state"],
+        "warm_start": ["boolean"],
+        "verbose": ["verbose"],
+        "verbose_interval": [Interval(Integral, 1, None, closed="left")],
+    }
+
     def __init__(
         self,
         n_components,
@@ -70,37 +86,6 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         self.warm_start = warm_start
         self.verbose = verbose
         self.verbose_interval = verbose_interval
-
-    def _check_initial_parameters(self, X):
-        """Check values of the basic parameters.
-
-        Parameters
-        ----------
-        X : array-like of shape (n_samples, n_features)
-        """
-        check_scalar(
-            self.n_components,
-            name="n_components",
-            target_type=numbers.Integral,
-            min_val=1,
-        )
-
-        check_scalar(self.tol, name="tol", target_type=numbers.Real, min_val=0.0)
-
-        check_scalar(
-            self.n_init, name="n_init", target_type=numbers.Integral, min_val=1
-        )
-
-        check_scalar(
-            self.max_iter, name="max_iter", target_type=numbers.Integral, min_val=0
-        )
-
-        check_scalar(
-            self.reg_covar, name="reg_covar", target_type=numbers.Real, min_val=0.0
-        )
-
-        # Check all the parameters values of the derived class
-        self._check_parameters(X)
 
     @abstractmethod
     def _check_parameters(self, X):
@@ -197,6 +182,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         self : object
             The fitted mixture.
         """
+        # parameters are validated in fit_predict
         self.fit_predict(X, y)
         return self
 
@@ -227,6 +213,8 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         labels : array, shape (n_samples,)
             Component labels.
         """
+        self._validate_params()
+
         X = self._validate_data(X, dtype=[np.float64, np.float32], ensure_min_samples=2)
         if X.shape[0] < self.n_components:
             raise ValueError(
@@ -234,7 +222,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
                 f"but got n_components = {self.n_components}, "
                 f"n_samples = {X.shape[0]}"
             )
-        self._check_initial_parameters(X)
+        self._check_parameters(X)
 
         # if we enable warm_start, we will have a unique initialisation
         do_init = not (self.warm_start and hasattr(self, "converged_"))

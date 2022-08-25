@@ -11,6 +11,7 @@ from scipy import linalg
 from ._base import BaseMixture, _check_shape
 from ..utils import check_array
 from ..utils.extmath import row_norms
+from ..utils._param_validation import StrOptions
 
 
 ###############################################################################
@@ -636,6 +637,14 @@ class GaussianMixture(BaseMixture):
     array([1, 0])
     """
 
+    _parameter_constraints = {
+        **BaseMixture._parameter_constraints,
+        "covariance_type": [StrOptions({"full", "tied", "diag", "spherical"})],
+        "weights_init": ["array-like", None],
+        "means_init": ["array-like", None],
+        "precisions_init": ["array-like", None],
+    }
+
     def __init__(
         self,
         n_components=1,
@@ -675,13 +684,6 @@ class GaussianMixture(BaseMixture):
     def _check_parameters(self, X):
         """Check the Gaussian mixture parameters are well defined."""
         _, n_features = X.shape
-        if self.covariance_type not in ["spherical", "tied", "diag", "full"]:
-            raise ValueError(
-                "Invalid value for 'covariance_type': %s "
-                "'covariance_type' should be in "
-                "['spherical', 'tied', 'diag', 'full']"
-                % self.covariance_type
-            )
 
         if self.weights_init is not None:
             self.weights_init = _check_weights(self.weights_init, self.n_components)

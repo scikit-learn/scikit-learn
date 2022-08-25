@@ -4,11 +4,13 @@
 #         Giorgio Patrini
 # License: BSD 3 clause
 
+from numbers import Integral
 import numpy as np
 from scipy import linalg, sparse
 
 from ._base import _BasePCA
 from ..utils import gen_batches
+from ..utils._param_validation import Interval
 from ..utils.extmath import svd_flip, _incremental_mean_and_var
 
 
@@ -177,6 +179,13 @@ class IncrementalPCA(_BasePCA):
     (1797, 7)
     """
 
+    _parameter_constraints = {
+        "n_components": [Interval(Integral, 1, None, closed="left"), None],
+        "whiten": ["boolean"],
+        "copy": ["boolean"],
+        "batch_size": [Interval(Integral, 1, None, closed="left"), None],
+    }
+
     def __init__(self, n_components=None, *, whiten=False, copy=True, batch_size=None):
         self.n_components = n_components
         self.whiten = whiten
@@ -200,6 +209,8 @@ class IncrementalPCA(_BasePCA):
         self : object
             Returns the instance itself.
         """
+        self._validate_params()
+
         self.components_ = None
         self.n_samples_seen_ = 0
         self.mean_ = 0.0
@@ -253,6 +264,10 @@ class IncrementalPCA(_BasePCA):
             Returns the instance itself.
         """
         first_pass = not hasattr(self, "components_")
+
+        if first_pass:
+            self._validate_params()
+
         if check_input:
             if sparse.issparse(X):
                 raise TypeError(
@@ -272,7 +287,7 @@ class IncrementalPCA(_BasePCA):
                 self.n_components_ = min(n_samples, n_features)
             else:
                 self.n_components_ = self.components_.shape[0]
-        elif not 1 <= self.n_components <= n_features:
+        elif not self.n_components <= n_features:
             raise ValueError(
                 "n_components=%r invalid for n_features=%d, need "
                 "more rows than columns for IncrementalPCA "

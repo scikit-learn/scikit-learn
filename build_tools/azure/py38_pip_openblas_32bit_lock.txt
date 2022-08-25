@@ -14,13 +14,13 @@ iniconfig==1.1.1
     # via pytest
 joblib==1.1.0
     # via -r build_tools/azure/py38_pip_openblas_32bit_requirements.txt
-numpy==1.23.0
+numpy==1.23.1
     # via
     #   -r build_tools/azure/py38_pip_openblas_32bit_requirements.txt
     #   scipy
 packaging==21.3
     # via pytest
-pillow==9.1.1
+pillow==9.2.0
     # via -r build_tools/azure/py38_pip_openblas_32bit_requirements.txt
 pluggy==1.0.0
     # via pytest

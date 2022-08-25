@@ -106,42 +106,6 @@ def test_assure_warning_when_normalize(CoordinateDescentModel, normalize, n_warn
     assert len([w.message for w in rec]) == n_warnings
 
 
-@pytest.mark.parametrize(
-    "params, err_type, err_msg",
-    [
-        ({"alpha": -1}, ValueError, "alpha == -1, must be >= 0.0"),
-        ({"l1_ratio": -1}, ValueError, "l1_ratio == -1, must be >= 0.0"),
-        ({"l1_ratio": 2}, ValueError, "l1_ratio == 2, must be <= 1.0"),
-        (
-            {"l1_ratio": "1"},
-            TypeError,
-            "l1_ratio must be an instance of float, not str",
-        ),
-        ({"tol": -1.0}, ValueError, "tol == -1.0, must be >= 0."),
-        (
-            {"tol": "1"},
-            TypeError,
-            "tol must be an instance of float, not str",
-        ),
-        ({"max_iter": 0}, ValueError, "max_iter == 0, must be >= 1."),
-        (
-            {"max_iter": "1"},
-            TypeError,
-            "max_iter must be an instance of int, not str",
-        ),
-    ],
-)
-def test_param_invalid(params, err_type, err_msg):
-    # Check that correct error is raised when l1_ratio in ElasticNet
-    # is outside the correct range
-    X = np.array([[-1.0], [0.0], [1.0]])
-    y = [-1, 0, 1]  # just a straight line
-
-    enet = ElasticNet(**params)
-    with pytest.raises(err_type, match=err_msg):
-        enet.fit(X, y)
-
-
 @pytest.mark.parametrize("order", ["C", "F"])
 @pytest.mark.parametrize("input_order", ["C", "F"])
 def test_set_order_dense(order, input_order):
@@ -390,7 +354,6 @@ def test_lasso_cv_positive_constraint():
 @pytest.mark.parametrize(
     "alphas, err_type, err_msg",
     [
-        (-2, ValueError, r"alphas == -2, must be >= 0.0."),
         ((1, -1, -100), ValueError, r"alphas\[1\] == -1, must be >= 0.0."),
         (
             (-0.1, -1.0, -10.0),
@@ -1009,23 +972,6 @@ def test_sparse_input_dtype_enet_and_lassocv():
     assert_almost_equal(clf.coef_, clf1.coef_, decimal=6)
 
 
-def test_precompute_invalid_argument():
-    X, y, _, _ = build_dataset()
-    for clf in [ElasticNetCV(precompute="invalid"), LassoCV(precompute="invalid")]:
-        err_msg = ".*should be.*True.*False.*auto.* array-like.*Got 'invalid'"
-        with pytest.raises(ValueError, match=err_msg):
-            clf.fit(X, y)
-
-    # Precompute = 'auto' is not supported for ElasticNet and Lasso
-    err_msg = ".*should be.*True.*False.*array-like.*Got 'auto'"
-    with pytest.raises(ValueError, match=err_msg):
-        ElasticNet(precompute="auto").fit(X, y)
-
-    err_msg = ".*should be.*True.*False.*array-like.*Got 'auto'"
-    with pytest.raises(ValueError, match=err_msg):
-        Lasso(precompute="auto").fit(X, y)
-
-
 def test_elasticnet_precompute_incorrect_gram():
     # check that passing an invalid precomputed Gram matrix will raise an
     # error.
@@ -1171,11 +1117,6 @@ def test_random_descent():
     clf_random.fit(X, new_y)
     assert_array_almost_equal(clf_cyclic.coef_, clf_random.coef_)
     assert_almost_equal(clf_cyclic.intercept_, clf_random.intercept_)
-
-    # Raise error when selection is not in cyclic or random.
-    clf_random = ElasticNet(selection="invalid")
-    with pytest.raises(ValueError):
-        clf_random.fit(X, y)
 
 
 def test_enet_path_positive():
@@ -1846,3 +1787,15 @@ def test_sample_weight_invariance(estimator):
 
     assert_allclose(reg_2sw.coef_, reg_dup.coef_)
     assert_allclose(reg_2sw.intercept_, reg_dup.intercept_)
+
+
+def test_read_only_buffer():
+    """Test that sparse coordinate descent works for read-only buffers"""
+
+    rng = np.random.RandomState(0)
+    clf = ElasticNet(alpha=0.1, copy_X=True, random_state=rng)
+    X = np.asfortranarray(rng.uniform(size=(100, 10)))
+    X.setflags(write=False)
+
+    y = rng.rand(100)
+    clf.fit(X, y)

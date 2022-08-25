@@ -15,20 +15,21 @@ from scipy import linalg
 from scipy.spatial.distance import pdist
 from scipy.spatial.distance import squareform
 from scipy.sparse import csr_matrix, issparse
+from numbers import Integral, Real
 from ..neighbors import NearestNeighbors
 from ..base import BaseEstimator
 from ..utils import check_random_state
 from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..utils.validation import check_non_negative
+from ..utils._param_validation import Interval, StrOptions, Hidden
 from ..decomposition import PCA
-from ..metrics.pairwise import pairwise_distances
+from ..metrics.pairwise import pairwise_distances, _VALID_METRICS
 
 # mypy error: Module 'sklearn.manifold' has no attribute '_utils'
 from . import _utils  # type: ignore
 
 # mypy error: Module 'sklearn.manifold' has no attribute '_barnes_hut_tsne'
 from . import _barnes_hut_tsne  # type: ignore
-
 
 MACHINE_EPSILON = np.finfo(np.double).eps
 
@@ -641,7 +642,7 @@ class TSNE(BaseEstimator):
         initializations might result in different local minima of the cost
         function. See :term:`Glossary <random_state>`.
 
-    method : str, default='barnes_hut'
+    method : {'barnes_hut', 'exact'}, default='barnes_hut'
         By default the gradient calculation algorithm uses Barnes-Hut
         approximation running in O(NlogN) time. method='exact'
         will run on the slower, but exact, algorithm in O(N^2) time. The
@@ -745,6 +746,33 @@ class TSNE(BaseEstimator):
     (4, 2)
     """
 
+    _parameter_constraints = {
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "perplexity": [Interval(Real, 0, None, closed="neither")],
+        "early_exaggeration": [Interval(Real, 1, None, closed="left")],
+        "learning_rate": [
+            StrOptions({"auto"}),
+            Hidden(StrOptions({"warn"})),
+            Interval(Real, 0, None, closed="neither"),
+        ],
+        "n_iter": [Interval(Integral, 250, None, closed="left")],
+        "n_iter_without_progress": [Interval(Integral, -1, None, closed="left")],
+        "min_grad_norm": [Interval(Real, 0, None, closed="left")],
+        "metric": [StrOptions(set(_VALID_METRICS) | {"precomputed"}), callable],
+        "metric_params": [dict, None],
+        "init": [
+            StrOptions({"pca", "random"}),
+            Hidden(StrOptions({"warn"})),
+            np.ndarray,
+        ],
+        "verbose": ["verbose"],
+        "random_state": ["random_state"],
+        "method": [StrOptions({"barnes_hut", "exact"})],
+        "angle": [Interval(Real, 0, 1, closed="both")],
+        "n_jobs": [None, Integral],
+        "square_distances": ["boolean", Hidden(StrOptions({"deprecated"}))],
+    }
+
     # Control the number of exploration iterations with early_exaggeration on
     _EXPLORATION_N_ITER = 250
 
@@ -822,10 +850,6 @@ class TSNE(BaseEstimator):
                 "with the sparse input matrix. Use "
                 'init="random" instead.'
             )
-        if self.method not in ["barnes_hut", "exact"]:
-            raise ValueError("'method' must be 'barnes_hut' or 'exact'")
-        if self.angle < 0.0 or self.angle > 1.0:
-            raise ValueError("'angle' must be between 0.0 - 1.0")
         if self.square_distances != "deprecated":
             warnings.warn(
                 "The parameter `square_distances` has not effect and will be "
@@ -836,9 +860,7 @@ class TSNE(BaseEstimator):
             # See issue #18018
             self._learning_rate = X.shape[0] / self.early_exaggeration / 4
             self._learning_rate = np.maximum(self._learning_rate, 50)
-        else:
-            if not (self._learning_rate > 0):
-                raise ValueError("'learning_rate' must be a positive number or 'auto'.")
+
         if self.method == "barnes_hut":
             X = self._validate_data(
                 X,
@@ -878,16 +900,6 @@ class TSNE(BaseEstimator):
                 "quad-tree or oct-tree."
             )
         random_state = check_random_state(self.random_state)
-
-        if self.early_exaggeration < 1.0:
-            raise ValueError(
-                "early_exaggeration must be at least 1, but is {}".format(
-                    self.early_exaggeration
-                )
-            )
-
-        if self.n_iter < 250:
-            raise ValueError("n_iter should be at least 250")
 
         n_samples = X.shape[0]
 
@@ -1006,8 +1018,6 @@ class TSNE(BaseEstimator):
             X_embedded = 1e-4 * random_state.standard_normal(
                 size=(n_samples, self.n_components)
             ).astype(np.float32)
-        else:
-            raise ValueError("'init' must be 'pca', 'random', or a numpy array")
 
         # Degrees of freedom of the Student's t-distribution. The suggestion
         # degrees_of_freedom = n_components - 1 comes from
@@ -1119,6 +1129,7 @@ class TSNE(BaseEstimator):
         X_new : ndarray of shape (n_samples, n_components)
             Embedding of the training data in low-dimensional space.
         """
+        self._validate_params()
         self._check_params_vs_input(X)
         embedding = self._fit(X)
         self.embedding_ = embedding
@@ -1144,6 +1155,7 @@ class TSNE(BaseEstimator):
         X_new : array of shape (n_samples, n_components)
             Embedding of the training data in low-dimensional space.
         """
+        self._validate_params()
         self.fit_transform(X)
         return self
 

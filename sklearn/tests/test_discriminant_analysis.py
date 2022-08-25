@@ -99,21 +99,8 @@ def test_lda_predict():
         # LDA shouldn't be able to separate those
         assert np.any(y_pred3 != y3), "solver %s" % solver
 
-    # Test invalid shrinkages
-    clf = LinearDiscriminantAnalysis(solver="lsqr", shrinkage=-0.2231)
-    with pytest.raises(ValueError):
-        clf.fit(X, y)
-
-    clf = LinearDiscriminantAnalysis(solver="eigen", shrinkage="dummy")
-    with pytest.raises(ValueError):
-        clf.fit(X, y)
-
     clf = LinearDiscriminantAnalysis(solver="svd", shrinkage="auto")
     with pytest.raises(NotImplementedError):
-        clf.fit(X, y)
-
-    clf = LinearDiscriminantAnalysis(solver="lsqr", shrinkage=np.array([1, 2]))
-    with pytest.raises(TypeError, match="shrinkage must be a float or a string"):
         clf.fit(X, y)
 
     clf = LinearDiscriminantAnalysis(
@@ -129,11 +116,6 @@ def test_lda_predict():
     ):
         clf.fit(X, y)
 
-    # Test unknown solver
-    clf = LinearDiscriminantAnalysis(solver="dummy")
-    with pytest.raises(ValueError):
-        clf.fit(X, y)
-
     # test bad solver with covariance_estimator
     clf = LinearDiscriminantAnalysis(solver="svd", covariance_estimator=LedoitWolf())
     with pytest.raises(
@@ -145,9 +127,7 @@ def test_lda_predict():
     clf = LinearDiscriminantAnalysis(
         solver="lsqr", covariance_estimator=KMeans(n_clusters=2, n_init="auto")
     )
-    with pytest.raises(
-        ValueError, match="KMeans does not have a covariance_ attribute"
-    ):
+    with pytest.raises(ValueError):
         clf.fit(X, y)
 
 
@@ -638,7 +618,7 @@ def test_covariance():
     assert_almost_equal(c_s, c_s.T)
 
 
-@pytest.mark.parametrize("solver", ["svd, lsqr", "eigen"])
+@pytest.mark.parametrize("solver", ["svd", "lsqr", "eigen"])
 def test_raises_value_error_on_same_number_of_classes_and_samples(solver):
     """
     Tests that if the number of samples equals the number

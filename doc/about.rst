@@ -423,7 +423,7 @@ time of Joris van den Bossche (2017-2018).
 .. image:: images/cds-logo.png
    :width: 100pt
    :align: center
-   :target: https://www.datascience-paris-saclay.fr/
+   :target: http://www.datascience-paris-saclay.fr/
 
 .. raw:: html
 

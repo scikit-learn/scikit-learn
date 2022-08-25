@@ -385,7 +385,7 @@ class SpectralBiclustering(BaseSpectral):
         default is 'bistochastic'.
 
         .. warning::
-           if `method='log'`, the data must be sparse.
+           if `method='log'`, the data must not be sparse.
 
     n_components : int, default=6
         Number of singular vectors to check.

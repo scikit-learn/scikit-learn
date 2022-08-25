@@ -29,6 +29,13 @@ if [[ "$BUILD_REASON" == "Schedule" ]]; then
     export SKLEARN_RUN_FLOAT32_TESTS=1
 fi
 
+COMMIT_MESSAGE=$(python build_tools/azure/get_commit_message.py --only-show-message)
+
+if [[ "$COMMIT_MESSAGE" =~ \[float32\] ]]; then
+    echo "float32 tests will be run due to commit message"
+    export SKLEARN_RUN_FLOAT32_TESTS=1
+fi
+
 mkdir -p $TEST_DIR
 cp setup.cfg $TEST_DIR
 cd $TEST_DIR
@@ -51,7 +58,7 @@ if [[ "$COVERAGE" == "true" ]]; then
 fi
 
 if [[ -n "$CHECK_WARNINGS" ]]; then
-    TEST_CMD="$TEST_CMD -Werror::DeprecationWarning -Werror::FutureWarning"
+    TEST_CMD="$TEST_CMD -Werror::DeprecationWarning -Werror::FutureWarning -Werror::numpy.VisibleDeprecationWarning"
 
     # numpy's 1.19.0's tostring() deprecation is ignored until scipy and joblib
     # removes its usage

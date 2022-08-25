@@ -4,18 +4,18 @@
 # License: BSD
 
 
-import numbers
+from numbers import Integral
 import numpy as np
 import warnings
 
 from . import OneHotEncoder
 
 from ..base import BaseEstimator, TransformerMixin
+from ..utils._param_validation import Hidden, Interval, StrOptions
 from ..utils.validation import check_array
 from ..utils.validation import check_is_fitted
 from ..utils.validation import check_random_state
 from ..utils.validation import _check_feature_names_in
-from ..utils.validation import check_scalar
 from ..utils import _safe_indexing
 
 
@@ -152,6 +152,19 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
            [ 0.5,  3.5, -1.5,  1.5]])
     """
 
+    _parameter_constraints = {
+        "n_bins": [Interval(Integral, 2, None, closed="left"), "array-like"],
+        "encode": [StrOptions({"onehot", "onehot-dense", "ordinal"})],
+        "strategy": [StrOptions({"uniform", "quantile", "kmeans"})],
+        "dtype": [type, None],  # TODO: TypeOptions constraint,
+        "subsample": [
+            Interval(Integral, 1, None, closed="left"),
+            None,
+            Hidden(StrOptions({"warn"})),
+        ],
+        "random_state": ["random_state"],
+    }
+
     def __init__(
         self,
         n_bins=5,
@@ -187,6 +200,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         self : object
             Returns the instance itself.
         """
+        self._validate_params()
         X = self._validate_data(X, dtype="numeric")
 
         supported_dtype = (np.float64, np.float32)
@@ -214,35 +228,16 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                         FutureWarning,
                     )
             else:
-                self.subsample = check_scalar(
-                    self.subsample, "subsample", numbers.Integral, min_val=1
-                )
                 rng = check_random_state(self.random_state)
                 if n_samples > self.subsample:
                     subsample_idx = rng.choice(
                         n_samples, size=self.subsample, replace=False
                     )
                     X = _safe_indexing(X, subsample_idx)
-        elif self.strategy != "quantile" and isinstance(
-            self.subsample, numbers.Integral
-        ):
+        elif self.strategy != "quantile" and isinstance(self.subsample, Integral):
             raise ValueError(
                 f"Invalid parameter for `strategy`: {self.strategy}. "
                 '`subsample` must be used with `strategy="quantile"`.'
-            )
-
-        valid_encode = ("onehot", "onehot-dense", "ordinal")
-        if self.encode not in valid_encode:
-            raise ValueError(
-                "Valid options for 'encode' are {}. Got encode={!r} instead.".format(
-                    valid_encode, self.encode
-                )
-            )
-        valid_strategy = ("uniform", "quantile", "kmeans")
-        if self.strategy not in valid_strategy:
-            raise ValueError(
-                "Valid options for 'strategy' are {}. "
-                "Got strategy={!r} instead.".format(valid_strategy, self.strategy)
             )
 
         n_features = X.shape[1]
@@ -313,21 +308,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
     def _validate_n_bins(self, n_features):
         """Returns n_bins_, the number of bins per feature."""
         orig_bins = self.n_bins
-        if isinstance(orig_bins, numbers.Number):
-            if not isinstance(orig_bins, numbers.Integral):
-                raise ValueError(
-                    "{} received an invalid n_bins type. "
-                    "Received {}, expected int.".format(
-                        KBinsDiscretizer.__name__, type(orig_bins).__name__
-                    )
-                )
-            if orig_bins < 2:
-                raise ValueError(
-                    "{} received an invalid number "
-                    "of bins. Received {}, expected at least 2.".format(
-                        KBinsDiscretizer.__name__, orig_bins
-                    )
-                )
+        if isinstance(orig_bins, Integral):
             return np.full(n_features, orig_bins, dtype=int)
 
         n_bins = check_array(orig_bins, dtype=int, copy=True, ensure_2d=False)

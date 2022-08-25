@@ -97,6 +97,13 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
     array([[0., 0., 4.]])
     """
 
+    _parameter_constraints = {
+        "dtype": "no_validation",  # validation delegated to numpy,
+        "separator": [str],
+        "sparse": ["boolean"],
+        "sort": ["boolean"],
+    }
+
     def __init__(self, *, dtype=np.float64, separator="=", sparse=True, sort=True):
         self.dtype = dtype
         self.separator = separator
@@ -154,6 +161,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         self : object
             DictVectorizer class instance.
         """
+        self._validate_params()
         feature_names = []
         vocab = {}
 
@@ -310,6 +318,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         Xa : {array, sparse matrix}
             Feature vectors; always 2-d.
         """
+        self._validate_params()
         return self._transform(X, fitting=True)
 
     def inverse_transform(self, X, dict_type=dict):
