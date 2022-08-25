@@ -669,8 +669,8 @@ class SelectKBest(_BaseFilter):
         super()._check_params(X, y)
         if not (self.k == "all" or 0 <= self.k <= X.shape[1]):
             raise ValueError(
-                "k should be >=0, <= n_features = %d; got %r. "
-                "Use k='all' to return all features." % (X.shape[1], self.k)
+                f"k should be >=0, <= n_features = {X.shape[1]}; "
+                f"got {self.k}. Use k='all' to return all features."
             )
 
     def _get_support_mask(self):
