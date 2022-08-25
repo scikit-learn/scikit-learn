@@ -319,7 +319,6 @@ class BisectingKMeans(_BaseKMeans):
                 max_iter=self.max_iter,
                 verbose=self.verbose,
                 tol=self.tol,
-                x_squared_norms=x_squared_norms,
                 n_threads=self._n_threads,
             )
 
@@ -463,13 +462,11 @@ class BisectingKMeans(_BaseKMeans):
         # sample weights are unused but necessary in cython helpers
         sample_weight = np.ones_like(x_squared_norms)
 
-        labels = self._predict_recursive(
-            X, x_squared_norms, sample_weight, self._bisecting_tree
-        )
+        labels = self._predict_recursive(X, sample_weight, self._bisecting_tree)
 
         return labels
 
-    def _predict_recursive(self, X, x_squared_norms, sample_weight, cluster_node):
+    def _predict_recursive(self, X, sample_weight, cluster_node):
         """Predict recursively by going down the hierarchical tree.
 
         Parameters
@@ -477,9 +474,6 @@ class BisectingKMeans(_BaseKMeans):
         X : {ndarray, csr_matrix} of shape (n_samples, n_features)
             The data points, currently assigned to `cluster_node`, to predict between
             the subclusters of this node.
-
-        x_squared_norms : ndarray of shape (n_samples,)
-            Squared euclidean norm of each data point.
 
         sample_weight : ndarray of shape (n_samples,)
             The weights for each observation in X.
@@ -504,7 +498,6 @@ class BisectingKMeans(_BaseKMeans):
         cluster_labels = _labels_inertia_threadpool_limit(
             X,
             sample_weight,
-            x_squared_norms,
             centers,
             self._n_threads,
             return_inertia=False,
@@ -515,11 +508,11 @@ class BisectingKMeans(_BaseKMeans):
         labels = np.full(X.shape[0], -1, dtype=np.int32)
 
         labels[mask] = self._predict_recursive(
-            X[mask], x_squared_norms[mask], sample_weight[mask], cluster_node.left
+            X[mask], sample_weight[mask], cluster_node.left
         )
 
         labels[~mask] = self._predict_recursive(
-            X[~mask], x_squared_norms[~mask], sample_weight[~mask], cluster_node.right
+            X[~mask], sample_weight[~mask], cluster_node.right
         )
 
         return labels
