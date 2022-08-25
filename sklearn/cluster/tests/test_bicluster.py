@@ -218,14 +218,6 @@ def test_perfect_checkerboard(global_random_seed):
     assert consensus_score(model.biclusters_, (rows, cols)) == 1
 
 
-def test_spectralcoclustering_parameter_validation(params, type_err, err_msg):
-    """Check parameters validation in `SpectralBiClustering`"""
-    data = np.arange(25).reshape((5, 5))
-    model = SpectralCoclustering(**params)
-    with pytest.raises(type_err, match=err_msg):
-        model.fit(data)
-
-
 @pytest.mark.parametrize(
     "params, type_err, err_msg",
     [
