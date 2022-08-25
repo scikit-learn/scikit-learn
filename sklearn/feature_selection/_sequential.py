@@ -9,10 +9,11 @@ import warnings
 
 from ._base import SelectorMixin
 from ..base import BaseEstimator, MetaEstimatorMixin, clone
-from ..utils._param_validation import HasMethods, Interval, StrOptions
+from ..utils._param_validation import HasMethods, Hidden, Interval, StrOptions
 from ..utils._tags import _safe_tags
 from ..utils.validation import check_is_fitted
 from ..model_selection import cross_val_score
+from ..metrics import get_scorer_names
 
 
 class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
@@ -155,10 +156,15 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         ],
         "tol": [None, Interval(Real, 0, None, closed="neither")],
         "direction": [StrOptions({"forward", "backward"})],
-        "scoring": [None, StrOptions(set(get_scorer_names())), callable, list, dict, tuple],
-        "cv": [
+        "scoring": [
             None,
-            Interval(Integral, 0, None, closed="neither"),
+            StrOptions(set(get_scorer_names())),
+            callable,
+            list,
+            dict,
+            tuple,
+        ],
+        "cv": [
             "cv_object",
             callable,
         ],
