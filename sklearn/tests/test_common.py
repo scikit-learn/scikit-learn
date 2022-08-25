@@ -512,7 +512,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "SelectPercentile",
     "SequentialFeatureSelector",
     "SimpleImputer",
-    "SkewedChi2Sampler",
     "SpectralBiclustering",
     "SpectralCoclustering",
     "SpectralEmbedding",
