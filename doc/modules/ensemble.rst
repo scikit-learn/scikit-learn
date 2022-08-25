@@ -1182,9 +1182,9 @@ indices of features that are allowed to interact
 For instance, with 3 features in total, ``interaction_cst=[{0}, {1}, {2}]``
 forbids all interactions.
 The constraints ``[{0, 1}, {1, 2}]`` specifies two groups of possibly
-interacting features. The first and second features may interact, as well as
-the second and third features. But note that the first and third are forbidden
-to interact. The following depicts a tree and the possible splits of the tree:
+interacting features. Features 0 and 1 may interact with each other, as well
+as features 1 and 2. But note that features 0 and 2 are forbidden to interact.
+The following depicts a tree and the possible splits of the tree:
 
 .. code-block:: none
 
