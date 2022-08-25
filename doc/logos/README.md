@@ -7,7 +7,7 @@ File types:
 - `ICO` file format refers to an image file format that contains small size computer icon images
 - `SVG` Scalable Vector Graphics (SVG) are an XML-based markup language for describing two-dimensional based vector graphics. They can be created and edited with any text editor or with drawing software.
 
-[Brand Name](/README.md#brand-name) | [Color Palette](/README.md#color-palette) | [Typography](/README.md#typography) | [Logos](/README.md#logos)
+[Brand Name](/doc/logos/README.md#brand-name) | [Color Palette](/doc/logos/README.md#color-palette) | [Typography](/doc/logos/README.md#typography) | [Logos](/doc/logos/README.md#logos)
 
 ---
 <br>
