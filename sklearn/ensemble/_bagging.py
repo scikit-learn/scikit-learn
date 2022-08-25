@@ -381,7 +381,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
             If the metaestimator already checks the input, set this value to
             False to prevent redundant input checking (#23149).
 
-        fit_params : dict, default=None
+        **fit_params : dict, default=None
             Parameters to pass to the `fit` method of the underlying estimator.
 
         Returns
