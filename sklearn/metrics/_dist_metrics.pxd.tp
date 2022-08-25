@@ -72,7 +72,7 @@ cdef inline DTYPE_t euclidean_rdist_to_dist{{name_suffix}}(const {{INPUT_DTYPE_t
 
 
 ######################################################################
-# DistanceMetric base class
+# DistanceMetric{{name_suffix}} base class
 cdef class DistanceMetric{{name_suffix}}:
     # The following attributes are required for a few of the subclasses.
     # we must define them here so that cython's limited polymorphism will work.
