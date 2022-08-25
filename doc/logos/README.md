@@ -2,20 +2,19 @@
 
 This section contains information around scikit-learn's brand standards and the use of scikit-learn assets. The purpose of these guidelines are to ensure the scikit-learn logo remains consistent and recognizable across all uses and communications. These guidelines also provide a common language for referring to the logos and their components.
 
-
 File types:
 - `PNG` is a higher-quality compression format; size of file is generally larger
 - `ICO` file format refers to an image file format that contains small size computer icon images
 - `SVG` Scalable Vector Graphics (SVG) are an XML-based markup language for describing two-dimensional based vector graphics. They can be created and edited with any text editor or with drawing software.
 
+[Brand Name](/README.md#brand-name) | [Color Palette](/README.md#color-palette) | [Typography](/README.md#typography) | [Logos](/README.md#logos)
+
 ---
 <br>
-
 
 ## Brand Name
 The official name of the package is __scikit-learn__. Do not abbreviate or otherwise alter the name. Always spell ‘scikit’ with a lowercase ‘s’.
 
-<br>
 
 ## Color Palette
 
@@ -25,14 +24,11 @@ The official name of the package is __scikit-learn__. Do not abbreviate or other
 
 ![#9B4600 Brown](brand_colors/colorswatch_9B4600_brown.png) `RGB 155/70/0| HEX #9B4600 | scikit-learn Brown` | More info: [#9B4600](https://www.color-hex.com/color/9b4600)
 
-<br>
-
 
 ## Typography
 The following typeface is used in the logo:
 - "scikit": Helvetica Neue
 - "learn": Script MT
-<br>
 
 
 ## Logos
@@ -53,7 +49,7 @@ You may highlight or reference your work with scikit-learn by using one of the l
 - __Minimum Size:__ For consistent legibility, please do not display the scikit-learn logo at less than 50px wide.
 - __Scale:__ Ensure any logos used are scaled proportionally. Stretched, compressed, or otherwise distorted versions of the logo should not be displayed.
 
-- __Clear Space:__ To ensure the mark is clearly visible in all uses, surround it with a sufficient amount of clear space that is free of type, graphics, and other elements that might cause visual clutter. Do not overlap the logo with text, images, or other elements. <br> <center><img src="brand_guidelines/scikitlearn_logo_clearspace_updated.png" width="250px"></center>
+- __Clear Space:__ To ensure the logo is clearly visible in all uses, surround it with a sufficient amount of clear space that is free of type, graphics, and other elements that might cause visual clutter. Do not overlap or obscure the logo with text, images, or other elements. The image below demonstrates the suggested amount of clear space margins to use around the logo. <br> <center><img src="brand_guidelines/scikitlearn_logo_clearspace_updated.png" width="250px"></center>
 
 - __Colors:__ Only use logos in the approved color palette defined above. Do not recolor the logo. 
 - __Typeface:__ Do not change the typeface used in the logo. 
