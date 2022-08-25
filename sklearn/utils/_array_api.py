@@ -31,8 +31,19 @@ class _ArrayAPIWrapper:
             X_np = numpy.take(X, indices, axis=axis)
             return self._namespace.asarray(X_np)
 
+        # We only support axis in (0, 1) and ndim in (1, 2) because that is all we need
+        # in scikit-learn
+        if axis not in {0, 1}:
+            raise ValueError(f"Only axis in (0, 1) is supported. Got {axis}")
+
+        if X.ndim not in {1, 2}:
+            raise ValueError(f"Only X.ndim in (1, 2) is supported. Got {X.ndim}")
+
         if axis == 0:
-            selected = [X[i] for i in indices]
+            if X.ndim == 1:
+                selected = [X[i] for i in indices]
+            else:  # X.ndim == 2
+                selected = [X[i, :] for i in indices]
         else:  # axis == 1
             selected = [X[:, i] for i in indices]
         return self._namespace.stack(selected, axis=axis)

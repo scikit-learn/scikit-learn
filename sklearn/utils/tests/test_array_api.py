@@ -49,38 +49,68 @@ def test_get_namespace_array_api():
             get_namespace(1)
 
 
-class _NumPyArrayAPITestWrapper(_ArrayAPIWrapper):
-    """NumPy Array API wrapper that has a different name. Used for testing."""
+class _AdjustableNameAPITestWrapper(_ArrayAPIWrapper):
+    """API wrapper that has an adjustable name. Used for testing."""
 
-    __name__ = "wrapped_numpy.array_api"
-
-    def __init__(self, array_namespace):
+    def __init__(self, array_namespace, name):
         super().__init__(array_namespace=array_namespace)
-
-    def __getattr__(self, name):
-        return getattr(self._namespace, name)
+        self.__name__ = name
 
 
-def test_array_api_wrapper():
+def test_array_api_wrapper_astype():
     """Test _ArrayAPIWrapper for ArrayAPIs that is not NumPy."""
-    xp = pytest.importorskip("numpy.array_api")
-    xp_ = _NumPyArrayAPITestWrapper(xp)
+    numpy_array_api = pytest.importorskip("numpy.array_api")
+    xp_ = _AdjustableNameAPITestWrapper(numpy_array_api, "wrapped_numpy.array_api")
+    xp = _ArrayAPIWrapper(xp_)
 
     X = xp.asarray(([[1, 2, 3], [3, 4, 5]]), dtype=xp.float64)
-    X_converted = xp_.astype(X, xp.float32)
+    X_converted = xp.astype(X, xp.float32)
     assert X_converted.dtype == xp.float32
 
-    X = xp.asarray(([[1, 2, 3], [3, 4, 5]]), dtype=xp.float64)
-    X_converted = xp_.asarray(X, dtype=xp.float32)
+    X_converted = xp.asarray(X, dtype=xp.float32)
     assert X_converted.dtype == xp.float32
+
+
+def test_array_api_wrapper_take_for_numpy_api():
+    """Test that fast path is called for numpy.array_api."""
+    numpy_array_api = pytest.importorskip("numpy.array_api")
+    # USe the same name as numpy.array_api
+    xp_ = _AdjustableNameAPITestWrapper(numpy_array_api, "numpy.array_api")
+    xp = _ArrayAPIWrapper(xp_)
+
+    X = xp.asarray(([[1, 2, 3], [3, 4, 5]]), dtype=xp.float64)
+    X_take = xp.take(X, xp.asarray([1]), axis=0)
+    assert hasattr(X_take, "__array_namespace__")
+    assert_array_equal(X_take, numpy.take(X, [1], axis=0))
+
+
+def test_array_api_wrapper_take():
+    """Test _ArrayAPIWrapper API for take."""
+    numpy_array_api = pytest.importorskip("numpy.array_api")
+    xp_ = _AdjustableNameAPITestWrapper(numpy_array_api, "wrapped_numpy.array_api")
+    xp = _ArrayAPIWrapper(xp_)
 
     # Check take compared to NumPy's with axis=0
-    X_take = xp_.take(X, xp.asarray([0]), axis=0)
+    X_1d = xp.asarray([1, 2, 3], dtype=xp.float64)
+    X_take = xp.take(X_1d, xp.asarray([1]), axis=0)
+    assert hasattr(X_take, "__array_namespace__")
+    assert_array_equal(X_take, numpy.take(X_1d, [1], axis=0))
+
+    X = xp.asarray(([[1, 2, 3], [3, 4, 5]]), dtype=xp.float64)
+    X_take = xp.take(X, xp.asarray([0]), axis=0)
+    assert hasattr(X_take, "__array_namespace__")
     assert_array_equal(X_take, numpy.take(X, [0], axis=0))
 
     # Check take compared to NumPy's with axis=1
-    X_take = xp_.take(X, xp.asarray([0, 2]), axis=1)
+    X_take = xp.take(X, xp.asarray([0, 2]), axis=1)
+    assert hasattr(X_take, "__array_namespace__")
     assert_array_equal(X_take, numpy.take(X, [0, 2], axis=1))
+
+    with pytest.raises(ValueError, match=r"Only axis in \(0, 1\) is supported"):
+        xp.take(X, xp.asarray([0]), axis=2)
+
+    with pytest.raises(ValueError, match=r"Only X.ndim in \(1, 2\) is supported"):
+        xp.take(xp.asarray([[[0]]]), xp.asarray([0]), axis=0)
 
 
 @pytest.mark.parametrize("is_array_api", [True, False])
@@ -101,7 +131,7 @@ def test_asarray_with_order(is_array_api):
 def test_asarray_with_order_ignored():
     """Test _asarray_with_order ignores order for Generic ArrayAPI."""
     xp = pytest.importorskip("numpy.array_api")
-    xp_ = _NumPyArrayAPITestWrapper(xp)
+    xp_ = _AdjustableNameAPITestWrapper(xp, "wrapped.array_api")
 
     X = numpy.asarray([[1.2, 3.4, 5.1], [3.4, 5.5, 1.2]], order="C")
     X = xp_.asarray(X)
@@ -116,7 +146,7 @@ def test_asarray_with_order_ignored():
 def test_convert_to_numpy_error():
     """Test convert to numpy errors for unsupported namespaces."""
     xp = pytest.importorskip("numpy.array_api")
-    xp_ = _NumPyArrayAPITestWrapper(xp)
+    xp_ = _AdjustableNameAPITestWrapper(xp, "wrapped.array_api")
 
     X = xp_.asarray([1.2, 3.4])
 
@@ -137,9 +167,9 @@ def test_convert_estimator_to_ndarray(array_namespace):
     xp = pytest.importorskip(array_namespace)
 
     if array_namespace == "numpy.array_api":
-        converter = lambda array: numpy.asarray(array)
+        converter = lambda array: numpy.asarray(array)  # noqa
     else:  # pragma: no cover
-        converter = lambda array: array._array.get()
+        converter = lambda array: array._array.get()  # noqa
 
     X = xp.asarray([[1.3, 4.5]])
     est = SimpleEstimator().fit(X)
