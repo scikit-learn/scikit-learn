@@ -30,6 +30,7 @@ from sklearn.datasets import load_diabetes, load_iris, make_hastie_10_2
 from sklearn.utils import check_random_state
 from sklearn.utils._mocking import CheckingClassifier
 from sklearn.utils._testing import _convert_container
+from sklearn.utils.validation import _num_samples, check_array
 from sklearn.preprocessing import FunctionTransformer, scale
 from itertools import cycle
 
@@ -646,6 +647,62 @@ def test_bagging_with_arbitrary_fit_params(
         expected_sample_weight=True,
         expected_fit_params=["other_fit_param"],
     ).set_fit_request(sample_weight=use_sample_weight, other_fit_param=True)
+    estimator = estimator_cls(base_estimator=base_estimator)
+    estimator.fit(X, y, **fit_params)
+
+
+@pytest.mark.parametrize("estimator_cls", [BaggingClassifier, BaggingRegressor])
+@pytest.mark.parametrize("fit_params_type", ["list", "array"])
+def test_bagging_with_arbitrary_fit_params_base_estimator_no_sample_weight_support(
+    estimator_cls, fit_params_type
+):
+    """Tests that fit_params are passed to the underlying base estimator even if
+    it doesn't support sample_weight.
+
+    """
+    # Using iris even for regression, which is fine for the purpose of this test
+    X, y = iris.data, iris.target
+    other_fit_param = np.ones(len(y))
+    fit_params = {
+        "other_fit_param": _convert_container(other_fit_param, fit_params_type),
+    }
+
+    # We need a custom CheckingClassifier that does _not_ have a sample_weight
+    # argument in fit. This is because BaggingClassifier and BaggingRegressor
+    # force the use of sample_weight if it is supported. However, here we want
+    # to test if fit_params are correctly routed even if the base estimator does
+    # not (forcefully) use sample_weight.
+    class MyCheckingClassifier(CheckingClassifier):
+        def fit(self, X, y, **fit_params):
+            assert _num_samples(X) == _num_samples(y)
+            if self.methods_to_check == "all" or "fit" in self.methods_to_check:
+                X, y = self._check_X_y(X, y, should_be_fitted=False)
+            self.n_features_in_ = np.shape(X)[1]
+            self.classes_ = np.unique(check_array(y, ensure_2d=False, allow_nd=True))
+            if self.expected_fit_params:
+                missing = set(self.expected_fit_params) - set(fit_params)
+                if missing:
+                    raise AssertionError(
+                        f"Expected fit parameter(s) {list(missing)} not seen."
+                    )
+                for key, value in fit_params.items():
+                    if _num_samples(value) != _num_samples(X):
+                        raise AssertionError(
+                            f"Fit parameter {key} has length {_num_samples(value)}"
+                            f"; expected {_num_samples(X)}."
+                        )
+            if self.expected_sample_weight:
+                raise ValueError("Never expect sample weight with this class")
+
+            return self
+
+    # Hypothetically, we would need a regressor for BaggingRegressor, but
+    # CheckingRegressor does not exist. Using CheckingClassifier here does the
+    # job for the purpose of the test, so we take that.
+    base_estimator = MyCheckingClassifier(
+        expected_sample_weight=False,
+        expected_fit_params=["other_fit_param"],
+    ).set_fit_request(other_fit_param=True)
     estimator = estimator_cls(base_estimator=base_estimator)
     estimator.fit(X, y, **fit_params)
 

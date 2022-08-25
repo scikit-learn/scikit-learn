@@ -147,7 +147,7 @@ def _parallel_build_estimators(
             estimator_fit(X_, y, sample_weight=curr_sample_weight, **fit_params)
         else:
             X_ = X[indices][:, features] if requires_feature_indexing else X[indices]
-            estimator_fit(X_, y[indices])
+            estimator_fit(X_, y[indices], **fit_params)
 
         estimators.append(estimator)
         estimators_features.append(features)
