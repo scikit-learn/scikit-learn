@@ -631,12 +631,7 @@ class RFECV(RFE):
     _parameter_constraints = {
         **RFE._parameter_constraints,  # type: ignore
         "min_features_to_select": [Interval(Integral, 0, None, closed="neither")],
-        "cv": [
-            None,
-            Interval(Integral, 0, None, closed="neither"),
-            "cv_object",
-            callable,
-        ],
+        "cv": ["cv_object", callable],
         "scoring": [None, str, callable, list, dict, tuple],
         "n_jobs": [None, Integral],
     }
