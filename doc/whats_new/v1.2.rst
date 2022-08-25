@@ -69,7 +69,9 @@ Changes impacting all modules
   - :class:`sklearn.manifold.TSNE`
   - :func:`sklearn.manifold.trustworthiness`
 
-  :pr:`23585` by `Julien Jerphanion <jjerphan>`
+  :pr:`23604` and :pr:`23585` by `Julien Jerphanion <jjerphan>`,
+  `Olivier Grisel <ogrisel>`, and `Thomas Fan`_.
+
 
 Changelog
 ---------
