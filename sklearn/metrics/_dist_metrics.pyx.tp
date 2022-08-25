@@ -415,9 +415,9 @@ cdef class DistanceMetric{{name_suffix}}:
         0. The implementation of this method in subclasses must be robust to the
         presence of explicit zeros in the CSR representation.
 
-        1. The `indices` are passed using pointers to be able to support an
+        1. The `data` arrays are passed using pointers to be able to support an
         alternative representation of the CSR data structure for supporting
-        fused sparse-dense datasets pairs.
+        fused sparse-dense datasets pairs with minimum overhead.
 
         See the explanations in `SparseDenseDatasetsPair.__init__`.
 
@@ -431,7 +431,7 @@ cdef class DistanceMetric{{name_suffix}}:
                 const SPARSE_INDEX_TYPE_t[:] x2_indices,
             ) nogil except -1:
 
-        Where callees would use slicing on the original CSR data and indices
+        Where callers would use slicing on the original CSR data and indices
         memoryviews:
 
             x1_start = X1_csr.indices_ptr[i]
@@ -440,10 +440,10 @@ cdef class DistanceMetric{{name_suffix}}:
             x2_end   = X2_csr.indices_ptr[j+1]
 
             self.dist_csr(
-                x1_data[x1_start:x1_end],
-                &x1_indices[x1_start],
-                x2_data[x2_start:x2_end],
-                &x2_indices[x2_start],
+                &x1_data[x1_start],
+                x1_indices[x1_start:x1_end],
+                &x2_data[x2_start],
+                x2_indices[x2_start:x2_end],
             )
 
         Yet, slicing on memoryview slows down execution as it takes the GIL.
@@ -689,47 +689,68 @@ cdef class DistanceMetric{{name_suffix}}:
             )
         return np.asarray(Darr)
 
-    def _pairwise_sparse_dense(self,
-        X: csr_matrix,
-        const {{INPUT_DTYPE_t}}[:, ::1] Y,
-    ):
+    def _pairwise_sparse_dense(self, X: csr_matrix, Y):
         cdef:
             ITYPE_t n_X = X.shape[0]
             ITYPE_t n_features = X.shape[1]
-            const {{INPUT_DTYPE_t}}[:] X_data = np.asarray(X.data, dtype={{INPUT_DTYPE}})
-            const SPARSE_INDEX_TYPE_t[:] X_indices = np.asarray(X.indices, dtype=SPARSE_INDEX_TYPE)
-            const SPARSE_INDEX_TYPE_t[:] X_indptr = np.asarray(X.indptr, dtype=SPARSE_INDEX_TYPE)
-
-            ITYPE_t n_Y = Y.shape[0]
-            const {{INPUT_DTYPE_t}}[:] Y_data = np.reshape(Y, -1)
-
-            # Potentially costly to store, but allows using `cdist_csr`
-            # without logic duplication.
-            const SPARSE_INDEX_TYPE_t[:] Y_indices = np.tile(
-                np.arange(n_features, dtype=SPARSE_INDEX_TYPE), reps=n_Y,
+            const {{INPUT_DTYPE_t}}[:] X_data = np.asarray(
+                X.data, dtype={{INPUT_DTYPE}},
             )
-            const SPARSE_INDEX_TYPE_t[:] Y_indptr = np.arange(
-                start=0, stop=n_features * (n_X + 1), step=n_features, dtype=SPARSE_INDEX_TYPE
+            const SPARSE_INDEX_TYPE_t[:] X_indices = np.asarray(
+                X.indices, dtype=SPARSE_INDEX_TYPE,
+            )
+            const SPARSE_INDEX_TYPE_t[:] X_indptr = np.asarray(
+                X.indptr, dtype=SPARSE_INDEX_TYPE,
+            )
+
+            const {{INPUT_DTYPE_t}}[:, ::1] Y_data = np.asarray(
+                Y, dtype={{INPUT_DTYPE}}, order="C",
+            )
+            ITYPE_t n_Y = Y_data.shape[0]
+            const SPARSE_INDEX_TYPE_t[:] Y_indices = (
+                np.arange(n_features, dtype=SPARSE_INDEX_TYPE)
             )
 
             DTYPE_t[:, ::1] Darr = np.empty((n_X, n_Y), dtype=DTYPE, order='C')
 
-        self.cdist_csr(
-            x1_data=&X_data[0],
-            x1_indices=X_indices,
-            x1_indptr=X_indptr,
-            x2_data=&Y_data[0],
-            x2_indices=Y_indices,
-            x2_indptr=Y_indptr,
-            size=n_features,
-            D=Darr,
-        )
+            ITYPE_t i1, i2
+            ITYPE_t x1_start, x1_end
+            {{INPUT_DTYPE_t}} * x2_data
+
+        with nogil:
+            # Use the exact same adaptation for CSR than in SparseDenseDatasetsPair
+            # for supporting the sparse-dense case with minimal overhead.
+            # Note: at this point this method is only a convenience method
+            # used in the tests via the DistanceMetric.pairwise method.
+            # Therefore, there is no need to attempt parallelization of those
+            # nested for-loops.
+            # Efficient parallel computation of pairwise distances can be
+            # achieved via the PairwiseDistances class instead. The latter
+            # internally calls into vector-wise distance computation from
+            # the DistanceMetric subclass while benefiting from the generic
+            # Cython/OpenMP parallelization template for the generic pairwise
+            # distance + reduction computational pattern.
+            for i1 in range(n_X):
+                x1_start = X_indptr[i1]
+                x1_end = X_indptr[i1 + 1]
+                for i2 in range(n_Y):
+                    x2_data = &Y_data[0, 0] + i2 * n_features
+
+                    Darr[i1, i2] = self.dist_csr(
+                        x1_data=&X_data[0],
+                        x1_indices=X_indices,
+                        x2_data=x2_data,
+                        x2_indices=Y_indices,
+                        x1_start=x1_start,
+                        x1_end=x1_end,
+                        x2_start=0,
+                        x2_end=n_features,
+                        size=n_features,
+                    )
+
         return np.asarray(Darr)
 
-    def _pairwise_dense_sparse(self,
-        const {{INPUT_DTYPE_t}}[:, ::1] X,
-        Y: csr_matrix,
-    ):
+    def _pairwise_dense_sparse(self, X, Y: csr_matrix):
         # We could have implemented this method using _pairwise_dense_sparse by
         # swapping argument and by transposing the results, but this would
         # have come with an extra copy to ensure C-contiguity of the result.
@@ -737,33 +758,62 @@ cdef class DistanceMetric{{name_suffix}}:
             ITYPE_t n_X = X.shape[0]
             ITYPE_t n_features = X.shape[1]
 
-            const {{INPUT_DTYPE_t}}[:] X_data = np.reshape(X, -1)
+            const {{INPUT_DTYPE_t}}[:, ::1] X_data = np.asarray(
+                X, dtype={{INPUT_DTYPE}}, order="C",
+            )
+            const SPARSE_INDEX_TYPE_t[:] X_indices = np.arange(
+                n_features, dtype=SPARSE_INDEX_TYPE,
+            )
 
-            # Potentially costly to store, but allows using `cdist_csr`
-            # without logic duplication.
-            const SPARSE_INDEX_TYPE_t[:] X_indices = np.tile(
-                np.arange(n_features, dtype=SPARSE_INDEX_TYPE), reps=n_X,
-            )
-            const SPARSE_INDEX_TYPE_t[:] X_indptr = np.arange(
-                start=0, stop=n_features * (n_X + 1), step=n_features, dtype=SPARSE_INDEX_TYPE
-            )
             ITYPE_t n_Y = Y.shape[0]
-            const {{INPUT_DTYPE_t}}[:] Y_data = np.asarray(Y.data, dtype={{INPUT_DTYPE}})
-            const SPARSE_INDEX_TYPE_t[:] Y_indices = np.asarray(Y.indices, dtype=SPARSE_INDEX_TYPE)
-            const SPARSE_INDEX_TYPE_t[:] Y_indptr = np.asarray(Y.indptr, dtype=SPARSE_INDEX_TYPE)
+            const {{INPUT_DTYPE_t}}[:] Y_data = np.asarray(
+                Y.data, dtype={{INPUT_DTYPE}},
+            )
+            const SPARSE_INDEX_TYPE_t[:] Y_indices = np.asarray(
+                Y.indices, dtype=SPARSE_INDEX_TYPE,
+            )
+            const SPARSE_INDEX_TYPE_t[:] Y_indptr = np.asarray(
+                Y.indptr, dtype=SPARSE_INDEX_TYPE,
+            )
 
             DTYPE_t[:, ::1] Darr = np.empty((n_X, n_Y), dtype=DTYPE, order='C')
 
-        self.cdist_csr(
-            x1_data=&X_data[0],
-            x1_indices=X_indices,
-            x1_indptr=X_indptr,
-            x2_data=&Y_data[0],
-            x2_indices=Y_indices,
-            x2_indptr=Y_indptr,
-            size=n_features,
-            D=Darr,
-        )
+            ITYPE_t i1, i2
+            {{INPUT_DTYPE_t}} * x1_data
+
+            ITYPE_t x2_start, x2_end
+
+        with nogil:
+            # Use the exact same adaptation for CSR than in SparseDenseDatasetsPair
+            # for supporting the dense-sparse case with minimal overhead.
+            # Note: at this point this method is only a convenience method
+            # used in the tests via the DistanceMetric.pairwise method.
+            # Therefore, there is no need to attempt parallelization of those
+            # nested for-loops.
+            # Efficient parallel computation of pairwise distances can be
+            # achieved via the PairwiseDistances class instead. The latter
+            # internally calls into vector-wise distance computation from
+            # the DistanceMetric subclass while benefiting from the generic
+            # Cython/OpenMP parallelization template for the generic pairwise
+            # distance + reduction computational pattern.
+            for i1 in range(n_X):
+                x1_data = &X_data[0, 0] + i1 * n_features
+                for i2 in range(n_Y):
+                    x2_start = Y_indptr[i2]
+                    x2_end = Y_indptr[i2 + 1]
+
+                    Darr[i1, i2] = self.dist_csr(
+                        x1_data=x1_data,
+                        x1_indices=X_indices,
+                        x2_data=&Y_data[0],
+                        x2_indices=Y_indices,
+                        x1_start=0,
+                        x1_end=n_features,
+                        x2_start=x2_start,
+                        x2_end=x2_end,
+                        size=n_features,
+                    )
+
         return np.asarray(Darr)
 
 
@@ -798,15 +848,14 @@ cdef class DistanceMetric{{name_suffix}}:
         Y_is_sparse = issparse(Y)
 
         if not X_is_sparse and not Y_is_sparse:
-            X = np.asarray(X, order='C')
-            Y = np.asarray(Y, order='C')
             return self._pairwise_dense_dense(X, Y)
+
         if X_is_sparse and Y_is_sparse:
             return self._pairwise_sparse_sparse(X, Y)
+
         if X_is_sparse and not Y_is_sparse:
-            Y = np.asarray(Y, order='C')
             return self._pairwise_sparse_dense(X, Y)
-        X = np.asarray(X, order='C')
+
         return self._pairwise_dense_sparse(X, Y)
 
 #------------------------------------------------------------

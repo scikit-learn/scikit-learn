@@ -197,15 +197,6 @@ Changelog
 - |Fix| Make sign of `components_` deterministic in :class:`decomposition.SparsePCA`.
   :pr:`23935` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-:mod:`sklearn.ensemble`
-.......................
-
-- |Efficiency| Improve runtime performance of :class:`ensemble.IsolationForest`
-  by avoiding data copies. :pr:`23252` by :user:`Zhehao Liu <MaxwellLZH>`.
-
-:mod:`sklearn.decomposition`
-............................
-
 - |Enhancement| :class:`decomposition.FastICA` now allows the user to select
   how whitening is performed through the new `whiten_solver` parameter, which
   supports `svd` and `eigh`. `whiten_solver` defaults to `svd` although `eigh`
@@ -213,6 +204,19 @@ Changelog
   `num_features > num_samples`.
   :pr:`11860` by :user:`Pierre Ablin <pierreablin>`,
   :pr:`22527` by :user:`Meekail Zain <micky774>` and `Thomas Fan`_.
+
+:mod:`sklearn.ensemble`
+.......................
+
+- |Efficiency| Improve runtime performance of :class:`ensemble.IsolationForest`
+  by avoiding data copies. :pr:`23252` by :user:`Zhehao Liu <MaxwellLZH>`.
+
+- |Fix| Fixed the issue where :class:`ensemble.AdaBoostClassifier` outputs
+  NaN in feature importance when fitted with very small sample weight.
+  :pr:`20415` by :user:`Zhehao Liu <MaxwellLZH>`.
+
+:mod:`sklearn.feature_selection`
+................................
 
 :mod:`sklearn.linear_model`
 ...........................
@@ -232,8 +236,32 @@ Changelog
   in :class:`linear_model.LogisticRegression`, and will be removed in version 1.4.
   Use `None` instead. :pr:`23877` by :user:`Zhehao Liu <MaxwellLZH>`.
 
+:mod:`sklearn.manifold`
+.......................
+
+- |Feature| Adds option to use the normalized stress in `manifold.MDS`. This is
+  enabled by setting the new `normalize` parameter to `True`.
+  :pr:`10168` by :user:`Łukasz Borchmann <Borchmann>`,
+  :pr:`12285` by :user:`Matthias Miltenberger <mattmilten>`,
+  :pr:`13042` by :user:`Matthieu Parizy <matthieu-pa>`,
+  :pr:`18094` by :user:`Roth E Conrad <rotheconrad>` and
+  :pr:`22562` by :user:`Meekail Zain <micky774>`.
+
+- |Enhancement| Adds `eigen_tol` parameter to
+  :class:`manifold.SpectralEmbedding`. Both :func:`manifold.spectral_embedding`
+  and :class:`manifold.SpectralEmbedding` now propogate `eigen_tol` to all
+  choices of `eigen_solver`. Includes a new option `eigen_tol="auto"`
+  and begins deprecation to change the default from `eigen_tol=0` to
+  `eigen_tol="auto"` in version 1.3.
+  :pr:`23210` by :user:`Meekail Zain <micky774>`.
+
 :mod:`sklearn.metrics`
 ......................
+
+- |Feature| :func:`metrics.ConfusionMatrixDisplay.from_estimator`,
+  :func:`metrics.ConfusionMatrixDisplay.from_predictions`, and
+  :meth:`metrics.ConfusionMatrixDisplay.plot` accepts a `text_kw` parameter which is passed to
+  matplotlib's `text` function. :pr:`24051` by `Thomas Fan`_.
 
 - |Feature| :func:`metrics.class_likelihood_ratios` is added to compute the positive and
   negative likelihood ratios derived from the confusion matrix
@@ -246,6 +274,13 @@ Changelog
   values for `y_true` will raise an error.
   :pr:`22710` by :user:`Conroy Trinh <trinhcon>` and
   :pr:`23461` by :user:`Meekail Zain <micky774>`.
+
+:mod:`sklearn.model_selection`
+..............................
+
+- |Fix| For all `SearchCV` classes and scipy >= 1.10, rank corresponding to a
+  nan score is correctly set to the maximum possible rank, rather than
+  `np.iinfo(np.int32).min`. :pr:`24141` by :user:`Loïc Estève <lesteve>`.
 
 :mod:`sklearn.multioutput`
 ..........................
@@ -262,6 +297,15 @@ Changelog
 
 - |Feature| Add methods `predict_joint_log_proba` to all naive Bayes classifiers.
   :pr:`23683` by :user:`Andrey Melnik <avm19>`.
+
+- |Enhancement| A new parameter `force_alpha` was added to
+  :class:`naive_bayes.BernoulliNB`, :class:`naive_bayes.ComplementNB`,
+  :class:`naive_bayes.CategoricalNB`, and :class:`naive_bayes.MultinomialNB`,
+  allowing user to set parameter alpha to a very small number, greater or equal
+  0, which was earlier automatically changed to `1e-10` instead.
+  :pr:`16747` by :user:`arka204`,
+  :pr:`18805` by :user:`hongshaoyang`,
+  :pr:`22269` by :user:`Meekail Zain <micky774>`.
 
 :mod:`sklearn.neighbors`
 ........................
@@ -306,37 +350,6 @@ Changelog
   `lapack_svd_driver`, to specify the lapack driver used in the internal
   deterministic SVD used by the randomized SVD algorithm.
   :pr:`20617` by :user:`Srinath Kailasa <skailasa>`
-
-:mod:`sklearn.manifold`
-.......................
-
-- |Feature| Adds option to use the normalized stress in `manifold.MDS`. This is
-  enabled by setting the new `normalize` parameter to `True`.
-  :pr:`10168` by :user:`Łukasz Borchmann <Borchmann>`,
-  :pr:`12285` by :user:`Matthias Miltenberger <mattmilten>`,
-  :pr:`13042` by :user:`Matthieu Parizy <matthieu-pa>`,
-  :pr:`18094` by :user:`Roth E Conrad <rotheconrad>` and
-  :pr:`22562` by :user:`Meekail Zain <micky774>`.
-
-- |Enhancement| Adds `eigen_tol` parameter to
-  :class:`manifold.SpectralEmbedding`. Both :func:`manifold.spectral_embedding`
-  and :class:`manifold.SpectralEmbedding` now propogate `eigen_tol` to all
-  choices of `eigen_solver`. Includes a new option `eigen_tol="auto"`
-  and begins deprecation to change the default from `eigen_tol=0` to
-  `eigen_tol="auto"` in version 1.3.
-  :pr:`23210` by :user:`Meekail Zain <micky774>`.
-
-:mod:`sklearn.naive_bayes`
-..........................
-
-- |Enhancement| A new parameter `force_alpha` was added to
-  :class:`naive_bayes.BernoulliNB`, :class:`naive_bayes.ComplementNB`,
-  :class:`naive_bayes.CategoricalNB`, and :class:`naive_bayes.MultinomialNB`,
-  allowing user to set parameter alpha to a very small number, greater or equal
-  0, which was earlier automatically changed to `1e-10` instead.
-  :pr:`16747` by :user:`arka204`,
-  :pr:`18805` by :user:`hongshaoyang`,
-  :pr:`22269` by :user:`Meekail Zain <micky774>`.
 
 Code and Documentation Contributors
 -----------------------------------
