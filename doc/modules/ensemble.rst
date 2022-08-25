@@ -1184,8 +1184,7 @@ forbids all interactions.
 The constraints ``[{0, 1}, {1, 2}]`` specifies two groups of possibly
 interacting features. The first and second features may interact, as well as
 the second and third features. But note that the first and third are forbidden
-to interact. The following depicts a tree and the the possible
-splits of the tree:
+to interact. The following depicts a tree and the possible splits of the tree:
 
 .. code-block:: text
 
