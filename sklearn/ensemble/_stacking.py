@@ -110,7 +110,7 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
         X_meta = []
         for est_idx, preds in enumerate(predictions):
             if isinstance(preds, list):
-                # `preds` is here a list of n_targets 2D ndarrays of
+                # `preds` is here a list of `n_targets` 2D ndarrays of
                 # `n_classes` columns. The k-th column contains the
                 # probabilities of the samples belonging the k-th class.
                 #
@@ -128,7 +128,7 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
                 and len(self.classes_) == 2
             ):
                 # Remove the first column when using probabilities in
-                # binary classification because both features are perfectly
+                # binary classification because both features `preds` are perfectly
                 # collinear.
                 X_meta.append(preds[:, 1:])
             else:
@@ -139,6 +139,7 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
             X_meta.append(X)
             if sparse.issparse(X):
                 return sparse.hstack(X_meta, format=X.format)
+
         return np.hstack(X_meta)
 
     @staticmethod
@@ -607,7 +608,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
             Returns a fitted instance of estimator.
         """
         check_classification_targets(y)
-        if type_of_target(y) == "multilabel-indicator":
+        if type_of_target(y) in ("multilabel-indicator", "multiclass-multioutput"):
             self._label_encoder = [LabelEncoder().fit(yk) for yk in y.T]
             self.classes_ = [le.classes_ for le in self._label_encoder]
             y_encoded = np.array(
@@ -645,6 +646,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         """
         y_pred = super().predict(X, **predict_params)
         if isinstance(self._label_encoder, list):
+            # Handle the multilabel-indicator and multiclass-multioutput cases
             y_pred = np.array(
                 [
                     self._label_encoder[target_idx].inverse_transform(target)
@@ -675,6 +677,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         y_pred = self.final_estimator_.predict_proba(self.transform(X))
 
         if isinstance(self._label_encoder, list):
+            # Handle the multilabel-indicator and multiclass-multioutput cases
             y_pred = np.array([preds[:, 0] for preds in y_pred]).T
         return y_pred
 
