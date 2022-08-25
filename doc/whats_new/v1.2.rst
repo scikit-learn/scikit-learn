@@ -139,7 +139,7 @@ Changelog
   :pr:`23470` by :user:`Meekail Zain <micky774>`.
 
 - |Fix| :class:`cluster.KMeans` support readonly attributes when predicting.
-  :pr:`xxxxx` by `Thomas Fan`_
+  :pr:`24258` by `Thomas Fan`_
 
 :mod:`sklearn.datasets`
 .......................
