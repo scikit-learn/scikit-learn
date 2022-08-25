@@ -872,7 +872,7 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         if self.priors is None:
             self.priors_ = np.bincount(y) / float(n_samples)
         else:
-            self.priors_ = np.array(self.priors, copy=False)
+            self.priors_ = np.array(self.priors)
 
         cov = None
         store_covariance = self.store_covariance
