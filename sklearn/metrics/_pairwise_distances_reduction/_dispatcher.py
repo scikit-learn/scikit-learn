@@ -6,9 +6,18 @@ from typing import List
 from scipy.sparse import issparse
 from .._dist_metrics import BOOL_METRICS, METRIC_MAPPING
 
-from ._base import _sqeuclidean_row_norms64
-from ._argkmin import PairwiseDistancesArgKmin64
-from ._radius_neighborhood import PairwiseDistancesRadiusNeighborhood64
+from ._base import (
+    _sqeuclidean_row_norms64,
+    _sqeuclidean_row_norms32,
+)
+from ._argkmin import (
+    PairwiseDistancesArgKmin64,
+    PairwiseDistancesArgKmin32,
+)
+from ._radius_neighborhood import (
+    PairwiseDistancesRadiusNeighborhood64,
+    PairwiseDistancesRadiusNeighborhood32,
+)
 
 from ... import get_config
 
@@ -31,8 +40,12 @@ def sqeuclidean_row_norms(X, num_threads):
     """
     if X.dtype == np.float64:
         return _sqeuclidean_row_norms64(X, num_threads)
+    if X.dtype == np.float32:
+        return _sqeuclidean_row_norms32(X, num_threads)
+
     raise ValueError(
-        f"Only 64bit float datasets are supported at this time, got: X.dtype={X.dtype}."
+        "Only float64 or float32 datasets are supported at this time, "
+        f"got: X.dtype={X.dtype}."
     )
 
 
@@ -79,7 +92,7 @@ class PairwiseDistancesReduction:
         -------
         True if the PairwiseDistancesReduction can be used, else False.
         """
-        dtypes_validity = X.dtype == Y.dtype == np.float64
+        dtypes_validity = X.dtype == Y.dtype and X.dtype in (np.float32, np.float64)
         c_contiguity = (
             hasattr(X, "flags")
             and X.flags.c_contiguous
@@ -247,8 +260,21 @@ class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
                 strategy=strategy,
                 return_distance=return_distance,
             )
+
+        if X.dtype == Y.dtype == np.float32:
+            return PairwiseDistancesArgKmin32.compute(
+                X=X,
+                Y=Y,
+                k=k,
+                metric=metric,
+                chunk_size=chunk_size,
+                metric_kwargs=metric_kwargs,
+                strategy=strategy,
+                return_distance=return_distance,
+            )
+
         raise ValueError(
-            "Only 64bit float datasets are supported at this time, "
+            "Only float64 or float32 datasets pairs are supported at this time, "
             f"got: X.dtype={X.dtype} and Y.dtype={Y.dtype}."
         )
 
@@ -386,7 +412,21 @@ class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
                 sort_results=sort_results,
                 return_distance=return_distance,
             )
+
+        if X.dtype == Y.dtype == np.float32:
+            return PairwiseDistancesRadiusNeighborhood32.compute(
+                X=X,
+                Y=Y,
+                radius=radius,
+                metric=metric,
+                chunk_size=chunk_size,
+                metric_kwargs=metric_kwargs,
+                strategy=strategy,
+                sort_results=sort_results,
+                return_distance=return_distance,
+            )
+
         raise ValueError(
-            "Only 64bit float datasets are supported at this time, "
+            "Only float64 or float32 datasets pairs are supported at this time, "
             f"got: X.dtype={X.dtype} and Y.dtype={Y.dtype}."
         )
