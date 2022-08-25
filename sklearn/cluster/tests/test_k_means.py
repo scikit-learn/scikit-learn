@@ -1226,10 +1226,11 @@ def test_predict_does_not_change_cluster_centers(is_sparse):
     if is_sparse:
         X = sp.csr_matrix(X)
 
-    kmeans = KMeans().fit(X)
+    kmeans = KMeans()
+    y_pred1 = kmeans.fit_predict(X)
     # Make cluster_centers readonly
     kmeans.cluster_centers_ = create_memmap_backed_data(kmeans.cluster_centers_)
+    kmeans.labels_ = create_memmap_backed_data(kmeans.labels_)
 
-    kmeans.predict(X)
-
-    assert_allclose(centers, kmeans.cluster_centers_)
+    y_pred2 = kmeans.predict(X)
+    assert_allclose(y_pred1, y_pred2)

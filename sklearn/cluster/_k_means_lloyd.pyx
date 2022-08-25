@@ -82,7 +82,7 @@ def lloyd_iter_chunked_dense(
     cdef:
         int n_samples = X.shape[0]
         int n_features = X.shape[1]
-        int n_clusters = centers_new.shape[0]
+        int n_clusters = centers_old.shape[0]
 
         # hard-coded number of samples per chunk. Appeared to be close to
         # optimal in all situations.
@@ -282,7 +282,7 @@ def lloyd_iter_chunked_sparse(
     cdef:
         int n_samples = X.shape[0]
         int n_features = X.shape[1]
-        int n_clusters = centers_new.shape[0]
+        int n_clusters = centers_old.shape[0]
 
         # Choose same as for dense. Does not have the same impact since with
         # sparse data the pairwise distances matrix is not precomputed.

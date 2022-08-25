@@ -784,8 +784,7 @@ def _labels_inertia(
     n_clusters = centers.shape[0]
 
     labels = np.full(n_samples, -1, dtype=np.int32)
-    weight_in_clusters = np.zeros(n_clusters, dtype=centers.dtype)
-    center_shift = np.zeros_like(weight_in_clusters)
+    center_shift = np.zeros(n_clusters, dtype=centers.dtype)
 
     if sp.issparse(X):
         _labels = lloyd_iter_chunked_sparse
@@ -795,13 +794,14 @@ def _labels_inertia(
         _inertia = _inertia_dense
         X = ReadonlyArrayWrapper(X)
 
+    centers = ReadonlyArrayWrapper(centers)
     _labels(
         X,
         sample_weight,
         x_squared_norms,
         centers,
-        centers,
-        weight_in_clusters,
+        None,
+        None,
         labels,
         center_shift,
         n_threads,
@@ -1866,7 +1866,6 @@ class MiniBatchKMeans(_BaseKMeans):
         n_init="warn",
         reassignment_ratio=0.01,
     ):
-
         super().__init__(
             n_clusters=n_clusters,
             init=init,
