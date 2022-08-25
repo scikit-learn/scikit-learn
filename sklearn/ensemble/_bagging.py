@@ -338,7 +338,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
 
     def _get_estimator(self):
         # should be overridden by child classes
-        return None
+        raise NotImplementedError("Return the default base estimator instance.")
 
     def _fit(
         self,

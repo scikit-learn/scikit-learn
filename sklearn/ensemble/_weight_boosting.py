@@ -489,7 +489,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
                 )
         if not has_fit_parameter(base_estimator, "sample_weight"):
             raise ValueError(
-                "%s doesn't support sample_weight." % base_estimator.__class__.__name__
+                f"{base_estimator.__class__.__name__} doesn't support sample_weight."
             )
         return base_estimator
 
