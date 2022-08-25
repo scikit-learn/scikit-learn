@@ -148,13 +148,14 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
     _parameter_constraints = {
         "estimator": [HasMethods(["fit"])],
         "n_features_to_select": [
-            StrOptions({"auto", "warn"}),
+            StrOptions({"auto", "warn"}, deprecated={"warn"}),
             Interval(Real, 0, 1, closed="right"),
             Interval(Integral, 0, None, closed="neither"),
+            Hidden(None),
         ],
         "tol": [None, Interval(Real, 0, None, closed="neither")],
         "direction": [StrOptions({"forward", "backward"})],
-        "scoring": [None, str, callable, list, dict, tuple],
+        "scoring": [None, StrOptions(set(get_scorer_names())), callable, list, dict, tuple],
         "cv": [
             None,
             Interval(Integral, 0, None, closed="neither"),
