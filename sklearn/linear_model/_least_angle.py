@@ -1309,7 +1309,7 @@ class LassoLars(Lars):
     """
 
     _parameter_constraints = {
-        **Lars._parameter_constraints,
+        **Lars._parameter_constraints,  # type: ignore
         "alpha": [Interval(Real, 0, None, closed="left")],
         "max_iter": [Interval(Integral, 0, None, closed="left")],
         "positive": ["boolean"],
@@ -1644,7 +1644,7 @@ class LarsCV(Lars):
     """
 
     _parameter_constraints = {
-        **Lars._parameter_constraints,
+        **Lars._parameter_constraints,  # type: ignore
         "max_iter": [Interval(Integral, 0, None, closed="left")],
         "cv": ["cv_object"],
         "max_n_alphas": [Interval(Integral, 0, None, closed="left")],
