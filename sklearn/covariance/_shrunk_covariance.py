@@ -456,7 +456,7 @@ class LedoitWolf(EmpiricalCovariance):
 
     _parameter_constraints = {
         **EmpiricalCovariance._parameter_constraints,
-        "block_size": [Interval(Integral, 0, None, closed="left")],
+        "block_size": [Interval(Integral, 1, None, closed="left")],
     }
 
     def __init__(self, *, store_precision=True, assume_centered=False, block_size=1000):
