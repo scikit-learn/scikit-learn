@@ -658,7 +658,7 @@ class SelectKBest(_BaseFilter):
 
     _parameter_constraints = {
         **_BaseFilter._parameter_constraints,  # type: ignore
-        "k": [StrOptions({"all"}), Interval(Integral, -1, None, closed="neither")],
+        "k": [StrOptions({"all"}), Interval(Integral, 0, None, closed="left")],
     }
 
     def __init__(self, score_func=f_classif, *, k=10):
@@ -1017,7 +1017,7 @@ class GenericUnivariateSelect(_BaseFilter):
     _parameter_constraints = {
         **_BaseFilter._parameter_constraints,  # type: ignore
         "mode": [StrOptions(set(_selection_modes.keys()))],
-        "param": [Interval(Real, None, None, closed="neither")],
+        "param": [Interval(Real, 0, None, closed="left")],
     }
 
     def __init__(self, score_func=f_classif, *, mode="percentile", param=1e-5):
