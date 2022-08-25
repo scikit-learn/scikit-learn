@@ -233,9 +233,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         warm_start=False,
     ):
         super().__init__(
-            base_estimator=ExtraTreeRegressor(
-                max_features=1, splitter="random", random_state=random_state
-            ),
+            base_estimator=None,
             # here above max_features has no links with self.max_features
             bootstrap=bootstrap,
             bootstrap_features=False,
@@ -259,6 +257,11 @@ class IsolationForest(OutlierMixin, BaseBagging):
         # to avoid suffering from communication overhead and extra memory
         # copies.
         return {"prefer": "threads"}
+
+    def _get_estimator(self):
+        return ExtraTreeRegressor(
+            max_features=1, splitter="random", random_state=self.random_state
+        )
 
     def fit(self, X, y=None, sample_weight=None):
         """
