@@ -101,6 +101,7 @@ UNCHANGED = "$UNCHANGED$"
 # methods at the moment involves monkeypatching this list.
 METHODS = [
     "fit",
+    "fit_predict",
     "partial_fit",
     "predict",
     "predict_proba",

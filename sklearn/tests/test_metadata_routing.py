@@ -1058,6 +1058,9 @@ def test_method_generation():
         def fit(self, X, y):
             pass
 
+        def fit_predict(self, X, y):
+            pass
+
         def partial_fit(self, X, y):
             pass
 
@@ -1091,6 +1094,9 @@ def test_method_generation():
     class SimpleEstimator(BaseEstimator):
         # This class should have every set_{method}_request
         def fit(self, X, y, sample_weight=None):
+            pass
+
+        def fit_predict(self, X, y):
             pass
 
         def partial_fit(self, X, y, sample_weight=None):
