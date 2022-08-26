@@ -188,11 +188,15 @@ Changelog
 :mod:`sklearn.discriminant_analysis`
 ....................................
 
-- |Enhancement| :class:`discriminant_analysis.LinearDiscriminantAnalysis` now
+- |MajorFeature| :class:`discriminant_analysis.LinearDiscriminantAnalysis` now
   supports the `Array API <https://data-apis.org/array-api/latest/>`_ for
   `solver="svd"`. Array API support is considered experimental and might evolve
   without being subjected to our usual rolling deprecation cycle policy. See
   :ref:`array_api` for more details. :pr:`22554` by `Thomas Fan`_.
+
+- |Fix| Validate parameters only in `fit` and not in `__init__`
+  for :class:`discriminant_analysis.QuadraticDiscriminantAnalysis`.
+  :pr:`24218` by :user:`Stefanie Molin <stefmolin>`.
 
 :mod:`sklearn.ensemble`
 .......................

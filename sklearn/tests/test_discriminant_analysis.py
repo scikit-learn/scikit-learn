@@ -11,7 +11,11 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_almost_equal
+<<<<<<< HEAD
 from sklearn.utils._array_api import _convert_to_numpy
+=======
+from sklearn.utils._testing import _convert_container
+>>>>>>> upstream/main
 
 from sklearn.datasets import make_blobs
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
@@ -553,6 +557,30 @@ def test_qda_priors():
     n_pos2 = np.sum(y_pred == 2)
 
     assert n_pos2 > n_pos
+
+
+@pytest.mark.parametrize("priors_type", ["list", "tuple", "array"])
+def test_qda_prior_type(priors_type):
+    """Check that priors accept array-like."""
+    priors = [0.5, 0.5]
+    clf = QuadraticDiscriminantAnalysis(
+        priors=_convert_container([0.5, 0.5], priors_type)
+    ).fit(X6, y6)
+    assert isinstance(clf.priors_, np.ndarray)
+    assert_array_equal(clf.priors_, priors)
+
+
+def test_qda_prior_copy():
+    """Check that altering `priors` without `fit` doesn't change `priors_`"""
+    priors = np.array([0.5, 0.5])
+    qda = QuadraticDiscriminantAnalysis(priors=priors).fit(X, y)
+
+    # we expect the following
+    assert_array_equal(qda.priors_, qda.priors)
+
+    # altering `priors` without `fit` should not change `priors_`
+    priors[0] = 0.2
+    assert qda.priors_[0] != qda.priors[0]
 
 
 def test_qda_store_covariance():
