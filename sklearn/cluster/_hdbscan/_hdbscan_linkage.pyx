@@ -3,7 +3,7 @@
 # License: 3-clause BSD
 
 import numpy as np
-cimport numpy as np
+cimport numpy as cnp
 import cython
 
 from libc.float cimport DBL_MAX
@@ -12,23 +12,24 @@ from libc.stdio cimport printf
 from sklearn.metrics._dist_metrics cimport DistanceMetric
 
 
-cpdef np.ndarray[np.double_t, ndim=2] mst_linkage_core(
-                               np.ndarray[np.double_t,
-                                          ndim=2] distance_matrix):
+cpdef cnp.ndarray[cnp.double_t, ndim=2] mst_linkage_core(
+    cnp.ndarray[cnp.double_t, ndim=2] distance_matrix
+):
 
-    cdef np.ndarray[np.intp_t, ndim=1] node_labels
-    cdef np.ndarray[np.intp_t, ndim=1] current_labels
-    cdef np.ndarray[np.double_t, ndim=1] current_distances
-    cdef np.ndarray[np.double_t, ndim=1] left
-    cdef np.ndarray[np.double_t, ndim=1] right
-    cdef np.ndarray[np.double_t, ndim=2] result
+    cdef:
+        cnp.ndarray[cnp.intp_t, ndim=1] node_labels
+        cnp.ndarray[cnp.intp_t, ndim=1] current_labels
+        cnp.ndarray[cnp.double_t, ndim=1] current_distances
+        cnp.ndarray[cnp.double_t, ndim=1] left
+        cnp.ndarray[cnp.double_t, ndim=1] right
+        cnp.ndarray[cnp.double_t, ndim=2] result
 
-    cdef np.ndarray label_filter
+        cnp.ndarray label_filter
 
-    cdef np.intp_t current_node
-    cdef np.intp_t new_node_index
-    cdef np.intp_t new_node
-    cdef np.intp_t i
+        cnp.intp_t current_node
+        cnp.intp_t new_node_index
+        cnp.intp_t new_node
+        cnp.intp_t i
 
     result = np.zeros((distance_matrix.shape[0] - 1, 3))
     node_labels = np.arange(distance_matrix.shape[0], dtype=np.intp)
@@ -52,49 +53,51 @@ cpdef np.ndarray[np.double_t, ndim=2] mst_linkage_core(
     return result
 
 
-cpdef np.ndarray[np.double_t, ndim=2] mst_linkage_core_vector(
-        np.ndarray[np.double_t, ndim=2, mode='c'] raw_data,
-        np.ndarray[np.double_t, ndim=1, mode='c'] core_distances,
-        DistanceMetric dist_metric,
-        np.double_t alpha=1.0):
+cpdef cnp.ndarray[cnp.double_t, ndim=2] mst_linkage_core_vector(
+    cnp.ndarray[cnp.double_t, ndim=2, mode='c'] raw_data,
+    cnp.ndarray[cnp.double_t, ndim=1, mode='c'] core_distances,
+    DistanceMetric dist_metric,
+    cnp.double_t alpha=1.0
+):
 
-    cdef np.ndarray[np.double_t, ndim=1] current_distances_arr
-    cdef np.ndarray[np.double_t, ndim=1] current_sources_arr
-    cdef np.ndarray[np.int8_t, ndim=1] in_tree_arr
-    cdef np.ndarray[np.double_t, ndim=2] result_arr
+    cdef:
+        cnp.ndarray[cnp.double_t, ndim=1] current_distances_arr
+        cnp.ndarray[cnp.double_t, ndim=1] current_sources_arr
+        cnp.ndarray[cnp.int8_t, ndim=1] in_tree_arr
+        cnp.ndarray[cnp.double_t, ndim=2] result_arr
 
-    cdef np.double_t * current_distances
-    cdef np.double_t * current_sources
-    cdef np.double_t * current_core_distances
-    cdef np.double_t * raw_data_ptr
-    cdef np.int8_t * in_tree
-    cdef np.double_t[:, ::1] raw_data_view
-    cdef np.double_t[:, ::1] result
+        cnp.double_t * current_distances
+        cnp.double_t * current_sources
+        cnp.double_t * current_core_distances
+        cnp.double_t * raw_data_ptr
+        cnp.int8_t * in_tree
+        cnp.double_t[:, ::1] raw_data_view
+        cnp.double_t[:, ::1] result
 
-    cdef np.ndarray label_filter
+        cnp.ndarray label_filter
 
-    cdef np.intp_t current_node
-    cdef np.intp_t source_node
-    cdef np.intp_t right_node
-    cdef np.intp_t left_node
-    cdef np.intp_t new_node
-    cdef np.intp_t i
-    cdef np.intp_t j
-    cdef np.intp_t dim
-    cdef np.intp_t num_features
+        cnp.intp_t current_node
+        cnp.intp_t source_node
+        cnp.intp_t right_node
+        cnp.intp_t left_node
+        cnp.intp_t new_node
+        cnp.intp_t i
+        cnp.intp_t j
+        cnp.intp_t dim
+        cnp.intp_t num_features
 
-    cdef double current_node_core_distance
-    cdef double right_value
-    cdef double left_value
-    cdef double core_value
-    cdef double new_distance
+        double current_node_core_distance
+        double right_value
+        double left_value
+        double core_value
+        double new_distance
 
     dim = raw_data.shape[0]
     num_features = raw_data.shape[1]
 
-    raw_data_view = (<np.double_t[:raw_data.shape[0], :raw_data.shape[1]:1]> (
-        <np.double_t *> raw_data.data))
-    raw_data_ptr = (<np.double_t *> &raw_data_view[0, 0])
+    raw_data_view = (<cnp.double_t[:raw_data.shape[0], :raw_data.shape[1]:1]> (
+        <cnp.double_t *> raw_data.data))
+    raw_data_ptr = (<cnp.double_t *> &raw_data_view[0, 0])
 
     result_arr = np.zeros((dim - 1, 3))
     in_tree_arr = np.zeros(dim, dtype=np.int8)
@@ -102,11 +105,11 @@ cpdef np.ndarray[np.double_t, ndim=2] mst_linkage_core_vector(
     current_distances_arr = np.infty * np.ones(dim)
     current_sources_arr = np.ones(dim)
 
-    result = (<np.double_t[:dim - 1, :3:1]> (<np.double_t *> result_arr.data))
-    in_tree = (<np.int8_t *> in_tree_arr.data)
-    current_distances = (<np.double_t *> current_distances_arr.data)
-    current_sources = (<np.double_t *> current_sources_arr.data)
-    current_core_distances = (<np.double_t *> core_distances.data)
+    result = (<cnp.double_t[:dim - 1, :3:1]> (<cnp.double_t *> result_arr.data))
+    in_tree = (<cnp.int8_t *> in_tree_arr.data)
+    current_distances = (<cnp.double_t *> current_distances_arr.data)
+    current_sources = (<cnp.double_t *> current_sources_arr.data)
+    current_core_distances = (<cnp.double_t *> core_distances.data)
 
     for i in range(1, dim):
 
@@ -174,21 +177,22 @@ cpdef np.ndarray[np.double_t, ndim=2] mst_linkage_core_vector(
 
 cdef class UnionFind (object):
 
-    cdef np.ndarray parent_arr
-    cdef np.ndarray size_arr
-    cdef np.intp_t next_label
-    cdef np.intp_t *parent
-    cdef np.intp_t *size
+    cdef:
+        cnp.ndarray parent_arr
+        cnp.ndarray size_arr
+        cnp.intp_t next_label
+        cnp.intp_t *parent
+        cnp.intp_t *size
 
     def __init__(self, N):
         self.parent_arr = -1 * np.ones(2 * N - 1, dtype=np.intp, order='C')
         self.next_label = N
         self.size_arr = np.hstack((np.ones(N, dtype=np.intp),
                                    np.zeros(N-1, dtype=np.intp)))
-        self.parent = (<np.intp_t *> self.parent_arr.data)
-        self.size = (<np.intp_t *> self.size_arr.data)
+        self.parent = (<cnp.intp_t *> self.parent_arr.data)
+        self.size = (<cnp.intp_t *> self.size_arr.data)
 
-    cdef void union(self, np.intp_t m, np.intp_t n):
+    cdef void union(self, cnp.intp_t m, cnp.intp_t n):
         self.size[self.next_label] = self.size[m] + self.size[n]
         self.parent[m] = self.next_label
         self.parent[n] = self.next_label
@@ -198,8 +202,8 @@ cdef class UnionFind (object):
         return
 
     @cython.wraparound(True)
-    cdef np.intp_t fast_find(self, np.intp_t n):
-        cdef np.intp_t p
+    cdef cnp.intp_t fast_find(self, cnp.intp_t n):
+        cdef cnp.intp_t p
         p = n
         while self.parent_arr[n] != -1:
             n = self.parent_arr[n]
@@ -209,24 +213,25 @@ cdef class UnionFind (object):
         return n
 
 @cython.wraparound(True)
-cpdef np.ndarray[np.double_t, ndim=2] label(np.ndarray[np.double_t, ndim=2] L):
+cpdef cnp.ndarray[cnp.double_t, ndim=2] label(cnp.double_t[:,:] L):
 
-    cdef np.ndarray[np.double_t, ndim=2] result_arr
-    cdef np.double_t[:, ::1] result
+    cdef:
+        cnp.ndarray[cnp.double_t, ndim=2] result_arr
+        cnp.double_t[:, ::1] result
 
-    cdef np.intp_t N, a, aa, b, bb, index
-    cdef np.double_t delta
+        cnp.intp_t N, a, aa, b, bb, index
+        cnp.double_t delta
 
     result_arr = np.zeros((L.shape[0], L.shape[1] + 1))
-    result = (<np.double_t[:L.shape[0], :4:1]> (
-        <np.double_t *> result_arr.data))
+    result = (<cnp.double_t[:L.shape[0], :4:1]> (
+        <cnp.double_t *> result_arr.data))
     N = L.shape[0] + 1
     U = UnionFind(N)
 
     for index in range(L.shape[0]):
 
-        a = <np.intp_t> L[index, 0]
-        b = <np.intp_t> L[index, 1]
+        a = <cnp.intp_t> L[index, 0]
+        b = <cnp.intp_t> L[index, 1]
         delta = L[index, 2]
 
         aa, bb = U.fast_find(a), U.fast_find(b)

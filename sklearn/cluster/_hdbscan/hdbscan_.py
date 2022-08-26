@@ -45,8 +45,7 @@ _PARAM_CONSTRAINTS = {
         StrOptions(
             {
                 "auto",
-                "best",
-                "generic",
+                "brute",
                 "prims_kdtree",
                 "prims_balltree",
                 "boruvka_kdtree",
@@ -96,7 +95,7 @@ def _process_mst(min_spanning_tree):
     return label(min_spanning_tree)
 
 
-def _hdbscan_generic(
+def _hdbscan_brute(
     X,
     min_samples=5,
     alpha=1.0,
@@ -374,10 +373,10 @@ def hdbscan(
         feature array.
 
         - If metric is a string or callable, it must be one of
-          the options allowed by `metrics.pairwise.pairwise_distances` for its
-          metric parameter.
+          the options allowed by :func:`metrics.pairwise.pairwise_distances`
+          for its metric parameter.
 
-        - If metric is "precomputed", X is assumed to be a distance matrix and
+        - If metric is "precomputed", `X` is assumed to be a distance matrix and
           must be square.
 
     leaf_size : int, default=40
@@ -390,17 +389,15 @@ def hdbscan(
         Exactly which algorithm to use; hdbscan has variants specialised
         for different characteristics of the data. By default this is set
         to `'auto'` which attempts to use a `KDTree` method if possible,
-        otherwise it uses a `BallTree` method. If the `X` passed during `fit`
-        has `n_features>60` then a `boruvka` approach is used, otherwise a
-        `prims` approach is used.
+        otherwise it uses a `BallTree` method. If `X` has `n_features>60`
+        then a `boruvka` approach is used, otherwise a `prims` approach is
+        used.
 
-        If the `X` passed during `fit` is sparse or `metric` is not a valid
-        metric for neither `KDTree` nor `BallTree` then it resolves to use
-        the `generic` algorithm.
+        If `X` is sparse or `metric` is invalid for both `KDTree` and
+        `BallTree`, then it resolves to use the `brute` algorithm.
 
         Available algorithms:
-        - `'best'`
-        - `'generic'`
+        - `'brute'`
         - `'prims_kdtree'`
         - `'prims_balltree'`
         - `'boruvka_kdtree'`
@@ -504,11 +501,11 @@ def hdbscan(
         )
 
     if algorithm != "auto":
-        if metric != "precomputed" and issparse(X) and algorithm != "generic":
-            raise ValueError("Sparse data matrices only support algorithm `generic`.")
+        if metric != "precomputed" and issparse(X) and algorithm != "brute":
+            raise ValueError("Sparse data matrices only support algorithm `brute`.")
 
-        if algorithm == "generic":
-            func = _hdbscan_generic
+        if algorithm == "brute":
+            func = _hdbscan_brute
             for key in ("algo", "leaf_size", "n_jobs"):
                 kwargs.pop(key, None)
         elif algorithm == "prims_kdtree":
@@ -526,7 +523,7 @@ def hdbscan(
     else:
         if issparse(X) or metric not in FAST_METRICS:
             # We can't do much with sparse matrices ...
-            func = _hdbscan_generic
+            func = _hdbscan_brute
             for key in ("algo", "leaf_size", "n_jobs"):
                 kwargs.pop(key, None)
         elif metric in KDTree.valid_metrics:
@@ -612,13 +609,12 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         has `n_features>60` then a `boruvka` approach is used, otherwise a
         `prims` approach is used.
 
-        If the `X` passed during `fit` is sparse or `metric` is not a valid
-        metric for neither `KDTree` nor `BallTree` then it resolves to use
-        the `generic` algorithm.
+        If the `X` passed during `fit` is sparse or `metric` is invalid for
+        both `KDTree` and `BallTree`, then it resolves to use the `brute`
+        algorithm.
 
         Available algorithms:
-        - `'best'`
-        - `'generic'`
+        - `'brute'`
         - `'prims_kdtree'`
         - `'prims_balltree'`
         - `'boruvka_kdtree'`
@@ -628,7 +624,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         Leaf size for trees responsible for fast nearest neighbour queries. A
         large dataset size and small leaf_size may induce excessive memory
         usage. If you are running out of memory consider increasing the
-        `leaf_size` parameter. Ignored for `algorithm=generic`.
+        `leaf_size` parameter. Ignored for `algorithm=brute`.
 
     memory : str, default=None
         Used to cache the output of the computation of the tree.

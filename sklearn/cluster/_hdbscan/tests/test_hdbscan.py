@@ -131,7 +131,7 @@ def test_hdbscan_feature_vector():
         "prims_balltree",
         "boruvka_kdtree",
         "boruvka_balltree",
-        "generic",
+        "brute",
         "auto",
     ],
 )
@@ -157,7 +157,7 @@ def test_hdbscan_algorithms(algo, metric):
         "minkowski": {"p": 2},
         "wminkowski": {"p": 2, "w": np.ones(X.shape[1])},
     }
-    if algo not in ("auto", "generic"):
+    if algo not in ("auto", "brute"):
         if metric not in ALGOS_TREES[algo].valid_metrics:
             with pytest.raises(ValueError):
                 hdbscan(
@@ -271,14 +271,14 @@ def test_hdbscan_boruvka_matches(tree):
 
     data = generate_noisy_data()
 
-    labels_prims = hdbscan(data, algorithm="generic")[0]
+    labels_prims = hdbscan(data, algorithm="brute")[0]
     labels_boruvka = hdbscan(data, algorithm=f"boruvka_{tree}")[0]
 
     num_mismatches = homogeneity(labels_prims, labels_boruvka)
 
     assert (num_mismatches / float(data.shape[0])) < 0.15
 
-    labels_prims = HDBSCAN(algorithm="generic").fit_predict(data)
+    labels_prims = HDBSCAN(algorithm="brute").fit_predict(data)
     labels_boruvka = HDBSCAN(algorithm=f"boruvka_{tree}").fit_predict(data)
 
     num_mismatches = homogeneity(labels_prims, labels_boruvka)
@@ -288,7 +288,7 @@ def test_hdbscan_boruvka_matches(tree):
 
 @pytest.mark.parametrize("strategy", ["prims", "boruvka"])
 @pytest.mark.parametrize("tree", ["kd", "ball"])
-def test_hdbscan_precomputed_non_generic(strategy, tree):
+def test_hdbscan_precomputed_non_brute(strategy, tree):
     hdb = HDBSCAN(metric="precomputed", algorithm=f"{strategy}_{tree}tree")
     with pytest.raises(ValueError):
         hdbscan(X, metric="precomputed", algorithm=f"{strategy}_{tree}tree")
@@ -310,7 +310,7 @@ def test_hdbscan_sparse():
     n_clusters = len(set(labels)) - int(-1 in labels)
     assert n_clusters == 3
 
-    msg = "Sparse data matrices only support algorithm `generic`."
+    msg = "Sparse data matrices only support algorithm `brute`."
     with pytest.raises(ValueError, match=msg):
         HDBSCAN(metric="euclidean", algorithm="boruvka_balltree").fit(sparse_X)
     with pytest.raises(ValueError, match=msg):

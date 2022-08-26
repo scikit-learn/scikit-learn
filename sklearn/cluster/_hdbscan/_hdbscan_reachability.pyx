@@ -14,7 +14,7 @@ from scipy.spatial.distance import pdist, squareform
 from sklearn.neighbors import BallTree, KDTree
 
 
-def mutual_reachability(distance_matrix, min_points=5, alpha=1.0):
+def mutual_reachability(distance_matrix, min_points=5, alpha=None):
     """Compute the weighted adjacency matrix of the mutual reachability
     graph of a distance matrix.
 
@@ -23,9 +23,13 @@ def mutual_reachability(distance_matrix, min_points=5, alpha=1.0):
     distance_matrix : ndarray, shape (n_samples, n_samples)
         Array of distances between samples.
 
-    min_points : int, optional (default=5)
+    min_points : int, default=5
         The number of points in a neighbourhood for a point to be considered
         a core point.
+
+    alpha : float, default=None
+        A distance scaling parameter as used in robust single linkage. This
+        divides the distances when calculating mutual reachability.
 
     Returns
     -------
@@ -49,7 +53,7 @@ def mutual_reachability(distance_matrix, min_points=5, alpha=1.0):
         core_distances = np.sort(distance_matrix,
                                  axis=0)[min_points]
 
-    if alpha != 1.0:
+    if alpha is not None:
         distance_matrix = distance_matrix / alpha
 
     stage1 = np.where(core_distances > distance_matrix,
