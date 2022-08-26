@@ -800,11 +800,11 @@ def _labels_inertia(
         sample_weight,
         x_squared_norms,
         centers,
-        None,
-        None,
-        labels,
-        center_shift,
-        n_threads,
+        centers_new=None,
+        weight_in_clusters=None,
+        labels=labels,
+        center_shift=center_shift,
+        n_threads=n_threads,
         update_centers=False,
     )
 

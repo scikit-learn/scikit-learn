@@ -1233,4 +1233,4 @@ def test_predict_does_not_change_cluster_centers(is_sparse):
     kmeans.labels_ = create_memmap_backed_data(kmeans.labels_)
 
     y_pred2 = kmeans.predict(X)
-    assert_allclose(y_pred1, y_pred2)
+    assert_array_equal(y_pred1, y_pred2)
