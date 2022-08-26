@@ -73,7 +73,9 @@ else:
 
 # TODO: Remove filterwarnings in 1.3 when wminkowski is removed
 @pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
-@pytest.mark.parametrize("metric_param_grid", METRICS_DEFAULT_PARAMS)
+@pytest.mark.parametrize(
+    "metric_param_grid", METRICS_DEFAULT_PARAMS, ids=lambda params: params[0]
+)
 @pytest.mark.parametrize("X, Y", [(X64, Y64), (X32, Y32), (X_mmap, Y_mmap)])
 def test_cdist(metric_param_grid, X, Y):
     DistanceMetricInterface = (
@@ -158,7 +160,9 @@ def test_cdist_bool_metric(metric, X_bool, Y_bool):
 
 # TODO: Remove filterwarnings in 1.3 when wminkowski is removed
 @pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
-@pytest.mark.parametrize("metric_param_grid", METRICS_DEFAULT_PARAMS)
+@pytest.mark.parametrize(
+    "metric_param_grid", METRICS_DEFAULT_PARAMS, ids=lambda params: params[0]
+)
 @pytest.mark.parametrize("X", [X64, X32, X_mmap])
 def test_pdist(metric_param_grid, X):
     DistanceMetricInterface = (
@@ -207,7 +211,9 @@ def test_pdist(metric_param_grid, X):
 
 # TODO: Remove filterwarnings in 1.3 when wminkowski is removed
 @pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
-@pytest.mark.parametrize("metric_param_grid", METRICS_DEFAULT_PARAMS)
+@pytest.mark.parametrize(
+    "metric_param_grid", METRICS_DEFAULT_PARAMS, ids=lambda params: params[0]
+)
 def test_distance_metrics_dtype_consistency(metric_param_grid):
     # DistanceMetric must return similar distances for both float32 and float64
     # input data.
@@ -258,7 +264,9 @@ def test_pdist_bool_metrics(metric, X_bool):
 # TODO: Remove filterwarnings in 1.3 when wminkowski is removed
 @pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
 @pytest.mark.parametrize("writable_kwargs", [True, False])
-@pytest.mark.parametrize("metric_param_grid", METRICS_DEFAULT_PARAMS)
+@pytest.mark.parametrize(
+    "metric_param_grid", METRICS_DEFAULT_PARAMS, ids=lambda params: params[0]
+)
 @pytest.mark.parametrize("X", [X64, X32])
 def test_pickle(writable_kwargs, metric_param_grid, X):
     DistanceMetricInterface = (

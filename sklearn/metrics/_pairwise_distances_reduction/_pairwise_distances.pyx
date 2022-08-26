@@ -9,8 +9,8 @@ from ._base cimport (
 )
 
 from ._datasets_pair cimport (
-    DatasetsPair,
-    DenseDenseDatasetsPair,
+    DatasetsPair64,
+    DenseDenseDatasetsPair64,
 )
 
 from ._gemm_term_computer cimport GEMMTermComputer64
@@ -105,7 +105,7 @@ cdef class PairwiseDistances64(PairwiseDistancesReduction64):
             # Fall back on a generic implementation that handles most scipy
             # metrics by computing the distances between 2 vectors at a time.
             pdr = PairwiseDistances64(
-                datasets_pair=DatasetsPair.get_for(X, Y, metric, metric_kwargs),
+                datasets_pair=DatasetsPair64.get_for(X, Y, metric, metric_kwargs),
                 chunk_size=chunk_size,
                 metric_kwargs=metric_kwargs,
                 strategy=strategy,
@@ -124,7 +124,7 @@ cdef class PairwiseDistances64(PairwiseDistancesReduction64):
 
     def __init__(
         self,
-        DatasetsPair datasets_pair,
+        DatasetsPair64 datasets_pair,
         chunk_size=None,
         strategy=None,
         sort_results=False,
@@ -201,14 +201,14 @@ cdef class FastEuclideanPairwiseDistances64(PairwiseDistances64):
 
         super().__init__(
             # The datasets pair here is used for exact distances computations
-            datasets_pair=DatasetsPair.get_for(X, Y, metric="euclidean"),
+            datasets_pair=DatasetsPair64.get_for(X, Y, metric="euclidean"),
             chunk_size=chunk_size,
             strategy=strategy,
             metric_kwargs=metric_kwargs,
         )
-        # X and Y are checked by the DatasetsPair implemented as a DenseDenseDatasetsPair
+        # X and Y are checked by the DatasetsPair64 implemented as a DenseDenseDatasetsPair64
         cdef:
-            DenseDenseDatasetsPair datasets_pair = <DenseDenseDatasetsPair> self.datasets_pair
+            DenseDenseDatasetsPair64 datasets_pair = <DenseDenseDatasetsPair64> self.datasets_pair
             ITYPE_t dist_middle_terms_chunks_size = self.Y_n_samples_chunk * self.X_n_samples_chunk
 
         self.gemm_term_computer = GEMMTermComputer64(

@@ -77,6 +77,8 @@ jobs:
         -e CPU_COUNT=$CPU_COUNT
         -e CCACHE_DIR=/ccache
         -e CCACHE_COMPRESS=$CCACHE_COMPRESS
+        -e BUILD_SOURCEVERSIONMESSAGE="$BUILD_SOURCEVERSIONMESSAGE"
+        -e BUILD_REASON="$BUILD_REASON"
         $DOCKER_CONTAINER
         sleep 1000000
       displayName: 'Start container'
