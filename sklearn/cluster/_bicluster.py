@@ -133,6 +133,7 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
             SpectralBiclustering instance.
         """
         self._validate_params()
+        self._check_parameters(X.shape[0])
         X = self._validate_data(X, accept_sparse="csr", dtype=np.float64)
         self._fit(X)
         return self
