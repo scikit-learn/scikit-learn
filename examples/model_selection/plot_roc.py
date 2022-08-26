@@ -3,8 +3,8 @@
 Multiclass Receiver Operating Characteristic (ROC)
 ==================================================
 
-Example of Receiver Operating Characteristic (ROC) metric to evaluate multiclass
-classifiers quality.
+This example describes the use of the Receiver Operating Characteristic (ROC)
+metric to evaluate multiclass classifiers quality.
 
 ROC curves typically feature true positive rate on the Y axis, and false
 positive rate on the X axis. This means that the top left corner of the plot is
@@ -38,7 +38,7 @@ which gives equal weight to the classification of each label.
 #
 # We import the :ref:`iris_dataset` which contains 3 classes, each one
 # corresponding to a type of iris plant. One class is linearly separable from
-# the other 2; the latter are NOT linearly separable from each other.
+# the other 2; the latter are **not** linearly separable from each other.
 #
 # Here we binarize the output and add noisy features to make the problem harder.
 
@@ -49,7 +49,7 @@ from sklearn.preprocessing import label_binarize
 
 iris = load_iris()
 X, y = iris.data, iris.target
-target_names = load_iris()["target_names"]
+target_names = iris.target_names
 
 random_state = np.random.RandomState(0)
 n_samples, n_features = X.shape
@@ -75,7 +75,7 @@ y_score = classifier.fit(X_train, y_train).predict_proba(X_test)
 # ROC curves are typically defined in binary classification, where the
 # true/false positive rates can be defined unambiguously. In the case of
 # multiclass classification, a notion of true/false positive rates is obtained
-# after "binarizing" the problem. This can be done in 2 different ways:
+# after binarizing the problem. This can be done in 2 different ways:
 #
 # - the One-vs-Rest scheme compares each class against all the others (assumed
 #   as one);
@@ -89,18 +89,17 @@ y_score = classifier.fit(X_train, y_train).predict_proba(X_test)
 # scores of one class compared to all the other classification scores predicted
 # by the multiclass classifier.
 #
-# .. note::
-#     One should not confuse the OvR strategy used to apply ROC **evaluation** to
-#     multiclass classifiers with the OvR strategy used to **train** a multiclass
-#     classifier by fitting a set binary classifiers (for instance via
-#     the :class:`sklearn.multiclass.OneVsRestClassifier` meta-estimator).
-#     The OvR ROC evaluation can be used to evaluate any kind of classification
-#     models respectively of how there where trained (inherently multiclass training,
-#     or via OvR or OvO training reductions, see :ref:`multiclass`).
-#     Here the LogisticRegression model we used is inherently multiclass, thanks to
-#     the use of the multinomial formulation. But it would also have been possible
-#     to use OvR ROC evaluation of an OvO multiclass support vector machine model
-#     such as :class:`sklearn.svm.SVC`.
+# .. note:: One should not confuse the OvR strategy used to apply ROC
+#     **evaluation** to multiclass classifiers with the OvR strategy used to
+#     **train** a multiclass classifier by fitting a set binary classifiers (for
+#     instance via the :class:`sklearn.multiclass.OneVsRestClassifier`
+#     meta-estimator). The OvR ROC evaluation can be used to evaluate any kind
+#     of classification models respectively of how they were trained (inherently
+#     multiclass training, or via OvR or OvO training reductions, see
+#     :ref:`multiclass`). The LogisticRegression model we use is inherently
+#     multiclass, thanks to the use of the multinomial formulation. But it would
+#     also have been possible to use OvR ROC evaluation of an OvO multiclass
+#     support vector machine model such as :class:`sklearn.svm.SVC`.
 #
 # ROC curve showing a specific class
 # ----------------------------------
@@ -112,11 +111,11 @@ y_onehot_test = label_binarize(y_test, classes=[0, 1, 2])
 y_onehot_test.shape  # (n_samples, n_classes)
 
 # %%
-iris.target_names
+target_names
 
 # %%
 class_id = 2
-iris.target_names[class_id]
+target_names[class_id]
 
 # %%
 import matplotlib.pyplot as plt
@@ -194,8 +193,9 @@ print(f"Micro-averaged One-vs-Rest ROC AUC score:\n{roc_auc['micro']:.2f}")
 
 # %%
 # Notice that by default, the computation of the ROC curve adds a single point
-# at the maximal false positive rate by using linear interpolation and `McClish
-# correction <https://pubmed.ncbi.nlm.nih.gov/2668680/>`_.
+# at the maximal false positive rate by using linear interpolation and the
+# McClish correction [:doi:`Analyzing a portion of the ROC curve Med Decis
+# Making. 1989 Jul-Sep; 9(3):190-5.<10.1177/0272989x8900900307>`].
 #
 # ROC curve using the OvR macro-average
 # -------------------------------------
