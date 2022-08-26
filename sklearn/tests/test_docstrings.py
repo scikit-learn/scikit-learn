@@ -14,9 +14,7 @@ numpydoc_validation = pytest.importorskip("numpydoc.validate")
 FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.decomposition._dict_learning.dict_learning",
     "sklearn.decomposition._dict_learning.dict_learning_online",
-    "sklearn.decomposition._nmf.non_negative_factorization",
     "sklearn.externals._packaging.version.parse",
-    "sklearn.feature_extraction.text.strip_accents_unicode",
     "sklearn.inspection._plot.partial_dependence.plot_partial_dependence",
     "sklearn.linear_model._least_angle.lars_path_gram",
     "sklearn.linear_model._omp.orthogonal_mp_gram",
@@ -27,7 +25,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.metrics._ranking.coverage_error",
     "sklearn.metrics._ranking.dcg_score",
     "sklearn.metrics._ranking.roc_curve",
-    "sklearn.metrics._ranking.top_k_accuracy_score",
     "sklearn.metrics._regression.mean_pinball_loss",
     "sklearn.metrics.cluster._bicluster.consensus_score",
     "sklearn.metrics.cluster._supervised.adjusted_mutual_info_score",
