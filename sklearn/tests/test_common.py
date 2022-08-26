@@ -512,7 +512,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "SequentialFeatureSelector",
     "SimpleImputer",
     "SpectralEmbedding",
-    "SplineTransformer",
     "TransformedTargetRegressor",
 ]
 
