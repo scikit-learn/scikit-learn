@@ -17,6 +17,8 @@ from ..utils.validation import check_is_fitted
 from ..decomposition import KernelPCA
 from ..preprocessing import KernelCenterer
 from ..utils.graph import _fix_connected_components
+from ..utils._param_validation import StrOptions, Interval
+from numbers import Integral, Real
 
 
 class Isomap(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
@@ -158,6 +160,51 @@ class Isomap(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     >>> X_transformed.shape
     (100, 2)
     """
+
+    _parameter_constraints = {
+        "n_neighbors": [Interval(Integral, 0, None, closed="left"), None],
+        "radius": [Interval(Real, 0.0, None, closed="left"), None],
+        "n_components": [Interval(Integral, 1, None, closed="left"), None],
+        "eigen_solver": [StrOptions({"auto", "dense", "arpack"})],
+        "tol": [Interval(Real, 0.0, None, closed="left")],
+        "max_iter": [Interval(Integral, 0, None, closed="left"), None],
+        "path_method": [StrOptions({"auto", "FW", "D"})],
+        "neighbors_algorithm": [StrOptions({"auto", "brute", "kd_tree", "ball_tree"})],
+        "n_jobs": [Integral, None],
+        "metric": [
+            StrOptions(
+                {
+                    "minkowski",
+                    "cityblock",
+                    "cosine",
+                    "euclidean",
+                    "l1",
+                    "l2",
+                    "manhattan",
+                    "braycurtis",
+                    "canberra",
+                    "chebyshev",
+                    "correlation",
+                    "dice",
+                    "hamming",
+                    "jaccard",
+                    "mahalanobis",
+                    "minkowski",
+                    "rogerstanimoto",
+                    "russellrao",
+                    "seuclidean",
+                    "sokalmichener",
+                    "sokalsneath",
+                    "sqeuclidean",
+                    "yule",
+                    "precomputed",
+                }
+            ),
+            callable,
+        ],
+        "p": [Interval(Integral, 0, 1, closed="neither")],
+        "metric_params": [dict, None],
+    }
 
     def __init__(
         self,
@@ -325,6 +372,7 @@ class Isomap(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         self : object
             Returns a fitted instance of self.
         """
+        self._validate_params()
         self._fit_transform(X)
         return self
 

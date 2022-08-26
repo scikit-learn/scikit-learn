@@ -473,7 +473,7 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "FunctionTransformer",
     "GenericUnivariateSelect",
     "HashingVectorizer",
-    "Isomap",
+    # "Isomap",
     "IterativeImputer",
     "LabelPropagation",
     "LabelSpreading",
