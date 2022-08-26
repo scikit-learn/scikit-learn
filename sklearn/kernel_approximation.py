@@ -7,7 +7,6 @@ approximate kernel feature maps based on Fourier transforms and Count Sketches.
 #         Daniel Lopez-Sanchez (TensorSketch) <lope@usal.es>
 
 # License: BSD 3 clause
-from numbers import Integral, Real
 import warnings
 
 import numpy as np
