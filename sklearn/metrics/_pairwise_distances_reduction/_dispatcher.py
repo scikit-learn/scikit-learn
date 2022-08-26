@@ -148,7 +148,7 @@ class PairwiseDistances(PairwiseDistancesReduction):
     @classmethod
     def is_usable_for(cls, X, Y, metric) -> bool:
         # TODO: support float32
-        return X.dtype == np.float64 and super().is_usable_for(X, Y, metric)
+        return super().is_usable_for(X, Y, metric) and X.dtype == np.float64
 
     @classmethod
     def compute(
