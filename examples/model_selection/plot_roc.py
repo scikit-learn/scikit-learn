@@ -47,7 +47,8 @@ from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import label_binarize
 
-(X, y) = load_iris(return_X_y=True)
+iris = load_iris()
+X, y = iris.data, iris.target
 target_names = load_iris()["target_names"]
 
 random_state = np.random.RandomState(0)
@@ -62,7 +63,7 @@ X = np.c_[X, random_state.randn(n_samples, 200 * n_features)]
 ) = train_test_split(X, y, test_size=0.5, stratify=y, random_state=0)
 
 # %%
-# We train a linear classifier that can naturaly handle multiclass problems.
+# We train a linear classifier that can naturally handle multiclass problems.
 
 from sklearn.linear_model import LogisticRegression
 
@@ -72,8 +73,8 @@ y_score = classifier.fit(X_train, y_train).predict_proba(X_test)
 
 # %%
 # ROC curves are typically defined in binary classification, where the
-# true/false positive rates can be defined unambiguosly. In the case of
-# multiclass classifcation, a notion of true/false positive rates is obtained
+# true/false positive rates can be defined unambiguously. In the case of
+# multiclass classification, a notion of true/false positive rates is obtained
 # after "binarizing" the problem. This can be done in 2 different ways:
 #
 # - the One-vs-Rest scheme compares each class against all the others (assumed
@@ -84,8 +85,22 @@ y_score = classifier.fit(X_train, y_train).predict_proba(X_test)
 # ==========================
 #
 # The One-vs-the-Rest (OvR) multiclass strategy, also known as one-vs-all,
-# consists in fitting one classifier per class. For each classifier, the class
-# is fitted against all the other classes.
+# consists in computing one ROC curve per class to evaluate the classification
+# scores of one class compared to all the other classification scores predicted
+# by the multiclass classifier.
+#
+# .. note::
+#     One should not confuse the OvR strategy used to apply ROC **evaluation** to
+#     multiclass classifiers with the OvR strategy used to **train** a multiclass
+#     classifier by fitting a set binary classifiers (for instance via
+#     the :class:`sklearn.multiclass.OneVsRestClassifier` meta-estimator).
+#     The OvR ROC evaluation can be used to evaluate any kind of classification
+#     models respectively of how there where trained (inherently multiclass training,
+#     or via OvR or OvO training reductions, see :ref:`multiclass`).
+#     Here the LogisticRegression model we used is inherently multiclass, thanks to
+#     the use of the multinomial formulation. But it would also have been possible
+#     to use OvR ROC evaluation of an OvO multiclass support vector machine model
+#     such as :class:`sklearn.svm.SVC`.
 #
 # ROC curve showing a specific class
 # ----------------------------------
@@ -93,12 +108,19 @@ y_score = classifier.fit(X_train, y_train).predict_proba(X_test)
 # In the following plot we show the resulting ROC curve when regarding the iris
 # flowers as either "virginica" (`class_id=2`) or "non-virginica" (the rest).
 
+y_onehot_test = label_binarize(y_test, classes=[0, 1, 2])
+y_onehot_test.shape  # (n_samples, n_classes)
+
+# %%
+iris.target_names
+
+# %%
+class_id = 2
+iris.target_names[class_id]
+
+# %%
 import matplotlib.pyplot as plt
 from sklearn.metrics import RocCurveDisplay
-
-class_id = 2
-
-y_onehot_test = label_binarize(y_test, classes=[0, 1, 2])
 
 RocCurveDisplay.from_predictions(
     y_onehot_test[:, class_id],
@@ -111,23 +133,22 @@ plt.xlim([0.0, 1.0])
 plt.ylim([0.0, 1.05])
 plt.xlabel("False Positive Rate")
 plt.ylabel("True Positive Rate")
-plt.title("One-vs-Rest Receiver operating characteristic example")
+plt.title("One-vs-Rest ROC: Virginica vs (Setosa & Versicolor)")
 plt.legend()
 plt.show()
 
 # %%
-# ROC curve using the OvR micro-average
-# -------------------------------------
+# ROC curve using micro-averaged OvR
+# ----------------------------------
 #
-# The micro-average aggregates the contributions from all the classes (using
+# Micro-averaging aggregates the contributions from all the classes (using
 # `.ravel`) to compute the average metric. In a multi-class classification
-# setup, micro-average is preferable if you suspect there might be class
-# imbalance.
+# setup, micro-averaging is preferable if the classes are severely imbalanced.
 
 RocCurveDisplay.from_predictions(
     y_onehot_test.ravel(),
     y_score.ravel(),
-    name="One-vs-Rest ROC micro-averaged",
+    name="One-vs-Rest ROC (micro-averaged)",
     color="darkorange",
 )
 plt.plot([0, 1], [0, 1], "k--", label="ROC curve for chance level")
