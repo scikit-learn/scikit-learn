@@ -98,10 +98,14 @@ class PairwiseDistancesReduction:
         def is_numpy_c_ordered(X):
             return hasattr(X, "flags") and X.flags.c_contiguous
 
+        def is_valid_sparse_matrix(X):
+            # TODO: support CSR matrices without non-zeros elements
+            return isspmatrix_csr(X) and X.nnz > 0
+
         return (
             get_config().get("enable_cython_pairwise_dist", True)
-            and (is_numpy_c_ordered(X) or isspmatrix_csr(X))
-            and (is_numpy_c_ordered(Y) or isspmatrix_csr(Y))
+            and (is_numpy_c_ordered(X) or is_valid_sparse_matrix(X))
+            and (is_numpy_c_ordered(Y) or is_valid_sparse_matrix(Y))
             and X.dtype == Y.dtype
             and X.dtype in (np.float32, np.float64)
             and metric in cls.valid_metrics()

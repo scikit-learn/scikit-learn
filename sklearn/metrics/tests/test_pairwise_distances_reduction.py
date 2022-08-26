@@ -545,6 +545,11 @@ def test_pairwise_distances_reduction_is_usable_for():
     # F-ordered arrays are not supported
     assert not PairwiseDistancesReduction.is_usable_for(np.asfortranarray(X), Y, metric)
 
+    # CSR matrices without non-zeros elements aren't currently supported
+    # TODO: support CSR matrices without non-zeros elements
+    X_csr_0_nnz = csr_matrix(X * 0)
+    assert not PairwiseDistancesReduction.is_usable_for(X_csr_0_nnz, Y, metric)
+
 
 def test_argkmin_factory_method_wrong_usages():
     rng = np.random.RandomState(1)
