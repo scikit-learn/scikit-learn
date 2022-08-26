@@ -60,32 +60,6 @@ def configuration(parent_package="", top_path=None):
     config.add_subpackage("tests")
     config.add_subpackage("_hdbscan")
 
-    # HDBSCAN subpackage
-    config.add_subpackage("_hdbscan.tests")
-    config.add_extension(
-        "_hdbscan._hdbscan_boruvka",
-        sources=["_hdbscan/_hdbscan_boruvka.pyx"],
-        include_dirs=[numpy.get_include(), "_hdbscan"],
-        libraries=libraries,
-    )
-    config.add_extension(
-        "_hdbscan._hdbscan_linkage",
-        sources=["_hdbscan/_hdbscan_linkage.pyx"],
-        include_dirs=[numpy.get_include()],
-        libraries=libraries,
-    )
-    config.add_extension(
-        "_hdbscan._hdbscan_reachability",
-        sources=["_hdbscan/_hdbscan_reachability.pyx"],
-        include_dirs=[numpy.get_include()],
-        libraries=libraries,
-    )
-    config.add_extension(
-        "_hdbscan._hdbscan_tree",
-        sources=["_hdbscan/_hdbscan_tree.pyx"],
-        include_dirs=[numpy.get_include()],
-        libraries=libraries,
-    )
     return config
 
 

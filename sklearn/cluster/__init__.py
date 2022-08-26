@@ -23,7 +23,7 @@ from ._optics import (
 )
 from ._bicluster import SpectralBiclustering, SpectralCoclustering
 from ._birch import Birch
-from ._hdbscan.hdbscan_ import HDBSCAN, hdbscan
+from ._hdbscan.hdbscan import HDBSCAN, hdbscan
 
 __all__ = [
     "AffinityPropagation",

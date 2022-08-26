@@ -23,9 +23,9 @@ from sklearn.neighbors import BallTree, KDTree, NearestNeighbors
 from sklearn.utils import check_array, gen_batches, get_chunk_n_rows
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 
-from ._hdbscan_linkage import label, mst_linkage_core, mst_linkage_core_vector
-from ._hdbscan_reachability import mutual_reachability, sparse_mutual_reachability
-from ._hdbscan_tree import (
+from ._linkage import label, mst_linkage_core, mst_linkage_core_vector
+from ._reachability import mutual_reachability, sparse_mutual_reachability
+from ._tree import (
     compute_stability,
     condense_tree,
     get_clusters,

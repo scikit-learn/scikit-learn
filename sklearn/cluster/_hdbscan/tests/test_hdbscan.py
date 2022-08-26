@@ -19,7 +19,6 @@ from sklearn.utils import shuffle
 from sklearn.utils._testing import assert_array_almost_equal
 
 n_clusters = 3
-# X = generate_clustered_data(n_clusters=n_clusters, n_samples_per_cluster=50)
 X, y = make_blobs(n_samples=200, random_state=10)
 X, y = shuffle(X, y, random_state=7)
 X = StandardScaler().fit_transform(X)
@@ -76,7 +75,7 @@ def test_hdbscan_distance_matrix():
 
     labels = hdbscan(D, metric="precomputed")[0]
     # number of clusters, ignoring noise if present
-    n_clusters_1 = len(set(labels)) - int(-1 in labels)  # ignore noise
+    n_clusters_1 = len(set(labels)) - int(-1 in labels)
     assert n_clusters_1 == n_clusters
 
     labels = HDBSCAN(metric="precomputed").fit(D).labels_
@@ -101,7 +100,7 @@ def test_hdbscan_sparse_distance_matrix():
 
     labels = hdbscan(D, metric="precomputed")[0]
     # number of clusters, ignoring noise if present
-    n_clusters_1 = len(set(labels)) - int(-1 in labels)  # ignore noise
+    n_clusters_1 = len(set(labels)) - int(-1 in labels)
     assert n_clusters_1 == n_clusters
 
     labels = HDBSCAN(metric="precomputed").fit(D).labels_
@@ -188,7 +187,6 @@ def test_hdbscan_dbscan_clustering():
 
 def test_hdbscan_high_dimensional():
     H, y = make_blobs(n_samples=50, random_state=0, n_features=64)
-    # H, y = shuffle(X, y, random_state=7)
     H = StandardScaler().fit_transform(H)
     labels = hdbscan(H)[0]
     n_clusters_1 = len(set(labels)) - int(-1 in labels)
