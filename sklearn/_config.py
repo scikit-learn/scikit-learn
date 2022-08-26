@@ -116,7 +116,7 @@ def set_config(
         Use Array API dispatching when inputs follow the Array API standard.
         Default is False.
 
-        .. versionadded:: 1.1
+        .. versionadded:: 1.2
 
     See Also
     --------
@@ -216,7 +216,7 @@ def config_context(
 
         See the :ref:`User Guide <array_api>` for more details.
 
-        .. versionadded:: 1.1
+        .. versionadded:: 1.2
 
     Yields
     ------
