@@ -129,8 +129,6 @@ def test_hdbscan_feature_vector():
     [
         "prims_kdtree",
         "prims_balltree",
-        "boruvka_kdtree",
-        "boruvka_balltree",
         "brute",
         "auto",
     ],
@@ -148,8 +146,6 @@ def test_hdbscan_algorithms(algo, metric):
     ALGOS_TREES = {
         "prims_kdtree": KDTree,
         "prims_balltree": BallTree,
-        "boruvka_kdtree": KDTree,
-        "boruvka_balltree": BallTree,
     }
     METRIC_PARAMS = {
         "mahalanobis": {"V": np.eye(X.shape[1])},
@@ -266,32 +262,11 @@ def test_hdbscan_input_lists():
     HDBSCAN(min_samples=1).fit(X)
 
 
-@pytest.mark.parametrize("tree", ["kdtree", "balltree"])
-def test_hdbscan_boruvka_matches(tree):
-
-    data = generate_noisy_data()
-
-    labels_prims = hdbscan(data, algorithm="brute")[0]
-    labels_boruvka = hdbscan(data, algorithm=f"boruvka_{tree}")[0]
-
-    num_mismatches = homogeneity(labels_prims, labels_boruvka)
-
-    assert (num_mismatches / float(data.shape[0])) < 0.15
-
-    labels_prims = HDBSCAN(algorithm="brute").fit_predict(data)
-    labels_boruvka = HDBSCAN(algorithm=f"boruvka_{tree}").fit_predict(data)
-
-    num_mismatches = homogeneity(labels_prims, labels_boruvka)
-
-    assert (num_mismatches / float(data.shape[0])) < 0.15
-
-
-@pytest.mark.parametrize("strategy", ["prims", "boruvka"])
 @pytest.mark.parametrize("tree", ["kd", "ball"])
-def test_hdbscan_precomputed_non_brute(strategy, tree):
-    hdb = HDBSCAN(metric="precomputed", algorithm=f"{strategy}_{tree}tree")
+def test_hdbscan_precomputed_non_brute(tree):
+    hdb = HDBSCAN(metric="precomputed", algorithm=f"prims_{tree}tree")
     with pytest.raises(ValueError):
-        hdbscan(X, metric="precomputed", algorithm=f"{strategy}_{tree}tree")
+        hdbscan(X, metric="precomputed", algorithm=f"prims_{tree}tree")
     with pytest.raises(ValueError):
         hdb.fit(X)
 
@@ -312,9 +287,9 @@ def test_hdbscan_sparse():
 
     msg = "Sparse data matrices only support algorithm `brute`."
     with pytest.raises(ValueError, match=msg):
-        HDBSCAN(metric="euclidean", algorithm="boruvka_balltree").fit(sparse_X)
+        HDBSCAN(metric="euclidean", algorithm="prims_balltree").fit(sparse_X)
     with pytest.raises(ValueError, match=msg):
-        hdbscan(sparse_X, metric="euclidean", algorithm="boruvka_balltree")
+        hdbscan(sparse_X, metric="euclidean", algorithm="prims_balltree")
 
 
 def test_hdbscan_caching(tmp_path):
@@ -404,17 +379,6 @@ def test_hdbscan_unfit_centers_errors():
 def test_hdbscan_precomputed_array_like():
     X = np.array([[1, np.inf], [np.inf, 1]])
     hdbscan(X, metric="precomputed")
-
-
-@pytest.mark.parametrize("algo", ["boruvka_kdtree", "boruvka_balltree"])
-def test_hdbscan_min_samples_less_than_total(algo):
-    X = np.array([[1, 2], [2, 1]])
-
-    msg = "Expected min_samples"
-    with pytest.raises(ValueError, match=msg):
-        hdbscan(X, algorithm=algo, min_samples=3)
-    with pytest.raises(ValueError, match=msg):
-        HDBSCAN(algorithm=algo, min_samples=3).fit(X)
 
 
 def test_hdbscan_sparse_distances_too_few_nonzero():

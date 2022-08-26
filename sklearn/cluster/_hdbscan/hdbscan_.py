@@ -23,7 +23,6 @@ from sklearn.neighbors import BallTree, KDTree, NearestNeighbors
 from sklearn.utils import check_array, gen_batches, get_chunk_n_rows
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 
-from ._hdbscan_boruvka import BoruvkaAlgorithm
 from ._hdbscan_linkage import label, mst_linkage_core, mst_linkage_core_vector
 from ._hdbscan_reachability import mutual_reachability, sparse_mutual_reachability
 from ._hdbscan_tree import (
@@ -46,10 +45,8 @@ _PARAM_CONSTRAINTS = {
             {
                 "auto",
                 "brute",
-                "prims_kdtree",
-                "prims_balltree",
-                "boruvka_kdtree",
-                "boruvka_balltree",
+                "kdtree",
+                "balltree",
             }
         )
     ],
@@ -226,40 +223,6 @@ def _hdbscan_prims(
     return _process_mst(min_spanning_tree)
 
 
-def _hdbscan_boruvka(
-    X,
-    algo,
-    min_samples=5,
-    metric="euclidean",
-    leaf_size=40,
-    n_jobs=4,
-    **metric_params,
-):
-    leaf_size = max(leaf_size, 3)
-    Tree = KDTree if algo == "kd_tree" else BallTree
-    tree = Tree(X, metric=metric, leaf_size=leaf_size, **metric_params)
-
-    n_samples = X.shape[0]
-    if min_samples + 1 > n_samples:
-        raise ValueError(
-            "Expected min_samples + 1 <= n_samples, "
-            f" but {min_samples+1=}, {n_samples=}"
-        )
-
-    out = BoruvkaAlgorithm(
-        tree=tree,
-        min_samples=min_samples,
-        metric=metric,
-        leaf_size=leaf_size // 3,
-        approx_min_span_tree=True,
-        n_jobs=n_jobs,
-        **metric_params,
-    )
-    min_spanning_tree = out.spanning_tree()
-
-    return _process_mst(min_spanning_tree)
-
-
 def remap_single_linkage_tree(tree, internal_to_raw, outliers):
     """
     Takes an internal single_linkage_tree structure and adds back in a set of points
@@ -388,20 +351,16 @@ def hdbscan(
     algorithm : str, default='auto'
         Exactly which algorithm to use; hdbscan has variants specialised
         for different characteristics of the data. By default this is set
-        to `'auto'` which attempts to use a `KDTree` method if possible,
-        otherwise it uses a `BallTree` method. If `X` has `n_features>60`
-        then a `boruvka` approach is used, otherwise a `prims` approach is
-        used.
+        to `'auto'` which attempts to use a `KDTree` tree if possible,
+        otherwise it uses a `BallTree` tree.
 
         If `X` is sparse or `metric` is invalid for both `KDTree` and
         `BallTree`, then it resolves to use the `brute` algorithm.
 
         Available algorithms:
         - `'brute'`
-        - `'prims_kdtree'`
-        - `'prims_balltree'`
-        - `'boruvka_kdtree'`
-        - `'boruvka_balltree'`
+        - `'kdtree'`
+        - `'balltree'`
 
     memory : str, default=None
         Used to cache the output of the computation of the tree.
@@ -508,17 +467,10 @@ def hdbscan(
             func = _hdbscan_brute
             for key in ("algo", "leaf_size", "n_jobs"):
                 kwargs.pop(key, None)
-        elif algorithm == "prims_kdtree":
+        elif algorithm == "kdtree":
             func = _hdbscan_prims
-        elif algorithm == "prims_balltree":
+        elif algorithm == "balltree":
             func = _hdbscan_prims
-            kwargs["algo"] = "ball_tree"
-        elif algorithm == "boruvka_kdtree":
-            func = _hdbscan_boruvka
-            kwargs.pop("alpha", None)
-        elif algorithm == "boruvka_balltree":
-            func = _hdbscan_boruvka
-            kwargs.pop("alpha", None)
             kwargs["algo"] = "ball_tree"
     else:
         if issparse(X) or metric not in FAST_METRICS:
@@ -527,21 +479,10 @@ def hdbscan(
             for key in ("algo", "leaf_size", "n_jobs"):
                 kwargs.pop(key, None)
         elif metric in KDTree.valid_metrics:
-            # TO DO: Need heuristic to decide when to go to boruvka
-            if X.shape[1] > 60:
-                func = _hdbscan_prims
-            else:
-                func = _hdbscan_boruvka
-                kwargs.pop("alpha", None)
+            func = _hdbscan_prims
         else:  # Metric is a valid BallTree metric
-            # TO DO: Need heuristic to decide when to go to boruvka;
-            if X.shape[1] > 60:
-                func = _hdbscan_prims
-                kwargs["algo"] = "ball_tree"
-            else:
-                func = _hdbscan_boruvka
-                kwargs.pop("alpha", None)
-                kwargs["algo"] = "ball_tree"
+            func = _hdbscan_prims
+            kwargs["algo"] = "ball_tree"
 
     single_linkage_tree = memory.cache(func)(**kwargs)
 
@@ -604,10 +545,8 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
     algorithm : str, default='auto'
         Exactly which algorithm to use; hdbscan has variants specialised
         for different characteristics of the data. By default this is set
-        to `'auto'` which attempts to use a `KDTree` method if possible,
-        otherwise it uses a `BallTree` method. If the `X` passed during `fit`
-        has `n_features>60` then a `boruvka` approach is used, otherwise a
-        `prims` approach is used.
+        to `'auto'` which attempts to use a `KDTree` tree if possible,
+        otherwise it uses a `BallTree` tree.
 
         If the `X` passed during `fit` is sparse or `metric` is invalid for
         both `KDTree` and `BallTree`, then it resolves to use the `brute`
@@ -615,10 +554,8 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
 
         Available algorithms:
         - `'brute'`
-        - `'prims_kdtree'`
-        - `'prims_balltree'`
-        - `'boruvka_kdtree'`
-        - `'boruvka_balltree'`
+        - `'kdtree'`
+        - `'balltree'`
 
     leaf_size : int, default=40
         Leaf size for trees responsible for fast nearest neighbour queries. A
