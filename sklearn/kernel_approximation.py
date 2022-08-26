@@ -7,6 +7,7 @@ approximate kernel feature maps based on Fourier transforms and Count Sketches.
 #         Daniel Lopez-Sanchez (TensorSketch) <lope@usal.es>
 
 # License: BSD 3 clause
+
 import warnings
 
 import numpy as np
@@ -26,7 +27,6 @@ from .utils import check_random_state
 from .utils._param_validation import Interval
 from .utils.extmath import safe_sparse_dot
 from .utils.validation import check_is_fitted
-from .utils._param_validation import Interval
 from .utils.validation import _check_feature_names_in
 from .metrics.pairwise import pairwise_kernels, KERNEL_PARAMS
 from .utils.validation import check_non_negative
