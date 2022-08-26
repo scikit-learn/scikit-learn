@@ -127,7 +127,7 @@ RocCurveDisplay.from_predictions(
     name=f"ROC curve for {target_names[class_id]} vs the rest",
     color="darkorange",
 )
-plt.plot([0, 1], [0, 1], "k--", label="ROC curve for chance level")
+plt.plot([0, 1], [0, 1], "k--", label="ROC curve for chance level (AUC = 0.5)")
 plt.xlim([0.0, 1.0])
 plt.ylim([0.0, 1.05])
 plt.xlabel("False Positive Rate")
@@ -150,7 +150,7 @@ RocCurveDisplay.from_predictions(
     name="One-vs-Rest ROC (micro-averaged)",
     color="darkorange",
 )
-plt.plot([0, 1], [0, 1], "k--", label="ROC curve for chance level")
+plt.plot([0, 1], [0, 1], "k--", label="ROC curve for chance level (AUC = 0.5)")
 plt.xlim([0.0, 1.0])
 plt.ylim([0.0, 1.05])
 plt.xlabel("False Positive Rate")
@@ -268,7 +268,7 @@ for class_id, color in zip(range(n_classes), colors):
         ax=ax,
     )
 
-plt.plot([0, 1], [0, 1], "k--", label="ROC curve for chance level")
+plt.plot([0, 1], [0, 1], "k--", label="ROC curve for chance level (AUC = 0.5)")
 plt.xlim([0.0, 1.0])
 plt.ylim([0.0, 1.05])
 plt.xlabel("False Positive Rate")
@@ -351,7 +351,7 @@ for ix, (idx_a, idx_b) in enumerate(combinations(np.unique(y), 2)):
         ax=ax,
         name=f"ROC curve for {target_names[idx_b]} as positive class",
     )
-    plt.plot([0, 1], [0, 1], "k--", label="ROC curve for chance level")
+    plt.plot([0, 1], [0, 1], "k--", label="ROC curve for chance level (AUC = 0.5)")
     plt.xlim([0.0, 1.0])
     plt.ylim([0.0, 1.05])
     plt.xlabel("False Positive Rate")
@@ -396,7 +396,7 @@ plt.plot(
     linestyle=":",
     linewidth=4,
 )
-plt.plot([0, 1], [0, 1], "k--", label="ROC curve for chance level")
+plt.plot([0, 1], [0, 1], "k--", label="ROC curve for chance level (AUC = 0.5)")
 plt.xlim([0.0, 1.0])
 plt.ylim([0.0, 1.05])
 plt.xlabel("False Positive Rate")
