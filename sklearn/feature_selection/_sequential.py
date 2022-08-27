@@ -164,10 +164,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
             dict,
             tuple,
         ],
-        "cv": [
-            "cv_object",
-            callable,
-        ],
+        "cv": ["cv_object"],
         "n_jobs": [None, Integral],
     }
 
