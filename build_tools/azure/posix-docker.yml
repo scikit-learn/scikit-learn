@@ -13,6 +13,7 @@ jobs:
   pool:
     vmImage: ${{ parameters.vmImage }}
   variables:
+    VIRTUALENV: 'testvenv'
     TEST_DIR: '$(Agent.WorkFolder)/tmp_folder'
     JUNITXML: 'test-data.xml'
     OMP_NUM_THREADS: '2'
@@ -64,19 +65,22 @@ jobs:
         -w /io
         --detach
         --name skcontainer
-        -e DISTRIB=$DISTRIB
-        -e LOCK_FILE=$LOCK_FILE
         -e TEST_DIR=/temp_dir
-        -e JUNITXML=$JUNITXML
-        -e VIRTUALENV=testvenv
-        -e PYTEST_XDIST_VERSION=$PYTEST_XDIST_VERSION
-        -e OMP_NUM_THREADS=$OMP_NUM_THREADS
-        -e OPENBLAS_NUM_THREADS=$OPENBLAS_NUM_THREADS
-        -e SKLEARN_SKIP_NETWORK_TESTS=$SKLEARN_SKIP_NETWORK_TESTS
-        -e SELECTED_TESTS="$SELECTED_TESTS"
-        -e CPU_COUNT=$CPU_COUNT
         -e CCACHE_DIR=/ccache
-        -e CCACHE_COMPRESS=$CCACHE_COMPRESS
+        -e DISTRIB
+        -e LOCK_FILE
+        -e TEST_DIR
+        -e JUNITXML
+        -e VIRTUALENV
+        -e PYTEST_XDIST_VERSION
+        -e OMP_NUM_THREADS
+        -e OPENBLAS_NUM_THREADS
+        -e SKLEARN_SKIP_NETWORK_TESTS
+        -e SELECTED_TESTS
+        -e CPU_COUNT
+        -e CCACHE_COMPRESS
+        -e BUILD_SOURCEVERSIONMESSAGE
+        -e BUILD_REASON
         $DOCKER_CONTAINER
         sleep 1000000
       displayName: 'Start container'
