@@ -337,7 +337,9 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             Fitted estimator.
         """
         self._validate_params()
-
+        # Ensure that there are insufficient samples for max_samples value
+        if 0.0 < self.max_samples < 1.0 and not int(X.shape[0] * self.max_samples) :
+            raise ValueError("insufficient samples for max_samples value")
         # Validate or convert input data
         if issparse(y):
             raise ValueError("sparse multilabel-indicator for y is not supported.")
