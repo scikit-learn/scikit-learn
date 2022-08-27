@@ -338,7 +338,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         """
         self._validate_params()
         # Ensure that the max_samples value is enough to make any samples
-        if not int(X.shape[0] * self.max_samples) :
+        if not int(X.shape[0] * self.max_samples):
             raise ValueError("max_samples value is too low to generate any samples")
         # Validate or convert input data
         if issparse(y):
