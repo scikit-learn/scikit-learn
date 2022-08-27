@@ -1126,3 +1126,29 @@ def test_no_user_warning_with_scoring():
     with warnings.catch_warnings():
         warnings.simplefilter("error", UserWarning)
         est.fit(X_df, y)
+
+
+def test_unknown_category_that_are_negative():
+    """Check that unknown categories that are negative does not error.
+
+    Non-regression test for #24274.
+    """
+
+    rng = np.random.RandomState(0)
+    n_samples = 1000
+    X = np.c_[rng.rand(n_samples), rng.randint(4, size=n_samples)]
+    y = np.zeros(shape=n_samples)
+    y[X[:, 1] % 2 == 0] = 1
+
+    hist = HistGradientBoostingRegressor(
+        random_state=0,
+        categorical_features=[False, True],
+        max_iter=10,
+    ).fit(X, y)
+
+    # -1 is unknown because it is negative
+    y_pred_neg_one = hist.predict(np.asarray([[-1, -1]]))
+
+    # np.nan is treated as unknown
+    y_pred_neg_one = hist.predict(np.array([[np.nan, np.nan]]))
+    assert_allclose(y_pred_neg_one, y_pred_neg_one)
