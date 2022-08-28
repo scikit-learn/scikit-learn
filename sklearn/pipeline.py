@@ -309,7 +309,9 @@ class Pipeline(_BaseComposition):
         # heuristic here is to check for parameter names with "__" and see if
         # the left side of "__" is a valid step name in the steps list.
         names = set([name for name, _ in self.steps])
-        old_params_steps = [param.split("__")[0] for param in props if "__" in param]
+        old_params_steps = set(
+            [param.split("__")[0] for param in props if "__" in param]
+        )
         step_params = old_params_steps & names
         if step_params and "fit" in method:
             # at least one parameter is passed with the old format, so we fall
@@ -943,7 +945,7 @@ class Pipeline(_BaseComposition):
             return router
 
         # then we add the last step
-        method_mapping = MethodMapping(owner=final_est.__class__.__name__)
+        method_mapping = MethodMapping()
         if hasattr(final_est, "fit_transform"):
             method_mapping.add(caller="fit_transform", callee="fit_transform")
         else:
