@@ -9,9 +9,9 @@ from sklearn.mixture import BayesianGaussianMixture
 
 
 @pytest.mark.parametrize("estimator", [GaussianMixture(), BayesianGaussianMixture()])
-def test_gaussian_mixture_n_iter(estimator, global_random_seed):
+def test_gaussian_mixture_n_iter(estimator):
     # check that n_iter is the number of iteration performed.
-    rng = np.random.RandomState(global_random_seed)
+    rng = np.random.RandomState(0)
     X = rng.rand(10, 5)
     # 2 EM iterations to mitigate ConvergenceWarning
     max_iter = 2
@@ -21,9 +21,9 @@ def test_gaussian_mixture_n_iter(estimator, global_random_seed):
 
 
 @pytest.mark.parametrize("estimator", [GaussianMixture(), BayesianGaussianMixture()])
-def test_mixture_n_components_greater_than_n_samples_error(estimator, global_random_seed):
+def test_mixture_n_components_greater_than_n_samples_error(estimator):
     """Check error when n_components <= n_samples"""
-    rng = np.random.RandomState(global_random_seed)
+    rng = np.random.RandomState()
     X = rng.rand(10, 5)
     estimator.set_params(n_components=12)
 
