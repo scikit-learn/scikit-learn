@@ -5,9 +5,9 @@ from scipy.sparse import csr_matrix
 cimport numpy as cnp
 cnp.import_array()
 
-ctypedef cnp.int8_t FLAG_T
+ctypedef cnp.int8_t FLAG_t
 
-# INDEX_{A,B}_T are defined to generate a proper Cartesian product
+# INDEX_{A,B}_t are defined to generate a proper Cartesian product
 # of types through Cython fused-type expansion.
 ctypedef fused INDEX_A_t:
     cnp.int32_t
@@ -22,11 +22,11 @@ ctypedef fused DATA_t:
     cnp.int32_t
     cnp.int64_t
 
-cdef inline INDEX_B_t _deg2_column(
-    INDEX_B_t d,
-    INDEX_B_t i,
-    INDEX_B_t j,
-    FLAG_T interaction_only
+cdef inline cnp.int64_t _deg2_column(
+    cnp.int64_t d,
+    cnp.int64_t i,
+    cnp.int64_t j,
+    FLAG_t interaction_only
 ) nogil:
     """Compute the index of the column for a degree 2 expansion
 
@@ -39,12 +39,12 @@ cdef inline INDEX_B_t _deg2_column(
         return d * i - (i**2 + i) / 2 + j
 
 
-cdef inline INDEX_B_t _deg3_column(
-    INDEX_B_t d,
-    INDEX_B_t i,
-    INDEX_B_t j,
-    INDEX_B_t k,
-    FLAG_T interaction_only
+cdef inline cnp.int64_t _deg3_column(
+    cnp.int64_t d,
+    cnp.int64_t i,
+    cnp.int64_t j,
+    cnp.int64_t k,
+    FLAG_t interaction_only
     ) nogil:
     """Compute the index of the column for a degree 3 expansion
 
@@ -69,15 +69,15 @@ def _csr_polynomial_expansion(
     cnp.ndarray[DATA_t, ndim=1] result_data,
     cnp.ndarray[INDEX_B_t, ndim=1] result_indices,
     cnp.ndarray[INDEX_B_t, ndim=1] result_indptr,
-    FLAG_T interaction_only,
-    FLAG_T degree
+    FLAG_t interaction_only,
+    FLAG_t degree
 ):
     """
     Perform a second-degree polynomial or interaction expansion on a scipy
     compressed sparse row (CSR) matrix. The method used only takes products of
-    non-zero features. For a matrix with density d, this results in a speedup
-    on the order of d^k where k is the degree of the expansion, assuming all
-    rows are of similar density.
+    non-zero features. For a matrix with density :math:`d`, this results in a
+    speedup on the order of :math:`(1/d)^k` where :math:`k` is the degree of
+    the expansion, assuming all rows are of similar density.
 
     Parameters
     ----------
@@ -130,7 +130,7 @@ def _csr_polynomial_expansion(
                 for j_ptr in range(i_ptr + interaction_only, row_ends):
                     j = indices[j_ptr]
                     if degree == 2:
-                        col = _deg2_column[INDEX_B_t](d, i, j, interaction_only)
+                        col = <INDEX_B_t> _deg2_column(d, i, j, interaction_only)
                         result_indices[expanded_index] = col
                         result_data[expanded_index] = (
                             data[i_ptr] * data[j_ptr])
@@ -141,7 +141,7 @@ def _csr_polynomial_expansion(
                         for k_ptr in range(j_ptr + interaction_only,
                                             row_ends):
                             k = indices[k_ptr]
-                            col = _deg3_column[INDEX_B_t](d, i, j, k, interaction_only)
+                            col = <INDEX_B_t> _deg3_column(d, i, j, k, interaction_only)
                             result_indices[expanded_index] = col
                             result_data[expanded_index] = (
                                 data[i_ptr] * data[j_ptr] * data[k_ptr])
