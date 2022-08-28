@@ -57,7 +57,9 @@ from .utils.multiclass import (
 )
 from .utils.metaestimators import _safe_split, available_if
 from .utils.fixes import delayed
-from .utils._param_validation import StrOptions
+from .utils._param_validation import _VerboseHelper
+from .utils._param_validation import Interval
+from .utils._param_validation import validate_params
 
 from joblib import Parallel
 
@@ -284,10 +286,9 @@ class OneVsRestClassifier(
     """
 
     _parameter_constraints = {
-        
         "estimator": [bool],
         "n_jobs": [Interval(Integral, 1, None, closed="left"), None],
-        "verbose": [Interval(Integral, 1, None, closed="left"), None]
+        "verbose": ["verbose"]
     }
 
     def __init__(self, estimator, *, n_jobs=None, verbose=0):
@@ -316,6 +317,7 @@ class OneVsRestClassifier(
         # outperform or match a dense label binarizer in all cases and has also
         # resulted in less or equal memory consumption in the fit_ovr function
         # overall.
+        self._validate_params()
         self.label_binarizer_ = LabelBinarizer(sparse_output=True)
         Y = self.label_binarizer_.fit_transform(y)
         Y = Y.tocsc()
@@ -372,6 +374,7 @@ class OneVsRestClassifier(
         self : object
             Instance of partially fitted estimator.
         """
+        self._validate_params()
         if _check_partial_fit_first_call(self, classes):
             if not hasattr(self.estimator, "partial_fit"):
                 raise ValueError(
