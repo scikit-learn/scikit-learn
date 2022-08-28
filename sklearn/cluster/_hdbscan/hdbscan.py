@@ -423,7 +423,9 @@ def hdbscan(
 
     # Checks input and converts to an nd-array where possible
     if metric != "precomputed" or issparse(X):
-        X = check_array(X, accept_sparse="csr", force_all_finite=False)
+        X = check_array(
+            X, accept_sparse="csr", force_all_finite=False, dtype=np.float64
+        )
     elif isinstance(X, np.ndarray):
         # Only non-sparse, precomputed distance matrices are handled here
         # and thereby allowed to contain numpy.inf for missing distances
