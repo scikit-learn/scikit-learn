@@ -1799,3 +1799,27 @@ def test_random_trees_embedding_feature_names_out():
         ]
     ]
     assert_array_equal(expected_names, names)
+
+
+@pytest.mark.parametrize("ForestClassifier", FOREST_CLASSIFIERS.values())
+@pytest.mark.parametrize(
+    "X, y, params, err_msg",
+    [
+        (
+            iris.data,
+            iris.target,
+            {
+                "max_samples": 1e-4,
+                "bootstrap": True,
+                "class_weight": "balanced_subsample",
+            },
+            "No samples were selected from your data, try increasing max_samples.",
+        ),
+    ],
+)
+def test_insufficient_samples_parallel_build_trees(
+    ForestClassifier, X, y, params, err_msg
+):
+    estimator = ForestClassifier(**params)
+    with pytest.raises(ValueError, match=err_msg):
+        estimator.fit(X, y)
