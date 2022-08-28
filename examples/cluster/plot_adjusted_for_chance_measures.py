@@ -6,13 +6,14 @@ Adjustment for chance in clustering performance evaluation
 This notebook explores the impact of uniformly-distributed random labeling on
 the behavior of some clustering evaluation metrics. For such purpose, the
 metrics are computed at fixed number of samples and as a function of the number
-of clusters assigned by the estimator. The example is divided in two
+of clusters assigned by the estimator. The example is divided into two
 experiments:
 
 - a first experiment with fixed "ground truth labels" (and therefore fixed
   number of classes) and randomly "predicted labels";
 - a second experiment with varying "ground truth labels", randomly "predicted
-  labels" and matching number of classes and assigned number of clusters.
+  labels". The "predicted labels" have the same number of classes and clusters
+  as the "ground truth labels".
 
 """
 
@@ -158,7 +159,7 @@ plt.show()
 # ---------------------------------------------------------
 #
 # In this section we define a similar function that uses several metrics to
-# score 2 uniformly-distributed random labelings. In this case the number of
+# score 2 uniformly-distributed random labelings. In this case, the number of
 # classes and assigned number of clusters are matched for each possible value in
 # `n_clusters_range`.
 
@@ -175,7 +176,7 @@ def uniform_labelings_scores(score_func, n_samples, n_clusters_range, n_runs=5):
 
 
 # %%
-# In this case we use `n_samples=100` to show the effect of having a number of
+# In this case, we use `n_samples=100` to show the effect of having a number of
 # clusters similar or equal to the number of samples.
 
 n_samples = 100
