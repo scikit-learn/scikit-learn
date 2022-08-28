@@ -782,13 +782,13 @@ def test_n_threads_agnosticism(
 @pytest.mark.parametrize("n_samples", [100, 1000])
 @pytest.mark.parametrize("chunk_size", [50, 512, 1024])
 @pytest.mark.parametrize(
-    "PairwiseDistancesReduction",
+    "Dispatcher",
     [ArgKmin, RadiusNeighbors],
 )
 @pytest.mark.parametrize("dtype", [np.float64, np.float32])
 def test_format_agnosticism(
     global_random_seed,
-    PairwiseDistancesReduction,
+    Dispatcher,
     n_samples,
     chunk_size,
     dtype,
@@ -803,7 +803,7 @@ def test_format_agnosticism(
     X_csr = csr_matrix(X)
     Y_csr = csr_matrix(Y)
 
-    if PairwiseDistancesReduction is ArgKmin:
+    if Dispatcher is ArgKmin:
         parameter = 10
         check_parameters = {}
         compute_parameters = {}
@@ -815,7 +815,7 @@ def test_format_agnosticism(
         compute_parameters = {"sort_results": True}
 
     # XXX: use itertools.pairwise when available?
-    dist_dense_dense, indices_dense_dense = PairwiseDistancesReduction.compute(
+    dist_dense_dense, indices_dense_dense = Dispatcher.compute(
         X,
         Y,
         parameter,
@@ -823,7 +823,7 @@ def test_format_agnosticism(
         **compute_parameters,
     )
 
-    dist_sparse_sparse, indices_sparse_sparse = PairwiseDistancesReduction.compute(
+    dist_sparse_sparse, indices_sparse_sparse = Dispatcher.compute(
         X_csr,
         Y_csr,
         parameter,
@@ -831,7 +831,7 @@ def test_format_agnosticism(
         **compute_parameters,
     )
 
-    ASSERT_RESULT[(PairwiseDistancesReduction, dtype)](
+    ASSERT_RESULT[(Dispatcher, dtype)](
         dist_dense_dense,
         dist_sparse_sparse,
         indices_dense_dense,
@@ -839,7 +839,7 @@ def test_format_agnosticism(
         **check_parameters,
     )
 
-    dist_dense_sparse, indices_dense_sparse = PairwiseDistancesReduction.compute(
+    dist_dense_sparse, indices_dense_sparse = Dispatcher.compute(
         X,
         Y_csr,
         parameter,
@@ -847,7 +847,7 @@ def test_format_agnosticism(
         **compute_parameters,
     )
 
-    ASSERT_RESULT[(PairwiseDistancesReduction, dtype)](
+    ASSERT_RESULT[(Dispatcher, dtype)](
         dist_dense_dense,
         dist_dense_sparse,
         indices_dense_dense,
@@ -855,7 +855,7 @@ def test_format_agnosticism(
         **check_parameters,
     )
 
-    dist_sparse_dense, indices_sparse_dense = PairwiseDistancesReduction.compute(
+    dist_sparse_dense, indices_sparse_dense = Dispatcher.compute(
         X_csr,
         Y,
         parameter,
@@ -863,7 +863,7 @@ def test_format_agnosticism(
         **compute_parameters,
     )
 
-    ASSERT_RESULT[(PairwiseDistancesReduction, dtype)](
+    ASSERT_RESULT[(Dispatcher, dtype)](
         dist_dense_dense,
         dist_sparse_dense,
         indices_dense_dense,
