@@ -1138,7 +1138,7 @@ class SGDClassifier(BaseSGDClassifier):
 
     t_ : int
         Number of weight updates performed during training.
-        Same as ``(n_iter_ * n_samples)``.
+        Same as ``(n_iter_ * n_samples + 1)``.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -1912,7 +1912,7 @@ class SGDRegressor(BaseSGDRegressor):
 
     t_ : int
         Number of weight updates performed during training.
-        Same as ``(n_iter_ * n_samples)``.
+        Same as ``(n_iter_ * n_samples + 1)``.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -2123,7 +2123,7 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
 
     t_ : int
         Number of weight updates performed during training.
-        Same as ``(n_iter_ * n_samples)``.
+        Same as ``(n_iter_ * n_samples + 1)``.
 
     loss_function_ : concrete ``LossFunction``
 
