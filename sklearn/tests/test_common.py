@@ -491,7 +491,7 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "Nystroem",
     "OAS",
     "OPTICS",
-    "OneVsRestClassifier",
+    "OneVsOneClassifier",
     "PatchExtractor",
     "PolynomialCountSketch",
     "PolynomialFeatures",
