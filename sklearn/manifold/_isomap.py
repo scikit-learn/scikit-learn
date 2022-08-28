@@ -13,6 +13,7 @@ from scipy.sparse.csgraph import connected_components
 from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
 from ..neighbors import NearestNeighbors, kneighbors_graph
 from ..neighbors import radius_neighbors_graph
+from ..metrics import get_scorer_names
 from ..utils.validation import check_is_fitted
 from ..decomposition import KernelPCA
 from ..preprocessing import KernelCenterer
@@ -172,37 +173,10 @@ class Isomap(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         "neighbors_algorithm": [StrOptions({"auto", "brute", "kd_tree", "ball_tree"})],
         "n_jobs": [Integral, None],
         "metric": [
-            StrOptions(
-                {
-                    "minkowski",
-                    "cityblock",
-                    "cosine",
-                    "euclidean",
-                    "l1",
-                    "l2",
-                    "manhattan",
-                    "braycurtis",
-                    "canberra",
-                    "chebyshev",
-                    "correlation",
-                    "dice",
-                    "hamming",
-                    "jaccard",
-                    "mahalanobis",
-                    "minkowski",
-                    "rogerstanimoto",
-                    "russellrao",
-                    "seuclidean",
-                    "sokalmichener",
-                    "sokalsneath",
-                    "sqeuclidean",
-                    "yule",
-                    "precomputed",
-                }
-            ),
+            StrOptions(set(get_scorer_names())),
             callable,
         ],
-        "p": [Interval(Integral, 0, 1, closed="neither")],
+        "p": [Interval(Integral, 0, None, closed="neither")],
         "metric_params": [dict, None],
     }
 
