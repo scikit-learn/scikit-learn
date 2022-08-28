@@ -88,6 +88,13 @@ class Pipeline(_BaseComposition):
         If True, the time elapsed while fitting each step will be printed as it
         is completed.
 
+    route_metadata_to_transform : bool, default=False
+        Whether passed metadata should be routed ro the steps' ``transform``
+        method or not. The default value will change to ``True`` in version
+        1.4.
+
+        .. versionadded:: 1.2
+
     Attributes
     ----------
     named_steps : :class:`~sklearn.utils.Bunch`
@@ -138,10 +145,13 @@ class Pipeline(_BaseComposition):
     # BaseEstimator interface
     _required_parameters = ["steps"]
 
-    def __init__(self, steps, *, memory=None, verbose=False):
+    def __init__(
+        self, steps, *, memory=None, verbose=False, route_metadata_to_transform="warn"
+    ):
         self.steps = steps
         self.memory = memory
         self.verbose = verbose
+        self.route_metadata_to_transform = route_metadata_to_transform
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.
@@ -289,7 +299,7 @@ class Pipeline(_BaseComposition):
 
         return "(step %d of %d) Processing %s" % (step_idx + 1, len(self.steps), name)
 
-    def _check_method_params(self, method, props):
+    def _check_method_params(self, method, props, **kwargs):
         # First we check if the user is passing arguments in the deprecated
         # step__parameter format. If yes, we display a warning message and we
         # rollback to the old routing behavior for now.
@@ -331,7 +341,38 @@ class Pipeline(_BaseComposition):
             return fit_params_steps
 
         # If we get here, we're doing the new routing behavior
-        routed_params = process_routing(self, method=method, other_params=props)
+        routed_params = process_routing(
+            self, method=method, other_params=props, **kwargs
+        )
+        # now we remove transform routed metadata if
+        # route_metadata_to_transform is not True. This done for backward
+        # compatibility, since Pipeline used to not route any metadata to
+        # transform.
+        warn = []
+        with_final = "transform" in method
+        for _, name, _ in self._iter(with_final=with_final, filter_passthrough=True):
+            if (
+                routed_params[name].transform
+                and self.route_metadata_to_transform is not True
+            ):
+                warn += [name]
+                routed_params[name].transform = {}
+        if warn and self.route_metadata_to_transform == "warn":
+            # note that this warning is raised only if there are metadata which
+            # can be routed to `transform` methods. For users who don't pass
+            # extra metadata or users who use estimators whose `transform`
+            # doesn't accept any metadata, there will be no warnings, which is
+            # the majority of the users.
+            warnings.warn(
+                f"The steps {' '.join(warn)} in this pipeline have requested metadata"
+                " which you have provided, but you have not explicitly set the"
+                " `route_metadata_to_transform` for this Pipeline object. To silence"
+                " this warning, either remove the requests from those steps' transform"
+                " method using their set_transform_request method, or explicitly set"
+                " route_metadata_to_transform to `True` or `False` for this Pipeline"
+                " object.",
+                FutureWarning,
+            )
         return routed_params
 
     # Estimator interface
@@ -493,9 +534,7 @@ class Pipeline(_BaseComposition):
         y_pred : ndarray
             Result of calling `predict` on the final estimator.
         """
-        routed_params = process_routing(
-            self, method="predict", other_params=predict_params
-        )
+        routed_params = self._check_method_params("predict", props=predict_params)
         Xt = X
         for _, name, transform in self._iter(with_final=False):
             Xt = transform.transform(Xt, **routed_params[name].transform)
@@ -569,8 +608,8 @@ class Pipeline(_BaseComposition):
         y_proba : ndarray of shape (n_samples, n_classes)
             Result of calling `predict_proba` on the final estimator.
         """
-        routed_params = process_routing(
-            self, method="predict_proba", other_params=predict_proba_params
+        routed_params = self._check_method_params(
+            method="predict_proba", props=predict_proba_params
         )
         Xt = X
         for _, name, transform in self._iter(with_final=False):
@@ -599,8 +638,8 @@ class Pipeline(_BaseComposition):
         y_score : ndarray of shape (n_samples, n_classes)
             Result of calling `decision_function` on the final estimator.
         """
-        routed_params = process_routing(
-            self, method="decision_function", other_params=decision_function_params
+        routed_params = self._check_method_params(
+            method="decision_function", props=decision_function_params
         )
         Xt = X
         for _, name, transform in self._iter(with_final=False):
@@ -658,8 +697,8 @@ class Pipeline(_BaseComposition):
         y_log_proba : ndarray of shape (n_samples, n_classes)
             Result of calling `predict_log_proba` on the final estimator.
         """
-        routed_params = process_routing(
-            self, method="predict_log_proba", other_params=predict_log_proba_params
+        routed_params = self._check_method_params(
+            method="predict_log_proba", props=predict_log_proba_params
         )
         Xt = X
         for _, name, transform in self._iter(with_final=False):
@@ -696,8 +735,8 @@ class Pipeline(_BaseComposition):
         Xt : ndarray of shape (n_samples, n_transformed_features)
             Transformed data.
         """
-        routed_params = process_routing(
-            self, method="transform", other_params=transform_params
+        routed_params = self._check_method_params(
+            method="transform", props=transform_params
         )
         Xt = X
         for _, name, transform in self._iter():
@@ -727,8 +766,8 @@ class Pipeline(_BaseComposition):
             Inverse transformed data, that is, data in the original feature
             space.
         """
-        routed_params = process_routing(
-            self, method="inverse_transform", other_params=inverse_transform_params
+        routed_params = self._check_method_params(
+            method="inverse_transform", props=inverse_transform_params
         )
         reverse_iter = reversed(list(self._iter()))
         for _, name, transform in reverse_iter:
@@ -764,8 +803,8 @@ class Pipeline(_BaseComposition):
         score : float
             Result of calling `score` on the final estimator.
         """
-        routed_params = process_routing(
-            self, method="score", other_params=score_params, sample_weight=sample_weight
+        routed_params = self._check_method_params(
+            method="score", props=score_params, sample_weight=sample_weight
         )
 
         Xt = X
