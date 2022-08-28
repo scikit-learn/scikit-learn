@@ -76,16 +76,17 @@ score_funcs = [
 
 import numpy as np
 
+rng = np.random.RandomState(0)
+
 
 def random_labels(n_samples, n_classes):
-    labels = np.random.randint
-    return labels(low=0, high=n_classes, size=n_samples)
+    return rng.randint(low=0, high=n_classes, size=n_samples)
 
 
 # %%
 # Another function will use the `random_labels` function to create a fixed set
 # of ground truth labels (`labels_a`) distributed in `n_classes` and then score
-# several sets of randomly "predicted" labels (`labels_b`) to assez the
+# several sets of randomly "predicted" labels (`labels_b`) to assess the
 # variability of a given metric at a given `n_clusters`.
 
 
@@ -112,7 +113,7 @@ import matplotlib.style as style
 
 n_samples = 1000
 n_classes = 10
-n_clusters_range = np.linspace(2, 100, 10).astype(int)
+n_clusters_range = np.arange(2, 102, 11)
 plots = []
 names = []
 
