@@ -173,6 +173,8 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     dropped from the resulting transformed feature matrix, unless specified
     in the `passthrough` keyword. Those columns specified with `passthrough`
     are added at the right to the output of the transformers.
+    It is not possible to address the same columns with more than one
+    transformer. However, multiple ColumnTransformer objects can be chained.
 
     Examples
     --------
