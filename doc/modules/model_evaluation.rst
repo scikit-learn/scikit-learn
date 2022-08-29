@@ -1573,8 +1573,8 @@ same classification task:
 
 * DET curves form a linear curve in normal deviate scale if the detection
   scores are normally (or close-to normally) distributed.
-  It was shown by [Navratil2007]_ that the reverse it not necessarily true and
-  even more general distributions are able produce linear DET curves.
+  It was shown by [Navratil2007]_ that the reverse is not necessarily true and
+  even more general distributions are able to produce linear DET curves.
 
 * The normal deviate scale transformation spreads out the points such that a
   comparatively larger space of plot is occupied.
