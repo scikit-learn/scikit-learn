@@ -494,7 +494,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "OneVsRestClassifier",
     "PatchExtractor",
     "PolynomialCountSketch",
-    "PolynomialFeatures",
     "RANSACRegressor",
     "RBFSampler",
     "RFE",
@@ -508,12 +507,10 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "SelectFwe",
     "SelectKBest",
     "SelectPercentile",
-    "SequentialFeatureSelector",
     "SimpleImputer",
     "SpectralBiclustering",
     "SpectralCoclustering",
     "SpectralEmbedding",
-    "TransformedTargetRegressor",
 ]
 
 
