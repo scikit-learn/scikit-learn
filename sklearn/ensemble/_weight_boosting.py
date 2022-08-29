@@ -454,7 +454,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
     0.983...
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **BaseWeightBoosting._parameter_constraints,
         "algorithm": [StrOptions({"SAMME", "SAMME.R"})],
     }
@@ -1011,7 +1011,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
     0.9771...
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **BaseWeightBoosting._parameter_constraints,
         "loss": [StrOptions({"linear", "square", "exponential"})],
     }

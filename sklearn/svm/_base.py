@@ -70,7 +70,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
     Parameter documentation is in the derived `SVC` class.
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "kernel": [
             StrOptions({"linear", "poly", "rbf", "sigmoid", "precomputed"}),
             callable,
@@ -692,7 +692,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
     """ABC for LibSVM-based classifiers."""
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **BaseLibSVM._parameter_constraints,
         "decision_function_shape": [StrOptions({"ovr", "ovo"})],
         "break_ties": ["boolean"],

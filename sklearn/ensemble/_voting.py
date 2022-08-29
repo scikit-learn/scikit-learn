@@ -286,7 +286,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
     (6, 6)
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **_BaseVoting._parameter_constraints,
         "voting": [StrOptions({"hard", "soft"})],
         "flatten_transform": ["boolean"],

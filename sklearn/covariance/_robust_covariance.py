@@ -699,7 +699,7 @@ class MinCovDet(EmpiricalCovariance):
     array([0.0813... , 0.0427...])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **EmpiricalCovariance._parameter_constraints,
         "support_fraction": [Interval(Real, 0, 1, closed="right"), None],
         "random_state": ["random_state"],

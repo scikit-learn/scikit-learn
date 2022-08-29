@@ -128,7 +128,7 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
     array([2.])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "regressor": [HasMethods(["fit", "predict"]), None],
         "transformer": [HasMethods("transform"), None],
         "func": [callable, None],

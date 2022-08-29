@@ -137,7 +137,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
     0.75
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "strategy": [
             StrOptions({"most_frequent", "prior", "stratified", "uniform", "constant"})
         ],
@@ -526,7 +526,7 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
     0.0
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "strategy": [StrOptions({"mean", "median", "quantile", "constant"})],
         "quantile": [Interval(Real, 0.0, 1.0, closed="both"), None],
         "constant": [

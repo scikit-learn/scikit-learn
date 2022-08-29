@@ -532,7 +532,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
     0.9...
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **_BaseStacking._parameter_constraints,
         "stack_method": [
             StrOptions({"auto", "predict_proba", "decision_function", "predict"})
