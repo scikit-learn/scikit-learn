@@ -112,7 +112,7 @@ pcr = make_pipeline(StandardScaler(), PCA(n_components=1), LinearRegression())
 pcr.fit(X_train, y_train)
 pca = pcr.named_steps["pca"]  # retrieve the PCA step of the pipeline
 
-pls = PLSRegression(n_components=1)
+pls = PLSRegression(n_components=1, algorithm="dayalmacgregor")
 pls.fit(X_train, y_train)
 
 fig, axes = plt.subplots(1, 2, figsize=(10, 3))

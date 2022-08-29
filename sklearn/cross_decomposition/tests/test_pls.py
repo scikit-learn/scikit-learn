@@ -10,8 +10,7 @@ from sklearn.cross_decomposition._pls import (
     _get_first_singular_vectors_svd,
     _svd_flip_1d,
 )
-from sklearn.cross_decomposition import CCA
-from sklearn.cross_decomposition import PLSSVD, PLSRegression, PLSCanonical
+from sklearn.cross_decomposition import CCA, PLSSVD, PLSRegression, PLSCanonical
 from sklearn.datasets import make_regression
 from sklearn.utils import check_random_state
 from sklearn.utils.extmath import svd_flip
@@ -63,15 +62,15 @@ def test_pls_canonical_basics():
     assert_array_almost_equal(Y_back, Y)
 
 
-def test_sanity_check_pls_regression():
-    # Sanity check for PLSRegression
+def test_sanity_check_pls_regression_nipals():
+    # Sanity check for PLSRegression with NIPALS algorithm
     # The results were checked against the R-packages plspm, misOmics and pls
 
     d = load_linnerud()
     X = d.data
     Y = d.target
 
-    pls = PLSRegression(n_components=X.shape[1])
+    pls = PLSRegression(n_components=X.shape[1], algorithm="nipals")
     X_trans, _ = pls.fit_transform(X, Y)
 
     # FIXME: one would expect y_trans == pls.y_scores_ but this is not
@@ -124,6 +123,57 @@ def test_sanity_check_pls_regression():
     y_loadings_sign_flip = np.sign(pls.y_loadings_ / expected_y_loadings)
     assert_array_almost_equal(x_loadings_sign_flip, x_weights_sign_flip)
     assert_array_almost_equal(y_loadings_sign_flip, y_weights_sign_flip)
+
+
+@pytest.mark.parametrize("scale", [True, False])
+def test_sanity_check_pls_regression_dayal_macgregor(scale):
+    # Sanity check for PLSRegression with Dayal-MacGregor
+    # The results were checked against the results of the NIPALS algorithm
+    # Loads the same data used to validate NIPALS against the R NIPALS implementations
+
+    d = load_linnerud()
+    X = d.data
+    Y = d.target
+
+    common_params = {"n_components": X.shape[1], "scale": scale}
+
+    pls_dayal = PLSRegression(algorithm="dayalmacgregor", **common_params).fit(X, Y)
+    pls_nipals = PLSRegression(algorithm="nipals", **common_params).fit(X, Y)
+
+    # overall prediction output
+    assert_allclose(pls_nipals.predict(X), pls_dayal.predict(X), rtol=1e-7)
+
+    # x loadings, x weights, x rotations, y loadings
+    # keep in mind Dayal-MacGregor does not explicitly compute y weights or rotations
+    assert_allclose(
+        np.abs(pls_nipals.x_loadings_), np.abs(pls_dayal.x_loadings_), atol=1e-5
+    )
+    assert_allclose(
+        np.abs(pls_nipals.x_weights_), np.abs(pls_dayal.x_weights_), rtol=1e-3
+    )
+    assert_allclose(
+        np.abs(pls_nipals.x_rotations_), np.abs(pls_dayal.x_rotations_), rtol=1e-5
+    )
+    assert_allclose(
+        np.abs(pls_nipals.y_loadings_), np.abs(pls_dayal.y_loadings_), rtol=1e-5
+    )
+
+
+@pytest.mark.parametrize("scale", [True, False])
+def test_dayalmacgregor_nipals_svd_consistency(scale, global_random_seed):
+    n_samples, n_features, n_targets = 20, 10, 5
+    rng = np.random.RandomState(global_random_seed)
+    X = rng.randn(n_samples, n_features)
+    Y = rng.randn(n_samples, n_targets)
+    common_params = {"tol": 1e-10, "scale": scale, "n_components": X.shape[1]}
+    pls_nipals = PLSRegression(algorithm="nipals", **common_params).fit(X, Y)
+    pls_svd = PLSRegression(algorithm="svd", **common_params).fit(X, Y)
+    pls_dayalmacgregor = PLSRegression(algorithm="dayalmacgregor", **common_params).fit(
+        X, Y
+    )
+
+    assert_allclose(pls_nipals.predict(X), pls_svd.predict(X), rtol=1e-6)
+    assert_allclose(pls_dayalmacgregor.predict(X), pls_nipals.predict(X), rtol=1e-6)
 
 
 def test_sanity_check_pls_regression_constant_column_Y():
@@ -620,3 +670,22 @@ def test_pls_feature_names_out(Klass):
         dtype=object,
     )
     assert_array_equal(names_out, expected_names_out)
+
+
+@pytest.mark.parametrize("scale", [True, False])
+@pytest.mark.parametrize("algorithm", ["nipals", "svd"])
+def test_dayal_macgregor_attributes(scale, algorithm):
+    n_samples, n_features, n_targets = 20, 10, 5
+    X = np.random.randn(n_samples, n_features)
+    Y = np.random.randn(n_samples, n_targets)
+    common_params = {"n_components": 3, "scale": scale}
+    model = PLSRegression(algorithm=algorithm, **common_params).fit(X, Y)
+    # NIPALS and SVD should have y_scores, y_rotations matrices
+    assert hasattr(model, "y_scores_")
+    assert hasattr(model, "y_rotations_")
+    model.set_params(algorithm="dayalmacgregor").fit(X, Y)
+    model.set_params(algorithm="dayalmacgregor").fit(X, Y)
+    # Dayal-MacGregor should not have y_scores, y_rotations matrices
+    # even if we reset a previously instantiated class
+    assert not hasattr(model, "y_scores_")
+    assert not hasattr(model, "y_rotations_")
