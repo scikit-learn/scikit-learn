@@ -924,12 +924,12 @@ def dict_learning_online(
 
     See Also
     --------
-    dict_learning: Solve a dictionary learning matrix factorization problem.
-    DictionaryLearning: Find a dictionary that sparsely encodes data.
-    MiniBatchDictionaryLearning: A faster, less accurate, version of the dictionary
+    dict_learning : Solve a dictionary learning matrix factorization problem.
+    DictionaryLearning : Find a dictionary that sparsely encodes data.
+    MiniBatchDictionaryLearning : A faster, less accurate, version of the dictionary
         learning algorithm.
-    SparsePCA: Sparse Principal Components Analysis.
-    MiniBatchSparsePCA: Mini-batch Sparse Principal Components Analysis.
+    SparsePCA : Sparse Principal Components Analysis.
+    MiniBatchSparsePCA : Mini-batch Sparse Principal Components Analysis.
     """
     deps = (return_n_iter, return_inner_stats, iter_offset, inner_stats)
     if max_iter is not None and not all(arg == "deprecated" for arg in deps):
