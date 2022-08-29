@@ -514,7 +514,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "SpectralBiclustering",
     "SpectralCoclustering",
     "SpectralEmbedding",
-    "TransformedTargetRegressor",
 ]
 
 
