@@ -156,11 +156,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         ],
         "tol": [None, Interval(Real, 0, None, closed="neither")],
         "direction": [StrOptions({"forward", "backward"})],
-        "scoring": [
-            None,
-            StrOptions(set(get_scorer_names())),
-            callable,
-        ],
+        "scoring": [None, StrOptions(set(get_scorer_names())), callable],
         "cv": ["cv_object"],
         "n_jobs": [None, Integral],
     }
