@@ -1296,7 +1296,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
 
     # TODO(1.2): remove "least_absolute_deviation"
     _parameter_constraints = {
-        **BaseHistGradientBoosting._parameter_constraints,  # type: ignore
+        **BaseHistGradientBoosting._parameter_constraints,
         "loss": [
             StrOptions(
                 {
@@ -1637,7 +1637,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
 
     # TODO(1.3): Remove "binary_crossentropy", "categorical_crossentropy", "auto"
     _parameter_constraints = {
-        **BaseHistGradientBoosting._parameter_constraints,  # type: ignore
+        **BaseHistGradientBoosting._parameter_constraints,
         "loss": [
             StrOptions(
                 {

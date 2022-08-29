@@ -46,7 +46,7 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
     instead.
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "estimators": [list],
         "weights": ["array-like", None],
         "n_jobs": [None, Integral],
@@ -287,7 +287,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
     """
 
     _parameter_constraints = {
-        **_BaseVoting._parameter_constraints,  # type: ignore
+        **_BaseVoting._parameter_constraints,
         "voting": [StrOptions({"hard", "soft"})],
         "flatten_transform": ["boolean"],
     }

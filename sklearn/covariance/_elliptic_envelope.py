@@ -141,7 +141,7 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
     """
 
     _parameter_constraints = {
-        **MinCovDet._parameter_constraints,  # type: ignore
+        **MinCovDet._parameter_constraints,
         "contamination": [Interval(Real, 0, 0.5, closed="right")],
     }
 
