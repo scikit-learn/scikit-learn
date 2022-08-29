@@ -1848,7 +1848,7 @@ class SVDD(OutlierMixin, BaseLibSVM):
 
     degree : int, default=3
         Degree of the polynomial kernel function ('poly').
-        Ignored by all other kernels.
+        Must be non-negative. Ignored by all other kernels.
 
     gamma : {'scale', 'auto'} or float, default='scale'
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
@@ -1856,6 +1856,7 @@ class SVDD(OutlierMixin, BaseLibSVM):
         - if ``gamma='scale'`` (default) is passed then it uses
           1 / (n_features * X.var()) as value of gamma,
         - if 'auto', uses 1 / n_features.
+        - if float, must be non-negative.
 
     coef0 : float, default=0.0
         Independent term in kernel function.
@@ -1933,9 +1934,9 @@ class SVDD(OutlierMixin, BaseLibSVM):
 
     See Also
     --------
-    OneClassSVM : Support vector method for outlier detection via a separating
-        soft-margin hyperplane implemented with libsvm with a parameter to
-        control the number of support vectors.
+    sklearn.svm.OneClassSVM : Support vector method for outlier detection via
+        a separating soft-margin hyperplane implemented with libsvm with
+        a parameter to control the number of support vectors.
 
     References
     ----------
@@ -1960,6 +1961,10 @@ class SVDD(OutlierMixin, BaseLibSVM):
     """
 
     _impl = "svdd_l1"
+
+    _parameter_constraints = {**BaseLibSVM._parameter_constraints}  # type: ignore
+    for unused_param in ["C", "class_weight", "epsilon", "probability", "random_state"]:
+        _parameter_constraints.pop(unused_param)
 
     def __init__(
         self,
@@ -1994,7 +1999,7 @@ class SVDD(OutlierMixin, BaseLibSVM):
             random_state=None,
         )
 
-    def fit(self, X, y=None, sample_weight=None, **params):
+    def fit(self, X, y=None, sample_weight=None):
         """Learn a soft minimum-volume hypersphere around the sample X.
 
         Parameters
@@ -2009,14 +2014,6 @@ class SVDD(OutlierMixin, BaseLibSVM):
         sample_weight : array-like of shape (n_samples,), default=None
             Per-sample weights. Rescale C per sample. Higher weights
             force the classifier to put more emphasis on these points.
-
-        **params : dict
-            Additional fit parameters.
-
-            .. deprecated:: 1.0
-                The `fit` method will not longer accept extra keyword
-                parameters in 1.2. These keyword parameters were
-                already discarded.
 
         Returns
         -------
