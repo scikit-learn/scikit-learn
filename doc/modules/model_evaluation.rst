@@ -2603,7 +2603,7 @@ explained in the example linked below.
 .. topic:: Example:
 
   * See :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_quantile.py`
-    for an example of using a the pinball loss to evaluate and tune the
+    for an example of using the pinball loss to evaluate and tune the
     hyper-parameters of quantile regression models on data with non-symmetric
     noise and outliers.
 
