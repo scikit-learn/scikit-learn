@@ -155,13 +155,6 @@ def test_ovr_ovo_regressor():
     # we are doing something sensible
     assert np.mean(pred == iris.target) > 0.9
 
-    ovr = OneVsOneClassifier(DecisionTreeRegressor())
-    pred = ovr.fit(iris.data, iris.target).predict(iris.data)
-    assert len(ovr.estimators_) == n_classes * (n_classes - 1) / 2
-    assert_array_equal(np.unique(pred), [0, 1, 2])
-    # we are doing something sensible
-    assert np.mean(pred == iris.target) > 0.9
-
 
 def test_ovr_fit_predict_sparse():
     for sparse in [
