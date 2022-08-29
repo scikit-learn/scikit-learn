@@ -64,7 +64,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
     direction : {'forward', 'backward'}, default='forward'
         Whether to perform forward selection or backward selection.
 
-    scoring : str, callable, list/tuple or dict, default=None
+    scoring : str or callable, default=None
         A single str (see :ref:`scoring_parameter`) or a callable
         (see :ref:`scoring`) to evaluate the predictions on the test set.
 
@@ -160,9 +160,6 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
             None,
             StrOptions(set(get_scorer_names())),
             callable,
-            list,
-            dict,
-            tuple,
         ],
         "cv": ["cv_object"],
         "n_jobs": [None, Integral],
