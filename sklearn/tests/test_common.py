@@ -497,8 +497,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "PolynomialCountSketch",
     "RANSACRegressor",
     "RBFSampler",
-    "RFE",
-    "RFECV",
     "RegressorChain",
     "RidgeCV",
     "RidgeClassifierCV",
