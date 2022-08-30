@@ -2149,8 +2149,10 @@ def check_classifiers_one_label_sample_weights(name, classifier_orig):
     # Test that fit won't raise an unexpected exception
     if has_fit_parameter(classifier, "sample_weight"):
         with raises(
-            [ValueError, AssertionError], match=[r"\bclass(es)?\b", error_predict],
-            may_pass=True, err_msg=error_fit
+            [ValueError, AssertionError],
+            match=[r"\bclass(es)?\b", error_predict],
+            may_pass=True,
+            err_msg=error_fit,
         ) as cm:
             classifier.fit(X_train, y, sample_weight=sample_weight)
             if cm.raised_and_matched:
@@ -2737,7 +2739,11 @@ def check_classifiers_predictions(X, y, name, classifier_orig):
                         "decision_function does not match "
                         "classifier for %r: expected '%s', got '%s'"
                     )
-                    % (classifier, ", ".join(map(str, y_exp)), ", ".join(map(str, y_pred))),
+                    % (
+                        classifier,
+                        ", ".join(map(str, y_exp)),
+                        ", ".join(map(str, y_pred)),
+                    ),
                 )
 
         # training set performance
