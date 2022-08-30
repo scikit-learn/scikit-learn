@@ -543,7 +543,6 @@ def test_none_estimator_with_weights(X, y, voter):
     assert y_pred.shape == y.shape
 
 
-
 @pytest.mark.parametrize(
     "est",
     [
@@ -570,6 +569,7 @@ def test_n_features_in(est):
     assert not hasattr(est, "n_features_in_")
     est.fit(X, y)
     assert est.n_features_in_ == 2
+
 
 @pytest.mark.parametrize(
     "estimator",
