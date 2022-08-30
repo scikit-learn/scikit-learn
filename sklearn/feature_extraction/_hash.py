@@ -82,8 +82,8 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
            [ 0.,  0.,  0., -2., -5.,  0.,  0.,  0.,  0.,  0.]])
     """
 
-    _parameter_constraints = {
-        "n_features": [Interval(Integral, 1, None, closed="left")],
+    _parameter_constraints: dict = {
+        "n_features": [Interval(Integral, 1, np.iinfo(np.int32).max, closed="both")],
         "input_type": [StrOptions({"dict", "pair", "string"})],
         "dtype": "no_validation",  # delegate to numpy
         "alternate_sign": ["boolean"],
@@ -142,7 +142,6 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
         X : sparse matrix of shape (n_samples, n_features)
             Feature matrix, for use with estimators or further transformers.
         """
-        self._validate_params()
         raw_X = iter(raw_X)
         if self.input_type == "dict":
             raw_X = (_iteritems(d) for d in raw_X)
@@ -166,4 +165,4 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
         return X
 
     def _more_tags(self):
-        return {"X_types": ["string"]}
+        return {"X_types": [self.input_type]}
