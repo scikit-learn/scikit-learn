@@ -118,7 +118,7 @@ class PolynomialCountSketch(
     1.0
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "gamma": [Interval(Real, 0, None, closed="left")],
         "degree": [Interval(Integral, 1, None, closed="left")],
         "coef0": [Interval(Real, None, None, closed="neither")],
