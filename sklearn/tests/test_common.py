@@ -467,7 +467,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "CalibratedClassifierCV",
     "ClassifierChain",
     "DictionaryLearning",
-    "FeatureHasher",
     "HashingVectorizer",
     "Isomap",
     "IterativeImputer",
