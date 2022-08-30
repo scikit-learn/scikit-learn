@@ -56,7 +56,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
     .. versionadded:: 0.18
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "hidden_layer_sizes": [
             "array-like",
             Interval(Integral, 1, None, closed="left"),

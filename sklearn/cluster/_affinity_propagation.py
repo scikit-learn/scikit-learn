@@ -405,7 +405,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
            [4, 2]])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "damping": [Interval(Real, 0.5, 1.0, closed="left")],
         "max_iter": [Interval(Integral, 1, None, closed="left")],
         "convergence_iter": [Interval(Integral, 1, None, closed="left")],
