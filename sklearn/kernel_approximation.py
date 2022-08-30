@@ -598,7 +598,7 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
     0.9499...
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "sample_steps": [Interval(Integral, 1, None, closed="left")],
         "sample_interval": [Interval(Real, 0, None, closed="left"), None],
     }
