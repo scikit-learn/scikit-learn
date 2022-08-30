@@ -12,6 +12,7 @@ from math import log
 import sys
 import warnings
 
+from numbers import Integral, Real
 import numpy as np
 from scipy import linalg, interpolate
 from scipy.linalg.lapack import get_lapack_funcs
@@ -24,6 +25,7 @@ from ..base import RegressorMixin, MultiOutputMixin
 # mypy error: Module 'sklearn.utils' has no attribute 'arrayfuncs'
 from ..utils import arrayfuncs, as_float_array  # type: ignore
 from ..utils import check_random_state
+from ..utils._param_validation import Hidden, Interval, StrOptions
 from ..model_selection import check_cv
 from ..exceptions import ConvergenceWarning
 from ..utils.fixes import delayed
@@ -966,6 +968,19 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
     [ 0. -1.11...]
     """
 
+    _parameter_constraints: dict = {
+        "fit_intercept": ["boolean"],
+        "verbose": ["verbose"],
+        "normalize": ["boolean", Hidden(StrOptions({"deprecated"}))],
+        "precompute": ["boolean", StrOptions({"auto"}), np.ndarray, Hidden(None)],
+        "n_nonzero_coefs": [Interval(Integral, 1, None, closed="left")],
+        "eps": [Interval(Real, 0, None, closed="left")],
+        "copy_X": ["boolean"],
+        "fit_path": ["boolean"],
+        "jitter": [Interval(Real, 0, None, closed="left"), None],
+        "random_state": ["random_state"],
+    }
+
     method = "lar"
     positive = False
 
@@ -1106,6 +1121,8 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         self : object
             Returns an instance of self.
         """
+        self._validate_params()
+
         X, y = self._validate_data(X, y, y_numeric=True, multi_output=True)
 
         _normalize = _deprecate_normalize(
@@ -1290,6 +1307,14 @@ class LassoLars(Lars):
     >>> print(reg.coef_)
     [ 0.         -0.955...]
     """
+
+    _parameter_constraints: dict = {
+        **Lars._parameter_constraints,
+        "alpha": [Interval(Real, 0, None, closed="left")],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
+        "positive": ["boolean"],
+    }
+    _parameter_constraints.pop("n_nonzero_coefs")
 
     method = "lasso"
 
@@ -1618,6 +1643,17 @@ class LarsCV(Lars):
     array([154.3996...])
     """
 
+    _parameter_constraints: dict = {
+        **Lars._parameter_constraints,
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
+        "cv": ["cv_object"],
+        "max_n_alphas": [Interval(Integral, 1, None, closed="left")],
+        "n_jobs": [Integral, None],
+    }
+
+    for parameter in ["n_nonzero_coefs", "jitter", "fit_path", "random_state"]:
+        _parameter_constraints.pop(parameter)
+
     method = "lar"
 
     def __init__(
@@ -1668,6 +1704,8 @@ class LarsCV(Lars):
         self : object
             Returns an instance of self.
         """
+        self._validate_params()
+
         _normalize = _deprecate_normalize(
             self.normalize, default=True, estimator_name=self.__class__.__name__
         )
@@ -1930,6 +1968,11 @@ class LassoLarsCV(LarsCV):
     array([-78.4831...])
     """
 
+    _parameter_constraints = {
+        **LarsCV._parameter_constraints,
+        "positive": ["boolean"],
+    }
+
     method = "lasso"
 
     def __init__(
@@ -2128,6 +2171,15 @@ class LassoLarsIC(LassoLars):
     [ 0.  -1.11...]
     """
 
+    _parameter_constraints: dict = {
+        **LassoLars._parameter_constraints,
+        "criterion": [StrOptions({"aic", "bic"})],
+        "noise_variance": [Interval(Real, 0, None, closed="left"), None],
+    }
+
+    for parameter in ["jitter", "fit_path", "alpha", "random_state"]:
+        _parameter_constraints.pop(parameter)
+
     def __init__(
         self,
         criterion="aic",
@@ -2178,6 +2230,8 @@ class LassoLarsIC(LassoLars):
         self : object
             Returns an instance of self.
         """
+        self._validate_params()
+
         _normalize = _deprecate_normalize(
             self.normalize, default=True, estimator_name=self.__class__.__name__
         )
