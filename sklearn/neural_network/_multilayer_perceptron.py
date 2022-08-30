@@ -36,7 +36,7 @@ from ..utils.multiclass import _check_partial_fit_first_call, unique_labels
 from ..utils.multiclass import type_of_target
 from ..utils.optimize import _check_optimize_result
 from ..utils.metaestimators import available_if
-from ..utils._param_validation import StrOptions, Interval
+from ..utils._param_validation import StrOptions, Options, Interval
 
 
 _STOCHASTIC_SOLVERS = ["sgd", "adam"]
@@ -84,9 +84,10 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         "beta_1": [Interval(Real, 0, 1, closed="left")],
         "beta_2": [Interval(Real, 0, 1, closed="left")],
         "epsilon": [Interval(Real, 0, None, closed="neither")],
-        # TODO update when ScalarOptions available
-        # [Interval(Integral, 1, None, closed="left"), ScalarOptions({np.inf})]
-        "n_iter_no_change": [Interval(Real, 0, None, closed="right")],
+        "n_iter_no_change": [
+            Interval(Integral, 1, None, closed="left"),
+            Options(Real, {np.inf}),
+        ],
         "max_fun": [Interval(Integral, 1, None, closed="left")],
     }
 
