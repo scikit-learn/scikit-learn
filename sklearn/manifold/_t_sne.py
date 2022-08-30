@@ -746,7 +746,7 @@ class TSNE(BaseEstimator):
     (4, 2)
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_components": [Interval(Integral, 1, None, closed="left")],
         "perplexity": [Interval(Real, 0, None, closed="neither")],
         "early_exaggeration": [Interval(Real, 1, None, closed="left")],
