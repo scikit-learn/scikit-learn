@@ -440,7 +440,7 @@ class _BaseFilter(SelectorMixin, BaseEstimator):
         (scores, pvalues) or a single array with scores.
     """
 
-    _parameter_constraints = {"score_func": [callable]}
+    _parameter_constraints: dict = {"score_func": [callable]}
 
     def __init__(self, score_func):
         self.score_func = score_func
@@ -462,6 +462,8 @@ class _BaseFilter(SelectorMixin, BaseEstimator):
         self : object
             Returns the instance itself.
         """
+        self._validate_params()
+
         X, y = self._validate_data(
             X, y, accept_sparse=["csr", "csc"], multi_output=True
         )
@@ -480,7 +482,7 @@ class _BaseFilter(SelectorMixin, BaseEstimator):
         return self
 
     def _check_params(self, X, y):
-        self._validate_params()
+        pass
 
     def _more_tags(self):
         return {"requires_y": True}
@@ -557,8 +559,8 @@ class SelectPercentile(_BaseFilter):
     (1797, 7)
     """
 
-    _parameter_constraints = {
-        **_BaseFilter._parameter_constraints,  # type: ignore
+    _parameter_constraints: dict = {
+        **_BaseFilter._parameter_constraints,
         "percentile": [Interval(Real, 0, 100, closed="both")],
     }
 
@@ -656,8 +658,8 @@ class SelectKBest(_BaseFilter):
     (1797, 20)
     """
 
-    _parameter_constraints = {
-        **_BaseFilter._parameter_constraints,  # type: ignore
+    _parameter_constraints: dict = {
+        **_BaseFilter._parameter_constraints,
         "k": [StrOptions({"all"}), Interval(Integral, 0, None, closed="left")],
     }
 
@@ -666,10 +668,9 @@ class SelectKBest(_BaseFilter):
         self.k = k
 
     def _check_params(self, X, y):
-        super()._check_params(X, y)
-        if not (self.k == "all" or 0 <= self.k <= X.shape[1]):
+        if not isinstance(self.k, str) and self.k > X.shape[1]:
             raise ValueError(
-                f"k should be >=0, <= n_features = {X.shape[1]}; "
+                f"k should be <= n_features = {X.shape[1]}; "
                 f"got {self.k}. Use k='all' to return all features."
             )
 
@@ -755,8 +756,8 @@ class SelectFpr(_BaseFilter):
     (569, 16)
     """
 
-    _parameter_constraints = {
-        **_BaseFilter._parameter_constraints,  # type: ignore
+    _parameter_constraints: dict = {
+        **_BaseFilter._parameter_constraints,
         "alpha": [Interval(Real, 0, 1, closed="both")],
     }
 
@@ -839,8 +840,8 @@ class SelectFdr(_BaseFilter):
     (569, 16)
     """
 
-    _parameter_constraints = {
-        **_BaseFilter._parameter_constraints,  # type: ignore
+    _parameter_constraints: dict = {
+        **_BaseFilter._parameter_constraints,
         "alpha": [Interval(Real, 0, 1, closed="both")],
     }
 
@@ -921,8 +922,8 @@ class SelectFwe(_BaseFilter):
     (569, 15)
     """
 
-    _parameter_constraints = {
-        **_BaseFilter._parameter_constraints,  # type: ignore
+    _parameter_constraints: dict = {
+        **_BaseFilter._parameter_constraints,
         "alpha": [Interval(Real, 0, 1, closed="both")],
     }
 
@@ -1014,8 +1015,8 @@ class GenericUnivariateSelect(_BaseFilter):
         "fwe": SelectFwe,
     }
 
-    _parameter_constraints = {
-        **_BaseFilter._parameter_constraints,  # type: ignore
+    _parameter_constraints: dict = {
+        **_BaseFilter._parameter_constraints,
         "mode": [StrOptions(set(_selection_modes.keys()))],
         "param": [Interval(Real, 0, None, closed="left")],
     }
@@ -1040,7 +1041,6 @@ class GenericUnivariateSelect(_BaseFilter):
         return {"preserves_dtype": [np.float64, np.float32]}
 
     def _check_params(self, X, y):
-        super()._check_params(X, y)
         self._make_selector()._check_params(X, y)
 
     def _get_support_mask(self):

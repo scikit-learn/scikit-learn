@@ -555,15 +555,6 @@ def test_select_percentile_regression_full():
     assert_array_equal(support, gtruth)
 
 
-def test_invalid_percentile():
-    X, y = make_regression(
-        n_samples=10, n_features=20, n_informative=2, shuffle=False, random_state=0
-    )
-
-    with pytest.raises(ValueError):
-        GenericUnivariateSelect(mode="percentile", param=101).fit(X, y)
-
-
 def test_select_kbest_regression():
     # Test whether the relative univariate feature selection
     # gets the correct items in a simple regression problem
