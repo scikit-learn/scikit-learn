@@ -453,7 +453,7 @@ class LedoitWolf(EmpiricalCovariance):
     array([ 0.0595... , -0.0075...])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **EmpiricalCovariance._parameter_constraints,
         "block_size": [Interval(Integral, 1, None, closed="left")],
     }
