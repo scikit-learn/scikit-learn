@@ -465,7 +465,6 @@ def test_estimators_do_not_raise_errors_in_init_or_set_params(Estimator):
 
 PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "AdditiveChi2Sampler",
-    "BayesianRidge",
     "CalibratedClassifierCV",
     "ClassifierChain",
     "DictionaryLearning",
@@ -482,7 +481,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "LassoLarsCV",
     "LassoLarsIC",
     "LatentDirichletAllocation",
-    "LedoitWolf",
     "MiniBatchDictionaryLearning",
     "MultiTaskElasticNet",
     "MultiTaskLasso",
@@ -500,7 +498,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "RidgeCV",
     "RidgeClassifierCV",
     "SelectFromModel",
-    "SimpleImputer",
     "SpectralBiclustering",
     "SpectralCoclustering",
     "SpectralEmbedding",
