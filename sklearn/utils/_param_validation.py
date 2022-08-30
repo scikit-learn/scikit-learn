@@ -296,7 +296,7 @@ class Options(_Constraint):
         representation of the constraint.
     """
 
-    def __init__(self, type, options, deprecated=None):
+    def __init__(self, type, options, *, deprecated=None):
         super().__init__()
         self.type = type
         self.options = options
@@ -335,7 +335,7 @@ class StrOptions(Options):
         representation of the constraint.
     """
 
-    def __init__(self, options, deprecated=None):
+    def __init__(self, options, *, deprecated=None):
         super().__init__(type=str, options=options, deprecated=deprecated)
 
 
