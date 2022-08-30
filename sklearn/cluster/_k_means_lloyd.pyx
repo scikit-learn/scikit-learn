@@ -57,9 +57,6 @@ def lloyd_iter_chunked_dense(
         computed during this iteration. `centers_new` can be `None` if
         `update_centers` is False.
 
-    centers_squared_norms : ndarray of shape (n_clusters,), dtype=floating
-        Squared L2 norm of the centers.
-
     weight_in_clusters : ndarray of shape (n_clusters,), dtype=floating
         Placeholder for the sums of the weights of every observation assigned
         to each center. `weight_in_clusters` can be `None` if `update_centers`
@@ -257,9 +254,6 @@ def lloyd_iter_chunked_sparse(
         Centers after previous iteration, placeholder for the new centers
         computed during this iteration. `centers_new` can be `None` if
         `update_centers` is False.
-
-    centers_squared_norms : ndarray of shape (n_clusters,), dtype=floating
-        Squared L2 norm of the centers.
 
     weight_in_clusters : ndarray of shape (n_clusters,), dtype=floating
         Placeholder for the sums of the weights of every observation assigned
