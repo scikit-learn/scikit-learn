@@ -239,7 +239,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
     instead.
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "base_estimator": "no_validation",
         "n_estimators": [Interval(Integral, 1, None, closed="left")],
         "max_samples": [

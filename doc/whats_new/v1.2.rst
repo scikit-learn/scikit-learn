@@ -185,6 +185,13 @@ Changelog
   :pr:`11860` by :user:`Pierre Ablin <pierreablin>`,
   :pr:`22527` by :user:`Meekail Zain <micky774>` and `Thomas Fan`_.
 
+:mod:`sklearn.discriminant_analysis`
+....................................
+
+- |Fix| Validate parameters only in `fit` and not in `__init__`
+  for :class:`discriminant_analysis.QuadraticDiscriminantAnalysis`.
+  :pr:`24218` by :user:`Stefanie Molin <stefmolin>`.
+
 :mod:`sklearn.ensemble`
 .......................
 
