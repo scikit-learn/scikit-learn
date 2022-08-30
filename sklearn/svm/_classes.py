@@ -191,7 +191,7 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     [1]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "penalty": [StrOptions({"l1", "l2"})],
         "loss": [StrOptions({"hinge", "squared_hinge"})],
         "dual": ["boolean"],
@@ -443,7 +443,7 @@ class LinearSVR(RegressorMixin, LinearModel):
     [-2.384...]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "epsilon": [Real],
         "tol": [Interval(Real, 0.0, None, closed="neither")],
         "C": [Interval(Real, 0.0, None, closed="neither")],
@@ -1039,8 +1039,8 @@ class NuSVC(BaseSVC):
 
     _impl = "nu_svc"
 
-    _parameter_constraints = {
-        **BaseSVC._parameter_constraints,  # type: ignore
+    _parameter_constraints: dict = {
+        **BaseSVC._parameter_constraints,
         "nu": [Interval(Real, 0.0, 1.0, closed="right")],
     }
     _parameter_constraints.pop("C")
@@ -1256,7 +1256,7 @@ class SVR(RegressorMixin, BaseLibSVM):
 
     _impl = "epsilon_svr"
 
-    _parameter_constraints = {**BaseLibSVM._parameter_constraints}  # type: ignore
+    _parameter_constraints: dict = {**BaseLibSVM._parameter_constraints}
     for unused_param in ["class_weight", "nu", "probability", "random_state"]:
         _parameter_constraints.pop(unused_param)
 
@@ -1465,7 +1465,7 @@ class NuSVR(RegressorMixin, BaseLibSVM):
 
     _impl = "nu_svr"
 
-    _parameter_constraints = {**BaseLibSVM._parameter_constraints}  # type: ignore
+    _parameter_constraints: dict = {**BaseLibSVM._parameter_constraints}
     for unused_param in ["class_weight", "epsilon", "probability", "random_state"]:
         _parameter_constraints.pop(unused_param)
 
@@ -1664,7 +1664,7 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
 
     _impl = "one_class"
 
-    _parameter_constraints = {**BaseLibSVM._parameter_constraints}  # type: ignore
+    _parameter_constraints: dict = {**BaseLibSVM._parameter_constraints}
     for unused_param in ["C", "class_weight", "epsilon", "probability", "random_state"]:
         _parameter_constraints.pop(unused_param)
 
