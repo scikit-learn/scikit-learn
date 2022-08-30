@@ -179,7 +179,7 @@ class IncrementalPCA(_BasePCA):
     (1797, 7)
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_components": [Interval(Integral, 1, None, closed="left"), None],
         "whiten": ["boolean"],
         "copy": ["boolean"],
