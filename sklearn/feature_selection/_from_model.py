@@ -230,7 +230,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
     2
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "estimator": [BaseEstimator],
         "threshold": [Interval(Real, None, None, closed="both"), str, None],
         "prefit": ["boolean"],
