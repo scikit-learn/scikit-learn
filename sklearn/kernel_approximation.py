@@ -14,6 +14,7 @@ import warnings
 import numpy as np
 import scipy.sparse as sp
 from scipy.linalg import svd
+from numbers import Integral, Real
 
 try:
     from scipy.fft import fft, ifft
@@ -453,6 +454,12 @@ class SkewedChi2Sampler(
     1.0
     """
 
+    _parameter_constraints: dict = {
+        "skewedness": [Interval(Real, None, None, closed="neither")],
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "random_state": ["random_state"],
+    }
+
     def __init__(self, *, skewedness=1.0, n_components=100, random_state=None):
         self.skewedness = skewedness
         self.n_components = n_components
@@ -478,7 +485,7 @@ class SkewedChi2Sampler(
         self : object
             Returns the instance itself.
         """
-
+        self._validate_params()
         X = self._validate_data(X)
         random_state = check_random_state(self.random_state)
         n_features = X.shape[1]
@@ -599,6 +606,11 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
     0.9499...
     """
 
+    _parameter_constraints: dict = {
+        "sample_steps": [Interval(Integral, 1, None, closed="left")],
+        "sample_interval": [Interval(Real, 0, None, closed="left"), None],
+    }
+
     def __init__(self, *, sample_steps=2, sample_interval=None):
         self.sample_steps = sample_steps
         self.sample_interval = sample_interval
@@ -621,6 +633,8 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
         self : object
             Returns the transformer.
         """
+        self._validate_params()
+
         X = self._validate_data(X, accept_sparse="csr")
         check_non_negative(X, "X in AdditiveChi2Sampler.fit")
 

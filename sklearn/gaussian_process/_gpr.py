@@ -175,7 +175,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
     (array([653.0..., 592.1...]), array([316.6..., 316.6...]))
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "kernel": [None, Kernel],
         "alpha": [Interval(Real, 0, None, closed="left"), np.ndarray],
         "optimizer": [StrOptions({"fmin_l_bfgs_b"}), callable, None],

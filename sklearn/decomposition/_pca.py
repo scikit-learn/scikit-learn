@@ -359,7 +359,7 @@ class PCA(_BasePCA):
     [6.30061...]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_components": [
             Interval(Integral, 0, None, closed="left"),
             Interval(Real, 0, 1, closed="neither"),
