@@ -504,7 +504,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "SelectFwe",
     "SelectKBest",
     "SelectPercentile",
-    "SimpleImputer",
     "SpectralBiclustering",
     "SpectralCoclustering",
     "SpectralEmbedding",
