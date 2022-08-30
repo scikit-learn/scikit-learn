@@ -135,7 +135,7 @@ class VerboseReporter:
 class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
     """Abstract base class for Gradient Boosting."""
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **DecisionTreeRegressor._parameter_constraints,
         "learning_rate": [Interval(Real, 0.0, None, closed="left")],
         "n_estimators": [Interval(Integral, 1, None, closed="left")],
@@ -1214,7 +1214,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
     """
 
     # TODO(1.3): remove "deviance"
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **BaseGradientBoosting._parameter_constraints,
         "loss": [
             StrOptions({"log_loss", "deviance", "exponential"}, deprecated={"deviance"})
@@ -1785,7 +1785,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     """
 
     # TODO(1.2): remove "ls" and "lad"
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **BaseGradientBoosting._parameter_constraints,
         "loss": [
             StrOptions(

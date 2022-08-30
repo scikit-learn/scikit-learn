@@ -93,16 +93,6 @@ def test_imputation_shape(strategy):
     assert X_imputed.shape == (10, 2)
 
 
-@pytest.mark.parametrize("strategy", ["const", 101, None])
-def test_imputation_error_invalid_strategy(strategy):
-    X = np.ones((3, 5))
-    X[0, 0] = np.nan
-
-    with pytest.raises(ValueError, match=str(strategy)):
-        imputer = SimpleImputer(strategy=strategy)
-        imputer.fit_transform(X)
-
-
 @pytest.mark.parametrize("strategy", ["mean", "median", "most_frequent"])
 def test_imputation_deletion_warning(strategy):
     X = np.ones((3, 5))
