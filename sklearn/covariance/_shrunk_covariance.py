@@ -14,9 +14,8 @@ shrunk_cov = (1-shrinkage)*cov + shrinkage*structured_estimate.
 
 # avoid division truncation
 import warnings
-from numbers import Real
+from numbers import Real, Integral
 import numpy as np
-from numbers import Integral
 
 from . import empirical_covariance, EmpiricalCovariance
 from .._config import config_context
