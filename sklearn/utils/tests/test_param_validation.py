@@ -51,7 +51,7 @@ class _Class:
 class _Estimator(BaseEstimator):
     """An estimator to test the validation of estimator parameters."""
 
-    _parameter_constraints = {"a": [Real]}
+    _parameter_constraints: dict = {"a": [Real]}
 
     def __init__(self, a):
         self.a = a

@@ -691,7 +691,7 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
     array([-78.3854...])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_nonzero_coefs": [Interval(Integral, 1, None, closed="left"), None],
         "tol": [Interval(Real, 0, None, closed="left"), None],
         "fit_intercept": ["boolean"],
@@ -998,7 +998,7 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
     array([-78.3854...])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "copy": ["boolean"],
         "fit_intercept": ["boolean"],
         "normalize": ["boolean", Hidden(StrOptions({"deprecated"}))],
