@@ -105,8 +105,15 @@ cpdef DTYPE_t[::1] _sqeuclidean_row_norms32(
 
 from ._datasets_pair cimport DatasetsPair{{name_suffix}}
 
-cdef class PairwiseDistancesReduction{{name_suffix}}:
-    """Base {{name_suffix}}bit implementation of PairwiseDistancesReduction."""
+cdef class BaseDistanceReducer{{name_suffix}}:
+    """
+    Base {{name_suffix}}bit implementation template of the pairwise-distances reduction
+    backend.
+
+    Implementations inherit from this template and may override the several
+    defined hooks as needed in order to easily extend functionality with
+    minimal redundant code.
+    """
 
     def __init__(
         self,
@@ -169,7 +176,7 @@ cdef class PairwiseDistancesReduction{{name_suffix}}:
                 strategy = 'parallel_on_X'
             elif 4 * self.chunk_size * self.effective_n_threads < self.n_samples_X:
                 # If Y is larger than X, but X is still large enough to allow for
-                # parallelism, we might still want to favor parallelizing on X. 
+                # parallelism, we might still want to favor parallelizing on X.
                 strategy = 'parallel_on_X'
             else:
                 strategy = 'parallel_on_Y'
@@ -334,7 +341,7 @@ cdef class PairwiseDistancesReduction{{name_suffix}}:
     ) nogil:
         """Compute the pairwise distances on two chunks of X and Y and reduce them.
 
-        This is THE core computational method of PairwiseDistanceReductions{{name_suffix}}.
+        This is THE core computational method of BaseDistanceReducer{{name_suffix}}.
         This must be implemented in subclasses agnostically from the parallelization
         strategies.
         """
