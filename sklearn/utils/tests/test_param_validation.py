@@ -52,7 +52,7 @@ class _Class:
 class _Estimator(BaseEstimator):
     """An estimator to test the validation of estimator parameters."""
 
-    _parameter_constraints = {"a": [Real]}
+    _parameter_constraints: dict = {"a": [Real]}
 
     def __init__(self, a):
         self.a = a
@@ -569,8 +569,8 @@ def test_validate_params_set_param_constraints_attribute():
 
 
 def test_boolean_constraint_deprecated_int():
-    """Check that validate_params raise a deprecation message but still passes validation
-    when using an int for a parameter accepting a boolean.
+    """Check that validate_params raise a deprecation message but still passes
+    validation when using an int for a parameter accepting a boolean.
     """
 
     @validate_params({"param": ["boolean"]})

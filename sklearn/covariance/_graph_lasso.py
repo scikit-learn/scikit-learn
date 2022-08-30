@@ -340,7 +340,7 @@ def graphical_lasso(
 
 
 class BaseGraphicalLasso(EmpiricalCovariance):
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **EmpiricalCovariance._parameter_constraints,
         "tol": [Interval(Real, 0, None, closed="right")],
         "enet_tol": [Interval(Real, 0, None, closed="right")],
@@ -463,7 +463,7 @@ class GraphicalLasso(BaseGraphicalLasso):
     array([0.073, 0.04 , 0.038, 0.143])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **BaseGraphicalLasso._parameter_constraints,
         "alpha": [Interval(Real, 0, None, closed="right")],
     }
@@ -840,7 +840,7 @@ class GraphicalLassoCV(BaseGraphicalLasso):
     array([0.073, 0.04 , 0.038, 0.143])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **BaseGraphicalLasso._parameter_constraints,
         "alphas": [Interval(Integral, 1, None, closed="left"), "array-like"],
         "n_refinements": [Interval(Integral, 1, None, closed="left")],

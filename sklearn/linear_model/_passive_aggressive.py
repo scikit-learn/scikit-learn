@@ -141,7 +141,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
 
     t_ : int
         Number of weight updates performed during training.
-        Same as ``(n_iter_ * n_samples)``.
+        Same as ``(n_iter_ * n_samples + 1)``.
 
     loss_function_ : callable
         Loss function used by the algorithm.
@@ -174,8 +174,8 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     [1]
     """
 
-    _parameter_constraints = {
-        **BaseSGDClassifier._parameter_constraints,  # type: ignore
+    _parameter_constraints: dict = {
+        **BaseSGDClassifier._parameter_constraints,
         "loss": [StrOptions({"hinge", "squared_hinge"})],
         "C": [Interval(Real, 0, None, closed="right")],
     }
@@ -428,7 +428,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
 
     t_ : int
         Number of weight updates performed during training.
-        Same as ``(n_iter_ * n_samples)``.
+        Same as ``(n_iter_ * n_samples + 1)``.
 
     See Also
     --------
@@ -459,8 +459,8 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     [-0.02306214]
     """
 
-    _parameter_constraints = {
-        **BaseSGDRegressor._parameter_constraints,  # type: ignore
+    _parameter_constraints: dict = {
+        **BaseSGDRegressor._parameter_constraints,
         "loss": [StrOptions({"epsilon_insensitive", "squared_epsilon_insensitive"})],
         "C": [Interval(Real, 0, None, closed="right")],
         "epsilon": [Interval(Real, 0, None, closed="left")],

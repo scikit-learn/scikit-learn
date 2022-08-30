@@ -6,7 +6,6 @@
 import numpy as np
 from scipy import sparse
 from scipy import linalg
-from scipy import stats
 from scipy.sparse.linalg import eigsh
 from scipy.special import expit
 
@@ -19,6 +18,7 @@ from sklearn.utils._testing import assert_allclose_dense_sparse
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import skip_if_32bit
+from sklearn.utils.fixes import _mode
 
 from sklearn.utils.extmath import density, _safe_accumulator_op
 from sklearn.utils.extmath import randomized_svd, _randomized_eigsh
@@ -56,7 +56,7 @@ def test_uniform_weights():
     weights = np.ones(x.shape)
 
     for axis in (None, 0, 1):
-        mode, score = stats.mode(x, axis)
+        mode, score = _mode(x, axis)
         mode2, score2 = weighted_mode(x, weights, axis=axis)
 
         assert_array_equal(mode, mode2)
