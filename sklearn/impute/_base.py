@@ -256,11 +256,11 @@ class SimpleImputer(_BaseImputer):
      [10.   3.5  9. ]]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **_BaseImputer._parameter_constraints,
         "strategy": [StrOptions({"mean", "median", "most_frequent", "constant"})],
-        "fill_value": [str, numbers.Number, None],  # type: ignore
-        "verbose": ["verbose", Hidden(StrOptions({"deprecated"}))],  # type: ignore
+        "fill_value": "no_validation",  # any object is valid
+        "verbose": ["verbose", Hidden(StrOptions({"deprecated"}))],
         "copy": ["boolean"],
     }
 

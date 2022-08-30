@@ -119,11 +119,7 @@ class KNNImputer(_BaseImputer):
     _parameter_constraints: dict = {
         **_BaseImputer._parameter_constraints,
         "n_neighbors": [Interval(Integral, 1, None, closed="left")],
-        "weights": [
-            StrOptions({"uniform", "distance"}),
-            callable,
-            Hidden(None),
-        ],
+        "weights": [StrOptions({"uniform", "distance"}), callable, Hidden(None)],
         "metric": [StrOptions(set(_NAN_METRICS)), callable],
         "copy": ["boolean"],
     }
