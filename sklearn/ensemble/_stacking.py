@@ -54,7 +54,7 @@ def _estimator_has(attr):
 class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCMeta):
     """Base class for stacking method."""
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "estimators": [list],
         "final_estimator": [None, HasMethods("fit")],
         "cv": ["cv_object", StrOptions({"prefit"})],
@@ -532,8 +532,8 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
     0.9...
     """
 
-    _parameter_constraints = {
-        **_BaseStacking._parameter_constraints,  # type: ignore
+    _parameter_constraints: dict = {
+        **_BaseStacking._parameter_constraints,
         "stack_method": [
             StrOptions({"auto", "predict_proba", "decision_function", "predict"})
         ],

@@ -97,7 +97,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
     array([[0., 0., 4.]])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "dtype": "no_validation",  # validation delegated to numpy,
         "separator": [str],
         "sparse": ["boolean"],

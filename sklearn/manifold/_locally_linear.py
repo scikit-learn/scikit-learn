@@ -688,7 +688,7 @@ class LocallyLinearEmbedding(
     (100, 2)
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_neighbors": [Interval(Integral, 1, None, closed="left")],
         "n_components": [Interval(Integral, 1, None, closed="left")],
         "reg": [Interval(Real, 0, None, closed="left")],
