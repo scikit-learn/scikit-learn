@@ -184,7 +184,7 @@ class NeighborhoodComponentsAnalysis(
         ],
         "init": [
             StrOptions({"auto", "pca", "lda", "identity", "random"}),
-            "array-like",
+            np.ndarray,
         ],
         "warm_start": ["boolean"],
         "max_iter": [Interval(Integral, 1, None, closed="left")],
