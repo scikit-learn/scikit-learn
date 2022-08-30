@@ -338,37 +338,6 @@ Changelog
   deterministic SVD used by the randomized SVD algorithm.
   :pr:`20617` by :user:`Srinath Kailasa <skailasa>`
 
-:mod:`sklearn.manifold`
-.......................
-
-- |Feature| Adds option to use the normalized stress in `manifold.MDS`. This is
-  enabled by setting the new `normalize` parameter to `True`.
-  :pr:`10168` by :user:`Łukasz Borchmann <Borchmann>`,
-  :pr:`12285` by :user:`Matthias Miltenberger <mattmilten>`,
-  :pr:`13042` by :user:`Matthieu Parizy <matthieu-pa>`,
-  :pr:`18094` by :user:`Roth E Conrad <rotheconrad>` and
-  :pr:`22562` by :user:`Meekail Zain <micky774>`.
-
-- |Enhancement| Adds `eigen_tol` parameter to
-  :class:`manifold.SpectralEmbedding`. Both :func:`manifold.spectral_embedding`
-  and :class:`manifold.SpectralEmbedding` now propogate `eigen_tol` to all
-  choices of `eigen_solver`. Includes a new option `eigen_tol="auto"`
-  and begins deprecation to change the default from `eigen_tol=0` to
-  `eigen_tol="auto"` in version 1.3.
-  :pr:`23210` by :user:`Meekail Zain <micky774>`.
-
-:mod:`sklearn.naive_bayes`
-..........................
-
-- |Enhancement| A new parameter `force_alpha` was added to
-  :class:`naive_bayes.BernoulliNB`, :class:`naive_bayes.ComplementNB`,
-  :class:`naive_bayes.CategoricalNB`, and :class:`naive_bayes.MultinomialNB`,
-  allowing user to set parameter alpha to a very small number, greater or equal
-  0, which was earlier automatically changed to `1e-10` instead.
-  :pr:`16747` by :user:`arka204`,
-  :pr:`18805` by :user:`hongshaoyang`,
-  :pr:`22269` by :user:`Meekail Zain <micky774>`.
-
 :mod:`sklearn.preprocessing`
 ............................
 
