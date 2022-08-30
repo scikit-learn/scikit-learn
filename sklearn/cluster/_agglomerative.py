@@ -890,7 +890,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
     array([1, 1, 1, 0, 0, 0])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_clusters": [Interval(Integral, 1, None, closed="left"), None],
         "affinity": [
             Hidden(StrOptions({"deprecated"})),
@@ -1257,7 +1257,7 @@ class FeatureAgglomeration(
     (1797, 32)
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_clusters": [Interval(Integral, 1, None, closed="left"), None],
         "affinity": [
             Hidden(StrOptions({"deprecated"})),

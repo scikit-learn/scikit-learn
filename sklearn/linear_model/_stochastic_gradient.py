@@ -80,7 +80,7 @@ class _ValidationScoreCallback:
 class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
     """Base class for SGD classification and regression."""
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "fit_intercept": ["boolean"],
         "max_iter": [Interval(Integral, 1, None, closed="left")],
         "tol": [Interval(Real, 0, None, closed="left"), None],
@@ -501,7 +501,7 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         "squared_epsilon_insensitive": (SquaredEpsilonInsensitive, DEFAULT_EPSILON),
     }
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **BaseSGD._parameter_constraints,
         "loss": [
             StrOptions(
@@ -1177,7 +1177,7 @@ class SGDClassifier(BaseSGDClassifier):
     [1]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **BaseSGDClassifier._parameter_constraints,
         "penalty": [StrOptions({"l2", "l1", "elasticnet"}), None],
         "alpha": [Interval(Real, 0, None, closed="left")],
@@ -1377,7 +1377,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         "squared_epsilon_insensitive": (SquaredEpsilonInsensitive, DEFAULT_EPSILON),
     }
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **BaseSGD._parameter_constraints,
         "loss": [
             StrOptions(
@@ -1953,7 +1953,7 @@ class SGDRegressor(BaseSGDRegressor):
                     ('sgdregressor', SGDRegressor())])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **BaseSGDRegressor._parameter_constraints,
         "penalty": [StrOptions({"l2", "l1", "elasticnet"}), None],
         "alpha": [Interval(Real, 0, None, closed="left")],
@@ -2164,7 +2164,7 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
 
     loss_functions = {"hinge": (Hinge, 1.0)}
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **BaseSGD._parameter_constraints,
         "nu": [Interval(Real, 0.0, 1.0, closed="right")],
         "learning_rate": [

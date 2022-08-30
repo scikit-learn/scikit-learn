@@ -128,7 +128,7 @@ class BernoulliRBM(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
     BernoulliRBM(n_components=2)
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_components": [Interval(Integral, 1, None, closed="left")],
         "learning_rate": [Interval(Real, 0, None, closed="neither")],
         "batch_size": [Interval(Integral, 1, None, closed="left")],
