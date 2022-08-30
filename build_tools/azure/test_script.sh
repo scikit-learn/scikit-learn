@@ -29,6 +29,13 @@ if [[ "$BUILD_REASON" == "Schedule" ]]; then
     export SKLEARN_RUN_FLOAT32_TESTS=1
 fi
 
+COMMIT_MESSAGE=$(python build_tools/azure/get_commit_message.py --only-show-message)
+
+if [[ "$COMMIT_MESSAGE" =~ \[float32\] ]]; then
+    echo "float32 tests will be run due to commit message"
+    export SKLEARN_RUN_FLOAT32_TESTS=1
+fi
+
 mkdir -p $TEST_DIR
 cp setup.cfg $TEST_DIR
 cd $TEST_DIR

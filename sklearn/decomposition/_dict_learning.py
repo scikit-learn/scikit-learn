@@ -761,7 +761,7 @@ def dict_learning_online(
     tol=1e-3,
     max_no_improvement=10,
 ):
-    """Solves a dictionary learning matrix factorization problem online.
+    """Solve a dictionary learning matrix factorization problem online.
 
     Finds the best dictionary and the corresponding sparse code for
     approximating the data matrix X by solving::
@@ -924,11 +924,12 @@ def dict_learning_online(
 
     See Also
     --------
-    dict_learning
-    DictionaryLearning
-    MiniBatchDictionaryLearning
-    SparsePCA
-    MiniBatchSparsePCA
+    dict_learning : Solve a dictionary learning matrix factorization problem.
+    DictionaryLearning : Find a dictionary that sparsely encodes data.
+    MiniBatchDictionaryLearning : A faster, less accurate, version of the dictionary
+        learning algorithm.
+    SparsePCA : Sparse Principal Components Analysis.
+    MiniBatchSparsePCA : Mini-batch Sparse Principal Components Analysis.
     """
     deps = (return_n_iter, return_inner_stats, iter_offset, inner_stats)
     if max_iter is not None and not all(arg == "deprecated" for arg in deps):
@@ -1329,7 +1330,7 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
     MiniBatchDictionaryLearning : A faster, less accurate, version of the
         dictionary learning algorithm.
     MiniBatchSparsePCA : Mini-batch Sparse Principal Components Analysis.
-    SparsePCA : Mini-batch Sparse Principal Components Analysis.
+    SparsePCA : Sparse Principal Components Analysis.
     sparse_encode : Sparse coding where each row of the result is the solution
         to a sparse coding problem.
 
