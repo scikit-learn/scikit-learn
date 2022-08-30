@@ -380,7 +380,7 @@ class MinMaxScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     [[1.5 0. ]]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "feature_range": [tuple],
         "copy": ["boolean"],
         "clip": ["boolean"],
@@ -773,7 +773,7 @@ class StandardScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     [[3. 3.]]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "copy": ["boolean"],
         "with_mean": ["boolean"],
         "with_std": ["boolean"],
@@ -1131,7 +1131,7 @@ class MaxAbsScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
            [ 0. ,  1. , -0.5]])
     """
 
-    _parameter_constraints = {"copy": ["boolean"]}
+    _parameter_constraints: dict = {"copy": ["boolean"]}
 
     def __init__(self, *, copy=True):
         self.copy = copy
@@ -1470,7 +1470,7 @@ class RobustScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
            [ 1. ,  0. , -1.6]])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "with_centering": ["boolean"],
         "with_scaling": ["boolean"],
         "quantile_range": [tuple],
@@ -1933,7 +1933,7 @@ class Normalizer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
            [0.5, 0.7, 0.5, 0.1]])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "norm": [StrOptions({"l1", "l2", "max"})],
         "copy": ["boolean"],
     }
@@ -2107,7 +2107,7 @@ class Binarizer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
            [0., 1., 0.]])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "threshold": [Real],
         "copy": ["boolean"],
     }
@@ -2486,7 +2486,7 @@ class QuantileTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator
     array([...])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_quantiles": [Interval(Integral, 1, None, closed="left")],
         "output_distribution": [StrOptions({"uniform", "normal"})],
         "ignore_implicit_zeros": ["boolean"],
@@ -3045,7 +3045,7 @@ class PowerTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
      [ 1.106...  1.414...]]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "method": [StrOptions({"yeo-johnson", "box-cox"})],
         "standardize": ["boolean"],
         "copy": ["boolean"],

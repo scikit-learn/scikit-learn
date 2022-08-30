@@ -551,6 +551,7 @@ message, the following actions are taken.
     [nogil]                Build & test with the nogil experimental branches of CPython, Cython, NumPy, SciPy...
     [icc-build]            Build & test with the Intel C compiler (ICC)
     [pypy]                 Build & test with PyPy
+    [float32]              Run float32 tests by setting `SKLEARN_RUN_FLOAT32_TESTS=1`. See :ref:`environment_variable` for more details
     [doc skip]             Docs are not built
     [doc quick]            Docs built, but excludes example gallery plots
     [doc build]            Docs built including example gallery plots (very long)
@@ -845,12 +846,66 @@ Finally, follow the formatting rules below to make it consistently good:
 * When editing reStructuredText (``.rst``) files, try to keep line length under
   80 characters when possible (exceptions include links and tables).
 
-* Do not modify sphinx labels as this would break existing cross references and
-  external links pointing to specific sections in the
-  scikit-learn documentation.
-
 * Before submitting your pull request check if your modifications have
   introduced new sphinx warnings and try to fix them.
+
+Cross-referencing
+-----------------
+
+It is often useful to cross-reference to other pages in the scikit-learn
+documentation. This should be done with reStructuredText cross-referencing
+syntax:
+
+* Section - to link to an arbitrary section in the documentation, use reference
+  labels (see
+  `Sphinx docs <https://www.sphinx-doc.org/en/master/usage/restructuredtext/roles.html#ref-role>`_).
+  For example:
+
+  .. code-block:: rst
+
+      .. _my-section:
+
+      My section
+      ----------
+
+      This is the text of the section.
+
+      To refer to itself use :ref:`my-section`.
+
+  You should not modify existing sphinx reference labels as this would break
+  existing cross references and external links pointing to specific sections in
+  the scikit-learn documentation.
+
+* Glossary - linking to a term in the :ref:`glossary`:
+
+  .. code-block:: rst
+
+      :term:`cross_validation`
+
+* Function - to link to the documentation of a function, use the full
+  import path to the function:
+
+  .. code-block:: rst
+
+      :func:`~sklearn.model_selection.cross_val_score`
+
+  However, if there is a 'currentmodule' directive above you in the document,
+  you will only need to use the path to the function succeeding the current
+  module specified. For example:
+
+  .. code-block:: rst
+
+      .. currentmodule:: sklearn.model_selection
+
+      :func:`cross_val_score`
+
+* Class - to link to documentation of a class, use the full import path to the
+  class, unless there is a 'currentmodule' directive in the document above
+  (see above):
+
+  .. code-block:: rst
+
+      :class:`~sklearn.preprocessing.StandardScaler`
 
 .. _generated_doc_CI:
 

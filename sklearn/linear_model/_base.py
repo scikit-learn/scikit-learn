@@ -638,7 +638,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
     array([16.])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "fit_intercept": ["boolean"],
         "normalize": [Hidden(StrOptions({"deprecated"})), "boolean"],
         "copy_X": ["boolean"],
