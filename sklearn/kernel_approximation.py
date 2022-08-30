@@ -14,7 +14,6 @@ import warnings
 import numpy as np
 import scipy.sparse as sp
 from scipy.linalg import svd
-from numbers import Integral, Real
 
 try:
     from scipy.fft import fft, ifft
@@ -25,7 +24,6 @@ from .base import BaseEstimator
 from .base import TransformerMixin
 from .base import _ClassNamePrefixFeaturesOutMixin
 from .utils import check_random_state
-from .utils._param_validation import Interval
 from .utils.extmath import safe_sparse_dot
 from .utils.validation import check_is_fitted
 from .utils.validation import _check_feature_names_in
