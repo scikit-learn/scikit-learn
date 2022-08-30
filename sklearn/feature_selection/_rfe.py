@@ -7,12 +7,13 @@
 """Recursive feature elimination for feature ranking"""
 
 import numpy as np
-import numbers
+from numbers import Integral, Real
 from joblib import Parallel, effective_n_jobs
 
 
 from ..utils.metaestimators import available_if
 from ..utils.metaestimators import _safe_split
+from ..utils._param_validation import HasMethods, Interval
 from ..utils._tags import _safe_tags
 from ..utils.validation import check_is_fitted
 from ..utils.fixes import delayed
@@ -183,6 +184,21 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
     array([1, 1, 1, 1, 1, 6, 4, 3, 2, 5])
     """
 
+    _parameter_constraints = {
+        "estimator": [HasMethods(["fit"])],
+        "n_features_to_select": [
+            None,
+            Interval(Real, 0, 1, closed="right"),
+            Interval(Integral, 0, None, closed="neither"),
+        ],
+        "step": [
+            Interval(Integral, 0, None, closed="neither"),
+            Interval(Real, 0, 1, closed="neither"),
+        ],
+        "verbose": ["verbose"],
+        "importance_getter": [str, callable],
+    }
+
     def __init__(
         self,
         estimator,
@@ -232,6 +248,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
+        self._validate_params()
         return self._fit(X, y, **fit_params)
 
     def _fit(self, X, y, step_score=None, **fit_params):
@@ -249,24 +266,13 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             force_all_finite=not tags.get("allow_nan", True),
             multi_output=True,
         )
-        error_msg = (
-            "n_features_to_select must be either None, a "
-            "positive integer representing the absolute "
-            "number of features or a float in (0.0, 1.0] "
-            "representing a percentage of features to "
-            f"select. Got {self.n_features_to_select}"
-        )
 
         # Initialization
         n_features = X.shape[1]
         if self.n_features_to_select is None:
             n_features_to_select = n_features // 2
-        elif self.n_features_to_select < 0:
-            raise ValueError(error_msg)
-        elif isinstance(self.n_features_to_select, numbers.Integral):  # int
+        elif isinstance(self.n_features_to_select, Integral):  # int
             n_features_to_select = self.n_features_to_select
-        elif self.n_features_to_select > 1.0:  # float > 1
-            raise ValueError(error_msg)
         else:  # float
             n_features_to_select = int(n_features * self.n_features_to_select)
 
@@ -274,8 +280,6 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             step = int(max(1, self.step * n_features))
         else:
             step = int(self.step)
-        if step <= 0:
-            raise ValueError("Step must be >0")
 
         support_ = np.ones(n_features, dtype=bool)
         ranking_ = np.ones(n_features, dtype=int)
@@ -624,6 +628,15 @@ class RFECV(RFE):
     array([1, 1, 1, 1, 1, 6, 4, 3, 2, 5])
     """
 
+    _parameter_constraints = {
+        **RFE._parameter_constraints,  # type: ignore
+        "min_features_to_select": [Interval(Integral, 0, None, closed="neither")],
+        "cv": ["cv_object"],
+        "scoring": [None, str, callable],
+        "n_jobs": [None, Integral],
+    }
+    _parameter_constraints.pop("n_features_to_select")
+
     def __init__(
         self,
         estimator,
@@ -670,6 +683,7 @@ class RFECV(RFE):
         self : object
             Fitted estimator.
         """
+        self._validate_params()
         tags = self._get_tags()
         X, y = self._validate_data(
             X,
@@ -689,8 +703,6 @@ class RFECV(RFE):
             step = int(max(1, self.step * n_features))
         else:
             step = int(self.step)
-        if step <= 0:
-            raise ValueError("Step must be >0")
 
         # Build an RFE object, which will evaluate and score each possible
         # feature count, down to self.min_features_to_select
