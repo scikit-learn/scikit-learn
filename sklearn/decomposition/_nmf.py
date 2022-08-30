@@ -985,7 +985,6 @@ def non_negative_factorization(
 
             &+ 0.5 * alpha\\_H * (1 - l1\\_ratio) * n\\_samples * ||H||_{Fro}^2
 
-
     Where:
 
     :math:`||A||_{Fro}^2 = \\sum_{i,j} A_{ij}^2` (Frobenius norm)
@@ -1142,14 +1141,6 @@ def non_negative_factorization(
     n_iter : int
         Actual number of iterations.
 
-    Examples
-    --------
-    >>> import numpy as np
-    >>> X = np.array([[1,1], [2, 1], [3, 1.2], [4, 1], [5, 0.8], [6, 1]])
-    >>> from sklearn.decomposition import non_negative_factorization
-    >>> W, H, n_iter = non_negative_factorization(
-    ...     X, n_components=2, init='random', random_state=0)
-
     References
     ----------
     .. [1] :doi:`"Fast local algorithms for large scale nonnegative matrix and tensor
@@ -1160,6 +1151,14 @@ def non_negative_factorization(
     .. [2] :doi:`"Algorithms for nonnegative matrix factorization with the
        beta-divergence" <10.1162/NECO_a_00168>`
        Fevotte, C., & Idier, J. (2011). Neural Computation, 23(9).
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> X = np.array([[1,1], [2, 1], [3, 1.2], [4, 1], [5, 0.8], [6, 1]])
+    >>> from sklearn.decomposition import non_negative_factorization
+    >>> W, H, n_iter = non_negative_factorization(
+    ...     X, n_components=2, init='random', random_state=0)
     """
     X = check_array(X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32])
 

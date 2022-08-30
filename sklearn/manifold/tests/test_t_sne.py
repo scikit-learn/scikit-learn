@@ -1048,32 +1048,54 @@ def test_gradient_bh_multithread_match_sequential():
         assert_allclose(grad_multithread, grad_multithread)
 
 
-def test_tsne_with_different_distance_metrics():
+@pytest.mark.parametrize(
+    "metric, dist_func",
+    [("manhattan", manhattan_distances), ("cosine", cosine_distances)],
+)
+@pytest.mark.parametrize("method", ["barnes_hut", "exact"])
+def test_tsne_with_different_distance_metrics(metric, dist_func, method):
     """Make sure that TSNE works for different distance metrics"""
+
+    if method == "barnes_hut" and metric == "manhattan":
+        # The distances computed by `manhattan_distances` differ slightly from those
+        # computed internally by NearestNeighbors via the PairwiseDistancesReduction
+        # Cython code-based. This in turns causes T-SNE to converge to a different
+        # solution but this should not impact the qualitative results as both
+        # methods.
+        # NOTE: it's probably not valid from a mathematical point of view to use the
+        # Manhattan distance for T-SNE...
+        # TODO: re-enable this test if/when `manhattan_distances` is refactored to
+        # reuse the same underlying Cython code NearestNeighbors.
+        # For reference, see:
+        # https://github.com/scikit-learn/scikit-learn/pull/23865/files#r925721573
+        pytest.xfail(
+            "Distance computations are different for method == 'barnes_hut' and metric"
+            " == 'manhattan', but this is expected."
+        )
+
     random_state = check_random_state(0)
     n_components_original = 3
     n_components_embedding = 2
     X = random_state.randn(50, n_components_original).astype(np.float32)
-    metrics = ["manhattan", "cosine"]
-    dist_funcs = [manhattan_distances, cosine_distances]
-    for metric, dist_func in zip(metrics, dist_funcs):
-        X_transformed_tsne = TSNE(
-            metric=metric,
-            n_components=n_components_embedding,
-            random_state=0,
-            n_iter=300,
-            init="random",
-            learning_rate="auto",
-        ).fit_transform(X)
-        X_transformed_tsne_precomputed = TSNE(
-            metric="precomputed",
-            n_components=n_components_embedding,
-            random_state=0,
-            n_iter=300,
-            init="random",
-            learning_rate="auto",
-        ).fit_transform(dist_func(X))
-        assert_array_equal(X_transformed_tsne, X_transformed_tsne_precomputed)
+    X_transformed_tsne = TSNE(
+        metric=metric,
+        method=method,
+        n_components=n_components_embedding,
+        random_state=0,
+        n_iter=300,
+        init="random",
+        learning_rate="auto",
+    ).fit_transform(X)
+    X_transformed_tsne_precomputed = TSNE(
+        metric="precomputed",
+        method=method,
+        n_components=n_components_embedding,
+        random_state=0,
+        n_iter=300,
+        init="random",
+        learning_rate="auto",
+    ).fit_transform(dist_func(X))
+    assert_array_equal(X_transformed_tsne, X_transformed_tsne_precomputed)
 
 
 # TODO: Remove in 1.2
