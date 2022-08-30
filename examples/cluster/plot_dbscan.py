@@ -4,7 +4,9 @@
 Demo of DBSCAN clustering algorithm
 ===================================
 
-Finds core samples of high density and expands clusters from them.
+DBSCAN (Density-Based Spatial Clustering of Applications with Noise)
+finds core samples of high density and expands clusters from them.
+This algorithm is good for data which contains clusters of similar density.
 
 """
 

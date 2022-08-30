@@ -152,7 +152,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
            [ 0.5,  3.5, -1.5,  1.5]])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_bins": [Interval(Integral, 2, None, closed="left"), "array-like"],
         "encode": [StrOptions({"onehot", "onehot-dense", "ordinal"})],
         "strategy": [StrOptions({"uniform", "quantile", "kmeans"})],
