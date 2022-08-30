@@ -107,7 +107,7 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
          for more details.
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "kernel": [StrOptions({"knn", "rbf"}), callable],
         "gamma": [Interval(Real, 0, None, closed="left")],
         "n_neighbors": [Interval(Integral, 0, None, closed="neither")],
@@ -415,7 +415,7 @@ class LabelPropagation(BaseLabelPropagation):
 
     _variant = "propagation"
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **BaseLabelPropagation._parameter_constraints
     }  # type: ignore
     _parameter_constraints.pop("alpha")
@@ -576,7 +576,7 @@ class LabelSpreading(BaseLabelPropagation):
 
     _variant = "spreading"
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **BaseLabelPropagation._parameter_constraints
     }  # type: ignore
     _parameter_constraints["alpha"] = [Interval(Real, 0, 1, closed="neither")]
