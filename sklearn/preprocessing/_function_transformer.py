@@ -127,7 +127,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
            [1.0986..., 1.3862...]])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "func": [callable, None],
         "inverse_func": [callable, None],
         "validate": ["boolean"],
@@ -221,7 +221,6 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         X_out : array-like, shape (n_samples, n_features)
             Transformed input.
         """
-        self._validate_params()
         X = self._check_input(X, reset=False)
         return self._transform(X, func=self.func, kw_args=self.kw_args)
 
@@ -238,7 +237,6 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         X_out : array-like, shape (n_samples, n_features)
             Transformed input.
         """
-        self._validate_params()
         if self.validate:
             X = check_array(X, accept_sparse=self.accept_sparse)
         return self._transform(X, func=self.inverse_func, kw_args=self.inv_kw_args)
