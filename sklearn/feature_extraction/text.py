@@ -739,7 +739,7 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
     (4, 16)
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "input": [StrOptions({"filename", "file", "content"})],
         "encoding": [str],
         "decode_error": [StrOptions({"strict", "ignore", "replace"})],
