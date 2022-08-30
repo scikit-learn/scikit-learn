@@ -323,7 +323,7 @@ cdef class DistanceMetric{{name_suffix}}:
         else:
             return metric(**kwargs)
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         if self.__class__ is DistanceMetric{{name_suffix}}:
             raise NotImplementedError("DistanceMetric{{name_suffix}} is an abstract class")
 
@@ -867,7 +867,7 @@ cdef class EuclideanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     .. math::
        D(x, y) = \sqrt{ \sum_i (x_i - y_i) ^ 2 }
     """
-    def __init__(self):
+    def __init__(self, **kwargs):
         self.p = 2
 
     cdef inline DTYPE_t dist(self,
@@ -982,7 +982,7 @@ cdef class SEuclideanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     .. math::
        D(x, y) = \sqrt{ \sum_i \frac{ (x_i - y_i) ^ 2}{V_i} }
     """
-    def __init__(self, V):
+    def __init__(self, V, **kwargs):
         self.vec = ReadonlyArrayWrapper(np.asarray(V, dtype=DTYPE))
         self.size = self.vec.shape[0]
         self.p = 2
@@ -1111,7 +1111,7 @@ cdef class ManhattanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     .. math::
        D(x, y) = \sum_i |x_i - y_i|
     """
-    def __init__(self):
+    def __init__(self, **kwargs):
         self.p = 1
 
     cdef inline DTYPE_t dist(
@@ -1194,7 +1194,7 @@ cdef class ChebyshevDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     array([[1.732..., 5.196...],
            [6.928..., 0....   ]])
     """
-    def __init__(self):
+    def __init__(self, **kwargs):
         self.p = INF{{name_suffix}}
 
     cdef inline DTYPE_t dist(
@@ -1284,7 +1284,7 @@ cdef class MinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     Note that for p=1, ManhattanDistance is more efficient, and for
     p=2, EuclideanDistance is more efficient.
     """
-    def __init__(self, p, w=None):
+    def __init__(self, p, w=None, **kwargs):
         if p < 1:
             raise ValueError("p must be greater than 1")
         elif np.isinf(p):
@@ -1473,7 +1473,7 @@ cdef class WMinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
         The weight vector.
 
     """
-    def __init__(self, p, w):
+    def __init__(self, p, w, **kwargs):
         from warnings import warn
         warn("WMinkowskiDistance is deprecated in version 1.1 and will be "
             "removed in version 1.3. Use MinkowskiDistance instead. Note "
@@ -1626,7 +1626,7 @@ cdef class MahalanobisDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
         optionally specify the inverse directly.  If VI is passed,
         then V is not referenced.
     """
-    def __init__(self, V=None, VI=None):
+    def __init__(self, V=None, VI=None, **kwargs):
         if VI is None:
             if V is None:
                 raise ValueError("Must provide either V or VI "

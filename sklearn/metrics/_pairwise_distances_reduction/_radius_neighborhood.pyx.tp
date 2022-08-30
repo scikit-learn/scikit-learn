@@ -122,18 +122,13 @@ cdef class RadiusNeighbors{{name_suffix}}(BaseDistanceReducer{{name_suffix}}):
                 sort_results=sort_results,
             )
         else:
-            # Fall back on a generic implementation that handles all distance
-            # metrics by computing it between 2 vectors at a time.
-
-            # The extra `Y_norm_squared` argument for the back-end is only
-            # supported for the Euclidean variant.
-            if metric_kwargs is not None:
-                metric_kwargs.pop("Y_norm_squared", None)
-
+             # Fall back on a generic implementation that handles most scipy
+             # metrics by computing the distances between 2 vectors at a time.
             pda = RadiusNeighbors{{name_suffix}}(
                 datasets_pair=DatasetsPair{{name_suffix}}.get_for(X, Y, metric, metric_kwargs),
                 radius=radius,
                 chunk_size=chunk_size,
+                metric_kwargs=metric_kwargs,
                 strategy=strategy,
                 sort_results=sort_results,
             )
@@ -156,6 +151,7 @@ cdef class RadiusNeighbors{{name_suffix}}(BaseDistanceReducer{{name_suffix}}):
         chunk_size=None,
         strategy=None,
         sort_results=False,
+        metric_kwargs=None,
     ):
         super().__init__(
             datasets_pair=datasets_pair,
@@ -378,6 +374,7 @@ cdef class EuclideanRadiusNeighbors{{name_suffix}}(RadiusNeighbors{{name_suffix}
             chunk_size=chunk_size,
             strategy=strategy,
             sort_results=sort_results,
+            metric_kwargs=metric_kwargs,
         )
         # X and Y are checked by the DatasetsPair{{name_suffix}} implemented
         # as a DenseDenseDatasetsPair{{name_suffix}}

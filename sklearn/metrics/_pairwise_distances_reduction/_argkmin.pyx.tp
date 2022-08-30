@@ -98,14 +98,8 @@ cdef class ArgKmin{{name_suffix}}(BaseDistanceReducer{{name_suffix}}):
                 metric_kwargs=metric_kwargs,
             )
         else:
-            # Fall back on a generic implementation that handles all distance
-            # metrics by computing it between 2 vectors at a time.
-
-            # The extra `Y_norm_squared` argument for the back-end is only
-            # supported for the Eucliean variant.
-            if metric_kwargs is not None:
-                metric_kwargs.pop("Y_norm_squared", None)
-
+             # Fall back on a generic implementation that handles most scipy
+             # metrics by computing the distances between 2 vectors at a time.
             pda = ArgKmin{{name_suffix}}(
                 datasets_pair=DatasetsPair{{name_suffix}}.get_for(X, Y, metric, metric_kwargs),
                 k=k,
