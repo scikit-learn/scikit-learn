@@ -417,7 +417,7 @@ class LabelPropagation(BaseLabelPropagation):
 
     _parameter_constraints: dict = {
         **BaseLabelPropagation._parameter_constraints
-    }  # type: ignore
+    }
     _parameter_constraints.pop("alpha")
 
     def __init__(
@@ -578,7 +578,7 @@ class LabelSpreading(BaseLabelPropagation):
 
     _parameter_constraints: dict = {
         **BaseLabelPropagation._parameter_constraints
-    }  # type: ignore
+    }
     _parameter_constraints["alpha"] = [Interval(Real, 0, 1, closed="neither")]
 
     def __init__(
