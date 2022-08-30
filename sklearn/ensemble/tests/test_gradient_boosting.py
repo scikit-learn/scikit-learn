@@ -1,6 +1,7 @@
 """
 Testing for the gradient boosting module (sklearn.ensemble.gradient_boosting).
 """
+import re
 import warnings
 import numpy as np
 from numpy.testing import assert_allclose
@@ -1233,9 +1234,14 @@ def test_gradient_boosting_with_init_pipeline():
     # sure we make the distinction between ValueError raised by a pipeline that
     # was passed sample_weight, and a ValueError raised by a regular estimator
     # whose input checking failed.
-    with pytest.raises(ValueError, match="nu <= 0 or nu > 1"):
+    invalid_nu = 1.5
+    err_msg = (
+        "The 'nu' parameter of NuSVR must be a float in the"
+        f" range (0.0, 1.0]. Got {invalid_nu} instead."
+    )
+    with pytest.raises(ValueError, match=re.escape(err_msg)):
         # Note that NuSVR properly supports sample_weight
-        init = NuSVR(gamma="auto", nu=1.5)
+        init = NuSVR(gamma="auto", nu=invalid_nu)
         gb = GradientBoostingRegressor(init=init)
         gb.fit(X, y, sample_weight=np.ones(X.shape[0]))
 

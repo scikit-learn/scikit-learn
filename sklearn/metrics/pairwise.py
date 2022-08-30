@@ -30,7 +30,7 @@ from ..utils._mask import _get_mask
 from ..utils.fixes import delayed
 from ..utils.fixes import sp_version, parse_version
 
-from ._pairwise_distances_reduction import PairwiseDistancesArgKmin
+from ._pairwise_distances_reduction import ArgKmin
 from ._pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
 from ..exceptions import DataConversionWarning
 
@@ -669,14 +669,14 @@ def pairwise_distances_argmin_min(
     if metric_kwargs is None:
         metric_kwargs = {}
 
-    if PairwiseDistancesArgKmin.is_usable_for(X, Y, metric):
+    if ArgKmin.is_usable_for(X, Y, metric):
         # This is an adaptor for one "sqeuclidean" specification.
         # For this backend, we can directly use "sqeuclidean".
         if metric_kwargs.get("squared", False) and metric == "euclidean":
             metric = "sqeuclidean"
             metric_kwargs = {}
 
-        values, indices = PairwiseDistancesArgKmin.compute(
+        values, indices = ArgKmin.compute(
             X=X,
             Y=Y,
             k=1,
@@ -688,7 +688,7 @@ def pairwise_distances_argmin_min(
         values = values.flatten()
         indices = indices.flatten()
     else:
-        # TODO: once PairwiseDistancesArgKmin supports sparse input matrices and 32 bit,
+        # TODO: once ArgKmin supports sparse input matrices and 32 bit,
         # we won't need to fallback to pairwise_distances_chunked anymore.
 
         # Turn off check for finiteness because this is costly and because arrays
@@ -781,14 +781,14 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
     if metric_kwargs is None:
         metric_kwargs = {}
 
-    if PairwiseDistancesArgKmin.is_usable_for(X, Y, metric):
+    if ArgKmin.is_usable_for(X, Y, metric):
         # This is an adaptor for one "sqeuclidean" specification.
         # For this backend, we can directly use "sqeuclidean".
         if metric_kwargs.get("squared", False) and metric == "euclidean":
             metric = "sqeuclidean"
             metric_kwargs = {}
 
-        indices = PairwiseDistancesArgKmin.compute(
+        indices = ArgKmin.compute(
             X=X,
             Y=Y,
             k=1,
@@ -799,7 +799,7 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
         )
         indices = indices.flatten()
     else:
-        # TODO: once PairwiseDistancesArgKmin supports sparse input matrices and 32 bit,
+        # TODO: once ArgKmin supports sparse input matrices and 32 bit,
         # we won't need to fallback to pairwise_distances_chunked anymore.
 
         # Turn off check for finiteness because this is costly and because arrays

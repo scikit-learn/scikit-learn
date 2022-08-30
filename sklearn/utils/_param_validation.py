@@ -2,6 +2,7 @@ from abc import ABC
 from abc import abstractmethod
 from collections.abc import Iterable
 import functools
+import math
 from inspect import signature
 from numbers import Integral
 from numbers import Real
@@ -36,6 +37,10 @@ def validate_parameter_constraints(parameter_constraints, params, caller_name):
         - a StrOptions object, representing a set of strings
         - the string "boolean"
         - the string "verbose"
+        - the string "cv_object"
+        - the string "missing_values"
+        - a HasMethods object, representing method(s) an object must have
+        - a Hidden object, representing a constraint not meant to be exposed to the user
 
     params : dict
         A dictionary `param_name: param_value`. The parameters to validate against the
@@ -123,6 +128,8 @@ def make_constraint(constraint):
         return _Booleans()
     if isinstance(constraint, str) and constraint == "verbose":
         return _VerboseHelper()
+    if isinstance(constraint, str) and constraint == "missing_values":
+        return _MissingValues()
     if isinstance(constraint, str) and constraint == "cv_object":
         return _CVObjects()
     if isinstance(constraint, Hidden):
@@ -250,6 +257,31 @@ class _NoneConstraint(_Constraint):
 
     def __str__(self):
         return "None"
+
+
+class _NanConstraint(_Constraint):
+    """Constraint representing the indicator `np.nan`."""
+
+    def is_satisfied_by(self, val):
+        return isinstance(val, Real) and math.isnan(val)
+
+    def __str__(self):
+        return "numpy.nan"
+
+
+class _PandasNAConstraint(_Constraint):
+    """Constraint representing the indicator `pd.NA`."""
+
+    def is_satisfied_by(self, val):
+        try:
+            import pandas as pd
+
+            return isinstance(val, type(pd.NA)) and pd.isna(val)
+        except ImportError:
+            return False
+
+    def __str__(self):
+        return "pandas.NA"
 
 
 class StrOptions(_Constraint):
@@ -509,6 +541,42 @@ class _VerboseHelper(_Constraint):
         )
 
 
+class _MissingValues(_Constraint):
+    """Helper constraint for the `missing_values` parameters.
+
+    Convenience for
+    [
+        Integral,
+        Interval(Real, None, None, closed="both"),
+        str,
+        None,
+        _NanConstraint(),
+        _PandasNAConstraint(),
+    ]
+    """
+
+    def __init__(self):
+        super().__init__()
+        self._constraints = [
+            _InstancesOf(Integral),
+            # we use an interval of Real to ignore np.nan that has its own constraint
+            Interval(Real, None, None, closed="both"),
+            _InstancesOf(str),
+            _NoneConstraint(),
+            _NanConstraint(),
+            _PandasNAConstraint(),
+        ]
+
+    def is_satisfied_by(self, val):
+        return any(c.is_satisfied_by(val) for c in self._constraints)
+
+    def __str__(self):
+        return (
+            f"{', '.join([str(c) for c in self._constraints[:-1]])} or"
+            f" {self._constraints[-1]}"
+        )
+
+
 class HasMethods(_Constraint):
     """Constraint representing objects that expose specific methods.
 
@@ -619,6 +687,9 @@ def generate_invalid_param_val(constraint, constraints=None):
     """
     if isinstance(constraint, StrOptions):
         return f"not {' or '.join(constraint.options)}"
+
+    if isinstance(constraint, _MissingValues):
+        return np.array([1, 2, 3])
 
     if isinstance(constraint, _VerboseHelper):
         return -1
@@ -782,6 +853,9 @@ def generate_valid_param(constraint):
 
     if isinstance(constraint, _VerboseHelper):
         return 1
+
+    if isinstance(constraint, _MissingValues):
+        return np.nan
 
     if isinstance(constraint, HasMethods):
         return type(

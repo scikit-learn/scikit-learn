@@ -452,8 +452,8 @@ class KFold(_BaseKFold):
 class GroupKFold(_BaseKFold):
     """K-fold iterator variant with non-overlapping groups.
 
-    The same group will not appear in two different folds (the number of
-    distinct groups has to be at least equal to the number of folds).
+    Each group will appear exactly once in the test set across all folds (the
+    number of distinct groups has to be at least equal to the number of folds).
 
     The folds are approximately balanced in the sense that the number of
     distinct groups is approximately the same in each fold.
@@ -762,10 +762,11 @@ class StratifiedGroupKFold(_BaseKFold):
     return stratified folds with non-overlapping groups. The folds are made by
     preserving the percentage of samples for each class.
 
-    The same group will not appear in two different folds (the number of
-    distinct groups has to be at least equal to the number of folds).
+    Each group will appear exactly once in the test set across all folds (the
+    number of distinct groups has to be at least equal to the number of folds).
 
-    The difference between GroupKFold and StratifiedGroupKFold is that
+    The difference between :class:`~sklearn.model_selection.GroupKFold`
+    and :class:`~sklearn.model_selection.StratifiedGroupKFold` is that
     the former attempts to create balanced folds such that the number of
     distinct groups is approximately the same in each fold, whereas
     StratifiedGroupKFold attempts to create folds which preserve the
@@ -1108,9 +1109,10 @@ class TimeSeriesSplit(_BaseKFold):
 class LeaveOneGroupOut(BaseCrossValidator):
     """Leave One Group Out cross-validator
 
-    Provides train/test indices to split data according to a third-party
-    provided group. This group information can be used to encode arbitrary
-    domain specific stratifications of the samples as integers.
+    Provides train/test indices to split data such that each training set is
+    comprised of all samples except ones belonging to one specific group.
+    Arbitrary domain specific group information is provided an array integers
+    that encodes the group of each sample.
 
     For instance the groups could be the year of collection of the samples
     and thus allow for cross-validation against time-based splits.
@@ -1120,7 +1122,7 @@ class LeaveOneGroupOut(BaseCrossValidator):
     Notes
     -----
     Splits are ordered according to the index of the group left out. The first
-    split has training set consting of the group whose index in `groups` is
+    split has testing set consisting of the group whose index in `groups` is
     lowest, and so on.
 
     Examples

@@ -91,10 +91,10 @@ class KNNImputer(_BaseImputer):
 
     See Also
     --------
-    SimpleImputer : Imputation transformer for completing missing values
+    SimpleImputer : Univariate imputer for completing missing values
         with simple strategies.
-    IterativeImputer : Multivariate imputer that estimates each feature
-        from all the others.
+    IterativeImputer : Multivariate imputer that estimates values to impute for
+        each feature with missing values from all the others.
 
     References
     ----------
@@ -116,8 +116,8 @@ class KNNImputer(_BaseImputer):
            [8. , 8. , 7. ]])
     """
 
-    _parameter_constraints = {
-        **_BaseImputer._parameter_constraints,  # type: ignore
+    _parameter_constraints: dict = {
+        **_BaseImputer._parameter_constraints,
         "n_neighbors": [Interval(Integral, 1, None, closed="left")],
         "weights": [StrOptions({"uniform", "distance"}), callable, Hidden(None)],
         "metric": [StrOptions(set(_NAN_METRICS)), callable],

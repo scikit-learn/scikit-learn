@@ -89,6 +89,7 @@ class ConfusionMatrixDisplay:
         ax=None,
         colorbar=True,
         im_kw=None,
+        text_kw=None,
     ):
         """Plot visualization.
 
@@ -118,6 +119,11 @@ class ConfusionMatrixDisplay:
         im_kw : dict, default=None
             Dict with keywords passed to `matplotlib.pyplot.imshow` call.
 
+        text_kw : dict, default=None
+            Dict with keywords passed to `matplotlib.pyplot.text` call.
+
+            .. versionadded:: 1.2
+
         Returns
         -------
         display : :class:`~sklearn.metrics.ConfusionMatrixDisplay`
@@ -136,6 +142,7 @@ class ConfusionMatrixDisplay:
         default_im_kw = dict(interpolation="nearest", cmap=cmap)
         im_kw = im_kw or {}
         im_kw = {**default_im_kw, **im_kw}
+        text_kw = text_kw or {}
 
         self.im_ = ax.imshow(cm, **im_kw)
         self.text_ = None
@@ -159,9 +166,10 @@ class ConfusionMatrixDisplay:
                 else:
                     text_cm = format(cm[i, j], values_format)
 
-                self.text_[i, j] = ax.text(
-                    j, i, text_cm, ha="center", va="center", color=color
-                )
+                default_text_kwargs = dict(ha="center", va="center", color=color)
+                text_kwargs = {**default_text_kwargs, **text_kw}
+
+                self.text_[i, j] = ax.text(j, i, text_cm, **text_kwargs)
 
         if self.display_labels is None:
             display_labels = np.arange(n_classes)
@@ -203,6 +211,7 @@ class ConfusionMatrixDisplay:
         ax=None,
         colorbar=True,
         im_kw=None,
+        text_kw=None,
     ):
         """Plot Confusion Matrix given an estimator and some data.
 
@@ -271,6 +280,11 @@ class ConfusionMatrixDisplay:
         im_kw : dict, default=None
             Dict with keywords passed to `matplotlib.pyplot.imshow` call.
 
+        text_kw : dict, default=None
+            Dict with keywords passed to `matplotlib.pyplot.text` call.
+
+            .. versionadded:: 1.2
+
         Returns
         -------
         display : :class:`~sklearn.metrics.ConfusionMatrixDisplay`
@@ -318,6 +332,7 @@ class ConfusionMatrixDisplay:
             values_format=values_format,
             colorbar=colorbar,
             im_kw=im_kw,
+            text_kw=text_kw,
         )
 
     @classmethod
@@ -337,6 +352,7 @@ class ConfusionMatrixDisplay:
         ax=None,
         colorbar=True,
         im_kw=None,
+        text_kw=None,
     ):
         """Plot Confusion Matrix given true and predicted labels.
 
@@ -402,6 +418,11 @@ class ConfusionMatrixDisplay:
         im_kw : dict, default=None
             Dict with keywords passed to `matplotlib.pyplot.imshow` call.
 
+        text_kw : dict, default=None
+            Dict with keywords passed to `matplotlib.pyplot.text` call.
+
+            .. versionadded:: 1.2
+
         Returns
         -------
         display : :class:`~sklearn.metrics.ConfusionMatrixDisplay`
@@ -456,6 +477,7 @@ class ConfusionMatrixDisplay:
             values_format=values_format,
             colorbar=colorbar,
             im_kw=im_kw,
+            text_kw=text_kw,
         )
 
 

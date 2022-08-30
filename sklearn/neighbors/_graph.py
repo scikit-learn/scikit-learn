@@ -291,7 +291,7 @@ class KNeighborsTransformer(
     metric_params : dict, default=None
         Additional keyword arguments for the metric function.
 
-    n_jobs : int, default=1
+    n_jobs : int, default=None
         The number of parallel jobs to run for neighbors search.
         If ``-1``, then the number of jobs is set to the number of CPU cores.
 
@@ -342,7 +342,7 @@ class KNeighborsTransformer(
     (178, 178)
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **NeighborsBase._parameter_constraints,
         "mode": [StrOptions({"distance", "connectivity"})],
     }
@@ -358,7 +358,7 @@ class KNeighborsTransformer(
         metric="minkowski",
         p=2,
         metric_params=None,
-        n_jobs=1,
+        n_jobs=None,
     ):
         super(KNeighborsTransformer, self).__init__(
             n_neighbors=n_neighbors,
@@ -515,7 +515,7 @@ class RadiusNeighborsTransformer(
     metric_params : dict, default=None
         Additional keyword arguments for the metric function.
 
-    n_jobs : int, default=1
+    n_jobs : int, default=None
         The number of parallel jobs to run for neighbors search.
         If ``-1``, then the number of jobs is set to the number of CPU cores.
 
@@ -570,7 +570,7 @@ class RadiusNeighborsTransformer(
     [ 29  15 111  11  12]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **NeighborsBase._parameter_constraints,
         "mode": [StrOptions({"distance", "connectivity"})],
     }
@@ -586,7 +586,7 @@ class RadiusNeighborsTransformer(
         metric="minkowski",
         p=2,
         metric_params=None,
-        n_jobs=1,
+        n_jobs=None,
     ):
         super(RadiusNeighborsTransformer, self).__init__(
             n_neighbors=None,
