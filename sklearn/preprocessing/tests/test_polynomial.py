@@ -792,7 +792,13 @@ def test_polynomial_features_deprecated_n_input_features():
         PolynomialFeatures().fit(X).n_input_features_
 
 
-def test_csr_polynomial_expansion_index_overflow():
+def test_csr_polynomial_expansion_index_overflow_non_regression():
+    def degree_2_calc(d, i, j, interaction_only):
+        if interaction_only:
+            return d * i - (i**2 + 3 * i) // 2 - 1 + j
+        else:
+            return d * i - (i**2 + i) // 2 + j
+
     n_samples = 13
     n_features = 120001
     dtype = np.float32
@@ -808,49 +814,69 @@ def test_csr_polynomial_expansion_index_overflow():
     pf = PolynomialFeatures(interaction_only=True, include_bias=False, degree=2)
     X_trans = pf.fit_transform(X)
     n_index, m_index = X_trans.nonzero()
-
+    second_degree_idx = (
+        degree_2_calc(n_features, n_features - 2, n_features - 1, True) + n_features
+    )
     assert X_trans.dtype == dtype
-    assert X_trans.shape == (13, 7200180001)
+    assert X_trans.shape == (13, second_degree_idx + 1)
     assert X_trans.indptr.dtype == X_trans.indices.dtype == np.int64
     assert_array_almost_equal(X_trans.data, np.array([1, 2, 2, 3, 4, 12], dtype=dtype))
     assert_array_almost_equal(n_index, np.array([11, 11, 11, 12, 12, 12]))
     assert_array_almost_equal(
-        m_index, np.array([119999, 120000, 7200180000, 119999, 120000, 7200180000])
+        m_index,
+        np.array(
+            [
+                n_features - 2,
+                n_features - 1,
+                second_degree_idx,
+                n_features - 2,
+                n_features - 1,
+                second_degree_idx,
+            ]
+        ),
     )
 
+
+@pytest.mark.parametrize(
+    "n_features",
+    [
+        # Needs promotion to int64 when interaction_only=False
+        65535,
+        # This guarantees that the intermediate operation when calculating
+        # output columns would overflow a C-long, hence checks that python-
+        # longs are being used.
+        int(np.sqrt(np.iinfo(np.int64).max) + 1),
+    ],
+)
+@pytest.mark.parametrize("interaction_only", [True, False])
+@pytest.mark.parametrize("include_bias", [True, False])
+def test_csr_polynomial_expansion_index_overflow_deg2(
+    n_features, interaction_only, include_bias
+):
     data = [1.0]
     row = [0]
-    n_features = 65535  # barely small enough to stay in int32
     col = [n_features - 1]
-    first_degree_idx = n_features - 1
-    second_degree_idx = int(n_features * (n_features + 1) / 2 + first_degree_idx)
+    first_degree_idx = n_features - 1 + int(include_bias)
+    second_degree_idx = int(n_features * (n_features + 1) // 2 + first_degree_idx)
 
     X = sparse.csr_matrix((data, (row, col)))
-    pf = PolynomialFeatures(interaction_only=True, include_bias=False, degree=2)
+    pf = PolynomialFeatures(
+        interaction_only=interaction_only, include_bias=include_bias, degree=2
+    )
     X_trans = pf.fit_transform(X)
-    assert X_trans.dtype == X.dtype
-    assert X_trans.indptr.dtype == X_trans.indices.dtype == np.int32
-    assert X_trans.nnz == 1
-    assert X_trans[0, first_degree_idx] == pytest.approx(1.0)
 
-    pf = PolynomialFeatures(interaction_only=False, include_bias=False, degree=2)
-    X_trans = pf.fit_transform(X)
-    assert X_trans.dtype == X.dtype
-    assert X_trans.indptr.dtype == X_trans.indices.dtype == np.int64
-    assert X_trans.indices.max() == pf.n_output_features_ - 1
-    assert X_trans.nnz == 2
-    assert X_trans[0, first_degree_idx] == pytest.approx(1.0)
-    assert X_trans[0, second_degree_idx] == pytest.approx(1.0)
+    expected_dtype = (
+        np.int64 if X_trans.indices.max() > np.iinfo(np.int32).max else np.int32
+    )
+    expected_nnz = 1 + int(not interaction_only) + int(include_bias)
 
-    pf = PolynomialFeatures(interaction_only=False, include_bias=True, degree=2)
-    X_trans = pf.fit_transform(X)
     assert X_trans.dtype == X.dtype
-    assert X_trans.indptr.dtype == X_trans.indices.dtype == np.int64
-    assert X_trans.indices.max() == pf.n_output_features_ - 1
-    assert X_trans.nnz == 3
-    assert X_trans[0, 0] == pytest.approx(1.0)
-    assert X_trans[0, first_degree_idx + 1] == pytest.approx(1.0)
-    assert X_trans[0, second_degree_idx + 1] == pytest.approx(1.0)
+    assert X_trans.shape == (1, pf.n_output_features_)
+    assert X_trans.indptr.dtype == X_trans.indices.dtype == expected_dtype
+    assert X_trans.nnz == expected_nnz
+    assert X_trans[0, first_degree_idx] == pytest.approx(1.0)
+    if not interaction_only:
+        assert X_trans[0, second_degree_idx] == pytest.approx(1.0)
 
 
 # TODO: Remove in 1.2 when get_feature_names is removed

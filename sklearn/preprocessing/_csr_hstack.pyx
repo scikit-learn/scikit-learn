@@ -29,11 +29,11 @@ cpdef _csr_hstack(
     const Py_ssize_t n_blocks,      # Number of matrices to stack
     const Py_ssize_t n_rows,        # Number of rows (same across all matrices)
     const cnp.int64_t[:] n_cols,    # Number of columns (one per matrix)
-    IND_t[:] indptr_cat,         # Input concatenated array of indptrs
-    IND_t[:] indices_cat,        # Input concatenated array of indices
+    IND_t[:] indptr_cat,            # Input concatenated array of indptrs
+    IND_t[:] indices_cat,           # Input concatenated array of indices
     DATA_t[:] data_cat,             # Input concatenated array of data
-    IND_t[:] indptr,            # Output array to write indptr into
-    IND_t[:] indices,           # Output array to write indices into
+    IND_t[:] indptr,                # Output array to write indptr into
+    IND_t[:] indices,               # Output array to write indices into
     DATA_t[:] data,                 # Output array to write data into
     ):
 
