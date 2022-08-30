@@ -598,6 +598,11 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
     0.9499...
     """
 
+    _parameter_constraints: dict = {
+        "sample_steps": [Interval(Integral, 1, None, closed="left")],
+        "sample_interval": [Interval(Real, 0, None, closed="left"), None],
+    }
+
     def __init__(self, *, sample_steps=2, sample_interval=None):
         self.sample_steps = sample_steps
         self.sample_interval = sample_interval
@@ -620,6 +625,8 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
         self : object
             Returns the transformer.
         """
+        self._validate_params()
+
         X = self._validate_data(X, accept_sparse="csr")
         check_non_negative(X, "X in AdditiveChi2Sampler.fit")
 
