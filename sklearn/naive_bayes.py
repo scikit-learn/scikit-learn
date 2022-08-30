@@ -238,7 +238,7 @@ class GaussianNB(_BaseNB):
     [1]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "priors": ["array-like", None],
         "var_smoothing": [Interval(Real, 0, None, closed="left")],
     }
@@ -547,7 +547,7 @@ class _BaseDiscreteNB(_BaseNB):
     _count(X, Y)
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "alpha": [Interval(Real, 0, None, closed="left"), "array-like"],
         "fit_prior": ["boolean"],
         "class_prior": ["array-like", None],
@@ -1054,7 +1054,7 @@ class ComplementNB(_BaseDiscreteNB):
     [3]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **_BaseDiscreteNB._parameter_constraints,
         "norm": ["boolean"],
     }
@@ -1215,7 +1215,7 @@ class BernoulliNB(_BaseDiscreteNB):
     [3]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **_BaseDiscreteNB._parameter_constraints,
         "binarize": [None, Interval(Real, 0, None, closed="left")],
     }
@@ -1394,7 +1394,7 @@ class CategoricalNB(_BaseDiscreteNB):
     [3]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **_BaseDiscreteNB._parameter_constraints,
         "min_categories": [
             None,
