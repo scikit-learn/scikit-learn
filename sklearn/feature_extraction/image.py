@@ -503,7 +503,7 @@ class PatchExtractor(BaseEstimator):
     Patches shape: (545706, 2, 2)
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "patch_size": ["array-like", tuple, None],
         "max_patches": [
             None,
