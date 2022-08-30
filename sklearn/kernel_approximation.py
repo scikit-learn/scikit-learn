@@ -29,6 +29,7 @@ from .utils.validation import check_is_fitted
 from .utils.validation import _check_feature_names_in
 from .metrics.pairwise import pairwise_kernels, KERNEL_PARAMS
 from .utils.validation import check_non_negative
+from .utils._param_validation import Interval
 
 
 class PolynomialCountSketch(
