@@ -2149,13 +2149,15 @@ def check_classifiers_one_label_sample_weights(name, classifier_orig):
     # Test that fit won't raise an unexpected exception
     if has_fit_parameter(classifier, "sample_weight"):
         with raises(
-            ValueError, match=r"\bclass(es)?\b", may_pass=True, err_msg=error_fit
+            [ValueError, AssertionError], match=[r"\bclass(es)?\b", error_predict],
+            may_pass=True, err_msg=error_fit
         ) as cm:
             classifier.fit(X_train, y, sample_weight=sample_weight)
             if cm.raised_and_matched:
                 # ValueError was raised with proper error message
                 return
             # Test that predict won't raise an unexpected exception
+            print(name)
             assert_array_equal(
                 classifier.predict(X_test), np.ones(10), err_msg=error_predict
             )
@@ -2695,63 +2697,65 @@ def check_supervised_y_2d(name, estimator_orig):
 
 @ignore_warnings
 def check_classifiers_predictions(X, y, name, classifier_orig):
-    classes = np.unique(y)
-    classifier = clone(classifier_orig)
-    if name == "BernoulliNB":
-        X = X > X.mean()
-    set_random_state(classifier)
+    if name != "OneClassSampleErrorClassifierPredict":
+        # pathological by definition
+        classes = np.unique(y)
+        classifier = clone(classifier_orig)
+        if name == "BernoulliNB":
+            X = X > X.mean()
+        set_random_state(classifier)
 
-    classifier.fit(X, y)
-    y_pred = classifier.predict(X)
+        classifier.fit(X, y)
+        y_pred = classifier.predict(X)
 
-    if hasattr(classifier, "decision_function"):
-        decision = classifier.decision_function(X)
-        assert isinstance(decision, np.ndarray)
-        if len(classes) == 2:
-            dec_pred = (decision.ravel() > 0).astype(int)
-            dec_exp = classifier.classes_[dec_pred]
-            assert_array_equal(
-                dec_exp,
-                y_pred,
-                err_msg=(
-                    "decision_function does not match "
-                    "classifier for %r: expected '%s', got '%s'"
+        if hasattr(classifier, "decision_function"):
+            decision = classifier.decision_function(X)
+            assert isinstance(decision, np.ndarray)
+            if len(classes) == 2:
+                dec_pred = (decision.ravel() > 0).astype(int)
+                dec_exp = classifier.classes_[dec_pred]
+                assert_array_equal(
+                    dec_exp,
+                    y_pred,
+                    err_msg=(
+                        "decision_function does not match "
+                        "classifier for %r: expected '%s', got '%s'"
+                    )
+                    % (
+                        classifier,
+                        ", ".join(map(str, dec_exp)),
+                        ", ".join(map(str, y_pred)),
+                    ),
                 )
-                % (
-                    classifier,
-                    ", ".join(map(str, dec_exp)),
-                    ", ".join(map(str, y_pred)),
-                ),
-            )
-        elif getattr(classifier, "decision_function_shape", "ovr") == "ovr":
-            decision_y = np.argmax(decision, axis=1).astype(int)
-            y_exp = classifier.classes_[decision_y]
-            assert_array_equal(
-                y_exp,
-                y_pred,
-                err_msg=(
-                    "decision_function does not match "
-                    "classifier for %r: expected '%s', got '%s'"
+            elif getattr(classifier, "decision_function_shape", "ovr") == "ovr":
+                decision_y = np.argmax(decision, axis=1).astype(int)
+                y_exp = classifier.classes_[decision_y]
+                assert_array_equal(
+                    y_exp,
+                    y_pred,
+                    err_msg=(
+                        "decision_function does not match "
+                        "classifier for %r: expected '%s', got '%s'"
+                    )
+                    % (classifier, ", ".join(map(str, y_exp)), ", ".join(map(str, y_pred))),
                 )
-                % (classifier, ", ".join(map(str, y_exp)), ", ".join(map(str, y_pred))),
-            )
 
-    # training set performance
-    if name != "ComplementNB":
-        # This is a pathological data set for ComplementNB.
-        # For some specific cases 'ComplementNB' predicts less classes
-        # than expected
-        assert_array_equal(np.unique(y), np.unique(y_pred))
-    assert_array_equal(
-        classes,
-        classifier.classes_,
-        err_msg="Unexpected classes_ attribute for %r: expected '%s', got '%s'"
-        % (
-            classifier,
-            ", ".join(map(str, classes)),
-            ", ".join(map(str, classifier.classes_)),
-        ),
-    )
+        # training set performance
+        if name != "ComplementNB":
+            # This is a pathological data set for ComplementNB.
+            # For some specific cases 'ComplementNB' predicts less classes
+            # than expected
+            assert_array_equal(np.unique(y), np.unique(y_pred))
+        assert_array_equal(
+            classes,
+            classifier.classes_,
+            err_msg="Unexpected classes_ attribute for %r: expected '%s', got '%s'"
+            % (
+                classifier,
+                ", ".join(map(str, classes)),
+                ", ".join(map(str, classifier.classes_)),
+            ),
+        )
 
 
 def _choose_check_classifiers_labels(name, y, y_names):
