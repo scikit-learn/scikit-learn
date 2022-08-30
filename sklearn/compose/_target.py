@@ -10,6 +10,7 @@ from ..base import BaseEstimator, RegressorMixin, clone
 from ..utils.validation import check_is_fitted
 from ..utils._tags import _safe_tags
 from ..utils import check_array, _safe_indexing
+from ..utils._param_validation import HasMethods
 from ..preprocessing import FunctionTransformer
 from ..exceptions import NotFittedError
 
@@ -127,6 +128,14 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
     array([2.])
     """
 
+    _parameter_constraints = {
+        "regressor": [HasMethods(["fit", "predict"]), None],
+        "transformer": [HasMethods("transform"), None],
+        "func": [callable, None],
+        "inverse_func": [callable, None],
+        "check_inverse": ["boolean"],
+    }
+
     def __init__(
         self,
         regressor=None,
@@ -207,6 +216,7 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
+        self._validate_params()
         if y is None:
             raise ValueError(
                 f"This {self.__class__.__name__} estimator "
