@@ -236,7 +236,7 @@ class IterativeImputer(_BaseImputer):
            [10.       ,  4.9999...,  9.        ]])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **_BaseImputer._parameter_constraints,
         "estimator": [None, HasMethods(["predict"])],
         "sample_posterior": ["boolean"],
