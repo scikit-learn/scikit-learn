@@ -246,7 +246,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
     """
 
     _parameter_constraints: dict = {
-        "base_estimator": "no_validation",
+        "estimator": "no_validation",
         "n_estimators": [Interval(Integral, 1, None, closed="left")],
         "max_samples": [
             Interval(Integral, 1, None, closed="left"),
@@ -282,8 +282,11 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         verbose=0,
         base_estimator="deprecated",
     ):
-        super().__init__(base_estimator=base_estimator, n_estimators=n_estimators)
-        self.estimator = estimator
+        super().__init__(
+            estimator=estimator,
+            n_estimators=n_estimators,
+            base_estimator=base_estimator,
+        )
         self.max_samples = max_samples
         self.max_features = max_features
         self.bootstrap = bootstrap
@@ -293,21 +296,6 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         self.n_jobs = n_jobs
         self.random_state = random_state
         self.verbose = verbose
-
-    def _validate_estimator(self, default=None):
-        """Check the estimator and the n_estimator attribute.
-
-        Sets the base_estimator_` attributes.
-        """
-        self._validate_n_estimators()
-
-        if self.estimator is not None:
-            self.base_estimator_ = self.estimator
-        else:
-            self.base_estimator_ = default
-
-        if self.base_estimator_ is None:
-            raise ValueError("estimator cannot be None")
 
     def fit(self, X, y, sample_weight=None):
         """Build a Bagging ensemble of estimators from the training set (X, y).
@@ -334,6 +322,15 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         """
 
         self._validate_params()
+
+        # TODO(1.4): Remove when base_estimator is removed
+        if self.base_estimator != "deprecated":
+            warn(
+                "`base_estimator` was renamed to `estimator` in version 1.2 and "
+                "will be removed in 1.4.",
+                FutureWarning,
+            )
+            self.estimator = self.base_estimator
 
         # Convert data (X is required to be 2d and indexable)
         X, y = self._validate_data(
@@ -769,39 +766,6 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
             base_estimator=base_estimator,
         )
 
-    def fit(self, X, y, sample_weight=None):
-        """Build a Bagging ensemble of estimators from the training set (X, y).
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            The training input samples. Sparse matrices are accepted only if
-            they are supported by the base estimator.
-
-        y : array-like of shape (n_samples,)
-            The target values (class labels in classification, real numbers in
-            regression).
-
-        sample_weight : array-like of shape (n_samples,), default=None
-            Sample weights. If None, then samples are equally weighted.
-            Note that this is supported only if the base estimator supports
-            sample weighting.
-
-        Returns
-        -------
-        self : object
-            Fitted estimator.
-        """
-        # TODO(1.4): Remove when base_estimator is removed
-        if self.base_estimator != "deprecated":
-            warn(
-                "`base_estimator` was renamed to `estimator` in version 1.2 and "
-                "will be removed in 1.4.",
-                FutureWarning,
-            )
-            self.estimator = self.base_estimator
-        return super().fit(X, y, sample_weight=sample_weight)
-
     def _validate_estimator(self):
         """Check the estimator and set the base_estimator_ attribute."""
         super()._validate_estimator(default=DecisionTreeClassifier())
@@ -1226,39 +1190,6 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
             verbose=verbose,
             base_estimator=base_estimator,
         )
-
-    def fit(self, X, y, sample_weight=None):
-        """Build a Bagging ensemble of estimators from the training set (X, y).
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            The training input samples. Sparse matrices are accepted only if
-            they are supported by the base estimator.
-
-        y : array-like of shape (n_samples,)
-            The target values (class labels in classification, real numbers in
-            regression).
-
-        sample_weight : array-like of shape (n_samples,), default=None
-            Sample weights. If None, then samples are equally weighted.
-            Note that this is supported only if the base estimator supports
-            sample weighting.
-
-        Returns
-        -------
-        self : object
-            Fitted estimator.
-        """
-        # TODO(1.4): Remove when base_estimator is removed
-        if self.base_estimator != "deprecated":
-            warn(
-                "`base_estimator` was renamed to `estimator` in version 1.2 and "
-                "will be removed in 1.4.",
-                FutureWarning,
-            )
-            self.estimator = self.base_estimator
-        return super().fit(X, y, sample_weight=sample_weight)
 
     def predict(self, X):
         """Predict regression target for X.
