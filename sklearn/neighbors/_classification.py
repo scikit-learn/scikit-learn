@@ -163,7 +163,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
     [[0.666... 0.333...]]
     """
 
-    _parameter_constraints = {**NeighborsBase._parameter_constraints}
+    _parameter_constraints: dict = {**NeighborsBase._parameter_constraints}
     _parameter_constraints.pop("radius")
     _parameter_constraints.update(
         {"weights": [StrOptions({"uniform", "distance"}), callable, None]}
@@ -482,7 +482,7 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
     [[0.66666667 0.33333333]]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **NeighborsBase._parameter_constraints,
         "weights": [StrOptions({"uniform", "distance"}), callable, None],
         "outlier_label": [Integral, str, "array-like", None],

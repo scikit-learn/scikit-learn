@@ -13,10 +13,7 @@ numpydoc_validation = pytest.importorskip("numpydoc.validate")
 
 FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.decomposition._dict_learning.dict_learning",
-    "sklearn.decomposition._dict_learning.dict_learning_online",
-    "sklearn.decomposition._nmf.non_negative_factorization",
     "sklearn.externals._packaging.version.parse",
-    "sklearn.feature_extraction.text.strip_accents_unicode",
     "sklearn.inspection._plot.partial_dependence.plot_partial_dependence",
     "sklearn.linear_model._least_angle.lars_path_gram",
     "sklearn.linear_model._omp.orthogonal_mp_gram",
@@ -27,7 +24,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.metrics._ranking.coverage_error",
     "sklearn.metrics._ranking.dcg_score",
     "sklearn.metrics._ranking.roc_curve",
-    "sklearn.metrics._ranking.top_k_accuracy_score",
     "sklearn.metrics._regression.mean_pinball_loss",
     "sklearn.metrics.cluster._bicluster.consensus_score",
     "sklearn.metrics.cluster._supervised.adjusted_mutual_info_score",
@@ -70,7 +66,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.utils.sparsefuncs.count_nonzero",
     "sklearn.utils.sparsefuncs.csc_median_axis_0",
     "sklearn.utils.sparsefuncs.incr_mean_variance_axis",
-    "sklearn.utils.sparsefuncs.inplace_swap_row",
     "sklearn.utils.sparsefuncs.inplace_swap_row_csc",
     "sklearn.utils.sparsefuncs.inplace_swap_row_csr",
     "sklearn.utils.validation.check_is_fitted",

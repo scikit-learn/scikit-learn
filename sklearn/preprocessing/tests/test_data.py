@@ -1343,7 +1343,7 @@ def test_quantile_transform_dense_toy():
     transformer = QuantileTransformer(n_quantiles=5)
     transformer.fit(X)
 
-    # using the a uniform output, each entry of X should be map between 0 and 1
+    # using a uniform output, each entry of X should be map between 0 and 1
     # and equally spaced
     X_trans = transformer.fit_transform(X)
     X_expected = np.tile(np.linspace(0, 1, num=5), (3, 1)).T

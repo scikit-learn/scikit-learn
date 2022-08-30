@@ -777,7 +777,7 @@ def _ridge_regression(
 
 class _BaseRidge(LinearModel, metaclass=ABCMeta):
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "alpha": [Interval(Real, 0, None, closed="left"), np.ndarray],
         "fit_intercept": ["boolean"],
         "normalize": [Hidden(StrOptions({"deprecated"})), "boolean"],
@@ -1383,7 +1383,7 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
     0.9595...
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **_BaseRidge._parameter_constraints,
         "class_weight": [dict, StrOptions({"balanced"}), None],
     }
