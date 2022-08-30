@@ -34,6 +34,7 @@ def validate_parameter_constraints(parameter_constraints, params, caller_name):
         - callable
         - None, meaning that None is a valid value for the parameter
         - any type, meaning that any instance of this type is valid
+        - an Options object, representing a set of elements of a given type
         - a StrOptions object, representing a set of strings
         - the string "boolean"
         - the string "verbose"
