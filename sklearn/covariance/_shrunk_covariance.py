@@ -14,7 +14,7 @@ shrunk_cov = (1-shrinkage)*cov + shrinkage*structured_estimate.
 
 # avoid division truncation
 import warnings
-from numbers import Real
+from numbers import Real, Integral
 import numpy as np
 
 from . import empirical_covariance, EmpiricalCovariance
@@ -453,6 +453,11 @@ class LedoitWolf(EmpiricalCovariance):
     array([ 0.0595... , -0.0075...])
     """
 
+    _parameter_constraints: dict = {
+        **EmpiricalCovariance._parameter_constraints,
+        "block_size": [Interval(Integral, 1, None, closed="left")],
+    }
+
     def __init__(self, *, store_precision=True, assume_centered=False, block_size=1000):
         super().__init__(
             store_precision=store_precision, assume_centered=assume_centered
@@ -475,6 +480,7 @@ class LedoitWolf(EmpiricalCovariance):
         self : object
             Returns the instance itself.
         """
+        self._validate_params()
         # Not calling the parent object to fit, to avoid computing the
         # covariance matrix (and potentially the precision)
         X = self._validate_data(X)

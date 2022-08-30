@@ -482,7 +482,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "LassoLarsCV",
     "LassoLarsIC",
     "LatentDirichletAllocation",
-    "LedoitWolf",
     "MiniBatchDictionaryLearning",
     "MultiTaskElasticNet",
     "MultiTaskLasso",
