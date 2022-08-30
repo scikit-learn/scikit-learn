@@ -345,7 +345,7 @@ class BaseGraphicalLasso(EmpiricalCovariance):
         "tol": [Interval(Real, 0, None, closed="right")],
         "enet_tol": [Interval(Real, 0, None, closed="right")],
         "max_iter": [Interval(Integral, 0, None, closed="left")],
-        "mode": [StrOptions({"cd", "lars"})],  # type: ignore
+        "mode": [StrOptions({"cd", "lars"})],
         "verbose": ["verbose"],
     }
     _parameter_constraints.pop("store_precision")
