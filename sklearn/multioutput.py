@@ -86,7 +86,7 @@ def _available_if_estimator_has(attr):
 
 class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "estimator": [HasMethods(["fit", "predict"])],
         "n_jobs": [Integral, None],
     }

@@ -2,7 +2,6 @@
 This file contains preprocessing tools based on polynomials.
 """
 import collections
-import numbers
 from numbers import Integral
 from itertools import chain, combinations
 from itertools import combinations_with_replacement as combinations_w_r
@@ -16,8 +15,8 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
 from ..utils.deprecation import deprecated
 from ..utils.validation import check_is_fitted, FLOAT_DTYPES, _check_sample_weight
-from ..utils._param_validation import Interval, StrOptions
 from ..utils.validation import _check_feature_names_in
+from ..utils._param_validation import Interval, StrOptions
 from ..utils.stats import _weighted_percentile
 
 from ._csr_polynomial_expansion import _csr_polynomial_expansion
@@ -216,6 +215,13 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
            [ 1.,  4.,  5., 20.]])
     """
 
+    _parameter_constraints: dict = {
+        "degree": [Interval(Integral, 0, None, closed="left"), "array-like"],
+        "interaction_only": ["boolean"],
+        "include_bias": ["boolean"],
+        "order": [StrOptions({"C", "F"})],
+    }
+
     def __init__(
         self, degree=2, *, interaction_only=False, include_bias=True, order="C"
     ):
@@ -371,14 +377,11 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         self : object
             Fitted transformer.
         """
+        self._validate_params()
         _, n_features = self._validate_data(X, accept_sparse=True).shape
 
-        if isinstance(self.degree, numbers.Integral):
-            if self.degree < 0:
-                raise ValueError(
-                    f"degree must be a non-negative integer, got {self.degree}."
-                )
-            elif self.degree == 0 and not self.include_bias:
+        if isinstance(self.degree, Integral):
+            if self.degree == 0 and not self.include_bias:
                 raise ValueError(
                     "Setting degree to zero and include_bias to False would result in"
                     " an empty output array."
@@ -391,8 +394,8 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         ):
             self._min_degree, self._max_degree = self.degree
             if not (
-                isinstance(self._min_degree, numbers.Integral)
-                and isinstance(self._max_degree, numbers.Integral)
+                isinstance(self._min_degree, Integral)
+                and isinstance(self._max_degree, Integral)
                 and self._min_degree >= 0
                 and self._min_degree <= self._max_degree
             ):
@@ -404,7 +407,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                 )
             elif self._max_degree == 0 and not self.include_bias:
                 raise ValueError(
-                    "Setting both min_deree and max_degree to zero and include_bias to"
+                    "Setting both min_degree and max_degree to zero and include_bias to"
                     " False would result in an empty output array."
                 )
         else:
@@ -760,7 +763,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
            [0.  , 0.  , 0.5 , 0.5 ]])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_knots": [Interval(Integral, 2, None, closed="left")],
         "degree": [Interval(Integral, 0, None, closed="left")],
         "knots": [StrOptions({"uniform", "quantile"}), "array-like"],

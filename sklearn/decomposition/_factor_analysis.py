@@ -161,7 +161,7 @@ class FactorAnalysis(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEst
     (1797, 7)
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_components": [Interval(Integral, 0, None, closed="left"), None],
         "tol": [Interval(Real, 0.0, None, closed="left")],
         "copy": ["boolean"],
