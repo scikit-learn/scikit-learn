@@ -146,7 +146,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
     (150, 3)
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "estimator": [HasMethods(["fit"])],
         "n_features_to_select": [
             StrOptions({"auto", "warn"}, deprecated={"warn"}),

@@ -377,7 +377,7 @@ def _radius_neighbors_from_graph(graph, radius, return_distance):
 class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
     """Base class for nearest neighbors estimators."""
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_neighbors": [Interval(Integral, 1, None, closed="left"), None],
         "radius": [Interval(Real, 0, None, closed="both"), None],
         "algorithm": [StrOptions({"auto", "ball_tree", "kd_tree", "brute"})],

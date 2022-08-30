@@ -147,7 +147,7 @@ class ShrunkCovariance(EmpiricalCovariance):
     array([0.0622..., 0.0193...])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **EmpiricalCovariance._parameter_constraints,
         "shrinkage": [Interval(Real, 0, 1, closed="both")],
     }
