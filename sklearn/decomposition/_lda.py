@@ -322,7 +322,7 @@ class LatentDirichletAllocation(
            [0.15297572, 0.00362644, 0.44412786, 0.39568399, 0.003586  ]])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_components": [Interval(Integral, 0, None, closed="neither")],
         "doc_topic_prior": [None, Interval(Real, 0, 1, closed="both")],
         "topic_word_prior": [None, Interval(Real, 0, 1, closed="both")],
