@@ -968,7 +968,7 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
     [ 0. -1.11...]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "fit_intercept": ["boolean"],
         "verbose": ["verbose"],
         "normalize": ["boolean", Hidden(StrOptions({"deprecated"}))],
@@ -1308,8 +1308,8 @@ class LassoLars(Lars):
     [ 0.         -0.955...]
     """
 
-    _parameter_constraints = {
-        **Lars._parameter_constraints,  # type: ignore
+    _parameter_constraints: dict = {
+        **Lars._parameter_constraints,
         "alpha": [Interval(Real, 0, None, closed="left")],
         "max_iter": [Interval(Integral, 0, None, closed="left")],
         "positive": ["boolean"],
@@ -1643,11 +1643,11 @@ class LarsCV(Lars):
     array([154.3996...])
     """
 
-    _parameter_constraints = {
-        **Lars._parameter_constraints,  # type: ignore
+    _parameter_constraints: dict = {
+        **Lars._parameter_constraints,
         "max_iter": [Interval(Integral, 0, None, closed="left")],
         "cv": ["cv_object"],
-        "max_n_alphas": [Interval(Integral, 0, None, closed="left")],
+        "max_n_alphas": [Interval(Integral, 1, None, closed="left")],
         "n_jobs": [Integral, None],
     }
 
@@ -2171,7 +2171,7 @@ class LassoLarsIC(LassoLars):
     [ 0.  -1.11...]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **LassoLars._parameter_constraints,
         "criterion": [StrOptions({"aic", "bic"})],
         "noise_variance": [Interval(Real, 0, None, closed="left"), None],
