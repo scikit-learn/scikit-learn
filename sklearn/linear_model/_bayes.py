@@ -658,7 +658,7 @@ class ARDRegression(RegressorMixin, LinearModel):
     array([1.])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_iter": [Interval(Integral, 1, None, closed="left")],
         "tol": [Interval(Real, 0, None, closed="left")],
         "alpha_1": [Interval(Real, 0, None, closed="left")],

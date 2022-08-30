@@ -446,7 +446,7 @@ class SkewedChi2Sampler(
     1.0
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "skewedness": [Interval(Real, None, None, closed="neither")],
         "n_components": [Interval(Integral, 1, None, closed="left")],
         "random_state": ["random_state"],

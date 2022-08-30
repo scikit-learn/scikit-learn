@@ -342,7 +342,7 @@ class KNeighborsTransformer(
     (178, 178)
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **NeighborsBase._parameter_constraints,
         "mode": [StrOptions({"distance", "connectivity"})],
     }
@@ -570,7 +570,7 @@ class RadiusNeighborsTransformer(
     [ 29  15 111  11  12]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **NeighborsBase._parameter_constraints,
         "mode": [StrOptions({"distance", "connectivity"})],
     }
