@@ -5,7 +5,7 @@ Adjustment for chance in clustering performance evaluation
 
 This notebook explores the impact of uniformly-distributed random labeling on
 the behavior of some clustering evaluation metrics. For such purpose, the
-metrics are computed at fixed number of samples and as a function of the number
+metrics are computed with a fixed number of samples and as a function of the number
 of clusters assigned by the estimator. The example is divided into two
 experiments:
 
@@ -113,7 +113,7 @@ import matplotlib.style as style
 
 n_samples = 1000
 n_classes = 10
-n_clusters_range = np.arange(2, 102, 11)
+n_clusters_range = np.linspace(2, 100, 10).astype(int)
 plots = []
 names = []
 
