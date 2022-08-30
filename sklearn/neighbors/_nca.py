@@ -190,7 +190,7 @@ class NeighborhoodComponentsAnalysis(
         "max_iter": [Interval(Integral, 1, None, closed="left")],
         "tol": [Interval(Real, 0, None, closed="left")],
         "callback": [callable, None],
-        "verbose": [Interval(Integral, 0, None, closed="left")],
+        "verbose": ["verbose"],
         "random_state": ["random_state"],
     }
 
