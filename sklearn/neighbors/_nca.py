@@ -348,14 +348,13 @@ class NeighborhoodComponentsAnalysis(
         y = LabelEncoder().fit_transform(y)
 
         # Check the preferred dimensionality of the projected space
-        if self.n_components is not None:
-            if self.n_components > X.shape[1]:
-                raise ValueError(
-                    "The preferred dimensionality of the "
-                    "projected space `n_components` ({}) cannot "
-                    "be greater than the given data "
-                    "dimensionality ({})!".format(self.n_components, X.shape[1])
-                )
+        if (self.n_components is not None) and (self.n_components > X.shape[1]):
+            raise ValueError(
+                "The preferred dimensionality of the "
+                "projected space `n_components` ({}) cannot "
+                "be greater than the given data "
+                "dimensionality ({})!".format(self.n_components, X.shape[1])
+            )
 
         # If warm_start is enabled, check that the inputs are consistent
         if self.warm_start and hasattr(self, "components_"):
@@ -394,16 +393,15 @@ class NeighborhoodComponentsAnalysis(
                     )
                 )
 
-            if self.n_components is not None:
-                # Assert that self.n_components = init.shape[0]
-                if self.n_components != init.shape[0]:
-                    raise ValueError(
-                        "The preferred dimensionality of the "
-                        "projected space `n_components` ({}) does"
-                        " not match the output dimensionality of "
-                        "the given linear transformation "
-                        "`init` ({})!".format(self.n_components, init.shape[0])
-                    )
+            # Assert that self.n_components = init.shape[0]
+            if (self.n_components is not None) and (self.n_components != init.shape[0]):
+                raise ValueError(
+                    "The preferred dimensionality of the "
+                    "projected space `n_components` ({}) does"
+                    " not match the output dimensionality of "
+                    "the given linear transformation "
+                    "`init` ({})!".format(self.n_components, init.shape[0])
+                )
 
         return X, y, init
 
