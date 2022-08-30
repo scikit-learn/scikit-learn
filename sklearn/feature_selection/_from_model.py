@@ -22,9 +22,13 @@ def _calculate_threshold(estimator, importances, threshold):
     if threshold is None:
         # determine default from estimator
         est_name = estimator.__class__.__name__
-        if (
-            hasattr(estimator, "penalty") and estimator.penalty == "l1"
-        ) or "Lasso" in est_name:
+        is_l1_penalized = hasattr(estimator, "penalty") and estimator.penalty == "l1"
+        is_lasso = "Lasso" in est_name
+        is_elasticnet_l1_penalized = "ElasticNet" in est_name and (
+            (hasattr(estimator, "l1_ratio_") and np.isclose(estimator.l1_ratio_, 1.0))
+            or (hasattr(estimator, "l1_ratio") and np.isclose(estimator.l1_ratio, 1.0))
+        )
+        if is_l1_penalized or is_lasso or is_elasticnet_l1_penalized:
             # the natural default threshold is 0 when l1 penalty was used
             threshold = 1e-5
         else:
@@ -93,9 +97,9 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
 
     threshold : str or float, default=None
         The threshold value to use for feature selection. Features whose
-        importance is greater or equal are kept while the others are
-        discarded. If "median" (resp. "mean"), then the ``threshold`` value is
-        the median (resp. the mean) of the feature importances. A scaling
+        absolute importance value is greater or equal are kept while the others
+        are discarded. If "median" (resp. "mean"), then the ``threshold`` value
+        is the median (resp. the mean) of the feature importances. A scaling
         factor (e.g., "1.25*mean") may also be used. If None and if the
         estimator has a parameter penalty set to l1, either explicitly
         or implicitly (e.g, Lasso), the threshold used is 1e-5.
@@ -119,7 +123,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         - If an integer, then it specifies the maximum number of features to
           allow.
         - If a callable, then it specifies how to calculate the maximum number of
-          features allowed by using the output of `max_feaures(X)`.
+          features allowed by using the output of `max_features(X)`.
         - If `None`, then all features are kept.
 
         To only select based on ``max_features``, set ``threshold=-np.inf``.

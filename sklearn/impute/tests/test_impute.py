@@ -93,16 +93,6 @@ def test_imputation_shape(strategy):
     assert X_imputed.shape == (10, 2)
 
 
-@pytest.mark.parametrize("strategy", ["const", 101, None])
-def test_imputation_error_invalid_strategy(strategy):
-    X = np.ones((3, 5))
-    X[0, 0] = np.nan
-
-    with pytest.raises(ValueError, match=str(strategy)):
-        imputer = SimpleImputer(strategy=strategy)
-        imputer.fit_transform(X)
-
-
 @pytest.mark.parametrize("strategy", ["mean", "median", "most_frequent"])
 def test_imputation_deletion_warning(strategy):
     X = np.ones((3, 5))
@@ -1112,18 +1102,6 @@ def test_iterative_imputer_dont_set_random_state(rs_imputer, rs_estimator):
             np.array([[-1, 1], [1, -1]]),
             {"features": "missing-only", "sparse": "auto"},
             "have missing values in transform but have no missing values in fit",
-        ),
-        (
-            np.array([[-1, 1], [1, 2]]),
-            np.array([[-1, 1], [1, 2]]),
-            {"features": "random", "sparse": "auto"},
-            "'features' has to be either 'missing-only' or 'all'",
-        ),
-        (
-            np.array([[-1, 1], [1, 2]]),
-            np.array([[-1, 1], [1, 2]]),
-            {"features": "all", "sparse": "random"},
-            "'sparse' has to be a boolean or 'auto'",
         ),
         (
             np.array([["a", "b"], ["c", "a"]], dtype=str),

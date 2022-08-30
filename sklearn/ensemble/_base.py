@@ -254,10 +254,10 @@ class _BaseHeterogeneousEnsemble(
         self.estimators = estimators
 
     def _validate_estimators(self):
-        if self.estimators is None or len(self.estimators) == 0:
+        if len(self.estimators) == 0:
             raise ValueError(
-                "Invalid 'estimators' attribute, 'estimators' should be a list"
-                " of (string, estimator) tuples."
+                "Invalid 'estimators' attribute, 'estimators' should be a "
+                "non-empty list of (string, estimator) tuples."
             )
         names, estimators = zip(*self.estimators)
         # defined by MetaEstimatorMixin

@@ -256,7 +256,7 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
            [0, 1, 0]])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "neg_label": [Integral],
         "pos_label": [Integral],
         "sparse_output": ["boolean"],
@@ -456,6 +456,11 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
         Shape will be (n_samples, 1) for binary problems. Sparse matrix will
         be of CSR format.
 
+    See Also
+    --------
+    LabelBinarizer : Class used to wrap the functionality of label_binarize and
+        allow for fitting to classes independently of the transform operation.
+
     Examples
     --------
     >>> from sklearn.preprocessing import label_binarize
@@ -476,11 +481,6 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
            [0],
            [0],
            [1]])
-
-    See Also
-    --------
-    LabelBinarizer : Class used to wrap the functionality of label_binarize and
-        allow for fitting to classes independently of the transform operation.
     """
     if not isinstance(y, list):
         # XXX Workaround that will be removed when list of list format is
@@ -743,7 +743,7 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
     array(['comedy', 'sci-fi', 'thriller'], dtype=object)
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "classes": ["array-like", None],
         "sparse_output": ["boolean"],
     }

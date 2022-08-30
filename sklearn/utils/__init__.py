@@ -473,6 +473,10 @@ def resample(*arrays, replace=True, n_samples=None, random_state=None, stratify=
         Sequence of resampled copies of the collections. The original arrays
         are not impacted.
 
+    See Also
+    --------
+    shuffle : Shuffle arrays or sparse matrices in a consistent way.
+
     Examples
     --------
     It is possible to mix sparse and dense arrays in the same run::
@@ -512,10 +516,6 @@ def resample(*arrays, replace=True, n_samples=None, random_state=None, stratify=
       >>> resample(y, n_samples=5, replace=False, stratify=y,
       ...          random_state=0)
       [1, 1, 1, 0, 1]
-
-    See Also
-    --------
-    shuffle
     """
     max_n_samples = n_samples
     random_state = check_random_state(random_state)

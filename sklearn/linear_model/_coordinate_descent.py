@@ -19,8 +19,7 @@ from joblib import Parallel, effective_n_jobs
 from ._base import LinearModel, _pre_fit
 from ..base import RegressorMixin, MultiOutputMixin
 from ._base import _preprocess_data, _deprecate_normalize
-from ..utils import check_array
-from ..utils import check_scalar
+from ..utils import check_array, check_scalar
 from ..utils.validation import check_random_state
 from ..utils._param_validation import Hidden, Interval, StrOptions
 from ..model_selection import check_cv
@@ -31,6 +30,7 @@ from ..utils.validation import (
     check_is_fitted,
     column_or_1d,
 )
+from ..utils._readonly_array_wrapper import ReadonlyArrayWrapper
 from ..utils.fixes import delayed
 
 # mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
@@ -612,7 +612,9 @@ def enet_path(
                 w=coef_,
                 alpha=l1_reg,
                 beta=l2_reg,
-                X_data=X.data,
+                X_data=ReadonlyArrayWrapper(
+                    X.data
+                ),  # TODO: Remove after release of Cython 3 (#23147)
                 X_indices=X.indices,
                 X_indptr=X.indptr,
                 y=y,
@@ -841,7 +843,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
     [1.451...]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "alpha": [Interval(Real, 0, None, closed="left")],
         "l1_ratio": [Interval(Real, 0, 1, closed="both")],
         "fit_intercept": ["boolean"],
@@ -1266,7 +1268,7 @@ class Lasso(ElasticNet):
     0.15...
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **ElasticNet._parameter_constraints,
     }
     _parameter_constraints.pop("l1_ratio")
@@ -1459,6 +1461,24 @@ def _path_residuals(
 class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
     """Base class for iterative model fitting along a regularization path."""
 
+    _parameter_constraints: dict = {
+        "eps": [Interval(Real, 0, None, closed="neither")],
+        "n_alphas": [Interval(Integral, 1, None, closed="left")],
+        "alphas": ["array-like", None],
+        "fit_intercept": ["boolean"],
+        "normalize": [Hidden(StrOptions({"deprecated"})), "boolean"],
+        "precompute": [StrOptions({"auto"}), "array-like", "boolean"],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "copy_X": ["boolean"],
+        "cv": ["cv_object"],
+        "verbose": ["verbose"],
+        "n_jobs": [Integral, None],
+        "positive": ["boolean"],
+        "random_state": ["random_state"],
+        "selection": [StrOptions({"cyclic", "random"})],
+    }
+
     @abstractmethod
     def __init__(
         self,
@@ -1534,6 +1554,8 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         self : object
             Returns an instance of fitted model.
         """
+
+        self._validate_params()
 
         # Do as _deprecate_normalize but without warning as it's raised
         # below during the refitting on the best alpha.
@@ -1616,9 +1638,6 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
 
         model = self._get_estimator()
 
-        if self.selection not in ["random", "cyclic"]:
-            raise ValueError("selection should be either random or cyclic.")
-
         # All LinearModelCV parameters except 'cv' are acceptable
         path_params = self.get_params()
 
@@ -1645,7 +1664,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
 
         check_scalar_alpha = partial(
             check_scalar,
-            target_type=numbers.Real,
+            target_type=Real,
             min_val=0.0,
             include_boundaries="left",
         )
@@ -1666,12 +1685,8 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
             ]
         else:
             # Making sure alphas entries are scalars.
-            if np.isscalar(alphas):
-                check_scalar_alpha(alphas, "alphas")
-            else:
-                # alphas is an iterable item in this case.
-                for index, alpha in enumerate(alphas):
-                    check_scalar_alpha(alpha, f"alphas[{index}]")
+            for index, alpha in enumerate(alphas):
+                check_scalar_alpha(alpha, f"alphas[{index}]")
             # Making sure alphas is properly ordered.
             alphas = np.tile(np.sort(alphas)[::-1], (n_l1_ratio, 1))
 
@@ -1802,7 +1817,7 @@ class LassoCV(RegressorMixin, LinearModelCV):
     n_alphas : int, default=100
         Number of alphas along the regularization path.
 
-    alphas : ndarray, default=None
+    alphas : array-like, default=None
         List of alphas where to compute the models.
         If ``None`` alphas are set automatically.
 
@@ -2030,7 +2045,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
     n_alphas : int, default=100
         Number of alphas along the regularization path, used for each l1_ratio.
 
-    alphas : ndarray, default=None
+    alphas : array-like, default=None
         List of alphas where to compute the models.
         If None alphas are set automatically.
 
@@ -2200,6 +2215,11 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
     >>> print(regr.predict([[0, 0]]))
     [0.398...]
     """
+
+    _parameter_constraints: dict = {
+        **LinearModelCV._parameter_constraints,
+        "l1_ratio": [Interval(Real, 0, 1, closed="both"), "array-like"],
+    }
 
     path = staticmethod(enet_path)
 
@@ -2851,6 +2871,13 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
     [0.00166409 0.00166409]
     """
 
+    _parameter_constraints: dict = {
+        **LinearModelCV._parameter_constraints,
+        "l1_ratio": [Interval(Real, 0, 1, closed="both"), "array-like"],
+    }
+    _parameter_constraints.pop("precompute")
+    _parameter_constraints.pop("positive")
+
     path = staticmethod(enet_path)
 
     def __init__(
@@ -3086,6 +3113,12 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
     >>> reg.predict(X[:1,])
     array([[153.7971...,  94.9015...]])
     """
+
+    _parameter_constraints: dict = {
+        **LinearModelCV._parameter_constraints,
+    }
+    _parameter_constraints.pop("precompute")
+    _parameter_constraints.pop("positive")
 
     path = staticmethod(lasso_path)
 

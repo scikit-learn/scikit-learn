@@ -702,16 +702,19 @@ def test_create_memmap_backed_data(monkeypatch, aligned):
     assert registration_counter.nb_calls == 3
 
     input_list = [input_array, input_array + 1, input_array + 2]
-    if aligned:
-        with pytest.raises(
-            ValueError, match="If aligned=True, input must be a single numpy array."
-        ):
-            create_memmap_backed_data(input_list, aligned=True)
-    else:
-        mmap_data_list = create_memmap_backed_data(input_list, aligned=False)
-        for input_array, data in zip(input_list, mmap_data_list):
-            check_memmap(input_array, data)
-        assert registration_counter.nb_calls == 4
+    mmap_data_list = create_memmap_backed_data(input_list, aligned=aligned)
+    for input_array, data in zip(input_list, mmap_data_list):
+        check_memmap(input_array, data)
+    assert registration_counter.nb_calls == 4
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "When creating aligned memmap-backed arrays, input must be a single array"
+            " or a sequence of arrays"
+        ),
+    ):
+        create_memmap_backed_data([input_array, "not-an-array"], aligned=True)
 
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64, np.int32, np.int64])
