@@ -348,59 +348,53 @@ class NeighborhoodComponentsAnalysis(
         y = LabelEncoder().fit_transform(y)
 
         # Check the preferred dimensionality of the projected space
-        if (self.n_components is not None) and (self.n_components > X.shape[1]):
+        if self.n_components is not None and self.n_components > X.shape[1]:
             raise ValueError(
                 "The preferred dimensionality of the "
-                "projected space `n_components` ({}) cannot "
+                f"projected space `n_components` ({self.n_components}) cannot "
                 "be greater than the given data "
-                "dimensionality ({})!".format(self.n_components, X.shape[1])
+                f"dimensionality ({X.shape[1]})!"
             )
 
         # If warm_start is enabled, check that the inputs are consistent
-        if self.warm_start and hasattr(self, "components_"):
-            if self.components_.shape[1] != X.shape[1]:
-                raise ValueError(
-                    "The new inputs dimensionality ({}) does not "
-                    "match the input dimensionality of the "
-                    "previously learned transformation ({}).".format(
-                        X.shape[1], self.components_.shape[1]
-                    )
-                )
+        if (
+            self.warm_start
+            and hasattr(self, "components_")
+            and self.components_.shape[1] != X.shape[1]
+        ):
+            raise ValueError(
+                f"The new inputs dimensionality ({X.shape[1]}) does not "
+                "match the input dimensionality of the "
+                f"previously learned transformation ({self.components_.shape[1]})."
+            )
 
         # Check how the linear transformation should be initialized
         init = self.init
 
         if isinstance(init, np.ndarray):
             init = check_array(init)
-
             # Assert that init.shape[1] = X.shape[1]
             if init.shape[1] != X.shape[1]:
                 raise ValueError(
-                    "The input dimensionality ({}) of the given "
+                    f"The input dimensionality ({init.shape[1]}) of the given "
                     "linear transformation `init` must match the "
-                    "dimensionality of the given inputs `X` ({}).".format(
-                        init.shape[1], X.shape[1]
-                    )
+                    f"dimensionality of the given inputs `X` ({X.shape[1]})."
                 )
-
             # Assert that init.shape[0] <= init.shape[1]
             if init.shape[0] > init.shape[1]:
                 raise ValueError(
-                    "The output dimensionality ({}) of the given "
+                    f"The output dimensionality ({init.shape[0]}) of the given "
                     "linear transformation `init` cannot be "
-                    "greater than its input dimensionality ({}).".format(
-                        init.shape[0], init.shape[1]
-                    )
+                    f"greater than its input dimensionality ({init.shape[1]})."
                 )
-
             # Assert that self.n_components = init.shape[0]
-            if (self.n_components is not None) and (self.n_components != init.shape[0]):
+            if self.n_components is not None and self.n_components != init.shape[0]:
                 raise ValueError(
                     "The preferred dimensionality of the "
-                    "projected space `n_components` ({}) does"
+                    f"projected space `n_components` ({self.n_components}) does"
                     " not match the output dimensionality of "
                     "the given linear transformation "
-                    "`init` ({})!".format(self.n_components, init.shape[0])
+                    f"`init` ({init.shape[0]})!"
                 )
 
         return X, y, init
