@@ -221,7 +221,11 @@ def test_perfect_checkerboard(global_random_seed):
 @pytest.mark.parametrize(
     "params, type_err, err_msg",
     [
-        ({"n_components": 3, "n_best": 4}, ValueError, "n_best == 4, must be <= 3."),
+        (
+            {"n_components": 3, "n_best": 4},
+            ValueError,
+            "n_best=4 must be <= n_components=3",
+        ),
     ],
 )
 def test_spectralbiclustering_parameter_validation(params, type_err, err_msg):

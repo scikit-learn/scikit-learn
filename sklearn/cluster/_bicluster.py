@@ -87,8 +87,7 @@ def _log_normalize(X):
 class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
     """Base class for spectral biclustering."""
 
-    _parameter_constraints = {
-        "n_clusters": [Interval(Integral, 0, None, closed="left"), tuple],
+    _parameter_constraints: dict = {
         "svd_method": [StrOptions({"randomized", "arpack"})],
         "n_svd_vecs": [Interval(Integral, 0, None, closed="left"), None],
         "mini_batch": ["boolean"],
@@ -116,6 +115,10 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
         self.n_init = n_init
         self.random_state = random_state
 
+    def _check_parameters(self, n_samples):
+        """Validate parameters depending on the input data."""
+        pass
+
     def fit(self, X, y=None):
         """Create a biclustering for X.
 
@@ -133,8 +136,9 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
             SpectralBiclustering instance.
         """
         self._validate_params()
-        self._check_parameters(X.shape[0])
+
         X = self._validate_data(X, accept_sparse="csr", dtype=np.float64)
+        self._check_parameters(X.shape[0])
         self._fit(X)
         return self
 
@@ -246,7 +250,7 @@ class SpectralCoclustering(BaseSpectral):
         Whether to use mini-batch k-means, which is faster but may get
         different results.
 
-    init : {'k-means++', 'random', or ndarray of shape \
+    init : {'k-means++', 'random'}, or ndarray of shape \
             (n_clusters, n_features), default='k-means++'
         Method for initialization of k-means algorithm; defaults to
         'k-means++'.
@@ -319,7 +323,10 @@ class SpectralCoclustering(BaseSpectral):
     SpectralCoclustering(n_clusters=2, random_state=0)
     """
 
-    _parameter_constraints = {**BaseSpectral._parameter_constraints}
+    _parameter_constraints: dict = {
+        **BaseSpectral._parameter_constraints,
+        "n_clusters": [Interval(Integral, 1, None, closed="left")],
+    }
 
     def __init__(
         self,
@@ -337,16 +344,13 @@ class SpectralCoclustering(BaseSpectral):
         )
 
     def _check_parameters(self, n_samples):
-        check_scalar(
-            self.n_clusters,
-            "n_clusters",
-            target_type=numbers.Integral,
-            min_val=1,
-            max_val=n_samples,
-        )
+        if self.n_clusters > n_samples:
+            raise ValueError(
+                f"n_clusters should be <= n_samples={n_samples}. Got"
+                f" {self.n_cluster} instead."
+            )
 
     def _fit(self, X):
-        self._validate_params()
         normalized_data, row_diag, col_diag = _scale_normalize(X)
         n_sv = 1 + int(np.ceil(np.log2(self.n_clusters)))
         u, v = self._svd(normalized_data, n_sv, n_discard=1)
@@ -416,7 +420,7 @@ class SpectralBiclustering(BaseSpectral):
         Whether to use mini-batch k-means, which is faster but may get
         different results.
 
-    init : {'k-means++', 'random'} or ndarray of (n_clusters, n_features), \
+    init : {'k-means++', 'random'} or ndarray of shape (n_clusters, n_features), \
             default='k-means++'
         Method for initialization of k-means algorithm; defaults to
         'k-means++'.
@@ -489,8 +493,9 @@ class SpectralBiclustering(BaseSpectral):
     SpectralBiclustering(n_clusters=2, random_state=0)
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **BaseSpectral._parameter_constraints,
+        "n_clusters": [Interval(Integral, 1, None, closed="left"), tuple],
         "method": [StrOptions({"bistochastic", "scale", "log"})],
         "n_components": [Interval(Integral, 1, None, closed="left")],
         "n_best": [Interval(Integral, 1, None, closed="left")],
@@ -518,50 +523,26 @@ class SpectralBiclustering(BaseSpectral):
         self.n_best = n_best
 
     def _check_parameters(self, n_samples):
-        try:
-            check_scalar(
-                self.n_clusters,
-                "n_clusters",
-                target_type=numbers.Integral,
-                min_val=1,
-                max_val=n_samples,
-            )
-        except (ValueError, TypeError):
-            try:
-                n_row_clusters, n_column_clusters = self.n_clusters
-                check_scalar(
-                    n_row_clusters,
-                    "n_row_clusters",
-                    target_type=numbers.Integral,
-                    min_val=1,
-                    max_val=n_samples,
-                )
-                check_scalar(
-                    n_column_clusters,
-                    "n_column_clusters",
-                    target_type=numbers.Integral,
-                    min_val=1,
-                    max_val=n_samples,
-                )
-            except (ValueError, TypeError) as e:
+        if isinstance(self.n_clusters, Integral):
+            if self.n_clusters > n_samples:
                 raise ValueError(
-                    "Incorrect parameter n_clusters has value:"
-                    f" {self.n_clusters}. It should either be a single integer"
-                    " or an iterable with two integers:"
-                    " (n_row_clusters, n_column_clusters)"
-                    " And the values are should be in the"
-                    " range: (1, n_samples)"
-                ) from e
-        check_scalar(
-            self.n_best,
-            "n_best",
-            target_type=numbers.Integral,
-            min_val=1,
-            max_val=self.n_components,
-        )
+                    f"n_clusters should be <= n_samples={n_samples}. Got"
+                    f" {self.n_cluster} instead."
+                )
+        else:  # tuple
+            if len(self.n_clusters) != 2 or any(x > n_samples for x in self.n_clusters):
+                raise ValueError(
+                    "When n_clusters is an iterable, it should contains two integers:"
+                    " (n_row_clusters, n_column_clusters), and both values should be in"
+                    " the range [1, n_samples]."
+                )
+
+        if self.n_best > self.n_components:
+            raise ValueError(
+                f"n_best={self.n_best} must be <= n_components={self.n_components}."
+            )
 
     def _fit(self, X):
-        self._validate_params()
         n_sv = self.n_components
         if self.method == "bistochastic":
             normalized_data = _bistochastic_normalize(X)
