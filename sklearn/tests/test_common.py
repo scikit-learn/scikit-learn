@@ -469,8 +469,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "DictionaryLearning",
     "HashingVectorizer",
     "IterativeImputer",
-    "LabelPropagation",
-    "LabelSpreading",
     "LatentDirichletAllocation",
     "MiniBatchDictionaryLearning",
     "MultiTaskElasticNet",
