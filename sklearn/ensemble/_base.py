@@ -126,7 +126,7 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
     @abstractmethod
     def __init__(
         self,
-        estimator,
+        estimator=None,
         *,
         n_estimators=10,
         estimator_params=tuple(),
@@ -158,11 +158,13 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         if self.estimator is not None:
             self.base_estimator_ = self.estimator
+        elif self.base_estimator != "deprecated" and self.base_estimator is not None:
+            self.base_estimator_ = self.base_estimator
         else:
             self.base_estimator_ = default
 
         if self.base_estimator_ is None:
-            raise ValueError("estimator cannot be None")
+            raise ValueError("estimator and base_estimator cannot be None")
 
     def _make_estimator(self, append=True, random_state=None):
         """Make and configure a copy of the `base_estimator_` attribute.
