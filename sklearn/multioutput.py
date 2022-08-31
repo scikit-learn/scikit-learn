@@ -19,7 +19,6 @@ import numpy as np
 import scipy.sparse as sp
 from joblib import Parallel
 
-from numpy.random import RandomState
 from abc import ABCMeta, abstractmethod
 from .base import BaseEstimator, clone, MetaEstimatorMixin
 from .base import RegressorMixin, ClassifierMixin, is_classifier
@@ -543,6 +542,15 @@ def _available_if_base_estimator_has(attr):
 
 
 class _BaseChain(BaseEstimator, metaclass=ABCMeta):
+
+    _parameter_constraints: dict = {
+        "base_estimator": [HasMethods(["fit", "predict"])],
+        "order": ["array-like", StrOptions({"random"}), None],
+        "cv": ["cv_object", StrOptions({"prefit"})],
+        "random_state": ["random_state"],
+        "verbose": ["boolean"],
+    }
+
     def __init__(
         self, base_estimator, *, order=None, cv=None, random_state=None, verbose=False
     ):
@@ -785,14 +793,6 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
            [0.0321..., 0.9935..., 0.0625...]])
     """
 
-    _parameter_constraints = {
-        "base_estimator": "no_validation",
-        "order": ["array-like", StrOptions({"random"}), None],
-        "cv": ["cv_object", StrOptions({"prefit"}), None],
-        "random_state": [Integral, RandomState, None],
-        "verbose": ["boolean"],
-    }
-
     def fit(self, X, Y):
         """Fit the model to data matrix X and targets Y.
 
@@ -809,7 +809,6 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         self : object
             Class instance.
         """
-
         self._validate_params()
 
         super().fit(X, Y)
@@ -1004,6 +1003,8 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
         self : object
             Returns a fitted instance.
         """
+        self._validate_params()
+
         super().fit(X, Y, **fit_params)
         return self
 
