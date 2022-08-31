@@ -5,7 +5,6 @@
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
-import numbers
 from numbers import Integral
 
 from scipy.linalg import norm
