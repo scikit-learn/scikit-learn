@@ -425,7 +425,7 @@ class _VectorizerMixin:
     def build_analyzer(self):
         """Return a callable to process input data.
 
-        The callable handles that handles preprocessing, tokenization, and
+        The callable handles preprocessing, tokenization, and
         n-grams generation.
 
         Returns
