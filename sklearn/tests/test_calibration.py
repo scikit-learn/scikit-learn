@@ -23,7 +23,6 @@ from sklearn.model_selection import KFold, cross_val_predict
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.ensemble import (
     RandomForestClassifier,
-    RandomForestRegressor,
     VotingClassifier,
 )
 from sklearn.linear_model import LogisticRegression, LinearRegression

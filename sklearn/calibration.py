@@ -244,7 +244,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
     array([[0.936..., 0.063...]])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "estimator": [
             HasMethods(["fit", "predict_proba"]),
             HasMethods(["fit", "decision_function"]),
