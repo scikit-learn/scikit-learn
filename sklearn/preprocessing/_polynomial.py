@@ -2,7 +2,7 @@
 This file contains preprocessing tools based on polynomials.
 """
 import collections
-import numbers
+from numbers import Integral
 from itertools import chain, combinations
 from itertools import combinations_with_replacement as combinations_w_r
 
@@ -14,9 +14,9 @@ from scipy.special import comb
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
 from ..utils.deprecation import deprecated
-from ..utils.fixes import linspace
 from ..utils.validation import check_is_fitted, FLOAT_DTYPES, _check_sample_weight
 from ..utils.validation import _check_feature_names_in
+from ..utils._param_validation import Interval, StrOptions
 from ..utils.stats import _weighted_percentile
 
 from ._csr_polynomial_expansion import _csr_polynomial_expansion
@@ -130,6 +130,13 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
            [ 1.,  4.,  5., 20.]])
     """
 
+    _parameter_constraints: dict = {
+        "degree": [Interval(Integral, 0, None, closed="left"), "array-like"],
+        "interaction_only": ["boolean"],
+        "include_bias": ["boolean"],
+        "order": [StrOptions({"C", "F"})],
+    }
+
     def __init__(
         self, degree=2, *, interaction_only=False, include_bias=True, order="C"
     ):
@@ -241,7 +248,8 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
 
             - If `input_features is None`, then `feature_names_in_` is
               used as feature names in. If `feature_names_in_` is not defined,
-              then names are generated: `[x0, x1, ..., x(n_features_in_)]`.
+              then the following input feature names are generated:
+              `["x0", "x1", ..., "x(n_features_in_ - 1)"]`.
             - If `input_features` is an array-like, then `input_features` must
               match `feature_names_in_` if `feature_names_in_` is defined.
 
@@ -284,13 +292,16 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         self : object
             Fitted transformer.
         """
+        self._validate_params()
         _, n_features = self._validate_data(X, accept_sparse=True).shape
 
-        if isinstance(self.degree, numbers.Integral):
-            if self.degree < 0:
+        if isinstance(self.degree, Integral):
+            if self.degree == 0 and not self.include_bias:
                 raise ValueError(
-                    f"degree must be a non-negative integer, got {self.degree}."
+                    "Setting degree to zero and include_bias to False would result in"
+                    " an empty output array."
                 )
+
             self._min_degree = 0
             self._max_degree = self.degree
         elif (
@@ -298,8 +309,8 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         ):
             self._min_degree, self._max_degree = self.degree
             if not (
-                isinstance(self._min_degree, numbers.Integral)
-                and isinstance(self._max_degree, numbers.Integral)
+                isinstance(self._min_degree, Integral)
+                and isinstance(self._max_degree, Integral)
                 and self._min_degree >= 0
                 and self._min_degree <= self._max_degree
             ):
@@ -308,6 +319,11 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                     "be non-negative integers that fulfil "
                     "min_degree <= max_degree, got "
                     f"{self.degree}."
+                )
+            elif self._max_degree == 0 and not self.include_bias:
+                raise ValueError(
+                    "Setting both min_degree and max_degree to zero and include_bias to"
+                    " False would result in an empty output array."
                 )
         else:
             raise ValueError(
@@ -380,7 +396,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                 to_stack.append(
                     sparse.csc_matrix(np.ones(shape=(n_samples, 1), dtype=X.dtype))
                 )
-            if self._min_degree <= 1:
+            if self._min_degree <= 1 and self._max_degree > 0:
                 to_stack.append(X)
             for deg in range(max(2, self._min_degree), self._max_degree + 1):
                 Xp_next = _csr_polynomial_expansion(
@@ -441,6 +457,9 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                 current_col = 1
             else:
                 current_col = 0
+
+            if self._max_degree == 0:
+                return XP
 
             # degree 1 term
             XP[:, current_col : current_col + n_features] = X
@@ -613,6 +632,17 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
            [0.  , 0.  , 0.5 , 0.5 ]])
     """
 
+    _parameter_constraints: dict = {
+        "n_knots": [Interval(Integral, 2, None, closed="left")],
+        "degree": [Interval(Integral, 0, None, closed="left")],
+        "knots": [StrOptions({"uniform", "quantile"}), "array-like"],
+        "extrapolation": [
+            StrOptions({"error", "constant", "linear", "continue", "periodic"})
+        ],
+        "include_bias": ["boolean"],
+        "order": [StrOptions({"C", "F"})],
+    }
+
     def __init__(
         self,
         n_knots=5,
@@ -667,7 +697,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             x_min = np.amin(X[mask], axis=0)
             x_max = np.amax(X[mask], axis=0)
 
-            knots = linspace(
+            knots = np.linspace(
                 start=x_min,
                 stop=x_max,
                 num=n_knots,
@@ -714,7 +744,8 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
 
             - If `input_features` is `None`, then `feature_names_in_` is
               used as feature names in. If `feature_names_in_` is not defined,
-              then names are generated: `[x0, x1, ..., x(n_features_in_)]`.
+              then the following input feature names are generated:
+              `["x0", "x1", ..., "x(n_features_in_ - 1)"]`.
             - If `input_features` is an array-like, then `input_features` must
               match `feature_names_in_` if `feature_names_in_` is defined.
 
@@ -752,6 +783,8 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         self : object
             Fitted transformer.
         """
+        self._validate_params()
+
         X = self._validate_data(
             X,
             reset=True,
@@ -764,20 +797,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
 
         _, n_features = X.shape
 
-        if not (isinstance(self.degree, numbers.Integral) and self.degree >= 0):
-            raise ValueError(
-                f"degree must be a non-negative integer, got {self.degree}."
-            )
-
-        if isinstance(self.knots, str) and self.knots in [
-            "uniform",
-            "quantile",
-        ]:
-            if not (isinstance(self.n_knots, numbers.Integral) and self.n_knots >= 2):
-                raise ValueError(
-                    f"n_knots must be a positive integer >= 2, got: {self.n_knots}"
-                )
-
+        if isinstance(self.knots, str):
             base_knots = self._get_base_knot_positions(
                 X, n_knots=self.n_knots, knots=self.knots, sample_weight=sample_weight
             )
@@ -789,21 +809,6 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                 raise ValueError("knots.shape[1] == n_features is violated.")
             elif not np.all(np.diff(base_knots, axis=0) > 0):
                 raise ValueError("knots must be sorted without duplicates.")
-
-        if self.extrapolation not in (
-            "error",
-            "constant",
-            "linear",
-            "continue",
-            "periodic",
-        ):
-            raise ValueError(
-                "extrapolation must be one of 'error', "
-                "'constant', 'linear', 'continue' or 'periodic'."
-            )
-
-        if not isinstance(self.include_bias, (bool, np.bool_)):
-            raise ValueError("include_bias must be bool.")
 
         # number of knots for base interval
         n_knots = base_knots.shape[0]
@@ -853,13 +858,13 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             dist_max = base_knots[-1] - base_knots[-2]
 
             knots = np.r_[
-                linspace(
+                np.linspace(
                     base_knots[0] - degree * dist_min,
                     base_knots[0] - dist_min,
                     num=degree,
                 ),
                 base_knots,
-                linspace(
+                np.linspace(
                     base_knots[-1] + dist_max,
                     base_knots[-1] + degree * dist_max,
                     num=degree,
@@ -921,7 +926,6 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             spl = self.bsplines_[i]
 
             if self.extrapolation in ("continue", "error", "periodic"):
-
                 if self.extrapolation == "periodic":
                     # With periodic extrapolation we map x to the segment
                     # [spl.t[k], spl.t[n]].

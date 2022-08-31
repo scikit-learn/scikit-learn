@@ -1,6 +1,7 @@
 import numpy as np
 import scipy.sparse as sp
 import pytest
+import warnings
 
 from sklearn.utils._testing import (
     assert_array_almost_equal,
@@ -66,20 +67,18 @@ def test_kernel_pca():
                 assert X_pred2.shape == X_pred.shape
 
 
-def test_kernel_pca_invalid_solver():
-    """Check that kPCA raises an error if the solver parameter is invalid"""
-    with pytest.raises(ValueError):
-        KernelPCA(eigen_solver="unknown").fit(np.random.randn(10, 10))
-
-
 def test_kernel_pca_invalid_parameters():
     """Check that kPCA raises an error if the parameters are invalid
 
     Tests fitting inverse transform with a precomputed kernel raises a
     ValueError.
     """
-    with pytest.raises(ValueError):
-        KernelPCA(10, fit_inverse_transform=True, kernel="precomputed")
+    estimator = KernelPCA(
+        n_components=10, fit_inverse_transform=True, kernel="precomputed"
+    )
+    err_ms = "Cannot fit_inverse_transform with a precomputed kernel"
+    with pytest.raises(ValueError, match=err_ms):
+        estimator.fit(np.random.randn(10, 10))
 
 
 def test_kernel_pca_consistent_transform():
@@ -230,7 +229,12 @@ def test_leave_zero_eig():
     X_fit = np.array([[1, 1], [0, 0]])
 
     # Assert that even with all np warnings on, there is no div by zero warning
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        # There might be warnings about the kernel being badly conditioned,
+        # but there should not be warnings about division by zero.
+        # (Numpy division by zero warning can have many message variants, but
+        # at least we know that it is a RuntimeWarning so lets check only this)
+        warnings.simplefilter("error", RuntimeWarning)
         with np.errstate(all="warn"):
             k = KernelPCA(n_components=2, remove_zero_eig=False, eigen_solver="dense")
             # Fit, then transform
@@ -239,13 +243,6 @@ def test_leave_zero_eig():
             B = k.fit_transform(X_fit)
             # Compare
             assert_array_almost_equal(np.abs(A), np.abs(B))
-
-    for w in record:
-        # There might be warnings about the kernel being badly conditioned,
-        # but there should not be warnings about division by zero.
-        # (Numpy division by zero warning can have many message variants, but
-        # at least we know that it is a RuntimeWarning so lets check only this)
-        assert not issubclass(w.category, RuntimeWarning)
 
 
 def test_kernel_pca_precomputed():
@@ -311,18 +308,6 @@ def test_kernel_pca_precomputed_non_symmetric(solver):
     # comparison between the non-centered and centered versions
     assert_array_equal(kpca.eigenvectors_, kpca_c.eigenvectors_)
     assert_array_equal(kpca.eigenvalues_, kpca_c.eigenvalues_)
-
-
-def test_kernel_pca_invalid_kernel():
-    """Tests that using an invalid kernel name raises a ValueError
-
-    An invalid kernel name should raise a ValueError at fit time.
-    """
-    rng = np.random.RandomState(0)
-    X_fit = rng.random_sample((2, 4))
-    kpca = KernelPCA(kernel="tototiti")
-    with pytest.raises(ValueError):
-        kpca.fit(X_fit)
 
 
 def test_gridsearch_pipeline():
@@ -457,7 +442,7 @@ def test_kernel_pca_solvers_equivalence(n_components):
     """Check that 'dense' 'arpack' & 'randomized' solvers give similar results"""
 
     # Generate random data
-    n_train, n_test = 2000, 100
+    n_train, n_test = 1_000, 100
     X, _ = make_circles(
         n_samples=(n_train + n_test), factor=0.3, noise=0.05, random_state=0
     )
@@ -529,18 +514,6 @@ def test_32_64_decomposition_shape():
     # Compare the shapes (corresponds to the number of non-zero eigenvalues)
     kpca = KernelPCA()
     assert kpca.fit_transform(X).shape == kpca.fit_transform(X.astype(np.float32)).shape
-
-
-# TODO: Remove in 1.1
-def test_kernel_pcc_pairwise_is_deprecated():
-    """Check that `_pairwise` is correctly marked with deprecation warning
-
-    Tests that a `FutureWarning` is issued when `_pairwise` is accessed.
-    """
-    kp = KernelPCA(kernel="precomputed")
-    msg = r"Attribute `_pairwise` was deprecated in version 0\.24"
-    with pytest.warns(FutureWarning, match=msg):
-        kp._pairwise
 
 
 # TODO: Remove in 1.2

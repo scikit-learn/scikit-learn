@@ -93,7 +93,7 @@ interpreter prompt::
 A dataset is a dictionary-like object that holds all the data and some
 metadata about the data. This data is stored in the ``.data`` member,
 which is a ``n_samples, n_features`` array. In the case of supervised
-problem, one or more response variables are stored in the ``.target`` member. More
+problems, one or more response variables are stored in the ``.target`` member. More
 details on the different datasets can be found in the :ref:`dedicated
 section <datasets>`.
 
@@ -183,7 +183,7 @@ the last item from ``digits.data``::
   SVC(C=100.0, gamma=0.001)
 
 Now you can *predict* new values. In this case, you'll predict using the last
-image from ``digits.data``. By predicting, you'll determine the image from the 
+image from ``digits.data``. By predicting, you'll determine the image from the
 training set that best matches the last image.
 
 
@@ -216,7 +216,7 @@ Type casting
 Unless otherwise specified, input will be cast to ``float64``::
 
   >>> import numpy as np
-  >>> from sklearn import random_projection
+  >>> from sklearn import kernel_approximation
 
   >>> rng = np.random.RandomState(0)
   >>> X = rng.rand(10, 2000)
@@ -224,7 +224,7 @@ Unless otherwise specified, input will be cast to ``float64``::
   >>> X.dtype
   dtype('float32')
 
-  >>> transformer = random_projection.GaussianRandomProjection()
+  >>> transformer = kernel_approximation.RBFSampler()
   >>> X_new = transformer.fit_transform(X)
   >>> X_new.dtype
   dtype('float64')

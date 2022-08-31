@@ -207,19 +207,22 @@ results will stop getting significantly better beyond a critical number of
 trees. The latter is the size of the random subsets of features to consider
 when splitting a node. The lower the greater the reduction of variance, but
 also the greater the increase in bias. Empirical good default values are
-``max_features=None`` (always considering all features instead of a random
-subset) for regression problems, and ``max_features="sqrt"`` (using a random
-subset of size ``sqrt(n_features)``) for classification tasks (where
-``n_features`` is the number of features in the data). Good results are often
-achieved when setting ``max_depth=None`` in combination with
-``min_samples_split=2`` (i.e., when fully developing the trees). Bear in mind
-though that these values are usually not optimal, and might result in models
-that consume a lot of RAM. The best parameter values should always be
-cross-validated. In addition, note that in random forests, bootstrap samples
-are used by default (``bootstrap=True``) while the default strategy for
-extra-trees is to use the whole dataset (``bootstrap=False``). When using
-bootstrap sampling the generalization accuracy can be estimated on the left out
-or out-of-bag samples. This can be enabled by setting ``oob_score=True``.
+``max_features=1.0`` or equivalently ``max_features=None`` (always considering
+all features instead of a random subset) for regression problems, and
+``max_features="sqrt"`` (using a random subset of size ``sqrt(n_features)``)
+for classification tasks (where ``n_features`` is the number of features in
+the data). The default value of ``max_features=1.0`` is equivalent to bagged
+trees and more randomness can be achieved by setting smaller values (e.g. 0.3
+is a typical default in the literature). Good results are often achieved when
+setting ``max_depth=None`` in combination with ``min_samples_split=2`` (i.e.,
+when fully developing the trees). Bear in mind though that these values are
+usually not optimal, and might result in models that consume a lot of RAM.
+The best parameter values should always be cross-validated. In addition, note
+that in random forests, bootstrap samples are used by default
+(``bootstrap=True``) while the default strategy for extra-trees is to use the
+whole dataset (``bootstrap=False``). When using bootstrap sampling the
+generalization error can be estimated on the left out or out-of-bag samples.
+This can be enabled by setting ``oob_score=True``.
 
 .. note::
 
@@ -455,10 +458,9 @@ Gradient Tree Boosting
 
 `Gradient Tree Boosting <https://en.wikipedia.org/wiki/Gradient_boosting>`_
 or Gradient Boosted Decision Trees (GBDT) is a generalization
-of boosting to arbitrary
-differentiable loss functions. GBDT is an accurate and effective
-off-the-shelf procedure that can be used for both regression and
-classification problems in a
+of boosting to arbitrary differentiable loss functions, see the seminal work of
+[Friedman2001]_. GBDT is an accurate and effective off-the-shelf procedure that can be
+used for both regression and classification problems in a
 variety of areas including Web search ranking and ecology.
 
 The module :mod:`sklearn.ensemble` provides methods
@@ -560,7 +562,7 @@ for regression which can be specified via the argument
 The figure below shows the results of applying :class:`GradientBoostingRegressor`
 with least squares loss and 500 base learners to the diabetes dataset
 (:func:`sklearn.datasets.load_diabetes`).
-The plot on the left shows the train and test error at each iteration.
+The plot shows the train and test error at each iteration.
 The train error at each iteration is stored in the
 :attr:`~GradientBoostingRegressor.train_score_` attribute
 of the gradient boosting model. The test error at each iterations can be obtained
@@ -620,7 +622,7 @@ We found that ``max_leaf_nodes=k`` gives comparable results to ``max_depth=k-1``
 but is significantly faster to train at the expense of a slightly higher
 training error.
 The parameter ``max_leaf_nodes`` corresponds to the variable ``J`` in the
-chapter on gradient boosting in [F2001]_ and is related to the parameter
+chapter on gradient boosting in [Friedman2001]_ and is related to the parameter
 ``interaction.depth`` in R's gbm package where ``max_leaf_nodes == interaction.depth + 1`` .
 
 Mathematical formulation
@@ -632,12 +634,12 @@ case.
 Regression
 ^^^^^^^^^^
 
-GBRT regressors are additive models whose prediction :math:`y_i` for a
+GBRT regressors are additive models whose prediction :math:`\hat{y}_i` for a
 given input :math:`x_i` is of the following form:
 
   .. math::
 
-    \hat{y_i} = F_M(x_i) = \sum_{m=1}^{M} h_m(x_i)
+    \hat{y}_i = F_M(x_i) = \sum_{m=1}^{M} h_m(x_i)
 
 where the :math:`h_m` are estimators called *weak learners* in the context
 of boosting. Gradient Tree Boosting uses :ref:`decision tree regressors
@@ -679,7 +681,7 @@ approximated as follows:
 .. note::
 
   Briefly, a first-order Taylor approximation says that
-  :math:`l(z) \approx l(a) + (z - a) \frac{\partial l(a)}{\partial a}`.
+  :math:`l(z) \approx l(a) + (z - a) \frac{\partial l}{\partial z}(a)`.
   Here, :math:`z` corresponds to :math:`F_{m - 1}(x_i) + h_m(x_i)`, and
   :math:`a` corresponds to :math:`F_{m-1}(x_i)`
 
@@ -721,9 +723,9 @@ homogeneous to a prediction: it cannot be a class, since the trees predict
 continuous values.
 
 The mapping from the value :math:`F_M(x_i)` to a class or a probability is
-loss-dependent. For the deviance (or log-loss), the probability that
+loss-dependent. For the log-loss, the probability that
 :math:`x_i` belongs to the positive class is modeled as :math:`p(y_i = 1 |
-x_i) = \sigma(F_M(x_i))` where :math:`\sigma` is the sigmoid function.
+x_i) = \sigma(F_M(x_i))` where :math:`\sigma` is the sigmoid or expit function.
 
 For multiclass classification, K trees (for K classes) are built at each of
 the :math:`M` iterations. The probability that :math:`x_i` belongs to class
@@ -752,7 +754,7 @@ the parameter ``loss``:
       target values.
     * Huber (``'huber'``): Another robust loss function that combines
       least squares and least absolute deviation; use ``alpha`` to
-      control the sensitivity with regards to outliers (see [F2001]_ for
+      control the sensitivity with regards to outliers (see [Friedman2001]_ for
       more details).
     * Quantile (``'quantile'``): A loss function for quantile regression.
       Use ``0 < alpha < 1`` to specify the quantile. This loss function
@@ -761,11 +763,11 @@ the parameter ``loss``:
 
   * Classification
 
-    * Binomial deviance (``'deviance'``): The binomial
-      negative log-likelihood loss function for binary classification (provides
-      probability estimates).  The initial model is given by the
+    * Binary log-loss (``'log-loss'``): The binomial
+      negative log-likelihood loss function for binary classification. It provides
+      probability estimates.  The initial model is given by the
       log odds-ratio.
-    * Multinomial deviance (``'deviance'``): The multinomial
+    * Multi-class log-loss (``'log-loss'``): The multinomial
       negative log-likelihood loss function for multi-class classification with
       ``n_classes`` mutually exclusive classes. It provides
       probability estimates.  The initial model is given by the
@@ -774,7 +776,7 @@ the parameter ``loss``:
       inefficient for data sets with a large number of classes.
     * Exponential loss (``'exponential'``): The same loss function
       as :class:`AdaBoostClassifier`. Less robust to mislabeled
-      examples than ``'deviance'``; can only be used for binary
+      examples than ``'log-loss'``; can only be used for binary
       classification.
 
 .. _gradient_boosting_shrinkage:
@@ -782,7 +784,7 @@ the parameter ``loss``:
 Shrinkage via learning rate
 ---------------------------
 
-[F2001]_ proposed a simple regularization strategy that scales
+[Friedman2001]_ proposed a simple regularization strategy that scales
 the contribution of each weak learner by a constant factor :math:`\nu`:
 
 .. math::
@@ -806,7 +808,7 @@ stopping. For a more detailed discussion of the interaction between
 Subsampling
 -----------
 
-[F1999]_ proposed stochastic gradient boosting, which combines gradient
+[Friedman2002]_ proposed stochastic gradient boosting, which combines gradient
 boosting with bootstrap averaging (bagging). At each iteration
 the base classifier is trained on a fraction ``subsample`` of
 the available training data. The subsample is drawn without replacement.
@@ -824,7 +826,7 @@ does poorly.
    :scale: 75
 
 Another strategy to reduce the variance is by subsampling the features
-analogous to the random splits in :class:`RandomForestClassifier` .
+analogous to the random splits in :class:`RandomForestClassifier`.
 The number of subsampled features can be controlled via the ``max_features``
 parameter.
 
@@ -893,6 +895,19 @@ based on permutation of the features.
 
  * :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_regression.py`
 
+.. topic:: References
+
+  .. [Friedman2001] Friedman, J.H. (2001). :doi:`Greedy function approximation: A gradient
+      boosting machine <10.1214/aos/1013203451>`.
+      Annals of Statistics, 29, 1189-1232.
+
+  .. [Friedman2002] Friedman, J.H. (2002). `Stochastic gradient boosting.
+     <https://statweb.stanford.edu/~jhf/ftp/stobst.pdf>`_.
+     Computational Statistics & Data Analysis, 38, 367-378.
+
+  .. [R2007] G. Ridgeway (2006). `Generalized Boosted Models: A guide to the gbm
+     package <https://cran.r-project.org/web/packages/gbm/vignettes/gbm.pdf>`_
+
 .. _histogram_based_gradient_boosting:
 
 Histogram-Based Gradient Boosting
@@ -946,10 +961,11 @@ controls the number of iterations of the boosting process::
 Available losses for regression are 'squared_error',
 'absolute_error', which is less sensitive to outliers, and
 'poisson', which is well suited to model counts and frequencies. For
-classification, 'binary_crossentropy' is used for binary classification and
-'categorical_crossentropy' is used for multiclass classification. By default
-the loss is 'auto' and will select the appropriate loss depending on
-:term:`y` passed to :term:`fit`.
+classification, 'log_loss' is the only option. For binary classification it uses the
+binary log loss, also kown as binomial deviance or binary cross-entropy. For
+`n_classes >= 3`, it uses the multi-class log loss function, with multinomial deviance
+and categorical cross-entropy as alternative names. The appropriate loss version is
+selected based on :term:`y` passed to :term:`fit`.
 
 The size of the trees can be controlled through the ``max_leaf_nodes``,
 ``max_depth``, and ``min_samples_leaf`` parameters.
@@ -963,7 +979,7 @@ corresponds to :math:`\lambda` in equation (2) of [XGBoost]_.
 
 Note that **early-stopping is enabled by default if the number of samples is
 larger than 10,000**. The early-stopping behaviour is controlled via the
-``early-stopping``, ``scoring``, ``validation_fraction``,
+``early_stopping``, ``scoring``, ``validation_fraction``,
 ``n_iter_no_change``, and ``tol`` parameters. It is possible to early-stop
 using an arbitrary :term:`scorer`, or just the training or validation loss.
 Note that for technical reasons, using a scorer is significantly slower than
@@ -1206,17 +1222,16 @@ Finally, many parts of the implementation of
 
 .. topic:: References
 
-  .. [F1999] Friedmann, Jerome H., 2007, `"Stochastic Gradient Boosting"
-     <https://statweb.stanford.edu/~jhf/ftp/stobst.pdf>`_
-  .. [R2007] G. Ridgeway, "Generalized Boosted Models: A guide to the gbm
-     package", 2007
   .. [XGBoost] Tianqi Chen, Carlos Guestrin, :arxiv:`"XGBoost: A Scalable Tree
      Boosting System" <1603.02754>`
+
   .. [LightGBM] Ke et. al. `"LightGBM: A Highly Efficient Gradient
      BoostingDecision Tree" <https://papers.nips.cc/paper/
      6907-lightgbm-a-highly-efficient-gradient-boosting-decision-tree>`_
-  .. [Fisher1958] Walter D. Fisher. `"On Grouping for Maximum Homogeneity"
-     <http://www.csiss.org/SPACE/workshops/2004/SAC/files/fisher.pdf>`_
+
+  .. [Fisher1958] Fisher, W.D. (1958). `"On Grouping for Maximum Homogeneity"
+     <http://csiss.ncgia.ucsb.edu/SPACE/workshops/2004/SAC/files/fisher.pdf>`_
+     Journal of the American Statistical Association, 53, 789-798.
 
 .. _voting_classifier:
 
@@ -1226,7 +1241,7 @@ Voting Classifier
 The idea behind the :class:`VotingClassifier` is to combine
 conceptually different machine learning classifiers and use a majority vote
 or the average predicted probabilities (soft vote) to predict the class labels.
-Such a classifier can be useful for a set of equally well performing model
+Such a classifier can be useful for a set of equally well performing models
 in order to balance out their individual weaknesses.
 
 
@@ -1318,7 +1333,7 @@ Here, the predicted class label is 2, since it has the
 highest average probability.
 
 The following example illustrates how the decision regions may change
-when a soft :class:`VotingClassifier` is used based on an linear Support
+when a soft :class:`VotingClassifier` is used based on a linear Support
 Vector Machine, a Decision Tree, and a K-nearest neighbor classifier::
 
    >>> from sklearn import datasets

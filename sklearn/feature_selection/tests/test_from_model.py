@@ -1,13 +1,27 @@
+import re
 import pytest
 import numpy as np
+import warnings
+from unittest.mock import Mock
 
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import skip_if_32bit
+from sklearn.utils._testing import MinimalClassifier
 
 from sklearn import datasets
-from sklearn.linear_model import LogisticRegression, SGDClassifier, Lasso
+from sklearn.cross_decomposition import CCA, PLSCanonical, PLSRegression
+from sklearn.datasets import make_friedman1
+from sklearn.exceptions import NotFittedError
+from sklearn.linear_model import (
+    LogisticRegression,
+    SGDClassifier,
+    Lasso,
+    LassoCV,
+    ElasticNet,
+    ElasticNetCV,
+)
 from sklearn.svm import LinearSVC
 from sklearn.feature_selection import SelectFromModel
 from sklearn.ensemble import RandomForestClassifier, HistGradientBoostingClassifier
@@ -59,14 +73,32 @@ def test_input_estimator_unchanged():
 @pytest.mark.parametrize(
     "max_features, err_type, err_msg",
     [
-        (-1, ValueError, "'max_features' should be 0 and"),
-        (data.shape[1] + 1, ValueError, "'max_features' should be 0 and"),
-        ("gobbledigook", TypeError, "should be an integer"),
-        ("all", TypeError, "should be an integer"),
+        (-1, ValueError, "max_features =="),
+        (
+            data.shape[1] + 1,
+            ValueError,
+            "max_features ==",
+        ),
+        (
+            lambda X: 1.5,
+            TypeError,
+            "max_features(X) must be an instance of int, not float.",
+        ),
+        (
+            "gobbledigook",
+            TypeError,
+            "'max_features' must be either an int or a callable",
+        ),
+        (
+            "all",
+            TypeError,
+            "'max_features' must be either an int or a callable",
+        ),
     ],
 )
 def test_max_features_error(max_features, err_type, err_msg):
-    clf = RandomForestClassifier(n_estimators=50, random_state=0)
+    err_msg = re.escape(err_msg)
+    clf = RandomForestClassifier(n_estimators=5, random_state=0)
 
     transformer = SelectFromModel(
         estimator=clf, max_features=max_features, threshold=-np.inf
@@ -75,14 +107,66 @@ def test_max_features_error(max_features, err_type, err_msg):
         transformer.fit(data, y)
 
 
-@pytest.mark.parametrize("max_features", [0, 2, data.shape[1]])
-def test_max_features_dim(max_features):
-    clf = RandomForestClassifier(n_estimators=50, random_state=0)
+@pytest.mark.parametrize("max_features", [0, 2, data.shape[1], None])
+def test_inferred_max_features_integer(max_features):
+    """Check max_features_ and output shape for integer max_features."""
+    clf = RandomForestClassifier(n_estimators=5, random_state=0)
     transformer = SelectFromModel(
         estimator=clf, max_features=max_features, threshold=-np.inf
     )
     X_trans = transformer.fit_transform(data, y)
-    assert X_trans.shape[1] == max_features
+    if max_features is not None:
+        assert transformer.max_features_ == max_features
+        assert X_trans.shape[1] == transformer.max_features_
+    else:
+        assert not hasattr(transformer, "max_features_")
+        assert X_trans.shape[1] == data.shape[1]
+
+
+@pytest.mark.parametrize(
+    "max_features",
+    [lambda X: 1, lambda X: X.shape[1], lambda X: min(X.shape[1], 10000)],
+)
+def test_inferred_max_features_callable(max_features):
+    """Check max_features_ and output shape for callable max_features."""
+    clf = RandomForestClassifier(n_estimators=5, random_state=0)
+    transformer = SelectFromModel(
+        estimator=clf, max_features=max_features, threshold=-np.inf
+    )
+    X_trans = transformer.fit_transform(data, y)
+    assert transformer.max_features_ == max_features(data)
+    assert X_trans.shape[1] == transformer.max_features_
+
+
+@pytest.mark.parametrize("max_features", [lambda X: round(len(X[0]) / 2), 2])
+def test_max_features_array_like(max_features):
+    X = [
+        [0.87, -1.34, 0.31],
+        [-2.79, -0.02, -0.85],
+        [-1.34, -0.48, -2.55],
+        [1.92, 1.48, 0.65],
+    ]
+    y = [0, 1, 0, 1]
+
+    clf = RandomForestClassifier(n_estimators=5, random_state=0)
+    transformer = SelectFromModel(
+        estimator=clf, max_features=max_features, threshold=-np.inf
+    )
+    X_trans = transformer.fit_transform(X, y)
+    assert X_trans.shape[1] == transformer.max_features_
+
+
+@pytest.mark.parametrize(
+    "max_features",
+    [lambda X: min(X.shape[1], 10000), lambda X: X.shape[1], lambda X: 1],
+)
+def test_max_features_callable_data(max_features):
+    """Tests that the callable passed to `fit` is called on X."""
+    clf = RandomForestClassifier(n_estimators=50, random_state=0)
+    m = Mock(side_effect=max_features)
+    transformer = SelectFromModel(estimator=clf, max_features=m, threshold=-np.inf)
+    transformer.fit_transform(data, y)
+    m.assert_called_with(data)
 
 
 class FixedImportanceEstimator(BaseEstimator):
@@ -241,7 +325,16 @@ def test_sample_weight():
     assert np.all(weighted_mask == reweighted_mask)
 
 
-def test_coef_default_threshold():
+@pytest.mark.parametrize(
+    "estimator",
+    [
+        Lasso(alpha=0.1, random_state=42),
+        LassoCV(random_state=42),
+        ElasticNet(l1_ratio=1, random_state=42),
+        ElasticNetCV(l1_ratio=[1], random_state=42),
+    ],
+)
+def test_coef_default_threshold(estimator):
     X, y = datasets.make_classification(
         n_samples=100,
         n_features=10,
@@ -253,7 +346,7 @@ def test_coef_default_threshold():
     )
 
     # For the Lasso and related models, the threshold defaults to 1e-5
-    transformer = SelectFromModel(estimator=Lasso(alpha=0.1, random_state=42))
+    transformer = SelectFromModel(estimator=estimator)
     transformer.fit(X, y)
     X_new = transformer.transform(X)
     mask = np.abs(transformer.estimator_.coef_) > 1e-5
@@ -333,6 +426,8 @@ def test_prefit():
     clf.fit(data, y)
     model = SelectFromModel(clf, prefit=True)
     assert_array_almost_equal(model.transform(data), X_transform)
+    model.fit(data, y)
+    assert model.estimator_ is not clf
 
     # Check that the model is rewritten if prefit=False and a fitted model is
     # passed
@@ -340,10 +435,69 @@ def test_prefit():
     model.fit(data, y)
     assert_array_almost_equal(model.transform(data), X_transform)
 
-    # Check that prefit=True and calling fit raises a ValueError
+    # Check that passing an unfitted estimator with `prefit=True` raises a
+    # `ValueError`
+    clf = SGDClassifier(alpha=0.1, max_iter=10, shuffle=True, random_state=0, tol=None)
     model = SelectFromModel(clf, prefit=True)
-    with pytest.raises(ValueError):
+    err_msg = "When `prefit=True`, `estimator` is expected to be a fitted estimator."
+    with pytest.raises(NotFittedError, match=err_msg):
         model.fit(data, y)
+    with pytest.raises(NotFittedError, match=err_msg):
+        model.partial_fit(data, y)
+    with pytest.raises(NotFittedError, match=err_msg):
+        model.transform(data)
+
+    # Check that the internal parameters of prefitted model are not changed
+    # when calling `fit` or `partial_fit` with `prefit=True`
+    clf = SGDClassifier(alpha=0.1, max_iter=10, shuffle=True, tol=None).fit(data, y)
+    model = SelectFromModel(clf, prefit=True)
+    model.fit(data, y)
+    assert_allclose(model.estimator_.coef_, clf.coef_)
+    model.partial_fit(data, y)
+    assert_allclose(model.estimator_.coef_, clf.coef_)
+
+
+def test_prefit_max_features():
+    """Check the interaction between `prefit` and `max_features`."""
+    # case 1: an error should be raised at `transform` if `fit` was not called to
+    # validate the attributes
+    estimator = RandomForestClassifier(n_estimators=5, random_state=0)
+    estimator.fit(data, y)
+    model = SelectFromModel(estimator, prefit=True, max_features=lambda X: X.shape[1])
+
+    err_msg = (
+        "When `prefit=True` and `max_features` is a callable, call `fit` "
+        "before calling `transform`."
+    )
+    with pytest.raises(NotFittedError, match=err_msg):
+        model.transform(data)
+
+    # case 2: `max_features` is not validated and different from an integer
+    # FIXME: we cannot validate the upper bound of the attribute at transform
+    # and we should force calling `fit` if we intend to force the attribute
+    # to have such an upper bound.
+    max_features = 2.5
+    model.set_params(max_features=max_features)
+    with pytest.raises(ValueError, match="`max_features` must be an integer"):
+        model.transform(data)
+
+
+def test_prefit_get_feature_names_out():
+    """Check the interaction between prefit and the feature names."""
+    clf = RandomForestClassifier(n_estimators=2, random_state=0)
+    clf.fit(data, y)
+    model = SelectFromModel(clf, prefit=True, max_features=1)
+
+    # FIXME: the error message should be improved. Raising a `NotFittedError`
+    # would be better since it would force to validate all class attribute and
+    # create all the necessary fitted attribute
+    err_msg = "Unable to generate feature names without n_features_in_"
+    with pytest.raises(ValueError, match=err_msg):
+        model.get_feature_names_out()
+
+    model.fit(data, y)
+    feature_names = model.get_feature_names_out()
+    assert feature_names == ["x3"]
 
 
 def test_threshold_string():
@@ -428,3 +582,81 @@ def test_importance_getter(estimator, importance_getter):
     )
     selector.fit(data, y)
     assert selector.transform(data).shape[1] == 1
+
+
+@pytest.mark.parametrize("PLSEstimator", [CCA, PLSCanonical, PLSRegression])
+def test_select_from_model_pls(PLSEstimator):
+    """Check the behaviour of SelectFromModel with PLS estimators.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/12410
+    """
+    X, y = make_friedman1(n_samples=50, n_features=10, random_state=0)
+    estimator = PLSEstimator(n_components=1)
+    model = make_pipeline(SelectFromModel(estimator), estimator).fit(X, y)
+    assert model.score(X, y) > 0.5
+
+
+def test_estimator_does_not_support_feature_names():
+    """SelectFromModel works with estimators that do not support feature_names_in_.
+
+    Non-regression test for #21949.
+    """
+    pytest.importorskip("pandas")
+    X, y = datasets.load_iris(as_frame=True, return_X_y=True)
+    all_feature_names = set(X.columns)
+
+    def importance_getter(estimator):
+        return np.arange(X.shape[1])
+
+    selector = SelectFromModel(
+        MinimalClassifier(), importance_getter=importance_getter
+    ).fit(X, y)
+
+    # selector learns the feature names itself
+    assert_array_equal(selector.feature_names_in_, X.columns)
+
+    feature_names_out = set(selector.get_feature_names_out())
+    assert feature_names_out < all_feature_names
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
+
+        selector.transform(X.iloc[1:3])
+
+
+@pytest.mark.parametrize(
+    "error, err_msg, max_features",
+    (
+        [ValueError, "max_features == 10, must be <= 4", 10],
+        [TypeError, "'max_features' must be either an int or a callable", "a"],
+        [ValueError, r"max_features\(X\) == 5, must be <= 4", lambda x: x.shape[1] + 1],
+    ),
+)
+def test_partial_fit_validate_max_features(error, err_msg, max_features):
+    """Test that partial_fit from SelectFromModel validates `max_features`."""
+    X, y = datasets.make_classification(
+        n_samples=100,
+        n_features=4,
+        random_state=0,
+    )
+
+    with pytest.raises(error, match=err_msg):
+        SelectFromModel(
+            estimator=SGDClassifier(), max_features=max_features
+        ).partial_fit(X, y, classes=[0, 1])
+
+
+@pytest.mark.parametrize("as_frame", [True, False])
+def test_partial_fit_validate_feature_names(as_frame):
+    """Test that partial_fit from SelectFromModel validates `feature_names_in_`."""
+    pytest.importorskip("pandas")
+    X, y = datasets.load_iris(as_frame=as_frame, return_X_y=True)
+
+    selector = SelectFromModel(estimator=SGDClassifier(), max_features=4).partial_fit(
+        X, y, classes=[0, 1, 2]
+    )
+    if as_frame:
+        assert_array_equal(selector.feature_names_in_, X.columns)
+    else:
+        assert not hasattr(selector, "feature_names_in_")

@@ -42,7 +42,6 @@ from ..utils.metaestimators import available_if
 from ..utils.fixes import delayed
 from ..metrics._scorer import _check_multimetric_scoring
 from ..metrics import check_scoring
-from ..utils import deprecated
 
 __all__ = ["GridSearchCV", "ParameterGrid", "ParameterSampler", "RandomizedSearchCV"]
 
@@ -94,7 +93,8 @@ class ParameterGrid:
     def __init__(self, param_grid):
         if not isinstance(param_grid, (Mapping, Iterable)):
             raise TypeError(
-                "Parameter grid is not a dict or a list ({!r})".format(param_grid)
+                f"Parameter grid should be a dict or a list, got: {param_grid!r} of"
+                f" type {type(param_grid).__name__}"
             )
 
         if isinstance(param_grid, Mapping):
@@ -105,12 +105,26 @@ class ParameterGrid:
         # check if all entries are dictionaries of lists
         for grid in param_grid:
             if not isinstance(grid, dict):
-                raise TypeError("Parameter grid is not a dict ({!r})".format(grid))
-            for key in grid:
-                if not isinstance(grid[key], Iterable):
+                raise TypeError(f"Parameter grid is not a dict ({grid!r})")
+            for key, value in grid.items():
+                if isinstance(value, np.ndarray) and value.ndim > 1:
+                    raise ValueError(
+                        f"Parameter array for {key!r} should be one-dimensional, got:"
+                        f" {value!r} with shape {value.shape}"
+                    )
+                if isinstance(value, str) or not isinstance(
+                    value, (np.ndarray, Sequence)
+                ):
                     raise TypeError(
-                        "Parameter grid value is not iterable "
-                        "(key={!r}, value={!r})".format(key, grid[key])
+                        f"Parameter grid for parameter {key!r} needs to be a list or a"
+                        f" numpy array, but got {value!r} (of type "
+                        f"{type(value).__name__}) instead. Single values "
+                        "need to be wrapped in a list with one element."
+                    )
+                if len(value) == 0:
+                    raise ValueError(
+                        f"Parameter grid for parameter {key!r} need "
+                        f"to be a non-empty sequence, got: {value!r}"
                     )
 
         self.param_grid = param_grid
@@ -244,9 +258,9 @@ class ParameterSampler:
     def __init__(self, param_distributions, n_iter, *, random_state=None):
         if not isinstance(param_distributions, (Mapping, Iterable)):
             raise TypeError(
-                "Parameter distribution is not a dict or a list ({!r})".format(
-                    param_distributions
-                )
+                "Parameter distribution is not a dict or a list,"
+                f" got: {param_distributions!r} of type "
+                f"{type(param_distributions).__name__}"
             )
 
         if isinstance(param_distributions, Mapping):
@@ -264,8 +278,8 @@ class ParameterSampler:
                     dist[key], "rvs"
                 ):
                     raise TypeError(
-                        "Parameter value is not iterable "
-                        "or distribution (key={!r}, value={!r})".format(key, dist[key])
+                        f"Parameter grid for parameter {key!r} is not iterable "
+                        f"or a distribution (value={dist[key]})"
                     )
         self.n_iter = n_iter
         self.random_state = random_state
@@ -319,30 +333,6 @@ class ParameterSampler:
             return min(self.n_iter, grid_size)
         else:
             return self.n_iter
-
-
-def _check_param_grid(param_grid):
-    if hasattr(param_grid, "items"):
-        param_grid = [param_grid]
-
-    for p in param_grid:
-        for name, v in p.items():
-            if isinstance(v, np.ndarray) and v.ndim > 1:
-                raise ValueError("Parameter array should be one-dimensional.")
-
-            if isinstance(v, str) or not isinstance(v, (np.ndarray, Sequence)):
-                raise ValueError(
-                    "Parameter grid for parameter ({0}) needs to"
-                    " be a list or numpy array, but got ({1})."
-                    " Single values need to be wrapped in a list"
-                    " with one element.".format(name, type(v))
-                )
-
-            if len(v) == 0:
-                raise ValueError(
-                    "Parameter values for parameter ({0}) need "
-                    "to be a non-empty sequence.".format(name)
-                )
 
 
 def _check_refit(search_cv, attr):
@@ -419,17 +409,6 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                 "check_supervised_y_2d": "DataConversionWarning not caught"
             },
         }
-
-    # TODO: Remove in 1.1
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `_pairwise` was deprecated in "
-        "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def _pairwise(self):
-        # allows cross-validation to see 'precomputed' metrics
-        return getattr(self.estimator, "_pairwise", False)
 
     def score(self, X, y=None):
         """Return the score on the given data, if the estimator has been refit.
@@ -665,7 +644,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         """Repeatedly calls `evaluate_candidates` to conduct a search.
 
         This method, implemented in sub-classes, makes it possible to
-        customize the the scheduling of evaluations: GridSearchCV and
+        customize the scheduling of evaluations: GridSearchCV and
         RandomizedSearchCV schedule evaluations for their whole parameter
         search space at once but other more sequential approaches are also
         possible: for instance is possible to iteratively schedule evaluations
@@ -777,7 +756,12 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             instance (e.g., :class:`~sklearn.model_selection.GroupKFold`).
 
         **fit_params : dict of str -> object
-            Parameters passed to the ``fit`` method of the estimator.
+            Parameters passed to the `fit` method of the estimator.
+
+            If a fit parameter is an array-like whose length is equal to
+            `num_samples` then it will be split across CV groups along with `X`
+            and `y`. For example, the :term:`sample_weight` parameter is split
+            because `len(sample_weights) = len(X)`.
 
         Returns
         -------
@@ -981,9 +965,13 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             results["std_%s" % key_name] = array_stds
 
             if rank:
-                results["rank_%s" % key_name] = np.asarray(
-                    rankdata(-array_means, method="min"), dtype=np.int32
-                )
+                rank_result = rankdata(-array_means, method="min")
+                # when input is nan, scipy >= 1.10 rankdata returns nan. To
+                # keep previous behaviour nans are set to the
+                # maximum possible rank
+                rank_result[np.isnan(rank_result)] = len(rank_result)
+                rank_result = np.asarray(rank_result, dtype=np.int32)
+                results["rank_%s" % key_name] = rank_result
 
         _store("fit_time", out["fit_time"])
         _store("score_time", out["score_time"])
@@ -1116,6 +1104,10 @@ class GridSearchCV(BaseSearchCV):
 
         See ``scoring`` parameter to know more about multiple metric
         evaluation.
+
+        See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py`
+        to see how to design a custom selection strategy using a callable
+        via `refit`.
 
         .. versionchanged:: 0.20
             Support for callable added.
@@ -1316,6 +1308,15 @@ class GridSearchCV(BaseSearchCV):
 
         .. versionadded:: 1.0
 
+    See Also
+    --------
+    ParameterGrid : Generates all the combinations of a hyperparameter grid.
+    train_test_split : Utility function to split the data into a development
+        set usable for fitting a GridSearchCV instance and an evaluation set
+        for its final evaluation.
+    sklearn.metrics.make_scorer : Make a scorer from a performance metric or
+        loss function.
+
     Notes
     -----
     The parameters selected are those that maximize the score of the left out
@@ -1328,15 +1329,6 @@ class GridSearchCV(BaseSearchCV):
     this case is to set `pre_dispatch`. Then, the memory is copied only
     `pre_dispatch` many times. A reasonable value for `pre_dispatch` is `2 *
     n_jobs`.
-
-    See Also
-    ---------
-    ParameterGrid : Generates all the combinations of a hyperparameter grid.
-    train_test_split : Utility function to split the data into a development
-        set usable for fitting a GridSearchCV instance and an evaluation set
-        for its final evaluation.
-    sklearn.metrics.make_scorer : Make a scorer from a performance metric or
-        loss function.
 
     Examples
     --------
@@ -1385,7 +1377,6 @@ class GridSearchCV(BaseSearchCV):
             return_train_score=return_train_score,
         )
         self.param_grid = param_grid
-        _check_param_grid(param_grid)
 
     def _run_search(self, evaluate_candidates):
         """Search all candidates in param_grid"""

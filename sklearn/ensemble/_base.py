@@ -15,7 +15,12 @@ from ..base import clone
 from ..base import is_classifier, is_regressor
 from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
-from ..tree import DecisionTreeRegressor, ExtraTreeRegressor
+from ..tree import (
+    DecisionTreeRegressor,
+    ExtraTreeRegressor,
+    BaseDecisionTree,
+    DecisionTreeClassifier,
+)
 from ..utils import Bunch, _print_elapsed_time
 from ..utils import check_random_state
 from ..utils.metaestimators import _BaseComposition
@@ -167,6 +172,16 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             elif getattr(estimator, "criterion", None) == "mae":
                 estimator.set_params(criterion="absolute_error")
 
+        # TODO(1.3): Remove
+        # max_features = 'auto' would cause warnings in every call to
+        # Tree.fit(..)
+        if isinstance(estimator, BaseDecisionTree):
+            if getattr(estimator, "max_features", None) == "auto":
+                if isinstance(estimator, DecisionTreeClassifier):
+                    estimator.set_params(max_features="sqrt")
+                elif isinstance(estimator, DecisionTreeRegressor):
+                    estimator.set_params(max_features=1.0)
+
         if random_state is not None:
             _set_random_states(estimator, random_state)
 
@@ -239,10 +254,10 @@ class _BaseHeterogeneousEnsemble(
         self.estimators = estimators
 
     def _validate_estimators(self):
-        if self.estimators is None or len(self.estimators) == 0:
+        if len(self.estimators) == 0:
             raise ValueError(
-                "Invalid 'estimators' attribute, 'estimators' should be a list"
-                " of (string, estimator) tuples."
+                "Invalid 'estimators' attribute, 'estimators' should be a "
+                "non-empty list of (string, estimator) tuples."
             )
         names, estimators = zip(*self.estimators)
         # defined by MetaEstimatorMixin

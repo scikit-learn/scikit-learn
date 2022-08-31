@@ -18,6 +18,7 @@ been leading the development.
 
 Governance
 ----------
+
 The decision making process and governance structure of scikit-learn is laid
 out in the :ref:`governance document <governance>`.
 
@@ -38,14 +39,23 @@ in the FAQ.
 
    :ref:`How you can contribute to the project <contributing>`
 
-Triage Team
------------
+Contributor Experience Team
+---------------------------
 
 The following people are active contributors who also help with
 :ref:`triaging issues <bug_triaging>`, PRs, and general
 maintenance:
 
-.. include:: triage_team.rst
+.. include:: contributor_experience_team.rst
+
+Communication Team
+------------------
+
+The following people help with :ref:`communication around scikit-learn
+<communication_team>`.
+
+.. include:: communication_team.rst
+
 
 Emeritus Core Developers
 ------------------------
@@ -54,6 +64,14 @@ The following people have been active contributors in the past, but are no
 longer active in the project:
 
 .. include:: authors_emeritus.rst
+
+Emeritus Communication Team
+---------------------------
+
+The following people have been active in the communication team in the
+past, but no longer have communication responsibilities:
+
+.. include:: communication_team_emeritus.rst
 
 
 .. _citing-scikit-learn:
@@ -130,7 +148,7 @@ The project would like to thank the following funders.
 The `Members <https://scikit-learn.fondation-inria.fr/en/home/#sponsors>`_ of
 the `Scikit-Learn Consortium at Inria Foundation
 <https://scikit-learn.fondation-inria.fr/en/home/>`_  fund Olivier
-Grisel, Guillaume Lemaitre, Jérémie du Boisberranger and Chiara Marmo.
+Grisel, Guillaume Lemaitre, and Jérémie du Boisberranger.
 
 .. raw:: html
 
@@ -201,32 +219,6 @@ Grisel, Guillaume Lemaitre, Jérémie du Boisberranger and Chiara Marmo.
    </div>
    </div>
 
-........
-
-.. raw:: html
-
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
-
-`The University of Sydney <https://sydney.edu.au/>`_ funds Joel Nothman since
-July 2017.
-
-.. raw:: html
-
-   </div>
-
-   <div class="sk-sponsor-div-box">
-
-.. image:: images/sydney-primary.jpeg
-   :width: 100pt
-   :align: center
-   :target: https://sydney.edu.au/
-
-.. raw:: html
-
-   </div>
-   </div>
-
 ..........
 
 .. raw:: html
@@ -234,8 +226,7 @@ July 2017.
    <div class="sk-sponsor-div">
    <div class="sk-sponsor-div-box">
 
-`Zalando SE <https://corporate.zalando.com/en>`_ funds Adrin Jalali since
-August 2020.
+`Hugging Face <https://huggingface.co/>`_ funds Adrin Jalali since 2022.
 
 .. raw:: html
 
@@ -243,10 +234,10 @@ August 2020.
 
    <div class="sk-sponsor-div-box">
 
-.. image:: images/zalando_logo.png
-   :width: 100pt
+.. image:: images/huggingface_logo-noborder.png
+   :width: 55pt
    :align: center
-   :target: https://corporate.zalando.com/en
+   :target: https://huggingface.co/
 
 .. raw:: html
 
@@ -330,6 +321,32 @@ Past Sponsors
    </div>
    </div>
 
+........
+
+.. raw:: html
+
+   <div class="sk-sponsor-div">
+   <div class="sk-sponsor-div-box">
+
+`The University of Sydney <https://sydney.edu.au/>`_ funded Joel Nothman
+(2017-2021).
+
+.. raw:: html
+
+   </div>
+
+   <div class="sk-sponsor-div-box">
+
+.. image:: images/sydney-primary.jpeg
+   :width: 100pt
+   :align: center
+   :target: https://sydney.edu.au/
+
+.. raw:: html
+
+   </div>
+   </div>
+
 ...........
 
 .. raw:: html
@@ -393,7 +410,7 @@ full-time. It also hosts coding sprints and other events.
    <div class="sk-sponsor-div-box">
 
 `Paris-Saclay Center for Data Science
-<https://www.datascience-paris-saclay.fr/>`_
+<http://www.datascience-paris-saclay.fr/>`_
 funded one year for a developer to work on the project full-time
 (2014-2015), 50% of the time of Guillaume Lemaitre (2016-2017) and 50% of the
 time of Joris van den Bossche (2017-2018).
@@ -406,32 +423,7 @@ time of Joris van den Bossche (2017-2018).
 .. image:: images/cds-logo.png
    :width: 100pt
    :align: center
-   :target: https://www.datascience-paris-saclay.fr/
-
-.. raw:: html
-
-   </div>
-   </div>
-
-............
-
-.. raw:: html
-
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
-
-`Anaconda, Inc <https://www.anaconda.com/>`_ funded Adrin Jalali in 2019.
-
-.. raw:: html
-
-   </div>
-
-   <div class="sk-sponsor-div-box">
-
-.. image:: images/anaconda.png
-   :width: 100pt
-   :align: center
-   :target: https://www.anaconda.com/
+   :target: http://www.datascience-paris-saclay.fr/
 
 .. raw:: html
 
@@ -582,7 +574,7 @@ The 2013 International Paris Sprint was made possible thanks to the support of
 `Télécom Paristech <https://www.telecom-paristech.fr/>`_, `tinyclues
 <https://www.tinyclues.com/>`_, the `French Python Association
 <https://www.afpy.org/>`_ and the `Fonds de la Recherche Scientifique
-<https://www.frs-fnrs.be/-fnrs>`_.
+<https://www.frs-fnrs.be>`_.
 
 ..............
 
@@ -594,9 +586,15 @@ Donating to the project
 .......................
 
 If you are interested in donating to the project or to one of our code-sprints,
-you can use the *Paypal* button below or the `NumFOCUS Donations Page
-<https://www.numfocus.org/support-numfocus.html>`_ (if you use the latter,
-please indicate that you are donating for the scikit-learn project).
+please donate via the `NumFOCUS Donations Page
+<https://numfocus.org/donate-to-scikit-learn>`_.
+
+.. raw :: html
+
+   <div style="text-align: center;">
+   <a class="btn btn-warning btn-big sk-donate-btn mb-1" href="https://numfocus.org/donate-to-scikit-learn">Help us, <strong>donate!</strong></a>
+   </div>
+   </br>
 
 All donations will be handled by `NumFOCUS
 <https://numfocus.org/>`_, a non-profit-organization which is
@@ -610,13 +608,6 @@ The received donations for the scikit-learn project mostly will go towards
 covering travel-expenses for code sprints, as well as towards the organization
 budget of the project [#f1]_.
 
-.. raw :: html
-
-   </br></br>
-   <div style="text-align: center;">
-   <a class="btn btn-warning btn-big sk-donate-btn mb-1" href="https://numfocus.org/donate-to-scikit-learn">Help us, <strong>donate!</strong></a>
-   </div>
-   </br>
 
 .. rubric:: Notes
 

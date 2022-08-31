@@ -30,17 +30,15 @@ that of representing a flat map of the Earth, as with
 # License: BSD 3 clause
 
 from time import time
-
 import numpy as np
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.ticker import NullFormatter
-
 from sklearn import manifold
 from sklearn.utils import check_random_state
 
-# Next line to silence pyflakes.
-Axes3D
+# Unused but required import for doing 3d projections with matplotlib < 3.2
+import mpl_toolkits.mplot3d  # noqa: F401
+import warnings
 
 # Variables for manifold learning.
 n_neighbors = 10
@@ -141,10 +139,17 @@ ax.yaxis.set_major_formatter(NullFormatter())
 plt.axis("tight")
 
 # Perform t-distributed stochastic neighbor embedding.
-t0 = time()
-tsne = manifold.TSNE(n_components=2, init="pca", random_state=0)
-trans_data = tsne.fit_transform(sphere_data).T
-t1 = time()
+# TODO(1.2) Remove warning handling.
+with warnings.catch_warnings():
+    warnings.filterwarnings(
+        "ignore", message="The PCA initialization", category=FutureWarning
+    )
+    t0 = time()
+    tsne = manifold.TSNE(
+        n_components=2, init="pca", random_state=0, learning_rate="auto"
+    )
+    trans_data = tsne.fit_transform(sphere_data).T
+    t1 = time()
 print("t-SNE: %.2g sec" % (t1 - t0))
 
 ax = fig.add_subplot(2, 5, 10)

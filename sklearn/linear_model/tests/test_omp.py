@@ -3,7 +3,9 @@
 
 import numpy as np
 import pytest
+import warnings
 
+from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import ignore_warnings
@@ -26,6 +28,7 @@ y, X, gamma = make_sparse_coded_signal(
     n_features=n_samples,
     n_nonzero_coefs=n_nonzero_coefs,
     random_state=0,
+    data_transposed=True,
 )
 # Make X not of norm 1 for testing
 X *= 10
@@ -52,11 +55,11 @@ def test_assure_warning_when_normalize(OmpModel, normalize, n_warnings):
     y = rng.rand(n_samples)
 
     model = OmpModel(normalize=normalize)
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings(record=True) as rec:
+        warnings.simplefilter("always", FutureWarning)
         model.fit(X, y)
 
-    record = [r for r in record if r.category == FutureWarning]
-    assert len(record) == n_warnings
+    assert len([w.message for w in rec]) == n_warnings
 
 
 def test_correct_shapes():
@@ -269,3 +272,23 @@ def test_omp_reaches_least_squares():
     omp.fit(X, Y)
     lstsq.fit(X, Y)
     assert_array_almost_equal(omp.coef_, lstsq.coef_)
+
+
+@pytest.mark.parametrize("data_type", (np.float32, np.float64))
+def test_omp_gram_dtype_match(data_type):
+    # verify matching input data type and output data type
+    coef = orthogonal_mp_gram(
+        G.astype(data_type), Xy.astype(data_type), n_nonzero_coefs=5
+    )
+    assert coef.dtype == data_type
+
+
+def test_omp_gram_numerical_consistency():
+    # verify numericaly consistency among np.float32 and np.float64
+    coef_32 = orthogonal_mp_gram(
+        G.astype(np.float32), Xy.astype(np.float32), n_nonzero_coefs=5
+    )
+    coef_64 = orthogonal_mp_gram(
+        G.astype(np.float32), Xy.astype(np.float64), n_nonzero_coefs=5
+    )
+    assert_allclose(coef_32, coef_64)

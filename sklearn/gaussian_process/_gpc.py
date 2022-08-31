@@ -4,6 +4,7 @@
 #
 # License: BSD 3 clause
 
+from numbers import Integral
 from operator import itemgetter
 
 import numpy as np
@@ -12,10 +13,11 @@ import scipy.optimize
 from scipy.special import erf, expit
 
 from ..base import BaseEstimator, ClassifierMixin, clone
-from .kernels import RBF, CompoundKernel, ConstantKernel as C
+from .kernels import Kernel, RBF, CompoundKernel, ConstantKernel as C
 from ..utils.validation import check_is_fitted
 from ..utils import check_random_state
 from ..utils.optimize import _check_optimize_result
+from ..utils._param_validation import Interval, StrOptions
 from ..preprocessing import LabelEncoder
 from ..multiclass import OneVsRestClassifier, OneVsOneClassifier
 
@@ -320,7 +322,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         gamma = LAMBDAS * f_star
         integrals = (
             np.sqrt(np.pi / alpha)
-            * erf(gamma * np.sqrt(alpha / (alpha + LAMBDAS ** 2)))
+            * erf(gamma * np.sqrt(alpha / (alpha + LAMBDAS**2)))
             / (2 * np.sqrt(var_f_star * 2 * np.pi))
         )
         pi_star = (COEFS * integrals).sum(axis=0) + 0.5 * COEFS.sum()
@@ -503,9 +505,10 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
     kernel : kernel instance, default=None
         The kernel specifying the covariance function of the GP. If None is
         passed, the kernel "1.0 * RBF(1.0)" is used as default. Note that
-        the kernel's hyperparameters are optimized during fitting.
+        the kernel's hyperparameters are optimized during fitting. Also kernel
+        cannot be a `CompoundKernel`.
 
-    optimizer : 'fmin_l_bfgs_b' or callable, default='fmin_l_bfgs_b'
+    optimizer : 'fmin_l_bfgs_b', callable or None, default='fmin_l_bfgs_b'
         Can either be one of the internally supported optimizers for optimizing
         the kernel's parameters, specified by a string, or an externally
         defined optimizer passed as a callable. If a callable is passed, it
@@ -634,6 +637,18 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
            [0.79064206, 0.06525643, 0.14410151]])
     """
 
+    _parameter_constraints: dict = {
+        "kernel": [Kernel, None],
+        "optimizer": [StrOptions({"fmin_l_bfgs_b"}), callable, None],
+        "n_restarts_optimizer": [Interval(Integral, 0, None, closed="left")],
+        "max_iter_predict": [Interval(Integral, 1, None, closed="left")],
+        "warm_start": ["boolean"],
+        "copy_X_train": ["boolean"],
+        "random_state": ["random_state"],
+        "multi_class": [StrOptions({"one_vs_rest", "one_vs_one"})],
+        "n_jobs": [Integral, None],
+    }
+
     def __init__(
         self,
         kernel=None,
@@ -673,6 +688,11 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
         self : object
             Returns an instance of self.
         """
+        self._validate_params()
+
+        if isinstance(self.kernel, CompoundKernel):
+            raise ValueError("kernel cannot be a CompoundKernel")
+
         if self.kernel is None or self.kernel.requires_vector_input:
             X, y = self._validate_data(
                 X, y, multi_output=False, ensure_2d=True, dtype="numeric"

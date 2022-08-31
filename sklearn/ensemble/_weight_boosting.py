@@ -25,6 +25,7 @@ The module structure is the following:
 
 from abc import ABCMeta, abstractmethod
 
+from numbers import Integral, Real
 import numpy as np
 
 import warnings
@@ -43,6 +44,7 @@ from ..utils.validation import check_is_fitted
 from ..utils.validation import _check_sample_weight
 from ..utils.validation import has_fit_parameter
 from ..utils.validation import _num_samples
+from ..utils._param_validation import Interval, StrOptions
 
 __all__ = [
     "AdaBoostClassifier",
@@ -56,6 +58,13 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
     Warning: This class should not be used directly. Use derived classes
     instead.
     """
+
+    _parameter_constraints: dict = {
+        "base_estimator": "no_validation",  # TODO create an estimator-like constraint ?
+        "n_estimators": [Interval(Integral, 1, None, closed="left")],
+        "learning_rate": [Interval(Real, 0, None, closed="neither")],
+        "random_state": ["random_state"],
+    }
 
     @abstractmethod
     def __init__(
@@ -98,8 +107,7 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
             DOK, or LIL. COO, DOK, and LIL are converted to CSR.
 
         y : array-like of shape (n_samples,)
-            The target values (class labels in classification, real numbers in
-            regression).
+            The target values.
 
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, the sample weights are initialized to
@@ -108,10 +116,9 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         Returns
         -------
         self : object
+            Fitted estimator.
         """
-        # Check parameters
-        if self.learning_rate <= 0:
-            raise ValueError("learning_rate must be greater than zero")
+        self._validate_params()
 
         X, y = self._validate_data(
             X,
@@ -139,8 +146,15 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         # Initialization of the random number instance that will be used to
         # generate a seed at each iteration
         random_state = check_random_state(self.random_state)
+        epsilon = np.finfo(sample_weight.dtype).eps
 
+        zero_weight_mask = sample_weight == 0.0
         for iboost in range(self.n_estimators):
+            # avoid extremely small sample weight, for details see issue #20320
+            sample_weight = np.clip(sample_weight, a_min=epsilon, a_max=None)
+            # do not clip sample weights that were exactly zero originally
+            sample_weight[zero_weight_mask] = 0.0
+
             # Boosting step
             sample_weight, estimator_weight, estimator_error = self._boost(
                 iboost, X, y, sample_weight, random_state
@@ -337,11 +351,13 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
     n_estimators : int, default=50
         The maximum number of estimators at which boosting is terminated.
         In case of perfect fit, the learning procedure is stopped early.
+        Values must be in the range `[1, inf)`.
 
     learning_rate : float, default=1.0
         Weight applied to each classifier at each boosting iteration. A higher
         learning rate increases the contribution of each classifier. There is
         a trade-off between the `learning_rate` and `n_estimators` parameters.
+        Values must be in the range `(0.0, inf)`.
 
     algorithm : {'SAMME', 'SAMME.R'}, default='SAMME.R'
         If 'SAMME.R' then use the SAMME.R real boosting algorithm.
@@ -438,6 +454,11 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
     0.983...
     """
 
+    _parameter_constraints: dict = {
+        **BaseWeightBoosting._parameter_constraints,
+        "algorithm": [StrOptions({"SAMME", "SAMME.R"})],
+    }
+
     def __init__(
         self,
         base_estimator=None,
@@ -456,34 +477,6 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         )
 
         self.algorithm = algorithm
-
-    def fit(self, X, y, sample_weight=None):
-        """Build a boosted classifier from the training set (X, y).
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            The training input samples. Sparse matrix can be CSC, CSR, COO,
-            DOK, or LIL. COO, DOK, and LIL are converted to CSR.
-
-        y : array-like of shape (n_samples,)
-            The target values (class labels).
-
-        sample_weight : array-like of shape (n_samples,), default=None
-            Sample weights. If None, the sample weights are initialized to
-            ``1 / n_samples``.
-
-        Returns
-        -------
-        self : object
-            Fitted estimator.
-        """
-        # Check that algorithm is supported
-        if self.algorithm not in ("SAMME", "SAMME.R"):
-            raise ValueError("algorithm %s is not supported" % self.algorithm)
-
-        # Fit
-        return super().fit(X, y, sample_weight)
 
     def _validate_estimator(self):
         """Check the estimator and set the base_estimator_ attribute."""
@@ -649,7 +642,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
             np.log((1.0 - estimator_error) / estimator_error) + np.log(n_classes - 1.0)
         )
 
-        # Only boost the weights if I will fit again
+        # Only boost the weights if it will fit again
         if not iboost == self.n_estimators - 1:
             # Only boost positive weights
             sample_weight = np.exp(
@@ -936,11 +929,13 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
     n_estimators : int, default=50
         The maximum number of estimators at which boosting is terminated.
         In case of perfect fit, the learning procedure is stopped early.
+        Values must be in the range `[1, inf)`.
 
     learning_rate : float, default=1.0
         Weight applied to each regressor at each boosting iteration. A higher
         learning rate increases the contribution of each regressor. There is
         a trade-off between the `learning_rate` and `n_estimators` parameters.
+        Values must be in the range `(0.0, inf)`.
 
     loss : {'linear', 'square', 'exponential'}, default='linear'
         The loss function to use when updating the weights after each
@@ -1016,6 +1011,11 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
     0.9771...
     """
 
+    _parameter_constraints: dict = {
+        **BaseWeightBoosting._parameter_constraints,
+        "loss": [StrOptions({"linear", "square", "exponential"})],
+    }
+
     def __init__(
         self,
         base_estimator=None,
@@ -1035,34 +1035,6 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
 
         self.loss = loss
         self.random_state = random_state
-
-    def fit(self, X, y, sample_weight=None):
-        """Build a boosted regressor from the training set (X, y).
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            The training input samples. Sparse matrix can be CSC, CSR, COO,
-            DOK, or LIL. COO, DOK, and LIL are converted to CSR.
-
-        y : array-like of shape (n_samples,)
-            The target values (real numbers).
-
-        sample_weight : array-like of shape (n_samples,), default=None
-            Sample weights. If None, the sample weights are initialized to
-            1 / n_samples.
-
-        Returns
-        -------
-        self : object
-            Fitted AdaBoostRegressor estimator.
-        """
-        # Check loss
-        if self.loss not in ("linear", "square", "exponential"):
-            raise ValueError("loss must be 'linear', 'square', or 'exponential'")
-
-        # Fit
-        return super().fit(X, y, sample_weight)
 
     def _validate_estimator(self):
         """Check the estimator and set the base_estimator_ attribute."""
@@ -1221,7 +1193,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
             The training input samples.
 
         Yields
-        -------
+        ------
         y : generator of ndarray of shape (n_samples,)
             The predicted regression values.
         """

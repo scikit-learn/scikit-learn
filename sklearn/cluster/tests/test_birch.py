@@ -17,6 +17,7 @@ from sklearn.metrics import pairwise_distances_argmin, v_measure_score
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_allclose
 
 
 def test_n_samples_leaves_roots():
@@ -82,11 +83,11 @@ def test_n_clusters():
     assert_array_equal(brc1.subcluster_labels_, brc2.subcluster_labels_)
     assert_array_equal(brc1.labels_, brc2.labels_)
 
-    # Test that the wrong global clustering step raises an Error.
+    # Test that n_clusters being a non-cluster estimator raises an Error.
     clf = ElasticNet()
     brc3 = Birch(n_clusters=clf)
-    err_msg = "n_clusters should be an instance of ClusterMixin or an int"
-    with pytest.raises(TypeError, match=err_msg):
+    msg = r"The 'n_clusters' parameter of Birch must be .* Got .* instead."
+    with pytest.raises(ValueError, match=msg):
         brc3.fit(X)
 
     # Test that a small number of clusters raises a warning.
@@ -185,37 +186,65 @@ def test_birch_fit_attributes_deprecated(attribute):
         getattr(brc, attribute)
 
 
-@pytest.mark.parametrize(
-    "params, err_type, err_msg",
-    [
-        ({"threshold": -1.0}, ValueError, "threshold == -1.0, must be > 0.0."),
-        ({"threshold": 0.0}, ValueError, "threshold == 0.0, must be > 0.0."),
-        ({"branching_factor": 0}, ValueError, "branching_factor == 0, must be > 1."),
-        ({"branching_factor": 1}, ValueError, "branching_factor == 1, must be > 1."),
-        (
-            {"branching_factor": 1.5},
-            TypeError,
-            "branching_factor must be an instance of <class 'numbers.Integral'>, not"
-            " <class 'float'>.",
-        ),
-        ({"branching_factor": -2}, ValueError, "branching_factor == -2, must be > 1."),
-        ({"n_clusters": 0}, ValueError, "n_clusters == 0, must be >= 1."),
-        (
-            {"n_clusters": 2.5},
-            TypeError,
-            "n_clusters must be an instance of <class 'numbers.Integral'>, not <class"
-            " 'float'>.",
-        ),
-        (
-            {"n_clusters": "whatever"},
-            TypeError,
-            "n_clusters should be an instance of ClusterMixin or an int",
-        ),
-        ({"n_clusters": -3}, ValueError, "n_clusters == -3, must be >= 1."),
-    ],
-)
-def test_birch_params_validation(params, err_type, err_msg):
-    """Check the parameters validation in `Birch`."""
-    X, _ = make_blobs(n_samples=80, centers=4)
-    with pytest.raises(err_type, match=err_msg):
-        Birch(**params).fit(X)
+def test_feature_names_out():
+    """Check `get_feature_names_out` for `Birch`."""
+    X, _ = make_blobs(n_samples=80, n_features=4, random_state=0)
+    brc = Birch(n_clusters=4)
+    brc.fit(X)
+    n_clusters = brc.subcluster_centers_.shape[0]
+
+    names_out = brc.get_feature_names_out()
+    assert_array_equal([f"birch{i}" for i in range(n_clusters)], names_out)
+
+
+def test_transform_match_across_dtypes():
+    X, _ = make_blobs(n_samples=80, n_features=4, random_state=0)
+    brc = Birch(n_clusters=4)
+    Y_64 = brc.fit_transform(X)
+    Y_32 = brc.fit_transform(X.astype(np.float32))
+
+    assert_allclose(Y_64, Y_32, atol=1e-6)
+
+
+def test_subcluster_dtype(global_dtype):
+    X = make_blobs(n_samples=80, n_features=4, random_state=0)[0].astype(
+        global_dtype, copy=False
+    )
+    brc = Birch(n_clusters=4)
+    assert brc.fit(X).subcluster_centers_.dtype == global_dtype
+
+
+def test_both_subclusters_updated():
+    """Check that both subclusters are updated when a node a split, even when there are
+    duplicated data points. Non-regression test for #23269.
+    """
+
+    X = np.array(
+        [
+            [-2.6192791, -1.5053215],
+            [-2.9993038, -1.6863596],
+            [-2.3724914, -1.3438171],
+            [-2.336792, -1.3417323],
+            [-2.4089134, -1.3290224],
+            [-2.3724914, -1.3438171],
+            [-3.364009, -1.8846745],
+            [-2.3724914, -1.3438171],
+            [-2.617677, -1.5003285],
+            [-2.2960556, -1.3260119],
+            [-2.3724914, -1.3438171],
+            [-2.5459878, -1.4533926],
+            [-2.25979, -1.3003055],
+            [-2.4089134, -1.3290224],
+            [-2.3724914, -1.3438171],
+            [-2.4089134, -1.3290224],
+            [-2.5459878, -1.4533926],
+            [-2.3724914, -1.3438171],
+            [-2.9720619, -1.7058647],
+            [-2.336792, -1.3417323],
+            [-2.3724914, -1.3438171],
+        ],
+        dtype=np.float32,
+    )
+
+    # no error
+    Birch(branching_factor=5, threshold=1e-5, n_clusters=None).fit(X)

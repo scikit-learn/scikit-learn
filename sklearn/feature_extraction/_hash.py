@@ -1,24 +1,14 @@
 # Author: Lars Buitinck
 # License: BSD 3 clause
 
-import numbers
+from numbers import Integral
 
 import numpy as np
 import scipy.sparse as sp
 
-from ..utils import IS_PYPY
 from ..base import BaseEstimator, TransformerMixin
-
-if not IS_PYPY:
-    from ._hashing_fast import transform as _hashing_transform
-else:
-
-    def _hashing_transform(*args, **kwargs):
-        raise NotImplementedError(
-            "FeatureHasher is not compatible with PyPy (see "
-            "https://github.com/scikit-learn/scikit-learn/issues/11540 "
-            "for the status updates)."
-        )
+from ._hashing_fast import transform as _hashing_transform
+from ..utils._param_validation import Interval, StrOptions
 
 
 def _iteritems(d):
@@ -92,37 +82,25 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
            [ 0.,  0.,  0., -2., -5.,  0.,  0.,  0.,  0.,  0.]])
     """
 
+    _parameter_constraints: dict = {
+        "n_features": [Interval(Integral, 1, np.iinfo(np.int32).max, closed="both")],
+        "input_type": [StrOptions({"dict", "pair", "string"})],
+        "dtype": "no_validation",  # delegate to numpy
+        "alternate_sign": ["boolean"],
+    }
+
     def __init__(
         self,
-        n_features=(2 ** 20),
+        n_features=(2**20),
         *,
         input_type="dict",
         dtype=np.float64,
         alternate_sign=True,
     ):
-        self._validate_params(n_features, input_type)
-
         self.dtype = dtype
         self.input_type = input_type
         self.n_features = n_features
         self.alternate_sign = alternate_sign
-
-    @staticmethod
-    def _validate_params(n_features, input_type):
-        # strangely, np.int16 instances are not instances of Integral,
-        # while np.int64 instances are...
-        if not isinstance(n_features, numbers.Integral):
-            raise TypeError(
-                "n_features must be integral, got %r (%s)."
-                % (n_features, type(n_features))
-            )
-        elif n_features < 1 or n_features >= np.iinfo(np.int32).max + 1:
-            raise ValueError("Invalid number of features (%d)." % n_features)
-
-        if input_type not in ("dict", "pair", "string"):
-            raise ValueError(
-                "input_type must be 'dict', 'pair' or 'string', got %r." % input_type
-            )
 
     def fit(self, X=None, y=None):
         """No-op.
@@ -144,7 +122,7 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
             FeatureHasher class instance.
         """
         # repeat input validation for grid search (which calls set_params)
-        self._validate_params(self.n_features, self.input_type)
+        self._validate_params()
         return self
 
     def transform(self, raw_X):

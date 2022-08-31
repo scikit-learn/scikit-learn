@@ -85,3 +85,20 @@ def test_array_object_type():
     X = np.array([(1, 2, 3), (2, 5), (5, 5, 1, 2)], dtype=object)
     with pytest.raises(ValueError, match="setting an array element with a sequence"):
         BallTree(X)
+
+
+def test_bad_pyfunc_metric():
+    def wrong_returned_value(x, y):
+        return "1"
+
+    def one_arg_func(x):
+        return 1.0  # pragma: no cover
+
+    X = np.ones((5, 2))
+    msg = "Custom distance function must accept two vectors and return a float."
+    with pytest.raises(TypeError, match=msg):
+        BallTree(X, metric=wrong_returned_value)
+
+    msg = "takes 1 positional argument but 2 were given"
+    with pytest.raises(TypeError, match=msg):
+        BallTree(X, metric=one_arg_func)

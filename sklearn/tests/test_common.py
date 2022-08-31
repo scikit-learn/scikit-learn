@@ -11,12 +11,30 @@ import warnings
 import sys
 import re
 import pkgutil
-from inspect import isgenerator, signature
+from inspect import isgenerator, signature, Parameter
 from itertools import product, chain
 from functools import partial
 
 import pytest
 import numpy as np
+
+from sklearn.cluster import (
+    AffinityPropagation,
+    Birch,
+    MeanShift,
+    OPTICS,
+    SpectralClustering,
+)
+from sklearn.datasets import make_blobs
+from sklearn.manifold import Isomap, TSNE, LocallyLinearEmbedding
+from sklearn.neighbors import (
+    LocalOutlierFactor,
+    KNeighborsClassifier,
+    KNeighborsRegressor,
+    RadiusNeighborsClassifier,
+    RadiusNeighborsRegressor,
+)
+from sklearn.semi_supervised import LabelPropagation, LabelSpreading
 
 from sklearn.utils import all_estimators
 from sklearn.utils._testing import ignore_warnings
@@ -51,6 +69,7 @@ from sklearn.utils.estimator_checks import (
     parametrize_with_checks,
     check_dataframe_column_names_consistency,
     check_n_features_in_after_fitting,
+    check_param_validation,
     check_transformer_get_feature_names_out,
     check_transformer_get_feature_names_out_pandas,
 )
@@ -115,8 +134,6 @@ def test_check_estimator_generate_only():
     assert isgenerator(all_instance_gen_checks)
 
 
-@ignore_warnings(category=(DeprecationWarning, FutureWarning))
-# ignore deprecated open(.., 'U') in numpy distutils
 def test_configure():
     # Smoke test the 'configure' step of setup, this tests all the
     # 'configure' functions in the setup.pys in scikit-learn
@@ -332,6 +349,24 @@ def test_check_n_features_in_after_fitting(estimator):
     check_n_features_in_after_fitting(estimator.__class__.__name__, estimator)
 
 
+def _estimators_that_predict_in_fit():
+    for estimator in _tested_estimators():
+        est_params = set(estimator.get_params())
+        if "oob_score" in est_params:
+            yield estimator.set_params(oob_score=True, bootstrap=True)
+        elif "early_stopping" in est_params:
+            est = estimator.set_params(early_stopping=True, n_iter_no_change=1)
+            if est.__class__.__name__ in {"MLPClassifier", "MLPRegressor"}:
+                # TODO: FIX MLP to not check validation set during MLP
+                yield pytest.param(
+                    est, marks=pytest.mark.xfail(msg="MLP still validates in fit")
+                )
+            else:
+                yield est
+        elif "n_iter_no_change" in est_params:
+            yield estimator.set_params(n_iter_no_change=1)
+
+
 # NOTE: When running `check_dataframe_column_names_consistency` on a meta-estimator that
 # delegates validation to a base estimator, the check is testing that the base estimator
 # is checking for column name consistency.
@@ -340,6 +375,7 @@ column_name_estimators = list(
         _tested_estimators(),
         [make_pipeline(LogisticRegression(C=1))],
         list(_generate_search_cv_instances()),
+        _estimators_that_predict_in_fit(),
     )
 )
 
@@ -350,7 +386,7 @@ column_name_estimators = list(
 def test_pandas_column_name_consistency(estimator):
     _set_checking_parameters(estimator)
     with ignore_warnings(category=(FutureWarning)):
-        with pytest.warns(None) as record:
+        with warnings.catch_warnings(record=True) as record:
             check_dataframe_column_names_consistency(
                 estimator.__class__.__name__, estimator
             )
@@ -361,17 +397,8 @@ def test_pandas_column_name_consistency(estimator):
 # TODO: As more modules support get_feature_names_out they should be removed
 # from this list to be tested
 GET_FEATURES_OUT_MODULES_TO_IGNORE = [
-    "cluster",
-    "cross_decomposition",
-    "discriminant_analysis",
     "ensemble",
-    "isotonic",
     "kernel_approximation",
-    "preprocessing",
-    "manifold",
-    "neighbors",
-    "neural_network",
-    "random_projection",
 ]
 
 
@@ -405,24 +432,7 @@ def test_transformers_get_feature_names_out(transformer):
 
 
 VALIDATE_ESTIMATOR_INIT = [
-    "ColumnTransformer",
-    "FactorAnalysis",
-    "FeatureHasher",
-    "FeatureUnion",
-    "GridSearchCV",
-    "HalvingGridSearchCV",
-    "KernelPCA",
-    "LabelBinarizer",
-    "NuSVC",
-    "NuSVR",
-    "OneClassSVM",
-    "Pipeline",
-    "RadiusNeighborsClassifier",
     "SGDOneClassSVM",
-    "SVC",
-    "SVR",
-    "TheilSenRegressor",
-    "TweedieRegressor",
 ]
 VALIDATE_ESTIMATOR_INIT = set(VALIDATE_ESTIMATOR_INIT)
 
@@ -433,9 +443,16 @@ VALIDATE_ESTIMATOR_INIT = set(VALIDATE_ESTIMATOR_INIT)
 )
 def test_estimators_do_not_raise_errors_in_init_or_set_params(Estimator):
     """Check that init or set_param does not raise errors."""
-    params = signature(Estimator).parameters
 
-    smoke_test_values = [-1, 3.0, "helloworld", np.array([1.0, 4.0]), {}, []]
+    # Remove parameters with **kwargs by filtering out Parameter.VAR_KEYWORD
+    # TODO: Remove in 1.2 when **kwargs is removed in RadiusNeighborsClassifier
+    params = [
+        name
+        for name, param in signature(Estimator).parameters.items()
+        if param.kind != Parameter.VAR_KEYWORD
+    ]
+
+    smoke_test_values = [-1, 3.0, "helloworld", np.array([1.0, 4.0]), [1], {}, []]
     for value in smoke_test_values:
         new_params = {key: value for key in params}
 
@@ -444,3 +461,91 @@ def test_estimators_do_not_raise_errors_in_init_or_set_params(Estimator):
 
         # Also do does not raise
         est.set_params(**new_params)
+
+
+PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
+    "CalibratedClassifierCV",
+    "ClassifierChain",
+    "DictionaryLearning",
+    "HashingVectorizer",
+    "Isomap",
+    "IterativeImputer",
+    "LabelPropagation",
+    "LabelSpreading",
+    "LatentDirichletAllocation",
+    "MiniBatchDictionaryLearning",
+    "MultiTaskElasticNet",
+    "MultiTaskLasso",
+    "NeighborhoodComponentsAnalysis",
+    "Nystroem",
+    "OAS",
+    "OPTICS",
+    "OneVsOneClassifier",
+    "OneVsRestClassifier",
+    "PatchExtractor",
+    "PolynomialCountSketch",
+    "RANSACRegressor",
+    "RBFSampler",
+    "RegressorChain",
+    "RidgeCV",
+    "RidgeClassifierCV",
+    "SelectFromModel",
+    "SpectralBiclustering",
+    "SpectralCoclustering",
+    "SpectralEmbedding",
+]
+
+
+@pytest.mark.parametrize(
+    "estimator", _tested_estimators(), ids=_get_check_estimator_ids
+)
+def test_check_param_validation(estimator):
+    name = estimator.__class__.__name__
+    if name in PARAM_VALIDATION_ESTIMATORS_TO_IGNORE:
+        pytest.skip(
+            f"Skipping check_param_validation for {name}: Does not use the "
+            "appropriate API for parameter validation yet."
+        )
+    _set_checking_parameters(estimator)
+    check_param_validation(name, estimator)
+
+
+# TODO: remove this filter in 1.2
+@pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
+@pytest.mark.parametrize(
+    "Estimator",
+    [
+        AffinityPropagation,
+        Birch,
+        MeanShift,
+        KNeighborsClassifier,
+        KNeighborsRegressor,
+        RadiusNeighborsClassifier,
+        RadiusNeighborsRegressor,
+        LabelPropagation,
+        LabelSpreading,
+        OPTICS,
+        SpectralClustering,
+        LocalOutlierFactor,
+        LocallyLinearEmbedding,
+        Isomap,
+        TSNE,
+    ],
+)
+def test_f_contiguous_array_estimator(Estimator):
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/23988
+    # https://github.com/scikit-learn/scikit-learn/issues/24013
+
+    X, _ = make_blobs(n_samples=80, n_features=4, random_state=0)
+    X = np.asfortranarray(X)
+    y = np.round(X[:, 0])
+
+    est = Estimator()
+    est.fit(X, y)
+
+    if hasattr(est, "transform"):
+        est.transform(X)
+
+    if hasattr(est, "predict"):
+        est.predict(X)

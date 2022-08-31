@@ -8,7 +8,7 @@ from sklearn.linear_model import LogisticRegressionCV
 from sklearn.pipeline import make_pipeline
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.feature_selection import SelectKBest, chi2
-from sklearn import set_config, config_context
+from sklearn import config_context
 
 
 # Ignore flake8 (lots of line too long issues)

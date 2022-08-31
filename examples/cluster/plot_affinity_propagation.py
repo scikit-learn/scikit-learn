@@ -13,15 +13,17 @@ from sklearn.cluster import AffinityPropagation
 from sklearn import metrics
 from sklearn.datasets import make_blobs
 
-# #############################################################################
+# %%
 # Generate sample data
+# --------------------
 centers = [[1, 1], [-1, -1], [1, -1]]
 X, labels_true = make_blobs(
     n_samples=300, centers=centers, cluster_std=0.5, random_state=0
 )
 
-# #############################################################################
+# %%
 # Compute Affinity Propagation
+# ----------------------------
 af = AffinityPropagation(preference=-50, random_state=0).fit(X)
 cluster_centers_indices = af.cluster_centers_indices_
 labels = af.labels_
@@ -42,8 +44,9 @@ print(
     % metrics.silhouette_score(X, labels, metric="sqeuclidean")
 )
 
-# #############################################################################
+# %%
 # Plot result
+# -----------
 import matplotlib.pyplot as plt
 from itertools import cycle
 

@@ -40,7 +40,7 @@ t0 = timeit.default_timer()
 solver = "saga"
 
 # Turn down for faster run time
-n_samples = 10000
+n_samples = 5000
 
 X, y = fetch_20newsgroups_vectorized(subset="all", return_X_y=True)
 X = X[:n_samples]
@@ -58,8 +58,8 @@ print(
 )
 
 models = {
-    "ovr": {"name": "One versus Rest", "iters": [1, 2, 4]},
-    "multinomial": {"name": "Multinomial", "iters": [1, 3, 7]},
+    "ovr": {"name": "One versus Rest", "iters": [1, 2, 3]},
+    "multinomial": {"name": "Multinomial", "iters": [1, 2, 5]},
 }
 
 for model in models:

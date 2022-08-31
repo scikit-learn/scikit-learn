@@ -99,7 +99,7 @@ for i, n_outliers in enumerate(range_n_outliers):
         # fit a Minimum Covariance Determinant (MCD) robust estimator to data
         mcd = MinCovDet().fit(X)
         # compare raw robust estimates with the true location and covariance
-        err_loc_mcd[i, j] = np.sum(mcd.location_ ** 2)
+        err_loc_mcd[i, j] = np.sum(mcd.location_**2)
         err_cov_mcd[i, j] = mcd.error_norm(np.eye(n_features))
 
         # compare estimators learned from the full data set with true
@@ -114,7 +114,7 @@ for i, n_outliers in enumerate(range_n_outliers):
         pure_X = X[inliers_mask]
         pure_location = pure_X.mean(0)
         pure_emp_cov = EmpiricalCovariance().fit(pure_X)
-        err_loc_emp_pure[i, j] = np.sum(pure_location ** 2)
+        err_loc_emp_pure[i, j] = np.sum(pure_location**2)
         err_cov_emp_pure[i, j] = pure_emp_cov.error_norm(np.eye(n_features))
 
 # Display results

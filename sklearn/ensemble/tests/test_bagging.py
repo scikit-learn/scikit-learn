@@ -437,45 +437,16 @@ def test_single_estimator():
 
 
 def test_error():
-    # Test that it gives proper exception on deficient input.
+    # Test support of decision_function
     X, y = iris.data, iris.target
     base = DecisionTreeClassifier()
-
-    # Test max_samples
-    with pytest.raises(ValueError):
-        BaggingClassifier(base, max_samples=-1).fit(X, y)
-    with pytest.raises(ValueError):
-        BaggingClassifier(base, max_samples=0.0).fit(X, y)
-    with pytest.raises(ValueError):
-        BaggingClassifier(base, max_samples=2.0).fit(X, y)
-    with pytest.raises(ValueError):
-        BaggingClassifier(base, max_samples=1000).fit(X, y)
-    with pytest.raises(ValueError):
-        BaggingClassifier(base, max_samples="foobar").fit(X, y)
-
-    # Test max_features
-    with pytest.raises(ValueError):
-        BaggingClassifier(base, max_features=-1).fit(X, y)
-    with pytest.raises(ValueError):
-        BaggingClassifier(base, max_features=0.0).fit(X, y)
-    with pytest.raises(ValueError):
-        BaggingClassifier(base, max_features=2.0).fit(X, y)
-    with pytest.raises(ValueError):
-        BaggingClassifier(base, max_features=5).fit(X, y)
-    with pytest.raises(ValueError):
-        BaggingClassifier(base, max_features="foobar").fit(X, y)
-
-    # Test support of decision_function
     assert not hasattr(BaggingClassifier(base).fit(X, y), "decision_function")
 
 
 def test_parallel_classification():
     # Check parallel classification.
-    rng = check_random_state(0)
-
-    # Classification
     X_train, X_test, y_train, y_test = train_test_split(
-        iris.data, iris.target, random_state=rng
+        iris.data, iris.target, random_state=0
     )
 
     ensemble = BaggingClassifier(
@@ -483,9 +454,8 @@ def test_parallel_classification():
     ).fit(X_train, y_train)
 
     # predict_proba
-    ensemble.set_params(n_jobs=1)
     y1 = ensemble.predict_proba(X_test)
-    ensemble.set_params(n_jobs=2)
+    ensemble.set_params(n_jobs=1)
     y2 = ensemble.predict_proba(X_test)
     assert_array_almost_equal(y1, y2)
 
@@ -501,9 +471,8 @@ def test_parallel_classification():
         SVC(decision_function_shape="ovr"), n_jobs=3, random_state=0
     ).fit(X_train, y_train)
 
-    ensemble.set_params(n_jobs=1)
     decisions1 = ensemble.decision_function(X_test)
-    ensemble.set_params(n_jobs=2)
+    ensemble.set_params(n_jobs=1)
     decisions2 = ensemble.decision_function(X_test)
     assert_array_almost_equal(decisions1, decisions2)
 
@@ -709,12 +678,12 @@ def test_warm_start_with_oob_score_fails():
 
 
 def test_oob_score_removed_on_warm_start():
-    X, y = make_hastie_10_2(n_samples=2000, random_state=1)
+    X, y = make_hastie_10_2(n_samples=100, random_state=1)
 
-    clf = BaggingClassifier(n_estimators=50, oob_score=True)
+    clf = BaggingClassifier(n_estimators=5, oob_score=True)
     clf.fit(X, y)
 
-    clf.set_params(warm_start=True, oob_score=False, n_estimators=100)
+    clf.set_params(warm_start=True, oob_score=False, n_estimators=10)
     clf.fit(X, y)
 
     with pytest.raises(AttributeError):

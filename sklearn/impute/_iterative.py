@@ -183,7 +183,10 @@ class IterativeImputer(_BaseImputer):
 
     See Also
     --------
-    SimpleImputer : Univariate imputation of missing values.
+    SimpleImputer : Univariate imputer for completing missing values
+        with simple strategies.
+    KNNImputer : Multivariate imputer that estimates missing features using
+        nearest samples.
 
     Notes
     -----
@@ -193,6 +196,16 @@ class IterativeImputer(_BaseImputer):
 
     Features which contain all missing values at :meth:`fit` are discarded upon
     :meth:`transform`.
+
+    Using defaults, the imputer scales in :math:`\\mathcal{O}(knp^3\\min(n,p))`
+    where :math:`k` = `max_iter`, :math:`n` the number of samples and
+    :math:`p` the number of features. It thus becomes prohibitively costly when
+    the number of features increases. Setting
+    `n_nearest_features << n_features`, `skip_complete=True` or increasing `tol`
+    can help to reduce its computational cost.
+
+    Depending on the nature of missing values, simple imputers can be
+    preferable in a prediction context.
 
     References
     ----------
@@ -785,10 +798,11 @@ class IterativeImputer(_BaseImputer):
             Input features.
 
             - If `input_features` is `None`, then `feature_names_in_` is
-                used as feature names in. If `feature_names_in_` is not defined,
-                then names are generated: `[x0, x1, ..., x(n_features_in_)]`.
+              used as feature names in. If `feature_names_in_` is not defined,
+              then the following input feature names are generated:
+              `["x0", "x1", ..., "x(n_features_in_ - 1)"]`.
             - If `input_features` is an array-like, then `input_features` must
-                match `feature_names_in_` if `feature_names_in_` is defined.
+              match `feature_names_in_` if `feature_names_in_` is defined.
 
         Returns
         -------

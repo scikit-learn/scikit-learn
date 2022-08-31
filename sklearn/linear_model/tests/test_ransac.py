@@ -30,9 +30,9 @@ y = data[:, 1]
 
 def test_ransac_inliers_outliers():
 
-    base_estimator = LinearRegression()
+    estimator = LinearRegression()
     ransac_estimator = RANSACRegressor(
-        base_estimator, min_samples=2, residual_threshold=5, random_state=0
+        estimator, min_samples=2, residual_threshold=5, random_state=0
     )
 
     # Estimate parameters of corrupted data
@@ -55,9 +55,9 @@ def test_ransac_is_data_valid():
     X = rng.rand(10, 2)
     y = rng.rand(10, 1)
 
-    base_estimator = LinearRegression()
+    estimator = LinearRegression()
     ransac_estimator = RANSACRegressor(
-        base_estimator,
+        estimator,
         min_samples=2,
         residual_threshold=5,
         is_data_valid=is_data_valid,
@@ -73,9 +73,9 @@ def test_ransac_is_model_valid():
         assert y.shape[0] == 2
         return False
 
-    base_estimator = LinearRegression()
+    estimator = LinearRegression()
     ransac_estimator = RANSACRegressor(
-        base_estimator,
+        estimator,
         min_samples=2,
         residual_threshold=5,
         is_model_valid=is_model_valid,
@@ -86,10 +86,10 @@ def test_ransac_is_model_valid():
 
 
 def test_ransac_max_trials():
-    base_estimator = LinearRegression()
+    estimator = LinearRegression()
 
     ransac_estimator = RANSACRegressor(
-        base_estimator,
+        estimator,
         min_samples=2,
         residual_threshold=5,
         max_trials=0,
@@ -102,7 +102,7 @@ def test_ransac_max_trials():
     # 1e-2 isn't enough, can still happen
     # 2 is the what ransac defines  as min_samples = X.shape[1] + 1
     max_trials = _dynamic_max_trials(len(X) - len(outliers), X.shape[0], 2, 1 - 1e-9)
-    ransac_estimator = RANSACRegressor(base_estimator, min_samples=2)
+    ransac_estimator = RANSACRegressor(estimator, min_samples=2)
     for i in range(50):
         ransac_estimator.set_params(min_samples=2, random_state=i)
         ransac_estimator.fit(X, y)
@@ -110,9 +110,9 @@ def test_ransac_max_trials():
 
 
 def test_ransac_stop_n_inliers():
-    base_estimator = LinearRegression()
+    estimator = LinearRegression()
     ransac_estimator = RANSACRegressor(
-        base_estimator,
+        estimator,
         min_samples=2,
         residual_threshold=5,
         stop_n_inliers=2,
@@ -124,9 +124,9 @@ def test_ransac_stop_n_inliers():
 
 
 def test_ransac_stop_score():
-    base_estimator = LinearRegression()
+    estimator = LinearRegression()
     ransac_estimator = RANSACRegressor(
-        base_estimator,
+        estimator,
         min_samples=2,
         residual_threshold=5,
         stop_score=0,
@@ -143,9 +143,9 @@ def test_ransac_score():
     y[0] = 1
     y[1] = 100
 
-    base_estimator = LinearRegression()
+    estimator = LinearRegression()
     ransac_estimator = RANSACRegressor(
-        base_estimator, min_samples=2, residual_threshold=0.5, random_state=0
+        estimator, min_samples=2, residual_threshold=0.5, random_state=0
     )
     ransac_estimator.fit(X, y)
 
@@ -159,9 +159,9 @@ def test_ransac_predict():
     y[0] = 1
     y[1] = 100
 
-    base_estimator = LinearRegression()
+    estimator = LinearRegression()
     ransac_estimator = RANSACRegressor(
-        base_estimator, min_samples=2, residual_threshold=0.5, random_state=0
+        estimator, min_samples=2, residual_threshold=0.5, random_state=0
     )
     ransac_estimator.fit(X, y)
 
@@ -171,9 +171,9 @@ def test_ransac_predict():
 def test_ransac_residuals_threshold_no_inliers():
     # When residual_threshold=nan there are no inliers and a
     # ValueError with a message should be raised
-    base_estimator = LinearRegression()
+    estimator = LinearRegression()
     ransac_estimator = RANSACRegressor(
-        base_estimator,
+        estimator,
         min_samples=2,
         residual_threshold=float("nan"),
         random_state=0,
@@ -192,9 +192,9 @@ def test_ransac_no_valid_data():
     def is_data_valid(X, y):
         return False
 
-    base_estimator = LinearRegression()
+    estimator = LinearRegression()
     ransac_estimator = RANSACRegressor(
-        base_estimator, is_data_valid=is_data_valid, max_trials=5
+        estimator, is_data_valid=is_data_valid, max_trials=5
     )
 
     msg = "RANSAC could not find a valid consensus set"
@@ -209,9 +209,9 @@ def test_ransac_no_valid_model():
     def is_model_valid(estimator, X, y):
         return False
 
-    base_estimator = LinearRegression()
+    estimator = LinearRegression()
     ransac_estimator = RANSACRegressor(
-        base_estimator, is_model_valid=is_model_valid, max_trials=5
+        estimator, is_model_valid=is_model_valid, max_trials=5
     )
 
     msg = "RANSAC could not find a valid consensus set"
@@ -226,9 +226,9 @@ def test_ransac_exceed_max_skips():
     def is_data_valid(X, y):
         return False
 
-    base_estimator = LinearRegression()
+    estimator = LinearRegression()
     ransac_estimator = RANSACRegressor(
-        base_estimator, is_data_valid=is_data_valid, max_trials=5, max_skips=3
+        estimator, is_data_valid=is_data_valid, max_trials=5, max_skips=3
     )
 
     msg = "RANSAC skipped more iterations than `max_skips`"
@@ -251,9 +251,9 @@ def test_ransac_warn_exceed_max_skips():
         else:
             return False
 
-    base_estimator = LinearRegression()
+    estimator = LinearRegression()
     ransac_estimator = RANSACRegressor(
-        base_estimator, is_data_valid=is_data_valid, max_skips=3, max_trials=5
+        estimator, is_data_valid=is_data_valid, max_skips=3, max_trials=5
     )
     warning_message = (
         "RANSAC found a valid consensus set but exited "
@@ -271,9 +271,9 @@ def test_ransac_warn_exceed_max_skips():
 def test_ransac_sparse_coo():
     X_sparse = sparse.coo_matrix(X)
 
-    base_estimator = LinearRegression()
+    estimator = LinearRegression()
     ransac_estimator = RANSACRegressor(
-        base_estimator, min_samples=2, residual_threshold=5, random_state=0
+        estimator, min_samples=2, residual_threshold=5, random_state=0
     )
     ransac_estimator.fit(X_sparse, y)
 
@@ -286,9 +286,9 @@ def test_ransac_sparse_coo():
 def test_ransac_sparse_csr():
     X_sparse = sparse.csr_matrix(X)
 
-    base_estimator = LinearRegression()
+    estimator = LinearRegression()
     ransac_estimator = RANSACRegressor(
-        base_estimator, min_samples=2, residual_threshold=5, random_state=0
+        estimator, min_samples=2, residual_threshold=5, random_state=0
     )
     ransac_estimator.fit(X_sparse, y)
 
@@ -301,9 +301,9 @@ def test_ransac_sparse_csr():
 def test_ransac_sparse_csc():
     X_sparse = sparse.csc_matrix(X)
 
-    base_estimator = LinearRegression()
+    estimator = LinearRegression()
     ransac_estimator = RANSACRegressor(
-        base_estimator, min_samples=2, residual_threshold=5, random_state=0
+        estimator, min_samples=2, residual_threshold=5, random_state=0
     )
     ransac_estimator.fit(X_sparse, y)
 
@@ -315,10 +315,10 @@ def test_ransac_sparse_csc():
 
 def test_ransac_none_estimator():
 
-    base_estimator = LinearRegression()
+    estimator = LinearRegression()
 
     ransac_estimator = RANSACRegressor(
-        base_estimator, min_samples=2, residual_threshold=5, random_state=0
+        estimator, min_samples=2, residual_threshold=5, random_state=0
     )
     ransac_none_estimator = RANSACRegressor(
         None, min_samples=2, residual_threshold=5, random_state=0
@@ -333,30 +333,28 @@ def test_ransac_none_estimator():
 
 
 def test_ransac_min_n_samples():
-    base_estimator = LinearRegression()
+    estimator = LinearRegression()
     ransac_estimator1 = RANSACRegressor(
-        base_estimator, min_samples=2, residual_threshold=5, random_state=0
+        estimator, min_samples=2, residual_threshold=5, random_state=0
     )
     ransac_estimator2 = RANSACRegressor(
-        base_estimator,
+        estimator,
         min_samples=2.0 / X.shape[0],
         residual_threshold=5,
         random_state=0,
     )
     ransac_estimator3 = RANSACRegressor(
-        base_estimator, min_samples=-1, residual_threshold=5, random_state=0
+        estimator, min_samples=-1, residual_threshold=5, random_state=0
     )
     ransac_estimator4 = RANSACRegressor(
-        base_estimator, min_samples=5.2, residual_threshold=5, random_state=0
+        estimator, min_samples=5.2, residual_threshold=5, random_state=0
     )
     ransac_estimator5 = RANSACRegressor(
-        base_estimator, min_samples=2.0, residual_threshold=5, random_state=0
+        estimator, min_samples=2.0, residual_threshold=5, random_state=0
     )
-    ransac_estimator6 = RANSACRegressor(
-        base_estimator, residual_threshold=5, random_state=0
-    )
+    ransac_estimator6 = RANSACRegressor(estimator, residual_threshold=5, random_state=0)
     ransac_estimator7 = RANSACRegressor(
-        base_estimator, min_samples=X.shape[0] + 1, residual_threshold=5, random_state=0
+        estimator, min_samples=X.shape[0] + 1, residual_threshold=5, random_state=0
     )
     # GH #19390
     ransac_estimator8 = RANSACRegressor(
@@ -394,9 +392,9 @@ def test_ransac_min_n_samples():
 
 def test_ransac_multi_dimensional_targets():
 
-    base_estimator = LinearRegression()
+    estimator = LinearRegression()
     ransac_estimator = RANSACRegressor(
-        base_estimator, min_samples=2, residual_threshold=5, random_state=0
+        estimator, min_samples=2, residual_threshold=5, random_state=0
     )
 
     # 3-D target values
@@ -424,19 +422,19 @@ def test_ransac_residual_loss():
 
     yyy = np.column_stack([y, y, y])
 
-    base_estimator = LinearRegression()
+    estimator = LinearRegression()
     ransac_estimator0 = RANSACRegressor(
-        base_estimator, min_samples=2, residual_threshold=5, random_state=0
+        estimator, min_samples=2, residual_threshold=5, random_state=0
     )
     ransac_estimator1 = RANSACRegressor(
-        base_estimator,
+        estimator,
         min_samples=2,
         residual_threshold=5,
         random_state=0,
         loss=loss_multi1,
     )
     ransac_estimator2 = RANSACRegressor(
-        base_estimator,
+        estimator,
         min_samples=2,
         residual_threshold=5,
         random_state=0,
@@ -462,7 +460,7 @@ def test_ransac_residual_loss():
         ransac_estimator0.predict(X), ransac_estimator2.predict(X)
     )
     ransac_estimator3 = RANSACRegressor(
-        base_estimator,
+        estimator,
         min_samples=2,
         residual_threshold=5,
         random_state=0,
@@ -475,8 +473,8 @@ def test_ransac_residual_loss():
 
 
 def test_ransac_default_residual_threshold():
-    base_estimator = LinearRegression()
-    ransac_estimator = RANSACRegressor(base_estimator, min_samples=2, random_state=0)
+    estimator = LinearRegression()
+    ransac_estimator = RANSACRegressor(estimator, min_samples=2, random_state=0)
 
     # Estimate parameters of corrupted data
     ransac_estimator.fit(X, y)
@@ -519,17 +517,13 @@ def test_ransac_dynamic_max_trials():
     assert _dynamic_max_trials(1, 100, 10, 0) == 0
     assert _dynamic_max_trials(1, 100, 10, 1) == float("inf")
 
-    base_estimator = LinearRegression()
-    ransac_estimator = RANSACRegressor(
-        base_estimator, min_samples=2, stop_probability=-0.1
-    )
+    estimator = LinearRegression()
+    ransac_estimator = RANSACRegressor(estimator, min_samples=2, stop_probability=-0.1)
 
     with pytest.raises(ValueError):
         ransac_estimator.fit(X, y)
 
-    ransac_estimator = RANSACRegressor(
-        base_estimator, min_samples=2, stop_probability=1.1
-    )
+    ransac_estimator = RANSACRegressor(estimator, min_samples=2, stop_probability=1.1)
     with pytest.raises(ValueError):
         ransac_estimator.fit(X, y)
 
@@ -579,12 +573,12 @@ def test_ransac_fit_sample_weight():
 
     assert_allclose(ransac_estimator.estimator_.coef_, ref_coef_)
 
-    # check that if base_estimator.fit doesn't support
+    # check that if estimator.fit doesn't support
     # sample_weight, raises error
-    base_estimator = OrthogonalMatchingPursuit()
-    ransac_estimator = RANSACRegressor(base_estimator, min_samples=10)
+    estimator = OrthogonalMatchingPursuit()
+    ransac_estimator = RANSACRegressor(estimator, min_samples=10)
 
-    err_msg = f"{base_estimator.__class__.__name__} does not support sample_weight."
+    err_msg = f"{estimator.__class__.__name__} does not support sample_weight."
     with pytest.raises(ValueError, match=err_msg):
         ransac_estimator.fit(X, y, weights)
 
@@ -594,7 +588,7 @@ def test_ransac_final_model_fit_sample_weight():
     rng = check_random_state(42)
     sample_weight = rng.randint(1, 4, size=y.shape[0])
     sample_weight = sample_weight / sample_weight.sum()
-    ransac = RANSACRegressor(base_estimator=LinearRegression(), random_state=0)
+    ransac = RANSACRegressor(estimator=LinearRegression(), random_state=0)
     ransac.fit(X, y, sample_weight=sample_weight)
 
     final_model = LinearRegression()
@@ -614,8 +608,8 @@ def test_perfect_horizontal_line():
     X = np.arange(100)[:, None]
     y = np.zeros((100,))
 
-    base_estimator = LinearRegression()
-    ransac_estimator = RANSACRegressor(base_estimator, random_state=0)
+    estimator = LinearRegression()
+    ransac_estimator = RANSACRegressor(estimator, random_state=0)
     ransac_estimator.fit(X, y)
 
     assert_allclose(ransac_estimator.estimator_.coef_, 0.0)
@@ -639,3 +633,18 @@ def test_loss_deprecated(old_loss, new_loss):
     est2 = RANSACRegressor(loss=new_loss, random_state=0)
     est2.fit(X, y)
     assert_allclose(est1.predict(X), est2.predict(X))
+
+
+def test_base_estimator_deprecated():
+    ransac_estimator = RANSACRegressor(
+        base_estimator=LinearRegression(),
+        min_samples=2,
+        residual_threshold=5,
+        random_state=0,
+    )
+    err_msg = (
+        "`base_estimator` was renamed to `estimator` in version 1.1 and "
+        "will be removed in 1.3."
+    )
+    with pytest.warns(FutureWarning, match=err_msg):
+        ransac_estimator.fit(X, y)

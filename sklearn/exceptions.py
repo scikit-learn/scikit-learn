@@ -3,17 +3,13 @@ The :mod:`sklearn.exceptions` module includes all custom warnings and error
 classes used across scikit-learn.
 """
 
-from .utils.deprecation import deprecated
-
 __all__ = [
     "NotFittedError",
-    "ChangedBehaviorWarning",
     "ConvergenceWarning",
     "DataConversionWarning",
     "DataDimensionalityWarning",
     "EfficiencyWarning",
     "FitFailedWarning",
-    "NonBLASDotWarning",
     "SkipTestWarning",
     "UndefinedMetricWarning",
     "PositiveSpectrumWarning",
@@ -39,15 +35,6 @@ class NotFittedError(ValueError, AttributeError):
 
     .. versionchanged:: 0.18
        Moved from sklearn.utils.validation.
-    """
-
-
-@deprecated("ChangedBehaviorWarning is deprecated in 0.24 and will be removed in 1.1")
-class ChangedBehaviorWarning(UserWarning):
-    """Warning class used to notify the user of any change in the behavior.
-
-    .. versionchanged:: 0.18
-       Moved from sklearn.base.
     """
 
 
@@ -111,18 +98,6 @@ class FitFailedWarning(RuntimeWarning):
 
     .. versionchanged:: 0.18
        Moved from sklearn.cross_validation.
-    """
-
-
-@deprecated("NonBLASDotWarning is deprecated in 0.24 and will be removed in 1.1")
-class NonBLASDotWarning(EfficiencyWarning):
-    """Warning used when the dot operation does not use BLAS.
-
-    This warning is used to notify the user that BLAS was not used for dot
-    operation and hence the efficiency may be affected.
-
-    .. versionchanged:: 0.18
-       Moved from sklearn.utils.validation, extends EfficiencyWarning.
     """
 
 

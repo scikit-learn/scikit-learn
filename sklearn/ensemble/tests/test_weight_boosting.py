@@ -2,6 +2,7 @@
 
 import numpy as np
 import pytest
+import re
 
 from scipy.sparse import csc_matrix
 from scipy.sparse import csr_matrix
@@ -147,7 +148,7 @@ def test_diabetes(loss):
     reg = AdaBoostRegressor(loss=loss, random_state=0)
     reg.fit(diabetes.data, diabetes.target)
     score = reg.score(diabetes.data, diabetes.target)
-    assert score > 0.6
+    assert score > 0.55
 
     # Check we used multiple estimators
     assert len(reg.estimators_) > 1
@@ -270,17 +271,12 @@ def test_importances():
         assert (importances[:3, np.newaxis] >= importances[3:]).all()
 
 
-def test_error():
-    # Test that it gives proper exception on deficient input.
-
-    with pytest.raises(ValueError):
-        AdaBoostClassifier(learning_rate=-1).fit(X, y_class)
-
-    with pytest.raises(ValueError):
-        AdaBoostClassifier(algorithm="foo").fit(X, y_class)
-
-    with pytest.raises(ValueError):
-        AdaBoostClassifier().fit(X, y_class, sample_weight=np.asarray([-1]))
+def test_adaboost_classifier_sample_weight_error():
+    # Test that it gives proper exception on incorrect sample weight.
+    clf = AdaBoostClassifier()
+    msg = re.escape("sample_weight.shape == (1,), expected (6,)")
+    with pytest.raises(ValueError, match=msg):
+        clf.fit(X, y_class, sample_weight=np.asarray([-1]))
 
 
 def test_base_estimator():
@@ -313,7 +309,7 @@ def test_base_estimator():
 
 def test_sample_weights_infinite():
     msg = "Sample weights have reached infinite values"
-    clf = AdaBoostClassifier(n_estimators=30, learning_rate=5.0, algorithm="SAMME")
+    clf = AdaBoostClassifier(n_estimators=30, learning_rate=23.0, algorithm="SAMME")
     with pytest.warns(UserWarning, match=msg):
         clf.fit(iris.data, iris.target)
 
@@ -579,3 +575,22 @@ def test_adaboost_negative_weight_error(model, X, y):
     err_msg = "Negative values in data passed to `sample_weight`"
     with pytest.raises(ValueError, match=err_msg):
         model.fit(X, y, sample_weight=sample_weight)
+
+
+def test_adaboost_numerically_stable_feature_importance_with_small_weights():
+    """Check that we don't create NaN feature importance with numerically
+    instable inputs.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/20320
+    """
+    rng = np.random.RandomState(42)
+    X = rng.normal(size=(1000, 10))
+    y = rng.choice([0, 1], size=1000)
+    sample_weight = np.ones_like(y) * 1e-263
+    tree = DecisionTreeClassifier(max_depth=10, random_state=12)
+    ada_model = AdaBoostClassifier(
+        base_estimator=tree, n_estimators=20, random_state=12
+    )
+    ada_model.fit(X, y, sample_weight=sample_weight)
+    assert np.isnan(ada_model.feature_importances_).sum() == 0

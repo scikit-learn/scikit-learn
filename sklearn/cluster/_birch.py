@@ -4,16 +4,22 @@
 # License: BSD 3 clause
 
 import warnings
-import numbers
 import numpy as np
+from numbers import Integral, Real
 from scipy import sparse
 from math import sqrt
 
 from ..metrics import pairwise_distances_argmin
 from ..metrics.pairwise import euclidean_distances
-from ..base import TransformerMixin, ClusterMixin, BaseEstimator
+from ..base import (
+    TransformerMixin,
+    ClusterMixin,
+    BaseEstimator,
+    _ClassNamePrefixFeaturesOutMixin,
+)
 from ..utils.extmath import row_norms
-from ..utils import check_scalar, deprecated
+from ..utils import deprecated
+from ..utils._param_validation import Interval
 from ..utils.validation import check_is_fitted
 from ..exceptions import ConvergenceWarning
 from . import AgglomerativeClustering
@@ -55,12 +61,14 @@ def _split_node(node, threshold, branching_factor):
         branching_factor=branching_factor,
         is_leaf=node.is_leaf,
         n_features=node.n_features,
+        dtype=node.init_centroids_.dtype,
     )
     new_node2 = _CFNode(
         threshold=threshold,
         branching_factor=branching_factor,
         is_leaf=node.is_leaf,
         n_features=node.n_features,
+        dtype=node.init_centroids_.dtype,
     )
     new_subcluster1.child_ = new_node1
     new_subcluster2.child_ = new_node2
@@ -84,6 +92,11 @@ def _split_node(node, threshold, branching_factor):
     node1_dist, node2_dist = dist[(farthest_idx,)]
 
     node1_closer = node1_dist < node2_dist
+    # make sure node1 is closest to itself even if all distances are equal.
+    # This can only happen when all node.centroids_ are duplicates leading to all
+    # distances between centroids being zero.
+    node1_closer[farthest_idx[0]] = True
+
     for idx, subcluster in enumerate(node.subclusters_):
         if node1_closer[idx]:
             new_node1.append_subcluster(subcluster)
@@ -142,7 +155,7 @@ class _CFNode:
 
     """
 
-    def __init__(self, *, threshold, branching_factor, is_leaf, n_features):
+    def __init__(self, *, threshold, branching_factor, is_leaf, n_features, dtype):
         self.threshold = threshold
         self.branching_factor = branching_factor
         self.is_leaf = is_leaf
@@ -151,8 +164,8 @@ class _CFNode:
         # The list of subclusters, centroids and squared norms
         # to manipulate throughout.
         self.subclusters_ = []
-        self.init_centroids_ = np.zeros((branching_factor + 1, n_features))
-        self.init_sq_norm_ = np.zeros((branching_factor + 1))
+        self.init_centroids_ = np.zeros((branching_factor + 1, n_features), dtype=dtype)
+        self.init_sq_norm_ = np.zeros((branching_factor + 1), dtype)
         self.squared_norm_ = []
         self.prev_leaf_ = None
         self.next_leaf_ = None
@@ -216,7 +229,9 @@ class _CFNode:
             # subcluster to accommodate the new child.
             else:
                 new_subcluster1, new_subcluster2 = _split_node(
-                    closest_subcluster.child_, threshold, branching_factor
+                    closest_subcluster.child_,
+                    threshold,
+                    branching_factor,
                 )
                 self.update_split_subclusters(
                     closest_subcluster, new_subcluster1, new_subcluster2
@@ -323,7 +338,7 @@ class _CFSubcluster:
         #   r^2 = sum_i ||x_i||^2 / n - ||c||^2
         sq_radius = new_ss / new_n - new_sq_norm
 
-        if sq_radius <= threshold ** 2:
+        if sq_radius <= threshold**2:
             (
                 self.n_samples_,
                 self.linear_sum_,
@@ -342,7 +357,9 @@ class _CFSubcluster:
         return sqrt(max(0, sq_radius))
 
 
-class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
+class Birch(
+    _ClassNamePrefixFeaturesOutMixin, ClusterMixin, TransformerMixin, BaseEstimator
+):
     """Implements the BIRCH clustering algorithm.
 
     It is a memory-efficient, online-learning algorithm provided as an
@@ -370,7 +387,7 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
         in each. The parent subcluster of that node is removed and two new
         subclusters are added as parents of the 2 split nodes.
 
-    n_clusters : int, instance of sklearn.cluster model, default=3
+    n_clusters : int, instance of sklearn.cluster model or None, default=3
         Number of clusters after the final clustering step, which treats the
         subclusters from the leaves as new samples.
 
@@ -462,6 +479,14 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
     array([0, 0, 0, 1, 1, 1])
     """
 
+    _parameter_constraints: dict = {
+        "threshold": [Interval(Real, 0.0, None, closed="neither")],
+        "branching_factor": [Interval(Integral, 1, None, closed="neither")],
+        "n_clusters": [None, ClusterMixin, Interval(Integral, 1, None, closed="left")],
+        "compute_labels": ["boolean"],
+        "copy": ["boolean"],
+    }
+
     def __init__(
         self,
         *,
@@ -513,30 +538,9 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
             Fitted estimator.
         """
 
-        # Validating the scalar parameters.
-        check_scalar(
-            self.threshold,
-            "threshold",
-            target_type=numbers.Real,
-            min_val=0.0,
-            include_boundaries="neither",
-        )
-        check_scalar(
-            self.branching_factor,
-            "branching_factor",
-            target_type=numbers.Integral,
-            min_val=1,
-            include_boundaries="neither",
-        )
-        if isinstance(self.n_clusters, numbers.Number):
-            check_scalar(
-                self.n_clusters,
-                "n_clusters",
-                target_type=numbers.Integral,
-                min_val=1,
-            )
+        self._validate_params()
 
-        # TODO: Remove deprected flags in 1.2
+        # TODO: Remove deprecated flags in 1.2
         self._deprecated_fit, self._deprecated_partial_fit = True, False
         return self._fit(X, partial=False)
 
@@ -545,7 +549,11 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
         first_call = not (partial and has_root)
 
         X = self._validate_data(
-            X, accept_sparse="csr", copy=self.copy, reset=first_call
+            X,
+            accept_sparse="csr",
+            copy=self.copy,
+            reset=first_call,
+            dtype=[np.float64, np.float32],
         )
         threshold = self.threshold
         branching_factor = self.branching_factor
@@ -561,6 +569,7 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
                 branching_factor=branching_factor,
                 is_leaf=True,
                 n_features=n_features,
+                dtype=X.dtype,
             )
 
             # To enable getting back subclusters.
@@ -569,6 +578,7 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
                 branching_factor=branching_factor,
                 is_leaf=True,
                 n_features=n_features,
+                dtype=X.dtype,
             )
             self.dummy_leaf_.next_leaf_ = self.root_
             self.root_.prev_leaf_ = self.dummy_leaf_
@@ -593,12 +603,14 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
                     branching_factor=branching_factor,
                     is_leaf=False,
                     n_features=n_features,
+                    dtype=X.dtype,
                 )
                 self.root_.append_subcluster(new_subcluster1)
                 self.root_.append_subcluster(new_subcluster2)
 
         centroids = np.concatenate([leaf.centroids_ for leaf in self._get_leaves()])
         self.subcluster_centers_ = centroids
+        self._n_features_out = self.subcluster_centers_.shape[0]
 
         self._global_clustering(X)
         return self
@@ -638,6 +650,8 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
         self
             Fitted estimator.
         """
+        self._validate_params()
+
         # TODO: Remove deprecated flags in 1.2
         self._deprecated_partial_fit, self._deprecated_fit = True, False
         if X is None:
@@ -676,6 +690,10 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
         X = self._validate_data(X, accept_sparse="csr", reset=False)
+        return self._predict(X)
+
+    def _predict(self, X):
+        """Predict data using the ``centroids_`` of subclusters."""
         kwargs = {"Y_norm_squared": self._subcluster_norms}
 
         with config_context(assume_finite=True):
@@ -702,7 +720,7 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
             Transformed data.
         """
         check_is_fitted(self)
-        self._validate_data(X, accept_sparse="csr", reset=False)
+        X = self._validate_data(X, accept_sparse="csr", reset=False)
         with config_context(assume_finite=True):
             return euclidean_distances(X, self.subcluster_centers_)
 
@@ -716,15 +734,11 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
 
         # Preprocessing for the global clustering.
         not_enough_centroids = False
-        if isinstance(clusterer, numbers.Integral):
+        if isinstance(clusterer, Integral):
             clusterer = AgglomerativeClustering(n_clusters=self.n_clusters)
             # There is no need to perform the global clustering step.
             if len(centroids) < self.n_clusters:
                 not_enough_centroids = True
-        elif clusterer is not None and not hasattr(clusterer, "fit_predict"):
-            raise TypeError(
-                "n_clusters should be an instance of ClusterMixin or an int"
-            )
 
         # To use in predict to avoid recalculation.
         self._subcluster_norms = row_norms(self.subcluster_centers_, squared=True)
@@ -745,4 +759,7 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
             self.subcluster_labels_ = clusterer.fit_predict(self.subcluster_centers_)
 
         if compute_labels:
-            self.labels_ = self.predict(X)
+            self.labels_ = self._predict(X)
+
+    def _more_tags(self):
+        return {"preserves_dtype": [np.float64, np.float32]}
