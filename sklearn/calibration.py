@@ -245,13 +245,18 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
     """
 
     _parameter_constraints = {
-        "estimator": [HasMethods(["fit"]), None],
+        "estimator": [
+            HasMethods(["fit", "predict_proba"]),
+            HasMethods(["fit", "decision_function"]),
+            None,
+        ],
         "method": [StrOptions({"isotonic", "sigmoid"})],
         "cv": ["cv_object", StrOptions({"prefit"})],
         "n_jobs": [Integral, None],
         "ensemble": ["boolean"],
         "base_estimator": [
-            HasMethods(["fit"]),
+            HasMethods(["fit", "predict_proba"]),
+            HasMethods(["fit", "decision_function"]),
             None,
             Hidden(StrOptions({"deprecated"})),
         ],
@@ -604,13 +609,10 @@ def _get_prediction_method(clf):
     if hasattr(clf, "decision_function"):
         method = getattr(clf, "decision_function")
         return method, "decision_function"
-    elif hasattr(clf, "predict_proba"):
+
+    if hasattr(clf, "predict_proba"):
         method = getattr(clf, "predict_proba")
         return method, "predict_proba"
-    else:
-        raise RuntimeError(
-            "'estimator' has no 'decision_function' or 'predict_proba' method."
-        )
 
 
 def _compute_predictions(pred_method, method_name, X, n_classes):

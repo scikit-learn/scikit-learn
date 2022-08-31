@@ -117,18 +117,6 @@ def test_calibration(data, method, ensemble):
             )
 
 
-@pytest.mark.parametrize("ensemble", [True, False])
-def test_calibration_regressor(data, ensemble):
-    # `base-estimator` should provide either decision_function or
-    # predict_proba (most regressors, for instance, should fail)
-    X, y = data
-    clf_base_regressor = CalibratedClassifierCV(
-        RandomForestRegressor(), ensemble=ensemble
-    )
-    with pytest.raises(RuntimeError):
-        clf_base_regressor.fit(X, y)
-
-
 def test_calibration_default_estimator(data):
     # Check estimator default is LinearSVC
     X, y = data
