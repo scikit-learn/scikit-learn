@@ -66,7 +66,7 @@ def test_base_not_int_n_estimators():
     with pytest.raises(ValueError):
         string_ensemble.fit(iris.data, iris.target)
     float_ensemble = BaggingClassifier(estimator=Perceptron(), n_estimators=3.0)
-    with pytest.raises(ValueError, match="n_estimators must be an integer"):
+    with pytest.raises(ValueError):
         float_ensemble.fit(iris.data, iris.target)
 
 
