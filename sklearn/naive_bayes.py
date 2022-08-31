@@ -1281,18 +1281,11 @@ class BernoulliNB(_BaseDiscreteNB):
         return jll
 
 
-class HybridNB(MultinomialNB):
-    """Hybrid Naive Bayes classifier, extends MultinomialNB
-
-    The hybrid model estimates the probability in the training phase by Bernoulli Model.
-    The training datasets are normally adequate; without the term frequency information,
-    this model should work fine during training.
-    In the predicting phase, word frequency plays an important role.
-    Multinomial Model is applied to estimate the probability. 
-
-    *Reference*
-    R. Chiong and Lau Bee Theng, "A hybrid Naive Bayes approach for information filtering," 
-    2008 3rd IEEE Conference on Industrial Electronics and Applications, 2008:1003-1007.
+class BinarizedNB(MultinomialNB):
+    """BinarizedNB extends MultinomialNB, with binarizing preprocess for fitting.
+    The binarizing preprocess could depress the over-fitting in most cases.
+    
+    As its subclass, `HybridNB` is highly recommended to apply.
     """
     
     @_deprecate_positional_args
@@ -1305,6 +1298,25 @@ class HybridNB(MultinomialNB):
         if self.binarize is not None:
             X = binarize(X, threshold=self.binarize)
         return X, y
+
+
+class HybridNB(BinarizedNB):
+    """Hybrid Naive Bayes classifier, extends MultinomialNB/BinarizedNB
+
+    The hybrid model estimates the probability in the training phase by Bernoulli Model.
+    The training datasets are normally adequate; without the term frequency information,
+    this model should work fine during training.
+    In the predicting phase, word frequency plays an important role.
+    Multinomial Model is applied to estimate the probability. 
+
+    *Reference*
+    R. Chiong and Lau Bee Theng, "A hybrid Naive Bayes approach for information filtering," 
+    2008 3rd IEEE Conference on Industrial Electronics and Applications, 2008:1003-1007.
+    """
+    
+    def fit(self, *args, **kwargs):
+        return BernoulliNB.fit(self, *args, **kwargs)
+
 
 
 class CategoricalNB(_BaseDiscreteNB):
